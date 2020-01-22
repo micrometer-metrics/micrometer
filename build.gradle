@@ -6,7 +6,6 @@ buildscript {
     }
     dependencies {
         classpath 'io.spring.gradle:spring-release-plugin:0.20.1'
-        classpath 'com.netflix.nebula:gradle-extra-configurations-plugin:3.2.0'
         classpath 'me.champeau.gradle:jmh-gradle-plugin:0.5.0'
         classpath 'com.netflix.nebula:nebula-project-plugin:3.4.0'
 
@@ -37,8 +36,27 @@ allprojects {
 
 subprojects {
     if (project.name != 'micrometer-bom') {
-        apply plugin: 'java'
+        apply plugin: 'java-library'
         apply plugin: 'checkstyle'
+
+        java {
+            // It is more idiomatic to define different features for different sets of optional
+            // dependencies, e.g., 'dropwizard' and 'reactor'. If this library published Gradle
+            // metadata, Gradle users would be able to use these feature names in their dependency
+            // declarations instead of understanding the actual required optional dependencies.
+            // But we don't publish Gradle metadata yet and this may be overkill so just have a
+            // single feature for now to correspond to any optional dependency.
+            registerFeature('optional') {
+                usingSourceSet(sourceSets.main)
+            }
+        }
+
+        // All projects use optional annotations, but since we don't expose them downstream we would
+        // have to add the dependency in every project, which is tedious so just do it here.
+        dependencies {
+            // JSR-305 only used for non-required meta-annotations
+            optionalApi "com.google.code.findbugs:jsr305:latest.release"
+        }
 
         tasks {
             compileJava {
@@ -81,7 +99,7 @@ subprojects {
             publications {
                 nebula(MavenPublication) {
                     // Nebula converts dynamic versions to static ones so it's ok.
-                    suppressPomMetadataWarningsFor('apiElements')
+                    suppressAllPomMetadataWarnings()
                 }
             }
         }

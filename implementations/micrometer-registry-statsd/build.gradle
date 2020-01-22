@@ -3,12 +3,14 @@ plugins {
 }
 
 dependencies {
-    compile project(':micrometer-core')
-    compile 'io.projectreactor:reactor-core:3.2.12.RELEASE'
-    compile 'io.projectreactor.netty:reactor-netty:0.8.6.RELEASE'
+    api project(':micrometer-core')
 
-    testCompile project(':micrometer-test')
-    testCompile 'io.projectreactor:reactor-test:latest.release'
+    implementation 'io.projectreactor:reactor-core:3.2.12.RELEASE'
+    implementation 'io.projectreactor.netty:reactor-netty:0.8.6.RELEASE'
+
+    testImplementation project(':micrometer-test')
+    testImplementation 'io.projectreactor:reactor-test:latest.release'
+    testImplementation 'ch.qos.logback:logback-classic:1.2.+'
 }
 
 shadowJar {

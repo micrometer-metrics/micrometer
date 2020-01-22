@@ -1,98 +1,93 @@
 plugins {
     id 'idea'
-    id 'com.github.johnrengelman.shadow' version '5.2.0'
 }
 
-apply plugin: 'nebula.optional-base'
-
 dependencies {
-    // JSR-305 only used for non-required meta-annotations
-    compile "com.google.code.findbugs:jsr305:latest.release", optional
-
-    compile 'org.hdrhistogram:HdrHistogram:latest.release'
-    compile('org.latencyutils:LatencyUtils:latest.release') {
+    // TODO(anuraaga): HdrHistogram is exposed in the micrometer API but probably shouldn't be
+    api 'org.hdrhistogram:HdrHistogram:latest.release'
+    implementation('org.latencyutils:LatencyUtils:latest.release') {
         exclude group: 'org.hdrhistogram', module: 'HdrHistogram'
     }
 
     // instrumentation options
-    compile 'io.dropwizard.metrics:metrics-core:4.0.+', optional
+    optionalApi 'io.dropwizard.metrics:metrics-core:4.0.+'
 
     // cache monitoring
-    compile 'com.google.guava:guava:latest.release', optional
-    compile 'com.github.ben-manes.caffeine:caffeine:latest.release', optional
-    compile 'net.sf.ehcache:ehcache:latest.release', optional
-    compile 'javax.cache:cache-api:latest.release', optional
-    compile 'com.hazelcast:hazelcast:3.+', optional
-    compile 'org.hibernate:hibernate-entitymanager:latest.release', optional
+    optionalApi 'com.google.guava:guava:latest.release'
+    optionalApi 'com.github.ben-manes.caffeine:caffeine:latest.release'
+    optionalApi 'net.sf.ehcache:ehcache:latest.release'
+    optionalApi 'javax.cache:cache-api:latest.release'
+    optionalApi 'com.hazelcast:hazelcast:3.+'
+    optionalApi 'org.hibernate:hibernate-entitymanager:latest.release'
 
     // server runtime monitoring
-    compile 'org.eclipse.jetty:jetty-server:9.+', optional
-    compile 'org.apache.tomcat.embed:tomcat-embed-core:8.+', optional
+    optionalApi 'org.eclipse.jetty:jetty-server:9.+'
+    optionalApi 'org.apache.tomcat.embed:tomcat-embed-core:8.+'
 
     // apache httpcomponents monitoring
-    compile 'org.apache.httpcomponents:httpclient:4.5.6', optional
-    compile 'org.apache.httpcomponents:httpasyncclient:4.1.4', optional
+    optionalApi 'org.apache.httpcomponents:httpclient:4.5.6'
+    optionalApi 'org.apache.httpcomponents:httpasyncclient:4.1.4'
 
     // hystrix monitoring
     // metrics are better with https://github.com/Netflix/Hystrix/pull/1568 introduced
     // in hystrix 1.5.12, but Netflix re-released 1.5.11 as 1.5.18 late in 2018.
     // <=1.5.11 or 1.5.18 doesn't break with Micrometer, but open metrics won't be correct necessarily.
-    compile 'com.netflix.hystrix:hystrix-core:1.5.12', optional
+    optionalApi 'com.netflix.hystrix:hystrix-core:1.5.12'
 
     // log monitoring
-    compile 'ch.qos.logback:logback-classic:1.2.+', optional
-    compile 'org.apache.logging.log4j:log4j-core:2.+', optional
+    optionalApi 'ch.qos.logback:logback-classic:1.2.+'
+    optionalApi 'org.apache.logging.log4j:log4j-core:2.+'
 
     // reactor
-    compile 'io.projectreactor:reactor-core:3.2.12.RELEASE', optional
-    compile 'io.projectreactor.netty:reactor-netty:0.8.6.RELEASE', optional
+    optionalApi 'io.projectreactor:reactor-core:3.2.12.RELEASE'
+    optionalApi 'io.projectreactor.netty:reactor-netty:0.8.6.RELEASE'
 
     // @Timed AOP
-    compile 'org.aspectj:aspectjweaver:1.8.+', optional
+    optionalApi 'org.aspectj:aspectjweaver:1.8.+'
 
-    compile 'com.squareup.okhttp3:okhttp:latest.release', optional
+    optionalApi 'com.squareup.okhttp3:okhttp:latest.release'
 
-    compile 'org.mongodb:mongo-java-driver:latest.release', optional
+    optionalApi 'org.mongodb:mongo-java-driver:latest.release'
 
-    compile 'org.jooq:jooq:latest.release', optional
+    optionalApi 'org.jooq:jooq:latest.release'
 
-    testCompile 'io.projectreactor:reactor-test:latest.release'
+    testImplementation 'io.projectreactor:reactor-test:latest.release'
 
     // JUnit 5
     testImplementation 'org.junit.jupiter:junit-jupiter:latest.release'
 
     // Eclipse still needs this (as of 4.7.1a)
-    testRuntime 'org.junit.platform:junit-platform-launcher:latest.release'
+    testRuntimeOnly 'org.junit.platform:junit-platform-launcher:latest.release'
 
-    testCompile 'org.mockito:mockito-core:latest.release'
+    testImplementation 'org.mockito:mockito-core:latest.release'
 
-    testCompile 'org.hsqldb:hsqldb:latest.release'
+    testImplementation 'org.hsqldb:hsqldb:latest.release'
 
-    testCompile 'org.eclipse.jetty:jetty-client:9.+', optional
+    testImplementation 'org.eclipse.jetty:jetty-client:9.+'
 
     // dependency injection tests
-    testCompile 'javax.inject:javax.inject:1'
-    testCompile 'org.springframework:spring-context:4.+'
-    testCompile 'org.springframework:spring-test:4.+'
-    testCompile 'com.google.inject:guice:4.1.0'
+    testImplementation 'javax.inject:javax.inject:1'
+    testImplementation 'org.springframework:spring-context:4.+'
+    testImplementation 'org.springframework:spring-test:4.+'
+    testImplementation 'com.google.inject:guice:4.1.0'
 
-    testCompile 'com.h2database:h2:latest.release'
+    testImplementation 'com.h2database:h2:latest.release'
 
     // Uncomment these if you are interested in testing injection with dagger in MeterRegistryInjectionTest
-//    testCompile 'com.google.dagger:dagger:2.11'
+//    testImplementation 'com.google.dagger:dagger:2.11'
 //    testAnnotationProcessor 'com.google.dagger:dagger-compiler:2.11'
 
-    testCompile 'org.assertj:assertj-core:latest.release'
+    testImplementation 'org.assertj:assertj-core:latest.release'
 
-    testCompile 'org.ehcache:ehcache:latest.release'
+    testImplementation 'org.ehcache:ehcache:latest.release'
 
     // Pin version temporarily to restore builds.
-    testCompile 'org.apache.kafka:kafka-clients:2.3.1'
+    testImplementation 'org.apache.kafka:kafka-clients:2.3.1'
 
-    testCompile 'ru.lanwen.wiremock:wiremock-junit5:1.2.0', {
+    testImplementation 'ru.lanwen.wiremock:wiremock-junit5:1.2.0', {
         exclude group: 'com.github.tomakehurst', module: 'wiremock'
     }
-    testCompile 'com.github.tomakehurst:wiremock-jre8:latest.release'
+    testImplementation 'com.github.tomakehurst:wiremock-jre8:latest.release'
 
-    testCompile 'de.flapdoodle.embed:de.flapdoodle.embed.mongo:latest.release'
+    testImplementation 'de.flapdoodle.embed:de.flapdoodle.embed.mongo:latest.release'
 }
