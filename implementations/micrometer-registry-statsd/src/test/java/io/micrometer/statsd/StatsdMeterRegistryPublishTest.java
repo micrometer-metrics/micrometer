@@ -19,7 +19,6 @@ import io.micrometer.core.Issue;
 import io.micrometer.core.instrument.Clock;
 import io.micrometer.core.instrument.Counter;
 import io.netty.handler.logging.LogLevel;
-import org.jetbrains.annotations.NotNull;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.EnumSource;
@@ -197,7 +196,6 @@ class StatsdMeterRegistryPublishTest {
         return meterRegistry.client.get().isDisposed();
     }
 
-    @NotNull
     private DisposableChannel startServer(StatsdProtocol protocol, int port) {
         if (protocol == StatsdProtocol.UDP) {
             return UdpServer.create()
@@ -229,7 +227,6 @@ class StatsdMeterRegistryPublishTest {
         }
     }
 
-    @NotNull
     private StatsdConfig getUnbufferedConfig(StatsdProtocol protocol, int port) {
         return new StatsdConfig() {
             @Override
