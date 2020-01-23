@@ -83,8 +83,10 @@ class StatsdMeterRegistryPublishTest {
         IntStream.range(2, 100).forEach(counter::increment);
         server = startServer(protocol, port);
         assertThat(serverLatch.getCount()).isEqualTo(3);
-        // make sure the client is connected before making counter increments
-        await().until(() -> !clientIsDisposed());
+        if (protocol == StatsdProtocol.TCP) {
+            // make sure the TCP client is connected before making counter increments
+            await().until(() -> !clientIsDisposed());
+        }
         counter.increment(5);
         counter.increment(6);
         counter.increment(7);
@@ -153,10 +155,12 @@ class StatsdMeterRegistryPublishTest {
         Counter counter = Counter.builder("my.counter").register(meterRegistry);
         IntStream.range(0, 100).forEach(counter::increment);
         server = startServer(protocol, port);
-        // client is null until TcpClient first connects
-        await().until(() -> meterRegistry.client.get() != null);
-        // TcpClient may take some time to reconnect to the server
-        await().until(() -> !clientIsDisposed());
+        if (protocol == StatsdProtocol.TCP) {
+            // client is null until TcpClient first connects
+            await().until(() -> meterRegistry.client.get() != null);
+            // TcpClient may take some time to reconnect to the server
+            await().until(() -> !clientIsDisposed());
+        }
         assertThat(serverLatch.getCount()).isEqualTo(3);
         counter.increment();
         counter.increment();
