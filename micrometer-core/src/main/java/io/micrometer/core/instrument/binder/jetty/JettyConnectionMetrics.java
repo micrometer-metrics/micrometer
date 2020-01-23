@@ -22,6 +22,7 @@ import io.micrometer.core.instrument.MeterRegistry;
 import io.micrometer.core.instrument.Tag;
 import io.micrometer.core.instrument.Tags;
 import io.micrometer.core.instrument.Timer;
+import io.micrometer.core.instrument.binder.BaseUnits;
 import io.micrometer.core.instrument.distribution.DistributionStatisticConfig;
 import io.micrometer.core.instrument.distribution.TimeWindowMax;
 import java.util.HashMap;
@@ -73,25 +74,25 @@ public class JettyConnectionMetrics extends AbstractLifeCycle implements Connect
         this.tags = tags;
 
         this.messagesIn = Counter.builder("jetty.connections.messages.in")
-                .baseUnit("messages")
+                .baseUnit(BaseUnits.MESSAGES)
                 .description("Messages received by tracked connections")
                 .tags(tags)
                 .register(registry);
 
         this.messagesOut = Counter.builder("jetty.connections.messages.out")
-                .baseUnit("messages")
+                .baseUnit(BaseUnits.MESSAGES)
                 .description("Messages sent by tracked connections")
                 .tags(tags)
                 .register(registry);
 
         this.bytesIn = DistributionSummary.builder("jetty.connections.bytes.in")
-                .baseUnit("bytes")
+                .baseUnit(BaseUnits.BYTES)
                 .description("Bytes received by tracked connections")
                 .tags(tags)
                 .register(registry);
 
         this.bytesOut = DistributionSummary.builder("jetty.connections.bytes.out")
-                .baseUnit("bytes")
+                .baseUnit(BaseUnits.BYTES)
                 .description("Bytes sent by tracked connections")
                 .tags(tags)
                 .register(registry);
@@ -100,14 +101,14 @@ public class JettyConnectionMetrics extends AbstractLifeCycle implements Connect
 
         Gauge.builder("jetty.connections.max", this, jcm -> jcm.maxConnections.poll())
                 .strongReference(true)
-                .baseUnit("connections")
+                .baseUnit(BaseUnits.CONNECTIONS)
                 .description("The maximum number of observed connections over a rolling 2-minute interval")
                 .tags(tags)
                 .register(registry);
 
         Gauge.builder("jetty.connections.current", this, jcm -> jcm.connectionSamples.size())
                 .strongReference(true)
-                .baseUnit("connections")
+                .baseUnit(BaseUnits.CONNECTIONS)
                 .description("The current number of open Jetty connections")
                 .tags(tags)
                 .register(registry);
