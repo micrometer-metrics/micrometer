@@ -16,6 +16,7 @@
 package io.micrometer.core.instrument.binder.jetty;
 
 import io.micrometer.core.instrument.*;
+import io.micrometer.core.instrument.binder.BaseUnits;
 import io.micrometer.core.instrument.binder.http.DefaultHttpRequestTagsProvider;
 import io.micrometer.core.instrument.binder.http.HttpRequestTagsProvider;
 import io.micrometer.core.lang.NonNullApi;
@@ -92,7 +93,7 @@ public class TimedHandler extends HandlerWrapper implements Graceful {
 
         Gauge.builder("jetty.server.async.waits", asyncWaits, AtomicInteger::doubleValue)
                 .description("Pending asynchronous wait operations")
-                .baseUnit("operations")
+                .baseUnit(BaseUnits.OPERATIONS)
                 .tags(tags)
                 .register(registry);
     }

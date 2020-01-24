@@ -72,6 +72,21 @@ public final class BaseUnits {
      */
     public static final String MILLISECONDS = "ms";
 
+    /**
+     * For messages.
+     */
+    public static final String MESSAGES = "messages";
+
+    /**
+     * For connections.
+     */
+    public static final String CONNECTIONS = "connections";
+
+    /**
+     * For operations.
+     */
+    public static final String OPERATIONS = "operations";
+
     private BaseUnits() {
     }
 
