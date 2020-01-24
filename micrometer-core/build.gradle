@@ -84,7 +84,7 @@ dependencies {
     // Pin version temporarily to restore builds.
     testImplementation 'org.apache.kafka:kafka-clients:2.3.1'
 
-    testImplementation 'ru.lanwen.wiremock:wiremock-junit5:1.2.0', {
+    testImplementation 'ru.lanwen.wiremock:wiremock-junit5:latest.release', {
         exclude group: 'com.github.tomakehurst', module: 'wiremock'
     }
     testImplementation 'com.github.tomakehurst:wiremock-jre8:latest.release'
