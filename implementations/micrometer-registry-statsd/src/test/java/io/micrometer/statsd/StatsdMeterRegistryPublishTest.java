@@ -83,7 +83,7 @@ class StatsdMeterRegistryPublishTest {
         if (protocol == StatsdProtocol.UDP) {
             await().until(() -> meterRegistry.client.get() != null);
             ((Connection) meterRegistry.client.get())
-                    //.addHandler(new LoggingHandler("udpclient", LogLevel.INFO))
+                    .addHandler(new LoggingHandler("udpclient", LogLevel.INFO))
                     .addHandler(new ChannelOutboundHandlerAdapter() {
                         @Override
                         public void write(ChannelHandlerContext ctx, Object msg, ChannelPromise promise) throws Exception {
@@ -177,7 +177,7 @@ class StatsdMeterRegistryPublishTest {
         if (protocol == StatsdProtocol.UDP) {
             await().until(() -> meterRegistry.client.get() != null);
             ((Connection) meterRegistry.client.get())
-                    //.addHandler(new LoggingHandler("udpclient", LogLevel.INFO))
+                    .addHandler(new LoggingHandler("udpclient", LogLevel.INFO))
                     .addHandler(new ChannelOutboundHandlerAdapter() {
                         @Override
                         public void write(ChannelHandlerContext ctx, Object msg, ChannelPromise promise) throws Exception {
