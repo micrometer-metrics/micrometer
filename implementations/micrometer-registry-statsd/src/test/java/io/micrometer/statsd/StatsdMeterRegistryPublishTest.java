@@ -73,19 +73,35 @@ class StatsdMeterRegistryPublishTest {
     @EnumSource(StatsdProtocol.class)
     void resumeSendingMetrics_whenServerIntermittentlyFails(StatsdProtocol protocol) throws InterruptedException {
         serverLatch = new CountDownLatch(1);
+        AtomicInteger writeCount = new AtomicInteger();
         DisposableChannel server = startServer(protocol, 0);
 
         final int port = server.address().getPort();
 
         meterRegistry = new StatsdMeterRegistry(getUnbufferedConfig(protocol, port), Clock.SYSTEM);
         startRegistryAndWaitForClient();
+        if (protocol == StatsdProtocol.UDP) {
+            await().until(() -> meterRegistry.client.get() != null);
+            ((Connection) meterRegistry.client.get())
+                    //.addHandler(new LoggingHandler("udpclient", LogLevel.INFO))
+                    .addHandler(new ChannelOutboundHandlerAdapter() {
+                        @Override
+                        public void write(ChannelHandlerContext ctx, Object msg, ChannelPromise promise) throws Exception {
+                            writeCount.incrementAndGet();
+                            super.write(ctx, msg, promise);
+                        }
+                    });
+        }
         Counter counter = Counter.builder("my.counter").register(meterRegistry);
         counter.increment(1);
         assertThat(serverLatch.await(5, TimeUnit.SECONDS)).isTrue();
         server.disposeNow();
         serverLatch = new CountDownLatch(3);
         // client will try to send but server is down
-        IntStream.range(2, 100).forEach(counter::increment);
+        IntStream.range(2, 5).forEach(counter::increment);
+        if (protocol == StatsdProtocol.UDP) {
+            await().until(() -> writeCount.get() == 4);
+        }
         server = startServer(protocol, port);
         assertThat(serverLatch.getCount()).isEqualTo(3);
         if (protocol == StatsdProtocol.TCP) {
@@ -161,11 +177,11 @@ class StatsdMeterRegistryPublishTest {
         if (protocol == StatsdProtocol.UDP) {
             await().until(() -> meterRegistry.client.get() != null);
             ((Connection) meterRegistry.client.get())
-                    .addHandler(new LoggingHandler("udpclient", LogLevel.INFO))
+                    //.addHandler(new LoggingHandler("udpclient", LogLevel.INFO))
                     .addHandler(new ChannelOutboundHandlerAdapter() {
                         @Override
                         public void write(ChannelHandlerContext ctx, Object msg, ChannelPromise promise) throws Exception {
-                            System.out.println("writeCount incremented: " + writeCount.incrementAndGet());
+                            writeCount.incrementAndGet();
                             super.write(ctx, msg, promise);
                         }
                     });
