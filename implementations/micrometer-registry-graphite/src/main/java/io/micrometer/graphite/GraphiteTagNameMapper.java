@@ -20,9 +20,6 @@ import io.micrometer.core.instrument.Tag;
 import io.micrometer.core.instrument.config.NamingConvention;
 import io.micrometer.core.instrument.util.HierarchicalNameMapper;
 
-import java.util.Arrays;
-import java.util.List;
-
 /**
  * Tag based {@link HierarchicalNameMapper} for Graphite.
  *
@@ -31,28 +28,14 @@ import java.util.List;
  * @author Andrew Fitzgerald
  */
 public class GraphiteTagNameMapper implements HierarchicalNameMapper {
-    private final List<String> tagsAsPrefix;
-
-    public GraphiteTagNameMapper(String... tagsAsPrefix) {
-        this.tagsAsPrefix = Arrays.asList(tagsAsPrefix);
-    }
 
     @Override
     public String toHierarchicalName(Meter.Id id, NamingConvention convention) {
         StringBuilder hierarchicalName = new StringBuilder();
-        for (String tagKey : tagsAsPrefix) {
-            String tagValue = id.getTag(tagKey);
-            if (tagValue != null) {
-                hierarchicalName.append(convention.tagValue(tagValue)).append(".");
-            }
-        }
         hierarchicalName.append(id.getConventionName(convention));
         for (Tag tag : id.getTagsAsIterable()) {
-            if (!tagsAsPrefix.contains(tag.getKey())) {
-
-                hierarchicalName.append(';').append(convention.tagKey(tag.getKey()))
-                        .append('=').append(convention.tagValue(tag.getValue()));
-            }
+            hierarchicalName.append(';').append(convention.tagKey(tag.getKey()))
+                    .append('=').append(convention.tagValue(tag.getValue()));
         }
         return hierarchicalName.toString();
     }

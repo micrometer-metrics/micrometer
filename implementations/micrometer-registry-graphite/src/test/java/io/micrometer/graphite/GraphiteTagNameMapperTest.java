@@ -15,9 +15,7 @@
  */
 package io.micrometer.graphite;
 
-import io.micrometer.core.Issue;
 import io.micrometer.core.instrument.Meter;
-import io.micrometer.core.instrument.config.NamingConvention;
 import io.micrometer.core.instrument.simple.SimpleMeterRegistry;
 import org.junit.jupiter.api.Test;
 
@@ -31,22 +29,13 @@ import static org.assertj.core.api.Assertions.assertThat;
  * @author Andrew Fitzgerald
  */
 class GraphiteTagNameMapperTest {
-    private final GraphiteTagNameMapper nameMapper = new GraphiteTagNameMapper("stack", "app.name");
-    private final Meter.Id id = new SimpleMeterRegistry().counter("my.name",
-            "app.name", "MYAPP", "stack", "PROD", "other.tag", "value").getId();
-
-    @Issue("#561")
-    @Test
-    void tagsAsPrefix() {
-        assertThat(nameMapper.toHierarchicalName(id, NamingConvention.camelCase))
-                .isEqualTo("PROD.MYAPP.myName;otherTag=value");
-    }
+    private final GraphiteTagNameMapper nameMapper = new GraphiteTagNameMapper();
 
     @Test
-    void toHierarchicalNameShouldSanitizeTagValueFromTagsAsPrefix() {
+    void iNeedToUpdateTheTestSuite() {
         Meter.Id id = new SimpleMeterRegistry().counter("my.name",
                 "app.name", "MY APP", "stack", "PROD", "other.tag", "value").getId();
         assertThat(nameMapper.toHierarchicalName(id, new GraphiteNamingConvention()))
-                .isEqualTo("PROD.MY_APP.myName;otherTag=value");
+                .isEqualTo("myName;appName=MY_APP;otherTag=value;stack=PROD");
     }
 }
