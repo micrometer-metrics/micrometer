@@ -18,11 +18,16 @@ package io.micrometer.statsd;
 import io.micrometer.core.Issue;
 import io.micrometer.core.instrument.Clock;
 import io.micrometer.core.instrument.Counter;
+import io.netty.channel.ChannelHandlerContext;
+import io.netty.channel.ChannelOutboundHandlerAdapter;
+import io.netty.channel.ChannelPromise;
 import io.netty.handler.logging.LogLevel;
+import io.netty.handler.logging.LoggingHandler;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.EnumSource;
 import reactor.core.publisher.Flux;
+import reactor.netty.Connection;
 import reactor.netty.DisposableChannel;
 import reactor.netty.tcp.TcpServer;
 import reactor.netty.udp.UdpServer;
@@ -30,6 +35,7 @@ import reactor.netty.udp.UdpServer;
 import java.time.Duration;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.IntStream;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -144,6 +150,7 @@ class StatsdMeterRegistryPublishTest {
     @ParameterizedTest
     @EnumSource(StatsdProtocol.class)
     void whenBackendInitiallyDown_metricsSentAfterBackendStarts(StatsdProtocol protocol) throws InterruptedException {
+        AtomicInteger writeCount = new AtomicInteger();
         serverLatch = new CountDownLatch(3);
         // start server to secure an open port
         DisposableChannel server = startServer(protocol, 0);
@@ -151,8 +158,23 @@ class StatsdMeterRegistryPublishTest {
         server.disposeNow();
         meterRegistry = new StatsdMeterRegistry(getUnbufferedConfig(protocol, port), Clock.SYSTEM);
         meterRegistry.start();
+        if (protocol == StatsdProtocol.UDP) {
+            await().until(() -> meterRegistry.client.get() != null);
+            ((Connection) meterRegistry.client.get())
+                    .addHandler(new LoggingHandler("udpclient", LogLevel.INFO))
+                    .addHandler(new ChannelOutboundHandlerAdapter() {
+                        @Override
+                        public void write(ChannelHandlerContext ctx, Object msg, ChannelPromise promise) throws Exception {
+                            System.out.println("writeCount incremented: " + writeCount.incrementAndGet());
+                            super.write(ctx, msg, promise);
+                        }
+                    });
+        }
         Counter counter = Counter.builder("my.counter").register(meterRegistry);
-        IntStream.range(0, 100).forEach(counter::increment);
+        IntStream.range(1, 4).forEach(counter::increment);
+        if (protocol == StatsdProtocol.UDP) {
+            await().until(() -> writeCount.get() == 3);
+        }
         server = startServer(protocol, port);
         if (protocol == StatsdProtocol.TCP) {
             // client is null until TcpClient first connects
