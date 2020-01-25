@@ -28,7 +28,7 @@ import java.util.regex.Pattern;
  * @author Jon Schneider
  * @author Johnny Lim
  */
-public class GraphiteNamingConvention implements NamingConvention {
+public class GraphiteHierarchicalNamingConvention implements NamingConvention {
     /**
      * A list that probably is blacklisted: https://github.com/graphite-project/graphite-web/blob/master/webapp/graphite/render/grammar.py#L48-L55.
      * Empirically, we have found others.
@@ -37,11 +37,11 @@ public class GraphiteNamingConvention implements NamingConvention {
     private static final Pattern PATTERN_TAG_BLACKLISTED_CHARS = Pattern.compile("[{}(),=\\[\\]/ ?:.]");
     private final NamingConvention delegate;
 
-    public GraphiteNamingConvention() {
+    public GraphiteHierarchicalNamingConvention() {
         this(NamingConvention.camelCase);
     }
 
-    public GraphiteNamingConvention(NamingConvention delegate) {
+    public GraphiteHierarchicalNamingConvention(NamingConvention delegate) {
         this.delegate = delegate;
     }
 

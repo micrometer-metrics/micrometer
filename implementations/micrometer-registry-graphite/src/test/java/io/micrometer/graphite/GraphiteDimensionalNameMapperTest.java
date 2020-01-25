@@ -32,7 +32,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 class GraphiteDimensionalNameMapperTest {
     private final GraphiteDimensionalNameMapper nameMapper = new GraphiteDimensionalNameMapper();
     private final SimpleMeterRegistry registry = new SimpleMeterRegistry();
-    private final NamingConvention namingConvention = new GraphiteNamingConvention();
+    private final NamingConvention namingConvention = new GraphiteHierarchicalNamingConvention();
 
     @Test
     void simpleName() {
