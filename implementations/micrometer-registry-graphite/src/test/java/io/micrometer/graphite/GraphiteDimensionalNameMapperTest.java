@@ -23,14 +23,14 @@ import org.junit.jupiter.api.Test;
 import static org.assertj.core.api.Assertions.assertThat;
 
 /**
- * Tests for {@link GraphiteTagNameMapper}.
+ * Tests for {@link GraphiteDimensionalNameMapper}.
  *
  * @author Jon Schneider
  * @author Johnny Lim
  * @author Andrew Fitzgerald
  */
-class GraphiteTagNameMapperTest {
-    private final GraphiteTagNameMapper nameMapper = new GraphiteTagNameMapper();
+class GraphiteDimensionalNameMapperTest {
+    private final GraphiteDimensionalNameMapper nameMapper = new GraphiteDimensionalNameMapper();
     private final SimpleMeterRegistry registry = new SimpleMeterRegistry();
     private final NamingConvention namingConvention = new GraphiteNamingConvention();
 
