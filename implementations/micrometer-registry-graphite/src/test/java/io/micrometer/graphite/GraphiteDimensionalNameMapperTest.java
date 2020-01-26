@@ -32,7 +32,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 class GraphiteDimensionalNameMapperTest {
     private final GraphiteDimensionalNameMapper nameMapper = new GraphiteDimensionalNameMapper();
     private final SimpleMeterRegistry registry = new SimpleMeterRegistry();
-    private final NamingConvention namingConvention = new GraphiteHierarchicalNamingConvention();
+    private final NamingConvention namingConvention = new GraphiteDimensionalNamingConvention();
 
     @Test
     void simpleName() {
@@ -41,53 +41,15 @@ class GraphiteDimensionalNameMapperTest {
     }
 
     @Test
-    void nameSubstitutions() {
-        Meter meter = registry.counter("a.name with spaces.counter");
-        assertThat(getName(meter)).isEqualTo("a.name_with_spaces.counter");
-    }
-
-    @Test
-    void invalidNameCharacters() {
-        Meter meter = registry.counter("a.very=bad;name{.counter");
-        assertThat(getName(meter)).isEqualTo("a.very_bad_name_.counter");
-    }
-
-    @Test
-    void simpleTag() {
+    void singleTag() {
         Meter meter = registry.counter("a.simple.counter", "key", "value");
         assertThat(getName(meter)).isEqualTo("a.simple.counter;key=value");
     }
 
     @Test
     void multipleTags() {
-        Meter meter = registry.counter("a.simple.counter", "key", "value", "anotherKey", "another.value");
-        assertThat(getName(meter)).isEqualTo("a.simple.counter;key=value;anotherKey=another.value");
-    }
-
-    @Test
-    void emptyTagKey() {
-        Meter meter = registry.counter("a.simple.counter", "", "value");
-        assertThat(getName(meter)).isEqualTo("a.simple.counter;unspecified=value");
-    }
-
-    @Test
-    void emptyTagValue() {
-        Meter meter = registry.counter("a.simple.counter", "key", "");
-        assertThat(getName(meter)).isEqualTo("a.simple.counter;key=unspecified");
-    }
-
-    /**
-     *
-     * > Tag names must have a length >= 1 and may contain any ascii characters except ;!^=
-     * > Tag values must also have a length >= 1, and they may contain any ascii characters except ;~
-     * > UTF-8 characters may work for names and values, but they are not well tested and it is not recommended to use non-ascii characters in metric names or tags.
-     * - https://graphite.readthedocs.io/en/latest/tags.html#carbon
-     *
-     */
-    @Test
-    void terribleTagNaming() {
-        Meter meter = registry.counter("a.simple.counter", "key;!^=~ why?", "value;!^=~ why?");
-        assertThat(getName(meter)).isEqualTo("a.simple.counter;key____~ why?=value_!^=_ why?");
+        Meter meter = registry.counter("a.simple.counter", "key1", "value1", "key2", "value2");
+        assertThat(getName(meter)).isEqualTo("a.simple.counter;key1=value1;key2=value2");
     }
 
     private String getName(Meter meter) {
