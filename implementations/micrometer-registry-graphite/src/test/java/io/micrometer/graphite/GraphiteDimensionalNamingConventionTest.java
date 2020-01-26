@@ -35,17 +35,12 @@ class GraphiteDimensionalNamingConventionTest {
     void name() {
         assertThat(convention.name("name([{id}])/1", Meter.Type.TIMER)).isEqualTo("name___id____1");
     }
-
-    @Test
-    void dotNotationIsConvertedToCamelCase() {
-        assertThat(convention.name("gauge.size", Meter.Type.GAUGE)).isEqualTo("gauge.size");
-    }
-
+    
     @Test
     void respectDelegateNamingConvention() {
         CustomNamingConvention delegateNamingConvention = new CustomNamingConvention();
 
-        GraphiteHierarchicalNamingConvention convention = new GraphiteHierarchicalNamingConvention(delegateNamingConvention);
+        GraphiteDimensionalNamingConvention convention = new GraphiteDimensionalNamingConvention(delegateNamingConvention);
 
         assertThat(convention.name("my.name", Meter.Type.TIMER)).isEqualTo("name-my.name");
         assertThat(convention.tagKey("my_tag_key")).isEqualTo("key-my_tag_key");
@@ -54,7 +49,6 @@ class GraphiteDimensionalNamingConventionTest {
 
     @Test
     void nameShouldPreserveDot() {
-        GraphiteHierarchicalNamingConvention convention = new GraphiteHierarchicalNamingConvention(NamingConvention.identity);
         assertThat(convention.name("my.counter", Meter.Type.COUNTER)).isEqualTo("my.counter");
     }
 
@@ -69,49 +63,103 @@ class GraphiteDimensionalNamingConventionTest {
     }
 
     @Test
+    void nameShouldSanitizeSemiColon(){
+        assertThat(convention.name("counter;1", Meter.Type.COUNTER)).isEqualTo("counter_1");
+    }
+
+    @Test
     void nameShouldSanitizeColon() {
         assertThat(convention.name("counter:1", Meter.Type.COUNTER)).isEqualTo("counter_1");
     }
 
     @Test
-    void tagKeyShouldSanitizeDot() {
-        GraphiteHierarchicalNamingConvention convention = new GraphiteHierarchicalNamingConvention(NamingConvention.identity);
-        assertThat(convention.tagKey("my.tag")).isEqualTo("my_tag");
+    void tagKeyShouldPreserveDot() {
+        assertThat(convention.tagKey("my.tag")).isEqualTo("my.tag");
     }
 
     @Test
-    void tagKeyShouldSanitizeSpace() {
-        assertThat(convention.tagKey("tag 1")).isEqualTo("tag_1");
+    void tagKeyShouldPreserveSpace() {
+        assertThat(convention.tagKey("tag 1")).isEqualTo("tag 1");
     }
 
     @Test
-    void tagKeyShouldSanitizeQuestionMark() {
-        assertThat(convention.tagKey("tag?1")).isEqualTo("tag_1");
+    void tagKeyShouldPreserveQuestionMark() {
+        assertThat(convention.tagKey("tag?1")).isEqualTo("tag?1");
     }
 
     @Test
-    void tagKeyShouldSanitizeColon() {
-        assertThat(convention.tagKey("tag:1")).isEqualTo("tag_1");
+    void tagKeyShouldPreserveColon() {
+        assertThat(convention.tagKey("tag:1")).isEqualTo("tag:1");
     }
 
     @Test
-    void tagValueShouldSanitizeDot() {
-        assertThat(convention.tagValue("my.value")).isEqualTo("my_value");
+    void tagKeyShouldSanitizeSemiColon(){
+        assertThat(convention.tagKey("tag;1")).isEqualTo("tag_1");
     }
 
     @Test
-    void tagValueShouldSanitizeSpace() {
-        assertThat(convention.tagKey("value 1")).isEqualTo("value_1");
+    void tagKeyShouldSanitizeExclamation(){
+        assertThat(convention.tagKey("tag!1")).isEqualTo("tag_1");
     }
 
     @Test
-    void tagValueShouldSanitizeQuestionMark() {
-        assertThat(convention.tagKey("value?1")).isEqualTo("value_1");
+    void tagKeyShouldSanitizeCarat(){
+        assertThat(convention.tagKey("tag^1")).isEqualTo("tag_1");
     }
 
     @Test
-    void tagValueShouldSanitizeColon() {
-        assertThat(convention.tagKey("value:1")).isEqualTo("value_1");
+    void tagKeyShouldSanitizeEquals(){
+        assertThat(convention.tagKey("tag=1")).isEqualTo("tag_1");
+    }
+
+    @Test
+    void tagKeyShouldPreserveTilde(){
+        assertThat(convention.tagKey("tag~1")).isEqualTo("tag~1");
+    }
+
+    @Test
+    void tagValueShouldPreserveDot() {
+        assertThat(convention.tagValue("my.tag")).isEqualTo("my.tag");
+    }
+
+    @Test
+    void tagValueShouldPreserveSpace() {
+        assertThat(convention.tagValue("tag 1")).isEqualTo("tag 1");
+    }
+
+    @Test
+    void tagValueShouldPreserveQuestionMark() {
+        assertThat(convention.tagValue("tag?1")).isEqualTo("tag?1");
+    }
+
+    @Test
+    void tagValueShouldPreserveColon() {
+        assertThat(convention.tagValue("tag:1")).isEqualTo("tag:1");
+    }
+
+    @Test
+    void tagValueShouldSanitizeSemiColon(){
+        assertThat(convention.tagValue("tag;1")).isEqualTo("tag_1");
+    }
+
+    @Test
+    void tagValueShouldPreserveExclamation(){
+        assertThat(convention.tagValue("tag!1")).isEqualTo("tag!1");
+    }
+
+    @Test
+    void tagValueShouldPreserveCarat(){
+        assertThat(convention.tagValue("tag^1")).isEqualTo("tag^1");
+    }
+
+    @Test
+    void tagValueShouldPreserveEquals(){
+        assertThat(convention.tagValue("tag=1")).isEqualTo("tag=1");
+    }
+
+    @Test
+    void tagValueShouldSanitizeTilde(){
+        assertThat(convention.tagValue("tag~1")).isEqualTo("tag_1");
     }
 
     private static class CustomNamingConvention implements NamingConvention {

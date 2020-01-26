@@ -34,12 +34,13 @@ public class GraphiteDimensionalNamingConvention implements NamingConvention {
      * A list that probably is blacklisted: https://github.com/graphite-project/graphite-web/blob/master/webapp/graphite/render/grammar.py#L48-L55.
      * Empirically, we have found others.
      */
-    private static final Pattern PATTERN_NAME_BLACKLISTED_CHARS = Pattern.compile("[{}(),=\\[\\]/ ?:]");
-    private static final Pattern PATTERN_TAG_BLACKLISTED_CHARS = Pattern.compile("[{}(),=\\[\\]/ ?:.]");
+    private static final Pattern PATTERN_NAME_BLACKLISTED_CHARS = Pattern.compile("[{}(),=\\[\\]/ ?:;]");
+    private static final Pattern PATTERN_TAG_KEY_BLACKLISTED_CHARS = Pattern.compile("[;!^=]");
+    private static final Pattern PATTERN_TAG_VALUE_BLACKLISTED_CHARS = Pattern.compile("[;~]");
     private final NamingConvention delegate;
 
     public GraphiteDimensionalNamingConvention() {
-        this(NamingConvention.camelCase);
+        this(NamingConvention.dot);
     }
 
     public GraphiteDimensionalNamingConvention(NamingConvention delegate) {
@@ -53,12 +54,12 @@ public class GraphiteDimensionalNamingConvention implements NamingConvention {
 
     @Override
     public String tagKey(String key) {
-        return sanitizeTag(this.delegate.tagKey(normalize(key)));
+        return sanitizeTagKey(this.delegate.tagKey(normalize(key)));
     }
 
     @Override
     public String tagValue(String value) {
-        return sanitizeTag(this.delegate.tagValue(normalize(value)));
+        return sanitizeTagValue(this.delegate.tagValue(normalize(value)));
     }
 
     /**
@@ -73,8 +74,12 @@ public class GraphiteDimensionalNamingConvention implements NamingConvention {
         return PATTERN_NAME_BLACKLISTED_CHARS.matcher(delegated).replaceAll("_");
     }
 
-    private String sanitizeTag(String delegated) {
-        return PATTERN_TAG_BLACKLISTED_CHARS.matcher(delegated).replaceAll("_");
+    private String sanitizeTagKey(String delegated) {
+        return PATTERN_TAG_KEY_BLACKLISTED_CHARS.matcher(delegated).replaceAll("_");
+    }
+
+    private String sanitizeTagValue(String delegated) {
+        return PATTERN_TAG_VALUE_BLACKLISTED_CHARS.matcher(delegated).replaceAll("_");
     }
 
 }
