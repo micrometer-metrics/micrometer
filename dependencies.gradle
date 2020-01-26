@@ -1,69 +1,79 @@
+def VERSIONS = [
+        'ch.qos.logback:logback-classic:1.2.+',
+        'com.amazonaws:aws-java-sdk-cloudwatch:latest.release',
+        'com.fasterxml.jackson.core:jackson-databind:latest.release',
+        'com.github.ben-manes.caffeine:caffeine:latest.release',
+        'com.github.tomakehurst:wiremock-jre8:latest.release',
+        'com.google.cloud:google-cloud-monitoring:latest.release',
+        'com.google.dagger:dagger:2.11',
+        'com.google.dagger:dagger-compiler:2.11',
+        'com.google.guava:guava:latest.release',
+        'com.google.inject:guice:4.1.0',
+        'com.hazelcast:hazelcast:3.+',
+        'com.h2database:h2:latest.release',
+        'com.microsoft.azure:applicationinsights-core:latest.release',
+        'com.netflix.hystrix:hystrix-core:1.5.12',
+        'com.netflix.spectator:spectator-reg-atlas:latest.release',
+        'com.signalfx.public:signalfx-java:latest.release',
+        'com.squareup.okhttp3:okhttp:latest.release',
+        'com.wavefront:wavefront-sdk-java:latest.release',
+        'de.flapdoodle.embed:de.flapdoodle.embed.mongo:latest.release',
+        'io.dropwizard.metrics:metrics-core:4.0.+',
+        'io.dropwizard.metrics:metrics-graphite:4.1.+',
+        'io.dropwizard.metrics:metrics-jmx:4.0.+',
+        'info.ganglia.gmetric4j:gmetric4j:latest.release',
+        'io.projectreactor:reactor-core:3.2.12.RELEASE',
+        'io.projectreactor:reactor-test:latest.release',
+        'io.projectreactor.netty:reactor-netty:0.8.6.RELEASE',
+        'io.prometheus:simpleclient_common:latest.release',
+        'javax.cache:cache-api:latest.release',
+        'javax.inject:javax.inject:1',
+        'javax.xml.bind:jaxb-api:2.3.+',
+        'junit:junit:4.12',
+        'net.sf.ehcache:ehcache:latest.release',
+        'org.apache.httpcomponents:httpasyncclient:4.1.4',
+        'org.apache.httpcomponents:httpclient:4.5.6',
+        'org.apache.kafka:kafka-clients:2.3.1',
+        'org.apache.logging.log4j:log4j-core:2.+',
+        'org.apache.tomcat.embed:tomcat-embed-core:8.+',
+        'org.aspectj:aspectjweaver:1.8.+',
+        'org.assertj:assertj-core:latest.release',
+        'org.eclipse.jetty:jetty-client:9.+',
+        'org.eclipse.jetty:jetty-server:9.+',
+        'org.ehcache:ehcache:latest.release',
+        'org.glassfish.jersey.core:jersey-server:2.+',
+        'org.glassfish.jersey.inject:jersey-hk2:2.+',
+        'org.glassfish.jersey.test-framework.providers:jersey-test-framework-provider-inmemory:2.+',
+        'org.hdrhistogram:HdrHistogram:latest.release',
+        'org.hibernate:hibernate-entitymanager:latest.release',
+        'org.hsqldb:hsqldb:latest.release',
+        'org.jooq:jooq:latest.release',
+        'org.jsr107.ri:cache-ri-impl:1.0.0',
+        'org.junit.jupiter:junit-jupiter:latest.release',
+        'org.junit.platform:junit-platform-launcher:latest.release',
+        'org.junit.vintage:junit-vintage-engine:latest.release',
+        'org.latencyutils:LatencyUtils:latest.release',
+        'org.mockito:mockito-core:latest.release',
+        'org.mongodb:mongo-java-driver:latest.release',
+        'org.slf4j:slf4j-api:1.7.+',
+        'org.springframework:spring-context:4.+',
+        'org.springframework:spring-test:4.+',
+        'ru.lanwen.wiremock:wiremock-junit5:latest.release',
+        'software.amazon.awssdk:cloudwatch:latest.release',
+]
+
 subprojects {
   plugins.withId('java-library') {
     dependencies {
       constraints {
         // Direct dependencies
-        api 'ch.qos.logback:logback-classic:1.2.+'
-        api 'com.amazonaws:aws-java-sdk-cloudwatch:latest.release'
-        api 'com.fasterxml.jackson.core:jackson-databind:latest.release'
-        api 'com.github.ben-manes.caffeine:caffeine:latest.release'
-        api 'com.github.tomakehurst:wiremock-jre8:latest.release'
-        api 'com.google.cloud:google-cloud-monitoring:latest.release'
-        api 'com.google.dagger:dagger:2.11'
-        api 'com.google.dagger:dagger-compiler:2.11'
-        api 'com.google.guava:guava:latest.release'
-        api 'com.google.inject:guice:4.1.0'
-        api 'com.hazelcast:hazelcast:3.+'
-        api 'com.h2database:h2:latest.release'
-        api 'com.microsoft.azure:applicationinsights-core:latest.release'
-        api 'com.netflix.hystrix:hystrix-core:1.5.12'
-        api 'com.netflix.spectator:spectator-reg-atlas:latest.release'
-        api 'com.signalfx.public:signalfx-java:latest.release'
-        api 'com.squareup.okhttp3:okhttp:latest.release'
-        api 'com.wavefront:wavefront-sdk-java:latest.release'
-        api 'de.flapdoodle.embed:de.flapdoodle.embed.mongo:latest.release'
-        api 'io.dropwizard.metrics:metrics-core:4.0.+'
-        api 'io.dropwizard.metrics:metrics-graphite:4.1.+'
-        api 'io.dropwizard.metrics:metrics-jmx:4.0.+'
-        api 'info.ganglia.gmetric4j:gmetric4j:latest.release'
-        api 'io.projectreactor:reactor-core:3.2.12.RELEASE'
-        api 'io.projectreactor:reactor-test:latest.release'
-        api 'io.projectreactor.netty:reactor-netty:0.8.6.RELEASE'
-        api 'io.prometheus:simpleclient_common:latest.release'
-        api 'javax.cache:cache-api:latest.release'
-        api 'javax.inject:javax.inject:1'
-        api 'javax.xml.bind:jaxb-api:2.3.+'
-        api 'junit:junit:4.12'
-        api 'net.sf.ehcache:ehcache:latest.release'
-        api 'org.apache.httpcomponents:httpasyncclient:4.1.4'
-        api 'org.apache.httpcomponents:httpclient:4.5.6'
-        api 'org.apache.kafka:kafka-clients:2.3.1'
-        api 'org.apache.logging.log4j:log4j-core:2.+'
-        api 'org.apache.tomcat.embed:tomcat-embed-core:8.+'
-        api 'org.aspectj:aspectjweaver:1.8.+'
-        api 'org.assertj:assertj-core:latest.release'
-        api 'org.eclipse.jetty:jetty-client:9.+'
-        api 'org.eclipse.jetty:jetty-server:9.+'
-        api 'org.ehcache:ehcache:latest.release'
-        api 'org.glassfish.jersey.core:jersey-server:2.+'
-        api 'org.glassfish.jersey.inject:jersey-hk2:2.+'
-        api 'org.glassfish.jersey.test-framework.providers:jersey-test-framework-provider-inmemory:2.+'
-        api 'org.hdrhistogram:HdrHistogram:latest.release'
-        api 'org.hibernate:hibernate-entitymanager:latest.release'
-        api 'org.hsqldb:hsqldb:latest.release'
-        api 'org.jooq:jooq:latest.release'
-        api 'org.jsr107.ri:cache-ri-impl:1.0.0'
-        api 'org.junit.jupiter:junit-jupiter:latest.release'
-        api 'org.junit.platform:junit-platform-launcher:latest.release'
-        api 'org.junit.vintage:junit-vintage-engine:latest.release'
-        api 'org.latencyutils:LatencyUtils:latest.release'
-        api 'org.mockito:mockito-core:latest.release'
-        api 'org.mongodb:mongo-java-driver:latest.release'
-        api 'org.slf4j:slf4j-api:1.7.+'
-        api 'org.springframework:spring-context:4.+'
-        api 'org.springframework:spring-test:4.+'
-        api 'ru.lanwen.wiremock:wiremock-junit5:latest.release'
-        api 'software.amazon.awssdk:cloudwatch:latest.release'
+        VERSIONS.each {version->
+          // java-library plugin has three root configurations, so we apply constraints too all of
+          // them so they all can use the managed versions.
+          api version
+          compileOnly version
+          runtimeOnly version
+        }
       }
     }
   }
