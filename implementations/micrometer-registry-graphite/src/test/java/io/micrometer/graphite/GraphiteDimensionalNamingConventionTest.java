@@ -35,7 +35,7 @@ class GraphiteDimensionalNamingConventionTest {
     void name() {
         assertThat(convention.name("name([{id}])/1", Meter.Type.TIMER)).isEqualTo("name___id____1");
     }
-    
+
     @Test
     void respectDelegateNamingConvention() {
         CustomNamingConvention delegateNamingConvention = new CustomNamingConvention();
@@ -63,7 +63,7 @@ class GraphiteDimensionalNamingConventionTest {
     }
 
     @Test
-    void nameShouldSanitizeSemiColon(){
+    void nameShouldSanitizeSemiColon() {
         assertThat(convention.name("counter;1", Meter.Type.COUNTER)).isEqualTo("counter_1");
     }
 
@@ -93,32 +93,32 @@ class GraphiteDimensionalNamingConventionTest {
     }
 
     @Test
-    void tagKeyShouldSanitizeSemiColon(){
+    void tagKeyShouldSanitizeSemiColon() {
         assertThat(convention.tagKey("tag;1")).isEqualTo("tag_1");
     }
 
     @Test
-    void tagKeyShouldSanitizeExclamation(){
+    void tagKeyShouldSanitizeExclamation() {
         assertThat(convention.tagKey("tag!1")).isEqualTo("tag_1");
     }
 
     @Test
-    void tagKeyShouldSanitizeCarat(){
+    void tagKeyShouldSanitizeCarat() {
         assertThat(convention.tagKey("tag^1")).isEqualTo("tag_1");
     }
 
     @Test
-    void tagKeyShouldSanitizeEquals(){
+    void tagKeyShouldSanitizeEquals() {
         assertThat(convention.tagKey("tag=1")).isEqualTo("tag_1");
     }
 
     @Test
-    void tagKeyShouldPreserveTilde(){
+    void tagKeyShouldPreserveTilde() {
         assertThat(convention.tagKey("tag~1")).isEqualTo("tag~1");
     }
 
     @Test
-    void tagKeyShouldHaveLengthGreaterThanZero(){
+    void tagKeyShouldHaveLengthGreaterThanZero() {
         assertThat(convention.tagKey("")).isEqualTo("unspecified");
     }
 
@@ -143,32 +143,32 @@ class GraphiteDimensionalNamingConventionTest {
     }
 
     @Test
-    void tagValueShouldSanitizeSemiColon(){
+    void tagValueShouldSanitizeSemiColon() {
         assertThat(convention.tagValue("tag;1")).isEqualTo("tag_1");
     }
 
     @Test
-    void tagValueShouldPreserveExclamation(){
+    void tagValueShouldPreserveExclamation() {
         assertThat(convention.tagValue("tag!1")).isEqualTo("tag!1");
     }
 
     @Test
-    void tagValueShouldPreserveCarat(){
+    void tagValueShouldPreserveCarat() {
         assertThat(convention.tagValue("tag^1")).isEqualTo("tag^1");
     }
 
     @Test
-    void tagValueShouldPreserveEquals(){
+    void tagValueShouldPreserveEquals() {
         assertThat(convention.tagValue("tag=1")).isEqualTo("tag=1");
     }
 
     @Test
-    void tagValueShouldSanitizeTilde(){
+    void tagValueShouldSanitizeTilde() {
         assertThat(convention.tagValue("tag~1")).isEqualTo("tag_1");
     }
 
     @Test
-    void tagValueShouldHaveLengthGreaterThanZero(){
+    void tagValueShouldHaveLengthGreaterThanZero() {
         assertThat(convention.tagValue("")).isEqualTo("unspecified");
     }
 
