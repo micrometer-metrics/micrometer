@@ -15,6 +15,7 @@
  */
 package io.micrometer.graphite;
 
+import com.google.common.base.Strings;
 import io.micrometer.core.instrument.Meter;
 import io.micrometer.core.instrument.config.NamingConvention;
 import io.micrometer.core.lang.Nullable;
@@ -54,11 +55,17 @@ public class GraphiteDimensionalNamingConvention implements NamingConvention {
 
     @Override
     public String tagKey(String key) {
+        if (key.isEmpty()){
+            return "unspecified";
+        }
         return sanitizeTagKey(this.delegate.tagKey(normalize(key)));
     }
 
     @Override
     public String tagValue(String value) {
+        if (value.isEmpty()){
+            return "unspecified";
+        }
         return sanitizeTagValue(this.delegate.tagValue(normalize(value)));
     }
 

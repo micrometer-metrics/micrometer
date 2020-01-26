@@ -118,6 +118,11 @@ class GraphiteDimensionalNamingConventionTest {
     }
 
     @Test
+    void tagKeyShouldHaveLengthGreaterThanZero(){
+        assertThat(convention.tagKey("")).isEqualTo("unspecified");
+    }
+
+    @Test
     void tagValueShouldPreserveDot() {
         assertThat(convention.tagValue("my.tag")).isEqualTo("my.tag");
     }
@@ -161,6 +166,12 @@ class GraphiteDimensionalNamingConventionTest {
     void tagValueShouldSanitizeTilde(){
         assertThat(convention.tagValue("tag~1")).isEqualTo("tag_1");
     }
+
+    @Test
+    void tagValueShouldHaveLengthGreaterThanZero(){
+        assertThat(convention.tagValue("")).isEqualTo("unspecified");
+    }
+
 
     private static class CustomNamingConvention implements NamingConvention {
 
