@@ -1,18 +1,18 @@
 dependencies {
     api project(':micrometer-core')
 
-    compileOnly 'org.glassfish.jersey.core:jersey-server:2.+'
-    runtimeOnly 'org.glassfish.jersey.inject:jersey-hk2:2.+'
+    compileOnly 'org.glassfish.jersey.core:jersey-server'
+    runtimeOnly 'org.glassfish.jersey.inject:jersey-hk2'
 
-    testImplementation 'org.glassfish.jersey.test-framework.providers:jersey-test-framework-provider-inmemory:2.+'
+    testImplementation 'org.glassfish.jersey.test-framework.providers:jersey-test-framework-provider-inmemory'
 
     // required by jdk 9
-    testRuntimeOnly 'javax.xml.bind:jaxb-api:2.3.+'
+    testRuntimeOnly 'javax.xml.bind:jaxb-api'
 
-    testImplementation 'org.assertj:assertj-core:3.+'
+    testImplementation 'org.assertj:assertj-core'
 
     // JERSEY-3662
-    testImplementation 'junit:junit:4.12'
-    testRuntimeOnly 'org.junit.vintage:junit-vintage-engine:latest.release'
-    testImplementation 'org.mockito:mockito-core:2.+'
+    testImplementation 'junit:junit'
+    testRuntimeOnly 'org.junit.vintage:junit-vintage-engine'
+    testImplementation 'org.mockito:mockito-core'
 }

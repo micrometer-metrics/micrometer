@@ -5,13 +5,13 @@ plugins {
 dependencies {
     api project(':micrometer-core')
 
-    implementation 'io.projectreactor:reactor-core:latest.release'
-    implementation 'io.projectreactor.netty:reactor-netty:latest.release'
+    implementation 'io.projectreactor:reactor-core'
+    implementation 'io.projectreactor.netty:reactor-netty'
 
     testImplementation project(':micrometer-test')
-    testImplementation 'io.projectreactor:reactor-test:latest.release'
+    testImplementation 'io.projectreactor:reactor-test'
+    testImplementation 'ch.qos.logback:logback-classic'
     testImplementation 'org.awaitility:awaitility:4.+'
-    testImplementation 'ch.qos.logback:logback-classic:1.2.+'
 }
 
 shadowJar {

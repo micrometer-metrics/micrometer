@@ -4,90 +4,90 @@ plugins {
 
 dependencies {
     // TODO(anuraaga): HdrHistogram is exposed in the micrometer API but probably shouldn't be
-    api 'org.hdrhistogram:HdrHistogram:latest.release'
-    implementation('org.latencyutils:LatencyUtils:latest.release') {
+    api 'org.hdrhistogram:HdrHistogram'
+    implementation('org.latencyutils:LatencyUtils') {
         exclude group: 'org.hdrhistogram', module: 'HdrHistogram'
     }
 
     // instrumentation options
-    optionalApi 'io.dropwizard.metrics:metrics-core:4.0.+'
+    optionalApi 'io.dropwizard.metrics:metrics-core'
 
     // cache monitoring
-    optionalApi 'com.google.guava:guava:latest.release'
-    optionalApi 'com.github.ben-manes.caffeine:caffeine:latest.release'
-    optionalApi 'net.sf.ehcache:ehcache:latest.release'
-    optionalApi 'javax.cache:cache-api:latest.release'
-    optionalApi 'com.hazelcast:hazelcast:3.+'
-    optionalApi 'org.hibernate:hibernate-entitymanager:latest.release'
+    optionalApi 'com.google.guava:guava'
+    optionalApi 'com.github.ben-manes.caffeine:caffeine'
+    optionalApi 'net.sf.ehcache:ehcache'
+    optionalApi 'javax.cache:cache-api'
+    optionalApi 'com.hazelcast:hazelcast'
+    optionalApi 'org.hibernate:hibernate-entitymanager'
 
     // server runtime monitoring
-    optionalApi 'org.eclipse.jetty:jetty-server:9.+'
-    optionalApi 'org.apache.tomcat.embed:tomcat-embed-core:8.+'
+    optionalApi 'org.eclipse.jetty:jetty-server'
+    optionalApi 'org.apache.tomcat.embed:tomcat-embed-core'
 
     // apache httpcomponents monitoring
-    optionalApi 'org.apache.httpcomponents:httpclient:4.5.6'
-    optionalApi 'org.apache.httpcomponents:httpasyncclient:4.1.4'
+    optionalApi 'org.apache.httpcomponents:httpclient'
+    optionalApi 'org.apache.httpcomponents:httpasyncclient'
 
     // hystrix monitoring
     // metrics are better with https://github.com/Netflix/Hystrix/pull/1568 introduced
     // in hystrix 1.5.12, but Netflix re-released 1.5.11 as 1.5.18 late in 2018.
     // <=1.5.11 or 1.5.18 doesn't break with Micrometer, but open metrics won't be correct necessarily.
-    optionalApi 'com.netflix.hystrix:hystrix-core:1.5.12'
+    optionalApi 'com.netflix.hystrix:hystrix-core'
 
     // log monitoring
-    optionalApi 'ch.qos.logback:logback-classic:1.2.+'
-    optionalApi 'org.apache.logging.log4j:log4j-core:2.+'
+    optionalApi 'ch.qos.logback:logback-classic'
+    optionalApi 'org.apache.logging.log4j:log4j-core'
 
     // reactor
-    optionalApi 'io.projectreactor:reactor-core:latest.release'
-    optionalApi 'io.projectreactor.netty:reactor-netty:latest.release'
+    optionalApi 'io.projectreactor:reactor-core'
+    optionalApi 'io.projectreactor.netty:reactor-netty'
 
     // @Timed AOP
-    optionalApi 'org.aspectj:aspectjweaver:1.8.+'
+    optionalApi 'org.aspectj:aspectjweaver'
 
-    optionalApi 'com.squareup.okhttp3:okhttp:latest.release'
+    optionalApi 'com.squareup.okhttp3:okhttp'
 
-    optionalApi 'org.mongodb:mongo-java-driver:latest.release'
+    optionalApi 'org.mongodb:mongo-java-driver'
 
-    optionalApi 'org.jooq:jooq:latest.release'
+    optionalApi 'org.jooq:jooq'
 
-    testImplementation 'io.projectreactor:reactor-test:latest.release'
+    testImplementation 'io.projectreactor:reactor-test'
 
     // JUnit 5
-    testImplementation 'org.junit.jupiter:junit-jupiter:5.5.+'
+    testImplementation 'org.junit.jupiter:junit-jupiter'
 
     // Eclipse still needs this (as of 4.7.1a)
-    testRuntimeOnly 'org.junit.platform:junit-platform-launcher:latest.release'
+    testRuntimeOnly 'org.junit.platform:junit-platform-launcher'
 
-    testImplementation 'org.mockito:mockito-core:latest.release'
+    testImplementation 'org.mockito:mockito-core'
 
-    testImplementation 'org.hsqldb:hsqldb:latest.release'
+    testImplementation 'org.hsqldb:hsqldb'
 
-    testImplementation 'org.eclipse.jetty:jetty-client:9.+'
+    testImplementation 'org.eclipse.jetty:jetty-client'
 
     // dependency injection tests
-    testImplementation 'javax.inject:javax.inject:1'
-    testImplementation 'org.springframework:spring-context:4.+'
-    testImplementation 'org.springframework:spring-test:4.+'
-    testImplementation 'com.google.inject:guice:4.1.0'
+    testImplementation 'javax.inject:javax.inject'
+    testImplementation 'org.springframework:spring-context'
+    testImplementation 'org.springframework:spring-test'
+    testImplementation 'com.google.inject:guice'
 
-    testImplementation 'com.h2database:h2:latest.release'
+    testImplementation 'com.h2database:h2'
 
     // Uncomment these if you are interested in testing injection with dagger in MeterRegistryInjectionTest
-//    testImplementation 'com.google.dagger:dagger:2.11'
-//    testAnnotationProcessor 'com.google.dagger:dagger-compiler:2.11'
+//    testImplementation 'com.google.dagger:dagger'
+//    testAnnotationProcessor 'com.google.dagger:dagger-compiler'
 
-    testImplementation 'org.assertj:assertj-core:latest.release'
+    testImplementation 'org.assertj:assertj-core'
 
-    testImplementation 'org.ehcache:ehcache:latest.release'
+    testImplementation 'org.ehcache:ehcache'
 
     // Pin version temporarily to restore builds.
-    testImplementation 'org.apache.kafka:kafka-clients:2.3.1'
+    testImplementation 'org.apache.kafka:kafka-clients'
 
-    testImplementation 'ru.lanwen.wiremock:wiremock-junit5:latest.release', {
+    testImplementation 'ru.lanwen.wiremock:wiremock-junit5', {
         exclude group: 'com.github.tomakehurst', module: 'wiremock'
     }
-    testImplementation 'com.github.tomakehurst:wiremock-jre8:latest.release'
+    testImplementation 'com.github.tomakehurst:wiremock-jre8'
 
-    testImplementation 'de.flapdoodle.embed:de.flapdoodle.embed.mongo:latest.release'
+    testImplementation 'de.flapdoodle.embed:de.flapdoodle.embed.mongo'
 }
