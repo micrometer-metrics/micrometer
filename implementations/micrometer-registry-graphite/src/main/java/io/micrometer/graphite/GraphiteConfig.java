@@ -49,9 +49,9 @@ public interface GraphiteConfig extends DropwizardConfig {
 
     /**
      * @return Whether Graphite tags should be used, as opposed to a hierarchical naming convention
-     * @link https://graphite.readthedocs.io/en/latest/tags.html
+     * @see <a href="https://graphite.readthedocs.io/en/latest/tags.html">Graphite Tag Support</a>
      */
-    default boolean graphiteTagsEnabled(){
+    default boolean graphiteTagsEnabled() {
         return true;
     }
 

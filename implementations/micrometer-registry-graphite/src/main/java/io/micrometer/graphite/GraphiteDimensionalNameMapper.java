@@ -22,6 +22,9 @@ import io.micrometer.core.instrument.util.HierarchicalNameMapper;
 
 /**
  * Tag based {@link HierarchicalNameMapper} for Graphite.
+ * This is a bit confusing, as this is actually used for dimensional metrics via Graphite's tagging support,
+ * as opposed to the {@link GraphiteHierarchicalNameMapper}
+ * @see <a href="https://graphite.readthedocs.io/en/latest/tags.html">Graphite Tag Support</a>
  *
  * @author Jon Schneider
  * @author Johnny Lim

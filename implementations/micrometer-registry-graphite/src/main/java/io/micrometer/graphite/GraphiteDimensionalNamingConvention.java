@@ -23,7 +23,8 @@ import java.text.Normalizer;
 import java.util.regex.Pattern;
 
 /**
- * {@link NamingConvention} for Graphite.
+ * Dimensional {@link NamingConvention} for Graphite based on Graphite's Tag support
+ * @see <a href="https://graphite.readthedocs.io/en/latest/tags.html">Graphite Tag Support</a>
  *
  * @author Jon Schneider
  * @author Johnny Lim
@@ -35,8 +36,15 @@ public class GraphiteDimensionalNamingConvention implements NamingConvention {
      * Empirically, we have found others.
      */
     private static final Pattern PATTERN_NAME_BLACKLISTED_CHARS = Pattern.compile("[{}(),=\\[\\]/ ?:;]");
+    /**
+     * The list of invalid tag key and value characters can be found here: https://graphite.readthedocs.io/en/latest/tags.html#carbon
+     */
     private static final Pattern PATTERN_TAG_KEY_BLACKLISTED_CHARS = Pattern.compile("[;!^=]");
     private static final Pattern PATTERN_TAG_VALUE_BLACKLISTED_CHARS = Pattern.compile("[;~]");
+    /**
+     * Graphite tag keys and values must have a length >= 1 https://graphite.readthedocs.io/en/latest/tags.html#carbon
+     */
+    private static final String UNSPECIFIED = "unspecified";
     private final NamingConvention delegate;
 
     public GraphiteDimensionalNamingConvention() {
@@ -55,7 +63,7 @@ public class GraphiteDimensionalNamingConvention implements NamingConvention {
     @Override
     public String tagKey(String key) {
         if (key.isEmpty()) {
-            return "unspecified";
+            return UNSPECIFIED;
         }
         return sanitizeTagKey(this.delegate.tagKey(normalize(key)));
     }
@@ -63,7 +71,7 @@ public class GraphiteDimensionalNamingConvention implements NamingConvention {
     @Override
     public String tagValue(String value) {
         if (value.isEmpty()) {
-            return "unspecified";
+            return UNSPECIFIED;
         }
         return sanitizeTagValue(this.delegate.tagValue(normalize(value)));
     }

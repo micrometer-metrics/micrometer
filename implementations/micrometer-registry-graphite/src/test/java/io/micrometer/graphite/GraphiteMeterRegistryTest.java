@@ -63,6 +63,11 @@ class GraphiteMeterRegistryTest {
             }
 
             @Override
+            public boolean graphiteTagsEnabled() {
+                return false;
+            }
+
+            @Override
             public Duration step() {
                 return Duration.ofSeconds(1);
             }
