@@ -25,6 +25,8 @@ buildscript {
 
 apply plugin: 'io.spring.release'
 
+apply from: 'dependencies.gradle'
+
 allprojects {
     apply plugin: 'io.spring.license'
 
@@ -91,6 +93,31 @@ subprojects {
         license {
             ext.year = Calendar.getInstance().get(Calendar.YEAR)
             skipExistingHeaders = true
+        }
+
+        // Publish resolved versions.
+        plugins.withId('maven-publish') {
+            publishing {
+                publications {
+                    nebula(MavenPublication) {
+                        versionMapping {
+                            allVariants {
+                                fromResolutionResult()
+                            }
+                        }
+
+                        // We publish resolved versions so don't need to publish our dependencyManagement
+                        // too. This is different from many Maven projects, where published artifacts often
+                        // don't include resolved versions and have a parent POM including dependencyManagement.
+                        pom.withXml {
+                            def dependencyManagement = asNode().get('dependencyManagement')
+                            if (dependencyManagement != null) {
+                                asNode().remove(dependencyManagement)
+                            }
+                        }
+                    }
+                }
+            }
         }
     }
 

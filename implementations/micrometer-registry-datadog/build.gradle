@@ -1,8 +1,7 @@
 dependencies {
     api project(':micrometer-core')
 
-    api 'org.apache.commons:commons-text:latest.release'
-    implementation 'org.slf4j:slf4j-api:1.7.+'
+    implementation 'org.slf4j:slf4j-api'
 
     testImplementation project(':micrometer-test')
 }
