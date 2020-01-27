@@ -11,7 +11,7 @@ dependencies {
     testImplementation project(':micrometer-test')
     testImplementation 'io.projectreactor:reactor-test'
     testImplementation 'ch.qos.logback:logback-classic'
-    testImplementation 'org.awaitility:awaitility:4.+'
+    testImplementation 'org.awaitility:awaitility'
 }
 
 shadowJar {
