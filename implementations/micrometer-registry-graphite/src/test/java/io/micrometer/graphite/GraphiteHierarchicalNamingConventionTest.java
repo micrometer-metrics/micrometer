@@ -22,13 +22,13 @@ import org.junit.jupiter.api.Test;
 import static org.assertj.core.api.Assertions.assertThat;
 
 /**
- * Tests for {@link GraphiteNamingConvention}.
+ * Tests for {@link GraphiteHierarchicalNamingConvention}.
  *
  * @author Jon Schneider
  * @author Johnny Lim
  */
-class GraphiteNamingConventionTest {
-    private GraphiteNamingConvention convention = new GraphiteNamingConvention();
+class GraphiteHierarchicalNamingConventionTest {
+    private GraphiteHierarchicalNamingConvention convention = new GraphiteHierarchicalNamingConvention();
 
     @Test
     void name() {
@@ -44,7 +44,7 @@ class GraphiteNamingConventionTest {
     void respectDelegateNamingConvention() {
         CustomNamingConvention delegateNamingConvention = new CustomNamingConvention();
 
-        GraphiteNamingConvention convention = new GraphiteNamingConvention(delegateNamingConvention);
+        GraphiteHierarchicalNamingConvention convention = new GraphiteHierarchicalNamingConvention(delegateNamingConvention);
 
         assertThat(convention.name("my.name", Meter.Type.TIMER)).isEqualTo("name-my.name");
         assertThat(convention.tagKey("my_tag_key")).isEqualTo("key-my_tag_key");
@@ -53,7 +53,7 @@ class GraphiteNamingConventionTest {
 
     @Test
     void nameShouldPreserveDot() {
-        GraphiteNamingConvention convention = new GraphiteNamingConvention(NamingConvention.identity);
+        GraphiteHierarchicalNamingConvention convention = new GraphiteHierarchicalNamingConvention(NamingConvention.identity);
         assertThat(convention.name("my.counter", Meter.Type.COUNTER)).isEqualTo("my.counter");
     }
 
@@ -74,7 +74,7 @@ class GraphiteNamingConventionTest {
 
     @Test
     void tagKeyShouldSanitizeDot() {
-        GraphiteNamingConvention convention = new GraphiteNamingConvention(NamingConvention.identity);
+        GraphiteHierarchicalNamingConvention convention = new GraphiteHierarchicalNamingConvention(NamingConvention.identity);
         assertThat(convention.tagKey("my.tag")).isEqualTo("my_tag");
     }
 

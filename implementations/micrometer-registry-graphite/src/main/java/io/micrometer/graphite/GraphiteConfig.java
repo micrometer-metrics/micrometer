@@ -48,8 +48,16 @@ public interface GraphiteConfig extends DropwizardConfig {
     }
 
     /**
-     * @return For the default naming convention, turn the specified tag keys into
-     * part of the metric prefix.
+     * @return Whether Graphite tags should be used, as opposed to a hierarchical naming convention
+     * @see <a href="https://graphite.readthedocs.io/en/latest/tags.html">Graphite Tag Support</a>
+     */
+    default boolean graphiteTagsEnabled() {
+        return true;
+    }
+
+    /**
+     * @return For the hierarchical naming convention, turn the specified tag keys into
+     * part of the metric prefix.  Ignored if {@link GraphiteConfig#graphiteTagsEnabled()} is true.
      */
     default String[] tagsAsPrefix() {
         return new String[0];
