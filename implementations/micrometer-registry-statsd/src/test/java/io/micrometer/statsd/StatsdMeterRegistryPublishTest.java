@@ -24,6 +24,8 @@ import io.netty.channel.ChannelPromise;
 import io.netty.handler.logging.LogLevel;
 import io.netty.handler.logging.LoggingHandler;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.condition.EnabledOnOs;
+import org.junit.jupiter.api.condition.OS;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.EnumSource;
 import reactor.core.publisher.Flux;
@@ -70,6 +72,8 @@ class StatsdMeterRegistryPublishTest {
     }
 
     @ParameterizedTest
+    // test behavior is not stable on at least macOS, so only run on Linux for now
+    @EnabledOnOs(OS.LINUX)
     @EnumSource(StatsdProtocol.class)
     void resumeSendingMetrics_whenServerIntermittentlyFails(StatsdProtocol protocol) throws InterruptedException {
         serverLatch = new CountDownLatch(1);
@@ -80,18 +84,7 @@ class StatsdMeterRegistryPublishTest {
 
         meterRegistry = new StatsdMeterRegistry(getUnbufferedConfig(protocol, port), Clock.SYSTEM);
         startRegistryAndWaitForClient();
-        if (protocol == StatsdProtocol.UDP) {
-            await().until(() -> meterRegistry.client.get() != null);
-            ((Connection) meterRegistry.client.get())
-                    .addHandler(new LoggingHandler("udpclient", LogLevel.INFO))
-                    .addHandler(new ChannelOutboundHandlerAdapter() {
-                        @Override
-                        public void write(ChannelHandlerContext ctx, Object msg, ChannelPromise promise) throws Exception {
-                            writeCount.incrementAndGet();
-                            super.write(ctx, msg, promise);
-                        }
-                    });
-        }
+        trackWritesForUdpClient(protocol, writeCount);
         Counter counter = Counter.builder("my.counter").register(meterRegistry);
         counter.increment(1);
         assertThat(serverLatch.await(5, TimeUnit.SECONDS)).isTrue();
@@ -112,8 +105,8 @@ class StatsdMeterRegistryPublishTest {
         counter.increment(6);
         counter.increment(7);
         assertThat(serverLatch.await(3, TimeUnit.SECONDS)).isTrue();
-        meterRegistry.close();
 
+        meterRegistry.close();
         server.disposeNow();
     }
 
@@ -164,6 +157,8 @@ class StatsdMeterRegistryPublishTest {
     }
 
     @ParameterizedTest
+    // test behavior is not stable on at least macOS, so only run on Linux for now
+    @EnabledOnOs(OS.LINUX)
     @EnumSource(StatsdProtocol.class)
     void whenBackendInitiallyDown_metricsSentAfterBackendStarts(StatsdProtocol protocol) throws InterruptedException {
         AtomicInteger writeCount = new AtomicInteger();
@@ -174,18 +169,7 @@ class StatsdMeterRegistryPublishTest {
         server.disposeNow();
         meterRegistry = new StatsdMeterRegistry(getUnbufferedConfig(protocol, port), Clock.SYSTEM);
         meterRegistry.start();
-        if (protocol == StatsdProtocol.UDP) {
-            await().until(() -> meterRegistry.client.get() != null);
-            ((Connection) meterRegistry.client.get())
-                    .addHandler(new LoggingHandler("udpclient", LogLevel.INFO))
-                    .addHandler(new ChannelOutboundHandlerAdapter() {
-                        @Override
-                        public void write(ChannelHandlerContext ctx, Object msg, ChannelPromise promise) throws Exception {
-                            writeCount.incrementAndGet();
-                            super.write(ctx, msg, promise);
-                        }
-                    });
-        }
+        trackWritesForUdpClient(protocol, writeCount);
         Counter counter = Counter.builder("my.counter").register(meterRegistry);
         IntStream.range(1, 4).forEach(counter::increment);
         if (protocol == StatsdProtocol.UDP) {
@@ -223,6 +207,21 @@ class StatsdMeterRegistryPublishTest {
         Counter counter = Counter.builder("my.counter").register(meterRegistry);
         IntStream.range(0, 100).forEach(counter::increment);
         assertThat(serverLatch.await(1, TimeUnit.SECONDS)).isFalse();
+    }
+
+    private void trackWritesForUdpClient(StatsdProtocol protocol, AtomicInteger writeCount) {
+        if (protocol == StatsdProtocol.UDP) {
+            await().until(() -> meterRegistry.client.get() != null);
+            ((Connection) meterRegistry.client.get())
+                    .addHandler(new LoggingHandler("udpclient", LogLevel.INFO))
+                    .addHandler(new ChannelOutboundHandlerAdapter() {
+                        @Override
+                        public void write(ChannelHandlerContext ctx, Object msg, ChannelPromise promise) throws Exception {
+                            writeCount.incrementAndGet();
+                            super.write(ctx, msg, promise);
+                        }
+                    });
+        }
     }
 
     private void startRegistryAndWaitForClient() {
