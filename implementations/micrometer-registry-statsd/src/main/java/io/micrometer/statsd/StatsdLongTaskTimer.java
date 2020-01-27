@@ -18,24 +18,24 @@ package io.micrometer.statsd;
 import io.micrometer.core.instrument.Clock;
 import io.micrometer.core.instrument.Statistic;
 import io.micrometer.core.instrument.internal.DefaultLongTaskTimer;
-import org.reactivestreams.Subscriber;
+import reactor.core.publisher.FluxSink;
 
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicReference;
 
 public class StatsdLongTaskTimer extends DefaultLongTaskTimer implements StatsdPollable {
     private final StatsdLineBuilder lineBuilder;
-    private final Subscriber<String> subscriber;
+    private final FluxSink<String> sink;
 
     private final AtomicReference<Long> lastActive = new AtomicReference<>(Long.MIN_VALUE);
     private final AtomicReference<Double> lastDuration = new AtomicReference<>(Double.NEGATIVE_INFINITY);
 
     private final boolean alwaysPublish;
 
-    StatsdLongTaskTimer(Id id, StatsdLineBuilder lineBuilder, Subscriber<String> subscriber, Clock clock, boolean alwaysPublish) {
+    StatsdLongTaskTimer(Id id, StatsdLineBuilder lineBuilder, FluxSink<String> sink, Clock clock, boolean alwaysPublish) {
         super(id, clock);
         this.lineBuilder = lineBuilder;
-        this.subscriber = subscriber;
+        this.sink = sink;
         this.alwaysPublish = alwaysPublish;
     }
 
@@ -43,12 +43,12 @@ public class StatsdLongTaskTimer extends DefaultLongTaskTimer implements StatsdP
     public void poll() {
         long active = activeTasks();
         if (alwaysPublish || lastActive.getAndSet(active) != active) {
-            subscriber.onNext(lineBuilder.gauge(active, Statistic.ACTIVE_TASKS));
+            sink.next(lineBuilder.gauge(active, Statistic.ACTIVE_TASKS));
         }
 
         double duration = duration(TimeUnit.MILLISECONDS);
         if (alwaysPublish || lastDuration.getAndSet(duration) != duration) {
-            subscriber.onNext(lineBuilder.gauge(duration, Statistic.DURATION));
+            sink.next(lineBuilder.gauge(duration, Statistic.DURATION));
         }
     }
 }

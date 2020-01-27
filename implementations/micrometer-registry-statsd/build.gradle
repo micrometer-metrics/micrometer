@@ -5,11 +5,12 @@ plugins {
 dependencies {
     api project(':micrometer-core')
 
-    implementation 'io.projectreactor:reactor-core:3.2.12.RELEASE'
-    implementation 'io.projectreactor.netty:reactor-netty:0.8.6.RELEASE'
+    implementation 'io.projectreactor:reactor-core:latest.release'
+    implementation 'io.projectreactor.netty:reactor-netty:latest.release'
 
     testImplementation project(':micrometer-test')
     testImplementation 'io.projectreactor:reactor-test:latest.release'
+    testImplementation 'org.awaitility:awaitility:4.+'
     testImplementation 'ch.qos.logback:logback-classic:1.2.+'
 }
 

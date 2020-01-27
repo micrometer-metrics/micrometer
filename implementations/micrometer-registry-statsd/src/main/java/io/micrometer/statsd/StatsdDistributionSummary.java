@@ -22,7 +22,7 @@ import io.micrometer.core.instrument.distribution.DistributionStatisticConfig;
 import io.micrometer.core.instrument.distribution.TimeWindowMax;
 import io.micrometer.core.instrument.util.MeterEquivalence;
 import io.micrometer.core.lang.Nullable;
-import org.reactivestreams.Subscriber;
+import reactor.core.publisher.FluxSink;
 
 import java.util.concurrent.atomic.DoubleAdder;
 import java.util.concurrent.atomic.LongAdder;
@@ -32,15 +32,15 @@ public class StatsdDistributionSummary extends AbstractDistributionSummary {
     private final DoubleAdder amount = new DoubleAdder();
     private final TimeWindowMax max;
     private final StatsdLineBuilder lineBuilder;
-    private final Subscriber<String> subscriber;
+    private final FluxSink<String> sink;
     private volatile boolean shutdown = false;
 
-    StatsdDistributionSummary(Meter.Id id, StatsdLineBuilder lineBuilder, Subscriber<String> subscriber, Clock clock,
+    StatsdDistributionSummary(Meter.Id id, StatsdLineBuilder lineBuilder, FluxSink<String> sink, Clock clock,
                               DistributionStatisticConfig distributionStatisticConfig, double scale) {
         super(id, clock, distributionStatisticConfig, scale, false);
         this.max = new TimeWindowMax(clock, distributionStatisticConfig);
         this.lineBuilder = lineBuilder;
-        this.subscriber = subscriber;
+        this.sink = sink;
     }
 
     @Override
@@ -49,7 +49,7 @@ public class StatsdDistributionSummary extends AbstractDistributionSummary {
             count.increment();
             this.amount.add(amount);
             max.record(amount);
-            subscriber.onNext(lineBuilder.histogram(amount));
+            sink.next(lineBuilder.histogram(amount));
         }
     }
 
