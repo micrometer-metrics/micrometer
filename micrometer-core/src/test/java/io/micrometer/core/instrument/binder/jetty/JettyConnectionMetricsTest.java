@@ -41,7 +41,7 @@ import static java.util.concurrent.TimeUnit.SECONDS;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
-public class JettyConnectionMetricsTest {
+class JettyConnectionMetricsTest {
     private SimpleMeterRegistry registry = new SimpleMeterRegistry(SimpleConfig.DEFAULT, new MockClock());
     private Server server = new Server(0);
     private ServerConnector connector = new ServerConnector(server);
@@ -114,7 +114,7 @@ public class JettyConnectionMetricsTest {
         assertTrue(latch.await(10, SECONDS));
         assertThat(registry.get("jetty.connections.max").gauge().value()).isEqualTo(1.0);
         assertThat(registry.get("jetty.connections.request").tag("type", "client").timer().count())
-                .isGreaterThanOrEqualTo(1);
+                .isEqualTo(1);
         assertThat(registry.get("jetty.connections.bytes.out").summary().totalAmount()).isGreaterThan(1);
     }
 }
