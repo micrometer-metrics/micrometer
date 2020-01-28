@@ -29,6 +29,7 @@ import java.util.regex.Pattern;
  * @author Jon Schneider
  * @author Johnny Lim
  * @author Andrew Fitzgerald
+ * @since 1.4.0
  */
 public class GraphiteDimensionalNamingConvention implements NamingConvention {
     /**

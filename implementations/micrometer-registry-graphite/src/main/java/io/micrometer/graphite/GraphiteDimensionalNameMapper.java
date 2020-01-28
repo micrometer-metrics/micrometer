@@ -29,6 +29,7 @@ import io.micrometer.core.instrument.util.HierarchicalNameMapper;
  * @author Jon Schneider
  * @author Johnny Lim
  * @author Andrew Fitzgerald
+ * @since 1.4.0
  */
 public class GraphiteDimensionalNameMapper implements HierarchicalNameMapper {
 
