@@ -26,6 +26,7 @@ import org.apache.catalina.Manager;
 import javax.management.*;
 import java.lang.management.ManagementFactory;
 import java.util.Collections;
+import java.util.Comparator;
 import java.util.List;
 import java.util.Set;
 import java.util.concurrent.Callable;
@@ -236,7 +237,8 @@ public class TomcatMetrics implements MeterBinder, AutoCloseable {
                 Set<ObjectName> objectNames = this.mBeanServer.queryNames(new ObjectName(name), null);
                 if (!objectNames.isEmpty()) {
                     // MBean is present, so we can register metrics now.
-                    objectNames.forEach(objectName -> perObject.accept(objectName, Tags.concat(tags, nameTag(objectName))));
+                    objectNames.stream().sorted(Comparator.reverseOrder()).findFirst()
+                            .ifPresent(objectName -> perObject.accept(objectName, Tags.concat(tags, nameTag(objectName))));
                     return;
                 }
             } catch (MalformedObjectNameException e) {
