@@ -95,7 +95,7 @@ interface DistributionSummaryTest {
 
         s.record(1);
         assertThat(s.percentile(1)).isEqualTo(1, Offset.offset(0.3));
-        assertThat(s.percentile(0.5)).isEqualTo(Double.NaN);
+        assertThat(s.percentile(0.5)).isNaN();
     }
 
     @Deprecated
@@ -107,6 +107,6 @@ interface DistributionSummaryTest {
 
         s.record(1);
         assertThat(s.histogramCountAtValue(1)).isEqualTo(1);
-        assertThat(s.histogramCountAtValue(2)).isEqualTo(Double.NaN);
+        assertThat(s.histogramCountAtValue(2)).isNaN();
     }
 }
