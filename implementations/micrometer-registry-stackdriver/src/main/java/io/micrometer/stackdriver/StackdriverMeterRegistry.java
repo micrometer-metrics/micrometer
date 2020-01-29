@@ -94,7 +94,7 @@ public class StackdriverMeterRegistry extends StepMeterRegistry {
     private MetricServiceClient client;
 
     public StackdriverMeterRegistry(StackdriverConfig config, Clock clock) {
-        this(config, clock, DEFAULT_THREAD_FACTORY, () ->  MetricServiceSettings.newBuilder().build());
+        this(config, clock, DEFAULT_THREAD_FACTORY, () -> MetricServiceSettings.newBuilder().build());
     }
 
     private StackdriverMeterRegistry(StackdriverConfig config, Clock clock, ThreadFactory threadFactory,
@@ -260,7 +260,7 @@ public class StackdriverMeterRegistry extends StepMeterRegistry {
         private final StackdriverConfig config;
         private Clock clock = Clock.SYSTEM;
         private ThreadFactory threadFactory = DEFAULT_THREAD_FACTORY;
-        private Callable<MetricServiceSettings> metricServiceSettings = () -> MetricServiceSettings.newBuilder().build();
+        private Callable<MetricServiceSettings> metricServiceSettings;
 
         Builder(StackdriverConfig config) {
             this.config = config;
