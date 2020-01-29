@@ -162,4 +162,12 @@ public interface StatsdConfig extends MeterRegistryConfig {
         String v = get(prefix() + ".buffered");
         return v == null || Boolean.parseBoolean(v);
     }
+
+    /**
+     * @return Common prefix that will be added to every metric's name.
+     */
+    default String namePrefix() {
+        String v = get(prefix() + ".namePrefix");
+        return v == null ? "" : v;
+    }
 }

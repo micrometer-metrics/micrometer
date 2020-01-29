@@ -86,7 +86,7 @@ public class StatsdMeterRegistry extends MeterRegistry {
     private Consumer<String> lineSink;
 
     public StatsdMeterRegistry(StatsdConfig config, Clock clock) {
-        this(config, HierarchicalNameMapper.DEFAULT, clock);
+        this(config, new StatsdHierarchicalNameMapper(config.namePrefix()), clock);
     }
 
     /**
