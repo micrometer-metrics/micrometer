@@ -88,7 +88,7 @@ interface GaugeTest {
 
         System.gc();
 
-        assertThat(registry.get("weak.ref").gauge().value()).isEqualTo(Double.NaN);
+        assertThat(registry.get("weak.ref").gauge().value()).isNaN();
         assertThat(registry.get("strong.ref").gauge().value()).isEqualTo(1.0);
     }
 }
