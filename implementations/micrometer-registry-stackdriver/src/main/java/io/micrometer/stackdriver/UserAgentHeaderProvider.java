@@ -29,9 +29,7 @@ import java.util.Map;
  * @author Mike Eltsufin
  * @author Ray Tsang
  */
-public class UserAgentHeaderProvider implements HeaderProvider {
-
-    private String userAgent;
+class UserAgentHeaderProvider implements HeaderProvider {
 
     private final Map<String, String> headers;
 
@@ -40,9 +38,9 @@ public class UserAgentHeaderProvider implements HeaderProvider {
      *
      * @param component The component
      */
-    public UserAgentHeaderProvider(String component) {
-        this.userAgent = computeUserAgent(component);
-        this.headers = Collections.singletonMap("User-Agent", this.userAgent);
+    UserAgentHeaderProvider(String component) {
+        String userAgent = computeUserAgent(component);
+        this.headers = Collections.singletonMap("User-Agent", userAgent);
     }
 
     /**
@@ -54,21 +52,10 @@ public class UserAgentHeaderProvider implements HeaderProvider {
         return this.headers;
     }
 
-    /**
-     * Returns the "User-Agent" header value which should be added to the google-cloud-java calls.
-     * e.g., {@code Micrometer/1.0.0.RELEASE micrometer-registry-stackdriver/1.0.0.RELEASE}.
-     *
-     * @return the user agent string.
-     */
-    public String getUserAgent() {
-        return this.userAgent;
-    }
-
     private String computeUserAgent(String component) {
         String library = "micrometer-registry-" + component;
-        String version = this.getClass().getPackage().getImplementationVersion();
+        String version = getClass().getPackage().getImplementationVersion();
 
         return "Micrometer/" + version + " " + library + "/" + version;
-
     }
 }

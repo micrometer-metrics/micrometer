@@ -50,6 +50,12 @@ public interface StackdriverConfig extends StepRegistryConfig {
         return resourceType == null ? "global" : resourceType;
     }
 
+    /**
+     * Return {@link CredentialsProvider} to use.
+     * @return {@code CredentialsProvider} to use
+     * @throws IOException if a specified file doesn't exist
+     * @since 1.4.0
+     */
     default CredentialsProvider credentials() throws IOException {
         String credentials = get(prefix() + ".credentials");
         return credentials == null ? MetricServiceSettings.defaultCredentialsProviderBuilder().build()
