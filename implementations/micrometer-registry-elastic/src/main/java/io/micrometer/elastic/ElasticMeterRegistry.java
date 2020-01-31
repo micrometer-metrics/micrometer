@@ -16,6 +16,7 @@
 package io.micrometer.elastic;
 
 import io.micrometer.core.instrument.*;
+import io.micrometer.core.instrument.distribution.HistogramSnapshot;
 import io.micrometer.core.instrument.step.StepMeterRegistry;
 import io.micrometer.core.instrument.util.MeterPartition;
 import io.micrometer.core.instrument.util.NamedThreadFactory;
@@ -366,12 +367,12 @@ public class ElasticMeterRegistry extends StepMeterRegistry {
 
     // VisibleForTesting
     Optional<String> writeSummary(DistributionSummary summary) {
-        summary.takeSnapshot();
+        HistogramSnapshot histogramSnapshot = summary.takeSnapshot();
         return Optional.of(writeDocument(summary, builder -> {
-            builder.append(",\"count\":").append(summary.count());
-            builder.append(",\"sum\":").append(summary.totalAmount());
-            builder.append(",\"mean\":").append(summary.mean());
-            builder.append(",\"max\":").append(summary.max());
+            builder.append(",\"count\":").append(histogramSnapshot.count());
+            builder.append(",\"sum\":").append(histogramSnapshot.total());
+            builder.append(",\"mean\":").append(histogramSnapshot.mean());
+            builder.append(",\"max\":").append(histogramSnapshot.max());
         }));
     }
 
