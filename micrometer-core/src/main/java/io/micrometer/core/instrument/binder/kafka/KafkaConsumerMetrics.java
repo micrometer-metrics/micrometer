@@ -53,6 +53,7 @@ import static java.util.Collections.emptyList;
 @Incubating(since = "1.1.0")
 @NonNullApi
 @NonNullFields
+@Deprecated
 public class KafkaConsumerMetrics implements MeterBinder, AutoCloseable {
     private static final String JMX_DOMAIN = "kafka.consumer";
     private static final String METRIC_NAME_PREFIX = "kafka.consumer.";

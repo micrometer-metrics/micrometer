@@ -48,6 +48,9 @@ dependencies {
 
     optionalApi 'org.jooq:jooq'
 
+    optionalApi 'org.apache.kafka:kafka-clients'
+    optionalApi 'org.apache.kafka:kafka-streams'
+
     testImplementation 'io.projectreactor:reactor-test'
 
     // JUnit 5
@@ -86,4 +89,12 @@ dependencies {
     testImplementation 'com.github.tomakehurst:wiremock-jre8'
 
     testImplementation 'de.flapdoodle.embed:de.flapdoodle.embed.mongo'
+
+    def junitJupiterVersion = '5.4.2'
+    testCompile "org.junit.jupiter:junit-jupiter-api:$junitJupiterVersion"
+    testCompile "org.junit.jupiter:junit-jupiter-params:$junitJupiterVersion"
+    testRuntimeOnly "org.junit.jupiter:junit-jupiter-engine:$junitJupiterVersion"
+    testCompile "org.testcontainers:testcontainers:1.12.5"
+    testCompile "org.testcontainers:junit-jupiter:1.12.5"
+    testCompile "org.testcontainers:kafka:1.12.5"
 }
