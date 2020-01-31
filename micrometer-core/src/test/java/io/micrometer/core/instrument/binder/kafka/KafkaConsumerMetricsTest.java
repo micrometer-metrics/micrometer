@@ -25,6 +25,7 @@ import org.apache.kafka.clients.consumer.KafkaConsumer;
 import org.apache.kafka.common.serialization.LongDeserializer;
 import org.apache.kafka.common.serialization.StringDeserializer;
 import org.junit.Ignore;
+import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 
 import java.util.Collections;
@@ -49,7 +50,7 @@ class KafkaConsumerMetricsTest {
     private KafkaConsumerMetrics kafkaConsumerMetrics = new KafkaConsumerMetrics(tags);
 
     @Test
-    @Ignore //as deprecated, and new versions handle clientId differently
+    @Disabled //as deprecated, and new versions handle clientId differently
     void verifyConsumerMetricsWithExpectedTags() {
         try (Consumer<Long, String> consumer = createConsumer()) {
 
@@ -67,7 +68,7 @@ class KafkaConsumerMetricsTest {
     }
 
     @Test
-    @Ignore //as deprecated, and new versions handle clientId differently
+    @Disabled //as deprecated, and new versions handle clientId differently
     void metricsReportedPerMultipleConsumers() {
         try (Consumer<Long, String> consumer = createConsumer();
              Consumer<Long, String> consumer2 = createConsumer()) {
