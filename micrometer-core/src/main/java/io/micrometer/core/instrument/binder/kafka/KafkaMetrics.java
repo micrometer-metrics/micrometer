@@ -68,8 +68,6 @@ public class KafkaMetrics implements MeterBinder {
      */
     private AtomicInteger currentSize = new AtomicInteger(0);
 
-    private MeterRegistry registry;
-
     /**
      * Kafka Producer metrics binder
      *
@@ -159,9 +157,7 @@ public class KafkaMetrics implements MeterBinder {
 
     @Override
     public void bindTo(MeterRegistry registry) {
-        //TODO: validate if concurrency modes allow this kind of variable assignment
-        this.registry = registry;
-        checkAndRegisterMetrics();
+        checkAndRegisterMetrics(registry);
     }
 
     /**
@@ -171,7 +167,7 @@ public class KafkaMetrics implements MeterBinder {
      * validation to double-check new metrics when returning values. This should only add the cost of
      * validating meters registered counter when no new meters are present.
      */
-    private void checkAndRegisterMetrics() {
+    private void checkAndRegisterMetrics(MeterRegistry registry) {
         Map<MetricName, ? extends Metric> metrics = metricsSupplier.get();
         if (currentSize.get()
             != metrics.size()) { // only happens first time number of metrics change
@@ -185,15 +181,15 @@ public class KafkaMetrics implements MeterBinder {
                 Meter meter;
                 if (metricName.endsWith("total")
                     || metricName.endsWith("count")) {
-                    meter = registerCounter(metric, metricName, extraTags);
+                    meter = registerCounter(registry, metric, metricName, extraTags);
                 } else if (metricName.endsWith("min")
                     || metricName.endsWith("max")
                     || metricName.endsWith("avg")) {
-                    meter = registerGauge(metric, metricName, extraTags);
+                    meter = registerGauge(registry, metric, metricName, extraTags);
                 } else if (metricName.endsWith("rate")) {
-                    meter = registerTimeGauge(metric, metricName, extraTags);
+                    meter = registerTimeGauge(registry, metric, metricName, extraTags);
                 } else { // this filter might need to be more extensive.
-                    meter = registerGauge(metric, metricName, extraTags);
+                    meter = registerGauge(registry, metric, metricName, extraTags);
                 }
                 // collect metrics with same name to validate number of labels
                 Set<Meter> meters = registered.get(metricName);
@@ -220,9 +216,8 @@ public class KafkaMetrics implements MeterBinder {
         }
     }
 
-    private TimeGauge registerTimeGauge(Metric metric, String metricName, Iterable<Tag> extraTags) {
-        return TimeGauge.builder(
-            metricName, metric, TimeUnit.SECONDS, toMetricValue())
+    private TimeGauge registerTimeGauge(MeterRegistry registry, Metric metric, String metricName, Iterable<Tag> extraTags) {
+        return TimeGauge.builder(metricName, metric, TimeUnit.SECONDS, toMetricValue(registry))
             .tags(metric.metricName().tags()
                 .entrySet()
                 .stream()
@@ -233,9 +228,8 @@ public class KafkaMetrics implements MeterBinder {
                 .register(registry);
     }
 
-    private Gauge registerGauge(Metric metric, String metricName, Iterable<Tag> extraTags) {
-        return Gauge.builder(
-            metricName, metric, toMetricValue())
+    private Gauge registerGauge(MeterRegistry registry, Metric metric, String metricName, Iterable<Tag> extraTags) {
+        return Gauge.builder(metricName, metric, toMetricValue(registry))
             .tags(metric.metricName().tags()
                 .entrySet()
                 .stream()
@@ -246,21 +240,8 @@ public class KafkaMetrics implements MeterBinder {
                 .register(registry);
     }
 
-    @NotNull private ToDoubleFunction<Metric> toMetricValue() {
-        return m -> {
-            // Double-check if new metrics are registered; if not (common scenario) it only adds metrics count validation
-            checkAndRegisterMetrics();
-            if (m.metricValue() instanceof Double) {
-                return (double) m.metricValue();
-            } else {
-                return Double.NaN;
-            }
-        };
-    }
-
-    private FunctionCounter registerCounter(Metric metric, String metricName, Iterable<Tag> extraTags) {
-        return FunctionCounter.builder(
-            metricName, metric, toMetricValue())
+    private FunctionCounter registerCounter(MeterRegistry registry, Metric metric, String metricName, Iterable<Tag> extraTags) {
+        return FunctionCounter.builder(metricName, metric, toMetricValue(registry))
             .tags(metric.metricName().tags()
                 .entrySet()
                 .stream()
@@ -269,6 +250,19 @@ public class KafkaMetrics implements MeterBinder {
             .tags(extraTags)
             .description(metric.metricName().description())
             .register(registry);
+    }
+
+    @NotNull private ToDoubleFunction<Metric> toMetricValue(MeterRegistry registry) {
+        return m -> {
+            // Double-check if new metrics are registered; if not (common scenario)
+            // it only adds metrics count validation
+            checkAndRegisterMetrics(registry);
+            if (m.metricValue() instanceof Double) {
+                return (double) m.metricValue();
+            } else {
+                return Double.NaN;
+            }
+        };
     }
 
     private String metricName(Metric metric) {
