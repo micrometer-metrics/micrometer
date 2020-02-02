@@ -24,6 +24,7 @@ import io.micrometer.core.instrument.Tag;
 import io.micrometer.core.instrument.TimeGauge;
 import io.micrometer.core.instrument.binder.MeterBinder;
 import io.micrometer.core.lang.NonNullApi;
+import io.micrometer.core.lang.NonNullFields;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
@@ -56,6 +57,7 @@ import static java.util.Collections.emptyList;
  */
 @Incubating(since = "1.4.0")
 @NonNullApi
+@NonNullFields
 public class KafkaMetrics implements MeterBinder {
     private static final String METRIC_NAME_PREFIX = "kafka.";
 
