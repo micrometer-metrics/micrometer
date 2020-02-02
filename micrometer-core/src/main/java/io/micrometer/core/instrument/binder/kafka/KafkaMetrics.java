@@ -24,7 +24,6 @@ import io.micrometer.core.instrument.Tag;
 import io.micrometer.core.instrument.TimeGauge;
 import io.micrometer.core.instrument.binder.MeterBinder;
 import io.micrometer.core.lang.NonNullApi;
-import io.micrometer.core.lang.NonNullFields;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
@@ -32,6 +31,7 @@ import java.util.Set;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Supplier;
+import java.util.function.ToDoubleFunction;
 import java.util.stream.Collectors;
 import org.apache.kafka.clients.admin.AdminClient;
 import org.apache.kafka.clients.consumer.Consumer;
@@ -39,6 +39,7 @@ import org.apache.kafka.clients.producer.Producer;
 import org.apache.kafka.common.Metric;
 import org.apache.kafka.common.MetricName;
 import org.apache.kafka.streams.KafkaStreams;
+import org.jetbrains.annotations.NotNull;
 
 import static java.util.Collections.emptyList;
 
@@ -55,7 +56,6 @@ import static java.util.Collections.emptyList;
  */
 @Incubating(since = "1.4.0")
 @NonNullApi
-@NonNullFields
 public class KafkaMetrics implements MeterBinder {
     private static final String METRIC_NAME_PREFIX = "kafka.";
 
@@ -67,6 +67,8 @@ public class KafkaMetrics implements MeterBinder {
      * Keep track of current number of metrics. When this value changes, metrics are re-bind.
      */
     private AtomicInteger currentSize = new AtomicInteger(0);
+
+    private MeterRegistry registry;
 
     /**
      * Kafka Producer metrics binder
@@ -150,19 +152,29 @@ public class KafkaMetrics implements MeterBinder {
     }
 
     KafkaMetrics(Supplier<Map<MetricName, ? extends Metric>> metricsSupplier,
-                 Iterable<Tag> extraTags) {
+        Iterable<Tag> extraTags) {
         this.metricsSupplier = metricsSupplier;
         this.extraTags = extraTags;
     }
 
     @Override
     public void bindTo(MeterRegistry registry) {
-        checkAndRegisterMetrics(registry);
+        //TODO: validate if concurrency modes allow this kind of variable assignment
+        this.registry = registry;
+        checkAndRegisterMetrics();
     }
 
-    private void checkAndRegisterMetrics(MeterRegistry registry) {
+    /**
+     * Gather metrics from Kafka metrics API and register Meters.
+     * <p>
+     * As this is a one-off execution when binding a Kafka client, Meters include a call to this
+     * validation to double-check new metrics when returning values. This should only add the cost of
+     * validating meters registered counter when no new meters are present.
+     */
+    private void checkAndRegisterMetrics() {
         Map<MetricName, ? extends Metric> metrics = metricsSupplier.get();
-        if (currentSize.get() != metrics.size()) { // only triggered when number of metrics change
+        if (currentSize.get()
+            != metrics.size()) { // only happens first time number of metrics change
             currentSize.set(metrics.size());
             Map<String, Set<Meter>> registered = new HashMap<>();
             //TODO filter out the following metrics: count (num of metrics), app.info metadata
@@ -172,16 +184,16 @@ public class KafkaMetrics implements MeterBinder {
                 String metricName = metricName(metric);
                 Meter meter;
                 if (metricName.endsWith("total")
-                        || metricName.endsWith("count")) {
-                    meter = registerCounter(registry, metric, metricName, extraTags);
+                    || metricName.endsWith("count")) {
+                    meter = registerCounter(metric, metricName, extraTags);
                 } else if (metricName.endsWith("min")
-                        || metricName.endsWith("max")
-                        || metricName.endsWith("avg")) {
-                    meter = registerGauge(registry, metric, metricName, extraTags);
+                    || metricName.endsWith("max")
+                    || metricName.endsWith("avg")) {
+                    meter = registerGauge(metric, metricName, extraTags);
                 } else if (metricName.endsWith("rate")) {
-                    meter = registerTimeGauge(registry, metric, metricName, extraTags);
+                    meter = registerTimeGauge(metric, metricName, extraTags);
                 } else { // this filter might need to be more extensive.
-                    meter = registerGauge(registry, metric, metricName, extraTags);
+                    meter = registerGauge(metric, metricName, extraTags);
                 }
                 // collect metrics with same name to validate number of labels
                 Set<Meter> meters = registered.get(metricName);
@@ -190,7 +202,7 @@ public class KafkaMetrics implements MeterBinder {
                 registered.put(metricName, meters);
             });
 
-            // clean up metrics with low number of tags
+            // remove meters with lower number of tags
             registered.forEach((metricName, meters) -> {
                 if (meters.size() > 1) {
                     // find largest number of tags
@@ -208,72 +220,60 @@ public class KafkaMetrics implements MeterBinder {
         }
     }
 
-    private TimeGauge registerTimeGauge(MeterRegistry registry, Metric metric, String metricName,
-                                        Iterable<Tag> extraTags) {
+    private TimeGauge registerTimeGauge(Metric metric, String metricName, Iterable<Tag> extraTags) {
         return TimeGauge.builder(
-                metricName, metric, TimeUnit.SECONDS, m -> {
-                    checkAndRegisterMetrics(registry);
-                    if (m.metricValue() instanceof Double) {
-                        return (double) m.metricValue();
-                    } else {
-                        return Double.NaN;
-                    }
-                })
-                .tags(metric.metricName().tags()
-                        .entrySet()
-                        .stream()
-                        .map(entry -> Tag.of(entry.getKey(), entry.getValue()))
-                        .collect(Collectors.toList()))
-                .tags(extraTags)
+            metricName, metric, TimeUnit.SECONDS, toMetricValue())
+            .tags(metric.metricName().tags()
+                .entrySet()
+                .stream()
+                .map(entry -> Tag.of(entry.getKey(), entry.getValue()))
+                .collect(Collectors.toList()))
+            .tags(extraTags)
                 .description(metric.metricName().description())
                 .register(registry);
     }
 
-    private Gauge registerGauge(
-        MeterRegistry registry, Metric metric, String metricName, Iterable<Tag> extraTags) {
+    private Gauge registerGauge(Metric metric, String metricName, Iterable<Tag> extraTags) {
         return Gauge.builder(
-                metricName, metric, m -> {
-                    checkAndRegisterMetrics(registry);
-                    if (m.metricValue() instanceof Double) {
-                        return (double) m.metricValue();
-                    } else {
-                        return Double.NaN;
-                    }
-                })
-                .tags(metric.metricName().tags()
-                        .entrySet()
-                        .stream()
-                        .map(entry -> Tag.of(entry.getKey(), entry.getValue()))
-                        .collect(Collectors.toList()))
-                .tags(extraTags)
+            metricName, metric, toMetricValue())
+            .tags(metric.metricName().tags()
+                .entrySet()
+                .stream()
+                .map(entry -> Tag.of(entry.getKey(), entry.getValue()))
+                .collect(Collectors.toList()))
+            .tags(extraTags)
                 .description(metric.metricName().description())
                 .register(registry);
     }
 
-    private FunctionCounter registerCounter(MeterRegistry registry, Metric metric, String metricName,
-                                            Iterable<Tag> extraTags) {
+    @NotNull private ToDoubleFunction<Metric> toMetricValue() {
+        return m -> {
+            // Double-check if new metrics are registered; if not (common scenario) it only adds metrics count validation
+            checkAndRegisterMetrics();
+            if (m.metricValue() instanceof Double) {
+                return (double) m.metricValue();
+            } else {
+                return Double.NaN;
+            }
+        };
+    }
+
+    private FunctionCounter registerCounter(Metric metric, String metricName, Iterable<Tag> extraTags) {
         return FunctionCounter.builder(
-                metricName, metric, m -> {
-                    checkAndRegisterMetrics(registry);
-                    if (m.metricValue() instanceof Double) {
-                        return (double) m.metricValue();
-                    } else {
-                        return Double.NaN;
-                    }
-                })
-                .tags(metric.metricName().tags()
-                        .entrySet()
-                        .stream()
-                        .map(entry -> Tag.of(entry.getKey(), entry.getValue()))
-                        .collect(Collectors.toList()))
-                .tags(extraTags)
-                .description(metric.metricName().description())
-                .register(registry);
+            metricName, metric, toMetricValue())
+            .tags(metric.metricName().tags()
+                .entrySet()
+                .stream()
+                .map(entry -> Tag.of(entry.getKey(), entry.getValue()))
+                .collect(Collectors.toList()))
+            .tags(extraTags)
+            .description(metric.metricName().description())
+            .register(registry);
     }
 
     private String metricName(Metric metric) {
         String value =
-                METRIC_NAME_PREFIX + metric.metricName().group() + "." + metric.metricName().name();
+            METRIC_NAME_PREFIX + metric.metricName().group() + "." + metric.metricName().name();
         return value.replaceAll("-", ".");
     }
 }
