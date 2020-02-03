@@ -82,7 +82,18 @@ subprojects {
             // set heap size for the test JVM(s)
             maxHeapSize = "1500m"
 
-            useJUnitPlatform()
+            useJUnitPlatform {
+                excludeTags 'docker'
+            }
+        }
+
+        task dockerTest(type: Test) {
+            // set heap size for the test JVM(s)
+            maxHeapSize = "1500m"
+
+            useJUnitPlatform {
+                includeTags 'docker'
+            }
         }
 
         checkstyle {

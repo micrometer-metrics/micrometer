@@ -15,6 +15,7 @@
  */
 package io.micrometer.core;
 
+import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 import org.testcontainers.elasticsearch.ElasticsearchContainer;
 import org.testcontainers.junit.jupiter.Container;
@@ -24,6 +25,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 // TODO delete this class - only used for verifying Testcontainers tests on CircleCI build
 @Testcontainers
+@Tag("docker")
 class TestcontainersTest {
 
     @Container
