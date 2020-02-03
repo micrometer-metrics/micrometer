@@ -1775,14 +1775,14 @@ public class MetricsDSLContext implements DSLContext {
     @PlainSQL
     @Support
     public <R extends Record> SelectWhereStep<R> selectFrom(String sql, Object... bindings) {
-        return context.selectFrom(sql, bindings);
+        return time(context.selectFrom(sql, bindings));
     }
 
     @Override
     @PlainSQL
     @Support
     public <R extends Record> SelectWhereStep<R> selectFrom(String sql, QueryPart... parts) {
-        return context.selectFrom(sql, parts);
+        return time(context.selectFrom(sql, parts));
     }
 
     @Override
