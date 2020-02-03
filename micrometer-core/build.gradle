@@ -59,6 +59,9 @@ dependencies {
     // Eclipse still needs this (as of 4.7.1a)
     testRuntimeOnly 'org.junit.platform:junit-platform-launcher'
 
+    testImplementation 'org.testcontainers:junit-jupiter:latest.release'
+    testImplementation 'org.testcontainers:elasticsearch:latest.release'
+
     testImplementation 'org.mockito:mockito-core'
 
     testImplementation 'org.hsqldb:hsqldb'
