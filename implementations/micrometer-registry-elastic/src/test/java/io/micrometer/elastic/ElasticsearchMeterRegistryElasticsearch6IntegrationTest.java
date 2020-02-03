@@ -15,6 +15,7 @@
  */
 package io.micrometer.elastic;
 
+import org.junit.jupiter.api.Tag;
 import org.testcontainers.junit.jupiter.Testcontainers;
 
 /**
@@ -22,7 +23,8 @@ import org.testcontainers.junit.jupiter.Testcontainers;
  *
  * @author Johnny Lim
  */
-@Testcontainers(disabledWithoutDocker = true)
+@Testcontainers
+@Tag("docker")
 class ElasticsearchMeterRegistryElasticsearch6IntegrationTest
         extends AbstractElasticsearchMeterRegistryIntegrationTest {
 
