@@ -59,21 +59,6 @@ class KafkaStreamsMetricsTest {
         }
     }
 
-    @Test void verify() {
-        try (KafkaStreams kafkaStreams = createStreams()) {
-            KafkaMetrics metrics = new KafkaMetrics(kafkaStreams, tags);
-            MeterRegistry registry = new SimpleMeterRegistry();
-
-            metrics.bindTo(registry);
-
-            registry.get("kafka.admin.client.metrics.connection.close.total")
-                    .tags(tags)
-                    .functionCounter();
-            registry.get("kafka.producer.metrics.batch.size.max").tags(tags).gauge();
-            registry.get("kafka.consumer.metrics.request.total").tags(tags).functionCounter();
-        }
-    }
-
     private KafkaStreams createStreams() {
         StreamsBuilder builder = new StreamsBuilder();
         builder.stream("input").to("output");
