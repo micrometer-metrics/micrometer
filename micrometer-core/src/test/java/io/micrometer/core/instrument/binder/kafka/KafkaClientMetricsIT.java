@@ -41,7 +41,7 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 @Tag("docker")
 class KafkaClientMetricsIT {
     @Container
-    private KafkaContainer kafkaContainer = new KafkaContainer("5.3.0");
+    private KafkaContainer kafkaContainer = new KafkaContainer();
 
     @Test
     void shouldManageProducerAndConsumerMetrics() {
@@ -76,9 +76,8 @@ class KafkaClientMetricsIT {
         producer.send(new ProducerRecord<>(topic, "key", "value"));
         producer.flush();
 
-        registry.getMeters().forEach(meter -> {
-            System.out.println(meter.getId() + " => " + meter.measure());
-        });
+        registry.getMeters()
+                .forEach(meter -> System.out.println(meter.getId() + " => " + meter.measure()));
 
         int producerAndConsumerMetricsAfterSend = registry.getMeters().size();
         assertTrue(producerAndConsumerMetricsAfterSend > producerAndConsumerMetrics);
@@ -87,15 +86,13 @@ class KafkaClientMetricsIT {
 
         consumer.poll(Duration.ofMillis(100));
 
-        registry.getMeters().forEach(meter -> {
-            System.out.println(meter.getId() + " => " + meter.measure());
-        });
+        registry.getMeters()
+                .forEach(meter -> System.out.println(meter.getId() + " => " + meter.measure()));
 
         int producerAndConsumerMetricsAfterPoll = registry.getMeters().size();
         assertTrue(producerAndConsumerMetricsAfterPoll > producerAndConsumerMetricsAfterSend);
 
-        registry.getMeters().forEach(meter -> {
-            System.out.println(meter.getId() + " => " + meter.measure());
-        });
+        registry.getMeters()
+                .forEach(meter -> System.out.println(meter.getId() + " => " + meter.measure()));
     }
 }

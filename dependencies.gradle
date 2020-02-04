@@ -69,6 +69,9 @@ def VERSIONS = [
         'org.springframework:spring-test:4.+',
         'ru.lanwen.wiremock:wiremock-junit5:latest.release',
         'software.amazon.awssdk:cloudwatch:latest.release',
+        'org.testcontainers:testcontainers:latest.release',
+        'org.testcontainers:junit-jupiter:latest.release',
+        'org.testcontainers:kafka:latest.release'
 ]
 
 subprojects {

@@ -91,7 +91,7 @@ dependencies {
     testImplementation 'de.flapdoodle.embed:de.flapdoodle.embed.mongo'
 
     // Kafka binder IT dependencies
-    testImplementation 'org.testcontainers:testcontainers:1.12.5'
-    testImplementation 'org.testcontainers:junit-jupiter:1.12.5'
-    testImplementation 'org.testcontainers:kafka:1.12.5'
+    testImplementation 'org.testcontainers:testcontainers'
+    testImplementation 'org.testcontainers:junit-jupiter'
+    testImplementation 'org.testcontainers:kafka'
 }
