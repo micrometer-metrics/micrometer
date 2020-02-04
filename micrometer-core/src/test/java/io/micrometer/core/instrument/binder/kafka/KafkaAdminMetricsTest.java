@@ -22,26 +22,44 @@ import java.util.Properties;
 import org.apache.kafka.clients.admin.AdminClient;
 import org.junit.jupiter.api.Test;
 
+import static io.micrometer.core.instrument.binder.kafka.KafkaMetrics.METRIC_NAME_PREFIX;
 import static org.apache.kafka.clients.admin.AdminClientConfig.BOOTSTRAP_SERVERS_CONFIG;
+import static org.assertj.core.api.Assertions.assertThat;
 
 class KafkaAdminMetricsTest {
-  private final static String BOOTSTRAP_SERVERS = "localhost:9092";
-  private Tags tags = Tags.of("app", "myapp", "version", "1");
+    private final static String BOOTSTRAP_SERVERS = "localhost:9092";
+    private Tags tags = Tags.of("app", "myapp", "version", "1");
 
-  @Test void verify() {
-    try (AdminClient adminClient = createAdmin()) {
-      KafkaMetrics metrics = new KafkaMetrics(adminClient, tags);
-      MeterRegistry registry = new SimpleMeterRegistry();
+    @Test void shouldCreateMeters() {
+        try (AdminClient adminClient = createAdmin()) {
+            KafkaMetrics metrics = new KafkaMetrics(adminClient);
+            MeterRegistry registry = new SimpleMeterRegistry();
 
-      metrics.bindTo(registry);
-
-      registry.get("kafka.admin.client.metrics.connection.close.total").tags(tags).functionCounter();
+            metrics.bindTo(registry);
+            assertThat(registry.getMeters())
+                    .hasSizeGreaterThan(0)
+                    .extracting(meter -> meter.getId().getName())
+                    .allMatch(s -> s.startsWith(METRIC_NAME_PREFIX));
+        }
     }
-  }
 
-  private AdminClient createAdmin() {
-    Properties adminConfig = new Properties();
-    adminConfig.put(BOOTSTRAP_SERVERS_CONFIG, BOOTSTRAP_SERVERS);
-    return AdminClient.create(adminConfig);
-  }
+    @Test void shouldCreateMetersWithTags() {
+        try (AdminClient adminClient = createAdmin()) {
+            KafkaMetrics metrics = new KafkaMetrics(adminClient, tags);
+            MeterRegistry registry = new SimpleMeterRegistry();
+
+            metrics.bindTo(registry);
+
+            assertThat(registry.getMeters())
+                    .hasSizeGreaterThan(0)
+                    .extracting(meter -> meter.getId().getTag("app"))
+                    .allMatch(s -> s.equals("myapp"));
+        }
+    }
+
+    private AdminClient createAdmin() {
+        Properties adminConfig = new Properties();
+        adminConfig.put(BOOTSTRAP_SERVERS_CONFIG, BOOTSTRAP_SERVERS);
+        return AdminClient.create(adminConfig);
+    }
 }

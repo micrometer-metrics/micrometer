@@ -44,7 +44,7 @@ class KafkaClientMetricsIT {
     private KafkaContainer kafkaContainer = new KafkaContainer("5.3.0");
 
     @Test
-    void should_manage_producer_and_consumer_metrics() {
+    void shouldManageProducerAndConsumerMetrics() {
         SimpleMeterRegistry registry = new SimpleMeterRegistry();
 
         assertEquals(0, registry.getMeters().size());

@@ -41,6 +41,7 @@ import org.apache.kafka.clients.producer.Producer;
 import org.apache.kafka.common.Metric;
 import org.apache.kafka.common.MetricName;
 import org.apache.kafka.streams.KafkaStreams;
+import org.jetbrains.annotations.NotNull;
 
 import static java.util.Collections.emptyList;
 
@@ -59,19 +60,20 @@ import static java.util.Collections.emptyList;
 @NonNullApi
 @NonNullFields
 public class KafkaMetrics implements MeterBinder {
-    private static final String METRIC_NAME_PREFIX = "kafka.";
+    static final String METRIC_NAME_PREFIX = "kafka.";
+
+    static final String METRIC_GROUP_APP_INFO = "app-info";
 
     private final Supplier<Map<MetricName, ? extends Metric>> metricsSupplier;
-
     private final Iterable<Tag> extraTags;
 
     /**
-     * Keep track of current number of metrics. When this value changes, metrics are re-bind.
+     * Keeps track of current number of metrics. When this value changes, metrics are bound again.
      */
     private AtomicInteger currentSize = new AtomicInteger(0);
 
     /**
-     * Kafka Producer metrics binder
+     * Kafka {@link Producer} metrics binder
      *
      * @param kafkaProducer producer instance to be instrumented
      * @param tags          additional tags
@@ -81,7 +83,7 @@ public class KafkaMetrics implements MeterBinder {
     }
 
     /**
-     * Kafka Producer metrics binder
+     * Kafka {@link Producer} metrics binder
      *
      * @param kafkaProducer producer instance to be instrumented
      */
@@ -90,7 +92,7 @@ public class KafkaMetrics implements MeterBinder {
     }
 
     /**
-     * Kafka Consumer metrics binder
+     * Kafka {@link Consumer} metrics binder
      *
      * @param kafkaConsumer consumer instance to be instrumented
      * @param tags          additional tags
@@ -100,7 +102,7 @@ public class KafkaMetrics implements MeterBinder {
     }
 
     /**
-     * Kafka Consumer metrics binder
+     * Kafka {@link Consumer} metrics binder
      *
      * @param kafkaConsumer consumer instance to be instrumented
      */
@@ -109,7 +111,7 @@ public class KafkaMetrics implements MeterBinder {
     }
 
     /**
-     * Kafka Streams metrics binder
+     * {@link KafkaStreams} metrics binder
      *
      * @param kafkaStreams instance to be instrumented
      * @param tags         additional tags
@@ -119,7 +121,7 @@ public class KafkaMetrics implements MeterBinder {
     }
 
     /**
-     * Kafka Streams metrics binder
+     * {@link KafkaStreams} metrics binder
      *
      * @param kafkaStreams instance to be instrumented
      */
@@ -128,7 +130,7 @@ public class KafkaMetrics implements MeterBinder {
     }
 
     /**
-     * Kafka Admin Client metrics binder
+     * Kafka {@link AdminClient} metrics binder
      *
      * @param adminClient instance to be instrumented
      * @param tags        additional tags
@@ -138,7 +140,7 @@ public class KafkaMetrics implements MeterBinder {
     }
 
     /**
-     * Kafka Admin client metrics binder
+     * Kafka {@link AdminClient} metrics binder
      *
      * @param adminClient instance to be instrumented
      */
@@ -147,19 +149,18 @@ public class KafkaMetrics implements MeterBinder {
     }
 
     KafkaMetrics(Supplier<Map<MetricName, ? extends Metric>> metricsSupplier) {
-        this.metricsSupplier = metricsSupplier;
-        this.extraTags = emptyList();
+        this(metricsSupplier, emptyList());
     }
 
     KafkaMetrics(Supplier<Map<MetricName, ? extends Metric>> metricsSupplier,
-        Iterable<Tag> extraTags) {
+            Iterable<Tag> extraTags) {
         this.metricsSupplier = metricsSupplier;
         this.extraTags = extraTags;
     }
 
     @Override
     public void bindTo(MeterRegistry registry) {
-        checkAndRegisterMetrics(registry);
+        checkAndBindMetrics(registry);
     }
 
     /**
@@ -169,54 +170,60 @@ public class KafkaMetrics implements MeterBinder {
      * validation to double-check new metrics when returning values. This should only add the cost of
      * validating meters registered counter when no new meters are present.
      */
-    private void checkAndRegisterMetrics(MeterRegistry registry) {
+    void checkAndBindMetrics(MeterRegistry registry) {
         Map<MetricName, ? extends Metric> metrics = metricsSupplier.get();
-        // only happens first time number of metrics change
+        //Only happens first time number of metrics change
         if (currentSize.get() != metrics.size()) {
             currentSize.set(metrics.size());
-            Map<String, Set<Meter>> registered = new HashMap<>();
-            //TODO filter out the following metrics: count (num of metrics), app.info metadata
-            // @jeqo: should we add app.info fields as tags? e.g. version and commit.id could be useful
-
-            // Register meters
+            Map<String, Set<Meter>> boundMeters = new HashMap<>();
+            //Register meters
             metrics.forEach((name, metric) -> {
-                String metricName = metricName(metric);
-                Meter meter;
-                //TODO: this filter might need to be more extensive.
-                if (metricName.endsWith("total") || metricName.endsWith("count")) {
-                    meter = registerCounter(registry, metric, metricName, extraTags);
-                } else if (metricName.endsWith("min")
-                    || metricName.endsWith("max")
-                    || metricName.endsWith("avg")) {
-                    meter = registerGauge(registry, metric, metricName, extraTags);
-                } else if (metricName.endsWith("rate")) {
-                    meter = registerTimeGauge(registry, metric, metricName, extraTags);
-                } else {
-                    meter = registerGauge(registry, metric, metricName, extraTags);
+                //Filter out metrics from group "app-info", that includes metadata
+                if (METRIC_GROUP_APP_INFO.equals(name.group())) {
+                    currentSize.incrementAndGet();
+                    return;
                 }
-                // collect metrics with same name to validate number of labels
-                Set<Meter> meters = registered.get(metricName);
+                Meter meter = bindMeter(registry, metric);
+                //Collect metrics with same name to validate number of labels
+                Set<Meter> meters = boundMeters.get(metric.metricName().name());
                 if (meters == null) meters = new HashSet<>();
                 meters.add(meter);
-                registered.put(metricName, meters);
+                boundMeters.put(metric.metricName().name(), meters);
             });
 
-            // Remove meters with lower number of tags
-            registered.forEach((metricName, meters) -> {
+            //Remove meters with lower number of tags
+            boundMeters.forEach((metricName, meters) -> {
                 if (meters.size() > 1) {
-                    // Find largest number of tags
+                    //Find largest number of tags
                     int maxTagsSize = 0;
                     for (Meter meter : meters) {
                         int size = meter.getId().getTags().size();
                         if (maxTagsSize < size) maxTagsSize = size;
                     }
-                    // Remove meters with lower number of tags
+                    //Remove meters with lower number of tags
                     for (Meter meter : meters) {
                         if (meter.getId().getTags().size() < maxTagsSize) registry.remove(meter);
                     }
                 }
             });
         }
+    }
+
+    @NotNull private Meter bindMeter(MeterRegistry registry, Metric metric) {
+        String metricName = metricName(metric);
+        Meter meter;
+        if (metricName.endsWith("total") || metricName.endsWith("count")) {
+            meter = registerCounter(registry, metric, metricName, extraTags);
+        } else if (metricName.endsWith("min")
+                || metricName.endsWith("max")
+                || metricName.endsWith("avg")) {
+            meter = registerGauge(registry, metric, metricName, extraTags);
+        } else if (metricName.endsWith("rate")) {
+            meter = registerTimeGauge(registry, metric, metricName, extraTags);
+        } else {
+            meter = registerGauge(registry, metric, metricName, extraTags);
+        }
+        return meter;
     }
 
     private TimeGauge registerTimeGauge(MeterRegistry registry, Metric metric, String metricName, Iterable<Tag> extraTags) {
@@ -245,11 +252,14 @@ public class KafkaMetrics implements MeterBinder {
 
     private ToDoubleFunction<Metric> toMetricValue(MeterRegistry registry) {
         return metric -> {
-            // Double-check if new metrics are registered; if not (common scenario)
-            // it only adds metrics count validation
-            checkAndRegisterMetrics(registry);
-            if (metric.metricValue() instanceof Double) return (double) metric.metricValue();
-            else return Double.NaN;
+            //Double-check if new metrics are registered; if not (common scenario)
+            //it only adds metrics count validation
+            checkAndBindMetrics(registry);
+            if (metric.metricValue() instanceof Double) {
+                return (double) metric.metricValue();
+            } else {
+                return 0.0;
+            }
         };
     }
 

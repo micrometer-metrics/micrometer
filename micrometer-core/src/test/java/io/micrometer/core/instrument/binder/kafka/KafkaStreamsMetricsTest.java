@@ -23,32 +23,63 @@ import org.apache.kafka.streams.KafkaStreams;
 import org.apache.kafka.streams.StreamsBuilder;
 import org.junit.jupiter.api.Test;
 
+import static io.micrometer.core.instrument.binder.kafka.KafkaMetrics.METRIC_NAME_PREFIX;
 import static org.apache.kafka.streams.StreamsConfig.APPLICATION_ID_CONFIG;
 import static org.apache.kafka.streams.StreamsConfig.BOOTSTRAP_SERVERS_CONFIG;
+import static org.assertj.core.api.Assertions.assertThat;
 
 class KafkaStreamsMetricsTest {
-  private final static String BOOTSTRAP_SERVERS = "localhost:9092";
-  private Tags tags = Tags.of("app", "myapp", "version", "1");
+    private final static String BOOTSTRAP_SERVERS = "localhost:9092";
+    private Tags tags = Tags.of("app", "myapp", "version", "1");
 
-  @Test void verify() {
-    try (KafkaStreams kafkaStreams = createStreams()) {
-      KafkaMetrics metrics = new KafkaMetrics(kafkaStreams, tags);
-      MeterRegistry registry = new SimpleMeterRegistry();
+    @Test void shouldCreateMeters() {
+        try (KafkaStreams kafkaStreams = createStreams()) {
+            KafkaMetrics metrics = new KafkaMetrics(kafkaStreams);
+            MeterRegistry registry = new SimpleMeterRegistry();
 
-      metrics.bindTo(registry);
-
-      registry.get("kafka.admin.client.metrics.connection.close.total").tags(tags).functionCounter();
-      registry.get("kafka.producer.metrics.batch.size.max").tags(tags).gauge();
-      registry.get("kafka.consumer.metrics.request.total").tags(tags).functionCounter();
+            metrics.bindTo(registry);
+            assertThat(registry.getMeters())
+                    .hasSizeGreaterThan(0)
+                    .extracting(meter -> meter.getId().getName())
+                    .allMatch(s -> s.startsWith(METRIC_NAME_PREFIX));
+        }
     }
-  }
 
-  private KafkaStreams createStreams() {
-    StreamsBuilder builder = new StreamsBuilder();
-    builder.stream("input").to("output");
-    Properties streamsConfig = new Properties();
-    streamsConfig.put(BOOTSTRAP_SERVERS_CONFIG, BOOTSTRAP_SERVERS);
-    streamsConfig.put(APPLICATION_ID_CONFIG, "app");
-    return new KafkaStreams(builder.build(), streamsConfig);
-  }
+    @Test void shouldCreateMetersWithTags() {
+        try (KafkaStreams kafkaStreams = createStreams()) {
+            KafkaMetrics metrics = new KafkaMetrics(kafkaStreams, tags);
+            MeterRegistry registry = new SimpleMeterRegistry();
+
+            metrics.bindTo(registry);
+
+            assertThat(registry.getMeters())
+                    .hasSizeGreaterThan(0)
+                    .extracting(meter -> meter.getId().getTag("app"))
+                    .allMatch(s -> s.equals("myapp"));
+        }
+    }
+
+    @Test void verify() {
+        try (KafkaStreams kafkaStreams = createStreams()) {
+            KafkaMetrics metrics = new KafkaMetrics(kafkaStreams, tags);
+            MeterRegistry registry = new SimpleMeterRegistry();
+
+            metrics.bindTo(registry);
+
+            registry.get("kafka.admin.client.metrics.connection.close.total")
+                    .tags(tags)
+                    .functionCounter();
+            registry.get("kafka.producer.metrics.batch.size.max").tags(tags).gauge();
+            registry.get("kafka.consumer.metrics.request.total").tags(tags).functionCounter();
+        }
+    }
+
+    private KafkaStreams createStreams() {
+        StreamsBuilder builder = new StreamsBuilder();
+        builder.stream("input").to("output");
+        Properties streamsConfig = new Properties();
+        streamsConfig.put(BOOTSTRAP_SERVERS_CONFIG, BOOTSTRAP_SERVERS);
+        streamsConfig.put(APPLICATION_ID_CONFIG, "app");
+        return new KafkaStreams(builder.build(), streamsConfig);
+    }
 }
