@@ -30,7 +30,7 @@ class ElasticsearchMeterRegistryElasticsearch7IntegrationTest
 
     @Override
     protected String getVersion() {
-        return "7.0.1";
+        return "7.5.2";
     }
 
     @Override
