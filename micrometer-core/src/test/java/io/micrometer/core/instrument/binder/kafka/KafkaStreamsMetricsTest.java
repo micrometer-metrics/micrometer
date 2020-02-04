@@ -21,10 +21,10 @@ import io.micrometer.core.instrument.simple.SimpleMeterRegistry;
 import java.util.Properties;
 import org.apache.kafka.streams.KafkaStreams;
 import org.apache.kafka.streams.StreamsBuilder;
-import org.apache.kafka.streams.StreamsConfig;
 import org.junit.jupiter.api.Test;
 
-import static org.apache.kafka.streams.StreamsConfig.*;
+import static org.apache.kafka.streams.StreamsConfig.APPLICATION_ID_CONFIG;
+import static org.apache.kafka.streams.StreamsConfig.BOOTSTRAP_SERVERS_CONFIG;
 
 class KafkaStreamsMetricsTest {
   private final static String BOOTSTRAP_SERVERS = "localhost:9092";

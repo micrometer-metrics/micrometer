@@ -20,10 +20,9 @@ import io.micrometer.core.instrument.Tags;
 import io.micrometer.core.instrument.simple.SimpleMeterRegistry;
 import java.util.Properties;
 import org.apache.kafka.clients.admin.AdminClient;
-import org.apache.kafka.clients.admin.AdminClientConfig;
 import org.junit.jupiter.api.Test;
 
-import static org.apache.kafka.clients.admin.AdminClientConfig.*;
+import static org.apache.kafka.clients.admin.AdminClientConfig.BOOTSTRAP_SERVERS_CONFIG;
 
 class KafkaAdminMetricsTest {
   private final static String BOOTSTRAP_SERVERS = "localhost:9092";
