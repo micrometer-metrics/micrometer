@@ -50,7 +50,8 @@ class KafkaClientMetricsIT {
         assertEquals(0, registry.getMeters().size());
 
         Properties producerConfigs = new Properties();
-        producerConfigs.put(ProducerConfig.BOOTSTRAP_SERVERS_CONFIG, kafkaContainer.getBootstrapServers());
+        producerConfigs.put(ProducerConfig.BOOTSTRAP_SERVERS_CONFIG,
+                kafkaContainer.getBootstrapServers());
         Producer<String, String> producer = new KafkaProducer<>(
                 producerConfigs, new StringSerializer(), new StringSerializer());
 
@@ -60,7 +61,8 @@ class KafkaClientMetricsIT {
         assertTrue(producerMetrics > 0);
 
         Properties consumerConfigs = new Properties();
-        consumerConfigs.put(ConsumerConfig.BOOTSTRAP_SERVERS_CONFIG, kafkaContainer.getBootstrapServers());
+        consumerConfigs.put(ConsumerConfig.BOOTSTRAP_SERVERS_CONFIG,
+                kafkaContainer.getBootstrapServers());
         consumerConfigs.put(ConsumerConfig.GROUP_ID_CONFIG, "test");
         Consumer<String, String> consumer = new KafkaConsumer<>(
                 consumerConfigs, new StringDeserializer(), new StringDeserializer());

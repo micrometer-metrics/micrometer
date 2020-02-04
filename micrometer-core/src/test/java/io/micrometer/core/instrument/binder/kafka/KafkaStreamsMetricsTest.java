@@ -24,6 +24,8 @@ import org.apache.kafka.streams.StreamsBuilder;
 import org.apache.kafka.streams.StreamsConfig;
 import org.junit.jupiter.api.Test;
 
+import static org.apache.kafka.streams.StreamsConfig.*;
+
 class KafkaStreamsMetricsTest {
   private final static String BOOTSTRAP_SERVERS = "localhost:9092";
   private Tags tags = Tags.of("app", "myapp", "version", "1");
@@ -45,8 +47,8 @@ class KafkaStreamsMetricsTest {
     StreamsBuilder builder = new StreamsBuilder();
     builder.stream("input").to("output");
     Properties streamsConfig = new Properties();
-    streamsConfig.put(StreamsConfig.BOOTSTRAP_SERVERS_CONFIG, BOOTSTRAP_SERVERS);
-    streamsConfig.put(StreamsConfig.APPLICATION_ID_CONFIG, "app");
+    streamsConfig.put(BOOTSTRAP_SERVERS_CONFIG, BOOTSTRAP_SERVERS);
+    streamsConfig.put(APPLICATION_ID_CONFIG, "app");
     return new KafkaStreams(builder.build(), streamsConfig);
   }
 }

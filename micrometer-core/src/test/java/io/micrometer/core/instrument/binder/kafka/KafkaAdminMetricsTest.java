@@ -23,6 +23,8 @@ import org.apache.kafka.clients.admin.AdminClient;
 import org.apache.kafka.clients.admin.AdminClientConfig;
 import org.junit.jupiter.api.Test;
 
+import static org.apache.kafka.clients.admin.AdminClientConfig.*;
+
 class KafkaAdminMetricsTest {
   private final static String BOOTSTRAP_SERVERS = "localhost:9092";
   private Tags tags = Tags.of("app", "myapp", "version", "1");
@@ -40,7 +42,7 @@ class KafkaAdminMetricsTest {
 
   private AdminClient createAdmin() {
     Properties adminConfig = new Properties();
-    adminConfig.put(AdminClientConfig.BOOTSTRAP_SERVERS_CONFIG, BOOTSTRAP_SERVERS);
+    adminConfig.put(BOOTSTRAP_SERVERS_CONFIG, BOOTSTRAP_SERVERS);
     return AdminClient.create(adminConfig);
   }
 }

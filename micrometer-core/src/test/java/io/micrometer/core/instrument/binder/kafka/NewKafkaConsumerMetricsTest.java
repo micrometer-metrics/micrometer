@@ -20,10 +20,11 @@ import io.micrometer.core.instrument.Tags;
 import io.micrometer.core.instrument.simple.SimpleMeterRegistry;
 import java.util.Properties;
 import org.apache.kafka.clients.consumer.Consumer;
-import org.apache.kafka.clients.consumer.ConsumerConfig;
 import org.apache.kafka.clients.consumer.KafkaConsumer;
 import org.apache.kafka.common.serialization.StringDeserializer;
 import org.junit.jupiter.api.Test;
+
+import static org.apache.kafka.clients.consumer.ConsumerConfig.*;
 
 //TODO to be renamed once old instrumentation is removed.
 class NewKafkaConsumerMetricsTest {
@@ -43,10 +44,10 @@ class NewKafkaConsumerMetricsTest {
 
   private Consumer<String, String> createConsumer() {
     Properties consumerConfig = new Properties();
-    consumerConfig.put(ConsumerConfig.BOOTSTRAP_SERVERS_CONFIG, BOOTSTRAP_SERVERS);
-    consumerConfig.put(ConsumerConfig.KEY_DESERIALIZER_CLASS_CONFIG, StringDeserializer.class);
-    consumerConfig.put(ConsumerConfig.VALUE_DESERIALIZER_CLASS_CONFIG, StringDeserializer.class);
-    consumerConfig.put(ConsumerConfig.GROUP_ID_CONFIG, "group");
+    consumerConfig.put(BOOTSTRAP_SERVERS_CONFIG, BOOTSTRAP_SERVERS);
+    consumerConfig.put(KEY_DESERIALIZER_CLASS_CONFIG, StringDeserializer.class);
+    consumerConfig.put(VALUE_DESERIALIZER_CLASS_CONFIG, StringDeserializer.class);
+    consumerConfig.put(GROUP_ID_CONFIG, "group");
     return new KafkaConsumer<>(consumerConfig);
   }
 }
