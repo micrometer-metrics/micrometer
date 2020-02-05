@@ -24,11 +24,15 @@ import io.micrometer.core.lang.NonNullApi;
 import io.micrometer.core.lang.NonNullFields;
 import io.micrometer.core.lang.Nullable;
 import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.core.Filter;
 import org.apache.logging.log4j.core.LogEvent;
 import org.apache.logging.log4j.core.LoggerContext;
 import org.apache.logging.log4j.core.config.Configuration;
 import org.apache.logging.log4j.core.config.LoggerConfig;
 import org.apache.logging.log4j.core.filter.AbstractFilter;
+import org.apache.logging.log4j.core.filter.CompositeFilter;
+
+import java.util.Arrays;
 
 import static java.util.Collections.emptyList;
 
@@ -72,14 +76,26 @@ public class Log4j2Metrics implements MeterBinder, AutoCloseable {
         Configuration configuration = loggerContext.getConfiguration();
         LoggerConfig rootLoggerConfig = configuration.getRootLogger();
         rootLoggerConfig.addFilter(metricsFilter);
-        loggerContext.getLoggers().stream()
-                .filter(logger -> !logger.isAdditive())
-                .forEach(logger -> {
-                    LoggerConfig loggerConfig = configuration.getLoggerConfig(logger.getName());
-                    if (loggerConfig != rootLoggerConfig) {
-                        loggerConfig.addFilter(metricsFilter);
-                    }
-                });
+
+        loggerContext.getConfiguration().getLoggers().values().stream()
+            .filter(loggerConfig -> !loggerConfig.isAdditive())
+            .forEach(loggerConfig -> {
+                if (loggerConfig == rootLoggerConfig) {
+                    return;
+                }
+                Filter logFilter = loggerConfig.getFilter();
+
+                if ((logFilter instanceof CompositeFilter && Arrays.stream(((CompositeFilter) logFilter).getFiltersArray())
+                        .anyMatch(innerFilter -> innerFilter instanceof MetricsFilter))) {
+                    return;
+                }
+
+                if (logFilter instanceof MetricsFilter) {
+                    return;
+                }
+                loggerConfig.addFilter(metricsFilter);
+            });
+
         loggerContext.updateLoggers(configuration);
     }
 
@@ -89,14 +105,15 @@ public class Log4j2Metrics implements MeterBinder, AutoCloseable {
             Configuration configuration = loggerContext.getConfiguration();
             LoggerConfig rootLoggerConfig = configuration.getRootLogger();
             rootLoggerConfig.removeFilter(metricsFilter);
-            loggerContext.getLoggers().stream()
-                    .filter(logger -> !logger.isAdditive())
-                    .forEach(logger -> {
-                        LoggerConfig loggerConfig = configuration.getLoggerConfig(logger.getName());
-                        if (loggerConfig != rootLoggerConfig) {
-                            loggerConfig.removeFilter(metricsFilter);
-                        }
-                    });
+
+            loggerContext.getConfiguration().getLoggers().values().stream()
+                .filter(loggerConfig -> !loggerConfig.isAdditive())
+                .forEach(loggerConfig -> {
+                    if (loggerConfig != rootLoggerConfig) {
+                        loggerConfig.removeFilter(metricsFilter);
+                    }
+                });
+
             loggerContext.updateLoggers(configuration);
             metricsFilter.stop();
         }
