@@ -4,4 +4,6 @@ dependencies {
     implementation 'org.slf4j:slf4j-api'
 
     testImplementation project(':micrometer-test')
+    testImplementation 'org.testcontainers:elasticsearch:latest.release'
+    testImplementation 'com.jayway.jsonpath:json-path:latest.release'
 }
