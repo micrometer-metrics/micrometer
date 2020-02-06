@@ -91,7 +91,7 @@ abstract class AbstractElasticsearchMeterRegistryIntegrationTest {
         Counter counter = registry.counter("test.counter");
         counter.increment();
 
-        TimeUnit.SECONDS.sleep(20);
+        registry.publish();
 
         String indexName = registry.indexName();
         String mapping = sendHttpGet(host + "/" + indexName + "/_mapping");
