@@ -20,9 +20,11 @@ import io.micrometer.core.instrument.Counter;
 import io.micrometer.core.ipc.http.HttpSender;
 import io.micrometer.core.ipc.http.HttpUrlConnectionSender;
 import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 import org.testcontainers.elasticsearch.ElasticsearchContainer;
 import org.testcontainers.junit.jupiter.Container;
+import org.testcontainers.junit.jupiter.Testcontainers;
 
 import java.time.Duration;
 
@@ -33,6 +35,8 @@ import static org.assertj.core.api.Assertions.assertThat;
  *
  * @author Johnny Lim
  */
+@Testcontainers
+@Tag("docker")
 abstract class AbstractElasticsearchMeterRegistryIntegrationTest {
 
     private static final String USER = "elastic";

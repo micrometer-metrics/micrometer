@@ -15,16 +15,11 @@
  */
 package io.micrometer.elastic;
 
-import org.junit.jupiter.api.Tag;
-import org.testcontainers.junit.jupiter.Testcontainers;
-
 /**
  * Integration tests on {@link ElasticMeterRegistry} for Elasticsearch 6.
  *
  * @author Johnny Lim
  */
-@Testcontainers
-@Tag("docker")
 class ElasticsearchMeterRegistryElasticsearch6IntegrationTest
         extends AbstractElasticsearchMeterRegistryIntegrationTest {
 
