@@ -15,8 +15,8 @@ dependencies {
 }
 
 shadowJar {
-    configurations = [project.configurations.compile]
-    classifier = null
+    configurations = [project.configurations.compileClasspath]
+    archiveClassifier = null
     dependencies {
         include(dependency('io.projectreactor:'))
         include(dependency('io.projectreactor.netty:'))
@@ -29,9 +29,11 @@ shadowJar {
     exclude 'META-INF/native/libnetty_transport_native_epoll_x86_64.so'
 }
 
+// Nebula plugin automatically configures the publication of the normal jar with its dependencies
+// and it's not possible to reconfigure this behavior to allow using shadow's MavenPublication
+// configuration, so we have to manually clean up the POM that nebula sets up instead.
 jar.enabled = false
 jar.dependsOn shadowJar
-
 publishing {
     publications {
         withType(MavenPublication) {
