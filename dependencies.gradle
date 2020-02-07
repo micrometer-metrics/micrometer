@@ -12,6 +12,9 @@ def VERSIONS = [
         'com.hazelcast:hazelcast:3.+',
         'com.h2database:h2:latest.release',
         'com.microsoft.azure:applicationinsights-core:latest.release',
+        // metrics are better with https://github.com/Netflix/Hystrix/pull/1568 introduced
+        // in hystrix 1.5.12, but Netflix re-released 1.5.11 as 1.5.18 late in 2018.
+        // <=1.5.11 or 1.5.18 doesn't break with Micrometer, but open metrics won't be correct necessarily.
         'com.netflix.hystrix:hystrix-core:1.5.12',
         'com.netflix.spectator:spectator-reg-atlas:latest.release',
         'com.signalfx.public:signalfx-java:latest.release',
@@ -33,6 +36,7 @@ def VERSIONS = [
         'net.sf.ehcache:ehcache:latest.release',
         'org.apache.httpcomponents:httpasyncclient:latest.release',
         'org.apache.httpcomponents:httpclient:latest.release',
+        // Pin version temporarily to restore builds. See gh-1756
         'org.apache.kafka:kafka-clients:2.3.1',
         'org.apache.logging.log4j:log4j-core:2.+',
         'org.apache.tomcat.embed:tomcat-embed-core:8.+',
