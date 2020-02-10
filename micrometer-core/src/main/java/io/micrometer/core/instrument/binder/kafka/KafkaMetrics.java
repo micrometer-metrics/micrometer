@@ -179,10 +179,7 @@ public class KafkaMetrics implements MeterBinder {
             //Register meters
             metrics.forEach((name, metric) -> {
                 //Filter out metrics from group "app-info", that includes metadata
-                if (METRIC_GROUP_APP_INFO.equals(name.group())) {
-                    currentSize.incrementAndGet();
-                    return;
-                }
+                if (METRIC_GROUP_APP_INFO.equals(name.group())) return;
                 Meter meter = bindMeter(registry, metric);
                 //Collect metrics with same name to validate number of labels
                 Set<Meter> meters = boundMeters.get(metric.metricName().name());
@@ -210,20 +207,14 @@ public class KafkaMetrics implements MeterBinder {
     }
 
     @NotNull private Meter bindMeter(MeterRegistry registry, Metric metric) {
-        String metricName = metricName(metric);
-        Meter meter;
-        if (metricName.endsWith("total") || metricName.endsWith("count")) {
-            meter = registerCounter(registry, metric, metricName, extraTags);
-        } else if (metricName.endsWith("min")
-                || metricName.endsWith("max")
-                || metricName.endsWith("avg")) {
-            meter = registerGauge(registry, metric, metricName, extraTags);
-        } else if (metricName.endsWith("rate")) {
-            meter = registerTimeGauge(registry, metric, metricName, extraTags);
-        } else {
-            meter = registerGauge(registry, metric, metricName, extraTags);
-        }
-        return meter;
+        String name = metricName(metric);
+        if (name.endsWith("total") || name.endsWith("count"))
+            return registerCounter(registry, metric, name, extraTags);
+        else if (name.endsWith("min") || name.endsWith("max") || name.endsWith("avg"))
+            return registerGauge(registry, metric, name, extraTags);
+        else if (name.endsWith("rate"))
+            return registerTimeGauge(registry, metric, name, extraTags);
+        else return registerGauge(registry, metric, name, extraTags);
     }
 
     private TimeGauge registerTimeGauge(MeterRegistry registry, Metric metric, String metricName, Iterable<Tag> extraTags) {
@@ -255,11 +246,8 @@ public class KafkaMetrics implements MeterBinder {
             //Double-check if new metrics are registered; if not (common scenario)
             //it only adds metrics count validation
             checkAndBindMetrics(registry);
-            if (metric.metricValue() instanceof Double) {
-                return (double) metric.metricValue();
-            } else {
-                return 0.0;
-            }
+            if (metric.metricValue() instanceof Double) return (double) metric.metricValue();
+            else return 0.0;
         };
     }
 
