@@ -23,6 +23,7 @@ import io.micrometer.core.instrument.MeterRegistry;
 import io.micrometer.core.instrument.Tag;
 import io.micrometer.core.instrument.TimeGauge;
 import io.micrometer.core.instrument.binder.MeterBinder;
+import io.micrometer.core.lang.NonNull;
 import io.micrometer.core.lang.NonNullApi;
 import io.micrometer.core.lang.NonNullFields;
 import java.util.HashMap;
@@ -41,7 +42,6 @@ import org.apache.kafka.clients.producer.Producer;
 import org.apache.kafka.common.Metric;
 import org.apache.kafka.common.MetricName;
 import org.apache.kafka.streams.KafkaStreams;
-import org.jetbrains.annotations.NotNull;
 
 import static java.util.Collections.emptyList;
 
@@ -158,8 +158,7 @@ public class KafkaMetrics implements MeterBinder {
         this.extraTags = extraTags;
     }
 
-    @Override
-    public void bindTo(MeterRegistry registry) {
+    @Override public void bindTo(MeterRegistry registry) {
         checkAndBindMetrics(registry);
     }
 
@@ -206,7 +205,7 @@ public class KafkaMetrics implements MeterBinder {
         }
     }
 
-    @NotNull private Meter bindMeter(MeterRegistry registry, Metric metric) {
+    @NonNull private Meter bindMeter(MeterRegistry registry, Metric metric) {
         String name = metricName(metric);
         if (name.endsWith("total") || name.endsWith("count"))
             return registerCounter(registry, metric, name, extraTags);
