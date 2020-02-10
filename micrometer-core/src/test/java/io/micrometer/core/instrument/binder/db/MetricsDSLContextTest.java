@@ -18,6 +18,7 @@ package io.micrometer.core.instrument.binder.db;
 import io.micrometer.core.instrument.MeterRegistry;
 import io.micrometer.core.instrument.Tags;
 import io.micrometer.core.instrument.simple.SimpleMeterRegistry;
+import io.micrometer.core.lang.NonNull;
 import org.jooq.*;
 import org.jooq.exception.DataAccessException;
 import org.jooq.impl.DSL;
@@ -177,6 +178,7 @@ class MetricsDSLContextTest {
         }
     }
 
+    @NonNull
     private MetricsDSLContext createDatabase(Connection conn) {
         Configuration configuration = new DefaultConfiguration()
                 .set(conn)
