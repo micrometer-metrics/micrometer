@@ -169,9 +169,8 @@ public class KafkaMetrics implements MeterBinder {
      */
     void checkAndBindMetrics(MeterRegistry registry) {
         Map<MetricName, ? extends Metric> metrics = metricsSupplier.get();
-        //Only happens first time number of metrics change
         if (!currentMeters.keySet().equals(metrics.keySet())) {
-            synchronized (this) {
+            synchronized (this) { //Enforce only happens once when metrics change
                 if (!currentMeters.keySet().equals(metrics.keySet())) {
                     //Clean registry
                     for (Meter meter: currentMeters.values()) registry.remove(meter);
@@ -180,9 +179,7 @@ public class KafkaMetrics implements MeterBinder {
                     metrics.forEach((name, metric) -> {
                         //Filter out metrics from group "app-info", that includes metadata
                         if (METRIC_GROUP_APP_INFO.equals(name.group())) return;
-                        Meter meter = bindMeter(registry, metric);
-                        //Collect metrics with same name to validate number of labels
-                        currentMeters.put(name, meter);
+                        currentMeters.put(name, bindMeter(registry, metric));
                     });
                 }
             }
