@@ -105,9 +105,10 @@ class KafkaMetricsTest {
 
     @Test void shouldRemoveMeterWithLessTags() {
         //Given
-        Map<MetricName, KafkaMetric> metrics = new LinkedHashMap<>();
+        Map<String, String> tags = new LinkedHashMap<>();
         Supplier<Map<MetricName, ? extends Metric>> supplier = () -> {
-            MetricName metricName = new MetricName("a", "b", "c", new LinkedHashMap<>());
+            Map<MetricName, KafkaMetric> metrics = new LinkedHashMap<>();
+            MetricName metricName = new MetricName("a", "b", "c", tags);
             KafkaMetric metric = new KafkaMetric(this, metricName, new Value(), null, null);
             metrics.put(metricName, metric);
             return metrics;
@@ -120,11 +121,7 @@ class KafkaMetricsTest {
         assertThat(registry.getMeters()).hasSize(1);
         assertThat(registry.getMeters().get(0).getId().getTags()).hasSize(0);
         //Given
-        Map<String, String> tags = new LinkedHashMap<>();
         tags.put("key0", "value0");
-        MetricName metricName = new MetricName("a", "b", "c", tags);
-        KafkaMetric metric = new KafkaMetric(this, metricName, new Value(), null, null);
-        metrics.put(metricName, metric);
         //When
         kafkaMetrics.checkAndBindMetrics(registry);
         //Then

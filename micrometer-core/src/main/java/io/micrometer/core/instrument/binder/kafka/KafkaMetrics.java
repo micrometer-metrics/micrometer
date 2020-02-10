@@ -27,12 +27,9 @@ import io.micrometer.core.lang.NonNull;
 import io.micrometer.core.lang.NonNullApi;
 import io.micrometer.core.lang.NonNullFields;
 import java.util.HashMap;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
 import java.util.concurrent.TimeUnit;
-import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Supplier;
 import java.util.function.ToDoubleFunction;
 import java.util.stream.Collectors;
@@ -50,10 +47,11 @@ import static java.util.Collections.emptyList;
  * <p>
  * It is based on {@code metrics()} method returning {@link Metric} map exposed by clients and
  * streams interface.
+ * <p>
+ * Meter names have the following convention: {@code kafka.(group without "metrics" suffix).metric name}
  *
  * @author Jorge Quilcate
- * @see <a href="https://docs.confluent.io/current/kafka/monitoring.html">Kakfa monitoring
- * documentation</a>
+ * @see <a href="https://docs.confluent.io/current/kafka/monitoring.html">Kakfa monitoring documentation</a>
  * @since 1.4.0
  */
 @Incubating(since = "1.4.0")
@@ -70,7 +68,7 @@ public class KafkaMetrics implements MeterBinder {
     /**
      * Keeps track of current number of metrics. When this value changes, metrics are bound again.
      */
-    private AtomicInteger currentSize = new AtomicInteger(0);
+    private volatile Map<MetricName, Meter> currentMeters = new HashMap<>();
 
     /**
      * Kafka {@link Producer} metrics binder
@@ -172,36 +170,22 @@ public class KafkaMetrics implements MeterBinder {
     void checkAndBindMetrics(MeterRegistry registry) {
         Map<MetricName, ? extends Metric> metrics = metricsSupplier.get();
         //Only happens first time number of metrics change
-        if (currentSize.get() != metrics.size()) {
-            currentSize.set(metrics.size());
-            Map<String, Set<Meter>> boundMeters = new HashMap<>();
-            //Register meters
-            metrics.forEach((name, metric) -> {
-                //Filter out metrics from group "app-info", that includes metadata
-                if (METRIC_GROUP_APP_INFO.equals(name.group())) return;
-                Meter meter = bindMeter(registry, metric);
-                //Collect metrics with same name to validate number of labels
-                Set<Meter> meters = boundMeters.get(metric.metricName().name());
-                if (meters == null) meters = new HashSet<>();
-                meters.add(meter);
-                boundMeters.put(metric.metricName().name(), meters);
-            });
-
-            //Remove meters with lower number of tags
-            boundMeters.forEach((metricName, meters) -> {
-                if (meters.size() > 1) {
-                    //Find largest number of tags
-                    int maxTagsSize = 0;
-                    for (Meter meter : meters) {
-                        int size = meter.getId().getTags().size();
-                        if (maxTagsSize < size) maxTagsSize = size;
-                    }
-                    //Remove meters with lower number of tags
-                    for (Meter meter : meters) {
-                        if (meter.getId().getTags().size() < maxTagsSize) registry.remove(meter);
-                    }
+        if (!currentMeters.keySet().equals(metrics.keySet())) {
+            synchronized (this) {
+                if (!currentMeters.keySet().equals(metrics.keySet())) {
+                    //Clean registry
+                    for (Meter meter: currentMeters.values()) registry.remove(meter);
+                    //Register meters
+                    currentMeters = new HashMap<>();
+                    metrics.forEach((name, metric) -> {
+                        //Filter out metrics from group "app-info", that includes metadata
+                        if (METRIC_GROUP_APP_INFO.equals(name.group())) return;
+                        Meter meter = bindMeter(registry, metric);
+                        //Collect metrics with same name to validate number of labels
+                        currentMeters.put(name, meter);
+                    });
                 }
-            });
+            }
         }
     }
 
@@ -246,6 +230,7 @@ public class KafkaMetrics implements MeterBinder {
             //it only adds metrics count validation
             checkAndBindMetrics(registry);
             if (metric.metricValue() instanceof Double) return (double) metric.metricValue();
+            else if (metric.metricValue() instanceof Integer) return ((Integer) metric.metricValue()).doubleValue();
             else return 0.0;
         };
     }
