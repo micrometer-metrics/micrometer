@@ -244,8 +244,7 @@ public class KafkaMetrics implements MeterBinder {
     }
 
     private String metricName(Metric metric) {
-        String value =
-            METRIC_NAME_PREFIX + metric.metricName().group() + "." + metric.metricName().name();
-        return value.replaceAll("-", ".");
+        String name = METRIC_NAME_PREFIX + metric.metricName().group() + "." + metric.metricName().name();
+        return name.replaceAll("-metrics", "").replaceAll("-", ".");
     }
 }
