@@ -578,8 +578,7 @@ public abstract class MeterRegistry {
                 m = meterMap.get(mappedId);
 
                 if (m == null) {
-                    if (!accept(originalId)) {
-                        //noinspection unchecked
+                    if (!accept(mappedId)) {
                         return noopBuilder.apply(mappedId);
                     }
 
