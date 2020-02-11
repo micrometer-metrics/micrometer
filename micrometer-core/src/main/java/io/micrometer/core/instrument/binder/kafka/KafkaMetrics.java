@@ -21,7 +21,6 @@ import io.micrometer.core.instrument.Gauge;
 import io.micrometer.core.instrument.Meter;
 import io.micrometer.core.instrument.MeterRegistry;
 import io.micrometer.core.instrument.Tag;
-import io.micrometer.core.instrument.TimeGauge;
 import io.micrometer.core.instrument.binder.MeterBinder;
 import io.micrometer.core.lang.NonNull;
 import io.micrometer.core.lang.NonNullApi;
@@ -30,7 +29,6 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.concurrent.TimeUnit;
 import java.util.function.Supplier;
 import java.util.function.ToDoubleFunction;
 import org.apache.kafka.common.Metric;
@@ -69,7 +67,7 @@ class KafkaMetrics implements MeterBinder {
      */
     private volatile Map<MetricName, Meter> currentMeters = new HashMap<>();
 
-    private String version = "";
+    private String kafkaVersion = "";
 
     KafkaMetrics(Supplier<Map<MetricName, ? extends Metric>> metricsSupplier) {
         this(metricsSupplier, emptyList());
@@ -87,7 +85,7 @@ class KafkaMetrics implements MeterBinder {
         for (Map.Entry<MetricName, ? extends Metric> entry: metrics.entrySet()) {
             MetricName name = entry.getKey();
             if (METRIC_GROUP_APP_INFO.equals(name.group())) {
-                if (VERSION_METRIC_NAME.equals(name.name())) version = (String) entry.getValue().metricValue();
+                if (VERSION_METRIC_NAME.equals(name.name())) kafkaVersion = (String) entry.getValue().metricValue();
                 else if (START_TIME_METRIC_NAME.equals(name.name())) startTimeMetric = entry.getValue();
             }
         }
@@ -115,7 +113,12 @@ class KafkaMetrics implements MeterBinder {
                     metrics.forEach((name, metric) -> {
                         //Filter out metrics from group "app-info", that includes metadata
                         if (METRIC_GROUP_APP_INFO.equals(name.group())) return;
-                        currentMeters.put(name, bindMeter(registry, metric));
+                        //Filter out non-numeric values
+                        if (metric.metricValue() instanceof Double
+                                || metric.metricValue() instanceof Float
+                                || metric.metricValue() instanceof Integer
+                                || metric.metricValue() instanceof Long)
+                            currentMeters.put(name, bindMeter(registry, metric));
                     });
                 }
             }
@@ -126,24 +129,13 @@ class KafkaMetrics implements MeterBinder {
         String name = metricName(metric);
         if (name.endsWith("total") || name.endsWith("count"))
             return registerCounter(registry, metric, name, extraTags);
-        else if (name.endsWith("min") || name.endsWith("max") || name.endsWith("avg"))
+        else if (name.endsWith("min") || name.endsWith("max") || name.endsWith("avg") || name.endsWith("rate"))
             return registerGauge(registry, metric, name, extraTags);
-        else if (name.endsWith("rate"))
-            return registerTimeGauge(registry, metric, name, extraTags);
         else return registerGauge(registry, metric, name, extraTags);
     }
 
-    private TimeGauge registerTimeGauge(MeterRegistry registry, Metric metric, String metricName, Iterable<Tag> extraTags) {
-        return TimeGauge.builder(metricName, metric, TimeUnit.SECONDS, toMetricValue(registry))
-                .tags(metricTags(metric))
-                .tags(extraTags)
-                .description(metric.metricName().description())
-                .register(registry);
-    }
-
     private Gauge registerGauge(MeterRegistry registry, Metric metric, String metricName, Iterable<Tag> extraTags) {
-        ToDoubleFunction<Metric> f = toMetricValue(registry);
-        return Gauge.builder(metricName, metric, f)
+        return Gauge.builder(metricName, metric, toMetricValue(registry))
                 .tags(metricTags(metric))
                 .tags(extraTags)
                 .description(metric.metricName().description())
@@ -166,13 +158,13 @@ class KafkaMetrics implements MeterBinder {
             if (metric.metricValue() instanceof Double) return (double) metric.metricValue();
             else if (metric.metricValue() instanceof Integer) return ((Integer) metric.metricValue()).doubleValue();
             else if (metric.metricValue() instanceof Long) return ((Long) metric.metricValue()).doubleValue();
-            else return 0.0;
+            else return ((Float) metric.metricValue()).doubleValue();
         };
     }
 
     private List<Tag> metricTags(Metric metric) {
         List<Tag> tags = new ArrayList<>();
-        tags.add(Tag.of("version", version));
+        tags.add(Tag.of("kafka-version", kafkaVersion));
         metric.metricName().tags().forEach((key, value) -> tags.add(Tag.of(key, value)));
         return tags;
     }
