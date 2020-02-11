@@ -26,13 +26,13 @@ import io.micrometer.core.instrument.binder.MeterBinder;
 import io.micrometer.core.lang.NonNull;
 import io.micrometer.core.lang.NonNullApi;
 import io.micrometer.core.lang.NonNullFields;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.TimeUnit;
 import java.util.function.Supplier;
 import java.util.function.ToDoubleFunction;
-import java.util.stream.Collectors;
 import org.apache.kafka.clients.admin.AdminClient;
 import org.apache.kafka.clients.consumer.Consumer;
 import org.apache.kafka.clients.producer.Producer;
@@ -48,10 +48,11 @@ import static java.util.Collections.emptyList;
  * It is based on {@code metrics()} method returning {@link Metric} map exposed by clients and
  * streams interface.
  * <p>
- * Meter names have the following convention: {@code kafka.(group without "metrics" suffix).metric name}
+ * Meter names have the following convention: {@code kafka.(metric_group).(metric_name)}
  *
  * @author Jorge Quilcate
- * @see <a href="https://docs.confluent.io/current/kafka/monitoring.html">Kakfa monitoring documentation</a>
+ * @see <a href="https://docs.confluent.io/current/kafka/monitoring.html">Kakfa monitoring
+ * documentation</a>
  * @since 1.4.0
  */
 @Incubating(since = "1.4.0")
@@ -61,14 +62,18 @@ public class KafkaMetrics implements MeterBinder {
     static final String METRIC_NAME_PREFIX = "kafka.";
 
     static final String METRIC_GROUP_APP_INFO = "app-info";
+    static final String VERSION_METRIC_NAME = "version";
+    static final String START_TIME_METRIC_NAME = "start-time-ms";
 
     private final Supplier<Map<MetricName, ? extends Metric>> metricsSupplier;
     private final Iterable<Tag> extraTags;
 
     /**
-     * Keeps track of current number of metrics. When this value changes, metrics are bound again.
+     * Keeps track of current set of metrics. When this values change, metrics are bound again.
      */
     private volatile Map<MetricName, Meter> currentMeters = new HashMap<>();
+
+    private String version = "";
 
     /**
      * Kafka {@link Producer} metrics binder
@@ -157,6 +162,14 @@ public class KafkaMetrics implements MeterBinder {
     }
 
     @Override public void bindTo(MeterRegistry registry) {
+        Map<MetricName, ? extends Metric> metrics = metricsSupplier.get();
+        metrics.forEach((name, metric) -> {
+            //Filter out metrics from group "app-info", that includes metadata
+            if (METRIC_GROUP_APP_INFO.equals(name.group())) {
+                if (VERSION_METRIC_NAME.equals(name.name())) version = (String) metric.metricValue();
+                else if (START_TIME_METRIC_NAME.equals(name.name())) bindMeter(registry, metric);
+            }
+        });
         checkAndBindMetrics(registry);
     }
 
@@ -173,7 +186,7 @@ public class KafkaMetrics implements MeterBinder {
             synchronized (this) { //Enforce only happens once when metrics change
                 if (!currentMeters.keySet().equals(metrics.keySet())) {
                     //Clean registry
-                    for (Meter meter: currentMeters.values()) registry.remove(meter);
+                    for (Meter meter : currentMeters.values()) registry.remove(meter);
                     //Register meters
                     currentMeters = new HashMap<>();
                     metrics.forEach((name, metric) -> {
@@ -199,26 +212,26 @@ public class KafkaMetrics implements MeterBinder {
 
     private TimeGauge registerTimeGauge(MeterRegistry registry, Metric metric, String metricName, Iterable<Tag> extraTags) {
         return TimeGauge.builder(metricName, metric, TimeUnit.SECONDS, toMetricValue(registry))
-            .tags(metricTags(metric))
-            .tags(extraTags)
-            .description(metric.metricName().description())
-            .register(registry);
+                .tags(metricTags(metric))
+                .tags(extraTags)
+                .description(metric.metricName().description())
+                .register(registry);
     }
 
     private Gauge registerGauge(MeterRegistry registry, Metric metric, String metricName, Iterable<Tag> extraTags) {
         return Gauge.builder(metricName, metric, toMetricValue(registry))
-            .tags(metricTags(metric))
-            .tags(extraTags)
-            .description(metric.metricName().description())
-            .register(registry);
+                .tags(metricTags(metric))
+                .tags(extraTags)
+                .description(metric.metricName().description())
+                .register(registry);
     }
 
     private FunctionCounter registerCounter(MeterRegistry registry, Metric metric, String metricName, Iterable<Tag> extraTags) {
         return FunctionCounter.builder(metricName, metric, toMetricValue(registry))
-            .tags(metricTags(metric))
-            .tags(extraTags)
-            .description(metric.metricName().description())
-            .register(registry);
+                .tags(metricTags(metric))
+                .tags(extraTags)
+                .description(metric.metricName().description())
+                .register(registry);
     }
 
     private ToDoubleFunction<Metric> toMetricValue(MeterRegistry registry) {
@@ -228,20 +241,22 @@ public class KafkaMetrics implements MeterBinder {
             checkAndBindMetrics(registry);
             if (metric.metricValue() instanceof Double) return (double) metric.metricValue();
             else if (metric.metricValue() instanceof Integer) return ((Integer) metric.metricValue()).doubleValue();
+            else if (metric.metricValue() instanceof Long) return ((Long) metric.metricValue()).doubleValue();
             else return 0.0;
         };
     }
 
     private List<Tag> metricTags(Metric metric) {
-        return metric.metricName().tags()
-            .entrySet()
-            .stream()
-            .map(entry -> Tag.of(entry.getKey(), entry.getValue()))
-            .collect(Collectors.toList());
+        List<Tag> tags = new ArrayList<>();
+        tags.add(Tag.of("version", version));
+        for (Map.Entry<String, String> entry: metric.metricName().tags().entrySet()) {
+            tags.add(Tag.of(entry.getKey(), entry.getValue()));
+        }
+        return tags;
     }
 
     private String metricName(Metric metric) {
         String name = METRIC_NAME_PREFIX + metric.metricName().group() + "." + metric.metricName().name();
-        return name.replaceAll("-metrics", "").replaceAll("-", ".");
+        return name.replaceAll("-", ".");
     }
 }

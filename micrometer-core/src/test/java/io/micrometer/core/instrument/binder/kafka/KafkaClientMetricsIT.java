@@ -34,8 +34,8 @@ import org.testcontainers.containers.KafkaContainer;
 import org.testcontainers.junit.jupiter.Container;
 import org.testcontainers.junit.jupiter.Testcontainers;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertTrue;
+import static java.lang.System.out;
+import static org.assertj.core.api.Assertions.assertThat;
 
 @Testcontainers
 @Tag("docker")
@@ -47,7 +47,7 @@ class KafkaClientMetricsIT {
     void shouldManageProducerAndConsumerMetrics() {
         SimpleMeterRegistry registry = new SimpleMeterRegistry();
 
-        assertEquals(0, registry.getMeters().size());
+        assertThat(registry.getMeters()).hasSize(0);
 
         Properties producerConfigs = new Properties();
         producerConfigs.put(ProducerConfig.BOOTSTRAP_SERVERS_CONFIG,
@@ -58,7 +58,10 @@ class KafkaClientMetricsIT {
         new KafkaMetrics(producer).bindTo(registry);
 
         int producerMetrics = registry.getMeters().size();
-        assertTrue(producerMetrics > 0);
+        assertThat(registry.getMeters()).hasSizeGreaterThan(0);
+        assertThat(registry.getMeters())
+                .extracting(m -> m.getId().getTag("version"))
+                .allMatch(v -> !v.isEmpty());
 
         Properties consumerConfigs = new Properties();
         consumerConfigs.put(ConsumerConfig.BOOTSTRAP_SERVERS_CONFIG,
@@ -69,30 +72,45 @@ class KafkaClientMetricsIT {
 
         new KafkaMetrics(consumer).bindTo(registry);
 
+        //Printing out for discovery purposes
+        out.println("Meters from producer before sending:");
+        registry.getMeters().forEach(meter -> out.println(meter.getId() + " => " + meter.measure()));
+
         int producerAndConsumerMetrics = registry.getMeters().size();
-        assertTrue(producerAndConsumerMetrics > producerMetrics);
+        assertThat(registry.getMeters()).hasSizeGreaterThan(producerMetrics);
+        assertThat(registry.getMeters())
+                .extracting(m -> m.getId().getTag("version"))
+                .allMatch(v -> !v.isEmpty());
 
         String topic = "test";
         producer.send(new ProducerRecord<>(topic, "key", "value"));
         producer.flush();
 
-        registry.getMeters()
-                .forEach(meter -> System.out.println(meter.getId() + " => " + meter.measure()));
+        //Printing out for discovery purposes
+        out.println("Meters from producer after sending and consumer before poll:");
+        registry.getMeters().forEach(meter -> out.println(meter.getId() + " => " + meter.measure()));
 
         int producerAndConsumerMetricsAfterSend = registry.getMeters().size();
-        assertTrue(producerAndConsumerMetricsAfterSend > producerAndConsumerMetrics);
+        assertThat(registry.getMeters()).hasSizeGreaterThan(producerAndConsumerMetrics);
+        assertThat(registry.getMeters())
+                .extracting(m -> m.getId().getTag("version"))
+                .allMatch(v -> !v.isEmpty());
 
         consumer.subscribe(Collections.singletonList(topic));
 
         consumer.poll(Duration.ofMillis(100));
 
-        registry.getMeters()
-                .forEach(meter -> System.out.println(meter.getId() + " => " + meter.measure()));
+        //Printing out for discovery purposes
+        out.println("Meters from producer and consumer after polling:");
+        registry.getMeters().forEach(meter -> out.println(meter.getId() + " => " + meter.measure()));
 
-        int producerAndConsumerMetricsAfterPoll = registry.getMeters().size();
-        assertTrue(producerAndConsumerMetricsAfterPoll > producerAndConsumerMetricsAfterSend);
+        assertThat(registry.getMeters()).hasSizeGreaterThan(producerAndConsumerMetricsAfterSend);
+        assertThat(registry.getMeters())
+                .extracting(m -> m.getId().getTag("version"))
+                .allMatch(v -> !v.isEmpty());
 
-        registry.getMeters()
-                .forEach(meter -> System.out.println(meter.getId() + " => " + meter.measure()));
+        //Printing out for discovery purposes
+        out.println("All meters from producer and consumer:");
+        registry.getMeters().forEach(meter -> out.println(meter.getId() + " => " + meter.measure()));
     }
 }

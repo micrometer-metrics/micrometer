@@ -119,13 +119,13 @@ class KafkaMetricsTest {
         kafkaMetrics.checkAndBindMetrics(registry);
         //Then
         assertThat(registry.getMeters()).hasSize(1);
-        assertThat(registry.getMeters().get(0).getId().getTags()).hasSize(0);
+        assertThat(registry.getMeters().get(0).getId().getTags()).hasSize(1); //only version
         //Given
         tags.put("key0", "value0");
         //When
         kafkaMetrics.checkAndBindMetrics(registry);
         //Then
         assertThat(registry.getMeters()).hasSize(1);
-        assertThat(registry.getMeters().get(0).getId().getTags()).hasSize(1);
+        assertThat(registry.getMeters().get(0).getId().getTags()).hasSize(2);
     }
 }
