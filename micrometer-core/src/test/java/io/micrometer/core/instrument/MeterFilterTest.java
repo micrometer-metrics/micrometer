@@ -19,6 +19,7 @@ import io.micrometer.core.Issue;
 import io.micrometer.core.instrument.config.MeterFilter;
 import io.micrometer.core.instrument.config.MeterFilterReply;
 import io.micrometer.core.instrument.distribution.DistributionStatisticConfig;
+import io.micrometer.core.instrument.simple.SimpleMeterRegistry;
 import io.micrometer.core.lang.Nullable;
 import org.assertj.core.api.Condition;
 import org.junit.jupiter.api.Test;
@@ -233,5 +234,24 @@ class MeterFilterTest {
         MeterFilter filter = MeterFilter.acceptNameStartsWith("my");
         assertThat(filter.accept(id1)).isEqualTo(MeterFilterReply.ACCEPT);
         assertThat(filter.accept(id2)).isEqualTo(MeterFilterReply.NEUTRAL);
+    }
+
+    @Test
+    void mapThenAccept() {
+        MeterRegistry registry = new SimpleMeterRegistry();
+
+        registry.config().meterFilter(new MeterFilter() {
+            @Override
+            public Meter.Id map(Meter.Id id) {
+                return id.withName("my.other.counter");
+            }
+        });
+
+        registry.config().meterFilter(MeterFilter.acceptNameStartsWith("my.other"));
+        registry.config().meterFilter(MeterFilter.deny());
+
+        registry.counter("my.counter").increment();
+
+        assertThat(registry.getMeters()).isNotEmpty();
     }
 }
