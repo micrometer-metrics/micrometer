@@ -13,7 +13,7 @@
 
         <!-- Imports -->
         <module name="IllegalImportCheck" >
-            <property name="illegalPkgs" value="com.google.common.(?!cache).*,org.apache.commons.text.*,org.slf4j.*"/>
+            <property name="illegalPkgs" value="com.google.common.(?!cache).*,org.apache.commons.text.*,org.slf4j.*,org.jetbrains.*,jdk.internal.jline.internal.*,reactor.util.annotation.*,org.checkerframework.checker.*"/>
             <property name="illegalClasses" value="org\.assertj\.core\.api\.Java6Assertions\..*"/>
             <property name="regexp" value="true"/>
         </module>
