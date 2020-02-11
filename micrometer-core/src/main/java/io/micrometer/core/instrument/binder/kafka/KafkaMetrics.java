@@ -163,13 +163,17 @@ public class KafkaMetrics implements MeterBinder {
 
     @Override public void bindTo(MeterRegistry registry) {
         Map<MetricName, ? extends Metric> metrics = metricsSupplier.get();
-        metrics.forEach((name, metric) -> {
-            //Filter out metrics from group "app-info", that includes metadata
+        // Collect static metrics and tags
+        Metric startTimeMetric = null;
+        for (Map.Entry<MetricName, ? extends Metric> entry: metrics.entrySet()) {
+            MetricName name = entry.getKey();
             if (METRIC_GROUP_APP_INFO.equals(name.group())) {
-                if (VERSION_METRIC_NAME.equals(name.name())) version = (String) metric.metricValue();
-                else if (START_TIME_METRIC_NAME.equals(name.name())) bindMeter(registry, metric);
+                if (VERSION_METRIC_NAME.equals(name.name())) version = (String) entry.getValue().metricValue();
+                else if (START_TIME_METRIC_NAME.equals(name.name())) startTimeMetric = entry.getValue();
             }
-        });
+        }
+        if (startTimeMetric != null) bindMeter(registry, startTimeMetric);
+        // Collect dynamic metrics
         checkAndBindMetrics(registry);
     }
 
@@ -219,7 +223,8 @@ public class KafkaMetrics implements MeterBinder {
     }
 
     private Gauge registerGauge(MeterRegistry registry, Metric metric, String metricName, Iterable<Tag> extraTags) {
-        return Gauge.builder(metricName, metric, toMetricValue(registry))
+        ToDoubleFunction<Metric> f = toMetricValue(registry);
+        return Gauge.builder(metricName, metric, f)
                 .tags(metricTags(metric))
                 .tags(extraTags)
                 .description(metric.metricName().description())
@@ -249,9 +254,7 @@ public class KafkaMetrics implements MeterBinder {
     private List<Tag> metricTags(Metric metric) {
         List<Tag> tags = new ArrayList<>();
         tags.add(Tag.of("version", version));
-        for (Map.Entry<String, String> entry: metric.metricName().tags().entrySet()) {
-            tags.add(Tag.of(entry.getKey(), entry.getValue()));
-        }
+        metric.metricName().tags().forEach((key, value) -> tags.add(Tag.of(key, value)));
         return tags;
     }
 
