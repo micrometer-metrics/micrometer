@@ -55,7 +55,7 @@ class KafkaClientMetricsIT {
         Producer<String, String> producer = new KafkaProducer<>(
                 producerConfigs, new StringSerializer(), new StringSerializer());
 
-        new KafkaMetrics(producer).bindTo(registry);
+        new KafkaClientMetrics(producer).bindTo(registry);
 
         int producerMetrics = registry.getMeters().size();
         assertThat(registry.getMeters()).hasSizeGreaterThan(0);
@@ -70,7 +70,7 @@ class KafkaClientMetricsIT {
         Consumer<String, String> consumer = new KafkaConsumer<>(
                 consumerConfigs, new StringDeserializer(), new StringDeserializer());
 
-        new KafkaMetrics(consumer).bindTo(registry);
+        new KafkaClientMetrics(consumer).bindTo(registry);
 
         //Printing out for discovery purposes
         out.println("Meters from producer before sending:");

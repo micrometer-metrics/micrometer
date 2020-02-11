@@ -23,7 +23,7 @@ import org.apache.kafka.streams.KafkaStreams;
 import org.apache.kafka.streams.StreamsBuilder;
 import org.junit.jupiter.api.Test;
 
-import static io.micrometer.core.instrument.binder.kafka.KafkaMetrics.METRIC_NAME_PREFIX;
+import static io.micrometer.core.instrument.binder.kafka.KafkaStreamsMetrics.METRIC_NAME_PREFIX;
 import static org.apache.kafka.streams.StreamsConfig.APPLICATION_ID_CONFIG;
 import static org.apache.kafka.streams.StreamsConfig.BOOTSTRAP_SERVERS_CONFIG;
 import static org.assertj.core.api.Assertions.assertThat;
@@ -34,7 +34,7 @@ class KafkaStreamsMetricsTest {
 
     @Test void shouldCreateMeters() {
         try (KafkaStreams kafkaStreams = createStreams()) {
-            KafkaMetrics metrics = new KafkaMetrics(kafkaStreams);
+            KafkaStreamsMetrics metrics = new KafkaStreamsMetrics(kafkaStreams);
             MeterRegistry registry = new SimpleMeterRegistry();
 
             metrics.bindTo(registry);
@@ -47,7 +47,7 @@ class KafkaStreamsMetricsTest {
 
     @Test void shouldCreateMetersWithTags() {
         try (KafkaStreams kafkaStreams = createStreams()) {
-            KafkaMetrics metrics = new KafkaMetrics(kafkaStreams, tags);
+            KafkaStreamsMetrics metrics = new KafkaStreamsMetrics(kafkaStreams, tags);
             MeterRegistry registry = new SimpleMeterRegistry();
 
             metrics.bindTo(registry);

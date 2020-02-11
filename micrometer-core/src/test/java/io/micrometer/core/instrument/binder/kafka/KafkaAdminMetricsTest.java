@@ -22,7 +22,7 @@ import java.util.Properties;
 import org.apache.kafka.clients.admin.AdminClient;
 import org.junit.jupiter.api.Test;
 
-import static io.micrometer.core.instrument.binder.kafka.KafkaMetrics.METRIC_NAME_PREFIX;
+import static io.micrometer.core.instrument.binder.kafka.KafkaClientMetrics.METRIC_NAME_PREFIX;
 import static org.apache.kafka.clients.admin.AdminClientConfig.BOOTSTRAP_SERVERS_CONFIG;
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -32,7 +32,7 @@ class KafkaAdminMetricsTest {
 
     @Test void shouldCreateMeters() {
         try (AdminClient adminClient = createAdmin()) {
-            KafkaMetrics metrics = new KafkaMetrics(adminClient);
+            KafkaClientMetrics metrics = new KafkaClientMetrics(adminClient);
             MeterRegistry registry = new SimpleMeterRegistry();
 
             metrics.bindTo(registry);
@@ -45,7 +45,7 @@ class KafkaAdminMetricsTest {
 
     @Test void shouldCreateMetersWithTags() {
         try (AdminClient adminClient = createAdmin()) {
-            KafkaMetrics metrics = new KafkaMetrics(adminClient, tags);
+            KafkaClientMetrics metrics = new KafkaClientMetrics(adminClient, tags);
             MeterRegistry registry = new SimpleMeterRegistry();
 
             metrics.bindTo(registry);

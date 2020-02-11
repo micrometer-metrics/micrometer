@@ -24,7 +24,7 @@ import org.apache.kafka.clients.producer.Producer;
 import org.apache.kafka.common.serialization.StringSerializer;
 import org.junit.jupiter.api.Test;
 
-import static io.micrometer.core.instrument.binder.kafka.KafkaMetrics.METRIC_NAME_PREFIX;
+import static io.micrometer.core.instrument.binder.kafka.KafkaClientMetrics.METRIC_NAME_PREFIX;
 import static org.apache.kafka.clients.producer.ProducerConfig.BOOTSTRAP_SERVERS_CONFIG;
 import static org.apache.kafka.clients.producer.ProducerConfig.KEY_SERIALIZER_CLASS_CONFIG;
 import static org.apache.kafka.clients.producer.ProducerConfig.VALUE_SERIALIZER_CLASS_CONFIG;
@@ -36,7 +36,7 @@ class KafkaProducerMetricsTest {
 
     @Test void shouldCreateMeters() {
         try (Producer<String, String> producer = createProducer()) {
-            KafkaMetrics metrics = new KafkaMetrics(producer);
+            KafkaClientMetrics metrics = new KafkaClientMetrics(producer);
             MeterRegistry registry = new SimpleMeterRegistry();
 
             metrics.bindTo(registry);
@@ -49,7 +49,7 @@ class KafkaProducerMetricsTest {
 
     @Test void shouldCreateMetersWithTags() {
         try (Producer<String, String> producer = createProducer()) {
-            KafkaMetrics metrics = new KafkaMetrics(producer, tags);
+            KafkaClientMetrics metrics = new KafkaClientMetrics(producer, tags);
             MeterRegistry registry = new SimpleMeterRegistry();
 
             metrics.bindTo(registry);

@@ -33,12 +33,8 @@ import java.util.Map;
 import java.util.concurrent.TimeUnit;
 import java.util.function.Supplier;
 import java.util.function.ToDoubleFunction;
-import org.apache.kafka.clients.admin.AdminClient;
-import org.apache.kafka.clients.consumer.Consumer;
-import org.apache.kafka.clients.producer.Producer;
 import org.apache.kafka.common.Metric;
 import org.apache.kafka.common.MetricName;
-import org.apache.kafka.streams.KafkaStreams;
 
 import static java.util.Collections.emptyList;
 
@@ -58,7 +54,7 @@ import static java.util.Collections.emptyList;
 @Incubating(since = "1.4.0")
 @NonNullApi
 @NonNullFields
-public class KafkaMetrics implements MeterBinder {
+class KafkaMetrics implements MeterBinder {
     static final String METRIC_NAME_PREFIX = "kafka.";
 
     static final String METRIC_GROUP_APP_INFO = "app-info";
@@ -75,88 +71,11 @@ public class KafkaMetrics implements MeterBinder {
 
     private String version = "";
 
-    /**
-     * Kafka {@link Producer} metrics binder
-     *
-     * @param kafkaProducer producer instance to be instrumented
-     * @param tags          additional tags
-     */
-    public KafkaMetrics(Producer<?, ?> kafkaProducer, Iterable<Tag> tags) {
-        this(kafkaProducer::metrics, tags);
-    }
-
-    /**
-     * Kafka {@link Producer} metrics binder
-     *
-     * @param kafkaProducer producer instance to be instrumented
-     */
-    public KafkaMetrics(Producer<?, ?> kafkaProducer) {
-        this(kafkaProducer::metrics);
-    }
-
-    /**
-     * Kafka {@link Consumer} metrics binder
-     *
-     * @param kafkaConsumer consumer instance to be instrumented
-     * @param tags          additional tags
-     */
-    public KafkaMetrics(Consumer<?, ?> kafkaConsumer, Iterable<Tag> tags) {
-        this(kafkaConsumer::metrics, tags);
-    }
-
-    /**
-     * Kafka {@link Consumer} metrics binder
-     *
-     * @param kafkaConsumer consumer instance to be instrumented
-     */
-    public KafkaMetrics(Consumer<?, ?> kafkaConsumer) {
-        this(kafkaConsumer::metrics);
-    }
-
-    /**
-     * {@link KafkaStreams} metrics binder
-     *
-     * @param kafkaStreams instance to be instrumented
-     * @param tags         additional tags
-     */
-    public KafkaMetrics(KafkaStreams kafkaStreams, Iterable<Tag> tags) {
-        this(kafkaStreams::metrics, tags);
-    }
-
-    /**
-     * {@link KafkaStreams} metrics binder
-     *
-     * @param kafkaStreams instance to be instrumented
-     */
-    public KafkaMetrics(KafkaStreams kafkaStreams) {
-        this(kafkaStreams::metrics);
-    }
-
-    /**
-     * Kafka {@link AdminClient} metrics binder
-     *
-     * @param adminClient instance to be instrumented
-     * @param tags        additional tags
-     */
-    public KafkaMetrics(AdminClient adminClient, Iterable<Tag> tags) {
-        this(adminClient::metrics, tags);
-    }
-
-    /**
-     * Kafka {@link AdminClient} metrics binder
-     *
-     * @param adminClient instance to be instrumented
-     */
-    public KafkaMetrics(AdminClient adminClient) {
-        this(adminClient::metrics);
-    }
-
     KafkaMetrics(Supplier<Map<MetricName, ? extends Metric>> metricsSupplier) {
         this(metricsSupplier, emptyList());
     }
 
-    KafkaMetrics(Supplier<Map<MetricName, ? extends Metric>> metricsSupplier,
-            Iterable<Tag> extraTags) {
+    KafkaMetrics(Supplier<Map<MetricName, ? extends Metric>> metricsSupplier, Iterable<Tag> extraTags) {
         this.metricsSupplier = metricsSupplier;
         this.extraTags = extraTags;
     }
@@ -260,6 +179,6 @@ public class KafkaMetrics implements MeterBinder {
 
     private String metricName(Metric metric) {
         String name = METRIC_NAME_PREFIX + metric.metricName().group() + "." + metric.metricName().name();
-        return name.replaceAll("-", ".");
+        return name.replaceAll("-metrics", "").replaceAll("-", ".");
     }
 }

@@ -24,7 +24,7 @@ import org.apache.kafka.clients.consumer.KafkaConsumer;
 import org.apache.kafka.common.serialization.StringDeserializer;
 import org.junit.jupiter.api.Test;
 
-import static io.micrometer.core.instrument.binder.kafka.KafkaMetrics.METRIC_NAME_PREFIX;
+import static io.micrometer.core.instrument.binder.kafka.KafkaClientMetrics.METRIC_NAME_PREFIX;
 import static org.apache.kafka.clients.consumer.ConsumerConfig.BOOTSTRAP_SERVERS_CONFIG;
 import static org.apache.kafka.clients.consumer.ConsumerConfig.GROUP_ID_CONFIG;
 import static org.apache.kafka.clients.consumer.ConsumerConfig.KEY_DESERIALIZER_CLASS_CONFIG;
@@ -37,7 +37,7 @@ class KafkaConsumerMetricsTest {
 
     @Test void shouldCreateMeters() {
         try (Consumer<String, String> consumer = createConsumer()) {
-            KafkaMetrics metrics = new KafkaMetrics(consumer);
+            KafkaClientMetrics metrics = new KafkaClientMetrics(consumer);
             MeterRegistry registry = new SimpleMeterRegistry();
 
             metrics.bindTo(registry);
@@ -50,7 +50,7 @@ class KafkaConsumerMetricsTest {
 
     @Test void shouldCreateMetersWithTags() {
         try (Consumer<String, String> consumer = createConsumer()) {
-            KafkaMetrics metrics = new KafkaMetrics(consumer, tags);
+            KafkaClientMetrics metrics = new KafkaClientMetrics(consumer, tags);
             MeterRegistry registry = new SimpleMeterRegistry();
 
             metrics.bindTo(registry);
