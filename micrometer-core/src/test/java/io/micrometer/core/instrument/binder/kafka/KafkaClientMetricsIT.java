@@ -60,7 +60,7 @@ class KafkaClientMetricsIT {
         int producerMetrics = registry.getMeters().size();
         assertThat(registry.getMeters()).hasSizeGreaterThan(0);
         assertThat(registry.getMeters())
-                .extracting(m -> m.getId().getTag("version"))
+                .extracting(m -> m.getId().getTag("kafka-version"))
                 .allMatch(v -> !v.isEmpty());
 
         Properties consumerConfigs = new Properties();
@@ -79,7 +79,7 @@ class KafkaClientMetricsIT {
         int producerAndConsumerMetrics = registry.getMeters().size();
         assertThat(registry.getMeters()).hasSizeGreaterThan(producerMetrics);
         assertThat(registry.getMeters())
-                .extracting(m -> m.getId().getTag("version"))
+                .extracting(m -> m.getId().getTag("kafka-version"))
                 .allMatch(v -> !v.isEmpty());
 
         String topic = "test";
@@ -93,7 +93,7 @@ class KafkaClientMetricsIT {
         int producerAndConsumerMetricsAfterSend = registry.getMeters().size();
         assertThat(registry.getMeters()).hasSizeGreaterThan(producerAndConsumerMetrics);
         assertThat(registry.getMeters())
-                .extracting(m -> m.getId().getTag("version"))
+                .extracting(m -> m.getId().getTag("kafka-version"))
                 .allMatch(v -> !v.isEmpty());
 
         consumer.subscribe(Collections.singletonList(topic));
@@ -106,7 +106,7 @@ class KafkaClientMetricsIT {
 
         assertThat(registry.getMeters()).hasSizeGreaterThan(producerAndConsumerMetricsAfterSend);
         assertThat(registry.getMeters())
-                .extracting(m -> m.getId().getTag("version"))
+                .extracting(m -> m.getId().getTag("kafka-version"))
                 .allMatch(v -> !v.isEmpty());
 
         //Printing out for discovery purposes
