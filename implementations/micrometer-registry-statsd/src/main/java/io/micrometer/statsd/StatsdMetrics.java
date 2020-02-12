@@ -19,7 +19,7 @@ import io.micrometer.core.instrument.MeterRegistry;
 import io.micrometer.core.instrument.binder.MeterBinder;
 
 /**
- * @deprecated statsd metrics are no longer available
+ * @deprecated statsd metrics are no longer available since 1.4.0
  */
 @Deprecated
 public class StatsdMetrics implements MeterBinder {
