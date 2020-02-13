@@ -17,6 +17,7 @@ def VERSIONS = [
         // <=1.5.11 or 1.5.18 doesn't break with Micrometer, but open metrics won't be correct necessarily.
         'com.netflix.hystrix:hystrix-core:1.5.12',
         'com.netflix.spectator:spectator-reg-atlas:latest.release',
+        'com.newrelic.agent.java:newrelic-api:latest.release',
         'com.signalfx.public:signalfx-java:latest.release',
         'com.squareup.okhttp3:okhttp:latest.release',
         'com.wavefront:wavefront-sdk-java:latest.release',
@@ -52,7 +53,8 @@ def VERSIONS = [
         'org.hdrhistogram:HdrHistogram:latest.release',
         'org.hibernate:hibernate-entitymanager:latest.release',
         'org.hsqldb:hsqldb:latest.release',
-        'org.jooq:jooq:latest.release',
+        // Pin version temporarily to restore builds. See gh-1852
+        'org.jooq:jooq:3.12.+',
         'org.jsr107.ri:cache-ri-impl:1.0.0',
         'org.junit.jupiter:junit-jupiter:latest.release',
         'org.junit.platform:junit-platform-launcher:latest.release',

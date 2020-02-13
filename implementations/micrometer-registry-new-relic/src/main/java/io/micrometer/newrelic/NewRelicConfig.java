@@ -1,5 +1,5 @@
 /**
- * Copyright 2017 Pivotal Software, Inc.
+ * Copyright 2019 Pivotal Software, Inc.
  * <p>
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,8 +15,8 @@
  */
 package io.micrometer.newrelic;
 
-import io.micrometer.core.instrument.config.MissingRequiredConfigurationException;
 import io.micrometer.core.instrument.step.StepRegistryConfig;
+import io.micrometer.core.lang.Nullable;
 
 /**
  * Configuration for {@link NewRelicMeterRegistry}.
@@ -32,46 +32,75 @@ public interface NewRelicConfig extends StepRegistryConfig {
     }
 
     /**
-     * When this is {@code false}, the New Relic eventType value will be set to {@link #eventType()}. Otherwise, the meter name will be used.
+     * When {@code true}, the meter name will be used as the {@code eventType} for the NewRelic event.
+     * When {@code false}, the {@code eventType} will be set to {@link #eventType()}.
+     * <br><br>
      * Defaults to {@code false}.
-     * @return whether to use meter names as the New Relic eventType value
+     *
+     * @return whether to use meter names as the NewRelic {@code eventType}
      */
     default boolean meterNameEventTypeEnabled() {
-        String v = get(prefix() + ".meterNameEventTypeEnabled");
-        return Boolean.parseBoolean(v);
+        return Boolean.parseBoolean(get(prefix() + ".meterNameEventTypeEnabled"));
     }
 
     /**
-     * This configuration property will only be used if {@link #meterNameEventTypeEnabled()} is {@code false}.
-     * Default value is {@code MicrometerSample}.
+     * The {@code eventType} to use for events sent to NewRelic.
+     * <br><br>
+     * Ignored if {@link #meterNameEventTypeEnabled()} is {@code true}.
+     * <br><br>
+     * Defaults to {@code MicrometerSample}.
+     *
      * @return static eventType value to send to New Relic for all metrics.
      */
     default String eventType() {
         String v = get(prefix() + ".eventType");
-        if (v == null)
-            return "MicrometerSample";
-        return v;
-    }
-
-    default String apiKey() {
-        String v = get(prefix() + ".apiKey");
-        if (v == null)
-            throw new MissingRequiredConfigurationException("apiKey must be set to report metrics to New Relic");
-        return v;
-    }
-
-    default String accountId() {
-        String v = get(prefix() + ".accountId");
-        if (v == null)
-            throw new MissingRequiredConfigurationException("accountId must be set to report metrics to New Relic");
-        return v;
+        return (v == null) ? "MicrometerSample" : v;
     }
 
     /**
-     * @return The URI for the New Relic insights API. The default is
-     * {@code https://insights-collector.newrelic.com}. If you need to pass through
-     * a proxy, you can change this value.
+     * The {@link NewRelicIntegration} method to use for reporting metric data.
+     * <br><br>
+     * Defaults to {@link NewRelicIntegration#API}.
+     *
+     * @return The NewRelic integration method
      */
+    default NewRelicIntegration integration() {
+        return NewRelicIntegration.fromString(get(prefix() + ".integration")).orElse(NewRelicIntegration.API);
+    }
+
+    /**
+     * The <a href="https://docs.newrelic.com/docs/apis/get-started/intro-apis/types-new-relic-api-keys#event-insert-key">NewRelic Insights API key</a> to use.
+     * <br><br>
+     * Ignored when {@link #integration()} is not {@link NewRelicIntegration#API}.
+     *
+     * @return The NewRelic Insights API key
+     */
+    @Nullable
+    default String apiKey() {
+        return get(prefix() + ".apiKey");
+    }
+
+    /**
+     * The ID of the NewRelic account to report Insights data to.
+     * <br><br>
+     * Ignored when {@link #integration()} is not {@link NewRelicIntegration#API}.
+     *
+     * @return The NewRelic account ID
+     */
+    @Nullable
+    default String accountId() {
+        return get(prefix() + ".accountId");
+    }
+
+    /**
+     * The URI for the New Relic insights API to report events to.
+     * The default is {@code https://insights-collector.newrelic.com}, but this can be changed if needed to pass data through a proxy.
+     * <br><br>
+     * Ignored when {@link #integration()} is not {@link NewRelicIntegration#API}.
+     *
+     * @return The NewRelic Insights API endpoint to use
+     */
+    @Nullable
     default String uri() {
         String v = get(prefix() + ".uri");
         return (v == null) ? "https://insights-collector.newrelic.com" : v;

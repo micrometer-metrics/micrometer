@@ -2,6 +2,11 @@ dependencies {
     api project(':micrometer-core')
 
     implementation 'org.slf4j:slf4j-api'
+    implementation 'com.newrelic.agent.java:newrelic-api'
 
     testImplementation project(':micrometer-test')
+
+    testImplementation 'ch.qos.logback:logback-classic'
+    testImplementation 'com.fasterxml.jackson.core:jackson-databind'
+    testImplementation 'com.google.guava:guava'
 }

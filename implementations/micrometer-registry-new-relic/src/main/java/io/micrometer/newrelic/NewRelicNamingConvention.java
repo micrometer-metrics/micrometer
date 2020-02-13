@@ -1,5 +1,5 @@
 /**
- * Copyright 2017 Pivotal Software, Inc.
+ * Copyright 2019 Pivotal Software, Inc.
  * <p>
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,8 +17,8 @@ package io.micrometer.newrelic;
 
 import io.micrometer.core.instrument.Meter;
 import io.micrometer.core.instrument.config.NamingConvention;
-import io.micrometer.core.instrument.util.StringEscapeUtils;
 import io.micrometer.core.lang.Nullable;
+
 import java.util.regex.Pattern;
 
 /**
@@ -28,6 +28,7 @@ import java.util.regex.Pattern;
  * @since 1.0.0
  */
 public class NewRelicNamingConvention implements NamingConvention {
+
     private final NamingConvention delegate;
 
     private static final Pattern INVALID_CHARACTERS_PATTERN = Pattern.compile("[^\\w:]");
@@ -35,6 +36,7 @@ public class NewRelicNamingConvention implements NamingConvention {
     private static String toValidNewRelicString(String input) {
         return INVALID_CHARACTERS_PATTERN.matcher(input).replaceAll("_");
     }
+
     public NewRelicNamingConvention() {
         this(NamingConvention.camelCase);
     }
@@ -45,16 +47,16 @@ public class NewRelicNamingConvention implements NamingConvention {
 
     @Override
     public String name(String name, Meter.Type type, @Nullable String baseUnit) {
-        return StringEscapeUtils.escapeJson(toValidNewRelicString(delegate.name(name, type, baseUnit)));
+        return toValidNewRelicString(delegate.name(name, type, baseUnit));
     }
 
     @Override
     public String tagKey(String key) {
-        return StringEscapeUtils.escapeJson(toValidNewRelicString(delegate.tagKey(key)));
+        return toValidNewRelicString(delegate.tagKey(key));
     }
 
     @Override
     public String tagValue(String value) {
-        return StringEscapeUtils.escapeJson(delegate.tagValue(value));
+        return delegate.tagValue(value);
     }
 }
