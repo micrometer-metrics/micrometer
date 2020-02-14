@@ -876,13 +876,15 @@ class NewRelicMeterRegistryTest {
     }
 
     private List<Map<String, Object>> jsonListToMap(String json) {
-        return readJson(json, new TypeReference<>() {
+        //noinspection Convert2Diamond
+        return readJson(json, new TypeReference<List<Map<String, Object>>>() {
             // this space intentionally left blank
         });
     }
 
     private Map<String, Object> jsonObjectToMap(String json) {
-        return readJson(json, new TypeReference<>() {
+        //noinspection Convert2Diamond
+        return readJson(json, new TypeReference<Map<String, Object>>() {
             // this space intentionally left blank
         });
     }
