@@ -131,7 +131,7 @@ class MetricsTurboFilter extends TurboFilter {
     @Override
     public FilterReply decide(Marker marker, Logger logger, Level level, String format, Object[] params, Throwable t) {
         // If format is null we can short circuit
-        if(format == null) {
+        if (format == null) {
             return FilterReply.NEUTRAL;
         }
 
