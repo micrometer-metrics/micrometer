@@ -15,6 +15,7 @@
  */
 package io.micrometer.core.instrument.binder.kafka;
 
+import com.google.common.collect.Iterables;
 import io.micrometer.core.annotation.Incubating;
 import io.micrometer.core.instrument.FunctionCounter;
 import io.micrometer.core.instrument.Gauge;
@@ -61,6 +62,7 @@ class KafkaMetrics implements MeterBinder {
 
     private final Supplier<Map<MetricName, ? extends Metric>> metricsSupplier;
     private final Iterable<Tag> extraTags;
+    private final int extraTagsSize;
 
     /**
      * Keeps track of current set of metrics. When this values change, metrics are bound again.
@@ -76,6 +78,7 @@ class KafkaMetrics implements MeterBinder {
     KafkaMetrics(Supplier<Map<MetricName, ? extends Metric>> metricsSupplier, Iterable<Tag> extraTags) {
         this.metricsSupplier = metricsSupplier;
         this.extraTags = extraTags;
+        this.extraTagsSize = Iterables.size(extraTags);
     }
 
     @Override public void bindTo(MeterRegistry registry) {
@@ -113,6 +116,17 @@ class KafkaMetrics implements MeterBinder {
                     metrics.forEach((name, metric) -> {
                         //Filter out metrics from group "app-info", that includes metadata
                         if (METRIC_GROUP_APP_INFO.equals(name.group())) return;
+                        //Kafka has metrics with lower number of tags (e.g. with/without topic or partition tag)
+                        //Remove meters with lower number of tags
+                        boolean hasLessTags = false;
+                        for (Meter meter : registry.find(name.name()).meters()) {
+                            if (meter.getId().getTags().size() < (metricTags(metric).size() + extraTagsSize)) {
+                                registry.remove(meter);
+                            } else {
+                                hasLessTags = true;
+                            }
+                        }
+                        if (hasLessTags) return;
                         //Filter out non-numeric values
                         if (metric.metricValue() instanceof Double
                                 || metric.metricValue() instanceof Float

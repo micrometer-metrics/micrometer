@@ -105,7 +105,7 @@ class KafkaMetricsTest {
         assertThat(registry.getMeters()).hasSize(1);
     }
 
-    @Test void shouldRemoveMeterWithLessTags() {
+    @Test void shouldRemoveNewerMeterWithLessTags() {
         //Given
         Map<String, String> tags = new LinkedHashMap<>();
         Supplier<Map<MetricName, ? extends Metric>> supplier = () -> {
@@ -129,5 +129,27 @@ class KafkaMetricsTest {
         //Then
         assertThat(registry.getMeters()).hasSize(1);
         assertThat(registry.getMeters().get(0).getId().getTags()).hasSize(2);
+    }
+
+    @Test void shouldRemoveMeterWithLessTags() {
+        //Given
+        Supplier<Map<MetricName, ? extends Metric>> supplier = () -> {
+            Map<String, String> tags = new LinkedHashMap<>();
+            Map<MetricName, KafkaMetric> metrics = new LinkedHashMap<>();
+            MetricName metricName = new MetricName("a", "b", "c", tags);
+            tags.put("key0", "value0");
+            MetricName metricName2 = new MetricName("a", "b", "c", tags);
+            KafkaMetric metric = new KafkaMetric(this, metricName, new Value(), new MetricConfig(), Time.SYSTEM);
+            metrics.put(metricName, metric);
+            metrics.put(metricName2, metric);
+            return metrics;
+        };
+        KafkaMetrics kafkaMetrics = new KafkaMetrics(supplier);
+        MeterRegistry registry = new SimpleMeterRegistry();
+        //When
+        kafkaMetrics.checkAndBindMetrics(registry);
+        //Then
+        assertThat(registry.getMeters()).hasSize(1);
+        assertThat(registry.getMeters().get(0).getId().getTags()).hasSize(2); // version + key0
     }
 }
