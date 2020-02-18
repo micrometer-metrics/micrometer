@@ -15,7 +15,6 @@
  */
 package io.micrometer.core.instrument.binder.kafka;
 
-import com.google.common.collect.Iterables;
 import io.micrometer.core.annotation.Incubating;
 import io.micrometer.core.instrument.FunctionCounter;
 import io.micrometer.core.instrument.Gauge;
@@ -78,7 +77,9 @@ class KafkaMetrics implements MeterBinder {
     KafkaMetrics(Supplier<Map<MetricName, ? extends Metric>> metricsSupplier, Iterable<Tag> extraTags) {
         this.metricsSupplier = metricsSupplier;
         this.extraTags = extraTags;
-        this.extraTagsSize = Iterables.size(extraTags);
+        int i = 0;
+        for (Tag ignored : extraTags) i++;
+        this.extraTagsSize = i;
     }
 
     @Override public void bindTo(MeterRegistry registry) {
