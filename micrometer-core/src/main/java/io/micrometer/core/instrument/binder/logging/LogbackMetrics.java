@@ -130,7 +130,9 @@ class MetricsTurboFilter extends TurboFilter {
 
     @Override
     public FilterReply decide(Marker marker, Logger logger, Level level, String format, Object[] params, Throwable t) {
-        // If format is null we can short circuit
+        // When filter is asked for decision for an isDebugEnabled call or similar test, there is no message (ie format) 
+        // and no intention to log anything with this call. We will not increment counters and can return immediately and
+        // avoid the relatively expensive ThreadLocal access below. See also logbacks Logger.callTurboFilters().
         if (format == null) {
             return FilterReply.NEUTRAL;
         }
