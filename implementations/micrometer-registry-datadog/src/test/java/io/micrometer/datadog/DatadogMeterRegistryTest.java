@@ -33,6 +33,7 @@ class DatadogMeterRegistryTest {
     @Issue("#463")
     @Test
     void encodeMetricName(@WiremockResolver.Wiremock WireMockServer server) {
+        Clock clock = new MockClock()
         DatadogMeterRegistry registry = new DatadogMeterRegistry(new DatadogConfig() {
             @Override
             public String uri() {
@@ -63,11 +64,11 @@ class DatadogMeterRegistryTest {
             public boolean enabled() {
                 return false;
             }
-        }, Clock.SYSTEM);
+        }, clock);
 
         server.stubFor(any(anyUrl()));
 
-        Counter.builder("my.dd.counter1#abc")
+        Counter.builder("my.counter#abc")
             .baseUnit(TimeUnit.MICROSECONDS.toString().toLowerCase())
             .description("metric description")
             .register(registry)
@@ -75,7 +76,7 @@ class DatadogMeterRegistryTest {
         registry.publish();
 
         server.verify(putRequestedFor(
-                urlMatching("/api/v1/series?api_key=fake"))
+                urlEqualTo("/api/v1/series?api_key=fake"))
                 .withRequestBody(equalToJson("{\"series\":[{\"metric\":\"my.dd.counter1#abc\",\"points\":[[1582636851,0.0]],\"type\":\"count\",\"unit\":\"microsecond\",\"tags\":[\"statistic:count\"]}]}")
                 ));
 
@@ -84,6 +85,7 @@ class DatadogMeterRegistryTest {
 
     @Test
     void testWithDescriptionEnabled(@WiremockResolver.Wiremock WireMockServer server) {
+        Clock clock = new MockClock()
         DatadogMeterRegistry registry = new DatadogMeterRegistry(new DatadogConfig() {
             @Override
             public String uri() {
@@ -114,11 +116,11 @@ class DatadogMeterRegistryTest {
             public boolean enabled() {
                 return false;
             }
-        }, Clock.SYSTEM);
+        }, clock);
 
         server.stubFor(any(anyUrl()));
 
-        Counter.builder("my.dd.counter2#abc")
+        Counter.builder("my.counter#abc")
                 .baseUnit(TimeUnit.MICROSECONDS.toString().toLowerCase())
                 .description("metric description")
                 .register(registry)
@@ -126,7 +128,7 @@ class DatadogMeterRegistryTest {
         registry.publish();
 
         server.verify(putRequestedFor(
-                urlMatching("/api/v1/metrics/my.dd.counter2%23abc?api_key=fake&application_key=fake"))
+                urlEqualTo("/api/v1/metrics/my.counter%23abc?api_key=fake&application_key=fake"))
                 .withRequestBody(equalToJson("{\"description\":\"metric description\"}")
                 ));
 
