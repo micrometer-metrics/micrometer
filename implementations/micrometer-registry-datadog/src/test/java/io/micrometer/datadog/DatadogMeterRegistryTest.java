@@ -64,8 +64,8 @@ class DatadogMeterRegistryTest {
 
         Counter.builder("my.counter#abc")
             .baseUnit(TimeUnit.MICROSECONDS.toString().toLowerCase())
-            .register(registry)
             .description("metric description")
+            .register(registry)
             .increment(Math.PI);
         registry.publish();
 
@@ -110,8 +110,8 @@ class DatadogMeterRegistryTest {
 
         Counter.builder("my.counter#abc")
                 .baseUnit(TimeUnit.MICROSECONDS.toString().toLowerCase())
-                .register(registry)
                 .description("metric description")
+                .register(registry)
                 .increment(Math.PI);
         registry.publish();
 
