@@ -129,6 +129,11 @@ class DatadogMeterRegistryTest {
         registry.publish();
 
         server.verify(putRequestedFor(
+                urlEqualTo("/api/v1/series?api_key=fake"))
+                .withRequestBody(equalToJson("{\"series\":[{\"metric\":\"my.dd.counter1#abc\",\"points\":[[0,0.0]],\"type\":\"count\",\"unit\":\"microsecond\",\"tags\":[\"statistic:count\"]}]}")
+                ));
+
+        server.verify(putRequestedFor(
                 urlEqualTo("/api/v1/metrics/my.counter%23abc?api_key=fake&application_key=fake"))
                 .withRequestBody(equalToJson("{\"description\":\"metric description\"}")
                 ));
