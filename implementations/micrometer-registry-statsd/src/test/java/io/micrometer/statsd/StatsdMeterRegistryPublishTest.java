@@ -52,6 +52,8 @@ class StatsdMeterRegistryPublishTest {
     CountDownLatch serverLatch;
 
     @ParameterizedTest
+    // test behavior is not stable on at least macOS, so only run on Linux for now
+    @EnabledOnOs(OS.LINUX)
     @EnumSource(StatsdProtocol.class)
     void receiveMetricsSuccessfully(StatsdProtocol protocol) throws InterruptedException {
         serverLatch = new CountDownLatch(3);
