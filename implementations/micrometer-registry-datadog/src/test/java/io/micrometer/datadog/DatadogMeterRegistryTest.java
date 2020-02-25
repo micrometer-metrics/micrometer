@@ -55,6 +55,11 @@ class DatadogMeterRegistryTest {
             }
 
             @Override
+            public boolean descriptions() {
+                return false;
+            }
+
+            @Override
             public boolean enabled() {
                 return false;
             }
@@ -101,8 +106,13 @@ class DatadogMeterRegistryTest {
             }
 
             @Override
-            public boolean enabled() {
+            public boolean descriptions() {
                 return true;
+            }
+
+            @Override
+            public boolean enabled() {
+                return false;
             }
         }, Clock.SYSTEM);
 
@@ -121,7 +131,7 @@ class DatadogMeterRegistryTest {
                 ));
 
         server.verify(putRequestedFor(
-                urlMatching("/api/v1/metrics/my.counter%23abc?.+"))
+                urlMatching("/api/v1/metrics/my.counter%23abc?api_key=fake&application_key=fake"))
                 .withRequestBody(equalToJson("{\"description\":\"metric description\"}")
                 ));
 
