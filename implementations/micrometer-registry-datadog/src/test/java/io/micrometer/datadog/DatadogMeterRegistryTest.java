@@ -78,7 +78,7 @@ class DatadogMeterRegistryTest {
 
         server.verify(putRequestedFor(
                 urlEqualTo("/api/v1/series?api_key=fake"))
-                .withRequestBody(equalToJson("{\"series\":[{\"metric\":\"my.dd.counter1#abc\",\"points\":[[1582636851,0.0]],\"type\":\"count\",\"unit\":\"microsecond\",\"tags\":[\"statistic:count\"]}]}")
+                .withRequestBody(equalToJson("{\"series\":[{\"metric\":\"my.dd.counter1#abc\",\"points\":[[0,0.0]],\"type\":\"count\",\"unit\":\"microsecond\",\"tags\":[\"statistic:count\"]}]}")
                 ));
 
         registry.close();
