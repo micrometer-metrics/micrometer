@@ -38,7 +38,7 @@ class DatadogMetricMetadataTest {
                 null
         );
 
-        assertThat(metricMetadata.editMetadataBody()).isEqualTo("{\"type\":\"count\",\"description\":\"The /\\\"recent cpu usage\\\" for the Java Virtual Machine process\"}");
+        assertThat(metricMetadata.editDescriptionMetadataBody()).isEqualTo("{\"description\":\"The /\\\"recent cpu usage\\\" for the Java Virtual Machine process\"}");
     }
 
     @Test
@@ -62,7 +62,7 @@ class DatadogMetricMetadataTest {
             false,
             null);
 
-        assertThat(metricMetadata.editMetadataBody()).isEqualTo("{\"type\":\"count\",\"unit\":\"millisecond\"}");
+        assertThat(metricMetadata.editDescriptionMetadataBody()).isEqualTo(null);
     }
 
 }
