@@ -242,10 +242,9 @@ public class DatadogMeterRegistry extends StepMeterRegistry {
                 .findAny()
                 .map(t -> ",\"host\":\"" + escapeJson(t.getValue()) + "\"")
                 .orElse("");
-
         // Create type attribute
         String type = ",\"type\":\"" + DatadogMetricMetadata.sanitizeType(statistic) + "\"";
-        // Create type attribute
+        // Create unit attribute
         String unit = "";
         if (id.getBaseUnit() != null || overrideBaseUnit != null) {
             unit = ",\"unit\":\"" + DatadogMetricMetadata.sanitizeBaseUnit(id.getBaseUnit(), overrideBaseUnit) + "\"";
