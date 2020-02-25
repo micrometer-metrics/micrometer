@@ -33,7 +33,7 @@ class DatadogMeterRegistryTest {
     @Issue("#463")
     @Test
     void encodeMetricName(@WiremockResolver.Wiremock WireMockServer server) {
-        Clock clock = new MockClock()
+        Clock clock = new MockClock();
         DatadogMeterRegistry registry = new DatadogMeterRegistry(new DatadogConfig() {
             @Override
             public String uri() {
@@ -85,7 +85,7 @@ class DatadogMeterRegistryTest {
 
     @Test
     void testWithDescriptionEnabled(@WiremockResolver.Wiremock WireMockServer server) {
-        Clock clock = new MockClock()
+        Clock clock = new MockClock();
         DatadogMeterRegistry registry = new DatadogMeterRegistry(new DatadogConfig() {
             @Override
             public String uri() {
