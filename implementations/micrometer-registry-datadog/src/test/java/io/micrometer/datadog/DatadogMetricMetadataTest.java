@@ -33,7 +33,7 @@ class DatadogMetricMetadataTest {
                         .tag("key", "value")
                         .description("The /\"recent cpu usage\" for the Java Virtual Machine process")
                         .register(new SimpleMeterRegistry()).getId(),
-                Statistic.COUNT
+                true
         );
 
         assertThat(metricMetadata.editDescriptionMetadataBody()).isEqualTo("{\"description\":\"The /\\\"recent cpu usage\\\" for the Java Virtual Machine process\"}");
@@ -56,7 +56,7 @@ class DatadogMetricMetadataTest {
                         return null;
                     }
                 }, Clock.SYSTEM)).getId(),
-            Statistic.TOTAL_TIME);
+            false);
 
         assertThat(metricMetadata.editDescriptionMetadataBody()).isEqualTo(null);
     }
