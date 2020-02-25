@@ -18,7 +18,6 @@ package io.micrometer.datadog;
 import io.micrometer.core.instrument.Meter;
 import io.micrometer.core.instrument.Statistic;
 import io.micrometer.core.instrument.util.StringEscapeUtils;
-import io.micrometer.core.lang.Nullable;
 
 import java.util.*;
 
@@ -77,7 +76,7 @@ class DatadogMetricMetadata {
         return body;
     }
 
-    static String sanitizeBaseUnit(String baseUnit, String overrideBaseUnit){
+    static String sanitizeBaseUnit(String baseUnit, String overrideBaseUnit) {
         String sanitizeBaseUnit = overrideBaseUnit != null ? overrideBaseUnit : baseUnit;
         if (sanitizeBaseUnit != null) {
             String whitelistedBaseUnit = UNIT_WHITELIST.contains(sanitizeBaseUnit) ? sanitizeBaseUnit :
@@ -85,14 +84,14 @@ class DatadogMetricMetadata {
 
             if (whitelistedBaseUnit != null) {
                 sanitizeBaseUnit = whitelistedBaseUnit;
-            }else{
+            } else {
                 sanitizeBaseUnit = null;
             }
         }
         return sanitizeBaseUnit;
     }
 
-    static String sanitizeType(Statistic statistic){
+    static String sanitizeType(Statistic statistic) {
         switch (statistic) {
             case COUNT:
             case TOTAL:

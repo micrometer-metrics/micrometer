@@ -247,7 +247,7 @@ public class DatadogMeterRegistry extends StepMeterRegistry {
         String type = ",\"type\":\"" + DatadogMetricMetadata.sanitizeType(statistic) + "\"";
         // Create type attribute
         String unit = "";
-        if(id.getBaseUnit() != null || overrideBaseUnit != null) {
+        if (id.getBaseUnit() != null || overrideBaseUnit != null) {
             unit = ",\"unit\":\"" + DatadogMetricMetadata.sanitizeBaseUnit(id.getBaseUnit(), overrideBaseUnit) + "\"";
         }
         // Create tags attribute
