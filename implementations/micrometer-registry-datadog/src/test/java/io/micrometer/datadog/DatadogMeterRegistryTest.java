@@ -71,12 +71,12 @@ class DatadogMeterRegistryTest {
             .baseUnit(TimeUnit.MICROSECONDS.toString().toLowerCase())
             .description("metric description")
             .register(registry)
-            .increment(1);
+            .increment(Math.PI);
         registry.publish();
 
         server.verify(putRequestedFor(
                 urlMatching("/api/v1/series?api_key=fake"))
-                .withRequestBody(equalToJson("{\"series\":[{\"metric\":\"my.counter#abc\",\"points\":[[1,0.0]],\"type\":\"count\",\"unit\":\"microsecond\",\"tags\":[\"statistic:count\"]}]}")
+                .withRequestBody(equalToJson("{\"series\":[{\"metric\":\"my.counter#abc\",\"points\":[[1582636851,0.0]],\"type\":\"count\",\"unit\":\"microsecond\",\"tags\":[\"statistic:count\"]}]}")
                 ));
 
         registry.close();
@@ -124,11 +124,6 @@ class DatadogMeterRegistryTest {
                 .register(registry)
                 .increment(Math.PI);
         registry.publish();
-
-//        server.verify(putRequestedFor(
-//                urlMatching("/api/v1/series?api_key=fake"))
-//                .withRequestBody(equalToJson("{\"series\":[{\"metric\":\"my.counter#abc\",\"points\":[[1,0.0]],\"type\":\"count\",\"unit\":\"microsecond\",\"tags\":[\"statistic:count\"]}]}")
-//                ));
 
         server.verify(putRequestedFor(
                 urlMatching("/api/v1/metrics/my.counter%23abc?api_key=fake&application_key=fake"))
