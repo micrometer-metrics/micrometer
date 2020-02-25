@@ -65,13 +65,65 @@ class DatadogMeterRegistryTest {
         Counter.builder("my.counter#abc")
             .baseUnit(TimeUnit.MICROSECONDS.toString().toLowerCase())
             .register(registry)
+            .description("metric description")
             .increment(Math.PI);
         registry.publish();
 
         server.verify(putRequestedFor(
-            urlMatching("/api/v1/metrics/my.counter%23abc?.+"))
-            .withRequestBody(equalToJson("{\"type\":\"count\",\"unit\":\"microsecond\"}")
-            ));
+                urlMatching("/api/v1/series?api_key=fake"))
+                .withRequestBody(equalToJson("{\"series\":[{\"metric\":\"my.counter#abc\",\"points\":[[1582634980,0.0]],\"type\":\"count\",\"unit\":\"microsecond\",\"tags\":[\"statistic:count\"]}]}")
+                ));
+
+        registry.close();
+    }
+
+    @Test
+    void testWithDescriptionEnabled(@WiremockResolver.Wiremock WireMockServer server) {
+        DatadogMeterRegistry registry = new DatadogMeterRegistry(new DatadogConfig() {
+            @Override
+            public String uri() {
+                return server.baseUrl();
+            }
+
+            @Override
+            public String get(String key) {
+                return null;
+            }
+
+            @Override
+            public String apiKey() {
+                return "fake";
+            }
+
+            @Override
+            public String applicationKey() {
+                return "fake";
+            }
+
+            @Override
+            public boolean enabled() {
+                return true;
+            }
+        }, Clock.SYSTEM);
+
+        server.stubFor(any(anyUrl()));
+
+        Counter.builder("my.counter#abc")
+                .baseUnit(TimeUnit.MICROSECONDS.toString().toLowerCase())
+                .register(registry)
+                .description("metric description")
+                .increment(Math.PI);
+        registry.publish();
+
+        server.verify(putRequestedFor(
+                urlMatching("/api/v1/series?api_key=fake"))
+                .withRequestBody(equalToJson("{\"series\":[{\"metric\":\"my.counter#abc\",\"points\":[[1582634980,0.0]],\"type\":\"count\",\"unit\":\"microsecond\",\"tags\":[\"statistic:count\"]}]}")
+                ));
+
+        server.verify(putRequestedFor(
+                urlMatching("/api/v1/metrics/my.counter%23abc?.+"))
+                .withRequestBody(equalToJson("{\"description\":\"metric description\"}")
+                ));
 
         registry.close();
     }
