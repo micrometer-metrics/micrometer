@@ -62,7 +62,7 @@ public interface DatadogConfig extends StepRegistryConfig {
      */
     default String uri() {
         String v = get(prefix() + ".uri");
-        return v == null ? "https://app.datadoghq.com" : v;
+        return v == null ? "https://api.datadoghq.com" : v;
     }
 
     /**
