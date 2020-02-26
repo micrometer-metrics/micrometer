@@ -15,7 +15,7 @@
  */
 package io.micrometer.core.instrument.binder.cache;
 
-import com.hazelcast.core.IMap;
+import com.hazelcast.map.IMap;
 import io.micrometer.core.instrument.*;
 import io.micrometer.core.instrument.binder.BaseUnits;
 import io.micrometer.core.lang.NonNullApi;

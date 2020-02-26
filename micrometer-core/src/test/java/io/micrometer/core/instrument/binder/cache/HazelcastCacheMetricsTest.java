@@ -16,11 +16,11 @@
 package io.micrometer.core.instrument.binder.cache;
 
 import com.hazelcast.core.Hazelcast;
-import com.hazelcast.core.IMap;
-import com.hazelcast.monitor.LocalMapStats;
-import com.hazelcast.monitor.NearCacheStats;
-import com.hazelcast.monitor.impl.LocalMapStatsImpl;
-import com.hazelcast.monitor.impl.NearCacheStatsImpl;
+import com.hazelcast.map.IMap;
+import com.hazelcast.map.LocalMapStats;
+import com.hazelcast.nearcache.NearCacheStats;
+import com.hazelcast.internal.monitor.impl.LocalMapStatsImpl;
+import com.hazelcast.internal.monitor.impl.NearCacheStatsImpl;
 
 import io.micrometer.core.instrument.FunctionCounter;
 import io.micrometer.core.instrument.FunctionTimer;
@@ -90,7 +90,7 @@ class HazelcastCacheMetricsTest extends AbstractCacheMetricsTest {
         assertThat(nearEvictions.value()).isEqualTo(nearCacheStats.getEvictions());
 
         // timings
-        TimeUnit timeUnit = TimeUnit.NANOSECONDS;
+        TimeUnit timeUnit = TimeUnit.MILLISECONDS;
         FunctionTimer getsLatency = fetch(meterRegistry, "cache.gets.latency").functionTimer();
         assertThat(getsLatency.count()).isEqualTo(localMapStats.getGetOperationCount());
         assertThat(getsLatency.totalTime(timeUnit)).isEqualTo(localMapStats.getTotalGetLatency());
