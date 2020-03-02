@@ -60,6 +60,7 @@ def VERSIONS = [
         'org.junit.vintage:junit-vintage-engine:latest.release',
         'org.latencyutils:LatencyUtils:latest.release',
         'org.mockito:mockito-core:latest.release',
+        'org.mockito:mockito-inline:latest.release',
         'org.mongodb:mongo-java-driver:latest.release',
         'org.slf4j:slf4j-api:1.7.+',
         'org.springframework:spring-context:4.+',
