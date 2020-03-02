@@ -1,7 +1,7 @@
 buildscript {
     repositories {
         jcenter()
-        maven { url 'https://plugins.gradle.org/m2/' }
+        gradlePluginPortal()
         mavenLocal()
     }
     dependencies {
@@ -195,7 +195,7 @@ subprojects {
 }
 
 wrapper {
-    gradleVersion = '6.1.1'
+    gradleVersion = '6.2.1'
 }
 
 defaultTasks 'build'
