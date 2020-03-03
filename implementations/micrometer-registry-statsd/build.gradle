@@ -37,6 +37,8 @@ jar.dependsOn shadowJar
 publishing {
     publications {
         withType(MavenPublication) {
+            artifact(shadowJar)
+
             pom.withXml {
                 asNode()
                         .dependencies
