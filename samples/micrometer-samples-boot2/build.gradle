@@ -15,15 +15,15 @@ dependencyManagement {
 
 dependencies {
     ['atlas', 'azure-monitor', 'prometheus', 'datadog', 'elastic', 'ganglia', 'graphite', 'jmx', 'influx', 'statsd', 'new-relic', 'cloudwatch', 'cloudwatch2', 'signalfx', 'wavefront', 'elastic', 'dynatrace', 'humio', 'appoptics', 'stackdriver'].each { sys ->
-        compile project(":micrometer-registry-$sys")
+        implementation project(":micrometer-registry-$sys")
     }
 
-    compile 'org.springframework.boot:spring-boot-starter-web'
-    compile 'org.springframework.boot:spring-boot-starter-actuator'
-    compile 'org.springframework.integration:spring-integration-ws'
-    compile 'org.springframework.integration:spring-integration-xml'
+    implementation 'org.springframework.boot:spring-boot-starter-web'
+    implementation 'org.springframework.boot:spring-boot-starter-actuator'
+    implementation 'org.springframework.integration:spring-integration-ws'
+    implementation 'org.springframework.integration:spring-integration-xml'
 
     // For running on Java 9+
-    runtime 'javax.xml.soap:javax.xml.soap-api:1.4.0'
-    runtime 'com.sun.xml.messaging.saaj:saaj-impl:1.5.1'
+    runtimeOnly 'javax.xml.soap:javax.xml.soap-api:1.4.0'
+    runtimeOnly 'com.sun.xml.messaging.saaj:saaj-impl:1.5.1'
 }
