@@ -419,6 +419,7 @@ public class StatsdMeterRegistry extends MeterRegistry {
 
     /**
      * @deprecated queue size is no longer available since 1.4.0
+     * @return queue size
      */
     @Deprecated
     public int queueSize() {
@@ -427,6 +428,7 @@ public class StatsdMeterRegistry extends MeterRegistry {
 
     /**
      * @deprecated queue capacity is no longer available since 1.4.0
+     * @return queue capacity
      */
     @Deprecated
     public int queueCapacity() {
