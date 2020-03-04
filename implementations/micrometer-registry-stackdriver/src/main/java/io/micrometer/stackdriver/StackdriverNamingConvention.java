@@ -29,7 +29,6 @@ import io.micrometer.core.lang.Nullable;
  *
  *
  * @see <a href="https://cloud.google.com/monitoring/api/v3/metrics-details">"Naming rules" section on Stackdriver's reference documentation</a>
- * and
  * @see <a href="https://cloud.google.com/monitoring/quotas#custom_metrics_quotas">"Custom Metrics" on the Stackdriver's Quotas and limits reference documentation</a>
  * 
  * @author Jon Schneider
