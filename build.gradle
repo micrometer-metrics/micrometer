@@ -2,6 +2,9 @@ buildscript {
     repositories {
         jcenter()
         maven { url 'https://plugins.gradle.org/m2/' }
+        maven {
+            url 'https://repo.spring.io/plugins-release'
+        }
         mavenLocal()
     }
     dependencies {
@@ -10,6 +13,8 @@ buildscript {
         classpath 'com.netflix.nebula:gradle-extra-configurations-plugin:3.2.0'
         classpath 'me.champeau.gradle:jmh-gradle-plugin:0.5.0'
         classpath 'com.netflix.nebula:nebula-project-plugin:3.4.0'
+        classpath "gradle.plugin.com.dorongold.plugins:task-tree:1.3"
+        classpath "io.spring.nohttp:nohttp-gradle:0.0.4.RELEASE"
     }
 
     configurations.classpath.resolutionStrategy.cacheDynamicVersionsFor 0, 'minutes'
@@ -30,6 +35,7 @@ subprojects {
     if (project.name != 'micrometer-bom') {
         apply plugin: 'java'
         apply plugin: 'checkstyle'
+        apply plugin: 'io.spring.nohttp'
 
         tasks {
             compileJava {
