@@ -61,7 +61,7 @@ import java.util.logging.Logger;
 /**
  * NOTE: This file has been copied from {io.netty.util.internal.logging}.
  *
- * <a href="http://java.sun.com/javase/6/docs/technotes/guides/logging/index.html">java.util.logging</a>
+ * <a href="https://docs.oracle.com/javase/8/docs/technotes/guides/logging/index.html">java.util.logging</a>
  * logger.
  */
 class JdkLogger extends AbstractInternalLogger {
