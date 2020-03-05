@@ -78,7 +78,7 @@ public final class StringEscapeUtils {
      *
      * We also escape '\u2028' and '\u2029', which JavaScript interprets as
      * newline characters. This prevents eval() from failing with a syntax
-     * error. http://code.google.com/p/google-gson/issues/detail?id=341
+     * error. https://github.com/google/gson/issues/341
      */
     private static final String[] REPLACEMENT_CHARS;
 

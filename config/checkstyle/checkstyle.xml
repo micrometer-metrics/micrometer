@@ -34,4 +34,6 @@
 
         <module name="SuppressionCommentFilter"/>
     </module>
+
+    <module name="io.spring.nohttp.checkstyle.check.NoHttpCheck"/>
 </module>
