@@ -2,12 +2,16 @@ buildscript {
     repositories {
         jcenter()
         gradlePluginPortal()
+        maven {
+            url 'https://repo.spring.io/plugins-release'
+        }
         mavenLocal()
     }
     dependencies {
         classpath 'io.spring.gradle:spring-release-plugin:0.20.1'
         classpath 'me.champeau.gradle:jmh-gradle-plugin:0.5.0'
         classpath 'com.netflix.nebula:nebula-project-plugin:3.4.0'
+        classpath "io.spring.nohttp:nohttp-gradle:0.0.4.RELEASE"
 
         constraints {
             classpath('org.ow2.asm:asm:7.3.1') {
@@ -40,6 +44,7 @@ subprojects {
     if (project.name != 'micrometer-bom') {
         apply plugin: 'java-library'
         apply plugin: 'checkstyle'
+        apply plugin: 'io.spring.nohttp'
 
         java {
             // It is more idiomatic to define different features for different sets of optional
