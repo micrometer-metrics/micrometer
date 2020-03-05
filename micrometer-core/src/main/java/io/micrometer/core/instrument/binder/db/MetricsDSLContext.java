@@ -51,10 +51,12 @@ import java.util.stream.Stream;
  * <p>
  * This can be used as the regular JOOQ {@link DSLContext} but queries will be timed
  * and tags can be set for the query timed. For example:
- * <code><pre>
+ * <pre>
+ * <code>
  *     MetricsDSLContext jooq = MetricsDSLContext.withMetrics(DSL.using(configuration), meterRegistry, Tags.empty());
  *     jooq.tag("name", "selectAllAuthors").select(asterisk()).from("author").fetch();
- * </pre></code>
+ * </code>
+ * </pre>
  *
  * @author Jon Schneider
  * @since 1.4.0
