@@ -88,7 +88,7 @@ public class StepDistributionSummary extends AbstractDistributionSummary {
 
     @Override
     public long count() {
-        return (long) count.poll();
+        return count.poll();
     }
 
     @Override

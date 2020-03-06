@@ -1,5 +1,5 @@
 /**
- * Copyright 2017 Pivotal Software, Inc.
+ * Copyright 2020 Pivotal Software, Inc.
  * <p>
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,21 +15,25 @@
  */
 package io.micrometer.core.instrument.step;
 
-import io.micrometer.core.instrument.Clock;
-
-import java.util.concurrent.atomic.LongAdder;
+import java.util.concurrent.atomic.AtomicLong;
 import java.util.function.Supplier;
 
-public class StepLong extends StepValue<Long> {
-    private final LongAdder current = new LongAdder();
+import io.micrometer.core.instrument.Clock;
 
-    public StepLong(Clock clock, long stepMillis) {
+/**
+ * A class similar to {@link StepLong}, but records the maximum <b>positive</b>
+ * value recorded in steps as opposed accumulated values.
+ */
+class StepLongMax extends StepValue<Long> {
+    private final AtomicLong current = new AtomicLong(0);
+
+    public StepLongMax(Clock clock, long stepMillis) {
         super(clock, stepMillis);
     }
 
     @Override
     protected Supplier<Long> valueSupplier() {
-        return current::sumThenReset;
+        return () -> current.getAndSet(0L);
     }
 
     @Override
@@ -37,7 +41,16 @@ public class StepLong extends StepValue<Long> {
         return 0L;
     }
 
-    public LongAdder getCurrent() {
-        return current;
+    /**
+     * Record a positive amount.
+     *
+     * @throws {@link IllegalArgumentException} if the amount is negative.
+     */
+    void record(final long amount) {
+        if (amount < 0) {
+            throw new IllegalArgumentException("Only positive values can be recorded.");
+        }
+        current.updateAndGet(curr -> Math.max(curr, amount));
     }
+
 }
