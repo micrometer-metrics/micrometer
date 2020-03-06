@@ -1,8 +1,10 @@
 def VERSIONS = [
         'ch.qos.logback:logback-classic:1.2.+',
+        'colt:colt:1.2.0',
         'com.amazonaws:aws-java-sdk-cloudwatch:latest.release',
         'com.fasterxml.jackson.core:jackson-databind:latest.release',
         'com.github.ben-manes.caffeine:caffeine:latest.release',
+        'com.github.charithe:kafka-junit:4.1.2',
         'com.github.tomakehurst:wiremock-jre8:latest.release',
         'com.google.cloud:google-cloud-monitoring:latest.release',
         'com.google.dagger:dagger:2.11',
@@ -29,6 +31,7 @@ def VERSIONS = [
         'io.projectreactor:reactor-test:latest.release',
         'io.projectreactor.netty:reactor-netty:latest.release',
         'io.prometheus:simpleclient_common:latest.release',
+        'io.prometheus:simpleclient_pushgateway:latest.release',
         'javax.cache:cache-api:latest.release',
         'javax.inject:javax.inject:1',
         'javax.xml.bind:jaxb-api:2.3.+',
