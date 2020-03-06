@@ -31,6 +31,17 @@ public class StepTimer extends AbstractTimer {
     private final StepLong total;
     private final StepLongMax max;
 
+    /**
+     * Create a new {@code StepTimer}.
+     *
+     * @param id                            ID
+     * @param clock                         clock
+     * @param distributionStatisticConfig   distribution statistic configuration
+     * @param pauseDetector                 pause detector
+     * @param baseTimeUnit                  base time unit
+     * @param stepDurationMillis                    step in milliseconds
+     * @param supportsAggregablePercentiles whether it supports aggregable percentiles
+     */
     public StepTimer(final Id id, final Clock clock, final DistributionStatisticConfig distributionStatisticConfig,
         final PauseDetector pauseDetector, final TimeUnit baseTimeUnit, final long stepDurationMillis,
         final boolean supportsAggregablePercentiles

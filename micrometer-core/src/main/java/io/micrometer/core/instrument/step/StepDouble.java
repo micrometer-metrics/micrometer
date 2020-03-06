@@ -34,16 +34,16 @@ public class StepDouble extends StepValue<Double> {
     }
 
     @Override
-    public Supplier<Double> valueSupplier() {
+    protected Supplier<Double> valueSupplier() {
         return current::sumThenReset;
+    }
+
+    @Override
+    protected Double noValue() {
+        return 0.0;
     }
 
     public DoubleAdder getCurrent() {
         return current;
-    }
-
-    @Override
-    public Double noValue() {
-        return 0.0;
     }
 }

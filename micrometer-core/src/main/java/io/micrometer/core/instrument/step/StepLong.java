@@ -28,12 +28,12 @@ public class StepLong extends StepValue<Long> {
     }
 
     @Override
-    public Supplier<Long> valueSupplier() {
+    protected Supplier<Long> valueSupplier() {
         return current::sumThenReset;
     }
 
     @Override
-    public Long noValue() {
+    protected Long noValue() {
         return 0L;
     }
 

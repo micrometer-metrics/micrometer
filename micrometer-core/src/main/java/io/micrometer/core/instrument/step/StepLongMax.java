@@ -32,8 +32,13 @@ class StepLongMax extends StepValue<Long> {
     }
 
     @Override
-    public Supplier<Long> valueSupplier() {
+    protected Supplier<Long> valueSupplier() {
         return () -> current.getAndSet(0L);
+    }
+
+    @Override
+    protected Long noValue() {
+        return 0L;
     }
 
     /**
@@ -48,8 +53,4 @@ class StepLongMax extends StepValue<Long> {
         current.updateAndGet(curr -> Math.max(curr, amount));
     }
 
-    @Override
-    public Long noValue() {
-        return 0L;
-    }
 }
