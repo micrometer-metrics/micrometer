@@ -21,6 +21,7 @@ import io.micrometer.core.instrument.simple.SimpleMeterRegistry;
 import java.util.Collections;
 import java.util.LinkedHashMap;
 import java.util.Map;
+import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Supplier;
 import org.apache.kafka.common.Metric;
 import org.apache.kafka.common.MetricName;
@@ -57,13 +58,14 @@ class KafkaMetricsTest {
 
     @Test void shouldAddNewMetersWhenMetricsChange() {
         //Given
-        Map<MetricName, KafkaMetric> metrics = new LinkedHashMap<>();
-        Supplier<Map<MetricName, ? extends Metric>> supplier = () -> {
+        AtomicReference<Map<MetricName, KafkaMetric>> metrics = new AtomicReference<>();
+        metrics.set(new LinkedHashMap<>());
+        Supplier<Map<MetricName, ? extends Metric>> supplier = () -> metrics.updateAndGet(map -> {
             MetricName metricName = new MetricName("a0", "b0", "c0", new LinkedHashMap<>());
             KafkaMetric metric = new KafkaMetric(this, metricName, new Value(), new MetricConfig(), Time.SYSTEM);
-            metrics.put(metricName, metric);
-            return metrics;
-        };
+            map.put(metricName, metric);
+            return map;
+        });
         KafkaMetrics kafkaMetrics = new KafkaMetrics(supplier);
         MeterRegistry registry = new SimpleMeterRegistry();
         //When
@@ -71,9 +73,12 @@ class KafkaMetricsTest {
         //Then
         assertThat(registry.getMeters()).hasSize(1);
         //Given
-        MetricName metricName = new MetricName("a1", "b1", "c1", new LinkedHashMap<>());
-        KafkaMetric metric = new KafkaMetric(this, metricName, new Value(), new MetricConfig(), Time.SYSTEM);
-        metrics.put(metricName, metric);
+        metrics.updateAndGet(map -> {
+            MetricName metricName = new MetricName("a1", "b1", "c1", new LinkedHashMap<>());
+            KafkaMetric metric = new KafkaMetric(this, metricName, new Value(), new MetricConfig(), Time.SYSTEM);
+            map.put(metricName, metric);
+            return map;
+        });
         //When
         kafkaMetrics.checkAndBindMetrics(registry);
         //Then

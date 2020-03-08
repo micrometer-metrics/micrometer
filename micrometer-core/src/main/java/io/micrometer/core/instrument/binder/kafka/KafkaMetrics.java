@@ -113,7 +113,7 @@ class KafkaMetrics implements MeterBinder {
             synchronized (this) { //Enforce only happens once when metrics change
                 if (!currentMeters.equals(metrics.keySet())) {
                     //Register meters
-                    currentMeters = new HashSet<>();
+                    currentMeters = new HashSet<>(metrics.keySet());
                     metrics.forEach((name, metric) -> {
                         //Filter out metrics from group "app-info", that includes metadata
                         if (METRIC_GROUP_APP_INFO.equals(name.group())) return;
@@ -124,7 +124,7 @@ class KafkaMetrics implements MeterBinder {
                         for (Meter meter : meters) {
                             if (meter.getId().getTags().size() < (metricTags(metric).size() + extraTagsSize))
                                 registry.remove(meter);
-                            // if already exists
+                            // Check if already exists
                             else if (meter.getId().getTags().equals(metricTags(metric))) return;
                             else hasLessTags = true;
                         }
@@ -132,7 +132,6 @@ class KafkaMetrics implements MeterBinder {
                         //Filter out non-numeric values
                         if (!isNumber(metric)) return;
                         bindMeter(registry, metric);
-                        currentMeters.add(name);
                     });
                 }
             }
