@@ -22,14 +22,14 @@ import io.micrometer.core.instrument.Meter;
 import io.micrometer.core.instrument.MeterRegistry;
 import io.micrometer.core.instrument.Tag;
 import io.micrometer.core.instrument.binder.MeterBinder;
-import io.micrometer.core.lang.NonNull;
 import io.micrometer.core.lang.NonNullApi;
 import io.micrometer.core.lang.NonNullFields;
 import java.util.ArrayList;
 import java.util.Collection;
-import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.function.Supplier;
 import java.util.function.ToDoubleFunction;
 import org.apache.kafka.common.Metric;
@@ -55,7 +55,6 @@ import static java.util.Collections.emptyList;
 @NonNullFields
 class KafkaMetrics implements MeterBinder {
     static final String METRIC_NAME_PREFIX = "kafka.";
-
     static final String METRIC_GROUP_APP_INFO = "app-info";
     static final String VERSION_METRIC_NAME = "version";
     static final String START_TIME_METRIC_NAME = "start-time-ms";
@@ -67,7 +66,7 @@ class KafkaMetrics implements MeterBinder {
     /**
      * Keeps track of current set of metrics. When this values change, metrics are bound again.
      */
-    private volatile Map<MetricName, Meter> currentMeters = new HashMap<>();
+    private volatile Set<MetricName> currentMeters = new HashSet<>();
 
     private String kafkaVersion = "unknown";
 
@@ -90,8 +89,10 @@ class KafkaMetrics implements MeterBinder {
         for (Map.Entry<MetricName, ? extends Metric> entry: metrics.entrySet()) {
             MetricName name = entry.getKey();
             if (METRIC_GROUP_APP_INFO.equals(name.group())) {
-                if (VERSION_METRIC_NAME.equals(name.name())) kafkaVersion = (String) entry.getValue().metricValue();
-                else if (START_TIME_METRIC_NAME.equals(name.name())) startTimeMetric = entry.getValue();
+                if (VERSION_METRIC_NAME.equals(name.name()))
+                    kafkaVersion = (String) entry.getValue().metricValue();
+                else if (START_TIME_METRIC_NAME.equals(name.name()))
+                    startTimeMetric = entry.getValue();
             }
         }
         if (startTimeMetric != null) bindMeter(registry, startTimeMetric);
@@ -108,13 +109,11 @@ class KafkaMetrics implements MeterBinder {
      */
     void checkAndBindMetrics(MeterRegistry registry) {
         Map<MetricName, ? extends Metric> metrics = metricsSupplier.get();
-        if (!currentMeters.keySet().equals(metrics.keySet())) {
+        if (!currentMeters.equals(metrics.keySet())) {
             synchronized (this) { //Enforce only happens once when metrics change
-                if (!currentMeters.keySet().equals(metrics.keySet())) {
-                    //Clean registry
-                    for (Meter meter : currentMeters.values()) registry.remove(meter);
+                if (!currentMeters.equals(metrics.keySet())) {
                     //Register meters
-                    currentMeters = new HashMap<>();
+                    currentMeters = new HashSet<>();
                     metrics.forEach((name, metric) -> {
                         //Filter out metrics from group "app-info", that includes metadata
                         if (METRIC_GROUP_APP_INFO.equals(name.group())) return;
@@ -125,40 +124,47 @@ class KafkaMetrics implements MeterBinder {
                         for (Meter meter : meters) {
                             if (meter.getId().getTags().size() < (metricTags(metric).size() + extraTagsSize))
                                 registry.remove(meter);
+                            // if already exists
+                            else if (meter.getId().getTags().equals(metricTags(metric))) return;
                             else hasLessTags = true;
                         }
                         if (hasLessTags) return;
                         //Filter out non-numeric values
-                        if (metric.metricValue() instanceof Double
-                                || metric.metricValue() instanceof Float
-                                || metric.metricValue() instanceof Integer
-                                || metric.metricValue() instanceof Long)
-                            currentMeters.put(name, bindMeter(registry, metric));
+                        if (!isNumber(metric)) return;
+                        bindMeter(registry, metric);
+                        currentMeters.add(name);
                     });
                 }
             }
         }
     }
 
-    @NonNull private Meter bindMeter(MeterRegistry registry, Metric metric) {
-        String name = metricName(metric);
-        if (name.endsWith("total") || name.endsWith("count"))
-            return registerCounter(registry, metric, name, extraTags);
-        else if (name.endsWith("min") || name.endsWith("max") || name.endsWith("avg") || name.endsWith("rate"))
-            return registerGauge(registry, metric, name, extraTags);
-        else return registerGauge(registry, metric, name, extraTags);
+    private boolean isNumber(Metric metric) {
+        return metric.metricValue() instanceof Double
+                || metric.metricValue() instanceof Float
+                || metric.metricValue() instanceof Integer
+                || metric.metricValue() instanceof Long;
     }
 
-    private Gauge registerGauge(MeterRegistry registry, Metric metric, String metricName, Iterable<Tag> extraTags) {
-        return Gauge.builder(metricName, metric, toMetricValue(registry))
+    private void bindMeter(MeterRegistry registry, Metric metric) {
+        String name = metricName(metric);
+        if (name.endsWith("total") || name.endsWith("count"))
+            registerCounter(registry, metric, name, extraTags);
+        else if (name.endsWith("min") || name.endsWith("max") || name.endsWith("avg") || name.endsWith("rate"))
+            registerGauge(registry, metric, name, extraTags);
+        else registerGauge(registry, metric, name, extraTags);
+    }
+
+    private void registerGauge(MeterRegistry registry, Metric metric, String metricName, Iterable<Tag> extraTags) {
+        Gauge.builder(metricName, metric, toMetricValue(registry))
                 .tags(metricTags(metric))
                 .tags(extraTags)
                 .description(metric.metricName().description())
                 .register(registry);
     }
 
-    private FunctionCounter registerCounter(MeterRegistry registry, Metric metric, String metricName, Iterable<Tag> extraTags) {
-        return FunctionCounter.builder(metricName, metric, toMetricValue(registry))
+    private void registerCounter(MeterRegistry registry, Metric metric, String metricName, Iterable<Tag> extraTags) {
+        FunctionCounter.builder(metricName, metric, toMetricValue(registry))
                 .tags(metricTags(metric))
                 .tags(extraTags)
                 .description(metric.metricName().description())
