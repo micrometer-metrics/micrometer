@@ -24,6 +24,8 @@ import io.micrometer.core.instrument.step.StepRegistryConfig;
 
 import java.io.FileInputStream;
 import java.io.IOException;
+import java.util.Collections;
+import java.util.Map;
 
 /**
  * {@link StepRegistryConfig} for Stackdriver.
@@ -43,6 +45,10 @@ public interface StackdriverConfig extends StepRegistryConfig {
         if (v == null)
             throw new MissingRequiredConfigurationException("projectId must be set to report metrics to Stackdriver");
         return v;
+    }
+
+    default Map<String, String> resourceLabels() {
+        return Collections.emptyMap();
     }
 
     default String resourceType() {
