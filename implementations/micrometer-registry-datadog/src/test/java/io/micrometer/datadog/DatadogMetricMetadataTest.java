@@ -57,7 +57,7 @@ class DatadogMetricMetadataTest {
                 }, Clock.SYSTEM)).getId(),
             false);
 
-        assertThat(metricMetadata.editDescriptionMetadataBody()).isEqualTo(null);
+        assertThat(metricMetadata.editDescriptionMetadataBody()).isNull();
     }
 
 }

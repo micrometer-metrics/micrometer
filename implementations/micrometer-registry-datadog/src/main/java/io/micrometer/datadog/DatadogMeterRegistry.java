@@ -229,7 +229,7 @@ public class DatadogMeterRegistry extends StepMeterRegistry {
     }
 
     //VisibleForTesting
-    String writeMetric(Meter.Id id, @Nullable String suffix, long wallTime, double value, Statistic statistic, String overrideBaseUnit) {
+    String writeMetric(Meter.Id id, @Nullable String suffix, long wallTime, double value, Statistic statistic, @Nullable String overrideBaseUnit) {
         Meter.Id fullId = id;
         if (suffix != null)
             fullId = idWithSuffix(id, suffix);
