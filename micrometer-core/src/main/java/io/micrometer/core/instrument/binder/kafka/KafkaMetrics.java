@@ -26,6 +26,7 @@ import io.micrometer.core.lang.NonNull;
 import io.micrometer.core.lang.NonNullApi;
 import io.micrometer.core.lang.NonNullFields;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -68,7 +69,7 @@ class KafkaMetrics implements MeterBinder {
      */
     private volatile Map<MetricName, Meter> currentMeters = new HashMap<>();
 
-    private String kafkaVersion = "";
+    private String kafkaVersion = "unknown";
 
     KafkaMetrics(Supplier<Map<MetricName, ? extends Metric>> metricsSupplier) {
         this(metricsSupplier, emptyList());
@@ -79,7 +80,7 @@ class KafkaMetrics implements MeterBinder {
         this.extraTags = extraTags;
         int i = 0;
         for (Tag ignored : extraTags) i++;
-        this.extraTagsSize = i;
+        this.extraTagsSize = i + 1; // 1 = kafka version tag
     }
 
     @Override public void bindTo(MeterRegistry registry) {
@@ -120,12 +121,11 @@ class KafkaMetrics implements MeterBinder {
                         //Kafka has metrics with lower number of tags (e.g. with/without topic or partition tag)
                         //Remove meters with lower number of tags
                         boolean hasLessTags = false;
-                        for (Meter meter : registry.find(name.name()).meters()) {
-                            if (meter.getId().getTags().size() < (metricTags(metric).size() + extraTagsSize)) {
+                        Collection<Meter> meters = registry.find(metricName(metric)).meters();
+                        for (Meter meter : meters) {
+                            if (meter.getId().getTags().size() < (metricTags(metric).size() + extraTagsSize))
                                 registry.remove(meter);
-                            } else {
-                                hasLessTags = true;
-                            }
+                            else hasLessTags = true;
                         }
                         if (hasLessTags) return;
                         //Filter out non-numeric values

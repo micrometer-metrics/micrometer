@@ -15,8 +15,10 @@
  */
 package io.micrometer.core.instrument.binder.kafka;
 
+import io.micrometer.core.instrument.Meter;
 import io.micrometer.core.instrument.MeterRegistry;
 import io.micrometer.core.instrument.simple.SimpleMeterRegistry;
+import java.util.Collections;
 import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.function.Supplier;
@@ -134,14 +136,15 @@ class KafkaMetricsTest {
     @Test void shouldRemoveMeterWithLessTags() {
         //Given
         Supplier<Map<MetricName, ? extends Metric>> supplier = () -> {
+            MetricName firstName = new MetricName("a", "b", "c", Collections.emptyMap());
+            KafkaMetric firstMetric = new KafkaMetric(this, firstName, new Value(), new MetricConfig(), Time.SYSTEM);
             Map<String, String> tags = new LinkedHashMap<>();
-            Map<MetricName, KafkaMetric> metrics = new LinkedHashMap<>();
-            MetricName metricName = new MetricName("a", "b", "c", tags);
             tags.put("key0", "value0");
-            MetricName metricName2 = new MetricName("a", "b", "c", tags);
-            KafkaMetric metric = new KafkaMetric(this, metricName, new Value(), new MetricConfig(), Time.SYSTEM);
-            metrics.put(metricName, metric);
-            metrics.put(metricName2, metric);
+            MetricName secondName = new MetricName("a", "b", "c", tags);
+            KafkaMetric secondMetric = new KafkaMetric(this, secondName, new Value(), new MetricConfig(), Time.SYSTEM);
+            Map<MetricName, KafkaMetric> metrics = new LinkedHashMap<>();
+            metrics.put(firstName, firstMetric);
+            metrics.put(secondName, secondMetric);
             return metrics;
         };
         KafkaMetrics kafkaMetrics = new KafkaMetrics(supplier);
@@ -150,6 +153,7 @@ class KafkaMetricsTest {
         kafkaMetrics.checkAndBindMetrics(registry);
         //Then
         assertThat(registry.getMeters()).hasSize(1);
-        assertThat(registry.getMeters().get(0).getId().getTags()).hasSize(2); // version + key0
+        Meter meter = registry.getMeters().get(0);
+        assertThat(meter.getId().getTags()).hasSize(2); // version + key0
     }
 }
