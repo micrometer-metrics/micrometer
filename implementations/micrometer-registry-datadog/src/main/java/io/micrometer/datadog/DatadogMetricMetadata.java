@@ -18,6 +18,7 @@ package io.micrometer.datadog;
 import io.micrometer.core.instrument.Meter;
 import io.micrometer.core.instrument.Statistic;
 import io.micrometer.core.instrument.util.StringEscapeUtils;
+import io.micrometer.core.lang.Nullable;
 
 import java.util.*;
 
@@ -67,28 +68,19 @@ class DatadogMetricMetadata {
     }
 
     String editDescriptionMetadataBody() {
-        String body = null;
-
         if (descriptionsEnabled && id.getDescription() != null) {
-            body = "{\"description\":\"" + StringEscapeUtils.escapeJson(id.getDescription()) + "\"}";
+            return "{\"description\":\"" + StringEscapeUtils.escapeJson(id.getDescription()) + "\"}";
         }
-
-        return body;
+        return null;
     }
 
-    static String sanitizeBaseUnit(String baseUnit, String overrideBaseUnit) {
+    static String sanitizeBaseUnit(@Nullable String baseUnit, @Nullable String overrideBaseUnit) {
         String sanitizeBaseUnit = overrideBaseUnit != null ? overrideBaseUnit : baseUnit;
         if (sanitizeBaseUnit != null) {
-            String whitelistedBaseUnit = UNIT_WHITELIST.contains(sanitizeBaseUnit) ? sanitizeBaseUnit :
+            return UNIT_WHITELIST.contains(sanitizeBaseUnit) ? sanitizeBaseUnit :
                     PLURALIZED_UNIT_MAPPING.get(sanitizeBaseUnit);
-
-            if (whitelistedBaseUnit != null) {
-                sanitizeBaseUnit = whitelistedBaseUnit;
-            } else {
-                sanitizeBaseUnit = null;
-            }
         }
-        return sanitizeBaseUnit;
+        return null;
     }
 
     static String sanitizeType(Statistic statistic) {
