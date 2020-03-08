@@ -16,18 +16,14 @@
 package io.micrometer.core.instrument.binder.kafka;
 
 import io.micrometer.core.annotation.Incubating;
-import io.micrometer.core.instrument.Meter;
 import io.micrometer.core.instrument.Tag;
 import io.micrometer.core.instrument.binder.MeterBinder;
 import io.micrometer.core.lang.NonNullApi;
 import io.micrometer.core.lang.NonNullFields;
-import java.util.HashMap;
-import java.util.Map;
 import org.apache.kafka.clients.admin.AdminClient;
 import org.apache.kafka.clients.consumer.Consumer;
 import org.apache.kafka.clients.producer.Producer;
 import org.apache.kafka.common.Metric;
-import org.apache.kafka.common.MetricName;
 
 /**
  * Kafka Client metrics binder.
@@ -46,13 +42,6 @@ import org.apache.kafka.common.MetricName;
 @NonNullApi
 @NonNullFields
 public class KafkaClientMetrics extends KafkaMetrics implements MeterBinder {
-
-    /**
-     * Keeps track of current set of metrics. When super values change, metrics are bound again.
-     */
-    private volatile Map<MetricName, Meter> currentMeters = new HashMap<>();
-
-    private String version = "";
 
     /**
      * Kafka {@link Producer} metrics binder
