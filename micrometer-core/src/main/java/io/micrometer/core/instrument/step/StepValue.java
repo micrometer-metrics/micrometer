@@ -23,6 +23,10 @@ import io.micrometer.core.instrument.Clock;
 /**
  * Tracks 'values' for periods (steps) of time.  The previous step's value is
  * obtained by calling {@link #poll}.
+ *
+ * @author Jon Schneider
+ * @author Samuel Cox
+ * @since 1.4.0
  */
 public abstract class StepValue<V> {
 

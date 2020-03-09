@@ -24,12 +24,12 @@ import java.util.function.Supplier;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-public class StepValueTest {
+class StepValueTest {
 
     private final MockClock clock = new MockClock();
 
     @Test
-    public void poll() {
+    void poll() {
         final AtomicLong aLong = new AtomicLong(42);
         final long stepTime = 60;
 

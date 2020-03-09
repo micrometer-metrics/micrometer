@@ -22,12 +22,12 @@ import java.time.Duration;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-public class StepLongMaxTest {
+class StepLongMaxTest {
 
     private final MockClock clock = new MockClock();
 
     @Test
-    public void poll() {
+    void poll() {
         final long stepTime = 60;
         final StepLongMax stepMax = new StepLongMax(clock, stepTime);
 
