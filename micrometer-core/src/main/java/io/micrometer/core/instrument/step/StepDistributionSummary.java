@@ -20,45 +20,19 @@ import io.micrometer.core.instrument.Clock;
 import io.micrometer.core.instrument.Measurement;
 import io.micrometer.core.instrument.Statistic;
 import io.micrometer.core.instrument.distribution.DistributionStatisticConfig;
-import io.micrometer.core.instrument.distribution.TimeWindowMax;
 
 import java.util.Arrays;
 
+/**
+ * Step-normalized {@link io.micrometer.core.instrument.DistributionSummary}.
+ *
+ * @author Jon Schneider
+ * @author Johnny Lim
+ */
 public class StepDistributionSummary extends AbstractDistributionSummary {
     private final StepLong count;
     private final StepDouble total;
-    private final TimeWindowMax max;
-
-    /**
-     * Create a new {@code StepDistributionSummary}.
-     *
-     * @param id                          ID
-     * @param clock                       clock
-     * @param distributionStatisticConfig distribution static configuration
-     * @param scale                       scale
-     * @deprecated Use {@link #StepDistributionSummary(io.micrometer.core.instrument.Meter.Id, Clock, DistributionStatisticConfig, double, long, boolean)}
-     */
-    @Deprecated
-    public StepDistributionSummary(Id id, Clock clock, DistributionStatisticConfig distributionStatisticConfig, double scale) {
-        this(id, clock, distributionStatisticConfig, scale, false);
-    }
-
-    /**
-     * Create a new {@code StepDistributionSummary}.
-     *
-     * @param id                            ID
-     * @param clock                         clock
-     * @param distributionStatisticConfig   distribution static configuration
-     * @param scale                         scale
-     * @param supportsAggregablePercentiles whether it supports aggregable percentiles
-     * @deprecated Use {@link #StepDistributionSummary(io.micrometer.core.instrument.Meter.Id, Clock, DistributionStatisticConfig, double, long, boolean)}
-     */
-    @Deprecated
-    @SuppressWarnings("ConstantConditions")
-    public StepDistributionSummary(Id id, Clock clock, DistributionStatisticConfig distributionStatisticConfig, double scale,
-                                   boolean supportsAggregablePercentiles) {
-        this(id, clock, distributionStatisticConfig, scale, distributionStatisticConfig.getExpiry().toMillis(), supportsAggregablePercentiles);
-    }
+    private final StepDoubleMax max;
 
     /**
      * Create a new {@code StepDistributionSummary}.
@@ -76,7 +50,7 @@ public class StepDistributionSummary extends AbstractDistributionSummary {
         super(id, clock, distributionStatisticConfig, scale, supportsAggregablePercentiles);
         this.count = new StepLong(clock, stepMillis);
         this.total = new StepDouble(clock, stepMillis);
-        this.max = new TimeWindowMax(clock, distributionStatisticConfig);
+        this.max = new StepDoubleMax(clock, stepMillis);
     }
 
     @Override
