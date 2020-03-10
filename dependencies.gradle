@@ -39,8 +39,8 @@ def VERSIONS = [
         'net.sf.ehcache:ehcache:latest.release',
         'org.apache.httpcomponents:httpasyncclient:latest.release',
         'org.apache.httpcomponents:httpclient:latest.release',
-        // Pin version temporarily to restore builds. See gh-1756
-        'org.apache.kafka:kafka-clients:2.3.1',
+        'org.apache.kafka:kafka-clients:latest.release',
+        'org.apache.kafka:kafka-streams:latest.release',
         'org.apache.logging.log4j:log4j-core:2.+',
         'org.apache.tomcat.embed:tomcat-embed-core:8.+',
         'org.aspectj:aspectjweaver:1.8.+',
@@ -69,6 +69,9 @@ def VERSIONS = [
         'org.springframework:spring-test:4.+',
         'ru.lanwen.wiremock:wiremock-junit5:latest.release',
         'software.amazon.awssdk:cloudwatch:latest.release',
+        'org.testcontainers:testcontainers:latest.release',
+        'org.testcontainers:junit-jupiter:latest.release',
+        'org.testcontainers:kafka:latest.release'
 ]
 
 subprojects {

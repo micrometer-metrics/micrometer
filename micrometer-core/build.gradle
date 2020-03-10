@@ -48,6 +48,9 @@ dependencies {
 
     optionalApi 'org.jooq:jooq'
 
+    optionalApi 'org.apache.kafka:kafka-clients'
+    optionalApi 'org.apache.kafka:kafka-streams'
+
     testImplementation 'io.projectreactor:reactor-test'
 
     // JUnit 5
@@ -86,4 +89,9 @@ dependencies {
     testImplementation 'com.github.tomakehurst:wiremock-jre8'
 
     testImplementation 'de.flapdoodle.embed:de.flapdoodle.embed.mongo'
+
+    // Kafka binder IT dependencies
+    testImplementation 'org.testcontainers:testcontainers'
+    testImplementation 'org.testcontainers:junit-jupiter'
+    testImplementation 'org.testcontainers:kafka'
 }

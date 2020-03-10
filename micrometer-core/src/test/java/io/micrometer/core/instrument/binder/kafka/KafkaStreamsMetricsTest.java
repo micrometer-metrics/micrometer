@@ -19,25 +19,22 @@ import io.micrometer.core.instrument.MeterRegistry;
 import io.micrometer.core.instrument.Tags;
 import io.micrometer.core.instrument.simple.SimpleMeterRegistry;
 import java.util.Properties;
-import org.apache.kafka.clients.consumer.Consumer;
-import org.apache.kafka.clients.consumer.KafkaConsumer;
-import org.apache.kafka.common.serialization.StringDeserializer;
+import org.apache.kafka.streams.KafkaStreams;
+import org.apache.kafka.streams.StreamsBuilder;
 import org.junit.jupiter.api.Test;
 
-import static io.micrometer.core.instrument.binder.kafka.KafkaClientMetrics.METRIC_NAME_PREFIX;
-import static org.apache.kafka.clients.consumer.ConsumerConfig.BOOTSTRAP_SERVERS_CONFIG;
-import static org.apache.kafka.clients.consumer.ConsumerConfig.GROUP_ID_CONFIG;
-import static org.apache.kafka.clients.consumer.ConsumerConfig.KEY_DESERIALIZER_CLASS_CONFIG;
-import static org.apache.kafka.clients.consumer.ConsumerConfig.VALUE_DESERIALIZER_CLASS_CONFIG;
+import static io.micrometer.core.instrument.binder.kafka.KafkaStreamsMetrics.METRIC_NAME_PREFIX;
+import static org.apache.kafka.streams.StreamsConfig.APPLICATION_ID_CONFIG;
+import static org.apache.kafka.streams.StreamsConfig.BOOTSTRAP_SERVERS_CONFIG;
 import static org.assertj.core.api.Assertions.assertThat;
 
-class KafkaConsumerMetricsTest {
+class KafkaStreamsMetricsTest {
     private final static String BOOTSTRAP_SERVERS = "localhost:9092";
     private Tags tags = Tags.of("app", "myapp", "version", "1");
 
     @Test void shouldCreateMeters() {
-        try (Consumer<String, String> consumer = createConsumer()) {
-            KafkaClientMetrics metrics = new KafkaClientMetrics(consumer);
+        try (KafkaStreams kafkaStreams = createStreams()) {
+            KafkaStreamsMetrics metrics = new KafkaStreamsMetrics(kafkaStreams);
             MeterRegistry registry = new SimpleMeterRegistry();
 
             metrics.bindTo(registry);
@@ -49,8 +46,8 @@ class KafkaConsumerMetricsTest {
     }
 
     @Test void shouldCreateMetersWithTags() {
-        try (Consumer<String, String> consumer = createConsumer()) {
-            KafkaClientMetrics metrics = new KafkaClientMetrics(consumer, tags);
+        try (KafkaStreams kafkaStreams = createStreams()) {
+            KafkaStreamsMetrics metrics = new KafkaStreamsMetrics(kafkaStreams, tags);
             MeterRegistry registry = new SimpleMeterRegistry();
 
             metrics.bindTo(registry);
@@ -62,12 +59,12 @@ class KafkaConsumerMetricsTest {
         }
     }
 
-    private Consumer<String, String> createConsumer() {
-        Properties consumerConfig = new Properties();
-        consumerConfig.put(BOOTSTRAP_SERVERS_CONFIG, BOOTSTRAP_SERVERS);
-        consumerConfig.put(KEY_DESERIALIZER_CLASS_CONFIG, StringDeserializer.class);
-        consumerConfig.put(VALUE_DESERIALIZER_CLASS_CONFIG, StringDeserializer.class);
-        consumerConfig.put(GROUP_ID_CONFIG, "group");
-        return new KafkaConsumer<>(consumerConfig);
+    private KafkaStreams createStreams() {
+        StreamsBuilder builder = new StreamsBuilder();
+        builder.stream("input").to("output");
+        Properties streamsConfig = new Properties();
+        streamsConfig.put(BOOTSTRAP_SERVERS_CONFIG, BOOTSTRAP_SERVERS);
+        streamsConfig.put(APPLICATION_ID_CONFIG, "app");
+        return new KafkaStreams(builder.build(), streamsConfig);
     }
 }
