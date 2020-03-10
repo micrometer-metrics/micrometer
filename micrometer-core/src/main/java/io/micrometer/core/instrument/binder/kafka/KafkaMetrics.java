@@ -56,6 +56,7 @@ import static java.util.Collections.emptyList;
 class KafkaMetrics implements MeterBinder {
     static final String METRIC_NAME_PREFIX = "kafka.";
     static final String METRIC_GROUP_APP_INFO = "app-info";
+    static final String METRIC_GROUP_METRICS_COUNT = "kafka-metrics-count";
     static final String VERSION_METRIC_NAME = "version";
     static final String START_TIME_METRIC_NAME = "start-time-ms";
 
@@ -115,8 +116,9 @@ class KafkaMetrics implements MeterBinder {
                     //Register meters
                     currentMeters = new HashSet<>(metrics.keySet());
                     metrics.forEach((name, metric) -> {
-                        //Filter out metrics from group "app-info", that includes metadata
+                        //Filter out metrics from groups that includes metadata
                         if (METRIC_GROUP_APP_INFO.equals(name.group())) return;
+                        if (METRIC_GROUP_METRICS_COUNT.equals(name.group())) return;
                         //Kafka has metrics with lower number of tags (e.g. with/without topic or partition tag)
                         //Remove meters with lower number of tags
                         boolean hasLessTags = false;
