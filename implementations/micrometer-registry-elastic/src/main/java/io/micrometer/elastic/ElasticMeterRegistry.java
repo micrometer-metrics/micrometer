@@ -286,8 +286,8 @@ public class ElasticMeterRegistry extends StepMeterRegistry {
     }
 
     /**
-	 * Return index type. default is 'doc'
-	 *
+	 * Return index type. Default is 'doc'
+	 * @implNote this only applies to Elasticsearch versions before 7.
 	 * @return index type.
 	 * @since 1.4.0
 	 */
