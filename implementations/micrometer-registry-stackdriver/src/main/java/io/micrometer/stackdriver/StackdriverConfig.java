@@ -47,6 +47,11 @@ public interface StackdriverConfig extends StepRegistryConfig {
         return v;
     }
 
+    /**
+     * Return resource labels.
+     * @return resource labels.
+     * @since 1.4.0
+     */
     default Map<String, String> resourceLabels() {
         return Collections.emptyMap();
     }
