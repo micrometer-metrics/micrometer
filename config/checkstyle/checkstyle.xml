@@ -38,6 +38,8 @@
         <!-- Whitespace -->
         <module name="com.puppycrawl.tools.checkstyle.checks.whitespace.WhitespaceAroundCheck" />
 
+        <module name="io.spring.javaformat.checkstyle.check.SpringJUnit5Check" />
+
         <module name="SuppressionCommentFilter"/>
     </module>
 
