@@ -99,7 +99,6 @@ public class ElasticMeterRegistry extends StepMeterRegistry {
             "  }\n" +
             "}";
 
-    private static final String TYPE_PATH_BEFORE_VERSION_7 = "/doc";
     private static final String TYPE_PATH_AFTER_VERSION_7 = "";
 
     private static final Pattern MAJOR_VERSION_PATTERN = Pattern.compile("\"number\" *: *\"([\\d]+)");
@@ -273,7 +272,7 @@ public class ElasticMeterRegistry extends StepMeterRegistry {
     }
 
     private String getTypePath() {
-        return majorVersion < 7 ? TYPE_PATH_BEFORE_VERSION_7 : TYPE_PATH_AFTER_VERSION_7;
+        return majorVersion < 7 ? "/" + indexType() : TYPE_PATH_AFTER_VERSION_7;
     }
 
     // VisibleForTesting
@@ -287,11 +286,21 @@ public class ElasticMeterRegistry extends StepMeterRegistry {
     }
 
     /**
-     * Return index name.
-     *
-     * @return index name.
-     * @since 1.2.0
-     */
+	 * Return index type. Default is 'doc'
+	 * @implNote this only applies to Elasticsearch versions before 7.
+	 * @return index type.
+	 * @since 1.4.0
+	 */
+    protected String indexType() {
+        return "doc";
+    }
+
+	/**
+	 * Return index name.
+	 *
+	 * @return index name.
+	 * @since 1.2.0
+	 */
     protected String indexName() {
         ZonedDateTime dt = ZonedDateTime.ofInstant(new Date(config().clock().wallTime()).toInstant(), ZoneOffset.UTC);
         return config.index() + config.indexDateSeparator() + indexDateFormatter.format(dt);
