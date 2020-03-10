@@ -15,44 +15,40 @@
  */
 package io.micrometer.core.instrument.step;
 
+import io.micrometer.core.instrument.Clock;
+
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.function.Supplier;
 
-import io.micrometer.core.instrument.Clock;
-
 /**
- * A class similar to {@link StepLong}, but records the maximum <b>positive</b>
+ * A class similar to {@link StepDouble}, but records the maximum
  * value recorded in steps as opposed accumulated values.
  *
  * @author Samuel Cox
+ * @author Johnny Lim
  */
-class StepLongMax extends StepValue<Long> {
-    private final AtomicLong current = new AtomicLong(0);
+class StepDoubleMax extends StepValue<Double> {
+    private final AtomicLong current = new AtomicLong();
 
-    public StepLongMax(Clock clock, long stepMillis) {
+    public StepDoubleMax(Clock clock, long stepMillis) {
         super(clock, stepMillis);
     }
 
     @Override
-    protected Supplier<Long> valueSupplier() {
-        return () -> current.getAndSet(0L);
+    protected Supplier<Double> valueSupplier() {
+        return () -> Double.longBitsToDouble(current.getAndSet(0));
     }
 
     @Override
-    protected Long noValue() {
-        return 0L;
+    protected Double noValue() {
+        return 0.0;
     }
 
     /**
-     * Record a positive amount.
-     *
-     * @throws {@link IllegalArgumentException} if the amount is negative.
+     * Record a amount.
      */
-    void record(final long amount) {
-        if (amount < 0) {
-            throw new IllegalArgumentException("Only positive values can be recorded.");
-        }
-        current.updateAndGet(curr -> Math.max(curr, amount));
+    void record(double amount) {
+        current.updateAndGet(current -> Math.max(current, Double.doubleToLongBits(amount)));
     }
 
 }
