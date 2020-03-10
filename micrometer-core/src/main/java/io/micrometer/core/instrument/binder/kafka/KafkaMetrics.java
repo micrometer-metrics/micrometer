@@ -39,11 +39,6 @@ import static java.util.Collections.emptyList;
 
 /**
  * Kafka metrics binder.
- * <p>
- * It is based on {@code metrics()} method returning {@link Metric} map exposed by clients and
- * streams interface.
- * <p>
- * Meter names have the following convention: {@code kafka.(metric_group).(metric_name)}
  *
  * @author Jorge Quilcate
  * @see <a href="https://docs.confluent.io/current/kafka/monitoring.html">Kakfa monitoring
@@ -65,7 +60,7 @@ class KafkaMetrics implements MeterBinder {
     private final int extraTagsSize;
 
     /**
-     * Keeps track of current set of metrics. When this values change, metrics are bound again.
+     * Keeps track of current set of metrics.
      */
     private volatile Set<MetricName> currentMeters = new HashSet<>();
 
@@ -106,14 +101,13 @@ class KafkaMetrics implements MeterBinder {
      * <p>
      * As this is a one-off execution when binding a Kafka client, Meters include a call to this
      * validation to double-check new metrics when returning values. This should only add the cost of
-     * validating meters registered counter when no new meters are present.
+     * comparing meters last returned from the Kafka client.
      */
     void checkAndBindMetrics(MeterRegistry registry) {
         Map<MetricName, ? extends Metric> metrics = metricsSupplier.get();
         if (!currentMeters.equals(metrics.keySet())) {
             synchronized (this) { //Enforce only happens once when metrics change
                 if (!currentMeters.equals(metrics.keySet())) {
-                    //Register meters
                     currentMeters = new HashSet<>(metrics.keySet());
                     metrics.forEach((name, metric) -> {
                         //Filter out metrics from groups that includes metadata
@@ -132,19 +126,12 @@ class KafkaMetrics implements MeterBinder {
                         }
                         if (hasLessTags) return;
                         //Filter out non-numeric values
-                        if (!isNumber(metric)) return;
+                        if (!(metric.metricValue() instanceof Number)) return;
                         bindMeter(registry, metric);
                     });
                 }
             }
         }
-    }
-
-    private boolean isNumber(Metric metric) {
-        return metric.metricValue() instanceof Double
-                || metric.metricValue() instanceof Float
-                || metric.metricValue() instanceof Integer
-                || metric.metricValue() instanceof Long;
     }
 
     private void bindMeter(MeterRegistry registry, Metric metric) {
@@ -174,13 +161,9 @@ class KafkaMetrics implements MeterBinder {
 
     private ToDoubleFunction<Metric> toMetricValue(MeterRegistry registry) {
         return metric -> {
-            //Double-check if new metrics are registered; if not (common scenario)
-            //it only adds metrics count validation
+            //Double-check if new metrics are registered
             checkAndBindMetrics(registry);
-            if (metric.metricValue() instanceof Double) return (double) metric.metricValue();
-            else if (metric.metricValue() instanceof Integer) return ((Integer) metric.metricValue()).doubleValue();
-            else if (metric.metricValue() instanceof Long) return ((Long) metric.metricValue()).doubleValue();
-            else return ((Float) metric.metricValue()).doubleValue();
+            return ((Number) metric.metricValue()).doubleValue();
         };
     }
 

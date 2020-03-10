@@ -24,8 +24,7 @@ import org.apache.kafka.streams.KafkaStreams;
 /**
  * Kafka Streams metrics binder.
  * <p>
- * It is based on {@code metrics()} method returning {@link Metric} map exposed by clients and
- * streams interface.
+ * It is based on the Kafka client's {@code metrics()} method returning a {@link Metric} map.
  * <p>
  * Meter names have the following convention: {@code kafka.(metric_group).(metric_name)}
  *
