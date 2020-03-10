@@ -44,7 +44,7 @@ public abstract class StepValue<V> {
     protected abstract Supplier<V> valueSupplier();
 
     /**
-     * The value that should be returned by {@link #poll} if within the first
+     * @return value that should be returned by {@link #poll} if within the first
      * step period or if the previous step didn't record a value.
      */
     protected abstract V noValue();
