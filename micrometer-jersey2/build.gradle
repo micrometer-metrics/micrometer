@@ -11,7 +11,7 @@ dependencies {
 
     testImplementation 'org.assertj:assertj-core'
 
-    // JERSEY-3662
+    // See https://github.com/eclipse-ee4j/jersey/issues/3662
     testImplementation 'junit:junit'
     testRuntimeOnly 'org.junit.vintage:junit-vintage-engine'
     testImplementation 'org.mockito:mockito-core'

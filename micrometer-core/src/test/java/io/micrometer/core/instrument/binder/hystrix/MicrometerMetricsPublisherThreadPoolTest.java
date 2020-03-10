@@ -51,12 +51,12 @@ class MicrometerMetricsPublisherThreadPoolTest {
     private final HystrixCommandGroupKey groupKey = HystrixCommandGroupKey.Factory.asKey(NAME_MICROMETER_GROUP);
 
     @BeforeEach
-    public void init() {
+    void init() {
         Hystrix.reset();
     }
 
     @AfterEach
-    public void teardown() {
+    void teardown() {
         Hystrix.reset();
     }
 
@@ -64,7 +64,7 @@ class MicrometerMetricsPublisherThreadPoolTest {
      * Test that thread pool metrics are published.
      */
     @Test
-    public void testMetricIds() {
+    void testMetricIds() {
         HystrixMetricsPublisher metricsPublisher = HystrixPlugins.getInstance().getMetricsPublisher();
         HystrixPlugins.reset();
         HystrixPlugins.getInstance().registerMetricsPublisher(new MicrometerMetricsPublisher(registry, metricsPublisher));

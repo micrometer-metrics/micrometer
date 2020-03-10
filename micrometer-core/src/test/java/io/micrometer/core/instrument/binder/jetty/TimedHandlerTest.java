@@ -80,7 +80,7 @@ class TimedHandlerTest {
     }
 
     @Test
-    public void testRequest() throws Exception {
+    void testRequest() throws Exception {
         CyclicBarrier[] barrier = {
                 new CyclicBarrier(3),
                 new CyclicBarrier(3)
@@ -123,7 +123,7 @@ class TimedHandlerTest {
     }
 
     @Test
-    public void testSuspendResume() throws Exception {
+    void testSuspendResume() throws Exception {
         long dispatchTime = 10;
         long requestTime = 50;
         AtomicReference<AsyncContext> asyncHolder = new AtomicReference<>();
@@ -215,7 +215,7 @@ class TimedHandlerTest {
     }
 
     @Test
-    public void testSuspendExpire() throws Exception {
+    void testSuspendExpire() throws Exception {
         long dispatchTime = 10;
         long timeout = 100;
         AtomicReference<AsyncContext> asyncHolder = new AtomicReference<>();
@@ -294,7 +294,7 @@ class TimedHandlerTest {
     }
 
     @Test
-    public void testSuspendComplete() throws Exception {
+    void testSuspendComplete() throws Exception {
         long dispatchTime = 10;
         AtomicReference<AsyncContext> asyncHolder = new AtomicReference<>();
         CyclicBarrier[] barrier = {
@@ -374,7 +374,7 @@ class TimedHandlerTest {
     }
 
     @Test
-    public void testAsyncRequestWithShutdown() throws Exception {
+    void testAsyncRequestWithShutdown() throws Exception {
         long delay = 500;
         CountDownLatch serverLatch = new CountDownLatch(1);
         timedHandler.setHandler(new AbstractHandler() {

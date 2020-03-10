@@ -205,7 +205,7 @@ class CloudWatchMeterRegistryTest {
     }
 
     @Test
-    public void batchSizeShouldWorkOnMetricDatum() throws InterruptedException {
+    void batchSizeShouldWorkOnMetricDatum() throws InterruptedException {
         List<Meter> meters = new ArrayList<>();
         for (int i = 0; i < 20; i++) {
             Timer timer = Timer.builder("timer." + i).register(this.registry);
