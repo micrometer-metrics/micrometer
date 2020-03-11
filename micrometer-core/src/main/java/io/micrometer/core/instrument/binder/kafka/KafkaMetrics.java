@@ -132,8 +132,7 @@ class KafkaMetrics implements MeterBinder {
     }
 
     private void bindMeter(MeterRegistry registry, Metric metric, String name, Iterable<Tag> tags) {
-        if (name.endsWith("total") || name.endsWith("count"))
-            registerCounter(registry, metric, name, tags);
+        if (name.endsWith("total") || name.endsWith("count")) registerCounter(registry, metric, name, tags);
         else if (name.endsWith("min") || name.endsWith("max") || name.endsWith("avg") || name.endsWith("rate"))
             registerGauge(registry, metric, name, tags);
         else registerGauge(registry, metric, name, tags);
