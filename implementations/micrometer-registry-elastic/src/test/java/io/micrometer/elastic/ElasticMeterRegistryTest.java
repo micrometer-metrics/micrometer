@@ -35,20 +35,10 @@ import static org.assertj.core.api.Assertions.assertThat;
  * @author Johnny Lim
  */
 class ElasticMeterRegistryTest {
-    private MockClock clock = new MockClock();
-    private ElasticConfig config = new ElasticConfig() {
-        @Override
-        public String get(String key) {
-            return null;
-        }
+    private final MockClock clock = new MockClock();
+    private final ElasticConfig config = ElasticConfig.DEFAULT;
 
-        @Override
-        public boolean enabled() {
-            return false;
-        }
-    };
-
-    private ElasticMeterRegistry registry = new ElasticMeterRegistry(config, clock);
+    private final ElasticMeterRegistry registry = new ElasticMeterRegistry(config, clock);
 
     @Test
     void timestampFormat() {
@@ -294,27 +284,7 @@ class ElasticMeterRegistryTest {
     @Issue("#1891")
     @Test
     void canExtendElasticMeterRegistry() {
-        ElasticMeterRegistry registry = new ElasticMeterRegistry(new ElasticConfig() {
-            @Override
-            public String get(String key) {
-                return null;
-            }
-
-            @Override
-            public String index() {
-                return "my-metrics";
-            }
-
-            @Override
-            public String indexDateFormat() {
-                return "";
-            }
-
-            @Override
-            public String indexDateSeparator() {
-                return "";
-            }
-        }, clock) {
+        ElasticMeterRegistry registry = new ElasticMeterRegistry(config, clock) {
             @Override
             public String indexName() {
                 return "my-metrics";
