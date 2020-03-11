@@ -57,7 +57,6 @@ class KafkaMetrics implements MeterBinder {
 
     private final Supplier<Map<MetricName, ? extends Metric>> metricsSupplier;
     private final Iterable<Tag> extraTags;
-    private final int extraTagsSize;
 
     /**
      * Keeps track of current set of metrics.
@@ -73,9 +72,6 @@ class KafkaMetrics implements MeterBinder {
     KafkaMetrics(Supplier<Map<MetricName, ? extends Metric>> metricsSupplier, Iterable<Tag> extraTags) {
         this.metricsSupplier = metricsSupplier;
         this.extraTags = extraTags;
-        int i = 0;
-        for (Tag ignored : extraTags) i++;
-        this.extraTagsSize = i + 1; // 1 = kafka version tag
     }
 
     @Override public void bindTo(MeterRegistry registry) {
