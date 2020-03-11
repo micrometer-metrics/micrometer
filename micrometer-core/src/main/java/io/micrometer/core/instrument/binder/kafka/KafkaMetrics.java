@@ -25,7 +25,6 @@ import io.micrometer.core.instrument.binder.MeterBinder;
 import io.micrometer.core.lang.NonNullApi;
 import io.micrometer.core.lang.NonNullFields;
 import java.util.ArrayList;
-import java.util.Collection;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
@@ -77,17 +76,17 @@ class KafkaMetrics implements MeterBinder {
     @Override public void bindTo(MeterRegistry registry) {
         Map<MetricName, ? extends Metric> metrics = metricsSupplier.get();
         // Collect static metrics and tags
-        Metric startTimeMetric = null;
+        Metric startTime = null;
         for (Map.Entry<MetricName, ? extends Metric> entry: metrics.entrySet()) {
             MetricName name = entry.getKey();
             if (METRIC_GROUP_APP_INFO.equals(name.group())) {
                 if (VERSION_METRIC_NAME.equals(name.name()))
                     kafkaVersion = (String) entry.getValue().metricValue();
                 else if (START_TIME_METRIC_NAME.equals(name.name()))
-                    startTimeMetric = entry.getValue();
+                    startTime = entry.getValue();
             }
         }
-        if (startTimeMetric != null) bindMeter(registry, startTimeMetric);
+        if (startTime != null) bindMeter(registry, startTime, metricName(startTime), metricTags(startTime));
         // Collect dynamic metrics
         checkAndBindMetrics(registry);
     }
@@ -109,14 +108,13 @@ class KafkaMetrics implements MeterBinder {
                         //Filter out metrics from groups that includes metadata
                         if (METRIC_GROUP_APP_INFO.equals(name.group())) return;
                         if (METRIC_GROUP_METRICS_COUNT.equals(name.group())) return;
+                        String metricName = metricName(metric);
+                        List<Tag> metricTags = metricTags(metric);
                         //Kafka has metrics with lower number of tags (e.g. with/without topic or partition tag)
                         //Remove meters with lower number of tags
                         boolean hasLessTags = false;
-                        Collection<Meter> meters = registry.find(metricName(metric)).meters();
-                        for (Meter meter : meters) {
+                        for (Meter meter : registry.find(metricName).meters()) {
                             List<Tag> meterTags = meter.getId().getTags();
-                            List<Tag> metricTags = metricTags(metric);
-                            extraTags.forEach(metricTags::add);
                             if (meterTags.size() < metricTags.size()) registry.remove(meter);
                             // Check if already exists
                             else if (meterTags.size() == metricTags.size())
@@ -127,34 +125,31 @@ class KafkaMetrics implements MeterBinder {
                         if (hasLessTags) return;
                         //Filter out non-numeric values
                         if (!(metric.metricValue() instanceof Number)) return;
-                        bindMeter(registry, metric);
+                        bindMeter(registry, metric, metricName, metricTags);
                     });
                 }
             }
         }
     }
 
-    private void bindMeter(MeterRegistry registry, Metric metric) {
-        String name = metricName(metric);
+    private void bindMeter(MeterRegistry registry, Metric metric, String name, Iterable<Tag> tags) {
         if (name.endsWith("total") || name.endsWith("count"))
-            registerCounter(registry, metric, name, extraTags);
+            registerCounter(registry, metric, name, tags);
         else if (name.endsWith("min") || name.endsWith("max") || name.endsWith("avg") || name.endsWith("rate"))
-            registerGauge(registry, metric, name, extraTags);
-        else registerGauge(registry, metric, name, extraTags);
+            registerGauge(registry, metric, name, tags);
+        else registerGauge(registry, metric, name, tags);
     }
 
-    private void registerGauge(MeterRegistry registry, Metric metric, String metricName, Iterable<Tag> extraTags) {
+    private void registerGauge(MeterRegistry registry, Metric metric, String metricName, Iterable<Tag> tags) {
         Gauge.builder(metricName, metric, toMetricValue(registry))
-                .tags(metricTags(metric))
-                .tags(extraTags)
+                .tags(tags)
                 .description(metric.metricName().description())
                 .register(registry);
     }
 
-    private void registerCounter(MeterRegistry registry, Metric metric, String metricName, Iterable<Tag> extraTags) {
+    private void registerCounter(MeterRegistry registry, Metric metric, String metricName, Iterable<Tag> tags) {
         FunctionCounter.builder(metricName, metric, toMetricValue(registry))
-                .tags(metricTags(metric))
-                .tags(extraTags)
+                .tags(tags)
                 .description(metric.metricName().description())
                 .register(registry);
     }
@@ -169,8 +164,9 @@ class KafkaMetrics implements MeterBinder {
 
     private List<Tag> metricTags(Metric metric) {
         List<Tag> tags = new ArrayList<>();
-        tags.add(Tag.of("kafka-version", kafkaVersion));
         metric.metricName().tags().forEach((key, value) -> tags.add(Tag.of(key, value)));
+        tags.add(Tag.of("kafka-version", kafkaVersion));
+        extraTags.forEach(tags::add);
         return tags;
     }
 
