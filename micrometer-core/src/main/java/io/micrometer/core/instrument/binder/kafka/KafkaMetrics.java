@@ -118,10 +118,14 @@ class KafkaMetrics implements MeterBinder {
                         boolean hasLessTags = false;
                         Collection<Meter> meters = registry.find(metricName(metric)).meters();
                         for (Meter meter : meters) {
-                            if (meter.getId().getTags().size() < (metricTags(metric).size() + extraTagsSize))
-                                registry.remove(meter);
+                            List<Tag> meterTags = meter.getId().getTags();
+                            List<Tag> metricTags = metricTags(metric);
+                            extraTags.forEach(metricTags::add);
+                            if (meterTags.size() < metricTags.size()) registry.remove(meter);
                             // Check if already exists
-                            else if (meter.getId().getTags().equals(metricTags(metric))) return;
+                            else if (meterTags.size() == metricTags.size())
+                                if (meter.getId().getTags().equals(metricTags)) return;
+                                else break;
                             else hasLessTags = true;
                         }
                         if (hasLessTags) return;
