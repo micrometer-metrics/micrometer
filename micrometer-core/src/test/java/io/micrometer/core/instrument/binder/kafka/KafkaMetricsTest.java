@@ -161,4 +161,31 @@ class KafkaMetricsTest {
         Meter meter = registry.getMeters().get(0);
         assertThat(meter.getId().getTags()).hasSize(2); // version + key0
     }
+
+    @Test void shouldBindMetersWithSameTags() {
+        //Given
+        Supplier<Map<MetricName, ? extends Metric>> supplier = () -> {
+            Map<String, String> firstTags = new LinkedHashMap<>();
+            firstTags.put("key0", "value0");
+            MetricName firstName = new MetricName("a", "b", "c", firstTags);
+            KafkaMetric firstMetric = new KafkaMetric(this, firstName, new Value(), new MetricConfig(), Time.SYSTEM);
+            Map<String, String> secondTags = new LinkedHashMap<>();
+            secondTags.put("key0", "value1");
+            MetricName secondName = new MetricName("a", "b", "c", secondTags);
+            KafkaMetric secondMetric = new KafkaMetric(this, secondName, new Value(), new MetricConfig(), Time.SYSTEM);
+
+            Map<MetricName, KafkaMetric> metrics = new LinkedHashMap<>();
+            metrics.put(firstName, firstMetric);
+            metrics.put(secondName, secondMetric);
+            return metrics;
+        };
+        KafkaMetrics kafkaMetrics = new KafkaMetrics(supplier);
+        MeterRegistry registry = new SimpleMeterRegistry();
+        //When
+        kafkaMetrics.checkAndBindMetrics(registry);
+        //Then
+        assertThat(registry.getMeters()).hasSize(2);
+        Meter meter = registry.getMeters().get(0);
+        assertThat(meter.getId().getTags()).hasSize(2); // version + key0
+    }
 }
