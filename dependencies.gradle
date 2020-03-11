@@ -56,7 +56,7 @@ def VERSIONS = [
         'org.hibernate:hibernate-entitymanager:latest.release',
         'org.hsqldb:hsqldb:latest.release',
         // Pin version temporarily to restore builds. See gh-1852
-        'org.jooq:jooq:3.12.+',
+        'org.jooq:jooq:3.13.+',
         'org.jsr107.ri:cache-ri-impl:1.0.0',
         'org.junit.jupiter:junit-jupiter:latest.release',
         'org.junit.platform:junit-platform-launcher:latest.release',

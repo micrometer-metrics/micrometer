@@ -44,6 +44,8 @@ import java.util.function.BiFunction;
 import java.util.function.Function;
 import java.util.stream.Stream;
 
+import static org.jooq.SQLDialect.*;
+
 /**
  * Time SQL queries passing through JOOQ.
  *
@@ -156,6 +158,16 @@ public class MetricsDSLContext implements DSLContext {
     }
 
     @Override
+    public Version version(String id) {
+        return context.version(id);
+    }
+
+    @Override
+    public Migration migrateTo(Version to) {
+        return context.migrateTo(to);
+    }
+
+    @Override
     public Meta meta() {
         return context.meta();
     }
@@ -186,9 +198,19 @@ public class MetricsDSLContext implements DSLContext {
     }
 
     @Override
+    public Meta meta(String... sources) {
+        return context.meta(sources);
+    }
+
+    @Override
     @Internal
     public Meta meta(Source... scripts) {
         return context.meta(scripts);
+    }
+
+    @Override
+    public Meta meta(Query... queries) {
+        return context.meta(queries);
     }
 
     @Override
@@ -1755,35 +1777,35 @@ public class MetricsDSLContext implements DSLContext {
 
     @Override
     @Support
-    public <R extends Record> SelectWhereStep<R> selectFrom(Name table) {
+    public SelectWhereStep<Record> selectFrom(Name table) {
         return time(context.selectFrom(table));
     }
 
     @Override
     @PlainSQL
     @Support
-    public <R extends Record> SelectWhereStep<R> selectFrom(SQL sql) {
+    public SelectWhereStep<Record> selectFrom(SQL sql) {
         return time(context.selectFrom(sql));
     }
 
     @Override
     @PlainSQL
     @Support
-    public <R extends Record> SelectWhereStep<R> selectFrom(String sql) {
+    public SelectWhereStep<Record> selectFrom(String sql) {
         return time(context.selectFrom(sql));
     }
 
     @Override
     @PlainSQL
     @Support
-    public <R extends Record> SelectWhereStep<R> selectFrom(String sql, Object... bindings) {
+    public SelectWhereStep<Record> selectFrom(String sql, Object... bindings) {
         return time(context.selectFrom(sql, bindings));
     }
 
     @Override
     @PlainSQL
     @Support
-    public <R extends Record> SelectWhereStep<R> selectFrom(String sql, QueryPart... parts) {
+    public SelectWhereStep<Record> selectFrom(String sql, QueryPart... parts) {
         return time(context.selectFrom(sql, parts));
     }
 
@@ -2431,13 +2453,13 @@ public class MetricsDSLContext implements DSLContext {
 
     @Override
     @Support
-    public <R extends Record> DeleteWhereStep<R> deleteFrom(Table<R> table) {
+    public <R extends Record> DeleteUsingStep<R> deleteFrom(Table<R> table) {
         return context.deleteFrom(table);
     }
 
     @Override
     @Support
-    public <R extends Record> DeleteWhereStep<R> delete(Table<R> table) {
+    public <R extends Record> DeleteUsingStep<R> delete(Table<R> table) {
         return context.delete(table);
     }
 
@@ -2649,6 +2671,12 @@ public class MetricsDSLContext implements DSLContext {
     }
 
     @Override
+    @Support({ MYSQL })
+    public RowCountQuery set(Name name, Param<?> param) {
+        return context.set(name, param);
+    }
+
+    @Override
     @Support({SQLDialect.FIREBIRD, SQLDialect.H2, SQLDialect.HSQLDB, SQLDialect.MARIADB, SQLDialect.MYSQL, SQLDialect.POSTGRES})
     public CommentOnIsStep commentOnTable(String tableName) {
         return context.commentOnTable(tableName);
@@ -2784,6 +2812,24 @@ public class MetricsDSLContext implements DSLContext {
     @Support({SQLDialect.MARIADB, SQLDialect.MYSQL, SQLDialect.POSTGRES})
     public CreateTableColumnStep createTemporaryTable(Table<?> table) {
         return context.createTemporaryTable(table);
+    }
+
+    @Override
+    @Support({ FIREBIRD, MARIADB, MYSQL, POSTGRES })
+    public CreateTableColumnStep createTemporaryTableIfNotExists(String table) {
+        return context.createTemporaryTableIfNotExists(table);
+    }
+
+    @Override
+    @Support({ FIREBIRD, MARIADB, MYSQL, POSTGRES })
+    public CreateTableColumnStep createTemporaryTableIfNotExists(Name table) {
+        return context.createTemporaryTableIfNotExists(table);
+    }
+
+    @Override
+    @Support({ FIREBIRD, MARIADB, MYSQL, POSTGRES })
+    public CreateTableColumnStep createTemporaryTableIfNotExists(Table<?> table) {
+        return context.createTemporaryTableIfNotExists(table);
     }
 
     @Override
@@ -2976,6 +3022,18 @@ public class MetricsDSLContext implements DSLContext {
     @Support({SQLDialect.H2, SQLDialect.POSTGRES})
     public CreateTypeStep createType(Name type) {
         return context.createType(type);
+    }
+
+    @Override
+    @Support({ POSTGRES })
+    public AlterTypeStep alterType(String type) {
+        return context.alterType(type);
+    }
+
+    @Override
+    @Support({ POSTGRES })
+    public AlterTypeStep alterType(Name type) {
+        return context.alterType(type);
     }
 
     @Override
@@ -3462,6 +3520,24 @@ public class MetricsDSLContext implements DSLContext {
     @Support({SQLDialect.MARIADB, SQLDialect.MYSQL, SQLDialect.POSTGRES})
     public DropTableStep dropTemporaryTable(Table<?> table) {
         return context.dropTemporaryTable(table);
+    }
+
+    @Override
+    @Support({ FIREBIRD, MARIADB, MYSQL, POSTGRES })
+    public DropTableStep dropTemporaryTableIfExists(String table) {
+        return context.dropTemporaryTableIfExists(table);
+    }
+
+    @Override
+    @Support({ FIREBIRD, MARIADB, MYSQL, POSTGRES })
+    public DropTableStep dropTemporaryTableIfExists(Name table) {
+        return context.dropTemporaryTableIfExists(table);
+    }
+
+    @Override
+    @Support({ FIREBIRD, MARIADB, MYSQL, POSTGRES })
+    public DropTableStep dropTemporaryTableIfExists(Table<?> table) {
+        return context.dropTemporaryTableIfExists(table);
     }
 
     @Override
