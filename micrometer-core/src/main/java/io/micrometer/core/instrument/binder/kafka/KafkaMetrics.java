@@ -79,12 +79,11 @@ class KafkaMetrics implements MeterBinder {
         Metric startTime = null;
         for (Map.Entry<MetricName, ? extends Metric> entry: metrics.entrySet()) {
             MetricName name = entry.getKey();
-            if (METRIC_GROUP_APP_INFO.equals(name.group())) {
+            if (METRIC_GROUP_APP_INFO.equals(name.group()))
                 if (VERSION_METRIC_NAME.equals(name.name()))
                     kafkaVersion = (String) entry.getValue().metricValue();
                 else if (START_TIME_METRIC_NAME.equals(name.name()))
                     startTime = entry.getValue();
-            }
         }
         if (startTime != null) bindMeter(registry, startTime, metricName(startTime), metricTags(startTime));
         // Collect dynamic metrics
@@ -140,15 +139,15 @@ class KafkaMetrics implements MeterBinder {
         else registerGauge(registry, metric, name, tags);
     }
 
-    private void registerGauge(MeterRegistry registry, Metric metric, String metricName, Iterable<Tag> tags) {
-        Gauge.builder(metricName, metric, toMetricValue(registry))
+    private void registerGauge(MeterRegistry registry, Metric metric, String name, Iterable<Tag> tags) {
+        Gauge.builder(name, metric, toMetricValue(registry))
                 .tags(tags)
                 .description(metric.metricName().description())
                 .register(registry);
     }
 
-    private void registerCounter(MeterRegistry registry, Metric metric, String metricName, Iterable<Tag> tags) {
-        FunctionCounter.builder(metricName, metric, toMetricValue(registry))
+    private void registerCounter(MeterRegistry registry, Metric metric, String name, Iterable<Tag> tags) {
+        FunctionCounter.builder(name, metric, toMetricValue(registry))
                 .tags(tags)
                 .description(metric.metricName().description())
                 .register(registry);
