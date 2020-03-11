@@ -85,7 +85,7 @@ class KafkaMetrics implements MeterBinder {
                 else if (START_TIME_METRIC_NAME.equals(name.name()))
                     startTime = entry.getValue();
         }
-        if (startTime != null) bindMeter(registry, startTime, metricName(startTime), metricTags(startTime));
+        if (startTime != null) bindMeter(registry, startTime, meterName(startTime), meterTags(startTime));
         // Collect dynamic metrics
         checkAndBindMetrics(registry);
     }
@@ -107,24 +107,24 @@ class KafkaMetrics implements MeterBinder {
                         //Filter out metrics from groups that includes metadata
                         if (METRIC_GROUP_APP_INFO.equals(name.group())) return;
                         if (METRIC_GROUP_METRICS_COUNT.equals(name.group())) return;
-                        String metricName = metricName(metric);
-                        List<Tag> metricTags = metricTags(metric);
+                        String meterName = meterName(metric);
+                        List<Tag> meterTags = meterTags(metric);
                         //Kafka has metrics with lower number of tags (e.g. with/without topic or partition tag)
                         //Remove meters with lower number of tags
                         boolean hasLessTags = false;
-                        for (Meter meter : registry.find(metricName).meters()) {
-                            List<Tag> meterTags = meter.getId().getTags();
-                            if (meterTags.size() < metricTags.size()) registry.remove(meter);
+                        for (Meter other : registry.find(meterName).meters()) {
+                            List<Tag> tags = other.getId().getTags();
+                            if (tags.size() < meterTags.size()) registry.remove(other);
                             // Check if already exists
-                            else if (meterTags.size() == metricTags.size())
-                                if (meter.getId().getTags().equals(metricTags)) return;
+                            else if (tags.size() == meterTags.size())
+                                if (tags.equals(meterTags)) return;
                                 else break;
                             else hasLessTags = true;
                         }
                         if (hasLessTags) return;
                         //Filter out non-numeric values
                         if (!(metric.metricValue() instanceof Number)) return;
-                        bindMeter(registry, metric, metricName, metricTags);
+                        bindMeter(registry, metric, meterName, meterTags);
                     });
                 }
             }
@@ -160,7 +160,7 @@ class KafkaMetrics implements MeterBinder {
         };
     }
 
-    private List<Tag> metricTags(Metric metric) {
+    private List<Tag> meterTags(Metric metric) {
         List<Tag> tags = new ArrayList<>();
         metric.metricName().tags().forEach((key, value) -> tags.add(Tag.of(key, value)));
         tags.add(Tag.of("kafka-version", kafkaVersion));
@@ -168,7 +168,7 @@ class KafkaMetrics implements MeterBinder {
         return tags;
     }
 
-    private String metricName(Metric metric) {
+    private String meterName(Metric metric) {
         String name = METRIC_NAME_PREFIX + metric.metricName().group() + "." + metric.metricName().name();
         return name.replaceAll("-metrics", "").replaceAll("-", ".");
     }
