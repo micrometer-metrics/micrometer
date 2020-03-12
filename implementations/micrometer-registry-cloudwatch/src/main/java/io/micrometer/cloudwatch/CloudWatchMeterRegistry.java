@@ -27,6 +27,7 @@ import io.micrometer.core.instrument.util.NamedThreadFactory;
 import io.micrometer.core.instrument.util.StringUtils;
 import io.micrometer.core.instrument.util.TimeUtils;
 import io.micrometer.core.lang.Nullable;
+import io.micrometer.core.util.internal.logging.WarnThenDebugLogger;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -150,6 +151,7 @@ public class CloudWatchMeterRegistry extends StepMeterRegistry {
     // VisibleForTesting
     class Batch {
         private long wallTime = clock.wallTime();
+        private WarnThenDebugLogger logger = new WarnThenDebugLogger(Batch.class);
 
         private Stream<MetricDatum> gaugeData(Gauge gauge) {
             MetricDatum metricDatum = metricDatum(gauge.getId(), "value", gauge.value());
@@ -271,9 +273,17 @@ public class CloudWatchMeterRegistry extends StepMeterRegistry {
 
         private List<Dimension> toDimensions(List<Tag> tags) {
             return tags.stream()
-                    .filter(t -> StringUtils.isNotBlank(t.getValue()))
+                    .filter(this::acceptableTag)
                     .map(tag -> new Dimension().withName(tag.getKey()).withValue(tag.getValue()))
                     .collect(toList());
+        }
+
+        private boolean acceptableTag(Tag tag) {
+            final boolean isAcceptable = StringUtils.isNotBlank(tag.getValue());
+            if (!isAcceptable) {
+                logger.log(String.format("Dropping tag with empty value: '%s'", tag.getKey()));
+            }
+            return isAcceptable;
         }
     }
 
