@@ -109,7 +109,6 @@ public class NewRelicMeterRegistry extends StepMeterRegistry {
 
         Builder(NewRelicConfig config) {
             this.config = config;
-            clientProvider = new NewRelicHttpClientProviderImpl(config);
         }
 
         /**
@@ -149,6 +148,10 @@ public class NewRelicMeterRegistry extends StepMeterRegistry {
         }
 
         public NewRelicMeterRegistry build() {
+            if (clientProvider == null) {
+                //default to the HTTP/REST client
+                clientProvider = new NewRelicHttpClientProviderImpl(config);
+            }
             return new NewRelicMeterRegistry(config, clientProvider, convention, clock, threadFactory);
         }
     }
