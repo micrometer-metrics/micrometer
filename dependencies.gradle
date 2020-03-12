@@ -45,7 +45,7 @@ def VERSIONS = [
         'org.apache.tomcat.embed:tomcat-embed-core:8.+',
         'org.aspectj:aspectjweaver:1.8.+',
         'org.assertj:assertj-core:latest.release',
-        'org.awaitility:awaitility:4.+',
+        'org.awaitility:awaitility:latest.release',
         'org.eclipse.jetty:jetty-client:9.+',
         'org.eclipse.jetty:jetty-server:9.+',
         'org.ehcache:ehcache:latest.release',
