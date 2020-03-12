@@ -16,7 +16,7 @@
 package io.micrometer.statsd;
 
 import io.micrometer.core.instrument.cumulative.CumulativeFunctionCounter;
-import org.reactivestreams.Subscriber;
+import reactor.core.publisher.FluxSink;
 
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.ToDoubleFunction;
@@ -30,20 +30,20 @@ import java.util.function.ToDoubleFunction;
  */
 public class StatsdFunctionCounter<T> extends CumulativeFunctionCounter<T> implements StatsdPollable {
     private final StatsdLineBuilder lineBuilder;
-    private final Subscriber<String> subscriber;
+    private final FluxSink<String> sink;
     private final AtomicReference<Long> lastValue = new AtomicReference<>(0L);
 
-    StatsdFunctionCounter(Id id, T obj, ToDoubleFunction<T> f, StatsdLineBuilder lineBuilder, Subscriber<String> subscriber) {
+    StatsdFunctionCounter(Id id, T obj, ToDoubleFunction<T> f, StatsdLineBuilder lineBuilder, FluxSink<String> sink) {
         super(id, obj, f);
         this.lineBuilder = lineBuilder;
-        this.subscriber = subscriber;
+        this.sink = sink;
     }
 
     @Override
     public void poll() {
         lastValue.updateAndGet(prev -> {
             long count = (long) count();
-            subscriber.onNext(lineBuilder.count(count - prev));
+            sink.next(lineBuilder.count(count - prev));
             return count;
         });
     }

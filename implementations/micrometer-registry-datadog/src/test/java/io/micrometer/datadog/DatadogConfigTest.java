@@ -67,7 +67,7 @@ class DatadogConfigTest {
 
     @Test
     void defaultsUriWhenMissing() {
-        assertThat(new TestDatadogConfig(null).uri()).isEqualTo("https://app.datadoghq.com");
+        assertThat(new TestDatadogConfig(null).uri()).isEqualTo("https://api.datadoghq.com");
     }
 
     @Test

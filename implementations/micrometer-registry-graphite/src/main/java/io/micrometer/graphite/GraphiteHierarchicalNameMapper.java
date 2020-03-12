@@ -28,6 +28,7 @@ import java.util.List;
  *
  * @author Jon Schneider
  * @author Johnny Lim
+ * @since 1.4.0
  */
 public class GraphiteHierarchicalNameMapper implements HierarchicalNameMapper {
     private final List<String> tagsAsPrefix;

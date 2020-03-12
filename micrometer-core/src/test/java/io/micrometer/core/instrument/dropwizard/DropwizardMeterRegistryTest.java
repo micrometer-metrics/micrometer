@@ -62,7 +62,7 @@ class DropwizardMeterRegistryTest {
     @Test
     void gaugeOnNullValue() {
         registry.gauge("gauge", emptyList(), null, obj -> 1.0);
-        assertThat(registry.get("gauge").gauge().value()).isEqualTo(Double.NaN);
+        assertThat(registry.get("gauge").gauge().value()).isNaN();
     }
 
     @Test

@@ -15,8 +15,17 @@
  */
 package io.micrometer.stackdriver;
 
+import com.google.api.gax.core.CredentialsProvider;
+import com.google.api.gax.core.FixedCredentialsProvider;
+import com.google.auth.oauth2.GoogleCredentials;
+import com.google.cloud.monitoring.v3.MetricServiceSettings;
 import io.micrometer.core.instrument.config.MissingRequiredConfigurationException;
 import io.micrometer.core.instrument.step.StepRegistryConfig;
+
+import java.io.FileInputStream;
+import java.io.IOException;
+import java.util.Collections;
+import java.util.Map;
 
 /**
  * {@link StepRegistryConfig} for Stackdriver.
@@ -38,8 +47,30 @@ public interface StackdriverConfig extends StepRegistryConfig {
         return v;
     }
 
+    /**
+     * Return resource labels.
+     * @return resource labels.
+     * @since 1.4.0
+     */
+    default Map<String, String> resourceLabels() {
+        return Collections.emptyMap();
+    }
+
     default String resourceType() {
         String resourceType = get(prefix() + ".resourceType");
         return resourceType == null ? "global" : resourceType;
+    }
+
+    /**
+     * Return {@link CredentialsProvider} to use.
+     * @return {@code CredentialsProvider} to use
+     * @throws IOException if a specified file doesn't exist
+     * @since 1.4.0
+     */
+    default CredentialsProvider credentials() throws IOException {
+        String credentials = get(prefix() + ".credentials");
+        return credentials == null ? MetricServiceSettings.defaultCredentialsProviderBuilder().build()
+                : FixedCredentialsProvider.create(GoogleCredentials.fromStream(new FileInputStream(credentials))
+                        .createScoped(MetricServiceSettings.getDefaultServiceScopes()));
     }
 }

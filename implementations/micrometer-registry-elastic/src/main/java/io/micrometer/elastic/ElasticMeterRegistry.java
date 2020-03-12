@@ -16,6 +16,7 @@
 package io.micrometer.elastic;
 
 import io.micrometer.core.instrument.*;
+import io.micrometer.core.instrument.distribution.HistogramSnapshot;
 import io.micrometer.core.instrument.step.StepMeterRegistry;
 import io.micrometer.core.instrument.util.MeterPartition;
 import io.micrometer.core.instrument.util.NamedThreadFactory;
@@ -98,7 +99,6 @@ public class ElasticMeterRegistry extends StepMeterRegistry {
             "  }\n" +
             "}";
 
-    private static final String TYPE_PATH_BEFORE_VERSION_7 = "/doc";
     private static final String TYPE_PATH_AFTER_VERSION_7 = "";
 
     private static final Pattern MAJOR_VERSION_PATTERN = Pattern.compile("\"number\" *: *\"([\\d]+)");
@@ -272,7 +272,7 @@ public class ElasticMeterRegistry extends StepMeterRegistry {
     }
 
     private String getTypePath() {
-        return majorVersion < 7 ? TYPE_PATH_BEFORE_VERSION_7 : TYPE_PATH_AFTER_VERSION_7;
+        return majorVersion < 7 ? "/" + indexType() : TYPE_PATH_AFTER_VERSION_7;
     }
 
     // VisibleForTesting
@@ -283,6 +283,16 @@ public class ElasticMeterRegistry extends StepMeterRegistry {
             count++;
         }
         return count;
+    }
+
+    /**
+     * Return index type. Default is 'doc'
+     * @implNote this only applies to Elasticsearch versions before 7.
+     * @return index type.
+     * @since 1.4.0
+     */
+    protected String indexType() {
+        return "doc";
     }
 
     /**
@@ -366,12 +376,12 @@ public class ElasticMeterRegistry extends StepMeterRegistry {
 
     // VisibleForTesting
     Optional<String> writeSummary(DistributionSummary summary) {
-        summary.takeSnapshot();
+        HistogramSnapshot histogramSnapshot = summary.takeSnapshot();
         return Optional.of(writeDocument(summary, builder -> {
-            builder.append(",\"count\":").append(summary.count());
-            builder.append(",\"sum\":").append(summary.totalAmount());
-            builder.append(",\"mean\":").append(summary.mean());
-            builder.append(",\"max\":").append(summary.max());
+            builder.append(",\"count\":").append(histogramSnapshot.count());
+            builder.append(",\"sum\":").append(histogramSnapshot.total());
+            builder.append(",\"mean\":").append(histogramSnapshot.mean());
+            builder.append(",\"max\":").append(histogramSnapshot.max());
         }));
     }
 

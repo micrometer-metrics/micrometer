@@ -70,7 +70,7 @@ class SimpleMeterRegistryTest {
     }
 
     @Test
-    public void newFunctionTimerWhenCountingModeIsCumulativeShouldReturnCumulativeFunctionTimer() {
+    void newFunctionTimerWhenCountingModeIsCumulativeShouldReturnCumulativeFunctionTimer() {
         SimpleMeterRegistry registry = createRegistry(CountingMode.CUMULATIVE);
         Meter.Id id = new Meter.Id("some.timer", Tags.empty(), null, null, Meter.Type.TIMER);
         FunctionTimer functionTimer = registry.newFunctionTimer(id, null, (o) -> 0L, (o) -> 0d, TimeUnit.SECONDS);
@@ -78,7 +78,7 @@ class SimpleMeterRegistryTest {
     }
 
     @Test
-    public void newFunctionCounterWhenCountingModeIsCumulativeShouldReturnCumulativeFunctionCounter() {
+    void newFunctionCounterWhenCountingModeIsCumulativeShouldReturnCumulativeFunctionCounter() {
         SimpleMeterRegistry registry = createRegistry(CountingMode.CUMULATIVE);
         Meter.Id id = new Meter.Id("some.timer", Tags.empty(), null, null, Meter.Type.COUNTER);
         FunctionCounter functionCounter = registry.newFunctionCounter(id, null, (o) -> 0d);
@@ -86,7 +86,7 @@ class SimpleMeterRegistryTest {
     }
 
     @Test
-    public void newFunctionTimerWhenCountingModeIsStepShouldReturnStepFunctionTimer() {
+    void newFunctionTimerWhenCountingModeIsStepShouldReturnStepFunctionTimer() {
         SimpleMeterRegistry registry = createRegistry(CountingMode.STEP);
         Meter.Id id = new Meter.Id("some.timer", Tags.empty(), null, null, Meter.Type.TIMER);
         FunctionTimer functionTimer = registry.newFunctionTimer(id, null, (o) -> 0L, (o) -> 0d, TimeUnit.SECONDS);
@@ -94,7 +94,7 @@ class SimpleMeterRegistryTest {
     }
 
     @Test
-    public void newFunctionCounterWhenCountingModeIsStepShouldReturnStepFunctionCounter() {
+    void newFunctionCounterWhenCountingModeIsStepShouldReturnStepFunctionCounter() {
         SimpleMeterRegistry registry = createRegistry(CountingMode.STEP);
         Meter.Id id = new Meter.Id("some.timer", Tags.empty(), null, null, Meter.Type.COUNTER);
         FunctionCounter functionCounter = registry.newFunctionCounter(id, null, (o) -> 0d);

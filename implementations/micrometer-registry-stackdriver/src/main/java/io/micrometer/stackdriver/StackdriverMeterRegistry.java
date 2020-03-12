@@ -22,7 +22,14 @@ import com.google.api.MonitoredResource;
 import com.google.api.gax.rpc.ApiException;
 import com.google.cloud.monitoring.v3.MetricServiceClient;
 import com.google.cloud.monitoring.v3.MetricServiceSettings;
-import com.google.monitoring.v3.*;
+import com.google.monitoring.v3.CreateMetricDescriptorRequest;
+import com.google.monitoring.v3.CreateTimeSeriesRequest;
+import com.google.monitoring.v3.ListMetricDescriptorsRequest;
+import com.google.monitoring.v3.Point;
+import com.google.monitoring.v3.ProjectName;
+import com.google.monitoring.v3.TimeInterval;
+import com.google.monitoring.v3.TimeSeries;
+import com.google.monitoring.v3.TypedValue;
 import com.google.protobuf.Timestamp;
 import io.micrometer.core.annotation.Incubating;
 import io.micrometer.core.instrument.Timer;
@@ -65,7 +72,7 @@ import static java.util.stream.StreamSupport.stream;
  */
 @Incubating(since = "1.1.0")
 public class StackdriverMeterRegistry extends StepMeterRegistry {
-
+    
     private static final ThreadFactory DEFAULT_THREAD_FACTORY = new NamedThreadFactory("stackdriver-metrics-publisher");
 
     /**
@@ -253,10 +260,18 @@ public class StackdriverMeterRegistry extends StepMeterRegistry {
         private final StackdriverConfig config;
         private Clock clock = Clock.SYSTEM;
         private ThreadFactory threadFactory = DEFAULT_THREAD_FACTORY;
-        private Callable<MetricServiceSettings> metricServiceSettings = () -> MetricServiceSettings.newBuilder().build();
+        private Callable<MetricServiceSettings> metricServiceSettings;
 
         Builder(StackdriverConfig config) {
             this.config = config;
+            this.metricServiceSettings = () -> {
+                MetricServiceSettings.Builder builder = MetricServiceSettings.newBuilder();
+                if (config.credentials() != null) {
+                    builder.setCredentialsProvider(config.credentials());
+                }
+                builder.setHeaderProvider(new UserAgentHeaderProvider("stackdriver"));
+                return builder.build();
+            };
         }
 
         public Builder clock(Clock clock) {
@@ -339,6 +354,7 @@ public class StackdriverMeterRegistry extends StepMeterRegistry {
                     .setResource(MonitoredResource.newBuilder()
                             .setType(config.resourceType())
                             .putLabels("project_id", config.projectId())
+                            .putAllLabels(config.resourceLabels())
                             .build())
                     .setMetricKind(MetricDescriptor.MetricKind.GAUGE) // https://cloud.google.com/monitoring/api/v3/metrics-details#metric-kinds
                     .setValueType(valueType)
@@ -351,9 +367,15 @@ public class StackdriverMeterRegistry extends StepMeterRegistry {
 
         private void createMetricDescriptorIfNecessary(MetricServiceClient client, Meter.Id id,
                                                        MetricDescriptor.ValueType valueType, @Nullable String statistic) {
-            if (!verifiedDescriptors.contains(id.getName())) {
+
+            if (verifiedDescriptors.isEmpty()) {
+                prePopulateVerifiedDescriptors();
+            }
+
+            final String metricType = metricType(id, statistic);
+            if (!verifiedDescriptors.contains(metricType)) {
                 MetricDescriptor descriptor = MetricDescriptor.newBuilder()
-                        .setType(metricType(id, statistic))
+                        .setType(metricType)
                         .setDescription(id.getDescription() == null ? "" : id.getDescription())
                         .setMetricKind(MetricDescriptor.MetricKind.GAUGE)
                         .setValueType(valueType)
@@ -370,12 +392,37 @@ public class StackdriverMeterRegistry extends StepMeterRegistry {
 
                 try {
                     client.createMetricDescriptor(request);
-                    verifiedDescriptors.add(id.getName());
+                    verifiedDescriptors.add(metricType);
                 } catch (ApiException e) {
                     logger.warn("failed to create metric descriptor in Stackdriver for meter " + id, e);
                 }
             }
         }
+
+        private void prePopulateVerifiedDescriptors() {
+            try {
+                if (client != null) {
+                    final String prefix = metricType(new Meter.Id("", Tags.empty(), null, null, Meter.Type.OTHER), null);
+                    final String filter = String.format("metric.type = starts_with(\"%s\")", prefix);
+                    final String projectName = "projects/" + config.projectId();
+
+                    final ListMetricDescriptorsRequest listMetricDescriptorsRequest = ListMetricDescriptorsRequest.newBuilder()
+                            .setName(projectName)
+                            .setFilter(filter)
+                            .build();
+
+                    final MetricServiceClient.ListMetricDescriptorsPagedResponse listMetricDescriptorsPagedResponse = client.listMetricDescriptors(listMetricDescriptorsRequest);
+                    listMetricDescriptorsPagedResponse.iterateAll().forEach(
+                            metricDescriptor -> verifiedDescriptors.add(metricDescriptor.getType()));
+
+                    logger.trace("Pre populated verified descriptors for project: {}, with filter: {}, existing metrics: {}", projectName, filter, verifiedDescriptors);
+                }
+            } catch (Exception e) {
+                // only log on warning and continue, this should not be a showstopper
+                logger.warn("Failed to pre populate verified descriptors for {}", config.projectId(), e);
+            }
+        }
+
 
         private String metricType(Meter.Id id, @Nullable String statistic) {
             StringBuilder metricType = new StringBuilder("custom.googleapis.com/").append(getConventionName(id));

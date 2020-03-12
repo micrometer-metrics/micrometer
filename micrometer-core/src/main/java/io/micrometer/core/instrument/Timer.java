@@ -378,11 +378,7 @@ public interface Timer extends Meter, HistogramSupport {
          */
         public Builder sla(@Nullable Duration... sla) {
             if (sla != null) {
-                long[] slaNano = new long[sla.length];
-                for (int i = 0; i < slaNano.length; i++) {
-                    slaNano[i] = sla[i].toNanos();
-                }
-                this.distributionConfigBuilder.sla(slaNano);
+                this.distributionConfigBuilder.sla(Arrays.stream(sla).mapToLong(Duration::toNanos).toArray());
             }
             return this;
         }

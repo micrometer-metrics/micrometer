@@ -35,7 +35,7 @@ import org.slf4j.Logger;
 /**
  * NOTE: This file has been copied from {io.netty.util.internal.logging}.
  *
- * <a href="http://www.slf4j.org/">SLF4J</a> logger.
+ * <a href="https://www.slf4j.org/">SLF4J</a> logger.
  */
 final class Slf4JLogger extends AbstractInternalLogger {
 

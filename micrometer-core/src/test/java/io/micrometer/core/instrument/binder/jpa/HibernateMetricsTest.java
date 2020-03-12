@@ -21,7 +21,6 @@ import io.micrometer.core.instrument.simple.SimpleConfig;
 import io.micrometer.core.instrument.simple.SimpleMeterRegistry;
 import org.hibernate.SessionFactory;
 import org.hibernate.stat.Statistics;
-import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
 import javax.persistence.EntityManagerFactory;
@@ -40,7 +39,9 @@ import static org.mockito.Mockito.when;
 @SuppressWarnings("deprecation")
 class HibernateMetricsTest {
 
-    private MeterRegistry registry;
+    private final MeterRegistry registry = new SimpleMeterRegistry(SimpleConfig.DEFAULT, new MockClock());
+    private final EntityManagerFactory entityManagerFactory = createMockEntityManagerFactory(true);
+    private final SessionFactory sessionFactory = createMockSessionFactory(true);
 
     private static EntityManagerFactory createMockEntityManagerFactory(boolean statsEnabled) {
         EntityManagerFactory emf = mock(EntityManagerFactory.class);
@@ -61,22 +62,15 @@ class HibernateMetricsTest {
         return sf;
     }
 
-    @BeforeEach
-    void setup() {
-        registry = new SimpleMeterRegistry(SimpleConfig.DEFAULT, new MockClock());
-    }
-
     @SuppressWarnings("deprecation")
     @Test
     void deprecatedMonitorShouldExposeMetricsWhenStatsEnabled() {
-        EntityManagerFactory entityManagerFactory = createMockEntityManagerFactory(true);
         HibernateMetrics.monitor(registry, entityManagerFactory, "entityManagerFactory");
         assertThatMonitorShouldExposeMetricsWhenStatsEnabled();
     }
 
     @Test
     void monitorShouldExposeMetricsWhenStatsEnabled() {
-        SessionFactory sessionFactory = createMockSessionFactory(true);
         HibernateMetrics.monitor(registry, sessionFactory, "sessionFactory");
         assertThatMonitorShouldExposeMetricsWhenStatsEnabled();
     }
@@ -134,14 +128,14 @@ class HibernateMetricsTest {
     void deprecatedMonitorShouldNotExposeMetricsWhenStatsNotEnabled() {
         EntityManagerFactory entityManagerFactory = createMockEntityManagerFactory(false);
         HibernateMetrics.monitor(registry, entityManagerFactory, "entityManagerFactory");
-        assertThat(registry.find("hibernate.sessions.open").gauge()).isNull();
+        assertThat(registry.find("hibernate.sessions.open").functionCounter()).isNull();
     }
 
     @Test
     void monitorShouldNotExposeMetricsWhenStatsNotEnabled() {
-        SessionFactory sessionFactory = createMockSessionFactory(true);
+        SessionFactory sessionFactory = createMockSessionFactory(false);
         HibernateMetrics.monitor(registry, sessionFactory, "sessionFactory");
-        assertThat(registry.find("hibernate.sessions.open").gauge()).isNull();
+        assertThat(registry.find("hibernate.sessions.open").functionCounter()).isNull();
     }
 
 }

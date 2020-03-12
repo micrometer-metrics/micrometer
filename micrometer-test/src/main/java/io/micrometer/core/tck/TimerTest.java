@@ -207,7 +207,7 @@ interface TimerTest {
 
         t.record(1, TimeUnit.MILLISECONDS);
         assertThat(t.percentile(1, TimeUnit.MILLISECONDS)).isEqualTo(1, Offset.offset(0.3));
-        assertThat(t.percentile(0.5, TimeUnit.MILLISECONDS)).isEqualTo(Double.NaN);
+        assertThat(t.percentile(0.5, TimeUnit.MILLISECONDS)).isNaN();
     }
 
     @Deprecated
@@ -219,6 +219,6 @@ interface TimerTest {
 
         t.record(1, TimeUnit.MILLISECONDS);
         assertThat(t.histogramCountAtValue((long) millisToUnit(1, TimeUnit.NANOSECONDS))).isEqualTo(1);
-        assertThat(t.histogramCountAtValue(1)).isEqualTo(Double.NaN);
+        assertThat(t.histogramCountAtValue(1)).isNaN();
     }
 }

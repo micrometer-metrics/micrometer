@@ -49,10 +49,12 @@ import static java.util.Collections.emptyList;
  * @author Johnny Lim
  * @see <a href="https://docs.confluent.io/current/kafka/monitoring.html">Kakfa monitoring documentation</a>
  * @since 1.1.0
+ * @deprecated use {@link KafkaClientMetrics} instead
  */
 @Incubating(since = "1.1.0")
 @NonNullApi
 @NonNullFields
+@Deprecated
 public class KafkaConsumerMetrics implements MeterBinder, AutoCloseable {
     private static final String JMX_DOMAIN = "kafka.consumer";
     private static final String METRIC_NAME_PREFIX = "kafka.consumer.";
@@ -228,7 +230,7 @@ public class KafkaConsumerMetrics implements MeterBinder, AutoCloseable {
 
     private ToDoubleFunction<MBeanServer> getJmxAttribute(MeterRegistry registry, AtomicReference<? extends Meter> meter,
                                                           ObjectName o, String jmxMetricName) {
-        return s -> safeDouble(jmxMetricName, () -> {
+        return s -> safeDouble(() -> {
             if (!s.isRegistered(o)) {
                 registry.remove(meter.get());
             }
@@ -330,7 +332,7 @@ public class KafkaConsumerMetrics implements MeterBinder, AutoCloseable {
         }
     }
 
-    private double safeDouble(String jmxMetricName, Callable<Object> callable) {
+    private double safeDouble(Callable<Object> callable) {
         try {
             return Double.parseDouble(callable.call().toString());
         } catch (Exception e) {

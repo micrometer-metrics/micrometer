@@ -35,20 +35,10 @@ import static org.assertj.core.api.Assertions.assertThat;
  * @author Johnny Lim
  */
 class ElasticMeterRegistryTest {
-    private MockClock clock = new MockClock();
-    private ElasticConfig config = new ElasticConfig() {
-        @Override
-        public String get(String key) {
-            return null;
-        }
+    private final MockClock clock = new MockClock();
+    private final ElasticConfig config = ElasticConfig.DEFAULT;
 
-        @Override
-        public boolean enabled() {
-            return false;
-        }
-    };
-
-    private ElasticMeterRegistry registry = new ElasticMeterRegistry(config, clock);
+    private final ElasticMeterRegistry registry = new ElasticMeterRegistry(config, clock);
 
     @Test
     void timestampFormat() {
@@ -290,5 +280,24 @@ class ElasticMeterRegistryTest {
         String responseBody = "{\"status\":200,\"name\":\"Sematext-Logsene\",\"cluster_name\":\"elasticsearch\",\"cluster_uuid\":\"anything\",\"version\":{\"number\":\"5.3.0\",\"build_hash\":\"3adb13b\",\"build_date\":\"2017-03-23T03:31:50.652Z\",\"build_snapshot\":false,\"lucene_version\":\"6.4.1\"},\"tagline\":\"You Know, for Search\"}";
         assertThat(ElasticMeterRegistry.getMajorVersion(responseBody)).isEqualTo(5);
     }
+    
+    @Issue("#1891")
+    @Test
+    void canExtendElasticMeterRegistry() {
+        ElasticMeterRegistry registry = new ElasticMeterRegistry(config, clock) {
+            @Override
+            public String indexName() {
+                return "my-metrics";
+            }
+
+            @Override
+            public String indexType() {
+                return "my-metric";
+            }
+        };
+        assertThat(registry.indexName()).isEqualTo("my-metrics");
+        assertThat(registry.indexType()).isEqualTo("my-metric");
+    }
+
 
 }

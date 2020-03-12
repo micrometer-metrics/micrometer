@@ -112,6 +112,7 @@ public class CountedAspect {
         counter(pjp, counted)
                 .tag(EXCEPTION_TAG, exception)
                 .tag(RESULT_TAG, result)
+                .tags(counted.extraTags())
                 .register(meterRegistry)
                 .increment();
     }

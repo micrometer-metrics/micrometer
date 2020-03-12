@@ -31,7 +31,7 @@ class CloudWatchUtilsTest {
     void testClamp() {
         assertThat(CloudWatchUtils.clampMetricValue(Double.NaN))
                 .as("Check NaN")
-                .isEqualTo(Double.NaN);
+                .isNaN();
 
         assertThat(CloudWatchUtils.clampMetricValue(Double.MIN_VALUE))
                 .as("Check minimum value")

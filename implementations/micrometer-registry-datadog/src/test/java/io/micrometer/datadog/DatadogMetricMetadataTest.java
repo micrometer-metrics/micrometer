@@ -17,7 +17,6 @@ package io.micrometer.datadog;
 
 import io.micrometer.core.instrument.Clock;
 import io.micrometer.core.instrument.Counter;
-import io.micrometer.core.instrument.Statistic;
 import io.micrometer.core.instrument.Timer;
 import io.micrometer.core.instrument.simple.SimpleMeterRegistry;
 import org.junit.jupiter.api.Test;
@@ -33,12 +32,10 @@ class DatadogMetricMetadataTest {
                         .tag("key", "value")
                         .description("The /\"recent cpu usage\" for the Java Virtual Machine process")
                         .register(new SimpleMeterRegistry()).getId(),
-                Statistic.COUNT,
-                true,
-                null
+                true
         );
 
-        assertThat(metricMetadata.editMetadataBody()).isEqualTo("{\"type\":\"count\",\"description\":\"The /\\\"recent cpu usage\\\" for the Java Virtual Machine process\"}");
+        assertThat(metricMetadata.editDescriptionMetadataBody()).isEqualTo("{\"description\":\"The /\\\"recent cpu usage\\\" for the Java Virtual Machine process\"}");
     }
 
     @Test
@@ -58,11 +55,9 @@ class DatadogMetricMetadataTest {
                         return null;
                     }
                 }, Clock.SYSTEM)).getId(),
-            Statistic.TOTAL_TIME,
-            false,
-            null);
+            false);
 
-        assertThat(metricMetadata.editMetadataBody()).isEqualTo("{\"type\":\"count\",\"unit\":\"millisecond\"}");
+        assertThat(metricMetadata.editDescriptionMetadataBody()).isNull();
     }
 
 }

@@ -45,7 +45,7 @@ class GraphiteHierarchicalNameMapperTest {
     void toHierarchicalNameShouldSanitizeTagValueFromTagsAsPrefix() {
         Meter.Id id = new SimpleMeterRegistry().counter("my.name",
                 "app.name", "MY APP", "stack", "PROD", "other.tag", "value").getId();
-        assertThat(nameMapper.toHierarchicalName(id, new GraphiteNamingConvention()))
+        assertThat(nameMapper.toHierarchicalName(id, new GraphiteHierarchicalNamingConvention()))
                 .isEqualTo("PROD.MY_APP.myName.otherTag.value");
     }
 }
