@@ -25,11 +25,12 @@ import com.amazonaws.services.cloudwatch.model.PutMetricDataResult;
 import com.amazonaws.services.cloudwatch.model.StandardUnit;
 import io.micrometer.core.instrument.*;
 import io.micrometer.core.instrument.config.MissingRequiredConfigurationException;
-import io.micrometer.core.instrument.config.NamingConvention;
 import io.micrometer.core.instrument.step.StepMeterRegistry;
 import io.micrometer.core.instrument.util.NamedThreadFactory;
+import io.micrometer.core.instrument.util.StringUtils;
 import io.micrometer.core.instrument.util.TimeUtils;
 import io.micrometer.core.lang.Nullable;
+import io.micrometer.core.util.internal.logging.WarnThenDebugLogger;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -72,6 +73,7 @@ public class CloudWatchMeterRegistry extends StepMeterRegistry {
     private final CloudWatchConfig config;
     private final AmazonCloudWatchAsync amazonCloudWatchAsync;
     private final Logger logger = LoggerFactory.getLogger(CloudWatchMeterRegistry.class);
+    private static final WarnThenDebugLogger warnThenDebugLogger = new WarnThenDebugLogger(CloudWatchMeterRegistry.class);
 
     public CloudWatchMeterRegistry(CloudWatchConfig config, Clock clock,
                                    AmazonCloudWatchAsync amazonCloudWatchAsync) {
@@ -88,7 +90,7 @@ public class CloudWatchMeterRegistry extends StepMeterRegistry {
 
         this.amazonCloudWatchAsync = amazonCloudWatchAsync;
         this.config = config;
-        config().namingConvention(NamingConvention.identity);
+        config().namingConvention(new CloudWatchNamingConvention());
         start(threadFactory);
     }
 
@@ -299,8 +301,17 @@ public class CloudWatchMeterRegistry extends StepMeterRegistry {
 
         private List<Dimension> toDimensions(List<Tag> tags) {
             return tags.stream()
+                    .filter(this::isAcceptableTag)
                     .map(tag -> new Dimension().withName(tag.getKey()).withValue(tag.getValue()))
                     .collect(toList());
+        }
+
+        private boolean isAcceptableTag(Tag tag) {
+            if (!StringUtils.isNotBlank(tag.getValue())) {
+                warnThenDebugLogger.log("Dropping a tag with key '" + tag.getKey() + "' because its value is blank.");
+                return false;
+            }
+            return true;
         }
     }
 
