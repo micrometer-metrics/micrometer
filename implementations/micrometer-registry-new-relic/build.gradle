@@ -2,7 +2,7 @@ dependencies {
     api project(':micrometer-core')
 
     implementation 'org.slf4j:slf4j-api'
-    compileOnly 'com.newrelic.agent.java:newrelic-api:5.+'
+    optionalApi 'com.newrelic.agent.java:newrelic-api:5.+'
 
     testImplementation project(':micrometer-test')
 }
