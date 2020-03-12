@@ -21,7 +21,6 @@ import com.amazonaws.services.cloudwatch.AmazonCloudWatchAsync;
 import com.amazonaws.services.cloudwatch.model.*;
 import io.micrometer.core.instrument.*;
 import io.micrometer.core.instrument.config.MissingRequiredConfigurationException;
-import io.micrometer.core.instrument.config.NamingConvention;
 import io.micrometer.core.instrument.step.StepMeterRegistry;
 import io.micrometer.core.instrument.util.NamedThreadFactory;
 import io.micrometer.core.instrument.util.StringUtils;
@@ -69,7 +68,7 @@ public class CloudWatchMeterRegistry extends StepMeterRegistry {
 
         this.amazonCloudWatchAsync = amazonCloudWatchAsync;
         this.config = config;
-        config().namingConvention(NamingConvention.identity);
+        config().namingConvention(new CloudWatchNamingConvention());
         start(threadFactory);
     }
 
