@@ -52,6 +52,7 @@ public class CloudWatchMeterRegistry extends StepMeterRegistry {
     private final CloudWatchConfig config;
     private final AmazonCloudWatchAsync amazonCloudWatchAsync;
     private final Logger logger = LoggerFactory.getLogger(CloudWatchMeterRegistry.class);
+    private static final WarnThenDebugLogger warnThenDebugLogger = new WarnThenDebugLogger(CloudWatchMeterRegistry.class);
 
     public CloudWatchMeterRegistry(CloudWatchConfig config, Clock clock,
                                    AmazonCloudWatchAsync amazonCloudWatchAsync) {
@@ -150,7 +151,6 @@ public class CloudWatchMeterRegistry extends StepMeterRegistry {
     // VisibleForTesting
     class Batch {
         private long wallTime = clock.wallTime();
-        private WarnThenDebugLogger logger = new WarnThenDebugLogger(Batch.class);
 
         private Stream<MetricDatum> gaugeData(Gauge gauge) {
             MetricDatum metricDatum = metricDatum(gauge.getId(), "value", gauge.value());
@@ -272,17 +272,17 @@ public class CloudWatchMeterRegistry extends StepMeterRegistry {
 
         private List<Dimension> toDimensions(List<Tag> tags) {
             return tags.stream()
-                    .filter(this::acceptableTag)
+                    .filter(this::isAcceptableTag)
                     .map(tag -> new Dimension().withName(tag.getKey()).withValue(tag.getValue()))
                     .collect(toList());
         }
 
-        private boolean acceptableTag(Tag tag) {
-            final boolean isAcceptable = StringUtils.isNotBlank(tag.getValue());
-            if (!isAcceptable) {
-                logger.log(String.format("Dropping tag with empty value: '%s'", tag.getKey()));
+        private boolean isAcceptableTag(Tag tag) {
+            if (!StringUtils.isNotBlank(tag.getValue())) {
+                warnThenDebugLogger.log("Dropping a tag with key '" + tag.getKey() + "' because its value is blank.");
+                return false;
             }
-            return isAcceptable;
+            return true;
         }
     }
 
