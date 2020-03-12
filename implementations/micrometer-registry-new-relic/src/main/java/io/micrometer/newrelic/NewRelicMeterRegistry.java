@@ -109,12 +109,21 @@ public class NewRelicMeterRegistry extends StepMeterRegistry {
 
         Builder(NewRelicConfig config) {
             this.config = config;
+            clientProvider = new NewRelicHttpClientProviderImpl(config);
         }
 
+        /**
+         * Use the New Relic Java Agent-based client provider to publish metrics.
+         * @return builder
+         */
         public Builder agentClientProvider() {
             return clientProvider(new NewRelicAgentClientProviderImpl(config));
-        } 
+        }
 
+        /**
+         * Use an HTTP client to publish metrics. This is the default client.
+         * @return builder
+         */
         public Builder httpClientProvider() {
             return clientProvider(new NewRelicHttpClientProviderImpl(config));
         } 
@@ -140,10 +149,6 @@ public class NewRelicMeterRegistry extends StepMeterRegistry {
         }
 
         public NewRelicMeterRegistry build() {
-            if (clientProvider == null) {
-                //default to the HTTP/REST client
-                clientProvider = new NewRelicHttpClientProviderImpl(config);
-            }
             return new NewRelicMeterRegistry(config, clientProvider, convention, clock, threadFactory);
         }
     }
