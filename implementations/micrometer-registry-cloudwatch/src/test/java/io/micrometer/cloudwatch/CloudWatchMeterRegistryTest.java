@@ -15,6 +15,7 @@
  */
 package io.micrometer.cloudwatch;
 
+import com.amazonaws.services.cloudwatch.model.Dimension;
 import com.amazonaws.services.cloudwatch.model.MetricDatum;
 import io.micrometer.core.instrument.*;
 import org.junit.jupiter.api.Test;
@@ -112,6 +113,15 @@ class CloudWatchMeterRegistryTest {
         List<Measurement> measurements = Arrays.asList(measurement1, measurement2, measurement3);
         Meter meter = Meter.builder("my.meter", Meter.Type.GAUGE, measurements).register(this.registry);
         assertThat(registry.new Batch().metricData(meter)).hasSize(2);
+    }
+
+    @Test
+    void writeShouldDropTagWithBlankValue() {
+        registry.gauge("my.gauge", Tags.of("accepted", "foo").and("empty", ""), 1d);
+        assertThat(registry.metricData())
+                .hasSize(1)
+                .allSatisfy(datum -> assertThat(datum.getDimensions()).hasSize(1).contains(
+                        new Dimension().withName("accepted").withValue("foo")));
     }
 
 }

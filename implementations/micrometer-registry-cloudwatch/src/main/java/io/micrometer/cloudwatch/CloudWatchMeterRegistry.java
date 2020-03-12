@@ -24,6 +24,7 @@ import io.micrometer.core.instrument.config.MissingRequiredConfigurationExceptio
 import io.micrometer.core.instrument.config.NamingConvention;
 import io.micrometer.core.instrument.step.StepMeterRegistry;
 import io.micrometer.core.instrument.util.NamedThreadFactory;
+import io.micrometer.core.instrument.util.StringUtils;
 import io.micrometer.core.instrument.util.TimeUtils;
 import io.micrometer.core.lang.Nullable;
 import org.slf4j.Logger;
@@ -270,6 +271,7 @@ public class CloudWatchMeterRegistry extends StepMeterRegistry {
 
         private List<Dimension> toDimensions(List<Tag> tags) {
             return tags.stream()
+                    .filter(t -> StringUtils.isNotBlank(t.getValue()))
                     .map(tag -> new Dimension().withName(tag.getKey()).withValue(tag.getValue()))
                     .collect(toList());
         }
