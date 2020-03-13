@@ -22,7 +22,6 @@ import io.micrometer.core.lang.Nullable;
 import java.net.InetAddress;
 import java.net.URI;
 import java.net.UnknownHostException;
-import java.time.Duration;
 
 /**
  * Configuration for {@link WavefrontMeterRegistry}.
