@@ -107,8 +107,8 @@ class WavefrontMeterRegistryTest {
         List<Measurement> measurements = Arrays.asList(measurement1, measurement2, measurement3, measurement4, measurement5);
         Meter meter = Meter.builder("my.meter", Meter.Type.GAUGE, measurements).register(this.registry);
         registry.writeMeter(meter);
-        verify(wavefrontSender, times(1)).sendMetric("my.meter", 1d, clock.wallTime(), "host", Map.of("statistic", "value"));
-        verify(wavefrontSender, times(1)).sendMetric("my.meter", 2d, clock.wallTime(), "host", Map.of("statistic", "value"));
+        verify(wavefrontSender, times(1)).sendMetric("my.meter", 1d, clock.wallTime(), "host", Collections.singletonMap("statistic", "value"));
+        verify(wavefrontSender, times(1)).sendMetric("my.meter", 2d, clock.wallTime(), "host", Collections.singletonMap("statistic", "value"));
         verifyNoMoreInteractions(wavefrontSender);
     }
 
@@ -122,7 +122,7 @@ class WavefrontMeterRegistryTest {
         );
         registry.addDistribution(wavefrontSender, id, distributions);
         verify(wavefrontSender, times(1)).sendDistribution("name", centroids,
-                Set.of(HistogramGranularity.MINUTE), time, "host", Collections.emptyMap());
+                Collections.singleton(HistogramGranularity.MINUTE), time, "host", Collections.emptyMap());
         verifyNoMoreInteractions(wavefrontSender);
     }
 }
