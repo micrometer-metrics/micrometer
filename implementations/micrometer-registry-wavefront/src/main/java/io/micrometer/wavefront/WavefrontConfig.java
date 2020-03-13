@@ -65,12 +65,6 @@ public interface WavefrontConfig extends PushRegistryConfig {
     };
 
     @Override
-    default Duration step() {
-        String v = get(prefix() + ".step");
-        return v == null ? Duration.ofSeconds(10) : Duration.parse(v);
-    }
-
-    @Override
     default String prefix() {
         return "wavefront";
     }
@@ -90,12 +84,9 @@ public interface WavefrontConfig extends PushRegistryConfig {
     }
 
     /**
-     * @return The port to send to when sending histogram distributions to a Wavefront proxy.
-     * The default is the port specified in the uri.
-     * <p>For details on configuring the histogram proxy port, see
-     * https://docs.wavefront.com/proxies_installing.html#configuring-proxy-ports-for-metrics-histograms-and-traces
-     * @since 1.2.0
+     * @deprecated this is no longer used as a single proxy port can handle all wavefront formats.
      */
+    @Deprecated
     default int distributionPort() {
         String v = get(prefix() + ".distributionPort");
         return v == null ? URI.create(uri()).getPort() : Integer.parseInt(v);
