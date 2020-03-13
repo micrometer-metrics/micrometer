@@ -308,7 +308,7 @@ public class WavefrontMeterRegistry extends PushMeterRegistry {
     }
 
     static String getWavefrontReportingUri(WavefrontConfig wavefrontConfig) {
-        // proxy reporting is is now http reporting on newer wavefront proxies.
+        // proxy reporting is now http reporting on newer wavefront proxies.
         if (wavefrontConfig.uri().startsWith("proxy")) {
             return "http" + wavefrontConfig.uri().substring(5);
         }
