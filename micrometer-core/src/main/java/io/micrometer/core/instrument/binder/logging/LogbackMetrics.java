@@ -130,13 +130,20 @@ class MetricsTurboFilter extends TurboFilter {
 
     @Override
     public FilterReply decide(Marker marker, Logger logger, Level level, String format, Object[] params, Throwable t) {
+        // When filter is asked for decision for an isDebugEnabled call or similar test, there is no message (ie format) 
+        // and no intention to log anything with this call. We will not increment counters and can return immediately and
+        // avoid the relatively expensive ThreadLocal access below. See also logbacks Logger.callTurboFilters().
+        if (format == null) {
+            return FilterReply.NEUTRAL;
+        }
+
         Boolean ignored = LogbackMetrics.ignoreMetrics.get();
         if (ignored != null && ignored) {
             return FilterReply.NEUTRAL;
         }
 
         // cannot use logger.isEnabledFor(level), as it would cause a StackOverflowError by calling this filter again!
-        if (level.isGreaterOrEqual(logger.getEffectiveLevel()) && format != null) {
+        if (level.isGreaterOrEqual(logger.getEffectiveLevel())) {
             switch (level.toInt()) {
                 case Level.ERROR_INT:
                     errorCounter.increment();
