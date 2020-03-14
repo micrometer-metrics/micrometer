@@ -4,7 +4,7 @@ def VERSIONS = [
         'com.amazonaws:aws-java-sdk-cloudwatch:latest.release',
         'com.fasterxml.jackson.core:jackson-databind:latest.release',
         'com.github.ben-manes.caffeine:caffeine:latest.release',
-        'com.github.charithe:kafka-junit:4.1.2',
+        'com.github.charithe:kafka-junit:latest.release',
         'com.github.tomakehurst:wiremock-jre8:latest.release',
         'com.google.cloud:google-cloud-monitoring:latest.release',
         'com.google.dagger:dagger:2.11',
