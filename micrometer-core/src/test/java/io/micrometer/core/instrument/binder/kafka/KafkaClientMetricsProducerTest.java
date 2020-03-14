@@ -19,20 +19,24 @@ import io.micrometer.core.instrument.MeterRegistry;
 import io.micrometer.core.instrument.Tags;
 import io.micrometer.core.instrument.simple.SimpleMeterRegistry;
 import java.util.Properties;
-import org.apache.kafka.clients.admin.AdminClient;
+import org.apache.kafka.clients.producer.KafkaProducer;
+import org.apache.kafka.clients.producer.Producer;
+import org.apache.kafka.common.serialization.StringSerializer;
 import org.junit.jupiter.api.Test;
 
 import static io.micrometer.core.instrument.binder.kafka.KafkaClientMetrics.METRIC_NAME_PREFIX;
-import static org.apache.kafka.clients.admin.AdminClientConfig.BOOTSTRAP_SERVERS_CONFIG;
+import static org.apache.kafka.clients.producer.ProducerConfig.BOOTSTRAP_SERVERS_CONFIG;
+import static org.apache.kafka.clients.producer.ProducerConfig.KEY_SERIALIZER_CLASS_CONFIG;
+import static org.apache.kafka.clients.producer.ProducerConfig.VALUE_SERIALIZER_CLASS_CONFIG;
 import static org.assertj.core.api.Assertions.assertThat;
 
-class KafkaAdminMetricsTest {
+class KafkaClientMetricsProducerTest {
     private final static String BOOTSTRAP_SERVERS = "localhost:9092";
     private Tags tags = Tags.of("app", "myapp", "version", "1");
 
     @Test void shouldCreateMeters() {
-        try (AdminClient adminClient = createAdmin()) {
-            KafkaClientMetrics metrics = new KafkaClientMetrics(adminClient);
+        try (Producer<String, String> producer = createProducer()) {
+            KafkaClientMetrics metrics = new KafkaClientMetrics(producer);
             MeterRegistry registry = new SimpleMeterRegistry();
 
             metrics.bindTo(registry);
@@ -44,8 +48,8 @@ class KafkaAdminMetricsTest {
     }
 
     @Test void shouldCreateMetersWithTags() {
-        try (AdminClient adminClient = createAdmin()) {
-            KafkaClientMetrics metrics = new KafkaClientMetrics(adminClient, tags);
+        try (Producer<String, String> producer = createProducer()) {
+            KafkaClientMetrics metrics = new KafkaClientMetrics(producer, tags);
             MeterRegistry registry = new SimpleMeterRegistry();
 
             metrics.bindTo(registry);
@@ -57,9 +61,11 @@ class KafkaAdminMetricsTest {
         }
     }
 
-    private AdminClient createAdmin() {
-        Properties adminConfig = new Properties();
-        adminConfig.put(BOOTSTRAP_SERVERS_CONFIG, BOOTSTRAP_SERVERS);
-        return AdminClient.create(adminConfig);
+    private Producer<String, String> createProducer() {
+        Properties producerConfig = new Properties();
+        producerConfig.put(BOOTSTRAP_SERVERS_CONFIG, BOOTSTRAP_SERVERS);
+        producerConfig.put(KEY_SERIALIZER_CLASS_CONFIG, StringSerializer.class);
+        producerConfig.put(VALUE_SERIALIZER_CLASS_CONFIG, StringSerializer.class);
+        return new KafkaProducer<>(producerConfig);
     }
 }

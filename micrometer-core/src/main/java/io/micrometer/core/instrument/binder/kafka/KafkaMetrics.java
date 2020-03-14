@@ -77,7 +77,7 @@ class KafkaMetrics implements MeterBinder {
         Map<MetricName, ? extends Metric> metrics = metricsSupplier.get();
         // Collect static metrics and tags
         Metric startTime = null;
-        for (Map.Entry<MetricName, ? extends Metric> entry: metrics.entrySet()) {
+        for (Map.Entry<MetricName, ? extends Metric> entry : metrics.entrySet()) {
             MetricName name = entry.getKey();
             if (METRIC_GROUP_APP_INFO.equals(name.group()))
                 if (VERSION_METRIC_NAME.equals(name.name()))
@@ -104,7 +104,10 @@ class KafkaMetrics implements MeterBinder {
                 if (!currentMeters.equals(metrics.keySet())) {
                     currentMeters = new HashSet<>(metrics.keySet());
                     metrics.forEach((name, metric) -> {
-                        //Filter out metrics from groups that includes metadata
+                        //Filter out non-numeric values
+                        if (!(metric.metricValue() instanceof Number)) return;
+
+                        //Filter out metrics from groups that include metadata
                         if (METRIC_GROUP_APP_INFO.equals(name.group())) return;
                         if (METRIC_GROUP_METRICS_COUNT.equals(name.group())) return;
                         String meterName = meterName(metric);
@@ -122,8 +125,6 @@ class KafkaMetrics implements MeterBinder {
                             else hasLessTags = true;
                         }
                         if (hasLessTags) return;
-                        //Filter out non-numeric values
-                        if (!(metric.metricValue() instanceof Number)) return;
                         bindMeter(registry, metric, meterName, meterTags);
                     });
                 }
@@ -133,8 +134,6 @@ class KafkaMetrics implements MeterBinder {
 
     private void bindMeter(MeterRegistry registry, Metric metric, String name, Iterable<Tag> tags) {
         if (name.endsWith("total") || name.endsWith("count")) registerCounter(registry, metric, name, tags);
-        else if (name.endsWith("min") || name.endsWith("max") || name.endsWith("avg") || name.endsWith("rate"))
-            registerGauge(registry, metric, name, tags);
         else registerGauge(registry, metric, name, tags);
     }
 

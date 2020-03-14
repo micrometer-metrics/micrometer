@@ -9,9 +9,9 @@ dependencies {
         exclude group: 'com.github.tomakehurst', module: 'wiremock'
     }
     api 'com.github.tomakehurst:wiremock-jre8'
-    api 'org.mockito:mockito-core:latest.release'
-    api 'org.testcontainers:testcontainers:latest.release'
-    api 'org.testcontainers:junit-jupiter:latest.release'
+    api 'org.mockito:mockito-core'
+    api 'org.testcontainers:testcontainers'
+    api 'org.testcontainers:junit-jupiter'
 
     testImplementation 'org.jsr107.ri:cache-ri-impl'
 

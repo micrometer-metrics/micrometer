@@ -19,24 +19,25 @@ import io.micrometer.core.instrument.MeterRegistry;
 import io.micrometer.core.instrument.Tags;
 import io.micrometer.core.instrument.simple.SimpleMeterRegistry;
 import java.util.Properties;
-import org.apache.kafka.clients.producer.KafkaProducer;
-import org.apache.kafka.clients.producer.Producer;
-import org.apache.kafka.common.serialization.StringSerializer;
+import org.apache.kafka.clients.consumer.Consumer;
+import org.apache.kafka.clients.consumer.KafkaConsumer;
+import org.apache.kafka.common.serialization.StringDeserializer;
 import org.junit.jupiter.api.Test;
 
 import static io.micrometer.core.instrument.binder.kafka.KafkaClientMetrics.METRIC_NAME_PREFIX;
-import static org.apache.kafka.clients.producer.ProducerConfig.BOOTSTRAP_SERVERS_CONFIG;
-import static org.apache.kafka.clients.producer.ProducerConfig.KEY_SERIALIZER_CLASS_CONFIG;
-import static org.apache.kafka.clients.producer.ProducerConfig.VALUE_SERIALIZER_CLASS_CONFIG;
+import static org.apache.kafka.clients.consumer.ConsumerConfig.BOOTSTRAP_SERVERS_CONFIG;
+import static org.apache.kafka.clients.consumer.ConsumerConfig.GROUP_ID_CONFIG;
+import static org.apache.kafka.clients.consumer.ConsumerConfig.KEY_DESERIALIZER_CLASS_CONFIG;
+import static org.apache.kafka.clients.consumer.ConsumerConfig.VALUE_DESERIALIZER_CLASS_CONFIG;
 import static org.assertj.core.api.Assertions.assertThat;
 
-class KafkaProducerMetricsTest {
+class KafkaClientMetricsConsumerTest {
     private final static String BOOTSTRAP_SERVERS = "localhost:9092";
     private Tags tags = Tags.of("app", "myapp", "version", "1");
 
     @Test void shouldCreateMeters() {
-        try (Producer<String, String> producer = createProducer()) {
-            KafkaClientMetrics metrics = new KafkaClientMetrics(producer);
+        try (Consumer<String, String> consumer = createConsumer()) {
+            KafkaClientMetrics metrics = new KafkaClientMetrics(consumer);
             MeterRegistry registry = new SimpleMeterRegistry();
 
             metrics.bindTo(registry);
@@ -48,8 +49,8 @@ class KafkaProducerMetricsTest {
     }
 
     @Test void shouldCreateMetersWithTags() {
-        try (Producer<String, String> producer = createProducer()) {
-            KafkaClientMetrics metrics = new KafkaClientMetrics(producer, tags);
+        try (Consumer<String, String> consumer = createConsumer()) {
+            KafkaClientMetrics metrics = new KafkaClientMetrics(consumer, tags);
             MeterRegistry registry = new SimpleMeterRegistry();
 
             metrics.bindTo(registry);
@@ -61,11 +62,12 @@ class KafkaProducerMetricsTest {
         }
     }
 
-    private Producer<String, String> createProducer() {
-        Properties producerConfig = new Properties();
-        producerConfig.put(BOOTSTRAP_SERVERS_CONFIG, BOOTSTRAP_SERVERS);
-        producerConfig.put(KEY_SERIALIZER_CLASS_CONFIG, StringSerializer.class);
-        producerConfig.put(VALUE_SERIALIZER_CLASS_CONFIG, StringSerializer.class);
-        return new KafkaProducer<>(producerConfig);
+    private Consumer<String, String> createConsumer() {
+        Properties consumerConfig = new Properties();
+        consumerConfig.put(BOOTSTRAP_SERVERS_CONFIG, BOOTSTRAP_SERVERS);
+        consumerConfig.put(KEY_DESERIALIZER_CLASS_CONFIG, StringDeserializer.class);
+        consumerConfig.put(VALUE_DESERIALIZER_CLASS_CONFIG, StringDeserializer.class);
+        consumerConfig.put(GROUP_ID_CONFIG, "group");
+        return new KafkaConsumer<>(consumerConfig);
     }
 }
