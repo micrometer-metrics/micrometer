@@ -132,11 +132,11 @@ class Log4j2MetricsTest {
         LoggerConfig loggerConfig = new LoggerConfig("com.test", Level.INFO, false);
         Configuration configuration = loggerContext.getConfiguration();
         configuration.addLogger("com.test", loggerConfig);
-        loggerContext.setConfiguration(configuration);
-        loggerContext.updateLoggers();
+        loggerContext.updateLoggers(configuration);
 
         Logger logger1 = loggerContext.getLogger("com.test.log1");
         loggerContext.getLogger("com.test.log2");
+        loggerContext.updateLoggers(configuration);
 
         new Log4j2Metrics(emptyList(), loggerContext).bindTo(registry);
 
