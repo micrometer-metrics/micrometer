@@ -272,11 +272,15 @@ public class InfluxMeterRegistry extends StepMeterRegistry {
         }
     }
 
-    class Field {
+    static class Field {
         final String key;
         final double value;
 
         Field(String key, double value) {
+            // `time` cannot be a field key or tag key
+            if (key.equals("time")) {
+                throw new IllegalArgumentException("'time' is an invalid field key in InfluxDB");
+            }
             this.key = key;
             this.value = value;
         }

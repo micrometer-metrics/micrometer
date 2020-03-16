@@ -49,9 +49,13 @@ class InfluxNamingConventionTest {
     }
 
     @Test
-    void timeCannotBeATagKeyOrValue() {
+    void timeCannotBeATagKey() {
         assertThat(catchThrowable(() -> convention.tagKey("time"))).isInstanceOf(IllegalArgumentException.class);
-        assertThat(catchThrowable(() -> convention.tagValue("time"))).isInstanceOf(IllegalArgumentException.class);
+    }
+
+    @Test
+    void timeCanBeATagValue() {
+        assertThat(convention.tagValue("time")).isEqualTo("time");
     }
 
     @Issue("#645")

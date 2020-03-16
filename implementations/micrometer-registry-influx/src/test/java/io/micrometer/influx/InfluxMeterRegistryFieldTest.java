@@ -15,17 +15,24 @@
  */
 package io.micrometer.influx;
 
-import io.micrometer.core.instrument.MockClock;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Test;
 
 import java.util.Locale;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.catchThrowable;
 
-class InfluxMeterRegistryFieldToStringTest {
+/**
+ * Tests for {@link io.micrometer.influx.InfluxMeterRegistry.Field}.
+ *
+ * @author Niclas Thall
+ * @author Jon Schneider
+ * @author Johnny Lim
+ */
+class InfluxMeterRegistryFieldTest {
 
-    private Locale originalLocale = Locale.getDefault();
+    private final Locale originalLocale = Locale.getDefault();
 
     @AfterEach
     void cleanUp() {
@@ -33,32 +40,34 @@ class InfluxMeterRegistryFieldToStringTest {
     }
 
     @Test
-    void testWithEnglishLocale() {
+    void toStringWithEnglishLocale() {
         Locale.setDefault(Locale.ENGLISH);
-        InfluxMeterRegistry instance = new InfluxMeterRegistry(k -> null, new MockClock());
 
-        InfluxMeterRegistry.Field field = instance.new Field("value", 0.01);
+        InfluxMeterRegistry.Field field = new InfluxMeterRegistry.Field("value", 0.01);
 
         assertThat(field.toString()).isEqualTo("value=0.01");
     }
 
     @Test
-    void testWithEnglishLocaleWithLargerResolution() {
+    void toStringWithEnglishLocaleWithLargerResolution() {
         Locale.setDefault(Locale.ENGLISH);
-        InfluxMeterRegistry instance = new InfluxMeterRegistry(k -> null, new MockClock());
 
-        InfluxMeterRegistry.Field field = instance.new Field("value", 0.0000009);
+        InfluxMeterRegistry.Field field = new InfluxMeterRegistry.Field("value", 0.0000009);
 
         assertThat(field.toString()).isEqualTo("value=0.000001");
     }
 
     @Test
-    void testWithSwedishLocale() {
+    void toStringWithSwedishLocale() {
         Locale.setDefault(new Locale("sv", "SE"));
 
-        InfluxMeterRegistry instance = new InfluxMeterRegistry(k -> null, new MockClock());
-        InfluxMeterRegistry.Field field = instance.new Field("value", 0.01);
+        InfluxMeterRegistry.Field field = new InfluxMeterRegistry.Field("value", 0.01);
 
         assertThat(field.toString()).isEqualTo("value=0.01");
+    }
+
+    @Test
+    void timeCannotBeAFieldKey() {
+        assertThat(catchThrowable(() -> new InfluxMeterRegistry.Field("time", 1.0))).isInstanceOf(IllegalArgumentException.class);
     }
 }
