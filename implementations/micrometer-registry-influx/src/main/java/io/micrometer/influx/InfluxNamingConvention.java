@@ -54,16 +54,14 @@ public class InfluxNamingConvention implements NamingConvention {
     @Override
     public String tagKey(String key) {
         // `time` cannot be a field key or tag key
-        if (key.equals("time"))
+        if (key.equals("time")) {
             throw new IllegalArgumentException("'time' is an invalid tag key in InfluxDB");
+        }
         return escape(delegate.tagKey(key));
     }
 
     @Override
     public String tagValue(String value) {
-        // `time` cannot be a field key or tag key
-        if (value.equals("time"))
-            throw new IllegalArgumentException("'time' is an invalid tag value in InfluxDB");
         return escape(this.delegate.tagValue(value));
     }
 
