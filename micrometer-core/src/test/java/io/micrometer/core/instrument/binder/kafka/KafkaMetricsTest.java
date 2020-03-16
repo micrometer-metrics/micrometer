@@ -38,11 +38,9 @@ class KafkaMetricsTest {
     @Test void shouldKeepMetersWhenMetricsDoNotChange() {
         //Given
         Supplier<Map<MetricName, ? extends Metric>> supplier = () -> {
-            Map<MetricName, KafkaMetric> metrics = new LinkedHashMap<>();
             MetricName metricName = new MetricName("a", "b", "c", new LinkedHashMap<>());
             KafkaMetric metric = new KafkaMetric(this, metricName, new Value(), new MetricConfig(), Time.SYSTEM);
-            metrics.put(metricName, metric);
-            return metrics;
+            return Collections.singletonMap(metricName, metric);
         };
         KafkaMetrics kafkaMetrics = new KafkaMetrics(supplier);
         MeterRegistry registry = new SimpleMeterRegistry();
@@ -58,8 +56,7 @@ class KafkaMetricsTest {
 
     @Test void shouldAddNewMetersWhenMetricsChange() {
         //Given
-        AtomicReference<Map<MetricName, KafkaMetric>> metrics = new AtomicReference<>();
-        metrics.set(new LinkedHashMap<>());
+        AtomicReference<Map<MetricName, KafkaMetric>> metrics = new AtomicReference<>(new LinkedHashMap<>());
         Supplier<Map<MetricName, ? extends Metric>> supplier = () -> metrics.updateAndGet(map -> {
             MetricName metricName = new MetricName("a0", "b0", "c0", new LinkedHashMap<>());
             KafkaMetric metric = new KafkaMetric(this, metricName, new Value(), new MetricConfig(), Time.SYSTEM);
@@ -87,8 +84,8 @@ class KafkaMetricsTest {
 
     @Test void shouldNotAddAppInfoMetrics() {
         //Given
-        Map<MetricName, KafkaMetric> metrics = new LinkedHashMap<>();
         Supplier<Map<MetricName, ? extends Metric>> supplier = () -> {
+            Map<MetricName, KafkaMetric> metrics = new LinkedHashMap<>();
             MetricName metricName = new MetricName("a0", "b0", "c0", new LinkedHashMap<>());
             KafkaMetric metric = new KafkaMetric(this, metricName, new Value(), new MetricConfig(), Time.SYSTEM);
             metrics.put(metricName, metric);
@@ -112,15 +109,13 @@ class KafkaMetricsTest {
         assertThat(registry.getMeters()).hasSize(1);
     }
 
-    @Test void shouldRemoveNewerMeterWithLessTags() {
+    @Test void shouldRemoveOlderMeterWithLessTags() {
         //Given
         Map<String, String> tags = new LinkedHashMap<>();
         Supplier<Map<MetricName, ? extends Metric>> supplier = () -> {
-            Map<MetricName, KafkaMetric> metrics = new LinkedHashMap<>();
             MetricName metricName = new MetricName("a", "b", "c", tags);
             KafkaMetric metric = new KafkaMetric(this, metricName, new Value(), new MetricConfig(), Time.SYSTEM);
-            metrics.put(metricName, metric);
-            return metrics;
+            return Collections.singletonMap(metricName, metric);
         };
         KafkaMetrics kafkaMetrics = new KafkaMetrics(supplier);
         MeterRegistry registry = new SimpleMeterRegistry();

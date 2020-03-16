@@ -1,5 +1,5 @@
 /**
- * Copyright 2020 Pivotal Software, Inc.
+ * Copyright 2018 Pivotal Software, Inc.
  * <p>
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,59 +15,145 @@
  */
 package io.micrometer.core.instrument.binder.kafka;
 
+import io.micrometer.core.instrument.Gauge;
 import io.micrometer.core.instrument.MeterRegistry;
 import io.micrometer.core.instrument.Tags;
 import io.micrometer.core.instrument.simple.SimpleMeterRegistry;
+import java.util.Collections;
 import java.util.Properties;
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.TimeUnit;
 import org.apache.kafka.clients.consumer.Consumer;
+import org.apache.kafka.clients.consumer.ConsumerConfig;
 import org.apache.kafka.clients.consumer.KafkaConsumer;
+import org.apache.kafka.common.serialization.LongDeserializer;
 import org.apache.kafka.common.serialization.StringDeserializer;
+import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 
-import static io.micrometer.core.instrument.binder.kafka.KafkaClientMetrics.METRIC_NAME_PREFIX;
-import static org.apache.kafka.clients.consumer.ConsumerConfig.BOOTSTRAP_SERVERS_CONFIG;
-import static org.apache.kafka.clients.consumer.ConsumerConfig.GROUP_ID_CONFIG;
-import static org.apache.kafka.clients.consumer.ConsumerConfig.KEY_DESERIALIZER_CLASS_CONFIG;
-import static org.apache.kafka.clients.consumer.ConsumerConfig.VALUE_DESERIALIZER_CLASS_CONFIG;
 import static org.assertj.core.api.Assertions.assertThat;
 
+/**
+ * Tests for {@link KafkaConsumerMetrics}.
+ *
+ * @author Jon Schneider
+ * @author Johnny Lim
+ */
+@Disabled
 class KafkaConsumerMetricsTest {
+    private final static String TOPIC = "my-example-topic";
     private final static String BOOTSTRAP_SERVERS = "localhost:9092";
+    private static int consumerCount = 0;
+
     private Tags tags = Tags.of("app", "myapp", "version", "1");
+    @SuppressWarnings("deprecation")
+    private KafkaConsumerMetrics kafkaConsumerMetrics = new KafkaConsumerMetrics(tags);
 
-    @Test void shouldCreateMeters() {
-        try (Consumer<String, String> consumer = createConsumer()) {
-            KafkaClientMetrics metrics = new KafkaClientMetrics(consumer);
+    @Test
+    void verifyConsumerMetricsWithExpectedTags() {
+        try (Consumer<Long, String> consumer = createConsumer()) {
+
             MeterRegistry registry = new SimpleMeterRegistry();
+            kafkaConsumerMetrics.bindTo(registry);
 
-            metrics.bindTo(registry);
-            assertThat(registry.getMeters())
-                    .hasSizeGreaterThan(0)
-                    .extracting(meter -> meter.getId().getName())
-                    .allMatch(s -> s.startsWith(METRIC_NAME_PREFIX));
+            // consumer coordinator metrics
+            Gauge assignedPartitions = registry.get("kafka.consumer.assigned.partitions").tags(tags).gauge();
+            assertThat(assignedPartitions.getId().getTag("client.id")).isEqualTo("consumer-" + consumerCount);
+
+            // global connection metrics
+            Gauge connectionCount = registry.get("kafka.consumer.connection.count").tags(tags).gauge();
+            assertThat(connectionCount.getId().getTag("client.id")).startsWith("consumer-" + consumerCount);
         }
     }
 
-    @Test void shouldCreateMetersWithTags() {
-        try (Consumer<String, String> consumer = createConsumer()) {
-            KafkaClientMetrics metrics = new KafkaClientMetrics(consumer, tags);
+    @Test
+    void metricsReportedPerMultipleConsumers() {
+        try (Consumer<Long, String> consumer = createConsumer();
+             Consumer<Long, String> consumer2 = createConsumer()) {
+
             MeterRegistry registry = new SimpleMeterRegistry();
+            kafkaConsumerMetrics.bindTo(registry);
 
-            metrics.bindTo(registry);
-
-            assertThat(registry.getMeters())
-                    .hasSizeGreaterThan(0)
-                    .extracting(meter -> meter.getId().getTag("app"))
-                    .allMatch(s -> s.equals("myapp"));
+            // fetch metrics
+            registry.get("kafka.consumer.fetch.total").tag("client.id", "consumer-" + consumerCount).functionCounter();
+            registry.get("kafka.consumer.fetch.total").tag("client.id", "consumer-" + (consumerCount - 1)).functionCounter();
         }
     }
 
-    private Consumer<String, String> createConsumer() {
-        Properties consumerConfig = new Properties();
-        consumerConfig.put(BOOTSTRAP_SERVERS_CONFIG, BOOTSTRAP_SERVERS);
-        consumerConfig.put(KEY_DESERIALIZER_CLASS_CONFIG, StringDeserializer.class);
-        consumerConfig.put(VALUE_DESERIALIZER_CLASS_CONFIG, StringDeserializer.class);
-        consumerConfig.put(GROUP_ID_CONFIG, "group");
-        return new KafkaConsumer<>(consumerConfig);
+    @Test
+    void newConsumersAreDiscoveredByListener() throws InterruptedException {
+        MeterRegistry registry = new SimpleMeterRegistry();
+        kafkaConsumerMetrics.bindTo(registry);
+
+        CountDownLatch latch = new CountDownLatch(1);
+        registry.config().onMeterAdded(m -> {
+            if (m.getId().getName().contains("kafka"))
+                latch.countDown();
+        });
+
+        try (Consumer<Long, String> consumer = createConsumer()) {
+            latch.await(10, TimeUnit.SECONDS);
+        }
     }
+
+    @Test
+    void verifyKafkaMajorVersion() {
+        try (Consumer<Long, String> consumer = createConsumer()) {
+            Tags tags = Tags.of("client.id", "consumer-" + consumerCount);
+            assertThat(kafkaConsumerMetrics.kafkaMajorVersion(tags)).isGreaterThanOrEqualTo(2);
+        }
+    }
+
+    @Test
+    void returnsNegativeKafkaMajorVersionWhenMBeanInstanceNotFound() {
+        try (Consumer<Long, String> consumer = createConsumer()) {
+            Tags tags = Tags.of("client.id", "invalid");
+            assertThat(kafkaConsumerMetrics.kafkaMajorVersion(tags)).isEqualTo(-1);
+        }
+    }
+
+    @Test
+    void returnsNegativeKafkaMajorVersionForEmptyTags() {
+        try (Consumer<Long, String> consumer = createConsumer()) {
+            assertThat(kafkaConsumerMetrics.kafkaMajorVersion(Tags.empty())).isEqualTo(-1);
+        }
+    }
+
+    @Test
+    void consumerBeforeBindingWhenClosedShouldRemoveMeters() {
+        MeterRegistry registry = new SimpleMeterRegistry();
+        try (Consumer<Long, String> consumer = createConsumer()) {
+            kafkaConsumerMetrics.bindTo(registry);
+
+            Gauge gauge = registry.get("kafka.consumer.assigned.partitions").gauge();
+            assertThat(gauge.getId().getTag("client.id")).isEqualTo("consumer-" + consumerCount);
+        }
+        assertThat(registry.find("kafka.consumer.assigned.partitions").gauge()).isNull();
+    }
+
+    @Test
+    void consumerAfterBindingWhenClosedShouldRemoveMeters() {
+        MeterRegistry registry = new SimpleMeterRegistry();
+        kafkaConsumerMetrics.bindTo(registry);
+
+        try (Consumer<Long, String> consumer = createConsumer()) {
+            Gauge gauge = registry.get("kafka.consumer.assigned.partitions").gauge();
+            assertThat(gauge.getId().getTag("client.id")).isEqualTo("consumer-" + consumerCount);
+        }
+        assertThat(registry.find("kafka.consumer.assigned.partitions").gauge()).isNull();
+    }
+
+    private Consumer<Long, String> createConsumer() {
+        Properties props = new Properties();
+        props.put(ConsumerConfig.BOOTSTRAP_SERVERS_CONFIG, BOOTSTRAP_SERVERS);
+        props.put(ConsumerConfig.GROUP_ID_CONFIG, "MicrometerTestConsumer");
+        props.put(ConsumerConfig.KEY_DESERIALIZER_CLASS_CONFIG, LongDeserializer.class.getName());
+        props.put(ConsumerConfig.VALUE_DESERIALIZER_CLASS_CONFIG, StringDeserializer.class.getName());
+
+        Consumer<Long, String> consumer = new KafkaConsumer<>(props);
+        consumer.subscribe(Collections.singletonList(TOPIC));
+        consumerCount++;
+        return consumer;
+    }
+
 }
