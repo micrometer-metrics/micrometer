@@ -281,7 +281,6 @@ class ElasticMeterRegistryTest {
         assertThat(ElasticMeterRegistry.getMajorVersion(responseBody)).isEqualTo(5);
     }
     
-    @Issue("#1891")
     @Test
     void canExtendElasticMeterRegistry() {
         ElasticMeterRegistry registry = new ElasticMeterRegistry(config, clock) {
