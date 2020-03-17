@@ -147,4 +147,17 @@ public interface ElasticConfig extends StepRegistryConfig {
         String v = get(prefix() + ".indexDateSeparator");
         return v == null ? "-" : v;
     }
+
+    /**
+     * The type to be used when writing metrics documents to an index.
+     * This configuration is only used with Elasticsearch versions before 7.
+     * Default is: "doc"
+     *
+     * @return document type
+     * @since 1.4.0
+     */
+    default String documentType() {
+        String v = get(prefix() + ".documentType");
+        return v == null ? "doc" : v;
+    }
 }

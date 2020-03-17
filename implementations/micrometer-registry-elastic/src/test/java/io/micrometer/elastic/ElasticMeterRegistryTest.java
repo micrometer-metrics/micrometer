@@ -281,7 +281,6 @@ class ElasticMeterRegistryTest {
         assertThat(ElasticMeterRegistry.getMajorVersion(responseBody)).isEqualTo(5);
     }
     
-    @Issue("#1891")
     @Test
     void canExtendElasticMeterRegistry() {
         ElasticMeterRegistry registry = new ElasticMeterRegistry(config, clock) {
@@ -289,14 +288,8 @@ class ElasticMeterRegistryTest {
             public String indexName() {
                 return "my-metrics";
             }
-
-            @Override
-            public String indexType() {
-                return "my-metric";
-            }
         };
         assertThat(registry.indexName()).isEqualTo("my-metrics");
-        assertThat(registry.indexType()).isEqualTo("my-metric");
     }
 
 

@@ -272,7 +272,7 @@ public class ElasticMeterRegistry extends StepMeterRegistry {
     }
 
     private String getTypePath() {
-        return majorVersion < 7 ? "/" + indexType() : TYPE_PATH_AFTER_VERSION_7;
+        return majorVersion < 7 ? "/" + config.documentType() : TYPE_PATH_AFTER_VERSION_7;
     }
 
     // VisibleForTesting
@@ -283,16 +283,6 @@ public class ElasticMeterRegistry extends StepMeterRegistry {
             count++;
         }
         return count;
-    }
-
-    /**
-     * Return index type. Default is 'doc'
-     * @implNote this only applies to Elasticsearch versions before 7.
-     * @return index type.
-     * @since 1.4.0
-     */
-    protected String indexType() {
-        return "doc";
     }
 
     /**
