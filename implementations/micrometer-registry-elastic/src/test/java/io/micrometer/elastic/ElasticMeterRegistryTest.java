@@ -289,14 +289,8 @@ class ElasticMeterRegistryTest {
             public String indexName() {
                 return "my-metrics";
             }
-
-            @Override
-            public String indexType() {
-                return "my-metric";
-            }
         };
         assertThat(registry.indexName()).isEqualTo("my-metrics");
-        assertThat(registry.indexType()).isEqualTo("my-metric");
     }
 
 
