@@ -29,16 +29,17 @@ public final class CountAtBucket {
     private final double bucket;
     private final double count;
 
-    private final boolean isLong;
-
-    public CountAtBucket(double bucket, double count) {
-        this(bucket, count, true);
+    /**
+     * @deprecated Use {@link #CountAtBucket(double, double)} instead.
+     */
+    @Deprecated
+    public CountAtBucket(long bucket, double count) {
+        this((double) bucket, count);
     }
 
-    public CountAtBucket(double bucket, double count, boolean isLong) {
+    public CountAtBucket(double bucket, double count) {
         this.bucket = bucket;
         this.count = count;
-        this.isLong = isLong;
     }
 
     public double bucket() {
@@ -53,11 +54,11 @@ public final class CountAtBucket {
         return count;
     }
 
-    public boolean isPositiveInf() {
-        if (isLong)
-            return bucket == (double)Long.MAX_VALUE;
-        else
-            return bucket == Double.POSITIVE_INFINITY;
+    boolean isPositiveInf() {
+        // check for Long.MAX_VALUE to maintain backwards compatibility
+        return bucket == Double.POSITIVE_INFINITY ||
+                bucket == Double.MAX_VALUE ||
+                (long) bucket == Long.MAX_VALUE;
     }
 
     @Override

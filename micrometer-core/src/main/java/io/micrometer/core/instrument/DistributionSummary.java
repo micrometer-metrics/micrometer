@@ -230,12 +230,39 @@ public interface DistributionSummary extends Meter, HistogramSupport {
          * {@link Builder#publishPercentileHistogram()}, the boundaries defined here are included alongside
          * other buckets used to generate aggregable percentile approximations.
          *
+         * @deprecated Use {@link #sla(double...)} instead.
          * @param sla Publish SLA boundaries in the set of histogram buckets shipped to the monitoring system.
          * @return This builder.
          */
+        @Deprecated
         public Builder sla(@Nullable long... sla) {
+            return sla == null ? this : sla(Arrays.stream(sla).asDoubleStream().toArray());
+        }
+
+        /**
+         * Publish at a minimum a histogram containing your defined SLA boundaries. When used in conjunction with
+         * {@link Builder#publishPercentileHistogram()}, the boundaries defined here are included alongside
+         * other buckets used to generate aggregable percentile approximations.
+         *
+         * @param sla Publish SLA boundaries in the set of histogram buckets shipped to the monitoring system.
+         * @return This builder.
+         */
+        public Builder sla(@Nullable double... sla) {
             this.distributionConfigBuilder.sla(sla);
             return this;
+        }
+
+        /**
+         * Sets the minimum value that this distribution summary is expected to observe. Sets a lower bound
+         * on histogram buckets that are shipped to monitoring systems that support aggregable percentile approximations.
+         *
+         * @deprecated Use {@link #minimumExpectedValue(Double)} instead.
+         * @param min The minimum value that this distribution summary is expected to observe.
+         * @return This builder.
+         */
+        @Deprecated
+        public Builder minimumExpectedValue(@Nullable Long min) {
+            return min == null ? this : minimumExpectedValue((double) min);
         }
 
         /**
@@ -245,9 +272,22 @@ public interface DistributionSummary extends Meter, HistogramSupport {
          * @param min The minimum value that this distribution summary is expected to observe.
          * @return This builder.
          */
-        public Builder minimumExpectedValue(@Nullable Long min) {
+        public Builder minimumExpectedValue(@Nullable Double min) {
             this.distributionConfigBuilder.minimumExpectedValue(min);
             return this;
+        }
+
+        /**
+         * Sets the maximum value that this distribution summary is expected to observe. Sets an upper bound
+         * on histogram buckets that are shipped to monitoring systems that support aggregable percentile approximations.
+         *
+         * @deprecated Use {@link #maximumExpectedValue(Double)} instead.
+         * @param max The maximum value that this distribution summary is expected to observe.
+         * @return This builder.
+         */
+        @Deprecated
+        public Builder maximumExpectedValue(@Nullable Long max) {
+            return max == null ? this : maximumExpectedValue((double) max);
         }
 
         /**
@@ -257,7 +297,7 @@ public interface DistributionSummary extends Meter, HistogramSupport {
          * @param max The maximum value that this distribution summary is expected to observe.
          * @return This builder.
          */
-        public Builder maximumExpectedValue(@Nullable Long max) {
+        public Builder maximumExpectedValue(@Nullable Double max) {
             this.distributionConfigBuilder.maximumExpectedValue(max);
             return this;
         }

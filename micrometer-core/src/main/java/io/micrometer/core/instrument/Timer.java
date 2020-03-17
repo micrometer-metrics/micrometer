@@ -378,7 +378,7 @@ public interface Timer extends Meter, HistogramSupport {
          */
         public Builder sla(@Nullable Duration... sla) {
             if (sla != null) {
-                this.distributionConfigBuilder.sla(Arrays.stream(sla).mapToLong(Duration::toNanos).toArray());
+                this.distributionConfigBuilder.sla(Arrays.stream(sla).mapToDouble(Duration::toNanos).toArray());
             }
             return this;
         }
@@ -392,7 +392,7 @@ public interface Timer extends Meter, HistogramSupport {
          */
         public Builder minimumExpectedValue(@Nullable Duration min) {
             if (min != null)
-                this.distributionConfigBuilder.minimumExpectedValue(min.toNanos());
+                this.distributionConfigBuilder.minimumExpectedValue((double) min.toNanos());
             return this;
         }
 
@@ -405,7 +405,7 @@ public interface Timer extends Meter, HistogramSupport {
          */
         public Builder maximumExpectedValue(@Nullable Duration max) {
             if (max != null)
-                this.distributionConfigBuilder.maximumExpectedValue(max.toNanos());
+                this.distributionConfigBuilder.maximumExpectedValue((double) max.toNanos());
             return this;
         }
 

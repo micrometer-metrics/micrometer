@@ -37,7 +37,7 @@ public class PrometheusDistributionSummary extends AbstractDistributionSummary {
         super(id, clock,
                 DistributionStatisticConfig.builder()
                         .percentilesHistogram(false)
-                        .sla()
+                        .sla(new double[0])
                         .build()
                         .merge(distributionStatisticConfig),
                 scale, false);

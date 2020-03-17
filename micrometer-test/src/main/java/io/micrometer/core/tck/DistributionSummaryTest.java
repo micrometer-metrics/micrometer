@@ -102,7 +102,7 @@ interface DistributionSummaryTest {
     @Test
     default void histogramCounts(MeterRegistry registry) {
         DistributionSummary s = DistributionSummary.builder("my.summmary")
-                .sla(1)
+                .sla(1.0)
                 .register(registry);
 
         s.record(1);

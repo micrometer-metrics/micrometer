@@ -182,7 +182,7 @@ class MeterFilterTest {
 
     @Test
     void minExpectedOnSummary() {
-        MeterFilter filter = MeterFilter.minExpected("name", 100);
+        MeterFilter filter = MeterFilter.minExpected("name", 100.0);
         Meter.Id timer = new Meter.Id("name", Tags.empty(), null, null, Meter.Type.DISTRIBUTION_SUMMARY);
 
         assertThat(filter.configure(timer, DistributionStatisticConfig.DEFAULT))
@@ -191,7 +191,7 @@ class MeterFilterTest {
 
     @Test
     void maxExpectedOnSummary() {
-        MeterFilter filter = MeterFilter.maxExpected("name", 100);
+        MeterFilter filter = MeterFilter.maxExpected("name", 100.0);
         Meter.Id timer = new Meter.Id("name", Tags.empty(), null, null, Meter.Type.DISTRIBUTION_SUMMARY);
 
         assertThat(filter.configure(timer, DistributionStatisticConfig.DEFAULT))

@@ -81,7 +81,7 @@ public class TimeWindowPercentileHistogram extends AbstractTimeWindowHistogram<D
     }
 
     @Override
-    double countAtValue(long value) {
+    double countAtValue(double value) {
         return accumulatedHistogram().getCountBetweenValues(0, value);
     }
 

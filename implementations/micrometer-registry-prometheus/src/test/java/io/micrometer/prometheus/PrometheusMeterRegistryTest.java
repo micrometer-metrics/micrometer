@@ -197,7 +197,7 @@ class PrometheusMeterRegistryTest {
         DistributionSummary s = DistributionSummary.builder("s1")
                 .publishPercentileHistogram()
                 .distributionStatisticExpiry(Duration.ofSeconds(60))
-                .sla(100)
+                .sla(100.0)
                 .register(registry);
 
         s.record(100);
@@ -212,8 +212,8 @@ class PrometheusMeterRegistryTest {
     void distributionPercentileBuckets() {
         DistributionSummary ds = DistributionSummary.builder("ds")
                 .publishPercentileHistogram()
-                .minimumExpectedValue(1L)
-                .maximumExpectedValue(2100L)
+                .minimumExpectedValue(1.0)
+                .maximumExpectedValue(2100.0)
                 .register(registry);
 
         ds.record(30);
@@ -242,7 +242,7 @@ class PrometheusMeterRegistryTest {
     @Issue("#370")
     @Test
     void slasOnlyNoPercentileHistogram() {
-        DistributionSummary.builder("my.summary").sla(1).register(registry).record(1);
+        DistributionSummary.builder("my.summary").sla(1.0).register(registry).record(1);
         assertThat(registry.scrape()).contains("my_summary_bucket{le=\"1.0\",} 1.0");
 
         Timer.builder("my.timer").sla(Duration.ofMillis(1)).register(registry).record(1, TimeUnit.MILLISECONDS);

@@ -145,7 +145,7 @@ public class CompareHistogramsWithOtherLibraries {
         public void setup() {
             double[] micrometerBuckets =
                     Doubles.toArray(PercentileHistogramBuckets.buckets(
-                            DistributionStatisticConfig.builder().minimumExpectedValue(0L).maximumExpectedValue(Long.MAX_VALUE)
+                            DistributionStatisticConfig.builder().minimumExpectedValue(0.0).maximumExpectedValue(Double.POSITIVE_INFINITY)
                                     .percentilesHistogram(true).build()));
             histogram = io.prometheus.client.Histogram.build("histogram", "A histogram")
                     .buckets(micrometerBuckets).create();

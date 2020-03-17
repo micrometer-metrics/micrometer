@@ -40,7 +40,7 @@ public class PrometheusTimer extends AbstractTimer {
         super(id, clock,
                 DistributionStatisticConfig.builder()
                         .percentilesHistogram(false)
-                        .sla()
+                        .sla(new double[0])
                         .build()
                         .merge(distributionStatisticConfig),
                 pauseDetector, TimeUnit.SECONDS, false);

@@ -119,8 +119,8 @@ class CompositeTimer extends AbstractCompositeMeter<Timer> implements Timer {
         Timer.Builder builder = Timer.builder(getId().getName())
                 .tags(getId().getTagsAsIterable())
                 .description(getId().getDescription())
-                .maximumExpectedValue(Duration.ofNanos(distributionStatisticConfig.getMaximumExpectedValue()))
-                .minimumExpectedValue(Duration.ofNanos(distributionStatisticConfig.getMinimumExpectedValue()))
+                .maximumExpectedValue(Duration.ofNanos(distributionStatisticConfig.getMaximumExpectedValue().longValue()))
+                .minimumExpectedValue(Duration.ofNanos(distributionStatisticConfig.getMinimumExpectedValue().longValue()))
                 .publishPercentiles(distributionStatisticConfig.getPercentiles())
                 .publishPercentileHistogram(distributionStatisticConfig.isPercentileHistogram())
                 .distributionStatisticBufferLength(distributionStatisticConfig.getBufferLength())
@@ -128,11 +128,11 @@ class CompositeTimer extends AbstractCompositeMeter<Timer> implements Timer {
                 .percentilePrecision(distributionStatisticConfig.getPercentilePrecision())
                 .pauseDetector(pauseDetector);
 
-        final long[] slaNanos = distributionStatisticConfig.getSlaBoundaries();
+        final double[] slaNanos = distributionStatisticConfig.getSlaBoundaries();
         if (slaNanos != null) {
             Duration[] sla = new Duration[slaNanos.length];
             for (int i = 0; i < slaNanos.length; i++) {
-                sla[i] = Duration.ofNanos(slaNanos[i]);
+                sla[i] = Duration.ofNanos((long) slaNanos[i]);
             }
             builder = builder.sla(sla);
         }
