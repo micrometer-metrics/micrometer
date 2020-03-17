@@ -29,7 +29,7 @@ import io.micrometer.core.instrument.util.NamedThreadFactory;
 import io.micrometer.core.instrument.util.TimeUtils;
 
 /**
- * Publishes metrics to New Relic Insights based on client provider selected (Http or Java Agent). 
+ * Publishes metrics to New Relic Insights based on client provider selected (HTTP or Java Agent).
  * Defaults to the HTTP/REST client provider.
  *
  * @author Jon Schneider
@@ -39,9 +39,10 @@ import io.micrometer.core.instrument.util.TimeUtils;
 public class NewRelicMeterRegistry extends StepMeterRegistry {
 
     private static final ThreadFactory DEFAULT_THREAD_FACTORY = new NamedThreadFactory("new-relic-metrics-publisher");
-    private final NewRelicConfig config;
-    private NewRelicClientProvider clientProvider;
     private final Logger logger = LoggerFactory.getLogger(NewRelicMeterRegistry.class);
+
+    private final NewRelicConfig config;
+    private final NewRelicClientProvider clientProvider;
 
     /**
      * @param config Configuration options for the registry that are describable as properties.
@@ -49,13 +50,14 @@ public class NewRelicMeterRegistry extends StepMeterRegistry {
      */
     public NewRelicMeterRegistry(NewRelicConfig config, Clock clock) {
         //default to the HTTP/REST client
-        this(config, new NewRelicHttpClientProviderImpl(config), clock);
+        this(config, new NewRelicHttpClientProvider(config), clock);
     }
     
     /**
      * @param config Configuration options for the registry that are describable as properties.
      * @param clientProvider Provider of the HTTP or Agent-based client that publishes metrics to New Relic
      * @param clock  The clock to use for timings.
+     * @since 1.4.0
      */
     public NewRelicMeterRegistry(NewRelicConfig config, NewRelicClientProvider clientProvider, Clock clock) {
         this(config, clientProvider, new NewRelicNamingConvention(), clock, DEFAULT_THREAD_FACTORY);
@@ -114,24 +116,32 @@ public class NewRelicMeterRegistry extends StepMeterRegistry {
         /**
          * Use the New Relic Java Agent-based client provider to publish metrics.
          * @return builder
+         * @since 1.4.0
          */
         public Builder agentClientProvider() {
-            return clientProvider(new NewRelicAgentClientProviderImpl(config));
+            return clientProvider(new NewRelicAgentClientProvider(config));
         }
 
         /**
          * Use an HTTP client to publish metrics. This is the default client.
          * @return builder
+         * @since 1.4.0
          */
         public Builder httpClientProvider() {
-            return clientProvider(new NewRelicHttpClientProviderImpl(config));
+            return clientProvider(new NewRelicHttpClientProvider(config));
         } 
 
         Builder clientProvider(NewRelicClientProvider clientProvider) {
             this.clientProvider = clientProvider;
             return this;
-        }       
+        }
 
+        /**
+         * Use the naming convention.
+         * @param convention naming convention to use
+         * @return builder
+         * @since 1.4.0
+         */
         public Builder namingConvention(NamingConvention convention) {
             this.convention = convention;
             return this;
@@ -150,7 +160,7 @@ public class NewRelicMeterRegistry extends StepMeterRegistry {
         public NewRelicMeterRegistry build() {
             if (clientProvider == null) {
                 //default to the HTTP/REST client
-                clientProvider = new NewRelicHttpClientProviderImpl(config);
+                clientProvider = new NewRelicHttpClientProvider(config);
             }
             return new NewRelicMeterRegistry(config, clientProvider, convention, clock, threadFactory);
         }

@@ -1,5 +1,5 @@
 /**
- * Copyright 2017 Pivotal Software, Inc.
+ * Copyright 2020 Pivotal Software, Inc.
  * <p>
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -27,7 +27,10 @@ import io.micrometer.core.instrument.Timer;
 import io.micrometer.core.instrument.config.NamingConvention;
 
 /**
+ * Client provider for {@link NewRelicMeterRegistry}.
+ *
  * @author Neil Powell
+ * @since 1.4.0
  */
 public interface NewRelicClientProvider {
     //long task timer
@@ -52,15 +55,13 @@ public interface NewRelicClientProvider {
     String METRIC_NAME = "metricName";
 
     default String getEventType(Meter.Id id, NewRelicConfig config, NamingConvention namingConvention) {
-        String eventType = null;
         if (config.meterNameEventTypeEnabled()) {
             //meter/metric name event type
-            eventType = id.getConventionName(namingConvention);
+            return id.getConventionName(namingConvention);
         } else {
             //static eventType "category"
-            eventType = config.eventType();
+            return config.eventType();
         }
-        return eventType;
     }
 
     void publish(NewRelicMeterRegistry meterRegistry);
