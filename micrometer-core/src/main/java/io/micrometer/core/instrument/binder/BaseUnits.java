@@ -87,6 +87,11 @@ public final class BaseUnits {
      */
     public static final String OPERATIONS = "operations";
 
+    /**
+     * Percent.
+     */
+    public static final String PERCENT = "percent";
+
     private BaseUnits() {
     }
 
