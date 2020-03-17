@@ -157,7 +157,7 @@ public interface ElasticConfig extends StepRegistryConfig {
      * @since 1.4.0
      */
     default String documentType() {
-        String v = get(prefix() + ".type");
+        String v = get(prefix() + ".documentType");
         return v == null ? "doc" : v;
     }
 }
