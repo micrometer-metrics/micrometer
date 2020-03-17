@@ -272,7 +272,7 @@ public class ElasticMeterRegistry extends StepMeterRegistry {
     }
 
     private String getTypePath() {
-        return majorVersion < 7 ? "/" + config.type() : TYPE_PATH_AFTER_VERSION_7;
+        return majorVersion < 7 ? "/" + config.documentType() : TYPE_PATH_AFTER_VERSION_7;
     }
 
     // VisibleForTesting

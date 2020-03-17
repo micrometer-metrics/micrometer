@@ -149,13 +149,14 @@ public interface ElasticConfig extends StepRegistryConfig {
     }
 
     /**
-     * The type to be used when writing metrics to index.
+     * The type to be used when writing metrics documents to an index.
+     * This configuration is only used with Elasticsearch versions before 7.
      * Default is: "doc"
      *
      * @return document type
-     * @since 1.2.0
+     * @since 1.4.0
      */
-    default String type() {
+    default String documentType() {
         String v = get(prefix() + ".type");
         return v == null ? "doc" : v;
     }
