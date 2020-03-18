@@ -33,10 +33,18 @@ public class PrometheusTimer extends AbstractTimer {
     private final LongAdder totalTime = new LongAdder();
     private final TimeWindowMax max;
 
+    private final HistogramFlavor histogramFlavor;
+
     @Nullable
     private final Histogram histogram;
 
+    @Deprecated
     PrometheusTimer(Id id, Clock clock, DistributionStatisticConfig distributionStatisticConfig, PauseDetector pauseDetector) {
+        this(id, clock, distributionStatisticConfig, pauseDetector, HistogramFlavor.Plain);
+    }
+
+
+    PrometheusTimer(Id id, Clock clock, DistributionStatisticConfig distributionStatisticConfig, PauseDetector pauseDetector, HistogramFlavor histogramFlavor) {
         super(id, clock,
                 DistributionStatisticConfig.builder()
                         .percentilesHistogram(false)
@@ -45,14 +53,24 @@ public class PrometheusTimer extends AbstractTimer {
                         .merge(distributionStatisticConfig),
                 pauseDetector, TimeUnit.SECONDS, false);
 
+        this.histogramFlavor = histogramFlavor;
         this.max = new TimeWindowMax(clock, distributionStatisticConfig);
 
         if (distributionStatisticConfig.isPublishingHistogram()) {
-            histogram = new TimeWindowFixedBoundaryHistogram(clock, DistributionStatisticConfig.builder()
-                    .expiry(Duration.ofDays(1825)) // effectively never roll over
-                    .bufferLength(1)
-                    .build()
-                    .merge(distributionStatisticConfig), true);
+            switch (histogramFlavor) {
+                case VictoriaMetrics:
+                    histogram = new FixedBoundaryVMHistogram();
+                    break;
+                case Plain:
+                    histogram = new TimeWindowFixedBoundaryHistogram(clock, DistributionStatisticConfig.builder()
+                            .expiry(Duration.ofDays(1825)) // effectively never roll over
+                            .bufferLength(1)
+                            .build()
+                            .merge(distributionStatisticConfig), true);
+                    break;
+                default:
+                    histogram = null;
+            }
         } else {
             histogram = null;
         }
@@ -83,6 +101,11 @@ public class PrometheusTimer extends AbstractTimer {
     public double max(TimeUnit unit) {
         return max.poll(unit);
     }
+
+    public HistogramFlavor histogramFlavor() {
+        return histogramFlavor;
+    }
+
 
     /**
      * For Prometheus we cannot use the histogram counts from HistogramSnapshot, as it is based on a
