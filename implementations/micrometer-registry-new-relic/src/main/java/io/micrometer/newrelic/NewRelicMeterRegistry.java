@@ -26,7 +26,6 @@ import io.micrometer.core.instrument.config.MissingRequiredConfigurationExceptio
 import io.micrometer.core.instrument.config.NamingConvention;
 import io.micrometer.core.instrument.step.StepMeterRegistry;
 import io.micrometer.core.instrument.util.NamedThreadFactory;
-import io.micrometer.core.instrument.util.TimeUtils;
 
 /**
  * Publishes metrics to New Relic Insights based on client provider selected (HTTP or Java Agent).
