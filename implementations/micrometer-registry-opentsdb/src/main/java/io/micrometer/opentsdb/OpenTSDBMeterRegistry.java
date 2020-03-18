@@ -267,7 +267,7 @@ public class OpenTSDBMeterRegistry extends PushMeterRegistry {
     private List<String> writeHistogram(long wallTime, Meter meter, CountAtBucket[] histogramCounts, double count) {
         List<String> metrics = new ArrayList<>(histogramCounts.length);
 
-        if(config.flavor() == null) {
+        if (config.flavor() == null) {
             // satisfies https://prometheus.io/docs/concepts/metric_types/#histogram, which is at least SOME standard
             // histogram format to follow
             for (CountAtBucket c : histogramCounts) {
@@ -287,7 +287,7 @@ public class OpenTSDBMeterRegistry extends PushMeterRegistry {
                     count
             ));
         }
-        else if(OpenTSDBFlavor.VictoriaMetrics.equals(config.flavor())) {
+        else if (OpenTSDBFlavor.VictoriaMetrics.equals(config.flavor())) {
             for (CountAtBucket c : histogramCounts) {
                 metrics.add(writeMetricWithSuffix(
                         meter.getId().withTag(Tag.of("vmrange", getRangeTagValue(c.bucket()))),

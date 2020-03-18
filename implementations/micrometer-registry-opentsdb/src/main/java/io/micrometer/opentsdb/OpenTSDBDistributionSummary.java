@@ -47,14 +47,14 @@ public class OpenTSDBDistributionSummary extends AbstractDistributionSummary {
         this.max = new TimeWindowMax(clock, distributionStatisticConfig);
 
         if (distributionStatisticConfig.isPublishingHistogram()) {
-            if(flavor == null) {
+            if (flavor == null) {
                 histogram = new TimeWindowFixedBoundaryHistogram(clock, DistributionStatisticConfig.builder()
                         .expiry(Duration.ofDays(1825)) // effectively never roll over
                         .bufferLength(1)
                         .build()
                         .merge(distributionStatisticConfig), true);
             }
-            else if(OpenTSDBFlavor.VictoriaMetrics.equals(flavor)) {
+            else if (OpenTSDBFlavor.VictoriaMetrics.equals(flavor)) {
                 histogram = new FixedBoundaryVictoriaMetricsHistogram();
             } else {
                 histogram = null;
