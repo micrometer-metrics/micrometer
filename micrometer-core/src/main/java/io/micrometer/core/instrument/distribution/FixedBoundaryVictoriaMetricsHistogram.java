@@ -1,5 +1,5 @@
 /**
- * Copyright 2017 Pivotal Software, Inc.
+ * Copyright 2020 Pivotal Software, Inc.
  * <p>
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,6 +20,7 @@ import java.math.BigDecimal;
 import java.math.MathContext;
 import java.math.RoundingMode;
 import java.util.ArrayList;
+import java.util.List;
 import java.util.Locale;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.concurrent.atomic.AtomicLongArray;
@@ -30,32 +31,15 @@ import java.util.concurrent.atomic.DoubleAdder;
  * A histogram implementation for non-negative values with automatically created buckets.
  * It does not support precomputed percentiles but supports aggregable percentile histograms.
  * It's suitable only with VictoriaMetrics storage.
- * Reference implementation by Aliaksandr Valialkin:
- * https://github.com/VictoriaMetrics/metrics/blob/master/histogram.go
- * Explanation and reasoning:
- * https://medium.com/@valyala/improving-histogram-usability-for-prometheus-and-grafana-bc7e5df0e350
  *
+ * <a href="https://github.com/VictoriaMetrics/metrics/blob/master/histogram.go">Reference implementation</a> written
+ * in Go originally by Aliaksandr Valialkin.
  *
  * @author Aliaksandr Valialkin
  * @author Nikolay Ustinov
+ * @since 1.4.0
  */
-
-public class FixedBoundaryVMHistogram implements Histogram {
-    public static class IdxOffset {
-        int bucketIdx;
-        int offset;
-
-        IdxOffset(int bucketIdx, int offset) {
-            this.bucketIdx = bucketIdx;
-            this.offset = offset;
-        }
-    }
-
-    @FunctionalInterface
-    public interface VisitedBucket {
-        void f(double upperBound, long count);
-    }
-
+public class FixedBoundaryVictoriaMetricsHistogram implements Histogram {
     public static final IdxOffset UPPER = new IdxOffset(-1, 2);
     public static final IdxOffset LOWER = new IdxOffset(-1, 1);
     public static final IdxOffset ZERO = new IdxOffset(-1, 0);
@@ -87,7 +71,7 @@ public class FixedBoundaryVMHistogram implements Histogram {
         for (int bucketIdx = 0; bucketIdx < BUCKETS_COUNT; bucketIdx++) {
             for (int offset = 0; offset < BUCKET_SIZE; offset++) {
                 int e10 = E10MIN + bucketIdx;
-                double m = 1 + (double)(offset + 1) / DECIMAL_MULTIPLIER;
+                double m = 1 + (double) (offset + 1) / DECIMAL_MULTIPLIER;
                 if (Math.abs(m - 10) < DECIMAL_PRECISION) {
                     m = 1;
                     e10++;
@@ -95,7 +79,8 @@ public class FixedBoundaryVMHistogram implements Histogram {
                 String end = String.format("%.1fe%d", m, e10);
                 VMRANGES[idx] = start + "..." + end;
 
-                Double endValue = BigDecimal.valueOf(m).setScale(1, RoundingMode.HALF_UP).multiply(BigDecimal.TEN.pow(e10, MathContext.DECIMAL128)).doubleValue();
+                Double endValue = BigDecimal.valueOf(m).setScale(1, RoundingMode.HALF_UP).multiply(
+                        BigDecimal.TEN.pow(e10, MathContext.DECIMAL128)).doubleValue();
                 UPPER_BOUNDS[idx] = endValue;
 
                 idx++;
@@ -110,19 +95,19 @@ public class FixedBoundaryVMHistogram implements Histogram {
     final AtomicLong upper;
     final DoubleAdder sum;
 
-    public FixedBoundaryVMHistogram() {
+    public FixedBoundaryVictoriaMetricsHistogram() {
         this.zeros = new AtomicLong(0);
         this.lower = new AtomicLong(0);
         this.upper = new AtomicLong(0);
         this.sum = new DoubleAdder();
 
-        this.values = new AtomicReferenceArray<AtomicLongArray>(BUCKETS_COUNT);
+        this.values = new AtomicReferenceArray<>(BUCKETS_COUNT);
     }
 
 
     @Override
     public void recordLong(long value) {
-        recordDouble((double)value);
+        recordDouble((double) value);
     }
 
     @Override
@@ -174,7 +159,7 @@ public class FixedBoundaryVMHistogram implements Histogram {
         else if (offset >= BUCKET_SIZE)
             offset = BUCKET_SIZE - 1;
 
-        if (Math.abs((double)offset - m) < DECIMAL_PRECISION) {
+        if (Math.abs((double) offset - m) < DECIMAL_PRECISION) {
             // Adjust offset to be on par with Prometheus 'le' buckets (aka 'less or equal')
             offset--;
             if (offset < 0) {
@@ -188,70 +173,57 @@ public class FixedBoundaryVMHistogram implements Histogram {
         return new IdxOffset(bucketIdx, offset);
     }
 
-    private static int getVMRangeIdx(int index, int offset) {
+    private static int getRangeIndex(int index, int offset) {
         if (index < 0) {
-            if (offset > 2) throw new RuntimeException(String.format("BUG: offset must be in range [0...2] for negative bucketIdx; got %d", offset));
+            if (offset > 2)
+                throw new RuntimeException(String.format("BUG: offset must be in range [0...2] for negative bucketIdx; got %d", offset));
             return offset;
         }
         return 3 + index * BUCKET_SIZE + offset;
     }
 
-    public static String getVMRangeValue(double value) {
+    public static String getRangeTagValue(double value) {
         IdxOffset idxOffset = getBucketIdxAndOffset(value);
-        int idx = getVMRangeIdx(idxOffset.bucketIdx, idxOffset.offset);
-        return VMRANGES[idx];
+        return VMRANGES[getRangeIndex(idxOffset.bucketIdx, idxOffset.offset)];
     }
 
-    private void visitNonZeroBuckets(VisitedBucket f) {
-        int vmrangeIdx;
-        final long zeroSnap = zeros.get();
+    private List<CountAtBucket> nonZeroBuckets() {
+        List<CountAtBucket> buckets = new ArrayList<>();
+
+        long zeroSnap = zeros.get();
         if (zeroSnap > 0) {
-            vmrangeIdx = getVMRangeIdx(ZERO.bucketIdx, ZERO.offset);
-            f.f(UPPER_BOUNDS[vmrangeIdx], zeroSnap);
+            buckets.add(new CountAtBucket(UPPER_BOUNDS[getRangeIndex(ZERO.bucketIdx, ZERO.offset)], zeroSnap));
         }
 
-        final long lowerSnap = lower.get();
+        long lowerSnap = lower.get();
         if (lowerSnap > 0) {
-            vmrangeIdx = getVMRangeIdx(LOWER.bucketIdx, LOWER.offset);
-            f.f(UPPER_BOUNDS[vmrangeIdx], lowerSnap);
+            buckets.add(new CountAtBucket(UPPER_BOUNDS[getRangeIndex(LOWER.bucketIdx, LOWER.offset)], lowerSnap));
         }
-        final long upperSnap = upper.get();
+
+        long upperSnap = upper.get();
         if (upperSnap > 0) {
-            vmrangeIdx = getVMRangeIdx(UPPER.bucketIdx, UPPER.offset);
-            f.f(UPPER_BOUNDS[vmrangeIdx], upperSnap);
+            buckets.add(new CountAtBucket(UPPER_BOUNDS[getRangeIndex(UPPER.bucketIdx, UPPER.offset)], upperSnap));
         }
 
         for (int i = 0; i < values.length(); i++) {
-            final AtomicLongArray bucket = values.get(i);
+            AtomicLongArray bucket = values.get(i);
             if (bucket != null) {
                 for (int j = 0; j < bucket.length(); j++) {
-                    final long cnt = bucket.get(j);
+                    long cnt = bucket.get(j);
                     if (cnt > 0) {
-                        vmrangeIdx = getVMRangeIdx(i, j);
-                        f.f(UPPER_BOUNDS[vmrangeIdx], cnt);
+                        buckets.add(new CountAtBucket(UPPER_BOUNDS[getRangeIndex(i, j)], cnt));
                     }
                 }
             }
         }
+
+        return buckets;
     }
-
-    private CountAtBucket[] takeCountSnapshot() {
-        //final ArrayList<CountAtBucket> cb = new ArrayList<CountAtBucket>(BUCKETS_COUNT * BUCKET_SIZE);
-        final ArrayList<CountAtBucket> cb = new ArrayList<CountAtBucket>();
-
-        visitNonZeroBuckets((double upper_bound, long count) -> {
-            cb.add(new CountAtBucket(upper_bound, count));
-        });
-
-        return cb.toArray(new CountAtBucket[0]);
-    }
-
 
     @Override
     public HistogramSnapshot takeSnapshot(long count, double total, double max) {
-        final CountAtBucket[] counts = takeCountSnapshot();
-
-        return new HistogramSnapshot(count, total, max, null, counts, this::outputSummary);
+        return new HistogramSnapshot(count, total, max, null,
+                nonZeroBuckets().toArray(new CountAtBucket[0]), this::outputSummary);
     }
 
     private void outputSummary(PrintStream printStream, double bucketScaling) {
@@ -259,12 +231,22 @@ public class FixedBoundaryVMHistogram implements Histogram {
 
         String bucketFormatString = "%14.1f %10d\n";
 
-        visitNonZeroBuckets((double upper_bound, long count) -> {
+        for (CountAtBucket bucket : nonZeroBuckets()) {
             printStream.format(Locale.US, bucketFormatString,
-                    upper_bound / bucketScaling,
-                    count);
-        });
+                    bucket.bucket() / bucketScaling,
+                    bucket.count());
+        }
 
         printStream.write('\n');
+    }
+
+    private static class IdxOffset {
+        final int bucketIdx;
+        final int offset;
+
+        IdxOffset(int bucketIdx, int offset) {
+            this.bucketIdx = bucketIdx;
+            this.offset = offset;
+        }
     }
 }

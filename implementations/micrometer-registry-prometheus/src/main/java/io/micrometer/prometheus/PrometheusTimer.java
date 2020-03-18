@@ -38,12 +38,6 @@ public class PrometheusTimer extends AbstractTimer {
     @Nullable
     private final Histogram histogram;
 
-    @Deprecated
-    PrometheusTimer(Id id, Clock clock, DistributionStatisticConfig distributionStatisticConfig, PauseDetector pauseDetector) {
-        this(id, clock, distributionStatisticConfig, pauseDetector, HistogramFlavor.Plain);
-    }
-
-
     PrometheusTimer(Id id, Clock clock, DistributionStatisticConfig distributionStatisticConfig, PauseDetector pauseDetector, HistogramFlavor histogramFlavor) {
         super(id, clock,
                 DistributionStatisticConfig.builder()
@@ -58,15 +52,15 @@ public class PrometheusTimer extends AbstractTimer {
 
         if (distributionStatisticConfig.isPublishingHistogram()) {
             switch (histogramFlavor) {
-                case VictoriaMetrics:
-                    histogram = new FixedBoundaryVMHistogram();
-                    break;
-                case Plain:
+                case Prometheus:
                     histogram = new TimeWindowFixedBoundaryHistogram(clock, DistributionStatisticConfig.builder()
                             .expiry(Duration.ofDays(1825)) // effectively never roll over
                             .bufferLength(1)
                             .build()
                             .merge(distributionStatisticConfig), true);
+                    break;
+                case VictoriaMetrics:
+                    histogram = new FixedBoundaryVictoriaMetricsHistogram();
                     break;
                 default:
                     histogram = null;

@@ -16,7 +16,6 @@
 package io.micrometer.prometheus;
 
 import io.micrometer.core.instrument.config.MeterRegistryConfig;
-import io.micrometer.core.instrument.distribution.HistogramFlavor;
 
 import java.time.Duration;
 
@@ -55,16 +54,17 @@ public interface PrometheusConfig extends MeterRegistryConfig {
     }
 
     /**
-     * Histogram type for backing DistributionSummary && Timer
+     * Histogram type for backing DistributionSummary and Timer
      *
      * @return Choose which type of histogram to use
+     * @since 1.4.0
      */
     default HistogramFlavor histogramFlavor() {
         String v = get(prefix() + ".histogramFlavor");
 
         // Default micrometer histogram implementation
         if (v == null)
-            return HistogramFlavor.Plain;
+            return HistogramFlavor.Prometheus;
 
         for (HistogramFlavor flavor : HistogramFlavor.values()) {
             if (flavor.toString().equalsIgnoreCase(v))

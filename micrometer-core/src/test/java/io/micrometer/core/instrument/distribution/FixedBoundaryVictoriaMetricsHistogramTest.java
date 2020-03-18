@@ -15,14 +15,18 @@
  */
 package io.micrometer.core.instrument.distribution;
 
-public enum HistogramFlavor {
-    /**
-     * Default histogram behaviour
-     */
-    Plain,
+import org.junit.jupiter.api.Test;
 
-    /**
-     * See FixedBoundaryVMHistogram class
-     */
-    VictoriaMetrics
+import static org.assertj.core.api.Assertions.assertThat;
+
+class FixedBoundaryVictoriaMetricsHistogramTest {
+    @Test
+    void checkUpperBoundLookup() {
+        try (FixedBoundaryVictoriaMetricsHistogram histogram = new FixedBoundaryVictoriaMetricsHistogram()) {
+            assertThat(histogram.getRangeTagValue(0.0d)).isEqualTo("0...0");
+            assertThat(histogram.getRangeTagValue(1e-9d)).isEqualTo("0...1.0e-9");
+            assertThat(histogram.getRangeTagValue(Double.POSITIVE_INFINITY)).isEqualTo("1.0e18...+Inf");
+            assertThat(histogram.getRangeTagValue(1e18d)).isEqualTo("9.5e17...1.0e18");
+        }
+    }
 }

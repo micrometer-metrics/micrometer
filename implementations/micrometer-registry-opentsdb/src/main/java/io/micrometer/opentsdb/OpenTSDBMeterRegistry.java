@@ -1,5 +1,5 @@
 /**
- * Copyright 2017 Pivotal Software, Inc.
+ * Copyright 2020 Pivotal Software, Inc.
  * <p>
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,11 +16,11 @@
 package io.micrometer.opentsdb;
 
 import io.micrometer.core.instrument.*;
+import io.micrometer.core.instrument.cumulative.CumulativeCounter;
 import io.micrometer.core.instrument.cumulative.CumulativeFunctionCounter;
 import io.micrometer.core.instrument.cumulative.CumulativeFunctionTimer;
 import io.micrometer.core.instrument.distribution.CountAtBucket;
 import io.micrometer.core.instrument.distribution.DistributionStatisticConfig;
-import io.micrometer.core.instrument.distribution.FixedBoundaryVMHistogram;
 import io.micrometer.core.instrument.distribution.ValueAtPercentile;
 import io.micrometer.core.instrument.distribution.pause.PauseDetector;
 import io.micrometer.core.instrument.internal.DefaultGauge;
@@ -39,7 +39,7 @@ import org.slf4j.LoggerFactory;
 
 import java.net.InetAddress;
 import java.net.UnknownHostException;
-import java.util.LinkedList;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.ThreadFactory;
 import java.util.concurrent.TimeUnit;
@@ -49,12 +49,14 @@ import java.util.stream.Collectors;
 import java.util.stream.Stream;
 import java.util.stream.StreamSupport;
 
+import static io.micrometer.core.instrument.distribution.FixedBoundaryVictoriaMetricsHistogram.getRangeTagValue;
 import static io.micrometer.core.instrument.util.StringEscapeUtils.escapeJson;
 
 /**
- * {@link MeterRegistry} for OpenTSDB.
- * default naming conventions are optimized to be prometheus-compatible
+ * Default naming conventions are optimized to be Prometheus compatible.
  *
+ * @author Nikolay Ustinov
+ * @since 1.4.0
  */
 public class OpenTSDBMeterRegistry extends PushMeterRegistry {
     private static final ThreadFactory DEFAULT_THREAD_FACTORY = new NamedThreadFactory("opentsdb-metrics-publisher");
@@ -93,7 +95,7 @@ public class OpenTSDBMeterRegistry extends PushMeterRegistry {
      * Convert a double to its string representation in Go.
      */
     public static String doubleToGoString(double d) {
-        if (d == Double.POSITIVE_INFINITY) {
+        if (d == Double.POSITIVE_INFINITY || d == Double.MAX_VALUE || d == Long.MAX_VALUE) {
             return "+Inf";
         }
         if (d == Double.NEGATIVE_INFINITY) {
@@ -105,26 +107,24 @@ public class OpenTSDBMeterRegistry extends PushMeterRegistry {
         return Double.toString(d);
     }
 
-
     @Override
     public Counter newCounter(Meter.Id id) {
-        return new OpenTSDBCounter(id);
+        return new CumulativeCounter(id);
     }
 
     @Override
     public DistributionSummary newDistributionSummary(Meter.Id id, DistributionStatisticConfig distributionStatisticConfig, double scale) {
-        return new OpenTSDBDistributionSummary(id, clock, distributionStatisticConfig, scale, config.histogramFlavor());
+        return new OpenTSDBDistributionSummary(id, clock, distributionStatisticConfig, scale, config.flavor());
     }
 
     @Override
-    protected io.micrometer.core.instrument.Timer newTimer(Meter.Id id, DistributionStatisticConfig distributionStatisticConfig, PauseDetector pauseDetector) {
-        return new OpenTSDBTimer(id, clock, distributionStatisticConfig, pauseDetector, config.histogramFlavor());
+    protected Timer newTimer(Meter.Id id, DistributionStatisticConfig distributionStatisticConfig, PauseDetector pauseDetector) {
+        return new OpenTSDBTimer(id, clock, distributionStatisticConfig, pauseDetector, config.flavor());
     }
 
-    @SuppressWarnings("unchecked")
     @Override
-    protected <T> io.micrometer.core.instrument.Gauge newGauge(Meter.Id id, @Nullable T obj, ToDoubleFunction<T> valueFunction) {
-        return new DefaultGauge(id, obj, valueFunction);
+    protected <T> Gauge newGauge(Meter.Id id, @Nullable T obj, ToDoubleFunction<T> valueFunction) {
+        return new DefaultGauge<>(id, obj, valueFunction);
     }
 
     @Override
@@ -191,78 +191,28 @@ public class OpenTSDBMeterRegistry extends PushMeterRegistry {
         }
     }
 
-    Stream<String> writeSummary(DistributionSummary csummary) {
+    Stream<String> writeSummary(DistributionSummary summary) {
         long wallTime = config().clock().wallTime();
-        if (csummary instanceof OpenTSDBDistributionSummary) {
-            OpenTSDBDistributionSummary summary = (OpenTSDBDistributionSummary) csummary;
 
-            final ValueAtPercentile[] percentileValues = summary.takeSnapshot().percentileValues();
-            final CountAtBucket[] histogramCounts = summary.histogramCounts();
-            double count = summary.count();
+        final ValueAtPercentile[] percentileValues = summary.takeSnapshot().percentileValues();
+        final CountAtBucket[] histogramCounts = ((OpenTSDBDistributionSummary) summary).histogramCounts();
+        double count = summary.count();
 
-            List<String> metrics = new LinkedList<String>();
+        List<String> metrics = new ArrayList<>();
 
-            if (percentileValues.length > 0) {
-                // satisfies https://prometheus.io/docs/concepts/metric_types/#summary
-                for (ValueAtPercentile v : percentileValues) {
-                    metrics.add(writeMetric(
-                            summary.getId().withTag(new ImmutableTag("quantile", doubleToGoString(v.percentile()))),
-                            wallTime,
-                            v.value()));
-                }
-            }
+        metrics.add(writeMetricWithSuffix(summary.getId(), "count", wallTime, count));
+        metrics.add(writeMetricWithSuffix(summary.getId(), "sum", wallTime, summary.totalAmount()));
+        metrics.add(writeMetricWithSuffix(summary.getId(), "max", wallTime, summary.max()));
 
-            if (histogramCounts.length > 0) {
-                switch (summary.histogramFlavor()) {
-                    case Plain:
-                        // satisfies https://prometheus.io/docs/concepts/metric_types/#histogram
-                        for (CountAtBucket c : histogramCounts) {
-                            metrics.add(writeMetricWithSuffix(
-                                    summary.getId().withTag(new ImmutableTag("le", doubleToGoString(c.bucket()))),
-                                    "bucket",
-                                    wallTime,
-                                    c.count()
-                            ));
-                        }
-
-                        // the +Inf bucket should always equal `count`
-                        metrics.add(writeMetricWithSuffix(
-                                summary.getId().withTag(new ImmutableTag("le", "+Inf")),
-                                "bucket",
-                                wallTime,
-                                count
-                        ));
-                        break;
-
-                    case VictoriaMetrics:
-                        for (CountAtBucket c : histogramCounts) {
-                            String vmrangeTagValue = FixedBoundaryVMHistogram.getVMRangeValue(c.bucket());
-                            metrics.add(writeMetricWithSuffix(
-                                    summary.getId().withTag(new ImmutableTag("vmrange", vmrangeTagValue)),
-                                    "bucket",
-                                    wallTime,
-                                    c.count()
-                            ));
-                        }
-                        break;
-
-                    default:
-                }
-            }
-
-            metrics.add(writeMetricWithSuffix(summary.getId(), "count", wallTime, count));
-            metrics.add(writeMetricWithSuffix(summary.getId(), "sum", wallTime, summary.totalAmount()));
-            metrics.add(writeMetricWithSuffix(summary.getId(), "max", wallTime, summary.max()));
-
-            return metrics.stream();
-        } else {
-            return Stream.of(
-                    writeMetricWithSuffix(csummary.getId(), "count", wallTime, csummary.count()),
-                    writeMetricWithSuffix(csummary.getId(), "avg", wallTime, csummary.mean()),
-                    writeMetricWithSuffix(csummary.getId(), "sum", wallTime, csummary.totalAmount()),
-                    writeMetricWithSuffix(csummary.getId(), "max", wallTime, csummary.max())
-            );
+        if (percentileValues.length > 0) {
+            metrics.addAll(writePercentiles(summary, wallTime, percentileValues));
         }
+
+        if (histogramCounts.length > 0) {
+            metrics.addAll(writeHistogram(wallTime, summary, histogramCounts, count));
+        }
+
+        return metrics.stream();
     }
 
     Stream<String> writeFunctionTimer(FunctionTimer timer) {
@@ -276,78 +226,79 @@ public class OpenTSDBMeterRegistry extends PushMeterRegistry {
         );
     }
 
-    Stream<String> writeTimer(Timer ctimer) {
+    Stream<String> writeTimer(Timer timer) {
         long wallTime = config().clock().wallTime();
-        if (ctimer instanceof OpenTSDBTimer) {
-            OpenTSDBTimer timer = (OpenTSDBTimer) ctimer;
 
-            final ValueAtPercentile[] percentileValues = timer.takeSnapshot().percentileValues();
-            final CountAtBucket[] histogramCounts = timer.histogramCounts();
-            double count = timer.count();
+        final ValueAtPercentile[] percentileValues = timer.takeSnapshot().percentileValues();
+        final CountAtBucket[] histogramCounts = ((OpenTSDBTimer) timer).histogramCounts();
+        double count = timer.count();
 
-            List<String> metrics = new LinkedList<String>();
+        List<String> metrics = new ArrayList<>();
 
-            if (percentileValues.length > 0) {
-                // satisfies https://prometheus.io/docs/concepts/metric_types/#summary
-                for (ValueAtPercentile v : percentileValues) {
-                    metrics.add(writeMetric(
-                            timer.getId().withTag(new ImmutableTag("quantile", doubleToGoString(v.percentile()))),
-                            wallTime,
-                            v.value(TimeUnit.SECONDS)));
-                }
-            }
+        metrics.add(writeMetricWithSuffix(timer.getId(), "count", wallTime, count));
+        metrics.add(writeMetricWithSuffix(timer.getId(), "sum", wallTime, timer.totalTime(TimeUnit.SECONDS)));
+        metrics.add(writeMetricWithSuffix(timer.getId(), "max", wallTime, timer.max(getBaseTimeUnit())));
 
-            if (histogramCounts.length > 0) {
-                switch (timer.histogramFlavor()) {
-                    case Plain:
-                        // satisfies https://prometheus.io/docs/concepts/metric_types/#histogram
-                        for (CountAtBucket c : histogramCounts) {
-                            metrics.add(writeMetricWithSuffix(
-                                    timer.getId().withTag(new ImmutableTag("le", doubleToGoString(c.bucket()))),
-                                    "bucket",
-                                    wallTime,
-                                    c.count()
-                            ));
-                        }
-
-                        // the +Inf bucket should always equal `count`
-                        metrics.add(writeMetricWithSuffix(
-                                timer.getId().withTag(new ImmutableTag("le", "+Inf")),
-                                "bucket",
-                                wallTime,
-                                count
-                        ));
-                        break;
-
-                    case VictoriaMetrics:
-                        for (CountAtBucket c : histogramCounts) {
-                            String vmrangeTagValue = FixedBoundaryVMHistogram.getVMRangeValue(c.bucket());
-                            metrics.add(writeMetricWithSuffix(
-                                    timer.getId().withTag(new ImmutableTag("vmrange", vmrangeTagValue)),
-                                    "bucket",
-                                    wallTime,
-                                    c.count()
-                            ));
-                        }
-                        break;
-
-                    default:
-                }
-            }
-
-            metrics.add(writeMetricWithSuffix(timer.getId(), "count", wallTime, count));
-            metrics.add(writeMetricWithSuffix(timer.getId(), "sum", wallTime, timer.totalTime(TimeUnit.SECONDS)));
-            metrics.add(writeMetricWithSuffix(timer.getId(), "max", wallTime, timer.max(getBaseTimeUnit())));
-
-            return metrics.stream();
-        } else {
-            return Stream.of(
-                    writeMetricWithSuffix(ctimer.getId(), "count", wallTime, ctimer.count()),
-                    writeMetricWithSuffix(ctimer.getId(), "avg", wallTime, ctimer.mean(getBaseTimeUnit())),
-                    writeMetricWithSuffix(ctimer.getId(), "sum", wallTime, ctimer.totalTime(getBaseTimeUnit())),
-                    writeMetricWithSuffix(ctimer.getId(), "max", wallTime, ctimer.max(getBaseTimeUnit()))
-            );
+        if (percentileValues.length > 0) {
+            metrics.addAll(writePercentiles(timer, wallTime, percentileValues));
         }
+
+        if (histogramCounts.length > 0) {
+            metrics.addAll(writeHistogram(wallTime, timer, histogramCounts, count));
+        }
+
+        return metrics.stream();
+    }
+
+    private List<String> writePercentiles(Meter meter, long wallTime, ValueAtPercentile[] percentileValues) {
+        List<String> metrics = new ArrayList<>(percentileValues.length);
+
+        // satisfies https://prometheus.io/docs/concepts/metric_types/#summary
+        for (ValueAtPercentile v : percentileValues) {
+            metrics.add(writeMetric(
+                    meter.getId().withTag(new ImmutableTag("quantile", doubleToGoString(v.percentile()))),
+                    wallTime,
+                    v.value(TimeUnit.SECONDS)));
+        }
+
+        return metrics;
+    }
+
+    private List<String> writeHistogram(long wallTime, Meter meter, CountAtBucket[] histogramCounts, double count) {
+        List<String> metrics = new ArrayList<>(histogramCounts.length);
+
+        if(config.flavor() == null) {
+            // satisfies https://prometheus.io/docs/concepts/metric_types/#histogram, which is at least SOME standard
+            // histogram format to follow
+            for (CountAtBucket c : histogramCounts) {
+                metrics.add(writeMetricWithSuffix(
+                        meter.getId().withTag(new ImmutableTag("le", doubleToGoString(c.bucket()))),
+                        "bucket",
+                        wallTime,
+                        c.count()
+                ));
+            }
+
+            // the +Inf bucket should always equal `count`
+            metrics.add(writeMetricWithSuffix(
+                    meter.getId().withTag(new ImmutableTag("le", "+Inf")),
+                    "bucket",
+                    wallTime,
+                    count
+            ));
+        }
+        else if(OpenTSDBFlavor.VictoriaMetrics.equals(config.flavor())) {
+            for (CountAtBucket c : histogramCounts) {
+                metrics.add(writeMetricWithSuffix(
+                        meter.getId().withTag(Tag.of("vmrange", getRangeTagValue(c.bucket()))),
+                        "bucket",
+                        wallTime,
+                        c.count()
+                ));
+            }
+        }
+
+        return metrics;
     }
 
     // VisibleForTesting
@@ -396,8 +347,7 @@ public class OpenTSDBMeterRegistry extends PushMeterRegistry {
 
         return StreamSupport.stream(meter.measure().spliterator(), false)
                 .map(ms -> {
-                            LinkedList<Tag> localTags = new LinkedList<Tag>(tags);
-                            localTags.add(new ImmutableTag("statistic", ms.getStatistic().toString()));
+                            Tags localTags = Tags.concat(tags, "statistics", ms.getStatistic().toString());
                             String name = getConventionName(meter.getId());
 
                             switch (ms.getStatistic()) {
@@ -429,7 +379,7 @@ public class OpenTSDBMeterRegistry extends PushMeterRegistry {
         // usually tagKeys and metricNames naming rules are the same
         // but we can't call getConventionName again after adding suffix
         return new OpenTSDBMetricBuilder()
-                .field("metric", (suffix == null || suffix.equals("")) ?
+                .field("metric", suffix.isEmpty() ?
                         getConventionName(id) :
                         config().namingConvention().tagKey(getConventionName(id) + "." + suffix)
                 )
@@ -455,16 +405,15 @@ public class OpenTSDBMeterRegistry extends PushMeterRegistry {
 
         OpenTSDBMetricBuilder datapoints(long wallTime, double value) {
             sb.append(",\"timestamp\":").append(wallTime).append(",\"value\":").append(DoubleFormat.wholeOrDecimal(value));
-            //sb.append(",\"datapoints\":[[").append(wallTime).append(',').append(DoubleFormat.decimalOrWhole(value)).append("]]");
             return this;
         }
 
-        OpenTSDBMetricBuilder tags(List<Tag> tags) {
+        OpenTSDBMetricBuilder tags(Iterable<Tag> tags) {
             OpenTSDBMetricBuilder tagBuilder = new OpenTSDBMetricBuilder();
-            if (tags.isEmpty()) {
-                // tags field is required for OpenTSDBDB, use hostname as a default tag
+            if (!tags.iterator().hasNext()) {
+                // tags field is required for OpenTSDB, use hostname as a default tag
                 try {
-                    tagBuilder.field("hostname", InetAddress.getLocalHost().getHostName());
+                    tagBuilder.field("host", InetAddress.getLocalHost().getHostName());
                 } catch (UnknownHostException ignore) {
                     /* ignore */
                 }
@@ -516,4 +465,3 @@ public class OpenTSDBMeterRegistry extends PushMeterRegistry {
         }
     }
 }
-

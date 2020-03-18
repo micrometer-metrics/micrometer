@@ -36,34 +36,30 @@ public class OpenTSDBTimer extends AbstractTimer {
     @Nullable
     private final Histogram histogram;
 
-    private final HistogramFlavor histogramFlavor;
-
-    OpenTSDBTimer(Id id, Clock clock, DistributionStatisticConfig distributionStatisticConfig, PauseDetector pauseDetector, HistogramFlavor histogramFlavor) {
+    OpenTSDBTimer(Id id, Clock clock, DistributionStatisticConfig distributionStatisticConfig, PauseDetector pauseDetector,
+                  @Nullable OpenTSDBFlavor flavor) {
         super(id, clock,
                 DistributionStatisticConfig.builder()
                         .percentilesHistogram(false)
-                        .sla()
+                        .sla(new double[0])
                         .build()
                         .merge(distributionStatisticConfig),
                 pauseDetector, TimeUnit.SECONDS, false);
 
-        this.histogramFlavor = histogramFlavor;
         this.max = new TimeWindowMax(clock, distributionStatisticConfig);
 
         if (distributionStatisticConfig.isPublishingHistogram()) {
-            switch (histogramFlavor) {
-                case VictoriaMetrics:
-                    histogram = new FixedBoundaryVMHistogram();
-                    break;
-                case Plain:
-                    histogram = new TimeWindowFixedBoundaryHistogram(clock, DistributionStatisticConfig.builder()
-                            .expiry(Duration.ofDays(1825)) // effectively never roll over
-                            .bufferLength(1)
-                            .build()
-                            .merge(distributionStatisticConfig), true);
-                    break;
-                default:
-                    histogram = null;
+            if(flavor == null) {
+                histogram = new TimeWindowFixedBoundaryHistogram(clock, DistributionStatisticConfig.builder()
+                        .expiry(Duration.ofDays(1825)) // effectively never roll over
+                        .bufferLength(1)
+                        .build()
+                        .merge(distributionStatisticConfig), true);
+            }
+            else if(OpenTSDBFlavor.VictoriaMetrics.equals(flavor)) {
+                histogram = new FixedBoundaryVictoriaMetricsHistogram();
+            } else {
+                histogram = null;
             }
         } else {
             histogram = null;
@@ -95,11 +91,6 @@ public class OpenTSDBTimer extends AbstractTimer {
     public double max(TimeUnit unit) {
         return max.poll(unit);
     }
-
-    public HistogramFlavor histogramFlavor() {
-        return histogramFlavor;
-    }
-
 
     /**
      * For Prometheus we cannot use the histogram counts from HistogramSnapshot, as it is based on a

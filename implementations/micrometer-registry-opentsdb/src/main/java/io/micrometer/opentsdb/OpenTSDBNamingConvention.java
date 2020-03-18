@@ -1,5 +1,5 @@
 /**
- * Copyright 2017 Pivotal Software, Inc.
+ * Copyright 2020 Pivotal Software, Inc.
  * <p>
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -29,7 +29,7 @@ public class OpenTSDBNamingConvention implements NamingConvention {
     private final String timerSuffix;
 
     public OpenTSDBNamingConvention() {
-        this("");
+        this("_duration");
     }
 
     public OpenTSDBNamingConvention(String timerSuffix) {

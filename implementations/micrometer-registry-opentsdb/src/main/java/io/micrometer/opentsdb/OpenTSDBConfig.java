@@ -1,5 +1,5 @@
 /**
- * Copyright 2018 Pivotal Software, Inc.
+ * Copyright 2020 Pivotal Software, Inc.
  * <p>
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,7 +15,6 @@
  */
 package io.micrometer.opentsdb;
 
-import io.micrometer.core.instrument.distribution.HistogramFlavor;
 import io.micrometer.core.instrument.push.PushRegistryConfig;
 import io.micrometer.core.lang.Nullable;
 
@@ -51,7 +50,7 @@ public interface OpenTSDBConfig extends PushRegistryConfig {
 
     /**
      * @return Authenticate requests with this user. By default is {@code null}, and the registry will not
-     * attempt to present credentials to OpenTSDBDB.
+     * attempt to present credentials to OpenTSDB.
      */
     @Nullable
     default String userName() {
@@ -60,7 +59,7 @@ public interface OpenTSDBConfig extends PushRegistryConfig {
 
     /**
      * @return Authenticate requests with this password. By default is {@code null}, and the registry will not
-     * attempt to present credentials to OpenTSDBDB.
+     * attempt to present credentials to OpenTSDB.
      */
     @Nullable
     default String password() {
@@ -68,22 +67,24 @@ public interface OpenTSDBConfig extends PushRegistryConfig {
     }
 
     /**
-     * Histogram type for backing DistributionSummary && Timer
+     * OpenTSDB can be used as a metrics sink to different backends. The registry
+     * can react to different flavors to ship metrics differently to guarantee the
+     * highest fidelity at their ultimate destination.
      *
-     * @return Choose which type of histogram to use
+     * @return A flavor that influences the style of metrics shipped to OpenTSDB.
      */
-    default HistogramFlavor histogramFlavor() {
-        String v = get(prefix() + ".histogramFlavor");
+    @Nullable
+    default OpenTSDBFlavor flavor() {
+        String v = get(prefix() + ".flavor");
 
-        // Default micrometer histogram implementation
         if (v == null)
-            return HistogramFlavor.Plain;
+            return null;
 
-        for (HistogramFlavor flavor : HistogramFlavor.values()) {
+        for (OpenTSDBFlavor flavor : OpenTSDBFlavor.values()) {
             if (flavor.toString().equalsIgnoreCase(v))
                 return flavor;
         }
 
-        throw new IllegalArgumentException("Unrecognized histogram flavor '" + v + "' (check property " + prefix() + ".histogramFlavor)");
+        throw new IllegalArgumentException("Unrecognized flavor '" + v + "' (check property " + prefix() + ".flavor)");
     }
 }
