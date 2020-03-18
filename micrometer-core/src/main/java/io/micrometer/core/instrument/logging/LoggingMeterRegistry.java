@@ -82,14 +82,6 @@ public class LoggingMeterRegistry extends StepMeterRegistry {
     }
 
     @Override
-    public void start(ThreadFactory threadFactory) {
-        if (config.enabled()) {
-            loggingSink.accept("publishing metrics to logs every " + TimeUtils.format(config.step()));
-        }
-        super.start(threadFactory);
-    }
-
-    @Override
     protected void publish() {
         if (config.enabled()) {
             getMeters().stream()

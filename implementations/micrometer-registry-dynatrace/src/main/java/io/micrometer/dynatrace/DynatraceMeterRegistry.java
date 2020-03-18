@@ -29,7 +29,6 @@ import io.micrometer.core.instrument.step.StepMeterRegistry;
 import io.micrometer.core.instrument.util.MeterPartition;
 import io.micrometer.core.instrument.util.NamedThreadFactory;
 import io.micrometer.core.instrument.util.StringUtils;
-import io.micrometer.core.instrument.util.TimeUtils;
 import io.micrometer.core.ipc.http.HttpSender;
 import io.micrometer.core.ipc.http.HttpUrlConnectionSender;
 import io.micrometer.core.lang.Nullable;
@@ -102,14 +101,6 @@ public class DynatraceMeterRegistry extends StepMeterRegistry {
 
     public static Builder builder(DynatraceConfig config) {
         return new Builder(config);
-    }
-
-    @Override
-    public void start(ThreadFactory threadFactory) {
-        if (config.enabled()) {
-            logger.info("publishing metrics to dynatrace every " + TimeUtils.format(config.step()));
-        }
-        super.start(threadFactory);
     }
 
     @Override

@@ -27,7 +27,6 @@ import io.micrometer.core.instrument.step.StepMeterRegistry;
 import io.micrometer.core.instrument.util.DoubleFormat;
 import io.micrometer.core.instrument.util.HierarchicalNameMapper;
 import io.micrometer.core.instrument.util.NamedThreadFactory;
-import io.micrometer.core.instrument.util.TimeUtils;
 import io.micrometer.core.lang.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -101,14 +100,6 @@ public class GangliaMeterRegistry extends StepMeterRegistry {
 
     public static Builder builder(GangliaConfig config) {
         return new Builder(config);
-    }
-
-    @Override
-    public void start(ThreadFactory threadFactory) {
-        if (config.enabled()) {
-            logger.info("publishing metrics to ganglia every " + TimeUtils.format(config.step()));
-        }
-        super.start(threadFactory);
     }
 
     @Override

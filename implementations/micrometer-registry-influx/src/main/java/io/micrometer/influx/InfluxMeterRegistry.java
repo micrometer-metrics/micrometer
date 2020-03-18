@@ -75,14 +75,6 @@ public class InfluxMeterRegistry extends StepMeterRegistry {
         return new Builder(config);
     }
 
-    @Override
-    public void start(ThreadFactory threadFactory) {
-        if (config.enabled()) {
-            logger.info("publishing metrics to influx every " + TimeUtils.format(config.step()));
-        }
-        super.start(threadFactory);
-    }
-
     private void createDatabaseIfNecessary() {
         if (!config.autoCreateDb() || databaseExists)
             return;
