@@ -31,6 +31,7 @@ import javax.management.NotificationListener;
 import javax.management.openmbean.CompositeData;
 import java.lang.management.*;
 import java.time.Duration;
+import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.concurrent.CopyOnWriteArrayList;
@@ -46,7 +47,7 @@ import static java.util.Collections.emptyList;
 public class JvmHeapPressureMetrics implements MeterBinder, AutoCloseable {
     private final Iterable<Tag> tags;
 
-    private final java.util.List<Runnable> notificationListenerCleanUpRunnables = new CopyOnWriteArrayList<>();
+    private final List<Runnable> notificationListenerCleanUpRunnables = new CopyOnWriteArrayList<>();
 
     private final long startOfMonitoring = System.nanoTime();
     private final Duration lookback;
@@ -76,7 +77,7 @@ public class JvmHeapPressureMetrics implements MeterBinder, AutoCloseable {
 
     @Override
     public void bindTo(@NonNull MeterRegistry registry) {
-        Gauge.builder("jvm.heap.usage.after.gc", lastOldGenUsageAfterGc, AtomicReference::get)
+        Gauge.builder("jvm.memory.usage.after.gc", lastOldGenUsageAfterGc, AtomicReference::get)
                 .tags(tags)
                 .tag("area", "heap")
                 .tag("generation", "old")
