@@ -29,6 +29,23 @@ import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.function.Function;
 
+/**
+ * Provides {@link HttpRequestInterceptor} and {@link HttpResponseInterceptor} for
+ * configuring with an {@link org.apache.http.nio.client.HttpAsyncClient}. Usage example:
+ * <pre>
+ *     MicrometerHttpClientInterceptor interceptor = new MicrometerHttpClientInterceptor(registry,
+ *             request -> request.getRequestLine().getUri(),
+ *             Tags.empty(),
+ *             true);
+ *
+ *     CloseableHttpAsyncClient httpAsyncClient = HttpAsyncClients.custom()
+ *             .addInterceptorFirst(interceptor.getRequestInterceptor())
+ *             .addInterceptorLast(interceptor.getResponseInterceptor())
+ *             .build();
+ * </pre>
+ *
+ * @since 1.4.0
+ */
 @Incubating(since = "1.4.0")
 public class MicrometerHttpClientInterceptor {
     private static final String METER_NAME = "httpcomponents.httpclient.request";
