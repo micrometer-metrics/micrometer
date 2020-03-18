@@ -32,7 +32,7 @@ import java.util.function.Function;
 /**
  * Provides {@link HttpRequestInterceptor} and {@link HttpResponseInterceptor} for
  * configuring with an {@link org.apache.http.nio.client.HttpAsyncClient}. Usage example:
- * <pre>
+ * <pre>{@code
  *     MicrometerHttpClientInterceptor interceptor = new MicrometerHttpClientInterceptor(registry,
  *             request -> request.getRequestLine().getUri(),
  *             Tags.empty(),
@@ -42,7 +42,7 @@ import java.util.function.Function;
  *             .addInterceptorFirst(interceptor.getRequestInterceptor())
  *             .addInterceptorLast(interceptor.getResponseInterceptor())
  *             .build();
- * </pre>
+ * }</pre>
  *
  * @since 1.4.0
  */
