@@ -71,12 +71,12 @@ public class FixedBoundaryVMHistogram implements Histogram {
     private static final Double[] UPPER_BOUNDS;
 
     static {
-        VMRANGES = new String[3 + BUCKETS_COUNT*BUCKET_SIZE];
+        VMRANGES = new String[3 + BUCKETS_COUNT * BUCKET_SIZE];
         VMRANGES[0] = "0...0";
         VMRANGES[1] = String.format("0...%.1fe%d", 1.0, E10MIN);
         VMRANGES[2] = String.format("%.1fe%d...+Inf", 1.0, E10MAX);
 
-        UPPER_BOUNDS = new Double[3 + BUCKETS_COUNT*BUCKET_SIZE];
+        UPPER_BOUNDS = new Double[3 + BUCKETS_COUNT * BUCKET_SIZE];
         UPPER_BOUNDS[0] = 0.0;
         UPPER_BOUNDS[1] = BigDecimal.TEN.pow(E10MIN, MathContext.DECIMAL128).doubleValue();
         UPPER_BOUNDS[2] = Double.POSITIVE_INFINITY;
@@ -87,7 +87,7 @@ public class FixedBoundaryVMHistogram implements Histogram {
         for (int bucketIdx = 0; bucketIdx < BUCKETS_COUNT; bucketIdx++) {
             for (int offset = 0; offset < BUCKET_SIZE; offset++) {
                 int e10 = E10MIN + bucketIdx;
-                double m = 1 + (double)(offset+1)/DECIMAL_MULTIPLIER;
+                double m = 1 + (double)(offset + 1) / DECIMAL_MULTIPLIER;
                 if (Math.abs(m - 10) < DECIMAL_PRECISION) {
                     m = 1;
                     e10++;
@@ -193,7 +193,7 @@ public class FixedBoundaryVMHistogram implements Histogram {
             if (offset > 2) throw new RuntimeException(String.format("BUG: offset must be in range [0...2] for negative bucketIdx; got %d", offset));
             return offset;
         }
-        return 3 + index*BUCKET_SIZE + offset;
+        return 3 + index * BUCKET_SIZE + offset;
     }
 
     public static String getVMRangeValue(double value) {
@@ -202,7 +202,7 @@ public class FixedBoundaryVMHistogram implements Histogram {
         return VMRANGES[idx];
     }
 
-    private void visitNonZeroBuckets(VisitedBucket f){
+    private void visitNonZeroBuckets(VisitedBucket f) {
         int vmrangeIdx;
         final long zeroSnap = zeros.get();
         if (zeroSnap > 0) {
