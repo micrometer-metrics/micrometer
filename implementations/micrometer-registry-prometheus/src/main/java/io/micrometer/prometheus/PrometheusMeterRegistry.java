@@ -20,6 +20,7 @@ import io.micrometer.core.instrument.cumulative.CumulativeFunctionCounter;
 import io.micrometer.core.instrument.cumulative.CumulativeFunctionTimer;
 import io.micrometer.core.instrument.distribution.CountAtBucket;
 import io.micrometer.core.instrument.distribution.DistributionStatisticConfig;
+import io.micrometer.core.instrument.distribution.FixedBoundaryVMHistogram;
 import io.micrometer.core.instrument.distribution.ValueAtPercentile;
 import io.micrometer.core.instrument.distribution.pause.PauseDetector;
 import io.micrometer.core.instrument.internal.DefaultGauge;
@@ -110,7 +111,7 @@ public class PrometheusMeterRegistry extends MeterRegistry {
     @Override
     public DistributionSummary newDistributionSummary(Meter.Id id, DistributionStatisticConfig distributionStatisticConfig, double scale) {
         MicrometerCollector collector = collectorByName(id);
-        PrometheusDistributionSummary summary = new PrometheusDistributionSummary(id, clock, distributionStatisticConfig, scale);
+        PrometheusDistributionSummary summary = new PrometheusDistributionSummary(id, clock, distributionStatisticConfig, scale, prometheusConfig.histogramFlavor());
         List<String> tagValues = tagValues(id);
 
         collector.add(tagValues, (conventionName, tagKeys) -> {
@@ -139,21 +140,39 @@ public class PrometheusMeterRegistry extends MeterRegistry {
                 type = Collector.Type.HISTOGRAM;
 
                 List<String> histogramKeys = new LinkedList<>(tagKeys);
-                histogramKeys.add("le");
+                switch (summary.histogramFlavor()) {
+                    case Plain:
+                        histogramKeys.add("le");
 
-                // satisfies https://prometheus.io/docs/concepts/metric_types/#histogram
-                for (CountAtBucket c : histogramCounts) {
-                    final List<String> histogramValues = new LinkedList<>(tagValues);
-                    histogramValues.add(Collector.doubleToGoString(c.bucket()));
-                    samples.add(new Collector.MetricFamilySamples.Sample(
-                            conventionName + "_bucket", histogramKeys, histogramValues, c.count()));
+                        // satisfies https://prometheus.io/docs/concepts/metric_types/#histogram
+                        for (CountAtBucket c : histogramCounts) {
+                            final List<String> histogramValues = new LinkedList<>(tagValues);
+                            histogramValues.add(Collector.doubleToGoString(c.bucket()));
+                            samples.add(new Collector.MetricFamilySamples.Sample(
+                                    conventionName + "_bucket", histogramKeys, histogramValues, c.count()));
+                        }
+
+                        // the +Inf bucket should always equal `count`
+                        final List<String> histogramValues = new LinkedList<>(tagValues);
+                        histogramValues.add("+Inf");
+                        samples.add(new Collector.MetricFamilySamples.Sample(
+                                conventionName + "_bucket", histogramKeys, histogramValues, count));
+                        break;
+
+                    case VictoriaMetrics:
+                        histogramKeys.add("vmrange");
+
+                        for (CountAtBucket c : histogramCounts) {
+                            final List<String> histogramValuesVM = new LinkedList<>(tagValues);
+                            histogramValuesVM.add(FixedBoundaryVMHistogram.getVMRangeValue(c.bucket()));
+                            samples.add(new Collector.MetricFamilySamples.Sample(
+                                    conventionName + "_bucket", histogramKeys, histogramValuesVM, c.count()));
+                        }
+                        break;
+
+                    default:
                 }
 
-                // the +Inf bucket should always equal `count`
-                final List<String> histogramValues = new LinkedList<>(tagValues);
-                histogramValues.add("+Inf");
-                samples.add(new Collector.MetricFamilySamples.Sample(
-                        conventionName + "_bucket", histogramKeys, histogramValues, count));
             }
 
             samples.add(new Collector.MetricFamilySamples.Sample(
@@ -173,7 +192,7 @@ public class PrometheusMeterRegistry extends MeterRegistry {
     @Override
     protected io.micrometer.core.instrument.Timer newTimer(Meter.Id id, DistributionStatisticConfig distributionStatisticConfig, PauseDetector pauseDetector) {
         MicrometerCollector collector = collectorByName(id);
-        PrometheusTimer timer = new PrometheusTimer(id, clock, distributionStatisticConfig, pauseDetector);
+        PrometheusTimer timer = new PrometheusTimer(id, clock, distributionStatisticConfig, pauseDetector, prometheusConfig.histogramFlavor());
         List<String> tagValues = tagValues(id);
 
         collector.add(tagValues, (conventionName, tagKeys) -> {
@@ -202,21 +221,40 @@ public class PrometheusMeterRegistry extends MeterRegistry {
                 type = Collector.Type.HISTOGRAM;
 
                 List<String> histogramKeys = new LinkedList<>(tagKeys);
-                histogramKeys.add("le");
 
-                // satisfies https://prometheus.io/docs/concepts/metric_types/#histogram
-                for (CountAtBucket c : histogramCounts) {
-                    final List<String> histogramValues = new LinkedList<>(tagValues);
-                    histogramValues.add(Collector.doubleToGoString(c.bucket(TimeUnit.SECONDS)));
-                    samples.add(new Collector.MetricFamilySamples.Sample(
-                            conventionName + "_bucket", histogramKeys, histogramValues, c.count()));
+                switch (timer.histogramFlavor()) {
+                    case Plain:
+                        histogramKeys.add("le");
+
+                        // satisfies https://prometheus.io/docs/concepts/metric_types/#histogram
+                        for (CountAtBucket c : histogramCounts) {
+                            final List<String> histogramValues = new LinkedList<>(tagValues);
+                            histogramValues.add(Collector.doubleToGoString(c.bucket(TimeUnit.SECONDS)));
+                            samples.add(new Collector.MetricFamilySamples.Sample(
+                                    conventionName + "_bucket", histogramKeys, histogramValues, c.count()));
+                        }
+
+                        // the +Inf bucket should always equal `count`
+                        final List<String> histogramValues = new LinkedList<>(tagValues);
+                        histogramValues.add("+Inf");
+                        samples.add(new Collector.MetricFamilySamples.Sample(
+                                conventionName + "_bucket", histogramKeys, histogramValues, count));
+                        break;
+
+                    case VictoriaMetrics:
+                        histogramKeys.add("vmrange");
+
+                        for (CountAtBucket c : histogramCounts) {
+                            final List<String> histogramValuesVM = new LinkedList<>(tagValues);
+                            histogramValuesVM.add(FixedBoundaryVMHistogram.getVMRangeValue(c.bucket()));
+                            samples.add(new Collector.MetricFamilySamples.Sample(
+                                    conventionName + "_bucket", histogramKeys, histogramValuesVM, c.count()));
+                        }
+                        break;
+
+                    default:
                 }
 
-                // the +Inf bucket should always equal `count`
-                final List<String> histogramValues = new LinkedList<>(tagValues);
-                histogramValues.add("+Inf");
-                samples.add(new Collector.MetricFamilySamples.Sample(
-                        conventionName + "_bucket", histogramKeys, histogramValues, count));
             }
 
             samples.add(new Collector.MetricFamilySamples.Sample(

@@ -1,5 +1,5 @@
 /**
- * Copyright 2017 Pivotal Software, Inc.
+ * Copyright 2018 Pivotal Software, Inc.
  * <p>
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,45 +13,58 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package io.micrometer.prometheus;
+package io.micrometer.opentsdb;
 
-import io.micrometer.core.instrument.config.MeterRegistryConfig;
 import io.micrometer.core.instrument.distribution.HistogramFlavor;
-
-import java.time.Duration;
+import io.micrometer.core.instrument.push.PushRegistryConfig;
+import io.micrometer.core.lang.Nullable;
 
 /**
- * Configuration for {@link PrometheusMeterRegistry}.
+ * Configuration for {@link OpenTSDBMeterRegistry}.
  *
- * @author Jon Schneider
+ * @author Nikolay Ustinov
  */
-public interface PrometheusConfig extends MeterRegistryConfig {
+public interface OpenTSDBConfig extends PushRegistryConfig {
     /**
      * Accept configuration defaults
      */
-    PrometheusConfig DEFAULT = k -> null;
+    OpenTSDBConfig DEFAULT = k -> null;
 
-    @Override
+    /**
+     * Property prefix to prepend to configuration names.
+     *
+     * @return property prefix
+     */
     default String prefix() {
-        return "prometheus";
+        return "opentsdb";
     }
 
     /**
-     * @return {@code true} if meter descriptions should be sent to Prometheus.
-     * Turn this off to minimize the amount of data sent on each scrape.
+     * The URI to send the metrics to.
+     *
+     * @return uri
      */
-    default boolean descriptions() {
-        String v = get(prefix() + ".descriptions");
-        return v == null || Boolean.parseBoolean(v);
+    default String uri() {
+        String v = get(prefix() + ".uri");
+        return v == null ? "http://localhost:4242/api/put" : v;
     }
 
     /**
-     * @return The step size to use in computing windowed statistics like max. The default is 1 minute.
-     * To get the most out of these statistics, align the step interval to be close to your scrape interval.
+     * @return Authenticate requests with this user. By default is {@code null}, and the registry will not
+     * attempt to present credentials to OpenTSDBDB.
      */
-    default Duration step() {
-        String v = get(prefix() + ".step");
-        return v == null ? Duration.ofMinutes(1) : Duration.parse(v);
+    @Nullable
+    default String userName() {
+        return get(prefix() + ".userName");
+    }
+
+    /**
+     * @return Authenticate requests with this password. By default is {@code null}, and the registry will not
+     * attempt to present credentials to OpenTSDBDB.
+     */
+    @Nullable
+    default String password() {
+        return get(prefix() + ".password");
     }
 
     /**
