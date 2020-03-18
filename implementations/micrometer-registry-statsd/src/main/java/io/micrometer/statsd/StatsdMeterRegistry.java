@@ -175,7 +175,7 @@ public class StatsdMeterRegistry extends MeterRegistry {
     public void start() {
         if (started.compareAndSet(false, true)) {
             if (lineSink != null) {
-                this.processor.subscribe(new Subscriber<>() {
+                this.processor.subscribe(new Subscriber<String>() {
                     @Override
                     public void onSubscribe(Subscription s) {
                         s.request(Long.MAX_VALUE);

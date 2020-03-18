@@ -24,7 +24,6 @@ import io.micrometer.core.instrument.binder.BaseUnits;
 import io.micrometer.core.instrument.binder.MeterBinder;
 import io.micrometer.core.instrument.distribution.TimeWindowSum;
 import io.micrometer.core.lang.NonNull;
-import org.jetbrains.annotations.NotNull;
 
 import javax.management.ListenerNotFoundException;
 import javax.management.NotificationEmitter;
