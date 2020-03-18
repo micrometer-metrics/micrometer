@@ -65,7 +65,7 @@ public abstract class PushMeterRegistry extends MeterRegistry {
             stop();
 
         if (config.enabled()) {
-            logger.info("publishing metrics every " + TimeUtils.format(config.step()));
+            logger.info("publishing metrics for " + this.getClass().getSimpleName() + " every " + TimeUtils.format(config.step()));
 
             scheduledExecutorService = Executors.newSingleThreadScheduledExecutor(threadFactory);
             scheduledExecutorService.scheduleAtFixedRate(this::publishSafely, config.step()
