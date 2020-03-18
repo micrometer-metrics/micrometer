@@ -82,7 +82,7 @@ public abstract class MeterRegistry {
     private final Config config = new Config();
     private final More more = new More();
 
-    // Eventhough writes are guarded by meterMapLock, iterators across value space are supported
+    // Even though writes are guarded by meterMapLock, iterators across value space are supported
     // Hence, we use CHM to support that iteration without ConcurrentModificationException risk
     private final Map<Id, Meter> meterMap = new ConcurrentHashMap<>();
 
