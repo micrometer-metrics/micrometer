@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package io.micrometer.prometheus;
+package io.micrometer.opentsdb;
 
 import io.micrometer.core.instrument.AbstractDistributionSummary;
 import io.micrometer.core.instrument.Clock;
@@ -25,7 +25,7 @@ import java.time.Duration;
 import java.util.concurrent.atomic.DoubleAdder;
 import java.util.concurrent.atomic.LongAdder;
 
-public class PrometheusDistributionSummary extends AbstractDistributionSummary {
+public class OpenTSDBDistributionSummary extends AbstractDistributionSummary {
     private static final CountAtBucket[] EMPTY_HISTOGRAM = new CountAtBucket[0];
     @Nullable
     private final Histogram histogram;
@@ -35,16 +35,11 @@ public class PrometheusDistributionSummary extends AbstractDistributionSummary {
 
     private final HistogramFlavor histogramFlavor;
 
-    @Deprecated
-    PrometheusDistributionSummary(Id id, Clock clock, DistributionStatisticConfig distributionStatisticConfig, double scale) {
-        this(id, clock, distributionStatisticConfig, scale, HistogramFlavor.Plain);
-    }
-
-    PrometheusDistributionSummary(Id id, Clock clock, DistributionStatisticConfig distributionStatisticConfig, double scale, HistogramFlavor histogramFlavor) {
+    OpenTSDBDistributionSummary(Id id, Clock clock, DistributionStatisticConfig distributionStatisticConfig, double scale, HistogramFlavor histogramFlavor) {
         super(id, clock,
                 DistributionStatisticConfig.builder()
                         .percentilesHistogram(false)
-                        .sla(new double[0])
+                        .sla()
                         .build()
                         .merge(distributionStatisticConfig),
                 scale, false);

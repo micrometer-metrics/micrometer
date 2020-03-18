@@ -13,41 +13,39 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package io.micrometer.prometheus;
+package io.micrometer.opentsdb;
 
-import io.micrometer.core.instrument.AbstractDistributionSummary;
+import io.micrometer.core.instrument.AbstractTimer;
 import io.micrometer.core.instrument.Clock;
 import io.micrometer.core.instrument.distribution.*;
-import io.micrometer.core.instrument.util.MeterEquivalence;
+import io.micrometer.core.instrument.distribution.pause.PauseDetector;
+import io.micrometer.core.instrument.util.TimeUtils;
 import io.micrometer.core.lang.Nullable;
 
 import java.time.Duration;
-import java.util.concurrent.atomic.DoubleAdder;
+import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.LongAdder;
 
-public class PrometheusDistributionSummary extends AbstractDistributionSummary {
+public class OpenTSDBTimer extends AbstractTimer {
     private static final CountAtBucket[] EMPTY_HISTOGRAM = new CountAtBucket[0];
+
+    private final LongAdder count = new LongAdder();
+    private final LongAdder totalTime = new LongAdder();
+    private final TimeWindowMax max;
+
     @Nullable
     private final Histogram histogram;
-    private LongAdder count = new LongAdder();
-    private DoubleAdder amount = new DoubleAdder();
-    private TimeWindowMax max;
 
     private final HistogramFlavor histogramFlavor;
 
-    @Deprecated
-    PrometheusDistributionSummary(Id id, Clock clock, DistributionStatisticConfig distributionStatisticConfig, double scale) {
-        this(id, clock, distributionStatisticConfig, scale, HistogramFlavor.Plain);
-    }
-
-    PrometheusDistributionSummary(Id id, Clock clock, DistributionStatisticConfig distributionStatisticConfig, double scale, HistogramFlavor histogramFlavor) {
+    OpenTSDBTimer(Id id, Clock clock, DistributionStatisticConfig distributionStatisticConfig, PauseDetector pauseDetector, HistogramFlavor histogramFlavor) {
         super(id, clock,
                 DistributionStatisticConfig.builder()
                         .percentilesHistogram(false)
-                        .sla(new double[0])
+                        .sla()
                         .build()
                         .merge(distributionStatisticConfig),
-                scale, false);
+                pauseDetector, TimeUnit.SECONDS, false);
 
         this.histogramFlavor = histogramFlavor;
         this.max = new TimeWindowMax(clock, distributionStatisticConfig);
@@ -73,13 +71,14 @@ public class PrometheusDistributionSummary extends AbstractDistributionSummary {
     }
 
     @Override
-    protected void recordNonNegative(double amount) {
+    protected void recordNonNegative(long amount, TimeUnit unit) {
         count.increment();
-        this.amount.add(amount);
-        max.record(amount);
+        long nanoAmount = TimeUnit.NANOSECONDS.convert(amount, unit);
+        totalTime.add(nanoAmount);
+        max.record(nanoAmount, TimeUnit.NANOSECONDS);
 
         if (histogram != null)
-            histogram.recordDouble(amount);
+            histogram.recordLong(TimeUnit.NANOSECONDS.convert(amount, unit));
     }
 
     @Override
@@ -88,29 +87,19 @@ public class PrometheusDistributionSummary extends AbstractDistributionSummary {
     }
 
     @Override
-    public double totalAmount() {
-        return amount.doubleValue();
+    public double totalTime(TimeUnit unit) {
+        return TimeUtils.nanosToUnit(totalTime.doubleValue(), unit);
     }
 
     @Override
-    public double max() {
-        return max.poll();
+    public double max(TimeUnit unit) {
+        return max.poll(unit);
     }
 
     public HistogramFlavor histogramFlavor() {
         return histogramFlavor;
     }
 
-    @SuppressWarnings("EqualsWhichDoesntCheckParameterClass")
-    @Override
-    public boolean equals(@Nullable Object o) {
-        return MeterEquivalence.equals(this, o);
-    }
-
-    @Override
-    public int hashCode() {
-        return MeterEquivalence.hashCode(this);
-    }
 
     /**
      * For Prometheus we cannot use the histogram counts from HistogramSnapshot, as it is based on a
@@ -131,8 +120,8 @@ public class PrometheusDistributionSummary extends AbstractDistributionSummary {
         }
 
         return new HistogramSnapshot(snapshot.count(),
-                snapshot.total(),
-                snapshot.max(),
+                snapshot.total(TimeUnit.SECONDS),
+                snapshot.max(TimeUnit.SECONDS),
                 snapshot.percentileValues(),
                 histogramCounts(),
                 snapshot::outputSummary);
