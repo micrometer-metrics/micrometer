@@ -44,9 +44,9 @@ public class NewRelicMeterRegistry extends StepMeterRegistry {
      * @param clock  The clock to use for timings.
      */
     public NewRelicMeterRegistry(NewRelicConfig config, Clock clock) {
-        this(config, ( config.clientProviderType().equals(ClientProviderType.insights_agent)
-                            ? new NewRelicAgentClientProvider(config) 
-                            : new NewRelicApiClientProvider(config) ), clock);
+        this(config, ( config.clientProviderType().equals(ClientProviderType.INSIGHTS_AGENT)
+                            ? new NewRelicInsightsAgentClientProvider(config) 
+                            : new NewRelicInsightsApiClientProvider(config) ), clock);
     }
 
     /**
@@ -112,7 +112,7 @@ public class NewRelicMeterRegistry extends StepMeterRegistry {
          * @since 1.4.0
          */
         public Builder agentClientProvider() {
-            return clientProvider(new NewRelicAgentClientProvider(config));
+            return clientProvider(new NewRelicInsightsAgentClientProvider(config));
         }
 
         /**
@@ -121,7 +121,7 @@ public class NewRelicMeterRegistry extends StepMeterRegistry {
          * @since 1.4.0
          */
         public Builder apiClientProvider() {
-            return clientProvider(new NewRelicApiClientProvider(config));
+            return clientProvider(new NewRelicInsightsApiClientProvider(config));
         }
 
         Builder clientProvider(NewRelicClientProvider clientProvider) {
@@ -153,7 +153,7 @@ public class NewRelicMeterRegistry extends StepMeterRegistry {
         public NewRelicMeterRegistry build() {
             if (clientProvider == null) {
                 //default to the REST API client
-                clientProvider = new NewRelicApiClientProvider(config);
+                clientProvider = new NewRelicInsightsApiClientProvider(config);
             }
             return new NewRelicMeterRegistry(config, clientProvider, convention, clock, threadFactory);
         }

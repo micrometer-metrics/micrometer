@@ -57,9 +57,9 @@ import io.micrometer.core.ipc.http.HttpUrlConnectionSender;
  * @author Neil Powell
  * @since 1.4.0
  */
-public class NewRelicApiClientProvider implements NewRelicClientProvider {
+public class NewRelicInsightsApiClientProvider implements NewRelicClientProvider {
 
-    private final Logger logger = LoggerFactory.getLogger(NewRelicApiClientProvider.class);
+    private final Logger logger = LoggerFactory.getLogger(NewRelicInsightsApiClientProvider.class);
 
     private final NewRelicConfig config;
     private final HttpSender httpClient;
@@ -67,17 +67,17 @@ public class NewRelicApiClientProvider implements NewRelicClientProvider {
     private final String insightsEndpoint;
 
     @SuppressWarnings("deprecation")
-    public NewRelicApiClientProvider(NewRelicConfig config) {
+    public NewRelicInsightsApiClientProvider(NewRelicConfig config) {
         this(config, new HttpUrlConnectionSender(config.connectTimeout(), config.readTimeout()), new NewRelicNamingConvention());
     }
     
     @SuppressWarnings("deprecation")
-    public NewRelicApiClientProvider(NewRelicConfig config, String proxyHost, int proxyPort) {
+    public NewRelicInsightsApiClientProvider(NewRelicConfig config, String proxyHost, int proxyPort) {
         this(config, new HttpUrlConnectionSender(config.connectTimeout(), config.readTimeout(), 
                             new Proxy(Proxy.Type.HTTP, new InetSocketAddress(proxyHost, proxyPort))), new NewRelicNamingConvention());
     }
 
-    public NewRelicApiClientProvider(NewRelicConfig config, HttpSender httpClient, NamingConvention namingConvention) {
+    public NewRelicInsightsApiClientProvider(NewRelicConfig config, HttpSender httpClient, NamingConvention namingConvention) {
 
         if (!config.meterNameEventTypeEnabled() && StringUtils.isEmpty(config.eventType())) {
             throw new MissingRequiredConfigurationException("eventType must be set to report metrics to New Relic");

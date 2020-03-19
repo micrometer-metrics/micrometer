@@ -54,15 +54,15 @@ public interface NewRelicConfig extends StepRegistryConfig {
     }
 
     /**
-     * When this is {@code insights_agent}, the New Relic metrics will be published with the NewRelicAgentClientProvider which delegates to the Java agent.
-     * Defaults to {@code insights_api} for publishing with the NewRelicApiClientProvider to the Insights REST API.
+     * When this is {@code INSIGHTS_AGENT}, the New Relic metrics will be published with the NewRelicAgentClientProvider which delegates to the Java agent.
+     * Defaults to {@code INSIGHTS_API} for publishing with the NewRelicApiClientProvider to the Insights REST API.
      * @return the ClientProviderType to use
      */
     default ClientProviderType clientProviderType() {
         String v = get(prefix() + ".clientProviderType");
         if (v == null)
-            return ClientProviderType.insights_api;
-        return ClientProviderType.valueOf(v);
+            return ClientProviderType.INSIGHTS_API;
+        return ClientProviderType.valueOf(v.toUpperCase());
     }
     
     default String apiKey() {

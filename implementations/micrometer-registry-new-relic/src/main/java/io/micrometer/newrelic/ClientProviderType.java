@@ -16,5 +16,5 @@
 package io.micrometer.newrelic;
 
 public enum ClientProviderType {
-    insights_api, insights_agent
+    INSIGHTS_API, INSIGHTS_AGENT
 }
