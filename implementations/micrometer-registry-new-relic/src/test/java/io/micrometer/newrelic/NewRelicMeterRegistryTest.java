@@ -67,7 +67,7 @@ class NewRelicMeterRegistryTest {
 
         @Override
         public ClientProviderType clientProviderType() {
-            return ClientProviderType.java_agent;
+            return ClientProviderType.insights_agent;
         }
         
     };
