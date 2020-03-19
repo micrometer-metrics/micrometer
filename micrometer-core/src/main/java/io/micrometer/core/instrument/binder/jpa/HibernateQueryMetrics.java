@@ -29,7 +29,6 @@ import org.hibernate.event.spi.PostLoadEventListener;
 import org.hibernate.stat.QueryStatistics;
 import org.hibernate.stat.Statistics;
 
-import java.util.Objects;
 import java.util.concurrent.TimeUnit;
 
 /**
