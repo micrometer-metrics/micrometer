@@ -60,6 +60,8 @@ public interface NewRelicConfig extends StepRegistryConfig {
      */
     default ClientProviderType clientProviderType() {
         String v = get(prefix() + ".clientProviderType");
+        if (v == null)
+            return ClientProviderType.insights_api;
         return ClientProviderType.valueOf(v);
     }
     
