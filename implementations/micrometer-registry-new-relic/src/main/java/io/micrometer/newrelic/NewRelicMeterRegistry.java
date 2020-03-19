@@ -108,20 +108,20 @@ public class NewRelicMeterRegistry extends StepMeterRegistry {
         }
 
         /**
-         * Use the New Relic Java Agent-based client provider to publish metrics.
+         * Use the New Relic Insights Java Agent-based client provider to publish metrics.
          * @return builder
          * @since 1.4.0
          */
-        public Builder agentClientProvider() {
+        public Builder insightsAgentClientProvider() {
             return clientProvider(new NewRelicInsightsAgentClientProvider(config));
         }
 
         /**
-         * Use a REST API client to publish metrics. This is the default client.
+         * Use the New Relic Insights REST API client provider to publish metrics. This is the default client.
          * @return builder
          * @since 1.4.0
          */
-        public Builder apiClientProvider() {
+        public Builder insightsApiClientProvider() {
             return clientProvider(new NewRelicInsightsApiClientProvider(config));
         }
 
