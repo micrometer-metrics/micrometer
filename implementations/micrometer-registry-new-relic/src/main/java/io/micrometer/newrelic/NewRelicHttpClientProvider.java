@@ -17,6 +17,8 @@ package io.micrometer.newrelic;
 
 import static io.micrometer.core.instrument.util.StringEscapeUtils.escapeJson;
 
+import java.net.InetSocketAddress;
+import java.net.Proxy;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
@@ -67,6 +69,11 @@ public class NewRelicHttpClientProvider implements NewRelicClientProvider {
     @SuppressWarnings("deprecation")
     public NewRelicHttpClientProvider(NewRelicConfig config) {
         this(config, new HttpUrlConnectionSender(config.connectTimeout(), config.readTimeout()), new NewRelicNamingConvention());
+    }
+    
+    public NewRelicHttpClientProvider(NewRelicConfig config, String proxyHost, int proxyPort) {
+        this(config, new HttpUrlConnectionSender(config.connectTimeout(), config.readTimeout(), 
+                            new Proxy(Proxy.Type.HTTP, new InetSocketAddress(proxyHost, proxyPort))), new NewRelicNamingConvention());
     }
 
     public NewRelicHttpClientProvider(NewRelicConfig config, HttpSender httpClient, NamingConvention namingConvention) {
