@@ -53,6 +53,16 @@ public interface NewRelicConfig extends StepRegistryConfig {
         return v;
     }
 
+    /**
+     * When this is {@code true}, the New Relic metrics will be published with the NewRelicAgentClientProvider.
+     * Defaults to {@code false}.
+     * @return whether to use the NewRelicAgentClientProvider
+     */
+    default boolean agentClientProviderEnabled() {
+        String v = get(prefix() + ".agentClientProviderEnabled");
+        return Boolean.parseBoolean(v);
+    }
+    
     default String apiKey() {
         String v = get(prefix() + ".apiKey");
         return v;

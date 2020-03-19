@@ -59,6 +59,19 @@ class NewRelicMeterRegistryTest {
 
     private final NewRelicConfig agentConfig = key -> null;
 
+    private final NewRelicConfig agentEnabledConfig = new NewRelicConfig() {
+        @Override
+        public String get(String key) {
+            return null;
+        }
+
+        @Override
+        public boolean agentClientProviderEnabled() {
+            return true;
+        }
+        
+    };
+    
     private final NewRelicConfig apiConfig = new NewRelicConfig() {
         @Override
         public String get(String key) {
@@ -103,6 +116,8 @@ class NewRelicMeterRegistryTest {
     private final MockClock clock = new MockClock();
     private final NewRelicMeterRegistry registry = new NewRelicMeterRegistry(apiConfig, mock(NewRelicClientProvider.class), clock);
     
+    private final NewRelicMeterRegistry agentEnabledRegistry = new NewRelicMeterRegistry(agentEnabledConfig, clock);
+    
     NewRelicAgentClientProvider getAgentClientProvider(NewRelicConfig config) {
         return new NewRelicAgentClientProvider(config);
     }
@@ -110,6 +125,18 @@ class NewRelicMeterRegistryTest {
         return new NewRelicApiClientProvider(config);
     }
 
+    @Test
+    void constructedtWithAgentClientProvider() {
+        //test Agent clientProvider
+        assertThat(agentEnabledRegistry.getClientProvider().getClass()).isEqualTo(NewRelicAgentClientProvider.class);
+    }
+    
+    @Test
+    void constructedWithApiClientProvider() {
+        //test default Api clientProvider
+        assertThat(registry.getClientProvider().getClass()).isEqualTo(NewRelicApiClientProvider.class);
+    }
+    
     @Test
     void writeGauge() {
         //test API clientProvider
@@ -137,7 +164,6 @@ class NewRelicMeterRegistryTest {
         Gauge gauge = registry.find("my.gauge2").gauge();
         assertThat(getAgentClientProvider(config).writeGauge(gauge)).isEqualTo(expectedEntries);
     }
-
 
     @Test
     void writeGaugeShouldDropNanValue() {

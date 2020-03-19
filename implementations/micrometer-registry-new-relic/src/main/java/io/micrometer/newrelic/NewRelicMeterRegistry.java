@@ -44,8 +44,9 @@ public class NewRelicMeterRegistry extends StepMeterRegistry {
      * @param clock  The clock to use for timings.
      */
     public NewRelicMeterRegistry(NewRelicConfig config, Clock clock) {
-        //default to the REST API client
-        this(config, new NewRelicApiClientProvider(config), clock);
+        this(config, ( config.agentClientProviderEnabled() 
+                            ? new NewRelicAgentClientProvider(config) 
+                            : new NewRelicApiClientProvider(config) ), clock);
     }
 
     /**
@@ -86,6 +87,11 @@ public class NewRelicMeterRegistry extends StepMeterRegistry {
     @Override
     protected TimeUnit getBaseTimeUnit() {
         return TimeUnit.SECONDS;
+    }
+    
+    // VisibleForTesting
+    NewRelicClientProvider getClientProvider() {
+        return clientProvider;
     }
 
     public static class Builder {
