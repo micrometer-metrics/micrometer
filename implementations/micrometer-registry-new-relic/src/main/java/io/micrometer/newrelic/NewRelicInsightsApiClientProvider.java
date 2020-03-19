@@ -17,6 +17,8 @@ package io.micrometer.newrelic;
 
 import static io.micrometer.core.instrument.util.StringEscapeUtils.escapeJson;
 
+import java.net.InetSocketAddress;
+import java.net.Proxy;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
@@ -55,9 +57,9 @@ import io.micrometer.core.ipc.http.HttpUrlConnectionSender;
  * @author Neil Powell
  * @since 1.4.0
  */
-public class NewRelicHttpClientProvider implements NewRelicClientProvider {
+public class NewRelicInsightsApiClientProvider implements NewRelicClientProvider {
 
-    private final Logger logger = LoggerFactory.getLogger(NewRelicHttpClientProvider.class);
+    private final Logger logger = LoggerFactory.getLogger(NewRelicInsightsApiClientProvider.class);
 
     private final NewRelicConfig config;
     private final HttpSender httpClient;
@@ -65,11 +67,17 @@ public class NewRelicHttpClientProvider implements NewRelicClientProvider {
     private final String insightsEndpoint;
 
     @SuppressWarnings("deprecation")
-    public NewRelicHttpClientProvider(NewRelicConfig config) {
+    public NewRelicInsightsApiClientProvider(NewRelicConfig config) {
         this(config, new HttpUrlConnectionSender(config.connectTimeout(), config.readTimeout()), new NewRelicNamingConvention());
     }
+    
+    @SuppressWarnings("deprecation")
+    public NewRelicInsightsApiClientProvider(NewRelicConfig config, String proxyHost, int proxyPort) {
+        this(config, new HttpUrlConnectionSender(config.connectTimeout(), config.readTimeout(), 
+                            new Proxy(Proxy.Type.HTTP, new InetSocketAddress(proxyHost, proxyPort))), new NewRelicNamingConvention());
+    }
 
-    public NewRelicHttpClientProvider(NewRelicConfig config, HttpSender httpClient, NamingConvention namingConvention) {
+    public NewRelicInsightsApiClientProvider(NewRelicConfig config, HttpSender httpClient, NamingConvention namingConvention) {
 
         if (!config.meterNameEventTypeEnabled() && StringUtils.isEmpty(config.eventType())) {
             throw new MissingRequiredConfigurationException("eventType must be set to report metrics to New Relic");

@@ -47,19 +47,19 @@ import io.micrometer.core.instrument.util.StringUtils;
  * @author Neil Powell
  * @since 1.4.0
  */
-public class NewRelicAgentClientProvider implements NewRelicClientProvider {
+public class NewRelicInsightsAgentClientProvider implements NewRelicClientProvider {
 
-    private final Logger logger = LoggerFactory.getLogger(NewRelicAgentClientProvider.class);
+    private final Logger logger = LoggerFactory.getLogger(NewRelicInsightsAgentClientProvider.class);
 
     private final NewRelicConfig config;
     private final Agent newRelicAgent;
     private final NamingConvention namingConvention;
     
-    public NewRelicAgentClientProvider(NewRelicConfig config) {
+    public NewRelicInsightsAgentClientProvider(NewRelicConfig config) {
         this(config, NewRelic.getAgent(), new NewRelicNamingConvention());
     }
 
-    public NewRelicAgentClientProvider(NewRelicConfig config, Agent newRelicAgent, NamingConvention namingConvention) {
+    public NewRelicInsightsAgentClientProvider(NewRelicConfig config, Agent newRelicAgent, NamingConvention namingConvention) {
 
         if (!config.meterNameEventTypeEnabled() && StringUtils.isEmpty(config.eventType())) {
             throw new MissingRequiredConfigurationException("eventType must be set to report metrics to New Relic");
