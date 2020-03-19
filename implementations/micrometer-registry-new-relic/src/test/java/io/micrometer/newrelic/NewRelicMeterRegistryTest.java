@@ -566,9 +566,9 @@ class NewRelicMeterRegistryTest {
         //test meterNameEventTypeEnabledConfig = false (default)
         MockNewRelicAgent mockNewRelicAgent = new MockNewRelicAgent();
         NewRelicInsightsAgentClientProvider agentProvider = new NewRelicInsightsAgentClientProvider(
-                                                agentConfig, mockNewRelicAgent, registry.config().namingConvention());
+                            insightsAgentEnabledConfig, mockNewRelicAgent, registry.config().namingConvention());
         
-        NewRelicMeterRegistry registry = new NewRelicMeterRegistry(agentConfig, agentProvider, clock);
+        NewRelicMeterRegistry registry = new NewRelicMeterRegistry(insightsAgentEnabledConfig, agentProvider, clock);
         
         registry.gauge("my.gauge", Tags.of("theTag", "theValue"), 1d);
         Gauge gauge = registry.find("my.gauge").gauge();
