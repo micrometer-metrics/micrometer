@@ -66,8 +66,8 @@ class NewRelicMeterRegistryTest {
         }
 
         @Override
-        public boolean agentClientProviderEnabled() {
-            return true;
+        public ClientProviderType clientProviderType() {
+            return ClientProviderType.java_agent;
         }
         
     };
@@ -89,8 +89,8 @@ class NewRelicMeterRegistryTest {
         }
         
         @Override
-        public boolean agentClientProviderEnabled() {
-            return false;
+        public ClientProviderType clientProviderType() {
+            return ClientProviderType.insights_api;
         }
     };
 
@@ -118,8 +118,8 @@ class NewRelicMeterRegistryTest {
         }
         
         @Override
-        public boolean agentClientProviderEnabled() {
-            return false;
+        public ClientProviderType clientProviderType() {
+            return ClientProviderType.insights_api;
         }
     };
     

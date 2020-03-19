@@ -44,7 +44,7 @@ public class NewRelicMeterRegistry extends StepMeterRegistry {
      * @param clock  The clock to use for timings.
      */
     public NewRelicMeterRegistry(NewRelicConfig config, Clock clock) {
-        this(config, ( config.agentClientProviderEnabled() 
+        this(config, ( config.clientProviderType().equals(ClientProviderType.java_agent)
                             ? new NewRelicAgentClientProvider(config) 
                             : new NewRelicApiClientProvider(config) ), clock);
     }
