@@ -16,18 +16,17 @@
 package io.micrometer.core.instrument.binder.jpa;
 
 import io.micrometer.core.instrument.MeterRegistry;
-import io.micrometer.core.instrument.MockClock;
-import io.micrometer.core.instrument.simple.SimpleConfig;
+import io.micrometer.core.instrument.Tags;
 import io.micrometer.core.instrument.simple.SimpleMeterRegistry;
+import org.hibernate.SessionFactory;
 import org.hibernate.stat.QueryStatistics;
 import org.hibernate.stat.Statistics;
-import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import org.mockito.Mockito;
 
 import java.util.concurrent.TimeUnit;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
 /**
@@ -37,32 +36,14 @@ import static org.mockito.Mockito.when;
  */
 class HibernateQueryMetricsTest {
 
-    private MeterRegistry registry;
-
-    @BeforeEach
-    void setup() {
-        registry = new SimpleMeterRegistry(SimpleConfig.DEFAULT, new MockClock());
-    }
-
-    private HibernateQueryMetrics.MetricsEventHandler createMetricsEventHandlerMock() {
-        HibernateQueryMetrics hibernateQueryMetricsMock = Mockito.mock(HibernateQueryMetrics.class);
-        return hibernateQueryMetricsMock.new MetricsEventHandler(registry);
-    }
-
-    private Statistics createQueryStatisticsMock(String query) {
-        Statistics statistics = Mockito.mock(Statistics.class);
-        QueryStatistics queryStatistics = Mockito.mock(QueryStatistics.class, invocation -> 43L);
-        when(statistics.getQueries()).thenReturn(new String[]{query});
-        when(statistics.getQueryStatistics(query)).thenReturn(queryStatistics);
-        return statistics;
-    }
-
+    private MeterRegistry registry = new SimpleMeterRegistry();
+    private HibernateQueryMetrics hibernateQueryMetrics = new HibernateQueryMetrics(mock(SessionFactory.class), "HibernateQueryMetricsTest", Tags.empty());
 
     @Test
-    void shouldExposeQueryMetrics() {
+    void metricsEventHandlerRegistersMetrics() {
         String query = "Select generatedAlias0 from Table as generatedAlias0 where generatedAlias0.param0 :val0";
 
-        HibernateQueryMetrics.MetricsEventHandler eventHandler = createMetricsEventHandlerMock();
+        HibernateQueryMetrics.MetricsEventHandler eventHandler = hibernateQueryMetrics.new MetricsEventHandler(registry);
         Statistics statistics = createQueryStatisticsMock(query);
 
         eventHandler.registerQueryMetric(statistics);
@@ -75,5 +56,13 @@ class HibernateQueryMetricsTest {
         assertThat(registry.get("hibernate.query.execution.max").tags("query", query).timeGauge().value(TimeUnit.MILLISECONDS)).isEqualTo(43.0d);
         assertThat(registry.get("hibernate.query.execution.min").tags("query", query).timeGauge().value(TimeUnit.MILLISECONDS)).isEqualTo(43.0d);
         assertThat(registry.get("hibernate.query.execution.rows").tags("query", query).functionCounter().count()).isEqualTo(43.0);
+    }
+
+    private Statistics createQueryStatisticsMock(String query) {
+        Statistics statistics = mock(Statistics.class);
+        QueryStatistics queryStatistics = mock(QueryStatistics.class, invocation -> 43L);
+        when(statistics.getQueries()).thenReturn(new String[]{query});
+        when(statistics.getQueryStatistics(query)).thenReturn(queryStatistics);
+        return statistics;
     }
 }
