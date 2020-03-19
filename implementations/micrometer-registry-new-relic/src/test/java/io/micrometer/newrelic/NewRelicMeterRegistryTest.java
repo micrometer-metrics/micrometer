@@ -72,19 +72,6 @@ class NewRelicMeterRegistryTest {
         
     };
     
-    private final NewRelicConfig apiDefaultConfig = new NewRelicConfig() {
-        @Override
-        public String get(String key) {
-            return null;
-        }
-
-        @Override
-        public boolean agentClientProviderEnabled() {
-            return false;
-        }
-        
-    };
-    
     private final NewRelicConfig apiConfig = new NewRelicConfig() {
         @Override
         public String get(String key) {
@@ -99,6 +86,11 @@ class NewRelicMeterRegistryTest {
         @Override
         public String apiKey() {
             return "apiKey";
+        }
+        
+        @Override
+        public boolean agentClientProviderEnabled() {
+            return false;
         }
     };
 
@@ -124,10 +116,15 @@ class NewRelicMeterRegistryTest {
         public String apiKey() {
             return "apiKey";
         }
+        
+        @Override
+        public boolean agentClientProviderEnabled() {
+            return false;
+        }
     };
     
     private final MockClock clock = new MockClock();
-    private final NewRelicMeterRegistry registry = new NewRelicMeterRegistry(apiDefaultConfig, mock(NewRelicClientProvider.class), clock);
+    private final NewRelicMeterRegistry registry = new NewRelicMeterRegistry(apiConfig, mock(NewRelicClientProvider.class), clock);
     
     private final NewRelicMeterRegistry agentEnabledRegistry = new NewRelicMeterRegistry(agentEnabledConfig, clock);
     
