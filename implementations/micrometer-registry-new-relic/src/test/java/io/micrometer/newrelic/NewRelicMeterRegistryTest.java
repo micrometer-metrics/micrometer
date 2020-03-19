@@ -126,6 +126,8 @@ class NewRelicMeterRegistryTest {
     private final MockClock clock = new MockClock();
     private final NewRelicMeterRegistry registry = new NewRelicMeterRegistry(apiConfig, mock(NewRelicClientProvider.class), clock);
     
+    private final NewRelicMeterRegistry apiDefaultRegistry = new NewRelicMeterRegistry(apiConfig, clock);
+    
     private final NewRelicMeterRegistry agentEnabledRegistry = new NewRelicMeterRegistry(agentEnabledConfig, clock);
     
     NewRelicAgentClientProvider getAgentClientProvider(NewRelicConfig config) {
@@ -144,7 +146,7 @@ class NewRelicMeterRegistryTest {
     @Test
     void constructedWithApiClientProvider() {
         //test default Api clientProvider
-        assertThat(registry.getClientProvider().getClass()).isEqualTo(NewRelicApiClientProvider.class);
+        assertThat(apiDefaultRegistry.getClientProvider().getClass()).isEqualTo(NewRelicApiClientProvider.class);
     }
     
     @Test
