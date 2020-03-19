@@ -110,7 +110,7 @@ public class NewRelicMeterRegistry extends StepMeterRegistry {
         }
 
         /**
-         * Use an HTTP client to publish metrics. This is the default client.
+         * Use a REST API client to publish metrics. This is the default client.
          * @return builder
          * @since 1.4.0
          */
