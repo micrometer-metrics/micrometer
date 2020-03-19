@@ -58,7 +58,7 @@ import io.micrometer.newrelic.NewRelicMeterRegistryTest.MockNewRelicAgent.MockNe
 class NewRelicMeterRegistryTest {
 
     private final NewRelicConfig agentConfig = key -> null;
-
+    
     private final NewRelicConfig agentEnabledConfig = new NewRelicConfig() {
         @Override
         public String get(String key) {
@@ -68,6 +68,19 @@ class NewRelicMeterRegistryTest {
         @Override
         public boolean agentClientProviderEnabled() {
             return true;
+        }
+        
+    };
+    
+    private final NewRelicConfig apiDefaultConfig = new NewRelicConfig() {
+        @Override
+        public String get(String key) {
+            return null;
+        }
+
+        @Override
+        public boolean agentClientProviderEnabled() {
+            return false;
         }
         
     };
@@ -114,7 +127,7 @@ class NewRelicMeterRegistryTest {
     };
     
     private final MockClock clock = new MockClock();
-    private final NewRelicMeterRegistry registry = new NewRelicMeterRegistry(apiConfig, mock(NewRelicClientProvider.class), clock);
+    private final NewRelicMeterRegistry registry = new NewRelicMeterRegistry(apiDefaultConfig, mock(NewRelicClientProvider.class), clock);
     
     private final NewRelicMeterRegistry agentEnabledRegistry = new NewRelicMeterRegistry(agentEnabledConfig, clock);
     
