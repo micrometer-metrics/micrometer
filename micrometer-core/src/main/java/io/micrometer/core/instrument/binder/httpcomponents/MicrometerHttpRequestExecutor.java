@@ -55,8 +55,10 @@ public class MicrometerHttpRequestExecutor extends HttpRequestExecutor {
 
     /**
      * Default header name for URI pattern.
+     * @deprecated use {@link DefaultUriMapper#URI_PATTERN_HEADER} since 1.4.0
      */
-    public static final String DEFAULT_URI_PATTERN_HEADER = "URI_PATTERN";
+    @Deprecated
+    public static final String DEFAULT_URI_PATTERN_HEADER = DefaultUriMapper.URI_PATTERN_HEADER;
 
     private static final String METER_NAME = "httpcomponents.httpclient.request";
 
@@ -161,7 +163,7 @@ public class MicrometerHttpRequestExecutor extends HttpRequestExecutor {
          * values, which could cause problems in your meter registry.
          *
          * By default, this feature is almost disabled. It only exposes values
-         * of the {@link #DEFAULT_URI_PATTERN_HEADER} HTTP header.
+         * of the {@value DefaultUriMapper#URI_PATTERN_HEADER} HTTP header.
          *
          * @param uriMapper A mapper that allows mapping and exposing request
          *                  paths.

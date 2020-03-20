@@ -21,7 +21,7 @@ import org.apache.http.conn.routing.HttpRoute;
 import org.apache.http.protocol.HttpContext;
 
 class HttpContextUtils {
-    public static Tags generateTagsForRoute(HttpContext context) {
+    static Tags generateTagsForRoute(HttpContext context) {
         String targetScheme = "UNKNOWN";
         String targetHost = "UNKNOWN";
         String targetPort = "UNKNOWN";
