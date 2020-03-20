@@ -37,14 +37,19 @@ import com.newrelic.api.agent.TraceMetadata;
 import com.newrelic.api.agent.TracedMethod;
 import com.newrelic.api.agent.Transaction;
 
+import io.micrometer.core.instrument.Counter;
+import io.micrometer.core.instrument.DistributionSummary;
 import io.micrometer.core.instrument.FunctionCounter;
+import io.micrometer.core.instrument.FunctionTimer;
 import io.micrometer.core.instrument.Gauge;
+import io.micrometer.core.instrument.LongTaskTimer;
 import io.micrometer.core.instrument.Measurement;
 import io.micrometer.core.instrument.Meter;
 import io.micrometer.core.instrument.MockClock;
 import io.micrometer.core.instrument.Statistic;
 import io.micrometer.core.instrument.Tags;
 import io.micrometer.core.instrument.TimeGauge;
+import io.micrometer.core.instrument.Timer;
 import io.micrometer.core.instrument.config.MissingRequiredConfigurationException;
 import io.micrometer.core.ipc.http.HttpSender;
 import io.micrometer.newrelic.NewRelicMeterRegistryTest.MockNewRelicAgent.MockNewRelicInsights;
@@ -586,13 +591,15 @@ class NewRelicMeterRegistryTest {
     }
     
     @Test
-    void succeedsMissingClientProvider() {
+    void succeedsCustomClientProvider() {
         NewRelicConfig config = key -> null;
         
-        NewRelicMeterRegistry registry = new NewRelicMeterRegistry(config, null, clock);
+        NewRelicClientProvider mockClientProvider = new MockClientProvider();
+        
+        NewRelicMeterRegistry registry = new NewRelicMeterRegistry(config, mockClientProvider, clock);
         
         assertThat(registry.getClientProvider()).isNotNull();
-        assertThat(registry.getClientProvider()).getClass().equals(NewRelicInsightsApiClientProvider.class);
+        assertThat(registry.getClientProvider()).getClass().equals(MockClientProvider.class);
     }
     
     @Test
@@ -771,6 +778,59 @@ class NewRelicMeterRegistryTest {
         };
 
         assertThat(getInsightsAgentClientProvider(config)).isNotNull();
+    }
+    
+    static class MockClientProvider implements NewRelicClientProvider {
+
+        @Override
+        public void publish(NewRelicMeterRegistry meterRegistry) {
+        }
+
+        @Override
+        public Object writeFunctionTimer(FunctionTimer timer) {
+            return null;
+        }
+
+        @Override
+        public Object writeTimer(Timer timer) {
+            return null;
+        }
+
+        @Override
+        public Object writeSummary(DistributionSummary summary) {
+            return null;
+        }
+
+        @Override
+        public Object writeLongTaskTimer(LongTaskTimer timer) {
+            return null;
+        }
+
+        @Override
+        public Object writeTimeGauge(TimeGauge gauge) {
+            return null;
+        }
+
+        @Override
+        public Object writeGauge(Gauge gauge) {
+            return null;
+        }
+
+        @Override
+        public Object writeCounter(Counter counter) {
+            return null;
+        }
+
+        @Override
+        public Object writeFunctionCounter(FunctionCounter counter) {
+            return null;
+        }
+
+        @Override
+        public Object writeMeter(Meter meter) {
+            return null;
+        }
+        
     }
     
     static class MockHttpSender implements HttpSender {
