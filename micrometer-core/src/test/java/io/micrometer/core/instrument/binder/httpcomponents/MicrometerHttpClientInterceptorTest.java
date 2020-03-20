@@ -36,6 +36,12 @@ import static com.github.tomakehurst.wiremock.client.WireMock.any;
 import static com.github.tomakehurst.wiremock.client.WireMock.anyUrl;
 import static org.assertj.core.api.Assertions.assertThat;
 
+/**
+ * Tests for {@link MicrometerHttpClientInterceptor}.
+ *
+ * @author Jon Schneider
+ * @author Johnny Lim
+ */
 @ExtendWith(WiremockResolver.class)
 class MicrometerHttpClientInterceptorTest {
     private MeterRegistry registry;
@@ -61,12 +67,34 @@ class MicrometerHttpClientInterceptorTest {
         client.close();
     }
 
+    @Test
+    void uriIsReadFromHttpHeader(@WiremockResolver.Wiremock WireMockServer server) throws Exception {
+        server.stubFor(any(anyUrl()));
+        MicrometerHttpClientInterceptor interceptor = new MicrometerHttpClientInterceptor(registry, Tags.empty(), true);
+        CloseableHttpAsyncClient client = asyncClient(interceptor);
+        client.start();
+        HttpGet request = new HttpGet(server.baseUrl());
+        request.addHeader(DefaultUriMapper.URI_PATTERN_HEADER, "/some/pattern");
+
+        Future<HttpResponse> future = client.execute(request, null);
+        HttpResponse response = future.get();
+
+        assertThat(response.getStatusLine().getStatusCode()).isEqualTo(200);
+        assertThat(registry.get("httpcomponents.httpclient.request").tag("uri", "/some/pattern").timer().count())
+                .isEqualTo(1);
+
+        client.close();
+    }
+
     private CloseableHttpAsyncClient asyncClient() {
         MicrometerHttpClientInterceptor interceptor = new MicrometerHttpClientInterceptor(registry,
                 request -> request.getRequestLine().getUri(),
                 Tags.empty(),
                 true);
+        return asyncClient(interceptor);
+    }
 
+    private CloseableHttpAsyncClient asyncClient(MicrometerHttpClientInterceptor interceptor) {
         return HttpAsyncClients.custom()
                 .addInterceptorFirst(interceptor.getRequestInterceptor())
                 .addInterceptorLast(interceptor.getResponseInterceptor())

@@ -44,6 +44,7 @@ import java.util.function.Function;
  *             .build();
  * }</pre>
  *
+ * @author Jon Schneider
  * @since 1.4.0
  */
 @Incubating(since = "1.4.0")
@@ -55,6 +56,14 @@ public class MicrometerHttpClientInterceptor {
     private final HttpRequestInterceptor requestInterceptor;
     private final HttpResponseInterceptor responseInterceptor;
 
+    /**
+     * Create a {@code MicrometerHttpClientInterceptor} instance.
+     *
+     * @param meterRegistry meter registry to bind
+     * @param uriMapper URI mapper to create {@code uri} tag
+     * @param extraTags extra tags
+     * @param exportTagsForRoute whether to export tags for route
+     */
     public MicrometerHttpClientInterceptor(MeterRegistry meterRegistry,
                                            Function<HttpRequest, String> uriMapper,
                                            Iterable<Tag> extraTags,
@@ -68,6 +77,20 @@ public class MicrometerHttpClientInterceptor {
                     .tags(exportTagsForRoute ? HttpContextUtils.generateTagsForRoute(context) : Tags.empty())
                     .tags(extraTags));
         };
+    }
+
+
+    /**
+     * Create a {@code MicrometerHttpClientInterceptor} instance with {@link DefaultUriMapper}.
+     *
+     * @param meterRegistry meter registry to bind
+     * @param extraTags extra tags
+     * @param exportTagsForRoute whether to export tags for route
+     */
+    public MicrometerHttpClientInterceptor(MeterRegistry meterRegistry,
+                                           Iterable<Tag> extraTags,
+                                           boolean exportTagsForRoute) {
+        this(meterRegistry, new DefaultUriMapper(), extraTags, exportTagsForRoute);
     }
 
     public HttpRequestInterceptor getRequestInterceptor() {
