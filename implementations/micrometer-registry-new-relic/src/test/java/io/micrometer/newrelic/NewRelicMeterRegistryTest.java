@@ -586,12 +586,12 @@ class NewRelicMeterRegistryTest {
     }
     
     @Test
-    void failsConfigMissingClientProvider() {
+    void succeedsMissingClientProvider() {
         NewRelicConfig config = key -> null;
         
-        assertThatThrownBy(() -> new NewRelicMeterRegistry(config, null, clock))
-            .isExactlyInstanceOf(MissingRequiredConfigurationException.class)
-            .hasMessageContaining("clientProvider");
+        NewRelicMeterRegistry registry = new NewRelicMeterRegistry(config, null, clock);
+        
+        assertThat(registry.getClientProvider()).isNotNull();
     }
     
     @Test
