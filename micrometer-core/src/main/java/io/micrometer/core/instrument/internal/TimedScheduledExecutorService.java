@@ -37,14 +37,16 @@ public class TimedScheduledExecutorService implements ScheduledExecutorService {
     private final Counter scheduledOnce;
     private final Counter scheduledRepetitively;
 
-    public TimedScheduledExecutorService(MeterRegistry registry, ScheduledExecutorService delegate, String executorServiceName, Iterable<Tag> tags) {
+    public TimedScheduledExecutorService(MeterRegistry registry, ScheduledExecutorService delegate,
+                                         String executorServiceName, String metricPrefix,
+                                         Iterable<Tag> tags) {
         this.registry = registry;
         this.delegate = delegate;
         Tags finalTags = Tags.concat(tags, "name", executorServiceName);
-        this.executionTimer = registry.timer("executor", finalTags);
-        this.idleTimer = registry.timer("executor.idle", finalTags);
-        this.scheduledOnce = registry.counter("executor.scheduled.once", finalTags);
-        this.scheduledRepetitively = registry.counter("executor.scheduled.repetitively", finalTags);
+        this.executionTimer = registry.timer(metricPrefix, finalTags);
+        this.idleTimer = registry.timer(metricPrefix + ".idle", finalTags);
+        this.scheduledOnce = registry.counter(metricPrefix + ".scheduled.once", finalTags);
+        this.scheduledRepetitively = registry.counter(metricPrefix + ".scheduled.repetitively", finalTags);
     }
 
     @Override

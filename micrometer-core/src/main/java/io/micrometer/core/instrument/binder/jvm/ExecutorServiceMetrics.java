@@ -30,6 +30,8 @@ import java.util.concurrent.*;
 
 import static java.util.Arrays.asList;
 
+import com.google.common.annotations.VisibleForTesting;
+
 /**
  * Monitors the status of executor service pools. Does not record timings on operations executed in the {@link ExecutorService},
  * as this requires the instance to be wrapped. Timings are provided separately by wrapping the executor service
@@ -42,14 +44,23 @@ import static java.util.Arrays.asList;
 @NonNullApi
 @NonNullFields
 public class ExecutorServiceMetrics implements MeterBinder {
+    @VisibleForTesting
+    static final String DEFAULT_EXECUTOR_METRIC_PREFIX = "executor";
     @Nullable
     private final ExecutorService executorService;
 
     private final Iterable<Tag> tags;
+    private final String metricPrefix;
 
     public ExecutorServiceMetrics(@Nullable ExecutorService executorService, String executorServiceName, Iterable<Tag> tags) {
+        this(executorService, executorServiceName, DEFAULT_EXECUTOR_METRIC_PREFIX, tags);
+    }
+
+    public ExecutorServiceMetrics(@Nullable ExecutorService executorService, String executorServiceName,
+                                  String metricPrefix, Iterable<Tag> tags) {
         this.executorService = executorService;
         this.tags = Tags.concat(tags, "name", executorServiceName);
+        this.metricPrefix = metricPrefix;
     }
 
     /**
@@ -62,10 +73,25 @@ public class ExecutorServiceMetrics implements MeterBinder {
      * @return The instrumented executor, proxied.
      */
     public static Executor monitor(MeterRegistry registry, Executor executor, String executorName, Iterable<Tag> tags) {
+        return monitor(registry, executor, executorName, DEFAULT_EXECUTOR_METRIC_PREFIX, tags);
+    }
+
+    /**
+     * Record metrics on the use of an {@link Executor}.
+     *
+     * @param registry     The registry to bind metrics to.
+     * @param executor     The executor to instrument.
+     * @param executorName Will be used to tag metrics with "name".
+     * @param metricPrefix The prefix of metric name.
+     * @param tags         Tags to apply to all recorded metrics.
+     * @return The instrumented executor, proxied.
+     */
+    public static Executor monitor(MeterRegistry registry, Executor executor, String executorName,
+                                   String metricPrefix, Iterable<Tag> tags) {
         if (executor instanceof ExecutorService) {
-            return monitor(registry, (ExecutorService) executor, executorName, tags);
+            return monitor(registry, (ExecutorService) executor, executorName, metricPrefix, tags);
         }
-        return new TimedExecutor(registry, executor, executorName, tags);
+        return new TimedExecutor(registry, executor, executorName, metricPrefix, tags);
     }
 
     /**
@@ -78,7 +104,22 @@ public class ExecutorServiceMetrics implements MeterBinder {
      * @return The instrumented executor, proxied.
      */
     public static Executor monitor(MeterRegistry registry, Executor executor, String executorName, Tag... tags) {
-        return monitor(registry, executor, executorName, asList(tags));
+        return monitor(registry, executor, executorName, DEFAULT_EXECUTOR_METRIC_PREFIX, tags);
+    }
+
+    /**
+     * Record metrics on the use of an {@link Executor}.
+     *
+     * @param registry     The registry to bind metrics to.
+     * @param executor     The executor to instrument.
+     * @param executorName Will be used to tag metrics with "name".
+     * @param metricPrefix The prefix of metric name.
+     * @param tags         Tags to apply to all recorded metrics.
+     * @return The instrumented executor, proxied.
+     */
+    public static Executor monitor(MeterRegistry registry, Executor executor, String executorName,
+                                   String metricPrefix, Tag... tags) {
+        return monitor(registry, executor, executorName, metricPrefix, asList(tags));
     }
 
     /**
@@ -91,11 +132,26 @@ public class ExecutorServiceMetrics implements MeterBinder {
      * @return The instrumented executor, proxied.
      */
     public static ExecutorService monitor(MeterRegistry registry, ExecutorService executor, String executorServiceName, Iterable<Tag> tags) {
+        return monitor(registry, executor, executorServiceName, DEFAULT_EXECUTOR_METRIC_PREFIX, tags);
+    }
+
+    /**
+     * Record metrics on the use of an {@link ExecutorService}.
+     *
+     * @param registry            The registry to bind metrics to.
+     * @param executor            The executor to instrument.
+     * @param executorServiceName Will be used to tag metrics with "name".
+     * @param metricPrefix        The prefix of metric name.
+     * @param tags                Tags to apply to all recorded metrics.
+     * @return The instrumented executor, proxied.
+     */
+    public static ExecutorService monitor(MeterRegistry registry, ExecutorService executor, String executorServiceName,
+                                          String metricPrefix, Iterable<Tag> tags) {
         if (executor instanceof ScheduledExecutorService) {
-            return monitor(registry, (ScheduledExecutorService) executor, executorServiceName, tags);
+            return monitor(registry, (ScheduledExecutorService) executor, executorServiceName, metricPrefix, tags);
         }
-        new ExecutorServiceMetrics(executor, executorServiceName, tags).bindTo(registry);
-        return new TimedExecutorService(registry, executor, executorServiceName, tags);
+        new ExecutorServiceMetrics(executor, executorServiceName, metricPrefix, tags).bindTo(registry);
+        return new TimedExecutorService(registry, executor, executorServiceName, metricPrefix, tags);
     }
 
     /**
@@ -108,7 +164,22 @@ public class ExecutorServiceMetrics implements MeterBinder {
      * @return The instrumented executor, proxied.
      */
     public static ExecutorService monitor(MeterRegistry registry, ExecutorService executor, String executorServiceName, Tag... tags) {
-        return monitor(registry, executor, executorServiceName, asList(tags));
+        return monitor(registry, executor, executorServiceName, DEFAULT_EXECUTOR_METRIC_PREFIX, tags);
+    }
+
+    /**
+     * Record metrics on the use of an {@link ExecutorService}.
+     *
+     * @param registry            The registry to bind metrics to.
+     * @param executor            The executor to instrument.
+     * @param executorServiceName Will be used to tag metrics with "name".
+     * @param metricPrefix        The prefix of metric name.
+     * @param tags                Tags to apply to all recorded metrics.
+     * @return The instrumented executor, proxied.
+     */
+    public static ExecutorService monitor(MeterRegistry registry, ExecutorService executor, String executorServiceName,
+                                          String metricPrefix, Tag... tags) {
+        return monitor(registry, executor, executorServiceName, metricPrefix, asList(tags));
     }
 
     /**
@@ -122,8 +193,24 @@ public class ExecutorServiceMetrics implements MeterBinder {
      * @since 1.3.0
      */
     public static ScheduledExecutorService monitor(MeterRegistry registry, ScheduledExecutorService executor, String executorServiceName, Iterable<Tag> tags) {
-        new ExecutorServiceMetrics(executor, executorServiceName, tags).bindTo(registry);
-        return new TimedScheduledExecutorService(registry, executor, executorServiceName, tags);
+        return monitor(registry, executor, executorServiceName, DEFAULT_EXECUTOR_METRIC_PREFIX, tags);
+    }
+
+    /**
+     * Record metrics on the use of a {@link ScheduledExecutorService}.
+     *
+     * @param registry            The registry to bind metrics to.
+     * @param executor            The scheduled executor to instrument.
+     * @param executorServiceName Will be used to tag metrics with "name".
+     * @param metricPrefix        The prefix of metric name.
+     * @param tags                Tags to apply to all recorded metrics.
+     * @return The instrumented scheduled executor, proxied.
+     * @since 1.3.0
+     */
+    public static ScheduledExecutorService monitor(MeterRegistry registry, ScheduledExecutorService executor, String executorServiceName,
+                                                   String metricPrefix, Iterable<Tag> tags) {
+        new ExecutorServiceMetrics(executor, executorServiceName, metricPrefix, tags).bindTo(registry);
+        return new TimedScheduledExecutorService(registry, executor, executorServiceName, metricPrefix, tags);
     }
 
     /**
@@ -137,7 +224,22 @@ public class ExecutorServiceMetrics implements MeterBinder {
      * @since 1.3.0
      */
     public static ScheduledExecutorService monitor(MeterRegistry registry, ScheduledExecutorService executor, String executorServiceName, Tag... tags) {
-        return monitor(registry, executor, executorServiceName, asList(tags));
+        return monitor(registry, executor, executorServiceName, DEFAULT_EXECUTOR_METRIC_PREFIX, tags);
+    }
+    /**
+     * Record metrics on the use of a {@link ScheduledExecutorService}.
+     *
+     * @param registry            The registry to bind metrics to.
+     * @param executor            The scheduled executor to instrument.
+     * @param executorServiceName Will be used to tag metrics with "name".
+     * @param metricPrefix        The prefix of metric name.
+     * @param tags                Tags to apply to all recorded metrics.
+     * @return The instrumented scheduled executor, proxied.
+     * @since 1.3.0
+     */
+    public static ScheduledExecutorService monitor(MeterRegistry registry, ScheduledExecutorService executor, String executorServiceName,
+                                                   String metricPrefix, Tag... tags) {
+        return monitor(registry, executor, executorServiceName, metricPrefix, asList(tags));
     }
 
     @Override
@@ -180,31 +282,31 @@ public class ExecutorServiceMetrics implements MeterBinder {
             return;
         }
 
-        FunctionCounter.builder("executor.completed", tp, ThreadPoolExecutor::getCompletedTaskCount)
+        FunctionCounter.builder(metricPrefix + ".completed", tp, ThreadPoolExecutor::getCompletedTaskCount)
                 .tags(tags)
                 .description("The approximate total number of tasks that have completed execution")
                 .baseUnit(BaseUnits.TASKS)
                 .register(registry);
 
-        Gauge.builder("executor.active", tp, ThreadPoolExecutor::getActiveCount)
+        Gauge.builder(metricPrefix + ".active", tp, ThreadPoolExecutor::getActiveCount)
                 .tags(tags)
                 .description("The approximate number of threads that are actively executing tasks")
                 .baseUnit(BaseUnits.THREADS)
                 .register(registry);
 
-        Gauge.builder("executor.queued", tp, tpRef -> tpRef.getQueue().size())
+        Gauge.builder(metricPrefix + ".queued", tp, tpRef -> tpRef.getQueue().size())
                 .tags(tags)
                 .description("The approximate number of tasks that are queued for execution")
                 .baseUnit(BaseUnits.TASKS)
                 .register(registry);
 
-        Gauge.builder("executor.queue.remaining", tp, tpRef -> tpRef.getQueue().remainingCapacity())
+        Gauge.builder(metricPrefix + ".queue.remaining", tp, tpRef -> tpRef.getQueue().remainingCapacity())
                 .tags(tags)
                 .description("The number of additional elements that this queue can ideally accept without blocking")
                 .baseUnit(BaseUnits.TASKS)
                 .register(registry);
 
-        Gauge.builder("executor.pool.size", tp, ThreadPoolExecutor::getPoolSize)
+        Gauge.builder(metricPrefix + ".pool.size", tp, ThreadPoolExecutor::getPoolSize)
                 .tags(tags)
                 .description("The current number of threads in the pool")
                 .baseUnit(BaseUnits.THREADS)
@@ -212,7 +314,7 @@ public class ExecutorServiceMetrics implements MeterBinder {
     }
 
     private void monitor(MeterRegistry registry, ForkJoinPool fj) {
-        FunctionCounter.builder("executor.steals", fj, ForkJoinPool::getStealCount)
+        FunctionCounter.builder(metricPrefix + ".steals", fj, ForkJoinPool::getStealCount)
                 .tags(tags)
                 .description("Estimate of the total number of tasks stolen from " +
                         "one thread's work queue by another. The reported value " +
@@ -220,17 +322,17 @@ public class ExecutorServiceMetrics implements MeterBinder {
                         "is not quiescent")
                 .register(registry);
 
-        Gauge.builder("executor.queued", fj, ForkJoinPool::getQueuedTaskCount)
+        Gauge.builder(metricPrefix + ".queued", fj, ForkJoinPool::getQueuedTaskCount)
                 .tags(tags)
                 .description("An estimate of the total number of tasks currently held in queues by worker threads")
                 .register(registry);
 
-        Gauge.builder("executor.active", fj, ForkJoinPool::getActiveThreadCount)
+        Gauge.builder(metricPrefix + ".active", fj, ForkJoinPool::getActiveThreadCount)
                 .tags(tags)
                 .description("An estimate of the number of threads that are currently stealing or executing tasks")
                 .register(registry);
 
-        Gauge.builder("executor.running", fj, ForkJoinPool::getRunningThreadCount)
+        Gauge.builder(metricPrefix + ".running", fj, ForkJoinPool::getRunningThreadCount)
                 .tags(tags)
                 .description("An estimate of the number of worker threads that are not blocked waiting to join tasks or for other managed synchronization threads")
                 .register(registry);

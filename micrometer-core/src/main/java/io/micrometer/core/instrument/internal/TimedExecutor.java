@@ -31,12 +31,12 @@ public class TimedExecutor implements Executor {
     private final Timer executionTimer;
     private final Timer idleTimer;
 
-    public TimedExecutor(MeterRegistry registry, Executor delegate, String executorName, Iterable<Tag> tags) {
+    public TimedExecutor(MeterRegistry registry, Executor delegate, String executorName, String metricPrefix, Iterable<Tag> tags) {
         this.registry = registry;
         this.delegate = delegate;
         Tags finalTags = Tags.concat(tags, "name", executorName);
-        this.executionTimer = registry.timer("executor.execution", finalTags);
-        this.idleTimer = registry.timer("executor.idle", finalTags);
+        this.executionTimer = registry.timer(metricPrefix + ".execution", finalTags);
+        this.idleTimer = registry.timer(metricPrefix + ".idle", finalTags);
     }
 
     @Override

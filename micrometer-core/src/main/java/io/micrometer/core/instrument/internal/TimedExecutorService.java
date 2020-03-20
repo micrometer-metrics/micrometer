@@ -37,12 +37,13 @@ public class TimedExecutorService implements ExecutorService {
     private final Timer executionTimer;
     private final Timer idleTimer;
 
-    public TimedExecutorService(MeterRegistry registry, ExecutorService delegate, String executorServiceName, Iterable<Tag> tags) {
+    public TimedExecutorService(MeterRegistry registry, ExecutorService delegate, String executorServiceName,
+                                String metricPrefix, Iterable<Tag> tags) {
         this.registry = registry;
         this.delegate = delegate;
         Tags finalTags = Tags.concat(tags, "name", executorServiceName);
-        this.executionTimer = registry.timer("executor", finalTags);
-        this.idleTimer = registry.timer("executor.idle", finalTags);
+        this.executionTimer = registry.timer(metricPrefix , finalTags);
+        this.idleTimer = registry.timer(metricPrefix + ".idle", finalTags);
     }
 
     @Override
