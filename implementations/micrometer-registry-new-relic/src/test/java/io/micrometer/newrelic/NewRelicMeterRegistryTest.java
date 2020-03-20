@@ -59,7 +59,7 @@ class NewRelicMeterRegistryTest {
 
     private final NewRelicConfig agentConfig = key -> null;
     
-    private final NewRelicConfig insightsAgentEnabledConfig = new NewRelicConfig() {
+    private final NewRelicConfig insightsAgentConfig = new NewRelicConfig() {
         @Override
         public String get(String key) {
             return null;
@@ -128,7 +128,7 @@ class NewRelicMeterRegistryTest {
     
     private final NewRelicMeterRegistry apiDefaultRegistry = new NewRelicMeterRegistry(insightsApiConfig, clock);
     
-    private final NewRelicMeterRegistry agentEnabledRegistry = new NewRelicMeterRegistry(insightsAgentEnabledConfig, clock);
+    private final NewRelicMeterRegistry agentEnabledRegistry = new NewRelicMeterRegistry(insightsAgentConfig, clock);
     
     NewRelicInsightsAgentClientProvider getInsightsAgentClientProvider(NewRelicConfig config) {
         return new NewRelicInsightsAgentClientProvider(config);
@@ -592,6 +592,23 @@ class NewRelicMeterRegistryTest {
         NewRelicMeterRegistry registry = new NewRelicMeterRegistry(config, null, clock);
         
         assertThat(registry.getClientProvider()).isNotNull();
+        assertThat(registry.getClientProvider()).getClass().equals(NewRelicInsightsApiClientProvider.class);
+    }
+    
+    @Test
+    void succeedsConfigInsightsApiClientProvider() {        
+        NewRelicMeterRegistry registry = new NewRelicMeterRegistry(insightsApiConfig, null, clock);
+        
+        assertThat(registry.getClientProvider()).isNotNull();
+        assertThat(registry.getClientProvider()).getClass().equals(NewRelicInsightsApiClientProvider.class);
+    }
+    
+    @Test
+    void succeedsConfigInsightsAgentClientProvider() {        
+        NewRelicMeterRegistry registry = new NewRelicMeterRegistry(insightsAgentConfig, null, clock);
+        
+        assertThat(registry.getClientProvider()).isNotNull();
+        assertThat(registry.getClientProvider()).getClass().equals(NewRelicInsightsAgentClientProvider.class);
     }
     
     @Test
