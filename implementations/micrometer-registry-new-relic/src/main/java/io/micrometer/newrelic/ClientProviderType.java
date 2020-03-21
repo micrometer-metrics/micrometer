@@ -15,6 +15,12 @@
  */
 package io.micrometer.newrelic;
 
+/**
+ * Types for {@link NewRelicClientProvider}.
+ *
+ * @author Neil Powell
+ * @since 1.4.0
+ */
 public enum ClientProviderType {
     INSIGHTS_API, INSIGHTS_AGENT
 }

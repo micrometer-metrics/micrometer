@@ -282,7 +282,7 @@ public interface Timer extends Meter, HistogramSupport {
 
         /**
          * Records the duration of the operation. Using this method, any tags
-         * stored on the sample are NOT recorded with the timing.
+         * stored on the sample are recorded with the timing.
          *
          * @param registry     The registry to which the timer will be registered.
          * @param timerBuilder The timer to record the sample to.
@@ -297,6 +297,7 @@ public interface Timer extends Meter, HistogramSupport {
         /**
          * @param tags Must be an even number of arguments representing key/value pairs of tags.
          * @return This builder.
+         * @since 1.4.0
          */
         @Incubating(since = "1.4.0")
         public Sample tags(String... tags) {

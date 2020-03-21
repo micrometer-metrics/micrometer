@@ -121,7 +121,7 @@ class MicrometerHttpRequestExecutorTest {
         server.stubFor(any(anyUrl()));
         HttpClient client = client(executor(false));
         HttpGet getWithHeader = new HttpGet(server.baseUrl());
-        getWithHeader.addHeader(MicrometerHttpRequestExecutor.DEFAULT_URI_PATTERN_HEADER, "/some/pattern");
+        getWithHeader.addHeader(DefaultUriMapper.URI_PATTERN_HEADER, "/some/pattern");
         EntityUtils.consume(client.execute(getWithHeader).getEntity());
         assertThat(registry.get(EXPECTED_METER_NAME)
                 .tags("uri", "/some/pattern")

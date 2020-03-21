@@ -36,7 +36,8 @@ public class NewRelicMeterRegistry extends StepMeterRegistry {
     private static final ThreadFactory DEFAULT_THREAD_FACTORY = new NamedThreadFactory("new-relic-metrics-publisher");
 
     private final NewRelicConfig config;
-    private final NewRelicClientProvider clientProvider;
+    // VisibleForTesting
+    final NewRelicClientProvider clientProvider;
 
     /**
      * @param config Configuration options for the registry that are describable as properties.
@@ -62,12 +63,10 @@ public class NewRelicMeterRegistry extends StepMeterRegistry {
         super(config, clock);
 
         if (clientProvider == null) {
-            //default to Insight Api client provider if not specified in config or provided
-            clientProvider = 
-                    (config.clientProviderType() != null
-                        && config.clientProviderType().equals(ClientProviderType.INSIGHTS_AGENT))
-                            ? new NewRelicInsightsAgentClientProvider(config) 
-                            : new NewRelicInsightsApiClientProvider(config);
+            //default to Insight API client provider if not specified in config or provided
+            clientProvider = (config.clientProviderType() == ClientProviderType.INSIGHTS_AGENT)
+                    ? new NewRelicInsightsAgentClientProvider(config)
+                    : new NewRelicInsightsApiClientProvider(config);
         }
 
         this.config = config;
@@ -90,11 +89,6 @@ public class NewRelicMeterRegistry extends StepMeterRegistry {
     protected TimeUnit getBaseTimeUnit() {
         return TimeUnit.SECONDS;
     }
-    
-    // VisibleForTesting
-    NewRelicClientProvider getClientProvider() {
-        return clientProvider;
-    }
 
     public static class Builder {
         private final NewRelicConfig config;
@@ -110,7 +104,7 @@ public class NewRelicMeterRegistry extends StepMeterRegistry {
 
         /**
          * Use the client provider.
-         * @param client provider to use
+         * @param clientProvider client provider to use
          * @return builder
          * @since 1.4.0
          */
@@ -121,7 +115,7 @@ public class NewRelicMeterRegistry extends StepMeterRegistry {
 
         /**
          * Use the naming convention.
-         * @param naming convention to use
+         * @param convention naming convention to use
          * @return builder
          * @since 1.4.0
          */

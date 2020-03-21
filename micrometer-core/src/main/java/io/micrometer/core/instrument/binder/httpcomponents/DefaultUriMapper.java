@@ -21,12 +21,21 @@ import org.apache.http.HttpRequest;
 import java.util.function.Function;
 
 /**
- * Extracts the pattern from the request header of the request if available.
+ * Extracts the URI pattern from the predefined request header, {@value URI_PATTERN_HEADER} if available.
+ *
+ * @author Benjamin Hubert
+ * @since 1.4.0
  */
-class DefaultUriMapper implements Function<HttpRequest, String> {
+public class DefaultUriMapper implements Function<HttpRequest, String> {
+
+    /**
+     * Header name for URI pattern.
+     */
+    public static final String URI_PATTERN_HEADER = "URI_PATTERN";
+
     @Override
     public String apply(HttpRequest httpRequest) {
-        Header uriPattern = httpRequest.getLastHeader(MicrometerHttpRequestExecutor.DEFAULT_URI_PATTERN_HEADER);
+        Header uriPattern = httpRequest.getLastHeader(URI_PATTERN_HEADER);
         if (uriPattern != null && uriPattern.getValue() != null) {
             return uriPattern.getValue();
         }
