@@ -15,6 +15,7 @@
  */
 package io.micrometer.newrelic;
 
+import static java.util.Collections.emptyList;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.Mockito.mock;
@@ -38,6 +39,7 @@ import com.newrelic.api.agent.TracedMethod;
 import com.newrelic.api.agent.Transaction;
 
 import io.micrometer.core.instrument.FunctionCounter;
+import io.micrometer.core.instrument.FunctionTimer;
 import io.micrometer.core.instrument.Gauge;
 import io.micrometer.core.instrument.Measurement;
 import io.micrometer.core.instrument.Meter;
@@ -45,6 +47,7 @@ import io.micrometer.core.instrument.MockClock;
 import io.micrometer.core.instrument.Statistic;
 import io.micrometer.core.instrument.Tags;
 import io.micrometer.core.instrument.TimeGauge;
+import io.micrometer.core.instrument.Timer;
 import io.micrometer.core.instrument.config.MissingRequiredConfigurationException;
 import io.micrometer.core.ipc.http.HttpSender;
 import io.micrometer.newrelic.NewRelicMeterRegistryTest.MockNewRelicAgent.MockNewRelicInsights;
@@ -385,6 +388,85 @@ class NewRelicMeterRegistryTest {
         assertThat(clientProvider.writeFunctionCounter(counter)).isEmpty();
     }
 
+    @Test
+    void writeTimer() {
+        //test API clientProvider
+        writeTimer(getInsightsApiClientProvider(meterNameEventTypeEnabledConfig),
+                "{\"eventType\":\"myTimer\",\"count\":0,\"avg\":0,\"totalTime\":0,\"max\":0,\"timeUnit\":\"seconds\"}");
+        writeTimer(getInsightsApiClientProvider(insightsApiConfig),
+                "{\"eventType\":\"MicrometerSample\",\"count\":0,\"avg\":0,\"totalTime\":0,\"max\":0,\"timeUnit\":\"seconds\",\"metricName\":\"myTimer\",\"metricType\":\"TIMER\"}");
+        
+        //test Agent clientProvider
+        Map<String, Object> expectedEntries = new HashMap<>();
+        expectedEntries.put("count", 0);
+        expectedEntries.put("avg", 0);
+        expectedEntries.put("totalTime", 0);
+        expectedEntries.put("max", 0);
+        expectedEntries.put("timeUnit", "seconds");       
+        writeTimer(getInsightsAgentClientProvider(meterNameEventTypeEnabledConfig), expectedEntries);
+        expectedEntries.put("count", 0);
+        expectedEntries.put("avg", 0);
+        expectedEntries.put("totalTime", 0);
+        expectedEntries.put("max", 0);        
+        expectedEntries.put("metricName", "myTimer2");
+        expectedEntries.put("metricType", "TIMER");
+        writeTimer(getInsightsAgentClientProvider(agentConfig), expectedEntries);
+    }
+    
+    private void writeTimer(NewRelicInsightsApiClientProvider clientProvider, String expectedJson) {
+        registry.timer("my.timer", Tags.empty());
+        Timer timer = registry.find("my.timer").timer();
+        assertThat(clientProvider.writeTimer(timer)).containsExactly(expectedJson);       
+    }
+    
+    private void writeTimer(NewRelicInsightsAgentClientProvider clientProvider, Map<String, Object> expectedEntries) {
+        registry.timer("my.timer2", Tags.empty());
+        Timer timer = registry.find("my.timer2").timer();    
+        assertThat(clientProvider.writeTimer(timer)).isEqualTo(expectedEntries);
+    }
+    
+    @Test
+    void writeFunctionTimer() {
+        //test API clientProvider
+        writeFunctionTimer(getInsightsApiClientProvider(meterNameEventTypeEnabledConfig),
+                "{\"eventType\":\"myFunTimer\",\"count\":0,\"avg\":0,\"totalTime\":0,\"timeUnit\":\"seconds\"}");
+        writeFunctionTimer(getInsightsApiClientProvider(insightsApiConfig),
+                "{\"eventType\":\"MicrometerSample\",\"count\":0,\"avg\":0,\"totalTime\":0,\"timeUnit\":\"seconds\",\"metricName\":\"myFunTimer\",\"metricType\":\"TIMER\"}");
+
+        //test Agent clientProvider
+        Map<String, Object> expectedEntries = new HashMap<>();
+        expectedEntries.put("avg", 0);
+        expectedEntries.put("count", 0);
+        expectedEntries.put("timeUnit", "seconds");
+        expectedEntries.put("totalTime", 0);
+        writeFunctionTimer(getInsightsAgentClientProvider(meterNameEventTypeEnabledConfig), expectedEntries);
+        expectedEntries.put("avg", 0);
+        expectedEntries.put("count", 0);
+        expectedEntries.put("timeUnit", "seconds");
+        expectedEntries.put("totalTime", 0);
+        expectedEntries.put("metricName", "myFunTimer2");
+        expectedEntries.put("metricType", "TIMER");
+        writeFunctionTimer(getInsightsAgentClientProvider(agentConfig), expectedEntries);
+    }
+    
+    private void writeFunctionTimer(NewRelicInsightsApiClientProvider clientProvider, String expectedJson) {
+        Object o = new Object();
+        registry.more().timer("myFunTimer", emptyList(),
+                o, o2 -> 1, o2 -> 1, TimeUnit.MILLISECONDS);
+
+        FunctionTimer functionTimer = registry.find("myFunTimer").functionTimer();
+        assertThat(clientProvider.writeFunctionTimer(functionTimer)).containsExactly(expectedJson);       
+    }
+    
+    private void writeFunctionTimer(NewRelicInsightsAgentClientProvider clientProvider, Map<String, Object> expectedEntries) {
+        Object o = new Object();
+        registry.more().timer("myFunTimer2", emptyList(),
+                o, o2 -> 1, o2 -> 1, TimeUnit.MILLISECONDS);
+        
+        FunctionTimer functionTimer = registry.find("myFunTimer2").functionTimer();
+        assertThat(clientProvider.writeFunctionTimer(functionTimer)).isEqualTo(expectedEntries);
+    }
+    
     @Test
     void writeMeterWhenCustomMeterHasOnlyNonFiniteValuesShouldNotBeWritten() {
         Measurement measurement1 = new Measurement(() -> Double.POSITIVE_INFINITY, Statistic.VALUE);
