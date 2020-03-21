@@ -41,10 +41,12 @@ management:
     stackdriver.enabled: false
     statsd.enabled: false
     wavefront.enabled: false
-
-  endpoint.shutdown.enabled: true
-
   endpoints:
     web:
       exposure:
         include: '*'
+  endpoint:
+    shutdown:
+      enabled: true
+    integrationgraph:
+      enabled: false

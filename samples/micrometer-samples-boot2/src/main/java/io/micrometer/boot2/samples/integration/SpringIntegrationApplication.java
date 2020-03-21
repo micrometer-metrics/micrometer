@@ -15,30 +15,27 @@
  */
 package io.micrometer.boot2.samples.integration;
 
-import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
+import org.springframework.boot.builder.SpringApplicationBuilder;
 import org.springframework.context.ConfigurableApplicationContext;
 import org.springframework.context.annotation.Bean;
-import org.springframework.context.annotation.Configuration;
 import org.springframework.integration.annotation.Gateway;
-import org.springframework.integration.annotation.IntegrationComponentScan;
 import org.springframework.integration.annotation.MessagingGateway;
 import org.springframework.integration.dsl.IntegrationFlow;
 import org.springframework.integration.ws.SimpleWebServiceOutboundGateway;
 import org.springframework.integration.ws.WebServiceHeaders;
 import org.springframework.integration.xml.transformer.XPathTransformer;
 
-@Configuration
 @SpringBootApplication
-@IntegrationComponentScan
 public class SpringIntegrationApplication {
 
     public static void main(String[] args) throws InterruptedException {
-        ConfigurableApplicationContext ctx = SpringApplication.run(SpringIntegrationApplication.class, args);
+        ConfigurableApplicationContext ctx = new SpringApplicationBuilder(SpringIntegrationApplication.class)
+                .profiles("spring-integration").run(args);
         TempConverter converter = ctx.getBean(TempConverter.class);
 
         for (int i = 0; i < 1000; i++) {
-            System.out.println(converter.fahrenheitToCelcius(68.0f));
+            System.out.println(converter.fahrenheitToCelsius(68.0f));
             Thread.sleep(10);
         }
 
@@ -64,7 +61,7 @@ public class SpringIntegrationApplication {
     @MessagingGateway
     public interface TempConverter {
         @Gateway(requestChannel = "convert.input")
-        float fahrenheitToCelcius(float fahren);
+        float fahrenheitToCelsius(float fahren);
     }
 
 }
