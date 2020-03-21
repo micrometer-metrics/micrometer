@@ -30,8 +30,6 @@ import java.util.concurrent.*;
 
 import static java.util.Arrays.asList;
 
-import com.google.common.annotations.VisibleForTesting;
-
 /**
  * Monitors the status of executor service pools. Does not record timings on operations executed in the {@link ExecutorService},
  * as this requires the instance to be wrapped. Timings are provided separately by wrapping the executor service
@@ -44,7 +42,6 @@ import com.google.common.annotations.VisibleForTesting;
 @NonNullApi
 @NonNullFields
 public class ExecutorServiceMetrics implements MeterBinder {
-    @VisibleForTesting
     static final String DEFAULT_EXECUTOR_METRIC_PREFIX = "executor";
     @Nullable
     private final ExecutorService executorService;
