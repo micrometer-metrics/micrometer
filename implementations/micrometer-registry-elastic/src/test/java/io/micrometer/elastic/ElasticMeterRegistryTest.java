@@ -86,6 +86,13 @@ class ElasticMeterRegistryTest {
     }
 
     @Test
+    void nanFunctionTimerShouldNotBeWritten() {
+        FunctionTimer timer = FunctionTimer.builder("myFunctionTimer", Double.NaN, Number::longValue, Number::doubleValue, TimeUnit.MILLISECONDS).register(registry);
+        clock.add(config.step());
+        assertThat(registry.writeFunctionTimer(timer)).isEmpty();
+    }
+
+    @Test
     void writeGauge() {
         Gauge gauge = Gauge.builder("myGauge", 123.0, Number::doubleValue).register(registry);
         assertThat(registry.writeGauge(gauge))
