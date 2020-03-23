@@ -19,7 +19,10 @@ import com.github.tomakehurst.wiremock.WireMockServer;
 import io.micrometer.core.Issue;
 import io.micrometer.core.instrument.Clock;
 import io.micrometer.core.instrument.Counter;
+import io.micrometer.core.instrument.Meter;
 import io.micrometer.core.instrument.MockClock;
+import io.micrometer.core.instrument.Tags;
+import io.micrometer.core.ipc.http.HttpSender;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import ru.lanwen.wiremock.ext.WiremockResolver;
@@ -27,6 +30,8 @@ import ru.lanwen.wiremock.ext.WiremockResolver;
 import java.util.concurrent.TimeUnit;
 
 import static com.github.tomakehurst.wiremock.client.WireMock.*;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.verifyNoInteractions;
 
 @ExtendWith(WiremockResolver.class)
 class DatadogMeterRegistryTest {
@@ -139,5 +144,27 @@ class DatadogMeterRegistryTest {
                 ));
 
         registry.close();
+    }
+
+    @Test
+    void postMetricDescriptionMetadataWhenDescriptionIsEnabledButNull() {
+        DatadogConfig config = new DatadogConfig() {
+
+            @Override
+            public String get(String key) {
+                return null;
+            }
+
+            @Override
+            public String apiKey() {
+                return "fake";
+            }
+        };
+
+        HttpSender httpSender = mock(HttpSender.class);
+        DatadogMeterRegistry registry = DatadogMeterRegistry.builder(config).httpClient(httpSender).build();
+        Meter.Id id = new Meter.Id("my.meter", Tags.empty(), null, null, Meter.Type.COUNTER);
+        registry.postMetricDescriptionMetadata("my.meter", new DatadogMetricMetadata(id, true));
+        verifyNoInteractions(httpSender);
     }
 }
