@@ -282,7 +282,7 @@ public class PrometheusMeterRegistry extends MeterRegistry {
     @Override
     protected LongTaskTimer newLongTaskTimer(Meter.Id id) {
         MicrometerCollector collector = collectorByName(id);
-        LongTaskTimer ltt = new DefaultLongTaskTimer(id, clock);
+        LongTaskTimer ltt = new DefaultLongTaskTimer(id, clock, getBaseTimeUnit()); //TODO: Use getBaseTimeUnit() for duration, etc throughout?
         List<String> tagValues = tagValues(id);
 
         collector.add(tagValues, (conventionName, tagKeys) -> Stream.of(new MicrometerCollector.Family(Collector.Type.UNTYPED, conventionName,

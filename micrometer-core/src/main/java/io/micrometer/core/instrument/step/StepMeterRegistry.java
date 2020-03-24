@@ -54,7 +54,7 @@ public abstract class StepMeterRegistry extends PushMeterRegistry {
 
     @Override
     protected LongTaskTimer newLongTaskTimer(Meter.Id id) {
-        return new DefaultLongTaskTimer(id, clock);
+        return new DefaultLongTaskTimer(id, clock, getBaseTimeUnit());
     }
 
     @Override

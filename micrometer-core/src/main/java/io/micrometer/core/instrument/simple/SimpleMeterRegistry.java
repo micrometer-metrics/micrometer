@@ -115,7 +115,7 @@ public class SimpleMeterRegistry extends MeterRegistry {
 
     @Override
     protected LongTaskTimer newLongTaskTimer(Meter.Id id) {
-        return new DefaultLongTaskTimer(id, clock);
+        return new DefaultLongTaskTimer(id, clock, getBaseTimeUnit());
     }
 
     @Override

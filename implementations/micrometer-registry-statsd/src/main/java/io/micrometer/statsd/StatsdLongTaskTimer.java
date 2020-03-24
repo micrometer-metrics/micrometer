@@ -32,8 +32,8 @@ public class StatsdLongTaskTimer extends DefaultLongTaskTimer implements StatsdP
 
     private final boolean alwaysPublish;
 
-    StatsdLongTaskTimer(Id id, StatsdLineBuilder lineBuilder, FluxSink<String> sink, Clock clock, boolean alwaysPublish) {
-        super(id, clock);
+    StatsdLongTaskTimer(Id id, StatsdLineBuilder lineBuilder, FluxSink<String> sink, Clock clock, boolean alwaysPublish, TimeUnit baseTimeUnit) {
+        super(id, clock, baseTimeUnit);
         this.lineBuilder = lineBuilder;
         this.sink = sink;
         this.alwaysPublish = alwaysPublish;

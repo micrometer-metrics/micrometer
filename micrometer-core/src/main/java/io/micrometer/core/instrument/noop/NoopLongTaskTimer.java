@@ -48,4 +48,9 @@ public class NoopLongTaskTimer extends NoopMeter implements LongTaskTimer {
     public int activeTasks() {
         return 0;
     }
+    
+    @Override
+    public TimeUnit baseTimeUnit() {
+        return TimeUnit.SECONDS;
+    }
 }

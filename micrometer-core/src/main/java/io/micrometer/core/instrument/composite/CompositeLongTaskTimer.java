@@ -78,6 +78,11 @@ class CompositeLongTaskTimer extends AbstractCompositeMeter<LongTaskTimer> imple
     }
 
     @Override
+    public TimeUnit baseTimeUnit() {
+        return firstChild().baseTimeUnit();
+    }
+    
+    @Override
     LongTaskTimer newNoopMeter() {
         return new NoopLongTaskTimer(getId());
     }

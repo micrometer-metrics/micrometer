@@ -160,6 +160,11 @@ public interface LongTaskTimer extends Meter {
         );
     }
 
+    /**
+     * @return The base time unit of the timer to which all published metrics will be scaled
+     */
+    TimeUnit baseTimeUnit();
+    
     class Sample {
         private final LongTaskTimer timer;
         private final long task;

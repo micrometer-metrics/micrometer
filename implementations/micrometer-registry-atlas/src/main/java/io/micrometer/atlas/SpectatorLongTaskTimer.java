@@ -15,19 +15,19 @@
  */
 package io.micrometer.atlas;
 
-import io.micrometer.core.instrument.AbstractMeter;
+import java.util.concurrent.TimeUnit;
+
+import io.micrometer.core.instrument.AbstractLongTaskTimer;
 import io.micrometer.core.instrument.LongTaskTimer;
 import io.micrometer.core.instrument.Meter;
 import io.micrometer.core.instrument.util.MeterEquivalence;
 import io.micrometer.core.instrument.util.TimeUtils;
 
-import java.util.concurrent.TimeUnit;
-
-public class SpectatorLongTaskTimer extends AbstractMeter implements LongTaskTimer {
+public class SpectatorLongTaskTimer extends AbstractLongTaskTimer implements LongTaskTimer {
     private final com.netflix.spectator.api.LongTaskTimer timer;
 
-    SpectatorLongTaskTimer(Meter.Id id, com.netflix.spectator.api.LongTaskTimer timer) {
-        super(id);
+    SpectatorLongTaskTimer(Meter.Id id, com.netflix.spectator.api.LongTaskTimer timer, TimeUnit baseTimeUnit) {
+        super(id, baseTimeUnit);
         this.timer = timer;
     }
 
