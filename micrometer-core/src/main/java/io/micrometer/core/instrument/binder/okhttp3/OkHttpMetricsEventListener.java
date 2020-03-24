@@ -91,6 +91,11 @@ public class OkHttpMetricsEventListener extends EventListener {
     }
 
     @Override
+    public void callEnd(Call call) {
+        callState.remove(call);
+    }
+
+    @Override
     public void responseHeadersEnd(Call call, Response response) {
         CallState state = callState.remove(call);
         if (state != null) {
