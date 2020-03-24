@@ -179,7 +179,7 @@ public class NewRelicInsightsApiClientProvider implements NewRelicClientProvider
 
     @Override
     public Stream<String> writeTimer(Timer timer) {
-        TimeUnit timeUnit = TimeUnit.valueOf(timer.getId().getBaseUnit().toUpperCase());
+        TimeUnit timeUnit = timer.baseTimeUnit();
         return Stream.of(
                 event(timer.getId(),
                         new Attribute(COUNT, timer.count()),
@@ -193,7 +193,7 @@ public class NewRelicInsightsApiClientProvider implements NewRelicClientProvider
 
     @Override
     public Stream<String> writeFunctionTimer(FunctionTimer timer) {
-        TimeUnit timeUnit = TimeUnit.valueOf(timer.getId().getBaseUnit().toUpperCase());
+        TimeUnit timeUnit = timer.baseTimeUnit();
         return Stream.of(
                 event(timer.getId(),
                         new Attribute(COUNT, timer.count()),

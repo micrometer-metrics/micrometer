@@ -167,7 +167,7 @@ public class NewRelicInsightsAgentClientProvider implements NewRelicClientProvid
     @Override
     public Map<String, Object> writeTimer(Timer timer) {
         Map<String, Object> attributes = new HashMap<>();
-        TimeUnit timeUnit = TimeUnit.valueOf(timer.getId().getBaseUnit().toUpperCase());
+        TimeUnit timeUnit = timer.baseTimeUnit();
         addAttribute(COUNT, timer.count(), attributes);
         addAttribute(AVG, timer.mean(timeUnit), attributes);
         addAttribute(TOTAL_TIME, timer.totalTime(timeUnit), attributes);		
@@ -181,7 +181,7 @@ public class NewRelicInsightsAgentClientProvider implements NewRelicClientProvid
     @Override
     public Map<String, Object> writeFunctionTimer(FunctionTimer timer) {
         Map<String, Object> attributes = new HashMap<>();
-        TimeUnit timeUnit = TimeUnit.valueOf(timer.getId().getBaseUnit().toUpperCase());
+        TimeUnit timeUnit = timer.baseTimeUnit();
         addAttribute(COUNT, timer.count(), attributes);
         addAttribute(AVG, timer.mean(timeUnit), attributes);
         addAttribute(TOTAL_TIME, timer.totalTime(timeUnit), attributes);
