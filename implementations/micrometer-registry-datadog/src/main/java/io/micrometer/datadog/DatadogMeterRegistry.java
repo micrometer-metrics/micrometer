@@ -261,10 +261,13 @@ public class DatadogMeterRegistry extends StepMeterRegistry {
     /**
      * Set up metric metadata once per time series
      */
-    private void postMetricDescriptionMetadata(String metricName, DatadogMetricMetadata metadata) {
+    // VisibleForTesting
+    void postMetricDescriptionMetadata(String metricName, DatadogMetricMetadata metadata) {
         // already posted the metadata for this metric
-        if (verifiedMetadata.contains(metricName) || !metadata.isDescriptionsEnabled())
+        if (!metadata.isDescriptionsEnabled() || metadata.editDescriptionMetadataBody() == null
+                || verifiedMetadata.contains(metricName)) {
             return;
+        }
 
         try {
             httpClient
