@@ -147,7 +147,7 @@ class OkHttpMetricsEventListenerTest {
     }
 
     @Test
-    void cachedRequestsDoNotLeakMemory(@WiremockResolver.Wiremock WireMockServer server, @TempDir Path tempDir) throws IOException {
+    void cachedResponsesDoNotLeakMemory(@WiremockResolver.Wiremock WireMockServer server, @TempDir Path tempDir) throws IOException {
         OkHttpMetricsEventListener okHttpMetricsEventListener = OkHttpMetricsEventListener.builder(registry, "okhttp.requests").build();
         OkHttpClient clientWithCache = new OkHttpClient.Builder()
                 .eventListener(okHttpMetricsEventListener)
