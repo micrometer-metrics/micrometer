@@ -209,11 +209,17 @@ public class CloudWatchMeterRegistry extends StepMeterRegistry {
             return Stream.of(metricDatum);
         }
 
-        private Stream<MetricDatum> functionTimerData(FunctionTimer timer) {
+        // VisibleForTesting
+        Stream<MetricDatum> functionTimerData(FunctionTimer timer) {
             // we can't know anything about max and percentiles originating from a function timer
-            return Stream.of(
-                    metricDatum(timer.getId(), "count", timer.count()),
-                    metricDatum(timer.getId(), "avg", timer.mean(getBaseTimeUnit())));
+            double sum = timer.totalTime(getBaseTimeUnit());
+            if (Double.isFinite(sum)) {
+                return Stream.of(
+                        metricDatum(timer.getId(), "sum", sum),
+                        metricDatum(timer.getId(), "count", timer.count()),
+                        metricDatum(timer.getId(), "avg", timer.mean(getBaseTimeUnit())));
+            }
+            return Stream.empty();
         }
 
         // VisibleForTesting
