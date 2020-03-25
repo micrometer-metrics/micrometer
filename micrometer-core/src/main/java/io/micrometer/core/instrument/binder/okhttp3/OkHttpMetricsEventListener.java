@@ -55,7 +55,8 @@ public class OkHttpMetricsEventListener extends EventListener {
     private final String requestsMetricName;
     private final Function<Request, String> urlMapper;
     private final Iterable<Tag> extraTags;
-    private final ConcurrentMap<Call, CallState> callState = new ConcurrentHashMap<>();
+    // VisibleForTesting
+    final ConcurrentMap<Call, CallState> callState = new ConcurrentHashMap<>();
 
     OkHttpMetricsEventListener(MeterRegistry registry, String requestsMetricName, Function<Request, String> urlMapper, Iterable<Tag> extraTags) {
         this.registry = registry;
