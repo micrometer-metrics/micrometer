@@ -74,6 +74,7 @@ public class MicrometerHttpClientInterceptor {
         this.responseInterceptor = (response, context) -> {
             Timer.Sample sample = timerByHttpContext.remove(context);
             sample.stop(meterRegistry, Timer.builder(METER_NAME)
+                    .tag("status", Integer.toString(response.getStatusLine().getStatusCode()))
                     .tags(exportTagsForRoute ? HttpContextUtils.generateTagsForRoute(context) : Tags.empty())
                     .tags(extraTags));
         };
