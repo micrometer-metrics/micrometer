@@ -208,7 +208,7 @@ public class PrometheusMeterRegistry extends MeterRegistry {
                     List<String> quantileValues = new LinkedList<>(tagValues);
                     quantileValues.add(Collector.doubleToGoString(v.percentile()));
                     samples.add(new Collector.MetricFamilySamples.Sample(
-                            conventionName, quantileKeys, quantileValues, v.value(TimeUnit.SECONDS)));
+                            conventionName, quantileKeys, quantileValues, v.value(getBaseTimeUnit())));
                 }
             }
 
@@ -226,7 +226,7 @@ public class PrometheusMeterRegistry extends MeterRegistry {
                         // satisfies https://prometheus.io/docs/concepts/metric_types/#histogram
                         for (CountAtBucket c : histogramCounts) {
                             final List<String> histogramValues = new LinkedList<>(tagValues);
-                            histogramValues.add(Collector.doubleToGoString(c.bucket(TimeUnit.SECONDS)));
+                            histogramValues.add(Collector.doubleToGoString(c.bucket(getBaseTimeUnit())));
                             samples.add(new Collector.MetricFamilySamples.Sample(
                                     conventionName + "_bucket", histogramKeys, histogramValues, c.count()));
                         }
@@ -256,7 +256,7 @@ public class PrometheusMeterRegistry extends MeterRegistry {
                     conventionName + "_count", tagKeys, tagValues, count));
 
             samples.add(new Collector.MetricFamilySamples.Sample(
-                    conventionName + "_sum", tagKeys, tagValues, timer.totalTime(TimeUnit.SECONDS)));
+                    conventionName + "_sum", tagKeys, tagValues, timer.totalTime(getBaseTimeUnit())));
 
             return Stream.of(new MicrometerCollector.Family(type, conventionName, samples.build()),
                     new MicrometerCollector.Family(Collector.Type.GAUGE, conventionName + "_max", Stream.of(
@@ -282,12 +282,12 @@ public class PrometheusMeterRegistry extends MeterRegistry {
     @Override
     protected LongTaskTimer newLongTaskTimer(Meter.Id id) {
         MicrometerCollector collector = collectorByName(id);
-        LongTaskTimer ltt = new DefaultLongTaskTimer(id, clock, getBaseTimeUnit()); //TODO: Use getBaseTimeUnit() for duration, etc throughout?
+        LongTaskTimer ltt = new DefaultLongTaskTimer(id, clock, getBaseTimeUnit());
         List<String> tagValues = tagValues(id);
 
         collector.add(tagValues, (conventionName, tagKeys) -> Stream.of(new MicrometerCollector.Family(Collector.Type.UNTYPED, conventionName,
                 new Collector.MetricFamilySamples.Sample(conventionName + "_active_count", tagKeys, tagValues, ltt.activeTasks()),
-                new Collector.MetricFamilySamples.Sample(conventionName + "_duration_sum", tagKeys, tagValues, ltt.duration(TimeUnit.SECONDS))
+                new Collector.MetricFamilySamples.Sample(conventionName + "_duration_sum", tagKeys, tagValues, ltt.duration(getBaseTimeUnit()))
         )));
 
         return ltt;
@@ -301,7 +301,7 @@ public class PrometheusMeterRegistry extends MeterRegistry {
 
         collector.add(tagValues, (conventionName, tagKeys) -> Stream.of(new MicrometerCollector.Family(Collector.Type.SUMMARY, conventionName,
                 new Collector.MetricFamilySamples.Sample(conventionName + "_count", tagKeys, tagValues, ft.count()),
-                new Collector.MetricFamilySamples.Sample(conventionName + "_sum", tagKeys, tagValues, ft.totalTime(TimeUnit.SECONDS))
+                new Collector.MetricFamilySamples.Sample(conventionName + "_sum", tagKeys, tagValues, ft.totalTime(getBaseTimeUnit()))
         )));
 
         return ft;
