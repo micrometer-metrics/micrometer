@@ -41,6 +41,7 @@ import com.newrelic.api.agent.Transaction;
 import io.micrometer.core.instrument.FunctionCounter;
 import io.micrometer.core.instrument.FunctionTimer;
 import io.micrometer.core.instrument.Gauge;
+import io.micrometer.core.instrument.LongTaskTimer;
 import io.micrometer.core.instrument.Measurement;
 import io.micrometer.core.instrument.Meter;
 import io.micrometer.core.instrument.MockClock;
@@ -465,6 +466,42 @@ class NewRelicMeterRegistryTest {
         
         FunctionTimer functionTimer = registry.find("myFunTimer2").functionTimer();
         assertThat(clientProvider.writeFunctionTimer(functionTimer)).isEqualTo(expectedEntries);
+    }
+    
+    @Test
+    void writeLongTaskTimer() {
+        //test API clientProvider
+        writeLongTaskTimer(getInsightsApiClientProvider(meterNameEventTypeEnabledConfig),
+                "{\"eventType\":\"myLongTaskTimer\",\"activeTasks\":0,\"duration\":0,\"timeUnit\":\"seconds\"}");
+        writeLongTaskTimer(getInsightsApiClientProvider(insightsApiConfig),
+                "{\"eventType\":\"MicrometerSample\",\"activeTasks\":0,\"duration\":0,\"timeUnit\":\"seconds\",\"metricName\":\"myLongTaskTimer\",\"metricType\":\"LONG_TASK_TIMER\"}");
+
+        //test Agent clientProvider
+        Map<String, Object> expectedEntries = new HashMap<>();
+        expectedEntries.put("activeTasks", 0);
+        expectedEntries.put("duration", 0);
+        expectedEntries.put("timeUnit", "seconds");
+        writeLongTaskTimer(getInsightsAgentClientProvider(meterNameEventTypeEnabledConfig), expectedEntries);
+        expectedEntries.put("activeTasks", 0);
+        expectedEntries.put("duration", 0);
+        expectedEntries.put("timeUnit", "seconds");
+        expectedEntries.put("metricName", "myLongTaskTimer2");
+        expectedEntries.put("metricType", "LONG_TASK_TIMER");
+        writeLongTaskTimer(getInsightsAgentClientProvider(agentConfig), expectedEntries);
+    }
+    
+    private void writeLongTaskTimer(NewRelicInsightsApiClientProvider clientProvider, String expectedJson) {
+        registry.more().longTaskTimer("myLongTaskTimer", emptyList());
+        LongTaskTimer longTaskTimer = registry.find("myLongTaskTimer").longTaskTimer();
+        
+        assertThat(clientProvider.writeLongTaskTimer(longTaskTimer)).containsExactly(expectedJson);       
+    }
+    
+    private void writeLongTaskTimer(NewRelicInsightsAgentClientProvider clientProvider, Map<String, Object> expectedEntries) {
+        registry.more().longTaskTimer("myLongTaskTimer2", emptyList());
+        LongTaskTimer longTaskTimer2 = registry.find("myLongTaskTimer2").longTaskTimer();
+        
+        assertThat(clientProvider.writeLongTaskTimer(longTaskTimer2)).isEqualTo(expectedEntries);
     }
     
     @Test
