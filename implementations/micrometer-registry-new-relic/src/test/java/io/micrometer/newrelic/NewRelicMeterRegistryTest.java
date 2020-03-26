@@ -38,9 +38,11 @@ import com.newrelic.api.agent.TraceMetadata;
 import com.newrelic.api.agent.TracedMethod;
 import com.newrelic.api.agent.Transaction;
 
+import io.micrometer.core.instrument.DistributionSummary;
 import io.micrometer.core.instrument.FunctionCounter;
 import io.micrometer.core.instrument.FunctionTimer;
 import io.micrometer.core.instrument.Gauge;
+import io.micrometer.core.instrument.LongTaskTimer;
 import io.micrometer.core.instrument.Measurement;
 import io.micrometer.core.instrument.Meter;
 import io.micrometer.core.instrument.MockClock;
@@ -465,6 +467,76 @@ class NewRelicMeterRegistryTest {
         
         FunctionTimer functionTimer = registry.find("myFunTimer2").functionTimer();
         assertThat(clientProvider.writeFunctionTimer(functionTimer)).isEqualTo(expectedEntries);
+    }
+    
+    @Test
+    void writeLongTaskTimer() {
+        //test API clientProvider
+        writeLongTaskTimer(getInsightsApiClientProvider(meterNameEventTypeEnabledConfig),
+                "{\"eventType\":\"myLongTaskTimer\",\"activeTasks\":0,\"duration\":0,\"timeUnit\":\"seconds\"}");
+        writeLongTaskTimer(getInsightsApiClientProvider(insightsApiConfig),
+                "{\"eventType\":\"MicrometerSample\",\"activeTasks\":0,\"duration\":0,\"timeUnit\":\"seconds\",\"metricName\":\"myLongTaskTimer\",\"metricType\":\"LONG_TASK_TIMER\"}");
+
+        //test Agent clientProvider
+        Map<String, Object> expectedEntries = new HashMap<>();
+        expectedEntries.put("activeTasks", 0);
+        expectedEntries.put("duration", 0);
+        expectedEntries.put("timeUnit", "seconds");
+        writeLongTaskTimer(getInsightsAgentClientProvider(meterNameEventTypeEnabledConfig), expectedEntries);
+        expectedEntries.put("activeTasks", 0);
+        expectedEntries.put("duration", 0);
+        expectedEntries.put("timeUnit", "seconds");
+        expectedEntries.put("metricName", "myLongTaskTimer2");
+        expectedEntries.put("metricType", "LONG_TASK_TIMER");
+        writeLongTaskTimer(getInsightsAgentClientProvider(agentConfig), expectedEntries);
+    }
+    
+    private void writeLongTaskTimer(NewRelicInsightsApiClientProvider clientProvider, String expectedJson) {
+        registry.more().longTaskTimer("myLongTaskTimer", emptyList());
+        LongTaskTimer longTaskTimer = registry.find("myLongTaskTimer").longTaskTimer();
+        assertThat(clientProvider.writeLongTaskTimer(longTaskTimer)).containsExactly(expectedJson);       
+    }
+    
+    private void writeLongTaskTimer(NewRelicInsightsAgentClientProvider clientProvider, Map<String, Object> expectedEntries) {
+        registry.more().longTaskTimer("myLongTaskTimer2", emptyList());
+        LongTaskTimer longTaskTimer = registry.find("myLongTaskTimer2").longTaskTimer();
+        assertThat(clientProvider.writeLongTaskTimer(longTaskTimer)).isEqualTo(expectedEntries);
+    }
+    
+    @Test
+    void writeSummary() {
+        //test API clientProvider
+        writeSummary(getInsightsApiClientProvider(meterNameEventTypeEnabledConfig),
+                "{\"eventType\":\"myDistSummary\",\"count\":0,\"avg\":0,\"total\":0,\"max\":0}");
+        writeSummary(getInsightsApiClientProvider(insightsApiConfig),
+                "{\"eventType\":\"MicrometerSample\",\"count\":0,\"avg\":0,\"total\":0,\"max\":0,\"metricName\":\"myDistSummary\",\"metricType\":\"DISTRIBUTION_SUMMARY\"}");
+
+        //test Agent clientProvider
+        Map<String, Object> expectedEntries = new HashMap<>();
+        expectedEntries.put("avg", 0);
+        expectedEntries.put("count", 0);
+        expectedEntries.put("max", 0);
+        expectedEntries.put("total", 0);
+        writeSummary(getInsightsAgentClientProvider(meterNameEventTypeEnabledConfig), expectedEntries);
+        expectedEntries.put("avg", 0);
+        expectedEntries.put("count", 0);
+        expectedEntries.put("max", 0);
+        expectedEntries.put("total", 0);
+        expectedEntries.put("metricName", "myDistSummary2");
+        expectedEntries.put("metricType", "DISTRIBUTION_SUMMARY");
+        writeSummary(getInsightsAgentClientProvider(agentConfig), expectedEntries);
+    }
+    
+    private void writeSummary(NewRelicInsightsApiClientProvider clientProvider, String expectedJson) {
+        registry.summary("myDistSummary", emptyList());
+        DistributionSummary summary = registry.find("myDistSummary").summary();
+        assertThat(clientProvider.writeSummary(summary)).containsExactly(expectedJson);       
+    }
+    
+    private void writeSummary(NewRelicInsightsAgentClientProvider clientProvider, Map<String, Object> expectedEntries) {
+        registry.summary("myDistSummary2", emptyList());
+        DistributionSummary summary = registry.find("myDistSummary2").summary();
+        assertThat(clientProvider.writeSummary(summary)).isEqualTo(expectedEntries);
     }
     
     @Test
