@@ -37,6 +37,7 @@ import reactor.core.publisher.Mono;
 import reactor.netty.tcp.TcpClient;
 import reactor.netty.udp.UdpClient;
 import reactor.util.context.Context;
+import reactor.util.retry.Retry;
 
 import java.net.PortUnreachableException;
 import java.time.Duration;
@@ -223,7 +224,7 @@ public class StatsdMeterRegistry extends MeterRegistry {
                 .handle((in, out) -> out
                         .sendString(publisher)
                         .neverComplete()
-                        .retry(throwable -> throwable instanceof PortUnreachableException)
+                        .retryWhen(Retry.indefinitely().filter(throwable -> throwable instanceof PortUnreachableException))
                 )
                 .connect()
                 .subscribe(client -> {
@@ -254,7 +255,7 @@ public class StatsdMeterRegistry extends MeterRegistry {
             }
             return Mono.empty();
         })
-                .retryBackoff(Long.MAX_VALUE, Duration.ofSeconds(1), Duration.ofMinutes(1))
+                .retryWhen(Retry.backoff(Long.MAX_VALUE, Duration.ofSeconds(1)).maxBackoff(Duration.ofMinutes(1)))
                 .subscribe(client -> {
                     this.client.replace(client);
 
