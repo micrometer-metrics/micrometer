@@ -16,8 +16,8 @@ com.hazelcast:hazelcast:3.11
 com.microsoft.azure:applicationinsights-core:2.2.0
 com.netflix.archaius:archaius-core:0.4.1
 com.netflix.hystrix:hystrix-core:1.5.12
-com.squareup.okhttp3:okhttp:3.11.0
-com.squareup.okio:okio:1.14.0
+com.squareup.okhttp3:okhttp:3.14.7
+com.squareup.okio:okio:1.17.2
 commons-configuration:commons-configuration:1.8
 commons-lang:commons-lang:2.6
 commons-logging:commons-logging:1.1.1
