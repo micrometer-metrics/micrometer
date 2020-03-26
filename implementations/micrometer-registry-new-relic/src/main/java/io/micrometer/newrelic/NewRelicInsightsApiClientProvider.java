@@ -118,7 +118,7 @@ public class NewRelicInsightsApiClientProvider implements NewRelicClientProvider
     
     @Override
     public Stream<String> writeLongTaskTimer(LongTaskTimer timer) {
-        TimeUnit timeUnit = TimeUnit.valueOf(timer.getId().getBaseUnit().toUpperCase());
+        TimeUnit timeUnit = timer.baseTimeUnit();
         return Stream.of(
                 event(timer.getId(),
                         new Attribute(ACTIVE_TASKS, timer.activeTasks()),
