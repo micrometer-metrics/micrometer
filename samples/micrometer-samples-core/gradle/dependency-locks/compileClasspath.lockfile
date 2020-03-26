@@ -46,8 +46,8 @@ com.netflix.spectator:spectator-ext-ipc:0.80.0
 com.netflix.spectator:spectator-reg-atlas:0.80.0
 com.rabbitmq:amqp-client:4.4.1
 com.signalfx.public:signalfx-java:0.0.48
-com.squareup.okhttp3:okhttp:3.11.0
-com.squareup.okio:okio:1.14.0
+com.squareup.okhttp3:okhttp:3.14.7
+com.squareup.okio:okio:1.17.2
 com.typesafe.scala-logging:scala-logging_2.12:3.9.0
 com.yammer.metrics:metrics-core:2.2.0
 commons-cli:commons-cli:1.2
