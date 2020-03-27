@@ -54,6 +54,7 @@ import static java.util.stream.StreamSupport.stream;
  * @author Jon Schneider
  * @author Johnny Lim
  * @author Pierre-Yves B.
+ * @since 1.2.0
  */
 public class CloudWatchMeterRegistry extends StepMeterRegistry {
 
@@ -308,7 +309,7 @@ public class CloudWatchMeterRegistry extends StepMeterRegistry {
         }
 
         private boolean isAcceptableTag(Tag tag) {
-            if (!StringUtils.isNotBlank(tag.getValue())) {
+            if (StringUtils.isBlank(tag.getValue())) {
                 warnThenDebugLogger.log("Dropping a tag with key '" + tag.getKey() + "' because its value is blank.");
                 return false;
             }

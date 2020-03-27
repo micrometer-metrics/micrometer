@@ -24,6 +24,7 @@ import io.micrometer.core.lang.Nullable;
  * {@link NamingConvention} for CloudWatch.
  *
  * @author Klaus Hartl
+ * @since 1.3.6
  */
 public class CloudWatchNamingConvention implements NamingConvention {
 
