@@ -16,24 +16,33 @@
 package io.micrometer.cloudwatch2;
 
 import io.micrometer.core.instrument.config.NamingConvention;
-import org.apache.commons.lang3.StringUtils;
 import org.junit.jupiter.api.Test;
+
+import java.util.Collections;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+/**
+ * Tests for {@link CloudWatchNamingConvention}.
+ *
+ * @author Klaus Hartl
+ * @author Johnny Lim
+ */
 class CloudWatchNamingConventionTest {
     private final NamingConvention namingConvention = new CloudWatchNamingConvention();
 
     @Test
     void truncateTagKey() {
-        assertThat(namingConvention
-                .tagKey(StringUtils.repeat("x", 256)).length()).isEqualTo(255);
+        assertThat(namingConvention.tagKey(repeat("x", 256))).hasSize(255);
     }
 
     @Test
     void truncateTagValue() {
-        assertThat(namingConvention
-                .tagValue(StringUtils.repeat("x", 256)).length()).isEqualTo(255);
+        assertThat(namingConvention.tagValue(repeat("x", 256))).hasSize(255);
+    }
+
+    private String repeat(String s, int repeat) {
+        return String.join("", Collections.nCopies(repeat, s));
     }
 
 }
