@@ -18,10 +18,10 @@ package io.micrometer.core.instrument.binder.okhttp3;
 import com.github.tomakehurst.wiremock.WireMockServer;
 import io.micrometer.core.instrument.MeterRegistry;
 import io.micrometer.core.instrument.MockClock;
+import io.micrometer.core.instrument.Tag;
 import io.micrometer.core.instrument.Tags;
 import io.micrometer.core.instrument.simple.SimpleConfig;
 import io.micrometer.core.instrument.simple.SimpleMeterRegistry;
-import java.util.function.Function;
 import okhttp3.Cache;
 import okhttp3.OkHttpClient;
 import okhttp3.Request;
@@ -34,6 +34,7 @@ import ru.lanwen.wiremock.ext.WiremockResolver;
 import java.io.IOException;
 import java.nio.file.Path;
 import java.util.concurrent.TimeUnit;
+import java.util.function.Function;
 
 import static com.github.tomakehurst.wiremock.client.WireMock.*;
 import static org.assertj.core.api.Assertions.assertThat;
@@ -157,6 +158,26 @@ class OkHttpMetricsEventListenerTest {
 
         assertThat(registry.get("okhttp.requests")
                 .tags("foo", "bar", "uri", "/helloworld.txt", "status", "200")
+                .timer().count()).isEqualTo(1L);
+    }
+
+    @Test
+    void contextSpecificTags(@WiremockResolver.Wiremock WireMockServer server) throws IOException {
+        server.stubFor(any(anyUrl()));
+        OkHttpClient client = new OkHttpClient.Builder()
+                .eventListener(OkHttpMetricsEventListener.builder(registry, "okhttp.requests")
+                        .tag((req, res) -> Tag.of("another.uri", req.url().encodedPath()))
+                        .build())
+                .build();
+
+        Request request = new Request.Builder()
+                .url(server.baseUrl() + "/helloworld.txt")
+                .build();
+
+        client.newCall(request).execute().close();
+
+        assertThat(registry.get("okhttp.requests")
+                .tags("another.uri", "/helloworld.txt", "status", "200")
                 .timer().count()).isEqualTo(1L);
     }
 
