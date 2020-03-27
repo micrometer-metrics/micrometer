@@ -196,6 +196,12 @@ public class JvmGcMetrics implements MeterBinder, AutoCloseable {
     }
 
     private static boolean isManagementExtensionsPresent() {
+        if ( ManagementFactory.getMemoryPoolMXBeans().isEmpty() ) {
+            // Substrate VM, for example, doesn't provide or support these beans (yet)
+            log.warn("GC notifications will not be available because MemoryPoolMXBeans are not provided by the JVM");
+            return false;
+        }
+
         try {
             Class.forName("com.sun.management.GarbageCollectionNotificationInfo", false,
                     JvmGcMetrics.class.getClassLoader());
