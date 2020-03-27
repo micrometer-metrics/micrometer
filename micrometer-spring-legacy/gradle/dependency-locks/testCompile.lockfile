@@ -56,7 +56,7 @@ com.netflix.spectator:spectator-api:0.96.0
 com.netflix.spectator:spectator-ext-ipc:0.96.0
 com.netflix.spectator:spectator-reg-atlas:0.96.0
 com.signalfx.public:signalfx-java:0.2.0
-com.squareup.okhttp3:okhttp:3.14.4
+com.squareup.okhttp3:okhttp:3.14.7
 com.squareup.okio:okio:1.17.2
 com.typesafe.netty:netty-reactive-streams-http:2.0.3
 com.typesafe.netty:netty-reactive-streams:2.0.3
