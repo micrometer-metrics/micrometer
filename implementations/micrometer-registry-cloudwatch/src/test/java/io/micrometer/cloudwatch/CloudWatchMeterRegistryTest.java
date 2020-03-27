@@ -139,6 +139,22 @@ class CloudWatchMeterRegistryTest {
     }
 
     @Test
+    void functionTimerData() {
+        FunctionTimer timer = FunctionTimer.builder("my.function.timer", 1d, Number::longValue, Number::doubleValue,
+                TimeUnit.MILLISECONDS).register(registry);
+        clock.add(config.step());
+        assertThat(registry.new Batch().functionTimerData(timer)).hasSize(3);
+    }
+
+    @Test
+    void functionTimerDataWhenSumIsNaNShouldReturnEmptyStream() {
+        FunctionTimer timer = FunctionTimer.builder("my.function.timer", Double.NaN, Number::longValue,
+                Number::doubleValue, TimeUnit.MILLISECONDS).register(registry);
+        clock.add(config.step());
+        assertThat(registry.new Batch().functionTimerData(timer)).isEmpty();
+    }
+
+    @Test
     void shouldAddFunctionTimerAggregateMetricWhenAtLeastOneEventHappened() {
         FunctionTimer timer = mock(FunctionTimer.class);
         Id meterId = new Id(METER_NAME, Tags.empty(), null, null, TIMER);

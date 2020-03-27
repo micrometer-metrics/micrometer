@@ -230,9 +230,14 @@ public class CloudWatchMeterRegistry extends StepMeterRegistry {
         // VisibleForTesting
         Stream<MetricDatum> functionTimerData(FunctionTimer timer) {
             // we can't know anything about max and percentiles originating from a function timer
+            double sum = timer.totalTime(getBaseTimeUnit());
+            if (!Double.isFinite(sum)) {
+                return Stream.empty();
+            }
             Stream.Builder<MetricDatum> metrics = Stream.builder();
             double count = timer.count();
             metrics.add(metricDatum(timer.getId(), "count", StandardUnit.Count, count));
+            metrics.add(metricDatum(timer.getId(), "sum", sum));
             if (count > 0) {
                 metrics.add(metricDatum(timer.getId(), "avg", timer.mean(getBaseTimeUnit())));
             }
@@ -298,7 +303,7 @@ public class CloudWatchMeterRegistry extends StepMeterRegistry {
         }
 
         private boolean isAcceptableTag(Tag tag) {
-            if (!StringUtils.isNotBlank(tag.getValue())) {
+            if (StringUtils.isBlank(tag.getValue())) {
                 warnThenDebugLogger.log("Dropping a tag with key '" + tag.getKey() + "' because its value is blank.");
                 return false;
             }
