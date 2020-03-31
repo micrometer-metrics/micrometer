@@ -17,8 +17,8 @@ package io.micrometer.core.instrument.binder.jetty;
 
 import io.micrometer.core.instrument.*;
 import io.micrometer.core.instrument.binder.BaseUnits;
-import io.micrometer.core.instrument.binder.http.DefaultHttpRequestTagsProvider;
-import io.micrometer.core.instrument.binder.http.HttpRequestTagsProvider;
+import io.micrometer.core.instrument.binder.http.DefaultHttpServletRequestTagsProvider;
+import io.micrometer.core.instrument.binder.http.HttpServletRequestTagsProvider;
 import io.micrometer.core.lang.NonNullApi;
 import io.micrometer.core.lang.NonNullFields;
 import org.eclipse.jetty.http.HttpStatus;
@@ -53,7 +53,7 @@ public class TimedHandler extends HandlerWrapper implements Graceful {
 
     private final MeterRegistry registry;
     private final Iterable<Tag> tags;
-    private final HttpRequestTagsProvider tagsProvider;
+    private final HttpServletRequestTagsProvider tagsProvider;
 
     private final Shutdown shutdown = new Shutdown() {
         @Override
@@ -68,10 +68,10 @@ public class TimedHandler extends HandlerWrapper implements Graceful {
     private final AtomicInteger asyncWaits = new AtomicInteger();
 
     public TimedHandler(MeterRegistry registry, Iterable<Tag> tags) {
-        this(registry, tags, new DefaultHttpRequestTagsProvider());
+        this(registry, tags, new DefaultHttpServletRequestTagsProvider());
     }
 
-    public TimedHandler(MeterRegistry registry, Iterable<Tag> tags, HttpRequestTagsProvider tagsProvider) {
+    public TimedHandler(MeterRegistry registry, Iterable<Tag> tags, HttpServletRequestTagsProvider tagsProvider) {
         this.registry = registry;
         this.tags = tags;
         this.tagsProvider = tagsProvider;

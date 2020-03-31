@@ -75,7 +75,7 @@ class HistogramGaugesTest {
                 .register(registry);
 
         DistributionSummary distributionSummary = DistributionSummary.builder("my.distribution")
-                .sla(Long.MAX_VALUE)
+                .sla(Double.POSITIVE_INFINITY)
                 .register(registry);
 
         HistogramGauges distributionGauges = HistogramGauges.registerWithCommonFormat(distributionSummary, registry);

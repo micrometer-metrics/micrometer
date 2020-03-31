@@ -75,14 +75,6 @@ public class InfluxMeterRegistry extends StepMeterRegistry {
         return new Builder(config);
     }
 
-    @Override
-    public void start(ThreadFactory threadFactory) {
-        if (config.enabled()) {
-            logger.info("publishing metrics to influx every " + TimeUtils.format(config.step()));
-        }
-        super.start(threadFactory);
-    }
-
     private void createDatabaseIfNecessary() {
         if (!config.autoCreateDb() || databaseExists)
             return;
@@ -272,11 +264,15 @@ public class InfluxMeterRegistry extends StepMeterRegistry {
         }
     }
 
-    class Field {
+    static class Field {
         final String key;
         final double value;
 
         Field(String key, double value) {
+            // `time` cannot be a field key or tag key
+            if (key.equals("time")) {
+                throw new IllegalArgumentException("'time' is an invalid field key in InfluxDB");
+            }
             this.key = key;
             this.value = value;
         }

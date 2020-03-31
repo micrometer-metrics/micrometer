@@ -37,6 +37,7 @@ import reactor.core.publisher.Mono;
 import reactor.netty.tcp.TcpClient;
 import reactor.netty.udp.UdpClient;
 import reactor.util.context.Context;
+import reactor.util.retry.Retry;
 
 import java.net.PortUnreachableException;
 import java.time.Duration;
@@ -47,7 +48,7 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.*;
-import java.util.stream.LongStream;
+import java.util.stream.DoubleStream;
 
 /**
  * {@link MeterRegistry} for StatsD.
@@ -223,7 +224,7 @@ public class StatsdMeterRegistry extends MeterRegistry {
                 .handle((in, out) -> out
                         .sendString(publisher)
                         .neverComplete()
-                        .retry(throwable -> throwable instanceof PortUnreachableException)
+                        .retryWhen(Retry.indefinitely().filter(throwable -> throwable instanceof PortUnreachableException))
                 )
                 .connect()
                 .subscribe(client -> {
@@ -254,7 +255,7 @@ public class StatsdMeterRegistry extends MeterRegistry {
             }
             return Mono.empty();
         })
-                .retryBackoff(Long.MAX_VALUE, Duration.ofSeconds(1), Duration.ofMinutes(1))
+                .retryWhen(Retry.backoff(Long.MAX_VALUE, Duration.ofSeconds(1)).maxBackoff(Duration.ofMinutes(1)))
                 .subscribe(client -> {
                     this.client.replace(client);
 
@@ -314,8 +315,8 @@ public class StatsdMeterRegistry extends MeterRegistry {
     }
 
     private DistributionStatisticConfig addInfBucket(DistributionStatisticConfig config) {
-        long[] slas = config.getSlaBoundaries() == null ? new long[]{Long.MAX_VALUE} :
-                LongStream.concat(Arrays.stream(config.getSlaBoundaries()), LongStream.of(Long.MAX_VALUE)).toArray();
+        double[] slas = config.getSlaBoundaries() == null ? new double[]{Double.POSITIVE_INFINITY} :
+                DoubleStream.concat(Arrays.stream(config.getSlaBoundaries()), DoubleStream.of(Double.POSITIVE_INFINITY)).toArray();
         return DistributionStatisticConfig.builder()
                 .sla(slas)
                 .build()
@@ -334,7 +335,6 @@ public class StatsdMeterRegistry extends MeterRegistry {
         return ltt;
     }
 
-    @SuppressWarnings("ConstantConditions")
     @Override
     protected Timer newTimer(Meter.Id id, DistributionStatisticConfig distributionStatisticConfig, PauseDetector
             pauseDetector) {
@@ -350,7 +350,6 @@ public class StatsdMeterRegistry extends MeterRegistry {
         return timer;
     }
 
-    @SuppressWarnings("ConstantConditions")
     @Override
     protected DistributionSummary newDistributionSummary(Meter.Id id, DistributionStatisticConfig
             distributionStatisticConfig, double scale) {
@@ -367,7 +366,7 @@ public class StatsdMeterRegistry extends MeterRegistry {
 
     @Override
     protected <T> FunctionCounter newFunctionCounter(Meter.Id id, T obj, ToDoubleFunction<T> countFunction) {
-        StatsdFunctionCounter fc = new StatsdFunctionCounter<>(id, obj, countFunction, lineBuilder(id), fluxSink);
+        StatsdFunctionCounter<T> fc = new StatsdFunctionCounter<>(id, obj, countFunction, lineBuilder(id), fluxSink);
         pollableMeters.put(id, fc);
         return fc;
     }
@@ -376,7 +375,7 @@ public class StatsdMeterRegistry extends MeterRegistry {
     protected <T> FunctionTimer newFunctionTimer(Meter.Id id, T
             obj, ToLongFunction<T> countFunction, ToDoubleFunction<T> totalTimeFunction, TimeUnit
                                                          totalTimeFunctionUnit) {
-        StatsdFunctionTimer ft = new StatsdFunctionTimer<>(id, obj, countFunction, totalTimeFunction, totalTimeFunctionUnit,
+        StatsdFunctionTimer<T> ft = new StatsdFunctionTimer<>(id, obj, countFunction, totalTimeFunction, totalTimeFunctionUnit,
                 getBaseTimeUnit(), lineBuilder(id), fluxSink);
         pollableMeters.put(id, ft);
         return ft;

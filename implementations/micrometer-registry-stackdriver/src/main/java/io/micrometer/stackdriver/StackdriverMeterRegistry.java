@@ -45,7 +45,6 @@ import io.micrometer.core.instrument.step.StepMeterRegistry;
 import io.micrometer.core.instrument.step.StepTimer;
 import io.micrometer.core.instrument.util.DoubleFormat;
 import io.micrometer.core.instrument.util.NamedThreadFactory;
-import io.micrometer.core.instrument.util.TimeUtils;
 import io.micrometer.core.lang.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -72,7 +71,7 @@ import static java.util.stream.StreamSupport.stream;
  */
 @Incubating(since = "1.1.0")
 public class StackdriverMeterRegistry extends StepMeterRegistry {
-    
+
     private static final ThreadFactory DEFAULT_THREAD_FACTORY = new NamedThreadFactory("stackdriver-metrics-publisher");
 
     /**
@@ -130,7 +129,6 @@ public class StackdriverMeterRegistry extends StepMeterRegistry {
             } else {
                 try {
                     this.client = MetricServiceClient.create(metricServiceSettings);
-                    logger.info("publishing metrics to stackdriver every {}", TimeUtils.format(config.step()));
                     super.start(threadFactory);
                 } catch (Exception e) {
                     logger.error("unable to create stackdriver client", e);
@@ -294,7 +292,8 @@ public class StackdriverMeterRegistry extends StepMeterRegistry {
         }
     }
 
-    private class Batch {
+    //VisibleForTesting
+    class Batch {
         private final TimeInterval interval = TimeInterval.newBuilder()
                 .setEndTime(Timestamp.newBuilder()
                         .setSeconds(clock.wallTime() / 1000)
@@ -432,7 +431,8 @@ public class StackdriverMeterRegistry extends StepMeterRegistry {
             return metricType.toString();
         }
 
-        private Distribution distribution(HistogramSnapshot snapshot, boolean timeDomain) {
+        //VisibleForTesting
+        Distribution distribution(HistogramSnapshot snapshot, boolean timeDomain) {
             CountAtBucket[] histogram = snapshot.histogramCounts();
 
             // selected finite buckets (represented as a normal histogram)
@@ -463,7 +463,7 @@ public class StackdriverMeterRegistry extends StepMeterRegistry {
             }
 
             // add the "+infinity" bucket, which does NOT have a corresponding bucket boundary
-            bucketCounts.add(snapshot.count() - truncatedSum.get());
+            bucketCounts.add(Math.max(0, snapshot.count() - truncatedSum.get()));
 
             List<Double> bucketBoundaries = Arrays.stream(histogram)
                     .map(countAtBucket -> timeDomain ? countAtBucket.bucket(getBaseTimeUnit()) : countAtBucket.bucket())

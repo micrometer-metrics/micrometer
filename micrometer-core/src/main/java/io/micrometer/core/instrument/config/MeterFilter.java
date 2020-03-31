@@ -312,7 +312,7 @@ public interface MeterFilter {
             public DistributionStatisticConfig configure(Meter.Id id, DistributionStatisticConfig config) {
                 if (id.getType() == Meter.Type.TIMER && id.getName().startsWith(prefix)) {
                     return DistributionStatisticConfig.builder()
-                            .maximumExpectedValue(max.toNanos())
+                            .maximumExpectedValue((double) max.toNanos())
                             .build()
                             .merge(config);
                 }
@@ -324,11 +324,23 @@ public interface MeterFilter {
     /**
      * Set a maximum expected value on any {@link DistributionSummary} whose name begins with the given prefix.
      *
+     * @deprecated Use {@link #maxExpected(String, double)} instead.
      * @param prefix Apply the maximum only to distribution summaries whose name begins with this prefix.
      * @param max    The maximum expected value of the distribution summary.
      * @return A filter that applies a maximum expected value to a distribution summary.
      */
     static MeterFilter maxExpected(String prefix, long max) {
+        return maxExpected(prefix, (double) max);
+    }
+
+    /**
+     * Set a maximum expected value on any {@link DistributionSummary} whose name begins with the given prefix.
+     *
+     * @param prefix Apply the maximum only to distribution summaries whose name begins with this prefix.
+     * @param max    The maximum expected value of the distribution summary.
+     * @return A filter that applies a maximum expected value to a distribution summary.
+     */
+    static MeterFilter maxExpected(String prefix, double max) {
         return new MeterFilter() {
             @Override
             public DistributionStatisticConfig configure(Meter.Id id, DistributionStatisticConfig config) {
@@ -356,7 +368,7 @@ public interface MeterFilter {
             public DistributionStatisticConfig configure(Meter.Id id, DistributionStatisticConfig config) {
                 if (id.getType() == Meter.Type.TIMER && id.getName().startsWith(prefix)) {
                     return DistributionStatisticConfig.builder()
-                            .minimumExpectedValue(min.toNanos())
+                            .minimumExpectedValue((double) min.toNanos())
                             .build()
                             .merge(config);
                 }
@@ -368,11 +380,23 @@ public interface MeterFilter {
     /**
      * Set a minimum expected value on any {@link DistributionSummary} whose name begins with the given prefix.
      *
+     * @deprecated Use {@link #minExpected(String, double)} instead.
      * @param prefix Apply the minimum only to distribution summaries whose name begins with this prefix.
      * @param min    The minimum expected value of the distribution summary.
      * @return A filter that applies a minimum expected value to a distribution summary.
      */
     static MeterFilter minExpected(String prefix, long min) {
+        return minExpected(prefix, (double) min);
+    }
+
+    /**
+     * Set a minimum expected value on any {@link DistributionSummary} whose name begins with the given prefix.
+     *
+     * @param prefix Apply the minimum only to distribution summaries whose name begins with this prefix.
+     * @param min    The minimum expected value of the distribution summary.
+     * @return A filter that applies a minimum expected value to a distribution summary.
+     */
+    static MeterFilter minExpected(String prefix, double min) {
         return new MeterFilter() {
             @Override
             public DistributionStatisticConfig configure(Meter.Id id, DistributionStatisticConfig config) {

@@ -1,5 +1,5 @@
 /**
- * Copyright 2017 Pivotal Software, Inc.
+ * Copyright 2020 Pivotal Software, Inc.
  * <p>
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,6 +17,8 @@ package io.micrometer.newrelic;
 
 import static io.micrometer.core.instrument.util.StringEscapeUtils.escapeJson;
 
+import java.net.InetSocketAddress;
+import java.net.Proxy;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
@@ -53,22 +55,29 @@ import io.micrometer.core.ipc.http.HttpUrlConnectionSender;
  * @author Jon Schneider
  * @author Johnny Lim
  * @author Neil Powell
+ * @since 1.4.0
  */
-public class NewRelicHttpClientProviderImpl implements NewRelicClientProvider {
+public class NewRelicInsightsApiClientProvider implements NewRelicClientProvider {
 
-    private final Logger logger = LoggerFactory.getLogger(NewRelicHttpClientProviderImpl.class);
+    private final Logger logger = LoggerFactory.getLogger(NewRelicInsightsApiClientProvider.class);
 
     private final NewRelicConfig config;
     private final HttpSender httpClient;
-    private final String insightsEndpoint;
     private final NamingConvention namingConvention;
+    private final String insightsEndpoint;
 
     @SuppressWarnings("deprecation")
-    public NewRelicHttpClientProviderImpl(NewRelicConfig config) {
+    public NewRelicInsightsApiClientProvider(NewRelicConfig config) {
         this(config, new HttpUrlConnectionSender(config.connectTimeout(), config.readTimeout()), new NewRelicNamingConvention());
     }
+    
+    @SuppressWarnings("deprecation")
+    public NewRelicInsightsApiClientProvider(NewRelicConfig config, String proxyHost, int proxyPort) {
+        this(config, new HttpUrlConnectionSender(config.connectTimeout(), config.readTimeout(), 
+                            new Proxy(Proxy.Type.HTTP, new InetSocketAddress(proxyHost, proxyPort))), new NewRelicNamingConvention());
+    }
 
-    public NewRelicHttpClientProviderImpl(NewRelicConfig config, HttpSender httpClient, NamingConvention namingConvention) {
+    public NewRelicInsightsApiClientProvider(NewRelicConfig config, HttpSender httpClient, NamingConvention namingConvention) {
 
         if (!config.meterNameEventTypeEnabled() && StringUtils.isEmpty(config.eventType())) {
             throw new MissingRequiredConfigurationException("eventType must be set to report metrics to New Relic");
@@ -109,12 +118,12 @@ public class NewRelicHttpClientProviderImpl implements NewRelicClientProvider {
     
     @Override
     public Stream<String> writeLongTaskTimer(LongTaskTimer timer) {
-        TimeUnit timeUnit = TimeUnit.valueOf(timer.getId().getBaseUnit());
+        TimeUnit timeUnit = TimeUnit.valueOf(timer.getId().getBaseUnit().toUpperCase());
         return Stream.of(
                 event(timer.getId(),
                         new Attribute(ACTIVE_TASKS, timer.activeTasks()),
                         new Attribute(DURATION, timer.duration(timeUnit)),
-                        new Attribute(TIME_UNIT, timeUnit.toString().toLowerCase())
+                        new Attribute(TIME_UNIT, timeUnit.name().toLowerCase())
                 )
         );
     }
@@ -149,7 +158,7 @@ public class NewRelicHttpClientProviderImpl implements NewRelicClientProvider {
             return Stream.of(
                     event(gauge.getId(),
                             new Attribute(VALUE, value),
-                            new Attribute(TIME_UNIT, gauge.baseTimeUnit().toString().toLowerCase())
+                            new Attribute(TIME_UNIT, gauge.baseTimeUnit().name().toLowerCase())
                     )
             );
         }
@@ -170,27 +179,27 @@ public class NewRelicHttpClientProviderImpl implements NewRelicClientProvider {
 
     @Override
     public Stream<String> writeTimer(Timer timer) {
-        TimeUnit timeUnit = TimeUnit.valueOf(timer.getId().getBaseUnit());
+        TimeUnit timeUnit = timer.baseTimeUnit();
         return Stream.of(
                 event(timer.getId(),
                         new Attribute(COUNT, timer.count()),
                         new Attribute(AVG, timer.mean(timeUnit)),
                         new Attribute(TOTAL_TIME, timer.totalTime(timeUnit)),
                         new Attribute(MAX, timer.max(timeUnit)),
-                        new Attribute(TIME_UNIT, timeUnit.toString().toLowerCase())
+                        new Attribute(TIME_UNIT, timeUnit.name().toLowerCase())
                 )
             );
     }
 
     @Override
     public Stream<String> writeFunctionTimer(FunctionTimer timer) {
-        TimeUnit timeUnit = TimeUnit.valueOf(timer.getId().getBaseUnit());
+        TimeUnit timeUnit = timer.baseTimeUnit();
         return Stream.of(
                 event(timer.getId(),
                         new Attribute(COUNT, timer.count()),
                         new Attribute(AVG, timer.mean(timeUnit)),
                         new Attribute(TOTAL_TIME, timer.totalTime(timeUnit)),
-                        new Attribute(TIME_UNIT, timeUnit.toString().toLowerCase())
+                        new Attribute(TIME_UNIT, timeUnit.name().toLowerCase())
                 )
             );
     }
@@ -246,7 +255,7 @@ public class NewRelicHttpClientProviderImpl implements NewRelicClientProvider {
         return Arrays.stream(attributes)
                 .map(attr -> 
                         (attr.getValue() instanceof Number) 
-                            ? ",\"" + attr.getName() + "\":" + DoubleFormat.wholeOrDecimal(((Number)attr.getValue()).doubleValue())
+                            ? ",\"" + attr.getName() + "\":" + DoubleFormat.wholeOrDecimal(((Number) attr.getValue()).doubleValue())
                             : ",\"" + attr.getName() + "\":\"" + namingConvention.tagValue(attr.getValue().toString()) + "\""
                 )
                 .collect(Collectors.joining("", "{\"eventType\":\"" + escapeJson(eventType) + "\"", tagsJson + "}"));

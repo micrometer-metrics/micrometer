@@ -62,11 +62,11 @@ class TimeWindowRotationTest {
     @MethodSource("histogramTypes")
     void expectedValueRangeValidation(Class<? extends AbstractTimeWindowHistogram<?, ?>> histogramType) {
         expectValidationFailure(histogramType, DistributionStatisticConfig.builder()
-            .minimumExpectedValue(0L)
+            .minimumExpectedValue(0.0)
             .build());
         expectValidationFailure(histogramType, DistributionStatisticConfig.builder()
-            .minimumExpectedValue(10L)
-            .maximumExpectedValue(9L)
+            .minimumExpectedValue(10.0)
+            .maximumExpectedValue(9.0)
             .build());
     }
 
@@ -74,7 +74,7 @@ class TimeWindowRotationTest {
     @MethodSource("histogramTypes")
     void slaBoundariesValidation(Class<? extends AbstractTimeWindowHistogram<?, ?>> histogramType) {
         expectValidationFailure(histogramType, DistributionStatisticConfig.builder()
-            .sla(0L)
+            .sla(0.0)
             .build());
     }
 

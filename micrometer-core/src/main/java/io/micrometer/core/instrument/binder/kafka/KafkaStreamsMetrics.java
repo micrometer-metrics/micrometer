@@ -15,7 +15,6 @@ package io.micrometer.core.instrument.binder.kafka;
 
 import io.micrometer.core.annotation.Incubating;
 import io.micrometer.core.instrument.Tag;
-import io.micrometer.core.instrument.binder.MeterBinder;
 import io.micrometer.core.lang.NonNullApi;
 import io.micrometer.core.lang.NonNullFields;
 import org.apache.kafka.common.Metric;
@@ -36,7 +35,7 @@ import org.apache.kafka.streams.KafkaStreams;
 @Incubating(since = "1.4.0")
 @NonNullApi
 @NonNullFields
-public class KafkaStreamsMetrics extends KafkaMetrics implements MeterBinder {
+public class KafkaStreamsMetrics extends KafkaMetrics {
 
     /**
      * {@link KafkaStreams} metrics binder

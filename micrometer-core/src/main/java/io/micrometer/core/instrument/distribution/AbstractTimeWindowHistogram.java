@@ -97,8 +97,8 @@ abstract class AbstractTimeWindowHistogram<T, U> implements Histogram {
             }
         }
 
-        final Long minimumExpectedValue = distributionStatisticConfig.getMinimumExpectedValue();
-        final Long maximumExpectedValue = distributionStatisticConfig.getMaximumExpectedValue();
+        final Double minimumExpectedValue = distributionStatisticConfig.getMinimumExpectedValue();
+        final Double maximumExpectedValue = distributionStatisticConfig.getMaximumExpectedValue();
         if (minimumExpectedValue == null || minimumExpectedValue <= 0) {
             rejectHistogramConfig("minimumExpectedValue (" + minimumExpectedValue + ") must be greater than 0.");
         }
@@ -109,7 +109,7 @@ abstract class AbstractTimeWindowHistogram<T, U> implements Histogram {
         }
 
         if (distributionStatisticConfig.getSlaBoundaries() != null) {
-            for (long sla : distributionStatisticConfig.getSlaBoundaries()) {
+            for (double sla : distributionStatisticConfig.getSlaBoundaries()) {
                 if (sla <= 0) {
                     rejectHistogramConfig("slaBoundaries must contain only the values greater than 0. " +
                             "Found " + sla);
@@ -147,7 +147,11 @@ abstract class AbstractTimeWindowHistogram<T, U> implements Histogram {
 
     abstract double valueAtPercentile(double percentile);
 
-    abstract double countAtValue(long value);
+    abstract double countAtValue(double value);
+
+    double countAtValue(long value) {
+        return countAtValue((double) value);
+    }
 
     void outputSummary(PrintStream out, double bucketScaling) {
     }
@@ -193,15 +197,15 @@ abstract class AbstractTimeWindowHistogram<T, U> implements Histogram {
             return null;
         }
 
-        final Set<Long> monitoredValues = distributionStatisticConfig.getHistogramBuckets(supportsAggregablePercentiles);
+        final Set<Double> monitoredValues = distributionStatisticConfig.getHistogramBuckets(supportsAggregablePercentiles);
         if (monitoredValues.isEmpty()) {
             return null;
         }
 
         final CountAtBucket[] counts = new CountAtBucket[monitoredValues.size()];
-        final Iterator<Long> iterator = monitoredValues.iterator();
+        final Iterator<Double> iterator = monitoredValues.iterator();
         for (int i = 0; i < counts.length; i++) {
-            final long v = iterator.next();
+            final double v = iterator.next();
             counts[i] = new CountAtBucket(v, countAtValue(v));
         }
         return counts;

@@ -1,5 +1,5 @@
 /**
- * Copyright 2017 Pivotal Software, Inc.
+ * Copyright 2020 Pivotal Software, Inc.
  * <p>
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,6 +15,7 @@
  */
 package io.micrometer.newrelic;
 
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.TimeUnit;
@@ -44,28 +45,28 @@ import io.micrometer.core.instrument.util.StringUtils;
  * Publishes metrics to New Relic Insights via Java Agent API.
  *
  * @author Neil Powell
+ * @since 1.4.0
  */
-public class NewRelicAgentClientProviderImpl implements NewRelicClientProvider {
+public class NewRelicInsightsAgentClientProvider implements NewRelicClientProvider {
 
-    private final Logger logger = LoggerFactory.getLogger(NewRelicAgentClientProviderImpl.class);
-    
-    private final Agent newRelicAgent;
+    private final Logger logger = LoggerFactory.getLogger(NewRelicInsightsAgentClientProvider.class);
+
     private final NewRelicConfig config;
+    private final Agent newRelicAgent;
     private final NamingConvention namingConvention;
     
-    public NewRelicAgentClientProviderImpl(NewRelicConfig config) {
+    public NewRelicInsightsAgentClientProvider(NewRelicConfig config) {
         this(config, NewRelic.getAgent(), new NewRelicNamingConvention());
     }
 
-    public NewRelicAgentClientProviderImpl(NewRelicConfig config, Agent newRelicAgent, NamingConvention namingConvention) {
+    public NewRelicInsightsAgentClientProvider(NewRelicConfig config, Agent newRelicAgent, NamingConvention namingConvention) {
 
-        if (config.meterNameEventTypeEnabled() == false
-                && StringUtils.isEmpty(config.eventType())) {
+        if (!config.meterNameEventTypeEnabled() && StringUtils.isEmpty(config.eventType())) {
             throw new MissingRequiredConfigurationException("eventType must be set to report metrics to New Relic");
         }
 
-        this.newRelicAgent = newRelicAgent;
         this.config = config;
+        this.newRelicAgent = newRelicAgent;
         this.namingConvention = namingConvention;
     }
 
@@ -93,11 +94,11 @@ public class NewRelicAgentClientProviderImpl implements NewRelicClientProvider {
 
     @Override
     public Map<String, Object> writeLongTaskTimer(LongTaskTimer timer) {
-        Map<String, Object> attributes = new HashMap<String, Object>();
-        TimeUnit timeUnit = TimeUnit.valueOf(timer.getId().getBaseUnit());
+        Map<String, Object> attributes = new HashMap<>();
+        TimeUnit timeUnit = TimeUnit.valueOf(timer.getId().getBaseUnit().toUpperCase());
         addAttribute(ACTIVE_TASKS, timer.activeTasks(), attributes);          	
         addAttribute(DURATION, timer.duration(timeUnit), attributes);
-        addAttribute(TIME_UNIT, timeUnit.toString().toLowerCase(), attributes);
+        addAttribute(TIME_UNIT, timeUnit.name().toLowerCase(), attributes);
         //process meter's name, type and tags
         addMeterAsAttributes(timer.getId(), attributes);
         return attributes;
@@ -113,44 +114,47 @@ public class NewRelicAgentClientProviderImpl implements NewRelicClientProvider {
         return writeCounterValues(counter.getId(), counter.count());
     }
     
-    Map<String, Object> writeCounterValues(Meter.Id id, double count) {
-        Map<String, Object> attributes = new HashMap<String, Object>();
-        if (Double.isFinite(count)) {
-            addAttribute(THROUGHPUT, count, attributes);
-            //process meter's name, type and tags
-            addMeterAsAttributes(id, attributes);			
+    private Map<String, Object> writeCounterValues(Meter.Id id, double count) {
+        if (!Double.isFinite(count)) {
+            return Collections.emptyMap();
         }
+        Map<String, Object> attributes = new HashMap<>();
+        addAttribute(THROUGHPUT, count, attributes);
+        //process meter's name, type and tags
+        addMeterAsAttributes(id, attributes);
         return attributes;
     }
 
     @Override
     public Map<String, Object> writeGauge(Gauge gauge) {
-        Map<String, Object> attributes = new HashMap<String, Object>();
         double value = gauge.value();
-        if (Double.isFinite(value)) {
-            addAttribute(VALUE, value, attributes);
-            //process meter's name, type and tags
-            addMeterAsAttributes(gauge.getId(), attributes);			 
+        if (!Double.isFinite(value)) {
+            return Collections.emptyMap();
         }
+        Map<String, Object> attributes = new HashMap<>();
+        addAttribute(VALUE, value, attributes);
+        //process meter's name, type and tags
+        addMeterAsAttributes(gauge.getId(), attributes);
         return attributes;
     }
 
     @Override
     public Map<String, Object> writeTimeGauge(TimeGauge gauge) {
-        Map<String, Object> attributes = new HashMap<String, Object>();
         double value = gauge.value();
-        if (Double.isFinite(value)) {
-            addAttribute(VALUE, value, attributes);
-            addAttribute(TIME_UNIT, gauge.baseTimeUnit().toString().toLowerCase(), attributes);
-            //process meter's name, type and tags
-            addMeterAsAttributes(gauge.getId(), attributes);
+        if (!Double.isFinite(value)) {
+            return Collections.emptyMap();
         }
+        Map<String, Object> attributes = new HashMap<>();
+        addAttribute(VALUE, value, attributes);
+        addAttribute(TIME_UNIT, gauge.baseTimeUnit().name().toLowerCase(), attributes);
+        //process meter's name, type and tags
+        addMeterAsAttributes(gauge.getId(), attributes);
         return attributes;
     }
     
     @Override
     public Map<String, Object> writeSummary(DistributionSummary summary) {
-        Map<String, Object> attributes = new HashMap<String, Object>();
+        Map<String, Object> attributes = new HashMap<>();
         addAttribute(COUNT, summary.count(), attributes);          	
         addAttribute(AVG, summary.mean(), attributes);            		
         addAttribute(TOTAL, summary.totalAmount(), attributes);
@@ -162,13 +166,13 @@ public class NewRelicAgentClientProviderImpl implements NewRelicClientProvider {
 
     @Override
     public Map<String, Object> writeTimer(Timer timer) {
-        Map<String, Object> attributes = new HashMap<String, Object>();
-        TimeUnit timeUnit = TimeUnit.valueOf(timer.getId().getBaseUnit());
-        addAttribute(COUNT, (new Double(timer.count())).longValue(), attributes);
+        Map<String, Object> attributes = new HashMap<>();
+        TimeUnit timeUnit = timer.baseTimeUnit();
+        addAttribute(COUNT, timer.count(), attributes);
         addAttribute(AVG, timer.mean(timeUnit), attributes);
         addAttribute(TOTAL_TIME, timer.totalTime(timeUnit), attributes);		
         addAttribute(MAX, timer.max(timeUnit), attributes);
-        addAttribute(TIME_UNIT, timeUnit.toString().toLowerCase(), attributes);
+        addAttribute(TIME_UNIT, timeUnit.name().toLowerCase(), attributes);
         //process meter's name, type and tags
         addMeterAsAttributes(timer.getId(), attributes);
         return attributes;
@@ -176,12 +180,12 @@ public class NewRelicAgentClientProviderImpl implements NewRelicClientProvider {
 
     @Override
     public Map<String, Object> writeFunctionTimer(FunctionTimer timer) {
-        Map<String, Object> attributes = new HashMap<String, Object>();
-        TimeUnit timeUnit = TimeUnit.valueOf(timer.getId().getBaseUnit());
-        addAttribute(COUNT, (new Double(timer.count())).longValue(), attributes);
+        Map<String, Object> attributes = new HashMap<>();
+        TimeUnit timeUnit = timer.baseTimeUnit();
+        addAttribute(COUNT, timer.count(), attributes);
         addAttribute(AVG, timer.mean(timeUnit), attributes);
         addAttribute(TOTAL_TIME, timer.totalTime(timeUnit), attributes);
-        addAttribute(TIME_UNIT, timeUnit.toString().toLowerCase(), attributes);
+        addAttribute(TIME_UNIT, timeUnit.name().toLowerCase(), attributes);
         //process meter's name, type and tags
         addMeterAsAttributes(timer.getId(), attributes);
         return attributes;
@@ -189,7 +193,7 @@ public class NewRelicAgentClientProviderImpl implements NewRelicClientProvider {
 
     @Override
     public Map<String, Object> writeMeter(Meter meter) {
-        Map<String, Object> attributes = new HashMap<String, Object>();
+        Map<String, Object> attributes = new HashMap<>();
         for (Measurement measurement : meter.measure()) {
             double value = measurement.getValue();
             if (!Double.isFinite(value)) {
@@ -201,11 +205,11 @@ public class NewRelicAgentClientProviderImpl implements NewRelicClientProvider {
             return attributes;
         }
         //process meter's name, type and tags
-        addMeterAsAttributes(meter.getId(), attributes);	
-        return attributes;		
+        addMeterAsAttributes(meter.getId(), attributes);
+        return attributes;
     }
 
-    void addMeterAsAttributes(Meter.Id id, Map<String, Object> attributes) {
+    private void addMeterAsAttributes(Meter.Id id, Map<String, Object> attributes) {
         if (!config.meterNameEventTypeEnabled()) {
             // Include contextual attributes when publishing all metrics under a single categorical eventType,
             // NOT when publishing an eventType per Meter/metric name
@@ -219,7 +223,7 @@ public class NewRelicAgentClientProviderImpl implements NewRelicClientProvider {
         }
     }
 
-    void addAttribute(String key, Number value, Map<String, Object> attributes) {
+    private void addAttribute(String key, Number value, Map<String, Object> attributes) {
         //process other tags
         
         //Replicate DoubleFormat.wholeOrDecimal(value.doubleValue()) formatting behavior
@@ -232,14 +236,14 @@ public class NewRelicAgentClientProviderImpl implements NewRelicClientProvider {
         }
     }
     
-    void addAttribute(String key, String value, Map<String, Object> attributes) {
+    private void addAttribute(String key, String value, Map<String, Object> attributes) {
         //process other tags
         attributes.put(namingConvention.tagKey(key), namingConvention.tagValue(value));
     }
 
     void sendEvents(Meter.Id id, Map<String, Object> attributes) {
         //Delegate to New Relic Java Agent
-        if (attributes != null && attributes.isEmpty() == false) {
+        if (attributes != null && !attributes.isEmpty()) {
             String eventType = getEventType(id, config, namingConvention);
             try {
                 newRelicAgent.getInsights().recordCustomEvent(eventType, attributes);

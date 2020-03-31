@@ -33,23 +33,35 @@ public class PrometheusDistributionSummary extends AbstractDistributionSummary {
     private DoubleAdder amount = new DoubleAdder();
     private TimeWindowMax max;
 
-    PrometheusDistributionSummary(Id id, Clock clock, DistributionStatisticConfig distributionStatisticConfig, double scale) {
+    private final HistogramFlavor histogramFlavor;
+
+    PrometheusDistributionSummary(Id id, Clock clock, DistributionStatisticConfig distributionStatisticConfig, double scale, HistogramFlavor histogramFlavor) {
         super(id, clock,
                 DistributionStatisticConfig.builder()
                         .percentilesHistogram(false)
-                        .sla()
+                        .sla(new double[0])
                         .build()
                         .merge(distributionStatisticConfig),
                 scale, false);
 
+        this.histogramFlavor = histogramFlavor;
         this.max = new TimeWindowMax(clock, distributionStatisticConfig);
 
         if (distributionStatisticConfig.isPublishingHistogram()) {
-            histogram = new TimeWindowFixedBoundaryHistogram(clock, DistributionStatisticConfig.builder()
-                    .expiry(Duration.ofDays(1825)) // effectively never roll over
-                    .bufferLength(1)
-                    .build()
-                    .merge(distributionStatisticConfig), true);
+            switch (histogramFlavor) {
+                case Prometheus:
+                    histogram = new TimeWindowFixedBoundaryHistogram(clock, DistributionStatisticConfig.builder()
+                            .expiry(Duration.ofDays(1825)) // effectively never roll over
+                            .bufferLength(1)
+                            .build()
+                            .merge(distributionStatisticConfig), true);
+                    break;
+                case VictoriaMetrics:
+                    histogram = new FixedBoundaryVictoriaMetricsHistogram();
+                    break;
+                default:
+                    histogram = null;
+            }
         } else {
             histogram = null;
         }
@@ -78,6 +90,10 @@ public class PrometheusDistributionSummary extends AbstractDistributionSummary {
     @Override
     public double max() {
         return max.poll();
+    }
+
+    public HistogramFlavor histogramFlavor() {
+        return histogramFlavor;
     }
 
     @SuppressWarnings("EqualsWhichDoesntCheckParameterClass")

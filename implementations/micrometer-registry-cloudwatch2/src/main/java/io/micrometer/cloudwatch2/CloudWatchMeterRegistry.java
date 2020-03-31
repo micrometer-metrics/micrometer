@@ -20,7 +20,6 @@ import io.micrometer.core.instrument.config.MissingRequiredConfigurationExceptio
 import io.micrometer.core.instrument.step.StepMeterRegistry;
 import io.micrometer.core.instrument.util.NamedThreadFactory;
 import io.micrometer.core.instrument.util.StringUtils;
-import io.micrometer.core.instrument.util.TimeUtils;
 import io.micrometer.core.lang.Nullable;
 import io.micrometer.core.util.internal.logging.WarnThenDebugLogger;
 import software.amazon.awssdk.core.exception.AbortedException;
@@ -54,6 +53,7 @@ import static java.util.stream.StreamSupport.stream;
  * @author Jon Schneider
  * @author Johnny Lim
  * @author Pierre-Yves B.
+ * @since 1.2.0
  */
 public class CloudWatchMeterRegistry extends StepMeterRegistry {
 
@@ -91,14 +91,6 @@ public class CloudWatchMeterRegistry extends StepMeterRegistry {
         this.config = config;
         config().namingConvention(new CloudWatchNamingConvention());
         start(threadFactory);
-    }
-
-    @Override
-    public void start(ThreadFactory threadFactory) {
-        if (config.enabled()) {
-            logger.info("publishing metrics to cloudwatch every " + TimeUtils.format(config.step()));
-        }
-        super.start(threadFactory);
     }
 
     @Override
@@ -233,9 +225,14 @@ public class CloudWatchMeterRegistry extends StepMeterRegistry {
         // VisibleForTesting
         Stream<MetricDatum> functionTimerData(FunctionTimer timer) {
             // we can't know anything about max and percentiles originating from a function timer
+            double sum = timer.totalTime(getBaseTimeUnit());
+            if (!Double.isFinite(sum)) {
+                return Stream.empty();
+            }
             Stream.Builder<MetricDatum> metrics = Stream.builder();
             double count = timer.count();
             metrics.add(metricDatum(timer.getId(), "count", StandardUnit.COUNT, count));
+            metrics.add(metricDatum(timer.getId(), "sum", sum));
             if (count > 0) {
                 metrics.add(metricDatum(timer.getId(), "avg", timer.mean(getBaseTimeUnit())));
             }
@@ -303,7 +300,7 @@ public class CloudWatchMeterRegistry extends StepMeterRegistry {
         }
 
         private boolean isAcceptableTag(Tag tag) {
-            if (!StringUtils.isNotBlank(tag.getValue())) {
+            if (StringUtils.isBlank(tag.getValue())) {
                 warnThenDebugLogger.log("Dropping a tag with key '" + tag.getKey() + "' because its value is blank.");
                 return false;
             }

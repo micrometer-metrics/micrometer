@@ -111,14 +111,6 @@ public class WavefrontMeterRegistry extends PushMeterRegistry {
     }
 
     @Override
-    public void start(ThreadFactory threadFactory) {
-        if (config.enabled()) {
-            logger.info("publishing metrics to Wavefront every " + TimeUtils.format(config.step()));
-        }
-        super.start(threadFactory);
-    }
-
-    @Override
     protected <T> Gauge newGauge(Meter.Id id, @Nullable T obj, ToDoubleFunction<T> valueFunction) {
         return new DefaultGauge<>(id, obj, valueFunction);
     }
@@ -306,7 +298,7 @@ public class WavefrontMeterRegistry extends PushMeterRegistry {
                 .build()
                 .merge(DistributionStatisticConfig.DEFAULT);
     }
-
+  
     static String getWavefrontReportingUri(WavefrontConfig wavefrontConfig) {
         // proxy reporting is now http reporting on newer wavefront proxies.
         if (wavefrontConfig.uri().startsWith("proxy")) {

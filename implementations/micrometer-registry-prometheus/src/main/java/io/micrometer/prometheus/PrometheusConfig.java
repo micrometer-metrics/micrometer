@@ -52,4 +52,25 @@ public interface PrometheusConfig extends MeterRegistryConfig {
         String v = get(prefix() + ".step");
         return v == null ? Duration.ofMinutes(1) : Duration.parse(v);
     }
+
+    /**
+     * Histogram type for backing DistributionSummary and Timer
+     *
+     * @return Choose which type of histogram to use
+     * @since 1.4.0
+     */
+    default HistogramFlavor histogramFlavor() {
+        String v = get(prefix() + ".histogramFlavor");
+
+        // Default micrometer histogram implementation
+        if (v == null)
+            return HistogramFlavor.Prometheus;
+
+        for (HistogramFlavor flavor : HistogramFlavor.values()) {
+            if (flavor.toString().equalsIgnoreCase(v))
+                return flavor;
+        }
+
+        throw new IllegalArgumentException("Unrecognized histogram flavor '" + v + "' (check property " + prefix() + ".histogramFlavor)");
+    }
 }

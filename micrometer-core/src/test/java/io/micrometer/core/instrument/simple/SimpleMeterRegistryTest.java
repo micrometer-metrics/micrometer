@@ -48,7 +48,7 @@ class SimpleMeterRegistryTest {
     @Issue("#370")
     @Test
     void slasOnlyNoPercentileHistogram() {
-        DistributionSummary summary = DistributionSummary.builder("my.summary").sla(1, 2).register(registry);
+        DistributionSummary summary = DistributionSummary.builder("my.summary").sla(1.0, 2).register(registry);
         summary.record(1);
 
         Timer timer = Timer.builder("my.timer").sla(Duration.ofMillis(1)).register(registry);

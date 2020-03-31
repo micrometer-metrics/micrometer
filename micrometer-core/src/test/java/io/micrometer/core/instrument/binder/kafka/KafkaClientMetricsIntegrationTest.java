@@ -39,7 +39,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 @Testcontainers
 @Tag("docker")
-class KafkaClientMetricsIT {
+class KafkaClientMetricsIntegrationTest {
     @Container
     private KafkaContainer kafkaContainer = new KafkaContainer();
 
@@ -74,7 +74,7 @@ class KafkaClientMetricsIT {
 
         //Printing out for discovery purposes
         out.println("Meters from producer before sending:");
-        registry.getMeters().forEach(meter -> out.println(meter.getId() + " => " + meter.measure()));
+        printMeters(registry);
 
         int producerAndConsumerMetrics = registry.getMeters().size();
         assertThat(registry.getMeters()).hasSizeGreaterThan(producerMetrics);
@@ -88,7 +88,7 @@ class KafkaClientMetricsIT {
 
         //Printing out for discovery purposes
         out.println("Meters from producer after sending and consumer before poll:");
-        registry.getMeters().forEach(meter -> out.println(meter.getId() + " => " + meter.measure()));
+        printMeters(registry);
 
         int producerAndConsumerMetricsAfterSend = registry.getMeters().size();
         assertThat(registry.getMeters()).hasSizeGreaterThan(producerAndConsumerMetrics);
@@ -102,7 +102,7 @@ class KafkaClientMetricsIT {
 
         //Printing out for discovery purposes
         out.println("Meters from producer and consumer after polling:");
-        registry.getMeters().forEach(meter -> out.println(meter.getId() + " => " + meter.measure()));
+        printMeters(registry);
 
         assertThat(registry.getMeters()).hasSizeGreaterThan(producerAndConsumerMetricsAfterSend);
         assertThat(registry.getMeters())
@@ -111,6 +111,10 @@ class KafkaClientMetricsIT {
 
         //Printing out for discovery purposes
         out.println("All meters from producer and consumer:");
+        printMeters(registry);
+    }
+
+    private void printMeters(SimpleMeterRegistry registry) {
         registry.getMeters().forEach(meter -> out.println(meter.getId() + " => " + meter.measure()));
     }
 }

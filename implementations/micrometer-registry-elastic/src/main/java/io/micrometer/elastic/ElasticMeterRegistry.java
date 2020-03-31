@@ -20,7 +20,6 @@ import io.micrometer.core.instrument.distribution.HistogramSnapshot;
 import io.micrometer.core.instrument.step.StepMeterRegistry;
 import io.micrometer.core.instrument.util.MeterPartition;
 import io.micrometer.core.instrument.util.NamedThreadFactory;
-import io.micrometer.core.instrument.util.TimeUtils;
 import io.micrometer.core.ipc.http.HttpSender;
 import io.micrometer.core.ipc.http.HttpUrlConnectionSender;
 import io.micrometer.core.lang.NonNull;
@@ -152,14 +151,6 @@ public class ElasticMeterRegistry extends StepMeterRegistry {
         return new Builder(config);
     }
 
-    @Override
-    public void start(ThreadFactory threadFactory) {
-        if (config.enabled()) {
-            logger.info("publishing metrics to elastic every " + TimeUtils.format(config.step()));
-        }
-        super.start(threadFactory);
-    }
-
     private void createIndexTemplateIfNeeded() {
         if (checkedForIndexTemplate || !config.autoCreateIndex()) {
             return;
@@ -272,7 +263,7 @@ public class ElasticMeterRegistry extends StepMeterRegistry {
     }
 
     private String getTypePath() {
-        return majorVersion < 7 ? "/" + indexType() : TYPE_PATH_AFTER_VERSION_7;
+        return majorVersion < 7 ? "/" + config.documentType() : TYPE_PATH_AFTER_VERSION_7;
     }
 
     // VisibleForTesting
@@ -283,16 +274,6 @@ public class ElasticMeterRegistry extends StepMeterRegistry {
             count++;
         }
         return count;
-    }
-
-    /**
-     * Return index type. Default is 'doc'
-     * @implNote this only applies to Elasticsearch versions before 7.
-     * @return index type.
-     * @since 1.4.0
-     */
-    protected String indexType() {
-        return "doc";
     }
 
     /**
@@ -349,11 +330,15 @@ public class ElasticMeterRegistry extends StepMeterRegistry {
 
     // VisibleForTesting
     Optional<String> writeFunctionTimer(FunctionTimer timer) {
-        return Optional.of(writeDocument(timer, builder -> {
-            builder.append(",\"count\":").append(timer.count());
-            builder.append(",\"sum\" :").append(timer.totalTime(getBaseTimeUnit()));
-            builder.append(",\"mean\":").append(timer.mean(getBaseTimeUnit()));
-        }));
+        double sum = timer.totalTime(getBaseTimeUnit());
+        if (Double.isFinite(sum)) {
+            return Optional.of(writeDocument(timer, builder -> {
+                builder.append(",\"count\":").append(timer.count());
+                builder.append(",\"sum\":").append(sum);
+                builder.append(",\"mean\":").append(timer.mean(getBaseTimeUnit()));
+            }));
+        }
+        return Optional.empty();
     }
 
     // VisibleForTesting

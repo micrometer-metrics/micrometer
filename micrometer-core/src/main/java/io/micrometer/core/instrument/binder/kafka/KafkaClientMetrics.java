@@ -17,7 +17,6 @@ package io.micrometer.core.instrument.binder.kafka;
 
 import io.micrometer.core.annotation.Incubating;
 import io.micrometer.core.instrument.Tag;
-import io.micrometer.core.instrument.binder.MeterBinder;
 import io.micrometer.core.lang.NonNullApi;
 import io.micrometer.core.lang.NonNullFields;
 import org.apache.kafka.clients.admin.AdminClient;
@@ -40,7 +39,7 @@ import org.apache.kafka.common.Metric;
 @Incubating(since = "1.4.0")
 @NonNullApi
 @NonNullFields
-public class KafkaClientMetrics extends KafkaMetrics implements MeterBinder {
+public class KafkaClientMetrics extends KafkaMetrics {
 
     /**
      * Kafka {@link Producer} metrics binder

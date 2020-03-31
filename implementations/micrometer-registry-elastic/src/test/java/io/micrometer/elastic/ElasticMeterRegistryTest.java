@@ -76,6 +76,13 @@ class ElasticMeterRegistryTest {
     }
 
     @Test
+    void nanFunctionTimerShouldNotBeWritten() {
+        FunctionTimer timer = FunctionTimer.builder("myFunctionTimer", Double.NaN, Number::longValue, Number::doubleValue, TimeUnit.MILLISECONDS).register(registry);
+        clock.add(config.step());
+        assertThat(registry.writeFunctionTimer(timer)).isEmpty();
+    }
+
+    @Test
     void writeGauge() {
         Gauge gauge = Gauge.builder("myGauge", 123.0, Number::doubleValue).register(registry);
         assertThat(registry.writeGauge(gauge))
@@ -281,7 +288,6 @@ class ElasticMeterRegistryTest {
         assertThat(ElasticMeterRegistry.getMajorVersion(responseBody)).isEqualTo(5);
     }
     
-    @Issue("#1891")
     @Test
     void canExtendElasticMeterRegistry() {
         ElasticMeterRegistry registry = new ElasticMeterRegistry(config, clock) {
@@ -289,14 +295,8 @@ class ElasticMeterRegistryTest {
             public String indexName() {
                 return "my-metrics";
             }
-
-            @Override
-            public String indexType() {
-                return "my-metric";
-            }
         };
         assertThat(registry.indexName()).isEqualTo("my-metrics");
-        assertThat(registry.indexType()).isEqualTo("my-metric");
     }
 
 

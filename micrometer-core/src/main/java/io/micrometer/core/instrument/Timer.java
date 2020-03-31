@@ -15,6 +15,7 @@
  */
 package io.micrometer.core.instrument;
 
+import io.micrometer.core.annotation.Incubating;
 import io.micrometer.core.annotation.Timed;
 import io.micrometer.core.instrument.distribution.CountAtBucket;
 import io.micrometer.core.instrument.distribution.DistributionStatisticConfig;
@@ -40,6 +41,7 @@ import java.util.function.Supplier;
 public interface Timer extends Meter, HistogramSupport {
     /**
      * Start a timing sample using the {@link Clock#SYSTEM System clock}.
+     *
      * @return A timing sample with start time recorded.
      * @since 1.1.0
      */
@@ -49,6 +51,7 @@ public interface Timer extends Meter, HistogramSupport {
 
     /**
      * Start a timing sample.
+     *
      * @param registry a meter registry whose clock is to be used
      * @return A timing sample with start time recorded.
      */
@@ -58,6 +61,7 @@ public interface Timer extends Meter, HistogramSupport {
 
     /**
      * Start a timing sample.
+     *
      * @param clock a clock to be used
      * @return A timing sample with start time recorded.
      */
@@ -154,11 +158,11 @@ public interface Timer extends Meter, HistogramSupport {
     default <T> Callable<T> wrap(Callable<T> f) {
         return () -> recordCallable(f);
     }
-    
+
     /**
      * Wrap a {@link Supplier} so that it is timed when invoked.
      *
-     * @param f The {@code Supplier} to time when it is invoked.
+     * @param f   The {@code Supplier} to time when it is invoked.
      * @param <T> The return type of the {@code Supplier} result.
      * @return The wrapped supplier.
      * @since 1.2.0
@@ -248,6 +252,13 @@ public interface Timer extends Meter, HistogramSupport {
      * sample is stopped, allowing you to determine the timer's tags at the last minute.
      */
     class Sample {
+        /**
+         * Tags determined at the start of a request. Useful for event-driven APIs where
+         * some tags are derived from a start event, and others are determined by a terminal
+         * event in some finite state machine.
+         */
+        private Tags tags = Tags.empty();
+
         private final long startTime;
         private final Clock clock;
 
@@ -257,7 +268,8 @@ public interface Timer extends Meter, HistogramSupport {
         }
 
         /**
-         * Records the duration of the operation
+         * Records the duration of the operation. Using this method, any tags
+         * stored on the sample are NOT recorded with the timing.
          *
          * @param timer The timer to record the sample to.
          * @return The total duration of the sample in nanoseconds
@@ -266,6 +278,41 @@ public interface Timer extends Meter, HistogramSupport {
             long durationNs = clock.monotonicTime() - startTime;
             timer.record(durationNs, TimeUnit.NANOSECONDS);
             return durationNs;
+        }
+
+        /**
+         * Records the duration of the operation. Using this method, any tags
+         * stored on the sample are recorded with the timing.
+         *
+         * @param registry     The registry to which the timer will be registered.
+         * @param timerBuilder The timer to record the sample to.
+         * @return The total duration of the sample in nanoseconds
+         * @since 1.4.0
+         */
+        @Incubating(since = "1.4.0")
+        public long stop(MeterRegistry registry, Timer.Builder timerBuilder) {
+            return stop(timerBuilder.tags(tags).register(registry));
+        }
+
+        /**
+         * @param tags Must be an even number of arguments representing key/value pairs of tags.
+         * @return This builder.
+         * @since 1.4.0
+         */
+        @Incubating(since = "1.4.0")
+        public Sample tags(String... tags) {
+            return tags(Tags.of(tags));
+        }
+
+        /**
+         * @param tags Tags to add to the eventual timer.
+         * @return The sample with added tags.
+         * @since 1.4.0
+         */
+        @Incubating(since = "1.4.0")
+        public Sample tags(Iterable<Tag> tags) {
+            this.tags = this.tags.and(tags);
+            return this;
         }
     }
 
@@ -378,7 +425,7 @@ public interface Timer extends Meter, HistogramSupport {
          */
         public Builder sla(@Nullable Duration... sla) {
             if (sla != null) {
-                this.distributionConfigBuilder.sla(Arrays.stream(sla).mapToLong(Duration::toNanos).toArray());
+                this.distributionConfigBuilder.sla(Arrays.stream(sla).mapToDouble(Duration::toNanos).toArray());
             }
             return this;
         }
@@ -392,7 +439,7 @@ public interface Timer extends Meter, HistogramSupport {
          */
         public Builder minimumExpectedValue(@Nullable Duration min) {
             if (min != null)
-                this.distributionConfigBuilder.minimumExpectedValue(min.toNanos());
+                this.distributionConfigBuilder.minimumExpectedValue((double) min.toNanos());
             return this;
         }
 
@@ -405,7 +452,7 @@ public interface Timer extends Meter, HistogramSupport {
          */
         public Builder maximumExpectedValue(@Nullable Duration max) {
             if (max != null)
-                this.distributionConfigBuilder.maximumExpectedValue(max.toNanos());
+                this.distributionConfigBuilder.maximumExpectedValue((double) max.toNanos());
             return this;
         }
 

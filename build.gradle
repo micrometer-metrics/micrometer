@@ -70,6 +70,10 @@ subprojects {
             compileJava {
                 options.encoding = 'UTF-8'
                 options.compilerArgs << '-Xlint:unchecked' << '-Xlint:deprecation'
+
+                sourceCompatibility = JavaVersion.VERSION_1_8
+                targetCompatibility = JavaVersion.VERSION_1_8
+
                 // ensure Java 8 baseline is enforced for main source
                 if (JavaVersion.current().isJava9Compatible()) {
                     options.compilerArgs.addAll(['--release', '8'])
@@ -78,8 +82,8 @@ subprojects {
             compileTestJava {
                 options.encoding = 'UTF-8'
                 options.compilerArgs << '-Xlint:unchecked' << '-Xlint:deprecation'
-                sourceCompatibility = JavaVersion.current()
-                targetCompatibility = JavaVersion.current()
+                sourceCompatibility = JavaVersion.VERSION_1_8
+                targetCompatibility = JavaVersion.VERSION_1_8
             }
         }
 
@@ -100,11 +104,6 @@ subprojects {
             useJUnitPlatform {
                 includeTags 'docker'
             }
-        }
-
-        checkstyle {
-            toolVersion = '8.23'
-            configFile = rootProject.file('config/checkstyle/checkstyle.xml')
         }
 
         license {
@@ -201,7 +200,7 @@ subprojects {
 }
 
 wrapper {
-    gradleVersion = '6.2.2'
+    gradleVersion = '6.3'
 }
 
 defaultTasks 'build'

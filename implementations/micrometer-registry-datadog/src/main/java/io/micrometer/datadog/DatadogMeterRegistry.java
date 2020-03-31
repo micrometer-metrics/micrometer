@@ -20,7 +20,6 @@ import io.micrometer.core.instrument.config.MissingRequiredConfigurationExceptio
 import io.micrometer.core.instrument.step.StepMeterRegistry;
 import io.micrometer.core.instrument.util.MeterPartition;
 import io.micrometer.core.instrument.util.NamedThreadFactory;
-import io.micrometer.core.instrument.util.TimeUtils;
 import io.micrometer.core.ipc.http.HttpSender;
 import io.micrometer.core.ipc.http.HttpUrlConnectionSender;
 import io.micrometer.core.lang.Nullable;
@@ -99,7 +98,6 @@ public class DatadogMeterRegistry extends StepMeterRegistry {
             if (config.applicationKey() == null) {
                 logger.info("An application key must be configured in order for unit information to be sent to Datadog.");
             }
-            logger.info("publishing metrics to datadog every " + TimeUtils.format(config.step()));
         }
         super.start(threadFactory);
     }
@@ -263,10 +261,13 @@ public class DatadogMeterRegistry extends StepMeterRegistry {
     /**
      * Set up metric metadata once per time series
      */
-    private void postMetricDescriptionMetadata(String metricName, DatadogMetricMetadata metadata) {
+    // VisibleForTesting
+    void postMetricDescriptionMetadata(String metricName, DatadogMetricMetadata metadata) {
         // already posted the metadata for this metric
-        if (verifiedMetadata.contains(metricName) || !metadata.isDescriptionsEnabled())
+        if (!metadata.isDescriptionsEnabled() || metadata.editDescriptionMetadataBody() == null
+                || verifiedMetadata.contains(metricName)) {
             return;
+        }
 
         try {
             httpClient

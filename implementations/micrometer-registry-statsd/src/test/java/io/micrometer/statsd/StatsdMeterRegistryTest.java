@@ -304,7 +304,7 @@ class StatsdMeterRegistryTest {
     void slasOnlyNoPercentileHistogram(StatsdFlavor flavor) {
         StatsdConfig config = configWithFlavor(flavor);
         MeterRegistry registry = new StatsdMeterRegistry(config, clock);
-        DistributionSummary summary = DistributionSummary.builder("my.summary").sla(1, 2).register(registry);
+        DistributionSummary summary = DistributionSummary.builder("my.summary").sla(1.0, 2).register(registry);
         summary.record(1);
 
         Timer timer = Timer.builder("my.timer").sla(Duration.ofMillis(1)).register(registry);
@@ -343,7 +343,7 @@ class StatsdMeterRegistryTest {
     @Test
     void distributionSummariesWithSlasHaveInfBucket() {
         StatsdMeterRegistry registry = new StatsdMeterRegistry(configWithFlavor(StatsdFlavor.ETSY), clock);
-        DistributionSummary summary = DistributionSummary.builder("my.distribution").sla(1).register(registry);
+        DistributionSummary summary = DistributionSummary.builder("my.distribution").sla(1.0).register(registry);
 
         // A io.micrometer.core.instrument.search.MeterNotFoundException is thrown if the gauge isn't present
         registry.get("my.distribution.histogram").tag("le", "+Inf").gauge();

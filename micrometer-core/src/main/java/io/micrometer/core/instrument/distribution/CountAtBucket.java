@@ -26,15 +26,23 @@ import java.util.concurrent.TimeUnit;
  */
 public final class CountAtBucket {
 
-    private final long bucket;
+    private final double bucket;
     private final double count;
 
+    /**
+     * @deprecated Use {@link #CountAtBucket(double, double)} instead.
+     */
+    @Deprecated
     public CountAtBucket(long bucket, double count) {
+        this((double) bucket, count);
+    }
+
+    public CountAtBucket(double bucket, double count) {
         this.bucket = bucket;
         this.count = count;
     }
 
-    public long bucket() {
+    public double bucket() {
         return bucket;
     }
 
@@ -44,6 +52,13 @@ public final class CountAtBucket {
 
     public double count() {
         return count;
+    }
+
+    boolean isPositiveInf() {
+        // check for Long.MAX_VALUE to maintain backwards compatibility
+        return bucket == Double.POSITIVE_INFINITY ||
+                bucket == Double.MAX_VALUE ||
+                (long) bucket == Long.MAX_VALUE;
     }
 
     @Override
@@ -58,16 +73,17 @@ public final class CountAtBucket {
 
         CountAtBucket that = (CountAtBucket) o;
 
-        return bucket == that.bucket && Double.compare(that.count, count) == 0;
+        return Double.compare(that.bucket, bucket) == 0 && Double.compare(that.count, count) == 0;
     }
 
     @Override
     public int hashCode() {
         int result;
-        long temp;
-        result = (int) (bucket ^ (bucket >>> 32));
-        temp = Double.doubleToLongBits(count);
-        result = 31 * result + (int) (temp ^ (temp >>> 32));
+        long tempCount, tempBucket;
+        tempBucket = Double.doubleToLongBits(bucket);
+        result = (int) (tempBucket ^ (tempBucket >>> 32));
+        tempCount = Double.doubleToLongBits(count);
+        result = 31 * result + (int) (tempCount ^ (tempCount >>> 32));
         return result;
     }
 }

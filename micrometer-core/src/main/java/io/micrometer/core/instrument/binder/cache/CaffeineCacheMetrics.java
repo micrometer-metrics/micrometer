@@ -144,7 +144,7 @@ public class CaffeineCacheMetrics extends CacheMeterBinder {
 
     @Override
     protected void bindImplementationSpecificMetrics(MeterRegistry registry) {
-        Gauge.builder("cache.eviction.weight", cache, c -> c.stats().evictionWeight())
+        FunctionCounter.builder("cache.eviction.weight", cache, c -> c.stats().evictionWeight())
                 .tags(getTagsWithCacheName())
                 .description("The sum of weights of evicted entries. This total does not include manual invalidations.")
                 .register(registry);

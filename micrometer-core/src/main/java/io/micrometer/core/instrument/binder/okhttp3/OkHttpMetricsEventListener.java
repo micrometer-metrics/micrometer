@@ -26,16 +26,21 @@ import okhttp3.*;
 
 import java.io.IOException;
 import java.lang.reflect.Method;
-import java.util.Collections;
+import java.util.ArrayList;
+import java.util.Collection;
 import java.util.Optional;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.TimeUnit;
+import java.util.function.BiFunction;
 import java.util.function.Function;
+
+import static java.util.stream.Collectors.toList;
+import static java.util.stream.StreamSupport.stream;
 
 /**
  * {@link EventListener} for collecting metrics from {@link OkHttpClient}.
- *
+ * <p>
  * {@literal uri} tag is usually limited to URI patterns to mitigate tag cardinality explosion but {@link OkHttpClient}
  * doesn't provide URI patterns. We provide {@value URI_PATTERN} header to support {@literal uri} tag or you can
  * configure a {@link Builder#uriMapper(Function) URI mapper} to provide your own tag values for {@literal uri} tag.
@@ -71,13 +76,19 @@ public class OkHttpMetricsEventListener extends EventListener {
     private final String requestsMetricName;
     private final Function<Request, String> urlMapper;
     private final Iterable<Tag> extraTags;
-    private final ConcurrentMap<Call, CallState> callState = new ConcurrentHashMap<>();
+    private final Iterable<BiFunction<Request, Response, Tag>> contextSpecificTags;
 
-    OkHttpMetricsEventListener(MeterRegistry registry, String requestsMetricName, Function<Request, String> urlMapper, Iterable<Tag> extraTags) {
+    // VisibleForTesting
+    final ConcurrentMap<Call, CallState> callState = new ConcurrentHashMap<>();
+
+    protected OkHttpMetricsEventListener(MeterRegistry registry, String requestsMetricName, Function<Request, String> urlMapper,
+                                         Iterable<Tag> extraTags,
+                                         Iterable<BiFunction<Request, Response, Tag>> contextSpecificTags) {
         this.registry = registry;
         this.requestsMetricName = requestsMetricName;
         this.urlMapper = urlMapper;
         this.extraTags = extraTags;
+        this.contextSpecificTags = contextSpecificTags;
     }
 
     public static Builder builder(MeterRegistry registry, String name) {
@@ -99,6 +110,11 @@ public class OkHttpMetricsEventListener extends EventListener {
     }
 
     @Override
+    public void callEnd(Call call) {
+        callState.remove(call);
+    }
+
+    @Override
     public void responseHeadersEnd(Call call, Response response) {
         CallState state = callState.remove(call);
         if (state != null) {
@@ -116,18 +132,23 @@ public class OkHttpMetricsEventListener extends EventListener {
 
         Tags requestTags = requestAvailable ? getRequestTags(request) : Tags.empty();
 
-        Iterable<Tag> tags = Tags.concat(extraTags, Tags.of(
-            "method", requestAvailable ? request.method() : "UNKNOWN",
-            "uri", requestAvailable ? uri : "UNKNOWN",
-            "status", getStatusMessage(state.response, state.exception),
-            "host", requestAvailable ? request.url().host() : "UNKNOWN"
-        )).and(requestTags);
+        Iterable<Tag> tags = Tags.of(
+                        "method", requestAvailable ? request.method() : "UNKNOWN",
+                        "uri", requestAvailable ? uri : "UNKNOWN",
+                        "status", getStatusMessage(state.response, state.exception),
+                        "host", requestAvailable ? request.url().host() : "UNKNOWN"
+                )
+                .and(extraTags)
+                .and(stream(contextSpecificTags.spliterator(), false)
+                        .map(contextTag -> contextTag.apply(request, state.response))
+                        .collect(toList()))
+                .and(requestTags);
 
         Timer.builder(this.requestsMetricName)
-            .tags(tags)
-            .description("Timer of OkHttp operation")
-            .register(registry)
-            .record(registry.config().clock().monotonicTime() - state.startTime, TimeUnit.NANOSECONDS);
+                .tags(tags)
+                .description("Timer of OkHttp operation")
+                .register(registry)
+                .record(registry.config().clock().monotonicTime() - state.startTime, TimeUnit.NANOSECONDS);
     }
 
     private Tags getRequestTags(Request request) {
@@ -175,7 +196,8 @@ public class OkHttpMetricsEventListener extends EventListener {
         private final MeterRegistry registry;
         private final String name;
         private Function<Request, String> uriMapper = (request) -> Optional.ofNullable(request.header(URI_PATTERN)).orElse("none");
-        private Iterable<Tag> tags = Collections.emptyList();
+        private Tags tags = Tags.empty();
+        private Collection<BiFunction<Request, Response, Tag>> contextSpecificTags = new ArrayList<>();
 
         Builder(MeterRegistry registry, String name) {
             this.registry = registry;
@@ -183,7 +205,23 @@ public class OkHttpMetricsEventListener extends EventListener {
         }
 
         public Builder tags(Iterable<Tag> tags) {
-            this.tags = tags;
+            this.tags = this.tags.and(tags);
+            return this;
+        }
+
+        /**
+         * @since 1.5.0
+         */
+        public Builder tag(Tag tag) {
+            this.tags = this.tags.and(tag);
+            return this;
+        }
+
+        /**
+         * @since 1.5.0
+         */
+        public Builder tag(BiFunction<Request, Response, Tag> contextSpecificTag) {
+            this.contextSpecificTags.add(contextSpecificTag);
             return this;
         }
 
@@ -193,7 +231,7 @@ public class OkHttpMetricsEventListener extends EventListener {
         }
 
         public OkHttpMetricsEventListener build() {
-            return new OkHttpMetricsEventListener(registry, name, uriMapper, tags);
+            return new OkHttpMetricsEventListener(registry, name, uriMapper, tags, contextSpecificTags);
         }
     }
 }

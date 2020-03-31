@@ -18,7 +18,7 @@ package io.micrometer.core.samples;
 import com.github.charithe.kafka.EphemeralKafkaBroker;
 import com.github.charithe.kafka.KafkaHelper;
 import io.micrometer.core.instrument.MeterRegistry;
-import io.micrometer.core.instrument.binder.kafka.KafkaConsumerMetrics;
+import io.micrometer.core.instrument.binder.kafka.KafkaClientMetrics;
 import io.micrometer.core.samples.utils.SampleConfig;
 import org.apache.kafka.clients.consumer.KafkaConsumer;
 import org.apache.kafka.clients.producer.KafkaProducer;
@@ -37,11 +37,12 @@ public class KafkaMetricsSample {
         broker.start();
         KafkaHelper kafkaHelper = KafkaHelper.createFor(broker);
 
-        MeterRegistry registry = SampleConfig.myMonitoringSystem();
-        new KafkaConsumerMetrics().bindTo(registry);
-
         KafkaConsumer<String, String> consumer = kafkaHelper.createStringConsumer();
         KafkaProducer<String, String> producer = kafkaHelper.createStringProducer();
+
+        MeterRegistry registry = SampleConfig.myMonitoringSystem();
+        new KafkaClientMetrics(consumer).bindTo(registry);
+        new KafkaClientMetrics(producer).bindTo(registry);
 
         consumer.subscribe(singletonList(TOPIC));
 
