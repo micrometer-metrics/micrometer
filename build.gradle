@@ -106,11 +106,6 @@ subprojects {
             }
         }
 
-        checkstyle {
-            toolVersion = '8.23'
-            configFile = rootProject.file('config/checkstyle/checkstyle.xml')
-        }
-
         license {
             ext.year = Calendar.getInstance().get(Calendar.YEAR)
             skipExistingHeaders = true
@@ -205,7 +200,7 @@ subprojects {
 }
 
 wrapper {
-    gradleVersion = '6.2.2'
+    gradleVersion = '6.3'
 }
 
 defaultTasks 'build'

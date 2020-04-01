@@ -23,6 +23,7 @@ import io.micrometer.core.instrument.step.StepRegistryConfig;
  * Configuration for CloudWatch exporting.
  *
  * @author Dawid Kublik
+ * @since 1.2.0
  */
 public interface CloudWatchConfig extends StepRegistryConfig {
 
