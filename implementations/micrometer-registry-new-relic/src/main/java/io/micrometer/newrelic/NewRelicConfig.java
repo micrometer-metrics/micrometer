@@ -15,7 +15,10 @@
  */
 package io.micrometer.newrelic;
 
+import java.time.Duration;
+
 import io.micrometer.core.instrument.step.StepRegistryConfig;
+import io.micrometer.core.ipc.http.HttpSender;
 
 /**
  * Configuration for {@link NewRelicMeterRegistry}.
@@ -85,6 +88,28 @@ public interface NewRelicConfig extends StepRegistryConfig {
     default String uri() {
         String v = get(prefix() + ".uri");
         return (v == null) ? "https://insights-collector.newrelic.com" : v;
+    }
+    
+    /**
+     * @return The connection timeout for requests to the backend. The default is
+     * 1 second.
+     * Connect timeout and read timeout have different meanings depending on the HTTP client. Configure
+     * timeout options on your {@link HttpSender} of choice instead.
+     */
+    default Duration connectTimeout() {
+        String v = get(prefix() + ".connectTimeout");
+        return v == null ? Duration.ofSeconds(1) : Duration.parse(v);
+    }
+
+    /**
+     * @return The read timeout for requests to the backend. The default is
+     * 10 seconds.
+     * Connect timeout and read timeout have different meanings depending on the HTTP client. Configure
+     * timeout options on your {@link HttpSender} of choice instead.
+     */
+    default Duration readTimeout() {
+        String v = get(prefix() + ".readTimeout");
+        return v == null ? Duration.ofSeconds(10) : Duration.parse(v);
     }
 
 }

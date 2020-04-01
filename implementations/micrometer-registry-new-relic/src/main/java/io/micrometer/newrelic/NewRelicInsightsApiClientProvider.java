@@ -66,12 +66,10 @@ public class NewRelicInsightsApiClientProvider implements NewRelicClientProvider
     private final NamingConvention namingConvention;
     private final String insightsEndpoint;
 
-    @SuppressWarnings("deprecation")
     public NewRelicInsightsApiClientProvider(NewRelicConfig config) {
         this(config, new HttpUrlConnectionSender(config.connectTimeout(), config.readTimeout()), new NewRelicNamingConvention());
     }
     
-    @SuppressWarnings("deprecation")
     public NewRelicInsightsApiClientProvider(NewRelicConfig config, String proxyHost, int proxyPort) {
         this(config, new HttpUrlConnectionSender(config.connectTimeout(), config.readTimeout(), 
                             new Proxy(Proxy.Type.HTTP, new InetSocketAddress(proxyHost, proxyPort))), new NewRelicNamingConvention());
