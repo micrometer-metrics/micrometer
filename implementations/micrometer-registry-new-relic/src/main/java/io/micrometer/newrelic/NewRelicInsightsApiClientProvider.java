@@ -62,7 +62,8 @@ public class NewRelicInsightsApiClientProvider implements NewRelicClientProvider
     private final Logger logger = LoggerFactory.getLogger(NewRelicInsightsApiClientProvider.class);
 
     private final NewRelicConfig config;
-    private final HttpSender httpClient;
+    // VisibleForTesting
+    final HttpSender httpClient;
     private final NamingConvention namingConvention;
     private final String insightsEndpoint;
 

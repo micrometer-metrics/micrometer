@@ -925,6 +925,24 @@ class NewRelicMeterRegistryTest {
 
         assertThat(getInsightsAgentClientProvider(config)).isNotNull();
     }
+
+    @Test
+    void canCustomizeHttpSenderViaBuilder_deprecated() {
+        HttpSender httpSender = mock(HttpSender.class);
+        NewRelicClientProvider clientProvider = NewRelicMeterRegistry.builder(insightsApiConfig).httpClient(httpSender).build().clientProvider;
+        assertThat(clientProvider).isInstanceOf(NewRelicInsightsApiClientProvider.class);
+        assertThat(((NewRelicInsightsApiClientProvider) clientProvider).httpClient).isEqualTo(httpSender);
+    }
+
+    @Test
+    void canCustomizeHttpSenderViaBuilder() {
+        HttpSender httpSender = mock(HttpSender.class);
+        NewRelicClientProvider clientProvider = NewRelicMeterRegistry.builder(insightsApiConfig)
+                .clientProvider(new NewRelicInsightsApiClientProvider(insightsApiConfig, httpSender, new NewRelicNamingConvention()))
+                .build().clientProvider;
+        assertThat(clientProvider).isInstanceOf(NewRelicInsightsApiClientProvider.class);
+        assertThat(((NewRelicInsightsApiClientProvider) clientProvider).httpClient).isEqualTo(httpSender);
+    }
     
     static class MockHttpSender implements HttpSender {
         
