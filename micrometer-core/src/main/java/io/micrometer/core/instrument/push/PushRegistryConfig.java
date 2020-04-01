@@ -44,9 +44,15 @@ public interface PushRegistryConfig extends MeterRegistryConfig {
     }
 
     /**
+     * Return the number of threads to use with the scheduler.
+     *
+     * Note that this configuration is NOT supported.
+     *
      * @return The number of threads to use with the scheduler. The default is
      * 2 threads.
+     * @deprecated since 1.1.13 because this configuration is not used
      */
+    @Deprecated
     default int numThreads() {
         String v = get(prefix() + ".numThreads");
         return v == null ? 2 : Integer.parseInt(v);
