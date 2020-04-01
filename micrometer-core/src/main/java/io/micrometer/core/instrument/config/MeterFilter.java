@@ -324,11 +324,12 @@ public interface MeterFilter {
     /**
      * Set a maximum expected value on any {@link DistributionSummary} whose name begins with the given prefix.
      *
-     * @deprecated Use {@link #maxExpected(String, double)} instead.
+     * @deprecated Use {@link #maxExpected(String, double)} instead since 1.4.0.
      * @param prefix Apply the maximum only to distribution summaries whose name begins with this prefix.
      * @param max    The maximum expected value of the distribution summary.
      * @return A filter that applies a maximum expected value to a distribution summary.
      */
+    @Deprecated
     static MeterFilter maxExpected(String prefix, long max) {
         return maxExpected(prefix, (double) max);
     }
@@ -339,6 +340,7 @@ public interface MeterFilter {
      * @param prefix Apply the maximum only to distribution summaries whose name begins with this prefix.
      * @param max    The maximum expected value of the distribution summary.
      * @return A filter that applies a maximum expected value to a distribution summary.
+     * @since 1.4.0
      */
     static MeterFilter maxExpected(String prefix, double max) {
         return new MeterFilter() {
@@ -380,11 +382,12 @@ public interface MeterFilter {
     /**
      * Set a minimum expected value on any {@link DistributionSummary} whose name begins with the given prefix.
      *
-     * @deprecated Use {@link #minExpected(String, double)} instead.
+     * @deprecated Use {@link #minExpected(String, double)} instead since 1.4.0.
      * @param prefix Apply the minimum only to distribution summaries whose name begins with this prefix.
      * @param min    The minimum expected value of the distribution summary.
      * @return A filter that applies a minimum expected value to a distribution summary.
      */
+    @Deprecated
     static MeterFilter minExpected(String prefix, long min) {
         return minExpected(prefix, (double) min);
     }
@@ -395,6 +398,7 @@ public interface MeterFilter {
      * @param prefix Apply the minimum only to distribution summaries whose name begins with this prefix.
      * @param min    The minimum expected value of the distribution summary.
      * @return A filter that applies a minimum expected value to a distribution summary.
+     * @since 1.4.0
      */
     static MeterFilter minExpected(String prefix, double min) {
         return new MeterFilter() {
