@@ -35,7 +35,6 @@ public class NewRelicMeterRegistry extends StepMeterRegistry {
 
     private static final ThreadFactory DEFAULT_THREAD_FACTORY = new NamedThreadFactory("new-relic-metrics-publisher");
 
-    private final NewRelicConfig config;
     // VisibleForTesting
     final NewRelicClientProvider clientProvider;
 
@@ -69,7 +68,6 @@ public class NewRelicMeterRegistry extends StepMeterRegistry {
                     : new NewRelicInsightsApiClientProvider(config, namingConvention);
         }
 
-        this.config = config;
         this.clientProvider = clientProvider;
 
         config().namingConvention(namingConvention);
