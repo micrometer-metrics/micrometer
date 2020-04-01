@@ -32,6 +32,7 @@ import io.micrometer.core.instrument.internal.DefaultMeter;
 import io.micrometer.core.instrument.push.PushMeterRegistry;
 import io.micrometer.core.instrument.util.MeterPartition;
 import io.micrometer.core.instrument.util.NamedThreadFactory;
+import io.micrometer.core.ipc.http.HttpSender;
 import io.micrometer.core.lang.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -329,6 +330,15 @@ public class WavefrontMeterRegistry extends PushMeterRegistry {
 
         public Builder threadFactory(ThreadFactory threadFactory) {
             this.threadFactory = threadFactory;
+            return this;
+        }
+
+        /**
+         * This call no-longer affects the transport used to send metrics to Wavefront. Use
+         * {@link #wavefrontSender(WavefrontSender)} to supply your own transport (whether proxy or direct ingestion).
+         */
+        @Deprecated
+        public Builder httpClient(@SuppressWarnings("unused") HttpSender httpClient) {
             return this;
         }
 
