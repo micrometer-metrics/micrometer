@@ -63,12 +63,17 @@ public class NewRelicInsightsApiClientProvider implements NewRelicClientProvider
 
     private final NewRelicConfig config;
     private final HttpSender httpClient;
-    private final NamingConvention namingConvention;
     private final String insightsEndpoint;
+    // VisibleForTesting
+    final NamingConvention namingConvention;
 
-    @SuppressWarnings("deprecation")
     public NewRelicInsightsApiClientProvider(NewRelicConfig config) {
-        this(config, new HttpUrlConnectionSender(config.connectTimeout(), config.readTimeout()), new NewRelicNamingConvention());
+        this(config, new NewRelicNamingConvention());
+    }
+    
+    @SuppressWarnings("deprecation")
+    public NewRelicInsightsApiClientProvider(NewRelicConfig config, NamingConvention namingConvention) {
+        this(config, new HttpUrlConnectionSender(config.connectTimeout(), config.readTimeout()), namingConvention);
     }
     
     @SuppressWarnings("deprecation")

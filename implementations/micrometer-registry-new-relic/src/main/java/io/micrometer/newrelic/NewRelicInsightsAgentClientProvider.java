@@ -53,10 +53,15 @@ public class NewRelicInsightsAgentClientProvider implements NewRelicClientProvid
 
     private final NewRelicConfig config;
     private final Agent newRelicAgent;
-    private final NamingConvention namingConvention;
+    // VisibleForTesting
+    final NamingConvention namingConvention;
     
     public NewRelicInsightsAgentClientProvider(NewRelicConfig config) {
-        this(config, NewRelic.getAgent(), new NewRelicNamingConvention());
+        this(config, new NewRelicNamingConvention());
+    }
+    
+    public NewRelicInsightsAgentClientProvider(NewRelicConfig config, NamingConvention namingConvention) {
+        this(config, NewRelic.getAgent(), namingConvention);
     }
 
     public NewRelicInsightsAgentClientProvider(NewRelicConfig config, Agent newRelicAgent, NamingConvention namingConvention) {

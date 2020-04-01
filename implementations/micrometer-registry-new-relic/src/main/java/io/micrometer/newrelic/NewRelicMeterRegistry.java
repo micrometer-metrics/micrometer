@@ -65,8 +65,8 @@ public class NewRelicMeterRegistry extends StepMeterRegistry {
         if (clientProvider == null) {
             //default to Insight API client provider if not specified in config or provided
             clientProvider = (config.clientProviderType() == ClientProviderType.INSIGHTS_AGENT)
-                    ? new NewRelicInsightsAgentClientProvider(config)
-                    : new NewRelicInsightsApiClientProvider(config);
+                    ? new NewRelicInsightsAgentClientProvider(config, namingConvention)
+                    : new NewRelicInsightsApiClientProvider(config, namingConvention);
         }
 
         this.config = config;
