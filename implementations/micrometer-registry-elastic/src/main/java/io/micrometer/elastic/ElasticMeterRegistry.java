@@ -307,7 +307,7 @@ public class ElasticMeterRegistry extends StepMeterRegistry {
         return writeCounter(counter, counter.count());
     }
 
-    private Optional<String> writeCounter(Meter meter, Double value) {
+    private Optional<String> writeCounter(Meter meter, double value) {
         if (Double.isFinite(value)) {
             return Optional.of(writeDocument(meter, builder -> {
                 builder.append(",\"count\":").append(value);
@@ -318,7 +318,7 @@ public class ElasticMeterRegistry extends StepMeterRegistry {
 
     // VisibleForTesting
     Optional<String> writeGauge(Gauge gauge) {
-        Double value = gauge.value();
+        double value = gauge.value();
         if (Double.isFinite(value)) {
             return Optional.of(writeDocument(gauge, builder -> {
                 builder.append(",\"value\":").append(value);
@@ -329,7 +329,7 @@ public class ElasticMeterRegistry extends StepMeterRegistry {
 
     // VisibleForTesting
     Optional<String> writeTimeGauge(TimeGauge gauge) {
-        Double value = gauge.value(getBaseTimeUnit());
+        double value = gauge.value(getBaseTimeUnit());
         if (Double.isFinite(value)) {
             return Optional.of(writeDocument(gauge, builder -> {
                 builder.append(",\"value\":").append(value);

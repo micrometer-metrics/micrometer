@@ -150,7 +150,7 @@ public class NewRelicMeterRegistry extends StepMeterRegistry {
 
     // VisibleForTesting
     Stream<String> writeGauge(Gauge gauge) {
-        Double value = gauge.value();
+        double value = gauge.value();
         if (Double.isFinite(value)) {
             return Stream.of(event(gauge.getId(), new Attribute("value", value)));
         }
@@ -159,7 +159,7 @@ public class NewRelicMeterRegistry extends StepMeterRegistry {
 
     // VisibleForTesting
     Stream<String> writeTimeGauge(TimeGauge gauge) {
-        Double value = gauge.value(getBaseTimeUnit());
+        double value = gauge.value(getBaseTimeUnit());
         if (Double.isFinite(value)) {
             return Stream.of(
                     event(gauge.getId(), 
