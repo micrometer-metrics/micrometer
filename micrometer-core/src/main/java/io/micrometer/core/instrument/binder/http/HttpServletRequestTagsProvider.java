@@ -22,10 +22,10 @@ import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
 /**
- *  Provides {@link Tag Tags} for HTTP Servlet request handling.
+ * Provides {@link Tag Tags} for HTTP Servlet request handling.
  *
- *  @author Jon Schneider
- *  @since 1.4.0
+ * @author Jon Schneider
+ * @since 1.4.0
  */
 @Incubating(since = "1.4.0")
 public interface HttpServletRequestTagsProvider {

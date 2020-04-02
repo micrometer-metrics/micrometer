@@ -22,6 +22,12 @@ import io.micrometer.core.instrument.util.StringUtils;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
+/**
+ * Tags for HTTP requests.
+ *
+ * @author Jon Schneider
+ * @since 1.4.0
+ */
 @Incubating(since = "1.4.0")
 public class HttpRequestTags {
     private static final Tag EXCEPTION_NONE = Tag.of("exception", "None");
