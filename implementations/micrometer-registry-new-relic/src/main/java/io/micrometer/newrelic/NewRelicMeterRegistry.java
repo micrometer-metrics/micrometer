@@ -22,6 +22,8 @@ import io.micrometer.core.instrument.Clock;
 import io.micrometer.core.instrument.config.NamingConvention;
 import io.micrometer.core.instrument.step.StepMeterRegistry;
 import io.micrometer.core.instrument.util.NamedThreadFactory;
+import io.micrometer.core.ipc.http.HttpSender;
+import io.micrometer.core.lang.Nullable;
 
 /**
  * Publishes metrics to New Relic Insights based on client provider selected (API or Java Agent).
@@ -58,7 +60,7 @@ public class NewRelicMeterRegistry extends StepMeterRegistry {
     }
 
     // VisibleForTesting
-    NewRelicMeterRegistry(NewRelicConfig config, NewRelicClientProvider clientProvider,
+    NewRelicMeterRegistry(NewRelicConfig config, @Nullable NewRelicClientProvider clientProvider,
                 NamingConvention namingConvention, Clock clock, ThreadFactory threadFactory) {
         super(config, clock);
 
@@ -93,17 +95,20 @@ public class NewRelicMeterRegistry extends StepMeterRegistry {
     public static class Builder {
         private final NewRelicConfig config;
 
+        @Nullable
         private NewRelicClientProvider clientProvider;
         private NamingConvention convention = new NewRelicNamingConvention();
         private Clock clock = Clock.SYSTEM;
         private ThreadFactory threadFactory = DEFAULT_THREAD_FACTORY;
+        @Nullable
+        private HttpSender httpClient;
 
         Builder(NewRelicConfig config) {
             this.config = config;
         }
 
         /**
-         * Use the client provider.
+         * Use the client provider. This will override {@link NewRelicConfig#clientProviderType()}.
          * @param clientProvider client provider to use
          * @return builder
          * @since 1.4.0
@@ -134,7 +139,26 @@ public class NewRelicMeterRegistry extends StepMeterRegistry {
             return this;
         }
 
+        /**
+         * Note: This only has an effect when a {@link #clientProvider(NewRelicClientProvider)} is not provided and {@link NewRelicConfig#clientProviderType()} is {@link ClientProviderType#INSIGHTS_API}.
+         *
+         * @param httpClient http client to use for publishing
+         * @return builder
+         * @deprecated use {@link #clientProvider(NewRelicClientProvider)} instead.
+         */
+        @Deprecated
+        public Builder httpClient(HttpSender httpClient) {
+            this.httpClient = httpClient;
+            return this;
+        }
+
         public NewRelicMeterRegistry build() {
+            if (clientProvider == null && httpClient != null) {
+                //default to Insight API client provider if not specified in config or provided
+                clientProvider = (config.clientProviderType() == ClientProviderType.INSIGHTS_AGENT)
+                        ? new NewRelicInsightsAgentClientProvider(config)
+                        : new NewRelicInsightsApiClientProvider(config, httpClient, convention);
+            }
             return new NewRelicMeterRegistry(config, clientProvider, convention, clock, threadFactory);
         }
     }
