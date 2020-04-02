@@ -68,35 +68,35 @@ class WavefrontMeterRegistryTest {
             .build();
 
     @Test
-    void addMetric() throws IOException {
+    void publishMetric() throws IOException {
         Meter.Id id = registry.counter("name").getId();
         long time = System.currentTimeMillis();
-        registry.addMetric(wavefrontSender, id, null, System.currentTimeMillis(), 1d);
+        registry.publishMetric(id, null, System.currentTimeMillis(), 1d);
         verify(wavefrontSender, times(1)).sendMetric("name", 1d, time, "host", Collections.emptyMap());
         verifyNoMoreInteractions(wavefrontSender);
     }
 
     @Test
-    void addMetricWhenNanOrInfinityShouldNotAdd() {
+    void publishMetricWhenNanOrInfinityShouldNotAdd() {
         Meter.Id id = registry.counter("name").getId();
-        registry.addMetric(wavefrontSender, id, null, System.currentTimeMillis(), Double.NaN);
-        registry.addMetric(wavefrontSender, id, null, System.currentTimeMillis(), Double.POSITIVE_INFINITY);
+        registry.publishMetric(id, null, System.currentTimeMillis(), Double.NaN);
+        registry.publishMetric(id, null, System.currentTimeMillis(), Double.POSITIVE_INFINITY);
         verifyNoInteractions(wavefrontSender);
     }
 
     @Test
-    void writeMeterWhenCustomMeterHasOnlyNonFiniteValuesShouldNotBeWritten() {
+    void publishMeterWhenCustomMeterHasOnlyNonFiniteValuesShouldNotBeWritten() {
         Measurement measurement1 = new Measurement(() -> Double.POSITIVE_INFINITY, Statistic.VALUE);
         Measurement measurement2 = new Measurement(() -> Double.NEGATIVE_INFINITY, Statistic.VALUE);
         Measurement measurement3 = new Measurement(() -> Double.NaN, Statistic.VALUE);
         List<Measurement> measurements = Arrays.asList(measurement1, measurement2, measurement3);
         Meter meter = Meter.builder("my.meter", Meter.Type.GAUGE, measurements).register(this.registry);
-        registry.writeMeter(meter);
+        registry.publishMeter(meter);
         verifyNoInteractions(wavefrontSender);
     }
 
     @Test
-    void writeMeterWhenCustomMeterHasMixedFiniteAndNonFiniteValuesShouldSkipOnlyNonFiniteValues() throws IOException {
+    void publishMeterWhenCustomMeterHasMixedFiniteAndNonFiniteValuesShouldSkipOnlyNonFiniteValues() throws IOException {
         Measurement measurement1 = new Measurement(() -> Double.POSITIVE_INFINITY, Statistic.VALUE);
         Measurement measurement2 = new Measurement(() -> Double.NEGATIVE_INFINITY, Statistic.VALUE);
         Measurement measurement3 = new Measurement(() -> Double.NaN, Statistic.VALUE);
@@ -104,21 +104,21 @@ class WavefrontMeterRegistryTest {
         Measurement measurement5 = new Measurement(() -> 2d, Statistic.VALUE);
         List<Measurement> measurements = Arrays.asList(measurement1, measurement2, measurement3, measurement4, measurement5);
         Meter meter = Meter.builder("my.meter", Meter.Type.GAUGE, measurements).register(this.registry);
-        registry.writeMeter(meter);
+        registry.publishMeter(meter);
         verify(wavefrontSender, times(1)).sendMetric("my.meter", 1d, clock.wallTime(), "host", Collections.singletonMap("statistic", "value"));
         verify(wavefrontSender, times(1)).sendMetric("my.meter", 2d, clock.wallTime(), "host", Collections.singletonMap("statistic", "value"));
         verifyNoMoreInteractions(wavefrontSender);
     }
 
     @Test
-    void addDistribution() throws IOException {
+    void publishDistribution() throws IOException {
         Meter.Id id = registry.summary("name").getId();
         long time = System.currentTimeMillis();
         List<Pair<Double, Integer>> centroids = Arrays.asList(new Pair<>(1d, 1));
         List<WavefrontHistogramImpl.Distribution> distributions = Arrays.asList(
             new WavefrontHistogramImpl.Distribution(time, centroids)
         );
-        registry.addDistribution(wavefrontSender, id, distributions);
+        registry.publishDistribution(id, distributions);
         verify(wavefrontSender, times(1)).sendDistribution("name", centroids,
                 Collections.singleton(HistogramGranularity.MINUTE), time, "host", Collections.emptyMap());
         verifyNoMoreInteractions(wavefrontSender);
