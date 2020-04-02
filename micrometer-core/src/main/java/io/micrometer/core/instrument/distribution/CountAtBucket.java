@@ -30,13 +30,24 @@ public final class CountAtBucket {
     private final double count;
 
     /**
-     * @deprecated Use {@link #CountAtBucket(double, double)} instead.
+     * Create a {@code CountAtBucket} instance.
+     *
+     * @param bucket bucket
+     * @param count count
+     * @deprecated Use {@link #CountAtBucket(double, double)} instead since 1.4.0.
      */
     @Deprecated
     public CountAtBucket(long bucket, double count) {
         this((double) bucket, count);
     }
 
+    /**
+     * Create a {@code CountAtBucket} instance.
+     *
+     * @param bucket bucket
+     * @param count count
+     * @since 1.4.0
+     */
     public CountAtBucket(double bucket, double count) {
         this.bucket = bucket;
         this.count = count;
@@ -78,11 +89,9 @@ public final class CountAtBucket {
 
     @Override
     public int hashCode() {
-        int result;
-        long tempCount, tempBucket;
-        tempBucket = Double.doubleToLongBits(bucket);
-        result = (int) (tempBucket ^ (tempBucket >>> 32));
-        tempCount = Double.doubleToLongBits(count);
+        long tempBucket = Double.doubleToLongBits(bucket);
+        int result = (int) (tempBucket ^ (tempBucket >>> 32));
+        long tempCount = Double.doubleToLongBits(count);
         result = 31 * result + (int) (tempCount ^ (tempCount >>> 32));
         return result;
     }

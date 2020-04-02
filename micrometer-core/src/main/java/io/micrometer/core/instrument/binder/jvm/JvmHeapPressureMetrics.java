@@ -33,16 +33,17 @@ import java.lang.management.*;
 import java.time.Duration;
 import java.util.List;
 import java.util.Map;
-import java.util.Optional;
 import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.atomic.AtomicReference;
-import java.util.function.ToLongFunction;
 
 import static java.util.Collections.emptyList;
 
 /**
  * Provides methods to access measurements of low pool memory and heavy GC overhead as described in
  * <a href="https://www.jetbrains.com/help/teamcity/teamcity-memory-monitor.html">TeamCity's Memory Monitor</a>.
+ *
+ * @author Jon Schneider
+ * @since 1.4.0
  */
 public class JvmHeapPressureMetrics implements MeterBinder, AutoCloseable {
     private final Iterable<Tag> tags;
@@ -67,8 +68,9 @@ public class JvmHeapPressureMetrics implements MeterBinder, AutoCloseable {
 
         for (MemoryPoolMXBean mbean : ManagementFactory.getMemoryPoolMXBeans()) {
             String name = mbean.getName();
-            if (isOldGenPool(name)) {
+            if (JvmMemory.isOldGenPool(name)) {
                 oldGenPoolName = name;
+                break;
             }
         }
 
@@ -97,7 +99,7 @@ public class JvmHeapPressureMetrics implements MeterBinder, AutoCloseable {
     }
 
     private void monitor() {
-        double maxOldGen = getOldGen().map(mem -> getUsageValue(mem, MemoryUsage::getMax)).orElse(0.0);
+        double maxOldGen = JvmMemory.getOldGen().map(mem -> JvmMemory.getUsageValue(mem, MemoryUsage::getMax)).orElse(0.0);
 
         for (GarbageCollectorMXBean mbean : ManagementFactory.getGarbageCollectorMXBeans()) {
             if (!(mbean instanceof NotificationEmitter)) {
@@ -115,7 +117,7 @@ public class JvmHeapPressureMetrics implements MeterBinder, AutoCloseable {
                 GcInfo gcInfo = notificationInfo.getGcInfo();
                 long duration = gcInfo.getDuration();
 
-                if (!isConcurrentPhase(gcCause)) {
+                if (!JvmMemory.isConcurrentPhase(gcCause)) {
                     gcPauseSum.record(duration);
                 }
 
@@ -137,46 +139,8 @@ public class JvmHeapPressureMetrics implements MeterBinder, AutoCloseable {
         }
     }
 
+    @Override
     public void close() {
         notificationListenerCleanUpRunnables.forEach(Runnable::run);
-    }
-
-    private static boolean isOldGenPool(String name) {
-        return name.endsWith("Old Gen") || name.endsWith("Tenured Gen");
-    }
-
-    private static boolean isConcurrentPhase(String cause) {
-        return "No GC".equals(cause);
-    }
-
-    private static Optional<MemoryPoolMXBean> getOldGen() {
-        return ManagementFactory
-                .getPlatformMXBeans(MemoryPoolMXBean.class)
-                .stream()
-                .filter(JvmHeapPressureMetrics::isHeap)
-                .filter(mem -> isOldGenPool(mem.getName()))
-                .findAny();
-    }
-
-    private static boolean isHeap(MemoryPoolMXBean memoryPoolBean) {
-        return MemoryType.HEAP.equals(memoryPoolBean.getType());
-    }
-
-    private static double getUsageValue(MemoryPoolMXBean memoryPoolMXBean, ToLongFunction<MemoryUsage> getter) {
-        MemoryUsage usage = getUsage(memoryPoolMXBean);
-        if (usage == null) {
-            return Double.NaN;
-        }
-        return getter.applyAsLong(usage);
-    }
-
-    private static MemoryUsage getUsage(MemoryPoolMXBean memoryPoolMXBean) {
-        try {
-            return memoryPoolMXBean.getUsage();
-        } catch (InternalError e) {
-            // Defensive for potential InternalError with some specific JVM options. Based on its Javadoc,
-            // MemoryPoolMXBean.getUsage() should return null, not throwing InternalError, so it seems to be a JVM bug.
-            return null;
-        }
     }
 }

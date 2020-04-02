@@ -22,6 +22,12 @@ import io.micrometer.core.instrument.Tags;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
+/**
+ * Default {@link HttpServletRequestTagsProvider}.
+ *
+ * @author Jon Schneider
+ * @since 1.4.0
+ */
 @Incubating(since = "1.4.0")
 public class DefaultHttpServletRequestTagsProvider implements HttpServletRequestTagsProvider {
     @Override
