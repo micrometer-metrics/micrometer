@@ -141,7 +141,7 @@ public class KairosMeterRegistry extends StepMeterRegistry {
 
     // VisibleForTesting
     Stream<String> writeGauge(Gauge gauge) {
-        Double value = gauge.value();
+        double value = gauge.value();
         if (Double.isFinite(value)) {
             return Stream.of(writeMetric(gauge.getId(), config().clock().wallTime(), value));
         }
@@ -150,7 +150,7 @@ public class KairosMeterRegistry extends StepMeterRegistry {
 
     // VisibleForTesting
     Stream<String> writeTimeGauge(TimeGauge timeGauge) {
-        Double value = timeGauge.value(getBaseTimeUnit());
+        double value = timeGauge.value(getBaseTimeUnit());
         if (Double.isFinite(value)) {
             return Stream.of(writeMetric(timeGauge.getId(), config().clock().wallTime(), value));
         }
