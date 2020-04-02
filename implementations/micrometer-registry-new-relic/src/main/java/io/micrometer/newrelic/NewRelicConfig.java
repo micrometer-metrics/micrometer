@@ -91,8 +91,8 @@ public interface NewRelicConfig extends StepRegistryConfig {
     }
     
     /**
-     * @return The connection timeout for requests to the backend. The default is
-     * 1 second.
+     * @return The connection timeout for {@link NewRelicInsightsApiClientProvider} requests to the Insights REST API.
+     * The default is 1 second.
      * Connect timeout and read timeout have different meanings depending on the HTTP client. Configure
      * timeout options on your {@link HttpSender} of choice instead.
      */
@@ -102,8 +102,8 @@ public interface NewRelicConfig extends StepRegistryConfig {
     }
 
     /**
-     * @return The read timeout for requests to the backend. The default is
-     * 10 seconds.
+     * @return The read timeout for {@link NewRelicInsightsApiClientProvider} requests to the Insights REST API.
+     * The default is 10 seconds.
      * Connect timeout and read timeout have different meanings depending on the HTTP client. Configure
      * timeout options on your {@link HttpSender} of choice instead.
      */
