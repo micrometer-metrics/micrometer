@@ -62,7 +62,8 @@ public class NewRelicInsightsApiClientProvider implements NewRelicClientProvider
     private final Logger logger = LoggerFactory.getLogger(NewRelicInsightsApiClientProvider.class);
 
     private final NewRelicConfig config;
-    private final HttpSender httpClient;
+    // VisibleForTesting
+    final HttpSender httpClient;
     private final NamingConvention namingConvention;
     private final String insightsEndpoint;
 
@@ -144,7 +145,7 @@ public class NewRelicInsightsApiClientProvider implements NewRelicClientProvider
 
     @Override
     public Stream<String> writeGauge(Gauge gauge) {
-        Double value = gauge.value();
+        double value = gauge.value();
         if (Double.isFinite(value)) {
             return Stream.of(event(gauge.getId(), new Attribute(VALUE, value)));
         }
@@ -153,7 +154,7 @@ public class NewRelicInsightsApiClientProvider implements NewRelicClientProvider
 
     @Override
     public Stream<String> writeTimeGauge(TimeGauge gauge) {
-        Double value = gauge.value();
+        double value = gauge.value();
         if (Double.isFinite(value)) {
             return Stream.of(
                     event(gauge.getId(),

@@ -26,8 +26,8 @@ class TimeWindowFixedBoundaryHistogramTest {
     void binarySearchForTail() {
         assertTailSearch(3, 1, 1.0, 5.0, 10.0);
         assertTailSearch(5, 1, 1.0, 5.0, 10.0);
-        assertTailSearch(3, 1, 1.0, 4.0, 5L, 10.0);
-        assertTailSearch(3, 2, 1.0, 2.0, 5L, 10.0);
+        assertTailSearch(3, 1, 1.0, 4.0, 5.0, 10.0);
+        assertTailSearch(3, 2, 1.0, 2.0, 5.0, 10.0);
         assertTailSearch(11, -1, 1.0, 5.0, 10.0);
     }
 

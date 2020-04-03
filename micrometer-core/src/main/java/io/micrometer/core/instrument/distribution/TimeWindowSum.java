@@ -21,6 +21,9 @@ import java.util.concurrent.atomic.AtomicLong;
 
 /**
  * An implementation of a moving-window sum based on a configurable ring buffer.
+ *
+ * @author Jon Schneider
+ * @since 1.4.0
  */
 public class TimeWindowSum {
     private static final AtomicIntegerFieldUpdater<TimeWindowSum> rotatingUpdater =
