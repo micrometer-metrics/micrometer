@@ -150,7 +150,7 @@ public class NewRelicInsightsApiClientProvider implements NewRelicClientProvider
 
     @Override
     public Stream<String> writeGauge(Gauge gauge) {
-        Double value = gauge.value();
+        double value = gauge.value();
         if (Double.isFinite(value)) {
             return Stream.of(event(gauge.getId(), new Attribute(VALUE, value)));
         }
@@ -159,7 +159,7 @@ public class NewRelicInsightsApiClientProvider implements NewRelicClientProvider
 
     @Override
     public Stream<String> writeTimeGauge(TimeGauge gauge) {
-        Double value = gauge.value();
+        double value = gauge.value();
         if (Double.isFinite(value)) {
             return Stream.of(
                     event(gauge.getId(),
