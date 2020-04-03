@@ -30,7 +30,6 @@ import io.micrometer.core.instrument.push.PushMeterRegistry;
 import io.micrometer.core.instrument.util.DoubleFormat;
 import io.micrometer.core.instrument.util.MeterPartition;
 import io.micrometer.core.instrument.util.NamedThreadFactory;
-import io.micrometer.core.instrument.util.TimeUtils;
 import io.micrometer.core.ipc.http.HttpSender;
 import io.micrometer.core.ipc.http.HttpUrlConnectionSender;
 import io.micrometer.core.lang.Nullable;
@@ -69,6 +68,7 @@ public class OpenTSDBMeterRegistry extends PushMeterRegistry {
         return new Builder(config);
     }
 
+    @SuppressWarnings("deprecation")
     public OpenTSDBMeterRegistry(OpenTSDBConfig config, Clock clock) {
         this(config, clock, DEFAULT_THREAD_FACTORY, new HttpUrlConnectionSender(config.connectTimeout(), config.readTimeout()));
     }
@@ -82,19 +82,10 @@ public class OpenTSDBMeterRegistry extends PushMeterRegistry {
         start(threadFactory);
     }
 
-    @Override
-    public void start(ThreadFactory threadFactory) {
-        if (config.enabled()) {
-            logger.info("publishing metrics to opentsdb every " + TimeUtils.format(config.step()));
-        }
-        super.start(threadFactory);
-    }
-
-
     /**
      * Convert a double to its string representation in Go.
      */
-    public static String doubleToGoString(double d) {
+    private static String doubleToGoString(double d) {
         if (d == Double.POSITIVE_INFINITY || d == Double.MAX_VALUE || d == Long.MAX_VALUE) {
             return "+Inf";
         }

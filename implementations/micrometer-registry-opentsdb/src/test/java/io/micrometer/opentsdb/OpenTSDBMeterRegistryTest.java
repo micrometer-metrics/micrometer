@@ -29,7 +29,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 class OpenTSDBMeterRegistryTest {
 
-    private final OpenTSDBConfig config = key -> null;
+    private final OpenTSDBConfig config = OpenTSDBConfig.DEFAULT;
     private final MockClock clock = new MockClock();
     private final OpenTSDBMeterRegistry meterRegistry = new OpenTSDBMeterRegistry(config, clock);
 

@@ -1,5 +1,5 @@
 /**
- * Copyright 2017 Pivotal Software, Inc.
+ * Copyright 2020 Pivotal Software, Inc.
  * <p>
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -26,6 +26,13 @@ import java.time.Duration;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.LongAdder;
 
+/**
+ * {@link io.micrometer.core.instrument.Timer} for OpenTSDB.
+ *
+ * @author Jon Schneider
+ * @author Nikolay Ustinov
+ * @since 1.4.0
+ */
 public class OpenTSDBTimer extends AbstractTimer {
     private static final CountAtBucket[] EMPTY_HISTOGRAM = new CountAtBucket[0];
 

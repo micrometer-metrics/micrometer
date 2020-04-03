@@ -1,5 +1,5 @@
 /**
- * Copyright 2017 Pivotal Software, Inc.
+ * Copyright 2020 Pivotal Software, Inc.
  * <p>
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,7 +17,6 @@ package io.micrometer.opentsdb;
 
 import io.micrometer.core.instrument.MeterRegistry;
 import io.micrometer.core.instrument.MockClock;
-import io.micrometer.core.lang.Nullable;
 import io.micrometer.core.tck.MeterRegistryCompatibilityKit;
 
 import java.time.Duration;
@@ -25,22 +24,7 @@ import java.time.Duration;
 class OpenTSDBMeterRegistryCompatibilityTest extends MeterRegistryCompatibilityKit {
     @Override
     public MeterRegistry registry() {
-        return new OpenTSDBMeterRegistry(new OpenTSDBConfig() {
-            @Override
-            public boolean enabled() {
-                return false;
-            }
-
-            @Override
-            @Nullable
-            public String get(String key) {
-                return null;
-            }
-
-        }, new MockClock());
-
-
-
+        return new OpenTSDBMeterRegistry(OpenTSDBConfig.DEFAULT, new MockClock());
     }
 
     @Override

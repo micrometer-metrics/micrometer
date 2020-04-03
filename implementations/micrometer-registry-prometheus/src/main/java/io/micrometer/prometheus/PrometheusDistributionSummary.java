@@ -29,9 +29,9 @@ public class PrometheusDistributionSummary extends AbstractDistributionSummary {
     private static final CountAtBucket[] EMPTY_HISTOGRAM = new CountAtBucket[0];
     @Nullable
     private final Histogram histogram;
-    private LongAdder count = new LongAdder();
-    private DoubleAdder amount = new DoubleAdder();
-    private TimeWindowMax max;
+    private final LongAdder count = new LongAdder();
+    private final DoubleAdder amount = new DoubleAdder();
+    private final TimeWindowMax max;
 
     private final HistogramFlavor histogramFlavor;
 
@@ -61,6 +61,7 @@ public class PrometheusDistributionSummary extends AbstractDistributionSummary {
                     break;
                 default:
                     histogram = null;
+                    break;
             }
         } else {
             histogram = null;
