@@ -789,7 +789,7 @@ class NewRelicMeterRegistryTest {
         NamingConvention customNamingConvention = mock(NewRelicNamingConvention.class);
         
         NewRelicMeterRegistry registry = new NewRelicMeterRegistry(insightsAgentConfig, null, customNamingConvention, clock, new NamedThreadFactory("new-relic-test"));
-        
+
         assertThat(registry.clientProvider).isInstanceOf(NewRelicInsightsAgentClientProvider.class);
         
         assertThat(((NewRelicInsightsAgentClientProvider)registry.clientProvider).namingConvention).isSameAs(customNamingConvention);
@@ -974,6 +974,21 @@ class NewRelicMeterRegistryTest {
                 .build().clientProvider;
         assertThat(clientProvider).isInstanceOf(NewRelicInsightsApiClientProvider.class);
         assertThat(((NewRelicInsightsApiClientProvider) clientProvider).httpClient).isEqualTo(httpSender);
+    }
+
+    @Test
+    void canChangeNamingConventionThroughConfig() {
+        NamingConvention namingConvention1 = mock(NamingConvention.class);
+        NamingConvention namingConvention2 = mock(NamingConvention.class);
+        NewRelicMeterRegistry meterRegistry = NewRelicMeterRegistry.builder(insightsApiConfig).namingConvention(namingConvention1).build();
+
+        assertThat(meterRegistry.config().namingConvention()).isEqualTo(namingConvention1);
+        assertThat(meterRegistry.clientProvider).isInstanceOf(NewRelicInsightsApiClientProvider.class);
+        assertThat(((NewRelicInsightsApiClientProvider) meterRegistry.clientProvider).namingConvention).isEqualTo(namingConvention1);
+
+        meterRegistry.config().namingConvention(namingConvention2);
+        assertThat(meterRegistry.config().namingConvention()).isEqualTo(namingConvention2);
+        assertThat(((NewRelicInsightsApiClientProvider) meterRegistry.clientProvider).namingConvention).isEqualTo(namingConvention2);
     }
     
     static class MockHttpSender implements HttpSender {

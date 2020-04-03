@@ -70,11 +70,21 @@ public class NewRelicMeterRegistry extends StepMeterRegistry {
                     : new NewRelicInsightsApiClientProvider(config);
         }
 
-        clientProvider.setNamingConvention(namingConvention);
         this.clientProvider = clientProvider;
 
         config().namingConvention(namingConvention);
         start(threadFactory);
+    }
+
+    @Override
+    public Config config() {
+        return new Config() {
+            @Override
+            public Config namingConvention(NamingConvention convention) {
+                clientProvider.setNamingConvention(convention);
+                return super.namingConvention(convention);
+            }
+        };
     }
 
     public static Builder builder(NewRelicConfig config) {
