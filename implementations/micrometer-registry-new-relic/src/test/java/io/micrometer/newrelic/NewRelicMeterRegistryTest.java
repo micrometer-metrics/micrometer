@@ -51,6 +51,8 @@ import io.micrometer.core.instrument.Tags;
 import io.micrometer.core.instrument.TimeGauge;
 import io.micrometer.core.instrument.Timer;
 import io.micrometer.core.instrument.config.MissingRequiredConfigurationException;
+import io.micrometer.core.instrument.config.NamingConvention;
+import io.micrometer.core.instrument.util.NamedThreadFactory;
 import io.micrometer.core.ipc.http.HttpSender;
 import io.micrometer.newrelic.NewRelicMeterRegistryTest.MockNewRelicAgent.MockNewRelicInsights;
 
@@ -751,17 +753,47 @@ class NewRelicMeterRegistryTest {
     }
     
     @Test
-    void succeedsConfigInsightsApiClientProvider() {        
+    void succeedsConfigInsightsApiClientProviderAndDefaultNamingConvention() {        
         NewRelicMeterRegistry registry = new NewRelicMeterRegistry(insightsApiConfig, null, clock);
         
         assertThat(registry.clientProvider).isInstanceOf(NewRelicInsightsApiClientProvider.class);
+        
+        assertThat(((NewRelicInsightsApiClientProvider)registry.clientProvider).namingConvention).isInstanceOf(NewRelicNamingConvention.class);
+        assertThat(registry.config().namingConvention()).isInstanceOf(NewRelicNamingConvention.class);
     }
     
     @Test
-    void succeedsConfigInsightsAgentClientProvider() {        
+    void succeedsConfigInsightsApiClientProviderAndCustomNamingConvention() {
+        NamingConvention customNamingConvention = mock(NewRelicNamingConvention.class);
+        
+        NewRelicMeterRegistry registry = new NewRelicMeterRegistry(insightsApiConfig, null, customNamingConvention, clock, new NamedThreadFactory("new-relic-test"));
+        
+        assertThat(registry.clientProvider).isInstanceOf(NewRelicInsightsApiClientProvider.class);
+        
+        assertThat(((NewRelicInsightsApiClientProvider)registry.clientProvider).namingConvention).isSameAs(customNamingConvention);
+        assertThat(registry.config().namingConvention()).isSameAs(customNamingConvention);
+    }
+    
+    @Test
+    void succeedsConfigInsightsAgentClientProviderAndDefaultNamingConvention() {        
         NewRelicMeterRegistry registry = new NewRelicMeterRegistry(insightsAgentConfig, null, clock);
         
         assertThat(registry.clientProvider).isInstanceOf(NewRelicInsightsAgentClientProvider.class);
+        
+        assertThat(((NewRelicInsightsAgentClientProvider)registry.clientProvider).namingConvention).isInstanceOf(NewRelicNamingConvention.class);
+        assertThat(registry.config().namingConvention()).isInstanceOf(NewRelicNamingConvention.class);
+    }
+    
+    @Test
+    void succeedsConfigInsightsAgentClientProviderAndCustomNamingConvention() {
+        NamingConvention customNamingConvention = mock(NewRelicNamingConvention.class);
+        
+        NewRelicMeterRegistry registry = new NewRelicMeterRegistry(insightsAgentConfig, null, customNamingConvention, clock, new NamedThreadFactory("new-relic-test"));
+
+        assertThat(registry.clientProvider).isInstanceOf(NewRelicInsightsAgentClientProvider.class);
+        
+        assertThat(((NewRelicInsightsAgentClientProvider)registry.clientProvider).namingConvention).isSameAs(customNamingConvention);
+        assertThat(registry.config().namingConvention()).isSameAs(customNamingConvention);
     }
     
     @Test
@@ -924,6 +956,40 @@ class NewRelicMeterRegistryTest {
         };
 
         assertThat(getInsightsAgentClientProvider(config)).isNotNull();
+    }
+
+    @SuppressWarnings("deprecation")
+    @Test
+    void canCustomizeHttpSenderViaBuilder_deprecated() {
+        HttpSender httpSender = mock(HttpSender.class);
+        NewRelicClientProvider clientProvider = NewRelicMeterRegistry.builder(insightsApiConfig).httpClient(httpSender).build().clientProvider;
+        assertThat(clientProvider).isInstanceOf(NewRelicInsightsApiClientProvider.class);
+        assertThat(((NewRelicInsightsApiClientProvider) clientProvider).httpClient).isEqualTo(httpSender);
+    }
+
+    @Test
+    void canCustomizeHttpSenderViaBuilder() {
+        HttpSender httpSender = mock(HttpSender.class);
+        NewRelicClientProvider clientProvider = NewRelicMeterRegistry.builder(insightsApiConfig)
+                .clientProvider(new NewRelicInsightsApiClientProvider(insightsApiConfig, httpSender, new NewRelicNamingConvention()))
+                .build().clientProvider;
+        assertThat(clientProvider).isInstanceOf(NewRelicInsightsApiClientProvider.class);
+        assertThat(((NewRelicInsightsApiClientProvider) clientProvider).httpClient).isEqualTo(httpSender);
+    }
+
+    @Test
+    void canChangeNamingConventionThroughConfig() {
+        NamingConvention namingConvention1 = mock(NamingConvention.class);
+        NamingConvention namingConvention2 = mock(NamingConvention.class);
+        NewRelicMeterRegistry meterRegistry = NewRelicMeterRegistry.builder(insightsApiConfig).namingConvention(namingConvention1).build();
+
+        assertThat(meterRegistry.config().namingConvention()).isEqualTo(namingConvention1);
+        assertThat(meterRegistry.clientProvider).isInstanceOf(NewRelicInsightsApiClientProvider.class);
+        assertThat(((NewRelicInsightsApiClientProvider) meterRegistry.clientProvider).namingConvention).isEqualTo(namingConvention1);
+
+        meterRegistry.config().namingConvention(namingConvention2);
+        assertThat(meterRegistry.config().namingConvention()).isEqualTo(namingConvention2);
+        assertThat(((NewRelicInsightsApiClientProvider) meterRegistry.clientProvider).namingConvention).isEqualTo(namingConvention2);
     }
     
     static class MockHttpSender implements HttpSender {

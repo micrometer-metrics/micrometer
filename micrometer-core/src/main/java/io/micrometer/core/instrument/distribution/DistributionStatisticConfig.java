@@ -19,9 +19,9 @@ import io.micrometer.core.instrument.internal.Mergeable;
 import io.micrometer.core.lang.Nullable;
 
 import java.time.Duration;
-import java.util.Arrays;
 import java.util.NavigableSet;
 import java.util.TreeSet;
+import java.util.stream.LongStream;
 
 /**
  * Configures the distribution statistics that emanate from meters like {@link io.micrometer.core.instrument.Timer}
@@ -256,6 +256,7 @@ public class DistributionStatisticConfig implements Mergeable<DistributionStatis
          *
          * @param sla The SLA boundaries to include the set of histogram buckets shipped to the monitoring system.
          * @return This builder.
+         * @since 1.4.0
          */
         public Builder sla(@Nullable double... sla) {
             config.sla = sla;
@@ -268,20 +269,20 @@ public class DistributionStatisticConfig implements Mergeable<DistributionStatis
          * generate aggregable percentile approximations. If the {@link DistributionStatisticConfig} is meant for
          * use with a {@link io.micrometer.core.instrument.Timer}, the SLA unit is in nanoseconds.
          *
-         * @deprecated Use {@link #sla(double...)} instead.
+         * @deprecated Use {@link #sla(double...)} instead since 1.4.0.
          * @param sla The SLA boundaries to include the set of histogram buckets shipped to the monitoring system.
          * @return This builder.
          */
         @Deprecated
         public Builder sla(@Nullable long... sla) {
-            return sla == null ? this : sla(Arrays.stream(sla).asDoubleStream().toArray());
+            return sla == null ? this : sla(LongStream.of(sla).asDoubleStream().toArray());
         }
 
         /**
          * The minimum value that the meter is expected to observe. Sets a lower bound
          * on histogram buckets that are shipped to monitoring systems that support aggregable percentile approximations.
          *
-         * @deprecated Use {@link #minimumExpectedValue(Double)} instead.
+         * @deprecated Use {@link #minimumExpectedValue(Double)} instead since 1.4.0.
          * @param min The minimum value that this distribution summary is expected to observe.
          * @return This builder.
          */
@@ -296,6 +297,7 @@ public class DistributionStatisticConfig implements Mergeable<DistributionStatis
          *
          * @param min The minimum value that this distribution summary is expected to observe.
          * @return This builder.
+         * @since 1.4.0
          */
         public Builder minimumExpectedValue(@Nullable Double min) {
             config.minimumExpectedValue = min;
@@ -306,7 +308,7 @@ public class DistributionStatisticConfig implements Mergeable<DistributionStatis
          * The maximum value that the meter is expected to observe. Sets an upper bound
          * on histogram buckets that are shipped to monitoring systems that support aggregable percentile approximations.
          *
-         * @deprecated Use {@link #maximumExpectedValue(Double)} instead.
+         * @deprecated Use {@link #maximumExpectedValue(Double)} instead since 1.4.0.
          * @param max The maximum value that the meter is expected to observe.
          * @return This builder.
          */
@@ -321,6 +323,7 @@ public class DistributionStatisticConfig implements Mergeable<DistributionStatis
          *
          * @param max The maximum value that the meter is expected to observe.
          * @return This builder.
+         * @since 1.4.0
          */
         public Builder maximumExpectedValue(@Nullable Double max) {
             config.maximumExpectedValue = max;

@@ -62,20 +62,27 @@ public class NewRelicInsightsApiClientProvider implements NewRelicClientProvider
     private final Logger logger = LoggerFactory.getLogger(NewRelicInsightsApiClientProvider.class);
 
     private final NewRelicConfig config;
-    private final HttpSender httpClient;
-    private final NamingConvention namingConvention;
+    // VisibleForTesting
+    final HttpSender httpClient;
+    // VisibleForTesting
+    NamingConvention namingConvention;
     private final String insightsEndpoint;
 
     public NewRelicInsightsApiClientProvider(NewRelicConfig config) {
         this(config, new HttpUrlConnectionSender(config.connectTimeout(), config.readTimeout()), new NewRelicNamingConvention());
     }
-    
+
     public NewRelicInsightsApiClientProvider(NewRelicConfig config, String proxyHost, int proxyPort) {
         this(config, new HttpUrlConnectionSender(config.connectTimeout(), config.readTimeout(), 
                             new Proxy(Proxy.Type.HTTP, new InetSocketAddress(proxyHost, proxyPort))), new NewRelicNamingConvention());
     }
 
-    public NewRelicInsightsApiClientProvider(NewRelicConfig config, HttpSender httpClient, NamingConvention namingConvention) {
+    public NewRelicInsightsApiClientProvider(NewRelicConfig config, HttpSender httpClient) {
+        this(config, httpClient, new NewRelicNamingConvention());
+    }
+
+    // VisibleForTesting
+    NewRelicInsightsApiClientProvider(NewRelicConfig config, HttpSender httpClient, NamingConvention namingConvention) {
 
         if (!config.meterNameEventTypeEnabled() && StringUtils.isEmpty(config.eventType())) {
             throw new MissingRequiredConfigurationException("eventType must be set to report metrics to New Relic");
@@ -142,7 +149,7 @@ public class NewRelicInsightsApiClientProvider implements NewRelicClientProvider
 
     @Override
     public Stream<String> writeGauge(Gauge gauge) {
-        Double value = gauge.value();
+        double value = gauge.value();
         if (Double.isFinite(value)) {
             return Stream.of(event(gauge.getId(), new Attribute(VALUE, value)));
         }
@@ -151,7 +158,7 @@ public class NewRelicInsightsApiClientProvider implements NewRelicClientProvider
 
     @Override
     public Stream<String> writeTimeGauge(TimeGauge gauge) {
-        Double value = gauge.value();
+        double value = gauge.value();
         if (Double.isFinite(value)) {
             return Stream.of(
                     event(gauge.getId(),
@@ -290,5 +297,9 @@ public class NewRelicInsightsApiClientProvider implements NewRelicClientProvider
         public Object getValue() {
             return value;
         }
+    }
+    
+    public void setNamingConvention(NamingConvention namingConvention) {
+        this.namingConvention = namingConvention;
     }
 }

@@ -53,13 +53,19 @@ public class NewRelicInsightsAgentClientProvider implements NewRelicClientProvid
 
     private final NewRelicConfig config;
     private final Agent newRelicAgent;
-    private final NamingConvention namingConvention;
+    // VisibleForTesting
+    NamingConvention namingConvention;
     
     public NewRelicInsightsAgentClientProvider(NewRelicConfig config) {
         this(config, NewRelic.getAgent(), new NewRelicNamingConvention());
     }
 
-    public NewRelicInsightsAgentClientProvider(NewRelicConfig config, Agent newRelicAgent, NamingConvention namingConvention) {
+    public NewRelicInsightsAgentClientProvider(NewRelicConfig config, Agent newRelicAgent) {
+        this(config, newRelicAgent, new NewRelicNamingConvention());
+    }
+
+    // VisibleForTesting
+    NewRelicInsightsAgentClientProvider(NewRelicConfig config, Agent newRelicAgent, NamingConvention namingConvention) {
 
         if (!config.meterNameEventTypeEnabled() && StringUtils.isEmpty(config.eventType())) {
             throw new MissingRequiredConfigurationException("eventType must be set to report metrics to New Relic");
@@ -251,5 +257,9 @@ public class NewRelicInsightsAgentClientProvider implements NewRelicClientProvid
                 logger.warn("failed to send metrics to new relic", e);
             }
         }
+    }
+    
+    public void setNamingConvention(NamingConvention namingConvention) {
+        this.namingConvention = namingConvention;
     }
 }
