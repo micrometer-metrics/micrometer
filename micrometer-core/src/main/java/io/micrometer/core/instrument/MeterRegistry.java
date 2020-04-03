@@ -425,7 +425,7 @@ public abstract class MeterRegistry {
      * @param obj           State object used to compute a value.
      * @param valueFunction Function that produces an instantaneous gauge value from the state object.
      * @param <T>           The type of the state object from which the gauge value is extracted.
-     * @return The number that was passed in so the registration can be done as part of an assignment
+     * @return The state object that was passed in so the registration can be done as part of an assignment
      * statement.
      */
     @Nullable
