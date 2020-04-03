@@ -958,6 +958,7 @@ class NewRelicMeterRegistryTest {
         assertThat(getInsightsAgentClientProvider(config)).isNotNull();
     }
 
+    @SuppressWarnings("deprecation")
     @Test
     void canCustomizeHttpSenderViaBuilder_deprecated() {
         HttpSender httpSender = mock(HttpSender.class);
