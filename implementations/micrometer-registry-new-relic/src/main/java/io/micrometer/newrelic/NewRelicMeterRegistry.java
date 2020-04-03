@@ -66,10 +66,11 @@ public class NewRelicMeterRegistry extends StepMeterRegistry {
         if (clientProvider == null) {
             //default to Insight API client provider if not specified in config or provided
             clientProvider = (config.clientProviderType() == ClientProviderType.INSIGHTS_AGENT)
-                    ? new NewRelicInsightsAgentClientProvider(config, namingConvention)
-                    : new NewRelicInsightsApiClientProvider(config, namingConvention);
+                    ? new NewRelicInsightsAgentClientProvider(config)
+                    : new NewRelicInsightsApiClientProvider(config);
         }
 
+        clientProvider.setNamingConvention(namingConvention);
         this.clientProvider = clientProvider;
 
         config().namingConvention(namingConvention);
@@ -117,7 +118,7 @@ public class NewRelicMeterRegistry extends StepMeterRegistry {
         }
 
         /**
-         * Use the naming convention.
+         * Use the naming convention. Defaults to {@link NewRelicNamingConvention}
          * @param convention naming convention to use
          * @return builder
          * @since 1.4.0

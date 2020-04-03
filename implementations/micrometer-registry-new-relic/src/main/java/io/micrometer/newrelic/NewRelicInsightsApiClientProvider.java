@@ -65,25 +65,26 @@ public class NewRelicInsightsApiClientProvider implements NewRelicClientProvider
     // VisibleForTesting
     final HttpSender httpClient;
     // VisibleForTesting
-    final NamingConvention namingConvention;
+    NamingConvention namingConvention;
     private final String insightsEndpoint;
 
-    public NewRelicInsightsApiClientProvider(NewRelicConfig config) {
-        this(config, new NewRelicNamingConvention());
-    }
-    
     @SuppressWarnings("deprecation")
-    public NewRelicInsightsApiClientProvider(NewRelicConfig config, NamingConvention namingConvention) {
-        this(config, new HttpUrlConnectionSender(config.connectTimeout(), config.readTimeout()), namingConvention);
+    public NewRelicInsightsApiClientProvider(NewRelicConfig config) {
+        this(config, new HttpUrlConnectionSender(config.connectTimeout(), config.readTimeout()), new NewRelicNamingConvention());
     }
-    
+
     @SuppressWarnings("deprecation")
     public NewRelicInsightsApiClientProvider(NewRelicConfig config, String proxyHost, int proxyPort) {
         this(config, new HttpUrlConnectionSender(config.connectTimeout(), config.readTimeout(), 
                             new Proxy(Proxy.Type.HTTP, new InetSocketAddress(proxyHost, proxyPort))), new NewRelicNamingConvention());
     }
 
-    public NewRelicInsightsApiClientProvider(NewRelicConfig config, HttpSender httpClient, NamingConvention namingConvention) {
+    public NewRelicInsightsApiClientProvider(NewRelicConfig config, HttpSender httpClient) {
+        this(config, httpClient, new NewRelicNamingConvention());
+    }
+
+    // VisibleForTesting
+    NewRelicInsightsApiClientProvider(NewRelicConfig config, HttpSender httpClient, NamingConvention namingConvention) {
 
         if (!config.meterNameEventTypeEnabled() && StringUtils.isEmpty(config.eventType())) {
             throw new MissingRequiredConfigurationException("eventType must be set to report metrics to New Relic");
@@ -298,5 +299,9 @@ public class NewRelicInsightsApiClientProvider implements NewRelicClientProvider
         public Object getValue() {
             return value;
         }
+    }
+    
+    public void setNamingConvention(NamingConvention namingConvention) {
+        this.namingConvention = namingConvention;
     }
 }

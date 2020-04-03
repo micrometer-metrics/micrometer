@@ -757,7 +757,9 @@ class NewRelicMeterRegistryTest {
         NewRelicMeterRegistry registry = new NewRelicMeterRegistry(insightsApiConfig, null, clock);
         
         assertThat(registry.clientProvider).isInstanceOf(NewRelicInsightsApiClientProvider.class);
+        
         assertThat(((NewRelicInsightsApiClientProvider)registry.clientProvider).namingConvention).isInstanceOf(NewRelicNamingConvention.class);
+        assertThat(registry.config().namingConvention()).isInstanceOf(NewRelicNamingConvention.class);
     }
     
     @Test
@@ -767,7 +769,9 @@ class NewRelicMeterRegistryTest {
         NewRelicMeterRegistry registry = new NewRelicMeterRegistry(insightsApiConfig, null, customNamingConvention, clock, new NamedThreadFactory("new-relic-test"));
         
         assertThat(registry.clientProvider).isInstanceOf(NewRelicInsightsApiClientProvider.class);
+        
         assertThat(((NewRelicInsightsApiClientProvider)registry.clientProvider).namingConvention).isSameAs(customNamingConvention);
+        assertThat(registry.config().namingConvention()).isSameAs(customNamingConvention);
     }
     
     @Test
@@ -775,7 +779,9 @@ class NewRelicMeterRegistryTest {
         NewRelicMeterRegistry registry = new NewRelicMeterRegistry(insightsAgentConfig, null, clock);
         
         assertThat(registry.clientProvider).isInstanceOf(NewRelicInsightsAgentClientProvider.class);
+        
         assertThat(((NewRelicInsightsAgentClientProvider)registry.clientProvider).namingConvention).isInstanceOf(NewRelicNamingConvention.class);
+        assertThat(registry.config().namingConvention()).isInstanceOf(NewRelicNamingConvention.class);
     }
     
     @Test
@@ -785,7 +791,9 @@ class NewRelicMeterRegistryTest {
         NewRelicMeterRegistry registry = new NewRelicMeterRegistry(insightsAgentConfig, null, customNamingConvention, clock, new NamedThreadFactory("new-relic-test"));
         
         assertThat(registry.clientProvider).isInstanceOf(NewRelicInsightsAgentClientProvider.class);
+        
         assertThat(((NewRelicInsightsAgentClientProvider)registry.clientProvider).namingConvention).isSameAs(customNamingConvention);
+        assertThat(registry.config().namingConvention()).isSameAs(customNamingConvention);
     }
     
     @Test
