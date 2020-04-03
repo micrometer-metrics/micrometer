@@ -37,7 +37,6 @@ public class NewRelicMeterRegistry extends StepMeterRegistry {
 
     private static final ThreadFactory DEFAULT_THREAD_FACTORY = new NamedThreadFactory("new-relic-metrics-publisher");
 
-    private final NewRelicConfig config;
     // VisibleForTesting
     final NewRelicClientProvider clientProvider;
 
@@ -71,7 +70,7 @@ public class NewRelicMeterRegistry extends StepMeterRegistry {
                     : new NewRelicInsightsApiClientProvider(config);
         }
 
-        this.config = config;
+        clientProvider.setNamingConvention(namingConvention);
         this.clientProvider = clientProvider;
 
         config().namingConvention(namingConvention);
@@ -119,7 +118,7 @@ public class NewRelicMeterRegistry extends StepMeterRegistry {
         }
 
         /**
-         * Use the naming convention.
+         * Use the naming convention. Defaults to {@link NewRelicNamingConvention}
          * @param convention naming convention to use
          * @return builder
          * @since 1.4.0

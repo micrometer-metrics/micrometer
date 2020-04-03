@@ -83,4 +83,6 @@ public interface NewRelicClientProvider {
     Object writeFunctionCounter(FunctionCounter counter);
 
     Object writeMeter(Meter meter);
+
+    void setNamingConvention(NamingConvention namingConvention);
 }
