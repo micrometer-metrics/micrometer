@@ -1,5 +1,5 @@
 /**
- * Copyright 2019 Pivotal Software, Inc.
+ * Copyright 2020 Pivotal Software, Inc.
  * <p>
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,7 +17,6 @@ package io.micrometer.core.instrument.binder.jpa;
 
 import io.micrometer.core.instrument.*;
 import io.micrometer.core.instrument.binder.MeterBinder;
-import io.micrometer.core.instrument.search.Search;
 import io.micrometer.core.lang.NonNullApi;
 import io.micrometer.core.lang.NonNullFields;
 import org.hibernate.SessionFactory;
@@ -113,49 +112,46 @@ public class HibernateQueryMetrics implements MeterBinder {
         void registerQueryMetric(Statistics statistics) {
             for (String query : statistics.getQueries()) {
                 QueryStatistics queryStatistics = statistics.getQueryStatistics(query);
-                if (queryStatistics == null) continue;
-                String queryName = meterRegistry.config().namingConvention().tagValue(query);
-                if (Search.in(meterRegistry).tags("query", queryName).functionCounter() != null) continue;
 
                 FunctionCounter.builder("hibernate.query.cache.requests", queryStatistics, QueryStatistics::getCacheHitCount)
                         .tags(tags)
-                        .tags("result", "hit", "query", queryName)
-                        .description("Number of query cache hits/misses")
+                        .tags("result", "hit", "query", query)
+                        .description("Number of query cache hits")
                         .register(meterRegistry);
 
                 FunctionCounter.builder("hibernate.query.cache.requests", queryStatistics, QueryStatistics::getCacheMissCount)
                         .tags(tags)
-                        .tags("result", "miss", "query", queryName)
-                        .description("Number of query cache hits/misses")
+                        .tags("result", "miss", "query", query)
+                        .description("Number of query cache misses")
                         .register(meterRegistry);
 
                 FunctionCounter.builder("hibernate.query.cache.puts", queryStatistics, QueryStatistics::getCachePutCount)
                         .tags(tags)
-                        .tags("query", queryName)
+                        .tags("query", query)
                         .description("Number of cache puts for a query")
                         .register(meterRegistry);
 
                 FunctionTimer.builder("hibernate.query.execution.total", queryStatistics, QueryStatistics::getExecutionCount, QueryStatistics::getExecutionTotalTime, TimeUnit.MILLISECONDS)
                         .tags(tags)
-                        .tags("query", queryName)
-                        .description("Number of query executions")
+                        .tags("query", query)
+                        .description("Query executions")
                         .register(meterRegistry);
 
                 TimeGauge.builder("hibernate.query.execution.max", queryStatistics, TimeUnit.MILLISECONDS, QueryStatistics::getExecutionMaxTime)
                         .tags(tags)
-                        .tags("query", queryName)
+                        .tags("query", query)
                         .description("Query maximum execution time")
                         .register(meterRegistry);
 
                 TimeGauge.builder("hibernate.query.execution.min", queryStatistics, TimeUnit.MILLISECONDS, QueryStatistics::getExecutionMinTime)
                         .tags(tags)
-                        .tags("query", queryName)
+                        .tags("query", query)
                         .description("Query minimum execution time")
                         .register(meterRegistry);
 
                 FunctionCounter.builder("hibernate.query.execution.rows", queryStatistics, QueryStatistics::getExecutionRowCount)
                         .tags(tags)
-                        .tags("query", queryName)
+                        .tags("query", query)
                         .description("Number of rows processed for a query")
                         .register(meterRegistry);
             }
