@@ -213,7 +213,7 @@ public class OpenTSDBMeterRegistry extends PushMeterRegistry {
                 writeMetricWithSuffix(timer.getId(), "count", wallTime, timer.count()),
                 // not applicable
                 //writeMetricWithSuffix(timer.getId(), "avg", wallTime, timer.mean(getBaseTimeUnit())),
-                writeMetricWithSuffix(timer.getId(), "sum", wallTime, timer.totalTime(TimeUnit.SECONDS))
+                writeMetricWithSuffix(timer.getId(), "sum", wallTime, timer.totalTime(getBaseTimeUnit()))
         );
     }
 
@@ -227,7 +227,7 @@ public class OpenTSDBMeterRegistry extends PushMeterRegistry {
         List<String> metrics = new ArrayList<>();
 
         metrics.add(writeMetricWithSuffix(timer.getId(), "count", wallTime, count));
-        metrics.add(writeMetricWithSuffix(timer.getId(), "sum", wallTime, timer.totalTime(TimeUnit.SECONDS)));
+        metrics.add(writeMetricWithSuffix(timer.getId(), "sum", wallTime, timer.totalTime(getBaseTimeUnit())));
         metrics.add(writeMetricWithSuffix(timer.getId(), "max", wallTime, timer.max(getBaseTimeUnit())));
 
         if (percentileValues.length > 0) {
@@ -244,12 +244,13 @@ public class OpenTSDBMeterRegistry extends PushMeterRegistry {
     private List<String> writePercentiles(Meter meter, long wallTime, ValueAtPercentile[] percentileValues) {
         List<String> metrics = new ArrayList<>(percentileValues.length);
 
+        boolean forTimer = meter instanceof Timer;
         // satisfies https://prometheus.io/docs/concepts/metric_types/#summary
         for (ValueAtPercentile v : percentileValues) {
             metrics.add(writeMetric(
                     meter.getId().withTag(new ImmutableTag("quantile", doubleToGoString(v.percentile()))),
                     wallTime,
-                    v.value(TimeUnit.SECONDS)));
+                    (forTimer ? v.value(getBaseTimeUnit()) : v.value())));
         }
 
         return metrics;
@@ -327,7 +328,7 @@ public class OpenTSDBMeterRegistry extends PushMeterRegistry {
         long wallTime = config().clock().wallTime();
         return Stream.of(
                 writeMetricWithSuffix(timer.getId(), "active.count", wallTime, timer.activeTasks()),
-                writeMetricWithSuffix(timer.getId(), "duration.sum", wallTime, timer.duration(TimeUnit.SECONDS))
+                writeMetricWithSuffix(timer.getId(), "duration.sum", wallTime, timer.duration(getBaseTimeUnit()))
         );
     }
 
