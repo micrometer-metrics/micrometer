@@ -50,7 +50,7 @@ import static java.util.concurrent.TimeUnit.SECONDS;
 @Incubating(since = "1.4.0")
 @NonNullApi
 @NonNullFields
-class KafkaMetrics implements MeterBinder {
+class KafkaMetrics implements MeterBinder, AutoCloseable {
     static final String METRIC_NAME_PREFIX = "kafka.";
     static final String METRIC_GROUP_APP_INFO = "app-info";
     static final String METRIC_GROUP_METRICS_COUNT = "kafka-metrics-count";
@@ -170,5 +170,10 @@ class KafkaMetrics implements MeterBinder {
     private String meterName(Metric metric) {
         String name = METRIC_NAME_PREFIX + metric.metricName().group() + "." + metric.metricName().name();
         return name.replaceAll("-metrics", "").replaceAll("-", ".");
+    }
+
+    @Override
+    public void close() {
+        this.scheduler.shutdownNow();
     }
 }
