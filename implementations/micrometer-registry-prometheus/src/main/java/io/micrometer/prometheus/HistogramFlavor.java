@@ -16,6 +16,9 @@
 package io.micrometer.prometheus;
 
 /**
+ * Histogram flavors.
+ *
+ * @author Jon Schneider
  * @since 1.4.0
  */
 public enum HistogramFlavor {

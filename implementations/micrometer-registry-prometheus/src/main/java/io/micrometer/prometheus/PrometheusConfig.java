@@ -67,7 +67,7 @@ public interface PrometheusConfig extends MeterRegistryConfig {
             return HistogramFlavor.Prometheus;
 
         for (HistogramFlavor flavor : HistogramFlavor.values()) {
-            if (flavor.toString().equalsIgnoreCase(v))
+            if (flavor.name().equalsIgnoreCase(v))
                 return flavor;
         }
 
