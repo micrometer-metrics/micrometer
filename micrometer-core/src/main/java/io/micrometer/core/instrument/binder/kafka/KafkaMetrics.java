@@ -29,12 +29,15 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.concurrent.Executors;
+import java.util.concurrent.ScheduledExecutorService;
 import java.util.function.Supplier;
 import java.util.function.ToDoubleFunction;
 import org.apache.kafka.common.Metric;
 import org.apache.kafka.common.MetricName;
 
 import static java.util.Collections.emptyList;
+import static java.util.concurrent.TimeUnit.SECONDS;
 
 /**
  * Kafka metrics binder.
@@ -56,6 +59,7 @@ class KafkaMetrics implements MeterBinder {
 
     private final Supplier<Map<MetricName, ? extends Metric>> metricsSupplier;
     private final Iterable<Tag> extraTags;
+    private final ScheduledExecutorService scheduler = Executors.newScheduledThreadPool(1);
 
     /**
      * Keeps track of current set of metrics.
@@ -87,7 +91,7 @@ class KafkaMetrics implements MeterBinder {
         }
         if (startTime != null) bindMeter(registry, startTime, meterName(startTime), meterTags(startTime));
         // Collect dynamic metrics
-        checkAndBindMetrics(registry);
+        scheduler.scheduleAtFixedRate(() -> checkAndBindMetrics(registry), 0, 5, SECONDS);
     }
 
     /**
@@ -138,25 +142,21 @@ class KafkaMetrics implements MeterBinder {
     }
 
     private void registerGauge(MeterRegistry registry, Metric metric, String name, Iterable<Tag> tags) {
-        Gauge.builder(name, metric, toMetricValue(registry))
+        Gauge.builder(name, metric, toMetricValue())
                 .tags(tags)
                 .description(metric.metricName().description())
                 .register(registry);
     }
 
     private void registerCounter(MeterRegistry registry, Metric metric, String name, Iterable<Tag> tags) {
-        FunctionCounter.builder(name, metric, toMetricValue(registry))
+        FunctionCounter.builder(name, metric, toMetricValue())
                 .tags(tags)
                 .description(metric.metricName().description())
                 .register(registry);
     }
 
-    private ToDoubleFunction<Metric> toMetricValue(MeterRegistry registry) {
-        return metric -> {
-            //Double-check if new metrics are registered
-            checkAndBindMetrics(registry);
-            return ((Number) metric.metricValue()).doubleValue();
-        };
+    private ToDoubleFunction<Metric> toMetricValue() {
+        return metric -> ((Number) metric.metricValue()).doubleValue();
     }
 
     private List<Tag> meterTags(Metric metric) {

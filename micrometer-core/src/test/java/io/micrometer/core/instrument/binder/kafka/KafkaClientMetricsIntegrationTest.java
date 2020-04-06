@@ -44,7 +44,7 @@ class KafkaClientMetricsIntegrationTest {
     private KafkaContainer kafkaContainer = new KafkaContainer();
 
     @Test
-    void shouldManageProducerAndConsumerMetrics() {
+    void shouldManageProducerAndConsumerMetrics() throws InterruptedException {
         SimpleMeterRegistry registry = new SimpleMeterRegistry();
 
         assertThat(registry.getMeters()).hasSize(0);
@@ -90,6 +90,8 @@ class KafkaClientMetricsIntegrationTest {
         out.println("Meters from producer after sending and consumer before poll:");
         printMeters(registry);
 
+        Thread.sleep(5 * 1000);
+
         int producerAndConsumerMetricsAfterSend = registry.getMeters().size();
         assertThat(registry.getMeters()).hasSizeGreaterThan(producerAndConsumerMetrics);
         assertThat(registry.getMeters())
@@ -103,6 +105,8 @@ class KafkaClientMetricsIntegrationTest {
         //Printing out for discovery purposes
         out.println("Meters from producer and consumer after polling:");
         printMeters(registry);
+
+        Thread.sleep(5 * 1000);
 
         assertThat(registry.getMeters()).hasSizeGreaterThan(producerAndConsumerMetricsAfterSend);
         assertThat(registry.getMeters())
