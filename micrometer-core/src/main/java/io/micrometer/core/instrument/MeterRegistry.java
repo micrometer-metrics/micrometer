@@ -422,16 +422,16 @@ public abstract class MeterRegistry {
      *
      * @param name          Name of the gauge being registered.
      * @param tags          Sequence of dimensions for breaking down the name.
-     * @param obj           State object used to compute a value.
+     * @param stateObject   State object used to compute a value.
      * @param valueFunction Function that produces an instantaneous gauge value from the state object.
      * @param <T>           The type of the state object from which the gauge value is extracted.
      * @return The state object that was passed in so the registration can be done as part of an assignment
      * statement.
      */
     @Nullable
-    public <T> T gauge(String name, Iterable<Tag> tags, @Nullable T obj, ToDoubleFunction<T> valueFunction) {
-        Gauge.builder(name, obj, valueFunction).tags(tags).register(this);
-        return obj;
+    public <T> T gauge(String name, Iterable<Tag> tags, @Nullable T stateObject, ToDoubleFunction<T> valueFunction) {
+        Gauge.builder(name, stateObject, valueFunction).tags(tags).register(this);
+        return stateObject;
     }
 
     /**
@@ -467,15 +467,15 @@ public abstract class MeterRegistry {
      * Register a gauge that reports the value of the object.
      *
      * @param name          Name of the gauge being registered.
-     * @param obj           State object used to compute a value.
+     * @param stateObject   State object used to compute a value.
      * @param valueFunction Function that produces an instantaneous gauge value from the state object.
      * @param <T>           The type of the state object from which the gauge value is extracted.
-     * @return The number that was passed in so the registration can be done as part of an assignment
+     * @return The state object that was passed in so the registration can be done as part of an assignment
      * statement.
      */
     @Nullable
-    public <T> T gauge(String name, T obj, ToDoubleFunction<T> valueFunction) {
-        return gauge(name, emptyList(), obj, valueFunction);
+    public <T> T gauge(String name, T stateObject, ToDoubleFunction<T> valueFunction) {
+        return gauge(name, emptyList(), stateObject, valueFunction);
     }
 
     /**
@@ -489,7 +489,7 @@ public abstract class MeterRegistry {
      * @param tags       Sequence of dimensions for breaking down the name.
      * @param collection Thread-safe implementation of {@link Collection} used to access the value.
      * @param <T>        The type of the state object from which the gauge value is extracted.
-     * @return The number that was passed in so the registration can be done as part of an assignment
+     * @return The Collection that was passed in so the registration can be done as part of an assignment
      * statement.
      */
     @Nullable
@@ -508,7 +508,7 @@ public abstract class MeterRegistry {
      * @param tags Sequence of dimensions for breaking down the name.
      * @param map  Thread-safe implementation of {@link Map} used to access the value.
      * @param <T>  The type of the state object from which the gauge value is extracted.
-     * @return The number that was passed in so the registration can be done as part of an assignment
+     * @return The Map that was passed in so the registration can be done as part of an assignment
      * statement.
      */
     @Nullable
