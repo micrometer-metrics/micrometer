@@ -40,19 +40,19 @@ import java.util.concurrent.atomic.DoubleAdder;
  * @since 1.4.0
  */
 public class FixedBoundaryVictoriaMetricsHistogram implements Histogram {
-    public static final IdxOffset UPPER = new IdxOffset(-1, 2);
-    public static final IdxOffset LOWER = new IdxOffset(-1, 1);
-    public static final IdxOffset ZERO = new IdxOffset(-1, 0);
+    private static final IdxOffset UPPER = new IdxOffset(-1, 2);
+    private static final IdxOffset LOWER = new IdxOffset(-1, 1);
+    private static final IdxOffset ZERO = new IdxOffset(-1, 0);
 
-    public static final int E10MIN = -9;
-    public static final int E10MAX = 18;
-    public static final int DECIMAL_MULTIPLIER = 2;
-    public static final int BUCKET_SIZE = 9 * DECIMAL_MULTIPLIER;
-    public static final int BUCKETS_COUNT = E10MAX - E10MIN;
-    public static final double DECIMAL_PRECISION = 0.01 / DECIMAL_MULTIPLIER;
+    private static final int E10MIN = -9;
+    private static final int E10MAX = 18;
+    private static final int DECIMAL_MULTIPLIER = 2;
+    private static final int BUCKET_SIZE = 9 * DECIMAL_MULTIPLIER;
+    private static final int BUCKETS_COUNT = E10MAX - E10MIN;
+    private static final double DECIMAL_PRECISION = 0.01 / DECIMAL_MULTIPLIER;
 
     private static final String[] VMRANGES;
-    private static final Double[] UPPER_BOUNDS;
+    private static final double[] UPPER_BOUNDS;
 
     static {
         VMRANGES = new String[3 + BUCKETS_COUNT * BUCKET_SIZE];
@@ -60,7 +60,7 @@ public class FixedBoundaryVictoriaMetricsHistogram implements Histogram {
         VMRANGES[1] = String.format("0...%.1fe%d", 1.0, E10MIN);
         VMRANGES[2] = String.format("%.1fe%d...+Inf", 1.0, E10MAX);
 
-        UPPER_BOUNDS = new Double[3 + BUCKETS_COUNT * BUCKET_SIZE];
+        UPPER_BOUNDS = new double[3 + BUCKETS_COUNT * BUCKET_SIZE];
         UPPER_BOUNDS[0] = 0.0;
         UPPER_BOUNDS[1] = BigDecimal.TEN.pow(E10MIN, MathContext.DECIMAL128).doubleValue();
         UPPER_BOUNDS[2] = Double.POSITIVE_INFINITY;
@@ -79,9 +79,8 @@ public class FixedBoundaryVictoriaMetricsHistogram implements Histogram {
                 String end = String.format("%.1fe%d", m, e10);
                 VMRANGES[idx] = start + "..." + end;
 
-                Double endValue = BigDecimal.valueOf(m).setScale(1, RoundingMode.HALF_UP).multiply(
+                UPPER_BOUNDS[idx] = BigDecimal.valueOf(m).setScale(1, RoundingMode.HALF_UP).multiply(
                         BigDecimal.TEN.pow(e10, MathContext.DECIMAL128)).doubleValue();
-                UPPER_BOUNDS[idx] = endValue;
 
                 idx++;
                 start = end;
@@ -103,7 +102,6 @@ public class FixedBoundaryVictoriaMetricsHistogram implements Histogram {
 
         this.values = new AtomicReferenceArray<>(BUCKETS_COUNT);
     }
-
 
     @Override
     public void recordLong(long value) {
@@ -144,15 +142,16 @@ public class FixedBoundaryVictoriaMetricsHistogram implements Histogram {
         if (bucketIdx < 0)
             return LOWER;
 
+        double pow = Math.pow(10, e10);
         if (bucketIdx >= BUCKETS_COUNT) {
-            if ((bucketIdx == BUCKETS_COUNT) && (Math.abs(Math.pow(10, e10) - value) < DECIMAL_PRECISION)) {
+            if ((bucketIdx == BUCKETS_COUNT) && (Math.abs(pow - value) < DECIMAL_PRECISION)) {
                 // Adjust m to be on par with Prometheus 'le' buckets (aka 'less or equal')
                 return new IdxOffset(BUCKETS_COUNT - 1, BUCKET_SIZE - 1);
             }
             return UPPER;
         }
 
-        double m = ((value / Math.pow(10, e10)) - 1) * DECIMAL_MULTIPLIER;
+        double m = ((value / pow) - 1) * DECIMAL_MULTIPLIER;
         int offset = (int) m;
         if (offset < 0)
             offset = 0;
@@ -164,9 +163,9 @@ public class FixedBoundaryVictoriaMetricsHistogram implements Histogram {
             offset--;
             if (offset < 0) {
                 bucketIdx--;
-                offset = BUCKET_SIZE - 1;
                 if (bucketIdx < 0)
                     return LOWER;
+                offset = BUCKET_SIZE - 1;
             }
         }
 
@@ -229,10 +228,8 @@ public class FixedBoundaryVictoriaMetricsHistogram implements Histogram {
     private void outputSummary(PrintStream printStream, double bucketScaling) {
         printStream.format("%14s %10s\n\n", "Bucket", "TotalCount");
 
-        String bucketFormatString = "%14.1f %10d\n";
-
         for (CountAtBucket bucket : nonZeroBuckets()) {
-            printStream.format(Locale.US, bucketFormatString,
+            printStream.format(Locale.US, "%14.1f %10d\n",
                     bucket.bucket() / bucketScaling,
                     bucket.count());
         }

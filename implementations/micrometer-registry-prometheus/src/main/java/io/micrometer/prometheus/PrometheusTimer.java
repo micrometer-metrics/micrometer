@@ -64,6 +64,7 @@ public class PrometheusTimer extends AbstractTimer {
                     break;
                 default:
                     histogram = null;
+                    break;
             }
         } else {
             histogram = null;

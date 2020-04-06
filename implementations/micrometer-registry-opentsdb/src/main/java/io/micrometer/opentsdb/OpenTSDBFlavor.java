@@ -15,6 +15,12 @@
  */
 package io.micrometer.opentsdb;
 
+/**
+ * OpenTSDB flavors.
+ *
+ * @author Jon Schneider
+ * @since 1.4.0
+ */
 public enum OpenTSDBFlavor {
     VictoriaMetrics
 }

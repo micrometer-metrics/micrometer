@@ -22,6 +22,7 @@ import io.micrometer.core.lang.Nullable;
  * Configuration for {@link OpenTSDBMeterRegistry}.
  *
  * @author Nikolay Ustinov
+ * @since 1.4.0
  */
 public interface OpenTSDBConfig extends PushRegistryConfig {
     /**
@@ -81,7 +82,7 @@ public interface OpenTSDBConfig extends PushRegistryConfig {
             return null;
 
         for (OpenTSDBFlavor flavor : OpenTSDBFlavor.values()) {
-            if (flavor.toString().equalsIgnoreCase(v))
+            if (flavor.name().equalsIgnoreCase(v))
                 return flavor;
         }
 

@@ -25,11 +25,18 @@ import java.time.Duration;
 import java.util.concurrent.atomic.DoubleAdder;
 import java.util.concurrent.atomic.LongAdder;
 
+/**
+ * {@link io.micrometer.core.instrument.DistributionSummary} for OpenTSDB.
+ *
+ * @author Jon Schneider
+ * @author Nikolay Ustinov
+ * @since 1.4.0
+ */
 public class OpenTSDBDistributionSummary extends AbstractDistributionSummary {
     private static final CountAtBucket[] EMPTY_HISTOGRAM = new CountAtBucket[0];
-    private LongAdder count = new LongAdder();
-    private DoubleAdder amount = new DoubleAdder();
-    private TimeWindowMax max;
+    private final LongAdder count = new LongAdder();
+    private final DoubleAdder amount = new DoubleAdder();
+    private final TimeWindowMax max;
 
     @Nullable
     private final Histogram histogram;

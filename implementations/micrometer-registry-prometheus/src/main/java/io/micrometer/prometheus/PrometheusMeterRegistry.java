@@ -139,6 +139,7 @@ public class PrometheusMeterRegistry extends MeterRegistry {
                 type = Collector.Type.HISTOGRAM;
 
                 List<String> histogramKeys = new LinkedList<>(tagKeys);
+                String sampleName = conventionName + "_bucket";
                 switch (summary.histogramFlavor()) {
                     case Prometheus:
                         histogramKeys.add("le");
@@ -148,14 +149,14 @@ public class PrometheusMeterRegistry extends MeterRegistry {
                             final List<String> histogramValues = new LinkedList<>(tagValues);
                             histogramValues.add(Collector.doubleToGoString(c.bucket()));
                             samples.add(new Collector.MetricFamilySamples.Sample(
-                                    conventionName + "_bucket", histogramKeys, histogramValues, c.count()));
+                                    sampleName, histogramKeys, histogramValues, c.count()));
                         }
 
                         // the +Inf bucket should always equal `count`
                         final List<String> histogramValues = new LinkedList<>(tagValues);
                         histogramValues.add("+Inf");
                         samples.add(new Collector.MetricFamilySamples.Sample(
-                                conventionName + "_bucket", histogramKeys, histogramValues, count));
+                                sampleName, histogramKeys, histogramValues, count));
                         break;
                     case VictoriaMetrics:
                         histogramKeys.add("vmrange");
@@ -164,10 +165,11 @@ public class PrometheusMeterRegistry extends MeterRegistry {
                             final List<String> histogramValuesVM = new LinkedList<>(tagValues);
                             histogramValuesVM.add(FixedBoundaryVictoriaMetricsHistogram.getRangeTagValue(c.bucket()));
                             samples.add(new Collector.MetricFamilySamples.Sample(
-                                    conventionName + "_bucket", histogramKeys, histogramValuesVM, c.count()));
+                                    sampleName, histogramKeys, histogramValuesVM, c.count()));
                         }
                         break;
                     default:
+                        break;
                 }
 
             }
@@ -219,6 +221,7 @@ public class PrometheusMeterRegistry extends MeterRegistry {
 
                 List<String> histogramKeys = new LinkedList<>(tagKeys);
 
+                String sampleName = conventionName + "_bucket";
                 switch (prometheusConfig.histogramFlavor()) {
                     case Prometheus:
                         histogramKeys.add("le");
@@ -228,14 +231,14 @@ public class PrometheusMeterRegistry extends MeterRegistry {
                             final List<String> histogramValues = new LinkedList<>(tagValues);
                             histogramValues.add(Collector.doubleToGoString(c.bucket(TimeUnit.SECONDS)));
                             samples.add(new Collector.MetricFamilySamples.Sample(
-                                    conventionName + "_bucket", histogramKeys, histogramValues, c.count()));
+                                    sampleName, histogramKeys, histogramValues, c.count()));
                         }
 
                         // the +Inf bucket should always equal `count`
                         final List<String> histogramValues = new LinkedList<>(tagValues);
                         histogramValues.add("+Inf");
                         samples.add(new Collector.MetricFamilySamples.Sample(
-                                conventionName + "_bucket", histogramKeys, histogramValues, count));
+                                sampleName, histogramKeys, histogramValues, count));
                         break;
                     case VictoriaMetrics:
                         histogramKeys.add("vmrange");
@@ -244,10 +247,11 @@ public class PrometheusMeterRegistry extends MeterRegistry {
                             final List<String> histogramValuesVM = new LinkedList<>(tagValues);
                             histogramValuesVM.add(FixedBoundaryVictoriaMetricsHistogram.getRangeTagValue(c.bucket()));
                             samples.add(new Collector.MetricFamilySamples.Sample(
-                                    conventionName + "_bucket", histogramKeys, histogramValuesVM, c.count()));
+                                    sampleName, histogramKeys, histogramValuesVM, c.count()));
                         }
                         break;
                     default:
+                        break;
                 }
 
             }
