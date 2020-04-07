@@ -44,7 +44,7 @@ public class JettySslHandshakeMetrics implements SslHandshakeListener {
     private final MeterRegistry registry;
     private final Iterable<Tag> tags;
 
-    Counter handshakesFailed;
+    private final Counter handshakesFailed;
 
     public JettySslHandshakeMetrics(MeterRegistry registry) {
         this(registry, Tags.empty());
