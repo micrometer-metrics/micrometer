@@ -58,6 +58,7 @@ class KafkaMetrics implements MeterBinder, AutoCloseable {
     static final String METRIC_GROUP_METRICS_COUNT = "kafka-metrics-count";
     static final String VERSION_METRIC_NAME = "version";
     static final String START_TIME_METRIC_NAME = "start-time-ms";
+    static final Duration DEFAULT_REFRESH_DURATION = Duration.ofSeconds(60);
 
     private final Supplier<Map<MetricName, ? extends Metric>> metricsSupplier;
     private final Iterable<Tag> extraTags;
@@ -72,13 +73,13 @@ class KafkaMetrics implements MeterBinder, AutoCloseable {
     private String kafkaVersion = "unknown";
 
     KafkaMetrics(Supplier<Map<MetricName, ? extends Metric>> metricsSupplier) {
-        this(metricsSupplier, emptyList(), Duration.ofSeconds(60));
+        this(metricsSupplier, emptyList(), DEFAULT_REFRESH_DURATION);
     }
 
     KafkaMetrics(Supplier<Map<MetricName, ? extends Metric>> metricsSupplier, Iterable<Tag> extraTags) {
         this.metricsSupplier = metricsSupplier;
         this.extraTags = extraTags;
-        this.refreshDuration = Duration.ofSeconds(60);
+        this.refreshDuration = DEFAULT_REFRESH_DURATION;
     }
 
     KafkaMetrics(Supplier<Map<MetricName, ? extends Metric>> metricsSupplier, Iterable<Tag> extraTags, Duration refreshDuration) {
@@ -141,7 +142,6 @@ class KafkaMetrics implements MeterBinder, AutoCloseable {
                 bindMeter(registry, metric, meterName, meterTags);
             });
         }
-
     }
 
     private void bindMeter(MeterRegistry registry, Metric metric, String name, Iterable<Tag> tags) {
