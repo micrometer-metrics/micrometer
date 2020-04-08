@@ -158,4 +158,14 @@ class WavefrontMeterRegistryTest {
         assertThatCode(() -> new WavefrontMeterRegistry(missingApiTokenProxyConfig, Clock.SYSTEM))
                 .doesNotThrowAnyException();
     }
+
+    @Test
+    void proxyUriConvertedToHttp() {
+        assertThat(WavefrontMeterRegistry.getWavefrontReportingUri(WavefrontConfig.DEFAULT_PROXY)).startsWith("http://");
+    }
+
+    @Test
+    void directApiUriUnchanged() {
+        assertThat(WavefrontMeterRegistry.getWavefrontReportingUri(WavefrontConfig.DEFAULT_DIRECT)).isEqualTo(WavefrontConfig.DEFAULT_DIRECT.uri());
+    }
 }

@@ -71,8 +71,7 @@ public class WavefrontMeterRegistry extends PushMeterRegistry {
      * @param clock  The clock to use for timings.
      */
     public WavefrontMeterRegistry(WavefrontConfig config, Clock clock) {
-        this(config, clock, DEFAULT_THREAD_FACTORY,
-            new WavefrontDirectIngestionClient.Builder(getWavefrontReportingUri(config), config.apiToken()).build());
+        this(config, clock, DEFAULT_THREAD_FACTORY, getDefaultSenderBuilder(config).build());
     }
 
     /**
@@ -83,9 +82,7 @@ public class WavefrontMeterRegistry extends PushMeterRegistry {
      */
     @Deprecated
     public WavefrontMeterRegistry(WavefrontConfig config, Clock clock, ThreadFactory threadFactory) {
-        this(config, clock, threadFactory,
-                new WavefrontDirectIngestionClient.Builder(getWavefrontReportingUri(config),
-                        config.apiToken()).build());
+        this(config, clock, threadFactory, getDefaultSenderBuilder(config).build());
     }
 
     WavefrontMeterRegistry(WavefrontConfig config, Clock clock, ThreadFactory threadFactory,
@@ -94,7 +91,7 @@ public class WavefrontMeterRegistry extends PushMeterRegistry {
         this.config = config;
         if (config.uri() == null)
             throw new MissingRequiredConfigurationException("A uri is required to publish metrics to Wavefront");
-        if (isDirectToApi() && config.apiToken() == null) {
+        if (isDirectToApi(config) && config.apiToken() == null) {
             throw new MissingRequiredConfigurationException(
                     "apiToken must be set whenever publishing directly to the Wavefront API");
         }
@@ -116,7 +113,7 @@ public class WavefrontMeterRegistry extends PushMeterRegistry {
         start(threadFactory);
     }
 
-    private boolean isDirectToApi() {
+    private static boolean isDirectToApi(WavefrontConfig config) {
         return !"proxy".equals(URI.create(config.uri()).getScheme());
     }
 
@@ -303,10 +300,24 @@ public class WavefrontMeterRegistry extends PushMeterRegistry {
   
     static String getWavefrontReportingUri(WavefrontConfig wavefrontConfig) {
         // proxy reporting is now http reporting on newer wavefront proxies.
-        if (wavefrontConfig.uri().startsWith("proxy")) {
-            return "http" + wavefrontConfig.uri().substring(5);
+        if (!isDirectToApi(wavefrontConfig)) {
+            return "http" + wavefrontConfig.uri().substring("proxy".length());
         }
         return wavefrontConfig.uri();
+    }
+
+    /**
+     * Creates a Builder for the default {@link WavefrontSender} to be used with a
+     * {@link WavefrontMeterRegistry} if one is not provided. Generates the builder
+     * based on the given {@link WavefrontConfig}.
+     *
+     * @param config config to use
+     * @return a builder for a WavefrontSender
+     * @since 1.5.0
+     */
+    public static WavefrontDirectIngestionClient.Builder getDefaultSenderBuilder(WavefrontConfig config) {
+        return new WavefrontDirectIngestionClient.Builder(getWavefrontReportingUri(config),
+                config.apiToken());
     }
 
     public static Builder builder(WavefrontConfig config) {
