@@ -59,6 +59,8 @@ class KafkaMetrics implements MeterBinder, AutoCloseable {
     static final String VERSION_METRIC_NAME = "version";
     static final String START_TIME_METRIC_NAME = "start-time-ms";
     static final Duration DEFAULT_REFRESH_INTERVAL = Duration.ofSeconds(60);
+    static final String KAFKA_VERSION_TAG_NAME = "kafka-version";
+    static final String CLIENT_ID_TAG_NAME = "client-id";
 
     private final Supplier<Map<MetricName, ? extends Metric>> metricsSupplier;
     private final Iterable<Tag> extraTags;
@@ -71,6 +73,7 @@ class KafkaMetrics implements MeterBinder, AutoCloseable {
     private volatile Set<MetricName> currentMeters = new HashSet<>();
 
     private String kafkaVersion = "unknown";
+    private String clientId = "unknown";
 
     KafkaMetrics(Supplier<Map<MetricName, ? extends Metric>> metricsSupplier) {
         this(metricsSupplier, emptyList());
@@ -92,6 +95,7 @@ class KafkaMetrics implements MeterBinder, AutoCloseable {
         Metric startTime = null;
         for (Map.Entry<MetricName, ? extends Metric> entry : metrics.entrySet()) {
             MetricName name = entry.getKey();
+            if (clientId.equals("unknown")) clientId = name.tags().get(CLIENT_ID_TAG_NAME);
             if (METRIC_GROUP_APP_INFO.equals(name.group()))
                 if (VERSION_METRIC_NAME.equals(name.name()))
                     kafkaVersion = (String) entry.getValue().metricValue();
@@ -133,6 +137,8 @@ class KafkaMetrics implements MeterBinder, AutoCloseable {
                 boolean hasLessTags = false;
                 for (Meter other : registry.find(meterName).meters()) {
                     List<Tag> tags = other.getId().getTags();
+                    // Only consider meters from the same client before filtering
+                    if (differentClient(tags)) break;
                     if (tags.size() < meterTags.size()) registry.remove(other);
                     // Check if already exists
                     else if (tags.size() == meterTags.size())
@@ -144,6 +150,17 @@ class KafkaMetrics implements MeterBinder, AutoCloseable {
                 bindMeter(registry, metric, meterName, meterTags);
             });
         }
+    }
+
+    private boolean differentClient(List<Tag> tags) {
+        boolean anotherClient = false, anotherVersion = false;
+        for (Tag tag : tags) {
+            if (tag.getKey().equals(CLIENT_ID_TAG_NAME))
+                if (!clientId.equals(tag.getValue())) anotherClient = true;
+            if (tag.getKey().equals(KAFKA_VERSION_TAG_NAME))
+                if (!kafkaVersion.equals(tag.getValue())) anotherVersion = true;
+        }
+        return anotherClient && anotherVersion;
     }
 
     private void bindMeter(MeterRegistry registry, Metric metric, String name, Iterable<Tag> tags) {
@@ -172,7 +189,7 @@ class KafkaMetrics implements MeterBinder, AutoCloseable {
     private List<Tag> meterTags(Metric metric) {
         List<Tag> tags = new ArrayList<>();
         metric.metricName().tags().forEach((key, value) -> tags.add(Tag.of(key, value)));
-        tags.add(Tag.of("kafka-version", kafkaVersion));
+        tags.add(Tag.of(KAFKA_VERSION_TAG_NAME, kafkaVersion));
         extraTags.forEach(tags::add);
         return tags;
     }
