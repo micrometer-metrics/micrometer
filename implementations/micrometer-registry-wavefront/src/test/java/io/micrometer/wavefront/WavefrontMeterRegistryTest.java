@@ -19,10 +19,8 @@ import com.wavefront.sdk.common.Pair;
 import com.wavefront.sdk.common.WavefrontSender;
 import com.wavefront.sdk.entities.histograms.HistogramGranularity;
 import com.wavefront.sdk.entities.histograms.WavefrontHistogramImpl;
-import io.micrometer.core.instrument.Measurement;
-import io.micrometer.core.instrument.Meter;
-import io.micrometer.core.instrument.MockClock;
-import io.micrometer.core.instrument.Statistic;
+import io.micrometer.core.instrument.*;
+import io.micrometer.core.instrument.config.MissingRequiredConfigurationException;
 import org.junit.jupiter.api.Test;
 
 import java.io.IOException;
@@ -30,6 +28,7 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 
+import static org.assertj.core.api.Assertions.*;
 import static org.mockito.Mockito.*;
 
 /**
@@ -116,11 +115,47 @@ class WavefrontMeterRegistryTest {
         long time = System.currentTimeMillis();
         List<Pair<Double, Integer>> centroids = Arrays.asList(new Pair<>(1d, 1));
         List<WavefrontHistogramImpl.Distribution> distributions = Arrays.asList(
-            new WavefrontHistogramImpl.Distribution(time, centroids)
+                new WavefrontHistogramImpl.Distribution(time, centroids)
         );
         registry.publishDistribution(id, distributions);
         verify(wavefrontSender, times(1)).sendDistribution("name", centroids,
                 Collections.singleton(HistogramGranularity.MINUTE), time, "host", Collections.emptyMap());
         verifyNoMoreInteractions(wavefrontSender);
+    }
+
+    @Test
+    void failsWhenUriIsMissing() {
+        WavefrontConfig missingUriConfig = new WavefrontConfig() {
+            @Override
+            public String get(String key) {
+                return null;
+            }
+
+            @Override
+            public String apiToken() {
+                return "fakeToken";
+            }
+        };
+
+        assertThatExceptionOfType(MissingRequiredConfigurationException.class)
+                .isThrownBy(() -> new WavefrontMeterRegistry(missingUriConfig, Clock.SYSTEM))
+                .withMessage("A uri is required to publish metrics to Wavefront");
+    }
+
+    @Test
+    void failsWhenApiTokenMissingAndDirectToApi() {
+        WavefrontConfig missingApiTokenDirectConfig = WavefrontConfig.DEFAULT_DIRECT;
+
+        assertThatExceptionOfType(MissingRequiredConfigurationException.class)
+                .isThrownBy(() -> new WavefrontMeterRegistry(missingApiTokenDirectConfig, Clock.SYSTEM))
+                .withMessage("apiToken must be set whenever publishing directly to the Wavefront API");
+    }
+
+    @Test
+    void proxyConfigDoesNotNeedApiToken() {
+        WavefrontConfig missingApiTokenProxyConfig = WavefrontConfig.DEFAULT_PROXY;
+
+        assertThatCode(() -> new WavefrontMeterRegistry(missingApiTokenProxyConfig, Clock.SYSTEM))
+                .doesNotThrowAnyException();
     }
 }

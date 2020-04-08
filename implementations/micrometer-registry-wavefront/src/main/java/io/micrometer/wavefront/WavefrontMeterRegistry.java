@@ -20,6 +20,7 @@ import com.wavefront.sdk.direct.ingestion.WavefrontDirectIngestionClient;
 import com.wavefront.sdk.entities.histograms.HistogramGranularity;
 import com.wavefront.sdk.entities.histograms.WavefrontHistogramImpl;
 import io.micrometer.core.instrument.*;
+import io.micrometer.core.instrument.config.MissingRequiredConfigurationException;
 import io.micrometer.core.instrument.cumulative.CumulativeCounter;
 import io.micrometer.core.instrument.cumulative.CumulativeFunctionCounter;
 import io.micrometer.core.instrument.cumulative.CumulativeFunctionTimer;
@@ -37,6 +38,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
+import java.net.URI;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
@@ -90,6 +92,12 @@ public class WavefrontMeterRegistry extends PushMeterRegistry {
                            WavefrontSender wavefrontSender) {
         super(config, clock);
         this.config = config;
+        if (config.uri() == null)
+            throw new MissingRequiredConfigurationException("A uri is required to publish metrics to Wavefront");
+        if (isDirectToApi() && config.apiToken() == null) {
+            throw new MissingRequiredConfigurationException(
+                    "apiToken must be set whenever publishing directly to the Wavefront API");
+        }
         this.wavefrontSender = wavefrontSender;
 
         this.histogramGranularities = new HashSet<>();
@@ -106,6 +114,10 @@ public class WavefrontMeterRegistry extends PushMeterRegistry {
         config().namingConvention(new WavefrontNamingConvention(config.globalPrefix()));
 
         start(threadFactory);
+    }
+
+    private boolean isDirectToApi() {
+        return !"proxy".equals(URI.create(config.uri()).getScheme());
     }
 
     @Override
