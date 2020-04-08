@@ -192,4 +192,28 @@ class KafkaMetricsTest {
         Meter meter = registry.getMeters().get(0);
         assertThat(meter.getId().getTags()).hasSize(2); // version + key0
     }
+
+    @Test void shouldBindMetersWithDifferentClientIds() {
+        //Given
+        Supplier<Map<MetricName, ? extends Metric>> supplier = () -> {
+            Map<String, String> firstTags = new LinkedHashMap<>();
+            firstTags.put("key0", "value0");
+            firstTags.put("client-id", "client0");
+            MetricName firstName = new MetricName("a", "b", "c", firstTags);
+            KafkaMetric firstMetric = new KafkaMetric(this, firstName, new Value(), new MetricConfig(), Time.SYSTEM);
+
+            Map<MetricName, KafkaMetric> metrics = new LinkedHashMap<>();
+            metrics.put(firstName, firstMetric);
+            return metrics;
+        };
+        KafkaMetrics kafkaMetrics = new KafkaMetrics(supplier);
+        MeterRegistry registry = new SimpleMeterRegistry();
+        registry.counter("kafka.b.a", "client-id", "client1", "key0", "value0");
+        //When
+        kafkaMetrics.bindTo(registry);
+        //Then
+        assertThat(registry.getMeters()).hasSize(2);
+        Meter meter = registry.getMeters().get(0);
+        assertThat(meter.getId().getTags()).hasSize(3); // version + clientId + key0
+    }
 }
