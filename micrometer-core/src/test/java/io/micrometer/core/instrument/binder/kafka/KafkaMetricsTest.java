@@ -18,19 +18,21 @@ package io.micrometer.core.instrument.binder.kafka;
 import io.micrometer.core.instrument.Meter;
 import io.micrometer.core.instrument.MeterRegistry;
 import io.micrometer.core.instrument.simple.SimpleMeterRegistry;
-import java.util.Collections;
-import java.util.LinkedHashMap;
-import java.util.Map;
-import java.util.concurrent.atomic.AtomicReference;
-import java.util.function.Supplier;
 import org.apache.kafka.common.Metric;
 import org.apache.kafka.common.MetricName;
+import org.apache.kafka.common.metrics.Gauge;
 import org.apache.kafka.common.metrics.KafkaMetric;
 import org.apache.kafka.common.metrics.MetricConfig;
 import org.apache.kafka.common.metrics.stats.Value;
 import org.apache.kafka.common.utils.Time;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Test;
+
+import java.util.Collections;
+import java.util.LinkedHashMap;
+import java.util.Map;
+import java.util.concurrent.atomic.AtomicReference;
+import java.util.function.Supplier;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -201,18 +203,23 @@ class KafkaMetricsTest {
             firstTags.put("client-id", "client0");
             MetricName firstName = new MetricName("a", "b", "c", firstTags);
             KafkaMetric firstMetric = new KafkaMetric(this, firstName, new Value(), new MetricConfig(), Time.SYSTEM);
+            MetricName versionName = new MetricName("version", "app-info", "kafka version", Collections.emptyMap());
+            Gauge<String> version = (config, now) -> "2.0";
+            KafkaMetric versionMetric = new KafkaMetric(this, versionName, version, new MetricConfig(), Time.SYSTEM);
 
             Map<MetricName, KafkaMetric> metrics = new LinkedHashMap<>();
             metrics.put(firstName, firstMetric);
+            metrics.put(versionName, versionMetric);
             return metrics;
         };
         KafkaMetrics kafkaMetrics = new KafkaMetrics(supplier);
         MeterRegistry registry = new SimpleMeterRegistry();
-        registry.counter("kafka.b.a", "client-id", "client1", "key0", "value0");
+        registry.counter("kafka.b.a", "client-id", "client0", "key0", "value0", "kafka-version", "1.0");
+        registry.counter("kafka.b.a", "client-id", "client1", "key0", "value0", "kafka-version", "1.0");
         //When
         kafkaMetrics.bindTo(registry);
         //Then
-        assertThat(registry.getMeters()).hasSize(2);
+        assertThat(registry.getMeters()).hasSize(3);
         Meter meter = registry.getMeters().get(0);
         assertThat(meter.getId().getTags()).hasSize(3); // version + clientId + key0
     }

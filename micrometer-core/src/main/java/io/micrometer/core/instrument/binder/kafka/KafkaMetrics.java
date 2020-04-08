@@ -61,6 +61,7 @@ class KafkaMetrics implements MeterBinder, AutoCloseable {
     static final Duration DEFAULT_REFRESH_INTERVAL = Duration.ofSeconds(60);
     static final String KAFKA_VERSION_TAG_NAME = "kafka-version";
     static final String CLIENT_ID_TAG_NAME = "client-id";
+    static final String DEFAULT_VALUE = "unknown";
 
     private final Supplier<Map<MetricName, ? extends Metric>> metricsSupplier;
     private final Iterable<Tag> extraTags;
@@ -72,8 +73,8 @@ class KafkaMetrics implements MeterBinder, AutoCloseable {
      */
     private volatile Set<MetricName> currentMeters = new HashSet<>();
 
-    private String kafkaVersion = "unknown";
-    private String clientId = "unknown";
+    private String kafkaVersion = DEFAULT_VALUE;
+    private String clientId = DEFAULT_VALUE;
 
     KafkaMetrics(Supplier<Map<MetricName, ? extends Metric>> metricsSupplier) {
         this(metricsSupplier, emptyList());
@@ -95,7 +96,7 @@ class KafkaMetrics implements MeterBinder, AutoCloseable {
         Metric startTime = null;
         for (Map.Entry<MetricName, ? extends Metric> entry : metrics.entrySet()) {
             MetricName name = entry.getKey();
-            if (clientId.equals("unknown")) clientId = name.tags().get(CLIENT_ID_TAG_NAME);
+            if (clientId.equals(DEFAULT_VALUE)) clientId = name.tags().get(CLIENT_ID_TAG_NAME);
             if (METRIC_GROUP_APP_INFO.equals(name.group()))
                 if (VERSION_METRIC_NAME.equals(name.name()))
                     kafkaVersion = (String) entry.getValue().metricValue();
