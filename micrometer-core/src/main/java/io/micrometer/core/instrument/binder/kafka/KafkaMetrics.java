@@ -160,7 +160,7 @@ class KafkaMetrics implements MeterBinder, AutoCloseable {
             if (tag.getKey().equals(KAFKA_VERSION_TAG_NAME))
                 if (!kafkaVersion.equals(tag.getValue())) anotherVersion = true;
         }
-        return anotherClient && anotherVersion;
+        return anotherClient || anotherVersion;
     }
 
     private void bindMeter(MeterRegistry registry, Metric metric, String name, Iterable<Tag> tags) {
