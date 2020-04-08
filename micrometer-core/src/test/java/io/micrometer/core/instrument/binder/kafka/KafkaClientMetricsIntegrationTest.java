@@ -55,7 +55,8 @@ class KafkaClientMetricsIntegrationTest {
         Producer<String, String> producer = new KafkaProducer<>(
                 producerConfigs, new StringSerializer(), new StringSerializer());
 
-        new KafkaClientMetrics(producer).bindTo(registry);
+        KafkaClientMetrics producerKafkaMetrics = new KafkaClientMetrics(producer);
+        producerKafkaMetrics.bindTo(registry);
 
         int producerMetrics = registry.getMeters().size();
         assertThat(registry.getMeters()).hasSizeGreaterThan(0);
@@ -70,7 +71,8 @@ class KafkaClientMetricsIntegrationTest {
         Consumer<String, String> consumer = new KafkaConsumer<>(
                 consumerConfigs, new StringDeserializer(), new StringDeserializer());
 
-        new KafkaClientMetrics(consumer).bindTo(registry);
+        KafkaClientMetrics consumerKafkaMetrics = new KafkaClientMetrics(consumer);
+        consumerKafkaMetrics.bindTo(registry);
 
         //Printing out for discovery purposes
         out.println("Meters from producer before sending:");
@@ -90,7 +92,7 @@ class KafkaClientMetricsIntegrationTest {
         out.println("Meters from producer after sending and consumer before poll:");
         printMeters(registry);
 
-        Thread.sleep(5 * 1000);
+        producerKafkaMetrics.checkAndBindMetrics(registry);
 
         int producerAndConsumerMetricsAfterSend = registry.getMeters().size();
         assertThat(registry.getMeters()).hasSizeGreaterThan(producerAndConsumerMetrics);
@@ -106,7 +108,7 @@ class KafkaClientMetricsIntegrationTest {
         out.println("Meters from producer and consumer after polling:");
         printMeters(registry);
 
-        Thread.sleep(5 * 1000);
+        consumerKafkaMetrics.checkAndBindMetrics(registry);
 
         assertThat(registry.getMeters()).hasSizeGreaterThan(producerAndConsumerMetricsAfterSend);
         assertThat(registry.getMeters())

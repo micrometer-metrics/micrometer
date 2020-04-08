@@ -24,6 +24,8 @@ import io.micrometer.core.instrument.Tag;
 import io.micrometer.core.instrument.binder.MeterBinder;
 import io.micrometer.core.lang.NonNullApi;
 import io.micrometer.core.lang.NonNullFields;
+
+import java.time.Duration;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
@@ -59,6 +61,7 @@ class KafkaMetrics implements MeterBinder, AutoCloseable {
 
     private final Supplier<Map<MetricName, ? extends Metric>> metricsSupplier;
     private final Iterable<Tag> extraTags;
+    private final Duration refreshDuration;
     private final ScheduledExecutorService scheduler = Executors.newScheduledThreadPool(1);
 
     /**
@@ -69,12 +72,19 @@ class KafkaMetrics implements MeterBinder, AutoCloseable {
     private String kafkaVersion = "unknown";
 
     KafkaMetrics(Supplier<Map<MetricName, ? extends Metric>> metricsSupplier) {
-        this(metricsSupplier, emptyList());
+        this(metricsSupplier, emptyList(), Duration.ofSeconds(60));
     }
 
     KafkaMetrics(Supplier<Map<MetricName, ? extends Metric>> metricsSupplier, Iterable<Tag> extraTags) {
         this.metricsSupplier = metricsSupplier;
         this.extraTags = extraTags;
+        this.refreshDuration = Duration.ofSeconds(60);
+    }
+
+    KafkaMetrics(Supplier<Map<MetricName, ? extends Metric>> metricsSupplier, Iterable<Tag> extraTags, Duration refreshDuration) {
+        this.metricsSupplier = metricsSupplier;
+        this.extraTags = extraTags;
+        this.refreshDuration = refreshDuration;
     }
 
     @Override public void bindTo(MeterRegistry registry) {
@@ -91,7 +101,7 @@ class KafkaMetrics implements MeterBinder, AutoCloseable {
         }
         if (startTime != null) bindMeter(registry, startTime, meterName(startTime), meterTags(startTime));
         // Collect dynamic metrics
-        scheduler.scheduleAtFixedRate(() -> checkAndBindMetrics(registry), 0, 5, SECONDS);
+        scheduler.scheduleAtFixedRate(() -> checkAndBindMetrics(registry), 0, refreshDuration.getSeconds(), SECONDS);
     }
 
     /**
@@ -103,37 +113,35 @@ class KafkaMetrics implements MeterBinder, AutoCloseable {
      */
     void checkAndBindMetrics(MeterRegistry registry) {
         Map<MetricName, ? extends Metric> metrics = metricsSupplier.get();
-        if (!currentMeters.equals(metrics.keySet())) {
-            synchronized (this) { //Enforce only happens once when metrics change
-                if (!currentMeters.equals(metrics.keySet())) {
-                    currentMeters = new HashSet<>(metrics.keySet());
-                    metrics.forEach((name, metric) -> {
-                        //Filter out non-numeric values
-                        if (!(metric.metricValue() instanceof Number)) return;
 
-                        //Filter out metrics from groups that include metadata
-                        if (METRIC_GROUP_APP_INFO.equals(name.group())) return;
-                        if (METRIC_GROUP_METRICS_COUNT.equals(name.group())) return;
-                        String meterName = meterName(metric);
-                        List<Tag> meterTags = meterTags(metric);
-                        //Kafka has metrics with lower number of tags (e.g. with/without topic or partition tag)
-                        //Remove meters with lower number of tags
-                        boolean hasLessTags = false;
-                        for (Meter other : registry.find(meterName).meters()) {
-                            List<Tag> tags = other.getId().getTags();
-                            if (tags.size() < meterTags.size()) registry.remove(other);
-                            // Check if already exists
-                            else if (tags.size() == meterTags.size())
-                                if (tags.equals(meterTags)) return;
-                                else break;
-                            else hasLessTags = true;
-                        }
-                        if (hasLessTags) return;
-                        bindMeter(registry, metric, meterName, meterTags);
-                    });
+        if (!currentMeters.equals(metrics.keySet())) {
+            currentMeters = new HashSet<>(metrics.keySet());
+            metrics.forEach((name, metric) -> {
+                //Filter out non-numeric values
+                if (!(metric.metricValue() instanceof Number)) return;
+
+                //Filter out metrics from groups that include metadata
+                if (METRIC_GROUP_APP_INFO.equals(name.group())) return;
+                if (METRIC_GROUP_METRICS_COUNT.equals(name.group())) return;
+                String meterName = meterName(metric);
+                List<Tag> meterTags = meterTags(metric);
+                //Kafka has metrics with lower number of tags (e.g. with/without topic or partition tag)
+                //Remove meters with lower number of tags
+                boolean hasLessTags = false;
+                for (Meter other : registry.find(meterName).meters()) {
+                    List<Tag> tags = other.getId().getTags();
+                    if (tags.size() < meterTags.size()) registry.remove(other);
+                    // Check if already exists
+                    else if (tags.size() == meterTags.size())
+                        if (tags.equals(meterTags)) return;
+                        else break;
+                    else hasLessTags = true;
                 }
-            }
+                if (hasLessTags) return;
+                bindMeter(registry, metric, meterName, meterTags);
+            });
         }
+
     }
 
     private void bindMeter(MeterRegistry registry, Metric metric, String name, Iterable<Tag> tags) {
