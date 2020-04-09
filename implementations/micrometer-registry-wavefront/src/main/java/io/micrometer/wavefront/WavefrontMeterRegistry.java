@@ -89,12 +89,6 @@ public class WavefrontMeterRegistry extends PushMeterRegistry {
                            WavefrontSender wavefrontSender) {
         super(config, clock);
         this.config = config;
-        if (config.uri() == null)
-            throw new MissingRequiredConfigurationException("A uri is required to publish metrics to Wavefront");
-        if (isDirectToApi(config) && config.apiToken() == null) {
-            throw new MissingRequiredConfigurationException(
-                    "apiToken must be set whenever publishing directly to the Wavefront API");
-        }
         this.wavefrontSender = wavefrontSender;
 
         this.histogramGranularities = new HashSet<>();
@@ -316,6 +310,12 @@ public class WavefrontMeterRegistry extends PushMeterRegistry {
      * @since 1.5.0
      */
     public static WavefrontDirectIngestionClient.Builder getDefaultSenderBuilder(WavefrontConfig config) {
+        if (config.uri() == null)
+            throw new MissingRequiredConfigurationException("A uri is required to publish metrics to Wavefront");
+        if (isDirectToApi(config) && config.apiToken() == null) {
+            throw new MissingRequiredConfigurationException(
+                    "apiToken must be set whenever publishing directly to the Wavefront API");
+        }
         return new WavefrontDirectIngestionClient.Builder(getWavefrontReportingUri(config),
                 config.apiToken());
     }
@@ -367,10 +367,9 @@ public class WavefrontMeterRegistry extends PushMeterRegistry {
         }
 
         public WavefrontMeterRegistry build() {
-            if (wavefrontSender == null) {
-                return new WavefrontMeterRegistry(config, clock, threadFactory);
-            }
-            return new WavefrontMeterRegistry(config, clock, threadFactory, wavefrontSender);
+            WavefrontSender sender = (wavefrontSender != null) ? wavefrontSender
+                    : getDefaultSenderBuilder(config).build();
+            return new WavefrontMeterRegistry(config, clock, threadFactory, sender);
         }
     }
 }

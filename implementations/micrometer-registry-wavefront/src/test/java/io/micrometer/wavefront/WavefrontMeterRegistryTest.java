@@ -35,6 +35,7 @@ import static org.mockito.Mockito.*;
  * Tests for {@link WavefrontMeterRegistry}.
  *
  * @author Johnny Lim
+ * @author Stephane Nicoll
  */
 class WavefrontMeterRegistryTest {
     private final WavefrontConfig config = new WavefrontConfig() {
@@ -124,7 +125,7 @@ class WavefrontMeterRegistryTest {
     }
 
     @Test
-    void failsWhenUriIsMissing() {
+    void failsWithDefaultSenderWhenUriIsMissing() {
         WavefrontConfig missingUriConfig = new WavefrontConfig() {
             @Override
             public String get(String key) {
@@ -138,24 +139,52 @@ class WavefrontMeterRegistryTest {
         };
 
         assertThatExceptionOfType(MissingRequiredConfigurationException.class)
-                .isThrownBy(() -> new WavefrontMeterRegistry(missingUriConfig, Clock.SYSTEM))
+                .isThrownBy(() -> WavefrontMeterRegistry.builder(missingUriConfig).build())
                 .withMessage("A uri is required to publish metrics to Wavefront");
     }
 
     @Test
-    void failsWhenApiTokenMissingAndDirectToApi() {
+    void failsWithDefaultSenderWhenApiTokenMissingAndDirectToApi() {
         WavefrontConfig missingApiTokenDirectConfig = WavefrontConfig.DEFAULT_DIRECT;
 
         assertThatExceptionOfType(MissingRequiredConfigurationException.class)
-                .isThrownBy(() -> new WavefrontMeterRegistry(missingApiTokenDirectConfig, Clock.SYSTEM))
+                .isThrownBy(() -> WavefrontMeterRegistry.builder(missingApiTokenDirectConfig).build())
                 .withMessage("apiToken must be set whenever publishing directly to the Wavefront API");
+    }
+
+    @Test
+    void customSenderDoesNotNeedUri() {
+        WavefrontConfig missingUriConfig = new WavefrontConfig() {
+            @Override
+            public String get(String key) {
+                return null;
+            }
+
+            @Override
+            public String apiToken() {
+                return "fakeToken";
+            }
+        };
+
+        assertThatCode(() -> WavefrontMeterRegistry.builder(missingUriConfig)
+                .wavefrontSender(mock(WavefrontSender.class)).build())
+                .doesNotThrowAnyException();
+    }
+
+    @Test
+    void customSenderDosNotNeedApiToken() {
+        WavefrontConfig missingApiTokenDirectConfig = WavefrontConfig.DEFAULT_DIRECT;
+
+        assertThatCode(() -> WavefrontMeterRegistry.builder(missingApiTokenDirectConfig)
+                .wavefrontSender(mock(WavefrontSender.class)).build())
+                .doesNotThrowAnyException();
     }
 
     @Test
     void proxyConfigDoesNotNeedApiToken() {
         WavefrontConfig missingApiTokenProxyConfig = WavefrontConfig.DEFAULT_PROXY;
 
-        assertThatCode(() -> new WavefrontMeterRegistry(missingApiTokenProxyConfig, Clock.SYSTEM))
+        assertThatCode(() -> WavefrontMeterRegistry.builder(missingApiTokenProxyConfig).build())
                 .doesNotThrowAnyException();
     }
 
