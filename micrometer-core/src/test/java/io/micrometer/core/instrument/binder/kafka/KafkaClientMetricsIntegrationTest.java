@@ -44,7 +44,7 @@ class KafkaClientMetricsIntegrationTest {
     private KafkaContainer kafkaContainer = new KafkaContainer();
 
     @Test
-    void shouldManageProducerAndConsumerMetrics() {
+    void shouldManageProducerAndConsumerMetrics() throws InterruptedException {
         SimpleMeterRegistry registry = new SimpleMeterRegistry();
 
         assertThat(registry.getMeters()).hasSize(0);
@@ -55,7 +55,8 @@ class KafkaClientMetricsIntegrationTest {
         Producer<String, String> producer = new KafkaProducer<>(
                 producerConfigs, new StringSerializer(), new StringSerializer());
 
-        new KafkaClientMetrics(producer).bindTo(registry);
+        KafkaClientMetrics producerKafkaMetrics = new KafkaClientMetrics(producer);
+        producerKafkaMetrics.bindTo(registry);
 
         int producerMetrics = registry.getMeters().size();
         assertThat(registry.getMeters()).hasSizeGreaterThan(0);
@@ -70,7 +71,8 @@ class KafkaClientMetricsIntegrationTest {
         Consumer<String, String> consumer = new KafkaConsumer<>(
                 consumerConfigs, new StringDeserializer(), new StringDeserializer());
 
-        new KafkaClientMetrics(consumer).bindTo(registry);
+        KafkaClientMetrics consumerKafkaMetrics = new KafkaClientMetrics(consumer);
+        consumerKafkaMetrics.bindTo(registry);
 
         //Printing out for discovery purposes
         out.println("Meters from producer before sending:");
@@ -90,6 +92,8 @@ class KafkaClientMetricsIntegrationTest {
         out.println("Meters from producer after sending and consumer before poll:");
         printMeters(registry);
 
+        producerKafkaMetrics.checkAndBindMetrics(registry);
+
         int producerAndConsumerMetricsAfterSend = registry.getMeters().size();
         assertThat(registry.getMeters()).hasSizeGreaterThan(producerAndConsumerMetrics);
         assertThat(registry.getMeters())
@@ -103,6 +107,8 @@ class KafkaClientMetricsIntegrationTest {
         //Printing out for discovery purposes
         out.println("Meters from producer and consumer after polling:");
         printMeters(registry);
+
+        consumerKafkaMetrics.checkAndBindMetrics(registry);
 
         assertThat(registry.getMeters()).hasSizeGreaterThan(producerAndConsumerMetricsAfterSend);
         assertThat(registry.getMeters())

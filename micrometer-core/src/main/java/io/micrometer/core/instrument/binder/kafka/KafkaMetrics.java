@@ -24,17 +24,22 @@ import io.micrometer.core.instrument.Tag;
 import io.micrometer.core.instrument.binder.MeterBinder;
 import io.micrometer.core.lang.NonNullApi;
 import io.micrometer.core.lang.NonNullFields;
+
+import java.time.Duration;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.concurrent.Executors;
+import java.util.concurrent.ScheduledExecutorService;
 import java.util.function.Supplier;
 import java.util.function.ToDoubleFunction;
 import org.apache.kafka.common.Metric;
 import org.apache.kafka.common.MetricName;
 
 import static java.util.Collections.emptyList;
+import static java.util.concurrent.TimeUnit.SECONDS;
 
 /**
  * Kafka metrics binder.
@@ -47,15 +52,18 @@ import static java.util.Collections.emptyList;
 @Incubating(since = "1.4.0")
 @NonNullApi
 @NonNullFields
-class KafkaMetrics implements MeterBinder {
+class KafkaMetrics implements MeterBinder, AutoCloseable {
     static final String METRIC_NAME_PREFIX = "kafka.";
     static final String METRIC_GROUP_APP_INFO = "app-info";
     static final String METRIC_GROUP_METRICS_COUNT = "kafka-metrics-count";
     static final String VERSION_METRIC_NAME = "version";
     static final String START_TIME_METRIC_NAME = "start-time-ms";
+    static final Duration DEFAULT_REFRESH_DURATION = Duration.ofSeconds(60);
 
     private final Supplier<Map<MetricName, ? extends Metric>> metricsSupplier;
     private final Iterable<Tag> extraTags;
+    private final Duration refreshDuration;
+    private final ScheduledExecutorService scheduler = Executors.newScheduledThreadPool(1);
 
     /**
      * Keeps track of current set of metrics.
@@ -65,12 +73,19 @@ class KafkaMetrics implements MeterBinder {
     private String kafkaVersion = "unknown";
 
     KafkaMetrics(Supplier<Map<MetricName, ? extends Metric>> metricsSupplier) {
-        this(metricsSupplier, emptyList());
+        this(metricsSupplier, emptyList(), DEFAULT_REFRESH_DURATION);
     }
 
     KafkaMetrics(Supplier<Map<MetricName, ? extends Metric>> metricsSupplier, Iterable<Tag> extraTags) {
         this.metricsSupplier = metricsSupplier;
         this.extraTags = extraTags;
+        this.refreshDuration = DEFAULT_REFRESH_DURATION;
+    }
+
+    KafkaMetrics(Supplier<Map<MetricName, ? extends Metric>> metricsSupplier, Iterable<Tag> extraTags, Duration refreshDuration) {
+        this.metricsSupplier = metricsSupplier;
+        this.extraTags = extraTags;
+        this.refreshDuration = refreshDuration;
     }
 
     @Override public void bindTo(MeterRegistry registry) {
@@ -87,7 +102,7 @@ class KafkaMetrics implements MeterBinder {
         }
         if (startTime != null) bindMeter(registry, startTime, meterName(startTime), meterTags(startTime));
         // Collect dynamic metrics
-        checkAndBindMetrics(registry);
+        scheduler.scheduleAtFixedRate(() -> checkAndBindMetrics(registry), 0, refreshDuration.getSeconds(), SECONDS);
     }
 
     /**
@@ -99,36 +114,33 @@ class KafkaMetrics implements MeterBinder {
      */
     void checkAndBindMetrics(MeterRegistry registry) {
         Map<MetricName, ? extends Metric> metrics = metricsSupplier.get();
-        if (!currentMeters.equals(metrics.keySet())) {
-            synchronized (this) { //Enforce only happens once when metrics change
-                if (!currentMeters.equals(metrics.keySet())) {
-                    currentMeters = new HashSet<>(metrics.keySet());
-                    metrics.forEach((name, metric) -> {
-                        //Filter out non-numeric values
-                        if (!(metric.metricValue() instanceof Number)) return;
 
-                        //Filter out metrics from groups that include metadata
-                        if (METRIC_GROUP_APP_INFO.equals(name.group())) return;
-                        if (METRIC_GROUP_METRICS_COUNT.equals(name.group())) return;
-                        String meterName = meterName(metric);
-                        List<Tag> meterTags = meterTags(metric);
-                        //Kafka has metrics with lower number of tags (e.g. with/without topic or partition tag)
-                        //Remove meters with lower number of tags
-                        boolean hasLessTags = false;
-                        for (Meter other : registry.find(meterName).meters()) {
-                            List<Tag> tags = other.getId().getTags();
-                            if (tags.size() < meterTags.size()) registry.remove(other);
-                            // Check if already exists
-                            else if (tags.size() == meterTags.size())
-                                if (tags.equals(meterTags)) return;
-                                else break;
-                            else hasLessTags = true;
-                        }
-                        if (hasLessTags) return;
-                        bindMeter(registry, metric, meterName, meterTags);
-                    });
+        if (!currentMeters.equals(metrics.keySet())) {
+            currentMeters = new HashSet<>(metrics.keySet());
+            metrics.forEach((name, metric) -> {
+                //Filter out non-numeric values
+                if (!(metric.metricValue() instanceof Number)) return;
+
+                //Filter out metrics from groups that include metadata
+                if (METRIC_GROUP_APP_INFO.equals(name.group())) return;
+                if (METRIC_GROUP_METRICS_COUNT.equals(name.group())) return;
+                String meterName = meterName(metric);
+                List<Tag> meterTags = meterTags(metric);
+                //Kafka has metrics with lower number of tags (e.g. with/without topic or partition tag)
+                //Remove meters with lower number of tags
+                boolean hasLessTags = false;
+                for (Meter other : registry.find(meterName).meters()) {
+                    List<Tag> tags = other.getId().getTags();
+                    if (tags.size() < meterTags.size()) registry.remove(other);
+                    // Check if already exists
+                    else if (tags.size() == meterTags.size())
+                        if (tags.equals(meterTags)) return;
+                        else break;
+                    else hasLessTags = true;
                 }
-            }
+                if (hasLessTags) return;
+                bindMeter(registry, metric, meterName, meterTags);
+            });
         }
     }
 
@@ -138,25 +150,21 @@ class KafkaMetrics implements MeterBinder {
     }
 
     private void registerGauge(MeterRegistry registry, Metric metric, String name, Iterable<Tag> tags) {
-        Gauge.builder(name, metric, toMetricValue(registry))
+        Gauge.builder(name, metric, toMetricValue())
                 .tags(tags)
                 .description(metric.metricName().description())
                 .register(registry);
     }
 
     private void registerCounter(MeterRegistry registry, Metric metric, String name, Iterable<Tag> tags) {
-        FunctionCounter.builder(name, metric, toMetricValue(registry))
+        FunctionCounter.builder(name, metric, toMetricValue())
                 .tags(tags)
                 .description(metric.metricName().description())
                 .register(registry);
     }
 
-    private ToDoubleFunction<Metric> toMetricValue(MeterRegistry registry) {
-        return metric -> {
-            //Double-check if new metrics are registered
-            checkAndBindMetrics(registry);
-            return ((Number) metric.metricValue()).doubleValue();
-        };
+    private ToDoubleFunction<Metric> toMetricValue() {
+        return metric -> ((Number) metric.metricValue()).doubleValue();
     }
 
     private List<Tag> meterTags(Metric metric) {
@@ -170,5 +178,10 @@ class KafkaMetrics implements MeterBinder {
     private String meterName(Metric metric) {
         String name = METRIC_NAME_PREFIX + metric.metricName().group() + "." + metric.metricName().name();
         return name.replaceAll("-metrics", "").replaceAll("-", ".");
+    }
+
+    @Override
+    public void close() {
+        this.scheduler.shutdownNow();
     }
 }
