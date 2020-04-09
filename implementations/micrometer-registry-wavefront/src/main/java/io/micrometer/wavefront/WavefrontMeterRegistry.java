@@ -317,7 +317,7 @@ public class WavefrontMeterRegistry extends PushMeterRegistry {
                     "apiToken must be set whenever publishing directly to the Wavefront API");
         }
         return new WavefrontDirectIngestionClient.Builder(getWavefrontReportingUri(config),
-                config.apiToken());
+                config.apiToken()).batchSize(config.batchSize());
     }
 
     public static Builder builder(WavefrontConfig config) {
