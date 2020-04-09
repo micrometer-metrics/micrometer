@@ -28,6 +28,7 @@ import org.apache.kafka.clients.consumer.ConsumerConfig;
 import org.apache.kafka.clients.consumer.KafkaConsumer;
 import org.apache.kafka.common.serialization.LongDeserializer;
 import org.apache.kafka.common.serialization.StringDeserializer;
+import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 
@@ -48,6 +49,11 @@ class KafkaConsumerMetricsTest {
     private Tags tags = Tags.of("app", "myapp", "version", "1");
     @SuppressWarnings("deprecation")
     private KafkaConsumerMetrics kafkaConsumerMetrics = new KafkaConsumerMetrics(tags);
+
+    @AfterEach
+    void afterEach() {
+        kafkaConsumerMetrics.close();
+    }
 
     @Test
     void verifyConsumerMetricsWithExpectedTags() {

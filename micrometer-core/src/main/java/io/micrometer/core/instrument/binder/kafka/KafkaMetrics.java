@@ -33,16 +33,16 @@ import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.TimeUnit;
 import java.util.function.Supplier;
 import java.util.function.ToDoubleFunction;
 import org.apache.kafka.common.Metric;
 import org.apache.kafka.common.MetricName;
 
 import static java.util.Collections.emptyList;
-import static java.util.concurrent.TimeUnit.SECONDS;
 
 /**
- * Kafka metrics binder.
+ * Kafka metrics binder. This should be closed on application shutdown to clean up resources.
  *
  * @author Jorge Quilcate
  * @see <a href="https://docs.confluent.io/current/kafka/monitoring.html">Kakfa monitoring
@@ -58,12 +58,12 @@ class KafkaMetrics implements MeterBinder, AutoCloseable {
     static final String METRIC_GROUP_METRICS_COUNT = "kafka-metrics-count";
     static final String VERSION_METRIC_NAME = "version";
     static final String START_TIME_METRIC_NAME = "start-time-ms";
-    static final Duration DEFAULT_REFRESH_DURATION = Duration.ofSeconds(60);
+    static final Duration DEFAULT_REFRESH_INTERVAL = Duration.ofSeconds(60);
 
     private final Supplier<Map<MetricName, ? extends Metric>> metricsSupplier;
     private final Iterable<Tag> extraTags;
-    private final Duration refreshDuration;
-    private final ScheduledExecutorService scheduler = Executors.newScheduledThreadPool(1);
+    private final Duration refreshInterval;
+    private final ScheduledExecutorService scheduler = Executors.newSingleThreadScheduledExecutor();
 
     /**
      * Keeps track of current set of metrics.
@@ -73,19 +73,17 @@ class KafkaMetrics implements MeterBinder, AutoCloseable {
     private String kafkaVersion = "unknown";
 
     KafkaMetrics(Supplier<Map<MetricName, ? extends Metric>> metricsSupplier) {
-        this(metricsSupplier, emptyList(), DEFAULT_REFRESH_DURATION);
+        this(metricsSupplier, emptyList(), DEFAULT_REFRESH_INTERVAL);
     }
 
     KafkaMetrics(Supplier<Map<MetricName, ? extends Metric>> metricsSupplier, Iterable<Tag> extraTags) {
-        this.metricsSupplier = metricsSupplier;
-        this.extraTags = extraTags;
-        this.refreshDuration = DEFAULT_REFRESH_DURATION;
+        this(metricsSupplier, extraTags, DEFAULT_REFRESH_INTERVAL);
     }
 
-    KafkaMetrics(Supplier<Map<MetricName, ? extends Metric>> metricsSupplier, Iterable<Tag> extraTags, Duration refreshDuration) {
+    KafkaMetrics(Supplier<Map<MetricName, ? extends Metric>> metricsSupplier, Iterable<Tag> extraTags, Duration refreshInterval) {
         this.metricsSupplier = metricsSupplier;
         this.extraTags = extraTags;
-        this.refreshDuration = refreshDuration;
+        this.refreshInterval = refreshInterval;
     }
 
     @Override public void bindTo(MeterRegistry registry) {
@@ -102,7 +100,11 @@ class KafkaMetrics implements MeterBinder, AutoCloseable {
         }
         if (startTime != null) bindMeter(registry, startTime, meterName(startTime), meterTags(startTime));
         // Collect dynamic metrics
-        scheduler.scheduleAtFixedRate(() -> checkAndBindMetrics(registry), 0, refreshDuration.getSeconds(), SECONDS);
+        scheduler.scheduleAtFixedRate(() -> checkAndBindMetrics(registry), 0, getRefreshIntervalInMillis(), TimeUnit.MILLISECONDS);
+    }
+
+    private long getRefreshIntervalInMillis() {
+        return refreshInterval.toMillis();
     }
 
     /**

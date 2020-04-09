@@ -20,6 +20,7 @@ import io.micrometer.core.instrument.Tags;
 import io.micrometer.core.instrument.simple.SimpleMeterRegistry;
 import java.util.Properties;
 import org.apache.kafka.clients.admin.AdminClient;
+import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Test;
 
 import static io.micrometer.core.instrument.binder.kafka.KafkaClientMetrics.METRIC_NAME_PREFIX;
@@ -29,10 +30,17 @@ import static org.assertj.core.api.Assertions.assertThat;
 class KafkaClientMetricsAdminTest {
     private final static String BOOTSTRAP_SERVERS = "localhost:9092";
     private Tags tags = Tags.of("app", "myapp", "version", "1");
+    KafkaClientMetrics metrics;
+
+    @AfterEach
+    void afterEach() {
+        if (metrics != null)
+            metrics.close();
+    }
 
     @Test void shouldCreateMeters() {
         try (AdminClient adminClient = createAdmin()) {
-            KafkaClientMetrics metrics = new KafkaClientMetrics(adminClient);
+            metrics = new KafkaClientMetrics(adminClient);
             MeterRegistry registry = new SimpleMeterRegistry();
 
             metrics.bindTo(registry);
@@ -45,7 +53,7 @@ class KafkaClientMetricsAdminTest {
 
     @Test void shouldCreateMetersWithTags() {
         try (AdminClient adminClient = createAdmin()) {
-            KafkaClientMetrics metrics = new KafkaClientMetrics(adminClient, tags);
+            metrics = new KafkaClientMetrics(adminClient, tags);
             MeterRegistry registry = new SimpleMeterRegistry();
 
             metrics.bindTo(registry);

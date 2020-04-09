@@ -21,7 +21,7 @@ import org.apache.kafka.common.Metric;
 import org.apache.kafka.streams.KafkaStreams;
 
 /**
- * Kafka Streams metrics binder.
+ * Kafka Streams metrics binder. This should be closed on application shutdown to clean up resources.
  * <p>
  * It is based on the Kafka client's {@code metrics()} method returning a {@link Metric} map.
  * <p>
