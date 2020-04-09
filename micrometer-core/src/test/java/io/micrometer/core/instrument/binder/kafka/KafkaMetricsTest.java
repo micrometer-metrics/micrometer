@@ -29,11 +29,20 @@ import org.apache.kafka.common.metrics.KafkaMetric;
 import org.apache.kafka.common.metrics.MetricConfig;
 import org.apache.kafka.common.metrics.stats.Value;
 import org.apache.kafka.common.utils.Time;
+import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Test;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
 class KafkaMetricsTest {
+
+    KafkaMetrics kafkaMetrics;
+
+    @AfterEach
+    void afterEach() {
+        if (kafkaMetrics != null)
+            kafkaMetrics.close();
+    }
 
     @Test void shouldKeepMetersWhenMetricsDoNotChange() {
         //Given
@@ -42,7 +51,7 @@ class KafkaMetricsTest {
             KafkaMetric metric = new KafkaMetric(this, metricName, new Value(), new MetricConfig(), Time.SYSTEM);
             return Collections.singletonMap(metricName, metric);
         };
-        KafkaMetrics kafkaMetrics = new KafkaMetrics(supplier);
+        kafkaMetrics = new KafkaMetrics(supplier);
         MeterRegistry registry = new SimpleMeterRegistry();
         //When
         kafkaMetrics.checkAndBindMetrics(registry);
@@ -63,7 +72,7 @@ class KafkaMetricsTest {
             map.put(metricName, metric);
             return map;
         });
-        KafkaMetrics kafkaMetrics = new KafkaMetrics(supplier);
+        kafkaMetrics = new KafkaMetrics(supplier);
         MeterRegistry registry = new SimpleMeterRegistry();
         //When
         kafkaMetrics.checkAndBindMetrics(registry);
@@ -97,7 +106,7 @@ class KafkaMetricsTest {
             metrics.put(appInfoMetricName, appInfoMetric);
             return metrics;
         };
-        KafkaMetrics kafkaMetrics = new KafkaMetrics(supplier);
+        kafkaMetrics = new KafkaMetrics(supplier);
         MeterRegistry registry = new SimpleMeterRegistry();
         //When
         kafkaMetrics.checkAndBindMetrics(registry);
@@ -117,7 +126,7 @@ class KafkaMetricsTest {
             KafkaMetric metric = new KafkaMetric(this, metricName, new Value(), new MetricConfig(), Time.SYSTEM);
             return Collections.singletonMap(metricName, metric);
         };
-        KafkaMetrics kafkaMetrics = new KafkaMetrics(supplier);
+        kafkaMetrics = new KafkaMetrics(supplier);
         MeterRegistry registry = new SimpleMeterRegistry();
         //When
         kafkaMetrics.checkAndBindMetrics(registry);
@@ -147,7 +156,7 @@ class KafkaMetricsTest {
             metrics.put(secondName, secondMetric);
             return metrics;
         };
-        KafkaMetrics kafkaMetrics = new KafkaMetrics(supplier);
+        kafkaMetrics = new KafkaMetrics(supplier);
         MeterRegistry registry = new SimpleMeterRegistry();
         //When
         kafkaMetrics.checkAndBindMetrics(registry);
@@ -174,7 +183,7 @@ class KafkaMetricsTest {
             metrics.put(secondName, secondMetric);
             return metrics;
         };
-        KafkaMetrics kafkaMetrics = new KafkaMetrics(supplier);
+        kafkaMetrics = new KafkaMetrics(supplier);
         MeterRegistry registry = new SimpleMeterRegistry();
         //When
         kafkaMetrics.checkAndBindMetrics(registry);

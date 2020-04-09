@@ -22,6 +22,7 @@ import java.util.Properties;
 import org.apache.kafka.clients.consumer.Consumer;
 import org.apache.kafka.clients.consumer.KafkaConsumer;
 import org.apache.kafka.common.serialization.StringDeserializer;
+import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Test;
 
 import static io.micrometer.core.instrument.binder.kafka.KafkaClientMetrics.METRIC_NAME_PREFIX;
@@ -34,10 +35,17 @@ import static org.assertj.core.api.Assertions.assertThat;
 class KafkaClientMetricsConsumerTest {
     private final static String BOOTSTRAP_SERVERS = "localhost:9092";
     private Tags tags = Tags.of("app", "myapp", "version", "1");
+    KafkaClientMetrics metrics;
+
+    @AfterEach
+    void afterEach() {
+        if (metrics != null)
+            metrics.close();
+    }
 
     @Test void shouldCreateMeters() {
         try (Consumer<String, String> consumer = createConsumer()) {
-            KafkaClientMetrics metrics = new KafkaClientMetrics(consumer);
+            metrics = new KafkaClientMetrics(consumer);
             MeterRegistry registry = new SimpleMeterRegistry();
 
             metrics.bindTo(registry);
@@ -50,7 +58,7 @@ class KafkaClientMetricsConsumerTest {
 
     @Test void shouldCreateMetersWithTags() {
         try (Consumer<String, String> consumer = createConsumer()) {
-            KafkaClientMetrics metrics = new KafkaClientMetrics(consumer, tags);
+            metrics = new KafkaClientMetrics(consumer, tags);
             MeterRegistry registry = new SimpleMeterRegistry();
 
             metrics.bindTo(registry);

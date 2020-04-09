@@ -21,6 +21,7 @@ import io.micrometer.core.instrument.simple.SimpleMeterRegistry;
 import java.util.Properties;
 import org.apache.kafka.streams.KafkaStreams;
 import org.apache.kafka.streams.StreamsBuilder;
+import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Test;
 
 import static io.micrometer.core.instrument.binder.kafka.KafkaStreamsMetrics.METRIC_NAME_PREFIX;
@@ -31,10 +32,17 @@ import static org.assertj.core.api.Assertions.assertThat;
 class KafkaStreamsMetricsTest {
     private final static String BOOTSTRAP_SERVERS = "localhost:9092";
     private Tags tags = Tags.of("app", "myapp", "version", "1");
+    KafkaStreamsMetrics metrics;
+
+    @AfterEach
+    void afterEach() {
+        if (metrics != null)
+            metrics.close();
+    }
 
     @Test void shouldCreateMeters() {
         try (KafkaStreams kafkaStreams = createStreams()) {
-            KafkaStreamsMetrics metrics = new KafkaStreamsMetrics(kafkaStreams);
+            metrics = new KafkaStreamsMetrics(kafkaStreams);
             MeterRegistry registry = new SimpleMeterRegistry();
 
             metrics.bindTo(registry);
@@ -47,7 +55,7 @@ class KafkaStreamsMetricsTest {
 
     @Test void shouldCreateMetersWithTags() {
         try (KafkaStreams kafkaStreams = createStreams()) {
-            KafkaStreamsMetrics metrics = new KafkaStreamsMetrics(kafkaStreams, tags);
+            metrics = new KafkaStreamsMetrics(kafkaStreams, tags);
             MeterRegistry registry = new SimpleMeterRegistry();
 
             metrics.bindTo(registry);
