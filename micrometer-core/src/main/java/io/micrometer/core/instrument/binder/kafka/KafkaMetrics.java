@@ -91,6 +91,12 @@ class KafkaMetrics implements MeterBinder, AutoCloseable {
     }
 
     @Override public void bindTo(MeterRegistry registry) {
+        prepareToBindMetrics(registry);
+        scheduler.scheduleAtFixedRate(() -> checkAndBindMetrics(registry), 0, getRefreshIntervalInMillis(), TimeUnit.MILLISECONDS);
+    }
+
+    /** Define common tags and meters before binding metrics */
+    void prepareToBindMetrics(MeterRegistry registry) {
         Map<MetricName, ? extends Metric> metrics = metricsSupplier.get();
         // Collect static metrics and tags
         Metric startTime = null;
@@ -104,8 +110,6 @@ class KafkaMetrics implements MeterBinder, AutoCloseable {
                     startTime = entry.getValue();
         }
         if (startTime != null) bindMeter(registry, startTime, meterName(startTime), meterTags(startTime));
-        // Collect dynamic metrics
-        scheduler.scheduleAtFixedRate(() -> checkAndBindMetrics(registry), 0, getRefreshIntervalInMillis(), TimeUnit.MILLISECONDS);
     }
 
     private long getRefreshIntervalInMillis() {
