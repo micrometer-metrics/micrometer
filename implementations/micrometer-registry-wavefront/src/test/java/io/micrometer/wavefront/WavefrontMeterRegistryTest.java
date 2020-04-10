@@ -17,6 +17,7 @@ package io.micrometer.wavefront;
 
 import com.wavefront.sdk.common.Pair;
 import com.wavefront.sdk.common.WavefrontSender;
+import com.wavefront.sdk.direct.ingestion.WavefrontDirectIngestionClient;
 import com.wavefront.sdk.entities.histograms.HistogramGranularity;
 import com.wavefront.sdk.entities.histograms.WavefrontHistogramImpl;
 import io.micrometer.core.instrument.*;
@@ -24,6 +25,7 @@ import io.micrometer.core.instrument.config.MissingRequiredConfigurationExceptio
 import org.junit.jupiter.api.Test;
 
 import java.io.IOException;
+import java.net.URI;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
@@ -122,6 +124,35 @@ class WavefrontMeterRegistryTest {
         verify(wavefrontSender, times(1)).sendDistribution("name", centroids,
                 Collections.singleton(HistogramGranularity.MINUTE), time, "host", Collections.emptyMap());
         verifyNoMoreInteractions(wavefrontSender);
+    }
+
+    @Test
+    void configureDefaultSenderWithCustomConfig() {
+        WavefrontConfig customConfig = new WavefrontConfig() {
+            @Override
+            public String get(String key) {
+                return null;
+            }
+
+            @Override
+            public String uri() {
+                return "https://example.com";
+            }
+
+            @Override
+            public String apiToken() {
+                return "apiToken";
+            }
+
+            @Override
+            public int batchSize() {
+                return 20;
+            }
+        };
+        WavefrontDirectIngestionClient sender = WavefrontMeterRegistry.getDefaultSenderBuilder(customConfig).build();
+        assertThat(sender).extracting("directService").hasFieldOrPropertyWithValue("uri", URI.create("https://example.com"));
+        assertThat(sender).extracting("directService").hasFieldOrPropertyWithValue("token", "apiToken");
+        assertThat(sender).hasFieldOrPropertyWithValue("batchSize", 20);
     }
 
     @Test
