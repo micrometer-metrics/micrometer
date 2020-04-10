@@ -17,7 +17,7 @@ package io.micrometer.wavefront;
 
 import com.wavefront.sdk.common.Pair;
 import com.wavefront.sdk.common.WavefrontSender;
-import com.wavefront.sdk.direct.ingestion.WavefrontDirectIngestionClient;
+import com.wavefront.sdk.common.clients.WavefrontClient;
 import com.wavefront.sdk.entities.histograms.HistogramGranularity;
 import com.wavefront.sdk.entities.histograms.WavefrontHistogramImpl;
 import io.micrometer.core.instrument.*;
@@ -149,9 +149,9 @@ class WavefrontMeterRegistryTest {
                 return 20;
             }
         };
-        WavefrontDirectIngestionClient sender = WavefrontMeterRegistry.getDefaultSenderBuilder(customConfig).build();
-        assertThat(sender).extracting("directService").hasFieldOrPropertyWithValue("uri", URI.create("https://example.com"));
-        assertThat(sender).extracting("directService").hasFieldOrPropertyWithValue("token", "apiToken");
+        WavefrontClient sender = WavefrontMeterRegistry.getDefaultSenderBuilder(customConfig).build();
+        assertThat(sender).extracting("reportingService").hasFieldOrPropertyWithValue("uri", URI.create("https://example.com"));
+        assertThat(sender).extracting("reportingService").hasFieldOrPropertyWithValue("token", "apiToken");
         assertThat(sender).hasFieldOrPropertyWithValue("batchSize", 20);
     }
 

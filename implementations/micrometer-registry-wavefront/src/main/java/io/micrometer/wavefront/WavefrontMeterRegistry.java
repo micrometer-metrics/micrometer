@@ -16,7 +16,7 @@
 package io.micrometer.wavefront;
 
 import com.wavefront.sdk.common.WavefrontSender;
-import com.wavefront.sdk.direct.ingestion.WavefrontDirectIngestionClient;
+import com.wavefront.sdk.common.clients.WavefrontClient;
 import com.wavefront.sdk.entities.histograms.HistogramGranularity;
 import com.wavefront.sdk.entities.histograms.WavefrontHistogramImpl;
 import io.micrometer.core.instrument.*;
@@ -309,14 +309,14 @@ public class WavefrontMeterRegistry extends PushMeterRegistry {
      * @return a builder for a WavefrontSender
      * @since 1.5.0
      */
-    public static WavefrontDirectIngestionClient.Builder getDefaultSenderBuilder(WavefrontConfig config) {
+    public static WavefrontClient.Builder getDefaultSenderBuilder(WavefrontConfig config) {
         if (config.uri() == null)
             throw new MissingRequiredConfigurationException("A uri is required to publish metrics to Wavefront");
         if (isDirectToApi(config) && config.apiToken() == null) {
             throw new MissingRequiredConfigurationException(
                     "apiToken must be set whenever publishing directly to the Wavefront API");
         }
-        return new WavefrontDirectIngestionClient.Builder(getWavefrontReportingUri(config),
+        return new WavefrontClient.Builder(getWavefrontReportingUri(config),
                 config.apiToken()).batchSize(config.batchSize());
     }
 
