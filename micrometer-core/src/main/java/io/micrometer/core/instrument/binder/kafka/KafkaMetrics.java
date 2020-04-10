@@ -154,14 +154,11 @@ class KafkaMetrics implements MeterBinder, AutoCloseable {
     }
 
     private boolean differentClient(List<Tag> tags) {
-        boolean anotherClient = false, anotherVersion = false;
-        for (Tag tag : tags) {
+        boolean anotherClient = false;
+        for (Tag tag : tags)
             if (tag.getKey().equals(CLIENT_ID_TAG_NAME))
                 if (!clientId.equals(tag.getValue())) anotherClient = true;
-            if (tag.getKey().equals(KAFKA_VERSION_TAG_NAME))
-                if (!kafkaVersion.equals(tag.getValue())) anotherVersion = true;
-        }
-        return anotherClient || anotherVersion;
+        return anotherClient;
     }
 
     private void bindMeter(MeterRegistry registry, Metric metric, String name, Iterable<Tag> tags) {

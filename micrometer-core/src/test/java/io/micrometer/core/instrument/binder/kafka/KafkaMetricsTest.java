@@ -203,24 +203,17 @@ class KafkaMetricsTest {
             firstTags.put("client-id", "client0");
             MetricName firstName = new MetricName("a", "b", "c", firstTags);
             KafkaMetric firstMetric = new KafkaMetric(this, firstName, new Value(), new MetricConfig(), Time.SYSTEM);
-            MetricName versionName = new MetricName("version", "app-info", "kafka version", Collections.emptyMap());
-            Gauge<String> version = (config, now) -> "2.0";
-            KafkaMetric versionMetric = new KafkaMetric(this, versionName, version, new MetricConfig(), Time.SYSTEM);
 
             Map<MetricName, KafkaMetric> metrics = new LinkedHashMap<>();
             metrics.put(firstName, firstMetric);
-            metrics.put(versionName, versionMetric);
             return metrics;
         };
         KafkaMetrics kafkaMetrics = new KafkaMetrics(supplier);
         MeterRegistry registry = new SimpleMeterRegistry();
-        registry.counter("kafka.b.a", "client-id", "client0", "key0", "value0", "kafka-version", "1.0");
-        registry.counter("kafka.b.a", "client-id", "client1", "key0", "value0", "kafka-version", "1.0");
+        registry.counter("kafka.b.a", "client-id", "client1", "key0", "value0");
         //When
-        kafkaMetrics.bindTo(registry);
+        kafkaMetrics.checkAndBindMetrics(registry);
         //Then
-        assertThat(registry.getMeters()).hasSize(3);
-        Meter meter = registry.getMeters().get(0);
-        assertThat(meter.getId().getTags()).hasSize(3); // version + clientId + key0
+        assertThat(registry.getMeters()).hasSize(2);
     }
 }
