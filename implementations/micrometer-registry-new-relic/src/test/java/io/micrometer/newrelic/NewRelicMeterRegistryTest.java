@@ -758,7 +758,8 @@ class NewRelicMeterRegistryTest {
         
         assertThat(registry.clientProvider).isInstanceOf(NewRelicInsightsApiClientProvider.class);
         
-        assertThat(((NewRelicInsightsApiClientProvider)registry.clientProvider).namingConvention).isInstanceOf(NewRelicNamingConvention.class);
+        assertThat(((NewRelicInsightsApiClientProvider) registry.clientProvider).namingConvention)
+                .isInstanceOf(NewRelicNamingConvention.class);
         assertThat(registry.config().namingConvention()).isInstanceOf(NewRelicNamingConvention.class);
     }
     
@@ -766,11 +767,13 @@ class NewRelicMeterRegistryTest {
     void succeedsConfigInsightsApiClientProviderAndCustomNamingConvention() {
         NamingConvention customNamingConvention = mock(NewRelicNamingConvention.class);
         
-        NewRelicMeterRegistry registry = new NewRelicMeterRegistry(insightsApiConfig, null, customNamingConvention, clock, new NamedThreadFactory("new-relic-test"));
+        NewRelicMeterRegistry registry = new NewRelicMeterRegistry(insightsApiConfig, null, customNamingConvention,
+                clock, new NamedThreadFactory("new-relic-test"));
         
         assertThat(registry.clientProvider).isInstanceOf(NewRelicInsightsApiClientProvider.class);
         
-        assertThat(((NewRelicInsightsApiClientProvider)registry.clientProvider).namingConvention).isSameAs(customNamingConvention);
+        assertThat(((NewRelicInsightsApiClientProvider) registry.clientProvider).namingConvention)
+                .isSameAs(customNamingConvention);
         assertThat(registry.config().namingConvention()).isSameAs(customNamingConvention);
     }
     
@@ -780,7 +783,8 @@ class NewRelicMeterRegistryTest {
         
         assertThat(registry.clientProvider).isInstanceOf(NewRelicInsightsAgentClientProvider.class);
         
-        assertThat(((NewRelicInsightsAgentClientProvider)registry.clientProvider).namingConvention).isInstanceOf(NewRelicNamingConvention.class);
+        assertThat(((NewRelicInsightsAgentClientProvider) registry.clientProvider).namingConvention)
+                .isInstanceOf(NewRelicNamingConvention.class);
         assertThat(registry.config().namingConvention()).isInstanceOf(NewRelicNamingConvention.class);
     }
     
@@ -788,11 +792,13 @@ class NewRelicMeterRegistryTest {
     void succeedsConfigInsightsAgentClientProviderAndCustomNamingConvention() {
         NamingConvention customNamingConvention = mock(NewRelicNamingConvention.class);
         
-        NewRelicMeterRegistry registry = new NewRelicMeterRegistry(insightsAgentConfig, null, customNamingConvention, clock, new NamedThreadFactory("new-relic-test"));
+        NewRelicMeterRegistry registry = new NewRelicMeterRegistry(insightsAgentConfig, null, customNamingConvention,
+                clock, new NamedThreadFactory("new-relic-test"));
 
         assertThat(registry.clientProvider).isInstanceOf(NewRelicInsightsAgentClientProvider.class);
         
-        assertThat(((NewRelicInsightsAgentClientProvider)registry.clientProvider).namingConvention).isSameAs(customNamingConvention);
+        assertThat(((NewRelicInsightsAgentClientProvider) registry.clientProvider).namingConvention)
+                .isSameAs(customNamingConvention);
         assertThat(registry.config().namingConvention()).isSameAs(customNamingConvention);
     }
     
