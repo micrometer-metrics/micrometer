@@ -203,7 +203,7 @@ class WavefrontMeterRegistryTest {
     }
 
     @Test
-    void customSenderDosNotNeedApiToken() {
+    void customSenderDoesNotNeedApiToken() {
         WavefrontConfig missingApiTokenDirectConfig = WavefrontConfig.DEFAULT_DIRECT;
 
         assertThatCode(() -> WavefrontMeterRegistry.builder(missingApiTokenDirectConfig)
