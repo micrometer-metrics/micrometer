@@ -54,6 +54,8 @@ import static java.util.stream.StreamSupport.stream;
 /**
  * {@link PushMeterRegistry} for Wavefront.
  *
+ * This requires Wavefront's Java SDK 2.1 or later.
+ *
  * @author Jon Schneider
  * @author Howard Yoo
  * @since 1.0.0
