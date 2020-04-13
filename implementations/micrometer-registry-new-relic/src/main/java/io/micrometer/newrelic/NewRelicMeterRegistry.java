@@ -40,6 +40,8 @@ public class NewRelicMeterRegistry extends StepMeterRegistry {
     // VisibleForTesting
     final NewRelicClientProvider clientProvider;
 
+    private final Config thisConfig;
+
     /**
      * @param config Configuration options for the registry that are describable as properties.
      * @param clock  The clock to use for timings.
@@ -54,7 +56,7 @@ public class NewRelicMeterRegistry extends StepMeterRegistry {
      * @param clock  The clock to use for timings.
      * @since 1.4.0
      */
-    public NewRelicMeterRegistry(NewRelicConfig config, NewRelicClientProvider clientProvider, Clock clock) {
+    public NewRelicMeterRegistry(NewRelicConfig config, @Nullable NewRelicClientProvider clientProvider, Clock clock) {
         this(config, clientProvider, new NewRelicNamingConvention(), clock, DEFAULT_THREAD_FACTORY);
     }
 
@@ -72,19 +74,21 @@ public class NewRelicMeterRegistry extends StepMeterRegistry {
 
         this.clientProvider = clientProvider;
 
+        thisConfig = new Config() {
+            @Override
+            public Config namingConvention(NamingConvention convention) {
+                NewRelicMeterRegistry.this.clientProvider.setNamingConvention(convention);
+                return super.namingConvention(convention);
+            }
+        };
+
         config().namingConvention(namingConvention);
         start(threadFactory);
     }
 
     @Override
     public Config config() {
-        return new Config() {
-            @Override
-            public Config namingConvention(NamingConvention convention) {
-                clientProvider.setNamingConvention(convention);
-                return super.namingConvention(convention);
-            }
-        };
+        return thisConfig;
     }
 
     public static Builder builder(NewRelicConfig config) {
@@ -128,7 +132,7 @@ public class NewRelicMeterRegistry extends StepMeterRegistry {
         }
 
         /**
-         * Use the naming convention. Defaults to {@link NewRelicNamingConvention}
+         * Use the naming convention. Defaults to {@link NewRelicNamingConvention}.
          * @param convention naming convention to use
          * @return builder
          * @since 1.4.0
@@ -149,11 +153,9 @@ public class NewRelicMeterRegistry extends StepMeterRegistry {
         }
 
         /**
-         * Note: This only has an effect when a {@link #clientProvider(NewRelicClientProvider)} is not provided and {@link NewRelicConfig#clientProviderType()} is {@link ClientProviderType#INSIGHTS_API}.
-         *
          * @param httpClient http client to use for publishing
          * @return builder
-         * @deprecated use {@link #clientProvider(NewRelicClientProvider)} instead.
+         * @deprecated since 1.4.0 use {@link #clientProvider(NewRelicClientProvider)} instead.
          */
         @Deprecated
         public Builder httpClient(HttpSender httpClient) {
@@ -162,11 +164,11 @@ public class NewRelicMeterRegistry extends StepMeterRegistry {
         }
 
         public NewRelicMeterRegistry build() {
-            if (clientProvider == null && httpClient != null) {
-                //default to Insight API client provider if not specified in config or provided
-                clientProvider = (config.clientProviderType() == ClientProviderType.INSIGHTS_AGENT)
-                        ? new NewRelicInsightsAgentClientProvider(config)
-                        : new NewRelicInsightsApiClientProvider(config, httpClient, convention);
+            if (httpClient != null) {
+                if (clientProvider != null) {
+                    throw new IllegalStateException("Please remove httpClient() configuration as it has been deprecated in favour of clientProvider().");
+                }
+                clientProvider = new NewRelicInsightsApiClientProvider(config, httpClient, convention);
             }
             return new NewRelicMeterRegistry(config, clientProvider, convention, clock, threadFactory);
         }

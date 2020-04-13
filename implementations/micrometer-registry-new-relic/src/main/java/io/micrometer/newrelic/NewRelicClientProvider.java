@@ -84,5 +84,11 @@ public interface NewRelicClientProvider {
 
     Object writeMeter(Meter meter);
 
+    /**
+     * Set naming convention.
+     *
+     * @param namingConvention naming convention
+     * @since 1.4.2
+     */
     void setNamingConvention(NamingConvention namingConvention);
 }
