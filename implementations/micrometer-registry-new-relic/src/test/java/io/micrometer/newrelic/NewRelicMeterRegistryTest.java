@@ -17,6 +17,7 @@ package io.micrometer.newrelic;
 
 import static java.util.Collections.emptyList;
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatIllegalStateException;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.Mockito.mock;
 
@@ -997,7 +998,18 @@ class NewRelicMeterRegistryTest {
         assertThat(meterRegistry.config().namingConvention()).isEqualTo(namingConvention2);
         assertThat(((NewRelicInsightsApiClientProvider) meterRegistry.clientProvider).namingConvention).isEqualTo(namingConvention2);
     }
-    
+
+    @SuppressWarnings("deprecation")
+    @Test
+    void builderBuildWhenBothHttpClientAndClientProviderAreSetShouldThrowIllegalStateException() {
+        NewRelicConfig config = key -> null;
+        assertThatIllegalStateException()
+                .isThrownBy(() -> new NewRelicMeterRegistry.Builder(config)
+                        .httpClient(mock(HttpSender.class))
+                        .clientProvider(mock(NewRelicClientProvider.class))
+                        .build());
+    }
+
     static class MockHttpSender implements HttpSender {
         
         private Request request;
