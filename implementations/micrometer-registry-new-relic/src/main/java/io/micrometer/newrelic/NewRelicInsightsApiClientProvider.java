@@ -79,6 +79,13 @@ public class NewRelicInsightsApiClientProvider implements NewRelicClientProvider
                             new Proxy(Proxy.Type.HTTP, new InetSocketAddress(proxyHost, proxyPort))), new NewRelicNamingConvention());
     }
 
+    /**
+     * Create a {@code NewRelicInsightsApiClientProvider} instance.
+     *
+     * @param config config
+     * @param httpClient HTTP client
+     * @since 1.4.2
+     */
     public NewRelicInsightsApiClientProvider(NewRelicConfig config, HttpSender httpClient) {
         this(config, httpClient, new NewRelicNamingConvention());
     }
@@ -300,7 +307,8 @@ public class NewRelicInsightsApiClientProvider implements NewRelicClientProvider
             return value;
         }
     }
-    
+
+    @Override
     public void setNamingConvention(NamingConvention namingConvention) {
         this.namingConvention = namingConvention;
     }

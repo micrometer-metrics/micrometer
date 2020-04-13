@@ -60,6 +60,13 @@ public class NewRelicInsightsAgentClientProvider implements NewRelicClientProvid
         this(config, NewRelic.getAgent(), new NewRelicNamingConvention());
     }
 
+    /**
+     * Create a {@code NewRelicInsightsAgentClientProvider} instance.
+     *
+     * @param config config
+     * @param newRelicAgent New Relic agent
+     * @since 1.4.2
+     */
     public NewRelicInsightsAgentClientProvider(NewRelicConfig config, Agent newRelicAgent) {
         this(config, newRelicAgent, new NewRelicNamingConvention());
     }
@@ -258,7 +265,8 @@ public class NewRelicInsightsAgentClientProvider implements NewRelicClientProvid
             }
         }
     }
-    
+
+    @Override
     public void setNamingConvention(NamingConvention namingConvention) {
         this.namingConvention = namingConvention;
     }
