@@ -65,6 +65,7 @@ public abstract class StepRegistryPropertiesConfigAdapter<T extends StepRegistry
         return get(T::getReadTimeout, StepRegistryConfig.super::readTimeout);
     }
 
+    @SuppressWarnings("deprecation")
     @Override
     public int numThreads() {
         return get(T::getNumThreads, StepRegistryConfig.super::numThreads);
