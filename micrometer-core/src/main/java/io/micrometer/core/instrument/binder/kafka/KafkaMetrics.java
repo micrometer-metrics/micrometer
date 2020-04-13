@@ -73,7 +73,7 @@ class KafkaMetrics implements MeterBinder, AutoCloseable {
     private String kafkaVersion = "unknown";
 
     KafkaMetrics(Supplier<Map<MetricName, ? extends Metric>> metricsSupplier) {
-        this(metricsSupplier, emptyList(), DEFAULT_REFRESH_INTERVAL);
+        this(metricsSupplier, emptyList());
     }
 
     KafkaMetrics(Supplier<Map<MetricName, ? extends Metric>> metricsSupplier, Iterable<Tag> extraTags) {
