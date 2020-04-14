@@ -1,5 +1,5 @@
 /**
- * Copyright 2019 Pivotal Software, Inc.
+ * Copyright 2019 VMware, Inc.
  * <p>
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -39,7 +39,7 @@ import static org.assertj.core.api.Assertions.assertThat;
         "management.metrics.export.atlas.enabled=true"
 })
 public class MeterRegistryCustomizerTest {
-    
+
     @Autowired
     private AtlasMeterRegistry atlasRegistry;
 
