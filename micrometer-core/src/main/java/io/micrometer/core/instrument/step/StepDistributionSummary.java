@@ -20,6 +20,7 @@ import io.micrometer.core.instrument.Clock;
 import io.micrometer.core.instrument.Measurement;
 import io.micrometer.core.instrument.Statistic;
 import io.micrometer.core.instrument.distribution.DistributionStatisticConfig;
+import io.micrometer.core.instrument.distribution.TimeWindowMax;
 
 import java.util.Arrays;
 
@@ -32,7 +33,7 @@ import java.util.Arrays;
 public class StepDistributionSummary extends AbstractDistributionSummary {
     private final StepLong count;
     private final StepDouble total;
-    private final StepDoubleMax max;
+    private final TimeWindowMax max;
 
     /**
      * Create a new {@code StepDistributionSummary}.
@@ -44,13 +45,12 @@ public class StepDistributionSummary extends AbstractDistributionSummary {
      * @param stepMillis                    step in milliseconds
      * @param supportsAggregablePercentiles whether it supports aggregable percentiles
      */
-    @SuppressWarnings("ConstantConditions")
     public StepDistributionSummary(Id id, Clock clock, DistributionStatisticConfig distributionStatisticConfig, double scale,
                                    long stepMillis, boolean supportsAggregablePercentiles) {
         super(id, clock, distributionStatisticConfig, scale, supportsAggregablePercentiles);
         this.count = new StepLong(clock, stepMillis);
         this.total = new StepDouble(clock, stepMillis);
-        this.max = new StepDoubleMax(clock, stepMillis);
+        this.max = new TimeWindowMax(clock, distributionStatisticConfig);
     }
 
     @Override

@@ -18,6 +18,7 @@ package io.micrometer.core.instrument.step;
 import io.micrometer.core.instrument.AbstractTimer;
 import io.micrometer.core.instrument.Clock;
 import io.micrometer.core.instrument.distribution.DistributionStatisticConfig;
+import io.micrometer.core.instrument.distribution.TimeWindowMax;
 import io.micrometer.core.instrument.distribution.pause.PauseDetector;
 import io.micrometer.core.instrument.util.TimeUtils;
 
@@ -29,7 +30,7 @@ import java.util.concurrent.TimeUnit;
 public class StepTimer extends AbstractTimer {
     private final StepLong count;
     private final StepLong total;
-    private final StepLongMax max;
+    private final TimeWindowMax max;
 
     /**
      * Create a new {@code StepTimer}.
@@ -50,7 +51,7 @@ public class StepTimer extends AbstractTimer {
 
         count = new StepLong(clock, stepDurationMillis);
         total = new StepLong(clock, stepDurationMillis);
-        max = new StepLongMax(clock, stepDurationMillis);
+        max = new TimeWindowMax(clock, distributionStatisticConfig);
     }
 
     @Override
