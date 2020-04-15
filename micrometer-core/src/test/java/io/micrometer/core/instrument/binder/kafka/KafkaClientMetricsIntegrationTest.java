@@ -136,8 +136,7 @@ class KafkaClientMetricsIntegrationTest {
                 producer1Configs, new StringSerializer(), new StringSerializer());
 
         KafkaClientMetrics producer1KafkaMetrics = new KafkaClientMetrics(producer1);
-        producer1KafkaMetrics.prepareToBindMetrics(registry);
-        producer1KafkaMetrics.checkAndBindMetrics(registry);
+        producer1KafkaMetrics.bindTo(registry);
 
         int producer1Metrics = registry.getMeters().size();
         assertThat(registry.getMeters()).hasSizeGreaterThan(0);
@@ -158,8 +157,7 @@ class KafkaClientMetricsIntegrationTest {
                 producer2Configs, new StringSerializer(), new StringSerializer());
 
         KafkaClientMetrics producer2KafkaMetrics = new KafkaClientMetrics(producer2);
-        producer2KafkaMetrics.prepareToBindMetrics(registry);
-        producer2KafkaMetrics.checkAndBindMetrics(registry);
+        producer2KafkaMetrics.bindTo(registry);
 
         producer2.send(new ProducerRecord<>("topic1", "foo"));
         producer2.flush();

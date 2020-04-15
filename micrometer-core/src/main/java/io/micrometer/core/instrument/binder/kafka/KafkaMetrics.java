@@ -108,7 +108,7 @@ class KafkaMetrics implements MeterBinder, AutoCloseable {
         Metric startTime = null;
         for (Map.Entry<MetricName, ? extends Metric> entry : metrics.entrySet()) {
             MetricName name = entry.getKey();
-            if (clientId.equals(DEFAULT_VALUE)) clientId = name.tags().get(CLIENT_ID_TAG_NAME);
+            if (clientId.equals(DEFAULT_VALUE) && name.tags().get(CLIENT_ID_TAG_NAME) != null) clientId = name.tags().get(CLIENT_ID_TAG_NAME);
             if (METRIC_GROUP_APP_INFO.equals(name.group()))
                 if (VERSION_METRIC_NAME.equals(name.name()))
                     kafkaVersion = (String) entry.getValue().metricValue();

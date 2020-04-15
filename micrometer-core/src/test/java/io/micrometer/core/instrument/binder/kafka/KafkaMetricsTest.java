@@ -57,7 +57,7 @@ class KafkaMetricsTest {
         kafkaMetrics = new KafkaMetrics(supplier);
         MeterRegistry registry = new SimpleMeterRegistry();
         //When
-        kafkaMetrics.checkAndBindMetrics(registry);
+        kafkaMetrics.bindTo(registry);
         //Then
         assertThat(registry.getMeters()).hasSize(1);
         //When
@@ -78,7 +78,7 @@ class KafkaMetricsTest {
         kafkaMetrics = new KafkaMetrics(supplier);
         MeterRegistry registry = new SimpleMeterRegistry();
         //When
-        kafkaMetrics.checkAndBindMetrics(registry);
+        kafkaMetrics.bindTo(registry);
         //Then
         assertThat(registry.getMeters()).hasSize(1);
         //Given
@@ -112,7 +112,7 @@ class KafkaMetricsTest {
         kafkaMetrics = new KafkaMetrics(supplier);
         MeterRegistry registry = new SimpleMeterRegistry();
         //When
-        kafkaMetrics.checkAndBindMetrics(registry);
+        kafkaMetrics.bindTo(registry);
         //Then
         assertThat(registry.getMeters()).hasSize(1);
         //When
@@ -132,7 +132,7 @@ class KafkaMetricsTest {
         kafkaMetrics = new KafkaMetrics(supplier);
         MeterRegistry registry = new SimpleMeterRegistry();
         //When
-        kafkaMetrics.checkAndBindMetrics(registry);
+        kafkaMetrics.bindTo(registry);
         //Then
         assertThat(registry.getMeters()).hasSize(1);
         assertThat(registry.getMeters().get(0).getId().getTags()).hasSize(1); //only version
@@ -162,7 +162,7 @@ class KafkaMetricsTest {
         kafkaMetrics = new KafkaMetrics(supplier);
         MeterRegistry registry = new SimpleMeterRegistry();
         //When
-        kafkaMetrics.checkAndBindMetrics(registry);
+        kafkaMetrics.bindTo(registry);
         //Then
         assertThat(registry.getMeters()).hasSize(1);
         Meter meter = registry.getMeters().get(0);
@@ -189,7 +189,7 @@ class KafkaMetricsTest {
         kafkaMetrics = new KafkaMetrics(supplier);
         MeterRegistry registry = new SimpleMeterRegistry();
         //When
-        kafkaMetrics.checkAndBindMetrics(registry);
+        kafkaMetrics.bindTo(registry);
         //Then
         assertThat(registry.getMeters()).hasSize(2);
         Meter meter = registry.getMeters().get(0);
