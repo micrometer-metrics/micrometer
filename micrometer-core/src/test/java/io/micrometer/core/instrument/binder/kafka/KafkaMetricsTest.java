@@ -15,8 +15,10 @@
  */
 package io.micrometer.core.instrument.binder.kafka;
 
+import io.micrometer.core.Issue;
 import io.micrometer.core.instrument.Meter;
 import io.micrometer.core.instrument.MeterRegistry;
+import io.micrometer.core.instrument.Tag;
 import io.micrometer.core.instrument.simple.SimpleMeterRegistry;
 import org.apache.kafka.common.Metric;
 import org.apache.kafka.common.MetricName;
@@ -194,6 +196,7 @@ class KafkaMetricsTest {
         assertThat(meter.getId().getTags()).hasSize(2); // version + key0
     }
 
+    @Issue("#1968")
     @Test void shouldBindMetersWithDifferentClientIds() {
         //Given
         Supplier<Map<MetricName, ? extends Metric>> supplier = () -> {
@@ -207,12 +210,38 @@ class KafkaMetricsTest {
             metrics.put(firstName, firstMetric);
             return metrics;
         };
-        KafkaMetrics kafkaMetrics = new KafkaMetrics(supplier);
+        kafkaMetrics = new KafkaMetrics(supplier);
         MeterRegistry registry = new SimpleMeterRegistry();
         registry.counter("kafka.b.a", "client-id", "client1", "key0", "value0");
         //When
-        kafkaMetrics.checkAndBindMetrics(registry);
+        kafkaMetrics.bindTo(registry);
         //Then
         assertThat(registry.getMeters()).hasSize(2);
+    }
+
+    @Issue("#1968")
+    @Test void shouldRemoveOlderMeterWithLessTagsWhenCommonTagsConfigured() {
+        //Given
+        Map<String, String> tags = new LinkedHashMap<>();
+        Supplier<Map<MetricName, ? extends Metric>> supplier = () -> {
+            MetricName metricName = new MetricName("a", "b", "c", tags);
+            KafkaMetric metric = new KafkaMetric(this, metricName, new Value(), new MetricConfig(), Time.SYSTEM);
+            return Collections.singletonMap(metricName, metric);
+        };
+        kafkaMetrics = new KafkaMetrics(supplier);
+        MeterRegistry registry = new SimpleMeterRegistry();
+        registry.config().commonTags("common", "value");
+        //When
+        kafkaMetrics.bindTo(registry);
+        //Then
+        assertThat(registry.getMeters()).hasSize(1);
+        assertThat(registry.getMeters().get(0).getId().getTags()).containsExactlyInAnyOrder(Tag.of("kafka-version", "unknown"), Tag.of("common", "value")); //only version
+        //Given
+        tags.put("key0", "value0");
+        //When
+        kafkaMetrics.checkAndBindMetrics(registry);
+        //Then
+        assertThat(registry.getMeters()).hasSize(1);
+        assertThat(registry.getMeters().get(0).getId().getTags()).containsExactlyInAnyOrder(Tag.of("kafka-version", "unknown"), Tag.of("key0", "value0"), Tag.of("common", "value"));
     }
 }

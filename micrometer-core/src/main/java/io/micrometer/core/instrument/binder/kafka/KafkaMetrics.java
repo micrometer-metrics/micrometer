@@ -26,11 +26,7 @@ import io.micrometer.core.lang.NonNullApi;
 import io.micrometer.core.lang.NonNullFields;
 
 import java.time.Duration;
-import java.util.ArrayList;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
@@ -67,6 +63,7 @@ class KafkaMetrics implements MeterBinder, AutoCloseable {
     private final Iterable<Tag> extraTags;
     private final Duration refreshInterval;
     private final ScheduledExecutorService scheduler = Executors.newSingleThreadScheduledExecutor();
+    private Iterable<Tag> commonTags;
 
     /**
      * Keeps track of current set of metrics.
@@ -91,8 +88,17 @@ class KafkaMetrics implements MeterBinder, AutoCloseable {
     }
 
     @Override public void bindTo(MeterRegistry registry) {
+        commonTags = getCommonTags(registry);
         prepareToBindMetrics(registry);
-        scheduler.scheduleAtFixedRate(() -> checkAndBindMetrics(registry), 0, getRefreshIntervalInMillis(), TimeUnit.MILLISECONDS);
+        checkAndBindMetrics(registry);
+        scheduler.scheduleAtFixedRate(() -> checkAndBindMetrics(registry), getRefreshIntervalInMillis(), getRefreshIntervalInMillis(), TimeUnit.MILLISECONDS);
+    }
+
+    private Iterable<Tag> getCommonTags(MeterRegistry registry) {
+        // FIXME hack until we have proper API to retrieve common tags
+        Meter.Id dummyId = Meter.builder("delete.this", Meter.Type.OTHER, Collections.emptyList()).register(registry).getId();
+        registry.remove(dummyId);
+        return dummyId.getTags();
     }
 
     /** Define common tags and meters before binding metrics */
@@ -193,6 +199,7 @@ class KafkaMetrics implements MeterBinder, AutoCloseable {
         metric.metricName().tags().forEach((key, value) -> tags.add(Tag.of(key, value)));
         tags.add(Tag.of(KAFKA_VERSION_TAG_NAME, kafkaVersion));
         extraTags.forEach(tags::add);
+        commonTags.forEach(tags::add);
         return tags;
     }
 
