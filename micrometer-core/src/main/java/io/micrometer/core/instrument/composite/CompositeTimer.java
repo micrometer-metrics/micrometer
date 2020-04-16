@@ -128,13 +128,13 @@ class CompositeTimer extends AbstractCompositeMeter<Timer> implements Timer {
                 .percentilePrecision(distributionStatisticConfig.getPercentilePrecision())
                 .pauseDetector(pauseDetector);
 
-        final double[] slaNanos = distributionStatisticConfig.getSlaBoundaries();
-        if (slaNanos != null) {
-            Duration[] sla = new Duration[slaNanos.length];
-            for (int i = 0; i < slaNanos.length; i++) {
-                sla[i] = Duration.ofNanos((long) slaNanos[i]);
+        final double[] sloNanos = distributionStatisticConfig.getServiceLevelObjectiveBoundaries();
+        if (sloNanos != null) {
+            Duration[] slo = new Duration[sloNanos.length];
+            for (int i = 0; i < sloNanos.length; i++) {
+                slo[i] = Duration.ofNanos((long) sloNanos[i]);
             }
-            builder = builder.sla(sla);
+            builder = builder.serviceLevelObjectives(slo);
         }
 
         return builder.register(registry);

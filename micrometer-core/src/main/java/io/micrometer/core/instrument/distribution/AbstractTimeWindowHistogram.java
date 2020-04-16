@@ -108,11 +108,11 @@ abstract class AbstractTimeWindowHistogram<T, U> implements Histogram {
                     minimumExpectedValue + ").");
         }
 
-        if (distributionStatisticConfig.getSlaBoundaries() != null) {
-            for (double sla : distributionStatisticConfig.getSlaBoundaries()) {
-                if (sla <= 0) {
-                    rejectHistogramConfig("slaBoundaries must contain only the values greater than 0. " +
-                            "Found " + sla);
+        if (distributionStatisticConfig.getServiceLevelObjectiveBoundaries() != null) {
+            for (double slo : distributionStatisticConfig.getServiceLevelObjectiveBoundaries()) {
+                if (slo <= 0) {
+                    rejectHistogramConfig("serviceLevelObjectiveBoundaries must contain only the values greater than 0. " +
+                            "Found " + slo);
                 }
             }
         }

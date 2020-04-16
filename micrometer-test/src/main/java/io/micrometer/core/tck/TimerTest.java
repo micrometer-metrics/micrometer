@@ -214,7 +214,7 @@ interface TimerTest {
     @Test
     default void histogramCounts(MeterRegistry registry) {
         Timer t = Timer.builder("my.timer")
-                .sla(Duration.ofMillis(1))
+                .serviceLevelObjectives(Duration.ofMillis(1))
                 .register(registry);
 
         t.record(1, TimeUnit.MILLISECONDS);

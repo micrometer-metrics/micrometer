@@ -47,11 +47,14 @@ class SimpleMeterRegistryTest {
 
     @Issue("#370")
     @Test
-    void slasOnlyNoPercentileHistogram() {
-        DistributionSummary summary = DistributionSummary.builder("my.summary").sla(1.0, 2).register(registry);
+    void serviceLevelObjectivesOnlyNoPercentileHistogram() {
+        DistributionSummary summary = DistributionSummary.builder("my.summary")
+                .serviceLevelObjectives(1.0, 2)
+                .register(registry);
+
         summary.record(1);
 
-        Timer timer = Timer.builder("my.timer").sla(Duration.ofMillis(1)).register(registry);
+        Timer timer = Timer.builder("my.timer").serviceLevelObjectives(Duration.ofMillis(1)).register(registry);
         timer.record(1, TimeUnit.MILLISECONDS);
 
         Gauge summaryHist1 = registry.get("my.summary.histogram").tags("le", "1").gauge();

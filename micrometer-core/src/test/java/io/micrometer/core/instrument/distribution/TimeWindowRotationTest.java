@@ -72,9 +72,9 @@ class TimeWindowRotationTest {
 
     @ParameterizedTest
     @MethodSource("histogramTypes")
-    void slaBoundariesValidation(Class<? extends AbstractTimeWindowHistogram<?, ?>> histogramType) {
+    void serviceLevelObjectiveBoundariesValidation(Class<? extends AbstractTimeWindowHistogram<?, ?>> histogramType) {
         expectValidationFailure(histogramType, DistributionStatisticConfig.builder()
-            .sla(0.0)
+            .serviceLevelObjectives(0.0)
             .build());
     }
 

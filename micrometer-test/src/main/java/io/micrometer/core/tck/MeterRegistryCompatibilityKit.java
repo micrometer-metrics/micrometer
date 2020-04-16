@@ -137,7 +137,7 @@ public abstract class MeterRegistryCompatibilityKit {
     void removeMeterWithSynthetic(MeterRegistry registry) {
         Timer timer = Timer.builder("my.timer")
                 .publishPercentiles(0.95)
-                .sla(Duration.ofMillis(10))
+                .serviceLevelObjectives(Duration.ofMillis(10))
                 .register(registry);
 
         registry.remove(timer);

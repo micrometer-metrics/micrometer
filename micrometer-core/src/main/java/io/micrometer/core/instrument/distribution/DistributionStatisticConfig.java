@@ -55,7 +55,7 @@ public class DistributionStatisticConfig implements Mergeable<DistributionStatis
     private Integer percentilePrecision;
 
     @Nullable
-    private double[] sla;
+    private double[] serviceLevelObjectives;
 
     @Nullable
     private Double minimumExpectedValue;
@@ -85,7 +85,7 @@ public class DistributionStatisticConfig implements Mergeable<DistributionStatis
         return DistributionStatisticConfig.builder()
                 .percentilesHistogram(this.percentileHistogram == null ? parent.percentileHistogram : this.percentileHistogram)
                 .percentiles(this.percentiles == null ? parent.percentiles : this.percentiles)
-                .sla(this.sla == null ? parent.sla : this.sla)
+                .serviceLevelObjectives(this.serviceLevelObjectives == null ? parent.serviceLevelObjectives : this.serviceLevelObjectives)
                 .percentilePrecision(this.percentilePrecision == null ? parent.percentilePrecision : this.percentilePrecision)
                 .minimumExpectedValue(this.minimumExpectedValue == null ? parent.minimumExpectedValue : this.minimumExpectedValue)
                 .maximumExpectedValue(this.maximumExpectedValue == null ? parent.maximumExpectedValue : this.maximumExpectedValue)
@@ -106,8 +106,8 @@ public class DistributionStatisticConfig implements Mergeable<DistributionStatis
             buckets.add(maximumExpectedValue);
         }
 
-        if (sla != null) {
-            for (double slaBoundary : sla) {
+        if (serviceLevelObjectives != null) {
+            for (double slaBoundary : serviceLevelObjectives) {
                 buckets.add(slaBoundary);
             }
         }
@@ -207,10 +207,25 @@ public class DistributionStatisticConfig implements Mergeable<DistributionStatis
      * use with a {@link io.micrometer.core.instrument.Timer}, the SLA unit is in nanoseconds.
      *
      * @return The SLA boundaries to include the set of histogram buckets shipped to the monitoring system.
+     * @deprecated Use {@link #getServiceLevelObjectiveBoundaries()} instead.
      */
     @Nullable
+    @Deprecated
     public double[] getSlaBoundaries() {
-        return sla;
+        return serviceLevelObjectives;
+    }
+
+    /**
+     * Publish at a minimum a histogram containing your defined SLA boundaries. When used in conjunction with
+     * {@link #percentileHistogram}, the boundaries defined here are included alongside other buckets used to
+     * generate aggregable percentile approximations. If the {@link DistributionStatisticConfig} is meant for
+     * use with a {@link io.micrometer.core.instrument.Timer}, the SLA unit is in nanoseconds.
+     *
+     * @return The SLA boundaries to include the set of histogram buckets shipped to the monitoring system.
+     */
+    @Nullable
+    public double[] getServiceLevelObjectiveBoundaries() {
+        return serviceLevelObjectives;
     }
 
     public static class Builder {
@@ -249,17 +264,17 @@ public class DistributionStatisticConfig implements Mergeable<DistributionStatis
         }
 
         /**
-         * Publish at a minimum a histogram containing your defined SLA boundaries. When used in conjunction with
-         * {@link #percentileHistogram}, the boundaries defined here are included alongside other buckets used to
+         * Publish at a minimum a histogram containing your defined Service Level Objective (SLO) boundaries. When used
+         * in conjunction with {@link #percentileHistogram}, the boundaries defined here are included alongside other buckets used to
          * generate aggregable percentile approximations. If the {@link DistributionStatisticConfig} is meant for
          * use with a {@link io.micrometer.core.instrument.Timer}, the SLA unit is in nanoseconds.
          *
-         * @param sla The SLA boundaries to include the set of histogram buckets shipped to the monitoring system.
+         * @param slos The SLO boundaries to include the set of histogram buckets shipped to the monitoring system.
          * @return This builder.
-         * @since 1.4.0
+         * @since 1.5.0
          */
-        public Builder sla(@Nullable double... sla) {
-            config.sla = sla;
+        public Builder serviceLevelObjectives(@Nullable double... slos) {
+            config.serviceLevelObjectives = slos;
             return this;
         }
 
@@ -269,13 +284,35 @@ public class DistributionStatisticConfig implements Mergeable<DistributionStatis
          * generate aggregable percentile approximations. If the {@link DistributionStatisticConfig} is meant for
          * use with a {@link io.micrometer.core.instrument.Timer}, the SLA unit is in nanoseconds.
          *
-         * @deprecated Use {@link #sla(double...)} instead since 1.4.0.
          * @param sla The SLA boundaries to include the set of histogram buckets shipped to the monitoring system.
          * @return This builder.
+         * @since 1.4.0
+         * @deprecated Use {@link #serviceLevelObjectives(double...)} instead. "Service Level Agreement" is
+         * more formally the agreement between an engineering organization and the business. Service Level Objectives
+         * are set more conservatively than the SLA to provide some wiggle room while still satisfying the business
+         * requirement. SLOs are the threshold we intend to measure against, then.
+         */
+        @Deprecated
+        public Builder sla(@Nullable double... sla) {
+            return serviceLevelObjectives(sla);
+        }
+
+        /**
+         * Publish at a minimum a histogram containing your defined SLA boundaries. When used in conjunction with
+         * {@link #percentileHistogram}, the boundaries defined here are included alongside other buckets used to
+         * generate aggregable percentile approximations. If the {@link DistributionStatisticConfig} is meant for
+         * use with a {@link io.micrometer.core.instrument.Timer}, the SLA unit is in nanoseconds.
+         *
+         * @param sla The SLA boundaries to include the set of histogram buckets shipped to the monitoring system.
+         * @return This builder.
+         * @deprecated Use {@link #serviceLevelObjectives(double...)} instead. "Service Level Agreement" is
+         * more formally the agreement between an engineering organization and the business. Service Level Objectives
+         * are set more conservatively than the SLA to provide some wiggle room while still satisfying the business
+         * requirement. SLOs are the threshold we intend to measure against, then.
          */
         @Deprecated
         public Builder sla(@Nullable long... sla) {
-            return sla == null ? this : sla(LongStream.of(sla).asDoubleStream().toArray());
+            return sla == null ? this : serviceLevelObjectives(LongStream.of(sla).asDoubleStream().toArray());
         }
 
         /**
@@ -372,6 +409,6 @@ public class DistributionStatisticConfig implements Mergeable<DistributionStatis
     }
 
     public boolean isPublishingHistogram() {
-        return (percentileHistogram != null && percentileHistogram) || (sla != null && sla.length > 0);
+        return (percentileHistogram != null && percentileHistogram) || (serviceLevelObjectives != null && serviceLevelObjectives.length > 0);
     }
 }

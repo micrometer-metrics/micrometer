@@ -32,7 +32,7 @@ class TimeWindowFixedBoundaryHistogramTest {
     }
 
     private void assertTailSearch(int search, int expectedIndex, double... buckets) {
-        DistributionStatisticConfig statisticConfig = DistributionStatisticConfig.builder().sla(buckets).build();
+        DistributionStatisticConfig statisticConfig = DistributionStatisticConfig.builder().serviceLevelObjectives(buckets).build();
         try (TimeWindowFixedBoundaryHistogram histogram = new TimeWindowFixedBoundaryHistogram(Clock.SYSTEM,
                 statisticConfig.merge(DistributionStatisticConfig.DEFAULT), false)) {
             TimeWindowFixedBoundaryHistogram.FixedBoundaryHistogram bucket = histogram.newBucket();
@@ -44,7 +44,7 @@ class TimeWindowFixedBoundaryHistogramTest {
     void histogramsAreCumulative() {
         try (TimeWindowFixedBoundaryHistogram histogram = new TimeWindowFixedBoundaryHistogram(new MockClock(),
                 DistributionStatisticConfig.builder()
-                        .sla(3.0, 6, 7)
+                        .serviceLevelObjectives(3.0, 6, 7)
                         .bufferLength(1)
                         .build()
                         .merge(DistributionStatisticConfig.DEFAULT), false)) {

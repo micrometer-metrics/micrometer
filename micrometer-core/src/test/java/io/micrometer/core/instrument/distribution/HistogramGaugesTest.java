@@ -35,7 +35,7 @@ class HistogramGaugesTest {
         MeterRegistry registry = new SimpleMeterRegistry();
 
         Timer timer = Timer.builder("my.timer")
-                .sla(Duration.ofMillis(1))
+                .serviceLevelObjectives(Duration.ofMillis(1))
                 .register(registry);
 
         HistogramGauges gauges = HistogramGauges.registerWithCommonFormat(timer, registry);
@@ -58,7 +58,7 @@ class HistogramGaugesTest {
         });
 
         Timer.builder("my.timer")
-             .sla(Duration.ofMillis(1))
+             .serviceLevelObjectives(Duration.ofMillis(1))
              .publishPercentiles(0.95)
              .register(registry);
 
@@ -71,11 +71,11 @@ class HistogramGaugesTest {
         MeterRegistry registry = new SimpleMeterRegistry();
 
         Timer timer = Timer.builder("my.timer")
-                .sla(Duration.ofNanos(Long.MAX_VALUE))
+                .serviceLevelObjectives(Duration.ofNanos(Long.MAX_VALUE))
                 .register(registry);
 
         DistributionSummary distributionSummary = DistributionSummary.builder("my.distribution")
-                .sla(Double.POSITIVE_INFINITY)
+                .serviceLevelObjectives(Double.POSITIVE_INFINITY)
                 .register(registry);
 
         HistogramGauges distributionGauges = HistogramGauges.registerWithCommonFormat(distributionSummary, registry);

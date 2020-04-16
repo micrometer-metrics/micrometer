@@ -181,7 +181,7 @@ class PrometheusMeterRegistryTest {
         Timer t = Timer.builder("t1")
                 .publishPercentileHistogram()
                 .distributionStatisticExpiry(Duration.ofSeconds(60))
-                .sla(Duration.ofMillis(100))
+                .serviceLevelObjectives(Duration.ofMillis(100))
                 .register(registry);
 
         t.record(100, TimeUnit.MILLISECONDS);
@@ -197,7 +197,7 @@ class PrometheusMeterRegistryTest {
         DistributionSummary s = DistributionSummary.builder("s1")
                 .publishPercentileHistogram()
                 .distributionStatisticExpiry(Duration.ofSeconds(60))
-                .sla(100.0)
+                .serviceLevelObjectives(100.0)
                 .register(registry);
 
         s.record(100);
@@ -241,11 +241,11 @@ class PrometheusMeterRegistryTest {
 
     @Issue("#370")
     @Test
-    void slasOnlyNoPercentileHistogram() {
-        DistributionSummary.builder("my.summary").sla(1.0).register(registry).record(1);
+    void serviceLevelObjectivesOnlyNoPercentileHistogram() {
+        DistributionSummary.builder("my.summary").serviceLevelObjectives(1.0).register(registry).record(1);
         assertThat(registry.scrape()).contains("my_summary_bucket{le=\"1.0\",} 1.0");
 
-        Timer.builder("my.timer").sla(Duration.ofMillis(1)).register(registry).record(1, TimeUnit.MILLISECONDS);
+        Timer.builder("my.timer").serviceLevelObjectives(Duration.ofMillis(1)).register(registry).record(1, TimeUnit.MILLISECONDS);
         assertThat(registry.scrape()).contains("my_timer_duration_seconds_bucket{le=\"0.001\",} 1.0");
     }
 

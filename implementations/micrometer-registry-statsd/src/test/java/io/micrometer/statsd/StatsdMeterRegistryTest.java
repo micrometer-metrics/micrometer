@@ -301,13 +301,13 @@ class StatsdMeterRegistryTest {
     @ParameterizedTest
     @EnumSource(StatsdFlavor.class)
     @Issue("#370")
-    void slasOnlyNoPercentileHistogram(StatsdFlavor flavor) {
+    void serviceLevelObjectivesOnlyNoPercentileHistogram(StatsdFlavor flavor) {
         StatsdConfig config = configWithFlavor(flavor);
         MeterRegistry registry = new StatsdMeterRegistry(config, clock);
-        DistributionSummary summary = DistributionSummary.builder("my.summary").sla(1.0, 2).register(registry);
+        DistributionSummary summary = DistributionSummary.builder("my.summary").serviceLevelObjectives(1.0, 2).register(registry);
         summary.record(1);
 
-        Timer timer = Timer.builder("my.timer").sla(Duration.ofMillis(1)).register(registry);
+        Timer timer = Timer.builder("my.timer").serviceLevelObjectives(Duration.ofMillis(1)).register(registry);
         timer.record(1, TimeUnit.MILLISECONDS);
 
         Gauge summaryHist1 = registry.get("my.summary.histogram").tags("le", "1").gauge();
@@ -332,18 +332,18 @@ class StatsdMeterRegistryTest {
     }
 
     @Test
-    void timersWithSlasHaveInfBucket() {
+    void timersWithServiceLevelObjectivesHaveInfBucket() {
         StatsdMeterRegistry registry = new StatsdMeterRegistry(configWithFlavor(StatsdFlavor.ETSY), clock);
-        Timer timer = Timer.builder("my.timer").sla(Duration.ofMillis(1)).register(registry);
+        Timer.builder("my.timer").serviceLevelObjectives(Duration.ofMillis(1)).register(registry);
 
         // A io.micrometer.core.instrument.search.MeterNotFoundException is thrown if the gauge isn't present
         registry.get("my.timer.histogram").tag("le", "+Inf").gauge();
     }
 
     @Test
-    void distributionSummariesWithSlasHaveInfBucket() {
+    void distributionSummariesWithServiceLevelObjectivesHaveInfBucket() {
         StatsdMeterRegistry registry = new StatsdMeterRegistry(configWithFlavor(StatsdFlavor.ETSY), clock);
-        DistributionSummary summary = DistributionSummary.builder("my.distribution").sla(1.0).register(registry);
+        DistributionSummary summary = DistributionSummary.builder("my.distribution").serviceLevelObjectives(1.0).register(registry);
 
         // A io.micrometer.core.instrument.search.MeterNotFoundException is thrown if the gauge isn't present
         registry.get("my.distribution.histogram").tag("le", "+Inf").gauge();
@@ -352,7 +352,7 @@ class StatsdMeterRegistryTest {
     @Test
     void infBucketEqualsCount() {
         StatsdMeterRegistry registry = new StatsdMeterRegistry(configWithFlavor(StatsdFlavor.ETSY), clock);
-        Timer timer = Timer.builder("my.timer").sla(Duration.ofMillis(1)).register(registry);
+        Timer timer = Timer.builder("my.timer").serviceLevelObjectives(Duration.ofMillis(1)).register(registry);
         timer.record(1, TimeUnit.MILLISECONDS);
 
         Gauge timerHist = registry.get("my.timer.histogram").tags("le", "+Inf").gauge();

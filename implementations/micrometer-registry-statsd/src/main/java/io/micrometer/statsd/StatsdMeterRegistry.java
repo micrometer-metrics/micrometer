@@ -315,10 +315,10 @@ public class StatsdMeterRegistry extends MeterRegistry {
     }
 
     private DistributionStatisticConfig addInfBucket(DistributionStatisticConfig config) {
-        double[] slas = config.getSlaBoundaries() == null ? new double[]{Double.POSITIVE_INFINITY} :
-                DoubleStream.concat(Arrays.stream(config.getSlaBoundaries()), DoubleStream.of(Double.POSITIVE_INFINITY)).toArray();
+        double[] serviceLevelObjectives = config.getServiceLevelObjectiveBoundaries() == null ? new double[]{Double.POSITIVE_INFINITY} :
+                DoubleStream.concat(Arrays.stream(config.getServiceLevelObjectiveBoundaries()), DoubleStream.of(Double.POSITIVE_INFINITY)).toArray();
         return DistributionStatisticConfig.builder()
-                .sla(slas)
+                .serviceLevelObjectives(serviceLevelObjectives)
                 .build()
                 .merge(config);
     }
@@ -339,8 +339,8 @@ public class StatsdMeterRegistry extends MeterRegistry {
     protected Timer newTimer(Meter.Id id, DistributionStatisticConfig distributionStatisticConfig, PauseDetector
             pauseDetector) {
 
-        // Adds an infinity bucket for SLA violation calculation
-        if (distributionStatisticConfig.getSlaBoundaries() != null) {
+        // Adds an infinity bucket for SLO violation calculation
+        if (distributionStatisticConfig.getServiceLevelObjectiveBoundaries() != null) {
             distributionStatisticConfig = addInfBucket(distributionStatisticConfig);
         }
 
@@ -354,8 +354,8 @@ public class StatsdMeterRegistry extends MeterRegistry {
     protected DistributionSummary newDistributionSummary(Meter.Id id, DistributionStatisticConfig
             distributionStatisticConfig, double scale) {
 
-        // Adds an infinity bucket for SLA violation calculation
-        if (distributionStatisticConfig.getSlaBoundaries() != null) {
+        // Adds an infinity bucket for SLO violation calculation
+        if (distributionStatisticConfig.getServiceLevelObjectiveBoundaries() != null) {
             distributionStatisticConfig = addInfBucket(distributionStatisticConfig);
         }
 

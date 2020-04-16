@@ -115,7 +115,7 @@ public class AtlasMeterRegistry extends MeterRegistry {
                 percentile -> Tags.concat(id.getTagsAsIterable(), "percentile", DoubleFormat.decimalOrNan(percentile.percentile())),
                 ValueAtPercentile::value,
                 bucket -> id.getName(),
-                bucket -> Tags.concat(id.getTagsAsIterable(), "sla", DoubleFormat.wholeOrDecimal(bucket.bucket())));
+                bucket -> Tags.concat(id.getTagsAsIterable(), "service.level.objective", DoubleFormat.wholeOrDecimal(bucket.bucket())));
 
         return summary;
     }
@@ -139,7 +139,7 @@ public class AtlasMeterRegistry extends MeterRegistry {
                 percentile -> Tags.concat(id.getTagsAsIterable(), "percentile", DoubleFormat.decimalOrNan(percentile.percentile())),
                 percentile -> percentile.value(timer.baseTimeUnit()),
                 bucket -> id.getName(),
-                bucket -> Tags.concat(id.getTagsAsIterable(), "sla", DoubleFormat.wholeOrDecimal(bucket.bucket(timer.baseTimeUnit()))));
+                bucket -> Tags.concat(id.getTagsAsIterable(), "service.level.objective", DoubleFormat.wholeOrDecimal(bucket.bucket(timer.baseTimeUnit()))));
 
         return timer;
     }

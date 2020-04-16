@@ -77,7 +77,7 @@ class CompositeDistributionSummary extends AbstractCompositeMeter<DistributionSu
                 .distributionStatisticBufferLength(distributionStatisticConfig.getBufferLength())
                 .distributionStatisticExpiry(distributionStatisticConfig.getExpiry())
                 .percentilePrecision(distributionStatisticConfig.getPercentilePrecision())
-                .sla(distributionStatisticConfig.getSlaBoundaries())
+                .serviceLevelObjectives(distributionStatisticConfig.getServiceLevelObjectiveBoundaries())
                 .scale(scale)
                 .register(registry);
     }
