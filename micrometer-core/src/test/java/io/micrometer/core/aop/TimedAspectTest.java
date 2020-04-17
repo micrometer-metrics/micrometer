@@ -125,7 +125,7 @@ class TimedAspectTest {
 
         @NonNull
         @Override
-        protected LongTaskTimer newLongTaskTimer(@Nonnull Id id) {
+        protected LongTaskTimer newLongTaskTimer(@Nonnull Id id, @Nonnull DistributionStatisticConfig distributionStatisticConfig) {
             throw new RuntimeException();
         }
     }

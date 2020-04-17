@@ -46,18 +46,8 @@ class NoopLongTaskTimerTest {
     }
 
     @Test
-    void returnsStop() {
-        assertThat(timer.stop(1)).isEqualTo(-1);
-    }
-
-    @Test
     void returnsDuration() {
         assertThat(timer.duration(TimeUnit.MINUTES)).isEqualTo(0);
-    }
-
-    @Test
-    void returnsDurationWithTask() {
-        assertThat(timer.duration(0, TimeUnit.MINUTES)).isEqualTo(-1);
     }
 
     @Test

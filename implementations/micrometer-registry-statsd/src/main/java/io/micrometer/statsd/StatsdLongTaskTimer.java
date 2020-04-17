@@ -17,6 +17,7 @@ package io.micrometer.statsd;
 
 import io.micrometer.core.instrument.Clock;
 import io.micrometer.core.instrument.Statistic;
+import io.micrometer.core.instrument.distribution.DistributionStatisticConfig;
 import io.micrometer.core.instrument.internal.DefaultLongTaskTimer;
 import reactor.core.publisher.FluxSink;
 
@@ -32,8 +33,9 @@ public class StatsdLongTaskTimer extends DefaultLongTaskTimer implements StatsdP
 
     private final boolean alwaysPublish;
 
-    StatsdLongTaskTimer(Id id, StatsdLineBuilder lineBuilder, FluxSink<String> sink, Clock clock, boolean alwaysPublish) {
-        super(id, clock);
+    StatsdLongTaskTimer(Id id, StatsdLineBuilder lineBuilder, FluxSink<String> sink, Clock clock, boolean alwaysPublish,
+                        DistributionStatisticConfig distributionStatisticConfig, TimeUnit baseTimeUnit) {
+        super(id, clock, baseTimeUnit, distributionStatisticConfig, false);
         this.lineBuilder = lineBuilder;
         this.sink = sink;
         this.alwaysPublish = alwaysPublish;

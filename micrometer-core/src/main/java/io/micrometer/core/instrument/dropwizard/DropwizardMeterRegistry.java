@@ -110,10 +110,12 @@ public abstract class DropwizardMeterRegistry extends MeterRegistry {
     }
 
     @Override
-    protected LongTaskTimer newLongTaskTimer(Meter.Id id) {
-        LongTaskTimer ltt = new DefaultLongTaskTimer(id, clock);
+    protected LongTaskTimer newLongTaskTimer(Meter.Id id, DistributionStatisticConfig distributionStatisticConfig) {
+        LongTaskTimer ltt = new DefaultLongTaskTimer(id, clock, getBaseTimeUnit(), distributionStatisticConfig, false);
         registry.register(hierarchicalName(id.withTag(Statistic.ACTIVE_TASKS)), (Gauge<Integer>) ltt::activeTasks);
         registry.register(hierarchicalName(id.withTag(Statistic.DURATION)), (Gauge<Double>) () -> ltt.duration(TimeUnit.NANOSECONDS));
+        registry.register(hierarchicalName(id.withTag(Statistic.MAX)), (Gauge<Double>) () -> ltt.max(TimeUnit.NANOSECONDS));
+        HistogramGauges.registerWithCommonFormat(ltt, this);
         return ltt;
     }
 

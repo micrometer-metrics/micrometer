@@ -53,6 +53,27 @@ public class HistogramGauges {
                         ?  "+Inf" : DoubleFormat.wholeOrDecimal(bucket.bucket(timer.baseTimeUnit()))));
     }
 
+    /**
+     * Register a set of gauges for percentiles and histogram buckets that follow a common format when
+     * the monitoring system doesn't have an opinion about the structure of this data.
+     *
+     * @param ltt the ltt from which to derive gauges
+     * @param registry the registry to register the gauges
+     * @return registered {@code HistogramGauges}
+     * @since 1.5.0
+     */
+    public static HistogramGauges registerWithCommonFormat(LongTaskTimer ltt, MeterRegistry registry) {
+        Meter.Id id = ltt.getId();
+        return HistogramGauges.register(ltt, registry,
+                percentile -> id.getName() + ".percentile",
+                percentile -> Tags.concat(id.getTagsAsIterable(), "phi", DoubleFormat.decimalOrNan(percentile.percentile())),
+                percentile -> percentile.value(ltt.baseTimeUnit()),
+                bucket -> id.getName() + ".histogram",
+                // We look for Long.MAX_VALUE to ensure a sensible tag on our +Inf bucket
+                bucket -> Tags.concat(id.getTagsAsIterable(), "le", bucket.isPositiveInf()
+                        ?  "+Inf" : DoubleFormat.wholeOrDecimal(bucket.bucket(ltt.baseTimeUnit()))));
+    }
+
     public static HistogramGauges registerWithCommonFormat(DistributionSummary summary, MeterRegistry registry) {
         Meter.Id id = summary.getId();
         return HistogramGauges.register(summary, registry,

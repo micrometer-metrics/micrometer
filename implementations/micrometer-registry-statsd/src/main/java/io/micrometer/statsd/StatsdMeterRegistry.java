@@ -329,8 +329,9 @@ public class StatsdMeterRegistry extends MeterRegistry {
     }
 
     @Override
-    protected LongTaskTimer newLongTaskTimer(Meter.Id id) {
-        StatsdLongTaskTimer ltt = new StatsdLongTaskTimer(id, lineBuilder(id), fluxSink, clock, statsdConfig.publishUnchangedMeters());
+    protected LongTaskTimer newLongTaskTimer(Meter.Id id, DistributionStatisticConfig distributionStatisticConfig) {
+        StatsdLongTaskTimer ltt = new StatsdLongTaskTimer(id, lineBuilder(id), fluxSink, clock, statsdConfig.publishUnchangedMeters(),
+                distributionStatisticConfig, getBaseTimeUnit());
         pollableMeters.put(id, ltt);
         return ltt;
     }

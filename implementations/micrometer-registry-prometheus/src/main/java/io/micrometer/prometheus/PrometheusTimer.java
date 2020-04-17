@@ -101,7 +101,6 @@ public class PrometheusTimer extends AbstractTimer {
         return histogramFlavor;
     }
 
-
     /**
      * For Prometheus we cannot use the histogram counts from HistogramSnapshot, as it is based on a
      * rolling histogram. Prometheus requires a histogram that accumulates values over the lifetime of the app.

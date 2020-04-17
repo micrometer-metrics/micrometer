@@ -90,8 +90,8 @@ public class CompositeMeterRegistry extends MeterRegistry {
     }
 
     @Override
-    protected LongTaskTimer newLongTaskTimer(Meter.Id id) {
-        return new CompositeLongTaskTimer(id);
+    protected LongTaskTimer newLongTaskTimer(Meter.Id id, DistributionStatisticConfig distributionStatisticConfig) {
+        return new CompositeLongTaskTimer(id, distributionStatisticConfig);
     }
 
     @Override

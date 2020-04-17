@@ -135,8 +135,18 @@ public abstract class MeterRegistry {
      *
      * @param id The id that uniquely identifies the long task timer.
      * @return A new long task timer.
+     * @deprecated Implement {@link #newLongTaskTimer(Id, DistributionStatisticConfig)} instead.
      */
-    protected abstract LongTaskTimer newLongTaskTimer(Meter.Id id);
+    @SuppressWarnings("DeprecatedIsStillUsed")
+    @Deprecated
+    protected LongTaskTimer newLongTaskTimer(Meter.Id id) {
+        throw new UnsupportedOperationException("MeterRegistry implementations may still override this, but it is only" +
+                "invoked by the overloaded form of newLongTaskTimer for backwards compatibility");
+    }
+
+    protected LongTaskTimer newLongTaskTimer(Meter.Id id, DistributionStatisticConfig distributionStatisticConfig) {
+        return newLongTaskTimer(id); // default implementation for backwards compatibility
+    }
 
     /**
      * Build a new timer to be added to the registry. This is guaranteed to only be called if the timer doesn't already exist.
@@ -819,10 +829,10 @@ public abstract class MeterRegistry {
          * @param id The identifier for this long task timer.
          * @return A new or existing long task timer.
          */
-        LongTaskTimer longTaskTimer(Meter.Id id) {
-            return registerMeterIfNecessary(LongTaskTimer.class, id, id2 -> {
+        LongTaskTimer longTaskTimer(Meter.Id id, DistributionStatisticConfig distributionStatisticConfig) {
+            return registerMeterIfNecessary(LongTaskTimer.class, id, distributionStatisticConfig, (id2, filteredConfig) -> {
                 Meter.Id withUnit = id2.withBaseUnit(getBaseTimeUnitStr());
-                return newLongTaskTimer(withUnit);
+                return newLongTaskTimer(withUnit, filteredConfig.merge(defaultHistogramConfig()));
             }, NoopLongTaskTimer::new);
         }
 

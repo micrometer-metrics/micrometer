@@ -173,8 +173,9 @@ public class AtlasMeterRegistry extends MeterRegistry {
     }
 
     @Override
-    protected LongTaskTimer newLongTaskTimer(Meter.Id id) {
-        return new SpectatorLongTaskTimer(id, com.netflix.spectator.api.patterns.LongTaskTimer.get(registry, spectatorId(id)));
+    protected LongTaskTimer newLongTaskTimer(Meter.Id id, DistributionStatisticConfig distributionStatisticConfig) {
+        return new SpectatorLongTaskTimer(id, com.netflix.spectator.api.patterns.LongTaskTimer.get(registry, spectatorId(id)),
+                clock, distributionStatisticConfig);
     }
 
     @Override

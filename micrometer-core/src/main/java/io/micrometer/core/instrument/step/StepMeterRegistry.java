@@ -53,8 +53,10 @@ public abstract class StepMeterRegistry extends PushMeterRegistry {
     }
 
     @Override
-    protected LongTaskTimer newLongTaskTimer(Meter.Id id) {
-        return new DefaultLongTaskTimer(id, clock);
+    protected LongTaskTimer newLongTaskTimer(Meter.Id id, DistributionStatisticConfig distributionStatisticConfig) {
+        LongTaskTimer ltt = new DefaultLongTaskTimer(id, clock, getBaseTimeUnit(), distributionStatisticConfig, false);
+        HistogramGauges.registerWithCommonFormat(ltt, this);
+        return ltt;
     }
 
     @Override

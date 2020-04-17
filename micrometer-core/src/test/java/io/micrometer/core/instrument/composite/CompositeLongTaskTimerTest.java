@@ -45,8 +45,6 @@ class CompositeLongTaskTimerTest {
         clock.add(100, TimeUnit.NANOSECONDS);
         assertThat(anotherSample.stop()).isEqualTo(110);
 
-        // if this fails, the composite is using a timer ID that overlaps with a separate timer in a member
-        // of the composite rather than mapping the ID to a separate ID in the composite member.
         assertThat(sample.stop()).isEqualTo(100);
     }
 }
