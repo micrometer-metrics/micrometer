@@ -55,7 +55,7 @@ public class NoopLongTaskTimer extends NoopMeter implements LongTaskTimer {
         return TimeUnit.SECONDS;
     }
 
-    public static class NoopSample implements Sample {
+    public static class NoopSample extends Sample {
         @Override
         public long stop() {
             return 0;

@@ -187,19 +187,19 @@ public interface LongTaskTimer extends Meter, HistogramSupport {
         );
     }
 
-    interface Sample {
+    abstract class Sample {
         /**
          * Records the duration of the operation
          *
          * @return The duration, in nanoseconds, of this sample that was stopped
          */
-        long stop();
+        public abstract long stop();
 
         /**
          * @param unit time unit to which the return value will be scaled
          * @return duration of this sample
          */
-        double duration(TimeUnit unit);
+        public abstract double duration(TimeUnit unit);
     }
 
     /**

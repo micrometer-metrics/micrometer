@@ -60,7 +60,7 @@ public class SpectatorLongTaskTimer extends DefaultLongTaskTimer implements Long
         return MeterEquivalence.hashCode(this);
     }
 
-    public class SpectatorSample implements Sample {
+    public class SpectatorSample extends Sample {
         private final Sample delegate;
         private final long taskId;
 

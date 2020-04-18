@@ -199,7 +199,7 @@ public class DefaultLongTaskTimer extends AbstractMeter implements LongTaskTimer
         );
     }
 
-    public class SampleImpl implements Sample {
+    public class SampleImpl extends Sample {
         private final long startTime;
         private volatile boolean stopped = false;
 
