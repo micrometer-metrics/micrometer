@@ -26,11 +26,7 @@ import io.micrometer.core.lang.NonNullApi;
 import io.micrometer.core.lang.NonNullFields;
 
 import java.time.Duration;
-import java.util.ArrayList;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
@@ -59,18 +55,23 @@ class KafkaMetrics implements MeterBinder, AutoCloseable {
     static final String VERSION_METRIC_NAME = "version";
     static final String START_TIME_METRIC_NAME = "start-time-ms";
     static final Duration DEFAULT_REFRESH_INTERVAL = Duration.ofSeconds(60);
+    static final String KAFKA_VERSION_TAG_NAME = "kafka-version";
+    static final String CLIENT_ID_TAG_NAME = "client-id";
+    static final String DEFAULT_VALUE = "unknown";
 
     private final Supplier<Map<MetricName, ? extends Metric>> metricsSupplier;
     private final Iterable<Tag> extraTags;
     private final Duration refreshInterval;
     private final ScheduledExecutorService scheduler = Executors.newSingleThreadScheduledExecutor();
+    private Iterable<Tag> commonTags;
 
     /**
      * Keeps track of current set of metrics.
      */
     private volatile Set<MetricName> currentMeters = new HashSet<>();
 
-    private String kafkaVersion = "unknown";
+    private String kafkaVersion = DEFAULT_VALUE;
+    private String clientId = DEFAULT_VALUE;
 
     KafkaMetrics(Supplier<Map<MetricName, ? extends Metric>> metricsSupplier) {
         this(metricsSupplier, emptyList());
@@ -87,11 +88,27 @@ class KafkaMetrics implements MeterBinder, AutoCloseable {
     }
 
     @Override public void bindTo(MeterRegistry registry) {
+        commonTags = getCommonTags(registry);
+        prepareToBindMetrics(registry);
+        checkAndBindMetrics(registry);
+        scheduler.scheduleAtFixedRate(() -> checkAndBindMetrics(registry), getRefreshIntervalInMillis(), getRefreshIntervalInMillis(), TimeUnit.MILLISECONDS);
+    }
+
+    private Iterable<Tag> getCommonTags(MeterRegistry registry) {
+        // FIXME hack until we have proper API to retrieve common tags
+        Meter.Id dummyId = Meter.builder("delete.this", Meter.Type.OTHER, Collections.emptyList()).register(registry).getId();
+        registry.remove(dummyId);
+        return dummyId.getTags();
+    }
+
+    /** Define common tags and meters before binding metrics */
+    void prepareToBindMetrics(MeterRegistry registry) {
         Map<MetricName, ? extends Metric> metrics = metricsSupplier.get();
         // Collect static metrics and tags
         Metric startTime = null;
         for (Map.Entry<MetricName, ? extends Metric> entry : metrics.entrySet()) {
             MetricName name = entry.getKey();
+            if (clientId.equals(DEFAULT_VALUE) && name.tags().get(CLIENT_ID_TAG_NAME) != null) clientId = name.tags().get(CLIENT_ID_TAG_NAME);
             if (METRIC_GROUP_APP_INFO.equals(name.group()))
                 if (VERSION_METRIC_NAME.equals(name.name()))
                     kafkaVersion = (String) entry.getValue().metricValue();
@@ -99,8 +116,6 @@ class KafkaMetrics implements MeterBinder, AutoCloseable {
                     startTime = entry.getValue();
         }
         if (startTime != null) bindMeter(registry, startTime, meterName(startTime), meterTags(startTime));
-        // Collect dynamic metrics
-        scheduler.scheduleAtFixedRate(() -> checkAndBindMetrics(registry), 0, getRefreshIntervalInMillis(), TimeUnit.MILLISECONDS);
     }
 
     private long getRefreshIntervalInMillis() {
@@ -133,6 +148,8 @@ class KafkaMetrics implements MeterBinder, AutoCloseable {
                 boolean hasLessTags = false;
                 for (Meter other : registry.find(meterName).meters()) {
                     List<Tag> tags = other.getId().getTags();
+                    // Only consider meters from the same client before filtering
+                    if (differentClient(tags)) break;
                     if (tags.size() < meterTags.size()) registry.remove(other);
                     // Check if already exists
                     else if (tags.size() == meterTags.size())
@@ -144,6 +161,14 @@ class KafkaMetrics implements MeterBinder, AutoCloseable {
                 bindMeter(registry, metric, meterName, meterTags);
             });
         }
+    }
+
+    private boolean differentClient(List<Tag> tags) {
+        boolean anotherClient = false;
+        for (Tag tag : tags)
+            if (tag.getKey().equals(CLIENT_ID_TAG_NAME))
+                if (!clientId.equals(tag.getValue())) anotherClient = true;
+        return anotherClient;
     }
 
     private void bindMeter(MeterRegistry registry, Metric metric, String name, Iterable<Tag> tags) {
@@ -172,8 +197,9 @@ class KafkaMetrics implements MeterBinder, AutoCloseable {
     private List<Tag> meterTags(Metric metric) {
         List<Tag> tags = new ArrayList<>();
         metric.metricName().tags().forEach((key, value) -> tags.add(Tag.of(key, value)));
-        tags.add(Tag.of("kafka-version", kafkaVersion));
+        tags.add(Tag.of(KAFKA_VERSION_TAG_NAME, kafkaVersion));
         extraTags.forEach(tags::add);
+        commonTags.forEach(tags::add);
         return tags;
     }
 

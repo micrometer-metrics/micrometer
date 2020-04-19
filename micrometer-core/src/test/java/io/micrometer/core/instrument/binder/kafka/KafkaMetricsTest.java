@@ -15,14 +15,11 @@
  */
 package io.micrometer.core.instrument.binder.kafka;
 
+import io.micrometer.core.Issue;
 import io.micrometer.core.instrument.Meter;
 import io.micrometer.core.instrument.MeterRegistry;
+import io.micrometer.core.instrument.Tag;
 import io.micrometer.core.instrument.simple.SimpleMeterRegistry;
-import java.util.Collections;
-import java.util.LinkedHashMap;
-import java.util.Map;
-import java.util.concurrent.atomic.AtomicReference;
-import java.util.function.Supplier;
 import org.apache.kafka.common.Metric;
 import org.apache.kafka.common.MetricName;
 import org.apache.kafka.common.metrics.KafkaMetric;
@@ -31,6 +28,12 @@ import org.apache.kafka.common.metrics.stats.Value;
 import org.apache.kafka.common.utils.Time;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Test;
+
+import java.util.Collections;
+import java.util.LinkedHashMap;
+import java.util.Map;
+import java.util.concurrent.atomic.AtomicReference;
+import java.util.function.Supplier;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -54,7 +57,7 @@ class KafkaMetricsTest {
         kafkaMetrics = new KafkaMetrics(supplier);
         MeterRegistry registry = new SimpleMeterRegistry();
         //When
-        kafkaMetrics.checkAndBindMetrics(registry);
+        kafkaMetrics.bindTo(registry);
         //Then
         assertThat(registry.getMeters()).hasSize(1);
         //When
@@ -75,7 +78,7 @@ class KafkaMetricsTest {
         kafkaMetrics = new KafkaMetrics(supplier);
         MeterRegistry registry = new SimpleMeterRegistry();
         //When
-        kafkaMetrics.checkAndBindMetrics(registry);
+        kafkaMetrics.bindTo(registry);
         //Then
         assertThat(registry.getMeters()).hasSize(1);
         //Given
@@ -109,7 +112,7 @@ class KafkaMetricsTest {
         kafkaMetrics = new KafkaMetrics(supplier);
         MeterRegistry registry = new SimpleMeterRegistry();
         //When
-        kafkaMetrics.checkAndBindMetrics(registry);
+        kafkaMetrics.bindTo(registry);
         //Then
         assertThat(registry.getMeters()).hasSize(1);
         //When
@@ -129,7 +132,7 @@ class KafkaMetricsTest {
         kafkaMetrics = new KafkaMetrics(supplier);
         MeterRegistry registry = new SimpleMeterRegistry();
         //When
-        kafkaMetrics.checkAndBindMetrics(registry);
+        kafkaMetrics.bindTo(registry);
         //Then
         assertThat(registry.getMeters()).hasSize(1);
         assertThat(registry.getMeters().get(0).getId().getTags()).hasSize(1); //only version
@@ -159,7 +162,7 @@ class KafkaMetricsTest {
         kafkaMetrics = new KafkaMetrics(supplier);
         MeterRegistry registry = new SimpleMeterRegistry();
         //When
-        kafkaMetrics.checkAndBindMetrics(registry);
+        kafkaMetrics.bindTo(registry);
         //Then
         assertThat(registry.getMeters()).hasSize(1);
         Meter meter = registry.getMeters().get(0);
@@ -186,10 +189,59 @@ class KafkaMetricsTest {
         kafkaMetrics = new KafkaMetrics(supplier);
         MeterRegistry registry = new SimpleMeterRegistry();
         //When
-        kafkaMetrics.checkAndBindMetrics(registry);
+        kafkaMetrics.bindTo(registry);
         //Then
         assertThat(registry.getMeters()).hasSize(2);
         Meter meter = registry.getMeters().get(0);
         assertThat(meter.getId().getTags()).hasSize(2); // version + key0
+    }
+
+    @Issue("#1968")
+    @Test void shouldBindMetersWithDifferentClientIds() {
+        //Given
+        Supplier<Map<MetricName, ? extends Metric>> supplier = () -> {
+            Map<String, String> firstTags = new LinkedHashMap<>();
+            firstTags.put("key0", "value0");
+            firstTags.put("client-id", "client0");
+            MetricName firstName = new MetricName("a", "b", "c", firstTags);
+            KafkaMetric firstMetric = new KafkaMetric(this, firstName, new Value(), new MetricConfig(), Time.SYSTEM);
+
+            Map<MetricName, KafkaMetric> metrics = new LinkedHashMap<>();
+            metrics.put(firstName, firstMetric);
+            return metrics;
+        };
+        kafkaMetrics = new KafkaMetrics(supplier);
+        MeterRegistry registry = new SimpleMeterRegistry();
+        registry.counter("kafka.b.a", "client-id", "client1", "key0", "value0");
+        //When
+        kafkaMetrics.bindTo(registry);
+        //Then
+        assertThat(registry.getMeters()).hasSize(2);
+    }
+
+    @Issue("#1968")
+    @Test void shouldRemoveOlderMeterWithLessTagsWhenCommonTagsConfigured() {
+        //Given
+        Map<String, String> tags = new LinkedHashMap<>();
+        Supplier<Map<MetricName, ? extends Metric>> supplier = () -> {
+            MetricName metricName = new MetricName("a", "b", "c", tags);
+            KafkaMetric metric = new KafkaMetric(this, metricName, new Value(), new MetricConfig(), Time.SYSTEM);
+            return Collections.singletonMap(metricName, metric);
+        };
+        kafkaMetrics = new KafkaMetrics(supplier);
+        MeterRegistry registry = new SimpleMeterRegistry();
+        registry.config().commonTags("common", "value");
+        //When
+        kafkaMetrics.bindTo(registry);
+        //Then
+        assertThat(registry.getMeters()).hasSize(1);
+        assertThat(registry.getMeters().get(0).getId().getTags()).containsExactlyInAnyOrder(Tag.of("kafka-version", "unknown"), Tag.of("common", "value")); //only version
+        //Given
+        tags.put("key0", "value0");
+        //When
+        kafkaMetrics.checkAndBindMetrics(registry);
+        //Then
+        assertThat(registry.getMeters()).hasSize(1);
+        assertThat(registry.getMeters().get(0).getId().getTags()).containsExactlyInAnyOrder(Tag.of("kafka-version", "unknown"), Tag.of("key0", "value0"), Tag.of("common", "value"));
     }
 }
