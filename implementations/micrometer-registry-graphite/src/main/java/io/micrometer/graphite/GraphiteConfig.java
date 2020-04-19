@@ -49,13 +49,13 @@ public interface GraphiteConfig extends DropwizardConfig {
 
     /**
      * @return Whether Graphite tags should be used, as opposed to a hierarchical naming convention.
-     * Defaults to true if a value is present for {@link GraphiteConfig#tagsAsPrefix}.
+     * Defaults to true if no values are present for {@link GraphiteConfig#tagsAsPrefix}.
      * @see <a href="https://graphite.readthedocs.io/en/latest/tags.html">Graphite Tag Support</a>
      * @since 1.4.0
      */
     default boolean graphiteTagsEnabled() {
         String v = get(prefix() + ".graphiteTagsEnabled");
-        return v == null ? tagsAsPrefix().length > 0 : Boolean.parseBoolean(v);
+        return v == null ? tagsAsPrefix().length == 0 : Boolean.parseBoolean(v);
     }
 
     /**
