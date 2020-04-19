@@ -23,6 +23,10 @@ import java.lang.annotation.*;
  * {@link #recordFailuresOnly()} to {@code true} would instruct the corresponding aspect
  * to only record the failed attempts.
  *
+ * <p>When the annotated method returns a {@link java.util.concurrent.CompletionStage} or any of its subclasses, the counters will be incremented
+ * only when the {@link java.util.concurrent.CompletionStage} is completed. If completed exceptionally a failure is recorded, otherwise if
+ * {@link Counted#recordFailuresOnly()} is set to {@code false}, a success is recorded.
+ *
  * @author Ali Dehghani
  * @since 1.2.0
  * @see io.micrometer.core.aop.CountedAspect
