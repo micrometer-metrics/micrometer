@@ -51,12 +51,12 @@ public class DatadogStatsdLineBuilder extends FlavorStatsdLineBuilder {
         NamingConvention next = config.namingConvention();
         if (this.namingConvention != next) {
             this.namingConvention = next;
-            this.name = next.name(sanitizeColons(id.getName()), id.getType(), id.getBaseUnit()) + ":";
+            this.name = next.name(sanitizeName(id.getName()), id.getType(), id.getBaseUnit()) + ":";
             synchronized (tagsLock) {
                 this.tags = HashTreePMap.empty();
                 this.conventionTags = id.getTagsAsIterable().iterator().hasNext() ?
                         id.getConventionTags(this.namingConvention).stream()
-                                .map(t -> sanitizeColons(t.getKey()) + ":" + sanitizeTagValue(t.getValue()))
+                                .map(t -> sanitizeName(t.getKey()) + ":" + sanitizeTagValue(t.getValue()))
                                 .collect(Collectors.joining(","))
                         : null;
             }
@@ -64,14 +64,14 @@ public class DatadogStatsdLineBuilder extends FlavorStatsdLineBuilder {
         }
     }
 
-    private String sanitizeColons(String value) {
+    private String sanitizeName(String value) {
+        if (!Character.isLetter(value.charAt(0))) {
+            value = "m." + value;
+        }
         return value.replace(':', '_');
     }
 
     private String sanitizeTagValue(String value) {
-        if (!Character.isLetter(value.charAt(0))) {
-            value = "m." + value;
-        }
         return (value.charAt(value.length() - 1) == ':') ? value.substring(0, value.length() - 1) + '_' : value;
     }
 
