@@ -31,6 +31,7 @@ import org.aspectj.lang.reflect.MethodSignature;
 
 import java.lang.reflect.Method;
 import java.util.Optional;
+import java.util.concurrent.CompletionStage;
 import java.util.function.Function;
 
 /**
@@ -47,6 +48,7 @@ import java.util.function.Function;
 @Incubating(since = "1.0.0")
 public class TimedAspect {
     public static final String DEFAULT_METRIC_NAME = "method.timed";
+    public static final String DEFAULT_EXCEPTION_TAG_VALUE = "none";
 
     /**
      * Tag key for an exception.
@@ -66,7 +68,7 @@ public class TimedAspect {
     public TimedAspect() {
         this(Metrics.globalRegistry);
     }
-    
+
     public TimedAspect(MeterRegistry registry) {
         this(registry, pjp ->
                 Tags.of("class", pjp.getStaticPart().getSignature().getDeclaringTypeName(),
@@ -89,51 +91,92 @@ public class TimedAspect {
         }
 
         final String metricName = timed.value().isEmpty() ? DEFAULT_METRIC_NAME : timed.value();
+        final boolean stopWhenCompleted = CompletionStage.class.isAssignableFrom(method.getReturnType());
 
         if (!timed.longTask()) {
-            return processWithTimer(pjp, timed, metricName);
+            return processWithTimer(pjp, timed, metricName, stopWhenCompleted);
         } else {
-            return processWithLongTaskTimer(pjp, timed, metricName);
+            return processWithLongTaskTimer(pjp, timed, metricName, stopWhenCompleted);
         }
     }
 
-    private Object processWithTimer(ProceedingJoinPoint pjp, Timed timed, String metricName) throws Throwable {
-        Timer.Sample sample = Timer.start(registry);
-        String exceptionClass = "none";
+    private Object processWithTimer(ProceedingJoinPoint pjp, Timed timed, String metricName, boolean stopWhenCompleted) throws Throwable {
 
-        try {
-            return pjp.proceed();
-        } catch (Exception ex) {
-            exceptionClass = ex.getClass().getSimpleName();
-            throw ex;
-        } finally {
+        Timer.Sample sample = Timer.start(registry);
+
+        if (stopWhenCompleted) {
             try {
-                sample.stop(Timer.builder(metricName)
-                                    .description(timed.description().isEmpty() ? null : timed.description())
-                                    .tags(timed.extraTags())
-                                    .tags(EXCEPTION_TAG, exceptionClass)
-                                    .tags(tagsBasedOnJoinPoint.apply(pjp))
-                                    .publishPercentileHistogram(timed.histogram())
-                                    .publishPercentiles(timed.percentiles().length == 0 ? null : timed.percentiles())
-                                    .register(registry));
-            } catch (Exception e) {
-                // ignoring on purpose
+                return ((CompletionStage<?>) pjp.proceed()).whenComplete((result, throwable) ->
+                        record(pjp, timed, metricName, sample, getExceptionTag(throwable)));
+            } catch (Exception ex) {
+                record(pjp, timed, metricName, sample, ex.getClass().getSimpleName());
+                throw ex;
             }
         }
+
+        try {
+            Object result = pjp.proceed();
+            record(pjp, timed, metricName, sample, DEFAULT_EXCEPTION_TAG_VALUE);
+            return result;
+        } catch (Exception ex) {
+            record(pjp, timed, metricName, sample, ex.getClass().getSimpleName());
+            throw ex;
+        }
     }
 
-    private Object processWithLongTaskTimer(ProceedingJoinPoint pjp, Timed timed, String metricName) throws Throwable {
+    private void record(ProceedingJoinPoint pjp, Timed timed, String metricName, Timer.Sample sample, String exceptionClass) {
+        try {
+            sample.stop(Timer.builder(metricName)
+                    .description(timed.description().isEmpty() ? null : timed.description())
+                    .tags(timed.extraTags())
+                    .tags(EXCEPTION_TAG, exceptionClass)
+                    .tags(tagsBasedOnJoinPoint.apply(pjp))
+                    .publishPercentileHistogram(timed.histogram())
+                    .publishPercentiles(timed.percentiles().length == 0 ? null : timed.percentiles())
+                    .register(registry));
+        } catch (Exception e) {
+            // ignoring on purpose
+        }
+    }
+
+    private String getExceptionTag(Throwable throwable) {
+
+        if (throwable == null) {
+            return DEFAULT_EXCEPTION_TAG_VALUE;
+        }
+
+        if (throwable.getCause() == null) {
+            return throwable.getClass().getSimpleName();
+        }
+
+        return throwable.getCause().getClass().getSimpleName();
+    }
+
+    private Object processWithLongTaskTimer(ProceedingJoinPoint pjp, Timed timed, String metricName, boolean stopWhenCompleted) throws Throwable {
 
         Optional<LongTaskTimer.Sample> sample = buildLongTaskTimer(pjp, timed, metricName).map(LongTaskTimer::start);
 
+        if (stopWhenCompleted) {
+            try {
+                return ((CompletionStage<?>) pjp.proceed()).whenComplete((result, throwable) -> sample.ifPresent(this::stopTimer));
+            } catch (Exception ex) {
+                sample.ifPresent(this::stopTimer);
+                throw ex;
+            }
+        }
+
         try {
             return pjp.proceed();
         } finally {
-            try {
-                sample.ifPresent(LongTaskTimer.Sample::stop);
-            } catch (Exception e) {
-                // ignoring on purpose
-            }
+            sample.ifPresent(this::stopTimer);
+        }
+    }
+
+    private void stopTimer(LongTaskTimer.Sample sample) {
+        try {
+            sample.stop();
+        } catch (Exception e) {
+            // ignoring on purpose
         }
     }
 
