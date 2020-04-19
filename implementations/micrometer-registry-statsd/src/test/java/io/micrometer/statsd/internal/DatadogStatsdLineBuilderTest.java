@@ -42,11 +42,22 @@ class DatadogStatsdLineBuilderTest {
 
     @Issue("#739")
     @Test
-    void sanitizeColons() {
-        Counter c = registry.counter("my:counter", "my:tag", "my:value");
+    void sanitizeColonsInTagKeys() {
+        Counter c = registry.counter("my:counter", "my:tag", "my_value");
         DatadogStatsdLineBuilder lb = new DatadogStatsdLineBuilder(c.getId(), registry.config());
 
         registry.config().namingConvention(NamingConvention.dot);
         assertThat(lb.line("1", Statistic.COUNT, "c")).isEqualTo("my_counter:1|c|#statistic:count,my_tag:my_value");
+    }
+
+    @Issue("#1998")
+    @Test
+    void allowColonsInTagValues() {
+        Counter c = registry.counter("my:counter", "my:tag", "my:value", "other_tag", "some:value:", "123.another.tag", "123:value");
+        DatadogStatsdLineBuilder lb = new DatadogStatsdLineBuilder(c.getId(), registry.config());
+
+        registry.config().namingConvention(NamingConvention.dot);
+        assertThat(lb.line("1", Statistic.COUNT, "c"))
+                .isEqualTo("my_counter:1|c|#statistic:count,m.123.another.tag:123:value,my_tag:my:value,other_tag:some:value_");
     }
 }
