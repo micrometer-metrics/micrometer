@@ -53,11 +53,11 @@ class DatadogStatsdLineBuilderTest {
     @Issue("#1998")
     @Test
     void allowColonsInTagValues() {
-        Counter c = registry.counter("my:counter", "my:tag", "my:value", "other_tag", "some:value:", "yet.another.tag", "123:value");
+        Counter c = registry.counter("my:counter", "my:tag", "my:value", "other_tag", "some:value:", "123.another.tag", "123:value");
         DatadogStatsdLineBuilder lb = new DatadogStatsdLineBuilder(c.getId(), registry.config());
 
         registry.config().namingConvention(NamingConvention.dot);
         assertThat(lb.line("1", Statistic.COUNT, "c"))
-                .isEqualTo("my_counter:1|c|#statistic:count,my_tag:my:value,other_tag:some:value_,yet.another.tag:m.123:value");
+                .isEqualTo("my_counter:1|c|#statistic:count,m.123.another.tag:123:value,my_tag:my:value,other_tag:some:value_");
     }
 }
