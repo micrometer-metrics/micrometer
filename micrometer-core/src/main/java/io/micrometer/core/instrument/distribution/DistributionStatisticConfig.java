@@ -154,7 +154,7 @@ public class DistributionStatisticConfig implements Mergeable<DistributionStatis
 
     /**
      * @deprecated Use {@link #getMinimumExpectedValueAsDouble}. If you use this method, your code
-     * will not be compatible with code that uses Micrometer 1.4.x.
+     * will not be compatible with code that uses Micrometer 1.4.x and later.
      */
     @Deprecated
     @Nullable
@@ -175,7 +175,7 @@ public class DistributionStatisticConfig implements Mergeable<DistributionStatis
 
     /**
      * @deprecated Use {@link #getMaximumExpectedValueAsDouble}. If you use this method, your code
-     * will not be compatible with code that uses Micrometer 1.3.x.
+     * will not be compatible with code that uses Micrometer 1.4.x and later.
      */
     @Deprecated
     @Nullable
@@ -222,7 +222,7 @@ public class DistributionStatisticConfig implements Mergeable<DistributionStatis
 
     /**
      * @deprecated Use {@link #getServiceLevelObjectiveBoundaries()}. If you use this method, your
-     * code will not be compatible with code that uses Micrometer 1.4.x.
+     * code will not be compatible with code that uses Micrometer 1.4.x and later.
      */
     @Deprecated
     @Nullable
