@@ -108,10 +108,9 @@ public class NewRelicInsightsAgentClientProvider implements NewRelicClientProvid
     @Override
     public Map<String, Object> writeLongTaskTimer(LongTaskTimer timer) {
         Map<String, Object> attributes = new HashMap<>();
-        TimeUnit timeUnit = TimeUnit.valueOf(timer.getId().getBaseUnit().toUpperCase());
-        addAttribute(ACTIVE_TASKS, timer.activeTasks(), attributes);          	
-        addAttribute(DURATION, timer.duration(timeUnit), attributes);
-        addAttribute(TIME_UNIT, timeUnit.name().toLowerCase(), attributes);
+        addAttribute(ACTIVE_TASKS, timer.activeTasks(), attributes);
+        addAttribute(DURATION, timer.duration(timer.baseTimeUnit()), attributes);
+        addAttribute(TIME_UNIT, timer.baseTimeUnit().name().toLowerCase(), attributes);
         //process meter's name, type and tags
         addMeterAsAttributes(timer.getId(), attributes);
         return attributes;
