@@ -97,8 +97,8 @@ abstract class AbstractTimeWindowHistogram<T, U> implements Histogram {
             }
         }
 
-        final Long minimumExpectedValue = distributionStatisticConfig.getMinimumExpectedValue();
-        final Long maximumExpectedValue = distributionStatisticConfig.getMaximumExpectedValue();
+        final Double minimumExpectedValue = distributionStatisticConfig.getMinimumExpectedValueAsDouble();
+        final Double maximumExpectedValue = distributionStatisticConfig.getMaximumExpectedValueAsDouble();
         if (minimumExpectedValue == null || minimumExpectedValue <= 0) {
             rejectHistogramConfig("minimumExpectedValue (" + minimumExpectedValue + ") must be greater than 0.");
         }
@@ -108,8 +108,8 @@ abstract class AbstractTimeWindowHistogram<T, U> implements Histogram {
                     minimumExpectedValue + ").");
         }
 
-        if (distributionStatisticConfig.getSlaBoundaries() != null) {
-            for (long sla : distributionStatisticConfig.getSlaBoundaries()) {
+        if (distributionStatisticConfig.getServiceLevelObjectiveBoundaries() != null) {
+            for (double sla : distributionStatisticConfig.getServiceLevelObjectiveBoundaries()) {
                 if (sla <= 0) {
                     rejectHistogramConfig("slaBoundaries must contain only the values greater than 0. " +
                             "Found " + sla);

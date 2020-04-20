@@ -113,7 +113,7 @@ class CompositeTimer extends AbstractCompositeMeter<Timer> implements Timer {
         return new NoopTimer(getId());
     }
 
-    @SuppressWarnings("ConstantConditions")
+    @SuppressWarnings({"ConstantConditions", "deprecation"})
     @Override
     Timer registerNewMeter(MeterRegistry registry) {
         Timer.Builder builder = Timer.builder(getId().getName())

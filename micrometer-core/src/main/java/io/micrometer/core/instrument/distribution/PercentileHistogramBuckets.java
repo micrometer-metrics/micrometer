@@ -75,6 +75,7 @@ public class PercentileHistogramBuckets {
      *                                    and maximum expected values..
      * @return The set of histogram buckets for use in computing aggregable percentiles.
      */
+    @SuppressWarnings("deprecation")
     public static NavigableSet<Long> buckets(DistributionStatisticConfig distributionStatisticConfig) {
         return PERCENTILE_BUCKETS.subSet(distributionStatisticConfig.getMinimumExpectedValue(), true,
                 distributionStatisticConfig.getMaximumExpectedValue(), true);

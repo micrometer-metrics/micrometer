@@ -211,14 +211,14 @@ public class PropertiesMeterFilterTest {
     public void configureWhenHasSlaShouldSetSlaToValue() {
         slas("spring.boot", "1", "2", "3");
         assertThat(filter.configure(createSpringBootMeter(), DistributionStatisticConfig.DEFAULT)
-                .getSlaBoundaries()).containsExactly(1000000, 2000000, 3000000);
+                .getServiceLevelObjectiveBoundaries()).containsExactly(1000000, 2000000, 3000000);
     }
 
     @Test
     public void configureWhenHasHigherSlaShouldSetPercentilesToValue() {
         slas("spring", "1", "2", "3");
         assertThat(filter.configure(createSpringBootMeter(), DistributionStatisticConfig.DEFAULT)
-                .getSlaBoundaries()).containsExactly(1000000, 2000000, 3000000);
+                .getServiceLevelObjectiveBoundaries()).containsExactly(1000000, 2000000, 3000000);
     }
 
     @Test
@@ -226,14 +226,14 @@ public class PropertiesMeterFilterTest {
         slas("spring", "1", "2", "3");
         slas("spring.boot", "4", "5", "6");
         assertThat(filter.configure(createSpringBootMeter(), DistributionStatisticConfig.DEFAULT)
-                .getSlaBoundaries()).containsExactly(4000000, 5000000, 6000000);
+                .getServiceLevelObjectiveBoundaries()).containsExactly(4000000, 5000000, 6000000);
     }
 
     @Test
     public void configureWhenHasMinimumExpectedValueShouldSetMinimumExpectedToValue() {
         setMinimumExpectedValue("spring.boot", 10);
         assertThat(filter.configure(createSpringBootMeter(),
-                DistributionStatisticConfig.DEFAULT).getMinimumExpectedValue())
+                DistributionStatisticConfig.DEFAULT).getMinimumExpectedValueAsDouble())
                         .isEqualTo(Duration.ofMillis(10).toNanos());
     }
 
@@ -241,7 +241,7 @@ public class PropertiesMeterFilterTest {
     public void configureWhenHasHigherMinimumExpectedValueShouldSetMinimumExpectedValueToValue() {
         setMinimumExpectedValue("spring", 10);
         assertThat(filter.configure(createSpringBootMeter(),
-                DistributionStatisticConfig.DEFAULT).getMinimumExpectedValue())
+                DistributionStatisticConfig.DEFAULT).getMinimumExpectedValueAsDouble())
                         .isEqualTo(Duration.ofMillis(10).toNanos());
     }
 
@@ -250,7 +250,7 @@ public class PropertiesMeterFilterTest {
         setMinimumExpectedValue("spring", 10);
         setMinimumExpectedValue("spring.boot", 50);
         assertThat(filter.configure(createSpringBootMeter(),
-                DistributionStatisticConfig.DEFAULT).getMinimumExpectedValue())
+                DistributionStatisticConfig.DEFAULT).getMinimumExpectedValueAsDouble())
                         .isEqualTo(Duration.ofMillis(50).toNanos());
     }
 
@@ -258,7 +258,7 @@ public class PropertiesMeterFilterTest {
     public void configureWhenHasMaximumExpectedValueShouldSetMaximumExpectedToValue() {
         setMaximumExpectedValue("spring.boot", 5000);
         assertThat(filter.configure(createSpringBootMeter(),
-                DistributionStatisticConfig.DEFAULT).getMaximumExpectedValue())
+                DistributionStatisticConfig.DEFAULT).getMaximumExpectedValueAsDouble())
                         .isEqualTo(Duration.ofMillis(5000).toNanos());
     }
 
@@ -266,7 +266,7 @@ public class PropertiesMeterFilterTest {
     public void configureWhenHasHigherMaximumExpectedValueShouldSetMaximumExpectedValueToValue() {
         setMaximumExpectedValue("spring", 5000);
         assertThat(filter.configure(createSpringBootMeter(),
-                DistributionStatisticConfig.DEFAULT).getMaximumExpectedValue())
+                DistributionStatisticConfig.DEFAULT).getMaximumExpectedValueAsDouble())
                         .isEqualTo(Duration.ofMillis(5000).toNanos());
     }
 
@@ -275,7 +275,7 @@ public class PropertiesMeterFilterTest {
         setMaximumExpectedValue("spring", 5000);
         setMaximumExpectedValue("spring.boot", 10000);
         assertThat(filter.configure(createSpringBootMeter(),
-                DistributionStatisticConfig.DEFAULT).getMaximumExpectedValue())
+                DistributionStatisticConfig.DEFAULT).getMaximumExpectedValueAsDouble())
                         .isEqualTo(Duration.ofMillis(10000).toNanos());
     }
 
