@@ -15,31 +15,17 @@
  */
 package io.micrometer.newrelic;
 
+import com.newrelic.api.agent.Agent;
+import com.newrelic.api.agent.NewRelic;
+import io.micrometer.core.instrument.*;
+import io.micrometer.core.instrument.config.NamingConvention;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.TimeUnit;
-
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
-import com.newrelic.api.agent.Agent;
-import com.newrelic.api.agent.NewRelic;
-
-import io.micrometer.core.instrument.Counter;
-import io.micrometer.core.instrument.DistributionSummary;
-import io.micrometer.core.instrument.FunctionCounter;
-import io.micrometer.core.instrument.FunctionTimer;
-import io.micrometer.core.instrument.Gauge;
-import io.micrometer.core.instrument.LongTaskTimer;
-import io.micrometer.core.instrument.Measurement;
-import io.micrometer.core.instrument.Meter;
-import io.micrometer.core.instrument.Tag;
-import io.micrometer.core.instrument.TimeGauge;
-import io.micrometer.core.instrument.Timer;
-import io.micrometer.core.instrument.config.MissingRequiredConfigurationException;
-import io.micrometer.core.instrument.config.NamingConvention;
-import io.micrometer.core.instrument.util.StringUtils;
 
 /**
  * Publishes metrics to New Relic Insights via Java Agent API.
@@ -73,11 +59,7 @@ public class NewRelicInsightsAgentClientProvider implements NewRelicClientProvid
 
     // VisibleForTesting
     NewRelicInsightsAgentClientProvider(NewRelicConfig config, Agent newRelicAgent, NamingConvention namingConvention) {
-
-        if (!config.meterNameEventTypeEnabled() && StringUtils.isEmpty(config.eventType())) {
-            throw new MissingRequiredConfigurationException("eventType must be set to report metrics to New Relic");
-        }
-
+        config.requireValid();
         this.config = config;
         this.newRelicAgent = newRelicAgent;
         this.namingConvention = namingConvention;

@@ -46,6 +46,7 @@ public class SimpleMeterRegistry extends MeterRegistry {
     public SimpleMeterRegistry(SimpleConfig config, Clock clock) {
         super(clock);
         this.config = config;
+        config.requireValid();
     }
 
     @Override

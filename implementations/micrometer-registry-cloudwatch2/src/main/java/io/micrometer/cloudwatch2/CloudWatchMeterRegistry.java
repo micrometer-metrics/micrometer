@@ -15,13 +15,15 @@
  */
 package io.micrometer.cloudwatch2;
 
+import io.micrometer.core.instrument.Timer;
 import io.micrometer.core.instrument.*;
-import io.micrometer.core.instrument.config.MissingRequiredConfigurationException;
 import io.micrometer.core.instrument.step.StepMeterRegistry;
 import io.micrometer.core.instrument.util.NamedThreadFactory;
 import io.micrometer.core.instrument.util.StringUtils;
 import io.micrometer.core.lang.Nullable;
 import io.micrometer.core.util.internal.logging.WarnThenDebugLogger;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import software.amazon.awssdk.core.exception.AbortedException;
 import software.amazon.awssdk.services.cloudwatch.CloudWatchAsyncClient;
 import software.amazon.awssdk.services.cloudwatch.model.Dimension;
@@ -29,15 +31,8 @@ import software.amazon.awssdk.services.cloudwatch.model.MetricDatum;
 import software.amazon.awssdk.services.cloudwatch.model.PutMetricDataRequest;
 import software.amazon.awssdk.services.cloudwatch.model.StandardUnit;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
 import java.time.Instant;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Objects;
+import java.util.*;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ThreadFactory;
 import java.util.concurrent.TimeUnit;
@@ -82,13 +77,9 @@ public class CloudWatchMeterRegistry extends StepMeterRegistry {
     public CloudWatchMeterRegistry(CloudWatchConfig config, Clock clock,
                                    CloudWatchAsyncClient cloudWatchAsyncClient, ThreadFactory threadFactory) {
         super(config, clock);
-
-        if (config.namespace() == null) {
-            throw new MissingRequiredConfigurationException("namespace must be set to report metrics to CloudWatch");
-        }
-
         this.cloudWatchAsyncClient = cloudWatchAsyncClient;
         this.config = config;
+        
         config().namingConvention(new CloudWatchNamingConvention());
         start(threadFactory);
     }

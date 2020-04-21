@@ -17,6 +17,7 @@ package io.micrometer.elastic;
 
 import io.micrometer.core.instrument.Meter;
 import io.micrometer.core.instrument.config.NamingConvention;
+import io.micrometer.core.lang.Nullable;
 
 import java.util.regex.Pattern;
 
@@ -41,7 +42,7 @@ public class ElasticNamingConvention implements NamingConvention {
     }
 
     @Override
-    public String name(String name, Meter.Type type, String baseUnit) {
+    public String name(String name, Meter.Type type, @Nullable String baseUnit) {
         return delegate.name(name, type, baseUnit);
     }
 

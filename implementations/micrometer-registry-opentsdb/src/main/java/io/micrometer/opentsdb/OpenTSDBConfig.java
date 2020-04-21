@@ -15,8 +15,12 @@
  */
 package io.micrometer.opentsdb;
 
+import io.micrometer.core.instrument.config.validate.Validated;
 import io.micrometer.core.instrument.push.PushRegistryConfig;
 import io.micrometer.core.lang.Nullable;
+
+import static io.micrometer.core.instrument.config.MeterRegistryConfigValidator.*;
+import static io.micrometer.core.instrument.config.validate.PropertyValidator.*;
 
 /**
  * Configuration for {@link OpenTSDBMeterRegistry}.
@@ -45,8 +49,7 @@ public interface OpenTSDBConfig extends PushRegistryConfig {
      * @return uri
      */
     default String uri() {
-        String v = get(prefix() + ".uri");
-        return v == null ? "http://localhost:4242/api/put" : v;
+        return getUrlString(this, "uri").orElse("http://localhost:4242/api/put");
     }
 
     /**
@@ -55,7 +58,7 @@ public interface OpenTSDBConfig extends PushRegistryConfig {
      */
     @Nullable
     default String userName() {
-        return get(prefix() + ".userName");
+        return getSecret(this, "userName").orElse(null);
     }
 
     /**
@@ -64,7 +67,7 @@ public interface OpenTSDBConfig extends PushRegistryConfig {
      */
     @Nullable
     default String password() {
-        return get(prefix() + ".password");
+        return getSecret(this, "password").orElse(null);
     }
 
     /**
@@ -76,16 +79,15 @@ public interface OpenTSDBConfig extends PushRegistryConfig {
      */
     @Nullable
     default OpenTSDBFlavor flavor() {
-        String v = get(prefix() + ".flavor");
+        return getEnum(this, OpenTSDBFlavor.class, "flavor").orElse(null);
+    }
 
-        if (v == null)
-            return null;
-
-        for (OpenTSDBFlavor flavor : OpenTSDBFlavor.values()) {
-            if (flavor.name().equalsIgnoreCase(v))
-                return flavor;
-        }
-
-        throw new IllegalArgumentException("Unrecognized flavor '" + v + "' (check property " + prefix() + ".flavor)");
+    @Override
+    default Validated<?> validate() {
+        return checkAll(this,
+                c -> PushRegistryConfig.validate(c),
+                checkRequired("uri", OpenTSDBConfig::uri),
+                check("flavor", OpenTSDBConfig::flavor)
+        );
     }
 }

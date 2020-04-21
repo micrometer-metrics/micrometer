@@ -298,6 +298,4 @@ class ElasticMeterRegistryTest {
         };
         assertThat(registry.indexName()).isEqualTo("my-metrics");
     }
-
-
 }

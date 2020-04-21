@@ -16,8 +16,13 @@
 package io.micrometer.core.instrument.dropwizard;
 
 import io.micrometer.core.instrument.config.MeterRegistryConfig;
+import io.micrometer.core.instrument.config.validate.Validated;
 
 import java.time.Duration;
+
+import static io.micrometer.core.instrument.config.MeterRegistryConfigValidator.check;
+import static io.micrometer.core.instrument.config.MeterRegistryConfigValidator.checkAll;
+import static io.micrometer.core.instrument.config.validate.PropertyValidator.getDuration;
 
 /**
  * Base configuration for {@link DropwizardMeterRegistry}.
@@ -29,7 +34,17 @@ public interface DropwizardConfig extends MeterRegistryConfig {
      * @return The step size (reporting frequency, max decaying) to use. The default is 1 minute.
      */
     default Duration step() {
-        String v = get(prefix() + ".step");
-        return v == null ? Duration.ofMinutes(1) : Duration.parse(v);
+        return getDuration(this, "step").orElse(Duration.ofMinutes(1));
+    }
+
+    @Override
+    default Validated<?> validate() {
+        return validate(this);
+    }
+
+    static Validated<?> validate(DropwizardConfig config) {
+        return checkAll(config,
+                check("step", DropwizardConfig::step)
+        );
     }
 }
