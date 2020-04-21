@@ -15,6 +15,8 @@
  */
 package io.micrometer.core.instrument.config;
 
+import io.micrometer.core.instrument.config.validate.Validated;
+import io.micrometer.core.instrument.config.validate.ValidationException;
 import io.micrometer.core.lang.Nullable;
 
 public interface MeterRegistryConfig {
@@ -28,4 +30,12 @@ public interface MeterRegistryConfig {
      */
     @Nullable
     String get(String key);
+
+    default Validated<?> validate() {
+        return Validated.none();
+    }
+
+    default void requireValid() throws ValidationException {
+        validate().orThrow();
+    }
 }

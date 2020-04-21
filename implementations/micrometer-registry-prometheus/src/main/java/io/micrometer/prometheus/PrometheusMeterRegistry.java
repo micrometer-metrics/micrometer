@@ -57,9 +57,11 @@ public class PrometheusMeterRegistry extends MeterRegistry {
     public PrometheusMeterRegistry(PrometheusConfig config, CollectorRegistry registry, Clock clock) {
         super(clock);
         this.registry = registry;
+        this.prometheusConfig = config;
+
+        config.requireValid();
         config().namingConvention(new PrometheusNamingConvention());
         config().onMeterRemoved(this::onMeterRemoved);
-        this.prometheusConfig = config;
     }
 
     private static List<String> tagValues(Meter.Id id) {

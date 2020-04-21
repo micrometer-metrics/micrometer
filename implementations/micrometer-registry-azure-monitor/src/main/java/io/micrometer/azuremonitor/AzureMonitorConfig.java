@@ -15,8 +15,11 @@
  */
 package io.micrometer.azuremonitor;
 
-import io.micrometer.core.instrument.config.MissingRequiredConfigurationException;
+import io.micrometer.core.instrument.config.validate.Validated;
 import io.micrometer.core.instrument.step.StepRegistryConfig;
+
+import static io.micrometer.core.instrument.config.MeterRegistryConfigValidator.*;
+import static io.micrometer.core.instrument.config.validate.PropertyValidator.getSecret;
 
 /**
  * Configuration for {@link AzureMonitorMeterRegistry}.
@@ -37,9 +40,14 @@ public interface AzureMonitorConfig extends StepRegistryConfig {
      * @return Instrumentation Key
      */
     default String instrumentationKey() {
-        String v = get(prefix() + ".instrumentationKey");
-        if (v == null)
-            throw new MissingRequiredConfigurationException("instrumentationKey must be set to report metrics to Azure Monitor");
-        return v;
+        return getSecret(this, "instrumentationKey").required().get();
+    }
+
+    @Override
+    default Validated<?> validate() {
+        return checkAll(this,
+                c -> StepRegistryConfig.validate(c),
+                checkRequired("instrumentationKey", AzureMonitorConfig::instrumentationKey)
+        );
     }
 }

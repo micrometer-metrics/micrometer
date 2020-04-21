@@ -44,7 +44,8 @@ class KafkaClientMetricsIntegrationTest {
     @Container
     private KafkaContainer kafkaContainer = new KafkaContainer();
 
-    @Test void shouldManageProducerAndConsumerMetrics() {
+    @Test
+    void shouldManageProducerAndConsumerMetrics() {
         SimpleMeterRegistry registry = new SimpleMeterRegistry();
 
         assertThat(registry.getMeters()).hasSize(0);

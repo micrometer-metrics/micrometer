@@ -20,8 +20,11 @@ import com.wavefront.sdk.common.WavefrontSender;
 import com.wavefront.sdk.common.clients.WavefrontClient;
 import com.wavefront.sdk.entities.histograms.HistogramGranularity;
 import com.wavefront.sdk.entities.histograms.WavefrontHistogramImpl;
-import io.micrometer.core.instrument.*;
-import io.micrometer.core.instrument.config.MissingRequiredConfigurationException;
+import io.micrometer.core.instrument.Measurement;
+import io.micrometer.core.instrument.Meter;
+import io.micrometer.core.instrument.MockClock;
+import io.micrometer.core.instrument.Statistic;
+import io.micrometer.core.instrument.config.validate.ValidationException;
 import org.junit.jupiter.api.Test;
 
 import java.io.IOException;
@@ -169,18 +172,16 @@ class WavefrontMeterRegistryTest {
             }
         };
 
-        assertThatExceptionOfType(MissingRequiredConfigurationException.class)
-                .isThrownBy(() -> WavefrontMeterRegistry.builder(missingUriConfig).build())
-                .withMessage("A uri is required to publish metrics to Wavefront");
+        assertThatExceptionOfType(ValidationException.class)
+                .isThrownBy(() -> WavefrontMeterRegistry.builder(missingUriConfig).build());
     }
 
     @Test
     void failsWithDefaultSenderWhenApiTokenMissingAndDirectToApi() {
         WavefrontConfig missingApiTokenDirectConfig = WavefrontConfig.DEFAULT_DIRECT;
 
-        assertThatExceptionOfType(MissingRequiredConfigurationException.class)
-                .isThrownBy(() -> WavefrontMeterRegistry.builder(missingApiTokenDirectConfig).build())
-                .withMessage("apiToken must be set whenever publishing directly to the Wavefront API");
+        assertThatExceptionOfType(ValidationException.class)
+                .isThrownBy(() -> WavefrontMeterRegistry.builder(missingApiTokenDirectConfig).build());
     }
 
     @Test

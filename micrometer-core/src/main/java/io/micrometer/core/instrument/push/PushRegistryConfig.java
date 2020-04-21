@@ -16,9 +16,14 @@
 package io.micrometer.core.instrument.push;
 
 import io.micrometer.core.instrument.config.MeterRegistryConfig;
+import io.micrometer.core.instrument.config.validate.Validated;
 import io.micrometer.core.ipc.http.HttpSender;
 
 import java.time.Duration;
+
+import static io.micrometer.core.instrument.config.MeterRegistryConfigValidator.checkAll;
+import static io.micrometer.core.instrument.config.MeterRegistryConfigValidator.check;
+import static io.micrometer.core.instrument.config.validate.PropertyValidator.*;
 
 /**
  * Common configuration settings for any registry that pushes aggregated
@@ -31,21 +36,19 @@ public interface PushRegistryConfig extends MeterRegistryConfig {
      * @return The step size (reporting frequency) to use. The default is 1 minute.
      */
     default Duration step() {
-        String v = get(prefix() + ".step");
-        return v == null ? Duration.ofMinutes(1) : Duration.parse(v);
+        return getDuration(this, "step").orElse(Duration.ofMinutes(1));
     }
 
     /**
      * @return {@code true} if publishing is enabled. Default is {@code true}.
      */
     default boolean enabled() {
-        String v = get(prefix() + ".enabled");
-        return v == null || Boolean.parseBoolean(v);
+        return getBoolean(this, "enabled").orElse(true);
     }
 
     /**
      * Return the number of threads to use with the scheduler.
-     *
+     * <p>
      * Note that this configuration is NOT supported.
      *
      * @return The number of threads to use with the scheduler. The default is
@@ -54,8 +57,7 @@ public interface PushRegistryConfig extends MeterRegistryConfig {
      */
     @Deprecated
     default int numThreads() {
-        String v = get(prefix() + ".numThreads");
-        return v == null ? 2 : Integer.parseInt(v);
+        return getInteger(this, "numThreads").orElse(2);
     }
 
     /**
@@ -66,8 +68,7 @@ public interface PushRegistryConfig extends MeterRegistryConfig {
      */
     @Deprecated
     default Duration connectTimeout() {
-        String v = get(prefix() + ".connectTimeout");
-        return v == null ? Duration.ofSeconds(1) : Duration.parse(v);
+        return getDuration(this, "connectTimeout").orElse(Duration.ofSeconds(1));
     }
 
     /**
@@ -78,8 +79,7 @@ public interface PushRegistryConfig extends MeterRegistryConfig {
      */
     @Deprecated
     default Duration readTimeout() {
-        String v = get(prefix() + ".readTimeout");
-        return v == null ? Duration.ofSeconds(10) : Duration.parse(v);
+        return getDuration(this, "readTimeout").orElse(Duration.ofSeconds(10));
     }
 
     /**
@@ -88,7 +88,22 @@ public interface PushRegistryConfig extends MeterRegistryConfig {
      * 10,000.
      */
     default int batchSize() {
-        String v = get(prefix() + ".batchSize");
-        return v == null ? 10000 : Integer.parseInt(v);
+        return getInteger(this, "batchSize").orElse(10000);
+    }
+
+    @Override
+    default Validated<?> validate() {
+        return validate(this);
+    }
+
+    static Validated<?> validate(PushRegistryConfig config) {
+        return checkAll(config,
+                check("step", PushRegistryConfig::step),
+                check("connectTimeout", PushRegistryConfig::connectTimeout),
+                check("readTimeout", PushRegistryConfig::readTimeout),
+                check("batchSize", PushRegistryConfig::batchSize),
+                check("numThreads", PushRegistryConfig::numThreads),
+                check("enabled", PushRegistryConfig::enabled)
+        );
     }
 }

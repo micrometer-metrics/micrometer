@@ -110,9 +110,11 @@ public class NewRelicMeterRegistry extends StepMeterRegistry {
 
         @Nullable
         private NewRelicClientProvider clientProvider;
+
         private NamingConvention convention = new NewRelicNamingConvention();
         private Clock clock = Clock.SYSTEM;
         private ThreadFactory threadFactory = DEFAULT_THREAD_FACTORY;
+
         @Nullable
         private HttpSender httpClient;
 

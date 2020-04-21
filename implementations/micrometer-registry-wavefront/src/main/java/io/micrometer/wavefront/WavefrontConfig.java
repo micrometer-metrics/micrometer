@@ -15,13 +15,16 @@
  */
 package io.micrometer.wavefront;
 
-import io.micrometer.core.instrument.config.MissingRequiredConfigurationException;
+import io.micrometer.core.instrument.config.validate.InvalidReason;
+import io.micrometer.core.instrument.config.validate.Validated;
 import io.micrometer.core.instrument.push.PushRegistryConfig;
 import io.micrometer.core.lang.Nullable;
 
 import java.net.InetAddress;
-import java.net.URI;
 import java.net.UnknownHostException;
+
+import static io.micrometer.core.instrument.config.MeterRegistryConfigValidator.*;
+import static io.micrometer.core.instrument.config.validate.PropertyValidator.*;
 
 /**
  * Configuration for {@link WavefrontMeterRegistry}.
@@ -76,10 +79,7 @@ public interface WavefrontConfig extends PushRegistryConfig {
      * the host must be in the proxy://HOST:PORT format.
      */
     default String uri() {
-        String v = get(prefix() + ".uri");
-        if (v == null)
-            throw new MissingRequiredConfigurationException("A uri is required to publish metrics to Wavefront");
-        return v;
+        return getUrlString(this, "uri").required().get();
     }
 
     /**
@@ -87,23 +87,21 @@ public interface WavefrontConfig extends PushRegistryConfig {
      */
     @Deprecated
     default int distributionPort() {
-        String v = get(prefix() + ".distributionPort");
-        return v == null ? URI.create(uri()).getPort() : Integer.parseInt(v);
+        return -1;
     }
 
     /**
      * @return Unique identifier for the app instance that is publishing metrics to Wavefront. Defaults to the local host name.
      */
     default String source() {
-        String v = get(prefix() + ".source");
-        if (v != null)
-            return v;
-
-        try {
-            return InetAddress.getLocalHost().getHostName();
-        } catch (UnknownHostException uhe) {
-            return "unknown";
-        }
+        return getString(this, "source")
+                .orElseGet(() -> {
+                    try {
+                        return InetAddress.getLocalHost().getHostName();
+                    } catch (UnknownHostException uhe) {
+                        return "unknown";
+                    }
+                });
     }
 
     /**
@@ -113,8 +111,10 @@ public interface WavefrontConfig extends PushRegistryConfig {
      */
     @Nullable
     default String apiToken() {
-        String v = get(prefix() + ".apiToken");
-        return v == null ? null : v.trim().length() > 0 ? v : null;
+        return getSecret(this, "apiToken")
+                .invalidateWhen(token -> token == null && WavefrontMeterRegistry.isDirectToApi(this),
+                        "must be set whenever publishing directly to the Wavefront API", InvalidReason.MISSING)
+                .orElse(null);
     }
 
     /**
@@ -123,8 +123,7 @@ public interface WavefrontConfig extends PushRegistryConfig {
      * @since 1.2.0
      */
     default boolean reportMinuteDistribution() {
-        String v = get(prefix() + ".reportMinuteDistribution");
-        return v == null || Boolean.parseBoolean(v);
+        return getBoolean(this, "reportMinuteDistribution").orElse(true);
     }
 
     /**
@@ -133,8 +132,7 @@ public interface WavefrontConfig extends PushRegistryConfig {
      * @since 1.2.0
      */
     default boolean reportHourDistribution() {
-        String v = get(prefix() + ".reportHourDistribution");
-        return Boolean.parseBoolean(v);
+        return getBoolean(this, "reportHourDistribution").orElse(false);
     }
 
     /**
@@ -143,8 +141,7 @@ public interface WavefrontConfig extends PushRegistryConfig {
      * @since 1.2.0
      */
     default boolean reportDayDistribution() {
-        String v = get(prefix() + ".reportDayDistribution");
-        return Boolean.parseBoolean(v);
+        return getBoolean(this, "reportDayDistribution").orElse(false);
     }
 
     /**
@@ -156,6 +153,24 @@ public interface WavefrontConfig extends PushRegistryConfig {
      */
     @Nullable
     default String globalPrefix() {
-        return get(prefix() + ".globalPrefix");
+        return getString(this, "globalPrefix").orElse(null);
+    }
+
+    @Override
+    default Validated<?> validate() {
+        return checkAll(this,
+                c -> PushRegistryConfig.validate(c),
+                checkRequired("source", WavefrontConfig::source)
+        );
+    }
+
+    default Validated<?> validateSenderConfiguration() {
+        return checkAll(this,
+                c -> validate(),
+                checkRequired("uri", WavefrontConfig::uri),
+                check("apiToken", WavefrontConfig::apiToken)
+                        .andThen(v -> v.invalidateWhen(token -> token == null && WavefrontMeterRegistry.isDirectToApi(this),
+                                "must be set whenever publishing directly to the Wavefront API", InvalidReason.MISSING))
+        );
     }
 }

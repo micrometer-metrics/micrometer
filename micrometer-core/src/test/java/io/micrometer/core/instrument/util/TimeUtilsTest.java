@@ -22,6 +22,7 @@ import java.time.Duration;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@SuppressWarnings("deprecation")
 class TimeUtilsTest {
     @Test
     void simpleParse() {
