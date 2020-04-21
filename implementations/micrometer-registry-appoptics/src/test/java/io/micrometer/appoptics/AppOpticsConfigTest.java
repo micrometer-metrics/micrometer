@@ -34,7 +34,7 @@ class AppOpticsConfigTest {
 
         assertThat(config.validate().failures().stream().map(Validated.Invalid::getMessage))
                 .containsExactlyInAnyOrder(
-                        "malformed URL",
+                        "must be a valid URL",
                         "is required"
                 );
     }

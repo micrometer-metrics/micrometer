@@ -33,7 +33,7 @@ class OpenTSDBConfigTest {
         props.put("opentsdb.flavor", "bad");
 
         assertThat(config.validate().failures().stream().map(Validated.Invalid::getMessage))
-                .containsExactlyInAnyOrder("malformed URL", "should be one of 'VictoriaMetrics'");
+                .containsExactlyInAnyOrder("must be a valid URL", "should be one of 'VictoriaMetrics'");
     }
 
     @Test

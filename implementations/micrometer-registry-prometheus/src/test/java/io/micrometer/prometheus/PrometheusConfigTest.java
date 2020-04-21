@@ -34,7 +34,7 @@ class PrometheusConfigTest {
 
         assertThat(config.validate().failures().stream().map(Validated.Invalid::getMessage))
                 .containsExactlyInAnyOrder(
-                        "unknown time unit 'w'",
+                        "must contain a valid time unit",
                         "should be one of 'Prometheus', 'VictoriaMetrics'"
                 );
     }

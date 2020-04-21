@@ -38,7 +38,7 @@ class StatsdConfigTest {
                 .containsOnly(
                         "should be one of 'ETSY', 'DATADOG', 'TELEGRAF', 'SYSDIG'",
                         "should be one of 'UDP', 'TCP'",
-                        "unknown time unit 'w'"
+                        "must contain a valid time unit"
                 );
     }
 

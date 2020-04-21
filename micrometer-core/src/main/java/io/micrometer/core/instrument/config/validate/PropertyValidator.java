@@ -48,7 +48,7 @@ public class PropertyValidator {
         try {
             return Validated.valid(prefixedProperty, value == null ? null : Integer.parseInt(value));
         } catch (NumberFormatException e) {
-            return Validated.invalid(prefixedProperty, value, "not an integer", InvalidReason.MALFORMED, e);
+            return Validated.invalid(prefixedProperty, value, "must be an integer", InvalidReason.MALFORMED, e);
         }
     }
 
@@ -84,7 +84,7 @@ public class PropertyValidator {
         try {
             return Validated.valid(prefixedProperty, value == null ? null : Boolean.parseBoolean(value));
         } catch (NumberFormatException e) {
-            return Validated.invalid(prefixedProperty, value, "not a boolean", InvalidReason.MALFORMED, e);
+            return Validated.invalid(prefixedProperty, value, "must be a boolean", InvalidReason.MALFORMED, e);
         }
     }
 
@@ -107,7 +107,7 @@ public class PropertyValidator {
         try {
             return Validated.valid(prefixedProperty, value == null ? null : URI.create(value).toURL()).map(url -> value);
         } catch (MalformedURLException | IllegalArgumentException ex) {
-            return Validated.invalid(prefixedProperty, value, "malformed URL", InvalidReason.MALFORMED, ex);
+            return Validated.invalid(prefixedProperty, value, "must be a valid URL", InvalidReason.MALFORMED, ex);
         }
     }
 

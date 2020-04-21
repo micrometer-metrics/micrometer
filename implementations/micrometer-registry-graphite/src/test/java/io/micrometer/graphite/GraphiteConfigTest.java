@@ -33,7 +33,7 @@ class GraphiteConfigTest {
         props.put("graphite.durationUnits", "bad duration");
 
         assertThat(config.validate().failures().stream().map(Validated.Invalid::getMessage))
-                .containsExactlyInAnyOrder("unknown time unit 'bad rate'", "unknown time unit 'bad duration'");
+                .containsOnly("must contain a valid time unit");
     }
 
     @Test

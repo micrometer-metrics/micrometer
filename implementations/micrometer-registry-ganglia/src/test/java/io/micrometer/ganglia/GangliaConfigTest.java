@@ -40,10 +40,10 @@ class GangliaConfigTest {
         // can iterate over failures to display messages
         assertThat(config.validate().failures().stream().map(Validated.Invalid::getMessage))
                 .containsExactlyInAnyOrder(
-                        "not an integer",
+                        "must be an integer",
                         "should be one of 'MULTICAST', 'UNICAST'",
-                        "not an integer",
-                        "unknown time unit 'weeks'"
+                        "must be an integer",
+                        "must contain a valid time unit"
                 );
     }
 

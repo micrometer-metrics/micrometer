@@ -32,7 +32,7 @@ class SignalFxConfigTest {
         props.put("signalfx.uri", "bad");
 
         assertThat(config.validate().failures().stream().map(Validated.Invalid::getMessage))
-                .containsExactlyInAnyOrder("malformed URL", "is required");
+                .containsExactlyInAnyOrder("must be a valid URL", "is required");
     }
 
     @Test

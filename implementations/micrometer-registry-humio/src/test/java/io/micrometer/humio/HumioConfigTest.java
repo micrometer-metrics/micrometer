@@ -32,7 +32,7 @@ class HumioConfigTest {
         props.put("humio.uri", "bad");
 
         assertThat(config.validate().failures().stream().map(Validated.Invalid::getMessage))
-                .containsOnly("malformed URL");
+                .containsOnly("must be a valid URL");
     }
 
     @Test

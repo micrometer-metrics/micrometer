@@ -41,12 +41,12 @@ public enum DurationValidator {
         protected Validated<Duration> doParse(String property, String value) {
             Matcher matcher = patterns.get(0).matcher(value.toLowerCase().replaceAll("[,_\\s]", ""));
             if (!matcher.matches()) {
-                return Validated.invalid(property, value, "does not match a simple duration pattern", InvalidReason.MALFORMED);
+                return Validated.invalid(property, value, "must be a valid duration", InvalidReason.MALFORMED);
             }
 
             String unit = matcher.group(4);
             if (StringUtils.isBlank(unit)) {
-                return Validated.invalid(property, value, "missing a recognizable unit for a duration", InvalidReason.MALFORMED);
+                return Validated.invalid(property, value, "must have a valid duration unit", InvalidReason.MALFORMED);
             }
 
             AtomicInteger e = new AtomicInteger(0);
@@ -67,7 +67,7 @@ public enum DurationValidator {
             try {
                 return Validated.valid(property, Duration.parse(value));
             } catch (Exception ex) {
-                return Validated.invalid(property, value, "is not a valid ISO-8601 duration", InvalidReason.MALFORMED, ex);
+                return Validated.invalid(property, value, "must be a valid ISO-8601 duration like 'PT10S'", InvalidReason.MALFORMED, ex);
             }
         }
     };
@@ -108,7 +108,7 @@ public enum DurationValidator {
      */
     private static Validated<DurationValidator> detect(String property, @Nullable String value) {
         if (value == null || StringUtils.isBlank(value)) {
-            return Validated.invalid(property, value, "duration value must not be blank", value == null ? InvalidReason.MISSING :
+            return Validated.invalid(property, value, "must be a valid duration value", value == null ? InvalidReason.MISSING :
                     InvalidReason.MALFORMED);
         }
 
@@ -118,7 +118,7 @@ public enum DurationValidator {
             }
         }
 
-        return Validated.invalid(property, value, "is not a valid duration", InvalidReason.MALFORMED);
+        return Validated.invalid(property, value, "must be a valid duration value", InvalidReason.MALFORMED);
     }
 
     public static Validated<TimeUnit> validateTimeUnit(String property, @Nullable String unit) {
@@ -176,7 +176,7 @@ public enum DurationValidator {
             case "day":
                 return Validated.valid(property, ChronoUnit.DAYS);
             default:
-                return Validated.invalid(property, value, "unknown time unit '" + unit + "'", InvalidReason.MALFORMED);
+                return Validated.invalid(property, value, "must contain a valid time unit", InvalidReason.MALFORMED);
         }
     }
 
@@ -201,7 +201,7 @@ public enum DurationValidator {
             case DAYS:
                 return Validated.valid(property, TimeUnit.DAYS);
             default:
-                return Validated.invalid(property, chronoUnit.toString(), "no TimeUnit equivalent", InvalidReason.MALFORMED);
+                return Validated.invalid(property, chronoUnit.toString(), "must be a valid time unit", InvalidReason.MALFORMED);
         }
     }
 }

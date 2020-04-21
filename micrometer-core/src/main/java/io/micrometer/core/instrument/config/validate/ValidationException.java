@@ -29,9 +29,9 @@ public class ValidationException extends IllegalStateException {
 
     public ValidationException(Validated<?> validation) {
         super(validation.failures().stream()
-                .map(invalid -> invalid.getProperty() + "='" +
+                .map(invalid -> invalid.getProperty() + " was '" +
                         (invalid.getValue() == null ? "null" : invalid.getValue().toString()) +
-                        "' " + invalid.getMessage())
+                        "' but it " + invalid.getMessage())
                 .collect(Collectors.joining(
                         "\n",
                         validation.failures().size() > 1 ? "Multiple validation failures:\n" : "",

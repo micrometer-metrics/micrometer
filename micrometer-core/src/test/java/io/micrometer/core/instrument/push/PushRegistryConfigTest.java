@@ -60,9 +60,9 @@ class PushRegistryConfigTest {
         assertThat(failures.size()).isEqualTo(5);
         assertThat(failures.stream().map(Validated.Invalid::getMessage))
                 .containsOnly(
-                        "does not match a simple duration pattern",
-                        "unknown time unit 'w'",
-                        "not an integer"
+                        "must be a valid duration",
+                        "must contain a valid time unit",
+                        "must be an integer"
                 );
 
         assertThatThrownBy(config::batchSize).isInstanceOf(ValidationException.class);
