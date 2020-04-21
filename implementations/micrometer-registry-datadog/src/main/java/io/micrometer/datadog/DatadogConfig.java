@@ -15,12 +15,9 @@
  */
 package io.micrometer.datadog;
 
-import io.micrometer.core.instrument.config.validate.Validated;
+import io.micrometer.core.instrument.config.MissingRequiredConfigurationException;
 import io.micrometer.core.instrument.step.StepRegistryConfig;
 import io.micrometer.core.lang.Nullable;
-
-import static io.micrometer.core.instrument.config.MeterRegistryConfigValidator.*;
-import static io.micrometer.core.instrument.config.validate.PropertyValidator.*;
 
 /**
  * Configuration for {@link DatadogMeterRegistry}.
@@ -35,7 +32,10 @@ public interface DatadogConfig extends StepRegistryConfig {
     }
 
     default String apiKey() {
-        return getString(this, "apiKey").required().get();
+        String v = get(prefix() + ".apiKey");
+        if (v == null)
+            throw new MissingRequiredConfigurationException("apiKey must be set to report metrics to Datadog");
+        return v;
     }
 
     /**
@@ -44,7 +44,7 @@ public interface DatadogConfig extends StepRegistryConfig {
      */
     @Nullable
     default String applicationKey() {
-        return getString(this, "applicationKey").orElse(null);
+        return get(prefix() + ".applicationKey");
     }
 
     /**
@@ -52,7 +52,8 @@ public interface DatadogConfig extends StepRegistryConfig {
      */
     @Nullable
     default String hostTag() {
-        return getString(this, "hostTag").orElse("instance");
+        String v = get(prefix() + ".hostTag");
+        return v == null ? "instance" : v;
     }
 
     /**
@@ -60,7 +61,8 @@ public interface DatadogConfig extends StepRegistryConfig {
      * datadoghq, you can define the location of the proxy with this.
      */
     default String uri() {
-        return getUrlString(this, "uri").orElse("https://api.datadoghq.com");
+        String v = get(prefix() + ".uri");
+        return v == null ? "https://api.datadoghq.com" : v;
     }
 
     /**
@@ -68,15 +70,7 @@ public interface DatadogConfig extends StepRegistryConfig {
      * Turn this off to minimize the amount of data sent on each scrape.
      */
     default boolean descriptions() {
-        return getBoolean(this, "descriptions").orElse(true);
-    }
-
-    @Override
-    default Validated<?> validate() {
-        return checkAll(this,
-                c -> StepRegistryConfig.validate(c),
-                checkRequired("apiKey", DatadogConfig::apiKey),
-                checkRequired("uri", DatadogConfig::uri)
-        );
+        String v = get(prefix() + ".descriptions");
+        return v == null || Boolean.parseBoolean(v);
     }
 }

@@ -15,13 +15,8 @@
  */
 package io.micrometer.influx;
 
-import io.micrometer.core.instrument.config.validate.Validated;
 import io.micrometer.core.instrument.step.StepRegistryConfig;
 import io.micrometer.core.lang.Nullable;
-
-import static io.micrometer.core.instrument.config.MeterRegistryConfigValidator.checkAll;
-import static io.micrometer.core.instrument.config.MeterRegistryConfigValidator.checkRequired;
-import static io.micrometer.core.instrument.config.validate.PropertyValidator.*;
 
 /**
  * Configuration for {@link InfluxMeterRegistry}.
@@ -43,7 +38,8 @@ public interface InfluxConfig extends StepRegistryConfig {
      * @return The db to send metrics to. Defaults to "mydb".
      */
     default String db() {
-        return getString(this, "db").orElse("mydb");
+        String v = get(prefix() + ".db");
+        return v == null ? "mydb" : v;
     }
 
     /**
@@ -51,7 +47,10 @@ public interface InfluxConfig extends StepRegistryConfig {
      * be one of 'any', 'one', 'quorum', or 'all'. Only available for InfluxEnterprise clusters.
      */
     default InfluxConsistency consistency() {
-        return getEnum(this, InfluxConsistency.class, "consistency").orElse(InfluxConsistency.ONE);
+        String v = get(prefix() + ".consistency");
+        if (v == null)
+            return InfluxConsistency.ONE;
+        return InfluxConsistency.valueOf(v.toUpperCase());
     }
 
     /**
@@ -60,7 +59,7 @@ public interface InfluxConfig extends StepRegistryConfig {
      */
     @Nullable
     default String userName() {
-        return getSecret(this, "userName").orElse(null);
+        return get(prefix() + ".userName");
     }
 
     /**
@@ -69,7 +68,7 @@ public interface InfluxConfig extends StepRegistryConfig {
      */
     @Nullable
     default String password() {
-        return getSecret(this, "password").orElse(null);
+        return get(prefix() + ".password");
     }
 
     /**
@@ -77,7 +76,7 @@ public interface InfluxConfig extends StepRegistryConfig {
      */
     @Nullable
     default String retentionPolicy() {
-        return getString(this, "retentionPolicy").orElse(null);
+        return get(prefix() + ".retentionPolicy");
     }
 
     /**
@@ -85,7 +84,7 @@ public interface InfluxConfig extends StepRegistryConfig {
      */
     @Nullable
     default String retentionDuration() {
-        return getString(this, "retentionDuration").orElse(null);
+        return get(prefix() + ".retentionDuration");
     }
 
     /**
@@ -93,7 +92,8 @@ public interface InfluxConfig extends StepRegistryConfig {
      */
     @Nullable
     default Integer retentionReplicationFactor() {
-        return getInteger(this, "retentionReplicationFactor").orElse(null);
+        String v = get(prefix() + ".retentionReplicationFactor");
+        return v == null ? null : Integer.valueOf(v);
     }
 
     /**
@@ -101,21 +101,24 @@ public interface InfluxConfig extends StepRegistryConfig {
      */
     @Nullable
     default String retentionShardDuration() {
-        return getString(this, "retentionShardDuration").orElse(null);
+        return get(prefix() + ".retentionShardDuration");
     }
+
 
     /**
      * @return The URI for the Influx backend. The default is {@code http://localhost:8086}.
      */
     default String uri() {
-        return getUrlString(this, "uri").orElse("http://localhost:8086");
+        String v = get(prefix() + ".uri");
+        return (v == null) ? "http://localhost:8086" : v;
     }
 
     /**
      * @return {@code true} if metrics publish batches should be GZIP compressed, {@code false} otherwise.
      */
     default boolean compressed() {
-        return getBoolean(this, "compressed").orElse(true);
+        String v = get(prefix() + ".compressed");
+        return v == null || Boolean.parseBoolean(v);
     }
 
     /**
@@ -123,16 +126,7 @@ public interface InfluxConfig extends StepRegistryConfig {
      * metrics to it, creating it if it does not exist.
      */
     default boolean autoCreateDb() {
-        return getBoolean(this, "autoCreateDb").orElse(true);
-    }
-
-    @Override
-    default Validated<?> validate() {
-        return checkAll(this,
-                c -> StepRegistryConfig.validate(c),
-                checkRequired("db", InfluxConfig::db),
-                checkRequired("consistency", InfluxConfig::consistency),
-                checkRequired("uri", InfluxConfig::uri)
-        );
+        String v = get(prefix() + ".autoCreateDb");
+        return v == null || Boolean.parseBoolean(v);
     }
 }

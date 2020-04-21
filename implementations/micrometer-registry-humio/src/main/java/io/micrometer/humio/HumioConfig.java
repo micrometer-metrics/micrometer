@@ -15,16 +15,11 @@
  */
 package io.micrometer.humio;
 
-import io.micrometer.core.instrument.config.validate.Validated;
 import io.micrometer.core.instrument.step.StepRegistryConfig;
 import io.micrometer.core.lang.Nullable;
 
 import java.time.Duration;
 import java.util.Map;
-
-import static io.micrometer.core.instrument.config.MeterRegistryConfigValidator.checkAll;
-import static io.micrometer.core.instrument.config.MeterRegistryConfigValidator.checkRequired;
-import static io.micrometer.core.instrument.config.validate.PropertyValidator.*;
 
 /**
  * Configuration for {@link HumioMeterRegistry}.
@@ -46,7 +41,8 @@ public interface HumioConfig extends StepRegistryConfig {
      * Humio, you can define the location of the proxy with this.
      */
     default String uri() {
-        return getUrlString(this, "uri").orElse("https://cloud.humio.com");
+        String v = get(prefix() + ".uri");
+        return v == null ? "https://cloud.humio.com" : v;
     }
 
     /**
@@ -63,20 +59,14 @@ public interface HumioConfig extends StepRegistryConfig {
 
     @Nullable
     default String apiToken() {
-        return getSecret(this, "apiToken").orElse(null);
+        return get(prefix() + ".apiToken");
     }
 
     @Deprecated
     @Override
     default Duration connectTimeout() {
-        return getDuration(this, "connectTimeout").orElse(Duration.ofSeconds(5));
-    }
-
-    @Override
-    default Validated<?> validate() {
-        return checkAll(this,
-                c -> StepRegistryConfig.validate(c),
-                checkRequired("uri", HumioConfig::uri)
-        );
+        String v = get(prefix() + ".connectTimeout");
+        // Humio regularly times out when the default is 1 second.
+        return v == null ? Duration.ofSeconds(5) : Duration.parse(v);
     }
 }

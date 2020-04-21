@@ -21,8 +21,10 @@ import com.microsoft.applicationinsights.telemetry.MetricTelemetry;
 import com.microsoft.applicationinsights.telemetry.SeverityLevel;
 import com.microsoft.applicationinsights.telemetry.TraceTelemetry;
 import io.micrometer.core.instrument.*;
+import io.micrometer.core.instrument.config.MissingRequiredConfigurationException;
 import io.micrometer.core.instrument.step.StepMeterRegistry;
 import io.micrometer.core.instrument.util.NamedThreadFactory;
+import io.micrometer.core.instrument.util.StringUtils;
 import io.micrometer.core.lang.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -60,7 +62,13 @@ public class AzureMonitorMeterRegistry extends StepMeterRegistry {
         this.config = config;
 
         config().namingConvention(new AzureMonitorNamingConvention());
-        telemetryConfiguration.setInstrumentationKey(config.instrumentationKey());
+
+        if (StringUtils.isEmpty(telemetryConfiguration.getInstrumentationKey())) {
+            if (config.instrumentationKey() == null) {
+                throw new MissingRequiredConfigurationException("instrumentationKey must be set to report metrics to Azure Monitor");
+            }
+            telemetryConfiguration.setInstrumentationKey(config.instrumentationKey());
+        }
 
         client = new TelemetryClient(telemetryConfiguration);
         client.getContext().getInternal().setSdkVersion(SDK_VERSION);

@@ -37,7 +37,6 @@ public abstract class PushMeterRegistry extends MeterRegistry {
     protected PushMeterRegistry(PushRegistryConfig config, Clock clock) {
         super(clock);
         this.config = config;
-        config.requireValid();
     }
 
     protected abstract void publish();

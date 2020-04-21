@@ -16,13 +16,8 @@
 package io.micrometer.prometheus;
 
 import io.micrometer.core.instrument.config.MeterRegistryConfig;
-import io.micrometer.core.instrument.config.validate.Validated;
 
 import java.time.Duration;
-
-import static io.micrometer.core.instrument.config.MeterRegistryConfigValidator.checkAll;
-import static io.micrometer.core.instrument.config.MeterRegistryConfigValidator.checkRequired;
-import static io.micrometer.core.instrument.config.validate.PropertyValidator.*;
 
 /**
  * Configuration for {@link PrometheusMeterRegistry}.
@@ -45,7 +40,8 @@ public interface PrometheusConfig extends MeterRegistryConfig {
      * Turn this off to minimize the amount of data sent on each scrape.
      */
     default boolean descriptions() {
-        return getBoolean(this, "descriptions").orElse(true);
+        String v = get(prefix() + ".descriptions");
+        return v == null || Boolean.parseBoolean(v);
     }
 
     /**
@@ -53,7 +49,8 @@ public interface PrometheusConfig extends MeterRegistryConfig {
      * To get the most out of these statistics, align the step interval to be close to your scrape interval.
      */
     default Duration step() {
-        return getDuration(this, "step").orElse(Duration.ofMinutes(1));
+        String v = get(prefix() + ".step");
+        return v == null ? Duration.ofMinutes(1) : Duration.parse(v);
     }
 
     /**
@@ -63,14 +60,17 @@ public interface PrometheusConfig extends MeterRegistryConfig {
      * @since 1.4.0
      */
     default HistogramFlavor histogramFlavor() {
-        return getEnum(this, HistogramFlavor.class, "histogramFlavor").orElse(HistogramFlavor.Prometheus);
-    }
+        String v = get(prefix() + ".histogramFlavor");
 
-    @Override
-    default Validated<?> validate() {
-        return checkAll(this,
-                checkRequired("step", PrometheusConfig::step),
-                checkRequired("histogramFlavor", PrometheusConfig::histogramFlavor)
-        );
+        // Default micrometer histogram implementation
+        if (v == null)
+            return HistogramFlavor.Prometheus;
+
+        for (HistogramFlavor flavor : HistogramFlavor.values()) {
+            if (flavor.name().equalsIgnoreCase(v))
+                return flavor;
+        }
+
+        throw new IllegalArgumentException("Unrecognized histogram flavor '" + v + "' (check property " + prefix() + ".histogramFlavor)");
     }
 }

@@ -15,16 +15,12 @@
  */
 package io.micrometer.signalfx;
 
-import io.micrometer.core.instrument.config.validate.Validated;
+import io.micrometer.core.instrument.config.MissingRequiredConfigurationException;
 import io.micrometer.core.instrument.step.StepRegistryConfig;
 
 import java.net.InetAddress;
 import java.net.UnknownHostException;
 import java.time.Duration;
-
-import static io.micrometer.core.instrument.config.MeterRegistryConfigValidator.checkAll;
-import static io.micrometer.core.instrument.config.MeterRegistryConfigValidator.checkRequired;
-import static io.micrometer.core.instrument.config.validate.PropertyValidator.*;
 
 /**
  * Configuration for {@link SignalFxMeterRegistry}.
@@ -39,7 +35,10 @@ public interface SignalFxConfig extends StepRegistryConfig {
     }
 
     default String accessToken() {
-        return getSecret(this, "accessToken").required().get();
+        String v = get(prefix() + ".accessToken");
+        if (v == null)
+            throw new MissingRequiredConfigurationException("accessToken must be set to report metrics to SignalFX");
+        return v;
     }
 
     /**
@@ -47,38 +46,28 @@ public interface SignalFxConfig extends StepRegistryConfig {
      * SignalFx, you can define the location of the proxy with this.
      */
     default String uri() {
-        // NOTE: at some point, the property 'apiHost' diverged from the name of the method 'uri', so we accept
-        // either here for backwards compatibility.
-        return getUrlString(this, "apiHost")
-                .flatMap((uri, valid) -> uri == null ? getUrlString(this, "uri") : valid)
-                .orElse("https://ingest.signalfx.com");
+        String v = get(prefix() + ".apiHost");
+        return v == null ? "https://ingest.signalfx.com" : v;
     }
 
     /**
      * @return Unique identifier for the app instance that is publishing metrics to SignalFx. Defaults to the local host name.
      */
     default String source() {
-        return getString(this, "source").orElseGet(() -> {
-            try {
-                return InetAddress.getLocalHost().getHostName();
-            } catch (UnknownHostException uhe) {
-                return "unknown";
-            }
-        });
+        String v = get(prefix() + ".source");
+        if (v != null)
+            return v;
+
+        try {
+            return InetAddress.getLocalHost().getHostName();
+        } catch (UnknownHostException uhe) {
+            return "unknown";
+        }
     }
 
     @Override
     default Duration step() {
-        return getDuration(this, "step").orElse(Duration.ofSeconds(10));
-    }
-
-    @Override
-    default Validated<?> validate() {
-        return checkAll(this,
-                c -> StepRegistryConfig.validate(c),
-                checkRequired("accessToken", SignalFxConfig::accessToken),
-                checkRequired("uri", SignalFxConfig::uri),
-                checkRequired("source", SignalFxConfig::source)
-        );
+        String v = get(prefix() + ".step");
+        return v == null ? Duration.ofSeconds(10) : Duration.parse(v);
     }
 }

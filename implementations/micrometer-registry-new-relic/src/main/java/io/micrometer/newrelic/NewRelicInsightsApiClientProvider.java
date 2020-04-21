@@ -15,14 +15,7 @@
  */
 package io.micrometer.newrelic;
 
-import io.micrometer.core.instrument.*;
-import io.micrometer.core.instrument.config.NamingConvention;
-import io.micrometer.core.instrument.util.DoubleFormat;
-import io.micrometer.core.instrument.util.MeterPartition;
-import io.micrometer.core.ipc.http.HttpSender;
-import io.micrometer.core.ipc.http.HttpUrlConnectionSender;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import static io.micrometer.core.instrument.util.StringEscapeUtils.escapeJson;
 
 import java.net.InetSocketAddress;
 import java.net.Proxy;
@@ -35,11 +28,30 @@ import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
-import static io.micrometer.core.instrument.util.StringEscapeUtils.escapeJson;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
+import io.micrometer.core.instrument.Counter;
+import io.micrometer.core.instrument.DistributionSummary;
+import io.micrometer.core.instrument.FunctionCounter;
+import io.micrometer.core.instrument.FunctionTimer;
+import io.micrometer.core.instrument.Gauge;
+import io.micrometer.core.instrument.LongTaskTimer;
+import io.micrometer.core.instrument.Measurement;
+import io.micrometer.core.instrument.Meter;
+import io.micrometer.core.instrument.Tag;
+import io.micrometer.core.instrument.Tags;
+import io.micrometer.core.instrument.TimeGauge;
+import io.micrometer.core.instrument.Timer;
+import io.micrometer.core.instrument.config.MissingRequiredConfigurationException;
+import io.micrometer.core.instrument.config.NamingConvention;
+import io.micrometer.core.instrument.util.*;
+import io.micrometer.core.ipc.http.HttpSender;
+import io.micrometer.core.ipc.http.HttpUrlConnectionSender;
 
 /**
  * Publishes metrics to New Relic Insights REST API.
- *
+ * 
  * @author Jon Schneider
  * @author Johnny Lim
  * @author Neil Powell
@@ -61,16 +73,16 @@ public class NewRelicInsightsApiClientProvider implements NewRelicClientProvider
         this(config, new HttpUrlConnectionSender(config.connectTimeout(), config.readTimeout()), new NewRelicNamingConvention());
     }
 
-    @Deprecated
+    @SuppressWarnings("deprecation")
     public NewRelicInsightsApiClientProvider(NewRelicConfig config, String proxyHost, int proxyPort) {
-        this(config, new HttpUrlConnectionSender(config.connectTimeout(), config.readTimeout(),
-                new Proxy(Proxy.Type.HTTP, new InetSocketAddress(proxyHost, proxyPort))), new NewRelicNamingConvention());
+        this(config, new HttpUrlConnectionSender(config.connectTimeout(), config.readTimeout(), 
+                            new Proxy(Proxy.Type.HTTP, new InetSocketAddress(proxyHost, proxyPort))), new NewRelicNamingConvention());
     }
 
     /**
      * Create a {@code NewRelicInsightsApiClientProvider} instance.
      *
-     * @param config     config
+     * @param config config
      * @param httpClient HTTP client
      * @since 1.4.2
      */
@@ -80,7 +92,20 @@ public class NewRelicInsightsApiClientProvider implements NewRelicClientProvider
 
     // VisibleForTesting
     NewRelicInsightsApiClientProvider(NewRelicConfig config, HttpSender httpClient, NamingConvention namingConvention) {
-        config.validateForInsightsApi().orThrow();
+
+        if (!config.meterNameEventTypeEnabled() && StringUtils.isEmpty(config.eventType())) {
+            throw new MissingRequiredConfigurationException("eventType must be set to report metrics to New Relic");
+        }
+        if (StringUtils.isEmpty(config.accountId())) {
+            throw new MissingRequiredConfigurationException("accountId must be set to report metrics to New Relic");
+        }
+        if (StringUtils.isEmpty(config.apiKey())) {
+            throw new MissingRequiredConfigurationException("apiKey must be set to report metrics to New Relic");
+        }
+        if (StringUtils.isEmpty(config.uri())) {
+            throw new MissingRequiredConfigurationException("uri must be set to report metrics to New Relic");
+        }
+
         this.config = config;
         this.httpClient = httpClient;
         this.namingConvention = namingConvention;
@@ -104,7 +129,7 @@ public class NewRelicInsightsApiClientProvider implements NewRelicClientProvider
                     this::writeMeter)));
         }
     }
-
+    
     @Override
     public Stream<String> writeLongTaskTimer(LongTaskTimer timer) {
         TimeUnit timeUnit = timer.baseTimeUnit();
@@ -163,7 +188,7 @@ public class NewRelicInsightsApiClientProvider implements NewRelicClientProvider
                         new Attribute(TOTAL, summary.totalAmount()),
                         new Attribute(MAX, summary.max())
                 )
-        );
+            );
     }
 
     @Override
@@ -177,7 +202,7 @@ public class NewRelicInsightsApiClientProvider implements NewRelicClientProvider
                         new Attribute(MAX, timer.max(timeUnit)),
                         new Attribute(TIME_UNIT, timeUnit.name().toLowerCase())
                 )
-        );
+            );
     }
 
     @Override
@@ -190,7 +215,7 @@ public class NewRelicInsightsApiClientProvider implements NewRelicClientProvider
                         new Attribute(TOTAL_TIME, timer.totalTime(timeUnit)),
                         new Attribute(TIME_UNIT, timeUnit.name().toLowerCase())
                 )
-        );
+            );
     }
 
     @Override
@@ -221,7 +246,7 @@ public class NewRelicInsightsApiClientProvider implements NewRelicClientProvider
             String name = id.getConventionName(namingConvention);
             newAttrs[size] = new Attribute(METRIC_NAME, name);
             newAttrs[size + 1] = new Attribute(METRIC_TYPE, id.getType().toString());
-
+            
             return event(id, Tags.empty(), newAttrs);
         }
         return event(id, Tags.empty(), attributes);
@@ -240,12 +265,12 @@ public class NewRelicInsightsApiClientProvider implements NewRelicClientProvider
         }
 
         String eventType = getEventType(id, config, namingConvention);
-
+        
         return Arrays.stream(attributes)
-                .map(attr ->
-                        (attr.getValue() instanceof Number)
-                                ? ",\"" + attr.getName() + "\":" + DoubleFormat.wholeOrDecimal(((Number) attr.getValue()).doubleValue())
-                                : ",\"" + attr.getName() + "\":\"" + namingConvention.tagValue(attr.getValue().toString()) + "\""
+                .map(attr -> 
+                        (attr.getValue() instanceof Number) 
+                            ? ",\"" + attr.getName() + "\":" + DoubleFormat.wholeOrDecimal(((Number) attr.getValue()).doubleValue())
+                            : ",\"" + attr.getName() + "\":\"" + namingConvention.tagValue(attr.getValue().toString()) + "\""
                 )
                 .collect(Collectors.joining("", "{\"eventType\":\"" + escapeJson(eventType) + "\"", tagsJson + "}"));
     }

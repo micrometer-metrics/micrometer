@@ -15,13 +15,9 @@
  */
 package io.micrometer.dynatrace;
 
-import io.micrometer.core.instrument.config.validate.Validated;
+import io.micrometer.core.instrument.config.MissingRequiredConfigurationException;
 import io.micrometer.core.instrument.step.StepRegistryConfig;
 import io.micrometer.core.instrument.util.StringUtils;
-import io.micrometer.core.lang.Nullable;
-
-import static io.micrometer.core.instrument.config.MeterRegistryConfigValidator.*;
-import static io.micrometer.core.instrument.config.validate.PropertyValidator.*;
 
 /**
  * Configuration for {@link DynatraceMeterRegistry}
@@ -36,21 +32,32 @@ public interface DynatraceConfig extends StepRegistryConfig {
     }
 
     default String apiToken() {
-        return getSecret(this, "apiToken").required().get();
+        String v = get(prefix() + ".apiToken");
+        if (v == null)
+            throw new MissingRequiredConfigurationException("apiToken must be set to report metrics to Dynatrace");
+        return v;
     }
 
     default String uri() {
-        return getUrlString(this, "uri").required().get();
+        String v = get(prefix() + ".uri");
+        if (v == null)
+            throw new MissingRequiredConfigurationException("uri must be set to report metrics to Dynatrace");
+        return v;
     }
 
     default String deviceId() {
-        return getString(this, "deviceId").required().get();
+        String v = get(prefix() + ".deviceId");
+        if (v == null)
+            throw new MissingRequiredConfigurationException("deviceId must be set to report metrics to Dynatrace");
+        return v;
     }
 
     default String technologyType() {
-        return getSecret(this, "technologyType")
-                .map(v -> StringUtils.isEmpty(v) ? "java" : v)
-                .get();
+        String v = get(prefix() + ".technologyType");
+        if (StringUtils.isEmpty(v))
+            return "java";
+
+        return v;
     }
 
     /**
@@ -59,19 +66,7 @@ public interface DynatraceConfig extends StepRegistryConfig {
      * @return device group name
      * @since 1.2.0
      */
-    @Nullable
     default String group() {
         return get(prefix() + ".group");
-    }
-
-    @Override
-    default Validated<?> validate() {
-        return checkAll(this,
-                c -> StepRegistryConfig.validate(c),
-                checkRequired("apiToken", DynatraceConfig::apiToken),
-                checkRequired("uri", DynatraceConfig::uri),
-                checkRequired("deviceId", DynatraceConfig::deviceId),
-                check("technologyType", DynatraceConfig::technologyType).andThen(Validated::nonBlank)
-        );
     }
 }

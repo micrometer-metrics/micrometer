@@ -17,6 +17,7 @@ package io.micrometer.appoptics;
 
 import io.micrometer.core.instrument.*;
 import io.micrometer.core.instrument.config.MeterFilter;
+import io.micrometer.core.instrument.config.MissingRequiredConfigurationException;
 import io.micrometer.core.instrument.distribution.HistogramSnapshot;
 import io.micrometer.core.instrument.step.StepMeterRegistry;
 import io.micrometer.core.instrument.util.MeterPartition;
@@ -66,6 +67,10 @@ public class AppOpticsMeterRegistry extends StepMeterRegistry {
     // Visible for testing
     protected AppOpticsMeterRegistry(AppOpticsConfig config, Clock clock, ThreadFactory threadFactory, HttpSender httpClient) {
         super(config, clock);
+
+        if (config.apiToken() == null) {
+            throw new MissingRequiredConfigurationException("apiToken must be set to report metrics to AppOptics");
+        }
 
         config().namingConvention(new AppOpticsNamingConvention());
 

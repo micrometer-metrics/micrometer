@@ -24,6 +24,7 @@ import com.signalfx.metrics.errorhandler.OnSendErrorHandler;
 import com.signalfx.metrics.flush.AggregateMetricSender;
 import com.signalfx.metrics.protobuf.SignalFxProtocolBuffers;
 import io.micrometer.core.instrument.*;
+import io.micrometer.core.instrument.config.MissingRequiredConfigurationException;
 import io.micrometer.core.instrument.config.NamingConvention;
 import io.micrometer.core.instrument.step.StepMeterRegistry;
 import io.micrometer.core.instrument.util.MeterPartition;
@@ -67,6 +68,10 @@ public class SignalFxMeterRegistry extends StepMeterRegistry {
     public SignalFxMeterRegistry(SignalFxConfig config, Clock clock, ThreadFactory threadFactory) {
         super(config, clock);
         this.config = config;
+
+        if (config.accessToken() == null) {
+            throw new MissingRequiredConfigurationException("accessToken must be set to report metrics to SignalFX");
+        }
 
         URI apiUri = URI.create(config.uri());
         int port = apiUri.getPort();

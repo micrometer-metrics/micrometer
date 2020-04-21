@@ -196,7 +196,7 @@ public class GangliaMeterRegistry extends StepMeterRegistry {
 
     @Override
     protected TimeUnit getBaseTimeUnit() {
-        return config.durationUnits();
+        return TimeUnit.MILLISECONDS;
     }
 
     public static class Builder {

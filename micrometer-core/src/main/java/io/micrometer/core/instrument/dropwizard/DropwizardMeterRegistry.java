@@ -57,9 +57,6 @@ public abstract class DropwizardMeterRegistry extends MeterRegistry {
         this.dropwizardClock = new DropwizardClock(clock);
         this.registry = registry;
         this.nameMapper = nameMapper;
-
-        config.requireValid();
-
         config()
             .namingConvention(NamingConvention.camelCase)
             .onMeterRemoved(this::onMeterRemoved);
@@ -124,7 +121,7 @@ public abstract class DropwizardMeterRegistry extends MeterRegistry {
 
     @Override
     protected <T> FunctionTimer newFunctionTimer(Meter.Id id, T obj, ToLongFunction<T> countFunction, ToDoubleFunction<T> totalTimeFunction, TimeUnit totalTimeFunctionUnit) {
-        DropwizardFunctionTimer<T> ft = new DropwizardFunctionTimer<>(id, clock, obj, countFunction, totalTimeFunction,
+        DropwizardFunctionTimer ft = new DropwizardFunctionTimer<>(id, clock, obj, countFunction, totalTimeFunction,
                 totalTimeFunctionUnit, getBaseTimeUnit());
         registry.register(hierarchicalName(id), ft.getDropwizardMeter());
         return ft;

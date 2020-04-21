@@ -20,6 +20,7 @@ import com.wavefront.sdk.common.clients.WavefrontClient;
 import com.wavefront.sdk.entities.histograms.HistogramGranularity;
 import com.wavefront.sdk.entities.histograms.WavefrontHistogramImpl;
 import io.micrometer.core.instrument.*;
+import io.micrometer.core.instrument.config.MissingRequiredConfigurationException;
 import io.micrometer.core.instrument.cumulative.CumulativeCounter;
 import io.micrometer.core.instrument.cumulative.CumulativeFunctionCounter;
 import io.micrometer.core.instrument.cumulative.CumulativeFunctionTimer;
@@ -48,9 +49,11 @@ import java.util.function.ToDoubleFunction;
 import java.util.function.ToLongFunction;
 import java.util.stream.Collectors;
 
+import static java.util.stream.StreamSupport.stream;
+
 /**
  * {@link PushMeterRegistry} for Wavefront.
- * <p>
+ *
  * This requires Wavefront's Java SDK 2.2 or later.
  *
  * @author Jon Schneider
@@ -58,7 +61,8 @@ import java.util.stream.Collectors;
  * @since 1.0.0
  */
 public class WavefrontMeterRegistry extends PushMeterRegistry {
-    private static final ThreadFactory DEFAULT_THREAD_FACTORY = new NamedThreadFactory("waveferont-metrics-publisher");
+    private static final ThreadFactory DEFAULT_THREAD_FACTORY =
+        new NamedThreadFactory("waveferont-metrics-publisher");
     private final Logger logger = LoggerFactory.getLogger(WavefrontMeterRegistry.class);
     private final WavefrontConfig config;
     private final WavefrontSender wavefrontSender;
@@ -86,11 +90,10 @@ public class WavefrontMeterRegistry extends PushMeterRegistry {
     WavefrontMeterRegistry(WavefrontConfig config, Clock clock, ThreadFactory threadFactory,
                            WavefrontSender wavefrontSender) {
         super(config, clock);
-
         this.config = config;
         this.wavefrontSender = wavefrontSender;
-        this.histogramGranularities = new HashSet<>();
 
+        this.histogramGranularities = new HashSet<>();
         if (config.reportMinuteDistribution()) {
             this.histogramGranularities.add(HistogramGranularity.MINUTE);
         }
@@ -106,7 +109,7 @@ public class WavefrontMeterRegistry extends PushMeterRegistry {
         start(threadFactory);
     }
 
-    static boolean isDirectToApi(WavefrontConfig config) {
+    private static boolean isDirectToApi(WavefrontConfig config) {
         return !"proxy".equals(URI.create(config.uri()).getScheme());
     }
 
@@ -128,7 +131,8 @@ public class WavefrontMeterRegistry extends PushMeterRegistry {
     @Override
     protected Timer newTimer(Meter.Id id, DistributionStatisticConfig distributionStatisticConfig,
                              PauseDetector pauseDetector) {
-        WavefrontTimer timer = new WavefrontTimer(id, clock, distributionStatisticConfig, pauseDetector, getBaseTimeUnit());
+        WavefrontTimer timer = new WavefrontTimer(id, clock, distributionStatisticConfig, pauseDetector,
+            getBaseTimeUnit());
         if (!timer.isPublishingHistogram()) {
             HistogramGauges.registerWithCommonFormat(timer, this);
         }
@@ -137,8 +141,9 @@ public class WavefrontMeterRegistry extends PushMeterRegistry {
 
     @Override
     protected DistributionSummary newDistributionSummary(
-            Meter.Id id, DistributionStatisticConfig distributionStatisticConfig, double scale) {
-        WavefrontDistributionSummary summary = new WavefrontDistributionSummary(id, clock, distributionStatisticConfig, scale);
+        Meter.Id id, DistributionStatisticConfig distributionStatisticConfig, double scale) {
+        WavefrontDistributionSummary summary = new WavefrontDistributionSummary(id, clock,
+            distributionStatisticConfig, scale);
         if (!summary.isPublishingHistogram()) {
             HistogramGauges.registerWithCommonFormat(summary, this);
         }
@@ -221,9 +226,11 @@ public class WavefrontMeterRegistry extends PushMeterRegistry {
     void publishMeter(Meter meter) {
         long wallTime = clock.wallTime();
 
-        for (Measurement measurement : meter.measure()) {
-            publishMetric(meter.getId().withTag(measurement.getStatistic()), null, wallTime, measurement.getValue());
-        }
+        stream(meter.measure().spliterator(), false)
+            .forEach(measurement -> {
+                Meter.Id id = meter.getId().withTag(measurement.getStatistic());
+                publishMetric(id, null, wallTime, measurement.getValue());
+            });
     }
 
     // VisibleForTesting
@@ -266,8 +273,8 @@ public class WavefrontMeterRegistry extends PushMeterRegistry {
 
     private Map<String, String> getTagsAsMap(Meter.Id id) {
         return getConventionTags(id)
-                .stream()
-                .collect(Collectors.toMap(Tag::getKey, Tag::getValue, (tag1, tag2) -> tag2));
+            .stream()
+            .collect(Collectors.toMap(Tag::getKey, Tag::getValue, (tag1, tag2) -> tag2));
     }
 
     private Meter.Id idWithSuffix(Meter.Id id, String suffix) {
@@ -286,7 +293,7 @@ public class WavefrontMeterRegistry extends PushMeterRegistry {
                 .build()
                 .merge(DistributionStatisticConfig.DEFAULT);
     }
-
+  
     static String getWavefrontReportingUri(WavefrontConfig wavefrontConfig) {
         // proxy reporting is now http reporting on newer wavefront proxies.
         if (!isDirectToApi(wavefrontConfig)) {
@@ -305,6 +312,12 @@ public class WavefrontMeterRegistry extends PushMeterRegistry {
      * @since 1.5.0
      */
     public static WavefrontClient.Builder getDefaultSenderBuilder(WavefrontConfig config) {
+        if (config.uri() == null)
+            throw new MissingRequiredConfigurationException("A uri is required to publish metrics to Wavefront");
+        if (isDirectToApi(config) && config.apiToken() == null) {
+            throw new MissingRequiredConfigurationException(
+                    "apiToken must be set whenever publishing directly to the Wavefront API");
+        }
         return new WavefrontClient.Builder(getWavefrontReportingUri(config),
                 config.apiToken()).batchSize(config.batchSize());
     }
@@ -358,11 +371,6 @@ public class WavefrontMeterRegistry extends PushMeterRegistry {
         public WavefrontMeterRegistry build() {
             WavefrontSender sender = (wavefrontSender != null) ? wavefrontSender
                     : getDefaultSenderBuilder(config).build();
-
-            if (wavefrontSender == null) {
-                config.validateSenderConfiguration().orThrow();
-            }
-
             return new WavefrontMeterRegistry(config, clock, threadFactory, sender);
         }
     }

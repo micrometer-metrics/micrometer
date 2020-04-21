@@ -20,11 +20,9 @@ import io.micrometer.core.instrument.distribution.HistogramSnapshot;
 import io.micrometer.core.instrument.step.StepMeterRegistry;
 import io.micrometer.core.instrument.util.MeterPartition;
 import io.micrometer.core.instrument.util.NamedThreadFactory;
-import io.micrometer.core.instrument.util.StringUtils;
 import io.micrometer.core.ipc.http.HttpSender;
 import io.micrometer.core.ipc.http.HttpUrlConnectionSender;
 import io.micrometer.core.lang.NonNull;
-import io.micrometer.core.lang.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -116,9 +114,7 @@ public class ElasticMeterRegistry extends StepMeterRegistry {
 
     private final String indexLine;
 
-    @Nullable
     private volatile Integer majorVersion;
-
     private volatile boolean checkedForIndexTemplate = false;
 
     @SuppressWarnings("deprecation")
@@ -142,7 +138,7 @@ public class ElasticMeterRegistry extends StepMeterRegistry {
         this.config = config;
         indexDateFormatter = DateTimeFormatter.ofPattern(config.indexDateFormat());
         this.httpClient = httpClient;
-        if (StringUtils.isNotEmpty(config.pipeline())) {
+        if (config.pipeline() != null && !config.pipeline().isEmpty()) {
             indexLine = "{ \"index\" : {\"pipeline\":\"" + config.pipeline() + "\"} }\n";
         } else {
             indexLine = "{ \"index\" : {} }\n";
@@ -189,9 +185,8 @@ public class ElasticMeterRegistry extends StepMeterRegistry {
         checkedForIndexTemplate = true;
     }
 
-    @SuppressWarnings("ConstantConditions")
     private String getTemplateBody() {
-        return majorVersion == null ||  majorVersion < 7 ? TEMPLATE_BODY_BEFORE_VERSION_7 : TEMPLATE_BODY_AFTER_VERSION_7;
+        return majorVersion < 7 ? TEMPLATE_BODY_BEFORE_VERSION_7 : TEMPLATE_BODY_AFTER_VERSION_7;
     }
 
     @Override
@@ -267,9 +262,8 @@ public class ElasticMeterRegistry extends StepMeterRegistry {
         return Integer.parseInt(matcher.group(1));
     }
 
-    @SuppressWarnings("ConstantConditions")
     private String getTypePath() {
-        return majorVersion == null || majorVersion < 7 ? "/" + config.documentType() : TYPE_PATH_AFTER_VERSION_7;
+        return majorVersion < 7 ? "/" + config.documentType() : TYPE_PATH_AFTER_VERSION_7;
     }
 
     // VisibleForTesting

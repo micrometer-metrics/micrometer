@@ -15,15 +15,10 @@
  */
 package io.micrometer.graphite;
 
-import io.micrometer.core.instrument.config.validate.Validated;
 import io.micrometer.core.instrument.dropwizard.DropwizardConfig;
 import io.micrometer.core.lang.Nullable;
 
 import java.util.concurrent.TimeUnit;
-
-import static io.micrometer.core.instrument.config.MeterRegistryConfigValidator.checkAll;
-import static io.micrometer.core.instrument.config.MeterRegistryConfigValidator.checkRequired;
-import static io.micrometer.core.instrument.config.validate.PropertyValidator.*;
 
 /**
  * Configuration for {@link GraphiteMeterRegistry}.
@@ -59,8 +54,8 @@ public interface GraphiteConfig extends DropwizardConfig {
      * @since 1.4.0
      */
     default boolean graphiteTagsEnabled() {
-        return getBoolean(this, "graphiteTagsEnabled")
-                .orElse(tagsAsPrefix().length == 0);
+        String v = get(prefix() + ".graphiteTagsEnabled");
+        return v == null ? tagsAsPrefix().length == 0 : Boolean.parseBoolean(v);
     }
 
     /**
@@ -72,43 +67,47 @@ public interface GraphiteConfig extends DropwizardConfig {
     }
 
     default TimeUnit rateUnits() {
-        return getTimeUnit(this, "rateUnits").orElse(TimeUnit.SECONDS);
+        String v = get(prefix() + ".rateUnits");
+        return v == null ? TimeUnit.SECONDS : TimeUnit.valueOf(v.toUpperCase());
     }
 
     default TimeUnit durationUnits() {
-        return getTimeUnit(this, "durationUnits").orElse(TimeUnit.MILLISECONDS);
+        String v = get(prefix() + ".durationUnits");
+        return v == null ? TimeUnit.MILLISECONDS : TimeUnit.valueOf(v.toUpperCase());
     }
 
     default String host() {
-        return getString(this, "host").orElse("localhost");
+        String v = get(prefix() + ".host");
+        return (v == null) ? "localhost" : v;
     }
 
     default int port() {
-        return getInteger(this, "port").orElse(2004);
+        String v = get(prefix() + ".port");
+        return (v == null) ? 2004 : Integer.parseInt(v);
     }
 
     /**
      * @return {@code true} if publishing is enabled. Default is {@code true}.
      */
     default boolean enabled() {
-        return getBoolean(this, "enabled").orElse(true);
+        String v = get(prefix() + ".enabled");
+        return v == null || Boolean.parseBoolean(v);
     }
 
     /**
      * @return Protocol to use while shipping data to Graphite.
      */
     default GraphiteProtocol protocol() {
-        return getEnum(this, GraphiteProtocol.class, "protocol").orElse(GraphiteProtocol.PICKLED);
-    }
+        String v = get(prefix() + ".protocol");
 
-    @Override
-    default Validated<?> validate() {
-        return checkAll(this,
-                c -> DropwizardConfig.validate(c),
-                checkRequired("rateUnits", GraphiteConfig::rateUnits),
-                checkRequired("durationUnits", GraphiteConfig::durationUnits),
-                checkRequired("host", GraphiteConfig::host),
-                checkRequired("protocol", GraphiteConfig::protocol)
-        );
+        if (v == null)
+            return GraphiteProtocol.PICKLED;
+
+        for (GraphiteProtocol flavor : GraphiteProtocol.values()) {
+            if (flavor.toString().equalsIgnoreCase(v))
+                return flavor;
+        }
+
+        throw new IllegalArgumentException("Unrecognized graphite protocol '" + v + "' (check property " + prefix() + ".protocol)");
     }
 }

@@ -15,8 +15,6 @@
  */
 package io.micrometer.core.instrument.util;
 
-import io.micrometer.core.instrument.config.validate.DurationValidator;
-
 import java.time.Duration;
 import java.time.format.DateTimeParseException;
 import java.time.temporal.ChronoUnit;
@@ -204,12 +202,6 @@ public final class TimeUtils {
         }
     }
 
-    /**
-     * @param time A time string ending in human readable suffixes like 'ns', 'ms', 's'.
-     * @return A duration
-     * @deprecated Use {@link DurationValidator#detectAndParse(String, TimeUnit)} instead.
-     */
-    @Deprecated
     public static Duration simpleParse(String time) {
         String timeLower = PARSE_PATTERN.matcher(time.toLowerCase()).replaceAll("");
         if (timeLower.endsWith("ns")) {

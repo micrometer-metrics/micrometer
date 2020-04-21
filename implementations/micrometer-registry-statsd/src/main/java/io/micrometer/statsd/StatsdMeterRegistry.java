@@ -52,7 +52,7 @@ import java.util.stream.DoubleStream;
 
 /**
  * {@link MeterRegistry} for StatsD.
- * <p>
+ *
  * The following StatsD line protocols are supported:
  *
  * <ul>
@@ -61,7 +61,7 @@ import java.util.stream.DoubleStream;
  *   <li>Telegraf</li>
  *   <li>Sysdig</li>
  * </ul>
- * <p>
+ *
  * See {@link StatsdFlavor} for more details.
  *
  * @author Jon Schneider
@@ -114,27 +114,25 @@ public class StatsdMeterRegistry extends MeterRegistry {
         this.nameMapper = nameMapper;
         this.lineBuilderFunction = lineBuilderFunction;
         this.lineSink = lineSink;
-
-        config.requireValid();
-
         config().namingConvention(namingConvention);
 
-        config().onMeterRemoved(meter ->
-                meter.use(
-                        this::removePollableMeter,
-                        c -> ((StatsdCounter) c).shutdown(),
-                        t -> ((StatsdTimer) t).shutdown(),
-                        d -> ((StatsdDistributionSummary) d).shutdown(),
-                        this::removePollableMeter,
-                        this::removePollableMeter,
-                        this::removePollableMeter,
-                        this::removePollableMeter,
-                        m -> {
-                            for (Measurement measurement : m.measure()) {
-                                pollableMeters.remove(m.getId().withTag(measurement.getStatistic()));
-                            }
-                        })
-        );
+        config().onMeterRemoved(meter -> {
+            //noinspection SuspiciousMethodCalls
+            meter.use(
+                this::removePollableMeter,
+                c -> ((StatsdCounter) c).shutdown(),
+                t -> ((StatsdTimer) t).shutdown(),
+                d -> ((StatsdDistributionSummary) d).shutdown(),
+                this::removePollableMeter,
+                this::removePollableMeter,
+                this::removePollableMeter,
+                this::removePollableMeter,
+                m -> {
+                    for (Measurement measurement : m.measure()) {
+                        pollableMeters.remove(m.getId().withTag(measurement.getStatistic()));
+                    }
+                });
+        });
 
         if (config.enabled()) {
             FluxSink<String> fluxSink = processor.sink();
@@ -206,7 +204,7 @@ public class StatsdMeterRegistry extends MeterRegistry {
                 final Publisher<String> publisher;
                 if (statsdConfig.buffered()) {
                     publisher = BufferingFlux.create(Flux.from(this.processor), "\n", statsdConfig.maxPacketLength(), statsdConfig.pollingFrequency().toMillis())
-                            .onBackpressureLatest();
+                        .onBackpressureLatest();
                 } else {
                     publisher = this.processor;
                 }
@@ -420,8 +418,8 @@ public class StatsdMeterRegistry extends MeterRegistry {
     }
 
     /**
-     * @return constant {@literal -1}
      * @deprecated queue size is no longer available since 1.4.0
+     * @return constant {@literal -1}
      */
     @Deprecated
     public int queueSize() {
@@ -429,8 +427,8 @@ public class StatsdMeterRegistry extends MeterRegistry {
     }
 
     /**
-     * @return constant {@literal -1}
      * @deprecated queue capacity is no longer available since 1.4.0
+     * @return constant {@literal -1}
      */
     @Deprecated
     public int queueCapacity() {

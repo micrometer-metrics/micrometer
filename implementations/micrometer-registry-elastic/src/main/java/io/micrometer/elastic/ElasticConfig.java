@@ -15,16 +15,7 @@
  */
 package io.micrometer.elastic;
 
-import io.micrometer.core.instrument.config.validate.InvalidReason;
-import io.micrometer.core.instrument.config.validate.Validated;
 import io.micrometer.core.instrument.step.StepRegistryConfig;
-import io.micrometer.core.lang.Nullable;
-
-import java.time.format.DateTimeFormatter;
-
-import static io.micrometer.core.instrument.config.MeterRegistryConfigValidator.checkAll;
-import static io.micrometer.core.instrument.config.MeterRegistryConfigValidator.checkRequired;
-import static io.micrometer.core.instrument.config.validate.PropertyValidator.*;
 
 /**
  * Configuration for {@link ElasticMeterRegistry}.
@@ -62,7 +53,8 @@ public interface ElasticConfig extends StepRegistryConfig {
      * @return host
      */
     default String host() {
-        return getUrlString(this, "host").orElse("http://localhost:9200");
+        String v = get(prefix() + ".host");
+        return v == null ? "http://localhost:9200" : v;
     }
 
     /**
@@ -72,7 +64,8 @@ public interface ElasticConfig extends StepRegistryConfig {
      * @return index name
      */
     default String index() {
-        return getString(this, "index").orElse("metrics");
+        String v = get(prefix() + ".index");
+        return v == null ? "metrics" : v;
     }
 
     /**
@@ -83,20 +76,8 @@ public interface ElasticConfig extends StepRegistryConfig {
      * @return date format for index
      */
     default String indexDateFormat() {
-        return getString(this, "indexDateFormat")
-                .invalidateWhen(format -> {
-                    if (format == null) {
-                        return false;
-                    }
-
-                    try {
-                        DateTimeFormatter.ofPattern(format);
-                        return false;
-                    } catch (IllegalArgumentException ignored) {
-                        return true;
-                    }
-                }, "invalid date format", InvalidReason.MALFORMED)
-                .orElse("yyyy-MM");
+        String v = get(prefix() + ".indexDateFormat");
+        return v == null ? "yyyy-MM" : v;
     }
 
     /**
@@ -106,7 +87,8 @@ public interface ElasticConfig extends StepRegistryConfig {
      * @return field name for timestamp
      */
     default String timestampFieldName() {
-        return getString(this, "timestampFieldName").orElse("@timestamp");
+        String v = get(prefix() + ".timestampFieldName");
+        return v == null ? "@timestamp" : v;
     }
 
     /**
@@ -116,38 +98,42 @@ public interface ElasticConfig extends StepRegistryConfig {
      * @return whether to create the index automatically
      */
     default boolean autoCreateIndex() {
-        return getBoolean(this, "autoCreateIndex").orElse(true);
+        String v = get(prefix() + ".autoCreateIndex");
+        return v == null || Boolean.parseBoolean(v);
     }
 
     /**
      * The Basic Authentication username.
+     * Default is: "" (= do not perform Basic Authentication)
      *
      * @return username for Basic Authentication
      */
-    @Nullable
     default String userName() {
-        return getSecret(this, "userName").orElse(null);
+        String v = get(prefix() + ".userName");
+        return v == null ? "" : v;
     }
 
     /**
      * The Basic Authentication password.
+     * Default is: "" (= do not perform Basic Authentication)
      *
      * @return password for Basic Authentication
      */
-    @Nullable
     default String password() {
-        return getSecret(this, "password").orElse(null);
+        String v = get(prefix() + ".password");
+        return v == null ? "" : v;
     }
 
     /**
      * The ingest pipeline name.
+     * Default is: "" (= do not pre-process events)
      *
      * @return ingest pipeline name
      * @since 1.2.0
      */
-    @Nullable
     default String pipeline() {
-        return getString(this, "pipeline").orElse(null);
+        String v = get(prefix() + ".pipeline");
+        return v == null ? "" : v;
     }
 
     /**
@@ -158,7 +144,8 @@ public interface ElasticConfig extends StepRegistryConfig {
      * @since 1.2.0
      */
     default String indexDateSeparator() {
-        return getString(this, "indexDateSeparator").orElse("-");
+        String v = get(prefix() + ".indexDateSeparator");
+        return v == null ? "-" : v;
     }
 
     /**
@@ -170,31 +157,7 @@ public interface ElasticConfig extends StepRegistryConfig {
      * @since 1.4.0
      */
     default String documentType() {
-        return getString(this, "documentType").orElse("doc");
-    }
-
-    @Override
-    default Validated<?> validate() {
-        return checkAll(this,
-                c -> StepRegistryConfig.validate(c),
-                checkRequired("host", ElasticConfig::host),
-                checkRequired("index", ElasticConfig::index),
-                checkRequired("timestampFieldName", ElasticConfig::timestampFieldName),
-                checkRequired("indexDateFormat", ElasticConfig::indexDateFormat)
-                        .andThen(v -> v.invalidateWhen(format -> {
-                            if (format == null) {
-                                return true;
-                            }
-
-                            try {
-                                DateTimeFormatter.ofPattern(format);
-                                return false;
-                            } catch (IllegalArgumentException ignored) {
-                                return true;
-                            }
-                        }, "invalid date format", InvalidReason.MALFORMED)),
-                checkRequired("indexDateSeparator", ElasticConfig::indexDateSeparator),
-                checkRequired("documentType", ElasticConfig::documentType)
-        );
+        String v = get(prefix() + ".documentType");
+        return v == null ? "doc" : v;
     }
 }

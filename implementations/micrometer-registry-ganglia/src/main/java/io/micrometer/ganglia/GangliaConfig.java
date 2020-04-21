@@ -16,15 +16,10 @@
 package io.micrometer.ganglia;
 
 import info.ganglia.gmetric4j.gmetric.GMetric;
-import io.micrometer.core.instrument.config.validate.Validated;
 import io.micrometer.core.instrument.step.StepRegistryConfig;
 import io.micrometer.core.lang.Nullable;
 
 import java.util.concurrent.TimeUnit;
-
-import static io.micrometer.core.instrument.config.MeterRegistryConfigValidator.checkAll;
-import static io.micrometer.core.instrument.config.MeterRegistryConfigValidator.checkRequired;
-import static io.micrometer.core.instrument.config.validate.PropertyValidator.*;
 
 /**
  * Configuration for {@link GangliaMeterRegistry}.
@@ -53,55 +48,56 @@ public interface GangliaConfig extends StepRegistryConfig {
         return "ganglia";
     }
 
-    @Deprecated
-    @Nullable
     default TimeUnit rateUnits() {
-        return null;
+        String v = get(prefix() + ".rateUnits");
+        return v == null ? TimeUnit.SECONDS : TimeUnit.valueOf(v.toUpperCase());
     }
 
     default TimeUnit durationUnits() {
-        return getTimeUnit(this, "durationUnits").orElse(TimeUnit.MILLISECONDS);
+        String v = get(prefix() + ".durationUnits");
+        return v == null ? TimeUnit.MILLISECONDS : TimeUnit.valueOf(v.toUpperCase());
     }
 
-    @Deprecated
-    @Nullable
     default String protocolVersion() {
-        return null;
+        String v = get(prefix() + ".protocolVersion");
+        if (v == null)
+            return "3.1";
+        if (!v.equals("3.1") && !v.equals("3.0")) {
+            throw new IllegalArgumentException("Ganglia version must be one of 3.1 or 3.0 (check property " + prefix() + ".protocolVersion)");
+        }
+        return v;
     }
 
     default GMetric.UDPAddressingMode addressingMode() {
-        return getEnum(this, GMetric.UDPAddressingMode.class, "addressingMode")
-                .orElse(GMetric.UDPAddressingMode.MULTICAST);
+        String v = get(prefix() + ".addressingMode");
+        if (v == null)
+            return GMetric.UDPAddressingMode.MULTICAST;
+        if (!v.equalsIgnoreCase("unicast") && !v.equalsIgnoreCase("multicast")) {
+            throw new IllegalArgumentException("Ganglia UDP addressing mode must be one of 'unicast' or 'multicast' (check property " + prefix() + ".addressingMode)");
+        }
+        return GMetric.UDPAddressingMode.valueOf(v.toUpperCase());
     }
 
     default int ttl() {
-        return getInteger(this, "ttl").orElse(1);
+        String v = get(prefix() + ".ttl");
+        return (v == null) ? 1 : Integer.parseInt(v);
     }
 
     default String host() {
-        return getString(this, "host").orElse("localhost");
+        String v = get(prefix() + ".host");
+        return (v == null) ? "localhost" : v;
     }
 
     default int port() {
-        return getInteger(this, "port").orElse(8649);
+        String v = get(prefix() + ".port");
+        return (v == null) ? 8649 : Integer.parseInt(v);
     }
 
     /**
      * @return {@code true} if publishing is enabled. Default is {@code true}.
      */
     default boolean enabled() {
-        return getBoolean(this, "enabled").orElse(true);
-    }
-
-    @Override
-    default Validated<?> validate() {
-        return checkAll(this,
-                c -> StepRegistryConfig.validate(c),
-                checkRequired("host", GangliaConfig::host),
-                checkRequired("port", GangliaConfig::port),
-                checkRequired("ttl", GangliaConfig::ttl),
-                checkRequired("durationUnits", GangliaConfig::durationUnits),
-                checkRequired("addressingMode", GangliaConfig::addressingMode)
-        );
+        String v = get(prefix() + ".enabled");
+        return v == null || Boolean.parseBoolean(v);
     }
 }

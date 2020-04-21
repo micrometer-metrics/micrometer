@@ -15,32 +15,84 @@
  */
 package io.micrometer.datadog;
 
-import io.micrometer.core.instrument.config.validate.Validated;
-import org.junit.jupiter.api.Test;
+import io.micrometer.core.instrument.config.MissingRequiredConfigurationException;
 
-import java.util.HashMap;
-import java.util.Map;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.CsvSource;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 
 class DatadogConfigTest {
-    private final Map<String, String> props = new HashMap<>();
-    private final DatadogConfig config = props::get;
 
     @Test
-    void invalid() {
-        assertThat(config.validate().failures().stream().map(Validated.Invalid::getMessage))
-                .containsExactly("is required");
+    void returnsDefaultPrefix() {
+        assertThat(new TestDatadogConfig("value").prefix()).isEqualTo("datadog");
     }
 
     @Test
-    void valid() {
-        props.put("datadog.apiKey", "secret");
-        assertThat(config.validate().isValid()).isTrue();
+    void returnsApiKey() {
+        String expectedValue = "value";
+        assertThat(new TestDatadogConfig(expectedValue).apiKey()).isEqualTo(expectedValue);
+    }
+
+    @Test
+    void throwsConfigurationExceptionOnNullValue() {
+        assertThrows(MissingRequiredConfigurationException.class, () -> new TestDatadogConfig(null).apiKey());
+    }
+
+    @Test
+    void returnsApplicationKey() {
+        String expectedValue = "value";
+        assertThat(new TestDatadogConfig(expectedValue).applicationKey()).isEqualTo(expectedValue);
+    }
+
+    @Test
+    void returnsHostTag() {
+        String expectedValue = "value";
+        assertThat(new TestDatadogConfig(expectedValue).hostTag()).isEqualTo(expectedValue);
     }
 
     @Test
     void defaultsHostTagWhenMissing() {
-        assertThat(config.hostTag()).isEqualTo("instance");
+        assertThat(new TestDatadogConfig(null).hostTag()).isEqualTo("instance");
+    }
+
+    @Test
+    void returnsUri() {
+        String expectedValue = "value";
+        assertThat(new TestDatadogConfig(expectedValue).uri()).isEqualTo(expectedValue);
+    }
+
+    @Test
+    void defaultsUriWhenMissing() {
+        assertThat(new TestDatadogConfig(null).uri()).isEqualTo("https://api.datadoghq.com");
+    }
+
+    @Test
+    void returnsTrueOnNullDescription() {
+        assertThat(new TestDatadogConfig(null).descriptions()).isTrue();
+    }
+
+    @ParameterizedTest
+    @CsvSource({"true", "false"})
+    void returnsExpectedBooleanDescription(String value) {
+        assertThat(new TestDatadogConfig(value).descriptions()).isEqualTo(Boolean.valueOf(value));
+    }
+
+    private static class TestDatadogConfig implements DatadogConfig {
+
+        private final String value;
+
+        private TestDatadogConfig(String value) {
+            this.value = value;
+        }
+
+        @Override
+        public String get(String key) {
+            return value;
+        }
+
     }
 }
