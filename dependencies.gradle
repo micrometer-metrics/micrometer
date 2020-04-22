@@ -50,10 +50,9 @@ def VERSIONS = [
         'org.eclipse.jetty:jetty-client:9.+',
         'org.eclipse.jetty:jetty-server:9.+',
         'org.ehcache:ehcache:latest.release',
-        // TODO switch back to 2.+ when https://issues.sonatype.org/browse/MVNCENTRAL-5714 is resolved
-        'org.glassfish.jersey.core:jersey-server:2.30.1',
-        'org.glassfish.jersey.inject:jersey-hk2:2.30.1',
-        'org.glassfish.jersey.test-framework.providers:jersey-test-framework-provider-inmemory:2.30.1',
+        'org.glassfish.jersey.core:jersey-server:2.+',
+        'org.glassfish.jersey.inject:jersey-hk2:2.+',
+        'org.glassfish.jersey.test-framework.providers:jersey-test-framework-provider-inmemory:2.+',
         'org.hdrhistogram:HdrHistogram:latest.release',
         'org.hibernate:hibernate-entitymanager:latest.release',
         'org.hsqldb:hsqldb:latest.release',
