@@ -182,9 +182,9 @@ subprojects {
         }
 
         contacts {
-            'jschneider@pivotal.io' {
-                moniker 'Jon Schneider'
-                github 'jkschneider'
+            'tludwig@vmware.com' {
+                moniker 'Tommy Ludwig'
+                github 'shakuzen'
             }
         }
 
