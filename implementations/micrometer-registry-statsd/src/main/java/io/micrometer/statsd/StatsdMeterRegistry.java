@@ -38,7 +38,6 @@ import reactor.netty.Connection;
 import reactor.netty.tcp.TcpClient;
 import reactor.netty.udp.UdpClient;
 import reactor.util.context.Context;
-import reactor.util.retry.Retry;
 
 import java.net.PortUnreachableException;
 import java.time.Duration;
@@ -266,7 +265,7 @@ public class StatsdMeterRegistry extends MeterRegistry {
 
     private void retryReplaceClient(Mono<? extends Connection> connection) {
          connection
-                 .retryWhen(Retry.backoff(Long.MAX_VALUE, Duration.ofSeconds(1)).maxBackoff(Duration.ofMinutes(1)))
+                 .retryBackoff(Long.MAX_VALUE, Duration.ofSeconds(1), Duration.ofMinutes(1))
                  .subscribe(client -> {
                      this.client.replace(client);
 
