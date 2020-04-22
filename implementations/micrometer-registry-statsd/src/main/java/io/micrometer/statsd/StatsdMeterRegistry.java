@@ -267,7 +267,7 @@ public class StatsdMeterRegistry extends MeterRegistry {
             }
             return Mono.empty();
         })
-                .retryWhen(Retry.backoff(Long.MAX_VALUE, Duration.ofSeconds(1)).maxBackoff(Duration.ofMinutes(1)))
+                .retryBackoff(Long.MAX_VALUE, Duration.ofSeconds(1), Duration.ofMinutes(1))
                 .subscribe(client -> {
                     this.client.replace(client);
 
