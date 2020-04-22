@@ -22,6 +22,7 @@ dependencies {
 
     // server runtime monitoring
     optionalApi 'org.eclipse.jetty:jetty-server'
+    optionalApi 'org.eclipse.jetty:jetty-client'
     optionalApi 'org.apache.tomcat.embed:tomcat-embed-core'
 
     // apache httpcomponents monitoring
@@ -62,8 +63,6 @@ dependencies {
     testImplementation 'org.mockito:mockito-core'
 
     testImplementation 'org.hsqldb:hsqldb'
-
-    testImplementation 'org.eclipse.jetty:jetty-client'
 
     // dependency injection tests
     testImplementation 'javax.inject:javax.inject'
