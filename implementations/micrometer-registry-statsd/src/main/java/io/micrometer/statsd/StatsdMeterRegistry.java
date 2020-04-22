@@ -34,6 +34,7 @@ import reactor.core.publisher.DirectProcessor;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.FluxSink;
 import reactor.core.publisher.Mono;
+import reactor.netty.Connection;
 import reactor.netty.tcp.TcpClient;
 import reactor.netty.udp.UdpClient;
 import reactor.util.context.Context;
@@ -220,7 +221,8 @@ public class StatsdMeterRegistry extends MeterRegistry {
     }
 
     private void prepareUdpClient(Publisher<String> publisher) {
-        UdpClient.create()
+        AtomicReference<UdpClient> udpClientReference = new AtomicReference<>();
+        UdpClient udpClient = UdpClient.create()
                 .host(statsdConfig.host())
                 .port(statsdConfig.port())
                 .handle((in, out) -> out
@@ -228,13 +230,9 @@ public class StatsdMeterRegistry extends MeterRegistry {
                         .neverComplete()
                         .retryWhen(Retry.indefinitely().filter(throwable -> throwable instanceof PortUnreachableException))
                 )
-                .connect()
-                .subscribe(client -> {
-                    this.client.replace(client);
-
-                    // now that we're connected, start polling gauges and other pollable meter types
-                    startPolling();
-                });
+                .doOnDisconnected(connection -> connectAndSubscribe(udpClientReference.get()));
+        udpClientReference.set(udpClient);
+        connectAndSubscribe(udpClient);
     }
 
     private void prepareTcpClient(Publisher<String> publisher) {
@@ -251,19 +249,32 @@ public class StatsdMeterRegistry extends MeterRegistry {
     }
 
     private void connectAndSubscribe(TcpClient tcpClient) {
-        Mono.defer(() -> {
+        retryReplaceClient(Mono.defer(() -> {
             if (started.get()) {
                 return tcpClient.connect();
             }
             return Mono.empty();
-        })
-                .retryWhen(Retry.backoff(Long.MAX_VALUE, Duration.ofSeconds(1)).maxBackoff(Duration.ofMinutes(1)))
-                .subscribe(client -> {
-                    this.client.replace(client);
+        }));
+    }
 
-                    // now that we're connected, start polling gauges and other pollable meter types
-                    startPolling();
-                });
+    private void connectAndSubscribe(UdpClient udpClient) {
+        retryReplaceClient(Mono.defer(() -> {
+            if (started.get()) {
+                return udpClient.connect();
+            }
+            return Mono.empty();
+        }));
+    }
+
+    private void retryReplaceClient(Mono<? extends Connection> connection) {
+         connection
+                 .retryWhen(Retry.backoff(Long.MAX_VALUE, Duration.ofSeconds(1)).maxBackoff(Duration.ofMinutes(1)))
+                 .subscribe(client -> {
+                     this.client.replace(client);
+
+                     // now that we're connected, start polling gauges and other pollable meter types
+                     startPolling();
+                 });
     }
 
     private void startPolling() {
