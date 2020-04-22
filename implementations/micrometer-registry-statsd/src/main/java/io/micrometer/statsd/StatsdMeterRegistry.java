@@ -34,9 +34,11 @@ import reactor.core.publisher.DirectProcessor;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.FluxSink;
 import reactor.core.publisher.Mono;
+import reactor.netty.Connection;
 import reactor.netty.tcp.TcpClient;
 import reactor.netty.udp.UdpClient;
 import reactor.util.context.Context;
+import reactor.util.retry.Retry;
 
 import java.net.PortUnreachableException;
 import java.time.Duration;
@@ -245,35 +247,32 @@ public class StatsdMeterRegistry extends MeterRegistry {
     }
 
     private void connectAndSubscribe(TcpClient tcpClient) {
-        Mono.defer(() -> {
+        retryReplaceClient(Mono.defer(() -> {
             if (started.get()) {
                 return tcpClient.connect();
             }
             return Mono.empty();
-        })
-                .retryBackoff(Long.MAX_VALUE, Duration.ofSeconds(1), Duration.ofMinutes(1))
-                .subscribe(client -> {
-                    this.client.replace(client);
-
-                    // now that we're connected, start polling gauges and other pollable meter types
-                    startPolling();
-                });
+        }));
     }
 
     private void connectAndSubscribe(UdpClient udpClient) {
-        Mono.defer(() -> {
+        retryReplaceClient(Mono.defer(() -> {
             if (started.get()) {
                 return udpClient.connect();
             }
             return Mono.empty();
-        })
-                .retryWhen(Retry.backoff(Long.MAX_VALUE, Duration.ofSeconds(1)).maxBackoff(Duration.ofMinutes(1)))
-                .subscribe(client -> {
-                    this.client.replace(client);
+        }));
+    }
 
-                    // now that we're connected, start polling gauges and other pollable meter types
-                    startPolling();
-                });
+    private void retryReplaceClient(Mono<? extends Connection> connection) {
+         connection
+                 .retryWhen(Retry.backoff(Long.MAX_VALUE, Duration.ofSeconds(1)).maxBackoff(Duration.ofMinutes(1)))
+                 .subscribe(client -> {
+                     this.client.replace(client);
+
+                     // now that we're connected, start polling gauges and other pollable meter types
+                     startPolling();
+                 });
     }
 
     private void startPolling() {
