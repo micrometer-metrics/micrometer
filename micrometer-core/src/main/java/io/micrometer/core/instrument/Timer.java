@@ -439,6 +439,7 @@ public interface Timer extends Meter, HistogramSupport {
          *
          * @param slos Publish SLO boundaries in the set of histogram buckets shipped to the monitoring system.
          * @return This builder.
+         * @since 1.5.0
          */
         public Builder serviceLevelObjectives(@Nullable Duration... slos) {
             if (slos != null) {
