@@ -175,6 +175,12 @@ subprojects {
     if(!['samples', 'benchmarks'].find{project.name.contains(it)}) {
         apply plugin: 'io.spring.publishing'
 
+        if (project.name != 'micrometer-bom') {
+            jar {
+                manifest.attributes.put('Automatic-Module-Name', project.name.replace('-', '.'))
+            }
+        }
+
         contacts {
             'jschneider@pivotal.io' {
                 moniker 'Jon Schneider'
