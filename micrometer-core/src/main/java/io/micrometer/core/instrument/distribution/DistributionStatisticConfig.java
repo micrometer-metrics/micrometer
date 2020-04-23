@@ -158,7 +158,7 @@ public class DistributionStatisticConfig implements Mergeable<DistributionStatis
      *
      * @return The minimum value that this distribution summary is expected to observe.
      * @deprecated Use {@link #getMinimumExpectedValueAsDouble}. If you use this method, your code
-     * will not be compatible with code that uses Micrometer 1.4.x and later.
+     * will not be compatible with code that uses Micrometer 1.3.x.
      */
     @Deprecated
     @Nullable
@@ -183,7 +183,7 @@ public class DistributionStatisticConfig implements Mergeable<DistributionStatis
      *
      * @return The maximum value that the meter is expected to observe.
      * @deprecated Use {@link #getMaximumExpectedValueAsDouble}. If you use this method, your code
-     * will not be compatible with code that uses Micrometer 1.4.x and later.
+     * will not be compatible with code that uses Micrometer 1.3.x.
      */
     @Deprecated
     @Nullable
