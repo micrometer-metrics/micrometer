@@ -153,6 +153,10 @@ public class DistributionStatisticConfig implements Mergeable<DistributionStatis
     }
 
     /**
+     * The minimum value that the meter is expected to observe. Sets a lower bound
+     * on histogram buckets that are shipped to monitoring systems that support aggregable percentile approximations.
+     *
+     * @return The minimum value that this distribution summary is expected to observe.
      * @deprecated Use {@link #getMinimumExpectedValueAsDouble}. If you use this method, your code
      * will not be compatible with code that uses Micrometer 1.4.x and later.
      */
@@ -174,6 +178,10 @@ public class DistributionStatisticConfig implements Mergeable<DistributionStatis
     }
 
     /**
+     * The maximum value that the meter is expected to observe. Sets an upper bound
+     * on histogram buckets that are shipped to monitoring systems that support aggregable percentile approximations.
+     *
+     * @return The maximum value that the meter is expected to observe.
      * @deprecated Use {@link #getMaximumExpectedValueAsDouble}. If you use this method, your code
      * will not be compatible with code that uses Micrometer 1.4.x and later.
      */
@@ -221,8 +229,14 @@ public class DistributionStatisticConfig implements Mergeable<DistributionStatis
     }
 
     /**
+     * Publish at a minimum a histogram containing your defined SLA boundaries. When used in conjunction with
+     * {@link #percentileHistogram}, the boundaries defined here are included alongside other buckets used to
+     * generate aggregable percentile approximations. If the {@link DistributionStatisticConfig} is meant for
+     * use with a {@link io.micrometer.core.instrument.Timer}, the SLA unit is in nanoseconds.
+     *
+     * @return The SLA boundaries to include the set of histogram buckets shipped to the monitoring system.
      * @deprecated Use {@link #getServiceLevelObjectiveBoundaries()}. If you use this method, your
-     * code will not be compatible with code that uses Micrometer 1.4.x and later.
+     * code will not be compatible with code that uses Micrometer 1.5.x and later.
      */
     @Deprecated
     @Nullable
@@ -231,12 +245,12 @@ public class DistributionStatisticConfig implements Mergeable<DistributionStatis
     }
 
     /**
-     * Publish at a minimum a histogram containing your defined SLA boundaries. When used in conjunction with
+     * Publish at a minimum a histogram containing your defined SLO boundaries. When used in conjunction with
      * {@link #percentileHistogram}, the boundaries defined here are included alongside other buckets used to
      * generate aggregable percentile approximations. If the {@link DistributionStatisticConfig} is meant for
-     * use with a {@link io.micrometer.core.instrument.Timer}, the SLA unit is in nanoseconds.
+     * use with a {@link io.micrometer.core.instrument.Timer}, the SLO unit is in nanoseconds.
      *
-     * @return The SLA boundaries to include the set of histogram buckets shipped to the monitoring system.
+     * @return The SLO boundaries to include the set of histogram buckets shipped to the monitoring system.
      */
     @Nullable
     public double[] getServiceLevelObjectiveBoundaries() {
