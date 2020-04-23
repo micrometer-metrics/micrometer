@@ -63,7 +63,7 @@ class CompositeDistributionSummary extends AbstractCompositeMeter<DistributionSu
         return new NoopDistributionSummary(getId());
     }
 
-    @SuppressWarnings("ConstantConditions")
+    @SuppressWarnings({"ConstantConditions", "deprecation"})
     @Override
     DistributionSummary registerNewMeter(MeterRegistry registry) {
         return DistributionSummary.builder(getId().getName())

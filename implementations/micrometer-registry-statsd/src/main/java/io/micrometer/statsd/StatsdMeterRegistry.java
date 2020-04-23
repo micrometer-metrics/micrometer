@@ -299,6 +299,7 @@ public class StatsdMeterRegistry extends MeterRegistry {
         return lineBuilderFunction.apply(id);
     }
 
+    @SuppressWarnings("deprecation")
     private DistributionStatisticConfig addInfBucket(DistributionStatisticConfig config) {
         long[] slas = config.getSlaBoundaries() == null ? new long[]{Long.MAX_VALUE} :
                 LongStream.concat(Arrays.stream(config.getSlaBoundaries()), LongStream.of(Long.MAX_VALUE)).toArray();
@@ -326,7 +327,7 @@ public class StatsdMeterRegistry extends MeterRegistry {
             pauseDetector) {
 
         // Adds an infinity bucket for SLA violation calculation
-        if (distributionStatisticConfig.getSlaBoundaries() != null) {
+        if (distributionStatisticConfig.getServiceLevelObjectiveBoundaries() != null) {
             distributionStatisticConfig = addInfBucket(distributionStatisticConfig);
         }
 
@@ -342,7 +343,7 @@ public class StatsdMeterRegistry extends MeterRegistry {
             distributionStatisticConfig, double scale) {
 
         // Adds an infinity bucket for SLA violation calculation
-        if (distributionStatisticConfig.getSlaBoundaries() != null) {
+        if (distributionStatisticConfig.getServiceLevelObjectiveBoundaries() != null) {
             distributionStatisticConfig = addInfBucket(distributionStatisticConfig);
         }
 

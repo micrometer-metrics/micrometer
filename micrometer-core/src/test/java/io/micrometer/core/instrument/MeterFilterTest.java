@@ -37,6 +37,7 @@ import static org.mockito.Mockito.*;
  * @author Jon Schneider
  * @author Johnny Lim
  */
+@SuppressWarnings("deprecation")
 class MeterFilterTest {
     private static Condition<Meter.Id> tag(String tagKey) {
         return tag(tagKey, null);

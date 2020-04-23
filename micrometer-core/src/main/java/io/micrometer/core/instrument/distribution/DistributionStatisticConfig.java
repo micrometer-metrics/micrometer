@@ -19,6 +19,7 @@ import io.micrometer.core.instrument.internal.Mergeable;
 import io.micrometer.core.lang.Nullable;
 
 import java.time.Duration;
+import java.util.Arrays;
 import java.util.NavigableSet;
 import java.util.TreeSet;
 
@@ -55,6 +56,9 @@ public class DistributionStatisticConfig implements Mergeable<DistributionStatis
 
     @Nullable
     private long[] sla;
+
+    @Nullable
+    private double[] slaAsDouble;
 
     @Nullable
     private Long minimumExpectedValue;
@@ -153,10 +157,38 @@ public class DistributionStatisticConfig implements Mergeable<DistributionStatis
      * on histogram buckets that are shipped to monitoring systems that support aggregable percentile approximations.
      *
      * @return The minimum value that this distribution summary is expected to observe.
+     * @deprecated Use {@link #getMinimumExpectedValueAsDouble}. If you use this method, your code
+     * will not be compatible with code that uses Micrometer 1.4.x and later.
      */
+    @Deprecated
     @Nullable
     public Long getMinimumExpectedValue() {
         return minimumExpectedValue;
+    }
+
+    /**
+     * The minimum value that the meter is expected to observe. Sets a lower bound
+     * on histogram buckets that are shipped to monitoring systems that support aggregable percentile approximations.
+     *
+     * @return The minimum value that this distribution summary is expected to observe.
+     */
+    @Nullable
+    public Double getMinimumExpectedValueAsDouble() {
+        return minimumExpectedValue != null ? (double) minimumExpectedValue : null;
+    }
+
+    /**
+     * The maximum value that the meter is expected to observe. Sets an upper bound
+     * on histogram buckets that are shipped to monitoring systems that support aggregable percentile approximations.
+     *
+     * @return The maximum value that the meter is expected to observe.
+     * @deprecated Use {@link #getMaximumExpectedValueAsDouble}. If you use this method, your code
+     * will not be compatible with code that uses Micrometer 1.4.x and later.
+     */
+    @Deprecated
+    @Nullable
+    public Long getMaximumExpectedValue() {
+        return maximumExpectedValue;
     }
 
     /**
@@ -166,8 +198,8 @@ public class DistributionStatisticConfig implements Mergeable<DistributionStatis
      * @return The maximum value that the meter is expected to observe.
      */
     @Nullable
-    public Long getMaximumExpectedValue() {
-        return maximumExpectedValue;
+    public Double getMaximumExpectedValueAsDouble() {
+        return maximumExpectedValue != null ? (double) maximumExpectedValue : null;
     }
 
     /**
@@ -203,10 +235,26 @@ public class DistributionStatisticConfig implements Mergeable<DistributionStatis
      * use with a {@link io.micrometer.core.instrument.Timer}, the SLA unit is in nanoseconds.
      *
      * @return The SLA boundaries to include the set of histogram buckets shipped to the monitoring system.
+     * @deprecated Use {@link #getServiceLevelObjectiveBoundaries()}. If you use this method, your
+     * code will not be compatible with code that uses Micrometer 1.5.x and later.
      */
+    @Deprecated
     @Nullable
     public long[] getSlaBoundaries() {
         return sla;
+    }
+
+    /**
+     * Publish at a minimum a histogram containing your defined SLO boundaries. When used in conjunction with
+     * {@link #percentileHistogram}, the boundaries defined here are included alongside other buckets used to
+     * generate aggregable percentile approximations. If the {@link DistributionStatisticConfig} is meant for
+     * use with a {@link io.micrometer.core.instrument.Timer}, the SLO unit is in nanoseconds.
+     *
+     * @return The SLO boundaries to include the set of histogram buckets shipped to the monitoring system.
+     */
+    @Nullable
+    public double[] getServiceLevelObjectiveBoundaries() {
+        return slaAsDouble;
     }
 
     public static class Builder {
@@ -255,6 +303,7 @@ public class DistributionStatisticConfig implements Mergeable<DistributionStatis
          */
         public Builder sla(@Nullable long... sla) {
             config.sla = sla;
+            config.slaAsDouble = sla != null ? Arrays.stream(sla).asDoubleStream().toArray() : null;
             return this;
         }
 
