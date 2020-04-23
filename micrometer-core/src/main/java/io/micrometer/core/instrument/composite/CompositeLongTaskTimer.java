@@ -98,7 +98,7 @@ class CompositeLongTaskTimer extends AbstractCompositeMeter<LongTaskTimer> imple
         return builder.register(registry);
     }
 
-    public static class CompositeSample extends Sample {
+    static class CompositeSample extends Sample {
         private final List<Sample> samples;
 
         private CompositeSample(List<Sample> samples) {

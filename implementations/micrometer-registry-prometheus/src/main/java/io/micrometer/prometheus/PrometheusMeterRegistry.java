@@ -212,7 +212,7 @@ public class PrometheusMeterRegistry extends MeterRegistry {
     @Override
     protected LongTaskTimer newLongTaskTimer(Meter.Id id, DistributionStatisticConfig distributionStatisticConfig) {
         MicrometerCollector collector = collectorByName(id);
-        LongTaskTimer ltt = new PrometheusLongTaskTimer(id, clock, getBaseTimeUnit(), distributionStatisticConfig, true);
+        LongTaskTimer ltt = new PrometheusLongTaskTimer(id, clock, getBaseTimeUnit(), distributionStatisticConfig);
         List<String> tagValues = tagValues(id);
 
         collector.add(tagValues, (conventionName, tagKeys) -> Stream.of(new MicrometerCollector.Family(Collector.Type.UNTYPED, conventionName,

@@ -43,9 +43,9 @@ public class DefaultLongTaskTimer extends AbstractMeter implements LongTaskTimer
     private final Deque<SampleImpl> activeTasks = new ConcurrentLinkedDeque<>();
 
     private final Clock clock;
+    private final TimeUnit baseTimeUnit;
     private final DistributionStatisticConfig distributionStatisticConfig;
     private final boolean supportsAggregablePercentiles;
-    private final TimeUnit baseTimeUnit;
 
     /**
      * @deprecated Use {@link #DefaultLongTaskTimer(Id, Clock, TimeUnit, DistributionStatisticConfig, boolean)} instead.
@@ -55,13 +55,23 @@ public class DefaultLongTaskTimer extends AbstractMeter implements LongTaskTimer
         this(id, clock, TimeUnit.MILLISECONDS, DistributionStatisticConfig.DEFAULT, false);
     }
 
+    /**
+     * Create a {@code DefaultLongTaskTimer} instance.
+     *
+     * @param id ID
+     * @param clock clock
+     * @param baseTimeUnit base time unit
+     * @param distributionStatisticConfig distribution statistic configuration
+     * @param supportsAggregablePercentiles whether it supports aggregable percentiles
+     * @since 1.5.0
+     */
     public DefaultLongTaskTimer(Id id, Clock clock, TimeUnit baseTimeUnit, DistributionStatisticConfig distributionStatisticConfig,
                                 boolean supportsAggregablePercentiles) {
         super(id);
         this.clock = clock;
+        this.baseTimeUnit = baseTimeUnit;
         this.distributionStatisticConfig = distributionStatisticConfig;
         this.supportsAggregablePercentiles = supportsAggregablePercentiles;
-        this.baseTimeUnit = baseTimeUnit;
     }
 
     @Override
@@ -119,7 +129,6 @@ public class DefaultLongTaskTimer extends AbstractMeter implements LongTaskTimer
 
         NavigableSet<Double> buckets = distributionStatisticConfig.getHistogramBuckets(supportsAggregablePercentiles);
 
-        ValueAtPercentile[] valueAtPercentilesArr = new ValueAtPercentile[0];
         CountAtBucket[] countAtBucketsArr = new CountAtBucket[0];
 
         List<Double> percentilesAboveInterpolatableLine = percentilesRequested.stream()
@@ -157,9 +166,9 @@ public class DefaultLongTaskTimer extends AbstractMeter implements LongTaskTimer
                         double percentileValue = activeTask.duration(TimeUnit.NANOSECONDS);
                         if (i != rank && priorActiveTask != null) {
                             // interpolate the percentile value when the active task rank is non-integral
-                            percentileValue = priorActiveTask.duration(TimeUnit.NANOSECONDS) +
-                                    ((percentileValue - priorActiveTask.duration(TimeUnit.NANOSECONDS)) *
-                                            (rank - (int) rank));
+                            double priorPercentileValue = priorActiveTask.duration(TimeUnit.NANOSECONDS);
+                            percentileValue = priorPercentileValue +
+                                    ((percentileValue - priorPercentileValue) * (rank - (int) rank));
                         }
 
                         valueAtPercentiles.add(new ValueAtPercentile(percentile, percentileValue));
@@ -187,7 +196,7 @@ public class DefaultLongTaskTimer extends AbstractMeter implements LongTaskTimer
             valueAtPercentiles.add(new ValueAtPercentile(percentile, max));
         }
 
-        valueAtPercentilesArr = valueAtPercentiles.toArray(valueAtPercentilesArr);
+        ValueAtPercentile[] valueAtPercentilesArr = valueAtPercentiles.toArray(new ValueAtPercentile[0]);
 
         return new HistogramSnapshot(
                 activeTasks.size(),
@@ -199,7 +208,7 @@ public class DefaultLongTaskTimer extends AbstractMeter implements LongTaskTimer
         );
     }
 
-    public class SampleImpl extends Sample {
+    class SampleImpl extends Sample {
         private final long startTime;
         private volatile boolean stopped = false;
 
@@ -226,9 +235,10 @@ public class DefaultLongTaskTimer extends AbstractMeter implements LongTaskTimer
 
         @Override
         public String toString() {
+            double durationInNanoseconds = duration(TimeUnit.NANOSECONDS);
             return "SampleImpl{" +
-                    "duration(seconds)=" + duration(TimeUnit.SECONDS) + ", " +
-                    "duration(nanos)=" + duration(TimeUnit.NANOSECONDS) + ", " +
+                    "duration(seconds)=" + TimeUtils.nanosToUnit(durationInNanoseconds, TimeUnit.SECONDS) + ", " +
+                    "duration(nanos)=" + durationInNanoseconds + ", " +
                     "startTimeNanos=" + startTime +
                     '}';
         }

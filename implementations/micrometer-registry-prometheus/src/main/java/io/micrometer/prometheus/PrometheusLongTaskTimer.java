@@ -28,13 +28,16 @@ import java.util.concurrent.atomic.AtomicInteger;
 
 /**
  * Extends the default long task timer, making histogram counts cumulative over time.
+ *
+ * @author Jon Schneider
+ * @since 1.5.0
  */
 public class PrometheusLongTaskTimer extends DefaultLongTaskTimer {
     @Nullable
     private CountAtBucket[] lastSnapshot;
 
-    public PrometheusLongTaskTimer(Id id, Clock clock, TimeUnit baseTimeUnit, DistributionStatisticConfig distributionStatisticConfig, boolean supportsAggregablePercentiles) {
-        super(id, clock, baseTimeUnit, distributionStatisticConfig, supportsAggregablePercentiles);
+    public PrometheusLongTaskTimer(Id id, Clock clock, TimeUnit baseTimeUnit, DistributionStatisticConfig distributionStatisticConfig) {
+        super(id, clock, baseTimeUnit, distributionStatisticConfig, true);
     }
 
     @Override
