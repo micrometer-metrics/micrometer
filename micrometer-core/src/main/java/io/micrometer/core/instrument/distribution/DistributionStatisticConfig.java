@@ -216,12 +216,13 @@ public class DistributionStatisticConfig implements Mergeable<DistributionStatis
     }
 
     /**
-     * Publish at a minimum a histogram containing your defined SLA boundaries. When used in conjunction with
+     * Publish at a minimum a histogram containing your defined SLO boundaries. When used in conjunction with
      * {@link #percentileHistogram}, the boundaries defined here are included alongside other buckets used to
      * generate aggregable percentile approximations. If the {@link DistributionStatisticConfig} is meant for
-     * use with a {@link io.micrometer.core.instrument.Timer}, the SLA unit is in nanoseconds.
+     * use with a {@link io.micrometer.core.instrument.Timer}, the SLO unit is in nanoseconds.
      *
-     * @return The SLA boundaries to include the set of histogram buckets shipped to the monitoring system.
+     * @return The SLO boundaries to include the set of histogram buckets shipped to the monitoring system.
+     * @since 1.5.0
      */
     @Nullable
     public double[] getServiceLevelObjectiveBoundaries() {
@@ -267,7 +268,7 @@ public class DistributionStatisticConfig implements Mergeable<DistributionStatis
          * Publish at a minimum a histogram containing your defined Service Level Objective (SLO) boundaries. When used
          * in conjunction with {@link #percentileHistogram}, the boundaries defined here are included alongside other buckets used to
          * generate aggregable percentile approximations. If the {@link DistributionStatisticConfig} is meant for
-         * use with a {@link io.micrometer.core.instrument.Timer}, the SLA unit is in nanoseconds.
+         * use with a {@link io.micrometer.core.instrument.Timer}, the SLO unit is in nanoseconds.
          *
          * @param slos The SLO boundaries to include the set of histogram buckets shipped to the monitoring system.
          * @return This builder.
