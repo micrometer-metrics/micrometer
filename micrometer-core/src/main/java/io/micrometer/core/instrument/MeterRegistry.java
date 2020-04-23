@@ -140,10 +140,18 @@ public abstract class MeterRegistry {
     @SuppressWarnings("DeprecatedIsStillUsed")
     @Deprecated
     protected LongTaskTimer newLongTaskTimer(Meter.Id id) {
-        throw new UnsupportedOperationException("MeterRegistry implementations may still override this, but it is only" +
-                "invoked by the overloaded form of newLongTaskTimer for backwards compatibility");
+        throw new UnsupportedOperationException("MeterRegistry implementations may still override this, but it is only " +
+                "invoked by the overloaded form of newLongTaskTimer for backwards compatibility.");
     }
 
+    /**
+     * Build a new long task timer to be added to the registry. This is guaranteed to only be called if the long task timer doesn't already exist.
+     *
+     * @param id The id that uniquely identifies the long task timer.
+     * @param distributionStatisticConfig Configuration for published distribution statistics.
+     * @return A new long task timer.
+     * @since 1.5.0
+     */
     protected LongTaskTimer newLongTaskTimer(Meter.Id id, DistributionStatisticConfig distributionStatisticConfig) {
         return newLongTaskTimer(id); // default implementation for backwards compatibility
     }

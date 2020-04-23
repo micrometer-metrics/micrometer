@@ -345,6 +345,7 @@ public class StatsdMeterRegistry extends MeterRegistry {
     protected LongTaskTimer newLongTaskTimer(Meter.Id id, DistributionStatisticConfig distributionStatisticConfig) {
         StatsdLongTaskTimer ltt = new StatsdLongTaskTimer(id, lineBuilder(id), fluxSink, clock, statsdConfig.publishUnchangedMeters(),
                 distributionStatisticConfig, getBaseTimeUnit());
+        HistogramGauges.registerWithCommonFormat(ltt, this);
         pollableMeters.put(id, ltt);
         return ltt;
     }

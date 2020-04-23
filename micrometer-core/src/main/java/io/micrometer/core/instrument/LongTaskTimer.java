@@ -149,6 +149,7 @@ public interface LongTaskTimer extends Meter, HistogramSupport {
 
     /**
      * @return The base time unit of the long task timer to which all published metrics will be scaled
+     * @since 1.5.0
      */
     TimeUnit baseTimeUnit();
 
