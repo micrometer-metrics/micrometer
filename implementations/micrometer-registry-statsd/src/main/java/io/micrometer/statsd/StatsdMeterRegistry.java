@@ -325,8 +325,8 @@ public class StatsdMeterRegistry extends MeterRegistry {
     }
 
     private DistributionStatisticConfig addInfBucket(DistributionStatisticConfig config) {
-        double[] slas = config.getSlaBoundaries() == null ? new double[]{Double.POSITIVE_INFINITY} :
-                DoubleStream.concat(Arrays.stream(config.getSlaBoundaries()), DoubleStream.of(Double.POSITIVE_INFINITY)).toArray();
+        double[] slas = config.getServiceLevelObjectiveBoundaries() == null ? new double[]{Double.POSITIVE_INFINITY} :
+                DoubleStream.concat(Arrays.stream(config.getServiceLevelObjectiveBoundaries()), DoubleStream.of(Double.POSITIVE_INFINITY)).toArray();
         return DistributionStatisticConfig.builder()
                 .sla(slas)
                 .build()
@@ -350,7 +350,7 @@ public class StatsdMeterRegistry extends MeterRegistry {
             pauseDetector) {
 
         // Adds an infinity bucket for SLA violation calculation
-        if (distributionStatisticConfig.getSlaBoundaries() != null) {
+        if (distributionStatisticConfig.getServiceLevelObjectiveBoundaries() != null) {
             distributionStatisticConfig = addInfBucket(distributionStatisticConfig);
         }
 
@@ -365,7 +365,7 @@ public class StatsdMeterRegistry extends MeterRegistry {
             distributionStatisticConfig, double scale) {
 
         // Adds an infinity bucket for SLA violation calculation
-        if (distributionStatisticConfig.getSlaBoundaries() != null) {
+        if (distributionStatisticConfig.getServiceLevelObjectiveBoundaries() != null) {
             distributionStatisticConfig = addInfBucket(distributionStatisticConfig);
         }
 

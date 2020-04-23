@@ -72,12 +72,12 @@ class CompositeDistributionSummary extends AbstractCompositeMeter<DistributionSu
                 .baseUnit(getId().getBaseUnit())
                 .publishPercentiles(distributionStatisticConfig.getPercentiles())
                 .publishPercentileHistogram(distributionStatisticConfig.isPercentileHistogram())
-                .maximumExpectedValue(distributionStatisticConfig.getMaximumExpectedValue())
-                .minimumExpectedValue(distributionStatisticConfig.getMinimumExpectedValue())
+                .maximumExpectedValue(distributionStatisticConfig.getMaximumExpectedValueAsDouble())
+                .minimumExpectedValue(distributionStatisticConfig.getMinimumExpectedValueAsDouble())
                 .distributionStatisticBufferLength(distributionStatisticConfig.getBufferLength())
                 .distributionStatisticExpiry(distributionStatisticConfig.getExpiry())
                 .percentilePrecision(distributionStatisticConfig.getPercentilePrecision())
-                .sla(distributionStatisticConfig.getSlaBoundaries())
+                .sla(distributionStatisticConfig.getServiceLevelObjectiveBoundaries())
                 .scale(scale)
                 .register(registry);
     }

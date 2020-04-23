@@ -119,8 +119,8 @@ class CompositeTimer extends AbstractCompositeMeter<Timer> implements Timer {
         Timer.Builder builder = Timer.builder(getId().getName())
                 .tags(getId().getTagsAsIterable())
                 .description(getId().getDescription())
-                .maximumExpectedValue(Duration.ofNanos(distributionStatisticConfig.getMaximumExpectedValue().longValue()))
-                .minimumExpectedValue(Duration.ofNanos(distributionStatisticConfig.getMinimumExpectedValue().longValue()))
+                .maximumExpectedValue(Duration.ofNanos(distributionStatisticConfig.getMaximumExpectedValueAsDouble().longValue()))
+                .minimumExpectedValue(Duration.ofNanos(distributionStatisticConfig.getMinimumExpectedValueAsDouble().longValue()))
                 .publishPercentiles(distributionStatisticConfig.getPercentiles())
                 .publishPercentileHistogram(distributionStatisticConfig.isPercentileHistogram())
                 .distributionStatisticBufferLength(distributionStatisticConfig.getBufferLength())
@@ -128,7 +128,7 @@ class CompositeTimer extends AbstractCompositeMeter<Timer> implements Timer {
                 .percentilePrecision(distributionStatisticConfig.getPercentilePrecision())
                 .pauseDetector(pauseDetector);
 
-        final double[] slaNanos = distributionStatisticConfig.getSlaBoundaries();
+        final double[] slaNanos = distributionStatisticConfig.getServiceLevelObjectiveBoundaries();
         if (slaNanos != null) {
             Duration[] sla = new Duration[slaNanos.length];
             for (int i = 0; i < slaNanos.length; i++) {
