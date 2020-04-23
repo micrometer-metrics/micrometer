@@ -76,7 +76,7 @@ public class PercentileHistogramBuckets {
      * @return The set of histogram buckets for use in computing aggregable percentiles.
      */
     public static NavigableSet<Double> buckets(DistributionStatisticConfig distributionStatisticConfig) {
-        return PERCENTILE_BUCKETS.subSet(distributionStatisticConfig.getMinimumExpectedValue(), true,
-                distributionStatisticConfig.getMaximumExpectedValue(), true);
+        return PERCENTILE_BUCKETS.subSet(distributionStatisticConfig.getMinimumExpectedValueAsDouble(), true,
+                distributionStatisticConfig.getMaximumExpectedValueAsDouble(), true);
     }
 }
