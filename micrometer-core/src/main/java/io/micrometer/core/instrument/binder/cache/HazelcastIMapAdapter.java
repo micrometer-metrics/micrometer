@@ -52,7 +52,8 @@ class HazelcastIMapAdapter {
     }
 
     LocalMapStats getLocalMapStats() {
-        return new LocalMapStats(invoke(GET_LOCAL_MAP_STATS, cache));
+        Object result = invoke(GET_LOCAL_MAP_STATS, cache);
+        return result == null ? null : new LocalMapStats(result);
     }
 
     static class LocalMapStats {
@@ -121,7 +122,8 @@ class HazelcastIMapAdapter {
         }
 
         NearCacheStats getNearCacheStats() {
-            return new NearCacheStats(invoke(GET_NEAR_CACHE_STATS, localMapStats));
+            Object result = invoke(GET_NEAR_CACHE_STATS, localMapStats);
+            return result == null ? null : new NearCacheStats(result);
         }
 
         long getTotalGetLatency() {
