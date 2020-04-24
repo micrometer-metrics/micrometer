@@ -1,0 +1,5 @@
+dependencies {
+    implementation project(':micrometer-core')
+    implementation 'com.hazelcast:hazelcast:4.+'
+    implementation 'ch.qos.logback:logback-classic'
+}
