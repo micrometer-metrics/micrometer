@@ -132,6 +132,21 @@ class MeterRegistryTest {
     }
 
     @Test
+    void removeMetersAffectedByNonIdempotentMeterFilter() {
+        registry.config().meterFilter(new MeterFilter() {
+            @Override
+            public Meter.Id map(Meter.Id id) {
+                return id.withName("prefix." + id.getName());
+            }
+        });
+
+        Counter counter = registry.counter("name");
+        assertThat(registry.find("prefix.name").counter()).isSameAs(counter);
+        assertThat(registry.remove(counter)).isSameAs(counter);
+        assertThat(registry.find("prefix.name").counter()).isNull();
+    }
+
+    @Test
     void removeMetersWithSynthetics() {
         Timer timer = Timer.builder("my.timer")
                 .publishPercentiles(0.95)
