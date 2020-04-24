@@ -114,13 +114,14 @@ public class TimedAspect {
             }
         }
 
+        String exceptionClass = DEFAULT_EXCEPTION_TAG_VALUE;
         try {
-            Object result = pjp.proceed();
-            record(pjp, timed, metricName, sample, DEFAULT_EXCEPTION_TAG_VALUE);
-            return result;
+            return pjp.proceed();
         } catch (Exception ex) {
-            record(pjp, timed, metricName, sample, ex.getClass().getSimpleName());
+            exceptionClass = ex.getClass().getSimpleName();
             throw ex;
+        } finally {
+            record(pjp, timed, metricName, sample, exceptionClass);
         }
     }
 

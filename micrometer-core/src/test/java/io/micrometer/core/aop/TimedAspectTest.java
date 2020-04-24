@@ -188,7 +188,7 @@ class TimedAspectTest {
                 .tag("class", "io.micrometer.core.aop.TimedAspectTest$AsyncTimedService")
                 .tag("method", "longCall")
                 .tag("extra", "tag")
-                .longTaskTimers().iterator().next().activeTasks()).isEqualTo(1);
+                .longTaskTimer().activeTasks()).isEqualTo(1);
 
         guardedResult.complete();
         completableFuture.join();
@@ -197,7 +197,7 @@ class TimedAspectTest {
                 .tag("class", "io.micrometer.core.aop.TimedAspectTest$AsyncTimedService")
                 .tag("method", "longCall")
                 .tag("extra", "tag")
-                .longTaskTimers().iterator().next().activeTasks()).isEqualTo(0);
+                .longTaskTimer().activeTasks()).isEqualTo(0);
     }
 
     @Test
@@ -216,7 +216,7 @@ class TimedAspectTest {
                 .tag("class", "io.micrometer.core.aop.TimedAspectTest$AsyncTimedService")
                 .tag("method", "longCall")
                 .tag("extra", "tag")
-                .longTaskTimers().iterator().next().activeTasks()).isEqualTo(1);
+                .longTaskTimer().activeTasks()).isEqualTo(1);
 
         guardedResult.complete(new NullPointerException());
         catchThrowableOfType(completableFuture::join, CompletionException.class);
@@ -225,7 +225,7 @@ class TimedAspectTest {
                 .tag("class", "io.micrometer.core.aop.TimedAspectTest$AsyncTimedService")
                 .tag("method", "longCall")
                 .tag("extra", "tag")
-                .longTaskTimers().iterator().next().activeTasks()).isEqualTo(0);
+                .longTaskTimer().activeTasks()).isEqualTo(0);
     }
 
     @Test
