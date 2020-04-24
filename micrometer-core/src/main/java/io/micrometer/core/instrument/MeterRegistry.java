@@ -593,11 +593,11 @@ public abstract class MeterRegistry {
 
                     m = builder.apply(mappedId, config);
 
-                    Id synAssoc = originalId.syntheticAssociation();
+                    Id synAssoc = mappedId.syntheticAssociation();
                     if (synAssoc != null) {
                         Set<Id> associations = syntheticAssociations.computeIfAbsent(synAssoc,
                                 k -> new HashSet<>());
-                        associations.add(originalId);
+                        associations.add(mappedId);
                     }
 
                     for (Consumer<Meter> onAdd : meterAddedListeners) {
@@ -635,21 +635,20 @@ public abstract class MeterRegistry {
     }
 
     /**
-     * @param id The id of the meter to remove
+     * @param mappedId The id of the meter to remove
      * @return The removed meter, or null if no meter matched the provided id.
      * @since 1.1.0
      */
     @Incubating(since = "1.1.0")
     @Nullable
-    public Meter remove(Meter.Id id) {
-        Id mappedId = getMappedId(id);
+    public Meter remove(Meter.Id mappedId) {
         Meter m = meterMap.get(mappedId);
 
         if (m != null) {
             synchronized (meterMapLock) {
                 m = meterMap.remove(mappedId);
                 if (m != null) {
-                    Set<Id> synthetics = syntheticAssociations.remove(id);
+                    Set<Id> synthetics = syntheticAssociations.remove(mappedId);
                     if (synthetics != null) {
                         for (Id synthetic : synthetics) {
                             remove(synthetic);
