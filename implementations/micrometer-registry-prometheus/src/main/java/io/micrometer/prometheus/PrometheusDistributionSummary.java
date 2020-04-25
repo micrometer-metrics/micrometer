@@ -15,15 +15,22 @@
  */
 package io.micrometer.prometheus;
 
-import io.micrometer.core.instrument.AbstractDistributionSummary;
-import io.micrometer.core.instrument.Clock;
-import io.micrometer.core.instrument.distribution.*;
-import io.micrometer.core.instrument.util.MeterEquivalence;
-import io.micrometer.core.lang.Nullable;
-
 import java.time.Duration;
 import java.util.concurrent.atomic.DoubleAdder;
 import java.util.concurrent.atomic.LongAdder;
+
+import io.micrometer.core.instrument.AbstractDistributionSummary;
+import io.micrometer.core.instrument.Clock;
+import io.micrometer.core.instrument.distribution.CountAtBucket;
+import io.micrometer.core.instrument.distribution.DistributionStatisticConfig;
+import io.micrometer.core.instrument.distribution.FixedBoundaryVictoriaMetricsHistogram;
+import io.micrometer.core.instrument.distribution.Histogram;
+import io.micrometer.core.instrument.distribution.HistogramSnapshot;
+import io.micrometer.core.instrument.distribution.TimeWindowFixedBoundaryHistogram;
+import io.micrometer.core.instrument.distribution.TimeWindowStats;
+import io.micrometer.core.instrument.distribution.TimeWindowStats.TimeWindowStatsSnapshot;
+import io.micrometer.core.instrument.util.MeterEquivalence;
+import io.micrometer.core.lang.Nullable;
 
 public class PrometheusDistributionSummary extends AbstractDistributionSummary {
     private static final CountAtBucket[] EMPTY_HISTOGRAM = new CountAtBucket[0];
@@ -31,7 +38,7 @@ public class PrometheusDistributionSummary extends AbstractDistributionSummary {
     private final Histogram histogram;
     private final LongAdder count = new LongAdder();
     private final DoubleAdder amount = new DoubleAdder();
-    private final TimeWindowMax max;
+    private final TimeWindowStats stats;
 
     private final HistogramFlavor histogramFlavor;
 
@@ -45,7 +52,7 @@ public class PrometheusDistributionSummary extends AbstractDistributionSummary {
                 scale, false);
 
         this.histogramFlavor = histogramFlavor;
-        this.max = new TimeWindowMax(clock, distributionStatisticConfig);
+        this.stats = new TimeWindowStats(clock, distributionStatisticConfig);
 
         if (distributionStatisticConfig.isPublishingHistogram()) {
             switch (histogramFlavor) {
@@ -72,7 +79,7 @@ public class PrometheusDistributionSummary extends AbstractDistributionSummary {
     protected void recordNonNegative(double amount) {
         count.increment();
         this.amount.add(amount);
-        max.record(amount);
+        stats.record(amount);
 
         if (histogram != null)
             histogram.recordDouble(amount);
@@ -88,9 +95,17 @@ public class PrometheusDistributionSummary extends AbstractDistributionSummary {
         return amount.doubleValue();
     }
 
+    /**
+     * Shortcut to {@link #getTimeWindowStatsSnapshot()}.getMax()
+     */
     @Override
     public double max() {
-        return max.poll();
+        return stats.max();
+    }
+
+    // TODO : Add this method to interface.
+    public TimeWindowStatsSnapshot getTimeWindowStatsSnapshot() {
+        return stats.getSnapshot();
     }
 
     public HistogramFlavor histogramFlavor() {
