@@ -139,7 +139,7 @@ class KafkaClientMetricsIntegrationTest {
         producer1KafkaMetrics.bindTo(registry);
 
         int producer1Metrics = registry.getMeters().size();
-        assertThat(registry.getMeters()).hasSizeGreaterThan(0);
+        assertThat(producer1Metrics).isGreaterThan(0);
 
         producer1.send(new ProducerRecord<>("topic1", "foo"));
         producer1.flush();
@@ -147,7 +147,7 @@ class KafkaClientMetricsIntegrationTest {
         producer1KafkaMetrics.checkAndBindMetrics(registry);
 
         int producer1MetricsAfterSend = registry.getMeters().size();
-        assertThat(registry.getMeters()).hasSizeGreaterThan(producer1Metrics);
+        assertThat(producer1MetricsAfterSend).isGreaterThan(producer1Metrics);
 
         Properties producer2Configs = new Properties();
         producer2Configs.put(ProducerConfig.BOOTSTRAP_SERVERS_CONFIG,
