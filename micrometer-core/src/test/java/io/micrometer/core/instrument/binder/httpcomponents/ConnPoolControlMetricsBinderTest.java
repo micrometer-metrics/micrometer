@@ -30,21 +30,21 @@ import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
 /**
- * Unit tests for {@link PoolingHttpClientConnectionManagerMetricsBinder}.
+ * Unit tests for {@link ConnPoolControlMetricsBinder}.
  *
  * @author Benjamin Hubert (benjamin.hubert@willhaben.at)
  */
-class PoolingHttpClientConnectionManagerMetricsBinderTest {
+class ConnPoolControlMetricsBinderTest {
 
     private MeterRegistry registry = new SimpleMeterRegistry(SimpleConfig.DEFAULT, new MockClock());
     private ConnPoolControl<HttpRoute> connPoolControl;
-    private PoolingHttpClientConnectionManagerMetricsBinder binder;
+    private ConnPoolControlMetricsBinder binder;
 
     @BeforeEach
     @SuppressWarnings("unchecked")
     void setup() {
         connPoolControl = (ConnPoolControl<HttpRoute>) mock(ConnPoolControl.class);
-        binder = new PoolingHttpClientConnectionManagerMetricsBinder(connPoolControl, "test");
+        binder = new ConnPoolControlMetricsBinder(connPoolControl, "test");
         binder.bindTo(registry);
     }
 

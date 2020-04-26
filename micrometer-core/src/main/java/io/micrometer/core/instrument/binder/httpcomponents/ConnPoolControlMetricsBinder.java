@@ -33,7 +33,7 @@ import org.apache.http.pool.ConnPoolControl;
  * @author Benjamin Hubert (benjamin.hubert@willhaben.at)
  * @since 1.3.0
  */
-public class PoolingHttpClientConnectionManagerMetricsBinder implements MeterBinder {
+public class ConnPoolControlMetricsBinder implements MeterBinder {
 
     private final ConnPoolControl<HttpRoute> connPoolControl;
     private final Iterable<Tag> tags;
@@ -48,7 +48,7 @@ public class PoolingHttpClientConnectionManagerMetricsBinder implements MeterBin
      *                          of arguments representing key/value pairs of tags.
      */
     @SuppressWarnings("WeakerAccess")
-    public PoolingHttpClientConnectionManagerMetricsBinder(ConnPoolControl<HttpRoute> connPoolControl, String name, String... tags) {
+    public ConnPoolControlMetricsBinder(ConnPoolControl<HttpRoute> connPoolControl, String name, String... tags) {
         this(connPoolControl, name, Tags.of(tags));
     }
 
@@ -60,7 +60,7 @@ public class PoolingHttpClientConnectionManagerMetricsBinder implements MeterBin
      * @param tags            Tags to apply to all recorded metrics.
      */
     @SuppressWarnings("WeakerAccess")
-    public PoolingHttpClientConnectionManagerMetricsBinder(ConnPoolControl<HttpRoute> connPoolControl, String name, Iterable<Tag> tags) {
+    public ConnPoolControlMetricsBinder(ConnPoolControl<HttpRoute> connPoolControl, String name, Iterable<Tag> tags) {
         this.connPoolControl = connPoolControl;
         this.tags = Tags.concat(tags, "httpclient", name);
     }
