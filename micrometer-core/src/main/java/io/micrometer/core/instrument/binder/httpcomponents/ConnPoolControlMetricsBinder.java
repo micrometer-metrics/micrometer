@@ -21,11 +21,10 @@ import io.micrometer.core.instrument.Tag;
 import io.micrometer.core.instrument.Tags;
 import io.micrometer.core.instrument.binder.MeterBinder;
 import io.micrometer.core.lang.NonNull;
-import org.apache.http.conn.routing.HttpRoute;
 import org.apache.http.pool.ConnPoolControl;
 
 /**
- * Collects metrics from a {@link ConnPoolControl}, for example {@link org.apache.http.impl.conn.PoolingHttpClientConnectionManager}
+ * Collects total metrics without routes state from a {@link ConnPoolControl}, for example {@link org.apache.http.impl.conn.PoolingHttpClientConnectionManager}
  * for synchronous HTTP clients or {@link org.apache.http.impl.nio.conn.PoolingNHttpClientConnectionManager} for asynchronous HTTP clients.
  * <p>
  * It monitors the overall connection pool state.
@@ -33,22 +32,22 @@ import org.apache.http.pool.ConnPoolControl;
  * @author Benjamin Hubert (benjamin.hubert@willhaben.at)
  * @since 1.3.0
  */
-public class ConnPoolControlMetricsBinder implements MeterBinder {
+public class ConnPoolControlMetricsBinder<T> implements MeterBinder {
 
-    private final ConnPoolControl<HttpRoute> connPoolControl;
-    private final Iterable<Tag> tags;
+    protected final ConnPoolControl<T> connPoolControl;
+    protected final Iterable<Tag> tags;
 
     /**
      * Creates a metrics binder for the given pooling connection pool control.
      *
      * @param connPoolControl The connection pool control to monitor.
-     * @param name              Name of the connection pool control. Will be added as tag with the
-     *                          key "httpclient".
-     * @param tags              Tags to apply to all recorded metrics. Must be an even number
-     *                          of arguments representing key/value pairs of tags.
+     * @param name            Name of the connection pool control. Will be added as tag with the
+     *                        key "httpclient".
+     * @param tags            Tags to apply to all recorded metrics. Must be an even number
+     *                        of arguments representing key/value pairs of tags.
      */
     @SuppressWarnings("WeakerAccess")
-    public ConnPoolControlMetricsBinder(ConnPoolControl<HttpRoute> connPoolControl, String name, String... tags) {
+    public ConnPoolControlMetricsBinder(ConnPoolControl<T> connPoolControl, String name, String... tags) {
         this(connPoolControl, name, Tags.of(tags));
     }
 
@@ -60,7 +59,7 @@ public class ConnPoolControlMetricsBinder implements MeterBinder {
      * @param tags            Tags to apply to all recorded metrics.
      */
     @SuppressWarnings("WeakerAccess")
-    public ConnPoolControlMetricsBinder(ConnPoolControl<HttpRoute> connPoolControl, String name, Iterable<Tag> tags) {
+    public ConnPoolControlMetricsBinder(ConnPoolControl<T> connPoolControl, String name, Iterable<Tag> tags) {
         this.connPoolControl = connPoolControl;
         this.tags = Tags.concat(tags, "httpclient", name);
     }
