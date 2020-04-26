@@ -20,6 +20,13 @@ import io.micrometer.core.instrument.push.PushRegistryConfig;
 
 
 public interface StepRegistryConfig extends PushRegistryConfig {
+    /**
+     * Validate a provided configuration.
+     *
+     * @param config configuration to validate
+     * @return validation result
+     * @since 1.5.0
+     */
     static Validated<?> validate(StepRegistryConfig config) {
         return PushRegistryConfig.validate(config);
     }

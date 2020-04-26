@@ -48,7 +48,6 @@ class NewRelicConfigTest {
         props.put("newrelic.clientProviderType", "insights_agent");
 
         assertThat(config.validate().isValid()).isTrue();
-        config.requireValid();
     }
 
     @Test

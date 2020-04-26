@@ -24,12 +24,16 @@ import java.time.temporal.ChronoUnit;
 import java.util.Arrays;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
-import java.util.concurrent.atomic.AtomicInteger;
-import java.util.concurrent.atomic.AtomicReference;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
+/**
+ * Validator for {@link Duration}.
+ *
+ * @author Jon Schneider
+ * @since 1.5.0
+ */
 @Incubating(since = "1.5.0")
 public enum DurationValidator {
     /**
@@ -49,15 +53,16 @@ public enum DurationValidator {
                 return Validated.invalid(property, value, "must have a valid duration unit", InvalidReason.MALFORMED);
             }
 
-            AtomicInteger e = new AtomicInteger(0);
-            AtomicReference<Double> amount = new AtomicReference<>(Double.parseDouble(matcher.group(1)));
-            while (e.get() < 18 && Math.abs(amount.get() - amount.get().longValue()) > 1e-10) {
-                amount.set(amount.get() * 10);
-                e.incrementAndGet();
+            int e = 0;
+            Double amount = Double.valueOf(matcher.group(1));
+            while (e < 18 && Math.abs(amount - amount.longValue()) > 1e-10) {
+                amount *= 10;
+                e++;
             }
-
+            long multipliedResult = amount.longValue();
+            long multipliedFactor = (long) Math.pow(10, e);
             return validateChronoUnit(property, value, unit)
-                    .map(cu -> Duration.of(amount.get().longValue(), cu).dividedBy((long) Math.pow(10, e.get())));
+                    .map(cu -> Duration.of(multipliedResult, cu).dividedBy(multipliedFactor));
         }
     },
 

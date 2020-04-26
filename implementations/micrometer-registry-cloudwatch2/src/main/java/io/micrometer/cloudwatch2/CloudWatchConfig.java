@@ -21,6 +21,7 @@ import io.micrometer.core.instrument.step.StepRegistryConfig;
 
 import static io.micrometer.core.instrument.config.MeterRegistryConfigValidator.check;
 import static io.micrometer.core.instrument.config.MeterRegistryConfigValidator.checkAll;
+import static io.micrometer.core.instrument.config.MeterRegistryConfigValidator.checkRequired;
 import static io.micrometer.core.instrument.config.validate.PropertyValidator.getInteger;
 import static io.micrometer.core.instrument.config.validate.PropertyValidator.getString;
 
@@ -51,7 +52,7 @@ public interface CloudWatchConfig extends StepRegistryConfig {
     default Validated<?> validate() {
         return checkAll(this,
                 (CloudWatchConfig c) -> StepRegistryConfig.validate(c),
-                check("namespace", CloudWatchConfig::namespace),
+                checkRequired("namespace", CloudWatchConfig::namespace),
                 check("batchSize", CloudWatchConfig::batchSize)
                         .andThen(v -> v.invalidateWhen(b -> b > MAX_BATCH_SIZE, "cannot be greater than " + MAX_BATCH_SIZE,
                                 InvalidReason.MALFORMED))

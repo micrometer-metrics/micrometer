@@ -60,6 +60,7 @@ public class NewRelicInsightsAgentClientProvider implements NewRelicClientProvid
     // VisibleForTesting
     NewRelicInsightsAgentClientProvider(NewRelicConfig config, Agent newRelicAgent, NamingConvention namingConvention) {
         config.requireValid();
+
         this.config = config;
         this.newRelicAgent = newRelicAgent;
         this.namingConvention = namingConvention;

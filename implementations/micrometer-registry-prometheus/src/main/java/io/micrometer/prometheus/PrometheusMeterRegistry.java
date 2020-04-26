@@ -46,9 +46,9 @@ import static java.util.stream.StreamSupport.stream;
  * @author Jon Schneider
  */
 public class PrometheusMeterRegistry extends MeterRegistry {
+    private final PrometheusConfig prometheusConfig;
     private final CollectorRegistry registry;
     private final ConcurrentMap<String, MicrometerCollector> collectorMap = new ConcurrentHashMap<>();
-    private final PrometheusConfig prometheusConfig;
 
     public PrometheusMeterRegistry(PrometheusConfig config) {
         this(config, new CollectorRegistry(), Clock.SYSTEM);
@@ -56,10 +56,12 @@ public class PrometheusMeterRegistry extends MeterRegistry {
 
     public PrometheusMeterRegistry(PrometheusConfig config, CollectorRegistry registry, Clock clock) {
         super(clock);
-        this.registry = registry;
-        this.prometheusConfig = config;
 
         config.requireValid();
+
+        this.prometheusConfig = config;
+        this.registry = registry;
+
         config().namingConvention(new PrometheusNamingConvention());
         config().onMeterRemoved(this::onMeterRemoved);
     }

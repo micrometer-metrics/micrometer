@@ -22,7 +22,6 @@ import org.junit.jupiter.api.Test;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.stream.Collectors;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
@@ -66,10 +65,6 @@ class PushRegistryConfigTest {
                 );
 
         assertThatThrownBy(config::batchSize).isInstanceOf(ValidationException.class);
-
-        System.out.println(
-                failures.stream().map(Object::toString).collect(Collectors.joining("\n"))
-        );
     }
 
     @Test

@@ -22,6 +22,7 @@ import io.micrometer.core.lang.Nullable;
 
 import java.util.concurrent.TimeUnit;
 
+import static io.micrometer.core.instrument.config.MeterRegistryConfigValidator.check;
 import static io.micrometer.core.instrument.config.MeterRegistryConfigValidator.checkAll;
 import static io.micrometer.core.instrument.config.MeterRegistryConfigValidator.checkRequired;
 import static io.micrometer.core.instrument.config.validate.PropertyValidator.*;
@@ -53,6 +54,11 @@ public interface GangliaConfig extends StepRegistryConfig {
         return "ganglia";
     }
 
+    /**
+     * Rate units.
+     * @return rate units
+     * @deprecated since 1.5.0
+     */
     @Deprecated
     @Nullable
     default TimeUnit rateUnits() {
@@ -63,6 +69,11 @@ public interface GangliaConfig extends StepRegistryConfig {
         return getTimeUnit(this, "durationUnits").orElse(TimeUnit.MILLISECONDS);
     }
 
+    /**
+     * Protocol version.
+     * @return protocol version
+     * @deprecated since 1.5.0
+     */
     @Deprecated
     @Nullable
     default String protocolVersion() {
@@ -98,7 +109,7 @@ public interface GangliaConfig extends StepRegistryConfig {
         return checkAll(this,
                 c -> StepRegistryConfig.validate(c),
                 checkRequired("host", GangliaConfig::host),
-                checkRequired("port", GangliaConfig::port),
+                check("port", GangliaConfig::port),
                 checkRequired("ttl", GangliaConfig::ttl),
                 checkRequired("durationUnits", GangliaConfig::durationUnits),
                 checkRequired("addressingMode", GangliaConfig::addressingMode)

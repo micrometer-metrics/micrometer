@@ -21,6 +21,7 @@ import io.micrometer.core.lang.Nullable;
 
 import java.util.concurrent.TimeUnit;
 
+import static io.micrometer.core.instrument.config.MeterRegistryConfigValidator.check;
 import static io.micrometer.core.instrument.config.MeterRegistryConfigValidator.checkAll;
 import static io.micrometer.core.instrument.config.MeterRegistryConfigValidator.checkRequired;
 import static io.micrometer.core.instrument.config.validate.PropertyValidator.*;
@@ -108,6 +109,7 @@ public interface GraphiteConfig extends DropwizardConfig {
                 checkRequired("rateUnits", GraphiteConfig::rateUnits),
                 checkRequired("durationUnits", GraphiteConfig::durationUnits),
                 checkRequired("host", GraphiteConfig::host),
+                check("port", GraphiteConfig::port),
                 checkRequired("protocol", GraphiteConfig::protocol)
         );
     }

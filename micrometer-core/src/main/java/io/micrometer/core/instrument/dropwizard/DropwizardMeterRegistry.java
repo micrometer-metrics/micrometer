@@ -53,12 +53,13 @@ public abstract class DropwizardMeterRegistry extends MeterRegistry {
 
     public DropwizardMeterRegistry(DropwizardConfig config, MetricRegistry registry, HierarchicalNameMapper nameMapper, Clock clock) {
         super(clock);
+
+        config.requireValid();
+
         this.dropwizardConfig = config;
         this.dropwizardClock = new DropwizardClock(clock);
         this.registry = registry;
         this.nameMapper = nameMapper;
-
-        config.requireValid();
 
         config()
             .namingConvention(NamingConvention.camelCase)

@@ -16,7 +16,6 @@
 package io.micrometer.cloudwatch;
 
 import io.micrometer.core.instrument.config.InvalidConfigurationException;
-import io.micrometer.core.instrument.config.MissingRequiredConfigurationException;
 import io.micrometer.core.instrument.step.StepRegistryConfig;
 
 /**
@@ -39,7 +38,7 @@ public interface CloudWatchConfig extends StepRegistryConfig {
     default String namespace() {
         String v = get(prefix() + ".namespace");
         if (v == null)
-            throw new MissingRequiredConfigurationException("namespace must be set to report metrics to CloudWatch");
+            throw new io.micrometer.core.instrument.config.MissingRequiredConfigurationException("namespace must be set to report metrics to CloudWatch");
         return v;
     }
 

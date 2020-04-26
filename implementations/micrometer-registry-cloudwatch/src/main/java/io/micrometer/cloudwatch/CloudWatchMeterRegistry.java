@@ -24,7 +24,6 @@ import com.amazonaws.services.cloudwatch.model.PutMetricDataRequest;
 import com.amazonaws.services.cloudwatch.model.PutMetricDataResult;
 import com.amazonaws.services.cloudwatch.model.StandardUnit;
 import io.micrometer.core.instrument.*;
-import io.micrometer.core.instrument.config.MissingRequiredConfigurationException;
 import io.micrometer.core.instrument.step.StepMeterRegistry;
 import io.micrometer.core.instrument.util.NamedThreadFactory;
 import io.micrometer.core.instrument.util.StringUtils;
@@ -84,7 +83,8 @@ public class CloudWatchMeterRegistry extends StepMeterRegistry {
         super(config, clock);
 
         if (config.namespace() == null) {
-            throw new MissingRequiredConfigurationException("namespace must be set to report metrics to CloudWatch");
+            throw new io.micrometer.core.instrument.config.MissingRequiredConfigurationException(
+                    "namespace must be set to report metrics to CloudWatch");
         }
 
         this.amazonCloudWatchAsync = amazonCloudWatchAsync;

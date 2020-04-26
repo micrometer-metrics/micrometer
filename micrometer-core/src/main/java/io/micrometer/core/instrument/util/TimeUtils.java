@@ -207,7 +207,7 @@ public final class TimeUtils {
     /**
      * @param time A time string ending in human readable suffixes like 'ns', 'ms', 's'.
      * @return A duration
-     * @deprecated Use {@link DurationValidator#detectAndParse(String, TimeUnit)} instead.
+     * @deprecated Use {@link DurationValidator#validate(String, String)} instead since 1.5.0.
      */
     @Deprecated
     public static Duration simpleParse(String time) {

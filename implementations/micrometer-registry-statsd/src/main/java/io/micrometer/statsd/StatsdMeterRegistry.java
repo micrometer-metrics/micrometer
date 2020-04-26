@@ -111,12 +111,12 @@ public class StatsdMeterRegistry extends MeterRegistry {
                                 @Nullable Consumer<String> lineSink) {
         super(clock);
 
+        config.requireValid();
+
         this.statsdConfig = config;
         this.nameMapper = nameMapper;
         this.lineBuilderFunction = lineBuilderFunction;
         this.lineSink = lineSink;
-
-        config.requireValid();
 
         config().namingConvention(namingConvention);
 

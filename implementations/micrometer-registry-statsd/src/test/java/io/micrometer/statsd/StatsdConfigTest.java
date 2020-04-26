@@ -39,7 +39,8 @@ class StatsdConfigTest {
                         "should be one of 'ETSY', 'DATADOG', 'TELEGRAF', 'SYSDIG'",
                         "should be one of 'UDP', 'TCP'",
                         "must contain a valid time unit"
-                );
+                )
+                .hasSize(4);
     }
 
     @Test

@@ -61,6 +61,14 @@ public class NewRelicInsightsApiClientProvider implements NewRelicClientProvider
         this(config, new HttpUrlConnectionSender(config.connectTimeout(), config.readTimeout()), new NewRelicNamingConvention());
     }
 
+    /**
+     * Create a {@code NewRelicInsightsApiClientProvider} instance.
+     *
+     * @param config config
+     * @param proxyHost proxy host
+     * @param proxyPort proxy port
+     * @deprecated since 1.5.0
+     */
     @Deprecated
     public NewRelicInsightsApiClientProvider(NewRelicConfig config, String proxyHost, int proxyPort) {
         this(config, new HttpUrlConnectionSender(config.connectTimeout(), config.readTimeout(),
