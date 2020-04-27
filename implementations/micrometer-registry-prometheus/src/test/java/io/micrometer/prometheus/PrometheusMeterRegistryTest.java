@@ -422,4 +422,11 @@ class PrometheusMeterRegistryTest {
 
         assertThat(timer.takeSnapshot().percentileValues()[0].value()).isEqualTo(2.0, offset(0.2));
     }
+
+    @Issue("#1883")
+    @Test
+    void canFilterCollectorRegistryByName() {
+        Counter.builder("my.count").register(registry);
+        assertThat(registry.getPrometheusRegistry().filteredMetricFamilySamples(Collections.singleton("my_count_total")).hasMoreElements()).isTrue();
+    }
 }
