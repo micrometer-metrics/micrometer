@@ -98,6 +98,20 @@ class LogbackMetricsTest {
         assertThat(loggerContext.getTurboFilterList()).isEmpty();
     }
 
+    @Issue("#2028")
+    @Test
+    void reAddFilterToLoggerContextAfterReset() {
+        LoggerContext loggerContext = new LoggerContext();
+        assertThat(loggerContext.getTurboFilterList()).isEmpty();
+
+        LogbackMetrics logbackMetrics = new LogbackMetrics(emptyList(), loggerContext);
+        logbackMetrics.bindTo(registry);
+
+        assertThat(loggerContext.getTurboFilterList()).hasSize(1);
+        loggerContext.reset();
+        assertThat(loggerContext.getTurboFilterList()).hasSize(1);
+    }
+
     @NonNullApi
     private static class LoggingCounterMeterRegistry extends SimpleMeterRegistry {
         @Override
