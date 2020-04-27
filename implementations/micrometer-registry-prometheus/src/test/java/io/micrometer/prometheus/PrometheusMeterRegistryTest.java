@@ -41,10 +41,13 @@ import static org.assertj.core.api.Assertions.offset;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 
 /**
+ * Tests for {@link PrometheusMeterRegistry}.
+ *
  * @author Jon Schneider
+ * @author Johnny Lim
  */
 class PrometheusMeterRegistryTest {
-    private CollectorRegistry prometheusRegistry = new CollectorRegistry();
+    private CollectorRegistry prometheusRegistry = new CollectorRegistry(true);
     private MockClock clock = new MockClock();
     private PrometheusMeterRegistry registry = new PrometheusMeterRegistry(PrometheusConfig.DEFAULT, prometheusRegistry, clock);
 
@@ -56,7 +59,8 @@ class PrometheusMeterRegistryTest {
     @Test
     void baseUnitMakesItToScrape() {
         AtomicInteger n = new AtomicInteger(0);
-        Gauge.builder("gauge", n, AtomicInteger::get).baseUnit(BaseUnits.BYTES).register(registry);
+        Gauge.builder("gauge", n, AtomicInteger::get).tags("a", "b").baseUnit(BaseUnits.BYTES).register(registry);
+        assertThat(prometheusRegistry).extracting("namesToCollectors").extracting("gauge_bytes").isNotNull();
         assertThat(registry.scrape()).contains("gauge_bytes");
     }
 
@@ -367,8 +371,8 @@ class PrometheusMeterRegistryTest {
     @DisplayName("removed meters correctly handled")
     void meterRemoval() {
         Timer timer = Timer.builder("timer_to_be_removed")
-            .publishPercentiles(0.5)
-            .register(registry);
+                .publishPercentiles(0.5)
+                .register(registry);
 
         assertThat(prometheusRegistry.metricFamilySamples()).has(withNameAndQuantile("timer_to_be_removed_duration_seconds"));
 
@@ -417,5 +421,12 @@ class PrometheusMeterRegistryTest {
         timer.record(2);
 
         assertThat(timer.takeSnapshot().percentileValues()[0].value()).isEqualTo(2.0, offset(0.2));
+    }
+
+    @Issue("#1883")
+    @Test
+    void canFilterCollectorRegistryByName() {
+        Counter.builder("my.count").register(registry);
+        assertThat(registry.getPrometheusRegistry().filteredMetricFamilySamples(Collections.singleton("my_count_total")).hasMoreElements()).isTrue();
     }
 }
