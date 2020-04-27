@@ -205,10 +205,7 @@ class KafkaMetricsTest {
             firstTags.put("client-id", "client0");
             MetricName firstName = new MetricName("a", "b", "c", firstTags);
             KafkaMetric firstMetric = new KafkaMetric(this, firstName, new Value(), new MetricConfig(), Time.SYSTEM);
-
-            Map<MetricName, KafkaMetric> metrics = new LinkedHashMap<>();
-            metrics.put(firstName, firstMetric);
-            return metrics;
+            return Collections.singletonMap(firstName, firstMetric);
         };
         kafkaMetrics = new KafkaMetrics(supplier);
         MeterRegistry registry = new SimpleMeterRegistry();
