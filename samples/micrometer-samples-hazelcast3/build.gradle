@@ -6,17 +6,14 @@ repositories {
     mavenCentral()
 }
 
-license {
-    ext.year = Calendar.getInstance().get(Calendar.YEAR)
-    skipExistingHeaders = true
-}
-
 dependencies {
     implementation project(':micrometer-core')
     implementation('com.hazelcast:hazelcast') {
         version {
-            strictly '3.12.6'
+            strictly '3.+'
         }
     }
     implementation 'ch.qos.logback:logback-classic'
+
+    testImplementation project(':micrometer-test')
 }

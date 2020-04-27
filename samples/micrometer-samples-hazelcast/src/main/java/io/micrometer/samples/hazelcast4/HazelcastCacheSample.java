@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package io.micrometer.core.samples;
+package io.micrometer.samples.hazelcast4;
 
 import com.hazelcast.core.Hazelcast;
 import com.hazelcast.map.IMap;

@@ -1,5 +1,5 @@
 /**
- * Copyright 2017 VMware, Inc.
+ * Copyright 2020 VMware, Inc.
  * <p>
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package io.micrometer.core.samples;
+package io.micrometer.samples.hazelcast3;
 
 import com.hazelcast.core.Hazelcast;
 import com.hazelcast.core.IMap;
