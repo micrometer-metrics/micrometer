@@ -36,35 +36,35 @@ public class HazelcastCacheMetrics extends CacheMeterBinder {
     /**
      * Record metrics on a Hazelcast cache.
      *
-     * @param registry The registry to bind metrics to.
-     * @param cache    The cache to instrument.
+     * @param registry registry to bind metrics to
+     * @param cache    Hazelcast IMap cache to instrument
      * @param tags     Tags to apply to all recorded metrics. Must be an even number of arguments representing key/value pairs of tags.
-     * @param <C>      The cache type.
-     * @param <K>      The cache key type.
-     * @param <V>      The cache value type.
      * @return The instrumented cache, unchanged. The original cache is not wrapped or proxied in any way.
      */
-    public static <K, V, C> C monitor(MeterRegistry registry, C cache, String... tags) {
+    public static Object monitor(MeterRegistry registry, Object cache, String... tags) {
         return monitor(registry, cache, Tags.of(tags));
     }
 
     /**
      * Record metrics on a Hazelcast cache.
      *
-     * @param registry The registry to bind metrics to.
-     * @param cache    The cache to instrument.
+     * @param registry registry to bind metrics to
+     * @param cache    Hazelcast IMap cache to instrument
      * @param tags     Tags to apply to all recorded metrics.
-     * @param <C>      The cache type.
-     * @param <K>      The cache key type.
-     * @param <V>      The cache value type.
      * @return The instrumented cache, unchanged. The original cache is not wrapped or proxied in any way.
      */
-    public static <K, V, C> C monitor(MeterRegistry registry, C cache, Iterable<Tag> tags) {
+    public static Object monitor(MeterRegistry registry, Object cache, Iterable<Tag> tags) {
         new HazelcastCacheMetrics(cache, tags).bindTo(registry);
         return cache;
     }
 
-    public <K, V, C> HazelcastCacheMetrics(C cache, Iterable<Tag> tags) {
+    /**
+     * Binder for Hazelcast cache metrics.
+     *
+     * @param cache Hazelcast IMap cache to instrument
+     * @param tags  Tags to apply to all recorded metrics.
+     */
+    public HazelcastCacheMetrics(Object cache, Iterable<Tag> tags) {
         super(cache, HazelcastIMapAdapter.nameOf(cache), tags);
         this.cache = new HazelcastIMapAdapter(cache);
     }

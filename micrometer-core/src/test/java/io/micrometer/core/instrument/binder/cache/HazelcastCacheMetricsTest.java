@@ -29,6 +29,7 @@ import io.micrometer.core.instrument.MeterRegistry;
 import io.micrometer.core.instrument.Tags;
 import io.micrometer.core.instrument.simple.SimpleMeterRegistry;
 
+import java.util.HashMap;
 import java.util.Random;
 import java.util.concurrent.TimeUnit;
 
@@ -36,7 +37,7 @@ import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 
-import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.*;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
@@ -151,6 +152,12 @@ class HazelcastCacheMetricsTest extends AbstractCacheMetricsTest {
     @Test
     void returnPutCount() {
         assertThat(metrics.putCount()).isEqualTo(cache.getLocalMapStats().getPutOperationCount());
+    }
+
+    @Test
+    void nonIMapCacheFails() {
+        assertThatExceptionOfType(RuntimeException.class)
+                .isThrownBy(() -> new HazelcastCacheMetrics(new HashMap<String, String>(), Tags.empty()));
     }
 
     @BeforeAll
