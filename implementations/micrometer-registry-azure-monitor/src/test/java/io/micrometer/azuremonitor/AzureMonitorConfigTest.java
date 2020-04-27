@@ -15,7 +15,6 @@
  */
 package io.micrometer.azuremonitor;
 
-import io.micrometer.core.instrument.config.validate.Validated;
 import org.junit.jupiter.api.Test;
 
 import java.util.HashMap;
@@ -26,12 +25,6 @@ import static org.assertj.core.api.Assertions.assertThat;
 class AzureMonitorConfigTest {
     private final Map<String, String> props = new HashMap<>();
     private final AzureMonitorConfig config = props::get;
-
-    @Test
-    void invalid() {
-        assertThat(config.validate().failures().stream().map(Validated.Invalid::getMessage))
-                .containsExactly("is required");
-    }
 
     @Test
     void valid() {
