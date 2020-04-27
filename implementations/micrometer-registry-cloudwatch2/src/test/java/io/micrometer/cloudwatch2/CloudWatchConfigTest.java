@@ -62,6 +62,25 @@ class CloudWatchConfigTest {
     }
 
     @Test
+    void invalidOverrideNamespace() {
+        CloudWatchConfig config = new CloudWatchConfig() {
+            @Override
+            public String namespace() {
+                return null;
+            }
+
+            @Override
+            public String get(String key) {
+                return null;
+            }
+        };
+        Validated<?> validate = config.validate();
+
+        assertThat(validate.failures().stream().map(Validated.Invalid::getMessage))
+                .containsExactly("is required");
+    }
+
+    @Test
     void valid() {
         props.put("cloudwatch.namespace", "name");
 

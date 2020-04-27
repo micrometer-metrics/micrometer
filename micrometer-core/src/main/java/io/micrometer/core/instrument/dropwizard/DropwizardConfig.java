@@ -42,6 +42,13 @@ public interface DropwizardConfig extends MeterRegistryConfig {
         return validate(this);
     }
 
+    /**
+     * Validate a provided configuration.
+     *
+     * @param config configuration to validate
+     * @return validation result
+     * @since 1.5.0
+     */
     static Validated<?> validate(DropwizardConfig config) {
         return checkAll(config,
                 check("step", DropwizardConfig::step)

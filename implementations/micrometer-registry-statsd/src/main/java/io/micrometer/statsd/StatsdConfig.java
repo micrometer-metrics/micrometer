@@ -20,6 +20,7 @@ import io.micrometer.core.instrument.config.validate.Validated;
 
 import java.time.Duration;
 
+import static io.micrometer.core.instrument.config.MeterRegistryConfigValidator.check;
 import static io.micrometer.core.instrument.config.MeterRegistryConfigValidator.checkAll;
 import static io.micrometer.core.instrument.config.MeterRegistryConfigValidator.checkRequired;
 import static io.micrometer.core.instrument.config.validate.PropertyValidator.*;
@@ -143,6 +144,7 @@ public interface StatsdConfig extends MeterRegistryConfig {
         return checkAll(this,
                 checkRequired("flavor", StatsdConfig::flavor),
                 checkRequired("host", StatsdConfig::host),
+                check("port", StatsdConfig::port),
                 checkRequired("protocol", StatsdConfig::protocol),
                 checkRequired("pollingFrequency", StatsdConfig::pollingFrequency),
                 checkRequired("step", StatsdConfig::step)

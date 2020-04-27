@@ -33,6 +33,12 @@ import java.util.stream.Stream;
 
 import static java.util.stream.StreamSupport.stream;
 
+/**
+ * Validation support for {@link io.micrometer.core.instrument.config.MeterRegistryConfig}.
+ *
+ * @author Jon Schneider
+ * @since 1.5.0
+ */
 @Incubating(since = "1.5.0")
 public interface Validated<T> extends Iterable<Validated<T>> {
     boolean isValid();
@@ -271,6 +277,10 @@ public interface Validated<T> extends Iterable<Validated<T>> {
 
         public String getMessage() {
             return message;
+        }
+
+        public InvalidReason getReason() {
+            return reason;
         }
 
         @Nullable

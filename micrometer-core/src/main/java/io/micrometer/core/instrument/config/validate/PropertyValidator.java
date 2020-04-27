@@ -26,19 +26,25 @@ import java.util.Arrays;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 
+/**
+ * Validator for properties.
+ *
+ * @author Jon Schneider
+ * @since 1.5.0
+ */
 @Incubating(since = "1.5.0")
 public class PropertyValidator {
     private PropertyValidator() {
     }
 
     public static Validated<Duration> getDuration(MeterRegistryConfig config, String property) {
-        return DurationValidator.validate(prefixedProperty(config, property),
-                config.get(prefixedProperty(config, property)));
+        String prefixedProperty = prefixedProperty(config, property);
+        return DurationValidator.validate(prefixedProperty, config.get(prefixedProperty));
     }
 
     public static Validated<TimeUnit> getTimeUnit(MeterRegistryConfig config, String property) {
-        return DurationValidator.validateTimeUnit(prefixedProperty(config, property),
-                config.get(prefixedProperty(config, property)));
+        String prefixedProperty = prefixedProperty(config, property);
+        return DurationValidator.validateTimeUnit(prefixedProperty, config.get(prefixedProperty));
     }
 
     public static Validated<Integer> getInteger(MeterRegistryConfig config, String property) {
@@ -46,7 +52,7 @@ public class PropertyValidator {
         String value = config.get(prefixedProperty);
 
         try {
-            return Validated.valid(prefixedProperty, value == null ? null : Integer.parseInt(value));
+            return Validated.valid(prefixedProperty, value == null ? null : Integer.valueOf(value));
         } catch (NumberFormatException e) {
             return Validated.invalid(prefixedProperty, value, "must be an integer", InvalidReason.MALFORMED, e);
         }
@@ -63,13 +69,13 @@ public class PropertyValidator {
         try {
             @SuppressWarnings("unchecked") E[] values = (E[]) enumClass.getDeclaredMethod("values").invoke(enumClass);
             for (E enumValue : values) {
-                if (enumValue.toString().equalsIgnoreCase(value)) {
+                if (enumValue.name().equalsIgnoreCase(value)) {
                     return Validated.valid(prefixedProperty, enumValue);
                 }
             }
 
             return Validated.invalid(prefixedProperty, value, "should be one of " + Arrays.stream(values)
-                .map(v -> '\'' + v.toString() + '\'')
+                .map(v -> '\'' + v.name() + '\'')
                 .collect(Collectors.joining(", ")), InvalidReason.MALFORMED);
         } catch (NoSuchMethodException | IllegalAccessException | InvocationTargetException e) {
             // indicates a bug in the meter registry's code, not in the user's configuration
@@ -80,19 +86,12 @@ public class PropertyValidator {
     public static Validated<Boolean> getBoolean(MeterRegistryConfig config, String property) {
         String prefixedProperty = prefixedProperty(config, property);
         String value = config.get(prefixedProperty);
-
-        try {
-            return Validated.valid(prefixedProperty, value == null ? null : Boolean.parseBoolean(value));
-        } catch (NumberFormatException e) {
-            return Validated.invalid(prefixedProperty, value, "must be a boolean", InvalidReason.MALFORMED, e);
-        }
+        return Validated.valid(prefixedProperty, value == null ? null : Boolean.valueOf(value));
     }
 
     public static Validated<String> getSecret(MeterRegistryConfig config, String property) {
         String prefixedProperty = prefixedProperty(config, property);
-        String value = config.get(prefixedProperty);
-
-        return Validated.validSecret(prefixedProperty, value);
+        return Validated.validSecret(prefixedProperty, config.get(prefixedProperty));
     }
 
     public static Validated<String> getString(MeterRegistryConfig config, String property) {

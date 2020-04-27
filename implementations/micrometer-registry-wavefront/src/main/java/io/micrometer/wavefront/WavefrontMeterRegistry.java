@@ -356,13 +356,11 @@ public class WavefrontMeterRegistry extends PushMeterRegistry {
         }
 
         public WavefrontMeterRegistry build() {
-            WavefrontSender sender = (wavefrontSender != null) ? wavefrontSender
-                    : getDefaultSenderBuilder(config).build();
-
             if (wavefrontSender == null) {
                 config.validateSenderConfiguration().orThrow();
             }
-
+            WavefrontSender sender = (wavefrontSender != null) ? wavefrontSender
+                    : getDefaultSenderBuilder(config).build();
             return new WavefrontMeterRegistry(config, clock, threadFactory, sender);
         }
     }

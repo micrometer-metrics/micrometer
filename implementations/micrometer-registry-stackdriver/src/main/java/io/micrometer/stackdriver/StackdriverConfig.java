@@ -82,7 +82,7 @@ public interface StackdriverConfig extends StepRegistryConfig {
                                 GoogleCredentials.fromStream(new FileInputStream(credentials))
                                         .createScoped(MetricServiceSettings.getDefaultServiceScopes())
                         );
-                        return Validated.valid(valid.getProperty(), (CredentialsProvider) provider);
+                        return Validated.valid(valid.getProperty(), provider);
                     } catch (IOException t) {
                         return Validated.invalid(valid.getProperty(), credentials, "cannot read credentials file", InvalidReason.MALFORMED, t);
                     }

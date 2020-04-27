@@ -96,14 +96,20 @@ public interface PushRegistryConfig extends MeterRegistryConfig {
         return validate(this);
     }
 
+    /**
+     * Validate a provided configuration.
+     *
+     * @param config configuration to validate
+     * @return validation result
+     * @since 1.5.0
+     */
     static Validated<?> validate(PushRegistryConfig config) {
         return checkAll(config,
                 check("step", PushRegistryConfig::step),
                 check("connectTimeout", PushRegistryConfig::connectTimeout),
                 check("readTimeout", PushRegistryConfig::readTimeout),
                 check("batchSize", PushRegistryConfig::batchSize),
-                check("numThreads", PushRegistryConfig::numThreads),
-                check("enabled", PushRegistryConfig::enabled)
+                check("numThreads", PushRegistryConfig::numThreads)
         );
     }
 }

@@ -31,10 +31,22 @@ public interface MeterRegistryConfig {
     @Nullable
     String get(String key);
 
+    /**
+     * Validate configuration.
+     *
+     * @return validation result
+     * @since 1.5.0
+     */
     default Validated<?> validate() {
         return Validated.none();
     }
 
+    /**
+     * Validate configuration and throw {@link ValidationException} if it's not valid.
+     *
+     * @throws ValidationException if it's not valid
+     * @since 1.5.0
+     */
     default void requireValid() throws ValidationException {
         validate().orThrow();
     }

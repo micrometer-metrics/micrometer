@@ -15,6 +15,12 @@
  */
 package io.micrometer.core.instrument.config.validate;
 
+/**
+ * Invalid reason.
+ *
+ * @author Jon Schneider
+ * @since 1.5.0
+ */
 public enum InvalidReason {
     MALFORMED,
     MISSING
