@@ -197,7 +197,7 @@ public class PrometheusMeterRegistry extends MeterRegistry {
             List<String> tagValues = tagValues(id);
 
             addDistributionStatisticSamples(distributionStatisticConfig, collector, timer, tagValues);
-        }
+        });
         return timer;
     }
 
