@@ -42,7 +42,11 @@ allprojects {
 
 subprojects {
     if (project.name != 'micrometer-bom') {
-        apply plugin: 'java-library'
+        if (project.name.contains('samples')) {
+            apply plugin: 'java'
+        } else {
+            apply plugin: 'java-library'
+        }
         apply plugin: 'checkstyle'
         apply plugin: 'io.spring.nohttp'
 
