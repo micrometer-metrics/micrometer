@@ -40,14 +40,14 @@ public interface AzureMonitorConfig extends StepRegistryConfig {
      * @return Instrumentation Key
      */
     default String instrumentationKey() {
-        return getSecret(this, "instrumentationKey").required().get();
+        return getSecret(this, "instrumentationKey").get();
     }
 
     @Override
     default Validated<?> validate() {
         return checkAll(this,
                 c -> StepRegistryConfig.validate(c),
-                checkRequired("instrumentationKey", AzureMonitorConfig::instrumentationKey)
+                check("instrumentationKey", AzureMonitorConfig::instrumentationKey)
         );
     }
 }
