@@ -15,7 +15,6 @@
  */
 package io.micrometer.core.instrument.binder.cache;
 
-import com.hazelcast.core.IMap;
 import io.micrometer.core.instrument.*;
 import io.micrometer.core.instrument.binder.BaseUnits;
 import io.micrometer.core.lang.NonNullApi;
@@ -32,7 +31,7 @@ import java.util.concurrent.TimeUnit;
 @NonNullApi
 @NonNullFields
 public class HazelcastCacheMetrics extends CacheMeterBinder {
-    private final IMap<?, ?> cache;
+    private final HazelcastIMapAdapter cache;
 
     /**
      * Record metrics on a Hazelcast cache.
@@ -45,7 +44,7 @@ public class HazelcastCacheMetrics extends CacheMeterBinder {
      * @param <V>      The cache value type.
      * @return The instrumented cache, unchanged. The original cache is not wrapped or proxied in any way.
      */
-    public static <K, V, C extends IMap<K, V>> C monitor(MeterRegistry registry, C cache, String... tags) {
+    public static <K, V, C> C monitor(MeterRegistry registry, C cache, String... tags) {
         return monitor(registry, cache, Tags.of(tags));
     }
 
@@ -60,14 +59,14 @@ public class HazelcastCacheMetrics extends CacheMeterBinder {
      * @param <V>      The cache value type.
      * @return The instrumented cache, unchanged. The original cache is not wrapped or proxied in any way.
      */
-    public static <K, V, C extends IMap<K, V>> C monitor(MeterRegistry registry, C cache, Iterable<Tag> tags) {
+    public static <K, V, C> C monitor(MeterRegistry registry, C cache, Iterable<Tag> tags) {
         new HazelcastCacheMetrics(cache, tags).bindTo(registry);
         return cache;
     }
 
-    public <K, V, C extends IMap<K, V>> HazelcastCacheMetrics(C cache, Iterable<Tag> tags) {
-        super(cache, cache.getName(), tags);
-        this.cache = cache;
+    public <K, V, C> HazelcastCacheMetrics(C cache, Iterable<Tag> tags) {
+        super(cache, HazelcastIMapAdapter.nameOf(cache), tags);
+        this.cache = new HazelcastIMapAdapter(cache);
     }
 
     @Override
@@ -79,7 +78,7 @@ public class HazelcastCacheMetrics extends CacheMeterBinder {
      * @return The number of hits against cache entries held in this local partition. Not all gets had to result from
      * a get operation against {@link #cache}. If a get operation elsewhere in the cluster caused a lookup against an entry
      * held in this partition, the hit will be recorded against map stats in this partition and not in the map stats of the
-     * calling {@link IMap}.
+     * calling {@code IMap}.
      */
     @Override
     protected long hitCount() {
