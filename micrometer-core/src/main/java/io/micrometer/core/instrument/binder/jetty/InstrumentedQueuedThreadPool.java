@@ -24,7 +24,7 @@ import java.util.concurrent.BlockingQueue;
 /**
  * A {@link QueuedThreadPool} that binds metrics about the Jetty server thread pool.
  * This can be passed when constructing a Jetty server. For example:
- * <p>
+ *
  * <pre>{@code
  *     Server server = new Server(new InstrumentedQueuedThreadPool(registry, Tags.empty()));
  *     // ...

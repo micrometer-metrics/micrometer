@@ -47,6 +47,7 @@ public class MeterRegistryConfigValidator {
      * @param property The named property to retrieve.
      * @param getter   The method on the configuration interface which corresponds to this property.
      * @param <M>      The type of the configuration interface.
+     * @param <T>      The type of the property.
      * @return A function which, given a configuration instance, validates the property.
      */
     @SuppressWarnings("unchecked")

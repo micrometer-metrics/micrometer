@@ -48,6 +48,10 @@ public class DefaultLongTaskTimer extends AbstractMeter implements LongTaskTimer
     private final boolean supportsAggregablePercentiles;
 
     /**
+     * Create a {@code DefaultLongTaskTimer} instance.
+     *
+     * @param id ID
+     * @param clock clock
      * @deprecated Use {@link #DefaultLongTaskTimer(Id, Clock, TimeUnit, DistributionStatisticConfig, boolean)} instead.
      */
     @Deprecated

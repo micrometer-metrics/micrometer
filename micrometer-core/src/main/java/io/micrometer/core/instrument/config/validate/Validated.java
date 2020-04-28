@@ -95,6 +95,7 @@ public interface Validated<T> extends Iterable<Validated<T>> {
      *
      * @param condition {@code true} when the property should be considered invalid.
      * @param message   A message explaining the reason why the property is considered invalid.
+     * @param reason    An invalid reason.
      * @return When originally {@link Valid}, apply the test and either retain the valid decision or make it {@link Invalid}.
      * When originally {@link Invalid} or {@link None}, don't apply the test at all, and pass through the original decision.
      */
