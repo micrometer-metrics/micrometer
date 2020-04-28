@@ -21,28 +21,70 @@ import org.eclipse.jetty.util.thread.QueuedThreadPool;
 
 import java.util.concurrent.BlockingQueue;
 
+/**
+ * A {@link QueuedThreadPool} that binds metrics about the Jetty server thread pool.
+ * This can be passed when constructing a Jetty server. For example:
+ * <p>
+ * <pre>{@code
+ *     Server server = new Server(new InstrumentedQueuedThreadPool(registry, Tags.empty()));
+ *     // ...
+ * }</pre>
+ *
+ * @since 1.1.0
+ * @see JettyServerThreadPoolMetrics
+ */
 public class InstrumentedQueuedThreadPool extends QueuedThreadPool {
 
     private final MeterRegistry registry;
     private final Iterable<Tag> tags;
 
+    /**
+     * Default values for the instrumented thread pool.
+     *
+     * @param registry where metrics will be bound
+     * @param tags     tags to apply to metrics bound from this
+     */
     public InstrumentedQueuedThreadPool(MeterRegistry registry, Iterable<Tag> tags) {
         this.registry = registry;
         this.tags = tags;
     }
 
+    /**
+     * Instrumented thread pool.
+     *
+     * @param registry   where metrics will be bound
+     * @param tags       tags to apply to metrics bound from this
+     * @param maxThreads maximum threads for the thread pool
+     */
     public InstrumentedQueuedThreadPool(MeterRegistry registry, Iterable<Tag> tags, int maxThreads) {
         super(maxThreads);
         this.registry = registry;
         this.tags = tags;
     }
 
+    /**
+     * Instrumented thread pool.
+     *
+     * @param registry   where metrics will be bound
+     * @param tags       tags to apply to metrics bound from this
+     * @param maxThreads maximum threads for the thread pool
+     * @param minThreads minimum threads for the thread pool
+     */
     public InstrumentedQueuedThreadPool(MeterRegistry registry, Iterable<Tag> tags, int maxThreads, int minThreads) {
         super(maxThreads, minThreads);
         this.registry = registry;
         this.tags = tags;
     }
 
+    /**
+     * Instrumented thread pool.
+     *
+     * @param registry    where metrics will be bound
+     * @param tags        tags to apply to metrics bound from this
+     * @param maxThreads  maximum threads for the thread pool
+     * @param minThreads  minimum threads for the thread pool
+     * @param idleTimeout timeout for idle threads in pool
+     */
     public InstrumentedQueuedThreadPool(MeterRegistry registry,
                                         Iterable<Tag> tags,
                                         int maxThreads,
@@ -53,6 +95,16 @@ public class InstrumentedQueuedThreadPool extends QueuedThreadPool {
         this.tags = tags;
     }
 
+    /**
+     * Instrumented thread pool.
+     *
+     * @param registry    where metrics will be bound
+     * @param tags        tags to apply to metrics bound from this
+     * @param maxThreads  maximum threads for the thread pool
+     * @param minThreads  minimum threads for the thread pool
+     * @param idleTimeout timeout for idle threads in pool
+     * @param queue       backing queue for thread pool tasks
+     */
     public InstrumentedQueuedThreadPool(MeterRegistry registry,
                                         Iterable<Tag> tags,
                                         int maxThreads,
