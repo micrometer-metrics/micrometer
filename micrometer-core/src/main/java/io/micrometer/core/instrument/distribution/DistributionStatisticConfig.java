@@ -96,6 +96,9 @@ public class DistributionStatisticConfig implements Mergeable<DistributionStatis
 
     /**
      * For internal use only.
+     *
+     * @param supportsAggregablePercentiles whether it supports aggregable percentiles
+     * @return histogram buckets
      */
     public NavigableSet<Double> getHistogramBuckets(boolean supportsAggregablePercentiles) {
         NavigableSet<Double> buckets = new TreeSet<>();
