@@ -210,6 +210,8 @@ public class OkHttpMetricsEventListener extends EventListener {
         }
 
         /**
+         * Add a {@link Tag} to any already configured tags on this Builder.
+         * @return this Builder
          * @since 1.5.0
          */
         public Builder tag(Tag tag) {

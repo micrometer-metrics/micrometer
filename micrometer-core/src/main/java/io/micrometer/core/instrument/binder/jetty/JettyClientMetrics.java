@@ -23,7 +23,8 @@ import io.micrometer.core.instrument.config.MeterFilter;
 import org.eclipse.jetty.client.api.Request;
 
 /**
- * Provides request metrics for Jetty {@link org.eclipse.jetty.client.HttpClient}.
+ * Provides request metrics for Jetty {@link org.eclipse.jetty.client.HttpClient},
+ * configured as a {@link org.eclipse.jetty.client.api.Request.Listener Request.Listener}.
  * Incubating in case there emerges a better way to handle path variable detection.
  *
  * @author Jon Schneider
