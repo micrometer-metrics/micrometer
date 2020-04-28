@@ -68,6 +68,11 @@ public interface DistributionSummary extends Meter, HistogramSupport {
     double max();
 
     /**
+     * @return The minimum time of a single event.
+     */
+    double min();
+
+    /**
      * Provides cumulative histogram counts.
      *
      * @param value The histogram bucket to retrieve a count for.

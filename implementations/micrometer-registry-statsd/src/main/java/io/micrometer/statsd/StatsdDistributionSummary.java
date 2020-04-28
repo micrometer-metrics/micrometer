@@ -20,6 +20,7 @@ import io.micrometer.core.instrument.Clock;
 import io.micrometer.core.instrument.Meter;
 import io.micrometer.core.instrument.distribution.DistributionStatisticConfig;
 import io.micrometer.core.instrument.distribution.TimeWindowMax;
+import io.micrometer.core.instrument.distribution.TimeWindowMin;
 import io.micrometer.core.instrument.util.MeterEquivalence;
 import io.micrometer.core.lang.Nullable;
 import org.reactivestreams.Subscriber;
@@ -31,6 +32,7 @@ public class StatsdDistributionSummary extends AbstractDistributionSummary {
     private final LongAdder count = new LongAdder();
     private final DoubleAdder amount = new DoubleAdder();
     private final TimeWindowMax max;
+    private final TimeWindowMin min;
     private final StatsdLineBuilder lineBuilder;
     private final Subscriber<String> subscriber;
     private volatile boolean shutdown = false;
@@ -39,6 +41,7 @@ public class StatsdDistributionSummary extends AbstractDistributionSummary {
                               DistributionStatisticConfig distributionStatisticConfig, double scale) {
         super(id, clock, distributionStatisticConfig, scale, false);
         this.max = new TimeWindowMax(clock, distributionStatisticConfig);
+        this.min = new TimeWindowMin(clock, distributionStatisticConfig);
         this.lineBuilder = lineBuilder;
         this.subscriber = subscriber;
     }
@@ -49,6 +52,7 @@ public class StatsdDistributionSummary extends AbstractDistributionSummary {
             count.increment();
             this.amount.add(amount);
             max.record(amount);
+            min.record(amount);
             subscriber.onNext(lineBuilder.histogram(amount));
         }
     }
@@ -71,6 +75,9 @@ public class StatsdDistributionSummary extends AbstractDistributionSummary {
     public double max() {
         return max.poll();
     }
+
+    @Override
+    public double min() { return min.poll(); }
 
     @SuppressWarnings("EqualsWhichDoesntCheckParameterClass")
     @Override

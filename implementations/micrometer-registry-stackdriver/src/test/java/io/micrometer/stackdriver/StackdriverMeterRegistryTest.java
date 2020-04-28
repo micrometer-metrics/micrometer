@@ -55,7 +55,7 @@ class StackdriverMeterRegistryTest {
     void distributionCountBucketsInfinityBucketIsNotNegative() {
         StackdriverMeterRegistry.Batch batch = meterRegistry.new Batch();
         // count is 4, but sum of bucket counts is 5 due to inconsistent snapshotting
-        HistogramSnapshot histogramSnapshot = new HistogramSnapshot(4, 14.7, 5, null, new CountAtBucket[]{new CountAtBucket(1, 2), new CountAtBucket(2, 5)}, null);
+        HistogramSnapshot histogramSnapshot = new HistogramSnapshot(4, 14.7, 5, 1,null, new CountAtBucket[]{new CountAtBucket(1, 2), new CountAtBucket(2, 5)}, null);
         Distribution distribution = batch.distribution(histogramSnapshot, false);
         List<Long> bucketCountsList = distribution.getBucketCountsList();
         assertThat(bucketCountsList.get(bucketCountsList.size() - 1)).isNotNegative();

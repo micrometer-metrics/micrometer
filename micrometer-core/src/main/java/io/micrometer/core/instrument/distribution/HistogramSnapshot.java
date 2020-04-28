@@ -33,17 +33,19 @@ public final class HistogramSnapshot {
     private final long count;
     private final double total;
     private final double max;
+    private final double min;
 
     @Nullable
     private final BiConsumer<PrintStream, Double> summaryOutput;
 
-    public HistogramSnapshot(long count, double total, double max,
+    public HistogramSnapshot(long count, double total, double max, double min,
                              @Nullable ValueAtPercentile[] percentileValues,
                              @Nullable CountAtBucket[] histogramCounts,
                              @Nullable BiConsumer<PrintStream, Double> summaryOutput) {
         this.count = count;
         this.total = total;
         this.max = max;
+        this.min = min;
         this.percentileValues = percentileValues != null ? percentileValues : EMPTY_VALUES;
         this.histogramCounts = histogramCounts != null ? histogramCounts : EMPTY_COUNTS;
         this.summaryOutput = summaryOutput;
@@ -66,7 +68,15 @@ public final class HistogramSnapshot {
     }
 
     public double max(TimeUnit unit) {
-        return TimeUtils.nanosToUnit(max, unit);
+        return TimeUtils.nanosToUnit(min, unit);
+    }
+
+    public double min() {
+        return max;
+    }
+
+    public double min(TimeUnit unit) {
+        return TimeUtils.nanosToUnit(min, unit);
     }
 
     public double mean() {
@@ -97,6 +107,8 @@ public final class HistogramSnapshot {
         buf.append(mean());
         buf.append(", max=");
         buf.append(max);
+        buf.append(", min=");
+        buf.append(min);
 
         if (percentileValues.length > 0) {
             buf.append(", percentileValues=");
@@ -112,8 +124,8 @@ public final class HistogramSnapshot {
         return buf.toString();
     }
 
-    public static HistogramSnapshot empty(long count, double total, double max) {
-        return new HistogramSnapshot(count, total, max, null, null, null);
+    public static HistogramSnapshot empty(long count, double total, double max, double min) {
+        return new HistogramSnapshot(count, total, max, min,null, null, null);
     }
 
     public void outputSummary(PrintStream out, double scale) {

@@ -19,6 +19,7 @@ import io.micrometer.core.instrument.AbstractTimer;
 import io.micrometer.core.instrument.Clock;
 import io.micrometer.core.instrument.distribution.DistributionStatisticConfig;
 import io.micrometer.core.instrument.distribution.TimeWindowMax;
+import io.micrometer.core.instrument.distribution.TimeWindowMin;
 import io.micrometer.core.instrument.distribution.pause.PauseDetector;
 import io.micrometer.core.instrument.util.TimeUtils;
 
@@ -32,6 +33,7 @@ public class CumulativeTimer extends AbstractTimer {
     private final AtomicLong count;
     private final AtomicLong total;
     private final TimeWindowMax max;
+    private final TimeWindowMin min;
 
     public CumulativeTimer(Id id, Clock clock, DistributionStatisticConfig distributionStatisticConfig,
                            PauseDetector pauseDetector, TimeUnit baseTimeUnit) {
@@ -44,6 +46,7 @@ public class CumulativeTimer extends AbstractTimer {
         this.count = new AtomicLong();
         this.total = new AtomicLong();
         this.max = new TimeWindowMax(clock, distributionStatisticConfig);
+        this.min = new TimeWindowMin(clock, distributionStatisticConfig);
     }
 
     @Override
@@ -52,6 +55,7 @@ public class CumulativeTimer extends AbstractTimer {
         count.getAndAdd(1);
         total.getAndAdd(nanoAmount);
         max.record(nanoAmount, TimeUnit.NANOSECONDS);
+        min.record(nanoAmount, TimeUnit.NANOSECONDS);
     }
 
     @Override
@@ -68,4 +72,7 @@ public class CumulativeTimer extends AbstractTimer {
     public double max(TimeUnit unit) {
         return max.poll(unit);
     }
+
+    @Override
+    public double min(TimeUnit unit) { return min.poll(unit); }
 }

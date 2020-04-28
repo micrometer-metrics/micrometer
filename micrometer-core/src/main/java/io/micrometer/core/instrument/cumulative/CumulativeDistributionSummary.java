@@ -21,6 +21,7 @@ import io.micrometer.core.instrument.Measurement;
 import io.micrometer.core.instrument.Statistic;
 import io.micrometer.core.instrument.distribution.DistributionStatisticConfig;
 import io.micrometer.core.instrument.distribution.TimeWindowMax;
+import io.micrometer.core.instrument.distribution.TimeWindowMin;
 
 import java.util.Arrays;
 import java.util.concurrent.atomic.AtomicLong;
@@ -38,6 +39,7 @@ public class CumulativeDistributionSummary extends AbstractDistributionSummary {
     private final AtomicLong count;
     private final DoubleAdder total;
     private final TimeWindowMax max;
+    private final TimeWindowMin min;
 
     @Deprecated
     public CumulativeDistributionSummary(Id id, Clock clock, DistributionStatisticConfig distributionStatisticConfig,
@@ -51,6 +53,7 @@ public class CumulativeDistributionSummary extends AbstractDistributionSummary {
         this.count = new AtomicLong();
         this.total = new DoubleAdder();
         this.max = new TimeWindowMax(clock, distributionStatisticConfig);
+        this.min = new TimeWindowMin(clock, distributionStatisticConfig);
     }
 
     @Override
@@ -58,6 +61,7 @@ public class CumulativeDistributionSummary extends AbstractDistributionSummary {
         count.incrementAndGet();
         total.add(amount);
         max.record(amount);
+        min.record(amount);
     }
 
     @Override
@@ -76,11 +80,15 @@ public class CumulativeDistributionSummary extends AbstractDistributionSummary {
     }
 
     @Override
+    public double min() { return min.poll(); }
+
+    @Override
     public Iterable<Measurement> measure() {
         return Arrays.asList(
             new Measurement(() -> (double) count(), Statistic.COUNT),
             new Measurement(this::totalAmount, Statistic.TOTAL),
-            new Measurement(this::max, Statistic.MAX)
+            new Measurement(this::max, Statistic.MAX),
+            new Measurement(this::min, Statistic.MIN)
         );
     }
 }

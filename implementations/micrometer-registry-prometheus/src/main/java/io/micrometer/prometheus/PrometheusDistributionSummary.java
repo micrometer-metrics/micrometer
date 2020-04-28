@@ -32,6 +32,7 @@ public class PrometheusDistributionSummary extends AbstractDistributionSummary {
     private LongAdder count = new LongAdder();
     private DoubleAdder amount = new DoubleAdder();
     private TimeWindowMax max;
+    private TimeWindowMin min;
 
     PrometheusDistributionSummary(Id id, Clock clock, DistributionStatisticConfig distributionStatisticConfig, double scale) {
         super(id, clock,
@@ -43,6 +44,7 @@ public class PrometheusDistributionSummary extends AbstractDistributionSummary {
                 scale, false);
 
         this.max = new TimeWindowMax(clock, distributionStatisticConfig);
+        this.min = new TimeWindowMin(clock, distributionStatisticConfig);
 
         if (distributionStatisticConfig.isPublishingHistogram()) {
             histogram = new TimeWindowFixedBoundaryHistogram(clock, DistributionStatisticConfig.builder()
@@ -80,6 +82,9 @@ public class PrometheusDistributionSummary extends AbstractDistributionSummary {
         return max.poll();
     }
 
+    @Override
+    public double min() { return min.poll(); }
+
     @SuppressWarnings("EqualsWhichDoesntCheckParameterClass")
     @Override
     public boolean equals(@Nullable Object o) {
@@ -98,7 +103,7 @@ public class PrometheusDistributionSummary extends AbstractDistributionSummary {
      * @return Cumulative histogram buckets.
      */
     public CountAtBucket[] histogramCounts() {
-        return histogram == null ? EMPTY_HISTOGRAM : histogram.takeSnapshot(0, 0, 0).histogramCounts();
+        return histogram == null ? EMPTY_HISTOGRAM : histogram.takeSnapshot(0, 0, 0, 0).histogramCounts();
     }
 
     @Override
@@ -112,6 +117,7 @@ public class PrometheusDistributionSummary extends AbstractDistributionSummary {
         return new HistogramSnapshot(snapshot.count(),
                 snapshot.total(),
                 snapshot.max(),
+                snapshot.min(),
                 snapshot.percentileValues(),
                 histogramCounts(),
                 snapshot::outputSummary);

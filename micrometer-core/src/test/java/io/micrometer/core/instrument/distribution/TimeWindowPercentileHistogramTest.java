@@ -37,7 +37,7 @@ class TimeWindowPercentileHistogramTest {
 
             histogram.recordDouble(3);
     
-            assertThat(histogram.takeSnapshot(0, 0, 0).histogramCounts()).containsExactly(
+            assertThat(histogram.takeSnapshot(0, 0, 0, 0).histogramCounts()).containsExactly(
                     new CountAtBucket(3, 1),
                     new CountAtBucket(6, 1),
                     new CountAtBucket(7, 1));
@@ -46,7 +46,7 @@ class TimeWindowPercentileHistogramTest {
     
             // Proves that the accumulated histogram is truly cumulative, and not just a representation
             // of the last snapshot
-            assertThat(histogram.takeSnapshot(0, 0, 0).histogramCounts()).containsExactly(
+            assertThat(histogram.takeSnapshot(0, 0, 0, 0).histogramCounts()).containsExactly(
                     new CountAtBucket(3, 1),
                     new CountAtBucket(6, 2),
                     new CountAtBucket(7, 2)
@@ -63,7 +63,7 @@ class TimeWindowPercentileHistogramTest {
                 .merge(DistributionStatisticConfig.DEFAULT), false)) {
             
             histogram.recordDouble(3);
-            assertThat(histogram.takeSnapshot(0, 0, 0).histogramCounts()).containsExactly(new CountAtBucket(3, 1));
+            assertThat(histogram.takeSnapshot(0, 0, 0, 0).histogramCounts()).containsExactly(new CountAtBucket(3, 1));
         }
     }
 
@@ -78,7 +78,7 @@ class TimeWindowPercentileHistogramTest {
             // large.
             histogram.recordDouble(Double.MAX_VALUE);
 
-            assertThat(histogram.takeSnapshot(0, 0, 0).histogramCounts())
+            assertThat(histogram.takeSnapshot(0, 0, 0, 0).histogramCounts())
                     .containsExactly(new CountAtBucket(Long.MAX_VALUE, 0));
         }
     }
@@ -97,7 +97,7 @@ class TimeWindowPercentileHistogramTest {
                 histogram.recordLong((long) millisToUnit(i, TimeUnit.NANOSECONDS));
             }
     
-            assertThat(histogram.takeSnapshot(0, 0, 0).percentileValues())
+            assertThat(histogram.takeSnapshot(0, 0, 0, 0).percentileValues())
                     .anyMatch(p -> percentileValueIsApproximately(p, 0.5, 5e6))
                     .anyMatch(p -> percentileValueIsApproximately(p, 0.9, 9e6))
                     .anyMatch(p -> percentileValueIsApproximately(p, 0.95, 10e6));
@@ -115,7 +115,7 @@ class TimeWindowPercentileHistogramTest {
                 config, false)) {
 
             ValueAtPercentile expectedPercentile = new ValueAtPercentile(0.5, 0);
-            HistogramSnapshot snapshot = histogram.takeSnapshot(0, 0, 0);
+            HistogramSnapshot snapshot = histogram.takeSnapshot(0, 0, 0, 0);
             assertThat(snapshot.percentileValues()).containsExactly(expectedPercentile);
         }
     }
@@ -135,7 +135,7 @@ class TimeWindowPercentileHistogramTest {
             }
     
             // baseline median
-            assertThat(histogram.takeSnapshot(0, 0, 0).percentileValues())
+            assertThat(histogram.takeSnapshot(0, 0, 0, 0).percentileValues())
                     .anyMatch(p -> percentileValueIsApproximately(p, 0.5, 5e6));
     
             for (int i = 11; i <= 20; i++) {
@@ -143,7 +143,7 @@ class TimeWindowPercentileHistogramTest {
             }
     
             // median should have moved after seeing 10 more samples
-            assertThat(histogram.takeSnapshot(0, 0, 0).percentileValues())
+            assertThat(histogram.takeSnapshot(0, 0, 0, 0 ).percentileValues())
                     .anyMatch(p -> percentileValueIsApproximately(p, 0.5, 10e6));
         }
     }
@@ -228,7 +228,7 @@ class TimeWindowPercentileHistogramTest {
     }
 
     private double percentileValue(Histogram histogram, double p) {
-        for (ValueAtPercentile valueAtPercentile : histogram.takeSnapshot(0, 0, 0).percentileValues()) {
+        for (ValueAtPercentile valueAtPercentile : histogram.takeSnapshot(0, 0, 0, 0).percentileValues()) {
             if (valueAtPercentile.percentile() == p)
                 return valueAtPercentile.value();
         }

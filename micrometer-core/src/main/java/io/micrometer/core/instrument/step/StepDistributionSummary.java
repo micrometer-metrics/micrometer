@@ -21,6 +21,7 @@ import io.micrometer.core.instrument.Measurement;
 import io.micrometer.core.instrument.Statistic;
 import io.micrometer.core.instrument.distribution.DistributionStatisticConfig;
 import io.micrometer.core.instrument.distribution.TimeWindowMax;
+import io.micrometer.core.instrument.distribution.TimeWindowMin;
 
 import java.util.Arrays;
 
@@ -28,6 +29,7 @@ public class StepDistributionSummary extends AbstractDistributionSummary {
     private final StepLong count;
     private final StepDouble total;
     private final TimeWindowMax max;
+    private final TimeWindowMin min;
 
     /**
      * Create a new {@code StepDistributionSummary}.
@@ -77,6 +79,7 @@ public class StepDistributionSummary extends AbstractDistributionSummary {
         this.count = new StepLong(clock, stepMillis);
         this.total = new StepDouble(clock, stepMillis);
         this.max = new TimeWindowMax(clock, distributionStatisticConfig);
+        this.min = new TimeWindowMin(clock, distributionStatisticConfig);
     }
 
     @Override
@@ -84,6 +87,7 @@ public class StepDistributionSummary extends AbstractDistributionSummary {
         count.getCurrent().add(1);
         total.getCurrent().add(amount);
         max.record(amount);
+        min.record(amount);
     }
 
     @Override
@@ -102,11 +106,17 @@ public class StepDistributionSummary extends AbstractDistributionSummary {
     }
 
     @Override
+    public double min() {
+        return min.poll();
+    }
+
+    @Override
     public Iterable<Measurement> measure() {
         return Arrays.asList(
                 new Measurement(() -> (double) count(), Statistic.COUNT),
                 new Measurement(this::totalAmount, Statistic.TOTAL),
-                new Measurement(this::max, Statistic.MAX)
+                new Measurement(this::max, Statistic.MAX),
+                new Measurement(this::min, Statistic.MIN)
         );
     }
 }

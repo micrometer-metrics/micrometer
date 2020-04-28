@@ -30,7 +30,7 @@ public class NoopHistogram implements Histogram {
     }
 
     @Override
-    public HistogramSnapshot takeSnapshot(long count, double total, double max) {
-        return HistogramSnapshot.empty(count, total, max);
+    public HistogramSnapshot takeSnapshot(long count, double total, double max, double min) {
+        return HistogramSnapshot.empty(count, total, max, min);
     }
 }

@@ -43,7 +43,12 @@ public class NoopDistributionSummary extends NoopMeter implements DistributionSu
     }
 
     @Override
+    public double min() {
+        return 0;
+    }
+
+    @Override
     public HistogramSnapshot takeSnapshot() {
-        return HistogramSnapshot.empty(0, 0, 0);
+        return HistogramSnapshot.empty(0, 0, 0, 0);
     }
 }

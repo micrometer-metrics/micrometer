@@ -54,6 +54,11 @@ class CompositeDistributionSummary extends AbstractCompositeMeter<DistributionSu
     }
 
     @Override
+    public double min() {
+        return firstChild().min();
+    }
+
+    @Override
     public HistogramSnapshot takeSnapshot() {
         return firstChild().takeSnapshot();
     }

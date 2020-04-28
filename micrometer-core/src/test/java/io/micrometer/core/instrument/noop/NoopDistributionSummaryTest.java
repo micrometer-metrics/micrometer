@@ -55,12 +55,18 @@ class NoopDistributionSummaryTest {
     }
 
     @Test
+    void returnsMinAsZero() {
+        assertThat(distributionSummary.min()).isEqualTo(0L);
+    }
+
+    @Test
     void returnsEmptySnapshot() {
         HistogramSnapshot snapshot = distributionSummary.takeSnapshot();
-        HistogramSnapshot expectedHistogram = HistogramSnapshot.empty(0, 0, 0);
+        HistogramSnapshot expectedHistogram = HistogramSnapshot.empty(0, 0, 0, 0);
         assertThat(snapshot.count()).isEqualTo(expectedHistogram.count());
         assertThat(snapshot.total()).isEqualTo(expectedHistogram.total());
         assertThat(snapshot.max()).isEqualTo(expectedHistogram.max());
+        assertThat(snapshot.min()).isEqualTo(expectedHistogram.min());
     }
 
 }

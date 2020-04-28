@@ -366,6 +366,7 @@ public class ElasticMeterRegistry extends StepMeterRegistry {
             builder.append(",\"sum\":").append(timer.totalTime(getBaseTimeUnit()));
             builder.append(",\"mean\":").append(timer.mean(getBaseTimeUnit()));
             builder.append(",\"max\":").append(timer.max(getBaseTimeUnit()));
+            builder.append(",\"min\":").append(timer.min(getBaseTimeUnit()));
         }));
     }
 
@@ -377,6 +378,7 @@ public class ElasticMeterRegistry extends StepMeterRegistry {
             builder.append(",\"sum\":").append(histogramSnapshot.total());
             builder.append(",\"mean\":").append(histogramSnapshot.mean());
             builder.append(",\"max\":").append(histogramSnapshot.max());
+            builder.append(",\"min\":").append(histogramSnapshot.min());
         }));
     }
 

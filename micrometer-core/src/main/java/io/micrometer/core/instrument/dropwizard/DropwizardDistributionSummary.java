@@ -19,6 +19,7 @@ import io.micrometer.core.instrument.AbstractDistributionSummary;
 import io.micrometer.core.instrument.Clock;
 import io.micrometer.core.instrument.distribution.DistributionStatisticConfig;
 import io.micrometer.core.instrument.distribution.TimeWindowMax;
+import io.micrometer.core.instrument.distribution.TimeWindowMin;
 import io.micrometer.core.instrument.util.MeterEquivalence;
 import io.micrometer.core.lang.Nullable;
 
@@ -31,12 +32,14 @@ public class DropwizardDistributionSummary extends AbstractDistributionSummary {
     private final com.codahale.metrics.Histogram impl;
     private final DoubleAdder totalAmount = new DoubleAdder();
     private final TimeWindowMax max;
+    private final TimeWindowMin min;
 
     DropwizardDistributionSummary(Id id, Clock clock, com.codahale.metrics.Histogram impl, DistributionStatisticConfig distributionStatisticConfig,
                                   double scale) {
         super(id, clock, distributionStatisticConfig, scale, false);
         this.impl = impl;
         this.max = new TimeWindowMax(clock, distributionStatisticConfig);
+        this.min = new TimeWindowMin(clock, distributionStatisticConfig);
     }
 
     @Override
@@ -45,6 +48,7 @@ public class DropwizardDistributionSummary extends AbstractDistributionSummary {
             impl.update((long) amount);
             totalAmount.add(amount);
             max.record(amount);
+            min.record(amount);
         }
     }
 
@@ -61,6 +65,11 @@ public class DropwizardDistributionSummary extends AbstractDistributionSummary {
     @Override
     public double max() {
         return max.poll();
+    }
+
+    @Override
+    public double min() {
+        return min.poll();
     }
 
     @SuppressWarnings("EqualsWhichDoesntCheckParameterClass")

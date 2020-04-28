@@ -192,12 +192,20 @@ public interface Timer extends Meter, HistogramSupport {
      */
     double max(TimeUnit unit);
 
+    /**
+     * @param unit The base unit of time to scale the min to.
+     * @return The minimum time of a single event.
+     */
+    double min(TimeUnit unit);
+
+
     @Override
     default Iterable<Measurement> measure() {
         return Arrays.asList(
                 new Measurement(() -> (double) count(), Statistic.COUNT),
                 new Measurement(() -> totalTime(baseTimeUnit()), Statistic.TOTAL_TIME),
-                new Measurement(() -> max(baseTimeUnit()), Statistic.MAX)
+                new Measurement(() -> max(baseTimeUnit()), Statistic.MAX),
+                new Measurement(() -> min(baseTimeUnit()), Statistic.MIN)
         );
     }
 

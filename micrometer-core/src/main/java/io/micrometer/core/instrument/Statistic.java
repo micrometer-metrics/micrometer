@@ -42,6 +42,11 @@ public enum Statistic {
     MAX("max"),
 
     /**
+     * The minimum amount recorded. When this represents a time, it is reported in the monitoring system's base unit of time.
+     */
+    MIN("min"),
+
+    /**
      * Instantaneous value, such as those reported by gauges.
      */
     VALUE("value"),

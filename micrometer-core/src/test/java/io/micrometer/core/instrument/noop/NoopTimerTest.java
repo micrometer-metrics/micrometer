@@ -82,6 +82,11 @@ class NoopTimerTest {
     }
 
     @Test
+    void returnsMinAsZero() {
+        assertThat(timer.min(TimeUnit.SECONDS)).isEqualTo(0L);
+    }
+
+    @Test
     void returnsBaseTimeUnit() {
         assertThat(timer.baseTimeUnit()).isEqualTo(TimeUnit.SECONDS);
     }
@@ -89,9 +94,10 @@ class NoopTimerTest {
     @Test
     void returnsEmptySnapshot() {
         HistogramSnapshot snapshot = timer.takeSnapshot();
-        HistogramSnapshot expectedHistogram = HistogramSnapshot.empty(0, 0, 0);
+        HistogramSnapshot expectedHistogram = HistogramSnapshot.empty(0, 0, 0, 0);
         assertThat(snapshot.count()).isEqualTo(expectedHistogram.count());
         assertThat(snapshot.total()).isEqualTo(expectedHistogram.total());
         assertThat(snapshot.max()).isEqualTo(expectedHistogram.max());
+        assertThat(snapshot.min()).isEqualTo(expectedHistogram.min());
     }
 }

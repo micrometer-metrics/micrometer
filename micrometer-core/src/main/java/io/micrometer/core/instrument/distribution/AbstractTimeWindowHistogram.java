@@ -153,7 +153,7 @@ abstract class AbstractTimeWindowHistogram<T, U> implements Histogram {
     }
 
     @Override
-    public final HistogramSnapshot takeSnapshot(long count, double total, double max) {
+    public final HistogramSnapshot takeSnapshot(long count, double total, double max, double min) {
         rotate();
 
         final ValueAtPercentile[] values;
@@ -164,7 +164,7 @@ abstract class AbstractTimeWindowHistogram<T, U> implements Histogram {
             counts = takeCountSnapshot();
         }
 
-        return new HistogramSnapshot(count, total, max, values, counts, this::outputSummary);
+        return new HistogramSnapshot(count, total, max, min, values, counts, this::outputSummary);
     }
 
     private void accumulateIfStale() {

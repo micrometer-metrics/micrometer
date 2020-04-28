@@ -19,6 +19,7 @@ import io.micrometer.core.instrument.AbstractTimer;
 import io.micrometer.core.instrument.Clock;
 import io.micrometer.core.instrument.distribution.DistributionStatisticConfig;
 import io.micrometer.core.instrument.distribution.TimeWindowMax;
+import io.micrometer.core.instrument.distribution.TimeWindowMin;
 import io.micrometer.core.instrument.distribution.pause.PauseDetector;
 import io.micrometer.core.instrument.util.TimeUtils;
 
@@ -31,6 +32,7 @@ public class StepTimer extends AbstractTimer {
     private final StepLong count;
     private final StepLong total;
     private final TimeWindowMax max;
+    private final TimeWindowMin min;
 
     /**
      * Create a new {@code StepTimer}.
@@ -84,6 +86,7 @@ public class StepTimer extends AbstractTimer {
         this.count = new StepLong(clock, stepMillis);
         this.total = new StepLong(clock, stepMillis);
         this.max = new TimeWindowMax(clock, distributionStatisticConfig);
+        this.min = new TimeWindowMin(clock, distributionStatisticConfig);
     }
 
     @Override
@@ -92,6 +95,7 @@ public class StepTimer extends AbstractTimer {
         count.getCurrent().add(1);
         total.getCurrent().add(nanoAmount);
         max.record(amount, unit);
+        min.record(amount, unit);
     }
 
     @Override
@@ -107,5 +111,10 @@ public class StepTimer extends AbstractTimer {
     @Override
     public double max(TimeUnit unit) {
         return max.poll(unit);
+    }
+
+    @Override
+    public double min(TimeUnit unit) {
+        return min.poll(unit);
     }
 }

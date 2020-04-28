@@ -62,12 +62,17 @@ public class NoopTimer extends NoopMeter implements Timer {
     }
 
     @Override
+    public double min(TimeUnit unit) {
+        return 0;
+    }
+
+    @Override
     public TimeUnit baseTimeUnit() {
         return TimeUnit.SECONDS;
     }
 
     @Override
     public HistogramSnapshot takeSnapshot() {
-        return HistogramSnapshot.empty(0, 0, 0);
+        return HistogramSnapshot.empty(0, 0, 0, 0);
     }
 }

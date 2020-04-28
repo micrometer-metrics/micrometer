@@ -77,6 +77,15 @@ public class StatsdTimer extends AbstractTimer {
         return TimeUtils.convert(max.poll(), TimeUnit.MILLISECONDS, unit);
     }
 
+    /**
+     * The StatsD agent will not need this value so it is not calculated.
+     * This value is not exported to the agent.
+     */
+    @Override
+    public double min(TimeUnit unit) {
+        return Double.NaN;
+    }
+
     void shutdown() {
         this.shutdown = true;
     }

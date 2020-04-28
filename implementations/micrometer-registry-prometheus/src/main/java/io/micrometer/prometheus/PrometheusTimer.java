@@ -32,6 +32,7 @@ public class PrometheusTimer extends AbstractTimer {
     private final LongAdder count = new LongAdder();
     private final LongAdder totalTime = new LongAdder();
     private final TimeWindowMax max;
+    private final TimeWindowMin min;
 
     @Nullable
     private final Histogram histogram;
@@ -46,6 +47,7 @@ public class PrometheusTimer extends AbstractTimer {
                 pauseDetector, TimeUnit.SECONDS, false);
 
         this.max = new TimeWindowMax(clock, distributionStatisticConfig);
+        this.min = new TimeWindowMin(clock, distributionStatisticConfig);
 
         if (distributionStatisticConfig.isPublishingHistogram()) {
             histogram = new TimeWindowFixedBoundaryHistogram(clock, DistributionStatisticConfig.builder()
@@ -64,6 +66,7 @@ public class PrometheusTimer extends AbstractTimer {
         long nanoAmount = TimeUnit.NANOSECONDS.convert(amount, unit);
         totalTime.add(nanoAmount);
         max.record(nanoAmount, TimeUnit.NANOSECONDS);
+        min.record(nanoAmount, TimeUnit.NANOSECONDS);
 
         if (histogram != null)
             histogram.recordLong(TimeUnit.NANOSECONDS.convert(amount, unit));
@@ -84,6 +87,11 @@ public class PrometheusTimer extends AbstractTimer {
         return max.poll(unit);
     }
 
+    @Override
+    public double min(TimeUnit unit) {
+        return min.poll(unit);
+    }
+
     /**
      * For Prometheus we cannot use the histogram counts from HistogramSnapshot, as it is based on a
      * rolling histogram. Prometheus requires a histogram that accumulates values over the lifetime of the app.
@@ -91,7 +99,7 @@ public class PrometheusTimer extends AbstractTimer {
      * @return Cumulative histogram buckets.
      */
     public CountAtBucket[] histogramCounts() {
-        return histogram == null ? EMPTY_HISTOGRAM : histogram.takeSnapshot(0, 0, 0).histogramCounts();
+        return histogram == null ? EMPTY_HISTOGRAM : histogram.takeSnapshot(0, 0, 0, 0).histogramCounts();
     }
 
     @Override
@@ -105,6 +113,7 @@ public class PrometheusTimer extends AbstractTimer {
         return new HistogramSnapshot(snapshot.count(),
                 snapshot.total(TimeUnit.SECONDS),
                 snapshot.max(TimeUnit.SECONDS),
+                snapshot.min(TimeUnit.SECONDS),
                 snapshot.percentileValues(),
                 histogramCounts(),
                 snapshot::outputSummary);

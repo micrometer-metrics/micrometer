@@ -20,6 +20,7 @@ import io.micrometer.core.instrument.AbstractTimer;
 import io.micrometer.core.instrument.Clock;
 import io.micrometer.core.instrument.distribution.DistributionStatisticConfig;
 import io.micrometer.core.instrument.distribution.TimeWindowMax;
+import io.micrometer.core.instrument.distribution.TimeWindowMin;
 import io.micrometer.core.instrument.distribution.pause.PauseDetector;
 import io.micrometer.core.instrument.util.TimeUtils;
 
@@ -30,11 +31,13 @@ public class DropwizardTimer extends AbstractTimer {
     private final Timer impl;
     private final AtomicLong totalTime = new AtomicLong(0);
     private final TimeWindowMax max;
+    private final TimeWindowMin min;
 
     DropwizardTimer(Id id, Timer impl, Clock clock, DistributionStatisticConfig distributionStatisticConfig, PauseDetector pauseDetector) {
         super(id, clock, distributionStatisticConfig, pauseDetector, TimeUnit.MILLISECONDS, false);
         this.impl = impl;
         this.max = new TimeWindowMax(clock, distributionStatisticConfig);
+        this.min = new TimeWindowMin(clock, distributionStatisticConfig);
     }
 
     @Override
@@ -44,6 +47,7 @@ public class DropwizardTimer extends AbstractTimer {
 
             long nanoAmount = TimeUnit.NANOSECONDS.convert(amount, unit);
             max.record(nanoAmount, TimeUnit.NANOSECONDS);
+            min.record(nanoAmount, TimeUnit.NANOSECONDS);
             totalTime.addAndGet(nanoAmount);
         }
     }
@@ -62,4 +66,7 @@ public class DropwizardTimer extends AbstractTimer {
     public double max(TimeUnit unit) {
         return max.poll(unit);
     }
+
+    @Override
+    public double min(TimeUnit unit) { return min.poll(unit); }
 }

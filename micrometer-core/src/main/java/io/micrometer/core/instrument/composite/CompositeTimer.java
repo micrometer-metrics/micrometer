@@ -99,6 +99,11 @@ class CompositeTimer extends AbstractCompositeMeter<Timer> implements Timer {
     }
 
     @Override
+    public double min(TimeUnit unit) {
+        return firstChild().min(unit);
+    }
+
+    @Override
     public HistogramSnapshot takeSnapshot() {
         return firstChild().takeSnapshot();
     }

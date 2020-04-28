@@ -30,7 +30,7 @@ public interface Histogram extends AutoCloseable {
 
     void recordDouble(double value);
 
-    HistogramSnapshot takeSnapshot(long count, double total, double max);
+    HistogramSnapshot takeSnapshot(long count, double total, double max, double min);
 
     @Override
     default void close() {

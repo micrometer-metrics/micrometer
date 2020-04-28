@@ -69,6 +69,11 @@ public class SpectatorDistributionSummary extends AbstractDistributionSummary {
         return Double.NaN;
     }
 
+    @Override
+    public double min() {
+        return Double.NaN;
+    }
+
     @SuppressWarnings("EqualsWhichDoesntCheckParameterClass")
     @Override
     public boolean equals(@Nullable Object o) {

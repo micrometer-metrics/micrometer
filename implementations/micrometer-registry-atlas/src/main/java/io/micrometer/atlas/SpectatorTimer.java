@@ -63,4 +63,10 @@ public class SpectatorTimer extends AbstractTimer {
 
         return Double.NaN;
     }
+
+    @Override
+    public double min(TimeUnit unit) {
+        return Double.NaN;
+    }
+
 }

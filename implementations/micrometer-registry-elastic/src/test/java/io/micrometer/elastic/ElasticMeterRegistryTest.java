@@ -58,7 +58,7 @@ class ElasticMeterRegistryTest {
     @Test
     void writeTimer() {
         Timer timer = Timer.builder("myTimer").register(registry);
-        assertThat(registry.writeTimer(timer)).contains("{ \"index\" : {} }\n{\"@timestamp\":\"1970-01-01T00:00:00.001Z\",\"name\":\"myTimer\",\"type\":\"timer\",\"count\":0,\"sum\":0.0,\"mean\":0.0,\"max\":0.0}");
+        assertThat(registry.writeTimer(timer)).contains("{ \"index\" : {} }\n{\"@timestamp\":\"1970-01-01T00:00:00.001Z\",\"name\":\"myTimer\",\"type\":\"timer\",\"count\":0,\"sum\":0.0,\"mean\":0.0,\"max\":0.0,\"min\":0.0}");
     }
 
     @Test
@@ -120,14 +120,14 @@ class ElasticMeterRegistryTest {
         summary.record(456);
         clock.add(config.step());
         assertThat(registry.writeSummary(summary))
-                .contains("{ \"index\" : {} }\n{\"@timestamp\":\"1970-01-01T00:01:00.001Z\",\"name\":\"summary\",\"type\":\"distribution_summary\",\"count\":2,\"sum\":579.0,\"mean\":289.5,\"max\":456.0}");
+                .contains("{ \"index\" : {} }\n{\"@timestamp\":\"1970-01-01T00:01:00.001Z\",\"name\":\"summary\",\"type\":\"distribution_summary\",\"count\":2,\"sum\":579.0,\"mean\":289.5,\"max\":456.0,\"min\":456.0}");
     }
 
     @Test
     void writeMeter() {
         Timer timer = Timer.builder("myTimer").register(registry);
         assertThat(registry.writeMeter(timer))
-                .contains("{ \"index\" : {} }\n{\"@timestamp\":\"1970-01-01T00:00:00.001Z\",\"name\":\"myTimer\",\"type\":\"timer\",\"count\":\"0.0\",\"total\":\"0.0\",\"max\":\"0.0\"}");
+                .contains("{ \"index\" : {} }\n{\"@timestamp\":\"1970-01-01T00:00:00.001Z\",\"name\":\"myTimer\",\"type\":\"timer\",\"count\":\"0.0\",\"total\":\"0.0\",\"max\":\"0.0\",\"min\":\"0.0\"}");
     }
 
     @Test
