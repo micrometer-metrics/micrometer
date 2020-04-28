@@ -16,6 +16,7 @@
 package io.micrometer.core.instrument.binder.jetty;
 
 import io.micrometer.core.instrument.Tag;
+import io.micrometer.core.instrument.binder.http.Outcome;
 import io.micrometer.core.instrument.util.StringUtils;
 import org.eclipse.jetty.client.api.Request;
 import org.eclipse.jetty.client.api.Response;
@@ -42,20 +43,6 @@ public final class JettyClientTags {
 
     private static final Tag EXCEPTION_NONE = Tag.of("exception", "None");
 
-    private static final Tag STATUS_SERVER_ERROR = Tag.of("status", String.valueOf(HttpStatus.INTERNAL_SERVER_ERROR_500));
-
-    private static final Tag OUTCOME_UNKNOWN = Tag.of("outcome", "UNKNOWN");
-
-    private static final Tag OUTCOME_INFORMATIONAL = Tag.of("outcome", "INFORMATIONAL");
-
-    private static final Tag OUTCOME_SUCCESS = Tag.of("outcome", "SUCCESS");
-
-    private static final Tag OUTCOME_REDIRECTION = Tag.of("outcome", "REDIRECTION");
-
-    private static final Tag OUTCOME_CLIENT_ERROR = Tag.of("outcome", "CLIENT_ERROR");
-
-    private static final Tag OUTCOME_SERVER_ERROR = Tag.of("outcome", "SERVER_ERROR");
-
     private static final Tag METHOD_UNKNOWN = Tag.of("method", "UNKNOWN");
 
     private static final Pattern TRAILING_SLASH_PATTERN = Pattern.compile("/$");
@@ -69,7 +56,7 @@ public final class JettyClientTags {
      * Creates a {@code method} tag based on the {@link Request#getMethod()
      * method} of the given {@code request}.
      *
-     * @param request the container request
+     * @param request the request
      * @return the method tag whose value is a capitalized method (e.g. GET).
      */
     public static Tag method(Request request) {
@@ -106,20 +93,16 @@ public final class JettyClientTags {
         }
 
         String matchingPattern = successfulUriPattern.apply(result);
+        matchingPattern = MULTIPLE_SLASH_PATTERN.matcher(matchingPattern).replaceAll("/");
         if (matchingPattern.equals("/")) {
             return URI_ROOT;
         }
-
-        matchingPattern = MULTIPLE_SLASH_PATTERN.matcher(matchingPattern).replaceAll("/");
-        if (!matchingPattern.equals("/")) {
-            matchingPattern = TRAILING_SLASH_PATTERN.matcher(matchingPattern).replaceAll("");
-        }
-
+        matchingPattern = TRAILING_SLASH_PATTERN.matcher(matchingPattern).replaceAll("");
         return Tag.of("uri", matchingPattern);
     }
 
     /**
-     * Creates a {@code exception} tag based on the {@link Class#getSimpleName() simple
+     * Creates an {@code exception} tag based on the {@link Class#getSimpleName() simple
      * name} of the class of the given {@code exception}.
      *
      * @param result the request result
@@ -151,19 +134,7 @@ public final class JettyClientTags {
      * @return the outcome tag derived from the status of the response
      */
     public static Tag outcome(Result result) {
-        int status = result.getResponse().getStatus();
-        if (HttpStatus.isInformational(status)) {
-            return OUTCOME_INFORMATIONAL;
-        } else if (HttpStatus.isSuccess(status)) {
-            return OUTCOME_SUCCESS;
-        } else if (HttpStatus.isRedirection(status)) {
-            return OUTCOME_REDIRECTION;
-        } else if (HttpStatus.isClientError(status)) {
-            return OUTCOME_CLIENT_ERROR;
-        } else if (HttpStatus.isServerError(status)) {
-            return OUTCOME_SERVER_ERROR;
-        }
-        return OUTCOME_UNKNOWN;
+        return Outcome.forStatus(result.getResponse().getStatus()).asTag();
     }
 
 }

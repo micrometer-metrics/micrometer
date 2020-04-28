@@ -18,8 +18,10 @@ package io.micrometer.core.instrument.binder.jetty;
 import io.micrometer.core.annotation.Incubating;
 import io.micrometer.core.instrument.DistributionSummary;
 import io.micrometer.core.instrument.MeterRegistry;
+import io.micrometer.core.instrument.Tag;
 import io.micrometer.core.instrument.Timer;
 import io.micrometer.core.instrument.config.MeterFilter;
+import io.micrometer.core.instrument.internal.OnlyOnceLoggingDenyMeterFilter;
 import org.eclipse.jetty.client.api.Request;
 
 /**
@@ -43,7 +45,15 @@ public class JettyClientMetrics implements Request.Listener {
         this.timingMetricName = timingMetricName;
         this.contentSizeMetricName = contentSizeMetricName;
 
-        registry.config().meterFilter(MeterFilter.maximumAllowableTags(this.timingMetricName, "uri", maxUriTags, MeterFilter.deny()));
+        MeterFilter timingMetricDenyFilter = new OnlyOnceLoggingDenyMeterFilter(
+                () -> String.format("Reached the maximum number of URI tags for '%s'.", timingMetricName));
+        MeterFilter contentSizeMetricDenyFilter = new OnlyOnceLoggingDenyMeterFilter(
+                () -> String.format("Reached the maximum number of URI tags for '%s'.", contentSizeMetricName));
+        registry.config()
+                .meterFilter(MeterFilter.maximumAllowableTags(
+                        this.timingMetricName, "uri", maxUriTags, timingMetricDenyFilter))
+                .meterFilter(MeterFilter.maximumAllowableTags(
+                        this.contentSizeMetricName, "uri", maxUriTags, contentSizeMetricDenyFilter));
     }
 
     @Override
@@ -52,17 +62,18 @@ public class JettyClientMetrics implements Request.Listener {
 
         request.onComplete(result -> {
             long requestLength = result.getRequest().getContent().getLength();
+            Iterable<Tag> httpRequestTags = tagsProvider.httpRequestTags(result);
             if (requestLength >= 0) {
                 DistributionSummary.builder(contentSizeMetricName)
                         .description("Content sizes for Jetty HTTP client requests")
-                        .tags(tagsProvider.httpRequestTags(result))
+                        .tags(httpRequestTags)
                         .register(registry)
                         .record(requestLength);
             }
 
             sample.stop(Timer.builder(timingMetricName)
                     .description("Jetty HTTP client request timing")
-                    .tags(tagsProvider.httpRequestTags(result))
+                    .tags(httpRequestTags)
                     .register(registry));
         });
     }
