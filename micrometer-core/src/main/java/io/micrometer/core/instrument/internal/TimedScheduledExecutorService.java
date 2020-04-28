@@ -24,10 +24,11 @@ import java.util.concurrent.*;
 import static java.util.stream.Collectors.toList;
 
 /**
- * A {@link ScheduledExecutorService} that is timed.
+ * A {@link ScheduledExecutorService} that is timed. This class is for internal use.
  *
  * @author Sebastian Lövdahl
  * @since 1.3.0
+ * @see io.micrometer.core.instrument.binder.jvm.ExecutorServiceMetrics
  */
 public class TimedScheduledExecutorService implements ScheduledExecutorService {
     private final MeterRegistry registry;
@@ -43,10 +44,10 @@ public class TimedScheduledExecutorService implements ScheduledExecutorService {
         this.registry = registry;
         this.delegate = delegate;
         Tags finalTags = Tags.concat(tags, "name", executorServiceName);
-        this.executionTimer = registry.timer(metricPrefix, finalTags);
-        this.idleTimer = registry.timer(metricPrefix + ".idle", finalTags);
-        this.scheduledOnce = registry.counter(metricPrefix + ".scheduled.once", finalTags);
-        this.scheduledRepetitively = registry.counter(metricPrefix + ".scheduled.repetitively", finalTags);
+        this.executionTimer = registry.timer(metricPrefix + "executor", finalTags);
+        this.idleTimer = registry.timer(metricPrefix + "executor.idle", finalTags);
+        this.scheduledOnce = registry.counter(metricPrefix + "executor.scheduled.once", finalTags);
+        this.scheduledRepetitively = registry.counter(metricPrefix + "executor.scheduled.repetitively", finalTags);
     }
 
     @Override

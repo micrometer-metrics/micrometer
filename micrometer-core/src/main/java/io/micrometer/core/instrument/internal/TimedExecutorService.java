@@ -27,9 +27,10 @@ import java.util.concurrent.*;
 import static java.util.stream.Collectors.toList;
 
 /**
- * An {@link java.util.concurrent.ExecutorService} that is timed
+ * An {@link java.util.concurrent.ExecutorService} that is timed. This class is for internal use.
  *
  * @author Jon Schneider
+ * @see io.micrometer.core.instrument.binder.jvm.ExecutorServiceMetrics
  */
 public class TimedExecutorService implements ExecutorService {
     private final MeterRegistry registry;
@@ -42,8 +43,8 @@ public class TimedExecutorService implements ExecutorService {
         this.registry = registry;
         this.delegate = delegate;
         Tags finalTags = Tags.concat(tags, "name", executorServiceName);
-        this.executionTimer = registry.timer(metricPrefix , finalTags);
-        this.idleTimer = registry.timer(metricPrefix + ".idle", finalTags);
+        this.executionTimer = registry.timer(metricPrefix + "executor", finalTags);
+        this.idleTimer = registry.timer(metricPrefix + "executor.idle", finalTags);
     }
 
     @Override

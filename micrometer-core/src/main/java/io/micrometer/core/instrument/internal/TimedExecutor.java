@@ -23,7 +23,9 @@ import io.micrometer.core.instrument.Timer;
 import java.util.concurrent.Executor;
 
 /**
- * An {@link Executor} that is timed
+ * An {@link Executor} that is timed. This class is for internal use.
+ *
+ * @see io.micrometer.core.instrument.binder.jvm.ExecutorServiceMetrics
  */
 public class TimedExecutor implements Executor {
     private final MeterRegistry registry;
@@ -35,8 +37,8 @@ public class TimedExecutor implements Executor {
         this.registry = registry;
         this.delegate = delegate;
         Tags finalTags = Tags.concat(tags, "name", executorName);
-        this.executionTimer = registry.timer(metricPrefix + ".execution", finalTags);
-        this.idleTimer = registry.timer(metricPrefix + ".idle", finalTags);
+        this.executionTimer = registry.timer(metricPrefix + "executor.execution", finalTags);
+        this.idleTimer = registry.timer(metricPrefix + "executor.idle", finalTags);
     }
 
     @Override
