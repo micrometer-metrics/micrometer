@@ -211,7 +211,9 @@ public class OkHttpMetricsEventListener extends EventListener {
 
         /**
          * Add a {@link Tag} to any already configured tags on this Builder.
-         * @return this Builder
+         *
+         * @param tag tag to add
+         * @return this builder
          * @since 1.5.0
          */
         public Builder tag(Tag tag) {
@@ -220,6 +222,10 @@ public class OkHttpMetricsEventListener extends EventListener {
         }
 
         /**
+         * Add a context-specific tag.
+         *
+         * @param contextSpecificTag function to create a context-specific tag
+         * @return this builder
          * @since 1.5.0
          */
         public Builder tag(BiFunction<Request, Response, Tag> contextSpecificTag) {

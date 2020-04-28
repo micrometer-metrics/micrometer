@@ -83,6 +83,9 @@ public interface WavefrontConfig extends PushRegistryConfig {
     }
 
     /**
+     * Get distribution port.
+     *
+     * @return distribution port
      * @deprecated since 1.5.0 this is no longer used as a single proxy port can handle all wavefront formats.
      */
     @Deprecated

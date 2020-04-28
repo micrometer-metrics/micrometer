@@ -336,6 +336,9 @@ public class WavefrontMeterRegistry extends PushMeterRegistry {
         }
 
         /**
+         * Set an HTTP client to use.
+         *
+         * @param httpClient HTTP client to use
          * @return builder
          * @deprecated since 1.5.0 this call no-longer affects the transport used to send metrics to Wavefront. Use
          * {@link #wavefrontSender(WavefrontSender)} to supply your own transport (whether proxy or direct ingestion).

@@ -91,6 +91,7 @@ public final class JettyClientTags {
      * {@code REDIRECTION} for 3xx responses, {@code NOT_FOUND} for 404 responses.
      *
      * @param result the request result
+     * @param successfulUriPattern successful URI pattern
      * @return the uri tag derived from the request result
      */
     public static Tag uri(Result result, Function<Result, String> successfulUriPattern) {
