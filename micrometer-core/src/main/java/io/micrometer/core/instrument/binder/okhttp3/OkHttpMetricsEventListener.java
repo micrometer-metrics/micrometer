@@ -159,7 +159,7 @@ public class OkHttpMetricsEventListener extends EventListener {
         return Tags.of(
                 "target.scheme", request.url().scheme(),
                 "target.host", request.url().host(),
-                "target.port", request.url().scheme()
+                "target.port", Integer.toString(request.url().port())
         );
     }
 
