@@ -242,7 +242,6 @@ class ExecutorServiceMetricsTest {
     }
 
     private void assertThreadPoolExecutorMetrics(String executorName, @Nullable String metricPrefix) {
-        metricPrefix = metricPrefix != null ? metricPrefix : DEFAULT_EXECUTOR_METRIC_PREFIX;
         registry.get(metricPrefix + "executor.completed").tags(userTags).tag("name", executorName).meter();
         registry.get(metricPrefix + "executor.queued").tags(userTags).tag("name", executorName).gauge();
         registry.get(metricPrefix + "executor.queue.remaining").tags(userTags).tag("name", executorName).gauge();
