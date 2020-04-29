@@ -28,7 +28,6 @@ import org.junit.jupiter.params.provider.CsvSource;
 
 import java.util.concurrent.*;
 
-import static io.micrometer.core.instrument.binder.jvm.ExecutorServiceMetrics.DEFAULT_EXECUTOR_METRIC_PREFIX;
 import static org.assertj.core.api.AssertionsForClassTypes.assertThat;
 
 /**

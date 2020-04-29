@@ -43,7 +43,7 @@ import static java.util.Arrays.asList;
 @NonNullApi
 @NonNullFields
 public class ExecutorServiceMetrics implements MeterBinder {
-    static final String DEFAULT_EXECUTOR_METRIC_PREFIX = "";
+    private static final String DEFAULT_EXECUTOR_METRIC_PREFIX = "";
     @Nullable
     private final ExecutorService executorService;
 
