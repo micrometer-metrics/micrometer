@@ -246,6 +246,8 @@ class ExecutorServiceMetricsTest {
         registry.get(metricPrefix + "executor.queue.remaining").tags(userTags).tag("name", executorName).gauge();
         registry.get(metricPrefix + "executor.active").tags(userTags).tag("name", executorName).gauge();
         registry.get(metricPrefix + "executor.pool.size").tags(userTags).tag("name", executorName).gauge();
+        registry.get(metricPrefix + "executor.pool.core").tags(userTags).tag("name", executorName).gauge();
+        registry.get(metricPrefix + "executor.pool.max").tags(userTags).tag("name", executorName).gauge();
         registry.get(metricPrefix + "executor.idle").tags(userTags).tag("name", executorName).timer();
         registry.get(metricPrefix + "executor").tags(userTags).tag("name", executorName).timer();
     }

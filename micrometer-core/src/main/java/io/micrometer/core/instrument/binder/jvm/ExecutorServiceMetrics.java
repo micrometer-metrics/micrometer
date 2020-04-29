@@ -317,6 +317,18 @@ public class ExecutorServiceMetrics implements MeterBinder {
                 .description("The current number of threads in the pool")
                 .baseUnit(BaseUnits.THREADS)
                 .register(registry);
+
+        Gauge.builder(metricPrefix + "executor.pool.core", tp, ThreadPoolExecutor::getCorePoolSize)
+                .tags(tags)
+                .description("The core number of threads for the pool")
+                .baseUnit(BaseUnits.THREADS)
+                .register(registry);
+
+        Gauge.builder(metricPrefix + "executor.pool.max", tp, ThreadPoolExecutor::getMaximumPoolSize)
+                .tags(tags)
+                .description("The maximum allowed number of threads in the pool")
+                .baseUnit(BaseUnits.THREADS)
+                .register(registry);
     }
 
     private void monitor(MeterRegistry registry, ForkJoinPool fj) {
