@@ -43,7 +43,6 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
-import org.springframework.test.util.ReflectionTestUtils;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.Mockito.when;
@@ -76,7 +75,7 @@ class JCacheMetricsTest extends AbstractCacheMetricsTest {
         // emulate MBean server with MBean used for statistic lookup
         mbeanServer = MBeanServerFactory.createMBeanServer();
         ObjectName objectName = new ObjectName("javax.cache:type=CacheStatistics");
-        ReflectionTestUtils.setField(metrics, "objectName", objectName);
+        metrics.objectName = objectName;
         CacheMBeanStub mBean = new CacheMBeanStub(expectedAttributeValue);
         mbeanServer.registerMBean(mBean, objectName);
     }
@@ -143,8 +142,7 @@ class JCacheMetricsTest extends AbstractCacheMetricsTest {
     @Test
     void defaultValueWhenNoMBeanAttributeFound() throws MalformedObjectNameException {
         // change source MBean to emulate AttributeNotFoundException
-        ObjectName objectName = new ObjectName("javax.cache:type=CacheInformation");
-        ReflectionTestUtils.setField(metrics, "objectName", objectName);
+        metrics.objectName = new ObjectName("javax.cache:type=CacheInformation");
 
         assertThat(metrics.hitCount()).isEqualTo(0L);
     }

@@ -67,7 +67,6 @@ dependencies {
     // dependency injection tests
     testImplementation 'javax.inject:javax.inject'
     testImplementation 'org.springframework:spring-context'
-    testImplementation 'org.springframework:spring-test'
     testImplementation 'com.google.inject:guice'
 
     testImplementation 'com.h2database:h2'

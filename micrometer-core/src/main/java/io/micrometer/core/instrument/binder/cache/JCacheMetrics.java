@@ -41,8 +41,9 @@ import java.util.List;
 @NonNullApi
 @NonNullFields
 public class JCacheMetrics extends CacheMeterBinder {
+    // VisibleForTesting
     @Nullable
-    private ObjectName objectName;
+    ObjectName objectName;
 
     /**
      * Record metrics on a JCache cache.
