@@ -113,18 +113,16 @@ public class OkHttpMetricsEventListener extends EventListener {
         }
     }
 
-    private void time(CallState state) {
+    // VisibleForTesting
+    void time(CallState state) {
         Request request = state.request;
         boolean requestAvailable = request != null;
-
-        String uri = state.response != null && (state.response.code() == 404 || state.response.code() == 301)
-                ? "NOT_FOUND" : urlMapper.apply(request);
 
         Tags requestTags = requestAvailable ? getRequestTags(request) : Tags.empty();
 
         Iterable<Tag> tags = Tags.concat(extraTags, Tags.of(
             "method", requestAvailable ? request.method() : "UNKNOWN",
-            "uri", requestAvailable ? uri : "UNKNOWN",
+            "uri", getUriTag(state, request),
             "status", getStatusMessage(state.response, state.exception),
             "host", requestAvailable ? request.url().host() : "UNKNOWN"
         )).and(requestTags);
@@ -134,6 +132,14 @@ public class OkHttpMetricsEventListener extends EventListener {
             .description("Timer of OkHttp operation")
             .register(registry)
             .record(registry.config().clock().monotonicTime() - state.startTime, TimeUnit.NANOSECONDS);
+    }
+
+    private String getUriTag(CallState state, Request request) {
+        if (request == null) {
+            return "UNKNOWN";
+        }
+        return state.response != null && (state.response.code() == 404 || state.response.code() == 301)
+                    ? "NOT_FOUND" : urlMapper.apply(request);
     }
 
     private Tags getRequestTags(Request request) {
@@ -162,7 +168,8 @@ public class OkHttpMetricsEventListener extends EventListener {
         return Integer.toString(response.code());
     }
 
-    private static class CallState {
+    // VisibleForTesting
+    static class CallState {
         final long startTime;
         @Nullable
         final Request request;
