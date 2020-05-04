@@ -15,9 +15,12 @@
  */
 package io.micrometer.boot2.samples;
 
+import io.micrometer.azuremonitor.AzureMonitorMeterRegistry;
 import io.micrometer.boot2.samples.components.PersonController;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.boot.builder.SpringApplicationBuilder;
+import org.springframework.context.annotation.Bean;
+import org.springframework.core.env.Environment;
 import org.springframework.scheduling.annotation.EnableScheduling;
 
 @SpringBootApplication(scanBasePackageClasses = PersonController.class)
@@ -25,6 +28,14 @@ import org.springframework.scheduling.annotation.EnableScheduling;
 public class AzureMonitorSample {
 
     public static void main(String[] args) {
-        new SpringApplicationBuilder(AtlasSample.class).profiles("azuremonitor").run(args);
+        new SpringApplicationBuilder(AzureMonitorSample.class).profiles("azuremonitor").run(args);
+    }
+
+    @Bean
+    AzureMonitorMeterRegistry azureMonitorMeterRegistry(Environment environment) {
+        // will need an application property `azure.instrumentationKey` to be set
+        return AzureMonitorMeterRegistry
+                .builder(environment::getProperty)
+                .build();
     }
 }
