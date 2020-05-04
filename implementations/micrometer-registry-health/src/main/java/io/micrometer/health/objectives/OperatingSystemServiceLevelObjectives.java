@@ -31,7 +31,7 @@ public class OperatingSystemServiceLevelObjectives {
                     .requires(new FileDescriptorMetrics())
                     .value(s -> s.name("process.open.fds"))
                     .dividedBy(denom -> denom.value(s -> s.name("process.max.fds")))
-                    .isGreaterThan(0.8)
+                    .isLessThan(0.8)
     };
 
     private OperatingSystemServiceLevelObjectives() {
