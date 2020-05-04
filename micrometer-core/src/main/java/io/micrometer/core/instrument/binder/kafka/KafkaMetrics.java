@@ -32,6 +32,8 @@ import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
 import java.util.function.Supplier;
 import java.util.function.ToDoubleFunction;
+
+import io.micrometer.core.lang.Nullable;
 import org.apache.kafka.common.Metric;
 import org.apache.kafka.common.MetricName;
 
@@ -63,6 +65,8 @@ class KafkaMetrics implements MeterBinder, AutoCloseable {
     private final Iterable<Tag> extraTags;
     private final Duration refreshInterval;
     private final ScheduledExecutorService scheduler = Executors.newSingleThreadScheduledExecutor();
+
+    @Nullable
     private Iterable<Tag> commonTags;
 
     /**
@@ -87,7 +91,8 @@ class KafkaMetrics implements MeterBinder, AutoCloseable {
         this.refreshInterval = refreshInterval;
     }
 
-    @Override public void bindTo(MeterRegistry registry) {
+    @Override
+    public void bindTo(MeterRegistry registry) {
         commonTags = getCommonTags(registry);
         prepareToBindMetrics(registry);
         checkAndBindMetrics(registry);
@@ -101,21 +106,29 @@ class KafkaMetrics implements MeterBinder, AutoCloseable {
         return dummyId.getTags();
     }
 
-    /** Define common tags and meters before binding metrics */
+    /**
+     * Define common tags and meters before binding metrics
+     */
     void prepareToBindMetrics(MeterRegistry registry) {
         Map<MetricName, ? extends Metric> metrics = metricsSupplier.get();
         // Collect static metrics and tags
         Metric startTime = null;
+
         for (Map.Entry<MetricName, ? extends Metric> entry : metrics.entrySet()) {
             MetricName name = entry.getKey();
-            if (clientId.equals(DEFAULT_VALUE) && name.tags().get(CLIENT_ID_TAG_NAME) != null) clientId = name.tags().get(CLIENT_ID_TAG_NAME);
+            if (clientId.equals(DEFAULT_VALUE) && name.tags().get(CLIENT_ID_TAG_NAME) != null)
+                clientId = name.tags().get(CLIENT_ID_TAG_NAME);
             if (METRIC_GROUP_APP_INFO.equals(name.group()))
-                if (VERSION_METRIC_NAME.equals(name.name()))
+                if (VERSION_METRIC_NAME.equals(name.name())) {
                     kafkaVersion = (String) entry.getValue().metricValue();
-                else if (START_TIME_METRIC_NAME.equals(name.name()))
+                } else if (START_TIME_METRIC_NAME.equals(name.name())) {
                     startTime = entry.getValue();
+                }
         }
-        if (startTime != null) bindMeter(registry, startTime, meterName(startTime), meterTags(startTime));
+
+        if (startTime != null) {
+            bindMeter(registry, startTime, meterName(startTime), meterTags(startTime));
+        }
     }
 
     private long getRefreshIntervalInMillis() {
@@ -135,44 +148,67 @@ class KafkaMetrics implements MeterBinder, AutoCloseable {
         if (!currentMeters.equals(metrics.keySet())) {
             currentMeters = new HashSet<>(metrics.keySet());
             metrics.forEach((name, metric) -> {
-                //Filter out non-numeric values
-                if (!(metric.metricValue() instanceof Number)) return;
+                // Filter out non-numeric values
+                // Filter out metrics from groups that include metadata
+                if (!(metric.metricValue() instanceof Number) ||
+                        METRIC_GROUP_APP_INFO.equals(name.group()) ||
+                        METRIC_GROUP_METRICS_COUNT.equals(name.group())) {
+                    return;
+                }
 
-                //Filter out metrics from groups that include metadata
-                if (METRIC_GROUP_APP_INFO.equals(name.group())) return;
-                if (METRIC_GROUP_METRICS_COUNT.equals(name.group())) return;
                 String meterName = meterName(metric);
-                List<Tag> meterTagsWithCommonTags = meterTags(metric, true);
-                //Kafka has metrics with lower number of tags (e.g. with/without topic or partition tag)
-                //Remove meters with lower number of tags
+                List<Tag> meterTags = meterTags(metric);
+
+                // Kafka has metrics with lower number of tags (e.g. with/without topic or partition tag)
+                // Remove meters with lower number of tags
                 boolean hasLessTags = false;
                 for (Meter other : registry.find(meterName).meters()) {
                     List<Tag> tags = other.getId().getTags();
+
                     // Only consider meters from the same client before filtering
-                    if (differentClient(tags)) break;
-                    if (tags.size() < meterTagsWithCommonTags.size()) registry.remove(other);
-                    // Check if already exists
-                    else if (tags.size() == meterTagsWithCommonTags.size())
-                        if (tags.equals(meterTagsWithCommonTags)) return;
-                        else break;
-                    else hasLessTags = true;
+                    if (differentClient(tags)) {
+                        break;
+                    }
+
+                    if (tags.size() < meterTags.size()) {
+                        registry.remove(other);
+                    } else if (tags.size() == meterTags.size()) {
+                        // Check if already exists
+                        if (tags.equals(meterTags)) {
+                            return;
+                        } else {
+                            break;
+                        }
+                    } else {
+                        hasLessTags = true;
+                    }
                 }
-                if (hasLessTags) return;
-                bindMeter(registry, metric, meterName, meterTags(metric));
+
+                if (!hasLessTags) {
+                    bindMeter(registry, metric, meterName, meterTags);
+                }
             });
         }
     }
 
     private boolean differentClient(List<Tag> tags) {
-        for (Tag tag : tags)
-            if (tag.getKey().equals(CLIENT_ID_TAG_NAME))
-                if (!clientId.equals(tag.getValue())) return true;
-        return false;
+        boolean anotherClient = false;
+        for (Tag tag : tags) {
+            if (tag.getKey().equals(CLIENT_ID_TAG_NAME)) {
+                if (!clientId.equals(tag.getValue())) {
+                    anotherClient = true;
+                }
+            }
+        }
+        return anotherClient;
     }
 
     private void bindMeter(MeterRegistry registry, Metric metric, String name, Iterable<Tag> tags) {
-        if (name.endsWith("total") || name.endsWith("count")) registerCounter(registry, metric, name, tags);
-        else registerGauge(registry, metric, name, tags);
+        if (name.endsWith("total") || name.endsWith("count")) {
+            registerCounter(registry, metric, name, tags);
+        } else {
+            registerGauge(registry, metric, name, tags);
+        }
     }
 
     private void registerGauge(MeterRegistry registry, Metric metric, String name, Iterable<Tag> tags) {
@@ -189,7 +225,7 @@ class KafkaMetrics implements MeterBinder, AutoCloseable {
                 .register(registry);
     }
 
-    private ToDoubleFunction<Metric> toMetricValue() {
+    private static ToDoubleFunction<Metric> toMetricValue() {
         return metric -> ((Number) metric.metricValue()).doubleValue();
     }
 
@@ -198,7 +234,7 @@ class KafkaMetrics implements MeterBinder, AutoCloseable {
         metric.metricName().tags().forEach((key, value) -> tags.add(Tag.of(key, value)));
         tags.add(Tag.of(KAFKA_VERSION_TAG_NAME, kafkaVersion));
         extraTags.forEach(tags::add);
-        if (includeCommonTags) {
+        if (commonTags != null) {
             commonTags.forEach(tags::add);
         }
         return tags;
