@@ -15,8 +15,10 @@
  */
 package io.micrometer.core.instrument.search;
 
-import io.micrometer.core.instrument.*;
 import io.micrometer.core.instrument.Timer;
+import io.micrometer.core.instrument.*;
+import io.micrometer.core.instrument.config.MeterFilter;
+import io.micrometer.core.instrument.config.MeterFilterReply;
 import io.micrometer.core.lang.Nullable;
 
 import java.util.*;
@@ -36,6 +38,10 @@ public final class Search {
     private final List<Tag> tags = new ArrayList<>();
     private Predicate<String> nameMatches = n -> true;
     private final Set<String> requiredTagKeys = new HashSet<>();
+    private final Map<String, Collection<Predicate<String>>> tagMatches = new HashMap<>();
+
+    @Nullable
+    private String exactNameMatch;
 
     private Search(MeterRegistry registry) {
         this.registry = registry;
@@ -48,7 +54,9 @@ public final class Search {
      * @return This search.
      */
     public Search name(String exactName) {
-        return name(n -> n.equals(exactName));
+        Search search = name(n -> n.equals(exactName));
+        this.exactNameMatch = exactName;
+        return search;
     }
 
     /**
@@ -58,8 +66,10 @@ public final class Search {
      * @return This search.
      */
     public Search name(@Nullable Predicate<String> nameMatches) {
-        if (nameMatches != null)
+        if (nameMatches != null) {
+            this.exactNameMatch = null;
             this.nameMatches = nameMatches;
+        }
         return this;
     }
 
@@ -103,6 +113,19 @@ public final class Search {
      */
     public Search tagKeys(String... tagKeys) {
         requiredTagKeys.addAll(Arrays.asList(tagKeys));
+        return this;
+    }
+
+    /**
+     * Meter contains a tag with the provided key and a value matching {@code tagValueMatches}.
+     *
+     * @param tagKey          The tag key to match.
+     * @param tagValueMatches The test on the tag value.
+     * @return This search.
+     * @since 1.6.0
+     */
+    public Search tag(String tagKey, Predicate<String> tagValueMatches) {
+        tagMatches.computeIfAbsent(tagKey, k -> new ArrayList<>()).add(tagValueMatches);
         return this;
     }
 
@@ -194,10 +217,49 @@ public final class Search {
         return meterStream().collect(toList());
     }
 
+    /**
+     * @return An accept filter that accepts any meter that matches this search.
+     * @since 1.6.0
+     */
+    public MeterFilter acceptFilter() {
+        return new MeterFilter() {
+            @Override
+            public MeterFilterReply accept(Meter.Id id) {
+                if (!nameMatches.test(id.getName())) {
+                    return MeterFilterReply.NEUTRAL;
+                }
+
+                boolean requiredKeysPresent = true;
+                if (!requiredTagKeys.isEmpty()) {
+                    final List<String> tagKeys = new ArrayList<>();
+                    id.getTags().forEach(t -> tagKeys.add(t.getKey()));
+                    requiredKeysPresent = tagKeys.containsAll(requiredTagKeys);
+                }
+
+                boolean tagPredicatesMatched = true;
+                if (!tagMatches.isEmpty()) {
+                    final Set<String> matchingTagKeys = new HashSet<>();
+                    id.getTags().forEach(t -> {
+                        Collection<Predicate<String>> tagValueMatchers = tagMatches.get(t.getKey());
+                        if (tagValueMatchers != null) {
+                            if (tagValueMatchers.stream().allMatch(matcher -> matcher.test(t.getValue()))) {
+                                matchingTagKeys.add(t.getKey());
+                            }
+                        }
+                    });
+                    tagPredicatesMatched = tagMatches.keySet().size() == matchingTagKeys.size();
+                }
+
+                return requiredKeysPresent && tagPredicatesMatched && id.getTags().containsAll(tags) ?
+                        MeterFilterReply.ACCEPT : MeterFilterReply.NEUTRAL;
+            }
+        };
+    }
+
     private Stream<Meter> meterStream() {
         Stream<Meter> meterStream = registry.getMeters().stream().filter(m -> nameMatches.test(m.getId().getName()));
 
-        if (!tags.isEmpty() || !requiredTagKeys.isEmpty()) {
+        if (!tags.isEmpty() || !requiredTagKeys.isEmpty() || !tagMatches.isEmpty()) {
             meterStream = meterStream.filter(m -> {
                 boolean requiredKeysPresent = true;
                 if (!requiredTagKeys.isEmpty()) {
@@ -206,7 +268,21 @@ public final class Search {
                     requiredKeysPresent = tagKeys.containsAll(requiredTagKeys);
                 }
 
-                return requiredKeysPresent && m.getId().getTags().containsAll(tags);
+                boolean tagPredicatesMatched = true;
+                if (!tagMatches.isEmpty()) {
+                    final Set<String> matchingTagKeys = new HashSet<>();
+                    m.getId().getTags().forEach(t -> {
+                        Collection<Predicate<String>> tagValueMatchers = tagMatches.get(t.getKey());
+                        if (tagValueMatchers != null) {
+                            if (tagValueMatchers.stream().allMatch(matcher -> matcher.test(t.getValue()))) {
+                                matchingTagKeys.add(t.getKey());
+                            }
+                        }
+                    });
+                    tagPredicatesMatched = tagMatches.keySet().size() == matchingTagKeys.size();
+                }
+
+                return requiredKeysPresent && tagPredicatesMatched && m.getId().getTags().containsAll(tags);
             });
         }
 
