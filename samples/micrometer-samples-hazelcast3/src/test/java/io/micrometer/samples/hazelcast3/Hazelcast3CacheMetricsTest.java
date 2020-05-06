@@ -20,18 +20,20 @@ import com.hazelcast.core.HazelcastInstance;
 import com.hazelcast.core.IMap;
 import com.hazelcast.monitor.LocalMapStats;
 import com.hazelcast.monitor.NearCacheStats;
+import com.hazelcast.monitor.impl.LocalMapStatsImpl;
 import io.micrometer.core.instrument.*;
 import io.micrometer.core.instrument.binder.cache.HazelcastCacheMetrics;
 import io.micrometer.core.instrument.search.RequiredSearch;
 import io.micrometer.core.instrument.simple.SimpleMeterRegistry;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 
 import java.util.concurrent.TimeUnit;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.when;
 
 /**
  * Copied from micrometer-core test HazelcastCacheMetricsTest here to ensure cache metrics work with Hazelcast 3.
@@ -42,10 +44,14 @@ class Hazelcast3CacheMetricsTest {
     IMap<String, String> cache = hazelcastInstance.getMap("mycache");
     HazelcastCacheMetrics metrics = new HazelcastCacheMetrics(cache, Tags.empty());
     LocalMapStats localMapStats = cache.getLocalMapStats();
+    NearCacheStats nearCacheStats = mock(NearCacheStats.class);
     MeterRegistry meterRegistry = new SimpleMeterRegistry();
 
     @BeforeEach
     void setup() {
+        LocalMapStatsImpl localMapStatsImpl = (LocalMapStatsImpl) this.localMapStats;
+        localMapStatsImpl.setNearCacheStats(nearCacheStats);
+
         metrics.bindTo(meterRegistry);
         cache.put("hello", "world");
         cache.get("hello");
@@ -76,18 +82,21 @@ class Hazelcast3CacheMetricsTest {
         assertThat(partitionGets.count()).isEqualTo(localMapStats.getGetOperationCount());
     }
 
-    @Disabled("TODO figure out how to setup near cache properly")
     @Test
     void nearCacheMetrics() {
-        NearCacheStats nearCacheStats = localMapStats.getNearCacheStats();
+        when(nearCacheStats.getHits()).thenReturn(1L);
+        when(nearCacheStats.getMisses()).thenReturn(2L);
+        when(nearCacheStats.getPersistenceCount()).thenReturn(3L);
+        when(nearCacheStats.getEvictions()).thenReturn(4L);
+
         Gauge hitCacheRequests = fetch(meterRegistry, "cache.near.requests", Tags.of("result", "hit")).gauge();
         assertThat(hitCacheRequests.value()).isEqualTo(nearCacheStats.getHits());
 
         Gauge missCacheRequests = fetch(meterRegistry, "cache.near.requests", Tags.of("result", "miss")).gauge();
         assertThat(missCacheRequests.value()).isEqualTo(nearCacheStats.getMisses());
 
-        Gauge nearPersistance = fetch(meterRegistry, "cache.near.persistences").gauge();
-        assertThat(nearPersistance.value()).isEqualTo(nearCacheStats.getPersistenceCount());
+        Gauge nearPersistences = fetch(meterRegistry, "cache.near.persistences").gauge();
+        assertThat(nearPersistences.value()).isEqualTo(nearCacheStats.getPersistenceCount());
 
         Gauge nearEvictions = fetch(meterRegistry, "cache.near.evictions").gauge();
         assertThat(nearEvictions.value()).isEqualTo(nearCacheStats.getEvictions());

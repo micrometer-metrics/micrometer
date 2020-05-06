@@ -1,6 +1,6 @@
 <!--
 
-    Copyright 2018 VMware, Inc.
+    Copyright 2020 VMware, Inc.
     <p>
     Licensed under the Apache License, Version 2.0 (the "License");
     you may not use this file except in compliance with the License.
@@ -18,7 +18,7 @@
 <configuration>
 
     <appender name="STDOUT" class="ch.qos.logback.core.ConsoleAppender">
-        <!-- encoders are  by default assigned the type
+        <!-- encoders are by default assigned the type
              ch.qos.logback.classic.encoder.PatternLayoutEncoder -->
         <encoder>
             <pattern>%d{HH:mm:ss.SSS} [%thread] %-5level %logger{36} - %msg%n</pattern>
