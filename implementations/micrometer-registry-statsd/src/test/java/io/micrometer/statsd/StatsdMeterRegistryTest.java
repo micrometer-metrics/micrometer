@@ -36,6 +36,7 @@ import reactor.util.concurrent.Queues;
 import java.time.Duration;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicReference;
@@ -358,8 +359,8 @@ class StatsdMeterRegistryTest {
         Gauge timerHist = registry.get("my.timer.histogram").tags("le", "+Inf").gauge();
         Long count = timer.takeSnapshot().count();
 
-       assertThat(timerHist.value()).isEqualTo(1);
-       assertThat(count).isEqualTo(1);
+        assertThat(timerHist.value()).isEqualTo(1);
+        assertThat(count).isEqualTo(1);
     }
 
     @Test
@@ -436,7 +437,7 @@ class StatsdMeterRegistryTest {
 
     @Test
     @Issue("#1260")
-    void lineSinkDoesNotConsume_whenRegistryDisabled() {
+    void lineSinkDoesNotConsumeWhenRegistryDisabled() {
         Consumer<String> shouldNotBeInvokedConsumer = line -> {
             throw new RuntimeException("line sink should not be called");
         };
@@ -451,8 +452,8 @@ class StatsdMeterRegistryTest {
                 return false;
             }
         })
-            .lineSink(shouldNotBeInvokedConsumer)
-            .build();
+                .lineSink(shouldNotBeInvokedConsumer)
+                .build();
 
         registry.counter("some.metric").increment();
         assertThat(registry.processor.inners().count()).as("processor has no subscribers registered").isZero();
@@ -515,7 +516,7 @@ class StatsdMeterRegistryTest {
         registry.poll();
         registry.remove(ltt);
         registry.poll();
-        assertThat(lines.get("ltt")).isEqualTo(2); // 2 lines shipped for a LongTaskTimer for each poll
+        assertThat(lines.get("ltt")).isEqualTo(3); // 3 lines shipped for a LongTaskTimer for each poll
 
         AtomicInteger ftObj = new AtomicInteger(1);
         registry.more().timer("functiontimer", Tags.empty(), ftObj, AtomicInteger::incrementAndGet,
@@ -531,6 +532,27 @@ class StatsdMeterRegistryTest {
         registry.remove(registry.get("functioncounter").functionCounter());
         registry.poll();
         assertThat(lines.get("functioncounter")).isEqualTo(1);
+    }
+
+    @Test
+    @Issue("#2064")
+    void publishLongTaskTimerMax() throws InterruptedException {
+        CountDownLatch maxCount = new CountDownLatch(1);
+
+        StatsdMeterRegistry registry = StatsdMeterRegistry.builder(configWithFlavor(StatsdFlavor.ETSY))
+                .clock(clock)
+                .lineSink(line -> {
+                    if (line.contains("max")) {
+                        maxCount.countDown();
+                    }
+                })
+                .build();
+
+        LongTaskTimer ltt = registry.more().longTaskTimer("ltt");
+        ltt.start();
+        registry.poll();
+
+        assertThat(maxCount.await(10, TimeUnit.SECONDS)).isTrue();
     }
 
     private UnicastProcessor<String> lineProcessor() {
