@@ -37,6 +37,14 @@ public final class HistogramSnapshot {
     @Nullable
     private final BiConsumer<PrintStream, Double> summaryOutput;
 
+    /**
+     * @param count            Total number of recordings
+     * @param total            In nanos if a unit of time
+     * @param max              In nanos if a unit of time
+     * @param percentileValues Pre-computed percentiles.
+     * @param histogramCounts  Bucket counts.
+     * @param summaryOutput    A function defining how to print the histogram.
+     */
     public HistogramSnapshot(long count, double total, double max,
                              @Nullable ValueAtPercentile[] percentileValues,
                              @Nullable CountAtBucket[] histogramCounts,
