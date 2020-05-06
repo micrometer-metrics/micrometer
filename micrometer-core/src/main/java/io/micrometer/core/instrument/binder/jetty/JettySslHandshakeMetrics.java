@@ -40,9 +40,19 @@ import javax.net.ssl.SSLSession;
  * }</pre>
  *
  * Alternatively, configure on all connectors with {@link JettySslHandshakeMetrics#addToAllConnectors(Server, MeterRegistry, Iterable)}.
+ *
+ * @author John Karp
+ * @author Johnny Lim
  * @since 1.5.0
  */
 public class JettySslHandshakeMetrics implements SslHandshakeListener {
+    private static final String METER_NAME = "jetty.ssl.handshakes";
+    private static final String DESCRIPTION = "SSL/TLS handshakes";
+    private static final String TAG_RESULT = "result";
+    private static final String TAG_PROTOCOL = "protocol";
+    private static final String TAG_CIPHER_SUITE = "ciphersuite";
+    private static final String TAG_VALUE_UNKNOWN = "unknown";
+
     private final MeterRegistry registry;
     private final Iterable<Tag> tags;
 
@@ -56,22 +66,25 @@ public class JettySslHandshakeMetrics implements SslHandshakeListener {
         this.registry = registry;
         this.tags = tags;
 
-        this.handshakesFailed = Counter.builder("jetty.ssl.handshakes")
+        this.handshakesFailed = Counter.builder(METER_NAME)
                 .baseUnit(BaseUnits.EVENTS)
-                .description("SSL/TLS handshakes")
-                .tags(Tags.concat(tags, "result", "failed"))
+                .description(DESCRIPTION)
+                .tag(TAG_RESULT, "failed")
+                .tag(TAG_PROTOCOL, TAG_VALUE_UNKNOWN)
+                .tag(TAG_CIPHER_SUITE, TAG_VALUE_UNKNOWN)
+                .tags(tags)
                 .register(registry);
     }
 
     @Override
     public void handshakeSucceeded(Event event) {
         SSLSession session = event.getSSLEngine().getSession();
-        Counter.builder("jetty.ssl.handshakes")
+        Counter.builder(METER_NAME)
                 .baseUnit(BaseUnits.EVENTS)
-                .description("SSL/TLS handshakes")
-                .tag("result", "succeeded")
-                .tag("protocol", session.getProtocol())
-                .tag("ciphersuite", session.getCipherSuite())
+                .description(DESCRIPTION)
+                .tag(TAG_RESULT, "succeeded")
+                .tag(TAG_PROTOCOL, session.getProtocol())
+                .tag(TAG_CIPHER_SUITE, session.getCipherSuite())
                 .tags(tags)
                 .register(registry)
                 .increment();

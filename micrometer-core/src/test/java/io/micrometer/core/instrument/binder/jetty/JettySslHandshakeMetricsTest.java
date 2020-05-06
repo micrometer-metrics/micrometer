@@ -16,6 +16,7 @@
 package io.micrometer.core.instrument.binder.jetty;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.mockito.Mockito.when;
 
 import io.micrometer.core.instrument.MockClock;
 import io.micrometer.core.instrument.Tag;
@@ -26,12 +27,17 @@ import org.eclipse.jetty.io.ssl.SslHandshakeListener;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.Mock;
-import org.mockito.Mockito;
 import org.mockito.MockitoAnnotations;
 
 import javax.net.ssl.SSLEngine;
 import javax.net.ssl.SSLSession;
 
+/**
+ * Tests for {@link JettySslHandshakeMetrics}.
+ *
+ * @author John Karp
+ * @author Johnny Lim
+ */
 class JettySslHandshakeMetricsTest {
     private SimpleMeterRegistry registry;
     private JettySslHandshakeMetrics sslHandshakeMetrics;
@@ -42,7 +48,7 @@ class JettySslHandshakeMetricsTest {
     @BeforeEach
     void setup() {
         MockitoAnnotations.initMocks(this);
-        Mockito.when(engine.getSession()).thenReturn(session);
+        when(engine.getSession()).thenReturn(session);
 
         registry = new SimpleMeterRegistry(SimpleConfig.DEFAULT, new MockClock());
 
@@ -55,15 +61,15 @@ class JettySslHandshakeMetricsTest {
         SslHandshakeListener.Event event = new SslHandshakeListener.Event(engine);
         sslHandshakeMetrics.handshakeFailed(event, new javax.net.ssl.SSLHandshakeException(""));
         assertThat(registry.get("jetty.ssl.handshakes")
-                           .tags("id", "0", "result", "failed")
+                           .tags("id", "0", "protocol", "unknown", "ciphersuite", "unknown", "result", "failed")
                            .counter().count()).isEqualTo(1.0);
     }
 
     @Test
     void handshakeSucceeded() {
         SslHandshakeListener.Event event = new SslHandshakeListener.Event(engine);
-        Mockito.when(session.getProtocol()).thenReturn("TLSv1.3");
-        Mockito.when(session.getCipherSuite()).thenReturn("RSA_XYZZY");
+        when(session.getProtocol()).thenReturn("TLSv1.3");
+        when(session.getCipherSuite()).thenReturn("RSA_XYZZY");
         sslHandshakeMetrics.handshakeSucceeded(event);
         assertThat(registry.get("jetty.ssl.handshakes")
                            .tags("id", "0", "protocol", "TLSv1.3", "ciphersuite", "RSA_XYZZY", "result", "succeeded")
