@@ -238,7 +238,8 @@ public class DistributionStatisticConfig implements Mergeable<DistributionStatis
      * use with a {@link io.micrometer.core.instrument.Timer}, the SLA unit is in nanoseconds.
      *
      * @return The SLA boundaries to include the set of histogram buckets shipped to the monitoring system.
-     * @deprecated Use {@link #getServiceLevelObjectiveBoundaries()} instead.
+     * @deprecated Use {@link #getServiceLevelObjectiveBoundaries()}. If you use this method, your
+     * code will not be compatible with code that uses Micrometer 1.5.x and later.
      */
     @Nullable
     @Deprecated
