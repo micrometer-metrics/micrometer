@@ -73,7 +73,10 @@ class OkHttpMetricsEventListenerTest {
         client.newCall(request).execute().close();
 
         assertThat(registry.get("okhttp.requests")
-                .tags("foo", "bar", "status", "200", "uri", URI_EXAMPLE_VALUE, "target.host", "localhost", "target.port", "" + server.port(), "target.scheme", "http")
+                .tags("foo", "bar", "status", "200", "uri", URI_EXAMPLE_VALUE,
+                        "target.host", "localhost",
+                        "target.port", String.valueOf(server.port()),
+                        "target.scheme", "http")
                 .timer().count()).isEqualTo(1L);
     }
 
@@ -87,7 +90,10 @@ class OkHttpMetricsEventListenerTest {
         client.newCall(request).execute().close();
 
         assertThat(registry.get("okhttp.requests")
-                .tags("foo", "bar", "status", "404", "uri", "NOT_FOUND", "target.host", "localhost", "target.port", "" + server.port(), "target.scheme", "http")
+                .tags("foo", "bar", "status", "404", "uri", "NOT_FOUND",
+                        "target.host", "localhost",
+                        "target.port", String.valueOf(server.port()),
+                        "target.scheme", "http")
                 .timer().count()).isEqualTo(1L);
     }
 
@@ -136,7 +142,10 @@ class OkHttpMetricsEventListenerTest {
         client.newCall(request).execute().close();
 
         assertThat(registry.get("okhttp.requests")
-                .tags("foo", "bar", "uri", "/", "status", "200", "target.host", "localhost", "target.port", "" + server.port(), "target.scheme", "http")
+                .tags("foo", "bar", "uri", "/", "status", "200",
+                        "target.host", "localhost",
+                        "target.port", String.valueOf(server.port()),
+                        "target.scheme", "http")
                 .timer().count()).isEqualTo(1L);
     }
 
@@ -157,7 +166,10 @@ class OkHttpMetricsEventListenerTest {
         client.newCall(request).execute().close();
 
         assertThat(registry.get("okhttp.requests")
-                .tags("foo", "bar", "uri", "/helloworld.txt", "status", "200", "target.host", "localhost", "target.port", "" + server.port(), "target.scheme", "http")
+                .tags("foo", "bar", "uri", "/helloworld.txt", "status", "200",
+                        "target.host", "localhost",
+                        "target.port", String.valueOf(server.port()),
+                        "target.scheme", "http")
                 .timer().count()).isEqualTo(1L);
     }
 
@@ -182,10 +194,11 @@ class OkHttpMetricsEventListenerTest {
     }
 
     @Test
-    void cachedResponsesDoNotLeakMemory(@WiremockResolver.Wiremock WireMockServer server, @TempDir Path tempDir) throws IOException {
-        OkHttpMetricsEventListener okHttpMetricsEventListener = OkHttpMetricsEventListener.builder(registry, "okhttp.requests").build();
+    void cachedResponsesDoNotLeakMemory(
+            @WiremockResolver.Wiremock WireMockServer server, @TempDir Path tempDir) throws IOException {
+        OkHttpMetricsEventListener listener = OkHttpMetricsEventListener.builder(registry, "okhttp.requests").build();
         OkHttpClient clientWithCache = new OkHttpClient.Builder()
-                .eventListener(okHttpMetricsEventListener)
+                .eventListener(listener)
                 .cache(new Cache(tempDir.toFile(), 55555))
                 .build();
         server.stubFor(any(anyUrl()).willReturn(aResponse().withHeader("Cache-Control", "max-age=9600")));
@@ -194,12 +207,12 @@ class OkHttpMetricsEventListenerTest {
                 .build();
 
         clientWithCache.newCall(request).execute().close();
-        assertThat(okHttpMetricsEventListener.callState).isEmpty();
+        assertThat(listener.callState).isEmpty();
         try (Response response = clientWithCache.newCall(request).execute()) {
             assertThat(response.cacheResponse()).isNotNull();
         }
 
-        assertThat(okHttpMetricsEventListener.callState).isEmpty();
+        assertThat(listener.callState).isEmpty();
     }
 
     @Test
@@ -237,7 +250,10 @@ class OkHttpMetricsEventListenerTest {
         client.newCall(request).execute().close();
 
         assertThat(registry.get("okhttp.requests")
-                .tags("status", "200", "target.host", "localhost", "target.port", "" + server.port(), "target.scheme", "http")
+                .tags("status", "200",
+                        "target.host", "localhost",
+                        "target.port", String.valueOf(server.port()),
+                        "target.scheme", "http")
                 .timer().getId().getTags()).doesNotContain(Tag.of("host", "localhost"));
     }
 
@@ -248,7 +264,11 @@ class OkHttpMetricsEventListenerTest {
         listener.time(state);
 
         assertThat(registry.get("okhttp.requests")
-                .tags("uri", "UNKNOWN").timer().count()).isEqualTo(1L);
+                .tags("uri", "UNKNOWN",
+                        "target.host", "UNKNOWN",
+                        "target.port", "UNKNOWN",
+                        "target.scheme", "UNKNOWN")
+                .timer().count()).isEqualTo(1L);
     }
 
     private void testRequestTags(@WiremockResolver.Wiremock WireMockServer server, Request request) throws IOException {
@@ -263,7 +283,10 @@ class OkHttpMetricsEventListenerTest {
         client.newCall(request).execute().close();
 
         assertThat(registry.get("okhttp.requests")
-                .tags("foo", "bar", "uri", "/helloworld.txt", "status", "200", "requestTag1", "tagValue1", "target.host", "localhost", "target.port", "" + server.port(), "target.scheme", "http")
+                .tags("foo", "bar", "uri", "/helloworld.txt", "status", "200", "requestTag1", "tagValue1",
+                        "target.host", "localhost",
+                        "target.port", String.valueOf(server.port()),
+                        "target.scheme", "http")
                 .timer().count()).isEqualTo(1L);
     }
 

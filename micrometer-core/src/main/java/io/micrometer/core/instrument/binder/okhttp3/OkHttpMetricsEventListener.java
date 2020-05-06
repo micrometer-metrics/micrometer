@@ -64,6 +64,18 @@ public class OkHttpMetricsEventListener extends EventListener {
         REQUEST_TAG_CLASS_EXISTS = getMethod("tag", Class.class) != null;
     }
 
+    private static final String TAG_TARGET_SCHEME = "target.scheme";
+    private static final String TAG_TARGET_HOST = "target.host";
+    private static final String TAG_TARGET_PORT = "target.port";
+
+    private static final String TAG_VALUE_UNKNOWN = "UNKNOWN";
+
+    private static final Tags TAGS_TARGET_UNKNOWN = Tags.of(
+            TAG_TARGET_SCHEME, TAG_VALUE_UNKNOWN,
+            TAG_TARGET_HOST, TAG_VALUE_UNKNOWN,
+            TAG_TARGET_PORT, TAG_VALUE_UNKNOWN
+    );
+
     private static Method getMethod(String name, Class<?>... parameterTypes) {
         try {
             return Request.class.getMethod(name, parameterTypes);
@@ -136,10 +148,11 @@ public class OkHttpMetricsEventListener extends EventListener {
         Request request = state.request;
         boolean requestAvailable = request != null;
 
-        Tags requestTags = requestAvailable ? getRequestTags(request).and(generateTagsForRoute(request)) : Tags.empty();
+        // NOTE: This feature won't work with Prometheus meter registry due to tag mismatch.
+        Tags requestTags = requestAvailable ? getRequestTags(request) : Tags.empty();
 
         Iterable<Tag> tags = Tags.of(
-                        "method", requestAvailable ? request.method() : "UNKNOWN",
+                        "method", requestAvailable ? request.method() : TAG_VALUE_UNKNOWN,
                         "uri", getUriTag(state, request),
                         "status", getStatusMessage(state.response, state.exception)
                 )
@@ -147,8 +160,12 @@ public class OkHttpMetricsEventListener extends EventListener {
                 .and(stream(contextSpecificTags.spliterator(), false)
                         .map(contextTag -> contextTag.apply(request, state.response))
                         .collect(toList()))
-                .and(requestTags);
-        tags = includeHostTag ? Tags.of(tags).and("host", requestAvailable ? request.url().host() : "UNKNOWN") : tags;
+                .and(requestTags)
+                .and(generateTagsForRoute(request));
+
+        if (includeHostTag) {
+            tags = Tags.of(tags).and("host", requestAvailable ? request.url().host() : TAG_VALUE_UNKNOWN);
+        }
 
         Timer.builder(this.requestsMetricName)
                 .tags(tags)
@@ -158,16 +175,19 @@ public class OkHttpMetricsEventListener extends EventListener {
     }
 
     private Tags generateTagsForRoute(Request request) {
+        if (request == null) {
+            return TAGS_TARGET_UNKNOWN;
+        }
         return Tags.of(
-                "target.scheme", request.url().scheme(),
-                "target.host", request.url().host(),
-                "target.port", Integer.toString(request.url().port())
+                TAG_TARGET_SCHEME, request.url().scheme(),
+                TAG_TARGET_HOST, request.url().host(),
+                TAG_TARGET_PORT, Integer.toString(request.url().port())
         );
     }
 
     private String getUriTag(CallState state, @Nullable Request request) {
         if (request == null) {
-            return "UNKNOWN";
+            return TAG_VALUE_UNKNOWN;
         }
         return state.response != null && (state.response.code() == 404 || state.response.code() == 301)
                     ? "NOT_FOUND" : urlMapper.apply(request);
