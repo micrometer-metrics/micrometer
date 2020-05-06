@@ -54,6 +54,15 @@ public class ExecutorServiceMetrics implements MeterBinder {
         this(executorService, executorServiceName, DEFAULT_EXECUTOR_METRIC_PREFIX, tags);
     }
 
+    /**
+     * Create an {@code ExecutorServiceMetrics} instance.
+     *
+     * @param executorService executor service
+     * @param executorServiceName executor service name which will be used as {@literal name} tag
+     * @param metricPrefix metrics prefix which will be used to prefix metric name
+     * @param tags additional tags
+     * @since 1.5.0
+     */
     public ExecutorServiceMetrics(@Nullable ExecutorService executorService, String executorServiceName,
                                   String metricPrefix, Iterable<Tag> tags) {
         this.executorService = executorService;
@@ -83,6 +92,7 @@ public class ExecutorServiceMetrics implements MeterBinder {
      * @param metricPrefix The prefix to use with meter names. This differentiates executor metrics that may have different tag sets.
      * @param tags         Tags to apply to all recorded metrics.
      * @return The instrumented executor, proxied.
+     * @since 1.5.0
      */
     public static Executor monitor(MeterRegistry registry, Executor executor, String executorName,
                                    String metricPrefix, Iterable<Tag> tags) {
@@ -114,6 +124,7 @@ public class ExecutorServiceMetrics implements MeterBinder {
      * @param metricPrefix The prefix to use with meter names. This differentiates executor metrics that may have different tag sets.
      * @param tags         Tags to apply to all recorded metrics.
      * @return The instrumented executor, proxied.
+     * @since 1.5.0
      */
     public static Executor monitor(MeterRegistry registry, Executor executor, String executorName,
                                    String metricPrefix, Tag... tags) {
@@ -142,6 +153,7 @@ public class ExecutorServiceMetrics implements MeterBinder {
      * @param metricPrefix        The prefix to use with meter names. This differentiates executor metrics that may have different tag sets.
      * @param tags                Tags to apply to all recorded metrics.
      * @return The instrumented executor, proxied.
+     * @since 1.5.0
      */
     public static ExecutorService monitor(MeterRegistry registry, ExecutorService executor, String executorServiceName,
                                           String metricPrefix, Iterable<Tag> tags) {
@@ -173,6 +185,7 @@ public class ExecutorServiceMetrics implements MeterBinder {
      * @param executorServiceName Will be used to tag metrics with "name".
      * @param metricPrefix        The prefix to use with meter names. This differentiates executor metrics that may have different tag sets.
      * @param tags                Tags to apply to all recorded metrics.
+     * @since 1.5.0
      * @return The instrumented executor, proxied.
      */
     public static ExecutorService monitor(MeterRegistry registry, ExecutorService executor, String executorServiceName,
