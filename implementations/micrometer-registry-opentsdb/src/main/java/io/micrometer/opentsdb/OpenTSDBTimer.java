@@ -118,8 +118,8 @@ public class OpenTSDBTimer extends AbstractTimer {
         }
 
         return new HistogramSnapshot(snapshot.count(),
-                snapshot.total(TimeUnit.SECONDS),
-                snapshot.max(TimeUnit.SECONDS),
+                snapshot.total(),
+                snapshot.max(),
                 snapshot.percentileValues(),
                 histogramCounts(),
                 snapshot::outputSummary);
