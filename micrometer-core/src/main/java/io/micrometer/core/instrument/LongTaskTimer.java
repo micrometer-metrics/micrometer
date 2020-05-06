@@ -139,6 +139,15 @@ public interface LongTaskTimer extends Meter, HistogramSupport {
     int activeTasks();
 
     /**
+     * @param unit The base unit of time to scale the mean to.
+     * @return The distribution average for all recorded events.
+     * @since 1.5.1
+     */
+    default double mean(TimeUnit unit) {
+        return activeTasks() == 0 ? 0 : duration(unit) / activeTasks();
+    }
+
+    /**
      * The amount of time the longest running task has been running
      *
      * @param unit The time unit to scale the max to.

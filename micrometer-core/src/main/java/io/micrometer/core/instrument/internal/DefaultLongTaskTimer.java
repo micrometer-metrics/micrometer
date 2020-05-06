@@ -27,6 +27,7 @@ import io.micrometer.core.instrument.util.TimeUtils;
 
 import java.util.*;
 import java.util.concurrent.*;
+import java.util.function.Consumer;
 import java.util.stream.Collectors;
 
 public class DefaultLongTaskTimer extends AbstractMeter implements LongTaskTimer {
@@ -104,6 +105,10 @@ public class DefaultLongTaskTimer extends AbstractMeter implements LongTaskTimer
     @Override
     public int activeTasks() {
         return activeTasks.size();
+    }
+
+    protected void forEachActive(Consumer<Sample> sample) {
+        activeTasks.forEach(sample);
     }
 
     @Override

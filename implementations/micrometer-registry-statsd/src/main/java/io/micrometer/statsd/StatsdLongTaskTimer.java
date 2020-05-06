@@ -52,5 +52,10 @@ public class StatsdLongTaskTimer extends DefaultLongTaskTimer implements StatsdP
         if (alwaysPublish || lastDuration.getAndSet(duration) != duration) {
             sink.next(lineBuilder.gauge(duration, Statistic.DURATION));
         }
+
+        double max = max(TimeUnit.MILLISECONDS);
+        if (alwaysPublish || lastDuration.getAndSet(duration) != duration) {
+            sink.next(lineBuilder.gauge(max, Statistic.MAX));
+        }
     }
 }
