@@ -22,11 +22,7 @@ import io.micrometer.core.instrument.Timer;
 import io.micrometer.core.lang.NonNullApi;
 import io.micrometer.core.lang.NonNullFields;
 import io.micrometer.core.lang.Nullable;
-import okhttp3.Call;
-import okhttp3.EventListener;
-import okhttp3.OkHttpClient;
-import okhttp3.Request;
-import okhttp3.Response;
+import okhttp3.*;
 
 import java.io.IOException;
 import java.lang.reflect.Method;
@@ -135,18 +131,16 @@ public class OkHttpMetricsEventListener extends EventListener {
         }
     }
 
-    private void time(CallState state) {
+    // VisibleForTesting
+    void time(CallState state) {
         Request request = state.request;
         boolean requestAvailable = request != null;
-
-        String uri = state.response != null && (state.response.code() == 404 || state.response.code() == 301)
-                ? "NOT_FOUND" : urlMapper.apply(request);
 
         Tags requestTags = requestAvailable ? getRequestTags(request).and(generateTagsForRoute(request)) : Tags.empty();
 
         Iterable<Tag> tags = Tags.of(
                         "method", requestAvailable ? request.method() : "UNKNOWN",
-                        "uri", requestAvailable ? uri : "UNKNOWN",
+                        "uri", getUriTag(state, request),
                         "status", getStatusMessage(state.response, state.exception)
                 )
                 .and(extraTags)
@@ -169,6 +163,14 @@ public class OkHttpMetricsEventListener extends EventListener {
                 "target.host", request.url().host(),
                 "target.port", Integer.toString(request.url().port())
         );
+    }
+
+    private String getUriTag(CallState state, @Nullable Request request) {
+        if (request == null) {
+            return "UNKNOWN";
+        }
+        return state.response != null && (state.response.code() == 404 || state.response.code() == 301)
+                    ? "NOT_FOUND" : urlMapper.apply(request);
     }
 
     private Tags getRequestTags(Request request) {
@@ -197,7 +199,8 @@ public class OkHttpMetricsEventListener extends EventListener {
         return Integer.toString(response.code());
     }
 
-    private static class CallState {
+    // VisibleForTesting
+    static class CallState {
         final long startTime;
         @Nullable
         final Request request;
