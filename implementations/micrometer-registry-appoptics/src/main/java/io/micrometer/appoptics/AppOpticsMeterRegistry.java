@@ -186,7 +186,6 @@ public class AppOpticsMeterRegistry extends StepMeterRegistry {
         return Optional.of(write(timeGauge.getId(), "timeGauge", Fields.Value.tag(), decimal(value)));
     }
 
-    @Nullable
     private Optional<String> writeCounter(Counter counter) {
         double count = counter.count();
         if (count > 0) {
@@ -197,7 +196,6 @@ public class AppOpticsMeterRegistry extends StepMeterRegistry {
     }
 
     // VisibleForTesting
-    @Nullable
     Optional<String> writeFunctionCounter(FunctionCounter counter) {
         double count = counter.count();
         if (Double.isFinite(count) && count > 0) {
@@ -207,7 +205,6 @@ public class AppOpticsMeterRegistry extends StepMeterRegistry {
         return Optional.empty();
     }
 
-    @Nullable
     private Optional<String> writeFunctionTimer(FunctionTimer timer) {
         double count = timer.count();
         if (count > 0) {
@@ -218,7 +215,6 @@ public class AppOpticsMeterRegistry extends StepMeterRegistry {
         return Optional.empty();
     }
 
-    @Nullable
     private Optional<String> writeTimer(Timer timer) {
         HistogramSnapshot snapshot = timer.takeSnapshot();
         long count = snapshot.count();
@@ -231,7 +227,6 @@ public class AppOpticsMeterRegistry extends StepMeterRegistry {
         return Optional.empty();
     }
 
-    @Nullable
     private Optional<String> writeSummary(DistributionSummary summary) {
         HistogramSnapshot snapshot = summary.takeSnapshot();
         if (snapshot.count() > 0) {
@@ -243,7 +238,6 @@ public class AppOpticsMeterRegistry extends StepMeterRegistry {
         return Optional.empty();
     }
 
-    @Nullable
     private Optional<String> writeLongTaskTimer(LongTaskTimer timer) {
         int activeTasks = timer.activeTasks();
         if (activeTasks > 0) {
