@@ -15,14 +15,13 @@
  */
 package io.micrometer.opentsdb;
 
+import io.micrometer.core.Issue;
+import io.micrometer.core.instrument.*;
+import org.junit.jupiter.api.Test;
+
 import java.time.Duration;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicReference;
-
-import io.micrometer.core.Issue;
-import io.micrometer.core.instrument.*;
-import io.micrometer.core.instrument.distribution.HistogramSnapshot;
-import org.junit.jupiter.api.Test;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
