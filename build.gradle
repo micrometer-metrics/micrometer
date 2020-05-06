@@ -42,7 +42,7 @@ allprojects {
 
 subprojects {
     if (project.name != 'micrometer-bom') {
-        if (project.name.contains('samples')) {
+        if (project.name.contains('samples') || project.name.contains('benchmarks')) {
             apply plugin: 'java'
         } else {
             apply plugin: 'java-library'
