@@ -15,9 +15,16 @@
  */
 package io.micrometer.influx2;
 
-import io.micrometer.core.instrument.config.MissingRequiredConfigurationException;
+import io.micrometer.core.instrument.config.validate.Validated;
 import io.micrometer.core.instrument.step.StepRegistryConfig;
 import io.micrometer.core.lang.Nullable;
+
+import static io.micrometer.core.instrument.config.MeterRegistryConfigValidator.checkAll;
+import static io.micrometer.core.instrument.config.MeterRegistryConfigValidator.checkRequired;
+import static io.micrometer.core.instrument.config.validate.PropertyValidator.getBoolean;
+import static io.micrometer.core.instrument.config.validate.PropertyValidator.getInteger;
+import static io.micrometer.core.instrument.config.validate.PropertyValidator.getString;
+import static io.micrometer.core.instrument.config.validate.PropertyValidator.getUrlString;
 
 /**
  * Configuration for {@link Influx2MeterRegistry}.
@@ -40,46 +47,35 @@ public interface Influx2Config extends StepRegistryConfig {
      * @return Specifies the destination bucket for writes.
      */
     default String bucket() {
-        String v = get(prefix() + ".bucket");
-        if (v == null)
-            throw new MissingRequiredConfigurationException("bucket must be set to report metrics to InfluxDB");
-        return v;
+        return getString(this, "bucket").orElse(null);
     }
 
     /**
      * @return Specifies the destination organization for writes.
      */
     default String org() {
-        String v = get(prefix() + ".org");
-        if (v == null)
-            throw new MissingRequiredConfigurationException("org must be set to report metrics to InfluxDB");
-        return v;
+        return getString(this, "org").orElse(null);
     }
 
     /**
      * @return Authenticate requests with this token.
      */
     default String token() {
-        String v = get(prefix() + ".token");
-        if (v == null)
-            throw new MissingRequiredConfigurationException("token must be set to report metrics to InfluxDB");
-        return v;
+        return getString(this, "token").orElse(null);
     }
 
     /**
      * @return The URI for the Influx backend. The default is {@code http://localhost:8086/api/v2}.
      */
     default String uri() {
-        String v = get(prefix() + ".uri");
-        return (v == null) ? "http://localhost:8086/api/v2" : v;
+        return getUrlString(this, "uri").orElse("http://localhost:8086/api/v2");
     }
 
     /**
      * @return {@code true} if metrics publish batches should be GZIP compressed, {@code false} otherwise.
      */
     default boolean compressed() {
-        String v = get(prefix() + ".compressed");
-        return v == null || Boolean.valueOf(v);
+        return getBoolean(this, "compressed").orElse(true);
     }
 
     /**
@@ -87,8 +83,7 @@ public interface Influx2Config extends StepRegistryConfig {
      * metrics to it, creating it if it does not exist.
      */
     default boolean autoCreateBucket() {
-        String v = get(prefix() + ".autoCreateBucket");
-        return v == null || Boolean.valueOf(v);
+        return getBoolean(this, "autoCreateBucket").orElse(true);
     }
 
     /**
@@ -96,7 +91,17 @@ public interface Influx2Config extends StepRegistryConfig {
      */
     @Nullable
     default Integer everySeconds() {
-        String v = get(prefix() + ".everySeconds");
-        return v == null ? null : Integer.parseInt(v);
+        return getInteger(this, "everySeconds").orElse(null);
+    }
+
+    @Override
+    default Validated<?> validate() {
+        return checkAll(this,
+                c -> StepRegistryConfig.validate(c),
+                checkRequired("bucket", Influx2Config::bucket),
+                checkRequired("org", Influx2Config::org),
+                checkRequired("token", Influx2Config::token) ,
+                checkRequired("uri", Influx2Config::uri)
+        );
     }
 }

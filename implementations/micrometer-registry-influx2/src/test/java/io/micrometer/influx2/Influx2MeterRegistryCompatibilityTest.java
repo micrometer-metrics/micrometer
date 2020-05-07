@@ -32,6 +32,21 @@ class Influx2MeterRegistryCompatibilityTest extends MeterRegistryCompatibilityKi
             }
 
             @Override
+            public String bucket() {
+                return "my-bucket";
+            }
+
+            @Override
+            public String org() {
+                return "my-org";
+            }
+
+            @Override
+            public String token() {
+                return "my-token";
+            }
+
+            @Override
             @Nullable
             public String get(String key) {
                 return null;
