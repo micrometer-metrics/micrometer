@@ -19,6 +19,7 @@ import io.micrometer.core.annotation.Timed;
 import io.micrometer.core.instrument.MeterRegistry;
 import io.micrometer.core.instrument.Timer;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RestController;
 
 import java.util.*;
@@ -43,6 +44,12 @@ public class PersonController {
             e.printStackTrace();
         }
         return people;
+    }
+
+    @GetMapping("/api/person/{id}")
+    @Timed("person.requests")
+    public Person person(@PathVariable String id) {
+        return new Person(id, "jon", "schneider", "USA", "MO");
     }
 
     @GetMapping("/api/peopleAsync")
