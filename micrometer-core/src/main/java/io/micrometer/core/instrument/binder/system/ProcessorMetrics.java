@@ -53,8 +53,8 @@ public class ProcessorMetrics implements MeterBinder {
 
     /** List of public, exported interface class names from supported JVM implementations. */
     private static final List<String> OPERATING_SYSTEM_BEAN_CLASS_NAMES = Arrays.asList(
-        "com.sun.management.OperatingSystemMXBean", // HotSpot
-        "com.ibm.lang.management.OperatingSystemMXBean" // J9
+        "com.ibm.lang.management.OperatingSystemMXBean", // J9
+        "com.sun.management.OperatingSystemMXBean" // HotSpot
     );
 
     private final Iterable<Tag> tags;
