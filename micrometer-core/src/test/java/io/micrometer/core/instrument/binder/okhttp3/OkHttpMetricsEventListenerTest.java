@@ -211,6 +211,20 @@ class OkHttpMetricsEventListenerTest {
                 .tags("uri", "UNKNOWN").timer().count()).isEqualTo(1L);
     }
 
+    @Test
+    void timeWhenRequestIsNullAndRequestTagKeysAreGiven() {
+        OkHttpMetricsEventListener listener = OkHttpMetricsEventListener.builder(registry, "okhttp.requests")
+                .requestTagKeys("tag1", "tag2").build();
+        OkHttpMetricsEventListener.CallState state = new OkHttpMetricsEventListener.CallState(registry.config().clock().monotonicTime(), null);
+        listener.time(state);
+
+        assertThat(registry.get("okhttp.requests")
+                .tags("uri", "UNKNOWN",
+                        "tag1", "UNKNOWN",
+                        "tag2", "UNKNOWN")
+                .timer().count()).isEqualTo(1L);
+    }
+
     private void testRequestTags(@WiremockResolver.Wiremock WireMockServer server, Request request) throws IOException {
         server.stubFor(any(anyUrl()));
         OkHttpClient client = new OkHttpClient.Builder()

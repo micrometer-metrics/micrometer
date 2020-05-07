@@ -26,7 +26,10 @@ import okhttp3.*;
 
 import java.io.IOException;
 import java.lang.reflect.Method;
+import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collections;
+import java.util.List;
 import java.util.Optional;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
@@ -43,6 +46,7 @@ import java.util.function.Function;
  * @author Bjarte S. Karlsen
  * @author Jon Schneider
  * @author Nurettin Yilmaz
+ * @author Johnny Lim
  */
 @NonNullApi
 @NonNullFields
@@ -71,14 +75,20 @@ public class OkHttpMetricsEventListener extends EventListener {
     private final String requestsMetricName;
     private final Function<Request, String> urlMapper;
     private final Iterable<Tag> extraTags;
+    private final Iterable<Tag> unknownRequestTags;
     // VisibleForTesting
     final ConcurrentMap<Call, CallState> callState = new ConcurrentHashMap<>();
 
-    OkHttpMetricsEventListener(MeterRegistry registry, String requestsMetricName, Function<Request, String> urlMapper, Iterable<Tag> extraTags) {
+    OkHttpMetricsEventListener(MeterRegistry registry, String requestsMetricName, Function<Request, String> urlMapper, Iterable<Tag> extraTags, Iterable<String> requestTagKeys) {
         this.registry = registry;
         this.requestsMetricName = requestsMetricName;
         this.urlMapper = urlMapper;
         this.extraTags = extraTags;
+        List<Tag> unknownRequestTags = new ArrayList<>();
+        for (String requestTagKey : requestTagKeys) {
+            unknownRequestTags.add(Tag.of(requestTagKey, "UNKNOWN"));
+        }
+        this.unknownRequestTags = unknownRequestTags;
     }
 
     public static Builder builder(MeterRegistry registry, String name) {
@@ -118,14 +128,12 @@ public class OkHttpMetricsEventListener extends EventListener {
         Request request = state.request;
         boolean requestAvailable = request != null;
 
-        Tags requestTags = requestAvailable ? getRequestTags(request) : Tags.empty();
-
         Iterable<Tag> tags = Tags.concat(extraTags, Tags.of(
             "method", requestAvailable ? request.method() : "UNKNOWN",
             "uri", getUriTag(state, request),
             "status", getStatusMessage(state.response, state.exception),
             "host", requestAvailable ? request.url().host() : "UNKNOWN"
-        )).and(requestTags);
+        )).and(getRequestTags(request));
 
         Timer.builder(this.requestsMetricName)
             .tags(tags)
@@ -142,7 +150,10 @@ public class OkHttpMetricsEventListener extends EventListener {
                     ? "NOT_FOUND" : urlMapper.apply(request);
     }
 
-    private Tags getRequestTags(Request request) {
+    private Iterable<Tag> getRequestTags(Request request) {
+        if (request == null) {
+            return unknownRequestTags;
+        }
         if (REQUEST_TAG_CLASS_EXISTS) {
             Tags requestTag = request.tag(Tags.class);
             if (requestTag != null) {
@@ -189,6 +200,7 @@ public class OkHttpMetricsEventListener extends EventListener {
         private final String name;
         private Function<Request, String> uriMapper = (request) -> Optional.ofNullable(request.header(URI_PATTERN)).orElse("none");
         private Iterable<Tag> tags = Collections.emptyList();
+        private Iterable<String> requestTagKeys = Collections.emptyList();
 
         Builder(MeterRegistry registry, String name) {
             this.registry = registry;
@@ -205,8 +217,37 @@ public class OkHttpMetricsEventListener extends EventListener {
             return this;
         }
 
+        /**
+         * Tag keys for {@link Request#tag()} or {@link Request#tag(Class)}.
+         *
+         * These keys will be added with {@literal UNKNOWN} values when {@link Request} is {@literal null}.
+         * Note that this is required only for Prometheus as it requires tag match for the same metric.
+         *
+         * @param requestTagKeys request tag keys
+         * @return this builder
+         * @since 1.3.9
+         */
+        public Builder requestTagKeys(String... requestTagKeys) {
+            return requestTagKeys(Arrays.asList(requestTagKeys));
+        }
+
+        /**
+         * Tag keys for {@link Request#tag()} or {@link Request#tag(Class)}.
+         *
+         * These keys will be added with {@literal UNKNOWN} values when {@link Request} is {@literal null}.
+         * Note that this is required only for Prometheus as it requires tag match for the same metric.
+         *
+         * @param requestTagKeys request tag keys
+         * @return this builder
+         * @since 1.3.9
+         */
+        public Builder requestTagKeys(Iterable<String> requestTagKeys) {
+            this.requestTagKeys = requestTagKeys;
+            return this;
+        }
+
         public OkHttpMetricsEventListener build() {
-            return new OkHttpMetricsEventListener(registry, name, uriMapper, tags);
+            return new OkHttpMetricsEventListener(registry, name, uriMapper, tags, requestTagKeys);
         }
     }
 }
