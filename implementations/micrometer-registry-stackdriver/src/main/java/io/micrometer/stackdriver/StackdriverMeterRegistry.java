@@ -418,10 +418,7 @@ public class StackdriverMeterRegistry extends StepMeterRegistry {
             }
 
             // add the "+infinity" bucket, which does NOT have a corresponding bucket boundary
-            long infinityBucketCount = snapshot.count() - truncatedSum.get();
-            if (infinityBucketCount > 0) {
-                bucketCounts.add(infinityBucketCount);
-            }
+            bucketCounts.add(Math.max(0, snapshot.count() - truncatedSum.get()));
 
             List<Double> bucketBoundaries = Arrays.stream(histogram)
                     .map(countAtBucket -> timeDomain ? countAtBucket.bucket(getBaseTimeUnit()) : countAtBucket.bucket())
