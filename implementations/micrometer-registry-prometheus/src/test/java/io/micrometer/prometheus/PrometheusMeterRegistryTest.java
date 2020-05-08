@@ -32,13 +32,13 @@ import java.time.Duration;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.Enumeration;
+import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 
 import static io.micrometer.core.instrument.MockClock.clock;
 import static java.util.Collections.emptyList;
-import static org.assertj.core.api.Assertions.assertThat;
-import static org.assertj.core.api.Assertions.offset;
+import static org.assertj.core.api.Assertions.*;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 
 /**
@@ -55,6 +55,24 @@ class PrometheusMeterRegistryTest {
     @BeforeEach
     void before() {
         registry.config().namingConvention(new PrometheusDurationNamingConvention());
+    }
+
+    @Test
+    void meterRegistrationFailedListenerCalledOnSameNameDifferentTags() throws InterruptedException {
+        CountDownLatch failedLatch = new CountDownLatch(1);
+        registry.config().onMeterRegistrationFailed(id -> failedLatch.countDown());
+        registry.counter("my.counter");
+        registry.counter("my.counter", "k", "v").increment();
+
+        assertThat(failedLatch.await(1, TimeUnit.SECONDS)).isTrue();
+
+        assertThatThrownBy(() -> registry
+                .throwExceptionOnRegistrationFailure()
+                .counter("my.counter", "k1", "v1")
+        ).isInstanceOf(IllegalArgumentException.class);
+
+        assertThatThrownBy(() -> registry.counter("my.counter", "k2", "v2"))
+                .isInstanceOf(IllegalArgumentException.class);
     }
 
     @Test
@@ -299,13 +317,6 @@ class PrometheusMeterRegistryTest {
 
         assertThat(registry.scrape())
                 .contains("api_requests_total 1.0");
-    }
-
-    @Issue("#266")
-    @Test
-    void twoMetricsWithDifferentTags() {
-        registry.counter("count", "k", "v", "k2", "v2");
-        assertThrows(IllegalArgumentException.class, () -> registry.counter("count", "k", "v"));
     }
 
     private Condition<Enumeration<Collector.MetricFamilySamples>> withNameAndQuantile(String name) {

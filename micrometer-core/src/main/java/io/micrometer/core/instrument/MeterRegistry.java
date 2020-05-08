@@ -79,6 +79,7 @@ public abstract class MeterRegistry {
     private volatile MeterFilter[] filters = new MeterFilter[0];
     private final List<Consumer<Meter>> meterAddedListeners = new CopyOnWriteArrayList<>();
     private final List<Consumer<Meter>> meterRemovedListeners = new CopyOnWriteArrayList<>();
+    private final List<Consumer<Meter.Id>> meterRegistrationFailedListeners = new CopyOnWriteArrayList<>();
     private final Config config = new Config();
     private final More more = new More();
 
@@ -757,6 +758,12 @@ public abstract class MeterRegistry {
             return this;
         }
 
+        @Incubating(since = "1.6.0")
+        public Config onMeterRegistrationFailed(Consumer<Meter.Id> meterRegistrationFailedListener) {
+            meterRegistrationFailedListeners.add(meterRegistrationFailedListener);
+            return this;
+        }
+
         /**
          * Use the provided naming convention, overriding the default for your monitoring system.
          *
@@ -978,5 +985,15 @@ public abstract class MeterRegistry {
      */
     public boolean isClosed() {
         return closed.get();
+    }
+
+    /**
+     * @param id The id that was attempted, but for which registration failed.
+     * @since 1.6.0
+     */
+    protected void meterRegistrationFailed(Meter.Id id) {
+        for (Consumer<Id> listener : meterRegistrationFailedListeners) {
+            listener.accept(id);
+        }
     }
 }

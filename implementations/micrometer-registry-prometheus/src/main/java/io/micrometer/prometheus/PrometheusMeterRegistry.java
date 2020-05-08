@@ -40,6 +40,7 @@ import java.util.function.ToDoubleFunction;
 import java.util.function.ToLongFunction;
 import java.util.stream.Stream;
 
+import static java.util.stream.Collectors.joining;
 import static java.util.stream.Collectors.toList;
 import static java.util.stream.StreamSupport.stream;
 
@@ -140,41 +141,41 @@ public class PrometheusMeterRegistry extends MeterRegistry {
                     // Prometheus doesn't balk at a metric being BOTH a histogram and a summary
                     type = Collector.Type.HISTOGRAM;
 
-                List<String> histogramKeys = new LinkedList<>(tagKeys);
-                String sampleName = conventionName + "_bucket";
-                switch (summary.histogramFlavor()) {
-                    case Prometheus:
-                        histogramKeys.add("le");
+                    List<String> histogramKeys = new LinkedList<>(tagKeys);
+                    String sampleName = conventionName + "_bucket";
+                    switch (summary.histogramFlavor()) {
+                        case Prometheus:
+                            histogramKeys.add("le");
 
-                        // satisfies https://prometheus.io/docs/concepts/metric_types/#histogram
-                        for (CountAtBucket c : histogramCounts) {
+                            // satisfies https://prometheus.io/docs/concepts/metric_types/#histogram
+                            for (CountAtBucket c : histogramCounts) {
+                                final List<String> histogramValues = new LinkedList<>(tagValues);
+                                histogramValues.add(Collector.doubleToGoString(c.bucket()));
+                                samples.add(new Collector.MetricFamilySamples.Sample(
+                                        sampleName, histogramKeys, histogramValues, c.count()));
+                            }
+
+                            // the +Inf bucket should always equal `count`
                             final List<String> histogramValues = new LinkedList<>(tagValues);
-                            histogramValues.add(Collector.doubleToGoString(c.bucket()));
+                            histogramValues.add("+Inf");
                             samples.add(new Collector.MetricFamilySamples.Sample(
-                                    sampleName, histogramKeys, histogramValues, c.count()));
-                        }
+                                    sampleName, histogramKeys, histogramValues, count));
+                            break;
+                        case VictoriaMetrics:
+                            histogramKeys.add("vmrange");
 
-                        // the +Inf bucket should always equal `count`
-                        final List<String> histogramValues = new LinkedList<>(tagValues);
-                        histogramValues.add("+Inf");
-                        samples.add(new Collector.MetricFamilySamples.Sample(
-                                sampleName, histogramKeys, histogramValues, count));
-                        break;
-                    case VictoriaMetrics:
-                        histogramKeys.add("vmrange");
+                            for (CountAtBucket c : histogramCounts) {
+                                final List<String> histogramValuesVM = new LinkedList<>(tagValues);
+                                histogramValuesVM.add(FixedBoundaryVictoriaMetricsHistogram.getRangeTagValue(c.bucket()));
+                                samples.add(new Collector.MetricFamilySamples.Sample(
+                                        sampleName, histogramKeys, histogramValuesVM, c.count()));
+                            }
+                            break;
+                        default:
+                            break;
+                    }
 
-                        for (CountAtBucket c : histogramCounts) {
-                            final List<String> histogramValuesVM = new LinkedList<>(tagValues);
-                            histogramValuesVM.add(FixedBoundaryVictoriaMetricsHistogram.getRangeTagValue(c.bucket()));
-                            samples.add(new Collector.MetricFamilySamples.Sample(
-                                    sampleName, histogramKeys, histogramValuesVM, c.count()));
-                        }
-                        break;
-                    default:
-                        break;
                 }
-
-            }
 
                 samples.add(new Collector.MetricFamilySamples.Sample(
                         conventionName + "_count", tagKeys, tagValues, count));
@@ -220,7 +221,7 @@ public class PrometheusMeterRegistry extends MeterRegistry {
             collector.add(tagValues, (conventionName, tagKeys) -> Stream.of(new MicrometerCollector.Family(Collector.Type.UNTYPED, conventionName,
                     new Collector.MetricFamilySamples.Sample(conventionName + "_active_count", tagKeys, tagValues, ltt.activeTasks()),
                     new Collector.MetricFamilySamples.Sample(conventionName + "_duration_sum", tagKeys, tagValues, ltt.duration(getBaseTimeUnit())),
-            new Collector.MetricFamilySamples.Sample(conventionName + "_max", tagKeys, tagValues, ltt.max(getBaseTimeUnit()))
+                    new Collector.MetricFamilySamples.Sample(conventionName + "_max", tagKeys, tagValues, ltt.max(getBaseTimeUnit()))
             )));
 
             addDistributionStatisticSamples(distributionStatisticConfig, collector, ltt, tagValues);
@@ -423,10 +424,8 @@ public class PrometheusMeterRegistry extends MeterRegistry {
                 return existingCollector;
             }
 
-            throw new IllegalArgumentException("Prometheus requires that all meters with the same name have the same" +
-                    " set of tag keys. There is already an existing meter named '" + name + "' containing tag keys [" +
-                    String.join(", ", existingCollector.getTagKeys()) + "]. The meter you are attempting to register" +
-                    " has keys [" + String.join(", ", tagKeys) + "].");
+            meterRegistrationFailed(id);
+            return null;
         });
     }
 
@@ -436,5 +435,22 @@ public class PrometheusMeterRegistry extends MeterRegistry {
                 .expiry(prometheusConfig.step())
                 .build()
                 .merge(DistributionStatisticConfig.DEFAULT);
+    }
+
+    /**
+     * For use with {@link MeterRegistry.Config#onMeterRegistrationFailed(Consumer)} when you want meters with the same name
+     * but different tags to cause an unchecked exception.
+     *
+     * @since 1.6.0
+     */
+    public PrometheusMeterRegistry throwExceptionOnRegistrationFailure() {
+        config().onMeterRegistrationFailed(id -> {
+            throw new IllegalArgumentException("Prometheus requires that all meters with the same name have the same" +
+                    " set of tag keys. There is already an existing meter named '" + id.getName() + "' containing tag keys [" +
+                    String.join(", ", collectorMap.get(getConventionName(id)).getTagKeys()) + "]. The meter you are attempting to register" +
+                    " has keys [" + getConventionTags(id).stream().map(Tag::getKey).collect(joining(", ")) + "].");
+        });
+
+        return this;
     }
 }
