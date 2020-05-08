@@ -16,14 +16,35 @@
 package io.micrometer.boot2.samples;
 
 import io.micrometer.boot2.samples.components.PersonController;
+import io.micrometer.core.instrument.Clock;
+import io.micrometer.core.instrument.logging.LoggingMeterRegistry;
+import io.micrometer.core.instrument.logging.LoggingRegistryConfig;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.boot.builder.SpringApplicationBuilder;
+import org.springframework.context.annotation.Bean;
 import org.springframework.scheduling.annotation.EnableScheduling;
+
+import java.time.Duration;
 
 @SpringBootApplication(scanBasePackageClasses = PersonController.class)
 @EnableScheduling
 public class LoggingRegistrySample {
     public static void main(String[] args) {
         new SpringApplicationBuilder(LoggingRegistrySample.class).profiles("logging").run(args);
+    }
+
+    @Bean
+    LoggingMeterRegistry loggingMeterRegistry() {
+        return new LoggingMeterRegistry(new LoggingRegistryConfig() {
+            @Override
+            public String get(String key) {
+                return null;
+            }
+
+            @Override
+            public Duration step() {
+                return Duration.ofSeconds(10);
+            }
+        }, Clock.SYSTEM);
     }
 }
