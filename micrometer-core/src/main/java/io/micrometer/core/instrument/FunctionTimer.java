@@ -53,7 +53,8 @@ public interface FunctionTimer extends Meter {
      * @return The distribution average for all recorded events.
      */
     default double mean(TimeUnit unit) {
-        return count() == 0 ? 0 : totalTime(unit) / count();
+        double count = count();
+        return count == 0 ? 0 : totalTime(unit) / count;
     }
 
     /**
