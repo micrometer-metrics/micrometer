@@ -47,7 +47,7 @@ public class OkHttpConnectionPoolMetrics implements MeterBinder {
     private final String name;
     private final Iterable<Tag> tags;
     private final Double maxIdleConnectionCount;
-    private ConnectionPoolConnectionStats connectionStats = new ConnectionPoolConnectionStats();
+    private final ThreadLocal<ConnectionPoolConnectionStats> connectionStats = new ThreadLocal<>();
 
     /**
      * Creates a meter binder for the given connection pool.
@@ -113,13 +113,25 @@ public class OkHttpConnectionPoolMetrics implements MeterBinder {
 
     @Override
     public void bindTo(@NonNull MeterRegistry registry) {
-        Gauge.builder(name + ".connection.count", connectionStats, ConnectionPoolConnectionStats::getActiveCount)
+        Gauge.builder(name + ".connection.count", connectionStats,
+                cs -> {
+                    if (cs.get() == null) {
+                        cs.set(new ConnectionPoolConnectionStats());
+                    }
+                    return cs.get().getActiveCount();
+                })
                 .baseUnit("connections")
                 .description("The state of connections in the OkHttp connection pool")
                 .tags(Tags.of(tags).and("state", "active"))
                 .register(registry);
 
-        Gauge.builder(name + ".connection.count", connectionStats, ConnectionPoolConnectionStats::getIdleConnectionCount)
+        Gauge.builder(name + ".connection.count", connectionStats,
+                cs -> {
+                    if (cs.get() == null) {
+                        cs.set(new ConnectionPoolConnectionStats());
+                    }
+                    return cs.get().getIdleConnectionCount();
+                })
                 .baseUnit("connections")
                 .description("The state of connections in the OkHttp connection pool")
                 .tags(Tags.of(tags).and("state", "idle"))
