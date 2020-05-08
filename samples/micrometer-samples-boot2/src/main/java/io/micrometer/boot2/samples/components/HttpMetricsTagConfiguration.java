@@ -59,7 +59,7 @@ public class HttpMetricsTagConfiguration {
                 filterChain.doFilter(request, cached);
 
                 Object path = request.getAttribute(HandlerMapping.BEST_MATCHING_PATTERN_ATTRIBUTE);
-                if(path.equals("/api/person/{id}")) {
+                if (path.equals("/api/person/{id}")) {
                     // Prometheus requires the same tags on all `http.server.requests`. So we'll need to add
                     // a `@Timed("person.requests") to the /api/person/{id} endpoint so it has a different name.
                     Person person = mapper.readValue(cached.getContentAsByteArray(), Person.class);
