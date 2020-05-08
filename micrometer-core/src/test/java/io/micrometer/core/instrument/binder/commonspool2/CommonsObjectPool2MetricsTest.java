@@ -1,5 +1,5 @@
 /**
- * Copyright 2018 Pivotal Software, Inc.
+ * Copyright 2020 Pivotal Software, Inc.
  * <p>
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -27,77 +27,82 @@ import org.apache.commons.pool2.impl.GenericObjectPool;
 import org.apache.commons.pool2.impl.GenericObjectPoolConfig;
 import org.junit.jupiter.api.Test;
 
+import java.util.Arrays;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 
+/**
+ * @author Chao Chang
+ */
 class CommonsObjectPool2MetricsTest {
-    private static int genericObjectPoolCount = 0;
+    private int genericObjectPoolCount = 0;
 
     private Tags tags = Tags.of("app", "myapp", "version", "1");
-    private CommonsObjectPool2Metrics commonsObjectPool2Metrics = new CommonsObjectPool2Metrics(tags);
+    private final MeterRegistry registry = new SimpleMeterRegistry();
+    private final CommonsObjectPool2Metrics commonsObjectPool2Metrics = new CommonsObjectPool2Metrics(tags);
 
     @Test
     void verifyMetricsWithExpectedTags() {
-        GenericObjectPool objectPool = createGenericObjectPool();
+        createGenericObjectPool();
         MeterRegistry registry = new SimpleMeterRegistry();
         commonsObjectPool2Metrics.bindTo(registry);
-        String[] gaugeNames = new String[]{"commons.pool2.num.idle",
-                "commons.pool2.num.waiters"};
-        for (String name : gaugeNames) {
-            registry.get(name).tags(tags).gauge();
-        }
 
-        String[] functionCounterNames = new String[]{"commons.pool2.created.count", "commons.pool2.borrowed.count",
-                "commons.pool2.returned.count", "commons.pool2.destroyed.count",
-                "commons.pool2.destroyed.by.evictor.count", "commons.pool2.destroyed.by.borrow.validation.count",};
-        for (String name : functionCounterNames) {
-            registry.get(name).tags(tags).functionCounter();
-        }
+        registry.get("commons.pool2.num.idle").tags(tags).gauge();
+        registry.get("commons.pool2.num.waiters").tags(tags).gauge();
 
-        String[] timeGaugeNames = new String[]{"commons.pool2.max.borrow.wait.time", "commons.pool2.mean.active.time",
-                "commons.pool2.mean.idle.time", "commons.pool2.mean.borrow.wait.time"};
-        for (String name : timeGaugeNames) {
-            registry.get(name).tags(tags).timeGauge();
-        }
+        Arrays.asList(
+                "commons.pool2.created",
+                "commons.pool2.borrowed",
+                "commons.pool2.returned",
+                "commons.pool2.destroyed",
+                "commons.pool2.destroyed.by.evictor",
+                "commons.pool2.destroyed.by.borrow.validation"
+        ).forEach(name -> registry.get(name).tags(tags).functionCounter());
 
+        Arrays.asList(
+                "commons.pool2.max.borrow.wait",
+                "commons.pool2.mean.active",
+                "commons.pool2.mean.idle",
+                "commons.pool2.mean.borrow.wait"
+        ).forEach(name -> registry.get(name).tags(tags).timeGauge());
     }
 
     @Test
-    void verifyGenericKeyedObjectPoolMetricsWithExpectedTags() throws Exception {
-        GenericKeyedObjectPool objectPool = createGenericKeyedObjectPool();
+    void verifyGenericKeyedObjectPoolMetricsWithExpectedTags() {
+        createGenericKeyedObjectPool();
         Tags tagsToMatch = tags.and("type", "GenericKeyedObjectPool");
-        MeterRegistry registry = new SimpleMeterRegistry();
         commonsObjectPool2Metrics.bindTo(registry);
-        String[] gaugeNames = new String[]{"commons.pool2.num.idle",
-                "commons.pool2.num.waiters"};
-        for (String name : gaugeNames) {
-            registry.get(name).tags(tagsToMatch).gauge();
-        }
 
-        String[] functionCounterNames = new String[]{"commons.pool2.created.count", "commons.pool2.borrowed.count",
-                "commons.pool2.returned.count", "commons.pool2.destroyed.count",
-                "commons.pool2.destroyed.by.evictor.count", "commons.pool2.destroyed.by.borrow.validation.count",};
-        for (String name : functionCounterNames) {
-            registry.get(name).tags(tagsToMatch).functionCounter();
-        }
+        Arrays.asList(
+                "commons.pool2.num.idle",
+                "commons.pool2.num.waiters"
+        ).forEach(name -> registry.get(name).tags(tagsToMatch).gauge());
 
-        String[] timeGaugeNames = new String[]{"commons.pool2.max.borrow.wait.time", "commons.pool2.mean.active.time",
-                "commons.pool2.mean.idle.time", "commons.pool2.mean.borrow.wait.time"};
-        for (String name : timeGaugeNames) {
-            registry.get(name).tags(tagsToMatch).timeGauge();
-        }
+        Arrays.asList(
+                "commons.pool2.created",
+                "commons.pool2.borrowed",
+                "commons.pool2.returned",
+                "commons.pool2.destroyed",
+                "commons.pool2.destroyed.by.evictor",
+                "commons.pool2.destroyed.by.borrow.validation"
+        ).forEach(name -> registry.get(name).tags(tagsToMatch).functionCounter());
 
+        Arrays.asList(
+                "commons.pool2.max.borrow.wait",
+                "commons.pool2.mean.active",
+                "commons.pool2.mean.idle",
+                "commons.pool2.mean.borrow.wait"
+        ).forEach(name -> registry.get(name).tags(tagsToMatch).timeGauge());
     }
 
     @Test
     void metricsReportedPerMultiplePools() {
-        GenericObjectPool objectPool1 = createGenericObjectPool();
-        GenericObjectPool objectPool2 = createGenericObjectPool();
-        GenericObjectPool objectPool3 = createGenericObjectPool();
+        createGenericObjectPool();
+        createGenericObjectPool();
+        createGenericObjectPool();
         MeterRegistry registry = new SimpleMeterRegistry();
         commonsObjectPool2Metrics.bindTo(registry);
 
-        // fetch metrics
         registry.get("commons.pool2.num.waiters").tag("name", "pool" + genericObjectPoolCount).gauge();
         registry.get("commons.pool2.num.waiters").tag("name", "pool" + (genericObjectPoolCount - 1)).gauge();
     }
@@ -113,18 +118,18 @@ class CommonsObjectPool2MetricsTest {
                 latch.countDown();
         });
 
-        GenericObjectPool objectPool = createGenericObjectPool();
+        createGenericObjectPool();
         latch.await(10, TimeUnit.SECONDS);
     }
 
-    private GenericObjectPool createGenericObjectPool() {
+    private void createGenericObjectPool() {
         genericObjectPoolCount++;
-        GenericObjectPoolConfig config = new GenericObjectPoolConfig();
+        GenericObjectPoolConfig<Object> config = new GenericObjectPoolConfig<>();
         config.setMaxTotal(10);
 
-        GenericObjectPool objectPool = new GenericObjectPool<>(new BasePooledObjectFactory<Object>() {
+        new GenericObjectPool<>(new BasePooledObjectFactory<Object>() {
             @Override
-            public Object create() throws Exception {
+            public Object create() {
                 return new Object();
             }
 
@@ -133,22 +138,19 @@ class CommonsObjectPool2MetricsTest {
                 return new DefaultPooledObject<>(testObject);
             }
         }, config);
-        return objectPool;
     }
 
-    private GenericKeyedObjectPool createGenericKeyedObjectPool() {
-        GenericKeyedObjectPool pool = new GenericKeyedObjectPool(new BaseKeyedPooledObjectFactory() {
+    private void createGenericKeyedObjectPool() {
+        new GenericKeyedObjectPool<>(new BaseKeyedPooledObjectFactory<Object, Object>() {
             @Override
-            public Object create(Object key) throws Exception {
+            public Object create(Object key) {
                 return key;
             }
 
             @Override
-            public PooledObject wrap(Object value) {
-                return new DefaultPooledObject(value);
+            public PooledObject<Object> wrap(Object value) {
+                return new DefaultPooledObject<>(value);
             }
         });
-        return pool;
     }
-
 }

@@ -1,5 +1,5 @@
 /**
- * Copyright 2017 Pivotal Software, Inc.
+ * Copyright 2020 Pivotal Software, Inc.
  * <p>
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,40 +16,19 @@
 
 package io.micrometer.core.instrument.binder.commonspool2;
 
-import io.micrometer.core.instrument.FunctionCounter;
-import io.micrometer.core.instrument.Gauge;
-import io.micrometer.core.instrument.Meter;
-import io.micrometer.core.instrument.MeterRegistry;
-import io.micrometer.core.instrument.Tag;
-import io.micrometer.core.instrument.Tags;
-import io.micrometer.core.instrument.TimeGauge;
+import io.micrometer.core.instrument.*;
 import io.micrometer.core.instrument.binder.MeterBinder;
+import io.micrometer.core.lang.NonNull;
 import io.micrometer.core.lang.Nullable;
 import io.micrometer.core.util.internal.logging.InternalLogger;
 import io.micrometer.core.util.internal.logging.InternalLoggerFactory;
 
-import javax.management.AttributeNotFoundException;
-import javax.management.InstanceNotFoundException;
-import javax.management.ListenerNotFoundException;
-import javax.management.MBeanException;
-import javax.management.MBeanServer;
-import javax.management.MBeanServerDelegate;
-import javax.management.MBeanServerFactory;
-import javax.management.MBeanServerNotification;
-import javax.management.MalformedObjectNameException;
-import javax.management.NotificationFilter;
-import javax.management.NotificationListener;
-import javax.management.ObjectName;
-import javax.management.ReflectionException;
+import javax.management.*;
 import java.lang.management.ManagementFactory;
 import java.util.List;
 import java.util.Objects;
 import java.util.Set;
-import java.util.concurrent.Callable;
-import java.util.concurrent.CopyOnWriteArrayList;
-import java.util.concurrent.Executor;
-import java.util.concurrent.Executors;
-import java.util.concurrent.TimeUnit;
+import java.util.concurrent.*;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.BiConsumer;
 import java.util.function.ToDoubleFunction;
@@ -58,9 +37,10 @@ import static java.util.Collections.emptyList;
 
 /**
  * Apache Commons Pool 2.x metrics collected from metrics exposed via the MBeanServer.
- * Metrics are exposed at each object pool.
+ * Metrics are exposed for each object pool.
  *
  * @author Chao Chang
+ * @since 1.6.0
  */
 public class CommonsObjectPool2Metrics implements MeterBinder, AutoCloseable {
     private final static InternalLogger log = InternalLoggerFactory.getInstance(CommonsObjectPool2Metrics.class);
@@ -97,7 +77,7 @@ public class CommonsObjectPool2Metrics implements MeterBinder, AutoCloseable {
     }
 
     @Override
-    public void bindTo(MeterRegistry registry) {
+    public void bindTo(@NonNull MeterRegistry registry) {
         for (String type : TYPES) {
             registerMetricsEventually(
                     type,
@@ -106,32 +86,32 @@ public class CommonsObjectPool2Metrics implements MeterBinder, AutoCloseable {
 
                         registerGaugeForObject(registry, o, "NumWaiters", "num.waiters", tags, "The estimate of the number of threads currently blocked waiting for an object from the pool", "threads");
 
-                        registerFunctionCounterForObject(registry, o, "CreatedCount", "created.count", tags, "The total number of objects created for this pool over the lifetime of the pool", "objects");
-                        registerFunctionCounterForObject(registry, o, "BorrowedCount", "borrowed.count", tags, "The total number of objects successfully borrowed from this pool over the lifetime of the pool", "objects");
-                        registerFunctionCounterForObject(registry, o, "ReturnedCount", "returned.count", tags, "The total number of objects returned to this pool over the lifetime of the pool", "objects");
-                        registerFunctionCounterForObject(registry, o, "DestroyedCount", "destroyed.count", tags, "The total number of objects destroyed by this pool over the lifetime of the pool", "objects");
+                        registerFunctionCounterForObject(registry, o, "CreatedCount", "created", tags, "The total number of objects created for this pool over the lifetime of the pool", "objects");
+                        registerFunctionCounterForObject(registry, o, "BorrowedCount", "borrowed", tags, "The total number of objects successfully borrowed from this pool over the lifetime of the pool", "objects");
+                        registerFunctionCounterForObject(registry, o, "ReturnedCount", "returned", tags, "The total number of objects returned to this pool over the lifetime of the pool", "objects");
+                        registerFunctionCounterForObject(registry, o, "DestroyedCount", "destroyed", tags, "The total number of objects destroyed by this pool over the lifetime of the pool", "objects");
                         registerFunctionCounterForObject(
-                                registry, o, "DestroyedByEvictorCount", "destroyed.by.evictor.count", tags, "The total number of objects destroyed by the evictor associated with this pool over the lifetime of the pool", "objects");
+                                registry, o, "DestroyedByEvictorCount", "destroyed.by.evictor", tags, "The total number of objects destroyed by the evictor associated with this pool over the lifetime of the pool", "objects");
                         registerFunctionCounterForObject(
                                 registry,
                                 o,
                                 "DestroyedByBorrowValidationCount",
-                                "destroyed.by.borrow.validation.count",
+                                "destroyed.by.borrow.validation",
                                 tags,
                                 "The total number of objects destroyed by this pool as a result of failing validation during borrowObject() over the lifetime of the pool",
                                 "objects");
 
-                        registerTimeGaugeForObject(
-                                registry, o, "MaxBorrowWaitTimeMillis", "max.borrow.wait.time", tags, "The maximum time a thread has waited to borrow objects from the pool");
-                        registerTimeGaugeForObject(
-                                registry, o, "MeanActiveTimeMillis", "mean.active.time", tags, "The mean time objects are active");
-                        registerTimeGaugeForObject(
-                                registry, o, "MeanIdleTimeMillis", "mean.idle.time", tags, "The mean time objects are idle");
+                        registerTimeGaugeForObject(registry, o, "MaxBorrowWaitTimeMillis", "max.borrow.wait", tags,
+                                "The maximum time a thread has waited to borrow objects from the pool");
+                        registerTimeGaugeForObject(registry, o, "MeanActiveTimeMillis", "mean.active", tags,
+                                "The mean time objects are active");
+                        registerTimeGaugeForObject(registry, o, "MeanIdleTimeMillis", "mean.idle", tags,
+                                "The mean time objects are idle");
                         registerTimeGaugeForObject(
                                 registry,
                                 o,
                                 "MeanBorrowWaitTimeMillis",
-                                "mean.borrow.wait.time",
+                                "mean.borrow.wait",
                                 tags,
                                 "The mean time threads wait to borrow an object");
                     });
@@ -194,7 +174,7 @@ public class CommonsObjectPool2Metrics implements MeterBinder, AutoCloseable {
                                 int maxTries = 3;
                                 for (int i = 0; i < maxTries; i++) {
                                     try {
-                                        Thread.sleep(1 * 1000);
+                                        Thread.sleep(1000);
                                     } catch (InterruptedException e) {
                                         throw new RuntimeException(e);
                                     }
@@ -208,7 +188,6 @@ public class CommonsObjectPool2Metrics implements MeterBinder, AutoCloseable {
                                         if (i == maxTries - 1) {
                                             log.error("can not set name tag", e);
                                         }
-                                        continue;
                                     }
                                 }
                                 perObject.accept(o, Tags.concat(tags, nameTags));
@@ -232,11 +211,11 @@ public class CommonsObjectPool2Metrics implements MeterBinder, AutoCloseable {
                         try {
                             mBeanServer.removeNotificationListener(
                                     MBeanServerDelegate.DELEGATE_NAME, notificationListener);
-                        } catch (InstanceNotFoundException | ListenerNotFoundException ignored) {
+                        } catch (InstanceNotFoundException | ListenerNotFoundException ignore) {
                         }
                     });
-        } catch (InstanceNotFoundException e) {
-            throw new RuntimeException("Error registering commons pool2 MBean listener", e);
+        } catch (InstanceNotFoundException ignore) {
+            // unable to register MBean listener
         }
     }
 
@@ -254,41 +233,48 @@ public class CommonsObjectPool2Metrics implements MeterBinder, AutoCloseable {
             String description,
             @Nullable String baseUnit) {
         final AtomicReference<Gauge> gauge = new AtomicReference<>();
-        gauge.set(
-                Gauge.builder(
+        gauge.set(Gauge
+                .builder(
                         METRIC_NAME_PREFIX + meterName,
                         mBeanServer,
-                        getJmxAttribute(registry, gauge, o, jmxMetricName))
-                        .description(description)
-                        .baseUnit(baseUnit)
-                        .tags(allTags)
-                        .register(registry));
+                        getJmxAttribute(registry, gauge, o, jmxMetricName)
+                )
+                .description(description)
+                .baseUnit(baseUnit)
+                .tags(allTags)
+                .register(registry)
+        );
     }
 
     private void registerFunctionCounterForObject(MeterRegistry registry, ObjectName o, String jmxMetricName, String meterName, Tags allTags, String description, @Nullable String baseUnit) {
         final AtomicReference<FunctionCounter> counter = new AtomicReference<>();
         counter.set(FunctionCounter
-                .builder(METRIC_NAME_PREFIX + meterName, mBeanServer,
-                        getJmxAttribute(registry, counter, o, jmxMetricName))
+                .builder(
+                        METRIC_NAME_PREFIX + meterName,
+                        mBeanServer,
+                        getJmxAttribute(registry, counter, o, jmxMetricName)
+                )
                 .description(description)
                 .baseUnit(baseUnit)
                 .tags(allTags)
-                .register(registry));
-    }
-
-    private void registerTimeGaugeForObject(MeterRegistry registry, ObjectName o, String jmxMetricName,
-                                            String meterName, Tags allTags, String description, TimeUnit timeUnit) {
-        final AtomicReference<TimeGauge> timeGauge = new AtomicReference<>();
-        timeGauge.set(TimeGauge.builder(METRIC_NAME_PREFIX + meterName, mBeanServer, timeUnit,
-                getJmxAttribute(registry, timeGauge, o, jmxMetricName))
-                .description(description)
-                .tags(allTags)
-                .register(registry));
+                .register(registry)
+        );
     }
 
     private void registerTimeGaugeForObject(MeterRegistry registry, ObjectName o, String jmxMetricName,
                                             String meterName, Tags allTags, String description) {
-        registerTimeGaugeForObject(registry, o, jmxMetricName, meterName, allTags, description, TimeUnit.MILLISECONDS);
+        final AtomicReference<TimeGauge> timeGauge = new AtomicReference<>();
+        timeGauge.set(TimeGauge
+                .builder(
+                        METRIC_NAME_PREFIX + meterName,
+                        mBeanServer,
+                        TimeUnit.MILLISECONDS,
+                        getJmxAttribute(registry, timeGauge, o, jmxMetricName)
+                )
+                .description(description)
+                .tags(allTags)
+                .register(registry)
+        );
     }
 
     private ToDoubleFunction<MBeanServer> getJmxAttribute(
@@ -296,14 +282,13 @@ public class CommonsObjectPool2Metrics implements MeterBinder, AutoCloseable {
             AtomicReference<? extends Meter> meter,
             ObjectName o,
             String jmxMetricName) {
-        return s ->
-                safeDouble(
-                        () -> {
-                            if (!s.isRegistered(o)) {
-                                registry.remove(meter.get());
-                            }
-                            return s.getAttribute(o, jmxMetricName);
-                        });
+        return s -> safeDouble(
+                () -> {
+                    if (!s.isRegistered(o)) {
+                        registry.remove(meter.get());
+                    }
+                    return s.getAttribute(o, jmxMetricName);
+                });
     }
 
     private double safeDouble(Callable<Object> callable) {
