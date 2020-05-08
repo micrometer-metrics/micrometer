@@ -59,7 +59,8 @@ public interface DistributionSummary extends Meter, HistogramSupport {
      * @return The distribution average for all recorded events.
      */
     default double mean() {
-        return count() == 0 ? 0 : totalAmount() / count();
+        long count = count();
+        return count == 0 ? 0 : totalAmount() / count;
     }
 
     /**
