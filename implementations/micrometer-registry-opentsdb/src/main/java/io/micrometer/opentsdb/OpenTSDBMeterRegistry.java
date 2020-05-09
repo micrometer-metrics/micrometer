@@ -21,10 +21,10 @@ import io.micrometer.core.instrument.cumulative.CumulativeFunctionCounter;
 import io.micrometer.core.instrument.cumulative.CumulativeFunctionTimer;
 import io.micrometer.core.instrument.distribution.CountAtBucket;
 import io.micrometer.core.instrument.distribution.DistributionStatisticConfig;
+import io.micrometer.core.instrument.distribution.HistogramSnapshot;
 import io.micrometer.core.instrument.distribution.ValueAtPercentile;
 import io.micrometer.core.instrument.distribution.pause.PauseDetector;
 import io.micrometer.core.instrument.internal.DefaultGauge;
-import io.micrometer.core.instrument.internal.DefaultLongTaskTimer;
 import io.micrometer.core.instrument.internal.DefaultMeter;
 import io.micrometer.core.instrument.push.PushMeterRegistry;
 import io.micrometer.core.instrument.util.DoubleFormat;
@@ -120,7 +120,7 @@ public class OpenTSDBMeterRegistry extends PushMeterRegistry {
 
     @Override
     protected LongTaskTimer newLongTaskTimer(Meter.Id id, DistributionStatisticConfig distributionStatisticConfig) {
-        return new DefaultLongTaskTimer(id, clock, getBaseTimeUnit(), distributionStatisticConfig, false);
+        return new OpenTSDBLongTaskTimer(id, clock, getBaseTimeUnit(), distributionStatisticConfig);
     }
 
     @Override
@@ -218,8 +218,9 @@ public class OpenTSDBMeterRegistry extends PushMeterRegistry {
     Stream<String> writeTimer(Timer timer) {
         long wallTime = config().clock().wallTime();
 
-        final ValueAtPercentile[] percentileValues = timer.takeSnapshot().percentileValues();
-        final CountAtBucket[] histogramCounts = ((OpenTSDBTimer) timer).histogramCounts();
+        HistogramSnapshot histogramSnapshot = timer.takeSnapshot();
+        final ValueAtPercentile[] percentileValues = histogramSnapshot.percentileValues();
+        final CountAtBucket[] histogramCounts = histogramSnapshot.histogramCounts();
         double count = timer.count();
 
         List<String> metrics = new ArrayList<>();
@@ -326,8 +327,9 @@ public class OpenTSDBMeterRegistry extends PushMeterRegistry {
     Stream<String> writeLongTaskTimer(LongTaskTimer timer) {
         long wallTime = config().clock().wallTime();
 
-        final ValueAtPercentile[] percentileValues = timer.takeSnapshot().percentileValues();
-        final CountAtBucket[] histogramCounts = ((OpenTSDBTimer) timer).histogramCounts();
+        HistogramSnapshot histogramSnapshot = timer.takeSnapshot();
+        final ValueAtPercentile[] percentileValues = histogramSnapshot.percentileValues();
+        final CountAtBucket[] histogramCounts = histogramSnapshot.histogramCounts();
         double count = timer.activeTasks();
 
         List<String> metrics = new ArrayList<>();
