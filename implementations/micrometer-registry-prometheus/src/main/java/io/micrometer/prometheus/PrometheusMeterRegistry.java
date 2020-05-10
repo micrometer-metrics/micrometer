@@ -23,6 +23,7 @@ import io.micrometer.core.instrument.distribution.pause.PauseDetector;
 import io.micrometer.core.instrument.internal.CumulativeHistogramLongTaskTimer;
 import io.micrometer.core.instrument.internal.DefaultGauge;
 import io.micrometer.core.instrument.internal.DefaultMeter;
+import io.micrometer.core.instrument.internal.CumulativeHistogramTimer;
 import io.micrometer.core.lang.Nullable;
 import io.prometheus.client.Collector;
 import io.prometheus.client.CollectorRegistry;
@@ -193,13 +194,26 @@ public class PrometheusMeterRegistry extends MeterRegistry {
 
     @Override
     protected io.micrometer.core.instrument.Timer newTimer(Meter.Id id, DistributionStatisticConfig distributionStatisticConfig, PauseDetector pauseDetector) {
-        PrometheusTimer timer = new PrometheusTimer(id, clock, distributionStatisticConfig, pauseDetector, prometheusConfig.histogramFlavor());
+        CumulativeHistogramTimer timer = new CumulativeHistogramTimer(id, clock, distributionStatisticConfig, pauseDetector, histogramFlavor(prometheusConfig.histogramFlavor()));
         applyToCollector(id, (collector) -> {
             List<String> tagValues = tagValues(id);
 
             addDistributionStatisticSamples(distributionStatisticConfig, collector, timer, tagValues);
         });
         return timer;
+    }
+
+    private io.micrometer.core.instrument.internal.HistogramFlavor histogramFlavor(HistogramFlavor flavor) {
+        switch (flavor) {
+            case Prometheus:
+                return io.micrometer.core.instrument.internal.HistogramFlavor.PROMETHEUS;
+
+            case VictoriaMetrics:
+                return io.micrometer.core.instrument.internal.HistogramFlavor.VICTORIA_METRICS;
+
+            default:
+                throw new IllegalArgumentException("Unexpected histogram flavor: " + flavor);
+        }
     }
 
     @Override
