@@ -679,11 +679,11 @@ class NewRelicMeterRegistryTest {
 
         NewRelicMeterRegistry registry = new NewRelicMeterRegistry(insightsApiConfig, apiProvider, clock);
 
-        registry.gauge("my.gauge", Tags.of("theTag", "theValue"), 1d);
+        Gauge.builder("my.gauge", () -> 1d).tag("theTag", "theValue").register(registry);
         Gauge gauge = registry.get("my.gauge").gauge();
         assertThat(gauge).isNotNull();
 
-        registry.gauge("other.gauge", 2d);
+        Gauge.builder("other.gauge", () -> 2d).register(registry);
         Gauge other = registry.get("other.gauge").gauge();
         assertThat(other).isNotNull();
 
