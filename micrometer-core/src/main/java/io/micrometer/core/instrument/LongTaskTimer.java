@@ -144,7 +144,8 @@ public interface LongTaskTimer extends Meter, HistogramSupport {
      * @since 1.5.1
      */
     default double mean(TimeUnit unit) {
-        return activeTasks() == 0 ? 0 : duration(unit) / activeTasks();
+        int activeTasks = activeTasks();
+        return activeTasks == 0 ? 0 : duration(unit) / activeTasks;
     }
 
     /**
