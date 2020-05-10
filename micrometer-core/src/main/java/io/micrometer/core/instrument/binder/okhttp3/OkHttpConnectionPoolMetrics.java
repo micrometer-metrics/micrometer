@@ -19,6 +19,7 @@ import io.micrometer.core.instrument.Gauge;
 import io.micrometer.core.instrument.MeterRegistry;
 import io.micrometer.core.instrument.Tag;
 import io.micrometer.core.instrument.Tags;
+import io.micrometer.core.instrument.binder.BaseUnits;
 import io.micrometer.core.instrument.binder.MeterBinder;
 import io.micrometer.core.lang.NonNull;
 import okhttp3.ConnectionPool;
@@ -32,8 +33,8 @@ import java.util.concurrent.CountDownLatch;
  * <p>
  * Example usage:
  * <pre>
- *     return new ConnectionPool(connectionPoolSize, connectionPoolKeepAliveMs, TimeUnit.MILLISECONDS);
- *     new OkHttpConnectionPoolMetrics(connectionPool, "okhttp.pool", Tags.of());
+ *     ConnectionPool connectionPool = new ConnectionPool(connectionPoolSize, connectionPoolKeepAliveMs, TimeUnit.MILLISECONDS);
+ *     new OkHttpConnectionPoolMetrics(connectionPool).bindTo(registry);
  * </pre>
  *
  * @author Ben Hubert
@@ -41,70 +42,71 @@ import java.util.concurrent.CountDownLatch;
  */
 public class OkHttpConnectionPoolMetrics implements MeterBinder {
 
-    private static final String DEFAULT_NAME = "okhttp.pool";
+    private static final String DEFAULT_NAME_PREFIX = "okhttp.pool";
+    private static final String TAG_STATE = "state";
 
     private final ConnectionPool connectionPool;
-    private final String name;
+    private final String namePrefix;
     private final Iterable<Tag> tags;
     private final Double maxIdleConnectionCount;
     private final ThreadLocal<ConnectionPoolConnectionStats> connectionStats = new ThreadLocal<>();
 
     /**
      * Creates a meter binder for the given connection pool.
-     * Metrics will be exposed using {@link #DEFAULT_NAME} as name.
+     * Metrics will be exposed using {@value #DEFAULT_NAME_PREFIX} as name prefix.
      *
      * @param connectionPool The connection pool to monitor. Must not be null.
      */
     public OkHttpConnectionPoolMetrics(ConnectionPool connectionPool) {
-        this(connectionPool, DEFAULT_NAME, Collections.emptyList(), null);
+        this(connectionPool, DEFAULT_NAME_PREFIX, Collections.emptyList(), null);
     }
 
     /**
      * Creates a meter binder for the given connection pool.
-     * Metrics will be exposed using {@link #DEFAULT_NAME} as name.
+     * Metrics will be exposed using {@value #DEFAULT_NAME_PREFIX} as name prefix.
      *
      * @param connectionPool The connection pool to monitor. Must not be null.
      * @param tags           A list of tags which will be passed for all meters. Must not be null.
      */
     public OkHttpConnectionPoolMetrics(ConnectionPool connectionPool, Iterable<Tag> tags) {
-        this(connectionPool, DEFAULT_NAME, tags, null);
+        this(connectionPool, DEFAULT_NAME_PREFIX, tags, null);
     }
 
     /**
      * Creates a meter binder for the given connection pool.
      *
      * @param connectionPool The connection pool to monitor. Must not be null.
-     * @param name           The desired name for the exposed metrics. Must not be null.
+     * @param namePrefix     The desired name prefix for the exposed metrics. Must not be null.
      * @param tags           A list of tags which will be passed for all meters. Must not be null.
      */
-    public OkHttpConnectionPoolMetrics(ConnectionPool connectionPool, String name, Iterable<Tag> tags) {
-        this(connectionPool, name, tags, null);
+    public OkHttpConnectionPoolMetrics(ConnectionPool connectionPool, String namePrefix, Iterable<Tag> tags) {
+        this(connectionPool, namePrefix, tags, null);
     }
 
     /**
      * Creates a meter binder for the given connection pool.
      *
      * @param connectionPool     The connection pool to monitor. Must not be null.
-     * @param name               The desired name for the exposed metrics. Must not be null.
+     * @param namePrefix         The desired name prefix for the exposed metrics. Must not be null.
      * @param tags               A list of tags which will be passed for all meters. Must not be null.
      * @param maxIdleConnections The maximum number of idle connections this pool will hold. This
      *                           value is passed to the {@link ConnectionPool} constructor but is
      *                           not exposed by this instance. Therefore this binder allows to pass
      *                           it, to be able to monitor it.
      */
-    public OkHttpConnectionPoolMetrics(ConnectionPool connectionPool, String name, Iterable<Tag> tags, Integer maxIdleConnections) {
+    public OkHttpConnectionPoolMetrics(ConnectionPool connectionPool, String namePrefix, Iterable<Tag> tags, Integer maxIdleConnections) {
         if (connectionPool == null) {
             throw new IllegalArgumentException("Given ConnectionPool must not be null.");
         }
-        if (name == null) {
-            throw new IllegalArgumentException("Given name must not be null.");
+        if (namePrefix == null) {
+            throw new IllegalArgumentException("Given name prefix must not be null.");
         }
         if (tags == null) {
             throw new IllegalArgumentException("Given list of tags must not be null.");
         }
 
         this.connectionPool = connectionPool;
-        this.name = name;
+        this.namePrefix = namePrefix;
         this.tags = tags;
         this.maxIdleConnectionCount = Optional.ofNullable(maxIdleConnections)
                 .map(Integer::doubleValue)
@@ -113,35 +115,36 @@ public class OkHttpConnectionPoolMetrics implements MeterBinder {
 
     @Override
     public void bindTo(@NonNull MeterRegistry registry) {
-        Gauge.builder(name + ".connection.count", connectionStats,
+        String connectionCountName = namePrefix + ".connection.count";
+        Gauge.builder(connectionCountName, connectionStats,
                 cs -> {
                     if (cs.get() == null) {
                         cs.set(new ConnectionPoolConnectionStats());
                     }
                     return cs.get().getActiveCount();
                 })
-                .baseUnit("connections")
+                .baseUnit(BaseUnits.CONNECTIONS)
                 .description("The state of connections in the OkHttp connection pool")
-                .tags(Tags.of(tags).and("state", "active"))
+                .tags(Tags.of(tags).and(TAG_STATE, "active"))
                 .register(registry);
 
-        Gauge.builder(name + ".connection.count", connectionStats,
+        Gauge.builder(connectionCountName, connectionStats,
                 cs -> {
                     if (cs.get() == null) {
                         cs.set(new ConnectionPoolConnectionStats());
                     }
                     return cs.get().getIdleConnectionCount();
                 })
-                .baseUnit("connections")
+                .baseUnit(BaseUnits.CONNECTIONS)
                 .description("The state of connections in the OkHttp connection pool")
-                .tags(Tags.of(tags).and("state", "idle"))
+                .tags(Tags.of(tags).and(TAG_STATE, "idle"))
                 .register(registry);
 
         if (this.maxIdleConnectionCount != null) {
-            Gauge.builder(name + ".connection.limit", () -> this.maxIdleConnectionCount)
-                    .baseUnit("connections")
+            Gauge.builder(namePrefix + ".connection.limit", () -> this.maxIdleConnectionCount)
+                    .baseUnit(BaseUnits.CONNECTIONS)
                     .description("The maximum idle connection count in an OkHttp connection pool.")
-                    .tags(Tags.concat(tags, "state", "idle"))
+                    .tags(Tags.concat(tags))
                     .register(registry);
         }
     }
@@ -151,7 +154,7 @@ public class OkHttpConnectionPoolMetrics implements MeterBinder {
      * Since we're calculating active from total-idle, we want to synchronize on idle to make sure the sum is accurate.
      */
     private final class ConnectionPoolConnectionStats {
-        private volatile CountDownLatch uses = new CountDownLatch(0);
+        private CountDownLatch uses = new CountDownLatch(0);
         private int idle;
         private int total;
 
@@ -167,7 +170,7 @@ public class OkHttpConnectionPoolMetrics implements MeterBinder {
             return idle;
         }
 
-        private synchronized void snapshotStatsIfNecessary() {
+        private void snapshotStatsIfNecessary() {
             if (uses.getCount() == 0) {
                 idle = connectionPool.idleConnectionCount();
                 total = connectionPool.connectionCount();
