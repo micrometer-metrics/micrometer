@@ -59,6 +59,7 @@ public class GraphiteMeterRegistry extends DropwizardMeterRegistry {
                 .withClock(new DropwizardClock(clock))
                 .convertRatesTo(config.rateUnits())
                 .convertDurationsTo(config.durationUnits())
+                .addMetricAttributesAsTags(config.graphiteTagsEnabled())
                 .build(getGraphiteSender(config));
     }
 
