@@ -549,7 +549,7 @@ class StatsdMeterRegistryTest {
     void publishLongTaskTimerMax() throws InterruptedException {
         CountDownLatch maxCount = new CountDownLatch(1);
 
-        StatsdMeterRegistry registry = StatsdMeterRegistry.builder(configWithFlavor(StatsdFlavor.ETSY))
+        registry = StatsdMeterRegistry.builder(configWithFlavor(StatsdFlavor.ETSY))
                 .clock(clock)
                 .lineSink(line -> {
                     if (line.contains("max")) {
