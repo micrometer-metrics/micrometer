@@ -44,7 +44,7 @@ class OkHttpConnectionPoolMetricsTest {
     }
 
     @Test
-    void creationWithNullNameThrowsException() {
+    void creationWithNullNamePrefixThrowsException() {
         assertThrows(IllegalArgumentException.class, () -> new OkHttpConnectionPoolMetrics(connectionPool, null, Tags.empty()));
     }
 
@@ -55,35 +55,35 @@ class OkHttpConnectionPoolMetricsTest {
     }
 
     @Test
-    void instanceUsesDefaultName() {
+    void instanceUsesDefaultNamePrefix() {
         OkHttpConnectionPoolMetrics instance = new OkHttpConnectionPoolMetrics(connectionPool);
         instance.bindTo(registry);
         registry.get("okhttp.pool.connection.count"); // does not throw MeterNotFoundException
     }
 
     @Test
-    void instanceUsesDefaultNameAndGivenTag() {
-        OkHttpConnectionPoolMetrics instance = new OkHttpConnectionPoolMetrics(connectionPool,  Tags.of("foo", "bar"));
+    void instanceUsesDefaultNamePrefixAndGivenTag() {
+        OkHttpConnectionPoolMetrics instance = new OkHttpConnectionPoolMetrics(connectionPool, Tags.of("foo", "bar"));
         instance.bindTo(registry);
         registry.get("okhttp.pool.connection.count").tags("foo", "bar"); // does not throw MeterNotFoundException
     }
 
     @Test
-    void instanceUsesGivenName() {
+    void instanceUsesGivenNamePrefix() {
         OkHttpConnectionPoolMetrics instance = new OkHttpConnectionPoolMetrics(connectionPool, "some.meter", Tags.empty());
         instance.bindTo(registry);
         registry.get("some.meter.connection.count"); // does not throw MeterNotFoundException
     }
 
     @Test
-    void instanceUsesGivenNameAndTag() {
+    void instanceUsesGivenNamePrefixAndTag() {
         OkHttpConnectionPoolMetrics instance = new OkHttpConnectionPoolMetrics(connectionPool, "another.meter", Tags.of("bar", "baz"));
         instance.bindTo(registry);
         registry.get("another.meter.connection.count").tags("bar", "baz"); // does not throw MeterNotFoundException
     }
 
     @Test
-    void active() {
+    void activeAndIdle() {
         OkHttpConnectionPoolMetrics instance = new OkHttpConnectionPoolMetrics(connectionPool, Tags.of("foo", "bar"));
         instance.bindTo(registry);
         when(connectionPool.connectionCount()).thenReturn(17);
@@ -97,22 +97,11 @@ class OkHttpConnectionPoolMetricsTest {
                 .gauge().value()).isEqualTo(10.0);
 
         assertThat(registry.get("okhttp.pool.connection.count")
-                .tags(Tags.of("foo", "bar", "state", "idle"))
-                .gauge().value()).isEqualTo(9.0);
-        assertThat(registry.get("okhttp.pool.connection.count")
                 .tags(Tags.of("foo", "bar", "state", "active"))
                 .gauge().value()).isEqualTo(8.0);
-    }
-
-    @Test
-    void idle() {
-        OkHttpConnectionPoolMetrics instance = new OkHttpConnectionPoolMetrics(connectionPool, Tags.of("foo", "bar"));
-        instance.bindTo(registry);
-        when(connectionPool.connectionCount()).thenReturn(20);
-        when(connectionPool.idleConnectionCount()).thenReturn(13);
         assertThat(registry.get("okhttp.pool.connection.count")
                 .tags(Tags.of("foo", "bar", "state", "idle"))
-                .gauge().value()).isEqualTo(13.0);
+                .gauge().value()).isEqualTo(9.0);
     }
 
     @Test
