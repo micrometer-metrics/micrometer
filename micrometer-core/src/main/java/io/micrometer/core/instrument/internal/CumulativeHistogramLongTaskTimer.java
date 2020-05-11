@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package io.micrometer.opentsdb;
+package io.micrometer.core.instrument.internal;
 
 import io.micrometer.core.instrument.Clock;
 import io.micrometer.core.instrument.distribution.CountAtBucket;
@@ -32,11 +32,11 @@ import java.util.concurrent.atomic.AtomicInteger;
  * @author Jon Schneider
  * @since 1.5.2
  */
-public class OpenTSDBLongTaskTimer extends DefaultLongTaskTimer {
+public class CumulativeHistogramLongTaskTimer extends DefaultLongTaskTimer {
     @Nullable
     private CountAtBucket[] lastSnapshot;
 
-    public OpenTSDBLongTaskTimer(Id id, Clock clock, TimeUnit baseTimeUnit, DistributionStatisticConfig distributionStatisticConfig) {
+    public CumulativeHistogramLongTaskTimer(Id id, Clock clock, TimeUnit baseTimeUnit, DistributionStatisticConfig distributionStatisticConfig) {
         super(id, clock, baseTimeUnit, distributionStatisticConfig, true);
     }
 
