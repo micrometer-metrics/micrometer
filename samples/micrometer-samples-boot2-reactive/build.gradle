@@ -11,11 +11,9 @@ dependencyManagement {
 
 dependencies {
     implementation project(":micrometer-core")
-    ['atlas', 'azure-monitor', 'prometheus', 'datadog', 'elastic', 'ganglia', 'graphite', 'health', 'jmx', 'influx', 'statsd', 'new-relic', 'cloudwatch', 'cloudwatch2', 'signalfx', 'wavefront', 'elastic', 'dynatrace', 'humio', 'appoptics', 'stackdriver'].each { sys ->
-        implementation project(":micrometer-registry-$sys")
-    }
+    implementation project(":micrometer-registry-prometheus")
 
-    implementation 'org.springframework.boot:spring-boot-starter-web'
+    implementation 'org.springframework.boot:spring-boot-starter-webflux'
     implementation('org.springframework.boot:spring-boot-starter-actuator') {
         exclude group: 'io.micrometer', module: 'micrometer-core'
     }
