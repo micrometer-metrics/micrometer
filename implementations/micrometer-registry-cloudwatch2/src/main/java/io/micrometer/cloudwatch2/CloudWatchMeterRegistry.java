@@ -260,6 +260,7 @@ public class CloudWatchMeterRegistry extends StepMeterRegistry {
 
             List<Tag> tags = id.getConventionTags(config().namingConvention());
             return MetricDatum.builder()
+                    .storageResolution(config.highResolution() ? 1 : 60)
                     .metricName(getMetricName(id, suffix))
                     .dimensions(toDimensions(tags))
                     .timestamp(timestamp)
