@@ -113,8 +113,7 @@ public interface NewRelicConfig extends StepRegistryConfig {
      * timeout options on your {@link HttpSender} of choice instead.
      */
     default Duration connectTimeout() {
-        String v = get(prefix() + ".connectTimeout");
-        return v == null ? Duration.ofSeconds(1) : Duration.parse(v);
+        return getDuration(this, "connectTimeout").orElse(Duration.ofSeconds(1));
     }
 
     /**
@@ -124,8 +123,7 @@ public interface NewRelicConfig extends StepRegistryConfig {
      * timeout options on your {@link HttpSender} of choice instead.
      */
     default Duration readTimeout() {
-        String v = get(prefix() + ".readTimeout");
-        return v == null ? Duration.ofSeconds(10) : Duration.parse(v);
+        return getDuration(this, "readTimeout").orElse(Duration.ofSeconds(10));
     }
 
     @Override
