@@ -28,11 +28,11 @@ import io.micrometer.core.instrument.binder.jetty.JettyConnectionMetrics;
 import io.micrometer.core.instrument.binder.jetty.JettyServerThreadPoolMetrics;
 import io.micrometer.core.instrument.binder.jetty.TimedHandler;
 import io.micrometer.core.instrument.util.StringUtils;
+import io.micrometer.core.lang.NonNull;
 import io.micrometer.prometheus.PrometheusConfig;
 import io.micrometer.prometheus.PrometheusMeterRegistry;
 import io.prometheus.client.exporter.common.TextFormat;
 import org.eclipse.jetty.server.Server;
-import org.jetbrains.annotations.NotNull;
 
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
@@ -99,7 +99,7 @@ class MicrometerPlugin implements Plugin {
     }
 
     @Override
-    public void apply(@NotNull Javalin app) {
+    public void apply(@NonNull Javalin app) {
         Server server = app.server().server();
 
         app.exception(Exception.class, EXCEPTION_HANDLER);
