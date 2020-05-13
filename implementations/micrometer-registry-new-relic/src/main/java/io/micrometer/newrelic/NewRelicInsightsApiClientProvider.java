@@ -56,7 +56,7 @@ public class NewRelicInsightsApiClientProvider implements NewRelicClientProvider
     NamingConvention namingConvention;
     private final String insightsEndpoint;
 
-    @SuppressWarnings("deprecation")
+
     public NewRelicInsightsApiClientProvider(NewRelicConfig config) {
         this(config, new HttpUrlConnectionSender(config.connectTimeout(), config.readTimeout()), new NewRelicNamingConvention());
     }
