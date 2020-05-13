@@ -1,0 +1,19 @@
+plugins {
+    id 'java'
+}
+
+repositories {
+    mavenCentral()
+}
+
+dependencies {
+    implementation project(':micrometer-core')
+    implementation('com.hazelcast:hazelcast') {
+        version {
+            strictly '3.+'
+        }
+    }
+    implementation 'ch.qos.logback:logback-classic'
+
+    testImplementation project(':micrometer-test')
+}

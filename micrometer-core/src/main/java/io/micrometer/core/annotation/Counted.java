@@ -1,5 +1,5 @@
 /**
- * Copyright 2017 Pivotal Software, Inc.
+ * Copyright 2017 VMware, Inc.
  * <p>
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -22,6 +22,10 @@ import java.lang.annotation.*;
  * By default, both failed and successful attempts would be reported. Switching the
  * {@link #recordFailuresOnly()} to {@code true} would instruct the corresponding aspect
  * to only record the failed attempts.
+ *
+ * <p>When the annotated method returns a {@link java.util.concurrent.CompletionStage} or any of its subclasses, the counters will be incremented
+ * only when the {@link java.util.concurrent.CompletionStage} is completed. If completed exceptionally a failure is recorded, otherwise if
+ * {@link Counted#recordFailuresOnly()} is set to {@code false}, a success is recorded.
  *
  * @author Ali Dehghani
  * @since 1.2.0

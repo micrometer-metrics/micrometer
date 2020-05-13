@@ -42,7 +42,11 @@ allprojects {
 
 subprojects {
     if (project.name != 'micrometer-bom') {
-        apply plugin: 'java-library'
+        if (project.name.contains('samples')) {
+            apply plugin: 'java'
+        } else {
+            apply plugin: 'java-library'
+        }
         apply plugin: 'checkstyle'
         apply plugin: 'io.spring.nohttp'
 
@@ -175,10 +179,16 @@ subprojects {
     if(!['samples', 'benchmarks'].find{project.name.contains(it)}) {
         apply plugin: 'io.spring.publishing'
 
+        if (project.name != 'micrometer-bom') {
+            jar {
+                manifest.attributes.put('Automatic-Module-Name', project.name.replace('-', '.'))
+            }
+        }
+
         contacts {
-            'jschneider@pivotal.io' {
-                moniker 'Jon Schneider'
-                github 'jkschneider'
+            'tludwig@vmware.com' {
+                moniker 'Tommy Ludwig'
+                github 'shakuzen'
             }
         }
 
@@ -200,7 +210,7 @@ subprojects {
 }
 
 wrapper {
-    gradleVersion = '6.3'
+    gradleVersion = '6.4'
 }
 
 defaultTasks 'build'

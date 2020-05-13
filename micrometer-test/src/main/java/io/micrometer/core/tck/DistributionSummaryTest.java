@@ -1,5 +1,5 @@
 /**
- * Copyright 2017 Pivotal Software, Inc.
+ * Copyright 2017 VMware, Inc.
  * <p>
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -102,7 +102,7 @@ interface DistributionSummaryTest {
     @Test
     default void histogramCounts(MeterRegistry registry) {
         DistributionSummary s = DistributionSummary.builder("my.summmary")
-                .sla(1.0)
+                .serviceLevelObjectives(1.0)
                 .register(registry);
 
         s.record(1);

@@ -1,5 +1,5 @@
 /**
- * Copyright 2017 Pivotal Software, Inc.
+ * Copyright 2017 VMware, Inc.
  * <p>
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -50,12 +50,12 @@ public class DatadogStatsdLineBuilder extends FlavorStatsdLineBuilder {
         NamingConvention next = config.namingConvention();
         if (this.namingConvention != next) {
             this.namingConvention = next;
-            this.name = next.name(sanitize(id.getName()), id.getType(), id.getBaseUnit()) + ":";
+            this.name = next.name(sanitizeName(id.getName()), id.getType(), id.getBaseUnit()) + ":";
             synchronized (conventionTagsLock) {
                 this.tags.clear();
                 this.conventionTags = id.getTagsAsIterable().iterator().hasNext() ?
                         id.getConventionTags(this.namingConvention).stream()
-                                .map(t -> sanitize(t.getKey()) + ":" + sanitize(t.getValue()))
+                                .map(t -> sanitizeName(t.getKey()) + ":" + sanitizeTagValue(t.getValue()))
                                 .collect(Collectors.joining(","))
                         : null;
             }
@@ -63,8 +63,15 @@ public class DatadogStatsdLineBuilder extends FlavorStatsdLineBuilder {
         }
     }
 
-    private String sanitize(String value) {
+    private String sanitizeName(String value) {
+        if (!Character.isLetter(value.charAt(0))) {
+            value = "m." + value;
+        }
         return value.replace(':', '_');
+    }
+
+    private String sanitizeTagValue(String value) {
+        return (value.charAt(value.length() - 1) == ':') ? value.substring(0, value.length() - 1) + '_' : value;
     }
 
     private String tagsByStatistic(@Nullable Statistic stat) {

@@ -1,5 +1,5 @@
 /**
- * Copyright 2020 Pivotal Software, Inc.
+ * Copyright 2020 VMware, Inc.
  * <p>
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -47,11 +47,11 @@ import java.util.stream.Stream;
 import static org.jooq.SQLDialect.*;
 
 /**
- * Time SQL queries passing through JOOQ.
+ * Time SQL queries passing through jOOQ.
  *
  * Timing of batch operations and with statements not supported.
  * <p>
- * This can be used as the regular JOOQ {@link DSLContext} but queries will be timed
+ * This can be used as the regular jOOQ {@link DSLContext} but queries will be timed
  * and tags can be set for the query timed. For example:
  * <pre>
  * <code>
@@ -59,6 +59,8 @@ import static org.jooq.SQLDialect.*;
  *     jooq.tag("name", "selectAllAuthors").select(asterisk()).from("author").fetch();
  * </code>
  * </pre>
+ *
+ * This requires jOOQ 3.13.0 or later.
  *
  * @author Jon Schneider
  * @since 1.4.0

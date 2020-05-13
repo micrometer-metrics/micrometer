@@ -1,5 +1,5 @@
 /**
- * Copyright 2017 Pivotal Software, Inc.
+ * Copyright 2017 VMware, Inc.
  * <p>
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -53,7 +53,8 @@ public interface FunctionTimer extends Meter {
      * @return The distribution average for all recorded events.
      */
     default double mean(TimeUnit unit) {
-        return count() == 0 ? 0 : totalTime(unit) / count();
+        double count = count();
+        return count == 0 ? 0 : totalTime(unit) / count;
     }
 
     /**

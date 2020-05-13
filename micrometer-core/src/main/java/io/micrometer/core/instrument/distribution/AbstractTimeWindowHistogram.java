@@ -1,5 +1,5 @@
 /**
- * Copyright 2017 Pivotal Software, Inc.
+ * Copyright 2017 VMware, Inc.
  * <p>
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -97,8 +97,8 @@ abstract class AbstractTimeWindowHistogram<T, U> implements Histogram {
             }
         }
 
-        final Double minimumExpectedValue = distributionStatisticConfig.getMinimumExpectedValue();
-        final Double maximumExpectedValue = distributionStatisticConfig.getMaximumExpectedValue();
+        final Double minimumExpectedValue = distributionStatisticConfig.getMinimumExpectedValueAsDouble();
+        final Double maximumExpectedValue = distributionStatisticConfig.getMaximumExpectedValueAsDouble();
         if (minimumExpectedValue == null || minimumExpectedValue <= 0) {
             rejectHistogramConfig("minimumExpectedValue (" + minimumExpectedValue + ") must be greater than 0.");
         }
@@ -108,11 +108,11 @@ abstract class AbstractTimeWindowHistogram<T, U> implements Histogram {
                     minimumExpectedValue + ").");
         }
 
-        if (distributionStatisticConfig.getSlaBoundaries() != null) {
-            for (double sla : distributionStatisticConfig.getSlaBoundaries()) {
-                if (sla <= 0) {
-                    rejectHistogramConfig("slaBoundaries must contain only the values greater than 0. " +
-                            "Found " + sla);
+        if (distributionStatisticConfig.getServiceLevelObjectiveBoundaries() != null) {
+            for (double slo : distributionStatisticConfig.getServiceLevelObjectiveBoundaries()) {
+                if (slo <= 0) {
+                    rejectHistogramConfig("serviceLevelObjectiveBoundaries must contain only the values greater than 0. " +
+                            "Found " + slo);
                 }
             }
         }

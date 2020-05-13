@@ -1,5 +1,5 @@
 /**
- * Copyright 2017 Pivotal Software, Inc.
+ * Copyright 2017 VMware, Inc.
  * <p>
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -186,7 +186,7 @@ class MeterFilterTest {
         Meter.Id timer = new Meter.Id("name", Tags.empty(), null, null, Meter.Type.DISTRIBUTION_SUMMARY);
 
         assertThat(filter.configure(timer, DistributionStatisticConfig.DEFAULT))
-                .satisfies(conf -> assertThat(conf.getMinimumExpectedValue()).isEqualTo(100));
+                .satisfies(conf -> assertThat(conf.getMinimumExpectedValueAsDouble()).isEqualTo(100));
     }
 
     @Test
@@ -195,7 +195,7 @@ class MeterFilterTest {
         Meter.Id timer = new Meter.Id("name", Tags.empty(), null, null, Meter.Type.DISTRIBUTION_SUMMARY);
 
         assertThat(filter.configure(timer, DistributionStatisticConfig.DEFAULT))
-                .satisfies(conf -> assertThat(conf.getMaximumExpectedValue()).isEqualTo(100));
+                .satisfies(conf -> assertThat(conf.getMaximumExpectedValueAsDouble()).isEqualTo(100));
     }
 
     @Test
@@ -204,7 +204,7 @@ class MeterFilterTest {
         Meter.Id timer = new Meter.Id("name", Tags.empty(), null, null, Meter.Type.TIMER);
 
         assertThat(filter.configure(timer, DistributionStatisticConfig.DEFAULT))
-                .satisfies(conf -> assertThat(conf.getMinimumExpectedValue()).isEqualTo(100));
+                .satisfies(conf -> assertThat(conf.getMinimumExpectedValueAsDouble()).isEqualTo(100));
     }
 
     @Test
@@ -213,7 +213,7 @@ class MeterFilterTest {
         Meter.Id timer = new Meter.Id("name", Tags.empty(), null, null, Meter.Type.TIMER);
 
         assertThat(filter.configure(timer, DistributionStatisticConfig.DEFAULT))
-                .satisfies(conf -> assertThat(conf.getMaximumExpectedValue()).isEqualTo(100));
+                .satisfies(conf -> assertThat(conf.getMaximumExpectedValueAsDouble()).isEqualTo(100));
     }
 
     @Test

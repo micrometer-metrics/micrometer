@@ -1,5 +1,5 @@
 /**
- * Copyright 2017 Pivotal Software, Inc.
+ * Copyright 2017 VMware, Inc.
  * <p>
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -72,12 +72,12 @@ class CompositeDistributionSummary extends AbstractCompositeMeter<DistributionSu
                 .baseUnit(getId().getBaseUnit())
                 .publishPercentiles(distributionStatisticConfig.getPercentiles())
                 .publishPercentileHistogram(distributionStatisticConfig.isPercentileHistogram())
-                .maximumExpectedValue(distributionStatisticConfig.getMaximumExpectedValue())
-                .minimumExpectedValue(distributionStatisticConfig.getMinimumExpectedValue())
+                .maximumExpectedValue(distributionStatisticConfig.getMaximumExpectedValueAsDouble())
+                .minimumExpectedValue(distributionStatisticConfig.getMinimumExpectedValueAsDouble())
                 .distributionStatisticBufferLength(distributionStatisticConfig.getBufferLength())
                 .distributionStatisticExpiry(distributionStatisticConfig.getExpiry())
                 .percentilePrecision(distributionStatisticConfig.getPercentilePrecision())
-                .sla(distributionStatisticConfig.getSlaBoundaries())
+                .serviceLevelObjectives(distributionStatisticConfig.getServiceLevelObjectiveBoundaries())
                 .scale(scale)
                 .register(registry);
     }

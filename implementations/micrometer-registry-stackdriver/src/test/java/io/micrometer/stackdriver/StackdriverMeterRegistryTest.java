@@ -1,5 +1,5 @@
 /**
- * Copyright 2020 Pivotal Software, Inc.
+ * Copyright 2020 VMware, Inc.
  * <p>
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -59,5 +59,15 @@ class StackdriverMeterRegistryTest {
         Distribution distribution = batch.distribution(histogramSnapshot, false);
         List<Long> bucketCountsList = distribution.getBucketCountsList();
         assertThat(bucketCountsList.get(bucketCountsList.size() - 1)).isNotNegative();
+    }
+
+    @Test
+    @Issue("#2045")
+    void batchDistributionWhenHistogramSnapshotIsEmpty() {
+        StackdriverMeterRegistry.Batch batch = meterRegistry.new Batch();
+        HistogramSnapshot histogramSnapshot = HistogramSnapshot.empty(0, 0.0, 0.0);
+        Distribution distribution = batch.distribution(histogramSnapshot, false);
+        assertThat(distribution.getBucketOptions().getExplicitBuckets().getBoundsCount()).isEqualTo(1);
+        assertThat(distribution.getBucketCountsList()).hasSize(1);
     }
 }

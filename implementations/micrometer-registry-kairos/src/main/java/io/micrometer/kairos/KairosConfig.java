@@ -1,5 +1,5 @@
 /**
- * Copyright 2018 Pivotal Software, Inc.
+ * Copyright 2018 VMware, Inc.
  * <p>
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,8 +15,14 @@
  */
 package io.micrometer.kairos;
 
+import io.micrometer.core.instrument.config.validate.Validated;
 import io.micrometer.core.instrument.step.StepRegistryConfig;
 import io.micrometer.core.lang.Nullable;
+
+import static io.micrometer.core.instrument.config.MeterRegistryConfigValidator.checkAll;
+import static io.micrometer.core.instrument.config.MeterRegistryConfigValidator.checkRequired;
+import static io.micrometer.core.instrument.config.validate.PropertyValidator.getSecret;
+import static io.micrometer.core.instrument.config.validate.PropertyValidator.getUrlString;
 
 /**
  * Configuration for {@link KairosMeterRegistry}.
@@ -46,8 +52,7 @@ public interface KairosConfig extends StepRegistryConfig {
      * @return uri
      */
     default String uri() {
-        String v = get(prefix() + ".uri");
-        return v == null ? "http://localhost:8080/api/v1/datapoints" : v;
+        return getUrlString(this, "uri").orElse("http://localhost:8080/api/v1/datapoints");
     }
 
     /**
@@ -56,7 +61,7 @@ public interface KairosConfig extends StepRegistryConfig {
      */
     @Nullable
     default String userName() {
-        return get(prefix() + ".userName");
+        return getSecret(this, "userName").orElse(null);
     }
 
     /**
@@ -65,6 +70,14 @@ public interface KairosConfig extends StepRegistryConfig {
      */
     @Nullable
     default String password() {
-        return get(prefix() + ".password");
+        return getSecret(this, "password").orElse(null);
+    }
+
+    @Override
+    default Validated<?> validate() {
+        return checkAll(this,
+                c -> StepRegistryConfig.validate(c),
+                checkRequired("uri", KairosConfig::uri)
+        );
     }
 }

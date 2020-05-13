@@ -1,5 +1,5 @@
 /**
- * Copyright 2017 Pivotal Software, Inc.
+ * Copyright 2017 VMware, Inc.
  * <p>
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -135,8 +135,26 @@ public abstract class MeterRegistry {
      *
      * @param id The id that uniquely identifies the long task timer.
      * @return A new long task timer.
+     * @deprecated Implement {@link #newLongTaskTimer(Id, DistributionStatisticConfig)} instead.
      */
-    protected abstract LongTaskTimer newLongTaskTimer(Meter.Id id);
+    @SuppressWarnings("DeprecatedIsStillUsed")
+    @Deprecated
+    protected LongTaskTimer newLongTaskTimer(Meter.Id id) {
+        throw new UnsupportedOperationException("MeterRegistry implementations may still override this, but it is only " +
+                "invoked by the overloaded form of newLongTaskTimer for backwards compatibility.");
+    }
+
+    /**
+     * Build a new long task timer to be added to the registry. This is guaranteed to only be called if the long task timer doesn't already exist.
+     *
+     * @param id The id that uniquely identifies the long task timer.
+     * @param distributionStatisticConfig Configuration for published distribution statistics.
+     * @return A new long task timer.
+     * @since 1.5.0
+     */
+    protected LongTaskTimer newLongTaskTimer(Meter.Id id, DistributionStatisticConfig distributionStatisticConfig) {
+        return newLongTaskTimer(id); // default implementation for backwards compatibility
+    }
 
     /**
      * Build a new timer to be added to the registry. This is guaranteed to only be called if the timer doesn't already exist.
@@ -442,16 +460,16 @@ public abstract class MeterRegistry {
      *
      * @param name          Name of the gauge being registered.
      * @param tags          Sequence of dimensions for breaking down the name.
-     * @param obj           State object used to compute a value.
+     * @param stateObject   State object used to compute a value.
      * @param valueFunction Function that produces an instantaneous gauge value from the state object.
      * @param <T>           The type of the state object from which the gauge value is extracted.
-     * @return The number that was passed in so the registration can be done as part of an assignment
+     * @return The state object that was passed in so the registration can be done as part of an assignment
      * statement.
      */
     @Nullable
-    public <T> T gauge(String name, Iterable<Tag> tags, @Nullable T obj, ToDoubleFunction<T> valueFunction) {
-        Gauge.builder(name, obj, valueFunction).tags(tags).register(this);
-        return obj;
+    public <T> T gauge(String name, Iterable<Tag> tags, @Nullable T stateObject, ToDoubleFunction<T> valueFunction) {
+        Gauge.builder(name, stateObject, valueFunction).tags(tags).register(this);
+        return stateObject;
     }
 
     /**
@@ -487,15 +505,15 @@ public abstract class MeterRegistry {
      * Register a gauge that reports the value of the object.
      *
      * @param name          Name of the gauge being registered.
-     * @param obj           State object used to compute a value.
+     * @param stateObject   State object used to compute a value.
      * @param valueFunction Function that produces an instantaneous gauge value from the state object.
      * @param <T>           The type of the state object from which the gauge value is extracted.
-     * @return The number that was passed in so the registration can be done as part of an assignment
+     * @return The state object that was passed in so the registration can be done as part of an assignment
      * statement.
      */
     @Nullable
-    public <T> T gauge(String name, T obj, ToDoubleFunction<T> valueFunction) {
-        return gauge(name, emptyList(), obj, valueFunction);
+    public <T> T gauge(String name, T stateObject, ToDoubleFunction<T> valueFunction) {
+        return gauge(name, emptyList(), stateObject, valueFunction);
     }
 
     /**
@@ -509,7 +527,7 @@ public abstract class MeterRegistry {
      * @param tags       Sequence of dimensions for breaking down the name.
      * @param collection Thread-safe implementation of {@link Collection} used to access the value.
      * @param <T>        The type of the state object from which the gauge value is extracted.
-     * @return The number that was passed in so the registration can be done as part of an assignment
+     * @return The Collection that was passed in so the registration can be done as part of an assignment
      * statement.
      */
     @Nullable
@@ -528,7 +546,7 @@ public abstract class MeterRegistry {
      * @param tags Sequence of dimensions for breaking down the name.
      * @param map  Thread-safe implementation of {@link Map} used to access the value.
      * @param <T>  The type of the state object from which the gauge value is extracted.
-     * @return The number that was passed in so the registration can be done as part of an assignment
+     * @return The Map that was passed in so the registration can be done as part of an assignment
      * statement.
      */
     @Nullable
@@ -593,11 +611,11 @@ public abstract class MeterRegistry {
 
                     m = builder.apply(mappedId, config);
 
-                    Id synAssoc = originalId.syntheticAssociation();
+                    Id synAssoc = mappedId.syntheticAssociation();
                     if (synAssoc != null) {
                         Set<Id> associations = syntheticAssociations.computeIfAbsent(synAssoc,
                                 k -> new HashSet<>());
-                        associations.add(originalId);
+                        associations.add(mappedId);
                     }
 
                     for (Consumer<Meter> onAdd : meterAddedListeners) {
@@ -635,21 +653,20 @@ public abstract class MeterRegistry {
     }
 
     /**
-     * @param id The id of the meter to remove
+     * @param mappedId The id of the meter to remove
      * @return The removed meter, or null if no meter matched the provided id.
      * @since 1.1.0
      */
     @Incubating(since = "1.1.0")
     @Nullable
-    public Meter remove(Meter.Id id) {
-        Id mappedId = getMappedId(id);
+    public Meter remove(Meter.Id mappedId) {
         Meter m = meterMap.get(mappedId);
 
         if (m != null) {
             synchronized (meterMapLock) {
                 m = meterMap.remove(mappedId);
                 if (m != null) {
-                    Set<Id> synthetics = syntheticAssociations.remove(id);
+                    Set<Id> synthetics = syntheticAssociations.remove(mappedId);
                     if (synthetics != null) {
                         for (Id synthetic : synthetics) {
                             remove(synthetic);
@@ -819,10 +836,10 @@ public abstract class MeterRegistry {
          * @param id The identifier for this long task timer.
          * @return A new or existing long task timer.
          */
-        LongTaskTimer longTaskTimer(Meter.Id id) {
-            return registerMeterIfNecessary(LongTaskTimer.class, id, id2 -> {
+        LongTaskTimer longTaskTimer(Meter.Id id, DistributionStatisticConfig distributionStatisticConfig) {
+            return registerMeterIfNecessary(LongTaskTimer.class, id, distributionStatisticConfig, (id2, filteredConfig) -> {
                 Meter.Id withUnit = id2.withBaseUnit(getBaseTimeUnitStr());
-                return newLongTaskTimer(withUnit);
+                return newLongTaskTimer(withUnit, filteredConfig.merge(defaultHistogramConfig()));
             }, NoopLongTaskTimer::new);
         }
 

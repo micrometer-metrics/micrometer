@@ -1,5 +1,5 @@
 /**
- * Copyright 2017 Pivotal Software, Inc.
+ * Copyright 2017 VMware, Inc.
  * <p>
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -214,7 +214,7 @@ interface TimerTest {
     @Test
     default void histogramCounts(MeterRegistry registry) {
         Timer t = Timer.builder("my.timer")
-                .sla(Duration.ofMillis(1))
+                .serviceLevelObjectives(Duration.ofMillis(1))
                 .register(registry);
 
         t.record(1, TimeUnit.MILLISECONDS);

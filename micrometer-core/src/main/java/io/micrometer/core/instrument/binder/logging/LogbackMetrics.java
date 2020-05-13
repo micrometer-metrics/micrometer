@@ -1,5 +1,5 @@
 /**
- * Copyright 2017 Pivotal Software, Inc.
+ * Copyright 2017 VMware, Inc.
  * <p>
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,6 +18,7 @@ package io.micrometer.core.instrument.binder.logging;
 import ch.qos.logback.classic.Level;
 import ch.qos.logback.classic.Logger;
 import ch.qos.logback.classic.LoggerContext;
+import ch.qos.logback.classic.spi.LoggerContextListener;
 import ch.qos.logback.classic.turbo.TurboFilter;
 import ch.qos.logback.core.spi.FilterReply;
 import io.micrometer.core.instrument.Counter;
@@ -30,8 +31,8 @@ import io.micrometer.core.lang.NonNullFields;
 import org.slf4j.LoggerFactory;
 import org.slf4j.Marker;
 
+import java.util.HashMap;
 import java.util.Map;
-import java.util.concurrent.ConcurrentHashMap;
 
 import static java.util.Collections.emptyList;
 
@@ -45,7 +46,7 @@ public class LogbackMetrics implements MeterBinder, AutoCloseable {
 
     private final Iterable<Tag> tags;
     private final LoggerContext loggerContext;
-    private final Map<MeterRegistry, MetricsTurboFilter> metricsTurboFilters = new ConcurrentHashMap<>();
+    private final Map<MeterRegistry, MetricsTurboFilter> metricsTurboFilters = new HashMap<>();
 
     public LogbackMetrics() {
         this(emptyList());
@@ -58,13 +59,47 @@ public class LogbackMetrics implements MeterBinder, AutoCloseable {
     public LogbackMetrics(Iterable<Tag> tags, LoggerContext context) {
         this.tags = tags;
         this.loggerContext = context;
+
+        loggerContext.addListener(new LoggerContextListener() {
+            @Override
+            public boolean isResetResistant() {
+                return true;
+            }
+
+            @Override
+            public void onReset(LoggerContext context) {
+                // re-add turbo filter because reset clears the turbo filter list
+                synchronized (metricsTurboFilters) {
+                    for (MetricsTurboFilter metricsTurboFilter : metricsTurboFilters.values()) {
+                        loggerContext.addTurboFilter(metricsTurboFilter);
+                    }
+                }
+            }
+
+            @Override
+            public void onStart(LoggerContext context) {
+                // no-op
+            }
+
+            @Override
+            public void onStop(LoggerContext context) {
+                // no-op
+            }
+
+            @Override
+            public void onLevelChange(Logger logger, Level level) {
+                // no-op
+            }
+        });
     }
 
     @Override
     public void bindTo(MeterRegistry registry) {
         MetricsTurboFilter filter = new MetricsTurboFilter(registry, tags);
-        metricsTurboFilters.put(registry, filter);
-        loggerContext.addTurboFilter(filter);
+        synchronized (metricsTurboFilters) {
+            metricsTurboFilters.put(registry, filter);
+            loggerContext.addTurboFilter(filter);
+        }
     }
 
     /**
@@ -81,8 +116,10 @@ public class LogbackMetrics implements MeterBinder, AutoCloseable {
 
     @Override
     public void close() {
-        for (MetricsTurboFilter metricsTurboFilter : metricsTurboFilters.values()) {
-            loggerContext.getTurboFilterList().remove(metricsTurboFilter);
+        synchronized (metricsTurboFilters) {
+            for (MetricsTurboFilter metricsTurboFilter : metricsTurboFilters.values()) {
+                loggerContext.getTurboFilterList().remove(metricsTurboFilter);
+            }
         }
     }
 }

@@ -1,5 +1,5 @@
 /**
- * Copyright 2018 Pivotal Software, Inc.
+ * Copyright 2018 VMware, Inc.
  * <p>
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -36,6 +36,9 @@ public abstract class PushMeterRegistry extends MeterRegistry {
 
     protected PushMeterRegistry(PushRegistryConfig config, Clock clock) {
         super(clock);
+
+        config.requireValid();
+
         this.config = config;
     }
 

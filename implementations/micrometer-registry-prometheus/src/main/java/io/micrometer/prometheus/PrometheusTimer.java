@@ -1,5 +1,5 @@
 /**
- * Copyright 2017 Pivotal Software, Inc.
+ * Copyright 2017 VMware, Inc.
  * <p>
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -42,7 +42,7 @@ public class PrometheusTimer extends AbstractTimer {
         super(id, clock,
                 DistributionStatisticConfig.builder()
                         .percentilesHistogram(false)
-                        .sla(new double[0])
+                        .serviceLevelObjectives()
                         .build()
                         .merge(distributionStatisticConfig),
                 pauseDetector, TimeUnit.SECONDS, false);
@@ -64,6 +64,7 @@ public class PrometheusTimer extends AbstractTimer {
                     break;
                 default:
                     histogram = null;
+                    break;
             }
         } else {
             histogram = null;
@@ -100,7 +101,6 @@ public class PrometheusTimer extends AbstractTimer {
         return histogramFlavor;
     }
 
-
     /**
      * For Prometheus we cannot use the histogram counts from HistogramSnapshot, as it is based on a
      * rolling histogram. Prometheus requires a histogram that accumulates values over the lifetime of the app.
@@ -120,8 +120,8 @@ public class PrometheusTimer extends AbstractTimer {
         }
 
         return new HistogramSnapshot(snapshot.count(),
-                snapshot.total(TimeUnit.SECONDS),
-                snapshot.max(TimeUnit.SECONDS),
+                snapshot.total(),
+                snapshot.max(),
                 snapshot.percentileValues(),
                 histogramCounts(),
                 snapshot::outputSummary);

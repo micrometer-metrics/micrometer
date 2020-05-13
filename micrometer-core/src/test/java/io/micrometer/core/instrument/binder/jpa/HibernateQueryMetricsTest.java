@@ -1,5 +1,5 @@
 /**
- * Copyright 2019 Pivotal Software, Inc.
+ * Copyright 2020 VMware, Inc.
  * <p>
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,6 +15,7 @@
  */
 package io.micrometer.core.instrument.binder.jpa;
 
+import io.micrometer.core.instrument.FunctionTimer;
 import io.micrometer.core.instrument.MeterRegistry;
 import io.micrometer.core.instrument.Tags;
 import io.micrometer.core.instrument.simple.SimpleMeterRegistry;
@@ -49,10 +50,11 @@ class HibernateQueryMetricsTest {
         eventHandler.registerQueryMetric(statistics);
 
         assertThat(registry.get("hibernate.query.cache.requests").tags("result", "hit", "query", query).functionCounter().count()).isEqualTo(43.0d);
-        assertThat(registry.get("hibernate.query.cache.requests").tags("result", "hit", "query", query).functionCounter().count()).isEqualTo(43.0d);
+        assertThat(registry.get("hibernate.query.cache.requests").tags("result", "miss", "query", query).functionCounter().count()).isEqualTo(43.0d);
         assertThat(registry.get("hibernate.query.cache.puts").tags("query", query).functionCounter().count()).isEqualTo(43.0d);
-        assertThat(registry.get("hibernate.query.execution.total").tags("query", query).functionTimer().count()).isEqualTo(43.0d);
-        assertThat(registry.get("hibernate.query.execution.total").tags("query", query).functionTimer().totalTime(TimeUnit.MILLISECONDS)).isEqualTo(43.0d);
+        FunctionTimer timer = registry.get("hibernate.query.execution.total").tags("query", query).functionTimer();
+        assertThat(timer.count()).isEqualTo(43.0d);
+        assertThat(timer.totalTime(TimeUnit.MILLISECONDS)).isEqualTo(43.0d);
         assertThat(registry.get("hibernate.query.execution.max").tags("query", query).timeGauge().value(TimeUnit.MILLISECONDS)).isEqualTo(43.0d);
         assertThat(registry.get("hibernate.query.execution.min").tags("query", query).timeGauge().value(TimeUnit.MILLISECONDS)).isEqualTo(43.0d);
         assertThat(registry.get("hibernate.query.execution.rows").tags("query", query).functionCounter().count()).isEqualTo(43.0);

@@ -1,5 +1,5 @@
 /**
- * Copyright 2020 Pivotal Software, Inc.
+ * Copyright 2020 VMware, Inc.
  * <p>
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -21,9 +21,16 @@ import io.micrometer.core.lang.Nullable;
 
 import java.util.regex.Pattern;
 
+/**
+ * {@link NamingConvention} for OpenTSDB.
+ *
+ * @author Jon Schneider
+ * @author Nikolay Ustinov
+ * @since 1.4.0
+ */
 public class OpenTSDBNamingConvention implements NamingConvention {
 
-    public final String separator = "_";
+    private static final String SEPARATOR = "_";
     private static final Pattern nameChars = Pattern.compile("[^a-zA-Z0-9_]");
     private static final Pattern tagKeyChars = Pattern.compile("[^a-zA-Z0-9_]");
     private final String timerSuffix;
@@ -69,7 +76,7 @@ public class OpenTSDBNamingConvention implements NamingConvention {
                 break;
         }
 
-        String sanitized = nameChars.matcher(conventionName).replaceAll(separator);
+        String sanitized = nameChars.matcher(conventionName).replaceAll(SEPARATOR);
         if (!Character.isLetter(sanitized.charAt(0))) {
             sanitized = "m_" + sanitized;
         }
@@ -84,7 +91,7 @@ public class OpenTSDBNamingConvention implements NamingConvention {
     public String tagKey(String key) {
         String conventionKey = NamingConvention.snakeCase.tagKey(key);
 
-        String sanitized = tagKeyChars.matcher(conventionKey).replaceAll(separator);
+        String sanitized = tagKeyChars.matcher(conventionKey).replaceAll(SEPARATOR);
         if (!Character.isLetter(sanitized.charAt(0))) {
             sanitized = "m_" + sanitized;
         }

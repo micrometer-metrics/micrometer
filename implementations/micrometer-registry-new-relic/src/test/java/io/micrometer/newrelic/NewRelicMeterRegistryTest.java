@@ -1,5 +1,5 @@
 /**
- * Copyright 2017 Pivotal Software, Inc.
+ * Copyright 2017 VMware, Inc.
  * <p>
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,10 +15,14 @@
  */
 package io.micrometer.newrelic;
 
-import static java.util.Collections.emptyList;
-import static org.assertj.core.api.Assertions.assertThat;
-import static org.assertj.core.api.Assertions.assertThatThrownBy;
-import static org.mockito.Mockito.mock;
+import com.newrelic.api.agent.*;
+import io.micrometer.core.instrument.*;
+import io.micrometer.core.instrument.config.NamingConvention;
+import io.micrometer.core.instrument.config.validate.ValidationException;
+import io.micrometer.core.instrument.util.NamedThreadFactory;
+import io.micrometer.core.ipc.http.HttpSender;
+import io.micrometer.newrelic.NewRelicMeterRegistryTest.MockNewRelicAgent.MockNewRelicInsights;
+import org.junit.jupiter.api.Test;
 
 import java.util.Arrays;
 import java.util.HashMap;
@@ -27,34 +31,9 @@ import java.util.Map;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicReference;
 
-import org.junit.jupiter.api.Test;
-
-import com.newrelic.api.agent.Agent;
-import com.newrelic.api.agent.Config;
-import com.newrelic.api.agent.Insights;
-import com.newrelic.api.agent.Logger;
-import com.newrelic.api.agent.MetricAggregator;
-import com.newrelic.api.agent.TraceMetadata;
-import com.newrelic.api.agent.TracedMethod;
-import com.newrelic.api.agent.Transaction;
-
-import io.micrometer.core.instrument.DistributionSummary;
-import io.micrometer.core.instrument.FunctionCounter;
-import io.micrometer.core.instrument.FunctionTimer;
-import io.micrometer.core.instrument.Gauge;
-import io.micrometer.core.instrument.LongTaskTimer;
-import io.micrometer.core.instrument.Measurement;
-import io.micrometer.core.instrument.Meter;
-import io.micrometer.core.instrument.MockClock;
-import io.micrometer.core.instrument.Statistic;
-import io.micrometer.core.instrument.Tags;
-import io.micrometer.core.instrument.TimeGauge;
-import io.micrometer.core.instrument.Timer;
-import io.micrometer.core.instrument.config.MissingRequiredConfigurationException;
-import io.micrometer.core.instrument.config.NamingConvention;
-import io.micrometer.core.instrument.util.NamedThreadFactory;
-import io.micrometer.core.ipc.http.HttpSender;
-import io.micrometer.newrelic.NewRelicMeterRegistryTest.MockNewRelicAgent.MockNewRelicInsights;
+import static java.util.Collections.emptyList;
+import static org.assertj.core.api.Assertions.*;
+import static org.mockito.Mockito.mock;
 
 /**
  * Tests for {@link NewRelicMeterRegistry}.
@@ -64,8 +43,6 @@ import io.micrometer.newrelic.NewRelicMeterRegistryTest.MockNewRelicAgent.MockNe
  */
 class NewRelicMeterRegistryTest {
 
-    private final NewRelicConfig agentConfig = key -> null;
-    
     private final NewRelicConfig insightsAgentConfig = new NewRelicConfig() {
         @Override
         public String get(String key) {
@@ -76,15 +53,15 @@ class NewRelicMeterRegistryTest {
         public ClientProviderType clientProviderType() {
             return ClientProviderType.INSIGHTS_AGENT;
         }
-        
+
     };
-    
+
     private final NewRelicConfig insightsApiConfig = new NewRelicConfig() {
         @Override
         public String get(String key) {
             return null;
         }
-        
+
         @Override
         public String accountId() {
             return "accountId";
@@ -94,7 +71,7 @@ class NewRelicMeterRegistryTest {
         public String apiKey() {
             return "apiKey";
         }
-        
+
         @Override
         public ClientProviderType clientProviderType() {
             return ClientProviderType.INSIGHTS_API;
@@ -113,7 +90,7 @@ class NewRelicMeterRegistryTest {
         public String get(String key) {
             return null;
         }
-        
+
         @Override
         public String accountId() {
             return "accountId";
@@ -123,23 +100,24 @@ class NewRelicMeterRegistryTest {
         public String apiKey() {
             return "apiKey";
         }
-        
+
         @Override
         public ClientProviderType clientProviderType() {
             return ClientProviderType.INSIGHTS_API;
         }
     };
-    
+
     private final MockClock clock = new MockClock();
     private final NewRelicMeterRegistry registry = new NewRelicMeterRegistry(insightsApiConfig, mock(NewRelicClientProvider.class), clock);
-    
+
     private final NewRelicMeterRegistry apiDefaultRegistry = new NewRelicMeterRegistry(insightsApiConfig, clock);
-    
+
     private final NewRelicMeterRegistry agentEnabledRegistry = new NewRelicMeterRegistry(insightsAgentConfig, clock);
-    
+
     NewRelicInsightsAgentClientProvider getInsightsAgentClientProvider(NewRelicConfig config) {
         return new NewRelicInsightsAgentClientProvider(config);
     }
+
     NewRelicInsightsApiClientProvider getInsightsApiClientProvider(NewRelicConfig config) {
         return new NewRelicInsightsApiClientProvider(config);
     }
@@ -149,38 +127,38 @@ class NewRelicMeterRegistryTest {
         //test Agent clientProvider
         assertThat(agentEnabledRegistry.clientProvider).isInstanceOf(NewRelicInsightsAgentClientProvider.class);
     }
-    
+
     @Test
     void constructedWithApiClientProvider() {
         //test default API clientProvider
         assertThat(apiDefaultRegistry.clientProvider).isInstanceOf(NewRelicInsightsApiClientProvider.class);
     }
-    
+
     @Test
     void writeGauge() {
         //test API clientProvider
         writeGauge(meterNameEventTypeEnabledConfig, "{\"eventType\":\"myGauge\",\"value\":1}");
-        writeGauge(insightsApiConfig, 
+        writeGauge(insightsApiConfig,
                 "{\"eventType\":\"MicrometerSample\",\"value\":1,\"metricName\":\"myGauge\",\"metricType\":\"GAUGE\"}");
-        
+
         //test Agent clientProvider
         Map<String, Object> expectedEntries = new HashMap<>();
         expectedEntries.put("value", 1);
         writeGauge(meterNameEventTypeEnabledConfig, expectedEntries);
         expectedEntries.put("metricName", "myGauge2");
         expectedEntries.put("metricType", "GAUGE");
-        writeGauge(agentConfig, expectedEntries);
+        writeGauge(insightsAgentConfig, expectedEntries);
     }
 
     private void writeGauge(NewRelicConfig config, String expectedJson) {
         registry.gauge("my.gauge", 1d);
-        Gauge gauge = registry.find("my.gauge").gauge();
+        Gauge gauge = registry.get("my.gauge").gauge();
         assertThat(getInsightsApiClientProvider(config).writeGauge(gauge)).containsExactly(expectedJson);
     }
-    
+
     private void writeGauge(NewRelicConfig config, Map<String, Object> expectedEntries) {
         registry.gauge("my.gauge2", 1d);
-        Gauge gauge = registry.find("my.gauge2").gauge();
+        Gauge gauge = registry.get("my.gauge2").gauge();
         assertThat(getInsightsAgentClientProvider(config).writeGauge(gauge)).isEqualTo(expectedEntries);
     }
 
@@ -189,55 +167,55 @@ class NewRelicMeterRegistryTest {
         //test API clientProvider
         writeGaugeShouldDropNanValue(getInsightsApiClientProvider(meterNameEventTypeEnabledConfig));
         writeGaugeShouldDropNanValue(getInsightsApiClientProvider(insightsApiConfig));
-        
+
         //test Agent clientProvider
         writeGaugeShouldDropNanValue(getInsightsAgentClientProvider(meterNameEventTypeEnabledConfig));
-        writeGaugeShouldDropNanValue(getInsightsAgentClientProvider(agentConfig));
+        writeGaugeShouldDropNanValue(getInsightsAgentClientProvider(insightsAgentConfig));
     }
-    
+
     private void writeGaugeShouldDropNanValue(NewRelicInsightsApiClientProvider clientProvider) {
         registry.gauge("my.gauge", Double.NaN);
-        Gauge gauge = registry.find("my.gauge").gauge();
+        Gauge gauge = registry.get("my.gauge").gauge();
         assertThat(clientProvider.writeGauge(gauge)).isEmpty();
     }
-    
+
     private void writeGaugeShouldDropNanValue(NewRelicInsightsAgentClientProvider clientProvider) {
         registry.gauge("my.gauge2", Double.NaN);
-        Gauge gauge = registry.find("my.gauge2").gauge();
+        Gauge gauge = registry.get("my.gauge2").gauge();
         assertThat(clientProvider.writeGauge(gauge)).isEmpty();
-    }     
+    }
 
     @Test
     void writeGaugeShouldDropInfiniteValues() {
         //test API clientProvider
         writeGaugeShouldDropInfiniteValues(getInsightsApiClientProvider(meterNameEventTypeEnabledConfig));
         writeGaugeShouldDropInfiniteValues(getInsightsApiClientProvider(insightsApiConfig));
-        
+
         //test Agent clientProvider
         writeGaugeShouldDropInfiniteValues(getInsightsAgentClientProvider(meterNameEventTypeEnabledConfig));
-        writeGaugeShouldDropInfiniteValues(getInsightsAgentClientProvider(agentConfig));
+        writeGaugeShouldDropInfiniteValues(getInsightsAgentClientProvider(insightsAgentConfig));
     }
 
     private void writeGaugeShouldDropInfiniteValues(NewRelicInsightsApiClientProvider clientProvider) {
         registry.gauge("my.gauge", Double.POSITIVE_INFINITY);
-        Gauge gauge = registry.find("my.gauge").gauge();
+        Gauge gauge = registry.get("my.gauge").gauge();
         assertThat(clientProvider.writeGauge(gauge)).isEmpty();
 
         registry.gauge("my.gauge", Double.NEGATIVE_INFINITY);
-        gauge = registry.find("my.gauge").gauge();
+        gauge = registry.get("my.gauge").gauge();
         assertThat(clientProvider.writeGauge(gauge)).isEmpty();
     }
-    
+
     private void writeGaugeShouldDropInfiniteValues(NewRelicInsightsAgentClientProvider clientProvider) {
         registry.gauge("my.gauge2", Double.POSITIVE_INFINITY);
-        Gauge gauge = registry.find("my.gauge2").gauge();
+        Gauge gauge = registry.get("my.gauge2").gauge();
         assertThat(clientProvider.writeGauge(gauge)).isEmpty();
 
         registry.gauge("my.gauge2", Double.NEGATIVE_INFINITY);
-        gauge = registry.find("my.gauge2").gauge();
+        gauge = registry.get("my.gauge2").gauge();
         assertThat(clientProvider.writeGauge(gauge)).isEmpty();
     }
-    
+
     @Test
     void writeGaugeWithTimeGauge() {
         //test API clientProvider
@@ -245,7 +223,7 @@ class NewRelicMeterRegistryTest {
                 "{\"eventType\":\"myTimeGauge\",\"value\":1,\"timeUnit\":\"seconds\"}");
         writeGaugeWithTimeGauge(getInsightsApiClientProvider(insightsApiConfig),
                 "{\"eventType\":\"MicrometerSample\",\"value\":1,\"timeUnit\":\"seconds\",\"metricName\":\"myTimeGauge\",\"metricType\":\"GAUGE\"}");
-        
+
         //test Agent clientProvider
         Map<String, Object> expectedEntries = new HashMap<>();
         expectedEntries.put("value", 1);
@@ -253,45 +231,45 @@ class NewRelicMeterRegistryTest {
         writeGaugeWithTimeGauge(getInsightsAgentClientProvider(meterNameEventTypeEnabledConfig), expectedEntries);
         expectedEntries.put("metricName", "myTimeGauge2");
         expectedEntries.put("metricType", "GAUGE");
-        writeGaugeWithTimeGauge(getInsightsAgentClientProvider(agentConfig), expectedEntries);
+        writeGaugeWithTimeGauge(getInsightsAgentClientProvider(insightsAgentConfig), expectedEntries);
     }
-    
+
     private void writeGaugeWithTimeGauge(NewRelicInsightsApiClientProvider clientProvider, String expectedJson) {
         AtomicReference<Double> obj = new AtomicReference<>(1d);
         registry.more().timeGauge("my.timeGauge", Tags.empty(), obj, TimeUnit.SECONDS, AtomicReference::get);
-        TimeGauge timeGauge = registry.find("my.timeGauge").timeGauge();
-        assertThat(clientProvider.writeTimeGauge(timeGauge)).containsExactly(expectedJson);       
+        TimeGauge timeGauge = registry.get("my.timeGauge").timeGauge();
+        assertThat(clientProvider.writeTimeGauge(timeGauge)).containsExactly(expectedJson);
     }
-    
+
     private void writeGaugeWithTimeGauge(NewRelicInsightsAgentClientProvider clientProvider, Map<String, Object> expectedEntries) {
         AtomicReference<Double> obj = new AtomicReference<>(1d);
         registry.more().timeGauge("my.timeGauge2", Tags.empty(), obj, TimeUnit.SECONDS, AtomicReference::get);
-        TimeGauge timeGauge = registry.find("my.timeGauge2").timeGauge();
+        TimeGauge timeGauge = registry.get("my.timeGauge2").timeGauge();
         assertThat(clientProvider.writeTimeGauge(timeGauge)).isEqualTo(expectedEntries);
     }
-    
+
     @Test
     void writeGaugeWithTimeGaugeShouldDropNanValue() {
         //test API clientProvider
         writeGaugeWithTimeGaugeShouldDropNanValue(getInsightsApiClientProvider(meterNameEventTypeEnabledConfig));
         writeGaugeWithTimeGaugeShouldDropNanValue(getInsightsApiClientProvider(insightsApiConfig));
-        
+
         //test Agent clientProvider
         writeGaugeWithTimeGaugeShouldDropNanValue(getInsightsAgentClientProvider(meterNameEventTypeEnabledConfig));
-        writeGaugeWithTimeGaugeShouldDropNanValue(getInsightsAgentClientProvider(agentConfig));
+        writeGaugeWithTimeGaugeShouldDropNanValue(getInsightsAgentClientProvider(insightsAgentConfig));
     }
-    
+
     private void writeGaugeWithTimeGaugeShouldDropNanValue(NewRelicInsightsApiClientProvider clientProvider) {
         AtomicReference<Double> obj = new AtomicReference<>(Double.NaN);
         registry.more().timeGauge("my.timeGauge", Tags.empty(), obj, TimeUnit.SECONDS, AtomicReference::get);
-        TimeGauge timeGauge = registry.find("my.timeGauge").timeGauge();
+        TimeGauge timeGauge = registry.get("my.timeGauge").timeGauge();
         assertThat(clientProvider.writeTimeGauge(timeGauge)).isEmpty();
     }
-    
+
     private void writeGaugeWithTimeGaugeShouldDropNanValue(NewRelicInsightsAgentClientProvider clientProvider) {
         AtomicReference<Double> obj = new AtomicReference<>(Double.NaN);
         registry.more().timeGauge("my.timeGauge2", Tags.empty(), obj, TimeUnit.SECONDS, AtomicReference::get);
-        TimeGauge timeGauge = registry.find("my.timeGauge2").timeGauge();
+        TimeGauge timeGauge = registry.get("my.timeGauge2").timeGauge();
         assertThat(clientProvider.writeTimeGauge(timeGauge)).isEmpty();
     }
 
@@ -300,33 +278,33 @@ class NewRelicMeterRegistryTest {
         //test API clientProvider
         writeGaugeWithTimeGaugeShouldDropInfiniteValues(getInsightsApiClientProvider(meterNameEventTypeEnabledConfig));
         writeGaugeWithTimeGaugeShouldDropInfiniteValues(getInsightsApiClientProvider(insightsApiConfig));
-        
+
         //test Agent clientProvider
         writeGaugeWithTimeGaugeShouldDropInfiniteValues(getInsightsAgentClientProvider(meterNameEventTypeEnabledConfig));
-        writeGaugeWithTimeGaugeShouldDropInfiniteValues(getInsightsAgentClientProvider(agentConfig));
+        writeGaugeWithTimeGaugeShouldDropInfiniteValues(getInsightsAgentClientProvider(insightsAgentConfig));
     }
-    
+
     private void writeGaugeWithTimeGaugeShouldDropInfiniteValues(NewRelicInsightsApiClientProvider clientProvider) {
         AtomicReference<Double> obj = new AtomicReference<>(Double.POSITIVE_INFINITY);
         registry.more().timeGauge("my.timeGauge", Tags.empty(), obj, TimeUnit.SECONDS, AtomicReference::get);
-        TimeGauge timeGauge = registry.find("my.timeGauge").timeGauge();
+        TimeGauge timeGauge = registry.get("my.timeGauge").timeGauge();
         assertThat(clientProvider.writeTimeGauge(timeGauge)).isEmpty();
 
         obj = new AtomicReference<>(Double.NEGATIVE_INFINITY);
         registry.more().timeGauge("my.timeGauge", Tags.empty(), obj, TimeUnit.SECONDS, AtomicReference::get);
-        timeGauge = registry.find("my.timeGauge").timeGauge();
+        timeGauge = registry.get("my.timeGauge").timeGauge();
         assertThat(clientProvider.writeTimeGauge(timeGauge)).isEmpty();
     }
-    
+
     private void writeGaugeWithTimeGaugeShouldDropInfiniteValues(NewRelicInsightsAgentClientProvider clientProvider) {
         AtomicReference<Double> obj = new AtomicReference<>(Double.POSITIVE_INFINITY);
         registry.more().timeGauge("my.timeGauge2", Tags.empty(), obj, TimeUnit.SECONDS, AtomicReference::get);
-        TimeGauge timeGauge = registry.find("my.timeGauge2").timeGauge();
+        TimeGauge timeGauge = registry.get("my.timeGauge2").timeGauge();
         assertThat(clientProvider.writeTimeGauge(timeGauge)).isEmpty();
 
         obj = new AtomicReference<>(Double.NEGATIVE_INFINITY);
         registry.more().timeGauge("my.timeGauge2", Tags.empty(), obj, TimeUnit.SECONDS, AtomicReference::get);
-        timeGauge = registry.find("my.timeGauge2").timeGauge();
+        timeGauge = registry.get("my.timeGauge2").timeGauge();
         assertThat(clientProvider.writeTimeGauge(timeGauge)).isEmpty();
     }
 
@@ -339,33 +317,33 @@ class NewRelicMeterRegistryTest {
                 "{\"eventType\":\"myCounter\",\"throughput\":1}");
         writeCounterWithFunctionCounter(counter, getInsightsApiClientProvider(insightsApiConfig),
                 "{\"eventType\":\"MicrometerSample\",\"throughput\":1,\"metricName\":\"myCounter\",\"metricType\":\"COUNTER\"}");
-        
+
         //test Agent clientProvider
         Map<String, Object> expectedEntries = new HashMap<>();
         expectedEntries.put("throughput", 1);
         writeCounterWithFunctionCounter(counter, getInsightsAgentClientProvider(meterNameEventTypeEnabledConfig), expectedEntries);
         expectedEntries.put("metricName", "myCounter");
         expectedEntries.put("metricType", "COUNTER");
-        writeCounterWithFunctionCounter(counter, getInsightsAgentClientProvider(agentConfig), expectedEntries);
+        writeCounterWithFunctionCounter(counter, getInsightsAgentClientProvider(insightsAgentConfig), expectedEntries);
     }
 
     private void writeCounterWithFunctionCounter(FunctionCounter counter, NewRelicInsightsApiClientProvider clientProvider, String expectedJson) {
         assertThat(clientProvider.writeFunctionCounter(counter)).containsExactly(expectedJson);
     }
-    
+
     private void writeCounterWithFunctionCounter(FunctionCounter counter, NewRelicInsightsAgentClientProvider clientProvider, Map<String, Object> expectedEntries) {
         assertThat(clientProvider.writeFunctionCounter(counter)).isEqualTo(expectedEntries);
     }
-    
+
     @Test
     void writeCounterWithFunctionCounterShouldDropInfiniteValues() {
         //test API clientProvider
         writeCounterWithFunctionCounterShouldDropInfiniteValues(getInsightsApiClientProvider(meterNameEventTypeEnabledConfig));
         writeCounterWithFunctionCounterShouldDropInfiniteValues(getInsightsApiClientProvider(insightsApiConfig));
-        
+
         //test Agent clientProvider
         writeCounterWithFunctionCounterShouldDropInfiniteValues(getInsightsAgentClientProvider(meterNameEventTypeEnabledConfig));
-        writeCounterWithFunctionCounterShouldDropInfiniteValues(getInsightsAgentClientProvider(agentConfig));
+        writeCounterWithFunctionCounterShouldDropInfiniteValues(getInsightsAgentClientProvider(insightsAgentConfig));
     }
 
     private void writeCounterWithFunctionCounterShouldDropInfiniteValues(NewRelicInsightsApiClientProvider clientProvider) {
@@ -379,16 +357,16 @@ class NewRelicMeterRegistryTest {
         clock.add(insightsApiConfig.step());
         assertThat(clientProvider.writeFunctionCounter(counter)).isEmpty();
     }
-    
+
     private void writeCounterWithFunctionCounterShouldDropInfiniteValues(NewRelicInsightsAgentClientProvider clientProvider) {
         FunctionCounter counter = FunctionCounter.builder("myCounter", Double.POSITIVE_INFINITY, Number::doubleValue)
                 .register(registry);
-        clock.add(agentConfig.step());
+        clock.add(insightsAgentConfig.step());
         assertThat(clientProvider.writeFunctionCounter(counter)).isEmpty();
 
         counter = FunctionCounter.builder("myCounter", Double.NEGATIVE_INFINITY, Number::doubleValue)
                 .register(registry);
-        clock.add(agentConfig.step());
+        clock.add(insightsAgentConfig.step());
         assertThat(clientProvider.writeFunctionCounter(counter)).isEmpty();
     }
 
@@ -399,36 +377,36 @@ class NewRelicMeterRegistryTest {
                 "{\"eventType\":\"myTimer\",\"count\":0,\"avg\":0,\"totalTime\":0,\"max\":0,\"timeUnit\":\"seconds\"}");
         writeTimer(getInsightsApiClientProvider(insightsApiConfig),
                 "{\"eventType\":\"MicrometerSample\",\"count\":0,\"avg\":0,\"totalTime\":0,\"max\":0,\"timeUnit\":\"seconds\",\"metricName\":\"myTimer\",\"metricType\":\"TIMER\"}");
-        
+
         //test Agent clientProvider
         Map<String, Object> expectedEntries = new HashMap<>();
         expectedEntries.put("count", 0);
         expectedEntries.put("avg", 0);
         expectedEntries.put("totalTime", 0);
         expectedEntries.put("max", 0);
-        expectedEntries.put("timeUnit", "seconds");       
+        expectedEntries.put("timeUnit", "seconds");
         writeTimer(getInsightsAgentClientProvider(meterNameEventTypeEnabledConfig), expectedEntries);
         expectedEntries.put("count", 0);
         expectedEntries.put("avg", 0);
         expectedEntries.put("totalTime", 0);
-        expectedEntries.put("max", 0);        
+        expectedEntries.put("max", 0);
         expectedEntries.put("metricName", "myTimer2");
         expectedEntries.put("metricType", "TIMER");
-        writeTimer(getInsightsAgentClientProvider(agentConfig), expectedEntries);
+        writeTimer(getInsightsAgentClientProvider(insightsAgentConfig), expectedEntries);
     }
-    
+
     private void writeTimer(NewRelicInsightsApiClientProvider clientProvider, String expectedJson) {
         registry.timer("my.timer", Tags.empty());
-        Timer timer = registry.find("my.timer").timer();
-        assertThat(clientProvider.writeTimer(timer)).containsExactly(expectedJson);       
+        Timer timer = registry.get("my.timer").timer();
+        assertThat(clientProvider.writeTimer(timer)).containsExactly(expectedJson);
     }
-    
+
     private void writeTimer(NewRelicInsightsAgentClientProvider clientProvider, Map<String, Object> expectedEntries) {
         registry.timer("my.timer2", Tags.empty());
-        Timer timer = registry.find("my.timer2").timer();    
+        Timer timer = registry.get("my.timer2").timer();
         assertThat(clientProvider.writeTimer(timer)).isEqualTo(expectedEntries);
     }
-    
+
     @Test
     void writeFunctionTimer() {
         //test API clientProvider
@@ -450,27 +428,27 @@ class NewRelicMeterRegistryTest {
         expectedEntries.put("totalTime", 0);
         expectedEntries.put("metricName", "myFunTimer2");
         expectedEntries.put("metricType", "TIMER");
-        writeFunctionTimer(getInsightsAgentClientProvider(agentConfig), expectedEntries);
+        writeFunctionTimer(getInsightsAgentClientProvider(insightsAgentConfig), expectedEntries);
     }
-    
+
     private void writeFunctionTimer(NewRelicInsightsApiClientProvider clientProvider, String expectedJson) {
         Object o = new Object();
         registry.more().timer("myFunTimer", emptyList(),
                 o, o2 -> 1, o2 -> 1, TimeUnit.MILLISECONDS);
 
-        FunctionTimer functionTimer = registry.find("myFunTimer").functionTimer();
-        assertThat(clientProvider.writeFunctionTimer(functionTimer)).containsExactly(expectedJson);       
+        FunctionTimer functionTimer = registry.get("myFunTimer").functionTimer();
+        assertThat(clientProvider.writeFunctionTimer(functionTimer)).containsExactly(expectedJson);
     }
-    
+
     private void writeFunctionTimer(NewRelicInsightsAgentClientProvider clientProvider, Map<String, Object> expectedEntries) {
         Object o = new Object();
         registry.more().timer("myFunTimer2", emptyList(),
                 o, o2 -> 1, o2 -> 1, TimeUnit.MILLISECONDS);
-        
-        FunctionTimer functionTimer = registry.find("myFunTimer2").functionTimer();
+
+        FunctionTimer functionTimer = registry.get("myFunTimer2").functionTimer();
         assertThat(clientProvider.writeFunctionTimer(functionTimer)).isEqualTo(expectedEntries);
     }
-    
+
     @Test
     void writeLongTaskTimer() {
         //test API clientProvider
@@ -490,21 +468,21 @@ class NewRelicMeterRegistryTest {
         expectedEntries.put("timeUnit", "seconds");
         expectedEntries.put("metricName", "myLongTaskTimer2");
         expectedEntries.put("metricType", "LONG_TASK_TIMER");
-        writeLongTaskTimer(getInsightsAgentClientProvider(agentConfig), expectedEntries);
+        writeLongTaskTimer(getInsightsAgentClientProvider(insightsAgentConfig), expectedEntries);
     }
-    
+
     private void writeLongTaskTimer(NewRelicInsightsApiClientProvider clientProvider, String expectedJson) {
         registry.more().longTaskTimer("myLongTaskTimer", emptyList());
-        LongTaskTimer longTaskTimer = registry.find("myLongTaskTimer").longTaskTimer();
-        assertThat(clientProvider.writeLongTaskTimer(longTaskTimer)).containsExactly(expectedJson);       
+        LongTaskTimer longTaskTimer = registry.get("myLongTaskTimer").longTaskTimer();
+        assertThat(clientProvider.writeLongTaskTimer(longTaskTimer)).containsExactly(expectedJson);
     }
-    
+
     private void writeLongTaskTimer(NewRelicInsightsAgentClientProvider clientProvider, Map<String, Object> expectedEntries) {
         registry.more().longTaskTimer("myLongTaskTimer2", emptyList());
-        LongTaskTimer longTaskTimer = registry.find("myLongTaskTimer2").longTaskTimer();
+        LongTaskTimer longTaskTimer = registry.get("myLongTaskTimer2").longTaskTimer();
         assertThat(clientProvider.writeLongTaskTimer(longTaskTimer)).isEqualTo(expectedEntries);
     }
-    
+
     @Test
     void writeSummary() {
         //test API clientProvider
@@ -526,39 +504,39 @@ class NewRelicMeterRegistryTest {
         expectedEntries.put("total", 0);
         expectedEntries.put("metricName", "myDistSummary2");
         expectedEntries.put("metricType", "DISTRIBUTION_SUMMARY");
-        writeSummary(getInsightsAgentClientProvider(agentConfig), expectedEntries);
+        writeSummary(getInsightsAgentClientProvider(insightsAgentConfig), expectedEntries);
     }
-    
+
     private void writeSummary(NewRelicInsightsApiClientProvider clientProvider, String expectedJson) {
         registry.summary("myDistSummary", emptyList());
-        DistributionSummary summary = registry.find("myDistSummary").summary();
-        assertThat(clientProvider.writeSummary(summary)).containsExactly(expectedJson);       
+        DistributionSummary summary = registry.get("myDistSummary").summary();
+        assertThat(clientProvider.writeSummary(summary)).containsExactly(expectedJson);
     }
-    
+
     private void writeSummary(NewRelicInsightsAgentClientProvider clientProvider, Map<String, Object> expectedEntries) {
         registry.summary("myDistSummary2", emptyList());
-        DistributionSummary summary = registry.find("myDistSummary2").summary();
+        DistributionSummary summary = registry.get("myDistSummary2").summary();
         assertThat(clientProvider.writeSummary(summary)).isEqualTo(expectedEntries);
     }
-    
+
     @Test
     void writeMeterWhenCustomMeterHasOnlyNonFiniteValuesShouldNotBeWritten() {
         Measurement measurement1 = new Measurement(() -> Double.POSITIVE_INFINITY, Statistic.VALUE);
         Measurement measurement2 = new Measurement(() -> Double.NEGATIVE_INFINITY, Statistic.VALUE);
         Measurement measurement3 = new Measurement(() -> Double.NaN, Statistic.VALUE);
         List<Measurement> measurements = Arrays.asList(measurement1, measurement2, measurement3);
-        
+
         //test API clientProvider
         writeMeterWhenCustomMeterHasOnlyNonFiniteValuesShouldNotBeWritten(
                 measurements, getInsightsApiClientProvider(meterNameEventTypeEnabledConfig));
         writeMeterWhenCustomMeterHasOnlyNonFiniteValuesShouldNotBeWritten(
                 measurements, getInsightsApiClientProvider(insightsApiConfig));
-        
+
         //test Agent clientProvider
         writeMeterWhenCustomMeterHasOnlyNonFiniteValuesShouldNotBeWritten(
                 measurements, getInsightsAgentClientProvider(meterNameEventTypeEnabledConfig));
         writeMeterWhenCustomMeterHasOnlyNonFiniteValuesShouldNotBeWritten(
-                measurements, getInsightsAgentClientProvider(agentConfig));
+                measurements, getInsightsAgentClientProvider(insightsAgentConfig));
     }
 
     private void writeMeterWhenCustomMeterHasOnlyNonFiniteValuesShouldNotBeWritten(
@@ -566,7 +544,7 @@ class NewRelicMeterRegistryTest {
         Meter meter = Meter.builder("my.meter", Meter.Type.GAUGE, measurements).register(registry);
         assertThat(clientProvider.writeMeter(meter)).isEmpty();
     }
-    
+
     private void writeMeterWhenCustomMeterHasOnlyNonFiniteValuesShouldNotBeWritten(
             List<Measurement> measurements, NewRelicInsightsAgentClientProvider clientProvider) {
         Meter meter = Meter.builder("my.meter2", Meter.Type.GAUGE, measurements).register(registry);
@@ -582,12 +560,12 @@ class NewRelicMeterRegistryTest {
         List<Measurement> measurements = Arrays.asList(measurement1, measurement2, measurement3, measurement4);
         //test API clientProvider
         writeMeterWhenCustomMeterHasMixedFiniteAndNonFiniteValuesShouldSkipOnlyNonFiniteValues(
-                measurements, getInsightsApiClientProvider(meterNameEventTypeEnabledConfig), 
+                measurements, getInsightsApiClientProvider(meterNameEventTypeEnabledConfig),
                 "{\"eventType\":\"myMeter\",\"value\":1}");
         writeMeterWhenCustomMeterHasMixedFiniteAndNonFiniteValuesShouldSkipOnlyNonFiniteValues(
                 measurements, getInsightsApiClientProvider(insightsApiConfig),
                 "{\"eventType\":\"MicrometerSample\",\"value\":1,\"metricName\":\"myMeter\",\"metricType\":\"GAUGE\"}");
-        
+
         //test Agent clientProvider
         Map<String, Object> expectedEntries = new HashMap<>();
         expectedEntries.put("value", 1);
@@ -596,7 +574,7 @@ class NewRelicMeterRegistryTest {
         expectedEntries.put("metricName", "myMeter2");
         expectedEntries.put("metricType", "GAUGE");
         writeMeterWhenCustomMeterHasMixedFiniteAndNonFiniteValuesShouldSkipOnlyNonFiniteValues(
-                measurements, getInsightsAgentClientProvider(agentConfig), expectedEntries);
+                measurements, getInsightsAgentClientProvider(insightsAgentConfig), expectedEntries);
     }
 
     private void writeMeterWhenCustomMeterHasMixedFiniteAndNonFiniteValuesShouldSkipOnlyNonFiniteValues(
@@ -604,13 +582,13 @@ class NewRelicMeterRegistryTest {
         Meter meter = Meter.builder("my.meter", Meter.Type.GAUGE, measurements).register(registry);
         assertThat(clientProvider.writeMeter(meter)).containsExactly(expectedJson);
     }
-    
+
     private void writeMeterWhenCustomMeterHasMixedFiniteAndNonFiniteValuesShouldSkipOnlyNonFiniteValues(
             List<Measurement> measurements, NewRelicInsightsAgentClientProvider clientProvider, Map<String, Object> expectedEntries) {
         Meter meter = Meter.builder("my.meter2", Meter.Type.GAUGE, measurements).register(registry);
         assertThat(clientProvider.writeMeter(meter)).isEqualTo(expectedEntries);
     }
-  
+
     @Test
     void writeMeterWhenCustomMeterHasDuplicatesKeysShouldWriteOnlyLastValue() {
         Measurement measurement1 = new Measurement(() -> 3d, Statistic.VALUE);
@@ -620,14 +598,14 @@ class NewRelicMeterRegistryTest {
         Meter meter = Meter.builder("my.meter", Meter.Type.GAUGE, measurements).register(this.registry);
         //test API clientProvider
         assertThat(getInsightsApiClientProvider(insightsApiConfig).writeMeter(meter)).containsExactly(
-                "{\"eventType\":\"MicrometerSample\",\"value\":2,\"metricName\":\"myMeter\",\"metricType\":\"GAUGE\"}"); 
-        
+                "{\"eventType\":\"MicrometerSample\",\"value\":2,\"metricName\":\"myMeter\",\"metricType\":\"GAUGE\"}");
+
         //test Agent clientProvider
         Map<String, Object> expectedEntries = new HashMap<>();
         expectedEntries.put("value", 2);
         expectedEntries.put("metricName", "myMeter");
         expectedEntries.put("metricType", "GAUGE");
-        assertThat(getInsightsAgentClientProvider(agentConfig).writeMeter(meter)).isEqualTo(expectedEntries);
+        assertThat(getInsightsAgentClientProvider(insightsAgentConfig).writeMeter(meter)).isEqualTo(expectedEntries);
     }
 
     @Test
@@ -635,86 +613,86 @@ class NewRelicMeterRegistryTest {
         //test meterNameEventTypeEnabledConfig = false (default)
         MockHttpSender mockHttpClient = new MockHttpSender();
         NewRelicInsightsApiClientProvider apiProvider = new NewRelicInsightsApiClientProvider(
-                                                                        insightsApiConfig, mockHttpClient, registry.config().namingConvention());
-        
+                insightsApiConfig, mockHttpClient, registry.config().namingConvention());
+
         NewRelicMeterRegistry registry = new NewRelicMeterRegistry(insightsApiConfig, apiProvider, clock);
-        
+
         registry.gauge("my.gauge", 1d);
-        Gauge gauge = registry.find("my.gauge").gauge();
-               
+        Gauge gauge = registry.get("my.gauge").gauge();
+
         apiProvider.sendEvents(apiProvider.writeGauge(gauge));
 
         assertThat(new String(mockHttpClient.getRequest().getEntity()))
-                        .contains("{\"eventType\":\"MicrometerSample\",\"value\":1,\"metricName\":\"myGauge\",\"metricType\":\"GAUGE\"}");
-        
+                .contains("{\"eventType\":\"MicrometerSample\",\"value\":1,\"metricName\":\"myGauge\",\"metricType\":\"GAUGE\"}");
+
         //test meterNameEventTypeEnabledConfig = true
         mockHttpClient = new MockHttpSender();
         apiProvider = new NewRelicInsightsApiClientProvider(
-                                meterNameEventTypeEnabledConfig, mockHttpClient, registry.config().namingConvention());
-        
+                meterNameEventTypeEnabledConfig, mockHttpClient, registry.config().namingConvention());
+
         registry.gauge("my.gauge2", 1d);
-        gauge = registry.find("my.gauge2").gauge();
-        
+        gauge = registry.get("my.gauge2").gauge();
+
         apiProvider.sendEvents(apiProvider.writeGauge(gauge));
-        
+
         assertThat(new String(mockHttpClient.getRequest().getEntity()))
-                                        .contains("{\"eventType\":\"myGauge2\",\"value\":1}");        
+                .contains("{\"eventType\":\"myGauge2\",\"value\":1}");
     }
-    
+
     @Test
-    void sendEventsWithAgentProvider() {        
+    void sendEventsWithAgentProvider() {
         //test meterNameEventTypeEnabledConfig = false (default)
         MockNewRelicAgent mockNewRelicAgent = new MockNewRelicAgent();
         NewRelicInsightsAgentClientProvider agentProvider = new NewRelicInsightsAgentClientProvider(
-                                                agentConfig, mockNewRelicAgent, registry.config().namingConvention());
-        
-        NewRelicMeterRegistry registry = new NewRelicMeterRegistry(agentConfig, agentProvider, clock);
-        
+                insightsAgentConfig, mockNewRelicAgent, registry.config().namingConvention());
+
+        NewRelicMeterRegistry registry = new NewRelicMeterRegistry(insightsAgentConfig, agentProvider, clock);
+
         registry.gauge("my.gauge", 1d);
-        Gauge gauge = registry.find("my.gauge").gauge();
-               
+        Gauge gauge = registry.get("my.gauge").gauge();
+
         agentProvider.sendEvents(gauge.getId(), agentProvider.writeGauge(gauge));
 
         assertThat(((MockNewRelicInsights) mockNewRelicAgent.getInsights()).getInsightData().getEventType()).isEqualTo("MicrometerSample");
         assertThat(((MockNewRelicInsights) mockNewRelicAgent.getInsights()).getInsightData().getAttributes()).hasSize(3);
-        
+
         //test meterNameEventTypeEnabledConfig = true
         mockNewRelicAgent = new MockNewRelicAgent();
         agentProvider = new NewRelicInsightsAgentClientProvider(
-                                meterNameEventTypeEnabledConfig, mockNewRelicAgent, registry.config().namingConvention());
-        
+                meterNameEventTypeEnabledConfig, mockNewRelicAgent, registry.config().namingConvention());
+
         registry.gauge("my.gauge2", 1d);
-        gauge = registry.find("my.gauge2").gauge();
-        
+        gauge = registry.get("my.gauge2").gauge();
+
         agentProvider.sendEvents(gauge.getId(), agentProvider.writeGauge(gauge));
-        
+
         assertThat(((MockNewRelicInsights) mockNewRelicAgent.getInsights()).getInsightData().getEventType()).isEqualTo("myGauge2");
         assertThat(((MockNewRelicInsights) mockNewRelicAgent.getInsights()).getInsightData().getAttributes()).hasSize(1);
     }
-    
+
     @Test
     void publishWithApiClientProvider() {
         //test meterNameEventTypeEnabledConfig = false (default)
         MockHttpSender mockHttpClient = new MockHttpSender();
         NewRelicInsightsApiClientProvider apiProvider = new NewRelicInsightsApiClientProvider(
-                                              insightsApiConfig, mockHttpClient, registry.config().namingConvention());
-        
+                insightsApiConfig, mockHttpClient, registry.config().namingConvention());
+
         NewRelicMeterRegistry registry = new NewRelicMeterRegistry(insightsApiConfig, apiProvider, clock);
-        
-        registry.gauge("my.gauge", Tags.of("theTag", "theValue"), 1d);
-        Gauge gauge = registry.find("my.gauge").gauge();
+
+        Gauge.builder("my.gauge", () -> 1d).tag("theTag", "theValue").register(registry);
+        Gauge gauge = registry.get("my.gauge").gauge();
         assertThat(gauge).isNotNull();
-        
-        registry.gauge("other.gauge", 2d);
-        Gauge other = registry.find("other.gauge").gauge();
+
+        Gauge.builder("other.gauge", () -> 2d).register(registry);
+        Gauge other = registry.get("other.gauge").gauge();
         assertThat(other).isNotNull();
-        
+
         registry.publish();
 
         //should send a batch of multiple in one json payload
         assertThat(new String(mockHttpClient.getRequest().getEntity()))
-                        .contains("[{\"eventType\":\"MicrometerSample\",\"value\":2,\"metricName\":\"otherGauge\",\"metricType\":\"GAUGE\"}," +
-                            "{\"eventType\":\"MicrometerSample\",\"value\":1,\"metricName\":\"myGauge\",\"metricType\":\"GAUGE\",\"theTag\":\"theValue\"}]");
+                .contains("[{\"eventType\":\"MicrometerSample\",\"value\":2,\"metricName\":\"otherGauge\",\"metricType\":\"GAUGE\"}," +
+                        "{\"eventType\":\"MicrometerSample\",\"value\":1,\"metricName\":\"myGauge\",\"metricType\":\"GAUGE\",\"theTag\":\"theValue\"}]");
     }
 
     @Test
@@ -722,80 +700,84 @@ class NewRelicMeterRegistryTest {
         //test meterNameEventTypeEnabledConfig = false (default)
         MockNewRelicAgent mockNewRelicAgent = new MockNewRelicAgent();
         NewRelicInsightsAgentClientProvider agentProvider = new NewRelicInsightsAgentClientProvider(
-                                                agentConfig, mockNewRelicAgent, registry.config().namingConvention());
-        
-        NewRelicMeterRegistry registry = new NewRelicMeterRegistry(agentConfig, agentProvider, clock);
-        
+                insightsAgentConfig, mockNewRelicAgent, registry.config().namingConvention());
+
+        NewRelicMeterRegistry registry = new NewRelicMeterRegistry(insightsAgentConfig, agentProvider, clock);
+
         registry.gauge("my.gauge", Tags.of("theTag", "theValue"), 1d);
-        Gauge gauge = registry.find("my.gauge").gauge();
+        Gauge gauge = registry.get("my.gauge").gauge();
         assertThat(gauge).isNotNull();
-        
+
         registry.gauge("other.gauge", 2d);
-        Gauge other = registry.find("other.gauge").gauge();
+        Gauge other = registry.get("other.gauge").gauge();
         assertThat(other).isNotNull();
-        
+
         registry.publish();
-        
+
         //should delegate to the Agent one at a time
         assertThat(((MockNewRelicInsights) mockNewRelicAgent.getInsights()).getInsightData().getEventType()).isEqualTo("MicrometerSample");
         assertThat(((MockNewRelicInsights) mockNewRelicAgent.getInsights()).getInsightData().getAttributes()).hasSize(4);
     }
-    
+
     @Test
     void succeedsCustomClientProvider() {
         NewRelicConfig config = key -> null;
-        
         NewRelicClientProvider customClientProvider = mock(NewRelicClientProvider.class);
-        
         NewRelicMeterRegistry registry = new NewRelicMeterRegistry(config, customClientProvider, clock);
-        
+
         assertThat(registry.clientProvider).isSameAs(customClientProvider);
     }
-    
+
     @Test
-    void succeedsConfigInsightsApiClientProviderAndDefaultNamingConvention() {        
+    void succeedsConfigInsightsApiClientProviderAndDefaultNamingConvention() {
         NewRelicMeterRegistry registry = new NewRelicMeterRegistry(insightsApiConfig, null, clock);
-        
+
         assertThat(registry.clientProvider).isInstanceOf(NewRelicInsightsApiClientProvider.class);
-        
-        assertThat(((NewRelicInsightsApiClientProvider)registry.clientProvider).namingConvention).isInstanceOf(NewRelicNamingConvention.class);
+
+        assertThat(((NewRelicInsightsApiClientProvider) registry.clientProvider).namingConvention)
+                .isInstanceOf(NewRelicNamingConvention.class);
         assertThat(registry.config().namingConvention()).isInstanceOf(NewRelicNamingConvention.class);
     }
-    
+
     @Test
     void succeedsConfigInsightsApiClientProviderAndCustomNamingConvention() {
         NamingConvention customNamingConvention = mock(NewRelicNamingConvention.class);
-        
-        NewRelicMeterRegistry registry = new NewRelicMeterRegistry(insightsApiConfig, null, customNamingConvention, clock, new NamedThreadFactory("new-relic-test"));
-        
+
+        NewRelicMeterRegistry registry = new NewRelicMeterRegistry(insightsApiConfig, null, customNamingConvention,
+                clock, new NamedThreadFactory("new-relic-test"));
+
         assertThat(registry.clientProvider).isInstanceOf(NewRelicInsightsApiClientProvider.class);
-        
-        assertThat(((NewRelicInsightsApiClientProvider)registry.clientProvider).namingConvention).isSameAs(customNamingConvention);
+
+        assertThat(((NewRelicInsightsApiClientProvider) registry.clientProvider).namingConvention)
+                .isSameAs(customNamingConvention);
         assertThat(registry.config().namingConvention()).isSameAs(customNamingConvention);
     }
-    
+
     @Test
-    void succeedsConfigInsightsAgentClientProviderAndDefaultNamingConvention() {        
+    void succeedsConfigInsightsAgentClientProviderAndDefaultNamingConvention() {
         NewRelicMeterRegistry registry = new NewRelicMeterRegistry(insightsAgentConfig, null, clock);
-        
+
         assertThat(registry.clientProvider).isInstanceOf(NewRelicInsightsAgentClientProvider.class);
-        
-        assertThat(((NewRelicInsightsAgentClientProvider)registry.clientProvider).namingConvention).isInstanceOf(NewRelicNamingConvention.class);
+
+        assertThat(((NewRelicInsightsAgentClientProvider) registry.clientProvider).namingConvention)
+                .isInstanceOf(NewRelicNamingConvention.class);
         assertThat(registry.config().namingConvention()).isInstanceOf(NewRelicNamingConvention.class);
     }
-    
+
     @Test
     void succeedsConfigInsightsAgentClientProviderAndCustomNamingConvention() {
         NamingConvention customNamingConvention = mock(NewRelicNamingConvention.class);
-        
-        NewRelicMeterRegistry registry = new NewRelicMeterRegistry(insightsAgentConfig, null, customNamingConvention, clock, new NamedThreadFactory("new-relic-test"));
+
+        NewRelicMeterRegistry registry = new NewRelicMeterRegistry(insightsAgentConfig, null, customNamingConvention,
+                clock, new NamedThreadFactory("new-relic-test"));
 
         assertThat(registry.clientProvider).isInstanceOf(NewRelicInsightsAgentClientProvider.class);
-        
-        assertThat(((NewRelicInsightsAgentClientProvider)registry.clientProvider).namingConvention).isSameAs(customNamingConvention);
+
+        assertThat(((NewRelicInsightsAgentClientProvider) registry.clientProvider).namingConvention)
+                .isSameAs(customNamingConvention);
         assertThat(registry.config().namingConvention()).isSameAs(customNamingConvention);
     }
-    
+
     @Test
     void failsConfigApiMissingEventType() {
         NewRelicConfig config = new NewRelicConfig() {
@@ -803,17 +785,18 @@ class NewRelicMeterRegistryTest {
             public String eventType() {
                 return "";
             }
+
             @Override
             public String get(String key) {
                 return null;
             }
         };
-        
+
         assertThatThrownBy(() -> getInsightsApiClientProvider(config))
-            .isExactlyInstanceOf(MissingRequiredConfigurationException.class)
-            .hasMessageContaining("eventType");
+                .isExactlyInstanceOf(ValidationException.class)
+                .hasMessageContaining("eventType");
     }
-    
+
     @Test
     void succeedsConfigApiMissingEventType() {
         NewRelicConfig config = new NewRelicConfig() {
@@ -821,18 +804,22 @@ class NewRelicMeterRegistryTest {
             public boolean meterNameEventTypeEnabled() {
                 return true;
             }
+
             @Override
             public String eventType() {
                 return "";
             }
+
             @Override
             public String accountId() {
                 return "accountId";
             }
+
             @Override
             public String apiKey() {
                 return "apiKey";
             }
+
             @Override
             public String get(String key) {
                 return null;
@@ -849,21 +836,23 @@ class NewRelicMeterRegistryTest {
             public String eventType() {
                 return "eventType";
             }
+
             @Override
             public String accountId() {
                 return null;
             }
+
             @Override
             public String get(String key) {
                 return null;
             }
         };
-        
+
         assertThatThrownBy(() -> getInsightsApiClientProvider(config))
-            .isExactlyInstanceOf(MissingRequiredConfigurationException.class)
-            .hasMessageContaining("accountId");
+                .isExactlyInstanceOf(ValidationException.class)
+                .hasMessageContaining("accountId");
     }
-    
+
     @Test
     void failsConfigApiMissingApiKey() {
         NewRelicConfig config = new NewRelicConfig() {
@@ -871,25 +860,28 @@ class NewRelicMeterRegistryTest {
             public String eventType() {
                 return "eventType";
             }
+
             @Override
             public String accountId() {
                 return "accountId";
             }
+
             @Override
             public String apiKey() {
                 return "";
             }
+
             @Override
             public String get(String key) {
                 return null;
             }
         };
-        
+
         assertThatThrownBy(() -> getInsightsApiClientProvider(config))
-            .isExactlyInstanceOf(MissingRequiredConfigurationException.class)
-            .hasMessageContaining("apiKey");
+                .isExactlyInstanceOf(ValidationException.class)
+                .hasMessageContaining("apiKey");
     }
-    
+
     @Test
     void failsConfigApiMissingUri() {
         NewRelicConfig config = new NewRelicConfig() {
@@ -897,29 +889,33 @@ class NewRelicMeterRegistryTest {
             public String eventType() {
                 return "eventType";
             }
+
             @Override
             public String accountId() {
                 return "accountId";
             }
+
             @Override
             public String apiKey() {
                 return "apiKey";
             }
+
             @Override
             public String uri() {
                 return "";
             }
+
             @Override
             public String get(String key) {
                 return null;
             }
         };
-        
+
         assertThatThrownBy(() -> getInsightsApiClientProvider(config))
-            .isExactlyInstanceOf(MissingRequiredConfigurationException.class)
-            .hasMessageContaining("uri");
+                .isExactlyInstanceOf(ValidationException.class)
+                .hasMessageContaining("uri");
     }
-    
+
     @Test
     void failsConfigAgentMissingEventType() {
         NewRelicConfig config = new NewRelicConfig() {
@@ -927,17 +923,18 @@ class NewRelicMeterRegistryTest {
             public String eventType() {
                 return "";
             }
+
             @Override
             public String get(String key) {
                 return null;
             }
         };
-        
+
         assertThatThrownBy(() -> getInsightsAgentClientProvider(config))
-            .isExactlyInstanceOf(MissingRequiredConfigurationException.class)
-            .hasMessageContaining("eventType");
+                .isExactlyInstanceOf(ValidationException.class)
+                .hasMessageContaining("eventType");
     }
-    
+
     @Test
     void succeedsConfigAgentMissingEventType() {
         NewRelicConfig config = new NewRelicConfig() {
@@ -945,13 +942,21 @@ class NewRelicMeterRegistryTest {
             public boolean meterNameEventTypeEnabled() {
                 return true;
             }
+
+            @SuppressWarnings("ConstantConditions")
             @Override
             public String eventType() {
-                return "";
+                return null;
             }
+
             @Override
             public String get(String key) {
                 return null;
+            }
+
+            @Override
+            public ClientProviderType clientProviderType() {
+                return ClientProviderType.INSIGHTS_AGENT;
             }
         };
 
@@ -991,17 +996,28 @@ class NewRelicMeterRegistryTest {
         assertThat(meterRegistry.config().namingConvention()).isEqualTo(namingConvention2);
         assertThat(((NewRelicInsightsApiClientProvider) meterRegistry.clientProvider).namingConvention).isEqualTo(namingConvention2);
     }
-    
+
+    @SuppressWarnings("deprecation")
+    @Test
+    void builderBuildWhenBothHttpClientAndClientProviderAreSetShouldThrowIllegalStateException() {
+        NewRelicConfig config = key -> null;
+        assertThatIllegalStateException()
+                .isThrownBy(() -> new NewRelicMeterRegistry.Builder(config)
+                        .httpClient(mock(HttpSender.class))
+                        .clientProvider(mock(NewRelicClientProvider.class))
+                        .build());
+    }
+
     static class MockHttpSender implements HttpSender {
-        
+
         private Request request;
-        
+
         @Override
         public Response send(Request request) {
             this.request = request;
             return new Response(200, "body");
         }
-        
+
         public Request getRequest() {
             return request;
         }

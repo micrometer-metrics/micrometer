@@ -1,5 +1,5 @@
 /**
- * Copyright 2017 Pivotal Software, Inc.
+ * Copyright 2017 VMware, Inc.
  * <p>
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -37,6 +37,14 @@ public final class HistogramSnapshot {
     @Nullable
     private final BiConsumer<PrintStream, Double> summaryOutput;
 
+    /**
+     * @param count            Total number of recordings
+     * @param total            In nanos if a unit of time
+     * @param max              In nanos if a unit of time
+     * @param percentileValues Pre-computed percentiles.
+     * @param histogramCounts  Bucket counts.
+     * @param summaryOutput    A function defining how to print the histogram.
+     */
     public HistogramSnapshot(long count, double total, double max,
                              @Nullable ValueAtPercentile[] percentileValues,
                              @Nullable CountAtBucket[] histogramCounts,

@@ -1,5 +1,5 @@
 /**
- * Copyright 2017 Pivotal Software, Inc.
+ * Copyright 2017 VMware, Inc.
  * <p>
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -29,7 +29,7 @@ class DistributionSummaryTest {
         MockClock clock = new MockClock();
         MeterRegistry registry = new SimpleMeterRegistry(SimpleConfig.DEFAULT, clock);
         DistributionSummary summary = DistributionSummary.builder("my.summary")
-                .sla(1.0)
+                .serviceLevelObjectives(1.0)
                 .register(registry);
 
         summary.record(1);
@@ -56,7 +56,7 @@ class DistributionSummaryTest {
         }, clock);
 
         DistributionSummary summary = DistributionSummary.builder("my.summary")
-                .sla(1.0)
+                .serviceLevelObjectives(1.0)
                 .register(registry);
 
         summary.record(1);

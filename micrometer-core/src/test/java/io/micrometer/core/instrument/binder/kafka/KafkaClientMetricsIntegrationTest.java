@@ -1,5 +1,5 @@
 /**
- * Copyright 2020 Pivotal Software, Inc.
+ * Copyright 2020 VMware, Inc.
  * <p>
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,9 +16,6 @@
 package io.micrometer.core.instrument.binder.kafka;
 
 import io.micrometer.core.instrument.simple.SimpleMeterRegistry;
-import java.time.Duration;
-import java.util.Collections;
-import java.util.Properties;
 import org.apache.kafka.clients.consumer.Consumer;
 import org.apache.kafka.clients.consumer.ConsumerConfig;
 import org.apache.kafka.clients.consumer.KafkaConsumer;
@@ -33,6 +30,10 @@ import org.junit.jupiter.api.Test;
 import org.testcontainers.containers.KafkaContainer;
 import org.testcontainers.junit.jupiter.Container;
 import org.testcontainers.junit.jupiter.Testcontainers;
+
+import java.time.Duration;
+import java.util.Collections;
+import java.util.Properties;
 
 import static java.lang.System.out;
 import static org.assertj.core.api.Assertions.assertThat;
@@ -55,7 +56,8 @@ class KafkaClientMetricsIntegrationTest {
         Producer<String, String> producer = new KafkaProducer<>(
                 producerConfigs, new StringSerializer(), new StringSerializer());
 
-        new KafkaClientMetrics(producer).bindTo(registry);
+        KafkaClientMetrics producerKafkaMetrics = new KafkaClientMetrics(producer);
+        producerKafkaMetrics.bindTo(registry);
 
         int producerMetrics = registry.getMeters().size();
         assertThat(registry.getMeters()).hasSizeGreaterThan(0);
@@ -70,7 +72,8 @@ class KafkaClientMetricsIntegrationTest {
         Consumer<String, String> consumer = new KafkaConsumer<>(
                 consumerConfigs, new StringDeserializer(), new StringDeserializer());
 
-        new KafkaClientMetrics(consumer).bindTo(registry);
+        KafkaClientMetrics consumerKafkaMetrics = new KafkaClientMetrics(consumer);
+        consumerKafkaMetrics.bindTo(registry);
 
         //Printing out for discovery purposes
         out.println("Meters from producer before sending:");
@@ -90,6 +93,8 @@ class KafkaClientMetricsIntegrationTest {
         out.println("Meters from producer after sending and consumer before poll:");
         printMeters(registry);
 
+        producerKafkaMetrics.checkAndBindMetrics(registry);
+
         int producerAndConsumerMetricsAfterSend = registry.getMeters().size();
         assertThat(registry.getMeters()).hasSizeGreaterThan(producerAndConsumerMetrics);
         assertThat(registry.getMeters())
@@ -104,6 +109,8 @@ class KafkaClientMetricsIntegrationTest {
         out.println("Meters from producer and consumer after polling:");
         printMeters(registry);
 
+        consumerKafkaMetrics.checkAndBindMetrics(registry);
+
         assertThat(registry.getMeters()).hasSizeGreaterThan(producerAndConsumerMetricsAfterSend);
         assertThat(registry.getMeters())
                 .extracting(m -> m.getId().getTag("kafka-version"))
@@ -112,9 +119,57 @@ class KafkaClientMetricsIntegrationTest {
         //Printing out for discovery purposes
         out.println("All meters from producer and consumer:");
         printMeters(registry);
+
+        producerKafkaMetrics.close();
+        consumerKafkaMetrics.close();
     }
 
-    private void printMeters(SimpleMeterRegistry registry) {
+    @Test void shouldRegisterMetricsFromDifferentClients() {
+        SimpleMeterRegistry registry = new SimpleMeterRegistry();
+
+        assertThat(registry.getMeters()).hasSize(0);
+
+        Properties producer1Configs = new Properties();
+        producer1Configs.put(ProducerConfig.BOOTSTRAP_SERVERS_CONFIG,
+                kafkaContainer.getBootstrapServers());
+        producer1Configs.put(ProducerConfig.CLIENT_ID_CONFIG, "producer1");
+        Producer<String, String> producer1 = new KafkaProducer<>(
+                producer1Configs, new StringSerializer(), new StringSerializer());
+
+        KafkaClientMetrics producer1KafkaMetrics = new KafkaClientMetrics(producer1);
+        producer1KafkaMetrics.bindTo(registry);
+
+        int producer1Metrics = registry.getMeters().size();
+        assertThat(producer1Metrics).isGreaterThan(0);
+
+        producer1.send(new ProducerRecord<>("topic1", "foo"));
+        producer1.flush();
+
+        producer1KafkaMetrics.checkAndBindMetrics(registry);
+
+        int producer1MetricsAfterSend = registry.getMeters().size();
+        assertThat(producer1MetricsAfterSend).isGreaterThan(producer1Metrics);
+
+        Properties producer2Configs = new Properties();
+        producer2Configs.put(ProducerConfig.BOOTSTRAP_SERVERS_CONFIG,
+                kafkaContainer.getBootstrapServers());
+        producer2Configs.put(ProducerConfig.CLIENT_ID_CONFIG, "producer2");
+        Producer<String, String> producer2 = new KafkaProducer<>(
+                producer2Configs, new StringSerializer(), new StringSerializer());
+
+        KafkaClientMetrics producer2KafkaMetrics = new KafkaClientMetrics(producer2);
+        producer2KafkaMetrics.bindTo(registry);
+
+        producer2.send(new ProducerRecord<>("topic1", "foo"));
+        producer2.flush();
+
+        producer2KafkaMetrics.checkAndBindMetrics(registry);
+
+        int producer2MetricsAfterSend = registry.getMeters().size();
+        assertThat(producer2MetricsAfterSend).isEqualTo(producer1MetricsAfterSend * 2);
+    }
+
+    void printMeters(SimpleMeterRegistry registry) {
         registry.getMeters().forEach(meter -> out.println(meter.getId() + " => " + meter.measure()));
     }
 }

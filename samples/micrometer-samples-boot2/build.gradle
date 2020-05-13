@@ -1,15 +1,11 @@
 plugins {
+    id 'java'
     id "io.spring.dependency-management" version "1.0.3.RELEASE"
 }
 
 dependencyManagement {
     imports {
-        mavenBom 'org.springframework.boot:spring-boot-dependencies:2.2.0.RELEASE'
-    }
-    dependencies {
-        // not necessary in real Boot 1.5.x apps because reactor is shaded inside the
-        // published version of micrometer-registry-statsd
-        dependency 'io.projectreactor:reactor-core:3.2.2.RELEASE'
+        mavenBom 'org.springframework.boot:spring-boot-dependencies:2.2.6.RELEASE'
     }
 }
 
@@ -23,8 +19,6 @@ dependencies {
     implementation('org.springframework.boot:spring-boot-starter-actuator') {
         exclude group: 'io.micrometer', module: 'micrometer-core'
     }
-    implementation 'org.springframework.integration:spring-integration-ws'
-    implementation 'org.springframework.integration:spring-integration-xml'
 
     // For running on Java 9+
     runtimeOnly 'javax.xml.soap:javax.xml.soap-api:1.4.0'

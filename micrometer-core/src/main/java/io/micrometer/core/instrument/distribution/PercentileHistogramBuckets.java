@@ -1,5 +1,5 @@
 /**
- * Copyright 2017 Pivotal Software, Inc.
+ * Copyright 2017 VMware, Inc.
  * <p>
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -76,7 +76,7 @@ public class PercentileHistogramBuckets {
      * @return The set of histogram buckets for use in computing aggregable percentiles.
      */
     public static NavigableSet<Double> buckets(DistributionStatisticConfig distributionStatisticConfig) {
-        return PERCENTILE_BUCKETS.subSet(distributionStatisticConfig.getMinimumExpectedValue(), true,
-                distributionStatisticConfig.getMaximumExpectedValue(), true);
+        return PERCENTILE_BUCKETS.subSet(distributionStatisticConfig.getMinimumExpectedValueAsDouble(), true,
+                distributionStatisticConfig.getMaximumExpectedValueAsDouble(), true);
     }
 }

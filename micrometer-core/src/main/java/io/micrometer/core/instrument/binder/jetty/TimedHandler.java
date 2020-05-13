@@ -1,5 +1,5 @@
 /**
- * Copyright 2019 Pivotal Software, Inc.
+ * Copyright 2019 VMware, Inc.
  * <p>
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -58,7 +58,7 @@ public class TimedHandler extends HandlerWrapper implements Graceful {
     private final Shutdown shutdown = new Shutdown() {
         @Override
         protected FutureCallback newShutdownCallback() {
-            return new FutureCallback(openRequests.activeTasks() == 0);
+            return TimedHandler.this.newShutdownCallback();
         }
     };
 
@@ -154,54 +154,7 @@ public class TimedHandler extends HandlerWrapper implements Graceful {
         }
     }
 
-    private final AsyncListener onCompletion = new AsyncListener() {
-        @Override
-        public void onTimeout(AsyncEvent event) {
-            asyncExpires.increment();
-
-            HttpChannelState state = ((AsyncContextEvent) event).getHttpChannelState();
-            Request request = state.getBaseRequest();
-
-            LongTaskTimer.Sample lttSample = (LongTaskTimer.Sample) request.getAttribute(SAMPLE_REQUEST_LONG_TASK_TIMER_ATTRIBUTE);
-            lttSample.stop();
-        }
-
-        @Override
-        public void onStartAsync(AsyncEvent event) {
-            event.getAsyncContext().addListener(this);
-        }
-
-        @Override
-        public void onError(AsyncEvent event) {
-        }
-
-        @Override
-        public void onComplete(AsyncEvent event) {
-            HttpChannelState state = ((AsyncContextEvent) event).getHttpChannelState();
-
-            Request request = state.getBaseRequest();
-            Timer.Sample sample = (Timer.Sample) request.getAttribute(SAMPLE_REQUEST_TIMER_ATTRIBUTE);
-            LongTaskTimer.Sample lttSample = (LongTaskTimer.Sample) request.getAttribute(SAMPLE_REQUEST_LONG_TASK_TIMER_ATTRIBUTE);
-
-            if (sample != null) {
-                sample.stop(Timer.builder("jetty.server.requests")
-                        .description("HTTP requests to the Jetty server")
-                        .tags(tagsProvider.getTags(request, request.getResponse()))
-                        .tags(tags)
-                        .register(registry));
-
-                lttSample.stop();
-            }
-
-            asyncWaits.decrementAndGet();
-
-            // If we have no more dispatches, should we signal shutdown?
-            FutureCallback shutdownCallback = shutdown.get();
-            if (shutdownCallback != null && openRequests.activeTasks() == 0) {
-                shutdownCallback.succeeded();
-            }
-        }
-    };
+    private final AsyncListener onCompletion = new OnCompletionAsyncListener(this);
 
     @Override
     protected void doStart() throws Exception {
@@ -224,4 +177,45 @@ public class TimedHandler extends HandlerWrapper implements Graceful {
     public boolean isShutdown() {
         return shutdown.isShutdown();
     }
+
+    void onAsyncTimeout(AsyncEvent event) {
+        asyncExpires.increment();
+
+        HttpChannelState state = ((AsyncContextEvent) event).getHttpChannelState();
+        Request request = state.getBaseRequest();
+
+        LongTaskTimer.Sample lttSample = (LongTaskTimer.Sample) request.getAttribute(SAMPLE_REQUEST_LONG_TASK_TIMER_ATTRIBUTE);
+        lttSample.stop();
+    }
+
+    void onAsyncComplete(AsyncEvent event) {
+        HttpChannelState state = ((AsyncContextEvent) event).getHttpChannelState();
+
+        Request request = state.getBaseRequest();
+        Timer.Sample sample = (Timer.Sample) request.getAttribute(SAMPLE_REQUEST_TIMER_ATTRIBUTE);
+        LongTaskTimer.Sample lttSample = (LongTaskTimer.Sample) request.getAttribute(SAMPLE_REQUEST_LONG_TASK_TIMER_ATTRIBUTE);
+
+        if (sample != null) {
+            sample.stop(Timer.builder("jetty.server.requests")
+                    .description("HTTP requests to the Jetty server")
+                    .tags(tagsProvider.getTags(request, request.getResponse()))
+                    .tags(tags)
+                    .register(registry));
+
+            lttSample.stop();
+        }
+
+        asyncWaits.decrementAndGet();
+
+        // If we have no more dispatches, should we signal shutdown?
+        FutureCallback shutdownCallback = shutdown.get();
+        if (shutdownCallback != null && openRequests.activeTasks() == 0) {
+            shutdownCallback.succeeded();
+        }
+    }
+
+    private FutureCallback newShutdownCallback() {
+        return new FutureCallback(openRequests.activeTasks() == 0);
+    }
+
 }

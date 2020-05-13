@@ -1,5 +1,5 @@
 /**
- * Copyright 2017 Pivotal Software, Inc.
+ * Copyright 2017 VMware, Inc.
  * <p>
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -137,7 +137,7 @@ public abstract class MeterRegistryCompatibilityKit {
     void removeMeterWithSynthetic(MeterRegistry registry) {
         Timer timer = Timer.builder("my.timer")
                 .publishPercentiles(0.95)
-                .sla(Duration.ofMillis(10))
+                .serviceLevelObjectives(Duration.ofMillis(10))
                 .register(registry);
 
         registry.remove(timer);

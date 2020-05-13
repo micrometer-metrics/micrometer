@@ -1,5 +1,5 @@
 /**
- * Copyright 2017 Pivotal Software, Inc.
+ * Copyright 2017 VMware, Inc.
  * <p>
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -59,7 +59,8 @@ public interface DistributionSummary extends Meter, HistogramSupport {
      * @return The distribution average for all recorded events.
      */
     default double mean() {
-        return count() == 0 ? 0 : totalAmount() / count();
+        long count = count();
+        return count == 0 ? 0 : totalAmount() / count;
     }
 
     /**
@@ -226,30 +227,52 @@ public interface DistributionSummary extends Meter, HistogramSupport {
         }
 
         /**
-         * Publish at a minimum a histogram containing your defined SLA boundaries. When used in conjunction with
-         * {@link Builder#publishPercentileHistogram()}, the boundaries defined here are included alongside
-         * other buckets used to generate aggregable percentile approximations.
+         * Publish at a minimum a histogram containing your defined service level objective (SLO) boundaries.
+         * When used in conjunction with {@link Timer.Builder#publishPercentileHistogram()}, the boundaries defined
+         * here are included alongside other buckets used to generate aggregable percentile approximations.
          *
-         * @deprecated Use {@link #sla(double...)} instead since 1.4.0.
-         * @param sla Publish SLA boundaries in the set of histogram buckets shipped to the monitoring system.
+         * @param sla Publish SLO boundaries in the set of histogram buckets shipped to the monitoring system.
          * @return This builder.
+         * @deprecated Use {{@link #serviceLevelObjectives(double...)}} instead. "Service Level Agreement" is
+         * more formally the agreement between an engineering organization and the business. Service Level Objectives
+         * are set more conservatively than the SLA to provide some wiggle room while still satisfying the business
+         * requirement. SLOs are the threshold we intend to measure against, then.
          */
         @Deprecated
         public Builder sla(@Nullable long... sla) {
-            return sla == null ? this : sla(Arrays.stream(sla).asDoubleStream().toArray());
+            return sla == null ? this : serviceLevelObjectives(Arrays.stream(sla).asDoubleStream().toArray());
         }
 
         /**
-         * Publish at a minimum a histogram containing your defined SLA boundaries. When used in conjunction with
-         * {@link Builder#publishPercentileHistogram()}, the boundaries defined here are included alongside
-         * other buckets used to generate aggregable percentile approximations.
+         * Publish at a minimum a histogram containing your defined service level objective (SLO) boundaries.
+         * When used in conjunction with {@link Timer.Builder#publishPercentileHistogram()}, the boundaries defined
+         * here are included alongside other buckets used to generate aggregable percentile approximations.
          *
-         * @param sla Publish SLA boundaries in the set of histogram buckets shipped to the monitoring system.
+         * @param sla Publish SLO boundaries in the set of histogram buckets shipped to the monitoring system.
          * @return This builder.
          * @since 1.4.0
+         * @deprecated Use {{@link #serviceLevelObjectives(double...)}} instead. "Service Level Agreement" is
+         * more formally the agreement between an engineering organization and the business. Service Level Objectives
+         * are set more conservatively than the SLA to provide some wiggle room while still satisfying the business
+         * requirement. SLOs are the threshold we intend to measure against, then.
          */
+        @Deprecated
         public Builder sla(@Nullable double... sla) {
-            this.distributionConfigBuilder.sla(sla);
+            this.distributionConfigBuilder.serviceLevelObjectives(sla);
+            return this;
+        }
+
+        /**
+         * Publish at a minimum a histogram containing your defined service level objective (SLO) boundaries.
+         * When used in conjunction with {@link Timer.Builder#publishPercentileHistogram()}, the boundaries defined
+         * here are included alongside other buckets used to generate aggregable percentile approximations.
+         *
+         * @param slos Publish SLO boundaries in the set of histogram buckets shipped to the monitoring system.
+         * @return This builder.
+         * @since 1.5.0
+         */
+        public Builder serviceLevelObjectives(@Nullable double... slos) {
+            this.distributionConfigBuilder.serviceLevelObjectives(slos);
             return this;
         }
 

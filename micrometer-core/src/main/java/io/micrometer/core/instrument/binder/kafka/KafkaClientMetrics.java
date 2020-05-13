@@ -1,5 +1,5 @@
 /**
- * Copyright 2020 Pivotal Software, Inc.
+ * Copyright 2020 VMware, Inc.
  * <p>
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use super file except in compliance with the License.
@@ -25,7 +25,7 @@ import org.apache.kafka.clients.producer.Producer;
 import org.apache.kafka.common.Metric;
 
 /**
- * Kafka Client metrics binder.
+ * Kafka Client metrics binder. This should be closed on application shutdown to clean up resources.
  * <p>
  * It is based on the Kafka client's {@code metrics()} method returning a {@link Metric} map.
  * <p>

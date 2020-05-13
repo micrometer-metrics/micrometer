@@ -1,5 +1,5 @@
 /**
- * Copyright 2018 Pivotal Software, Inc.
+ * Copyright 2018 VMware, Inc.
  * <p>
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,8 +15,11 @@
  */
 package io.micrometer.azuremonitor;
 
-import io.micrometer.core.instrument.config.MissingRequiredConfigurationException;
+import io.micrometer.core.instrument.config.validate.Validated;
 import io.micrometer.core.instrument.step.StepRegistryConfig;
+
+import static io.micrometer.core.instrument.config.MeterRegistryConfigValidator.*;
+import static io.micrometer.core.instrument.config.validate.PropertyValidator.getSecret;
 
 /**
  * Configuration for {@link AzureMonitorMeterRegistry}.
@@ -37,9 +40,14 @@ public interface AzureMonitorConfig extends StepRegistryConfig {
      * @return Instrumentation Key
      */
     default String instrumentationKey() {
-        String v = get(prefix() + ".instrumentationKey");
-        if (v == null)
-            throw new MissingRequiredConfigurationException("instrumentationKey must be set to report metrics to Azure Monitor");
-        return v;
+        return getSecret(this, "instrumentationKey").get();
+    }
+
+    @Override
+    default Validated<?> validate() {
+        return checkAll(this,
+                c -> StepRegistryConfig.validate(c),
+                check("instrumentationKey", AzureMonitorConfig::instrumentationKey)
+        );
     }
 }

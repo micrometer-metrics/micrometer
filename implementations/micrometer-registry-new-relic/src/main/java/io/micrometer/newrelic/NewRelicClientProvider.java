@@ -1,5 +1,5 @@
 /**
- * Copyright 2020 Pivotal Software, Inc.
+ * Copyright 2020 VMware, Inc.
  * <p>
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -84,5 +84,11 @@ public interface NewRelicClientProvider {
 
     Object writeMeter(Meter meter);
 
+    /**
+     * Set naming convention.
+     *
+     * @param namingConvention naming convention
+     * @since 1.4.2
+     */
     void setNamingConvention(NamingConvention namingConvention);
 }

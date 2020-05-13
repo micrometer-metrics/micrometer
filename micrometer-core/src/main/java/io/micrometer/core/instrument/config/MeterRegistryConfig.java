@@ -1,5 +1,5 @@
 /**
- * Copyright 2017 Pivotal Software, Inc.
+ * Copyright 2017 VMware, Inc.
  * <p>
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,6 +15,8 @@
  */
 package io.micrometer.core.instrument.config;
 
+import io.micrometer.core.instrument.config.validate.Validated;
+import io.micrometer.core.instrument.config.validate.ValidationException;
 import io.micrometer.core.lang.Nullable;
 
 public interface MeterRegistryConfig {
@@ -28,4 +30,24 @@ public interface MeterRegistryConfig {
      */
     @Nullable
     String get(String key);
+
+    /**
+     * Validate configuration.
+     *
+     * @return validation result
+     * @since 1.5.0
+     */
+    default Validated<?> validate() {
+        return Validated.none();
+    }
+
+    /**
+     * Validate configuration and throw {@link ValidationException} if it's not valid.
+     *
+     * @throws ValidationException if it's not valid
+     * @since 1.5.0
+     */
+    default void requireValid() throws ValidationException {
+        validate().orThrow();
+    }
 }

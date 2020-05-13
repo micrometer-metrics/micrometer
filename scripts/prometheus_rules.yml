@@ -1,8 +1,0 @@
-groups:
-  - name: latency
-    interval: 10s
-    rules:
-    - record: instance:http_server_requests_seconds_count:rate1m
-      expr: sum(rate(http_server_requests_seconds_count[75s])) by (instance)
-    - record: instance:http_server_requests_seconds_sum:rate1m
-      expr: sum(rate(http_server_requests_seconds_sum[75s])) by (instance)

@@ -1,5 +1,5 @@
 /**
- * Copyright 2020 Pivotal Software, Inc.
+ * Copyright 2020 VMware, Inc.
  * <p>
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -25,11 +25,18 @@ import java.time.Duration;
 import java.util.concurrent.atomic.DoubleAdder;
 import java.util.concurrent.atomic.LongAdder;
 
+/**
+ * {@link io.micrometer.core.instrument.DistributionSummary} for OpenTSDB.
+ *
+ * @author Jon Schneider
+ * @author Nikolay Ustinov
+ * @since 1.4.0
+ */
 public class OpenTSDBDistributionSummary extends AbstractDistributionSummary {
     private static final CountAtBucket[] EMPTY_HISTOGRAM = new CountAtBucket[0];
-    private LongAdder count = new LongAdder();
-    private DoubleAdder amount = new DoubleAdder();
-    private TimeWindowMax max;
+    private final LongAdder count = new LongAdder();
+    private final DoubleAdder amount = new DoubleAdder();
+    private final TimeWindowMax max;
 
     @Nullable
     private final Histogram histogram;
@@ -39,7 +46,7 @@ public class OpenTSDBDistributionSummary extends AbstractDistributionSummary {
         super(id, clock,
                 DistributionStatisticConfig.builder()
                         .percentilesHistogram(false)
-                        .sla(new double[0])
+                        .serviceLevelObjectives()
                         .build()
                         .merge(distributionStatisticConfig),
                 scale, false);

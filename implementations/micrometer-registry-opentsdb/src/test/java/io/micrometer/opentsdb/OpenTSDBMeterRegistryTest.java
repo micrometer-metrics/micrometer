@@ -1,5 +1,5 @@
 /**
- * Copyright 2020 Pivotal Software, Inc.
+ * Copyright 2020 VMware, Inc.
  * <p>
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,21 +15,19 @@
  */
 package io.micrometer.opentsdb;
 
+import io.micrometer.core.Issue;
+import io.micrometer.core.instrument.*;
+import org.junit.jupiter.api.Test;
+
+import java.time.Duration;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicReference;
-
-import io.micrometer.core.instrument.FunctionCounter;
-import io.micrometer.core.instrument.Gauge;
-import io.micrometer.core.instrument.MockClock;
-import io.micrometer.core.instrument.Tags;
-import io.micrometer.core.instrument.TimeGauge;
-import org.junit.jupiter.api.Test;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
 class OpenTSDBMeterRegistryTest {
 
-    private final OpenTSDBConfig config = key -> null;
+    private final OpenTSDBConfig config = OpenTSDBConfig.DEFAULT;
     private final MockClock clock = new MockClock();
     private final OpenTSDBMeterRegistry meterRegistry = new OpenTSDBMeterRegistry(config, clock);
 
@@ -104,5 +102,31 @@ class OpenTSDBMeterRegistryTest {
         clock.add(config.step());
         assertThat(meterRegistry.writeFunctionCounter(counter)).isEmpty();
     }
-}
 
+    @Issue("#2060")
+    @Test
+    void histogramBucketsHaveCorrectBaseUnit() {
+        Timer timer = Timer.builder("my.timer")
+                .publishPercentileHistogram()
+                .serviceLevelObjectives(Duration.ofMillis(900), Duration.ofSeconds(1))
+                .register(meterRegistry);
+
+        timer.record(1, TimeUnit.SECONDS);
+        clock.add(config.step());
+
+        assertThat(meterRegistry.writeTimer(timer))
+                .contains("{\"metric\":\"my_timer_duration_seconds_bucket\",\"timestamp\":60001,\"value\":1,\"tags\":{\"le\":\"1.0\"}}")
+                .contains("{\"metric\":\"my_timer_duration_seconds_bucket\",\"timestamp\":60001,\"value\":0,\"tags\":{\"le\":\"0.9\"}}");
+    }
+
+    @Test
+    void longTaskTimer() {
+        LongTaskTimer timer = LongTaskTimer.builder("my.timer").tag("tag", "value").register(meterRegistry);
+        meterRegistry.writeLongTaskTimer(timer).forEach(System.out::println);
+
+        assertThat(meterRegistry.writeLongTaskTimer(timer))
+                .contains("{\"metric\":\"my_timer_duration_seconds_active_count\",\"timestamp\":1,\"value\":0,\"tags\":{\"tag\":\"value\"}}")
+                .contains("{\"metric\":\"my_timer_duration_seconds_duration_sum\",\"timestamp\":1,\"value\":0,\"tags\":{\"tag\":\"value\"}}")
+                .contains("{\"metric\":\"my_timer_duration_seconds_max\",\"timestamp\":1,\"value\":0,\"tags\":{\"tag\":\"value\"}}");
+    }
+}

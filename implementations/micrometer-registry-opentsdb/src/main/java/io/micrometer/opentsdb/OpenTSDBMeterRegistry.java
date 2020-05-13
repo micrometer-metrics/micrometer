@@ -1,5 +1,5 @@
 /**
- * Copyright 2020 Pivotal Software, Inc.
+ * Copyright 2020 VMware, Inc.
  * <p>
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -21,16 +21,16 @@ import io.micrometer.core.instrument.cumulative.CumulativeFunctionCounter;
 import io.micrometer.core.instrument.cumulative.CumulativeFunctionTimer;
 import io.micrometer.core.instrument.distribution.CountAtBucket;
 import io.micrometer.core.instrument.distribution.DistributionStatisticConfig;
+import io.micrometer.core.instrument.distribution.HistogramSnapshot;
 import io.micrometer.core.instrument.distribution.ValueAtPercentile;
 import io.micrometer.core.instrument.distribution.pause.PauseDetector;
 import io.micrometer.core.instrument.internal.DefaultGauge;
-import io.micrometer.core.instrument.internal.DefaultLongTaskTimer;
 import io.micrometer.core.instrument.internal.DefaultMeter;
+import io.micrometer.core.instrument.internal.CumulativeHistogramLongTaskTimer;
 import io.micrometer.core.instrument.push.PushMeterRegistry;
 import io.micrometer.core.instrument.util.DoubleFormat;
 import io.micrometer.core.instrument.util.MeterPartition;
 import io.micrometer.core.instrument.util.NamedThreadFactory;
-import io.micrometer.core.instrument.util.TimeUtils;
 import io.micrometer.core.ipc.http.HttpSender;
 import io.micrometer.core.ipc.http.HttpUrlConnectionSender;
 import io.micrometer.core.lang.Nullable;
@@ -65,10 +65,7 @@ public class OpenTSDBMeterRegistry extends PushMeterRegistry {
     private final HttpSender httpClient;
     private final Logger logger = LoggerFactory.getLogger(OpenTSDBMeterRegistry.class);
 
-    public static Builder builder(OpenTSDBConfig config) {
-        return new Builder(config);
-    }
-
+    @SuppressWarnings("deprecation")
     public OpenTSDBMeterRegistry(OpenTSDBConfig config, Clock clock) {
         this(config, clock, DEFAULT_THREAD_FACTORY, new HttpUrlConnectionSender(config.connectTimeout(), config.readTimeout()));
     }
@@ -82,19 +79,14 @@ public class OpenTSDBMeterRegistry extends PushMeterRegistry {
         start(threadFactory);
     }
 
-    @Override
-    public void start(ThreadFactory threadFactory) {
-        if (config.enabled()) {
-            logger.info("publishing metrics to opentsdb every " + TimeUtils.format(config.step()));
-        }
-        super.start(threadFactory);
+    public static Builder builder(OpenTSDBConfig config) {
+        return new Builder(config);
     }
-
 
     /**
      * Convert a double to its string representation in Go.
      */
-    public static String doubleToGoString(double d) {
+    private static String doubleToGoString(double d) {
         if (d == Double.POSITIVE_INFINITY || d == Double.MAX_VALUE || d == Long.MAX_VALUE) {
             return "+Inf";
         }
@@ -128,8 +120,8 @@ public class OpenTSDBMeterRegistry extends PushMeterRegistry {
     }
 
     @Override
-    protected LongTaskTimer newLongTaskTimer(Meter.Id id) {
-        return new DefaultLongTaskTimer(id, clock);
+    protected LongTaskTimer newLongTaskTimer(Meter.Id id, DistributionStatisticConfig distributionStatisticConfig) {
+        return new CumulativeHistogramLongTaskTimer(id, clock, getBaseTimeUnit(), distributionStatisticConfig);
     }
 
     @Override
@@ -152,7 +144,6 @@ public class OpenTSDBMeterRegistry extends PushMeterRegistry {
         return TimeUnit.SECONDS;
     }
 
-
     @Override
     protected DistributionStatisticConfig defaultHistogramConfig() {
         return DistributionStatisticConfig.builder()
@@ -160,7 +151,6 @@ public class OpenTSDBMeterRegistry extends PushMeterRegistry {
                 .build()
                 .merge(DistributionStatisticConfig.DEFAULT);
     }
-
 
     @Override
     protected void publish() {
@@ -209,7 +199,7 @@ public class OpenTSDBMeterRegistry extends PushMeterRegistry {
         }
 
         if (histogramCounts.length > 0) {
-            metrics.addAll(writeHistogram(wallTime, summary, histogramCounts, count));
+            metrics.addAll(writeHistogram(wallTime, summary, histogramCounts, count, getBaseTimeUnit()));
         }
 
         return metrics.stream();
@@ -222,21 +212,22 @@ public class OpenTSDBMeterRegistry extends PushMeterRegistry {
                 writeMetricWithSuffix(timer.getId(), "count", wallTime, timer.count()),
                 // not applicable
                 //writeMetricWithSuffix(timer.getId(), "avg", wallTime, timer.mean(getBaseTimeUnit())),
-                writeMetricWithSuffix(timer.getId(), "sum", wallTime, timer.totalTime(TimeUnit.SECONDS))
+                writeMetricWithSuffix(timer.getId(), "sum", wallTime, timer.totalTime(getBaseTimeUnit()))
         );
     }
 
     Stream<String> writeTimer(Timer timer) {
         long wallTime = config().clock().wallTime();
 
-        final ValueAtPercentile[] percentileValues = timer.takeSnapshot().percentileValues();
-        final CountAtBucket[] histogramCounts = ((OpenTSDBTimer) timer).histogramCounts();
+        HistogramSnapshot histogramSnapshot = timer.takeSnapshot();
+        final ValueAtPercentile[] percentileValues = histogramSnapshot.percentileValues();
+        final CountAtBucket[] histogramCounts = histogramSnapshot.histogramCounts();
         double count = timer.count();
 
         List<String> metrics = new ArrayList<>();
 
         metrics.add(writeMetricWithSuffix(timer.getId(), "count", wallTime, count));
-        metrics.add(writeMetricWithSuffix(timer.getId(), "sum", wallTime, timer.totalTime(TimeUnit.SECONDS)));
+        metrics.add(writeMetricWithSuffix(timer.getId(), "sum", wallTime, timer.totalTime(getBaseTimeUnit())));
         metrics.add(writeMetricWithSuffix(timer.getId(), "max", wallTime, timer.max(getBaseTimeUnit())));
 
         if (percentileValues.length > 0) {
@@ -244,7 +235,7 @@ public class OpenTSDBMeterRegistry extends PushMeterRegistry {
         }
 
         if (histogramCounts.length > 0) {
-            metrics.addAll(writeHistogram(wallTime, timer, histogramCounts, count));
+            metrics.addAll(writeHistogram(wallTime, timer, histogramCounts, count, getBaseTimeUnit()));
         }
 
         return metrics.stream();
@@ -253,18 +244,20 @@ public class OpenTSDBMeterRegistry extends PushMeterRegistry {
     private List<String> writePercentiles(Meter meter, long wallTime, ValueAtPercentile[] percentileValues) {
         List<String> metrics = new ArrayList<>(percentileValues.length);
 
+        boolean forTimer = meter instanceof Timer;
         // satisfies https://prometheus.io/docs/concepts/metric_types/#summary
         for (ValueAtPercentile v : percentileValues) {
             metrics.add(writeMetric(
                     meter.getId().withTag(new ImmutableTag("quantile", doubleToGoString(v.percentile()))),
                     wallTime,
-                    v.value(TimeUnit.SECONDS)));
+                    (forTimer ? v.value(getBaseTimeUnit()) : v.value())));
         }
 
         return metrics;
     }
 
-    private List<String> writeHistogram(long wallTime, Meter meter, CountAtBucket[] histogramCounts, double count) {
+    private List<String> writeHistogram(long wallTime, Meter meter, CountAtBucket[] histogramCounts, double count,
+                                        @Nullable TimeUnit timeUnit) {
         List<String> metrics = new ArrayList<>(histogramCounts.length);
 
         if (config.flavor() == null) {
@@ -272,7 +265,7 @@ public class OpenTSDBMeterRegistry extends PushMeterRegistry {
             // histogram format to follow
             for (CountAtBucket c : histogramCounts) {
                 metrics.add(writeMetricWithSuffix(
-                        meter.getId().withTag(new ImmutableTag("le", doubleToGoString(c.bucket()))),
+                        meter.getId().withTag(new ImmutableTag("le", doubleToGoString(timeUnit == null ? c.bucket() : c.bucket(timeUnit)))),
                         "bucket",
                         wallTime,
                         c.count()
@@ -290,7 +283,7 @@ public class OpenTSDBMeterRegistry extends PushMeterRegistry {
         else if (OpenTSDBFlavor.VictoriaMetrics.equals(config.flavor())) {
             for (CountAtBucket c : histogramCounts) {
                 metrics.add(writeMetricWithSuffix(
-                        meter.getId().withTag(Tag.of("vmrange", getRangeTagValue(c.bucket()))),
+                        meter.getId().withTag(Tag.of("vmrange", getRangeTagValue(timeUnit == null ? c.bucket() : c.bucket(timeUnit)))),
                         "bucket",
                         wallTime,
                         c.count()
@@ -334,10 +327,27 @@ public class OpenTSDBMeterRegistry extends PushMeterRegistry {
 
     Stream<String> writeLongTaskTimer(LongTaskTimer timer) {
         long wallTime = config().clock().wallTime();
-        return Stream.of(
-                writeMetricWithSuffix(timer.getId(), "active.count", wallTime, timer.activeTasks()),
-                writeMetricWithSuffix(timer.getId(), "duration.sum", wallTime, timer.duration(TimeUnit.SECONDS))
-        );
+
+        HistogramSnapshot histogramSnapshot = timer.takeSnapshot();
+        final ValueAtPercentile[] percentileValues = histogramSnapshot.percentileValues();
+        final CountAtBucket[] histogramCounts = histogramSnapshot.histogramCounts();
+        double count = timer.activeTasks();
+
+        List<String> metrics = new ArrayList<>();
+
+        metrics.add(writeMetricWithSuffix(timer.getId(), "active.count", wallTime, count));
+        metrics.add(writeMetricWithSuffix(timer.getId(), "duration.sum", wallTime, timer.duration(getBaseTimeUnit())));
+        metrics.add(writeMetricWithSuffix(timer.getId(), "max", wallTime, timer.max(getBaseTimeUnit())));
+
+        if (percentileValues.length > 0) {
+            metrics.addAll(writePercentiles(timer, wallTime, percentileValues));
+        }
+
+        if (histogramCounts.length > 0) {
+            metrics.addAll(writeHistogram(wallTime, timer, histogramCounts, count, getBaseTimeUnit()));
+        }
+
+        return metrics.stream();
     }
 
     private Stream<String> writeCustomMetric(Meter meter) {

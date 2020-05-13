@@ -1,5 +1,5 @@
 /**
- * Copyright 2020 Pivotal Software, Inc.
+ * Copyright 2020 VMware, Inc.
  * <p>
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -23,6 +23,7 @@ import io.netty.channel.ChannelOutboundHandlerAdapter;
 import io.netty.channel.ChannelPromise;
 import io.netty.handler.logging.LogLevel;
 import io.netty.handler.logging.LoggingHandler;
+import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.condition.EnabledOnOs;
 import org.junit.jupiter.api.condition.OS;
@@ -45,11 +46,23 @@ import static org.awaitility.Awaitility.await;
 
 /**
  * Tests {@link StatsdMeterRegistry} metrics publishing functionality.
+ *
+ * @author Tommy Ludwig
+ * @author Johnny Lim
  */
 class StatsdMeterRegistryPublishTest {
 
     StatsdMeterRegistry meterRegistry;
+    DisposableChannel server;
     CountDownLatch serverLatch;
+
+    @AfterEach
+    void cleanUp() {
+        meterRegistry.close();
+        if (server != null) {
+            server.disposeNow();
+        }
+    }
 
     @ParameterizedTest
     // test behavior is not stable on at least macOS, so only run on Linux for now
@@ -57,7 +70,7 @@ class StatsdMeterRegistryPublishTest {
     @EnumSource(StatsdProtocol.class)
     void receiveMetricsSuccessfully(StatsdProtocol protocol) throws InterruptedException {
         serverLatch = new CountDownLatch(3);
-        DisposableChannel server = startServer(protocol, 0);
+        server = startServer(protocol, 0);
 
         final int port = server.address().getPort();
 
@@ -68,9 +81,6 @@ class StatsdMeterRegistryPublishTest {
         counter.increment();
         counter.increment();
         assertThat(serverLatch.await(3, TimeUnit.SECONDS)).isTrue();
-        meterRegistry.close();
-
-        server.disposeNow();
     }
 
     @ParameterizedTest
@@ -80,7 +90,7 @@ class StatsdMeterRegistryPublishTest {
     void resumeSendingMetrics_whenServerIntermittentlyFails(StatsdProtocol protocol) throws InterruptedException {
         serverLatch = new CountDownLatch(1);
         AtomicInteger writeCount = new AtomicInteger();
-        DisposableChannel server = startServer(protocol, 0);
+        server = startServer(protocol, 0);
 
         final int port = server.address().getPort();
 
@@ -107,9 +117,6 @@ class StatsdMeterRegistryPublishTest {
         counter.increment(6);
         counter.increment(7);
         assertThat(serverLatch.await(3, TimeUnit.SECONDS)).isTrue();
-
-        meterRegistry.close();
-        server.disposeNow();
     }
 
     @ParameterizedTest
@@ -117,7 +124,7 @@ class StatsdMeterRegistryPublishTest {
     @Issue("#1676")
     void stopAndStartMeterRegistrySendsMetrics(StatsdProtocol protocol) throws InterruptedException {
         serverLatch = new CountDownLatch(3);
-        DisposableChannel server = startServer(protocol, 0);
+        server = startServer(protocol, 0);
 
         final int port = server.address().getPort();
 
@@ -135,9 +142,6 @@ class StatsdMeterRegistryPublishTest {
         counter.increment();
         counter.increment();
         assertThat(serverLatch.await(1, TimeUnit.SECONDS)).isTrue();
-        meterRegistry.close();
-
-        server.disposeNow();
     }
 
     @Test
@@ -155,7 +159,6 @@ class StatsdMeterRegistryPublishTest {
         counter.increment();
         counter.increment();
         assertThat(latch.await(1, TimeUnit.SECONDS)).isTrue();
-        meterRegistry.close();
     }
 
     @ParameterizedTest
@@ -166,7 +169,7 @@ class StatsdMeterRegistryPublishTest {
         AtomicInteger writeCount = new AtomicInteger();
         serverLatch = new CountDownLatch(3);
         // start server to secure an open port
-        DisposableChannel server = startServer(protocol, 0);
+        server = startServer(protocol, 0);
         final int port = server.address().getPort();
         server.disposeNow();
         meterRegistry = new StatsdMeterRegistry(getUnbufferedConfig(protocol, port), Clock.SYSTEM);
@@ -189,8 +192,6 @@ class StatsdMeterRegistryPublishTest {
         counter.increment();
         counter.increment();
         assertThat(serverLatch.await(1, TimeUnit.SECONDS)).isTrue();
-        meterRegistry.close();
-        server.disposeNow();
     }
 
     @ParameterizedTest
@@ -198,7 +199,7 @@ class StatsdMeterRegistryPublishTest {
     void whenRegistryStopped_doNotConnectToBackend(StatsdProtocol protocol) throws InterruptedException {
         serverLatch = new CountDownLatch(3);
         // start server to secure an open port
-        DisposableChannel server = startServer(protocol, 0);
+        server = startServer(protocol, 0);
         final int port = server.address().getPort();
         meterRegistry = new StatsdMeterRegistry(getUnbufferedConfig(protocol, port), Clock.SYSTEM);
         startRegistryAndWaitForClient();

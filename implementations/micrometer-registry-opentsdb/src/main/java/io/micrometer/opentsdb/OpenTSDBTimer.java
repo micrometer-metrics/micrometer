@@ -1,5 +1,5 @@
 /**
- * Copyright 2017 Pivotal Software, Inc.
+ * Copyright 2020 VMware, Inc.
  * <p>
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -26,6 +26,13 @@ import java.time.Duration;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.LongAdder;
 
+/**
+ * {@link io.micrometer.core.instrument.Timer} for OpenTSDB.
+ *
+ * @author Jon Schneider
+ * @author Nikolay Ustinov
+ * @since 1.4.0
+ */
 public class OpenTSDBTimer extends AbstractTimer {
     private static final CountAtBucket[] EMPTY_HISTOGRAM = new CountAtBucket[0];
 
@@ -41,7 +48,7 @@ public class OpenTSDBTimer extends AbstractTimer {
         super(id, clock,
                 DistributionStatisticConfig.builder()
                         .percentilesHistogram(false)
-                        .sla(new double[0])
+                        .serviceLevelObjectives()
                         .build()
                         .merge(distributionStatisticConfig),
                 pauseDetector, TimeUnit.SECONDS, false);
@@ -73,8 +80,9 @@ public class OpenTSDBTimer extends AbstractTimer {
         totalTime.add(nanoAmount);
         max.record(nanoAmount, TimeUnit.NANOSECONDS);
 
-        if (histogram != null)
-            histogram.recordLong(TimeUnit.NANOSECONDS.convert(amount, unit));
+        if (histogram != null) {
+            histogram.recordLong(nanoAmount);
+        }
     }
 
     @Override
@@ -111,8 +119,8 @@ public class OpenTSDBTimer extends AbstractTimer {
         }
 
         return new HistogramSnapshot(snapshot.count(),
-                snapshot.total(TimeUnit.SECONDS),
-                snapshot.max(TimeUnit.SECONDS),
+                snapshot.total(),
+                snapshot.max(),
                 snapshot.percentileValues(),
                 histogramCounts(),
                 snapshot::outputSummary);
