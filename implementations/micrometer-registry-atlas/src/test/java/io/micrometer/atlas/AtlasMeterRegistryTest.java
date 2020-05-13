@@ -16,12 +16,21 @@
 package io.micrometer.atlas;
 
 import com.github.tomakehurst.wiremock.WireMockServer;
+import com.netflix.spectator.api.patterns.PolledMeter;
 import com.netflix.spectator.atlas.AtlasConfig;
+import com.netflix.spectator.atlas.AtlasRegistry;
 import io.micrometer.core.Issue;
 import io.micrometer.core.instrument.Clock;
+import io.micrometer.core.instrument.FunctionCounter;
+import io.micrometer.core.instrument.MockClock;
+import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import ru.lanwen.wiremock.ext.WiremockResolver;
+
+import java.time.Duration;
+import java.util.concurrent.atomic.AtomicLong;
+import java.util.function.Supplier;
 
 import static com.github.tomakehurst.wiremock.client.WireMock.*;
 
@@ -45,5 +54,49 @@ class AtlasMeterRegistryTest {
         server.stubFor(any(anyUrl()));
         new AtlasMeterRegistry(config, Clock.SYSTEM).close();
         server.verify(postRequestedFor(urlEqualTo("/api/v1/publish")));
+    }
+
+    @Test
+    void functionCounter() {
+        AtomicLong count = new AtomicLong();
+
+        MockClock clock = new MockClock();
+        AtlasMeterRegistry registry = new AtlasMeterRegistry(new AtlasConfig() {
+            @Override
+            public String get(String k) {
+                return null;
+            }
+
+            @Override
+            public Duration step() {
+                return Duration.ofMinutes(1);
+            }
+
+            @Override
+            public Duration lwcStep() {
+                return step();
+            }
+        }, clock);
+        FunctionCounter.builder("test", count, AtomicLong::doubleValue).register(registry);
+
+        Supplier<Double> valueSupplier = () -> {
+            AtlasRegistry r = (AtlasRegistry) registry.getSpectatorRegistry();
+            PolledMeter.update(r);
+            clock.add(Duration.ofMinutes(1));
+            return r.measurements()
+                    .filter(m -> m.id().name().equals("test"))
+                    .findFirst()
+                    .get()
+                    .value();
+        };
+
+        count.addAndGet(60);
+        Assertions.assertEquals(1.0, valueSupplier.get());
+
+        count.addAndGet(120);
+        Assertions.assertEquals(2.0, valueSupplier.get());
+
+        count.addAndGet(90);
+        Assertions.assertEquals(1.5, valueSupplier.get());
     }
 }
