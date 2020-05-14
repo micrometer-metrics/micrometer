@@ -111,7 +111,7 @@ class MicrometerPlugin implements Plugin {
                 response.setHeader(EXCEPTION_HEADER, null);
 
                 String uri = app.servlet().getMatcher()
-                        .findEntries(HandlerType.GET, request.getPathInfo())
+                        .findEntries(HandlerType.valueOf(request.getMethod()), request.getPathInfo())
                         .stream()
                         .findAny()
                         .map(HandlerEntry::getPath)
