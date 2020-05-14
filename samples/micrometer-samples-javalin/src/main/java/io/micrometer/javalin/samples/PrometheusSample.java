@@ -27,6 +27,11 @@ import io.micrometer.core.instrument.binder.http.DefaultHttpServletRequestTagsPr
 import io.micrometer.core.instrument.binder.jetty.JettyConnectionMetrics;
 import io.micrometer.core.instrument.binder.jetty.JettyServerThreadPoolMetrics;
 import io.micrometer.core.instrument.binder.jetty.TimedHandler;
+import io.micrometer.core.instrument.binder.jvm.JvmGcMetrics;
+import io.micrometer.core.instrument.binder.jvm.JvmHeapPressureMetrics;
+import io.micrometer.core.instrument.binder.jvm.JvmMemoryMetrics;
+import io.micrometer.core.instrument.binder.system.FileDescriptorMetrics;
+import io.micrometer.core.instrument.binder.system.ProcessorMetrics;
 import io.micrometer.core.instrument.util.StringUtils;
 import io.micrometer.core.lang.NonNull;
 import io.micrometer.prometheus.PrometheusConfig;
@@ -46,7 +51,12 @@ import static io.javalin.apibuilder.ApiBuilder.path;
 public class PrometheusSample {
     public static void main(String[] args) {
         PrometheusMeterRegistry meterRegistry = new PrometheusMeterRegistry(PrometheusConfig.DEFAULT);
-
+        new JvmGcMetrics().bindTo(meterRegistry);
+        new JvmHeapPressureMetrics().bindTo(meterRegistry);
+        new JvmMemoryMetrics().bindTo(meterRegistry);
+        new ProcessorMetrics().bindTo(meterRegistry);
+        new FileDescriptorMetrics().bindTo(meterRegistry);
+        
         Javalin app = Javalin.create(config -> config.registerPlugin(new MicrometerPlugin(meterRegistry))).start(8080);
 
         // must manually delegate to Micrometer exception handler for excepton tags to be correct
