@@ -51,12 +51,17 @@ import static io.javalin.apibuilder.ApiBuilder.path;
 public class PrometheusSample {
     public static void main(String[] args) {
         PrometheusMeterRegistry meterRegistry = new PrometheusMeterRegistry(PrometheusConfig.DEFAULT);
+
+        // add any tags here that will apply to all metrics streaming from this app
+        // (e.g. EC2 region, stack, instance id, server group)
+        meterRegistry.config().commonTags("app", "javalin-sample");
+
         new JvmGcMetrics().bindTo(meterRegistry);
         new JvmHeapPressureMetrics().bindTo(meterRegistry);
         new JvmMemoryMetrics().bindTo(meterRegistry);
         new ProcessorMetrics().bindTo(meterRegistry);
         new FileDescriptorMetrics().bindTo(meterRegistry);
-        
+
         Javalin app = Javalin.create(config -> config.registerPlugin(new MicrometerPlugin(meterRegistry))).start(8080);
 
         // must manually delegate to Micrometer exception handler for excepton tags to be correct
