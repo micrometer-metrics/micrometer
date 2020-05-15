@@ -47,9 +47,9 @@ public class EtsyStatsdLineBuilder extends FlavorStatsdLineBuilder {
     private void updateIfNamingConventionChanged() {
         NamingConvention next = config.namingConvention();
         if (this.namingConvention != next) {
-            this.namingConvention = next;
             this.names = HashTreePMap.empty();
             this.nameNoStat = null;
+            this.namingConvention = next;
         }
     }
 
