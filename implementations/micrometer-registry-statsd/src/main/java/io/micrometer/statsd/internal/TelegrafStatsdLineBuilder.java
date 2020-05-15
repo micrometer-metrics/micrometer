@@ -23,12 +23,9 @@ import io.micrometer.core.lang.Nullable;
 import org.pcollections.HashTreePMap;
 import org.pcollections.PMap;
 
-import java.util.concurrent.atomic.AtomicReferenceFieldUpdater;
 import java.util.stream.Collectors;
 
 public class TelegrafStatsdLineBuilder extends FlavorStatsdLineBuilder {
-    private static final AtomicReferenceFieldUpdater<TelegrafStatsdLineBuilder, NamingConvention> namingConventionUpdater =
-            AtomicReferenceFieldUpdater.newUpdater(TelegrafStatsdLineBuilder.class, NamingConvention.class, "namingConvention");
     private final Object tagsLock = new Object();
     @SuppressWarnings({"NullableProblems", "unused"})
     private volatile NamingConvention namingConvention;
@@ -53,21 +50,20 @@ public class TelegrafStatsdLineBuilder extends FlavorStatsdLineBuilder {
     private void updateIfNamingConventionChanged() {
         NamingConvention next = config.namingConvention();
         if (this.namingConvention != next) {
-            for (; ; ) {
-                if (namingConventionUpdater.compareAndSet(this, this.namingConvention, next))
-                    break;
-            }
-
-            this.name = telegrafEscape(next.name(id.getName(), id.getType(), id.getBaseUnit()));
             synchronized (tagsLock) {
+                if (this.namingConvention == next) {
+                    return;
+                }
                 this.tags = HashTreePMap.empty();
                 this.conventionTags = id.getTagsAsIterable().iterator().hasNext() ?
-                        id.getConventionTags(this.namingConvention).stream()
+                        id.getConventionTags(next).stream()
                                 .map(t -> telegrafEscape(t.getKey()) + "=" + telegrafEscape(t.getValue()))
                                 .collect(Collectors.joining(","))
                         : null;
             }
+            this.name = telegrafEscape(next.name(id.getName(), id.getType(), id.getBaseUnit()));
             this.tagsNoStat = tags(null, conventionTags, "=", ",");
+            this.namingConvention = next;
         }
     }
 
