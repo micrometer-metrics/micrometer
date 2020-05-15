@@ -20,6 +20,7 @@ import io.micrometer.core.instrument.MeterRegistry;
 import io.micrometer.core.instrument.Tag;
 import io.micrometer.core.instrument.Tags;
 import org.jooq.*;
+import org.jooq.Record;
 import org.jooq.conf.Settings;
 import org.jooq.exception.*;
 import org.jooq.impl.DSL;
@@ -43,8 +44,6 @@ import java.util.concurrent.Executor;
 import java.util.function.BiFunction;
 import java.util.function.Function;
 import java.util.stream.Stream;
-
-import static org.jooq.SQLDialect.*;
 
 /**
  * Time SQL queries passing through jOOQ.
