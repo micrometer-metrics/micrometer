@@ -25,10 +25,9 @@ import io.netty.handler.logging.LogLevel;
 import io.netty.handler.logging.LoggingHandler;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.condition.EnabledOnOs;
-import org.junit.jupiter.api.condition.OS;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.EnumSource;
+import reactor.core.Disposable;
 import reactor.core.publisher.Flux;
 import reactor.netty.Connection;
 import reactor.netty.DisposableChannel;
@@ -39,6 +38,7 @@ import java.time.Duration;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.concurrent.atomic.AtomicReference;
 import java.util.stream.IntStream;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -56,6 +56,8 @@ class StatsdMeterRegistryPublishTest {
     DisposableChannel server;
     CountDownLatch serverLatch;
 
+    volatile boolean bound = false;
+
     @AfterEach
     void cleanUp() {
         meterRegistry.close();
@@ -65,8 +67,6 @@ class StatsdMeterRegistryPublishTest {
     }
 
     @ParameterizedTest
-    // test behavior is not stable on at least macOS, so only run on Linux for now
-    @EnabledOnOs(OS.LINUX)
     @EnumSource(StatsdProtocol.class)
     void receiveMetricsSuccessfully(StatsdProtocol protocol) throws InterruptedException {
         serverLatch = new CountDownLatch(3);
@@ -84,8 +84,6 @@ class StatsdMeterRegistryPublishTest {
     }
 
     @ParameterizedTest
-    // test behavior is not stable on at least macOS, so only run on Linux for now
-    @EnabledOnOs(OS.LINUX)
     @EnumSource(StatsdProtocol.class)
     void resumeSendingMetrics_whenServerIntermittentlyFails(StatsdProtocol protocol) throws InterruptedException {
         serverLatch = new CountDownLatch(1);
@@ -100,6 +98,9 @@ class StatsdMeterRegistryPublishTest {
         Counter counter = Counter.builder("my.counter").register(meterRegistry);
         counter.increment(1);
         assertThat(serverLatch.await(5, TimeUnit.SECONDS)).isTrue();
+
+        Disposable firstClient = meterRegistry.client.get();
+
         server.disposeNow();
         serverLatch = new CountDownLatch(3);
         // client will try to send but server is down
@@ -109,10 +110,18 @@ class StatsdMeterRegistryPublishTest {
         }
         server = startServer(protocol, port);
         assertThat(serverLatch.getCount()).isEqualTo(3);
+
+        await().until(() -> bound);
+
+        // Note that this guarantees this test to be passed.
+        // For TCP, this will help trigger replacing client. If this triggered replacing, this change will be lost.
+        // For UDP, the first change seems to be lost frequently somehow.
+        Counter.builder("another.counter").register(meterRegistry).increment();
+
         if (protocol == StatsdProtocol.TCP) {
-            // make sure the TCP client is connected before making counter increments
-            await().until(() -> !clientIsDisposed());
+            await().until(() -> meterRegistry.client.get() != firstClient);
         }
+
         counter.increment(5);
         counter.increment(6);
         counter.increment(7);
@@ -162,8 +171,6 @@ class StatsdMeterRegistryPublishTest {
     }
 
     @ParameterizedTest
-    // test behavior is not stable on at least macOS, so only run on Linux for now
-    @EnabledOnOs(OS.LINUX)
     @EnumSource(StatsdProtocol.class)
     void whenBackendInitiallyDown_metricsSentAfterBackendStarts(StatsdProtocol protocol) throws InterruptedException {
         AtomicInteger writeCount = new AtomicInteger();
@@ -188,6 +195,13 @@ class StatsdMeterRegistryPublishTest {
             await().until(() -> !clientIsDisposed());
         }
         assertThat(serverLatch.getCount()).isEqualTo(3);
+
+        if (protocol == StatsdProtocol.UDP) {
+            // Note that this guarantees this test to be passed.
+            // For UDP, the first change seems to be lost frequently somehow.
+            Counter.builder("another.counter").register(meterRegistry).increment();
+        }
+
         counter.increment();
         counter.increment();
         counter.increment();
@@ -247,9 +261,12 @@ class StatsdMeterRegistryPublishTest {
                                         serverLatch.countDown();
                                         return Flux.never();
                                     }))
-                    .wiretap("udpserver", LogLevel.INFO)
+                    .doOnBound((server) -> bound = true)
+                    .doOnUnbound((server) -> bound = false)
+                    .wiretap(true)
                     .bindNow(Duration.ofSeconds(2));
         } else if (protocol == StatsdProtocol.TCP) {
+            AtomicReference<DisposableChannel> channel = new AtomicReference<>();
             return TcpServer.create()
                     .host("localhost")
                     .port(port)
@@ -257,9 +274,14 @@ class StatsdMeterRegistryPublishTest {
                             in.receive().asString()
                                     .flatMap(packet -> {
                                         IntStream.range(0, packet.split("my.counter").length - 1).forEach(i -> serverLatch.countDown());
-                                        in.withConnection(DisposableChannel::dispose);
+                                        in.withConnection(channel::set);
                                         return Flux.never();
                                     }))
+                    .doOnBound((server) -> bound = true)
+                    .doOnUnbound((server) -> {
+                        bound = false;
+                        channel.get().dispose();
+                    })
                     .wiretap("tcpserver", LogLevel.INFO)
                     .bindNow(Duration.ofSeconds(5));
         } else {
