@@ -15,14 +15,16 @@
  */
 package io.micrometer.core.tck;
 
+import io.micrometer.core.Issue;
 import io.micrometer.core.instrument.MeterRegistry;
 import io.micrometer.core.instrument.Timer;
 import io.micrometer.core.instrument.distribution.DistributionStatisticConfig;
 import io.micrometer.core.instrument.simple.SimpleMeterRegistry;
-
 import org.assertj.core.data.Offset;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.CsvSource;
 
 import java.time.Duration;
 import java.util.concurrent.TimeUnit;
@@ -31,9 +33,7 @@ import java.util.function.Supplier;
 import static io.micrometer.core.instrument.MockClock.clock;
 import static io.micrometer.core.instrument.util.TimeUtils.millisToUnit;
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.junit.jupiter.api.Assertions.assertAll;
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.*;
 
 /**
  * Tests for {@link Timer}
@@ -44,7 +44,31 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
 interface TimerTest {
     Duration step();
 
-    @DisplayName("record throwables")
+    @DisplayName("autocloseable sample")
+    @ParameterizedTest(name = "when outcome is '{0}'")
+    @CsvSource({"success", "error"})
+    @Issue("#1425")
+    default void closeable(String outcome) {
+        MeterRegistry registry = new SimpleMeterRegistry();
+
+        try (Timer.ResourceSample sample = Timer.resource(registry, "requests")
+                .description("This is an operation")
+                .publishPercentileHistogram()) {
+            try {
+                if (outcome.equals("error")) {
+                    throw new IllegalArgumentException("boom");
+                }
+                sample.tag("outcome", "success");
+            } catch (Throwable t) {
+                sample.tag("outcome", "error");
+            }
+        }
+
+        assertThat(registry.get("requests").tag("outcome", outcome).timer().count())
+                .isEqualTo(1);
+    }
+
+    @DisplayName("record callables")
     @Test
     default void recordThrowable() {
         MeterRegistry registry = new SimpleMeterRegistry();
@@ -131,7 +155,7 @@ interface TimerTest {
                     () -> assertEquals(10, t.totalTime(TimeUnit.NANOSECONDS), 1.0e-12));
         }
     }
-    
+
     @Test
     @DisplayName("wrap supplier")
     default void wrapSupplier(MeterRegistry registry) {
