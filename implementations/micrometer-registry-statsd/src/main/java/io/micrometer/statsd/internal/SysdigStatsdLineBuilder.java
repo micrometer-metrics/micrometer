@@ -20,6 +20,7 @@ import io.micrometer.core.instrument.MeterRegistry;
 import io.micrometer.core.instrument.Statistic;
 import io.micrometer.core.instrument.config.NamingConvention;
 import io.micrometer.core.lang.Nullable;
+
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 import java.util.regex.Pattern;
@@ -52,17 +53,17 @@ public class SysdigStatsdLineBuilder extends FlavorStatsdLineBuilder {
     private void updateIfNamingConventionChanged() {
         NamingConvention next = config.namingConvention();
         if (this.namingConvention != next) {
-            this.namingConvention = next;
             this.name = sanitize(next.name(id.getName(), id.getType(), id.getBaseUnit()));
             synchronized (conventionTagsLock) {
                 this.tags.clear();
                 this.conventionTags = id.getTagsAsIterable().iterator().hasNext() ?
-                        id.getConventionTags(this.namingConvention).stream()
+                        id.getConventionTags(next).stream()
                                 .map(t -> sanitize(t.getKey()) + "=" + sanitize(t.getValue()))
                                 .collect(Collectors.joining(","))
                         : null;
             }
             this.tagsNoStat = tags(null, conventionTags, "=", "#");
+            this.namingConvention = next;
         }
     }
 
