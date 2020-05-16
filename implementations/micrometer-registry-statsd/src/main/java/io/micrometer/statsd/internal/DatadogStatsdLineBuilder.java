@@ -20,6 +20,7 @@ import io.micrometer.core.instrument.MeterRegistry;
 import io.micrometer.core.instrument.Statistic;
 import io.micrometer.core.instrument.config.NamingConvention;
 import io.micrometer.core.lang.Nullable;
+
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 import java.util.stream.Collectors;
@@ -49,17 +50,20 @@ public class DatadogStatsdLineBuilder extends FlavorStatsdLineBuilder {
     private void updateIfNamingConventionChanged() {
         NamingConvention next = config.namingConvention();
         if (this.namingConvention != next) {
-            this.namingConvention = next;
-            this.name = next.name(sanitizeName(id.getName()), id.getType(), id.getBaseUnit()) + ":";
             synchronized (conventionTagsLock) {
+                if (this.namingConvention == next) {
+                    return;
+                }
                 this.tags.clear();
                 this.conventionTags = id.getTagsAsIterable().iterator().hasNext() ?
-                        id.getConventionTags(this.namingConvention).stream()
+                        id.getConventionTags(next).stream()
                                 .map(t -> sanitizeName(t.getKey()) + ":" + sanitizeTagValue(t.getValue()))
                                 .collect(Collectors.joining(","))
                         : null;
             }
+            this.name = next.name(sanitizeName(id.getName()), id.getType(), id.getBaseUnit()) + ":";
             this.tagsNoStat = tags(null, conventionTags, ":", "|#");
+            this.namingConvention = next;
         }
     }
 
