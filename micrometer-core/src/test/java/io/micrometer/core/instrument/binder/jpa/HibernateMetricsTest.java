@@ -20,13 +20,17 @@ import io.micrometer.core.instrument.MockClock;
 import io.micrometer.core.instrument.simple.SimpleConfig;
 import io.micrometer.core.instrument.simple.SimpleMeterRegistry;
 import org.hibernate.SessionFactory;
+import org.hibernate.stat.SecondLevelCacheStatistics;
 import org.hibernate.stat.Statistics;
 import org.junit.jupiter.api.Test;
+import org.mockito.stubbing.Answer;
 
 import javax.persistence.EntityManagerFactory;
 import java.util.concurrent.TimeUnit;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
@@ -52,12 +56,12 @@ class HibernateMetricsTest {
 
     private static SessionFactory createMockSessionFactory(boolean statsEnabled) {
         SessionFactory sf = mock(SessionFactory.class);
-        Statistics stats = mock(Statistics.class, invocation -> {
-            if (invocation.getMethod().getName().equals("isStatisticsEnabled")) {
-                return statsEnabled;
-            }
-            return 42L;
-        });
+        final Answer<?> defaultAnswer = inv -> 42L;
+        Statistics stats = mock(Statistics.class, defaultAnswer);
+        SecondLevelCacheStatistics secondLevelCacheStatistics = mock(SecondLevelCacheStatistics.class, defaultAnswer);
+        doReturn(statsEnabled).when(stats).isStatisticsEnabled();
+        doReturn(new String[]{"region1", "region2"}).when(stats).getSecondLevelCacheRegionNames();
+        doReturn(secondLevelCacheStatistics).when(stats).getSecondLevelCacheStatistics(anyString());
         when(sf.getStatistics()).thenReturn(stats);
         return sf;
     }
@@ -89,9 +93,18 @@ class HibernateMetricsTest {
         assertThat(registry.get("hibernate.statements").tags("status", "prepared").functionCounter().count()).isEqualTo(42.0d);
         assertThat(registry.get("hibernate.statements").tags("status", "closed").functionCounter().count()).isEqualTo(42.0d);
 
-        assertThat(registry.get("hibernate.second.level.cache.requests").tags("result", "hit").functionCounter().count()).isEqualTo(42.0d);
-        assertThat(registry.get("hibernate.second.level.cache.requests").tags("result", "miss").functionCounter().count()).isEqualTo(42.0d);
-        assertThat(registry.get("hibernate.second.level.cache.puts").functionCounter().count()).isEqualTo(42.0d);
+        assertThat(registry.get("hibernate.second.level.cache.requests").tags("result", "hit", "region", "region1").functionCounter().count()).isEqualTo(42.0d);
+        assertThat(registry.get("hibernate.second.level.cache.requests").tags("result", "hit", "region", "region2").functionCounter().count()).isEqualTo(42.0d);
+        assertThat(registry.get("hibernate.second.level.cache.requests").tags("result", "miss", "region", "region1").functionCounter().count()).isEqualTo(42.0d);
+        assertThat(registry.get("hibernate.second.level.cache.requests").tags("result", "miss", "region", "region2").functionCounter().count()).isEqualTo(42.0d);
+        assertThat(registry.get("hibernate.second.level.cache.puts").tags("region", "region1").functionCounter().count()).isEqualTo(42.0d);
+        assertThat(registry.get("hibernate.second.level.cache.puts").tags("region", "region2").functionCounter().count()).isEqualTo(42.0d);
+        assertThat(registry.get("hibernate.second.level.cache.elements").tags("store", "memory", "region", "region1").gauge().value()).isEqualTo(42.0d);
+        assertThat(registry.get("hibernate.second.level.cache.elements").tags("store", "memory", "region", "region2").gauge().value()).isEqualTo(42.0d);
+        assertThat(registry.get("hibernate.second.level.cache.elements").tags("store", "disk", "region", "region1").gauge().value()).isEqualTo(42.0d);
+        assertThat(registry.get("hibernate.second.level.cache.elements").tags("store", "disk", "region", "region2").gauge().value()).isEqualTo(42.0d);
+        assertThat(registry.get("hibernate.second.level.cache.size").tags("store", "memory", "region", "region1").gauge().value()).isEqualTo(42.0d);
+        assertThat(registry.get("hibernate.second.level.cache.size").tags("store", "memory", "region", "region2").gauge().value()).isEqualTo(42.0d);
 
         assertThat(registry.get("hibernate.entities.deletes").functionCounter().count()).isEqualTo(42.0d);
         assertThat(registry.get("hibernate.entities.fetches").functionCounter().count()).isEqualTo(42.0d);
