@@ -81,6 +81,7 @@ org.apache.tomcat.embed:tomcat-embed-core:8.5.46
 org.apache.tomcat:tomcat-annotations-api:8.5.46
 org.aspectj:aspectjweaver:1.8.14
 org.assertj:assertj-core:3.13.2
+org.awaitility:awaitility:4.0.2
 org.checkerframework:checker-qual:2.10.0
 org.codehaus.mojo:animal-sniffer-annotations:1.18
 org.dom4j:dom4j:2.1.1

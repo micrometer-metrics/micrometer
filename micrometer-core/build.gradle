@@ -80,6 +80,7 @@ dependencies {
 //    testCompile 'com.google.dagger:dagger-compiler:2.11'
 
     testCompile 'org.assertj:assertj-core:latest.release'
+    testCompile 'org.awaitility:awaitility:latest.release'
 
     testCompile 'org.ehcache:ehcache:latest.release'
 
