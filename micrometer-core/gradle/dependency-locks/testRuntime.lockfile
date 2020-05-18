@@ -99,6 +99,7 @@ org.eclipse.jetty:jetty-xml:9.2.28.v20190418
 org.ehcache:ehcache:3.8.1
 org.glassfish.jaxb:jaxb-runtime:2.3.1
 org.glassfish.jaxb:txw2:2.3.1
+org.hamcrest:hamcrest:2.1
 org.hdrhistogram:HdrHistogram:2.1.11
 org.hibernate.common:hibernate-commons-annotations:5.1.0.Final
 org.hibernate:hibernate-core:5.4.6.Final
