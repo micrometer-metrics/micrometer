@@ -49,6 +49,7 @@ import javax.servlet.http.HttpServletResponse;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.fail;
+import static org.awaitility.Awaitility.await;
 
 
 /**
@@ -245,7 +246,8 @@ class TomcatMetricsTest {
     }
 
     private void checkMbeansAfterRequests(long expectedSentBytes) {
-        assertThat(registry.get("tomcat.global.sent").functionCounter().count()).isEqualTo(expectedSentBytes);
+        await().atMost(5, TimeUnit.SECONDS)
+                .until(() -> registry.get("tomcat.global.sent").functionCounter().count() == expectedSentBytes);
         assertThat(registry.get("tomcat.global.received").functionCounter().count()).isEqualTo(10.0);
         assertThat(registry.get("tomcat.global.error").functionCounter().count()).isEqualTo(1.0);
         assertThat(registry.get("tomcat.global.request").functionTimer().count()).isEqualTo(2.0);

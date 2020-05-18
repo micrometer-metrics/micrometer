@@ -97,6 +97,7 @@ org.apache.tomcat:tomcat-annotations-api:8.5.54
 org.apiguardian:apiguardian-api:1.1.0
 org.aspectj:aspectjweaver:1.8.14
 org.assertj:assertj-core:3.15.0
+org.awaitility:awaitility:4.0.2
 org.checkerframework:checker-qual:3.3.0
 org.conscrypt:conscrypt-openjdk-uber:2.1.0
 org.dom4j:dom4j:2.1.3
