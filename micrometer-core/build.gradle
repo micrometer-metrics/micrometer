@@ -76,6 +76,7 @@ dependencies {
 //    testAnnotationProcessor 'com.google.dagger:dagger-compiler'
 
     testImplementation 'org.assertj:assertj-core'
+    testImplementation 'org.awaitility:awaitility'
 
     testImplementation 'org.ehcache:ehcache'
 
