@@ -66,17 +66,6 @@ class TomcatMetricsTest {
 
     private int port;
 
-    @BeforeEach
-    void setUp() throws IOException {
-        this.port = getAvailablePort();
-    }
-
-    private int getAvailablePort() throws IOException {
-        try (ServerSocket serverSocket = new ServerSocket(0)) {
-            return serverSocket.getLocalPort();
-        }
-    }
-
     @Test
     void managerBasedMetrics() {
         Context context = new StandardContext();
@@ -214,8 +203,10 @@ class TomcatMetricsTest {
             StandardHost host = new StandardHost();
             host.setName("localhost");
             server.setHost(host);
-            server.setPort(this.port);
+            server.setPort(0);
             server.start();
+
+            this.port = server.getConnector().getLocalPort();
 
             Context context = server.addContext("", null);
             server.addServlet("", "servletname", servlet);
