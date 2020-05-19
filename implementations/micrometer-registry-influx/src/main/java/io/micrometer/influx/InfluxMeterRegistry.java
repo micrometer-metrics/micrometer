@@ -34,7 +34,7 @@ import java.util.stream.Stream;
 import static java.util.stream.Collectors.joining;
 
 /**
- * {@link MeterRegistry} for InfluxDB.
+ * {@link MeterRegistry} for InfluxDB; since Micrometer 1.6, this also support the InfluxDB v2.
  *
  * @author Jon Schneider
  * @author Johnny Lim
@@ -45,6 +45,7 @@ public class InfluxMeterRegistry extends StepMeterRegistry {
     private final HttpSender httpClient;
     private final Logger logger = LoggerFactory.getLogger(InfluxMeterRegistry.class);
     private boolean databaseExists = false;
+    private InfluxDBVersion influxDBVersion = null;
 
     @SuppressWarnings("deprecation")
     public InfluxMeterRegistry(InfluxConfig config, Clock clock) {
@@ -101,10 +102,11 @@ public class InfluxMeterRegistry extends StepMeterRegistry {
 
     @Override
     protected void publish() {
+        recognizeInfluxDBVersion();
         createDatabaseIfNecessary();
 
         try {
-            String influxEndpoint = config.uri() + "/write?consistency=" + config.consistency().toString().toLowerCase() + "&precision=ms&db=" + config.db();
+            String influxEndpoint = influxDBVersion.writeEndpoint(config);
             if (StringUtils.isNotBlank(config.retentionPolicy())) {
                 influxEndpoint += "&rp=" + config.retentionPolicy();
             }
@@ -232,6 +234,42 @@ public class InfluxMeterRegistry extends StepMeterRegistry {
                 + " " + clock.wallTime();
     }
 
+    private void recognizeInfluxDBVersion() {
+
+        if (influxDBVersion != null) {
+            return;
+        }
+
+        String uri = config.uri() + "/ping";
+        try {
+            httpClient
+                    .head(uri)
+                    .send()
+                    .onSuccess(response -> {
+                        logger.debug("InfluxDB successfully pinged: '{}'", response.headers());
+                        influxDBVersion = response.headers().entrySet()
+                                .stream()
+                                .filter(entry -> "X-Influxdb-Version".equalsIgnoreCase(entry.getKey()))
+                                .map(entry -> {
+                                    boolean v1 = entry.getValue().stream().anyMatch(value -> value.startsWith("1."));
+                                    return v1 ? InfluxDBVersion.V1 : InfluxDBVersion.V2;
+                                })
+                                .findFirst()
+                                // There is no header "X-Influxdb-Version: 1.X" => use v2 API
+                                .orElse(InfluxDBVersion.V2);
+                        logger.debug("InfluxDB version configured to: '{}'", influxDBVersion);
+                    })
+                    .onError(response -> {
+                        logger.error("unable to ping InfluxDB '{}'. Use v2 API.: {}", uri, response.body());
+                        // Unable ping http://server/ping => use v2 API
+                        influxDBVersion = InfluxDBVersion.V2;
+                    });
+        } catch (Throwable e) {
+            logger.error("unable to ping InfluxDB '{}', Use v1 API.", uri, e);
+            influxDBVersion = InfluxDBVersion.V1;
+        }
+    }
+
     @Override
     protected final TimeUnit getBaseTimeUnit() {
         return TimeUnit.MILLISECONDS;
@@ -289,4 +327,20 @@ public class InfluxMeterRegistry extends StepMeterRegistry {
         }
     }
 
+    private enum InfluxDBVersion {
+        V1 {
+            @Override
+            String writeEndpoint(InfluxConfig config) {
+                return config.uri() + "/write?consistency=" + config.consistency().toString().toLowerCase() + "&precision=ms&db=" + config.db();
+            }
+        },
+        V2 {
+            @Override
+            String writeEndpoint(InfluxConfig config) {
+                return config.uri() + "/api/v2/write?&precision=ms&bucket=" + config.db();
+            }
+        };
+
+        abstract String writeEndpoint(InfluxConfig config);
+    }
 }

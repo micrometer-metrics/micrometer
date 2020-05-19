@@ -24,7 +24,7 @@ import static io.micrometer.core.instrument.config.MeterRegistryConfigValidator.
 import static io.micrometer.core.instrument.config.validate.PropertyValidator.*;
 
 /**
- * Configuration for {@link InfluxMeterRegistry}.
+ * Configuration for {@link InfluxMeterRegistry}; since Micrometer 1.6, this also support the InfluxDB v2.
  *
  * @author Jon Schneider
  */
