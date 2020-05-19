@@ -1,5 +1,5 @@
 /**
- * Copyright 2020 VMware, Inc.
+ * Copyright 2017 VMware, Inc.
  * <p>
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package io.micrometer.opentsdb;
+package io.micrometer.core.instrument.internal;
 
 import io.micrometer.core.instrument.AbstractTimer;
 import io.micrometer.core.instrument.Clock;
@@ -27,13 +27,12 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.LongAdder;
 
 /**
- * {@link io.micrometer.core.instrument.Timer} for OpenTSDB.
+ * {@link io.micrometer.core.instrument.Timer} using cumulative histogram buckets.
  *
  * @author Jon Schneider
- * @author Nikolay Ustinov
- * @since 1.4.0
+ * @since 1.5.2
  */
-public class OpenTSDBTimer extends AbstractTimer {
+public class CumulativeHistogramTimer extends AbstractTimer {
     private static final CountAtBucket[] EMPTY_HISTOGRAM = new CountAtBucket[0];
 
     private final LongAdder count = new LongAdder();
@@ -43,8 +42,7 @@ public class OpenTSDBTimer extends AbstractTimer {
     @Nullable
     private final Histogram histogram;
 
-    OpenTSDBTimer(Id id, Clock clock, DistributionStatisticConfig distributionStatisticConfig, PauseDetector pauseDetector,
-                  @Nullable OpenTSDBFlavor flavor) {
+    public CumulativeHistogramTimer(Id id, Clock clock, DistributionStatisticConfig distributionStatisticConfig, PauseDetector pauseDetector, HistogramFlavor histogramFlavor) {
         super(id, clock,
                 DistributionStatisticConfig.builder()
                         .percentilesHistogram(false)
@@ -56,17 +54,20 @@ public class OpenTSDBTimer extends AbstractTimer {
         this.max = new TimeWindowMax(clock, distributionStatisticConfig);
 
         if (distributionStatisticConfig.isPublishingHistogram()) {
-            if (flavor == null) {
-                histogram = new TimeWindowFixedBoundaryHistogram(clock, DistributionStatisticConfig.builder()
-                        .expiry(Duration.ofDays(1825)) // effectively never roll over
-                        .bufferLength(1)
-                        .build()
-                        .merge(distributionStatisticConfig), true);
-            }
-            else if (OpenTSDBFlavor.VictoriaMetrics.equals(flavor)) {
-                histogram = new FixedBoundaryVictoriaMetricsHistogram();
-            } else {
-                histogram = null;
+            switch (histogramFlavor) {
+                case PROMETHEUS:
+                    histogram = new TimeWindowFixedBoundaryHistogram(clock, DistributionStatisticConfig.builder()
+                            .expiry(Duration.ofDays(1825)) // effectively never roll over
+                            .bufferLength(1)
+                            .build()
+                            .merge(distributionStatisticConfig), true);
+                    break;
+                case VICTORIA_METRICS:
+                    histogram = new FixedBoundaryVictoriaMetricsHistogram();
+                    break;
+                default:
+                    histogram = null;
+                    break;
             }
         } else {
             histogram = null;

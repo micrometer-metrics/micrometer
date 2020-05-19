@@ -24,6 +24,7 @@ import io.micrometer.core.instrument.distribution.DistributionStatisticConfig;
 import io.micrometer.core.instrument.distribution.HistogramSnapshot;
 import io.micrometer.core.instrument.distribution.ValueAtPercentile;
 import io.micrometer.core.instrument.distribution.pause.PauseDetector;
+import io.micrometer.core.instrument.internal.CumulativeHistogramTimer;
 import io.micrometer.core.instrument.internal.DefaultGauge;
 import io.micrometer.core.instrument.internal.DefaultMeter;
 import io.micrometer.core.instrument.internal.CumulativeHistogramLongTaskTimer;
@@ -111,7 +112,20 @@ public class OpenTSDBMeterRegistry extends PushMeterRegistry {
 
     @Override
     protected Timer newTimer(Meter.Id id, DistributionStatisticConfig distributionStatisticConfig, PauseDetector pauseDetector) {
-        return new OpenTSDBTimer(id, clock, distributionStatisticConfig, pauseDetector, config.flavor());
+        return new CumulativeHistogramTimer(id, clock, distributionStatisticConfig, pauseDetector, histogramFlavor(config.flavor()));
+    }
+
+    private io.micrometer.core.instrument.internal.HistogramFlavor histogramFlavor(OpenTSDBFlavor flavor) {
+        if (flavor == null) {
+            return io.micrometer.core.instrument.internal.HistogramFlavor.PROMETHEUS;
+        }
+        switch (flavor) {
+            case VictoriaMetrics:
+                return io.micrometer.core.instrument.internal.HistogramFlavor.VICTORIA_METRICS;
+
+            default:
+                throw new IllegalArgumentException("Unexpected histogram flavor: " + flavor);
+        }
     }
 
     @Override
