@@ -442,4 +442,14 @@ class PrometheusMeterRegistryTest {
         HistogramSnapshot histogramSnapshot = timer.takeSnapshot();
         assertThat(histogramSnapshot.total(TimeUnit.SECONDS)).isEqualTo(1);
     }
+
+    @Test
+    void scrapeWithLongTaskTimer() {
+        LongTaskTimer.builder("my.long.task.timer").register(registry);
+        assertThat(registry.scrape())
+                .contains("my_long_task_timer_duration_seconds_max")
+                .contains("my_long_task_timer_duration_seconds_active_count")
+                .contains("my_long_task_timer_duration_seconds_duration_sum");
+    }
+
 }
