@@ -195,11 +195,8 @@ public class PrometheusMeterRegistry extends MeterRegistry {
     @Override
     protected io.micrometer.core.instrument.Timer newTimer(Meter.Id id, DistributionStatisticConfig distributionStatisticConfig, PauseDetector pauseDetector) {
         PrometheusTimer timer = new PrometheusTimer(id, clock, distributionStatisticConfig, pauseDetector, prometheusConfig.histogramFlavor());
-        applyToCollector(id, (collector) -> {
-            List<String> tagValues = tagValues(id);
-
-            addDistributionStatisticSamples(distributionStatisticConfig, collector, timer, tagValues);
-        });
+        applyToCollector(id, (collector) ->
+                addDistributionStatisticSamples(distributionStatisticConfig, collector, timer, tagValues(id), false));
         return timer;
     }
 
@@ -217,16 +214,8 @@ public class PrometheusMeterRegistry extends MeterRegistry {
     @Override
     protected LongTaskTimer newLongTaskTimer(Meter.Id id, DistributionStatisticConfig distributionStatisticConfig) {
         LongTaskTimer ltt = new CumulativeHistogramLongTaskTimer(id, clock, getBaseTimeUnit(), distributionStatisticConfig);
-        applyToCollector(id, (collector) -> {
-            List<String> tagValues = tagValues(id);
-            collector.add(tagValues, (conventionName, tagKeys) -> Stream.of(new MicrometerCollector.Family(Collector.Type.UNTYPED, conventionName,
-                    new Collector.MetricFamilySamples.Sample(conventionName + "_active_count", tagKeys, tagValues, ltt.activeTasks()),
-                    new Collector.MetricFamilySamples.Sample(conventionName + "_duration_sum", tagKeys, tagValues, ltt.duration(getBaseTimeUnit())),
-                    new Collector.MetricFamilySamples.Sample(conventionName + "_max", tagKeys, tagValues, ltt.max(getBaseTimeUnit()))
-            )));
-
-            addDistributionStatisticSamples(distributionStatisticConfig, collector, ltt, tagValues);
-        });
+        applyToCollector(id, (collector) ->
+                addDistributionStatisticSamples(distributionStatisticConfig, collector, ltt, tagValues(id), true));
         return ltt;
     }
 
@@ -323,7 +312,7 @@ public class PrometheusMeterRegistry extends MeterRegistry {
     }
 
     private void addDistributionStatisticSamples(DistributionStatisticConfig distributionStatisticConfig, MicrometerCollector collector,
-                                                 HistogramSupport histogramSupport, List<String> tagValues) {
+                                                 HistogramSupport histogramSupport, List<String> tagValues, boolean forLongTaskTimer) {
         collector.add(tagValues, (conventionName, tagKeys) -> {
             Stream.Builder<Collector.MetricFamilySamples.Sample> samples = Stream.builder();
 
@@ -388,10 +377,10 @@ public class PrometheusMeterRegistry extends MeterRegistry {
             }
 
             samples.add(new Collector.MetricFamilySamples.Sample(
-                    conventionName + "_count", tagKeys, tagValues, count));
+                    conventionName + (forLongTaskTimer ? "_active_count" : "_count"), tagKeys, tagValues, count));
 
             samples.add(new Collector.MetricFamilySamples.Sample(
-                    conventionName + "_sum", tagKeys, tagValues, histogramSnapshot.total(TimeUnit.SECONDS)));
+                    conventionName + (forLongTaskTimer ? "_duration_sum" : "_sum"), tagKeys, tagValues, histogramSnapshot.total(TimeUnit.SECONDS)));
 
             return Stream.of(new MicrometerCollector.Family(type, conventionName, samples.build()),
                     new MicrometerCollector.Family(Collector.Type.GAUGE, conventionName + "_max", Stream.of(
