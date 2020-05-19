@@ -126,6 +126,18 @@ public interface InfluxConfig extends StepRegistryConfig {
         return getBoolean(this, "autoCreateDb").orElse(true);
     }
 
+    /**
+     * @return Authentication token to authorize API requests. See detail info:
+     * <ul>
+     *     <li><a href="https://docs.influxdata.com/influxdb/v1.8/administration/authentication_and_authorization#3-include-the-token-in-http-requests">InfluxDB v1: Include the token in HTTP requests</a></li>
+     *     <li><a href="https://v2.docs.influxdata.com/v2.0/reference/api/#authentication">InfluxDB v2: Authentication API</a></li>
+     * </ul>
+     */
+    @Nullable
+    default String token() {
+        return getString(this, "token").orElse(null);
+    }
+
     @Override
     default Validated<?> validate() {
         return checkAll(this,

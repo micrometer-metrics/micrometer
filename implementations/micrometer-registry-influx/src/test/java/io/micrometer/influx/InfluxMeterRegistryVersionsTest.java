@@ -20,13 +20,16 @@ import java.util.concurrent.TimeUnit;
 import com.github.tomakehurst.wiremock.WireMockServer;
 import io.micrometer.core.instrument.Counter;
 import io.micrometer.core.instrument.MockClock;
+import io.micrometer.core.instrument.config.validate.ValidationException;
 import io.micrometer.core.lang.Nullable;
+import org.assertj.core.api.Assertions;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import ru.lanwen.wiremock.ext.WiremockResolver;
 
 import static com.github.tomakehurst.wiremock.client.WireMock.aResponse;
 import static com.github.tomakehurst.wiremock.client.WireMock.any;
+import static com.github.tomakehurst.wiremock.client.WireMock.anyUrl;
 import static com.github.tomakehurst.wiremock.client.WireMock.equalTo;
 import static com.github.tomakehurst.wiremock.client.WireMock.headRequestedFor;
 import static com.github.tomakehurst.wiremock.client.WireMock.postRequestedFor;
@@ -100,6 +103,121 @@ public class InfluxMeterRegistryVersionsTest {
                 .withRequestBody(equalTo("my_counter,metric_type=counter value=0 1")));
     }
 
+    @Test
+    void writeToV1Token(@WiremockResolver.Wiremock WireMockServer server) {
+        server.stubFor(any(urlEqualTo("/ping"))
+                .willReturn(aResponse().withStatus(200).withHeader("X-Influxdb-Version", "1.7.10")));
+        server.stubFor(any(urlEqualTo("/write"))
+                .willReturn(aResponse().withStatus(204)));
+
+        publishSimpleStat(server);
+
+        server.verify(headRequestedFor(urlEqualTo("/ping")));
+        server.verify(postRequestedFor(urlEqualTo("/write?consistency=one&precision=ms&db=mydb"))
+                .withRequestBody(equalTo("my_counter,metric_type=counter value=0 1"))
+                .withHeader("Authorization", equalTo("Bearer my-token")));
+    }
+    
+    @Test
+    void writeToV2Token(@WiremockResolver.Wiremock WireMockServer server) {
+        server.stubFor(any(urlEqualTo("/ping"))
+                .willReturn(aResponse().withStatus(200).withHeader("X-Influxdb-Version", "2.0.10")));
+        server.stubFor(any(urlEqualTo("/api/v2/write"))
+                .willReturn(aResponse().withStatus(204)));
+
+        publishSimpleStat(server);
+
+        server.verify(headRequestedFor(urlEqualTo("/ping")));
+        server.verify(postRequestedFor(urlEqualTo("/api/v2/write?&precision=ms&bucket=mydb"))
+                .withRequestBody(equalTo("my_counter,metric_type=counter value=0 1"))
+                .withHeader("Authorization", equalTo("Token my-token")));
+    }
+
+    @Test
+    void writeToV2TokenRequired(@WiremockResolver.Wiremock WireMockServer server) {
+
+        server.stubFor(any(urlEqualTo("/ping"))
+                .willReturn(aResponse().withStatus(200).withHeader("X-Influxdb-Version", "2.0.10")));
+        server.stubFor(any(urlEqualTo("/api/v2/write"))
+                .willReturn(aResponse().withStatus(204)));
+
+        InfluxMeterRegistry registry = new InfluxMeterRegistry(new InfluxConfig() {
+            @Override
+            public String uri() {
+                return server.baseUrl();
+            }
+
+            @Override
+            @Nullable
+            public String get(String key) {
+                return null;
+            }
+
+            @Override
+            public boolean autoCreateDb() {
+                return false;
+            }
+        }, new MockClock());
+
+        Counter.builder("my.counter")
+                .baseUnit(TimeUnit.MICROSECONDS.toString().toLowerCase())
+                .description("metric description")
+                .register(registry)
+                .increment(Math.PI);
+
+        Assertions.assertThatThrownBy(registry::publish)
+                .hasMessage("influx.token was 'null' but it is required")
+                .isInstanceOf(ValidationException.class);
+
+        server.verify(headRequestedFor(urlEqualTo("/ping")));
+        server.verify(0, postRequestedFor(anyUrl()));
+    }
+
+    @Test
+    void writeToV2TokenNotBlank(@WiremockResolver.Wiremock WireMockServer server) {
+
+        server.stubFor(any(urlEqualTo("/ping"))
+                .willReturn(aResponse().withStatus(200).withHeader("X-Influxdb-Version", "2.0.10")));
+        server.stubFor(any(urlEqualTo("/api/v2/write"))
+                .willReturn(aResponse().withStatus(204)));
+
+        InfluxMeterRegistry registry = new InfluxMeterRegistry(new InfluxConfig() {
+            @Override
+            public String uri() {
+                return server.baseUrl();
+            }
+
+            @Override
+            @Nullable
+            public String get(String key) {
+                return null;
+            }
+
+            @Override
+            public boolean autoCreateDb() {
+                return false;
+            }
+
+            @Override
+            public String token() {
+                return "";
+            }
+        }, new MockClock());
+
+        Counter.builder("my.counter")
+                .baseUnit(TimeUnit.MICROSECONDS.toString().toLowerCase())
+                .description("metric description")
+                .register(registry)
+                .increment(Math.PI);
+
+        Assertions.assertThatThrownBy(registry::publish)
+                .hasMessage("influx.token was '' but it cannot be blank")
+                .isInstanceOf(ValidationException.class);
+
+        server.verify(headRequestedFor(urlEqualTo("/ping")));
+        server.verify(0, postRequestedFor(anyUrl()));
+    }
+
     private void publishSimpleStat(@WiremockResolver.Wiremock final WireMockServer server) {
         InfluxMeterRegistry registry = new InfluxMeterRegistry(new InfluxConfig() {
             @Override
@@ -111,6 +229,11 @@ public class InfluxMeterRegistryVersionsTest {
             @Nullable
             public String get(String key) {
                 return null;
+            }
+
+            @Override
+            public String token() {
+                return "my-token";
             }
         }, new MockClock());
 

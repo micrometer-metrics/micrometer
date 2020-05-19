@@ -16,7 +16,9 @@
 package io.micrometer.influx;
 
 import io.micrometer.core.instrument.*;
+import io.micrometer.core.instrument.config.validate.Validated;
 import io.micrometer.core.instrument.step.StepMeterRegistry;
+import io.micrometer.core.instrument.step.StepRegistryConfig;
 import io.micrometer.core.instrument.util.*;
 import io.micrometer.core.ipc.http.HttpSender;
 import io.micrometer.core.ipc.http.HttpUrlConnectionSender;
@@ -31,6 +33,8 @@ import java.util.concurrent.ThreadFactory;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Stream;
 
+import static io.micrometer.core.instrument.config.MeterRegistryConfigValidator.checkAll;
+import static io.micrometer.core.instrument.config.MeterRegistryConfigValidator.checkRequired;
 import static java.util.stream.Collectors.joining;
 
 /**
@@ -112,8 +116,11 @@ public class InfluxMeterRegistry extends StepMeterRegistry {
             }
 
             for (List<Meter> batch : MeterPartition.partition(this, config.batchSize())) {
-                httpClient.post(influxEndpoint)
-                        .withBasicAuthentication(config.userName(), config.password())
+                HttpSender.Request.Builder requestBuilder = httpClient
+                        .post(influxEndpoint)
+                        .withBasicAuthentication(config.userName(), config.password());
+                influxDBVersion.addHeaderToken(config, requestBuilder);
+                requestBuilder
                         .withPlainText(batch.stream()
                                 .flatMap(m -> m.match(
                                         gauge -> writeGauge(gauge.getId(), gauge.value()),
@@ -268,6 +275,13 @@ public class InfluxMeterRegistry extends StepMeterRegistry {
             logger.error("unable to ping InfluxDB '{}', Use v1 API.", uri, e);
             influxDBVersion = InfluxDBVersion.V1;
         }
+
+        if (influxDBVersion.equals(InfluxDBVersion.V2)) {
+            checkAll(config,
+                    c -> StepRegistryConfig.validate(c),
+                    checkRequired("token", InfluxConfig::token).andThen(Validated::nonBlank))
+                    .orThrow();
+        }
     }
 
     @Override
@@ -333,14 +347,30 @@ public class InfluxMeterRegistry extends StepMeterRegistry {
             String writeEndpoint(InfluxConfig config) {
                 return config.uri() + "/write?consistency=" + config.consistency().toString().toLowerCase() + "&precision=ms&db=" + config.db();
             }
+
+            @Override
+            void addHeaderToken(final InfluxConfig config, final HttpSender.Request.Builder requestBuilder) {
+                if (config.token() != null) {
+                    requestBuilder.withHeader("Authorization", "Bearer " + config.token());
+                }
+            }
         },
         V2 {
             @Override
             String writeEndpoint(InfluxConfig config) {
                 return config.uri() + "/api/v2/write?&precision=ms&bucket=" + config.db();
             }
+
+            @Override
+            void addHeaderToken(final InfluxConfig config, final HttpSender.Request.Builder requestBuilder) {
+                if (config.token() != null) {
+                    requestBuilder.withHeader("Authorization", "Token " + config.token());
+                }
+            }
         };
 
         abstract String writeEndpoint(InfluxConfig config);
+
+        abstract void addHeaderToken(final InfluxConfig config, final HttpSender.Request.Builder requestBuilder);
     }
 }
