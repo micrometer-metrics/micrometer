@@ -32,6 +32,12 @@ import java.time.Duration;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.Enumeration;
+import java.util.HashSet;
+import java.util.List;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 
@@ -61,7 +67,6 @@ class PrometheusMeterRegistryTest {
     void baseUnitMakesItToScrape() {
         AtomicInteger n = new AtomicInteger(0);
         Gauge.builder("gauge", n, AtomicInteger::get).tags("a", "b").baseUnit(BaseUnits.BYTES).register(registry);
-        assertThat(prometheusRegistry).extracting("namesToCollectors").extracting("gauge_bytes").isNotNull();
         assertThat(registry.scrape()).contains("gauge_bytes");
     }
 
@@ -426,9 +431,96 @@ class PrometheusMeterRegistryTest {
 
     @Issue("#1883")
     @Test
-    void canFilterCollectorRegistryByName() {
+    void namesToCollectors() {
+        AtomicInteger n = new AtomicInteger(0);
+        Gauge.builder("gauge", n, AtomicInteger::get).tags("a", "b").baseUnit(BaseUnits.BYTES).register(registry);
+        assertThat(prometheusRegistry).extracting("namesToCollectors").extracting("gauge_bytes").isNotNull();
+    }
+
+    @Issue("#1883")
+    @Test
+    void filteredMetricFamilySamplesWithCounter() {
+        String[] names = { "my_count_total" };
+
         Counter.builder("my.count").register(registry);
-        assertThat(registry.getPrometheusRegistry().filteredMetricFamilySamples(Collections.singleton("my_count_total")).hasMoreElements()).isTrue();
+        assertFilteredMetricFamilySamples(names, names);
+    }
+
+    private void assertFilteredMetricFamilySamples(String[] includedNames, String[] expectedNames) {
+        Enumeration<Collector.MetricFamilySamples> metricFamilySamples = registry.getPrometheusRegistry()
+                .filteredMetricFamilySamples(new HashSet<>(Arrays.asList(includedNames)));
+        String[] names = Collections.list(metricFamilySamples).stream()
+                .flatMap(metricFamilySample -> metricFamilySample.samples.stream()).map(sample -> sample.name)
+                .toArray(String[]::new);
+        assertThat(names).containsExactlyInAnyOrder(expectedNames);
+    }
+
+    @Issue("#1883")
+    @Test
+    void filteredMetricFamilySamplesWithGauge() {
+        String[] names = { "my_gauge" };
+
+        Gauge.builder("my.gauge", () -> 1d).register(registry);
+        assertFilteredMetricFamilySamples(names, names);
+    }
+
+    @Issue("#1883")
+    @Test
+    void filteredMetricFamilySamplesWithTimer() {
+        String[] names = {
+                "my_timer_duration_seconds_count",
+                "my_timer_duration_seconds_sum",
+                "my_timer_duration_seconds_max" };
+
+        Timer.builder("my.timer").register(registry);
+        assertFilteredMetricFamilySamples(names, names);
+    }
+
+    @Issue("#1883")
+    @Test
+    void filteredMetricFamilySamplesWithLongTaskTimer() {
+        String[] includedNames = {
+                "my_long_task_timer_duration_seconds",
+                "my_long_task_timer_duration_seconds_max",
+                "my_long_task_timer_duration_seconds_active_count",
+                "my_long_task_timer_duration_seconds_duration_sum" };
+        String[] expectedNames = {
+                "my_long_task_timer_duration_seconds_max",
+                "my_long_task_timer_duration_seconds_active_count",
+                "my_long_task_timer_duration_seconds_duration_sum" };
+
+        LongTaskTimer.builder("my.long.task.timer").register(registry);
+        assertFilteredMetricFamilySamples(includedNames, expectedNames);
+    }
+
+    @Issue("#1883")
+    @Test
+    void filteredMetricFamilySamplesWithDistributionSummary() {
+        String[] names = {
+                "my_distribution_summary_count",
+                "my_distribution_summary_sum",
+                "my_distribution_summary_max" };
+
+        DistributionSummary.builder("my.distribution.summary").register(registry);
+        assertFilteredMetricFamilySamples(names, names);
+    }
+
+    @Issue("#1883")
+    @Test
+    void filteredMetricFamilySamplesWithCustomMeter() {
+        String[] includedNames = {
+                "my_custom_meter",
+                "my_custom_meter_sum",
+                "my_custom_meter_max" };
+        String[] expectedNames = {
+                "my_custom_meter_sum",
+                "my_custom_meter_max" };
+
+        List<Measurement> measurements = Arrays.asList(
+                new Measurement(() -> 1d, Statistic.TOTAL),
+                new Measurement(() -> 1d, Statistic.MAX));
+        Meter.builder("my.custom.meter", Meter.Type.OTHER, measurements).register(registry);
+        assertFilteredMetricFamilySamples(includedNames, expectedNames);
     }
 
     @Issue("#2060")
@@ -450,6 +542,33 @@ class PrometheusMeterRegistryTest {
                 .contains("my_long_task_timer_duration_seconds_max")
                 .contains("my_long_task_timer_duration_seconds_active_count")
                 .contains("my_long_task_timer_duration_seconds_duration_sum");
+    }
+
+    @Issue("#2087")
+    @Test
+    void meterTriggeringAnotherMeterWhenCollectingValue() {
+        ExecutorService executorService = Executors.newSingleThreadExecutor();
+
+        Gauge.builder("my.gauge", () -> {
+            Future<?> future = executorService.submit(() -> {
+                Gauge.builder("another.gauge", () -> 2d).register(registry);
+            });
+
+            try {
+                future.get();
+            } catch (InterruptedException ex) {
+                Thread.currentThread().interrupt();
+                throw new RuntimeException(ex);
+            } catch (ExecutionException ex) {
+                throw new RuntimeException(ex);
+            }
+            return 1d;
+        }).register(registry);
+
+        assertThat(registry.get("my.gauge").gauge().value()).isEqualTo(1d);
+        assertThat(registry.get("another.gauge").gauge().value()).isEqualTo(2d);
+
+        executorService.shutdownNow();
     }
 
 }
