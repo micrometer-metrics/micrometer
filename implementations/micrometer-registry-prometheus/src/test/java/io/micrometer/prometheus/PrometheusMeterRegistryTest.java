@@ -66,7 +66,7 @@ class PrometheusMeterRegistryTest {
     @Test
     void meterRegistrationFailedListenerCalledOnSameNameDifferentTags() throws InterruptedException {
         CountDownLatch failedLatch = new CountDownLatch(1);
-        registry.config().onMeterRegistrationFailed(id -> failedLatch.countDown());
+        registry.config().onMeterRegistrationFailed((id, reason) -> failedLatch.countDown());
         registry.counter("my.counter");
         registry.counter("my.counter", "k", "v").increment();
 

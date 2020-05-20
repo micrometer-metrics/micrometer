@@ -50,6 +50,7 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.function.BiConsumer;
 import java.util.function.BiFunction;
 import java.util.function.Consumer;
 import java.util.function.Function;
@@ -79,7 +80,7 @@ public abstract class MeterRegistry {
     private volatile MeterFilter[] filters = new MeterFilter[0];
     private final List<Consumer<Meter>> meterAddedListeners = new CopyOnWriteArrayList<>();
     private final List<Consumer<Meter>> meterRemovedListeners = new CopyOnWriteArrayList<>();
-    private final List<Consumer<Meter.Id>> meterRegistrationFailedListeners = new CopyOnWriteArrayList<>();
+    private final List<BiConsumer<Meter.Id, String>> meterRegistrationFailedListeners = new CopyOnWriteArrayList<>();
     private final Config config = new Config();
     private final More more = new More();
 
@@ -758,8 +759,15 @@ public abstract class MeterRegistry {
             return this;
         }
 
+        /**
+         * Register an event listener for meter registration failures.
+         *
+         * @param meterRegistrationFailedListener An event listener for meter registration failures
+         * @return This configuration instance
+         * @since 1.6.0
+         */
         @Incubating(since = "1.6.0")
-        public Config onMeterRegistrationFailed(Consumer<Meter.Id> meterRegistrationFailedListener) {
+        public Config onMeterRegistrationFailed(BiConsumer<Id, String> meterRegistrationFailedListener) {
             meterRegistrationFailedListeners.add(meterRegistrationFailedListener);
             return this;
         }
@@ -988,12 +996,15 @@ public abstract class MeterRegistry {
     }
 
     /**
+     * Handle a meter registration failure.
+     *
      * @param id The id that was attempted, but for which registration failed.
+     * @param reason The reason why the meter registration has failed
      * @since 1.6.0
      */
-    protected void meterRegistrationFailed(Meter.Id id) {
-        for (Consumer<Id> listener : meterRegistrationFailedListeners) {
-            listener.accept(id);
+    protected void meterRegistrationFailed(Meter.Id id, @Nullable String reason) {
+        for (BiConsumer<Id, String> listener : meterRegistrationFailedListeners) {
+            listener.accept(id, reason);
         }
     }
 }

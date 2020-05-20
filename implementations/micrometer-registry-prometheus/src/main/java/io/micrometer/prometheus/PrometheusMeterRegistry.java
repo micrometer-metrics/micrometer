@@ -36,6 +36,7 @@ import java.util.List;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.TimeUnit;
+import java.util.function.BiConsumer;
 import java.util.function.Consumer;
 import java.util.function.ToDoubleFunction;
 import java.util.function.ToLongFunction;
@@ -414,7 +415,10 @@ public class PrometheusMeterRegistry extends MeterRegistry {
                 return existingCollector;
             }
 
-            meterRegistrationFailed(id);
+            meterRegistrationFailed(id, "Prometheus requires that all meters with the same name have the same" +
+                    " set of tag keys. There is already an existing meter named '" + id.getName() + "' containing tag keys [" +
+                    String.join(", ", collectorMap.get(getConventionName(id)).getTagKeys()) + "]. The meter you are attempting to register" +
+                    " has keys [" + getConventionTags(id).stream().map(Tag::getKey).collect(joining(", ")) + "].");
             return null;
         });
     }
@@ -428,17 +432,15 @@ public class PrometheusMeterRegistry extends MeterRegistry {
     }
 
     /**
-     * For use with {@link MeterRegistry.Config#onMeterRegistrationFailed(Consumer)} when you want meters with the same name
+     * For use with {@link MeterRegistry.Config#onMeterRegistrationFailed(BiConsumer)} when you want meters with the same name
      * but different tags to cause an unchecked exception.
      *
+     * @return This registry
      * @since 1.6.0
      */
     public PrometheusMeterRegistry throwExceptionOnRegistrationFailure() {
-        config().onMeterRegistrationFailed(id -> {
-            throw new IllegalArgumentException("Prometheus requires that all meters with the same name have the same" +
-                    " set of tag keys. There is already an existing meter named '" + id.getName() + "' containing tag keys [" +
-                    String.join(", ", collectorMap.get(getConventionName(id)).getTagKeys()) + "]. The meter you are attempting to register" +
-                    " has keys [" + getConventionTags(id).stream().map(Tag::getKey).collect(joining(", ")) + "].");
+        config().onMeterRegistrationFailed((id, reason) -> {
+            throw new IllegalArgumentException(reason);
         });
 
         return this;
