@@ -15,8 +15,10 @@
  */
 package io.micrometer.influx;
 
+import io.micrometer.core.instrument.config.validate.InvalidReason;
 import io.micrometer.core.instrument.config.validate.Validated;
 import io.micrometer.core.instrument.step.StepRegistryConfig;
+import io.micrometer.core.instrument.util.StringUtils;
 import io.micrometer.core.lang.Nullable;
 
 import static io.micrometer.core.instrument.config.MeterRegistryConfigValidator.checkAll;
@@ -127,6 +129,38 @@ public interface InfluxConfig extends StepRegistryConfig {
     }
 
     /**
+     * Specifies the destination organization for writes. Takes either the ID or Name interchangeably.
+     * See detail info: <a href="https://v2.docs.influxdata.com/v2.0/organizations/view-orgs/">How to retrieve the <i>org</i> parameter in the InfluxDB UI.</a>
+     * @return The destination organization for writes.
+     * @since 1.6
+     */
+    @Nullable
+    default String org() {
+        return getString(this, "org").orElse(null);
+    }
+
+    /**
+     * Specifies the destination bucket for writes. Takes either the ID or Name interchangeably.
+     * See detail info: <a href="https://v2.docs.influxdata.com/v2.0/organizations/buckets/view-buckets/">How to retrieve the <i>bucket</i> parameter in the InfluxDB UI.</a>
+     * @return The destination organization for writes.
+     * @since 1.6
+     */
+    default String bucket() {
+        return getString(this, "bucket").flatMap((bucket, valid) -> {
+            if (StringUtils.isNotBlank(bucket)) {
+                return Validated.valid(valid.getProperty(), bucket);
+            }
+
+            String db = db();
+            if (StringUtils.isNotBlank(db)) {
+                return Validated.valid(valid.getProperty(), db);
+            }
+
+            return Validated.invalid(valid.getProperty(), bucket, "db or bucket should be specified", InvalidReason.MISSING);
+        }).get();
+    }
+
+    /**
      * See detail info for the InfluxDB v1 and InfluxDB v2:
      * <ul>
      *     <li><a href="https://docs.influxdata.com/influxdb/v1.8/administration/authentication_and_authorization#3-include-the-token-in-http-requests">InfluxDB v1: Include the token in HTTP requests</a></li>
@@ -140,22 +174,12 @@ public interface InfluxConfig extends StepRegistryConfig {
         return getString(this, "token").orElse(null);
     }
 
-    /**
-     * Specifies the destination organization for writes. Takes either the ID or Name interchangeably.
-     * See detail info: <a href="https://v2.docs.influxdata.com/v2.0/organizations/view-orgs/">How to retrieve the <i>org</i> parameter in the InfluxDB UI.</a>
-     * @return The destination organization for writes.
-     * @since 1.6
-     */
-    @Nullable
-    default String org() {
-        return getString(this, "org").orElse(null);
-    }
-
     @Override
     default Validated<?> validate() {
         return checkAll(this,
                 c -> StepRegistryConfig.validate(c),
                 checkRequired("db", InfluxConfig::db),
+                checkRequired("bucket", InfluxConfig::bucket),
                 checkRequired("consistency", InfluxConfig::consistency),
                 checkRequired("uri", InfluxConfig::uri)
         );

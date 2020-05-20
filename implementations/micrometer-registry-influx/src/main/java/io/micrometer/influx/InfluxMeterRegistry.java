@@ -360,7 +360,7 @@ public class InfluxMeterRegistry extends StepMeterRegistry {
         V2 {
             @Override
             String writeEndpoint(InfluxConfig config) throws UnsupportedEncodingException {
-                return config.uri() + "/api/v2/write?&precision=ms&bucket=" + config.db() + "&org=" + URLEncoder.encode(config.org(), "UTF-8");
+                return config.uri() + "/api/v2/write?&precision=ms&bucket=" + URLEncoder.encode(config.bucket(), "UTF-8") + "&org=" + URLEncoder.encode(config.org(), "UTF-8");
             }
 
             @Override
