@@ -148,16 +148,14 @@ public class CommonsObjectPool2Metrics implements MeterBinder, AutoCloseable {
         try {
             Set<ObjectName> objs =
                     mBeanServer.queryNames(new ObjectName(JMX_DOMAIN + ":type=" + type + ",*"), null);
-            if (!objs.isEmpty()) {
-                for (ObjectName o : objs) {
-                    Iterable<Tag> nameTags = emptyList();
-                    try {
-                        nameTags = nameTag(o, type);
-                    } catch (Exception e) {
-                        log.error("exception in determining name tag", e);
-                    }
-                    perObject.accept(o, Tags.concat(tags, nameTags));
+            for (ObjectName o : objs) {
+                Iterable<Tag> nameTags = emptyList();
+                try {
+                    nameTags = nameTag(o, type);
+                } catch (Exception e) {
+                    log.error("exception in determining name tag", e);
                 }
+                perObject.accept(o, Tags.concat(tags, nameTags));
             }
         } catch (MalformedObjectNameException e) {
             throw new RuntimeException("Error registering commons pool2 based metrics", e);
