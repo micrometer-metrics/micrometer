@@ -300,7 +300,7 @@ public interface HttpSender {
             this(code, body, null);
         }
 
-        public Response(int code, @Nullable String body, @Nullable  final Map<String, List<String>> headers) {
+        public Response(int code, @Nullable String body, @Nullable final Map<String, List<String>> headers) {
             this.code = code;
             this.body = StringUtils.isBlank(body) ? NO_RESPONSE_BODY : body;
             this.headers = headers == null ? NO_RESPONSE_HEADERS : headers;

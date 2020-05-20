@@ -19,6 +19,7 @@ import com.github.tomakehurst.wiremock.WireMockServer;
 import com.github.tomakehurst.wiremock.client.BasicCredentials;
 import com.github.tomakehurst.wiremock.client.WireMock;
 import com.github.tomakehurst.wiremock.matching.MatchResult;
+import org.assertj.core.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -161,4 +162,27 @@ public abstract class HttpSenderCompatibilityKit {
                 .withHeader("customHeader", equalTo("customHeaderValue")));
     }
 
+    @ParameterizedTest
+    @EnumSource(HttpSender.Method.class)
+    void  successfulRequestReceivedWithHeaders(HttpSender.Method method, @WiremockResolver.Wiremock WireMockServer server) throws Throwable {
+        server.stubFor(any(urlEqualTo("/metrics"))
+                .willReturn(ok().withHeader("responseHeader","responseHeaderValue")));
+
+        HttpSender.Response response = httpSender.newRequest(server.baseUrl() + "/metrics")
+                .withMethod(method)
+                .send();
+
+        assertThat(response.code()).isEqualTo(200);
+        assertThat(response.body()).isEqualTo(HttpSender.Response.NO_RESPONSE_BODY);
+        assertThat(response.headers()).isNotEmpty();
+        assertThat(response.headers())
+                .hasEntrySatisfying("responseHeader",
+                        value -> Assertions.assertThat(value).containsExactly("responseHeaderValue"));
+
+        server.verify(WireMock.requestMadeFor(request ->
+                MatchResult.aggregate(
+                        MatchResult.of(request.getMethod().getName().equals(method.name())),
+                        MatchResult.of(request.getUrl().equals("/metrics"))
+                )));
+    }
 }

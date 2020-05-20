@@ -15,10 +15,14 @@
  */
 package io.micrometer.core.ipc.http;
 
+import java.util.List;
+import java.util.Map;
+import java.util.stream.Collectors;
+
+import io.netty.handler.codec.http.HttpHeaders;
 import io.netty.handler.codec.http.HttpMethod;
 import reactor.core.publisher.Mono;
 import reactor.netty.http.client.HttpClient;
-import reactor.util.function.Tuple2;
 
 /**
  * {@link HttpSender} implementation based on the Reactor Netty {@link HttpClient}.
@@ -39,17 +43,23 @@ public class ReactorNettySender implements HttpSender {
 
     @Override
     public Response send(Request request) {
-        Tuple2<Integer, String> response = httpClient
+        Response response = httpClient
                 .request(toNettyHttpMethod(request.getMethod()))
                 .uri(request.getUrl().toString())
                 .send((httpClientRequest, nettyOutbound) -> {
                     request.getRequestHeaders().forEach(httpClientRequest::addHeader);
                     return nettyOutbound.sendByteArray(Mono.just(request.getEntity()));
                 })
-                .responseSingle((r, body) -> Mono.just(r.status().code()).zipWith(body.asString().defaultIfEmpty("")))
+                .responseSingle((r, body) -> Mono.just(r).zipWith(body.asString().defaultIfEmpty("")))
+                .map(r -> {
+                    HttpHeaders responseHeaders = r.getT1().responseHeaders();
+                    Map<String, List<String>> headers = responseHeaders.names().stream()
+                            .collect(Collectors.toMap(it -> it, responseHeaders::getAll));
+                    return new Response(r.getT1().status().code(), r.getT2(), headers);
+                })
                 .block();
 
-        return new Response(response.getT1(), response.getT2());
+        return response;
     }
 
     private HttpMethod toNettyHttpMethod(Method method) {
