@@ -92,6 +92,12 @@ public final class BaseUnits {
      */
     public static final String PERCENT = "percent";
 
+    /**
+     * For objects.
+     * @since 1.6.0
+     */
+    public static final String OBJECTS = "objects";
+
     private BaseUnits() {
     }
 

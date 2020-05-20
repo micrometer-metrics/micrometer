@@ -17,6 +17,7 @@
 package io.micrometer.core.instrument.binder.commonspool2;
 
 import io.micrometer.core.instrument.*;
+import io.micrometer.core.instrument.binder.BaseUnits;
 import io.micrometer.core.instrument.binder.MeterBinder;
 import io.micrometer.core.lang.NonNull;
 import io.micrometer.core.lang.Nullable;
@@ -43,13 +44,13 @@ import static java.util.Collections.emptyList;
  * @since 1.6.0
  */
 public class CommonsObjectPool2Metrics implements MeterBinder, AutoCloseable {
-    private final static InternalLogger log = InternalLoggerFactory.getInstance(CommonsObjectPool2Metrics.class);
+    private static final InternalLogger log = InternalLoggerFactory.getInstance(CommonsObjectPool2Metrics.class);
     private static final String JMX_DOMAIN = "org.apache.commons.pool2";
     private static final String METRIC_NAME_PREFIX = "commons.pool2.";
 
     private static final String[] TYPES = new String[]{"GenericObjectPool", "GenericKeyedObjectPool"};
 
-    private final Executor executor = Executors.newSingleThreadExecutor();
+    private final ExecutorService executor = Executors.newSingleThreadExecutor();
 
     private final MBeanServer mBeanServer;
     private final Iterable<Tag> tags;
@@ -82,37 +83,50 @@ public class CommonsObjectPool2Metrics implements MeterBinder, AutoCloseable {
             registerMetricsEventually(
                     type,
                     (o, tags) -> {
-                        registerGaugeForObject(registry, o, "NumIdle", "num.idle", tags, "The number of instances currently idle in this pool", "objects");
+                        registerGaugeForObject(registry, o,
+                                "NumIdle", "num.idle", tags,
+                                "The number of instances currently idle in this pool", BaseUnits.OBJECTS);
+                        registerGaugeForObject(registry, o,
+                                "NumWaiters", "num.waiters", tags,
+                                "The estimate of the number of threads currently blocked waiting for an object from the pool",
+                                BaseUnits.THREADS);
 
-                        registerGaugeForObject(registry, o, "NumWaiters", "num.waiters", tags, "The estimate of the number of threads currently blocked waiting for an object from the pool", "threads");
-
-                        registerFunctionCounterForObject(registry, o, "CreatedCount", "created", tags, "The total number of objects created for this pool over the lifetime of the pool", "objects");
-                        registerFunctionCounterForObject(registry, o, "BorrowedCount", "borrowed", tags, "The total number of objects successfully borrowed from this pool over the lifetime of the pool", "objects");
-                        registerFunctionCounterForObject(registry, o, "ReturnedCount", "returned", tags, "The total number of objects returned to this pool over the lifetime of the pool", "objects");
-                        registerFunctionCounterForObject(registry, o, "DestroyedCount", "destroyed", tags, "The total number of objects destroyed by this pool over the lifetime of the pool", "objects");
-                        registerFunctionCounterForObject(
-                                registry, o, "DestroyedByEvictorCount", "destroyed.by.evictor", tags, "The total number of objects destroyed by the evictor associated with this pool over the lifetime of the pool", "objects");
-                        registerFunctionCounterForObject(
-                                registry,
-                                o,
-                                "DestroyedByBorrowValidationCount",
-                                "destroyed.by.borrow.validation",
-                                tags,
+                        registerFunctionCounterForObject(registry, o,
+                                "CreatedCount", "created", tags,
+                                "The total number of objects created for this pool over the lifetime of the pool",
+                                BaseUnits.OBJECTS);
+                        registerFunctionCounterForObject(registry, o,
+                                "BorrowedCount", "borrowed", tags,
+                                "The total number of objects successfully borrowed from this pool over the lifetime of the pool",
+                                BaseUnits.OBJECTS);
+                        registerFunctionCounterForObject(registry, o,
+                                "ReturnedCount", "returned", tags,
+                                "The total number of objects returned to this pool over the lifetime of the pool",
+                                BaseUnits.OBJECTS);
+                        registerFunctionCounterForObject(registry, o,
+                                "DestroyedCount", "destroyed", tags,
+                                "The total number of objects destroyed by this pool over the lifetime of the pool",
+                                BaseUnits.OBJECTS);
+                        registerFunctionCounterForObject(registry, o,
+                                "DestroyedByEvictorCount", "destroyed.by.evictor", tags,
+                                "The total number of objects destroyed by the evictor associated with this pool over the lifetime of the pool",
+                                BaseUnits.OBJECTS);
+                        registerFunctionCounterForObject(registry, o,
+                                "DestroyedByBorrowValidationCount", "destroyed.by.borrow.validation", tags,
                                 "The total number of objects destroyed by this pool as a result of failing validation during borrowObject() over the lifetime of the pool",
-                                "objects");
+                                BaseUnits.OBJECTS);
 
-                        registerTimeGaugeForObject(registry, o, "MaxBorrowWaitTimeMillis", "max.borrow.wait", tags,
+                        registerTimeGaugeForObject(registry, o,
+                                "MaxBorrowWaitTimeMillis", "max.borrow.wait", tags,
                                 "The maximum time a thread has waited to borrow objects from the pool");
-                        registerTimeGaugeForObject(registry, o, "MeanActiveTimeMillis", "mean.active", tags,
+                        registerTimeGaugeForObject(registry, o,
+                                "MeanActiveTimeMillis", "mean.active", tags,
                                 "The mean time objects are active");
-                        registerTimeGaugeForObject(registry, o, "MeanIdleTimeMillis", "mean.idle", tags,
+                        registerTimeGaugeForObject(registry, o,
+                                "MeanIdleTimeMillis", "mean.idle", tags,
                                 "The mean time objects are idle");
-                        registerTimeGaugeForObject(
-                                registry,
-                                o,
-                                "MeanBorrowWaitTimeMillis",
-                                "mean.borrow.wait",
-                                tags,
+                        registerTimeGaugeForObject(registry, o,
+                                "MeanBorrowWaitTimeMillis", "mean.borrow.wait", tags,
                                 "The mean time threads wait to borrow an object");
                     });
         }
@@ -144,7 +158,6 @@ public class CommonsObjectPool2Metrics implements MeterBinder, AutoCloseable {
                     }
                     perObject.accept(o, Tags.concat(tags, nameTags));
                 }
-                return;
             }
         } catch (MalformedObjectNameException e) {
             throw new RuntimeException("Error registering commons pool2 based metrics", e);
@@ -162,20 +175,20 @@ public class CommonsObjectPool2Metrics implements MeterBinder, AutoCloseable {
      */
     private void registerNotificationListener(String type, BiConsumer<ObjectName, Tags> perObject) {
         NotificationListener notificationListener =
-                // in notifcation listener, we cannot get attributes for the registered object,
+                // in notification listener, we cannot get attributes for the registered object,
                 // so we do it later time in a separate thread.
                 (notification, handback) -> {
                     executor.execute(
                             () -> {
                                 MBeanServerNotification mbs = (MBeanServerNotification) notification;
                                 ObjectName o = mbs.getMBeanName();
-                                mbs.getUserData();
                                 Iterable<Tag> nameTags = emptyList();
                                 int maxTries = 3;
                                 for (int i = 0; i < maxTries; i++) {
                                     try {
                                         Thread.sleep(1000);
                                     } catch (InterruptedException e) {
+                                        Thread.currentThread().interrupt();
                                         throw new RuntimeException(e);
                                     }
                                     try {
@@ -222,6 +235,7 @@ public class CommonsObjectPool2Metrics implements MeterBinder, AutoCloseable {
     @Override
     public void close() {
         notificationListenerCleanUpRunnables.forEach(Runnable::run);
+        executor.shutdown();
     }
 
     private void registerGaugeForObject(
