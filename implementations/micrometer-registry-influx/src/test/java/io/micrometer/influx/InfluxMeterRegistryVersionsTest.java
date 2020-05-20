@@ -69,7 +69,7 @@ public class InfluxMeterRegistryVersionsTest {
         publishSimpleStat(server);
 
         server.verify(headRequestedFor(urlEqualTo("/ping")));
-        server.verify(postRequestedFor(urlEqualTo("/api/v2/write?&precision=ms&bucket=mydb"))
+        server.verify(postRequestedFor(urlEqualTo("/api/v2/write?&precision=ms&bucket=mydb&org=my-org"))
                 .withRequestBody(equalTo("my_counter,metric_type=counter value=0 1")));
     }
 
@@ -84,7 +84,7 @@ public class InfluxMeterRegistryVersionsTest {
         publishSimpleStat(server);
 
         server.verify(headRequestedFor(urlEqualTo("/ping")));
-        server.verify(postRequestedFor(urlEqualTo("/api/v2/write?&precision=ms&bucket=mydb"))
+        server.verify(postRequestedFor(urlEqualTo("/api/v2/write?&precision=ms&bucket=mydb&org=my-org"))
                 .withRequestBody(equalTo("my_counter,metric_type=counter value=0 1")));
     }
 
@@ -99,7 +99,7 @@ public class InfluxMeterRegistryVersionsTest {
         publishSimpleStat(server);
 
         server.verify(headRequestedFor(urlEqualTo("/ping")));
-        server.verify(postRequestedFor(urlEqualTo("/api/v2/write?&precision=ms&bucket=mydb"))
+        server.verify(postRequestedFor(urlEqualTo("/api/v2/write?&precision=ms&bucket=mydb&org=my-org"))
                 .withRequestBody(equalTo("my_counter,metric_type=counter value=0 1")));
     }
 
@@ -128,7 +128,7 @@ public class InfluxMeterRegistryVersionsTest {
         publishSimpleStat(server);
 
         server.verify(headRequestedFor(urlEqualTo("/ping")));
-        server.verify(postRequestedFor(urlEqualTo("/api/v2/write?&precision=ms&bucket=mydb"))
+        server.verify(postRequestedFor(urlEqualTo("/api/v2/write?&precision=ms&bucket=mydb&org=my-org"))
                 .withRequestBody(equalTo("my_counter,metric_type=counter value=0 1"))
                 .withHeader("Authorization", equalTo("Token my-token")));
     }
@@ -156,6 +156,11 @@ public class InfluxMeterRegistryVersionsTest {
             @Override
             public boolean autoCreateDb() {
                 return false;
+            }
+
+            @Override
+            public String org() {
+                return "my-org";
             }
         }, new MockClock());
 
@@ -202,6 +207,11 @@ public class InfluxMeterRegistryVersionsTest {
             public String token() {
                 return "";
             }
+
+            @Override
+            public String org() {
+                return "my-org";
+            }
         }, new MockClock());
 
         Counter.builder("my.counter")
@@ -212,6 +222,101 @@ public class InfluxMeterRegistryVersionsTest {
 
         Assertions.assertThatThrownBy(registry::publish)
                 .hasMessage("influx.token was '' but it cannot be blank")
+                .isInstanceOf(ValidationException.class);
+
+        server.verify(headRequestedFor(urlEqualTo("/ping")));
+        server.verify(0, postRequestedFor(anyUrl()));
+    }
+
+    @Test
+    void writeToV2OrgRequired(@WiremockResolver.Wiremock WireMockServer server) {
+
+        server.stubFor(any(urlEqualTo("/ping"))
+                .willReturn(aResponse().withStatus(200).withHeader("X-Influxdb-Version", "2.0.10")));
+        server.stubFor(any(urlEqualTo("/api/v2/write"))
+                .willReturn(aResponse().withStatus(204)));
+
+        InfluxMeterRegistry registry = new InfluxMeterRegistry(new InfluxConfig() {
+            @Override
+            public String uri() {
+                return server.baseUrl();
+            }
+
+            @Override
+            @Nullable
+            public String get(String key) {
+                return null;
+            }
+
+            @Override
+            public boolean autoCreateDb() {
+                return false;
+            }
+
+            @Override
+            public String token() {
+                return "my-token";
+            }
+        }, new MockClock());
+
+        Counter.builder("my.counter")
+                .baseUnit(TimeUnit.MICROSECONDS.toString().toLowerCase())
+                .description("metric description")
+                .register(registry)
+                .increment(Math.PI);
+
+        Assertions.assertThatThrownBy(registry::publish)
+                .hasMessage("influx.org was 'null' but it is required")
+                .isInstanceOf(ValidationException.class);
+
+        server.verify(headRequestedFor(urlEqualTo("/ping")));
+        server.verify(0, postRequestedFor(anyUrl()));
+    }
+
+    @Test
+    void writeToV2OrgNotBlank(@WiremockResolver.Wiremock WireMockServer server) {
+
+        server.stubFor(any(urlEqualTo("/ping"))
+                .willReturn(aResponse().withStatus(200).withHeader("X-Influxdb-Version", "2.0.10")));
+        server.stubFor(any(urlEqualTo("/api/v2/write"))
+                .willReturn(aResponse().withStatus(204)));
+
+        InfluxMeterRegistry registry = new InfluxMeterRegistry(new InfluxConfig() {
+            @Override
+            public String uri() {
+                return server.baseUrl();
+            }
+
+            @Override
+            @Nullable
+            public String get(String key) {
+                return null;
+            }
+
+            @Override
+            public boolean autoCreateDb() {
+                return false;
+            }
+
+            @Override
+            public String token() {
+                return "my-token";
+            }
+
+            @Override
+            public String org() {
+                return "";
+            }
+        }, new MockClock());
+
+        Counter.builder("my.counter")
+                .baseUnit(TimeUnit.MICROSECONDS.toString().toLowerCase())
+                .description("metric description")
+                .register(registry)
+                .increment(Math.PI);
+
+        Assertions.assertThatThrownBy(registry::publish)
+                .hasMessage("influx.org was '' but it cannot be blank")
                 .isInstanceOf(ValidationException.class);
 
         server.verify(headRequestedFor(urlEqualTo("/ping")));
@@ -234,6 +339,11 @@ public class InfluxMeterRegistryVersionsTest {
             @Override
             public String token() {
                 return "my-token";
+            }
+
+            @Override
+            public String org() {
+                return "my-org";
             }
         }, new MockClock());
 

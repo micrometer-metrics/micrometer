@@ -127,15 +127,28 @@ public interface InfluxConfig extends StepRegistryConfig {
     }
 
     /**
-     * @return Authentication token to authorize API requests. See detail info:
+     * See detail info for the InfluxDB v1 and InfluxDB v2:
      * <ul>
      *     <li><a href="https://docs.influxdata.com/influxdb/v1.8/administration/authentication_and_authorization#3-include-the-token-in-http-requests">InfluxDB v1: Include the token in HTTP requests</a></li>
      *     <li><a href="https://v2.docs.influxdata.com/v2.0/reference/api/#authentication">InfluxDB v2: Authentication API</a></li>
      * </ul>
+     * @return Authentication token to authorize API requests.
+     * @since 1.6
      */
     @Nullable
     default String token() {
         return getString(this, "token").orElse(null);
+    }
+
+    /**
+     * Specifies the destination organization for writes. Takes either the ID or Name interchangeably.
+     * See detail info: <a href="https://v2.docs.influxdata.com/v2.0/organizations/view-orgs/">How to retrieve the <i>org</i> parameter in the InfluxDB UI.</a>
+     * @return The destination organization for writes.
+     * @since 1.6
+     */
+    @Nullable
+    default String org() {
+        return getString(this, "org").orElse(null);
     }
 
     @Override

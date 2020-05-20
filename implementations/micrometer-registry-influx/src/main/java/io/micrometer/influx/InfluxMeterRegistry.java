@@ -25,6 +25,7 @@ import io.micrometer.core.ipc.http.HttpUrlConnectionSender;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.io.UnsupportedEncodingException;
 import java.util.ArrayList;
 import java.net.MalformedURLException;
 import java.net.URLEncoder;
@@ -49,7 +50,7 @@ public class InfluxMeterRegistry extends StepMeterRegistry {
     private final HttpSender httpClient;
     private final Logger logger = LoggerFactory.getLogger(InfluxMeterRegistry.class);
     private boolean databaseExists = false;
-    private InfluxDBVersion influxDBVersion = null;
+    private InfluxDBVersion influxDBVersion;
 
     @SuppressWarnings("deprecation")
     public InfluxMeterRegistry(InfluxConfig config, Clock clock) {
@@ -279,8 +280,9 @@ public class InfluxMeterRegistry extends StepMeterRegistry {
         if (influxDBVersion.equals(InfluxDBVersion.V2)) {
             checkAll(config,
                     c -> StepRegistryConfig.validate(c),
-                    checkRequired("token", InfluxConfig::token).andThen(Validated::nonBlank))
-                    .orThrow();
+                    checkRequired("token", InfluxConfig::token).andThen(Validated::nonBlank),
+                    checkRequired("org", InfluxConfig::org).andThen(Validated::nonBlank)
+            ).orThrow();
         }
     }
 
@@ -357,8 +359,8 @@ public class InfluxMeterRegistry extends StepMeterRegistry {
         },
         V2 {
             @Override
-            String writeEndpoint(InfluxConfig config) {
-                return config.uri() + "/api/v2/write?&precision=ms&bucket=" + config.db();
+            String writeEndpoint(InfluxConfig config) throws UnsupportedEncodingException {
+                return config.uri() + "/api/v2/write?&precision=ms&bucket=" + config.db() + "&org=" + URLEncoder.encode(config.org(), "UTF-8");
             }
 
             @Override
@@ -369,7 +371,7 @@ public class InfluxMeterRegistry extends StepMeterRegistry {
             }
         };
 
-        abstract String writeEndpoint(InfluxConfig config);
+        abstract String writeEndpoint(InfluxConfig config) throws UnsupportedEncodingException;
 
         abstract void addHeaderToken(final InfluxConfig config, final HttpSender.Request.Builder requestBuilder);
     }
