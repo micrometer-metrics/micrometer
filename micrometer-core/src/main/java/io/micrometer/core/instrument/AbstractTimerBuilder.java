@@ -22,8 +22,16 @@ import io.micrometer.core.lang.Nullable;
 import java.time.Duration;
 import java.util.Arrays;
 
+/**
+ * Base builder for {@link Timer}.
+ *
+ * @param <B> builder type
+ *
+ * @author Jon Schneider
+ * @since 1.6.0
+ */
 @SuppressWarnings("unchecked")
-public class AbstractTimerBuilder<B extends AbstractTimerBuilder<B>> {
+public abstract class AbstractTimerBuilder<B extends AbstractTimerBuilder<B>> {
     protected final String name;
     protected Tags tags = Tags.empty();
     protected final DistributionStatisticConfig.Builder distributionConfigBuilder;
