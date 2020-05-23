@@ -75,6 +75,9 @@ public class DatadogStatsdLineBuilder extends FlavorStatsdLineBuilder {
     }
 
     private String sanitizeTagValue(String value) {
+        if (value.isEmpty()) {
+            return value;
+        }
         return (value.charAt(value.length() - 1) == ':') ? value.substring(0, value.length() - 1) + '_' : value;
     }
 
