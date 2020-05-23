@@ -31,8 +31,10 @@ import io.prometheus.client.exporter.common.TextFormat;
 import java.io.IOException;
 import java.io.StringWriter;
 import java.io.Writer;
+import java.util.Enumeration;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.TimeUnit;
@@ -101,6 +103,40 @@ public class PrometheusMeterRegistry extends MeterRegistry {
      */
     public void scrape(Writer writer) throws IOException {
         TextFormat.write004(writer, registry.metricFamilySamples());
+    }
+
+    /**
+     * Return text for scraping.
+     *
+     * @param includedNames Sample names to be included. All samples will be included if {@code null}.
+     * @return Content that should be included in the response body for an endpoint designated for
+     * Prometheus to scrape from.
+     * @since 1.6.0
+     */
+    public String scrape(Set<String> includedNames) {
+        Writer writer = new StringWriter();
+        try {
+            scrape(writer, includedNames);
+        } catch (IOException e) {
+            // This actually never happens since StringWriter::write() doesn't throw any IOException
+            throw new RuntimeException(e);
+        }
+        return writer.toString();
+    }
+
+    /**
+     * Scrape to the specified writer.
+     *
+     * @param writer Target that serves the content to be scraped by Prometheus.
+     * @param includedNames Sample names to be included. All samples will be included if {@code null}.
+     * @throws IOException if writing fails
+     * @since 1.6.0
+     */
+    public void scrape(Writer writer, @Nullable Set<String> includedNames) throws IOException {
+        Enumeration<Collector.MetricFamilySamples> samples = includedNames != null
+                ? registry.filteredMetricFamilySamples(includedNames)
+                : registry.metricFamilySamples();
+        TextFormat.write004(writer, samples);
     }
 
     @Override
