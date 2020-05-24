@@ -18,17 +18,13 @@ package io.micrometer.core.aop;
 import io.micrometer.core.annotation.Counted;
 import io.micrometer.core.instrument.Counter;
 import io.micrometer.core.instrument.MeterRegistry;
-import io.micrometer.core.instrument.Tag;
-import io.micrometer.core.instrument.Tags;
 import io.micrometer.core.lang.NonNullApi;
+import java.lang.reflect.Method;
+import java.util.concurrent.CompletionStage;
 import org.aspectj.lang.ProceedingJoinPoint;
 import org.aspectj.lang.annotation.Around;
 import org.aspectj.lang.annotation.Aspect;
 import org.aspectj.lang.reflect.MethodSignature;
-
-import java.lang.reflect.Method;
-import java.util.concurrent.CompletionStage;
-import java.util.function.Function;
 
 /**
  * Aspect responsible for intercepting all methods annotated with the {@link Counted}
@@ -61,9 +57,9 @@ public class CountedAspect {
     private final MeterRegistry meterRegistry;
 
     /**
-     * A function to produce additional tags for any given join point.
+     * A factory to produce additional tags for any given join point.
      */
-    private final Function<ProceedingJoinPoint, Iterable<Tag>> tagsBasedOnJoinPoint;
+    private final JoinPointBasedTagFactory joinPointBasedTagFactory;
 
     /**
      * Construct a new aspect with the given {@code meterRegistry} along with a default
@@ -72,20 +68,18 @@ public class CountedAspect {
      * @param meterRegistry Where we're going register metrics.
      */
     public CountedAspect(MeterRegistry meterRegistry) {
-        this(meterRegistry, pjp ->
-                Tags.of("class", pjp.getStaticPart().getSignature().getDeclaringTypeName(),
-                        "method", pjp.getStaticPart().getSignature().getName()));
+        this(meterRegistry, new DefaultJoinPointBasedTagFactory());
     }
 
     /**
      * Constructs a new aspect with the given {@code meterRegistry} and tags provider function.
      *
      * @param meterRegistry        Where we're going register metrics.
-     * @param tagsBasedOnJoinPoint A function to generate tags given a join point.
+     * @param joinPointBasedTagFactory A factory to generate tags given a join point.
      */
-    public CountedAspect(MeterRegistry meterRegistry, Function<ProceedingJoinPoint, Iterable<Tag>> tagsBasedOnJoinPoint) {
+    public CountedAspect(MeterRegistry meterRegistry, JoinPointBasedTagFactory joinPointBasedTagFactory) {
         this.meterRegistry = meterRegistry;
-        this.tagsBasedOnJoinPoint = tagsBasedOnJoinPoint;
+        this.joinPointBasedTagFactory = joinPointBasedTagFactory;
     }
 
     /**
@@ -154,7 +148,7 @@ public class CountedAspect {
     }
 
     private Counter.Builder counter(ProceedingJoinPoint pjp, Counted counted) {
-        Counter.Builder builder = Counter.builder(counted.value()).tags(tagsBasedOnJoinPoint.apply(pjp));
+        Counter.Builder builder = Counter.builder(counted.value()).tags(joinPointBasedTagFactory.apply(pjp));
         String description = counted.description();
         if (!description.isEmpty()) {
             builder.description(description);
