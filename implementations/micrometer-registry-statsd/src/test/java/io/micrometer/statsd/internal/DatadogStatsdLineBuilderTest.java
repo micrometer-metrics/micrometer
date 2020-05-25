@@ -51,12 +51,12 @@ class DatadogStatsdLineBuilderTest {
     }
 
     @Test
-    void allowEmptyTagValues() {
+    void interpretEmptyTagValuesAsValuelessTags() {
         Counter c = registry.counter("my:counter", "my:tag", "");
         DatadogStatsdLineBuilder lb = new DatadogStatsdLineBuilder(c.getId(), registry.config());
 
         registry.config().namingConvention(NamingConvention.dot);
-        assertThat(lb.line("1", Statistic.COUNT, "c")).isEqualTo("my_counter:1|c|#statistic:count,my_tag:");
+        assertThat(lb.line("1", Statistic.COUNT, "c")).isEqualTo("my_counter:1|c|#statistic:count,my_tag");
     }
 
     @Issue("#1998")
