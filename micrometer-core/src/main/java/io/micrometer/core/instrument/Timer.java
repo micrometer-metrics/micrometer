@@ -347,6 +347,7 @@ public interface Timer extends Meter, HistogramSupport {
             return super.publishPercentileHistogram(enabled);
         }
 
+        @SuppressWarnings("deprecation")
         @Override
         public Builder sla(Duration... sla) {
             return super.sla(sla);

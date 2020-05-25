@@ -68,13 +68,12 @@ interface TimerTest {
                 .isEqualTo(1);
     }
 
-    @DisplayName("record callables")
+    @DisplayName("record callable")
     @Test
-    default void recordThrowable() {
+    default void recordCallable() throws Exception {
         MeterRegistry registry = new SimpleMeterRegistry();
 
-        Supplier<String> timed = () -> registry.timer("timer").record(() -> "");
-        timed.get();
+        registry.timer("timer").recordCallable(() -> "");
     }
 
     @Test
