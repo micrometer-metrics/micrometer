@@ -118,8 +118,9 @@ public class MongoMetricsConnectionPoolListener extends ConnectionPoolListenerAd
     }
 
     private Gauge registerGauge(ServerId serverId, String metricName, String description, Map<ServerId, AtomicInteger> metrics) {
-        metrics.put(serverId, new AtomicInteger());
-        return Gauge.builder(metricName, metrics, m -> m.get(serverId).doubleValue())
+        AtomicInteger value = new AtomicInteger();
+        metrics.put(serverId, value);
+        return Gauge.builder(metricName, value, AtomicInteger::doubleValue)
                     .description(description)
                     .tag("cluster.id", serverId.getClusterId().getValue())
                     .tag("server.address", serverId.getAddress().toString())
