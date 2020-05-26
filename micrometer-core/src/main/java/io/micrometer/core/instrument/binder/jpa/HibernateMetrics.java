@@ -16,7 +16,6 @@
 package io.micrometer.core.instrument.binder.jpa;
 
 import io.micrometer.core.instrument.FunctionCounter;
-import io.micrometer.core.instrument.Gauge;
 import io.micrometer.core.instrument.MeterRegistry;
 import io.micrometer.core.instrument.Tag;
 import io.micrometer.core.instrument.Tags;
@@ -148,18 +147,6 @@ public class HibernateMetrics implements MeterBinder {
             .register(registry);
     }
 
-    private void gauge(MeterRegistry registry, String name, String description, ToDoubleFunction<Statistics> f, String... extraTags) {
-        if (this.statistics == null) {
-            return;
-        }
-
-        Gauge.builder(name, statistics, f)
-                .tags(tags)
-                .tags(extraTags)
-                .description(description)
-                .register(registry);
-    }
-
     @Override
     public void bindTo(MeterRegistry registry) {
         if (this.statistics == null) {
@@ -199,12 +186,6 @@ public class HibernateMetrics implements MeterBinder {
                             stats -> stats.getSecondLevelCacheStatistics(regionName).getMissCount(), "region", regionName, "result", "miss");
                     counter(registry, "hibernate.second.level.cache.puts", "The number of cacheable entities/collections put in the cache",
                             stats -> stats.getSecondLevelCacheStatistics(regionName).getPutCount(), "region", regionName);
-                    gauge(registry, "hibernate.second.level.cache.elements", "The number of cacheable entities/collections stored in memory",
-                            stats -> stats.getSecondLevelCacheStatistics(regionName).getElementCountInMemory(), "region", regionName, "store", "memory");
-                    gauge(registry, "hibernate.second.level.cache.elements", "The number of cacheable entities/collections stored on disk",
-                            stats -> stats.getSecondLevelCacheStatistics(regionName).getElementCountOnDisk(), "region", regionName, "store", "disk");
-                    gauge(registry, "hibernate.second.level.cache.size", "The size in bytes of cacheable entities/collections stored in memory",
-                            stats -> stats.getSecondLevelCacheStatistics(regionName).getSizeInMemory(), "region", regionName, "store", "memory");
                 });
 
         // Entity information
