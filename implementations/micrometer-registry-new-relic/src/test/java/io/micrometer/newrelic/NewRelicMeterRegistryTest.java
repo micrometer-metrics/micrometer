@@ -151,14 +151,12 @@ class NewRelicMeterRegistryTest {
     }
 
     private void writeGauge(NewRelicConfig config, String expectedJson) {
-        registry.gauge("my.gauge", 1d);
-        Gauge gauge = registry.get("my.gauge").gauge();
+        Gauge gauge = Gauge.builder("my.gauge", () -> 1d).register(registry);
         assertThat(getInsightsApiClientProvider(config).writeGauge(gauge)).containsExactly(expectedJson);
     }
 
     private void writeGauge(NewRelicConfig config, Map<String, Object> expectedEntries) {
-        registry.gauge("my.gauge2", 1d);
-        Gauge gauge = registry.get("my.gauge2").gauge();
+        Gauge gauge = Gauge.builder("my.gauge2", () -> 1d).register(registry);
         assertThat(getInsightsAgentClientProvider(config).writeGauge(gauge)).isEqualTo(expectedEntries);
     }
 
@@ -174,14 +172,12 @@ class NewRelicMeterRegistryTest {
     }
 
     private void writeGaugeShouldDropNanValue(NewRelicInsightsApiClientProvider clientProvider) {
-        registry.gauge("my.gauge", Double.NaN);
-        Gauge gauge = registry.get("my.gauge").gauge();
+        Gauge gauge = Gauge.builder("my.gauge", () -> Double.NaN).register(registry);
         assertThat(clientProvider.writeGauge(gauge)).isEmpty();
     }
 
     private void writeGaugeShouldDropNanValue(NewRelicInsightsAgentClientProvider clientProvider) {
-        registry.gauge("my.gauge2", Double.NaN);
-        Gauge gauge = registry.get("my.gauge2").gauge();
+        Gauge gauge = Gauge.builder("my.gauge2", () -> Double.NaN).register(registry);
         assertThat(clientProvider.writeGauge(gauge)).isEmpty();
     }
 
@@ -197,22 +193,18 @@ class NewRelicMeterRegistryTest {
     }
 
     private void writeGaugeShouldDropInfiniteValues(NewRelicInsightsApiClientProvider clientProvider) {
-        registry.gauge("my.gauge", Double.POSITIVE_INFINITY);
-        Gauge gauge = registry.get("my.gauge").gauge();
+        Gauge gauge = Gauge.builder("my.gauge", () -> Double.POSITIVE_INFINITY).register(registry);
         assertThat(clientProvider.writeGauge(gauge)).isEmpty();
 
-        registry.gauge("my.gauge", Double.NEGATIVE_INFINITY);
-        gauge = registry.get("my.gauge").gauge();
+        gauge = Gauge.builder("my.gauge2", () -> Double.NEGATIVE_INFINITY).register(registry);
         assertThat(clientProvider.writeGauge(gauge)).isEmpty();
     }
 
     private void writeGaugeShouldDropInfiniteValues(NewRelicInsightsAgentClientProvider clientProvider) {
-        registry.gauge("my.gauge2", Double.POSITIVE_INFINITY);
-        Gauge gauge = registry.get("my.gauge2").gauge();
+        Gauge gauge = Gauge.builder("my.gauge", () -> Double.POSITIVE_INFINITY).register(registry);
         assertThat(clientProvider.writeGauge(gauge)).isEmpty();
 
-        registry.gauge("my.gauge2", Double.NEGATIVE_INFINITY);
-        gauge = registry.get("my.gauge2").gauge();
+        gauge = Gauge.builder("my.gauge2", () -> Double.NEGATIVE_INFINITY).register(registry);
         assertThat(clientProvider.writeGauge(gauge)).isEmpty();
     }
 
@@ -708,8 +700,7 @@ class NewRelicMeterRegistryTest {
         Gauge gauge = registry.get("my.gauge").gauge();
         assertThat(gauge).isNotNull();
 
-        registry.gauge("other.gauge", 2d);
-        Gauge other = registry.get("other.gauge").gauge();
+        Gauge other = Gauge.builder("other.gauge", () -> 2d).register(registry);
         assertThat(other).isNotNull();
 
         registry.publish();
