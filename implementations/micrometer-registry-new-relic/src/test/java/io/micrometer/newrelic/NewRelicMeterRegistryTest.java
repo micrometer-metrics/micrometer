@@ -258,8 +258,7 @@ class NewRelicMeterRegistryTest {
         MockHttpSender mockHttpSender = new MockHttpSender();
         NewRelicMeterRegistry registry = new NewRelicMeterRegistry(config, clock, new NamedThreadFactory("new-relic-test"), mockHttpSender);
 
-        registry.gauge("my.gauge", 1d);
-        Gauge gauge = registry.find("my.gauge").gauge();
+        Gauge gauge = Gauge.builder("my.gauge", () -> 1d).register(registry);
         assertThat(gauge).isNotNull();
 
         registry.publish();
