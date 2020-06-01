@@ -18,6 +18,7 @@ package io.micrometer.statsd.internal;
 import io.micrometer.core.instrument.Meter;
 import io.micrometer.core.instrument.MeterRegistry;
 import io.micrometer.core.instrument.Statistic;
+import io.micrometer.core.instrument.Tag;
 import io.micrometer.core.instrument.config.NamingConvention;
 import io.micrometer.core.lang.Nullable;
 import org.pcollections.HashTreePMap;
@@ -57,7 +58,7 @@ public class DatadogStatsdLineBuilder extends FlavorStatsdLineBuilder {
                 this.tags = HashTreePMap.empty();
                 this.conventionTags = id.getTagsAsIterable().iterator().hasNext() ?
                         id.getConventionTags(next).stream()
-                                .map(t -> sanitizeName(t.getKey()) + ":" + sanitizeTagValue(t.getValue()))
+                                .map(t -> formatTag(t))
                                 .collect(Collectors.joining(","))
                         : null;
             }
@@ -65,6 +66,14 @@ public class DatadogStatsdLineBuilder extends FlavorStatsdLineBuilder {
             this.tagsNoStat = tags(null, conventionTags, ":", "|#");
             this.namingConvention = next;
         }
+    }
+
+    private String formatTag(Tag t) {
+        String sanitizedTag = sanitizeName(t.getKey());
+        if (!t.getValue().isEmpty()) {
+            sanitizedTag += ":" + sanitizeTagValue(t.getValue());
+        }
+        return sanitizedTag;
     }
 
     private String sanitizeName(String value) {
