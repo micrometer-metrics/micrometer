@@ -62,26 +62,22 @@ class NewRelicMeterRegistryTest {
 
     @Test
     void writeGauge() {
-        registry.gauge("my.gauge", 1d);
-        Gauge gauge = registry.find("my.gauge").gauge();
+        Gauge gauge = Gauge.builder("my.gauge", () -> 1d).register(registry);
         assertThat(registry.writeGauge(gauge)).hasSize(1);
     }
 
     @Test
     void writeGaugeShouldDropNanValue() {
-        registry.gauge("my.gauge", Double.NaN);
-        Gauge gauge = registry.find("my.gauge").gauge();
+        Gauge gauge = Gauge.builder("my.gauge", () -> Double.NaN).register(registry);
         assertThat(registry.writeGauge(gauge)).isEmpty();
     }
 
     @Test
     void writeGaugeShouldDropInfiniteValues() {
-        registry.gauge("my.gauge", Double.POSITIVE_INFINITY);
-        Gauge gauge = registry.find("my.gauge").gauge();
+        Gauge gauge = Gauge.builder("my.gauge", () -> Double.POSITIVE_INFINITY).register(registry);
         assertThat(registry.writeGauge(gauge)).isEmpty();
 
-        registry.gauge("my.gauge", Double.NEGATIVE_INFINITY);
-        gauge = registry.find("my.gauge").gauge();
+        gauge = Gauge.builder("my.gauge", () -> Double.NEGATIVE_INFINITY).register(registry);
         assertThat(registry.writeGauge(gauge)).isEmpty();
     }
 
