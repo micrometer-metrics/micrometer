@@ -45,49 +45,49 @@ import io.micrometer.core.ipc.http.HttpSender;
 class NewRelicMeterRegistryTest {
 
     private final NewRelicConfig config = new NewRelicConfig() {
-        
+
         @Override
         public String get(String key) {
             return null;
         }
-        
+
         @Override
         public String accountId() {
             return "accountId";
         }
-        
+
         @Override
         public String apiKey() {
             return "apiKey";
         }
-        
+
     };
-   
+
     private final NewRelicConfig meterNameEventTypeEnabledConfig = new NewRelicConfig() {
-        
+
         @Override
         public boolean meterNameEventTypeEnabled() {
             // Previous behavior for backward compatibility
             return true;
         }
-        
+
         @Override
         public String get(String key) {
             return null;
         }
-        
+
         @Override
         public String accountId() {
             return "accountId";
         }
-        
+
         @Override
         public String apiKey() {
             return "apiKey";
         }
-        
+
     };
-    
+
     private final MockClock clock = new MockClock();
     private final NewRelicMeterRegistry meterNameEventTypeEnabledRegistry = new NewRelicMeterRegistry(meterNameEventTypeEnabledConfig, clock);
     private final NewRelicMeterRegistry registry = new NewRelicMeterRegistry(config, clock);
@@ -100,8 +100,7 @@ class NewRelicMeterRegistryTest {
     }
 
     private void writeGauge(NewRelicMeterRegistry meterRegistry, String expectedJson) {
-        meterRegistry.gauge("my.gauge", 1d);
-        Gauge gauge = meterRegistry.find("my.gauge").gauge();
+        Gauge gauge = Gauge.builder("my.gauge", () -> 1d).register(registry);
         assertThat(meterRegistry.writeGauge(gauge)).containsExactly(expectedJson);
     }
 
@@ -112,8 +111,7 @@ class NewRelicMeterRegistryTest {
     }
 
     private void writeGaugeShouldDropNanValue(NewRelicMeterRegistry meterRegistry) {
-        meterRegistry.gauge("my.gauge", Double.NaN);
-        Gauge gauge = meterRegistry.find("my.gauge").gauge();
+        Gauge gauge = Gauge.builder("my.gauge", () -> Double.NaN).register(registry);
         assertThat(meterRegistry.writeGauge(gauge)).isEmpty();
     }
 
@@ -124,12 +122,10 @@ class NewRelicMeterRegistryTest {
     }
 
     private void writeGaugeShouldDropInfiniteValues(NewRelicMeterRegistry meterRegistry) {
-        meterRegistry.gauge("my.gauge", Double.POSITIVE_INFINITY);
-        Gauge gauge = meterRegistry.find("my.gauge").gauge();
+        Gauge gauge = Gauge.builder("my.gauge", () -> Double.POSITIVE_INFINITY).register(registry);
         assertThat(meterRegistry.writeGauge(gauge)).isEmpty();
 
-        meterRegistry.gauge("my.gauge", Double.NEGATIVE_INFINITY);
-        gauge = meterRegistry.find("my.gauge").gauge();
+        gauge = Gauge.builder("my.gauge2", () -> Double.NEGATIVE_INFINITY).register(registry);
         assertThat(meterRegistry.writeGauge(gauge)).isEmpty();
     }
 
@@ -261,13 +257,13 @@ class NewRelicMeterRegistryTest {
     void publish() {
         MockHttpSender mockHttpSender = new MockHttpSender();
         NewRelicMeterRegistry registry = new NewRelicMeterRegistry(config, clock, new NamedThreadFactory("new-relic-test"), mockHttpSender);
-        
+
         registry.gauge("my.gauge", 1d);
         Gauge gauge = registry.find("my.gauge").gauge();
         assertThat(gauge).isNotNull();
-        
+
         registry.publish();
-        
+
         assertThat(new String(mockHttpSender.getRequest().getEntity()))
             .contains("{\"eventType\":\"MicrometerSample\",\"value\":1,\"metricName\":\"myGauge\",\"metricType\":\"GAUGE\"}");
     }
@@ -284,7 +280,7 @@ class NewRelicMeterRegistryTest {
                 return null;
             }
         };
-        
+
         assertThatThrownBy(() -> new NewRelicMeterRegistry(config, clock))
                 .isExactlyInstanceOf(MissingRequiredConfigurationException.class)
                 .hasMessageContaining("eventType");
@@ -311,7 +307,7 @@ class NewRelicMeterRegistryTest {
                 .isExactlyInstanceOf(MissingRequiredConfigurationException.class)
                 .hasMessageContaining("accountId");
     }
-    
+
     @Test
     void configMissingApiKey() {
         NewRelicConfig config = new NewRelicConfig() {
@@ -337,7 +333,7 @@ class NewRelicMeterRegistryTest {
                 .isExactlyInstanceOf(MissingRequiredConfigurationException.class)
                 .hasMessageContaining("apiKey");
     }
-    
+
     @Test
     void configMissingUri() {
         NewRelicConfig config = new NewRelicConfig() {
@@ -367,17 +363,17 @@ class NewRelicMeterRegistryTest {
                 .isExactlyInstanceOf(MissingRequiredConfigurationException.class)
                 .hasMessageContaining("uri");
     }
-    
+
     static class MockHttpSender implements HttpSender {
-        
+
         private Request request;
-        
+
         @Override
         public Response send(Request request) {
             this.request = request;
             return new Response(200, "body");
         }
-        
+
         public Request getRequest() {
             return request;
         }
