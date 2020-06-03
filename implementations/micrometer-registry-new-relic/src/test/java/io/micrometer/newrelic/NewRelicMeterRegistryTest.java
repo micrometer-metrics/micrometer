@@ -114,6 +114,9 @@ class NewRelicMeterRegistryTest {
 
     private final NewRelicMeterRegistry agentEnabledRegistry = new NewRelicMeterRegistry(insightsAgentConfig, clock);
 
+    // Note that this needs to be a member field to prevent it from being garbage-collected.
+    private final AtomicReference<Double> stateObject = new AtomicReference<>();
+
     NewRelicInsightsAgentClientProvider getInsightsAgentClientProvider(NewRelicConfig config) {
         return new NewRelicInsightsAgentClientProvider(config);
     }
@@ -227,16 +230,16 @@ class NewRelicMeterRegistryTest {
     }
 
     private void writeGaugeWithTimeGauge(NewRelicInsightsApiClientProvider clientProvider, String expectedJson) {
-        AtomicReference<Double> obj = new AtomicReference<>(1d);
-        registry.more().timeGauge("my.timeGauge", Tags.empty(), obj, TimeUnit.SECONDS, AtomicReference::get);
-        TimeGauge timeGauge = registry.get("my.timeGauge").timeGauge();
+        stateObject.set(1d);
+        TimeGauge timeGauge = registry.more()
+                .timeGauge("my.timeGauge", Tags.empty(), stateObject, TimeUnit.SECONDS, AtomicReference::get);
         assertThat(clientProvider.writeTimeGauge(timeGauge)).containsExactly(expectedJson);
     }
 
     private void writeGaugeWithTimeGauge(NewRelicInsightsAgentClientProvider clientProvider, Map<String, Object> expectedEntries) {
-        AtomicReference<Double> obj = new AtomicReference<>(1d);
-        registry.more().timeGauge("my.timeGauge2", Tags.empty(), obj, TimeUnit.SECONDS, AtomicReference::get);
-        TimeGauge timeGauge = registry.get("my.timeGauge2").timeGauge();
+        stateObject.set(1d);
+        TimeGauge timeGauge = registry.more()
+                .timeGauge("my.timeGauge2", Tags.empty(), stateObject, TimeUnit.SECONDS, AtomicReference::get);
         assertThat(clientProvider.writeTimeGauge(timeGauge)).isEqualTo(expectedEntries);
     }
 
@@ -252,16 +255,16 @@ class NewRelicMeterRegistryTest {
     }
 
     private void writeGaugeWithTimeGaugeShouldDropNanValue(NewRelicInsightsApiClientProvider clientProvider) {
-        AtomicReference<Double> obj = new AtomicReference<>(Double.NaN);
-        registry.more().timeGauge("my.timeGauge", Tags.empty(), obj, TimeUnit.SECONDS, AtomicReference::get);
-        TimeGauge timeGauge = registry.get("my.timeGauge").timeGauge();
+        stateObject.set(Double.NaN);
+        TimeGauge timeGauge = registry.more()
+                .timeGauge("my.timeGauge", Tags.empty(), stateObject, TimeUnit.SECONDS, AtomicReference::get);
         assertThat(clientProvider.writeTimeGauge(timeGauge)).isEmpty();
     }
 
     private void writeGaugeWithTimeGaugeShouldDropNanValue(NewRelicInsightsAgentClientProvider clientProvider) {
-        AtomicReference<Double> obj = new AtomicReference<>(Double.NaN);
-        registry.more().timeGauge("my.timeGauge2", Tags.empty(), obj, TimeUnit.SECONDS, AtomicReference::get);
-        TimeGauge timeGauge = registry.get("my.timeGauge2").timeGauge();
+        stateObject.set(Double.NaN);
+        TimeGauge timeGauge = registry.more()
+                .timeGauge("my.timeGauge2", Tags.empty(), stateObject, TimeUnit.SECONDS, AtomicReference::get);
         assertThat(clientProvider.writeTimeGauge(timeGauge)).isEmpty();
     }
 
@@ -277,26 +280,26 @@ class NewRelicMeterRegistryTest {
     }
 
     private void writeGaugeWithTimeGaugeShouldDropInfiniteValues(NewRelicInsightsApiClientProvider clientProvider) {
-        AtomicReference<Double> obj = new AtomicReference<>(Double.POSITIVE_INFINITY);
-        registry.more().timeGauge("my.timeGauge", Tags.empty(), obj, TimeUnit.SECONDS, AtomicReference::get);
-        TimeGauge timeGauge = registry.get("my.timeGauge").timeGauge();
+        stateObject.set(Double.POSITIVE_INFINITY);
+        TimeGauge timeGauge = registry.more()
+                .timeGauge("my.timeGauge", Tags.empty(), stateObject, TimeUnit.SECONDS, AtomicReference::get);
         assertThat(clientProvider.writeTimeGauge(timeGauge)).isEmpty();
 
-        obj = new AtomicReference<>(Double.NEGATIVE_INFINITY);
-        registry.more().timeGauge("my.timeGauge", Tags.empty(), obj, TimeUnit.SECONDS, AtomicReference::get);
-        timeGauge = registry.get("my.timeGauge").timeGauge();
+        stateObject.set(Double.NEGATIVE_INFINITY);
+        timeGauge = registry.more()
+                .timeGauge("my.timeGauge", Tags.empty(), stateObject, TimeUnit.SECONDS, AtomicReference::get);
         assertThat(clientProvider.writeTimeGauge(timeGauge)).isEmpty();
     }
 
     private void writeGaugeWithTimeGaugeShouldDropInfiniteValues(NewRelicInsightsAgentClientProvider clientProvider) {
-        AtomicReference<Double> obj = new AtomicReference<>(Double.POSITIVE_INFINITY);
-        registry.more().timeGauge("my.timeGauge2", Tags.empty(), obj, TimeUnit.SECONDS, AtomicReference::get);
-        TimeGauge timeGauge = registry.get("my.timeGauge2").timeGauge();
+        stateObject.set(Double.POSITIVE_INFINITY);
+        TimeGauge timeGauge = registry.more()
+                .timeGauge("my.timeGauge2", Tags.empty(), stateObject, TimeUnit.SECONDS, AtomicReference::get);
         assertThat(clientProvider.writeTimeGauge(timeGauge)).isEmpty();
 
-        obj = new AtomicReference<>(Double.NEGATIVE_INFINITY);
-        registry.more().timeGauge("my.timeGauge2", Tags.empty(), obj, TimeUnit.SECONDS, AtomicReference::get);
-        timeGauge = registry.get("my.timeGauge2").timeGauge();
+        stateObject.set(Double.NEGATIVE_INFINITY);
+        timeGauge = registry.more()
+                .timeGauge("my.timeGauge2", Tags.empty(), stateObject, TimeUnit.SECONDS, AtomicReference::get);
         assertThat(clientProvider.writeTimeGauge(timeGauge)).isEmpty();
     }
 
