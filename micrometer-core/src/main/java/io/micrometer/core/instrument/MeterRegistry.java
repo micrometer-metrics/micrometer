@@ -137,7 +137,7 @@ public abstract class MeterRegistry {
      *
      * @param id The id that uniquely identifies the long task timer.
      * @return A new long task timer.
-     * @deprecated Implement {@link #newLongTaskTimer(Id, DistributionStatisticConfig)} instead.
+     * @deprecated Implement {@link #newLongTaskTimer(Meter.Id, DistributionStatisticConfig)} instead.
      */
     @SuppressWarnings("DeprecatedIsStillUsed")
     @Deprecated

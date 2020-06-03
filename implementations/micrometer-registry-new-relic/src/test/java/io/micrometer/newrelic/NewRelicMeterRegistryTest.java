@@ -609,8 +609,7 @@ class NewRelicMeterRegistryTest {
 
         NewRelicMeterRegistry registry = new NewRelicMeterRegistry(insightsApiConfig, apiProvider, clock);
 
-        registry.gauge("my.gauge", 1d);
-        Gauge gauge = registry.get("my.gauge").gauge();
+        Gauge gauge = Gauge.builder("my.gauge", () -> 1d).register(registry);
 
         apiProvider.sendEvents(apiProvider.writeGauge(gauge));
 
@@ -622,8 +621,7 @@ class NewRelicMeterRegistryTest {
         apiProvider = new NewRelicInsightsApiClientProvider(
                 meterNameEventTypeEnabledConfig, mockHttpClient, registry.config().namingConvention());
 
-        registry.gauge("my.gauge2", 1d);
-        gauge = registry.get("my.gauge2").gauge();
+        gauge = Gauge.builder("my.gauge2", () -> 1d).register(registry);
 
         apiProvider.sendEvents(apiProvider.writeGauge(gauge));
 
@@ -640,8 +638,7 @@ class NewRelicMeterRegistryTest {
 
         NewRelicMeterRegistry registry = new NewRelicMeterRegistry(insightsAgentConfig, agentProvider, clock);
 
-        registry.gauge("my.gauge", 1d);
-        Gauge gauge = registry.get("my.gauge").gauge();
+        Gauge gauge = Gauge.builder("my.gauge", () -> 1d).register(registry);
 
         agentProvider.sendEvents(gauge.getId(), agentProvider.writeGauge(gauge));
 
@@ -653,8 +650,7 @@ class NewRelicMeterRegistryTest {
         agentProvider = new NewRelicInsightsAgentClientProvider(
                 meterNameEventTypeEnabledConfig, mockNewRelicAgent, registry.config().namingConvention());
 
-        registry.gauge("my.gauge2", 1d);
-        gauge = registry.get("my.gauge2").gauge();
+        gauge = Gauge.builder("my.gauge2", () -> 1d).register(registry);
 
         agentProvider.sendEvents(gauge.getId(), agentProvider.writeGauge(gauge));
 
@@ -671,12 +667,10 @@ class NewRelicMeterRegistryTest {
 
         NewRelicMeterRegistry registry = new NewRelicMeterRegistry(insightsApiConfig, apiProvider, clock);
 
-        Gauge.builder("my.gauge", () -> 1d).tag("theTag", "theValue").register(registry);
-        Gauge gauge = registry.get("my.gauge").gauge();
+        Gauge gauge = Gauge.builder("my.gauge", () -> 1d).tag("theTag", "theValue").register(registry);
         assertThat(gauge).isNotNull();
 
-        Gauge.builder("other.gauge", () -> 2d).register(registry);
-        Gauge other = registry.get("other.gauge").gauge();
+        Gauge other = Gauge.builder("other.gauge", () -> 2d).register(registry);
         assertThat(other).isNotNull();
 
         registry.publish();
@@ -696,8 +690,7 @@ class NewRelicMeterRegistryTest {
 
         NewRelicMeterRegistry registry = new NewRelicMeterRegistry(insightsAgentConfig, agentProvider, clock);
 
-        registry.gauge("my.gauge", Tags.of("theTag", "theValue"), 1d);
-        Gauge gauge = registry.get("my.gauge").gauge();
+        Gauge gauge = Gauge.builder("my.gauge", () -> 1d).tags("theTag", "theValue").register(registry);
         assertThat(gauge).isNotNull();
 
         Gauge other = Gauge.builder("other.gauge", () -> 2d).register(registry);

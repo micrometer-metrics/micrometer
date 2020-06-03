@@ -18,6 +18,7 @@ package io.micrometer.core.instrument.internal;
 import io.micrometer.core.instrument.AbstractMeter;
 import io.micrometer.core.instrument.Clock;
 import io.micrometer.core.instrument.LongTaskTimer;
+import io.micrometer.core.instrument.Meter;
 import io.micrometer.core.instrument.distribution.CountAtBucket;
 import io.micrometer.core.instrument.distribution.DistributionStatisticConfig;
 import io.micrometer.core.instrument.distribution.HistogramSnapshot;
@@ -53,7 +54,7 @@ public class DefaultLongTaskTimer extends AbstractMeter implements LongTaskTimer
      *
      * @param id ID
      * @param clock clock
-     * @deprecated Use {@link #DefaultLongTaskTimer(Id, Clock, TimeUnit, DistributionStatisticConfig, boolean)} instead.
+     * @deprecated Use {@link #DefaultLongTaskTimer(Meter.Id, Clock, TimeUnit, DistributionStatisticConfig, boolean)} instead.
      */
     @Deprecated
     public DefaultLongTaskTimer(Id id, Clock clock) {
