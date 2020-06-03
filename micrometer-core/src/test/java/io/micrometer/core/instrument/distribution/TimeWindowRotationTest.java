@@ -1,5 +1,5 @@
 /**
- * Copyright 2017 Pivotal Software, Inc.
+ * Copyright 2017 VMware, Inc.
  * <p>
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -62,19 +62,19 @@ class TimeWindowRotationTest {
     @MethodSource("histogramTypes")
     void expectedValueRangeValidation(Class<? extends AbstractTimeWindowHistogram<?, ?>> histogramType) {
         expectValidationFailure(histogramType, DistributionStatisticConfig.builder()
-            .minimumExpectedValue(0L)
+            .minimumExpectedValue(0.0)
             .build());
         expectValidationFailure(histogramType, DistributionStatisticConfig.builder()
-            .minimumExpectedValue(10L)
-            .maximumExpectedValue(9L)
+            .minimumExpectedValue(10.0)
+            .maximumExpectedValue(9.0)
             .build());
     }
 
     @ParameterizedTest
     @MethodSource("histogramTypes")
-    void slaBoundariesValidation(Class<? extends AbstractTimeWindowHistogram<?, ?>> histogramType) {
+    void serviceLevelObjectiveBoundariesValidation(Class<? extends AbstractTimeWindowHistogram<?, ?>> histogramType) {
         expectValidationFailure(histogramType, DistributionStatisticConfig.builder()
-            .sla(0L)
+            .serviceLevelObjectives(0.0)
             .build());
     }
 

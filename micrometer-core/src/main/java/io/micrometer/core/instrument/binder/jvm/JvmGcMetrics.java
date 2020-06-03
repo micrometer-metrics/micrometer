@@ -1,5 +1,5 @@
 /**
- * Copyright 2017 Pivotal Software, Inc.
+ * Copyright 2017 VMware, Inc.
  * <p>
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -41,6 +41,7 @@ import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicLong;
 
+import static io.micrometer.core.instrument.binder.jvm.JvmMemory.*;
 import static java.util.Collections.emptyList;
 
 /**
@@ -90,7 +91,9 @@ public class JvmGcMetrics implements MeterBinder, AutoCloseable {
             return;
         }
 
-        AtomicLong maxDataSize = new AtomicLong(0L);
+        double maxOldGen = getOldGen().map(mem -> getUsageValue(mem, MemoryUsage::getMax)).orElse(0.0);
+
+        AtomicLong maxDataSize = new AtomicLong((long) maxOldGen);
         Gauge.builder("jvm.gc.max.data.size", maxDataSize, AtomicLong::get)
             .tags(tags)
             .description("Max size of old generation memory pool")
@@ -193,6 +196,12 @@ public class JvmGcMetrics implements MeterBinder, AutoCloseable {
     }
 
     private static boolean isManagementExtensionsPresent() {
+        if ( ManagementFactory.getMemoryPoolMXBeans().isEmpty() ) {
+            // Substrate VM, for example, doesn't provide or support these beans (yet)
+            log.warn("GC notifications will not be available because MemoryPoolMXBeans are not provided by the JVM");
+            return false;
+        }
+
         try {
             Class.forName("com.sun.management.GarbageCollectionNotificationInfo", false,
                     JvmGcMetrics.class.getClassLoader());
@@ -203,18 +212,6 @@ public class JvmGcMetrics implements MeterBinder, AutoCloseable {
                     "com.sun.management.GarbageCollectionNotificationInfo is not present");
             return false;
         }
-    }
-
-    private boolean isConcurrentPhase(String cause) {
-        return "No GC".equals(cause);
-    }
-
-    private boolean isOldGenPool(String name) {
-        return name.endsWith("Old Gen") || name.endsWith("Tenured Gen");
-    }
-
-    private boolean isYoungGenPool(String name) {
-        return name.endsWith("Eden Space");
     }
 
     @Override

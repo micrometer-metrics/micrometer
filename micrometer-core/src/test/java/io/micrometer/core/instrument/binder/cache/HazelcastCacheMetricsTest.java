@@ -1,5 +1,5 @@
 /**
- * Copyright 2018 Pivotal Software, Inc.
+ * Copyright 2018 VMware, Inc.
  * <p>
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,11 +16,11 @@
 package io.micrometer.core.instrument.binder.cache;
 
 import com.hazelcast.core.Hazelcast;
-import com.hazelcast.core.IMap;
-import com.hazelcast.monitor.LocalMapStats;
-import com.hazelcast.monitor.NearCacheStats;
-import com.hazelcast.monitor.impl.LocalMapStatsImpl;
-import com.hazelcast.monitor.impl.NearCacheStatsImpl;
+import com.hazelcast.map.IMap;
+import com.hazelcast.map.LocalMapStats;
+import com.hazelcast.nearcache.NearCacheStats;
+import com.hazelcast.internal.monitor.impl.LocalMapStatsImpl;
+import com.hazelcast.internal.monitor.impl.NearCacheStatsImpl;
 
 import io.micrometer.core.instrument.FunctionCounter;
 import io.micrometer.core.instrument.FunctionTimer;
@@ -29,6 +29,7 @@ import io.micrometer.core.instrument.MeterRegistry;
 import io.micrometer.core.instrument.Tags;
 import io.micrometer.core.instrument.simple.SimpleMeterRegistry;
 
+import java.util.HashMap;
 import java.util.Random;
 import java.util.concurrent.TimeUnit;
 
@@ -36,7 +37,7 @@ import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 
-import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.*;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
@@ -90,7 +91,7 @@ class HazelcastCacheMetricsTest extends AbstractCacheMetricsTest {
         assertThat(nearEvictions.value()).isEqualTo(nearCacheStats.getEvictions());
 
         // timings
-        TimeUnit timeUnit = TimeUnit.NANOSECONDS;
+        TimeUnit timeUnit = TimeUnit.MILLISECONDS;
         FunctionTimer getsLatency = fetch(meterRegistry, "cache.gets.latency").functionTimer();
         assertThat(getsLatency.count()).isEqualTo(localMapStats.getGetOperationCount());
         assertThat(getsLatency.totalTime(timeUnit)).isEqualTo(localMapStats.getTotalGetLatency());
@@ -151,6 +152,12 @@ class HazelcastCacheMetricsTest extends AbstractCacheMetricsTest {
     @Test
     void returnPutCount() {
         assertThat(metrics.putCount()).isEqualTo(cache.getLocalMapStats().getPutOperationCount());
+    }
+
+    @Test
+    void nonIMapCacheFails() {
+        assertThatExceptionOfType(RuntimeException.class)
+                .isThrownBy(() -> new HazelcastCacheMetrics(new HashMap<String, String>(), Tags.empty()));
     }
 
     @BeforeAll

@@ -1,5 +1,5 @@
 /**
- * Copyright 2017 Pivotal Software, Inc.
+ * Copyright 2017 VMware, Inc.
  * <p>
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -41,6 +41,56 @@ public final class BaseUnits {
      * For threads.
      */
     public static final String THREADS = "threads";
+
+    /**
+     * For classes.
+     */
+    public static final String CLASSES = "classes";
+
+    /**
+     * For buffers.
+     */
+    public static final String BUFFERS = "buffers";
+
+    /**
+     * For events.
+     */
+    public static final String EVENTS = "events";
+
+    /**
+     * For files.
+     */
+    public static final String FILES = "files";
+
+    /**
+     * For sessions.
+     */
+    public static final String SESSIONS = "sessions";
+
+    /**
+     * For milliseconds.
+     */
+    public static final String MILLISECONDS = "ms";
+
+    /**
+     * For messages.
+     */
+    public static final String MESSAGES = "messages";
+
+    /**
+     * For connections.
+     */
+    public static final String CONNECTIONS = "connections";
+
+    /**
+     * For operations.
+     */
+    public static final String OPERATIONS = "operations";
+
+    /**
+     * Percent.
+     */
+    public static final String PERCENT = "percent";
 
     private BaseUnits() {
     }

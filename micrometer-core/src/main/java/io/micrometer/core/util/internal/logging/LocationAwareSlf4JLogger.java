@@ -1,5 +1,5 @@
 /**
- * Copyright 2019 Pivotal Software, Inc.
+ * Copyright 2019 VMware, Inc.
  * <p>
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -37,7 +37,7 @@ import static org.slf4j.spi.LocationAwareLogger.*;
 /**
  * NOTE: This file has been copied from {io.netty.util.internal.logging}.
  *
- * <a href="http://www.slf4j.org/">SLF4J</a> logger which is location aware and so will log the correct origin of the
+ * <a href="https://www.slf4j.org/">SLF4J</a> logger which is location aware and so will log the correct origin of the
  * logging event by filter out the wrapper itself.
  */
 final class LocationAwareSlf4JLogger extends AbstractInternalLogger {

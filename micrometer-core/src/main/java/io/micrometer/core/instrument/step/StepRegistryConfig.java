@@ -1,5 +1,5 @@
 /**
- * Copyright 2017 Pivotal Software, Inc.
+ * Copyright 2017 VMware, Inc.
  * <p>
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,8 +15,19 @@
  */
 package io.micrometer.core.instrument.step;
 
+import io.micrometer.core.instrument.config.validate.Validated;
 import io.micrometer.core.instrument.push.PushRegistryConfig;
 
 
 public interface StepRegistryConfig extends PushRegistryConfig {
+    /**
+     * Validate a provided configuration.
+     *
+     * @param config configuration to validate
+     * @return validation result
+     * @since 1.5.0
+     */
+    static Validated<?> validate(StepRegistryConfig config) {
+        return PushRegistryConfig.validate(config);
+    }
 }

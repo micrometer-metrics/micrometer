@@ -1,5 +1,5 @@
 /**
- * Copyright 2017 Pivotal Software, Inc.
+ * Copyright 2017 VMware, Inc.
  * <p>
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -23,15 +23,14 @@ import io.micrometer.core.instrument.binder.BaseUnits;
 import io.micrometer.core.instrument.binder.MeterBinder;
 import io.micrometer.core.lang.NonNullApi;
 import io.micrometer.core.lang.NonNullFields;
-import io.micrometer.core.lang.Nullable;
 
 import java.lang.management.BufferPoolMXBean;
 import java.lang.management.ManagementFactory;
 import java.lang.management.MemoryPoolMXBean;
 import java.lang.management.MemoryType;
 import java.lang.management.MemoryUsage;
-import java.util.function.ToLongFunction;
 
+import static io.micrometer.core.instrument.binder.jvm.JvmMemory.getUsageValue;
 import static java.util.Collections.emptyList;
 
 /**
@@ -63,7 +62,7 @@ public class JvmMemoryMetrics implements MeterBinder {
             Gauge.builder("jvm.buffer.count", bufferPoolBean, BufferPoolMXBean::getCount)
                     .tags(tagsWithId)
                     .description("An estimate of the number of buffers in the pool")
-                    .baseUnit("buffers")
+                    .baseUnit(BaseUnits.BUFFERS)
                     .register(registry);
 
             Gauge.builder("jvm.buffer.memory.used", bufferPoolBean, BufferPoolMXBean::getMemoryUsed)
@@ -100,25 +99,6 @@ public class JvmMemoryMetrics implements MeterBinder {
                 .description("The maximum amount of memory in bytes that can be used for memory management")
                 .baseUnit(BaseUnits.BYTES)
                 .register(registry);
-        }
-    }
-
-    private double getUsageValue(MemoryPoolMXBean memoryPoolMXBean, ToLongFunction<MemoryUsage> getter) {
-        MemoryUsage usage = getUsage(memoryPoolMXBean);
-        if (usage == null) {
-            return Double.NaN;
-        }
-        return getter.applyAsLong(usage);
-    }
-
-    @Nullable
-    private MemoryUsage getUsage(MemoryPoolMXBean memoryPoolMXBean) {
-        try {
-            return memoryPoolMXBean.getUsage();
-        } catch (InternalError e) {
-            // Defensive for potential InternalError with some specific JVM options. Based on its Javadoc,
-            // MemoryPoolMXBean.getUsage() should return null, not throwing InternalError, so it seems to be a JVM bug.
-            return null;
         }
     }
 

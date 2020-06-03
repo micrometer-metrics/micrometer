@@ -1,5 +1,5 @@
 /**
- * Copyright 2018 Pivotal Software, Inc.
+ * Copyright 2018 VMware, Inc.
  * <p>
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -55,11 +55,11 @@ public class OkHttpSender implements HttpSender {
             MediaType mediaType = contentType != null
                     ? MediaType.get(contentType + "; charset=utf-8")
                     : MEDIA_TYPE_APPLICATION_JSON;
-            RequestBody body = RequestBody.create(mediaType, entity);
+            RequestBody body = RequestBody.create(entity, mediaType);
             requestBuilder.method(requestMethod, body);
         } else {
             if (okhttp3.internal.http.HttpMethod.requiresRequestBody(requestMethod)) {
-                RequestBody body = RequestBody.create(MEDIA_TYPE_TEXT_PLAIN, entity);
+                RequestBody body = RequestBody.create(entity, MEDIA_TYPE_TEXT_PLAIN);
                 requestBuilder.method(requestMethod, body);
             } else {
                 requestBuilder.method(requestMethod, null);

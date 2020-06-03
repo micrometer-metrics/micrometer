@@ -1,5 +1,5 @@
 /**
- * Copyright 2017 Pivotal Software, Inc.
+ * Copyright 2017 VMware, Inc.
  * <p>
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -28,7 +28,6 @@ import java.util.concurrent.atomic.AtomicLong;
  * @author Jon Schneider
  */
 public class TimeWindowMax {
-    @SuppressWarnings("rawtypes")
     private static final AtomicIntegerFieldUpdater<TimeWindowMax> rotatingUpdater =
             AtomicIntegerFieldUpdater.newUpdater(TimeWindowMax.class, "rotating");
 

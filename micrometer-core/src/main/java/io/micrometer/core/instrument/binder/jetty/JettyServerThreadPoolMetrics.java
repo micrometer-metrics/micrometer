@@ -1,5 +1,5 @@
 /**
- * Copyright 2017 Pivotal Software, Inc.
+ * Copyright 2019 VMware, Inc.
  * <p>
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -25,10 +25,21 @@ import org.eclipse.jetty.util.thread.ThreadPool.SizedThreadPool;
 
 /**
  * {@link MeterBinder} for Jetty {@link ThreadPool}.
+ * <p>
+ * Pass the {@link ThreadPool} used with the Jetty {@link org.eclipse.jetty.server.Server Server}. For example:
+ * <pre>
+ *     {@code
+ *     QueuedThreadPool threadPool = new QueuedThreadPool();
+ *     Server server = new Server(threadPool);
+ *     new JettyServerThreadPoolMetrics(threadPool, tags).bindTo(registry);
+ *     }
+ * </pre>
  *
  * @author Manabu Matsuzaki
  * @author Andy Wilkinson
  * @author Johnny Lim
+ * @since 1.1.0
+ * @see InstrumentedQueuedThreadPool
  */
 public class JettyServerThreadPoolMetrics implements MeterBinder {
 

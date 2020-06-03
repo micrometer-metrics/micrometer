@@ -1,5 +1,5 @@
 /**
- * Copyright 2019 Pivotal Software, Inc.
+ * Copyright 2019 VMware, Inc.
  * <p>
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -38,6 +38,7 @@ class RequestTest {
         HttpSender.Request.Builder builder = HttpSender.Request.build("https://micrometer.io/", sender).compress();
         Field requestHeadersField = HttpSender.Request.Builder.class.getDeclaredField("requestHeaders");
         requestHeadersField.setAccessible(true);
+        @SuppressWarnings("unchecked")
         Map<String, String> requestHeaders = (Map<String, String>) requestHeadersField.get(builder);
         assertThat(requestHeaders).containsEntry("Content-Encoding", "gzip");
     }

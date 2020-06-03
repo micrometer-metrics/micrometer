@@ -1,5 +1,5 @@
 /**
- * Copyright 2017 Pivotal Software, Inc.
+ * Copyright 2017 VMware, Inc.
  * <p>
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -24,12 +24,10 @@ import com.signalfx.metrics.errorhandler.OnSendErrorHandler;
 import com.signalfx.metrics.flush.AggregateMetricSender;
 import com.signalfx.metrics.protobuf.SignalFxProtocolBuffers;
 import io.micrometer.core.instrument.*;
-import io.micrometer.core.instrument.config.MissingRequiredConfigurationException;
 import io.micrometer.core.instrument.config.NamingConvention;
 import io.micrometer.core.instrument.step.StepMeterRegistry;
 import io.micrometer.core.instrument.util.MeterPartition;
 import io.micrometer.core.instrument.util.NamedThreadFactory;
-import io.micrometer.core.instrument.util.TimeUtils;
 import io.micrometer.core.lang.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -47,7 +45,11 @@ import static com.signalfx.metrics.protobuf.SignalFxProtocolBuffers.MetricType.G
 import static java.util.stream.StreamSupport.stream;
 
 /**
+ * {@link StepMeterRegistry} for SignalFx.
+ *
  * @author Jon Schneider
+ * @author Johnny Lim
+ * @since 1.0.0
  */
 public class SignalFxMeterRegistry extends StepMeterRegistry {
     private static final ThreadFactory DEFAULT_THREAD_FACTORY = new NamedThreadFactory("signalfx-metrics-publisher");
@@ -66,10 +68,6 @@ public class SignalFxMeterRegistry extends StepMeterRegistry {
         super(config, clock);
         this.config = config;
 
-        if (config.accessToken() == null) {
-            throw new MissingRequiredConfigurationException("accessToken must be set to report metrics to SignalFX");
-        }
-
         URI apiUri = URI.create(config.uri());
         int port = apiUri.getPort();
         if (port == -1) {
@@ -87,14 +85,6 @@ public class SignalFxMeterRegistry extends StepMeterRegistry {
         config().namingConvention(new SignalFxNamingConvention());
 
         start(threadFactory);
-    }
-
-    @Override
-    public void start(ThreadFactory threadFactory) {
-        if (config.enabled()) {
-            logger.info("publishing metrics to signalfx every " + TimeUtils.format(config.step()));
-        }
-        super.start(threadFactory);
     }
 
     @Override
@@ -151,7 +141,7 @@ public class SignalFxMeterRegistry extends StepMeterRegistry {
         SignalFxProtocolBuffers.Datum.Builder datumBuilder = SignalFxProtocolBuffers.Datum.newBuilder();
         SignalFxProtocolBuffers.Datum datum = (value instanceof Double ?
                 datumBuilder.setDoubleValue((Double) value) :
-                datumBuilder.setIntValue((Long) value)
+                datumBuilder.setIntValue(value.longValue())
         ).build();
 
         String metricName = config().namingConvention().name(statSuffix == null ? meter.getId().getName() : meter.getId().getName() + "." + statSuffix,
@@ -172,7 +162,8 @@ public class SignalFxMeterRegistry extends StepMeterRegistry {
         return dataPointBuilder;
     }
 
-    private Stream<SignalFxProtocolBuffers.DataPoint.Builder> addLongTaskTimer(LongTaskTimer longTaskTimer) {
+    // VisibleForTesting
+    Stream<SignalFxProtocolBuffers.DataPoint.Builder> addLongTaskTimer(LongTaskTimer longTaskTimer) {
         return Stream.of(
                 addDatapoint(longTaskTimer, GAUGE, "activeTasks", longTaskTimer.activeTasks()),
                 addDatapoint(longTaskTimer, COUNTER, "duration", longTaskTimer.duration(getBaseTimeUnit()))

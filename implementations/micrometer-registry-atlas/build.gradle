@@ -1,6 +1,7 @@
 dependencies {
-    compile project(':micrometer-core')
-    compile 'com.netflix.spectator:spectator-reg-atlas:latest.release'
+    api project(':micrometer-core')
 
-    testCompile project(':micrometer-test')
+    api 'com.netflix.spectator:spectator-reg-atlas'
+
+    testImplementation project(':micrometer-test')
 }

@@ -1,5 +1,5 @@
 /**
- * Copyright 2017 Pivotal Software, Inc.
+ * Copyright 2017 VMware, Inc.
  * <p>
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -24,41 +24,16 @@ import io.micrometer.core.instrument.distribution.TimeWindowMax;
 
 import java.util.Arrays;
 
+/**
+ * Step-normalized {@link io.micrometer.core.instrument.DistributionSummary}.
+ *
+ * @author Jon Schneider
+ * @author Johnny Lim
+ */
 public class StepDistributionSummary extends AbstractDistributionSummary {
     private final StepLong count;
     private final StepDouble total;
     private final TimeWindowMax max;
-
-    /**
-     * Create a new {@code StepDistributionSummary}.
-     *
-     * @param id                          ID
-     * @param clock                       clock
-     * @param distributionStatisticConfig distribution static configuration
-     * @param scale                       scale
-     * @deprecated Use {@link #StepDistributionSummary(io.micrometer.core.instrument.Meter.Id, Clock, DistributionStatisticConfig, double, long, boolean)}
-     */
-    @Deprecated
-    public StepDistributionSummary(Id id, Clock clock, DistributionStatisticConfig distributionStatisticConfig, double scale) {
-        this(id, clock, distributionStatisticConfig, scale, false);
-    }
-
-    /**
-     * Create a new {@code StepDistributionSummary}.
-     *
-     * @param id                            ID
-     * @param clock                         clock
-     * @param distributionStatisticConfig   distribution static configuration
-     * @param scale                         scale
-     * @param supportsAggregablePercentiles whether it supports aggregable percentiles
-     * @deprecated Use {@link #StepDistributionSummary(io.micrometer.core.instrument.Meter.Id, Clock, DistributionStatisticConfig, double, long, boolean)}
-     */
-    @Deprecated
-    @SuppressWarnings("ConstantConditions")
-    public StepDistributionSummary(Id id, Clock clock, DistributionStatisticConfig distributionStatisticConfig, double scale,
-                                   boolean supportsAggregablePercentiles) {
-        this(id, clock, distributionStatisticConfig, scale, distributionStatisticConfig.getExpiry().toMillis(), supportsAggregablePercentiles);
-    }
 
     /**
      * Create a new {@code StepDistributionSummary}.
@@ -70,7 +45,6 @@ public class StepDistributionSummary extends AbstractDistributionSummary {
      * @param stepMillis                    step in milliseconds
      * @param supportsAggregablePercentiles whether it supports aggregable percentiles
      */
-    @SuppressWarnings("ConstantConditions")
     public StepDistributionSummary(Id id, Clock clock, DistributionStatisticConfig distributionStatisticConfig, double scale,
                                    long stepMillis, boolean supportsAggregablePercentiles) {
         super(id, clock, distributionStatisticConfig, scale, supportsAggregablePercentiles);
@@ -88,7 +62,7 @@ public class StepDistributionSummary extends AbstractDistributionSummary {
 
     @Override
     public long count() {
-        return (long) count.poll();
+        return count.poll();
     }
 
     @Override

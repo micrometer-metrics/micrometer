@@ -1,5 +1,5 @@
 /**
- * Copyright 2017 Pivotal Software, Inc.
+ * Copyright 2017 VMware, Inc.
  * <p>
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -45,6 +45,9 @@ public class SimpleMeterRegistry extends MeterRegistry {
 
     public SimpleMeterRegistry(SimpleConfig config, Clock clock) {
         super(clock);
+
+        config.requireValid();
+
         this.config = config;
     }
 
@@ -114,8 +117,10 @@ public class SimpleMeterRegistry extends MeterRegistry {
     }
 
     @Override
-    protected LongTaskTimer newLongTaskTimer(Meter.Id id) {
-        return new DefaultLongTaskTimer(id, clock);
+    protected LongTaskTimer newLongTaskTimer(Meter.Id id, DistributionStatisticConfig distributionStatisticConfig) {
+        DefaultLongTaskTimer ltt = new DefaultLongTaskTimer(id, clock, getBaseTimeUnit(), distributionStatisticConfig, false);
+        HistogramGauges.registerWithCommonFormat(ltt, this);
+        return ltt;
     }
 
     @Override

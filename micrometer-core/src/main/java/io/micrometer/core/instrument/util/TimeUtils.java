@@ -1,5 +1,5 @@
 /**
- * Copyright 2017 Pivotal Software, Inc.
+ * Copyright 2017 VMware, Inc.
  * <p>
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,6 +14,8 @@
  * limitations under the License.
  */
 package io.micrometer.core.instrument.util;
+
+import io.micrometer.core.instrument.config.validate.DurationValidator;
 
 import java.time.Duration;
 import java.time.format.DateTimeParseException;
@@ -202,6 +204,12 @@ public final class TimeUtils {
         }
     }
 
+    /**
+     * @param time A time string ending in human readable suffixes like 'ns', 'ms', 's'.
+     * @return A duration
+     * @deprecated Use {@link DurationValidator#validate(String, String)} instead since 1.5.0.
+     */
+    @Deprecated
     public static Duration simpleParse(String time) {
         String timeLower = PARSE_PATTERN.matcher(time.toLowerCase()).replaceAll("");
         if (timeLower.endsWith("ns")) {

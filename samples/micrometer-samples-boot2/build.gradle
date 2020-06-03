@@ -1,29 +1,26 @@
 plugins {
+    id 'java'
     id "io.spring.dependency-management" version "1.0.3.RELEASE"
 }
 
 dependencyManagement {
     imports {
-        mavenBom 'org.springframework.boot:spring-boot-dependencies:2.2.0.RELEASE'
-    }
-    dependencies {
-        // not necessary in real Boot 1.5.x apps because reactor is shaded inside the
-        // published version of micrometer-registry-statsd
-        dependency 'io.projectreactor:reactor-core:3.2.2.RELEASE'
+        mavenBom 'org.springframework.boot:spring-boot-dependencies:2.2.6.RELEASE'
     }
 }
 
 dependencies {
+    implementation project(":micrometer-core")
     ['atlas', 'azure-monitor', 'prometheus', 'datadog', 'elastic', 'ganglia', 'graphite', 'jmx', 'influx', 'statsd', 'new-relic', 'cloudwatch', 'cloudwatch2', 'signalfx', 'wavefront', 'elastic', 'dynatrace', 'humio', 'appoptics', 'stackdriver'].each { sys ->
-        compile project(":micrometer-registry-$sys")
+        implementation project(":micrometer-registry-$sys")
     }
 
-    compile 'org.springframework.boot:spring-boot-starter-web'
-    compile 'org.springframework.boot:spring-boot-starter-actuator'
-    compile 'org.springframework.integration:spring-integration-ws'
-    compile 'org.springframework.integration:spring-integration-xml'
+    implementation 'org.springframework.boot:spring-boot-starter-web'
+    implementation('org.springframework.boot:spring-boot-starter-actuator') {
+        exclude group: 'io.micrometer', module: 'micrometer-core'
+    }
 
     // For running on Java 9+
-    runtime 'javax.xml.soap:javax.xml.soap-api:1.4.0'
-    runtime 'com.sun.xml.messaging.saaj:saaj-impl:1.5.1'
+    runtimeOnly 'javax.xml.soap:javax.xml.soap-api:1.4.0'
+    runtimeOnly 'com.sun.xml.messaging.saaj:saaj-impl:1.5.1'
 }

@@ -1,5 +1,5 @@
 /**
- * Copyright 2017 Pivotal Software, Inc.
+ * Copyright 2017 VMware, Inc.
  * <p>
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,7 +15,16 @@
  */
 package io.micrometer.elastic;
 
+import io.micrometer.core.instrument.config.validate.InvalidReason;
+import io.micrometer.core.instrument.config.validate.Validated;
 import io.micrometer.core.instrument.step.StepRegistryConfig;
+import io.micrometer.core.lang.Nullable;
+
+import java.time.format.DateTimeFormatter;
+
+import static io.micrometer.core.instrument.config.MeterRegistryConfigValidator.checkAll;
+import static io.micrometer.core.instrument.config.MeterRegistryConfigValidator.checkRequired;
+import static io.micrometer.core.instrument.config.validate.PropertyValidator.*;
 
 /**
  * Configuration for {@link ElasticMeterRegistry}.
@@ -53,8 +62,7 @@ public interface ElasticConfig extends StepRegistryConfig {
      * @return host
      */
     default String host() {
-        String v = get(prefix() + ".host");
-        return v == null ? "http://localhost:9200" : v;
+        return getUrlString(this, "host").orElse("http://localhost:9200");
     }
 
     /**
@@ -64,8 +72,7 @@ public interface ElasticConfig extends StepRegistryConfig {
      * @return index name
      */
     default String index() {
-        String v = get(prefix() + ".index");
-        return v == null ? "metrics" : v;
+        return getString(this, "index").orElse("metrics");
     }
 
     /**
@@ -76,8 +83,20 @@ public interface ElasticConfig extends StepRegistryConfig {
      * @return date format for index
      */
     default String indexDateFormat() {
-        String v = get(prefix() + ".indexDateFormat");
-        return v == null ? "yyyy-MM" : v;
+        return getString(this, "indexDateFormat")
+                .invalidateWhen(format -> {
+                    if (format == null) {
+                        return false;
+                    }
+
+                    try {
+                        DateTimeFormatter.ofPattern(format);
+                        return false;
+                    } catch (IllegalArgumentException ignored) {
+                        return true;
+                    }
+                }, "invalid date format", InvalidReason.MALFORMED)
+                .orElse("yyyy-MM");
     }
 
     /**
@@ -87,8 +106,7 @@ public interface ElasticConfig extends StepRegistryConfig {
      * @return field name for timestamp
      */
     default String timestampFieldName() {
-        String v = get(prefix() + ".timestampFieldName");
-        return v == null ? "@timestamp" : v;
+        return getString(this, "timestampFieldName").orElse("@timestamp");
     }
 
     /**
@@ -98,42 +116,38 @@ public interface ElasticConfig extends StepRegistryConfig {
      * @return whether to create the index automatically
      */
     default boolean autoCreateIndex() {
-        String v = get(prefix() + ".autoCreateIndex");
-        return v == null || Boolean.valueOf(v);
+        return getBoolean(this, "autoCreateIndex").orElse(true);
     }
 
     /**
      * The Basic Authentication username.
-     * Default is: "" (= do not perform Basic Authentication)
      *
      * @return username for Basic Authentication
      */
+    @Nullable
     default String userName() {
-        String v = get(prefix() + ".userName");
-        return v == null ? "" : v;
+        return getSecret(this, "userName").orElse(null);
     }
 
     /**
      * The Basic Authentication password.
-     * Default is: "" (= do not perform Basic Authentication)
      *
      * @return password for Basic Authentication
      */
+    @Nullable
     default String password() {
-        String v = get(prefix() + ".password");
-        return v == null ? "" : v;
+        return getSecret(this, "password").orElse(null);
     }
 
     /**
      * The ingest pipeline name.
-     * Default is: "" (= do not pre-process events)
      *
      * @return ingest pipeline name
      * @since 1.2.0
      */
+    @Nullable
     default String pipeline() {
-        String v = get(prefix() + ".pipeline");
-        return v == null ? "" : v;
+        return getString(this, "pipeline").orElse(null);
     }
 
     /**
@@ -144,7 +158,43 @@ public interface ElasticConfig extends StepRegistryConfig {
      * @since 1.2.0
      */
     default String indexDateSeparator() {
-        String v = get(prefix() + ".indexDateSeparator");
-        return v == null ? "-" : v;
+        return getString(this, "indexDateSeparator").orElse("-");
+    }
+
+    /**
+     * The type to be used when writing metrics documents to an index.
+     * This configuration is only used with Elasticsearch versions before 7.
+     * Default is: "doc"
+     *
+     * @return document type
+     * @since 1.4.0
+     */
+    default String documentType() {
+        return getString(this, "documentType").orElse("doc");
+    }
+
+    @Override
+    default Validated<?> validate() {
+        return checkAll(this,
+                c -> StepRegistryConfig.validate(c),
+                checkRequired("host", ElasticConfig::host),
+                checkRequired("index", ElasticConfig::index),
+                checkRequired("timestampFieldName", ElasticConfig::timestampFieldName),
+                checkRequired("indexDateFormat", ElasticConfig::indexDateFormat)
+                        .andThen(v -> v.invalidateWhen(format -> {
+                            if (format == null) {
+                                return true;
+                            }
+
+                            try {
+                                DateTimeFormatter.ofPattern(format);
+                                return false;
+                            } catch (IllegalArgumentException ignored) {
+                                return true;
+                            }
+                        }, "invalid date format", InvalidReason.MALFORMED)),
+                checkRequired("indexDateSeparator", ElasticConfig::indexDateSeparator),
+                checkRequired("documentType", ElasticConfig::documentType)
+        );
     }
 }

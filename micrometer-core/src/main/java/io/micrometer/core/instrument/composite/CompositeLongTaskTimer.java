@@ -1,5 +1,5 @@
 /**
- * Copyright 2017 Pivotal Software, Inc.
+ * Copyright 2017 VMware, Inc.
  * <p>
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,53 +18,28 @@ package io.micrometer.core.instrument.composite;
 import io.micrometer.core.instrument.LongTaskTimer;
 import io.micrometer.core.instrument.Meter;
 import io.micrometer.core.instrument.MeterRegistry;
+import io.micrometer.core.instrument.distribution.DistributionStatisticConfig;
+import io.micrometer.core.instrument.distribution.HistogramSnapshot;
 import io.micrometer.core.instrument.noop.NoopLongTaskTimer;
 
+import java.time.Duration;
 import java.util.ArrayList;
-import java.util.Collection;
-import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.ConcurrentMap;
+import java.util.List;
 import java.util.concurrent.TimeUnit;
-import java.util.concurrent.atomic.AtomicLong;
 
 class CompositeLongTaskTimer extends AbstractCompositeMeter<LongTaskTimer> implements LongTaskTimer {
-    private final AtomicLong nextTask = new AtomicLong(0L);
-    private final ConcurrentMap<Long, Collection<Sample>> timings = new ConcurrentHashMap<>();
+    private final DistributionStatisticConfig distributionStatisticConfig;
 
-    CompositeLongTaskTimer(Meter.Id id) {
+    CompositeLongTaskTimer(Meter.Id id, DistributionStatisticConfig distributionStatisticConfig) {
         super(id);
+        this.distributionStatisticConfig = distributionStatisticConfig;
     }
 
     @Override
     public Sample start() {
-        long task = nextTask.getAndIncrement();
-
-        Collection<Sample> samples = new ArrayList<>();
+        List<Sample> samples = new ArrayList<>();
         forEachChild(ltt -> samples.add(ltt.start()));
-        timings.put(task, samples);
-
-        return new Sample(this, task);
-    }
-
-    @Override
-    public long stop(long task) {
-        Collection<Sample> childMappings = timings.remove(task);
-        long last = 0;
-        if (childMappings != null) {
-            for (Sample sample : childMappings) {
-                last = sample.stop();
-            }
-        }
-        return last;
-    }
-
-    @Override
-    public double duration(long task, TimeUnit unit) {
-        Collection<Sample> childSamples = timings.get(task);
-        if (childSamples != null) {
-            return childSamples.stream().findFirst().map(c -> c.duration(unit)).orElse(-1.0);
-        }
-        return -1.0;
+        return new CompositeSample(samples);
     }
 
     @Override
@@ -78,15 +53,73 @@ class CompositeLongTaskTimer extends AbstractCompositeMeter<LongTaskTimer> imple
     }
 
     @Override
+    public double max(TimeUnit unit) {
+        return firstChild().max(unit);
+    }
+
+    @Override
+    public TimeUnit baseTimeUnit() {
+        return TimeUnit.SECONDS;
+    }
+
+    @Override
+    public HistogramSnapshot takeSnapshot() {
+        return firstChild().takeSnapshot();
+    }
+
+    @Override
     LongTaskTimer newNoopMeter() {
         return new NoopLongTaskTimer(getId());
     }
 
+    @SuppressWarnings("ConstantConditions")
     @Override
     LongTaskTimer registerNewMeter(MeterRegistry registry) {
-        return LongTaskTimer.builder(getId().getName())
+        LongTaskTimer.Builder builder = LongTaskTimer.builder(getId().getName())
                 .tags(getId().getTagsAsIterable())
                 .description(getId().getDescription())
-                .register(registry);
+                .maximumExpectedValue(Duration.ofNanos(distributionStatisticConfig.getMaximumExpectedValueAsDouble().longValue()))
+                .minimumExpectedValue(Duration.ofNanos(distributionStatisticConfig.getMinimumExpectedValueAsDouble().longValue()))
+                .publishPercentiles(distributionStatisticConfig.getPercentiles())
+                .publishPercentileHistogram(distributionStatisticConfig.isPercentileHistogram())
+                .distributionStatisticBufferLength(distributionStatisticConfig.getBufferLength())
+                .distributionStatisticExpiry(distributionStatisticConfig.getExpiry())
+                .percentilePrecision(distributionStatisticConfig.getPercentilePrecision());
+
+        final double[] sloNanos = distributionStatisticConfig.getServiceLevelObjectiveBoundaries();
+        if (sloNanos != null) {
+            Duration[] slo = new Duration[sloNanos.length];
+            for (int i = 0; i < sloNanos.length; i++) {
+                slo[i] = Duration.ofNanos((long) sloNanos[i]);
+            }
+            builder = builder.serviceLevelObjectives(slo);
+        }
+
+        return builder.register(registry);
+    }
+
+    static class CompositeSample extends Sample {
+        private final List<Sample> samples;
+
+        private CompositeSample(List<Sample> samples) {
+            this.samples = samples;
+        }
+
+        @Override
+        public long stop() {
+            return samples.stream()
+                    .reduce(
+                            0L,
+                            (stopped, sample) -> sample.stop(),
+                            (s1, s2) -> s1
+                    );
+        }
+
+        @Override
+        public double duration(TimeUnit unit) {
+            return samples.stream().findAny()
+                    .map(s -> s.duration(unit))
+                    .orElse(0.0);
+        }
     }
 }

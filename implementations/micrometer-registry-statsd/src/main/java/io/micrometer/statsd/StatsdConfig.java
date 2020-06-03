@@ -1,5 +1,5 @@
 /**
- * Copyright 2017 Pivotal Software, Inc.
+ * Copyright 2017 VMware, Inc.
  * <p>
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,8 +16,14 @@
 package io.micrometer.statsd;
 
 import io.micrometer.core.instrument.config.MeterRegistryConfig;
+import io.micrometer.core.instrument.config.validate.Validated;
 
 import java.time.Duration;
+
+import static io.micrometer.core.instrument.config.MeterRegistryConfigValidator.check;
+import static io.micrometer.core.instrument.config.MeterRegistryConfigValidator.checkAll;
+import static io.micrometer.core.instrument.config.MeterRegistryConfigValidator.checkRequired;
+import static io.micrometer.core.instrument.config.validate.PropertyValidator.*;
 
 /**
  * Configuration for {@link StatsdMeterRegistry}.
@@ -39,44 +45,31 @@ public interface StatsdConfig extends MeterRegistryConfig {
      * @return Choose which variant of the StatsD line protocol to use.
      */
     default StatsdFlavor flavor() {
-        String v = get(prefix() + ".flavor");
-
         // Datadog is the default because it is more frequently requested than
         // vanilla StatsD (Etsy), and Telegraf supports Datadog's format with a configuration
         // option.
-        if (v == null)
-            return StatsdFlavor.DATADOG;
-
-        for (StatsdFlavor flavor : StatsdFlavor.values()) {
-            if (flavor.toString().equalsIgnoreCase(v))
-                return flavor;
-        }
-
-        throw new IllegalArgumentException("Unrecognized statsd flavor '" + v + "' (check property " + prefix() + ".flavor)");
+        return getEnum(this, StatsdFlavor.class, "flavor").orElse(StatsdFlavor.DATADOG);
     }
 
     /**
      * @return {@code true} if publishing is enabled. Default is {@code true}.
      */
     default boolean enabled() {
-        String v = get(prefix() + ".enabled");
-        return v == null || Boolean.valueOf(v);
+        return getBoolean(this, "enabled").orElse(true);
     }
 
     /**
      * @return The host name of the StatsD agent.
      */
     default String host() {
-        String v = get(prefix() + ".host");
-        return (v == null) ? "localhost" : v;
+        return getString(this, "host").orElse("localhost");
     }
 
     /**
      * @return The port of the StatsD agent.
      */
     default int port() {
-        String v = get(prefix() + ".port");
-        return (v == null) ? 8125 : Integer.parseInt(v);
+        return getInteger(this, "port").orElse(8125);
     }
 
     /**
@@ -84,17 +77,7 @@ public interface StatsdConfig extends MeterRegistryConfig {
      * @since 1.2.0
      */
     default StatsdProtocol protocol() {
-        final String v = get(prefix() + ".protocol");
-
-        if (v == null)
-            return StatsdProtocol.UDP;
-
-        for (StatsdProtocol protocol : StatsdProtocol.values()) {
-            if (protocol.toString().equalsIgnoreCase(v))
-                return protocol;
-        }
-
-        throw new IllegalArgumentException("Unrecognized statsd protocol '" + v + "' (check property " + prefix() + ".protocol)");
+        return getEnum(this, StatsdProtocol.class, "protocol").orElse(StatsdProtocol.UDP);
     }
 
     /**
@@ -106,11 +89,9 @@ public interface StatsdConfig extends MeterRegistryConfig {
      * @return The max length of the payload.
      */
     default int maxPacketLength() {
-        String v = get(prefix() + ".maxPacketLength");
-
         // 1400 is the value that Datadog has chosen in their client. Seems to work well
         // for most cases.
-        return (v == null) ? 1400 : Integer.parseInt(v);
+        return getInteger(this, "maxPacketLength").orElse(1400);
     }
 
     /**
@@ -120,8 +101,7 @@ public interface StatsdConfig extends MeterRegistryConfig {
      * @return The polling frequency.
      */
     default Duration pollingFrequency() {
-        String v = get(prefix() + ".pollingFrequency");
-        return v == null ? Duration.ofSeconds(10) : Duration.parse(v);
+        return getDuration(this, "pollingFrequency").orElse(Duration.ofSeconds(10));
     }
 
     /**
@@ -132,8 +112,7 @@ public interface StatsdConfig extends MeterRegistryConfig {
      */
     @Deprecated
     default int queueSize() {
-        String v = get(prefix() + ".queueSize");
-        return v == null ? Integer.MAX_VALUE : Integer.parseInt(v);
+        return getInteger(this, "queueSize").orElse(Integer.MAX_VALUE);
     }
 
     /**
@@ -141,16 +120,14 @@ public interface StatsdConfig extends MeterRegistryConfig {
      * To get the most out of these statistics, align the step interval to be close to your scrape interval.
      */
     default Duration step() {
-        String v = get(prefix() + ".step");
-        return v == null ? Duration.ofMinutes(1) : Duration.parse(v);
+        return getDuration(this, "step").orElse(Duration.ofMinutes(1));
     }
 
     /**
      * @return {@code true} if unchanged meters should be published to the StatsD server. Default is {@code true}.
      */
     default boolean publishUnchangedMeters() {
-        String v = get(prefix() + ".publishUnchangedMeters");
-        return v == null || Boolean.valueOf(v);
+        return getBoolean(this, "publishUnchangedMeters").orElse(true);
     }
 
     /**
@@ -159,7 +136,18 @@ public interface StatsdConfig extends MeterRegistryConfig {
      * is reached.
      */
     default boolean buffered() {
-        String v = get(prefix() + ".buffered");
-        return v == null || Boolean.valueOf(v);
+        return getBoolean(this, "buffered").orElse(true);
+    }
+
+    @Override
+    default Validated<?> validate() {
+        return checkAll(this,
+                checkRequired("flavor", StatsdConfig::flavor),
+                checkRequired("host", StatsdConfig::host),
+                check("port", StatsdConfig::port),
+                checkRequired("protocol", StatsdConfig::protocol),
+                checkRequired("pollingFrequency", StatsdConfig::pollingFrequency),
+                checkRequired("step", StatsdConfig::step)
+        );
     }
 }

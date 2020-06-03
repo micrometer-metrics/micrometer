@@ -1,5 +1,5 @@
 /**
- * Copyright 2017 Pivotal Software, Inc.
+ * Copyright 2017 VMware, Inc.
  * <p>
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -26,8 +26,7 @@ import io.micrometer.core.instrument.internal.DefaultLongTaskTimer;
 import io.micrometer.core.instrument.internal.DefaultMeter;
 import io.micrometer.core.instrument.util.HierarchicalNameMapper;
 import io.micrometer.core.lang.Nullable;
-import io.micrometer.core.util.internal.logging.InternalLogger;
-import io.micrometer.core.util.internal.logging.InternalLoggerFactory;
+import io.micrometer.core.util.internal.logging.WarnThenDebugLogger;
 
 import java.lang.ref.WeakReference;
 import java.util.concurrent.TimeUnit;
@@ -42,7 +41,8 @@ import java.util.function.ToLongFunction;
  * @author Johnny Lim
  */
 public abstract class DropwizardMeterRegistry extends MeterRegistry {
-    private static final InternalLogger log = InternalLoggerFactory.getInstance(DropwizardMeterRegistry.class);
+
+    private static final WarnThenDebugLogger logger = new WarnThenDebugLogger(DropwizardMeterRegistry.class);
 
     private final MetricRegistry registry;
     private final HierarchicalNameMapper nameMapper;
@@ -53,10 +53,14 @@ public abstract class DropwizardMeterRegistry extends MeterRegistry {
 
     public DropwizardMeterRegistry(DropwizardConfig config, MetricRegistry registry, HierarchicalNameMapper nameMapper, Clock clock) {
         super(clock);
+
+        config.requireValid();
+
         this.dropwizardConfig = config;
         this.dropwizardClock = new DropwizardClock(clock);
         this.registry = registry;
         this.nameMapper = nameMapper;
+
         config()
             .namingConvention(NamingConvention.camelCase)
             .onMeterRemoved(this::onMeterRemoved);
@@ -86,13 +90,7 @@ public abstract class DropwizardMeterRegistry extends MeterRegistry {
                 try {
                     return valueFunction.applyAsDouble(obj2);
                 } catch (Throwable ex) {
-                    String message = "Failed to apply the value function for the gauge '" + id.getName() + "'.";
-                    if (this.warnLogged.compareAndSet(false, true)) {
-                        log.warn(message, ex);
-                    }
-                    else {
-                        log.debug(message, ex);
-                    }
+                    logger.log("Failed to apply the value function for the gauge '" + id.getName() + "'.", ex);
                 }
             }
             return nullGaugeValue();
@@ -116,16 +114,18 @@ public abstract class DropwizardMeterRegistry extends MeterRegistry {
     }
 
     @Override
-    protected LongTaskTimer newLongTaskTimer(Meter.Id id) {
-        LongTaskTimer ltt = new DefaultLongTaskTimer(id, clock);
+    protected LongTaskTimer newLongTaskTimer(Meter.Id id, DistributionStatisticConfig distributionStatisticConfig) {
+        LongTaskTimer ltt = new DefaultLongTaskTimer(id, clock, getBaseTimeUnit(), distributionStatisticConfig, false);
         registry.register(hierarchicalName(id.withTag(Statistic.ACTIVE_TASKS)), (Gauge<Integer>) ltt::activeTasks);
         registry.register(hierarchicalName(id.withTag(Statistic.DURATION)), (Gauge<Double>) () -> ltt.duration(TimeUnit.NANOSECONDS));
+        registry.register(hierarchicalName(id.withTag(Statistic.MAX)), (Gauge<Double>) () -> ltt.max(TimeUnit.NANOSECONDS));
+        HistogramGauges.registerWithCommonFormat(ltt, this);
         return ltt;
     }
 
     @Override
     protected <T> FunctionTimer newFunctionTimer(Meter.Id id, T obj, ToLongFunction<T> countFunction, ToDoubleFunction<T> totalTimeFunction, TimeUnit totalTimeFunctionUnit) {
-        DropwizardFunctionTimer ft = new DropwizardFunctionTimer<>(id, clock, obj, countFunction, totalTimeFunction,
+        DropwizardFunctionTimer<T> ft = new DropwizardFunctionTimer<>(id, clock, obj, countFunction, totalTimeFunction,
                 totalTimeFunctionUnit, getBaseTimeUnit());
         registry.register(hierarchicalName(id), ft.getDropwizardMeter());
         return ft;

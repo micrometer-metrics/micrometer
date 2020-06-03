@@ -1,12 +1,27 @@
 dependencies {
-    compile project(':micrometer-core')
-    compile 'org.assertj:assertj-core:latest.release'
+    api project(':micrometer-core')
 
-    compile 'org.junit.jupiter:junit-jupiter:latest.release'
+    api 'org.assertj:assertj-core'
 
-    compile 'ru.lanwen.wiremock:wiremock-junit5:latest.release'
-    compile 'com.github.tomakehurst:wiremock:latest.release'
-    compile 'org.mockito:mockito-core:latest.release'
+    api 'org.junit.jupiter:junit-jupiter'
 
-    testCompile 'org.jsr107.ri:cache-ri-impl:1.0.0'
+    api 'ru.lanwen.wiremock:wiremock-junit5', {
+        exclude group: 'com.github.tomakehurst', module: 'wiremock'
+    }
+    api 'com.github.tomakehurst:wiremock-jre8'
+    api 'org.mockito:mockito-core'
+    api 'org.testcontainers:testcontainers'
+    api 'org.testcontainers:junit-jupiter'
+
+    testImplementation 'org.jsr107.ri:cache-ri-impl'
+
+    // We have tests for the many features that are optional dependencies, so add
+    // them here just like a user would need to.
+    testImplementation 'com.google.guava:guava'
+    testImplementation 'com.github.ben-manes.caffeine:caffeine'
+    testImplementation 'net.sf.ehcache:ehcache'
+    testImplementation 'javax.cache:cache-api'
+    testImplementation 'com.hazelcast:hazelcast'
+    testImplementation 'com.squareup.okhttp3:okhttp'
+    testImplementation 'io.projectreactor.netty:reactor-netty'
 }

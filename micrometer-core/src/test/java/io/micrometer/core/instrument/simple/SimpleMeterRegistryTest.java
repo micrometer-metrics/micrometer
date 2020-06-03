@@ -1,5 +1,5 @@
 /**
- * Copyright 2017 Pivotal Software, Inc.
+ * Copyright 2017 VMware, Inc.
  * <p>
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -47,11 +47,14 @@ class SimpleMeterRegistryTest {
 
     @Issue("#370")
     @Test
-    void slasOnlyNoPercentileHistogram() {
-        DistributionSummary summary = DistributionSummary.builder("my.summary").sla(1, 2).register(registry);
+    void serviceLevelObjectivesOnlyNoPercentileHistogram() {
+        DistributionSummary summary = DistributionSummary.builder("my.summary")
+                .serviceLevelObjectives(1.0, 2)
+                .register(registry);
+
         summary.record(1);
 
-        Timer timer = Timer.builder("my.timer").sla(Duration.ofMillis(1)).register(registry);
+        Timer timer = Timer.builder("my.timer").serviceLevelObjectives(Duration.ofMillis(1)).register(registry);
         timer.record(1, TimeUnit.MILLISECONDS);
 
         Gauge summaryHist1 = registry.get("my.summary.histogram").tags("le", "1").gauge();
@@ -70,7 +73,7 @@ class SimpleMeterRegistryTest {
     }
 
     @Test
-    public void newFunctionTimerWhenCountingModeIsCumulativeShouldReturnCumulativeFunctionTimer() {
+    void newFunctionTimerWhenCountingModeIsCumulativeShouldReturnCumulativeFunctionTimer() {
         SimpleMeterRegistry registry = createRegistry(CountingMode.CUMULATIVE);
         Meter.Id id = new Meter.Id("some.timer", Tags.empty(), null, null, Meter.Type.TIMER);
         FunctionTimer functionTimer = registry.newFunctionTimer(id, null, (o) -> 0L, (o) -> 0d, TimeUnit.SECONDS);
@@ -78,7 +81,7 @@ class SimpleMeterRegistryTest {
     }
 
     @Test
-    public void newFunctionCounterWhenCountingModeIsCumulativeShouldReturnCumulativeFunctionCounter() {
+    void newFunctionCounterWhenCountingModeIsCumulativeShouldReturnCumulativeFunctionCounter() {
         SimpleMeterRegistry registry = createRegistry(CountingMode.CUMULATIVE);
         Meter.Id id = new Meter.Id("some.timer", Tags.empty(), null, null, Meter.Type.COUNTER);
         FunctionCounter functionCounter = registry.newFunctionCounter(id, null, (o) -> 0d);
@@ -86,7 +89,7 @@ class SimpleMeterRegistryTest {
     }
 
     @Test
-    public void newFunctionTimerWhenCountingModeIsStepShouldReturnStepFunctionTimer() {
+    void newFunctionTimerWhenCountingModeIsStepShouldReturnStepFunctionTimer() {
         SimpleMeterRegistry registry = createRegistry(CountingMode.STEP);
         Meter.Id id = new Meter.Id("some.timer", Tags.empty(), null, null, Meter.Type.TIMER);
         FunctionTimer functionTimer = registry.newFunctionTimer(id, null, (o) -> 0L, (o) -> 0d, TimeUnit.SECONDS);
@@ -94,7 +97,7 @@ class SimpleMeterRegistryTest {
     }
 
     @Test
-    public void newFunctionCounterWhenCountingModeIsStepShouldReturnStepFunctionCounter() {
+    void newFunctionCounterWhenCountingModeIsStepShouldReturnStepFunctionCounter() {
         SimpleMeterRegistry registry = createRegistry(CountingMode.STEP);
         Meter.Id id = new Meter.Id("some.timer", Tags.empty(), null, null, Meter.Type.COUNTER);
         FunctionCounter functionCounter = registry.newFunctionCounter(id, null, (o) -> 0d);
