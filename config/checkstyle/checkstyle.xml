@@ -13,7 +13,8 @@
 
         <!-- Imports -->
         <module name="IllegalImportCheck" >
-            <property name="illegalPkgs" value="com.google.common.(?!cache).*,org.apache.commons.text.*,org.slf4j.*"/>
+            <property name="illegalPkgs" value="com.google.common.(?!cache).*,org.apache.commons.text.*,org.slf4j.*,org.jetbrains.*,jdk.internal.jline.internal.*,reactor.util.annotation.*,org.checkerframework.checker.*"/>
+            <property name="illegalClasses" value="org\.assertj\.core\.api\.Java6Assertions\..*"/>
             <property name="regexp" value="true"/>
         </module>
         <module name="UnusedImports">
@@ -37,10 +38,14 @@
         <!-- Whitespace -->
         <module name="com.puppycrawl.tools.checkstyle.checks.whitespace.WhitespaceAroundCheck" />
 
+        <module name="io.spring.javaformat.checkstyle.check.SpringJUnit5Check" />
+
         <module name="SuppressionCommentFilter"/>
     </module>
 
     <module name="SuppressionFilter">
         <property name="file" value="${config_loc}/suppressions.xml"/>
     </module>
+
+    <module name="io.spring.nohttp.checkstyle.check.NoHttpCheck"/>
 </module>

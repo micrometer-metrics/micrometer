@@ -1,5 +1,5 @@
 /**
- * Copyright 2019 Pivotal Software, Inc.
+ * Copyright 2019 VMware, Inc.
  * <p>
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -35,7 +35,7 @@ import org.slf4j.Logger;
 /**
  * NOTE: This file has been copied from {io.netty.util.internal.logging}.
  *
- * <a href="http://www.slf4j.org/">SLF4J</a> logger.
+ * <a href="https://www.slf4j.org/">SLF4J</a> logger.
  */
 final class Slf4JLogger extends AbstractInternalLogger {
 

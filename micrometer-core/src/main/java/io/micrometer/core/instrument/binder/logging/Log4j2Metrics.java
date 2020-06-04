@@ -1,5 +1,5 @@
 /**
- * Copyright 2017 Pivotal Software, Inc.
+ * Copyright 2017 VMware, Inc.
  * <p>
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,16 +18,21 @@ package io.micrometer.core.instrument.binder.logging;
 import io.micrometer.core.instrument.Counter;
 import io.micrometer.core.instrument.MeterRegistry;
 import io.micrometer.core.instrument.Tag;
+import io.micrometer.core.instrument.binder.BaseUnits;
 import io.micrometer.core.instrument.binder.MeterBinder;
 import io.micrometer.core.lang.NonNullApi;
 import io.micrometer.core.lang.NonNullFields;
 import io.micrometer.core.lang.Nullable;
 import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.core.Filter;
 import org.apache.logging.log4j.core.LogEvent;
 import org.apache.logging.log4j.core.LoggerContext;
 import org.apache.logging.log4j.core.config.Configuration;
 import org.apache.logging.log4j.core.config.LoggerConfig;
 import org.apache.logging.log4j.core.filter.AbstractFilter;
+import org.apache.logging.log4j.core.filter.CompositeFilter;
+
+import java.util.Arrays;
 
 import static java.util.Collections.emptyList;
 
@@ -71,14 +76,26 @@ public class Log4j2Metrics implements MeterBinder, AutoCloseable {
         Configuration configuration = loggerContext.getConfiguration();
         LoggerConfig rootLoggerConfig = configuration.getRootLogger();
         rootLoggerConfig.addFilter(metricsFilter);
-        loggerContext.getLoggers().stream()
-                .filter(logger -> !logger.isAdditive())
-                .forEach(logger -> {
-                    LoggerConfig loggerConfig = configuration.getLoggerConfig(logger.getName());
-                    if (loggerConfig != rootLoggerConfig) {
-                        loggerConfig.addFilter(metricsFilter);
-                    }
-                });
+
+        loggerContext.getConfiguration().getLoggers().values().stream()
+            .filter(loggerConfig -> !loggerConfig.isAdditive())
+            .forEach(loggerConfig -> {
+                if (loggerConfig == rootLoggerConfig) {
+                    return;
+                }
+                Filter logFilter = loggerConfig.getFilter();
+
+                if ((logFilter instanceof CompositeFilter && Arrays.stream(((CompositeFilter) logFilter).getFiltersArray())
+                        .anyMatch(innerFilter -> innerFilter instanceof MetricsFilter))) {
+                    return;
+                }
+
+                if (logFilter instanceof MetricsFilter) {
+                    return;
+                }
+                loggerConfig.addFilter(metricsFilter);
+            });
+
         loggerContext.updateLoggers(configuration);
     }
 
@@ -88,14 +105,15 @@ public class Log4j2Metrics implements MeterBinder, AutoCloseable {
             Configuration configuration = loggerContext.getConfiguration();
             LoggerConfig rootLoggerConfig = configuration.getRootLogger();
             rootLoggerConfig.removeFilter(metricsFilter);
-            loggerContext.getLoggers().stream()
-                    .filter(logger -> !logger.isAdditive())
-                    .forEach(logger -> {
-                        LoggerConfig loggerConfig = configuration.getLoggerConfig(logger.getName());
-                        if (loggerConfig != rootLoggerConfig) {
-                            loggerConfig.removeFilter(metricsFilter);
-                        }
-                    });
+
+            loggerContext.getConfiguration().getLoggers().values().stream()
+                .filter(loggerConfig -> !loggerConfig.isAdditive())
+                .forEach(loggerConfig -> {
+                    if (loggerConfig != rootLoggerConfig) {
+                        loggerConfig.removeFilter(metricsFilter);
+                    }
+                });
+
             loggerContext.updateLoggers(configuration);
             metricsFilter.stop();
         }
@@ -117,42 +135,42 @@ public class Log4j2Metrics implements MeterBinder, AutoCloseable {
                     .tags(tags)
                     .tags("level", "fatal")
                     .description("Number of fatal level log events")
-                    .baseUnit("events")
+                    .baseUnit(BaseUnits.EVENTS)
                     .register(registry);
 
             errorCounter = Counter.builder(METER_NAME)
                     .tags(tags)
                     .tags("level", "error")
                     .description("Number of error level log events")
-                    .baseUnit("events")
+                    .baseUnit(BaseUnits.EVENTS)
                     .register(registry);
 
             warnCounter = Counter.builder(METER_NAME)
                     .tags(tags)
                     .tags("level", "warn")
                     .description("Number of warn level log events")
-                    .baseUnit("events")
+                    .baseUnit(BaseUnits.EVENTS)
                     .register(registry);
 
             infoCounter = Counter.builder(METER_NAME)
                     .tags(tags)
                     .tags("level", "info")
                     .description("Number of info level log events")
-                    .baseUnit("events")
+                    .baseUnit(BaseUnits.EVENTS)
                     .register(registry);
 
             debugCounter = Counter.builder(METER_NAME)
                     .tags(tags)
                     .tags("level", "debug")
                     .description("Number of debug level log events")
-                    .baseUnit("events")
+                    .baseUnit(BaseUnits.EVENTS)
                     .register(registry);
 
             traceCounter = Counter.builder(METER_NAME)
                     .tags(tags)
                     .tags("level", "trace")
                     .description("Number of trace level log events")
-                    .baseUnit("events")
+                    .baseUnit(BaseUnits.EVENTS)
                     .register(registry);
         }
 

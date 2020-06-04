@@ -1,5 +1,5 @@
 /**
- * Copyright 2017 Pivotal Software, Inc.
+ * Copyright 2017 VMware, Inc.
  * <p>
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,9 +15,12 @@
  */
 package io.micrometer.datadog;
 
-import io.micrometer.core.instrument.config.MissingRequiredConfigurationException;
+import io.micrometer.core.instrument.config.validate.Validated;
 import io.micrometer.core.instrument.step.StepRegistryConfig;
 import io.micrometer.core.lang.Nullable;
+
+import static io.micrometer.core.instrument.config.MeterRegistryConfigValidator.*;
+import static io.micrometer.core.instrument.config.validate.PropertyValidator.*;
 
 /**
  * Configuration for {@link DatadogMeterRegistry}.
@@ -32,10 +35,7 @@ public interface DatadogConfig extends StepRegistryConfig {
     }
 
     default String apiKey() {
-        String v = get(prefix() + ".apiKey");
-        if (v == null)
-            throw new MissingRequiredConfigurationException("apiKey must be set to report metrics to Datadog");
-        return v;
+        return getString(this, "apiKey").required().get();
     }
 
     /**
@@ -44,7 +44,7 @@ public interface DatadogConfig extends StepRegistryConfig {
      */
     @Nullable
     default String applicationKey() {
-        return get(prefix() + ".applicationKey");
+        return getString(this, "applicationKey").orElse(null);
     }
 
     /**
@@ -52,8 +52,7 @@ public interface DatadogConfig extends StepRegistryConfig {
      */
     @Nullable
     default String hostTag() {
-        String v = get(prefix() + ".hostTag");
-        return v == null ? "instance" : v;
+        return getString(this, "hostTag").orElse("instance");
     }
 
     /**
@@ -61,8 +60,7 @@ public interface DatadogConfig extends StepRegistryConfig {
      * datadoghq, you can define the location of the proxy with this.
      */
     default String uri() {
-        String v = get(prefix() + ".uri");
-        return v == null ? "https://app.datadoghq.com" : v;
+        return getUrlString(this, "uri").orElse("https://api.datadoghq.com");
     }
 
     /**
@@ -70,7 +68,15 @@ public interface DatadogConfig extends StepRegistryConfig {
      * Turn this off to minimize the amount of data sent on each scrape.
      */
     default boolean descriptions() {
-        String v = get(prefix() + ".descriptions");
-        return v == null || Boolean.valueOf(v);
+        return getBoolean(this, "descriptions").orElse(true);
+    }
+
+    @Override
+    default Validated<?> validate() {
+        return checkAll(this,
+                c -> StepRegistryConfig.validate(c),
+                checkRequired("apiKey", DatadogConfig::apiKey),
+                checkRequired("uri", DatadogConfig::uri)
+        );
     }
 }

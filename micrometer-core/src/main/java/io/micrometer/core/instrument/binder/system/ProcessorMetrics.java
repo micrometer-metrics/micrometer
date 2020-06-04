@@ -1,5 +1,5 @@
 /**
- * Copyright 2017 Pivotal Software, Inc.
+ * Copyright 2017 VMware, Inc.
  * <p>
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -41,6 +41,11 @@ import static java.util.Objects.requireNonNull;
  *     <li>HotSpot</li>
  *     <li>J9</li>
  * </ul>
+ *
+ * @author Jon Schneider
+ * @author Michael Weirauch
+ * @author Clint Checketts
+ * @author Tommy Ludwig
  */
 @NonNullApi
 @NonNullFields

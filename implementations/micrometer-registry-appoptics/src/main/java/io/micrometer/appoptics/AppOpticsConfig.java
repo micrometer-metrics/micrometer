@@ -1,5 +1,5 @@
 /**
- * Copyright 2018 Pivotal Software, Inc.
+ * Copyright 2018 VMware, Inc.
  * <p>
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,11 +15,15 @@
  */
 package io.micrometer.appoptics;
 
-import io.micrometer.core.instrument.config.MissingRequiredConfigurationException;
+import io.micrometer.core.instrument.config.validate.InvalidReason;
+import io.micrometer.core.instrument.config.validate.Validated;
 import io.micrometer.core.instrument.step.StepRegistryConfig;
 import io.micrometer.core.lang.Nullable;
 
 import java.time.Duration;
+
+import static io.micrometer.core.instrument.config.MeterRegistryConfigValidator.*;
+import static io.micrometer.core.instrument.config.validate.PropertyValidator.*;
 
 /**
  * Configuration for {@link AppOpticsMeterRegistry}.
@@ -42,10 +46,7 @@ public interface AppOpticsConfig extends StepRegistryConfig {
      * @return AppOptics API token
      */
     default String apiToken() {
-        String t = get(prefix() + ".apiToken");
-        if (t == null)
-            throw new MissingRequiredConfigurationException("apiToken must be set to report metrics to AppOptics");
-        return t;
+        return getSecret(this, "apiToken").required().get();
     }
 
     /**
@@ -53,36 +54,44 @@ public interface AppOpticsConfig extends StepRegistryConfig {
      */
     @Nullable
     default String hostTag() {
-        String v = get(prefix() + ".hostTag");
-        return v == null ? "instance" : v;
+        return getString(this, "hostTag").orElse("instance");
     }
 
     /**
      * @return the URI to ship metrics to
      */
     default String uri() {
-        String v = get(prefix() + ".uri");
-        return v == null ? "https://api.appoptics.com/v1/measurements" : v;
+        return getUrlString(this, "uri").orElse("https://api.appoptics.com/v1/measurements");
     }
 
     /**
      * @return whether or not to ship a floored time - floors time to the multiple of the {@link #step()}
      */
     default boolean floorTimes() {
-        return Boolean.parseBoolean(get(prefix() + ".floorTimes"));
+        return getBoolean(this, "floorTimes").orElse(false);
     }
 
     @Override
     default int batchSize() {
-        String v = get(prefix() + ".batchSize");
-        return v == null ? DEFAULT_BATCH_SIZE : Math.min(Integer.parseInt(v), MAX_BATCH_SIZE);
+        return Math.min(getInteger(this, "batchSize").orElse(DEFAULT_BATCH_SIZE), MAX_BATCH_SIZE);
     }
 
     @Deprecated
     @Override
     default Duration connectTimeout() {
-        String v = get(prefix() + ".connectTimeout");
         // AppOptics regularly times out when the default is 1 second.
-        return v == null ? Duration.ofSeconds(5) : Duration.parse(v);
+        return getDuration(this, "connectTimeout").orElse(Duration.ofSeconds(5));
+    }
+
+    @Override
+    default Validated<?> validate() {
+        return checkAll(this,
+                c -> StepRegistryConfig.validate(c),
+                checkRequired("apiToken", AppOpticsConfig::apiToken),
+                checkRequired("uri", AppOpticsConfig::uri),
+                check("batchSize", AppOpticsConfig::batchSize)
+                        .andThen(v -> v.invalidateWhen(b -> b > MAX_BATCH_SIZE, "cannot be greater than " + MAX_BATCH_SIZE,
+                                InvalidReason.MALFORMED))
+        );
     }
 }

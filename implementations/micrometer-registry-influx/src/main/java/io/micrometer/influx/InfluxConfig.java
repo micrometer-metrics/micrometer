@@ -1,5 +1,5 @@
 /**
- * Copyright 2017 Pivotal Software, Inc.
+ * Copyright 2017 VMware, Inc.
  * <p>
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,8 +15,13 @@
  */
 package io.micrometer.influx;
 
+import io.micrometer.core.instrument.config.validate.Validated;
 import io.micrometer.core.instrument.step.StepRegistryConfig;
 import io.micrometer.core.lang.Nullable;
+
+import static io.micrometer.core.instrument.config.MeterRegistryConfigValidator.checkAll;
+import static io.micrometer.core.instrument.config.MeterRegistryConfigValidator.checkRequired;
+import static io.micrometer.core.instrument.config.validate.PropertyValidator.*;
 
 /**
  * Configuration for {@link InfluxMeterRegistry}.
@@ -38,8 +43,7 @@ public interface InfluxConfig extends StepRegistryConfig {
      * @return The db to send metrics to. Defaults to "mydb".
      */
     default String db() {
-        String v = get(prefix() + ".db");
-        return v == null ? "mydb" : v;
+        return getString(this, "db").orElse("mydb");
     }
 
     /**
@@ -47,10 +51,7 @@ public interface InfluxConfig extends StepRegistryConfig {
      * be one of 'any', 'one', 'quorum', or 'all'. Only available for InfluxEnterprise clusters.
      */
     default InfluxConsistency consistency() {
-        String v = get(prefix() + ".consistency");
-        if (v == null)
-            return InfluxConsistency.ONE;
-        return InfluxConsistency.valueOf(v.toUpperCase());
+        return getEnum(this, InfluxConsistency.class, "consistency").orElse(InfluxConsistency.ONE);
     }
 
     /**
@@ -59,7 +60,7 @@ public interface InfluxConfig extends StepRegistryConfig {
      */
     @Nullable
     default String userName() {
-        return get(prefix() + ".userName");
+        return getSecret(this, "userName").orElse(null);
     }
 
     /**
@@ -68,7 +69,7 @@ public interface InfluxConfig extends StepRegistryConfig {
      */
     @Nullable
     default String password() {
-        return get(prefix() + ".password");
+        return getSecret(this, "password").orElse(null);
     }
 
     /**
@@ -76,7 +77,7 @@ public interface InfluxConfig extends StepRegistryConfig {
      */
     @Nullable
     default String retentionPolicy() {
-        return get(prefix() + ".retentionPolicy");
+        return getString(this, "retentionPolicy").orElse(null);
     }
 
     /**
@@ -84,7 +85,7 @@ public interface InfluxConfig extends StepRegistryConfig {
      */
     @Nullable
     default String retentionDuration() {
-        return get(prefix() + ".retentionDuration");
+        return getString(this, "retentionDuration").orElse(null);
     }
 
     /**
@@ -92,8 +93,7 @@ public interface InfluxConfig extends StepRegistryConfig {
      */
     @Nullable
     default Integer retentionReplicationFactor() {
-        String v = get(prefix() + ".retentionReplicationFactor");
-        return v == null ? null : Integer.valueOf(v);
+        return getInteger(this, "retentionReplicationFactor").orElse(null);
     }
 
     /**
@@ -101,24 +101,21 @@ public interface InfluxConfig extends StepRegistryConfig {
      */
     @Nullable
     default String retentionShardDuration() {
-        return get(prefix() + ".retentionShardDuration");
+        return getString(this, "retentionShardDuration").orElse(null);
     }
-
 
     /**
      * @return The URI for the Influx backend. The default is {@code http://localhost:8086}.
      */
     default String uri() {
-        String v = get(prefix() + ".uri");
-        return (v == null) ? "http://localhost:8086" : v;
+        return getUrlString(this, "uri").orElse("http://localhost:8086");
     }
 
     /**
      * @return {@code true} if metrics publish batches should be GZIP compressed, {@code false} otherwise.
      */
     default boolean compressed() {
-        String v = get(prefix() + ".compressed");
-        return v == null || Boolean.valueOf(v);
+        return getBoolean(this, "compressed").orElse(true);
     }
 
     /**
@@ -126,7 +123,16 @@ public interface InfluxConfig extends StepRegistryConfig {
      * metrics to it, creating it if it does not exist.
      */
     default boolean autoCreateDb() {
-        String v = get(prefix() + ".autoCreateDb");
-        return v == null || Boolean.valueOf(v);
+        return getBoolean(this, "autoCreateDb").orElse(true);
+    }
+
+    @Override
+    default Validated<?> validate() {
+        return checkAll(this,
+                c -> StepRegistryConfig.validate(c),
+                checkRequired("db", InfluxConfig::db),
+                checkRequired("consistency", InfluxConfig::consistency),
+                checkRequired("uri", InfluxConfig::uri)
+        );
     }
 }

@@ -1,5 +1,5 @@
 /**
- * Copyright 2018 Pivotal Software, Inc.
+ * Copyright 2018 VMware, Inc.
  * <p>
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,7 +20,6 @@ import io.micrometer.core.instrument.step.StepMeterRegistry;
 import io.micrometer.core.instrument.util.DoubleFormat;
 import io.micrometer.core.instrument.util.MeterPartition;
 import io.micrometer.core.instrument.util.NamedThreadFactory;
-import io.micrometer.core.instrument.util.TimeUtils;
 import io.micrometer.core.ipc.http.HttpSender;
 import io.micrometer.core.ipc.http.HttpUrlConnectionSender;
 import org.slf4j.Logger;
@@ -68,14 +67,6 @@ public class KairosMeterRegistry extends StepMeterRegistry {
 
     public static Builder builder(KairosConfig config) {
         return new Builder(config);
-    }
-
-    @Override
-    public void start(ThreadFactory threadFactory) {
-        if (config.enabled()) {
-            logger.info("publishing metrics to kairos every " + TimeUtils.format(config.step()));
-        }
-        super.start(threadFactory);
     }
 
     @Override
@@ -150,7 +141,7 @@ public class KairosMeterRegistry extends StepMeterRegistry {
 
     // VisibleForTesting
     Stream<String> writeGauge(Gauge gauge) {
-        Double value = gauge.value();
+        double value = gauge.value();
         if (Double.isFinite(value)) {
             return Stream.of(writeMetric(gauge.getId(), config().clock().wallTime(), value));
         }
@@ -159,7 +150,7 @@ public class KairosMeterRegistry extends StepMeterRegistry {
 
     // VisibleForTesting
     Stream<String> writeTimeGauge(TimeGauge timeGauge) {
-        Double value = timeGauge.value(getBaseTimeUnit());
+        double value = timeGauge.value(getBaseTimeUnit());
         if (Double.isFinite(value)) {
             return Stream.of(writeMetric(timeGauge.getId(), config().clock().wallTime(), value));
         }
@@ -222,7 +213,7 @@ public class KairosMeterRegistry extends StepMeterRegistry {
         }
 
         KairosMetricBuilder datapoints(long wallTime, double value) {
-            sb.append(",\"datapoints\":[[").append(wallTime).append(',').append(DoubleFormat.decimalOrWhole(value)).append("]]");
+            sb.append(",\"datapoints\":[[").append(wallTime).append(',').append(DoubleFormat.wholeOrDecimal(value)).append("]]");
             return this;
         }
 

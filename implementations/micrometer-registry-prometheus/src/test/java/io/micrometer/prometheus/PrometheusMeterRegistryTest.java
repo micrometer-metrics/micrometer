@@ -1,5 +1,5 @@
 /**
- * Copyright 2017 Pivotal Software, Inc.
+ * Copyright 2017 VMware, Inc.
  * <p>
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -41,10 +41,13 @@ import static org.assertj.core.api.Assertions.offset;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 
 /**
+ * Tests for {@link PrometheusMeterRegistry}.
+ *
  * @author Jon Schneider
+ * @author Johnny Lim
  */
 class PrometheusMeterRegistryTest {
-    private CollectorRegistry prometheusRegistry = new CollectorRegistry();
+    private CollectorRegistry prometheusRegistry = new CollectorRegistry(true);
     private MockClock clock = new MockClock();
     private PrometheusMeterRegistry registry = new PrometheusMeterRegistry(PrometheusConfig.DEFAULT, prometheusRegistry, clock);
 
@@ -56,7 +59,8 @@ class PrometheusMeterRegistryTest {
     @Test
     void baseUnitMakesItToScrape() {
         AtomicInteger n = new AtomicInteger(0);
-        Gauge.builder("gauge", n, AtomicInteger::get).baseUnit(BaseUnits.BYTES).register(registry);
+        Gauge.builder("gauge", n, AtomicInteger::get).tags("a", "b").baseUnit(BaseUnits.BYTES).register(registry);
+        assertThat(prometheusRegistry).extracting("namesToCollectors").extracting("gauge_bytes").isNotNull();
         assertThat(registry.scrape()).contains("gauge_bytes");
     }
 
@@ -181,7 +185,7 @@ class PrometheusMeterRegistryTest {
         Timer t = Timer.builder("t1")
                 .publishPercentileHistogram()
                 .distributionStatisticExpiry(Duration.ofSeconds(60))
-                .sla(Duration.ofMillis(100))
+                .serviceLevelObjectives(Duration.ofMillis(100))
                 .register(registry);
 
         t.record(100, TimeUnit.MILLISECONDS);
@@ -197,7 +201,7 @@ class PrometheusMeterRegistryTest {
         DistributionSummary s = DistributionSummary.builder("s1")
                 .publishPercentileHistogram()
                 .distributionStatisticExpiry(Duration.ofSeconds(60))
-                .sla(100)
+                .serviceLevelObjectives(100.0)
                 .register(registry);
 
         s.record(100);
@@ -212,8 +216,8 @@ class PrometheusMeterRegistryTest {
     void distributionPercentileBuckets() {
         DistributionSummary ds = DistributionSummary.builder("ds")
                 .publishPercentileHistogram()
-                .minimumExpectedValue(1L)
-                .maximumExpectedValue(2100L)
+                .minimumExpectedValue(1.0)
+                .maximumExpectedValue(2100.0)
                 .register(registry);
 
         ds.record(30);
@@ -241,11 +245,11 @@ class PrometheusMeterRegistryTest {
 
     @Issue("#370")
     @Test
-    void slasOnlyNoPercentileHistogram() {
-        DistributionSummary.builder("my.summary").sla(1).register(registry).record(1);
+    void serviceLevelObjectivesOnlyNoPercentileHistogram() {
+        DistributionSummary.builder("my.summary").serviceLevelObjectives(1.0).register(registry).record(1);
         assertThat(registry.scrape()).contains("my_summary_bucket{le=\"1.0\",} 1.0");
 
-        Timer.builder("my.timer").sla(Duration.ofMillis(1)).register(registry).record(1, TimeUnit.MILLISECONDS);
+        Timer.builder("my.timer").serviceLevelObjectives(Duration.ofMillis(1)).register(registry).record(1, TimeUnit.MILLISECONDS);
         assertThat(registry.scrape()).contains("my_timer_duration_seconds_bucket{le=\"0.001\",} 1.0");
     }
 
@@ -367,8 +371,8 @@ class PrometheusMeterRegistryTest {
     @DisplayName("removed meters correctly handled")
     void meterRemoval() {
         Timer timer = Timer.builder("timer_to_be_removed")
-            .publishPercentiles(0.5)
-            .register(registry);
+                .publishPercentiles(0.5)
+                .register(registry);
 
         assertThat(prometheusRegistry.metricFamilySamples()).has(withNameAndQuantile("timer_to_be_removed_duration_seconds"));
 
@@ -417,5 +421,12 @@ class PrometheusMeterRegistryTest {
         timer.record(2);
 
         assertThat(timer.takeSnapshot().percentileValues()[0].value()).isEqualTo(2.0, offset(0.2));
+    }
+
+    @Issue("#1883")
+    @Test
+    void canFilterCollectorRegistryByName() {
+        Counter.builder("my.count").register(registry);
+        assertThat(registry.getPrometheusRegistry().filteredMetricFamilySamples(Collections.singleton("my_count_total")).hasMoreElements()).isTrue();
     }
 }

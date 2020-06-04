@@ -1,5 +1,5 @@
 /**
- * Copyright 2017 Pivotal Software, Inc.
+ * Copyright 2017 VMware, Inc.
  * <p>
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -26,14 +26,18 @@ import org.apache.catalina.Manager;
 import javax.management.*;
 import java.lang.management.ManagementFactory;
 import java.util.Collections;
+import java.util.Comparator;
 import java.util.List;
 import java.util.Set;
 import java.util.concurrent.Callable;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.TimeUnit;
 import java.util.function.BiConsumer;
 
 /**
  * {@link MeterBinder} for Tomcat.
+ * <p>Note: the {@link #close()} method should be called when the application shuts down
+ * to clean up listeners this binder registers.
  *
  * @author Clint Checketts
  * @author Jon Schneider
@@ -41,7 +45,7 @@ import java.util.function.BiConsumer;
  */
 @NonNullApi
 @NonNullFields
-public class TomcatMetrics implements MeterBinder {
+public class TomcatMetrics implements MeterBinder, AutoCloseable {
 
     private static final String JMX_DOMAIN_EMBEDDED = "Tomcat";
     private static final String JMX_DOMAIN_STANDALONE = "Catalina";
@@ -54,6 +58,8 @@ public class TomcatMetrics implements MeterBinder {
 
     private final MBeanServer mBeanServer;
     private final Iterable<Tag> tags;
+
+    private final Set<NotificationListener> notificationListeners = ConcurrentHashMap.newKeySet();
 
     private volatile String jmxDomain;
 
@@ -100,27 +106,27 @@ public class TomcatMetrics implements MeterBinder {
 
         Gauge.builder("tomcat.sessions.active.max", manager, Manager::getMaxActive)
                 .tags(tags)
-                .baseUnit("sessions")
+                .baseUnit(BaseUnits.SESSIONS)
                 .register(registry);
 
         Gauge.builder("tomcat.sessions.active.current", manager, Manager::getActiveSessions)
                 .tags(tags)
-                .baseUnit("sessions")
+                .baseUnit(BaseUnits.SESSIONS)
                 .register(registry);
 
         FunctionCounter.builder("tomcat.sessions.created", manager, Manager::getSessionCounter)
                 .tags(tags)
-                .baseUnit("sessions")
+                .baseUnit(BaseUnits.SESSIONS)
                 .register(registry);
 
         FunctionCounter.builder("tomcat.sessions.expired", manager, Manager::getExpiredSessions)
                 .tags(tags)
-                .baseUnit("sessions")
+                .baseUnit(BaseUnits.SESSIONS)
                 .register(registry);
 
         FunctionCounter.builder("tomcat.sessions.rejected", manager, Manager::getRejectedSessions)
                 .tags(tags)
-                .baseUnit("sessions")
+                .baseUnit(BaseUnits.SESSIONS)
                 .register(registry);
 
         TimeGauge.builder("tomcat.sessions.alive.max", manager, TimeUnit.SECONDS, Manager::getSessionMaxAliveTime)
@@ -161,7 +167,7 @@ public class TomcatMetrics implements MeterBinder {
                     s -> safeDouble(() -> s.getAttribute(name, "hitCount")))
                     .tags(allTags)
                     .register(registry);
-        });
+        }, false);
     }
 
     private void registerServletMetrics(MeterRegistry registry) {
@@ -216,17 +222,23 @@ public class TomcatMetrics implements MeterBinder {
         });
     }
 
+    private void registerMetricsEventually(String key, String value, BiConsumer<ObjectName, Iterable<Tag>> perObject) {
+        registerMetricsEventually(key, value, perObject, true);
+    }
+
     /**
      * If the MBean already exists, register metrics immediately. Otherwise register an MBean registration listener
      * with the MBeanServer and register metrics when/if the MBean becomes available.
      */
-    private void registerMetricsEventually(String key, String value, BiConsumer<ObjectName, Iterable<Tag>> perObject) {
+    private void registerMetricsEventually(String key, String value, BiConsumer<ObjectName, Iterable<Tag>> perObject, boolean hasName) {
         if (getJmxDomain() != null) {
             try {
-                Set<ObjectName> objectNames = this.mBeanServer.queryNames(new ObjectName(getJmxDomain() + ":" + key + "=" + value + ",name=*"), null);
+                String name = getJmxDomain() + ":" + key + "=" + value + (hasName ? ",name=*,*" : "");
+                Set<ObjectName> objectNames = this.mBeanServer.queryNames(new ObjectName(name), null);
                 if (!objectNames.isEmpty()) {
                     // MBean is present, so we can register metrics now.
-                    objectNames.forEach(objectName -> perObject.accept(objectName, Tags.concat(tags, nameTag(objectName))));
+                    objectNames.stream().sorted(Comparator.reverseOrder()).findFirst()
+                            .ifPresent(objectName -> perObject.accept(objectName, Tags.concat(tags, nameTag(objectName))));
                     return;
                 }
             } catch (MalformedObjectNameException e) {
@@ -245,11 +257,13 @@ public class TomcatMetrics implements MeterBinder {
                 perObject.accept(objectName, Tags.concat(tags, nameTag(objectName)));
                 try {
                     mBeanServer.removeNotificationListener(MBeanServerDelegate.DELEGATE_NAME, this);
+                    notificationListeners.remove(this);
                 } catch (InstanceNotFoundException | ListenerNotFoundException ex) {
                     throw new RuntimeException(ex);
                 }
             }
         };
+        notificationListeners.add(notificationListener);
 
         NotificationFilter notificationFilter = (NotificationFilter) notification -> {
             if (!MBeanServerNotification.REGISTRATION_NOTIFICATION.equals(notification.getType())) {
@@ -326,4 +340,16 @@ public class TomcatMetrics implements MeterBinder {
         }
         return Collections.emptyList();
     }
+
+    @Override
+    public void close() {
+        for (NotificationListener notificationListener : this.notificationListeners) {
+            try {
+                this.mBeanServer.removeNotificationListener(MBeanServerDelegate.DELEGATE_NAME, notificationListener);
+            } catch (InstanceNotFoundException | ListenerNotFoundException ex) {
+                throw new RuntimeException(ex);
+            }
+        }
+    }
+
 }

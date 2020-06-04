@@ -1,11 +1,11 @@
 /*
- * Copyright 2017 Pivotal Software, Inc.
+ * Copyright 2017 VMware, Inc.
  * <p>
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  * <p>
- * http://www.apache.org/licenses/LICENSE-2.0
+ * https://www.apache.org/licenses/LICENSE-2.0
  * <p>
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -39,7 +39,7 @@ import java.util.List;
 import java.util.stream.Collectors;
 
 import static com.github.tomakehurst.wiremock.client.WireMock.*;
-import static org.assertj.core.api.Java6Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 
 /**
@@ -121,7 +121,7 @@ class MicrometerHttpRequestExecutorTest {
         server.stubFor(any(anyUrl()));
         HttpClient client = client(executor(false));
         HttpGet getWithHeader = new HttpGet(server.baseUrl());
-        getWithHeader.addHeader(MicrometerHttpRequestExecutor.DEFAULT_URI_PATTERN_HEADER, "/some/pattern");
+        getWithHeader.addHeader(DefaultUriMapper.URI_PATTERN_HEADER, "/some/pattern");
         EntityUtils.consume(client.execute(getWithHeader).getEntity());
         assertThat(registry.get(EXPECTED_METER_NAME)
                 .tags("uri", "/some/pattern")

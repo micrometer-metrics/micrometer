@@ -1,5 +1,5 @@
 /**
- * Copyright 2017 Pivotal Software, Inc.
+ * Copyright 2017 VMware, Inc.
  * <p>
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -71,12 +71,18 @@ public class JvmThreadMetrics implements MeterBinder {
                 .baseUnit(BaseUnits.THREADS)
                 .register(registry);
 
-        for (Thread.State state : Thread.State.values()) {
-            Gauge.builder("jvm.threads.states", threadBean, (bean) -> getThreadStateCount(bean, state))
-                    .tags(Tags.concat(tags, "state", getStateTagValue(state)))
-                    .description("The current number of threads having " + state + " state")
-                    .baseUnit(BaseUnits.THREADS)
-                    .register(registry);
+        try {
+            threadBean.getAllThreadIds();
+            for (Thread.State state : Thread.State.values()) {
+                Gauge.builder("jvm.threads.states", threadBean, (bean) -> getThreadStateCount(bean, state))
+                        .tags(Tags.concat(tags, "state", getStateTagValue(state)))
+                        .description("The current number of threads having " + state + " state")
+                        .baseUnit(BaseUnits.THREADS)
+                        .register(registry);
+            }
+        } catch (Error error) {
+            // An error will be thrown for unsupported operations
+            // e.g. SubstrateVM does not support getAllThreadIds
         }
     }
 

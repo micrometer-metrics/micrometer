@@ -1,19 +1,18 @@
-apply plugin: 'nebula.optional-base'
-
 dependencies {
-    compile project(':micrometer-core')
-    compile 'org.glassfish.jersey.core:jersey-server:2.+', optional
-    runtime 'org.glassfish.jersey.inject:jersey-hk2:2.+'
+    api project(':micrometer-core')
 
-    testCompile 'org.glassfish.jersey.test-framework.providers:jersey-test-framework-provider-inmemory:2.+'
+    compileOnly 'org.glassfish.jersey.core:jersey-server'
+    runtimeOnly 'org.glassfish.jersey.inject:jersey-hk2'
+
+    testImplementation 'org.glassfish.jersey.test-framework.providers:jersey-test-framework-provider-inmemory'
 
     // required by jdk 9
-    testRuntime 'javax.xml.bind:jaxb-api:2.3.+'
+    testRuntimeOnly 'javax.xml.bind:jaxb-api'
 
-    testCompile 'org.assertj:assertj-core:3.+'
+    testImplementation 'org.assertj:assertj-core'
 
-    // JERSEY-3662
-    testImplementation 'junit:junit:4.12'
-    testRuntimeOnly 'org.junit.vintage:junit-vintage-engine:latest.release'
-    testCompile 'org.mockito:mockito-core:2.+'
+    // See https://github.com/eclipse-ee4j/jersey/issues/3662
+    testImplementation 'junit:junit'
+    testRuntimeOnly 'org.junit.vintage:junit-vintage-engine'
+    testImplementation 'org.mockito:mockito-core'
 }

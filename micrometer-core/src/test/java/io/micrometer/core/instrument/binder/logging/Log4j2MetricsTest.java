@@ -1,5 +1,5 @@
 /**
- * Copyright 2017 Pivotal Software, Inc.
+ * Copyright 2017 VMware, Inc.
  * <p>
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -131,5 +131,25 @@ class Log4j2MetricsTest {
         assertThat(loggerConfig.getFilter()).isNotNull();
         log4j2Metrics.close();
         assertThat(loggerConfig.getFilter()).isNull();
+    }
+
+    @Test
+    void noDuplicateLoggingCountWhenMultipleNonAdditiveLoggersShareConfig() {
+        LoggerContext loggerContext = new LoggerContext("test");
+
+        LoggerConfig loggerConfig = new LoggerConfig("com.test", Level.INFO, false);
+        Configuration configuration = loggerContext.getConfiguration();
+        configuration.addLogger("com.test", loggerConfig);
+        loggerContext.setConfiguration(configuration);
+        loggerContext.updateLoggers();
+
+        Logger logger1 = loggerContext.getLogger("com.test.log1");
+        loggerContext.getLogger("com.test.log2");
+
+        new Log4j2Metrics(emptyList(), loggerContext).bindTo(registry);
+
+        assertThat(registry.get("log4j2.events").tags("level", "info").counter().count()).isEqualTo(0);
+        logger1.info("Hello, world!");
+        assertThat(registry.get("log4j2.events").tags("level", "info").counter().count()).isEqualTo(1);
     }
 }

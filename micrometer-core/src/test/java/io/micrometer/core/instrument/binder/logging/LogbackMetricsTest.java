@@ -1,5 +1,5 @@
 /**
- * Copyright 2017 Pivotal Software, Inc.
+ * Copyright 2017 VMware, Inc.
  * <p>
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -96,6 +96,20 @@ class LogbackMetricsTest {
         assertThat(loggerContext.getTurboFilterList()).hasSize(1);
         logbackMetrics.close();
         assertThat(loggerContext.getTurboFilterList()).isEmpty();
+    }
+
+    @Issue("#2028")
+    @Test
+    void reAddFilterToLoggerContextAfterReset() {
+        LoggerContext loggerContext = new LoggerContext();
+        assertThat(loggerContext.getTurboFilterList()).isEmpty();
+
+        LogbackMetrics logbackMetrics = new LogbackMetrics(emptyList(), loggerContext);
+        logbackMetrics.bindTo(registry);
+
+        assertThat(loggerContext.getTurboFilterList()).hasSize(1);
+        loggerContext.reset();
+        assertThat(loggerContext.getTurboFilterList()).hasSize(1);
     }
 
     @NonNullApi

@@ -1,5 +1,5 @@
 /**
- * Copyright 2017 Pivotal Software, Inc.
+ * Copyright 2017 VMware, Inc.
  * <p>
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -41,7 +41,7 @@ class DynatraceTimeSeries {
 
     String asJson() {
         String body = "{\"timeseriesId\":\"" + metricId + "\"" +
-                ",\"dataPoints\":[[" + time + "," + DoubleFormat.decimalOrWhole(value) + "]]";
+                ",\"dataPoints\":[[" + time + "," + DoubleFormat.wholeOrDecimal(value) + "]]";
 
         if (dimensions != null && !dimensions.isEmpty()) {
             body += ",\"dimensions\":{" +

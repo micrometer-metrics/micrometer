@@ -1,5 +1,5 @@
 /**
- * Copyright 2019 Pivotal Software, Inc.
+ * Copyright 2019 VMware, Inc.
  * <p>
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -91,12 +91,14 @@ public class MongoMetricsConnectionPoolListener extends ConnectionPoolListenerAd
                 .decrementAndGet();
     }
 
+    @SuppressWarnings("deprecation")
     @Override
     public void waitQueueEntered(ConnectionPoolWaitQueueEnteredEvent event) {
         waitQueueSize.get(event.getServerId())
                 .incrementAndGet();
     }
 
+    @SuppressWarnings("deprecation")
     @Override
     public void waitQueueExited(ConnectionPoolWaitQueueExitedEvent event) {
         waitQueueSize.get(event.getServerId())

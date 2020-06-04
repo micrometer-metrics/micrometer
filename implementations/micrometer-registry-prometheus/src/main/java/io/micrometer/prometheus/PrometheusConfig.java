@@ -1,5 +1,5 @@
 /**
- * Copyright 2017 Pivotal Software, Inc.
+ * Copyright 2017 VMware, Inc.
  * <p>
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,8 +16,13 @@
 package io.micrometer.prometheus;
 
 import io.micrometer.core.instrument.config.MeterRegistryConfig;
+import io.micrometer.core.instrument.config.validate.Validated;
 
 import java.time.Duration;
+
+import static io.micrometer.core.instrument.config.MeterRegistryConfigValidator.checkAll;
+import static io.micrometer.core.instrument.config.MeterRegistryConfigValidator.checkRequired;
+import static io.micrometer.core.instrument.config.validate.PropertyValidator.*;
 
 /**
  * Configuration for {@link PrometheusMeterRegistry}.
@@ -40,8 +45,7 @@ public interface PrometheusConfig extends MeterRegistryConfig {
      * Turn this off to minimize the amount of data sent on each scrape.
      */
     default boolean descriptions() {
-        String v = get(prefix() + ".descriptions");
-        return v == null || Boolean.valueOf(v);
+        return getBoolean(this, "descriptions").orElse(true);
     }
 
     /**
@@ -49,7 +53,24 @@ public interface PrometheusConfig extends MeterRegistryConfig {
      * To get the most out of these statistics, align the step interval to be close to your scrape interval.
      */
     default Duration step() {
-        String v = get(prefix() + ".step");
-        return v == null ? Duration.ofMinutes(1) : Duration.parse(v);
+        return getDuration(this, "step").orElse(Duration.ofMinutes(1));
+    }
+
+    /**
+     * Histogram type for backing DistributionSummary and Timer
+     *
+     * @return Choose which type of histogram to use
+     * @since 1.4.0
+     */
+    default HistogramFlavor histogramFlavor() {
+        return getEnum(this, HistogramFlavor.class, "histogramFlavor").orElse(HistogramFlavor.Prometheus);
+    }
+
+    @Override
+    default Validated<?> validate() {
+        return checkAll(this,
+                checkRequired("step", PrometheusConfig::step),
+                checkRequired("histogramFlavor", PrometheusConfig::histogramFlavor)
+        );
     }
 }

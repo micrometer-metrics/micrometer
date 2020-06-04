@@ -1,5 +1,5 @@
 /**
- * Copyright 2017 Pivotal Software, Inc.
+ * Copyright 2017 VMware, Inc.
  * <p>
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -97,8 +97,8 @@ abstract class AbstractTimeWindowHistogram<T, U> implements Histogram {
             }
         }
 
-        final Long minimumExpectedValue = distributionStatisticConfig.getMinimumExpectedValue();
-        final Long maximumExpectedValue = distributionStatisticConfig.getMaximumExpectedValue();
+        final Double minimumExpectedValue = distributionStatisticConfig.getMinimumExpectedValueAsDouble();
+        final Double maximumExpectedValue = distributionStatisticConfig.getMaximumExpectedValueAsDouble();
         if (minimumExpectedValue == null || minimumExpectedValue <= 0) {
             rejectHistogramConfig("minimumExpectedValue (" + minimumExpectedValue + ") must be greater than 0.");
         }
@@ -108,11 +108,11 @@ abstract class AbstractTimeWindowHistogram<T, U> implements Histogram {
                     minimumExpectedValue + ").");
         }
 
-        if (distributionStatisticConfig.getSlaBoundaries() != null) {
-            for (long sla : distributionStatisticConfig.getSlaBoundaries()) {
-                if (sla <= 0) {
-                    rejectHistogramConfig("slaBoundaries must contain only the values greater than 0. " +
-                            "Found " + sla);
+        if (distributionStatisticConfig.getServiceLevelObjectiveBoundaries() != null) {
+            for (double slo : distributionStatisticConfig.getServiceLevelObjectiveBoundaries()) {
+                if (slo <= 0) {
+                    rejectHistogramConfig("serviceLevelObjectiveBoundaries must contain only the values greater than 0. " +
+                            "Found " + slo);
                 }
             }
         }
@@ -147,7 +147,11 @@ abstract class AbstractTimeWindowHistogram<T, U> implements Histogram {
 
     abstract double valueAtPercentile(double percentile);
 
-    abstract double countAtValue(long value);
+    abstract double countAtValue(double value);
+
+    double countAtValue(long value) {
+        return countAtValue((double) value);
+    }
 
     void outputSummary(PrintStream out, double bucketScaling) {
     }
@@ -193,15 +197,15 @@ abstract class AbstractTimeWindowHistogram<T, U> implements Histogram {
             return null;
         }
 
-        final Set<Long> monitoredValues = distributionStatisticConfig.getHistogramBuckets(supportsAggregablePercentiles);
+        final Set<Double> monitoredValues = distributionStatisticConfig.getHistogramBuckets(supportsAggregablePercentiles);
         if (monitoredValues.isEmpty()) {
             return null;
         }
 
         final CountAtBucket[] counts = new CountAtBucket[monitoredValues.size()];
-        final Iterator<Long> iterator = monitoredValues.iterator();
+        final Iterator<Double> iterator = monitoredValues.iterator();
         for (int i = 0; i < counts.length; i++) {
-            final long v = iterator.next();
+            final double v = iterator.next();
             counts[i] = new CountAtBucket(v, countAtValue(v));
         }
         return counts;
