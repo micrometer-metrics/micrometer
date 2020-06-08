@@ -42,6 +42,18 @@ public class KafkaStreamsMetrics extends KafkaMetrics {
      *
      * @param kafkaStreams instance to be instrumented
      * @param tags         additional tags
+     * @param includeClientIdInMeterName whether client ID is included in meter name or not
+     * @since 1.5.2
+     */
+    public KafkaStreamsMetrics(KafkaStreams kafkaStreams, Iterable<Tag> tags, boolean includeClientIdInMeterName) {
+        super(kafkaStreams::metrics, tags, includeClientIdInMeterName);
+    }
+
+    /**
+     * {@link KafkaStreams} metrics binder
+     *
+     * @param kafkaStreams instance to be instrumented
+     * @param tags         additional tags
      */
     public KafkaStreamsMetrics(KafkaStreams kafkaStreams, Iterable<Tag> tags) {
         super(kafkaStreams::metrics, tags);

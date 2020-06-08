@@ -46,6 +46,18 @@ public class KafkaClientMetrics extends KafkaMetrics {
      *
      * @param kafkaProducer producer instance to be instrumented
      * @param tags          additional tags
+     * @param includeClientIdInMeterName whether client ID is included in meter name or not
+     * @since 1.5.2
+     */
+    public KafkaClientMetrics(Producer<?, ?> kafkaProducer, Iterable<Tag> tags, boolean includeClientIdInMeterName) {
+        super(kafkaProducer::metrics, tags, includeClientIdInMeterName);
+    }
+
+    /**
+     * Kafka {@link Producer} metrics binder
+     *
+     * @param kafkaProducer producer instance to be instrumented
+     * @param tags          additional tags
      */
     public KafkaClientMetrics(Producer<?, ?> kafkaProducer, Iterable<Tag> tags) {
         super(kafkaProducer::metrics, tags);
@@ -65,6 +77,18 @@ public class KafkaClientMetrics extends KafkaMetrics {
      *
      * @param kafkaConsumer consumer instance to be instrumented
      * @param tags          additional tags
+     * @param includeClientIdInMeterName whether client ID is included in meter name or not
+     * @since 1.5.2
+     */
+    public KafkaClientMetrics(Consumer<?, ?> kafkaConsumer, Iterable<Tag> tags, boolean includeClientIdInMeterName) {
+        super(kafkaConsumer::metrics, tags, includeClientIdInMeterName);
+    }
+
+    /**
+     * Kafka {@link Consumer} metrics binder
+     *
+     * @param kafkaConsumer consumer instance to be instrumented
+     * @param tags          additional tags
      */
     public KafkaClientMetrics(Consumer<?, ?> kafkaConsumer, Iterable<Tag> tags) {
         super(kafkaConsumer::metrics, tags);
@@ -77,6 +101,18 @@ public class KafkaClientMetrics extends KafkaMetrics {
      */
     public KafkaClientMetrics(Consumer<?, ?> kafkaConsumer) {
         super(kafkaConsumer::metrics);
+    }
+
+    /**
+     * Kafka {@link AdminClient} metrics binder
+     *
+     * @param adminClient instance to be instrumented
+     * @param tags        additional tags
+     * @param includeClientIdInMeterName whether client ID is included in meter name or not
+     * @since 1.5.2
+     */
+    public KafkaClientMetrics(AdminClient adminClient, Iterable<Tag> tags, boolean includeClientIdInMeterName) {
+        super(adminClient::metrics, tags, includeClientIdInMeterName);
     }
 
     /**

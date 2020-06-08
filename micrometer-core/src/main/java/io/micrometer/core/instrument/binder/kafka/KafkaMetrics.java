@@ -54,14 +54,14 @@ class KafkaMetrics implements MeterBinder, AutoCloseable {
     static final String METRIC_GROUP_METRICS_COUNT = "kafka-metrics-count";
     static final String VERSION_METRIC_NAME = "version";
     static final String START_TIME_METRIC_NAME = "start-time-ms";
-    static final Duration DEFAULT_REFRESH_INTERVAL = Duration.ofSeconds(60);
     static final String KAFKA_VERSION_TAG_NAME = "kafka-version";
     static final String CLIENT_ID_TAG_NAME = "client-id";
     static final String DEFAULT_VALUE = "unknown";
 
     private final Supplier<Map<MetricName, ? extends Metric>> metricsSupplier;
     private final Iterable<Tag> extraTags;
-    private final Duration refreshInterval;
+    private final Duration refreshInterval = Duration.ofSeconds(60);
+    private final boolean includeClientIdInMeterName;
     private final ScheduledExecutorService scheduler = Executors.newSingleThreadScheduledExecutor();
     private Iterable<Tag> commonTags;
 
@@ -78,13 +78,13 @@ class KafkaMetrics implements MeterBinder, AutoCloseable {
     }
 
     KafkaMetrics(Supplier<Map<MetricName, ? extends Metric>> metricsSupplier, Iterable<Tag> extraTags) {
-        this(metricsSupplier, extraTags, DEFAULT_REFRESH_INTERVAL);
+        this(metricsSupplier, extraTags, false);
     }
 
-    KafkaMetrics(Supplier<Map<MetricName, ? extends Metric>> metricsSupplier, Iterable<Tag> extraTags, Duration refreshInterval) {
+    KafkaMetrics(Supplier<Map<MetricName, ? extends Metric>> metricsSupplier, Iterable<Tag> extraTags, boolean includeClientIdInMeterName) {
         this.metricsSupplier = metricsSupplier;
         this.extraTags = extraTags;
-        this.refreshInterval = refreshInterval;
+        this.includeClientIdInMeterName = includeClientIdInMeterName;
     }
 
     @Override public void bindTo(MeterRegistry registry) {
@@ -209,7 +209,11 @@ class KafkaMetrics implements MeterBinder, AutoCloseable {
     }
 
     private String meterName(Metric metric) {
-        String name = METRIC_NAME_PREFIX + metric.metricName().group() + "." + metric.metricName().name();
+        String name = METRIC_NAME_PREFIX;
+        if (includeClientIdInMeterName && !clientId.equals(DEFAULT_VALUE)) {
+            name += clientId + ".";
+        }
+        name += metric.metricName().group() + "." + metric.metricName().name();
         return name.replaceAll("-metrics", "").replaceAll("-", ".");
     }
 
