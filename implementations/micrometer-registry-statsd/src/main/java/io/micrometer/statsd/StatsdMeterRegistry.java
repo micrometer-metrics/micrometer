@@ -270,7 +270,7 @@ public class StatsdMeterRegistry extends MeterRegistry {
          connection
                  .retryWhen(Retry.backoff(Long.MAX_VALUE, Duration.ofSeconds(1)).maxBackoff(Duration.ofMinutes(1)))
                  .subscribe(client -> {
-                     this.client.replace(client);
+                     this.client.update(client);
 
                      // now that we're connected, start polling gauges and other pollable meter types
                      startPolling();
@@ -278,7 +278,7 @@ public class StatsdMeterRegistry extends MeterRegistry {
     }
 
     private void startPolling() {
-        meterPoller.replace(Flux.interval(statsdConfig.pollingFrequency())
+        meterPoller.update(Flux.interval(statsdConfig.pollingFrequency())
                 .doOnEach(n -> poll())
                 .subscribe());
     }
