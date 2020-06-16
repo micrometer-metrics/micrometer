@@ -8,7 +8,7 @@ dependencies {
     api 'ru.lanwen.wiremock:wiremock-junit5', {
         exclude group: 'com.github.tomakehurst', module: 'wiremock'
     }
-    api 'com.github.tomakehurst:wiremock-jre8'
+    api 'com.github.tomakehurst:wiremock-jre8-standalone'
     api 'org.mockito:mockito-core'
     api 'org.testcontainers:testcontainers'
     api 'org.testcontainers:junit-jupiter'
