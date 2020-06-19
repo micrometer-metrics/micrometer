@@ -191,9 +191,15 @@ class MetricsDSLContextTest {
         ExecuteListener userExecuteListener = mock(ExecuteListener.class);
         Configuration configuration = new DefaultConfiguration().set(() -> userExecuteListener);
 
-        MetricsDSLContext context = withMetrics(using(configuration), meterRegistry, Tags.empty());
+        MetricsDSLContext jooq = withMetrics(using(configuration), meterRegistry, Tags.empty());
 
-        ExecuteListenerProvider[] executeListenerProviders = context.configuration().executeListenerProviders();
+        ExecuteListenerProvider[] executeListenerProviders = jooq.configuration().executeListenerProviders();
+        assertThat(executeListenerProviders).hasSize(2);
+        assertThat(executeListenerProviders[0].provide()).isSameAs(userExecuteListener);
+        assertThat(executeListenerProviders[1].provide()).isInstanceOf(JooqExecuteListener.class);
+
+        SelectSelectStep<Record> select = jooq.tag("name", "selectAllAuthors").select(asterisk());
+        executeListenerProviders = select.configuration().executeListenerProviders();
         assertThat(executeListenerProviders).hasSize(2);
         assertThat(executeListenerProviders[0].provide()).isSameAs(userExecuteListener);
         assertThat(executeListenerProviders[1].provide()).isInstanceOf(JooqExecuteListener.class);

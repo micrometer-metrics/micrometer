@@ -73,6 +73,8 @@ public class MetricsDSLContext implements DSLContext {
     private final Iterable<Tag> tags;
     private final ThreadLocal<Iterable<Tag>> contextTags = new ThreadLocal<>();
 
+    private final ExecuteListenerProvider defaultExecuteListenerProvider;
+
     public static MetricsDSLContext withMetrics(DSLContext jooq, MeterRegistry registry, Iterable<Tag> tags) {
         return new MetricsDSLContext(jooq, registry, tags);
     }
@@ -81,12 +83,13 @@ public class MetricsDSLContext implements DSLContext {
         this.registry = registry;
         this.tags = tags;
 
-        Configuration configuration = context.configuration().derive();
-        Configuration derivedConfiguration = derive(configuration, new JooqExecuteListener(registry, tags, () -> {
+        this.defaultExecuteListenerProvider = () -> new JooqExecuteListener(registry, tags, () -> {
             Iterable<Tag> queryTags = contextTags.get();
             contextTags.remove();
             return queryTags;
-        }));
+        });
+        Configuration configuration = context.configuration().derive();
+        Configuration derivedConfiguration = derive(configuration, this.defaultExecuteListenerProvider);
 
         this.context = DSL.using(derivedConfiguration);
     }
@@ -99,13 +102,20 @@ public class MetricsDSLContext implements DSLContext {
     public Configuration time(Configuration c) {
         Iterable<Tag> queryTags = contextTags.get();
         contextTags.remove();
-        return derive(c, new JooqExecuteListener(registry, tags, () -> queryTags));
+        return derive(c, () -> new JooqExecuteListener(registry, tags, () -> queryTags));
     }
 
-    private Configuration derive(Configuration configuration, ExecuteListener listener) {
+    private Configuration derive(Configuration configuration, ExecuteListenerProvider executeListenerProvider) {
         ExecuteListenerProvider[] providers = configuration.executeListenerProviders();
+        for (int i = 0; i < providers.length; i++) {
+            if (providers[i] == this.defaultExecuteListenerProvider) {
+                ExecuteListenerProvider[] newProviders = Arrays.copyOf(providers, providers.length);
+                newProviders[i] = executeListenerProvider;
+                return configuration.derive(newProviders);
+            }
+        }
         ExecuteListenerProvider[] newProviders = Arrays.copyOf(providers, providers.length + 1);
-        newProviders[providers.length] = () -> listener;
+        newProviders[providers.length] = executeListenerProvider;
         return configuration.derive(newProviders);
     }
 
