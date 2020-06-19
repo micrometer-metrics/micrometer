@@ -35,6 +35,7 @@ import java.sql.Connection;
 import java.sql.DatabaseMetaData;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.List;
 import java.util.Map;
@@ -62,6 +63,7 @@ import java.util.stream.Stream;
  * This requires jOOQ 3.13.0 or later.
  *
  * @author Jon Schneider
+ * @author Johnny Lim
  * @since 1.4.0
  */
 @Incubating(since = "1.4.0")
@@ -79,13 +81,13 @@ public class MetricsDSLContext implements DSLContext {
         this.registry = registry;
         this.tags = tags;
 
-        Configuration derivedConfiguration = context.configuration().derive();
-        derivedConfiguration.set(new JooqExecuteListener(registry, tags, () -> {
+        Configuration configuration = context.configuration().derive();
+        Configuration derivedConfiguration = derive(configuration, new JooqExecuteListener(registry, tags, () -> {
             Iterable<Tag> queryTags = contextTags.get();
             contextTags.remove();
             return queryTags;
         }));
-        
+
         this.context = DSL.using(derivedConfiguration);
     }
 
@@ -97,7 +99,14 @@ public class MetricsDSLContext implements DSLContext {
     public Configuration time(Configuration c) {
         Iterable<Tag> queryTags = contextTags.get();
         contextTags.remove();
-        return c.derive(new JooqExecuteListener(registry, tags, () -> queryTags));
+        return derive(c, new JooqExecuteListener(registry, tags, () -> queryTags));
+    }
+
+    private Configuration derive(Configuration configuration, ExecuteListener listener) {
+        ExecuteListenerProvider[] providers = configuration.executeListenerProviders();
+        ExecuteListenerProvider[] newProviders = Arrays.copyOf(providers, providers.length + 1);
+        newProviders[providers.length] = () -> listener;
+        return configuration.derive(newProviders);
     }
 
     @SuppressWarnings("unchecked")
