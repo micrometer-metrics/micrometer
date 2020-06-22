@@ -320,6 +320,18 @@ public class DistributionStatisticConfig implements Mergeable<DistributionStatis
         }
 
         /**
+         * The minimum value that the meter is expected to observe. Sets a lower bound
+         * on histogram buckets that are shipped to monitoring systems that support aggregable percentile approximations.
+         *
+         * @param min The minimum value that this distribution summary is expected to observe.
+         * @return This builder.
+         */
+        public Builder minimumExpectedValue(@Nullable Double min) {
+            config.minimumExpectedValue = min == null ? null : min.longValue();
+            return this;
+        }
+
+        /**
          * The maximum value that the meter is expected to observe. Sets an upper bound
          * on histogram buckets that are shipped to monitoring systems that support aggregable percentile approximations.
          *
@@ -328,6 +340,18 @@ public class DistributionStatisticConfig implements Mergeable<DistributionStatis
          */
         public Builder maximumExpectedValue(@Nullable Long max) {
             config.maximumExpectedValue = max;
+            return this;
+        }
+
+        /**
+         * The maximum value that the meter is expected to observe. Sets an upper bound
+         * on histogram buckets that are shipped to monitoring systems that support aggregable percentile approximations.
+         *
+         * @param max The maximum value that the meter is expected to observe.
+         * @return This builder.
+         */
+        public Builder maximumExpectedValue(@Nullable Double max) {
+            config.maximumExpectedValue = max == null ? null : max.longValue();
             return this;
         }
 
