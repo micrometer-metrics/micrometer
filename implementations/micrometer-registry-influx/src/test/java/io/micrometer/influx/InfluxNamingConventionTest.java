@@ -76,6 +76,12 @@ class InfluxNamingConventionTest {
         assertThat(convention.tagValue("my.tag.value")).isEqualTo("value:my.tag.value");
     }
 
+    @Issue("#2155")
+    @Test
+    void newlineCharReplacedInTagValues() {
+        assertThat(convention.tagValue("hello\nworld\n")).isEqualTo("hello\\ world\\ ");
+    }
+
     private static class CustomNamingConvention implements NamingConvention {
 
         @Override
