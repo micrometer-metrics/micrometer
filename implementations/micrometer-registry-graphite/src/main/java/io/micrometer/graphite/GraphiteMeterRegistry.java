@@ -90,9 +90,6 @@ public class GraphiteMeterRegistry extends DropwizardMeterRegistry {
     public void close() {
         if (config.enabled()) {
             reporter.report();
-        }
-        stop();
-        if (config.enabled()) {
             reporter.close();
         }
         super.close();
