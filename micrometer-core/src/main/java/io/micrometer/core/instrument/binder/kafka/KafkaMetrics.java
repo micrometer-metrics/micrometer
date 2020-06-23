@@ -34,6 +34,8 @@ import java.util.function.Supplier;
 import java.util.function.ToDoubleFunction;
 
 import io.micrometer.core.lang.Nullable;
+import io.micrometer.core.util.internal.logging.InternalLogger;
+import io.micrometer.core.util.internal.logging.InternalLoggerFactory;
 import org.apache.kafka.common.Metric;
 import org.apache.kafka.common.MetricName;
 
@@ -51,6 +53,8 @@ import static java.util.Collections.emptyList;
 @NonNullApi
 @NonNullFields
 class KafkaMetrics implements MeterBinder, AutoCloseable {
+    private final static InternalLogger log = InternalLoggerFactory.getInstance(KafkaMetrics.class);
+
     static final String METRIC_NAME_PREFIX = "kafka.";
     static final String METRIC_GROUP_APP_INFO = "app-info";
     static final String METRIC_GROUP_METRICS_COUNT = "kafka-metrics-count";
@@ -183,9 +187,20 @@ class KafkaMetrics implements MeterBinder, AutoCloseable {
                         hasLessTags = true;
                     }
                 }
-
-                if (!hasLessTags) {
-                    bindMeter(registry, metric, meterName, meterTags(metric));
+                if (hasLessTags) return;
+                List<Tag> tags = meterTags(metric);
+                try {
+                    bindMeter(registry, metric, meterName, tags);
+                }
+                catch (Exception ex) {
+                    String message = ex.getMessage();
+                    if (message != null && message.contains("Prometheus requires")) {
+                        log.info("Failed to bind meter: " + meterName + " " + tags
+                                + ". However, this could happen and might be restored in the next refresh.");
+                    }
+                    else {
+                        log.warn("Failed to bind meter: " + meterName + " " + tags + ".", ex);
+                    }
                 }
             });
         }
