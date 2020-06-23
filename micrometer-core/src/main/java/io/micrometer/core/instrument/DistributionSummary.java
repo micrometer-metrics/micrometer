@@ -303,6 +303,19 @@ public interface DistributionSummary extends Meter, HistogramSupport {
         }
 
         /**
+         * Sets the minimum value that this distribution summary is expected to observe. Sets a lower bound
+         * on histogram buckets that are shipped to monitoring systems that support aggregable percentile approximations.
+         *
+         * @param min The minimum value that this distribution summary is expected to observe.
+         * @return This builder.
+         * @since 1.3.10
+         */
+        public Builder minimumExpectedValue(@Nullable Double min) {
+            this.distributionConfigBuilder.minimumExpectedValue(min);
+            return this;
+        }
+
+        /**
          * Sets the maximum value that this distribution summary is expected to observe. Sets an upper bound
          * on histogram buckets that are shipped to monitoring systems that support aggregable percentile approximations.
          *
@@ -322,6 +335,19 @@ public interface DistributionSummary extends Meter, HistogramSupport {
          * @param max The maximum value that this distribution summary is expected to observe.
          * @return This builder.
          * @since 1.4.0
+         */
+        public Builder maximumExpectedValue(@Nullable Double max) {
+            this.distributionConfigBuilder.maximumExpectedValue(max);
+            return this;
+        }
+
+        /**
+         * Sets the maximum value that this distribution summary is expected to observe. Sets an upper bound
+         * on histogram buckets that are shipped to monitoring systems that support aggregable percentile approximations.
+         *
+         * @param max The maximum value that this distribution summary is expected to observe.
+         * @return This builder.
+         * @since 1.3.10
          */
         public Builder maximumExpectedValue(@Nullable Double max) {
             this.distributionConfigBuilder.maximumExpectedValue(max);
