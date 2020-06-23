@@ -256,6 +256,7 @@ public interface DistributionSummary extends Meter, HistogramSupport {
          *
          * @param min The minimum value that this distribution summary is expected to observe.
          * @return This builder.
+         * @since 1.3.10
          */
         public Builder minimumExpectedValue(@Nullable Double min) {
             this.distributionConfigBuilder.minimumExpectedValue(min);
@@ -280,6 +281,7 @@ public interface DistributionSummary extends Meter, HistogramSupport {
          *
          * @param max The maximum value that this distribution summary is expected to observe.
          * @return This builder.
+         * @since 1.3.10
          */
         public Builder maximumExpectedValue(@Nullable Double max) {
             this.distributionConfigBuilder.maximumExpectedValue(max);

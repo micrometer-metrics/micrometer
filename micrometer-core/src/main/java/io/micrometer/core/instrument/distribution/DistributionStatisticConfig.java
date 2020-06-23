@@ -325,6 +325,7 @@ public class DistributionStatisticConfig implements Mergeable<DistributionStatis
          *
          * @param min The minimum value that this distribution summary is expected to observe.
          * @return This builder.
+         * @since 1.3.10
          */
         public Builder minimumExpectedValue(@Nullable Double min) {
             config.minimumExpectedValue = min == null ? null : min.longValue();
@@ -349,6 +350,7 @@ public class DistributionStatisticConfig implements Mergeable<DistributionStatis
          *
          * @param max The maximum value that the meter is expected to observe.
          * @return This builder.
+         * @since 1.3.10
          */
         public Builder maximumExpectedValue(@Nullable Double max) {
             config.maximumExpectedValue = max == null ? null : max.longValue();
