@@ -45,6 +45,7 @@ public interface ElasticConfig extends StepRegistryConfig {
      * @param key Key to look up in the config.
      * @return Value for the key or null if no key is present.
      */
+    @Nullable
     String get(String key);
 
     /**
