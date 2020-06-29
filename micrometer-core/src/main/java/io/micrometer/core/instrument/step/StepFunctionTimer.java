@@ -43,8 +43,8 @@ public class StepFunctionTimer<T> implements FunctionTimer {
     private final Clock clock;
     private volatile long lastUpdateTime = (long) (-2e6);
 
-    private volatile long lastCount = 0;
-    private volatile double lastTime = 0.0;
+    private volatile long lastCount;
+    private volatile double lastTime;
 
     private final LongAdder count = new LongAdder();
     private final DoubleAdder total = new DoubleAdder();

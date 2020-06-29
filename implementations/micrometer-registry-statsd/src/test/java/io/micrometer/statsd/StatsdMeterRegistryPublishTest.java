@@ -56,7 +56,7 @@ class StatsdMeterRegistryPublishTest {
     DisposableChannel server;
     CountDownLatch serverLatch;
 
-    volatile boolean bound = false;
+    volatile boolean bound;
 
     @AfterEach
     void cleanUp() {

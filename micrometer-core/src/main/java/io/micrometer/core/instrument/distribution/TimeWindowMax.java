@@ -40,7 +40,7 @@ public class TimeWindowMax {
     private volatile long lastRotateTimestampMillis;
 
     @SuppressWarnings({"unused", "FieldCanBeLocal"})
-    private volatile int rotating = 0; // 0 - not rotating, 1 - rotating
+    private volatile int rotating; // 0 - not rotating, 1 - rotating
 
     @SuppressWarnings("ConstantConditions")
     public TimeWindowMax(Clock clock, DistributionStatisticConfig config) {

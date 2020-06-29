@@ -35,7 +35,7 @@ public class TimeWindowSum {
     private volatile long lastRotateTimestampMillis;
 
     @SuppressWarnings({"unused", "FieldCanBeLocal"})
-    private volatile int rotating = 0; // 0 - not rotating, 1 - rotating
+    private volatile int rotating; // 0 - not rotating, 1 - rotating
 
     public TimeWindowSum(int bufferLength, Duration expiry) {
         this.durationBetweenRotatesMillis = expiry.toMillis();
