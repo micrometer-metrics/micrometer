@@ -20,6 +20,7 @@ import com.wavefront.sdk.common.WavefrontSender;
 import com.wavefront.sdk.common.clients.WavefrontClient;
 import com.wavefront.sdk.entities.histograms.HistogramGranularity;
 import com.wavefront.sdk.entities.histograms.WavefrontHistogramImpl;
+import io.micrometer.core.Issue;
 import io.micrometer.core.instrument.Measurement;
 import io.micrometer.core.instrument.Meter;
 import io.micrometer.core.instrument.MockClock;
@@ -29,6 +30,7 @@ import org.junit.jupiter.api.Test;
 
 import java.io.IOException;
 import java.net.URI;
+import java.time.Duration;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
@@ -130,6 +132,13 @@ class WavefrontMeterRegistryTest {
     }
 
     @Test
+    @Issue("#2173")
+    void defaultStepConfigAffectsWavefrontBuilder() {
+        WavefrontClient.Builder defaultSenderBuilder = WavefrontMeterRegistry.getDefaultSenderBuilder(config);
+        assertThat(defaultSenderBuilder).hasFieldOrPropertyWithValue("flushIntervalSeconds", 60);
+    }
+
+    @Test
     void configureDefaultSenderWithCustomConfig() {
         WavefrontConfig customConfig = new WavefrontConfig() {
             @Override
@@ -151,8 +160,15 @@ class WavefrontMeterRegistryTest {
             public int batchSize() {
                 return 20;
             }
+
+            @Override
+            public Duration step() {
+                return Duration.ofSeconds(15);
+            }
         };
-        WavefrontClient sender = WavefrontMeterRegistry.getDefaultSenderBuilder(customConfig).build();
+        WavefrontClient.Builder builder = WavefrontMeterRegistry.getDefaultSenderBuilder(customConfig);
+        WavefrontClient sender = builder.build();
+        assertThat(builder).hasFieldOrPropertyWithValue("flushIntervalSeconds", 15);
         assertThat(sender).extracting("reportingService").hasFieldOrPropertyWithValue("uri", URI.create("https://example.com"));
         assertThat(sender).extracting("reportingService").hasFieldOrPropertyWithValue("token", "apiToken");
         assertThat(sender).hasFieldOrPropertyWithValue("batchSize", 20);
