@@ -34,7 +34,6 @@ import java.time.Duration;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
-import java.util.concurrent.TimeUnit;
 
 import static org.assertj.core.api.Assertions.*;
 import static org.mockito.Mockito.*;
@@ -136,8 +135,7 @@ class WavefrontMeterRegistryTest {
     @Issue("#2173")
     void defaultStepConfigAffectsWavefrontBuilder() {
         WavefrontClient.Builder defaultSenderBuilder = WavefrontMeterRegistry.getDefaultSenderBuilder(config);
-        assertThat(defaultSenderBuilder).hasFieldOrPropertyWithValue("flushInterval", 60L);
-        assertThat(defaultSenderBuilder).hasFieldOrPropertyWithValue("flushIntervalTimeUnit", TimeUnit.SECONDS);
+        assertThat(defaultSenderBuilder).hasFieldOrPropertyWithValue("flushIntervalSeconds", 60);
     }
 
     @Test
@@ -170,8 +168,7 @@ class WavefrontMeterRegistryTest {
         };
         WavefrontClient.Builder builder = WavefrontMeterRegistry.getDefaultSenderBuilder(customConfig);
         WavefrontClient sender = builder.build();
-        assertThat(builder).hasFieldOrPropertyWithValue("flushInterval", 15L);
-        assertThat(builder).hasFieldOrPropertyWithValue("flushIntervalTimeUnit", TimeUnit.SECONDS);
+        assertThat(builder).hasFieldOrPropertyWithValue("flushIntervalSeconds", 15);
         assertThat(sender).extracting("reportingService").hasFieldOrPropertyWithValue("uri", URI.create("https://example.com"));
         assertThat(sender).extracting("reportingService").hasFieldOrPropertyWithValue("token", "apiToken");
         assertThat(sender).hasFieldOrPropertyWithValue("batchSize", 20);
