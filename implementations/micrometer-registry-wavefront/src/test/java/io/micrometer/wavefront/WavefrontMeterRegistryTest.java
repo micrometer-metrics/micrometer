@@ -136,8 +136,8 @@ class WavefrontMeterRegistryTest {
     @Issue("#2173")
     void defaultStepConfigAffectsWavefrontBuilder() {
         WavefrontClient.Builder defaultSenderBuilder = WavefrontMeterRegistry.getDefaultSenderBuilder(config);
-        assertThat(defaultSenderBuilder).hasFieldOrPropertyWithValue("flushInterval", 60_000L);
-        assertThat(defaultSenderBuilder).hasFieldOrPropertyWithValue("flushIntervalTimeUnit", TimeUnit.MILLISECONDS);
+        assertThat(defaultSenderBuilder).hasFieldOrPropertyWithValue("flushInterval", 60L);
+        assertThat(defaultSenderBuilder).hasFieldOrPropertyWithValue("flushIntervalTimeUnit", TimeUnit.SECONDS);
     }
 
     @Test
@@ -170,8 +170,8 @@ class WavefrontMeterRegistryTest {
         };
         WavefrontClient.Builder builder = WavefrontMeterRegistry.getDefaultSenderBuilder(customConfig);
         WavefrontClient sender = builder.build();
-        assertThat(builder).hasFieldOrPropertyWithValue("flushInterval", 15_000L);
-        assertThat(builder).hasFieldOrPropertyWithValue("flushIntervalTimeUnit", TimeUnit.MILLISECONDS);
+        assertThat(builder).hasFieldOrPropertyWithValue("flushInterval", 15L);
+        assertThat(builder).hasFieldOrPropertyWithValue("flushIntervalTimeUnit", TimeUnit.SECONDS);
         assertThat(sender).extracting("reportingService").hasFieldOrPropertyWithValue("uri", URI.create("https://example.com"));
         assertThat(sender).extracting("reportingService").hasFieldOrPropertyWithValue("token", "apiToken");
         assertThat(sender).hasFieldOrPropertyWithValue("batchSize", 20);
