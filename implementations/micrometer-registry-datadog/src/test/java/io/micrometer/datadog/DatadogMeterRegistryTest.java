@@ -21,6 +21,7 @@ import io.micrometer.core.instrument.Clock;
 import io.micrometer.core.instrument.Counter;
 import io.micrometer.core.instrument.Meter;
 import io.micrometer.core.instrument.MockClock;
+import io.micrometer.core.instrument.Statistic;
 import io.micrometer.core.instrument.Tags;
 import io.micrometer.core.ipc.http.HttpSender;
 import org.junit.jupiter.api.Test;
@@ -140,14 +141,14 @@ class DatadogMeterRegistryTest {
 
         server.verify(putRequestedFor(
                 urlEqualTo("/api/v1/metrics/my.counter%23abc?api_key=fake&application_key=fake"))
-                .withRequestBody(equalToJson("{\"description\":\"metric description\"}")
+                .withRequestBody(equalToJson("{\"type\":\"count\",\"unit\":\"microsecond\",\"description\":\"metric description\"}")
                 ));
 
         registry.close();
     }
 
     @Test
-    void postMetricDescriptionMetadataWhenDescriptionIsEnabledButNull() {
+    void postMetricMetadataWhenDescriptionIsEnabledButNull() {
         DatadogConfig config = new DatadogConfig() {
 
             @Override
@@ -164,7 +165,7 @@ class DatadogMeterRegistryTest {
         HttpSender httpSender = mock(HttpSender.class);
         DatadogMeterRegistry registry = DatadogMeterRegistry.builder(config).httpClient(httpSender).build();
         Meter.Id id = new Meter.Id("my.meter", Tags.empty(), null, null, Meter.Type.COUNTER);
-        registry.postMetricDescriptionMetadata("my.meter", new DatadogMetricMetadata(id, true));
+        registry.postMetricMetadata("my.meter", new DatadogMetricMetadata(id, Statistic.COUNT, true, null));
         verifyNoInteractions(httpSender);
     }
 }
