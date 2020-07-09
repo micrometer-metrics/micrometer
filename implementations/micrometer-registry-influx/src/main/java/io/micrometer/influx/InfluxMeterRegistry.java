@@ -16,11 +16,23 @@
 package io.micrometer.influx;
 
 import io.micrometer.common.util.StringUtils;
-import io.micrometer.core.instrument.*;
+import io.micrometer.core.instrument.Clock;
+import io.micrometer.core.instrument.DistributionSummary;
+import io.micrometer.core.instrument.FunctionTimer;
+import io.micrometer.core.instrument.LongTaskTimer;
+import io.micrometer.core.instrument.Measurement;
+import io.micrometer.core.instrument.Meter;
+import io.micrometer.core.instrument.MeterRegistry;
+import io.micrometer.core.instrument.Tag;
+import io.micrometer.core.instrument.Timer;
 import io.micrometer.core.instrument.step.StepMeterRegistry;
 import io.micrometer.core.instrument.util.DoubleFormat;
 import io.micrometer.core.instrument.util.MeterPartition;
 import io.micrometer.core.instrument.util.NamedThreadFactory;
+import io.micrometer.core.instrument.util.DoubleFormat;
+import io.micrometer.core.instrument.util.MeterPartition;
+import io.micrometer.core.instrument.util.NamedThreadFactory;
+import io.micrometer.core.instrument.util.StringUtils;
 import io.micrometer.core.ipc.http.HttpSender;
 import io.micrometer.core.ipc.http.HttpUrlConnectionSender;
 import org.slf4j.Logger;
@@ -50,7 +62,7 @@ public class InfluxMeterRegistry extends StepMeterRegistry {
     private final InfluxConfig config;
 
     private final HttpSender httpClient;
-
+    private final InfluxTagMapper tagMapper;
     private final Logger logger = LoggerFactory.getLogger(InfluxMeterRegistry.class);
 
     private boolean databaseExists = false;
@@ -58,7 +70,7 @@ public class InfluxMeterRegistry extends StepMeterRegistry {
     @SuppressWarnings("deprecation")
     public InfluxMeterRegistry(InfluxConfig config, Clock clock) {
         this(config, clock, DEFAULT_THREAD_FACTORY,
-                new HttpUrlConnectionSender(config.connectTimeout(), config.readTimeout()));
+                new HttpUrlConnectionSender(config.connectTimeout(), config.readTimeout()), InfluxTagMapper.DEFAULT);
     }
 
     /**
@@ -70,14 +82,15 @@ public class InfluxMeterRegistry extends StepMeterRegistry {
      */
     @Deprecated
     public InfluxMeterRegistry(InfluxConfig config, Clock clock, ThreadFactory threadFactory) {
-        this(config, clock, threadFactory, new HttpUrlConnectionSender(config.connectTimeout(), config.readTimeout()));
+        this(config, clock, threadFactory, new HttpUrlConnectionSender(config.connectTimeout(), config.readTimeout()), InfluxTagMapper.DEFAULT);
     }
 
-    private InfluxMeterRegistry(InfluxConfig config, Clock clock, ThreadFactory threadFactory, HttpSender httpClient) {
+    private InfluxMeterRegistry(InfluxConfig config, Clock clock, ThreadFactory threadFactory, HttpSender httpClient, InfluxTagMapper tagMapper) {
         super(config, clock);
         config().namingConvention(new InfluxNamingConvention());
         this.config = config;
         this.httpClient = httpClient;
+        this.tagMapper = tagMapper;
         start(threadFactory);
     }
 
@@ -236,11 +249,27 @@ public class InfluxMeterRegistry extends StepMeterRegistry {
     }
 
     private String influxLineProtocol(Meter.Id id, String metricType, Stream<Field> fields) {
-        String tags = getConventionTags(id).stream().filter(t -> StringUtils.isNotBlank(t.getValue()))
+        final List<Tag> meterTags = getConventionTags(id);
+
+        final List<Tag> influxTags = new ArrayList<>();
+        final List<Tag> influxFields = new ArrayList<>();
+        for (Tag meterTag : meterTags) {
+            if (this.tagMapper.shouldBeField(id, meterTag)) {
+                influxFields.add(meterTag);
+            } else {
+                influxTags.add(meterTag);
+            }
+        }
+
+        String tags = influxTags.stream().filter(t -> StringUtils.isNotBlank(t.getValue()))
                 .map(t -> "," + t.getKey() + "=" + t.getValue()).collect(joining(""));
 
-        return getConventionName(id) + tags + ",metric_type=" + metricType + " "
-                + fields.map(Field::toString).collect(joining(",")) + " " + clock.wallTime();
+        String tagFields = influxFields.stream()
+                .filter(t -> StringUtils.isNotBlank(t.getValue()))
+                .map(t -> "," + t.getKey() + "=\"" + t.getValue() + "\"") // tags are string, so place them as strings into influx line protocol (quotes)
+                .collect(joining(""));return getConventionName(id) + tags + ",metric_type=" + metricType + " "
+                + fields.map(Field::toString).collect(joining(","))+ tagFields
+                + " " + clock.wallTime();
     }
 
     @Override
@@ -255,6 +284,7 @@ public class InfluxMeterRegistry extends StepMeterRegistry {
         private Clock clock = Clock.SYSTEM;
 
         private ThreadFactory threadFactory = DEFAULT_THREAD_FACTORY;
+        private InfluxTagMapper tagMapper = InfluxTagMapper.DEFAULT;
 
         private HttpSender httpClient;
 
@@ -279,8 +309,13 @@ public class InfluxMeterRegistry extends StepMeterRegistry {
             return this;
         }
 
+        public Builder tagMapper(InfluxTagMapper tagMapper) {
+            this.tagMapper = tagMapper;
+            return this;
+        }
+
         public InfluxMeterRegistry build() {
-            return new InfluxMeterRegistry(config, clock, threadFactory, httpClient);
+            return new InfluxMeterRegistry(config, clock, threadFactory, httpClient, tagMapper);
         }
 
     }
