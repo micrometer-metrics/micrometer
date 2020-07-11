@@ -43,6 +43,8 @@ import static java.util.Arrays.asList;
 @NonNullApi
 @NonNullFields
 public class ExecutorServiceMetrics implements MeterBinder {
+    private static boolean allowIllegalReflectiveAccess = true;
+
     private static final String DEFAULT_EXECUTOR_METRIC_PREFIX = "";
     @Nullable
     private final ExecutorService executorService;
@@ -271,12 +273,14 @@ public class ExecutorServiceMetrics implements MeterBinder {
 
         if (executorService instanceof ThreadPoolExecutor) {
             monitor(registry, (ThreadPoolExecutor) executorService);
-        } else if (className.equals("java.util.concurrent.Executors$DelegatedScheduledExecutorService")) {
-            monitor(registry, unwrapThreadPoolExecutor(executorService, executorService.getClass()));
-        } else if (className.equals("java.util.concurrent.Executors$FinalizableDelegatedExecutorService")) {
-            monitor(registry, unwrapThreadPoolExecutor(executorService, executorService.getClass().getSuperclass()));
         } else if (executorService instanceof ForkJoinPool) {
             monitor(registry, (ForkJoinPool) executorService);
+        } else if (allowIllegalReflectiveAccess) {
+            if (className.equals("java.util.concurrent.Executors$DelegatedScheduledExecutorService")) {
+                monitor(registry, unwrapThreadPoolExecutor(executorService, executorService.getClass()));
+            } else if (className.equals("java.util.concurrent.Executors$FinalizableDelegatedExecutorService")) {
+                monitor(registry, unwrapThreadPoolExecutor(executorService, executorService.getClass().getSuperclass()));
+            }
         }
     }
 
@@ -368,4 +372,17 @@ public class ExecutorServiceMetrics implements MeterBinder {
                 .description("An estimate of the number of worker threads that are not blocked waiting to join tasks or for other managed synchronization threads")
                 .register(registry);
     }
+
+    /**
+     * Disable illegal reflective accesses.
+     *
+     * Java 9+ warns illegal reflective accesses, but some metrics from this binder depend on reflective access to
+     * {@link Executors}'s internal implementation details. This method allows to disable the feature to avoid the
+     * warnings.
+     * @since 1.6.0
+     */
+    public static void disableIllegalReflectiveAccess() {
+        allowIllegalReflectiveAccess = false;
+    }
+
 }
