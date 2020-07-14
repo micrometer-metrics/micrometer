@@ -41,10 +41,9 @@ import java.util.Random;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import org.mockito.Mock;
-import org.mockito.MockitoAnnotations;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
 /**
@@ -54,11 +53,10 @@ import static org.mockito.Mockito.when;
  */
 class JCacheMetricsTest extends AbstractCacheMetricsTest {
 
-    @Mock
-    private Cache<String, String> cache;
+    @SuppressWarnings("unchecked")
+    private Cache<String, String> cache = mock(Cache.class);
 
-    @Mock
-    private CacheManager cacheManager;
+    private CacheManager cacheManager = mock(CacheManager.class);
 
     private JCacheMetrics metrics;
     private MBeanServer mbeanServer;
@@ -66,7 +64,6 @@ class JCacheMetricsTest extends AbstractCacheMetricsTest {
 
     @BeforeEach
     void setup() throws Exception {
-        MockitoAnnotations.initMocks(this);
         when(cache.getCacheManager()).thenReturn(cacheManager);
         when(cache.getName()).thenReturn("testCache");
         when(cacheManager.getURI()).thenReturn(new URI("http://localhost"));

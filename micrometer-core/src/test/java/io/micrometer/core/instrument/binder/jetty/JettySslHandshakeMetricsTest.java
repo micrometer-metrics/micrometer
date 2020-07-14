@@ -16,6 +16,7 @@
 package io.micrometer.core.instrument.binder.jetty;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
 import io.micrometer.core.instrument.MockClock;
@@ -26,8 +27,6 @@ import io.micrometer.core.instrument.simple.SimpleMeterRegistry;
 import org.eclipse.jetty.io.ssl.SslHandshakeListener;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import org.mockito.Mock;
-import org.mockito.MockitoAnnotations;
 
 import javax.net.ssl.SSLEngine;
 import javax.net.ssl.SSLSession;
@@ -42,12 +41,11 @@ class JettySslHandshakeMetricsTest {
     private SimpleMeterRegistry registry;
     private JettySslHandshakeMetrics sslHandshakeMetrics;
 
-    @Mock SSLSession session;
-    @Mock SSLEngine engine;
+    SSLSession session = mock(SSLSession.class);
+    SSLEngine engine = mock(SSLEngine.class);
 
     @BeforeEach
     void setup() {
-        MockitoAnnotations.initMocks(this);
         when(engine.getSession()).thenReturn(session);
 
         registry = new SimpleMeterRegistry(SimpleConfig.DEFAULT, new MockClock());
