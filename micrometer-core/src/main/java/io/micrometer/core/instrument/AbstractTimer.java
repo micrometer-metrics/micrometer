@@ -15,20 +15,35 @@
  */
 package io.micrometer.core.instrument;
 
-import io.micrometer.core.instrument.distribution.*;
-import io.micrometer.core.instrument.distribution.pause.ClockDriftPauseDetector;
-import io.micrometer.core.instrument.distribution.pause.PauseDetector;
-import io.micrometer.core.instrument.util.MeterEquivalence;
-import io.micrometer.core.lang.Nullable;
-import org.LatencyUtils.IntervalEstimator;
-import org.LatencyUtils.SimplePauseDetector;
-import org.LatencyUtils.TimeCappedMovingAverageIntervalEstimator;
-
+import java.lang.management.ManagementFactory;
+import java.lang.management.MemoryMXBean;
+import java.lang.management.MemoryNotificationInfo;
+import java.lang.management.MemoryPoolMXBean;
 import java.util.Map;
 import java.util.concurrent.Callable;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.TimeUnit;
 import java.util.function.Supplier;
+
+import javax.management.Notification;
+import javax.management.NotificationEmitter;
+import javax.management.NotificationListener;
+
+import org.LatencyUtils.IntervalEstimator;
+import org.LatencyUtils.SimplePauseDetector;
+import org.LatencyUtils.TimeCappedMovingAverageIntervalEstimator;
+
+import io.micrometer.core.instrument.distribution.DistributionStatisticConfig;
+import io.micrometer.core.instrument.distribution.Histogram;
+import io.micrometer.core.instrument.distribution.HistogramSnapshot;
+import io.micrometer.core.instrument.distribution.NoopHistogram;
+import io.micrometer.core.instrument.distribution.TimeWindowFixedBoundaryHistogram;
+import io.micrometer.core.instrument.distribution.TimeWindowPercentileHistogram;
+import io.micrometer.core.instrument.distribution.pause.ClockDriftPauseDetector;
+import io.micrometer.core.instrument.distribution.pause.MemoryPoolThresholdPauseDetector;
+import io.micrometer.core.instrument.distribution.pause.PauseDetector;
+import io.micrometer.core.instrument.util.MeterEquivalence;
+import io.micrometer.core.lang.Nullable;
 
 public abstract class AbstractTimer extends AbstractMeter implements Timer {
     private static Map<PauseDetector, org.LatencyUtils.PauseDetector> pauseDetectorCache =
@@ -99,6 +114,27 @@ public abstract class AbstractTimer extends AbstractMeter implements Timer {
                 ClockDriftPauseDetector clockDriftPauseDetector = (ClockDriftPauseDetector) detector;
                 return new SimplePauseDetector(clockDriftPauseDetector.getSleepInterval().toNanos(),
                         clockDriftPauseDetector.getPauseThreshold().toNanos(), 1, false);
+            } else if (detector instanceof MemoryPoolThresholdPauseDetector) {
+                MemoryPoolThresholdPauseDetector memThresholdDetector = (MemoryPoolThresholdPauseDetector) detector;
+                NotificationListener notificationListener = new NotificationListener() {
+                    @Override
+                    public void handleNotification(Notification notification, Object handback) {
+                        if (notification.getType().equals(MemoryNotificationInfo.MEMORY_THRESHOLD_EXCEEDED)) {
+                            //poll every (default) 3 seconds to determine if all memory pools are freed up
+                            while (isMemoryPoolThresholdExceeded()) {
+                                try {
+                                    Thread.sleep(memThresholdDetector.getPollMemoryPoolThresholdMillis());
+                                } catch (InterruptedException e) {
+                                    e.printStackTrace();
+                                }
+                            }
+                        }
+                    }
+                };
+                //register listener with mem-pool bean
+                MemoryMXBean bean = ManagementFactory.getMemoryMXBean();
+                NotificationEmitter emitter = (NotificationEmitter) bean;
+                emitter.addNotificationListener(notificationListener, null, null);
             }
             return null;
         });
@@ -118,6 +154,18 @@ public abstract class AbstractTimer extends AbstractMeter implements Timer {
                 }
             });
         }
+    }
+    
+    private boolean isMemoryPoolThresholdExceeded() {
+        for (MemoryPoolMXBean membean : ManagementFactory.getMemoryPoolMXBeans()) {
+            if (membean.isUsageThresholdSupported()) {
+//                System.out.println("name: " + membean.getName());
+                if (membean.isUsageThresholdExceeded()) {
+                    return true;
+                }
+            }
+        }
+        return false;
     }
 
     private void recordValueWithExpectedInterval(long nanoValue, long expectedIntervalBetweenValueSamples) {
