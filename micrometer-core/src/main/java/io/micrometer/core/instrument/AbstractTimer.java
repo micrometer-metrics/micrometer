@@ -46,6 +46,7 @@ import io.micrometer.core.instrument.util.MeterEquivalence;
 import io.micrometer.core.lang.Nullable;
 
 public abstract class AbstractTimer extends AbstractMeter implements Timer {
+
     private static Map<PauseDetector, org.LatencyUtils.PauseDetector> pauseDetectorCache =
             new ConcurrentHashMap<>();
 
@@ -120,15 +121,10 @@ public abstract class AbstractTimer extends AbstractMeter implements Timer {
                     @Override
                     public void handleNotification(Notification notification, Object handback) {
                         if (notification.getType().equals(MemoryNotificationInfo.MEMORY_THRESHOLD_EXCEEDED)) {
-                            //poll every (default) 3 seconds to determine if all memory pools are freed up
-                            while (isMemoryPoolThresholdExceeded()) {
-                                try {
-                                    Thread.sleep(memThresholdDetector.getPollMemoryPoolThresholdMillis());
-                                } catch (InterruptedException e) {
-                                    e.printStackTrace();
-                                }
-                            }
+                            System.out.println("Fermata: " + notification.getType() + ", PAUSE ALL OBSERVABILITY THREADS");
+                            new MemoryPollingThread(memThresholdDetector.getPollMemoryPoolThresholdMillis()).start();
                         }
+                        System.out.println("Separate thread launched handleNotification() complete!");
                     }
                 };
                 //register listener with mem-pool bean
@@ -155,17 +151,38 @@ public abstract class AbstractTimer extends AbstractMeter implements Timer {
             });
         }
     }
-    
-    private boolean isMemoryPoolThresholdExceeded() {
-        for (MemoryPoolMXBean membean : ManagementFactory.getMemoryPoolMXBeans()) {
-            if (membean.isUsageThresholdSupported()) {
-//                System.out.println("name: " + membean.getName());
-                if (membean.isUsageThresholdExceeded()) {
-                    return true;
+
+    class MemoryPollingThread extends Thread {
+        private int pollMemoryThresholdMillis = 6000;
+        
+        public MemoryPollingThread(int pollMemoryThresholdMillis) {
+            this.pollMemoryThresholdMillis = pollMemoryThresholdMillis;
+        }
+
+        public void run() {
+            //poll indefinitely every (default) 6 seconds to determine if all memory pools are freed up
+            while (isMemoryPoolThresholdExceeded()) {
+                try {
+                    System.out.println("indefinitely looping every " + pollMemoryThresholdMillis + " millis!");
+                    Thread.sleep(pollMemoryThresholdMillis);
+                } catch (InterruptedException e) {
+                    e.printStackTrace();
                 }
             }
+            System.out.println("Tremolo: exited polling loop, CONTINUE ALL OBSERVABILITY THREADS!");
         }
-        return false;
+        
+        private boolean isMemoryPoolThresholdExceeded() {
+            for (MemoryPoolMXBean membean : ManagementFactory.getMemoryPoolMXBeans()) {
+                if (membean.isUsageThresholdSupported()) {
+                    System.out.println("name: " + membean.getName());
+                    if (membean.isUsageThresholdExceeded()) {
+                        return true;
+                    }
+                }
+            }
+            return false;
+        }
     }
 
     private void recordValueWithExpectedInterval(long nanoValue, long expectedIntervalBetweenValueSamples) {

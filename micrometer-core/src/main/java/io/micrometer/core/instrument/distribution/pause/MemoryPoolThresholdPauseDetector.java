@@ -17,7 +17,7 @@ package io.micrometer.core.instrument.distribution.pause;
 
 public class MemoryPoolThresholdPauseDetector implements PauseDetector {
 
-    private int pollMemoryPoolThresholdMillis = 3000;
+    private int pollMemoryPoolThresholdMillis = 6000;
 
     public MemoryPoolThresholdPauseDetector(int pollMemoryPoolThresholdMillis) {
         this.pollMemoryPoolThresholdMillis = pollMemoryPoolThresholdMillis;
