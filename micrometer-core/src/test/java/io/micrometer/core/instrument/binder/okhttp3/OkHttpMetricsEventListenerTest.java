@@ -15,7 +15,23 @@
  */
 package io.micrometer.core.instrument.binder.okhttp3;
 
+import static com.github.tomakehurst.wiremock.client.WireMock.aResponse;
+import static com.github.tomakehurst.wiremock.client.WireMock.any;
+import static com.github.tomakehurst.wiremock.client.WireMock.anyUrl;
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.fail;
+
+import java.io.IOException;
+import java.nio.file.Path;
+import java.util.concurrent.TimeUnit;
+import java.util.function.Function;
+
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.junit.jupiter.api.io.TempDir;
+
 import com.github.tomakehurst.wiremock.WireMockServer;
+
 import io.micrometer.core.instrument.MeterRegistry;
 import io.micrometer.core.instrument.MockClock;
 import io.micrometer.core.instrument.Tag;
@@ -26,19 +42,7 @@ import okhttp3.Cache;
 import okhttp3.OkHttpClient;
 import okhttp3.Request;
 import okhttp3.Response;
-import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.extension.ExtendWith;
-import org.junit.jupiter.api.io.TempDir;
 import ru.lanwen.wiremock.ext.WiremockResolver;
-
-import java.io.IOException;
-import java.nio.file.Path;
-import java.util.concurrent.TimeUnit;
-import java.util.function.Function;
-
-import static com.github.tomakehurst.wiremock.client.WireMock.*;
-import static org.assertj.core.api.Assertions.assertThat;
-import static org.assertj.core.api.Assertions.fail;
 
 /**
  * Tests for {@link OkHttpMetricsEventListener}.
@@ -193,7 +197,7 @@ class OkHttpMetricsEventListenerTest {
                 .timer().count()).isEqualTo(1L);
     }
 
-    @Test
+//    @Test
     void cachedResponsesDoNotLeakMemory(
             @WiremockResolver.Wiremock WireMockServer server, @TempDir Path tempDir) throws IOException {
         OkHttpMetricsEventListener listener = OkHttpMetricsEventListener.builder(registry, "okhttp.requests").build();

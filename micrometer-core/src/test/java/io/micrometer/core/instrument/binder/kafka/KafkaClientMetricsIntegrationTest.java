@@ -15,7 +15,13 @@
  */
 package io.micrometer.core.instrument.binder.kafka;
 
-import io.micrometer.core.instrument.simple.SimpleMeterRegistry;
+import static java.lang.System.out;
+import static org.assertj.core.api.Assertions.assertThat;
+
+import java.time.Duration;
+import java.util.Collections;
+import java.util.Properties;
+
 import org.apache.kafka.clients.consumer.Consumer;
 import org.apache.kafka.clients.consumer.ConsumerConfig;
 import org.apache.kafka.clients.consumer.KafkaConsumer;
@@ -31,14 +37,9 @@ import org.testcontainers.containers.KafkaContainer;
 import org.testcontainers.junit.jupiter.Container;
 import org.testcontainers.junit.jupiter.Testcontainers;
 
-import java.time.Duration;
-import java.util.Collections;
-import java.util.Properties;
+import io.micrometer.core.instrument.simple.SimpleMeterRegistry;
 
-import static java.lang.System.out;
-import static org.assertj.core.api.Assertions.assertThat;
-
-@Testcontainers
+@Testcontainers(disabledWithoutDocker = true)
 @Tag("docker")
 class KafkaClientMetricsIntegrationTest {
     @Container
