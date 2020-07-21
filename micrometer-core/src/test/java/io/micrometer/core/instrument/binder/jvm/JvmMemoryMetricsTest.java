@@ -40,6 +40,8 @@ class JvmMemoryMetricsTest {
 
         assertJvmMemoryMetrics(registry, "heap");
         assertJvmMemoryMetrics(registry, "nonheap");
+
+        assertJvmHeapMemoryPercent(registry);
     }
 
     private void assertJvmMemoryMetrics(MeterRegistry registry, String area) {
@@ -67,6 +69,11 @@ class JvmMemoryMetricsTest {
         Gauge bufferTotal = registry.get("jvm.buffer.total.capacity").tags("id", bufferId).gauge();
         assertThat(bufferTotal.value()).isGreaterThanOrEqualTo(0);
         assertThat(bufferTotal.getId().getBaseUnit()).isEqualTo(BaseUnits.BYTES);
+    }
+
+    private void assertJvmHeapMemoryPercent(MeterRegistry registry) {
+        Gauge heapMemUsedPercent = registry.get("jvm.memory.heap_used_percent").gauge();
+        assertThat(heapMemUsedPercent.value()).isNotNull();
     }
 
 }

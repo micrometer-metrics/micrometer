@@ -101,7 +101,7 @@ public class JvmMemoryMetrics implements MeterBinder {
 
         //The used and committed size of the returned memory usage is the sum of those values of all heap/non-heap memory pools
         // whereas the max size of the returned memory usage represents the setting of the non-heap/non-heap memory which may
-        // not be the sum of those of all non-heap memory pools. If the setting is missing for non-heap memory pools these values come as -1.
+        // not be the sum of those of all non-heap memory pools. If the setting is missing for heap/non-heap memory pools these values come as -1.
 
         MemoryMXBean memoryMXBean = ManagementFactory.getMemoryMXBean();
 
