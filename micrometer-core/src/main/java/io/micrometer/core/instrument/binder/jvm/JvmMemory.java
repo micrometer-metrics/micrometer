@@ -17,10 +17,7 @@ package io.micrometer.core.instrument.binder.jvm;
 
 import io.micrometer.core.lang.Nullable;
 
-import java.lang.management.ManagementFactory;
-import java.lang.management.MemoryPoolMXBean;
-import java.lang.management.MemoryType;
-import java.lang.management.MemoryUsage;
+import java.lang.management.*;
 import java.util.Optional;
 import java.util.function.ToLongFunction;
 
@@ -72,4 +69,40 @@ class JvmMemory {
             return null;
         }
     }
+
+    static double getTotalAreaUsageValue(MemoryMXBean memoryMXBean, ToLongFunction<MemoryUsage> getter, String area) {
+        MemoryUsage usage = getTotalAreaUsage(memoryMXBean, area);
+        if (usage == null) {
+            return Double.NaN;
+        }
+        return getter.applyAsLong(usage);
+    }
+
+    @Nullable
+    private static MemoryUsage getTotalAreaUsage(MemoryMXBean memoryMXBean, String area) {
+        MemoryUsage usage = null;
+        try {
+            if(area.equals("heap")){
+                usage = memoryMXBean.getHeapMemoryUsage();
+            }
+            else if(area.equals("nonheap")){
+                usage = memoryMXBean.getNonHeapMemoryUsage();
+            }
+            return usage;
+        } catch (InternalError e) {
+            // Defensive for potential InternalError with some specific JVM options. Based on its Javadoc,
+            // MemoryPoolMXBean.getUsage() should return null, not throwing InternalError, so it seems to be a JVM bug.
+            return null;
+        }
+    }
+
+    static double getHeapUsagePercent(MemoryMXBean memoryMXBean){
+        MemoryUsage usage = getTotalAreaUsage(memoryMXBean, "heap");
+        if (usage == null) {
+            return Double.NaN;
+        }
+        return ((double)usage.getUsed()/usage.getMax()) * 100;
+    }
+
+
 }

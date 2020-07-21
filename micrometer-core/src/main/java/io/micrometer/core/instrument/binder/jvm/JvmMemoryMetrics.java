@@ -24,13 +24,11 @@ import io.micrometer.core.instrument.binder.MeterBinder;
 import io.micrometer.core.lang.NonNullApi;
 import io.micrometer.core.lang.NonNullFields;
 
-import java.lang.management.BufferPoolMXBean;
-import java.lang.management.ManagementFactory;
-import java.lang.management.MemoryPoolMXBean;
-import java.lang.management.MemoryType;
-import java.lang.management.MemoryUsage;
+import java.lang.management.*;
 
 import static io.micrometer.core.instrument.binder.jvm.JvmMemory.getUsageValue;
+import static io.micrometer.core.instrument.binder.jvm.JvmMemory.getTotalAreaUsageValue;
+import static io.micrometer.core.instrument.binder.jvm.JvmMemory.getHeapUsagePercent;
 import static java.util.Collections.emptyList;
 
 /**
@@ -100,6 +98,58 @@ public class JvmMemoryMetrics implements MeterBinder {
                 .baseUnit(BaseUnits.BYTES)
                 .register(registry);
         }
+
+        //The used and committed size of the returned memory usage is the sum of those values of all heap/non-heap memory pools
+        // whereas the max size of the returned memory usage represents the setting of the non-heap/non-heap memory which may
+        // not be the sum of those of all non-heap memory pools. If the setting is missing for non-heap memory pools these values come as -1.
+
+        MemoryMXBean memoryMXBean = ManagementFactory.getMemoryMXBean();
+
+        Iterable<Tag> tagsWithId = Tags.concat(tags,"id", "total", "area", "heap");
+
+        Gauge.builder("jvm.memory.used", memoryMXBean, (mem) -> getTotalAreaUsageValue(mem, MemoryUsage::getUsed, "heap"))
+                .tags(tagsWithId)
+                .description("The amount of used memory")
+                .baseUnit(BaseUnits.BYTES)
+                .register(registry);
+
+        Gauge.builder("jvm.memory.max", memoryMXBean, (mem) -> getTotalAreaUsageValue(mem, MemoryUsage::getMax, "heap"))
+                .tags(tagsWithId)
+                .description("The maximum amount of memory in bytes that can be used for memory management")
+                .baseUnit(BaseUnits.BYTES)
+                .register(registry);
+
+        Gauge.builder("jvm.memory.committed", memoryMXBean, (mem) -> getTotalAreaUsageValue(mem, MemoryUsage::getCommitted, "heap"))
+                .tags(tagsWithId)
+                .description("The amount of memory in bytes that is committed for the Java virtual machine to use")
+                .baseUnit(BaseUnits.BYTES)
+                .register(registry);
+
+        Gauge.builder("jvm.memory.heap_used_percent", memoryMXBean, (mem) -> getHeapUsagePercent(mem))
+                .tags(tags)
+                .description("The percentage of used memory with respect to maximum amount of memory that can be used for memory management of heap")
+                .register(registry);
+
+        tagsWithId = Tags.concat(tags,"id", "total", "area", "nonheap");
+
+        Gauge.builder("jvm.memory.used", memoryMXBean, (mem) -> getTotalAreaUsageValue(mem, MemoryUsage::getUsed, "nonheap"))
+                .tags(tagsWithId)
+                .description("The amount of used memory")
+                .baseUnit(BaseUnits.BYTES)
+                .register(registry);
+
+        Gauge.builder("jvm.memory.max", memoryMXBean, (mem) -> getTotalAreaUsageValue(mem, MemoryUsage::getMax, "nonheap"))
+                .tags(tagsWithId)
+                .description("The maximum amount of memory in bytes that can be used for memory management")
+                .baseUnit(BaseUnits.BYTES)
+                .register(registry);
+
+        Gauge.builder("jvm.memory.committed", memoryMXBean, (mem) -> getTotalAreaUsageValue(mem, MemoryUsage::getCommitted, "nonheap"))
+                .tags(tagsWithId)
+                .description("The amount of memory in bytes that is committed for the Java virtual machine to use")
+                .baseUnit(BaseUnits.BYTES)
+                .register(registry);
+
     }
 
 }
