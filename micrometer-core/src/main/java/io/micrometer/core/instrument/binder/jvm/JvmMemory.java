@@ -82,10 +82,10 @@ class JvmMemory {
     private static MemoryUsage getTotalAreaUsage(MemoryMXBean memoryMXBean, String area) {
         MemoryUsage usage = null;
         try {
-            if(area.equals("heap")){
+            if (area.equals("heap")) {
                 usage = memoryMXBean.getHeapMemoryUsage();
             }
-            else if(area.equals("nonheap")){
+            else if (area.equals("nonheap")) {
                 usage = memoryMXBean.getNonHeapMemoryUsage();
             }
             return usage;
@@ -96,12 +96,12 @@ class JvmMemory {
         }
     }
 
-    static double getHeapUsagePercent(MemoryMXBean memoryMXBean){
+    static double getHeapUsagePercent(MemoryMXBean memoryMXBean) {
         MemoryUsage usage = getTotalAreaUsage(memoryMXBean, "heap");
         if (usage == null) {
             return Double.NaN;
         }
-        return ((double)usage.getUsed()/usage.getMax()) * 100;
+        return ((double)usage.getUsed() / usage.getMax()) * 100;
     }
 
 
