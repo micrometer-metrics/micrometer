@@ -125,7 +125,7 @@ public class JvmMemoryMetrics implements MeterBinder {
                 .baseUnit(BaseUnits.BYTES)
                 .register(registry);
 
-        Gauge.builder("jvm.memory.heap_used_percent", memoryMXBean, (mem) -> getHeapUsagePercent(mem))
+        Gauge.builder("jvm.memory.heap.used.percent", memoryMXBean, (mem) -> getHeapUsagePercent(mem))
                 .tags(tags)
                 .description("The percentage of used memory with respect to maximum amount of memory that can be used for memory management of heap")
                 .register(registry);

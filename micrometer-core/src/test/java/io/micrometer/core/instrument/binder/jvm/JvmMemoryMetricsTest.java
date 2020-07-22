@@ -72,7 +72,7 @@ class JvmMemoryMetricsTest {
     }
 
     private void assertJvmHeapMemoryPercent(MeterRegistry registry) {
-        Gauge heapMemUsedPercent = registry.get("jvm.memory.heap_used_percent").gauge();
+        Gauge heapMemUsedPercent = registry.get("jvm.memory.heap.used.percent").gauge();
         assertThat(heapMemUsedPercent.value()).isNotNull();
     }
 
