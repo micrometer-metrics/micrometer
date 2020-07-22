@@ -37,7 +37,9 @@ public interface JettyClientTagsProvider {
      * @return tags to associate with metrics recorded for the request
      */
     default Iterable<Tag> httpRequestTags(Result result) {
-        return Tags.of(JettyClientTags.method(result.getRequest()), JettyClientTags.uri(result, this::uriPattern),
+        return Tags.of(JettyClientTags.method(result.getRequest()),
+                JettyClientTags.host(result.getRequest()),
+                JettyClientTags.uri(result, this::uriPattern),
                 JettyClientTags.exception(result), JettyClientTags.status(result),
                 JettyClientTags.outcome(result));
     }
