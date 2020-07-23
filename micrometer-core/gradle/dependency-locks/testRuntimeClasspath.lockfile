@@ -28,6 +28,7 @@ com.ibm.icu:icu4j:61.1
 com.jayway.jsonpath:json-path:2.4.0
 com.kohlschutter.junixsocket:junixsocket-common:2.0.4
 com.kohlschutter.junixsocket:junixsocket-native-common:2.0.4
+com.lmax:disruptor:3.4.2
 com.netflix.archaius:archaius-core:0.4.1
 com.netflix.hystrix:hystrix-core:1.5.12
 com.squareup.okhttp3:okhttp:4.5.0

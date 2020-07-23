@@ -90,6 +90,9 @@ dependencies {
 
     testImplementation 'de.flapdoodle.embed:de.flapdoodle.embed.mongo'
 
+    // Log4j2 Async dependency
+    testImplementation 'com.lmax:disruptor:3.4.+'
+
     // Kafka binder IT dependencies
     testImplementation 'org.testcontainers:testcontainers'
     testImplementation 'org.testcontainers:junit-jupiter'
