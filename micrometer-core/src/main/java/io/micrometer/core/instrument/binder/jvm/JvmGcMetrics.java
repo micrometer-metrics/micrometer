@@ -204,7 +204,7 @@ public class JvmGcMetrics implements MeterBinder, AutoCloseable {
 
         try {
             Class.forName("com.sun.management.GarbageCollectionNotificationInfo", false,
-                    JvmGcMetrics.class.getClassLoader());
+                    MemoryPoolMXBean.class.getClassLoader());
             return true;
         } catch (Throwable e) {
             // We are operating in a JVM without access to this level of detail
