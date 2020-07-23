@@ -81,7 +81,7 @@ dependencies {
     testCompile 'com.github.tomakehurst:wiremock:latest.release'
 
     // Log4j2 Async dependency
-    testImplementation 'com.lmax:disruptor:3.4.2'
+    testImplementation 'com.lmax:disruptor:3.4.+'
 }
 
 shadowJar {
