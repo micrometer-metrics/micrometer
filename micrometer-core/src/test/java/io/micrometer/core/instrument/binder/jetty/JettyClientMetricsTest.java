@@ -88,10 +88,23 @@ public class JettyClientMetricsTest {
     }
 
     @Test
-    void successfulRequest() throws Exception {
+    void successfulHttpPostRequest() throws Exception {
         Request post = httpClient.POST("http://localhost:" + connector.getLocalPort() + "/ok");
         post.content(new StringContentProvider("123456"));
         post.send();
+        httpClient.stop();
+
+        assertTrue(singleRequestLatch.await(10, SECONDS));
+        assertThat(registry.get("jetty.client.requests")
+                .tag("outcome", "SUCCESS")
+                .tag("status", "200")
+                .tag("uri", "/ok")
+                .timer().count()).isEqualTo(1);
+    }
+
+    @Test
+    void successfulHttpGetRequest() throws Exception {
+        httpClient.GET("http://localhost:" + connector.getLocalPort() + "/ok");
         httpClient.stop();
 
         assertTrue(singleRequestLatch.await(10, SECONDS));
