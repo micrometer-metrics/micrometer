@@ -15,6 +15,7 @@
  */
 package io.micrometer.core.instrument.binder.jetty;
 
+import io.micrometer.core.instrument.DistributionSummary;
 import io.micrometer.core.instrument.MockClock;
 import io.micrometer.core.instrument.simple.SimpleConfig;
 import io.micrometer.core.instrument.simple.SimpleMeterRegistry;
@@ -113,6 +114,9 @@ public class JettyClientMetricsTest {
                 .tag("status", "200")
                 .tag("uri", "/ok")
                 .timer().count()).isEqualTo(1);
+        DistributionSummary requestSizeSummary = registry.get("jetty.client.request.size").summary();
+        assertThat(requestSizeSummary.count()).isEqualTo(1);
+        assertThat(requestSizeSummary.totalAmount()).isEqualTo(0);
     }
 
     @Test
