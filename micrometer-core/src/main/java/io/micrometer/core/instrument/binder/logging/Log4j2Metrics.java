@@ -99,7 +99,7 @@ public class Log4j2Metrics implements MeterBinder, AutoCloseable {
     }
 
     private MetricsFilter createMetricsFilterAndStart(MeterRegistry registry, LoggerConfig loggerConfig) {
-        MetricsFilter metricsFilter = new MetricsFilter(registry, tags, loggerConfig);
+        MetricsFilter metricsFilter = new MetricsFilter(registry, tags, loggerConfig instanceof AsyncLoggerConfig);
         metricsFilter.start();
         metricsFilters.add(metricsFilter);
         return metricsFilter;
@@ -135,10 +135,10 @@ public class Log4j2Metrics implements MeterBinder, AutoCloseable {
         private final Counter infoCounter;
         private final Counter debugCounter;
         private final Counter traceCounter;
-        private final LoggerConfig loggerConfig;
+        private final boolean isAsyncLogger;
 
-        MetricsFilter(MeterRegistry registry, Iterable<Tag> tags, LoggerConfig loggerConfig) {
-            this.loggerConfig = loggerConfig;
+        MetricsFilter(MeterRegistry registry, Iterable<Tag> tags, boolean isAsyncLogger) {
+            this.isAsyncLogger = isAsyncLogger;
             fatalCounter = Counter.builder(METER_NAME)
                     .tags(tags)
                     .tags("level", "fatal")
@@ -185,7 +185,7 @@ public class Log4j2Metrics implements MeterBinder, AutoCloseable {
         @Override
         public Result filter(LogEvent event) {
 
-            if (isNotAsyncLogger() || isAsyncLoggerAndEndOfBatch(event)) {
+            if (!isAsyncLogger || isAsyncLoggerAndEndOfBatch(event)) {
                 incrementCounter(event);
             }
 
@@ -194,15 +194,7 @@ public class Log4j2Metrics implements MeterBinder, AutoCloseable {
 
 
         private boolean isAsyncLoggerAndEndOfBatch(LogEvent event) {
-            return  isAsyncLogger() && event.isEndOfBatch();
-        }
-
-        private boolean isNotAsyncLogger() {
-            return !this.isAsyncLogger();
-        }
-
-        private boolean isAsyncLogger() {
-            return loggerConfig instanceof AsyncLoggerConfig;
+            return  isAsyncLogger && event.isEndOfBatch();
         }
 
         private void incrementCounter(LogEvent event) {
