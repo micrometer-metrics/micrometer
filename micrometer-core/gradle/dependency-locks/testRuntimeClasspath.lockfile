@@ -19,6 +19,7 @@ com.google.guava:guava:20.0
 com.google.inject:guice:4.1.0
 com.hazelcast:hazelcast:3.11
 com.jayway.jsonpath:json-path:2.4.0
+com.lmax:disruptor:3.4.2
 com.netflix.archaius:archaius-core:0.4.1
 com.netflix.hystrix:hystrix-core:1.5.12
 com.squareup.okhttp3:okhttp:3.14.7
