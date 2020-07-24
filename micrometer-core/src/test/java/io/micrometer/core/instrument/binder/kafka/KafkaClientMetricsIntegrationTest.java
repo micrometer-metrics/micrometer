@@ -30,6 +30,7 @@ import org.junit.jupiter.api.Test;
 import org.testcontainers.containers.KafkaContainer;
 import org.testcontainers.junit.jupiter.Container;
 import org.testcontainers.junit.jupiter.Testcontainers;
+import org.testcontainers.utility.DockerImageName;
 
 import java.time.Duration;
 import java.util.Collections;
@@ -42,7 +43,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 @Tag("docker")
 class KafkaClientMetricsIntegrationTest {
     @Container
-    private KafkaContainer kafkaContainer = new KafkaContainer();
+    private KafkaContainer kafkaContainer = new KafkaContainer(DockerImageName.parse("confluentinc/cp-kafka:latest"));
 
     @Test
     void shouldManageProducerAndConsumerMetrics() {
