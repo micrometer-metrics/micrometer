@@ -25,6 +25,7 @@ import org.junit.jupiter.api.Test;
 import org.testcontainers.elasticsearch.ElasticsearchContainer;
 import org.testcontainers.junit.jupiter.Container;
 import org.testcontainers.junit.jupiter.Testcontainers;
+import org.testcontainers.utility.DockerImageName;
 
 import java.time.Duration;
 
@@ -43,7 +44,8 @@ abstract class AbstractElasticsearchMeterRegistryIntegrationTest {
     private static final String PASSWORD = "changeme";
 
     @Container
-    private final ElasticsearchContainer elasticsearch = new ElasticsearchContainer(getDockerImageName(getVersion()));
+    private final ElasticsearchContainer elasticsearch = new ElasticsearchContainer(DockerImageName.parse(
+            getDockerImageName(getVersion())));
 
     private final HttpSender httpSender = new HttpUrlConnectionSender();
 
