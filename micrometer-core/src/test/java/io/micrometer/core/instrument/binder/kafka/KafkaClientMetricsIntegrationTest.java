@@ -42,7 +42,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 @Tag("docker")
 class KafkaClientMetricsIntegrationTest {
     @Container
-    private KafkaContainer kafkaContainer = new KafkaContainer();
+    private KafkaContainer kafkaContainer = new KafkaContainer("5.5.1");
 
     @Test
     void shouldManageProducerAndConsumerMetrics() {
