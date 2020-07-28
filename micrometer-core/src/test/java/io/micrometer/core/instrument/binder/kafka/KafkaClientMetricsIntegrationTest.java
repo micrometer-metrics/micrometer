@@ -43,7 +43,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 @Tag("docker")
 class KafkaClientMetricsIntegrationTest {
     @Container
-    private KafkaContainer kafkaContainer = new KafkaContainer(DockerImageName.parse("confluentinc/cp-kafka:latest"));
+    private KafkaContainer kafkaContainer = new KafkaContainer(DockerImageName.parse("confluentinc/cp-kafka:5.5.1"));
 
     @Test
     void shouldManageProducerAndConsumerMetrics() {
