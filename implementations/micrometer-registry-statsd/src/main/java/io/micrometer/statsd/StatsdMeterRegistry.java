@@ -25,6 +25,7 @@ import io.micrometer.core.instrument.internal.DefaultMeter;
 import io.micrometer.core.instrument.util.HierarchicalNameMapper;
 import io.micrometer.core.lang.Nullable;
 import io.micrometer.statsd.internal.*;
+import io.netty.resolver.DefaultAddressResolverGroup;
 import org.reactivestreams.Publisher;
 import org.reactivestreams.Subscriber;
 import org.reactivestreams.Subscription;
@@ -236,8 +237,10 @@ public class StatsdMeterRegistry extends MeterRegistry {
     }
 
     private void prepareTcpClient(Publisher<String> publisher) {
+        StatsdAddressResolverGroup addressResolverGroup = new StatsdAddressResolverGroup();
         AtomicReference<TcpClient> tcpClientReference = new AtomicReference<>();
         TcpClient tcpClient = TcpClient.create()
+                .resolver(addressResolverGroup)
                 .host(statsdConfig.host())
                 .port(statsdConfig.port())
                 .handle((in, out) -> out
