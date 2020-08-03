@@ -18,4 +18,5 @@ public final class StatsdAddressResolverGroup extends AddressResolverGroup<InetS
         AddressResolver<InetSocketAddress> inetSocketAddressAddressResolver = new DefaultNameResolver(executor).asAddressResolver();
         return inetSocketAddressAddressResolver;
     }
+
 }
