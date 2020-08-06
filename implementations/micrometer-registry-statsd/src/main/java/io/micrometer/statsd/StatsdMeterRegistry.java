@@ -25,6 +25,7 @@ import io.micrometer.core.instrument.internal.DefaultMeter;
 import io.micrometer.core.instrument.util.HierarchicalNameMapper;
 import io.micrometer.core.lang.Nullable;
 import io.micrometer.statsd.internal.*;
+import io.netty.util.AttributeKey;
 import org.reactivestreams.Publisher;
 import org.reactivestreams.Subscriber;
 import org.reactivestreams.Subscription;
@@ -78,7 +79,7 @@ public class StatsdMeterRegistry extends MeterRegistry {
     private final AtomicBoolean started = new AtomicBoolean(false);
     DirectProcessor<String> processor = DirectProcessor.create();
     FluxSink<String> fluxSink = new NoopFluxSink();
-    Disposable.Swap client = Disposables.swap();
+    Disposable.Swap statsdConnection = Disposables.swap();
     private Disposable.Swap meterPoller = Disposables.swap();
 
     @Nullable
@@ -86,6 +87,8 @@ public class StatsdMeterRegistry extends MeterRegistry {
 
     @Nullable
     private Consumer<String> lineSink;
+
+    private static final AttributeKey<Boolean> CONNECTION_DISPOSED = AttributeKey.valueOf("doOnDisconnectCalled");
 
     public StatsdMeterRegistry(StatsdConfig config, Clock clock) {
         this(config, HierarchicalNameMapper.DEFAULT, clock);
@@ -230,7 +233,12 @@ public class StatsdMeterRegistry extends MeterRegistry {
                         .neverComplete()
                         .retryWhen(Retry.indefinitely().filter(throwable -> throwable instanceof PortUnreachableException))
                 )
-                .doOnDisconnected(connection -> connectAndSubscribe(udpClientReference.get()));
+                .doOnDisconnected(connection -> {
+                    Boolean connectionDisposed = connection.channel().attr(CONNECTION_DISPOSED).getAndSet(Boolean.TRUE);
+                    if (connectionDisposed == null || !connectionDisposed) {
+                        connectAndSubscribe(udpClientReference.get());
+                    }
+                });
         udpClientReference.set(udpClient);
         connectAndSubscribe(udpClient);
     }
@@ -243,7 +251,12 @@ public class StatsdMeterRegistry extends MeterRegistry {
                 .handle((in, out) -> out
                         .sendString(publisher)
                         .neverComplete())
-                .doOnDisconnected(connection -> connectAndSubscribe(tcpClientReference.get()));
+                .doOnDisconnected(connection -> {
+                    Boolean connectionDisposed = connection.channel().attr(CONNECTION_DISPOSED).getAndSet(Boolean.TRUE);
+                    if (connectionDisposed == null || !connectionDisposed) {
+                        connectAndSubscribe(tcpClientReference.get());
+                    }
+                });
         tcpClientReference.set(tcpClient);
         connectAndSubscribe(tcpClient);
     }
@@ -266,11 +279,11 @@ public class StatsdMeterRegistry extends MeterRegistry {
         }));
     }
 
-    private void retryReplaceClient(Mono<? extends Connection> connection) {
-         connection
+    private void retryReplaceClient(Mono<? extends Connection> connectMono) {
+         connectMono
                  .retryWhen(Retry.backoff(Long.MAX_VALUE, Duration.ofSeconds(1)).maxBackoff(Duration.ofMinutes(1)))
-                 .subscribe(client -> {
-                     this.client.update(client);
+                 .subscribe(connection -> {
+                     this.statsdConnection.replace(connection);
 
                      // now that we're connected, start polling gauges and other pollable meter types
                      startPolling();
@@ -285,8 +298,8 @@ public class StatsdMeterRegistry extends MeterRegistry {
 
     public void stop() {
         if (started.compareAndSet(true, false)) {
-            if (client.get() != null) {
-                client.get().dispose();
+            if (statsdConnection.get() != null) {
+                statsdConnection.get().dispose();
             }
             if (meterPoller.get() != null) {
                 meterPoller.get().dispose();
