@@ -55,6 +55,7 @@ class StatsdMeterRegistryPublishTest {
     StatsdMeterRegistry meterRegistry;
     DisposableChannel server;
     CountDownLatch serverLatch;
+    AtomicInteger serverMetricReadCount = new AtomicInteger();
 
     volatile boolean bound = false;
 
@@ -99,7 +100,7 @@ class StatsdMeterRegistryPublishTest {
         counter.increment(1);
         assertThat(serverLatch.await(5, TimeUnit.SECONDS)).isTrue();
 
-        Disposable firstClient = meterRegistry.client.get();
+        Disposable firstClient = meterRegistry.statsdConnection.get();
 
         server.disposeNow();
         serverLatch = new CountDownLatch(3);
@@ -119,7 +120,7 @@ class StatsdMeterRegistryPublishTest {
         Counter.builder("another.counter").register(meterRegistry).increment();
 
         if (protocol == StatsdProtocol.TCP) {
-            await().until(() -> meterRegistry.client.get() != firstClient);
+            await().until(() -> meterRegistry.statsdConnection.get() != firstClient);
         }
 
         counter.increment(5);
@@ -190,7 +191,7 @@ class StatsdMeterRegistryPublishTest {
         server = startServer(protocol, port);
         if (protocol == StatsdProtocol.TCP) {
             // client is null until TcpClient first connects
-            await().until(() -> meterRegistry.client.get() != null);
+            await().until(() -> meterRegistry.statsdConnection.get() != null);
             // TcpClient may take some time to reconnect to the server
             await().until(() -> !clientIsDisposed());
         }
@@ -226,10 +227,37 @@ class StatsdMeterRegistryPublishTest {
         assertThat(serverLatch.await(1, TimeUnit.SECONDS)).isFalse();
     }
 
+    @ParameterizedTest
+    @EnumSource(StatsdProtocol.class)
+    @Issue("#2177")
+    void whenSendError_reconnectsAndWritesNewMetrics(StatsdProtocol protocol) throws InterruptedException {
+        serverLatch = new CountDownLatch(3);
+        server = startServer(protocol, 0);
+        final int port = server.address().getPort();
+        meterRegistry = new StatsdMeterRegistry(getUnbufferedConfig(protocol, port), Clock.SYSTEM);
+        startRegistryAndWaitForClient();
+        ((Connection) meterRegistry.statsdConnection.get()).addHandler("writeFailure", new ChannelOutboundHandlerAdapter() {
+            @Override
+            public void write(ChannelHandlerContext ctx, Object msg, ChannelPromise promise) throws Exception {
+                throw new RuntimeException("write error for testing purposes");
+            }
+        });
+        Counter counter = Counter.builder("my.counter").register(meterRegistry);
+        // write will cause error
+        counter.increment();
+        // wait for reconnect
+        await().until(() -> !clientIsDisposed());
+        // remove write exception handler
+        ((Connection) meterRegistry.statsdConnection.get()).removeHandler("writeFailure");
+        IntStream.range(1, 4).forEach(counter::increment);
+        assertThat(serverLatch.await(3, TimeUnit.SECONDS)).isTrue();
+        await().pollDelay(Duration.ofSeconds(1)).atMost(Duration.ofSeconds(3)).until(() -> serverMetricReadCount.get() == 3);
+    }
+
     private void trackWritesForUdpClient(StatsdProtocol protocol, AtomicInteger writeCount) {
         if (protocol == StatsdProtocol.UDP) {
-            await().until(() -> meterRegistry.client.get() != null);
-            ((Connection) meterRegistry.client.get())
+            await().until(() -> meterRegistry.statsdConnection.get() != null);
+            ((Connection) meterRegistry.statsdConnection.get())
                     .addHandler(new LoggingHandler("udpclient", LogLevel.INFO))
                     .addHandler(new ChannelOutboundHandlerAdapter() {
                         @Override
@@ -247,7 +275,7 @@ class StatsdMeterRegistryPublishTest {
     }
 
     private boolean clientIsDisposed() {
-        return meterRegistry.client.get().isDisposed();
+        return meterRegistry.statsdConnection.get().isDisposed();
     }
 
     private DisposableChannel startServer(StatsdProtocol protocol, int port) {
@@ -259,11 +287,12 @@ class StatsdMeterRegistryPublishTest {
                             in.receive().asString()
                                     .flatMap(packet -> {
                                         serverLatch.countDown();
+                                        serverMetricReadCount.getAndIncrement();
                                         return Flux.never();
                                     }))
                     .doOnBound((server) -> bound = true)
                     .doOnUnbound((server) -> bound = false)
-                    .wiretap(true)
+                    .wiretap("udpserver", LogLevel.INFO)
                     .bindNow(Duration.ofSeconds(2));
         } else if (protocol == StatsdProtocol.TCP) {
             AtomicReference<DisposableChannel> channel = new AtomicReference<>();
@@ -273,14 +302,19 @@ class StatsdMeterRegistryPublishTest {
                     .handle((in, out) ->
                             in.receive().asString()
                                     .flatMap(packet -> {
-                                        IntStream.range(0, packet.split("my.counter").length - 1).forEach(i -> serverLatch.countDown());
+                                        IntStream.range(0, packet.split("my.counter").length - 1).forEach(i -> {
+                                            serverLatch.countDown();
+                                            serverMetricReadCount.getAndIncrement();
+                                        });
                                         in.withConnection(channel::set);
                                         return Flux.never();
                                     }))
                     .doOnBound((server) -> bound = true)
                     .doOnUnbound((server) -> {
                         bound = false;
-                        channel.get().dispose();
+                        if (channel.get() != null) {
+                            channel.get().dispose();
+                        }
                     })
                     .wiretap("tcpserver", LogLevel.INFO)
                     .bindNow(Duration.ofSeconds(5));
