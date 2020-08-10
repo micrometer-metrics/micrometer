@@ -215,7 +215,7 @@ public class StackdriverMeterRegistry extends StepMeterRegistry {
     }
 
     private Stream<TimeSeries> createCounter(Batch batch, Counter counter) {
-        return Stream.of(batch.createTimeSeries(counter, counter.count(), null));
+        return Stream.of(batch.createTimeSeries(counter, counter.count(), null, MetricDescriptor.MetricKind.CUMULATIVE));
     }
 
     private Stream<TimeSeries> createLongTaskTimer(Batch batch, LongTaskTimer longTaskTimer) {
@@ -282,16 +282,13 @@ public class StackdriverMeterRegistry extends StepMeterRegistry {
 
     //VisibleForTesting
     class Batch {
-        private final TimeInterval interval = TimeInterval.newBuilder()
-                .setEndTime(Timestamp.newBuilder()
-                        .setSeconds(clock.wallTime() / 1000)
-                        .setNanos((int) (clock.wallTime() % 1000) * 1000000)
-                        .build())
-                .build();
-
         TimeSeries createTimeSeries(Meter meter, double value, @Nullable String statistic) {
+            return createTimeSeries(meter, value, statistic, MetricDescriptor.MetricKind.GAUGE);
+        }
+
+        TimeSeries createTimeSeries(Meter meter, double value, @Nullable String statistic, MetricDescriptor.MetricKind metricKind) {
             return createTimeSeries(meter.getId(), TypedValue.newBuilder().setDoubleValue(value).build(),
-                    MetricDescriptor.ValueType.DOUBLE, statistic);
+                    MetricDescriptor.ValueType.DOUBLE, statistic, metricKind);
         }
 
         TimeSeries createTimeSeries(Meter meter, long value, @Nullable String statistic) {
@@ -325,8 +322,13 @@ public class StackdriverMeterRegistry extends StepMeterRegistry {
 
         private TimeSeries createTimeSeries(Meter.Id id, TypedValue typedValue, MetricDescriptor.ValueType valueType,
                                             @Nullable String statistic) {
+            return createTimeSeries(id, typedValue, valueType, statistic, MetricDescriptor.MetricKind.GAUGE);
+        }
+
+        private TimeSeries createTimeSeries(Meter.Id id, TypedValue typedValue, MetricDescriptor.ValueType valueType,
+                                            @Nullable String statistic, MetricDescriptor.MetricKind metricKind) {
             if (client != null)
-                createMetricDescriptorIfNecessary(client, id, valueType, statistic);
+                createMetricDescriptorIfNecessary(client, id, valueType, statistic, metricKind);
 
             String metricType = metricType(id, statistic);
 
@@ -343,17 +345,17 @@ public class StackdriverMeterRegistry extends StepMeterRegistry {
                             .putLabels("project_id", config.projectId())
                             .putAllLabels(config.resourceLabels())
                             .build())
-                    .setMetricKind(MetricDescriptor.MetricKind.GAUGE) // https://cloud.google.com/monitoring/api/v3/metrics-details#metric-kinds
+                    .setMetricKind(metricKind) // https://cloud.google.com/monitoring/api/v3/metrics-details#metric-kinds
                     .setValueType(valueType)
                     .addPoints(Point.newBuilder()
-                            .setInterval(interval)
+                            .setInterval(interval(metricKind))
                             .setValue(typedValue)
                             .build())
                     .build();
         }
 
-        private void createMetricDescriptorIfNecessary(MetricServiceClient client, Meter.Id id,
-                                                       MetricDescriptor.ValueType valueType, @Nullable String statistic) {
+        private void createMetricDescriptorIfNecessary(MetricServiceClient client, Meter.Id id, MetricDescriptor.ValueType valueType,
+                                                       @Nullable String statistic, MetricDescriptor.MetricKind metricKind) {
 
             if (verifiedDescriptors.isEmpty()) {
                 prePopulateVerifiedDescriptors();
@@ -364,7 +366,7 @@ public class StackdriverMeterRegistry extends StepMeterRegistry {
                 MetricDescriptor descriptor = MetricDescriptor.newBuilder()
                         .setType(metricType)
                         .setDescription(id.getDescription() == null ? "" : id.getDescription())
-                        .setMetricKind(MetricDescriptor.MetricKind.GAUGE)
+                        .setMetricKind(metricKind)
                         .setValueType(valueType)
                         .build();
 
@@ -410,13 +412,30 @@ public class StackdriverMeterRegistry extends StepMeterRegistry {
             }
         }
 
-
         private String metricType(Meter.Id id, @Nullable String statistic) {
             StringBuilder metricType = new StringBuilder("custom.googleapis.com/").append(getConventionName(id));
             if (statistic != null) {
                 metricType.append("/").append(statistic);
             }
             return metricType.toString();
+        }
+
+        private final EnumSet<MetricDescriptor.MetricKind> requireStartTime = EnumSet.of(MetricDescriptor.MetricKind.DELTA, MetricDescriptor.MetricKind.CUMULATIVE);
+
+        private Timestamp buildTimestamp(long timeMs) {
+            return Timestamp.newBuilder()
+                    .setSeconds(timeMs / 1000)
+                    .setNanos((int) (timeMs % 1000) * 1000000)
+                    .build();
+        }
+
+        private TimeInterval interval(MetricDescriptor.MetricKind metricKind) {
+            TimeInterval.Builder builder = TimeInterval.newBuilder()
+                    .setEndTime(buildTimestamp(clock.wallTime()));
+            if (requireStartTime.contains(metricKind)) {
+                builder.setStartTime(buildTimestamp(clock.wallTime() - config.step().toMillis()));
+            }
+            return builder.build();
         }
 
         //VisibleForTesting
