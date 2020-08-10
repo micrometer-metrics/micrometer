@@ -16,23 +16,36 @@
 package io.micrometer.stackdriver;
 
 import com.google.api.Distribution;
+import com.google.api.MetricDescriptor;
+import com.google.api.gax.rpc.UnaryCallable;
+import com.google.cloud.monitoring.v3.MetricServiceClient;
+import com.google.cloud.monitoring.v3.stub.MetricServiceStub;
+import com.google.monitoring.v3.CreateMetricDescriptorRequest;
+import com.google.monitoring.v3.CreateTimeSeriesRequest;
+import com.google.monitoring.v3.TimeInterval;
+import com.google.protobuf.Empty;
 import io.micrometer.core.Issue;
 import io.micrometer.core.instrument.MockClock;
 import io.micrometer.core.instrument.distribution.CountAtBucket;
 import io.micrometer.core.instrument.distribution.HistogramSnapshot;
 import io.micrometer.core.lang.Nullable;
 import org.junit.jupiter.api.Test;
+import org.mockito.ArgumentCaptor;
 
+import java.io.IOException;
 import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
 
 /**
  * Tests for {@link StackdriverMeterRegistry}
  */
 class StackdriverMeterRegistryTest {
 
-    StackdriverMeterRegistry meterRegistry = new StackdriverMeterRegistry(new StackdriverConfig() {
+    StackdriverConfig config = new StackdriverConfig() {
         @Override
         public boolean enabled() {
             return false;
@@ -48,7 +61,9 @@ class StackdriverMeterRegistryTest {
         public String get(String key) {
             return null;
         }
-    }, new MockClock());
+    };
+
+    StackdriverMeterRegistry meterRegistry = new StackdriverMeterRegistry(config, new MockClock());
 
     @Test
     @Issue("#1325")
@@ -69,5 +84,38 @@ class StackdriverMeterRegistryTest {
         Distribution distribution = batch.distribution(histogramSnapshot, false);
         assertThat(distribution.getBucketOptions().getExplicitBuckets().getBoundsCount()).isEqualTo(1);
         assertThat(distribution.getBucketCountsList()).hasSize(1);
+    }
+
+    @Test
+    void counterTimeSeries() throws IOException {
+        MetricServiceStub metricServiceStub = mock(MetricServiceStub.class);
+        meterRegistry.client = MetricServiceClient.create(metricServiceStub);
+
+        UnaryCallable<CreateMetricDescriptorRequest, MetricDescriptor> metricDescriptorCallable = mock(UnaryCallable.class);
+        when(metricServiceStub.createMetricDescriptorCallable()).thenReturn(metricDescriptorCallable);
+
+        UnaryCallable<CreateTimeSeriesRequest, Empty> createTimesSeriesCallable = mock(UnaryCallable.class);
+        when(metricServiceStub.createTimeSeriesCallable()).thenReturn(createTimesSeriesCallable);
+
+        meterRegistry.counter("my-counter");
+        meterRegistry.publish();
+
+        ArgumentCaptor<CreateMetricDescriptorRequest> metricDescriptorCaptor = ArgumentCaptor.forClass(CreateMetricDescriptorRequest.class);
+        ArgumentCaptor<CreateTimeSeriesRequest> timeSeriesCaptor = ArgumentCaptor.forClass(CreateTimeSeriesRequest.class);
+        verify(metricDescriptorCallable).call(metricDescriptorCaptor.capture());
+        verify(createTimesSeriesCallable).call(timeSeriesCaptor.capture());
+
+        assertThat(metricDescriptorCaptor.getValue().getMetricDescriptor().getMetricKind()).isEqualTo(MetricDescriptor.MetricKind.CUMULATIVE);
+
+        TimeInterval interval = timeSeriesCaptor.getValue().getTimeSeries(0).getPoints(0).getInterval();
+        long startTime = toMs(interval.getStartTime().getSeconds(), interval.getStartTime().getNanos());
+        long endTime = toMs(interval.getEndTime().getSeconds(), interval.getEndTime().getNanos());
+        assertThat(endTime - startTime).isEqualTo(toMs(config.step().getSeconds(), config.step().getNano()));
+
+        assertThat(timeSeriesCaptor.getValue().getTimeSeries(0).getMetricKind()).isEqualTo(MetricDescriptor.MetricKind.CUMULATIVE);
+    }
+
+    private long toMs(long seconds, int nanos) {
+        return seconds * 1_000 + nanos / 1_000_000;
     }
 }
