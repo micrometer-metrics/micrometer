@@ -80,7 +80,7 @@ subprojects {
 
                 // ensure Java 8 baseline is enforced for main source
                 if (JavaVersion.current().isJava9Compatible()) {
-                    options.compilerArgs.addAll(['--release', '8'])
+                    options.release = 8
                 }
             }
             compileTestJava {
@@ -210,7 +210,7 @@ subprojects {
 }
 
 wrapper {
-    gradleVersion = '6.5.1'
+    gradleVersion = '6.6'
 }
 
 defaultTasks 'build'
