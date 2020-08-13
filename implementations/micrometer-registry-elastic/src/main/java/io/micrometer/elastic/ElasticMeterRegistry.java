@@ -319,11 +319,12 @@ public class ElasticMeterRegistry extends StepMeterRegistry {
     // VisibleForTesting
     Optional<String> writeFunctionTimer(FunctionTimer timer) {
         double sum = timer.totalTime(getBaseTimeUnit());
-        if (Double.isFinite(sum)) {
+        double mean = timer.mean(getBaseTimeUnit());
+        if (Double.isFinite(sum) && Double.isFinite(mean)) {
             return Optional.of(writeDocument(timer, builder -> {
                 builder.append(",\"count\":").append(timer.count());
                 builder.append(",\"sum\":").append(sum);
-                builder.append(",\"mean\":").append(timer.mean(getBaseTimeUnit()));
+                builder.append(",\"mean\":").append(mean);
             }));
         }
         return Optional.empty();
