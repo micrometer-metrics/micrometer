@@ -36,7 +36,6 @@ import java.util.concurrent.TimeUnit;
 import java.util.stream.Stream;
 
 import static io.micrometer.core.instrument.util.StringEscapeUtils.escapeJson;
-import static java.util.Objects.requireNonNull;
 import static java.util.stream.Collectors.joining;
 import static java.util.stream.StreamSupport.stream;
 
@@ -232,7 +231,7 @@ public class DatadogMeterRegistry extends StepMeterRegistry {
 
         // Create host attribute
         String host = config.hostTag() == null ? "" : stream(tags.spliterator(), false)
-                .filter(t -> requireNonNull(config.hostTag()).equals(t.getKey()))
+                .filter(t -> config.hostTag().equals(t.getKey()))
                 .findAny()
                 .map(t -> ",\"host\":\"" + escapeJson(t.getValue()) + "\"")
                 .orElse("");
