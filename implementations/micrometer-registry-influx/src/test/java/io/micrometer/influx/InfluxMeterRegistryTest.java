@@ -162,4 +162,36 @@ class InfluxMeterRegistryTest {
         clock.add(config.step());
         assertThat(meterRegistry.writeFunctionTimer(timer)).isEmpty();
     }
+
+    @Test
+    void nanMeanFunctionTimerShouldNotWriteMean() {
+        FunctionTimer functionTimer = new FunctionTimer() {
+            @Override
+            public double count() {
+                return 1;
+            }
+
+            @Override
+            public double totalTime(TimeUnit unit) {
+                return 1;
+            }
+
+            @Override
+            public TimeUnit baseTimeUnit() {
+                return TimeUnit.SECONDS;
+            }
+
+            @Override
+            public Id getId() {
+                return new Id("func.timer", Tags.empty(), null, null, Type.TIMER);
+            }
+
+            @Override
+            public double mean(TimeUnit unit) {
+                return Double.NaN;
+            }
+        };
+        assertThat(meterRegistry.writeFunctionTimer(functionTimer))
+                .containsOnly("func_timer,metric_type=histogram sum=1,count=1 1");
+    }
 }
