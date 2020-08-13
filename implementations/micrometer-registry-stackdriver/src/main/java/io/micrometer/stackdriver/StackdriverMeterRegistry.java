@@ -196,7 +196,7 @@ public class StackdriverMeterRegistry extends StepMeterRegistry {
     }
 
     private Stream<TimeSeries> createFunctionCounter(Batch batch, FunctionCounter functionCounter) {
-        return Stream.of(batch.createTimeSeries(functionCounter, functionCounter.count(), null));
+        return Stream.of(batch.createTimeSeries(functionCounter, functionCounter.count(), null, MetricDescriptor.MetricKind.CUMULATIVE));
     }
 
     private Stream<TimeSeries> createTimeGauge(Batch batch, TimeGauge timeGauge) {
@@ -305,7 +305,7 @@ public class StackdriverMeterRegistry extends StepMeterRegistry {
                             createTimeSeries(histogramSupport,
                                     timeDomain ? snapshot.max(getBaseTimeUnit()) : snapshot.max(),
                                     "max"),
-                            createTimeSeries(histogramSupport, snapshot.count(), "count")
+                            createTimeSeries(histogramSupport, snapshot.count(), "count", MetricDescriptor.MetricKind.CUMULATIVE)
                     ),
                     Arrays.stream(snapshot.percentileValues())
                             .map(valueAtP -> createTimeSeries(histogramSupport,
