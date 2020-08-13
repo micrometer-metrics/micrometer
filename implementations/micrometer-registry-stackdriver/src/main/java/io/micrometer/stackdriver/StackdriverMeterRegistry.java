@@ -283,6 +283,22 @@ public class StackdriverMeterRegistry extends StepMeterRegistry {
 
     //VisibleForTesting
     class Batch {
+        private final Timestamp startTime;
+        private final Timestamp endTime;
+
+        Batch() {
+            long wallTime = clock.wallTime();
+            startTime = buildTimestamp(wallTime - config.step().toMillis());
+            endTime = buildTimestamp(wallTime);
+        }
+
+        private Timestamp buildTimestamp(long timeMs) {
+            return Timestamp.newBuilder()
+                    .setSeconds(timeMs / 1000)
+                    .setNanos((int) (timeMs % 1000) * 1000000)
+                    .build();
+        }
+
         TimeSeries createTimeSeries(Meter meter, double value, @Nullable String statistic) {
             return createTimeSeries(meter, value, statistic, MetricDescriptor.MetricKind.GAUGE);
         }
@@ -423,18 +439,10 @@ public class StackdriverMeterRegistry extends StepMeterRegistry {
 
         private final EnumSet<MetricDescriptor.MetricKind> requireStartTime = EnumSet.of(MetricDescriptor.MetricKind.DELTA, MetricDescriptor.MetricKind.CUMULATIVE);
 
-        private Timestamp buildTimestamp(long timeMs) {
-            return Timestamp.newBuilder()
-                    .setSeconds(timeMs / 1000)
-                    .setNanos((int) (timeMs % 1000) * 1000000)
-                    .build();
-        }
-
         private TimeInterval interval(MetricDescriptor.MetricKind metricKind) {
-            TimeInterval.Builder builder = TimeInterval.newBuilder()
-                    .setEndTime(buildTimestamp(clock.wallTime()));
+            TimeInterval.Builder builder = TimeInterval.newBuilder().setEndTime(endTime);
             if (requireStartTime.contains(metricKind)) {
-                builder.setStartTime(buildTimestamp(clock.wallTime() - config.step().toMillis()));
+                builder.setStartTime(startTime);
             }
             return builder.build();
         }
