@@ -155,4 +155,11 @@ class InfluxMeterRegistryTest {
         Meter meter = Meter.builder("my.meter", Meter.Type.GAUGE, measurements).register(this.meterRegistry);
         assertThat(meterRegistry.writeMeter(meter)).containsExactly("my_meter,metric_type=unknown value=1,value=2 1");
     }
+
+    @Test
+    void nanFunctionTimerShouldNotBeWritten() {
+        FunctionTimer timer = FunctionTimer.builder("myFunctionTimer", Double.NaN, Number::longValue, Number::doubleValue, TimeUnit.MILLISECONDS).register(meterRegistry);
+        clock.add(config.step());
+        assertThat(meterRegistry.writeFunctionTimer(timer)).isEmpty();
+    }
 }
