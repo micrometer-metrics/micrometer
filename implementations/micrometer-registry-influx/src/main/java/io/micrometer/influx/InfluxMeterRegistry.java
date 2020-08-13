@@ -190,14 +190,20 @@ public class InfluxMeterRegistry extends StepMeterRegistry {
         return Stream.empty();
     }
 
-    private Stream<String> writeFunctionTimer(FunctionTimer timer) {
-        Stream<Field> fields = Stream.of(
-                new Field("sum", timer.totalTime(getBaseTimeUnit())),
-                new Field("count", timer.count()),
-                new Field("mean", timer.mean(getBaseTimeUnit()))
-        );
-
-        return Stream.of(influxLineProtocol(timer.getId(), "histogram", fields));
+    // VisibleForTesting
+    Stream<String> writeFunctionTimer(FunctionTimer timer) {
+        double sum = timer.totalTime(getBaseTimeUnit());
+        if (Double.isFinite(sum)) {
+            Stream.Builder<Field> builder = Stream.builder();
+            builder.add(new Field("sum", sum));
+            builder.add(new Field("count", timer.count()));
+            double mean = timer.mean(getBaseTimeUnit());
+            if (Double.isFinite(mean)) {
+                builder.add(new Field("mean", mean));
+            }
+            return Stream.of(influxLineProtocol(timer.getId(), "histogram", builder.build()));
+        }
+        return Stream.empty();
     }
 
     private Stream<String> writeTimer(Timer timer) {
