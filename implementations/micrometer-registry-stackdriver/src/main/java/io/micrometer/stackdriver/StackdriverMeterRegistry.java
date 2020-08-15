@@ -76,7 +76,8 @@ public class StackdriverMeterRegistry extends StepMeterRegistry {
     /**
      * Metric names for which we have posted a custom metric
      */
-    private final Set<String> verifiedDescriptors = ConcurrentHashMap.newKeySet();
+    //VisibleForTesting
+    final Map<String, MetricDescriptor.MetricKind> verifiedDescriptors = new ConcurrentHashMap<String, MetricDescriptor.MetricKind>();
 
     @Nullable
     private MetricServiceSettings metricServiceSettings;
@@ -344,10 +345,17 @@ public class StackdriverMeterRegistry extends StepMeterRegistry {
 
         private TimeSeries createTimeSeries(Meter.Id id, TypedValue typedValue, MetricDescriptor.ValueType valueType,
                                             @Nullable String statistic, MetricDescriptor.MetricKind metricKind) {
+            MetricDescriptor.MetricKind backendMetricKind = metricKind;
             if (client != null)
-                createMetricDescriptorIfNecessary(client, id, valueType, statistic, metricKind);
+                backendMetricKind = createMetricDescriptorIfNecessary(client, id, valueType, statistic, metricKind);
 
             String metricType = metricType(id, statistic);
+
+            if (!metricKind.equals(backendMetricKind)) {
+                logger.info("MetricKind configured in Stackdriver ({}) is not matching the one expected by Micrometer for that kind of Meter ({})." +
+                        "Using Stackdriver's value. Consider deleting MetricDescriptor {} and allowing Micrometer to recreate it.",
+                        backendMetricKind, metricKind, metricType);
+            }
 
             Map<String, String> metricLabels = getConventionTags(id).stream()
                     .collect(Collectors.toMap(Tag::getKey, Tag::getValue));
@@ -362,24 +370,24 @@ public class StackdriverMeterRegistry extends StepMeterRegistry {
                             .putLabels("project_id", config.projectId())
                             .putAllLabels(config.resourceLabels())
                             .build())
-                    .setMetricKind(metricKind) // https://cloud.google.com/monitoring/api/v3/metrics-details#metric-kinds
+                    .setMetricKind(backendMetricKind) // https://cloud.google.com/monitoring/api/v3/metrics-details#metric-kinds
                     .setValueType(valueType)
                     .addPoints(Point.newBuilder()
-                            .setInterval(interval(metricKind))
+                            .setInterval(interval(backendMetricKind))
                             .setValue(typedValue)
                             .build())
                     .build();
         }
 
-        private void createMetricDescriptorIfNecessary(MetricServiceClient client, Meter.Id id, MetricDescriptor.ValueType valueType,
-                                                       @Nullable String statistic, MetricDescriptor.MetricKind metricKind) {
+        private MetricDescriptor.MetricKind createMetricDescriptorIfNecessary(MetricServiceClient client, Meter.Id id, MetricDescriptor.ValueType valueType,
+                                                                              @Nullable String statistic, MetricDescriptor.MetricKind metricKind) {
 
             if (verifiedDescriptors.isEmpty()) {
                 prePopulateVerifiedDescriptors();
             }
 
             final String metricType = metricType(id, statistic);
-            if (!verifiedDescriptors.contains(metricType)) {
+            if (!verifiedDescriptors.containsKey(metricType)) {
                 MetricDescriptor descriptor = MetricDescriptor.newBuilder()
                         .setType(metricType)
                         .setDescription(id.getDescription() == null ? "" : id.getDescription())
@@ -398,10 +406,13 @@ public class StackdriverMeterRegistry extends StepMeterRegistry {
 
                 try {
                     client.createMetricDescriptor(request);
-                    verifiedDescriptors.add(metricType);
+                    verifiedDescriptors.put(metricType, metricKind);
                 } catch (ApiException e) {
                     logger.warn("failed to create metric descriptor in Stackdriver for meter " + id, e);
                 }
+                return metricKind;
+            } else {
+                return verifiedDescriptors.get(metricType);
             }
         }
 
@@ -419,7 +430,7 @@ public class StackdriverMeterRegistry extends StepMeterRegistry {
 
                     final MetricServiceClient.ListMetricDescriptorsPagedResponse listMetricDescriptorsPagedResponse = client.listMetricDescriptors(listMetricDescriptorsRequest);
                     listMetricDescriptorsPagedResponse.iterateAll().forEach(
-                            metricDescriptor -> verifiedDescriptors.add(metricDescriptor.getType()));
+                            metricDescriptor -> verifiedDescriptors.put(metricDescriptor.getType(), metricDescriptor.getMetricKind()));
 
                     logger.trace("Pre populated verified descriptors for project: {}, with filter: {}, existing metrics: {}", projectName, filter, verifiedDescriptors);
                 }

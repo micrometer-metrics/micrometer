@@ -63,7 +63,9 @@ class StackdriverMeterRegistryTest {
         }
     };
 
-    StackdriverMeterRegistry meterRegistry = new StackdriverMeterRegistry(config, new MockClock());
+    private final MockClock clock = new MockClock();
+
+    StackdriverMeterRegistry meterRegistry = new StackdriverMeterRegistry(config, clock);
 
     @Test
     @Issue("#1325")
@@ -113,6 +115,34 @@ class StackdriverMeterRegistryTest {
         assertThat(endTime - startTime).isEqualTo(toMs(config.step().getSeconds(), config.step().getNano()));
 
         assertThat(timeSeriesCaptor.getValue().getTimeSeries(0).getMetricKind()).isEqualTo(MetricDescriptor.MetricKind.CUMULATIVE);
+    }
+
+    @Test
+    void counterTimeSeriesPreexistingMetricDescriptor() {
+        MetricDescriptor.MetricKind preexistingMetricKind = MetricDescriptor.MetricKind.GAUGE;
+        meterRegistry.verifiedDescriptors.put("custom.googleapis.com/my_counter", preexistingMetricKind);
+
+        MetricServiceStub metricServiceStub = mock(MetricServiceStub.class);
+        meterRegistry.client = MetricServiceClient.create(metricServiceStub);
+
+        UnaryCallable<CreateMetricDescriptorRequest, MetricDescriptor> metricDescriptorCallable = mock(UnaryCallable.class);
+        when(metricServiceStub.createMetricDescriptorCallable()).thenReturn(metricDescriptorCallable);
+
+        UnaryCallable<CreateTimeSeriesRequest, Empty> createTimesSeriesCallable = mock(UnaryCallable.class);
+        when(metricServiceStub.createTimeSeriesCallable()).thenReturn(createTimesSeriesCallable);
+
+        meterRegistry.counter("my-counter");
+        meterRegistry.publish();
+
+        ArgumentCaptor<CreateTimeSeriesRequest> timeSeriesCaptor = ArgumentCaptor.forClass(CreateTimeSeriesRequest.class);
+        verify(createTimesSeriesCallable).call(timeSeriesCaptor.capture());
+
+        TimeInterval interval = timeSeriesCaptor.getValue().getTimeSeries(0).getPoints(0).getInterval();
+        long endTime = toMs(interval.getEndTime().getSeconds(), interval.getEndTime().getNanos());
+        assertThat(interval.hasStartTime()).isFalse();
+        assertThat(endTime).isEqualTo(clock.wallTime());
+
+        assertThat(timeSeriesCaptor.getValue().getTimeSeries(0).getMetricKind()).isEqualTo(preexistingMetricKind);
     }
 
     private long toMs(long seconds, int nanos) {
