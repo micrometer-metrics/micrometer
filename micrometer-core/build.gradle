@@ -84,9 +84,7 @@ dependencies {
 
     testImplementation 'org.apache.commons:commons-pool2:2.+'
 
-    testImplementation 'ru.lanwen.wiremock:wiremock-junit5', {
-        exclude group: 'com.github.tomakehurst', module: 'wiremock'
-    }
+    testImplementation 'ru.lanwen.wiremock:wiremock-junit5'
     testImplementation 'com.github.tomakehurst:wiremock-jre8-standalone'
 
     testImplementation 'de.flapdoodle.embed:de.flapdoodle.embed.mongo'
