@@ -37,7 +37,6 @@ dependencies {
     optionalApi 'org.apache.logging.log4j:log4j-core'
 
     // reactor
-    optionalApi 'io.projectreactor:reactor-core'
     optionalApi 'io.projectreactor.netty:reactor-netty'
 
     // @Timed AOP

@@ -28,7 +28,6 @@ def VERSIONS = [
         'io.dropwizard.metrics:metrics-graphite:4.1.+',
         'io.dropwizard.metrics:metrics-jmx:4.0.+',
         'info.ganglia.gmetric4j:gmetric4j:latest.release',
-        'io.projectreactor:reactor-core:latest.release',
         'io.projectreactor:reactor-test:latest.release',
         'io.projectreactor.netty:reactor-netty:latest.release',
         'io.prometheus:simpleclient_common:latest.release',
