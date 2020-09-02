@@ -9,7 +9,7 @@ dependencyManagement {
     dependencies {
         // not necessary in real Boot 1.5.x apps because reactor is shaded inside the
         // published version of micrometer-registry-statsd
-        dependency 'io.projectreactor:reactor-core:3.2.2.RELEASE'
+        dependency 'io.projectreactor:reactor-core:3.2.+'
     }
 }
 
