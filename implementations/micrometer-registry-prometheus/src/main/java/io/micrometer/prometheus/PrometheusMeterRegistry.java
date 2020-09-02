@@ -97,6 +97,7 @@ public class PrometheusMeterRegistry extends MeterRegistry {
      *
      * @param writer Target that serves the content to be scraped by Prometheus.
      * @throws IOException if writing fails
+     * @since 1.2.0
      */
     public void scrape(Writer writer) throws IOException {
         TextFormat.write004(writer, registry.metricFamilySamples());

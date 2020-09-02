@@ -210,6 +210,8 @@ subprojects {
     repositories {
         mavenCentral()
         mavenLocal()
+        // TODO remove snapshot repository before release
+        maven { url "https://repo.spring.io/snapshot" }
     }
 
     def check = tasks.findByName('check')
@@ -217,7 +219,7 @@ subprojects {
 }
 
 wrapper {
-    gradleVersion = '6.6'
+    gradleVersion = '6.6.1'
 }
 
 defaultTasks 'build'
