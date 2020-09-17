@@ -39,6 +39,7 @@ import java.util.Optional;
 import java.util.concurrent.ThreadFactory;
 import java.util.concurrent.TimeUnit;
 import java.util.function.Consumer;
+import java.util.function.Function;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -90,9 +91,9 @@ public class ElasticMeterRegistry extends StepMeterRegistry {
             "    \"type\": \"double\"\n" +
             "  }\n" +
             "}";
-    private static final String TEMPLATE_BODY_BEFORE_VERSION_7 = "{\"template\":\"metrics*\",\"mappings\":{\"_default_\":{\"_all\":{\"enabled\":false}," + TEMPLATE_PROPERTIES + "}}}";
-    private static final String TEMPLATE_BODY_AFTER_VERSION_7 = "{\n" +
-            "  \"index_patterns\": [\"metrics*\"],\n" +
+    private static final Function<String, String> TEMPLATE_BODY_BEFORE_VERSION_7 = (indexPrefix) -> "{\"template\":\"" + indexPrefix + "*\",\"mappings\":{\"_default_\":{\"_all\":{\"enabled\":false}," + TEMPLATE_PROPERTIES + "}}}";
+    private static final Function<String, String> TEMPLATE_BODY_AFTER_VERSION_7 = (indexPrefix) -> "{\n" +
+            "  \"index_patterns\": [\"" + indexPrefix + "*\"],\n" +
             "  \"mappings\": {\n" +
             "    \"_source\": {\n" +
             "      \"enabled\": false\n" +
@@ -191,7 +192,7 @@ public class ElasticMeterRegistry extends StepMeterRegistry {
 
     @SuppressWarnings("ConstantConditions")
     private String getTemplateBody() {
-        return majorVersion == null ||  majorVersion < 7 ? TEMPLATE_BODY_BEFORE_VERSION_7 : TEMPLATE_BODY_AFTER_VERSION_7;
+        return majorVersion == null || majorVersion < 7 ? TEMPLATE_BODY_BEFORE_VERSION_7.apply(config.index()) : TEMPLATE_BODY_AFTER_VERSION_7.apply(config.index());
     }
 
     @Override
