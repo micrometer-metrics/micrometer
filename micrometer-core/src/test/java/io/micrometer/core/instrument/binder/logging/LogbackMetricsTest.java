@@ -73,6 +73,25 @@ class LogbackMetricsTest {
         registry.counter("my.counter").increment();
     }
 
+    @Issue("#2270")
+    @Test
+    void resetIgnoreMetricsAfterRunnable() {
+        RuntimeException exception = new RuntimeException("Thrown by runnable");
+
+        try (LogbackMetrics logbackMetrics = new LogbackMetrics()) {
+            assertThat(logbackMetrics.ignoreMetrics.get()).isNull();
+            try {
+                logbackMetrics.ignoreMetrics(() -> {
+                    assertThat(logbackMetrics.ignoreMetrics.get()).isTrue();
+                    throw exception;
+                });
+            } catch (RuntimeException e) {
+                assertThat(e).isEqualTo(exception);
+                assertThat(logbackMetrics.ignoreMetrics.get()).isNull();
+            }
+        }
+    }
+
     @Issue("#421")
     @Test
     void removeFilterFromLoggerContextOnClose() {
