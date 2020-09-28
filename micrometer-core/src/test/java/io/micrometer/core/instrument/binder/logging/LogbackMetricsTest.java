@@ -117,9 +117,9 @@ class LogbackMetricsTest {
     @Issue("#2270")
     @Test
     void resetIgnoreMetricsWhenRunnableThrows() {
-        Counter logCounter = registry.get("logback.events").counter();
+        Counter infoLogCounter = registry.get("logback.events").tag("level", "info").counter();
         logger.info("hi");
-        assertThat(logCounter.count()).isEqualTo(1);
+        assertThat(infoLogCounter.count()).isEqualTo(1);
         try {
             LogbackMetrics.ignoreMetrics(() -> {
                 throw new RuntimeException();
@@ -127,7 +127,7 @@ class LogbackMetricsTest {
         } catch (RuntimeException ignore) {
         }
         logger.info("hi");
-        assertThat(logCounter.count()).isEqualTo(2);
+        assertThat(infoLogCounter.count()).isEqualTo(2);
     }
 
     @NonNullApi
