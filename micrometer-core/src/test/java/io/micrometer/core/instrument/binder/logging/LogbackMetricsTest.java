@@ -27,6 +27,7 @@ import io.micrometer.core.instrument.cumulative.CumulativeCounter;
 import io.micrometer.core.instrument.simple.SimpleConfig;
 import io.micrometer.core.instrument.simple.SimpleMeterRegistry;
 import io.micrometer.core.lang.NonNullApi;
+import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.slf4j.LoggerFactory;
@@ -37,10 +38,19 @@ import static org.assertj.core.api.Assertions.assertThat;
 class LogbackMetricsTest {
     private MeterRegistry registry = new SimpleMeterRegistry(SimpleConfig.DEFAULT, new MockClock());
     private Logger logger = (Logger) LoggerFactory.getLogger("foo");
+    LogbackMetrics logbackMetrics;
 
     @BeforeEach
     void bindLogbackMetrics() {
-        new LogbackMetrics().bindTo(registry);
+        logbackMetrics = new LogbackMetrics();
+        logbackMetrics.bindTo(registry);
+    }
+
+    @AfterEach
+    void closeLogbackMetrics() {
+        if (logbackMetrics != null) {
+            logbackMetrics.close();
+        }
     }
 
     @Test
@@ -73,25 +83,6 @@ class LogbackMetricsTest {
         registry.counter("my.counter").increment();
     }
 
-    @Issue("#2270")
-    @Test
-    void resetIgnoreMetricsAfterRunnable() {
-        RuntimeException exception = new RuntimeException("Thrown by runnable");
-
-        try (LogbackMetrics logbackMetrics = new LogbackMetrics()) {
-            assertThat(logbackMetrics.ignoreMetrics.get()).isNull();
-            try {
-                logbackMetrics.ignoreMetrics(() -> {
-                    assertThat(logbackMetrics.ignoreMetrics.get()).isTrue();
-                    throw exception;
-                });
-            } catch (RuntimeException e) {
-                assertThat(e).isEqualTo(exception);
-                assertThat(logbackMetrics.ignoreMetrics.get()).isNull();
-            }
-        }
-    }
-
     @Issue("#421")
     @Test
     void removeFilterFromLoggerContextOnClose() {
@@ -117,6 +108,22 @@ class LogbackMetricsTest {
         assertThat(loggerContext.getTurboFilterList()).hasSize(1);
         loggerContext.reset();
         assertThat(loggerContext.getTurboFilterList()).hasSize(1);
+    }
+
+    @Issue("#2270")
+    @Test
+    void resetIgnoreMetricsWhenRunnableThrows() {
+        Counter logCounter = registry.get("logback.events").counter();
+        logger.info("hi");
+        assertThat(logCounter.count()).isEqualTo(1);
+        try {
+            LogbackMetrics.ignoreMetrics(() -> {
+                throw new RuntimeException();
+            });
+        } catch (RuntimeException ignore) {
+        }
+        logger.info("hi");
+        assertThat(logCounter.count()).isEqualTo(2);
     }
 
     @NonNullApi
