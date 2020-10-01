@@ -37,6 +37,11 @@ public class ZabbixDiscoveryPublisher {
 
     private final Logger logger = LoggerFactory.getLogger(ZabbixDiscoveryPublisher.class);
 
+    /**
+     * Sender using the Zabbix trapper protocol.
+     *
+     * @see <a href="https://www.zabbix.com/documentation/5.0/manual/appendix/items/trapper.">Zabbix trapper protocol </a>
+     */
     private final ZabbixSender zabbixSender;
     private final ZabbixConfig config;
 
