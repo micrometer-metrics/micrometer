@@ -204,6 +204,7 @@ class CompositeMeterRegistryTest {
         simple.get("deny.composite").meter();
     }
 
+    @Issue("#1159")
     @Test
     void differentIgnoreTagsForCompositeAndChildAddAndRemove() {
         simple.config().meterFilter(MeterFilter.ignoreTags("tagkey2"));

@@ -83,18 +83,19 @@ abstract class AbstractCompositeMeter<T extends Meter> extends AbstractMeter imp
     }
 
     /**
-     * Does nothing. New registries added to the composite are automatically reflected in each meter
-     * belonging to the composite.
+     * Remove metrics from child registries.
      *
      * @param registry The registry to remove.
      */
-    @Deprecated
     public final void remove(MeterRegistry registry) {
         for (; ; ) {
             if (childrenGuard.compareAndSet(false, true)) {
                 try {
                     Map<MeterRegistry, T> newChildren = new IdentityHashMap<>(children);
-                    newChildren.remove(registry);
+                    newChildren.computeIfPresent(registry, (reg, met) -> {
+                        reg.remove(met);
+                        return null;
+                    });
                     this.children = newChildren;
                     break;
                 } finally {
