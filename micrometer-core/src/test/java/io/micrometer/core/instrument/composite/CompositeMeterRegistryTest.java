@@ -205,6 +205,23 @@ class CompositeMeterRegistryTest {
     }
 
     @Test
+    void differentIgnoreTagsForCompositeAndChildAddAndRemove() {
+        simple.config().meterFilter(MeterFilter.ignoreTags("tagkey2"));
+        composite.add(simple);
+
+        Counter counterMeter = composite.counter("counterMetric", "tagkey1", "tagvalue1", "tagkey2", "tagvalue2");
+
+        assertThat(simple.find("counterMetric").meter()).isNotNull();
+        assertThat(composite.find("counterMetric").meter()).isNotNull();
+
+        composite.remove(counterMeter);
+
+        assertThat(composite.find("counterMetric").meter()).isNull();
+        assertThat(simple.find("counterMetric").meter()).isNull();
+
+    }
+
+    @Test
     void histogramConfigDefaultIsNotAffectedByComposite() {
         composite.add(simple);
 
