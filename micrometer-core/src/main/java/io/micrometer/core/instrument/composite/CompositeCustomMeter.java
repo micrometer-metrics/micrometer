@@ -78,7 +78,7 @@ class CompositeCustomMeter extends DefaultMeter implements CompositeMeter {
         }
     }
 
-    private Meter registerNewMeter(MeterRegistry registry){
+    private Meter registerNewMeter(MeterRegistry registry) {
         return Meter.builder(getId().getName(), getType(), measure())
                 .tags(getId().getTagsAsIterable())
                 .description(getId().getDescription())
