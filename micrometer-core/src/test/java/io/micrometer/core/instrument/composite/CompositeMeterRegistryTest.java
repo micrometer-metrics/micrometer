@@ -97,8 +97,11 @@ class CompositeMeterRegistryTest {
 
         composite.add(simple);
         compositeCounter.increment();
+        compositeCounter.increment();
 
-        // now it receives updates again
+        //Refresh the reference to new meter
+        simpleCounter = simple.get("counter").counter();
+        // now it receives updates again but for a new meter object. The old one was removed previously
         assertThat(simpleCounter.count()).isEqualTo(2);
     }
 
