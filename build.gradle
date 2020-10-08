@@ -291,6 +291,11 @@ subprojects {
                 github 'shakuzen'
             }
         }
+
+        if (project.extensions.findByName('bintray')) {
+            bintray.labels = ['micrometer', 'atlas', 'metrics', 'prometheus', 'spectator', 'influx', 'new-relic', 'signalfx', 'wavefront', 'elastic', 'dynatrace', 'azure-monitor', 'appoptics', 'kairos', 'stackdriver', 'opentelemetry']
+            bintray.packageName = 'io.micrometer'
+        }
     }
 
     description = 'Application monitoring instrumentation facade'
