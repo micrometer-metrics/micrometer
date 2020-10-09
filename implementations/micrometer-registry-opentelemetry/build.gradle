@@ -5,4 +5,5 @@ dependencies {
     compile 'io.opentelemetry:opentelemetry-sdk:0.8.0'
 
     testImplementation project(':micrometer-test')
+    testImplementation('io.opentelemetry:opentelemetry-exporters-inmemory:0.8.0')
 }

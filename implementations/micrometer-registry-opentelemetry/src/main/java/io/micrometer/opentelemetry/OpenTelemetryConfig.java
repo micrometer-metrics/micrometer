@@ -33,18 +33,17 @@ public interface OpenTelemetryConfig extends MeterRegistryConfig {
     }
 
     default String instrumentationName() {
-        return getString(this, "instrumentationName").required().get();
+        return getString(this, "instrumentationName").orElse("micrometer");
     }
 
     default String instrumentationVersion() {
-        return getString(this, "instrumentationVersion").required().get();
+        return getString(this, "instrumentationVersion").orElse(null);
     }
 
     @Override
     default Validated<?> validate() {
         return checkAll(this,
-                checkRequired("instrumentationName", OpenTelemetryConfig::instrumentationName),
-                checkRequired("instrumentationVersion", OpenTelemetryConfig::instrumentationVersion)
+                checkRequired("instrumentationName", OpenTelemetryConfig::instrumentationName)
         );
     }
 }

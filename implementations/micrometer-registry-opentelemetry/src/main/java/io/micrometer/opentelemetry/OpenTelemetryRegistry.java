@@ -36,10 +36,12 @@ import io.micrometer.core.instrument.distribution.pause.PauseDetector;
 import io.micrometer.core.instrument.internal.DefaultMeter;
 import io.opentelemetry.OpenTelemetry;
 import io.opentelemetry.common.Labels;
+import io.opentelemetry.metrics.AsynchronousInstrument;
 import io.opentelemetry.metrics.DoubleCounter;
 import io.opentelemetry.metrics.DoubleSumObserver;
 import io.opentelemetry.metrics.DoubleValueObserver;
 import io.opentelemetry.metrics.DoubleValueRecorder;
+import io.opentelemetry.metrics.SynchronousInstrument;
 
 
 /**
@@ -49,45 +51,41 @@ import io.opentelemetry.metrics.DoubleValueRecorder;
  */
 public class OpenTelemetryRegistry extends MeterRegistry {
 
-    final OpenTelemetryConfig config;
     final io.opentelemetry.metrics.Meter otelMeter;
 
     public OpenTelemetryRegistry(OpenTelemetryConfig config, Clock clock) {
         super(clock);
         config.requireValid();
         config().onMeterRemoved(this::onMeterRemoved);
-        this.config = config;
         this.otelMeter = OpenTelemetry.getMeter(config.instrumentationName(), config.instrumentationVersion());
     }
 
     @Override
     protected <T> Gauge newGauge(Meter.Id id, T obj, ToDoubleFunction<T> valueFunction) {
-        DoubleValueObserver observer = otelMeter.doubleValueObserverBuilder(id.getName())
-                .setDescription(id.getDescription())
-                .setUnit(id.getBaseUnit())
-                .setConstantLabels(labelsFrom(id))
-                .build();
-        return new OpenTelemetryGauge<T>(id, obj, valueFunction, observer);
+        DoubleValueObserver.Builder builder = otelMeter.doubleValueObserverBuilder(id.getName());
+        copyAttributes(id, builder);
+        if ( id.getBaseUnit() != null ) {
+            builder.setUnit(id.getBaseUnit());
+        }
+        return new OpenTelemetryGauge<T>(id, obj, valueFunction, builder.build());
     }
 
     @Override
     protected Counter newCounter(Meter.Id id) {
-        DoubleCounter counter = otelMeter.doubleCounterBuilder(id.getName())
-                .setDescription(id.getDescription())
-                .setUnit(id.getBaseUnit())
-                .setConstantLabels(labelsFrom(id))
-                .build();
-        return new OpenTelemetryCounter(id, counter);
+        DoubleCounter.Builder builder = otelMeter.doubleCounterBuilder(id.getName());
+        copyAttributes(id, builder);
+        if ( id.getBaseUnit() != null ) {
+            builder.setUnit(id.getBaseUnit());
+        }
+        return new OpenTelemetryCounter(id, builder.build());
     }
 
     @Override
     protected Timer newTimer(Meter.Id id, DistributionStatisticConfig distributionStatisticConfig, PauseDetector pauseDetector) {
-        DoubleValueRecorder recorder = otelMeter.doubleValueRecorderBuilder(id.getName())
-                .setDescription(id.getDescription())
-                .setUnit("s")
-                .setConstantLabels(labelsFrom(id))
-                .build();
-        return new OpenTelemetryTimer(id, clock, recorder, getBaseTimeUnit());
+        DoubleValueRecorder.Builder builder = otelMeter.doubleValueRecorderBuilder(id.getName())
+                .setUnit("s");
+        copyAttributes(id, builder);
+        return new OpenTelemetryTimer(id, clock, builder.build(), TimeUnit.SECONDS);
     }
 
     @Override
@@ -102,28 +100,23 @@ public class OpenTelemetryRegistry extends MeterRegistry {
 
     @Override
     protected <T> FunctionTimer newFunctionTimer(Meter.Id id, T obj, ToLongFunction<T> countFunction, ToDoubleFunction<T> totalTimeFunction, TimeUnit totalTimeFunctionUnit) {
-        DoubleSumObserver countObserver = otelMeter.doubleSumObserverBuilder(id.getName())
-                .setDescription(id.getDescription())
-                .setUnit(id.getBaseUnit())
-                .setConstantLabels(labelsFrom(id))
-                .build();
-        DoubleValueObserver valueObserver = otelMeter.doubleValueObserverBuilder(id.getName())
-                .setDescription(id.getDescription())
-                .setUnit(id.getBaseUnit())
-                .setConstantLabels(labelsFrom(id))
-                .build();
+        // TODO: names must be different
+        DoubleSumObserver.Builder countObserver = otelMeter.doubleSumObserverBuilder(id.getName());
+        copyAttributes(id, countObserver);
+
+        DoubleValueObserver.Builder valueObserver = otelMeter.doubleValueObserverBuilder(id.getName());
+        copyAttributes(id, valueObserver);
+
         return new OpenTelemetryFunctionTimer<T>(id, obj, countFunction, totalTimeFunction, totalTimeFunctionUnit, getBaseTimeUnit(),
-                countObserver, valueObserver);
+                countObserver.build(), valueObserver.build());
     }
 
     @Override
     protected <T> FunctionCounter newFunctionCounter(Meter.Id id, T obj, ToDoubleFunction<T> countFunction) {
-        DoubleSumObserver observer = otelMeter.doubleSumObserverBuilder(id.getName())
-                .setDescription(id.getDescription())
-                .setUnit(id.getBaseUnit())
-                .setConstantLabels(labelsFrom(id))
-                .build();
-        return new OpenTelemetryFunctionCounter<T>(id, obj, countFunction, observer);
+        DoubleSumObserver.Builder builder = otelMeter.doubleSumObserverBuilder(id.getName());
+        copyAttributes(id, builder);
+
+        return new OpenTelemetryFunctionCounter<T>(id, obj, countFunction, builder.build());
     }
 
     @Override
@@ -138,6 +131,20 @@ public class OpenTelemetryRegistry extends MeterRegistry {
 
     private void onMeterRemoved(Meter meter) {
         // .. ?
+    }
+
+    private void copyAttributes(Meter.Id id, AsynchronousInstrument.Builder builder) {
+        builder.setConstantLabels(labelsFrom(id));
+        if ( id.getDescription() != null ) {
+            builder.setDescription(id.getDescription());
+        }
+    }
+
+    private void copyAttributes(Meter.Id id, SynchronousInstrument.Builder builder) {
+        builder.setConstantLabels(labelsFrom(id));
+        if ( id.getDescription() != null ) {
+            builder.setDescription(id.getDescription());
+        }
     }
 
     private Labels labelsFrom(Meter.Id id) {
