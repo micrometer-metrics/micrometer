@@ -101,10 +101,10 @@ public class OpenTelemetryRegistry extends MeterRegistry {
     @Override
     protected <T> FunctionTimer newFunctionTimer(Meter.Id id, T obj, ToLongFunction<T> countFunction, ToDoubleFunction<T> totalTimeFunction, TimeUnit totalTimeFunctionUnit) {
         // TODO: names must be different
-        DoubleSumObserver.Builder countObserver = otelMeter.doubleSumObserverBuilder(id.getName());
+        DoubleSumObserver.Builder countObserver = otelMeter.doubleSumObserverBuilder(id.getName()+".count");
         copyAttributes(id, countObserver);
 
-        DoubleValueObserver.Builder valueObserver = otelMeter.doubleValueObserverBuilder(id.getName());
+        DoubleValueObserver.Builder valueObserver = otelMeter.doubleValueObserverBuilder(id.getName()+".total");
         copyAttributes(id, valueObserver);
 
         return new OpenTelemetryFunctionTimer<T>(id, obj, countFunction, totalTimeFunction, totalTimeFunctionUnit, getBaseTimeUnit(),

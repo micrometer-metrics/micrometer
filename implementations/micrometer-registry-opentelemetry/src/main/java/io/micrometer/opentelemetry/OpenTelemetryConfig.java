@@ -33,7 +33,7 @@ public interface OpenTelemetryConfig extends MeterRegistryConfig {
     }
 
     default String instrumentationName() {
-        return getString(this, "instrumentationName").orElse("micrometer");
+        return getString(this, "instrumentationName").orElse("io.micrometer");
     }
 
     default String instrumentationVersion() {
