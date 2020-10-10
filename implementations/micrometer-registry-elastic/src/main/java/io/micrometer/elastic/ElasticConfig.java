@@ -68,12 +68,12 @@ public interface ElasticConfig extends StepRegistryConfig {
 
     /**
      * The index name to write metrics to.
-     * Default is: "metrics"
+     * Default is: "micrometer-metrics"
      *
      * @return index name
      */
     default String index() {
-        return getString(this, "index").orElse("metrics");
+        return getString(this, "index").orElse("micrometer-metrics");
     }
 
     /**
