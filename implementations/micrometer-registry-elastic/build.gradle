@@ -6,4 +6,5 @@ dependencies {
     testImplementation project(':micrometer-test')
     testImplementation 'org.testcontainers:elasticsearch:latest.release'
     testImplementation 'com.jayway.jsonpath:json-path:latest.release'
+    testImplementation 'ch.qos.logback:logback-classic'
 }
