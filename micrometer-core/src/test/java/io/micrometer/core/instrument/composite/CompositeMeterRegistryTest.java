@@ -71,7 +71,7 @@ class CompositeMeterRegistryTest {
 
         Counter.builder("counter").baseUnit(BaseUnits.BYTES).register(composite);
         DistributionSummary.builder("summary").baseUnit(BaseUnits.BYTES).register(composite);
-        Gauge.builder("gauge", new AtomicInteger(0), AtomicInteger::get).baseUnit(BaseUnits.BYTES).register(composite);
+        Gauge.builder("gauge", new AtomicInteger(), AtomicInteger::get).baseUnit(BaseUnits.BYTES).register(composite);
 
         assertThat(simple.get("counter").counter().getId().getBaseUnit()).isEqualTo(BaseUnits.BYTES);
         assertThat(simple.get("summary").summary().getId().getBaseUnit()).isEqualTo(BaseUnits.BYTES);

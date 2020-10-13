@@ -100,7 +100,7 @@ public class JvmGcMetrics implements MeterBinder, AutoCloseable {
             .baseUnit(BaseUnits.BYTES)
             .register(registry);
 
-        AtomicLong liveDataSize = new AtomicLong(0L);
+        AtomicLong liveDataSize = new AtomicLong();
 
         Gauge.builder("jvm.gc.live.data.size", liveDataSize, AtomicLong::get)
             .tags(tags)
@@ -119,7 +119,7 @@ public class JvmGcMetrics implements MeterBinder, AutoCloseable {
             .register(registry);
 
         // start watching for GC notifications
-        final AtomicLong youngGenSizeAfter = new AtomicLong(0L);
+        final AtomicLong youngGenSizeAfter = new AtomicLong();
 
         for (GarbageCollectorMXBean mbean : ManagementFactory.getGarbageCollectorMXBeans()) {
             if (!(mbean instanceof NotificationEmitter)) {

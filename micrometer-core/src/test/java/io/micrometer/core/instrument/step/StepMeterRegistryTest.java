@@ -38,7 +38,7 @@ import static org.assertj.core.api.SoftAssertions.assertSoftly;
  * @author Johnny Lim
  */
 class StepMeterRegistryTest {
-    private AtomicInteger publishes = new AtomicInteger(0);
+    private AtomicInteger publishes = new AtomicInteger();
     private MockClock clock = new MockClock();
 
     private StepRegistryConfig config = new StepRegistryConfig() {

@@ -30,7 +30,7 @@ import java.util.function.ToDoubleFunction;
 public class DropwizardFunctionCounter<T> extends AbstractMeter implements FunctionCounter {
     private final WeakReference<T> ref;
     private final ToDoubleFunction<T> f;
-    private final AtomicLong last = new AtomicLong(0);
+    private final AtomicLong last = new AtomicLong();
     private final DropwizardRate rate;
     private final Meter dropwizardMeter;
 

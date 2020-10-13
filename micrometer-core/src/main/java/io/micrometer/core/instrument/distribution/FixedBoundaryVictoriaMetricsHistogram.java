@@ -95,9 +95,9 @@ public class FixedBoundaryVictoriaMetricsHistogram implements Histogram {
     final DoubleAdder sum;
 
     public FixedBoundaryVictoriaMetricsHistogram() {
-        this.zeros = new AtomicLong(0);
-        this.lower = new AtomicLong(0);
-        this.upper = new AtomicLong(0);
+        this.zeros = new AtomicLong();
+        this.lower = new AtomicLong();
+        this.upper = new AtomicLong();
         this.sum = new DoubleAdder();
 
         this.values = new AtomicReferenceArray<>(BUCKETS_COUNT);
