@@ -21,17 +21,21 @@ import io.micrometer.core.instrument.cumulative.CumulativeFunctionCounter;
 import io.opentelemetry.common.Labels;
 import io.opentelemetry.metrics.AsynchronousInstrument;
 import io.opentelemetry.metrics.DoubleSumObserver;
+import io.opentelemetry.metrics.DoubleUpDownCounter;
+import io.opentelemetry.metrics.DoubleUpDownSumObserver;
 
 public class OpenTelemetryFunctionCounter<T> extends CumulativeFunctionCounter<T> {
-    final DoubleSumObserver observer;
+    private final DoubleUpDownSumObserver observer;
+    private final Labels labels;
 
-    public OpenTelemetryFunctionCounter(Id id, T obj, ToDoubleFunction<T> value, DoubleSumObserver observer) {
+    public OpenTelemetryFunctionCounter(Id id, T obj, ToDoubleFunction<T> value, DoubleUpDownSumObserver observer, Labels labels) {
         super(id, obj, value);
+        this.labels = labels;
         this.observer = observer;
         this.observer.setCallback(this::update);
     }
 
     public void update(AsynchronousInstrument.DoubleResult result) {
-        result.observe(count(), Labels.empty());
+        result.observe(count(), labels);
     }
 }

@@ -17,10 +17,11 @@ package io.micrometer.opentelemetry;
 
 import io.micrometer.core.instrument.Measurement;
 import io.micrometer.core.instrument.internal.DefaultMeter;
+import io.opentelemetry.common.Labels;
 
 public class OpenTelemetryMeter extends DefaultMeter {
 
-    public OpenTelemetryMeter(Id id, Type type, Iterable<Measurement> measurements) {
+    public OpenTelemetryMeter(Id id, Type type, Iterable<Measurement> measurements, Labels labels) {
         super(id, type, measurements);
         // ?
     }

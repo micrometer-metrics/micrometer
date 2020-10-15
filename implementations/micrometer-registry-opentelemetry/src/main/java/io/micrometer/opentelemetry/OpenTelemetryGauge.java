@@ -30,15 +30,17 @@ import io.opentelemetry.metrics.DoubleValueObserver;
  * @author Erin Schnabel
  */
 public class OpenTelemetryGauge<T> extends DefaultGauge<T> {
-    final DoubleValueObserver observer;
+    private final DoubleValueObserver observer;
+    private final Labels labels;
 
-    public OpenTelemetryGauge(Id id, T obj, ToDoubleFunction<T> value, DoubleValueObserver observer) {
+    public OpenTelemetryGauge(Id id, T obj, ToDoubleFunction<T> value, DoubleValueObserver observer, Labels labels) {
         super(id, obj, value);
+        this.labels = labels;
         this.observer = observer;
         this.observer.setCallback(this::update);
     }
 
     public void update(AsynchronousInstrument.DoubleResult result) {
-        result.observe(value(), Labels.empty());
+        result.observe(value(), labels);
     }
 }

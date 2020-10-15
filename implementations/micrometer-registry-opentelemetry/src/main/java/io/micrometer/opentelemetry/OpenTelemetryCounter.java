@@ -17,24 +17,22 @@ package io.micrometer.opentelemetry;
 
 import io.micrometer.core.instrument.AbstractMeter;
 import io.micrometer.core.instrument.Counter;
+import io.opentelemetry.common.Labels;
 import io.opentelemetry.metrics.DoubleCounter;
 
-/**
- * Use an Asynchronous Callback to observe the value of the Micrometer counter.
- *
- * @author Erin Schnabel
- */
 public class OpenTelemetryCounter extends AbstractMeter implements Counter {
-    final DoubleCounter counter;
+    private final DoubleCounter counter;
+    private final Labels labels;
 
-    public OpenTelemetryCounter(Id id, DoubleCounter counter) {
+    public OpenTelemetryCounter(Id id, DoubleCounter counter, Labels labels) {
         super(id);
         this.counter = counter;
+        this.labels = labels;
     }
 
     @Override
     public void increment(double amount) {
-        counter.add(amount);
+        counter.add(amount, labels);
     }
 
     @Override

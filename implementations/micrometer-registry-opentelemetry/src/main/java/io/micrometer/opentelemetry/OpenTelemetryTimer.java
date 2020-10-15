@@ -29,13 +29,15 @@ import io.opentelemetry.common.Labels;
 import io.opentelemetry.metrics.DoubleValueRecorder;
 
 public class OpenTelemetryTimer extends AbstractMeter implements Timer {
-    final DoubleValueRecorder recorder;
-    final TimeUnit baseTimeUnit;
-    final Clock clock;
+    private final DoubleValueRecorder recorder;
+    private final TimeUnit baseTimeUnit;
+    private final Clock clock;
+    private final Labels labels;
     protected final Histogram histogram = NoopHistogram.INSTANCE;
 
-    public OpenTelemetryTimer(Id id, Clock clock, DoubleValueRecorder recorder, TimeUnit baseTimeUnit) {
+    public OpenTelemetryTimer(Id id, Clock clock, DoubleValueRecorder recorder, TimeUnit baseTimeUnit, Labels labels) {
         super(id);
+        this.labels = labels;
         this.clock = clock;
         this.recorder = recorder;
         this.baseTimeUnit = baseTimeUnit;
@@ -43,7 +45,7 @@ public class OpenTelemetryTimer extends AbstractMeter implements Timer {
 
     @Override
     public void record(long amount, TimeUnit unit) {
-        recorder.record(unit.convert(amount, baseTimeUnit), Labels.empty());
+        recorder.record(unit.convert(amount, baseTimeUnit), labels);
     }
 
     @Override
