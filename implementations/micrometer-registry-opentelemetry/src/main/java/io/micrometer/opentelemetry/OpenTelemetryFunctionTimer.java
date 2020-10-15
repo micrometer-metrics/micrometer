@@ -22,32 +22,33 @@ import java.util.function.ToLongFunction;
 import io.micrometer.core.instrument.cumulative.CumulativeFunctionTimer;
 import io.opentelemetry.common.Labels;
 import io.opentelemetry.metrics.AsynchronousInstrument;
-import io.opentelemetry.metrics.DoubleSumObserver;
 import io.opentelemetry.metrics.DoubleValueObserver;
 
 public class OpenTelemetryFunctionTimer<T> extends CumulativeFunctionTimer<T> {
-    final DoubleSumObserver countObserver;
-    final DoubleValueObserver valueObserver;
+    private final DoubleValueObserver countObserver;
+    private final DoubleValueObserver durationObserver;
+    private final Labels labels;
 
     public OpenTelemetryFunctionTimer(Id id, T obj,
-                                      ToLongFunction<T> countFunction,
-                                      ToDoubleFunction<T> totalTimeFunction,
-                                      TimeUnit totalTimeFunctionUnit,
-                                      TimeUnit baseTimeUnit,
-                                      DoubleSumObserver countObserver,
-                                      DoubleValueObserver valueObserver) {
+                                      ToLongFunction<T> countFunction, DoubleValueObserver countObserver,
+                                      ToDoubleFunction<T> totalTimeFunction, DoubleValueObserver valueObserver,
+                                      TimeUnit totalTimeFunctionUnit, TimeUnit baseTimeUnit,
+                                      Labels labels) {
         super(id, obj, countFunction, totalTimeFunction, totalTimeFunctionUnit, baseTimeUnit);
         this.countObserver = countObserver;
         this.countObserver.setCallback(this::updateCount);
-        this.valueObserver = valueObserver;
-        this.valueObserver.setCallback(this::updateValue);
+
+        this.durationObserver = valueObserver;
+        this.durationObserver.setCallback(this::updateDuration);
+
+        this.labels = labels;
     }
 
-    private void updateValue(AsynchronousInstrument.DoubleResult doubleResult) {
-        doubleResult.observe(totalTime(baseTimeUnit()), Labels.empty());
+    private void updateDuration(AsynchronousInstrument.DoubleResult doubleResult) {
+        doubleResult.observe(totalTime(baseTimeUnit()), labels);
     }
 
     private void updateCount(AsynchronousInstrument.DoubleResult doubleResult) {
-        doubleResult.observe(count(), Labels.empty());
+        doubleResult.observe(count(), labels);
     }
 }

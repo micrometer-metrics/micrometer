@@ -36,12 +36,7 @@ import io.micrometer.core.instrument.distribution.pause.PauseDetector;
 import io.micrometer.core.instrument.internal.DefaultMeter;
 import io.opentelemetry.OpenTelemetry;
 import io.opentelemetry.common.Labels;
-import io.opentelemetry.metrics.AsynchronousInstrument;
-import io.opentelemetry.metrics.DoubleCounter;
-import io.opentelemetry.metrics.DoubleSumObserver;
-import io.opentelemetry.metrics.DoubleValueObserver;
-import io.opentelemetry.metrics.DoubleValueRecorder;
-import io.opentelemetry.metrics.SynchronousInstrument;
+import io.opentelemetry.metrics.*;
 
 
 /**
@@ -63,29 +58,25 @@ public class OpenTelemetryRegistry extends MeterRegistry {
     @Override
     protected <T> Gauge newGauge(Meter.Id id, T obj, ToDoubleFunction<T> valueFunction) {
         DoubleValueObserver.Builder builder = otelMeter.doubleValueObserverBuilder(id.getName());
-        copyAttributes(id, builder);
-        if ( id.getBaseUnit() != null ) {
-            builder.setUnit(id.getBaseUnit());
-        }
-        return new OpenTelemetryGauge<T>(id, obj, valueFunction, builder.build());
+        copyValues(builder, id.getDescription(), id.getBaseUnit());
+
+        return new OpenTelemetryGauge<T>(id, obj, valueFunction, builder.build(), labelsFrom(id));
     }
 
     @Override
     protected Counter newCounter(Meter.Id id) {
         DoubleCounter.Builder builder = otelMeter.doubleCounterBuilder(id.getName());
-        copyAttributes(id, builder);
-        if ( id.getBaseUnit() != null ) {
-            builder.setUnit(id.getBaseUnit());
-        }
-        return new OpenTelemetryCounter(id, builder.build());
+        copyValues(builder, id.getDescription(), id.getBaseUnit());
+
+        return new OpenTelemetryCounter(id, builder.build(), labelsFrom(id));
     }
 
     @Override
     protected Timer newTimer(Meter.Id id, DistributionStatisticConfig distributionStatisticConfig, PauseDetector pauseDetector) {
-        DoubleValueRecorder.Builder builder = otelMeter.doubleValueRecorderBuilder(id.getName())
-                .setUnit("s");
-        copyAttributes(id, builder);
-        return new OpenTelemetryTimer(id, clock, builder.build(), TimeUnit.SECONDS);
+        DoubleValueRecorder.Builder builder = otelMeter.doubleValueRecorderBuilder(id.getName());
+        copyValues(builder, id.getDescription(), "s");
+
+        return new OpenTelemetryTimer(id, clock, builder.build(), getBaseTimeUnit(), labelsFrom(id));
     }
 
     @Override
@@ -100,23 +91,25 @@ public class OpenTelemetryRegistry extends MeterRegistry {
 
     @Override
     protected <T> FunctionTimer newFunctionTimer(Meter.Id id, T obj, ToLongFunction<T> countFunction, ToDoubleFunction<T> totalTimeFunction, TimeUnit totalTimeFunctionUnit) {
+
         // TODO: names must be different
-        DoubleSumObserver.Builder countObserver = otelMeter.doubleSumObserverBuilder(id.getName()+".count");
-        copyAttributes(id, countObserver);
+        DoubleValueObserver.Builder countObserver = otelMeter.doubleValueObserverBuilder(config().namingConvention().name(id.getName(), Meter.Type.COUNTER));
+        DoubleValueObserver.Builder durationObserver = otelMeter.doubleValueObserverBuilder(config().namingConvention().name(id.getName(), Meter.Type.TIMER));
 
-        DoubleValueObserver.Builder valueObserver = otelMeter.doubleValueObserverBuilder(id.getName()+".total");
-        copyAttributes(id, valueObserver);
+        copyValues(countObserver, id.getDescription(), "1");
+        copyValues(durationObserver, id.getDescription(), "s");
 
-        return new OpenTelemetryFunctionTimer<T>(id, obj, countFunction, totalTimeFunction, totalTimeFunctionUnit, getBaseTimeUnit(),
-                countObserver.build(), valueObserver.build());
+        return new OpenTelemetryFunctionTimer<T>(id, obj, countFunction, countObserver.build(), totalTimeFunction,
+                durationObserver.build(), totalTimeFunctionUnit, getBaseTimeUnit(),
+                labelsFrom(id));
     }
 
     @Override
     protected <T> FunctionCounter newFunctionCounter(Meter.Id id, T obj, ToDoubleFunction<T> countFunction) {
-        DoubleSumObserver.Builder builder = otelMeter.doubleSumObserverBuilder(id.getName());
-        copyAttributes(id, builder);
+        DoubleUpDownSumObserver.Builder builder = otelMeter.doubleUpDownSumObserverBuilder(id.getName());
+        copyValues(builder, id.getDescription(), id.getBaseUnit());
 
-        return new OpenTelemetryFunctionCounter<T>(id, obj, countFunction, builder.build());
+        return new OpenTelemetryFunctionCounter<T>(id, obj, countFunction, builder.build(), labelsFrom(id));
     }
 
     @Override
@@ -130,20 +123,24 @@ public class OpenTelemetryRegistry extends MeterRegistry {
     }
 
     private void onMeterRemoved(Meter meter) {
-        // .. ?
+        // TODO ?
     }
 
-    private void copyAttributes(Meter.Id id, AsynchronousInstrument.Builder builder) {
-        builder.setConstantLabels(labelsFrom(id));
-        if ( id.getDescription() != null ) {
-            builder.setDescription(id.getDescription());
+    void copyValues(AsynchronousInstrument.Builder builder, String description, String unit) {
+        if ( description != null ) {
+            builder.setDescription(description);
+        }
+        if ( unit != null ) {
+            builder.setUnit(unit);
         }
     }
 
-    private void copyAttributes(Meter.Id id, SynchronousInstrument.Builder builder) {
-        builder.setConstantLabels(labelsFrom(id));
-        if ( id.getDescription() != null ) {
-            builder.setDescription(id.getDescription());
+    void copyValues(SynchronousInstrument.Builder builder, String description, String unit) {
+        if ( description != null ) {
+            builder.setDescription(description);
+        }
+        if ( unit != null ) {
+            builder.setUnit(unit);
         }
     }
 
