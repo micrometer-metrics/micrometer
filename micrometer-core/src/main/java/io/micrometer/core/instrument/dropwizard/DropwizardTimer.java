@@ -28,7 +28,7 @@ import java.util.concurrent.atomic.AtomicLong;
 
 public class DropwizardTimer extends AbstractTimer {
     private final Timer impl;
-    private final AtomicLong totalTime = new AtomicLong(0);
+    private final AtomicLong totalTime = new AtomicLong();
     private final TimeWindowMax max;
 
     DropwizardTimer(Id id, Timer impl, Clock clock, DistributionStatisticConfig distributionStatisticConfig, PauseDetector pauseDetector) {

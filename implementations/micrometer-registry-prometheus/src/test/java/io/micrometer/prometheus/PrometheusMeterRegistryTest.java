@@ -83,7 +83,7 @@ class PrometheusMeterRegistryTest {
 
     @Test
     void baseUnitMakesItToScrape() {
-        AtomicInteger n = new AtomicInteger(0);
+        AtomicInteger n = new AtomicInteger();
         Gauge.builder("gauge", n, AtomicInteger::get).tags("a", "b").baseUnit(BaseUnits.BYTES).register(registry);
         assertThat(registry.scrape()).contains("gauge_bytes");
     }
@@ -443,7 +443,7 @@ class PrometheusMeterRegistryTest {
     @Issue("#1883")
     @Test
     void namesToCollectors() {
-        AtomicInteger n = new AtomicInteger(0);
+        AtomicInteger n = new AtomicInteger();
         Gauge.builder("gauge", n, AtomicInteger::get).tags("a", "b").baseUnit(BaseUnits.BYTES).register(registry);
         assertThat(prometheusRegistry).extracting("namesToCollectors").extracting("gauge_bytes").isNotNull();
     }

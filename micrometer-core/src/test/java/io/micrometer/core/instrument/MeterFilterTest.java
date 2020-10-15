@@ -108,7 +108,7 @@ class MeterFilterTest {
 
     @Test
     void maximumAllowableTags() {
-        AtomicInteger n = new AtomicInteger(0);
+        AtomicInteger n = new AtomicInteger();
 
         MeterFilter filter = MeterFilter.maximumAllowableTags("name", "k", 2, new MeterFilter() {
             @Override

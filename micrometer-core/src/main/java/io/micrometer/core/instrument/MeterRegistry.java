@@ -96,7 +96,7 @@ public abstract class MeterRegistry {
     // Guarded by meterMapLock for both reads and writes
     private final Map<Id, Set<Id>> syntheticAssociations = new HashMap<>();
 
-    private final AtomicBoolean closed = new AtomicBoolean(false);
+    private final AtomicBoolean closed = new AtomicBoolean();
     private PauseDetector pauseDetector = new NoPauseDetector();
 
     /**

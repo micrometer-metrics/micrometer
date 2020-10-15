@@ -76,7 +76,7 @@ public class StatsdMeterRegistry extends MeterRegistry {
     private final StatsdConfig statsdConfig;
     private final HierarchicalNameMapper nameMapper;
     private final Map<Meter.Id, StatsdPollable> pollableMeters = new ConcurrentHashMap<>();
-    private final AtomicBoolean started = new AtomicBoolean(false);
+    private final AtomicBoolean started = new AtomicBoolean();
     DirectProcessor<String> processor = DirectProcessor.create();
     FluxSink<String> fluxSink = new NoopFluxSink();
     Disposable.Swap statsdConnection = Disposables.swap();

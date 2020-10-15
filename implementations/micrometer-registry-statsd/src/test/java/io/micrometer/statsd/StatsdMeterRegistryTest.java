@@ -384,7 +384,7 @@ class StatsdMeterRegistryTest {
     @EnumSource(StatsdFlavor.class)
     @Issue("#600")
     void memoryPerformanceOfNamingConventionInHotLoops(StatsdFlavor flavor) {
-        AtomicInteger namingConventionUses = new AtomicInteger(0);
+        AtomicInteger namingConventionUses = new AtomicInteger();
 
         registry = new StatsdMeterRegistry(configWithFlavor(flavor), clock);
 
@@ -425,7 +425,7 @@ class StatsdMeterRegistryTest {
     @Test
     @Issue("#778")
     void doNotPublishNanOrInfiniteGaugeValues() {
-        AtomicInteger lineCount = new AtomicInteger(0);
+        AtomicInteger lineCount = new AtomicInteger();
         registry = StatsdMeterRegistry.builder(StatsdConfig.DEFAULT)
                 .lineSink(l -> lineCount.incrementAndGet())
                 .build();
