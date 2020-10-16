@@ -241,7 +241,8 @@ public final class Tags implements Iterable<Tag> {
      * Return a new {@code Tags} instance containing tags constructed from the specified key/valueSupplier pair.
      *
      * @param key   the tag key to add
-     * @param valueSupplier the tag value supplier to add
+     * @param valueSupplier the tag value supplier to add.
+     *                      In case the valueSupplier returns null an empty String will be returned.
      * @return a new {@code Tags} instance
      */
     public static Tags of(String key, Supplier<String> valueSupplier) {

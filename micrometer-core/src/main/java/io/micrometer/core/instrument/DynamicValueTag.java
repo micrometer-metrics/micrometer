@@ -42,6 +42,12 @@ final class DynamicValueTag implements Tag {
         return key;
     }
 
+    /**
+     * Get the value of the given valueSupplier.
+     * In case the valueSupplier returns null an empty String will be returned.
+     *
+     * @return the value of the given valueSupplier
+     */
     @Override
     public String getValue() {
         String value = valueSupplier.get();

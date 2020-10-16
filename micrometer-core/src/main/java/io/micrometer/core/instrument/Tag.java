@@ -40,7 +40,7 @@ public interface Tag extends Comparable<Tag> {
     }
 
     /**
-     * Create a {@link Tag} instance with dynamic values, which may change during runtime.
+     * Create a {@link Tag} instance with a dynamic value, which may change during runtime.
      * <p>
      * NOTE: If the given valueSupplier returns null, an empty {@link String} will be returned as tag value.
      * </p>
