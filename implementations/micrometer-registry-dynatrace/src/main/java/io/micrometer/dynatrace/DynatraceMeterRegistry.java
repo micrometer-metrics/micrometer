@@ -42,7 +42,7 @@ import static io.micrometer.dynatrace.DynatraceMetricDefinition.DynatraceUnit;
 import static java.nio.charset.StandardCharsets.UTF_8;
 
 /**
- * {@link StepMeterRegistry} for Dynatrace.
+ * {@link StepMeterRegistry} for Dynatrace metric API v1.
  *
  * @author Oriol Barcelona
  * @author Jon Schneider

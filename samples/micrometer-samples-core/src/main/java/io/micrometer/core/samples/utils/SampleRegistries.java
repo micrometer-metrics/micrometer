@@ -32,8 +32,6 @@ import io.micrometer.core.instrument.logging.LoggingRegistryConfig;
 import io.micrometer.core.lang.Nullable;
 import io.micrometer.datadog.DatadogConfig;
 import io.micrometer.datadog.DatadogMeterRegistry;
-import io.micrometer.dynatrace.DynatraceConfig;
-import io.micrometer.dynatrace.DynatraceMeterRegistry;
 import io.micrometer.elastic.ElasticConfig;
 import io.micrometer.elastic.ElasticMeterRegistry;
 import io.micrometer.ganglia.GangliaConfig;
@@ -424,8 +422,8 @@ public class SampleRegistries {
         }, Clock.SYSTEM);
     }
 
-    public static DynatraceMeterRegistry dynatrace(String apiToken, String uri) {
-        return new DynatraceMeterRegistry(new DynatraceConfig() {
+    public static io.micrometer.dynatrace.DynatraceMeterRegistry dynatrace(String apiToken, String uri) {
+        return new io.micrometer.dynatrace.DynatraceMeterRegistry(new io.micrometer.dynatrace.DynatraceConfig() {
             @Override
             public String get(String key) {
                 return null;
@@ -451,6 +449,31 @@ public class SampleRegistries {
                 return Duration.ofSeconds(10);
             }
         }, Clock.SYSTEM);
+    }
+
+    public static io.micrometer.dynatrace2.DynatraceMeterRegistry dynatrace2(String apiToken, String uri) {
+        return io.micrometer.dynatrace2.DynatraceMeterRegistry.builder(new io.micrometer.dynatrace2.DynatraceConfig() {
+            @Override
+            public String get(String key) {
+                return null;
+            }
+
+            @Override
+            public String apiToken() {
+                return apiToken;
+            }
+
+            @Override
+            public String uri() {
+                return uri;
+            }
+
+
+            @Override
+            public Duration step() {
+                return Duration.ofSeconds(5);
+            }
+        }).build();
     }
 
     public static HumioMeterRegistry humio(String apiToken) {

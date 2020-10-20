@@ -1,5 +1,5 @@
 /**
- * Copyright 2017 VMware, Inc.
+ * Copyright 2020 VMware, Inc.
  * <p>
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,15 +13,9 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package io.micrometer.core.samples.utils;
+@NonNullApi
+@NonNullFields
+package io.micrometer.dynatrace2;
 
-import io.micrometer.core.instrument.MeterRegistry;
-
-// Run: git update-index --assume-unchanged **/SampleConfig.java
-// If you legitimately need to change this file, you can undo this with: git update-index --no-assume-unchanged **/SampleConfig.java
-public class SampleConfig {
-    public static MeterRegistry myMonitoringSystem() {
-        // Pick a monitoring system here to use in your samples.
-        return SampleRegistries.dynatrace2("hey", "yo");
-    }
-}
+import io.micrometer.core.lang.NonNullApi;
+import io.micrometer.core.lang.NonNullFields;

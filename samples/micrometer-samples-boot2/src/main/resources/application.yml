@@ -27,6 +27,7 @@ management:
     azuremonitor.enabled: false
     datadog.enabled: false
     dynatrace.enabled: false
+    dynatrace2.enabled: false
     elastic.enabled: false
     ganglia.enabled: false
     graphite.enabled: false

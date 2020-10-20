@@ -30,6 +30,7 @@ MODULES=(
     micrometer-registry-elastic
     micrometer-registry-kairos
     micrometer-registry-dynatrace
+    micrometer-registry-dynatrace2
     micrometer-registry-humio
     micrometer-registry-azure-monitor
     micrometer-registry-appoptics

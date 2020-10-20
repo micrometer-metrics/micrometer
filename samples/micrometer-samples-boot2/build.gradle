@@ -7,7 +7,7 @@ apply plugin: 'io.spring.dependency-management'
 
 dependencies {
     implementation project(":micrometer-core")
-    ['atlas', 'azure-monitor', 'prometheus', 'datadog', 'elastic', 'ganglia', 'graphite', 'health', 'jmx', 'influx', 'statsd', 'new-relic', 'cloudwatch', 'cloudwatch2', 'signalfx', 'wavefront', 'elastic', 'dynatrace', 'humio', 'appoptics', 'stackdriver'].each { sys ->
+    ['atlas', 'azure-monitor', 'prometheus', 'datadog', 'elastic', 'ganglia', 'graphite', 'health', 'jmx', 'influx', 'statsd', 'new-relic', 'cloudwatch', 'cloudwatch2', 'signalfx', 'wavefront', 'elastic', 'dynatrace', 'dynatrace2', 'humio', 'appoptics', 'stackdriver'].each { sys ->
         implementation project(":micrometer-registry-$sys")
     }
 
