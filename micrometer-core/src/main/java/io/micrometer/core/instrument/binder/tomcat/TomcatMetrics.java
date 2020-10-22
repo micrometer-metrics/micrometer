@@ -70,6 +70,10 @@ public class TomcatMetrics implements MeterBinder, AutoCloseable {
         this.manager = manager;
         this.tags = tags;
         this.mBeanServer = mBeanServer;
+
+        if (manager != null) {
+            this.jmxDomain = manager.getContext().getDomain();
+        }
     }
 
     public static void monitor(MeterRegistry registry, @Nullable Manager manager, String... tags) {
