@@ -29,6 +29,7 @@ import java.time.Duration;
 import java.util.*;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.ThreadFactory;
 import java.util.concurrent.TimeUnit;
 import java.util.function.Supplier;
 import java.util.function.ToDoubleFunction;
@@ -68,7 +69,7 @@ class KafkaMetrics implements MeterBinder, AutoCloseable {
     private final Supplier<Map<MetricName, ? extends Metric>> metricsSupplier;
     private final Iterable<Tag> extraTags;
     private final Duration refreshInterval;
-    private final ScheduledExecutorService scheduler = Executors.newSingleThreadScheduledExecutor();
+    private final ScheduledExecutorService scheduler = Executors.newSingleThreadScheduledExecutor(new DaemonThreadFactory());
 
     @Nullable
     private Iterable<Tag> commonTags;
@@ -266,5 +267,14 @@ class KafkaMetrics implements MeterBinder, AutoCloseable {
     @Override
     public void close() {
         this.scheduler.shutdownNow();
+    }
+
+    private static class DaemonThreadFactory implements ThreadFactory {
+        @Override
+        public Thread newThread(Runnable r) {
+            Thread thread = new Thread(r, "micrometer-kafka-metrics");
+            thread.setDaemon(true);
+            return thread;
+        }
     }
 }
