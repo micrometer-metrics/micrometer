@@ -18,6 +18,7 @@ package io.micrometer.core.instrument;
 import io.micrometer.core.annotation.Incubating;
 import io.micrometer.core.lang.Nullable;
 
+import java.util.Collections;
 import java.util.Set;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Supplier;
@@ -38,9 +39,20 @@ public class MultiGauge {
     private final Meter.Id commonId;
     private final AtomicReference<Set<Meter.Id>> registeredRows = new AtomicReference<>(emptySet());
 
+    private final Iterable<Tag> commonTags;
+
     private MultiGauge(MeterRegistry registry, Meter.Id commonId) {
         this.registry = registry;
         this.commonId = commonId;
+
+        this.commonTags = getCommonTags(registry);
+    }
+
+    private static Iterable<Tag> getCommonTags(MeterRegistry registry) {
+        // FIXME hack until we have proper API to retrieve common tags
+        Meter.Id dummyId = Meter.builder("delete.this", Meter.Type.OTHER, Collections.emptyList()).register(registry).getId();
+        registry.remove(dummyId);
+        return dummyId.getTags();
     }
 
     /**
@@ -62,7 +74,7 @@ public class MultiGauge {
             Stream<Meter.Id> idStream = StreamSupport.stream(rows.spliterator(), false)
                     .map(row -> {
                         Row r = row;
-                        Meter.Id rowId = commonId.withTags(row.uniqueTags);
+                        Meter.Id rowId = commonId.withTags(row.uniqueTags.and(commonTags));
                         boolean previouslyDefined = oldRows.contains(rowId);
 
                         if (overwrite && previouslyDefined) {

@@ -22,6 +22,10 @@ import org.junit.jupiter.api.Test;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
+import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.atomic.AtomicInteger;
+import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 import static java.util.stream.Collectors.toList;
@@ -81,6 +85,47 @@ class MultiGaugeTest {
         System.gc();
 
         assertThat(registry.get("colors").tag("color", "red").gauge().value()).isEqualTo(1);
+    }
+
+    @Test
+    void overwrite() {
+        testOverwrite();
+    }
+
+    private void testOverwrite() {
+        String testKey = "key1";
+        AtomicInteger testValue = new AtomicInteger(1);
+
+        Map<String, AtomicInteger> map = new ConcurrentHashMap<>();
+        map.put(testKey, testValue);
+
+        String meterName = "my.multi.gauge";
+        String testTagKey = "tag1";
+
+        MultiGauge gauge = MultiGauge.builder(meterName).register(registry);
+
+        List<Row<?>> rows = map.entrySet().stream()
+                .map(row -> Row.of(Tags.of(testTagKey, row.getKey()), row.getValue()))
+                .collect(Collectors.toList());
+        gauge.register(rows, true);
+
+        testValue = new AtomicInteger(100);
+        map.put(testKey, testValue);
+
+        rows = map.entrySet().stream()
+                .map(t -> Row.of(Tags.of(testTagKey, t.getKey()), t.getValue()))
+                .collect(Collectors.toList());
+        gauge.register(rows, true);
+
+        assertThat(registry.get(meterName).tag(testTagKey, testKey).gauge().value())
+                .isEqualTo(testValue.intValue());
+    }
+
+    @Test
+    void overwriteWithCommonTags() {
+        registry.config().commonTags("common1", "1");
+
+        testOverwrite();
     }
 
     private static class Color {
