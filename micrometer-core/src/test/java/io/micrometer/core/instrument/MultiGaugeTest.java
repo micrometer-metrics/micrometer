@@ -98,11 +98,14 @@ class MultiGaugeTest {
     }
 
     private void testOverwrite(String mappedMeterName) {
-        String testKey = "key1";
-        AtomicInteger testValue = new AtomicInteger(1);
+        String testKey1 = "key1";
+        AtomicInteger testValue1 = new AtomicInteger(1);
+        String testKey2 = "key2";
+        AtomicInteger testValue2 = new AtomicInteger(2);
 
         Map<String, AtomicInteger> map = new ConcurrentHashMap<>();
-        map.put(testKey, testValue);
+        map.put(testKey1, testValue1);
+        map.put(testKey2, testValue2);
 
         String meterName = "my.multi.gauge";
         String testTagKey = "tag1";
@@ -113,17 +116,24 @@ class MultiGaugeTest {
                 .map(row -> Row.of(Tags.of(testTagKey, row.getKey()), row.getValue()))
                 .collect(Collectors.toList());
         gauge.register(rows, true);
+        assertThat(registry.getMeters()).hasSize(2);
+        assertThat(registry.get(mappedMeterName).tag(testTagKey, testKey1).gauge().value())
+                .isEqualTo(testValue1.intValue());
+        assertThat(registry.get(mappedMeterName).tag(testTagKey, testKey2).gauge().value())
+                .isEqualTo(testValue2.intValue());
 
-        testValue = new AtomicInteger(100);
-        map.put(testKey, testValue);
+        testValue1 = new AtomicInteger(100);
+        map.put(testKey1, testValue1);
+        map.remove(testKey2);
 
         rows = map.entrySet().stream()
                 .map(t -> Row.of(Tags.of(testTagKey, t.getKey()), t.getValue()))
                 .collect(Collectors.toList());
         gauge.register(rows, true);
 
-        assertThat(registry.get(mappedMeterName).tag(testTagKey, testKey).gauge().value())
-                .isEqualTo(testValue.intValue());
+        assertThat(registry.getMeters()).hasSize(1);
+        assertThat(registry.get(mappedMeterName).tag(testTagKey, testKey1).gauge().value())
+                .isEqualTo(testValue1.intValue());
     }
 
     @Test
