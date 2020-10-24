@@ -16,6 +16,7 @@
 package io.micrometer.core.instrument;
 
 import io.micrometer.core.instrument.MultiGauge.Row;
+import io.micrometer.core.instrument.config.MeterFilter;
 import io.micrometer.core.instrument.simple.SimpleMeterRegistry;
 import org.junit.jupiter.api.Test;
 
@@ -93,6 +94,10 @@ class MultiGaugeTest {
     }
 
     private void testOverwrite() {
+        testOverwrite("my.multi.gauge");
+    }
+
+    private void testOverwrite(String mappedMeterName) {
         String testKey = "key1";
         AtomicInteger testValue = new AtomicInteger(1);
 
@@ -117,7 +122,7 @@ class MultiGaugeTest {
                 .collect(Collectors.toList());
         gauge.register(rows, true);
 
-        assertThat(registry.get(meterName).tag(testTagKey, testKey).gauge().value())
+        assertThat(registry.get(mappedMeterName).tag(testTagKey, testKey).gauge().value())
                 .isEqualTo(testValue.intValue());
     }
 
@@ -126,6 +131,18 @@ class MultiGaugeTest {
         registry.config().commonTags("common1", "1");
 
         testOverwrite();
+    }
+
+    @Test
+    void overwriteWithPrefix() {
+        registry.config().meterFilter(new MeterFilter() {
+            @Override
+            public Meter.Id map(Meter.Id id) {
+                return id.withName("prefix." + id.getName());
+            }
+        });
+
+        testOverwrite("prefix.my.multi.gauge");
     }
 
     private static class Color {
