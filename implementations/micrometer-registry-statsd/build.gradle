@@ -28,6 +28,10 @@ shadowJar {
     relocate 'io.netty', 'io.micrometer.shaded.io.netty'
     exclude 'META-INF/native/libnetty_transport_native_epoll_x86_64.so'
     relocate 'org.pcollections', 'io.micrometer.shaded.statsd.org.pcollections'
+    metaInf {
+        from "$rootDir/LICENSE"
+        from "$rootDir/NOTICE"
+    }
 }
 
 jar.deleteAllActions()
