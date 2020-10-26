@@ -47,8 +47,11 @@ import static java.util.Collections.emptyList;
 /**
  * Record metrics that report a number of statistics related to garbage
  * collection emanating from the MXBean and also adds information about GC causes.
+ * <p>
+ * This provides metrics for OpenJDK garbage collectors: serial, parallel, G1, Shenandoah, ZGC.
  *
  * @author Jon Schneider
+ * @author Tommy Ludwig
  * @see GarbageCollectorMXBean
  */
 @NonNullApi
@@ -67,6 +70,9 @@ public class JvmGcMetrics implements MeterBinder, AutoCloseable {
     @Nullable
     private String oldGenPoolName;
 
+    @Nullable
+    private String nonGenerationalMemoryPool;
+
     private final List<Runnable> notificationListenerCleanUpRunnables = new CopyOnWriteArrayList<>();
 
     public JvmGcMetrics() {
@@ -80,6 +86,8 @@ public class JvmGcMetrics implements MeterBinder, AutoCloseable {
                 youngGenPoolName = name;
             } else if (isOldGenPool(name)) {
                 oldGenPoolName = name;
+            } else if (isNonGenerationalHeapPool(name)) {
+                nonGenerationalMemoryPool = name;
             }
         }
         this.tags = tags;
@@ -91,12 +99,12 @@ public class JvmGcMetrics implements MeterBinder, AutoCloseable {
             return;
         }
 
-        double maxOldGen = getOldGen().map(mem -> getUsageValue(mem, MemoryUsage::getMax)).orElse(0.0);
+        double maxLongLivedPoolBytes = getLongLivedHeapPool().map(mem -> getUsageValue(mem, MemoryUsage::getMax)).orElse(0.0);
 
-        AtomicLong maxDataSize = new AtomicLong((long) maxOldGen);
+        AtomicLong maxDataSize = new AtomicLong((long) maxLongLivedPoolBytes);
         Gauge.builder("jvm.gc.max.data.size", maxDataSize, AtomicLong::get)
             .tags(tags)
-            .description("Max size of old generation memory pool")
+            .description("Max size of long-lived heap memory pool")
             .baseUnit(BaseUnits.BYTES)
             .register(registry);
 
@@ -104,31 +112,28 @@ public class JvmGcMetrics implements MeterBinder, AutoCloseable {
 
         Gauge.builder("jvm.gc.live.data.size", liveDataSize, AtomicLong::get)
             .tags(tags)
-            .description("Size of old generation memory pool after a full GC")
+            .description("Size of long-lived heap memory pool after reclamation")
             .baseUnit(BaseUnits.BYTES)
-            .register(registry);
-
-        Counter promotedBytes = Counter.builder("jvm.gc.memory.promoted").tags(tags)
-            .baseUnit(BaseUnits.BYTES)
-            .description("Count of positive increases in the size of the old generation memory pool before GC to after GC")
             .register(registry);
 
         Counter allocatedBytes = Counter.builder("jvm.gc.memory.allocated").tags(tags)
             .baseUnit(BaseUnits.BYTES)
-            .description("Incremented for an increase in the size of the young generation memory pool after one GC to before the next")
+            .description("Incremented for an increase in the size of the (young) heap memory pool after one GC to before the next")
             .register(registry);
 
+        Counter promotedBytes = (oldGenPoolName == null) ? null : Counter.builder("jvm.gc.memory.promoted").tags(tags)
+                    .baseUnit(BaseUnits.BYTES)
+                    .description("Count of positive increases in the size of the old generation memory pool before GC to after GC")
+                    .register(registry);
+
         // start watching for GC notifications
-        final AtomicLong youngGenSizeAfter = new AtomicLong();
+        final AtomicLong heapPoolSizeAfterGc = new AtomicLong();
 
         for (GarbageCollectorMXBean mbean : ManagementFactory.getGarbageCollectorMXBeans()) {
             if (!(mbean instanceof NotificationEmitter)) {
                 continue;
             }
             NotificationListener notificationListener = (notification, ref) -> {
-                if (!notification.getType().equals(GarbageCollectionNotificationInfo.GARBAGE_COLLECTION_NOTIFICATION)) {
-                    return;
-                }
                 CompositeData cd = (CompositeData) notification.getUserData();
                 GarbageCollectionNotificationInfo notificationInfo = GarbageCollectionNotificationInfo.from(cd);
 
@@ -156,6 +161,16 @@ public class JvmGcMetrics implements MeterBinder, AutoCloseable {
                 final Map<String, MemoryUsage> before = gcInfo.getMemoryUsageBeforeGc();
                 final Map<String, MemoryUsage> after = gcInfo.getMemoryUsageAfterGc();
 
+                if (nonGenerationalMemoryPool != null) {
+                    countPoolSizeDelta(gcInfo, allocatedBytes, heapPoolSizeAfterGc, nonGenerationalMemoryPool);
+                    if (after.get(nonGenerationalMemoryPool).getUsed() < before.get(nonGenerationalMemoryPool).getUsed()) {
+                        liveDataSize.set(after.get(nonGenerationalMemoryPool).getUsed());
+                        final long longLivedMaxAfter = after.get(nonGenerationalMemoryPool).getMax();
+                        maxDataSize.set(longLivedMaxAfter);
+                    }
+                    return;
+                }
+
                 if (oldGenPoolName != null) {
                     final long oldBefore = before.get(oldGenPoolName).getUsed();
                     final long oldAfter = after.get(oldGenPoolName).getUsed();
@@ -175,23 +190,29 @@ public class JvmGcMetrics implements MeterBinder, AutoCloseable {
                 }
 
                 if (youngGenPoolName != null) {
-                    final long youngBefore = before.get(youngGenPoolName).getUsed();
-                    final long youngAfter = after.get(youngGenPoolName).getUsed();
-                    final long delta = youngBefore - youngGenSizeAfter.get();
-                    youngGenSizeAfter.set(youngAfter);
-                    if (delta > 0L) {
-                        allocatedBytes.increment(delta);
-                    }
+                    countPoolSizeDelta(gcInfo, allocatedBytes, heapPoolSizeAfterGc, youngGenPoolName);
                 }
             };
             NotificationEmitter notificationEmitter = (NotificationEmitter) mbean;
-            notificationEmitter.addNotificationListener(notificationListener, null, null);
+            notificationEmitter.addNotificationListener(notificationListener, notification -> notification.getType().equals(GarbageCollectionNotificationInfo.GARBAGE_COLLECTION_NOTIFICATION), null);
             notificationListenerCleanUpRunnables.add(() -> {
                 try {
                     notificationEmitter.removeNotificationListener(notificationListener);
                 } catch (ListenerNotFoundException ignore) {
                 }
             });
+        }
+    }
+
+    private void countPoolSizeDelta(GcInfo gcInfo, Counter counter, AtomicLong previousPoolSize, String poolName) {
+        Map<String, MemoryUsage> before = gcInfo.getMemoryUsageBeforeGc();
+        Map<String, MemoryUsage> after = gcInfo.getMemoryUsageAfterGc();
+        final long beforeBytes = before.get(poolName).getUsed();
+        final long afterBytes = after.get(poolName).getUsed();
+        final long delta = beforeBytes - previousPoolSize.get();
+        previousPoolSize.set(afterBytes);
+        if (delta > 0L) {
+            counter.increment(delta);
         }
     }
 
