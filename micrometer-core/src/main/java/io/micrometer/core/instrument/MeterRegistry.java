@@ -654,6 +654,14 @@ public abstract class MeterRegistry {
         return remove(meter.getId());
     }
 
+    @Nullable
+    Meter remove(Meter.Id id, boolean applyFilters) {
+        if (applyFilters) {
+            return remove(getMappedId(id));
+        }
+        return remove(id);
+    }
+
     /**
      * @param mappedId The id of the meter to remove
      * @return The removed meter, or null if no meter matched the provided id.
