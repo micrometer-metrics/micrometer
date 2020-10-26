@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/bin/bash -e
 # This script will build the project.
 
 SWITCHES="-s --console=plain"
