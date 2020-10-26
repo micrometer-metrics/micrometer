@@ -27,6 +27,10 @@ shadowJar {
     relocate 'org.reactivestreams', 'io.micrometer.shaded.org.reactorstreams'
     relocate 'io.netty', 'io.micrometer.shaded.io.netty'
     exclude 'META-INF/native/libnetty_transport_native_epoll_x86_64.so'
+    metaInf {
+        from "$rootDir/LICENSE"
+        from "$rootDir/NOTICE"
+    }
 }
 
 // Nebula plugin automatically configures the publication of the normal jar with its dependencies
