@@ -49,10 +49,8 @@ jobs:
     executor: circle-jdk-executor
     steps:
       - gradlew-build
-      - gradlew-build:
-          command: shenandoahTest
-      - gradlew-build:
-          command: zgcTest
+      - run: ./gradlew shenandoahTest
+      - run: ./gradlew zgcTest
 
   docker-tests:
     executor: machine-executor
