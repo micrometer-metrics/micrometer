@@ -189,6 +189,10 @@ subprojects {
         if (project.name != 'micrometer-bom') {
             jar {
                 manifest.attributes.put('Automatic-Module-Name', project.name.replace('-', '.'))
+                metaInf {
+                    from "$rootDir/LICENSE"
+                    from "$rootDir/NOTICE"
+                }
             }
         }
 
