@@ -102,10 +102,12 @@ subprojects {
             }
         }
 
-        jar {
-            metaInf {
-                from "$rootDir/LICENSE"
-                from "$rootDir/NOTICE"
+        if (project.name != 'micrometer-bom') {
+            jar {
+                metaInf {
+                    from "$rootDir/LICENSE"
+                    from "$rootDir/NOTICE"
+                }
             }
         }
 
