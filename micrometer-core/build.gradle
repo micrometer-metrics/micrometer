@@ -102,6 +102,10 @@ shadowJar {
         include(dependency('org.pcollections:'))
     }
     relocate 'org.pcollections', 'io.micrometer.shaded.org.pcollections'
+    metaInf {
+        from "$rootDir/LICENSE"
+        from "$rootDir/NOTICE"
+    }
 }
 
 jar.enabled = false
