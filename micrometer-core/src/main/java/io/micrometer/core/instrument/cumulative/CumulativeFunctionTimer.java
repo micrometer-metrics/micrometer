@@ -38,8 +38,8 @@ public class CumulativeFunctionTimer<T> implements FunctionTimer {
     private final TimeUnit totalTimeFunctionUnit;
     private final TimeUnit baseTimeUnit;
 
-    private volatile long lastCount = 0;
-    private volatile double lastTime = 0.0;
+    private volatile long lastCount;
+    private volatile double lastTime;
 
     public CumulativeFunctionTimer(Id id, T obj, ToLongFunction<T> countFunction, ToDoubleFunction<T> totalTimeFunction,
                                    TimeUnit totalTimeFunctionUnit, TimeUnit baseTimeUnit) {

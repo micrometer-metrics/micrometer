@@ -57,7 +57,7 @@ class StatsdMeterRegistryPublishTest {
     CountDownLatch serverLatch;
     AtomicInteger serverMetricReadCount = new AtomicInteger();
 
-    volatile boolean bound = false;
+    volatile boolean bound;
 
     @AfterEach
     void cleanUp() {

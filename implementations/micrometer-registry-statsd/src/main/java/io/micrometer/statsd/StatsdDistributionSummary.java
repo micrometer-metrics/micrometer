@@ -33,7 +33,7 @@ public class StatsdDistributionSummary extends AbstractDistributionSummary {
     private final TimeWindowMax max;
     private final StatsdLineBuilder lineBuilder;
     private final FluxSink<String> sink;
-    private volatile boolean shutdown = false;
+    private volatile boolean shutdown;
 
     StatsdDistributionSummary(Meter.Id id, StatsdLineBuilder lineBuilder, FluxSink<String> sink, Clock clock,
                               DistributionStatisticConfig distributionStatisticConfig, double scale) {

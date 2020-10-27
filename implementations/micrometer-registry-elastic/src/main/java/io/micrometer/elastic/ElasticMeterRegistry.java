@@ -120,7 +120,7 @@ public class ElasticMeterRegistry extends StepMeterRegistry {
     @Nullable
     private volatile Integer majorVersion;
 
-    private volatile boolean checkedForIndexTemplate = false;
+    private volatile boolean checkedForIndexTemplate;
 
     @SuppressWarnings("deprecation")
     public ElasticMeterRegistry(ElasticConfig config, Clock clock) {
