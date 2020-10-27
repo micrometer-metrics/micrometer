@@ -126,6 +126,8 @@ public abstract class CacheMeterBinder implements MeterBinder {
      * The put mechanism is unimportant - this count applies to entries added to the cache according to a pre-defined
      * load function such as exists in Guava/Caffeine caches as well as manual puts.
      *
+     * Note that Guava/Caffeine caches don't count manual puts.
+     *
      * @return Total number of entries added to the cache. Monotonically increasing count.
      */
     protected abstract long putCount();
