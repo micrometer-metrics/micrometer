@@ -1,5 +1,5 @@
 /**
- * Copyright 2019 VMware, Inc.
+ * Copyright 2020 VMware, Inc.
  * <p>
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,19 +15,15 @@
  */
 package io.micrometer.core.instrument.binder.jvm;
 
-import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.Tag;
 
-import java.lang.management.MemoryPoolMXBean;
-import java.util.Optional;
+import java.lang.annotation.ElementType;
+import java.lang.annotation.Retention;
+import java.lang.annotation.RetentionPolicy;
+import java.lang.annotation.Target;
 
-import static org.assertj.core.api.Assertions.assertThat;
-
-@GcTest
-class JvmMemoryTest {
-
-    @Test
-    void assertJvmMemoryGetLongLivedHeapPool() {
-        Optional<MemoryPoolMXBean> longLivedHeapPool = JvmMemory.getLongLivedHeapPool();
-        assertThat(longLivedHeapPool).isNotEmpty();
-    }
+@Target({ ElementType.TYPE, ElementType.METHOD })
+@Retention(RetentionPolicy.RUNTIME)
+@Tag("gc")
+public @interface GcTest {
 }
