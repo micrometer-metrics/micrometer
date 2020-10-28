@@ -209,7 +209,7 @@ class KafkaMetricsTest {
         };
         kafkaMetrics = new KafkaMetrics(supplier);
         MeterRegistry registry = new SimpleMeterRegistry();
-        registry.counter("kafka.b.a", "client-id", "client1", "key0", "value0");
+        registry.counter("kafka.b.a", "client-id", "client1", "key0", "value0", "kafka-version", "unknown");
         //When
         kafkaMetrics.bindTo(registry);
         //Then
@@ -240,5 +240,68 @@ class KafkaMetricsTest {
         //Then
         assertThat(registry.getMeters()).hasSize(1);
         assertThat(registry.getMeters().get(0).getId().getTags()).containsExactlyInAnyOrder(Tag.of("kafka-version", "unknown"), Tag.of("key0", "value0"), Tag.of("common", "value"));
+    }
+
+    @Issue("#2212")
+    @Test
+    void shouldRemoveMeterWithLessTagsWithMultipleClients() {
+        //Given
+        AtomicReference<Map<MetricName, KafkaMetric>> metrics = new AtomicReference<>(new LinkedHashMap<>());
+        Supplier<Map<MetricName, ? extends Metric>> supplier = () -> metrics.updateAndGet(map -> {
+            Map<String, String> firstTags = new LinkedHashMap<>();
+            Map<String, String> secondTags = new LinkedHashMap<>();
+            firstTags.put("key0", "value0");
+            firstTags.put("client-id", "client0");
+            secondTags.put("key0", "value0");
+            secondTags.put("client-id", "client1");
+            MetricName firstName = new MetricName("a", "b", "c", firstTags);
+            MetricName secondName = new MetricName("a", "b", "c", secondTags);
+            KafkaMetric firstMetric = new KafkaMetric(this, firstName, new Value(), new MetricConfig(), Time.SYSTEM);
+            KafkaMetric secondMetric = new KafkaMetric(this, secondName, new Value(), new MetricConfig(), Time.SYSTEM);
+
+            map.put(firstName, firstMetric);
+            map.put(secondName, secondMetric);
+            return map;
+        });
+        kafkaMetrics = new KafkaMetrics(supplier);
+        MeterRegistry registry = new SimpleMeterRegistry();
+        // simulate PrometheusMeterRegistry restriction
+        registry.config()
+                .onMeterAdded(meter -> registry.find(meter.getId().getName()).meters().stream()
+                        .filter(m -> m.getId().getTags().size() != meter.getId().getTags().size())
+                        .findAny().ifPresent(m -> {
+                            throw new RuntimeException("meter exists with different number of tags");
+                        }));
+        //When
+        kafkaMetrics.bindTo(registry);
+        //Then
+        assertThat(registry.getMeters()).hasSize(2);
+        // Given
+        metrics.updateAndGet(map -> {
+            Map<String, String> firstTags = new LinkedHashMap<>();
+            Map<String, String> secondTags = new LinkedHashMap<>();
+            firstTags.put("key0", "value0");
+            firstTags.put("client-id", "client0");
+            secondTags.put("key0", "value0");
+            secondTags.put("client-id", "client1");
+            // more tags than before
+            firstTags.put("key1", "value1");
+            secondTags.put("key1", "value1");
+
+            MetricName firstName = new MetricName("a", "b", "c", firstTags);
+            MetricName secondName = new MetricName("a", "b", "c", secondTags);
+            KafkaMetric firstMetric = new KafkaMetric(this, firstName, new Value(), new MetricConfig(), Time.SYSTEM);
+            KafkaMetric secondMetric = new KafkaMetric(this, secondName, new Value(), new MetricConfig(), Time.SYSTEM);
+
+            map.put(firstName, firstMetric);
+            map.put(secondName, secondMetric);
+            return map;
+        });
+        // When
+        kafkaMetrics.checkAndBindMetrics(registry);
+        // Then
+        assertThat(registry.getMeters()).hasSize(2);
+        registry.getMeters().forEach(meter -> assertThat(meter.getId().getTags())
+                .extracting(Tag::getKey).containsOnly("key0", "key1", "client-id", "kafka-version"));
     }
 }
