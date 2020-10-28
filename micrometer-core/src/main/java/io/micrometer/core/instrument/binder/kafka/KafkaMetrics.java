@@ -36,6 +36,7 @@ import java.util.function.ToDoubleFunction;
 
 import io.micrometer.core.util.internal.logging.InternalLogger;
 import io.micrometer.core.util.internal.logging.InternalLoggerFactory;
+import io.micrometer.core.util.internal.logging.WarnThenDebugLogger;
 import org.apache.kafka.common.Metric;
 import org.apache.kafka.common.MetricName;
 
@@ -54,6 +55,7 @@ import static java.util.Collections.emptyList;
 @NonNullFields
 class KafkaMetrics implements MeterBinder, AutoCloseable {
     private final static InternalLogger log = InternalLoggerFactory.getInstance(KafkaMetrics.class);
+    private final static WarnThenDebugLogger warnThenDebugLogger = new WarnThenDebugLogger(KafkaMetrics.class);
 
     static final String METRIC_NAME_PREFIX = "kafka.";
     static final String METRIC_GROUP_APP_INFO = "app-info";
@@ -166,7 +168,7 @@ class KafkaMetrics implements MeterBinder, AutoCloseable {
                 catch (Exception ex) {
                     String message = ex.getMessage();
                     if (message != null && message.contains("Prometheus requires")) {
-                        log.info("Failed to bind meter: " + meterName + " " + tags
+                        warnThenDebugLogger.log("Failed to bind meter: " + meterName + " " + tags
                                 + ". However, this could happen and might be restored in the next refresh.");
                     }
                     else {
