@@ -155,11 +155,11 @@ class KafkaMetrics implements MeterBinder, AutoCloseable {
                 for (Meter other : registry.find(meterName).meters()) {
                     List<Tag> tags = other.getId().getTags();
                     // Only consider meters from the same client before filtering
-                    if (differentClient(tags)) break;
+                    if (differentClient(tags, metric.metricName().tags().get(CLIENT_ID_TAG_NAME))) continue;
                     if (tags.size() < meterTagsWithCommonTags.size()) registry.remove(other);
                     // Check if already exists
                     else if (tags.size() == meterTagsWithCommonTags.size())
-                        if (tags.equals(meterTagsWithCommonTags)) return;
+                        if (tags.containsAll(meterTagsWithCommonTags) && meterTagsWithCommonTags.containsAll(tags)) return;
                         else break;
                     else hasLessTags = true;
                 }
@@ -182,7 +182,7 @@ class KafkaMetrics implements MeterBinder, AutoCloseable {
         }
     }
 
-    private boolean differentClient(List<Tag> tags) {
+    private boolean differentClient(List<Tag> tags, String clientId) {
         for (Tag tag : tags)
             if (tag.getKey().equals(CLIENT_ID_TAG_NAME))
                 if (!clientId.equals(tag.getValue())) return true;
