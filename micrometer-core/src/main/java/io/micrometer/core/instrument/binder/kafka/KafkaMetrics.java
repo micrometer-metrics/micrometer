@@ -37,6 +37,7 @@ import java.util.function.ToDoubleFunction;
 import io.micrometer.core.lang.Nullable;
 import io.micrometer.core.util.internal.logging.InternalLogger;
 import io.micrometer.core.util.internal.logging.InternalLoggerFactory;
+import io.micrometer.core.util.internal.logging.WarnThenDebugLogger;
 import org.apache.kafka.common.Metric;
 import org.apache.kafka.common.MetricName;
 
@@ -55,6 +56,7 @@ import static java.util.Collections.emptyList;
 @NonNullFields
 class KafkaMetrics implements MeterBinder, AutoCloseable {
     private final static InternalLogger log = InternalLoggerFactory.getInstance(KafkaMetrics.class);
+    private final static WarnThenDebugLogger warnThenDebugLogger = new WarnThenDebugLogger(KafkaMetrics.class);
 
     static final String METRIC_NAME_PREFIX = "kafka.";
     static final String METRIC_GROUP_APP_INFO = "app-info";
@@ -63,7 +65,6 @@ class KafkaMetrics implements MeterBinder, AutoCloseable {
     static final String START_TIME_METRIC_NAME = "start-time-ms";
     static final Duration DEFAULT_REFRESH_INTERVAL = Duration.ofSeconds(60);
     static final String KAFKA_VERSION_TAG_NAME = "kafka-version";
-    static final String CLIENT_ID_TAG_NAME = "client-id";
     static final String DEFAULT_VALUE = "unknown";
 
     private final Supplier<Map<MetricName, ? extends Metric>> metricsSupplier;
@@ -80,7 +81,6 @@ class KafkaMetrics implements MeterBinder, AutoCloseable {
     private volatile Set<MetricName> currentMeters = new HashSet<>();
 
     private String kafkaVersion = DEFAULT_VALUE;
-    private String clientId = DEFAULT_VALUE;
 
     KafkaMetrics(Supplier<Map<MetricName, ? extends Metric>> metricsSupplier) {
         this(metricsSupplier, emptyList());
@@ -121,8 +121,6 @@ class KafkaMetrics implements MeterBinder, AutoCloseable {
 
         for (Map.Entry<MetricName, ? extends Metric> entry : metrics.entrySet()) {
             MetricName name = entry.getKey();
-            if (clientId.equals(DEFAULT_VALUE) && name.tags().get(CLIENT_ID_TAG_NAME) != null)
-                clientId = name.tags().get(CLIENT_ID_TAG_NAME);
             if (METRIC_GROUP_APP_INFO.equals(name.group()))
                 if (VERSION_METRIC_NAME.equals(name.name())) {
                     kafkaVersion = (String) entry.getValue().metricValue();
@@ -168,25 +166,13 @@ class KafkaMetrics implements MeterBinder, AutoCloseable {
                 boolean hasLessTags = false;
                 for (Meter other : registry.find(meterName).meters()) {
                     List<Tag> tags = other.getId().getTags();
-
-                    // Only consider meters from the same client before filtering
-                    if (differentClient(tags)) {
-                        break;
-                    }
-
                     List<Tag> meterTagsWithCommonTags = meterTags(metric, true);
-                    if (tags.size() < meterTagsWithCommonTags.size()) {
-                        registry.remove(other);
-                    } else if (tags.size() == meterTagsWithCommonTags.size()) {
-                        // Check if already exists
-                        if (tags.equals(meterTagsWithCommonTags)) {
-                            return;
-                        } else {
-                            break;
-                        }
-                    } else {
-                        hasLessTags = true;
-                    }
+                    if (tags.size() < meterTagsWithCommonTags.size()) registry.remove(other);
+                    // Check if already exists
+                    else if (tags.size() == meterTagsWithCommonTags.size())
+                        if (tags.containsAll(meterTagsWithCommonTags) && meterTagsWithCommonTags.containsAll(tags)) return;
+                        else break;
+                    else hasLessTags = true;
                 }
                 if (hasLessTags) return;
                 List<Tag> tags = meterTags(metric);
@@ -196,7 +182,7 @@ class KafkaMetrics implements MeterBinder, AutoCloseable {
                 catch (Exception ex) {
                     String message = ex.getMessage();
                     if (message != null && message.contains("Prometheus requires")) {
-                        log.info("Failed to bind meter: " + meterName + " " + tags
+                        warnThenDebugLogger.log("Failed to bind meter: " + meterName + " " + tags
                                 + ". However, this could happen and might be restored in the next refresh.");
                     }
                     else {
@@ -205,17 +191,6 @@ class KafkaMetrics implements MeterBinder, AutoCloseable {
                 }
             });
         }
-    }
-
-    private boolean differentClient(List<Tag> tags) {
-        for (Tag tag : tags) {
-            if (tag.getKey().equals(CLIENT_ID_TAG_NAME)) {
-                if (!clientId.equals(tag.getValue())) {
-                    return true;
-                }
-            }
-        }
-        return false;
     }
 
     private void bindMeter(MeterRegistry registry, Metric metric, String name, Iterable<Tag> tags) {
