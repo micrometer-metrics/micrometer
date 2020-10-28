@@ -47,8 +47,8 @@ dependencies {
     compile 'org.apache.logging.log4j:log4j-core:2.+', optional
 
     // reactor
-    compile 'io.projectreactor:reactor-core:3.2.+', optional
-    compile 'io.projectreactor.netty:reactor-netty:0.8.+', optional
+    compile 'io.projectreactor:reactor-core:3.2.12.RELEASE', optional
+    compile 'io.projectreactor.netty:reactor-netty:0.8.6.RELEASE', optional
 
     // @Timed AOP
     compile 'org.aspectj:aspectjweaver:1.8.+', optional
