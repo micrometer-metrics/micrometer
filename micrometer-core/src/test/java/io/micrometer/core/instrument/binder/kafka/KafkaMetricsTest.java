@@ -209,7 +209,7 @@ class KafkaMetricsTest {
         };
         kafkaMetrics = new KafkaMetrics(supplier);
         MeterRegistry registry = new SimpleMeterRegistry();
-        registry.counter("kafka.b.a", "client-id", "client1", "key0", "value0");
+        registry.counter("kafka.b.a", "client-id", "client1", "key0", "value0", "kafka-version", "unknown");
         //When
         kafkaMetrics.bindTo(registry);
         //Then
@@ -265,6 +265,13 @@ class KafkaMetricsTest {
         });
         kafkaMetrics = new KafkaMetrics(supplier);
         MeterRegistry registry = new SimpleMeterRegistry();
+        // simulate PrometheusMeterRegistry restriction
+        registry.config()
+                .onMeterAdded(meter -> registry.find(meter.getId().getName()).meters().stream()
+                        .filter(m -> m.getId().getTags().size() != meter.getId().getTags().size())
+                        .findAny().ifPresent(m -> {
+                            throw new RuntimeException("meter exists with different number of tags");
+                        }));
         //When
         kafkaMetrics.bindTo(registry);
         //Then
