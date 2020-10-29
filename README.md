@@ -28,7 +28,7 @@ See [Micrometer's support policy](https://micrometer.io/docs/support) for more d
 
 ## Join the discussion
 
-Join the [Micrometer Slack](http://slack.micrometer.io) to share your questions, concerns, and feature requests.
+Join the [Micrometer Slack](https://slack.micrometer.io) to share your questions, concerns, and feature requests.
 
 ## Snapshot builds
 
