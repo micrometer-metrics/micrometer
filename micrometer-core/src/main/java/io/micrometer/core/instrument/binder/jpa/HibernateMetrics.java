@@ -15,7 +15,11 @@
  */
 package io.micrometer.core.instrument.binder.jpa;
 
-import io.micrometer.core.instrument.*;
+import io.micrometer.core.instrument.FunctionCounter;
+import io.micrometer.core.instrument.MeterRegistry;
+import io.micrometer.core.instrument.Tag;
+import io.micrometer.core.instrument.Tags;
+import io.micrometer.core.instrument.TimeGauge;
 import io.micrometer.core.instrument.binder.MeterBinder;
 import io.micrometer.core.lang.NonNullApi;
 import io.micrometer.core.lang.NonNullFields;
@@ -25,6 +29,7 @@ import org.hibernate.stat.Statistics;
 
 import javax.persistence.EntityManagerFactory;
 import javax.persistence.PersistenceException;
+import java.util.Arrays;
 import java.util.concurrent.TimeUnit;
 import java.util.function.ToDoubleFunction;
 
@@ -173,12 +178,15 @@ public class HibernateMetrics implements MeterBinder {
             Statistics::getCloseStatementCount, "status", "closed");
 
         // Second Level Caching
-        counter(registry, "hibernate.second.level.cache.requests", "The number of cacheable entities/collections successfully retrieved from the cache",
-            Statistics::getSecondLevelCacheHitCount, "result", "hit");
-        counter(registry, "hibernate.second.level.cache.requests", "The number of cacheable entities/collections not found in the cache and loaded from the database",
-            Statistics::getSecondLevelCacheMissCount, "result", "miss");
-        counter(registry, "hibernate.second.level.cache.puts", "The number of cacheable entities/collections put in the cache",
-            Statistics::getSecondLevelCachePutCount);
+        Arrays.stream(statistics.getSecondLevelCacheRegionNames())
+                .forEach(regionName ->  {
+                    counter(registry, "hibernate.second.level.cache.requests", "The number of cacheable entities/collections successfully retrieved from the cache",
+                            stats -> stats.getSecondLevelCacheStatistics(regionName).getHitCount(), "region", regionName, "result", "hit");
+                    counter(registry, "hibernate.second.level.cache.requests", "The number of cacheable entities/collections not found in the cache and loaded from the database",
+                            stats -> stats.getSecondLevelCacheStatistics(regionName).getMissCount(), "region", regionName, "result", "miss");
+                    counter(registry, "hibernate.second.level.cache.puts", "The number of cacheable entities/collections put in the cache",
+                            stats -> stats.getSecondLevelCacheStatistics(regionName).getPutCount(), "region", regionName);
+                });
 
         // Entity information
         counter(registry, "hibernate.entities.deletes", "The number of entity deletes", Statistics::getEntityDeleteCount);
