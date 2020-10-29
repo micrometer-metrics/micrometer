@@ -1,5 +1,0 @@
-# This is a Gradle generated file for dependency locking.
-# Manual edits can break the build and are not advised.
-# This file is expected to be part of source control.
-io.dropwizard.metrics:metrics-core:4.0.7
-org.slf4j:slf4j-api:1.7.30
