@@ -75,10 +75,10 @@ org.apache.httpcomponents:httpasyncclient:4.1.4
 org.apache.httpcomponents:httpclient:4.5.13
 org.apache.httpcomponents:httpcore-nio:4.4.10
 org.apache.httpcomponents:httpcore:4.4.13
-org.apache.kafka:connect-api:5.5.1-ccs
-org.apache.kafka:connect-json:5.5.1-ccs
-org.apache.kafka:kafka-clients:5.5.1-ccs
-org.apache.kafka:kafka-streams:5.5.1-ccs
+org.apache.kafka:connect-api:2.6.0
+org.apache.kafka:connect-json:2.6.0
+org.apache.kafka:kafka-clients:2.6.0
+org.apache.kafka:kafka-streams:2.6.0
 org.apache.logging.log4j:log4j-api:2.13.3
 org.apache.logging.log4j:log4j-core:2.13.3
 org.apache.tomcat.embed:tomcat-embed-core:8.5.59
@@ -128,7 +128,7 @@ org.opentest4j:opentest4j:1.2.0
 org.reactivestreams:reactive-streams:1.0.3
 org.rnorth.duct-tape:duct-tape:1.0.8
 org.rnorth.visible-assertions:visible-assertions:2.1.2
-org.rocksdb:rocksdbjni:5.18.3
+org.rocksdb:rocksdbjni:5.18.4
 org.slf4j:slf4j-api:1.7.30
 org.springframework:spring-aop:5.3.0
 org.springframework:spring-beans:5.3.0
