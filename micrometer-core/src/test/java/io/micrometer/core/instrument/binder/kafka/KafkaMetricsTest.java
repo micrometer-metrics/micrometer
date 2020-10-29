@@ -220,12 +220,12 @@ class KafkaMetricsTest {
 
         kafkaMetrics.bindTo(registry);
         assertThat(registry.getMeters()).hasSize(1);
-        assertThat(registry.getMeters().get(0).getId().getTags()).containsExactlyInAnyOrder(Tag.of("kafka-version", "unknown"), Tag.of("common", "value")); // only version
+        assertThat(registry.getMeters().get(0).getId().getTags()).containsExactlyInAnyOrder(Tag.of("kafka.version", "unknown"), Tag.of("common", "value")); // only version
 
         tags.put("key0", "value0");
         kafkaMetrics.checkAndBindMetrics(registry);
         assertThat(registry.getMeters()).hasSize(1);
-        assertThat(registry.getMeters().get(0).getId().getTags()).containsExactlyInAnyOrder(Tag.of("kafka-version", "unknown"), Tag.of("key0", "value0"), Tag.of("common", "value"));
+        assertThat(registry.getMeters().get(0).getId().getTags()).containsExactlyInAnyOrder(Tag.of("kafka.version", "unknown"), Tag.of("key0", "value0"), Tag.of("common", "value"));
     }
 
     @Issue("#2212")
@@ -288,6 +288,6 @@ class KafkaMetricsTest {
         // Then
         assertThat(registry.getMeters()).hasSize(2);
         registry.getMeters().forEach(meter -> assertThat(meter.getId().getTags())
-                .extracting(Tag::getKey).containsOnly("key0", "key1", "client-id", "kafka-version"));
+                .extracting(Tag::getKey).containsOnly("key0", "key1", "client.id", "kafka.version"));
     }
 }
