@@ -156,7 +156,7 @@ class KafkaMetrics implements MeterBinder, AutoCloseable {
                     if (tags.size() < meterTagsWithCommonTags.size()) registry.remove(other);
                     // Check if already exists
                     else if (tags.size() == meterTagsWithCommonTags.size())
-                        if (tags.containsAll(meterTagsWithCommonTags) && meterTagsWithCommonTags.containsAll(tags)) return;
+                        if (tags.containsAll(meterTagsWithCommonTags)) return;
                         else break;
                     else hasLessTags = true;
                 }
