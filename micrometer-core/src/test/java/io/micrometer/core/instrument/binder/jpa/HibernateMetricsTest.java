@@ -61,7 +61,7 @@ class HibernateMetricsTest {
         SecondLevelCacheStatistics secondLevelCacheStatistics = mock(SecondLevelCacheStatistics.class, defaultAnswer);
         doReturn(statsEnabled).when(stats).isStatisticsEnabled();
         doReturn(new String[]{"region1", "region2"}).when(stats).getSecondLevelCacheRegionNames();
-        doReturn(secondLevelCacheStatistics).when(stats).getSecondLevelCacheStatistics(anyString());
+        doReturn(secondLevelCacheStatistics).when(stats).getDomainDataRegionStatistics(anyString());
         when(sf.getStatistics()).thenReturn(stats);
         return sf;
     }
