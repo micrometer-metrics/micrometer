@@ -19,15 +19,18 @@ import io.micrometer.core.instrument.MeterRegistry;
 import io.micrometer.core.instrument.MockClock;
 import io.micrometer.core.instrument.Tag;
 import io.micrometer.core.instrument.Tags;
+import io.micrometer.core.instrument.search.MeterNotFoundException;
 import io.micrometer.core.instrument.simple.SimpleConfig;
 import io.micrometer.core.instrument.simple.SimpleMeterRegistry;
 import org.junit.jupiter.api.DisplayName;
+import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.CsvSource;
 
 import java.util.concurrent.*;
 
 import static org.assertj.core.api.AssertionsForClassTypes.assertThat;
+import static org.assertj.core.api.AssertionsForClassTypes.assertThatThrownBy;
 
 /**
  * Tests for {@link ExecutorServiceMetrics}.
@@ -249,4 +252,23 @@ class ExecutorServiceMetricsTest {
         registry.get(metricPrefix + "executor.idle").tags(userTags).tag("name", executorName).timer();
         registry.get(metricPrefix + "executor").tags(userTags).tag("name", executorName).timer();
     }
+
+    @Test
+    void newSingleThreadScheduledExecutor() {
+        String executorServiceName = "myExecutorService";
+        ExecutorServiceMetrics.monitor(registry, Executors.newSingleThreadScheduledExecutor(), executorServiceName);
+        registry.get("executor").tag("name", executorServiceName).timer();
+        registry.get("executor.completed").tag("name", executorServiceName).functionCounter();
+    }
+
+    @Test
+    void newSingleThreadScheduledExecutorWhenReflectiveAccessIsDisabled() {
+        String executorServiceName = "myExecutorService";
+        ExecutorServiceMetrics.disableIllegalReflectiveAccess();
+        ExecutorServiceMetrics.monitor(registry, Executors.newSingleThreadScheduledExecutor(), executorServiceName);
+        registry.get("executor").tag("name", executorServiceName).timer();
+        assertThatThrownBy(() -> registry.get("executor.completed").tag("name", executorServiceName).functionCounter())
+                .isExactlyInstanceOf(MeterNotFoundException.class);
+    }
+
 }
