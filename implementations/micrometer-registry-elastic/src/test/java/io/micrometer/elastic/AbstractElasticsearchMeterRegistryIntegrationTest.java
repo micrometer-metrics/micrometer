@@ -113,7 +113,7 @@ abstract class AbstractElasticsearchMeterRegistryIntegrationTest {
     }
 
     private static String getDockerImageName(String version) {
-        return "docker.elastic.co/elasticsearch/elasticsearch-oss:" + version;
+        return "docker.elastic.co/elasticsearch/elasticsearch:" + version;
     }
 
 }

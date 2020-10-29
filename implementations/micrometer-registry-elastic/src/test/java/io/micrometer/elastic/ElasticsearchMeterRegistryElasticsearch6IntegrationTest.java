@@ -25,7 +25,7 @@ class ElasticsearchMeterRegistryElasticsearch6IntegrationTest
 
     @Override
     protected String getVersion() {
-        return "6.8.6";
+        return "6.8.12";
     }
 
 }
