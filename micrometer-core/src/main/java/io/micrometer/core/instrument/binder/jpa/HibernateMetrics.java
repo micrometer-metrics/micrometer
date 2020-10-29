@@ -181,11 +181,11 @@ public class HibernateMetrics implements MeterBinder {
         Arrays.stream(statistics.getSecondLevelCacheRegionNames())
                 .forEach(regionName ->  {
                     counter(registry, "hibernate.second.level.cache.requests", "The number of cacheable entities/collections successfully retrieved from the cache",
-                            stats -> stats.getSecondLevelCacheStatistics(regionName).getHitCount(), "region", regionName, "result", "hit");
+                            stats -> stats.getDomainDataRegionStatistics(regionName).getHitCount(), "region", regionName, "result", "hit");
                     counter(registry, "hibernate.second.level.cache.requests", "The number of cacheable entities/collections not found in the cache and loaded from the database",
-                            stats -> stats.getSecondLevelCacheStatistics(regionName).getMissCount(), "region", regionName, "result", "miss");
+                            stats -> stats.getDomainDataRegionStatistics(regionName).getMissCount(), "region", regionName, "result", "miss");
                     counter(registry, "hibernate.second.level.cache.puts", "The number of cacheable entities/collections put in the cache",
-                            stats -> stats.getSecondLevelCacheStatistics(regionName).getPutCount(), "region", regionName);
+                            stats -> stats.getDomainDataRegionStatistics(regionName).getPutCount(), "region", regionName);
                 });
 
         // Entity information
