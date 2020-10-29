@@ -156,6 +156,24 @@ public class TomcatMetrics implements MeterBinder, AutoCloseable {
                     .tags(allTags)
                     .baseUnit(BaseUnits.THREADS)
                     .register(registry);
+
+            Gauge.builder("tomcat.connections.current", mBeanServer,
+                    s -> safeDouble(() -> s.getAttribute(name, "connectionCount")))
+                    .tags(allTags)
+                    .baseUnit(BaseUnits.CONNECTIONS)
+                    .register(registry);
+
+            Gauge.builder("tomcat.connections.keepalive.current", mBeanServer,
+                    s -> safeDouble(() -> s.getAttribute(name, "keepAliveCount")))
+                    .tags(allTags)
+                    .baseUnit(BaseUnits.CONNECTIONS)
+                    .register(registry);
+
+            Gauge.builder("tomcat.connections.config.max", mBeanServer,
+                    s -> safeDouble(() -> s.getAttribute(name, "maxConnections")))
+                    .tags(allTags)
+                    .baseUnit(BaseUnits.CONNECTIONS)
+                    .register(registry);
         });
     }
 
