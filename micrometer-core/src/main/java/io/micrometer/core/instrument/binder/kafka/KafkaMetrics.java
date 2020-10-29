@@ -64,7 +64,7 @@ class KafkaMetrics implements MeterBinder, AutoCloseable {
     static final String VERSION_METRIC_NAME = "version";
     static final String START_TIME_METRIC_NAME = "start-time-ms";
     static final Duration DEFAULT_REFRESH_INTERVAL = Duration.ofSeconds(60);
-    static final String KAFKA_VERSION_TAG_NAME = "kafka-version";
+    static final String KAFKA_VERSION_TAG_NAME = "kafka.version";
     static final String DEFAULT_VALUE = "unknown";
 
     private final Supplier<Map<MetricName, ? extends Metric>> metricsSupplier;
@@ -221,7 +221,7 @@ class KafkaMetrics implements MeterBinder, AutoCloseable {
 
     private List<Tag> meterTags(Metric metric, boolean includeCommonTags) {
         List<Tag> tags = new ArrayList<>();
-        metric.metricName().tags().forEach((key, value) -> tags.add(Tag.of(key, value)));
+        metric.metricName().tags().forEach((key, value) -> tags.add(Tag.of(key.replaceAll("-", "."), value)));
         tags.add(Tag.of(KAFKA_VERSION_TAG_NAME, kafkaVersion));
         extraTags.forEach(tags::add);
         if (includeCommonTags) {
