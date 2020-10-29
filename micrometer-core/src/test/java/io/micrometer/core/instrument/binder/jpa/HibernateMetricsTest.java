@@ -128,6 +128,8 @@ class HibernateMetricsTest {
         assertThat(registry.get("hibernate.cache.query.requests").tags("result", "hit").functionCounter().count()).isEqualTo(42.0d);
         assertThat(registry.get("hibernate.cache.query.requests").tags("result", "miss").functionCounter().count()).isEqualTo(42.0d);
         assertThat(registry.get("hibernate.cache.query.puts").functionCounter().count()).isEqualTo(42.0d);
+        assertThat(registry.get("hibernate.cache.query.plan").tags("result", "hit").functionCounter().count()).isEqualTo(42.0d);
+        assertThat(registry.get("hibernate.cache.query.plan").tags("result", "miss").functionCounter().count()).isEqualTo(42.0d);
     }
 
     @SuppressWarnings("deprecation")
