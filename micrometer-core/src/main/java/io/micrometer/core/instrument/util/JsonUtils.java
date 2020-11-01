@@ -74,8 +74,8 @@ public final class JsonUtils {
     /**
      * Print a new line with indention at the beginning of the new line.
      *
-     * @param indentLevel
-     * @param stringBuilder
+     * @param indentLevel The indention level to use.
+     * @param stringBuilder The string builder to append it to.
      */
     private static void appendIndentedNewLine(int indentLevel, StringBuilder stringBuilder) {
         stringBuilder.append("\n");

@@ -112,7 +112,7 @@ public class TimeWindowFixedBoundaryHistogram
     class FixedBoundaryHistogram {
         /**
          * For recording efficiency, this is a normal histogram. We turn these values into
-         * cumulative counts only on calls to {@link #countAtValue(long)}.
+         * cumulative counts only on calls to {@link #countAtValue(double)}.
          */
         final AtomicLongArray values;
 

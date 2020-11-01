@@ -433,8 +433,9 @@ public class PrometheusMeterRegistry extends MeterRegistry {
     }
 
     /**
-     * For use with {@link MeterRegistry.Config#onMeterRegistrationFailed(BiConsumer)} when you want meters with the same name
-     * but different tags to cause an unchecked exception.
+     * For use with {@link io.micrometer.core.instrument.MeterRegistry.Config#onMeterRegistrationFailed(BiConsumer)
+     * MeterRegistry.Config#onMeterRegistrationFailed(BiConsumer)} when you want meters with the same name but different
+     * tags to cause an unchecked exception.
      *
      * @return This registry
      * @since 1.6.0
