@@ -78,10 +78,14 @@ public class JvmHeapPressureMetrics implements MeterBinder, AutoCloseable {
                 .tag("area", "heap")
                 .description("The percentage of old gen heap used after the last GC event, in the range [0..1]")
                 .baseUnit(BaseUnits.PERCENT);
-        if (JvmMemory.isOldGenPool(longLivedPoolName))
-            builder.tag("generation", "old");
-        else
-            builder.tag("pool", longLivedPoolName);
+
+        if ( longLivedPoolName != null ) {
+            if (JvmMemory.isOldGenPool(longLivedPoolName))
+                builder.tag("generation", "old");
+            else
+                builder.tag("pool", longLivedPoolName);
+        }
+
         builder.register(registry);
 
         Gauge.builder("jvm.gc.overhead", gcPauseSum,

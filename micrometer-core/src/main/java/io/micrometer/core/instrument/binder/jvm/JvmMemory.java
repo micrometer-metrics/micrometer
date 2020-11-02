@@ -43,11 +43,11 @@ class JvmMemory {
     }
 
     static boolean isYoungGenPool(String name) {
-        return name.endsWith("Eden Space");
+        return name != null && name.endsWith("Eden Space");
     }
 
     static boolean isOldGenPool(String name) {
-        return name.endsWith("Old Gen") || name.endsWith("Tenured Gen");
+        return name != null && (name.endsWith("Old Gen") || name.endsWith("Tenured Gen"));
     }
 
     static boolean isNonGenerationalHeapPool(String name) {
