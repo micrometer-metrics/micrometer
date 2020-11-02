@@ -72,12 +72,15 @@ public class SysdigStatsdLineBuilder extends FlavorStatsdLineBuilder {
     }
 
     private String tagsByStatistic(@Nullable Statistic stat) {
-        return stat == null ? tagsNoStat : tags.computeIfAbsent(stat, this::sysdigTag);
-    }
-
-    private String sysdigTag(@Nullable Statistic stat) {
+        if (stat == null) {
+            return tagsNoStat;
+        }
+        String tags = this.tags.get(stat);
+        if (tags != null) {
+            return tags;
+        }
         synchronized (conventionTagsLock) {
-            return tags(stat, conventionTags, "=", "#");
+            return this.tags.computeIfAbsent(stat, (key) -> tags(stat, conventionTags, "=", "#"));
         }
     }
 }
