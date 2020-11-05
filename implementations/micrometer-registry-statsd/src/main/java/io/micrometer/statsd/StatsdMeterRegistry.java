@@ -95,8 +95,8 @@ public class StatsdMeterRegistry extends MeterRegistry {
     }
 
     /**
-     * Use this constructor for Etsy-flavored StatsD when you need to influence the way Micrometer's dimensional {@link Meter.Id}
-     * is written to a flat hierarchical name.
+     * Use this constructor for Etsy-flavored StatsD when you need to influence the way Micrometer's dimensional
+     * {@link io.micrometer.core.instrument.Meter.Id Meter.Id} is written to a flat hierarchical name.
      *
      * @param config     The StatsD configuration.
      * @param nameMapper A strategy for flattening dimensional IDs.
