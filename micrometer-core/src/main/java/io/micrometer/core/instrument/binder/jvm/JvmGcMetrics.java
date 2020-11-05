@@ -162,7 +162,8 @@ public class JvmGcMetrics implements MeterBinder, AutoCloseable {
                 final Map<String, MemoryUsage> after = gcInfo.getMemoryUsageAfterGc();
 
                 if (nonGenerationalMemoryPool != null) {
-                    countPoolSizeDelta(gcInfo, allocatedBytes, heapPoolSizeAfterGc, nonGenerationalMemoryPool);
+                    countPoolSizeDelta(gcInfo.getMemoryUsageBeforeGc(), gcInfo.getMemoryUsageAfterGc(), allocatedBytes,
+                            heapPoolSizeAfterGc, nonGenerationalMemoryPool);
                     if (after.get(nonGenerationalMemoryPool).getUsed() < before.get(nonGenerationalMemoryPool).getUsed()) {
                         liveDataSize.set(after.get(nonGenerationalMemoryPool).getUsed());
                         final long longLivedMaxAfter = after.get(nonGenerationalMemoryPool).getMax();
@@ -190,7 +191,8 @@ public class JvmGcMetrics implements MeterBinder, AutoCloseable {
                 }
 
                 if (youngGenPoolName != null) {
-                    countPoolSizeDelta(gcInfo, allocatedBytes, heapPoolSizeAfterGc, youngGenPoolName);
+                    countPoolSizeDelta(gcInfo.getMemoryUsageBeforeGc(), gcInfo.getMemoryUsageAfterGc(), allocatedBytes,
+                            heapPoolSizeAfterGc, youngGenPoolName);
                 }
             };
             NotificationEmitter notificationEmitter = (NotificationEmitter) mbean;
@@ -204,9 +206,8 @@ public class JvmGcMetrics implements MeterBinder, AutoCloseable {
         }
     }
 
-    private void countPoolSizeDelta(GcInfo gcInfo, Counter counter, AtomicLong previousPoolSize, String poolName) {
-        Map<String, MemoryUsage> before = gcInfo.getMemoryUsageBeforeGc();
-        Map<String, MemoryUsage> after = gcInfo.getMemoryUsageAfterGc();
+    private void countPoolSizeDelta(Map<String, MemoryUsage> before, Map<String, MemoryUsage> after, Counter counter,
+            AtomicLong previousPoolSize, String poolName) {
         final long beforeBytes = before.get(poolName).getUsed();
         final long afterBytes = after.get(poolName).getUsed();
         final long delta = beforeBytes - previousPoolSize.get();
