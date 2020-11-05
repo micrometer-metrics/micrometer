@@ -40,9 +40,6 @@ public final class Search {
     private final Set<String> requiredTagKeys = new HashSet<>();
     private final Map<String, Collection<Predicate<String>>> tagMatches = new HashMap<>();
 
-    @Nullable
-    private String exactNameMatch;
-
     private Search(MeterRegistry registry) {
         this.registry = registry;
     }
@@ -54,9 +51,7 @@ public final class Search {
      * @return This search.
      */
     public Search name(String exactName) {
-        Search search = name(n -> n.equals(exactName));
-        this.exactNameMatch = exactName;
-        return search;
+        return name(n -> n.equals(exactName));
     }
 
     /**
@@ -67,7 +62,6 @@ public final class Search {
      */
     public Search name(@Nullable Predicate<String> nameMatches) {
         if (nameMatches != null) {
-            this.exactNameMatch = null;
             this.nameMatches = nameMatches;
         }
         return this;
