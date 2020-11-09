@@ -102,6 +102,7 @@ class TimestreamConfigTest {
             public String tableName() {
                 return "tablename";
             }
+
             @Override
             public String get(String key) {
                 return null;
@@ -125,6 +126,7 @@ class TimestreamConfigTest {
             public String tableName() {
                 return null;
             }
+
             @Override
             public String get(String key) {
                 return null;

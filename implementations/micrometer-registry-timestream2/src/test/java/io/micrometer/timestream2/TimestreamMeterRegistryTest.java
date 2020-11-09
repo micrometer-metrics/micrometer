@@ -26,18 +26,18 @@ import software.amazon.awssdk.services.timestreamwrite.model.Record;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import java.util.Optional;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Predicate;
-import java.util.function.Supplier;
-import java.util.stream.Stream;
+import java.util.stream.Collectors;
 
 import static io.micrometer.core.instrument.Meter.Id;
 import static io.micrometer.core.instrument.Meter.Type;
-import static io.micrometer.core.instrument.Meter.Type.DISTRIBUTION_SUMMARY;
-import static io.micrometer.core.instrument.Meter.Type.TIMER;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.Mockito.*;
+import static software.amazon.awssdk.services.timestreamwrite.model.MeasureValueType.BIGINT;
+import static software.amazon.awssdk.services.timestreamwrite.model.MeasureValueType.DOUBLE;
 
 /**
  * Tests for {@link TimestreamMeterRegistry}.
@@ -93,13 +93,13 @@ class TimestreamMeterRegistryTest {
     @Test
     void batchGetMetricName() {
         Id id = new Id("name", Tags.empty(), null, null, Type.COUNTER);
-        assertThat(registry.new Batch().getMetricName(id, "suffix")).isEqualTo("name.suffix");
+        assertThat(registry.new Batch().getMetricName(id, "suffix")).isEqualTo("name.total.suffix");
     }
 
     @Test
     void batchGetMetricNameWhenSuffixIsNullShouldNotAppend() {
         Id id = new Id("name", Tags.empty(), null, null, Type.COUNTER);
-        assertThat(registry.new Batch().getMetricName(id, null)).isEqualTo("name");
+        assertThat(registry.new Batch().getMetricName(id, null)).isEqualTo("name.total");
     }
 
     @Test
@@ -114,12 +114,12 @@ class TimestreamMeterRegistryTest {
         FunctionCounter counter = FunctionCounter.builder("my.positive.infinity", Double.POSITIVE_INFINITY, Number::doubleValue).register(registry);
         clock.add(config.step());
         assertThat(registry.new Batch().functionCounterData(counter).findFirst().get().getValueForField("MeasureValue", String.class).get())
-                .isEqualTo(String.valueOf(Double.MAX_VALUE));
+                .isEqualTo(String.valueOf(Long.MAX_VALUE));
 
         counter = FunctionCounter.builder("my.negative.infinity", Double.NEGATIVE_INFINITY, Number::doubleValue).register(registry);
         clock.add(config.step());
         assertThat(registry.new Batch().functionCounterData(counter).findFirst().get().getValueForField("MeasureValue", String.class).get())
-                .isEqualTo(String.valueOf("-" + Double.MAX_VALUE));
+                .isEqualTo(String.valueOf(Long.MIN_VALUE));
     }
 
     @Test
@@ -127,7 +127,7 @@ class TimestreamMeterRegistryTest {
         Measurement measurement = new Measurement(() -> Double.NaN, Statistic.VALUE);
         List<Measurement> measurements = Arrays.asList(measurement);
         Meter meter = Meter.builder("my.meter", Type.GAUGE, measurements).register(this.registry);
-        assertThat(registry.new Batch().metricData(meter)).isEmpty();
+        assertThat(registry.new Batch().meterData(meter)).isEmpty();
     }
 
     @Test
@@ -137,7 +137,7 @@ class TimestreamMeterRegistryTest {
         Measurement measurement3 = new Measurement(() -> 2d, Statistic.VALUE);
         List<Measurement> measurements = Arrays.asList(measurement1, measurement2, measurement3);
         Meter meter = Meter.builder("my.meter", Type.GAUGE, measurements).register(this.registry);
-        assertThat(registry.new Batch().metricData(meter)).hasSize(2);
+        assertThat(registry.new Batch().meterData(meter)).hasSize(2);
     }
 
     @Test
@@ -149,12 +149,218 @@ class TimestreamMeterRegistryTest {
                         Dimension.builder().name("accepted").value("foo").dimensionValueType(DimensionValueType.VARCHAR).build()));
     }
 
+
+    //Batch tests
     @Test
-    void functionTimerData() {
-        FunctionTimer timer = FunctionTimer.builder("my.function.timer", 1d, Number::longValue, Number::doubleValue,
+    void gaugeData() {
+        Gauge gauge = Gauge.builder("my.function.gauge", () -> 1d).register(registry);
+        List<Record> metricDataStream = registry.new Batch().gaugeData(gauge).collect(Collectors.toList());
+        assertThat(metricDataStream).hasSize(1);
+
+        Optional<Record> record = metricDataStream.stream().filter(hasMetric("my.function.gauge")).findFirst();
+        assertThat(record.isPresent()).isTrue();
+        assertThat(record.get().measureValue()).isEqualTo("1.0");
+        assertThat(record.get().measureValueType()).isEqualTo(DOUBLE);
+    }
+
+    @Test
+    void counterShouldReturnRecordStream() {
+        Counter counter = Counter.builder("my.function.counter").register(registry);
+        counter.increment();
+        clock.add(config.step());
+        List<Record> metricDataStream = registry.new Batch().counterData(counter).collect(Collectors.toList());
+        assertThat(metricDataStream).hasSize(1);
+        Optional<Record> record = metricDataStream.stream().filter(hasMetric("my.function.counter.total")).findFirst();
+        assertThat(record.isPresent()).isTrue();
+        assertThat(record.get().measureValue()).isEqualTo("1");
+        assertThat(record.get().measureValueType()).isEqualTo(BIGINT);
+    }
+
+    @Test
+    void timerDataShouldNotHaveAverageMetricWhenNoEventHappened() {
+        Timer timer = Timer.builder("my.timer").register(registry);
+
+        List<Record> metricDataStream = registry.new Batch().timerData(timer).collect(Collectors.toList());
+        assertThat(metricDataStream).hasSize(2);
+
+        Optional<Record> record_count = metricDataStream.stream().filter(hasMetric("my.timer.seconds.count")).findFirst();
+        assertThat(record_count.isPresent()).isTrue();
+        assertThat(record_count.get().measureValue()).isEqualTo("0");
+        assertThat(record_count.get().measureValueType()).isEqualTo(BIGINT);
+
+        Optional<Record> record_sum = metricDataStream.stream().filter(hasMetric("my.timer.seconds.sum")).findFirst();
+        assertThat(record_sum.isPresent()).isTrue();
+        assertThat(record_sum.get().measureValue()).isEqualTo("0.0");
+        assertThat(record_sum.get().measureValueType()).isEqualTo(DOUBLE);
+    }
+
+    @Test
+    void timerDataShouldHaveAggregateMetricsWhenAtLeastOneEventHappened() {
+        Timer timer = Timer.builder("my.timer").register(registry);
+        timer.record(10, TimeUnit.SECONDS);
+        timer.record(20, TimeUnit.SECONDS);
+        clock.add(config.step());
+
+        List<Record> metricDataStream = registry.new Batch().timerData(timer).collect(Collectors.toList());
+        assertThat(metricDataStream).hasSize(4);
+
+        Optional<Record> record_count = metricDataStream.stream().filter(hasMetric("my.timer.seconds.count")).findFirst();
+        assertThat(record_count.isPresent()).isTrue();
+        assertThat(record_count.get().measureValue()).isEqualTo("2");
+        assertThat(record_count.get().measureValueType()).isEqualTo(BIGINT);
+
+        Optional<Record> record_sum = metricDataStream.stream().filter(hasMetric("my.timer.seconds.sum")).findFirst();
+        assertThat(record_sum.isPresent()).isTrue();
+        assertThat(record_sum.get().measureValue()).isEqualTo("30.0");
+        assertThat(record_sum.get().measureValueType()).isEqualTo(DOUBLE);
+
+        Optional<Record> record_avg = metricDataStream.stream().filter(hasMetric("my.timer.seconds.avg")).findFirst();
+        assertThat(record_avg.isPresent()).isTrue();
+        assertThat(record_avg.get().measureValue()).isEqualTo("15.0");
+        assertThat(record_avg.get().measureValueType()).isEqualTo(DOUBLE);
+
+        Optional<Record> record_max = metricDataStream.stream().filter(hasMetric("my.timer.seconds.max")).findFirst();
+        assertThat(record_max.isPresent()).isTrue();
+        assertThat(record_max.get().measureValue()).isEqualTo("20.0");
+        assertThat(record_max.get().measureValueType()).isEqualTo(DOUBLE);
+    }
+
+
+    @Test
+    void distributionSummaryShouldHaveAggregateMetricWhenAtLeastOneEventHappened() {
+        DistributionSummary distributionSummary = DistributionSummary.builder("my.function.distributionSummary").register(registry);
+        distributionSummary.record(10);
+        distributionSummary.record(20);
+        clock.add(config.step());
+        List<Record> metricDataStream = registry.new Batch().summaryData(distributionSummary).collect(Collectors.toList());
+        assertThat(metricDataStream).hasSize(4);
+
+        Optional<Record> record_count = metricDataStream.stream().filter(hasMetric("my.function.distributionSummary.count")).findFirst();
+        assertThat(record_count.isPresent()).isTrue();
+        assertThat(record_count.get().measureValue()).isEqualTo("2");
+        assertThat(record_count.get().measureValueType()).isEqualTo(BIGINT);
+
+        Optional<Record> record_sum = metricDataStream.stream().filter(hasMetric("my.function.distributionSummary.sum")).findFirst();
+        assertThat(record_sum.isPresent()).isTrue();
+        assertThat(record_sum.get().measureValue()).isEqualTo("30.0");
+        assertThat(record_sum.get().measureValueType()).isEqualTo(DOUBLE);
+
+        Optional<Record> record_avg = metricDataStream.stream().filter(hasMetric("my.function.distributionSummary.avg")).findFirst();
+        assertThat(record_avg.isPresent()).isTrue();
+        assertThat(record_avg.get().measureValue()).isEqualTo("15.0");
+        assertThat(record_avg.get().measureValueType()).isEqualTo(DOUBLE);
+
+        Optional<Record> record_max = metricDataStream.stream().filter(hasMetric("my.function.distributionSummary.max")).findFirst();
+        assertThat(record_max.isPresent()).isTrue();
+        assertThat(record_max.get().measureValue()).isEqualTo("20.0");
+        assertThat(record_max.get().measureValueType()).isEqualTo(DOUBLE);
+    }
+
+    @Test
+    void distributionSummaryShouldNotHaveAggregateMetricWhenNoEventHappened() {
+        DistributionSummary distributionSummary = DistributionSummary.builder("my.function.distributionSummary").register(registry);
+        List<Record> metricDataStream = registry.new Batch().summaryData(distributionSummary).collect(Collectors.toList());
+        assertThat(metricDataStream).hasSize(2);
+
+        Optional<Record> record_count = metricDataStream.stream().filter(hasMetric("my.function.distributionSummary.count")).findFirst();
+        assertThat(record_count.isPresent()).isTrue();
+        assertThat(record_count.get().measureValue()).isEqualTo("0");
+        assertThat(record_count.get().measureValueType()).isEqualTo(BIGINT);
+
+        Optional<Record> record_sum = metricDataStream.stream().filter(hasMetric("my.function.distributionSummary.sum")).findFirst();
+        assertThat(record_sum.isPresent()).isTrue();
+        assertThat(record_sum.get().measureValue()).isEqualTo("0.0");
+        assertThat(record_sum.get().measureValueType()).isEqualTo(DOUBLE);
+
+    }
+
+
+    @Test
+    void longTaskTimerData() {
+        LongTaskTimer longTaskTimer = LongTaskTimer.builder("my.function.longTaskTimer").register(registry);
+        clock.add(config.step());
+        List<Record> metricDataStream = registry.new Batch().longTaskTimerData(longTaskTimer).collect(Collectors.toList());
+        assertThat(metricDataStream).hasSize(2);
+
+        Optional<Record> record_count = metricDataStream.stream().filter(hasMetric("my.function.longTaskTimer.seconds.active.count")).findFirst();
+        assertThat(record_count.isPresent()).isTrue();
+        assertThat(record_count.get().measureValue()).isEqualTo("0");
+        assertThat(record_count.get().measureValueType()).isEqualTo(BIGINT);
+
+        Optional<Record> record_sum = metricDataStream.stream().filter(hasMetric("my.function.longTaskTimer.seconds.duration.sum")).findFirst();
+        assertThat(record_sum.isPresent()).isTrue();
+        assertThat(record_sum.get().measureValue()).isEqualTo("0.0");
+        assertThat(record_sum.get().measureValueType()).isEqualTo(DOUBLE);
+    }
+
+
+    @Test
+    void timeGaugeData() {
+        TimeGauge gauge = TimeGauge.builder("my.function.timeGauge", 1d, TimeUnit.MILLISECONDS, value -> 20).register(registry);
+        clock.add(config.step());
+        List<Record> metricDataStream = registry.new Batch().timeGaugeData(gauge).collect(Collectors.toList());
+
+        assertThat(metricDataStream).hasSize(1);
+        Optional<Record> record_duration = metricDataStream.stream().filter(hasMetric("my.function.timeGauge.seconds")).findFirst();
+        assertThat(record_duration.isPresent()).isTrue();
+        assertThat(record_duration.get().measureValue()).isEqualTo("0.02");
+        assertThat(record_duration.get().measureValueType()).isEqualTo(DOUBLE);
+    }
+
+
+    @Test
+    void functionCounterShouldReturnNotEmptyStream() {
+        FunctionCounter functionCounter = FunctionCounter.builder("my.function.functionCounter", 1d, value -> 10).register(registry);
+        clock.add(config.step());
+        List<Record> metricDataStream = registry.new Batch().functionCounterData(functionCounter).collect(Collectors.toList());
+        assertThat(metricDataStream).hasSize(1);
+
+        Optional<Record> record_counter = metricDataStream.stream().filter(hasMetric("my.function.functionCounter.total")).findFirst();
+        assertThat(record_counter.isPresent()).isTrue();
+        assertThat(record_counter.get().measureValue()).isEqualTo("10");
+        assertThat(record_counter.get().measureValueType()).isEqualTo(BIGINT);
+    }
+
+    @Test
+    void functionTimerDataShouldHaveAverageMetricWhenAtLeastOneEventHappened() {
+        FunctionTimer timer = FunctionTimer.builder("my.function.timer", 1d, value -> 2, value -> 30,
                 TimeUnit.MILLISECONDS).register(registry);
         clock.add(config.step());
-        assertThat(registry.new Batch().functionTimerData(timer)).hasSize(3);
+
+        List<Record> metricDataStream = registry.new Batch().functionTimerData(timer).collect(Collectors.toList());
+        assertThat(metricDataStream).hasSize(3);
+
+        Optional<Record> record_count = metricDataStream.stream().filter(hasMetric("my.function.timer.seconds.count")).findFirst();
+        assertThat(record_count.isPresent()).isTrue();
+        assertThat(record_count.get().measureValue()).isEqualTo("2");
+        assertThat(record_count.get().measureValueType()).isEqualTo(BIGINT);
+
+        Optional<Record> record_sum = metricDataStream.stream().filter(hasMetric("my.function.timer.seconds.sum")).findFirst();
+        assertThat(record_sum.isPresent()).isTrue();
+        assertThat(record_sum.get().measureValue()).isEqualTo("0.03");
+        assertThat(record_sum.get().measureValueType()).isEqualTo(DOUBLE);
+
+        Optional<Record> record_avg = metricDataStream.stream().filter(hasMetric("my.function.timer.seconds.avg")).findFirst();
+        assertThat(record_avg.isPresent()).isTrue();
+        assertThat(record_avg.get().measureValue()).isEqualTo("0.015");
+        assertThat(record_avg.get().measureValueType()).isEqualTo(DOUBLE);
+    }
+
+    @Test
+    void functionTimerDataShouldNotHaveAverageMetricWhenNoEventHappened() {
+        FunctionTimer timer = FunctionTimer.builder("my.function.timer", 1d, value -> 0, value -> 0,
+                TimeUnit.MILLISECONDS).register(registry);
+        List<Record> metricDataStream = registry.new Batch().functionTimerData(timer).collect(Collectors.toList());
+        assertThat(metricDataStream).hasSize(2);
+        Optional<Record> record_count = metricDataStream.stream().filter(hasMetric("my.function.timer.seconds.count")).findFirst();
+        assertThat(record_count.isPresent()).isTrue();
+        assertThat(record_count.get().measureValue()).isEqualTo("0");
+        assertThat(record_count.get().measureValueType()).isEqualTo(BIGINT);
+
+        Optional<Record> record_sum = metricDataStream.stream().filter(hasMetric("my.function.timer.seconds.sum")).findFirst();
+        assertThat(record_sum.isPresent()).isTrue();
+        assertThat(record_sum.get().measureValue()).isEqualTo("0.0");
+        assertThat(record_sum.get().measureValueType()).isEqualTo(DOUBLE);
     }
 
     @Test
@@ -165,81 +371,6 @@ class TimestreamMeterRegistryTest {
         assertThat(registry.new Batch().functionTimerData(timer)).isEmpty();
     }
 
-    @Test
-    void shouldAddFunctionTimerAggregateMetricWhenAtLeastOneEventHappened() {
-        FunctionTimer timer = mock(FunctionTimer.class);
-        Id meterId = new Id(METER_NAME, Tags.empty(), null, null, TIMER);
-        when(timer.getId()).thenReturn(meterId);
-        when(timer.count()).thenReturn(2.0);
-
-        Stream<Record> metricDatumStream = registryBatch.functionTimerData(timer);
-
-        assertThat(metricDatumStream.anyMatch(hasAvgMetric(meterId))).isTrue();
-    }
-
-    @Test
-    void shouldNotAddFunctionTimerAggregateMetricWhenNoEventHappened() {
-        FunctionTimer timer = mock(FunctionTimer.class);
-        Id meterId = new Id(METER_NAME, Tags.empty(), null, null, TIMER);
-        when(timer.getId()).thenReturn(meterId);
-        when(timer.count()).thenReturn(0.0);
-
-        Stream<Record> metricDatumStream = registryBatch.functionTimerData(timer);
-
-        assertThat(metricDatumStream.noneMatch(hasAvgMetric(meterId))).isTrue();
-    }
-
-    @Test
-    void shouldAddTimerAggregateMetricWhenAtLeastOneEventHappened() {
-        Timer timer = mock(Timer.class);
-        Id meterId = new Id(METER_NAME, Tags.empty(), null, null, TIMER);
-        when(timer.getId()).thenReturn(meterId);
-        when(timer.count()).thenReturn(2L);
-
-        Supplier<Stream<Record>> streamSupplier = () -> registryBatch.timerData(timer);
-
-        assertThat(streamSupplier.get().anyMatch(hasAvgMetric(meterId))).isTrue();
-        assertThat(streamSupplier.get().anyMatch(hasMaxMetric(meterId))).isTrue();
-    }
-
-    @Test
-    void shouldNotAddTimerAggregateMetricWhenNoEventHappened() {
-        Timer timer = mock(Timer.class);
-        Id meterId = new Id(METER_NAME, Tags.empty(), null, null, TIMER);
-        when(timer.getId()).thenReturn(meterId);
-        when(timer.count()).thenReturn(0L);
-
-        Supplier<Stream<Record>> streamSupplier = () -> registryBatch.timerData(timer);
-
-        assertThat(streamSupplier.get().noneMatch(hasAvgMetric(meterId))).isTrue();
-        assertThat(streamSupplier.get().noneMatch(hasMaxMetric(meterId))).isTrue();
-    }
-
-    @Test
-    void shouldAddDistributionSumAggregateMetricWhenAtLeastOneEventHappened() {
-        DistributionSummary summary = mock(DistributionSummary.class);
-        Id meterId = new Id(METER_NAME, Tags.empty(), null, null, DISTRIBUTION_SUMMARY);
-        when(summary.getId()).thenReturn(meterId);
-        when(summary.count()).thenReturn(2L);
-
-        Supplier<Stream<Record>> streamSupplier = () -> registryBatch.summaryData(summary);
-
-        assertThat(streamSupplier.get().anyMatch(hasAvgMetric(meterId))).isTrue();
-        assertThat(streamSupplier.get().anyMatch(hasMaxMetric(meterId))).isTrue();
-    }
-
-    @Test
-    void shouldNotAddDistributionSumAggregateMetricWhenNoEventHappened() {
-        DistributionSummary summary = mock(DistributionSummary.class);
-        Id meterId = new Id(METER_NAME, Tags.empty(), null, null, DISTRIBUTION_SUMMARY);
-        when(summary.getId()).thenReturn(meterId);
-        when(summary.count()).thenReturn(0L);
-
-        Supplier<Stream<Record>> streamSupplier = () -> registryBatch.summaryData(summary);
-
-        assertThat(streamSupplier.get().noneMatch(hasAvgMetric(meterId))).isTrue();
-        assertThat(streamSupplier.get().noneMatch(hasMaxMetric(meterId))).isTrue();
-    }
 
     @Test
     void batchSizeShouldWorkOnRecords() throws InterruptedException {
@@ -260,17 +391,7 @@ class TimestreamMeterRegistryTest {
         assertThat(allValues.get(1)).hasSize(20);
     }
 
-
-    @Test
-    void toWriteRecordsRequest() throws InterruptedException {
-
-    }
-
-    private Predicate<Record> hasAvgMetric(Id id) {
-        return e -> e.measureName().equals(id.getName().concat(".avg"));
-    }
-
-    private Predicate<Record> hasMaxMetric(Id id) {
-        return e -> e.measureName().equals(id.getName().concat(".max"));
+    private Predicate<Record> hasMetric(String id) {
+        return e -> e.measureName().equals(id);
     }
 }

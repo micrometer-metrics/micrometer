@@ -15,10 +15,13 @@
  */
 package io.micrometer.timestream2;
 
+import io.micrometer.core.instrument.Meter;
+import io.micrometer.core.instrument.binder.BaseUnits;
 import io.micrometer.core.instrument.config.NamingConvention;
 import org.junit.jupiter.api.Test;
 
 import java.util.Collections;
+import java.util.concurrent.TimeUnit;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -28,16 +31,56 @@ import static org.assertj.core.api.Assertions.assertThat;
  * @author Guillaume Hiron
  */
 class TimestreamNamingConventionTest {
-    private final NamingConvention namingConvention = new TimestreamNamingConvention();
+    private final NamingConvention convention = new TimestreamNamingConvention();
 
     @Test
     void truncateTagKey() {
-        assertThat(namingConvention.tagKey(repeat("x", 256))).hasSize(255);
+        assertThat(convention.tagKey(repeat("x", 257))).hasSize(256);
     }
 
     @Test
     void truncateTagValue() {
-        assertThat(namingConvention.tagValue(repeat("x", 2048))).hasSize(2047);
+        assertThat(convention.tagValue(repeat("x", 2049))).hasSize(2048);
+    }
+
+    @Test
+    void formatName() {
+        assertThat(convention.name("123abc/{:id}水", Meter.Type.GAUGE)).startsWith("123abc/{:id}水");
+    }
+
+    @Test
+    void formatTagKey() {
+        assertThat(convention.tagKey("123abc/{:id}水")).startsWith("123abc/{:id}水");
+    }
+
+    @Test
+    void unitsAreAppendedToTimers() {
+        assertThat(convention.name("timer", Meter.Type.TIMER, TimeUnit.SECONDS.toString().toLowerCase())).isEqualTo("timer.seconds");
+        assertThat(convention.name("timer", Meter.Type.LONG_TASK_TIMER, TimeUnit.SECONDS.toString().toLowerCase())).isEqualTo("timer.seconds");
+        assertThat(convention.name("timer.duration", Meter.Type.LONG_TASK_TIMER, TimeUnit.SECONDS.toString().toLowerCase())).isEqualTo("timer.duration.seconds");
+    }
+
+    @Test
+    void unitsAreAppendedToDistributionSummaries() {
+        assertThat(convention.name("response.size", Meter.Type.DISTRIBUTION_SUMMARY, BaseUnits.BYTES)).isEqualTo("response.size.bytes");
+        assertThat(convention.name("summary", Meter.Type.DISTRIBUTION_SUMMARY)).isEqualTo("summary");
+    }
+
+    @Test
+    void unitsAreAppendedToCounters() {
+        assertThat(convention.name("response.size", Meter.Type.COUNTER, BaseUnits.BYTES)).isEqualTo("response.size.bytes.total");
+        assertThat(convention.name("counter", Meter.Type.COUNTER)).isEqualTo("counter.total");
+    }
+
+    @Test
+    void unitsAreAppendedToGauges() {
+        assertThat(convention.name("response.size", Meter.Type.GAUGE, BaseUnits.BYTES)).isEqualTo("response.size.bytes");
+        assertThat(convention.name("gauge", Meter.Type.GAUGE)).isEqualTo("gauge");
+    }
+
+    @Test
+    void dotNotationIsConvertedToSnakeCase() {
+        assertThat(convention.name("gauge.size", Meter.Type.GAUGE)).isEqualTo("gauge.size");
     }
 
     private String repeat(String s, int repeat) {

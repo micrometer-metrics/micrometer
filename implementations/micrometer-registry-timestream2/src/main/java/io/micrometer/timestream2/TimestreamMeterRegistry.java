@@ -37,8 +37,11 @@ import java.util.concurrent.ThreadFactory;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Stream;
 
+import static io.micrometer.timestream2.TimestreamNamingConvention.MAX_MEASURE_NAME_LENGTH;
 import static java.util.stream.Collectors.toList;
 import static java.util.stream.StreamSupport.stream;
+import static software.amazon.awssdk.services.timestreamwrite.model.MeasureValueType.BIGINT;
+import static software.amazon.awssdk.services.timestreamwrite.model.MeasureValueType.DOUBLE;
 import static software.amazon.awssdk.services.timestreamwrite.model.TimeUnit.SECONDS;
 
 /**
@@ -77,6 +80,10 @@ public class TimestreamMeterRegistry extends StepMeterRegistry {
         start(threadFactory);
     }
 
+    public static Builder builder() {
+        return new Builder().config(key -> null);
+    }
+
     private void checkClient(TimestreamWriteAsyncClient client) {
         Objects.requireNonNull(client);
     }
@@ -101,8 +108,10 @@ public class TimestreamMeterRegistry extends StepMeterRegistry {
                 batch::timeGaugeData,
                 batch::functionCounterData,
                 batch::functionTimerData,
-                batch::metricData)
-        ).collect(toList());
+                batch::meterData)
+        )
+                .filter(Objects::nonNull)
+                .collect(toList());
     }
 
     //VisibleForTesting
@@ -128,14 +137,10 @@ public class TimestreamMeterRegistry extends StepMeterRegistry {
                 });
     }
 
-    public static Builder builder() {
-        return new Builder().config(key -> null);
-    }
-
     @Override
     @NonNull
     protected TimeUnit getBaseTimeUnit() {
-        return TimeUnit.MILLISECONDS;
+        return TimeUnit.SECONDS;
     }
 
     public static class Builder {
@@ -178,27 +183,29 @@ public class TimestreamMeterRegistry extends StepMeterRegistry {
     class Batch {
         private final Instant timestamp = Instant.ofEpochMilli(clock.wallTime());
 
-        private Stream<Record> gaugeData(Gauge gauge) {
-            Record record = record(gauge.getId(), "value", MeasureValueType.DOUBLE, gauge.value());
+        // VisibleForTesting
+        Stream<Record> gaugeData(Gauge gauge) {
+            Record record = record(gauge.getId(), null, DOUBLE, gauge.value());
             if (record == null) {
                 return Stream.empty();
             }
             return Stream.of(record);
         }
 
-        private Stream<Record> counterData(Counter counter) {
-            return Stream.of(record(counter.getId(), "count", MeasureValueType.BIGINT, counter.count()));
+        // VisibleForTesting
+        Stream<Record> counterData(Counter counter) {
+            return Stream.of(record(counter.getId(), null, BIGINT, counter.count()));
         }
 
         // VisibleForTesting
         Stream<Record> timerData(Timer timer) {
             Stream.Builder<Record> metrics = Stream.builder();
-            metrics.add(record(timer.getId(), "sum", MeasureValueType.DOUBLE, timer.totalTime(getBaseTimeUnit())));
+            metrics.add(record(timer.getId(), "sum", DOUBLE, timer.totalTime(getBaseTimeUnit())));
             long count = timer.count();
-            metrics.add(record(timer.getId(), "count", MeasureValueType.BIGINT, count));
+            metrics.add(record(timer.getId(), "count", BIGINT, count));
             if (count > 0) {
-                metrics.add(record(timer.getId(), "avg", MeasureValueType.DOUBLE, timer.mean(getBaseTimeUnit())));
-                metrics.add(record(timer.getId(), "max", MeasureValueType.DOUBLE, timer.max(getBaseTimeUnit())));
+                metrics.add(record(timer.getId(), "avg", DOUBLE, timer.mean(getBaseTimeUnit())));
+                metrics.add(record(timer.getId(), "max", DOUBLE, timer.max(getBaseTimeUnit())));
             }
             return metrics.build();
         }
@@ -206,24 +213,26 @@ public class TimestreamMeterRegistry extends StepMeterRegistry {
         // VisibleForTesting
         Stream<Record> summaryData(DistributionSummary summary) {
             Stream.Builder<Record> metrics = Stream.builder();
-            metrics.add(record(summary.getId(), "sum", MeasureValueType.DOUBLE, summary.totalAmount()));
+            metrics.add(record(summary.getId(), "sum", DOUBLE, summary.totalAmount()));
             long count = summary.count();
-            metrics.add(record(summary.getId(), "count", MeasureValueType.BIGINT, count));
+            metrics.add(record(summary.getId(), "count", BIGINT, count));
             if (count > 0) {
-                metrics.add(record(summary.getId(), "avg", MeasureValueType.DOUBLE, summary.mean()));
-                metrics.add(record(summary.getId(), "max", MeasureValueType.DOUBLE, summary.max()));
+                metrics.add(record(summary.getId(), "avg", DOUBLE, summary.mean()));
+                metrics.add(record(summary.getId(), "max", DOUBLE, summary.max()));
             }
             return metrics.build();
         }
 
-        private Stream<Record> longTaskTimerData(LongTaskTimer longTaskTimer) {
+        // VisibleForTesting
+        Stream<Record> longTaskTimerData(LongTaskTimer longTaskTimer) {
             return Stream.of(
-                    record(longTaskTimer.getId(), "activeTasks", MeasureValueType.BIGINT, longTaskTimer.activeTasks()),
-                    record(longTaskTimer.getId(), "duration", MeasureValueType.DOUBLE, longTaskTimer.duration(getBaseTimeUnit())));
+                    record(longTaskTimer.getId(), "active.count", BIGINT, longTaskTimer.activeTasks()),
+                    record(longTaskTimer.getId(), "duration.sum", DOUBLE, longTaskTimer.duration(getBaseTimeUnit())));
         }
 
-        private Stream<Record> timeGaugeData(TimeGauge gauge) {
-            Record metricDatum = record(gauge.getId(), "value", MeasureValueType.DOUBLE, gauge.value(getBaseTimeUnit()));
+        // VisibleForTesting
+        Stream<Record> timeGaugeData(TimeGauge gauge) {
+            Record metricDatum = record(gauge.getId(), null, DOUBLE, gauge.value(getBaseTimeUnit()));
             if (metricDatum == null) {
                 return Stream.empty();
             }
@@ -232,7 +241,7 @@ public class TimestreamMeterRegistry extends StepMeterRegistry {
 
         // VisibleForTesting
         Stream<Record> functionCounterData(FunctionCounter counter) {
-            Record metricDatum = record(counter.getId(), "count", MeasureValueType.BIGINT, counter.count());
+            Record metricDatum = record(counter.getId(), null, BIGINT, counter.count());
             if (metricDatum == null) {
                 return Stream.empty();
             }
@@ -247,34 +256,34 @@ public class TimestreamMeterRegistry extends StepMeterRegistry {
                 return Stream.empty();
             }
             Stream.Builder<Record> metrics = Stream.builder();
-            double count = timer.count();
-            metrics.add(record(timer.getId(), "count", MeasureValueType.BIGINT, count));
-            metrics.add(record(timer.getId(), "sum", MeasureValueType.DOUBLE, sum));
+            Double count = timer.count();
+            metrics.add(record(timer.getId(), "count", BIGINT, count.longValue()));
+            metrics.add(record(timer.getId(), "sum", DOUBLE, sum));
             if (count > 0) {
-                metrics.add(record(timer.getId(), "avg", MeasureValueType.DOUBLE, timer.mean(getBaseTimeUnit())));
+                metrics.add(record(timer.getId(), "avg", DOUBLE, timer.mean(getBaseTimeUnit())));
             }
             return metrics.build();
         }
 
         // VisibleForTesting
-        Stream<Record> metricData(Meter m) {
+        Stream<Record> meterData(Meter m) {
             return stream(m.measure().spliterator(), false)
                     .map(ms -> record(m.getId().withTag(ms.getStatistic()),
                             null,
-                            MeasureValueType.DOUBLE, //default type ?
+                            DOUBLE, //default type ?
                             ms.getValue()))
                     .filter(Objects::nonNull);
         }
 
-        @Nullable
-        private Record record(Meter.Id id, @Nullable String suffix, MeasureValueType measureValueType, double value) {
-            if (Double.isNaN(value)) {
+        Record record(Meter.Id id, @Nullable String suffix, MeasureValueType measureValueType, double value) {
+            String mesureValue = metricValueToString(measureValueType, value);
+            if (Objects.isNull(mesureValue)) {
                 return null;
             }
             List<Tag> tags = id.getConventionTags(config().namingConvention());
             return Record.builder()
                     .measureName(getMetricName(id, suffix))
-                    .measureValue(String.valueOf(clampMetricValue(value)))
+                    .measureValue(mesureValue)
                     .measureValueType(measureValueType)
                     .dimensions(toDimensions(tags))
                     .time(String.valueOf(timestamp.getEpochSecond()))
@@ -284,8 +293,14 @@ public class TimestreamMeterRegistry extends StepMeterRegistry {
 
         // VisibleForTesting
         String getMetricName(Meter.Id id, @Nullable String suffix) {
-            String name = suffix != null ? id.getName() + "." + suffix : id.getName();
-            return config().namingConvention().name(name, id.getType(), id.getBaseUnit());
+            String baseName = config().namingConvention().name(id.getName(), id.getType(), id.getBaseUnit());
+            String fullName = suffix != null ? baseName + "." + suffix : baseName;
+
+            if (fullName.length() > MAX_MEASURE_NAME_LENGTH) {
+                logger.warn("Metric name '" + fullName + "' too long (" + fullName.length() + ">" +
+                            MAX_MEASURE_NAME_LENGTH + ")");
+            }
+            return StringUtils.truncate(fullName, MAX_MEASURE_NAME_LENGTH);
         }
 
         private List<Dimension> toDimensions(List<Tag> tags) {
@@ -308,26 +323,47 @@ public class TimestreamMeterRegistry extends StepMeterRegistry {
             return true;
         }
 
+
+        String metricValueToString(MeasureValueType measureValueType, double value) {
+            switch (measureValueType) {
+                case DOUBLE:
+                    Double clampMetricToDoubleValue = clampMetricToDoubleValue(value);
+                    return clampMetricToDoubleValue == null ? null : String.valueOf(clampMetricToDoubleValue);
+                case BIGINT:
+                    Long clampMetricToLongValue = clampMetricToLongValue(value);
+                    return clampMetricToLongValue == null ? null : String.valueOf(clampMetricToLongValue);
+                default:
+                    logger.warn("Unable to record measure type " + measureValueType.toString());
+                    return null;
+            }
+        }
+
         /**
          * Clean up metric to be within the allowable range}
          *
          * @param value unsanitized value
          * @return value clamped to allowable range
          */
-        double clampMetricValue(double value) {
-            // Leave as is and let the SDK reject it
+        Double clampMetricToDoubleValue(double value) {
             if (Double.isNaN(value)) {
-                return value;
+                return null;
             }
             double magnitude = Math.abs(value);
             if (magnitude == 0) {
                 // Leave zero as zero
-                return 0;
+                return 0d;
             }
             // Non-zero magnitude, clamp to allowed range
             double clampedMag = Math.min(magnitude, Double.MAX_VALUE);
             return Math.copySign(clampedMag, value);
         }
 
+        Long clampMetricToLongValue(double value) {
+            if (Double.isNaN(value)) {
+                warnThenDebugLogger.log("Double.isNan is not supported: return null;");
+                return null;
+            }
+            return ((Double) value).longValue();
+        }
     }
 }
