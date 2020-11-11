@@ -40,7 +40,6 @@ import static org.mockito.Mockito.when;
  * @author Marten Deinum
  * @author Johnny Lim
  */
-@SuppressWarnings("deprecation")
 class HibernateMetricsTest {
 
     private final MeterRegistry registry = new SimpleMeterRegistry(SimpleConfig.DEFAULT, new MockClock());
