@@ -24,10 +24,21 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 @GcTest
 class JvmMemoryTest {
+    static String runtimeVendor = System.getProperty("java.vm.vendor", "unknown");
 
     @Test
     void assertJvmMemoryGetLongLivedHeapPool() {
         Optional<MemoryPoolMXBean> longLivedHeapPool = JvmMemory.getLongLivedHeapPool();
-        assertThat(longLivedHeapPool).isNotEmpty();
+        if ( !runtimeVendor.contains("OpenJ9") ) {
+            assertThat(longLivedHeapPool).isNotEmpty();
+        }
+    }
+
+    @Test
+    void assertTolerateNullName() {
+        // There is a way for the name passed to these methods to be null.
+        // Ensure they don't fail;
+        assertThat(JvmMemory.isOldGenPool(null)).isFalse();
+        assertThat(JvmMemory.isYoungGenPool(null)).isFalse();
     }
 }
