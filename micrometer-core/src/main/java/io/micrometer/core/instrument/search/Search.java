@@ -68,7 +68,7 @@ public final class Search {
     }
 
     /**
-     * Meter contains a tag with the matching tag keys and values.
+     * Meter contains tags with the matching tag keys and values.
      *
      * @param tags The tags to match.
      * @return This search.
@@ -79,7 +79,7 @@ public final class Search {
     }
 
     /**
-     * Meter contains a tag with the matching tag keys and values.
+     * Meter contains tags with the matching tag keys and values.
      *
      * @param tags Must be an even number of arguments representing key/value pairs of tags.
      * @return This search.
@@ -100,7 +100,7 @@ public final class Search {
     }
 
     /**
-     * Meter contains a tag with the matching keys.
+     * Meter contains tags with the matching keys.
      *
      * @param tagKeys The tag keys to match.
      * @return This search.
