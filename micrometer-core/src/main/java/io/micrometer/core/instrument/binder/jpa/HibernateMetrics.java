@@ -179,27 +179,16 @@ public class HibernateMetrics implements MeterBinder {
 
         // Second Level Caching
 
-        long numRegions = Arrays.stream(statistics.getSecondLevelCacheRegionNames())
+        Arrays.stream(statistics.getSecondLevelCacheRegionNames())
                 .filter(this::hasDomainDataRegionStatistics)
-                .peek(regionName -> {
+                .forEach(regionName -> {
                     counter(registry, "hibernate.second.level.cache.requests", "The number of cacheable entities/collections successfully retrieved from the cache",
-                            stats -> stats.getSecondLevelCacheStatistics(regionName).getHitCount(), "region", regionName, "result", "hit");
+                            stats -> stats.getDomainDataRegionStatistics(regionName).getHitCount(), "region", regionName, "result", "hit");
                     counter(registry, "hibernate.second.level.cache.requests", "The number of cacheable entities/collections not found in the cache and loaded from the database",
-                            stats -> stats.getSecondLevelCacheStatistics(regionName).getMissCount(), "region", regionName, "result", "miss");
+                            stats -> stats.getDomainDataRegionStatistics(regionName).getMissCount(), "region", regionName, "result", "miss");
                     counter(registry, "hibernate.second.level.cache.puts", "The number of cacheable entities/collections put in the cache",
-                            stats -> stats.getSecondLevelCacheStatistics(regionName).getPutCount(), "region", regionName);
-                })
-                .count();
-
-        if ( numRegions == 0 ) {
-            // Fallback to previous behavior, with the "all" region tag
-            counter(registry, "hibernate.second.level.cache.requests", "The number of cacheable entities/collections successfully retrieved from the cache",
-                    Statistics::getSecondLevelCacheHitCount, "region", "all", "result", "hit");
-            counter(registry, "hibernate.second.level.cache.requests", "The number of cacheable entities/collections not found in the cache and loaded from the database",
-                    Statistics::getSecondLevelCacheMissCount, "region", "all", "result", "miss");
-            counter(registry, "hibernate.second.level.cache.puts", "The number of cacheable entities/collections put in the cache",
-                    Statistics::getSecondLevelCachePutCount, "region", "all");
-        }
+                            stats -> stats.getDomainDataRegionStatistics(regionName).getPutCount(), "region", regionName);
+                });
 
         // Entity information
         counter(registry, "hibernate.entities.deletes", "The number of entity deletes", Statistics::getEntityDeleteCount);
@@ -261,11 +250,10 @@ public class HibernateMetrics implements MeterBinder {
     }
 
     private boolean hasDomainDataRegionStatistics(String regionName) {
-        // In 5.1/5.2, getSecondLevelCacheStatistics returns null if the region can't be resolved.
         // In 5.3, getDomainDataRegionStatistics (a new method) will throw an IllegalArgumentException
         // if the region can't be resolved.
         try {
-            return statistics.getSecondLevelCacheStatistics(regionName) != null;
+            return statistics.getDomainDataRegionStatistics(regionName) != null;
         } catch (IllegalArgumentException e) {
             return false;
         }

@@ -20,7 +20,7 @@ import io.micrometer.core.instrument.MockClock;
 import io.micrometer.core.instrument.simple.SimpleConfig;
 import io.micrometer.core.instrument.simple.SimpleMeterRegistry;
 import org.hibernate.SessionFactory;
-import org.hibernate.stat.SecondLevelCacheStatistics;
+import org.hibernate.stat.CacheRegionStatistics;
 import org.hibernate.stat.Statistics;
 import org.junit.jupiter.api.Test;
 import org.mockito.stubbing.Answer;
@@ -40,7 +40,6 @@ import static org.mockito.Mockito.when;
  * @author Marten Deinum
  * @author Johnny Lim
  */
-@SuppressWarnings("deprecation")
 class HibernateMetricsTest {
 
     private final MeterRegistry registry = new SimpleMeterRegistry(SimpleConfig.DEFAULT, new MockClock());
@@ -58,10 +57,10 @@ class HibernateMetricsTest {
         SessionFactory sf = mock(SessionFactory.class);
         final Answer<?> defaultAnswer = inv -> 42L;
         Statistics stats = mock(Statistics.class, defaultAnswer);
-        SecondLevelCacheStatistics secondLevelCacheStatistics = mock(SecondLevelCacheStatistics.class, defaultAnswer);
+        CacheRegionStatistics secondLevelCacheStatistics = mock(CacheRegionStatistics.class, defaultAnswer);
         doReturn(statsEnabled).when(stats).isStatisticsEnabled();
         doReturn(new String[]{"region1", "region2"}).when(stats).getSecondLevelCacheRegionNames();
-        doReturn(secondLevelCacheStatistics).when(stats).getSecondLevelCacheStatistics(anyString());
+        doReturn(secondLevelCacheStatistics).when(stats).getDomainDataRegionStatistics(anyString());
         when(sf.getStatistics()).thenReturn(stats);
         return sf;
     }

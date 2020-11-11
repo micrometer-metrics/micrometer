@@ -15,13 +15,13 @@
  */
 package io.micrometer.core.instrument.binder.jpa;
 
-import javax.persistence.EntityManagerFactory;
-
 import io.micrometer.core.instrument.MeterRegistry;
 import io.micrometer.core.instrument.MockClock;
+import io.micrometer.core.instrument.search.MeterNotFoundException;
 import io.micrometer.core.instrument.simple.SimpleConfig;
 import io.micrometer.core.instrument.simple.SimpleMeterRegistry;
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import org.hibernate.SessionFactory;
 import org.hibernate.stat.Statistics;
 import org.junit.jupiter.api.Test;
@@ -33,18 +33,10 @@ import org.mockito.stubbing.Answer;
  *
  * @author Erin Schnabel
  */
-@SuppressWarnings("deprecation")
 class HibernateMetricsNoSecondLevelCacheTest {
 
     private final MeterRegistry registry = new SimpleMeterRegistry(SimpleConfig.DEFAULT, new MockClock());
     private final SessionFactory sessionFactory = createMockSessionFactory(true);
-
-    private static EntityManagerFactory createMockEntityManagerFactory(boolean statsEnabled) {
-        EntityManagerFactory emf = mock(EntityManagerFactory.class);
-        SessionFactory sf = createMockSessionFactory(statsEnabled);
-        when(emf.unwrap(SessionFactory.class)).thenReturn(sf);
-        return emf;
-    }
 
     private static SessionFactory createMockSessionFactory(boolean statsEnabled) {
         SessionFactory sf = mock(SessionFactory.class);
@@ -52,8 +44,8 @@ class HibernateMetricsNoSecondLevelCacheTest {
         Statistics stats = mock(Statistics.class, defaultAnswer);
         doReturn(statsEnabled).when(stats).isStatisticsEnabled();
         doReturn(new String[]{"region1", "region2"}).when(stats).getSecondLevelCacheRegionNames();
-        doReturn(null).when(stats).getSecondLevelCacheStatistics("region1");
-        doThrow(new IllegalArgumentException("Mocked: Unknown region")).when(stats).getSecondLevelCacheStatistics("region2");
+        doReturn(null).when(stats).getDomainDataRegionStatistics("region1");
+        doThrow(new IllegalArgumentException("Mocked: Unknown region")).when(stats).getDomainDataRegionStatistics("region2");
         when(sf.getStatistics()).thenReturn(stats);
         return sf;
     }
@@ -68,9 +60,12 @@ class HibernateMetricsNoSecondLevelCacheTest {
         // Global cache statistics should still be emitted
         // It should not throw an java.lang.IllegalArgumentException
         // see https://github.com/micrometer-metrics/micrometer/issues/2334
-        assertThat(registry.get("hibernate.second.level.cache.requests").tags("result", "hit", "region", "all").functionCounter().count()).isEqualTo(42.0d);
-        assertThat(registry.get("hibernate.second.level.cache.requests").tags("result", "miss", "region", "all").functionCounter().count()).isEqualTo(42.0d);
-        assertThat(registry.get("hibernate.second.level.cache.puts").tags("region", "all").functionCounter().count()).isEqualTo(42.0d);
+        assertThat(registry.get("hibernate.sessions.open").functionCounter().count()).isEqualTo(42.0);
+
+        assertThatThrownBy(() -> registry.get("hibernate.second.level.cache.requests").functionCounters())
+            .isInstanceOf(MeterNotFoundException.class);
+        assertThatThrownBy(() -> registry.get("hibernate.second.level.cache.puts").functionCounters())
+            .isInstanceOf(MeterNotFoundException.class);
    }
 
 }
