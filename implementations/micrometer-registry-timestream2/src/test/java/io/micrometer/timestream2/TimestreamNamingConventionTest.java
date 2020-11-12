@@ -86,5 +86,4 @@ class TimestreamNamingConventionTest {
     private String repeat(String s, int repeat) {
         return String.join("", Collections.nCopies(repeat, s));
     }
-
 }

@@ -81,7 +81,7 @@ public class TimestreamNamingConvention implements NamingConvention {
     public String tagKey(String key) {
         String tagKey = nameConvention.tagKey(key);
         if (tagKey.length() > MAX_DIMENSION_NAME_LENGTH) {
-            logger.warn("Tag name '" + tagKey + "' too long (" + tagKey.length() + ">" +
+            logger.warn("Tag name '" + tagKey + "' is too long (" + tagKey.length() + ">" +
                         MAX_DIMENSION_NAME_LENGTH + ")");
         }
         return StringUtils.truncate(tagKey, MAX_DIMENSION_NAME_LENGTH);
@@ -90,7 +90,7 @@ public class TimestreamNamingConvention implements NamingConvention {
     @Override
     public String tagValue(String value) {
         if (value.length() > MAX_DIMENSION_VALUE_LENGTH) {
-            logger.warn("Tag value '" + value + "' too long (" + value.length() + ">" +
+            logger.warn("Tag value '" + value + "' is too long (" + value.length() + ">" +
                         MAX_DIMENSION_VALUE_LENGTH + ")");
         }
         return StringUtils.truncate(value, MAX_DIMENSION_VALUE_LENGTH);
