@@ -116,6 +116,9 @@ public class TimestreamMeterRegistry extends StepMeterRegistry {
 
     //VisibleForTesting
     void sendRecords(List<Record> records) {
+        if (logger.isErrorEnabled())
+            records.stream().forEach(record -> logger.debug("Will send record " + record.toString()));
+
         WriteRecordsRequest writeRecordsRequest = WriteRecordsRequest.builder()
                 .databaseName(config.databaseName())
                 .tableName(config.tableName())

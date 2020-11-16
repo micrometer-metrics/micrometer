@@ -45,12 +45,55 @@ class TimestreamNamingConventionTest {
 
     @Test
     void formatName() {
-        assertThat(convention.name("123abc/{:id}水", Meter.Type.GAUGE)).startsWith("123abc/{:id}水");
+        assertThat(convention.name("123abc/{id}水", Meter.Type.GAUGE)).startsWith("123abc/{id}水");
     }
 
     @Test
+    void formatNameForbiddenChar() {
+        assertThat(convention.name("123abc/{:id}水", Meter.Type.GAUGE)).startsWith("123abc/{_id}水");
+    }
+
+    @Test
+    void formatNameForbiddenValues() {
+        assertThat(convention.name("measure_value", Meter.Type.GAUGE)).isEqualTo("m_measure_value");
+        assertThat(convention.name("time", Meter.Type.GAUGE)).isEqualTo("m_time");
+        assertThat(convention.name("ts_non_existent_col", Meter.Type.GAUGE)).isEqualTo("m_ts_non_existent_col");
+    }
+
+
+    @Test
+    void formatNameForbiddenPrefix() {
+        assertThat(convention.name("ts_foo", Meter.Type.GAUGE)).isEqualTo("m_ts_foo");
+        assertThat(convention.name("measure_value_foo", Meter.Type.GAUGE)).isEqualTo("m_measure_value_foo");
+    }
+
+    @Test
+    void formatTagForbiddenValues() {
+        assertThat(convention.tagKey("measure_value")).isEqualTo("m_measure_value");
+        assertThat(convention.tagKey("time")).isEqualTo("m_time");
+        assertThat(convention.tagKey("ts_non_existent_col")).isEqualTo("m_ts_non_existent_col");
+    }
+
+    @Test
+    void formatTagForbiddenPrefix() {
+        assertThat(convention.tagKey("ts_foo")).isEqualTo("m_ts_foo");
+        assertThat(convention.tagKey("measure_value_foo")).isEqualTo("m_measure_value_foo");
+    }
+
+    @Test
+    void formatTagKeyStartsWithNonAlphabetic() {
+        assertThat(convention.tagKey("123")).isEqualTo("m_123");
+    }
+
+    @Test
+    void formatTagKeyEndsWithUnderscore() {
+        assertThat(convention.tagKey("A123abc_")).isEqualTo("A123abc0");
+    }
+
+
+    @Test
     void formatTagKey() {
-        assertThat(convention.tagKey("123abc/{:id}水")).startsWith("123abc/{:id}水");
+        assertThat(convention.tagKey("123abc/{:id}水")).isEqualTo("m_123abc___id_0");
     }
 
     @Test
