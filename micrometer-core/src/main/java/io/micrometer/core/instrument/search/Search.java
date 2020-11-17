@@ -106,7 +106,17 @@ public final class Search {
      * @return This search.
      */
     public Search tagKeys(String... tagKeys) {
-        requiredTagKeys.addAll(Arrays.asList(tagKeys));
+        return tagKeys(Arrays.asList(tagKeys));
+    }
+
+    /**
+     * Meter contains tags with the matching keys.
+     *
+     * @param tagKeys The tag keys to match.
+     * @return This search.
+     */
+    public Search tagKeys(Collection<String> tagKeys) {
+        requiredTagKeys.addAll(tagKeys);
         return this;
     }
 
