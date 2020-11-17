@@ -114,6 +114,7 @@ public final class Search {
      *
      * @param tagKeys The tag keys to match.
      * @return This search.
+     * @since 1.7.0
      */
     public Search tagKeys(Collection<String> tagKeys) {
         requiredTagKeys.addAll(tagKeys);
