@@ -21,6 +21,7 @@ import com.mongodb.ServerAddress;
 import com.mongodb.event.ClusterListenerAdapter;
 import com.mongodb.event.ClusterOpeningEvent;
 import io.micrometer.core.instrument.MeterRegistry;
+import io.micrometer.core.instrument.Tag;
 import io.micrometer.core.instrument.Tags;
 import io.micrometer.core.instrument.simple.SimpleMeterRegistry;
 import org.junit.jupiter.api.Test;
@@ -42,7 +43,8 @@ class MongoMetricsConnectionPoolListenerTest extends AbstractMongoDbTest {
         AtomicReference<String> clusterId = new AtomicReference<>();
         MongoClientOptions options = MongoClientOptions.builder()
                 .minConnectionsPerHost(2)
-                .addConnectionPoolListener(new MongoMetricsConnectionPoolListener(registry))
+                .addConnectionPoolListener(new MongoMetricsConnectionPoolListener(registry,
+                        Tag.of("pool_name", "mongoTemplate")))
                 .addClusterListener(new ClusterListenerAdapter() {
                     @Override
                     public void clusterOpening(ClusterOpeningEvent event) {
@@ -57,7 +59,8 @@ class MongoMetricsConnectionPoolListenerTest extends AbstractMongoDbTest {
 
         Tags tags = Tags.of(
                 "cluster.id", clusterId.get(),
-                "server.address", String.format("%s:%s", HOST, port)
+                "server.address", String.format("%s:%s", HOST, port),
+                "pool_name", "mongoTemplate"
         );
 
         assertThat(registry.get("mongodb.driver.pool.size").tags(tags).gauge().value()).isEqualTo(2);

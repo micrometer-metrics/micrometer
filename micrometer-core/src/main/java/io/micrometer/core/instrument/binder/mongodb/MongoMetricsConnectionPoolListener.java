@@ -19,9 +19,7 @@ import com.mongodb.MongoClient;
 import com.mongodb.connection.ServerId;
 import com.mongodb.event.*;
 import io.micrometer.core.annotation.Incubating;
-import io.micrometer.core.instrument.Gauge;
-import io.micrometer.core.instrument.Meter;
-import io.micrometer.core.instrument.MeterRegistry;
+import io.micrometer.core.instrument.*;
 import io.micrometer.core.lang.NonNullApi;
 import io.micrometer.core.lang.NonNullFields;
 
@@ -50,9 +48,11 @@ public class MongoMetricsConnectionPoolListener extends ConnectionPoolListenerAd
     private final Map<ServerId, List<Meter>> meters = new ConcurrentHashMap<>();
 
     private final MeterRegistry registry;
+    private final Tags extraTags;
 
-    public MongoMetricsConnectionPoolListener(MeterRegistry registry) {
+    public MongoMetricsConnectionPoolListener(MeterRegistry registry, Tag... extraTags) {
         this.registry = registry;
+        this.extraTags = Tags.of(extraTags);
     }
 
     @Override
@@ -124,6 +124,7 @@ public class MongoMetricsConnectionPoolListener extends ConnectionPoolListenerAd
                     .description(description)
                     .tag("cluster.id", serverId.getClusterId().getValue())
                     .tag("server.address", serverId.getAddress().toString())
+                    .tags(extraTags)
                     .register(registry);
     }
 
