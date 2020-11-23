@@ -60,7 +60,7 @@ import java.util.stream.Stream;
  * </code>
  * </pre>
  *
- * This requires jOOQ 3.13.0 or later.
+ * This requires jOOQ 3.14.0 or later.
  *
  * @author Jon Schneider
  * @author Johnny Lim
@@ -135,11 +135,6 @@ public class MetricsDSLContext implements DSLContext {
     public DSLContext tags(Iterable<Tag> tags) {
         contextTags.set(tags);
         return this;
-    }
-
-    @Override
-    public void close() throws DataAccessException {
-        context.close();
     }
 
     @Override
@@ -1008,6 +1003,11 @@ public class MetricsDSLContext implements DSLContext {
         return context.with(alias, fieldAliases);
     }
 
+    @Override
+    public WithAsStep with(String alias, Collection<String> fieldAliases) {
+        return context.with(alias, fieldAliases);
+    }
+
     @Override    
     public WithAsStep with(Name alias) {
         return context.with(alias);
@@ -1015,6 +1015,11 @@ public class MetricsDSLContext implements DSLContext {
 
     @Override    
     public WithAsStep with(Name alias, Name... fieldAliases) {
+        return context.with(alias, fieldAliases);
+    }
+
+    @Override
+    public WithAsStep with(Name alias, Collection<? extends Name> fieldAliases) {
         return context.with(alias, fieldAliases);
     }
 
@@ -1253,6 +1258,11 @@ public class MetricsDSLContext implements DSLContext {
         return context.with(tables);
     }
 
+    @Override
+    public WithStep with(Collection<? extends CommonTableExpression<?>> tables) {
+        return context.with(tables);
+    }
+
     @Override    
     public WithAsStep withRecursive(String alias) {
         return context.withRecursive(alias);
@@ -1263,6 +1273,11 @@ public class MetricsDSLContext implements DSLContext {
         return context.withRecursive(alias, fieldAliases);
     }
 
+    @Override
+    public WithAsStep withRecursive(String alias, Collection<String> fieldAliases) {
+        return context.withRecursive(alias, fieldAliases);
+    }
+
     @Override    
     public WithAsStep withRecursive(Name alias) {
         return context.withRecursive(alias);
@@ -1270,6 +1285,11 @@ public class MetricsDSLContext implements DSLContext {
 
     @Override    
     public WithAsStep withRecursive(Name alias, Name... fieldAliases) {
+        return context.withRecursive(alias, fieldAliases);
+    }
+
+    @Override
+    public WithAsStep withRecursive(Name alias, Collection<? extends Name> fieldAliases) {
         return context.withRecursive(alias, fieldAliases);
     }
 
@@ -1505,6 +1525,11 @@ public class MetricsDSLContext implements DSLContext {
 
     @Override    
     public WithStep withRecursive(CommonTableExpression<?>... tables) {
+        return context.withRecursive(tables);
+    }
+
+    @Override
+    public WithStep withRecursive(Collection<? extends CommonTableExpression<?>> tables) {
         return context.withRecursive(tables);
     }
 
@@ -2083,6 +2108,16 @@ public class MetricsDSLContext implements DSLContext {
         return context.delete(table);
     }
 
+    @Override
+    public void batched(BatchedRunnable runnable) {
+        context.batched(runnable);
+    }
+
+    @Override
+    public <T> T batchedResult(BatchedCallable<T> callable) {
+        return context.batchedResult(callable);
+    }
+
     @Override    
     public Batch batch(Query... queries) {
         return context.batch(queries);
@@ -2151,6 +2186,16 @@ public class MetricsDSLContext implements DSLContext {
     @Override    
     public Batch batchUpdate(Collection<? extends UpdatableRecord<?>> records) {
         return context.batchUpdate(records);
+    }
+
+    @Override
+    public Batch batchMerge(UpdatableRecord<?>... records) {
+        return context.batchMerge(records);
+    }
+
+    @Override
+    public Batch batchMerge(Collection<? extends UpdatableRecord<?>> records) {
+        return context.batchMerge(records);
     }
 
     @Override    
@@ -2271,6 +2316,66 @@ public class MetricsDSLContext implements DSLContext {
     @Override    
     public RowCountQuery set(Name name, Param<?> param) {
         return context.set(name, param);
+    }
+
+    @Override
+    public CreateDatabaseFinalStep createDatabase(String database) {
+        return context.createDatabase(database);
+    }
+
+    @Override
+    public CreateDatabaseFinalStep createDatabase(Name database) {
+        return context.createDatabase(database);
+    }
+
+    @Override
+    public CreateDatabaseFinalStep createDatabase(Catalog database) {
+        return context.createDatabase(database);
+    }
+
+    @Override
+    public CreateDatabaseFinalStep createDatabaseIfNotExists(String database) {
+        return context.createDatabaseIfNotExists(database);
+    }
+
+    @Override
+    public CreateDatabaseFinalStep createDatabaseIfNotExists(Name database) {
+        return context.createDatabaseIfNotExists(database);
+    }
+
+    @Override
+    public CreateDatabaseFinalStep createDatabaseIfNotExists(Catalog database) {
+        return context.createDatabaseIfNotExists(database);
+    }
+
+    @Override
+    public CreateDomainAsStep createDomain(String domain) {
+        return context.createDomain(domain);
+    }
+
+    @Override
+    public CreateDomainAsStep createDomain(Name domain) {
+        return context.createDomain(domain);
+    }
+
+    @Override
+    public CreateDomainAsStep createDomain(Domain<?> domain) {
+        return context.createDomain(domain);
+    }
+
+    @Override
+    public CreateDomainAsStep createDomainIfNotExists(String domain) {
+        return context.createDomainIfNotExists(domain);
+    }
+
+    @Override
+    public CreateDomainAsStep createDomainIfNotExists(Name domain) {
+        return context.createDomainIfNotExists(domain);
+    }
+
+    @Override
+    public CreateDomainAsStep createDomainIfNotExists(Domain<?> domain) {
+        return context.createDomainIfNotExists(domain);
     }
 
     @Override    
@@ -2723,6 +2828,66 @@ public class MetricsDSLContext implements DSLContext {
         return context.createSequenceIfNotExists(sequence);
     }
 
+    @Override
+    public AlterDatabaseStep alterDatabase(String database) {
+        return context.alterDatabase(database);
+    }
+
+    @Override
+    public AlterDatabaseStep alterDatabase(Name database) {
+        return context.alterDatabase(database);
+    }
+
+    @Override
+    public AlterDatabaseStep alterDatabase(Catalog database) {
+        return context.alterDatabase(database);
+    }
+
+    @Override
+    public AlterDatabaseStep alterDatabaseIfExists(String database) {
+        return context.alterDatabaseIfExists(database);
+    }
+
+    @Override
+    public AlterDatabaseStep alterDatabaseIfExists(Name database) {
+        return context.alterDatabaseIfExists(database);
+    }
+
+    @Override
+    public AlterDatabaseStep alterDatabaseIfExists(Catalog database) {
+        return context.alterDatabaseIfExists(database);
+    }
+
+    @Override
+    public <T> AlterDomainStep<T> alterDomain(String domain) {
+        return context.alterDomain(domain);
+    }
+
+    @Override
+    public <T> AlterDomainStep<T> alterDomain(Name domain) {
+        return context.alterDomain(domain);
+    }
+
+    @Override
+    public <T> AlterDomainStep<T> alterDomain(Domain<T> domain) {
+        return context.alterDomain(domain);
+    }
+
+    @Override
+    public <T> AlterDomainStep<T> alterDomainIfExists(String domain) {
+        return context.alterDomainIfExists(domain);
+    }
+
+    @Override
+    public <T> AlterDomainStep<T> alterDomainIfExists(Name domain) {
+        return context.alterDomainIfExists(domain);
+    }
+
+    @Override
+    public <T> AlterDomainStep<T> alterDomainIfExists(Domain<T> domain) {
+        return context.alterDomainIfExists(domain);
+    }
+
     @Override    
     public AlterSequenceStep<BigInteger> alterSequence(String sequence) {
         return context.alterSequence(sequence);
@@ -2811,6 +2976,66 @@ public class MetricsDSLContext implements DSLContext {
     @Override    
     public AlterSchemaStep alterSchemaIfExists(Schema schema) {
         return context.alterSchemaIfExists(schema);
+    }
+
+    @Override
+    public DropDatabaseFinalStep dropDatabase(String database) {
+        return context.dropDatabase(database);
+    }
+
+    @Override
+    public DropDatabaseFinalStep dropDatabase(Name database) {
+        return context.dropDatabase(database);
+    }
+
+    @Override
+    public DropDatabaseFinalStep dropDatabase(Catalog database) {
+        return context.dropDatabase(database);
+    }
+
+    @Override
+    public DropDatabaseFinalStep dropDatabaseIfExists(String database) {
+        return context.dropDatabaseIfExists(database);
+    }
+
+    @Override
+    public DropDatabaseFinalStep dropDatabaseIfExists(Name database) {
+        return context.dropDatabaseIfExists(database);
+    }
+
+    @Override
+    public DropDatabaseFinalStep dropDatabaseIfExists(Catalog database) {
+        return context.dropDatabaseIfExists(database);
+    }
+
+    @Override
+    public DropDomainCascadeStep dropDomain(String domain) {
+        return context.dropDomain(domain);
+    }
+
+    @Override
+    public DropDomainCascadeStep dropDomain(Name domain) {
+        return context.dropDomain(domain);
+    }
+
+    @Override
+    public DropDomainCascadeStep dropDomain(Domain<?> domain) {
+        return context.dropDomain(domain);
+    }
+
+    @Override
+    public DropDomainCascadeStep dropDomainIfExists(String domain) {
+        return context.dropDomainIfExists(domain);
+    }
+
+    @Override
+    public DropDomainCascadeStep dropDomainIfExists(Name domain) {
+        return context.dropDomainIfExists(domain);
+    }
+
+    @Override
+    public DropDomainCascadeStep dropDomainIfExists(Domain<?> domain) {
+        return context.dropDomainIfExists(domain);
     }
 
     @Override    
@@ -3146,6 +3371,11 @@ public class MetricsDSLContext implements DSLContext {
     @Override    
     public <T extends Number> T nextval(Sequence<T> sequence) throws DataAccessException {
         return context.nextval(sequence);
+    }
+
+    @Override
+    public <T extends Number> List<T> nextvals(Sequence<T> sequence, int size) throws DataAccessException {
+        return context.nextvals(sequence, size);
     }
 
     @Override    
