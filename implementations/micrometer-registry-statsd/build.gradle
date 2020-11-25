@@ -6,7 +6,7 @@ dependencies {
     api project(':micrometer-core')
 
     implementation 'io.projectreactor:reactor-core'
-    implementation 'io.projectreactor.netty:reactor-netty'
+    implementation 'io.projectreactor.netty:reactor-netty-core'
 
     testImplementation project(':micrometer-test')
     testImplementation 'io.projectreactor:reactor-test'
@@ -48,7 +48,7 @@ publishing {
                         .dependencies
                         .dependency
                         .findAll {
-                    ['reactor-core', 'reactor-netty'].contains(it.artifactId.text())
+                    ['reactor-core', 'reactor-netty-core'].contains(it.artifactId.text())
                 }
                 .each { it.parent().remove(it) }
             }
