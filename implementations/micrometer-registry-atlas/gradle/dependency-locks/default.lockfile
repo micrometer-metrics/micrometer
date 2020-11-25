@@ -4,6 +4,7 @@
 com.netflix.spectator:spectator-api:0.106.0
 com.netflix.spectator:spectator-ext-ipc:0.106.0
 com.netflix.spectator:spectator-reg-atlas:0.106.0
+io.projectreactor:reactor-bom:2020.0.1
 javax.inject:javax.inject:1
 org.hdrhistogram:HdrHistogram:2.1.12
 org.latencyutils:LatencyUtils:2.0.3
