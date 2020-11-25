@@ -4,6 +4,7 @@
 com.github.tomakehurst:wiremock-jre8-standalone:2.27.2
 com.google.code.findbugs:jsr305:3.0.2
 com.microsoft.azure:applicationinsights-core:2.6.2
+io.projectreactor:reactor-bom:2020.0.1
 javax.activation:javax.activation-api:1.2.0
 javax.xml.bind:jaxb-api:2.3.1
 net.bytebuddy:byte-buddy-agent:1.10.15

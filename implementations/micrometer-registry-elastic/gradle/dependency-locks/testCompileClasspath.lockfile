@@ -10,6 +10,7 @@ com.github.docker-java:docker-java-transport:3.2.5
 com.github.tomakehurst:wiremock-jre8-standalone:2.27.2
 com.google.code.findbugs:jsr305:3.0.2
 com.jayway.jsonpath:json-path:2.4.0
+io.projectreactor:reactor-bom:2020.0.1
 junit:junit:4.12
 net.bytebuddy:byte-buddy-agent:1.10.15
 net.bytebuddy:byte-buddy:1.10.15
