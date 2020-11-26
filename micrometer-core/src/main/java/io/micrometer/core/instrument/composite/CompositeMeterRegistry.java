@@ -67,7 +67,7 @@ public class CompositeMeterRegistry extends MeterRegistry {
                 })
                 .onMeterRemoved(m -> {
                     if (m instanceof CompositeMeter) { // should always be
-                        lock(registriesLock, () -> nonCompositeDescendants.forEach(r -> r.remove(m)));
+                        lock(registriesLock, () -> nonCompositeDescendants.forEach(((CompositeMeter) m)::remove));
                     }
                 });
 

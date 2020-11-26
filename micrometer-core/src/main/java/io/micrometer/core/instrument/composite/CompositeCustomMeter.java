@@ -20,22 +20,69 @@ import io.micrometer.core.instrument.Meter;
 import io.micrometer.core.instrument.MeterRegistry;
 import io.micrometer.core.instrument.internal.DefaultMeter;
 
+import java.util.Collections;
+import java.util.IdentityHashMap;
+import java.util.Map;
+import java.util.concurrent.atomic.AtomicBoolean;
+
 class CompositeCustomMeter extends DefaultMeter implements CompositeMeter {
+    private AtomicBoolean childrenGuard = new AtomicBoolean();
+    private Map<MeterRegistry, Meter> children = Collections.emptyMap();
+
+
     CompositeCustomMeter(Id id, Type type, Iterable<Measurement> measurements) {
         super(id, type, measurements);
     }
 
     @Override
     public void add(MeterRegistry registry) {
-        Meter.builder(getId().getName(), getType(), measure())
-            .tags(getId().getTagsAsIterable())
-            .description(getId().getDescription())
-            .baseUnit(getId().getBaseUnit())
-            .register(registry);
+
+        final Meter newMeter = registerNewMeter(registry);
+        if (newMeter == null) {
+            return;
+        }
+
+        for (; ; ) {
+            if (childrenGuard.compareAndSet(false, true)) {
+                try {
+                    Map<MeterRegistry, Meter> newChildren = new IdentityHashMap<>(children);
+                    newChildren.put(registry, newMeter);
+                    this.children = newChildren;
+                    break;
+                } finally {
+                    childrenGuard.set(false);
+                }
+            }
+        }
+
+
+
     }
 
     @Override
     public void remove(MeterRegistry registry) {
-        // do nothing
+        for (; ; ) {
+            if (childrenGuard.compareAndSet(false, true)) {
+                try {
+                    Map<MeterRegistry, Meter> newChildren = new IdentityHashMap<>(children);
+                    newChildren.computeIfPresent(registry, (reg, met) -> {
+                        reg.remove(met);
+                        return null;
+                    });
+                    this.children = newChildren;
+                    break;
+                } finally {
+                    childrenGuard.set(false);
+                }
+            }
+        }
+    }
+
+    private Meter registerNewMeter(MeterRegistry registry) {
+        return Meter.builder(getId().getName(), getType(), measure())
+                .tags(getId().getTagsAsIterable())
+                .description(getId().getDescription())
+                .baseUnit(getId().getBaseUnit())
+                .register(registry);
     }
 }

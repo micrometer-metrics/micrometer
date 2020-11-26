@@ -97,8 +97,11 @@ class CompositeMeterRegistryTest {
 
         composite.add(simple);
         compositeCounter.increment();
+        compositeCounter.increment();
 
-        // now it receives updates again
+        //Refresh the reference to new meter
+        simpleCounter = simple.get("counter").counter();
+        // now it receives updates again but for a new meter object. The old one was removed previously
         assertThat(simpleCounter.count()).isEqualTo(2);
     }
 
@@ -202,6 +205,24 @@ class CompositeMeterRegistryTest {
         // if the meter is registered directly to the child, the composite config does not take effect
         simple.counter("deny.composite");
         simple.get("deny.composite").meter();
+    }
+
+    @Issue("#1159")
+    @Test
+    void differentIgnoreTagsForCompositeAndChildAddAndRemove() {
+        simple.config().meterFilter(MeterFilter.ignoreTags("tagkey2"));
+        composite.add(simple);
+
+        Counter counterMeter = composite.counter("counterMetric", "tagkey1", "tagvalue1", "tagkey2", "tagvalue2");
+
+        assertThat(simple.find("counterMetric").meter()).isNotNull();
+        assertThat(composite.find("counterMetric").meter()).isNotNull();
+
+        composite.remove(counterMeter);
+
+        assertThat(composite.find("counterMetric").meter()).isNull();
+        assertThat(simple.find("counterMetric").meter()).isNull();
+
     }
 
     @Test
