@@ -64,31 +64,40 @@ public class ElasticMeterRegistry extends StepMeterRegistry {
             "    \"type\": \"keyword\"\n" +
             "  },\n" +
             "  \"count\": {\n" +
-            "    \"type\": \"double\"\n" +
+            "    \"type\": \"double\",\n" +
+            "    \"index\": false\n" +
             "  },\n" +
             "  \"value\": {\n" +
-            "    \"type\": \"double\"\n" +
+            "    \"type\": \"double\",\n" +
+            "    \"index\": false\n" +
             "  },\n" +
             "  \"sum\": {\n" +
-            "    \"type\": \"double\"\n" +
+            "    \"type\": \"double\",\n" +
+            "    \"index\": false\n" +
             "  },\n" +
             "  \"mean\": {\n" +
-            "    \"type\": \"double\"\n" +
+            "    \"type\": \"double\",\n" +
+            "    \"index\": false\n" +
             "  },\n" +
             "  \"duration\": {\n" +
-            "    \"type\": \"double\"\n" +
+            "    \"type\": \"double\",\n" +
+            "    \"index\": false\n" +
             "  },\n" +
             "  \"max\": {\n" +
-            "    \"type\": \"double\"\n" +
+            "    \"type\": \"double\",\n" +
+            "    \"index\": false\n" +
             "  },\n" +
             "  \"total\": {\n" +
-            "    \"type\": \"double\"\n" +
+            "    \"type\": \"double\",\n" +
+            "    \"index\": false\n" +
             "  },\n" +
             "  \"unknown\": {\n" +
-            "    \"type\": \"double\"\n" +
+            "    \"type\": \"double\",\n" +
+            "    \"index\": false\n" +
             "  },\n" +
             "  \"active\": {\n" +
-            "    \"type\": \"double\"\n" +
+            "    \"type\": \"double\",\n" +
+            "    \"index\": false\n" +
             "  }\n" +
             "}";
     private static final Function<String, String> TEMPLATE_BODY_BEFORE_VERSION_7 = (indexPrefix) -> "{\"template\":\"" + indexPrefix + "*\",\"mappings\":{\"_default_\":{\"_all\":{\"enabled\":false}," + TEMPLATE_PROPERTIES + "}}}";
