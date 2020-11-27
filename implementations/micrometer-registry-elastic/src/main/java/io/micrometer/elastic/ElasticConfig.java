@@ -169,7 +169,9 @@ public interface ElasticConfig extends StepRegistryConfig {
      *
      * @return document type
      * @since 1.4.0
+     * @deprecated This is no-op due to removal of mapping types since Elasticsearch 7.
      */
+    @Deprecated
     default String documentType() {
         return getString(this, "documentType").orElse("doc");
     }
