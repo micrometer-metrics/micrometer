@@ -24,7 +24,6 @@ import io.micrometer.core.instrument.util.StringUtils;
 import io.micrometer.core.ipc.http.HttpSender;
 import io.micrometer.core.ipc.http.HttpUrlConnectionSender;
 import io.micrometer.core.lang.NonNull;
-import io.micrometer.core.lang.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -53,6 +52,7 @@ import static java.util.stream.Collectors.joining;
  * @author Jon Schneider
  * @author Johnny Lim
  * @since 1.1.0
+ * @implNote This implementation requires Elasticsearch 7 or above.
  */
 public class ElasticMeterRegistry extends StepMeterRegistry {
     private static final ThreadFactory DEFAULT_THREAD_FACTORY = new NamedThreadFactory("elastic-metrics-publisher");
@@ -91,7 +91,6 @@ public class ElasticMeterRegistry extends StepMeterRegistry {
             "    \"type\": \"double\"\n" +
             "  }\n" +
             "}";
-    private static final Function<String, String> TEMPLATE_BODY_BEFORE_VERSION_7 = (indexPrefix) -> "{\"template\":\"" + indexPrefix + "*\",\"mappings\":{\"_default_\":{\"_all\":{\"enabled\":false}," + TEMPLATE_PROPERTIES + "}}}";
     private static final Function<String, String> TEMPLATE_BODY_AFTER_VERSION_7 = (indexPrefix) -> "{\n" +
             "  \"index_patterns\": [\"" + indexPrefix + "*\"],\n" +
             "  \"mappings\": {\n" +
@@ -100,8 +99,6 @@ public class ElasticMeterRegistry extends StepMeterRegistry {
             "    },\n" + TEMPLATE_PROPERTIES +
             "  }\n" +
             "}";
-
-    private static final String TYPE_PATH_AFTER_VERSION_7 = "";
 
     private static final Pattern MAJOR_VERSION_PATTERN = Pattern.compile("\"number\" *: *\"([\\d]+)");
 
@@ -116,9 +113,6 @@ public class ElasticMeterRegistry extends StepMeterRegistry {
     private final DateTimeFormatter indexDateFormatter;
 
     private final String indexLine;
-
-    @Nullable
-    private volatile Integer majorVersion;
 
     private volatile boolean checkedForIndexTemplate;
 
@@ -190,17 +184,15 @@ public class ElasticMeterRegistry extends StepMeterRegistry {
         checkedForIndexTemplate = true;
     }
 
-    @SuppressWarnings("ConstantConditions")
     private String getTemplateBody() {
-        return majorVersion == null || majorVersion < 7 ? TEMPLATE_BODY_BEFORE_VERSION_7.apply(config.index()) : TEMPLATE_BODY_AFTER_VERSION_7.apply(config.index());
+        return TEMPLATE_BODY_AFTER_VERSION_7.apply(config.index());
     }
 
     @Override
     protected void publish() {
-        determineMajorVersionIfNeeded();
         createIndexTemplateIfNeeded();
 
-        String uri = config.host() + "/" + indexName() + getTypePath() + "/_bulk";
+        String uri = config.host() + "/" + indexName() + "/_bulk";
         for (List<Meter> batch : MeterPartition.partition(this, config.batchSize())) {
             try {
                 String requestBody = batch.stream()
@@ -244,21 +236,6 @@ public class ElasticMeterRegistry extends StepMeterRegistry {
         }
     }
 
-    private void determineMajorVersionIfNeeded() {
-        if (majorVersion != null) {
-            return;
-        }
-        try {
-            String responseBody = httpClient.get(config.host())
-                    .withBasicAuthentication(config.userName(), config.password())
-                    .send()
-                    .body();
-            majorVersion = getMajorVersion(responseBody);
-        } catch (Throwable ex) {
-            throw new RuntimeException(ex);
-        }
-    }
-
     // VisibleForTesting
     static int getMajorVersion(String responseBody) {
         Matcher matcher = MAJOR_VERSION_PATTERN.matcher(responseBody);
@@ -266,11 +243,6 @@ public class ElasticMeterRegistry extends StepMeterRegistry {
             throw new IllegalArgumentException("Unexpected response body: " + responseBody);
         }
         return Integer.parseInt(matcher.group(1));
-    }
-
-    @SuppressWarnings("ConstantConditions")
-    private String getTypePath() {
-        return majorVersion == null || majorVersion < 7 ? "/" + config.documentType() : TYPE_PATH_AFTER_VERSION_7;
     }
 
     // VisibleForTesting
