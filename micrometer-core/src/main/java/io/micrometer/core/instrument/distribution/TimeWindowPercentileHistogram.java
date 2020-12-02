@@ -35,7 +35,8 @@ public class TimeWindowPercentileHistogram extends AbstractTimeWindowHistogram<D
     public TimeWindowPercentileHistogram(Clock clock, DistributionStatisticConfig distributionStatisticConfig,
                                          boolean supportsAggregablePercentiles) {
         super(clock, distributionStatisticConfig, DoubleRecorder.class, supportsAggregablePercentiles);
-        intervalHistogram = new DoubleHistogram(percentilePrecision(distributionStatisticConfig));
+        intervalHistogram = new DoubleHistogram(highestToLowestValueRatio(distributionStatisticConfig),
+                percentilePrecision(distributionStatisticConfig));
         initRingBuffer();
     }
 
@@ -83,6 +84,10 @@ public class TimeWindowPercentileHistogram extends AbstractTimeWindowHistogram<D
     @Override
     double countAtValue(long value) {
         return accumulatedHistogram().getCountBetweenValues(0, value);
+    }
+
+    private long highestToLowestValueRatio(DistributionStatisticConfig config) {
+        return config.getMaximumExpectedValue() / config.getMinimumExpectedValue();
     }
 
     private int percentilePrecision(DistributionStatisticConfig config) {
