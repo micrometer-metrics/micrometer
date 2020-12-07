@@ -29,8 +29,8 @@ import io.micrometer.core.lang.Nullable;
 
 import java.time.Duration;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.ThreadFactory;
@@ -138,7 +138,7 @@ public class HealthMeterRegistry extends SimpleMeterRegistry {
         }
 
         public Builder serviceLevelObjectives(ServiceLevelObjective... slos) {
-            this.serviceLevelObjectives.addAll(Arrays.asList(slos));
+            Collections.addAll(this.serviceLevelObjectives, slos);
             return this;
         }
 
