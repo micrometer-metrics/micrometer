@@ -1,0 +1,10 @@
+dependencies {
+    api project(':micrometer-core')
+
+    implementation 'org.slf4j:slf4j-api'
+
+    testImplementation 'org.testcontainers:junit-jupiter'
+    testCompile group: 'junit', name: 'junit', version: '4.12'
+
+    testImplementation project(':micrometer-test')
+}
