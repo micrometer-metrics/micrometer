@@ -40,6 +40,7 @@ import java.util.function.ToDoubleFunction;
  * @author Marten Deinum
  * @author Jon Schneider
  * @author Johnny Lim
+ * @implNote This implementation requires Hibernate 5.3 or later.
  */
 @NonNullApi
 @NonNullFields
