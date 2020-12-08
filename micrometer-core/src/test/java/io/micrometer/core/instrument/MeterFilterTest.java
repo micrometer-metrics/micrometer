@@ -61,6 +61,15 @@ class MeterFilterTest {
     }
 
     @Test
+    void commonTagsShouldNotOverrideTagValuesFromMeterId() {
+        MeterFilter filter = MeterFilter.commonTags(Tags.of("k0", "c0", "k1", "c1", "k2", "c2"));
+        Meter.Id id = new Meter.Id("name", Tags.of("k1", "m1", "k2", "m2", "k3", "m3"), null, null, Meter.Type.COUNTER);
+        Meter.Id filteredId = filter.map(id);
+        assertThat(filteredId.getTags())
+                .containsExactlyElementsOf(Tags.of("k0", "c0", "k1", "m1", "k2", "m2", "k3", "m3"));
+    }
+
+    @Test
     void ignoreTags() {
         MeterFilter filter = MeterFilter.ignoreTags("k1", "k2");
         Meter.Id id = new Meter.Id("name", Tags.of("k1", "v1", "k2", "v2", "k3", "v3"), null, null, Meter.Type.COUNTER);
