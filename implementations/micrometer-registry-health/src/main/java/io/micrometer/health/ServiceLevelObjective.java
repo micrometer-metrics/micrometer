@@ -194,7 +194,7 @@ public abstract class ServiceLevelObjective {
             }
 
             public final Builder requires(MeterBinder... requires) {
-                this.requires.addAll(Arrays.asList(requires));
+                Collections.addAll(this.requires, requires);
                 return this;
             }
 

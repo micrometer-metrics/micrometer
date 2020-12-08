@@ -110,7 +110,7 @@ public final class RequiredSearch {
      * @return This search.
      */
     public RequiredSearch tagKeys(String... tagKeys) {
-        requiredTagKeys.addAll(Arrays.asList(tagKeys));
+        Collections.addAll(requiredTagKeys, tagKeys);
         return this;
     }
 
