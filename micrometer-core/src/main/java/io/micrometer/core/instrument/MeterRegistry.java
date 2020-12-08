@@ -644,6 +644,9 @@ public abstract class MeterRegistry {
     }
 
     /**
+     * Remove a {@link Meter} from this {@link MeterRegistry registry}. This is expected to be a {@link Meter} with
+     * the same {@link Id} returned when registering a meter - which will have {@link MeterFilter}s applied to it.
+     *
      * @param meter The meter to remove
      * @return The removed meter, or null if the provided meter is not currently registered.
      * @since 1.1.0
@@ -654,15 +657,25 @@ public abstract class MeterRegistry {
         return remove(meter.getId());
     }
 
+    /**
+     * Remove a {@link Meter} from this {@link MeterRegistry registry} based on its {@link Id}
+     * before applying this registry's {@link MeterFilter}s to the given {@link Id}.
+     *
+     * @param preFilterId the id of the meter to remove
+     * @return The removed meter, or null if the meter is not found
+     * @since 1.3.16
+     */
+    @Incubating(since = "1.3.16")
     @Nullable
-    Meter remove(Meter.Id id, boolean applyFilters) {
-        if (applyFilters) {
-            return remove(getMappedId(id));
-        }
-        return remove(id);
+    public Meter removeByPreFilterId(Meter.Id preFilterId) {
+        return remove(getMappedId(preFilterId));
     }
 
     /**
+     * Remove a {@link Meter} from this {@link MeterRegistry registry} based the given {@link Id} as-is. The registry's
+     * {@link MeterFilter}s will not be applied to it. You can use the {@link Id} of the {@link Meter} returned
+     * when registering a meter, since that will have {@link MeterFilter}s already applied to it.
+     *
      * @param mappedId The id of the meter to remove
      * @return The removed meter, or null if no meter matched the provided id.
      * @since 1.1.0
