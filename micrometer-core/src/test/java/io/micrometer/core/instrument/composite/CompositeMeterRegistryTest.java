@@ -475,4 +475,17 @@ class CompositeMeterRegistryTest {
         }
     }
 
+    @Test
+    @Issue("#2354")
+    void meterRemovalPropagatesToChildRegistryWithModifyingFilter() {
+        this.simple.config().commonTags("host", "localhost");
+        this.composite.add(this.simple);
+
+        Counter counter = this.composite.counter("my.counter");
+        this.composite.remove(counter);
+
+        assertThat(this.composite.getMeters()).isEmpty();
+        assertThat(this.simple.getMeters()).isEmpty();
+    }
+
 }
