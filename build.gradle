@@ -9,7 +9,6 @@ buildscript {
     }
     dependencies {
         classpath 'io.spring.gradle:spring-release-plugin:0.20.1'
-        classpath 'me.champeau.gradle:jmh-gradle-plugin:0.5.0'
         classpath 'com.netflix.nebula:nebula-project-plugin:3.4.0'
         classpath "io.spring.nohttp:nohttp-gradle:0.0.4.RELEASE"
         classpath "org.gradle:test-retry-gradle-plugin:1.1.9"
