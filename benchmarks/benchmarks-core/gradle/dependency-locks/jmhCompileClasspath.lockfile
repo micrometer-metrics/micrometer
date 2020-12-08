@@ -9,7 +9,7 @@ com.google.guava:listenablefuture:9999.0-empty-to-avoid-conflict-with-guava
 com.google.j2objc:j2objc-annotations:1.3
 io.dropwizard.metrics5:metrics-core:5.0.0
 io.dropwizard.metrics:metrics-core:4.0.7
-io.projectreactor:reactor-bom:2020.0.1
+io.projectreactor:reactor-bom:2020.0.2
 io.prometheus:simpleclient:0.8.1
 io.prometheus:simpleclient_common:0.8.1
 net.sf.jopt-simple:jopt-simple:4.6

@@ -2,4 +2,4 @@
 # Manual edits can break the build and are not advised.
 # This file is expected to be part of source control.
 com.google.code.findbugs:jsr305:3.0.2
-io.projectreactor:reactor-bom:2020.0.1
+io.projectreactor:reactor-bom:2020.0.2

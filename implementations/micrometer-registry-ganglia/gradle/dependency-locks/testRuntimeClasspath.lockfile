@@ -22,7 +22,7 @@ commons-fileupload:commons-fileupload:1.4
 commons-io:commons-io:2.2
 commons-logging:commons-logging:1.2
 info.ganglia.gmetric4j:gmetric4j:1.0.10
-io.projectreactor:reactor-bom:2020.0.1
+io.projectreactor:reactor-bom:2020.0.2
 javax.servlet:javax.servlet-api:3.1.0
 junit:junit:4.12
 net.bytebuddy:byte-buddy-agent:1.10.5

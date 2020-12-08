@@ -21,7 +21,7 @@ commons-codec:commons-codec:1.11
 commons-fileupload:commons-fileupload:1.4
 commons-io:commons-io:2.2
 commons-logging:commons-logging:1.2
-io.projectreactor:reactor-bom:2020.0.1
+io.projectreactor:reactor-bom:2020.0.2
 io.prometheus:simpleclient:0.8.1
 io.prometheus:simpleclient_common:0.8.1
 javax.servlet:javax.servlet-api:3.1.0

@@ -5,5 +5,5 @@ com.google.code.findbugs:jsr305:3.0.2
 com.netflix.spectator:spectator-api:0.106.0
 com.netflix.spectator:spectator-ext-ipc:0.106.0
 com.netflix.spectator:spectator-reg-atlas:0.106.0
-io.projectreactor:reactor-bom:2020.0.1
+io.projectreactor:reactor-bom:2020.0.2
 org.hdrhistogram:HdrHistogram:2.1.12
