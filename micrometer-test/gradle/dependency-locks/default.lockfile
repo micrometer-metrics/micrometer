@@ -2,7 +2,7 @@
 # Manual edits can break the build and are not advised.
 # This file is expected to be part of source control.
 com.github.tomakehurst:wiremock-jre8-standalone:2.27.2
-io.projectreactor:reactor-bom:2020.0.1
+io.projectreactor:reactor-bom:2020.0.2
 net.bytebuddy:byte-buddy-agent:1.10.15
 net.bytebuddy:byte-buddy:1.10.15
 org.apiguardian:apiguardian-api:1.1.0

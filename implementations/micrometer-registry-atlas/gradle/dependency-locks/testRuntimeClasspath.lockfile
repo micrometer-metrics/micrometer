@@ -6,7 +6,7 @@ com.google.code.findbugs:jsr305:3.0.2
 com.netflix.spectator:spectator-api:0.119.0
 com.netflix.spectator:spectator-ext-ipc:0.119.0
 com.netflix.spectator:spectator-reg-atlas:0.119.0
-io.projectreactor:reactor-bom:2020.0.1
+io.projectreactor:reactor-bom:2020.0.2
 javax.inject:javax.inject:1
 net.bytebuddy:byte-buddy-agent:1.10.15
 net.bytebuddy:byte-buddy:1.10.15

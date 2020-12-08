@@ -3,7 +3,7 @@
 # This file is expected to be part of source control.
 com.github.tomakehurst:wiremock-jre8-standalone:2.27.2
 com.google.code.findbugs:jsr305:3.0.2
-io.projectreactor:reactor-bom:2020.0.1
+io.projectreactor:reactor-bom:2020.0.2
 io.prometheus:simpleclient:0.9.0
 io.prometheus:simpleclient_common:0.9.0
 net.bytebuddy:byte-buddy-agent:1.10.15

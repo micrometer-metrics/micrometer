@@ -13,7 +13,7 @@ com.github.tomakehurst:wiremock-jre8-standalone:2.27.2
 com.google.code.findbugs:jsr305:3.0.2
 commons-codec:commons-codec:1.11
 commons-logging:commons-logging:1.2
-io.projectreactor:reactor-bom:2020.0.1
+io.projectreactor:reactor-bom:2020.0.2
 joda-time:joda-time:2.8.1
 net.bytebuddy:byte-buddy-agent:1.10.15
 net.bytebuddy:byte-buddy:1.10.15
