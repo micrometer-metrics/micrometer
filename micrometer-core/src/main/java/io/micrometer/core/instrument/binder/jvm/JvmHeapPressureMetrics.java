@@ -113,7 +113,7 @@ public class JvmHeapPressureMetrics implements MeterBinder, AutoCloseable {
                 GcInfo gcInfo = notificationInfo.getGcInfo();
                 long duration = gcInfo.getDuration();
 
-                if (!JvmMemory.isConcurrentPhase(gcCause)) {
+                if (!JvmMemory.isConcurrentPhase(gcCause, notificationInfo.getGcName())) {
                     gcPauseSum.record(duration);
                 }
 

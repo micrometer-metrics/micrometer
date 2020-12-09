@@ -141,7 +141,7 @@ public class JvmGcMetrics implements MeterBinder, AutoCloseable {
                 String gcAction = notificationInfo.getGcAction();
                 GcInfo gcInfo = notificationInfo.getGcInfo();
                 long duration = gcInfo.getDuration();
-                if (isConcurrentPhase(gcCause)) {
+                if (isConcurrentPhase(gcCause, notificationInfo.getGcName())) {
                     Timer.builder("jvm.gc.concurrent.phase.time")
                             .tags(tags)
                             .tags("action", gcAction, "cause", gcCause)

@@ -38,8 +38,9 @@ class JvmMemory {
                 .findAny();
     }
 
-    static boolean isConcurrentPhase(String cause) {
-        return "No GC".equals(cause);
+    static boolean isConcurrentPhase(String cause, String name) {
+        return "No GC".equals(cause)
+                || "Shenandoah Cycles".equals(name);
     }
 
     static boolean isYoungGenPool(String name) {
