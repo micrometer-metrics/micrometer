@@ -66,7 +66,7 @@ class BufferingFluxTest {
                 "fourteen bytes"
         );
 
-        Flux<String> buffered = BufferingFlux.create(source, "\n", 27, 1000);
+        Flux<String> buffered = BufferingFlux.create(source, "\n", 27, Long.MAX_VALUE);
 
         StepVerifier.create(buffered)
                 .expectNext("twelve bytes\nfourteen bytes\n")

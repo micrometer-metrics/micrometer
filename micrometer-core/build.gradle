@@ -38,7 +38,7 @@ dependencies {
 
     // reactor
     optionalApi 'io.projectreactor:reactor-core'
-    optionalApi 'io.projectreactor.netty:reactor-netty-http'
+    optionalApi 'io.projectreactor.netty:reactor-netty'
 
     // @Timed AOP
     optionalApi 'org.aspectj:aspectjweaver'

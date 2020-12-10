@@ -20,8 +20,8 @@ import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.stream.Collectors;
 
+import reactor.core.publisher.DirectProcessor;
 import reactor.core.publisher.Flux;
-import reactor.core.publisher.Sinks;
 
 public class BufferingFlux {
 
@@ -46,16 +46,16 @@ public class BufferingFlux {
             final AtomicInteger byteSize = new AtomicInteger(0);
             final AtomicLong lastTime = new AtomicLong(0);
 
-            final Sinks.Empty<Void> intervalEnd = Sinks.empty();
+            final DirectProcessor<Void> intervalEnd = DirectProcessor.create();
 
             final Flux<String> heartbeat = Flux.interval(Duration.ofMillis(maxMillisecondsBetweenEmits))
                     .map(l -> "")
-                    .takeUntilOther(intervalEnd.asMono());
+                    .takeUntilOther(intervalEnd);
 
             // Create a stream that emits at least once every $maxMillisecondsBetweenEmits, to avoid long pauses between
             // buffer flushes when the source doesn't emit for a while.
             final Flux<String> sourceWithEmptyStringKeepAlive = source
-                    .doOnTerminate(intervalEnd::tryEmitEmpty)
+                    .doOnTerminate(intervalEnd::onComplete)
                     .mergeWith(heartbeat);
 
             return sourceWithEmptyStringKeepAlive

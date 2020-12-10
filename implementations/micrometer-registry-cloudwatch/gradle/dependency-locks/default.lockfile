@@ -10,7 +10,6 @@ com.fasterxml.jackson.core:jackson-databind:2.11.0
 com.fasterxml.jackson.dataformat:jackson-dataformat-cbor:2.6.7
 commons-codec:commons-codec:1.11
 commons-logging:commons-logging:1.2
-io.projectreactor:reactor-bom:2020.0.1
 joda-time:joda-time:2.8.1
 org.apache.httpcomponents:httpclient:4.5.12
 org.apache.httpcomponents:httpcore:4.4.13

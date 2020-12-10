@@ -21,7 +21,6 @@ commons-codec:commons-codec:1.11
 commons-fileupload:commons-fileupload:1.4
 commons-io:commons-io:2.2
 commons-logging:commons-logging:1.2
-io.projectreactor:reactor-bom:2020.0.1
 javax.servlet:javax.servlet-api:3.1.0
 junit:junit:4.12
 net.bytebuddy:byte-buddy-agent:1.10.5
@@ -70,7 +69,7 @@ org.mockito:mockito-core:3.3.3
 org.objenesis:objenesis:2.6
 org.opentest4j:opentest4j:1.2.0
 org.ow2.asm:asm:7.0
-org.reactivestreams:reactive-streams:1.0.3
+org.reactivestreams:reactive-streams:1.0.2
 org.rnorth.duct-tape:duct-tape:1.0.8
 org.rnorth.visible-assertions:visible-assertions:2.1.2
 org.rnorth:tcp-unix-socket-proxy:1.0.2
