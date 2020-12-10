@@ -79,13 +79,12 @@ class LogbackMetricsTest {
 
     @Issue("#411")
     @Test
-    void ignoringLogMetricsInsideCounters() {
+    void ignoringMetricsInsideCounters() {
         registry = new LoggingCounterMeterRegistry();
         try (LogbackMetrics logbackMetrics = new LogbackMetrics()) {
             logbackMetrics.bindTo(registry);
             registry.counter("my.counter").increment();
         }
-        assertThat(registry.get("logback.events").tags("level", "info").counter().count()).isZero();
     }
 
     @Issue("#421")
