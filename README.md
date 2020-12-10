@@ -42,7 +42,7 @@ repositories {
 }
 
 dependencies {
-    compile 'io.micrometer:micrometer-core:latest.integration'
+    implementation 'io.micrometer:micrometer-core:latest.integration'
 }
 ```
 
@@ -56,7 +56,7 @@ repositories {
 }
 
 dependencies {
-    compile 'io.micrometer:micrometer-core:latest.integration'
+    implementation 'io.micrometer:micrometer-core:latest.integration'
 }
 ```
 
