@@ -24,7 +24,7 @@ commons-codec:commons-codec:1.11
 commons-fileupload:commons-fileupload:1.4
 commons-io:commons-io:2.2
 commons-logging:commons-logging:1.2
-io.projectreactor:reactor-bom:2020.0.2
+io.projectreactor:reactor-bom:2020.0.1
 javax.inject:javax.inject:1
 javax.servlet:javax.servlet-api:3.1.0
 junit:junit:4.12
