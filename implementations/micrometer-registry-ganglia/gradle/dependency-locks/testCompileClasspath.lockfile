@@ -4,7 +4,6 @@
 com.github.tomakehurst:wiremock-jre8-standalone:2.27.2
 com.google.code.findbugs:jsr305:3.0.2
 info.ganglia.gmetric4j:gmetric4j:1.0.10
-io.projectreactor:reactor-bom:2020.0.2
 net.bytebuddy:byte-buddy-agent:1.10.15
 net.bytebuddy:byte-buddy:1.10.15
 org.acplt.remotetea:remotetea-oncrpc:1.1.2
