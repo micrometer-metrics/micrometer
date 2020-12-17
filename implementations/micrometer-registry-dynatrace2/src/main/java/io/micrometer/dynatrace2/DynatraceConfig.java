@@ -37,6 +37,8 @@ public interface DynatraceConfig extends StepRegistryConfig {
         return "dynatrace2";
     }
 
+    default String entityId() { return getString(this,"entityId").orElse(""); }
+
     default String apiToken() {
         return getSecret(this, "apiToken").required().get();
     }
