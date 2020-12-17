@@ -15,11 +15,7 @@
  */
 package io.micrometer.dynatrace2;
 
-import io.micrometer.core.instrument.Clock;
-import io.micrometer.core.instrument.Counter;
-import io.micrometer.core.instrument.Gauge;
-import io.micrometer.core.instrument.Measurement;
-import io.micrometer.core.instrument.Meter;
+import io.micrometer.core.instrument.*;
 
 import java.util.stream.Stream;
 
@@ -30,9 +26,11 @@ import java.util.stream.Stream;
  */
 class MetricLineFactory {
     private final Clock clock;
+    private final DynatraceConfig config;
 
-    MetricLineFactory(Clock clock) {
+    MetricLineFactory(Clock clock, DynatraceConfig config) {
         this.clock = clock;
+        this.config = config;
     }
 
     /**
@@ -46,7 +44,7 @@ class MetricLineFactory {
         return meter.match(
                 this::toGaugeLine,
                 this::toCounterLine,
-                this::toEmpty,
+                this::toTimerLine,
                 this::toEmpty,
                 this::toEmpty,
                 this::toEmpty,
@@ -58,24 +56,38 @@ class MetricLineFactory {
 
     private Stream<String> toGaugeLine(Gauge meter) {
         long wallTime = clock.wallTime();
+        String entityId = config.entityId();
 
         return Streams.of(meter.measure())
                 .map(measurement -> LineProtocolFormatters.formatGaugeMetricLine(
                         metricName(meter, measurement),
                         meter.getId().getTags(),
                         measurement.getValue(),
-                        wallTime));
+                        wallTime, entityId));
     }
 
     private Stream<String> toCounterLine(Counter meter) {
         long wallTime = clock.wallTime();
+        String entityId = config.entityId();
 
         return Streams.of(meter.measure())
                 .map(measurement -> LineProtocolFormatters.formatCounterMetricLine(
                         metricName(meter, measurement),
                         meter.getId().getTags(),
                         measurement.getValue(),
-                        wallTime));
+                        wallTime, entityId));
+    }
+
+    private Stream<String> toTimerLine(Timer meter) {
+        long wallTime = clock.wallTime();
+        String entityId = config.entityId();
+
+        return Streams.of(meter.measure())
+                .map(measurement -> LineProtocolFormatters.formatTimerMetricLine(
+                        metricName(meter, measurement),
+                        meter.getId().getTags(),
+                        measurement.getValue(),
+                        wallTime, entityId));
     }
 
     private Stream<String> toEmpty(Meter meter) {

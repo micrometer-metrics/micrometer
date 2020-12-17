@@ -16,6 +16,8 @@
 package io.micrometer.dynatrace2;
 
 import io.micrometer.core.instrument.Tag;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.text.DecimalFormat;
 import java.text.DecimalFormatSymbols;
@@ -34,37 +36,78 @@ import java.util.stream.Collectors;
  */
 class LineProtocolFormatters {
 
+    private static final Logger logger = LoggerFactory.getLogger(LineProtocolFormatters.class);
+
     private static final DecimalFormat METRIC_VALUE_FORMAT = new DecimalFormat(
             "#.#####",
             DecimalFormatSymbols.getInstance(Locale.US));
 
-    static String formatGaugeMetricLine(String metric, List<Tag> tags, double value, long timestamp) {
+    static String formatGaugeMetricLine(String metric, List<Tag> tags, double value, long timestamp, String entityId) {
         return String.format(
                 "%s %s %d",
-                formatMetricAndDimensions(metric, tags),
+                formatMetricAndDimensions(metric, tags, entityId),
                 formatMetricValue(value),
                 timestamp);
     }
 
-    static String formatCounterMetricLine(String metric, List<Tag> tags, double value, long timestamp) {
+    static String formatCounterMetricLine(String metric, List<Tag> tags, double value, long timestamp, String entityId) {
         return String.format(
                 "%s count,delta=%s %d",
-                formatMetricAndDimensions(metric, tags),
+                formatMetricAndDimensions(metric, tags, entityId),
                 formatMetricValue(value),
                 timestamp);
     }
 
-    private static String formatMetricAndDimensions(String metric, List<Tag> tags) {
-        if (tags.isEmpty()) {
-            return metric;
-        }
+    static String formatTimerMetricLine(String metric, List<Tag> tags, double value, long timestamp, String entityId) {
+        return String.format(
+                "%s gauge,%s %d",
+                formatMetricAndDimensions(metric, tags, entityId),
+                formatMetricValue(value),
+                timestamp);
+    }
 
-        return String.format("%s,%s", metric, formatTags(tags));
+    private static String formatMetricAndDimensions(String metric, List<Tag> tags, String entityId) {
+        String[] cases = {"HOST","PROCESS_GROUP_INSTANCE","CUSTOM_DEVICE","CUSTOM_DEVICE_GROUP"};
+        String entityIdString = "";
+        if (!entityId.equals("")) {
+            int index;
+            for(index=0;index<cases.length; index++){
+                if(entityId.startsWith(cases[index])) break;
+            }
+            switch(index){
+                case 0:
+                    entityIdString = "dt.entity.host="+entityId;
+                    break;
+                case 1:
+                    entityIdString = "dt.entity.process_group_instance="+entityId;
+                    break;
+                case 2:
+                    entityIdString = "dt.entity.custom_device="+entityId;
+                    break;
+                case 3:
+                    entityIdString = "dt.entity.custom_device_group="+entityId;
+                    break;
+                default:
+                    logger.debug("Entity ID Not Available");
+            }
+        }
+        if (tags.isEmpty() ) {
+            if (entityIdString.equals("")) {
+                return metric;
+            }
+            else {
+                return metric +","+entityIdString;
+            }
+        }
+        if (entityIdString.equals("")) {
+            return String.format("%s,%s", metric, formatTags(tags));
+        }
+        return String.format("%s,%s,%s", metric, entityIdString, formatTags(tags));
     }
 
     private static String formatTags(List<Tag> tags) {
         return tags.stream()
-                .map(tag -> String.format("%s=%s", tag.getKey(), tag.getValue()))
+                .map(tag -> String.format("%s=\"%s\"", tag.getKey().toLowerCase(Locale.US), tag.getValue()))
                 .limit(LineProtocolIngestionLimits.METRIC_LINE_MAX_DIMENSIONS)
                 .collect(Collectors.joining(","));
     }

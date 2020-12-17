@@ -55,7 +55,7 @@ public class DynatraceMeterRegistry extends StepMeterRegistry {
 
     @Override
     protected void publish() {
-        MetricLineFactory metricLineFactory = new MetricLineFactory(clock);
+        MetricLineFactory metricLineFactory = new MetricLineFactory(clock, config);
 
         Map<Boolean, List<String>> metricLines = getMeters()
                 .stream()
