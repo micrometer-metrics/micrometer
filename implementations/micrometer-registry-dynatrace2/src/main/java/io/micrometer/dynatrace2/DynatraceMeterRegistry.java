@@ -48,6 +48,7 @@ public class DynatraceMeterRegistry extends StepMeterRegistry {
         super(config, clock);
         this.config = config;
         this.httpClient = httpClient;
+        addCommonTags();
 
         config().namingConvention(new LineProtocolNamingConvention());
         start(threadFactory);
@@ -77,6 +78,35 @@ public class DynatraceMeterRegistry extends StepMeterRegistry {
 
     private boolean lineLengthGreaterThanLimit(String line) {
         return line.length() > LineProtocolIngestionLimits.METRIC_LINE_MAX_LENGTH;
+    }
+
+    private void addCommonTags() {
+        String[] cases = {"HOST","PROCESS_GROUP","PROCESS_GROUP_INSTANCE","CUSTOM_DEVICE","CUSTOM_DEVICE_GROUP"};
+        if (!config.entityId().equals("")) {
+            int index;
+            for(index=0;index<cases.length; index++){
+                if(config.entityId().startsWith(cases[index])) break;
+            }
+            switch(index){
+                case 0:
+                    config().commonTags("dt.entity.host", config.entityId());
+                    break;
+                case 1:
+                    config().commonTags("dt.entity.process_group", config.entityId());
+                    break;
+                case 2:
+                    config().commonTags("dt.entity.process_group_instance", config.entityId());
+                    break;
+                case 3:
+                    config().commonTags("dt.entity.custom_device", config.entityId());
+                    break;
+                case 4:
+                    config().commonTags("dt.entity.custom_device_group", config.entityId());
+                    break;
+                default:
+                    logger.debug("Entity ID Not Available");
+            }
+        }
     }
 
     @Override

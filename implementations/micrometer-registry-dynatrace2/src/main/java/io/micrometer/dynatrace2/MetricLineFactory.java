@@ -63,7 +63,7 @@ class MetricLineFactory {
                         metricName(meter, measurement),
                         meter.getId().getTags(),
                         measurement.getValue(),
-                        wallTime, entityId));
+                        wallTime));
     }
 
     private Stream<String> toCounterLine(Counter meter) {
@@ -75,7 +75,7 @@ class MetricLineFactory {
                         metricName(meter, measurement),
                         meter.getId().getTags(),
                         measurement.getValue(),
-                        wallTime, entityId));
+                        wallTime));
     }
 
     private Stream<String> toTimerLine(Timer meter) {
@@ -87,7 +87,7 @@ class MetricLineFactory {
                         metricName(meter, measurement),
                         meter.getId().getTags(),
                         measurement.getValue(),
-                        wallTime, entityId));
+                        wallTime));
     }
 
     private Stream<String> toEmpty(Meter meter) {

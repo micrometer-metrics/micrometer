@@ -28,7 +28,7 @@ class LineProtocolFormattersTest implements WithAssertions {
 
     @Test
     void shouldCreateAGaugeMetricLine_whenDimensionsAreEmpty() {
-        String metricLine = formatGaugeMetricLine("my.metric", emptyList(), 3.33, 12345, "");
+        String metricLine = formatGaugeMetricLine("my.metric", emptyList(), 3.33, 12345);
 
         assertThat(metricLine).isEqualTo("my.metric 3.33 12345");
     }
@@ -39,14 +39,14 @@ class LineProtocolFormattersTest implements WithAssertions {
                 "my.metric",
                 asList(Tag.of("country", "es"), Tag.of("city", "bcn")),
                 3.33,
-                12345, "");
+                12345);
 
         assertThat(metricLine).isEqualTo("my.metric,country=es,city=bcn 3.33 12345");
     }
 
     @Test
     void shouldCreateACounterMetricLine_whenDimensionsAreEmpty() {
-        String metricLine = formatCounterMetricLine("my.metric", emptyList(), 5, 12345, "");
+        String metricLine = formatCounterMetricLine("my.metric", emptyList(), 5, 12345);
 
         assertThat(metricLine).isEqualTo("my.metric count,delta=5 12345");
     }
@@ -57,7 +57,7 @@ class LineProtocolFormattersTest implements WithAssertions {
                 "my.metric",
                 asList(Tag.of("country", "es"), Tag.of("city", "bcn")),
                 5,
-                12345, "");
+                12345);
 
         assertThat(metricLine).isEqualTo("my.metric,country=es,city=bcn count,delta=5 12345");
     }
