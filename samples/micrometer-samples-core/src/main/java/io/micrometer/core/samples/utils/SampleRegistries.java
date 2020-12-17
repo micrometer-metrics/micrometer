@@ -451,7 +451,7 @@ public class SampleRegistries {
         }, Clock.SYSTEM);
     }
 
-    public static io.micrometer.dynatrace2.DynatraceMeterRegistry dynatrace2(String apiToken, String uri) {
+    public static io.micrometer.dynatrace2.DynatraceMeterRegistry dynatrace2(String apiToken, String uri, String entityId) {
         return io.micrometer.dynatrace2.DynatraceMeterRegistry.builder(new io.micrometer.dynatrace2.DynatraceConfig() {
             @Override
             public String get(String key) {
@@ -466,6 +466,11 @@ public class SampleRegistries {
             @Override
             public String uri() {
                 return uri;
+            }
+
+            @Override
+            public String entityId() {
+                return entityId;
             }
 
 
