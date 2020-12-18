@@ -37,6 +37,10 @@ public interface DynatraceConfig extends StepRegistryConfig {
         return "dynatrace2";
     }
 
+    default String deviceName() { return getString(this,"deviceName").orElse(""); }
+
+    default String groupName() { return getString(this,"groupName").orElse(""); }
+
     default String entityId() { return getString(this,"entityId").orElse(""); }
 
     default String apiToken() {
@@ -56,6 +60,9 @@ public interface DynatraceConfig extends StepRegistryConfig {
     default Validated<?> validate() {
         return checkAll(this,
                 c -> StepRegistryConfig.validate(c),
+                check("deviceName", DynatraceConfig::deviceName),
+                check("groupName", DynatraceConfig::groupName),
+                check("entityId", DynatraceConfig::entityId),
                 checkRequired("apiToken", DynatraceConfig::apiToken),
                 checkRequired("uri", DynatraceConfig::uri),
                 check("batchSize", DynatraceConfig::batchSize)

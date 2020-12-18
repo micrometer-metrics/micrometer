@@ -81,6 +81,24 @@ public class DynatraceMeterRegistry extends StepMeterRegistry {
     }
 
     private void addCommonTags() {
+        addCommonTags_entityId();
+        addCommonTags_deviceName();
+        addCommonTags_groupName();
+    }
+
+    private void addCommonTags_groupName(){
+        if (!config.deviceName().equals("")){
+            config().commonTags("group-name", config.groupName());
+        }
+    }
+
+    private void addCommonTags_deviceName(){
+        if (!config.deviceName().equals("")){
+            config().commonTags("device-name", config.deviceName());
+        }
+    }
+
+    private void addCommonTags_entityId(){
         String[] cases = {"HOST","PROCESS_GROUP","PROCESS_GROUP_INSTANCE","CUSTOM_DEVICE","CUSTOM_DEVICE_GROUP"};
         if (!config.entityId().equals("")) {
             int index;
