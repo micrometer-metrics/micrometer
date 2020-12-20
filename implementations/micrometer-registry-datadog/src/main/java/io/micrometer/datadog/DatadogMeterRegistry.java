@@ -188,7 +188,7 @@ public class DatadogMeterRegistry extends StepMeterRegistry {
         metrics.add(writeMetric(id, "avg", wallTime, summary.mean(), Statistic.VALUE, null));
         metrics.add(writeMetric(id, "max", wallTime, summary.max(), Statistic.MAX, null));
 
-        addToMetadataList(metadata, id, "sum", Statistic.TOTAL_TIME, null);
+        addToMetadataList(metadata, id, "sum", Statistic.TOTAL, null);
         addToMetadataList(metadata, id, "count", Statistic.COUNT, "occurrence");
         addToMetadataList(metadata, id, "avg", Statistic.VALUE, null);
         addToMetadataList(metadata, id, "max", Statistic.MAX, null);
