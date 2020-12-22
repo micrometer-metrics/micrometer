@@ -15,6 +15,7 @@
  */
 package io.micrometer.logzio;
 
+import io.logz.listener.inputs.prometheus.protocol.Remote;
 import io.micrometer.core.instrument.Clock;
 import io.micrometer.core.instrument.Counter;
 import io.micrometer.core.instrument.DistributionSummary;
@@ -25,44 +26,62 @@ import io.micrometer.core.instrument.LongTaskTimer;
 import io.micrometer.core.instrument.Measurement;
 import io.micrometer.core.instrument.Meter;
 import io.micrometer.core.instrument.MeterRegistry;
-import io.micrometer.core.instrument.Tag;
 import io.micrometer.core.instrument.TimeGauge;
 import io.micrometer.core.instrument.Timer;
+import io.micrometer.core.instrument.cumulative.CumulativeCounter;
+import io.micrometer.core.instrument.cumulative.CumulativeDistributionSummary;
+import io.micrometer.core.instrument.cumulative.CumulativeFunctionCounter;
+import io.micrometer.core.instrument.cumulative.CumulativeFunctionTimer;
+import io.micrometer.core.instrument.cumulative.CumulativeTimer;
+import io.micrometer.core.instrument.distribution.DistributionStatisticConfig;
 import io.micrometer.core.instrument.distribution.HistogramSnapshot;
-import io.micrometer.core.instrument.step.StepMeterRegistry;
+import io.micrometer.core.instrument.distribution.pause.PauseDetector;
+import io.micrometer.core.instrument.internal.CumulativeHistogramLongTaskTimer;
+import io.micrometer.core.instrument.internal.DefaultGauge;
+import io.micrometer.core.instrument.internal.DefaultMeter;
+import io.micrometer.core.instrument.push.PushMeterRegistry;
 import io.micrometer.core.instrument.util.MeterPartition;
 import io.micrometer.core.instrument.util.NamedThreadFactory;
 import io.micrometer.core.ipc.http.HttpSender;
 import io.micrometer.core.ipc.http.HttpUrlConnectionSender;
 import io.micrometer.core.lang.NonNull;
+import io.micrometer.core.lang.Nullable;
+import javafx.util.Pair;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.xerial.snappy.Snappy;
 
+import java.time.Instant;
 import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 import java.util.concurrent.ThreadFactory;
 import java.util.concurrent.TimeUnit;
-import java.util.function.Consumer;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
+import java.util.function.ToDoubleFunction;
+import java.util.function.ToLongFunction;
+import java.util.stream.Collectors;
+
+import javax.ws.rs.core.HttpHeaders;
 
 import static io.micrometer.core.instrument.util.StringEscapeUtils.escapeJson;
-import static java.util.stream.Collectors.joining;
 
 /**
  * {@link MeterRegistry} for Logz.io.
  */
-public class LogzioMeterRegistry extends StepMeterRegistry {
+public class LogzioMeterRegistry extends PushMeterRegistry {
     private static final ThreadFactory DEFAULT_THREAD_FACTORY = new NamedThreadFactory("Logzio-metrics-publisher");
 
     private static final String ERROR_RESPONSE_BODY_SIGNATURE = "\"errors\":true";
-    private static final Pattern STATUS_CREATED_PATTERN = Pattern.compile("\"status\":201");
 
     private final Logger logger = LoggerFactory.getLogger(LogzioMeterRegistry.class);
 
     private final LogzioConfig config;
     private final HttpSender httpClient;
+
+    private Instant time;
 
     @SuppressWarnings("deprecation")
     public LogzioMeterRegistry(LogzioConfig config, Clock clock) {
@@ -89,10 +108,12 @@ public class LogzioMeterRegistry extends StepMeterRegistry {
 
     @Override
     protected void publish() {
-        String uri = config.uri() + "/?token=" + config.token() + "&type=micrometer_metrics";
+        String uri = config.uri();
+        M3dbMetricj m3dbMetric = new M3dbMetricj();
+        time = Instant.now();
         for (List<Meter> batch : MeterPartition.partition(this, config.batchSize())) {
             try {
-                String requestBody = batch.stream()
+                List<Pair<Map<String, String>, Map<Instant, Number>>> requestBody = batch.stream()
                         .map(m -> m.match(
                                 this::writeGauge,
                                 this::writeCounter,
@@ -103,118 +124,116 @@ public class LogzioMeterRegistry extends StepMeterRegistry {
                                 this::writeFunctionCounter,
                                 this::writeFunctionTimer,
                                 this::writeMeter))
+                        .flatMap(List::stream)
                         .filter(Optional::isPresent)
                         .map(Optional::get)
-                        .collect(joining("\n", "", "\n"));
+                        .collect(Collectors.toList());
+
+                Remote.WriteRequest writeRequest = m3dbMetric.buildRemoteWriteRequest(requestBody);
                 httpClient
                         .post(uri)
-                        .withJsonContent(requestBody)
+                        .withContent("application/x-protobuf", Snappy.compress(writeRequest.toByteArray()))
+                        .withHeader("Content-Encoding", "snappy")
+                        .withHeader(HttpHeaders.AUTHORIZATION, "Bearer " + config.token())
                         .send()
                         .onSuccess(response -> {
                             String responseBody = response.body();
                             if (responseBody.contains(ERROR_RESPONSE_BODY_SIGNATURE)) {
                                 logger.debug("failed metrics payload: {}", requestBody);
                             } else {
-                                logger.debug("successfully sent metrics to elastic");
+                                logger.debug("successfully sent metrics");
                             }
                         })
                         .onError(response -> {
                             logger.debug("failed metrics payload: {}", requestBody);
-                            logger.error("failed to send metrics to logzio: {}", response.body());
+                            logger.error("failed to send metrics to Logz.io: {}", response.body());
                         });
             } catch (Throwable e) {
-                logger.error("failed to send metrics to logzio", e);
+                logger.error("failed to send metrics to Logz.io", e);
             }
         }
     }
 
     // VisibleForTesting
-    static int countCreatedItems(String responseBody) {
-        Matcher matcher = STATUS_CREATED_PATTERN.matcher(responseBody);
-        int count = 0;
-        while (matcher.find()) {
-            count++;
-        }
-        return count;
-    }
-
-    // VisibleForTesting
-    Optional<String> writeCounter(Counter counter) {
+    List<Optional<Pair<Map<String, String>, Map<Instant, Number>>>> writeCounter(Counter counter) {
         return writeCounter(counter, counter.count());
     }
 
     // VisibleForTesting
-    Optional<String> writeFunctionCounter(FunctionCounter counter) {
+    List<Optional<Pair<Map<String, String>, Map<Instant, Number>>>> writeFunctionCounter(FunctionCounter counter) {
         return writeCounter(counter, counter.count());
     }
 
-    private Optional<String> writeCounter(Meter meter, double value) {
+    private List<Optional<Pair<Map<String, String>, Map<Instant, Number>>>> writeCounter(Meter meter, Double value) {
         if (Double.isFinite(value)) {
-            return Optional.of(writeDocument(meter, builder -> {
-                builder.append(":").append(value);
-            }));
+            return Arrays.asList(Optional.of(writeDocument(meter, value, "")));
         }
-        return Optional.empty();
+        return Arrays.asList(Optional.empty());
     }
 
     // VisibleForTesting
-    Optional<String> writeGauge(Gauge gauge) {
+    List<Optional<Pair<Map<String, String>, Map<Instant, Number>>>> writeGauge(Gauge gauge) {
         double value = gauge.value();
         if (Double.isFinite(value)) {
-            return Optional.of(writeDocument(gauge, builder -> {
-                builder.append(":").append(value);
-            }));
+            return Arrays.asList(Optional.of(writeDocument(gauge, value, "")));
         }
-        return Optional.empty();
+        return Arrays.asList(Optional.empty());
     }
 
     // VisibleForTesting
-    Optional<String> writeTimeGauge(TimeGauge gauge) {
+    List<Optional<Pair<Map<String, String>, Map<Instant, Number>>>> writeTimeGauge(TimeGauge gauge) {
         double value = gauge.value(getBaseTimeUnit());
         if (Double.isFinite(value)) {
-            return Optional.of(writeDocument(gauge, builder -> {
-                builder.append(":").append(value);
-            }));
+            return Arrays.asList(Optional.of(writeDocument(gauge, value, "")));
         }
-        return Optional.empty();
+        return Arrays.asList(Optional.empty());
     }
 
     // VisibleForTesting
-    Optional<String> writeFunctionTimer(FunctionTimer timer) {
+    List<Optional<Pair<Map<String, String>, Map<Instant, Number>>>> writeFunctionTimer(FunctionTimer timer) {
         double sum = timer.totalTime(getBaseTimeUnit());
         double mean = timer.mean(getBaseTimeUnit());
         if (Double.isFinite(sum) && Double.isFinite(mean)) {
-            return Optional.of(writeDocument(timer, builder -> {
-                builder.append(":").append(timer.count());
-            }));
+            return Arrays.asList(
+                    Optional.of(writeDocument(timer, timer.count(), "_count")),
+                    Optional.of(writeDocument(timer, timer.totalTime(getBaseTimeUnit()), "_sum"))
+            );
         }
-        return Optional.empty();
+        return Arrays.asList(Optional.empty());
     }
 
     // VisibleForTesting
-    Optional<String> writeLongTaskTimer(LongTaskTimer timer) {
-        return Optional.of(writeDocument(timer, builder -> {
-            builder.append(":").append(timer.activeTasks());
-        }));
+    List<Optional<Pair<Map<String, String>, Map<Instant, Number>>>> writeLongTaskTimer(LongTaskTimer timer) {
+        return Arrays.asList(
+                Optional.of(writeDocument(timer, timer.duration(getBaseTimeUnit()), "_sum")),
+                Optional.of(writeDocument(timer, timer.max(getBaseTimeUnit()), "_max")),
+                Optional.of(writeDocument(timer, timer.activeTasks(), "_count"))
+        );
     }
 
     // VisibleForTesting
-    Optional<String> writeTimer(Timer timer) {
-        return Optional.of(writeDocument(timer, builder -> {
-            builder.append(":").append(timer.count());
-        }));
+    List<Optional<Pair<Map<String, String>, Map<Instant, Number>>>> writeTimer(Timer timer) {
+        return Arrays.asList(
+                Optional.of(writeDocument(timer, timer.count(), "_count")),
+                Optional.of(writeDocument(timer, timer.max(getBaseTimeUnit()), "_max")),
+                Optional.of(writeDocument(timer, timer.totalTime(getBaseTimeUnit()), "_sum"))
+        );
     }
 
     // VisibleForTesting
-    Optional<String> writeSummary(DistributionSummary summary) {
+    List<Optional<Pair<Map<String, String>, Map<Instant, Number>>>> writeSummary(DistributionSummary summary) {
         HistogramSnapshot histogramSnapshot = summary.takeSnapshot();
-        return Optional.of(writeDocument(summary, builder -> {
-            builder.append(":").append(histogramSnapshot.count());
-        }));
+        List<Optional<Pair<Map<String, String>, Map<Instant, Number>>>> list = new ArrayList<>(Arrays.asList(
+                Optional.of(writeDocument(summary, histogramSnapshot.max(), "_max")),
+                Optional.of(writeDocument(summary, histogramSnapshot.total(), "_sum")),
+                Optional.of(writeDocument(summary, histogramSnapshot.count(), "_count"))
+        )
+        );
+        return list;
     }
 
     // VisibleForTesting
-    Optional<String> writeMeter(Meter meter) {
+    List<Optional<Pair<Map<String, String>, Map<Instant, Number>>>> writeMeter(Meter meter) {
         Iterable<Measurement> measurements = meter.measure();
         List<String> names = new ArrayList<>();
         // Snapshot values should be used throughout this method as there are chances for values to be changed in-between.
@@ -228,36 +247,81 @@ public class LogzioMeterRegistry extends StepMeterRegistry {
             values.add(value);
         }
         if (names.isEmpty()) {
-            return Optional.empty();
+            return Arrays.asList(Optional.empty());
         }
-        return Optional.of(writeDocument(meter, builder -> {
-            for (int i = 0; i < names.size(); i++) {
-                builder.append(",\"").append(names.get(i)).append("\":\"").append(values.get(i)).append("\"");
-            }
-        }));
+
+        List<Optional<Pair<Map<String, String>, Map<Instant, Number>>>> metersList = new ArrayList<>();
+        for (int i = 0; i < names.size(); i++) {
+            metersList.add(Optional.of(writeDocument(meter, values.get(i), names.get(i))));
+        }
+
+        return metersList;
     }
 
     // VisibleForTesting
-    String writeDocument(Meter meter, Consumer<StringBuilder> consumer) {
+    Pair<Map<String, String>, Map<Instant, Number>> writeDocument(Meter meter, Number value, String type) {
+        Map<String, String> labels = new HashMap<>();
+        Map<Instant, Number> samples = new HashMap<>();
 
-        StringBuilder sb = new StringBuilder();
-        String name = getConventionName(meter.getId());
-        String type = meter.getId().getType().toString().toLowerCase();
-        sb.append("{\"metrics\":{").append("\"" + escapeJson(name)).append("." + escapeJson(type) + "\"");
-        consumer.accept(sb);
-        sb.append("}").append(", \"dimensions\": {");
+        labels.put("__name__", escapeJson(getConventionName(meter.getId())) + type);
+        getConventionTags(meter.getId()).forEach(tag -> labels.put(tag.getKey(), tag.getValue()));
+        samples.put(time, value);
 
-        List<Tag> tags = getConventionTags(meter.getId());
-        sb.append(tags.stream().map(tag -> "\"" + escapeJson(tag.getKey()) + "\"" + ":\"" + escapeJson(tag.getValue()) + "\"").collect(joining(", ")));
-        sb.append("}}");
-
-        return sb.toString();
+        return new Pair<>(labels, samples);
     }
 
+
+    @Override
+    public Counter newCounter(Meter.Id id) {
+        return new CumulativeCounter(id);
+    }
+
+    @Override
+    public DistributionSummary newDistributionSummary(Meter.Id id, DistributionStatisticConfig distributionStatisticConfig, double scale) {
+        return new CumulativeDistributionSummary(id, clock, distributionStatisticConfig, scale);
+    }
+
+    @Override
+    protected Timer newTimer(Meter.Id id, DistributionStatisticConfig distributionStatisticConfig, PauseDetector pauseDetector) {
+        return new CumulativeTimer(id, clock, distributionStatisticConfig, pauseDetector, getBaseTimeUnit());
+    }
+
+    @Override
+    protected <T> Gauge newGauge(Meter.Id id, @Nullable T obj, ToDoubleFunction<T> valueFunction) {
+        return new DefaultGauge<>(id, obj, valueFunction);
+    }
+
+    @Override
+    protected LongTaskTimer newLongTaskTimer(Meter.Id id, DistributionStatisticConfig distributionStatisticConfig) {
+        return new CumulativeHistogramLongTaskTimer(id, clock, getBaseTimeUnit(), distributionStatisticConfig);
+    }
+
+    @Override
+    protected <T> FunctionTimer newFunctionTimer(Meter.Id id, T obj, ToLongFunction<T> countFunction, ToDoubleFunction<T> totalTimeFunction, TimeUnit totalTimeFunctionUnit) {
+        return new CumulativeFunctionTimer<>(id, obj, countFunction, totalTimeFunction, totalTimeFunctionUnit, getBaseTimeUnit());
+    }
+
+    @Override
+    protected <T> FunctionCounter newFunctionCounter(Meter.Id id, T obj, ToDoubleFunction<T> countFunction) {
+        return new CumulativeFunctionCounter<>(id, obj, countFunction);
+    }
+
+    @Override
+    protected Meter newMeter(Meter.Id id, Meter.Type type, Iterable<Measurement> measurements) {
+        return new DefaultMeter(id, type, measurements);
+    }
 
     @Override
     @NonNull
     protected TimeUnit getBaseTimeUnit() {
         return TimeUnit.MILLISECONDS;
+    }
+
+    @Override
+    protected DistributionStatisticConfig defaultHistogramConfig() {
+        return DistributionStatisticConfig.builder()
+                .expiry(config.step())
+                .build()
+                .merge(DistributionStatisticConfig.DEFAULT);
     }
 }
