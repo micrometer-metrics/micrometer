@@ -72,7 +72,7 @@ class LogzioMeterRegistryTest {
     }
 
     @AfterEach
-    private void clear() {
+    void clear() {
         registry.clear();
     }
 
