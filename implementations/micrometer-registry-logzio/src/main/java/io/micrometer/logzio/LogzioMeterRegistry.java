@@ -16,6 +16,7 @@
 package io.micrometer.logzio;
 
 import io.logz.listener.inputs.prometheus.protocol.Remote;
+import io.logz.listener.inputs.prometheus.protocol.Types;
 import io.micrometer.core.instrument.Clock;
 import io.micrometer.core.instrument.Counter;
 import io.micrometer.core.instrument.DistributionSummary;
@@ -46,7 +47,7 @@ import io.micrometer.core.ipc.http.HttpSender;
 import io.micrometer.core.ipc.http.HttpUrlConnectionSender;
 import io.micrometer.core.lang.NonNull;
 import io.micrometer.core.lang.Nullable;
-import javafx.util.Pair;
+import org.javatuples.Pair;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.xerial.snappy.Snappy;
@@ -63,7 +64,6 @@ import java.util.concurrent.TimeUnit;
 import java.util.function.ToDoubleFunction;
 import java.util.function.ToLongFunction;
 import java.util.stream.Collectors;
-
 import javax.ws.rs.core.HttpHeaders;
 
 import static io.micrometer.core.instrument.util.StringEscapeUtils.escapeJson;
@@ -109,7 +109,6 @@ public class LogzioMeterRegistry extends PushMeterRegistry {
     @Override
     protected void publish() {
         String uri = config.uri();
-        M3dbMetricj m3dbMetric = new M3dbMetricj();
         time = Instant.now();
         for (List<Meter> batch : MeterPartition.partition(this, config.batchSize())) {
             try {
@@ -129,7 +128,7 @@ public class LogzioMeterRegistry extends PushMeterRegistry {
                         .map(Optional::get)
                         .collect(Collectors.toList());
 
-                Remote.WriteRequest writeRequest = m3dbMetric.buildRemoteWriteRequest(requestBody);
+                Remote.WriteRequest writeRequest = buildRemoteWriteRequest(requestBody);
                 httpClient
                         .post(uri)
                         .withContent("application/x-protobuf", Snappy.compress(writeRequest.toByteArray()))
@@ -328,4 +327,20 @@ public class LogzioMeterRegistry extends PushMeterRegistry {
                 .build()
                 .merge(DistributionStatisticConfig.DEFAULT);
     }
+
+    private Remote.WriteRequest buildRemoteWriteRequest( List<Pair<Map<String, String>, Map<Instant, Number>>> labelsSamplesPairs) {
+        return Remote.WriteRequest.newBuilder()
+                .addAllTimeseries(labelsSamplesPairs.stream().map((labels) ->
+                        Types.TimeSeries.newBuilder().addAllLabels(getLabels(labels.getValue0())).addAllSamples(getSamples(labels.getValue1())).build()).collect(Collectors.toList())
+                ).build();
+    }
+
+    private List<Types.Label> getLabels(Map<String, String> labels){
+        return labels.entrySet().stream().map(entry -> Types.Label.newBuilder().setName(entry.getKey()).setValue(entry.getValue()).build()).collect(Collectors.toList());
+    }
+
+    private List<Types.Sample> getSamples(Map<Instant, Number> samples){
+        return samples.entrySet().stream().map(entry -> Types.Sample.newBuilder().setTimestampMillis(entry.getKey().toEpochMilli()).setValue(entry.getValue().doubleValue()).build()).collect(Collectors.toList());
+    }
+
 }

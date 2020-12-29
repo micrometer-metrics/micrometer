@@ -15,6 +15,7 @@ dependencies {
 
     compile "com.google.protobuf:protobuf-java:3.13.0"
     compile group: 'javax.ws.rs', name: 'javax.ws.rs-api', version: '2.0'
+    compile group: 'org.javatuples', name: 'javatuples', version: '1.2'
 
     implementation 'org.slf4j:slf4j-api'
     implementation 'org.xerial.snappy:snappy-java:1.1.8.2'

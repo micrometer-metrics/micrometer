@@ -101,9 +101,9 @@ class LogzioMeterRegistryTest {
     void writeTimer() {
         Timer timer = Timer.builder("myTimer").register(registry);
         assertThat(registry.writeTimer(timer).toString())
-                .contains("{__name__=myTimer_duration_seconds_count}={1970-01-01T00:00:00.001Z=0}"
-                        , "{__name__=myTimer_duration_seconds_max}={1970-01-01T00:00:00.001Z=0.0}"
-                        , "{__name__=myTimer_duration_seconds_sum}={1970-01-01T00:00:00.001Z=0.0}"
+                .contains("{__name__=myTimer_duration_seconds_count}, {1970-01-01T00:00:00.001Z=0}"
+                        , "{__name__=myTimer_duration_seconds_max}, {1970-01-01T00:00:00.001Z=0.0}"
+                        , "{__name__=myTimer_duration_seconds_sum}, {1970-01-01T00:00:00.001Z=0.0}"
                 );
     }
 
@@ -112,14 +112,14 @@ class LogzioMeterRegistryTest {
         Counter counter = Counter.builder("myCounter").register(registry);
         counter.increment();
         assertThat(registry.writeCounter(counter).toString())
-                .contains("{__name__=myCounter_total}={1970-01-01T00:00:00.001Z=1.0}");
+                .contains("{__name__=myCounter_total}, {1970-01-01T00:00:00.001Z=1.0}");
     }
 
     @Test
     void writeGauge() {
         Gauge gauge = Gauge.builder("myGauge", 123.0, Number::doubleValue).register(registry);
         assertThat(registry.writeGauge(gauge).toString())
-                .contains("{__name__=myGauge}={1970-01-01T00:00:00.001Z=123.0}");
+                .contains("{__name__=myGauge}, {1970-01-01T00:00:00.001Z=123.0}");
     }
 
 
@@ -127,16 +127,16 @@ class LogzioMeterRegistryTest {
     void writeTimeGauge() {
         TimeGauge gauge = TimeGauge.builder("myTimeGauge", 123.0, TimeUnit.MILLISECONDS, Number::doubleValue).register(registry);
         assertThat(registry.writeTimeGauge(gauge).toString())
-                .contains("{__name__=myTimeGauge_milliseconds}={1970-01-01T00:00:00.001Z=123.0}");
+                .contains("{__name__=myTimeGauge_milliseconds}, {1970-01-01T00:00:00.001Z=123.0}");
     }
 
     @Test
     void writeLongTaskTimer() {
         LongTaskTimer timer = LongTaskTimer.builder("longTaskTimer").register(registry);
         assertThat(registry.writeLongTaskTimer(timer).toString())
-                .contains("{__name__=longTaskTimer_duration_seconds_sum}={1970-01-01T00:00:00.001Z=0.0}"
-                        , "{__name__=longTaskTimer_duration_seconds_max}={1970-01-01T00:00:00.001Z=0.0}"
-                        , "{__name__=longTaskTimer_duration_seconds_count}={1970-01-01T00:00:00.001Z=0}"
+                .contains("{__name__=longTaskTimer_duration_seconds_sum}, {1970-01-01T00:00:00.001Z=0.0}"
+                        , "{__name__=longTaskTimer_duration_seconds_max}, {1970-01-01T00:00:00.001Z=0.0}"
+                        , "{__name__=longTaskTimer_duration_seconds_count}, {1970-01-01T00:00:00.001Z=0}"
                 );
     }
 
@@ -156,9 +156,9 @@ class LogzioMeterRegistryTest {
     void writeMeter() {
         Timer timer = Timer.builder("myTimer").register(registry);
         assertThat(registry.writeMeter(timer).toString())
-                .contains("{__name__=myTimer_duration_seconds_total}={1970-01-01T00:00:00.001Z=0.0}"
-                        , "{__name__=myTimer_duration_seconds_max}={1970-01-01T00:00:00.001Z=0.0}"
-                        , "{__name__=myTimer_duration_seconds_count}={1970-01-01T00:00:00.001Z=0.0}"
+                .contains("{__name__=myTimer_duration_seconds_total}, {1970-01-01T00:00:00.001Z=0.0}"
+                        , "{__name__=myTimer_duration_seconds_max}, {1970-01-01T00:00:00.001Z=0.0}"
+                        , "{__name__=myTimer_duration_seconds_count}, {1970-01-01T00:00:00.001Z=0.0}"
                 );
     }
 
@@ -167,6 +167,6 @@ class LogzioMeterRegistryTest {
     void writeFunctionCounter() {
         FunctionCounter counter = FunctionCounter.builder("myFunctionCounter", 123.0, Number::doubleValue).register(registry);
         assertThat(registry.writeFunctionCounter(counter).toString())
-                .contains("{__name__=myFunctionCounter_total}={1970-01-01T00:00:00.001Z=123.0");
+                .contains("{__name__=myFunctionCounter_total}, {1970-01-01T00:00:00.001Z=123.0");
     }
 }
