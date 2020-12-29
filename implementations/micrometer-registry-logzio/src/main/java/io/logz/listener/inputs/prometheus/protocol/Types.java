@@ -4,7 +4,7 @@
 package io.logz.listener.inputs.prometheus.protocol;
 
 public final class Types {
-    private Types() {}
+    private Types() { }
     public static void registerAllExtensions(
             com.google.protobuf.ExtensionRegistryLite registry) {
     }

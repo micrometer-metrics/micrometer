@@ -269,7 +269,7 @@ public class LogzioMeterRegistry extends PushMeterRegistry {
         return new Pair<>(labels, samples);
     }
 
-    public static void setTime(Instant newTime){
+    public static void setTime(Instant newTime) {
         time = newTime;
     }
 
@@ -328,18 +328,18 @@ public class LogzioMeterRegistry extends PushMeterRegistry {
                 .merge(DistributionStatisticConfig.DEFAULT);
     }
 
-    private Remote.WriteRequest buildRemoteWriteRequest( List<Pair<Map<String, String>, Map<Instant, Number>>> labelsSamplesPairs) {
+    private Remote.WriteRequest buildRemoteWriteRequest(List<Pair<Map<String, String>, Map<Instant, Number>>> labelsSamplesPairs) {
         return Remote.WriteRequest.newBuilder()
                 .addAllTimeseries(labelsSamplesPairs.stream().map((labels) ->
                         Types.TimeSeries.newBuilder().addAllLabels(getLabels(labels.getValue0())).addAllSamples(getSamples(labels.getValue1())).build()).collect(Collectors.toList())
                 ).build();
     }
 
-    private List<Types.Label> getLabels(Map<String, String> labels){
+    private List<Types.Label> getLabels(Map<String, String> labels) {
         return labels.entrySet().stream().map(entry -> Types.Label.newBuilder().setName(entry.getKey()).setValue(entry.getValue()).build()).collect(Collectors.toList());
     }
 
-    private List<Types.Sample> getSamples(Map<Instant, Number> samples){
+    private List<Types.Sample> getSamples(Map<Instant, Number> samples) {
         return samples.entrySet().stream().map(entry -> Types.Sample.newBuilder().setTimestampMillis(entry.getKey().toEpochMilli()).setValue(entry.getValue().doubleValue()).build()).collect(Collectors.toList());
     }
 
