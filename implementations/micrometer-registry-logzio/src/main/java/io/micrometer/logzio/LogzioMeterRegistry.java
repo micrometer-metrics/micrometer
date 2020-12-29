@@ -81,7 +81,7 @@ public class LogzioMeterRegistry extends PushMeterRegistry {
     private final LogzioConfig config;
     private final HttpSender httpClient;
 
-    private Instant time;
+    private static Instant time;
 
     @SuppressWarnings("deprecation")
     public LogzioMeterRegistry(LogzioConfig config, Clock clock) {
@@ -252,7 +252,7 @@ public class LogzioMeterRegistry extends PushMeterRegistry {
 
         List<Optional<Pair<Map<String, String>, Map<Instant, Number>>>> metersList = new ArrayList<>();
         for (int i = 0; i < names.size(); i++) {
-            metersList.add(Optional.of(writeDocument(meter, values.get(i), names.get(i))));
+            metersList.add(Optional.of(writeDocument(meter, values.get(i), "_" + names.get(i))));
         }
 
         return metersList;
@@ -268,6 +268,10 @@ public class LogzioMeterRegistry extends PushMeterRegistry {
         samples.put(time, value);
 
         return new Pair<>(labels, samples);
+    }
+
+    public static void setTime(Instant newTime){
+        time = newTime;
     }
 
 

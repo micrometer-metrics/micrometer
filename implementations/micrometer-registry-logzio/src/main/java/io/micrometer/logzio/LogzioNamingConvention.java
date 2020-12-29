@@ -31,9 +31,14 @@ public class LogzioNamingConvention implements NamingConvention {
 
     private static final Pattern nameChars = Pattern.compile("[^a-zA-Z0-9_:]");
     private static final Pattern tagKeyChars = Pattern.compile("[^a-zA-Z0-9_]");
+    private final String timerSuffix;
 
     public LogzioNamingConvention() {
-        super();
+        this("_duration");
+    }
+
+    public LogzioNamingConvention(String timerSuffix) {
+        this.timerSuffix = timerSuffix;
     }
 
     /**
@@ -71,8 +76,10 @@ public class LogzioNamingConvention implements NamingConvention {
                 break;
             case TIMER:
             case LONG_TASK_TIMER:
-                 if (!conventionName.endsWith("_seconds"))
+                if (conventionName.endsWith(timerSuffix)) {
                     conventionName += "_seconds";
+                } else if (!conventionName.endsWith("_seconds"))
+                    conventionName += timerSuffix + "_seconds";
                 break;
         }
 
@@ -82,5 +89,4 @@ public class LogzioNamingConvention implements NamingConvention {
         }
         return sanitized;
     }
-
 }
