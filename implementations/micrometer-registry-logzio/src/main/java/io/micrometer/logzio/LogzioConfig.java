@@ -35,12 +35,12 @@ public interface LogzioConfig extends StepRegistryConfig {
 
     default HashMap<String, String> regionsUri() {
         return new HashMap<String, String>() {{
-            put("us", "http://listener.logz.io");
-            put("ca", "http://listener-ca.logz.io");
-            put("eu", "http://listener-eu.logz.io");
-            put("nl", "http://listener-nl.logz.io");
-            put("uk", "http://listener-uk.logz.io");
-            put("wa", "http://listener-wa.logz.io");
+            put("us", "https://listener.logz.io");
+            put("ca", "https://listener-ca.logz.io");
+            put("eu", "https://listener-eu.logz.io");
+            put("nl", "https://listener-nl.logz.io");
+            put("uk", "https://listener-uk.logz.io");
+            put("wa", "https://listener-wa.logz.io");
         }};
     }
 
@@ -61,7 +61,7 @@ public interface LogzioConfig extends StepRegistryConfig {
                 return regionsToUri.get(region) + ":" + port();
             }
         }
-        return getUrlString(this, "uri").orElse("http://listener.logz.io" + ":" + port());
+        return getUrlString(this, "uri").orElse("https://listener.logz.io" + ":" + port());
     }
 
     default String region() {

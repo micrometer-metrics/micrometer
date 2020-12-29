@@ -2,10 +2,9 @@
 // source: remote.proto
 
 package io.logz.listener.inputs.prometheus.protocol;
-import com.google.protobuf.ExtensionRegistryLite;
 
 public final class Remote {
-    private Remote() {}
+    private Remote() { }
     public static void registerAllExtensions(
             com.google.protobuf.ExtensionRegistryLite registry) {
     }
@@ -270,7 +269,7 @@ public final class Remote {
         public static io.logz.listener.inputs.prometheus.protocol.Remote.WriteRequest parseFrom(
                 com.google.protobuf.CodedInputStream input,
                 com.google.protobuf.ExtensionRegistryLite extensionRegistry)
-                throws java.io.IOException {
+                throws java.io.IOException  {
             return com.google.protobuf.GeneratedMessageV3
                     .parseWithIOException(PARSER, input, extensionRegistry);
         }
@@ -333,14 +332,14 @@ public final class Remote {
                 if (timeseriesBuilder_ == null) {
                     timeseries_ = java.util.Collections.emptyList();
                     bitField0_ = (bitField0_ & ~0x00000001);
-                } else {
+                } else  {
                     timeseriesBuilder_.clear();
                 }
                 return this;
             }
 
             public com.google.protobuf.Descriptors.Descriptor
-            getDescriptorForType() {
+            getDescriptorForType()  {
                 return io.logz.listener.inputs.prometheus.protocol.Remote.internal_static_prometheus_WriteRequest_descriptor;
             }
 
