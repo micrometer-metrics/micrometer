@@ -31,7 +31,6 @@ import io.micrometer.core.instrument.Tags;
 import io.micrometer.core.instrument.Timer;
 import io.micrometer.core.lang.NonNullApi;
 import io.micrometer.core.lang.NonNullFields;
-import org.checkerframework.checker.index.qual.NonNegative;
 
 import java.util.Arrays;
 import java.util.EnumMap;
@@ -116,8 +115,7 @@ public final class CaffeineStatsCounter implements StatsCounter {
     }
 
     /**
-     * Register a metric for the size of the cache.
-     * @param cache
+     * Register a gauge for the size of the given cache.
      */
     public void registerSizeMetric(Cache<?,?> cache) {
         Gauge.builder("cache.size", cache, Cache::estimatedSize).tags(tags)
@@ -126,22 +124,22 @@ public final class CaffeineStatsCounter implements StatsCounter {
     }
 
     @Override
-    public void recordHits(@NonNegative int count) {
+    public void recordHits(int count) {
         hitCount.increment(count);
     }
 
     @Override
-    public void recordMisses(@NonNegative int count) {
+    public void recordMisses(int count) {
         missCount.increment(count);
     }
 
     @Override
-    public void recordLoadSuccess(@NonNegative long loadTime) {
+    public void recordLoadSuccess(long loadTime) {
         loadSuccesses.record(loadTime, TimeUnit.NANOSECONDS);
     }
 
     @Override
-    public void recordLoadFailure(@NonNegative long loadTime) {
+    public void recordLoadFailure(long loadTime) {
         loadFailures.record(loadTime, TimeUnit.NANOSECONDS);
     }
 
@@ -152,12 +150,12 @@ public final class CaffeineStatsCounter implements StatsCounter {
 
     @SuppressWarnings("deprecation")
     @Override
-    public void recordEviction(@NonNegative int weight) {
+    public void recordEviction(int weight) {
         evictions.record(weight);
     }
 
     @Override
-    public void recordEviction(@NonNegative int weight, RemovalCause cause) {
+    public void recordEviction(int weight, RemovalCause cause) {
         evictionMetrics.get(cause).record(weight);
     }
 
