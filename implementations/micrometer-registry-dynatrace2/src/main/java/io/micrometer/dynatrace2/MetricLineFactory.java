@@ -17,16 +17,23 @@ package io.micrometer.dynatrace2;
 
 import io.micrometer.core.instrument.*;
 
+import java.util.List;
+import java.util.Locale;
+import java.util.regex.Pattern;
 import java.util.stream.Stream;
+
+import static io.micrometer.dynatrace2.LineProtocolIngestionLimits.METRIC_KEY_MAX_LENGTH;
 
 /**
  * Metric line factory which maps from micrometer domain to expected format in line protocol
  *
  * @author Oriol Barcelona
+ * @author David Mass
  */
 class MetricLineFactory {
     private final Clock clock;
     private final DynatraceConfig config;
+    private static final Pattern NAME_CLEANUP_PATTERN = Pattern.compile("[^a-z0-9-_.]");
 
     MetricLineFactory(Clock clock, DynatraceConfig config) {
         this.clock = clock;
@@ -56,7 +63,6 @@ class MetricLineFactory {
 
     private Stream<String> toGaugeLine(Gauge meter) {
         long wallTime = clock.wallTime();
-        String entityId = config.entityId();
 
         return Streams.of(meter.measure())
                 .map(measurement -> LineProtocolFormatters.formatGaugeMetricLine(
@@ -68,7 +74,6 @@ class MetricLineFactory {
 
     private Stream<String> toCounterLine(Counter meter) {
         long wallTime = clock.wallTime();
-        String entityId = config.entityId();
 
         return Streams.of(meter.measure())
                 .map(measurement -> LineProtocolFormatters.formatCounterMetricLine(
@@ -80,7 +85,6 @@ class MetricLineFactory {
 
     private Stream<String> toTimerLine(Timer meter) {
         long wallTime = clock.wallTime();
-        String entityId = config.entityId();
 
         return Streams.of(meter.measure())
                 .map(measurement -> LineProtocolFormatters.formatTimerMetricLine(
@@ -90,16 +94,29 @@ class MetricLineFactory {
                         wallTime));
     }
 
-    private Stream<String> toEmpty(Meter meter) {
-        return Stream.empty();
-    }
+    private Stream<String> toEmpty(Meter meter) { return Stream.empty(); }
 
     private String metricName(Meter meter, Measurement measurement) {
         String meterName = meter.getId().getName();
         if (Streams.of(meter.measure()).count() == 1) {
-            return meterName;
+            meterName = meterName.toLowerCase(Locale.US);
+            String sanitized = NAME_CLEANUP_PATTERN.matcher(meterName).replaceAll("_");
+            try {
+                return sanitized.substring(0,METRIC_KEY_MAX_LENGTH);
+            }
+            catch (IndexOutOfBoundsException e){
+                return sanitized;
+            }
         }
 
-        return String.format("%s.%s", meterName, measurement.getStatistic().getTagValueRepresentation());
+        String fullMetricName = String.format("%s.%s", meterName, measurement.getStatistic().getTagValueRepresentation());
+        fullMetricName = fullMetricName.toLowerCase(Locale.US);
+        String sanitized = NAME_CLEANUP_PATTERN.matcher(fullMetricName).replaceAll("_");
+        try {
+            return sanitized.substring(0,METRIC_KEY_MAX_LENGTH);
+        }
+        catch (IndexOutOfBoundsException e){
+            return sanitized;
+        }
     }
 }

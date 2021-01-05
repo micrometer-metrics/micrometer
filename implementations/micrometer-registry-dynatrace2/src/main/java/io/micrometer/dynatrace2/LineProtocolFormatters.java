@@ -21,7 +21,10 @@ import java.text.DecimalFormat;
 import java.text.DecimalFormatSymbols;
 import java.util.List;
 import java.util.Locale;
+import java.util.regex.Pattern;
 import java.util.stream.Collectors;
+
+import static io.micrometer.dynatrace2.LineProtocolIngestionLimits.DIMENSION_KEY_MAX_LENGTH;
 
 /**
  * Static formatters for line protocol
@@ -30,9 +33,12 @@ import java.util.stream.Collectors;
  * {@link io.micrometer.core.instrument.config.NamingConvention}
  *
  * @author Oriol Barcelona
+ * @author David Mass
  * @see LineProtocolNamingConvention
  */
 class LineProtocolFormatters {
+
+    private static final Pattern KEY_CLEANUP_PATTERN = Pattern.compile("[^a-z0-9-_.]");
 
     private static final DecimalFormat METRIC_VALUE_FORMAT = new DecimalFormat(
             "#.#####",
@@ -71,12 +77,23 @@ class LineProtocolFormatters {
 
     private static String formatTags(List<Tag> tags) {
         return tags.stream()
-                .map(tag -> String.format("%s=\"%s\"", tag.getKey().toLowerCase(Locale.US), tag.getValue()))
+                .map(tag -> String.format("%s=\"%s\"", sanitizeTagKey(tag.getKey()), tag.getValue()))
                 .limit(LineProtocolIngestionLimits.METRIC_LINE_MAX_DIMENSIONS)
                 .collect(Collectors.joining(","));
     }
 
     private static String formatMetricValue(double value) {
         return METRIC_VALUE_FORMAT.format(value);
+    }
+
+    private static String sanitizeTagKey(String key) {
+        key = key.toLowerCase(Locale.US);
+        String sanitized = KEY_CLEANUP_PATTERN.matcher(key).replaceAll("_");
+        try {
+            return sanitized.substring(0, DIMENSION_KEY_MAX_LENGTH);
+        }
+        catch (IndexOutOfBoundsException e) {
+            return sanitized;
+        }
     }
 }
