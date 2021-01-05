@@ -21,6 +21,7 @@ import org.junit.jupiter.api.Test;
 
 import static io.micrometer.dynatrace2.LineProtocolFormatters.formatCounterMetricLine;
 import static io.micrometer.dynatrace2.LineProtocolFormatters.formatGaugeMetricLine;
+import static io.micrometer.dynatrace2.LineProtocolFormatters.formatTimerMetricLine;
 import static java.util.Arrays.asList;
 import static java.util.Collections.emptyList;
 
@@ -41,7 +42,7 @@ class LineProtocolFormattersTest implements WithAssertions {
                 3.33,
                 12345);
 
-        assertThat(metricLine).isEqualTo("my.metric,country=es,city=bcn 3.33 12345");
+        assertThat(metricLine).isEqualTo("my.metric,country=\"es\",city=\"bcn\" 3.33 12345");
     }
 
     @Test
@@ -59,6 +60,35 @@ class LineProtocolFormattersTest implements WithAssertions {
                 5,
                 12345);
 
-        assertThat(metricLine).isEqualTo("my.metric,country=es,city=bcn count,delta=5 12345");
+        assertThat(metricLine).isEqualTo("my.metric,country=\"es\",city=\"bcn\" count,delta=5 12345");
+    }
+
+    @Test
+    void shouldCreateATimerMetricLine_whenDimensionsAreEmpty() {
+        String metricLine = formatTimerMetricLine("my.metric", emptyList(), 5, 12345);
+
+        assertThat(metricLine).isEqualTo("my.metric gauge,5 12345");
+    }
+
+    @Test
+    void shouldCreateATimerMetricLine_whenMultipleDimensions() {
+        String metricLine = formatTimerMetricLine(
+                "my.metric",
+                asList(Tag.of("country", "es"), Tag.of("city", "bcn")),
+                5,
+                12345);
+
+        assertThat(metricLine).isEqualTo("my.metric,country=\"es\",city=\"bcn\" gauge,5 12345");
+    }
+
+    @Test
+    void shouldSucceed_whenTagKeyContainsSpecialChar() {
+        String metricLine = formatTimerMetricLine(
+                "my.metric",
+                asList(Tag.of("country#lang", "es"), Tag.of("city", "bcn")),
+                5,
+                12345);
+
+        assertThat(metricLine).isEqualTo("my.metric,country_lang=\"es\",city=\"bcn\" gauge,5 12345");
     }
 }

@@ -26,12 +26,30 @@ class LineProtocolNamingConventionTest implements WithAssertions {
     }
 
     @Test
+    void shouldMetricKeyBeSanitized_whenItContainsSpecialChars() {
+        String name = "my,metric";
+
+        String metricKey = namingConvention.name(name, Meter.Type.GAUGE);
+
+        assertThat(metricKey).matches("my_metric");
+    }
+
+    @Test
     void shouldDimensionNameBeTrimmed_whenIsGreaterThanMaxLength() {
         String key = stringOfSize(DIMENSION_KEY_MAX_LENGTH + 1);
 
         String dimensionName = namingConvention.tagKey(key);
 
         assertThat(dimensionName).hasSize(DIMENSION_KEY_MAX_LENGTH);
+    }
+
+    @Test
+    void shouldDimensionNameBeSanitized_whenItContainsSpecialChars() {
+        String key = "country#lang";
+
+        String dimensionName = namingConvention.tagKey(key);
+
+        assertThat(dimensionName).matches("country_lang");
     }
 
     @Test

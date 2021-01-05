@@ -30,7 +30,9 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import ru.lanwen.wiremock.ext.WiremockResolver;
 import ru.lanwen.wiremock.ext.WiremockResolver.Wiremock;
 
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 import java.util.stream.Stream;
@@ -50,6 +52,7 @@ import static io.micrometer.dynatrace2.LineProtocolIngestionLimits.METRIC_LINE_M
  * Tests for {@link DynatraceMeterRegistry}.
  *
  * @author Oriol Barcelona
+ * @author David Mass
  */
 @ExtendWith(WiremockResolver.class)
 class DynatraceMeterRegistryTest implements WithAssertions {
@@ -80,6 +83,9 @@ class DynatraceMeterRegistryTest implements WithAssertions {
             public String uri() {
                 return server.baseUrl();
             }
+
+            @Override
+            public String entityId() {return "HOST-06F288EE2A930951"; }
         };
         clock = new MockClock();
         meterRegistry = DynatraceMeterRegistry.builder(config)
@@ -133,7 +139,7 @@ class DynatraceMeterRegistryTest implements WithAssertions {
 
         dtApiServer.verify(postRequestedFor(METRICS_INGESTION_URL)
                 .withHeader("Content-Type", TEXT_PLAIN_CONTENT_TYPE)
-                .withRequestBody(equalToMetricLines("cpu.temperature 55"))
+                .withRequestBody(equalToMetricLines("cpu.temperature,dt.entity.host=\"HOST-06F288EE2A930951\" 55"))
         );
     }
 
@@ -141,14 +147,14 @@ class DynatraceMeterRegistryTest implements WithAssertions {
     void shouldIngestAMetricThroughTheApi_whenHasDimensions() {
         meterRegistry.gauge(
                 "cpu.temperature",
-                Tags.of("dt.entity.host", "HOST-06F288EE2A930951", "cpu", "1"),
+                Tags.of("hostname", "server01", "cpu", "1"),
                 55);
 
         meterRegistry.publish();
 
         dtApiServer.verify(postRequestedFor(METRICS_INGESTION_URL)
                 .withHeader("Content-Type", TEXT_PLAIN_CONTENT_TYPE)
-                .withRequestBody(equalToMetricLines("cpu.temperature,cpu=1,dt.entity.host=HOST-06F288EE2A930951 55"))
+                .withRequestBody(equalToMetricLines("cpu.temperature,cpu=\"1\",dt.entity.host=\"HOST-06F288EE2A930951\",hostname=\"server01\" 55"))
         );
     }
 
@@ -156,11 +162,11 @@ class DynatraceMeterRegistryTest implements WithAssertions {
     void shouldIngestMultipleMetricsThroughTheApi_whenSameMetricButDifferentDimensions() {
         meterRegistry.gauge(
                 "cpu.temperature",
-                Tags.of("dt.entity.host", "HOST-06F288EE2A930951", "cpu", "1"),
+                Tags.of("hostname", "server01", "cpu", "1"),
                 55);
         meterRegistry.gauge(
                 "cpu.temperature",
-                Tags.of("dt.entity.host", "HOST-06F288EE2A930951", "cpu", "2"),
+                Tags.of("hostname", "server01", "cpu", "2"),
                 50);
 
 
@@ -169,8 +175,39 @@ class DynatraceMeterRegistryTest implements WithAssertions {
         dtApiServer.verify(postRequestedFor(METRICS_INGESTION_URL)
                 .withHeader("Content-Type", TEXT_PLAIN_CONTENT_TYPE)
                 .withRequestBody(equalToMetricLines(
-                        "cpu.temperature,cpu=2,dt.entity.host=HOST-06F288EE2A930951 50",
-                        "cpu.temperature,cpu=1,dt.entity.host=HOST-06F288EE2A930951 55"))
+                        "cpu.temperature,cpu=\"1\",dt.entity.host=\"HOST-06F288EE2A930951\",hostname=\"server01\" 55",
+                        "cpu.temperature,cpu=\"2\",dt.entity.host=\"HOST-06F288EE2A930951\",hostname=\"server01\" 50"
+                        ))
+        );
+    }
+
+
+    @Test
+    void shouldMetricNameBeSanitized_whenSpecialChars() {
+        meterRegistry.gauge(
+                "cpu#temperature",
+                Tags.of("hostname", "server01", "cpu", "1"),
+                55);
+
+        meterRegistry.publish();
+
+        dtApiServer.verify(postRequestedFor(METRICS_INGESTION_URL)
+                .withHeader("Content-Type", TEXT_PLAIN_CONTENT_TYPE)
+                .withRequestBody(equalToMetricLines("cpu_temperature,cpu=\"1\",dt.entity.host=\"HOST-06F288EE2A930951\",hostname=\"server01\" 55"))
+        );
+    }
+
+
+    @Test
+    void shouldAddCommonTag_whenEntityIdPropIsAdded() {
+        meterRegistry.gauge(
+                "cpu_temperature", 55);
+
+        meterRegistry.publish();
+
+        dtApiServer.verify(postRequestedFor(METRICS_INGESTION_URL)
+                .withHeader("Content-Type", TEXT_PLAIN_CONTENT_TYPE)
+                .withRequestBody(equalToMetricLines("cpu_temperature,dt.entity.host=\"HOST-06F288EE2A930951\" 55"))
         );
     }
 

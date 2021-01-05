@@ -33,6 +33,7 @@ class DynatraceConfigTest implements WithAssertions {
     void shouldBeValid_whenAllRequiredPropsAreSet() {
         props.put("dynatrace2.apiToken", "secret");
         props.put("dynatrace2.uri", "https://uri.dynatrace.com");
+        props.put("dynatrace2.deviceName", "test-device");
 
         assertThat(config.validate().isValid()).isTrue();
     }
@@ -55,5 +56,15 @@ class DynatraceConfigTest implements WithAssertions {
         assertThat(failures)
                 .extracting(Validated.Invalid::getProperty)
                 .containsOnlyOnce("dynatrace2.batchSize");
+    }
+
+    @Test
+    void shouldBeEmptyString_whenOptionalPropsAreNotSet() {
+        props.put("dynatrace2.apiToken", "secret");
+        props.put("dynatrace2.uri", "https://uri.dynatrace.com");
+
+        assertThat(config.deviceName()).matches("");
+        assertThat(config.entityId()).matches("");
+        assertThat(config.groupName()).matches("");
     }
 }
