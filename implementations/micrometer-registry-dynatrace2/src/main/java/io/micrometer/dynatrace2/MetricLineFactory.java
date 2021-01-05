@@ -52,12 +52,12 @@ class MetricLineFactory {
                 this::toGaugeLine,
                 this::toCounterLine,
                 this::toTimerLine,
-                this::toEmpty,
-                this::toEmpty,
-                this::toEmpty,
-                this::toEmpty,
-                this::toEmpty,
-                this::toEmpty
+                this::toDistributionSummaryLine,
+                this::toLongTaskTimerLine,
+                this::toTimeGaugeLine,
+                this::toFunctionCounterLine,
+                this::toFunctionTimerLine,
+                this::toMeterLine
         );
     }
 
@@ -88,6 +88,72 @@ class MetricLineFactory {
 
         return Streams.of(meter.measure())
                 .map(measurement -> LineProtocolFormatters.formatTimerMetricLine(
+                        metricName(meter, measurement),
+                        meter.getId().getTags(),
+                        measurement.getValue(),
+                        wallTime));
+    }
+
+    private Stream<String> toDistributionSummaryLine(DistributionSummary meter) {
+        long wallTime = clock.wallTime();
+
+        return Streams.of(meter.measure())
+                .map(measurement -> LineProtocolFormatters.formatGaugeMetricLine(
+                        metricName(meter, measurement),
+                        meter.getId().getTags(),
+                        measurement.getValue(),
+                        wallTime));
+    }
+
+    private Stream<String> toLongTaskTimerLine(LongTaskTimer meter) {
+        long wallTime = clock.wallTime();
+
+        return Streams.of(meter.measure())
+                .map(measurement -> LineProtocolFormatters.formatTimerMetricLine(
+                        metricName(meter, measurement),
+                        meter.getId().getTags(),
+                        measurement.getValue(),
+                        wallTime));
+    }
+
+    private Stream<String> toTimeGaugeLine(TimeGauge meter) {
+        long wallTime = clock.wallTime();
+
+        return Streams.of(meter.measure())
+                .map(measurement -> LineProtocolFormatters.formatGaugeMetricLine(
+                        metricName(meter, measurement),
+                        meter.getId().getTags(),
+                        measurement.getValue(),
+                        wallTime));
+    }
+
+    private Stream<String> toFunctionCounterLine(FunctionCounter meter) {
+        long wallTime = clock.wallTime();
+
+        return Streams.of(meter.measure())
+                .map(measurement -> LineProtocolFormatters.formatCounterMetricLine(
+                        metricName(meter, measurement),
+                        meter.getId().getTags(),
+                        measurement.getValue(),
+                        wallTime));
+    }
+
+    private Stream<String> toFunctionTimerLine(FunctionTimer meter) {
+        long wallTime = clock.wallTime();
+
+        return Streams.of(meter.measure())
+                .map(measurement -> LineProtocolFormatters.formatTimerMetricLine(
+                        metricName(meter, measurement),
+                        meter.getId().getTags(),
+                        measurement.getValue(),
+                        wallTime));
+    }
+
+    private Stream<String> toMeterLine(Meter meter) {
+        long wallTime = clock.wallTime();
+
+        return Streams.of(meter.measure())
+                .map(measurement -> LineProtocolFormatters.formatGaugeMetricLine(
                         metricName(meter, measurement),
                         meter.getId().getTags(),
                         measurement.getValue(),
