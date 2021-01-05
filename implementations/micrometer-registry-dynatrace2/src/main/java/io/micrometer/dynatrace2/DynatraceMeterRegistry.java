@@ -34,6 +34,7 @@ import java.util.stream.Collectors;
  * https://dev-wiki.dynatrace.org/display/MET/MINT+Specification#MINTSpecification-IngestFormat
  *
  * @author Oriol Barcelona
+ * @author David Mass
  * @see <a href="https://www.dynatrace.com/support/help/dynatrace-api/environment-api/metric-v2/post-ingest-metrics/">Dynatrace metric ingestion v2</a>
  * @since ?
  */

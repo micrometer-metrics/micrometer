@@ -29,6 +29,7 @@ import static io.micrometer.dynatrace2.LineProtocolIngestionLimits.MAX_METRIC_LI
  * Configuration for {@link DynatraceMeterRegistry}
  *
  * @author Oriol Barcelona
+ * @author David Mass
  */
 public interface DynatraceConfig extends StepRegistryConfig {
 
