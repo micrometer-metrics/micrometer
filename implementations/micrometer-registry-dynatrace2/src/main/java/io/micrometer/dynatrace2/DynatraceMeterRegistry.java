@@ -100,7 +100,7 @@ public class DynatraceMeterRegistry extends StepMeterRegistry {
     }
 
     private void addCommonTags_entityId(){
-        String[] cases = {"HOST","PROCESS_GROUP","PROCESS_GROUP_INSTANCE","CUSTOM_DEVICE","CUSTOM_DEVICE_GROUP"};
+        String[] cases = {"HOST","PROCESS_GROUP_INSTANCE","PROCESS_GROUP","CUSTOM_DEVICE_GROUP","CUSTOM_DEVICE"};
         if (!config.entityId().equals("")) {
             int index;
             for(index=0;index<cases.length; index++){
@@ -111,16 +111,16 @@ public class DynatraceMeterRegistry extends StepMeterRegistry {
                     config().commonTags("dt.entity.host", config.entityId());
                     break;
                 case 1:
-                    config().commonTags("dt.entity.process_group", config.entityId());
-                    break;
-                case 2:
                     config().commonTags("dt.entity.process_group_instance", config.entityId());
                     break;
+                case 2:
+                    config().commonTags("dt.entity.process_group", config.entityId());
+                    break;
                 case 3:
-                    config().commonTags("dt.entity.custom_device", config.entityId());
+                    config().commonTags("dt.entity.custom_device_group", config.entityId());
                     break;
                 case 4:
-                    config().commonTags("dt.entity.custom_device_group", config.entityId());
+                    config().commonTags("dt.entity.custom_device", config.entityId());
                     break;
                 default:
                     logger.debug("Entity ID Not Available");
