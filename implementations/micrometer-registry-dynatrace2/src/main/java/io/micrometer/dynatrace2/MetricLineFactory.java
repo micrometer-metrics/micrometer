@@ -16,13 +16,9 @@
 package io.micrometer.dynatrace2;
 
 import io.micrometer.core.instrument.*;
+import io.micrometer.core.instrument.config.NamingConvention;
 
-import java.util.List;
-import java.util.Locale;
-import java.util.regex.Pattern;
 import java.util.stream.Stream;
-
-import static io.micrometer.dynatrace2.LineProtocolIngestionLimits.METRIC_KEY_MAX_LENGTH;
 
 /**
  * Metric line factory which maps from micrometer domain to expected format in line protocol
@@ -32,12 +28,11 @@ import static io.micrometer.dynatrace2.LineProtocolIngestionLimits.METRIC_KEY_MA
  */
 class MetricLineFactory {
     private final Clock clock;
-    private final DynatraceConfig config;
-    private static final Pattern NAME_CLEANUP_PATTERN = Pattern.compile("[^a-z0-9-_.]");
+    private final NamingConvention namingConvention;
 
-    MetricLineFactory(Clock clock, DynatraceConfig config) {
+    MetricLineFactory(Clock clock, NamingConvention lineProtocolNamingConvention) {
         this.clock = clock;
-        this.config = config;
+        this.namingConvention = lineProtocolNamingConvention;
     }
 
     /**
@@ -66,9 +61,9 @@ class MetricLineFactory {
 
         return Streams.of(meter.measure())
                 .map(measurement -> LineProtocolFormatters.formatGaugeMetricLine(
-                        metricName(meter, measurement),
-                        meter.getId().getTags(),
-                        measurement.getValue(),
+                        namingConvention,
+                        meter,
+                        measurement,
                         wallTime));
     }
 
@@ -77,9 +72,9 @@ class MetricLineFactory {
 
         return Streams.of(meter.measure())
                 .map(measurement -> LineProtocolFormatters.formatCounterMetricLine(
-                        metricName(meter, measurement),
-                        meter.getId().getTags(),
-                        measurement.getValue(),
+                        namingConvention,
+                        meter,
+                        measurement,
                         wallTime));
     }
 
@@ -88,9 +83,9 @@ class MetricLineFactory {
 
         return Streams.of(meter.measure())
                 .map(measurement -> LineProtocolFormatters.formatTimerMetricLine(
-                        metricName(meter, measurement),
-                        meter.getId().getTags(),
-                        measurement.getValue(),
+                        namingConvention,
+                        meter,
+                        measurement,
                         wallTime));
     }
 
@@ -99,9 +94,9 @@ class MetricLineFactory {
 
         return Streams.of(meter.measure())
                 .map(measurement -> LineProtocolFormatters.formatGaugeMetricLine(
-                        metricName(meter, measurement),
-                        meter.getId().getTags(),
-                        measurement.getValue(),
+                        namingConvention,
+                        meter,
+                        measurement,
                         wallTime));
     }
 
@@ -110,9 +105,9 @@ class MetricLineFactory {
 
         return Streams.of(meter.measure())
                 .map(measurement -> LineProtocolFormatters.formatTimerMetricLine(
-                        metricName(meter, measurement),
-                        meter.getId().getTags(),
-                        measurement.getValue(),
+                        namingConvention,
+                        meter,
+                        measurement,
                         wallTime));
     }
 
@@ -121,9 +116,9 @@ class MetricLineFactory {
 
         return Streams.of(meter.measure())
                 .map(measurement -> LineProtocolFormatters.formatGaugeMetricLine(
-                        metricName(meter, measurement),
-                        meter.getId().getTags(),
-                        measurement.getValue(),
+                        namingConvention,
+                        meter,
+                        measurement,
                         wallTime));
     }
 
@@ -132,9 +127,9 @@ class MetricLineFactory {
 
         return Streams.of(meter.measure())
                 .map(measurement -> LineProtocolFormatters.formatCounterMetricLine(
-                        metricName(meter, measurement),
-                        meter.getId().getTags(),
-                        measurement.getValue(),
+                        namingConvention,
+                        meter,
+                        measurement,
                         wallTime));
     }
 
@@ -143,9 +138,9 @@ class MetricLineFactory {
 
         return Streams.of(meter.measure())
                 .map(measurement -> LineProtocolFormatters.formatTimerMetricLine(
-                        metricName(meter, measurement),
-                        meter.getId().getTags(),
-                        measurement.getValue(),
+                        namingConvention,
+                        meter,
+                        measurement,
                         wallTime));
     }
 
@@ -154,35 +149,9 @@ class MetricLineFactory {
 
         return Streams.of(meter.measure())
                 .map(measurement -> LineProtocolFormatters.formatGaugeMetricLine(
-                        metricName(meter, measurement),
-                        meter.getId().getTags(),
-                        measurement.getValue(),
+                        namingConvention,
+                        meter,
+                        measurement,
                         wallTime));
-    }
-
-    private Stream<String> toEmpty(Meter meter) { return Stream.empty(); }
-
-    private String metricName(Meter meter, Measurement measurement) {
-        String meterName = meter.getId().getName();
-        if (Streams.of(meter.measure()).count() == 1) {
-            meterName = meterName.toLowerCase(Locale.US);
-            String sanitized = NAME_CLEANUP_PATTERN.matcher(meterName).replaceAll("_");
-            try {
-                return sanitized.substring(0,METRIC_KEY_MAX_LENGTH);
-            }
-            catch (IndexOutOfBoundsException e){
-                return sanitized;
-            }
-        }
-
-        String fullMetricName = String.format("%s.%s", meterName, measurement.getStatistic().getTagValueRepresentation());
-        fullMetricName = fullMetricName.toLowerCase(Locale.US);
-        String sanitized = NAME_CLEANUP_PATTERN.matcher(fullMetricName).replaceAll("_");
-        try {
-            return sanitized.substring(0,METRIC_KEY_MAX_LENGTH);
-        }
-        catch (IndexOutOfBoundsException e){
-            return sanitized;
-        }
     }
 }

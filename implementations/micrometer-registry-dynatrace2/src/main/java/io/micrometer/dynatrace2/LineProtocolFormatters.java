@@ -15,7 +15,10 @@
  */
 package io.micrometer.dynatrace2;
 
+import io.micrometer.core.instrument.Measurement;
+import io.micrometer.core.instrument.Meter;
 import io.micrometer.core.instrument.Tag;
+import io.micrometer.core.instrument.config.NamingConvention;
 
 import java.text.DecimalFormat;
 import java.text.DecimalFormatSymbols;
@@ -38,46 +41,53 @@ import static io.micrometer.dynatrace2.LineProtocolIngestionLimits.DIMENSION_KEY
  */
 class LineProtocolFormatters {
 
-    private static final Pattern KEY_CLEANUP_PATTERN = Pattern.compile("[^a-z0-9-_.]");
-
     private static final DecimalFormat METRIC_VALUE_FORMAT = new DecimalFormat(
             "#.#####",
             DecimalFormatSymbols.getInstance(Locale.US));
 
-    static String formatGaugeMetricLine(String metric, List<Tag> tags, double value, long timestamp) {
+    static String formatGaugeMetricLine(NamingConvention namingConvention, Meter meter, Measurement measurement, long timestamp) {
         return String.format(
                 "%s %s %d",
-                formatMetricAndDimensions(metric, tags),
-                formatMetricValue(value),
+                formatMetricAndDimensions(namingConvention.name(formatMetricName(meter, measurement), meter.getId().getType()), meter.getId().getTags(), namingConvention),
+                formatMetricValue(measurement.getValue()),
                 timestamp);
     }
 
-    static String formatCounterMetricLine(String metric, List<Tag> tags, double value, long timestamp) {
+    static String formatCounterMetricLine(NamingConvention namingConvention, Meter meter, Measurement measurement, long timestamp) {
         return String.format(
                 "%s count,delta=%s %d",
-                formatMetricAndDimensions(metric, tags),
-                formatMetricValue(value),
+                formatMetricAndDimensions(namingConvention.name(formatMetricName(meter, measurement), meter.getId().getType()), meter.getId().getTags(), namingConvention),
+                formatMetricValue(measurement.getValue()),
                 timestamp);
     }
 
-    static String formatTimerMetricLine(String metric, List<Tag> tags, double value, long timestamp) {
+    static String formatTimerMetricLine(NamingConvention namingConvention, Meter meter, Measurement measurement, long timestamp) {
         return String.format(
                 "%s gauge,%s %d",
-                formatMetricAndDimensions(metric, tags),
-                formatMetricValue(value),
+                formatMetricAndDimensions(namingConvention.name(formatMetricName(meter, measurement), meter.getId().getType()), meter.getId().getTags(), namingConvention),
+                formatMetricValue(measurement.getValue()),
                 timestamp);
     }
 
-    private static String formatMetricAndDimensions(String metric, List<Tag> tags) {
+    private static String formatMetricAndDimensions(String metric, List<Tag> tags, NamingConvention namingConvention) {
         if (tags.isEmpty() ) {
                 return metric;
             }
-        return String.format("%s,%s", metric, formatTags(tags));
+        return String.format("%s,%s", metric, formatTags(tags, namingConvention));
     }
 
-    private static String formatTags(List<Tag> tags) {
+    private static String formatMetricName(Meter meter, Measurement measurement) {
+        String meterName = meter.getId().getName();
+        if (Streams.of(meter.measure()).count() == 1) {
+            return meterName;
+        }
+
+        return String.format("%s.%s", meterName, measurement.getStatistic().getTagValueRepresentation());
+    }
+
+    private static String formatTags(List<Tag> tags, NamingConvention namingConvention) {
         return tags.stream()
-                .map(tag -> String.format("%s=\"%s\"", sanitizeTagKey(tag.getKey()), tag.getValue()))
+                .map(tag -> String.format("%s=\"%s\"", namingConvention.tagKey(tag.getKey()), namingConvention.tagValue(tag.getValue())))
                 .limit(LineProtocolIngestionLimits.METRIC_LINE_MAX_DIMENSIONS)
                 .collect(Collectors.joining(","));
     }
@@ -86,14 +96,4 @@ class LineProtocolFormatters {
         return METRIC_VALUE_FORMAT.format(value);
     }
 
-    private static String sanitizeTagKey(String key) {
-        key = key.toLowerCase(Locale.US);
-        String sanitized = KEY_CLEANUP_PATTERN.matcher(key).replaceAll("_");
-        try {
-            return sanitized.substring(0, DIMENSION_KEY_MAX_LENGTH);
-        }
-        catch (IndexOutOfBoundsException e) {
-            return sanitized;
-        }
-    }
 }

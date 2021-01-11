@@ -16,6 +16,7 @@
 package io.micrometer.dynatrace2;
 
 import io.micrometer.core.instrument.Clock;
+import io.micrometer.core.instrument.config.NamingConvention;
 import io.micrometer.core.instrument.step.StepMeterRegistry;
 import io.micrometer.core.instrument.util.NamedThreadFactory;
 import io.micrometer.core.ipc.http.HttpSender;
@@ -57,7 +58,8 @@ public class DynatraceMeterRegistry extends StepMeterRegistry {
 
     @Override
     protected void publish() {
-        MetricLineFactory metricLineFactory = new MetricLineFactory(clock, config);
+        NamingConvention lineProtocolNamingConvention = config().namingConvention();
+        MetricLineFactory metricLineFactory = new MetricLineFactory(clock, lineProtocolNamingConvention);
 
         Map<Boolean, List<String>> metricLines = getMeters()
                 .stream()

@@ -50,8 +50,7 @@ public class LineProtocolNamingConvention implements NamingConvention {
 
     @Override
     public String name(String name, Meter.Type type, @Nullable String baseUnit) {
-        String conventionName = delegate.name(name, type, baseUnit);
-        conventionName = conventionName.toLowerCase(Locale.US);
+        String conventionName = name.toLowerCase(Locale.US);
         String sanitized = NAME_CLEANUP_PATTERN.matcher(conventionName).replaceAll("_");
         try {
             return sanitized.substring(0,METRIC_KEY_MAX_LENGTH);
@@ -63,8 +62,7 @@ public class LineProtocolNamingConvention implements NamingConvention {
 
     @Override
     public String tagKey(String key) {
-        String conventionKey = delegate.tagKey(key);
-        conventionKey = conventionKey.toLowerCase(Locale.US);
+        String conventionKey = key.toLowerCase(Locale.US);
         String sanitized = KEY_CLEANUP_PATTERN.matcher(conventionKey).replaceAll("_");
         try {
             return sanitized.substring(0, DIMENSION_KEY_MAX_LENGTH);
@@ -76,6 +74,11 @@ public class LineProtocolNamingConvention implements NamingConvention {
 
     @Override
     public String tagValue(String value) {
-        return value.substring(0, DIMENSION_VALUE_MAX_LENGTH);
+        try {
+            return value.substring(0, DIMENSION_VALUE_MAX_LENGTH);
+        }
+        catch (IndexOutOfBoundsException e) {
+            return value;
+        }
     }
 }

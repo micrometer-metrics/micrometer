@@ -15,80 +15,175 @@
  */
 package io.micrometer.dynatrace2;
 
-import io.micrometer.core.instrument.Tag;
+import io.micrometer.core.instrument.*;
+import io.micrometer.core.instrument.config.NamingConvention;
 import org.assertj.core.api.WithAssertions;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+
+import java.util.ArrayList;
+import java.util.List;
 
 import static io.micrometer.dynatrace2.LineProtocolFormatters.formatCounterMetricLine;
 import static io.micrometer.dynatrace2.LineProtocolFormatters.formatGaugeMetricLine;
 import static io.micrometer.dynatrace2.LineProtocolFormatters.formatTimerMetricLine;
-import static java.util.Arrays.asList;
-import static java.util.Collections.emptyList;
+
 
 class LineProtocolFormattersTest implements WithAssertions {
 
+    DynatraceMeterRegistry meterRegistry;
+    Clock clock;
+    NamingConvention namingConvention = new LineProtocolNamingConvention();
+
+    @BeforeEach
+    void setUpConfigAndMeterRegistry(){
+        DynatraceConfig config = new DynatraceConfig() {
+            @Override
+            public String get(String key) {
+                return null;
+            }
+
+            @Override
+            public String apiToken() {
+                return "API_TOKEN";
+            }
+
+            @Override
+            public String uri() {
+                return "https://dynatrace.com";
+            }
+
+            @Override
+            public String entityId() {return ""; }
+        };
+        clock = new MockClock();
+        meterRegistry = DynatraceMeterRegistry.builder(config)
+                .clock(clock)
+                .build();
+    }
+
     @Test
     void shouldCreateAGaugeMetricLine_whenDimensionsAreEmpty() {
-        String metricLine = formatGaugeMetricLine("my.metric", emptyList(), 3.33, 12345);
+        meterRegistry.gauge("my.metric", 55);
 
-        assertThat(metricLine).isEqualTo("my.metric 3.33 12345");
+        List<String> metricLines = new ArrayList<>();
+
+        for(Meter meter : meterRegistry.getMeters()){
+            for(Measurement measurement : meter.measure()) {
+                    String metricLine = formatGaugeMetricLine(namingConvention, meter, measurement, 12345);
+                    metricLines.add(metricLine);
+            }
+        }
+
+        assertThat(metricLines).contains("my.metric 55 12345");
     }
 
     @Test
     void shouldCreateAGaugeMetricLine_whenMultipleDimensions() {
-        String metricLine = formatGaugeMetricLine(
-                "my.metric",
-                asList(Tag.of("country", "es"), Tag.of("city", "bcn")),
-                3.33,
-                12345);
+        meterRegistry.gauge("my.metric",Tags.of("country", "es", "city", "bcn"), 3.33);
 
-        assertThat(metricLine).isEqualTo("my.metric,country=\"es\",city=\"bcn\" 3.33 12345");
+        List<String> metricLines = new ArrayList<>();
+
+        for(Meter meter : meterRegistry.getMeters()){
+            for(Measurement measurement : meter.measure()) {
+                String metricLine = formatGaugeMetricLine(namingConvention, meter, measurement, 12345);
+                metricLines.add(metricLine);
+            }
+        }
+
+        assertThat(metricLines).contains("my.metric,city=\"bcn\",country=\"es\" 3.33 12345");
     }
 
     @Test
     void shouldCreateACounterMetricLine_whenDimensionsAreEmpty() {
-        String metricLine = formatCounterMetricLine("my.metric", emptyList(), 5, 12345);
+        Counter counterMeter = meterRegistry.counter("my.metric");
 
-        assertThat(metricLine).isEqualTo("my.metric count,delta=5 12345");
+        List<String> metricLines = new ArrayList<>();
+
+        for(Measurement measurement : counterMeter.measure()){
+            String metricLine = formatCounterMetricLine(namingConvention, counterMeter, measurement, 12345);
+            metricLines.add(metricLine);
+        }
+        assertThat(metricLines).contains("my.metric count,delta=0 12345");
+
     }
 
     @Test
     void shouldCreateACounterMetricLine_whenMultipleDimensions() {
-        String metricLine = formatCounterMetricLine(
-                "my.metric",
-                asList(Tag.of("country", "es"), Tag.of("city", "bcn")),
-                5,
-                12345);
+        Counter counterMeter = Counter.builder("my.metric").tag("country", "es").tag("city", "bcn").register(meterRegistry);
 
-        assertThat(metricLine).isEqualTo("my.metric,country=\"es\",city=\"bcn\" count,delta=5 12345");
+        List<String> metricLines = new ArrayList<>();
+
+        for(Measurement measurement : counterMeter.measure()) {
+            String metricLine = formatCounterMetricLine(namingConvention, counterMeter, measurement, 12345);
+            metricLines.add(metricLine);
+        }
+
+        assertThat(metricLines).contains("my.metric,city=\"bcn\",country=\"es\" count,delta=0 12345");
     }
 
     @Test
     void shouldCreateATimerMetricLine_whenDimensionsAreEmpty() {
-        String metricLine = formatTimerMetricLine("my.metric", emptyList(), 5, 12345);
+        meterRegistry.timer("my.metric");
 
-        assertThat(metricLine).isEqualTo("my.metric gauge,5 12345");
+        List<String> metricLines = new ArrayList<>();
+
+        for(Meter meter : meterRegistry.getMeters()){
+            for(Measurement measurement : meter.measure()) {
+                String metricLine = formatTimerMetricLine(namingConvention, meter, measurement, 12345);
+                metricLines.add(metricLine);
+            }
+        }
+
+        assertThat(metricLines).contains("my.metric.count gauge,0 12345");
     }
 
     @Test
     void shouldCreateATimerMetricLine_whenMultipleDimensions() {
-        String metricLine = formatTimerMetricLine(
-                "my.metric",
-                asList(Tag.of("country", "es"), Tag.of("city", "bcn")),
-                5,
-                12345);
+        meterRegistry.timer("my.metric", Tags.of("country", "es", "city", "bcn"));
 
-        assertThat(metricLine).isEqualTo("my.metric,country=\"es\",city=\"bcn\" gauge,5 12345");
+        List<String> metricLines = new ArrayList<>();
+
+        for(Meter meter : meterRegistry.getMeters()){
+            for(Measurement measurement : meter.measure()) {
+                String metricLine = formatTimerMetricLine(namingConvention, meter, measurement, 12345);
+                metricLines.add(metricLine);
+            }
+        }
+
+        assertThat(metricLines).contains("my.metric.count,city=\"bcn\",country=\"es\" gauge,0 12345");
     }
+
 
     @Test
     void shouldSucceed_whenTagKeyContainsSpecialChar() {
-        String metricLine = formatTimerMetricLine(
-                "my.metric",
-                asList(Tag.of("country#lang", "es"), Tag.of("city", "bcn")),
-                5,
-                12345);
+        meterRegistry.timer("my.metric", Tags.of("country#lang", "es", "city", "bcn"));
 
-        assertThat(metricLine).isEqualTo("my.metric,country_lang=\"es\",city=\"bcn\" gauge,5 12345");
+        List<String> metricLines = new ArrayList<>();
+
+        for (Meter meter : meterRegistry.getMeters()) {
+            for (Measurement measurement : meter.measure()) {
+                String metricLine = formatTimerMetricLine(namingConvention, meter, measurement, 12345);
+                metricLines.add(metricLine);
+            }
+        }
+
+        assertThat(metricLines).contains("my.metric.count,city=\"bcn\",country_lang=\"es\" gauge,0 12345");
+    }
+
+    @Test
+    void shouldSucceed_whenMeticNameContainsSpecialChar() {
+        meterRegistry.timer("My#Metric");
+
+        List<String> metricLines = new ArrayList<>();
+
+        for (Meter meter : meterRegistry.getMeters()) {
+            for (Measurement measurement : meter.measure()) {
+                String metricLine = formatTimerMetricLine(namingConvention, meter, measurement, 12345);
+                metricLines.add(metricLine);
+            }
+        }
+
+        assertThat(metricLines).contains("my_metric.count gauge,0 12345");
     }
 }
