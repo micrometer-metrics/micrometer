@@ -46,25 +46,13 @@ dependencies {
 }
 ```
 
-## Building Locally
-
-Run `./gradlew clean pTML` to publish a Maven-style snapshot to your Maven local repo. To consume:
-
-```groovy
-repositories {
-    mavenLocal()
-}
-
-dependencies {
-    implementation 'io.micrometer:micrometer-core:latest.integration'
-}
-```
-
-The build automatically calculates the "next" version for you when publishing snapshots.
-
 ## Documentation
 
-The reference documentation is managed in [a separate GitHub repository](https://github.com/micrometer-metrics/micrometer-docs).
+The reference documentation is managed in [a separate GitHub repository](https://github.com/micrometer-metrics/micrometer-docs) and published to https://micrometer.io/.
+
+## Contributing
+
+See our [Contributing Guide](CONTRIBUTING.md) for information about contributing to Micrometer.
 
 -------------------------------------
 _Licensed under [Apache Software License 2.0](https://www.apache.org/licenses/LICENSE-2.0)_
