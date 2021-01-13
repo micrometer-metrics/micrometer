@@ -67,4 +67,11 @@ class DynatraceConfigTest implements WithAssertions {
         assertThat(config.entityId()).matches("");
         assertThat(config.groupName()).matches("");
     }
+
+    @Test
+    void shouldBeApiTokenEmptyString_whenURLIncludesLocalhost() {
+        props.put("dynatrace2.uri", "http://localhost:14499/metrics/ingest");
+
+        assertThat(config.apiToken()).matches("");
+    }
 }

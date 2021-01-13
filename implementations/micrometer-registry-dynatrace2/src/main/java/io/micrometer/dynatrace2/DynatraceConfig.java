@@ -45,6 +45,9 @@ public interface DynatraceConfig extends StepRegistryConfig {
     default String entityId() { return getString(this,"entityId").orElse(""); }
 
     default String apiToken() {
+        if (this.uri().contains("localhost")){
+            return getSecret(this, "apiToken").orElse("");
+        }
         return getSecret(this, "apiToken").required().get();
     }
 
@@ -64,7 +67,7 @@ public interface DynatraceConfig extends StepRegistryConfig {
                 check("deviceName", DynatraceConfig::deviceName),
                 check("groupName", DynatraceConfig::groupName),
                 check("entityId", DynatraceConfig::entityId),
-                checkRequired("apiToken", DynatraceConfig::apiToken),
+                check("apiToken", DynatraceConfig::apiToken),
                 checkRequired("uri", DynatraceConfig::uri),
                 check("batchSize", DynatraceConfig::batchSize)
                         .andThen(invalidateWhenGreaterThan(MAX_METRIC_LINES_PER_REQUEST))
