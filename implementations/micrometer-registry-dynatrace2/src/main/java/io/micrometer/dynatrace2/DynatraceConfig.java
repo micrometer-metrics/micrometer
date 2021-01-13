@@ -45,7 +45,7 @@ public interface DynatraceConfig extends StepRegistryConfig {
     default String entityId() { return getString(this,"entityId").orElse(""); }
 
     default String apiToken() {
-        if (this.uri().contains("localhost")){
+        if (this.uri().contains("localhost")) {
             return getSecret(this, "apiToken").orElse("");
         }
         return getSecret(this, "apiToken").required().get();

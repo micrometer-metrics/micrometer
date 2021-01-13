@@ -36,7 +36,7 @@ class LineProtocolFormattersTest implements WithAssertions {
     NamingConvention namingConvention = new LineProtocolNamingConvention();
 
     @BeforeEach
-    void setUpConfigAndMeterRegistry(){
+    void setUpConfigAndMeterRegistry() {
         DynatraceConfig config = new DynatraceConfig() {
             @Override
             public String get(String key) {
@@ -54,7 +54,7 @@ class LineProtocolFormattersTest implements WithAssertions {
             }
 
             @Override
-            public String entityId() {return ""; }
+            public String entityId() { return ""; }
         };
         clock = new MockClock();
         meterRegistry = DynatraceMeterRegistry.builder(config)
@@ -68,8 +68,8 @@ class LineProtocolFormattersTest implements WithAssertions {
 
         List<String> metricLines = new ArrayList<>();
 
-        for(Meter meter : meterRegistry.getMeters()){
-            for(Measurement measurement : meter.measure()) {
+        for (Meter meter : meterRegistry.getMeters()) {
+            for (Measurement measurement : meter.measure()) {
                     String metricLine = formatGaugeMetricLine(namingConvention, meter, measurement, 12345);
                     metricLines.add(metricLine);
             }
@@ -84,8 +84,8 @@ class LineProtocolFormattersTest implements WithAssertions {
 
         List<String> metricLines = new ArrayList<>();
 
-        for(Meter meter : meterRegistry.getMeters()){
-            for(Measurement measurement : meter.measure()) {
+        for (Meter meter : meterRegistry.getMeters()) {
+            for (Measurement measurement : meter.measure()) {
                 String metricLine = formatGaugeMetricLine(namingConvention, meter, measurement, 12345);
                 metricLines.add(metricLine);
             }
@@ -100,7 +100,7 @@ class LineProtocolFormattersTest implements WithAssertions {
 
         List<String> metricLines = new ArrayList<>();
 
-        for(Measurement measurement : counterMeter.measure()){
+        for (Measurement measurement : counterMeter.measure()) {
             String metricLine = formatCounterMetricLine(namingConvention, counterMeter, measurement, 12345);
             metricLines.add(metricLine);
         }
@@ -114,7 +114,7 @@ class LineProtocolFormattersTest implements WithAssertions {
 
         List<String> metricLines = new ArrayList<>();
 
-        for(Measurement measurement : counterMeter.measure()) {
+        for (Measurement measurement : counterMeter.measure()) {
             String metricLine = formatCounterMetricLine(namingConvention, counterMeter, measurement, 12345);
             metricLines.add(metricLine);
         }
@@ -128,8 +128,8 @@ class LineProtocolFormattersTest implements WithAssertions {
 
         List<String> metricLines = new ArrayList<>();
 
-        for(Meter meter : meterRegistry.getMeters()){
-            for(Measurement measurement : meter.measure()) {
+        for (Meter meter : meterRegistry.getMeters()) {
+            for (Measurement measurement : meter.measure()) {
                 String metricLine = formatTimerMetricLine(namingConvention, meter, measurement, 12345);
                 metricLines.add(metricLine);
             }
@@ -144,8 +144,8 @@ class LineProtocolFormattersTest implements WithAssertions {
 
         List<String> metricLines = new ArrayList<>();
 
-        for(Meter meter : meterRegistry.getMeters()){
-            for(Measurement measurement : meter.measure()) {
+        for (Meter meter : meterRegistry.getMeters()) {
+            for (Measurement measurement : meter.measure()) {
                 String metricLine = formatTimerMetricLine(namingConvention, meter, measurement, 12345);
                 metricLines.add(metricLine);
             }

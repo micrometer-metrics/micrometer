@@ -30,9 +30,7 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import ru.lanwen.wiremock.ext.WiremockResolver;
 import ru.lanwen.wiremock.ext.WiremockResolver.Wiremock;
 
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 import java.util.stream.Stream;
@@ -85,7 +83,7 @@ class DynatraceMeterRegistryTest implements WithAssertions {
             }
 
             @Override
-            public String entityId() {return "HOST-06F288EE2A930951"; }
+            public String entityId() { return "HOST-06F288EE2A930951"; }
         };
         clock = new MockClock();
         meterRegistry = DynatraceMeterRegistry.builder(config)
