@@ -21,6 +21,10 @@ For example, those with Micrometer knowledge and experience can contribute by:
 
 The remainder of this document will focus on guidance for contributing code changes. It will help contributors to build, modify, or test the Micrometer source code.
 
+## Contributor License Agreement
+
+Contributions in the form of source changes require that you fill out and submit the [Contributor License Agreement](https://cla.pivotal.io/sign/pivotal) if you have not done so previously.
+
 ## Getting the source
 
 The Micrometer source code is hosted on GitHub at https://github.com/micrometer-metrics/micrometer.
