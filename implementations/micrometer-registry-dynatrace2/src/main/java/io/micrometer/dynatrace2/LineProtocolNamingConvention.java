@@ -74,11 +74,13 @@ public class LineProtocolNamingConvention implements NamingConvention {
 
     @Override
     public String tagValue(String value) {
+        String sanitized = value.replace("\\","\\\\");
+        sanitized = sanitized.replace("\"", "\\\"");
         try {
-            return value.substring(0, DIMENSION_VALUE_MAX_LENGTH);
+            return sanitized.substring(0, DIMENSION_VALUE_MAX_LENGTH);
         }
         catch (IndexOutOfBoundsException e) {
-            return value;
+            return sanitized;
         }
     }
 }
