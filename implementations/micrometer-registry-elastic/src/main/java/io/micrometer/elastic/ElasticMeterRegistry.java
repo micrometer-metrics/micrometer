@@ -194,7 +194,7 @@ public class ElasticMeterRegistry extends StepMeterRegistry {
     }
 
     private String getTemplateBody() {
-        return TEMPLATE_BODY_AFTER_VERSION_7.apply(config.index());
+        return TEMPLATE_BODY_AFTER_VERSION_7.apply(config.index() + config.indexDateSeparator());
     }
 
     @Override
