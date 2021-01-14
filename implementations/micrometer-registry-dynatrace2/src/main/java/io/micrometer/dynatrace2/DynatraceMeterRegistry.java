@@ -46,7 +46,12 @@ public class DynatraceMeterRegistry extends StepMeterRegistry {
     private final DynatraceConfig config;
     private final HttpSender httpClient;
 
-    private DynatraceMeterRegistry(DynatraceConfig config, Clock clock, ThreadFactory threadFactory, HttpSender httpClient) {
+    @SuppressWarnings("deprecation")
+    public DynatraceMeterRegistry(DynatraceConfig config, Clock clock) {
+        this(config, clock, DEFAULT_THREAD_FACTORY, new HttpUrlConnectionSender(config.connectTimeout(), config.readTimeout()));
+    }
+
+    public DynatraceMeterRegistry(DynatraceConfig config, Clock clock, ThreadFactory threadFactory, HttpSender httpClient) {
         super(config, clock);
         this.config = config;
         this.httpClient = httpClient;
