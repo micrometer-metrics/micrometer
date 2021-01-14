@@ -36,9 +36,6 @@ import java.util.concurrent.TimeUnit;
 @Incubating(since = "1.2.0")
 public class MongoMetricsCommandListener implements CommandListener {
 
-    private final Timer.Builder timerBuilder = Timer.builder("mongodb.driver.commands")
-            .description("Timer of mongodb commands");
-
     private final MeterRegistry registry;
 
     public MongoMetricsCommandListener(MeterRegistry registry) {
@@ -60,7 +57,8 @@ public class MongoMetricsCommandListener implements CommandListener {
     }
 
     private void timeCommand(CommandEvent event, String status, long elapsedTimeInNanoseconds) {
-        timerBuilder
+        Timer.builder("mongodb.driver.commands")
+                .description("Timer of mongodb commands")
                 .tag("command", event.getCommandName())
                 .tag("cluster.id", event.getConnectionDescription().getConnectionId().getServerId().getClusterId().getValue())
                 .tag("server.address", event.getConnectionDescription().getServerAddress().toString())
