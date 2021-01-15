@@ -11,7 +11,7 @@ buildscript {
         classpath 'io.spring.gradle:spring-release-plugin:0.20.1'
         classpath 'com.netflix.nebula:nebula-project-plugin:3.4.0'
         classpath "io.spring.nohttp:nohttp-gradle:0.0.4.RELEASE"
-        classpath "org.gradle:test-retry-gradle-plugin:1.1.9"
+        classpath "org.gradle:test-retry-gradle-plugin:1.2.0"
 
         constraints {
             classpath('org.ow2.asm:asm:7.3.1') {
