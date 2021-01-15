@@ -68,7 +68,7 @@ subprojects {
         dependencies {
             // JSR-305 only used for non-required meta-annotations
             optionalApi "com.google.code.findbugs:jsr305:latest.release"
-            checkstyle("io.spring.javaformat:spring-javaformat-checkstyle:0.0.20")
+            checkstyle("io.spring.javaformat:spring-javaformat-checkstyle:latest.release")
         }
 
         tasks {
