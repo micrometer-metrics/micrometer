@@ -420,7 +420,7 @@ public class PrometheusMeterRegistry extends MeterRegistry {
                     " set of tag keys. There is already an existing meter named '" + id.getName() + "' containing tag keys [" +
                     String.join(", ", collectorMap.get(getConventionName(id)).getTagKeys()) + "]. The meter you are attempting to register" +
                     " has keys [" + getConventionTags(id).stream().map(Tag::getKey).collect(joining(", ")) + "].");
-            return null;
+            return existingCollector;
         });
     }
 
