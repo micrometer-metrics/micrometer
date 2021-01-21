@@ -64,6 +64,14 @@ class PrometheusMeterRegistryTest {
     }
 
     @Test
+    void metersWithSameNameAndDifferentTagsContinueSilently() {
+        String meterName = "my.counter";
+        registry.counter(meterName, "k1", "v1");
+        registry.counter(meterName, "k2", "v2");
+        registry.counter(meterName, "k3", "v3");
+    }
+
+    @Test
     void meterRegistrationFailedListenerCalledOnSameNameDifferentTags() throws InterruptedException {
         CountDownLatch failedLatch = new CountDownLatch(1);
         registry.config().onMeterRegistrationFailed((id, reason) -> failedLatch.countDown());
@@ -75,10 +83,13 @@ class PrometheusMeterRegistryTest {
         assertThatThrownBy(() -> registry
                 .throwExceptionOnRegistrationFailure()
                 .counter("my.counter", "k1", "v1")
-        ).isInstanceOf(IllegalArgumentException.class);
+        )
+                .isInstanceOf(IllegalArgumentException.class)
+                .hasMessageStartingWith("Prometheus requires that all meters with the same name have the same set of tag keys.");
 
         assertThatThrownBy(() -> registry.counter("my.counter", "k2", "v2"))
-                .isInstanceOf(IllegalArgumentException.class);
+                .isInstanceOf(IllegalArgumentException.class)
+                .hasMessageStartingWith("Prometheus requires that all meters with the same name have the same set of tag keys.");
     }
 
     @Test
