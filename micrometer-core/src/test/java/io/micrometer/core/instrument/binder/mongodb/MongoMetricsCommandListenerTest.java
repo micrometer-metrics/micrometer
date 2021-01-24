@@ -15,12 +15,17 @@
  */
 package io.micrometer.core.instrument.binder.mongodb;
 
+import java.util.Date;
+import java.util.concurrent.atomic.AtomicReference;
+
 import com.mongodb.MongoClient;
 import com.mongodb.MongoClientOptions;
 import com.mongodb.ServerAddress;
 import com.mongodb.event.ClusterListenerAdapter;
 import com.mongodb.event.ClusterOpeningEvent;
+import com.mongodb.event.CommandEvent;
 import io.micrometer.core.instrument.MeterRegistry;
+import io.micrometer.core.instrument.Tag;
 import io.micrometer.core.instrument.Tags;
 import io.micrometer.core.instrument.search.MeterNotFoundException;
 import io.micrometer.core.instrument.simple.SimpleMeterRegistry;
@@ -44,7 +49,9 @@ import static org.assertj.core.api.Assertions.assertThat;
 class MongoMetricsCommandListenerTest extends AbstractMongoDbTest {
 
     private MeterRegistry registry;
+
     private AtomicReference<String> clusterId;
+
     private MongoClient mongo;
 
     @BeforeEach
