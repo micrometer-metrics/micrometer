@@ -248,7 +248,7 @@ public class PrometheusMeterRegistry extends MeterRegistry {
 
     @Override
     protected Meter newMeter(Meter.Id id, Meter.Type type, Iterable<Measurement> measurements) {
-        Collector.Type promType = Collector.Type.UNTYPED;
+        Collector.Type promType = Collector.Type.UNKNOWN;
         switch (type) {
             case COUNTER:
                 promType = Collector.Type.COUNTER;
