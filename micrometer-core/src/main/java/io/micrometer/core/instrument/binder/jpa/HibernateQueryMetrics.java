@@ -40,9 +40,13 @@ import java.util.concurrent.TimeUnit;
  *
  * @author Pawel Stepien
  * @since 1.4.0
+ * @deprecated This implementation is deprecated in favor of the MeterBinder maintained
+ *    as part of the Hibernate project as of version 5.4.26. See
+ *    https://mvnrepository.com/artifact/org.hibernate/hibernate-micrometer/
  */
 @NonNullApi
 @NonNullFields
+@Deprecated
 public class HibernateQueryMetrics implements MeterBinder {
 
     private static final String SESSION_FACTORY_TAG_NAME = "entityManagerFactory";
