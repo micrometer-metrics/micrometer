@@ -17,6 +17,7 @@ package io.micrometer.core.tck;
 
 import io.micrometer.core.instrument.DistributionSummary;
 import io.micrometer.core.instrument.MeterRegistry;
+import io.micrometer.core.instrument.distribution.CountAtBucket;
 import org.assertj.core.data.Offset;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -49,6 +50,23 @@ interface DistributionSummaryTest {
 
         assertAll(() -> assertTrue(ds.count() >= 2L),
                 () -> assertTrue(ds.totalAmount() >= 20L));
+    }
+
+    @Test
+    @DisplayName("support for non-integer SLOs")
+    default void nonIntegerSLOs(MeterRegistry registry) {
+        DistributionSummary ds = DistributionSummary.builder("my.summary")
+                .serviceLevelObjectives(5, 0.5, 0.1)
+                .register(registry);
+
+        ds.record(0.03);
+        ds.record(0.3);
+        ds.record(3);
+
+        assertThat(ds.takeSnapshot().histogramCounts())
+                .contains(new CountAtBucket(0.1, 1))
+                .contains(new CountAtBucket(0.5, 2))
+                .contains(new CountAtBucket(5.0, 3));
     }
 
     @Test
