@@ -64,6 +64,24 @@ class KafkaMetricsTest {
     }
 
     @Test
+    void closeShouldRemoveAllMeters() {
+        //Given
+        Supplier<Map<MetricName, ? extends Metric>> supplier = () -> {
+            MetricName metricName = new MetricName("a", "b", "c", new LinkedHashMap<>());
+            KafkaMetric metric = new KafkaMetric(this, metricName, new Value(), new MetricConfig(), Time.SYSTEM);
+            return Collections.singletonMap(metricName, metric);
+        };
+        kafkaMetrics = new KafkaMetrics(supplier);
+        MeterRegistry registry = new SimpleMeterRegistry();
+
+        kafkaMetrics.bindTo(registry);
+        assertThat(registry.getMeters()).hasSize(1);
+
+        kafkaMetrics.close();
+        assertThat(registry.getMeters()).isEmpty();
+    }
+
+    @Test
     void shouldAddNewMetersWhenMetricsChange() {
         //Given
         AtomicReference<Map<MetricName, KafkaMetric>> metrics = new AtomicReference<>(new LinkedHashMap<>());
