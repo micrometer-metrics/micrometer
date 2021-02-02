@@ -15,9 +15,6 @@
  */
 package io.micrometer.core.instrument.binder.mongodb;
 
-import java.util.Date;
-import java.util.concurrent.atomic.AtomicReference;
-
 import com.mongodb.MongoClient;
 import com.mongodb.MongoClientOptions;
 import com.mongodb.ServerAddress;
@@ -45,6 +42,7 @@ import static org.assertj.core.api.Assertions.assertThat;
  * Tests for {@link MongoMetricsCommandListener}.
  *
  * @author Christophe Bornet
+ * @author Chris Bono
  */
 class MongoMetricsCommandListenerTest extends AbstractMongoDbTest {
 
@@ -97,6 +95,38 @@ class MongoMetricsCommandListenerTest extends AbstractMongoDbTest {
                 "status", "FAILED"
         );
         assertThat(registry.get("mongodb.driver.commands").tags(tags).timer().count()).isEqualTo(1);
+    }
+
+    @Test
+    void shouldCreateSuccessCommandMetricWithCustomSettings() {
+        MongoMetricsCommandTagsProvider tagsProvider = new DefaultMongoMetricsCommandTagsProvider() {
+            @Override
+            public Iterable<Tag> commandTags(CommandEvent event) {
+                return Tags.of(super.commandTags(event)).and(Tag.of("mongoz", "5150"));
+            }
+        };
+        MongoClientOptions options = MongoClientOptions.builder()
+                .addCommandListener(new MongoMetricsCommandListener(registry, tagsProvider))
+                .addClusterListener(new ClusterListenerAdapter() {
+                    @Override
+                    public void clusterOpening(ClusterOpeningEvent event) {
+                        clusterId.set(event.getClusterId().getValue());
+                    }
+                })
+                .build();
+        try (MongoClient customMongo = new MongoClient(new ServerAddress(HOST, port), options)) {
+            customMongo.getDatabase("test")
+                    .getCollection("testCol")
+                    .insertOne(new Document("testDoc", new Date()));
+            Tags tags = Tags.of(
+                    "cluster.id", clusterId.get(),
+                    "server.address", String.format("%s:%s", HOST, port),
+                    "command", "insert",
+                    "status", "SUCCESS",
+                    "mongoz", "5150"
+            );
+            assertThat(registry.get("mongodb.driver.commands").tags(tags).timer().count()).isEqualTo(1);
+        }
     }
 
     @Test
