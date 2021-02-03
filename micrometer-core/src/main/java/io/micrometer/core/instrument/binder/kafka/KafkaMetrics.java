@@ -28,6 +28,7 @@ import io.micrometer.core.lang.NonNullFields;
 
 import java.time.Duration;
 import java.util.*;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
@@ -82,6 +83,11 @@ class KafkaMetrics implements MeterBinder, AutoCloseable {
 
     private String kafkaVersion = DEFAULT_VALUE;
 
+    @Nullable
+    private volatile MeterRegistry registry;
+
+    private final Set<Meter> registeredMeters = ConcurrentHashMap.newKeySet();
+
     KafkaMetrics(Supplier<Map<MetricName, ? extends Metric>> metricsSupplier) {
         this(metricsSupplier, emptyList());
     }
@@ -98,6 +104,8 @@ class KafkaMetrics implements MeterBinder, AutoCloseable {
 
     @Override
     public void bindTo(MeterRegistry registry) {
+        this.registry = registry;
+
         commonTags = getCommonTags(registry);
         prepareToBindMetrics(registry);
         checkAndBindMetrics(registry);
@@ -167,7 +175,10 @@ class KafkaMetrics implements MeterBinder, AutoCloseable {
                 for (Meter other : registry.find(meterName).meters()) {
                     List<Tag> tags = other.getId().getTags();
                     List<Tag> meterTagsWithCommonTags = meterTags(metric, true);
-                    if (tags.size() < meterTagsWithCommonTags.size()) registry.remove(other);
+                    if (tags.size() < meterTagsWithCommonTags.size()) {
+                        registry.remove(other);
+                        registeredMeters.remove(other);
+                    }
                     // Check if already exists
                     else if (tags.size() == meterTagsWithCommonTags.size())
                         if (tags.containsAll(meterTagsWithCommonTags)) return;
@@ -194,22 +205,27 @@ class KafkaMetrics implements MeterBinder, AutoCloseable {
     }
 
     private void bindMeter(MeterRegistry registry, Metric metric, String name, Iterable<Tag> tags) {
+        Meter meter = registerMeter(registry, metric, name, tags);
+        registeredMeters.add(meter);
+    }
+
+    private Meter registerMeter(MeterRegistry registry, Metric metric, String name, Iterable<Tag> tags) {
         if (name.endsWith("total") || name.endsWith("count")) {
-            registerCounter(registry, metric, name, tags);
+            return registerCounter(registry, metric, name, tags);
         } else {
-            registerGauge(registry, metric, name, tags);
+            return registerGauge(registry, metric, name, tags);
         }
     }
 
-    private void registerGauge(MeterRegistry registry, Metric metric, String name, Iterable<Tag> tags) {
-        Gauge.builder(name, metric, toMetricValue())
+    private Gauge registerGauge(MeterRegistry registry, Metric metric, String name, Iterable<Tag> tags) {
+        return Gauge.builder(name, metric, toMetricValue())
                 .tags(tags)
                 .description(metric.metricName().description())
                 .register(registry);
     }
 
-    private void registerCounter(MeterRegistry registry, Metric metric, String name, Iterable<Tag> tags) {
-        FunctionCounter.builder(name, metric, toMetricValue())
+    private FunctionCounter registerCounter(MeterRegistry registry, Metric metric, String name, Iterable<Tag> tags) {
+        return FunctionCounter.builder(name, metric, toMetricValue())
                 .tags(tags)
                 .description(metric.metricName().description())
                 .register(registry);
@@ -242,5 +258,9 @@ class KafkaMetrics implements MeterBinder, AutoCloseable {
     @Override
     public void close() {
         this.scheduler.shutdownNow();
+
+        for (Meter meter : registeredMeters) {
+            registry.remove(meter);
+        }
     }
 }
