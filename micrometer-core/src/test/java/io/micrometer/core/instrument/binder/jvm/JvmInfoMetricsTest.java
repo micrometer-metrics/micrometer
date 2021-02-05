@@ -27,6 +27,11 @@ import java.util.Collection;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+/**
+ * Tests for {@link JvmInfoMetrics}.
+ *
+ * @author Erin Schnabel
+ */
 class JvmInfoMetricsTest {
 
     @Test
