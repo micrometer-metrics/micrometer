@@ -19,6 +19,12 @@ import io.micrometer.core.instrument.Gauge;
 import io.micrometer.core.instrument.MeterRegistry;
 import io.micrometer.core.instrument.binder.MeterBinder;
 
+/**
+ * {@link MeterBinder} for JVM information.
+ *
+ * @author Erin Schnabel
+ * @since 1.7.0
+ */
 public class JvmInfoMetrics implements MeterBinder {
 
     @Override
