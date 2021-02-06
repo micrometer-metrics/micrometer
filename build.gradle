@@ -90,6 +90,16 @@ subprojects {
                 sourceCompatibility = JavaVersion.VERSION_1_8
                 targetCompatibility = JavaVersion.VERSION_1_8
             }
+
+            javadoc {
+                configure(options) {
+                    tags(
+                        'apiNote:a:API Note:',
+                        'implSpec:a:Implementation Requirements:',
+                        'implNote:a:Implementation Note:'
+                    )
+                }
+            }
         }
 
         //noinspection GroovyAssignabilityCheck
