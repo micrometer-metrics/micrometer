@@ -1,5 +1,5 @@
 /*
- * Copyright 2020 VMware, Inc.
+ * Copyright 2021 VMware, Inc.
  * <p>
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,10 +16,8 @@
 /**
  * Collect metrics for grpc-java clients and servers.
  *
- * Refer to {@link io.micrometer.core.instrument.binder.grpc.MetricCollectingClientInterceptor
- * MetricCollectingClientInterceptor} and
- * {@link io.micrometer.core.instrument.binder.grpc.MetricCollectingServerInterceptor MetricCollectingServerInterceptor}
+ * Refer to {@link io.micrometer.core.instrument.binder.grpc.MetricCollectingClientInterceptor} and
+ * {@link io.micrometer.core.instrument.binder.grpc.MetricCollectingServerInterceptor}
  * for usage examples.
  */
-
 package io.micrometer.core.instrument.binder.grpc;
