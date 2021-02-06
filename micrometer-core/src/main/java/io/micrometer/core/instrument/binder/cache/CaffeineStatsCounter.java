@@ -115,6 +115,8 @@ public final class CaffeineStatsCounter implements StatsCounter {
 
     /**
      * Register a gauge for the size of the given cache.
+     *
+     * @param cache cache to register a gauge for its size
      */
     public void registerSizeMetric(Cache<?,?> cache) {
         Gauge.builder("cache.size", cache, Cache::estimatedSize).tags(tags)
