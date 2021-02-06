@@ -1,10 +1,17 @@
 /*
- * Copyright 2020 VMware, Inc. <p> Licensed under the Apache License, Version 2.0 (the "License"); you may not use this
- * file except in compliance with the License. You may obtain a copy of the License at <p>
- * https://www.apache.org/licenses/LICENSE-2.0 <p> Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND,
- * either express or implied. See the License for the specific language governing permissions and limitations under the
- * License.
+ * Copyright 2021 VMware, Inc.
+ * <p>
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ * <p>
+ * https://www.apache.org/licenses/LICENSE-2.0
+ * <p>
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
  */
 
 package io.micrometer.core.instrument.binder.grpc;
@@ -32,7 +39,7 @@ import io.micrometer.core.instrument.Timer;
  *
  * <code>
  * <pre>
- * ManagedChannel channel = ManagedChannelBuilder.forAddress("localhost:8080", 8080)
+ * ManagedChannel channel = ManagedChannelBuilder.forAddress("localhost", 8080)
  *     .intercept(new MetricCollectingClientInterceptor(meterRegistry))
  *     .build();
  *
@@ -41,6 +48,7 @@ import io.micrometer.core.instrument.Timer;
  * </code>
  *
  * @author Daniel Theuke (daniel.theuke@heuboe.de)
+ * @since 1.7.0
  */
 public class MetricCollectingClientInterceptor extends AbstractMetricCollectingInterceptor
         implements ClientInterceptor {
@@ -48,15 +56,15 @@ public class MetricCollectingClientInterceptor extends AbstractMetricCollectingI
     /**
      * The total number of requests sent
      */
-    public static final String METRIC_NAME_CLIENT_REQUESTS_SENT = "grpc.client.requests.sent";
+    private static final String METRIC_NAME_CLIENT_REQUESTS_SENT = "grpc.client.requests.sent";
     /**
      * The total number of responses received
      */
-    public static final String METRIC_NAME_CLIENT_RESPONSES_RECEIVED = "grpc.client.responses.received";
+    private static final String METRIC_NAME_CLIENT_RESPONSES_RECEIVED = "grpc.client.responses.received";
     /**
      * The total time taken for the client to complete the call, including network delay
      */
-    public static final String METRIC_NAME_CLIENT_PROCESSING_DURATION = "grpc.client.processing.duration";
+    private static final String METRIC_NAME_CLIENT_PROCESSING_DURATION = "grpc.client.processing.duration";
 
     /**
      * Creates a new gRPC client interceptor that will collect metrics into the given {@link MeterRegistry}.
@@ -69,7 +77,7 @@ public class MetricCollectingClientInterceptor extends AbstractMetricCollectingI
 
     /**
      * Creates a new gRPC client interceptor that will collect metrics into the given {@link MeterRegistry} and uses the
-     * given customizer to configure the {@link Counter}s and {@link Timer}s.
+     * given customizers to configure the {@link Counter}s and {@link Timer}s.
      *
      * @param registry The registry to use.
      * @param counterCustomizer The unary function that can be used to customize the created counters.

@@ -1,5 +1,5 @@
 /*
- * Copyright 2020 VMware, Inc.
+ * Copyright 2021 VMware, Inc.
  * <p>
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -23,7 +23,7 @@ import io.grpc.Status.Code;
 import io.micrometer.core.instrument.Counter;
 
 /**
- * A simple forwarding server call that collects metrics for micrometer.
+ * A simple forwarding server call that collects metrics.
  *
  * @param <Q> The type of message received one or more times from the client.
  * @param <A> The type of message sent one or more times to the client.
@@ -38,7 +38,7 @@ class MetricCollectingServerCall<Q, A> extends SimpleForwardingServerCall<Q, A> 
      * Creates a new delegating ServerCall that will wrap the given server call to collect metrics.
      *
      * @param delegate The original call to wrap.
-     * @param responseCounter The counter for incoming responses.
+     * @param responseCounter The counter for outgoing responses.
      */
     public MetricCollectingServerCall(
             final ServerCall<Q, A> delegate,

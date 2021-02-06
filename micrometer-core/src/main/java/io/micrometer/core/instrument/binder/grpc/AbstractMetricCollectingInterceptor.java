@@ -1,10 +1,17 @@
 /*
- * Copyright 2020 VMware, Inc. <p> Licensed under the Apache License, Version 2.0 (the "License"); you may not use this
- * file except in compliance with the License. You may obtain a copy of the License at <p>
- * https://www.apache.org/licenses/LICENSE-2.0 <p> Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND,
- * either express or implied. See the License for the specific language governing permissions and limitations under the
- * License.
+ * Copyright 2021 VMware, Inc.
+ * <p>
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ * <p>
+ * https://www.apache.org/licenses/LICENSE-2.0
+ * <p>
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
  */
 
 package io.micrometer.core.instrument.binder.grpc;
@@ -25,30 +32,32 @@ import io.micrometer.core.instrument.Counter;
 import io.micrometer.core.instrument.MeterRegistry;
 import io.micrometer.core.instrument.Timer;
 import io.micrometer.core.instrument.Timer.Sample;
+import io.micrometer.core.instrument.binder.BaseUnits;
 
 /**
- * An abstract gRPC interceptor that will collect metrics for micrometer.
+ * An abstract gRPC interceptor that will collect metrics.
  *
  * @author Daniel Theuke (daniel.theuke@heuboe.de)
+ * @since 1.7.0
  */
 public abstract class AbstractMetricCollectingInterceptor {
 
     /**
      * The metrics tag key that belongs to the called service name.
      */
-    public static final String TAG_SERVICE_NAME = "service";
+    private static final String TAG_SERVICE_NAME = "service";
     /**
      * The metrics tag key that belongs to the called method name.
      */
-    public static final String TAG_METHOD_NAME = "method";
+    private static final String TAG_METHOD_NAME = "method";
     /**
      * The metrics tag key that belongs to the type of the called method.
      */
-    public static final String TAG_METHOD_TYPE = "methodType";
+    private static final String TAG_METHOD_TYPE = "methodType";
     /**
      * The metrics tag key that belongs to the result status code.
      */
-    public static final String TAG_STATUS_CODE = "statusCode";
+    private static final String TAG_STATUS_CODE = "statusCode";
 
     /**
      * Creates a new counter builder for the given method. By default the base unit will be messages.
@@ -62,7 +71,7 @@ public abstract class AbstractMetricCollectingInterceptor {
             final String name, final String description) {
         return Counter.builder(name)
                 .description(description)
-                .baseUnit("messages")
+                .baseUnit(BaseUnits.MESSAGES)
                 .tag(TAG_SERVICE_NAME, method.getServiceName())
                 .tag(TAG_METHOD_NAME, method.getBareMethodName())
                 .tag(TAG_METHOD_TYPE, method.getType().name());
@@ -99,20 +108,20 @@ public abstract class AbstractMetricCollectingInterceptor {
      *
      * @param registry The registry to use.
      */
-    public AbstractMetricCollectingInterceptor(final MeterRegistry registry) {
+    protected AbstractMetricCollectingInterceptor(final MeterRegistry registry) {
         this(registry, UnaryOperator.identity(), UnaryOperator.identity(), Code.OK);
     }
 
     /**
      * Creates a new gRPC interceptor that will collect metrics into the given {@link MeterRegistry} and uses the given
-     * customizer to configure the {@link Counter}s and {@link Timer}s.
+     * customizers to configure the {@link Counter}s and {@link Timer}s.
      *
      * @param registry The registry to use.
      * @param counterCustomizer The unary function that can be used to customize the created counters.
      * @param timerCustomizer The unary function that can be used to customize the created timers.
      * @param eagerInitializedCodes The status codes that should be eager initialized.
      */
-    public AbstractMetricCollectingInterceptor(final MeterRegistry registry,
+    protected AbstractMetricCollectingInterceptor(final MeterRegistry registry,
             final UnaryOperator<Counter.Builder> counterCustomizer,
             final UnaryOperator<Timer.Builder> timerCustomizer, final Status.Code... eagerInitializedCodes) {
         this.registry = registry;
@@ -202,7 +211,7 @@ public abstract class AbstractMetricCollectingInterceptor {
     }
 
     /**
-     * Creates a new timer for a given code for the given method.
+     * Creates a new function that returns a timer for a given code for the given method.
      *
      * @param method The method to create the timer for.
      * @return The newly created function that returns a timer for a given code.

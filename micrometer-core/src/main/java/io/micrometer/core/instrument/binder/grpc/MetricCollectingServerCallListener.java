@@ -1,5 +1,5 @@
 /*
- * Copyright 2020 VMware, Inc.
+ * Copyright 2021 VMware, Inc.
  * <p>
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,12 +19,13 @@ import java.util.function.Consumer;
 import java.util.function.Supplier;
 
 import io.grpc.ForwardingServerCallListener.SimpleForwardingServerCallListener;
+import io.grpc.ServerCall;
 import io.grpc.ServerCall.Listener;
 import io.grpc.Status;
 import io.micrometer.core.instrument.Counter;
 
 /**
- * A simple forwarding server call listener that collects metrics for micrometer.
+ * A simple forwarding server call listener that collects metrics.
  *
  * @param <Q> The type of message received one or more times from the client.
  * @author Daniel Theuke (daniel.theuke@heuboe.de)
@@ -36,7 +37,7 @@ class MetricCollectingServerCallListener<Q> extends SimpleForwardingServerCallLi
     private final Consumer<Status.Code> responseStatusTiming;
 
     /**
-     * Creates a new delegating ServerCallListener that will wrap the given server call listener to collect metrics.
+     * Creates a new delegating {@link ServerCall.Listener} that will wrap the given server call listener to collect metrics.
      *
      * @param delegate The original listener to wrap.
      * @param requestCounter The counter for incoming requests.
