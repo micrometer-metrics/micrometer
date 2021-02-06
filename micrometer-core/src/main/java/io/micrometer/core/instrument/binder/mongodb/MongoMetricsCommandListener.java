@@ -75,7 +75,7 @@ public class MongoMetricsCommandListener implements CommandListener {
 
     @Override
     public void commandFailed(CommandFailedEvent event) {
-        timeCommand(event,event.getElapsedTime(TimeUnit.NANOSECONDS));
+        timeCommand(event, event.getElapsedTime(TimeUnit.NANOSECONDS));
     }
 
     private void timeCommand(CommandEvent event, long elapsedTimeInNanoseconds) {

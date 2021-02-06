@@ -130,6 +130,38 @@ class MongoMetricsCommandListenerTest extends AbstractMongoDbTest {
     }
 
     @Test
+    void shouldCreateFailedCommandMetricWithCustomSettings() {
+        MongoMetricsCommandTagsProvider tagsProvider = new DefaultMongoMetricsCommandTagsProvider() {
+            @Override
+            public Iterable<Tag> commandTags(CommandEvent event) {
+                return Tags.of(super.commandTags(event)).and(Tag.of("mongoz", "5150"));
+            }
+        };
+        MongoClientOptions options = MongoClientOptions.builder()
+                .addCommandListener(new MongoMetricsCommandListener(registry, tagsProvider))
+                .addClusterListener(new ClusterListenerAdapter() {
+                    @Override
+                    public void clusterOpening(ClusterOpeningEvent event) {
+                        clusterId.set(event.getClusterId().getValue());
+                    }
+                })
+                .build();
+        try (MongoClient customMongo = new MongoClient(new ServerAddress(HOST, port), options)) {
+            customMongo.getDatabase("test")
+                    .getCollection("testCol")
+                    .dropIndex("nonExistentIndex");
+            Tags tags = Tags.of(
+                    "cluster.id", clusterId.get(),
+                    "server.address", String.format("%s:%s", HOST, port),
+                    "command", "dropIndexes",
+                    "status", "FAILED",
+                    "mongoz", "5150"
+            );
+            assertThat(registry.get("mongodb.driver.commands").tags(tags).timer().count()).isEqualTo(1);
+        }
+    }
+
+    @Test
     void shouldSupportConcurrentCommands() throws InterruptedException {
         for (int i = 0; i < 20; i++) {
             Map<String, Thread> commandThreadMap = new HashMap<>();

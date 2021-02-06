@@ -1,5 +1,5 @@
 /**
- * Copyright 2019 VMware, Inc.
+ * Copyright 2020 VMware, Inc.
  * <p>
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,7 +16,7 @@
 package io.micrometer.core.instrument.binder.mongodb;
 
 import com.mongodb.event.CommandEvent;
-import com.mongodb.event.CommandFailedEvent;
+import com.mongodb.event.CommandSucceededEvent;
 import io.micrometer.core.instrument.Tag;
 import io.micrometer.core.instrument.Tags;
 
@@ -33,6 +33,6 @@ public class DefaultMongoMetricsCommandTagsProvider implements MongoMetricsComma
                 Tag.of("command", event.getCommandName()),
                 Tag.of("cluster.id", event.getConnectionDescription().getConnectionId().getServerId().getClusterId().getValue()),
                 Tag.of("server.address", event.getConnectionDescription().getServerAddress().toString()),
-                Tag.of("status", (event instanceof CommandFailedEvent) ? "FAILED" : "SUCCESS"));
+                Tag.of("status", (event instanceof CommandSucceededEvent) ? "SUCCESS" : "FAILED"));
     }
 }
