@@ -1,5 +1,5 @@
 /**
- * Copyright 2018 VMware, Inc.
+ * Copyright 2021 VMware, Inc.
  * <p>
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -54,7 +54,9 @@ import java.util.concurrent.TimeUnit;
  *
  * @author Ben Manes
  * @author John Karp
+ * @author Johnny Lim
  * @see CaffeineCacheMetrics
+ * @since 1.7.0
  */
 @NonNullApi
 @NonNullFields
@@ -67,7 +69,6 @@ public final class CaffeineStatsCounter implements StatsCounter {
     private final Counter missCount;
     private final Timer loadSuccesses;
     private final Timer loadFailures;
-    private final DistributionSummary evictions;
     private final EnumMap<RemovalCause, DistributionSummary> evictionMetrics;
 
     /**
@@ -104,8 +105,6 @@ public final class CaffeineStatsCounter implements StatsCounter {
                 .description("Successful cache loads.").register(registry);
         loadFailures = Timer.builder("cache.loads").tag("result", "failure").tags(tags)
                 .description("Failed cache loads.").register(registry);
-        evictions = DistributionSummary.builder("cache.evictions").tags(tags)
-                .description("Entries evicted from cache.").register(registry);
 
         evictionMetrics = new EnumMap<>(RemovalCause.class);
         Arrays.stream(RemovalCause.values()).forEach(cause -> evictionMetrics.put(
@@ -143,15 +142,9 @@ public final class CaffeineStatsCounter implements StatsCounter {
         loadFailures.record(loadTime, TimeUnit.NANOSECONDS);
     }
 
-    @Override
-    public void recordEviction() {
-        recordEviction(1);
-    }
-
     @SuppressWarnings("deprecation")
     @Override
-    public void recordEviction(int weight) {
-        evictions.record(weight);
+    public void recordEviction() {
     }
 
     @Override
@@ -167,10 +160,9 @@ public final class CaffeineStatsCounter implements StatsCounter {
                 loadSuccesses.count(),
                 loadFailures.count(),
                 (long) loadSuccesses.totalTime(TimeUnit.NANOSECONDS)
-                + (long) loadFailures.totalTime(TimeUnit.NANOSECONDS),
-                evictions.count() + evictionMetrics.values().stream().mapToLong(DistributionSummary::count).sum(),
-                (long) (evictions.totalAmount()
-                        + evictionMetrics.values().stream().mapToDouble(DistributionSummary::totalAmount).sum())
+                        + (long) loadFailures.totalTime(TimeUnit.NANOSECONDS),
+                evictionMetrics.values().stream().mapToLong(DistributionSummary::count).sum(),
+                (long) evictionMetrics.values().stream().mapToDouble(DistributionSummary::totalAmount).sum()
         );
     }
 

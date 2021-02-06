@@ -1,5 +1,5 @@
 /**
- * Copyright 2018 VMware, Inc.
+ * Copyright 2021 VMware, Inc.
  * <p>
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -39,7 +39,7 @@ import java.util.concurrent.TimeUnit;
  *
  * @author John Karp
  */
-public class CaffeineStatsCounterTest {
+class CaffeineStatsCounterTest {
     private static final String CACHE_NAME = "foo";
     private static final Tags USER_TAGS = Tags.of("k", "v");
     private static final Tags TAGS = Tags.concat(USER_TAGS, "cache", CACHE_NAME);
@@ -88,22 +88,6 @@ public class CaffeineStatsCounterTest {
         Timer timer = fetch("cache.loads", "result", "failure").timer();
         assertThat(timer.count()).isEqualTo(1);
         assertThat(timer.totalTime(TimeUnit.NANOSECONDS)).isEqualTo(256);
-    }
-
-    @Test
-    void eviction() {
-        stats.recordEviction();
-        DistributionSummary summary = fetch("cache.evictions").summary();
-        assertThat(summary.count()).isEqualTo(1);
-        assertThat(summary.totalAmount()).isEqualTo(1);
-    }
-
-    @Test
-    void evictionWithWeight() {
-        stats.recordEviction(3);
-        DistributionSummary summary = fetch("cache.evictions").summary();
-        assertThat(summary.count()).isEqualTo(1);
-        assertThat(summary.totalAmount()).isEqualTo(3);
     }
 
     @ParameterizedTest
