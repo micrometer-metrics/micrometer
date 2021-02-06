@@ -40,6 +40,7 @@ public interface TimeGauge extends Gauge {
      *
      * @param name The time gauge's name.
      * @param f    A function that yields a double value for the time gauge.
+     * @param fUnits time unit
      * @return A new time gauge builder.
      * @since 1.7.0
      */

@@ -37,7 +37,6 @@ import io.micrometer.core.instrument.Timer;
  * <b>Usage:</b>
  * </p>
  *
- * <code>
  * <pre>
  * ManagedChannel channel = ManagedChannelBuilder.forAddress("localhost", 8080)
  *     .intercept(new MetricCollectingClientInterceptor(meterRegistry))
@@ -45,7 +44,6 @@ import io.micrometer.core.instrument.Timer;
  *
  * channel.newCall(method, options);
  * </pre>
- * </code>
  *
  * @author Daniel Theuke (daniel.theuke@heuboe.de)
  * @since 1.7.0

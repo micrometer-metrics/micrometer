@@ -41,7 +41,6 @@ import io.micrometer.core.instrument.Timer;
  * <b>Usage:</b>
  * </p>
  *
- * <code>
  * <pre>
  * Server server = ServerBuilder.forPort(8080)
  *         .intercept(new MetricCollectingServerInterceptor(meterRegistry))
@@ -49,7 +48,6 @@ import io.micrometer.core.instrument.Timer;
  *
  * server.start()
  * </pre>
- * </code>
  *
  * @author Daniel Theuke (daniel.theuke@heuboe.de)
  * @since 1.7.0
