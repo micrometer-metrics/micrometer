@@ -23,6 +23,7 @@ import io.micrometer.core.instrument.Tag;
  *
  * @author Chris Bono
  */
+@FunctionalInterface
 public interface MongoMetricsCommandTagsProvider {
 
     /**
