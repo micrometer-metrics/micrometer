@@ -21,6 +21,12 @@ import java.time.Duration;
 
 import static io.micrometer.core.instrument.config.validate.PropertyValidator.getDuration;
 
+/**
+ * {@link MeterRegistryConfig} for {@link HealthMeterRegistry}.
+ *
+ * @author Jon Schneider
+ * @since 1.6.0
+ */
 public interface HealthConfig extends MeterRegistryConfig {
     HealthConfig DEFAULT = key -> null;
 

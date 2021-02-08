@@ -222,64 +222,45 @@ public final class Search {
                 if (!nameMatches.test(id.getName())) {
                     return MeterFilterReply.NEUTRAL;
                 }
-
-                boolean requiredKeysPresent = true;
-                if (!requiredTagKeys.isEmpty()) {
-                    final List<String> tagKeys = new ArrayList<>();
-                    id.getTags().forEach(t -> tagKeys.add(t.getKey()));
-                    requiredKeysPresent = tagKeys.containsAll(requiredTagKeys);
-                }
-
-                boolean tagPredicatesMatched = true;
-                if (!tagMatches.isEmpty()) {
-                    final Set<String> matchingTagKeys = new HashSet<>();
-                    id.getTags().forEach(t -> {
-                        Collection<Predicate<String>> tagValueMatchers = tagMatches.get(t.getKey());
-                        if (tagValueMatchers != null) {
-                            if (tagValueMatchers.stream().allMatch(matcher -> matcher.test(t.getValue()))) {
-                                matchingTagKeys.add(t.getKey());
-                            }
-                        }
-                    });
-                    tagPredicatesMatched = tagMatches.keySet().size() == matchingTagKeys.size();
-                }
-
-                return requiredKeysPresent && tagPredicatesMatched && id.getTags().containsAll(tags) ?
-                        MeterFilterReply.ACCEPT : MeterFilterReply.NEUTRAL;
+                return isTagsMatched(id) ? MeterFilterReply.ACCEPT : MeterFilterReply.NEUTRAL;
             }
         };
     }
 
+    private boolean isTagsMatched(Meter.Id id) {
+        return isRequiredTagKeysPresent(id) && isTagPredicatesMatched(id) && id.getTags().containsAll(tags);
+    }
+
+    private boolean isRequiredTagKeysPresent(Meter.Id id) {
+        if (!requiredTagKeys.isEmpty()) {
+            final Set<String> tagKeys = new HashSet<>();
+            id.getTags().forEach(t -> tagKeys.add(t.getKey()));
+            return tagKeys.containsAll(requiredTagKeys);
+        }
+        return true;
+    }
+
+    private boolean isTagPredicatesMatched(Meter.Id id) {
+        if (!tagMatches.isEmpty()) {
+            final Set<String> matchingTagKeys = new HashSet<>();
+            id.getTags().forEach(t -> {
+                Collection<Predicate<String>> tagValueMatchers = tagMatches.get(t.getKey());
+                if (tagValueMatchers != null) {
+                    if (tagValueMatchers.stream().allMatch(matcher -> matcher.test(t.getValue()))) {
+                        matchingTagKeys.add(t.getKey());
+                    }
+                }
+            });
+            return tagMatches.keySet().size() == matchingTagKeys.size();
+        }
+        return true;
+    }
+
     private Stream<Meter> meterStream() {
         Stream<Meter> meterStream = registry.getMeters().stream().filter(m -> nameMatches.test(m.getId().getName()));
-
         if (!tags.isEmpty() || !requiredTagKeys.isEmpty() || !tagMatches.isEmpty()) {
-            meterStream = meterStream.filter(m -> {
-                boolean requiredKeysPresent = true;
-                if (!requiredTagKeys.isEmpty()) {
-                    final List<String> tagKeys = new ArrayList<>();
-                    m.getId().getTags().forEach(t -> tagKeys.add(t.getKey()));
-                    requiredKeysPresent = tagKeys.containsAll(requiredTagKeys);
-                }
-
-                boolean tagPredicatesMatched = true;
-                if (!tagMatches.isEmpty()) {
-                    final Set<String> matchingTagKeys = new HashSet<>();
-                    m.getId().getTags().forEach(t -> {
-                        Collection<Predicate<String>> tagValueMatchers = tagMatches.get(t.getKey());
-                        if (tagValueMatchers != null) {
-                            if (tagValueMatchers.stream().allMatch(matcher -> matcher.test(t.getValue()))) {
-                                matchingTagKeys.add(t.getKey());
-                            }
-                        }
-                    });
-                    tagPredicatesMatched = tagMatches.keySet().size() == matchingTagKeys.size();
-                }
-
-                return requiredKeysPresent && tagPredicatesMatched && m.getId().getTags().containsAll(tags);
-            });
+            meterStream = meterStream.filter(m -> isTagsMatched(m.getId()));
         }
-
         return meterStream;
     }
 

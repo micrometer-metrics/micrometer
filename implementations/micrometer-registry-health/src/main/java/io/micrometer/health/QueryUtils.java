@@ -17,12 +17,14 @@ package io.micrometer.health;
 
 import java.util.function.BinaryOperator;
 
+/**
+ * Utilities for queries.
+ *
+ * @author Jon Schneider
+ */
 class QueryUtils {
-    public static final BinaryOperator<Double> SUM_OR_NAN = (v1, v2) -> {
+    static final BinaryOperator<Double> SUM_OR_NAN = (v1, v2) -> {
         if (Double.isNaN(v1)) {
-            if (Double.isNaN(v2)) {
-                return Double.NaN;
-            }
             return v2;
         } else if (Double.isNaN(v2)) {
             return v1;
@@ -30,11 +32,8 @@ class QueryUtils {
         return v1 + v2;
     };
 
-    public static final BinaryOperator<Double> MAX_OR_NAN = (v1, v2) -> {
+    static final BinaryOperator<Double> MAX_OR_NAN = (v1, v2) -> {
         if (Double.isNaN(v1)) {
-            if (Double.isNaN(v2)) {
-                return Double.NaN;
-            }
             return v2;
         } else if (Double.isNaN(v2)) {
             return v1;
