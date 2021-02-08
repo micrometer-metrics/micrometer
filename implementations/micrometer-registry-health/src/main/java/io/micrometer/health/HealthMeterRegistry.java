@@ -31,6 +31,8 @@ import java.time.Duration;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.HashSet;
+import java.util.Set;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.ThreadFactory;
@@ -48,6 +50,7 @@ import java.util.stream.Collectors;
  * in order to perform their tests. These are automatically bound at construction time.
  *
  * @author Jon Schneider
+ * @author Johnny Lim
  * @since 1.6.0
  */
 @Incubating(since = "1.6.0")
@@ -98,9 +101,13 @@ public class HealthMeterRegistry extends SimpleMeterRegistry {
 
         // do this after the deny filter is set, because maybe only a portion of the metrics a binder registers are needed
         // for the SLOs that require the binder
+        Set<MeterBinder> boundMeterBinders = new HashSet<>();
         for (ServiceLevelObjective slo : serviceLevelObjectives) {
             for (MeterBinder require : slo.getRequires()) {
-                require.bindTo(this);
+                if (!boundMeterBinders.contains(require)) {
+                    require.bindTo(this);
+                    boundMeterBinders.add(require);
+                }
             }
         }
 

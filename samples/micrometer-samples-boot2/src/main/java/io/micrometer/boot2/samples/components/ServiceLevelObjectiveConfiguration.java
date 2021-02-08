@@ -18,6 +18,9 @@ package io.micrometer.boot2.samples.components;
 import io.micrometer.core.instrument.Meter.Type;
 import io.micrometer.core.instrument.Tag;
 import io.micrometer.core.instrument.binder.BaseUnits;
+import io.micrometer.core.instrument.binder.jvm.JvmHeapPressureMetrics;
+import io.micrometer.core.instrument.binder.jvm.JvmMemoryMetrics;
+import io.micrometer.core.instrument.binder.system.FileDescriptorMetrics;
 import io.micrometer.core.instrument.config.NamingConvention;
 import io.micrometer.health.HealthConfig;
 import io.micrometer.health.HealthMeterRegistry;
@@ -50,8 +53,8 @@ public class ServiceLevelObjectiveConfiguration {
     @Bean
     HealthMeterRegistry healthMeterRegistry() {
         HealthMeterRegistry registry = HealthMeterRegistry.builder(HealthConfig.DEFAULT)
-                .serviceLevelObjectives(JvmServiceLevelObjectives.MEMORY)
-                .serviceLevelObjectives(OperatingSystemServiceLevelObjectives.DISK)
+                .serviceLevelObjectives(JvmServiceLevelObjectives.forMemory(new JvmHeapPressureMetrics(), new JvmMemoryMetrics()))
+                .serviceLevelObjectives(OperatingSystemServiceLevelObjectives.forDisk(new FileDescriptorMetrics()))
                 .serviceLevelObjectives(
                         ServiceLevelObjective.build("api.error.ratio")
                                 .failedMessage("API error ratio")

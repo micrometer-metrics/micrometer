@@ -18,6 +18,7 @@ package io.micrometer.health;
 import io.micrometer.core.instrument.Meter;
 import io.micrometer.core.instrument.MockClock;
 import io.micrometer.core.instrument.Timer;
+import io.micrometer.core.instrument.binder.jvm.JvmHeapPressureMetrics;
 import io.micrometer.core.instrument.binder.jvm.JvmMemoryMetrics;
 import io.micrometer.core.instrument.config.MeterFilter;
 import io.micrometer.health.objectives.JvmServiceLevelObjectives;
@@ -131,7 +132,7 @@ class HealthMeterRegistryTest {
     void meterFiltersAffectServiceLevelObjectives() {
         HealthMeterRegistry registry = HealthMeterRegistry.builder(HealthConfig.DEFAULT)
                 .clock(new MockClock())
-                .serviceLevelObjectives(JvmServiceLevelObjectives.MEMORY)
+                .serviceLevelObjectives(JvmServiceLevelObjectives.forMemory(new JvmHeapPressureMetrics(), new JvmMemoryMetrics()))
                 .serviceLevelObjectiveFilter(MeterFilter.denyNameStartsWith("jvm.pool"))
                 .serviceLevelObjectiveFilter(new MeterFilter() {
                     @Override
