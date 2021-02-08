@@ -15,6 +15,7 @@
  */
 package io.micrometer.health;
 
+import io.micrometer.core.instrument.FunctionCounter;
 import io.micrometer.core.instrument.MockClock;
 import io.micrometer.core.instrument.Timer;
 import io.micrometer.core.instrument.util.TimeUtils;
@@ -27,12 +28,20 @@ import java.util.concurrent.TimeUnit;
 import static io.micrometer.core.instrument.MockClock.clock;
 import static org.assertj.core.api.Assertions.assertThat;
 
+/**
+ * Tests for queries.
+ *
+ * @author Jon Schneider
+ * @author Johnny Lim
+ */
 class QueryTest {
     HealthMeterRegistry registry = HealthMeterRegistry
             .builder(HealthConfig.DEFAULT)
             // just so my.timer doesn't get filtered out eagerly
             .serviceLevelObjectives(ServiceLevelObjective.build("timer")
                 .count(s -> s.name("my.timer")).isGreaterThan(0))
+            .serviceLevelObjectives(ServiceLevelObjective.build("function.counter")
+                    .count(s -> s.name("my.function.counter")).isGreaterThan(0))
             .clock(new MockClock())
             .build();
 
@@ -43,6 +52,8 @@ class QueryTest {
         Timer t2 = registry.timer("my.timer", "k", "v2");
         t2.record(2, TimeUnit.SECONDS);
         t2.record(2, TimeUnit.SECONDS);
+
+        FunctionCounter.builder("my.function.counter", 1d, Number::doubleValue).register(registry);
 
         clock(registry).addSeconds(10);
         registry.tick();
@@ -56,6 +67,15 @@ class QueryTest {
                         .count(s -> s.name("my.timer"))
                         .getValue(registry)
         ).isEqualTo(3);
+    }
+
+    @Test
+    void countWhenMeterIsFunctionCounter() {
+        assertThat(
+                ServiceLevelObjective.build("function.counter.objective")
+                        .count(s -> s.name("my.function.counter"))
+                        .getValue(registry)
+        ).isEqualTo(1);
     }
 
     @Test

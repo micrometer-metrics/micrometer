@@ -40,7 +40,10 @@ import static io.micrometer.health.QueryUtils.MAX_OR_NAN;
 import static io.micrometer.health.QueryUtils.SUM_OR_NAN;
 
 /**
+ * Service level objective.
+ *
  * @author Jon Schneider
+ * @author Johnny Lim
  * @since 1.6.0
  */
 public abstract class ServiceLevelObjective {
@@ -240,7 +243,7 @@ public abstract class ServiceLevelObjective {
                             } else if (m instanceof FunctionTimer) {
                                 return ((FunctionTimer) m).count();
                             } else if (m instanceof FunctionCounter) {
-                                ((FunctionCounter) m).count();
+                                return ((FunctionCounter) m).count();
                             } else if (m instanceof LongTaskTimer) {
                                 return (double) ((LongTaskTimer) m).activeTasks();
                             }
