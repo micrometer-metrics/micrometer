@@ -52,7 +52,7 @@ import static java.util.stream.Collectors.joining;
  */
 @Incubating(since = "1.1.0")
 public class LoggingMeterRegistry extends StepMeterRegistry {
-    private final static InternalLogger log = InternalLoggerFactory.getInstance(LoggingMeterRegistry.class);
+    private static final InternalLogger log = InternalLoggerFactory.getInstance(LoggingMeterRegistry.class);
 
     private final LoggingRegistryConfig config;
     private final Consumer<String> loggingSink;
