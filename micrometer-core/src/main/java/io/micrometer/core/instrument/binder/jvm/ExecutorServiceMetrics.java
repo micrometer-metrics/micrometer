@@ -286,6 +286,8 @@ public class ExecutorServiceMetrics implements MeterBinder {
             } else {
                 log.warn("Failed to bind as {} is unsupported.", className);
             }
+        } else {
+            log.warn("Failed to bind as {} is unsupported or reflective access is not allowed.", className);
         }
     }
 
