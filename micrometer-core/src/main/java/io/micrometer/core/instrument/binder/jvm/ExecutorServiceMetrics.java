@@ -25,6 +25,8 @@ import io.micrometer.core.instrument.util.StringUtils;
 import io.micrometer.core.lang.NonNullApi;
 import io.micrometer.core.lang.NonNullFields;
 import io.micrometer.core.lang.Nullable;
+import io.micrometer.core.util.internal.logging.InternalLogger;
+import io.micrometer.core.util.internal.logging.InternalLoggerFactory;
 
 import java.lang.reflect.Field;
 import java.util.concurrent.*;
@@ -45,6 +47,7 @@ import static java.util.Arrays.asList;
 public class ExecutorServiceMetrics implements MeterBinder {
     private static boolean allowIllegalReflectiveAccess = true;
 
+    private static final InternalLogger log = InternalLoggerFactory.getInstance(ExecutorServiceMetrics.class);
     private static final String DEFAULT_EXECUTOR_METRIC_PREFIX = "";
     @Nullable
     private final ExecutorService executorService;
@@ -280,7 +283,11 @@ public class ExecutorServiceMetrics implements MeterBinder {
                 monitor(registry, unwrapThreadPoolExecutor(executorService, executorService.getClass()));
             } else if (className.equals("java.util.concurrent.Executors$FinalizableDelegatedExecutorService")) {
                 monitor(registry, unwrapThreadPoolExecutor(executorService, executorService.getClass().getSuperclass()));
+            } else {
+                log.warn("Failed to bind as {} is unsupported.", className);
             }
+        } else {
+            log.warn("Failed to bind as {} is unsupported or reflective access is not allowed.", className);
         }
     }
 
