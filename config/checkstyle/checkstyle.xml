@@ -38,6 +38,9 @@
         <!-- Whitespace -->
         <module name="com.puppycrawl.tools.checkstyle.checks.whitespace.WhitespaceAroundCheck" />
 
+        <!-- Modifiers -->
+        <module name="ModifierOrder" />
+
         <module name="SuppressionCommentFilter"/>
     </module>
 

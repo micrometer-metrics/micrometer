@@ -30,7 +30,7 @@ import java.time.Duration;
 import static java.util.Collections.singletonList;
 
 public class KafkaMetricsSample {
-    private final static String TOPIC = "my-example-topic";
+    private static final String TOPIC = "my-example-topic";
 
     public static void main(String[] args) throws Exception {
         EphemeralKafkaBroker broker = EphemeralKafkaBroker.create();

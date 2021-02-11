@@ -40,8 +40,8 @@ import static org.assertj.core.api.Assertions.assertThat;
  * @author Johnny Lim
  */
 class KafkaConsumerMetricsTest {
-    private final static String TOPIC = "my-example-topic";
-    private final static String BOOTSTRAP_SERVERS = "localhost:9092";
+    private static final String TOPIC = "my-example-topic";
+    private static final String BOOTSTRAP_SERVERS = "localhost:9092";
     private static int consumerCount = 0;
 
     private Tags tags = Tags.of("app", "myapp", "version", "1");
