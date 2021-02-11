@@ -46,7 +46,7 @@ import static java.util.Arrays.asList;
 @NonNullFields
 public class ExecutorServiceMetrics implements MeterBinder {
 
-    private final static InternalLogger log = InternalLoggerFactory.getInstance(ExecutorServiceMetrics.class);
+    private static final InternalLogger log = InternalLoggerFactory.getInstance(ExecutorServiceMetrics.class);
 
     static final String DEFAULT_EXECUTOR_METRIC_PREFIX = "";
     @Nullable
