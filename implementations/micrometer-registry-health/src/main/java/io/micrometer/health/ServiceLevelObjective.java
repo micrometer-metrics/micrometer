@@ -334,7 +334,7 @@ public abstract class ServiceLevelObjective {
             }
         }
 
-        public static abstract class NumericQuery {
+        public abstract static class NumericQuery {
             protected final String name;
             private final Tags tags;
 
