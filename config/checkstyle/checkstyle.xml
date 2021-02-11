@@ -40,6 +40,9 @@
 
         <module name="io.spring.javaformat.checkstyle.check.SpringJUnit5Check" />
 
+        <!-- Modifiers -->
+        <module name="ModifierOrder" />
+
         <module name="SuppressionCommentFilter"/>
     </module>
 

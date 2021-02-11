@@ -58,7 +58,7 @@ import static java.util.Collections.emptyList;
 @NonNullFields
 public class JvmGcMetrics implements MeterBinder, AutoCloseable {
 
-    private final static InternalLogger log = InternalLoggerFactory.getInstance(JvmGcMetrics.class);
+    private static final InternalLogger log = InternalLoggerFactory.getInstance(JvmGcMetrics.class);
 
     private final boolean managementExtensionsPresent = isManagementExtensionsPresent();
 
