@@ -54,8 +54,8 @@ import static java.util.Collections.emptyList;
 @NonNullApi
 @NonNullFields
 class KafkaMetrics implements MeterBinder, AutoCloseable {
-    private final static InternalLogger log = InternalLoggerFactory.getInstance(KafkaMetrics.class);
-    private final static WarnThenDebugLogger warnThenDebugLogger = new WarnThenDebugLogger(KafkaMetrics.class);
+    private static final InternalLogger log = InternalLoggerFactory.getInstance(KafkaMetrics.class);
+    private static final WarnThenDebugLogger warnThenDebugLogger = new WarnThenDebugLogger(KafkaMetrics.class);
 
     static final String METRIC_NAME_PREFIX = "kafka.";
     static final String METRIC_GROUP_APP_INFO = "app-info";
