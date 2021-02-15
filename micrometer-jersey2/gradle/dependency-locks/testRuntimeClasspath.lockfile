@@ -30,10 +30,10 @@ org.glassfish.jersey.test-framework:jersey-test-framework-core:2.32
 org.hamcrest:hamcrest-core:1.3
 org.hdrhistogram:HdrHistogram:2.1.12
 org.javassist:javassist:3.25.0-GA
-org.junit.platform:junit-platform-commons:1.7.0
-org.junit.platform:junit-platform-engine:1.7.0
-org.junit.vintage:junit-vintage-engine:5.7.0
-org.junit:junit-bom:5.7.0
+org.junit.platform:junit-platform-commons:1.7.1
+org.junit.platform:junit-platform-engine:1.7.1
+org.junit.vintage:junit-vintage-engine:5.7.1
+org.junit:junit-bom:5.7.1
 org.latencyutils:LatencyUtils:2.0.3
 org.mockito:mockito-core:3.6.0
 org.objenesis:objenesis:3.1

@@ -42,11 +42,11 @@ org.jetbrains.kotlin:kotlin-stdlib-common:1.4.10
 org.jetbrains.kotlin:kotlin-stdlib:1.4.10
 org.jetbrains:annotations:13.0
 org.jsr107.ri:cache-ri-impl:1.0.0
-org.junit.jupiter:junit-jupiter-api:5.7.0
-org.junit.jupiter:junit-jupiter-params:5.7.0
-org.junit.jupiter:junit-jupiter:5.7.0
-org.junit.platform:junit-platform-commons:1.7.0
-org.junit:junit-bom:5.7.0
+org.junit.jupiter:junit-jupiter-api:5.7.1
+org.junit.jupiter:junit-jupiter-params:5.7.1
+org.junit.jupiter:junit-jupiter:5.7.1
+org.junit.platform:junit-platform-commons:1.7.1
+org.junit:junit-bom:5.7.1
 org.mockito:mockito-core:3.6.0
 org.objenesis:objenesis:3.1
 org.opentest4j:opentest4j:1.2.0
