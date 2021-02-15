@@ -297,8 +297,10 @@ public class ExecutorServiceMetrics implements MeterBinder {
             Field e = wrapper.getDeclaredField("e");
             e.setAccessible(true);
             return (ThreadPoolExecutor) e.get(executor);
-        } catch (NoSuchFieldException | IllegalAccessException e) {
+        } catch (NoSuchFieldException | IllegalAccessException | RuntimeException e) {
+            // Cannot use InaccessibleObjectException since it was introduced in Java 9, so catch all RuntimeExceptions instead
             // Do nothing. We simply can't get to the underlying ThreadPoolExecutor.
+            log.info("Cannot unwrap ThreadPoolExecutor for monitoring from {} due to {}: {}", wrapper.getName(), e.getClass().getName(), e.getMessage());
         }
         return null;
     }
