@@ -84,5 +84,5 @@ dependencies {
     testRuntime 'com.sun.xml.messaging.saaj:saaj-impl:1.4.0'
 
     testImplementation 'junit:junit:4.12'
-    testRuntimeOnly 'org.junit.vintage:junit-vintage-engine:latest.release'
+    testRuntimeOnly 'org.junit.vintage:junit-vintage-engine:5.7.+'
 }

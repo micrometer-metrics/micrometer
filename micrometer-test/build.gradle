@@ -3,7 +3,7 @@ dependencies {
     compile 'org.assertj:assertj-core:latest.release'
 
     // JUnit 5
-    compile 'org.junit.jupiter:junit-jupiter:5.4.+'
+    compile 'org.junit.jupiter:junit-jupiter:5.7.+'
 
     compile 'ru.lanwen.wiremock:wiremock-junit5:latest.release'
     compile 'com.github.tomakehurst:wiremock:latest.release'
