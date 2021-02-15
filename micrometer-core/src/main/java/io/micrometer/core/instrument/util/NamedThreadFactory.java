@@ -31,8 +31,7 @@ public class NamedThreadFactory implements ThreadFactory {
         Thread thread = new Thread(r);
         int seq = sequence.getAndIncrement();
         thread.setName(prefix + (seq > 1 ? "-" + seq : ""));
-        if (!thread.isDaemon())
-            thread.setDaemon(true);
+        thread.setDaemon(true);
         return thread;
     }
 }
