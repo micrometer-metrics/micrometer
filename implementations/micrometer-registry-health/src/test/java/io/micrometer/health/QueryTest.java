@@ -156,7 +156,7 @@ class QueryTest {
                         .count(s -> s.name("my.timer"))
                         .isLessThan(4)
                         .healthy(registry)
-        ).isEqualTo(true);
+        ).isTrue();
 
         assertThat(
                 ServiceLevelObjective
@@ -164,7 +164,7 @@ class QueryTest {
                         .total(s -> s.name("my.timer"))
                         .isLessThan(Duration.ofSeconds(6))
                         .healthy(registry)
-        ).isEqualTo(true);
+        ).isTrue();
     }
 
     @Test
@@ -175,14 +175,14 @@ class QueryTest {
                         .count(s -> s.name("my.timer"))
                         .isLessThanOrEqualTo(3)
                         .healthy(registry)
-        ).isEqualTo(true);
+        ).isTrue();
 
         assertThat(ServiceLevelObjective
                 .build("sum")
                 .total(s -> s.name("my.timer"))
                 .isLessThanOrEqualTo(Duration.ofSeconds(5))
                 .healthy(registry)
-        ).isEqualTo(true);
+        ).isTrue();
     }
 
     @Test
@@ -193,7 +193,7 @@ class QueryTest {
                         .count(s -> s.name("my.timer"))
                         .isGreaterThan(2)
                         .healthy(registry)
-        ).isEqualTo(true);
+        ).isTrue();
 
         assertThat(
                 ServiceLevelObjective
@@ -201,7 +201,7 @@ class QueryTest {
                         .total(s -> s.name("my.timer"))
                         .isGreaterThan(Duration.ofSeconds(4))
                         .healthy(registry)
-        ).isEqualTo(true);
+        ).isTrue();
     }
 
     @Test
@@ -212,7 +212,7 @@ class QueryTest {
                         .count(s -> s.name("my.timer"))
                         .isGreaterThanOrEqualTo(3)
                         .healthy(registry)
-        ).isEqualTo(true);
+        ).isTrue();
 
         assertThat(
                 ServiceLevelObjective
@@ -220,7 +220,7 @@ class QueryTest {
                         .total(s -> s.name("my.timer"))
                         .isGreaterThanOrEqualTo(Duration.ofSeconds(5))
                         .healthy(registry)
-        ).isEqualTo(true);
+        ).isTrue();
     }
 
     @Test
@@ -231,7 +231,7 @@ class QueryTest {
                         .count(s -> s.name("my.timer"))
                         .isEqualTo(3)
                         .healthy(registry)
-        ).isEqualTo(true);
+        ).isTrue();
 
         assertThat(
                 ServiceLevelObjective
@@ -239,6 +239,6 @@ class QueryTest {
                         .total(s -> s.name("my.timer"))
                         .isEqualTo(Duration.ofSeconds(5))
                         .healthy(registry)
-        ).isEqualTo(true);
+        ).isTrue();
     }
 }
