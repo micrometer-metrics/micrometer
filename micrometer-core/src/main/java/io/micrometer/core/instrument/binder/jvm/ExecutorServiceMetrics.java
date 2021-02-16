@@ -37,6 +37,10 @@ import static java.util.Arrays.asList;
  * Monitors the status of executor service pools. Does not record timings on operations executed in the {@link ExecutorService},
  * as this requires the instance to be wrapped. Timings are provided separately by wrapping the executor service
  * with {@link TimedExecutorService}.
+ * <p>
+ * Supports {@link ThreadPoolExecutor} and {@link ForkJoinPool} types of {@link ExecutorService}. Some libraries may provide
+ * a wrapper type for {@link ExecutorService}, like {@link TimedExecutorService}. Make sure to pass the underlying,
+ * unwrapped ExecutorService to this MeterBinder, if it is wrapped in another type.
  *
  * @author Jon Schneider
  * @author Clint Checketts
