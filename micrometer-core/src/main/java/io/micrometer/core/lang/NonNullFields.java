@@ -26,7 +26,10 @@ import java.lang.annotation.*;
  * tools with JSR-305 support and used by Kotlin to infer nullability of the API.
  * <p>Should be used at package level in association with {@link Nullable}
  * annotations at field level.
+ * <p>
+ * NOTE: This file has been copied from {org.springframework.lang}.
  *
+ * @author Sebastien Deleuze
  * @see NonNullFields
  * @see Nullable
  * @see NonNull
