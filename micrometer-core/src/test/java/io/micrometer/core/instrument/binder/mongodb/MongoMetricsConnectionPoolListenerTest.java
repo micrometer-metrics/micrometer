@@ -18,8 +18,12 @@ package io.micrometer.core.instrument.binder.mongodb;
 import com.mongodb.MongoClient;
 import com.mongodb.MongoClientOptions;
 import com.mongodb.ServerAddress;
-import com.mongodb.event.ClusterListenerAdapter;
-import com.mongodb.event.ClusterOpeningEvent;
+import com.mongodb.connection.ClusterId;
+import com.mongodb.connection.ConnectionId;
+import com.mongodb.connection.ConnectionPoolSettings;
+import com.mongodb.connection.ServerId;
+import com.mongodb.event.*;
+import io.micrometer.core.Issue;
 import io.micrometer.core.instrument.MeterRegistry;
 import io.micrometer.core.instrument.Tags;
 import io.micrometer.core.instrument.simple.SimpleMeterRegistry;
@@ -28,6 +32,7 @@ import org.junit.jupiter.api.Test;
 import java.util.concurrent.atomic.AtomicReference;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatCode;
 
 /**
  * Tests for {@link MongoMetricsConnectionPoolListener}.
@@ -36,9 +41,10 @@ import static org.assertj.core.api.Assertions.assertThat;
  */
 class MongoMetricsConnectionPoolListenerTest extends AbstractMongoDbTest {
 
+    private final MeterRegistry registry = new SimpleMeterRegistry();
+
     @Test
     void shouldCreatePoolMetrics() {
-        MeterRegistry registry = new SimpleMeterRegistry();
         AtomicReference<String> clusterId = new AtomicReference<>();
         MongoClientOptions options = MongoClientOptions.builder()
                 .minConnectionsPerHost(2)
@@ -69,6 +75,19 @@ class MongoMetricsConnectionPoolListenerTest extends AbstractMongoDbTest {
         assertThat(registry.find("mongodb.driver.pool.size").tags(tags).gauge())
                 .describedAs("metrics should be removed when the connection pool is closed")
                 .isNull();
+    }
+
+    @Test
+    @Issue("#2384")
+    void whenConnectionCheckedInAfterPoolClose_thenNoExceptionThrown() {
+        ServerId serverId = new ServerId(new ClusterId(), new ServerAddress(HOST, port));
+        ConnectionId connectionId = new ConnectionId(serverId);
+        MongoMetricsConnectionPoolListener listener = new MongoMetricsConnectionPoolListener(registry);
+        listener.connectionPoolOpened(new ConnectionPoolOpenedEvent(serverId, ConnectionPoolSettings.builder().build()));
+        listener.connectionCheckedOut(new ConnectionCheckedOutEvent(connectionId));
+        listener.connectionPoolClosed(new ConnectionPoolClosedEvent(serverId));
+        assertThatCode(() -> listener.connectionCheckedIn(new ConnectionCheckedInEvent(connectionId)))
+                .doesNotThrowAnyException();
     }
 
 }
