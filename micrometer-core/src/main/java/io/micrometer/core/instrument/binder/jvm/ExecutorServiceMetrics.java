@@ -37,6 +37,10 @@ import static java.util.Arrays.asList;
  * Monitors the status of executor service pools. Does not record timings on operations executed in the {@link ExecutorService},
  * as this requires the instance to be wrapped. Timings are provided separately by wrapping the executor service
  * with {@link TimedExecutorService}.
+ * <p>
+ * Supports {@link ThreadPoolExecutor} and {@link ForkJoinPool} types of {@link ExecutorService}. Some libraries may provide
+ * a wrapper type for {@link ExecutorService}, like {@link TimedExecutorService}. Make sure to pass the underlying,
+ * unwrapped ExecutorService to this MeterBinder, if it is wrapped in another type.
  *
  * @author Jon Schneider
  * @author Clint Checketts
@@ -295,8 +299,10 @@ public class ExecutorServiceMetrics implements MeterBinder {
             Field e = wrapper.getDeclaredField("e");
             e.setAccessible(true);
             return (ThreadPoolExecutor) e.get(executor);
-        } catch (NoSuchFieldException | IllegalAccessException e) {
+        } catch (NoSuchFieldException | IllegalAccessException | RuntimeException e) {
+            // Cannot use InaccessibleObjectException since it was introduced in Java 9, so catch all RuntimeExceptions instead
             // Do nothing. We simply can't get to the underlying ThreadPoolExecutor.
+            log.info("Cannot unwrap ThreadPoolExecutor for monitoring from {} due to {}: {}", wrapper.getName(), e.getClass().getName(), e.getMessage());
         }
         return null;
     }

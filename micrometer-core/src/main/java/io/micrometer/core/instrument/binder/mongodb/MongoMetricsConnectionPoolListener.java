@@ -81,40 +81,52 @@ public class MongoMetricsConnectionPoolListener extends ConnectionPoolListenerAd
 
     @Override
     public void connectionCheckedOut(ConnectionCheckedOutEvent event) {
-        checkedOutCount.get(event.getConnectionId().getServerId())
-                .incrementAndGet();
+        AtomicInteger gauge = checkedOutCount.get(event.getConnectionId().getServerId());
+        if (gauge != null) {
+            gauge.incrementAndGet();
+        }
     }
 
     @Override
     public void connectionCheckedIn(ConnectionCheckedInEvent event) {
-        checkedOutCount.get(event.getConnectionId().getServerId())
-                .decrementAndGet();
+        AtomicInteger gauge = checkedOutCount.get(event.getConnectionId().getServerId());
+        if (gauge != null) {
+            gauge.decrementAndGet();
+        }
     }
 
     @SuppressWarnings("deprecation")
     @Override
     public void waitQueueEntered(ConnectionPoolWaitQueueEnteredEvent event) {
-        waitQueueSize.get(event.getServerId())
-                .incrementAndGet();
+        AtomicInteger gauge = waitQueueSize.get(event.getServerId());
+        if (gauge != null) {
+            gauge.incrementAndGet();
+        }
     }
 
     @SuppressWarnings("deprecation")
     @Override
     public void waitQueueExited(ConnectionPoolWaitQueueExitedEvent event) {
-        waitQueueSize.get(event.getServerId())
-                .decrementAndGet();
+        AtomicInteger gauge = waitQueueSize.get(event.getServerId());
+        if (gauge != null) {
+            gauge.decrementAndGet();
+        }
     }
 
     @Override
     public void connectionAdded(ConnectionAddedEvent event) {
-        poolSize.get(event.getConnectionId().getServerId())
-                .incrementAndGet();
+        AtomicInteger gauge = poolSize.get(event.getConnectionId().getServerId());
+        if (gauge != null) {
+            gauge.incrementAndGet();
+        }
     }
 
     @Override
     public void connectionRemoved(ConnectionRemovedEvent event) {
-        poolSize.get(event.getConnectionId().getServerId())
-                .decrementAndGet();
+        AtomicInteger gauge = poolSize.get(event.getConnectionId().getServerId());
+        if (gauge != null) {
+            gauge.decrementAndGet();
+        }
     }
 
     private Gauge registerGauge(ServerId serverId, String metricName, String description, Map<ServerId, AtomicInteger> metrics) {

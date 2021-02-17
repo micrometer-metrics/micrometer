@@ -15,6 +15,7 @@
  */
 package io.micrometer.core.instrument.binder.jvm;
 
+import io.micrometer.core.Issue;
 import io.micrometer.core.instrument.MeterRegistry;
 import io.micrometer.core.instrument.MockClock;
 import io.micrometer.core.instrument.Tag;
@@ -22,12 +23,15 @@ import io.micrometer.core.instrument.Tags;
 import io.micrometer.core.instrument.simple.SimpleConfig;
 import io.micrometer.core.instrument.simple.SimpleMeterRegistry;
 import org.junit.jupiter.api.DisplayName;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.condition.DisabledForJreRange;
+import org.junit.jupiter.api.condition.JRE;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.CsvSource;
 
 import java.util.concurrent.*;
 
-import static org.assertj.core.api.AssertionsForClassTypes.assertThat;
+import static org.assertj.core.api.AssertionsForClassTypes.*;
 
 /**
  * Tests for {@link ExecutorServiceMetrics}.
@@ -106,6 +110,7 @@ class ExecutorServiceMetricsTest {
     }
 
     @DisplayName("ExecutorService can be monitored with a default set of metrics")
+    @DisabledForJreRange(min = JRE.JAVA_16, disabledReason = "See gh-2317 for why we can't run this full test on Java 16+")
     @ParameterizedTest
     @CsvSource({ "custom,custom.", "custom.,custom.", ",''", "' ',''" })
     void monitorExecutorService(String metricPrefix, String expectedMetricPrefix) throws InterruptedException {
@@ -135,6 +140,14 @@ class ExecutorServiceMetricsTest {
         assertThat(registry.get(expectedMetricPrefix + "executor").tags(userTags).timer().count()).isEqualTo(2L);
         assertThat(registry.get(expectedMetricPrefix + "executor.idle").tags(userTags).timer().count()).isEqualTo(2L);
         assertThat(registry.get(expectedMetricPrefix + "executor.queued").tags(userTags).gauge().value()).isEqualTo(0.0);
+    }
+
+    @DisplayName("No exception thrown trying to monitor Executors private class")
+    @Test
+    @Issue("#2447") // Note: only reproduces on Java 16+ or with --illegal-access=deny
+    void monitorExecutorsExecutorServicePrivateClass() {
+        assertThatCode(() -> ExecutorServiceMetrics.monitor(registry, Executors.newSingleThreadExecutor(), ""))
+                .doesNotThrowAnyException();
     }
 
     @DisplayName("ScheduledExecutorService can be monitored with a default set of metrics")
