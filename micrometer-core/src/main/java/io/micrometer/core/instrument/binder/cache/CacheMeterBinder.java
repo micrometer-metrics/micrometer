@@ -58,7 +58,7 @@ public abstract class CacheMeterBinder implements MeterBinder {
         }
 
         if (missCount() != null) {
-            FunctionCounter.builder("cache.gets", cache.get(),
+            FunctionCounter.builder("cache.misses", cache.get(),
                     c -> {
                         Long misses = missCount();
                         return misses == null ? 0 : misses;
