@@ -22,7 +22,7 @@ dependencies {
 
     // cache monitoring
     compile 'com.google.guava:guava:latest.release', optional
-    compile 'com.github.ben-manes.caffeine:caffeine:latest.release', optional
+    compile 'com.github.ben-manes.caffeine:caffeine:2.+', optional
     compile 'net.sf.ehcache:ehcache:latest.release', optional
     compile 'javax.cache:cache-api:latest.release', optional
     compile 'com.hazelcast:hazelcast:latest.release', optional
