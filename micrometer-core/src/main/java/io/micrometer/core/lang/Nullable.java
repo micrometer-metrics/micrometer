@@ -29,7 +29,7 @@ import java.lang.annotation.*;
  * <p>Can be used in association with {@code NonNullApi} or {@code @NonNullFields} to
  * override the default non-nullable semantic to nullable.
  * <p>
- * NOTE: This file has been copied from {org.springframework.lang}.
+ * NOTE: This file has been copied from {@code org.springframework.lang}.
  *
  * @author Sebastien Deleuze
  * @author Juergen Hoeller

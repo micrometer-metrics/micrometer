@@ -45,7 +45,7 @@ modified copy of the PCollections library by Harold Cooper.
   * Homepage: https://github.com/hrldcpr/pcollections
 
 This product contains a modified portion of the 'org.springframework.lang'
-package in the Spring Framework library, distributed by Pivotal, Inc:
+package in the Spring Framework library, distributed by VMware, Inc:
 
   * Copyright 2002-2019 the original author or authors.
   * License: Apache License v2.0
