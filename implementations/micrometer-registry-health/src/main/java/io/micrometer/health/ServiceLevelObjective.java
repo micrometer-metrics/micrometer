@@ -690,7 +690,6 @@ public abstract class ServiceLevelObjective {
                 return new MultipleIndicator(name, tags, failedMessage, objectives, combiner);
             }
 
-
             /**
              * Combine {@link ServiceLevelObjective ServiceLevelObjectives} with the provided {@code combiner}.
              *
