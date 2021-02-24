@@ -29,7 +29,7 @@ import java.lang.annotation.*;
  * (scope = fields) to set the default behavior to non-nullable in order to avoid annotating
  * your whole codebase with {@code @NonNull}.
  * <p>
- * NOTE: This file has been copied from {org.springframework.lang}.
+ * NOTE: This file has been copied from {@code org.springframework.lang}.
  *
  * @author Sebastien Deleuze
  * @author Juergen Hoeller

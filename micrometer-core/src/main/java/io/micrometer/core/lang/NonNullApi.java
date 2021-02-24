@@ -27,7 +27,7 @@ import java.lang.annotation.*;
  * <p>Should be used at package level in association with {@link Nullable}
  * annotations at parameter and return value level.
  * <p>
- * NOTE: This file has been copied from {org.springframework.lang}.
+ * NOTE: This file has been copied from {@code org.springframework.lang}.
  *
  * @author Sebastien Deleuze
  * @author Juergen Hoeller
