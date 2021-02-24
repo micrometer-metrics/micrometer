@@ -682,18 +682,6 @@ public abstract class ServiceLevelObjective {
              * Combine {@link ServiceLevelObjective ServiceLevelObjectives} with the provided {@code combiner}.
              *
              * @param combiner combiner to combine {@link ServiceLevelObjective ServiceLevelObjectives}
-             * @param objectives {@link ServiceLevelObjective ServiceLevelObjectives} to combine
-             * @return combined {@code MultipleIndicator}
-             * @deprecated Use {@link #combine(BinaryOperator)} instead as this is broken with {@link #compose(String, ServiceLevelObjective...)}.
-             */
-            public final MultipleIndicator combine(BinaryOperator<Boolean> combiner, ServiceLevelObjective... objectives) {
-                return new MultipleIndicator(name, tags, failedMessage, objectives, combiner);
-            }
-
-            /**
-             * Combine {@link ServiceLevelObjective ServiceLevelObjectives} with the provided {@code combiner}.
-             *
-             * @param combiner combiner to combine {@link ServiceLevelObjective ServiceLevelObjectives}
              * @return combined {@code MultipleIndicator}
              * @since 1.6.4
              */
