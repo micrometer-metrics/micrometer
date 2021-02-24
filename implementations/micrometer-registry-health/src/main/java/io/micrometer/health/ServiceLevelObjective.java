@@ -695,7 +695,7 @@ public abstract class ServiceLevelObjective {
              *
              * @param combiner combiner to combine {@link ServiceLevelObjective ServiceLevelObjectives}
              * @return combined {@code MultipleIndicator}
-             * @since 1.6.4
+             * @since 1.6.5
              */
             public final MultipleIndicator combine(BinaryOperator<Boolean> combiner) {
                 return new MultipleIndicator(name, tags, failedMessage, objectives, combiner);
