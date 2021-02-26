@@ -145,7 +145,6 @@ public final class CaffeineStatsCounter implements StatsCounter {
     }
 
     @SuppressWarnings("deprecation")
-    @Override
     public void recordEviction() {
     }
 
@@ -156,7 +155,7 @@ public final class CaffeineStatsCounter implements StatsCounter {
 
     @Override
     public CacheStats snapshot() {
-        return new CacheStats(
+        return CacheStats.of(
                 (long) hitCount.count(),
                 (long) missCount.count(),
                 loadSuccesses.count(),
