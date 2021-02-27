@@ -1,6 +1,6 @@
 buildscript {
     repositories {
-        jcenter()
+        mavenCentral()
         gradlePluginPortal()
         maven {
             url 'https://repo.spring.io/plugins-release'
