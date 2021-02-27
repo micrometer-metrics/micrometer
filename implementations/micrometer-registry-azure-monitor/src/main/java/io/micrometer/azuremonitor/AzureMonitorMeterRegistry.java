@@ -122,28 +122,43 @@ public class AzureMonitorMeterRegistry extends StepMeterRegistry {
         return Stream.of(active, duration);
     }
 
-    private Stream<MetricTelemetry> trackDistributionSummary(DistributionSummary summary) {
+    // VisibleForTesting
+    Stream<MetricTelemetry> trackDistributionSummary(DistributionSummary summary) {
+        long count = summary.count();
+        if (count == 0) {
+            return Stream.empty();
+        }
         MetricTelemetry mt = createMetricTelemetry(summary, null);
         mt.setValue(summary.totalAmount());
-        mt.setCount(castCountToInt(summary.count()));
+        mt.setCount(castCountToInt(count));
         mt.setMax(summary.max());
         mt.setMin(0.0); // TODO: when #457 is resolved, support min
         return Stream.of(mt);
     }
 
-    private Stream<MetricTelemetry> trackTimer(Timer timer) {
+    // VisibleForTesting
+    Stream<MetricTelemetry> trackTimer(Timer timer) {
+        long count = timer.count();
+        if (count == 0) {
+            return Stream.empty();
+        }
         MetricTelemetry mt = createMetricTelemetry(timer, null);
         mt.setValue(timer.totalTime(getBaseTimeUnit()));
-        mt.setCount(castCountToInt(timer.count()));
+        mt.setCount(castCountToInt(count));
         mt.setMin(0.0); // TODO: when #457 is resolved, support min
         mt.setMax(timer.max(getBaseTimeUnit()));
         return Stream.of(mt);
     }
 
-    private Stream<MetricTelemetry> trackFunctionTimer(FunctionTimer timer) {
+    // VisibleForTesting
+    Stream<MetricTelemetry> trackFunctionTimer(FunctionTimer timer) {
+        double count = timer.count();
+        if (count == 0) {
+            return Stream.empty();
+        }
         MetricTelemetry mt = createMetricTelemetry(timer, null);
         mt.setValue(timer.totalTime(getBaseTimeUnit()));
-        mt.setCount(castCountToInt(timer.count()));
+        mt.setCount(castCountToInt(count));
         return Stream.of(mt);
     }
 
