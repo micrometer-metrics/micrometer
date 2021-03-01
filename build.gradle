@@ -118,6 +118,12 @@ subprojects {
         plugins.withId('maven-publish') {
             sourceCompatibility = JavaVersion.VERSION_1_8
             targetCompatibility = JavaVersion.VERSION_1_8
+
+            // Nebula doesn't interface with Gradle's module format so just disable it for now.
+            tasks.withType(GenerateModuleMetadata) {
+                enabled = false
+            }
+
             publishing {
                 publications {
                     nebula(MavenPublication) {
@@ -136,25 +142,12 @@ subprojects {
                                 asNode().remove(dependencyManagement)
                             }
                         }
+
+                        // Nebula converts dynamic versions to static ones so it's ok.
+                        suppressAllPomMetadataWarnings()
                     }
                 }
             }
-        }
-    }
-
-    plugins.withId('maven-publish') {
-        publishing {
-            publications {
-                nebula(MavenPublication) {
-                    // Nebula converts dynamic versions to static ones so it's ok.
-                    suppressAllPomMetadataWarnings()
-                }
-            }
-        }
-
-        // Nebula doesn't interface with Gradle's module format so just disable it for now.
-        tasks.withType(GenerateModuleMetadata) {
-            enabled = false
         }
     }
 
