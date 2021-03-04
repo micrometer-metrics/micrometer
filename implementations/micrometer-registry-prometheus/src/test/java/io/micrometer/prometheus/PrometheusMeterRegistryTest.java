@@ -587,4 +587,25 @@ class PrometheusMeterRegistryTest {
         executorService.shutdownNow();
     }
 
+    @DisplayName("support for non-integer SLOs in DistributionSummary")
+    @Test
+    void nonIntegerSLOs() {
+        DistributionSummary ds = DistributionSummary
+                .builder("ds")
+                .serviceLevelObjectives(10, 1, 0.1, 0.01)
+                .register(registry);
+
+        ds.record(50);
+        ds.record(5);
+        ds.record(0.5);
+        ds.record(0.05);
+
+        assertThat(registry.scrape())
+                .contains("ds_bucket{le=\"0.01\",} 0.0")
+                .contains("ds_bucket{le=\"0.1\",} 1.0")
+                .contains("ds_bucket{le=\"1.0\",} 2.0")
+                .contains("ds_bucket{le=\"10.0\",} 3.0")
+                .contains("ds_bucket{le=\"+Inf\",} 4.0");
+    }
+
 }

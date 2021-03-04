@@ -57,12 +57,12 @@ public class TimeWindowFixedBoundaryHistogram
 
     @Override
     void recordLong(FixedBoundaryHistogram bucket, long value) {
-        bucket.record(value);
+        recordDouble(bucket, value);
     }
 
     @Override
     final void recordDouble(FixedBoundaryHistogram bucket, double value) {
-        recordLong(bucket, (long) Math.ceil(value));
+        bucket.record(value);
     }
 
     @Override
@@ -137,7 +137,7 @@ public class TimeWindowFixedBoundaryHistogram
             }
         }
 
-        void record(long value) {
+        void record(double value) {
             int index = leastLessThanOrEqualTo(value);
             if (index > -1)
                 values.incrementAndGet(index);
@@ -146,7 +146,7 @@ public class TimeWindowFixedBoundaryHistogram
         /**
          * The least bucket that is less than or equal to a sample.
          */
-        int leastLessThanOrEqualTo(long key) {
+        int leastLessThanOrEqualTo(double key) {
             int low = 0;
             int high = buckets.length - 1;
 
