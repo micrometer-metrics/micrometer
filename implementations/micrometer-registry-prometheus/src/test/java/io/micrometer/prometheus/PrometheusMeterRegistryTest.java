@@ -39,9 +39,11 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.regex.Pattern;
 
 import static io.micrometer.core.instrument.MockClock.clock;
 import static java.util.Collections.emptyList;
+import static java.util.regex.Pattern.DOTALL;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.offset;
 import static org.junit.jupiter.api.Assertions.assertThrows;
@@ -209,6 +211,35 @@ class PrometheusMeterRegistryTest {
 
         assertThat(registry.scrape())
                 .contains("s1_bucket{le=\"100.0\",} 1.0");
+    }
+
+    @Test
+    void percentileHistogramWithUpperBoundContainsExactlyOneInf() {
+
+        DistributionSummary s = DistributionSummary.builder("s")
+                .publishPercentileHistogram()
+                .maximumExpectedValue(3.0)
+                .register(registry);
+
+        s.record(100);
+
+        String inf = Pattern.quote("s_bucket{le=\"+Inf\",} 1.0");
+        assertThat(registry.scrape()).matches(Pattern.compile(".*" + inf + ".*", DOTALL));
+        assertThat(registry.scrape()).doesNotMatch(Pattern.compile(".*" + inf + ".*" + inf + ".*", DOTALL));
+    }
+
+    @Test
+    void percentileHistogramWithoutUpperBoundContainsExactlyOneInf() {
+
+        DistributionSummary s = DistributionSummary.builder("s")
+                .publishPercentileHistogram()
+                .register(registry);
+
+        s.record(100);
+
+        String inf = Pattern.quote("s_bucket{le=\"+Inf\",} 1.0");
+        assertThat(registry.scrape()).matches(Pattern.compile(".*" + inf + ".*", DOTALL));
+        assertThat(registry.scrape()).doesNotMatch(Pattern.compile(".*" + inf + ".*" + inf + ".*", DOTALL));
     }
 
     @Issue("#247")
