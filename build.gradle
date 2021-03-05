@@ -86,6 +86,14 @@ subprojects {
             }
             repositories {
                 maven {
+                    name = 'Milestone'
+                    url = 'https://repo.spring.io/milestone'
+                    credentials {
+                        username findProperty('MILESTONE_REPO_USER')
+                        password findProperty('MILESTONE_REPO_PASSWORD')
+                    }
+                }
+                maven {
                     name = 'MavenCentral'
                     url = 'https://s01.oss.sonatype.org/service/local/staging/deploy/maven2'
                     credentials {
