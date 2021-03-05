@@ -31,6 +31,8 @@ allprojects {
 }
 
 subprojects {
+    apply plugin: 'signing'
+
     if (project.name != 'micrometer-bom') {
         apply plugin: 'java'
         apply plugin: 'checkstyle'
@@ -74,6 +76,29 @@ subprojects {
         plugins.withId('maven-publish') {
             sourceCompatibility = JavaVersion.VERSION_1_8
             targetCompatibility = JavaVersion.VERSION_1_8
+        }
+    }
+
+    plugins.withId('maven-publish') {
+        publishing {
+            publications {
+                nebula(MavenPublication)
+            }
+            repositories {
+                maven {
+                    name = 'MavenCentral'
+                    url = 'https://s01.oss.sonatype.org/service/local/staging/deploy/maven2'
+                    credentials {
+                        username findProperty('MAVEN_CENTRAL_USER')
+                        password findProperty('MAVEN_CENTRAL_PASSWORD')
+                    }
+                }
+            }
+        }
+
+        signing {
+            useInMemoryPgpKeys(findProperty('SIGNING_KEY'), findProperty('SIGNING_PASSWORD'))
+            sign publishing.publications.nebula
         }
     }
 
