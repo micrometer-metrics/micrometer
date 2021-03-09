@@ -14,12 +14,14 @@ buildscript {
         classpath 'com.netflix.nebula:nebula-project-plugin:3.4.0'
         classpath "gradle.plugin.com.dorongold.plugins:task-tree:1.3"
         classpath "io.spring.nohttp:nohttp-gradle:0.0.4.RELEASE"
+        classpath 'io.github.gradle-nexus:publish-plugin:1.0.0'
     }
 
     configurations.classpath.resolutionStrategy.cacheDynamicVersionsFor 0, 'minutes'
 }
 
 apply plugin: 'io.spring.release'
+apply plugin: 'io.github.gradle-nexus.publish-plugin'
 
 allprojects {
     apply plugin: 'io.spring.license'
@@ -93,14 +95,6 @@ subprojects {
                         password findProperty('MILESTONE_REPO_PASSWORD')
                     }
                 }
-                maven {
-                    name = 'MavenCentral'
-                    url = 'https://s01.oss.sonatype.org/service/local/staging/deploy/maven2'
-                    credentials {
-                        username findProperty('MAVEN_CENTRAL_USER')
-                        password findProperty('MAVEN_CENTRAL_PASSWORD')
-                    }
-                }
             }
         }
 
@@ -163,6 +157,16 @@ subprojects {
 
     def check = tasks.findByName('check')
     if (check) project.rootProject.tasks.releaseCheck.dependsOn check
+}
+
+nexusPublishing {
+    repositories {
+        mavenCentral {
+            nexusUrl.set(uri('https://s01.oss.sonatype.org/service/local/'))
+            username = findProperty('MAVEN_CENTRAL_USER')
+            password = findProperty('MAVEN_CENTRAL_PASSWORD')
+        }
+    }
 }
 
 wrapper {
