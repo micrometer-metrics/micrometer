@@ -88,6 +88,14 @@ subprojects {
             }
             repositories {
                 maven {
+                    name = 'Snapshot'
+                    url = 'https://repo.spring.io/snapshot'
+                    credentials {
+                        username findProperty('SNAPSHOT_REPO_USER')
+                        password findProperty('SNAPSHOT_REPO_PASSWORD')
+                    }
+                }
+                maven {
                     name = 'Milestone'
                     url = 'https://repo.spring.io/milestone'
                     credentials {
