@@ -107,6 +107,7 @@ subprojects {
         }
 
         signing {
+            required = hasProperty('SIGNING_KEY')
             useInMemoryPgpKeys(findProperty('SIGNING_KEY'), findProperty('SIGNING_PASSWORD'))
             sign publishing.publications.nebula
         }
