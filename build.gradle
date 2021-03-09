@@ -163,6 +163,7 @@ nexusPublishing {
     repositories {
         mavenCentral {
             nexusUrl.set(uri('https://s01.oss.sonatype.org/service/local/'))
+            snapshotRepositoryUrl.set(uri('https://repo.spring.io/snapshot/')) // not used but necessary for the plugin
             username = findProperty('MAVEN_CENTRAL_USER')
             password = findProperty('MAVEN_CENTRAL_PASSWORD')
         }
