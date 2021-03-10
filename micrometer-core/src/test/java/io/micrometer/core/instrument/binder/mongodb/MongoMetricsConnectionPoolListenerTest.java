@@ -15,9 +15,10 @@
  */
 package io.micrometer.core.instrument.binder.mongodb;
 
-import com.mongodb.MongoClient;
-import com.mongodb.MongoClientOptions;
+import com.mongodb.MongoClientSettings;
 import com.mongodb.ServerAddress;
+import com.mongodb.client.MongoClient;
+import com.mongodb.client.MongoClients;
 import com.mongodb.connection.ClusterId;
 import com.mongodb.connection.ConnectionId;
 import com.mongodb.connection.ConnectionPoolSettings;
@@ -27,6 +28,7 @@ import io.micrometer.core.Issue;
 import io.micrometer.core.instrument.MeterRegistry;
 import io.micrometer.core.instrument.Tags;
 import io.micrometer.core.instrument.simple.SimpleMeterRegistry;
+import org.assertj.core.util.Lists;
 import org.junit.jupiter.api.Test;
 
 import java.util.concurrent.atomic.AtomicReference;
@@ -46,17 +48,20 @@ class MongoMetricsConnectionPoolListenerTest extends AbstractMongoDbTest {
     @Test
     void shouldCreatePoolMetrics() {
         AtomicReference<String> clusterId = new AtomicReference<>();
-        MongoClientOptions options = MongoClientOptions.builder()
-                .minConnectionsPerHost(2)
-                .addConnectionPoolListener(new MongoMetricsConnectionPoolListener(registry))
-                .addClusterListener(new ClusterListenerAdapter() {
+        MongoClientSettings settings = MongoClientSettings.builder()
+                .applyToConnectionPoolSettings(builder -> builder
+                        .minSize(2)
+                        .addConnectionPoolListener(new MongoMetricsConnectionPoolListener(registry))
+                )
+                .applyToClusterSettings(builder -> builder.hosts(Lists.newArrayList(new ServerAddress(HOST, port))))
+                .applyToClusterSettings(builder -> builder.addClusterListener(new ClusterListener() {
                     @Override
                     public void clusterOpening(ClusterOpeningEvent event) {
                         clusterId.set(event.getClusterId().getValue());
                     }
-                })
+                }))
                 .build();
-        MongoClient mongo = new MongoClient(new ServerAddress(HOST, port), options);
+        MongoClient mongo = MongoClients.create(settings);
 
         mongo.getDatabase("test")
                 .createCollection("testCol");
@@ -68,7 +73,8 @@ class MongoMetricsConnectionPoolListenerTest extends AbstractMongoDbTest {
 
         assertThat(registry.get("mongodb.driver.pool.size").tags(tags).gauge().value()).isEqualTo(2);
         assertThat(registry.get("mongodb.driver.pool.checkedout").gauge().value()).isZero();
-        assertThat(registry.get("mongodb.driver.pool.waitqueuesize").gauge().value()).isZero();
+        // TODO: waitQueueEntered and waitQueueExited were removed, how can we provide mongodb.driver.pool.waitqueuesize?
+//        assertThat(registry.get("mongodb.driver.pool.waitqueuesize").gauge().value()).isZero();
 
         mongo.close();
 
@@ -83,7 +89,7 @@ class MongoMetricsConnectionPoolListenerTest extends AbstractMongoDbTest {
         ServerId serverId = new ServerId(new ClusterId(), new ServerAddress(HOST, port));
         ConnectionId connectionId = new ConnectionId(serverId);
         MongoMetricsConnectionPoolListener listener = new MongoMetricsConnectionPoolListener(registry);
-        listener.connectionPoolOpened(new ConnectionPoolOpenedEvent(serverId, ConnectionPoolSettings.builder().build()));
+        listener.connectionPoolCreated(new ConnectionPoolCreatedEvent(serverId, ConnectionPoolSettings.builder().build()));
         listener.connectionCheckedOut(new ConnectionCheckedOutEvent(connectionId));
         listener.connectionPoolClosed(new ConnectionPoolClosedEvent(serverId));
         assertThatCode(() -> listener.connectionCheckedIn(new ConnectionCheckedInEvent(connectionId)))

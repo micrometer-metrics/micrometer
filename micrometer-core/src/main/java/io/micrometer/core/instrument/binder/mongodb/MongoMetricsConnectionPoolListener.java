@@ -15,7 +15,7 @@
  */
 package io.micrometer.core.instrument.binder.mongodb;
 
-import com.mongodb.MongoClient;
+import com.mongodb.client.MongoClient;
 import com.mongodb.connection.ServerId;
 import com.mongodb.event.*;
 import io.micrometer.core.annotation.Incubating;
@@ -40,7 +40,7 @@ import java.util.concurrent.atomic.AtomicInteger;
 @NonNullApi
 @NonNullFields
 @Incubating(since = "1.2.0")
-public class MongoMetricsConnectionPoolListener extends ConnectionPoolListenerAdapter {
+public class MongoMetricsConnectionPoolListener implements ConnectionPoolListener {
 
     private static final String METRIC_PREFIX = "mongodb.driver.pool.";
 
@@ -56,7 +56,7 @@ public class MongoMetricsConnectionPoolListener extends ConnectionPoolListenerAd
     }
 
     @Override
-    public void connectionPoolOpened(ConnectionPoolOpenedEvent event) {
+    public void connectionPoolCreated(ConnectionPoolCreatedEvent event) {
         List<Meter> connectionMeters = new ArrayList<>();
         connectionMeters.add(registerGauge(event.getServerId(), METRIC_PREFIX + "size",
                 "the current size of the connection pool, including idle and and in-use members", poolSize));
@@ -79,6 +79,11 @@ public class MongoMetricsConnectionPoolListener extends ConnectionPoolListenerAd
         waitQueueSize.remove(serverId);
     }
 
+//    @Override
+//    public void connectionPoolCleared(ConnectionPoolClearedEvent event) {
+//        // TODO: Do we need to implement this?
+//    }
+
     @Override
     public void connectionCheckedOut(ConnectionCheckedOutEvent event) {
         AtomicInteger gauge = checkedOutCount.get(event.getConnectionId().getServerId());
@@ -95,26 +100,8 @@ public class MongoMetricsConnectionPoolListener extends ConnectionPoolListenerAd
         }
     }
 
-    @SuppressWarnings("deprecation")
     @Override
-    public void waitQueueEntered(ConnectionPoolWaitQueueEnteredEvent event) {
-        AtomicInteger gauge = waitQueueSize.get(event.getServerId());
-        if (gauge != null) {
-            gauge.incrementAndGet();
-        }
-    }
-
-    @SuppressWarnings("deprecation")
-    @Override
-    public void waitQueueExited(ConnectionPoolWaitQueueExitedEvent event) {
-        AtomicInteger gauge = waitQueueSize.get(event.getServerId());
-        if (gauge != null) {
-            gauge.decrementAndGet();
-        }
-    }
-
-    @Override
-    public void connectionAdded(ConnectionAddedEvent event) {
+    public void connectionCreated(ConnectionCreatedEvent event) {
         AtomicInteger gauge = poolSize.get(event.getConnectionId().getServerId());
         if (gauge != null) {
             gauge.incrementAndGet();
@@ -122,7 +109,7 @@ public class MongoMetricsConnectionPoolListener extends ConnectionPoolListenerAd
     }
 
     @Override
-    public void connectionRemoved(ConnectionRemovedEvent event) {
+    public void connectionClosed(ConnectionClosedEvent event) {
         AtomicInteger gauge = poolSize.get(event.getConnectionId().getServerId());
         if (gauge != null) {
             gauge.decrementAndGet();

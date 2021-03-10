@@ -15,7 +15,7 @@
  */
 package io.micrometer.core.instrument.binder.mongodb;
 
-import com.mongodb.MongoClient;
+import com.mongodb.client.MongoClient;
 import com.mongodb.event.*;
 import io.micrometer.core.annotation.Incubating;
 import io.micrometer.core.instrument.MeterRegistry;
@@ -68,4 +68,3 @@ public class MongoMetricsCommandListener implements CommandListener {
     }
 
 }
-
