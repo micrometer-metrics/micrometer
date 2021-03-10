@@ -2,6 +2,8 @@
 # This script will build the project.
 
 SWITCHES="-s --console=plain -x release -x artifactoryPublish -x bintrayUpload -x bintrayPublish"
+# circleci does not like \n
+ORG_GRADLE_PROJECT_SIGNING_KEY="$(echo -e "$ORG_GRADLE_PROJECT_SIGNING_KEY")"
 
 if [ $CIRCLE_PR_NUMBER ]; then
   echo -e "WARN: Should not be here => Found Pull Request #$CIRCLE_PR_NUMBER => Branch [$CIRCLE_BRANCH]"
