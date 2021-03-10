@@ -123,11 +123,6 @@ subprojects {
             sourceCompatibility = JavaVersion.VERSION_1_8
             targetCompatibility = JavaVersion.VERSION_1_8
 
-            // Nebula doesn't interface with Gradle's module format so just disable it for now.
-            tasks.withType(GenerateModuleMetadata) {
-                enabled = false
-            }
-
             publishing {
                 publications {
                     nebula(MavenPublication) {
@@ -146,9 +141,6 @@ subprojects {
                                 asNode().remove(dependencyManagement)
                             }
                         }
-
-                        // Nebula converts dynamic versions to static ones so it's ok.
-                        suppressAllPomMetadataWarnings()
                     }
                 }
             }
@@ -158,7 +150,10 @@ subprojects {
     plugins.withId('maven-publish') {
         publishing {
             publications {
-                nebula(MavenPublication)
+                nebula(MavenPublication) {
+                    // Nebula converts dynamic versions to static ones so it's ok.
+                    suppressAllPomMetadataWarnings()
+                }
             }
             repositories {
                 maven {
@@ -184,6 +179,11 @@ subprojects {
             required = hasProperty('SIGNING_KEY')
             useInMemoryPgpKeys(findProperty('SIGNING_KEY'), findProperty('SIGNING_PASSWORD'))
             sign publishing.publications.nebula
+        }
+
+        // Nebula doesn't interface with Gradle's module format so just disable it for now.
+        tasks.withType(GenerateModuleMetadata) {
+            enabled = false
         }
     }
 
