@@ -23,6 +23,7 @@ import io.micrometer.core.instrument.distribution.DistributionStatisticConfig;
 import io.micrometer.core.instrument.distribution.HistogramSnapshot;
 import io.prometheus.client.Collector;
 import io.prometheus.client.CollectorRegistry;
+import io.prometheus.client.exporter.common.TextFormat;
 import org.assertj.core.api.Condition;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -585,6 +586,25 @@ class PrometheusMeterRegistryTest {
         assertThat(registry.get("another.gauge").gauge().value()).isEqualTo(2d);
 
         executorService.shutdownNow();
+    }
+
+    @Test
+    void openMetricsScrape() {
+        Counter.builder("my.counter").baseUnit("bytes").register(registry);
+        Timer.builder("my.timer").register(registry);
+        System.out.println(registry.scrape());
+        assertThat(registry.scrape(TextFormat.CONTENT_TYPE_OPENMETRICS_100))
+                .contains("# TYPE my_counter_bytes counter\n" +
+                        "# HELP my_counter_bytes  \n" +
+                        "my_counter_bytes_total 0.0\n")
+                .contains("# TYPE my_timer_seconds_max gauge\n" +
+                        "# HELP my_timer_seconds_max  \n" +
+                        "my_timer_seconds_max 0.0\n")
+                .contains("# TYPE my_timer_seconds summary\n" +
+                        "# HELP my_timer_seconds  \n" +
+                        "my_timer_seconds_count 0.0\n" +
+                        "my_timer_seconds_sum 0.0\n")
+                .endsWith("# EOF\n");
     }
 
 }

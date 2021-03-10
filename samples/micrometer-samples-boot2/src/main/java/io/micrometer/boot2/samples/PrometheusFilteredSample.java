@@ -18,13 +18,16 @@ package io.micrometer.boot2.samples;
 import io.micrometer.boot2.samples.components.PersonController;
 import io.micrometer.prometheus.PrometheusMeterRegistry;
 import io.prometheus.client.exporter.common.TextFormat;
-import org.springframework.boot.actuate.endpoint.annotation.ReadOperation;
-import org.springframework.boot.actuate.endpoint.web.annotation.WebEndpoint;
+import org.springframework.boot.actuate.endpoint.web.annotation.RestControllerEndpoint;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.boot.builder.SpringApplicationBuilder;
-import org.springframework.lang.Nullable;
+import org.springframework.http.MediaType;
+import org.springframework.http.ResponseEntity;
 import org.springframework.scheduling.annotation.EnableScheduling;
 import org.springframework.stereotype.Component;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.RequestHeader;
+import org.springframework.web.bind.annotation.RequestParam;
 
 import java.util.Set;
 
@@ -41,7 +44,7 @@ public class PrometheusFilteredSample {
     }
 
     @Component
-    @WebEndpoint(id = "filteredPrometheus")
+    @RestControllerEndpoint(id = "filteredPrometheus")
     static class FilteredPrometheusScrapeEndpoint  {
 
         private final PrometheusMeterRegistry meterRegistry;
@@ -50,10 +53,12 @@ public class PrometheusFilteredSample {
             this.meterRegistry = meterRegistry;
         }
 
-        @ReadOperation(produces = TextFormat.CONTENT_TYPE_004)
-        public String scrape(@Nullable Set<String> includedNames) {
-            return this.meterRegistry.scrape(includedNames);
+        @GetMapping(produces = {TextFormat.CONTENT_TYPE_004, TextFormat.CONTENT_TYPE_OPENMETRICS_100})
+        public ResponseEntity<String> scrape(@RequestParam(required = false, name = "includedNames") Set<String> includedNames,
+                                             @RequestHeader(required = false, name = "Accept") String acceptHeader) {
+            return ResponseEntity.ok()
+                    .contentType(MediaType.valueOf(TextFormat.chooseContentType(acceptHeader)))
+                    .body(this.meterRegistry.scrape(TextFormat.chooseContentType(acceptHeader), includedNames));
         }
-
     }
 }
