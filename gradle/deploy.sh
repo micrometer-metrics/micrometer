@@ -8,11 +8,9 @@ if [ $CIRCLE_PR_NUMBER ]; then
   echo -e "Not attempting to publish"
 elif [ -z $CIRCLE_TAG ]; then
   echo -e "Publishing Snapshot => Branch ['$CIRCLE_BRANCH']"
-  openssl aes-256-cbc -d -in gradle.properties.enc -out gradle.properties -k "$KEY" -md sha256
   ./gradlew snapshot publishNebulaPublicationToSnapshotRepository "$SWITCHES" -x test
 elif [ $CIRCLE_TAG ]; then
   echo -e "Publishing Release => Branch ['$CIRCLE_BRANCH']  Tag ['$CIRCLE_TAG']"
-  openssl aes-256-cbc -d -in gradle.properties.enc -out gradle.properties -k "$KEY" -md sha256
   case "$CIRCLE_TAG" in
   *-M\.*)
     ./gradlew -Prelease.disableGitChecks=true -Prelease.useLastTag=true candidate publishNebulaPublicationToMilestoneRepository "$SWITCHES"
