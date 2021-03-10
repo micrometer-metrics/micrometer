@@ -8,15 +8,15 @@ if [ $CIRCLE_PR_NUMBER ]; then
   echo -e "Not attempting to publish"
 elif [ -z $CIRCLE_TAG ]; then
   echo -e "Publishing Snapshot => Branch ['$CIRCLE_BRANCH']"
-  ./gradlew snapshot publishNebulaPublicationToSnapshotRepository "$SWITCHES" -x test
+  ./gradlew snapshot publishNebulaPublicationToSnapshotRepository $SWITCHES -x test
 elif [ $CIRCLE_TAG ]; then
   echo -e "Publishing Release => Branch ['$CIRCLE_BRANCH']  Tag ['$CIRCLE_TAG']"
   case "$CIRCLE_TAG" in
   *-M\.*)
-    ./gradlew -Prelease.disableGitChecks=true -Prelease.useLastTag=true candidate publishNebulaPublicationToMilestoneRepository "$SWITCHES"
+    ./gradlew -Prelease.disableGitChecks=true -Prelease.useLastTag=true candidate publishNebulaPublicationToMilestoneRepository $SWITCHES
     ;;
   *)
-    ./gradlew -Prelease.disableGitChecks=true -Prelease.useLastTag=true final publishNebulaPublicationToMavenCentralRepository closeAndReleaseMavenCentralStagingRepository "$SWITCHES"
+    ./gradlew -Prelease.disableGitChecks=true -Prelease.useLastTag=true final publishNebulaPublicationToMavenCentralRepository closeAndReleaseMavenCentralStagingRepository $SWITCHES
     ;;
   esac
 else
