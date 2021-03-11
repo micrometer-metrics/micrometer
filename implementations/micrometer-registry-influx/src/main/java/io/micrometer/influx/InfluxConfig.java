@@ -145,7 +145,7 @@ public interface InfluxConfig extends StepRegistryConfig {
     /**
      * Specifies the destination bucket for writes. Takes either the ID or Name interchangeably.
      * See detail info: <a href="https://v2.docs.influxdata.com/v2.0/organizations/buckets/view-buckets/">How to retrieve the <i>bucket</i> parameter in the InfluxDB UI.</a>
-     * @return The destination organization for writes.
+     * @return The destination bucket (or db) for writes.
      * @since 1.6
      */
     default String bucket() {
