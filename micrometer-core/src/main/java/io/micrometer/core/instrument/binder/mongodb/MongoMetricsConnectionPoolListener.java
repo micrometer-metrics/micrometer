@@ -75,11 +75,6 @@ public class MongoMetricsConnectionPoolListener implements ConnectionPoolListene
         checkedOutCount.remove(serverId);
     }
 
-//    @Override
-//    public void connectionPoolCleared(ConnectionPoolClearedEvent event) {
-//        // TODO: Do we need to implement this?
-//    }
-
     @Override
     public void connectionCheckedOut(ConnectionCheckedOutEvent event) {
         AtomicInteger gauge = checkedOutCount.get(event.getConnectionId().getServerId());
