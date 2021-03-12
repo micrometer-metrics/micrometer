@@ -404,7 +404,7 @@ public class InfluxMeterRegistryVersionsTest {
 
         server.stubFor(any(urlPathEqualTo("/ping"))
                 .willReturn(aResponse().withStatus(200).withHeader("X-Influxdb-Version", "2.0.10")));
-        server.stubFor(any(urlPathEqualTo("/api/v2/bucket"))
+        server.stubFor(any(urlPathEqualTo("/api/v2/buckets"))
                 .willReturn(aResponse().withStatus(200).withBody("{\"id\": \"05b97d59f7177000\", \"orgID\": \"05b97d59e4577000\", \"name\": \"my-bucket\"}")));
         server.stubFor(any(urlPathEqualTo("/api/v2/write"))
                 .willReturn(aResponse().withStatus(204)));
@@ -420,7 +420,7 @@ public class InfluxMeterRegistryVersionsTest {
         publishSimpleStat(config);
 
         server.verify(headRequestedFor(urlEqualTo("/ping")));
-        server.verify(postRequestedFor(urlEqualTo("/api/v2/bucket"))
+        server.verify(postRequestedFor(urlEqualTo("/api/v2/buckets"))
                 .withRequestBody(equalTo("{\"name\":\"my-bucket\",\"orgID\":\"05b97d59e4577000\",\"retentionRules\":[]}"))
                 .withHeader("Authorization", equalTo("Token my-token")));
         server.verify(postRequestedFor(urlEqualTo("/api/v2/write?&precision=ms&bucket=my-bucket&org=05b97d59e4577000"))
@@ -433,7 +433,7 @@ public class InfluxMeterRegistryVersionsTest {
 
         server.stubFor(any(urlPathEqualTo("/ping"))
                 .willReturn(aResponse().withStatus(200).withHeader("X-Influxdb-Version", "2.0.10")));
-        server.stubFor(any(urlPathEqualTo("/api/v2/bucket"))
+        server.stubFor(any(urlPathEqualTo("/api/v2/buckets"))
                 .willReturn(aResponse().withStatus(200).withBody("{\"id\": \"05b97d59f7177000\", \"orgID\": \"05b97d59e4577000\", \"name\": \"my-bucket\"}")));
         server.stubFor(any(urlPathEqualTo("/api/v2/write"))
                 .willReturn(aResponse().withStatus(204)));
@@ -450,7 +450,7 @@ public class InfluxMeterRegistryVersionsTest {
         publishSimpleStat(config);
 
         server.verify(headRequestedFor(urlEqualTo("/ping")));
-        server.verify(postRequestedFor(urlEqualTo("/api/v2/bucket"))
+        server.verify(postRequestedFor(urlEqualTo("/api/v2/buckets"))
                 .withRequestBody(equalTo("{\"name\":\"my-bucket\",\"orgID\":\"05b97d59e4577000\",\"retentionRules\":[{\"type\":\"expire\",\"everySeconds\":8600}]}"))
                 .withHeader("Authorization", equalTo("Token my-token")));
         server.verify(postRequestedFor(urlEqualTo("/api/v2/write?&precision=ms&bucket=my-bucket&org=05b97d59e4577000"))

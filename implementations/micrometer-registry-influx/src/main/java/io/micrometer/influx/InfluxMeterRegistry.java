@@ -132,7 +132,7 @@ public class InfluxMeterRegistry extends StepMeterRegistry {
                     .build();
 
             HttpSender.Request.Builder requestBuilder = httpClient
-                    .post(config.uri() + "/api/v2/bucket");
+                    .post(config.uri() + "/api/v2/buckets");
             influxDBVersion.addHeaderToken(this, requestBuilder);
             
             requestBuilder
