@@ -46,7 +46,6 @@ public class MongoMetricsConnectionPoolListener implements ConnectionPoolListene
 
     private final Map<ServerId, AtomicInteger> poolSize = new ConcurrentHashMap<>();
     private final Map<ServerId, AtomicInteger> checkedOutCount = new ConcurrentHashMap<>();
-    private final Map<ServerId, AtomicInteger> waitQueueSize = new ConcurrentHashMap<>();
     private final Map<ServerId, List<Meter>> meters = new ConcurrentHashMap<>();
 
     private final MeterRegistry registry;
@@ -62,8 +61,6 @@ public class MongoMetricsConnectionPoolListener implements ConnectionPoolListene
                 "the current size of the connection pool, including idle and and in-use members", poolSize));
         connectionMeters.add(registerGauge(event.getServerId(), METRIC_PREFIX + "checkedout",
                 "the count of connections that are currently in use", checkedOutCount));
-        connectionMeters.add(registerGauge(event.getServerId(), METRIC_PREFIX + "waitqueuesize",
-                "the current size of the wait queue for a connection from the pool", waitQueueSize));
         meters.put(event.getServerId(), connectionMeters);
     }
 
@@ -76,7 +73,6 @@ public class MongoMetricsConnectionPoolListener implements ConnectionPoolListene
         meters.remove(serverId);
         poolSize.remove(serverId);
         checkedOutCount.remove(serverId);
-        waitQueueSize.remove(serverId);
     }
 
 //    @Override
