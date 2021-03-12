@@ -25,7 +25,6 @@ import io.micrometer.core.instrument.MeterRegistry;
 import io.micrometer.core.instrument.Tags;
 import io.micrometer.core.instrument.search.MeterNotFoundException;
 import io.micrometer.core.instrument.simple.SimpleMeterRegistry;
-import org.assertj.core.util.Lists;
 import org.bson.Document;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
@@ -36,6 +35,7 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.atomic.AtomicReference;
 
+import static java.util.Collections.singletonList;
 import static org.assertj.core.api.Assertions.assertThat;
 
 /**
@@ -55,7 +55,7 @@ class MongoMetricsCommandListenerTest extends AbstractMongoDbTest {
         clusterId = new AtomicReference<>();
         MongoClientSettings settings = MongoClientSettings.builder()
                 .addCommandListener(new MongoMetricsCommandListener(registry))
-                .applyToClusterSettings(builder -> builder.hosts(Lists.newArrayList(new ServerAddress(HOST, port))))
+                .applyToClusterSettings(builder -> builder.hosts(singletonList(new ServerAddress(HOST, port))))
                 .applyToClusterSettings(builder -> builder.addClusterListener(new ClusterListener() {
                     @Override
                     public void clusterOpening(ClusterOpeningEvent event) {

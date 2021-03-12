@@ -28,11 +28,11 @@ import io.micrometer.core.Issue;
 import io.micrometer.core.instrument.MeterRegistry;
 import io.micrometer.core.instrument.Tags;
 import io.micrometer.core.instrument.simple.SimpleMeterRegistry;
-import org.assertj.core.util.Lists;
 import org.junit.jupiter.api.Test;
 
 import java.util.concurrent.atomic.AtomicReference;
 
+import static java.util.Collections.singletonList;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatCode;
 
@@ -53,7 +53,7 @@ class MongoMetricsConnectionPoolListenerTest extends AbstractMongoDbTest {
                         .minSize(2)
                         .addConnectionPoolListener(new MongoMetricsConnectionPoolListener(registry))
                 )
-                .applyToClusterSettings(builder -> builder.hosts(Lists.newArrayList(new ServerAddress(HOST, port))))
+                .applyToClusterSettings(builder -> builder.hosts(singletonList(new ServerAddress(HOST, port))))
                 .applyToClusterSettings(builder -> builder.addClusterListener(new ClusterListener() {
                     @Override
                     public void clusterOpening(ClusterOpeningEvent event) {
