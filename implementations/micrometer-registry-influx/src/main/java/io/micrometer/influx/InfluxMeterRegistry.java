@@ -52,7 +52,7 @@ public class InfluxMeterRegistry extends StepMeterRegistry {
     private final InfluxConfig config;
     private final HttpSender httpClient;
     private final Logger logger = LoggerFactory.getLogger(InfluxMeterRegistry.class);
-    private boolean storageExists = false;
+    private boolean databaseExists = false;
     private InfluxDBVersion influxDBVersion;
     private String org = "";
 
@@ -85,21 +85,9 @@ public class InfluxMeterRegistry extends StepMeterRegistry {
         return new Builder(config);
     }
 
-    private void createStorageIfNecessary() {
-        if (!config.autoCreateDb() || storageExists)
-            return;
-
-        switch (influxDBVersion) {
-            case V1:
-                createDatabaseIfNecessary();
-                break;
-            case V2:
-                createBucketIfNecessary();
-                break;
-        }
-    }
-
     private void createDatabaseIfNecessary() {
+        if (!config.autoCreateDb() || databaseExists || InfluxDBVersion.V2 == influxDBVersion)
+            return;
 
         try {
             String createDatabaseQuery = new CreateDatabaseQueryBuilder(config.db()).setRetentionDuration(config.retentionDuration())
@@ -116,7 +104,7 @@ public class InfluxMeterRegistry extends StepMeterRegistry {
                     .send()
                     .onSuccess(response -> {
                         logger.debug("influx database {} is ready to receive metrics", config.db());
-                        storageExists = true;
+                        databaseExists = true;
                     })
                     .onError(response -> logger.error("unable to create database '{}': {}", config.db(), response.body()));
         } catch (Throwable e) {
@@ -124,34 +112,10 @@ public class InfluxMeterRegistry extends StepMeterRegistry {
         }
     }
 
-    private void createBucketIfNecessary() {
-
-        try {
-            String createBucketJSON = new CreateBucketJSONBuilder(config.bucket(), org)
-                    .setEverySeconds(config.retentionDuration())
-                    .build();
-
-            HttpSender.Request.Builder requestBuilder = httpClient
-                    .post(config.uri() + "/api/v2/buckets");
-            influxDBVersion.addHeaderToken(this, requestBuilder);
-            
-            requestBuilder
-                    .withJsonContent(createBucketJSON)
-                    .send()
-                    .onSuccess(response -> {
-                        logger.debug("influx bucket {} is ready to receive metrics", config.bucket());
-                        storageExists = true;
-                    })
-                    .onError(response -> logger.error("unable to create bucket '{}': {}", config.bucket(), response.body()));
-        } catch (Throwable e) {
-            logger.warn("unable to create bucket '{}'", config.bucket(), e);
-        }
-    }
-
     @Override
     protected void publish() {
         recognizeInfluxDBVersion();
-        createStorageIfNecessary();
+        createDatabaseIfNecessary();
 
         try {
             String influxEndpoint = influxDBVersion.writeEndpoint(this);
@@ -181,7 +145,7 @@ public class InfluxMeterRegistry extends StepMeterRegistry {
                         .send()
                         .onSuccess(response -> {
                             logger.debug("successfully sent {} metrics to InfluxDB.", batch.size());
-                            storageExists = true;
+                            databaseExists = true;
                         })
                         .onError(response -> logger.error("failed to send metrics to influx: {}", response.body()));
             }

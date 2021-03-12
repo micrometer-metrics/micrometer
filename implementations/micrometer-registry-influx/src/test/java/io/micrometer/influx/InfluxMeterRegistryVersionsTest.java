@@ -399,65 +399,6 @@ public class InfluxMeterRegistryVersionsTest {
                 .withHeader("Authorization", equalTo("Bearer my-token")));
     }
 
-    @Test
-    void createStorageV2(@WiremockResolver.Wiremock WireMockServer server) {
-
-        server.stubFor(any(urlPathEqualTo("/ping"))
-                .willReturn(aResponse().withStatus(200).withHeader("X-Influxdb-Version", "2.0.10")));
-        server.stubFor(any(urlPathEqualTo("/api/v2/buckets"))
-                .willReturn(aResponse().withStatus(200).withBody("{\"id\": \"05b97d59f7177000\", \"orgID\": \"05b97d59e4577000\", \"name\": \"my-bucket\"}")));
-        server.stubFor(any(urlPathEqualTo("/api/v2/write"))
-                .willReturn(aResponse().withStatus(204)));
-
-        Map<String, String> props = new HashMap<>();
-        InfluxConfig config = props::get;
-        props.put("influx.uri", server.baseUrl());
-        props.put("influx.token", "my-token");
-        props.put("influx.bucket", "my-bucket");
-        props.put("influx.org", "05b97d59e4577000");
-        props.put("influx.autoCreateDb", "true");
-
-        publishSimpleStat(config);
-
-        server.verify(headRequestedFor(urlEqualTo("/ping")));
-        server.verify(postRequestedFor(urlEqualTo("/api/v2/buckets"))
-                .withRequestBody(equalTo("{\"name\":\"my-bucket\",\"orgID\":\"05b97d59e4577000\",\"retentionRules\":[]}"))
-                .withHeader("Authorization", equalTo("Token my-token")));
-        server.verify(postRequestedFor(urlEqualTo("/api/v2/write?&precision=ms&bucket=my-bucket&org=05b97d59e4577000"))
-                .withRequestBody(equalTo("my_counter,metric_type=counter value=0 1"))
-                .withHeader("Authorization", equalTo("Token my-token")));
-    }
-
-    @Test
-    void createStorageV2WithRetentionDuration(@WiremockResolver.Wiremock WireMockServer server) {
-
-        server.stubFor(any(urlPathEqualTo("/ping"))
-                .willReturn(aResponse().withStatus(200).withHeader("X-Influxdb-Version", "2.0.10")));
-        server.stubFor(any(urlPathEqualTo("/api/v2/buckets"))
-                .willReturn(aResponse().withStatus(200).withBody("{\"id\": \"05b97d59f7177000\", \"orgID\": \"05b97d59e4577000\", \"name\": \"my-bucket\"}")));
-        server.stubFor(any(urlPathEqualTo("/api/v2/write"))
-                .willReturn(aResponse().withStatus(204)));
-
-        Map<String, String> props = new HashMap<>();
-        InfluxConfig config = props::get;
-        props.put("influx.uri", server.baseUrl());
-        props.put("influx.token", "my-token");
-        props.put("influx.bucket", "my-bucket");
-        props.put("influx.org", "05b97d59e4577000");
-        props.put("influx.autoCreateDb", "true");
-        props.put("influx.retentionDuration", "8600");
-
-        publishSimpleStat(config);
-
-        server.verify(headRequestedFor(urlEqualTo("/ping")));
-        server.verify(postRequestedFor(urlEqualTo("/api/v2/buckets"))
-                .withRequestBody(equalTo("{\"name\":\"my-bucket\",\"orgID\":\"05b97d59e4577000\",\"retentionRules\":[{\"type\":\"expire\",\"everySeconds\":8600}]}"))
-                .withHeader("Authorization", equalTo("Token my-token")));
-        server.verify(postRequestedFor(urlEqualTo("/api/v2/write?&precision=ms&bucket=my-bucket&org=05b97d59e4577000"))
-                .withRequestBody(equalTo("my_counter,metric_type=counter value=0 1"))
-                .withHeader("Authorization", equalTo("Token my-token")));
-    }
-
     private void publishSimpleStat(@WiremockResolver.Wiremock final WireMockServer server) {
         InfluxConfig config = new InfluxConfig() {
             @Override

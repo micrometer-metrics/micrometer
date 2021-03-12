@@ -83,9 +83,6 @@ public interface InfluxConfig extends StepRegistryConfig {
     }
 
     /**
-     * Since Micrometer 1.7, this also support the InfluxDB v2.
-     * For the InfluxDB v2 the value should be an amount of seconds (e.g. 3600).
-     *
      * @return Time period for which influx should retain data in the current database (e.g. 2h, 52w).
      */
     @Nullable
@@ -124,8 +121,8 @@ public interface InfluxConfig extends StepRegistryConfig {
     }
 
     /**
-     * @return {@code true} if Micrometer should check if {@link #db()} or {@link #bucket()} exists before attempting to publish
-     * metrics to it, creating it if it does not exist. Since Micrometer 1.7, this also support the InfluxDB v2.
+     * @return {@code true} if Micrometer should check if {@link #db()} exists before attempting to publish
+     * metrics to it, creating it if it does not exist. The creating bucket for the InfluxDB v2 is not supported.
      */
     default boolean autoCreateDb() {
         return getBoolean(this, "autoCreateDb").orElse(true);
