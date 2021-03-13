@@ -592,7 +592,6 @@ class PrometheusMeterRegistryTest {
     void openMetricsScrape() {
         Counter.builder("my.counter").baseUnit("bytes").register(registry);
         Timer.builder("my.timer").register(registry);
-        System.out.println(registry.scrape());
         assertThat(registry.scrape(TextFormat.CONTENT_TYPE_OPENMETRICS_100))
                 .contains("# TYPE my_counter_bytes counter\n" +
                         "# HELP my_counter_bytes  \n" +
