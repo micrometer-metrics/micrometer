@@ -121,7 +121,7 @@ public class PrometheusMeterRegistry extends MeterRegistry {
      * Write the metrics scrape body in a specific content type to the given writer.
      *
      * @param writer where to write the scrape body
-     * @param contentType of the scrape
+     * @param contentType the Content-Type of the scrape
      * @throws IOException if writing fails
      * @see TextFormat
      * @since 1.7.0
