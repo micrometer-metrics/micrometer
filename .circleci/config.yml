@@ -58,9 +58,6 @@ jobs:
       - image: circleci/openjdk:11-jdk
     steps:
       - checkout
-      - run:
-          name: Decrypt properties
-          command: openssl aes-256-cbc -d -in gradle.properties.enc -out gradle.properties -k "$KEY" -md sha256
       - deploy:
           name: Maven Central sync
           # arbitrarily choose one project to run the `mavenCentralSync` task since all use the same Bintray package
