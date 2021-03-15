@@ -131,8 +131,30 @@ public interface InfluxConfig extends StepRegistryConfig {
     }
 
     /**
+     * Specifies the API version to used for sends metrics. Specify 'v1' or 'v2' based on a version of your InfluxDB.
+     * Defaults to 'v1'.
+     *
+     * @return The API version to used for send metrics.
+     * @since 1.7
+     */
+    default InfluxApiVersion apiVersion() {
+        return getEnum(this, InfluxApiVersion.class, "apiVersion").map(version -> {
+
+            if (version == null) {
+                if (StringUtils.isNotBlank(org())) {
+                    return InfluxApiVersion.V2;
+                }
+                return InfluxApiVersion.V1;
+            }
+
+            return version;
+        }).get();
+    }
+
+    /**
      * Specifies the destination organization for writes. Takes either the ID or Name interchangeably.
      * See detail info: <a href="https://v2.docs.influxdata.com/v2.0/organizations/view-orgs/">How to retrieve the <i>org</i> parameter in the InfluxDB UI.</a>
+     *
      * @return The destination organization for writes.
      * @since 1.7
      */
@@ -144,6 +166,7 @@ public interface InfluxConfig extends StepRegistryConfig {
     /**
      * Specifies the destination bucket for writes. Takes either the ID or Name interchangeably.
      * See detail info: <a href="https://v2.docs.influxdata.com/v2.0/organizations/buckets/view-buckets/">How to retrieve the <i>bucket</i> parameter in the InfluxDB UI.</a>
+     *
      * @return The destination bucket (or db) for writes.
      * @since 1.7
      */
@@ -168,6 +191,7 @@ public interface InfluxConfig extends StepRegistryConfig {
      *     <li><a href="https://docs.influxdata.com/influxdb/v1.8/administration/authentication_and_authorization#3-include-the-token-in-http-requests">InfluxDB v1: Include the token in HTTP requests</a></li>
      *     <li><a href="https://v2.docs.influxdata.com/v2.0/reference/api/#authentication">InfluxDB v2: Authentication API</a></li>
      * </ul>
+     *
      * @return Authentication token to authorize API requests.
      * @since 1.7
      */
@@ -183,6 +207,9 @@ public interface InfluxConfig extends StepRegistryConfig {
                 checkRequired("db", InfluxConfig::db),
                 checkRequired("bucket", InfluxConfig::bucket),
                 checkRequired("consistency", InfluxConfig::consistency),
+                checkRequired("apiVersion", InfluxConfig::apiVersion)
+                        .andThen(v -> v.invalidateWhen(a -> a == InfluxApiVersion.V2 && StringUtils.isBlank(this.org()), "could be used only with specified 'org'", InvalidReason.MISSING))
+                        .andThen(v -> v.invalidateWhen(a -> a == InfluxApiVersion.V2 && StringUtils.isBlank(this.token()), "could be used only with specified 'token'", InvalidReason.MISSING)),
                 checkRequired("uri", InfluxConfig::uri)
         );
     }

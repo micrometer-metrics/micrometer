@@ -16,27 +16,21 @@
 package io.micrometer.influx;
 
 import io.micrometer.core.instrument.*;
-import io.micrometer.core.instrument.config.validate.Validated;
 import io.micrometer.core.instrument.step.StepMeterRegistry;
-import io.micrometer.core.instrument.step.StepRegistryConfig;
 import io.micrometer.core.instrument.util.*;
 import io.micrometer.core.ipc.http.HttpSender;
 import io.micrometer.core.ipc.http.HttpUrlConnectionSender;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.io.UnsupportedEncodingException;
 import java.util.ArrayList;
 import java.net.MalformedURLException;
 import java.net.URLEncoder;
 import java.util.List;
 import java.util.concurrent.ThreadFactory;
 import java.util.concurrent.TimeUnit;
-import java.util.function.Function;
 import java.util.stream.Stream;
 
-import static io.micrometer.core.instrument.config.MeterRegistryConfigValidator.checkAll;
-import static io.micrometer.core.instrument.config.MeterRegistryConfigValidator.checkRequired;
 import static java.util.stream.Collectors.joining;
 
 /**
@@ -47,11 +41,10 @@ import static java.util.stream.Collectors.joining;
  */
 public class InfluxMeterRegistry extends StepMeterRegistry {
     private static final ThreadFactory DEFAULT_THREAD_FACTORY = new NamedThreadFactory("influx-metrics-publisher");
-    private final InfluxConfig config;
+    protected final InfluxConfig config;
     private final HttpSender httpClient;
     private final Logger logger = LoggerFactory.getLogger(InfluxMeterRegistry.class);
     private boolean databaseExists = false;
-    private InfluxDBVersion influxDBVersion;
 
     @SuppressWarnings("deprecation")
     public InfluxMeterRegistry(InfluxConfig config, Clock clock) {
@@ -83,7 +76,7 @@ public class InfluxMeterRegistry extends StepMeterRegistry {
     }
 
     private void createDatabaseIfNecessary() {
-        if (!config.autoCreateDb() || databaseExists || InfluxDBVersion.V2 == influxDBVersion)
+        if (!config.autoCreateDb() || databaseExists || config.apiVersion() == InfluxApiVersion.V2)
             return;
 
         try {
@@ -95,7 +88,7 @@ public class InfluxMeterRegistry extends StepMeterRegistry {
             HttpSender.Request.Builder requestBuilder = httpClient
                     .post(config.uri() + "/query?q=" + URLEncoder.encode(createDatabaseQuery, "UTF-8"))
                     .withBasicAuthentication(config.userName(), config.password());
-            influxDBVersion.addHeaderToken(this, requestBuilder);
+            config.apiVersion().addHeaderToken(this, requestBuilder);
 
             requestBuilder
                     .send()
@@ -111,11 +104,10 @@ public class InfluxMeterRegistry extends StepMeterRegistry {
 
     @Override
     protected void publish() {
-        recognizeInfluxDBVersion();
         createDatabaseIfNecessary();
 
         try {
-            String influxEndpoint = influxDBVersion.writeEndpoint(this);
+            String influxEndpoint = config.apiVersion().writeEndpoint(this);
             if (StringUtils.isNotBlank(config.retentionPolicy())) {
                 influxEndpoint += "&rp=" + config.retentionPolicy();
             }
@@ -124,7 +116,7 @@ public class InfluxMeterRegistry extends StepMeterRegistry {
                 HttpSender.Request.Builder requestBuilder = httpClient
                         .post(influxEndpoint)
                         .withBasicAuthentication(config.userName(), config.password());
-                influxDBVersion.addHeaderToken(this, requestBuilder);
+                config.apiVersion().addHeaderToken(this, requestBuilder);
                 requestBuilder
                         .withPlainText(batch.stream()
                                 .flatMap(m -> m.match(
@@ -246,51 +238,6 @@ public class InfluxMeterRegistry extends StepMeterRegistry {
                 + " " + clock.wallTime();
     }
 
-    private void recognizeInfluxDBVersion() {
-
-        if (influxDBVersion != null) {
-            return;
-        }
-
-        String uri = config.uri() + "/ping";
-        try {
-            httpClient
-                    .head(uri)
-                    .send()
-                    .onSuccess(response -> {
-                        logger.debug("InfluxDB successfully pinged: '{}'", response.headers());
-                        influxDBVersion = response.headers().entrySet()
-                                .stream()
-                                .filter(entry -> "X-Influxdb-Version".equalsIgnoreCase(entry.getKey()))
-                                .map(entry -> {
-                                    boolean v1 = entry.getValue().stream().anyMatch(value -> value.startsWith("1."));
-                                    return v1 ? InfluxDBVersion.V1 : InfluxDBVersion.V2;
-                                })
-                                .findFirst()
-                                // There is no header "X-Influxdb-Version: 1.X" => use v2 API
-                                .orElse(InfluxDBVersion.V2);
-                        logger.debug("InfluxDB version configured to: '{}'", influxDBVersion);
-                    })
-                    .onError(response -> {
-                        logger.error("unable to ping InfluxDB: '{}'. Use v1 API.: {}", uri, response.body());
-                        // Unable ping http://server/ping => use v1 API
-                        influxDBVersion = InfluxDBVersion.V1;
-                    });
-        } catch (Throwable e) {
-            logger.error("unable to ping InfluxDB: '{}', Use v1 API.", uri, e);
-            influxDBVersion = InfluxDBVersion.V1;
-        }
-
-        if (influxDBVersion.equals(InfluxDBVersion.V2)) {
-            checkAll(config,
-                    c -> StepRegistryConfig.validate(c),
-                    checkRequired("token", InfluxConfig::token).andThen(Validated::nonBlank),
-                    checkRequired("org", (Function<InfluxConfig, String>) it -> config.org())
-                            .andThen(Validated::nonBlank)
-            ).orThrow();
-        }
-    }
-
     @Override
     protected final TimeUnit getBaseTimeUnit() {
         return TimeUnit.MILLISECONDS;
@@ -348,42 +295,4 @@ public class InfluxMeterRegistry extends StepMeterRegistry {
         }
     }
 
-    private enum InfluxDBVersion {
-        V1 {
-            @Override
-            String writeEndpoint(final InfluxMeterRegistry registry) {
-                InfluxConfig config = registry.config;
-                return config.uri() + "/write?consistency=" + config.consistency().toString().toLowerCase() + "&precision=ms&db=" + config.db();
-            }
-
-            @Override
-            void addHeaderToken(final InfluxMeterRegistry registry, final HttpSender.Request.Builder requestBuilder) {
-                InfluxConfig config = registry.config;
-                if (config.token() != null) {
-                    requestBuilder.withHeader("Authorization", "Bearer " + config.token());
-                }
-            }
-        },
-        V2 {
-            @Override
-            String writeEndpoint(final InfluxMeterRegistry registry) throws UnsupportedEncodingException {
-                InfluxConfig config = registry.config;
-                String bucket = URLEncoder.encode(config.bucket(), "UTF-8");
-                String org = URLEncoder.encode(config.org(), "UTF-8");
-                return config.uri() + "/api/v2/write?&precision=ms&bucket=" + bucket + "&org=" + org;
-            }
-
-            @Override
-            void addHeaderToken(final InfluxMeterRegistry registry, final HttpSender.Request.Builder requestBuilder) {
-                InfluxConfig config = registry.config;
-                if (config.token() != null) {
-                    requestBuilder.withHeader("Authorization", "Token " + config.token());
-                }
-            }
-        };
-
-        abstract String writeEndpoint(final InfluxMeterRegistry registry) throws UnsupportedEncodingException;
-
-        abstract void addHeaderToken(final InfluxMeterRegistry registry, final HttpSender.Request.Builder requestBuilder);
-    }
 }
