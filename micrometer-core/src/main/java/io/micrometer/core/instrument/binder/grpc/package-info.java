@@ -1,5 +1,5 @@
-/**
- * Copyright 2020 VMware, Inc.
+/*
+ * Copyright 2021 VMware, Inc.
  * <p>
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,13 +13,11 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 /**
- * SLO-based health meter registry.
+ * Collect metrics for grpc-java clients and servers.
+ *
+ * Refer to {@link io.micrometer.core.instrument.binder.grpc.MetricCollectingClientInterceptor} and
+ * {@link io.micrometer.core.instrument.binder.grpc.MetricCollectingServerInterceptor}
+ * for usage examples.
  */
-@NonNullApi
-@NonNullFields
-package io.micrometer.health;
-
-import io.micrometer.core.lang.NonNullApi;
-import io.micrometer.core.lang.NonNullFields;
+package io.micrometer.core.instrument.binder.grpc;

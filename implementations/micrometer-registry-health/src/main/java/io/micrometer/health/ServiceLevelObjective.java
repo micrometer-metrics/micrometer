@@ -20,6 +20,7 @@ import io.micrometer.core.instrument.*;
 import io.micrometer.core.instrument.binder.MeterBinder;
 import io.micrometer.core.instrument.composite.CompositeMeterRegistry;
 import io.micrometer.core.instrument.config.MeterFilter;
+import io.micrometer.core.instrument.distribution.HistogramSupport;
 import io.micrometer.core.instrument.distribution.ValueAtPercentile;
 import io.micrometer.core.instrument.search.Search;
 import io.micrometer.core.lang.Nullable;
@@ -40,7 +41,10 @@ import static io.micrometer.health.QueryUtils.MAX_OR_NAN;
 import static io.micrometer.health.QueryUtils.SUM_OR_NAN;
 
 /**
+ * Service level objective.
+ *
  * @author Jon Schneider
+ * @author Johnny Lim
  * @since 1.6.0
  */
 public abstract class ServiceLevelObjective {
@@ -61,11 +65,14 @@ public abstract class ServiceLevelObjective {
     @Nullable
     private final String failedMessage;
 
+    private final Meter.Id id;
+
     protected ServiceLevelObjective(String name, Tags tags, @Nullable String baseUnit, @Nullable String failedMessage) {
         this.name = name;
         this.tags = tags;
         this.baseUnit = baseUnit;
         this.failedMessage = failedMessage;
+        this.id = new Meter.Id(name, tags, baseUnit, failedMessage, Meter.Type.GAUGE);
     }
 
     public String getName() {
@@ -82,7 +89,7 @@ public abstract class ServiceLevelObjective {
     }
 
     public Meter.Id getId() {
-        return new Meter.Id(name, tags, baseUnit, failedMessage, Meter.Type.GAUGE);
+        return id;
     }
 
     @Nullable
@@ -122,7 +129,7 @@ public abstract class ServiceLevelObjective {
 
         @Override
         public boolean healthy(MeterRegistry registry) {
-            Double v = query.getValue(registry);
+            Double v = getValue(registry);
             return v.isNaN() || test.test(v);
         }
 
@@ -178,8 +185,7 @@ public abstract class ServiceLevelObjective {
             private final Collection<MeterBinder> requires;
 
             Builder(String name) {
-                this.name = name;
-                this.requires = new ArrayList<>();
+                this(name, null, new ArrayList<>());
             }
 
             Builder(String name, @Nullable String failedMessage, Collection<MeterBinder> requires) {
@@ -212,7 +218,7 @@ public abstract class ServiceLevelObjective {
             }
 
             /**
-             * @param tags Tags to add to the eventual timer.
+             * @param tags Tags to add to the single indicator.
              * @return The builder with added tags.
              */
             public final Builder tags(Iterable<Tag> tags) {
@@ -223,7 +229,7 @@ public abstract class ServiceLevelObjective {
             /**
              * @param key   The tag key.
              * @param value The tag value.
-             * @return The timer builder with a single added tag.
+             * @return The single indicator builder with a single added tag.
              */
             public final Builder tag(String key, String value) {
                 this.tags = tags.and(key, value);
@@ -240,7 +246,7 @@ public abstract class ServiceLevelObjective {
                             } else if (m instanceof FunctionTimer) {
                                 return ((FunctionTimer) m).count();
                             } else if (m instanceof FunctionCounter) {
-                                ((FunctionCounter) m).count();
+                                return ((FunctionCounter) m).count();
                             } else if (m instanceof LongTaskTimer) {
                                 return (double) ((LongTaskTimer) m).activeTasks();
                             }
@@ -275,15 +281,11 @@ public abstract class ServiceLevelObjective {
             public final NumericQuery maxPercentile(Function<Search, Search> search, double percentile) {
                 return new Instant(name, tags, baseUnit, failedMessage, requires, search, s -> s.meters().stream()
                         .map(m -> {
-                            ValueAtPercentile[] valueAtPercentiles = new ValueAtPercentile[0];
-                            if (m instanceof DistributionSummary) {
-                                valueAtPercentiles = ((DistributionSummary) m).takeSnapshot().percentileValues();
-                            } else if (m instanceof Timer) {
-                                valueAtPercentiles = ((Timer) m).takeSnapshot().percentileValues();
-                            } else if (m instanceof LongTaskTimer) {
-                                valueAtPercentiles = ((LongTaskTimer) m).takeSnapshot().percentileValues();
+                            if (!(m instanceof HistogramSupport)) {
+                                return Double.NaN;
                             }
 
+                            ValueAtPercentile[] valueAtPercentiles = ((HistogramSupport) m).takeSnapshot().percentileValues();
                             return Arrays.stream(valueAtPercentiles)
                                     .filter(vap -> vap.percentile() == percentile)
                                     .map(ValueAtPercentile::value)
@@ -331,7 +333,7 @@ public abstract class ServiceLevelObjective {
             }
         }
 
-        public static abstract class NumericQuery {
+        public abstract static class NumericQuery {
             protected final String name;
             private final Tags tags;
 
@@ -650,7 +652,7 @@ public abstract class ServiceLevelObjective {
             }
 
             /**
-             * @param tags Tags to add to the eventual timer.
+             * @param tags Tags to add to the multiple indicator.
              * @return The builder with added tags.
              */
             public Builder tags(Iterable<Tag> tags) {
@@ -676,7 +678,14 @@ public abstract class ServiceLevelObjective {
                 return new MultipleIndicator(name, tags, failedMessage, objectives, (o1, o2) -> o1 || o2);
             }
 
-            public final MultipleIndicator combine(BinaryOperator<Boolean> combiner, ServiceLevelObjective... objectives) {
+            /**
+             * Combine {@link ServiceLevelObjective ServiceLevelObjectives} with the provided {@code combiner}.
+             *
+             * @param combiner combiner to combine {@link ServiceLevelObjective ServiceLevelObjectives}
+             * @return combined {@code MultipleIndicator}
+             * @since 1.6.5
+             */
+            public final MultipleIndicator combine(BinaryOperator<Boolean> combiner) {
                 return new MultipleIndicator(name, tags, failedMessage, objectives, combiner);
             }
         }

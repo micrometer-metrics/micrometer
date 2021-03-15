@@ -31,8 +31,10 @@ import io.prometheus.client.exporter.common.TextFormat;
 import java.io.IOException;
 import java.io.StringWriter;
 import java.io.Writer;
+import java.util.Enumeration;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.TimeUnit;
@@ -78,13 +80,73 @@ public class PrometheusMeterRegistry extends MeterRegistry {
     }
 
     /**
-     * @return Content that should be included in the response body for an endpoint designated for
-     * Prometheus to scrape from.
+     * @return Content in Prometheus text format for the response body of an endpoint designated for
+     * Prometheus to scrape.
      */
     public String scrape() {
+        return scrape(TextFormat.CONTENT_TYPE_004);
+    }
+
+    /**
+     * Get the metrics scrape body in a specific content type.
+     *
+     * @param contentType the scrape Content-Type
+     * @return the scrape body
+     * @see TextFormat
+     * @since 1.7.0
+     */
+    public String scrape(String contentType) {
         Writer writer = new StringWriter();
         try {
-            scrape(writer);
+            scrape(writer, contentType);
+        } catch (IOException e) {
+            // This actually never happens since StringWriter::write() doesn't throw any IOException
+            throw new RuntimeException(e);
+        }
+        return writer.toString();
+    }
+
+    /**
+     * Scrape to the specified writer in Prometheus text format.
+     *
+     * @param writer Target that serves the content to be scraped by Prometheus.
+     * @throws IOException if writing fails
+     * @since 1.2.0
+     */
+    public void scrape(Writer writer) throws IOException {
+        scrape(writer, TextFormat.CONTENT_TYPE_004);
+    }
+
+    /**
+     * Write the metrics scrape body in a specific content type to the given writer.
+     *
+     * @param writer where to write the scrape body
+     * @param contentType the Content-Type of the scrape
+     * @throws IOException if writing fails
+     * @see TextFormat
+     * @since 1.7.0
+     */
+    public void scrape(Writer writer, String contentType) throws IOException {
+        scrape(writer, contentType, registry.metricFamilySamples());
+    }
+
+    private void scrape(Writer writer, String contentType, Enumeration<Collector.MetricFamilySamples> samples) throws IOException {
+        TextFormat.writeFormat(contentType, writer, samples);
+    }
+
+    /**
+     * Return text for scraping.
+     *
+     * @param contentType the Content-Type of the scrape.
+     * @param includedNames Sample names to be included. All samples will be included if {@code null}.
+     * @return Content that should be included in the response body for an endpoint designated for
+     * Prometheus to scrape from.
+     * @since 1.7.0
+     */
+    public String scrape(String contentType, @Nullable Set<String> includedNames) {
+        Writer writer = new StringWriter();
+        try {
+            scrape(writer, contentType, includedNames);
         } catch (IOException e) {
             // This actually never happens since StringWriter::write() doesn't throw any IOException
             throw new RuntimeException(e);
@@ -96,11 +158,16 @@ public class PrometheusMeterRegistry extends MeterRegistry {
      * Scrape to the specified writer.
      *
      * @param writer Target that serves the content to be scraped by Prometheus.
+     * @param contentType the Content-Type of the scrape.
+     * @param includedNames Sample names to be included. All samples will be included if {@code null}.
      * @throws IOException if writing fails
-     * @since 1.2.0
+     * @since 1.7.0
      */
-    public void scrape(Writer writer) throws IOException {
-        TextFormat.write004(writer, registry.metricFamilySamples());
+    public void scrape(Writer writer, String contentType, @Nullable Set<String> includedNames) throws IOException {
+        Enumeration<Collector.MetricFamilySamples> samples = includedNames != null
+                ? registry.filteredMetricFamilySamples(includedNames)
+                : registry.metricFamilySamples();
+        scrape(writer, contentType, samples);
     }
 
     @Override

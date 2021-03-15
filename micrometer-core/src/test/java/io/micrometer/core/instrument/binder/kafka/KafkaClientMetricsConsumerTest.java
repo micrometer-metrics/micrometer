@@ -33,7 +33,7 @@ import static org.apache.kafka.clients.consumer.ConsumerConfig.VALUE_DESERIALIZE
 import static org.assertj.core.api.Assertions.assertThat;
 
 class KafkaClientMetricsConsumerTest {
-    private final static String BOOTSTRAP_SERVERS = "localhost:9092";
+    private static final String BOOTSTRAP_SERVERS = "localhost:9092";
     private Tags tags = Tags.of("app", "myapp", "version", "1");
     KafkaClientMetrics metrics;
 

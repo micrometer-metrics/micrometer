@@ -15,20 +15,41 @@
  */
 package io.micrometer.core.instrument;
 
+import io.micrometer.core.annotation.Incubating;
 import io.micrometer.core.instrument.util.TimeUtils;
 import io.micrometer.core.lang.Nullable;
 
 import java.util.concurrent.TimeUnit;
+import java.util.function.Supplier;
 import java.util.function.ToDoubleFunction;
 
 /**
  * A specialized gauge that tracks a time value, to be scaled to the base unit of time expected by each registry implementation.
  *
  * @author Jon Schneider
+ * @author Johnny Lim
  */
 public interface TimeGauge extends Gauge {
     static <T> Builder<T> builder(String name, @Nullable T obj, TimeUnit fUnits, ToDoubleFunction<T> f) {
         return new Builder<>(name, obj, fUnits, f);
+    }
+
+    /**
+     * A convenience method for building a time gauge from a supplying function, holding a strong
+     * reference to this function.
+     *
+     * @param name The time gauge's name.
+     * @param f    A function that yields a double value for the time gauge.
+     * @param fUnits time unit
+     * @return A new time gauge builder.
+     * @since 1.7.0
+     */
+    @Incubating(since = "1.7.0")
+    static Builder<Supplier<Number>> builder(String name, Supplier<Number> f, TimeUnit fUnits) {
+        return new Builder<>(name, f, fUnits, f2 -> {
+            Number val = f2.get();
+            return val == null ? Double.NaN : val.doubleValue();
+        }).strongReference(true);
     }
 
     /**
@@ -55,6 +76,7 @@ public interface TimeGauge extends Gauge {
         private final TimeUnit fUnits;
         private final ToDoubleFunction<T> f;
         private Tags tags = Tags.empty();
+        private boolean strongReference = false;
 
         @Nullable
         private final T obj;
@@ -106,6 +128,20 @@ public interface TimeGauge extends Gauge {
         }
 
         /**
+         * Indicates that the time gauge should maintain a strong reference on the object upon which
+         * its instantaneous value is determined.
+         *
+         * @param strong Whether or not to maintain a strong reference on the time gauged object.
+         * @return The time gauge builder with altered strong reference semantics.
+         * @since 1.7.0
+         */
+        @Incubating(since = "1.7.0")
+        public Builder<T> strongReference(boolean strong) {
+            this.strongReference = strong;
+            return this;
+        }
+
+        /**
          * Add the time gauge to a single registry, or return an existing time gauge in that registry. The returned
          * time gauge will be unique for each registry, but each registry is guaranteed to only create one time gauge
          * for the same combination of name and tags.
@@ -115,7 +151,7 @@ public interface TimeGauge extends Gauge {
          */
         public TimeGauge register(MeterRegistry registry) {
             return registry.more().timeGauge(new Meter.Id(name, tags, null, description, Type.GAUGE),
-                    obj, fUnits, f);
+                    obj, fUnits, strongReference ? new StrongReferenceGaugeFunction<>(obj, f) : f);
         }
     }
 }

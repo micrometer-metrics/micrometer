@@ -24,9 +24,10 @@ import io.micrometer.core.lang.NonNullFields;
 import java.util.concurrent.TimeUnit;
 
 /**
- * Collect metrics from Caffeine's com.github.benmanes.caffeine.cache.Cache.
+ * Collect metrics from Caffeine's {@link com.github.benmanes.caffeine.cache.Cache}. {@link CaffeineStatsCounter} is an
+ * alternative that can collect more detailed statistics.
  * <p>
- * Note that `recordStats()` is required to gather non-zero statistics:
+ * Note that {@code recordStats()} is required to gather non-zero statistics:
  * <pre>{@code
  * Cache<String, String> cache = Caffeine.newBuilder().recordStats().build();
  * CaffeineCacheMetrics.monitor(registry, cache, "mycache", "region", "test");
@@ -34,6 +35,7 @@ import java.util.concurrent.TimeUnit;
  * <p>
  *
  * @author Clint Checketts
+ * @see CaffeineStatsCounter
  */
 @NonNullApi
 @NonNullFields
