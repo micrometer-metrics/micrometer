@@ -28,7 +28,6 @@ import java.net.URL;
 import java.nio.charset.StandardCharsets;
 import java.util.Base64;
 import java.util.Collections;
-import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
@@ -291,7 +290,7 @@ public interface HttpSender {
 
     class Response {
         public static final String NO_RESPONSE_BODY = "<no response body>";
-        private static final Map<String, List<String>> NO_RESPONSE_HEADERS = Collections.unmodifiableMap(new HashMap<>());
+        private static final Map<String, List<String>> NO_RESPONSE_HEADERS = Collections.emptyMap();
         private final int code;
         private final String body;
         private final Map<String, List<String>> headers;
