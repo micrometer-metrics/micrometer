@@ -18,6 +18,7 @@ package io.micrometer.influx;
 import java.io.UnsupportedEncodingException;
 import java.net.URLEncoder;
 
+import io.micrometer.core.instrument.util.StringUtils;
 import io.micrometer.core.ipc.http.HttpSender;
 
 /**
@@ -26,14 +27,16 @@ import io.micrometer.core.ipc.http.HttpSender;
 public enum InfluxApiVersion {
     V1 {
         @Override
-        String writeEndpoint(final InfluxMeterRegistry registry) {
-            InfluxConfig config = registry.config;
-            return config.uri() + "/write?consistency=" + config.consistency().toString().toLowerCase() + "&precision=ms&db=" + config.db();
+        String writeEndpoint(final InfluxConfig config) {
+            String influxEndpoint = config.uri() + "/write?consistency=" + config.consistency().toString().toLowerCase() + "&precision=ms&db=" + config.db();
+            if (StringUtils.isNotBlank(config.retentionPolicy())) {
+                influxEndpoint += "&rp=" + config.retentionPolicy();
+            }
+            return influxEndpoint;
         }
 
         @Override
-        void addHeaderToken(final InfluxMeterRegistry registry, final HttpSender.Request.Builder requestBuilder) {
-            InfluxConfig config = registry.config;
+        void addHeaderToken(final InfluxConfig config, final HttpSender.Request.Builder requestBuilder) {
             if (config.token() != null) {
                 requestBuilder.withHeader("Authorization", "Bearer " + config.token());
             }
@@ -42,23 +45,21 @@ public enum InfluxApiVersion {
     
     V2 {
         @Override
-        String writeEndpoint(final InfluxMeterRegistry registry) throws UnsupportedEncodingException {
-            InfluxConfig config = registry.config;
+        String writeEndpoint(final InfluxConfig config) throws UnsupportedEncodingException {
             String bucket = URLEncoder.encode(config.bucket(), "UTF-8");
             String org = URLEncoder.encode(config.org(), "UTF-8");
             return config.uri() + "/api/v2/write?&precision=ms&bucket=" + bucket + "&org=" + org;
         }
 
         @Override
-        void addHeaderToken(final InfluxMeterRegistry registry, final HttpSender.Request.Builder requestBuilder) {
-            InfluxConfig config = registry.config;
+        void addHeaderToken(final InfluxConfig config, final HttpSender.Request.Builder requestBuilder) {
             if (config.token() != null) {
                 requestBuilder.withHeader("Authorization", "Token " + config.token());
             }
         }
     };
 
-    abstract String writeEndpoint(final InfluxMeterRegistry registry) throws UnsupportedEncodingException;
+    abstract String writeEndpoint(final InfluxConfig config) throws UnsupportedEncodingException;
 
-    abstract void addHeaderToken(final InfluxMeterRegistry registry, final HttpSender.Request.Builder requestBuilder);
+    abstract void addHeaderToken(final InfluxConfig config, final HttpSender.Request.Builder requestBuilder);
 }

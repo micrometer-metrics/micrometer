@@ -41,7 +41,7 @@ import static java.util.stream.Collectors.joining;
  */
 public class InfluxMeterRegistry extends StepMeterRegistry {
     private static final ThreadFactory DEFAULT_THREAD_FACTORY = new NamedThreadFactory("influx-metrics-publisher");
-    protected final InfluxConfig config;
+    private final InfluxConfig config;
     private final HttpSender httpClient;
     private final Logger logger = LoggerFactory.getLogger(InfluxMeterRegistry.class);
     private boolean databaseExists = false;
@@ -88,7 +88,7 @@ public class InfluxMeterRegistry extends StepMeterRegistry {
             HttpSender.Request.Builder requestBuilder = httpClient
                     .post(config.uri() + "/query?q=" + URLEncoder.encode(createDatabaseQuery, "UTF-8"))
                     .withBasicAuthentication(config.userName(), config.password());
-            config.apiVersion().addHeaderToken(this, requestBuilder);
+            config.apiVersion().addHeaderToken(config, requestBuilder);
 
             requestBuilder
                     .send()
@@ -107,16 +107,13 @@ public class InfluxMeterRegistry extends StepMeterRegistry {
         createDatabaseIfNecessary();
 
         try {
-            String influxEndpoint = config.apiVersion().writeEndpoint(this);
-            if (StringUtils.isNotBlank(config.retentionPolicy())) {
-                influxEndpoint += "&rp=" + config.retentionPolicy();
-            }
+            String influxEndpoint = config.apiVersion().writeEndpoint(config);
 
             for (List<Meter> batch : MeterPartition.partition(this, config.batchSize())) {
                 HttpSender.Request.Builder requestBuilder = httpClient
                         .post(influxEndpoint)
                         .withBasicAuthentication(config.userName(), config.password());
-                config.apiVersion().addHeaderToken(this, requestBuilder);
+                config.apiVersion().addHeaderToken(config, requestBuilder);
                 requestBuilder
                         .withPlainText(batch.stream()
                                 .flatMap(m -> m.match(

@@ -73,6 +73,22 @@ public class InfluxMeterRegistryVersionsTest {
     }
 
     @Test
+    void writeToV1WithRP(@WiremockResolver.Wiremock WireMockServer server) {
+        Map<String, String> props = new HashMap<>();
+        InfluxConfig config = props::get;
+        props.put("influx.uri", server.baseUrl());
+        props.put("influx.db", "my-db");
+        props.put("influx.token", "my-token");
+        props.put("influx.retentionPolicy", "one_day_only");
+
+        publishSimpleStat(config);
+
+        server.verify(postRequestedFor(urlEqualTo("/write?consistency=one&precision=ms&db=my-db&rp=one_day_only"))
+                .withRequestBody(equalTo("my_counter,metric_type=counter value=0 1"))
+                .withHeader("Authorization", equalTo("Bearer my-token")));
+    }
+
+    @Test
     void writeToV2TokenRequired(@WiremockResolver.Wiremock WireMockServer server) {
 
         server.stubFor(any(urlPathEqualTo("/api/v2/write"))
