@@ -15,10 +15,11 @@
  */
 package io.micrometer.core.instrument.binder.mongodb;
 
-import com.mongodb.MongoClient;
-import com.mongodb.MongoClientOptions;
+import com.mongodb.MongoClientSettings;
 import com.mongodb.ServerAddress;
-import com.mongodb.event.ClusterListenerAdapter;
+import com.mongodb.client.MongoClient;
+import com.mongodb.client.MongoClients;
+import com.mongodb.event.ClusterListener;
 import com.mongodb.event.ClusterOpeningEvent;
 import io.micrometer.core.instrument.MeterRegistry;
 import io.micrometer.core.instrument.Tags;
@@ -34,6 +35,7 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.atomic.AtomicReference;
 
+import static java.util.Collections.singletonList;
 import static org.assertj.core.api.Assertions.assertThat;
 
 /**
@@ -51,15 +53,16 @@ class MongoMetricsCommandListenerTest extends AbstractMongoDbTest {
     void setup() {
         registry = new SimpleMeterRegistry();
         clusterId = new AtomicReference<>();
-        MongoClientOptions options = MongoClientOptions.builder()
+        MongoClientSettings settings = MongoClientSettings.builder()
                 .addCommandListener(new MongoMetricsCommandListener(registry))
-                .addClusterListener(new ClusterListenerAdapter() {
+                .applyToClusterSettings(builder -> builder.hosts(singletonList(new ServerAddress(HOST, port))))
+                .applyToClusterSettings(builder -> builder.addClusterListener(new ClusterListener() {
                     @Override
                     public void clusterOpening(ClusterOpeningEvent event) {
                         clusterId.set(event.getClusterId().getValue());
                     }
-                }).build();
-        mongo = new MongoClient(new ServerAddress(HOST, port), options);
+                })).build();
+        mongo = MongoClients.create(settings);
     }
 
     @Test

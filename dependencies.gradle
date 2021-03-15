@@ -70,7 +70,7 @@ def VERSIONS = [
         'org.latencyutils:LatencyUtils:latest.release',
         'org.mockito:mockito-core:latest.release',
         'org.mockito:mockito-inline:latest.release',
-        'org.mongodb:mongo-java-driver:latest.release',
+        'org.mongodb:mongodb-driver-sync:latest.release',
         'org.slf4j:slf4j-api:1.7.+',
         'org.springframework:spring-context:latest.release',
         'org.testcontainers:junit-jupiter:latest.release',

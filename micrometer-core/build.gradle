@@ -46,7 +46,7 @@ dependencies {
 
     optionalApi 'com.squareup.okhttp3:okhttp'
 
-    optionalApi 'org.mongodb:mongo-java-driver'
+    optionalApi 'org.mongodb:mongodb-driver-sync'
 
     optionalApi 'org.jooq:jooq'
 
