@@ -98,17 +98,17 @@ public class InfluxMeterRegistryVersionsTest {
     }
 
     @Test
-    void writeToV2PingError(@WiremockResolver.Wiremock WireMockServer server) {
+    void writeToV1PingError(@WiremockResolver.Wiremock WireMockServer server) {
 
         server.stubFor(any(urlPathEqualTo("/ping"))
                 .willReturn(aResponse().withStatus(500)));
-        server.stubFor(any(urlPathEqualTo("/api/v2/write"))
+        server.stubFor(any(urlPathEqualTo("/write"))
                 .willReturn(aResponse().withStatus(204)));
 
         publishSimpleStat(server);
 
         server.verify(headRequestedFor(urlEqualTo("/ping")));
-        server.verify(postRequestedFor(urlEqualTo("/api/v2/write?&precision=ms&bucket=my-bucket&org=my-org"))
+        server.verify(postRequestedFor(urlEqualTo("/write?consistency=one&precision=ms&db=my-db"))
                 .withRequestBody(equalTo("my_counter,metric_type=counter value=0 1")));
     }
 

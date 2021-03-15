@@ -275,9 +275,9 @@ public class InfluxMeterRegistry extends StepMeterRegistry {
                         logger.debug("InfluxDB version configured to: '{}'", influxDBVersion);
                     })
                     .onError(response -> {
-                        logger.error("unable to ping InfluxDB: '{}'. Use v2 API.: {}", uri, response.body());
-                        // Unable ping http://server/ping => use v2 API
-                        influxDBVersion = InfluxDBVersion.V2;
+                        logger.error("unable to ping InfluxDB: '{}'. Use v1 API.: {}", uri, response.body());
+                        // Unable ping http://server/ping => use v1 API
+                        influxDBVersion = InfluxDBVersion.V1;
                     });
         } catch (Throwable e) {
             logger.error("unable to ping InfluxDB: '{}', Use v1 API.", uri, e);
