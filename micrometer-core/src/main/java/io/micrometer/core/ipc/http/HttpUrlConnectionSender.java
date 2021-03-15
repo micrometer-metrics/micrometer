@@ -22,7 +22,6 @@ import java.io.OutputStream;
 import java.net.HttpURLConnection;
 import java.net.Proxy;
 import java.time.Duration;
-import java.util.List;
 import java.util.Map;
 
 /**
@@ -101,7 +100,6 @@ public class HttpUrlConnectionSender implements HttpSender {
             }
 
             int status = con.getResponseCode();
-            Map<String, List<String>> headers = con.getHeaderFields();
 
             String body = null;
             try {
@@ -113,7 +111,7 @@ public class HttpUrlConnectionSender implements HttpSender {
             } catch (IOException ignored) {
             }
 
-            return new Response(status, body, headers);
+            return new Response(status, body);
         } finally {
             try {
                 if (con != null) {

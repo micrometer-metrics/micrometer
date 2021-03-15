@@ -27,9 +27,7 @@ import java.net.URI;
 import java.net.URL;
 import java.nio.charset.StandardCharsets;
 import java.util.Base64;
-import java.util.Collections;
 import java.util.LinkedHashMap;
-import java.util.List;
 import java.util.Map;
 import java.util.function.Consumer;
 import java.util.function.Supplier;
@@ -290,19 +288,12 @@ public interface HttpSender {
 
     class Response {
         public static final String NO_RESPONSE_BODY = "<no response body>";
-        private static final Map<String, List<String>> NO_RESPONSE_HEADERS = Collections.emptyMap();
         private final int code;
         private final String body;
-        private final Map<String, List<String>> headers;
 
         public Response(int code, @Nullable String body) {
-            this(code, body, null);
-        }
-
-        public Response(int code, @Nullable String body, @Nullable final Map<String, List<String>> headers) {
             this.code = code;
             this.body = StringUtils.isBlank(body) ? NO_RESPONSE_BODY : body;
-            this.headers = headers == null ? NO_RESPONSE_HEADERS : headers;
         }
 
         public int code() {
@@ -311,10 +302,6 @@ public interface HttpSender {
 
         public String body() {
             return body;
-        }
-
-        public Map<String, List<String>> headers() {
-            return headers;
         }
 
         public Response onSuccess(Consumer<Response> onSuccess) {

@@ -17,9 +17,7 @@ package io.micrometer.core.ipc.http;
 
 import okhttp3.*;
 
-import java.util.List;
 import java.util.Map;
-import java.util.stream.Collectors;
 
 /**
  * OkHttp-based {@link HttpSender}.
@@ -69,10 +67,6 @@ public class OkHttpSender implements HttpSender {
         }
 
         okhttp3.Response response = client.newCall(requestBuilder.build()).execute();
-        Headers responseHeaders = response.headers();
-        Map<String, List<String>> headers = responseHeaders.names().stream()
-                .collect(Collectors.toMap(it -> it, responseHeaders::values));
-
-        return new Response(response.code(), response.body() == null ? null : response.body().string(), headers);
+        return new Response(response.code(), response.body() == null ? null : response.body().string());
     }
 }
