@@ -68,20 +68,6 @@ jobs:
           name: Deployment
           command: sh ./gradle/deploy.sh
 
-  maven-central-sync:
-    executor: circle-jdk-executor
-    steps:
-      - checkout
-      - run:
-          name: Decrypt properties
-          command: openssl aes-256-cbc -d -in gradle.properties.enc -out gradle.properties -k "$KEY" -md sha256
-      - deploy:
-          name: Maven Central sync
-          # arbitrarily choose one project to run the `mavenCentralSync` task since all use the same Bintray package
-          command: ./gradlew :micrometer-core:mavenCentralSync -Prelease.useLastTag=true -x bintrayPublish -x bintrayUpload -x bintrayCreateVersion -x bintrayCreatePackage
-          # Maven Central Sync might take more than 10 minutes
-          no_output_timeout: 30m
-
 workflows:
   version: 2
   build_prs_deploy_snapshots:
@@ -115,19 +101,6 @@ workflows:
           requires:
             - build
             - docker-tests
-          filters:
-            tags:
-              only: /^v\d+\.\d+\.\d+(-rc\.\d+)?$/
-      - staging-approval:
-          type: approval
-          requires:
-            - deploy
-          filters:
-            tags:
-              only: /^v\d+\.\d+\.\d+(-rc\.\d+)?$/
-      - maven-central-sync:
-          requires:
-            - staging-approval
           filters:
             tags:
               only: /^v\d+\.\d+\.\d+(-rc\.\d+)?$/
