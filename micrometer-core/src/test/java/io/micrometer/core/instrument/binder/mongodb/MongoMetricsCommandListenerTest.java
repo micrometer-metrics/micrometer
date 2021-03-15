@@ -21,7 +21,9 @@ import com.mongodb.client.MongoClient;
 import com.mongodb.client.MongoClients;
 import com.mongodb.event.ClusterListener;
 import com.mongodb.event.ClusterOpeningEvent;
+import com.mongodb.event.CommandEvent;
 import io.micrometer.core.instrument.MeterRegistry;
+import io.micrometer.core.instrument.Tag;
 import io.micrometer.core.instrument.Tags;
 import io.micrometer.core.instrument.search.MeterNotFoundException;
 import io.micrometer.core.instrument.simple.SimpleMeterRegistry;
@@ -42,11 +44,14 @@ import static org.assertj.core.api.Assertions.assertThat;
  * Tests for {@link MongoMetricsCommandListener}.
  *
  * @author Christophe Bornet
+ * @author Chris Bono
  */
 class MongoMetricsCommandListenerTest extends AbstractMongoDbTest {
 
     private MeterRegistry registry;
+
     private AtomicReference<String> clusterId;
+
     private MongoClient mongo;
 
     @BeforeEach
@@ -93,6 +98,72 @@ class MongoMetricsCommandListenerTest extends AbstractMongoDbTest {
                 "status", "FAILED"
         );
         assertThat(registry.get("mongodb.driver.commands").tags(tags).timer().count()).isEqualTo(1);
+    }
+
+    @Test
+    void shouldCreateSuccessCommandMetricWithCustomSettings() {
+        MongoMetricsCommandTagsProvider tagsProvider = new DefaultMongoMetricsCommandTagsProvider() {
+            @Override
+            public Iterable<Tag> commandTags(CommandEvent event) {
+                return Tags.of(super.commandTags(event)).and(Tag.of("mongoz", "5150"));
+            }
+        };
+        MongoClientSettings settings = MongoClientSettings.builder()
+                .addCommandListener(new MongoMetricsCommandListener(registry, tagsProvider))
+                .applyToClusterSettings(builder -> builder.hosts(singletonList(new ServerAddress(HOST, port))))
+                .applyToClusterSettings(builder -> builder.addClusterListener(new ClusterListener() {
+                    @Override
+                    public void clusterOpening(ClusterOpeningEvent event) {
+                        clusterId.set(event.getClusterId().getValue());
+                    }
+                }))
+                .build();
+        try (MongoClient mongo = MongoClients.create(settings)) {
+            mongo.getDatabase("test")
+                    .getCollection("testCol")
+                    .insertOne(new Document("testDoc", new Date()));
+            Tags tags = Tags.of(
+                    "cluster.id", clusterId.get(),
+                    "server.address", String.format("%s:%s", HOST, port),
+                    "command", "insert",
+                    "status", "SUCCESS",
+                    "mongoz", "5150"
+            );
+            assertThat(registry.get("mongodb.driver.commands").tags(tags).timer().count()).isEqualTo(1);
+        }
+    }
+
+    @Test
+    void shouldCreateFailedCommandMetricWithCustomSettings() {
+        MongoMetricsCommandTagsProvider tagsProvider = new DefaultMongoMetricsCommandTagsProvider() {
+            @Override
+            public Iterable<Tag> commandTags(CommandEvent event) {
+                return Tags.of(super.commandTags(event)).and(Tag.of("mongoz", "5150"));
+            }
+        };
+        MongoClientSettings settings = MongoClientSettings.builder()
+                .addCommandListener(new MongoMetricsCommandListener(registry, tagsProvider))
+                .applyToClusterSettings(builder -> builder.hosts(singletonList(new ServerAddress(HOST, port))))
+                .applyToClusterSettings(builder -> builder.addClusterListener(new ClusterListener() {
+                    @Override
+                    public void clusterOpening(ClusterOpeningEvent event) {
+                        clusterId.set(event.getClusterId().getValue());
+                    }
+                }))
+                .build();
+        try (MongoClient mongo = MongoClients.create(settings)) {
+            mongo.getDatabase("test")
+                    .getCollection("testCol")
+                    .dropIndex("nonExistentIndex");
+            Tags tags = Tags.of(
+                    "cluster.id", clusterId.get(),
+                    "server.address", String.format("%s:%s", HOST, port),
+                    "command", "dropIndexes",
+                    "status", "FAILED",
+                    "mongoz", "5150"
+            );
+            assertThat(registry.get("mongodb.driver.commands").tags(tags).timer().count()).isEqualTo(1);
+        }
     }
 
     @Test
