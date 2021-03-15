@@ -73,6 +73,7 @@ class MongoMetricsConnectionPoolListenerTest extends AbstractMongoDbTest {
 
         assertThat(registry.get("mongodb.driver.pool.size").tags(tags).gauge().value()).isEqualTo(2);
         assertThat(registry.get("mongodb.driver.pool.checkedout").gauge().value()).isZero();
+        assertThat(registry.get("mongodb.driver.pool.waitqueuesize").gauge().value()).isZero();
 
         mongo.close();
 

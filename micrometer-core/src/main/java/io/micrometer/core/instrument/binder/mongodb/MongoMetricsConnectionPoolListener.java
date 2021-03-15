@@ -44,8 +44,9 @@ public class MongoMetricsConnectionPoolListener implements ConnectionPoolListene
 
     private static final String METRIC_PREFIX = "mongodb.driver.pool.";
 
-    private final Map<ServerId, AtomicInteger> poolSize = new ConcurrentHashMap<>();
-    private final Map<ServerId, AtomicInteger> checkedOutCount = new ConcurrentHashMap<>();
+    private final Map<ServerId, AtomicInteger> poolSizes = new ConcurrentHashMap<>();
+    private final Map<ServerId, AtomicInteger> checkedOutCounts = new ConcurrentHashMap<>();
+    private final Map<ServerId, AtomicInteger> waitQueueSizes = new ConcurrentHashMap<>();
     private final Map<ServerId, List<Meter>> meters = new ConcurrentHashMap<>();
 
     private final MeterRegistry registry;
@@ -58,9 +59,11 @@ public class MongoMetricsConnectionPoolListener implements ConnectionPoolListene
     public void connectionPoolCreated(ConnectionPoolCreatedEvent event) {
         List<Meter> connectionMeters = new ArrayList<>();
         connectionMeters.add(registerGauge(event.getServerId(), METRIC_PREFIX + "size",
-                "the current size of the connection pool, including idle and and in-use members", poolSize));
+                "the current size of the connection pool, including idle and and in-use members", poolSizes));
         connectionMeters.add(registerGauge(event.getServerId(), METRIC_PREFIX + "checkedout",
-                "the count of connections that are currently in use", checkedOutCount));
+                "the count of connections that are currently in use", checkedOutCounts));
+        connectionMeters.add(registerGauge(event.getServerId(), METRIC_PREFIX + "waitqueuesize",
+                "the current size of the wait queue for a connection from the pool", waitQueueSizes));
         meters.put(event.getServerId(), connectionMeters);
     }
 
@@ -71,39 +74,61 @@ public class MongoMetricsConnectionPoolListener implements ConnectionPoolListene
             registry.remove(meter);
         }
         meters.remove(serverId);
-        poolSize.remove(serverId);
-        checkedOutCount.remove(serverId);
+        poolSizes.remove(serverId);
+        checkedOutCounts.remove(serverId);
+        waitQueueSizes.remove(serverId);
+    }
+
+    @Override
+    public void connectionCheckOutStarted(ConnectionCheckOutStartedEvent event) {
+        AtomicInteger waitQueueSize = waitQueueSizes.get(event.getServerId());
+        if (waitQueueSize != null) {
+            waitQueueSize.incrementAndGet();
+        }
     }
 
     @Override
     public void connectionCheckedOut(ConnectionCheckedOutEvent event) {
-        AtomicInteger gauge = checkedOutCount.get(event.getConnectionId().getServerId());
-        if (gauge != null) {
-            gauge.incrementAndGet();
+        AtomicInteger checkedOutCount = checkedOutCounts.get(event.getConnectionId().getServerId());
+        if (checkedOutCount != null) {
+            checkedOutCount.incrementAndGet();
+        }
+
+        AtomicInteger waitQueueSize = waitQueueSizes.get(event.getConnectionId().getServerId());
+        if (waitQueueSize != null) {
+            waitQueueSize.decrementAndGet();
+        }
+    }
+
+    @Override
+    public void connectionCheckOutFailed(ConnectionCheckOutFailedEvent event) {
+        AtomicInteger waitQueueSize = waitQueueSizes.get(event.getServerId());
+        if (waitQueueSize != null) {
+            waitQueueSize.decrementAndGet();
         }
     }
 
     @Override
     public void connectionCheckedIn(ConnectionCheckedInEvent event) {
-        AtomicInteger gauge = checkedOutCount.get(event.getConnectionId().getServerId());
-        if (gauge != null) {
-            gauge.decrementAndGet();
+        AtomicInteger checkedOutCount = checkedOutCounts.get(event.getConnectionId().getServerId());
+        if (checkedOutCount != null) {
+            checkedOutCount.decrementAndGet();
         }
     }
 
     @Override
     public void connectionCreated(ConnectionCreatedEvent event) {
-        AtomicInteger gauge = poolSize.get(event.getConnectionId().getServerId());
-        if (gauge != null) {
-            gauge.incrementAndGet();
+        AtomicInteger poolSize = poolSizes.get(event.getConnectionId().getServerId());
+        if (poolSize != null) {
+            poolSize.incrementAndGet();
         }
     }
 
     @Override
     public void connectionClosed(ConnectionClosedEvent event) {
-        AtomicInteger gauge = poolSize.get(event.getConnectionId().getServerId());
-        if (gauge != null) {
-            gauge.decrementAndGet();
+        AtomicInteger poolSize = poolSizes.get(event.getConnectionId().getServerId());
+        if (poolSize != null) {
+            poolSize.decrementAndGet();
         }
     }
 
