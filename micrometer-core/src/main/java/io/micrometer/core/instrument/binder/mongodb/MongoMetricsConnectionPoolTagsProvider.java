@@ -16,7 +16,7 @@
 package io.micrometer.core.instrument.binder.mongodb;
 
 
-import com.mongodb.event.ConnectionPoolOpenedEvent;
+import com.mongodb.event.ConnectionPoolCreatedEvent;
 import io.micrometer.core.instrument.Tag;
 
 /**
@@ -28,11 +28,10 @@ import io.micrometer.core.instrument.Tag;
 public interface MongoMetricsConnectionPoolTagsProvider {
 
     /**
-     * Provides tags to be associated with the Mongo connection metrics for the given {@link ConnectionPoolOpenedEvent event}.
+     * Provides tags to be associated with the Mongo connection metrics for the given {@link ConnectionPoolCreatedEvent event}.
      *
      * @param event The Mongo event of when the connection pool is opened
      * @return tags to be associated with metrics recorded for the connection pool
      */
-    Iterable<Tag> connectionPoolTags(ConnectionPoolOpenedEvent event);
-
+    Iterable<Tag> connectionPoolTags(ConnectionPoolCreatedEvent event);
 }

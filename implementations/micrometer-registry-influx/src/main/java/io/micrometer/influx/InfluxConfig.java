@@ -15,8 +15,10 @@
  */
 package io.micrometer.influx;
 
+import io.micrometer.core.instrument.config.validate.InvalidReason;
 import io.micrometer.core.instrument.config.validate.Validated;
 import io.micrometer.core.instrument.step.StepRegistryConfig;
+import io.micrometer.core.instrument.util.StringUtils;
 import io.micrometer.core.lang.Nullable;
 
 import static io.micrometer.core.instrument.config.MeterRegistryConfigValidator.checkAll;
@@ -24,7 +26,7 @@ import static io.micrometer.core.instrument.config.MeterRegistryConfigValidator.
 import static io.micrometer.core.instrument.config.validate.PropertyValidator.*;
 
 /**
- * Configuration for {@link InfluxMeterRegistry}.
+ * Configuration for {@link InfluxMeterRegistry}; since Micrometer 1.7, this also support the InfluxDB v2.
  *
  * @author Jon Schneider
  */
@@ -57,6 +59,7 @@ public interface InfluxConfig extends StepRegistryConfig {
     /**
      * @return Authenticate requests with this user. By default is {@code null}, and the registry will not
      * attempt to present credentials to Influx.
+     * The authenticating by 'userName' and 'password' is not supported for the InfluxDB v2.
      */
     @Nullable
     default String userName() {
@@ -66,6 +69,7 @@ public interface InfluxConfig extends StepRegistryConfig {
     /**
      * @return Authenticate requests with this password. By default is {@code null}, and the registry will not
      * attempt to present credentials to Influx.
+     * The authenticating by 'userName' and 'password' is not supported for the InfluxDB v2.
      */
     @Nullable
     default String password() {
@@ -120,10 +124,80 @@ public interface InfluxConfig extends StepRegistryConfig {
 
     /**
      * @return {@code true} if Micrometer should check if {@link #db()} exists before attempting to publish
-     * metrics to it, creating it if it does not exist.
+     * metrics to it, creating it if it does not exist. The creating bucket for the InfluxDB v2 is not supported.
      */
     default boolean autoCreateDb() {
         return getBoolean(this, "autoCreateDb").orElse(true);
+    }
+
+    /**
+     * Specifies the API version to used for sends metrics. Specify 'v1' or 'v2' based on a version of your InfluxDB.
+     * Defaults to 'v1'.
+     *
+     * @return The API version to used for send metrics.
+     * @since 1.7
+     */
+    default InfluxApiVersion apiVersion() {
+        return getEnum(this, InfluxApiVersion.class, "apiVersion").map(version -> {
+
+            if (version == null) {
+                if (StringUtils.isNotBlank(org())) {
+                    return InfluxApiVersion.V2;
+                }
+                return InfluxApiVersion.V1;
+            }
+
+            return version;
+        }).get();
+    }
+
+    /**
+     * Specifies the destination organization for writes. Takes either the ID or Name interchangeably.
+     * See detail info: <a href="https://v2.docs.influxdata.com/v2.0/organizations/view-orgs/">How to retrieve the <i>org</i> parameter in the InfluxDB UI.</a>
+     *
+     * @return The destination organization for writes.
+     * @since 1.7
+     */
+    @Nullable
+    default String org() {
+        return getString(this, "org").orElse(null);
+    }
+
+    /**
+     * Specifies the destination bucket for writes. Takes either the ID or Name interchangeably.
+     * See detail info: <a href="https://v2.docs.influxdata.com/v2.0/organizations/buckets/view-buckets/">How to retrieve the <i>bucket</i> parameter in the InfluxDB UI.</a>
+     *
+     * @return The destination bucket (or db) for writes.
+     * @since 1.7
+     */
+    default String bucket() {
+        return getString(this, "bucket").flatMap((bucket, valid) -> {
+            if (StringUtils.isNotBlank(bucket)) {
+                return Validated.valid(valid.getProperty(), bucket);
+            }
+
+            String db = db();
+            if (StringUtils.isNotBlank(db)) {
+                return Validated.valid(valid.getProperty(), db);
+            }
+
+            return Validated.invalid(valid.getProperty(), bucket, "db or bucket should be specified", InvalidReason.MISSING);
+        }).get();
+    }
+
+    /**
+     * See detail info for the InfluxDB v1 and InfluxDB v2:
+     * <ul>
+     *     <li><a href="https://docs.influxdata.com/influxdb/v1.8/administration/authentication_and_authorization#3-include-the-token-in-http-requests">InfluxDB v1: Include the token in HTTP requests</a></li>
+     *     <li><a href="https://v2.docs.influxdata.com/v2.0/reference/api/#authentication">InfluxDB v2: Authentication API</a></li>
+     * </ul>
+     *
+     * @return Authentication token to authorize API requests.
+     * @since 1.7
+     */
+    @Nullable
+    default String token() {
+        return getString(this, "token").orElse(null);
     }
 
     @Override
@@ -131,7 +205,11 @@ public interface InfluxConfig extends StepRegistryConfig {
         return checkAll(this,
                 c -> StepRegistryConfig.validate(c),
                 checkRequired("db", InfluxConfig::db),
+                checkRequired("bucket", InfluxConfig::bucket),
                 checkRequired("consistency", InfluxConfig::consistency),
+                checkRequired("apiVersion", InfluxConfig::apiVersion)
+                        .andThen(v -> v.invalidateWhen(a -> a == InfluxApiVersion.V2 && StringUtils.isBlank(this.org()), "could be used only with specified 'org'", InvalidReason.MISSING))
+                        .andThen(v -> v.invalidateWhen(a -> a == InfluxApiVersion.V2 && StringUtils.isBlank(this.token()), "could be used only with specified 'token'", InvalidReason.MISSING)),
                 checkRequired("uri", InfluxConfig::uri)
         );
     }

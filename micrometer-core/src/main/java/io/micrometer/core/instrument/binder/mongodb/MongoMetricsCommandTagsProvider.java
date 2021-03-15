@@ -13,13 +13,24 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+package io.micrometer.core.instrument.binder.mongodb;
+
+import com.mongodb.event.CommandEvent;
+import io.micrometer.core.instrument.Tag;
 
 /**
- * SLO-based health meter registry.
+ * Provides {@link Tag Tags} for Mongo command metrics.
+ *
+ * @author Chris Bono
  */
-@NonNullApi
-@NonNullFields
-package io.micrometer.health;
+@FunctionalInterface
+public interface MongoMetricsCommandTagsProvider {
 
-import io.micrometer.core.lang.NonNullApi;
-import io.micrometer.core.lang.NonNullFields;
+    /**
+     * Provides tags to be associated with metrics for the given Mongo command.
+     *
+     * @param commandEvent the Mongo command
+     * @return tags to associate with metrics recorded for the command
+     */
+    Iterable<Tag> commandTags(CommandEvent commandEvent);
+}

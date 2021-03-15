@@ -29,6 +29,11 @@ import java.util.concurrent.TimeUnit;
 import static io.micrometer.core.instrument.MockClock.clock;
 import static org.assertj.core.api.Assertions.assertThat;
 
+/**
+ * Tests for {@link HealthMeterRegistry}.
+ *
+ * @author Jon Schneider
+ */
 class HealthMeterRegistryTest {
     @Test
     void healthFromServiceLevelObjective() {
@@ -123,8 +128,7 @@ class HealthMeterRegistryTest {
                 .build();
 
         assertThat(registry.getMeters().stream().map(m -> m.getId().getName()))
-                .containsOnly("jvm.memory.used")
-                .isNotEmpty();
+                .containsOnly("jvm.memory.used");
     }
 
     @Test
@@ -143,7 +147,6 @@ class HealthMeterRegistryTest {
 
         assertThat(registry.getServiceLevelObjectives().stream().map(ServiceLevelObjective::getName))
                 .contains("jvm.collection.load")
-                .doesNotContain("jvm.pool.memory")
-                .isNotEmpty();
+                .doesNotContain("jvm.pool.memory");
     }
 }

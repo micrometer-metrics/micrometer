@@ -34,7 +34,7 @@ import java.util.stream.Stream;
 import static java.util.stream.Collectors.joining;
 
 /**
- * {@link MeterRegistry} for InfluxDB.
+ * {@link MeterRegistry} for InfluxDB; since Micrometer 1.7, this also support the InfluxDB v2.
  *
  * @author Jon Schneider
  * @author Johnny Lim
@@ -76,7 +76,7 @@ public class InfluxMeterRegistry extends StepMeterRegistry {
     }
 
     private void createDatabaseIfNecessary() {
-        if (!config.autoCreateDb() || databaseExists)
+        if (!config.autoCreateDb() || databaseExists || config.apiVersion() == InfluxApiVersion.V2)
             return;
 
         try {
@@ -85,9 +85,12 @@ public class InfluxMeterRegistry extends StepMeterRegistry {
                     .setRetentionReplicationFactor(config.retentionReplicationFactor())
                     .setRetentionShardDuration(config.retentionShardDuration()).build();
 
-            httpClient
+            HttpSender.Request.Builder requestBuilder = httpClient
                     .post(config.uri() + "/query?q=" + URLEncoder.encode(createDatabaseQuery, "UTF-8"))
-                    .withBasicAuthentication(config.userName(), config.password())
+                    .withBasicAuthentication(config.userName(), config.password());
+            config.apiVersion().addHeaderToken(config, requestBuilder);
+
+            requestBuilder
                     .send()
                     .onSuccess(response -> {
                         logger.debug("influx database {} is ready to receive metrics", config.db());
@@ -104,14 +107,14 @@ public class InfluxMeterRegistry extends StepMeterRegistry {
         createDatabaseIfNecessary();
 
         try {
-            String influxEndpoint = config.uri() + "/write?consistency=" + config.consistency().toString().toLowerCase() + "&precision=ms&db=" + config.db();
-            if (StringUtils.isNotBlank(config.retentionPolicy())) {
-                influxEndpoint += "&rp=" + config.retentionPolicy();
-            }
+            String influxEndpoint = config.apiVersion().writeEndpoint(config);
 
             for (List<Meter> batch : MeterPartition.partition(this, config.batchSize())) {
-                httpClient.post(influxEndpoint)
-                        .withBasicAuthentication(config.userName(), config.password())
+                HttpSender.Request.Builder requestBuilder = httpClient
+                        .post(influxEndpoint)
+                        .withBasicAuthentication(config.userName(), config.password());
+                config.apiVersion().addHeaderToken(config, requestBuilder);
+                requestBuilder
                         .withPlainText(batch.stream()
                                 .flatMap(m -> m.match(
                                         gauge -> writeGauge(gauge.getId(), gauge.value()),

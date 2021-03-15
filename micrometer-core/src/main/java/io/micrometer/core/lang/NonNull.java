@@ -28,7 +28,11 @@ import java.lang.annotation.*;
  * <p>Use {@code @NonNullApi} (scope = parameters + return values) and/or {@code @NonNullFields}
  * (scope = fields) to set the default behavior to non-nullable in order to avoid annotating
  * your whole codebase with {@code @NonNull}.
+ * <p>
+ * NOTE: This file has been copied from {@code org.springframework.lang}.
  *
+ * @author Sebastien Deleuze
+ * @author Juergen Hoeller
  * @see NonNullApi
  * @see NonNullFields
  * @see Nullable

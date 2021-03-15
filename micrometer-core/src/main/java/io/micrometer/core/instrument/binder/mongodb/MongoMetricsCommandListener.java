@@ -15,7 +15,7 @@
  */
 package io.micrometer.core.instrument.binder.mongodb;
 
-import com.mongodb.MongoClient;
+import com.mongodb.client.MongoClient;
 import com.mongodb.event.*;
 import io.micrometer.core.annotation.Incubating;
 import io.micrometer.core.instrument.MeterRegistry;
@@ -29,6 +29,7 @@ import java.util.concurrent.TimeUnit;
  * {@link CommandListener} for collecting command metrics from {@link MongoClient}.
  *
  * @author Christophe Bornet
+ * @author Chris Bono
  * @since 1.2.0
  */
 @NonNullApi
@@ -38,8 +39,26 @@ public class MongoMetricsCommandListener implements CommandListener {
 
     private final MeterRegistry registry;
 
+    private final MongoMetricsCommandTagsProvider tagsProvider;
+
+    /**
+     * Constructs a command listener that uses the default tags provider.
+     *
+     * @param registry meter registry
+     */
     public MongoMetricsCommandListener(MeterRegistry registry) {
+        this(registry, new DefaultMongoMetricsCommandTagsProvider());
+    }
+
+    /**
+     * Constructs a command listener with a custom tags provider.
+     *
+     * @param registry meter registry
+     * @param tagsProvider provides tags to be associated with metrics for the given Mongo command
+     */
+    public MongoMetricsCommandListener(MeterRegistry registry, MongoMetricsCommandTagsProvider tagsProvider) {
         this.registry = registry;
+        this.tagsProvider = tagsProvider;
     }
 
     @Override
@@ -48,24 +67,20 @@ public class MongoMetricsCommandListener implements CommandListener {
 
     @Override
     public void commandSucceeded(CommandSucceededEvent event) {
-        timeCommand(event, "SUCCESS", event.getElapsedTime(TimeUnit.NANOSECONDS));
+        timeCommand(event, event.getElapsedTime(TimeUnit.NANOSECONDS));
     }
 
     @Override
     public void commandFailed(CommandFailedEvent event) {
-        timeCommand(event, "FAILED", event.getElapsedTime(TimeUnit.NANOSECONDS));
+        timeCommand(event, event.getElapsedTime(TimeUnit.NANOSECONDS));
     }
 
-    private void timeCommand(CommandEvent event, String status, long elapsedTimeInNanoseconds) {
+    private void timeCommand(CommandEvent event, long elapsedTimeInNanoseconds) {
         Timer.builder("mongodb.driver.commands")
                 .description("Timer of mongodb commands")
-                .tag("command", event.getCommandName())
-                .tag("cluster.id", event.getConnectionDescription().getConnectionId().getServerId().getClusterId().getValue())
-                .tag("server.address", event.getConnectionDescription().getServerAddress().toString())
-                .tag("status", status)
+                .tags(tagsProvider.commandTags(event))
                 .register(registry)
                 .record(elapsedTimeInNanoseconds, TimeUnit.NANOSECONDS);
     }
 
 }
-

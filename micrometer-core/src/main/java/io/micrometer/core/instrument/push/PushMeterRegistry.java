@@ -28,7 +28,7 @@ import java.util.concurrent.ThreadFactory;
 import java.util.concurrent.TimeUnit;
 
 public abstract class PushMeterRegistry extends MeterRegistry {
-    private final static InternalLogger logger = InternalLoggerFactory.getInstance(PushMeterRegistry.class);
+    private static final InternalLogger logger = InternalLoggerFactory.getInstance(PushMeterRegistry.class);
     private final PushRegistryConfig config;
 
     @Nullable

@@ -15,22 +15,24 @@
  */
 package io.micrometer.core.instrument.binder.mongodb;
 
-import com.mongodb.event.ConnectionPoolCreatedEvent;
+import com.mongodb.event.CommandEvent;
+import com.mongodb.event.CommandSucceededEvent;
 import io.micrometer.core.instrument.Tag;
 import io.micrometer.core.instrument.Tags;
 
 /**
- * Default implementation for {@link MongoMetricsConnectionPoolTagsProvider}
+ * Default implementation for {@link MongoMetricsCommandTagsProvider}.
  *
- * @author Gustavo Monarin
+ * @author Chris Bono
  */
-public class DefaultMongoMetricsConnectionPoolTagsProvider implements MongoMetricsConnectionPoolTagsProvider {
+public class DefaultMongoMetricsCommandTagsProvider implements MongoMetricsCommandTagsProvider {
 
     @Override
-    public Iterable<Tag> connectionPoolTags(final ConnectionPoolCreatedEvent event) {
+    public Iterable<Tag> commandTags(CommandEvent event) {
         return Tags.of(
-                Tag.of("cluster.id", event.getServerId().getClusterId().getValue()),
-                Tag.of("server.address", event.getServerId().getAddress().toString()));
+                Tag.of("command", event.getCommandName()),
+                Tag.of("cluster.id", event.getConnectionDescription().getConnectionId().getServerId().getClusterId().getValue()),
+                Tag.of("server.address", event.getConnectionDescription().getServerAddress().toString()),
+                Tag.of("status", (event instanceof CommandSucceededEvent) ? "SUCCESS" : "FAILED"));
     }
-
 }
