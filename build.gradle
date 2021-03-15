@@ -12,6 +12,7 @@ buildscript {
         classpath 'com.netflix.nebula:nebula-project-plugin:3.4.0'
         classpath "io.spring.nohttp:nohttp-gradle:0.0.4.RELEASE"
         classpath "org.gradle:test-retry-gradle-plugin:1.2.0"
+        classpath 'io.github.gradle-nexus:publish-plugin:1.0.0'
 
         constraints {
             classpath('org.ow2.asm:asm:7.3.1') {
@@ -28,6 +29,7 @@ buildscript {
 }
 
 apply plugin: 'io.spring.release'
+apply plugin: 'io.github.gradle-nexus.publish-plugin'
 
 apply from: 'dependencies.gradle'
 
@@ -41,6 +43,8 @@ allprojects {
 }
 
 subprojects {
+    apply plugin: 'signing'
+
     if (project.name != 'micrometer-bom') {
         if (project.name.contains('samples') || project.name.contains('benchmarks')) {
             apply plugin: 'java'
@@ -158,11 +162,6 @@ subprojects {
             sourceCompatibility = JavaVersion.VERSION_1_8
             targetCompatibility = JavaVersion.VERSION_1_8
 
-            // Nebula doesn't interface with Gradle's module format so just disable it for now.
-            tasks.withType(GenerateModuleMetadata) {
-                enabled = false
-            }
-
             publishing {
                 publications {
                     nebula(MavenPublication) {
@@ -181,12 +180,49 @@ subprojects {
                                 asNode().remove(dependencyManagement)
                             }
                         }
-
-                        // Nebula converts dynamic versions to static ones so it's ok.
-                        suppressAllPomMetadataWarnings()
                     }
                 }
             }
+        }
+    }
+
+    plugins.withId('maven-publish') {
+        publishing {
+            publications {
+                nebula(MavenPublication) {
+                    // Nebula converts dynamic versions to static ones so it's ok.
+                    suppressAllPomMetadataWarnings()
+                }
+            }
+            repositories {
+                maven {
+                    name = 'Snapshot'
+                    url = 'https://repo.spring.io/snapshot'
+                    credentials {
+                        username findProperty('SNAPSHOT_REPO_USER')
+                        password findProperty('SNAPSHOT_REPO_PASSWORD')
+                    }
+                }
+                maven {
+                    name = 'Milestone'
+                    url = 'https://repo.spring.io/milestone'
+                    credentials {
+                        username findProperty('MILESTONE_REPO_USER')
+                        password findProperty('MILESTONE_REPO_PASSWORD')
+                    }
+                }
+            }
+        }
+
+        signing {
+            required = hasProperty('SIGNING_KEY')
+            useInMemoryPgpKeys(findProperty('SIGNING_KEY'), findProperty('SIGNING_PASSWORD'))
+            sign publishing.publications.nebula
+        }
+
+        // Nebula doesn't interface with Gradle's module format so just disable it for now.
+        tasks.withType(GenerateModuleMetadata) {
+            enabled = false
         }
     }
 
@@ -244,6 +280,17 @@ subprojects {
 
     def check = tasks.findByName('check')
     if (check) project.rootProject.tasks.releaseCheck.dependsOn check
+}
+
+nexusPublishing {
+    repositories {
+        mavenCentral {
+            nexusUrl.set(uri('https://s01.oss.sonatype.org/service/local/'))
+            snapshotRepositoryUrl.set(uri('https://repo.spring.io/snapshot/')) // not used but necessary for the plugin
+            username = findProperty('MAVEN_CENTRAL_USER')
+            password = findProperty('MAVEN_CENTRAL_PASSWORD')
+        }
+    }
 }
 
 wrapper {
