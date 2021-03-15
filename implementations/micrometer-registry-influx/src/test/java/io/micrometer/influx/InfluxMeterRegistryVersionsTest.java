@@ -19,9 +19,6 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.TimeUnit;
 
-import wiremock.com.fasterxml.jackson.databind.ObjectMapper;
-import wiremock.com.fasterxml.jackson.databind.node.ArrayNode;
-import wiremock.com.fasterxml.jackson.databind.node.ObjectNode;
 import com.github.tomakehurst.wiremock.WireMockServer;
 import io.micrometer.core.instrument.Counter;
 import io.micrometer.core.instrument.MockClock;
@@ -37,7 +34,6 @@ import static com.github.tomakehurst.wiremock.client.WireMock.aResponse;
 import static com.github.tomakehurst.wiremock.client.WireMock.any;
 import static com.github.tomakehurst.wiremock.client.WireMock.anyUrl;
 import static com.github.tomakehurst.wiremock.client.WireMock.equalTo;
-import static com.github.tomakehurst.wiremock.client.WireMock.getRequestedFor;
 import static com.github.tomakehurst.wiremock.client.WireMock.headRequestedFor;
 import static com.github.tomakehurst.wiremock.client.WireMock.postRequestedFor;
 import static com.github.tomakehurst.wiremock.client.WireMock.urlEqualTo;
@@ -312,46 +308,6 @@ public class InfluxMeterRegistryVersionsTest {
 
         server.verify(headRequestedFor(urlEqualTo("/ping")));
         server.verify(0, postRequestedFor(anyUrl()));
-    }
-
-    @Test
-    void writeToV2OrgFromApi(@WiremockResolver.Wiremock WireMockServer server) {
-
-        ObjectMapper mapper = new ObjectMapper();
-
-        ObjectNode org = mapper.createObjectNode();
-        org.put("id", "05b84f389c36e000");
-
-        ArrayNode orgs = mapper.createArrayNode();
-        orgs.add(org);
-
-        ObjectNode root = mapper.createObjectNode();
-        root.set("orgs", orgs);
-
-        server.stubFor(any(urlPathEqualTo("/ping"))
-                .willReturn(aResponse().withStatus(200).withHeader("X-Influxdb-Version", "2.0.10")));
-        server.stubFor(any(urlPathEqualTo("/api/v2/write"))
-                .willReturn(aResponse().withStatus(204)));
-        server.stubFor(any(urlPathEqualTo("/api/v2/orgs"))
-                .willReturn(aResponse().withStatus(200)
-                        .withJsonBody(root)
-                        .withHeader("Content-Type", "application/json")));
-
-        Map<String, String> props = new HashMap<>();
-        InfluxConfig config = props::get;
-        props.put("influx.uri", server.baseUrl());
-        props.put("influx.token", "my-token");
-        props.put("influx.bucket", "my-bucket");
-        props.put("influx.autoCreateDb", "false");
-
-        publishSimpleStat(config);
-
-        server.verify(headRequestedFor(urlEqualTo("/ping")));
-        server.verify(getRequestedFor(urlEqualTo("/api/v2/orgs"))
-                .withHeader("Authorization", equalTo("Token my-token")));
-        server.verify(postRequestedFor(urlEqualTo("/api/v2/write?&precision=ms&bucket=my-bucket&org=05b84f389c36e000"))
-                .withRequestBody(equalTo("my_counter,metric_type=counter value=0 1"))
-                .withHeader("Authorization", equalTo("Token my-token")));
     }
 
     @Test
