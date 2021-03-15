@@ -40,6 +40,7 @@ import static org.assertj.core.api.Assertions.assertThatCode;
  * Tests for {@link MongoMetricsConnectionPoolListener}.
  *
  * @author Christophe Bornet
+ * @author Jonatan Ivanov
  */
 class MongoMetricsConnectionPoolListenerTest extends AbstractMongoDbTest {
 
