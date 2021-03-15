@@ -51,19 +51,25 @@ public class MongoMetricsConnectionPoolListener implements ConnectionPoolListene
     private final Map<ServerId, List<Meter>> meters = new ConcurrentHashMap<>();
 
     private final MeterRegistry registry;
+    private final MongoMetricsConnectionPoolTagsProvider tagsProvider;
 
     public MongoMetricsConnectionPoolListener(MeterRegistry registry) {
+        this(registry, new DefaultMongoMetricsConnectionPoolTagsProvider());
+    }
+
+    public MongoMetricsConnectionPoolListener(MeterRegistry registry, MongoMetricsConnectionPoolTagsProvider tagsProvider) {
         this.registry = registry;
+        this.tagsProvider = tagsProvider;
     }
 
     @Override
     public void connectionPoolCreated(ConnectionPoolCreatedEvent event) {
         List<Meter> connectionMeters = new ArrayList<>();
-        connectionMeters.add(registerGauge(event.getServerId(), METRIC_PREFIX + "size",
+        connectionMeters.add(registerGauge(event, METRIC_PREFIX + "size",
                 "the current size of the connection pool, including idle and and in-use members", poolSizes));
-        connectionMeters.add(registerGauge(event.getServerId(), METRIC_PREFIX + "checkedout",
+        connectionMeters.add(registerGauge(event, METRIC_PREFIX + "checkedout",
                 "the count of connections that are currently in use", checkedOutCounts));
-        connectionMeters.add(registerGauge(event.getServerId(), METRIC_PREFIX + "waitqueuesize",
+        connectionMeters.add(registerGauge(event, METRIC_PREFIX + "waitqueuesize",
                 "the current size of the wait queue for a connection from the pool", waitQueueSizes));
         meters.put(event.getServerId(), connectionMeters);
     }
@@ -133,14 +139,13 @@ public class MongoMetricsConnectionPoolListener implements ConnectionPoolListene
         }
     }
 
-    private Gauge registerGauge(ServerId serverId, String metricName, String description, Map<ServerId, AtomicInteger> metrics) {
+    private Gauge registerGauge(ConnectionPoolCreatedEvent event, String metricName, String description, Map<ServerId, AtomicInteger> metrics) {
         AtomicInteger value = new AtomicInteger();
-        metrics.put(serverId, value);
+        metrics.put(event.getServerId(), value);
         return Gauge.builder(metricName, value, AtomicInteger::doubleValue)
-                    .description(description)
-                    .tag("cluster.id", serverId.getClusterId().getValue())
-                    .tag("server.address", serverId.getAddress().toString())
-                    .register(registry);
+                .description(description)
+                .tags(tagsProvider.connectionPoolTags(event))
+                .register(registry);
     }
 
 }

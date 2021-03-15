@@ -84,6 +84,50 @@ class MongoMetricsConnectionPoolListenerTest extends AbstractMongoDbTest {
     }
 
     @Test
+    void shouldCreatePoolMetricsWithCustomTags() {
+        MeterRegistry registry = new SimpleMeterRegistry();
+        AtomicReference<String> clusterId = new AtomicReference<>();
+        MongoMetricsConnectionPoolListener connectionPoolListener = new MongoMetricsConnectionPoolListener(registry, e ->
+                Tags.of(
+                        "cluster.id", e.getServerId().getClusterId().getValue(),
+                        "server.address", e.getServerId().getAddress().toString(),
+                        "my.custom.connection.pool.identifier", "custom"
+                ));
+        MongoClientSettings settings = MongoClientSettings.builder()
+                .applyToConnectionPoolSettings(builder -> builder
+                        .minSize(2)
+                        .addConnectionPoolListener(connectionPoolListener)
+                )
+                .applyToClusterSettings(builder -> builder.hosts(singletonList(new ServerAddress(HOST, port))))
+                .applyToClusterSettings(builder -> builder.addClusterListener(new ClusterListener() {
+                    @Override
+                    public void clusterOpening(ClusterOpeningEvent event) {
+                        clusterId.set(event.getClusterId().getValue());
+                    }
+                }))
+                .build();
+        MongoClient mongo = MongoClients.create(settings);
+
+        mongo.getDatabase("test")
+                .createCollection("testCol");
+
+        Tags tags = Tags.of(
+                "cluster.id", clusterId.get(),
+                "server.address", String.format("%s:%s", HOST, port),
+                "my.custom.connection.pool.identifier", "custom"
+        );
+
+        assertThat(registry.get("mongodb.driver.pool.size").tags(tags).gauge().value()).isEqualTo(2);
+        assertThat(registry.get("mongodb.driver.pool.checkedout").gauge().value()).isZero();
+        assertThat(registry.get("mongodb.driver.pool.waitqueuesize").gauge().value()).isZero();
+
+        mongo.close();
+
+        assertThat(registry.find("mongodb.driver.pool.size").tags(tags).gauge())
+                .describedAs("metrics should be removed when the connection pool is closed")
+                .isNull();
+    }
+
     @Issue("#2384")
     void whenConnectionCheckedInAfterPoolClose_thenNoExceptionThrown() {
         ServerId serverId = new ServerId(new ClusterId(), new ServerAddress(HOST, port));
