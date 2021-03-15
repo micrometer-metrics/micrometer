@@ -176,7 +176,7 @@ subprojects {
         }
 
         signing {
-            required = hasProperty('SIGNING_KEY')
+            required = System.env.CIRCLE_STAGE == 'deploy'
             useInMemoryPgpKeys(findProperty('SIGNING_KEY'), findProperty('SIGNING_PASSWORD'))
             sign publishing.publications.nebula
         }
