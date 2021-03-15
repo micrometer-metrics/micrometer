@@ -59,6 +59,7 @@ public interface InfluxConfig extends StepRegistryConfig {
     /**
      * @return Authenticate requests with this user. By default is {@code null}, and the registry will not
      * attempt to present credentials to Influx.
+     * The authenticating by 'userName' and 'password' is not supported for the InfluxDB v2.
      */
     @Nullable
     default String userName() {
@@ -68,6 +69,7 @@ public interface InfluxConfig extends StepRegistryConfig {
     /**
      * @return Authenticate requests with this password. By default is {@code null}, and the registry will not
      * attempt to present credentials to Influx.
+     * The authenticating by 'userName' and 'password' is not supported for the InfluxDB v2.
      */
     @Nullable
     default String password() {
@@ -132,7 +134,7 @@ public interface InfluxConfig extends StepRegistryConfig {
      * Specifies the destination organization for writes. Takes either the ID or Name interchangeably.
      * See detail info: <a href="https://v2.docs.influxdata.com/v2.0/organizations/view-orgs/">How to retrieve the <i>org</i> parameter in the InfluxDB UI.</a>
      * @return The destination organization for writes.
-     * @since 1.6
+     * @since 1.7
      */
     @Nullable
     default String org() {
@@ -143,7 +145,7 @@ public interface InfluxConfig extends StepRegistryConfig {
      * Specifies the destination bucket for writes. Takes either the ID or Name interchangeably.
      * See detail info: <a href="https://v2.docs.influxdata.com/v2.0/organizations/buckets/view-buckets/">How to retrieve the <i>bucket</i> parameter in the InfluxDB UI.</a>
      * @return The destination bucket (or db) for writes.
-     * @since 1.6
+     * @since 1.7
      */
     default String bucket() {
         return getString(this, "bucket").flatMap((bucket, valid) -> {
@@ -167,7 +169,7 @@ public interface InfluxConfig extends StepRegistryConfig {
      *     <li><a href="https://v2.docs.influxdata.com/v2.0/reference/api/#authentication">InfluxDB v2: Authentication API</a></li>
      * </ul>
      * @return Authentication token to authorize API requests.
-     * @since 1.6
+     * @since 1.7
      */
     @Nullable
     default String token() {
