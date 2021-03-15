@@ -108,17 +108,18 @@ class MongoMetricsCommandListenerTest extends AbstractMongoDbTest {
                 return Tags.of(super.commandTags(event)).and(Tag.of("mongoz", "5150"));
             }
         };
-        MongoClientOptions options = MongoClientOptions.builder()
+        MongoClientSettings settings = MongoClientSettings.builder()
                 .addCommandListener(new MongoMetricsCommandListener(registry, tagsProvider))
-                .addClusterListener(new ClusterListenerAdapter() {
+                .applyToClusterSettings(builder -> builder.hosts(singletonList(new ServerAddress(HOST, port))))
+                .applyToClusterSettings(builder -> builder.addClusterListener(new ClusterListener() {
                     @Override
                     public void clusterOpening(ClusterOpeningEvent event) {
                         clusterId.set(event.getClusterId().getValue());
                     }
-                })
+                }))
                 .build();
-        try (MongoClient customMongo = new MongoClient(new ServerAddress(HOST, port), options)) {
-            customMongo.getDatabase("test")
+        try (MongoClient mongo = MongoClients.create(settings)) {
+            mongo.getDatabase("test")
                     .getCollection("testCol")
                     .insertOne(new Document("testDoc", new Date()));
             Tags tags = Tags.of(
@@ -140,17 +141,18 @@ class MongoMetricsCommandListenerTest extends AbstractMongoDbTest {
                 return Tags.of(super.commandTags(event)).and(Tag.of("mongoz", "5150"));
             }
         };
-        MongoClientOptions options = MongoClientOptions.builder()
+        MongoClientSettings settings = MongoClientSettings.builder()
                 .addCommandListener(new MongoMetricsCommandListener(registry, tagsProvider))
-                .addClusterListener(new ClusterListenerAdapter() {
+                .applyToClusterSettings(builder -> builder.hosts(singletonList(new ServerAddress(HOST, port))))
+                .applyToClusterSettings(builder -> builder.addClusterListener(new ClusterListener() {
                     @Override
                     public void clusterOpening(ClusterOpeningEvent event) {
                         clusterId.set(event.getClusterId().getValue());
                     }
-                })
+                }))
                 .build();
-        try (MongoClient customMongo = new MongoClient(new ServerAddress(HOST, port), options)) {
-            customMongo.getDatabase("test")
+        try (MongoClient mongo = MongoClients.create(settings)) {
+            mongo.getDatabase("test")
                     .getCollection("testCol")
                     .dropIndex("nonExistentIndex");
             Tags tags = Tags.of(
