@@ -158,11 +158,13 @@ public class PrometheusMeterRegistry extends MeterRegistry {
                                         sampleName, histogramKeys, histogramValues, c.count()));
                             }
 
-                            // the +Inf bucket should always equal `count`
-                            final List<String> histogramValues = new LinkedList<>(tagValues);
-                            histogramValues.add("+Inf");
-                            samples.add(new Collector.MetricFamilySamples.Sample(
-                                    sampleName, histogramKeys, histogramValues, count));
+                            if (Double.isFinite(histogramCounts[histogramCounts.length - 1].bucket())) {
+                                // the +Inf bucket should always equal `count`
+                                final List<String> histogramValues = new LinkedList<>(tagValues);
+                                histogramValues.add("+Inf");
+                                samples.add(new Collector.MetricFamilySamples.Sample(
+                                        sampleName, histogramKeys, histogramValues, count));
+                            }
                             break;
                         case VictoriaMetrics:
                             histogramKeys.add("vmrange");

@@ -240,6 +240,31 @@ class PrometheusMeterRegistryTest {
                 .contains("s1_bucket{le=\"100.0\",} 1.0");
     }
 
+    @Test
+    void percentileHistogramWithUpperBoundContainsExactlyOneInf() {
+
+        DistributionSummary s = DistributionSummary.builder("s")
+                .publishPercentileHistogram()
+                .maximumExpectedValue(3.0)
+                .register(registry);
+
+        s.record(100);
+
+        assertThat(registry.scrape()).containsOnlyOnce("s_bucket{le=\"+Inf\",} 1.0");
+    }
+
+    @Test
+    void percentileHistogramWithoutUpperBoundContainsExactlyOneInf() {
+
+        DistributionSummary s = DistributionSummary.builder("s")
+                .publishPercentileHistogram()
+                .register(registry);
+
+        s.record(100);
+
+        assertThat(registry.scrape()).containsOnlyOnce("s_bucket{le=\"+Inf\",} 1.0");
+    }
+
     @Issue("#247")
     @Test
     void distributionPercentileBuckets() {
