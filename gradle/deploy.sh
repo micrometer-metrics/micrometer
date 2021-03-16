@@ -14,7 +14,7 @@ elif [ -z $CIRCLE_TAG ]; then
 elif [ $CIRCLE_TAG ]; then
   echo -e "Publishing Release => Branch ['$CIRCLE_BRANCH']  Tag ['$CIRCLE_TAG']"
   case "$CIRCLE_TAG" in
-  *-M\.*)
+  *-M* | *-RC*)
     ./gradlew -Prelease.disableGitChecks=true -Prelease.useLastTag=true candidate publishNebulaPublicationToMilestoneRepository $SWITCHES
     ;;
   *)
