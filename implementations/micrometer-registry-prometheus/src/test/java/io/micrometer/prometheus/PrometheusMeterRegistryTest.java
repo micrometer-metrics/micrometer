@@ -39,11 +39,9 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
-import java.util.regex.Pattern;
 
 import static io.micrometer.core.instrument.MockClock.clock;
 import static java.util.Collections.emptyList;
-import static java.util.regex.Pattern.DOTALL;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.offset;
 import static org.junit.jupiter.api.Assertions.assertThrows;
@@ -223,9 +221,7 @@ class PrometheusMeterRegistryTest {
 
         s.record(100);
 
-        String inf = Pattern.quote("s_bucket{le=\"+Inf\",} 1.0");
-        assertThat(registry.scrape()).matches(Pattern.compile(".*" + inf + ".*", DOTALL));
-        assertThat(registry.scrape()).doesNotMatch(Pattern.compile(".*" + inf + ".*" + inf + ".*", DOTALL));
+        assertThat(registry.scrape()).containsOnlyOnce("s_bucket{le=\"+Inf\",} 1.0");
     }
 
     @Test
@@ -237,9 +233,7 @@ class PrometheusMeterRegistryTest {
 
         s.record(100);
 
-        String inf = Pattern.quote("s_bucket{le=\"+Inf\",} 1.0");
-        assertThat(registry.scrape()).matches(Pattern.compile(".*" + inf + ".*", DOTALL));
-        assertThat(registry.scrape()).doesNotMatch(Pattern.compile(".*" + inf + ".*" + inf + ".*", DOTALL));
+        assertThat(registry.scrape()).containsOnlyOnce("s_bucket{le=\"+Inf\",} 1.0");
     }
 
     @Issue("#247")
