@@ -40,12 +40,15 @@ class JvmMemory {
     static boolean isConcurrentPhase(String cause, String name) {
         return "No GC".equals(cause)
                 || "Shenandoah Cycles".equals(name);
+                // Don't think this applies to J9 - maybe "J9MMCONSTANT_IMPLICIT_GC_COMPLETE_CONCURRENT" / concurrent collection must be completed"
     }
 
     static boolean isAllocationPool(String name) {
         return name != null && (name.endsWith("Eden Space")
                 || "Shenandoah".equals(name)
                 || "ZHeap".equals(name)
+                || name.endsWith("nursery-allocate")
+                || name.endsWith("-eden") // "balanced-eden"
         );
     }
 
@@ -54,6 +57,8 @@ class JvmMemory {
                 || name.endsWith("Tenured Gen")
                 || "Shenandoah".equals(name)
                 || "ZHeap".equals(name)
+                || name.endsWith("balanced-old")
+                || name.contains("tenured") // "tenured", "tenured-SOA", "tenured-LOA"
         );
     }
 

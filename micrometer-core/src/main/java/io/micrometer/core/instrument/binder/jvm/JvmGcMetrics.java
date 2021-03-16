@@ -249,7 +249,12 @@ public class JvmGcMetrics implements MeterBinder, AutoCloseable {
             put("MarkSweepCompact", OLD);
             put("PS MarkSweep", OLD);
             put("PS Scavenge", YOUNG);
-            put("ParNew", YOUNG);
+            put("ParNew", YOUNG); 
+            put("global", OLD);
+            put("scavenge", YOUNG);
+            put("partial gc", YOUNG);
+            put("global garbage collect", OLD);
+            put("Epsilon", OLD);
         }};
 
         static GcGenerationAge fromGcName(String gcName) {
