@@ -34,7 +34,8 @@ import java.util.stream.Stream;
 import static java.util.stream.Collectors.joining;
 
 /**
- * {@link MeterRegistry} for InfluxDB; since Micrometer 1.7, this also support the InfluxDB v2.
+ * {@link MeterRegistry} for InfluxDB.
+ * Since Micrometer 1.7, this supports InfluxDB v2 and v1.
  *
  * @author Jon Schneider
  * @author Johnny Lim

@@ -1,5 +1,5 @@
 /**
- * Copyright 2020 VMware, Inc.
+ * Copyright 2021 VMware, Inc.
  * <p>
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -41,12 +41,12 @@ import static com.github.tomakehurst.wiremock.client.WireMock.urlPathEqualTo;
 import static org.assertj.core.api.Assertions.assertThat;
 
 /**
- * Unit tests for check compatibility of {@link InfluxMeterRegistry} with InfluxDB v1 and InfluxDB v2.
+ * Unit tests to check compatibility of {@link InfluxMeterRegistry} with InfluxDB v1 and InfluxDB v2.
  *
- * @author Jakub Bednar (19/05/2020 09:00)
+ * @author Jakub Bednar
  */
 @ExtendWith(WiremockResolver.class)
-public class InfluxMeterRegistryVersionsTest {
+class InfluxMeterRegistryVersionsTest {
 
     @Test
     void writeToV1Token(@WiremockResolver.Wiremock WireMockServer server) {
@@ -123,7 +123,7 @@ public class InfluxMeterRegistryVersionsTest {
         };
 
         Assertions.assertThatThrownBy(() -> publishSimpleStat(config))
-                .hasMessage("influx.apiVersion was 'V2' but it could be used only with specified 'token'")
+                .hasMessage("influx.apiVersion was 'V2' but it requires 'token' is configured")
                 .isInstanceOf(ValidationException.class);
 
         server.verify(0, postRequestedFor(anyUrl()));
@@ -169,7 +169,7 @@ public class InfluxMeterRegistryVersionsTest {
         };
 
         Assertions.assertThatThrownBy(() -> publishSimpleStat(config))
-                .hasMessage("influx.apiVersion was 'V2' but it could be used only with specified 'token'")
+                .hasMessage("influx.apiVersion was 'V2' but it requires 'token' is configured")
                 .isInstanceOf(ValidationException.class);
 
         server.verify(0, postRequestedFor(anyUrl()));
@@ -210,7 +210,7 @@ public class InfluxMeterRegistryVersionsTest {
         };
 
         Assertions.assertThatThrownBy(() -> publishSimpleStat(config))
-                .hasMessage("influx.apiVersion was 'V2' but it could be used only with specified 'org'")
+                .hasMessage("influx.apiVersion was 'V2' but it requires 'org' is configured")
                 .isInstanceOf(ValidationException.class);
 
         server.verify(0, postRequestedFor(anyUrl()));
@@ -256,7 +256,7 @@ public class InfluxMeterRegistryVersionsTest {
         };
 
         Assertions.assertThatThrownBy(() -> publishSimpleStat(config))
-                .hasMessage("influx.apiVersion was 'V2' but it could be used only with specified 'org'")
+                .hasMessage("influx.apiVersion was 'V2' but it requires 'org' is configured")
                 .isInstanceOf(ValidationException.class);
 
         server.verify(0, postRequestedFor(anyUrl()));
@@ -338,8 +338,7 @@ public class InfluxMeterRegistryVersionsTest {
         assertThat(config.apiVersion()).isEqualTo(InfluxApiVersion.V2);
     }
 
-    private void publishSimpleStat(@NonNull final InfluxApiVersion apiVersion,
-                                   @WiremockResolver.Wiremock final WireMockServer server) {
+    private void publishSimpleStat(@NonNull InfluxApiVersion apiVersion, WireMockServer server) {
         InfluxConfig config = new InfluxConfig() {
             @Override
             public String uri() {
@@ -381,8 +380,7 @@ public class InfluxMeterRegistryVersionsTest {
         publishSimpleStat(config);
     }
 
-    private void publishSimpleStat(final InfluxConfig config) {
-
+    private void publishSimpleStat(InfluxConfig config) {
         InfluxMeterRegistry registry = new InfluxMeterRegistry(config, new MockClock());
 
         Counter.builder("my.counter")

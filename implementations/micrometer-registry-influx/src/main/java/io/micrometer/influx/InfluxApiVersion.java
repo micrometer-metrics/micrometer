@@ -1,5 +1,5 @@
 /**
- * Copyright 2017 VMware, Inc.
+ * Copyright 2021 VMware, Inc.
  * <p>
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -22,7 +22,10 @@ import io.micrometer.core.instrument.util.StringUtils;
 import io.micrometer.core.ipc.http.HttpSender;
 
 /**
- * @author Jakub Bednar (15/03/2021 14:08)
+ * Enum for the version of the InfluxDB API.
+ *
+ * @author Jakub Bednar
+ * @since 1.7.0
  */
 public enum InfluxApiVersion {
     V1 {
