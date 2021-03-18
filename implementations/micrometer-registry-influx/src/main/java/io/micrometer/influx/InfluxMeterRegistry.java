@@ -72,6 +72,14 @@ public class InfluxMeterRegistry extends StepMeterRegistry {
         start(threadFactory);
     }
 
+    @Override
+    public void start(ThreadFactory threadFactory) {
+        super.start(threadFactory);
+        if (config.enabled()) {
+            logger.info("Using InfluxDB API version {} to write metrics", config.apiVersion());
+        }
+    }
+
     public static Builder builder(InfluxConfig config) {
         return new Builder(config);
     }
