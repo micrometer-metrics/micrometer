@@ -65,6 +65,7 @@ public abstract class StepMeterRegistry extends MeterRegistry {
     public void stop() {
         if (scheduledExecutorService != null) {
             scheduledExecutorService.shutdown();
+            scheduledExecutorService.awaitTermination(config.shutdownTimeout().toMillis(), TimeUnit.MILLISECONDS);
             scheduledExecutorService = null;
         }
     }

@@ -78,4 +78,13 @@ public interface StepRegistryConfig extends MeterRegistryConfig {
         String v = get(prefix() + ".batchSize");
         return v == null ? 10000 : Integer.parseInt(v);
     }
+
+    /**
+     * @return The timeout to use when calling awaitTermination while shutting down the
+     * ScheduledExecutorService. The default is 5 seconds.
+     */
+    default Duration shutdownTimeout() {
+        String v = get(prefix() + ".shutdownTimeout");
+        return v == null ? Duration.ofSeconds(5) : Duration.parse(v);
+    }
 }
