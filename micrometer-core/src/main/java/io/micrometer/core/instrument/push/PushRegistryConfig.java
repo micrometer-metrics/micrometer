@@ -91,6 +91,12 @@ public interface PushRegistryConfig extends MeterRegistryConfig {
         return getInteger(this, "batchSize").orElse(10000);
     }
 
+    /**
+     * @return The timeout to use when calling awaitTermination while shutting down the ScheduledExecutorService. The
+     * default is 5 seconds.
+     */
+    default Duration shutdownTimeout() { return getDuration(this, "shutdownTimeout").orElse(Duration.ofSeconds(5)); }
+
     @Override
     default Validated<?> validate() {
         return validate(this);
@@ -109,7 +115,8 @@ public interface PushRegistryConfig extends MeterRegistryConfig {
                 check("connectTimeout", PushRegistryConfig::connectTimeout),
                 check("readTimeout", PushRegistryConfig::readTimeout),
                 check("batchSize", PushRegistryConfig::batchSize),
-                check("numThreads", PushRegistryConfig::numThreads)
+                check("numThreads", PushRegistryConfig::numThreads),
+                check("shutdownTimeout", PushRegistryConfig::shutdownTimeout)
         );
     }
 }

@@ -82,7 +82,14 @@ public abstract class PushMeterRegistry extends MeterRegistry {
     public void stop() {
         if (scheduledExecutorService != null) {
             scheduledExecutorService.shutdown();
-            scheduledExecutorService = null;
+            try {
+                scheduledExecutorService.awaitTermination(config.shutdownTimeout().toMillis(), TimeUnit.MILLISECONDS);
+            } catch (InterruptedException ie) {
+                scheduledExecutorService.shutdownNow();
+                Thread.currentThread().interrupt();
+            } finally {
+                scheduledExecutorService = null;
+            }
         }
     }
 

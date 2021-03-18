@@ -49,6 +49,7 @@ class PushRegistryConfigTest {
         props.put("push.readTimeout", "1w");
         props.put("push.batchSize", "Z");
         props.put("push.step", "up");
+        props.put("push.shutdownTimeout", "down");
 
         // overall not valid
         assertThat(config.validate().isValid()).isFalse();
@@ -56,12 +57,13 @@ class PushRegistryConfigTest {
         // can iterate over failures to display messages
         List<Validated.Invalid<?>> failures = config.validate().failures();
 
-        assertThat(failures.size()).isEqualTo(5);
+        assertThat(failures.size()).isEqualTo(6);
         assertThat(failures.stream().map(Validated.Invalid::getMessage))
                 .containsOnly(
                         "must be a valid duration",
                         "must contain a valid time unit",
-                        "must be an integer"
+                        "must be an integer",
+                        "must be a valid duration value"
                 );
 
         assertThatThrownBy(config::batchSize).isInstanceOf(ValidationException.class);
@@ -74,6 +76,7 @@ class PushRegistryConfigTest {
         props.put("push.readTimeout", "1s");
         props.put("push.batchSize", "3");
         props.put("push.step", "1s");
+        props.put("push.shutdownTimeout", "10s");
 
         assertThat(config.validate().isValid()).isTrue();
     }
