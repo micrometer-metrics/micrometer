@@ -152,6 +152,28 @@ subprojects {
             jvmArgs '-XX:+UseZGC'
         }
 
+        task openj9BalancedTest(type: Test) {
+            // set heap size for the test JVM(s)
+            maxHeapSize = "1500m"
+
+            useJUnitPlatform {
+                includeTags 'gc'
+            }
+
+            jvmArgs '-Xgcpolicy:balanced'
+        }
+
+        task openj9ConcurrentScavengeTest(type: Test) {
+            // set heap size for the test JVM(s)
+            maxHeapSize = "1500m"
+
+            useJUnitPlatform {
+                includeTags 'gc'
+            }
+
+            jvmArgs '-Xgc:concurrentScavenge'
+        }
+
         license {
             ext.year = Calendar.getInstance().get(Calendar.YEAR)
             skipExistingHeaders = true
