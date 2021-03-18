@@ -26,7 +26,8 @@ import static io.micrometer.core.instrument.config.MeterRegistryConfigValidator.
 import static io.micrometer.core.instrument.config.validate.PropertyValidator.*;
 
 /**
- * Configuration for {@link InfluxMeterRegistry}; since Micrometer 1.7, this also support the InfluxDB v2.
+ * Configuration for {@link InfluxMeterRegistry}.
+ * Since Micrometer 1.7, InfluxDB v2 and v1 are supported.
  *
  * @author Jon Schneider
  */
@@ -49,17 +50,19 @@ public interface InfluxConfig extends StepRegistryConfig {
     }
 
     /**
-     * @return Sets the write consistency for each point. The Influx default is 'one'. Must
-     * be one of 'any', 'one', 'quorum', or 'all'. Only available for InfluxEnterprise clusters.
+     * Must be one of 'any', 'one', 'quorum', or 'all'. Only available for InfluxEnterprise clusters.
+     *
+     * @return Sets the write consistency for each point. The default is 'one'.
      */
     default InfluxConsistency consistency() {
         return getEnum(this, InfluxConsistency.class, "consistency").orElse(InfluxConsistency.ONE);
     }
 
     /**
+     * Authentication by 'userName' and 'password' is not supported for InfluxDB v2.
+     *
      * @return Authenticate requests with this user. By default is {@code null}, and the registry will not
      * attempt to present credentials to Influx.
-     * The authenticating by 'userName' and 'password' is not supported for the InfluxDB v2.
      */
     @Nullable
     default String userName() {
@@ -67,9 +70,10 @@ public interface InfluxConfig extends StepRegistryConfig {
     }
 
     /**
+     * Authentication by 'userName' and 'password' is not supported for InfluxDB v2.
+     *
      * @return Authenticate requests with this password. By default is {@code null}, and the registry will not
      * attempt to present credentials to Influx.
-     * The authenticating by 'userName' and 'password' is not supported for the InfluxDB v2.
      */
     @Nullable
     default String password() {
@@ -77,6 +81,8 @@ public interface InfluxConfig extends StepRegistryConfig {
     }
 
     /**
+     * This retention configuration will only be used with InfluxDB v1.
+     *
      * @return Influx writes to the DEFAULT retention policy if one is not specified.
      */
     @Nullable
@@ -85,6 +91,8 @@ public interface InfluxConfig extends StepRegistryConfig {
     }
 
     /**
+     * This retention configuration will only be used with InfluxDB v1.
+     *
      * @return Time period for which influx should retain data in the current database (e.g. 2h, 52w).
      */
     @Nullable
@@ -93,6 +101,8 @@ public interface InfluxConfig extends StepRegistryConfig {
     }
 
     /**
+     * This retention configuration will only be used with InfluxDB v1.
+     *
      * @return How many copies of the data are stored in the cluster. Must be 1 for a single node instance.
      */
     @Nullable
@@ -101,6 +111,8 @@ public interface InfluxConfig extends StepRegistryConfig {
     }
 
     /**
+     * This retention configuration will only be used with InfluxDB v1.
+     *
      * @return The time range covered by a shard group (e.g. 2h, 52w).
      */
     @Nullable
@@ -123,40 +135,38 @@ public interface InfluxConfig extends StepRegistryConfig {
     }
 
     /**
+     * Auto-creating the database is only supported with InfluxDB v1.
+     *
      * @return {@code true} if Micrometer should check if {@link #db()} exists before attempting to publish
-     * metrics to it, creating it if it does not exist. The creating bucket for the InfluxDB v2 is not supported.
+     * metrics to it, creating it if it does not exist.
      */
     default boolean autoCreateDb() {
         return getBoolean(this, "autoCreateDb").orElse(true);
     }
 
     /**
-     * Specifies the API version to used for sends metrics. Specify 'v1' or 'v2' based on a version of your InfluxDB.
-     * Defaults to 'v1'.
+     * Specifies the API version used to send metrics. Use 'v1' or 'v2' based on the version of your InfluxDB.
+     * Defaults to 'v1' unless an {@link #org()} is configured. If an {@link #org()} is configured, defaults to 'v2'.
      *
-     * @return The API version to used for send metrics.
+     * @return The API version used to send metrics.
      * @since 1.7
      */
     default InfluxApiVersion apiVersion() {
-        return getEnum(this, InfluxApiVersion.class, "apiVersion").map(version -> {
-
-            if (version == null) {
-                if (StringUtils.isNotBlank(org())) {
-                    return InfluxApiVersion.V2;
-                }
-                return InfluxApiVersion.V1;
+        return getEnum(this, InfluxApiVersion.class, "apiVersion").orElseGet(() -> {
+            if (StringUtils.isNotBlank(org())) {
+                return InfluxApiVersion.V2;
             }
-
-            return version;
-        }).get();
+            return InfluxApiVersion.V1;
+        });
     }
 
     /**
      * Specifies the destination organization for writes. Takes either the ID or Name interchangeably.
-     * See detail info: <a href="https://v2.docs.influxdata.com/v2.0/organizations/view-orgs/">How to retrieve the <i>org</i> parameter in the InfluxDB UI.</a>
+     * This is only used with InfluxDB v2.
      *
      * @return The destination organization for writes.
      * @since 1.7
+     * @see <a href="https://v2.docs.influxdata.com/v2.0/organizations/view-orgs/">How to retrieve the org parameter in the InfluxDB UI.</a>
      */
     @Nullable
     default String org() {
@@ -165,10 +175,11 @@ public interface InfluxConfig extends StepRegistryConfig {
 
     /**
      * Specifies the destination bucket for writes. Takes either the ID or Name interchangeably.
-     * See detail info: <a href="https://v2.docs.influxdata.com/v2.0/organizations/buckets/view-buckets/">How to retrieve the <i>bucket</i> parameter in the InfluxDB UI.</a>
+     * This is only used with InfluxDB v2.
      *
      * @return The destination bucket (or db) for writes.
      * @since 1.7
+     * @see <a href="https://v2.docs.influxdata.com/v2.0/organizations/buckets/view-buckets/">How to retrieve the bucket parameter in the InfluxDB UI.</a>
      */
     default String bucket() {
         return getString(this, "bucket").flatMap((bucket, valid) -> {
@@ -186,14 +197,12 @@ public interface InfluxConfig extends StepRegistryConfig {
     }
 
     /**
-     * See detail info for the InfluxDB v1 and InfluxDB v2:
-     * <ul>
-     *     <li><a href="https://docs.influxdata.com/influxdb/v1.8/administration/authentication_and_authorization#3-include-the-token-in-http-requests">InfluxDB v1: Include the token in HTTP requests</a></li>
-     *     <li><a href="https://v2.docs.influxdata.com/v2.0/reference/api/#authentication">InfluxDB v2: Authentication API</a></li>
-     * </ul>
+     * Authentication token for the InfluxDB API. This takes precedence over userName/password if configured.
      *
      * @return Authentication token to authorize API requests.
      * @since 1.7
+     * @see <a href="https://docs.influxdata.com/influxdb/v1.8/administration/authentication_and_authorization#3-include-the-token-in-http-requests">InfluxDB v1: Include the token in HTTP requests</a>
+     * @see <a href="https://v2.docs.influxdata.com/v2.0/reference/api/#authentication">InfluxDB v2: Authentication API</a>
      */
     @Nullable
     default String token() {
@@ -208,8 +217,8 @@ public interface InfluxConfig extends StepRegistryConfig {
                 checkRequired("bucket", InfluxConfig::bucket),
                 checkRequired("consistency", InfluxConfig::consistency),
                 checkRequired("apiVersion", InfluxConfig::apiVersion)
-                        .andThen(v -> v.invalidateWhen(a -> a == InfluxApiVersion.V2 && StringUtils.isBlank(this.org()), "could be used only with specified 'org'", InvalidReason.MISSING))
-                        .andThen(v -> v.invalidateWhen(a -> a == InfluxApiVersion.V2 && StringUtils.isBlank(this.token()), "could be used only with specified 'token'", InvalidReason.MISSING)),
+                        .andThen(v -> v.invalidateWhen(a -> a == InfluxApiVersion.V2 && StringUtils.isBlank(this.org()), "requires 'org' is also configured", InvalidReason.MISSING))
+                        .andThen(v -> v.invalidateWhen(a -> a == InfluxApiVersion.V2 && StringUtils.isBlank(this.token()), "requires 'token' is also configured", InvalidReason.MISSING)),
                 checkRequired("uri", InfluxConfig::uri)
         );
     }
