@@ -197,6 +197,8 @@ public interface InfluxConfig extends StepRegistryConfig {
     }
 
     /**
+     * Authentication token for the InfluxDB API. This takes precedence over userName/password if configured.
+     *
      * @return Authentication token to authorize API requests.
      * @since 1.7
      * @see <a href="https://docs.influxdata.com/influxdb/v1.8/administration/authentication_and_authorization#3-include-the-token-in-http-requests">InfluxDB v1: Include the token in HTTP requests</a>
