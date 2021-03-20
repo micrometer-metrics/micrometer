@@ -34,16 +34,16 @@ public class StepLong implements  PartialStepLong {
     }
 
     private void rollCount(long now,final boolean enablePartialStepRecording) {
-        final long stepTime = now / stepMillis;
-        final long lastInit = lastInitPos.get();
-        if (lastInit < stepTime && lastInitPos.compareAndSet(lastInit, stepTime)) {
-            final double v = current.sumThenReset();
-            // Need to check if there was any activity during the previous step interval. If there was
-            // then the init position will move forward by 1, otherwise it will be older. No activity
-            // means the previous interval should be set to the `init` value.
-            if (enablePartialStepRecording) {
-                previous = v;
-            } else {
+        if (enablePartialStepRecording) {
+            previous = current.sumThenReset();
+        } else {
+            final long stepTime = now / stepMillis;
+            final long lastInit = lastInitPos.get();
+            if (lastInit < stepTime && lastInitPos.compareAndSet(lastInit, stepTime)) {
+                final double v = current.sumThenReset();
+                // Need to check if there was any activity during the previous step interval. If there was
+                // then the init position will move forward by 1, otherwise it will be older. No activity
+                // means the previous interval should be set to the `init` value.
                 previous = (lastInit == stepTime - 1) ? v : 0.0;
             }
         }
