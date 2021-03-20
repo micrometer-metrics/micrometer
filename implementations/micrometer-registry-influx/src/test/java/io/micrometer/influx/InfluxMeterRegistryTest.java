@@ -131,7 +131,7 @@ class InfluxMeterRegistryTest {
         Measurement m3 = new Measurement(() -> 5d, Statistic.TOTAL_TIME);
         Meter meter = Meter.builder("my.custom", Meter.Type.OTHER, Arrays.asList(m1, m2, m3)).register(meterRegistry);
 
-        assertThat(meterRegistry.writeMeter(meter).collect(Collectors.joining())).isEqualTo(expectedInfluxLine);
+        assertThat(meterRegistry.writeMeter(meter,false).collect(Collectors.joining())).isEqualTo(expectedInfluxLine);
     }
 
     @Test
@@ -141,7 +141,7 @@ class InfluxMeterRegistryTest {
         Measurement measurement3 = new Measurement(() -> Double.NaN, Statistic.VALUE);
         List<Measurement> measurements = Arrays.asList(measurement1, measurement2, measurement3);
         Meter meter = Meter.builder("my.meter", Meter.Type.GAUGE, measurements).register(this.meterRegistry);
-        assertThat(meterRegistry.writeMeter(meter)).isEmpty();
+        assertThat(meterRegistry.writeMeter(meter,false)).isEmpty();
     }
 
     @Test
@@ -153,14 +153,14 @@ class InfluxMeterRegistryTest {
         Measurement measurement5 = new Measurement(() -> 2d, Statistic.VALUE);
         List<Measurement> measurements = Arrays.asList(measurement1, measurement2, measurement3, measurement4, measurement5);
         Meter meter = Meter.builder("my.meter", Meter.Type.GAUGE, measurements).register(this.meterRegistry);
-        assertThat(meterRegistry.writeMeter(meter)).containsExactly("my_meter,metric_type=gauge value=1,value=2 1");
+        assertThat(meterRegistry.writeMeter(meter,false)).containsExactly("my_meter,metric_type=gauge value=1,value=2 1");
     }
 
     @Test
     void nanFunctionTimerShouldNotBeWritten() {
         FunctionTimer timer = FunctionTimer.builder("myFunctionTimer", Double.NaN, Number::longValue, Number::doubleValue, TimeUnit.MILLISECONDS).register(meterRegistry);
         clock.add(config.step());
-        assertThat(meterRegistry.writeFunctionTimer(timer)).isEmpty();
+        assertThat(meterRegistry.writeFunctionTimer(timer,false)).isEmpty();
     }
 
     @Test
@@ -191,7 +191,7 @@ class InfluxMeterRegistryTest {
                 return Double.NaN;
             }
         };
-        assertThat(meterRegistry.writeFunctionTimer(functionTimer))
+        assertThat(meterRegistry.writeFunctionTimer(functionTimer,false))
                 .containsOnly("func_timer,metric_type=histogram sum=1,count=1 1");
     }
 }

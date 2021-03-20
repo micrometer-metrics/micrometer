@@ -20,7 +20,7 @@ import io.micrometer.core.instrument.Clock;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.concurrent.atomic.LongAdder;
 
-public class StepLong {
+public class StepLong implements  PartialStepLong {
     private final Clock clock;
     private final long stepMillis;
     private final LongAdder current = new LongAdder();
@@ -33,7 +33,7 @@ public class StepLong {
         lastInitPos = new AtomicLong(clock.wallTime() / stepMillis);
     }
 
-    private void rollCount(long now) {
+    private void rollCount(long now,final boolean enablePartialStepRecording) {
         final long stepTime = now / stepMillis;
         final long lastInit = lastInitPos.get();
         if (lastInit < stepTime && lastInitPos.compareAndSet(lastInit, stepTime)) {
@@ -41,7 +41,11 @@ public class StepLong {
             // Need to check if there was any activity during the previous step interval. If there was
             // then the init position will move forward by 1, otherwise it will be older. No activity
             // means the previous interval should be set to the `init` value.
-            previous = (lastInit == stepTime - 1) ? v : 0.0;
+            if (enablePartialStepRecording) {
+                previous = v;
+            } else {
+                previous = (lastInit == stepTime - 1) ? v : 0.0;
+            }
         }
     }
 
@@ -53,7 +57,13 @@ public class StepLong {
      * @return The value for the last completed interval.
      */
     public double poll() {
-        rollCount(clock.wallTime());
+        rollCount(clock.wallTime(),false);
+        return previous;
+    }
+
+    @Override
+    public double partialPoll() {
+        rollCount(clock.wallTime(),true);
         return previous;
     }
 }

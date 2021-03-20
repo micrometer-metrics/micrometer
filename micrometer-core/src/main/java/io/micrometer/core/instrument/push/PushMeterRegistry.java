@@ -43,7 +43,7 @@ public abstract class PushMeterRegistry extends MeterRegistry {
     /**
      * Catch uncaught exceptions thrown from {@link #publish()}.
      */
-    private void publishSafely() {
+    protected void publishSafely() {
         try {
             publish();
         } catch (Throwable e) {
