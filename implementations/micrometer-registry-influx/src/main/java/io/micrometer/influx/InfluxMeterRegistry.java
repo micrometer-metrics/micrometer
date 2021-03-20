@@ -118,12 +118,8 @@ public class InfluxMeterRegistry extends StepMeterRegistry {
     }
 
     @Override
-    protected void publishSafely() {
-        try {
-            internalPublish(true);
-        } catch (Throwable e) {
-            logger.warn("Unexpected exception thrown while publishing metrics for " + this.getClass().getSimpleName(), e);
-        }
+    protected void publishGracefulShutdown() {
+        internalPublish(true);
     }
 
     protected void internalPublish(final boolean enablePartialStepRecording) {
