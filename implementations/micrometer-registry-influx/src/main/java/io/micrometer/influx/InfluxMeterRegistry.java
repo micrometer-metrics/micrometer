@@ -220,6 +220,7 @@ public class InfluxMeterRegistry extends StepMeterRegistry {
         return Stream.empty();
     }
 
+    // VisibleForTesting
     Stream<String> writeCounter(Counter counter,final boolean enablePartialStepRecording) {
         double count;
         Meter.Id id = counter.getId();
@@ -274,7 +275,8 @@ public class InfluxMeterRegistry extends StepMeterRegistry {
         return Stream.empty();
     }
 
-    private Stream<String> writeTimer(Timer timer,final boolean enablePartialStepRecording) {
+    // VisibleForTesting
+    Stream<String> writeTimer(Timer timer,final boolean enablePartialStepRecording) {
         double totalTime;
         long count;
         double mean;
@@ -297,7 +299,8 @@ public class InfluxMeterRegistry extends StepMeterRegistry {
         return Stream.of(influxLineProtocol(timer.getId(), "histogram", fields));
     }
 
-    private Stream<String> writeSummary(DistributionSummary summary,final boolean enablePartialStepRecording) {
+    // VisibleForTesting
+    Stream<String> writeSummary(DistributionSummary summary,final boolean enablePartialStepRecording) {
         double totalAmount;
         long count;
         double mean;
