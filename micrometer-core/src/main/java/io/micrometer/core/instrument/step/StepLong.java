@@ -35,7 +35,7 @@ public class StepLong implements  PartialStepLong {
 
     private void rollCount(long now,final boolean enablePartialStepRecording) {
         if (enablePartialStepRecording) {
-            previous = current.sumThenReset();
+            previous = current.sum();
         } else {
             final long stepTime = now / stepMillis;
             final long lastInit = lastInitPos.get();

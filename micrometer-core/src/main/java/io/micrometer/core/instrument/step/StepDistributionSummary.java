@@ -108,7 +108,8 @@ public class StepDistributionSummary extends AbstractDistributionSummary impleme
 
     @Override
     public double partialMean() {
-        return partialCount() == 0 ? 0 : partialTotalAmount() / partialCount();
+        long partialCount = partialCount();
+        return partialCount == 0 ? 0 : partialTotalAmount() / partialCount;
     }
 
     @Override

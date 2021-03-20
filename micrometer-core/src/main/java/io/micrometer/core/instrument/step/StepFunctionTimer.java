@@ -104,7 +104,8 @@ public class StepFunctionTimer<T> implements FunctionTimer,PartialStepFunctionTi
 
     @Override
     public double partialMean(TimeUnit unit) {
-        return partialCount() == 0 ? 0 : partialTotalTime(unit) / partialCount();
+        double partialCount = partialCount();
+        return partialCount == 0 ? 0 : partialTotalTime(unit) / partialCount;
     }
 
     @Override

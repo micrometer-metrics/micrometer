@@ -116,7 +116,8 @@ public class StepTimer extends AbstractTimer implements PartialStepTimer {
 
     @Override
     public double partialMean(TimeUnit unit) {
-        return partialCount() == 0 ? 0 : partialTotalTime(unit) / partialCount();
+        long partialCount = partialCount();
+        return partialCount == 0 ? 0 : partialTotalTime(unit) / partialCount;
     }
 
     @Override
