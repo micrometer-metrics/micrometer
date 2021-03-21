@@ -15,6 +15,14 @@
  */
 package io.micrometer.core.instrument.step;
 
+/**
+ * The interface Partial step double.
+ * @author garridobarrera
+ */
 public interface PartialStepDouble {
+
+    /**
+     * @return The value for the last incomplete interval (without reset).
+     */
     double partialPoll();
 }

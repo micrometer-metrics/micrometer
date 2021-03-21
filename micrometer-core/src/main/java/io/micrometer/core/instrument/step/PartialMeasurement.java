@@ -15,6 +15,14 @@
  */
 package io.micrometer.core.instrument.step;
 
+/**
+ * The interface Partial measurement.
+ * @author garridobarrera
+ */
 public interface PartialMeasurement {
+
+    /**
+     * @return Value for the measurement at partial step (without reset).
+     */
     double partialGetValue();
 }

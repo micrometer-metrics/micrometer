@@ -15,8 +15,24 @@
  */
 package io.micrometer.core.instrument.step;
 
+/**
+ * The interface Partial step distribution summary.
+ * @author garridobarrera
+ */
 public interface PartialStepDistributionSummary {
+
+    /**
+     * @return The number of times that record has been called since this summary was created at partial step (without reset).
+     */
     long partialCount();
+
+    /**
+     * @return The total amount of all recorded events at partial step (without reset).
+     */
     double partialTotalAmount();
+
+    /**
+     * @return The distribution average for all recorded events at partial step (without reset).
+     */
     double partialMean();
 }

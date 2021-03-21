@@ -17,8 +17,26 @@ package io.micrometer.core.instrument.step;
 
 import java.util.concurrent.TimeUnit;
 
+/**
+ * The interface Partial step function timer.
+ * @author garridobarrera
+ */
 public interface PartialStepFunctionTimer {
+
+    /**
+     * @return The total number of occurrences of the timed event at partial step (without reset).
+     */
     double partialCount();
+
+    /**
+     * @param unit The base unit of time to scale the total to.
+     * @return The total time of all occurrences of the timed event at partial step (without reset).
+     */
     double partialTotalTime(TimeUnit unit);
+
+    /**
+     * @param unit The base unit of time to scale the mean to.
+     * @return The distribution average for all recorded events at partial step (without reset).
+     */
     double partialMean(TimeUnit unit);
 }

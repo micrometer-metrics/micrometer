@@ -15,7 +15,14 @@
  */
 package io.micrometer.core.instrument.step;
 
+/**
+ * The interface Partial step counter.
+ * @author garridobarrera
+ */
 public interface PartialStepCounter {
 
+    /**
+     * @return The cumulative count since this counter was created at partial step (without reset).
+     */
     double partialCount();
 }
