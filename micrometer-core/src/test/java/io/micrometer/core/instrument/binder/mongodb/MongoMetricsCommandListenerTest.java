@@ -60,13 +60,14 @@ class MongoMetricsCommandListenerTest extends AbstractMongoDbTest {
         clusterId = new AtomicReference<>();
         MongoClientSettings settings = MongoClientSettings.builder()
                 .addCommandListener(new MongoMetricsCommandListener(registry))
-                .applyToClusterSettings(builder -> builder.hosts(singletonList(new ServerAddress(HOST, port))))
-                .applyToClusterSettings(builder -> builder.addClusterListener(new ClusterListener() {
-                    @Override
-                    public void clusterOpening(ClusterOpeningEvent event) {
-                        clusterId.set(event.getClusterId().getValue());
-                    }
-                })).build();
+                .applyToClusterSettings(builder -> builder
+                        .hosts(singletonList(new ServerAddress(HOST, port)))
+                        .addClusterListener(new ClusterListener() {
+                            @Override
+                            public void clusterOpening(ClusterOpeningEvent event) {
+                                clusterId.set(event.getClusterId().getValue());
+                            }
+                        })).build();
         mongo = MongoClients.create(settings);
     }
 
@@ -110,13 +111,14 @@ class MongoMetricsCommandListenerTest extends AbstractMongoDbTest {
         };
         MongoClientSettings settings = MongoClientSettings.builder()
                 .addCommandListener(new MongoMetricsCommandListener(registry, tagsProvider))
-                .applyToClusterSettings(builder -> builder.hosts(singletonList(new ServerAddress(HOST, port))))
-                .applyToClusterSettings(builder -> builder.addClusterListener(new ClusterListener() {
-                    @Override
-                    public void clusterOpening(ClusterOpeningEvent event) {
-                        clusterId.set(event.getClusterId().getValue());
-                    }
-                }))
+                .applyToClusterSettings(builder -> builder
+                        .hosts(singletonList(new ServerAddress(HOST, port)))
+                        .addClusterListener(new ClusterListener() {
+                            @Override
+                            public void clusterOpening(ClusterOpeningEvent event) {
+                                clusterId.set(event.getClusterId().getValue());
+                            }
+                        }))
                 .build();
         try (MongoClient mongo = MongoClients.create(settings)) {
             mongo.getDatabase("test")
@@ -143,13 +145,14 @@ class MongoMetricsCommandListenerTest extends AbstractMongoDbTest {
         };
         MongoClientSettings settings = MongoClientSettings.builder()
                 .addCommandListener(new MongoMetricsCommandListener(registry, tagsProvider))
-                .applyToClusterSettings(builder -> builder.hosts(singletonList(new ServerAddress(HOST, port))))
-                .applyToClusterSettings(builder -> builder.addClusterListener(new ClusterListener() {
-                    @Override
-                    public void clusterOpening(ClusterOpeningEvent event) {
-                        clusterId.set(event.getClusterId().getValue());
-                    }
-                }))
+                .applyToClusterSettings(builder -> builder
+                        .hosts(singletonList(new ServerAddress(HOST, port)))
+                        .addClusterListener(new ClusterListener() {
+                            @Override
+                            public void clusterOpening(ClusterOpeningEvent event) {
+                                clusterId.set(event.getClusterId().getValue());
+                            }
+                        }))
                 .build();
         try (MongoClient mongo = MongoClients.create(settings)) {
             mongo.getDatabase("test")

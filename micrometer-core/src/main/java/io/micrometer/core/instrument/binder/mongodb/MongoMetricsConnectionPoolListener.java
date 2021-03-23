@@ -37,6 +37,7 @@ import java.util.concurrent.atomic.AtomicInteger;
  * @author Christophe Bornet
  * @author Jonatan Ivanov
  * @since 1.2.0
+ * @implNote This implementation requires MongoDB Java driver 4 or later.
  */
 @NonNullApi
 @NonNullFields
