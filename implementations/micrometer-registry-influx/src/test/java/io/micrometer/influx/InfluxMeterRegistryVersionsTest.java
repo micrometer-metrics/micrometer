@@ -27,14 +27,14 @@ import io.micrometer.core.instrument.MockClock;
 import io.micrometer.core.instrument.config.validate.Validated;
 import io.micrometer.core.instrument.config.validate.ValidationException;
 import io.micrometer.core.lang.NonNull;
-import io.micrometer.core.lang.Nullable;
-import org.assertj.core.api.Assertions;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import ru.lanwen.wiremock.ext.WiremockResolver;
+import ru.lanwen.wiremock.ext.WiremockResolver.Wiremock;
 
 import static com.github.tomakehurst.wiremock.client.WireMock.*;
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.AssertionsForClassTypes.assertThatThrownBy;
 
 /**
  * Unit tests to check compatibility of {@link InfluxMeterRegistry} with InfluxDB v1 and InfluxDB v2.
@@ -45,9 +45,8 @@ import static org.assertj.core.api.Assertions.assertThat;
 class InfluxMeterRegistryVersionsTest {
 
     @Test
-    void writeToV1Token(@WiremockResolver.Wiremock WireMockServer server) {
-        server.stubFor(any(urlPathEqualTo("/write"))
-                .willReturn(aResponse().withStatus(204)));
+    void writeToV1Token(@Wiremock WireMockServer server) {
+        stubForV1(server);
 
         publishSimpleStat(InfluxApiVersion.V1, server);
 
@@ -56,8 +55,13 @@ class InfluxMeterRegistryVersionsTest {
                 .withHeader("Authorization", equalTo("Bearer my-token")));
     }
 
+    private void stubForV1(WireMockServer server) {
+        server.stubFor(any(urlPathEqualTo("/write"))
+                .willReturn(aResponse().withStatus(204)));
+    }
+
     @Test
-    void writeToV1BasicAuth(@WiremockResolver.Wiremock WireMockServer server) {
+    void writeToV1BasicAuth(@Wiremock WireMockServer server) {
         server.stubFor(post(urlPathEqualTo("/write"))
                 .withBasicAuth("user", "pass")
                 .willReturn(aResponse().withStatus(204)));
@@ -76,9 +80,8 @@ class InfluxMeterRegistryVersionsTest {
     }
 
     @Test
-    void writeToV1TokenPreferredOverBasicAuth(@WiremockResolver.Wiremock WireMockServer server) {
-        server.stubFor(post(urlPathEqualTo("/write"))
-                .willReturn(aResponse().withStatus(204)));
+    void writeToV1TokenPreferredOverBasicAuth(@Wiremock WireMockServer server) {
+        stubForV1(server);
 
         Map<String, String> props = new HashMap<>();
         InfluxConfig config = props::get;
@@ -95,19 +98,25 @@ class InfluxMeterRegistryVersionsTest {
     }
 
     @Test
-    void writeToV2Token(@WiremockResolver.Wiremock WireMockServer server) {
-        server.stubFor(any(urlPathEqualTo("/api/v2/write"))
-                .willReturn(aResponse().withStatus(204)));
+    void writeToV2Token(@Wiremock WireMockServer server) {
+        stubForV2(server);
 
         publishSimpleStat(InfluxApiVersion.V2, server);
 
-        server.verify(postRequestedFor(urlEqualTo("/api/v2/write?&precision=ms&bucket=my-bucket&org=my-org"))
+        server.verify(postRequestedFor(urlEqualTo("/api/v2/write?precision=ms&bucket=my-bucket&org=my-org"))
                 .withRequestBody(equalTo("my_counter,metric_type=counter value=0 1"))
                 .withHeader("Authorization", equalTo("Token my-token")));
     }
 
+    private void stubForV2(WireMockServer server) {
+        server.stubFor(any(urlPathEqualTo("/api/v2/write"))
+                .willReturn(aResponse().withStatus(204)));
+    }
+
     @Test
-    void writeToV1WithRP(@WiremockResolver.Wiremock WireMockServer server) {
+    void writeToV1WithRP(@Wiremock WireMockServer server) {
+        stubForV1(server);
+
         Map<String, String> props = new HashMap<>();
         InfluxConfig config = props::get;
         props.put("influx.uri", server.baseUrl());
@@ -123,10 +132,8 @@ class InfluxMeterRegistryVersionsTest {
     }
 
     @Test
-    void writeToV2TokenRequired(@WiremockResolver.Wiremock WireMockServer server) {
-
-        server.stubFor(any(urlPathEqualTo("/api/v2/write"))
-                .willReturn(aResponse().withStatus(204)));
+    void writeToV2TokenRequired(@Wiremock WireMockServer server) {
+        stubForV2(server);
 
         InfluxConfig config = new InfluxConfig() {
             @Override
@@ -135,7 +142,6 @@ class InfluxMeterRegistryVersionsTest {
             }
 
             @Override
-            @Nullable
             public String get(String key) {
                 return null;
             }
@@ -151,7 +157,7 @@ class InfluxMeterRegistryVersionsTest {
             }
         };
 
-        Assertions.assertThatThrownBy(() -> publishSimpleStat(config))
+        assertThatThrownBy(() -> publishSimpleStat(config))
                 .hasMessage("influx.apiVersion was 'V2' but it requires 'token' is also configured")
                 .isInstanceOf(ValidationException.class);
 
@@ -159,10 +165,8 @@ class InfluxMeterRegistryVersionsTest {
     }
 
     @Test
-    void writeToV2TokenNotBlank(@WiremockResolver.Wiremock WireMockServer server) {
-
-        server.stubFor(any(urlPathEqualTo("/api/v2/write"))
-                .willReturn(aResponse().withStatus(204)));
+    void writeToV2TokenNotBlank(@Wiremock WireMockServer server) {
+        stubForV2(server);
 
         InfluxConfig config = new InfluxConfig() {
             @Override
@@ -171,7 +175,6 @@ class InfluxMeterRegistryVersionsTest {
             }
 
             @Override
-            @Nullable
             public String get(String key) {
                 return null;
             }
@@ -192,7 +195,7 @@ class InfluxMeterRegistryVersionsTest {
             }
         };
 
-        Assertions.assertThatThrownBy(() -> publishSimpleStat(config))
+        assertThatThrownBy(() -> publishSimpleStat(config))
                 .hasMessage("influx.apiVersion was 'V2' but it requires 'token' is also configured")
                 .isInstanceOf(ValidationException.class);
 
@@ -200,10 +203,8 @@ class InfluxMeterRegistryVersionsTest {
     }
 
     @Test
-    void writeToV2OrgRequired(@WiremockResolver.Wiremock WireMockServer server) {
-
-        server.stubFor(any(urlPathEqualTo("/api/v2/write"))
-                .willReturn(aResponse().withStatus(204)));
+    void writeToV2OrgRequired(@Wiremock WireMockServer server) {
+        stubForV2(server);
 
         InfluxConfig config = new InfluxConfig() {
             @Override
@@ -212,7 +213,6 @@ class InfluxMeterRegistryVersionsTest {
             }
 
             @Override
-            @Nullable
             public String get(String key) {
                 return null;
             }
@@ -228,7 +228,7 @@ class InfluxMeterRegistryVersionsTest {
             }
         };
 
-        Assertions.assertThatThrownBy(() -> publishSimpleStat(config))
+        assertThatThrownBy(() -> publishSimpleStat(config))
                 .hasMessage("influx.apiVersion was 'V2' but it requires 'org' is also configured")
                 .isInstanceOf(ValidationException.class);
 
@@ -236,10 +236,8 @@ class InfluxMeterRegistryVersionsTest {
     }
 
     @Test
-    void writeToV2OrgNotBlank(@WiremockResolver.Wiremock WireMockServer server) {
-
-        server.stubFor(any(urlPathEqualTo("/api/v2/write"))
-                .willReturn(aResponse().withStatus(204)));
+    void writeToV2OrgNotBlank(@Wiremock WireMockServer server) {
+        stubForV2(server);
 
         InfluxConfig config = new InfluxConfig() {
             @Override
@@ -248,7 +246,6 @@ class InfluxMeterRegistryVersionsTest {
             }
 
             @Override
-            @Nullable
             public String get(String key) {
                 return null;
             }
@@ -269,7 +266,7 @@ class InfluxMeterRegistryVersionsTest {
             }
         };
 
-        Assertions.assertThatThrownBy(() -> publishSimpleStat(config))
+        assertThatThrownBy(() -> publishSimpleStat(config))
                 .hasMessage("influx.apiVersion was 'V2' but it requires 'org' is also configured")
                 .isInstanceOf(ValidationException.class);
 
@@ -295,12 +292,10 @@ class InfluxMeterRegistryVersionsTest {
     }
 
     @Test
-    void createStorageV1(@WiremockResolver.Wiremock WireMockServer server) {
-
+    void createStorageV1(@Wiremock WireMockServer server) {
         server.stubFor(any(urlPathEqualTo("/query"))
                 .willReturn(aResponse().withStatus(200).withBody("{\"results\":[{\"statement_id\":0}]}")));
-        server.stubFor(any(urlPathEqualTo("/write"))
-                .willReturn(aResponse().withStatus(204)));
+        stubForV1(server);
 
         Map<String, String> props = new HashMap<>();
         InfluxConfig config = props::get;
@@ -357,7 +352,6 @@ class InfluxMeterRegistryVersionsTest {
             }
 
             @Override
-            @Nullable
             public String get(String key) {
                 return null;
             }
@@ -395,7 +389,7 @@ class InfluxMeterRegistryVersionsTest {
         InfluxMeterRegistry registry = new InfluxMeterRegistry(config, new MockClock());
 
         Counter.builder("my.counter")
-                .baseUnit(TimeUnit.MICROSECONDS.toString().toLowerCase())
+                .baseUnit(TimeUnit.MICROSECONDS.name().toLowerCase())
                 .description("metric description")
                 .register(registry)
                 .increment(Math.PI);
