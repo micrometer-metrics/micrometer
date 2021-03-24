@@ -6,8 +6,6 @@ ch.qos.logback:logback-core:1.2.3
 com.github.tomakehurst:wiremock-jre8-standalone:2.27.2
 com.google.code.findbugs:jsr305:3.0.2
 io.netty:netty-buffer:4.1.56.Final
-io.netty:netty-codec-http2:4.1.56.Final
-io.netty:netty-codec-http:4.1.56.Final
 io.netty:netty-codec-socks:4.1.56.Final
 io.netty:netty-codec:4.1.56.Final
 io.netty:netty-common:4.1.56.Final
