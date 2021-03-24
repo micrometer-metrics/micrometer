@@ -54,13 +54,14 @@ class MongoMetricsConnectionPoolListenerTest extends AbstractMongoDbTest {
                         .minSize(2)
                         .addConnectionPoolListener(new MongoMetricsConnectionPoolListener(registry))
                 )
-                .applyToClusterSettings(builder -> builder.hosts(singletonList(new ServerAddress(HOST, port))))
-                .applyToClusterSettings(builder -> builder.addClusterListener(new ClusterListener() {
-                    @Override
-                    public void clusterOpening(ClusterOpeningEvent event) {
-                        clusterId.set(event.getClusterId().getValue());
-                    }
-                }))
+                .applyToClusterSettings(builder -> builder
+                        .hosts(singletonList(new ServerAddress(HOST, port)))
+                        .addClusterListener(new ClusterListener() {
+                            @Override
+                            public void clusterOpening(ClusterOpeningEvent event) {
+                                clusterId.set(event.getClusterId().getValue());
+                            }
+                        }))
                 .build();
         MongoClient mongo = MongoClients.create(settings);
 
@@ -98,13 +99,14 @@ class MongoMetricsConnectionPoolListenerTest extends AbstractMongoDbTest {
                         .minSize(2)
                         .addConnectionPoolListener(connectionPoolListener)
                 )
-                .applyToClusterSettings(builder -> builder.hosts(singletonList(new ServerAddress(HOST, port))))
-                .applyToClusterSettings(builder -> builder.addClusterListener(new ClusterListener() {
-                    @Override
-                    public void clusterOpening(ClusterOpeningEvent event) {
-                        clusterId.set(event.getClusterId().getValue());
-                    }
-                }))
+                .applyToClusterSettings(builder -> builder
+                        .hosts(singletonList(new ServerAddress(HOST, port)))
+                        .addClusterListener(new ClusterListener() {
+                            @Override
+                            public void clusterOpening(ClusterOpeningEvent event) {
+                                clusterId.set(event.getClusterId().getValue());
+                            }
+                        }))
                 .build();
         MongoClient mongo = MongoClients.create(settings);
 
