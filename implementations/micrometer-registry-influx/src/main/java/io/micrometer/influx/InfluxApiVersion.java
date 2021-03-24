@@ -31,7 +31,7 @@ public enum InfluxApiVersion {
     V1 {
         @Override
         String writeEndpoint(final InfluxConfig config) {
-            String influxEndpoint = config.uri() + "/write?consistency=" + config.consistency().toString().toLowerCase() + "&precision=ms&db=" + config.db();
+            String influxEndpoint = config.uri() + "/write?consistency=" + config.consistency().name().toLowerCase() + "&precision=ms&db=" + config.db();
             if (StringUtils.isNotBlank(config.retentionPolicy())) {
                 influxEndpoint += "&rp=" + config.retentionPolicy();
             }
@@ -51,7 +51,7 @@ public enum InfluxApiVersion {
         String writeEndpoint(final InfluxConfig config) throws UnsupportedEncodingException {
             String bucket = URLEncoder.encode(config.bucket(), "UTF-8");
             String org = URLEncoder.encode(config.org(), "UTF-8");
-            return config.uri() + "/api/v2/write?&precision=ms&bucket=" + bucket + "&org=" + org;
+            return config.uri() + "/api/v2/write?precision=ms&bucket=" + bucket + "&org=" + org;
         }
 
         @Override
