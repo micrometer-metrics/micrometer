@@ -68,7 +68,7 @@ public abstract class StepMeterRegistry extends PushMeterRegistry {
     @Override
     protected DistributionSummary newDistributionSummary(Meter.Id id, DistributionStatisticConfig distributionStatisticConfig, double scale) {
         DistributionSummary summary = new StepDistributionSummary(id, clock, distributionStatisticConfig, scale,
-            config.step().toMillis(),false);
+            config.step().toMillis(), false);
         HistogramGauges.registerWithCommonFormat(summary, this);
         return summary;
     }
