@@ -36,6 +36,7 @@
         </module>
 
         <!-- Whitespace -->
+        <module name="com.puppycrawl.tools.checkstyle.checks.whitespace.WhitespaceAfterCheck" />
         <module name="com.puppycrawl.tools.checkstyle.checks.whitespace.WhitespaceAroundCheck" />
 
         <!-- Modifiers -->
