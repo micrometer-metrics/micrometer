@@ -50,7 +50,7 @@ import static io.micrometer.health.QueryUtils.SUM_OR_NAN;
 public abstract class ServiceLevelObjective {
     private static final ThreadLocal<DecimalFormat> WHOLE_OR_SHORT_DECIMAL = ThreadLocal.withInitial(() -> {
         DecimalFormatSymbols otherSymbols = new DecimalFormatSymbols(Locale.US);
-        return new DecimalFormat("##0.##",otherSymbols);
+        return new DecimalFormat("##0.##", otherSymbols);
     });
 
     private final String name;

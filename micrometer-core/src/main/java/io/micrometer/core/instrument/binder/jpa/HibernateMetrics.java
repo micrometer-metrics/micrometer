@@ -248,9 +248,9 @@ public class HibernateMetrics implements MeterBinder {
             Statistics::getQueryCacheMissCount, "result", "miss");
         counter(registry, "hibernate.cache.query.puts", "The number of cacheable queries put in cache",
             Statistics::getQueryCachePutCount);
-        counter(registry,"hibernate.cache.query.plan", "The global number of query plans successfully retrieved from cache",
+        counter(registry, "hibernate.cache.query.plan", "The global number of query plans successfully retrieved from cache",
                 Statistics::getQueryPlanCacheHitCount, "result", "hit");
-        counter(registry,"hibernate.cache.query.plan", "The global number of query plans lookups not found in cache",
+        counter(registry, "hibernate.cache.query.plan", "The global number of query plans lookups not found in cache",
                 Statistics::getQueryPlanCacheMissCount, "result", "miss");
     }
 
