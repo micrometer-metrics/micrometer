@@ -55,6 +55,7 @@ public class MongoMetricsCommandListener implements CommandListener {
      *
      * @param registry meter registry
      * @param tagsProvider provides tags to be associated with metrics for the given Mongo command
+     * @since 1.7.0
      */
     public MongoMetricsCommandListener(MeterRegistry registry, MongoMetricsCommandTagsProvider tagsProvider) {
         this.registry = registry;

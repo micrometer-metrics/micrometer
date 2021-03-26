@@ -1,5 +1,5 @@
 /**
- * Copyright 2020 VMware, Inc.
+ * Copyright 2021 VMware, Inc.
  * <p>
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,9 +20,10 @@ import io.micrometer.core.instrument.Tag;
 import io.micrometer.core.instrument.Tags;
 
 /**
- * Default implementation for {@link MongoMetricsConnectionPoolTagsProvider}
+ * Default implementation for {@link MongoMetricsConnectionPoolTagsProvider}.
  *
  * @author Gustavo Monarin
+ * @since 1.7.0
  */
 public class DefaultMongoMetricsConnectionPoolTagsProvider implements MongoMetricsConnectionPoolTagsProvider {
 
