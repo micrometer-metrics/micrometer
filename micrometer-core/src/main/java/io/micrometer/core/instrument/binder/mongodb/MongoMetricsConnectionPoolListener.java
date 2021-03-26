@@ -54,10 +54,22 @@ public class MongoMetricsConnectionPoolListener implements ConnectionPoolListene
     private final MeterRegistry registry;
     private final MongoMetricsConnectionPoolTagsProvider tagsProvider;
 
+    /**
+     * Create a new {@code MongoMetricsConnectionPoolListener}.
+     *
+     * @param registry registry to use
+     */
     public MongoMetricsConnectionPoolListener(MeterRegistry registry) {
         this(registry, new DefaultMongoMetricsConnectionPoolTagsProvider());
     }
 
+    /**
+     * Create a new {@code MongoMetricsConnectionPoolListener}.
+     *
+     * @param registry registry to use
+     * @param tagsProvider tags provider to use
+     * @since 1.7.0
+     */
     public MongoMetricsConnectionPoolListener(MeterRegistry registry, MongoMetricsConnectionPoolTagsProvider tagsProvider) {
         this.registry = registry;
         this.tagsProvider = tagsProvider;
