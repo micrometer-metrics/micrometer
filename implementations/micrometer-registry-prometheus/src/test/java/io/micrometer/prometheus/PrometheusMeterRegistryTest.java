@@ -20,6 +20,7 @@ import io.micrometer.core.instrument.*;
 import io.micrometer.core.instrument.binder.BaseUnits;
 import io.micrometer.core.instrument.composite.CompositeMeterRegistry;
 import io.micrometer.core.instrument.distribution.DistributionStatisticConfig;
+import io.micrometer.core.instrument.distribution.HistogramSnapshot;
 import io.prometheus.client.Collector;
 import io.prometheus.client.CollectorRegistry;
 import org.assertj.core.api.Condition;
@@ -411,5 +412,17 @@ class PrometheusMeterRegistryTest {
         timer.record(2);
 
         assertThat(timer.takeSnapshot().percentileValues()[0].value()).isEqualTo(2.0, offset(0.2));
+    }
+
+    @Issue("#2060")
+    @Test
+    void timerCountAndSumHasCorrectBaseUnit() {
+        Timer timer = Timer.builder("my.timer")
+                .publishPercentileHistogram()
+                .register(registry);
+
+        timer.record(1, TimeUnit.SECONDS);
+        HistogramSnapshot histogramSnapshot = timer.takeSnapshot();
+        assertThat(histogramSnapshot.total(TimeUnit.SECONDS)).isEqualTo(1);
     }
 }
