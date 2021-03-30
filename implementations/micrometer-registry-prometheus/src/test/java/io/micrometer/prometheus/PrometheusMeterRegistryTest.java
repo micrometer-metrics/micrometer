@@ -544,7 +544,7 @@ class PrometheusMeterRegistryTest {
 
     @Issue("#2060")
     @Test
-    void timerCountAndSumHasCorrectBaseUnit() {
+    void timerSumAndMaxHaveCorrectBaseUnit_whenPercentileHistogramEnabled() {
         Timer timer = Timer.builder("my.timer")
                 .publishPercentileHistogram()
                 .register(registry);
@@ -552,6 +552,10 @@ class PrometheusMeterRegistryTest {
         timer.record(1, TimeUnit.SECONDS);
         HistogramSnapshot histogramSnapshot = timer.takeSnapshot();
         assertThat(histogramSnapshot.total(TimeUnit.SECONDS)).isEqualTo(1);
+        assertThat(histogramSnapshot.max(TimeUnit.SECONDS)).isEqualTo(1);
+        String scrape = registry.scrape();
+        assertThat(scrape).contains("my_timer_seconds_sum 1.0\n");
+        assertThat(scrape).contains("my_timer_seconds_max 1.0\n");
     }
 
     @Test
