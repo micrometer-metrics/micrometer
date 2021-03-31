@@ -20,6 +20,8 @@ import io.micrometer.core.instrument.step.StepRegistryConfig;
 import io.micrometer.core.instrument.util.StringUtils;
 import io.micrometer.core.lang.Nullable;
 
+import java.util.function.Function;
+
 import static io.micrometer.core.instrument.config.MeterRegistryConfigValidator.*;
 import static io.micrometer.core.instrument.config.validate.PropertyValidator.*;
 
@@ -63,15 +65,34 @@ public interface DynatraceConfig extends StepRegistryConfig {
     default String group() {
         return get(prefix() + ".group");
     }
+    
+    default String apiVersion() {
+        return "v1";
+//        return getString(this, "apiVersion").required().get();
+    }
 
+    /**
+     * Return the version of the target Dynatrace API.
+     * 
+     * @return a {@link String} containing the version of the targeted Dynatrace API.
+     */
     @Override
     default Validated<?> validate() {
-        return checkAll(this,
-                c -> StepRegistryConfig.validate(c),
-                checkRequired("apiToken", DynatraceConfig::apiToken),
-                checkRequired("uri", DynatraceConfig::uri),
-                checkRequired("deviceId", DynatraceConfig::deviceId),
-                check("technologyType", DynatraceConfig::technologyType).andThen(Validated::nonBlank)
-        );
+        // once the apiVersion is actually transmitted by spring-boot, use this:
+//        Function<DynatraceConfig, Validated<String>> versionFunc = checkRequired("apiVersion", DynatraceConfig::apiVersion);
+//        String versionStr = versionFunc.apply(this).get();
+        String versionStr = "v1";
+        if (versionStr.startsWith("v1")) {
+            return checkAll(this,
+                    c -> StepRegistryConfig.validate(c),
+                    checkRequired("apiToken", DynatraceConfig::apiToken),
+                    checkRequired("uri", DynatraceConfig::uri),
+                    checkRequired("deviceId", DynatraceConfig::deviceId),
+                    check("technologyType", DynatraceConfig::technologyType).andThen(Validated::nonBlank)
+            );
+        }
+        
+        // else check only api token and uri which are needed for v2. 
+        throw new IllegalArgumentException(String.format("the api version is not valid: %s", versionStr));
     }
 }

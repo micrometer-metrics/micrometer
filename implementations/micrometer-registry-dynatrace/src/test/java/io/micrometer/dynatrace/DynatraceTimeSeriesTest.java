@@ -15,6 +15,7 @@
  */
 package io.micrometer.dynatrace;
 
+import io.micrometer.dynatrace.v1.DynatraceTimeSeries;
 import org.junit.jupiter.api.Test;
 
 import java.util.HashMap;

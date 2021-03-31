@@ -19,3 +19,5 @@ management.metrics.export.dynatrace:
   apiToken: my-api-token
   uri: https://my-environment-id.live.dynatrace.com
   deviceId: my-custom-device
+  apiVersion: v2
+  step: 5s
