@@ -40,9 +40,6 @@ public final class Search {
     private final Set<String> requiredTagKeys = new HashSet<>();
     private final Map<String, Collection<Predicate<String>>> tagMatches = new HashMap<>();
 
-    @Nullable
-    private String exactNameMatch;
-
     private Search(MeterRegistry registry) {
         this.registry = registry;
     }
@@ -54,9 +51,7 @@ public final class Search {
      * @return This search.
      */
     public Search name(String exactName) {
-        Search search = name(n -> n.equals(exactName));
-        this.exactNameMatch = exactName;
-        return search;
+        return name(n -> n.equals(exactName));
     }
 
     /**
@@ -67,14 +62,13 @@ public final class Search {
      */
     public Search name(@Nullable Predicate<String> nameMatches) {
         if (nameMatches != null) {
-            this.exactNameMatch = null;
             this.nameMatches = nameMatches;
         }
         return this;
     }
 
     /**
-     * Meter contains a tag with the matching tag keys and values.
+     * Meter contains tags with the matching tag keys and values.
      *
      * @param tags The tags to match.
      * @return This search.
@@ -85,7 +79,7 @@ public final class Search {
     }
 
     /**
-     * Meter contains a tag with the matching tag keys and values.
+     * Meter contains tags with the matching tag keys and values.
      *
      * @param tags Must be an even number of arguments representing key/value pairs of tags.
      * @return This search.
@@ -106,13 +100,24 @@ public final class Search {
     }
 
     /**
-     * Meter contains a tag with the matching keys.
+     * Meter contains tags with the matching keys.
      *
      * @param tagKeys The tag keys to match.
      * @return This search.
      */
     public Search tagKeys(String... tagKeys) {
-        requiredTagKeys.addAll(Arrays.asList(tagKeys));
+        return tagKeys(Arrays.asList(tagKeys));
+    }
+
+    /**
+     * Meter contains tags with the matching keys.
+     *
+     * @param tagKeys The tag keys to match.
+     * @return This search.
+     * @since 1.7.0
+     */
+    public Search tagKeys(Collection<String> tagKeys) {
+        requiredTagKeys.addAll(tagKeys);
         return this;
     }
 
@@ -228,64 +233,45 @@ public final class Search {
                 if (!nameMatches.test(id.getName())) {
                     return MeterFilterReply.NEUTRAL;
                 }
-
-                boolean requiredKeysPresent = true;
-                if (!requiredTagKeys.isEmpty()) {
-                    final List<String> tagKeys = new ArrayList<>();
-                    id.getTags().forEach(t -> tagKeys.add(t.getKey()));
-                    requiredKeysPresent = tagKeys.containsAll(requiredTagKeys);
-                }
-
-                boolean tagPredicatesMatched = true;
-                if (!tagMatches.isEmpty()) {
-                    final Set<String> matchingTagKeys = new HashSet<>();
-                    id.getTags().forEach(t -> {
-                        Collection<Predicate<String>> tagValueMatchers = tagMatches.get(t.getKey());
-                        if (tagValueMatchers != null) {
-                            if (tagValueMatchers.stream().allMatch(matcher -> matcher.test(t.getValue()))) {
-                                matchingTagKeys.add(t.getKey());
-                            }
-                        }
-                    });
-                    tagPredicatesMatched = tagMatches.keySet().size() == matchingTagKeys.size();
-                }
-
-                return requiredKeysPresent && tagPredicatesMatched && id.getTags().containsAll(tags) ?
-                        MeterFilterReply.ACCEPT : MeterFilterReply.NEUTRAL;
+                return isTagsMatched(id) ? MeterFilterReply.ACCEPT : MeterFilterReply.NEUTRAL;
             }
         };
     }
 
+    private boolean isTagsMatched(Meter.Id id) {
+        return isRequiredTagKeysPresent(id) && isTagPredicatesMatched(id) && id.getTags().containsAll(tags);
+    }
+
+    private boolean isRequiredTagKeysPresent(Meter.Id id) {
+        if (!requiredTagKeys.isEmpty()) {
+            final Set<String> tagKeys = new HashSet<>();
+            id.getTags().forEach(t -> tagKeys.add(t.getKey()));
+            return tagKeys.containsAll(requiredTagKeys);
+        }
+        return true;
+    }
+
+    private boolean isTagPredicatesMatched(Meter.Id id) {
+        if (!tagMatches.isEmpty()) {
+            final Set<String> matchingTagKeys = new HashSet<>();
+            id.getTags().forEach(t -> {
+                Collection<Predicate<String>> tagValueMatchers = tagMatches.get(t.getKey());
+                if (tagValueMatchers != null) {
+                    if (tagValueMatchers.stream().allMatch(matcher -> matcher.test(t.getValue()))) {
+                        matchingTagKeys.add(t.getKey());
+                    }
+                }
+            });
+            return tagMatches.keySet().size() == matchingTagKeys.size();
+        }
+        return true;
+    }
+
     private Stream<Meter> meterStream() {
         Stream<Meter> meterStream = registry.getMeters().stream().filter(m -> nameMatches.test(m.getId().getName()));
-
         if (!tags.isEmpty() || !requiredTagKeys.isEmpty() || !tagMatches.isEmpty()) {
-            meterStream = meterStream.filter(m -> {
-                boolean requiredKeysPresent = true;
-                if (!requiredTagKeys.isEmpty()) {
-                    final List<String> tagKeys = new ArrayList<>();
-                    m.getId().getTags().forEach(t -> tagKeys.add(t.getKey()));
-                    requiredKeysPresent = tagKeys.containsAll(requiredTagKeys);
-                }
-
-                boolean tagPredicatesMatched = true;
-                if (!tagMatches.isEmpty()) {
-                    final Set<String> matchingTagKeys = new HashSet<>();
-                    m.getId().getTags().forEach(t -> {
-                        Collection<Predicate<String>> tagValueMatchers = tagMatches.get(t.getKey());
-                        if (tagValueMatchers != null) {
-                            if (tagValueMatchers.stream().allMatch(matcher -> matcher.test(t.getValue()))) {
-                                matchingTagKeys.add(t.getKey());
-                            }
-                        }
-                    });
-                    tagPredicatesMatched = tagMatches.keySet().size() == matchingTagKeys.size();
-                }
-
-                return requiredKeysPresent && tagPredicatesMatched && m.getId().getTags().containsAll(tags);
-            });
+            meterStream = meterStream.filter(m -> isTagsMatched(m.getId()));
         }
-
         return meterStream;
     }
 

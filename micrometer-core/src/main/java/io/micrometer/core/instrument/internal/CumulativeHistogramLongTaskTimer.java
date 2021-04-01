@@ -44,7 +44,7 @@ public class CumulativeHistogramLongTaskTimer extends DefaultLongTaskTimer {
     public HistogramSnapshot takeSnapshot() {
         HistogramSnapshot snapshot = super.takeSnapshot();
 
-        AtomicInteger i = new AtomicInteger(0);
+        AtomicInteger i = new AtomicInteger();
 
         snapshot = new HistogramSnapshot(
                 snapshot.count(),

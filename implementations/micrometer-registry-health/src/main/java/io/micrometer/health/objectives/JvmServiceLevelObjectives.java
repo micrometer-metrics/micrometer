@@ -23,6 +23,8 @@ import io.micrometer.health.ServiceLevelObjective;
 import java.time.Duration;
 
 /**
+ * {@link ServiceLevelObjective ServiceLevelObjectives} for Java Virtual Machine.
+ *
  * @author Jon Schneider
  * @since 1.6.0
  */
@@ -31,7 +33,7 @@ public class JvmServiceLevelObjectives {
      * A series of high-level heap monitors originally defined in
      * <a href="https://www.jetbrains.com/help/teamcity/teamcity-memory-monitor.html">Team City's memory monitor</a>.
      */
-    public static final ServiceLevelObjective[] MEMORY = new ServiceLevelObjective[]{
+    public static final ServiceLevelObjective[] MEMORY = new ServiceLevelObjective[] {
             ServiceLevelObjective
                     .build("jvm.pool.memory")
                     .failedMessage("Memory usage in a single memory pool exceeds 90% after garbage collection.")
@@ -44,6 +46,7 @@ public class JvmServiceLevelObjectives {
                     .build("jvm.gc.load")
                     .failedMessage("Memory cleaning is taking more than 50% of CPU resources on average. " +
                             "This usually means really serious problems with memory resulting in high performance degradation.")
+                    .requires(new JvmHeapPressureMetrics())
                     .baseUnit("percent CPU time spent")
                     .value(s -> s.name("jvm.gc.overhead"))
                     .isLessThan(0.5),
@@ -72,7 +75,7 @@ public class JvmServiceLevelObjectives {
                     .and()
     };
 
-    public static final ServiceLevelObjective[] ALLOCATIONS = new ServiceLevelObjective[]{
+    public static final ServiceLevelObjective[] ALLOCATIONS = new ServiceLevelObjective[] {
             ServiceLevelObjective
                     .build("jvm.allocations.g1.humongous")
                     .failedMessage("A single object was allocated that exceeded 50% of the total size of the eden space.")

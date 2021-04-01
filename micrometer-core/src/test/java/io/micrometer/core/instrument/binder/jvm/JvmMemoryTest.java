@@ -16,18 +16,30 @@
 package io.micrometer.core.instrument.binder.jvm;
 
 import org.junit.jupiter.api.Test;
-
-import java.lang.management.MemoryPoolMXBean;
-import java.util.Optional;
+import org.junit.jupiter.api.condition.DisabledIfSystemProperty;
+import org.junit.jupiter.api.condition.EnabledIfSystemProperty;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.junit.jupiter.api.Assertions.*;
 
+@GcTest
 class JvmMemoryTest {
+    @Test
+    @DisabledIfSystemProperty(named = "java.vm.vendor", matches = "Eclipse OpenJ9")
+    void getLongLivedHeapPool() {
+        assertThat(JvmMemory.getLongLivedHeapPool()).isNotEmpty();
+    }
 
     @Test
-    void assertJvmMemoryGetOldGen() {
-        Optional<MemoryPoolMXBean> oldGen = JvmMemory.getOldGen();
-        assertThat(oldGen).isNotEmpty();
+    @EnabledIfSystemProperty(named = "java.vm.vendor", matches = "Eclipse OpenJ9")
+    void getLongLivedHeapPoolWithEclipseOpenJ9() {
+        assertThat(JvmMemory.getLongLivedHeapPool()).isEmpty();
+    }
+
+    @Test
+    void assertTolerateNullName() {
+        // There is a way for the name passed to these methods to be null.
+        // Ensure they don't fail;
+        assertThat(JvmMemory.isOldGenPool(null)).isFalse();
+        assertThat(JvmMemory.isYoungGenPool(null)).isFalse();
     }
 }

@@ -271,8 +271,7 @@ public interface Timer extends Meter, HistogramSupport {
         }
 
         /**
-         * Records the duration of the operation. Using this method, any tags
-         * stored on the sample are NOT recorded with the timing.
+         * Records the duration of the operation.
          *
          * @param timer The timer to record the sample to.
          * @return The total duration of the sample in nanoseconds

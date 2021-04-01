@@ -76,7 +76,7 @@ public class StatsdMeterRegistry extends MeterRegistry {
     private final StatsdConfig statsdConfig;
     private final HierarchicalNameMapper nameMapper;
     private final Map<Meter.Id, StatsdPollable> pollableMeters = new ConcurrentHashMap<>();
-    private final AtomicBoolean started = new AtomicBoolean(false);
+    private final AtomicBoolean started = new AtomicBoolean();
     DirectProcessor<String> processor = DirectProcessor.create();
     FluxSink<String> fluxSink = new NoopFluxSink();
     Disposable.Swap statsdConnection = Disposables.swap();
@@ -95,8 +95,8 @@ public class StatsdMeterRegistry extends MeterRegistry {
     }
 
     /**
-     * Use this constructor for Etsy-flavored StatsD when you need to influence the way Micrometer's dimensional {@link Meter.Id}
-     * is written to a flat hierarchical name.
+     * Use this constructor for Etsy-flavored StatsD when you need to influence the way Micrometer's dimensional
+     * {@link io.micrometer.core.instrument.Meter.Id Meter.Id} is written to a flat hierarchical name.
      *
      * @param config     The StatsD configuration.
      * @param nameMapper A strategy for flattening dimensional IDs.

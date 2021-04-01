@@ -31,7 +31,7 @@ interface GaugeTest {
     @Test
     @DisplayName("gauges attached to a number are updated when their values are observed")
     default void numericGauge(MeterRegistry registry) {
-        AtomicInteger n = registry.gauge("my.gauge", new AtomicInteger(0));
+        AtomicInteger n = registry.gauge("my.gauge", new AtomicInteger());
         n.set(1);
 
         Gauge g = registry.get("my.gauge").gauge();

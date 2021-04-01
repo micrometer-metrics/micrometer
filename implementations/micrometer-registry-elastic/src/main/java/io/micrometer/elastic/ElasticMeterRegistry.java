@@ -24,7 +24,6 @@ import io.micrometer.core.instrument.util.StringUtils;
 import io.micrometer.core.ipc.http.HttpSender;
 import io.micrometer.core.ipc.http.HttpUrlConnectionSender;
 import io.micrometer.core.lang.NonNull;
-import io.micrometer.core.lang.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -39,6 +38,7 @@ import java.util.Optional;
 import java.util.concurrent.ThreadFactory;
 import java.util.concurrent.TimeUnit;
 import java.util.function.Consumer;
+import java.util.function.Function;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -52,6 +52,7 @@ import static java.util.stream.Collectors.joining;
  * @author Jon Schneider
  * @author Johnny Lim
  * @since 1.1.0
+ * @implNote This implementation requires Elasticsearch 7 or above.
  */
 public class ElasticMeterRegistry extends StepMeterRegistry {
     private static final ThreadFactory DEFAULT_THREAD_FACTORY = new NamedThreadFactory("elastic-metrics-publisher");
@@ -63,44 +64,50 @@ public class ElasticMeterRegistry extends StepMeterRegistry {
             "    \"type\": \"keyword\"\n" +
             "  },\n" +
             "  \"count\": {\n" +
-            "    \"type\": \"double\"\n" +
+            "    \"type\": \"double\",\n" +
+            "    \"index\": false\n" +
             "  },\n" +
             "  \"value\": {\n" +
-            "    \"type\": \"double\"\n" +
+            "    \"type\": \"double\",\n" +
+            "    \"index\": false\n" +
             "  },\n" +
             "  \"sum\": {\n" +
-            "    \"type\": \"double\"\n" +
+            "    \"type\": \"double\",\n" +
+            "    \"index\": false\n" +
             "  },\n" +
             "  \"mean\": {\n" +
-            "    \"type\": \"double\"\n" +
+            "    \"type\": \"double\",\n" +
+            "    \"index\": false\n" +
             "  },\n" +
             "  \"duration\": {\n" +
-            "    \"type\": \"double\"\n" +
+            "    \"type\": \"double\",\n" +
+            "    \"index\": false\n" +
             "  },\n" +
             "  \"max\": {\n" +
-            "    \"type\": \"double\"\n" +
+            "    \"type\": \"double\",\n" +
+            "    \"index\": false\n" +
             "  },\n" +
             "  \"total\": {\n" +
-            "    \"type\": \"double\"\n" +
+            "    \"type\": \"double\",\n" +
+            "    \"index\": false\n" +
             "  },\n" +
             "  \"unknown\": {\n" +
-            "    \"type\": \"double\"\n" +
+            "    \"type\": \"double\",\n" +
+            "    \"index\": false\n" +
             "  },\n" +
             "  \"active\": {\n" +
-            "    \"type\": \"double\"\n" +
+            "    \"type\": \"double\",\n" +
+            "    \"index\": false\n" +
             "  }\n" +
             "}";
-    private static final String TEMPLATE_BODY_BEFORE_VERSION_7 = "{\"template\":\"metrics*\",\"mappings\":{\"_default_\":{\"_all\":{\"enabled\":false}," + TEMPLATE_PROPERTIES + "}}}";
-    private static final String TEMPLATE_BODY_AFTER_VERSION_7 = "{\n" +
-            "  \"index_patterns\": [\"metrics*\"],\n" +
+    private static final Function<String, String> TEMPLATE_BODY_AFTER_VERSION_7 = (indexPrefix) -> "{\n" +
+            "  \"index_patterns\": [\"" + indexPrefix + "*\"],\n" +
             "  \"mappings\": {\n" +
             "    \"_source\": {\n" +
             "      \"enabled\": false\n" +
             "    },\n" + TEMPLATE_PROPERTIES +
             "  }\n" +
             "}";
-
-    private static final String TYPE_PATH_AFTER_VERSION_7 = "";
 
     private static final Pattern MAJOR_VERSION_PATTERN = Pattern.compile("\"number\" *: *\"([\\d]+)");
 
@@ -116,10 +123,7 @@ public class ElasticMeterRegistry extends StepMeterRegistry {
 
     private final String indexLine;
 
-    @Nullable
-    private volatile Integer majorVersion;
-
-    private volatile boolean checkedForIndexTemplate = false;
+    private volatile boolean checkedForIndexTemplate;
 
     @SuppressWarnings("deprecation")
     public ElasticMeterRegistry(ElasticConfig config, Clock clock) {
@@ -189,17 +193,15 @@ public class ElasticMeterRegistry extends StepMeterRegistry {
         checkedForIndexTemplate = true;
     }
 
-    @SuppressWarnings("ConstantConditions")
     private String getTemplateBody() {
-        return majorVersion == null ||  majorVersion < 7 ? TEMPLATE_BODY_BEFORE_VERSION_7 : TEMPLATE_BODY_AFTER_VERSION_7;
+        return TEMPLATE_BODY_AFTER_VERSION_7.apply(config.index() + config.indexDateSeparator());
     }
 
     @Override
     protected void publish() {
-        determineMajorVersionIfNeeded();
         createIndexTemplateIfNeeded();
 
-        String uri = config.host() + "/" + indexName() + getTypePath() + "/_bulk";
+        String uri = config.host() + "/" + indexName() + "/_bulk";
         for (List<Meter> batch : MeterPartition.partition(this, config.batchSize())) {
             try {
                 String requestBody = batch.stream()
@@ -243,21 +245,6 @@ public class ElasticMeterRegistry extends StepMeterRegistry {
         }
     }
 
-    private void determineMajorVersionIfNeeded() {
-        if (majorVersion != null) {
-            return;
-        }
-        try {
-            String responseBody = httpClient.get(config.host())
-                    .withBasicAuthentication(config.userName(), config.password())
-                    .send()
-                    .body();
-            majorVersion = getMajorVersion(responseBody);
-        } catch (Throwable ex) {
-            throw new RuntimeException(ex);
-        }
-    }
-
     // VisibleForTesting
     static int getMajorVersion(String responseBody) {
         Matcher matcher = MAJOR_VERSION_PATTERN.matcher(responseBody);
@@ -265,11 +252,6 @@ public class ElasticMeterRegistry extends StepMeterRegistry {
             throw new IllegalArgumentException("Unexpected response body: " + responseBody);
         }
         return Integer.parseInt(matcher.group(1));
-    }
-
-    @SuppressWarnings("ConstantConditions")
-    private String getTypePath() {
-        return majorVersion == null || majorVersion < 7 ? "/" + config.documentType() : TYPE_PATH_AFTER_VERSION_7;
     }
 
     // VisibleForTesting
@@ -337,11 +319,12 @@ public class ElasticMeterRegistry extends StepMeterRegistry {
     // VisibleForTesting
     Optional<String> writeFunctionTimer(FunctionTimer timer) {
         double sum = timer.totalTime(getBaseTimeUnit());
-        if (Double.isFinite(sum)) {
+        double mean = timer.mean(getBaseTimeUnit());
+        if (Double.isFinite(sum) && Double.isFinite(mean)) {
             return Optional.of(writeDocument(timer, builder -> {
                 builder.append(",\"count\":").append(timer.count());
                 builder.append(",\"sum\":").append(sum);
-                builder.append(",\"mean\":").append(timer.mean(getBaseTimeUnit()));
+                builder.append(",\"mean\":").append(mean);
             }));
         }
         return Optional.empty();

@@ -68,12 +68,12 @@ public interface ElasticConfig extends StepRegistryConfig {
 
     /**
      * The index name to write metrics to.
-     * Default is: "metrics"
+     * Default is: "micrometer-metrics"
      *
      * @return index name
      */
     default String index() {
-        return getString(this, "index").orElse("metrics");
+        return getString(this, "index").orElse("micrometer-metrics");
     }
 
     /**
@@ -169,7 +169,9 @@ public interface ElasticConfig extends StepRegistryConfig {
      *
      * @return document type
      * @since 1.4.0
+     * @deprecated This is no-op due to removal of mapping types since Elasticsearch 7.
      */
+    @Deprecated
     default String documentType() {
         return getString(this, "documentType").orElse("doc");
     }

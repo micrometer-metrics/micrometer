@@ -155,4 +155,43 @@ class InfluxMeterRegistryTest {
         Meter meter = Meter.builder("my.meter", Meter.Type.GAUGE, measurements).register(this.meterRegistry);
         assertThat(meterRegistry.writeMeter(meter)).containsExactly("my_meter,metric_type=gauge value=1,value=2 1");
     }
+
+    @Test
+    void nanFunctionTimerShouldNotBeWritten() {
+        FunctionTimer timer = FunctionTimer.builder("myFunctionTimer", Double.NaN, Number::longValue, Number::doubleValue, TimeUnit.MILLISECONDS).register(meterRegistry);
+        clock.add(config.step());
+        assertThat(meterRegistry.writeFunctionTimer(timer)).isEmpty();
+    }
+
+    @Test
+    void nanMeanFunctionTimerShouldNotWriteMean() {
+        FunctionTimer functionTimer = new FunctionTimer() {
+            @Override
+            public double count() {
+                return 1;
+            }
+
+            @Override
+            public double totalTime(TimeUnit unit) {
+                return 1;
+            }
+
+            @Override
+            public TimeUnit baseTimeUnit() {
+                return TimeUnit.SECONDS;
+            }
+
+            @Override
+            public Id getId() {
+                return new Id("func.timer", Tags.empty(), null, null, Type.TIMER);
+            }
+
+            @Override
+            public double mean(TimeUnit unit) {
+                return Double.NaN;
+            }
+        };
+        assertThat(meterRegistry.writeFunctionTimer(functionTimer))
+                .containsOnly("func_timer,metric_type=histogram sum=1,count=1 1");
+    }
 }

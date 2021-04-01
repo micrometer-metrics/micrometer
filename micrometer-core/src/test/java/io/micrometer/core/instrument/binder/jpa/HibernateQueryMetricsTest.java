@@ -34,7 +34,11 @@ import static org.mockito.Mockito.when;
  * Tests for {@link HibernateQueryMetrics}.
  *
  * @author Pawel Stepien
+ * @deprecated This implementation is deprecated in favor of the MeterBinder maintained
+ *    as part of the Hibernate project as of version 5.4.26. See
+ *    https://mvnrepository.com/artifact/org.hibernate/hibernate-micrometer/
  */
+@SuppressWarnings("deprecation")
 class HibernateQueryMetricsTest {
 
     private MeterRegistry registry = new SimpleMeterRegistry();

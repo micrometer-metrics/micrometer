@@ -220,7 +220,7 @@ public class DefaultLongTaskTimer extends AbstractMeter implements LongTaskTimer
 
     class SampleImpl extends Sample {
         private final long startTime;
-        private volatile boolean stopped = false;
+        private volatile boolean stopped;
 
         private SampleImpl() {
             this.startTime = clock.monotonicTime();

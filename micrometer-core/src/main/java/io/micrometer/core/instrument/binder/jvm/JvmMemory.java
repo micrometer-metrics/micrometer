@@ -29,25 +29,30 @@ class JvmMemory {
     private JvmMemory() {
     }
 
-    static Optional<MemoryPoolMXBean> getOldGen() {
+    static Optional<MemoryPoolMXBean> getLongLivedHeapPool() {
         return ManagementFactory
                 .getPlatformMXBeans(MemoryPoolMXBean.class)
                 .stream()
                 .filter(JvmMemory::isHeap)
-                .filter(mem -> isOldGenPool(mem.getName()))
+                .filter(mem -> isOldGenPool(mem.getName()) || isNonGenerationalHeapPool(mem.getName()))
                 .findAny();
     }
 
-    static boolean isConcurrentPhase(String cause) {
-        return "No GC".equals(cause);
+    static boolean isConcurrentPhase(String cause, String name) {
+        return "No GC".equals(cause)
+                || "Shenandoah Cycles".equals(name);
     }
 
     static boolean isYoungGenPool(String name) {
-        return name.endsWith("Eden Space");
+        return name != null && name.endsWith("Eden Space");
     }
 
     static boolean isOldGenPool(String name) {
-        return name.endsWith("Old Gen") || name.endsWith("Tenured Gen");
+        return name != null && (name.endsWith("Old Gen") || name.endsWith("Tenured Gen"));
+    }
+
+    static boolean isNonGenerationalHeapPool(String name) {
+        return "Shenandoah".equals(name) || "ZHeap".equals(name);
     }
 
     private static boolean isHeap(MemoryPoolMXBean memoryPoolBean) {

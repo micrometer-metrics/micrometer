@@ -19,11 +19,13 @@ import io.micrometer.core.instrument.binder.system.FileDescriptorMetrics;
 import io.micrometer.health.ServiceLevelObjective;
 
 /**
+ * {@link ServiceLevelObjective ServiceLevelObjectives} for Operating System.
+ *
  * @author Jon Schneider
  * @since 1.6.0
  */
 public class OperatingSystemServiceLevelObjectives {
-    public static final ServiceLevelObjective[] DISK = new ServiceLevelObjective[]{
+    public static final ServiceLevelObjective[] DISK = new ServiceLevelObjective[] {
             ServiceLevelObjective.build("os.file.descriptors")
                     .failedMessage("Too many file descriptors are open. When the max is reached, " +
                             "further attempts to retrieve a file descriptor will block indefinitely.")

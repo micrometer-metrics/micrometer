@@ -1,5 +1,6 @@
 /**
- * Copyright 2017 VMware, Inc.
+ * Copyright 2002-2017 the original author or authors.
+ * Copyright 2017-2021 VMware, Inc.
  * <p>
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -28,7 +29,11 @@ import java.lang.annotation.*;
  * repeat parent {@code @Nullable} annotations unless they behave differently.
  * <p>Can be used in association with {@code NonNullApi} or {@code @NonNullFields} to
  * override the default non-nullable semantic to nullable.
+ * <p>
+ * NOTE: This file has been copied from {@code org.springframework.lang}.
  *
+ * @author Sebastien Deleuze
+ * @author Juergen Hoeller
  * @see NonNullApi
  * @see NonNullFields
  * @see NonNull

@@ -79,7 +79,7 @@ class WavefrontMeterRegistryTest {
     void publishMetric() throws IOException {
         Meter.Id id = registry.counter("name").getId();
         long time = System.currentTimeMillis();
-        registry.publishMetric(id, null, System.currentTimeMillis(), 1d);
+        registry.publishMetric(id, null, time, 1d);
         verify(wavefrontSender, times(1)).sendMetric("name", 1d, time, "host", Collections.emptyMap());
         verifyNoMoreInteractions(wavefrontSender);
     }

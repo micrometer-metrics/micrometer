@@ -16,4 +16,8 @@ dependencies {
     implementation 'io.projectreactor.netty:reactor-netty'
     implementation 'org.apache.kafka:kafka-clients'
     implementation 'com.github.charithe:kafka-junit'
+    implementation ('io.grpc:grpc-services') {
+        exclude module: 'io.grpc:grpc-netty-shaded'
+    }
+
 }

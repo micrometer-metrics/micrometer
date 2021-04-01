@@ -40,8 +40,8 @@ public class FunctionTimerSample {
             .register(registry);
 
         Object placeholder = new Object();
-        AtomicLong totalTimeNanos = new AtomicLong(0);
-        AtomicLong totalCount = new AtomicLong(0);
+        AtomicLong totalTimeNanos = new AtomicLong();
+        AtomicLong totalCount = new AtomicLong();
 
         FunctionTimer.builder("ftimer", placeholder, p -> totalCount.get(), p -> totalTimeNanos.get(), TimeUnit.NANOSECONDS)
             .register(registry);

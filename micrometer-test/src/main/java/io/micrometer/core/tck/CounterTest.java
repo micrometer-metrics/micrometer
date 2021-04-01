@@ -62,7 +62,7 @@ interface CounterTest {
     @Test
     @DisplayName("function-tracking counter increments by change in a monotonically increasing function when observed")
     default void functionTrackingCounter(MeterRegistry registry) {
-        AtomicLong n = new AtomicLong(0);
+        AtomicLong n = new AtomicLong();
         registry.more().counter("tracking", emptyList(), n);
         n.incrementAndGet();
 

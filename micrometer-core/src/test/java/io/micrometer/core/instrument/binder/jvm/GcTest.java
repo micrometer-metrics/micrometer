@@ -1,5 +1,5 @@
 /**
- * Copyright 2019 VMware, Inc.
+ * Copyright 2020 VMware, Inc.
  * <p>
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,19 +13,17 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package io.micrometer.elastic;
+package io.micrometer.core.instrument.binder.jvm;
 
-/**
- * Integration tests on {@link ElasticMeterRegistry} for Elasticsearch 6.
- *
- * @author Johnny Lim
- */
-class ElasticsearchMeterRegistryElasticsearch6IntegrationTest
-        extends AbstractElasticsearchMeterRegistryIntegrationTest {
+import org.junit.jupiter.api.Tag;
 
-    @Override
-    protected String getVersion() {
-        return "6.8.6";
-    }
+import java.lang.annotation.ElementType;
+import java.lang.annotation.Retention;
+import java.lang.annotation.RetentionPolicy;
+import java.lang.annotation.Target;
 
+@Target({ ElementType.TYPE, ElementType.METHOD })
+@Retention(RetentionPolicy.RUNTIME)
+@Tag("gc")
+public @interface GcTest {
 }

@@ -35,6 +35,7 @@ import static java.util.stream.Collectors.joining;
 
 /**
  * {@link MeterRegistry} for InfluxDB.
+ * Since Micrometer 1.7, this supports InfluxDB v2 and v1.
  *
  * @author Jon Schneider
  * @author Johnny Lim
@@ -71,12 +72,20 @@ public class InfluxMeterRegistry extends StepMeterRegistry {
         start(threadFactory);
     }
 
+    @Override
+    public void start(ThreadFactory threadFactory) {
+        super.start(threadFactory);
+        if (config.enabled()) {
+            logger.info("Using InfluxDB API version {} to write metrics", config.apiVersion());
+        }
+    }
+
     public static Builder builder(InfluxConfig config) {
         return new Builder(config);
     }
 
     private void createDatabaseIfNecessary() {
-        if (!config.autoCreateDb() || databaseExists)
+        if (!config.autoCreateDb() || databaseExists || config.apiVersion() == InfluxApiVersion.V2)
             return;
 
         try {
@@ -85,9 +94,12 @@ public class InfluxMeterRegistry extends StepMeterRegistry {
                     .setRetentionReplicationFactor(config.retentionReplicationFactor())
                     .setRetentionShardDuration(config.retentionShardDuration()).build();
 
-            httpClient
+            HttpSender.Request.Builder requestBuilder = httpClient
                     .post(config.uri() + "/query?q=" + URLEncoder.encode(createDatabaseQuery, "UTF-8"))
-                    .withBasicAuthentication(config.userName(), config.password())
+                    .withBasicAuthentication(config.userName(), config.password());
+            config.apiVersion().addHeaderToken(config, requestBuilder);
+
+            requestBuilder
                     .send()
                     .onSuccess(response -> {
                         logger.debug("influx database {} is ready to receive metrics", config.db());
@@ -104,14 +116,14 @@ public class InfluxMeterRegistry extends StepMeterRegistry {
         createDatabaseIfNecessary();
 
         try {
-            String influxEndpoint = config.uri() + "/write?consistency=" + config.consistency().toString().toLowerCase() + "&precision=ms&db=" + config.db();
-            if (StringUtils.isNotBlank(config.retentionPolicy())) {
-                influxEndpoint += "&rp=" + config.retentionPolicy();
-            }
+            String influxEndpoint = config.apiVersion().writeEndpoint(config);
 
             for (List<Meter> batch : MeterPartition.partition(this, config.batchSize())) {
-                httpClient.post(influxEndpoint)
-                        .withBasicAuthentication(config.userName(), config.password())
+                HttpSender.Request.Builder requestBuilder = httpClient
+                        .post(influxEndpoint)
+                        .withBasicAuthentication(config.userName(), config.password());
+                config.apiVersion().addHeaderToken(config, requestBuilder);
+                requestBuilder
                         .withPlainText(batch.stream()
                                 .flatMap(m -> m.match(
                                         gauge -> writeGauge(gauge.getId(), gauge.value()),
@@ -182,14 +194,20 @@ public class InfluxMeterRegistry extends StepMeterRegistry {
         return Stream.empty();
     }
 
-    private Stream<String> writeFunctionTimer(FunctionTimer timer) {
-        Stream<Field> fields = Stream.of(
-                new Field("sum", timer.totalTime(getBaseTimeUnit())),
-                new Field("count", timer.count()),
-                new Field("mean", timer.mean(getBaseTimeUnit()))
-        );
-
-        return Stream.of(influxLineProtocol(timer.getId(), "histogram", fields));
+    // VisibleForTesting
+    Stream<String> writeFunctionTimer(FunctionTimer timer) {
+        double sum = timer.totalTime(getBaseTimeUnit());
+        if (Double.isFinite(sum)) {
+            Stream.Builder<Field> builder = Stream.builder();
+            builder.add(new Field("sum", sum));
+            builder.add(new Field("count", timer.count()));
+            double mean = timer.mean(getBaseTimeUnit());
+            if (Double.isFinite(mean)) {
+                builder.add(new Field("mean", mean));
+            }
+            return Stream.of(influxLineProtocol(timer.getId(), "histogram", builder.build()));
+        }
+        return Stream.empty();
     }
 
     private Stream<String> writeTimer(Timer timer) {

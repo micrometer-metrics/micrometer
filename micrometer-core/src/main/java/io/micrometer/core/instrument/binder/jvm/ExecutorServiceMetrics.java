@@ -25,6 +25,8 @@ import io.micrometer.core.instrument.util.StringUtils;
 import io.micrometer.core.lang.NonNullApi;
 import io.micrometer.core.lang.NonNullFields;
 import io.micrometer.core.lang.Nullable;
+import io.micrometer.core.util.internal.logging.InternalLogger;
+import io.micrometer.core.util.internal.logging.InternalLoggerFactory;
 
 import java.lang.reflect.Field;
 import java.util.concurrent.*;
@@ -35,6 +37,10 @@ import static java.util.Arrays.asList;
  * Monitors the status of executor service pools. Does not record timings on operations executed in the {@link ExecutorService},
  * as this requires the instance to be wrapped. Timings are provided separately by wrapping the executor service
  * with {@link TimedExecutorService}.
+ * <p>
+ * Supports {@link ThreadPoolExecutor} and {@link ForkJoinPool} types of {@link ExecutorService}. Some libraries may provide
+ * a wrapper type for {@link ExecutorService}, like {@link TimedExecutorService}. Make sure to pass the underlying,
+ * unwrapped ExecutorService to this MeterBinder, if it is wrapped in another type.
  *
  * @author Jon Schneider
  * @author Clint Checketts
@@ -43,6 +49,9 @@ import static java.util.Arrays.asList;
 @NonNullApi
 @NonNullFields
 public class ExecutorServiceMetrics implements MeterBinder {
+    private static boolean allowIllegalReflectiveAccess = true;
+
+    private static final InternalLogger log = InternalLoggerFactory.getInstance(ExecutorServiceMetrics.class);
     private static final String DEFAULT_EXECUTOR_METRIC_PREFIX = "";
     @Nullable
     private final ExecutorService executorService;
@@ -271,12 +280,18 @@ public class ExecutorServiceMetrics implements MeterBinder {
 
         if (executorService instanceof ThreadPoolExecutor) {
             monitor(registry, (ThreadPoolExecutor) executorService);
-        } else if (className.equals("java.util.concurrent.Executors$DelegatedScheduledExecutorService")) {
-            monitor(registry, unwrapThreadPoolExecutor(executorService, executorService.getClass()));
-        } else if (className.equals("java.util.concurrent.Executors$FinalizableDelegatedExecutorService")) {
-            monitor(registry, unwrapThreadPoolExecutor(executorService, executorService.getClass().getSuperclass()));
         } else if (executorService instanceof ForkJoinPool) {
             monitor(registry, (ForkJoinPool) executorService);
+        } else if (allowIllegalReflectiveAccess) {
+            if (className.equals("java.util.concurrent.Executors$DelegatedScheduledExecutorService")) {
+                monitor(registry, unwrapThreadPoolExecutor(executorService, executorService.getClass()));
+            } else if (className.equals("java.util.concurrent.Executors$FinalizableDelegatedExecutorService")) {
+                monitor(registry, unwrapThreadPoolExecutor(executorService, executorService.getClass().getSuperclass()));
+            } else {
+                log.warn("Failed to bind as {} is unsupported.", className);
+            }
+        } else {
+            log.warn("Failed to bind as {} is unsupported or reflective access is not allowed.", className);
         }
     }
 
@@ -290,8 +305,10 @@ public class ExecutorServiceMetrics implements MeterBinder {
             Field e = wrapper.getDeclaredField("e");
             e.setAccessible(true);
             return (ThreadPoolExecutor) e.get(executor);
-        } catch (NoSuchFieldException | IllegalAccessException e) {
+        } catch (NoSuchFieldException | IllegalAccessException | RuntimeException e) {
+            // Cannot use InaccessibleObjectException since it was introduced in Java 9, so catch all RuntimeExceptions instead
             // Do nothing. We simply can't get to the underlying ThreadPoolExecutor.
+            log.info("Cannot unwrap ThreadPoolExecutor for monitoring from {} due to {}: {}", wrapper.getName(), e.getClass().getName(), e.getMessage());
         }
         return null;
     }
@@ -368,4 +385,17 @@ public class ExecutorServiceMetrics implements MeterBinder {
                 .description("An estimate of the number of worker threads that are not blocked waiting to join tasks or for other managed synchronization threads")
                 .register(registry);
     }
+
+    /**
+     * Disable illegal reflective accesses.
+     *
+     * Java 9+ warns illegal reflective accesses, but some metrics from this binder depend on reflective access to
+     * {@link Executors}'s internal implementation details. This method allows to disable the feature to avoid the
+     * warnings.
+     * @since 1.6.0
+     */
+    public static void disableIllegalReflectiveAccess() {
+        allowIllegalReflectiveAccess = false;
+    }
+
 }
