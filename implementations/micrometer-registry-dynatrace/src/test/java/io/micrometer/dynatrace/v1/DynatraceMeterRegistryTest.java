@@ -289,32 +289,7 @@ class DynatraceMeterRegistryTest {
 
 
     private DynatraceMeterRegistry createMeterRegistry() {
-        DynatraceConfig config = new DynatraceConfig() {
-            @Override
-            public String get(String key) {
-                return null;
-            }
-
-            @Override
-            public String uri() {
-                return "http://localhost";
-            }
-
-            @Override
-            public String deviceId() {
-                return "deviceId";
-            }
-
-            @Override
-            public String apiToken() {
-                return "apiToken";
-            }
-
-            @Override
-            public String apiVersion() {
-                return "v1";
-            }
-        };
+        DynatraceConfig config = createDynatraceConfig();
 
         return DynatraceMeterRegistry.builder(config)
                 .httpClient(request -> new HttpSender.Response(200, null))
@@ -322,7 +297,14 @@ class DynatraceMeterRegistryTest {
     }
 
     private DynatraceMeterRegistryImplV1 createMeterRegistryImpl() {
-        DynatraceConfig config = new DynatraceConfig() {
+        DynatraceConfig config = createDynatraceConfig();
+
+        return new DynatraceMeterRegistryImplV1(config, Clock.SYSTEM, request -> new HttpSender.Response(200, null));
+
+    }
+
+    private DynatraceConfig createDynatraceConfig() {
+        return new DynatraceConfig() {
             @Override
             public String get(String key) {
                 return null;
@@ -348,9 +330,6 @@ class DynatraceMeterRegistryTest {
                 return "v1";
             }
         };
-
-        return new DynatraceMeterRegistryImplV1(config, Clock.SYSTEM, request -> new HttpSender.Response(200, null));
-
     }
 
     private boolean isValidJson(String json) {
