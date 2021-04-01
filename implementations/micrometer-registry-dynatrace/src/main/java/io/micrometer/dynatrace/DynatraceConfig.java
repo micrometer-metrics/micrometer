@@ -65,17 +65,17 @@ public interface DynatraceConfig extends StepRegistryConfig {
     default String group() {
         return get(prefix() + ".group");
     }
-    
+
+    /**
+     * Return the version of the target Dynatrace API.
+     *
+     * @return a {@link String} containing the version of the targeted Dynatrace API.
+     */
     default String apiVersion() {
         return "v1";
 //        return getString(this, "apiVersion").required().get();
     }
 
-    /**
-     * Return the version of the target Dynatrace API.
-     * 
-     * @return a {@link String} containing the version of the targeted Dynatrace API.
-     */
     @Override
     default Validated<?> validate() {
         // once the apiVersion is actually transmitted by spring-boot, use this:
