@@ -32,7 +32,6 @@ import static java.util.Arrays.stream;
  * @author Oriol Barcelona
  */
 class DynatraceMetricDefinition {
-
     private static final int MAX_DISPLAY_NAME = 256;
     private static final int MAX_GROUP_NAME = 256;
     private final String metricId;

@@ -2,7 +2,6 @@ package io.micrometer.dynatrace;
 
 import io.micrometer.core.instrument.Clock;
 import io.micrometer.core.instrument.MeterRegistry;
-import io.micrometer.core.instrument.step.StepMeterRegistry;
 import io.micrometer.core.instrument.util.NamedThreadFactory;
 import io.micrometer.core.ipc.http.HttpSender;
 
@@ -29,44 +28,4 @@ public abstract class DynatraceMeterRegistryImplBase {
         this.threadFactory = threadFactory;
         this.httpClient = httpClient;
     }
-
-//    public DynatraceMeterRegistryImplBase(DynatraceConfig config, Clock clock, HttpSender httpClient) {
-//        this.config = config;
-//        this.httpClient = httpClient;
-//        this.clock = clock;
-//    }
-
-    //    static class Builder {
-//        private DynatraceConfig config;
-//        private HttpSender httpClient;
-//        private String endpointUrl;
-//        private String apiToken;
-//        private String apiVersion;
-//
-//        Builder() {}
-//
-//        public void setConfig(DynatraceConfig config) {
-//            this.config = config;
-//        }
-//
-//        public void setHttpClient(HttpSender httpClient) {
-//            this.httpClient = httpClient;
-//        }
-//
-//        public void setEndpointUrl(String endpointUrl) {
-//            this.endpointUrl = endpointUrl;
-//        }
-//
-//        public void setApiToken(String apiToken) {
-//            this.apiToken = apiToken;
-//        }
-//
-//        public void setApiVersion(String apiVersion) {
-//            this.apiVersion = apiVersion;
-//        }
-//
-//        public DynatraceMeterRegistryImplBase build() {
-//
-//        }
-//    }
 }

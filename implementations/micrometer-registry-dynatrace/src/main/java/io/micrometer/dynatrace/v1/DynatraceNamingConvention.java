@@ -30,7 +30,7 @@ import java.util.regex.Pattern;
  * @author Johnny Lim
  * @since 1.1.0
  */
-public class DynatraceNamingConvention implements NamingConvention {
+class DynatraceNamingConvention implements NamingConvention {
 
     private static final WarnThenDebugLogger logger = new WarnThenDebugLogger(DynatraceNamingConvention.class);
 

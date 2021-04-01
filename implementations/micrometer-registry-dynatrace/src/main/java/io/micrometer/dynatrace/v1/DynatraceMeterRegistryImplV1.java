@@ -35,7 +35,12 @@ public class DynatraceMeterRegistryImplV1 extends DynatraceMeterRegistryImplBase
     private final Set<String> createdCustomMetrics = ConcurrentHashMap.newKeySet();
     private final String customMetricEndpointTemplate;
 
-    private static final NamingConvention namingConvention = new DynatraceNamingConvention();
+    private final NamingConvention namingConvention;
+
+
+    public DynatraceMeterRegistryImplV1(DynatraceConfig config, Clock clock, HttpSender httpClient) {
+        this(config, clock, DEFAULT_THREAD_FACTORY, httpClient);
+    }
 
     public DynatraceMeterRegistryImplV1(DynatraceConfig config, Clock clock, ThreadFactory threadFactory, HttpSender httpClient) {
         super(config, clock, threadFactory, httpClient);
@@ -43,7 +48,7 @@ public class DynatraceMeterRegistryImplV1 extends DynatraceMeterRegistryImplBase
         this.config = config;
         this.httpClient = httpClient;
         this.customMetricEndpointTemplate = config.uri() + "/api/v1/timeseries/";
-
+        this.namingConvention = new DynatraceNamingConvention();
     }
 
     @Override
@@ -266,6 +271,5 @@ public class DynatraceMeterRegistryImplV1 extends DynatraceMeterRegistryImplBase
     private Meter.Id idWithSuffix(Meter.Id id, String suffix) {
         return id.withName(id.getName() + "." + suffix);
     }
-
 
 }

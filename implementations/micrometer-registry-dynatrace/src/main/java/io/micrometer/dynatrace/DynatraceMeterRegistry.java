@@ -19,10 +19,7 @@ import io.micrometer.core.instrument.Clock;
 import io.micrometer.core.instrument.step.StepMeterRegistry;
 import io.micrometer.core.ipc.http.HttpSender;
 import io.micrometer.core.ipc.http.HttpUrlConnectionSender;
-import io.micrometer.dynatrace.v1.DynatraceMeterRegisterV1;
 import io.micrometer.dynatrace.v1.DynatraceMeterRegistryImplV1;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import java.util.concurrent.ThreadFactory;
 import java.util.concurrent.TimeUnit;
@@ -107,9 +104,6 @@ public class DynatraceMeterRegistry extends StepMeterRegistry {
         }
 
         public DynatraceMeterRegistry build() {
-            if (this.apiVersion == null || this.apiVersion.isEmpty() || this.apiVersion.startsWith("v1")) {
-                return new DynatraceMeterRegisterV1(config, clock, threadFactory, httpClient);
-            }
             return new DynatraceMeterRegistry(config, clock, threadFactory, httpClient);
         }
     }
