@@ -52,7 +52,7 @@ public class MongoMetricsConnectionPoolListener implements ConnectionPoolListene
     private final Map<ServerId, List<Meter>> meters = new ConcurrentHashMap<>();
 
     private final MeterRegistry registry;
-    private final MongoMetricsConnectionPoolTagsProvider tagsProvider;
+    private final MongoConnectionPoolTagsProvider tagsProvider;
 
     /**
      * Create a new {@code MongoMetricsConnectionPoolListener}.
@@ -60,7 +60,7 @@ public class MongoMetricsConnectionPoolListener implements ConnectionPoolListene
      * @param registry registry to use
      */
     public MongoMetricsConnectionPoolListener(MeterRegistry registry) {
-        this(registry, new DefaultMongoMetricsConnectionPoolTagsProvider());
+        this(registry, new DefaultMongoConnectionPoolTagsProvider());
     }
 
     /**
@@ -70,7 +70,7 @@ public class MongoMetricsConnectionPoolListener implements ConnectionPoolListene
      * @param tagsProvider tags provider to use
      * @since 1.7.0
      */
-    public MongoMetricsConnectionPoolListener(MeterRegistry registry, MongoMetricsConnectionPoolTagsProvider tagsProvider) {
+    public MongoMetricsConnectionPoolListener(MeterRegistry registry, MongoConnectionPoolTagsProvider tagsProvider) {
         this.registry = registry;
         this.tagsProvider = tagsProvider;
     }

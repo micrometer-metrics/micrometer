@@ -1,5 +1,5 @@
 /**
- * Copyright 2021 VMware, Inc.
+ * Copyright 2020 VMware, Inc.
  * <p>
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,23 +15,23 @@
  */
 package io.micrometer.core.instrument.binder.mongodb;
 
-import com.mongodb.event.CommandEvent;
+import com.mongodb.event.ConnectionPoolCreatedEvent;
 import io.micrometer.core.instrument.Tag;
 
 /**
- * Provides {@link Tag Tags} for Mongo command metrics.
+ * Provides {@link Tag Tags} for Mongo connection pool metrics.
  *
- * @author Chris Bono
+ * @author Gustavo Monarin
  * @since 1.7.0
  */
 @FunctionalInterface
-public interface MongoMetricsCommandTagsProvider {
+public interface MongoConnectionPoolTagsProvider {
 
     /**
-     * Provides tags to be associated with metrics for the given Mongo command.
+     * Provides tags to be associated with the Mongo connection metrics for the given {@link ConnectionPoolCreatedEvent event}.
      *
-     * @param commandEvent the Mongo command
-     * @return tags to associate with metrics recorded for the command
+     * @param event The Mongo event of when the connection pool is opened
+     * @return tags to be associated with metrics recorded for the connection pool
      */
-    Iterable<Tag> commandTags(CommandEvent commandEvent);
+    Iterable<Tag> connectionPoolTags(ConnectionPoolCreatedEvent event);
 }

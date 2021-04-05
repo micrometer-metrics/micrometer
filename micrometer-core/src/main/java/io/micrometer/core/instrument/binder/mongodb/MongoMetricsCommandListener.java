@@ -39,7 +39,7 @@ public class MongoMetricsCommandListener implements CommandListener {
 
     private final MeterRegistry registry;
 
-    private final MongoMetricsCommandTagsProvider tagsProvider;
+    private final MongoCommandTagsProvider tagsProvider;
 
     /**
      * Constructs a command listener that uses the default tags provider.
@@ -47,7 +47,7 @@ public class MongoMetricsCommandListener implements CommandListener {
      * @param registry meter registry
      */
     public MongoMetricsCommandListener(MeterRegistry registry) {
-        this(registry, new DefaultMongoMetricsCommandTagsProvider());
+        this(registry, new DefaultMongoCommandTagsProvider());
     }
 
     /**
@@ -57,7 +57,7 @@ public class MongoMetricsCommandListener implements CommandListener {
      * @param tagsProvider provides tags to be associated with metrics for the given Mongo command
      * @since 1.7.0
      */
-    public MongoMetricsCommandListener(MeterRegistry registry, MongoMetricsCommandTagsProvider tagsProvider) {
+    public MongoMetricsCommandListener(MeterRegistry registry, MongoCommandTagsProvider tagsProvider) {
         this.registry = registry;
         this.tagsProvider = tagsProvider;
     }
