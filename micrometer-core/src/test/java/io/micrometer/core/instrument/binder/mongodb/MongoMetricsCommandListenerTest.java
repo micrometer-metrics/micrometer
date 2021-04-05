@@ -103,7 +103,7 @@ class MongoMetricsCommandListenerTest extends AbstractMongoDbTest {
 
     @Test
     void shouldCreateSuccessCommandMetricWithCustomSettings() {
-        MongoMetricsCommandTagsProvider tagsProvider = new DefaultMongoMetricsCommandTagsProvider() {
+        MongoCommandTagsProvider tagsProvider = new DefaultMongoCommandTagsProvider() {
             @Override
             public Iterable<Tag> commandTags(CommandEvent event) {
                 return Tags.of(super.commandTags(event)).and(Tag.of("mongoz", "5150"));
@@ -137,7 +137,7 @@ class MongoMetricsCommandListenerTest extends AbstractMongoDbTest {
 
     @Test
     void shouldCreateFailedCommandMetricWithCustomSettings() {
-        MongoMetricsCommandTagsProvider tagsProvider = new DefaultMongoMetricsCommandTagsProvider() {
+        MongoCommandTagsProvider tagsProvider = new DefaultMongoCommandTagsProvider() {
             @Override
             public Iterable<Tag> commandTags(CommandEvent event) {
                 return Tags.of(super.commandTags(event)).and(Tag.of("mongoz", "5150"));

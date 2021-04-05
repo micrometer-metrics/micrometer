@@ -1,5 +1,5 @@
 /**
- * Copyright 2020 VMware, Inc.
+ * Copyright 2021 VMware, Inc.
  * <p>
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,21 +17,21 @@ package io.micrometer.core.instrument.binder.mongodb;
 
 import com.mongodb.event.ConnectionPoolCreatedEvent;
 import io.micrometer.core.instrument.Tag;
+import io.micrometer.core.instrument.Tags;
 
 /**
- * Provides {@link Tag Tags} for Mongo connection pool metrics.
+ * Default implementation for {@link MongoConnectionPoolTagsProvider}.
  *
  * @author Gustavo Monarin
  * @since 1.7.0
  */
-@FunctionalInterface
-public interface MongoMetricsConnectionPoolTagsProvider {
+public class DefaultMongoConnectionPoolTagsProvider implements MongoConnectionPoolTagsProvider {
 
-    /**
-     * Provides tags to be associated with the Mongo connection metrics for the given {@link ConnectionPoolCreatedEvent event}.
-     *
-     * @param event The Mongo event of when the connection pool is opened
-     * @return tags to be associated with metrics recorded for the connection pool
-     */
-    Iterable<Tag> connectionPoolTags(ConnectionPoolCreatedEvent event);
+    @Override
+    public Iterable<Tag> connectionPoolTags(final ConnectionPoolCreatedEvent event) {
+        return Tags.of(
+                Tag.of("cluster.id", event.getServerId().getClusterId().getValue()),
+                Tag.of("server.address", event.getServerId().getAddress().toString()));
+    }
+
 }

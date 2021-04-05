@@ -21,12 +21,12 @@ import io.micrometer.core.instrument.Tag;
 import io.micrometer.core.instrument.Tags;
 
 /**
- * Default implementation for {@link MongoMetricsCommandTagsProvider}.
+ * Default implementation for {@link MongoCommandTagsProvider}.
  *
  * @author Chris Bono
  * @since 1.7.0
  */
-public class DefaultMongoMetricsCommandTagsProvider implements MongoMetricsCommandTagsProvider {
+public class DefaultMongoCommandTagsProvider implements MongoCommandTagsProvider {
 
     @Override
     public Iterable<Tag> commandTags(CommandEvent event) {

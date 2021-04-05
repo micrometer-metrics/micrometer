@@ -15,23 +15,23 @@
  */
 package io.micrometer.core.instrument.binder.mongodb;
 
-import com.mongodb.event.ConnectionPoolCreatedEvent;
+import com.mongodb.event.CommandEvent;
 import io.micrometer.core.instrument.Tag;
-import io.micrometer.core.instrument.Tags;
 
 /**
- * Default implementation for {@link MongoMetricsConnectionPoolTagsProvider}.
+ * Provides {@link Tag Tags} for Mongo command metrics.
  *
- * @author Gustavo Monarin
+ * @author Chris Bono
  * @since 1.7.0
  */
-public class DefaultMongoMetricsConnectionPoolTagsProvider implements MongoMetricsConnectionPoolTagsProvider {
+@FunctionalInterface
+public interface MongoCommandTagsProvider {
 
-    @Override
-    public Iterable<Tag> connectionPoolTags(final ConnectionPoolCreatedEvent event) {
-        return Tags.of(
-                Tag.of("cluster.id", event.getServerId().getClusterId().getValue()),
-                Tag.of("server.address", event.getServerId().getAddress().toString()));
-    }
-
+    /**
+     * Provides tags to be associated with metrics for the given Mongo command.
+     *
+     * @param commandEvent the Mongo command
+     * @return tags to associate with metrics recorded for the command
+     */
+    Iterable<Tag> commandTags(CommandEvent commandEvent);
 }
