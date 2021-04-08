@@ -33,6 +33,7 @@ import java.lang.reflect.Method;
 import java.util.Optional;
 import java.util.concurrent.CompletionStage;
 import java.util.function.Function;
+import java.util.function.Predicate;
 
 /**
  * AspectJ aspect for intercepting types or methods annotated with {@link Timed @Timed}.
@@ -41,12 +42,14 @@ import java.util.function.Function;
  * @author Jon Schneider
  * @author Johnny Lim
  * @author Nejc Korasa
+ * @author Jonatan Ivanov
  * @since 1.0.0
  */
 @Aspect
 @NonNullApi
 @Incubating(since = "1.0.0")
 public class TimedAspect {
+    private static final Predicate<ProceedingJoinPoint> DONT_SKIP_ANYTHING = pjp -> false;
     public static final String DEFAULT_METRIC_NAME = "method.timed";
     public static final String DEFAULT_EXCEPTION_TAG_VALUE = "none";
 
@@ -59,9 +62,10 @@ public class TimedAspect {
 
     private final MeterRegistry registry;
     private final Function<ProceedingJoinPoint, Iterable<Tag>> tagsBasedOnJoinPoint;
+    private final Predicate<ProceedingJoinPoint> shouldSkip;
 
     /**
-     * Create a {@code TimedAspect} instance with {@link Metrics#globalRegistry}.
+     * Creates a {@code TimedAspect} instance with {@link Metrics#globalRegistry}.
      *
      * @since 1.2.0
      */
@@ -69,20 +73,59 @@ public class TimedAspect {
         this(Metrics.globalRegistry);
     }
 
+    /**
+     * Creates a {@code TimedAspect} instance with the given {@code meterRegistry}.
+     *
+     * @param registry Where we're going to register metrics.
+     */
     public TimedAspect(MeterRegistry registry) {
-        this(registry, pjp ->
-                Tags.of("class", pjp.getStaticPart().getSignature().getDeclaringTypeName(),
-                        "method", pjp.getStaticPart().getSignature().getName())
+        this(registry, DONT_SKIP_ANYTHING);
+    }
+
+    /**
+     * Creates a {@code TimedAspect} instance with the given {@code meterRegistry} and tags provider function.
+     *
+     * @param registry Where we're going to register metrics.
+     * @param tagsBasedOnJoinPoint A function to generate tags given a join point.
+     */
+    public TimedAspect(MeterRegistry registry, Function<ProceedingJoinPoint, Iterable<Tag>> tagsBasedOnJoinPoint) {
+        this(registry, tagsBasedOnJoinPoint, DONT_SKIP_ANYTHING);
+    }
+
+    /**
+     * Creates a {@code TimedAspect} instance with the given {@code meterRegistry} and skip predicate.
+     *
+     * @param registry Where we're going to register metrics.
+     * @param shouldSkip A predicate to decide if creating the timer should be skipped or not.
+     */
+    public TimedAspect(MeterRegistry registry, Predicate<ProceedingJoinPoint> shouldSkip) {
+        this(
+                registry,
+                pjp -> Tags.of("class", pjp.getStaticPart().getSignature().getDeclaringTypeName(),
+                        "method", pjp.getStaticPart().getSignature().getName()),
+                shouldSkip
         );
     }
 
-    public TimedAspect(MeterRegistry registry, Function<ProceedingJoinPoint, Iterable<Tag>> tagsBasedOnJoinPoint) {
+    /**
+     * Creates a {@code TimedAspect} instance with the given {@code meterRegistry}, tags provider function and skip predicate.
+     *
+     * @param registry Where we're going to register metrics.
+     * @param tagsBasedOnJoinPoint A function to generate tags given a join point.
+     * @param shouldSkip A predicate to decide if creating the timer should be skipped or not.
+     */
+    public TimedAspect(MeterRegistry registry, Function<ProceedingJoinPoint, Iterable<Tag>> tagsBasedOnJoinPoint, Predicate<ProceedingJoinPoint> shouldSkip) {
         this.registry = registry;
         this.tagsBasedOnJoinPoint = tagsBasedOnJoinPoint;
+        this.shouldSkip = shouldSkip;
     }
 
     @Around("execution (@io.micrometer.core.annotation.Timed * *.*(..))")
     public Object timedMethod(ProceedingJoinPoint pjp) throws Throwable {
+        if (shouldSkip.test(pjp)) {
+            return pjp.proceed();
+        }
+
         Method method = ((MethodSignature) pjp.getSignature()).getMethod();
         Timed timed = method.getAnnotation(Timed.class);
         if (timed == null) {
