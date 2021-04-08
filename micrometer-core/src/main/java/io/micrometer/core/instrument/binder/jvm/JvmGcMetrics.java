@@ -62,7 +62,7 @@ public class JvmGcMetrics implements MeterBinder, AutoCloseable {
     private final Iterable<Tag> tags;
 
     @Nullable
-    private String youngGenPoolName;
+    private String allocationPoolName;
 
     @Nullable
     private String oldGenPoolName;
@@ -76,8 +76,8 @@ public class JvmGcMetrics implements MeterBinder, AutoCloseable {
     public JvmGcMetrics(Iterable<Tag> tags) {
         for (MemoryPoolMXBean mbean : ManagementFactory.getMemoryPoolMXBeans()) {
             String name = mbean.getName();
-            if (isYoungGenPool(name)) {
-                youngGenPoolName = name;
+            if (isAllocationPool(name)) {
+                allocationPoolName = name;
             } else if (isOldGenPool(name)) {
                 oldGenPoolName = name;
             }
@@ -118,8 +118,7 @@ public class JvmGcMetrics implements MeterBinder, AutoCloseable {
             .description("Incremented for an increase in the size of the young generation memory pool after one GC to before the next")
             .register(registry);
 
-        // start watching for GC notifications
-        final AtomicLong youngGenSizeAfter = new AtomicLong(0L);
+        final AtomicLong allocationPoolSizeAfter = new AtomicLong(0L);
 
         for (GarbageCollectorMXBean mbean : ManagementFactory.getGarbageCollectorMXBeans()) {
             if (!(mbean instanceof NotificationEmitter)) {
@@ -152,7 +151,6 @@ public class JvmGcMetrics implements MeterBinder, AutoCloseable {
                             .record(duration, TimeUnit.MILLISECONDS);
                 }
 
-                // Update promotion and allocation counters
                 final Map<String, MemoryUsage> before = gcInfo.getMemoryUsageBeforeGc();
                 final Map<String, MemoryUsage> after = gcInfo.getMemoryUsageAfterGc();
 
@@ -167,18 +165,18 @@ public class JvmGcMetrics implements MeterBinder, AutoCloseable {
                     // Some GC implementations such as G1 can reduce the old gen size as part of a minor GC. To track the
                     // live data size we record the value if we see a reduction in the old gen heap size or
                     // after a major GC.
-                    if (oldAfter < oldBefore || GcGenerationAge.fromName(notificationInfo.getGcName()) == GcGenerationAge.OLD) {
+                    if (oldAfter < oldBefore || isMajorGc(notificationInfo)) {
                         liveDataSize.set(oldAfter);
                         final long oldMaxAfter = after.get(oldGenPoolName).getMax();
                         maxDataSize.set(oldMaxAfter);
                     }
                 }
 
-                if (youngGenPoolName != null) {
-                    final long youngBefore = before.get(youngGenPoolName).getUsed();
-                    final long youngAfter = after.get(youngGenPoolName).getUsed();
-                    final long delta = youngBefore - youngGenSizeAfter.get();
-                    youngGenSizeAfter.set(youngAfter);
+                if (allocationPoolName != null) {
+                    final long allocationBefore = before.get(allocationPoolName).getUsed();
+                    final long allocationAfter = after.get(allocationPoolName).getUsed();
+                    final long delta = allocationBefore - allocationPoolSizeAfter.get();
+                    allocationPoolSizeAfter.set(allocationAfter);
                     if (delta > 0L) {
                         allocatedBytes.increment(delta);
                     }
@@ -193,6 +191,10 @@ public class JvmGcMetrics implements MeterBinder, AutoCloseable {
                 }
             });
         }
+    }
+
+    private boolean isMajorGc(GarbageCollectionNotificationInfo notificationInfo) {
+        return GcGenerationAge.fromGcName(notificationInfo.getGcName()) == GcGenerationAge.OLD;
     }
 
     private static boolean isManagementExtensionsPresent() {
@@ -228,7 +230,7 @@ public class JvmGcMetrics implements MeterBinder, AutoCloseable {
         YOUNG,
         UNKNOWN;
 
-        private static Map<String, GcGenerationAge> knownCollectors = new HashMap<String, GcGenerationAge>() {{
+        private static final Map<String, GcGenerationAge> knownCollectors = new HashMap<String, GcGenerationAge>() {{
             put("ConcurrentMarkSweep", OLD);
             put("Copy", YOUNG);
             put("G1 Old Generation", OLD);
@@ -239,8 +241,8 @@ public class JvmGcMetrics implements MeterBinder, AutoCloseable {
             put("ParNew", YOUNG);
         }};
 
-        static GcGenerationAge fromName(String name) {
-            return knownCollectors.getOrDefault(name, UNKNOWN);
+        static GcGenerationAge fromGcName(String gcName) {
+            return knownCollectors.getOrDefault(gcName, UNKNOWN);
         }
     }
 
