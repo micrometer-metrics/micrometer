@@ -36,7 +36,37 @@ import java.util.function.Function;
 import java.util.function.Predicate;
 
 /**
- * AspectJ aspect for intercepting types or methods annotated with {@link Timed @Timed}.
+ * <p>
+ * AspectJ aspect for intercepting types or methods annotated with {@link Timed @Timed}.<br />
+ * The aspect supports programmatic customizations through constructor-injectable custom logic.
+ * </p>
+ *
+ * <p>
+ * You might want to add tags programmatically to the {@link Timer}.<br />
+ * In this case, the tags provider function (<code>Function&lt;ProceedingJoinPoint, Iterable&lt;Tag&gt;&gt;</code>) can help.
+ * It receives a {@link ProceedingJoinPoint} and returns the {@link Tag}s that will be attached to the {@link Timer}.
+ * </p>
+ * <p>
+ * You might also want to skip the {@link Timer} creation programmatically.<br />
+ * One use-case can be having another component in your application that already processes the {@link Timed @Timed} annotation
+ * in some cases so that {@code TimedAspect} should not intercept these methods. E.g.: Spring Boot does this for its controllers.
+ * By using the skip predicate (<code>Predicate&lt;ProceedingJoinPoint&gt;</code>)
+ * you can tell the {@code TimedAspect} when not to create a {@link Timer}.
+ *
+ * Here's an example to disable {@link Timer} creation for Spring controllers:
+ *
+ * <pre>
+ * &#064;Bean
+ * public TimedAspect timedAspect(MeterRegistry meterRegistry) {
+ *     return new TimedAspect(meterRegistry, this::skipControllers);
+ * }
+ *
+ * private boolean skipControllers(ProceedingJoinPoint pjp) {
+ *     Class<?> targetClass = pjp.getTarget().getClass();
+ *     return targetClass.isAnnotationPresent(RestController.class) || targetClass.isAnnotationPresent(Controller.class);
+ * }
+ * </pre>
+ * </p>
  *
  * @author David J. M. Karlsen
  * @author Jon Schneider
