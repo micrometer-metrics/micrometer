@@ -42,7 +42,7 @@ class JvmMemory {
         return "No GC".equals(cause);
     }
 
-    static boolean isYoungGenPool(String name) {
+    static boolean isAllocationPool(String name) {
         return name.endsWith("Eden Space");
     }
 
