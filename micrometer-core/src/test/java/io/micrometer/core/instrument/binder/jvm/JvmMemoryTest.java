@@ -40,6 +40,6 @@ class JvmMemoryTest {
         // There is a way for the name passed to these methods to be null.
         // Ensure they don't fail;
         assertThat(JvmMemory.isOldGenPool(null)).isFalse();
-        assertThat(JvmMemory.isYoungGenPool(null)).isFalse();
+        assertThat(JvmMemory.isAllocationPool(null)).isFalse();
     }
 }
