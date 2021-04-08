@@ -20,6 +20,8 @@ import io.micrometer.core.instrument.step.StepRegistryConfig;
 import io.micrometer.core.instrument.util.StringUtils;
 import io.micrometer.core.lang.Nullable;
 
+import java.util.function.Function;
+
 import static io.micrometer.core.instrument.config.MeterRegistryConfigValidator.*;
 import static io.micrometer.core.instrument.config.validate.PropertyValidator.*;
 
@@ -27,6 +29,7 @@ import static io.micrometer.core.instrument.config.validate.PropertyValidator.*;
  * Configuration for {@link DynatraceMeterRegistry}
  *
  * @author Oriol Barcelona
+ * @author Georg Pirklbauer
  */
 public interface DynatraceConfig extends StepRegistryConfig {
 
@@ -49,7 +52,7 @@ public interface DynatraceConfig extends StepRegistryConfig {
 
     default String technologyType() {
         return getSecret(this, "technologyType")
-                .map(v -> StringUtils.isEmpty(v) ? "java" : v)
+                .map(val -> StringUtils.isEmpty(val) ? "java" : val)
                 .get();
     }
 
@@ -64,14 +67,33 @@ public interface DynatraceConfig extends StepRegistryConfig {
         return get(prefix() + ".group");
     }
 
+    /**
+     * Return the version of the target Dynatrace API.
+     *
+     * @return a {@link String} containing the version of the targeted Dynatrace API.
+     */
+    default String apiVersion() {
+        // if not specified, defaults to v1 for backwards compatibility.
+        return getString(this, "apiVersion")
+                .map(val -> StringUtils.isEmpty(val) ? "v1" : val)
+                .get();
+    }
+
     @Override
     default Validated<?> validate() {
-        return checkAll(this,
-                c -> StepRegistryConfig.validate(c),
-                checkRequired("apiToken", DynatraceConfig::apiToken),
-                checkRequired("uri", DynatraceConfig::uri),
-                checkRequired("deviceId", DynatraceConfig::deviceId),
-                check("technologyType", DynatraceConfig::technologyType).andThen(Validated::nonBlank)
-        );
+        // Currently only v1 is implemented. This check will be extended once more versions are added.
+        Function<DynatraceConfig, Validated<String>> versionFunc = checkRequired("apiVersion", DynatraceConfig::apiVersion);
+        String versionStr = versionFunc.apply(this).get();
+        if (versionStr.equals("v1")) {
+            return checkAll(this,
+                    c -> StepRegistryConfig.validate(c),
+                    checkRequired("apiToken", DynatraceConfig::apiToken),
+                    checkRequired("uri", DynatraceConfig::uri),
+                    checkRequired("deviceId", DynatraceConfig::deviceId),
+                    check("technologyType", DynatraceConfig::technologyType).andThen(Validated::nonBlank)
+            );
+        }
+
+        throw new IllegalArgumentException(String.format("The provided API version is not valid: %s.", versionStr));
     }
 }

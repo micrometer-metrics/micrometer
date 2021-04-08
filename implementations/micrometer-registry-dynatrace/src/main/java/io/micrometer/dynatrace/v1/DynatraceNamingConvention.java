@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package io.micrometer.dynatrace;
+package io.micrometer.dynatrace.v1;
 
 import io.micrometer.core.instrument.Meter;
 import io.micrometer.core.instrument.config.NamingConvention;
@@ -30,7 +30,7 @@ import java.util.regex.Pattern;
  * @author Johnny Lim
  * @since 1.1.0
  */
-public class DynatraceNamingConvention implements NamingConvention {
+class DynatraceNamingConvention implements NamingConvention {
 
     private static final WarnThenDebugLogger logger = new WarnThenDebugLogger(DynatraceNamingConvention.class);
 

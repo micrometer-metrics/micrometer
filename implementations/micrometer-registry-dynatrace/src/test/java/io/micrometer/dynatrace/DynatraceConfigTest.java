@@ -23,6 +23,7 @@ import java.util.List;
 import java.util.Map;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 
 class DynatraceConfigTest {
     private final Map<String, String> props = new HashMap<>();
@@ -61,5 +62,33 @@ class DynatraceConfigTest {
         props.put("dynatrace.deviceId", "device");
 
         assertThat(config.validate().isValid()).isTrue();
+    }
+
+    @Test
+    void invalidVersion() {
+        Map<String, String> properties = new HashMap<String, String>() {{
+            put("dynatrace.apiToken", "secret");
+            put("dynatrace.uri", "https://uri.dynatrace.com");
+            put("dynatrace.deviceId", "device");
+            put("dynatrace.apiVersion", "v-INVALID");
+        }};
+
+        DynatraceConfig config = properties::get;
+
+        assertThrows(IllegalArgumentException.class, config::validate);
+    }
+
+    @Test
+    void testFallbackToV1() {
+        Map<String, String> properties = new HashMap<String, String>() {{
+            put("dynatrace.apiToken", "secret");
+            put("dynatrace.uri", "https://uri.dynatrace.com");
+            put("dynatrace.deviceId", "device");
+        }};
+
+        DynatraceConfig config = properties::get;
+        assertThat(config.apiVersion()).isEqualTo("v1");
+        Validated<?> validated = config.validate();
+        assertThat(validated.isValid()).isTrue();
     }
 }
