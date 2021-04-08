@@ -40,7 +40,6 @@ import java.util.function.Predicate;
  * AspectJ aspect for intercepting types or methods annotated with {@link Timed @Timed}.<br />
  * The aspect supports programmatic customizations through constructor-injectable custom logic.
  * </p>
- *
  * <p>
  * You might want to add tags programmatically to the {@link Timer}.<br />
  * In this case, the tags provider function (<code>Function&lt;ProceedingJoinPoint, Iterable&lt;Tag&gt;&gt;</code>) can help.
