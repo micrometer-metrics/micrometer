@@ -65,7 +65,7 @@ public class JvmGcMetrics implements MeterBinder, AutoCloseable {
     private final Iterable<Tag> tags;
 
     @Nullable
-    private String youngGenPoolName;
+    private String allocationPoolName;
 
     @Nullable
     private String oldGenPoolName;
@@ -82,8 +82,8 @@ public class JvmGcMetrics implements MeterBinder, AutoCloseable {
     public JvmGcMetrics(Iterable<Tag> tags) {
         for (MemoryPoolMXBean mbean : ManagementFactory.getMemoryPoolMXBeans()) {
             String name = mbean.getName();
-            if (isYoungGenPool(name)) {
-                youngGenPoolName = name;
+            if (isAllocationPool(name)) {
+                allocationPoolName = name;
             } else if (isOldGenPool(name)) {
                 oldGenPoolName = name;
             } else if (isNonGenerationalHeapPool(name)) {
@@ -126,8 +126,7 @@ public class JvmGcMetrics implements MeterBinder, AutoCloseable {
                     .description("Count of positive increases in the size of the old generation memory pool before GC to after GC")
                     .register(registry);
 
-        // start watching for GC notifications
-        final AtomicLong heapPoolSizeAfterGc = new AtomicLong();
+        final AtomicLong allocationPoolSizeAfter = new AtomicLong(0L);
 
         for (GarbageCollectorMXBean mbean : ManagementFactory.getGarbageCollectorMXBeans()) {
             if (!(mbean instanceof NotificationEmitter)) {
@@ -157,13 +156,12 @@ public class JvmGcMetrics implements MeterBinder, AutoCloseable {
                             .record(duration, TimeUnit.MILLISECONDS);
                 }
 
-                // Update promotion and allocation counters
                 final Map<String, MemoryUsage> before = gcInfo.getMemoryUsageBeforeGc();
                 final Map<String, MemoryUsage> after = gcInfo.getMemoryUsageAfterGc();
 
                 if (nonGenerationalMemoryPool != null) {
                     countPoolSizeDelta(gcInfo.getMemoryUsageBeforeGc(), gcInfo.getMemoryUsageAfterGc(), allocatedBytes,
-                            heapPoolSizeAfterGc, nonGenerationalMemoryPool);
+                            allocationPoolSizeAfter, nonGenerationalMemoryPool);
                     if (after.get(nonGenerationalMemoryPool).getUsed() < before.get(nonGenerationalMemoryPool).getUsed()) {
                         liveDataSize.set(after.get(nonGenerationalMemoryPool).getUsed());
                         final long longLivedMaxAfter = after.get(nonGenerationalMemoryPool).getMax();
@@ -183,16 +181,16 @@ public class JvmGcMetrics implements MeterBinder, AutoCloseable {
                     // Some GC implementations such as G1 can reduce the old gen size as part of a minor GC. To track the
                     // live data size we record the value if we see a reduction in the old gen heap size or
                     // after a major GC.
-                    if (oldAfter < oldBefore || GcGenerationAge.fromName(notificationInfo.getGcName()) == GcGenerationAge.OLD) {
+                    if (oldAfter < oldBefore || isMajorGc(notificationInfo)) {
                         liveDataSize.set(oldAfter);
                         final long oldMaxAfter = after.get(oldGenPoolName).getMax();
                         maxDataSize.set(oldMaxAfter);
                     }
                 }
 
-                if (youngGenPoolName != null) {
+                if (allocationPoolName != null) {
                     countPoolSizeDelta(gcInfo.getMemoryUsageBeforeGc(), gcInfo.getMemoryUsageAfterGc(), allocatedBytes,
-                            heapPoolSizeAfterGc, youngGenPoolName);
+                            allocationPoolSizeAfter, allocationPoolName);
                 }
             };
             NotificationEmitter notificationEmitter = (NotificationEmitter) mbean;
@@ -215,6 +213,10 @@ public class JvmGcMetrics implements MeterBinder, AutoCloseable {
         if (delta > 0L) {
             counter.increment(delta);
         }
+    }
+
+    private boolean isMajorGc(GarbageCollectionNotificationInfo notificationInfo) {
+        return GcGenerationAge.fromGcName(notificationInfo.getGcName()) == GcGenerationAge.OLD;
     }
 
     private static boolean isManagementExtensionsPresent() {
@@ -250,7 +252,7 @@ public class JvmGcMetrics implements MeterBinder, AutoCloseable {
         YOUNG,
         UNKNOWN;
 
-        private static Map<String, GcGenerationAge> knownCollectors = new HashMap<String, GcGenerationAge>() {{
+        private static final Map<String, GcGenerationAge> knownCollectors = new HashMap<String, GcGenerationAge>() {{
             put("ConcurrentMarkSweep", OLD);
             put("Copy", YOUNG);
             put("G1 Old Generation", OLD);
@@ -261,8 +263,8 @@ public class JvmGcMetrics implements MeterBinder, AutoCloseable {
             put("ParNew", YOUNG);
         }};
 
-        static GcGenerationAge fromName(String name) {
-            return knownCollectors.getOrDefault(name, UNKNOWN);
+        static GcGenerationAge fromGcName(String gcName) {
+            return knownCollectors.getOrDefault(gcName, UNKNOWN);
         }
     }
 

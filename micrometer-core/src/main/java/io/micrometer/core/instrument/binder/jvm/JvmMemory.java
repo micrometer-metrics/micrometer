@@ -43,7 +43,7 @@ class JvmMemory {
                 || "Shenandoah Cycles".equals(name);
     }
 
-    static boolean isYoungGenPool(String name) {
+    static boolean isAllocationPool(String name) {
         return name != null && name.endsWith("Eden Space");
     }
 
