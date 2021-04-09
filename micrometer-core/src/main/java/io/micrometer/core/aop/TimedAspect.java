@@ -53,7 +53,7 @@ import java.util.function.Predicate;
  * you can tell the {@code TimedAspect} when not to create a {@link Timer}.
  *
  * Here's an example to disable {@link Timer} creation for Spring controllers:
- *
+ *</p>
  * <pre>
  * &#064;Bean
  * public TimedAspect timedAspect(MeterRegistry meterRegistry) {
@@ -61,11 +61,10 @@ import java.util.function.Predicate;
  * }
  *
  * private boolean skipControllers(ProceedingJoinPoint pjp) {
- *     Class<?> targetClass = pjp.getTarget().getClass();
+ *     Class&lt;?&gt; targetClass = pjp.getTarget().getClass();
  *     return targetClass.isAnnotationPresent(RestController.class) || targetClass.isAnnotationPresent(Controller.class);
  * }
  * </pre>
- * </p>
  *
  * @author David J. M. Karlsen
  * @author Jon Schneider

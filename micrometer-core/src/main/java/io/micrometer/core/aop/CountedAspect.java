@@ -51,7 +51,7 @@ import java.util.function.Predicate;
  * you can tell the {@code CountedAspect} when not to create a {@link Counter}.
  *
  * Here's a theoretic example to disable {@link Counter} creation for Spring controllers:
- *
+ *</p>
  * <pre>
  * &#064;Bean
  * public CountedAspect countedAspect(MeterRegistry meterRegistry) {
@@ -59,11 +59,10 @@ import java.util.function.Predicate;
  * }
  *
  * private boolean skipControllers(ProceedingJoinPoint pjp) {
- *     Class<?> targetClass = pjp.getTarget().getClass();
+ *     Class&lt;?&gt; targetClass = pjp.getTarget().getClass();
  *     return targetClass.isAnnotationPresent(RestController.class) || targetClass.isAnnotationPresent(Controller.class);
  * }
  * </pre>
- * </p>
  *
  * @author Ali Dehghani
  * @author Jonatan Ivanov
