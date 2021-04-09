@@ -20,15 +20,16 @@ import io.micrometer.core.instrument.MeterRegistry;
 import io.micrometer.core.instrument.util.NamedThreadFactory;
 import io.micrometer.core.ipc.http.HttpSender;
 
+import javax.annotation.Nonnull;
 import java.util.concurrent.ThreadFactory;
 import java.util.concurrent.TimeUnit;
 
 /**
- * Base class for implementations of the {@link io.micrometer.dynatrace.DynatraceMeterRegistry} delegate.
+ * Base class for implementations of Dynatrace exporters.
  *
  * @author Georg Pirklbauer
  */
-public abstract class DynatraceMeterRegistryImplBase {
+public abstract class AbstractDynatraceExporter {
     protected static final ThreadFactory DEFAULT_THREAD_FACTORY = new NamedThreadFactory("dynatrace-metrics-publisher");
 
     protected DynatraceConfig config;
@@ -36,13 +37,13 @@ public abstract class DynatraceMeterRegistryImplBase {
     protected ThreadFactory threadFactory;
     protected HttpSender httpClient;
 
-    public abstract void publish(MeterRegistry registry);
+    public abstract void export(@Nonnull MeterRegistry registry);
 
     public TimeUnit getBaseTimeUnit() {
         return TimeUnit.MILLISECONDS;
     }
 
-    public DynatraceMeterRegistryImplBase(DynatraceConfig config, Clock clock, ThreadFactory threadFactory, HttpSender httpClient) {
+    public AbstractDynatraceExporter(DynatraceConfig config, Clock clock, ThreadFactory threadFactory, HttpSender httpClient) {
         this.config = config;
         this.clock = clock;
         this.threadFactory = threadFactory;

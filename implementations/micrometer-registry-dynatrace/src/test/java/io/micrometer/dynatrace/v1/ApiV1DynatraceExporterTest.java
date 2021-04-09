@@ -42,10 +42,10 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
  *
  * @author Johnny Lim
  */
-class DynatraceMeterRegistryImplV1Test {
+class ApiV1DynatraceExporterTest {
 
     private final DynatraceMeterRegistry meterRegistry = createMeterRegistry();
-    private final DynatraceMeterRegistryImplV1 meterRegistryImpl = createMeterRegistryImpl();
+    private final ApiV1DynatraceExporter meterRegistryImpl = createMeterRegistryImpl();
 
     private final ObjectMapper mapper = new ObjectMapper();
 
@@ -111,7 +111,7 @@ class DynatraceMeterRegistryImplV1Test {
 
     @Test
     void putCustomMetricOnSuccessShouldAddMetricIdToCreatedCustomMetrics() throws NoSuchFieldException, IllegalAccessException {
-        Field createdCustomMetricsField = DynatraceMeterRegistryImplV1.class.getDeclaredField("createdCustomMetrics");
+        Field createdCustomMetricsField = ApiV1DynatraceExporter.class.getDeclaredField("createdCustomMetrics");
         createdCustomMetricsField.setAccessible(true);
         @SuppressWarnings("unchecked")
         Set<String> createdCustomMetrics = (Set<String>) createdCustomMetricsField.get(meterRegistryImpl);
@@ -294,10 +294,10 @@ class DynatraceMeterRegistryImplV1Test {
                 .build();
     }
 
-    private DynatraceMeterRegistryImplV1 createMeterRegistryImpl() {
+    private ApiV1DynatraceExporter createMeterRegistryImpl() {
         DynatraceConfig config = createDynatraceConfig();
 
-        return new DynatraceMeterRegistryImplV1(config, Clock.SYSTEM, request -> new HttpSender.Response(200, null));
+        return new ApiV1DynatraceExporter(config, Clock.SYSTEM, request -> new HttpSender.Response(200, null));
 
     }
 

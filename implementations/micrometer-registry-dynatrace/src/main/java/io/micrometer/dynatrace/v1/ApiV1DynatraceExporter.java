@@ -25,10 +25,11 @@ import io.micrometer.core.instrument.util.StringUtils;
 import io.micrometer.core.ipc.http.HttpSender;
 import io.micrometer.core.lang.Nullable;
 import io.micrometer.dynatrace.DynatraceConfig;
-import io.micrometer.dynatrace.DynatraceMeterRegistryImplBase;
+import io.micrometer.dynatrace.AbstractDynatraceExporter;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import javax.annotation.Nonnull;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -48,11 +49,11 @@ import static java.nio.charset.StandardCharsets.UTF_8;
  * @author Jon Schneider
  * @author Johnny Lim
  * @author PJ Fanning
+ * @author Georg Pirklbauer
  */
-public class DynatraceMeterRegistryImplV1 extends DynatraceMeterRegistryImplBase {
+public class ApiV1DynatraceExporter extends AbstractDynatraceExporter {
     private static final int MAX_MESSAGE_SIZE = 15360; //max message size in bytes that Dynatrace will accept
-    private final Logger logger = LoggerFactory.getLogger(DynatraceMeterRegistryImplV1.class.getName());
-
+    private final Logger logger = LoggerFactory.getLogger(ApiV1DynatraceExporter.class.getName());
 
     /**
      * Metric names for which we have created the custom metric in the API
@@ -62,22 +63,21 @@ public class DynatraceMeterRegistryImplV1 extends DynatraceMeterRegistryImplBase
 
     private final NamingConvention namingConvention;
 
-
-    public DynatraceMeterRegistryImplV1(DynatraceConfig config, Clock clock, HttpSender httpClient) {
+    public ApiV1DynatraceExporter(DynatraceConfig config, Clock clock, HttpSender httpClient) {
         this(config, clock, DEFAULT_THREAD_FACTORY, httpClient);
     }
 
-    public DynatraceMeterRegistryImplV1(DynatraceConfig config, Clock clock, ThreadFactory threadFactory, HttpSender httpClient) {
+    public ApiV1DynatraceExporter(DynatraceConfig config, Clock clock, ThreadFactory threadFactory, HttpSender httpClient) {
         super(config, clock, threadFactory, httpClient);
 
-        this.config = config;
-        this.httpClient = httpClient;
+//        this.config = config;
+//        this.httpClient = httpClient;
         this.customMetricEndpointTemplate = config.uri() + "/api/v1/timeseries/";
         this.namingConvention = new DynatraceNamingConvention();
     }
 
     @Override
-    public void publish(MeterRegistry registry) {
+    public void export(@Nonnull MeterRegistry registry) {
         String customDeviceMetricEndpoint = config.uri() + "/api/v1/entity/infrastructure/custom/" +
                 config.deviceId() + "?api-token=" + config.apiToken();
 
@@ -178,11 +178,11 @@ public class DynatraceMeterRegistryImplV1 extends DynatraceMeterRegistryImplBase
                 new DynatraceTimeSeries(metricId, time, value.doubleValue(), extractDimensionValues(tags)));
     }
 
-    private List<Tag> getConventionTags(Meter.Id id) {
+    public List<Tag> getConventionTags(Meter.Id id) {
         return id.getConventionTags(namingConvention);
     }
 
-    private String getConventionName(Meter.Id id) {
+    public String getConventionName(Meter.Id id) {
         return id.getConventionName(namingConvention);
     }
 
