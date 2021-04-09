@@ -20,6 +20,8 @@ import io.micrometer.core.instrument.step.StepMeterRegistry;
 import io.micrometer.core.ipc.http.HttpSender;
 import io.micrometer.core.ipc.http.HttpUrlConnectionSender;
 import io.micrometer.dynatrace.v1.ApiV1DynatraceExporter;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.util.concurrent.ThreadFactory;
 import java.util.concurrent.TimeUnit;
@@ -38,12 +40,14 @@ import static io.micrometer.dynatrace.AbstractDynatraceExporter.DEFAULT_THREAD_F
  */
 public class DynatraceMeterRegistry extends StepMeterRegistry {
     private final AbstractDynatraceExporter exporter;
+    private final Logger logger = LoggerFactory.getLogger(DynatraceMeterRegistry.class.getName());
 
     private DynatraceMeterRegistry(DynatraceConfig config, Clock clock, ThreadFactory threadFactory, HttpSender httpClient) {
         super(config, clock);
         start(threadFactory);
 
-        if (config.apiVersion().equals("v1")) {
+        if (config.apiVersion() == DynatraceApiVersion.v1) {
+            logger.info("Using Dynatrace v1 exporter.");
             this.exporter = new ApiV1DynatraceExporter(config, clock, threadFactory, httpClient);
         } else {
             throw new IllegalArgumentException("Only v1 export is available at the moment.");

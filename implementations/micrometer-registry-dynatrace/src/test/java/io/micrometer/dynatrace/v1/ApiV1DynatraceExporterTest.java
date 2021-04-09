@@ -19,6 +19,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import io.micrometer.core.instrument.*;
 import io.micrometer.core.instrument.config.validate.ValidationException;
 import io.micrometer.core.ipc.http.HttpSender;
+import io.micrometer.dynatrace.DynatraceApiVersion;
 import io.micrometer.dynatrace.DynatraceConfig;
 import io.micrometer.dynatrace.DynatraceMeterRegistry;
 import org.junit.jupiter.api.Test;
@@ -324,8 +325,8 @@ class ApiV1DynatraceExporterTest {
             }
 
             @Override
-            public String apiVersion() {
-                return "v1";
+            public DynatraceApiVersion apiVersion() {
+                return DynatraceApiVersion.v1;
             }
         };
     }

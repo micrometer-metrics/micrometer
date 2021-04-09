@@ -16,6 +16,7 @@
 package io.micrometer.dynatrace;
 
 import io.micrometer.core.instrument.config.validate.Validated;
+import io.micrometer.core.instrument.config.validate.ValidationException;
 import org.junit.jupiter.api.Test;
 
 import java.util.HashMap;
@@ -72,10 +73,10 @@ class DynatraceConfigTest {
             put("dynatrace.deviceId", "device");
             put("dynatrace.apiVersion", "v-INVALID");
         }};
-
         DynatraceConfig config = properties::get;
 
-        assertThrows(IllegalArgumentException.class, config::validate);
+        ValidationException ve = assertThrows(ValidationException.class, config::validate);
+        assertThat(ve.getMessage()).startsWith("dynatrace.apiVersion was 'v-INVALID' but it should be one of ");
     }
 
     @Test
@@ -87,7 +88,7 @@ class DynatraceConfigTest {
         }};
 
         DynatraceConfig config = properties::get;
-        assertThat(config.apiVersion()).isEqualTo("v1");
+        assertThat(config.apiVersion()).isEqualTo(DynatraceApiVersion.v1);
         Validated<?> validated = config.validate();
         assertThat(validated.isValid()).isTrue();
     }

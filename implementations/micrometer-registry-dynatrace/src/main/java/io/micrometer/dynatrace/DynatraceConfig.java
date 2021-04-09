@@ -15,12 +15,11 @@
  */
 package io.micrometer.dynatrace;
 
+import io.micrometer.core.instrument.config.validate.InvalidReason;
 import io.micrometer.core.instrument.config.validate.Validated;
 import io.micrometer.core.instrument.step.StepRegistryConfig;
 import io.micrometer.core.instrument.util.StringUtils;
 import io.micrometer.core.lang.Nullable;
-
-import java.util.function.Function;
 
 import static io.micrometer.core.instrument.config.MeterRegistryConfigValidator.*;
 import static io.micrometer.core.instrument.config.validate.PropertyValidator.*;
@@ -70,21 +69,19 @@ public interface DynatraceConfig extends StepRegistryConfig {
     /**
      * Return the version of the target Dynatrace API.
      *
-     * @return a {@link String} containing the version of the targeted Dynatrace API.
+     * @return a {@link DynatraceApiVersion} containing the version of the targeted Dynatrace API.
      */
-    default String apiVersion() {
-        // if not specified, defaults to v1 for backwards compatibility.
-        return getString(this, "apiVersion")
-                .map(val -> StringUtils.isEmpty(val) ? "v1" : val)
-                .get();
+    default DynatraceApiVersion apiVersion() {
+        // if not specified or invalid, defaults to v1 for backwards compatibility.
+        return getEnum(this, DynatraceApiVersion.class, "apiVersion")
+                .orElse(DynatraceApiVersion.v1);
     }
 
     @Override
     default Validated<?> validate() {
         // Currently only v1 is implemented. This check will be extended once more versions are added.
-        Function<DynatraceConfig, Validated<String>> versionFunc = checkRequired("apiVersion", DynatraceConfig::apiVersion);
-        String versionStr = versionFunc.apply(this).get();
-        if (versionStr.equals("v1")) {
+
+        if (apiVersion() == DynatraceApiVersion.v1) {
             return checkAll(this,
                     c -> StepRegistryConfig.validate(c),
                     checkRequired("apiToken", DynatraceConfig::apiToken),
@@ -94,6 +91,6 @@ public interface DynatraceConfig extends StepRegistryConfig {
             );
         }
 
-        throw new IllegalArgumentException(String.format("The provided API version is not valid: %s.", versionStr));
+        return Validated.invalid("apiVersion", apiVersion(), "API version could not be validated.", InvalidReason.MALFORMED);
     }
 }
