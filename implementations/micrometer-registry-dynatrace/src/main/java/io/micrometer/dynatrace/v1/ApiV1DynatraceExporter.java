@@ -70,8 +70,6 @@ public class ApiV1DynatraceExporter extends AbstractDynatraceExporter {
     public ApiV1DynatraceExporter(DynatraceConfig config, Clock clock, ThreadFactory threadFactory, HttpSender httpClient) {
         super(config, clock, threadFactory, httpClient);
 
-//        this.config = config;
-//        this.httpClient = httpClient;
         this.customMetricEndpointTemplate = config.uri() + "/api/v1/timeseries/";
         this.namingConvention = new DynatraceNamingConvention();
     }

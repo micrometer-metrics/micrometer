@@ -80,7 +80,6 @@ public interface DynatraceConfig extends StepRegistryConfig {
     @Override
     default Validated<?> validate() {
         // Currently only v1 is implemented. This check will be extended once more versions are added.
-
         if (apiVersion() == DynatraceApiVersion.v1) {
             return checkAll(this,
                     c -> StepRegistryConfig.validate(c),
