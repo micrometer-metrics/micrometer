@@ -88,7 +88,7 @@ class DynatraceConfigTest {
         }};
 
         DynatraceConfig config = properties::get;
-        assertThat(config.apiVersion()).isEqualTo(DynatraceApiVersion.v1);
+        assertThat(config.apiVersion()).isEqualTo(DynatraceApiVersion.V1);
         Validated<?> validated = config.validate();
         assertThat(validated.isValid()).isTrue();
     }

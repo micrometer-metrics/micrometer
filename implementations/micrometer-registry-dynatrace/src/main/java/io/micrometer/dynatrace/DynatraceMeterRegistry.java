@@ -17,16 +17,15 @@ package io.micrometer.dynatrace;
 
 import io.micrometer.core.instrument.Clock;
 import io.micrometer.core.instrument.step.StepMeterRegistry;
+import io.micrometer.core.instrument.util.NamedThreadFactory;
 import io.micrometer.core.ipc.http.HttpSender;
 import io.micrometer.core.ipc.http.HttpUrlConnectionSender;
-import io.micrometer.dynatrace.v1.ApiV1DynatraceExporter;
+import io.micrometer.dynatrace.v1.DynatraceExporterV1;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.util.concurrent.ThreadFactory;
 import java.util.concurrent.TimeUnit;
-
-import static io.micrometer.dynatrace.AbstractDynatraceExporter.DEFAULT_THREAD_FACTORY;
 
 /**
  * {@link StepMeterRegistry} for Dynatrace.
@@ -39,16 +38,18 @@ import static io.micrometer.dynatrace.AbstractDynatraceExporter.DEFAULT_THREAD_F
  * @since 1.1.0
  */
 public class DynatraceMeterRegistry extends StepMeterRegistry {
+    private static final ThreadFactory DEFAULT_THREAD_FACTORY = new NamedThreadFactory("dynatrace-metrics-publisher");
+
     private final AbstractDynatraceExporter exporter;
-    private final Logger logger = LoggerFactory.getLogger(DynatraceMeterRegistry.class.getName());
+    private static final Logger logger = LoggerFactory.getLogger(DynatraceMeterRegistry.class.getName());
 
     private DynatraceMeterRegistry(DynatraceConfig config, Clock clock, ThreadFactory threadFactory, HttpSender httpClient) {
         super(config, clock);
         start(threadFactory);
 
-        if (config.apiVersion() == DynatraceApiVersion.v1) {
+        if (config.apiVersion() == DynatraceApiVersion.V1) {
             logger.info("Using Dynatrace v1 exporter.");
-            this.exporter = new ApiV1DynatraceExporter(config, clock, threadFactory, httpClient);
+            this.exporter = new DynatraceExporterV1(config, clock, httpClient);
         } else {
             throw new IllegalArgumentException("Only v1 export is available at the moment.");
         }

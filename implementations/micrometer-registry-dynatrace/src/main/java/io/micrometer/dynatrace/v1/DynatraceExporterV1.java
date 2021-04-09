@@ -24,8 +24,8 @@ import io.micrometer.core.instrument.util.MeterPartition;
 import io.micrometer.core.instrument.util.StringUtils;
 import io.micrometer.core.ipc.http.HttpSender;
 import io.micrometer.core.lang.Nullable;
-import io.micrometer.dynatrace.DynatraceConfig;
 import io.micrometer.dynatrace.AbstractDynatraceExporter;
+import io.micrometer.dynatrace.DynatraceConfig;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -35,7 +35,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.ThreadFactory;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 import java.util.stream.StreamSupport;
@@ -51,9 +50,9 @@ import static java.nio.charset.StandardCharsets.UTF_8;
  * @author PJ Fanning
  * @author Georg Pirklbauer
  */
-public class ApiV1DynatraceExporter extends AbstractDynatraceExporter {
+public class DynatraceExporterV1 extends AbstractDynatraceExporter {
     private static final int MAX_MESSAGE_SIZE = 15360; //max message size in bytes that Dynatrace will accept
-    private final Logger logger = LoggerFactory.getLogger(ApiV1DynatraceExporter.class.getName());
+    private final Logger logger = LoggerFactory.getLogger(DynatraceExporterV1.class.getName());
 
     /**
      * Metric names for which we have created the custom metric in the API
@@ -63,12 +62,8 @@ public class ApiV1DynatraceExporter extends AbstractDynatraceExporter {
 
     private final NamingConvention namingConvention;
 
-    public ApiV1DynatraceExporter(DynatraceConfig config, Clock clock, HttpSender httpClient) {
-        this(config, clock, DEFAULT_THREAD_FACTORY, httpClient);
-    }
-
-    public ApiV1DynatraceExporter(DynatraceConfig config, Clock clock, ThreadFactory threadFactory, HttpSender httpClient) {
-        super(config, clock, threadFactory, httpClient);
+    public DynatraceExporterV1(DynatraceConfig config, Clock clock, HttpSender httpClient) {
+        super(config, clock, httpClient);
 
         this.customMetricEndpointTemplate = config.uri() + "/api/v1/timeseries/";
         this.namingConvention = new DynatraceNamingConvention();
@@ -176,11 +171,11 @@ public class ApiV1DynatraceExporter extends AbstractDynatraceExporter {
                 new DynatraceTimeSeries(metricId, time, value.doubleValue(), extractDimensionValues(tags)));
     }
 
-    public List<Tag> getConventionTags(Meter.Id id) {
+    private List<Tag> getConventionTags(Meter.Id id) {
         return id.getConventionTags(namingConvention);
     }
 
-    public String getConventionName(Meter.Id id) {
+    private String getConventionName(Meter.Id id) {
         return id.getConventionName(namingConvention);
     }
 
