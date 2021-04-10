@@ -35,7 +35,7 @@ import java.util.function.Predicate;
 /**
  * <p>
  * Aspect responsible for intercepting all methods annotated with the {@link Counted @Counted}
- * annotation and record a few counter metrics about their execution status.<br />
+ * annotation and recording a few counter metrics about their execution status.<br />
  * The aspect supports programmatic customizations through constructor-injectable custom logic.
  * </p>
  * <p>
@@ -90,7 +90,7 @@ public class CountedAspect {
     /**
      * Where we're going register metrics.
      */
-    private final MeterRegistry meterRegistry;
+    private final MeterRegistry registry;
 
     /**
      * A function to produce additional tags for any given join point.
@@ -105,13 +105,14 @@ public class CountedAspect {
     /**
      * Creates a {@code CountedAspect} instance with {@link Metrics#globalRegistry}.
      *
+     * @since 1.7.0
      */
     public CountedAspect() {
         this(Metrics.globalRegistry);
     }
 
     /**
-     * Creates a {@code CountedAspect} instance with the given {@code meterRegistry}.
+     * Creates a {@code CountedAspect} instance with the given {@code registry}.
      *
      * @param registry Where we're going to register metrics.
      */
@@ -120,24 +121,25 @@ public class CountedAspect {
     }
 
     /**
-     * Creates a {@code CountedAspect} instance with the given {@code meterRegistry} and tags provider function.
+     * Creates a {@code CountedAspect} instance with the given {@code registry} and tags provider function.
      *
-     * @param meterRegistry Where we're going to register metrics.
+     * @param registry Where we're going to register metrics.
      * @param tagsBasedOnJoinPoint A function to generate tags given a join point.
      */
-    public CountedAspect(MeterRegistry meterRegistry, Function<ProceedingJoinPoint, Iterable<Tag>> tagsBasedOnJoinPoint) {
-        this(meterRegistry, tagsBasedOnJoinPoint, DONT_SKIP_ANYTHING);
+    public CountedAspect(MeterRegistry registry, Function<ProceedingJoinPoint, Iterable<Tag>> tagsBasedOnJoinPoint) {
+        this(registry, tagsBasedOnJoinPoint, DONT_SKIP_ANYTHING);
     }
 
     /**
-     * Creates a {@code CountedAspect} instance with the given {@code meterRegistry} and skip predicate.
+     * Creates a {@code CountedAspect} instance with the given {@code registry} and skip predicate.
      *
-     * @param meterRegistry Where we're going to register metrics.
+     * @param registry Where we're going to register metrics.
      * @param shouldSkip A predicate to decide if creating the timer should be skipped or not.
+     * @since 1.7.0
      */
-    public CountedAspect(MeterRegistry meterRegistry, Predicate<ProceedingJoinPoint> shouldSkip) {
+    public CountedAspect(MeterRegistry registry, Predicate<ProceedingJoinPoint> shouldSkip) {
         this(
-                meterRegistry,
+                registry,
                 pjp -> Tags.of("class", pjp.getStaticPart().getSignature().getDeclaringTypeName(),
                                 "method", pjp.getStaticPart().getSignature().getName()),
                 shouldSkip
@@ -145,14 +147,15 @@ public class CountedAspect {
     }
 
     /**
-     * Creates a {@code CountedAspect} instance with the given {@code meterRegistry}, tags provider function and skip predicate.
+     * Creates a {@code CountedAspect} instance with the given {@code registry}, tags provider function and skip predicate.
      *
-     * @param meterRegistry Where we're going to register metrics.
+     * @param registry Where we're going to register metrics.
      * @param tagsBasedOnJoinPoint A function to generate tags given a join point.
      * @param shouldSkip A predicate to decide if creating the timer should be skipped or not.
+     * @since 1.7.0
      */
-    public CountedAspect(MeterRegistry meterRegistry, Function<ProceedingJoinPoint, Iterable<Tag>> tagsBasedOnJoinPoint, Predicate<ProceedingJoinPoint> shouldSkip) {
-        this.meterRegistry = meterRegistry;
+    public CountedAspect(MeterRegistry registry, Function<ProceedingJoinPoint, Iterable<Tag>> tagsBasedOnJoinPoint, Predicate<ProceedingJoinPoint> shouldSkip) {
+        this.registry = registry;
         this.tagsBasedOnJoinPoint = tagsBasedOnJoinPoint;
         this.shouldSkip = shouldSkip;
     }
@@ -221,7 +224,7 @@ public class CountedAspect {
                 .tag(EXCEPTION_TAG, exception)
                 .tag(RESULT_TAG, result)
                 .tags(counted.extraTags())
-                .register(meterRegistry)
+                .register(registry)
                 .increment();
     }
 

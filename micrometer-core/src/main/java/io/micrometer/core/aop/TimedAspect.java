@@ -102,7 +102,7 @@ public class TimedAspect {
     }
 
     /**
-     * Creates a {@code TimedAspect} instance with the given {@code meterRegistry}.
+     * Creates a {@code TimedAspect} instance with the given {@code registry}.
      *
      * @param registry Where we're going to register metrics.
      */
@@ -111,7 +111,7 @@ public class TimedAspect {
     }
 
     /**
-     * Creates a {@code TimedAspect} instance with the given {@code meterRegistry} and tags provider function.
+     * Creates a {@code TimedAspect} instance with the given {@code registry} and tags provider function.
      *
      * @param registry Where we're going to register metrics.
      * @param tagsBasedOnJoinPoint A function to generate tags given a join point.
@@ -121,10 +121,11 @@ public class TimedAspect {
     }
 
     /**
-     * Creates a {@code TimedAspect} instance with the given {@code meterRegistry} and skip predicate.
+     * Creates a {@code TimedAspect} instance with the given {@code registry} and skip predicate.
      *
      * @param registry Where we're going to register metrics.
      * @param shouldSkip A predicate to decide if creating the timer should be skipped or not.
+     * @since 1.7.0
      */
     public TimedAspect(MeterRegistry registry, Predicate<ProceedingJoinPoint> shouldSkip) {
         this(
@@ -136,11 +137,12 @@ public class TimedAspect {
     }
 
     /**
-     * Creates a {@code TimedAspect} instance with the given {@code meterRegistry}, tags provider function and skip predicate.
+     * Creates a {@code TimedAspect} instance with the given {@code registry}, tags provider function and skip predicate.
      *
      * @param registry Where we're going to register metrics.
      * @param tagsBasedOnJoinPoint A function to generate tags given a join point.
      * @param shouldSkip A predicate to decide if creating the timer should be skipped or not.
+     * @since 1.7.0
      */
     public TimedAspect(MeterRegistry registry, Function<ProceedingJoinPoint, Iterable<Tag>> tagsBasedOnJoinPoint, Predicate<ProceedingJoinPoint> shouldSkip) {
         this.registry = registry;
