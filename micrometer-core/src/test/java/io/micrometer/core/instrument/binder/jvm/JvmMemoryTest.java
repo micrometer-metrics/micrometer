@@ -26,13 +26,13 @@ class JvmMemoryTest {
     @Test
     @DisabledIfSystemProperty(named = "java.vm.vendor", matches = "Eclipse OpenJ9")
     void getLongLivedHeapPool() {
-        assertThat(JvmMemory.getLongLivedHeapPool()).isNotEmpty();
+        assertThat(JvmMemory.getLongLivedHeapPools()).isNotEmpty();
     }
 
     @Test
     @EnabledIfSystemProperty(named = "java.vm.vendor", matches = "Eclipse OpenJ9")
     void getLongLivedHeapPoolWithEclipseOpenJ9() {
-        assertThat(JvmMemory.getLongLivedHeapPool()).isEmpty();
+        assertThat(JvmMemory.getLongLivedHeapPools()).isEmpty();
     }
 
     @Test

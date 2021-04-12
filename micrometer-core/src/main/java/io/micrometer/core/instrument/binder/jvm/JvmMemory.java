@@ -21,21 +21,20 @@ import java.lang.management.ManagementFactory;
 import java.lang.management.MemoryPoolMXBean;
 import java.lang.management.MemoryType;
 import java.lang.management.MemoryUsage;
-import java.util.Optional;
 import java.util.function.ToLongFunction;
+import java.util.stream.Stream;
 
 class JvmMemory {
 
     private JvmMemory() {
     }
 
-    static Optional<MemoryPoolMXBean> getLongLivedHeapPool() {
+    static Stream<MemoryPoolMXBean> getLongLivedHeapPools() {
         return ManagementFactory
                 .getMemoryPoolMXBeans()
                 .stream()
                 .filter(JvmMemory::isHeap)
-                .filter(mem -> isLongLivedPool(mem.getName()))
-                .findAny();
+                .filter(mem -> isLongLivedPool(mem.getName()));
     }
 
     static boolean isConcurrentPhase(String cause, String name) {
