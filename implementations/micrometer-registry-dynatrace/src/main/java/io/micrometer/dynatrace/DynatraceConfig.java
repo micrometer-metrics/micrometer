@@ -79,17 +79,13 @@ public interface DynatraceConfig extends StepRegistryConfig {
 
     @Override
     default Validated<?> validate() {
-        // Currently only v1 is implemented. This check will be extended once more versions are added.
-        if (apiVersion() == DynatraceApiVersion.V1) {
-            return checkAll(this,
-                    c -> StepRegistryConfig.validate(c),
-                    checkRequired("apiToken", DynatraceConfig::apiToken),
-                    checkRequired("uri", DynatraceConfig::uri),
-                    checkRequired("deviceId", DynatraceConfig::deviceId),
-                    check("technologyType", DynatraceConfig::technologyType).andThen(Validated::nonBlank)
-            );
-        }
-
-        return Validated.invalid("apiVersion", apiVersion(), "API version could not be validated.", InvalidReason.MALFORMED);
+        return checkAll(this,
+                c -> StepRegistryConfig.validate(c),
+                checkRequired("apiToken", DynatraceConfig::apiToken),
+                checkRequired("uri", DynatraceConfig::uri),
+                checkRequired("deviceId", DynatraceConfig::deviceId),
+                check("technologyType", DynatraceConfig::technologyType).andThen(Validated::nonBlank),
+                check("apiVersion", DynatraceConfig::apiVersion)
+        );
     }
 }

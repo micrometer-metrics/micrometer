@@ -15,6 +15,7 @@
  */
 package io.micrometer.dynatrace;
 
+import io.micrometer.core.instrument.config.validate.InvalidReason;
 import io.micrometer.core.instrument.config.validate.Validated;
 import io.micrometer.core.instrument.config.validate.ValidationException;
 import org.junit.jupiter.api.Test;
@@ -75,8 +76,14 @@ class DynatraceConfigTest {
         }};
         DynatraceConfig config = properties::get;
 
-        ValidationException ve = assertThrows(ValidationException.class, config::validate);
-        assertThat(ve.getMessage()).startsWith("dynatrace.apiVersion was 'v-INVALID' but it should be one of ");
+        List<Validated.Invalid<?>> failures = config.validate().failures();
+        assertThat(failures).hasSize(1);
+        Validated.Invalid<?> failure = failures.get(0);
+        assertThat(failure.getProperty()).isEqualTo("dynatrace.apiVersion");
+        assertThat(failure.getValue()).isEqualTo("v-INVALID");
+        assertThat(failure.getMessage()).startsWith("should be one of ");
+        assertThat(failure.getReason()).isSameAs(InvalidReason.MALFORMED);
+        assertThat(failure.getException()).isNull();
     }
 
     @Test
@@ -88,8 +95,8 @@ class DynatraceConfigTest {
         }};
 
         DynatraceConfig config = properties::get;
-        assertThat(config.apiVersion()).isEqualTo(DynatraceApiVersion.V1);
-        Validated<?> validated = config.validate();
-        assertThat(validated.isValid()).isTrue();
+
+        assertThat(config.validate().isValid()).isTrue();
+        assertThat(config.apiVersion()).isSameAs(DynatraceApiVersion.V1);
     }
 }
