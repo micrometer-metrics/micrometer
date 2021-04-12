@@ -27,6 +27,9 @@ import java.util.concurrent.ConcurrentMap;
 import java.util.stream.Collectors;
 
 public class DatadogStatsdLineBuilder extends FlavorStatsdLineBuilder {
+
+    private static final String ENTITY_ID_TAG_NAME = "dd.internal.entity_id";
+
     private final Object conventionTagsLock = new Object();
     @SuppressWarnings({"NullableProblems", "unused"})
     private volatile NamingConvention namingConvention;
@@ -37,6 +40,8 @@ public class DatadogStatsdLineBuilder extends FlavorStatsdLineBuilder {
     @SuppressWarnings("NullableProblems")
     private volatile String tagsNoStat;
     private final ConcurrentMap<Statistic, String> tags = new ConcurrentHashMap<>();
+    @Nullable
+    private String ddEntityId;
 
     public DatadogStatsdLineBuilder(Meter.Id id, MeterRegistry.Config config) {
         super(id, config);
@@ -48,6 +53,11 @@ public class DatadogStatsdLineBuilder extends FlavorStatsdLineBuilder {
         return name + amount + "|" + type + tagsByStatistic(stat);
     }
 
+    // VisibleForTesting
+    void setDdEntityId(@Nullable String ddEntityId) {
+        this.ddEntityId = ddEntityId;
+    }
+
     private void updateIfNamingConventionChanged() {
         NamingConvention next = config.namingConvention();
         if (this.namingConvention != next) {
@@ -56,16 +66,28 @@ public class DatadogStatsdLineBuilder extends FlavorStatsdLineBuilder {
                     return;
                 }
                 this.tags.clear();
-                this.conventionTags = id.getTagsAsIterable().iterator().hasNext() ?
+                String conventionTags = id.getTagsAsIterable().iterator().hasNext() ?
                         id.getConventionTags(next).stream()
-                                .map(t -> formatTag(t))
+                                .map(this::formatTag)
                                 .collect(Collectors.joining(","))
                         : null;
+                this.conventionTags = appendEntityIdTag(conventionTags);
             }
             this.name = next.name(sanitizeName(id.getName()), id.getType(), id.getBaseUnit()) + ":";
             this.tagsNoStat = tags(null, conventionTags, ":", "|#");
             this.namingConvention = next;
         }
+    }
+
+    private @Nullable String appendEntityIdTag(@Nullable String tags) {
+        if (ddEntityId == null || ddEntityId.trim().isEmpty()) {
+            ddEntityId = System.getenv("DD_ENTITY_ID");
+        }
+        if (ddEntityId != null && !ddEntityId.trim().isEmpty()) {
+            String entityIdTag = formatTag(Tag.of(ENTITY_ID_TAG_NAME, ddEntityId));
+            return tags == null ? entityIdTag : tags + "," + entityIdTag;
+        }
+        return tags;
     }
 
     private String formatTag(Tag t) {
