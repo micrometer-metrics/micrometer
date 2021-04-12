@@ -83,7 +83,8 @@ public class JvmGcMetrics implements MeterBinder, AutoCloseable {
             String name = mbean.getName();
             if (isAllocationPool(name)) {
                 allocationPoolName = name;
-            } else if (isLongLivedPool(name)) {
+            }
+            if (isLongLivedPool(name)) {
                 longLivedPoolName = name;
             }
         }
@@ -189,6 +190,7 @@ public class JvmGcMetrics implements MeterBinder, AutoCloseable {
 
     private boolean isGenerationalGcConfigured() {
         return ManagementFactory.getMemoryPoolMXBeans().stream()
+                .filter(JvmMemory::isHeap)
                 .map(MemoryPoolMXBean::getName)
                 .filter(name -> !name.contains("tenured"))
                 .count() > 1;

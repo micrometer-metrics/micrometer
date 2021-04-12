@@ -44,7 +44,10 @@ class JvmMemory {
     }
 
     static boolean isAllocationPool(String name) {
-        return name != null && name.endsWith("Eden Space");
+        return name != null && (name.endsWith("Eden Space")
+                || "Shenandoah".equals(name)
+                || "ZHeap".equals(name)
+        );
     }
 
     static boolean isLongLivedPool(String name) {
@@ -55,7 +58,7 @@ class JvmMemory {
         );
     }
 
-    private static boolean isHeap(MemoryPoolMXBean memoryPoolBean) {
+    static boolean isHeap(MemoryPoolMXBean memoryPoolBean) {
         return MemoryType.HEAP.equals(memoryPoolBean.getType());
     }
 
