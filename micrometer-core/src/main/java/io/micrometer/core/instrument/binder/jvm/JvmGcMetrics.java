@@ -165,7 +165,7 @@ public class JvmGcMetrics implements MeterBinder, AutoCloseable {
                     // Some GC implementations such as G1 can reduce the old gen size as part of a minor GC. To track the
                     // live data size we record the value if we see a reduction in the old gen heap size or
                     // after a major GC.
-                    if (oldAfter < oldBefore || isMajorGc(notificationInfo)) {
+                    if (oldAfter < oldBefore || isMajorGc(notificationInfo.getGcName())) {
                         liveDataSize.set(oldAfter);
                         final long oldMaxAfter = after.get(oldGenPoolName).getMax();
                         maxDataSize.set(oldMaxAfter);
@@ -193,8 +193,8 @@ public class JvmGcMetrics implements MeterBinder, AutoCloseable {
         }
     }
 
-    private boolean isMajorGc(GarbageCollectionNotificationInfo notificationInfo) {
-        return GcGenerationAge.fromGcName(notificationInfo.getGcName()) == GcGenerationAge.OLD;
+    private boolean isMajorGc(String gcName) {
+        return GcGenerationAge.fromGcName(gcName) == GcGenerationAge.OLD;
     }
 
     private static boolean isManagementExtensionsPresent() {
