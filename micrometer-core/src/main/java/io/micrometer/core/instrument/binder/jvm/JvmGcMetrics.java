@@ -18,6 +18,7 @@ package io.micrometer.core.instrument.binder.jvm;
 import com.sun.management.GarbageCollectionNotificationInfo;
 import com.sun.management.GcInfo;
 import io.micrometer.core.instrument.*;
+import io.micrometer.core.instrument.Timer;
 import io.micrometer.core.instrument.binder.BaseUnits;
 import io.micrometer.core.instrument.binder.MeterBinder;
 import io.micrometer.core.lang.NonNullApi;
@@ -34,9 +35,7 @@ import java.lang.management.GarbageCollectorMXBean;
 import java.lang.management.ManagementFactory;
 import java.lang.management.MemoryPoolMXBean;
 import java.lang.management.MemoryUsage;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicLong;
@@ -69,8 +68,7 @@ public class JvmGcMetrics implements MeterBinder, AutoCloseable {
     @Nullable
     private String allocationPoolName;
 
-    @Nullable
-    private String longLivedPoolName;
+    private Set<String> longLivedPoolNames = new HashSet<>();
 
     private final List<Runnable> notificationListenerCleanUpRunnables = new CopyOnWriteArrayList<>();
 
@@ -85,7 +83,7 @@ public class JvmGcMetrics implements MeterBinder, AutoCloseable {
                 allocationPoolName = name;
             }
             if (isLongLivedPool(name)) {
-                longLivedPoolName = name;
+                longLivedPoolNames.add(name);
             }
         }
         this.tags = tags;
@@ -97,7 +95,7 @@ public class JvmGcMetrics implements MeterBinder, AutoCloseable {
             return;
         }
 
-        double maxLongLivedPoolBytes = getLongLivedHeapPool().map(mem -> getUsageValue(mem, MemoryUsage::getMax)).orElse(0.0);
+        double maxLongLivedPoolBytes = getLongLivedHeapPools().mapToDouble(mem -> getUsageValue(mem, MemoryUsage::getMax)).sum();
 
         AtomicLong maxDataSize = new AtomicLong((long) maxLongLivedPoolBytes);
         Gauge.builder("jvm.gc.max.data.size", maxDataSize, AtomicLong::get)
@@ -157,11 +155,10 @@ public class JvmGcMetrics implements MeterBinder, AutoCloseable {
                 final Map<String, MemoryUsage> before = gcInfo.getMemoryUsageBeforeGc();
                 final Map<String, MemoryUsage> after = gcInfo.getMemoryUsageAfterGc();
 
-                countPoolSizeDelta(gcInfo.getMemoryUsageBeforeGc(), gcInfo.getMemoryUsageAfterGc(), allocatedBytes,
-                        allocationPoolSizeAfter, allocationPoolName);
+                countPoolSizeDelta(before, after, allocatedBytes, allocationPoolSizeAfter, allocationPoolName);
 
-                final long longLivedBefore = before.get(longLivedPoolName).getUsed();
-                final long longLivedAfter = after.get(longLivedPoolName).getUsed();
+                final long longLivedBefore = longLivedPoolNames.stream().mapToLong(pool -> before.get(pool).getUsed()).sum();
+                final long longLivedAfter = longLivedPoolNames.stream().mapToLong(pool -> after.get(pool).getUsed()).sum();
                 if (isGenerationalGc) {
                     final long delta = longLivedAfter - longLivedBefore;
                     if (delta > 0L) {
@@ -174,7 +171,7 @@ public class JvmGcMetrics implements MeterBinder, AutoCloseable {
                 // after a major GC.
                 if (longLivedAfter < longLivedBefore || isMajorGc(notificationInfo.getGcName())) {
                     liveDataSize.set(longLivedAfter);
-                    maxDataSize.set(after.get(longLivedPoolName).getMax());
+                    maxDataSize.set(longLivedPoolNames.stream().mapToLong(pool -> after.get(pool).getMax()).sum());
                 }
             };
             NotificationEmitter notificationEmitter = (NotificationEmitter) mbean;
