@@ -61,6 +61,8 @@ public class JvmGcMetrics implements MeterBinder, AutoCloseable {
     private static final InternalLogger log = InternalLoggerFactory.getInstance(JvmGcMetrics.class);
 
     private final boolean managementExtensionsPresent = isManagementExtensionsPresent();
+    // VisibleForTesting
+    final boolean isGenerationalGc = isGenerationalGcConfigured();
 
     private final Iterable<Tag> tags;
 
@@ -68,10 +70,7 @@ public class JvmGcMetrics implements MeterBinder, AutoCloseable {
     private String allocationPoolName;
 
     @Nullable
-    private String oldGenPoolName;
-
-    @Nullable
-    private String nonGenerationalMemoryPool;
+    private String longLivedPoolName;
 
     private final List<Runnable> notificationListenerCleanUpRunnables = new CopyOnWriteArrayList<>();
 
@@ -84,10 +83,8 @@ public class JvmGcMetrics implements MeterBinder, AutoCloseable {
             String name = mbean.getName();
             if (isAllocationPool(name)) {
                 allocationPoolName = name;
-            } else if (isOldGenPool(name)) {
-                oldGenPoolName = name;
-            } else if (isNonGenerationalHeapPool(name)) {
-                nonGenerationalMemoryPool = name;
+            } else if (isLongLivedPool(name)) {
+                longLivedPoolName = name;
             }
         }
         this.tags = tags;
@@ -121,10 +118,10 @@ public class JvmGcMetrics implements MeterBinder, AutoCloseable {
             .description("Incremented for an increase in the size of the (young) heap memory pool after one GC to before the next")
             .register(registry);
 
-        Counter promotedBytes = (oldGenPoolName == null) ? null : Counter.builder("jvm.gc.memory.promoted").tags(tags)
+        Counter promotedBytes = (isGenerationalGc) ? Counter.builder("jvm.gc.memory.promoted").tags(tags)
                     .baseUnit(BaseUnits.BYTES)
                     .description("Count of positive increases in the size of the old generation memory pool before GC to after GC")
-                    .register(registry);
+                    .register(registry) : null;
 
         final AtomicLong allocationPoolSizeAfter = new AtomicLong(0L);
 
@@ -159,38 +156,24 @@ public class JvmGcMetrics implements MeterBinder, AutoCloseable {
                 final Map<String, MemoryUsage> before = gcInfo.getMemoryUsageBeforeGc();
                 final Map<String, MemoryUsage> after = gcInfo.getMemoryUsageAfterGc();
 
-                if (nonGenerationalMemoryPool != null) {
-                    countPoolSizeDelta(gcInfo.getMemoryUsageBeforeGc(), gcInfo.getMemoryUsageAfterGc(), allocatedBytes,
-                            allocationPoolSizeAfter, nonGenerationalMemoryPool);
-                    if (after.get(nonGenerationalMemoryPool).getUsed() < before.get(nonGenerationalMemoryPool).getUsed()) {
-                        liveDataSize.set(after.get(nonGenerationalMemoryPool).getUsed());
-                        final long longLivedMaxAfter = after.get(nonGenerationalMemoryPool).getMax();
-                        maxDataSize.set(longLivedMaxAfter);
-                    }
-                    return;
-                }
+                countPoolSizeDelta(gcInfo.getMemoryUsageBeforeGc(), gcInfo.getMemoryUsageAfterGc(), allocatedBytes,
+                        allocationPoolSizeAfter, allocationPoolName);
 
-                if (oldGenPoolName != null) {
-                    final long oldBefore = before.get(oldGenPoolName).getUsed();
-                    final long oldAfter = after.get(oldGenPoolName).getUsed();
-                    final long delta = oldAfter - oldBefore;
+                final long longLivedBefore = before.get(longLivedPoolName).getUsed();
+                final long longLivedAfter = after.get(longLivedPoolName).getUsed();
+                if (isGenerationalGc) {
+                    final long delta = longLivedAfter - longLivedBefore;
                     if (delta > 0L) {
                         promotedBytes.increment(delta);
                     }
-
-                    // Some GC implementations such as G1 can reduce the old gen size as part of a minor GC. To track the
-                    // live data size we record the value if we see a reduction in the old gen heap size or
-                    // after a major GC.
-                    if (oldAfter < oldBefore || isMajorGc(notificationInfo.getGcName())) {
-                        liveDataSize.set(oldAfter);
-                        final long oldMaxAfter = after.get(oldGenPoolName).getMax();
-                        maxDataSize.set(oldMaxAfter);
-                    }
                 }
 
-                if (allocationPoolName != null) {
-                    countPoolSizeDelta(gcInfo.getMemoryUsageBeforeGc(), gcInfo.getMemoryUsageAfterGc(), allocatedBytes,
-                            allocationPoolSizeAfter, allocationPoolName);
+                // Some GC implementations such as G1 can reduce the old gen size as part of a minor GC. To track the
+                // live data size we record the value if we see a reduction in the old gen heap size or
+                // after a major GC.
+                if (longLivedAfter < longLivedBefore || isMajorGc(notificationInfo.getGcName())) {
+                    liveDataSize.set(longLivedAfter);
+                    maxDataSize.set(after.get(longLivedPoolName).getMax());
                 }
             };
             NotificationEmitter notificationEmitter = (NotificationEmitter) mbean;
@@ -202,6 +185,13 @@ public class JvmGcMetrics implements MeterBinder, AutoCloseable {
                 }
             });
         }
+    }
+
+    private boolean isGenerationalGcConfigured() {
+        return ManagementFactory.getMemoryPoolMXBeans().stream()
+                .map(MemoryPoolMXBean::getName)
+                .filter(name -> !name.contains("tenured"))
+                .count() > 1;
     }
 
     private void countPoolSizeDelta(Map<String, MemoryUsage> before, Map<String, MemoryUsage> after, Counter counter,
@@ -216,7 +206,7 @@ public class JvmGcMetrics implements MeterBinder, AutoCloseable {
     }
 
     private boolean isMajorGc(String gcName) {
-        return GcGenerationAge.fromGcName(gcName) == GcGenerationAge.OLD;
+        return !isGenerationalGc || GcGenerationAge.fromGcName(gcName) == GcGenerationAge.OLD;
     }
 
     private static boolean isManagementExtensionsPresent() {
