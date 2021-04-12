@@ -78,13 +78,9 @@ public class JvmHeapPressureMetrics implements MeterBinder, AutoCloseable {
             Gauge.Builder<AtomicReference<Double>> builder = Gauge.builder("jvm.memory.usage.after.gc", lastOldGenUsageAfterGc, AtomicReference::get)
                     .tags(tags)
                     .tag("area", "heap")
-                    .description("The percentage of old gen heap used after the last GC event, in the range [0..1]")
+                    .tag("pool", longLivedPoolName)
+                    .description("The percentage of long-lived heap pool used after the last GC event, in the range [0..1]")
                     .baseUnit(BaseUnits.PERCENT);
-
-            if (JvmMemory.isOldGenPool(longLivedPoolName))
-                builder.tag("generation", "old");
-            else
-                builder.tag("pool", longLivedPoolName);
 
             builder.register(registry);
         }

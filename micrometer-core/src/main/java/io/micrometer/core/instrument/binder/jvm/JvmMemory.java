@@ -31,10 +31,10 @@ class JvmMemory {
 
     static Optional<MemoryPoolMXBean> getLongLivedHeapPool() {
         return ManagementFactory
-                .getPlatformMXBeans(MemoryPoolMXBean.class)
+                .getMemoryPoolMXBeans()
                 .stream()
                 .filter(JvmMemory::isHeap)
-                .filter(mem -> isOldGenPool(mem.getName()) || isNonGenerationalHeapPool(mem.getName()))
+                .filter(mem -> isLongLivedPool(mem.getName()))
                 .findAny();
     }
 
@@ -47,12 +47,12 @@ class JvmMemory {
         return name != null && name.endsWith("Eden Space");
     }
 
-    static boolean isOldGenPool(String name) {
-        return name != null && (name.endsWith("Old Gen") || name.endsWith("Tenured Gen"));
-    }
-
-    static boolean isNonGenerationalHeapPool(String name) {
-        return "Shenandoah".equals(name) || "ZHeap".equals(name);
+    static boolean isLongLivedPool(String name) {
+        return name != null && (name.endsWith("Old Gen")
+                || name.endsWith("Tenured Gen")
+                || "Shenandoah".equals(name)
+                || "ZHeap".equals(name)
+        );
     }
 
     private static boolean isHeap(MemoryPoolMXBean memoryPoolBean) {
