@@ -46,6 +46,9 @@ class JvmMemory {
         return name != null && (name.endsWith("Eden Space")
                 || "Shenandoah".equals(name)
                 || "ZHeap".equals(name)
+                || name.endsWith("nursery-allocate")
+                || name.endsWith("-eden") // "balanced-eden"
+                || "JavaHeap".equals(name) // metronome
         );
     }
 
@@ -54,6 +57,9 @@ class JvmMemory {
                 || name.endsWith("Tenured Gen")
                 || "Shenandoah".equals(name)
                 || "ZHeap".equals(name)
+                || name.endsWith("balanced-old")
+                || name.contains("tenured") // "tenured", "tenured-SOA", "tenured-LOA"
+                || "JavaHeap".equals(name) // metronome
         );
     }
 

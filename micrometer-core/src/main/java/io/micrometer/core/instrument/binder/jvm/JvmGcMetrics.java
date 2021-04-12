@@ -48,6 +48,7 @@ import static java.util.Collections.emptyList;
  * collection emanating from the MXBean and also adds information about GC causes.
  * <p>
  * This provides metrics for OpenJDK garbage collectors: serial, parallel, G1, Shenandoah, ZGC.
+ * and for OpenJ9 garbage collectors: gencon, balanced, opthruput, optavgpause, metronome.
  *
  * @author Jon Schneider
  * @author Tommy Ludwig
@@ -249,7 +250,12 @@ public class JvmGcMetrics implements MeterBinder, AutoCloseable {
             put("MarkSweepCompact", OLD);
             put("PS MarkSweep", OLD);
             put("PS Scavenge", YOUNG);
-            put("ParNew", YOUNG);
+            put("ParNew", YOUNG); 
+            put("global", OLD);
+            put("scavenge", YOUNG);
+            put("partial gc", YOUNG);
+            put("global garbage collect", OLD);
+            put("Epsilon", OLD);
         }};
 
         static GcGenerationAge fromGcName(String gcName) {

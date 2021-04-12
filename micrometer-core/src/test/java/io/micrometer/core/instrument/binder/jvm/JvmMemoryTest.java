@@ -16,23 +16,14 @@
 package io.micrometer.core.instrument.binder.jvm;
 
 import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.condition.DisabledIfSystemProperty;
-import org.junit.jupiter.api.condition.EnabledIfSystemProperty;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
 @GcTest
 class JvmMemoryTest {
     @Test
-    @DisabledIfSystemProperty(named = "java.vm.vendor", matches = "Eclipse OpenJ9")
     void getLongLivedHeapPool() {
         assertThat(JvmMemory.getLongLivedHeapPools()).isNotEmpty();
-    }
-
-    @Test
-    @EnabledIfSystemProperty(named = "java.vm.vendor", matches = "Eclipse OpenJ9")
-    void getLongLivedHeapPoolWithEclipseOpenJ9() {
-        assertThat(JvmMemory.getLongLivedHeapPools()).isEmpty();
     }
 
     @Test
