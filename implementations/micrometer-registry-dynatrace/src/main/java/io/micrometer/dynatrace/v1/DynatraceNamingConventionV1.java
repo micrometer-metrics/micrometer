@@ -1,5 +1,5 @@
 /**
- * Copyright 2017 VMware, Inc.
+ * Copyright 2021 VMware, Inc.
  * <p>
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,25 +13,25 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
 package io.micrometer.dynatrace.v1;
 
 import io.micrometer.core.instrument.Meter;
 import io.micrometer.core.instrument.config.NamingConvention;
 import io.micrometer.core.lang.Nullable;
 import io.micrometer.core.util.internal.logging.WarnThenDebugLogger;
+import io.micrometer.dynatrace.DynatraceNamingConvention;
 
 import java.util.regex.Pattern;
 
 /**
- * {@link NamingConvention} for Dynatrace.
+ * {@link NamingConvention} for Dynatrace API v1.
  *
  * @author Oriol Barcelona Palau
  * @author Jon Schneider
  * @author Johnny Lim
- * @since 1.1.0
  */
-public class DynatraceNamingConvention implements NamingConvention {
-
+public class DynatraceNamingConventionV1 implements NamingConvention {
     private static final WarnThenDebugLogger logger = new WarnThenDebugLogger(DynatraceNamingConvention.class);
 
     private static final Pattern NAME_CLEANUP_PATTERN = Pattern.compile("[^\\w._-]");
@@ -40,11 +40,11 @@ public class DynatraceNamingConvention implements NamingConvention {
 
     private final NamingConvention delegate;
 
-    public DynatraceNamingConvention(NamingConvention delegate) {
+    public DynatraceNamingConventionV1(NamingConvention delegate) {
         this.delegate = delegate;
     }
 
-    public DynatraceNamingConvention() {
+    public DynatraceNamingConventionV1() {
         this(NamingConvention.dot);
     }
 

@@ -26,6 +26,7 @@ import io.micrometer.core.ipc.http.HttpSender;
 import io.micrometer.core.lang.Nullable;
 import io.micrometer.dynatrace.AbstractDynatraceExporter;
 import io.micrometer.dynatrace.DynatraceConfig;
+import io.micrometer.dynatrace.DynatraceNamingConvention;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
