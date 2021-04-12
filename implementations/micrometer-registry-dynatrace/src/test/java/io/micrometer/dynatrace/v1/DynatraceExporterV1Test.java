@@ -46,7 +46,7 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 class DynatraceExporterV1Test {
 
     private final DynatraceMeterRegistry meterRegistry = createMeterRegistry();
-    private final DynatraceExporterV1 meterRegistryImpl = createMeterRegistryImpl();
+    private final DynatraceExporterV1 exporter = createExporter();
 
     private final ObjectMapper mapper = new ObjectMapper();
 
@@ -115,11 +115,11 @@ class DynatraceExporterV1Test {
         Field createdCustomMetricsField = DynatraceExporterV1.class.getDeclaredField("createdCustomMetrics");
         createdCustomMetricsField.setAccessible(true);
         @SuppressWarnings("unchecked")
-        Set<String> createdCustomMetrics = (Set<String>) createdCustomMetricsField.get(meterRegistryImpl);
+        Set<String> createdCustomMetrics = (Set<String>) createdCustomMetricsField.get(exporter);
         assertThat(createdCustomMetrics).isEmpty();
 
         DynatraceMetricDefinition customMetric = new DynatraceMetricDefinition("metricId", null, null, null, new String[]{"type"}, null);
-        meterRegistryImpl.putCustomMetric(customMetric);
+        exporter.putCustomMetric(customMetric);
         assertThat(createdCustomMetrics).containsExactly("metricId");
     }
 
@@ -127,14 +127,14 @@ class DynatraceExporterV1Test {
     void writeMeterWithGauge() {
         meterRegistry.gauge("my.gauge", 1d);
         Gauge gauge = meterRegistry.find("my.gauge").gauge();
-        assertThat(meterRegistryImpl.writeMeter(gauge)).hasSize(1);
+        assertThat(exporter.writeMeter(gauge)).hasSize(1);
     }
 
     @Test
     void writeMeterWithGaugeShouldDropNanValue() {
         meterRegistry.gauge("my.gauge", Double.NaN);
         Gauge gauge = meterRegistry.find("my.gauge").gauge();
-        assertThat(meterRegistryImpl.writeMeter(gauge)).isEmpty();
+        assertThat(exporter.writeMeter(gauge)).isEmpty();
     }
 
     @SuppressWarnings("unchecked")
@@ -143,7 +143,7 @@ class DynatraceExporterV1Test {
         AtomicBoolean first = new AtomicBoolean(true);
         meterRegistry.gauge("my.gauge", first, (b) -> b.getAndSet(false) ? 1d : Double.NaN);
         Gauge gauge = meterRegistry.find("my.gauge").gauge();
-        Stream<DynatraceCustomMetric> stream = meterRegistryImpl.writeMeter(gauge);
+        Stream<DynatraceCustomMetric> stream = exporter.writeMeter(gauge);
         List<DynatraceCustomMetric> metrics = stream.collect(Collectors.toList());
         assertThat(metrics).hasSize(1);
         DynatraceCustomMetric metric = metrics.get(0);
@@ -161,11 +161,11 @@ class DynatraceExporterV1Test {
     void writeMeterWithGaugeShouldDropInfiniteValues() {
         meterRegistry.gauge("my.gauge", Double.POSITIVE_INFINITY);
         Gauge gauge = meterRegistry.find("my.gauge").gauge();
-        assertThat(meterRegistryImpl.writeMeter(gauge)).isEmpty();
+        assertThat(exporter.writeMeter(gauge)).isEmpty();
 
         meterRegistry.gauge("my.gauge", Double.NEGATIVE_INFINITY);
         gauge = meterRegistry.find("my.gauge").gauge();
-        assertThat(meterRegistryImpl.writeMeter(gauge)).isEmpty();
+        assertThat(exporter.writeMeter(gauge)).isEmpty();
     }
 
     @Test
@@ -173,7 +173,7 @@ class DynatraceExporterV1Test {
         AtomicReference<Double> obj = new AtomicReference<>(1d);
         meterRegistry.more().timeGauge("my.timeGauge", Tags.empty(), obj, TimeUnit.SECONDS, AtomicReference::get);
         TimeGauge timeGauge = meterRegistry.find("my.timeGauge").timeGauge();
-        assertThat(meterRegistryImpl.writeMeter(timeGauge)).hasSize(1);
+        assertThat(exporter.writeMeter(timeGauge)).hasSize(1);
     }
 
     @Test
@@ -181,7 +181,7 @@ class DynatraceExporterV1Test {
         AtomicReference<Double> obj = new AtomicReference<>(Double.NaN);
         meterRegistry.more().timeGauge("my.timeGauge", Tags.empty(), obj, TimeUnit.SECONDS, AtomicReference::get);
         TimeGauge timeGauge = meterRegistry.find("my.timeGauge").timeGauge();
-        assertThat(meterRegistryImpl.writeMeter(timeGauge)).isEmpty();
+        assertThat(exporter.writeMeter(timeGauge)).isEmpty();
     }
 
     @Test
@@ -189,12 +189,12 @@ class DynatraceExporterV1Test {
         AtomicReference<Double> obj = new AtomicReference<>(Double.POSITIVE_INFINITY);
         meterRegistry.more().timeGauge("my.timeGauge", Tags.empty(), obj, TimeUnit.SECONDS, AtomicReference::get);
         TimeGauge timeGauge = meterRegistry.find("my.timeGauge").timeGauge();
-        assertThat(meterRegistryImpl.writeMeter(timeGauge)).isEmpty();
+        assertThat(exporter.writeMeter(timeGauge)).isEmpty();
 
         obj = new AtomicReference<>(Double.NEGATIVE_INFINITY);
         meterRegistry.more().timeGauge("my.timeGauge", Tags.empty(), obj, TimeUnit.SECONDS, AtomicReference::get);
         timeGauge = meterRegistry.find("my.timeGauge").timeGauge();
-        assertThat(meterRegistryImpl.writeMeter(timeGauge)).isEmpty();
+        assertThat(exporter.writeMeter(timeGauge)).isEmpty();
     }
 
     @Test
@@ -202,11 +202,11 @@ class DynatraceExporterV1Test {
         Double number = 1d;
         meterRegistry.gauge("my.gauge", number);
         Gauge gauge = meterRegistry.find("my.gauge").gauge();
-        Stream<DynatraceCustomMetric> series = meterRegistryImpl.writeMeter(gauge);
+        Stream<DynatraceCustomMetric> series = exporter.writeMeter(gauge);
         List<DynatraceTimeSeries> timeSeries = series
                 .map(DynatraceCustomMetric::getTimeSeries)
                 .collect(Collectors.toList());
-        List<DynatraceBatchedPayload> entries = meterRegistryImpl.createPostMessages("my.type", null, timeSeries);
+        List<DynatraceBatchedPayload> entries = exporter.createPostMessages("my.type", null, timeSeries);
         assertThat(entries).hasSize(1);
         assertThat(entries.get(0).metricCount).isEqualTo(1);
         assertThat(isValidJson(entries.get(0).payload)).isEqualTo(true);
@@ -214,14 +214,14 @@ class DynatraceExporterV1Test {
 
     @Test
     void whenAllTsTooLargeEmptyMessageListReturned() {
-        List<DynatraceBatchedPayload> messages = meterRegistryImpl.createPostMessages("my.type", null, Collections.singletonList(createTimeSeriesWithDimensions(10_000)));
+        List<DynatraceBatchedPayload> messages = exporter.createPostMessages("my.type", null, Collections.singletonList(createTimeSeriesWithDimensions(10_000)));
         assertThat(messages).isEmpty();
     }
 
     @Test
     void splitsWhenExactlyExceedingMaxByComma() {
         // comma needs to be considered when there is more than one time series
-        List<DynatraceBatchedPayload> messages = meterRegistryImpl.createPostMessages("my.type", "my.group",
+        List<DynatraceBatchedPayload> messages = exporter.createPostMessages("my.type", "my.group",
                 // Max bytes: 15330 (excluding header/footer, 15360 with header/footer)
                 Arrays.asList(createTimeSeriesWithDimensions(750), // 14861 bytes
                         createTimeSeriesWithDimensions(23, "asdfg"), // 469 bytes (overflows due to comma)
@@ -238,7 +238,7 @@ class DynatraceExporterV1Test {
 
     @Test
     void countsPreviousAndNextComma() {
-        List<DynatraceBatchedPayload> messages = meterRegistryImpl.createPostMessages("my.type", null,
+        List<DynatraceBatchedPayload> messages = exporter.createPostMessages("my.type", null,
                 // Max bytes: 15330 (excluding header/footer, 15360 with header/footer)
                 Arrays.asList(createTimeSeriesWithDimensions(750), // 14861 bytes
                         createTimeSeriesWithDimensions(10, "asdf"), // 234 bytes + comma
@@ -257,7 +257,7 @@ class DynatraceExporterV1Test {
         Measurement measurement3 = new Measurement(() -> Double.NaN, Statistic.VALUE);
         List<Measurement> measurements = Arrays.asList(measurement1, measurement2, measurement3);
         Meter meter = Meter.builder("my.meter", Meter.Type.GAUGE, measurements).register(this.meterRegistry);
-        assertThat(meterRegistryImpl.writeMeter(meter)).isEmpty();
+        assertThat(exporter.writeMeter(meter)).isEmpty();
     }
 
     @Test
@@ -269,7 +269,7 @@ class DynatraceExporterV1Test {
         Measurement measurement5 = new Measurement(() -> 2d, Statistic.VALUE);
         List<Measurement> measurements = Arrays.asList(measurement1, measurement2, measurement3, measurement4, measurement5);
         Meter meter = Meter.builder("my.meter", Meter.Type.GAUGE, measurements).register(this.meterRegistry);
-        assertThat(meterRegistryImpl.writeMeter(meter)).hasSize(2);
+        assertThat(exporter.writeMeter(meter)).hasSize(2);
     }
 
     private DynatraceTimeSeries createTimeSeriesWithDimensions(int numberOfDimensions) {
@@ -286,7 +286,6 @@ class DynatraceExporterV1Test {
         return map;
     }
 
-
     private DynatraceMeterRegistry createMeterRegistry() {
         DynatraceConfig config = createDynatraceConfig();
 
@@ -295,7 +294,7 @@ class DynatraceExporterV1Test {
                 .build();
     }
 
-    private DynatraceExporterV1 createMeterRegistryImpl() {
+    private DynatraceExporterV1 createExporter() {
         DynatraceConfig config = createDynatraceConfig();
 
         return new DynatraceExporterV1(config, Clock.SYSTEM, request -> new HttpSender.Response(200, null));
@@ -339,5 +338,4 @@ class DynatraceExporterV1Test {
             return false;
         }
     }
-
 }
