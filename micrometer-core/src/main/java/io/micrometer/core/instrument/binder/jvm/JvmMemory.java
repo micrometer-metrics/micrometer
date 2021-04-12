@@ -48,6 +48,7 @@ class JvmMemory {
                 || "ZHeap".equals(name)
                 || name.endsWith("nursery-allocate")
                 || name.endsWith("-eden") // "balanced-eden"
+                || "JavaHeap".equals(name) // metronome
         );
     }
 
@@ -58,6 +59,7 @@ class JvmMemory {
                 || "ZHeap".equals(name)
                 || name.endsWith("balanced-old")
                 || name.contains("tenured") // "tenured", "tenured-SOA", "tenured-LOA"
+                || "JavaHeap".equals(name) // metronome
         );
     }
 
