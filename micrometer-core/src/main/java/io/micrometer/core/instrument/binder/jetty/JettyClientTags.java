@@ -45,6 +45,8 @@ public final class JettyClientTags {
 
     private static final Tag METHOD_UNKNOWN = Tag.of("method", "UNKNOWN");
 
+    private static final Tag HOST_UNKNOWN = Tag.of("host", "UNKNOWN");
+
     private static final Pattern TRAILING_SLASH_PATTERN = Pattern.compile("/$");
 
     private static final Pattern MULTIPLE_SLASH_PATTERN = Pattern.compile("//+");
@@ -61,6 +63,17 @@ public final class JettyClientTags {
      */
     public static Tag method(Request request) {
         return (request != null) ? Tag.of("method", request.getMethod()) : METHOD_UNKNOWN;
+    }
+
+    /**
+     * Creates a {@code host} tag based on the {@link Request#getHost()
+     * method} of the given {@code request}.
+     *
+     * @param request the request
+     * @return the host tag derived from request result.
+     */
+    public static Tag host(Request request) {
+        return (request != null) ? Tag.of("host", request.getHost()) : HOST_UNKNOWN;
     }
 
     /**
