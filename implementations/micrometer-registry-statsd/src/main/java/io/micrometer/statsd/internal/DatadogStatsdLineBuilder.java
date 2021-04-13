@@ -40,22 +40,20 @@ public class DatadogStatsdLineBuilder extends FlavorStatsdLineBuilder {
     @SuppressWarnings("NullableProblems")
     private volatile String tagsNoStat;
     private final ConcurrentMap<Statistic, String> tags = new ConcurrentHashMap<>();
+    // VisibleForTesting
     @Nullable
-    private String ddEntityId;
+    String ddEntityId;
 
     public DatadogStatsdLineBuilder(Meter.Id id, MeterRegistry.Config config) {
         super(id, config);
+
+        ddEntityId = System.getenv("DD_ENTITY_ID");
     }
 
     @Override
     String line(String amount, @Nullable Statistic stat, String type) {
         updateIfNamingConventionChanged();
         return name + amount + "|" + type + tagsByStatistic(stat);
-    }
-
-    // VisibleForTesting
-    void setDdEntityId(@Nullable String ddEntityId) {
-        this.ddEntityId = ddEntityId;
     }
 
     private void updateIfNamingConventionChanged() {
@@ -79,10 +77,8 @@ public class DatadogStatsdLineBuilder extends FlavorStatsdLineBuilder {
         }
     }
 
-    private @Nullable String appendEntityIdTag(@Nullable String tags) {
-        if (ddEntityId == null || ddEntityId.trim().isEmpty()) {
-            ddEntityId = System.getenv("DD_ENTITY_ID");
-        }
+    @Nullable
+    private String appendEntityIdTag(@Nullable String tags) {
         if (ddEntityId != null && !ddEntityId.trim().isEmpty()) {
             String entityIdTag = formatTag(Tag.of(ENTITY_ID_TAG_NAME, ddEntityId));
             return tags == null ? entityIdTag : tags + "," + entityIdTag;

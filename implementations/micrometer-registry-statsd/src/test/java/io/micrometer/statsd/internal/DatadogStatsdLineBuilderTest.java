@@ -64,7 +64,7 @@ class DatadogStatsdLineBuilderTest {
     void appendDdEntityIdTag() {
         Counter c = registry.counter("my:counter", "mytag", "myvalue");
         DatadogStatsdLineBuilder lb = new DatadogStatsdLineBuilder(c.getId(), registry.config());
-        lb.setDdEntityId("test-entity-id");
+        lb.ddEntityId = "test-entity-id";
 
         registry.config().namingConvention(NamingConvention.dot);
         assertThat(lb.line("1", Statistic.COUNT, "c")).isEqualTo("my_counter:1|c|#statistic:count,mytag:myvalue,dd.internal.entity_id:test-entity-id");
