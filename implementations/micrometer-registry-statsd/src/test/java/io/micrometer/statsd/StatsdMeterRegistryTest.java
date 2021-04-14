@@ -45,8 +45,7 @@ import java.util.function.Consumer;
 
 import static java.util.Collections.singletonList;
 import static java.util.stream.IntStream.range;
-import static org.assertj.core.api.Assertions.assertThat;
-import static org.assertj.core.api.Assertions.fail;
+import static org.assertj.core.api.Assertions.*;
 
 /**
  * Tests for {@link StatsdMeterRegistry}.
@@ -542,6 +541,17 @@ class StatsdMeterRegistryTest {
         registry.remove(registry.get("functioncounter").functionCounter());
         registry.poll();
         assertThat(lines.get("functioncounter")).isEqualTo(1);
+    }
+
+    @Test
+    void pollFailureNotFatal() {
+        registry = StatsdMeterRegistry.builder(StatsdConfig.DEFAULT).build();
+        Gauge.builder("fails", "", o -> {
+            throw new RuntimeException();
+        }).register(registry);
+        Gauge.builder("works", () -> 42).register(registry);
+
+        assertThatCode(() -> registry.poll()).doesNotThrowAnyException();
     }
 
     @Test

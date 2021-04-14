@@ -175,7 +175,11 @@ public class StatsdMeterRegistry extends MeterRegistry {
 
     void poll() {
         for (StatsdPollable pollableMeter : pollableMeters.values()) {
-            pollableMeter.poll();
+            try {
+                pollableMeter.poll();
+            } catch (RuntimeException e) {
+                // Silently ignore misbehaving pollable meter
+            }
         }
     }
 
