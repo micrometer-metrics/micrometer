@@ -66,11 +66,11 @@ public final class JettyClientTags {
     }
 
     /**
-     * Creates a {@code host} tag based on the {@link Request#getHost()
-     * method} of the given {@code request}.
+     * Creates a {@code host} tag based on the {@link Request#getHost()} of the given {@code request}.
      *
      * @param request the request
-     * @return the host tag derived from request result.
+     * @return the host tag derived from request
+     * @since 1.7.0
      */
     public static Tag host(Request request) {
         return (request != null) ? Tag.of("host", request.getHost()) : HOST_UNKNOWN;
