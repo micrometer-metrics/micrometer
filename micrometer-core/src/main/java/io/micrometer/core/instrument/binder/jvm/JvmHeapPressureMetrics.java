@@ -55,7 +55,7 @@ public class JvmHeapPressureMetrics implements MeterBinder, AutoCloseable {
     private final long startOfMonitoring = System.nanoTime();
     private final Duration lookback;
     private final TimeWindowSum gcPauseSum;
-    private final AtomicReference<Double> lastOldGenUsageAfterGc = new AtomicReference<>(0.0);
+    private final AtomicReference<Double> lastLongLivedPoolUsageAfterGc = new AtomicReference<>(0.0);
 
     private final Set<String> longLivedPoolNames;
 
@@ -75,9 +75,8 @@ public class JvmHeapPressureMetrics implements MeterBinder, AutoCloseable {
 
     @Override
     public void bindTo(@NonNull MeterRegistry registry) {
-
         if (!longLivedPoolNames.isEmpty()) {
-            Gauge.builder("jvm.memory.usage.after.gc", lastOldGenUsageAfterGc, AtomicReference::get)
+            Gauge.builder("jvm.memory.usage.after.gc", lastLongLivedPoolUsageAfterGc, AtomicReference::get)
                     .tags(tags)
                     .tag("area", "heap")
                     .tag("pool", "long-lived")
@@ -119,7 +118,7 @@ public class JvmHeapPressureMetrics implements MeterBinder, AutoCloseable {
                 if (!longLivedPoolNames.isEmpty()) {
                     final long usedAfter = longLivedPoolNames.stream().mapToLong(pool -> after.get(pool).getUsed()).sum();
                     double maxAfter = longLivedPoolNames.stream().mapToLong(pool -> after.get(pool).getMax()).sum();
-                    lastOldGenUsageAfterGc.set(usedAfter / maxAfter);
+                    lastLongLivedPoolUsageAfterGc.set(usedAfter / maxAfter);
                 }
             };
             NotificationEmitter notificationEmitter = (NotificationEmitter) mbean;

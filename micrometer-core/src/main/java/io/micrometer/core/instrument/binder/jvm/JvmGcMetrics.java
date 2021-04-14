@@ -47,8 +47,8 @@ import static java.util.Collections.emptyList;
  * Record metrics that report a number of statistics related to garbage
  * collection emanating from the MXBean and also adds information about GC causes.
  * <p>
- * This provides metrics for OpenJDK garbage collectors: serial, parallel, G1, Shenandoah, ZGC.
- * and for OpenJ9 garbage collectors: gencon, balanced, opthruput, optavgpause, metronome.
+ * This provides metrics for OpenJDK garbage collectors (serial, parallel, G1, Shenandoah, ZGC)
+ * and for OpenJ9 garbage collectors (gencon, balanced, opthruput, optavgpause, metronome).
  *
  * @author Jon Schneider
  * @author Tommy Ludwig
@@ -69,7 +69,7 @@ public class JvmGcMetrics implements MeterBinder, AutoCloseable {
     @Nullable
     private String allocationPoolName;
 
-    private Set<String> longLivedPoolNames = new HashSet<>();
+    private final Set<String> longLivedPoolNames = new HashSet<>();
 
     private final List<Runnable> notificationListenerCleanUpRunnables = new CopyOnWriteArrayList<>();
 
