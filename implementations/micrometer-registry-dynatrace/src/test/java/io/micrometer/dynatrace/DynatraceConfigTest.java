@@ -15,6 +15,7 @@
  */
 package io.micrometer.dynatrace;
 
+import io.micrometer.core.instrument.config.validate.InvalidReason;
 import io.micrometer.core.instrument.config.validate.Validated;
 import org.junit.jupiter.api.Test;
 
@@ -52,6 +53,26 @@ class DynatraceConfigTest {
 
         assertThat(validate.failures().stream().map(Validated.Invalid::getMessage))
                 .contains("cannot be blank");
+    }
+
+    @Test
+    void invalidVersion() {
+        Map<String, String> properties = new HashMap<String, String>() {{
+            put("dynatrace.apiToken", "secret");
+            put("dynatrace.uri", "https://uri.dynatrace.com");
+            put("dynatrace.deviceId", "device");
+            put("dynatrace.apiVersion", "v-INVALID");
+        }};
+        DynatraceConfig config = properties::get;
+
+        List<Validated.Invalid<?>> failures = config.validate().failures();
+        assertThat(failures).hasSize(1);
+        Validated.Invalid<?> failure = failures.get(0);
+        assertThat(failure.getProperty()).isEqualTo("dynatrace.apiVersion");
+        assertThat(failure.getValue()).isEqualTo("v-INVALID");
+        assertThat(failure.getMessage()).startsWith("should be one of ");
+        assertThat(failure.getReason()).isSameAs(InvalidReason.MALFORMED);
+        assertThat(failure.getException()).isNull();
     }
 
     @Test

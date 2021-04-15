@@ -78,6 +78,11 @@ public interface DynatraceConfig extends StepRegistryConfig {
 
     @Override
     default Validated<?> validate() {
+        Validated<DynatraceApiVersion> apiVersionValidation = checkRequired("apiVersion", DynatraceConfig::apiVersion).apply(this);
+        if (apiVersionValidation.isInvalid()) {
+            return apiVersionValidation;
+        }
+
         return validateV1();
     }
 
