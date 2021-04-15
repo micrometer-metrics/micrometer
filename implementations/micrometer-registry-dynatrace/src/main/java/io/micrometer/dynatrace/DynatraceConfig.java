@@ -71,7 +71,7 @@ public interface DynatraceConfig extends StepRegistryConfig {
      * @return a {@link DynatraceApiVersion} containing the version of the targeted Dynatrace API.
      */
     default DynatraceApiVersion apiVersion() {
-        // if not specified or invalid, defaults to v1 for backwards compatibility.
+        // if not specified, defaults to v1 for backwards compatibility.
         return getEnum(this, DynatraceApiVersion.class, "apiVersion")
                 .orElse(DynatraceApiVersion.V1);
     }
@@ -89,7 +89,6 @@ public interface DynatraceConfig extends StepRegistryConfig {
     default Validated<?> validateV1() {
         return checkAll(this,
                 c -> StepRegistryConfig.validate(c),
-                checkRequired("apiVersion", DynatraceConfig::apiVersion),
                 checkRequired("apiToken", DynatraceConfig::apiToken),
                 checkRequired("uri", DynatraceConfig::uri),
                 checkRequired("deviceId", DynatraceConfig::deviceId),
