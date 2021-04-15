@@ -78,13 +78,17 @@ public interface DynatraceConfig extends StepRegistryConfig {
 
     @Override
     default Validated<?> validate() {
+        return validateV1();
+    }
+
+    default Validated<?> validateV1() {
         return checkAll(this,
                 c -> StepRegistryConfig.validate(c),
+                checkRequired("apiVersion", DynatraceConfig::apiVersion),
                 checkRequired("apiToken", DynatraceConfig::apiToken),
                 checkRequired("uri", DynatraceConfig::uri),
                 checkRequired("deviceId", DynatraceConfig::deviceId),
-                check("technologyType", DynatraceConfig::technologyType).andThen(Validated::nonBlank),
-                check("apiVersion", DynatraceConfig::apiVersion)
+                check("technologyType", DynatraceConfig::technologyType).andThen(Validated::nonBlank)
         );
     }
 }
