@@ -51,6 +51,8 @@ import java.util.concurrent.atomic.AtomicReference;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
+import static com.google.api.MetricDescriptor.MetricKind.CUMULATIVE;
+import static com.google.api.MetricDescriptor.MetricKind.DELTA;
 import static java.util.stream.Collectors.groupingBy;
 import static java.util.stream.Collectors.toCollection;
 import static java.util.stream.StreamSupport.stream;
@@ -71,13 +73,15 @@ public class StackdriverMeterRegistry extends StepMeterRegistry {
      * https://cloud.google.com/monitoring/quotas#custom_metrics_quotas
      */
     private static final int TIMESERIES_PER_REQUEST_LIMIT = 200;
+    private static final EnumSet<MetricDescriptor.MetricKind> requireStartTime = EnumSet.of(DELTA, CUMULATIVE);
     private final Logger logger = LoggerFactory.getLogger(StackdriverMeterRegistry.class);
     private final StackdriverConfig config;
+    private long previousBatchEndTime;
     /**
      * Metric names for which we have posted a custom metric
      */
     //VisibleForTesting
-    final Map<String, MetricDescriptor.MetricKind> verifiedDescriptors = new ConcurrentHashMap<String, MetricDescriptor.MetricKind>();
+    final Map<String, MetricDescriptor.MetricKind> verifiedDescriptors = new ConcurrentHashMap<>();
 
     @Nullable
     private MetricServiceSettings metricServiceSettings;
@@ -103,6 +107,8 @@ public class StackdriverMeterRegistry extends StepMeterRegistry {
         }
 
         config().namingConvention(new StackdriverNamingConvention());
+
+        previousBatchEndTime = clock.wallTime();
 
         start(threadFactory);
     }
@@ -217,7 +223,7 @@ public class StackdriverMeterRegistry extends StepMeterRegistry {
     }
 
     private Stream<TimeSeries> createCounter(Batch batch, Counter counter) {
-        return Stream.of(batch.createTimeSeries(counter, counter.count(), null, MetricDescriptor.MetricKind.CUMULATIVE));
+        return Stream.of(batch.createTimeSeries(counter, counter.count(), null, CUMULATIVE));
     }
 
     private Stream<TimeSeries> createLongTaskTimer(Batch batch, LongTaskTimer longTaskTimer) {
@@ -282,22 +288,24 @@ public class StackdriverMeterRegistry extends StepMeterRegistry {
         }
     }
 
+    private Timestamp buildTimestamp(long timeMs) {
+        return Timestamp.newBuilder()
+                .setSeconds(timeMs / 1000)
+                .setNanos((int) (timeMs % 1000) * 1000000)
+                .build();
+    }
+
     //VisibleForTesting
     class Batch {
+
         private final Timestamp startTime;
         private final Timestamp endTime;
 
         Batch() {
             long wallTime = clock.wallTime();
-            startTime = buildTimestamp(wallTime - config.step().toMillis());
+            startTime = buildTimestamp(previousBatchEndTime + 1);
             endTime = buildTimestamp(wallTime);
-        }
-
-        private Timestamp buildTimestamp(long timeMs) {
-            return Timestamp.newBuilder()
-                    .setSeconds(timeMs / 1000)
-                    .setNanos((int) (timeMs % 1000) * 1000000)
-                    .build();
+            previousBatchEndTime = wallTime;
         }
 
         TimeSeries createTimeSeries(Meter meter, double value, @Nullable String statistic) {
@@ -352,7 +360,7 @@ public class StackdriverMeterRegistry extends StepMeterRegistry {
             String metricType = metricType(id, statistic);
 
             if (!metricKind.equals(backendMetricKind)) {
-                logger.info("MetricKind configured in Stackdriver ({}) is not matching the one expected by Micrometer for that kind of Meter ({})." +
+                logger.trace("MetricKind configured in Stackdriver ({}) is not matching the one expected by Micrometer for that kind of Meter ({})." +
                         "Using Stackdriver's value. Consider deleting MetricDescriptor {} and allowing Micrometer to recreate it.",
                         backendMetricKind, metricKind, metricType);
             }
@@ -447,8 +455,6 @@ public class StackdriverMeterRegistry extends StepMeterRegistry {
             }
             return metricType.toString();
         }
-
-        private final EnumSet<MetricDescriptor.MetricKind> requireStartTime = EnumSet.of(MetricDescriptor.MetricKind.DELTA, MetricDescriptor.MetricKind.CUMULATIVE);
 
         private TimeInterval interval(MetricDescriptor.MetricKind metricKind) {
             TimeInterval.Builder builder = TimeInterval.newBuilder().setEndTime(endTime);
