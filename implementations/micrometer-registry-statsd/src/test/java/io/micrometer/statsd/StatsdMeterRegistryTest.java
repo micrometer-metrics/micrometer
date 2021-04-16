@@ -546,7 +546,7 @@ class StatsdMeterRegistryTest {
     @Test
     void pollFailureNotFatal() {
         registry = StatsdMeterRegistry.builder(StatsdConfig.DEFAULT).build();
-        Gauge.builder("fails", "", o -> {
+        Gauge.builder("fails", () -> {
             throw new RuntimeException();
         }).register(registry);
         Gauge.builder("works", () -> 42).register(registry);

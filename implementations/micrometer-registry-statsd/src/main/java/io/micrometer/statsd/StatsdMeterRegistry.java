@@ -24,6 +24,7 @@ import io.micrometer.core.instrument.distribution.pause.PauseDetector;
 import io.micrometer.core.instrument.internal.DefaultMeter;
 import io.micrometer.core.instrument.util.HierarchicalNameMapper;
 import io.micrometer.core.lang.Nullable;
+import io.micrometer.core.util.internal.logging.WarnThenDebugLogger;
 import io.micrometer.statsd.internal.*;
 import io.netty.util.AttributeKey;
 import org.reactivestreams.Publisher;
@@ -72,6 +73,7 @@ import java.util.stream.DoubleStream;
  * @since 1.0.0
  */
 public class StatsdMeterRegistry extends MeterRegistry {
+    private static final WarnThenDebugLogger warnThenDebugLogger = new WarnThenDebugLogger(StatsdMeterRegistry.class);
 
     private final StatsdConfig statsdConfig;
     private final HierarchicalNameMapper nameMapper;
@@ -174,11 +176,11 @@ public class StatsdMeterRegistry extends MeterRegistry {
     }
 
     void poll() {
-        for (StatsdPollable pollableMeter : pollableMeters.values()) {
+        for (Map.Entry<Meter.Id, StatsdPollable> pollableMeter : pollableMeters.entrySet()) {
             try {
-                pollableMeter.poll();
+                pollableMeter.getValue().poll();
             } catch (RuntimeException e) {
-                // Silently ignore misbehaving pollable meter
+                warnThenDebugLogger.log("Failed to poll a meter '" + pollableMeter.getKey().getName() + "'.", e);
             }
         }
     }
