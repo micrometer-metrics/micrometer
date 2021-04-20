@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package io.micrometer.dynatrace;
+package io.micrometer.dynatrace.v1;
 
 import io.micrometer.core.instrument.util.StringEscapeUtils;
 import io.micrometer.core.instrument.util.StringUtils;
@@ -32,7 +32,6 @@ import static java.util.Arrays.stream;
  * @author Oriol Barcelona
  */
 class DynatraceMetricDefinition {
-
     private static final int MAX_DISPLAY_NAME = 256;
     private static final int MAX_GROUP_NAME = 256;
     private final String metricId;

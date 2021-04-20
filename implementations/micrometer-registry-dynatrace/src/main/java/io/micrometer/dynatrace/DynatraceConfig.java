@@ -27,6 +27,7 @@ import static io.micrometer.core.instrument.config.validate.PropertyValidator.*;
  * Configuration for {@link DynatraceMeterRegistry}
  *
  * @author Oriol Barcelona
+ * @author Georg Pirklbauer
  */
 public interface DynatraceConfig extends StepRegistryConfig {
 
@@ -49,7 +50,7 @@ public interface DynatraceConfig extends StepRegistryConfig {
 
     default String technologyType() {
         return getSecret(this, "technologyType")
-                .map(v -> StringUtils.isEmpty(v) ? "java" : v)
+                .map(val -> StringUtils.isEmpty(val) ? "java" : val)
                 .get();
     }
 
@@ -64,8 +65,28 @@ public interface DynatraceConfig extends StepRegistryConfig {
         return get(prefix() + ".group");
     }
 
+    /**
+     * Return the version of the target Dynatrace API.
+     *
+     * @return a {@link DynatraceApiVersion} containing the version of the targeted Dynatrace API.
+     */
+    default DynatraceApiVersion apiVersion() {
+        // if not specified, defaults to v1 for backwards compatibility.
+        return getEnum(this, DynatraceApiVersion.class, "apiVersion")
+                .orElse(DynatraceApiVersion.V1);
+    }
+
     @Override
     default Validated<?> validate() {
+        Validated<DynatraceApiVersion> apiVersionValidation = checkRequired("apiVersion", DynatraceConfig::apiVersion).apply(this);
+        if (apiVersionValidation.isInvalid()) {
+            return apiVersionValidation;
+        }
+
+        return validateV1();
+    }
+
+    default Validated<?> validateV1() {
         return checkAll(this,
                 c -> StepRegistryConfig.validate(c),
                 checkRequired("apiToken", DynatraceConfig::apiToken),
