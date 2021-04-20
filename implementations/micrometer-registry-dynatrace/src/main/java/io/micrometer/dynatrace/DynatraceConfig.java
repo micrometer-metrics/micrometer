@@ -78,21 +78,29 @@ public interface DynatraceConfig extends StepRegistryConfig {
 
     @Override
     default Validated<?> validate() {
-        Validated<DynatraceApiVersion> apiVersionValidation = checkRequired("apiVersion", DynatraceConfig::apiVersion).apply(this);
-        if (apiVersionValidation.isInvalid()) {
-            return apiVersionValidation;
-        }
-
-        return validateV1();
-    }
-
-    default Validated<?> validateV1() {
         return checkAll(this,
-                c -> StepRegistryConfig.validate(c),
-                checkRequired("apiToken", DynatraceConfig::apiToken),
-                checkRequired("uri", DynatraceConfig::uri),
-                checkRequired("deviceId", DynatraceConfig::deviceId),
-                check("technologyType", DynatraceConfig::technologyType).andThen(Validated::nonBlank)
+                config -> StepRegistryConfig.validate(config),
+                checkRequired("apiVersion", DynatraceConfig::apiVersion).andThen(
+                        apiVersionValidation -> {
+                            if (apiVersionValidation.isValid()) {
+                                return checkAll(this,
+                                        config -> {
+                                            if (config.apiVersion() ==  DynatraceApiVersion.V1) {
+                                                return checkAll(this,
+                                                        checkRequired("apiToken", DynatraceConfig::apiToken),
+                                                        checkRequired("uri", DynatraceConfig::uri),
+                                                        checkRequired("deviceId", DynatraceConfig::deviceId),
+                                                        check("technologyType", DynatraceConfig::technologyType).andThen(Validated::nonBlank)
+                                                );
+                                            } else {
+                                                return apiVersionValidation; // V2 validation comes here
+                                            }
+                                        }
+                                );
+                            } else {
+                                return apiVersionValidation;
+                            }
+                        })
         );
     }
 }

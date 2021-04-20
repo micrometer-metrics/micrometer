@@ -32,9 +32,12 @@ class DynatraceConfigTest {
     @Test
     void invalid() {
         List<Validated.Invalid<?>> failures = config.validate().failures();
-        assertThat(failures.stream().map(Validated.Invalid::getMessage))
-                .containsOnly("is required");
         assertThat(failures.size()).isEqualTo(3);
+        assertThat(failures.stream().map(Validated::toString)).containsExactlyInAnyOrder(
+                "Invalid{property='dynatrace.apiToken', value='null', message='is required'}",
+                "Invalid{property='dynatrace.uri', value='null', message='is required'}",
+                "Invalid{property='dynatrace.deviceId', value='null', message='is required'}"
+        );
     }
 
     @Test
@@ -51,8 +54,13 @@ class DynatraceConfigTest {
             }
         }.validate();
 
-        assertThat(validate.failures().stream().map(Validated.Invalid::getMessage))
-                .contains("cannot be blank");
+        assertThat(validate.failures().size()).isEqualTo(4);
+        assertThat(validate.failures().stream().map(Validated::toString)).containsExactlyInAnyOrder(
+                "Invalid{property='dynatrace.apiToken', value='null', message='is required'}",
+                "Invalid{property='dynatrace.uri', value='null', message='is required'}",
+                "Invalid{property='dynatrace.deviceId', value='null', message='is required'}",
+                "Invalid{property='dynatrace.technologyType', value='', message='cannot be blank'}"
+        );
     }
 
     @Test
