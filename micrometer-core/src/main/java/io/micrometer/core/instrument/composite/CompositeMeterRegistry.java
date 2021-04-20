@@ -38,14 +38,14 @@ import java.util.function.ToLongFunction;
  * @author Johnny Lim
  */
 public class CompositeMeterRegistry extends MeterRegistry {
-    private final AtomicBoolean registriesLock = new AtomicBoolean(false);
+    private final AtomicBoolean registriesLock = new AtomicBoolean();
     private final Set<MeterRegistry> registries = Collections.newSetFromMap(new IdentityHashMap<>());
     private final Set<MeterRegistry> unmodifiableRegistries = Collections.unmodifiableSet(registries);
 
     // VisibleForTesting
     volatile Set<MeterRegistry> nonCompositeDescendants = Collections.emptySet();
 
-    private final AtomicBoolean parentLock = new AtomicBoolean(false);
+    private final AtomicBoolean parentLock = new AtomicBoolean();
     private volatile Set<CompositeMeterRegistry> parents = Collections.newSetFromMap(new IdentityHashMap<>());
 
     public CompositeMeterRegistry() {
@@ -67,7 +67,7 @@ public class CompositeMeterRegistry extends MeterRegistry {
                 })
                 .onMeterRemoved(m -> {
                     if (m instanceof CompositeMeter) { // should always be
-                        lock(registriesLock, () -> nonCompositeDescendants.forEach(r -> r.remove(m)));
+                        lock(registriesLock, () -> nonCompositeDescendants.forEach(r -> r.removeByPreFilterId(m.getId())));
                     }
                 });
 

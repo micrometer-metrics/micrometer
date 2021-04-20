@@ -34,9 +34,11 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
 import java.io.IOException;
+import java.time.Duration;
 
 import static java.util.Collections.emptyList;
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.awaitility.Awaitility.await;
 
 /**
  * Tests for {@link Log4j2Metrics}.
@@ -171,7 +173,8 @@ class Log4j2MetricsTest {
 
         assertThat(registry.get("log4j2.events").tags("level", "info").counter().count()).isEqualTo(0);
         logger.info("Hello, world!");
-        assertThat(registry.get("log4j2.events").tags("level", "info").counter().count()).isEqualTo(1);
+        await().atMost(Duration.ofSeconds(1))
+                .until(() -> registry.get("log4j2.events").tags("level", "info").counter().count() == 1);
     }
 
 }

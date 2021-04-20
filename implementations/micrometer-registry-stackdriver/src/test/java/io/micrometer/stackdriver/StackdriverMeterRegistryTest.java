@@ -108,12 +108,6 @@ class StackdriverMeterRegistryTest {
         verify(createTimesSeriesCallable).call(timeSeriesCaptor.capture());
 
         assertThat(metricDescriptorCaptor.getValue().getMetricDescriptor().getMetricKind()).isEqualTo(MetricDescriptor.MetricKind.CUMULATIVE);
-
-        TimeInterval interval = timeSeriesCaptor.getValue().getTimeSeries(0).getPoints(0).getInterval();
-        long startTime = toMs(interval.getStartTime().getSeconds(), interval.getStartTime().getNanos());
-        long endTime = toMs(interval.getEndTime().getSeconds(), interval.getEndTime().getNanos());
-        assertThat(endTime - startTime).isEqualTo(toMs(config.step().getSeconds(), config.step().getNano()));
-
         assertThat(timeSeriesCaptor.getValue().getTimeSeries(0).getMetricKind()).isEqualTo(MetricDescriptor.MetricKind.CUMULATIVE);
     }
 

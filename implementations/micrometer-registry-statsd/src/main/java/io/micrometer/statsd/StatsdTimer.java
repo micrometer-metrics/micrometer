@@ -33,7 +33,7 @@ public class StatsdTimer extends AbstractTimer {
     private final StatsdLineBuilder lineBuilder;
     private final FluxSink<String> sink;
     private StepDouble max;
-    private volatile boolean shutdown = false;
+    private volatile boolean shutdown;
 
     StatsdTimer(Id id, StatsdLineBuilder lineBuilder, FluxSink<String> sink, Clock clock,
                 DistributionStatisticConfig distributionStatisticConfig, PauseDetector pauseDetector, TimeUnit baseTimeUnit, long stepMillis) {

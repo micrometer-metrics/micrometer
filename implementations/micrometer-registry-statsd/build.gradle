@@ -1,12 +1,15 @@
 plugins {
-    id 'com.github.johnrengelman.shadow' version '5.2.0'
+    id 'com.github.johnrengelman.shadow' version '6.1.0'
 }
 
 dependencies {
     api project(':micrometer-core')
 
     implementation 'io.projectreactor:reactor-core'
-    implementation 'io.projectreactor.netty:reactor-netty'
+    implementation('io.projectreactor.netty:reactor-netty') {
+        exclude module: 'netty-codec-http2'
+        exclude module: 'netty-codec-http'
+    }
 
     testImplementation project(':micrometer-test')
     testImplementation 'io.projectreactor:reactor-test'
@@ -27,6 +30,10 @@ shadowJar {
     relocate 'org.reactivestreams', 'io.micrometer.shaded.org.reactorstreams'
     relocate 'io.netty', 'io.micrometer.shaded.io.netty'
     exclude 'META-INF/native/libnetty_transport_native_epoll_x86_64.so'
+    metaInf {
+        from "$rootDir/LICENSE"
+        from "$rootDir/NOTICE"
+    }
 }
 
 // Nebula plugin automatically configures the publication of the normal jar with its dependencies

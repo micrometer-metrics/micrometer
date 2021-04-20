@@ -18,13 +18,17 @@ package io.micrometer.core.instrument.binder.jvm;
 import io.micrometer.core.instrument.simple.SimpleMeterRegistry;
 import org.junit.jupiter.api.Test;
 
+import java.lang.management.MemoryPoolMXBean;
+
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.junit.jupiter.api.Assumptions.assumeTrue;
 
 /**
  * Tests for {@link JvmGcMetrics}.
  *
  * @author Johnny Lim
  */
+@GcTest
 class JvmGcMetricsTest {
 
     @Test
@@ -32,10 +36,16 @@ class JvmGcMetricsTest {
         SimpleMeterRegistry registry = new SimpleMeterRegistry();
         JvmGcMetrics binder = new JvmGcMetrics();
         binder.bindTo(registry);
-        assertThat(registry.find("jvm.gc.max.data.size").gauge()).isNotNull();
         assertThat(registry.find("jvm.gc.live.data.size").gauge()).isNotNull();
-        assertThat(registry.find("jvm.gc.memory.promoted").counter()).isNotNull();
         assertThat(registry.find("jvm.gc.memory.allocated").counter()).isNotNull();
+        assertThat(registry.find("jvm.gc.max.data.size").gauge().value()).isGreaterThan(0);
+
+        assumeTrue(isGenerationalGc());
+        assertThat(registry.find("jvm.gc.memory.promoted").counter()).isNotNull();
+    }
+
+    private boolean isGenerationalGc() {
+        return JvmMemory.getLongLivedHeapPool().map(MemoryPoolMXBean::getName).filter(JvmMemory::isOldGenPool).isPresent();
     }
 
 }

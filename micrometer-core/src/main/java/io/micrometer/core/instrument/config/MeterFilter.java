@@ -45,6 +45,9 @@ public interface MeterFilter {
     /**
      * Add common tags that are applied to every meter created afterward.
      *
+     * The common tags will not override tag values from a meter ID. They will also not override previously configured
+     * common tag MeterFilters that have the same tag key.
+     *
      * @param tags Common tags.
      * @return A common tag filter.
      */
@@ -52,7 +55,7 @@ public interface MeterFilter {
         return new MeterFilter() {
             @Override
             public Meter.Id map(Meter.Id id) {
-                return id.withTags(Tags.concat(tags, id.getTagsAsIterable()));
+                return id.replaceTags(Tags.concat(tags, id.getTagsAsIterable()));
             }
         };
     }

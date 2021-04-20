@@ -36,7 +36,7 @@ import java.util.stream.Collectors;
 /**
  * Delete this when this feature is incorporated into Spring Boot.
  *
- * @since 1.6.0
+ * @author Jon Schneider
  */
 @Configuration
 public class ServiceLevelObjectiveConfiguration {

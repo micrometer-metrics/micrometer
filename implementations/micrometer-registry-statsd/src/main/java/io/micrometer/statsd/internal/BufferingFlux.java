@@ -43,8 +43,8 @@ public class BufferingFlux {
     public static Flux<String> create(final Flux<String> source, final String delimiter, final int maxByteArraySize, final long maxMillisecondsBetweenEmits) {
         return Flux.defer(() -> {
             final int delimiterSize = delimiter.getBytes().length;
-            final AtomicInteger byteSize = new AtomicInteger(0);
-            final AtomicLong lastTime = new AtomicLong(0);
+            final AtomicInteger byteSize = new AtomicInteger();
+            final AtomicLong lastTime = new AtomicLong();
 
             final DirectProcessor<Void> intervalEnd = DirectProcessor.create();
 

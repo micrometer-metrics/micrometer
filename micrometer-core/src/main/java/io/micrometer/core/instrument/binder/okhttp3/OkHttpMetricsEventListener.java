@@ -42,8 +42,9 @@ import static java.util.stream.StreamSupport.stream;
  * {@link EventListener} for collecting metrics from {@link OkHttpClient}.
  * <p>
  * {@literal uri} tag is usually limited to URI patterns to mitigate tag cardinality explosion but {@link OkHttpClient}
- * doesn't provide URI patterns. We provide {@value URI_PATTERN} header to support {@literal uri} tag or you can
- * configure a {@link Builder#uriMapper(Function) URI mapper} to provide your own tag values for {@literal uri} tag.
+ * doesn't provide URI patterns. We provide {@value OkHttpMetricsEventListener#URI_PATTERN} header to support
+ * {@literal uri} tag or you can configure a {@link Builder#uriMapper(Function) URI mapper} to provide your own tag
+ * values for {@literal uri} tag.
  *
  * @author Bjarte S. Karlsen
  * @author Jon Schneider

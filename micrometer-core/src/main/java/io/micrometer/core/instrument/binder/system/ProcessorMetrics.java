@@ -78,7 +78,8 @@ public class ProcessorMetrics implements MeterBinder {
         this.tags = tags;
         this.operatingSystemBean = ManagementFactory.getOperatingSystemMXBean();
         this.operatingSystemBeanClass = getFirstClassFound(OPERATING_SYSTEM_BEAN_CLASS_NAMES);
-        this.systemCpuUsage = detectMethod("getSystemCpuLoad");
+        Method getCpuLoad = detectMethod("getCpuLoad");
+        this.systemCpuUsage = getCpuLoad != null ? getCpuLoad : detectMethod("getSystemCpuLoad");
         this.processCpuUsage = detectMethod("getProcessCpuLoad");
     }
 

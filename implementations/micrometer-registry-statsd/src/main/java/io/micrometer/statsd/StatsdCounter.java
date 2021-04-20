@@ -29,7 +29,7 @@ public class StatsdCounter extends AbstractMeter implements Counter {
     private final StatsdLineBuilder lineBuilder;
     private final FluxSink<String> sink;
     private DoubleAdder count = new DoubleAdder();
-    private volatile boolean shutdown = false;
+    private volatile boolean shutdown;
 
     StatsdCounter(Id id, StatsdLineBuilder lineBuilder, FluxSink<String> sink) {
         super(id);

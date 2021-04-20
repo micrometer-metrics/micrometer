@@ -71,7 +71,7 @@ class CompositeMeterRegistryTest {
 
         Counter.builder("counter").baseUnit(BaseUnits.BYTES).register(composite);
         DistributionSummary.builder("summary").baseUnit(BaseUnits.BYTES).register(composite);
-        Gauge.builder("gauge", new AtomicInteger(0), AtomicInteger::get).baseUnit(BaseUnits.BYTES).register(composite);
+        Gauge.builder("gauge", new AtomicInteger(), AtomicInteger::get).baseUnit(BaseUnits.BYTES).register(composite);
 
         assertThat(simple.get("counter").counter().getId().getBaseUnit()).isEqualTo(BaseUnits.BYTES);
         assertThat(simple.get("summary").summary().getId().getBaseUnit()).isEqualTo(BaseUnits.BYTES);
@@ -473,6 +473,19 @@ class CompositeMeterRegistryTest {
             assertThat(this.composite.find(meterName).tag(tagName, String.valueOf(i)).counter().count())
                     .isEqualTo(count / tagCount);
         }
+    }
+
+    @Test
+    @Issue("#2354")
+    void meterRemovalPropagatesToChildRegistryWithModifyingFilter() {
+        this.simple.config().commonTags("host", "localhost");
+        this.composite.add(this.simple);
+
+        Counter counter = this.composite.counter("my.counter");
+        this.composite.remove(counter);
+
+        assertThat(this.composite.getMeters()).isEmpty();
+        assertThat(this.simple.getMeters()).isEmpty();
     }
 
 }
