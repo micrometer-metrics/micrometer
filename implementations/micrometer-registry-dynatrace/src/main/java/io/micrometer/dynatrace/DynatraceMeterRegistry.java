@@ -17,6 +17,7 @@ package io.micrometer.dynatrace;
 
 import io.micrometer.core.instrument.Clock;
 import io.micrometer.core.instrument.step.StepMeterRegistry;
+import io.micrometer.core.instrument.util.MeterPartition;
 import io.micrometer.core.instrument.util.NamedThreadFactory;
 import io.micrometer.core.ipc.http.HttpSender;
 import io.micrometer.core.ipc.http.HttpUrlConnectionSender;
@@ -41,6 +42,7 @@ public class DynatraceMeterRegistry extends StepMeterRegistry {
     private static final ThreadFactory DEFAULT_THREAD_FACTORY = new NamedThreadFactory("dynatrace-metrics-publisher");
     private static final Logger logger = LoggerFactory.getLogger(DynatraceMeterRegistry.class);
 
+    private final DynatraceConfig config;
     private final AbstractDynatraceExporter exporter;
 
     @SuppressWarnings("deprecation")
@@ -51,6 +53,7 @@ public class DynatraceMeterRegistry extends StepMeterRegistry {
     private DynatraceMeterRegistry(DynatraceConfig config, Clock clock, ThreadFactory threadFactory, HttpSender httpClient) {
         super(config, clock);
 
+        this.config = config;
         if (config.apiVersion() == DynatraceApiVersion.V1) {
             logger.info("Using Dynatrace v1 exporter.");
             this.exporter = new DynatraceExporterV1(config, clock, httpClient);
@@ -66,7 +69,7 @@ public class DynatraceMeterRegistry extends StepMeterRegistry {
 
     @Override
     protected void publish() {
-        exporter.export(this);
+        exporter.export(MeterPartition.partition(this, config.batchSize()));
     }
 
     @Override

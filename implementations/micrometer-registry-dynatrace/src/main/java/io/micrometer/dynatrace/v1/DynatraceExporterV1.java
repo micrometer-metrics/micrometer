@@ -19,7 +19,6 @@ package io.micrometer.dynatrace.v1;
 import io.micrometer.core.instrument.*;
 import io.micrometer.core.instrument.config.NamingConvention;
 import io.micrometer.core.instrument.distribution.HistogramSnapshot;
-import io.micrometer.core.instrument.util.MeterPartition;
 import io.micrometer.core.instrument.util.StringUtils;
 import io.micrometer.core.ipc.http.HttpSender;
 import io.micrometer.core.lang.Nullable;
@@ -72,11 +71,11 @@ public class DynatraceExporterV1 extends AbstractDynatraceExporter {
     }
 
     @Override
-    public void export(@Nonnull MeterRegistry registry) {
+    public void export(@Nonnull List<List<Meter>> partitions) {
         String customDeviceMetricEndpoint = config.uri() + "/api/v1/entity/infrastructure/custom/" +
                 config.deviceId() + "?api-token=" + config.apiToken();
 
-        for (List<Meter> batch : MeterPartition.partition(registry, config.batchSize())) {
+        for (List<Meter> batch : partitions) {
             final List<DynatraceCustomMetric> series = batch.stream()
                     .flatMap(meter -> meter.match(
                             this::writeMeter,
