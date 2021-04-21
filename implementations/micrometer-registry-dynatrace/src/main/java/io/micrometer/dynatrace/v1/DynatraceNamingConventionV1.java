@@ -1,5 +1,5 @@
 /**
- * Copyright 2021 VMware, Inc.
+ * Copyright 2017 VMware, Inc.
  * <p>
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -30,6 +30,7 @@ import java.util.regex.Pattern;
  * @author Oriol Barcelona Palau
  * @author Jon Schneider
  * @author Johnny Lim
+ * @since 1.8.0
  */
 public class DynatraceNamingConventionV1 implements NamingConvention {
     private static final WarnThenDebugLogger logger = new WarnThenDebugLogger(DynatraceNamingConvention.class);

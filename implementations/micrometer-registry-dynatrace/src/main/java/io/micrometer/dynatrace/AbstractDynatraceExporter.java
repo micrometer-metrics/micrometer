@@ -26,6 +26,7 @@ import java.util.concurrent.TimeUnit;
  * Base class for implementations of Dynatrace exporters.
  *
  * @author Georg Pirklbauer
+ * @since 1.8.0
  */
 public abstract class AbstractDynatraceExporter {
 
@@ -33,15 +34,15 @@ public abstract class AbstractDynatraceExporter {
     protected Clock clock;
     protected HttpSender httpClient;
 
-    public abstract void export(@Nonnull MeterRegistry registry);
-
-    public TimeUnit getBaseTimeUnit() {
-        return TimeUnit.MILLISECONDS;
-    }
-
     public AbstractDynatraceExporter(DynatraceConfig config, Clock clock, HttpSender httpClient) {
         this.config = config;
         this.clock = clock;
         this.httpClient = httpClient;
     }
+
+    public TimeUnit getBaseTimeUnit() {
+        return TimeUnit.MILLISECONDS;
+    }
+
+    public abstract void export(@Nonnull MeterRegistry registry);
 }

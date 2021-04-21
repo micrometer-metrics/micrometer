@@ -1,5 +1,5 @@
 /**
- * Copyright 2021 VMware, Inc.
+ * Copyright 2017-2021 VMware, Inc.
  * <p>
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -12,7 +12,6 @@
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
  * limitations under the License.
- *
  */
 
 package io.micrometer.dynatrace.v1;
@@ -40,6 +39,7 @@ import java.util.stream.Collectors;
 import java.util.stream.Stream;
 import java.util.stream.StreamSupport;
 
+import static io.micrometer.dynatrace.v1.DynatraceMetricDefinition.DynatraceUnit;
 import static java.nio.charset.StandardCharsets.UTF_8;
 
 /**
@@ -50,10 +50,11 @@ import static java.nio.charset.StandardCharsets.UTF_8;
  * @author Johnny Lim
  * @author PJ Fanning
  * @author Georg Pirklbauer
+ * @since 1.8.0
  */
 public class DynatraceExporterV1 extends AbstractDynatraceExporter {
     private static final int MAX_MESSAGE_SIZE = 15360; //max message size in bytes that Dynatrace will accept
-    private final Logger logger = LoggerFactory.getLogger(DynatraceExporterV1.class.getName());
+    private final Logger logger = LoggerFactory.getLogger(DynatraceExporterV1.class);
 
     /**
      * Metric names for which we have created the custom metric in the API
@@ -122,7 +123,7 @@ public class DynatraceExporterV1 extends AbstractDynatraceExporter {
         final long wallTime = clock.wallTime();
         final Meter.Id id = longTaskTimer.getId();
         return Stream.of(
-                createCustomMetric(idWithSuffix(id, "activeTasks"), wallTime, longTaskTimer.activeTasks(), DynatraceMetricDefinition.DynatraceUnit.Count),
+                createCustomMetric(idWithSuffix(id, "activeTasks"), wallTime, longTaskTimer.activeTasks(), DynatraceUnit.Count),
                 createCustomMetric(idWithSuffix(id, "count"), wallTime, longTaskTimer.duration(getBaseTimeUnit())));
     }
 
@@ -133,7 +134,7 @@ public class DynatraceExporterV1 extends AbstractDynatraceExporter {
 
         return Stream.of(
                 createCustomMetric(idWithSuffix(id, "sum"), wallTime, snapshot.total(getBaseTimeUnit())),
-                createCustomMetric(idWithSuffix(id, "count"), wallTime, snapshot.count(), DynatraceMetricDefinition.DynatraceUnit.Count),
+                createCustomMetric(idWithSuffix(id, "count"), wallTime, snapshot.count(), DynatraceUnit.Count),
                 createCustomMetric(idWithSuffix(id, "avg"), wallTime, snapshot.mean(getBaseTimeUnit())),
                 createCustomMetric(idWithSuffix(id, "max"), wallTime, snapshot.max(getBaseTimeUnit())));
     }
@@ -143,7 +144,7 @@ public class DynatraceExporterV1 extends AbstractDynatraceExporter {
         final Meter.Id id = timer.getId();
 
         return Stream.of(
-                createCustomMetric(idWithSuffix(id, "count"), wallTime, timer.count(), DynatraceMetricDefinition.DynatraceUnit.Count),
+                createCustomMetric(idWithSuffix(id, "count"), wallTime, timer.count(), DynatraceUnit.Count),
                 createCustomMetric(idWithSuffix(id, "avg"), wallTime, timer.mean(getBaseTimeUnit())),
                 createCustomMetric(idWithSuffix(id, "sum"), wallTime, timer.totalTime(getBaseTimeUnit())));
     }
@@ -155,16 +156,16 @@ public class DynatraceExporterV1 extends AbstractDynatraceExporter {
 
         return Stream.of(
                 createCustomMetric(idWithSuffix(id, "sum"), wallTime, snapshot.total(getBaseTimeUnit())),
-                createCustomMetric(idWithSuffix(id, "count"), wallTime, snapshot.count(), DynatraceMetricDefinition.DynatraceUnit.Count),
+                createCustomMetric(idWithSuffix(id, "count"), wallTime, snapshot.count(), DynatraceUnit.Count),
                 createCustomMetric(idWithSuffix(id, "avg"), wallTime, snapshot.mean(getBaseTimeUnit())),
                 createCustomMetric(idWithSuffix(id, "max"), wallTime, snapshot.max(getBaseTimeUnit())));
     }
 
     private DynatraceCustomMetric createCustomMetric(Meter.Id id, long time, Number value) {
-        return createCustomMetric(id, time, value, DynatraceMetricDefinition.DynatraceUnit.fromPlural(id.getBaseUnit()));
+        return createCustomMetric(id, time, value, DynatraceUnit.fromPlural(id.getBaseUnit()));
     }
 
-    private DynatraceCustomMetric createCustomMetric(Meter.Id id, long time, Number value, @Nullable DynatraceMetricDefinition.DynatraceUnit unit) {
+    private DynatraceCustomMetric createCustomMetric(Meter.Id id, long time, Number value, @Nullable DynatraceUnit unit) {
         final String metricId = getConventionName(id);
         final List<Tag> tags = getConventionTags(id);
         return new DynatraceCustomMetric(

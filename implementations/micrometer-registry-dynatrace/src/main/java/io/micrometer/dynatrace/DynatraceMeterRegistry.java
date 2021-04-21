@@ -39,13 +39,17 @@ import java.util.concurrent.TimeUnit;
  */
 public class DynatraceMeterRegistry extends StepMeterRegistry {
     private static final ThreadFactory DEFAULT_THREAD_FACTORY = new NamedThreadFactory("dynatrace-metrics-publisher");
+    private static final Logger logger = LoggerFactory.getLogger(DynatraceMeterRegistry.class);
 
     private final AbstractDynatraceExporter exporter;
-    private static final Logger logger = LoggerFactory.getLogger(DynatraceMeterRegistry.class.getName());
+
+    @SuppressWarnings("deprecation")
+    public DynatraceMeterRegistry(DynatraceConfig config, Clock clock) {
+        this(config, clock, DEFAULT_THREAD_FACTORY, new HttpUrlConnectionSender(config.connectTimeout(), config.readTimeout()));
+    }
 
     private DynatraceMeterRegistry(DynatraceConfig config, Clock clock, ThreadFactory threadFactory, HttpSender httpClient) {
         super(config, clock);
-        start(threadFactory);
 
         if (config.apiVersion() == DynatraceApiVersion.V1) {
             logger.info("Using Dynatrace v1 exporter.");
@@ -53,16 +57,11 @@ public class DynatraceMeterRegistry extends StepMeterRegistry {
         } else {
             throw new IllegalArgumentException("Only v1 export is available at the moment.");
         }
+        start(threadFactory);
     }
 
-    @SuppressWarnings("deprecation")
-    public DynatraceMeterRegistry(DynatraceConfig config, Clock clock) {
-        this(config, clock, DEFAULT_THREAD_FACTORY, new HttpUrlConnectionSender(config.connectTimeout(), config.readTimeout()));
-    }
-
-    @Override
-    protected TimeUnit getBaseTimeUnit() {
-        return this.exporter.getBaseTimeUnit();
+    public static Builder builder(DynatraceConfig config) {
+        return new Builder(config);
     }
 
     @Override
@@ -70,9 +69,9 @@ public class DynatraceMeterRegistry extends StepMeterRegistry {
         exporter.export(this);
     }
 
-    // the builder is used by spring boot to create the class.
-    public static Builder builder(DynatraceConfig config) {
-        return new Builder(config);
+    @Override
+    protected TimeUnit getBaseTimeUnit() {
+        return this.exporter.getBaseTimeUnit();
     }
 
     public static class Builder {

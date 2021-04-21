@@ -28,6 +28,7 @@ import static io.micrometer.core.instrument.config.validate.PropertyValidator.*;
  *
  * @author Oriol Barcelona
  * @author Georg Pirklbauer
+ * @since 1.1.0
  */
 public interface DynatraceConfig extends StepRegistryConfig {
 

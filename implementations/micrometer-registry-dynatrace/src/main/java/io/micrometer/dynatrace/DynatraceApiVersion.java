@@ -18,6 +18,7 @@ package io.micrometer.dynatrace;
 
 /**
  * An enum containing valid Dynatrace API versions.
+ * @since 1.8.0
  */
 public enum DynatraceApiVersion {
     V1,

@@ -30,12 +30,13 @@ import io.micrometer.dynatrace.v1.DynatraceNamingConventionV1;
  * @since 1.1.0
  */
 public class DynatraceNamingConvention implements NamingConvention {
-    private final NamingConvention namingConvention;
+    private final NamingConvention versionSpecificNamingConvention;
 
     public DynatraceNamingConvention(NamingConvention delegate, DynatraceApiVersion version) {
-        // if (version == DynatraceApiVersion.V1) ...
-        // for now, this check does not make sense, but it will when more naming conventions are added.
-        this.namingConvention = new DynatraceNamingConventionV1(delegate);
+        if (version != DynatraceApiVersion.V1) {
+            throw new IllegalArgumentException("At the moment, V1 is the only supported version");
+        }
+        this.versionSpecificNamingConvention = new DynatraceNamingConventionV1(delegate);
     }
 
     public DynatraceNamingConvention(NamingConvention delegate) {
@@ -48,22 +49,22 @@ public class DynatraceNamingConvention implements NamingConvention {
 
     @Override
     public String name(String name, Meter.Type type, @Nullable String baseUnit) {
-        return namingConvention.name(name, type, baseUnit);
+        return versionSpecificNamingConvention.name(name, type, baseUnit);
     }
 
     @Override
     public String name(String name, Meter.Type type) {
-        return namingConvention.name(name, type);
+        return versionSpecificNamingConvention.name(name, type);
     }
 
     @Override
     public String tagKey(String key) {
-        return namingConvention.tagKey(key);
+        return versionSpecificNamingConvention.tagKey(key);
     }
 
     @Override
     public String tagValue(String value) {
-        return namingConvention.tagValue(value);
+        return versionSpecificNamingConvention.tagValue(value);
     }
 }
 
