@@ -33,7 +33,7 @@ Join the [Micrometer Slack](https://slack.micrometer.io) to share your questions
 
 ## Snapshot builds
 
-Snapshots are published to `repo.spring.io` for every successful build on the `master` branch and maintenance branches.
+Snapshots are published to `repo.spring.io` for every successful build on the `main` branch and maintenance branches.
 
 To use:
 

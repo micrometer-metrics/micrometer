@@ -6,7 +6,7 @@ If you would like to use any of the published Micrometer modules as a library in
 
 ## Code of Conduct
 
-See [our Contributor Code of Conduct](https://github.com/micrometer-metrics/.github/blob/master/CODE_OF_CONDUCT.md).
+See [our Contributor Code of Conduct](https://github.com/micrometer-metrics/.github/blob/main/CODE_OF_CONDUCT.md).
 
 ## Contributions
 
