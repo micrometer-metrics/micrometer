@@ -1,10 +1,9 @@
 plugins {
-    id "me.champeau.jmh" version "0.6.2"
+    id "me.champeau.jmh" version "0.6.4"
 }
 
 dependencies {
     jmh project(':micrometer-core')
-    jmh project(':micrometer-samples-core')
     jmh project(':micrometer-registry-prometheus')
 
     jmh 'io.dropwizard.metrics5:metrics-core:latest.release'

@@ -18,6 +18,8 @@ package io.micrometer.dynatrace;
 import io.micrometer.core.instrument.Meter;
 import org.junit.jupiter.api.Test;
 
+import java.util.Collections;
+
 import static org.assertj.core.api.Assertions.assertThat;
 
 /**
@@ -57,5 +59,11 @@ class DynatraceNamingConventionTest {
     @Test
     void tagKeysAreSanitized() {
         assertThat(convention.tagKey("{tagTag0}.-")).isEqualTo("_tagTag0_.-");
+    }
+
+    @Test
+    void tagValuesAreTruncated() {
+        String expected = String.join("", Collections.nCopies(128, "a"));
+        assertThat(convention.tagValue(String.join("", Collections.nCopies(130, "a")))).isEqualTo(expected);
     }
 }
