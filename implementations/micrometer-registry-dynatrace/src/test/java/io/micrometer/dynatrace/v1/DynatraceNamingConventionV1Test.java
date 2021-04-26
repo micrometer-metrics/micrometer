@@ -19,6 +19,8 @@ import io.micrometer.core.instrument.Meter;
 import io.micrometer.dynatrace.DynatraceNamingConvention;
 import org.junit.jupiter.api.Test;
 
+import java.util.Collections;
+
 import static org.assertj.core.api.Assertions.assertThat;
 
 /**
@@ -70,6 +72,11 @@ class DynatraceNamingConventionV1Test {
         assertThat(dynatraceConvention.name("system.load.average.1m", Meter.Type.COUNTER, null))
                 .isEqualTo(v1Convention.name("system.load.average.1m", Meter.Type.COUNTER, null));
         assertThat(dynatraceConvention.tagKey("{tagTag0}.-")).isEqualTo(v1Convention.tagKey("_tagTag0_.-"));
+    }
+    @Test
+    void tagValuesAreTruncated() {
+        String expected = String.join("", Collections.nCopies(128, "a"));
+        assertThat(convention.tagValue(String.join("", Collections.nCopies(130, "a")))).isEqualTo(expected);
     }
 }
 

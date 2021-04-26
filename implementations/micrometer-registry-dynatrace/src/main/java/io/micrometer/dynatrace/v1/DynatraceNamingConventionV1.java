@@ -18,6 +18,7 @@ package io.micrometer.dynatrace.v1;
 
 import io.micrometer.core.instrument.Meter;
 import io.micrometer.core.instrument.config.NamingConvention;
+import io.micrometer.core.instrument.util.StringUtils;
 import io.micrometer.core.lang.Nullable;
 import io.micrometer.core.util.internal.logging.WarnThenDebugLogger;
 import io.micrometer.dynatrace.DynatraceNamingConvention;
@@ -38,6 +39,8 @@ public class DynatraceNamingConventionV1 implements NamingConvention {
     private static final Pattern NAME_CLEANUP_PATTERN = Pattern.compile("[^\\w._-]");
     private static final Pattern LEADING_NUMERIC_PATTERN = Pattern.compile("[._-]([\\d])+");
     private static final Pattern KEY_CLEANUP_PATTERN = Pattern.compile("[^\\w.-]");
+
+    private static final int TAG_VALUE_MAX_LENGTH = 128;
 
     private final NamingConvention delegate;
 
@@ -71,5 +74,10 @@ public class DynatraceNamingConventionV1 implements NamingConvention {
     @Override
     public String tagKey(String key) {
         return KEY_CLEANUP_PATTERN.matcher(delegate.tagKey(key)).replaceAll("_");
+    }
+
+    @Override
+    public String tagValue(String value) {
+        return StringUtils.truncate(value, TAG_VALUE_MAX_LENGTH);
     }
 }
