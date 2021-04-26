@@ -17,6 +17,7 @@ package io.micrometer.dynatrace;
 
 import io.micrometer.core.instrument.Meter;
 import io.micrometer.core.instrument.config.NamingConvention;
+import io.micrometer.core.instrument.util.StringUtils;
 import io.micrometer.core.lang.Nullable;
 import io.micrometer.core.util.internal.logging.WarnThenDebugLogger;
 
@@ -76,9 +77,6 @@ public class DynatraceNamingConvention implements NamingConvention {
 
     @Override
     public String tagValue(String value) {
-        if (value.length() <= TAG_VALUE_MAX_LENGTH) {
-            return value;
-        }
-        return value.substring(0, TAG_VALUE_MAX_LENGTH);
+        return StringUtils.truncate(value, TAG_VALUE_MAX_LENGTH);
     }
 }
