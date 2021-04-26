@@ -23,7 +23,8 @@ dependencies {
     // cache monitoring
     compile 'com.google.guava:guava:latest.release', optional
     compile 'com.github.ben-manes.caffeine:caffeine:2.+', optional
-    compile 'net.sf.ehcache:ehcache:latest.release', optional
+    // locked to this version due to ehcache-parent 2.25 not being on central
+    compile 'net.sf.ehcache:ehcache:2.10.6', optional
     compile 'javax.cache:cache-api:latest.release', optional
     compile 'com.hazelcast:hazelcast:latest.release', optional
     compile 'org.hibernate:hibernate-entitymanager:latest.release', optional
