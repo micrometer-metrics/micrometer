@@ -37,7 +37,8 @@ def VERSIONS = [
         'javax.inject:javax.inject:1',
         'javax.xml.bind:jaxb-api:2.3.+',
         'junit:junit:4.12',
-        'net.sf.ehcache:ehcache:latest.release',
+        // locked to this version due to ehcache-parent 2.25 not being on central
+        'net.sf.ehcache:ehcache:2.10.6',
         'org.apache.httpcomponents:httpasyncclient:latest.release',
         'org.apache.httpcomponents:httpclient:latest.release',
         'org.apache.kafka:kafka-clients:latest.release',
