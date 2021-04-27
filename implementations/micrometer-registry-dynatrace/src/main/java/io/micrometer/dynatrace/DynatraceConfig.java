@@ -15,10 +15,13 @@
  */
 package io.micrometer.dynatrace;
 
+import io.micrometer.core.instrument.config.validate.InvalidReason;
 import io.micrometer.core.instrument.config.validate.Validated;
 import io.micrometer.core.instrument.step.StepRegistryConfig;
-import io.micrometer.core.instrument.util.StringUtils;
 import io.micrometer.core.lang.Nullable;
+
+import java.util.Collections;
+import java.util.Map;
 
 import static io.micrometer.core.instrument.config.MeterRegistryConfigValidator.*;
 import static io.micrometer.core.instrument.config.validate.PropertyValidator.*;
@@ -38,11 +41,19 @@ public interface DynatraceConfig extends StepRegistryConfig {
     }
 
     default String apiToken() {
-        return getSecret(this, "apiToken").required().get();
+        if (apiVersion() == DynatraceApiVersion.V1) {
+            return getSecret(this, "apiToken").required().get();
+        }
+        return getSecret(this, "apiToken").orElse("");
     }
 
     default String uri() {
-        return getUrlString(this, "uri").required().get();
+        // If no URI is set, return an empty string. It is up to the exporter to decide what to do
+        // with an empty URI.
+        if (apiVersion() == DynatraceApiVersion.V1) {
+            return getUrlString(this, "uri").required().get();
+        }
+        return getUrlString(this, "uri").orElse("");
     }
 
     default String deviceId() {
@@ -50,9 +61,7 @@ public interface DynatraceConfig extends StepRegistryConfig {
     }
 
     default String technologyType() {
-        return getSecret(this, "technologyType")
-                .map(val -> StringUtils.isEmpty(val) ? "java" : val)
-                .get();
+        return getSecret(this, "technologyType").orElse("java");
     }
 
     /**
@@ -67,7 +76,7 @@ public interface DynatraceConfig extends StepRegistryConfig {
     }
 
     /**
-     * Return the version of the target Dynatrace API.
+     * Return the version of the target Dynatrace API. Defaults to v1 if not provided.
      *
      * @return a {@link DynatraceApiVersion} containing the version of the targeted Dynatrace API.
      */
@@ -75,6 +84,21 @@ public interface DynatraceConfig extends StepRegistryConfig {
         // if not specified, defaults to v1 for backwards compatibility.
         return getEnum(this, DynatraceApiVersion.class, "apiVersion")
                 .orElse(DynatraceApiVersion.V1);
+    }
+
+    default String metricKeyPrefix() {
+        // returns an empty string if nothing is set in the properties.
+        return getString(this, "metricKeyPrefix").orElse("");
+    }
+
+    default Map<String, String> defaultDimensions() {
+        return Collections.emptyMap();
+    }
+
+    default Boolean enrichWithOneAgentMetadata() {
+        // defaults to true if nothing is set.
+        return getBoolean(this, "enrichWithOneAgentMetadata")
+                .orElse(true);
     }
 
     @Override
@@ -86,7 +110,7 @@ public interface DynatraceConfig extends StepRegistryConfig {
                             if (apiVersionValidation.isValid()) {
                                 return checkAll(this,
                                         config -> {
-                                            if (config.apiVersion() ==  DynatraceApiVersion.V1) {
+                                            if (config.apiVersion() == DynatraceApiVersion.V1) {
                                                 return checkAll(this,
                                                         checkRequired("apiToken", DynatraceConfig::apiToken),
                                                         checkRequired("uri", DynatraceConfig::uri),
@@ -94,7 +118,14 @@ public interface DynatraceConfig extends StepRegistryConfig {
                                                         check("technologyType", DynatraceConfig::technologyType).andThen(Validated::nonBlank)
                                                 );
                                             } else {
-                                                return apiVersionValidation; // V2 validation comes here
+                                                return checkAll(this,
+                                                        c -> StepRegistryConfig.validate(c),
+                                                        check("apiToken", DynatraceConfig::apiToken)
+                                                                .andThen(v -> v.invalidateWhen(x -> !apiToken().isEmpty() &&
+                                                                                checkRequired("uri", DynatraceConfig::uri).apply(this).isValid() &&
+                                                                                uri().isEmpty(),
+                                                                        "when using an API token, the endpoint URI is required", InvalidReason.MISSING))
+                                                );
                                             }
                                         }
                                 );

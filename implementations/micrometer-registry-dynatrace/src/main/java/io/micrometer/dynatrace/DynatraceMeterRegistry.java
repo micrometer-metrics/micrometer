@@ -16,12 +16,16 @@
 package io.micrometer.dynatrace;
 
 import io.micrometer.core.instrument.Clock;
+import io.micrometer.core.instrument.Meter;
+import io.micrometer.core.instrument.config.MeterFilter;
+import io.micrometer.core.instrument.distribution.DistributionStatisticConfig;
 import io.micrometer.core.instrument.step.StepMeterRegistry;
 import io.micrometer.core.instrument.util.MeterPartition;
 import io.micrometer.core.instrument.util.NamedThreadFactory;
 import io.micrometer.core.ipc.http.HttpSender;
 import io.micrometer.core.ipc.http.HttpUrlConnectionSender;
 import io.micrometer.dynatrace.v1.DynatraceExporterV1;
+import io.micrometer.dynatrace.v2.DynatraceExporterV2;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -54,12 +58,15 @@ public class DynatraceMeterRegistry extends StepMeterRegistry {
         super(config, clock);
 
         this.config = config;
-        if (config.apiVersion() == DynatraceApiVersion.V1) {
-            logger.info("Using Dynatrace v1 exporter.");
-            this.exporter = new DynatraceExporterV1(config, clock, httpClient);
+        if (config.apiVersion() == DynatraceApiVersion.V2) {
+            logger.info("Exporting to Dynatrace metrics API v2");
+            this.exporter = new DynatraceExporterV2(config, clock, httpClient);
+            registerMinPercentile();
         } else {
-            throw new IllegalArgumentException("Only v1 export is available at the moment.");
+            logger.info("Exporting to Dynatrace metrics API v1");
+            this.exporter = new DynatraceExporterV1(config, clock, httpClient);
         }
+
         start(threadFactory);
     }
 
@@ -75,6 +82,23 @@ public class DynatraceMeterRegistry extends StepMeterRegistry {
     @Override
     protected TimeUnit getBaseTimeUnit() {
         return this.exporter.getBaseTimeUnit();
+    }
+
+    /**
+     * As the micrometer summary statistics (DistributionSummary, and a number of timer meter types)
+     * do not provide the minimum values that are required by Dynatrace to ingest summary metrics,
+     * we add the 0% percentile to each summary statistic and use that as the minimum value.
+     */
+    private void registerMinPercentile() {
+        config().meterFilter(new MeterFilter() {
+            @Override
+            public DistributionStatisticConfig configure(Meter.Id id, DistributionStatisticConfig config) {
+                return DistributionStatisticConfig.builder()
+                        .percentiles(0)
+                        .build()
+                        .merge(config);
+            }
+        });
     }
 
     public static class Builder {
@@ -110,4 +134,3 @@ public class DynatraceMeterRegistry extends StepMeterRegistry {
         }
     }
 }
-

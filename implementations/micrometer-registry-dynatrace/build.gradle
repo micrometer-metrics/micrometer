@@ -2,6 +2,8 @@ dependencies {
     api project(':micrometer-core')
 
     implementation 'org.slf4j:slf4j-api'
+    
+    implementation('com.dynatrace.metric.util:dynatrace-metric-utils-java:0.1.1')
 
     testImplementation project(':micrometer-test')
     testImplementation 'com.fasterxml.jackson.core:jackson-databind'

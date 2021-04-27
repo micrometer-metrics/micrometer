@@ -23,6 +23,7 @@ import io.micrometer.core.instrument.util.StringUtils;
 import io.micrometer.core.ipc.http.HttpSender;
 import io.micrometer.core.lang.Nullable;
 import io.micrometer.dynatrace.AbstractDynatraceExporter;
+import io.micrometer.dynatrace.DynatraceApiVersion;
 import io.micrometer.dynatrace.DynatraceConfig;
 import io.micrometer.dynatrace.DynatraceNamingConvention;
 import org.slf4j.Logger;
@@ -67,7 +68,7 @@ public class DynatraceExporterV1 extends AbstractDynatraceExporter {
         super(config, clock, httpClient);
 
         this.customMetricEndpointTemplate = config.uri() + "/api/v1/timeseries/";
-        this.namingConvention = new DynatraceNamingConvention();
+        this.namingConvention = new DynatraceNamingConvention(NamingConvention.dot, DynatraceApiVersion.V1);
     }
 
     @Override

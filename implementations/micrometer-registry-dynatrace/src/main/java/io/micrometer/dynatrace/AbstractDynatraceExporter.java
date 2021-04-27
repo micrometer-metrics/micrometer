@@ -31,10 +31,9 @@ import java.util.concurrent.TimeUnit;
  * @since 1.8.0
  */
 public abstract class AbstractDynatraceExporter {
-
-    protected DynatraceConfig config;
-    protected Clock clock;
-    protected HttpSender httpClient;
+    protected final DynatraceConfig config;
+    protected final Clock clock;
+    protected final HttpSender httpClient;
 
     public AbstractDynatraceExporter(DynatraceConfig config, Clock clock, HttpSender httpClient) {
         this.config = config;
