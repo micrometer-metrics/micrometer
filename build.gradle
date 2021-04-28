@@ -10,7 +10,7 @@ buildscript {
     dependencies {
         classpath 'io.spring.gradle:spring-release-plugin:0.20.1'
         classpath 'com.netflix.nebula:nebula-project-plugin:3.4.0'
-        classpath "io.spring.nohttp:nohttp-gradle:0.0.4.RELEASE"
+        classpath "io.spring.nohttp:nohttp-gradle:0.0.7"
         classpath "org.gradle:test-retry-gradle-plugin:1.1.9"
         classpath 'io.github.gradle-nexus:publish-plugin:1.0.0'
 
