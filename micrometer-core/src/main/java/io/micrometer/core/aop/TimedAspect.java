@@ -197,7 +197,7 @@ public class TimedAspect {
     
     private List<SampledMetric> createSampledMetrics(ProceedingJoinPoint pjp, Timed... timers) {
         List<SampledMetric> sampledMetrics = new ArrayList<>(timers.length);
-        for(Timed timed: timers) {
+        for (Timed timed: timers) {
             final String metricName = timed.value().isEmpty() ? DEFAULT_METRIC_NAME : timed.value();
             if (!timed.longTask()) {
                 SampledMetric sampledMetric = new ShortSampledMetric(pjp, timed, metricName, Timer.start(registry));
@@ -215,13 +215,13 @@ public class TimedAspect {
         CompletionStage<?> completionStage;
         try {
             completionStage = (CompletionStage<?>) pjp.proceed();
-            for(SampledMetric sampledMetric: sampledMetrics) {
+            for (SampledMetric sampledMetric: sampledMetrics) {
                completionStage = completionStage.whenComplete((result, throwable) ->
                sampledMetric.stop(getExceptionTag(throwable)));
             }
         } catch (Exception ex) {
             String exceptionClassName = ex.getClass().getSimpleName();
-            for(SampledMetric sampledMetric: sampledMetrics) {
+            for (SampledMetric sampledMetric: sampledMetrics) {
                 sampledMetric.stop(exceptionClassName);
             }
             throw ex;
@@ -238,7 +238,7 @@ public class TimedAspect {
             exceptionClass = ex.getClass().getSimpleName();
             throw ex;
         } finally {
-            for(SampledMetric sampledMetric: sampledMetrics) {
+            for (SampledMetric sampledMetric: sampledMetrics) {
                 sampledMetric.stop(exceptionClass);
             }
         }
@@ -272,7 +272,7 @@ public class TimedAspect {
         }
     }
     
-    private static abstract class SampledMetric {
+    private abstract static class SampledMetric {
         abstract void stop(String exceptionClass);
     }
     
@@ -306,7 +306,7 @@ public class TimedAspect {
         }
     }
     
-    private static class LongSampledMetric extends SampledMetric{
+    private static class LongSampledMetric extends SampledMetric {
         final Optional<LongTaskTimer.Sample> sample;
         
         public LongSampledMetric(Optional<LongTaskTimer.Sample> sample) {

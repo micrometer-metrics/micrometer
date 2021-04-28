@@ -357,7 +357,7 @@ class TimedAspectTest {
     static class MultipleTimedService {
         @Timed(value = "call", extraTags = {"extra", "tag"})
         @Timed(value = "longCall", extraTags = {"extra", "tag"}, longTask = true)
-        void call(){
+        void call() {
             
         }
     }
