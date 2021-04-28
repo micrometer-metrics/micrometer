@@ -1,6 +1,5 @@
 build/
 .gradle/
-gradle.properties
 out/
 
 *.iml
@@ -15,7 +14,5 @@ out/
 bin/
 .factorypath
 .vscode
-
 .DS_Store
-
 .java-version
