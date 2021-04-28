@@ -26,6 +26,10 @@ import java.util.concurrent.TimeUnit;
 import java.util.function.ToDoubleFunction;
 import java.util.function.ToLongFunction;
 
+/**
+ * @deprecated Since 1.4.0. Use {@link TimedHandler} instead.
+ */
+@Deprecated
 @NonNullApi
 @NonNullFields
 public class JettyStatisticsMetrics implements MeterBinder {
@@ -57,6 +61,7 @@ public class JettyStatisticsMetrics implements MeterBinder {
         FunctionCounter.builder("jetty.responses.size", statisticsHandler, StatisticsHandler::getResponsesBytesTotal)
             .description("Total number of bytes across all responses")
             .baseUnit(BaseUnits.BYTES)
+            .tags(tags)
             .register(registry);
 
         bindGauge(registry, "jetty.requests.active", "Number of requests currently active", StatisticsHandler::getRequestsActive);

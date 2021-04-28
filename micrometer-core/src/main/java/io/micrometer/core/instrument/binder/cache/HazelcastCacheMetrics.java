@@ -1,5 +1,5 @@
 /**
- * Copyright 2017 Pivotal Software, Inc.
+ * Copyright 2017 VMware, Inc.
  * <p>
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,7 +15,6 @@
  */
 package io.micrometer.core.instrument.binder.cache;
 
-import com.hazelcast.core.IMap;
 import io.micrometer.core.instrument.*;
 import io.micrometer.core.instrument.binder.BaseUnits;
 import io.micrometer.core.lang.NonNullApi;
@@ -32,42 +31,42 @@ import java.util.concurrent.TimeUnit;
 @NonNullApi
 @NonNullFields
 public class HazelcastCacheMetrics extends CacheMeterBinder {
-    private final IMap<?, ?> cache;
+    private final HazelcastIMapAdapter cache;
 
     /**
      * Record metrics on a Hazelcast cache.
      *
-     * @param registry The registry to bind metrics to.
-     * @param cache    The cache to instrument.
+     * @param registry registry to bind metrics to
+     * @param cache    Hazelcast IMap cache to instrument
      * @param tags     Tags to apply to all recorded metrics. Must be an even number of arguments representing key/value pairs of tags.
-     * @param <C>      The cache type.
-     * @param <K>      The cache key type.
-     * @param <V>      The cache value type.
      * @return The instrumented cache, unchanged. The original cache is not wrapped or proxied in any way.
      */
-    public static <K, V, C extends IMap<K, V>> C monitor(MeterRegistry registry, C cache, String... tags) {
+    public static Object monitor(MeterRegistry registry, Object cache, String... tags) {
         return monitor(registry, cache, Tags.of(tags));
     }
 
     /**
      * Record metrics on a Hazelcast cache.
      *
-     * @param registry The registry to bind metrics to.
-     * @param cache    The cache to instrument.
+     * @param registry registry to bind metrics to
+     * @param cache    Hazelcast IMap cache to instrument
      * @param tags     Tags to apply to all recorded metrics.
-     * @param <C>      The cache type.
-     * @param <K>      The cache key type.
-     * @param <V>      The cache value type.
      * @return The instrumented cache, unchanged. The original cache is not wrapped or proxied in any way.
      */
-    public static <K, V, C extends IMap<K, V>> C monitor(MeterRegistry registry, C cache, Iterable<Tag> tags) {
+    public static Object monitor(MeterRegistry registry, Object cache, Iterable<Tag> tags) {
         new HazelcastCacheMetrics(cache, tags).bindTo(registry);
         return cache;
     }
 
-    public <K, V, C extends IMap<K, V>> HazelcastCacheMetrics(C cache, Iterable<Tag> tags) {
-        super(cache, cache.getName(), tags);
-        this.cache = cache;
+    /**
+     * Binder for Hazelcast cache metrics.
+     *
+     * @param cache Hazelcast IMap cache to instrument
+     * @param tags  Tags to apply to all recorded metrics.
+     */
+    public HazelcastCacheMetrics(Object cache, Iterable<Tag> tags) {
+        super(cache, HazelcastIMapAdapter.nameOf(cache), tags);
+        this.cache = new HazelcastIMapAdapter(cache);
     }
 
     @Override
@@ -79,7 +78,7 @@ public class HazelcastCacheMetrics extends CacheMeterBinder {
      * @return The number of hits against cache entries held in this local partition. Not all gets had to result from
      * a get operation against {@link #cache}. If a get operation elsewhere in the cluster caused a lookup against an entry
      * held in this partition, the hit will be recorded against map stats in this partition and not in the map stats of the
-     * calling {@link IMap}.
+     * calling {@code IMap}.
      */
     @Override
     protected long hitCount() {

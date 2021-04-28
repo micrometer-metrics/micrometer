@@ -1,5 +1,5 @@
 /**
- * Copyright 2019 Pivotal Software, Inc.
+ * Copyright 2019 VMware, Inc.
  * <p>
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -46,18 +46,8 @@ class NoopLongTaskTimerTest {
     }
 
     @Test
-    void returnsStop() {
-        assertThat(timer.stop(1)).isEqualTo(-1);
-    }
-
-    @Test
     void returnsDuration() {
         assertThat(timer.duration(TimeUnit.MINUTES)).isEqualTo(0);
-    }
-
-    @Test
-    void returnsDurationWithTask() {
-        assertThat(timer.duration(0, TimeUnit.MINUTES)).isEqualTo(-1);
     }
 
     @Test

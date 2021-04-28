@@ -1,5 +1,5 @@
 /**
- * Copyright 2017 Pivotal Software, Inc.
+ * Copyright 2017 VMware, Inc.
  * <p>
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,13 +15,21 @@
  */
 package io.micrometer.newrelic;
 
-import io.micrometer.core.instrument.config.MissingRequiredConfigurationException;
+import io.micrometer.core.instrument.config.validate.InvalidReason;
+import io.micrometer.core.instrument.config.validate.Validated;
 import io.micrometer.core.instrument.step.StepRegistryConfig;
+import io.micrometer.core.instrument.util.StringUtils;
+import io.micrometer.core.lang.Nullable;
+
+import static io.micrometer.core.instrument.config.MeterRegistryConfigValidator.*;
+import static io.micrometer.core.instrument.config.validate.PropertyValidator.*;
+import static io.micrometer.core.instrument.util.StringUtils.isBlank;
 
 /**
  * Configuration for {@link NewRelicMeterRegistry}.
  *
  * @author Jon Schneider
+ * @author Neil Powell
  * @since 1.0.0
  */
 public interface NewRelicConfig extends StepRegistryConfig {
@@ -34,37 +42,56 @@ public interface NewRelicConfig extends StepRegistryConfig {
     /**
      * When this is {@code false}, the New Relic eventType value will be set to {@link #eventType()}. Otherwise, the meter name will be used.
      * Defaults to {@code false}.
+     *
      * @return whether to use meter names as the New Relic eventType value
      */
     default boolean meterNameEventTypeEnabled() {
-        String v = get(prefix() + ".meterNameEventTypeEnabled");
-        return Boolean.parseBoolean(v);
+        return getBoolean(this, "meterNameEventTypeEnabled").orElse(false);
     }
 
     /**
      * This configuration property will only be used if {@link #meterNameEventTypeEnabled()} is {@code false}.
      * Default value is {@code MicrometerSample}.
+     *
      * @return static eventType value to send to New Relic for all metrics.
      */
     default String eventType() {
-        String v = get(prefix() + ".eventType");
-        if (v == null)
-            return "MicrometerSample";
-        return v;
+        return getString(this, "eventType").orElse("MicrometerSample");
     }
 
+    /**
+     * When this is {@code INSIGHTS_AGENT}, the New Relic metrics will be published with the
+     * {@link NewRelicInsightsAgentClientProvider} which delegates to the Java agent.
+     * Defaults to {@code INSIGHTS_API} for publishing with the {@link NewRelicInsightsApiClientProvider} to the
+     * Insights REST API.
+     *
+     * @return the ClientProviderType to use
+     */
+    default ClientProviderType clientProviderType() {
+        return getEnum(this, ClientProviderType.class, "clientProviderType")
+                .orElse(ClientProviderType.INSIGHTS_API);
+    }
+
+    @Nullable
     default String apiKey() {
-        String v = get(prefix() + ".apiKey");
-        if (v == null)
-            throw new MissingRequiredConfigurationException("apiKey must be set to report metrics to New Relic");
-        return v;
+        return getSecret(this, "apiKey")
+                .invalidateWhen(
+                        secret -> isBlank(secret) && ClientProviderType.INSIGHTS_API.equals(clientProviderType()),
+                        "is required when publishing to Insights API",
+                        InvalidReason.MISSING
+                )
+                .orElse(null);
     }
 
+    @Nullable
     default String accountId() {
-        String v = get(prefix() + ".accountId");
-        if (v == null)
-            throw new MissingRequiredConfigurationException("accountId must be set to report metrics to New Relic");
-        return v;
+        return getSecret(this, "accountId")
+                .invalidateWhen(
+                        secret -> isBlank(secret) && ClientProviderType.INSIGHTS_API.equals(clientProviderType()),
+                        "is required when publishing to Insights API",
+                        InvalidReason.MISSING
+                )
+                .orElse(null);
     }
 
     /**
@@ -73,7 +100,33 @@ public interface NewRelicConfig extends StepRegistryConfig {
      * a proxy, you can change this value.
      */
     default String uri() {
-        String v = get(prefix() + ".uri");
-        return (v == null) ? "https://insights-collector.newrelic.com" : v;
+        return getUrlString(this, "uri").orElse("https://insights-collector.newrelic.com");
+    }
+
+    @Override
+    default Validated<?> validate() {
+        return checkAll(this,
+                c -> StepRegistryConfig.validate(c),
+                check("eventType", NewRelicConfig::eventType)
+                        .andThen(v -> v.invalidateWhen(type -> isBlank(type) && !meterNameEventTypeEnabled(),
+                                "event type is required when not using the meter name as the event type",
+                                InvalidReason.MISSING)),
+                checkRequired("clientProviderType", NewRelicConfig::clientProviderType)
+        );
+    }
+
+    default Validated<?> validateForInsightsApi() {
+        return checkAll(this,
+                c -> validate(),
+                check("uri", NewRelicConfig::uri)
+                        .andThen(v -> v.invalidateWhen(StringUtils::isBlank, "is required when publishing to Insights API",
+                                InvalidReason.MISSING)),
+                check("apiKey", NewRelicConfig::apiKey)
+                        .andThen(v -> v.invalidateWhen(StringUtils::isBlank, "is required when publishing to Insights API",
+                                InvalidReason.MISSING)),
+                check("accountId", NewRelicConfig::accountId)
+                        .andThen(v -> v.invalidateWhen(StringUtils::isBlank, "is required when publishing to Insights API",
+                                InvalidReason.MISSING))
+        );
     }
 }

@@ -1,5 +1,5 @@
 /**
- * Copyright 2017 Pivotal Software, Inc.
+ * Copyright 2017 VMware, Inc.
  * <p>
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -24,7 +24,6 @@ import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.IntStream;
 
-import reactor.core.publisher.DirectProcessor;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 import reactor.test.StepVerifier;
@@ -99,7 +98,6 @@ class BufferingFluxTest {
     @Test
     void doNotBufferIndefinitely() throws InterruptedException {
         // Produce a value at a more frequent interval than the maxMillisecondsBetweenEmits
-        DirectProcessor<Void> end = DirectProcessor.create();
         Flux<String> source = Flux.interval(Duration.ofMillis(100))
             .map(Object::toString);
 
@@ -108,11 +106,7 @@ class BufferingFluxTest {
         CountDownLatch received = new CountDownLatch(1);
         buffered.subscribe(v -> received.countDown());
 
-        try {
-            received.await(10, TimeUnit.SECONDS);
-        } finally {
-            end.onComplete();
-        }
+        received.await(10, TimeUnit.SECONDS);
     }
 
     /**

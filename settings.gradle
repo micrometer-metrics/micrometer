@@ -1,17 +1,28 @@
+pluginManagement {
+    repositories {
+        gradlePluginPortal()
+        maven { url 'https://repo.spring.io/release' }
+    }
+}
+
+plugins {
+    id "com.gradle.enterprise" version "3.5"
+    id "io.spring.ge.conventions" version "0.0.7"
+}
+
 rootProject.name = 'micrometer'
 
 include 'micrometer-core'
-include 'micrometer-spring-legacy'
 include 'micrometer-jersey2'
 
-['core', 'boot1'].each { sample ->
+['core', 'boot2', 'spring-integration', 'hazelcast', 'hazelcast3'].each { sample ->
     include "micrometer-samples-$sample"
     project(":micrometer-samples-$sample").projectDir = new File(rootProject.projectDir, "samples/micrometer-samples-$sample")
 }
 
 include 'micrometer-test'
 
-['atlas', 'prometheus', 'datadog', 'elastic', 'ganglia', 'graphite', 'jmx', 'influx', 'statsd', 'new-relic', 'cloudwatch', 'cloudwatch2', 'signalfx', 'wavefront', 'dynatrace', 'azure-monitor', 'humio', 'appoptics', 'kairos', 'stackdriver'].each { sys ->
+['atlas', 'prometheus', 'datadog', 'elastic', 'ganglia', 'graphite', 'jmx', 'influx', 'statsd', 'new-relic', 'cloudwatch', 'cloudwatch2', 'signalfx', 'wavefront', 'dynatrace', 'azure-monitor', 'humio', 'appoptics', 'kairos', 'stackdriver', 'opentsdb'].each { sys ->
     include "micrometer-registry-$sys"
     project(":micrometer-registry-$sys").projectDir = new File(rootProject.projectDir, "implementations/micrometer-registry-$sys")
 }

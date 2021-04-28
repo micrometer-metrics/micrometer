@@ -1,5 +1,5 @@
 /**
- * Copyright 2017 Pivotal Software, Inc.
+ * Copyright 2017 VMware, Inc.
  * <p>
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,13 +15,15 @@
  */
 package io.micrometer.cloudwatch2;
 
+import io.micrometer.core.instrument.Timer;
 import io.micrometer.core.instrument.*;
-import io.micrometer.core.instrument.config.MissingRequiredConfigurationException;
-import io.micrometer.core.instrument.config.NamingConvention;
 import io.micrometer.core.instrument.step.StepMeterRegistry;
 import io.micrometer.core.instrument.util.NamedThreadFactory;
-import io.micrometer.core.instrument.util.TimeUtils;
+import io.micrometer.core.instrument.util.StringUtils;
 import io.micrometer.core.lang.Nullable;
+import io.micrometer.core.util.internal.logging.WarnThenDebugLogger;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import software.amazon.awssdk.core.exception.AbortedException;
 import software.amazon.awssdk.services.cloudwatch.CloudWatchAsyncClient;
 import software.amazon.awssdk.services.cloudwatch.model.Dimension;
@@ -29,15 +31,8 @@ import software.amazon.awssdk.services.cloudwatch.model.MetricDatum;
 import software.amazon.awssdk.services.cloudwatch.model.PutMetricDataRequest;
 import software.amazon.awssdk.services.cloudwatch.model.StandardUnit;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
 import java.time.Instant;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Objects;
+import java.util.*;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ThreadFactory;
 import java.util.concurrent.TimeUnit;
@@ -53,6 +48,7 @@ import static java.util.stream.StreamSupport.stream;
  * @author Jon Schneider
  * @author Johnny Lim
  * @author Pierre-Yves B.
+ * @since 1.2.0
  */
 public class CloudWatchMeterRegistry extends StepMeterRegistry {
 
@@ -71,6 +67,7 @@ public class CloudWatchMeterRegistry extends StepMeterRegistry {
     private final CloudWatchConfig config;
     private final CloudWatchAsyncClient cloudWatchAsyncClient;
     private final Logger logger = LoggerFactory.getLogger(CloudWatchMeterRegistry.class);
+    private static final WarnThenDebugLogger warnThenDebugLogger = new WarnThenDebugLogger(CloudWatchMeterRegistry.class);
 
     public CloudWatchMeterRegistry(CloudWatchConfig config, Clock clock,
                                    CloudWatchAsyncClient cloudWatchAsyncClient) {
@@ -80,23 +77,11 @@ public class CloudWatchMeterRegistry extends StepMeterRegistry {
     public CloudWatchMeterRegistry(CloudWatchConfig config, Clock clock,
                                    CloudWatchAsyncClient cloudWatchAsyncClient, ThreadFactory threadFactory) {
         super(config, clock);
-
-        if (config.namespace() == null) {
-            throw new MissingRequiredConfigurationException("namespace must be set to report metrics to CloudWatch");
-        }
-
         this.cloudWatchAsyncClient = cloudWatchAsyncClient;
         this.config = config;
-        config().namingConvention(NamingConvention.identity);
+        
+        config().namingConvention(new CloudWatchNamingConvention());
         start(threadFactory);
-    }
-
-    @Override
-    public void start(ThreadFactory threadFactory) {
-        if (config.enabled()) {
-            logger.info("publishing metrics to cloudwatch every " + TimeUtils.format(config.step()));
-        }
-        super.start(threadFactory);
     }
 
     @Override
@@ -138,7 +123,9 @@ public class CloudWatchMeterRegistry extends StepMeterRegistry {
             latch.countDown();
         });
         try {
-            latch.await(config.readTimeout().toMillis(), TimeUnit.MILLISECONDS);
+            @SuppressWarnings("deprecation")
+            long readTimeoutMillis = config.readTimeout().toMillis();
+            latch.await(readTimeoutMillis, TimeUnit.MILLISECONDS);
         } catch (InterruptedException e) {
             logger.warn("metrics push to cloudwatch took longer than expected");
             throw e;
@@ -229,9 +216,14 @@ public class CloudWatchMeterRegistry extends StepMeterRegistry {
         // VisibleForTesting
         Stream<MetricDatum> functionTimerData(FunctionTimer timer) {
             // we can't know anything about max and percentiles originating from a function timer
+            double sum = timer.totalTime(getBaseTimeUnit());
+            if (!Double.isFinite(sum)) {
+                return Stream.empty();
+            }
             Stream.Builder<MetricDatum> metrics = Stream.builder();
             double count = timer.count();
             metrics.add(metricDatum(timer.getId(), "count", StandardUnit.COUNT, count));
+            metrics.add(metricDatum(timer.getId(), "sum", sum));
             if (count > 0) {
                 metrics.add(metricDatum(timer.getId(), "avg", timer.mean(getBaseTimeUnit())));
             }
@@ -293,8 +285,17 @@ public class CloudWatchMeterRegistry extends StepMeterRegistry {
 
         private List<Dimension> toDimensions(List<Tag> tags) {
             return tags.stream()
+                    .filter(this::isAcceptableTag)
                     .map(tag -> Dimension.builder().name(tag.getKey()).value(tag.getValue()).build())
                     .collect(toList());
+        }
+
+        private boolean isAcceptableTag(Tag tag) {
+            if (StringUtils.isBlank(tag.getValue())) {
+                warnThenDebugLogger.log("Dropping a tag with key '" + tag.getKey() + "' because its value is blank.");
+                return false;
+            }
+            return true;
         }
     }
 

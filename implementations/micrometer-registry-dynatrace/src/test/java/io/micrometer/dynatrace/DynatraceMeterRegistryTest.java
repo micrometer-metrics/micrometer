@@ -1,5 +1,5 @@
 /**
- * Copyright 2017 Pivotal Software, Inc.
+ * Copyright 2017 VMware, Inc.
  * <p>
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,14 +16,8 @@
 package io.micrometer.dynatrace;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import io.micrometer.core.instrument.Clock;
-import io.micrometer.core.instrument.Gauge;
-import io.micrometer.core.instrument.Measurement;
-import io.micrometer.core.instrument.Meter;
-import io.micrometer.core.instrument.Statistic;
-import io.micrometer.core.instrument.Tags;
-import io.micrometer.core.instrument.TimeGauge;
-import io.micrometer.core.instrument.config.MissingRequiredConfigurationException;
+import io.micrometer.core.instrument.*;
+import io.micrometer.core.instrument.config.validate.ValidationException;
 import io.micrometer.core.ipc.http.HttpSender;
 import org.junit.jupiter.api.Test;
 
@@ -53,7 +47,7 @@ class DynatraceMeterRegistryTest {
     private final ObjectMapper mapper = new ObjectMapper();
 
     @Test
-    void constructorWhenUriIsMissingShouldThrowMissingRequiredConfigurationException() {
+    void constructorWhenUriIsMissingShouldThrowValidationException() {
         assertThatThrownBy(() -> new DynatraceMeterRegistry(new DynatraceConfig() {
             @Override
             public String get(String key) {
@@ -69,13 +63,11 @@ class DynatraceMeterRegistryTest {
             public String apiToken() {
                 return "apiToken";
             }
-        }, Clock.SYSTEM))
-                .isExactlyInstanceOf(MissingRequiredConfigurationException.class)
-                .hasMessage("uri must be set to report metrics to Dynatrace");
+        }, Clock.SYSTEM)).isExactlyInstanceOf(ValidationException.class);
     }
 
     @Test
-    void constructorWhenDeviceIdIsMissingShouldThrowMissingRequiredConfigurationException() {
+    void constructorWhenDeviceIdIsMissingShouldThrowValidationException() {
         assertThatThrownBy(() -> new DynatraceMeterRegistry(new DynatraceConfig() {
             @Override
             public String get(String key) {
@@ -91,13 +83,11 @@ class DynatraceMeterRegistryTest {
             public String apiToken() {
                 return "apiToken";
             }
-        }, Clock.SYSTEM))
-                .isExactlyInstanceOf(MissingRequiredConfigurationException.class)
-                .hasMessage("deviceId must be set to report metrics to Dynatrace");
+        }, Clock.SYSTEM)).isExactlyInstanceOf(ValidationException.class);
     }
 
     @Test
-    void constructorWhenApiTokenIsMissingShouldThrowMissingRequiredConfigurationException() {
+    void constructorWhenApiTokenIsMissingShouldThrowValidationException() {
         assertThatThrownBy(() -> new DynatraceMeterRegistry(new DynatraceConfig() {
             @Override
             public String get(String key) {
@@ -113,9 +103,7 @@ class DynatraceMeterRegistryTest {
             public String deviceId() {
                 return "deviceId";
             }
-        }, Clock.SYSTEM))
-                .isExactlyInstanceOf(MissingRequiredConfigurationException.class)
-                .hasMessage("apiToken must be set to report metrics to Dynatrace");
+        }, Clock.SYSTEM)).isExactlyInstanceOf(ValidationException.class);
     }
 
     @Test
@@ -145,6 +133,7 @@ class DynatraceMeterRegistryTest {
         assertThat(meterRegistry.writeMeter(gauge)).isEmpty();
     }
 
+    @SuppressWarnings("unchecked")
     @Test
     void writeMeterWithGaugeWhenChangingFiniteToNaNShouldWork() {
         AtomicBoolean first = new AtomicBoolean(true);
@@ -211,8 +200,8 @@ class DynatraceMeterRegistryTest {
         Gauge gauge = meterRegistry.find("my.gauge").gauge();
         Stream<DynatraceMeterRegistry.DynatraceCustomMetric> series = meterRegistry.writeMeter(gauge);
         List<DynatraceTimeSeries> timeSeries = series
-            .map(DynatraceMeterRegistry.DynatraceCustomMetric::getTimeSeries)
-            .collect(Collectors.toList());
+                .map(DynatraceMeterRegistry.DynatraceCustomMetric::getTimeSeries)
+                .collect(Collectors.toList());
         List<DynatraceBatchedPayload> entries = meterRegistry.createPostMessages("my.type", null, timeSeries);
         assertThat(entries).hasSize(1);
         assertThat(entries.get(0).metricCount).isEqualTo(1);
@@ -229,12 +218,12 @@ class DynatraceMeterRegistryTest {
     void splitsWhenExactlyExceedingMaxByComma() {
         // comma needs to be considered when there is more than one time series
         List<DynatraceBatchedPayload> messages = meterRegistry.createPostMessages("my.type", "my.group",
-            // Max bytes: 15330 (excluding header/footer, 15360 with header/footer)
-            Arrays.asList(createTimeSeriesWithDimensions(750), // 14861 bytes
-                createTimeSeriesWithDimensions(23, "asdfg"), // 469 bytes (overflows due to comma)
-                createTimeSeriesWithDimensions(750), // 14861 bytes
-                createTimeSeriesWithDimensions(22, "asd") // 468 bytes + comma
-            ));
+                // Max bytes: 15330 (excluding header/footer, 15360 with header/footer)
+                Arrays.asList(createTimeSeriesWithDimensions(750), // 14861 bytes
+                        createTimeSeriesWithDimensions(23, "asdfg"), // 469 bytes (overflows due to comma)
+                        createTimeSeriesWithDimensions(750), // 14861 bytes
+                        createTimeSeriesWithDimensions(22, "asd") // 468 bytes + comma
+                ));
         assertThat(messages).hasSize(3);
         assertThat(messages.get(0).metricCount).isEqualTo(1);
         assertThat(messages.get(1).metricCount).isEqualTo(1);
@@ -246,11 +235,11 @@ class DynatraceMeterRegistryTest {
     @Test
     void countsPreviousAndNextComma() {
         List<DynatraceBatchedPayload> messages = meterRegistry.createPostMessages("my.type", null,
-            // Max bytes: 15330 (excluding header/footer, 15360 with header/footer)
-            Arrays.asList(createTimeSeriesWithDimensions(750), // 14861 bytes
-                createTimeSeriesWithDimensions(10, "asdf"), // 234 bytes + comma
-                createTimeSeriesWithDimensions(10, "asdf") // 234 bytes + comma = 15331 bytes (overflow)
-            ));
+                // Max bytes: 15330 (excluding header/footer, 15360 with header/footer)
+                Arrays.asList(createTimeSeriesWithDimensions(750), // 14861 bytes
+                        createTimeSeriesWithDimensions(10, "asdf"), // 234 bytes + comma
+                        createTimeSeriesWithDimensions(10, "asdf") // 234 bytes + comma = 15331 bytes (overflow)
+                ));
         assertThat(messages).hasSize(2);
         assertThat(messages.get(0).metricCount).isEqualTo(2);
         assertThat(messages.get(1).metricCount).isEqualTo(1);
@@ -282,9 +271,11 @@ class DynatraceMeterRegistryTest {
     private DynatraceTimeSeries createTimeSeriesWithDimensions(int numberOfDimensions) {
         return createTimeSeriesWithDimensions(numberOfDimensions, "some.metric");
     }
+
     private DynatraceTimeSeries createTimeSeriesWithDimensions(int numberOfDimensions, String metricId) {
         return new DynatraceTimeSeries(metricId, System.currentTimeMillis(), 1.23, createDimensionsMap(numberOfDimensions));
     }
+
     private Map<String, String> createDimensionsMap(int numberOfDimensions) {
         Map<String, String> map = new HashMap<>();
         IntStream.range(0, numberOfDimensions).forEach(i -> map.put("key" + i, "value" + i));
@@ -314,8 +305,8 @@ class DynatraceMeterRegistryTest {
             }
         };
         return DynatraceMeterRegistry.builder(config)
-            .httpClient(request -> new HttpSender.Response(200, null))
-            .build();
+                .httpClient(request -> new HttpSender.Response(200, null))
+                .build();
     }
 
     private boolean isValidJson(String json) {

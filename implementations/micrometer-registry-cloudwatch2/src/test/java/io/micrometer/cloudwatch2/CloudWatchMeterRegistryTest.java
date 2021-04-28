@@ -1,5 +1,5 @@
 /**
- * Copyright 2017 Pivotal Software, Inc.
+ * Copyright 2017 VMware, Inc.
  * <p>
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,6 +18,7 @@ package io.micrometer.cloudwatch2;
 import io.micrometer.core.instrument.*;
 import org.junit.jupiter.api.Test;
 import org.mockito.ArgumentCaptor;
+import software.amazon.awssdk.services.cloudwatch.model.Dimension;
 import software.amazon.awssdk.services.cloudwatch.model.MetricDatum;
 import software.amazon.awssdk.services.cloudwatch.model.StandardUnit;
 
@@ -129,6 +130,31 @@ class CloudWatchMeterRegistryTest {
     }
 
     @Test
+    void writeShouldDropTagWithBlankValue() {
+        registry.gauge("my.gauge", Tags.of("accepted", "foo").and("empty", ""), 1d);
+        assertThat(registry.metricData())
+                .hasSize(1)
+                .allSatisfy(datum -> assertThat(datum.dimensions()).hasSize(1).contains(
+                        Dimension.builder().name("accepted").value("foo").build()));
+    }
+
+    @Test
+    void functionTimerData() {
+        FunctionTimer timer = FunctionTimer.builder("my.function.timer", 1d, Number::longValue, Number::doubleValue,
+                TimeUnit.MILLISECONDS).register(registry);
+        clock.add(config.step());
+        assertThat(registry.new Batch().functionTimerData(timer)).hasSize(3);
+    }
+
+    @Test
+    void functionTimerDataWhenSumIsNaNShouldReturnEmptyStream() {
+        FunctionTimer timer = FunctionTimer.builder("my.function.timer", Double.NaN, Number::longValue,
+                Number::doubleValue, TimeUnit.MILLISECONDS).register(registry);
+        clock.add(config.step());
+        assertThat(registry.new Batch().functionTimerData(timer)).isEmpty();
+    }
+
+    @Test
     void shouldAddFunctionTimerAggregateMetricWhenAtLeastOneEventHappened() {
         FunctionTimer timer = mock(FunctionTimer.class);
         Id meterId = new Id(METER_NAME, Tags.empty(), null, null, TIMER);
@@ -214,6 +240,7 @@ class CloudWatchMeterRegistryTest {
         when(this.registry.getMeters()).thenReturn(meters);
         doNothing().when(this.registry).sendMetricData(any());
         this.registry.publish();
+        @SuppressWarnings("unchecked")
         ArgumentCaptor<List<MetricDatum>> argumentCaptor = ArgumentCaptor.forClass(List.class);
         verify(this.registry, times(2)).sendMetricData(argumentCaptor.capture());
         List<List<MetricDatum>> allValues = argumentCaptor.getAllValues();

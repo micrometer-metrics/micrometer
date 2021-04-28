@@ -1,11 +1,11 @@
 /*
- * Copyright 2019 Pivotal Software, Inc.
+ * Copyright 2019 VMware, Inc.
  * <p>
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  * <p>
- * http://www.apache.org/licenses/LICENSE-2.0
+ * https://www.apache.org/licenses/LICENSE-2.0
  * <p>
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -20,8 +20,10 @@ import io.micrometer.core.instrument.MeterRegistry;
 import io.micrometer.core.instrument.Tag;
 import io.micrometer.core.instrument.Tags;
 import io.micrometer.core.instrument.Timer;
-import org.apache.http.*;
-import org.apache.http.conn.routing.HttpRoute;
+import org.apache.http.HttpClientConnection;
+import org.apache.http.HttpException;
+import org.apache.http.HttpRequest;
+import org.apache.http.HttpResponse;
 import org.apache.http.protocol.HttpContext;
 import org.apache.http.protocol.HttpRequestExecutor;
 
@@ -53,13 +55,14 @@ public class MicrometerHttpRequestExecutor extends HttpRequestExecutor {
 
     /**
      * Default header name for URI pattern.
+     * @deprecated use {@link DefaultUriMapper#URI_PATTERN_HEADER} since 1.4.0
      */
-    public static final String DEFAULT_URI_PATTERN_HEADER = "URI_PATTERN";
+    @Deprecated
+    public static final String DEFAULT_URI_PATTERN_HEADER = DefaultUriMapper.URI_PATTERN_HEADER;
 
     private static final String METER_NAME = "httpcomponents.httpclient.request";
-    private static final String UNKNOWN = "UNKNOWN";
 
-    private static final Tag STATUS_UNKNOWN = Tag.of("status", UNKNOWN);
+    private static final Tag STATUS_UNKNOWN = Tag.of("status", "UNKNOWN");
     private static final Tag STATUS_CLIENT_ERROR = Tag.of("status", "CLIENT_ERROR");
     private static final Tag STATUS_IO_ERROR = Tag.of("status", "IO_ERROR");
 
@@ -102,7 +105,7 @@ public class MicrometerHttpRequestExecutor extends HttpRequestExecutor {
         Tag uri = Tag.of("uri", uriMapper.apply(request));
         Tag status = STATUS_UNKNOWN;
 
-        Tags routeTags = exportTagsForRoute ? generateTagsForRoute(context) : Tags.empty();
+        Tags routeTags = exportTagsForRoute ? HttpContextUtils.generateTagsForRoute(context) : Tags.empty();
 
         try {
             HttpResponse response = super.execute(request, conn, context);
@@ -121,24 +124,6 @@ public class MicrometerHttpRequestExecutor extends HttpRequestExecutor {
                     .tags(tags)
                     .register(registry));
         }
-    }
-
-    private Tags generateTagsForRoute(HttpContext context) {
-        String targetScheme = UNKNOWN;
-        String targetHost = UNKNOWN;
-        String targetPort = UNKNOWN;
-        Object routeAttribute = context.getAttribute("http.route");
-        if (routeAttribute instanceof HttpRoute) {
-            HttpHost host = ((HttpRoute) routeAttribute).getTargetHost();
-            targetScheme = host.getSchemeName();
-            targetHost = host.getHostName();
-            targetPort = String.valueOf(host.getPort());
-        }
-        return Tags.of(
-                "target.scheme", targetScheme,
-                "target.host", targetHost,
-                "target.port", targetPort
-        );
     }
 
     public static class Builder {
@@ -178,7 +163,7 @@ public class MicrometerHttpRequestExecutor extends HttpRequestExecutor {
          * values, which could cause problems in your meter registry.
          *
          * By default, this feature is almost disabled. It only exposes values
-         * of the {@link #DEFAULT_URI_PATTERN_HEADER} HTTP header.
+         * of the {@value DefaultUriMapper#URI_PATTERN_HEADER} HTTP header.
          *
          * @param uriMapper A mapper that allows mapping and exposing request
          *                  paths.
@@ -213,20 +198,6 @@ public class MicrometerHttpRequestExecutor extends HttpRequestExecutor {
          */
         public MicrometerHttpRequestExecutor build() {
             return new MicrometerHttpRequestExecutor(waitForContinue, registry, uriMapper, tags, exportTagsForRoute);
-        }
-    }
-
-    /**
-     * Extracts the pattern from the request header of the request if available.
-     */
-    private static class DefaultUriMapper implements Function<HttpRequest, String> {
-        @Override
-        public String apply(HttpRequest httpRequest) {
-            Header uriPattern = httpRequest.getLastHeader(DEFAULT_URI_PATTERN_HEADER);
-            if (uriPattern != null && uriPattern.getValue() != null) {
-                return uriPattern.getValue();
-            }
-            return UNKNOWN;
         }
     }
 

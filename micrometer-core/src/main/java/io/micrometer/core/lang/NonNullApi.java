@@ -1,5 +1,6 @@
 /**
- * Copyright 2017 Pivotal Software, Inc.
+ * Copyright 2002-2017 the original author or authors.
+ * Copyright 2017-2021 VMware, Inc.
  * <p>
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -26,7 +27,11 @@ import java.lang.annotation.*;
  * tools with JSR-305 support and used by Kotlin to infer nullability of the API.
  * <p>Should be used at package level in association with {@link Nullable}
  * annotations at parameter and return value level.
+ * <p>
+ * NOTE: This file has been copied from {@code org.springframework.lang}.
  *
+ * @author Sebastien Deleuze
+ * @author Juergen Hoeller
  * @see NonNullFields
  * @see Nullable
  * @see NonNull

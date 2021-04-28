@@ -1,5 +1,5 @@
 /**
- * Copyright 2018 Pivotal Software, Inc.
+ * Copyright 2018 VMware, Inc.
  * <p>
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -21,11 +21,9 @@ import com.microsoft.applicationinsights.telemetry.MetricTelemetry;
 import com.microsoft.applicationinsights.telemetry.SeverityLevel;
 import com.microsoft.applicationinsights.telemetry.TraceTelemetry;
 import io.micrometer.core.instrument.*;
-import io.micrometer.core.instrument.config.MissingRequiredConfigurationException;
 import io.micrometer.core.instrument.step.StepMeterRegistry;
 import io.micrometer.core.instrument.util.NamedThreadFactory;
 import io.micrometer.core.instrument.util.StringUtils;
-import io.micrometer.core.instrument.util.TimeUtils;
 import io.micrometer.core.lang.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -34,6 +32,7 @@ import java.util.concurrent.ThreadFactory;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Stream;
 
+import static io.micrometer.core.instrument.config.MeterRegistryConfigValidator.checkRequired;
 import static java.util.stream.StreamSupport.stream;
 
 /**
@@ -63,11 +62,8 @@ public class AzureMonitorMeterRegistry extends StepMeterRegistry {
         this.config = config;
 
         config().namingConvention(new AzureMonitorNamingConvention());
-
         if (StringUtils.isEmpty(telemetryConfiguration.getInstrumentationKey())) {
-            if (config.instrumentationKey() == null) {
-                throw new MissingRequiredConfigurationException("instrumentationKey must be set to report metrics to Azure Monitor");
-            }
+            checkRequired("instrumentationKey", AzureMonitorConfig::instrumentationKey).apply(config).orThrow();
             telemetryConfiguration.setInstrumentationKey(config.instrumentationKey());
         }
 
@@ -79,14 +75,6 @@ public class AzureMonitorMeterRegistry extends StepMeterRegistry {
 
     public static Builder builder(AzureMonitorConfig config) {
         return new Builder(config);
-    }
-
-    @Override
-    public void start(ThreadFactory threadFactory) {
-        if (config.enabled()) {
-            logger.info("publishing metrics to azure monitor every " + TimeUtils.format(config.step()));
-        }
-        super.start(threadFactory);
     }
 
     @Override
@@ -136,28 +124,43 @@ public class AzureMonitorMeterRegistry extends StepMeterRegistry {
         return Stream.of(active, duration);
     }
 
-    private Stream<MetricTelemetry> trackDistributionSummary(DistributionSummary summary) {
+    // VisibleForTesting
+    Stream<MetricTelemetry> trackDistributionSummary(DistributionSummary summary) {
+        long count = summary.count();
+        if (count == 0) {
+            return Stream.empty();
+        }
         MetricTelemetry mt = createMetricTelemetry(summary, null);
         mt.setValue(summary.totalAmount());
-        mt.setCount(castCountToInt(summary.count()));
+        mt.setCount(castCountToInt(count));
         mt.setMax(summary.max());
         mt.setMin(0.0); // TODO: when #457 is resolved, support min
         return Stream.of(mt);
     }
 
-    private Stream<MetricTelemetry> trackTimer(Timer timer) {
+    // VisibleForTesting
+    Stream<MetricTelemetry> trackTimer(Timer timer) {
+        long count = timer.count();
+        if (count == 0) {
+            return Stream.empty();
+        }
         MetricTelemetry mt = createMetricTelemetry(timer, null);
         mt.setValue(timer.totalTime(getBaseTimeUnit()));
-        mt.setCount(castCountToInt(timer.count()));
+        mt.setCount(castCountToInt(count));
         mt.setMin(0.0); // TODO: when #457 is resolved, support min
         mt.setMax(timer.max(getBaseTimeUnit()));
         return Stream.of(mt);
     }
 
-    private Stream<MetricTelemetry> trackFunctionTimer(FunctionTimer timer) {
+    // VisibleForTesting
+    Stream<MetricTelemetry> trackFunctionTimer(FunctionTimer timer) {
+        double count = timer.count();
+        if (count == 0) {
+            return Stream.empty();
+        }
         MetricTelemetry mt = createMetricTelemetry(timer, null);
         mt.setValue(timer.totalTime(getBaseTimeUnit()));
-        mt.setCount(castCountToInt(timer.count()));
+        mt.setCount(castCountToInt(count));
         return Stream.of(mt);
     }
 

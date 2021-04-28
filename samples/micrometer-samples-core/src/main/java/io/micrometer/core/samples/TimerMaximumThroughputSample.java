@@ -1,5 +1,5 @@
 /**
- * Copyright 2017 Pivotal Software, Inc.
+ * Copyright 2017 VMware, Inc.
  * <p>
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -38,7 +38,7 @@ public class TimerMaximumThroughputSample {
         Timer timer = Timer.builder("timer")
                 .publishPercentileHistogram()
 //                .publishPercentiles(0.5, 0.95, 0.99)
-                .sla(Duration.ofMillis(275), Duration.ofMillis(300), Duration.ofMillis(500))
+                .serviceLevelObjectives(Duration.ofMillis(275), Duration.ofMillis(300), Duration.ofMillis(500))
                 .distributionStatisticExpiry(Duration.ofSeconds(10))
                 .distributionStatisticBufferLength(3)
                 .register(registry);

@@ -1,5 +1,5 @@
 /**
- * Copyright 2017 Pivotal Software, Inc.
+ * Copyright 2017 VMware, Inc.
  * <p>
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,16 +20,13 @@ import io.micrometer.core.instrument.MeterRegistry;
 import io.micrometer.core.instrument.Statistic;
 import io.micrometer.core.instrument.config.NamingConvention;
 import io.micrometer.core.lang.Nullable;
-import org.pcollections.HashTreePMap;
-import org.pcollections.PMap;
 
-import java.util.concurrent.atomic.AtomicReferenceFieldUpdater;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ConcurrentMap;
 import java.util.stream.Collectors;
 
 public class TelegrafStatsdLineBuilder extends FlavorStatsdLineBuilder {
-    private static final AtomicReferenceFieldUpdater<TelegrafStatsdLineBuilder, NamingConvention> namingConventionUpdater =
-            AtomicReferenceFieldUpdater.newUpdater(TelegrafStatsdLineBuilder.class, NamingConvention.class, "namingConvention");
-    private final Object tagsLock = new Object();
+    private final Object conventionTagsLock = new Object();
     @SuppressWarnings({"NullableProblems", "unused"})
     private volatile NamingConvention namingConvention;
     @SuppressWarnings("NullableProblems")
@@ -38,7 +35,7 @@ public class TelegrafStatsdLineBuilder extends FlavorStatsdLineBuilder {
     private volatile String conventionTags;
     @SuppressWarnings("NullableProblems")
     private volatile String tagsNoStat;
-    private volatile PMap<Statistic, String> tags = HashTreePMap.empty();
+    private final ConcurrentMap<Statistic, String> tags = new ConcurrentHashMap<>();
 
     public TelegrafStatsdLineBuilder(Meter.Id id, MeterRegistry.Config config) {
         super(id, config);
@@ -53,21 +50,20 @@ public class TelegrafStatsdLineBuilder extends FlavorStatsdLineBuilder {
     private void updateIfNamingConventionChanged() {
         NamingConvention next = config.namingConvention();
         if (this.namingConvention != next) {
-            for (; ; ) {
-                if (namingConventionUpdater.compareAndSet(this, this.namingConvention, next))
-                    break;
-            }
-
-            this.name = telegrafEscape(next.name(id.getName(), id.getType(), id.getBaseUnit()));
-            synchronized (tagsLock) {
-                this.tags = HashTreePMap.empty();
+            synchronized (conventionTagsLock) {
+                if (this.namingConvention == next) {
+                    return;
+                }
+                this.tags.clear();
                 this.conventionTags = id.getTagsAsIterable().iterator().hasNext() ?
-                        id.getConventionTags(this.namingConvention).stream()
+                        id.getConventionTags(next).stream()
                                 .map(t -> telegrafEscape(t.getKey()) + "=" + telegrafEscape(t.getValue()))
                                 .collect(Collectors.joining(","))
                         : null;
             }
+            this.name = telegrafEscape(next.name(id.getName(), id.getType(), id.getBaseUnit()));
             this.tagsNoStat = tags(null, conventionTags, "=", ",");
+            this.namingConvention = next;
         }
     }
 
@@ -75,20 +71,12 @@ public class TelegrafStatsdLineBuilder extends FlavorStatsdLineBuilder {
         if (stat == null) {
             return tagsNoStat;
         }
-
-        String tagString = tags.get(stat);
-        if (tagString != null)
-            return tagString;
-
-        synchronized (tagsLock) {
-            tagString = tags.get(stat);
-            if (tagString != null) {
-                return tagString;
-            }
-
-            tagString = tags(stat, conventionTags, "=", ",");
-            tags = tags.plus(stat, tagString);
-            return tagString;
+        String tags = this.tags.get(stat);
+        if (tags != null) {
+            return tags;
+        }
+        synchronized (conventionTagsLock) {
+            return this.tags.computeIfAbsent(stat, (key) -> tags(stat, conventionTags, "=", ","));
         }
     }
 

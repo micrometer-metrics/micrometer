@@ -1,19 +1,28 @@
-apply plugin: "me.champeau.gradle.jmh"
+plugins {
+    id "me.champeau.jmh" version "0.6.4"
+}
 
 dependencies {
     jmh project(':micrometer-core')
-    jmh project(':micrometer-samples-core')
     jmh project(':micrometer-registry-prometheus')
 
     jmh 'io.dropwizard.metrics5:metrics-core:latest.release'
     jmh 'io.prometheus:simpleclient_common:latest.release'
 
+    jmh 'io.dropwizard.metrics:metrics-core'
+    jmh 'com.google.guava:guava'
+
     jmh 'org.openjdk.jmh:jmh-core:latest.release'
+
+    // Nebula doesn't like having jmhAnnotationProcessor without jmh so we just add it twice.
     jmh 'org.openjdk.jmh:jmh-generator-annprocess:latest.release'
+    jmhAnnotationProcessor 'org.openjdk.jmh:jmh-generator-annprocess:latest.release'
 }
 
 jmh {
     fork = 1
     warmupIterations = 1
     iterations = 1
+    duplicateClassesStrategy = DuplicatesStrategy.EXCLUDE
+    zip64 = true
 }

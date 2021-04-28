@@ -1,5 +1,5 @@
 /**
- * Copyright 2017 Pivotal Software, Inc.
+ * Copyright 2017 VMware, Inc.
  * <p>
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -54,17 +54,15 @@ public class InfluxNamingConvention implements NamingConvention {
     @Override
     public String tagKey(String key) {
         // `time` cannot be a field key or tag key
-        if (key.equals("time"))
+        if (key.equals("time")) {
             throw new IllegalArgumentException("'time' is an invalid tag key in InfluxDB");
+        }
         return escape(delegate.tagKey(key));
     }
 
     @Override
     public String tagValue(String value) {
-        // `time` cannot be a field key or tag key
-        if (value.equals("time"))
-            throw new IllegalArgumentException("'time' is an invalid tag value in InfluxDB");
-        return escape(this.delegate.tagValue(value));
+        return escape(this.delegate.tagValue(value).replace('\n', ' '));
     }
 
     private String escape(String string) {

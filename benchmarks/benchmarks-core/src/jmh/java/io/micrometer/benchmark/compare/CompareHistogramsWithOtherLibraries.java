@@ -1,5 +1,5 @@
 /**
- * Copyright 2018 Pivotal Software, Inc.
+ * Copyright 2018 VMware, Inc.
  * <p>
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -145,7 +145,7 @@ public class CompareHistogramsWithOtherLibraries {
         public void setup() {
             double[] micrometerBuckets =
                     Doubles.toArray(PercentileHistogramBuckets.buckets(
-                            DistributionStatisticConfig.builder().minimumExpectedValue(0L).maximumExpectedValue(Long.MAX_VALUE)
+                            DistributionStatisticConfig.builder().minimumExpectedValue(0.0).maximumExpectedValue(Double.POSITIVE_INFINITY)
                                     .percentilesHistogram(true).build()));
             histogram = io.prometheus.client.Histogram.build("histogram", "A histogram")
                     .buckets(micrometerBuckets).create();

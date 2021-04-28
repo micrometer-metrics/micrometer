@@ -1,5 +1,5 @@
 /**
- * Copyright 2019 Pivotal Software, Inc.
+ * Copyright 2019 VMware, Inc.
  * <p>
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -68,6 +68,8 @@ public abstract class InternalLoggerFactory {
 
     /**
      * Returns the default factory.
+     *
+     * @return default factory
      */
     public static InternalLoggerFactory getDefaultFactory() {
         if (defaultFactory == null) {
@@ -78,6 +80,8 @@ public abstract class InternalLoggerFactory {
 
     /**
      * Changes the default factory.
+     *
+     * @param defaultFactory default factory
      */
     public static void setDefaultFactory(InternalLoggerFactory defaultFactory) {
         requireNonNull(defaultFactory, "defaultFactory");
@@ -86,6 +90,9 @@ public abstract class InternalLoggerFactory {
 
     /**
      * Creates a new logger instance with the name of the specified class.
+     *
+     * @param clazz class to use for a logger name
+     * @return logger instance
      */
     public static InternalLogger getInstance(Class<?> clazz) {
         return getInstance(clazz.getName());
@@ -93,6 +100,9 @@ public abstract class InternalLoggerFactory {
 
     /**
      * Creates a new logger instance with the specified name.
+     *
+     * @param name logger name
+     * @return logger instance
      */
     public static InternalLogger getInstance(String name) {
         return getDefaultFactory().newInstance(name);
@@ -100,6 +110,9 @@ public abstract class InternalLoggerFactory {
 
     /**
      * Creates a new logger instance with the specified name.
+     *
+     * @param name logger name
+     * @return logger instance
      */
     protected abstract InternalLogger newInstance(String name);
 

@@ -1,5 +1,5 @@
 /**
- * Copyright 2017 Pivotal Software, Inc.
+ * Copyright 2017 VMware, Inc.
  * <p>
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,19 +18,21 @@ package io.micrometer.core.instrument.binder.logging;
 import ch.qos.logback.classic.Level;
 import ch.qos.logback.classic.Logger;
 import ch.qos.logback.classic.LoggerContext;
+import ch.qos.logback.classic.spi.LoggerContextListener;
 import ch.qos.logback.classic.turbo.TurboFilter;
 import ch.qos.logback.core.spi.FilterReply;
 import io.micrometer.core.instrument.Counter;
 import io.micrometer.core.instrument.MeterRegistry;
 import io.micrometer.core.instrument.Tag;
+import io.micrometer.core.instrument.binder.BaseUnits;
 import io.micrometer.core.instrument.binder.MeterBinder;
 import io.micrometer.core.lang.NonNullApi;
 import io.micrometer.core.lang.NonNullFields;
 import org.slf4j.LoggerFactory;
 import org.slf4j.Marker;
 
+import java.util.HashMap;
 import java.util.Map;
-import java.util.concurrent.ConcurrentHashMap;
 
 import static java.util.Collections.emptyList;
 
@@ -44,7 +46,7 @@ public class LogbackMetrics implements MeterBinder, AutoCloseable {
 
     private final Iterable<Tag> tags;
     private final LoggerContext loggerContext;
-    private final Map<MeterRegistry, MetricsTurboFilter> metricsTurboFilters = new ConcurrentHashMap<>();
+    private final Map<MeterRegistry, MetricsTurboFilter> metricsTurboFilters = new HashMap<>();
 
     public LogbackMetrics() {
         this(emptyList());
@@ -57,13 +59,47 @@ public class LogbackMetrics implements MeterBinder, AutoCloseable {
     public LogbackMetrics(Iterable<Tag> tags, LoggerContext context) {
         this.tags = tags;
         this.loggerContext = context;
+
+        loggerContext.addListener(new LoggerContextListener() {
+            @Override
+            public boolean isResetResistant() {
+                return true;
+            }
+
+            @Override
+            public void onReset(LoggerContext context) {
+                // re-add turbo filter because reset clears the turbo filter list
+                synchronized (metricsTurboFilters) {
+                    for (MetricsTurboFilter metricsTurboFilter : metricsTurboFilters.values()) {
+                        loggerContext.addTurboFilter(metricsTurboFilter);
+                    }
+                }
+            }
+
+            @Override
+            public void onStart(LoggerContext context) {
+                // no-op
+            }
+
+            @Override
+            public void onStop(LoggerContext context) {
+                // no-op
+            }
+
+            @Override
+            public void onLevelChange(Logger logger, Level level) {
+                // no-op
+            }
+        });
     }
 
     @Override
     public void bindTo(MeterRegistry registry) {
         MetricsTurboFilter filter = new MetricsTurboFilter(registry, tags);
-        metricsTurboFilters.put(registry, filter);
-        loggerContext.addTurboFilter(filter);
+        synchronized (metricsTurboFilters) {
+            metricsTurboFilters.put(registry, filter);
+            loggerContext.addTurboFilter(filter);
+        }
     }
 
     /**
@@ -74,14 +110,19 @@ public class LogbackMetrics implements MeterBinder, AutoCloseable {
      */
     public static void ignoreMetrics(Runnable r) {
         ignoreMetrics.set(true);
-        r.run();
-        ignoreMetrics.remove();
+        try {
+            r.run();
+        } finally {
+            ignoreMetrics.remove();
+        }  
     }
 
     @Override
     public void close() {
-        for (MetricsTurboFilter metricsTurboFilter : metricsTurboFilters.values()) {
-            loggerContext.getTurboFilterList().remove(metricsTurboFilter);
+        synchronized (metricsTurboFilters) {
+            for (MetricsTurboFilter metricsTurboFilter : metricsTurboFilters.values()) {
+                loggerContext.getTurboFilterList().remove(metricsTurboFilter);
+            }
         }
     }
 }
@@ -99,43 +140,50 @@ class MetricsTurboFilter extends TurboFilter {
         errorCounter = Counter.builder("logback.events")
                 .tags(tags).tags("level", "error")
                 .description("Number of error level events that made it to the logs")
-                .baseUnit("events")
+                .baseUnit(BaseUnits.EVENTS)
                 .register(registry);
 
         warnCounter = Counter.builder("logback.events")
                 .tags(tags).tags("level", "warn")
                 .description("Number of warn level events that made it to the logs")
-                .baseUnit("events")
+                .baseUnit(BaseUnits.EVENTS)
                 .register(registry);
 
         infoCounter = Counter.builder("logback.events")
                 .tags(tags).tags("level", "info")
                 .description("Number of info level events that made it to the logs")
-                .baseUnit("events")
+                .baseUnit(BaseUnits.EVENTS)
                 .register(registry);
 
         debugCounter = Counter.builder("logback.events")
                 .tags(tags).tags("level", "debug")
                 .description("Number of debug level events that made it to the logs")
-                .baseUnit("events")
+                .baseUnit(BaseUnits.EVENTS)
                 .register(registry);
 
         traceCounter = Counter.builder("logback.events")
                 .tags(tags).tags("level", "trace")
                 .description("Number of trace level events that made it to the logs")
-                .baseUnit("events")
+                .baseUnit(BaseUnits.EVENTS)
                 .register(registry);
     }
 
     @Override
     public FilterReply decide(Marker marker, Logger logger, Level level, String format, Object[] params, Throwable t) {
+        // When filter is asked for decision for an isDebugEnabled call or similar test, there is no message (ie format) 
+        // and no intention to log anything with this call. We will not increment counters and can return immediately and
+        // avoid the relatively expensive ThreadLocal access below. See also logbacks Logger.callTurboFilters().
+        if (format == null) {
+            return FilterReply.NEUTRAL;
+        }
+
         Boolean ignored = LogbackMetrics.ignoreMetrics.get();
         if (ignored != null && ignored) {
             return FilterReply.NEUTRAL;
         }
 
         // cannot use logger.isEnabledFor(level), as it would cause a StackOverflowError by calling this filter again!
-        if (level.isGreaterOrEqual(logger.getEffectiveLevel()) && format != null) {
+        if (level.isGreaterOrEqual(logger.getEffectiveLevel())) {
             switch (level.toInt()) {
                 case Level.ERROR_INT:
                     errorCounter.increment();

@@ -1,5 +1,5 @@
 /**
- * Copyright 2018 Pivotal Software, Inc.
+ * Copyright 2018 VMware, Inc.
  * <p>
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -21,7 +21,6 @@ import com.github.benmanes.caffeine.cache.LoadingCache;
 import com.github.benmanes.caffeine.cache.stats.CacheStats;
 
 import io.micrometer.core.instrument.FunctionCounter;
-import io.micrometer.core.instrument.Gauge;
 import io.micrometer.core.instrument.MeterRegistry;
 import io.micrometer.core.instrument.Tags;
 import io.micrometer.core.instrument.TimeGauge;
@@ -48,9 +47,9 @@ class CaffeineCacheMetricsTest extends AbstractCacheMetricsTest {
 
         verifyCommonCacheMetrics(registry, metrics);
 
-        Gauge evictionWeight = fetch(registry, "cache.eviction.weight").gauge();
+        FunctionCounter evictionWeight = fetch(registry, "cache.eviction.weight").functionCounter();
         CacheStats stats = cache.stats();
-        assertThat(evictionWeight.value()).isEqualTo(stats.evictionWeight());
+        assertThat(evictionWeight.count()).isEqualTo(stats.evictionWeight());
 
         // specific to LoadingCache instance
         TimeGauge loadDuration = fetch(registry, "cache.load.duration").timeGauge();
@@ -68,7 +67,7 @@ class CaffeineCacheMetricsTest extends AbstractCacheMetricsTest {
         MeterRegistry meterRegistry = new SimpleMeterRegistry();
         CaffeineCacheMetrics.monitor(meterRegistry, cache, "testCache", expectedTag);
 
-        meterRegistry.get("cache.eviction.weight").tags(expectedTag).gauge();
+        meterRegistry.get("cache.eviction.weight").tags(expectedTag).functionCounter();
     }
 
     @Test

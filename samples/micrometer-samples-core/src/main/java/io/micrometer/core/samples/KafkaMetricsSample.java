@@ -1,5 +1,5 @@
 /**
- * Copyright 2018 Pivotal Software, Inc.
+ * Copyright 2018 VMware, Inc.
  * <p>
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,7 +18,7 @@ package io.micrometer.core.samples;
 import com.github.charithe.kafka.EphemeralKafkaBroker;
 import com.github.charithe.kafka.KafkaHelper;
 import io.micrometer.core.instrument.MeterRegistry;
-import io.micrometer.core.instrument.binder.kafka.KafkaConsumerMetrics;
+import io.micrometer.core.instrument.binder.kafka.KafkaClientMetrics;
 import io.micrometer.core.samples.utils.SampleConfig;
 import org.apache.kafka.clients.consumer.KafkaConsumer;
 import org.apache.kafka.clients.producer.KafkaProducer;
@@ -30,18 +30,19 @@ import java.time.Duration;
 import static java.util.Collections.singletonList;
 
 public class KafkaMetricsSample {
-    private final static String TOPIC = "my-example-topic";
+    private static final String TOPIC = "my-example-topic";
 
     public static void main(String[] args) throws Exception {
         EphemeralKafkaBroker broker = EphemeralKafkaBroker.create();
         broker.start();
         KafkaHelper kafkaHelper = KafkaHelper.createFor(broker);
 
-        MeterRegistry registry = SampleConfig.myMonitoringSystem();
-        new KafkaConsumerMetrics().bindTo(registry);
-
         KafkaConsumer<String, String> consumer = kafkaHelper.createStringConsumer();
         KafkaProducer<String, String> producer = kafkaHelper.createStringProducer();
+
+        MeterRegistry registry = SampleConfig.myMonitoringSystem();
+        new KafkaClientMetrics(consumer).bindTo(registry);
+        new KafkaClientMetrics(producer).bindTo(registry);
 
         consumer.subscribe(singletonList(TOPIC));
 

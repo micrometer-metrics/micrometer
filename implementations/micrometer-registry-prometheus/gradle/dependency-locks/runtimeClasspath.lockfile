@@ -1,0 +1,8 @@
+# This is a Gradle generated file for dependency locking.
+# Manual edits can break the build and are not advised.
+# This file is expected to be part of source control.
+com.google.code.findbugs:jsr305:3.0.2
+io.prometheus:simpleclient:0.8.1
+io.prometheus:simpleclient_common:0.8.1
+org.hdrhistogram:HdrHistogram:2.1.12
+org.latencyutils:LatencyUtils:2.0.3

@@ -13,3 +13,5 @@ out/
 .sts4-cache/
 bin/
 .factorypath
+.DS_Store
+.java-version

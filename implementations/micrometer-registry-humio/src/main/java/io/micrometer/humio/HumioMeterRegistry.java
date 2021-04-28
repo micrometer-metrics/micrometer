@@ -1,5 +1,5 @@
 /**
- * Copyright 2017 Pivotal Software, Inc.
+ * Copyright 2017 VMware, Inc.
  * <p>
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -21,7 +21,6 @@ import io.micrometer.core.instrument.step.StepMeterRegistry;
 import io.micrometer.core.instrument.util.DoubleFormat;
 import io.micrometer.core.instrument.util.MeterPartition;
 import io.micrometer.core.instrument.util.NamedThreadFactory;
-import io.micrometer.core.instrument.util.TimeUtils;
 import io.micrometer.core.ipc.http.HttpSender;
 import io.micrometer.core.ipc.http.HttpUrlConnectionSender;
 import io.micrometer.core.lang.NonNull;
@@ -77,14 +76,6 @@ public class HumioMeterRegistry extends StepMeterRegistry {
 
     public static Builder builder(HumioConfig config) {
         return new Builder(config);
-    }
-
-    @Override
-    public void start(ThreadFactory threadFactory) {
-        if (config.enabled()) {
-            logger.info("publishing metrics to humio every " + TimeUtils.format(config.step()));
-        }
-        super.start(threadFactory);
     }
 
     @Override
@@ -291,7 +282,7 @@ public class HumioMeterRegistry extends StepMeterRegistry {
                     .append(escapeJson(name)).append('"');
 
             for (Attribute attribute : attributes) {
-                sb.append(",\"").append(attribute.name).append("\":").append(DoubleFormat.decimalOrWhole(attribute.value));
+                sb.append(",\"").append(attribute.name).append("\":").append(DoubleFormat.wholeOrDecimal(attribute.value));
             }
 
             List<Tag> tags = getConventionTags(meter.getId());

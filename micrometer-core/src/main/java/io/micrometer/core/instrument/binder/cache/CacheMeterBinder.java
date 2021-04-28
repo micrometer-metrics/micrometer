@@ -1,5 +1,5 @@
 /**
- * Copyright 2017 Pivotal Software, Inc.
+ * Copyright 2017 VMware, Inc.
  * <p>
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -125,6 +125,8 @@ public abstract class CacheMeterBinder implements MeterBinder {
     /**
      * The put mechanism is unimportant - this count applies to entries added to the cache according to a pre-defined
      * load function such as exists in Guava/Caffeine caches as well as manual puts.
+     *
+     * Note that Guava/Caffeine caches don't count manual puts.
      *
      * @return Total number of entries added to the cache. Monotonically increasing count.
      */

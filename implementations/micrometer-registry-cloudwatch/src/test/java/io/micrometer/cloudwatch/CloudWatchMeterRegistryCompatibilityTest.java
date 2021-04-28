@@ -1,5 +1,5 @@
 /**
- * Copyright 2017 Pivotal Software, Inc.
+ * Copyright 2017 VMware, Inc.
  * <p>
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -22,6 +22,7 @@ import io.micrometer.core.tck.MeterRegistryCompatibilityKit;
 
 import java.time.Duration;
 
+@SuppressWarnings("deprecation")
 class CloudWatchMeterRegistryCompatibilityTest extends MeterRegistryCompatibilityKit {
 
     private final CloudWatchConfig config = new CloudWatchConfig() {

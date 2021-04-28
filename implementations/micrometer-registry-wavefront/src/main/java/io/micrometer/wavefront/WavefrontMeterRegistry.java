@@ -1,5 +1,5 @@
 /**
- * Copyright 2017 Pivotal Software, Inc.
+ * Copyright 2017 VMware, Inc.
  * <p>
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,12 +15,11 @@
  */
 package io.micrometer.wavefront;
 
-import com.wavefront.sdk.common.Constants;
-import com.wavefront.sdk.common.Utils;
+import com.wavefront.sdk.common.WavefrontSender;
+import com.wavefront.sdk.common.clients.WavefrontClient;
 import com.wavefront.sdk.entities.histograms.HistogramGranularity;
 import com.wavefront.sdk.entities.histograms.WavefrontHistogramImpl;
 import io.micrometer.core.instrument.*;
-import io.micrometer.core.instrument.config.MissingRequiredConfigurationException;
 import io.micrometer.core.instrument.cumulative.CumulativeCounter;
 import io.micrometer.core.instrument.cumulative.CumulativeFunctionCounter;
 import io.micrometer.core.instrument.cumulative.CumulativeFunctionTimer;
@@ -28,62 +27,48 @@ import io.micrometer.core.instrument.distribution.DistributionStatisticConfig;
 import io.micrometer.core.instrument.distribution.HistogramGauges;
 import io.micrometer.core.instrument.distribution.pause.PauseDetector;
 import io.micrometer.core.instrument.internal.DefaultGauge;
-import io.micrometer.core.instrument.internal.DefaultLongTaskTimer;
 import io.micrometer.core.instrument.internal.DefaultMeter;
 import io.micrometer.core.instrument.push.PushMeterRegistry;
-import io.micrometer.core.instrument.util.MeterPartition;
 import io.micrometer.core.instrument.util.NamedThreadFactory;
-import io.micrometer.core.instrument.util.TimeUtils;
 import io.micrometer.core.ipc.http.HttpSender;
-import io.micrometer.core.ipc.http.HttpUrlConnectionSender;
 import io.micrometer.core.lang.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
-import java.io.OutputStreamWriter;
-import java.net.*;
-import java.nio.charset.StandardCharsets;
+import java.net.URI;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.ThreadFactory;
 import java.util.concurrent.TimeUnit;
-import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.ToDoubleFunction;
 import java.util.function.ToLongFunction;
 import java.util.stream.Collectors;
-import java.util.stream.Stream;
-
-import static java.util.stream.Collectors.joining;
-import static java.util.stream.StreamSupport.stream;
 
 /**
  * {@link PushMeterRegistry} for Wavefront.
+ * <p>
+ * This requires Wavefront's Java SDK 2.2 or later.
  *
  * @author Jon Schneider
  * @author Howard Yoo
  * @since 1.0.0
  */
 public class WavefrontMeterRegistry extends PushMeterRegistry {
-    private static final ThreadFactory DEFAULT_THREAD_FACTORY =
-        new NamedThreadFactory("waveferont-metrics-publisher");
+    private static final ThreadFactory DEFAULT_THREAD_FACTORY = new NamedThreadFactory("waveferont-metrics-publisher");
     private final Logger logger = LoggerFactory.getLogger(WavefrontMeterRegistry.class);
     private final WavefrontConfig config;
-    private final HttpSender httpClient;
-    private final URI uri;
-    private final int distributionPort;
+    private final WavefrontSender wavefrontSender;
     private final Set<HistogramGranularity> histogramGranularities;
 
     /**
      * @param config Configuration options for the registry that are describable as properties.
      * @param clock  The clock to use for timings.
      */
-    @SuppressWarnings("deprecation")
     public WavefrontMeterRegistry(WavefrontConfig config, Clock clock) {
-        this(config, clock, DEFAULT_THREAD_FACTORY,
-            new HttpUrlConnectionSender(config.connectTimeout(), config.readTimeout()));
+        this(config, clock, DEFAULT_THREAD_FACTORY, getDefaultSenderBuilder(config).build());
     }
 
     /**
@@ -94,23 +79,17 @@ public class WavefrontMeterRegistry extends PushMeterRegistry {
      */
     @Deprecated
     public WavefrontMeterRegistry(WavefrontConfig config, Clock clock, ThreadFactory threadFactory) {
-        this(config, clock, threadFactory,
-            new HttpUrlConnectionSender(config.connectTimeout(), config.readTimeout()));
+        this(config, clock, threadFactory, getDefaultSenderBuilder(config).build());
     }
 
-    private WavefrontMeterRegistry(WavefrontConfig config, Clock clock, ThreadFactory threadFactory,
-                                   HttpSender httpClient) {
+    WavefrontMeterRegistry(WavefrontConfig config, Clock clock, ThreadFactory threadFactory,
+                           WavefrontSender wavefrontSender) {
         super(config, clock);
-        this.config = config;
-        if (directToApi() && config.apiToken() == null) {
-            throw new MissingRequiredConfigurationException(
-                "apiToken must be set whenever publishing directly to the Wavefront API");
-        }
-        this.httpClient = httpClient;
-        this.uri = URI.create(config.uri());
-        this.distributionPort = config.distributionPort();
 
+        this.config = config;
+        this.wavefrontSender = wavefrontSender;
         this.histogramGranularities = new HashSet<>();
+
         if (config.reportMinuteDistribution()) {
             this.histogramGranularities.add(HistogramGranularity.MINUTE);
         }
@@ -126,12 +105,8 @@ public class WavefrontMeterRegistry extends PushMeterRegistry {
         start(threadFactory);
     }
 
-    @Override
-    public void start(ThreadFactory threadFactory) {
-        if (config.enabled()) {
-            logger.info("publishing metrics to Wavefront every " + TimeUtils.format(config.step()));
-        }
-        super.start(threadFactory);
+    static boolean isDirectToApi(WavefrontConfig config) {
+        return !"proxy".equals(URI.create(config.uri()).getScheme());
     }
 
     @Override
@@ -145,15 +120,14 @@ public class WavefrontMeterRegistry extends PushMeterRegistry {
     }
 
     @Override
-    protected LongTaskTimer newLongTaskTimer(Meter.Id id) {
-        return new DefaultLongTaskTimer(id, clock);
+    protected LongTaskTimer newLongTaskTimer(Meter.Id id, DistributionStatisticConfig distributionStatisticConfig) {
+        return new WavefrontLongTaskTimer(id, clock, distributionStatisticConfig, getBaseTimeUnit());
     }
 
     @Override
     protected Timer newTimer(Meter.Id id, DistributionStatisticConfig distributionStatisticConfig,
                              PauseDetector pauseDetector) {
-        WavefrontTimer timer = new WavefrontTimer(id, clock, distributionStatisticConfig, pauseDetector,
-            getBaseTimeUnit());
+        WavefrontTimer timer = new WavefrontTimer(id, clock, distributionStatisticConfig, pauseDetector, getBaseTimeUnit());
         if (!timer.isPublishingHistogram()) {
             HistogramGauges.registerWithCommonFormat(timer, this);
         }
@@ -162,9 +136,8 @@ public class WavefrontMeterRegistry extends PushMeterRegistry {
 
     @Override
     protected DistributionSummary newDistributionSummary(
-        Meter.Id id, DistributionStatisticConfig distributionStatisticConfig, double scale) {
-        WavefrontDistributionSummary summary = new WavefrontDistributionSummary(id, clock,
-            distributionStatisticConfig, scale);
+            Meter.Id id, DistributionStatisticConfig distributionStatisticConfig, double scale) {
+        WavefrontDistributionSummary summary = new WavefrontDistributionSummary(id, clock, distributionStatisticConfig, scale);
         if (!summary.isPublishingHistogram()) {
             HistogramGauges.registerWithCommonFormat(summary, this);
         }
@@ -188,168 +161,92 @@ public class WavefrontMeterRegistry extends PushMeterRegistry {
 
     @Override
     protected void publish() {
-        for (List<Meter> batch : MeterPartition.partition(this, config.batchSize())) {
-            Stream.Builder<String> metrics = Stream.builder();
-            Stream.Builder<String> distributions = Stream.builder();
-            AtomicInteger distributionCount = new AtomicInteger();
-
-            batch.stream()
-                .flatMap(m -> m.match(
-                    this::writeMeter,
-                    this::writeMeter,
-                    this::writeTimer,
-                    this::writeSummary,
-                    this::writeMeter,
-                    this::writeMeter,
-                    this::writeMeter,
-                    this::writeFunctionTimer,
-                    this::writeMeter))
-                .forEach(metricLineData -> {
-                    if (metricLineData.isDistribution()) {
-                        distributions.add(metricLineData.lineData());
-                        distributionCount.getAndIncrement();
-                    } else {
-                        metrics.add(metricLineData.lineData());
-                    }
-                });
-
-            Stream<String> metricStream = metrics.build();
-            Stream<String> distributionStream = distributions.build();
-
-            if (directToApi()) {
-                flushDirectToApi(metricStream, Constants.WAVEFRONT_METRIC_FORMAT, "metrics",
-                    batch.size());
-                flushDirectToApi(distributionStream, Constants.WAVEFRONT_HISTOGRAM_FORMAT,
-                    "distributions", distributionCount.get());
-            } else {
-                flushToProxy(metricStream, uri.getPort(), "metrics", batch.size());
-                flushToProxy(distributionStream, distributionPort, "distributions",
-                    distributionCount.get());
-            }
-        }
+        getMeters().forEach(m -> m.use(
+                this::publishMeter,
+                this::publishMeter,
+                this::publishTimer,
+                this::publishSummary,
+                this::publishLongTaskTimer,
+                this::publishMeter,
+                this::publishMeter,
+                this::publishFunctionTimer,
+                this::publishMeter));
     }
 
-    private void flushDirectToApi(Stream<String> stream, String format, String description, int count) {
-        if (count == 0) {
-            return;
-        }
-        try {
-            String originalPath = uri.getPath() != null && !uri.getPath().equals("/") ? uri.getPath() : "";
-            httpClient.post(new URL(uri.getScheme(), uri.getHost(), uri.getPort(), originalPath + "/report?f=" + format).toString())
-                .withHeader("Authorization", "Bearer " + config.apiToken())
-                .withContent("application/octet-stream", stream.collect(joining()))
-                .compress()
-                .send()
-                .onSuccess(response -> logSuccessfulMetricsSent(description, count))
-                .onError(response -> logger.error("failed to send {} to Wavefront: {}", description, response.body()));
-        } catch (Throwable e) {
-            logger.error("failed to send " + description + " to Wavefront", e);
-        }
-    }
-
-    @SuppressWarnings("deprecation")
-    private void flushToProxy(Stream<String> stream, int port, String description, int count) {
-        if (count == 0) {
-            return;
-        }
-        try {
-            SocketAddress endpoint = uri.getHost() != null ?
-                new InetSocketAddress(uri.getHost(), port) :
-                new InetSocketAddress(InetAddress.getByName(null), port);
-            try (Socket socket = new Socket()) {
-                // connectTimeout should be pulled up to WavefrontConfig when it is removed elsewhere
-                socket.connect(endpoint, (int) this.config.connectTimeout().toMillis());
-                try (OutputStreamWriter writer =
-                         new OutputStreamWriter(socket.getOutputStream(), StandardCharsets.UTF_8)) {
-                    writer.write(stream.collect(joining()));
-                    writer.flush();
-                }
-                logSuccessfulMetricsSent(description, count);
-            } catch (IOException e) {
-                logger.error("failed to send " + description + " to Wavefront", e);
-            }
-        } catch (UnknownHostException e) {
-            logger.error("failed to send " + description + " to Wavefront: unknown host " + uri.getHost());
-        }
-    }
-
-    private void logSuccessfulMetricsSent(String description, int count) {
-        logger.debug("successfully sent {} {} to Wavefront.", count, description);
-    }
-
-    private boolean directToApi() {
-        return !"proxy".equals(URI.create(config.uri()).getScheme());
-    }
-
-    private Stream<WavefrontMetricLineData> writeFunctionTimer(FunctionTimer timer) {
+    private void publishFunctionTimer(FunctionTimer timer) {
         long wallTime = clock.wallTime();
-        Stream.Builder<WavefrontMetricLineData> metrics = Stream.builder();
 
         Meter.Id id = timer.getId();
 
         // we can't know anything about max and percentiles originating from a function timer
-        addMetric(metrics, id, "count", wallTime, timer.count());
-        addMetric(metrics, id, "avg", wallTime, timer.mean(getBaseTimeUnit()));
-        addMetric(metrics, id, "sum", wallTime, timer.totalTime(getBaseTimeUnit()));
-
-        return metrics.build();
+        publishMetric(id, "count", wallTime, timer.count());
+        publishMetric(id, "avg", wallTime, timer.mean(getBaseTimeUnit()));
+        publishMetric(id, "sum", wallTime, timer.totalTime(getBaseTimeUnit()));
     }
 
-    private Stream<WavefrontMetricLineData> writeTimer(Timer timer) {
+    private void publishTimer(Timer timer) {
         final long wallTime = clock.wallTime();
-        final Stream.Builder<WavefrontMetricLineData> metrics = Stream.builder();
 
         final Meter.Id id = timer.getId();
         final WavefrontTimer wfTimer = (WavefrontTimer) timer;
 
         if (wfTimer.isPublishingHistogram()) {
-            addDistribution(metrics, id, wfTimer.flushDistributions());
+            publishDistribution(id, wfTimer.flushDistributions());
         } else {
-            addMetric(metrics, id, "sum", wallTime, timer.totalTime(getBaseTimeUnit()));
-            addMetric(metrics, id, "count", wallTime, timer.count());
-            addMetric(metrics, id, "avg", wallTime, timer.mean(getBaseTimeUnit()));
-            addMetric(metrics, id, "max", wallTime, timer.max(getBaseTimeUnit()));
+            publishMetric(id, "sum", wallTime, timer.totalTime(getBaseTimeUnit()));
+            publishMetric(id, "count", wallTime, timer.count());
+            publishMetric(id, "avg", wallTime, timer.mean(getBaseTimeUnit()));
+            publishMetric(id, "max", wallTime, timer.max(getBaseTimeUnit()));
         }
-
-        return metrics.build();
     }
 
-    private Stream<WavefrontMetricLineData> writeSummary(DistributionSummary summary) {
+    private void publishLongTaskTimer(LongTaskTimer timer) {
         final long wallTime = clock.wallTime();
-        final Stream.Builder<WavefrontMetricLineData> metrics = Stream.builder();
+
+        final Meter.Id id = timer.getId();
+        final WavefrontLongTaskTimer wfTimer = (WavefrontLongTaskTimer) timer;
+
+        if (wfTimer.isPublishingHistogram()) {
+            publishDistribution(id, wfTimer.flushDistributions());
+        }
+        else {
+            publishMetric(id, "avg", wallTime, timer.mean(getBaseTimeUnit()));
+            publishMetric(id, "max", wallTime, timer.max(getBaseTimeUnit()));
+        }
+
+        // these suffixes have equivalents (count and sum) in the Wavefront histogram implementation, but for consistency
+        // with long task timers that don't publish distribution statistics, we always publish timeseries with these names too.
+        publishMetric(id, "duration", wallTime, timer.duration(getBaseTimeUnit()));
+        publishMetric(id, "active", wallTime, timer.activeTasks());
+    }
+
+    private void publishSummary(DistributionSummary summary) {
+        final long wallTime = clock.wallTime();
 
         final Meter.Id id = summary.getId();
         final WavefrontDistributionSummary wfSummary = (WavefrontDistributionSummary) summary;
 
         if (wfSummary.isPublishingHistogram()) {
-            addDistribution(metrics, id, wfSummary.flushDistributions());
+            publishDistribution(id, wfSummary.flushDistributions());
         } else {
-            addMetric(metrics, id, "sum", wallTime, summary.totalAmount());
-            addMetric(metrics, id, "count", wallTime, summary.count());
-            addMetric(metrics, id, "avg", wallTime, summary.mean());
-            addMetric(metrics, id, "max", wallTime, summary.max());
+            publishMetric(id, "sum", wallTime, summary.totalAmount());
+            publishMetric(id, "count", wallTime, summary.count());
+            publishMetric(id, "avg", wallTime, summary.mean());
+            publishMetric(id, "max", wallTime, summary.max());
         }
-
-        return metrics.build();
     }
 
     // VisibleForTesting
-    Stream<WavefrontMetricLineData> writeMeter(Meter meter) {
+    void publishMeter(Meter meter) {
         long wallTime = clock.wallTime();
-        Stream.Builder<WavefrontMetricLineData> metrics = Stream.builder();
 
-        stream(meter.measure().spliterator(), false)
-            .forEach(measurement -> {
-                Meter.Id id = meter.getId().withTag(measurement.getStatistic());
-                addMetric(metrics, id, null, wallTime, measurement.getValue());
-            });
-
-        return metrics.build();
+        for (Measurement measurement : meter.measure()) {
+            publishMetric(meter.getId().withTag(measurement.getStatistic()), null, wallTime, measurement.getValue());
+        }
     }
 
     // VisibleForTesting
-    void addMetric(Stream.Builder<WavefrontMetricLineData> metrics, Meter.Id id, @Nullable String suffix,
-                   long wallTime, double value) {
+    void publishMetric(Meter.Id id, @Nullable String suffix, long wallTime, double value) {
         if (!Double.isFinite(value)) {
             return;
         }
@@ -364,35 +261,32 @@ public class WavefrontMeterRegistry extends PushMeterRegistry {
         Map<String, String> tags = getTagsAsMap(id);
 
         try {
-            String lineData = Utils.metricToLineData(name, value, wallTime, source, tags, "unknown");
-            metrics.add(new WavefrontMetricLineData(lineData, false));
-        } catch (IllegalArgumentException e) {
-            logger.error("failed to convert metric to Wavefront format: " + fullId.getName(), e);
+            wavefrontSender.sendMetric(name, value, wallTime, source, tags);
+        } catch (IOException e) {
+            logger.warn("failed to report metric to Wavefront: " + fullId.getName(), e);
         }
     }
 
     // VisibleForTesting
-    void addDistribution(Stream.Builder<WavefrontMetricLineData> metrics, Meter.Id id,
-                         List<WavefrontHistogramImpl.Distribution> distributions) {
+    void publishDistribution(Meter.Id id, List<WavefrontHistogramImpl.Distribution> distributions) {
         String name = getConventionName(id);
         String source = config.source();
         Map<String, String> tags = getTagsAsMap(id);
 
         for (WavefrontHistogramImpl.Distribution distribution : distributions) {
             try {
-                String lineData = Utils.histogramToLineData(name, distribution.centroids,
-                    histogramGranularities, distribution.timestamp, source, tags, "unknown");
-                metrics.add(new WavefrontMetricLineData(lineData, true));
-            } catch (IllegalArgumentException e) {
-                logger.error("failed to convert distribution to Wavefront format: " + id.getName(), e);
+                wavefrontSender.sendDistribution(name, distribution.centroids, histogramGranularities,
+                        distribution.timestamp, source, tags);
+            } catch (IOException e) {
+                logger.warn("failed to send distribution to Wavefront: " + id.getName(), e);
             }
         }
     }
 
     private Map<String, String> getTagsAsMap(Meter.Id id) {
         return getConventionTags(id)
-            .stream()
-            .collect(Collectors.toMap(Tag::getKey, Tag::getValue, (tag1, tag2) -> tag2));
+                .stream()
+                .collect(Collectors.toMap(Tag::getKey, Tag::getValue, (tag1, tag2) -> tag2));
     }
 
     private Meter.Id idWithSuffix(Meter.Id id, String suffix) {
@@ -412,6 +306,29 @@ public class WavefrontMeterRegistry extends PushMeterRegistry {
                 .merge(DistributionStatisticConfig.DEFAULT);
     }
 
+    static String getWavefrontReportingUri(WavefrontConfig wavefrontConfig) {
+        // proxy reporting is now http reporting on newer wavefront proxies.
+        if (!isDirectToApi(wavefrontConfig)) {
+            return "http" + wavefrontConfig.uri().substring("proxy".length());
+        }
+        return wavefrontConfig.uri();
+    }
+
+    /**
+     * Creates a Builder for the default {@link WavefrontSender} to be used with a
+     * {@link WavefrontMeterRegistry} if one is not provided. Generates the builder
+     * based on the given {@link WavefrontConfig}.
+     *
+     * @param config config to use
+     * @return a builder for a WavefrontSender
+     * @since 1.5.0
+     */
+    public static WavefrontClient.Builder getDefaultSenderBuilder(WavefrontConfig config) {
+        return new WavefrontClient.Builder(getWavefrontReportingUri(config),
+                config.apiToken()).batchSize(config.batchSize())
+                .flushIntervalSeconds((int) config.step().getSeconds());
+    }
+
     public static Builder builder(WavefrontConfig config) {
         return new Builder(config);
     }
@@ -421,12 +338,11 @@ public class WavefrontMeterRegistry extends PushMeterRegistry {
 
         private Clock clock = Clock.SYSTEM;
         private ThreadFactory threadFactory = DEFAULT_THREAD_FACTORY;
-        private HttpSender httpClient;
+        @Nullable
+        private WavefrontSender wavefrontSender;
 
-        @SuppressWarnings("deprecation")
         Builder(WavefrontConfig config) {
             this.config = config;
-            this.httpClient = new HttpUrlConnectionSender(config.connectTimeout(), config.readTimeout());
         }
 
         public Builder clock(Clock clock) {
@@ -439,13 +355,36 @@ public class WavefrontMeterRegistry extends PushMeterRegistry {
             return this;
         }
 
-        public Builder httpClient(HttpSender httpClient) {
-            this.httpClient = httpClient;
+        /**
+         * Set an HTTP client to use.
+         *
+         * @param httpClient HTTP client to use
+         * @return builder
+         * @deprecated since 1.5.0 this call no-longer affects the transport used to send metrics to Wavefront. Use
+         * {@link #wavefrontSender(WavefrontSender)} to supply your own transport (whether proxy or direct ingestion).
+         */
+        @Deprecated
+        public Builder httpClient(@SuppressWarnings("unused") HttpSender httpClient) {
+            return this;
+        }
+
+        /**
+         * @param wavefrontSender wavefront sender to be used
+         * @return builder
+         * @since 1.5.0
+         */
+        public Builder wavefrontSender(WavefrontSender wavefrontSender) {
+            this.wavefrontSender = wavefrontSender;
             return this;
         }
 
         public WavefrontMeterRegistry build() {
-            return new WavefrontMeterRegistry(config, clock, threadFactory, httpClient);
+            if (wavefrontSender == null) {
+                config.validateSenderConfiguration().orThrow();
+            }
+            WavefrontSender sender = (wavefrontSender != null) ? wavefrontSender
+                    : getDefaultSenderBuilder(config).build();
+            return new WavefrontMeterRegistry(config, clock, threadFactory, sender);
         }
     }
 }

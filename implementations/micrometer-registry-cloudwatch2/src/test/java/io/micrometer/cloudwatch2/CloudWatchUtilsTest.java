@@ -1,5 +1,5 @@
 /**
- * Copyright 2017 Pivotal Software, Inc.
+ * Copyright 2017 VMware, Inc.
  * <p>
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -31,7 +31,7 @@ class CloudWatchUtilsTest {
     void testClamp() {
         assertThat(CloudWatchUtils.clampMetricValue(Double.NaN))
                 .as("Check NaN")
-                .isEqualTo(Double.NaN);
+                .isNaN();
 
         assertThat(CloudWatchUtils.clampMetricValue(Double.MIN_VALUE))
                 .as("Check minimum value")

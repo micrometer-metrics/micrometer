@@ -1,5 +1,5 @@
 /**
- * Copyright 2017 Pivotal Software, Inc.
+ * Copyright 2017 VMware, Inc.
  * <p>
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -45,8 +45,6 @@ class CompositeLongTaskTimerTest {
         clock.add(100, TimeUnit.NANOSECONDS);
         assertThat(anotherSample.stop()).isEqualTo(110);
 
-        // if this fails, the composite is using a timer ID that overlaps with a separate timer in a member
-        // of the composite rather than mapping the ID to a separate ID in the composite member.
         assertThat(sample.stop()).isEqualTo(100);
     }
 }

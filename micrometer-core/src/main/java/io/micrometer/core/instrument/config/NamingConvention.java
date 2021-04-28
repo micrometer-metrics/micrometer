@@ -1,5 +1,5 @@
 /**
- * Copyright 2017 Pivotal Software, Inc.
+ * Copyright 2017 VMware, Inc.
  * <p>
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -86,7 +86,7 @@ public interface NamingConvention {
                     if (Character.isUpperCase(firstChar)) {
                         conventionName.append(str); // already capitalized
                     } else {
-                        conventionName.append(Character.toUpperCase(firstChar)).append(str.substring(1));
+                        conventionName.append(Character.toUpperCase(firstChar)).append(str, 1, str.length());
                     }
                 }
             }

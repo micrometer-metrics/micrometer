@@ -1,50 +1,63 @@
-version: 2
-jobs:
-  build:
+version: 2.1
+
+executors:
+  circle-jdk-executor:
     working_directory: ~/micrometer
     environment:
       GRADLE_OPTS: '-Dorg.gradle.jvmargs="-Xmx2048m -XX:+HeapDumpOnOutOfMemoryError"'
     docker:
-      - image: circleci/openjdk:11-jdk
+      - image: cimg/openjdk:15.0.2
+  machine-executor:
+    working_directory: ~/micrometer
+    machine:
+      image: ubuntu-2004:202101-01
+
+commands:
+  gradlew-build:
+    description: 'Run a Gradle build using the wrapper'
+    parameters:
+      command:
+        type: string
+        default: 'check test'
     steps:
-
       - checkout
-
       - restore_cache:
           key: gradle-dependencies-{{ checksum "build.gradle" }}
-
       - run:
           name: downloadDependencies
           command: ./gradlew downloadDependencies --console=plain
-
       - save_cache:
           key: gradle-dependencies-{{ checksum "build.gradle" }}
           paths:
             - ~/.gradle
-
       - run:
-          name: run tests
-          command: ./gradlew check test
-
+          name: run gradle command
+          command: ./gradlew << parameters.command >>
       - run:
           name: collect test reports
           when: always
           command: |
             mkdir -p ~/micrometer/test-results/junit/
             find . -type f -regex ".*/build/test-results/.*xml" -exec cp {} ~/micrometer/test-results/junit/ \;
-
       - store_test_results:
           path: ~/micrometer/test-results/
-
       - store_artifacts:
           path: ~/micrometer/test-results/
 
+jobs:
+  build:
+    executor: circle-jdk-executor
+    steps:
+      - gradlew-build
+
+  docker-tests:
+    executor: machine-executor
+    steps:
+      - gradlew-build:
+          command: dockerTest
+
   deploy:
-    working_directory: ~/micrometer
-    environment:
-      GRADLE_OPTS: '-Dorg.gradle.jvmargs="-Xmx2048m -XX:+HeapDumpOnOutOfMemoryError"'
-    docker:
-      - image: circleci/openjdk:11-jdk
+    executor: circle-jdk-executor
     steps:
       - checkout
       - restore_cache:
@@ -53,29 +66,16 @@ jobs:
           name: Deployment
           command: sh ./gradle/deploy.sh
 
-  maven-central-sync:
-    docker:
-      - image: circleci/openjdk:11-jdk
-    steps:
-      - checkout
-      - run:
-          name: Decrypt properties
-          command: openssl aes-256-cbc -d -in gradle.properties.enc -out gradle.properties -k "$KEY" -md sha256
-      - deploy:
-          name: Maven Central sync
-          # arbitrarily choose one project to run the `mavenCentralSync` task since all use the same Bintray package
-          command: ./gradlew :micrometer-core:mavenCentralSync -Prelease.useLastTag=true -x bintrayPublish -x bintrayUpload -x bintrayCreateVersion -x bintrayCreatePackage
-          # Maven Central Sync might take more than 10 minutes
-          no_output_timeout: 30m
-
 workflows:
   version: 2
   build_prs_deploy_snapshots:
     jobs:
       - build
+      - docker-tests
       - deploy:
           requires:
             - build
+            - docker-tests
           filters:
             branches:
               only:
@@ -89,22 +89,16 @@ workflows:
               ignore: /.*/
             tags:
               only: /^v\d+\.\d+\.\d+(-rc\.\d+)?$/
+      - docker-tests:
+          filters:
+            branches:
+              ignore: /.*/
+            tags:
+              only: /^v\d+\.\d+\.\d+(-rc\.\d+)?$/
       - deploy:
           requires:
             - build
-          filters:
-            tags:
-              only: /^v\d+\.\d+\.\d+(-rc\.\d+)?$/
-      - staging-approval:
-          type: approval
-          requires:
-            - deploy
-          filters:
-            tags:
-              only: /^v\d+\.\d+\.\d+(-rc\.\d+)?$/
-      - maven-central-sync:
-          requires:
-            - staging-approval
+            - docker-tests
           filters:
             tags:
               only: /^v\d+\.\d+\.\d+(-rc\.\d+)?$/

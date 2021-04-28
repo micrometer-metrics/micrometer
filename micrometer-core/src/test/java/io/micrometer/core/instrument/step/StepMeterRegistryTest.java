@@ -1,5 +1,5 @@
 /**
- * Copyright 2017 Pivotal Software, Inc.
+ * Copyright 2017 VMware, Inc.
  * <p>
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,11 +20,23 @@ import io.micrometer.core.instrument.*;
 import org.junit.jupiter.api.Test;
 
 import java.time.Duration;
+import java.util.Arrays;
+import java.util.List;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 
+import static java.time.Duration.ofMillis;
+import static java.util.concurrent.TimeUnit.MILLISECONDS;
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.SoftAssertions.assertSoftly;
 
+/**
+ * Tests for {@link StepMeterRegistry}.
+ *
+ * @author Jon Schneider
+ * @author Samuel Cox
+ * @author Johnny Lim
+ */
 class StepMeterRegistryTest {
     private AtomicInteger publishes = new AtomicInteger(0);
     private MockClock clock = new MockClock();
@@ -55,12 +67,15 @@ class StepMeterRegistryTest {
 
     @Issue("#370")
     @Test
-    void slasOnlyNoPercentileHistogram() {
-        DistributionSummary summary = DistributionSummary.builder("my.summary").sla(1, 2).register(registry);
+    void serviceLevelObjectivesOnlyNoPercentileHistogram() {
+        DistributionSummary summary = DistributionSummary.builder("my.summary")
+                .serviceLevelObjectives(1.0, 2)
+                .register(registry);
+
         summary.record(1);
 
-        Timer timer = Timer.builder("my.timer").sla(Duration.ofMillis(1)).register(registry);
-        timer.record(1, TimeUnit.MILLISECONDS);
+        Timer timer = Timer.builder("my.timer").serviceLevelObjectives(ofMillis(1)).register(registry);
+        timer.record(1, MILLISECONDS);
 
         Gauge summaryHist1 = registry.get("my.summary.histogram").tags("le", "1").gauge();
         Gauge summaryHist2 = registry.get("my.summary.histogram").tags("le", "2").gauge();
@@ -83,5 +98,67 @@ class StepMeterRegistryTest {
         assertThat(publishes.get()).isEqualTo(0);
         registry.close();
         assertThat(publishes.get()).isEqualTo(1);
+    }
+
+    @Issue("#1993")
+    @Test
+    void timerMaxValueDecays() {
+        Timer timerStep1Length2 = Timer.builder("timer1x2")
+                .distributionStatisticBufferLength(2)
+                .distributionStatisticExpiry(config.step())
+                .register(registry);
+
+        Timer timerStep2Length2 = Timer.builder("timer2x2")
+                .distributionStatisticBufferLength(2)
+                .distributionStatisticExpiry(config.step().multipliedBy(2))
+                .register(registry);
+
+        Timer timerStep1Length6 = Timer.builder("timer1x6")
+                .distributionStatisticBufferLength(6)
+                .distributionStatisticExpiry(config.step())
+                .register(registry);
+
+        List<Timer> timers = Arrays.asList(timerStep1Length2, timerStep2Length2, timerStep1Length6);
+
+        timers.forEach(t -> t.record(ofMillis(15)));
+
+        assertSoftly(softly -> {
+            softly.assertThat(timerStep1Length2.max(MILLISECONDS)).isEqualTo(15L);
+            softly.assertThat(timerStep2Length2.max(MILLISECONDS)).isEqualTo(15L);
+            softly.assertThat(timerStep1Length6.max(MILLISECONDS)).isEqualTo(15L);
+        });
+
+        clock.add(config.step().plus(Duration.ofMillis(1)));
+        clock.add(config.step());
+        timers.forEach(t -> t.record(ofMillis(10)));
+
+        assertSoftly(softly -> {
+            softly.assertThat(timerStep1Length2.max(MILLISECONDS)).isEqualTo(10L);
+            softly.assertThat(timerStep2Length2.max(MILLISECONDS)).isEqualTo(15L);
+            softly.assertThat(timerStep1Length6.max(MILLISECONDS)).isEqualTo(15L);
+        });
+
+        clock.add(config.step());
+        timers.forEach(t -> t.record(ofMillis(5)));
+
+        assertSoftly(softly -> {
+            softly.assertThat(timerStep1Length2.max(MILLISECONDS)).isEqualTo(10L);
+            softly.assertThat(timerStep2Length2.max(MILLISECONDS)).isEqualTo(15L);
+            softly.assertThat(timerStep1Length6.max(MILLISECONDS)).isEqualTo(15L);
+        });
+
+        clock.add(config.step());
+        assertSoftly(softly -> {
+            softly.assertThat(timerStep1Length2.max(MILLISECONDS)).isEqualTo(5L);
+            softly.assertThat(timerStep2Length2.max(MILLISECONDS)).isEqualTo(10L);
+            softly.assertThat(timerStep1Length6.max(MILLISECONDS)).isEqualTo(15L);
+        });
+
+        clock.add(config.step().multipliedBy(5));
+        assertSoftly(softly -> {
+            softly.assertThat(timerStep1Length2.max(MILLISECONDS)).isEqualTo(0L);
+            softly.assertThat(timerStep2Length2.max(MILLISECONDS)).isEqualTo(0L);
+            softly.assertThat(timerStep1Length6.max(MILLISECONDS)).isEqualTo(0L);
+        });
     }
 }

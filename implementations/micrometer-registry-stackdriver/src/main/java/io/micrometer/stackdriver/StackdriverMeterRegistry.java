@@ -1,5 +1,5 @@
 /**
- * Copyright 2018 Pivotal Software, Inc.
+ * Copyright 2018 VMware, Inc.
  * <p>
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -25,9 +25,8 @@ import com.google.cloud.monitoring.v3.MetricServiceSettings;
 import com.google.monitoring.v3.*;
 import com.google.protobuf.Timestamp;
 import io.micrometer.core.annotation.Incubating;
-import io.micrometer.core.instrument.*;
 import io.micrometer.core.instrument.Timer;
-import io.micrometer.core.instrument.config.MissingRequiredConfigurationException;
+import io.micrometer.core.instrument.*;
 import io.micrometer.core.instrument.distribution.CountAtBucket;
 import io.micrometer.core.instrument.distribution.DistributionStatisticConfig;
 import io.micrometer.core.instrument.distribution.HistogramSnapshot;
@@ -38,7 +37,6 @@ import io.micrometer.core.instrument.step.StepMeterRegistry;
 import io.micrometer.core.instrument.step.StepTimer;
 import io.micrometer.core.instrument.util.DoubleFormat;
 import io.micrometer.core.instrument.util.NamedThreadFactory;
-import io.micrometer.core.instrument.util.TimeUtils;
 import io.micrometer.core.lang.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -65,6 +63,7 @@ import static java.util.stream.StreamSupport.stream;
  */
 @Incubating(since = "1.1.0")
 public class StackdriverMeterRegistry extends StepMeterRegistry {
+
     private static final ThreadFactory DEFAULT_THREAD_FACTORY = new NamedThreadFactory("stackdriver-metrics-publisher");
 
     /**
@@ -93,10 +92,6 @@ public class StackdriverMeterRegistry extends StepMeterRegistry {
                                      Callable<MetricServiceSettings> metricServiceSettings) {
         super(config, clock);
 
-        if (config.projectId() == null) {
-            throw new MissingRequiredConfigurationException("projectId must be set to report metrics to Stackdriver");
-        }
-
         this.config = config;
 
         try {
@@ -122,7 +117,6 @@ public class StackdriverMeterRegistry extends StepMeterRegistry {
             } else {
                 try {
                     this.client = MetricServiceClient.create(metricServiceSettings);
-                    logger.info("publishing metrics to stackdriver every " + TimeUtils.format(config.step()));
                     super.start(threadFactory);
                 } catch (Exception e) {
                     logger.error("unable to create stackdriver client", e);
@@ -252,10 +246,18 @@ public class StackdriverMeterRegistry extends StepMeterRegistry {
         private final StackdriverConfig config;
         private Clock clock = Clock.SYSTEM;
         private ThreadFactory threadFactory = DEFAULT_THREAD_FACTORY;
-        private Callable<MetricServiceSettings> metricServiceSettings = () -> MetricServiceSettings.newBuilder().build();
+        private Callable<MetricServiceSettings> metricServiceSettings;
 
         Builder(StackdriverConfig config) {
             this.config = config;
+            this.metricServiceSettings = () -> {
+                MetricServiceSettings.Builder builder = MetricServiceSettings.newBuilder();
+                if (config.credentials() != null) {
+                    builder.setCredentialsProvider(config.credentials());
+                }
+                builder.setHeaderProvider(new UserAgentHeaderProvider("stackdriver"));
+                return builder.build();
+            };
         }
 
         public Builder clock(Clock clock) {
@@ -278,7 +280,8 @@ public class StackdriverMeterRegistry extends StepMeterRegistry {
         }
     }
 
-    private class Batch {
+    //VisibleForTesting
+    class Batch {
         private final TimeInterval interval = TimeInterval.newBuilder()
                 .setEndTime(Timestamp.newBuilder()
                         .setSeconds(clock.wallTime() / 1000)
@@ -309,7 +312,7 @@ public class StackdriverMeterRegistry extends StepMeterRegistry {
                     Arrays.stream(snapshot.percentileValues())
                             .map(valueAtP -> createTimeSeries(histogramSupport,
                                     timeDomain ? valueAtP.value(getBaseTimeUnit()) : valueAtP.value(),
-                                    "p" + DoubleFormat.decimalOrWhole(valueAtP.percentile() * 100)))
+                                    "p" + DoubleFormat.wholeOrDecimal(valueAtP.percentile() * 100)))
             );
         }
 
@@ -338,6 +341,7 @@ public class StackdriverMeterRegistry extends StepMeterRegistry {
                     .setResource(MonitoredResource.newBuilder()
                             .setType(config.resourceType())
                             .putLabels("project_id", config.projectId())
+                            .putAllLabels(config.resourceLabels())
                             .build())
                     .setMetricKind(MetricDescriptor.MetricKind.GAUGE) // https://cloud.google.com/monitoring/api/v3/metrics-details#metric-kinds
                     .setValueType(valueType)
@@ -350,9 +354,15 @@ public class StackdriverMeterRegistry extends StepMeterRegistry {
 
         private void createMetricDescriptorIfNecessary(MetricServiceClient client, Meter.Id id,
                                                        MetricDescriptor.ValueType valueType, @Nullable String statistic) {
-            if (!verifiedDescriptors.contains(id.getName())) {
+
+            if (verifiedDescriptors.isEmpty()) {
+                prePopulateVerifiedDescriptors();
+            }
+
+            final String metricType = metricType(id, statistic);
+            if (!verifiedDescriptors.contains(metricType)) {
                 MetricDescriptor descriptor = MetricDescriptor.newBuilder()
-                        .setType(metricType(id, statistic))
+                        .setType(metricType)
                         .setDescription(id.getDescription() == null ? "" : id.getDescription())
                         .setMetricKind(MetricDescriptor.MetricKind.GAUGE)
                         .setValueType(valueType)
@@ -369,12 +379,37 @@ public class StackdriverMeterRegistry extends StepMeterRegistry {
 
                 try {
                     client.createMetricDescriptor(request);
-                    verifiedDescriptors.add(id.getName());
+                    verifiedDescriptors.add(metricType);
                 } catch (ApiException e) {
                     logger.warn("failed to create metric descriptor in Stackdriver for meter " + id, e);
                 }
             }
         }
+
+        private void prePopulateVerifiedDescriptors() {
+            try {
+                if (client != null) {
+                    final String prefix = metricType(new Meter.Id("", Tags.empty(), null, null, Meter.Type.OTHER), null);
+                    final String filter = String.format("metric.type = starts_with(\"%s\")", prefix);
+                    final String projectName = "projects/" + config.projectId();
+
+                    final ListMetricDescriptorsRequest listMetricDescriptorsRequest = ListMetricDescriptorsRequest.newBuilder()
+                            .setName(projectName)
+                            .setFilter(filter)
+                            .build();
+
+                    final MetricServiceClient.ListMetricDescriptorsPagedResponse listMetricDescriptorsPagedResponse = client.listMetricDescriptors(listMetricDescriptorsRequest);
+                    listMetricDescriptorsPagedResponse.iterateAll().forEach(
+                            metricDescriptor -> verifiedDescriptors.add(metricDescriptor.getType()));
+
+                    logger.trace("Pre populated verified descriptors for project: {}, with filter: {}, existing metrics: {}", projectName, filter, verifiedDescriptors);
+                }
+            } catch (Exception e) {
+                // only log on warning and continue, this should not be a showstopper
+                logger.warn("Failed to pre populate verified descriptors for {}", config.projectId(), e);
+            }
+        }
+
 
         private String metricType(Meter.Id id, @Nullable String statistic) {
             StringBuilder metricType = new StringBuilder("custom.googleapis.com/").append(getConventionName(id));
@@ -384,7 +419,8 @@ public class StackdriverMeterRegistry extends StepMeterRegistry {
             return metricType.toString();
         }
 
-        private Distribution distribution(HistogramSnapshot snapshot, boolean timeDomain) {
+        //VisibleForTesting
+        Distribution distribution(HistogramSnapshot snapshot, boolean timeDomain) {
             CountAtBucket[] histogram = snapshot.histogramCounts();
 
             // selected finite buckets (represented as a normal histogram)
@@ -415,7 +451,7 @@ public class StackdriverMeterRegistry extends StepMeterRegistry {
             }
 
             // add the "+infinity" bucket, which does NOT have a corresponding bucket boundary
-            bucketCounts.add(snapshot.count() - truncatedSum.get());
+            bucketCounts.add(Math.max(0, snapshot.count() - truncatedSum.get()));
 
             List<Double> bucketBoundaries = Arrays.stream(histogram)
                     .map(countAtBucket -> timeDomain ? countAtBucket.bucket(getBaseTimeUnit()) : countAtBucket.bucket())

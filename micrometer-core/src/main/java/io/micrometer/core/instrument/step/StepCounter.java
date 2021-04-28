@@ -1,5 +1,5 @@
 /**
- * Copyright 2017 Pivotal Software, Inc.
+ * Copyright 2017 VMware, Inc.
  * <p>
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -21,8 +21,10 @@ import io.micrometer.core.instrument.Counter;
 
 /**
  * Counter that reports a rate per second to a monitoring system. Note that {@link #count()}
- * will report the number events in the last complete interval rather than the total for
+ * will report the number of events in the last complete interval rather than the total for
  * the life of the process.
+ *
+ * @author Jon Schneider
  */
 public class StepCounter extends AbstractMeter implements Counter {
     private final StepDouble value;

@@ -1,20 +1,19 @@
+plugins {
+    id 'java'
+}
+
 dependencies {
-    compile project(':micrometer-core')
-    compile 'colt:colt:1.2.0'
-    compile('ch.qos.logback:logback-classic:1.2.+') {
-        force = true
-    }
-    compile('org.slf4j:slf4j-api:1.7.25') {
-        // logback doesn't yet work with slf4j 1.8
-        force = true
-    }
+    implementation project(':micrometer-core')
+    implementation 'colt:colt'
+    implementation('ch.qos.logback:logback-classic')
+    implementation('org.slf4j:slf4j-api')
 
     ['atlas', 'prometheus', 'datadog', 'ganglia', 'elastic', 'graphite', 'jmx', 'influx', 'statsd', 'new-relic', 'cloudwatch', 'cloudwatch2', 'signalfx', 'wavefront', 'dynatrace', 'azure-monitor', 'humio', 'appoptics', 'kairos', 'stackdriver'].each { sys ->
-        compile project(":micrometer-registry-$sys")
+        implementation project(":micrometer-registry-$sys")
     }
 
-    compile 'io.prometheus:simpleclient_pushgateway:latest.release'
-    compile 'io.projectreactor.netty:reactor-netty:latest.release'
-    compile 'org.apache.kafka:kafka-clients:latest.release'
-    compile 'com.github.charithe:kafka-junit:4.1.2'
+    implementation 'io.prometheus:simpleclient_pushgateway'
+    implementation 'io.projectreactor.netty:reactor-netty'
+    implementation 'org.apache.kafka:kafka-clients'
+    implementation 'com.github.charithe:kafka-junit'
 }

@@ -1,5 +1,5 @@
 /**
- * Copyright 2017 Pivotal Software, Inc.
+ * Copyright 2017 VMware, Inc.
  * <p>
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -24,7 +24,10 @@ import io.micrometer.core.lang.NonNullApi;
 import org.aspectj.lang.ProceedingJoinPoint;
 import org.aspectj.lang.annotation.Around;
 import org.aspectj.lang.annotation.Aspect;
+import org.aspectj.lang.reflect.MethodSignature;
 
+import java.lang.reflect.Method;
+import java.util.concurrent.CompletionStage;
 import java.util.function.Function;
 
 /**
@@ -38,6 +41,9 @@ import java.util.function.Function;
 @Aspect
 @NonNullApi
 public class CountedAspect {
+    public final String DEFAULT_EXCEPTION_TAG_VALUE = "none";
+    public final String RESULT_TAG_FAILURE_VALUE = "failure";
+    public final String RESULT_TAG_SUCCESS_VALUE = "success";
 
     /**
      * The tag name to encapsulate the method execution status.
@@ -89,6 +95,10 @@ public class CountedAspect {
      * failed attempts. In case of a failure, the aspect tags the counter with the simple name of the thrown
      * exception.
      *
+     * <p>When the annotated method returns a {@link CompletionStage} or any of its subclasses, the counters will be incremented
+     * only when the {@link CompletionStage} is completed. If completed exceptionally a failure is recorded, otherwise if
+     * {@link Counted#recordFailuresOnly()} is set to {@code false}, a success is recorded.
+     *
      * @param pjp     Encapsulates some information about the intercepted area.
      * @param counted The annotation.
      * @return Whatever the intercepted method returns.
@@ -96,22 +106,49 @@ public class CountedAspect {
      */
     @Around("@annotation(counted)")
     public Object interceptAndRecord(ProceedingJoinPoint pjp, Counted counted) throws Throwable {
+
+        final Method method = ((MethodSignature) pjp.getSignature()).getMethod();
+        final boolean stopWhenCompleted = CompletionStage.class.isAssignableFrom(method.getReturnType());
+
+        if (stopWhenCompleted) {
+            try {
+                return ((CompletionStage<?>) pjp.proceed()).whenComplete((result, throwable) ->
+                        recordCompletionResult(pjp, counted, throwable));
+            } catch (Throwable e) {
+                record(pjp, counted, e.getClass().getSimpleName(), RESULT_TAG_FAILURE_VALUE);
+                throw e;
+            }
+        }
+
         try {
             Object result = pjp.proceed();
             if (!counted.recordFailuresOnly()) {
-                record(pjp, counted, "none", "success");
+                record(pjp, counted, DEFAULT_EXCEPTION_TAG_VALUE, RESULT_TAG_SUCCESS_VALUE);
             }
             return result;
         } catch (Throwable e) {
-            record(pjp, counted, e.getClass().getSimpleName(), "failure");
+            record(pjp, counted, e.getClass().getSimpleName(), RESULT_TAG_FAILURE_VALUE);
             throw e;
         }
+    }
+
+    private void recordCompletionResult(ProceedingJoinPoint pjp, Counted counted, Throwable throwable) {
+
+        if (throwable != null) {
+            String exceptionTagValue = throwable.getCause() == null ?
+                    throwable.getClass().getSimpleName() : throwable.getCause().getClass().getSimpleName();
+            record(pjp, counted, exceptionTagValue, RESULT_TAG_FAILURE_VALUE);
+        } else if (!counted.recordFailuresOnly()) {
+            record(pjp, counted, DEFAULT_EXCEPTION_TAG_VALUE, RESULT_TAG_SUCCESS_VALUE);
+        }
+
     }
 
     private void record(ProceedingJoinPoint pjp, Counted counted, String exception, String result) {
         counter(pjp, counted)
                 .tag(EXCEPTION_TAG, exception)
                 .tag(RESULT_TAG, result)
+                .tags(counted.extraTags())
                 .register(meterRegistry)
                 .increment();
     }

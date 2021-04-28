@@ -1,5 +1,5 @@
 /**
- * Copyright 2018 Pivotal Software, Inc.
+ * Copyright 2018 VMware, Inc.
  * <p>
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,12 +17,10 @@ package io.micrometer.appoptics;
 
 import io.micrometer.core.instrument.*;
 import io.micrometer.core.instrument.config.MeterFilter;
-import io.micrometer.core.instrument.config.MissingRequiredConfigurationException;
 import io.micrometer.core.instrument.distribution.HistogramSnapshot;
 import io.micrometer.core.instrument.step.StepMeterRegistry;
 import io.micrometer.core.instrument.util.MeterPartition;
 import io.micrometer.core.instrument.util.NamedThreadFactory;
-import io.micrometer.core.instrument.util.TimeUtils;
 import io.micrometer.core.ipc.http.HttpSender;
 import io.micrometer.core.ipc.http.HttpUrlConnectionSender;
 import org.slf4j.Logger;
@@ -69,10 +67,6 @@ public class AppOpticsMeterRegistry extends StepMeterRegistry {
     protected AppOpticsMeterRegistry(AppOpticsConfig config, Clock clock, ThreadFactory threadFactory, HttpSender httpClient) {
         super(config, clock);
 
-        if (config.apiToken() == null) {
-            throw new MissingRequiredConfigurationException("apiToken must be set to report metrics to AppOptics");
-        }
-
         config().namingConvention(new AppOpticsNamingConvention());
 
         this.config = config;
@@ -93,14 +87,6 @@ public class AppOpticsMeterRegistry extends StepMeterRegistry {
 
     public static Builder builder(AppOpticsConfig config) {
         return new Builder(config);
-    }
-
-    @Override
-    public void start(ThreadFactory threadFactory) {
-        if (config.enabled()) {
-            logger.info("publishing metrics to appoptics every " + TimeUtils.format(config.step()));
-        }
-        super.start(threadFactory);
     }
 
     @Override
@@ -200,7 +186,6 @@ public class AppOpticsMeterRegistry extends StepMeterRegistry {
         return Optional.of(write(timeGauge.getId(), "timeGauge", Fields.Value.tag(), decimal(value)));
     }
 
-    @Nullable
     private Optional<String> writeCounter(Counter counter) {
         double count = counter.count();
         if (count > 0) {
@@ -211,7 +196,6 @@ public class AppOpticsMeterRegistry extends StepMeterRegistry {
     }
 
     // VisibleForTesting
-    @Nullable
     Optional<String> writeFunctionCounter(FunctionCounter counter) {
         double count = counter.count();
         if (Double.isFinite(count) && count > 0) {
@@ -221,7 +205,6 @@ public class AppOpticsMeterRegistry extends StepMeterRegistry {
         return Optional.empty();
     }
 
-    @Nullable
     private Optional<String> writeFunctionTimer(FunctionTimer timer) {
         double count = timer.count();
         if (count > 0) {
@@ -232,7 +215,6 @@ public class AppOpticsMeterRegistry extends StepMeterRegistry {
         return Optional.empty();
     }
 
-    @Nullable
     private Optional<String> writeTimer(Timer timer) {
         HistogramSnapshot snapshot = timer.takeSnapshot();
         long count = snapshot.count();
@@ -245,7 +227,6 @@ public class AppOpticsMeterRegistry extends StepMeterRegistry {
         return Optional.empty();
     }
 
-    @Nullable
     private Optional<String> writeSummary(DistributionSummary summary) {
         HistogramSnapshot snapshot = summary.takeSnapshot();
         if (snapshot.count() > 0) {
@@ -257,7 +238,6 @@ public class AppOpticsMeterRegistry extends StepMeterRegistry {
         return Optional.empty();
     }
 
-    @Nullable
     private Optional<String> writeLongTaskTimer(LongTaskTimer timer) {
         int activeTasks = timer.activeTasks();
         if (activeTasks > 0) {

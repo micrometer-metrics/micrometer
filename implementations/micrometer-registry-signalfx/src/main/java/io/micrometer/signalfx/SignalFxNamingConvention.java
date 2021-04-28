@@ -1,5 +1,5 @@
 /**
- * Copyright 2017 Pivotal Software, Inc.
+ * Copyright 2017 VMware, Inc.
  * <p>
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -22,17 +22,25 @@ import io.micrometer.core.instrument.config.NamingConvention;
 import io.micrometer.core.instrument.util.StringEscapeUtils;
 import io.micrometer.core.instrument.util.StringUtils;
 import io.micrometer.core.lang.Nullable;
+import io.micrometer.core.util.internal.logging.WarnThenDebugLogger;
 
 /**
- * See https://developers.signalfx.com/reference#section-criteria-for-metric-and-dimension-names-and-values for criteria.
+ * {@link NamingConvention} for SignalFx.
+ *
+ * See https://developers.signalfx.com/metrics/data_ingest_overview.html#_criteria_for_metric_and_dimension_names_and_values
  *
  * @author Jon Schneider
+ * @author Johnny Lim
  */
 public class SignalFxNamingConvention implements NamingConvention {
+
+    private static final WarnThenDebugLogger logger = new WarnThenDebugLogger(SignalFxNamingConvention.class);
 
     private static final Pattern START_UNDERSCORE_PATTERN = Pattern.compile("^_");
     private static final Pattern SF_PATTERN = Pattern.compile("^sf_");
     private static final Pattern START_LETTERS_PATTERN = Pattern.compile("^[a-zA-Z].*");
+    private static final Pattern PATTERN_TAG_KEY_BLACKLISTED_CHARS = Pattern.compile("[^\\w_\\-]");
+    private static final Pattern PATTERN_TAG_KEY_BLACKLISTED_PREFIX = Pattern.compile("^(aws|gcp|azure)_.*");
 
     private static final int NAME_MAX_LENGTH = 256;
     private static final int TAG_VALUE_MAX_LENGTH = 256;
@@ -66,8 +74,15 @@ public class SignalFxNamingConvention implements NamingConvention {
         conventionKey = START_UNDERSCORE_PATTERN.matcher(conventionKey).replaceAll(""); // 2
         conventionKey = SF_PATTERN.matcher(conventionKey).replaceAll(""); // 2
 
+        conventionKey = PATTERN_TAG_KEY_BLACKLISTED_CHARS.matcher(conventionKey).replaceAll("_");
         if (!START_LETTERS_PATTERN.matcher(conventionKey).matches()) { // 3
             conventionKey = "a" + conventionKey;
+        }
+        if (PATTERN_TAG_KEY_BLACKLISTED_PREFIX.matcher(conventionKey).matches()) {
+            logger.log("'" + conventionKey + "' (original name: '" + key + "') is not a valid tag key. "
+                    + "Must not start with any of these prefixes: aws_, gcp_, or azure_. "
+                    + "Please rename it to conform to the constraints. "
+                    + "If it comes from a third party, please use MeterFilter to rename it.");
         }
         return StringUtils.truncate(conventionKey, KEY_MAX_LENGTH); // 1
     }

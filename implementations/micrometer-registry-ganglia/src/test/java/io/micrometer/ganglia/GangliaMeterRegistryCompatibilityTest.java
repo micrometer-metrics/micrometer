@@ -1,5 +1,5 @@
 /**
- * Copyright 2017 Pivotal Software, Inc.
+ * Copyright 2017 VMware, Inc.
  * <p>
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,7 +17,6 @@ package io.micrometer.ganglia;
 
 import io.micrometer.core.instrument.MeterRegistry;
 import io.micrometer.core.instrument.MockClock;
-import io.micrometer.core.instrument.util.HierarchicalNameMapper;
 import io.micrometer.core.lang.Nullable;
 import io.micrometer.core.tck.MeterRegistryCompatibilityKit;
 
@@ -26,7 +25,7 @@ import java.time.Duration;
 class GangliaMeterRegistryCompatibilityTest extends MeterRegistryCompatibilityKit {
     @Override
     public MeterRegistry registry() {
-        return new GangliaMeterRegistry(new GangliaConfig() {
+        return GangliaMeterRegistry.builder(new GangliaConfig() {
             @Override
             public boolean enabled() {
                 return false;
@@ -37,7 +36,7 @@ class GangliaMeterRegistryCompatibilityTest extends MeterRegistryCompatibilityKi
             public String get(String key) {
                 return null;
             }
-        }, new MockClock(), HierarchicalNameMapper.DEFAULT);
+        }).clock(new MockClock()).build();
     }
 
     @Override

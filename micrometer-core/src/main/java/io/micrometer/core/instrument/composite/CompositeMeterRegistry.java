@@ -1,5 +1,5 @@
 /**
- * Copyright 2017 Pivotal Software, Inc.
+ * Copyright 2017 VMware, Inc.
  * <p>
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -67,7 +67,7 @@ public class CompositeMeterRegistry extends MeterRegistry {
                 })
                 .onMeterRemoved(m -> {
                     if (m instanceof CompositeMeter) { // should always be
-                        lock(registriesLock, () -> nonCompositeDescendants.forEach(r -> r.remove(m)));
+                        lock(registriesLock, () -> nonCompositeDescendants.forEach(r -> r.removeByPreFilterId(m.getId())));
                     }
                 });
 
@@ -90,8 +90,8 @@ public class CompositeMeterRegistry extends MeterRegistry {
     }
 
     @Override
-    protected LongTaskTimer newLongTaskTimer(Meter.Id id) {
-        return new CompositeLongTaskTimer(id);
+    protected LongTaskTimer newLongTaskTimer(Meter.Id id, DistributionStatisticConfig distributionStatisticConfig) {
+        return new CompositeLongTaskTimer(id, distributionStatisticConfig);
     }
 
     @Override

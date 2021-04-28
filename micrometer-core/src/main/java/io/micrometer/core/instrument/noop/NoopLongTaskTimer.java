@@ -1,5 +1,5 @@
 /**
- * Copyright 2017 Pivotal Software, Inc.
+ * Copyright 2017 VMware, Inc.
  * <p>
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,6 +16,7 @@
 package io.micrometer.core.instrument.noop;
 
 import io.micrometer.core.instrument.LongTaskTimer;
+import io.micrometer.core.instrument.distribution.HistogramSnapshot;
 
 import java.util.concurrent.TimeUnit;
 
@@ -26,17 +27,7 @@ public class NoopLongTaskTimer extends NoopMeter implements LongTaskTimer {
 
     @Override
     public Sample start() {
-        return new Sample(this, 0);
-    }
-
-    @Override
-    public long stop(long task) {
-        return -1;
-    }
-
-    @Override
-    public double duration(long task, TimeUnit unit) {
-        return -1;
+        return new NoopSample();
     }
 
     @Override
@@ -47,5 +38,32 @@ public class NoopLongTaskTimer extends NoopMeter implements LongTaskTimer {
     @Override
     public int activeTasks() {
         return 0;
+    }
+
+    @Override
+    public double max(TimeUnit unit) {
+        return 0;
+    }
+
+    @Override
+    public HistogramSnapshot takeSnapshot() {
+        return HistogramSnapshot.empty(0, 0, 0);
+    }
+
+    @Override
+    public TimeUnit baseTimeUnit() {
+        return TimeUnit.SECONDS;
+    }
+
+    static class NoopSample extends Sample {
+        @Override
+        public long stop() {
+            return 0;
+        }
+
+        @Override
+        public double duration(TimeUnit unit) {
+            return 0;
+        }
     }
 }

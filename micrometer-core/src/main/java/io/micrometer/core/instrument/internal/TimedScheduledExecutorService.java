@@ -1,11 +1,11 @@
 /**
- * Copyright 2019 Pivotal Software, Inc.
+ * Copyright 2019 VMware, Inc.
  * <p>
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  * <p>
- * http://www.apache.org/licenses/LICENSE-2.0
+ * https://www.apache.org/licenses/LICENSE-2.0
  * <p>
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -24,10 +24,11 @@ import java.util.concurrent.*;
 import static java.util.stream.Collectors.toList;
 
 /**
- * A {@link ScheduledExecutorService} that is timed.
+ * A {@link ScheduledExecutorService} that is timed. This class is for internal use.
  *
  * @author Sebastian Lövdahl
  * @since 1.3.0
+ * @see io.micrometer.core.instrument.binder.jvm.ExecutorServiceMetrics
  */
 public class TimedScheduledExecutorService implements ScheduledExecutorService {
     private final MeterRegistry registry;
@@ -37,14 +38,16 @@ public class TimedScheduledExecutorService implements ScheduledExecutorService {
     private final Counter scheduledOnce;
     private final Counter scheduledRepetitively;
 
-    public TimedScheduledExecutorService(MeterRegistry registry, ScheduledExecutorService delegate, String executorServiceName, Iterable<Tag> tags) {
+    public TimedScheduledExecutorService(MeterRegistry registry, ScheduledExecutorService delegate,
+                                         String executorServiceName, String metricPrefix,
+                                         Iterable<Tag> tags) {
         this.registry = registry;
         this.delegate = delegate;
         Tags finalTags = Tags.concat(tags, "name", executorServiceName);
-        this.executionTimer = registry.timer("executor", finalTags);
-        this.idleTimer = registry.timer("executor.idle", finalTags);
-        this.scheduledOnce = registry.counter("executor.scheduled.once", finalTags);
-        this.scheduledRepetitively = registry.counter("executor.scheduled.repetitively", finalTags);
+        this.executionTimer = registry.timer(metricPrefix + "executor", finalTags);
+        this.idleTimer = registry.timer(metricPrefix + "executor.idle", finalTags);
+        this.scheduledOnce = registry.counter(metricPrefix + "executor.scheduled.once", finalTags);
+        this.scheduledRepetitively = registry.counter(metricPrefix + "executor.scheduled.repetitively", finalTags);
     }
 
     @Override

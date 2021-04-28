@@ -1,5 +1,5 @@
 /**
- * Copyright 2017 Pivotal Software, Inc.
+ * Copyright 2017 VMware, Inc.
  * <p>
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,17 +17,32 @@ package io.micrometer.core.instrument.binder.system;
 
 import io.micrometer.core.instrument.MeterRegistry;
 import io.micrometer.core.instrument.simple.SimpleMeterRegistry;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
 import static org.assertj.core.api.AssertionsForClassTypes.assertThat;
 import static org.junit.jupiter.api.Assumptions.assumeTrue;
 
+/**
+ * Tests for {@link ProcessorMetrics}.
+ *
+ * @author Jon Schneider
+ * @author Michael Weirauch
+ * @author Clint Checketts
+ * @author Tommy Ludwig
+ * @author Johnny Lim
+ */
 class ProcessorMetricsTest {
+
+    MeterRegistry registry = new SimpleMeterRegistry();
+
+    @BeforeEach
+    void setup() {
+        new ProcessorMetrics().bindTo(registry);
+    }
+
     @Test
     void cpuMetrics() {
-        MeterRegistry registry = new SimpleMeterRegistry();
-        new ProcessorMetrics().bindTo(registry);
-
         assertThat(registry.get("system.cpu.count").gauge().value()).isGreaterThan(0);
         if (System.getProperty("os.name").toLowerCase().contains("win")) {
             assertThat(registry.find("system.load.average.1m").gauge())
@@ -39,10 +54,7 @@ class ProcessorMetricsTest {
 
     @Test
     void hotspotCpuMetrics() {
-        assumeTrue(classExists("com.sun.management.OperatingSystemMXBean"));
-
-        MeterRegistry registry = new SimpleMeterRegistry();
-        new ProcessorMetrics().bindTo(registry);
+        assumeTrue(!isOpenJ9());
 
         assertThat(registry.get("system.cpu.usage").gauge().value()).isGreaterThanOrEqualTo(0);
         assertThat(registry.get("process.cpu.usage").gauge().value()).isGreaterThanOrEqualTo(0);
@@ -50,20 +62,21 @@ class ProcessorMetricsTest {
 
     @Test
     void openJ9CpuMetrics() {
-        assumeTrue(classExists("com.ibm.lang.management.OperatingSystemMXBean"));
-
-        MeterRegistry registry = new SimpleMeterRegistry();
-        new ProcessorMetrics().bindTo(registry);
+        assumeTrue(isOpenJ9());
 
         /*
-         * We can't assert on values because these methods are documented to return "-1"
-         * on the first call and a positive value - if supported - on subsequent calls.
+         * These methods are documented to return "-1" on the first call
+         * and a positive value - if supported - on subsequent calls.
          * This holds true for "system.cpu.usage" but not for "process.cpu.usage". The latter
          * needs some milliseconds of sleep before it actually returns a positive value
          * on a supported system. Thread.sleep() is flaky, though.
          */
-        registry.get("system.cpu.usage").gauge();
-        registry.get("process.cpu.usage").gauge();
+        assertThat(registry.get("system.cpu.usage").gauge().value()).isEqualTo(-1);
+        assertThat(registry.get("process.cpu.usage").gauge().value()).isEqualTo(-1);
+    }
+
+    private boolean isOpenJ9() {
+        return classExists("com.ibm.lang.management.OperatingSystemMXBean");
     }
 
     private boolean classExists(String className) {

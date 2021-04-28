@@ -1,0 +1,93 @@
+def VERSIONS = [
+        'ch.qos.logback:logback-classic:1.2.+',
+        'colt:colt:1.2.0',
+        'com.amazonaws:aws-java-sdk-cloudwatch:latest.release',
+        'com.fasterxml.jackson.core:jackson-databind:latest.release',
+        'com.github.ben-manes.caffeine:caffeine:2.+',
+        'com.github.charithe:kafka-junit:latest.release',
+        'com.github.tomakehurst:wiremock-jre8:latest.release',
+        'com.google.cloud:google-cloud-monitoring:latest.release',
+        'com.google.dagger:dagger:2.11',
+        'com.google.dagger:dagger-compiler:2.11',
+        'com.google.guava:guava:latest.release',
+        'com.google.inject:guice:4.1.0',
+        'com.hazelcast:hazelcast:4.+',
+        'com.h2database:h2:latest.release',
+        'com.microsoft.azure:applicationinsights-core:latest.release',
+        // metrics are better with https://github.com/Netflix/Hystrix/pull/1568 introduced
+        // in hystrix 1.5.12, but Netflix re-released 1.5.11 as 1.5.18 late in 2018.
+        // <=1.5.11 or 1.5.18 doesn't break with Micrometer, but open metrics won't be correct necessarily.
+        'com.netflix.hystrix:hystrix-core:1.5.12',
+        'com.netflix.spectator:spectator-reg-atlas:latest.release',
+        'com.newrelic.agent.java:newrelic-api:5.+',
+        'com.signalfx.public:signalfx-java:latest.release',
+        'com.squareup.okhttp3:okhttp:latest.release',
+        'com.wavefront:wavefront-sdk-java:latest.release',
+        'de.flapdoodle.embed:de.flapdoodle.embed.mongo:latest.release',
+        'io.dropwizard.metrics:metrics-core:4.0.+',
+        'io.dropwizard.metrics:metrics-graphite:4.1.+',
+        'io.dropwizard.metrics:metrics-jmx:4.0.+',
+        'info.ganglia.gmetric4j:gmetric4j:latest.release',
+        'io.projectreactor:reactor-core:3.3.+',
+        'io.projectreactor:reactor-test:3.3.+',
+        'io.projectreactor.netty:reactor-netty:0.9.+',
+        'io.prometheus:simpleclient_common:latest.release',
+        'io.prometheus:simpleclient_pushgateway:latest.release',
+        'javax.cache:cache-api:latest.release',
+        'javax.inject:javax.inject:1',
+        'javax.xml.bind:jaxb-api:2.3.+',
+        'junit:junit:4.12',
+        // locked to this version due to ehcache-parent 2.25 not being on central
+        'net.sf.ehcache:ehcache:2.10.6',
+        'org.apache.httpcomponents:httpasyncclient:latest.release',
+        'org.apache.httpcomponents:httpclient:latest.release',
+        'org.apache.kafka:kafka-clients:latest.release',
+        'org.apache.kafka:kafka-streams:latest.release',
+        'org.apache.logging.log4j:log4j-core:2.+',
+        'org.apache.tomcat.embed:tomcat-embed-core:8.+',
+        'org.aspectj:aspectjweaver:1.8.+',
+        'org.assertj:assertj-core:latest.release',
+        'org.awaitility:awaitility:latest.release',
+        'org.eclipse.jetty:jetty-client:9.+',
+        'org.eclipse.jetty:jetty-server:9.+',
+        'org.ehcache:ehcache:latest.release',
+        'org.glassfish.jersey.core:jersey-server:2.+',
+        'org.glassfish.jersey.inject:jersey-hk2:2.+',
+        'org.glassfish.jersey.test-framework.providers:jersey-test-framework-provider-inmemory:2.+',
+        'org.hdrhistogram:HdrHistogram:latest.release',
+        'org.hibernate:hibernate-entitymanager:latest.release',
+        'org.hsqldb:hsqldb:latest.release',
+        'org.jooq:jooq:latest.release',
+        'org.jsr107.ri:cache-ri-impl:1.0.0',
+        'org.junit.jupiter:junit-jupiter:5.7.+',
+        'org.junit.platform:junit-platform-launcher:1.7.+',
+        'org.junit.vintage:junit-vintage-engine:5.7.+',
+        'org.latencyutils:LatencyUtils:latest.release',
+        'org.mockito:mockito-core:latest.release',
+        'org.mongodb:mongo-java-driver:latest.release',
+        'org.slf4j:slf4j-api:1.7.+',
+        'org.springframework:spring-context:4.+',
+        'org.springframework:spring-test:4.+',
+        'org.testcontainers:junit-jupiter:latest.release',
+        'org.testcontainers:kafka:latest.release',
+        'org.testcontainers:testcontainers:latest.release',
+        'ru.lanwen.wiremock:wiremock-junit5:latest.release',
+        'software.amazon.awssdk:cloudwatch:latest.release'
+]
+
+subprojects {
+  plugins.withId('java-library') {
+    dependencies {
+      constraints {
+        // Direct dependencies
+        VERSIONS.each {version->
+          // java-library plugin has three root configurations, so we apply constraints too all of
+          // them so they all can use the managed versions.
+          api version
+          compileOnly version
+          runtimeOnly version
+        }
+      }
+    }
+  }
+}

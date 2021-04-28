@@ -1,5 +1,5 @@
 /**
- * Copyright 2017 Pivotal Software, Inc.
+ * Copyright 2017 VMware, Inc.
  * <p>
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -31,7 +31,7 @@ public class GraphiteMeterRegistry extends DropwizardMeterRegistry {
     private final GraphiteReporter reporter;
 
     public GraphiteMeterRegistry(GraphiteConfig config, Clock clock) {
-        this(config, clock, new GraphiteHierarchicalNameMapper(config.tagsAsPrefix()));
+        this(config, clock, config.graphiteTagsEnabled() ? new GraphiteDimensionalNameMapper() : new GraphiteHierarchicalNameMapper(config.tagsAsPrefix()));
     }
 
     public GraphiteMeterRegistry(GraphiteConfig config, Clock clock, HierarchicalNameMapper nameMapper) {
@@ -48,7 +48,7 @@ public class GraphiteMeterRegistry extends DropwizardMeterRegistry {
         super(config, metricRegistry, nameMapper, clock);
 
         this.config = config;
-        config().namingConvention(new GraphiteNamingConvention());
+        config().namingConvention(config.graphiteTagsEnabled() ? new GraphiteDimensionalNamingConvention() : new GraphiteHierarchicalNamingConvention());
         this.reporter = reporter;
 
         start();
@@ -90,9 +90,6 @@ public class GraphiteMeterRegistry extends DropwizardMeterRegistry {
     public void close() {
         if (config.enabled()) {
             reporter.report();
-        }
-        stop();
-        if (config.enabled()) {
             reporter.close();
         }
         super.close();

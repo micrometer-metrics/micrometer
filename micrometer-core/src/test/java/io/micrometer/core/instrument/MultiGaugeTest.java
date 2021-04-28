@@ -1,5 +1,5 @@
 /**
- * Copyright 2018 Pivotal Software, Inc.
+ * Copyright 2018 VMware, Inc.
  * <p>
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,12 +16,17 @@
 package io.micrometer.core.instrument;
 
 import io.micrometer.core.instrument.MultiGauge.Row;
+import io.micrometer.core.instrument.config.MeterFilter;
 import io.micrometer.core.instrument.simple.SimpleMeterRegistry;
 import org.junit.jupiter.api.Test;
 
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
+import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.atomic.AtomicInteger;
+import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 import static java.util.stream.Collectors.toList;
@@ -81,6 +86,73 @@ class MultiGaugeTest {
         System.gc();
 
         assertThat(registry.get("colors").tag("color", "red").gauge().value()).isEqualTo(1);
+    }
+
+    @Test
+    void overwrite() {
+        testOverwrite();
+    }
+
+    private void testOverwrite() {
+        testOverwrite("my.multi.gauge");
+    }
+
+    private void testOverwrite(String mappedMeterName) {
+        String testKey1 = "key1";
+        AtomicInteger testValue1 = new AtomicInteger(1);
+        String testKey2 = "key2";
+        AtomicInteger testValue2 = new AtomicInteger(2);
+
+        Map<String, AtomicInteger> map = new ConcurrentHashMap<>();
+        map.put(testKey1, testValue1);
+        map.put(testKey2, testValue2);
+
+        String meterName = "my.multi.gauge";
+        String testTagKey = "tag1";
+
+        MultiGauge gauge = MultiGauge.builder(meterName).register(registry);
+
+        List<Row<?>> rows = map.entrySet().stream()
+                .map(row -> Row.of(Tags.of(testTagKey, row.getKey()), row.getValue()))
+                .collect(Collectors.toList());
+        gauge.register(rows, true);
+        assertThat(registry.getMeters()).hasSize(2);
+        assertThat(registry.get(mappedMeterName).tag(testTagKey, testKey1).gauge().value())
+                .isEqualTo(testValue1.intValue());
+        assertThat(registry.get(mappedMeterName).tag(testTagKey, testKey2).gauge().value())
+                .isEqualTo(testValue2.intValue());
+
+        testValue1 = new AtomicInteger(100);
+        map.put(testKey1, testValue1);
+        map.remove(testKey2);
+
+        rows = map.entrySet().stream()
+                .map(t -> Row.of(Tags.of(testTagKey, t.getKey()), t.getValue()))
+                .collect(Collectors.toList());
+        gauge.register(rows, true);
+
+        assertThat(registry.getMeters()).hasSize(1);
+        assertThat(registry.get(mappedMeterName).tag(testTagKey, testKey1).gauge().value())
+                .isEqualTo(testValue1.intValue());
+    }
+
+    @Test
+    void overwriteWithCommonTags() {
+        registry.config().commonTags("common1", "1");
+
+        testOverwrite();
+    }
+
+    @Test
+    void overwriteWithPrefix() {
+        registry.config().meterFilter(new MeterFilter() {
+            @Override
+            public Meter.Id map(Meter.Id id) {
+                return id.withName("prefix." + id.getName());
+            }
+        });
+
+        testOverwrite("prefix.my.multi.gauge");
     }
 
     private static class Color {

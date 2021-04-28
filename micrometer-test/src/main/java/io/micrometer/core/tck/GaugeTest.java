@@ -1,5 +1,5 @@
 /**
- * Copyright 2017 Pivotal Software, Inc.
+ * Copyright 2017 VMware, Inc.
  * <p>
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -88,7 +88,7 @@ interface GaugeTest {
 
         System.gc();
 
-        assertThat(registry.get("weak.ref").gauge().value()).isEqualTo(Double.NaN);
+        assertThat(registry.get("weak.ref").gauge().value()).isNaN();
         assertThat(registry.get("strong.ref").gauge().value()).isEqualTo(1.0);
     }
 }

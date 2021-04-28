@@ -1,5 +1,5 @@
 /**
- * Copyright 2017 Pivotal Software, Inc.
+ * Copyright 2017 VMware, Inc.
  * <p>
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -73,14 +73,6 @@ public class InfluxMeterRegistry extends StepMeterRegistry {
 
     public static Builder builder(InfluxConfig config) {
         return new Builder(config);
-    }
-
-    @Override
-    public void start(ThreadFactory threadFactory) {
-        if (config.enabled()) {
-            logger.info("publishing metrics to influx every " + TimeUtils.format(config.step()));
-        }
-        super.start(threadFactory);
     }
 
     private void createDatabaseIfNecessary() {
@@ -190,14 +182,20 @@ public class InfluxMeterRegistry extends StepMeterRegistry {
         return Stream.empty();
     }
 
-    private Stream<String> writeFunctionTimer(FunctionTimer timer) {
-        Stream<Field> fields = Stream.of(
-                new Field("sum", timer.totalTime(getBaseTimeUnit())),
-                new Field("count", timer.count()),
-                new Field("mean", timer.mean(getBaseTimeUnit()))
-        );
-
-        return Stream.of(influxLineProtocol(timer.getId(), "histogram", fields));
+    // VisibleForTesting
+    Stream<String> writeFunctionTimer(FunctionTimer timer) {
+        double sum = timer.totalTime(getBaseTimeUnit());
+        if (Double.isFinite(sum)) {
+            Stream.Builder<Field> builder = Stream.builder();
+            builder.add(new Field("sum", sum));
+            builder.add(new Field("count", timer.count()));
+            double mean = timer.mean(getBaseTimeUnit());
+            if (Double.isFinite(mean)) {
+                builder.add(new Field("mean", mean));
+            }
+            return Stream.of(influxLineProtocol(timer.getId(), "histogram", builder.build()));
+        }
+        return Stream.empty();
     }
 
     private Stream<String> writeTimer(Timer timer) {
@@ -272,11 +270,15 @@ public class InfluxMeterRegistry extends StepMeterRegistry {
         }
     }
 
-    class Field {
+    static class Field {
         final String key;
         final double value;
 
         Field(String key, double value) {
+            // `time` cannot be a field key or tag key
+            if (key.equals("time")) {
+                throw new IllegalArgumentException("'time' is an invalid field key in InfluxDB");
+            }
             this.key = key;
             this.value = value;
         }

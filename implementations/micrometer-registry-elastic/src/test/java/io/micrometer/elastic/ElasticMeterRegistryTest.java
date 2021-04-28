@@ -1,5 +1,5 @@
 /**
- * Copyright 2017 Pivotal Software, Inc.
+ * Copyright 2017 VMware, Inc.
  * <p>
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -35,20 +35,10 @@ import static org.assertj.core.api.Assertions.assertThat;
  * @author Johnny Lim
  */
 class ElasticMeterRegistryTest {
-    private MockClock clock = new MockClock();
-    private ElasticConfig config = new ElasticConfig() {
-        @Override
-        public String get(String key) {
-            return null;
-        }
+    private final MockClock clock = new MockClock();
+    private final ElasticConfig config = ElasticConfig.DEFAULT;
 
-        @Override
-        public boolean enabled() {
-            return false;
-        }
-    };
-
-    private ElasticMeterRegistry registry = new ElasticMeterRegistry(config, clock);
+    private final ElasticMeterRegistry registry = new ElasticMeterRegistry(config, clock);
 
     @Test
     void timestampFormat() {
@@ -83,6 +73,13 @@ class ElasticMeterRegistryTest {
         FunctionCounter counter = FunctionCounter.builder("myCounter", Double.NaN, Number::doubleValue).register(registry);
         clock.add(config.step());
         assertThat(registry.writeFunctionCounter(counter)).isEmpty();
+    }
+
+    @Test
+    void nanFunctionTimerShouldNotBeWritten() {
+        FunctionTimer timer = FunctionTimer.builder("myFunctionTimer", Double.NaN, Number::longValue, Number::doubleValue, TimeUnit.MILLISECONDS).register(registry);
+        clock.add(config.step());
+        assertThat(registry.writeFunctionTimer(timer)).isEmpty();
     }
 
     @Test
@@ -290,5 +287,15 @@ class ElasticMeterRegistryTest {
         String responseBody = "{\"status\":200,\"name\":\"Sematext-Logsene\",\"cluster_name\":\"elasticsearch\",\"cluster_uuid\":\"anything\",\"version\":{\"number\":\"5.3.0\",\"build_hash\":\"3adb13b\",\"build_date\":\"2017-03-23T03:31:50.652Z\",\"build_snapshot\":false,\"lucene_version\":\"6.4.1\"},\"tagline\":\"You Know, for Search\"}";
         assertThat(ElasticMeterRegistry.getMajorVersion(responseBody)).isEqualTo(5);
     }
-
+    
+    @Test
+    void canExtendElasticMeterRegistry() {
+        ElasticMeterRegistry registry = new ElasticMeterRegistry(config, clock) {
+            @Override
+            public String indexName() {
+                return "my-metrics";
+            }
+        };
+        assertThat(registry.indexName()).isEqualTo("my-metrics");
+    }
 }

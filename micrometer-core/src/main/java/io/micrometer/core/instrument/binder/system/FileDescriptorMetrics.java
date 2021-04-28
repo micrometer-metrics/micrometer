@@ -1,5 +1,5 @@
 /**
- * Copyright 2017 Pivotal Software, Inc.
+ * Copyright 2017 VMware, Inc.
  * <p>
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,6 +18,7 @@ package io.micrometer.core.instrument.binder.system;
 import io.micrometer.core.instrument.Gauge;
 import io.micrometer.core.instrument.MeterRegistry;
 import io.micrometer.core.instrument.Tag;
+import io.micrometer.core.instrument.binder.BaseUnits;
 import io.micrometer.core.instrument.binder.MeterBinder;
 import io.micrometer.core.lang.NonNullApi;
 import io.micrometer.core.lang.NonNullFields;
@@ -92,7 +93,7 @@ public class FileDescriptorMetrics implements MeterBinder {
             Gauge.builder("process.files.open", osBean, x -> invoke(openFilesMethod))
                     .tags(tags)
                     .description("The open file descriptor count")
-                    .baseUnit("files")
+                    .baseUnit(BaseUnits.FILES)
                     .register(registry);
         }
 
@@ -100,7 +101,7 @@ public class FileDescriptorMetrics implements MeterBinder {
             Gauge.builder("process.files.max", osBean, x -> invoke(maxFilesMethod))
                     .tags(tags)
                     .description("The maximum file descriptor count")
-                    .baseUnit("files")
+                    .baseUnit(BaseUnits.FILES)
                     .register(registry);
         }
     }

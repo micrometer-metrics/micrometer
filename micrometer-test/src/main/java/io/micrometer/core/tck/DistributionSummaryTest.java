@@ -1,5 +1,5 @@
 /**
- * Copyright 2017 Pivotal Software, Inc.
+ * Copyright 2017 VMware, Inc.
  * <p>
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -95,18 +95,18 @@ interface DistributionSummaryTest {
 
         s.record(1);
         assertThat(s.percentile(1)).isEqualTo(1, Offset.offset(0.3));
-        assertThat(s.percentile(0.5)).isEqualTo(Double.NaN);
+        assertThat(s.percentile(0.5)).isNaN();
     }
 
     @Deprecated
     @Test
     default void histogramCounts(MeterRegistry registry) {
         DistributionSummary s = DistributionSummary.builder("my.summmary")
-                .sla(1)
+                .serviceLevelObjectives(1.0)
                 .register(registry);
 
         s.record(1);
         assertThat(s.histogramCountAtValue(1)).isEqualTo(1);
-        assertThat(s.histogramCountAtValue(2)).isEqualTo(Double.NaN);
+        assertThat(s.histogramCountAtValue(2)).isNaN();
     }
 }

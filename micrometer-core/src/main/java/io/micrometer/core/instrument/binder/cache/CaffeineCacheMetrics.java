@@ -1,5 +1,5 @@
 /**
- * Copyright 2017 Pivotal Software, Inc.
+ * Copyright 2017 VMware, Inc.
  * <p>
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -144,7 +144,7 @@ public class CaffeineCacheMetrics extends CacheMeterBinder {
 
     @Override
     protected void bindImplementationSpecificMetrics(MeterRegistry registry) {
-        Gauge.builder("cache.eviction.weight", cache, c -> c.stats().evictionWeight())
+        FunctionCounter.builder("cache.eviction.weight", cache, c -> c.stats().evictionWeight())
                 .tags(getTagsWithCacheName())
                 .description("The sum of weights of evicted entries. This total does not include manual invalidations.")
                 .register(registry);

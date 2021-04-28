@@ -1,5 +1,5 @@
 /**
- * Copyright 2018 Pivotal Software, Inc.
+ * Copyright 2018 VMware, Inc.
  * <p>
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -52,7 +52,7 @@ import static java.util.stream.Collectors.joining;
  */
 @Incubating(since = "1.1.0")
 public class LoggingMeterRegistry extends StepMeterRegistry {
-    private final static InternalLogger log = InternalLoggerFactory.getInstance(LoggingMeterRegistry.class);
+    private static final InternalLogger log = InternalLoggerFactory.getInstance(LoggingMeterRegistry.class);
 
     private final LoggingRegistryConfig config;
     private final Consumer<String> loggingSink;
@@ -79,14 +79,6 @@ public class LoggingMeterRegistry extends StepMeterRegistry {
         return (meter) -> getConventionName(meter.getId()) + getConventionTags(meter.getId()).stream()
                 .map(t -> t.getKey() + "=" + t.getValue())
                 .collect(joining(",", "{", "}"));
-    }
-
-    @Override
-    public void start(ThreadFactory threadFactory) {
-        if (config.enabled()) {
-            loggingSink.accept("publishing metrics to logs every " + TimeUtils.format(config.step()));
-        }
-        super.start(threadFactory);
     }
 
     @Override

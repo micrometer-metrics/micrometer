@@ -1,5 +1,5 @@
 /**
- * Copyright 2018 Pivotal Software, Inc.
+ * Copyright 2018 VMware, Inc.
  * <p>
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -66,7 +66,7 @@ public class MultiGauge {
                         boolean previouslyDefined = oldRows.contains(rowId);
 
                         if (overwrite && previouslyDefined) {
-                            registry.remove(rowId);
+                            registry.removeByPreFilterId(rowId);
                         }
 
                         if (overwrite || !previouslyDefined) {
@@ -81,7 +81,7 @@ public class MultiGauge {
 
             for (Meter.Id oldRow : oldRows) {
                 if (!newRows.contains(oldRow))
-                    registry.remove(oldRow);
+                    registry.removeByPreFilterId(oldRow);
             }
 
             return newRows;

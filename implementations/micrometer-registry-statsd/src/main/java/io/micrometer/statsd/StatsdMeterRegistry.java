@@ -1,5 +1,5 @@
 /**
- * Copyright 2017 Pivotal Software, Inc.
+ * Copyright 2017 VMware, Inc.
  * <p>
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -24,34 +24,38 @@ import io.micrometer.core.instrument.distribution.pause.PauseDetector;
 import io.micrometer.core.instrument.internal.DefaultMeter;
 import io.micrometer.core.instrument.util.HierarchicalNameMapper;
 import io.micrometer.core.lang.Nullable;
+import io.micrometer.core.util.internal.logging.WarnThenDebugLogger;
 import io.micrometer.statsd.internal.*;
-import org.reactivestreams.Processor;
+import io.netty.util.AttributeKey;
 import org.reactivestreams.Publisher;
 import org.reactivestreams.Subscriber;
 import org.reactivestreams.Subscription;
 import reactor.core.Disposable;
 import reactor.core.Disposables;
+import reactor.core.publisher.DirectProcessor;
 import reactor.core.publisher.Flux;
-import reactor.core.publisher.UnicastProcessor;
-import reactor.netty.udp.UdpClient;
+import reactor.core.publisher.FluxSink;
+import reactor.core.publisher.Mono;
+import reactor.netty.Connection;
 import reactor.netty.tcp.TcpClient;
-import reactor.util.concurrent.Queues;
+import reactor.netty.udp.UdpClient;
+import reactor.util.context.Context;
+import reactor.util.retry.Retry;
 
-import java.lang.reflect.InvocationTargetException;
+import java.net.PortUnreachableException;
+import java.time.Duration;
 import java.util.Arrays;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
-import java.util.function.Consumer;
-import java.util.function.Function;
-import java.util.function.ToDoubleFunction;
-import java.util.function.ToLongFunction;
-import java.util.stream.LongStream;
+import java.util.concurrent.atomic.AtomicReference;
+import java.util.function.*;
+import java.util.stream.DoubleStream;
 
 /**
  * {@link MeterRegistry} for StatsD.
- *
+ * <p>
  * The following StatsD line protocols are supported:
  *
  * <ul>
@@ -60,23 +64,24 @@ import java.util.stream.LongStream;
  *   <li>Telegraf</li>
  *   <li>Sysdig</li>
  * </ul>
- *
+ * <p>
  * See {@link StatsdFlavor} for more details.
  *
  * @author Jon Schneider
  * @author Johnny Lim
+ * @author Tommy Ludwig
  * @since 1.0.0
  */
 public class StatsdMeterRegistry extends MeterRegistry {
-
-    private static final Processor<String, String> NOOP_PROCESSOR = new NoopProcessor();
+    private static final WarnThenDebugLogger warnThenDebugLogger = new WarnThenDebugLogger(StatsdMeterRegistry.class);
 
     private final StatsdConfig statsdConfig;
     private final HierarchicalNameMapper nameMapper;
     private final Map<Meter.Id, StatsdPollable> pollableMeters = new ConcurrentHashMap<>();
     private final AtomicBoolean started = new AtomicBoolean(false);
-    Processor<String, String> processor = NOOP_PROCESSOR;
-    private Disposable.Swap client = Disposables.swap();
+    DirectProcessor<String> processor = DirectProcessor.create();
+    FluxSink<String> fluxSink = new NoopFluxSink();
+    Disposable.Swap statsdConnection = Disposables.swap();
     private Disposable.Swap meterPoller = Disposables.swap();
 
     @Nullable
@@ -84,6 +89,8 @@ public class StatsdMeterRegistry extends MeterRegistry {
 
     @Nullable
     private Consumer<String> lineSink;
+
+    private static final AttributeKey<Boolean> CONNECTION_DISPOSED = AttributeKey.valueOf("doOnDisconnectCalled");
 
     public StatsdMeterRegistry(StatsdConfig config, Clock clock) {
         this(config, HierarchicalNameMapper.DEFAULT, clock);
@@ -109,31 +116,41 @@ public class StatsdMeterRegistry extends MeterRegistry {
                                 @Nullable Consumer<String> lineSink) {
         super(clock);
 
+        config.requireValid();
+
         this.statsdConfig = config;
         this.nameMapper = nameMapper;
         this.lineBuilderFunction = lineBuilderFunction;
         this.lineSink = lineSink;
+
         config().namingConvention(namingConvention);
 
-        config().onMeterRemoved(meter -> {
-            //noinspection SuspiciousMethodCalls
-            meter.use(
-                this::removePollableMeter,
-                c -> ((StatsdCounter) c).shutdown(),
-                t -> ((StatsdTimer) t).shutdown(),
-                d -> ((StatsdDistributionSummary) d).shutdown(),
-                this::removePollableMeter,
-                this::removePollableMeter,
-                this::removePollableMeter,
-                this::removePollableMeter,
-                m -> {
-                    for (Measurement measurement : m.measure()) {
-                        pollableMeters.remove(m.getId().withTag(measurement.getStatistic()));
-                    }
-                });
-        });
+        config().onMeterRemoved(meter ->
+                meter.use(
+                        this::removePollableMeter,
+                        c -> ((StatsdCounter) c).shutdown(),
+                        t -> ((StatsdTimer) t).shutdown(),
+                        d -> ((StatsdDistributionSummary) d).shutdown(),
+                        this::removePollableMeter,
+                        this::removePollableMeter,
+                        this::removePollableMeter,
+                        this::removePollableMeter,
+                        m -> {
+                            for (Measurement measurement : m.measure()) {
+                                pollableMeters.remove(m.getId().withTag(measurement.getStatistic()));
+                            }
+                        })
+        );
 
         if (config.enabled()) {
+            FluxSink<String> fluxSink = processor.sink();
+
+            try {
+                Class.forName("ch.qos.logback.classic.turbo.TurboFilter", false, getClass().getClassLoader());
+                this.fluxSink = new LogbackMetricsSuppressingFluxSink(fluxSink);
+            } catch (ClassNotFoundException e) {
+                this.fluxSink = fluxSink;
+            }
             start();
         }
     }
@@ -159,24 +176,19 @@ public class StatsdMeterRegistry extends MeterRegistry {
     }
 
     void poll() {
-        for (StatsdPollable pollableMeter : pollableMeters.values()) {
-            pollableMeter.poll();
+        for (Map.Entry<Meter.Id, StatsdPollable> pollableMeter : pollableMeters.entrySet()) {
+            try {
+                pollableMeter.getValue().poll();
+            } catch (RuntimeException e) {
+                warnThenDebugLogger.log("Failed to poll a meter '" + pollableMeter.getKey().getName() + "'.", e);
+            }
         }
     }
 
     public void start() {
         if (started.compareAndSet(false, true)) {
-            UnicastProcessor<String> unicastProcessor = UnicastProcessor.create(Queues.<String>unboundedMultiproducer().get());
-
-            try {
-                Class.forName("ch.qos.logback.classic.turbo.TurboFilter", false, getClass().getClassLoader());
-                this.processor = new LogbackMetricsSuppressingUnicastProcessor(unicastProcessor);
-            } catch (ClassNotFoundException e) {
-                this.processor = unicastProcessor;
-            }
-
             if (lineSink != null) {
-                processor.subscribe(new Subscriber<String>() {
+                this.processor.subscribe(new Subscriber<String>() {
                     @Override
                     public void onSubscribe(Subscription s) {
                         s.request(Long.MAX_VALUE);
@@ -203,10 +215,10 @@ public class StatsdMeterRegistry extends MeterRegistry {
             } else {
                 final Publisher<String> publisher;
                 if (statsdConfig.buffered()) {
-                    publisher = BufferingFlux.create(Flux.from(processor), "\n", statsdConfig.maxPacketLength(), statsdConfig.pollingFrequency().toMillis())
-                        .onBackpressureLatest();
+                    publisher = BufferingFlux.create(Flux.from(this.processor), "\n", statsdConfig.maxPacketLength(), statsdConfig.pollingFrequency().toMillis())
+                            .onBackpressureLatest();
                 } else {
-                    publisher = processor;
+                    publisher = this.processor;
                 }
                 if (statsdConfig.protocol() == StatsdProtocol.UDP) {
                     prepareUdpClient(publisher);
@@ -218,48 +230,86 @@ public class StatsdMeterRegistry extends MeterRegistry {
     }
 
     private void prepareUdpClient(Publisher<String> publisher) {
-        UdpClient.create()
+        AtomicReference<UdpClient> udpClientReference = new AtomicReference<>();
+        UdpClient udpClient = UdpClient.create()
                 .host(statsdConfig.host())
                 .port(statsdConfig.port())
                 .handle((in, out) -> out
                         .sendString(publisher)
                         .neverComplete()
+                        .retryWhen(Retry.indefinitely().filter(throwable -> throwable instanceof PortUnreachableException))
                 )
-                .connect()
-                .subscribe(client -> {
-                    this.client.replace(client);
-
-                    // now that we're connected, start polling gauges and other pollable meter types
-                    startPolling();
+                .doOnDisconnected(connection -> {
+                    Boolean connectionDisposed = connection.channel().attr(CONNECTION_DISPOSED).getAndSet(Boolean.TRUE);
+                    if (connectionDisposed == null || !connectionDisposed) {
+                        connectAndSubscribe(udpClientReference.get());
+                    }
                 });
+        udpClientReference.set(udpClient);
+        connectAndSubscribe(udpClient);
     }
 
     private void prepareTcpClient(Publisher<String> publisher) {
-        TcpClient.create()
+        AtomicReference<TcpClient> tcpClientReference = new AtomicReference<>();
+        TcpClient tcpClient = TcpClient.create()
                 .host(statsdConfig.host())
                 .port(statsdConfig.port())
                 .handle((in, out) -> out
                         .sendString(publisher)
                         .neverComplete())
-                .connect()
-                .subscribe(client -> {
-                    this.client.replace(client);
-
-                    // now that we're connected, start polling gauges and other pollable meter types
-                    startPolling();
+                .doOnDisconnected(connection -> {
+                    Boolean connectionDisposed = connection.channel().attr(CONNECTION_DISPOSED).getAndSet(Boolean.TRUE);
+                    if (connectionDisposed == null || !connectionDisposed) {
+                        connectAndSubscribe(tcpClientReference.get());
+                    }
                 });
+        tcpClientReference.set(tcpClient);
+        connectAndSubscribe(tcpClient);
+    }
+
+    private void connectAndSubscribe(TcpClient tcpClient) {
+        retryReplaceClient(Mono.defer(() -> {
+            if (started.get()) {
+                return tcpClient.connect();
+            }
+            return Mono.empty();
+        }));
+    }
+
+    private void connectAndSubscribe(UdpClient udpClient) {
+        retryReplaceClient(Mono.defer(() -> {
+            if (started.get()) {
+                return udpClient.connect();
+            }
+            return Mono.empty();
+        }));
+    }
+
+    private void retryReplaceClient(Mono<? extends Connection> connectMono) {
+         connectMono
+                 .retryWhen(Retry.backoff(Long.MAX_VALUE, Duration.ofSeconds(1)).maxBackoff(Duration.ofMinutes(1)))
+                 .subscribe(connection -> {
+                     this.statsdConnection.replace(connection);
+
+                     // now that we're connected, start polling gauges and other pollable meter types
+                     startPolling();
+                 });
     }
 
     private void startPolling() {
-        meterPoller.replace(Flux.interval(statsdConfig.pollingFrequency())
+        meterPoller.update(Flux.interval(statsdConfig.pollingFrequency())
                 .doOnEach(n -> poll())
                 .subscribe());
     }
 
     public void stop() {
         if (started.compareAndSet(true, false)) {
-            client.dispose();
-            meterPoller.dispose();
+            if (statsdConnection.get() != null) {
+                statsdConnection.get().dispose();
+            }
+            if (meterPoller.get() != null) {
+                meterPoller.get().dispose();
+            }
         }
     }
 
@@ -272,7 +322,7 @@ public class StatsdMeterRegistry extends MeterRegistry {
 
     @Override
     protected <T> Gauge newGauge(Meter.Id id, @Nullable T obj, ToDoubleFunction<T> valueFunction) {
-        StatsdGauge<T> gauge = new StatsdGauge<>(id, lineBuilder(id), processor, obj, valueFunction, statsdConfig.publishUnchangedMeters());
+        StatsdGauge<T> gauge = new StatsdGauge<>(id, lineBuilder(id), fluxSink, obj, valueFunction, statsdConfig.publishUnchangedMeters());
         pollableMeters.put(id, gauge);
         return gauge;
     }
@@ -297,60 +347,60 @@ public class StatsdMeterRegistry extends MeterRegistry {
     }
 
     private DistributionStatisticConfig addInfBucket(DistributionStatisticConfig config) {
-        long[] slas = config.getSlaBoundaries() == null ? new long[]{Long.MAX_VALUE} :
-                LongStream.concat(Arrays.stream(config.getSlaBoundaries()), LongStream.of(Long.MAX_VALUE)).toArray();
+        double[] serviceLevelObjectives = config.getServiceLevelObjectiveBoundaries() == null ? new double[]{Double.POSITIVE_INFINITY} :
+                DoubleStream.concat(Arrays.stream(config.getServiceLevelObjectiveBoundaries()), DoubleStream.of(Double.POSITIVE_INFINITY)).toArray();
         return DistributionStatisticConfig.builder()
-                .sla(slas)
+                .serviceLevelObjectives(serviceLevelObjectives)
                 .build()
                 .merge(config);
     }
 
     @Override
     protected Counter newCounter(Meter.Id id) {
-        return new StatsdCounter(id, lineBuilder(id), processor);
+        return new StatsdCounter(id, lineBuilder(id), fluxSink);
     }
 
     @Override
-    protected LongTaskTimer newLongTaskTimer(Meter.Id id) {
-        StatsdLongTaskTimer ltt = new StatsdLongTaskTimer(id, lineBuilder(id), processor, clock, statsdConfig.publishUnchangedMeters());
+    protected LongTaskTimer newLongTaskTimer(Meter.Id id, DistributionStatisticConfig distributionStatisticConfig) {
+        StatsdLongTaskTimer ltt = new StatsdLongTaskTimer(id, lineBuilder(id), fluxSink, clock, statsdConfig.publishUnchangedMeters(),
+                distributionStatisticConfig, getBaseTimeUnit());
+        HistogramGauges.registerWithCommonFormat(ltt, this);
         pollableMeters.put(id, ltt);
         return ltt;
     }
 
-    @SuppressWarnings("ConstantConditions")
     @Override
     protected Timer newTimer(Meter.Id id, DistributionStatisticConfig distributionStatisticConfig, PauseDetector
             pauseDetector) {
 
-        // Adds an infinity bucket for SLA violation calculation
-        if (distributionStatisticConfig.getSlaBoundaries() != null) {
+        // Adds an infinity bucket for SLO violation calculation
+        if (distributionStatisticConfig.getServiceLevelObjectiveBoundaries() != null) {
             distributionStatisticConfig = addInfBucket(distributionStatisticConfig);
         }
 
-        Timer timer = new StatsdTimer(id, lineBuilder(id), processor, clock, distributionStatisticConfig, pauseDetector, getBaseTimeUnit(),
+        Timer timer = new StatsdTimer(id, lineBuilder(id), fluxSink, clock, distributionStatisticConfig, pauseDetector, getBaseTimeUnit(),
                 statsdConfig.step().toMillis());
         HistogramGauges.registerWithCommonFormat(timer, this);
         return timer;
     }
 
-    @SuppressWarnings("ConstantConditions")
     @Override
     protected DistributionSummary newDistributionSummary(Meter.Id id, DistributionStatisticConfig
             distributionStatisticConfig, double scale) {
 
-        // Adds an infinity bucket for SLA violation calculation
-        if (distributionStatisticConfig.getSlaBoundaries() != null) {
+        // Adds an infinity bucket for SLO violation calculation
+        if (distributionStatisticConfig.getServiceLevelObjectiveBoundaries() != null) {
             distributionStatisticConfig = addInfBucket(distributionStatisticConfig);
         }
 
-        DistributionSummary summary = new StatsdDistributionSummary(id, lineBuilder(id), processor, clock, distributionStatisticConfig, scale);
+        DistributionSummary summary = new StatsdDistributionSummary(id, lineBuilder(id), fluxSink, clock, distributionStatisticConfig, scale);
         HistogramGauges.registerWithCommonFormat(summary, this);
         return summary;
     }
 
     @Override
     protected <T> FunctionCounter newFunctionCounter(Meter.Id id, T obj, ToDoubleFunction<T> countFunction) {
-        StatsdFunctionCounter fc = new StatsdFunctionCounter<>(id, obj, countFunction, lineBuilder(id), processor);
+        StatsdFunctionCounter<T> fc = new StatsdFunctionCounter<>(id, obj, countFunction, lineBuilder(id), fluxSink);
         pollableMeters.put(id, fc);
         return fc;
     }
@@ -359,8 +409,8 @@ public class StatsdMeterRegistry extends MeterRegistry {
     protected <T> FunctionTimer newFunctionTimer(Meter.Id id, T
             obj, ToLongFunction<T> countFunction, ToDoubleFunction<T> totalTimeFunction, TimeUnit
                                                          totalTimeFunctionUnit) {
-        StatsdFunctionTimer ft = new StatsdFunctionTimer<>(id, obj, countFunction, totalTimeFunction, totalTimeFunctionUnit,
-                getBaseTimeUnit(), lineBuilder(id), processor);
+        StatsdFunctionTimer<T> ft = new StatsdFunctionTimer<>(id, obj, countFunction, totalTimeFunction, totalTimeFunctionUnit,
+                getBaseTimeUnit(), lineBuilder(id), fluxSink);
         pollableMeters.put(id, ft);
         return ft;
     }
@@ -374,13 +424,13 @@ public class StatsdMeterRegistry extends MeterRegistry {
                 case COUNT:
                 case TOTAL:
                 case TOTAL_TIME:
-                    pollableMeters.put(id.withTag(stat), () -> processor.onNext(line.count((long) ms.getValue(), stat)));
+                    pollableMeters.put(id.withTag(stat), () -> fluxSink.next(line.count((long) ms.getValue(), stat)));
                     break;
                 case VALUE:
                 case ACTIVE_TASKS:
                 case DURATION:
                 case UNKNOWN:
-                    pollableMeters.put(id.withTag(stat), () -> processor.onNext(line.gauge(ms.getValue(), stat)));
+                    pollableMeters.put(id.withTag(stat), () -> fluxSink.next(line.gauge(ms.getValue(), stat)));
                     break;
             }
         });
@@ -400,22 +450,22 @@ public class StatsdMeterRegistry extends MeterRegistry {
                 .merge(DistributionStatisticConfig.DEFAULT);
     }
 
+    /**
+     * @return constant {@literal -1}
+     * @deprecated queue size is no longer available since 1.4.0
+     */
+    @Deprecated
     public int queueSize() {
-        try {
-            return (Integer) processor.getClass().getMethod("size").invoke(processor);
-        } catch (IllegalAccessException | InvocationTargetException | NoSuchMethodException e) {
-            // should never happen
-            return 0;
-        }
+        return -1;
     }
 
+    /**
+     * @return constant {@literal -1}
+     * @deprecated queue capacity is no longer available since 1.4.0
+     */
+    @Deprecated
     public int queueCapacity() {
-        try {
-            return (Integer) processor.getClass().getMethod("getBufferSize").invoke(processor);
-        } catch (IllegalAccessException | InvocationTargetException | NoSuchMethodException e) {
-            // should never happen
-            return 0;
-        }
+        return -1;
     }
 
     /**
@@ -473,28 +523,48 @@ public class StatsdMeterRegistry extends MeterRegistry {
         }
     }
 
-    private static final class NoopProcessor implements Processor<String, String> {
-
+    private static final class NoopFluxSink implements FluxSink<String> {
         @Override
-        public void subscribe(Subscriber<? super String> s) {
+        public void complete() {
         }
 
         @Override
-        public void onSubscribe(Subscription s) {
+        public Context currentContext() {
+            return Context.empty();
         }
 
         @Override
-        public void onNext(String s) {
+        public void error(Throwable e) {
         }
 
         @Override
-        public void onError(Throwable t) {
+        public FluxSink<String> next(String s) {
+            return this;
         }
 
         @Override
-        public void onComplete() {
+        public long requestedFromDownstream() {
+            return 0;
         }
 
+        @Override
+        public boolean isCancelled() {
+            return false;
+        }
+
+        @Override
+        public FluxSink<String> onRequest(LongConsumer consumer) {
+            return this;
+        }
+
+        @Override
+        public FluxSink<String> onCancel(Disposable d) {
+            return this;
+        }
+
+        @Override
+        public FluxSink<String> onDispose(Disposable d) {
+            return this;
+        }
     }
-
 }

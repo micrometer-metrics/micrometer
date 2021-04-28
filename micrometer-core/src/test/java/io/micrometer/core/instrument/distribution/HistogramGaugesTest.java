@@ -1,5 +1,5 @@
 /**
- * Copyright 2017 Pivotal Software, Inc.
+ * Copyright 2017 VMware, Inc.
  * <p>
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -35,7 +35,7 @@ class HistogramGaugesTest {
         MeterRegistry registry = new SimpleMeterRegistry();
 
         Timer timer = Timer.builder("my.timer")
-                .sla(Duration.ofMillis(1))
+                .serviceLevelObjectives(Duration.ofMillis(1))
                 .register(registry);
 
         HistogramGauges gauges = HistogramGauges.registerWithCommonFormat(timer, registry);
@@ -58,7 +58,7 @@ class HistogramGaugesTest {
         });
 
         Timer.builder("my.timer")
-             .sla(Duration.ofMillis(1))
+             .serviceLevelObjectives(Duration.ofMillis(1))
              .publishPercentiles(0.95)
              .register(registry);
 
@@ -71,11 +71,11 @@ class HistogramGaugesTest {
         MeterRegistry registry = new SimpleMeterRegistry();
 
         Timer timer = Timer.builder("my.timer")
-                .sla(Duration.ofNanos(Long.MAX_VALUE))
+                .serviceLevelObjectives(Duration.ofNanos(Long.MAX_VALUE))
                 .register(registry);
 
         DistributionSummary distributionSummary = DistributionSummary.builder("my.distribution")
-                .sla(Long.MAX_VALUE)
+                .serviceLevelObjectives(Double.POSITIVE_INFINITY)
                 .register(registry);
 
         HistogramGauges distributionGauges = HistogramGauges.registerWithCommonFormat(distributionSummary, registry);

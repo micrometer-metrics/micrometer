@@ -1,5 +1,5 @@
 /**
- * Copyright 2017 Pivotal Software, Inc.
+ * Copyright 2017 VMware, Inc.
  * <p>
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -42,11 +42,31 @@ class DatadogStatsdLineBuilderTest {
 
     @Issue("#739")
     @Test
-    void sanitizeColons() {
-        Counter c = registry.counter("my:counter", "my:tag", "my:value");
+    void sanitizeColonsInTagKeys() {
+        Counter c = registry.counter("my:counter", "my:tag", "my_value");
         DatadogStatsdLineBuilder lb = new DatadogStatsdLineBuilder(c.getId(), registry.config());
 
         registry.config().namingConvention(NamingConvention.dot);
         assertThat(lb.line("1", Statistic.COUNT, "c")).isEqualTo("my_counter:1|c|#statistic:count,my_tag:my_value");
+    }
+
+    @Test
+    void interpretEmptyTagValuesAsValuelessTags() {
+        Counter c = registry.counter("my:counter", "my:tag", "");
+        DatadogStatsdLineBuilder lb = new DatadogStatsdLineBuilder(c.getId(), registry.config());
+
+        registry.config().namingConvention(NamingConvention.dot);
+        assertThat(lb.line("1", Statistic.COUNT, "c")).isEqualTo("my_counter:1|c|#statistic:count,my_tag");
+    }
+
+    @Issue("#1998")
+    @Test
+    void allowColonsInTagValues() {
+        Counter c = registry.counter("my:counter", "my:tag", "my:value", "other_tag", "some:value:", "123.another.tag", "123:value");
+        DatadogStatsdLineBuilder lb = new DatadogStatsdLineBuilder(c.getId(), registry.config());
+
+        registry.config().namingConvention(NamingConvention.dot);
+        assertThat(lb.line("1", Statistic.COUNT, "c"))
+                .isEqualTo("my_counter:1|c|#statistic:count,m.123.another.tag:123:value,my_tag:my:value,other_tag:some:value_");
     }
 }

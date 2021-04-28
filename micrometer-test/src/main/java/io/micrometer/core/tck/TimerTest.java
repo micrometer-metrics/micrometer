@@ -1,5 +1,5 @@
 /**
- * Copyright 2017 Pivotal Software, Inc.
+ * Copyright 2017 VMware, Inc.
  * <p>
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -207,18 +207,18 @@ interface TimerTest {
 
         t.record(1, TimeUnit.MILLISECONDS);
         assertThat(t.percentile(1, TimeUnit.MILLISECONDS)).isEqualTo(1, Offset.offset(0.3));
-        assertThat(t.percentile(0.5, TimeUnit.MILLISECONDS)).isEqualTo(Double.NaN);
+        assertThat(t.percentile(0.5, TimeUnit.MILLISECONDS)).isNaN();
     }
 
     @Deprecated
     @Test
     default void histogramCounts(MeterRegistry registry) {
         Timer t = Timer.builder("my.timer")
-                .sla(Duration.ofMillis(1))
+                .serviceLevelObjectives(Duration.ofMillis(1))
                 .register(registry);
 
         t.record(1, TimeUnit.MILLISECONDS);
         assertThat(t.histogramCountAtValue((long) millisToUnit(1, TimeUnit.NANOSECONDS))).isEqualTo(1);
-        assertThat(t.histogramCountAtValue(1)).isEqualTo(Double.NaN);
+        assertThat(t.histogramCountAtValue(1)).isNaN();
     }
 }

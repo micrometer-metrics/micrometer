@@ -1,5 +1,5 @@
 /**
- * Copyright 2017 Pivotal Software, Inc.
+ * Copyright 2017 VMware, Inc.
  * <p>
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,6 +20,7 @@ import io.micrometer.core.instrument.*;
 import io.micrometer.core.instrument.util.DoubleFormat;
 
 import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.TimeUnit;
 import java.util.function.Function;
 import java.util.function.ToDoubleFunction;
 
@@ -42,15 +43,30 @@ public class HistogramGauges {
      * @return registered {@code HistogramGauges}
      */
     public static HistogramGauges registerWithCommonFormat(Timer timer, MeterRegistry registry) {
-        Meter.Id id = timer.getId();
-        return HistogramGauges.register(timer, registry,
+        return getHistogramGauges(timer, timer.getId(), timer.baseTimeUnit(), registry);
+    }
+
+    private static HistogramGauges getHistogramGauges(HistogramSupport histogramSupport, Meter.Id id, TimeUnit baseTimeUnit, MeterRegistry registry) {
+        return HistogramGauges.register(histogramSupport, registry,
                 percentile -> id.getName() + ".percentile",
                 percentile -> Tags.concat(id.getTagsAsIterable(), "phi", DoubleFormat.decimalOrNan(percentile.percentile())),
-                percentile -> percentile.value(timer.baseTimeUnit()),
+                percentile -> percentile.value(baseTimeUnit),
                 bucket -> id.getName() + ".histogram",
-                // We look for Long.MAX_VALUE to ensure a sensible tag on our +Inf bucket
-                bucket -> Tags.concat(id.getTagsAsIterable(), "le", bucket.bucket() != Long.MAX_VALUE
-                        ? DoubleFormat.wholeOrDecimal(bucket.bucket(timer.baseTimeUnit())) : "+Inf"));
+                bucket -> Tags.concat(id.getTagsAsIterable(), "le", bucket.isPositiveInf()
+                        ? "+Inf" : DoubleFormat.wholeOrDecimal(bucket.bucket(baseTimeUnit))));
+    }
+
+    /**
+     * Register a set of gauges for percentiles and histogram buckets that follow a common format when
+     * the monitoring system doesn't have an opinion about the structure of this data.
+     *
+     * @param ltt the long task timer from which to derive gauges
+     * @param registry the registry to register the gauges
+     * @return registered {@code HistogramGauges}
+     * @since 1.5.0
+     */
+    public static HistogramGauges registerWithCommonFormat(LongTaskTimer ltt, MeterRegistry registry) {
+        return getHistogramGauges(ltt, ltt.getId(), ltt.baseTimeUnit(), registry);
     }
 
     public static HistogramGauges registerWithCommonFormat(DistributionSummary summary, MeterRegistry registry) {
@@ -60,9 +76,8 @@ public class HistogramGauges {
                 percentile -> Tags.concat(id.getTagsAsIterable(), "phi", DoubleFormat.decimalOrNan(percentile.percentile())),
                 ValueAtPercentile::value,
                 bucket -> id.getName() + ".histogram",
-                // We look for Long.MAX_VALUE to ensure a sensible tag on our +Inf bucket
-                bucket -> Tags.concat(id.getTagsAsIterable(), "le", bucket.bucket() != Long.MAX_VALUE
-                        ? DoubleFormat.wholeOrDecimal(bucket.bucket()) : "+Inf"));
+                bucket -> Tags.concat(id.getTagsAsIterable(), "le", bucket.isPositiveInf()
+                        ? "+Inf" : DoubleFormat.wholeOrDecimal(bucket.bucket())));
     }
 
     public static HistogramGauges register(HistogramSupport meter, MeterRegistry registry,

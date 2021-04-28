@@ -1,5 +1,5 @@
 /**
- * Copyright 2017 Pivotal Software, Inc.
+ * Copyright 2017 VMware, Inc.
  * <p>
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -21,6 +21,8 @@ import io.micrometer.core.instrument.util.TimeUtils;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicIntegerFieldUpdater;
 import java.util.concurrent.atomic.AtomicLong;
+import java.util.function.DoubleSupplier;
+import java.util.function.LongSupplier;
 
 /**
  * An implementation of a decaying maximum for a distribution based on a configurable ring buffer.
@@ -28,7 +30,6 @@ import java.util.concurrent.atomic.AtomicLong;
  * @author Jon Schneider
  */
 public class TimeWindowMax {
-    @SuppressWarnings("rawtypes")
     private static final AtomicIntegerFieldUpdater<TimeWindowMax> rotatingUpdater =
             AtomicIntegerFieldUpdater.newUpdater(TimeWindowMax.class, "rotating");
 
@@ -65,10 +66,14 @@ public class TimeWindowMax {
      * @param timeUnit The unit of time of the incoming sample.
      */
     public void record(double sample, TimeUnit timeUnit) {
+        record(() -> (long) TimeUtils.convert(sample, timeUnit, TimeUnit.NANOSECONDS));
+    }
+
+    private void record(LongSupplier sampleSupplier) {
         rotate();
-        final long sampleNanos = (long) TimeUtils.convert(sample, timeUnit, TimeUnit.NANOSECONDS);
+        long sample = sampleSupplier.getAsLong();
         for (AtomicLong max : ringBuffer) {
-            updateMax(max, sampleNanos);
+            updateMax(max, sample);
         }
     }
 
@@ -77,9 +82,13 @@ public class TimeWindowMax {
      * @return A max scaled to the base unit of time. For use by timer implementations.
      */
     public double poll(TimeUnit timeUnit) {
+        return poll(() -> TimeUtils.nanosToUnit(ringBuffer[currentBucket].get(), timeUnit));
+    }
+
+    private double poll(DoubleSupplier maxSupplier) {
         rotate();
         synchronized (this) {
-            return TimeUtils.nanosToUnit(ringBuffer[currentBucket].get(), timeUnit);
+            return maxSupplier.getAsDouble();
         }
     }
 
@@ -87,10 +96,7 @@ public class TimeWindowMax {
      * @return An unscaled max. For use by distribution summary implementations.
      */
     public double poll() {
-        rotate();
-        synchronized (this) {
-            return Double.longBitsToDouble(ringBuffer[currentBucket].get());
-        }
+        return poll(() -> Double.longBitsToDouble(ringBuffer[currentBucket].get()));
     }
 
     /**
@@ -99,19 +105,14 @@ public class TimeWindowMax {
      * @param sample The value to record.
      */
     public void record(double sample) {
-        rotate();
-        long sampleLong = Double.doubleToLongBits(sample);
-        for (AtomicLong max : ringBuffer) {
-            updateMax(max, sampleLong);
-        }
+        record(() -> Double.doubleToLongBits(sample));
     }
 
     private void updateMax(AtomicLong max, long sample) {
-        for (; ; ) {
-            long curMax = max.get();
-            if (curMax >= sample || max.compareAndSet(curMax, sample))
-                break;
-        }
+        long curMax;
+        do {
+            curMax = max.get();
+        } while (curMax < sample && !max.compareAndSet(curMax, sample));
     }
 
     private void rotate() {

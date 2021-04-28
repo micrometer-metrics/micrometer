@@ -1,5 +1,5 @@
 /**
- * Copyright 2017 Pivotal Software, Inc.
+ * Copyright 2017 VMware, Inc.
  * <p>
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -29,15 +29,15 @@ class DistributionSummaryTest {
         MockClock clock = new MockClock();
         MeterRegistry registry = new SimpleMeterRegistry(SimpleConfig.DEFAULT, clock);
         DistributionSummary summary = DistributionSummary.builder("my.summary")
-                .sla(1)
+                .serviceLevelObjectives(1.0)
                 .register(registry);
 
         summary.record(1);
 
         // Histogram bucket counts DO roll over at the step interval, so decay.
-        assertThat(summary.takeSnapshot().histogramCounts()).containsExactly(new CountAtBucket(1, 1));
+        assertThat(summary.takeSnapshot().histogramCounts()).containsExactly(new CountAtBucket(1.0, 1));
         clock.add(SimpleConfig.DEFAULT.step());
-        assertThat(summary.takeSnapshot().histogramCounts()).containsExactly(new CountAtBucket(1, 0));
+        assertThat(summary.takeSnapshot().histogramCounts()).containsExactly(new CountAtBucket(1.0, 0));
     }
 
     @Test
@@ -56,13 +56,13 @@ class DistributionSummaryTest {
         }, clock);
 
         DistributionSummary summary = DistributionSummary.builder("my.summary")
-                .sla(1)
+                .serviceLevelObjectives(1.0)
                 .register(registry);
 
         summary.record(1);
 
-        assertThat(summary.takeSnapshot().histogramCounts()).containsExactly(new CountAtBucket(1, 1));
+        assertThat(summary.takeSnapshot().histogramCounts()).containsExactly(new CountAtBucket(1.0, 1));
         clock.add(SimpleConfig.DEFAULT.step());
-        assertThat(summary.takeSnapshot().histogramCounts()).containsExactly(new CountAtBucket(1, 0));
+        assertThat(summary.takeSnapshot().histogramCounts()).containsExactly(new CountAtBucket(1.0, 0));
     }
 }

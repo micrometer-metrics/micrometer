@@ -1,5 +1,5 @@
 /**
- * Copyright 2017 Pivotal Software, Inc.
+ * Copyright 2017 VMware, Inc.
  * <p>
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -54,13 +54,13 @@ public final class DoubleFormat {
     private static final ThreadLocal<DecimalFormat> WHOLE_OR_DECIMAL = ThreadLocal.withInitial(() -> {
         // the following will ensure a dot ('.') as decimal separator
         DecimalFormatSymbols otherSymbols = new DecimalFormatSymbols(Locale.US);
-        return new DecimalFormat("##0.######",otherSymbols);
+        return new DecimalFormat("##0.######", otherSymbols);
     });
 
     private static final ThreadLocal<DecimalFormat> DECIMAL = ThreadLocal.withInitial(() -> {
         // the following will ensure a dot ('.') as decimal separator
         DecimalFormatSymbols otherSymbols = new DecimalFormatSymbols(Locale.US);
-        return new DecimalFormat("##0.0#####",otherSymbols);
+        return new DecimalFormat("##0.0#####", otherSymbols);
     });
 
     private DoubleFormat() {

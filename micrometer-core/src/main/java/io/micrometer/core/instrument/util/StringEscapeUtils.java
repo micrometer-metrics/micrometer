@@ -1,5 +1,5 @@
 /**
- * Copyright 2017 Pivotal Software, Inc.
+ * Copyright 2017 VMware, Inc.
  * <p>
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,63 +18,87 @@ package io.micrometer.core.instrument.util;
 import io.micrometer.core.lang.Nullable;
 
 /**
- * Utilities for escaping {@code String}.
+ * Utilities for JSON escaping {@code String}.
+ *
+ * <h2>Implementation Approach</h2>
+ * This uses a replacement char array to perform escaping, an idea from Square/Moshi. In their case,
+ * it was an internal detail of {@code com.squareup.moshi.JsonUtf8Writer}, licensed Apache 2.0
+ * Copyright 2010 Google Inc. The comments and initialization of {@code REPLACEMENT_CHARS} came
+ * directly from Moshi's {@code JsonUtf8Writer}.
  *
  * @author Jon Schneider
  * @author Johnny Lim
  */
 public final class StringEscapeUtils {
-    /**
-     * Modified from the quote method in:
-     * https://github.com/codehaus/jettison/blob/master/src/main/java/org/codehaus/jettison/json/JSONObject.java
-     *
-     * @param string The string to escape.
+    /*
+     * @param v The string to escape.
      * @return An escaped JSON string.
      */
-    public static String escapeJson(@Nullable String string) {
-        if (StringUtils.isEmpty(string)) {
-            return "";
-        }
+    public static String escapeJson(@Nullable String v) {
+        if (v == null) return "";
+        int length = v.length();
+        if (length == 0) return v;
 
-        int len = string.length();
-        StringBuilder sb = new StringBuilder(len + 2);
-
-        for (int i = 0; i < len; i += 1) {
-            char c = string.charAt(i);
-            switch (c) {
-                case '\\':
-                case '"':
-                    sb.append('\\');
-                    sb.append(c);
-                    break;
-                case '\b':
-                    sb.append("\\b");
-                    break;
-                case '\t':
-                    sb.append("\\t");
-                    break;
-                case '\n':
-                    sb.append("\\n");
-                    break;
-                case '\f':
-                    sb.append("\\f");
-                    break;
-                case '\r':
-                    sb.append("\\r");
-                    break;
-                default:
-                    if (c < ' ') {
-                        String t = "000" + Integer.toHexString(c);
-                        sb.append("\\u").append(t.substring(t.length() - 4));
-                    } else {
-                        sb.append(c);
-                    }
+        int afterReplacement = 0;
+        StringBuilder builder = null;
+        for (int i = 0; i < length; i++) {
+            char c = v.charAt(i);
+            String replacement;
+            if (c < 0x80) {
+                replacement = REPLACEMENT_CHARS[c];
+                if (replacement == null) continue;
+            } else if (c == '\u2028') {
+                replacement = U2028;
+            } else if (c == '\u2029') {
+                replacement = U2029;
+            } else {
+                continue;
             }
+            if (afterReplacement < i) { // write characters between the last replacement and now
+                if (builder == null) builder = new StringBuilder(length);
+                builder.append(v, afterReplacement, i);
+            }
+            if (builder == null) builder = new StringBuilder(length);
+            builder.append(replacement);
+            afterReplacement = i + 1;
         }
-        return sb.toString();
+        if (builder == null) return v; // then we didn't escape anything
+
+        if (afterReplacement < length) {
+            builder.append(v, afterReplacement, length);
+        }
+        return builder.toString();
     }
+
+    /*
+     * From RFC 7159, "All Unicode characters may be placed within the
+     * quotation marks except for the characters that must be escaped:
+     * quotation mark, reverse solidus, and the control characters
+     * (U+0000 through U+001F)."
+     *
+     * We also escape '\u2028' and '\u2029', which JavaScript interprets as
+     * newline characters. This prevents eval() from failing with a syntax
+     * error. https://github.com/google/gson/issues/341
+     */
+    private static final String[] REPLACEMENT_CHARS;
+
+    static {
+        REPLACEMENT_CHARS = new String[128];
+        for (int i = 0; i <= 0x1f; i++) {
+            REPLACEMENT_CHARS[i] = String.format("\\u%04x", (int) i);
+        }
+        REPLACEMENT_CHARS['"'] = "\\\"";
+        REPLACEMENT_CHARS['\\'] = "\\\\";
+        REPLACEMENT_CHARS['\t'] = "\\t";
+        REPLACEMENT_CHARS['\b'] = "\\b";
+        REPLACEMENT_CHARS['\n'] = "\\n";
+        REPLACEMENT_CHARS['\r'] = "\\r";
+        REPLACEMENT_CHARS['\f'] = "\\f";
+    }
+
+    private static final String U2028 = "\\u2028";
+    private static final String U2029 = "\\u2029";
 
     private StringEscapeUtils() {
     }
-
 }

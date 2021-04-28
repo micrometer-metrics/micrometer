@@ -1,5 +1,5 @@
 /**
- * Copyright 2017 Pivotal Software, Inc.
+ * Copyright 2017 VMware, Inc.
  * <p>
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -64,7 +64,7 @@ public final class Search {
     }
 
     /**
-     * Meter contains a tag with the matching tag keys and values.
+     * Meter contains tags with the matching tag keys and values.
      *
      * @param tags The tags to match.
      * @return This search.
@@ -75,7 +75,7 @@ public final class Search {
     }
 
     /**
-     * Meter contains a tag with the matching tag keys and values.
+     * Meter contains tags with the matching tag keys and values.
      *
      * @param tags Must be an even number of arguments representing key/value pairs of tags.
      * @return This search.
@@ -96,7 +96,7 @@ public final class Search {
     }
 
     /**
-     * Meter contains a tag with the matching keys.
+     * Meter contains tags with the matching keys.
      *
      * @param tagKeys The tag keys to match.
      * @return This search.

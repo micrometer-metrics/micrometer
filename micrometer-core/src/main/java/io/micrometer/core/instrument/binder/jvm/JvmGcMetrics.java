@@ -1,5 +1,5 @@
 /**
- * Copyright 2017 Pivotal Software, Inc.
+ * Copyright 2017 VMware, Inc.
  * <p>
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -41,6 +41,7 @@ import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicLong;
 
+import static io.micrometer.core.instrument.binder.jvm.JvmMemory.*;
 import static java.util.Collections.emptyList;
 
 /**
@@ -54,14 +55,14 @@ import static java.util.Collections.emptyList;
 @NonNullFields
 public class JvmGcMetrics implements MeterBinder, AutoCloseable {
 
-    private final static InternalLogger log = InternalLoggerFactory.getInstance(JvmGcMetrics.class);
+    private static final InternalLogger log = InternalLoggerFactory.getInstance(JvmGcMetrics.class);
 
     private final boolean managementExtensionsPresent = isManagementExtensionsPresent();
 
     private final Iterable<Tag> tags;
 
     @Nullable
-    private String youngGenPoolName;
+    private String allocationPoolName;
 
     @Nullable
     private String oldGenPoolName;
@@ -75,8 +76,8 @@ public class JvmGcMetrics implements MeterBinder, AutoCloseable {
     public JvmGcMetrics(Iterable<Tag> tags) {
         for (MemoryPoolMXBean mbean : ManagementFactory.getMemoryPoolMXBeans()) {
             String name = mbean.getName();
-            if (isYoungGenPool(name)) {
-                youngGenPoolName = name;
+            if (isAllocationPool(name)) {
+                allocationPoolName = name;
             } else if (isOldGenPool(name)) {
                 oldGenPoolName = name;
             }
@@ -90,7 +91,9 @@ public class JvmGcMetrics implements MeterBinder, AutoCloseable {
             return;
         }
 
-        AtomicLong maxDataSize = new AtomicLong(0L);
+        double maxOldGen = getOldGen().map(mem -> getUsageValue(mem, MemoryUsage::getMax)).orElse(0.0);
+
+        AtomicLong maxDataSize = new AtomicLong((long) maxOldGen);
         Gauge.builder("jvm.gc.max.data.size", maxDataSize, AtomicLong::get)
             .tags(tags)
             .description("Max size of old generation memory pool")
@@ -115,8 +118,7 @@ public class JvmGcMetrics implements MeterBinder, AutoCloseable {
             .description("Incremented for an increase in the size of the young generation memory pool after one GC to before the next")
             .register(registry);
 
-        // start watching for GC notifications
-        final AtomicLong youngGenSizeAfter = new AtomicLong(0L);
+        final AtomicLong allocationPoolSizeAfter = new AtomicLong(0L);
 
         for (GarbageCollectorMXBean mbean : ManagementFactory.getGarbageCollectorMXBeans()) {
             if (!(mbean instanceof NotificationEmitter)) {
@@ -149,7 +151,6 @@ public class JvmGcMetrics implements MeterBinder, AutoCloseable {
                             .record(duration, TimeUnit.MILLISECONDS);
                 }
 
-                // Update promotion and allocation counters
                 final Map<String, MemoryUsage> before = gcInfo.getMemoryUsageBeforeGc();
                 final Map<String, MemoryUsage> after = gcInfo.getMemoryUsageAfterGc();
 
@@ -164,18 +165,18 @@ public class JvmGcMetrics implements MeterBinder, AutoCloseable {
                     // Some GC implementations such as G1 can reduce the old gen size as part of a minor GC. To track the
                     // live data size we record the value if we see a reduction in the old gen heap size or
                     // after a major GC.
-                    if (oldAfter < oldBefore || GcGenerationAge.fromName(notificationInfo.getGcName()) == GcGenerationAge.OLD) {
+                    if (oldAfter < oldBefore || isMajorGc(notificationInfo.getGcName())) {
                         liveDataSize.set(oldAfter);
                         final long oldMaxAfter = after.get(oldGenPoolName).getMax();
                         maxDataSize.set(oldMaxAfter);
                     }
                 }
 
-                if (youngGenPoolName != null) {
-                    final long youngBefore = before.get(youngGenPoolName).getUsed();
-                    final long youngAfter = after.get(youngGenPoolName).getUsed();
-                    final long delta = youngBefore - youngGenSizeAfter.get();
-                    youngGenSizeAfter.set(youngAfter);
+                if (allocationPoolName != null) {
+                    final long allocationBefore = before.get(allocationPoolName).getUsed();
+                    final long allocationAfter = after.get(allocationPoolName).getUsed();
+                    final long delta = allocationBefore - allocationPoolSizeAfter.get();
+                    allocationPoolSizeAfter.set(allocationAfter);
                     if (delta > 0L) {
                         allocatedBytes.increment(delta);
                     }
@@ -192,10 +193,20 @@ public class JvmGcMetrics implements MeterBinder, AutoCloseable {
         }
     }
 
+    private boolean isMajorGc(String gcName) {
+        return GcGenerationAge.fromGcName(gcName) == GcGenerationAge.OLD;
+    }
+
     private static boolean isManagementExtensionsPresent() {
+        if ( ManagementFactory.getMemoryPoolMXBeans().isEmpty() ) {
+            // Substrate VM, for example, doesn't provide or support these beans (yet)
+            log.warn("GC notifications will not be available because MemoryPoolMXBeans are not provided by the JVM");
+            return false;
+        }
+
         try {
             Class.forName("com.sun.management.GarbageCollectionNotificationInfo", false,
-                    JvmGcMetrics.class.getClassLoader());
+                    MemoryPoolMXBean.class.getClassLoader());
             return true;
         } catch (Throwable e) {
             // We are operating in a JVM without access to this level of detail
@@ -203,18 +214,6 @@ public class JvmGcMetrics implements MeterBinder, AutoCloseable {
                     "com.sun.management.GarbageCollectionNotificationInfo is not present");
             return false;
         }
-    }
-
-    private boolean isConcurrentPhase(String cause) {
-        return "No GC".equals(cause);
-    }
-
-    private boolean isOldGenPool(String name) {
-        return name.endsWith("Old Gen") || name.endsWith("Tenured Gen");
-    }
-
-    private boolean isYoungGenPool(String name) {
-        return name.endsWith("Eden Space");
     }
 
     @Override
@@ -231,7 +230,7 @@ public class JvmGcMetrics implements MeterBinder, AutoCloseable {
         YOUNG,
         UNKNOWN;
 
-        private static Map<String, GcGenerationAge> knownCollectors = new HashMap<String, GcGenerationAge>() {{
+        private static final Map<String, GcGenerationAge> knownCollectors = new HashMap<String, GcGenerationAge>() {{
             put("ConcurrentMarkSweep", OLD);
             put("Copy", YOUNG);
             put("G1 Old Generation", OLD);
@@ -242,8 +241,8 @@ public class JvmGcMetrics implements MeterBinder, AutoCloseable {
             put("ParNew", YOUNG);
         }};
 
-        static GcGenerationAge fromName(String name) {
-            return knownCollectors.getOrDefault(name, UNKNOWN);
+        static GcGenerationAge fromGcName(String gcName) {
+            return knownCollectors.getOrDefault(gcName, UNKNOWN);
         }
     }
 

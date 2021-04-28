@@ -1,5 +1,5 @@
 /**
- * Copyright 2017 Pivotal Software, Inc.
+ * Copyright 2017 VMware, Inc.
  * <p>
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -34,19 +34,19 @@ import java.util.concurrent.atomic.AtomicLongArray;
  */
 public class TimeWindowFixedBoundaryHistogram
         extends AbstractTimeWindowHistogram<TimeWindowFixedBoundaryHistogram.FixedBoundaryHistogram, Void> {
-    private final long[] buckets;
+    private final double[] buckets;
 
     public TimeWindowFixedBoundaryHistogram(Clock clock, DistributionStatisticConfig config, boolean supportsAggregablePercentiles) {
         super(clock, config, FixedBoundaryHistogram.class, supportsAggregablePercentiles);
 
-        NavigableSet<Long> histogramBuckets = distributionStatisticConfig.getHistogramBuckets(supportsAggregablePercentiles);
+        NavigableSet<Double> histogramBuckets = distributionStatisticConfig.getHistogramBuckets(supportsAggregablePercentiles);
 
         Boolean percentileHistogram = distributionStatisticConfig.isPercentileHistogram();
         if (percentileHistogram != null && percentileHistogram) {
             histogramBuckets.addAll(PercentileHistogramBuckets.buckets(distributionStatisticConfig));
         }
 
-        this.buckets = histogramBuckets.stream().filter(Objects::nonNull).mapToLong(Long::longValue).toArray();
+        this.buckets = histogramBuckets.stream().filter(Objects::nonNull).mapToDouble(Double::doubleValue).toArray();
         initRingBuffer();
     }
 
@@ -90,7 +90,7 @@ public class TimeWindowFixedBoundaryHistogram
     }
 
     @Override
-    double countAtValue(long value) {
+    double countAtValue(double value) {
         return currentHistogram().countAtValue(value);
     }
 
@@ -120,7 +120,7 @@ public class TimeWindowFixedBoundaryHistogram
             this.values = new AtomicLongArray(buckets.length);
         }
 
-        long countAtValue(long value) {
+        long countAtValue(double value) {
             int index = Arrays.binarySearch(buckets, value);
             if (index < 0)
                 return 0;

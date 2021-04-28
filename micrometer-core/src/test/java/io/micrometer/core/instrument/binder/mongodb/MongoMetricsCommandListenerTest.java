@@ -1,5 +1,5 @@
 /**
- * Copyright 2019 Pivotal Software, Inc.
+ * Copyright 2019 VMware, Inc.
  * <p>
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -22,6 +22,7 @@ import com.mongodb.event.ClusterListenerAdapter;
 import com.mongodb.event.ClusterOpeningEvent;
 import io.micrometer.core.instrument.MeterRegistry;
 import io.micrometer.core.instrument.Tags;
+import io.micrometer.core.instrument.search.MeterNotFoundException;
 import io.micrometer.core.instrument.simple.SimpleMeterRegistry;
 import org.bson.Document;
 import org.junit.jupiter.api.AfterEach;
@@ -29,6 +30,8 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
 import java.util.Date;
+import java.util.HashMap;
+import java.util.Map;
 import java.util.concurrent.atomic.AtomicReference;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -87,6 +90,56 @@ class MongoMetricsCommandListenerTest extends AbstractMongoDbTest {
                 "status", "FAILED"
         );
         assertThat(registry.get("mongodb.driver.commands").tags(tags).timer().count()).isEqualTo(1);
+    }
+
+    @Test
+    void shouldSupportConcurrentCommands() throws InterruptedException {
+        for (int i = 0; i < 20; i++) {
+            Map<String, Thread> commandThreadMap = new HashMap<>();
+
+            commandThreadMap.put("insert", new Thread(() -> mongo.getDatabase("test")
+                    .getCollection("testCol")
+                    .insertOne(new Document("testField", new Date()))));
+
+            commandThreadMap.put("update", new Thread(() -> mongo.getDatabase("test")
+                    .getCollection("testCol")
+                    .updateOne(new Document("nonExistentField", "abc"),
+                            new Document("$set", new Document("nonExistentField", "xyz")))));
+
+            commandThreadMap.put("delete", new Thread(() -> mongo.getDatabase("test")
+                    .getCollection("testCol")
+                    .deleteOne(new Document("nonExistentField", "abc"))));
+
+            commandThreadMap.put("aggregate", new Thread(() -> mongo.getDatabase("test")
+                    .getCollection("testCol")
+                    .countDocuments()));
+
+            for (Thread thread : commandThreadMap.values()) {
+                thread.start();
+            }
+
+            for (Thread thread : commandThreadMap.values()) {
+                thread.join();
+            }
+
+            final int iterationsCompleted = i + 1;
+
+            for (String command : commandThreadMap.keySet()) {
+                long commandsRecorded;
+                try {
+                    commandsRecorded = registry.get("mongodb.driver.commands")
+                            .tags(Tags.of("command", command))
+                            .timer()
+                            .count();
+                } catch (MeterNotFoundException e) {
+                    commandsRecorded = 0L;
+                }
+
+                assertThat(commandsRecorded)
+                        .as("Check how many %s commands were recorded after %d iterations", command, iterationsCompleted)
+                        .isEqualTo(iterationsCompleted);
+            }
+        }
     }
 
     @AfterEach

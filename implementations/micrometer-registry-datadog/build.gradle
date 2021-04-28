@@ -1,9 +1,7 @@
-apply plugin: 'nebula.optional-base'
-
 dependencies {
-    compile project(':micrometer-core')
-    compile 'org.slf4j:slf4j-api:1.7.+'
-    compile 'org.apache.commons:commons-text:latest.release'
+    api project(':micrometer-core')
 
-    testCompile project(':micrometer-test')
+    implementation 'org.slf4j:slf4j-api'
+
+    testImplementation project(':micrometer-test')
 }

@@ -1,5 +1,5 @@
 /**
- * Copyright 2017 Pivotal Software, Inc.
+ * Copyright 2017 VMware, Inc.
  * <p>
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,43 +17,27 @@ package io.micrometer.core.instrument.step;
 
 import io.micrometer.core.instrument.Clock;
 
-import java.util.concurrent.atomic.AtomicLong;
 import java.util.concurrent.atomic.LongAdder;
+import java.util.function.Supplier;
 
-public class StepLong {
-    private final Clock clock;
-    private final long stepMillis;
+public class StepLong extends StepValue<Long> {
     private final LongAdder current = new LongAdder();
-    private final AtomicLong lastInitPos;
-    private volatile double previous = 0.0;
 
     public StepLong(Clock clock, long stepMillis) {
-        this.clock = clock;
-        this.stepMillis = stepMillis;
-        lastInitPos = new AtomicLong(clock.wallTime() / stepMillis);
+        super(clock, stepMillis);
     }
 
-    private void rollCount(long now) {
-        final long stepTime = now / stepMillis;
-        final long lastInit = lastInitPos.get();
-        if (lastInit < stepTime && lastInitPos.compareAndSet(lastInit, stepTime)) {
-            final double v = current.sumThenReset();
-            // Need to check if there was any activity during the previous step interval. If there was
-            // then the init position will move forward by 1, otherwise it will be older. No activity
-            // means the previous interval should be set to the `init` value.
-            previous = (lastInit == stepTime - 1) ? v : 0.0;
-        }
+    @Override
+    protected Supplier<Long> valueSupplier() {
+        return current::sumThenReset;
+    }
+
+    @Override
+    protected Long noValue() {
+        return 0L;
     }
 
     public LongAdder getCurrent() {
         return current;
-    }
-
-    /**
-     * @return The value for the last completed interval.
-     */
-    public double poll() {
-        rollCount(clock.wallTime());
-        return previous;
     }
 }

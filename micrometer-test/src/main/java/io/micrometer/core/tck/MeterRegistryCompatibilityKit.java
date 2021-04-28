@@ -1,5 +1,5 @@
 /**
- * Copyright 2017 Pivotal Software, Inc.
+ * Copyright 2017 VMware, Inc.
  * <p>
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -33,10 +33,17 @@ import static java.util.Objects.requireNonNull;
 import static org.assertj.core.api.Assertions.assertThat;
 
 /**
+ * Base class for {@link MeterRegistry} compatibility tests.
+ *
  * @author Jon Schneider
+ * @author Johnny Lim
  */
 @ExtendWith(RegistryResolver.class)
 public abstract class MeterRegistryCompatibilityKit {
+
+    // Retain this as a member field to prevent it to be garbage-collected in OpenJ9.
+    private final Object o = new Object();
+
     public abstract MeterRegistry registry();
     public abstract Duration step();
 
@@ -112,10 +119,8 @@ public abstract class MeterRegistryCompatibilityKit {
     @Test
     @DisplayName("function timers respect the base unit of an underlying registry")
     void functionTimerUnits(MeterRegistry registry) {
-        Object o = new Object();
-
         registry.more().timer("function.timer", emptyList(),
-            o, o2 -> 1, o2 -> 1, TimeUnit.MILLISECONDS);
+            this.o, o2 -> 1, o2 -> 1, TimeUnit.MILLISECONDS);
 
         FunctionTimer ft = registry.get("function.timer").functionTimer();
         clock(registry).add(step());
@@ -132,7 +137,7 @@ public abstract class MeterRegistryCompatibilityKit {
     void removeMeterWithSynthetic(MeterRegistry registry) {
         Timer timer = Timer.builder("my.timer")
                 .publishPercentiles(0.95)
-                .sla(Duration.ofMillis(10))
+                .serviceLevelObjectives(Duration.ofMillis(10))
                 .register(registry);
 
         registry.remove(timer);

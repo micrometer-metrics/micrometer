@@ -22,10 +22,12 @@ See [Micrometer's support policy](https://micrometer.io/docs/support) for more d
 | `1.1.x`            | Yes |  |
 | `1.2.x`            | No  | `1.2.2` |
 | `1.3.x`            | Yes |  |
+| `1.4.x`            | No  |  |
+| `1.5.x`            | Yes |  |
 
 ## Join the discussion
 
-Join the [Micrometer Slack](http://slack.micrometer.io) to share your questions, concerns, and feature requests.
+Join the [Micrometer Slack](https://slack.micrometer.io) to share your questions, concerns, and feature requests.
 
 ## Snapshot builds
 
@@ -59,7 +61,11 @@ dependencies {
 
 The build automatically calculates the "next" version for you when publishing snapshots.
 
+## Documentation
+
+The reference documentation is managed in [a separate GitHub repository](https://github.com/micrometer-metrics/micrometer-docs).
+
 -------------------------------------
 _Licensed under [Apache Software License 2.0](https://www.apache.org/licenses/LICENSE-2.0)_
 
-_Sponsored by [Pivotal](https://pivotal.io)_
+_Sponsored by [VMware](https://tanzu.vmware.com)_

@@ -1,5 +1,5 @@
 /**
- * Copyright 2017 Pivotal Software, Inc.
+ * Copyright 2017 VMware, Inc.
  * <p>
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -22,6 +22,7 @@ import javax.ws.rs.core.Response;
 import javax.ws.rs.core.Response.Status;
 
 import io.micrometer.core.instrument.Tag;
+import io.micrometer.core.instrument.binder.http.Outcome;
 import io.micrometer.core.instrument.util.StringUtils;
 import org.glassfish.jersey.server.ContainerRequest;
 import org.glassfish.jersey.server.ContainerResponse;
@@ -48,18 +49,6 @@ public final class JerseyTags {
     private static final Tag EXCEPTION_NONE = Tag.of("exception", "None");
 
     private static final Tag STATUS_SERVER_ERROR = Tag.of("status", String.valueOf(Status.INTERNAL_SERVER_ERROR.getStatusCode()));
-
-    private static final Tag OUTCOME_UNKNOWN = Tag.of("outcome", "UNKNOWN");
-
-    private static final Tag OUTCOME_INFORMATIONAL = Tag.of("outcome", "INFORMATIONAL");
-
-    private static final Tag OUTCOME_SUCCESS = Tag.of("outcome", "SUCCESS");
-
-    private static final Tag OUTCOME_REDIRECTION = Tag.of("outcome", "REDIRECTION");
-
-    private static final Tag OUTCOME_CLIENT_ERROR = Tag.of("outcome", "CLIENT_ERROR");
-
-    private static final Tag OUTCOME_SERVER_ERROR = Tag.of("outcome", "SERVER_ERROR");
 
     private static final Tag METHOD_UNKNOWN = Tag.of("method", "UNKNOWN");
 
@@ -170,29 +159,10 @@ public final class JerseyTags {
      */
     public static Tag outcome(ContainerResponse response) {
         if (response != null) {
-            int status = response.getStatus();
-            switch (Response.Status.Family.familyOf(status)) {
-                case INFORMATIONAL:
-                    return OUTCOME_INFORMATIONAL;
-
-                case SUCCESSFUL:
-                    return OUTCOME_SUCCESS;
-
-                case REDIRECTION:
-                    return OUTCOME_REDIRECTION;
-
-                case CLIENT_ERROR:
-                    return OUTCOME_CLIENT_ERROR;
-
-                case SERVER_ERROR:
-                    return OUTCOME_SERVER_ERROR;
-
-                default:
-                    return OUTCOME_UNKNOWN;
-            }
+            return Outcome.forStatus(response.getStatus()).asTag();
         }
         /* In case there is no response we are dealing with an unmapped exception. */
-        return OUTCOME_SERVER_ERROR;
+        return Outcome.SERVER_ERROR.asTag();
     }
 
 }

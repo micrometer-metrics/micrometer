@@ -1,5 +1,5 @@
 /**
- * Copyright 2017 Pivotal Software, Inc.
+ * Copyright 2017 VMware, Inc.
  * <p>
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -27,20 +27,23 @@ import java.util.stream.Stream;
 import static java.util.stream.Collectors.toList;
 
 /**
+ * {@link Collector} for Micrometer.
+ *
  * @author Jon Schneider
+ * @author Johnny Lim
  */
-class MicrometerCollector extends Collector {
+class MicrometerCollector extends Collector implements Collector.Describable {
     private final Meter.Id id;
     private final Map<List<String>, Child> children = new ConcurrentHashMap<>();
     private final String conventionName;
     private final List<String> tagKeys;
-    private final PrometheusConfig config;
+    private final String help;
 
     public MicrometerCollector(Meter.Id id, NamingConvention convention, PrometheusConfig config) {
         this.id = id;
         this.conventionName = id.getConventionName(convention);
         this.tagKeys = id.getConventionTags(convention).stream().map(Tag::getKey).collect(toList());
-        this.config = config;
+        this.help = config.descriptions() ? Optional.ofNullable(id.getDescription()).orElse(" ") : " ";
     }
 
     public void add(List<String> tagValues, Child child) {
@@ -61,8 +64,6 @@ class MicrometerCollector extends Collector {
 
     @Override
     public List<MetricFamilySamples> collect() {
-        final String help = config.descriptions() ? Optional.ofNullable(id.getDescription()).orElse(" ") : " ";
-
         Map<String, Family> families = new HashMap<>();
 
         for (Child child : children.values()) {
@@ -75,6 +76,34 @@ class MicrometerCollector extends Collector {
         return families.values().stream()
                 .map(family -> new MetricFamilySamples(family.conventionName, family.type, help, family.samples))
                 .collect(toList());
+    }
+
+    @Override
+    public List<MetricFamilySamples> describe() {
+        switch (id.getType()) {
+            case COUNTER:
+                return Collections.singletonList(
+                        new MetricFamilySamples(conventionName, Type.COUNTER, help, Collections.emptyList()));
+
+            case GAUGE:
+                return Collections.singletonList(
+                        new MetricFamilySamples(conventionName, Type.GAUGE, help, Collections.emptyList()));
+
+            case TIMER:
+            case DISTRIBUTION_SUMMARY:
+                return Arrays.asList(
+                        new MetricFamilySamples(conventionName, Type.HISTOGRAM, help, Collections.emptyList()),
+                        new MetricFamilySamples(conventionName + "_max", Type.GAUGE, help, Collections.emptyList()));
+
+            case LONG_TASK_TIMER:
+                return Arrays.asList(
+                        new MetricFamilySamples(conventionName, Type.HISTOGRAM, help, Collections.emptyList()),
+                        new MetricFamilySamples(conventionName, Type.UNTYPED, help, Collections.emptyList()));
+
+            default:
+                return Collections.singletonList(
+                        new MetricFamilySamples(conventionName, Type.UNTYPED, help, Collections.emptyList()));
+        }
     }
 
     interface Child {

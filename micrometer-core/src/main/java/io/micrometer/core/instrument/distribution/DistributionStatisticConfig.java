@@ -1,5 +1,5 @@
 /**
- * Copyright 2017 Pivotal Software, Inc.
+ * Copyright 2017 VMware, Inc.
  * <p>
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -21,6 +21,7 @@ import io.micrometer.core.lang.Nullable;
 import java.time.Duration;
 import java.util.NavigableSet;
 import java.util.TreeSet;
+import java.util.stream.LongStream;
 
 /**
  * Configures the distribution statistics that emanate from meters like {@link io.micrometer.core.instrument.Timer}
@@ -36,8 +37,8 @@ public class DistributionStatisticConfig implements Mergeable<DistributionStatis
     public static final DistributionStatisticConfig DEFAULT = builder()
             .percentilesHistogram(false)
             .percentilePrecision(1)
-            .minimumExpectedValue(1L)
-            .maximumExpectedValue(Long.MAX_VALUE)
+            .minimumExpectedValue(1.0)
+            .maximumExpectedValue(Double.POSITIVE_INFINITY)
             .expiry(Duration.ofMinutes(2))
             .bufferLength(3)
             .build();
@@ -54,13 +55,13 @@ public class DistributionStatisticConfig implements Mergeable<DistributionStatis
     private Integer percentilePrecision;
 
     @Nullable
-    private long[] sla;
+    private double[] serviceLevelObjectives;
 
     @Nullable
-    private Long minimumExpectedValue;
+    private Double minimumExpectedValue;
 
     @Nullable
-    private Long maximumExpectedValue;
+    private Double maximumExpectedValue;
 
     @Nullable
     private Duration expiry;
@@ -84,7 +85,7 @@ public class DistributionStatisticConfig implements Mergeable<DistributionStatis
         return DistributionStatisticConfig.builder()
                 .percentilesHistogram(this.percentileHistogram == null ? parent.percentileHistogram : this.percentileHistogram)
                 .percentiles(this.percentiles == null ? parent.percentiles : this.percentiles)
-                .sla(this.sla == null ? parent.sla : this.sla)
+                .serviceLevelObjectives(this.serviceLevelObjectives == null ? parent.serviceLevelObjectives : this.serviceLevelObjectives)
                 .percentilePrecision(this.percentilePrecision == null ? parent.percentilePrecision : this.percentilePrecision)
                 .minimumExpectedValue(this.minimumExpectedValue == null ? parent.minimumExpectedValue : this.minimumExpectedValue)
                 .maximumExpectedValue(this.maximumExpectedValue == null ? parent.maximumExpectedValue : this.maximumExpectedValue)
@@ -93,8 +94,14 @@ public class DistributionStatisticConfig implements Mergeable<DistributionStatis
                 .build();
     }
 
-    public NavigableSet<Long> getHistogramBuckets(boolean supportsAggregablePercentiles) {
-        NavigableSet<Long> buckets = new TreeSet<>();
+    /**
+     * For internal use only.
+     *
+     * @param supportsAggregablePercentiles whether it supports aggregable percentiles
+     * @return histogram buckets
+     */
+    public NavigableSet<Double> getHistogramBuckets(boolean supportsAggregablePercentiles) {
+        NavigableSet<Double> buckets = new TreeSet<>();
 
         if (percentileHistogram != null && percentileHistogram && supportsAggregablePercentiles) {
             buckets.addAll(PercentileHistogramBuckets.buckets(this));
@@ -102,8 +109,8 @@ public class DistributionStatisticConfig implements Mergeable<DistributionStatis
             buckets.add(maximumExpectedValue);
         }
 
-        if (sla != null) {
-            for (long slaBoundary : sla) {
+        if (serviceLevelObjectives != null) {
+            for (double slaBoundary : serviceLevelObjectives) {
                 buckets.add(slaBoundary);
             }
         }
@@ -153,10 +160,38 @@ public class DistributionStatisticConfig implements Mergeable<DistributionStatis
      * on histogram buckets that are shipped to monitoring systems that support aggregable percentile approximations.
      *
      * @return The minimum value that this distribution summary is expected to observe.
+     * @deprecated Use {@link #getMinimumExpectedValueAsDouble}. If you use this method, your code
+     * will not be compatible with code that uses Micrometer 1.3.x.
+     */
+    @Deprecated
+    @Nullable
+    public Double getMinimumExpectedValue() {
+        return getMinimumExpectedValueAsDouble();
+    }
+
+    /**
+     * The minimum value that the meter is expected to observe. Sets a lower bound
+     * on histogram buckets that are shipped to monitoring systems that support aggregable percentile approximations.
+     *
+     * @return The minimum value that this distribution summary is expected to observe.
      */
     @Nullable
-    public Long getMinimumExpectedValue() {
+    public Double getMinimumExpectedValueAsDouble() {
         return minimumExpectedValue;
+    }
+
+    /**
+     * The maximum value that the meter is expected to observe. Sets an upper bound
+     * on histogram buckets that are shipped to monitoring systems that support aggregable percentile approximations.
+     *
+     * @return The maximum value that the meter is expected to observe.
+     * @deprecated Use {@link #getMaximumExpectedValueAsDouble}. If you use this method, your code
+     * will not be compatible with code that uses Micrometer 1.3.x.
+     */
+    @Deprecated
+    @Nullable
+    public Double getMaximumExpectedValue() {
+        return getMaximumExpectedValueAsDouble();
     }
 
     /**
@@ -166,7 +201,7 @@ public class DistributionStatisticConfig implements Mergeable<DistributionStatis
      * @return The maximum value that the meter is expected to observe.
      */
     @Nullable
-    public Long getMaximumExpectedValue() {
+    public Double getMaximumExpectedValueAsDouble() {
         return maximumExpectedValue;
     }
 
@@ -199,14 +234,30 @@ public class DistributionStatisticConfig implements Mergeable<DistributionStatis
     /**
      * Publish at a minimum a histogram containing your defined SLA boundaries. When used in conjunction with
      * {@link #percentileHistogram}, the boundaries defined here are included alongside other buckets used to
-     * generate aggregable percentile approximations.  If The {@link DistributionStatisticConfig} is meant for
-     * use with a {@link io.micrometer.core.instrument.Timer}, the SLA unit is in nanoseconds
+     * generate aggregable percentile approximations. If the {@link DistributionStatisticConfig} is meant for
+     * use with a {@link io.micrometer.core.instrument.Timer}, the SLA unit is in nanoseconds.
      *
      * @return The SLA boundaries to include the set of histogram buckets shipped to the monitoring system.
+     * @deprecated Use {@link #getServiceLevelObjectiveBoundaries()}. If you use this method, your
+     * code will not be compatible with code that uses Micrometer 1.4.x and later.
      */
     @Nullable
-    public long[] getSlaBoundaries() {
-        return sla;
+    @Deprecated
+    public double[] getSlaBoundaries() {
+        return getServiceLevelObjectiveBoundaries();
+    }
+
+    /**
+     * Publish at a minimum a histogram containing your defined SLO boundaries. When used in conjunction with
+     * {@link #percentileHistogram}, the boundaries defined here are included alongside other buckets used to
+     * generate aggregable percentile approximations. If the {@link DistributionStatisticConfig} is meant for
+     * use with a {@link io.micrometer.core.instrument.Timer}, the SLO unit is in nanoseconds.
+     *
+     * @return The SLO boundaries to include the set of histogram buckets shipped to the monitoring system.
+     */
+    @Nullable
+    public double[] getServiceLevelObjectiveBoundaries() {
+        return serviceLevelObjectives;
     }
 
     public static class Builder {
@@ -245,17 +296,68 @@ public class DistributionStatisticConfig implements Mergeable<DistributionStatis
         }
 
         /**
+         * Publish at a minimum a histogram containing your defined Service Level Objective (SLO) boundaries. When used
+         * in conjunction with {@link #percentileHistogram}, the boundaries defined here are included alongside other buckets used to
+         * generate aggregable percentile approximations. If the {@link DistributionStatisticConfig} is meant for
+         * use with a {@link io.micrometer.core.instrument.Timer}, the SLO unit is in nanoseconds.
+         *
+         * @param slos The SLO boundaries to include the set of histogram buckets shipped to the monitoring system.
+         * @return This builder.
+         * @since 1.5.0
+         */
+        public Builder serviceLevelObjectives(@Nullable double... slos) {
+            config.serviceLevelObjectives = slos;
+            return this;
+        }
+
+        /**
          * Publish at a minimum a histogram containing your defined SLA boundaries. When used in conjunction with
          * {@link #percentileHistogram}, the boundaries defined here are included alongside other buckets used to
-         * generate aggregable percentile approximations.  If The {@link DistributionStatisticConfig} is meant for
-         * use with a {@link io.micrometer.core.instrument.Timer}, the SLA unit is in nanoseconds
+         * generate aggregable percentile approximations. If the {@link DistributionStatisticConfig} is meant for
+         * use with a {@link io.micrometer.core.instrument.Timer}, the SLA unit is in nanoseconds.
          *
          * @param sla The SLA boundaries to include the set of histogram buckets shipped to the monitoring system.
          * @return This builder.
+         * @since 1.4.0
+         * @deprecated Use {@link #serviceLevelObjectives(double...)} instead. "Service Level Agreement" is
+         * more formally the agreement between an engineering organization and the business. Service Level Objectives
+         * are set more conservatively than the SLA to provide some wiggle room while still satisfying the business
+         * requirement. SLOs are the threshold we intend to measure against, then.
          */
+        @Deprecated
+        public Builder sla(@Nullable double... sla) {
+            return serviceLevelObjectives(sla);
+        }
+
+        /**
+         * Publish at a minimum a histogram containing your defined SLA boundaries. When used in conjunction with
+         * {@link #percentileHistogram}, the boundaries defined here are included alongside other buckets used to
+         * generate aggregable percentile approximations. If the {@link DistributionStatisticConfig} is meant for
+         * use with a {@link io.micrometer.core.instrument.Timer}, the SLA unit is in nanoseconds.
+         *
+         * @param sla The SLA boundaries to include the set of histogram buckets shipped to the monitoring system.
+         * @return This builder.
+         * @deprecated Use {@link #serviceLevelObjectives(double...)} instead. "Service Level Agreement" is
+         * more formally the agreement between an engineering organization and the business. Service Level Objectives
+         * are set more conservatively than the SLA to provide some wiggle room while still satisfying the business
+         * requirement. SLOs are the threshold we intend to measure against, then.
+         */
+        @Deprecated
         public Builder sla(@Nullable long... sla) {
-            config.sla = sla;
-            return this;
+            return sla == null ? this : serviceLevelObjectives(LongStream.of(sla).asDoubleStream().toArray());
+        }
+
+        /**
+         * The minimum value that the meter is expected to observe. Sets a lower bound
+         * on histogram buckets that are shipped to monitoring systems that support aggregable percentile approximations.
+         *
+         * @deprecated Use {@link #minimumExpectedValue(Double)} instead since 1.4.0.
+         * @param min The minimum value that this distribution summary is expected to observe.
+         * @return This builder.
+         */
+        @Deprecated
+        public Builder minimumExpectedValue(@Nullable Long min) {
+            return min == null ? this : minimumExpectedValue((double) min);
         }
 
         /**
@@ -264,8 +366,9 @@ public class DistributionStatisticConfig implements Mergeable<DistributionStatis
          *
          * @param min The minimum value that this distribution summary is expected to observe.
          * @return This builder.
+         * @since 1.3.10
          */
-        public Builder minimumExpectedValue(@Nullable Long min) {
+        public Builder minimumExpectedValue(@Nullable Double min) {
             config.minimumExpectedValue = min;
             return this;
         }
@@ -274,10 +377,24 @@ public class DistributionStatisticConfig implements Mergeable<DistributionStatis
          * The maximum value that the meter is expected to observe. Sets an upper bound
          * on histogram buckets that are shipped to monitoring systems that support aggregable percentile approximations.
          *
+         * @deprecated Use {@link #maximumExpectedValue(Double)} instead since 1.4.0.
          * @param max The maximum value that the meter is expected to observe.
          * @return This builder.
          */
+        @Deprecated
         public Builder maximumExpectedValue(@Nullable Long max) {
+            return max == null ? this : maximumExpectedValue((double) max);
+        }
+
+        /**
+         * The maximum value that the meter is expected to observe. Sets an upper bound
+         * on histogram buckets that are shipped to monitoring systems that support aggregable percentile approximations.
+         *
+         * @param max The maximum value that the meter is expected to observe.
+         * @return This builder.
+         * @since 1.3.10
+         */
+        public Builder maximumExpectedValue(@Nullable Double max) {
             config.maximumExpectedValue = max;
             return this;
         }
@@ -324,6 +441,6 @@ public class DistributionStatisticConfig implements Mergeable<DistributionStatis
     }
 
     public boolean isPublishingHistogram() {
-        return (percentileHistogram != null && percentileHistogram) || (sla != null && sla.length > 0);
+        return (percentileHistogram != null && percentileHistogram) || (serviceLevelObjectives != null && serviceLevelObjectives.length > 0);
     }
 }

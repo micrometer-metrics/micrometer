@@ -1,5 +1,5 @@
 /**
- * Copyright 2017 Pivotal Software, Inc.
+ * Copyright 2017 VMware, Inc.
  * <p>
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,15 +18,16 @@ package io.micrometer.statsd.internal;
 import io.micrometer.core.instrument.Meter;
 import io.micrometer.core.instrument.MeterRegistry;
 import io.micrometer.core.instrument.Statistic;
+import io.micrometer.core.instrument.Tag;
 import io.micrometer.core.instrument.config.NamingConvention;
 import io.micrometer.core.lang.Nullable;
-import org.pcollections.HashTreePMap;
-import org.pcollections.PMap;
 
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ConcurrentMap;
 import java.util.stream.Collectors;
 
 public class DatadogStatsdLineBuilder extends FlavorStatsdLineBuilder {
-    private final Object tagsLock = new Object();
+    private final Object conventionTagsLock = new Object();
     @SuppressWarnings({"NullableProblems", "unused"})
     private volatile NamingConvention namingConvention;
     @SuppressWarnings("NullableProblems")
@@ -35,7 +36,7 @@ public class DatadogStatsdLineBuilder extends FlavorStatsdLineBuilder {
     private volatile String conventionTags;
     @SuppressWarnings("NullableProblems")
     private volatile String tagsNoStat;
-    private volatile PMap<Statistic, String> tags = HashTreePMap.empty();
+    private final ConcurrentMap<Statistic, String> tags = new ConcurrentHashMap<>();
 
     public DatadogStatsdLineBuilder(Meter.Id id, MeterRegistry.Config config) {
         super(id, config);
@@ -50,42 +51,52 @@ public class DatadogStatsdLineBuilder extends FlavorStatsdLineBuilder {
     private void updateIfNamingConventionChanged() {
         NamingConvention next = config.namingConvention();
         if (this.namingConvention != next) {
-            this.namingConvention = next;
-            this.name = next.name(sanitize(id.getName()), id.getType(), id.getBaseUnit()) + ":";
-            synchronized (tagsLock) {
-                this.tags = HashTreePMap.empty();
+            synchronized (conventionTagsLock) {
+                if (this.namingConvention == next) {
+                    return;
+                }
+                this.tags.clear();
                 this.conventionTags = id.getTagsAsIterable().iterator().hasNext() ?
-                        id.getConventionTags(this.namingConvention).stream()
-                                .map(t -> sanitize(t.getKey()) + ":" + sanitize(t.getValue()))
+                        id.getConventionTags(next).stream()
+                                .map(t -> formatTag(t))
                                 .collect(Collectors.joining(","))
                         : null;
             }
+            this.name = next.name(sanitizeName(id.getName()), id.getType(), id.getBaseUnit()) + ":";
             this.tagsNoStat = tags(null, conventionTags, ":", "|#");
+            this.namingConvention = next;
         }
     }
 
-    private String sanitize(String value) {
+    private String formatTag(Tag t) {
+        String sanitizedTag = sanitizeName(t.getKey());
+        if (!t.getValue().isEmpty()) {
+            sanitizedTag += ":" + sanitizeTagValue(t.getValue());
+        }
+        return sanitizedTag;
+    }
+
+    private String sanitizeName(String value) {
+        if (!Character.isLetter(value.charAt(0))) {
+            value = "m." + value;
+        }
         return value.replace(':', '_');
+    }
+
+    private String sanitizeTagValue(String value) {
+        return (value.charAt(value.length() - 1) == ':') ? value.substring(0, value.length() - 1) + '_' : value;
     }
 
     private String tagsByStatistic(@Nullable Statistic stat) {
         if (stat == null) {
             return tagsNoStat;
         }
-
-        String tagString = tags.get(stat);
-        if (tagString != null)
-            return tagString;
-
-        synchronized (tagsLock) {
-            tagString = tags.get(stat);
-            if (tagString != null) {
-                return tagString;
-            }
-
-            tagString = tags(stat, conventionTags, ":", "|#");
-            tags = tags.plus(stat, tagString);
-            return tagString;
+        String tags = this.tags.get(stat);
+        if (tags != null) {
+            return tags;
+        }
+        synchronized (conventionTagsLock) {
+            return this.tags.computeIfAbsent(stat, (key) -> tags(key, conventionTags, ":", "|#"));
         }
     }
 }

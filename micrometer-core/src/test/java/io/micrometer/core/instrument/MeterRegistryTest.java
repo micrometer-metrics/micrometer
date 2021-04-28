@@ -1,5 +1,5 @@
 /**
- * Copyright 2017 Pivotal Software, Inc.
+ * Copyright 2017 VMware, Inc.
  * <p>
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -129,6 +129,21 @@ class MeterRegistryTest {
         assertThat(registry.find("another.name").counter()).isSameAs(counter);
         assertThat(registry.remove(counter)).isSameAs(counter);
         assertThat(registry.find("another.name").counter()).isNull();
+    }
+
+    @Test
+    void removeMetersAffectedByNonIdempotentMeterFilter() {
+        registry.config().meterFilter(new MeterFilter() {
+            @Override
+            public Meter.Id map(Meter.Id id) {
+                return id.withName("prefix." + id.getName());
+            }
+        });
+
+        Counter counter = registry.counter("name");
+        assertThat(registry.find("prefix.name").counter()).isSameAs(counter);
+        assertThat(registry.remove(counter)).isSameAs(counter);
+        assertThat(registry.find("prefix.name").counter()).isNull();
     }
 
     @Test

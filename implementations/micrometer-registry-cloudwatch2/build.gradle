@@ -1,7 +1,8 @@
 dependencies {
-    compile project(':micrometer-core')
-    compile 'org.slf4j:slf4j-api:1.7.+'
-    compile 'software.amazon.awssdk:cloudwatch:latest.release'
+    api project(':micrometer-core')
 
-    testCompile project(':micrometer-test')
+    api 'software.amazon.awssdk:cloudwatch'
+    implementation 'org.slf4j:slf4j-api'
+
+    testImplementation project(':micrometer-test')
 }

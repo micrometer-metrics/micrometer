@@ -1,5 +1,5 @@
 /**
- * Copyright 2017 Pivotal Software, Inc.
+ * Copyright 2017 VMware, Inc.
  * <p>
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -21,27 +21,30 @@ import java.util.List;
 /**
  * Base class for a partition.
  *
- * Modified from {@link com.google.common.collect.Lists#partition(List, int)}.
+ * <p>Those extending this should pass control of the input to this type and never mutate it nor
+ * call any mutation operations on this type.
  *
  * @author Jon Schneider
  * @since 1.2.2
  */
 public abstract class AbstractPartition<T> extends AbstractList<List<T>> {
-    private final List<T> list;
-    private final int partitionSize;
-    private final int partitionCount;
+    final List<T> delegate;
+    final int partitionSize;
+    final int partitionCount;
 
-    protected AbstractPartition(List<T> list, int partitionSize) {
-        this.list = list;
+    protected AbstractPartition(List<T> delegate, int partitionSize) {
+        if (delegate == null) throw new NullPointerException("delegate == null");
+        this.delegate = delegate;
+        if (partitionSize < 1) throw new IllegalArgumentException("partitionSize < 1");
         this.partitionSize = partitionSize;
-        this.partitionCount = MathUtils.divideWithCeilingRoundingMode(list.size(), partitionSize);
+        this.partitionCount = partitionCount(delegate, partitionSize);
     }
 
     @Override
     public List<T> get(int index) {
         int start = index * partitionSize;
-        int end = Math.min(start + partitionSize, list.size());
-        return list.subList(start, end);
+        int end = Math.min(start + partitionSize, delegate.size());
+        return delegate.subList(start, end);
     }
 
     @Override
@@ -51,6 +54,12 @@ public abstract class AbstractPartition<T> extends AbstractList<List<T>> {
 
     @Override
     public boolean isEmpty() {
-        return list.isEmpty();
+        return delegate.isEmpty();
+    }
+
+    // This rounds up on remainder to avoid orphaning.
+    static <T> int partitionCount(List<T> delegate, int partitionSize) {
+        int result = delegate.size() / partitionSize;
+        return delegate.size() % partitionSize == 0 ? result : result + 1;
     }
 }

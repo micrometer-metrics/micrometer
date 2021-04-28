@@ -1,5 +1,5 @@
 /**
- * Copyright 2017 Pivotal Software, Inc.
+ * Copyright 2017 VMware, Inc.
  * <p>
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,7 +17,10 @@ package io.micrometer.core.instrument.config;
 
 /**
  * Signals that a piece of required configuration has not been provided.
+ *
+ * @deprecated since 1.5.0 replaced with {@link io.micrometer.core.instrument.config.validate.Validated} API.
  */
+@Deprecated
 public class MissingRequiredConfigurationException extends IllegalStateException {
     public MissingRequiredConfigurationException(String s) {
         super(s);

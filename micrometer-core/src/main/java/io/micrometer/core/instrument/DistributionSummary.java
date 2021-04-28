@@ -1,5 +1,5 @@
 /**
- * Copyright 2017 Pivotal Software, Inc.
+ * Copyright 2017 VMware, Inc.
  * <p>
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -59,7 +59,8 @@ public interface DistributionSummary extends Meter, HistogramSupport {
      * @return The distribution average for all recorded events.
      */
     default double mean() {
-        return count() == 0 ? 0 : totalAmount() / count();
+        long count = count();
+        return count == 0 ? 0 : totalAmount() / count;
     }
 
     /**
@@ -226,16 +227,66 @@ public interface DistributionSummary extends Meter, HistogramSupport {
         }
 
         /**
-         * Publish at a minimum a histogram containing your defined SLA boundaries. When used in conjunction with
-         * {@link Builder#publishPercentileHistogram()}, the boundaries defined here are included alongside
-         * other buckets used to generate aggregable percentile approximations.
+         * Publish at a minimum a histogram containing your defined service level objective (SLO) boundaries.
+         * When used in conjunction with {@link Timer.Builder#publishPercentileHistogram()}, the boundaries defined
+         * here are included alongside other buckets used to generate aggregable percentile approximations.
          *
-         * @param sla Publish SLA boundaries in the set of histogram buckets shipped to the monitoring system.
+         * @param sla Publish SLO boundaries in the set of histogram buckets shipped to the monitoring system.
+         * @return This builder.
+         * @deprecated Use {{@link #serviceLevelObjectives(double...)}} instead. "Service Level Agreement" is
+         * more formally the agreement between an engineering organization and the business. Service Level Objectives
+         * are set more conservatively than the SLA to provide some wiggle room while still satisfying the business
+         * requirement. SLOs are the threshold we intend to measure against, then.
+         */
+        @Deprecated
+        public Builder sla(@Nullable long... sla) {
+            return sla == null ? this : serviceLevelObjectives(Arrays.stream(sla).asDoubleStream().toArray());
+        }
+
+        /**
+         * Publish at a minimum a histogram containing your defined service level objective (SLO) boundaries.
+         * When used in conjunction with {@link Timer.Builder#publishPercentileHistogram()}, the boundaries defined
+         * here are included alongside other buckets used to generate aggregable percentile approximations.
+         *
+         * @param sla Publish SLO boundaries in the set of histogram buckets shipped to the monitoring system.
+         * @return This builder.
+         * @since 1.4.0
+         * @deprecated Use {{@link #serviceLevelObjectives(double...)}} instead. "Service Level Agreement" is
+         * more formally the agreement between an engineering organization and the business. Service Level Objectives
+         * are set more conservatively than the SLA to provide some wiggle room while still satisfying the business
+         * requirement. SLOs are the threshold we intend to measure against, then.
+         */
+        @Deprecated
+        public Builder sla(@Nullable double... sla) {
+            this.distributionConfigBuilder.serviceLevelObjectives(sla);
+            return this;
+        }
+
+        /**
+         * Publish at a minimum a histogram containing your defined service level objective (SLO) boundaries.
+         * When used in conjunction with {@link Timer.Builder#publishPercentileHistogram()}, the boundaries defined
+         * here are included alongside other buckets used to generate aggregable percentile approximations.
+         *
+         * @param slos Publish SLO boundaries in the set of histogram buckets shipped to the monitoring system.
+         * @return This builder.
+         * @since 1.5.0
+         */
+        public Builder serviceLevelObjectives(@Nullable double... slos) {
+            this.distributionConfigBuilder.serviceLevelObjectives(slos);
+            return this;
+        }
+
+        /**
+         * Sets the minimum value that this distribution summary is expected to observe. Sets a lower bound
+         * on histogram buckets that are shipped to monitoring systems that support aggregable percentile approximations.
+         *
+         * @deprecated Use {@link #minimumExpectedValue(Double)} instead since 1.4.0.
+         * @param min The minimum value that this distribution summary is expected to observe.
          * @return This builder.
          */
-        public Builder sla(@Nullable long... sla) {
-            this.distributionConfigBuilder.sla(sla);
-            return this;
+        @Deprecated
+        public Builder minimumExpectedValue(@Nullable Long min) {
+            return min == null ? this : minimumExpectedValue((double) min);
         }
 
         /**
@@ -244,8 +295,9 @@ public interface DistributionSummary extends Meter, HistogramSupport {
          *
          * @param min The minimum value that this distribution summary is expected to observe.
          * @return This builder.
+         * @since 1.3.10
          */
-        public Builder minimumExpectedValue(@Nullable Long min) {
+        public Builder minimumExpectedValue(@Nullable Double min) {
             this.distributionConfigBuilder.minimumExpectedValue(min);
             return this;
         }
@@ -254,10 +306,24 @@ public interface DistributionSummary extends Meter, HistogramSupport {
          * Sets the maximum value that this distribution summary is expected to observe. Sets an upper bound
          * on histogram buckets that are shipped to monitoring systems that support aggregable percentile approximations.
          *
+         * @deprecated Use {@link #maximumExpectedValue(Double)} instead since 1.4.0.
          * @param max The maximum value that this distribution summary is expected to observe.
          * @return This builder.
          */
+        @Deprecated
         public Builder maximumExpectedValue(@Nullable Long max) {
+            return max == null ? this : maximumExpectedValue((double) max);
+        }
+
+        /**
+         * Sets the maximum value that this distribution summary is expected to observe. Sets an upper bound
+         * on histogram buckets that are shipped to monitoring systems that support aggregable percentile approximations.
+         *
+         * @param max The maximum value that this distribution summary is expected to observe.
+         * @return This builder.
+         * @since 1.3.10
+         */
+        public Builder maximumExpectedValue(@Nullable Double max) {
             this.distributionConfigBuilder.maximumExpectedValue(max);
             return this;
         }

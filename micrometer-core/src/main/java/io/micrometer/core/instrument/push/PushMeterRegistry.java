@@ -1,5 +1,5 @@
 /**
- * Copyright 2018 Pivotal Software, Inc.
+ * Copyright 2018 VMware, Inc.
  * <p>
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,6 +17,7 @@ package io.micrometer.core.instrument.push;
 
 import io.micrometer.core.instrument.Clock;
 import io.micrometer.core.instrument.MeterRegistry;
+import io.micrometer.core.instrument.util.TimeUtils;
 import io.micrometer.core.lang.Nullable;
 import io.micrometer.core.util.internal.logging.InternalLogger;
 import io.micrometer.core.util.internal.logging.InternalLoggerFactory;
@@ -27,7 +28,7 @@ import java.util.concurrent.ThreadFactory;
 import java.util.concurrent.TimeUnit;
 
 public abstract class PushMeterRegistry extends MeterRegistry {
-    private final static InternalLogger logger = InternalLoggerFactory.getInstance(PushMeterRegistry.class);
+    private static final InternalLogger logger = InternalLoggerFactory.getInstance(PushMeterRegistry.class);
     private final PushRegistryConfig config;
 
     @Nullable
@@ -35,6 +36,9 @@ public abstract class PushMeterRegistry extends MeterRegistry {
 
     protected PushMeterRegistry(PushRegistryConfig config, Clock clock) {
         super(clock);
+
+        config.requireValid();
+
         this.config = config;
     }
 
@@ -64,6 +68,8 @@ public abstract class PushMeterRegistry extends MeterRegistry {
             stop();
 
         if (config.enabled()) {
+            logger.info("publishing metrics for " + this.getClass().getSimpleName() + " every " + TimeUtils.format(config.step()));
+
             scheduledExecutorService = Executors.newSingleThreadScheduledExecutor(threadFactory);
             scheduledExecutorService.scheduleAtFixedRate(this::publishSafely, config.step()
                     .toMillis(), config.step().toMillis(), TimeUnit.MILLISECONDS);

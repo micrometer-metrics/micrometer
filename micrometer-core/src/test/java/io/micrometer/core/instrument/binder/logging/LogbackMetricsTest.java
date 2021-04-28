@@ -1,5 +1,5 @@
 /**
- * Copyright 2017 Pivotal Software, Inc.
+ * Copyright 2017 VMware, Inc.
  * <p>
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -40,17 +40,19 @@ import static org.assertj.core.api.Assertions.assertThat;
 class LogbackMetricsTest {
     private MeterRegistry registry = new SimpleMeterRegistry(SimpleConfig.DEFAULT, new MockClock());
     private Logger logger = (Logger) LoggerFactory.getLogger("foo");
-    private LogbackMetrics logbackMetrics;
-    
+    LogbackMetrics logbackMetrics;
+
     @BeforeEach
     void bindLogbackMetrics() {
         logbackMetrics = new LogbackMetrics();
         logbackMetrics.bindTo(registry);
     }
-    
+
     @AfterEach
-    void tearDown() {
-        logbackMetrics.close();
+    void closeLogbackMetrics() {
+        if (logbackMetrics != null) {
+            logbackMetrics.close();
+        }
     }
 
     @Test
@@ -96,6 +98,36 @@ class LogbackMetricsTest {
         assertThat(loggerContext.getTurboFilterList()).hasSize(1);
         logbackMetrics.close();
         assertThat(loggerContext.getTurboFilterList()).isEmpty();
+    }
+
+    @Issue("#2028")
+    @Test
+    void reAddFilterToLoggerContextAfterReset() {
+        LoggerContext loggerContext = new LoggerContext();
+        assertThat(loggerContext.getTurboFilterList()).isEmpty();
+
+        LogbackMetrics logbackMetrics = new LogbackMetrics(emptyList(), loggerContext);
+        logbackMetrics.bindTo(registry);
+
+        assertThat(loggerContext.getTurboFilterList()).hasSize(1);
+        loggerContext.reset();
+        assertThat(loggerContext.getTurboFilterList()).hasSize(1);
+    }
+
+    @Issue("#2270")
+    @Test
+    void resetIgnoreMetricsWhenRunnableThrows() {
+        Counter infoLogCounter = registry.get("logback.events").tag("level", "info").counter();
+        logger.info("hi");
+        assertThat(infoLogCounter.count()).isEqualTo(1);
+        try {
+            LogbackMetrics.ignoreMetrics(() -> {
+                throw new RuntimeException();
+            });
+        } catch (RuntimeException ignore) {
+        }
+        logger.info("hi");
+        assertThat(infoLogCounter.count()).isEqualTo(2);
     }
 
     @NonNullApi

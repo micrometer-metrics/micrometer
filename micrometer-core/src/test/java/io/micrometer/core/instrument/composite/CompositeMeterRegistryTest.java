@@ -1,5 +1,5 @@
 /**
- * Copyright 2017 Pivotal Software, Inc.
+ * Copyright 2017 VMware, Inc.
  * <p>
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -473,6 +473,19 @@ class CompositeMeterRegistryTest {
             assertThat(this.composite.find(meterName).tag(tagName, String.valueOf(i)).counter().count())
                     .isEqualTo(count / tagCount);
         }
+    }
+
+    @Test
+    @Issue("#2354")
+    void meterRemovalPropagatesToChildRegistryWithModifyingFilter() {
+        this.simple.config().commonTags("host", "localhost");
+        this.composite.add(this.simple);
+
+        Counter counter = this.composite.counter("my.counter");
+        this.composite.remove(counter);
+
+        assertThat(this.composite.getMeters()).isEmpty();
+        assertThat(this.simple.getMeters()).isEmpty();
     }
 
 }

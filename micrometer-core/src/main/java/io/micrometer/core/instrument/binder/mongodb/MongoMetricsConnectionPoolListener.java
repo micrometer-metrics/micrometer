@@ -1,5 +1,5 @@
 /**
- * Copyright 2019 Pivotal Software, Inc.
+ * Copyright 2019 VMware, Inc.
  * <p>
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -81,43 +81,58 @@ public class MongoMetricsConnectionPoolListener extends ConnectionPoolListenerAd
 
     @Override
     public void connectionCheckedOut(ConnectionCheckedOutEvent event) {
-        checkedOutCount.get(event.getConnectionId().getServerId())
-                .incrementAndGet();
+        AtomicInteger gauge = checkedOutCount.get(event.getConnectionId().getServerId());
+        if (gauge != null) {
+            gauge.incrementAndGet();
+        }
     }
 
     @Override
     public void connectionCheckedIn(ConnectionCheckedInEvent event) {
-        checkedOutCount.get(event.getConnectionId().getServerId())
-                .decrementAndGet();
+        AtomicInteger gauge = checkedOutCount.get(event.getConnectionId().getServerId());
+        if (gauge != null) {
+            gauge.decrementAndGet();
+        }
     }
 
+    @SuppressWarnings("deprecation")
     @Override
     public void waitQueueEntered(ConnectionPoolWaitQueueEnteredEvent event) {
-        waitQueueSize.get(event.getServerId())
-                .incrementAndGet();
+        AtomicInteger gauge = waitQueueSize.get(event.getServerId());
+        if (gauge != null) {
+            gauge.incrementAndGet();
+        }
     }
 
+    @SuppressWarnings("deprecation")
     @Override
     public void waitQueueExited(ConnectionPoolWaitQueueExitedEvent event) {
-        waitQueueSize.get(event.getServerId())
-                .decrementAndGet();
+        AtomicInteger gauge = waitQueueSize.get(event.getServerId());
+        if (gauge != null) {
+            gauge.decrementAndGet();
+        }
     }
 
     @Override
     public void connectionAdded(ConnectionAddedEvent event) {
-        poolSize.get(event.getConnectionId().getServerId())
-                .incrementAndGet();
+        AtomicInteger gauge = poolSize.get(event.getConnectionId().getServerId());
+        if (gauge != null) {
+            gauge.incrementAndGet();
+        }
     }
 
     @Override
     public void connectionRemoved(ConnectionRemovedEvent event) {
-        poolSize.get(event.getConnectionId().getServerId())
-                .decrementAndGet();
+        AtomicInteger gauge = poolSize.get(event.getConnectionId().getServerId());
+        if (gauge != null) {
+            gauge.decrementAndGet();
+        }
     }
 
     private Gauge registerGauge(ServerId serverId, String metricName, String description, Map<ServerId, AtomicInteger> metrics) {
-        metrics.put(serverId, new AtomicInteger());
-        return Gauge.builder(metricName, metrics, m -> m.get(serverId).doubleValue())
+        AtomicInteger value = new AtomicInteger();
+        metrics.put(serverId, value);
+        return Gauge.builder(metricName, value, AtomicInteger::doubleValue)
                     .description(description)
                     .tag("cluster.id", serverId.getClusterId().getValue())
                     .tag("server.address", serverId.getAddress().toString())

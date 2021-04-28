@@ -1,5 +1,5 @@
 /**
- * Copyright 2017 Pivotal Software, Inc.
+ * Copyright 2017 VMware, Inc.
  * <p>
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -24,6 +24,7 @@ import java.util.*;
 
 /**
  * @author Jon Schneider
+ * @author Gregory Zussa
  */
 class DatadogMetricMetadata {
 
@@ -67,36 +68,40 @@ class DatadogMetricMetadata {
         this.descriptionsEnabled = descriptionsEnabled;
         this.overrideBaseUnit = overrideBaseUnit;
 
+        this.type = sanitizeType(statistic);
+    }
+
+    String editMetadataBody() {
+        if (descriptionsEnabled && id.getDescription() != null) {
+            String body = "{\"type\":\"" + type + "\"";
+
+            String baseUnit = sanitizeBaseUnit(id.getBaseUnit(), overrideBaseUnit);
+            if (baseUnit != null) {
+                body += ",\"unit\":\"" + baseUnit + "\"";
+            }
+            body += ",\"description\":\"" + StringEscapeUtils.escapeJson(id.getDescription()) + "\"}";
+            return body;
+        }
+        return null;
+    }
+
+    static String sanitizeBaseUnit(@Nullable String baseUnit, @Nullable String overrideBaseUnit) {
+        String sanitizeBaseUnit = overrideBaseUnit != null ? overrideBaseUnit : baseUnit;
+        if (sanitizeBaseUnit != null) {
+            return UNIT_WHITELIST.contains(sanitizeBaseUnit) ? sanitizeBaseUnit :
+                    PLURALIZED_UNIT_MAPPING.get(sanitizeBaseUnit);
+        }
+        return null;
+    }
+
+    static String sanitizeType(Statistic statistic) {
         switch (statistic) {
             case COUNT:
             case TOTAL:
             case TOTAL_TIME:
-                this.type = "count";
-                break;
+                return "count";
             default:
-                this.type = "gauge";
+                return "gauge";
         }
-    }
-
-    String editMetadataBody() {
-        String body = "{\"type\":\"" + type + "\"";
-
-        String baseUnit = overrideBaseUnit != null ? overrideBaseUnit : id.getBaseUnit();
-        if (baseUnit != null) {
-            String whitelistedBaseUnit = UNIT_WHITELIST.contains(baseUnit) ? baseUnit :
-                    PLURALIZED_UNIT_MAPPING.get(baseUnit);
-
-            if (whitelistedBaseUnit != null) {
-                body += ",\"unit\":\"" + whitelistedBaseUnit + "\"";
-            }
-        }
-
-        if (descriptionsEnabled && id.getDescription() != null) {
-            body += ",\"description\":\"" + StringEscapeUtils.escapeJson(id.getDescription()) + "\"";
-        }
-
-        body += "}";
-
-        return body;
     }
 }

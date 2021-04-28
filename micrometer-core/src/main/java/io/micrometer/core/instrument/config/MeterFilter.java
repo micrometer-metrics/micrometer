@@ -1,5 +1,5 @@
 /**
- * Copyright 2017 Pivotal Software, Inc.
+ * Copyright 2017 VMware, Inc.
  * <p>
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -45,6 +45,9 @@ public interface MeterFilter {
     /**
      * Add common tags that are applied to every meter created afterward.
      *
+     * The common tags will not override tag values from a meter ID. They will also not override previously configured
+     * common tag MeterFilters that have the same tag key.
+     *
      * @param tags Common tags.
      * @return A common tag filter.
      */
@@ -52,7 +55,7 @@ public interface MeterFilter {
         return new MeterFilter() {
             @Override
             public Meter.Id map(Meter.Id id) {
-                return id.withTags(Tags.concat(tags, id.getTagsAsIterable()));
+                return id.replaceTags(Tags.concat(tags, id.getTagsAsIterable()));
             }
         };
     }
@@ -312,7 +315,7 @@ public interface MeterFilter {
             public DistributionStatisticConfig configure(Meter.Id id, DistributionStatisticConfig config) {
                 if (id.getType() == Meter.Type.TIMER && id.getName().startsWith(prefix)) {
                     return DistributionStatisticConfig.builder()
-                            .maximumExpectedValue(max.toNanos())
+                            .maximumExpectedValue((double) max.toNanos())
                             .build()
                             .merge(config);
                 }
@@ -324,11 +327,25 @@ public interface MeterFilter {
     /**
      * Set a maximum expected value on any {@link DistributionSummary} whose name begins with the given prefix.
      *
+     * @deprecated Use {@link #maxExpected(String, double)} instead since 1.4.0.
      * @param prefix Apply the maximum only to distribution summaries whose name begins with this prefix.
      * @param max    The maximum expected value of the distribution summary.
      * @return A filter that applies a maximum expected value to a distribution summary.
      */
+    @Deprecated
     static MeterFilter maxExpected(String prefix, long max) {
+        return maxExpected(prefix, (double) max);
+    }
+
+    /**
+     * Set a maximum expected value on any {@link DistributionSummary} whose name begins with the given prefix.
+     *
+     * @param prefix Apply the maximum only to distribution summaries whose name begins with this prefix.
+     * @param max    The maximum expected value of the distribution summary.
+     * @return A filter that applies a maximum expected value to a distribution summary.
+     * @since 1.4.0
+     */
+    static MeterFilter maxExpected(String prefix, double max) {
         return new MeterFilter() {
             @Override
             public DistributionStatisticConfig configure(Meter.Id id, DistributionStatisticConfig config) {
@@ -356,7 +373,7 @@ public interface MeterFilter {
             public DistributionStatisticConfig configure(Meter.Id id, DistributionStatisticConfig config) {
                 if (id.getType() == Meter.Type.TIMER && id.getName().startsWith(prefix)) {
                     return DistributionStatisticConfig.builder()
-                            .minimumExpectedValue(min.toNanos())
+                            .minimumExpectedValue((double) min.toNanos())
                             .build()
                             .merge(config);
                 }
@@ -368,11 +385,25 @@ public interface MeterFilter {
     /**
      * Set a minimum expected value on any {@link DistributionSummary} whose name begins with the given prefix.
      *
+     * @deprecated Use {@link #minExpected(String, double)} instead since 1.4.0.
      * @param prefix Apply the minimum only to distribution summaries whose name begins with this prefix.
      * @param min    The minimum expected value of the distribution summary.
      * @return A filter that applies a minimum expected value to a distribution summary.
      */
+    @Deprecated
     static MeterFilter minExpected(String prefix, long min) {
+        return minExpected(prefix, (double) min);
+    }
+
+    /**
+     * Set a minimum expected value on any {@link DistributionSummary} whose name begins with the given prefix.
+     *
+     * @param prefix Apply the minimum only to distribution summaries whose name begins with this prefix.
+     * @param min    The minimum expected value of the distribution summary.
+     * @return A filter that applies a minimum expected value to a distribution summary.
+     * @since 1.4.0
+     */
+    static MeterFilter minExpected(String prefix, double min) {
         return new MeterFilter() {
             @Override
             public DistributionStatisticConfig configure(Meter.Id id, DistributionStatisticConfig config) {

@@ -1,5 +1,5 @@
 /**
- * Copyright 2017 Pivotal Software, Inc.
+ * Copyright 2017 VMware, Inc.
  * <p>
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -227,10 +227,10 @@ public interface Meter {
         }
 
         /**
-         * Generate a new id with an additional tag. If the key of the provided tag already exists, this overwrites
+         * Generate a new id with additional tags. If the key of the provided tag already exists, this overwrites
          * the tag value.
          *
-         * @param tags The tag to add.
+         * @param tags The tags to add.
          * @return A new id with the provided tags added. The source id remains unchanged.
          * @since 1.1.0
          */
@@ -241,7 +241,7 @@ public interface Meter {
         /**
          * Generate a new id replacing all tags with new ones.
          *
-         * @param tags The tag to add.
+         * @param tags The tags to add.
          * @return A new id with the only the provided tags. The source id remains unchanged.
          * @since 1.1.0
          */

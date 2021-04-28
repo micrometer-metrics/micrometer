@@ -1,5 +1,5 @@
 /**
- * Copyright 2017 Pivotal Software, Inc.
+ * Copyright 2017 VMware, Inc.
  * <p>
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,8 +16,11 @@
 package io.micrometer.core.instrument;
 
 import io.micrometer.core.annotation.Timed;
+import io.micrometer.core.instrument.distribution.DistributionStatisticConfig;
+import io.micrometer.core.instrument.distribution.HistogramSupport;
 import io.micrometer.core.lang.Nullable;
 
+import java.time.Duration;
 import java.util.Arrays;
 import java.util.concurrent.Callable;
 import java.util.concurrent.TimeUnit;
@@ -30,7 +33,7 @@ import java.util.function.Supplier;
  *
  * @author Jon Schneider
  */
-public interface LongTaskTimer extends Meter {
+public interface LongTaskTimer extends Meter, HistogramSupport {
     static Builder builder(String name) {
         return new Builder(name);
     }
@@ -125,25 +128,8 @@ public interface LongTaskTimer extends Meter {
     Sample start();
 
     /**
-     * Mark a given task as completed.
-     *
-     * @param task Id for the task to stop. This should be the value returned from {@link #start()}.
-     * @return Duration for the task in nanoseconds. A -1 value will be returned for an unknown task.
-     */
-    long stop(long task);
-
-    /**
-     * The current duration for an active task.
-     *
-     * @param task Id for the task to stop. This should be the value returned from {@link #start()}.
      * @param unit The time unit to scale the duration to.
-     * @return Duration for the task in nanoseconds. A -1 value will be returned for an unknown task.
-     */
-    double duration(long task, TimeUnit unit);
-
-    /**
-     * @param unit The time unit to scale the duration to.
-     * @return The cumulative duration of all current tasks in nanoseconds.
+     * @return The cumulative duration of all current tasks.
      */
     double duration(TimeUnit unit);
 
@@ -151,6 +137,58 @@ public interface LongTaskTimer extends Meter {
      * @return The current number of tasks being executed.
      */
     int activeTasks();
+
+    /**
+     * @param unit The base unit of time to scale the mean to.
+     * @return The distribution average for all recorded events.
+     * @since 1.5.1
+     */
+    default double mean(TimeUnit unit) {
+        int activeTasks = activeTasks();
+        return activeTasks == 0 ? 0 : duration(unit) / activeTasks;
+    }
+
+    /**
+     * The amount of time the longest running task has been running
+     *
+     * @param unit The time unit to scale the max to.
+     * @return The maximum active task duration.
+     * @since 1.5.0
+     */
+    double max(TimeUnit unit);
+
+    /**
+     * @return The base time unit of the long task timer to which all published metrics will be scaled
+     * @since 1.5.0
+     */
+    TimeUnit baseTimeUnit();
+
+    /**
+     * Mark a given task as completed.
+     *
+     * @param task Id for the task to stop. This should be the value returned from {@link #start()}.
+     * @return Duration for the task in nanoseconds. A -1 value will be returned for an unknown task.
+     * @deprecated Use {@link Sample#stop()}. As of 1.5.0, this always returns -1 as tasks no longer have IDs.
+     */
+    @SuppressWarnings("unused")
+    @Deprecated
+    default long stop(long task) {
+        return -1;
+    }
+
+    /**
+     * The current duration for an active task.
+     *
+     * @param task Id for the task to stop. This should be the value returned from {@link #start()}.
+     * @param unit The time unit to scale the duration to.
+     * @return Duration for the task. A -1 value will be returned for an unknown task.
+     * @deprecated Use {@link Sample#duration(TimeUnit)}. As of 1.5.0, this always returns -1 as tasks no longer have IDs.
+     */
+    @SuppressWarnings("unused")
+    @Deprecated
+    default double duration(long task, TimeUnit unit) {
+        return -1;
+    }
 
     @Override
     default Iterable<Measurement> measure() {
@@ -160,27 +198,19 @@ public interface LongTaskTimer extends Meter {
         );
     }
 
-    class Sample {
-        private final LongTaskTimer timer;
-        private final long task;
-
-        public Sample(LongTaskTimer timer, long task) {
-            this.timer = timer;
-            this.task = task;
-        }
-
+    abstract class Sample {
         /**
          * Records the duration of the operation
          *
-         * @return The duration that was stop in nanoseconds
+         * @return The duration, in nanoseconds, of this sample that was stopped
          */
-        public long stop() {
-            return timer.stop(task);
-        }
+        public abstract long stop();
 
-        public double duration(TimeUnit unit) {
-            return timer.duration(task, unit);
-        }
+        /**
+         * @param unit time unit to which the return value will be scaled
+         * @return duration of this sample
+         */
+        public abstract double duration(TimeUnit unit);
     }
 
     /**
@@ -189,12 +219,15 @@ public interface LongTaskTimer extends Meter {
     class Builder {
         private final String name;
         private Tags tags = Tags.empty();
+        private final DistributionStatisticConfig.Builder distributionConfigBuilder = new DistributionStatisticConfig.Builder();
 
         @Nullable
         private String description;
 
         private Builder(String name) {
             this.name = name;
+            minimumExpectedValue(Duration.ofMinutes(2));
+            maximumExpectedValue(Duration.ofHours(2));
         }
 
         /**
@@ -234,6 +267,135 @@ public interface LongTaskTimer extends Meter {
         }
 
         /**
+         * Publish at a minimum a histogram containing your defined service level objective (SLO) boundaries.
+         * When used in conjunction with {@link Builder#publishPercentileHistogram()}, the boundaries defined
+         * here are included alongside other buckets used to generate aggregable percentile approximations.
+         *
+         * @param slos Publish SLO boundaries in the set of histogram buckets shipped to the monitoring system.
+         * @return This builder.
+         * @since 1.5.0
+         */
+        public Builder serviceLevelObjectives(@Nullable Duration... slos) {
+            if (slos != null) {
+                this.distributionConfigBuilder.serviceLevelObjectives(Arrays.stream(slos).mapToDouble(Duration::toNanos).toArray());
+            }
+            return this;
+        }
+
+        /**
+         * Sets the minimum value that this timer is expected to observe. Sets a lower bound
+         * on histogram buckets that are shipped to monitoring systems that support aggregable percentile approximations.
+         *
+         * @param min The minimum value that this timer is expected to observe.
+         * @return This builder.
+         * @since 1.5.0
+         */
+        public Builder minimumExpectedValue(@Nullable Duration min) {
+            if (min != null)
+                this.distributionConfigBuilder.minimumExpectedValue((double) min.toNanos());
+            return this;
+        }
+
+        /**
+         * Sets the maximum value that this timer is expected to observe. Sets an upper bound
+         * on histogram buckets that are shipped to monitoring systems that support aggregable percentile approximations.
+         *
+         * @param max The maximum value that this timer is expected to observe.
+         * @return This builder.
+         * @since 1.5.0
+         */
+        public Builder maximumExpectedValue(@Nullable Duration max) {
+            if (max != null)
+                this.distributionConfigBuilder.maximumExpectedValue((double) max.toNanos());
+            return this;
+        }
+
+        /**
+         * Statistics emanating from a timer like max, percentiles, and histogram counts decay over time to
+         * give greater weight to recent samples (exception: histogram counts are cumulative for those systems that expect cumulative
+         * histogram buckets). Samples are accumulated to such statistics in ring buffers which rotate after
+         * this expiry, with a buffer length of {@link #distributionStatisticBufferLength(Integer)}.
+         *
+         * @param expiry The amount of time samples are accumulated to a histogram before it is reset and rotated.
+         * @return This builder.
+         * @since 1.5.0
+         */
+        public Builder distributionStatisticExpiry(@Nullable Duration expiry) {
+            this.distributionConfigBuilder.expiry(expiry);
+            return this;
+        }
+
+        /**
+         * Statistics emanating from a timer like max, percentiles, and histogram counts decay over time to
+         * give greater weight to recent samples (exception: histogram counts are cumulative for those systems that expect cumulative
+         * histogram buckets). Samples are accumulated to such statistics in ring buffers which rotate after
+         * {@link #distributionStatisticExpiry(Duration)}, with this buffer length.
+         *
+         * @param bufferLength The number of histograms to keep in the ring buffer.
+         * @return This builder.
+         * @since 1.5.0
+         */
+        public Builder distributionStatisticBufferLength(@Nullable Integer bufferLength) {
+            this.distributionConfigBuilder.bufferLength(bufferLength);
+            return this;
+        }
+
+        /**
+         * Produces an additional time series for each requested percentile. This percentile
+         * is computed locally, and so can't be aggregated with percentiles computed across other
+         * dimensions (e.g. in a different instance). Use {@link #publishPercentileHistogram()}
+         * to publish a histogram that can be used to generate aggregable percentile approximations.
+         *
+         * @param percentiles Percentiles to compute and publish. The 95th percentile should be expressed as {@code 0.95}.
+         * @return This builder.
+         * @since 1.5.0
+         */
+        public Builder publishPercentiles(@Nullable double... percentiles) {
+            this.distributionConfigBuilder.percentiles(percentiles);
+            return this;
+        }
+
+        /**
+         * Determines the number of digits of precision to maintain on the dynamic range histogram used to compute
+         * percentile approximations. The higher the degrees of precision, the more accurate the approximation is at the
+         * cost of more memory.
+         *
+         * @param digitsOfPrecision The digits of precision to maintain for percentile approximations.
+         * @return This builder.
+         * @since 1.5.0
+         */
+        public Builder percentilePrecision(@Nullable Integer digitsOfPrecision) {
+            this.distributionConfigBuilder.percentilePrecision(digitsOfPrecision);
+            return this;
+        }
+
+        /**
+         * Adds histogram buckets used to generate aggregable percentile approximations in monitoring
+         * systems that have query facilities to do so (e.g. Prometheus' {@code histogram_quantile},
+         * Atlas' {@code :percentiles}).
+         *
+         * @return This builder.
+         * @since 1.5.0
+         */
+        public Builder publishPercentileHistogram() {
+            return publishPercentileHistogram(true);
+        }
+
+        /**
+         * Adds histogram buckets used to generate aggregable percentile approximations in monitoring
+         * systems that have query facilities to do so (e.g. Prometheus' {@code histogram_quantile},
+         * Atlas' {@code :percentiles}).
+         *
+         * @param enabled Determines whether percentile histograms should be published.
+         * @return This builder.
+         * @since 1.5.0
+         */
+        public Builder publishPercentileHistogram(@Nullable Boolean enabled) {
+            this.distributionConfigBuilder.percentilesHistogram(enabled);
+            return this;
+        }
+
+        /**
          * Add the long task timer to a single registry, or return an existing long task timer in that registry. The returned
          * long task timer will be unique for each registry, but each registry is guaranteed to only create one long task timer
          * for the same combination of name and tags.
@@ -242,7 +404,8 @@ public interface LongTaskTimer extends Meter {
          * @return A new or existing long task timer.
          */
         public LongTaskTimer register(MeterRegistry registry) {
-            return registry.more().longTaskTimer(new Meter.Id(name, tags, null, description, Type.LONG_TASK_TIMER));
+            return registry.more().longTaskTimer(new Meter.Id(name, tags, null, description, Type.LONG_TASK_TIMER),
+                    distributionConfigBuilder.build());
         }
     }
 }

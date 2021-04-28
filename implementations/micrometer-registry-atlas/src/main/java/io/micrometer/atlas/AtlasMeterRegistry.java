@@ -1,5 +1,5 @@
 /**
- * Copyright 2017 Pivotal Software, Inc.
+ * Copyright 2017 VMware, Inc.
  * <p>
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,11 +20,13 @@ import com.netflix.spectator.api.Id;
 import com.netflix.spectator.api.Registry;
 import com.netflix.spectator.api.histogram.PercentileDistributionSummary;
 import com.netflix.spectator.api.histogram.PercentileTimer;
+import com.netflix.spectator.api.patterns.PolledMeter;
 import com.netflix.spectator.atlas.AtlasConfig;
 import com.netflix.spectator.atlas.AtlasRegistry;
 import io.micrometer.core.instrument.*;
 import io.micrometer.core.instrument.distribution.DistributionStatisticConfig;
 import io.micrometer.core.instrument.distribution.HistogramGauges;
+import io.micrometer.core.instrument.distribution.HistogramSupport;
 import io.micrometer.core.instrument.distribution.ValueAtPercentile;
 import io.micrometer.core.instrument.distribution.pause.PauseDetector;
 import io.micrometer.core.instrument.internal.DefaultMeter;
@@ -115,7 +117,7 @@ public class AtlasMeterRegistry extends MeterRegistry {
                 percentile -> Tags.concat(id.getTagsAsIterable(), "percentile", DoubleFormat.decimalOrNan(percentile.percentile())),
                 ValueAtPercentile::value,
                 bucket -> id.getName(),
-                bucket -> Tags.concat(id.getTagsAsIterable(), "sla", DoubleFormat.wholeOrDecimal(bucket.bucket())));
+                bucket -> Tags.concat(id.getTagsAsIterable(), "service.level.objective", DoubleFormat.wholeOrDecimal(bucket.bucket())));
 
         return summary;
     }
@@ -133,15 +135,17 @@ public class AtlasMeterRegistry extends MeterRegistry {
         }
 
         SpectatorTimer timer = new SpectatorTimer(id, internalTimer, clock, distributionStatisticConfig, pauseDetector, getBaseTimeUnit());
+        registerHistogramGauges(timer, id, timer.baseTimeUnit());
+        return timer;
+    }
 
-        HistogramGauges.register(timer, this,
+    private void registerHistogramGauges(HistogramSupport histogramSupport, Meter.Id id, TimeUnit baseTimeUnit) {
+        HistogramGauges.register(histogramSupport, this,
                 percentile -> id.getName(),
                 percentile -> Tags.concat(id.getTagsAsIterable(), "percentile", DoubleFormat.decimalOrNan(percentile.percentile())),
-                percentile -> percentile.value(timer.baseTimeUnit()),
+                percentile -> percentile.value(baseTimeUnit),
                 bucket -> id.getName(),
-                bucket -> Tags.concat(id.getTagsAsIterable(), "sla", DoubleFormat.wholeOrDecimal(bucket.bucket(timer.baseTimeUnit()))));
-
-        return timer;
+                bucket -> Tags.concat(id.getTagsAsIterable(), "service.level.objective", DoubleFormat.wholeOrDecimal(bucket.bucket(baseTimeUnit))));
     }
 
     private Id spectatorId(Meter.Id id) {
@@ -161,7 +165,9 @@ public class AtlasMeterRegistry extends MeterRegistry {
     @Override
     protected <T> FunctionCounter newFunctionCounter(Meter.Id id, T obj, ToDoubleFunction<T> countFunction) {
         FunctionCounter fc = new StepFunctionCounter<>(id, clock, atlasConfig.step().toMillis(), obj, countFunction);
-        newMeter(id, Meter.Type.COUNTER, fc.measure());
+        PolledMeter.using(registry)
+                .withId(spectatorId(id))
+                .monitorMonotonicCounter(obj, obj2 -> (long) countFunction.applyAsDouble(obj2));
         return fc;
     }
 
@@ -173,8 +179,11 @@ public class AtlasMeterRegistry extends MeterRegistry {
     }
 
     @Override
-    protected LongTaskTimer newLongTaskTimer(Meter.Id id) {
-        return new SpectatorLongTaskTimer(id, com.netflix.spectator.api.patterns.LongTaskTimer.get(registry, spectatorId(id)));
+    protected LongTaskTimer newLongTaskTimer(Meter.Id id, DistributionStatisticConfig distributionStatisticConfig) {
+        SpectatorLongTaskTimer ltt = new SpectatorLongTaskTimer(id, com.netflix.spectator.api.patterns.LongTaskTimer.get(registry, spectatorId(id)),
+                clock, distributionStatisticConfig);
+        registerHistogramGauges(ltt, ltt.getId(), ltt.baseTimeUnit());
+        return ltt;
     }
 
     @Override

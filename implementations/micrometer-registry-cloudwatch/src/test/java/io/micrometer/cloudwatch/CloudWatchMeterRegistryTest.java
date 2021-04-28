@@ -1,5 +1,5 @@
 /**
- * Copyright 2017 Pivotal Software, Inc.
+ * Copyright 2017 VMware, Inc.
  * <p>
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,6 +15,7 @@
  */
 package io.micrometer.cloudwatch;
 
+import com.amazonaws.services.cloudwatch.model.Dimension;
 import com.amazonaws.services.cloudwatch.model.MetricDatum;
 import io.micrometer.core.instrument.*;
 import org.junit.jupiter.api.Test;
@@ -41,6 +42,7 @@ import static org.mockito.Mockito.*;
  *
  * @author Johnny Lim
  */
+@SuppressWarnings("deprecation")
 class CloudWatchMeterRegistryTest {
     private static final String METER_NAME = "test";
     private final CloudWatchConfig config = new CloudWatchConfig() {
@@ -128,6 +130,31 @@ class CloudWatchMeterRegistryTest {
     }
 
     @Test
+    void writeShouldDropTagWithBlankValue() {
+        registry.gauge("my.gauge", Tags.of("accepted", "foo").and("empty", ""), 1d);
+        assertThat(registry.metricData())
+                .hasSize(1)
+                .allSatisfy(datum -> assertThat(datum.getDimensions()).hasSize(1).contains(
+                        new Dimension().withName("accepted").withValue("foo")));
+    }
+
+    @Test
+    void functionTimerData() {
+        FunctionTimer timer = FunctionTimer.builder("my.function.timer", 1d, Number::longValue, Number::doubleValue,
+                TimeUnit.MILLISECONDS).register(registry);
+        clock.add(config.step());
+        assertThat(registry.new Batch().functionTimerData(timer)).hasSize(3);
+    }
+
+    @Test
+    void functionTimerDataWhenSumIsNaNShouldReturnEmptyStream() {
+        FunctionTimer timer = FunctionTimer.builder("my.function.timer", Double.NaN, Number::longValue,
+                Number::doubleValue, TimeUnit.MILLISECONDS).register(registry);
+        clock.add(config.step());
+        assertThat(registry.new Batch().functionTimerData(timer)).isEmpty();
+    }
+
+    @Test
     void shouldAddFunctionTimerAggregateMetricWhenAtLeastOneEventHappened() {
         FunctionTimer timer = mock(FunctionTimer.class);
         Id meterId = new Id(METER_NAME, Tags.empty(), null, null, TIMER);
@@ -204,7 +231,7 @@ class CloudWatchMeterRegistryTest {
     }
 
     @Test
-    public void batchSizeShouldWorkOnMetricDatum() throws InterruptedException {
+    void batchSizeShouldWorkOnMetricDatum() throws InterruptedException {
         List<Meter> meters = new ArrayList<>();
         for (int i = 0; i < 20; i++) {
             Timer timer = Timer.builder("timer." + i).register(this.registry);
@@ -213,6 +240,7 @@ class CloudWatchMeterRegistryTest {
         when(this.registry.getMeters()).thenReturn(meters);
         doNothing().when(this.registry).sendMetricData(any());
         this.registry.publish();
+        @SuppressWarnings("unchecked")
         ArgumentCaptor<List<MetricDatum>> argumentCaptor = ArgumentCaptor.forClass(List.class);
         verify(this.registry, times(2)).sendMetricData(argumentCaptor.capture());
         List<List<MetricDatum>> allValues = argumentCaptor.getAllValues();

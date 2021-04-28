@@ -1,5 +1,5 @@
 /**
- * Copyright 2017 Pivotal Software, Inc.
+ * Copyright 2017 VMware, Inc.
  * <p>
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -23,42 +23,20 @@ import io.micrometer.core.instrument.distribution.DistributionStatisticConfig;
 import io.micrometer.core.instrument.distribution.TimeWindowMax;
 
 import java.util.Arrays;
+import java.util.concurrent.atomic.DoubleAdder;
+import java.util.concurrent.atomic.LongAdder;
 
+/**
+ * Step-normalized {@link io.micrometer.core.instrument.DistributionSummary}.
+ *
+ * @author Jon Schneider
+ * @author Johnny Lim
+ */
 public class StepDistributionSummary extends AbstractDistributionSummary {
-    private final StepLong count;
-    private final StepDouble total;
+    private final LongAdder count = new LongAdder();
+    private final DoubleAdder total = new DoubleAdder();
+    private final StepTuple2<Long, Double> countTotal;
     private final TimeWindowMax max;
-
-    /**
-     * Create a new {@code StepDistributionSummary}.
-     *
-     * @param id                          ID
-     * @param clock                       clock
-     * @param distributionStatisticConfig distribution static configuration
-     * @param scale                       scale
-     * @deprecated Use {@link #StepDistributionSummary(io.micrometer.core.instrument.Meter.Id, Clock, DistributionStatisticConfig, double, long, boolean)}
-     */
-    @Deprecated
-    public StepDistributionSummary(Id id, Clock clock, DistributionStatisticConfig distributionStatisticConfig, double scale) {
-        this(id, clock, distributionStatisticConfig, scale, false);
-    }
-
-    /**
-     * Create a new {@code StepDistributionSummary}.
-     *
-     * @param id                            ID
-     * @param clock                         clock
-     * @param distributionStatisticConfig   distribution static configuration
-     * @param scale                         scale
-     * @param supportsAggregablePercentiles whether it supports aggregable percentiles
-     * @deprecated Use {@link #StepDistributionSummary(io.micrometer.core.instrument.Meter.Id, Clock, DistributionStatisticConfig, double, long, boolean)}
-     */
-    @Deprecated
-    @SuppressWarnings("ConstantConditions")
-    public StepDistributionSummary(Id id, Clock clock, DistributionStatisticConfig distributionStatisticConfig, double scale,
-                                   boolean supportsAggregablePercentiles) {
-        this(id, clock, distributionStatisticConfig, scale, distributionStatisticConfig.getExpiry().toMillis(), supportsAggregablePercentiles);
-    }
 
     /**
      * Create a new {@code StepDistributionSummary}.
@@ -70,30 +48,28 @@ public class StepDistributionSummary extends AbstractDistributionSummary {
      * @param stepMillis                    step in milliseconds
      * @param supportsAggregablePercentiles whether it supports aggregable percentiles
      */
-    @SuppressWarnings("ConstantConditions")
     public StepDistributionSummary(Id id, Clock clock, DistributionStatisticConfig distributionStatisticConfig, double scale,
                                    long stepMillis, boolean supportsAggregablePercentiles) {
         super(id, clock, distributionStatisticConfig, scale, supportsAggregablePercentiles);
-        this.count = new StepLong(clock, stepMillis);
-        this.total = new StepDouble(clock, stepMillis);
+        this.countTotal = new StepTuple2<>(clock, stepMillis, 0L, 0.0, count::sumThenReset, total::sumThenReset);
         this.max = new TimeWindowMax(clock, distributionStatisticConfig);
     }
 
     @Override
     protected void recordNonNegative(double amount) {
-        count.getCurrent().add(1);
-        total.getCurrent().add(amount);
+        count.add(1);
+        total.add(amount);
         max.record(amount);
     }
 
     @Override
     public long count() {
-        return (long) count.poll();
+        return countTotal.poll1();
     }
 
     @Override
     public double totalAmount() {
-        return total.poll();
+        return countTotal.poll2();
     }
 
     @Override

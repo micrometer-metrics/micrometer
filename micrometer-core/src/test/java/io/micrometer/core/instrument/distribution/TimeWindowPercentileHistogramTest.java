@@ -1,5 +1,5 @@
 /**
- * Copyright 2017 Pivotal Software, Inc.
+ * Copyright 2017 VMware, Inc.
  * <p>
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -26,30 +26,30 @@ import static io.micrometer.core.instrument.util.TimeUtils.secondsToUnit;
 import static org.assertj.core.api.Assertions.assertThat;
 
 class TimeWindowPercentileHistogramTest {
-    
+
     @Test
     void histogramsAreCumulative() {
         try (TimeWindowPercentileHistogram histogram = new TimeWindowPercentileHistogram(new MockClock(),
                 DistributionStatisticConfig.builder()
-                        .sla(3, 6, 7)
+                        .serviceLevelObjectives(3.0, 6, 7)
                         .build()
                         .merge(DistributionStatisticConfig.DEFAULT), false)) {
 
             histogram.recordDouble(3);
-    
+
             assertThat(histogram.takeSnapshot(0, 0, 0).histogramCounts()).containsExactly(
-                    new CountAtBucket(3, 1),
-                    new CountAtBucket(6, 1),
-                    new CountAtBucket(7, 1));
-    
+                    new CountAtBucket(3.0, 1),
+                    new CountAtBucket(6.0, 1),
+                    new CountAtBucket(7.0, 1));
+
             histogram.recordDouble(6);
-    
+
             // Proves that the accumulated histogram is truly cumulative, and not just a representation
             // of the last snapshot
             assertThat(histogram.takeSnapshot(0, 0, 0).histogramCounts()).containsExactly(
-                    new CountAtBucket(3, 1),
-                    new CountAtBucket(6, 2),
-                    new CountAtBucket(7, 2)
+                    new CountAtBucket(3.0, 1),
+                    new CountAtBucket(6.0, 2),
+                    new CountAtBucket(7.0, 2)
             );
         }
     }
@@ -57,29 +57,30 @@ class TimeWindowPercentileHistogramTest {
     @Test
     void sampleValueAboveMaximumExpectedValue() {
         try (TimeWindowPercentileHistogram histogram = new TimeWindowPercentileHistogram(new MockClock(), DistributionStatisticConfig.builder()
-                .sla(3)
-                .maximumExpectedValue(2L)
+                .serviceLevelObjectives(3.0)
+                .maximumExpectedValue(2.0)
                 .build()
                 .merge(DistributionStatisticConfig.DEFAULT), false)) {
-            
+
             histogram.recordDouble(3);
-            assertThat(histogram.takeSnapshot(0, 0, 0).histogramCounts()).containsExactly(new CountAtBucket(3, 1));
+            assertThat(histogram.takeSnapshot(0, 0, 0).histogramCounts()).containsExactly(new CountAtBucket(3.0, 1));
         }
     }
 
     @Test
     void recordValuesThatExceedTheDynamicRange() {
         try (TimeWindowPercentileHistogram histogram = new TimeWindowPercentileHistogram(new MockClock(),
-                DistributionStatisticConfig.builder().sla(Long.MAX_VALUE).build()
-                        .merge(DistributionStatisticConfig.DEFAULT),
-                false)) {
+                DistributionStatisticConfig.builder()
+                        .serviceLevelObjectives(Double.POSITIVE_INFINITY)
+                        .build()
+                        .merge(DistributionStatisticConfig.DEFAULT), false)) {
 
             // Regardless of the imputed dynamic bound for the underlying histogram, Double.MAX_VALUE is always too
             // large.
             histogram.recordDouble(Double.MAX_VALUE);
 
             assertThat(histogram.takeSnapshot(0, 0, 0).histogramCounts())
-                    .containsExactly(new CountAtBucket(Long.MAX_VALUE, 0));
+                    .containsExactly(new CountAtBucket(Double.POSITIVE_INFINITY, 0));
         }
     }
 
@@ -88,15 +89,15 @@ class TimeWindowPercentileHistogramTest {
         try (TimeWindowPercentileHistogram histogram = new TimeWindowPercentileHistogram(new MockClock(),
                 DistributionStatisticConfig.builder()
                         .percentiles(0.5, 0.9, 0.95)
-                        .minimumExpectedValue((long) millisToUnit(1, TimeUnit.NANOSECONDS))
-                        .maximumExpectedValue((long) secondsToUnit(30, TimeUnit.NANOSECONDS))
+                        .minimumExpectedValue(millisToUnit(1, TimeUnit.NANOSECONDS))
+                        .maximumExpectedValue(secondsToUnit(30, TimeUnit.NANOSECONDS))
                         .build()
                         .merge(DistributionStatisticConfig.DEFAULT), false)) {
 
             for (long i = 1; i <= 10; i++) {
                 histogram.recordLong((long) millisToUnit(i, TimeUnit.NANOSECONDS));
             }
-    
+
             assertThat(histogram.takeSnapshot(0, 0, 0).percentileValues())
                     .anyMatch(p -> percentileValueIsApproximately(p, 0.5, 5e6))
                     .anyMatch(p -> percentileValueIsApproximately(p, 0.9, 9e6))
@@ -133,15 +134,15 @@ class TimeWindowPercentileHistogramTest {
             for (int i = 1; i <= 10; i++) {
                 histogram.recordLong((long) millisToUnit(i, TimeUnit.NANOSECONDS));
             }
-    
+
             // baseline median
             assertThat(histogram.takeSnapshot(0, 0, 0).percentileValues())
                     .anyMatch(p -> percentileValueIsApproximately(p, 0.5, 5e6));
-    
+
             for (int i = 11; i <= 20; i++) {
                 histogram.recordLong((long) millisToUnit(i, TimeUnit.NANOSECONDS));
             }
-    
+
             // median should have moved after seeing 10 more samples
             assertThat(histogram.takeSnapshot(0, 0, 0).percentileValues())
                     .anyMatch(p -> percentileValueIsApproximately(p, 0.5, 10e6));
@@ -154,7 +155,7 @@ class TimeWindowPercentileHistogramTest {
         double eps = Math.abs(1 - (vp.value() / nanos));
         return eps < 0.05;
     }
-    
+
     @Test
     void timeBasedSlidingWindow() {
         final DistributionStatisticConfig config =

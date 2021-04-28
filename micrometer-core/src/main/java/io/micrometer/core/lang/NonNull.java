@@ -1,5 +1,6 @@
 /**
- * Copyright 2017 Pivotal Software, Inc.
+ * Copyright 2002-2017 the original author or authors.
+ * Copyright 2017-2021 VMware, Inc.
  * <p>
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -28,7 +29,11 @@ import java.lang.annotation.*;
  * <p>Use {@code @NonNullApi} (scope = parameters + return values) and/or {@code @NonNullFields}
  * (scope = fields) to set the default behavior to non-nullable in order to avoid annotating
  * your whole codebase with {@code @NonNull}.
+ * <p>
+ * NOTE: This file has been copied from {@code org.springframework.lang}.
  *
+ * @author Sebastien Deleuze
+ * @author Juergen Hoeller
  * @see NonNullApi
  * @see NonNullFields
  * @see Nullable

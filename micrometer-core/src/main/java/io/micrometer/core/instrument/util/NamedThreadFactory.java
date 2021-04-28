@@ -1,5 +1,5 @@
 /**
- * Copyright 2018 Pivotal Software, Inc.
+ * Copyright 2018 VMware, Inc.
  * <p>
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -31,8 +31,7 @@ public class NamedThreadFactory implements ThreadFactory {
         Thread thread = new Thread(r);
         int seq = sequence.getAndIncrement();
         thread.setName(prefix + (seq > 1 ? "-" + seq : ""));
-        if (!thread.isDaemon())
-            thread.setDaemon(true);
+        thread.setDaemon(true);
         return thread;
     }
 }

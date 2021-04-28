@@ -1,5 +1,5 @@
 /**
- * Copyright 2017 Pivotal Software, Inc.
+ * Copyright 2017 VMware, Inc.
  * <p>
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -49,9 +49,13 @@ class InfluxNamingConventionTest {
     }
 
     @Test
-    void timeCannotBeATagKeyOrValue() {
+    void timeCannotBeATagKey() {
         assertThat(catchThrowable(() -> convention.tagKey("time"))).isInstanceOf(IllegalArgumentException.class);
-        assertThat(catchThrowable(() -> convention.tagValue("time"))).isInstanceOf(IllegalArgumentException.class);
+    }
+
+    @Test
+    void timeCanBeATagValue() {
+        assertThat(convention.tagValue("time")).isEqualTo("time");
     }
 
     @Issue("#645")
@@ -70,6 +74,12 @@ class InfluxNamingConventionTest {
         assertThat(convention.name("my.name", Meter.Type.TIMER)).isEqualTo("name:my.name");
         assertThat(convention.tagKey("my.tag.key")).isEqualTo("key:my.tag.key");
         assertThat(convention.tagValue("my.tag.value")).isEqualTo("value:my.tag.value");
+    }
+
+    @Issue("#2155")
+    @Test
+    void newlineCharReplacedInTagValues() {
+        assertThat(convention.tagValue("hello\nworld\n")).isEqualTo("hello\\ world\\ ");
     }
 
     private static class CustomNamingConvention implements NamingConvention {

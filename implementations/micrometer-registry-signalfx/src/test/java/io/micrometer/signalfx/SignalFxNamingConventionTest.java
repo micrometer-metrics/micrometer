@@ -1,5 +1,5 @@
 /**
- * Copyright 2017 Pivotal Software, Inc.
+ * Copyright 2017 VMware, Inc.
  * <p>
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,6 +19,12 @@ import org.junit.jupiter.api.Test;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+/**
+ * Tests for {@link SignalFxNamingConvention}.
+ *
+ * @author Jon Schneider
+ * @author Johnny Lim
+ */
 class SignalFxNamingConventionTest {
     private SignalFxNamingConvention convention = new SignalFxNamingConvention();
 
@@ -28,6 +34,11 @@ class SignalFxNamingConventionTest {
         assertThat(convention.tagKey("sf_boo")).isEqualTo("boo");
 
         assertThat(convention.tagKey("123")).isEqualTo("a123");
+    }
+
+    @Test
+    void tagKeyWhenKeyHasBlacklistedCharShouldSanitize() {
+        assertThat(convention.tagKey("a.b")).isEqualTo("a_b");
     }
 
 }

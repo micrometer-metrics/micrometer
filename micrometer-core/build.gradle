@@ -1,120 +1,100 @@
 plugins {
-    id "net.ltgt.apt" version "0.10" // for dagger injection testing
     id 'idea'
-    id 'com.github.johnrengelman.shadow' version '4.0.3'
 }
 
-apply plugin: 'nebula.optional-base'
-
 dependencies {
-    compile 'org.pcollections:pcollections:latest.release'
-
-    // JSR-305 only used for non-required meta-annotations
-    compile "com.google.code.findbugs:jsr305:latest.release", optional
-
-    compile 'org.hdrhistogram:HdrHistogram:latest.release'
-    compile('org.latencyutils:LatencyUtils:latest.release') {
+    // TODO(anuraaga): HdrHistogram is exposed in the micrometer API but probably shouldn't be
+    api 'org.hdrhistogram:HdrHistogram'
+    implementation('org.latencyutils:LatencyUtils') {
         exclude group: 'org.hdrhistogram', module: 'HdrHistogram'
     }
 
     // instrumentation options
-    compile 'io.dropwizard.metrics:metrics-core:4.0.+', optional
+    optionalApi 'io.dropwizard.metrics:metrics-core'
 
     // cache monitoring
-    compile 'com.google.guava:guava:latest.release', optional
-    compile 'com.github.ben-manes.caffeine:caffeine:latest.release', optional
-    compile 'net.sf.ehcache:ehcache:latest.release', optional
-    compile 'javax.cache:cache-api:latest.release', optional
-    compile 'com.hazelcast:hazelcast:latest.release', optional
-    compile 'org.hibernate:hibernate-entitymanager:latest.release', optional
+    optionalApi 'com.google.guava:guava'
+    optionalApi 'com.github.ben-manes.caffeine:caffeine'
+    optionalApi 'net.sf.ehcache:ehcache'
+    optionalApi 'javax.cache:cache-api'
+    optionalApi 'com.hazelcast:hazelcast'
+    optionalApi 'org.hibernate:hibernate-entitymanager'
 
     // server runtime monitoring
-    // 9.4+ are incompatible with the latest version of wiremock as of 1/4/2019
-    compile 'org.eclipse.jetty:jetty-server:9.2.+', optional
-    compile 'org.apache.tomcat.embed:tomcat-embed-core:8.+', optional
+    optionalApi 'org.eclipse.jetty:jetty-server'
+    optionalApi 'org.eclipse.jetty:jetty-client'
+    optionalApi 'org.apache.tomcat.embed:tomcat-embed-core'
 
     // apache httpcomponents monitoring
-    compile 'org.apache.httpcomponents:httpclient:4.5.6', optional
+    optionalApi 'org.apache.httpcomponents:httpclient'
+    optionalApi 'org.apache.httpcomponents:httpasyncclient'
 
     // hystrix monitoring
-    // metrics are better with https://github.com/Netflix/Hystrix/pull/1568 introduced
-    // in hystrix 1.5.12, but Netflix re-released 1.5.11 as 1.5.18 late in 2018.
-    // <=1.5.11 or 1.5.18 doesn't break with Micrometer, but open metrics won't be correct necessarily.
-    compile 'com.netflix.hystrix:hystrix-core:1.5.12', optional
+    optionalApi 'com.netflix.hystrix:hystrix-core'
 
     // log monitoring
-    compile 'ch.qos.logback:logback-classic:1.2.+', optional
-    compile 'org.apache.logging.log4j:log4j-core:2.+', optional
+    optionalApi 'ch.qos.logback:logback-classic'
+    optionalApi 'org.apache.logging.log4j:log4j-core'
 
     // reactor
-    compile 'io.projectreactor:reactor-core:latest.release', optional
-    compile 'io.projectreactor.netty:reactor-netty:latest.release', optional
+    optionalApi 'io.projectreactor:reactor-core'
+    optionalApi 'io.projectreactor.netty:reactor-netty'
 
     // @Timed AOP
-    compile 'org.aspectj:aspectjweaver:1.8.+', optional
+    optionalApi 'org.aspectj:aspectjweaver'
 
-    compile 'com.squareup.okhttp3:okhttp:3.+', optional
+    optionalApi 'com.squareup.okhttp3:okhttp'
 
-    compile 'org.mongodb:mongo-java-driver:latest.release', optional
+    optionalApi 'org.mongodb:mongo-java-driver'
 
-    testCompile 'io.projectreactor:reactor-test:latest.release'
+    optionalApi 'org.jooq:jooq'
+
+    optionalApi 'org.apache.kafka:kafka-clients'
+    optionalApi 'org.apache.kafka:kafka-streams'
+
+    testImplementation 'io.projectreactor:reactor-test'
 
     // JUnit 5
-    testImplementation 'org.junit.jupiter:junit-jupiter:latest.release'
+    testImplementation 'org.junit.jupiter:junit-jupiter'
 
     // Eclipse still needs this (as of 4.7.1a)
-    testRuntime 'org.junit.platform:junit-platform-launcher:latest.release'
+    testRuntimeOnly 'org.junit.platform:junit-platform-launcher'
 
-    testCompile 'org.mockito:mockito-core:latest.release'
+    testImplementation 'org.mockito:mockito-core'
 
-    testCompile 'org.hsqldb:hsqldb:latest.release'
+    testImplementation 'org.hsqldb:hsqldb'
 
     // dependency injection tests
-    testCompile 'javax.inject:javax.inject:1'
-    testCompile 'org.springframework:spring-context:4.+'
-    testCompile 'org.springframework:spring-test:4.+'
-    testCompile 'com.google.inject:guice:4.1.0'
+    testImplementation 'javax.inject:javax.inject'
+    testImplementation 'org.springframework:spring-context'
+    testImplementation 'org.springframework:spring-test'
+    testImplementation 'com.google.inject:guice'
+
+    testImplementation 'com.h2database:h2'
 
     // Uncomment these if you are interested in testing injection with dagger in MeterRegistryInjectionTest
-//    testCompile 'com.google.dagger:dagger:2.11'
-//    testCompile 'com.google.dagger:dagger-compiler:2.11'
+//    testImplementation 'com.google.dagger:dagger'
+//    testAnnotationProcessor 'com.google.dagger:dagger-compiler'
 
-    testCompile 'org.assertj:assertj-core:latest.release'
+    testImplementation 'org.assertj:assertj-core'
+    testImplementation 'org.awaitility:awaitility'
 
-    testCompile 'org.ehcache:ehcache:latest.release'
+    testImplementation 'org.ehcache:ehcache'
 
-    testCompile 'org.apache.kafka:kafka-clients:latest.release'
+    testImplementation 'org.apache.kafka:kafka-clients'
 
-    testCompile 'ru.lanwen.wiremock:wiremock-junit5:1.2.0'
-    testCompile 'com.github.tomakehurst:wiremock:latest.release'
-
-    testCompile 'de.flapdoodle.embed:de.flapdoodle.embed.mongo:latest.release'
-}
-
-shadowJar {
-    configurations = [project.configurations.compile]
-    classifier = null
-    dependencies {
-        include(dependency('org.pcollections:'))
+    testImplementation 'ru.lanwen.wiremock:wiremock-junit5', {
+        exclude group: 'com.github.tomakehurst', module: 'wiremock'
     }
-    relocate 'org.pcollections', 'io.micrometer.shaded.org.pcollections'
-}
+    testImplementation 'com.github.tomakehurst:wiremock-jre8'
 
-jar.enabled = false
-jar.dependsOn shadowJar
+    testImplementation 'de.flapdoodle.embed:de.flapdoodle.embed.mongo'
 
-publishing {
-    publications {
-        withType(MavenPublication) {
-            pom.withXml {
-                asNode()
-                        .dependencies
-                        .dependency
-                        .findAll {
-                    ['pcollections'].contains(it.artifactId.text())
-                }
-                .each { it.parent().remove(it) }
-            }
-        }
-    }
+    // Log4j2 Async dependency
+    testImplementation 'com.lmax:disruptor:3.4.+'
+
+    // Kafka binder IT dependencies
+    testImplementation 'org.testcontainers:testcontainers'
+    testImplementation 'org.testcontainers:junit-jupiter'
+    testImplementation 'org.testcontainers:kafka'
 }

@@ -1,5 +1,5 @@
 /**
- * Copyright 2017 Pivotal Software, Inc.
+ * Copyright 2017 VMware, Inc.
  * <p>
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -27,9 +27,10 @@ import java.util.concurrent.*;
 import static java.util.stream.Collectors.toList;
 
 /**
- * An {@link java.util.concurrent.ExecutorService} that is timed
+ * An {@link java.util.concurrent.ExecutorService} that is timed. This class is for internal use.
  *
  * @author Jon Schneider
+ * @see io.micrometer.core.instrument.binder.jvm.ExecutorServiceMetrics
  */
 public class TimedExecutorService implements ExecutorService {
     private final MeterRegistry registry;
@@ -37,12 +38,13 @@ public class TimedExecutorService implements ExecutorService {
     private final Timer executionTimer;
     private final Timer idleTimer;
 
-    public TimedExecutorService(MeterRegistry registry, ExecutorService delegate, String executorServiceName, Iterable<Tag> tags) {
+    public TimedExecutorService(MeterRegistry registry, ExecutorService delegate, String executorServiceName,
+                                String metricPrefix, Iterable<Tag> tags) {
         this.registry = registry;
         this.delegate = delegate;
         Tags finalTags = Tags.concat(tags, "name", executorServiceName);
-        this.executionTimer = registry.timer("executor", finalTags);
-        this.idleTimer = registry.timer("executor.idle", finalTags);
+        this.executionTimer = registry.timer(metricPrefix + "executor", finalTags);
+        this.idleTimer = registry.timer(metricPrefix + "executor.idle", finalTags);
     }
 
     @Override

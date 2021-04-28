@@ -1,5 +1,5 @@
 /**
- * Copyright 2019 Pivotal Software, Inc.
+ * Copyright 2019 VMware, Inc.
  * <p>
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -63,7 +63,7 @@ class PushMeterRegistryTest {
     @Test
     void whenUncaughtExceptionInPublish_taskStillScheduled() throws InterruptedException {
         pushMeterRegistry.start(threadFactory);
-        assertThat(latch.await(500,TimeUnit.MILLISECONDS))
+        assertThat(latch.await(500, TimeUnit.MILLISECONDS))
                 .as("publish should continue to be scheduled even if an uncaught exception is thrown")
                 .isTrue();
     }

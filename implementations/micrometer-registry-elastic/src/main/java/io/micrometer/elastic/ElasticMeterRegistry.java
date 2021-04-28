@@ -1,5 +1,5 @@
 /**
- * Copyright 2017 Pivotal Software, Inc.
+ * Copyright 2017 VMware, Inc.
  * <p>
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,13 +16,15 @@
 package io.micrometer.elastic;
 
 import io.micrometer.core.instrument.*;
+import io.micrometer.core.instrument.distribution.HistogramSnapshot;
 import io.micrometer.core.instrument.step.StepMeterRegistry;
 import io.micrometer.core.instrument.util.MeterPartition;
 import io.micrometer.core.instrument.util.NamedThreadFactory;
-import io.micrometer.core.instrument.util.TimeUtils;
+import io.micrometer.core.instrument.util.StringUtils;
 import io.micrometer.core.ipc.http.HttpSender;
 import io.micrometer.core.ipc.http.HttpUrlConnectionSender;
 import io.micrometer.core.lang.NonNull;
+import io.micrometer.core.lang.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -37,6 +39,7 @@ import java.util.Optional;
 import java.util.concurrent.ThreadFactory;
 import java.util.concurrent.TimeUnit;
 import java.util.function.Consumer;
+import java.util.function.Function;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -88,9 +91,9 @@ public class ElasticMeterRegistry extends StepMeterRegistry {
             "    \"type\": \"double\"\n" +
             "  }\n" +
             "}";
-    private static final String TEMPLATE_BODY_BEFORE_VERSION_7 = "{\"template\":\"metrics*\",\"mappings\":{\"_default_\":{\"_all\":{\"enabled\":false}," + TEMPLATE_PROPERTIES + "}}}";
-    private static final String TEMPLATE_BODY_AFTER_VERSION_7 = "{\n" +
-            "  \"index_patterns\": [\"metrics*\"],\n" +
+    private static final Function<String, String> TEMPLATE_BODY_BEFORE_VERSION_7 = (indexPrefix) -> "{\"template\":\"" + indexPrefix + "*\",\"mappings\":{\"_default_\":{\"_all\":{\"enabled\":false}," + TEMPLATE_PROPERTIES + "}}}";
+    private static final Function<String, String> TEMPLATE_BODY_AFTER_VERSION_7 = (indexPrefix) -> "{\n" +
+            "  \"index_patterns\": [\"" + indexPrefix + "*\"],\n" +
             "  \"mappings\": {\n" +
             "    \"_source\": {\n" +
             "      \"enabled\": false\n" +
@@ -98,7 +101,6 @@ public class ElasticMeterRegistry extends StepMeterRegistry {
             "  }\n" +
             "}";
 
-    private static final String TYPE_PATH_BEFORE_VERSION_7 = "/doc";
     private static final String TYPE_PATH_AFTER_VERSION_7 = "";
 
     private static final Pattern MAJOR_VERSION_PATTERN = Pattern.compile("\"number\" *: *\"([\\d]+)");
@@ -115,7 +117,9 @@ public class ElasticMeterRegistry extends StepMeterRegistry {
 
     private final String indexLine;
 
+    @Nullable
     private volatile Integer majorVersion;
+
     private volatile boolean checkedForIndexTemplate = false;
 
     @SuppressWarnings("deprecation")
@@ -139,7 +143,7 @@ public class ElasticMeterRegistry extends StepMeterRegistry {
         this.config = config;
         indexDateFormatter = DateTimeFormatter.ofPattern(config.indexDateFormat());
         this.httpClient = httpClient;
-        if (config.pipeline() != null && !config.pipeline().isEmpty()) {
+        if (StringUtils.isNotEmpty(config.pipeline())) {
             indexLine = "{ \"index\" : {\"pipeline\":\"" + config.pipeline() + "\"} }\n";
         } else {
             indexLine = "{ \"index\" : {} }\n";
@@ -150,14 +154,6 @@ public class ElasticMeterRegistry extends StepMeterRegistry {
 
     public static Builder builder(ElasticConfig config) {
         return new Builder(config);
-    }
-
-    @Override
-    public void start(ThreadFactory threadFactory) {
-        if (config.enabled()) {
-            logger.info("publishing metrics to elastic every " + TimeUtils.format(config.step()));
-        }
-        super.start(threadFactory);
     }
 
     private void createIndexTemplateIfNeeded() {
@@ -194,8 +190,10 @@ public class ElasticMeterRegistry extends StepMeterRegistry {
         checkedForIndexTemplate = true;
     }
 
+    @SuppressWarnings("ConstantConditions")
     private String getTemplateBody() {
-        return majorVersion < 7 ? TEMPLATE_BODY_BEFORE_VERSION_7 : TEMPLATE_BODY_AFTER_VERSION_7;
+        String indexPrefix = config.index() + config.indexDateSeparator();
+        return majorVersion == null || majorVersion < 7 ? TEMPLATE_BODY_BEFORE_VERSION_7.apply(indexPrefix) : TEMPLATE_BODY_AFTER_VERSION_7.apply(indexPrefix);
     }
 
     @Override
@@ -271,8 +269,9 @@ public class ElasticMeterRegistry extends StepMeterRegistry {
         return Integer.parseInt(matcher.group(1));
     }
 
+    @SuppressWarnings("ConstantConditions")
     private String getTypePath() {
-        return majorVersion < 7 ? TYPE_PATH_BEFORE_VERSION_7 : TYPE_PATH_AFTER_VERSION_7;
+        return majorVersion == null || majorVersion < 7 ? "/" + config.documentType() : TYPE_PATH_AFTER_VERSION_7;
     }
 
     // VisibleForTesting
@@ -306,7 +305,7 @@ public class ElasticMeterRegistry extends StepMeterRegistry {
         return writeCounter(counter, counter.count());
     }
 
-    private Optional<String> writeCounter(Meter meter, Double value) {
+    private Optional<String> writeCounter(Meter meter, double value) {
         if (Double.isFinite(value)) {
             return Optional.of(writeDocument(meter, builder -> {
                 builder.append(",\"count\":").append(value);
@@ -317,7 +316,7 @@ public class ElasticMeterRegistry extends StepMeterRegistry {
 
     // VisibleForTesting
     Optional<String> writeGauge(Gauge gauge) {
-        Double value = gauge.value();
+        double value = gauge.value();
         if (Double.isFinite(value)) {
             return Optional.of(writeDocument(gauge, builder -> {
                 builder.append(",\"value\":").append(value);
@@ -328,7 +327,7 @@ public class ElasticMeterRegistry extends StepMeterRegistry {
 
     // VisibleForTesting
     Optional<String> writeTimeGauge(TimeGauge gauge) {
-        Double value = gauge.value(getBaseTimeUnit());
+        double value = gauge.value(getBaseTimeUnit());
         if (Double.isFinite(value)) {
             return Optional.of(writeDocument(gauge, builder -> {
                 builder.append(",\"value\":").append(value);
@@ -339,11 +338,16 @@ public class ElasticMeterRegistry extends StepMeterRegistry {
 
     // VisibleForTesting
     Optional<String> writeFunctionTimer(FunctionTimer timer) {
-        return Optional.of(writeDocument(timer, builder -> {
-            builder.append(",\"count\":").append(timer.count());
-            builder.append(",\"sum\" :").append(timer.totalTime(getBaseTimeUnit()));
-            builder.append(",\"mean\":").append(timer.mean(getBaseTimeUnit()));
-        }));
+        double sum = timer.totalTime(getBaseTimeUnit());
+        double mean = timer.mean(getBaseTimeUnit());
+        if (Double.isFinite(sum) && Double.isFinite(mean)) {
+            return Optional.of(writeDocument(timer, builder -> {
+                builder.append(",\"count\":").append(timer.count());
+                builder.append(",\"sum\":").append(sum);
+                builder.append(",\"mean\":").append(mean);
+            }));
+        }
+        return Optional.empty();
     }
 
     // VisibleForTesting
@@ -366,12 +370,12 @@ public class ElasticMeterRegistry extends StepMeterRegistry {
 
     // VisibleForTesting
     Optional<String> writeSummary(DistributionSummary summary) {
-        summary.takeSnapshot();
+        HistogramSnapshot histogramSnapshot = summary.takeSnapshot();
         return Optional.of(writeDocument(summary, builder -> {
-            builder.append(",\"count\":").append(summary.count());
-            builder.append(",\"sum\":").append(summary.totalAmount());
-            builder.append(",\"mean\":").append(summary.mean());
-            builder.append(",\"max\":").append(summary.max());
+            builder.append(",\"count\":").append(histogramSnapshot.count());
+            builder.append(",\"sum\":").append(histogramSnapshot.total());
+            builder.append(",\"mean\":").append(histogramSnapshot.mean());
+            builder.append(",\"max\":").append(histogramSnapshot.max());
         }));
     }
 

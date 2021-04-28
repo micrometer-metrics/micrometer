@@ -1,7 +1,11 @@
 dependencies {
-    compile project(':micrometer-core')
-    compile 'info.ganglia.gmetric4j:gmetric4j:latest.release'
-    compile 'org.slf4j:slf4j-api:1.7.+'
+    api project(':micrometer-core')
 
-    testCompile project(':micrometer-test')
+    api 'info.ganglia.gmetric4j:gmetric4j'
+    implementation 'org.slf4j:slf4j-api'
+
+    // Deprecated constructor references this which is otherwise unused.
+    compileOnly 'io.dropwizard.metrics:metrics-core'
+
+    testImplementation project(':micrometer-test')
 }

@@ -1,5 +1,5 @@
 /**
- * Copyright 2017 Pivotal Software, Inc.
+ * Copyright 2019 VMware, Inc.
  * <p>
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -62,6 +62,6 @@ class JettyServerThreadPoolMetricsTest {
         assertThat(registry.get("jetty.threads.config.min").gauge().value()).isEqualTo(32.0);
         assertThat(registry.get("jetty.threads.config.max").gauge().value()).isEqualTo(100.0);
         assertThat(registry.get("jetty.threads.current").gauge().value()).isNotEqualTo(0.0);
-        assertThat(registry.get("jetty.threads.busy").gauge().value()).isNotEqualTo(0.0);
+        assertThat(registry.get("jetty.threads.busy").gauge().value()).isGreaterThanOrEqualTo(0.0);
     }
 }
