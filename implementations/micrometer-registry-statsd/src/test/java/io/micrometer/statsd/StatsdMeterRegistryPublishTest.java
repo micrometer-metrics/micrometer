@@ -34,6 +34,7 @@ import reactor.netty.DisposableChannel;
 import reactor.netty.tcp.TcpServer;
 import reactor.netty.udp.UdpServer;
 
+import java.net.InetSocketAddress;
 import java.time.Duration;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
@@ -73,7 +74,7 @@ class StatsdMeterRegistryPublishTest {
         serverLatch = new CountDownLatch(3);
         server = startServer(protocol, 0);
 
-        final int port = server.address().getPort();
+        final int port = getPort();
 
         meterRegistry = new StatsdMeterRegistry(getUnbufferedConfig(protocol, port), Clock.SYSTEM);
         startRegistryAndWaitForClient();
@@ -91,7 +92,7 @@ class StatsdMeterRegistryPublishTest {
         AtomicInteger writeCount = new AtomicInteger();
         server = startServer(protocol, 0);
 
-        final int port = server.address().getPort();
+        final int port = getPort();
 
         meterRegistry = new StatsdMeterRegistry(getUnbufferedConfig(protocol, port), Clock.SYSTEM);
         startRegistryAndWaitForClient();
@@ -136,7 +137,7 @@ class StatsdMeterRegistryPublishTest {
         serverLatch = new CountDownLatch(3);
         server = startServer(protocol, 0);
 
-        final int port = server.address().getPort();
+        final int port = getPort();
 
         meterRegistry = new StatsdMeterRegistry(getUnbufferedConfig(protocol, port), Clock.SYSTEM);
         startRegistryAndWaitForClient();
@@ -178,7 +179,7 @@ class StatsdMeterRegistryPublishTest {
         serverLatch = new CountDownLatch(3);
         // start server to secure an open port
         server = startServer(protocol, 0);
-        final int port = server.address().getPort();
+        final int port = getPort();
         server.disposeNow();
         meterRegistry = new StatsdMeterRegistry(getUnbufferedConfig(protocol, port), Clock.SYSTEM);
         meterRegistry.start();
@@ -215,7 +216,7 @@ class StatsdMeterRegistryPublishTest {
         serverLatch = new CountDownLatch(3);
         // start server to secure an open port
         server = startServer(protocol, 0);
-        final int port = server.address().getPort();
+        final int port = getPort();
         meterRegistry = new StatsdMeterRegistry(getUnbufferedConfig(protocol, port), Clock.SYSTEM);
         startRegistryAndWaitForClient();
         server.disposeNow();
@@ -233,7 +234,7 @@ class StatsdMeterRegistryPublishTest {
     void whenSendError_reconnectsAndWritesNewMetrics(StatsdProtocol protocol) throws InterruptedException {
         serverLatch = new CountDownLatch(3);
         server = startServer(protocol, 0);
-        final int port = server.address().getPort();
+        final int port = getPort();
         meterRegistry = new StatsdMeterRegistry(getUnbufferedConfig(protocol, port), Clock.SYSTEM);
         startRegistryAndWaitForClient();
         ((Connection) meterRegistry.statsdConnection.get()).addHandler("writeFailure", new ChannelOutboundHandlerAdapter() {
@@ -252,6 +253,10 @@ class StatsdMeterRegistryPublishTest {
         IntStream.range(1, 4).forEach(counter::increment);
         assertThat(serverLatch.await(3, TimeUnit.SECONDS)).isTrue();
         await().pollDelay(Duration.ofSeconds(1)).atMost(Duration.ofSeconds(3)).until(() -> serverMetricReadCount.get() == 3);
+    }
+
+    private int getPort() {
+        return ((InetSocketAddress) server.address()).getPort();
     }
 
     private void trackWritesForUdpClient(StatsdProtocol protocol, AtomicInteger writeCount) {

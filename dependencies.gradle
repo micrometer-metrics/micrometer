@@ -34,9 +34,6 @@ def VERSIONS = [
         'io.grpc:grpc-stubs:latest.release',
         'io.grpc:grpc-alts:latest.release',
         'info.ganglia.gmetric4j:gmetric4j:latest.release',
-        'io.projectreactor:reactor-core:3.3.+',
-        'io.projectreactor:reactor-test:3.3.+',
-        'io.projectreactor.netty:reactor-netty:0.9.+',
         'io.prometheus:simpleclient_common:latest.release',
         'io.prometheus:simpleclient_pushgateway:latest.release',
         'javax.cache:cache-api:latest.release',
@@ -93,6 +90,7 @@ subprojects {
           runtimeOnly version
         }
       }
+      implementation platform('io.projectreactor:reactor-bom:2020.0.+')
     }
   }
 }
