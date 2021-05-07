@@ -12,6 +12,15 @@ plugins {
 
 rootProject.name = 'micrometer'
 
+buildCache {
+    remote(HttpBuildCache) {
+        url = 'https://ge.micrometer.io/cache/'
+    }
+}
+gradleEnterprise {
+    server = "https://ge.micrometer.io"
+}
+
 include 'micrometer-core'
 include 'micrometer-jersey2'
 
