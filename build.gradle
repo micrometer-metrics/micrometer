@@ -7,11 +7,21 @@ buildscript {
         }
         mavenLocal()
     }
+
+    configurations.classpath {
+        // Group ID changed from the version used in spring-release-plugin
+        exclude group: 'gradle.plugin.nl.javadude.gradle.plugins', module: 'license-gradle-plugin'
+    }
+
     dependencies {
         classpath 'io.spring.gradle:spring-release-plugin:0.20.1'
         classpath 'com.netflix.nebula:nebula-project-plugin:3.4.0'
         classpath "io.spring.nohttp:nohttp-gradle:0.0.7"
         classpath 'io.github.gradle-nexus:publish-plugin:1.0.0'
+        // replacing the excluded transitive dependency
+        classpath('gradle.plugin.com.hierynomus.gradle.plugins:license-gradle-plugin:0.16.1') {
+            because 'Need at least this version for Gradle 7+ compatibility.'
+        }
 
         constraints {
             classpath('org.ow2.asm:asm:7.3.1') {
@@ -255,7 +265,7 @@ nexusPublishing {
 }
 
 wrapper {
-    gradleVersion = '6.8.3'
+    gradleVersion = '7.0'
 }
 
 defaultTasks 'build'
