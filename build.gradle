@@ -142,8 +142,10 @@ subprojects {
                             }
                         }
 
-                        // MYSTERY: from Gradle 7.0 the publish tasks fail without the following line
+                        // MYSTERY: from Gradle 7.0 compileOnly and runtimeOnly are not resolvable and the version of nebula publish plugin we use tries to resolve
+                        // TODO: remove them once we clean-up the spring-release plugin
                         configurations.compileOnly.setCanBeResolved(true)
+                        configurations.runtimeOnly.setCanBeResolved(true)
                         // We publish resolved versions so don't need to publish our dependencyManagement
                         // too. This is different from many Maven projects, where published artifacts often
                         // don't include resolved versions and have a parent POM including dependencyManagement.
