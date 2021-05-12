@@ -80,8 +80,8 @@ io.netty:netty-transport:4.1.63.Final
 io.opencensus:opencensus-api:0.24.0
 io.opencensus:opencensus-contrib-http-util:0.24.0
 io.perfmark:perfmark-api:0.19.0
-io.projectreactor.netty:reactor-netty:0.9.19.RELEASE
-io.projectreactor:reactor-core:3.3.16.RELEASE
+io.projectreactor.netty:reactor-netty:0.9.20.RELEASE
+io.projectreactor:reactor-core:3.3.17.RELEASE
 io.prometheus:simpleclient:0.9.0
 io.prometheus:simpleclient_common:0.9.0
 io.prometheus:simpleclient_pushgateway:0.9.0
