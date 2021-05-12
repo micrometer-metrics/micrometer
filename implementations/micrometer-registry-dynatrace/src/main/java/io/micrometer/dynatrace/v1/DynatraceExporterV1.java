@@ -72,12 +72,11 @@ public class DynatraceExporterV1 extends AbstractDynatraceExporter {
     }
 
     @Override
-    public void export(@Nonnull List<List<Meter>> partitions) {
+    public void export(@Nonnull List<Meter> meters) {
         String customDeviceMetricEndpoint = config.uri() + "/api/v1/entity/infrastructure/custom/" +
                 config.deviceId() + "?api-token=" + config.apiToken();
 
-        for (List<Meter> batch : partitions) {
-            final List<DynatraceCustomMetric> series = batch.stream()
+            final List<DynatraceCustomMetric> series = meters.stream()
                     .flatMap(meter -> meter.match(
                             this::writeMeter,
                             this::writeMeter,
@@ -107,7 +106,6 @@ public class DynatraceExporterV1 extends AbstractDynatraceExporter {
                                 .collect(Collectors.toList()),
                         customDeviceMetricEndpoint);
             }
-        }
     }
 
     // VisibleForTesting

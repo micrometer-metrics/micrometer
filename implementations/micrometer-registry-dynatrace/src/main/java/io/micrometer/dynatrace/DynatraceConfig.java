@@ -119,7 +119,6 @@ public interface DynatraceConfig extends StepRegistryConfig {
                                                 );
                                             } else {
                                                 return checkAll(this,
-                                                        c -> StepRegistryConfig.validate(c),
                                                         check("apiToken", DynatraceConfig::apiToken)
                                                                 .andThen(v -> v.invalidateWhen(x -> !apiToken().isEmpty() &&
                                                                                 checkRequired("uri", DynatraceConfig::uri).apply(this).isValid() &&

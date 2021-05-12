@@ -45,5 +45,5 @@ public abstract class AbstractDynatraceExporter {
         return TimeUnit.MILLISECONDS;
     }
 
-    public abstract void export(@Nonnull List<List<Meter>> partitions);
+    public abstract void export(@Nonnull List<Meter> meters);
 }

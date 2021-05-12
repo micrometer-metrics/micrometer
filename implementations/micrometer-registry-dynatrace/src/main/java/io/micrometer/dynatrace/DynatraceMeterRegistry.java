@@ -20,7 +20,6 @@ import io.micrometer.core.instrument.Meter;
 import io.micrometer.core.instrument.config.MeterFilter;
 import io.micrometer.core.instrument.distribution.DistributionStatisticConfig;
 import io.micrometer.core.instrument.step.StepMeterRegistry;
-import io.micrometer.core.instrument.util.MeterPartition;
 import io.micrometer.core.instrument.util.NamedThreadFactory;
 import io.micrometer.core.ipc.http.HttpSender;
 import io.micrometer.core.ipc.http.HttpUrlConnectionSender;
@@ -76,7 +75,7 @@ public class DynatraceMeterRegistry extends StepMeterRegistry {
 
     @Override
     protected void publish() {
-        exporter.export(MeterPartition.partition(this, config.batchSize()));
+        exporter.export(this.getMeters());
     }
 
     @Override
