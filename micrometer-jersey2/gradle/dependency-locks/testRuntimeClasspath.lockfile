@@ -1,0 +1,42 @@
+# This is a Gradle generated file for dependency locking.
+# Manual edits can break the build and are not advised.
+# This file is expected to be part of source control.
+com.google.code.findbugs:jsr305:3.0.2
+jakarta.activation:jakarta.activation-api:1.2.2
+jakarta.annotation:jakarta.annotation-api:1.3.5
+jakarta.servlet:jakarta.servlet-api:4.0.3
+jakarta.validation:jakarta.validation-api:2.0.2
+jakarta.ws.rs:jakarta.ws.rs-api:2.1.6
+jakarta.xml.bind:jakarta.xml.bind-api:2.3.3
+javax.activation:javax.activation-api:1.2.0
+javax.xml.bind:jaxb-api:2.3.1
+junit:junit:4.13.1
+net.bytebuddy:byte-buddy-agent:1.10.20
+net.bytebuddy:byte-buddy:1.10.20
+org.apiguardian:apiguardian-api:1.1.0
+org.assertj:assertj-core:3.19.0
+org.glassfish.hk2.external:aopalliance-repackaged:2.6.1
+org.glassfish.hk2.external:jakarta.inject:2.6.1
+org.glassfish.hk2:hk2-api:2.6.1
+org.glassfish.hk2:hk2-locator:2.6.1
+org.glassfish.hk2:hk2-utils:2.6.1
+org.glassfish.hk2:osgi-resource-locator:1.0.3
+org.glassfish.jersey.containers:jersey-container-servlet-core:2.34
+org.glassfish.jersey.core:jersey-client:2.34
+org.glassfish.jersey.core:jersey-common:2.34
+org.glassfish.jersey.core:jersey-server:2.34
+org.glassfish.jersey.inject:jersey-hk2:2.34
+org.glassfish.jersey.media:jersey-media-jaxb:2.34
+org.glassfish.jersey.test-framework.providers:jersey-test-framework-provider-inmemory:2.34
+org.glassfish.jersey.test-framework:jersey-test-framework-core:2.34
+org.hamcrest:hamcrest-core:1.3
+org.hdrhistogram:HdrHistogram:2.1.12
+org.javassist:javassist:3.25.0-GA
+org.junit.platform:junit-platform-commons:1.7.1
+org.junit.platform:junit-platform-engine:1.7.1
+org.junit.vintage:junit-vintage-engine:5.7.1
+org.junit:junit-bom:5.7.1
+org.latencyutils:LatencyUtils:2.0.3
+org.mockito:mockito-core:3.9.0
+org.objenesis:objenesis:3.2
+org.opentest4j:opentest4j:1.2.0

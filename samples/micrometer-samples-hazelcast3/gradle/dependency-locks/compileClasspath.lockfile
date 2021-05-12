@@ -1,0 +1,9 @@
+# This is a Gradle generated file for dependency locking.
+# Manual edits can break the build and are not advised.
+# This file is expected to be part of source control.
+ch.qos.logback:logback-classic:1.2.3
+ch.qos.logback:logback-core:1.2.3
+com.google.code.findbugs:jsr305:3.0.2
+com.hazelcast:hazelcast:3.12.12
+org.hdrhistogram:HdrHistogram:2.1.12
+org.slf4j:slf4j-api:1.7.30
