@@ -34,18 +34,22 @@ public class LogbackMetricsSuppressingManySink implements Sinks.Many<String> {
     @Override
     public Sinks.EmitResult tryEmitNext(String s) {
         LogbackMetrics.ignoreMetrics(() -> delegate.tryEmitNext(s));
+        // We want to silently drop the element if not emitted for any reason
+        // We do not use the returned result
         return Sinks.EmitResult.OK;
     }
 
     @Override
     public Sinks.EmitResult tryEmitComplete() {
         LogbackMetrics.ignoreMetrics(delegate::tryEmitComplete);
+        // We do not use the returned result
         return Sinks.EmitResult.OK;
     }
 
     @Override
     public Sinks.EmitResult tryEmitError(Throwable error) {
         LogbackMetrics.ignoreMetrics(() -> delegate.tryEmitError(error));
+        // We do not use the returned result
         return Sinks.EmitResult.OK;
     }
 
