@@ -19,7 +19,7 @@ import io.micrometer.core.instrument.AbstractMeter;
 import io.micrometer.core.instrument.Gauge;
 import io.micrometer.core.instrument.util.MeterEquivalence;
 import io.micrometer.core.lang.Nullable;
-import reactor.core.publisher.FluxSink;
+import reactor.core.publisher.Sinks;
 
 import java.lang.ref.WeakReference;
 import java.util.concurrent.atomic.AtomicReference;
@@ -27,14 +27,14 @@ import java.util.function.ToDoubleFunction;
 
 public class StatsdGauge<T> extends AbstractMeter implements Gauge, StatsdPollable {
     private final StatsdLineBuilder lineBuilder;
-    private final FluxSink<String> sink;
+    private final Sinks.Many<String> sink;
 
     private final WeakReference<T> ref;
     private final ToDoubleFunction<T> value;
     private final AtomicReference<Double> lastValue = new AtomicReference<>(Double.NaN);
     private final boolean alwaysPublish;
 
-    StatsdGauge(Id id, StatsdLineBuilder lineBuilder, FluxSink<String> sink, @Nullable T obj, ToDoubleFunction<T> value, boolean alwaysPublish) {
+    StatsdGauge(Id id, StatsdLineBuilder lineBuilder, Sinks.Many<String> sink, @Nullable T obj, ToDoubleFunction<T> value, boolean alwaysPublish) {
         super(id);
         this.lineBuilder = lineBuilder;
         this.sink = sink;
@@ -53,7 +53,7 @@ public class StatsdGauge<T> extends AbstractMeter implements Gauge, StatsdPollab
     public void poll() {
         double val = value();
         if (Double.isFinite(val) && (alwaysPublish || lastValue.getAndSet(val) != val)) {
-            sink.next(lineBuilder.gauge(val));
+            sink.tryEmitNext(lineBuilder.gauge(val));
         }
     }
 
