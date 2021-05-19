@@ -1,4 +1,25 @@
+pluginManagement {
+    repositories {
+        gradlePluginPortal()
+        maven { url 'https://repo.spring.io/release' }
+    }
+}
+
+plugins {
+    id "com.gradle.enterprise" version "3.5"
+    id "io.spring.ge.conventions" version "0.0.7"
+}
+
 rootProject.name = 'micrometer'
+
+buildCache {
+    remote(HttpBuildCache) {
+        url = 'https://ge.micrometer.io/cache/'
+    }
+}
+gradleEnterprise {
+    server = "https://ge.micrometer.io"
+}
 
 include 'micrometer-core'
 include 'micrometer-jersey2'

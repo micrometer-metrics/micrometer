@@ -81,7 +81,7 @@ workflows:
           filters:
             branches:
               only:
-                - master
+                - main
                 - /\d+\.\d+\.x/
   build_deploy_releases:
     jobs:
