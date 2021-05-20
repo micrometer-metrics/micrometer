@@ -2,10 +2,6 @@ plugins {
     id 'java'
 }
 
-repositories {
-    mavenCentral()
-}
-
 dependencies {
     implementation project(":micrometer-core")
     implementation project(":micrometer-registry-prometheus")
