@@ -15,8 +15,8 @@ commons-beanutils:commons-beanutils:1.9.4
 commons-collections:commons-collections:3.2.2
 info.picocli:picocli:4.3.1
 io.spring.javaformat:spring-javaformat-checkstyle:0.0.20
-io.spring.nohttp:nohttp-checkstyle:0.0.7
-io.spring.nohttp:nohttp:0.0.7
+io.spring.nohttp:nohttp-checkstyle:0.0.8
+io.spring.nohttp:nohttp:0.0.8
 net.sf.saxon:Saxon-HE:9.9.1-7
 org.antlr:antlr4-runtime:4.8-1
 org.checkerframework:checker-qual:2.11.1
