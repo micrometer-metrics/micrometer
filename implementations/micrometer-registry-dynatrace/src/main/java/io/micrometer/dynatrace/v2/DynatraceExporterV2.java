@@ -44,11 +44,7 @@ import java.util.stream.StreamSupport;
  * @author Georg Pirklbauer
  */
 public final class DynatraceExporterV2 extends AbstractDynatraceExporter {
-    private static final String DEFAULT_ONEAGENT_ENDPOINT = "http://127.0.0.1:14499/metrics/ingest";
-    private static final int MAX_BATCH_SIZE = 1000;
-
     private static final String METRIC_EXCEPTION_FORMATTER = "Could not serialize metric with name %s: %s";
-    private static final String ILLEGAL_ARGUMENT_EXCEPTION_FORMATTER = "Illegal value for metric with name %s: %s Dropping...";
 
     private static final Pattern EXTRACT_LINES_OK = Pattern.compile("\"linesOk\":\\s?(\\d+)");
     private static final Pattern EXTRACT_LINES_INVALID = Pattern.compile("\"linesInvalid\":\\s?(\\d+)");
@@ -60,13 +56,11 @@ public final class DynatraceExporterV2 extends AbstractDynatraceExporter {
     private static final Logger logger = LoggerFactory.getLogger(DynatraceExporterV2.class.getName());
     private static final Map<String, String> staticDimensions = Collections.singletonMap("dt.metrics.source", "micrometer");
 
-    private static final int METRIC_LINE_MAX_LENGTH = 2000;
-
     public DynatraceExporterV2(DynatraceConfig config, Clock clock, HttpSender httpClient) {
         super(config, clock, httpClient);
 
         if (config.uri().isEmpty()) {
-            this.endpoint = DEFAULT_ONEAGENT_ENDPOINT;
+            this.endpoint = DynatraceMetricApiConstants.getDefaultOneAgentEndpoint();
         } else {
             this.endpoint = config.uri();
         }
@@ -95,19 +89,25 @@ public final class DynatraceExporterV2 extends AbstractDynatraceExporter {
         return DimensionList.fromCollection(dimensions);
     }
 
+    /**
+     * Export to the Dynatrace v2 endpoint. Measurements that contain NaN or Infinite values, as
+     * well as serialized data points that exceed length limits imposed by the API will be dropped
+     * and not exported. If the number of serialized data points exceeds the maximum number of
+     * allowed data points per request they will be sent in chunks.
+     *
+     * @param meters A list of {@link Meter Meters} that are serialized as one or more metric lines.
+     */
     @Override
     public void export(@Nonnull List<Meter> meters) {
-        Map<Boolean, List<String>> metricLines =
+        // Lines that are too long to be ingested into Dynatrace, as well as lines that contain NaN
+        // or Inf values are dropped and not returned from "toMetricLines", and are therefore
+        // dropped.
+        List<String> metricLines =
                 meters.stream()                            // turn List<Meter> into Stream<Meter>
                         .flatMap(this::toMetricLines)      // turn Stream<Meter> into Stream<String>
-                        .collect(Collectors.partitioningBy(DynatraceExporterV2::lineLengthBelowLimit));
+                        .collect(Collectors.toList());     // Collect to List.
 
-        // both keys will be present, even if empty.
-        if (!metricLines.get(false).isEmpty()) {
-            logger.info("dropping {} lines that exceed the line length limit of {}", metricLines.get(false).size(), METRIC_LINE_MAX_LENGTH);
-        }
-
-        sendInBatches(metricLines.get(true));
+        sendInBatches(metricLines);
     }
 
     private void showErrorIfEndpointIsInvalid(String uri) {
@@ -170,18 +170,12 @@ public final class DynatraceExporterV2 extends AbstractDynatraceExporter {
     private Stream<String> makeSummaryLine(Meter meter, double min, double max, double total, long count) {
         List<String> serializedLine = new ArrayList<>(1);
         try {
-            throwIfValueIsInvalid(max);
-            throwIfValueIsInvalid(total);
-
             serializedLine.add(
                     createMetricBuilder(meter)
                             .setDoubleSummaryValue(min, max, total, count)
                             .serialize());
         } catch (MetricException e) {
             logger.warn(String.format(METRIC_EXCEPTION_FORMATTER, meter.getId().getName(), e.getMessage()));
-        } catch (IllegalArgumentException iae) {
-            // drop lines containing NaN or Infinity silently.
-            logger.debug(String.format(ILLEGAL_ARGUMENT_EXCEPTION_FORMATTER, meter.getId().getName(), iae.getMessage()));
         }
 
         return streamOf(serializedLine);
@@ -240,15 +234,6 @@ public final class DynatraceExporterV2 extends AbstractDynatraceExporter {
         return toGauge(meter);
     }
 
-    private void throwIfValueIsInvalid(Double value) {
-        if (value.isNaN()) {
-            throw new IllegalArgumentException("Value cannot be NaN.");
-        }
-        if (value.isInfinite()) {
-            throw new IllegalArgumentException("Value cannot be infinite.");
-        }
-    }
-
     Stream<String> toGauge(Meter meter) {
         return streamOf(meter.measure()).map(
                 measurement -> createGaugeLine(meter, measurement))
@@ -257,15 +242,11 @@ public final class DynatraceExporterV2 extends AbstractDynatraceExporter {
 
     private String createGaugeLine(Meter meter, Measurement measurement) {
         try {
-            throwIfValueIsInvalid(measurement.getValue());
             return createMetricBuilder(meter)
                     .setDoubleGaugeValue(measurement.getValue())
                     .serialize();
         } catch (MetricException e) {
             logger.warn(String.format(METRIC_EXCEPTION_FORMATTER, meter.getId().getName(), e.getMessage()));
-        } catch (IllegalArgumentException iae) {
-            // drop lines containing NaN or Infinity silently.
-            logger.debug(String.format(ILLEGAL_ARGUMENT_EXCEPTION_FORMATTER, meter.getId().getName(), iae.getMessage()));
         }
         return null;
     }
@@ -278,15 +259,11 @@ public final class DynatraceExporterV2 extends AbstractDynatraceExporter {
 
     private String createCounterLine(Meter meter, Measurement measurement) {
         try {
-            throwIfValueIsInvalid(measurement.getValue());
             return createMetricBuilder(meter)
                     .setDoubleCounterValueDelta(measurement.getValue())
                     .serialize();
         } catch (MetricException e) {
             logger.warn(String.format(METRIC_EXCEPTION_FORMATTER, meter.getId().getName(), e.getMessage()));
-        } catch (IllegalArgumentException iae) {
-            // drop lines containing NaN or Infinity silently.
-            logger.debug(String.format(ILLEGAL_ARGUMENT_EXCEPTION_FORMATTER, meter.getId().getName(), iae.getMessage()));
         }
         return null;
     }
@@ -349,13 +326,9 @@ public final class DynatraceExporterV2 extends AbstractDynatraceExporter {
     }
 
     private void sendInBatches(List<String> metricLines) {
-        int partitionSize = Math.min(config.batchSize(), MAX_BATCH_SIZE);
+        int partitionSize = Math.min(config.batchSize(), DynatraceMetricApiConstants.getPayloadLinesLimit());
         MetricLinePartition.partition(metricLines, partitionSize)
                 .forEach(this::send);
-    }
-
-    private static boolean lineLengthBelowLimit(String line) {
-        return line.length() <= METRIC_LINE_MAX_LENGTH;
     }
 
     static class MetricLinePartition extends AbstractPartition<String> {

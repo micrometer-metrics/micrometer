@@ -24,6 +24,7 @@ import io.micrometer.dynatrace.DynatraceMeterRegistry;
 import org.junit.jupiter.api.Test;
 
 import java.time.Duration;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
@@ -354,6 +355,8 @@ class DynatraceExporterV2Test {
         Counter counter = meterRegistry.find("my.counter1").counter();
         assertNotNull(counter);
 
+        // NaN and infinity are ignored. The counter value stays at 0.0 when adding one of NaN,
+        // +Inf or -Inf.
         counter.increment(Double.NaN);
         List<String> actual1 = exporter.toCounter(counter).collect(Collectors.toList());
         counter.increment(Double.POSITIVE_INFINITY);
@@ -381,5 +384,21 @@ class DynatraceExporterV2Test {
         assertThat(actual.get(0)).contains("tag1=value1").contains("tag2=value2").contains("dt.metrics.source=micrometer");
         assertThat(actual.get(0)).startsWith("my.counter,");
         assertThat(actual.get(0)).hasSize("my.counter,tag1=value1,dt.metrics.source=micrometer,tag2=value2 count,delta=0.0 1617796526714".length());
+    }
+
+    @Test
+    void linesExceedingLengthLimitDiscardedGracefully() {
+        List<Tag> tagList = new ArrayList<>();
+        for (int i = 0; i < 250; i++) {
+            tagList.add(Tag.of(String.format("key%d", i), String.format("val%d", i)));
+        }
+        Tags tags = Tags.concat(tagList);
+
+        meterRegistry.gauge("serialized.as.too.long.line", tags, 1.23);
+        Gauge gauge = meterRegistry.find("serialized.as.too.long.line").gauge();
+        assertThat(gauge).isNotNull();
+
+        List<String> actual = exporter.toGauge(gauge).collect(Collectors.toList());
+        assertThat(actual).isEmpty();
     }
 }
