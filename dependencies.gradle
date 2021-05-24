@@ -59,7 +59,7 @@ def VERSIONS = [
         'org.hdrhistogram:HdrHistogram:latest.release',
         'org.hibernate:hibernate-entitymanager:5.+',
         'org.hsqldb:hsqldb:2.5.+', // 2.6.0 requires JDK 11.
-        'org.jooq:jooq:3.14.8',
+        'org.jooq:jooq:latest.release',
         'org.jsr107.ri:cache-ri-impl:1.0.0',
         'org.junit.jupiter:junit-jupiter:5.7.+',
         'org.junit.platform:junit-platform-launcher:1.7.+',
