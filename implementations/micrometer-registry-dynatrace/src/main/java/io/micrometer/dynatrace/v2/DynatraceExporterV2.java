@@ -58,12 +58,7 @@ public final class DynatraceExporterV2 extends AbstractDynatraceExporter {
 
     public DynatraceExporterV2(DynatraceConfig config, Clock clock, HttpSender httpClient) {
         super(config, clock, httpClient);
-
-        if (config.uri().isEmpty()) {
-            this.endpoint = DynatraceMetricApiConstants.getDefaultOneAgentEndpoint();
-        } else {
-            this.endpoint = config.uri();
-        }
+        this.endpoint = config.uri();
         showErrorIfEndpointIsInvalid(endpoint);
         logger.info("Exporting to endpoint {}", this.endpoint);
 

@@ -15,6 +15,7 @@
  */
 package io.micrometer.dynatrace;
 
+import com.dynatrace.metric.util.DynatraceMetricApiConstants;
 import io.micrometer.core.instrument.config.validate.InvalidReason;
 import io.micrometer.core.instrument.config.validate.Validated;
 import org.junit.jupiter.api.Test;
@@ -26,11 +27,11 @@ import java.util.Map;
 import static org.assertj.core.api.Assertions.assertThat;
 
 class DynatraceConfigTest {
-    private final Map<String, String> props = new HashMap<>();
-    private final DynatraceConfig config = props::get;
-
     @Test
     void invalid() {
+        Map<String, String> properties = new HashMap<>();
+        DynatraceConfig config = properties::get;
+
         List<Validated.Invalid<?>> failures = config.validate().failures();
         assertThat(failures.size()).isEqualTo(3);
         assertThat(failures.stream().map(Validated::toString)).containsExactlyInAnyOrder(
@@ -85,10 +86,12 @@ class DynatraceConfigTest {
 
     @Test
     void valid() {
-        props.put("dynatrace.apiToken", "secret");
-        props.put("dynatrace.uri", "https://uri.dynatrace.com");
-        props.put("dynatrace.deviceId", "device");
-
+        Map<String, String> properties = new HashMap<String, String>() {{
+            put("dynatrace.apiToken", "secret");
+            put("dynatrace.uri", "https://uri.dynatrace.com");
+            put("dynatrace.deviceId", "device");
+        }};
+        DynatraceConfig config = properties::get;
         assertThat(config.validate().isValid()).isTrue();
     }
 
@@ -115,7 +118,7 @@ class DynatraceConfigTest {
 
         assertThat(config.apiVersion()).isEqualTo(DynatraceApiVersion.V2);
         assertThat(config.apiToken()).isEmpty();
-        assertThat(config.uri()).isEmpty();
+        assertThat(config.uri()).isSameAs(DynatraceMetricApiConstants.getDefaultOneAgentEndpoint());
         assertThat(config.metricKeyPrefix()).isEmpty();
         assertThat(config.defaultDimensions()).isEmpty();
         assertThat(config.enrichWithOneAgentMetadata()).isTrue();

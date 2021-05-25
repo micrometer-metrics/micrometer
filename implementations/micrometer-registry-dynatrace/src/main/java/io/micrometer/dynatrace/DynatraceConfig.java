@@ -15,7 +15,7 @@
  */
 package io.micrometer.dynatrace;
 
-import io.micrometer.core.instrument.config.validate.InvalidReason;
+import com.dynatrace.metric.util.DynatraceMetricApiConstants;
 import io.micrometer.core.instrument.config.validate.Validated;
 import io.micrometer.core.instrument.step.StepRegistryConfig;
 import io.micrometer.core.lang.Nullable;
@@ -51,7 +51,7 @@ public interface DynatraceConfig extends StepRegistryConfig {
         if (apiVersion() == DynatraceApiVersion.V1) {
             return getUrlString(this, "uri").required().get();
         }
-        return getUrlString(this, "uri").orElse("");
+        return getUrlString(this, "uri").orElse(DynatraceMetricApiConstants.getDefaultOneAgentEndpoint());
     }
 
     default String deviceId() {
@@ -80,8 +80,7 @@ public interface DynatraceConfig extends StepRegistryConfig {
      */
     default DynatraceApiVersion apiVersion() {
         // if not specified, defaults to v1 for backwards compatibility.
-        return getEnum(this, DynatraceApiVersion.class, "apiVersion")
-                .orElse(DynatraceApiVersion.V1);
+        return getEnum(this, DynatraceApiVersion.class, "apiVersion").orElse(DynatraceApiVersion.V1);
     }
 
     default String metricKeyPrefix() {
@@ -114,11 +113,7 @@ public interface DynatraceConfig extends StepRegistryConfig {
                                                 );
                                             } else {
                                                 return checkAll(this,
-                                                        check("apiToken", DynatraceConfig::apiToken)
-                                                                .andThen(v -> v.invalidateWhen(x -> !apiToken().isEmpty() &&
-                                                                                checkRequired("uri", DynatraceConfig::uri).apply(this).isValid() &&
-                                                                                uri().isEmpty(),
-                                                                        "when using an API token, the endpoint URI is required", InvalidReason.MISSING))
+                                                        checkRequired("uri", DynatraceConfig::uri)
                                                 );
                                             }
                                         }
