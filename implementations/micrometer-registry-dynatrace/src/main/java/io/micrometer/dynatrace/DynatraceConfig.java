@@ -27,6 +27,8 @@ import static io.micrometer.core.instrument.config.validate.PropertyValidator.*;
  * Configuration for {@link DynatraceMeterRegistry}
  *
  * @author Oriol Barcelona
+ * @author Georg Pirklbauer
+ * @since 1.1.0
  */
 public interface DynatraceConfig extends StepRegistryConfig {
 
@@ -49,7 +51,7 @@ public interface DynatraceConfig extends StepRegistryConfig {
 
     default String technologyType() {
         return getSecret(this, "technologyType")
-                .map(v -> StringUtils.isEmpty(v) ? "java" : v)
+                .map(val -> StringUtils.isEmpty(val) ? "java" : val)
                 .get();
     }
 
@@ -64,14 +66,42 @@ public interface DynatraceConfig extends StepRegistryConfig {
         return get(prefix() + ".group");
     }
 
+    /**
+     * Return the version of the target Dynatrace API.
+     *
+     * @return a {@link DynatraceApiVersion} containing the version of the targeted Dynatrace API.
+     */
+    default DynatraceApiVersion apiVersion() {
+        // if not specified, defaults to v1 for backwards compatibility.
+        return getEnum(this, DynatraceApiVersion.class, "apiVersion")
+                .orElse(DynatraceApiVersion.V1);
+    }
+
     @Override
     default Validated<?> validate() {
         return checkAll(this,
-                c -> StepRegistryConfig.validate(c),
-                checkRequired("apiToken", DynatraceConfig::apiToken),
-                checkRequired("uri", DynatraceConfig::uri),
-                checkRequired("deviceId", DynatraceConfig::deviceId),
-                check("technologyType", DynatraceConfig::technologyType).andThen(Validated::nonBlank)
+                config -> StepRegistryConfig.validate(config),
+                checkRequired("apiVersion", DynatraceConfig::apiVersion).andThen(
+                        apiVersionValidation -> {
+                            if (apiVersionValidation.isValid()) {
+                                return checkAll(this,
+                                        config -> {
+                                            if (config.apiVersion() ==  DynatraceApiVersion.V1) {
+                                                return checkAll(this,
+                                                        checkRequired("apiToken", DynatraceConfig::apiToken),
+                                                        checkRequired("uri", DynatraceConfig::uri),
+                                                        checkRequired("deviceId", DynatraceConfig::deviceId),
+                                                        check("technologyType", DynatraceConfig::technologyType).andThen(Validated::nonBlank)
+                                                );
+                                            } else {
+                                                return apiVersionValidation; // V2 validation comes here
+                                            }
+                                        }
+                                );
+                            } else {
+                                return apiVersionValidation;
+                            }
+                        })
         );
     }
 }

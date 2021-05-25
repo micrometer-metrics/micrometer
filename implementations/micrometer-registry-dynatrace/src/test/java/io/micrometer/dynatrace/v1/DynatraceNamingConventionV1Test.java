@@ -1,5 +1,5 @@
 /**
- * Copyright 2017 VMware, Inc.
+ * Copyright 2021 VMware, Inc.
  * <p>
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,9 +13,10 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package io.micrometer.dynatrace;
+package io.micrometer.dynatrace.v1;
 
 import io.micrometer.core.instrument.Meter;
+import io.micrometer.dynatrace.DynatraceNamingConvention;
 import org.junit.jupiter.api.Test;
 
 import java.util.Collections;
@@ -29,9 +30,8 @@ import static org.assertj.core.api.Assertions.assertThat;
  * @author Jon Schneider
  * @author Johnny Lim
  */
-class DynatraceNamingConventionTest {
-
-    private final DynatraceNamingConvention convention = new DynatraceNamingConvention();
+class DynatraceNamingConventionV1Test {
+    private final DynatraceNamingConventionV1 convention = new DynatraceNamingConventionV1();
 
     @Test
     void nameStartsWithCustomAndColon() {
@@ -62,8 +62,21 @@ class DynatraceNamingConventionTest {
     }
 
     @Test
+    void testDelegate() {
+        DynatraceNamingConvention dynatraceConvention = new DynatraceNamingConvention();
+        DynatraceNamingConventionV1 v1Convention = convention;
+        assertThat(dynatraceConvention.name("mymetric", Meter.Type.COUNTER, null)).isEqualTo(v1Convention.name("mymetric", Meter.Type.COUNTER, null));
+        assertThat(dynatraceConvention.name("my.name1", Meter.Type.COUNTER, null)).isEqualTo(v1Convention.name("my.name1", Meter.Type.COUNTER, null));
+        assertThat(dynatraceConvention.name("my_name1", Meter.Type.COUNTER, null)).isEqualTo(v1Convention.name("my_name1", Meter.Type.COUNTER, null));
+        assertThat(dynatraceConvention.name("my-name1", Meter.Type.COUNTER, null)).isEqualTo(v1Convention.name("my-name1", Meter.Type.COUNTER, null));
+        assertThat(dynatraceConvention.name("system.load.average.1m", Meter.Type.COUNTER, null))
+                .isEqualTo(v1Convention.name("system.load.average.1m", Meter.Type.COUNTER, null));
+        assertThat(dynatraceConvention.tagKey("{tagTag0}.-")).isEqualTo(v1Convention.tagKey("_tagTag0_.-"));
+    }
+    @Test
     void tagValuesAreTruncated() {
         String expected = String.join("", Collections.nCopies(128, "a"));
         assertThat(convention.tagValue(String.join("", Collections.nCopies(130, "a")))).isEqualTo(expected);
     }
 }
+

@@ -15,6 +15,7 @@
  */
 package io.micrometer.dynatrace;
 
+import io.micrometer.core.instrument.config.validate.InvalidReason;
 import io.micrometer.core.instrument.config.validate.Validated;
 import org.junit.jupiter.api.Test;
 
@@ -31,9 +32,12 @@ class DynatraceConfigTest {
     @Test
     void invalid() {
         List<Validated.Invalid<?>> failures = config.validate().failures();
-        assertThat(failures.stream().map(Validated.Invalid::getMessage))
-                .containsOnly("is required");
         assertThat(failures.size()).isEqualTo(3);
+        assertThat(failures.stream().map(Validated::toString)).containsExactlyInAnyOrder(
+                "Invalid{property='dynatrace.apiToken', value='null', message='is required'}",
+                "Invalid{property='dynatrace.uri', value='null', message='is required'}",
+                "Invalid{property='dynatrace.deviceId', value='null', message='is required'}"
+        );
     }
 
     @Test
@@ -50,8 +54,33 @@ class DynatraceConfigTest {
             }
         }.validate();
 
-        assertThat(validate.failures().stream().map(Validated.Invalid::getMessage))
-                .contains("cannot be blank");
+        assertThat(validate.failures().size()).isEqualTo(4);
+        assertThat(validate.failures().stream().map(Validated::toString)).containsExactlyInAnyOrder(
+                "Invalid{property='dynatrace.apiToken', value='null', message='is required'}",
+                "Invalid{property='dynatrace.uri', value='null', message='is required'}",
+                "Invalid{property='dynatrace.deviceId', value='null', message='is required'}",
+                "Invalid{property='dynatrace.technologyType', value='', message='cannot be blank'}"
+        );
+    }
+
+    @Test
+    void invalidVersion() {
+        Map<String, String> properties = new HashMap<String, String>() {{
+            put("dynatrace.apiToken", "secret");
+            put("dynatrace.uri", "https://uri.dynatrace.com");
+            put("dynatrace.deviceId", "device");
+            put("dynatrace.apiVersion", "v-INVALID");
+        }};
+        DynatraceConfig config = properties::get;
+
+        List<Validated.Invalid<?>> failures = config.validate().failures();
+        assertThat(failures).hasSize(1);
+        Validated.Invalid<?> failure = failures.get(0);
+        assertThat(failure.getProperty()).isEqualTo("dynatrace.apiVersion");
+        assertThat(failure.getValue()).isEqualTo("v-INVALID");
+        assertThat(failure.getMessage()).startsWith("should be one of ");
+        assertThat(failure.getReason()).isSameAs(InvalidReason.MALFORMED);
+        assertThat(failure.getException()).isNull();
     }
 
     @Test
@@ -61,5 +90,19 @@ class DynatraceConfigTest {
         props.put("dynatrace.deviceId", "device");
 
         assertThat(config.validate().isValid()).isTrue();
+    }
+
+    @Test
+    void testFallbackToV1() {
+        Map<String, String> properties = new HashMap<String, String>() {{
+            put("dynatrace.apiToken", "secret");
+            put("dynatrace.uri", "https://uri.dynatrace.com");
+            put("dynatrace.deviceId", "device");
+        }};
+
+        DynatraceConfig config = properties::get;
+
+        assertThat(config.validate().isValid()).isTrue();
+        assertThat(config.apiVersion()).isSameAs(DynatraceApiVersion.V1);
     }
 }
