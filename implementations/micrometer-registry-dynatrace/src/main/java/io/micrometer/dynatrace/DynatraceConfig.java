@@ -48,8 +48,6 @@ public interface DynatraceConfig extends StepRegistryConfig {
     }
 
     default String uri() {
-        // If no URI is set, return an empty string. It is up to the exporter to decide what to do
-        // with an empty URI.
         if (apiVersion() == DynatraceApiVersion.V1) {
             return getUrlString(this, "uri").required().get();
         }
@@ -87,7 +85,6 @@ public interface DynatraceConfig extends StepRegistryConfig {
     }
 
     default String metricKeyPrefix() {
-        // returns an empty string if nothing is set in the properties.
         return getString(this, "metricKeyPrefix").orElse("");
     }
 
@@ -96,9 +93,7 @@ public interface DynatraceConfig extends StepRegistryConfig {
     }
 
     default Boolean enrichWithOneAgentMetadata() {
-        // defaults to true if nothing is set.
-        return getBoolean(this, "enrichWithOneAgentMetadata")
-                .orElse(true);
+        return getBoolean(this, "enrichWithOneAgentMetadata").orElse(true);
     }
 
     @Override
