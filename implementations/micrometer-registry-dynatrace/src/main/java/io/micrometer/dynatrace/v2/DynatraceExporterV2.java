@@ -54,12 +54,14 @@ public final class DynatraceExporterV2 extends AbstractDynatraceExporter {
     private static final Map<String, String> staticDimensions = Collections.singletonMap("dt.metrics.source", "micrometer");
 
     private final String endpoint;
+    private final boolean ignoreToken;
     private final MetricBuilderFactory metricBuilderFactory;
 
     public DynatraceExporterV2(DynatraceConfig config, Clock clock, HttpSender httpClient) {
         super(config, clock, httpClient);
         this.endpoint = config.uri();
         showErrorIfEndpointIsInvalid(endpoint);
+        ignoreToken = shouldIgnoreToken(config);
         logger.info("Exporting to endpoint {}", this.endpoint);
 
         MetricBuilderFactory.MetricBuilderFactoryBuilder factoryBuilder = MetricBuilderFactory.builder()
@@ -78,6 +80,18 @@ public final class DynatraceExporterV2 extends AbstractDynatraceExporter {
             URI.create(uri).toURL();
         } catch (IllegalArgumentException | MalformedURLException ex) {
             logger.error("Invalid URI provided, exporting will fail: {}", uri);
+        }
+    }
+
+    private boolean shouldIgnoreToken(DynatraceConfig config) {
+        if (config.apiToken().isEmpty()) {
+            return true;
+        } else if (config.uri().equals(DynatraceMetricApiConstants.getDefaultOneAgentEndpoint())) {
+            logger.warn("Potential misconfiguration detected: Token is provided, but the endpoint is set to the local OneAgent endpoint, "
+                    + "thus the token will be ignored. If exporting to the cluster API endpoint is intended, its URI has to be provided explicitly.");
+            return true;
+        } else {
+            return false;
         }
     }
 
@@ -254,8 +268,12 @@ public final class DynatraceExporterV2 extends AbstractDynatraceExporter {
                 logger.debug("sending lines:\n" + body);
             }
 
-            httpClient.post(endpoint)
-                    .withHeader("Authorization", "Api-Token " + config.apiToken())
+            HttpSender.Request.Builder requestBuilder = httpClient.post(endpoint);
+            if (!ignoreToken) {
+                requestBuilder.withHeader("Authorization", "Api-Token " + config.apiToken());
+            }
+
+            requestBuilder
                     .withHeader("User-Agent", "micrometer")
                     .withPlainText(body)
                     .send()
