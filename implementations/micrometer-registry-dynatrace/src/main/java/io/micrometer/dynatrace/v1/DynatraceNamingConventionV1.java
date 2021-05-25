@@ -21,7 +21,6 @@ import io.micrometer.core.instrument.config.NamingConvention;
 import io.micrometer.core.instrument.util.StringUtils;
 import io.micrometer.core.lang.Nullable;
 import io.micrometer.core.util.internal.logging.WarnThenDebugLogger;
-import io.micrometer.dynatrace.DynatraceNamingConvention;
 
 import java.util.regex.Pattern;
 
@@ -34,7 +33,7 @@ import java.util.regex.Pattern;
  * @since 1.8.0
  */
 public class DynatraceNamingConventionV1 implements NamingConvention {
-    private static final WarnThenDebugLogger logger = new WarnThenDebugLogger(DynatraceNamingConvention.class);
+    private static final WarnThenDebugLogger logger = new WarnThenDebugLogger(DynatraceNamingConventionV1.class);
 
     private static final Pattern NAME_CLEANUP_PATTERN = Pattern.compile("[^\\w._-]");
     private static final Pattern LEADING_NUMERIC_PATTERN = Pattern.compile("[._-]([\\d])+");
