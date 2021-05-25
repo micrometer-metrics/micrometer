@@ -34,11 +34,11 @@ class ReactorNettySenderTests {
     HttpSender httpSender = new ReactorNettySender();
 
     @Test
-    void customReadTimeoutHonored(@WiremockResolver.Wiremock WireMockServer server) throws Throwable {
+    void customReadTimeoutHonored(@WiremockResolver.Wiremock WireMockServer server) {
         this.httpSender = new ReactorNettySender(HttpClient.create()
-                .tcpConfiguration(tcpClient -> tcpClient.doOnConnected(connection ->
+                .doOnConnected(connection ->
                         connection.addHandlerLast(new ReadTimeoutHandler(1, TimeUnit.MILLISECONDS))
-                                .addHandlerLast(new WriteTimeoutHandler(1, TimeUnit.MILLISECONDS)))));
+                                .addHandlerLast(new WriteTimeoutHandler(1, TimeUnit.MILLISECONDS))));
         server.stubFor(any(urlEqualTo("/metrics")).willReturn(ok().withFixedDelay(5)));
 
         assertThatExceptionOfType(ReadTimeoutException.class)

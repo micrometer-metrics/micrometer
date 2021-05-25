@@ -35,17 +35,13 @@ def VERSIONS = [
         'io.grpc:grpc-stubs:latest.release',
         'io.grpc:grpc-alts:latest.release',
         'info.ganglia.gmetric4j:gmetric4j:latest.release',
-        'io.projectreactor:reactor-core:3.3.+',
-        'io.projectreactor:reactor-test:3.3.+',
-        'io.projectreactor.netty:reactor-netty:0.9.+',
         'io.prometheus:simpleclient_common:latest.release',
         'io.prometheus:simpleclient_pushgateway:latest.release',
         'javax.cache:cache-api:latest.release',
         'javax.inject:javax.inject:1',
         'javax.xml.bind:jaxb-api:2.3.+',
         'junit:junit:4.12',
-        // locked to this version due to ehcache-parent 2.25 not being on central
-        'net.sf.ehcache:ehcache:2.10.6',
+        'net.sf.ehcache:ehcache:latest.release',
         'org.apache.httpcomponents:httpasyncclient:latest.release',
         'org.apache.httpcomponents:httpclient:latest.release',
         'org.apache.kafka:kafka-clients:2.+',
@@ -64,7 +60,7 @@ def VERSIONS = [
         'org.hdrhistogram:HdrHistogram:latest.release',
         'org.hibernate:hibernate-entitymanager:5.+',
         'org.hsqldb:hsqldb:2.5.+', // 2.6.0 requires JDK 11.
-        'org.jooq:jooq:3.14.+',
+        'org.jooq:jooq:latest.release',
         'org.jsr107.ri:cache-ri-impl:1.0.0',
         'org.junit.jupiter:junit-jupiter:5.7.+',
         'org.junit.platform:junit-platform-launcher:1.7.+',
@@ -95,6 +91,7 @@ subprojects {
           runtimeOnly version
         }
       }
+      implementation platform('io.projectreactor:reactor-bom:2020.0.+')
     }
   }
 }
