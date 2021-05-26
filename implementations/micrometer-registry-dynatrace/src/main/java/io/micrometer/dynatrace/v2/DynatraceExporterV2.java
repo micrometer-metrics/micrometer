@@ -44,17 +44,16 @@ import java.util.stream.StreamSupport;
  * @author Georg Pirklbauer
  */
 public final class DynatraceExporterV2 extends AbstractDynatraceExporter {
-    private static final String METRIC_EXCEPTION_FORMATTER = "Could not serialize metric with name %s: %s";
-
+    private static final String METER_EXCEPTION_FORMAT = "Could not serialize meter %s: %s";
     private static final Pattern EXTRACT_LINES_OK = Pattern.compile("\"linesOk\":\\s?(\\d+)");
     private static final Pattern EXTRACT_LINES_INVALID = Pattern.compile("\"linesInvalid\":\\s?(\\d+)");
     private static final Pattern IS_NULL_ERROR_RESPONSE = Pattern.compile("\"error\":\\s?null");
 
-    private final String endpoint;
-    private final MetricBuilderFactory metricBuilderFactory;
-
     private static final Logger logger = LoggerFactory.getLogger(DynatraceExporterV2.class.getName());
     private static final Map<String, String> staticDimensions = Collections.singletonMap("dt.metrics.source", "micrometer");
+
+    private final String endpoint;
+    private final MetricBuilderFactory metricBuilderFactory;
 
     public DynatraceExporterV2(DynatraceConfig config, Clock clock, HttpSender httpClient) {
         super(config, clock, httpClient);
@@ -67,8 +66,7 @@ public final class DynatraceExporterV2 extends AbstractDynatraceExporter {
         showErrorIfEndpointIsInvalid(endpoint);
         logger.info("Exporting to endpoint {}", this.endpoint);
 
-        MetricBuilderFactory.MetricBuilderFactoryBuilder factoryBuilder = MetricBuilderFactory
-                .builder()
+        MetricBuilderFactory.MetricBuilderFactoryBuilder factoryBuilder = MetricBuilderFactory.builder()
                 .withPrefix(config.metricKeyPrefix())
                 .withDefaultDimensions(parseDefaultDimensions(config.defaultDimensions()));
 
@@ -77,6 +75,14 @@ public final class DynatraceExporterV2 extends AbstractDynatraceExporter {
         }
 
         metricBuilderFactory = factoryBuilder.build();
+    }
+
+    private void showErrorIfEndpointIsInvalid(String uri) {
+        try {
+            URI.create(uri).toURL();
+        } catch (IllegalArgumentException | MalformedURLException ex) {
+            logger.error("Invalid URI provided, exporting will fail: {}", uri);
+        }
     }
 
     private DimensionList parseDefaultDimensions(Map<String, String> defaultDimensions) {
@@ -100,22 +106,13 @@ public final class DynatraceExporterV2 extends AbstractDynatraceExporter {
     @Override
     public void export(@Nonnull List<Meter> meters) {
         // Lines that are too long to be ingested into Dynatrace, as well as lines that contain NaN
-        // or Inf values are dropped and not returned from "toMetricLines", and are therefore
-        // dropped.
+        // or Inf values are dropped and not returned from "toMetricLines", and are therefore dropped.
         List<String> metricLines =
-                meters.stream()                            // turn List<Meter> into Stream<Meter>
-                        .flatMap(this::toMetricLines)      // turn Stream<Meter> into Stream<String>
-                        .collect(Collectors.toList());     // Collect to List.
+                meters.stream()
+                        .flatMap(this::toMetricLines)      // Stream<Meter> to Stream<String>
+                        .collect(Collectors.toList());
 
         sendInBatches(metricLines);
-    }
-
-    private void showErrorIfEndpointIsInvalid(String uri) {
-        try {
-            URI.create(uri).toURL();
-        } catch (IllegalArgumentException | MalformedURLException ex) {
-            logger.error("Invalid URI provided, exporting will fail: {}", uri);
-        }
     }
 
     private Stream<String> toMetricLines(Meter meter) {
@@ -140,7 +137,7 @@ public final class DynatraceExporterV2 extends AbstractDynatraceExporter {
         return toCounter(meter);
     }
 
-    static double minFromHistogramSnapshot(HistogramSnapshot histogramSnapshot, TimeUnit timeUnit) {
+    private double minFromHistogramSnapshot(HistogramSnapshot histogramSnapshot, TimeUnit timeUnit) {
         ValueAtPercentile[] valuesAtPercentiles = histogramSnapshot.percentileValues();
         double min = Double.NaN;
 
@@ -167,20 +164,6 @@ public final class DynatraceExporterV2 extends AbstractDynatraceExporter {
         return toSummaryLine(meter, histogramSnapshot, total, max, true);
     }
 
-    private Stream<String> makeSummaryLine(Meter meter, double min, double max, double total, long count) {
-        List<String> serializedLine = new ArrayList<>(1);
-        try {
-            serializedLine.add(
-                    createMetricBuilder(meter)
-                            .setDoubleSummaryValue(min, max, total, count)
-                            .serialize());
-        } catch (MetricException e) {
-            logger.warn(String.format(METRIC_EXCEPTION_FORMATTER, meter.getId().getName(), e.getMessage()));
-        }
-
-        return streamOf(serializedLine);
-    }
-
     private Stream<String> toSummaryLine(Meter meter, HistogramSnapshot histogramSnapshot, double total, double max, boolean isTimer) {
         long count = histogramSnapshot.count();
 
@@ -196,6 +179,20 @@ public final class DynatraceExporterV2 extends AbstractDynatraceExporter {
         }
 
         return makeSummaryLine(meter, min, max, total, count);
+    }
+
+    private Stream<String> makeSummaryLine(Meter meter, double min, double max, double total, long count) {
+        List<String> serializedLine = new ArrayList<>(1);
+        try {
+            serializedLine.add(
+                    createMetricBuilder(meter)
+                            .setDoubleSummaryValue(min, max, total, count)
+                            .serialize());
+        } catch (MetricException e) {
+            logger.warn(String.format(METER_EXCEPTION_FORMAT, meter.getId().getName(), e.getMessage()));
+        }
+
+        return streamOf(serializedLine);
     }
 
     Stream<String> toDistributionSummaryLine(DistributionSummary meter) {
@@ -246,7 +243,7 @@ public final class DynatraceExporterV2 extends AbstractDynatraceExporter {
                     .setDoubleGaugeValue(measurement.getValue())
                     .serialize();
         } catch (MetricException e) {
-            logger.warn(String.format(METRIC_EXCEPTION_FORMATTER, meter.getId().getName(), e.getMessage()));
+            logger.warn(String.format(METER_EXCEPTION_FORMAT, meter.getId().getName(), e.getMessage()));
         }
         return null;
     }
@@ -263,7 +260,7 @@ public final class DynatraceExporterV2 extends AbstractDynatraceExporter {
                     .setDoubleCounterValueDelta(measurement.getValue())
                     .serialize();
         } catch (MetricException e) {
-            logger.warn(String.format(METRIC_EXCEPTION_FORMATTER, meter.getId().getName(), e.getMessage()));
+            logger.warn(String.format(METER_EXCEPTION_FORMAT, meter.getId().getName(), e.getMessage()));
         }
         return null;
     }
@@ -275,14 +272,14 @@ public final class DynatraceExporterV2 extends AbstractDynatraceExporter {
                 .setTimestamp(Instant.ofEpochMilli(clock.wallTime()));
     }
 
-    private static DimensionList fromTags(List<Tag> tags) {
+    private DimensionList fromTags(List<Tag> tags) {
         return DimensionList.fromCollection(
                 tags.stream()
                         .map(tag -> Dimension.create(tag.getKey(), tag.getValue()))
                         .collect(Collectors.toList()));
     }
 
-    static <T> Stream<T> streamOf(Iterable<T> iterable) {
+    private <T> Stream<T> streamOf(Iterable<T> iterable) {
         return StreamSupport.stream(iterable.spliterator(), false);
     }
 
