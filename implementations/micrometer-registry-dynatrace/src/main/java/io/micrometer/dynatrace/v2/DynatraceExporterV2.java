@@ -34,6 +34,7 @@ import java.net.URI;
 import java.time.Instant;
 import java.util.*;
 import java.util.concurrent.TimeUnit;
+import java.util.function.BiFunction;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
@@ -129,11 +130,31 @@ public final class DynatraceExporterV2 extends AbstractDynatraceExporter {
     }
 
     Stream<String> toGaugeLine(Gauge meter) {
-        return toGauge(meter);
+        return toMeterLine(meter, this::createGaugeLine);
+    }
+
+    private String createGaugeLine(Meter meter, Measurement measurement) {
+        try {
+            return createMetricBuilder(meter).setDoubleGaugeValue(measurement.getValue()).serialize();
+        } catch (MetricException e) {
+            logger.warn(String.format(METER_EXCEPTION_FORMAT, meter.getId().getName(), e.getMessage()));
+        }
+
+        return null;
     }
 
     Stream<String> toCounterLine(Counter meter) {
-        return toCounter(meter);
+        return toMeterLine(meter, this::createCounterLine);
+    }
+
+    private String createCounterLine(Meter meter, Measurement measurement) {
+        try {
+            return createMetricBuilder(meter).setDoubleCounterValueDelta(measurement.getValue()).serialize();
+        } catch (MetricException e) {
+            logger.warn(String.format(METER_EXCEPTION_FORMAT, meter.getId().getName(), e.getMessage()));
+        }
+
+        return null;
     }
 
     Stream<String> toTimerLine(Timer meter) {
@@ -152,7 +173,7 @@ public final class DynatraceExporterV2 extends AbstractDynatraceExporter {
             min = minFromHistogramSnapshot(histogramSnapshot, timeUnit);
         }
 
-        return makeSummaryLine(meter, min, max, total, count);
+        return createSummaryLine(meter, min, max, total, count);
     }
 
     private double minFromHistogramSnapshot(HistogramSnapshot histogramSnapshot, TimeUnit timeUnit) {
@@ -169,7 +190,7 @@ public final class DynatraceExporterV2 extends AbstractDynatraceExporter {
         return min;
     }
 
-    private Stream<String> makeSummaryLine(Meter meter, double min, double max, double total, long count) {
+    private Stream<String> createSummaryLine(Meter meter, double min, double max, double total, long count) {
         try {
             String line = createMetricBuilder(meter).setDoubleSummaryValue(min, max, total, count).serialize();
             return streamOf(Collections.singletonList(line));
@@ -189,11 +210,11 @@ public final class DynatraceExporterV2 extends AbstractDynatraceExporter {
     }
 
     Stream<String> toTimeGaugeLine(TimeGauge meter) {
-        return toGauge(meter);
+        return toMeterLine(meter, this::createGaugeLine);
     }
 
     Stream<String> toFunctionCounterLine(FunctionCounter meter) {
-        return toCounter(meter);
+        return toMeterLine(meter, this::createCounterLine);
     }
 
     Stream<String> toFunctionTimerLine(FunctionTimer meter) {
@@ -201,46 +222,21 @@ public final class DynatraceExporterV2 extends AbstractDynatraceExporter {
         double average = meter.mean(getBaseTimeUnit());
         long longCount = Double.valueOf(meter.count()).longValue();
 
-        return makeSummaryLine(meter, average, average, total, longCount);
+        return createSummaryLine(meter, average, average, total, longCount);
     }
 
     Stream<String> toMeterLine(Meter meter) {
-        return toGauge(meter);
+        return toMeterLine(meter, this::createGaugeLine);
     }
 
-    Stream<String> toGauge(Meter meter) {
+    private Stream<String> toMeterLine(Meter meter, BiFunction<Meter, Measurement, String> measurementConverter) {
         return streamOf(meter.measure())
-                .map(measurement -> createGaugeLine(meter, measurement))
+                .map(measurement -> measurementConverter.apply(meter, measurement))
                 .filter(Objects::nonNull);
-    }
-
-    private String createGaugeLine(Meter meter, Measurement measurement) {
-        try {
-            return createMetricBuilder(meter).setDoubleGaugeValue(measurement.getValue()).serialize();
-        } catch (MetricException e) {
-            logger.warn(String.format(METER_EXCEPTION_FORMAT, meter.getId().getName(), e.getMessage()));
-        }
-        return null;
-    }
-
-    Stream<String> toCounter(Meter meter) {
-        return streamOf(meter.measure())
-                .map(measurement -> createCounterLine(meter, measurement))
-                .filter(Objects::nonNull);
-    }
-
-    private String createCounterLine(Meter meter, Measurement measurement) {
-        try {
-            return createMetricBuilder(meter).setDoubleCounterValueDelta(measurement.getValue()).serialize();
-        } catch (MetricException e) {
-            logger.warn(String.format(METER_EXCEPTION_FORMAT, meter.getId().getName(), e.getMessage()));
-        }
-        return null;
     }
 
     private Metric.Builder createMetricBuilder(Meter meter) {
-        return metricBuilderFactory
-                .newMetricBuilder(meter.getId().getName())
+        return metricBuilderFactory.newMetricBuilder(meter.getId().getName())
                 .setDimensions(fromTags(meter.getId().getTags()))
                 .setTimestamp(Instant.ofEpochMilli(clock.wallTime()));
     }
