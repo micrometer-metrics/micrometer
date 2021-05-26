@@ -107,10 +107,9 @@ public final class DynatraceExporterV2 extends AbstractDynatraceExporter {
     public void export(@Nonnull List<Meter> meters) {
         // Lines that are too long to be ingested into Dynatrace, as well as lines that contain NaN
         // or Inf values are dropped and not returned from "toMetricLines", and are therefore dropped.
-        List<String> metricLines =
-                meters.stream()
-                        .flatMap(this::toMetricLines)      // Stream<Meter> to Stream<String>
-                        .collect(Collectors.toList());
+        List<String> metricLines = meters.stream()
+                .flatMap(this::toMetricLines) // Stream<Meter> to Stream<String>
+                .collect(Collectors.toList());
 
         sendInBatches(metricLines);
     }
@@ -302,13 +301,12 @@ public final class DynatraceExporterV2 extends AbstractDynatraceExporter {
 
     private void sendInBatches(List<String> metricLines) {
         int partitionSize = Math.min(config.batchSize(), DynatraceMetricApiConstants.getPayloadLinesLimit());
-        MetricLinePartition.partition(metricLines, partitionSize)
-                .forEach(this::send);
+        MetricLinePartition.partition(metricLines, partitionSize).forEach(this::send);
     }
 
     static class MetricLinePartition extends AbstractPartition<String> {
 
-        MetricLinePartition(List<String> list, int partitionSize) {
+        private MetricLinePartition(List<String> list, int partitionSize) {
             super(list, partitionSize);
         }
 
