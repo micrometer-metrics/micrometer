@@ -264,8 +264,8 @@ public final class DynatraceExporterV2 extends AbstractDynatraceExporter {
                     .withHeader("User-Agent", "micrometer")
                     .withPlainText(body)
                     .send()
-                    .onSuccess((r) -> handleSuccess(metricLines.size(), r))
-                    .onError((r) -> logger.error("Failed metric ingestion. Error code={} response.body={}", r.code(), r.body()));
+                    .onSuccess(response -> handleSuccess(metricLines.size(), response))
+                    .onError(response -> logger.error("Failed metric ingestion. Error code={} response.body={}", response.code(), response.body()));
         } catch (Throwable throwable) {
             logger.error("Failed metric ingestion: {}", throwable.getMessage());
         }
@@ -280,13 +280,13 @@ public final class DynatraceExporterV2 extends AbstractDynatraceExporter {
                     logger.info("Sent {} metric lines, linesOk: {}, linesInvalid: {}.",
                             totalSent, linesOkMatchResult.group(1), linesInvalidMatchResult.group(1));
                 } else {
-                    logger.warn("could not parse response: {}", response.body());
+                    logger.warn("Unable to parse response: {}", response.body());
                 }
             } else {
-                logger.warn("could not parse response: {}", response.body());
+                logger.warn("Unable to parse response: {}", response.body());
             }
         } else {
-            // common pitfall if URI is supplied in v1 format (without endpoint path)
+            // common pitfall if URI is supplied in V1 format (without endpoint path)
             logger.error("Expected status code 202, got {}. Did you specify the ingest path (e.g.: /api/v2/metrics/ingest)?", response.code());
         }
     }
