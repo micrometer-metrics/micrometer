@@ -143,12 +143,7 @@ public final class DynatraceExporterV2 extends AbstractDynatraceExporter {
 
         for (ValueAtPercentile valueAtPercentile : valuesAtPercentiles) {
             if (valueAtPercentile.percentile() == 0.0) {
-                if (timeUnit == null) {
-                    // not a timer value, probably a DistributionSummary
-                    min = valueAtPercentile.value();
-                } else {
-                    min = valueAtPercentile.value(timeUnit);
-                }
+                min = (timeUnit != null) ? valueAtPercentile.value(timeUnit) : valueAtPercentile.value();
                 break;
             }
         }
@@ -157,58 +152,41 @@ public final class DynatraceExporterV2 extends AbstractDynatraceExporter {
     }
 
     Stream<String> toTimerLine(Timer meter) {
-        HistogramSnapshot histogramSnapshot = meter.takeSnapshot();
-        double total = histogramSnapshot.total(getBaseTimeUnit());
-        double max = histogramSnapshot.max(getBaseTimeUnit());
-
-        return toSummaryLine(meter, histogramSnapshot, total, max, true);
+        return toSummaryLine(meter, meter.takeSnapshot(), getBaseTimeUnit());
     }
 
-    private Stream<String> toSummaryLine(Meter meter, HistogramSnapshot histogramSnapshot, double total, double max, boolean isTimer) {
+    private Stream<String> toSummaryLine(Meter meter, HistogramSnapshot histogramSnapshot, TimeUnit timeUnit) {
         long count = histogramSnapshot.count();
+        double total = (timeUnit != null) ? histogramSnapshot.total(timeUnit) : histogramSnapshot.total();
+        double max = (timeUnit != null) ? histogramSnapshot.max(timeUnit) : histogramSnapshot.max();
 
         double min;
         if (count == 1) {
             min = max;
         } else {
-            if (isTimer) {
-                min = minFromHistogramSnapshot(histogramSnapshot, getBaseTimeUnit());
-            } else {
-                min = minFromHistogramSnapshot(histogramSnapshot, null);
-            }
+            min = minFromHistogramSnapshot(histogramSnapshot, timeUnit);
         }
 
         return makeSummaryLine(meter, min, max, total, count);
     }
 
     private Stream<String> makeSummaryLine(Meter meter, double min, double max, double total, long count) {
-        List<String> serializedLine = new ArrayList<>(1);
         try {
-            serializedLine.add(
-                    createMetricBuilder(meter)
-                            .setDoubleSummaryValue(min, max, total, count)
-                            .serialize());
+            String line = createMetricBuilder(meter).setDoubleSummaryValue(min, max, total, count).serialize();
+            return streamOf(Collections.singletonList(line));
         } catch (MetricException e) {
             logger.warn(String.format(METER_EXCEPTION_FORMAT, meter.getId().getName(), e.getMessage()));
         }
 
-        return streamOf(serializedLine);
+        return Stream.empty();
     }
 
     Stream<String> toDistributionSummaryLine(DistributionSummary meter) {
-        HistogramSnapshot histogramSnapshot = meter.takeSnapshot();
-        double total = histogramSnapshot.total();
-        double max = histogramSnapshot.max();
-
-        return toSummaryLine(meter, histogramSnapshot, total, max, false);
+        return toSummaryLine(meter, meter.takeSnapshot(), null);
     }
 
     Stream<String> toLongTaskTimerLine(LongTaskTimer meter) {
-        HistogramSnapshot histogramSnapshot = meter.takeSnapshot();
-        double total = histogramSnapshot.total(getBaseTimeUnit());
-        double max = histogramSnapshot.max(getBaseTimeUnit());
-
-        return toSummaryLine(meter, histogramSnapshot, total, max, true);
+        return toSummaryLine(meter, meter.takeSnapshot(), getBaseTimeUnit());
     }
 
     Stream<String> toTimeGaugeLine(TimeGauge meter) {
@@ -273,10 +251,10 @@ public final class DynatraceExporterV2 extends AbstractDynatraceExporter {
     }
 
     private DimensionList fromTags(List<Tag> tags) {
-        return DimensionList.fromCollection(
-                tags.stream()
-                        .map(tag -> Dimension.create(tag.getKey(), tag.getValue()))
-                        .collect(Collectors.toList()));
+        return DimensionList.fromCollection(tags.stream()
+                .map(tag -> Dimension.create(tag.getKey(), tag.getValue()))
+                .collect(Collectors.toList())
+        );
     }
 
     private <T> Stream<T> streamOf(Iterable<T> iterable) {
