@@ -136,20 +136,6 @@ public final class DynatraceExporterV2 extends AbstractDynatraceExporter {
         return toCounter(meter);
     }
 
-    private double minFromHistogramSnapshot(HistogramSnapshot histogramSnapshot, TimeUnit timeUnit) {
-        ValueAtPercentile[] valuesAtPercentiles = histogramSnapshot.percentileValues();
-        double min = Double.NaN;
-
-        for (ValueAtPercentile valueAtPercentile : valuesAtPercentiles) {
-            if (valueAtPercentile.percentile() == 0.0) {
-                min = (timeUnit != null) ? valueAtPercentile.value(timeUnit) : valueAtPercentile.value();
-                break;
-            }
-        }
-
-        return min;
-    }
-
     Stream<String> toTimerLine(Timer meter) {
         return toSummaryLine(meter, meter.takeSnapshot(), getBaseTimeUnit());
     }
@@ -167,6 +153,20 @@ public final class DynatraceExporterV2 extends AbstractDynatraceExporter {
         }
 
         return makeSummaryLine(meter, min, max, total, count);
+    }
+
+    private double minFromHistogramSnapshot(HistogramSnapshot histogramSnapshot, TimeUnit timeUnit) {
+        ValueAtPercentile[] valuesAtPercentiles = histogramSnapshot.percentileValues();
+        double min = Double.NaN;
+
+        for (ValueAtPercentile valueAtPercentile : valuesAtPercentiles) {
+            if (valueAtPercentile.percentile() == 0.0) {
+                min = (timeUnit != null) ? valueAtPercentile.value(timeUnit) : valueAtPercentile.value();
+                break;
+            }
+        }
+
+        return min;
     }
 
     private Stream<String> makeSummaryLine(Meter meter, double min, double max, double total, long count) {
@@ -209,16 +209,14 @@ public final class DynatraceExporterV2 extends AbstractDynatraceExporter {
     }
 
     Stream<String> toGauge(Meter meter) {
-        return streamOf(meter.measure()).map(
-                measurement -> createGaugeLine(meter, measurement))
+        return streamOf(meter.measure())
+                .map(measurement -> createGaugeLine(meter, measurement))
                 .filter(Objects::nonNull);
     }
 
     private String createGaugeLine(Meter meter, Measurement measurement) {
         try {
-            return createMetricBuilder(meter)
-                    .setDoubleGaugeValue(measurement.getValue())
-                    .serialize();
+            return createMetricBuilder(meter).setDoubleGaugeValue(measurement.getValue()).serialize();
         } catch (MetricException e) {
             logger.warn(String.format(METER_EXCEPTION_FORMAT, meter.getId().getName(), e.getMessage()));
         }
@@ -226,16 +224,14 @@ public final class DynatraceExporterV2 extends AbstractDynatraceExporter {
     }
 
     Stream<String> toCounter(Meter meter) {
-        return streamOf(meter.measure()).map(
-                measurement -> createCounterLine(meter, measurement))
+        return streamOf(meter.measure())
+                .map(measurement -> createCounterLine(meter, measurement))
                 .filter(Objects::nonNull);
     }
 
     private String createCounterLine(Meter meter, Measurement measurement) {
         try {
-            return createMetricBuilder(meter)
-                    .setDoubleCounterValueDelta(measurement.getValue())
-                    .serialize();
+            return createMetricBuilder(meter).setDoubleCounterValueDelta(measurement.getValue()).serialize();
         } catch (MetricException e) {
             logger.warn(String.format(METER_EXCEPTION_FORMAT, meter.getId().getName(), e.getMessage()));
         }
