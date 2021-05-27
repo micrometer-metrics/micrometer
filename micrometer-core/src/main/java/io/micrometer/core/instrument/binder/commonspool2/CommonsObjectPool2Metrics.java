@@ -87,6 +87,9 @@ public class CommonsObjectPool2Metrics implements MeterBinder, AutoCloseable {
                                 "NumIdle", "num.idle", tags,
                                 "The number of instances currently idle in this pool", BaseUnits.OBJECTS);
                         registerGaugeForObject(registry, o,
+                                "NumActive", "num.active", tags,
+                                "The number of instances currently active in this pool", BaseUnits.OBJECTS);
+                        registerGaugeForObject(registry, o,
                                 "NumWaiters", "num.waiters", tags,
                                 "The estimate of the number of threads currently blocked waiting for an object from the pool",
                                 BaseUnits.THREADS);
