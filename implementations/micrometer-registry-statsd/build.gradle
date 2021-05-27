@@ -26,7 +26,7 @@ shadowJar {
     relocate 'reactor', 'io.micrometer.shaded.reactor'
     relocate 'org.reactivestreams', 'io.micrometer.shaded.org.reactorstreams'
     relocate 'io.netty', 'io.micrometer.shaded.io.netty'
-    exclude 'META-INF/native/libnetty_transport_native_epoll_x86_64.so'
+    relocate 'META-INF/native/libnetty', 'META-INF/native/libio_micrometer_shaded_netty'
     metaInf {
         from "$rootDir/LICENSE"
         from "$rootDir/NOTICE"
