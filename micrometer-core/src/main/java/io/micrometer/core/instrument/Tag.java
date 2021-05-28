@@ -15,18 +15,45 @@
  */
 package io.micrometer.core.instrument;
 
+import java.util.function.Supplier;
+
 /**
  * Key/value pair representing a dimension of a meter used to classify and drill into measurements.
  *
  * @author Jon Schneider
+ * @author Simon Scholz
  */
 public interface Tag extends Comparable<Tag> {
     String getKey();
 
     String getValue();
 
+    /**
+     * Create a {@link Tag} instance with static values.
+     *
+     * @param key of the tag
+     * @param value of the tag
+     * @return an instance of {@link Tag}
+     */
     static Tag of(String key, String value) {
         return new ImmutableTag(key, value);
+    }
+
+    /**
+     * Create a {@link Tag} instance with a dynamic value, which may change during runtime.
+     * <p>
+     * NOTE: If the given valueSupplier returns null, an empty {@link String} will be returned as tag value.
+     * </p>
+     * <p>
+     * This is especially handy when common tags, which might change during runtime, should be applied.
+     * </p>
+     * @param key of the tag
+     * @param valueSupplier {@link Supplier}, which can determine the tag's value at runtime.
+     *                       In case the given supplier returns null an empty {@link String} will be returned.
+     * @return a {@link Tag} with a value, which might change during runtime
+     */
+    static Tag of(String key, Supplier<String> valueSupplier) {
+        return new DynamicValueTag(key, valueSupplier);
     }
 
     @Override

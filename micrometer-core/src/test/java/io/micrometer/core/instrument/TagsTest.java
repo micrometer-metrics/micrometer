@@ -46,13 +46,13 @@ class TagsTest {
 
     @Test
     void stream() {
-        Tags tags = Tags.of(Tag.of("k1",  "v1"), Tag.of("k1",  "v1"), Tag.of("k2", "v2"));
+        Tags tags = Tags.of(Tag.of("k1",  "v1"), Tag.of("k1",  "v1"), Tag.of("k1", () -> "v1"), Tag.of("k2", "v2"), Tag.of("k2", () -> "v2"));
         assertThat(tags.stream()).hasSize(2);
     }
 
     @Test
     void tagsHashCode() {
-        Tags tags = Tags.of(Tag.of("k1",  "v1"), Tag.of("k1",  "v1"), Tag.of("k2", "v2"));
+        Tags tags = Tags.of(Tag.of("k1",  "v1"), Tag.of("k1",  "v1"), Tag.of("k2", "v2"), Tag.of("k2", () -> "v2"));
         Tags tags2 = Tags.of(Tag.of("k1",  "v1"), Tag.of("k2",  "v2"));
         assertThat(tags.hashCode()).isEqualTo(tags2.hashCode());
     }
@@ -61,11 +61,13 @@ class TagsTest {
     void tagsToString() {
         Tags tags = Tags.of(Tag.of("k1",  "v1"), Tag.of("k1",  "v1"), Tag.of("k2", "v2"));
         assertThat(tags.toString()).isEqualTo("[tag(k1=v1),tag(k2=v2)]");
+        Tags tags2 = Tags.of(Tag.of("k1",  "v1"), Tag.of("k1",  "v1"), Tag.of("k2", "v2"), Tag.of("k2", () -> "v2"));
+        assertThat(tags2.toString()).isEqualTo("[tag(k1=v1),tag(k2=v2)]");
     }
 
     @Test
     void tagsEquality() {
-        Tags tags = Tags.of(Tag.of("k1",  "v1"), Tag.of("k1",  "v1"), Tag.of("k2", "v2"));
+        Tags tags = Tags.of(Tag.of("k1",  "v1"), Tag.of("k1",  "v1"), Tag.of("k2", "v2"), Tag.of("k2", () -> "v2"));
         Tags tags2 = Tags.of(Tag.of("k1",  "v1"), Tag.of("k2",  "v2"));
         assertThat(tags).isEqualTo(tags2);
     }
@@ -73,6 +75,12 @@ class TagsTest {
     @Test
     void createsListWithSingleTag() {
         Iterable<Tag> tags = Tags.of("k1", "v1");
+        assertThat(tags).containsExactly(Tag.of("k1", "v1"));
+    }
+
+    @Test
+    void createsListWithSingleTagAndDynamic() {
+        Iterable<Tag> tags = Tags.of("k1", () -> "v1");
         assertThat(tags).containsExactly(Tag.of("k1", "v1"));
     }
 
@@ -111,6 +119,12 @@ class TagsTest {
     @Test
     void concatOnTwoTagsWithSameKeyAreMergedIntoOneTag() {
         Iterable<Tag> tags = Tags.concat(Tags.of("k", "v1"), "k", "v2");
+        assertThat(tags).containsExactly(Tag.of("k", "v2"));
+    }
+
+    @Test
+    void concatOnTwoDynamicValueTagsWithSameKeyAreMergedIntoOneTag() {
+        Iterable<Tag> tags = Tags.concat(Tags.of("k", () -> "v1"), "k", "v2");
         assertThat(tags).containsExactly(Tag.of("k", "v2"));
     }
 

@@ -1,5 +1,5 @@
 /**
- * Copyright 2017 VMware, Inc.
+ * Copyright 2020 VMware, Inc.
  * <p>
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,23 +18,23 @@ package io.micrometer.core.instrument;
 import io.micrometer.core.lang.Nullable;
 
 import java.util.Objects;
+import java.util.function.Supplier;
 
 import static java.util.Objects.requireNonNull;
 
 /**
- * Immutable {@link Tag}.
+ * Dynamic value {@link Tag}.
  *
- * @author Jon Schneider
+ * @author Simon Scholz
  */
-public class ImmutableTag implements Tag {
-    private final String key;
-    private final String value;
+final class DynamicValueTag implements Tag {
 
-    public ImmutableTag(String key, String value) {
-        requireNonNull(key);
-        requireNonNull(value);
-        this.key = key;
-        this.value = value;
+    private final String key;
+    private final Supplier<String> valueSupplier;
+
+    DynamicValueTag(String key, Supplier<String> valueSupplier) {
+        this.key = requireNonNull(key, "The key must not be null");
+        this.valueSupplier = requireNonNull(valueSupplier, "The valueSupplier must not be null");;
     }
 
     @Override
@@ -42,9 +42,16 @@ public class ImmutableTag implements Tag {
         return key;
     }
 
+    /**
+     * Get the value of the given valueSupplier.
+     * In case the valueSupplier returns null an empty String will be returned.
+     *
+     * @return the value of the given valueSupplier
+     */
     @Override
     public String getValue() {
-        return value;
+        String value = valueSupplier.get();
+        return value != null ? value : "";
     }
 
     @Override
@@ -53,18 +60,18 @@ public class ImmutableTag implements Tag {
         if (o == null || o.getClass().isAssignableFrom(Tag.class)) return false;
         Tag that = (Tag) o;
         return Objects.equals(key, that.getKey()) &&
-            Objects.equals(value, that.getValue());
+                Objects.equals(valueSupplier.get(), that.getValue());
     }
 
     @Override
     public int hashCode() {
-        int result = key.hashCode();
-        result = 31 * result + value.hashCode();
+        int result = getKey().hashCode();
+        result = 31 * result + getValue().hashCode();
         return result;
     }
 
     @Override
     public String toString() {
-        return "tag(" + key + "=" + value + ")";
+        return "tag(" + getKey() + "=" + getValue() + ")";
     }
 }

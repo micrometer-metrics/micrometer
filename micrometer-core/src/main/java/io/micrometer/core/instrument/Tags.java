@@ -18,6 +18,7 @@ package io.micrometer.core.instrument;
 import io.micrometer.core.lang.Nullable;
 
 import java.util.*;
+import java.util.function.Supplier;
 import java.util.stream.Stream;
 import java.util.stream.StreamSupport;
 
@@ -234,6 +235,18 @@ public final class Tags implements Iterable<Tag> {
      */
     public static Tags of(String key, String value) {
         return new Tags(new Tag[]{Tag.of(key, value)});
+    }
+
+    /**
+     * Return a new {@code Tags} instance containing tags constructed from the specified key/valueSupplier pair.
+     *
+     * @param key   the tag key to add
+     * @param valueSupplier the tag value supplier to add.
+     *                      In case the valueSupplier returns null an empty String will be returned.
+     * @return a new {@code Tags} instance
+     */
+    public static Tags of(String key, Supplier<String> valueSupplier) {
+        return new Tags(new Tag[]{Tag.of(key, valueSupplier)});
     }
 
     /**
