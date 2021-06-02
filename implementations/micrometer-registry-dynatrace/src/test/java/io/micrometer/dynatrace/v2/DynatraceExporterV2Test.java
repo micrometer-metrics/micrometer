@@ -21,6 +21,7 @@ import io.micrometer.core.ipc.http.HttpSender;
 import io.micrometer.dynatrace.DynatraceApiVersion;
 import io.micrometer.dynatrace.DynatraceConfig;
 import io.micrometer.dynatrace.DynatraceMeterRegistry;
+import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 import wiremock.com.google.common.util.concurrent.AtomicDouble;
 
@@ -323,109 +324,78 @@ class DynatraceExporterV2Test {
 
     @Test
     void toMeterLine() {
-        meterRegistry.gauge("my.meter", 1.23);
-        Gauge gauge = meterRegistry.find("my.meter").gauge();
-        assertNotNull(gauge);
+        Measurement m1 = new Measurement(() -> 23d, Statistic.VALUE);
+        Measurement m2 = new Measurement(() -> 42d, Statistic.VALUE);
+        Measurement m3 = new Measurement(() -> 5d, Statistic.VALUE);
+        Meter meter = Meter.builder("my.custom", Meter.Type.OTHER, Arrays.asList(m1, m2, m3)).register(meterRegistry);
 
-        List<String> actual = exporter.toMeterLine(gauge).collect(Collectors.toList());
-        assertThat(actual).hasSize(1);
-        assertThat(actual.get(0)).startsWith("my.meter,dt.metrics.source=micrometer gauge,1.23");
-        String expectedDummy = "my.meter,dt.metrics.source=micrometer gauge,1.23 1617714022879";
-        assertThat(actual.get(0)).hasSize(expectedDummy.length());
+        List<String> lines = exporter.toMeterLine(meter).collect(Collectors.toList());
+        assertThat(lines).hasSize(3);
+        assertThat(lines.get(0)).isEqualTo("my.custom,dt.metrics.source=micrometer gauge,23.0 " + clock.wallTime());
+        assertThat(lines.get(1)).isEqualTo("my.custom,dt.metrics.source=micrometer gauge,42.0 " + clock.wallTime());
+        assertThat(lines.get(2)).isEqualTo("my.custom,dt.metrics.source=micrometer gauge,5.0 " + clock.wallTime());
     }
 
     @Test
-    void toGaugeInvalidName() {
-        // invalid name.
+    void gaugeWithInvalidNameShouldBeDropped() {
         meterRegistry.gauge("~~~", 1.23);
         Gauge gauge = meterRegistry.find("~~~").gauge();
         assertNotNull(gauge);
-
-        List<String> actual = exporter.toGaugeLine(gauge).collect(Collectors.toList());
-        assertThat(actual).isEmpty();
+        assertThat(exporter.toGaugeLine(gauge).collect(Collectors.toList())).isEmpty();
     }
 
     @Test
-    void toGaugeInvalidCases() {
-        meterRegistry.gauge("my.gauge1", Double.NaN);
-        Gauge gauge1 = meterRegistry.find("my.gauge1").gauge();
-        assertNotNull(gauge1);
-        List<String> actual1 = exporter.toGaugeLine(gauge1).collect(Collectors.toList());
-        assertThat(actual1).isEmpty();
-
-        meterRegistry.gauge("my.gauge2", Double.NEGATIVE_INFINITY);
-        Gauge gauge2 = meterRegistry.find("my.gauge2").gauge();
-        assertNotNull(gauge2);
-        List<String> actual2 = exporter.toGaugeLine(gauge2).collect(Collectors.toList());
-        assertThat(actual2).isEmpty();
-
-        meterRegistry.gauge("my.gauge3", Double.POSITIVE_INFINITY);
-        Gauge gauge3 = meterRegistry.find("my.gauge3").gauge();
-        assertNotNull(gauge3);
-        List<String> actual3 = exporter.toGaugeLine(gauge3).collect(Collectors.toList());
-        assertThat(actual3).isEmpty();
-    }
-
-    @Test
-    void toGaugeTags() {
-        // invalid name.
+    void toGaugeLineShouldContainTags() {
         Gauge.builder("my.gauge", () -> 1.23).tags(Tags.of("tag1", "value1", "tag2", "value2")).register(meterRegistry);
         Gauge gauge = meterRegistry.find("my.gauge").gauge();
         assertNotNull(gauge);
 
-        List<String> actual = exporter.toGaugeLine(gauge).collect(Collectors.toList());
-        assertThat(actual).hasSize(1);
-        assertThat(actual.get(0)).contains("tag1=value1").contains("tag2=value2").contains("dt.metrics.source=micrometer");
-        assertThat(actual.get(0)).startsWith("my.gauge,");
-        assertThat(actual.get(0)).hasSize("my.gauge,dt.metrics.source=micrometer,tag1=value1,tag2=value2 gauge,1.23 1617776498381".length());
+        List<String> lines = exporter.toGaugeLine(gauge).collect(Collectors.toList());
+        assertThat(lines).hasSize(1);
+        assertThat(lines.get(0)).isEqualTo("my.gauge,tag1=value1,dt.metrics.source=micrometer,tag2=value2 gauge,1.23 " + clock.wallTime());
     }
 
     @Test
-    void toCounterInvalidName() {
-        // invalid name.
+    @Disabled
+    void toGaugeLineShouldDropBlankTagValues() {
+        Gauge.builder("my.gauge", () -> 1.23).tags(Tags.of("tag1", "value1", "tag2", "")).register(meterRegistry);
+        Gauge gauge = meterRegistry.find("my.gauge").gauge();
+        assertNotNull(gauge);
+
+        List<String> lines = exporter.toGaugeLine(gauge).collect(Collectors.toList());
+        assertThat(lines).hasSize(1);
+        assertThat(lines.get(0)).isEqualTo("my.gauge,tag1=value1,dt.metrics.source=micrometer gauge,1.23 " + clock.wallTime());
+    }
+
+    @Test
+    void counterWithInvalidNameShouldBeDropped() {
         meterRegistry.counter("~~~");
         Counter counter = meterRegistry.find("~~~").counter();
         assertNotNull(counter);
-
-        List<String> actual = exporter.toCounterLine(counter).collect(Collectors.toList());
-        assertThat(actual).isEmpty();
+        assertThat(exporter.toCounterLine(counter).collect(Collectors.toList())).isEmpty();
     }
 
     @Test
-    void toCounterInvalidCases() {
-        meterRegistry.counter("my.counter1");
-        Counter counter = meterRegistry.find("my.counter1").counter();
-        assertNotNull(counter);
-
-        // NaN and infinity are ignored. The counter value stays at 0.0 when adding one of NaN,
-        // +Inf or -Inf.
-        counter.increment(Double.NaN);
-        List<String> actual1 = exporter.toCounterLine(counter).collect(Collectors.toList());
-        counter.increment(Double.POSITIVE_INFINITY);
-        List<String> actual2 = exporter.toCounterLine(counter).collect(Collectors.toList());
-        counter.increment(Double.NEGATIVE_INFINITY);
-        List<String> actual3 = exporter.toCounterLine(counter).collect(Collectors.toList());
-        assertThat(actual1).hasSize(1);
-        assertThat(actual2).hasSize(1);
-        assertThat(actual3).hasSize(1);
-
-        assertThat(actual1.get(0)).contains("count,delta=0");
-        assertThat(actual2.get(0)).contains("count,delta=0");
-        assertThat(actual3.get(0)).contains("count,delta=0");
-    }
-
-    @Test
-    void toCounterTags() {
-        // invalid name.
+    void toCounterLineShouldContainTags() {
         Counter.builder("my.counter").tags(Tags.of("tag1", "value1", "tag2", "value2")).register(meterRegistry);
         Counter counter = meterRegistry.find("my.counter").counter();
         assertNotNull(counter);
 
-        List<String> actual = exporter.toCounterLine(counter).collect(Collectors.toList());
-        assertThat(actual).hasSize(1);
-        assertThat(actual.get(0)).contains("tag1=value1").contains("tag2=value2").contains("dt.metrics.source=micrometer");
-        assertThat(actual.get(0)).startsWith("my.counter,");
-        assertThat(actual.get(0)).hasSize("my.counter,tag1=value1,dt.metrics.source=micrometer,tag2=value2 count,delta=0.0 1617796526714".length());
+        List<String> lines = exporter.toCounterLine(counter).collect(Collectors.toList());
+        assertThat(lines).hasSize(1);
+        assertThat(lines.get(0)).isEqualTo("my.counter,tag1=value1,dt.metrics.source=micrometer,tag2=value2 count,delta=0.0 " + clock.wallTime());
+    }
+
+    @Test
+    @Disabled
+    void toCounterLineShouldDropBlankTagValues() {
+        Counter.builder("my.counter").tags(Tags.of("tag1", "value1", "tag2", "")).register(meterRegistry);
+        Counter counter = meterRegistry.find("my.counter").counter();
+        assertNotNull(counter);
+
+        List<String> lines = exporter.toCounterLine(counter).collect(Collectors.toList());
+        assertThat(lines).hasSize(1);
+        assertThat(lines.get(0)).isEqualTo("my.counter,tag1=value1,dt.metrics.source=micrometer count,delta=0.0 " + clock.wallTime());
     }
 
     @Test
@@ -440,7 +410,6 @@ class DynatraceExporterV2Test {
         Gauge gauge = meterRegistry.find("serialized.as.too.long.line").gauge();
         assertThat(gauge).isNotNull();
 
-        List<String> actual = exporter.toGaugeLine(gauge).collect(Collectors.toList());
-        assertThat(actual).isEmpty();
+        assertThat(exporter.toGaugeLine(gauge).collect(Collectors.toList())).isEmpty();
     }
 }
