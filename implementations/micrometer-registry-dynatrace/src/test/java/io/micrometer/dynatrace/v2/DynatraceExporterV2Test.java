@@ -22,23 +22,33 @@ import io.micrometer.dynatrace.DynatraceApiVersion;
 import io.micrometer.dynatrace.DynatraceConfig;
 import io.micrometer.dynatrace.DynatraceMeterRegistry;
 import org.junit.jupiter.api.Test;
+import wiremock.com.google.common.util.concurrent.AtomicDouble;
 
 import java.time.Duration;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
-import java.util.Map;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicReference;
 import java.util.stream.Collectors;
 
+import static io.micrometer.core.instrument.MockClock.clock;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 
 class DynatraceExporterV2Test {
+    private final MockClock clock = createMockClock();
+    private final DynatraceConfig config = createDynatraceConfig();
     private final DynatraceMeterRegistry meterRegistry = createMeterRegistry();
     private final DynatraceExporterV2 exporter = createExporter();
 
-    private static final int timeout = 400;
+    private MockClock createMockClock() {
+        MockClock clock = new MockClock();
+        // Set the clock to something recent so that the Dynatrace library will not complain.
+        clock.add(System.currentTimeMillis(), TimeUnit.MILLISECONDS);
+
+        return clock;
+    }
 
     private DynatraceConfig createDynatraceConfig() {
         return new DynatraceConfig() {
@@ -61,27 +71,240 @@ class DynatraceExporterV2Test {
             public DynatraceApiVersion apiVersion() {
                 return DynatraceApiVersion.V2;
             }
-
-            @Override
-            public Duration step() {
-                return Duration.ofMillis(timeout);
-            }
         };
     }
 
     private DynatraceMeterRegistry createMeterRegistry() {
-        DynatraceConfig config = createDynatraceConfig();
-
         return DynatraceMeterRegistry.builder(config)
+                .clock(clock)
                 .httpClient(request -> new HttpSender.Response(200, null))
                 .build();
     }
 
     private DynatraceExporterV2 createExporter() {
-        DynatraceConfig config = createDynatraceConfig();
+        return new DynatraceExporterV2(config, clock, request -> new HttpSender.Response(200, null));
+    }
 
-        return new DynatraceExporterV2(config, Clock.SYSTEM,
-                request -> new HttpSender.Response(200, null));
+    @Test
+    void toGaugeLine() {
+        meterRegistry.gauge("my.gauge", 1.23);
+        Gauge gauge = meterRegistry.find("my.gauge").gauge();
+        List<String> lines = exporter.toGaugeLine(gauge).collect(Collectors.toList());
+        assertThat(lines).hasSize(1);
+        assertThat(lines.get(0)).isEqualTo("my.gauge,dt.metrics.source=micrometer gauge,1.23 " + clock.wallTime());
+    }
+
+    @Test
+    void toGaugeLineShouldDropNanValue() {
+        meterRegistry.gauge("my.gauge", Double.NaN);
+        Gauge gauge = meterRegistry.find("my.gauge").gauge();
+        assertThat(exporter.toGaugeLine(gauge).collect(Collectors.toList())).isEmpty();
+    }
+
+    @Test
+    void toGaugeLineShouldDropInfiniteValues() {
+        meterRegistry.gauge("my.gauge", Double.POSITIVE_INFINITY);
+        Gauge gauge = meterRegistry.find("my.gauge").gauge();
+        assertThat(exporter.toGaugeLine(gauge).collect(Collectors.toList())).isEmpty();
+
+        meterRegistry.gauge("my.gauge", Double.NEGATIVE_INFINITY);
+        gauge = meterRegistry.find("my.gauge").gauge();
+        assertThat(exporter.toGaugeLine(gauge).collect(Collectors.toList())).isEmpty();
+    }
+
+    @Test
+    void toTimeGaugeLine() {
+        AtomicReference<Double> obj = new AtomicReference<>(2.3d);
+        meterRegistry.more().timeGauge("my.timeGauge", Tags.empty(), obj, TimeUnit.MILLISECONDS, AtomicReference::get);
+        TimeGauge timeGauge = meterRegistry.find("my.timeGauge").timeGauge();
+        List<String> lines = exporter.toTimeGaugeLine(timeGauge).collect(Collectors.toList());
+        assertThat(lines).hasSize(1);
+        assertThat(lines.get(0)).isEqualTo("my.timeGauge,dt.metrics.source=micrometer gauge,2.3 " + clock.wallTime());
+    }
+
+    @Test
+    void toTimeGaugeLineShouldDropNanValue() {
+        AtomicReference<Double> obj = new AtomicReference<>(Double.NaN);
+        meterRegistry.more().timeGauge("my.timeGauge", Tags.empty(), obj, TimeUnit.MILLISECONDS, AtomicReference::get);
+        TimeGauge timeGauge = meterRegistry.find("my.timeGauge").timeGauge();
+
+        assertThat(exporter.toTimeGaugeLine(timeGauge).collect(Collectors.toList())).isEmpty();
+    }
+
+    @Test
+    void toTimeGaugeLineShouldDropInfiniteValues() {
+        AtomicReference<Double> obj = new AtomicReference<>(Double.POSITIVE_INFINITY);
+        meterRegistry.more().timeGauge("my.timeGauge", Tags.empty(), obj, TimeUnit.MILLISECONDS, AtomicReference::get);
+        TimeGauge timeGauge = meterRegistry.find("my.timeGauge").timeGauge();
+        assertThat(exporter.toTimeGaugeLine(timeGauge).collect(Collectors.toList())).isEmpty();
+
+        obj = new AtomicReference<>(Double.NEGATIVE_INFINITY);
+        meterRegistry.more().timeGauge("my.timeGauge", Tags.empty(), obj, TimeUnit.MILLISECONDS, AtomicReference::get);
+        timeGauge = meterRegistry.find("my.timeGauge").timeGauge();
+        assertThat(exporter.toTimeGaugeLine(timeGauge).collect(Collectors.toList())).isEmpty();
+    }
+
+    @Test
+    void toCounterLine() {
+        Counter counter = meterRegistry.counter("my.counter");
+        counter.increment();
+        counter.increment();
+        counter.increment();
+        clock.add(config.step());
+
+        List<String> lines = exporter.toCounterLine(counter).collect(Collectors.toList());
+        assertThat(lines).hasSize(1);
+        assertThat(lines.get(0)).isEqualTo("my.counter,dt.metrics.source=micrometer count,delta=3.0 " + clock.wallTime());
+    }
+
+    @Test
+    void toCounterLineShouldDropNanValue() {
+        Counter counter = meterRegistry.counter("my.counter");
+        counter.increment(Double.NaN);
+        clock.add(config.step());
+
+        assertThat(exporter.toCounterLine(counter).collect(Collectors.toList())).isEmpty();
+    }
+
+    @Test
+    void toCounterLineShouldDropInfiniteValue() {
+        Counter counter = meterRegistry.counter("my.counter");
+        counter.increment(Double.POSITIVE_INFINITY);
+        clock.add(config.step());
+
+        assertThat(exporter.toCounterLine(counter).collect(Collectors.toList())).isEmpty();
+    }
+
+    @Test
+    void toFunctionCounterLine() {
+        AtomicDouble obj = new AtomicDouble();
+        FunctionCounter.builder("my.functionCounter", obj, Number::doubleValue).register(meterRegistry);
+        FunctionCounter functionCounter = meterRegistry.find("my.functionCounter").functionCounter();
+        assertNotNull(functionCounter);
+
+        obj.addAndGet(2.3d);
+        clock.add(config.step());
+
+        List<String> lines = exporter.toFunctionCounterLine(functionCounter).collect(Collectors.toList());
+        assertThat(lines).hasSize(1);
+        assertThat(lines.get(0)).isEqualTo("my.functionCounter,dt.metrics.source=micrometer count,delta=2.3 " + clock.wallTime());
+    }
+
+    @Test
+    void toFunctionCounterLineShouldDropNanValue() {
+        AtomicDouble obj = new AtomicDouble();
+        FunctionCounter.builder("my.functionCounter", obj, Number::doubleValue).register(meterRegistry);
+        FunctionCounter functionCounter = meterRegistry.find("my.functionCounter").functionCounter();
+        assertNotNull(functionCounter);
+
+        obj.addAndGet(Double.NaN);
+        clock.add(config.step());
+
+        assertThat(exporter.toFunctionCounterLine(functionCounter).collect(Collectors.toList())).isEmpty();
+    }
+
+    @Test
+    void toFunctionCounterLineShouldDropInfiniteValue() {
+        AtomicDouble obj = new AtomicDouble();
+        FunctionCounter.builder("my.functionCounter", obj, Number::doubleValue).register(meterRegistry);
+        FunctionCounter functionCounter = meterRegistry.find("my.functionCounter").functionCounter();
+        assertNotNull(functionCounter);
+
+        obj.addAndGet(Double.POSITIVE_INFINITY);
+        clock.add(config.step());
+
+        assertThat(exporter.toFunctionCounterLine(functionCounter).collect(Collectors.toList())).isEmpty();
+    }
+
+    @Test
+    void toTimerLine() {
+        Timer timer = meterRegistry.timer("my.timer");
+        timer.record(Duration.ofMillis(60));
+        timer.record(Duration.ofMillis(20));
+        timer.record(Duration.ofMillis(10));
+        clock.add(config.step());
+
+        List<String> lines = exporter.toTimerLine(timer).collect(Collectors.toList());
+        assertThat(lines).hasSize(1);
+        assertThat(lines.get(0)).isEqualTo("my.timer,dt.metrics.source=micrometer gauge,min=0.0,max=60.0,sum=90.0,count=3 " + clock.wallTime());
+    }
+
+    @Test
+    void toFunctionTimerLineShouldDropNanMean() {
+        FunctionTimer functionTimer = new FunctionTimer() {
+            @Override
+            public double count() {
+                return 500;
+            }
+
+            @Override
+            public double totalTime(TimeUnit unit) {
+                return 5000;
+            }
+
+            @Override
+            public TimeUnit baseTimeUnit() {
+                return TimeUnit.MILLISECONDS;
+            }
+
+            @Override
+            public Id getId() {
+                return new Id("my.functionTimer", Tags.empty(), null, null, Type.TIMER);
+            }
+
+            @Override
+            public double mean(TimeUnit unit) {
+                return Double.NaN;
+            }
+        };
+
+        assertThat(exporter.toFunctionTimerLine(functionTimer).collect(Collectors.toList())).isEmpty();
+    }
+
+    @Test
+    void toFunctionTimerLine() {
+        FunctionTimer functionTimer = new FunctionTimer() {
+            @Override
+            public double count() {
+                return 500;
+            }
+
+            @Override
+            public double totalTime(TimeUnit unit) {
+                return 5000;
+            }
+
+            @Override
+            public TimeUnit baseTimeUnit() {
+                return TimeUnit.MILLISECONDS;
+            }
+
+            @Override
+            public Id getId() {
+                return new Id("my.functionTimer", Tags.empty(), null, null, Type.TIMER);
+            }
+        };
+
+        List<String> lines = exporter.toFunctionTimerLine(functionTimer).collect(Collectors.toList());
+        assertThat(lines).hasSize(1);
+        assertThat(lines.get(0)).isEqualTo("my.functionTimer,dt.metrics.source=micrometer gauge,min=10.0,max=10.0,sum=5000.0,count=500 " + clock.wallTime());
+    }
+
+    @Test
+    void toLongTaskTimerLine() {
+        LongTaskTimer longTaskTimer = LongTaskTimer.builder("my.longTaskTimer").register(meterRegistry);
+        List<Integer> samples = Arrays.asList(42, 48, 40, 35, 22, 16, 13, 8, 6, 2, 4);
+        int prior = samples.get(0);
+        for (Integer value : samples) {
+            clock.add(prior - value, TimeUnit.SECONDS);
+            longTaskTimer.start();
+            prior = value;
+        }
+        clock(meterRegistry).add(samples.get(samples.size() - 1), TimeUnit.SECONDS);
+
+        List<String> lines = exporter.toLongTaskTimerLine(longTaskTimer).collect(Collectors.toList());
+        assertThat(lines).hasSize(1);
+        assertThat(lines.get(0)).isEqualTo("my.longTaskTimer,dt.metrics.source=micrometer gauge,min=4000.0,max=42000.0,sum=236000.0,count=11 " + clock.wallTime());
     }
 
     @Test
@@ -91,28 +314,11 @@ class DynatraceExporterV2Test {
         summary.record(2.3);
         summary.record(5.4);
         summary.record(.1);
+        clock.add(config.step());
 
-        try {
-            Thread.sleep(timeout);
-        } catch (InterruptedException ignored) {
-        }
-
-        List<String> actual = exporter.toDistributionSummaryLine(summary).collect(Collectors.toList());
-        assertThat(actual).hasSize(1);
-        assertThat(actual.get(0)).startsWith("my.summary,dt.metrics.source=micrometer gauge");
-        assertThat(actual.get(0)).contains("max=5.4").contains("min=0.0").contains("sum=10.9").contains("count=4");
-    }
-
-    @Test
-    void toGaugeLine() {
-        meterRegistry.gauge("my.gauge", 1.23);
-        Gauge myGauge = meterRegistry.find("my.gauge").gauge();
-
-        List<String> actual = exporter.toGaugeLine(myGauge).collect(Collectors.toList());
-        assertThat(actual).hasSize(1);
-        assertThat(actual.get(0)).startsWith("my.gauge,dt.metrics.source=micrometer gauge,1.23 ");
-        String expectedDummy = "my.gauge,dt.metrics.source=micrometer gauge,1.23 1617714022879";
-        assertThat(actual.get(0)).hasSize(expectedDummy.length());
+        List<String> lines = exporter.toDistributionSummaryLine(summary).collect(Collectors.toList());
+        assertThat(lines).hasSize(1);
+        assertThat(lines.get(0)).isEqualTo("my.summary,dt.metrics.source=micrometer gauge,min=0.0,max=5.4,sum=10.9,count=4 " + clock.wallTime());
     }
 
     @Test
@@ -126,170 +332,6 @@ class DynatraceExporterV2Test {
         assertThat(actual.get(0)).startsWith("my.meter,dt.metrics.source=micrometer gauge,1.23");
         String expectedDummy = "my.meter,dt.metrics.source=micrometer gauge,1.23 1617714022879";
         assertThat(actual.get(0)).hasSize(expectedDummy.length());
-    }
-
-    @Test
-    void toCounterLine() {
-        meterRegistry.counter("my.counter");
-        Counter counter = meterRegistry.find("my.counter").counter();
-        assertNotNull(counter);
-        counter.increment();
-        counter.increment();
-        counter.increment();
-
-        // wait for the next export interval
-        try {
-            Thread.sleep(timeout);
-        } catch (InterruptedException ignored) {
-        }
-
-        String expected = "my.counter,dt.metrics.source=micrometer count,delta=3.0 ";
-        List<String> actual = exporter.toCounterLine(counter).collect(Collectors.toList());
-        assertThat(actual).hasSize(1);
-        String actualLine = actual.get(0);
-        String expectedDummy = "my.counter,dt.metrics.source=micrometer count,delta=3.0 1617714022879";
-        assertThat(actualLine).hasSize(expectedDummy.length());
-        assertThat(actualLine).startsWith(expected);
-    }
-
-    @Test
-    void toTimerLine() {
-        meterRegistry.timer("my.timer");
-        Timer timer = meterRegistry.find("my.timer").timer();
-        assertNotNull(timer);
-
-        timer.record(Duration.ofMillis(60));
-        timer.record(Duration.ofMillis(20));
-        timer.record(Duration.ofMillis(10));
-
-        try {
-            Thread.sleep(timeout);
-        } catch (InterruptedException ignored) {
-        }
-
-        List<String> actual = exporter.toTimerLine(timer).collect(Collectors.toList());
-        assertThat(actual).hasSize(1);
-        assertThat(actual.get(0)).startsWith("my.timer,dt.metrics.source=micrometer gauge,min=0.0,max=60.0,sum=90.0,count=3 ");
-        assertThat(actual.get(0)).hasSize("my.timer,dt.metrics.source=micrometer gauge,min=0.0,max=60.0,sum=60.0,count=3 1617776498381".length());
-    }
-
-    @Test
-    void toLongTaskTimerLine() {
-        LongTaskTimer.builder("my.long.task.timer").register(meterRegistry);
-        LongTaskTimer longTaskTimer = meterRegistry.find("my.long.task.timer").longTaskTimer();
-        assertNotNull(longTaskTimer);
-
-        // needs to be run in the background, otherwise record will wait until the task is finished.
-        Runnable r = new Runnable() {
-            @Override
-            public void run() {
-                longTaskTimer.record(() -> {
-                    try {
-                        Thread.sleep(500);
-                    } catch (InterruptedException ignored) {
-                    }
-                });
-            }
-        };
-        new Thread(r).start();
-
-        // wait for the first scrape to be recorded.
-        try {
-            Thread.sleep(timeout);
-        } catch (InterruptedException ignored) {
-        }
-
-        List<String> actual = exporter.toLongTaskTimerLine(longTaskTimer).collect(Collectors.toList());
-        assertThat(actual).hasSize(1);
-        assertThat(actual.get(0)).startsWith("my.long.task.timer,dt.metrics.source=micrometer gauge,");
-
-        // contains all key=value pairs (including sum, count, max, and min)
-        Map<String, String> statisticToValueMap =
-                Arrays.stream(actual.get(0).split("[, ]"))
-                        .filter(x -> x.contains("="))
-                        .map(x -> x.split("="))
-                        .collect(Collectors.toMap(x -> x[0], x -> x[1]));
-
-        // make sure all pairs exist
-        assertThat(statisticToValueMap).containsKey("min");
-        assertThat(statisticToValueMap).containsKey("max");
-        assertThat(statisticToValueMap).containsKey("sum");
-        assertThat(statisticToValueMap).containsKey("count");
-        // and that they have values larger than zero,
-        // usually they are somewhere around 290 - 310
-        assertThat(Double.parseDouble(statisticToValueMap.get("min"))).isGreaterThan(timeout - 20);
-        assertThat(Double.parseDouble(statisticToValueMap.get("max"))).isGreaterThan(timeout - 20);
-        assertThat(Double.parseDouble(statisticToValueMap.get("sum"))).isGreaterThan(timeout - 20);
-        assertThat(statisticToValueMap.get("count")).isEqualTo("1");
-    }
-
-    @Test
-    void toTimeGaugeLine() {
-        TimeGauge.builder("my.time.gauge", () -> 2.3, TimeUnit.MILLISECONDS).register(meterRegistry);
-        TimeGauge timeGauge = meterRegistry.find("my.time.gauge").timeGauge();
-        assertNotNull(timeGauge);
-
-        List<String> actual = exporter.toTimeGaugeLine(timeGauge).collect(Collectors.toList());
-        assertThat(actual).hasSize(1);
-        assertThat(actual.get(0)).hasSize("my.time.gauge,dt.metrics.source=micrometer gauge,2.3 1617776498381".length());
-        assertThat(actual.get(0)).startsWith("my.time.gauge,dt.metrics.source=micrometer gauge,2.3 ");
-    }
-
-    @Test
-    void toFunctionCounterLine() {
-        class TestClass {
-            double count() {
-                return 2.3;
-            }
-        }
-        TestClass tester = new TestClass();
-        FunctionCounter.builder("my.function.counter", tester, TestClass::count).register(meterRegistry);
-        FunctionCounter functionCounter = meterRegistry.find("my.function.counter").functionCounter();
-        assertNotNull(functionCounter);
-
-        tester.count();
-
-        try {
-            Thread.sleep(timeout);
-        } catch (InterruptedException ignored) {
-        }
-
-        List<String> actual = exporter.toFunctionCounterLine(functionCounter).collect(Collectors.toList());
-        assertThat(actual).hasSize(1);
-        assertThat(actual.get(0)).startsWith("my.function.counter,dt.metrics.source=micrometer count,delta=2.3");
-        assertThat(actual.get(0)).hasSize("my.function.counter,dt.metrics.source=micrometer count,delta=2.3 1617776498381".length());
-    }
-
-    @Test
-    void toFunctionTimerLine() {
-        class FunctionTimerDummy implements FunctionTimer {
-            @Override
-            public double count() {
-                return 500.5;
-            }
-
-            @Override
-            public double totalTime(TimeUnit unit) {
-                return 5005;
-            }
-
-            @Override
-            public TimeUnit baseTimeUnit() {
-                return TimeUnit.MILLISECONDS;
-            }
-
-            @Override
-            public Id getId() {
-                return new Id("my.function.timer", Tags.empty(), null, null, Type.TIMER);
-            }
-        }
-
-        FunctionTimerDummy dummy = new FunctionTimerDummy();
-
-        List<String> actual = exporter.toFunctionTimerLine(dummy).collect(Collectors.toList());
-        assertThat(actual).hasSize(1);
-        assertThat(actual.get(0)).startsWith("my.function.timer,dt.metrics.source=micrometer gauge,min=10.0,max=10.0,sum=5005.0,count=500 ");
-        assertThat(actual.get(0)).hasSize("my.function.timer,dt.metrics.source=micrometer gauge,min=10.0,max=10.0,sum=5005.0,count=500 1234567890123".length());
     }
 
     @Test
