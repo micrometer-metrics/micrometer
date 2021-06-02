@@ -21,6 +21,7 @@ import io.micrometer.core.ipc.http.HttpSender;
 import io.micrometer.dynatrace.DynatraceApiVersion;
 import io.micrometer.dynatrace.DynatraceConfig;
 import io.micrometer.dynatrace.DynatraceMeterRegistry;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 import wiremock.com.google.common.util.concurrent.AtomicDouble;
@@ -41,58 +42,27 @@ import static java.util.concurrent.TimeUnit.MILLISECONDS;
 import static java.util.concurrent.TimeUnit.SECONDS;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.mockito.Mockito.mock;
 
 class DynatraceExporterV2Test {
-    private final MockClock clock = createMockClock();
-    private final DynatraceConfig config = createDynatraceConfig();
-    private final DynatraceMeterRegistry meterRegistry = createMeterRegistry();
-    private final DynatraceExporterV2 exporter = createExporter();
+    private DynatraceConfig config;
+    private MockClock clock;
+    private HttpSender httpClient = mock(HttpSender.class);
+    private DynatraceMeterRegistry meterRegistry;
+    private DynatraceExporterV2 exporter;
 
-    private MockClock createMockClock() {
-        MockClock clock = new MockClock();
-        // Set the clock to something recent so that the Dynatrace library will not complain.
-        clock.add(System.currentTimeMillis(), MILLISECONDS);
-
-        return clock;
-    }
-
-    private DynatraceConfig createDynatraceConfig() {
-        return new DynatraceConfig() {
-            @Override
-            @SuppressWarnings("NullableProblems")
-            public String get(String key) {
-                return null;
-            }
-
-            @Override
-            @SuppressWarnings("NullableProblems")
-            public String uri() {
-                return "http://localhost";
-            }
-
-            @Override
-            @SuppressWarnings("NullableProblems")
-            public String apiToken() {
-                return "apiToken";
-            }
-
-            @Override
-            @SuppressWarnings("NullableProblems")
-            public DynatraceApiVersion apiVersion() {
-                return DynatraceApiVersion.V2;
-            }
-        };
-    }
-
-    private DynatraceMeterRegistry createMeterRegistry() {
-        return DynatraceMeterRegistry.builder(config)
+    @BeforeEach
+    void setUp() {
+        this.config = createDefaultDynatraceConfig();
+        this.clock = new MockClock();
+        this.clock.add(System.currentTimeMillis(), MILLISECONDS); // Set the clock to something recent so that the Dynatrace library will not complain.
+        this.httpClient = mock(HttpSender.class);
+        this.meterRegistry = DynatraceMeterRegistry.builder(config)
                 .clock(clock)
-                .httpClient(request -> new HttpSender.Response(200, null))
+                .httpClient(httpClient)
                 .build();
-    }
 
-    private DynatraceExporterV2 createExporter() {
-        return new DynatraceExporterV2(config, clock, request -> new HttpSender.Response(200, null));
+        this.exporter = new DynatraceExporterV2(config, clock, request -> new HttpSender.Response(200, null));
     }
 
     @Test
@@ -427,5 +397,33 @@ class DynatraceExporterV2Test {
         assertThat(gauge).isNotNull();
 
         assertThat(exporter.toGaugeLine(gauge).collect(Collectors.toList())).isEmpty();
+    }
+
+    private DynatraceConfig createDefaultDynatraceConfig() {
+        return new DynatraceConfig() {
+            @Override
+            @SuppressWarnings("NullableProblems")
+            public String get(String key) {
+                return null;
+            }
+
+            @Override
+            @SuppressWarnings("NullableProblems")
+            public String uri() {
+                return "http://localhost";
+            }
+
+            @Override
+            @SuppressWarnings("NullableProblems")
+            public String apiToken() {
+                return "apiToken";
+            }
+
+            @Override
+            @SuppressWarnings("NullableProblems")
+            public DynatraceApiVersion apiVersion() {
+                return DynatraceApiVersion.V2;
+            }
+        };
     }
 }
