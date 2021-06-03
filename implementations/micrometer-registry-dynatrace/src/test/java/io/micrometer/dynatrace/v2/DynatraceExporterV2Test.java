@@ -22,7 +22,6 @@ import io.micrometer.dynatrace.DynatraceApiVersion;
 import io.micrometer.dynatrace.DynatraceConfig;
 import io.micrometer.dynatrace.DynatraceMeterRegistry;
 import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 import org.mockito.ArgumentCaptor;
 
@@ -346,7 +345,6 @@ class DynatraceExporterV2Test {
     }
 
     @Test
-    @Disabled
     void toGaugeLineShouldDropBlankTagValues() {
         Gauge.builder("my.gauge", () -> 1.23).tags(Tags.of("tag1", "value1", "tag2", "")).register(meterRegistry);
         Gauge gauge = meterRegistry.find("my.gauge").gauge();
@@ -354,7 +352,7 @@ class DynatraceExporterV2Test {
 
         List<String> lines = exporter.toGaugeLine(gauge).collect(Collectors.toList());
         assertThat(lines).hasSize(1);
-        assertThat(lines.get(0)).isEqualTo("my.gauge,tag1=value1,dt.metrics.source=micrometer gauge,1.23 " + clock.wallTime());
+        assertThat(lines.get(0)).isEqualTo("my.gauge,tag1=value1,dt.metrics.source=micrometer,tag2= gauge,1.23 " + clock.wallTime());
     }
 
     @Test
@@ -377,7 +375,6 @@ class DynatraceExporterV2Test {
     }
 
     @Test
-    @Disabled
     void toCounterLineShouldDropBlankTagValues() {
         Counter.builder("my.counter").tags(Tags.of("tag1", "value1", "tag2", "")).register(meterRegistry);
         Counter counter = meterRegistry.find("my.counter").counter();
@@ -385,7 +382,7 @@ class DynatraceExporterV2Test {
 
         List<String> lines = exporter.toCounterLine(counter).collect(Collectors.toList());
         assertThat(lines).hasSize(1);
-        assertThat(lines.get(0)).isEqualTo("my.counter,tag1=value1,dt.metrics.source=micrometer count,delta=0.0 " + clock.wallTime());
+        assertThat(lines.get(0)).isEqualTo("my.counter,tag1=value1,dt.metrics.source=micrometer,tag2= count,delta=0.0 " + clock.wallTime());
     }
 
     @Test
