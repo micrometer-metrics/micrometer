@@ -24,7 +24,7 @@ import io.micrometer.dynatrace.DynatraceMeterRegistry;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
-import wiremock.com.google.common.util.concurrent.AtomicDouble;
+import org.mockito.ArgumentCaptor;
 
 import java.time.Duration;
 import java.util.ArrayList;
@@ -41,13 +41,17 @@ import static java.lang.Double.NEGATIVE_INFINITY;
 import static java.util.concurrent.TimeUnit.MILLISECONDS;
 import static java.util.concurrent.TimeUnit.SECONDS;
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.entry;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.mockito.ArgumentMatchers.isA;
 import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
 
 class DynatraceExporterV2Test {
     private DynatraceConfig config;
     private MockClock clock;
-    private HttpSender httpClient = mock(HttpSender.class);
+    private HttpSender httpClient;
     private DynatraceMeterRegistry meterRegistry;
     private DynatraceExporterV2 exporter;
 
@@ -62,7 +66,7 @@ class DynatraceExporterV2Test {
                 .httpClient(httpClient)
                 .build();
 
-        this.exporter = new DynatraceExporterV2(config, clock, request -> new HttpSender.Response(200, null));
+        this.exporter = new DynatraceExporterV2(config, clock, httpClient);
     }
 
     @Test
@@ -157,12 +161,12 @@ class DynatraceExporterV2Test {
 
     @Test
     void toFunctionCounterLine() {
-        AtomicDouble obj = new AtomicDouble();
-        FunctionCounter.builder("my.functionCounter", obj, Number::doubleValue).register(meterRegistry);
+        AtomicReference<Double> obj = new AtomicReference<>(0.0d);
+        FunctionCounter.builder("my.functionCounter", obj, AtomicReference::get).register(meterRegistry);
         FunctionCounter functionCounter = meterRegistry.find("my.functionCounter").functionCounter();
         assertNotNull(functionCounter);
 
-        obj.addAndGet(2.3d);
+        obj.set(2.3d);
         clock.add(config.step());
 
         List<String> lines = exporter.toFunctionCounterLine(functionCounter).collect(Collectors.toList());
@@ -172,12 +176,12 @@ class DynatraceExporterV2Test {
 
     @Test
     void toFunctionCounterLineShouldDropNanValue() {
-        AtomicDouble obj = new AtomicDouble();
-        FunctionCounter.builder("my.functionCounter", obj, Number::doubleValue).register(meterRegistry);
+        AtomicReference<Double> obj = new AtomicReference<>(0.0d);
+        FunctionCounter.builder("my.functionCounter", obj, AtomicReference::get).register(meterRegistry);
         FunctionCounter functionCounter = meterRegistry.find("my.functionCounter").functionCounter();
         assertNotNull(functionCounter);
 
-        obj.addAndGet(NaN);
+        obj.set(NaN);
         clock.add(config.step());
 
         assertThat(exporter.toFunctionCounterLine(functionCounter).collect(Collectors.toList())).isEmpty();
@@ -185,12 +189,12 @@ class DynatraceExporterV2Test {
 
     @Test
     void toFunctionCounterLineShouldDropInfiniteValue() {
-        AtomicDouble obj = new AtomicDouble();
-        FunctionCounter.builder("my.functionCounter", obj, Number::doubleValue).register(meterRegistry);
+        AtomicReference<Double> obj = new AtomicReference<>(0.0d);
+        FunctionCounter.builder("my.functionCounter", obj, AtomicReference::get).register(meterRegistry);
         FunctionCounter functionCounter = meterRegistry.find("my.functionCounter").functionCounter();
         assertNotNull(functionCounter);
 
-        obj.addAndGet(POSITIVE_INFINITY);
+        obj.set(POSITIVE_INFINITY);
         clock.add(config.step());
 
         assertThat(exporter.toFunctionCounterLine(functionCounter).collect(Collectors.toList())).isEmpty();
@@ -397,6 +401,40 @@ class DynatraceExporterV2Test {
         assertThat(gauge).isNotNull();
 
         assertThat(exporter.toGaugeLine(gauge).collect(Collectors.toList())).isEmpty();
+    }
+
+    @Test
+    void shouldSendHeadersAndBody() throws Throwable {
+        HttpSender.Request.Builder builder = HttpSender.Request.build(config.uri(), httpClient);
+        when(httpClient.post(config.uri())).thenReturn(builder);
+        when(httpClient.send(isA(HttpSender.Request.class))).thenReturn(new HttpSender.Response(202,
+                "{ \"linesOk\": 3, \"linesInvalid\": 0, \"error\": null }"
+        ));
+
+        Counter counter = meterRegistry.counter("my.counter");
+        counter.increment(12d);
+        meterRegistry.gauge("my.gauge", 42d);
+        Gauge gauge = meterRegistry.find("my.gauge").gauge();
+        Timer timer = meterRegistry.timer("my.timer");
+        timer.record(22, MILLISECONDS);
+        clock.add(config.step());
+
+        exporter.export(Arrays.asList(counter, gauge, timer));
+
+        ArgumentCaptor<HttpSender.Request> argumentCaptor = ArgumentCaptor.forClass(HttpSender.Request.class);
+        verify(httpClient).send(argumentCaptor.capture());
+        HttpSender.Request request = argumentCaptor.getValue();
+
+        assertThat(request.getRequestHeaders()).containsOnly(
+                entry("Content-Type", "text/plain"),
+                entry("User-Agent", "micrometer"),
+                entry("Authorization", "Api-Token apiToken")
+        );
+        assertThat(request.getEntity()).asString()
+                .hasLineCount(3)
+                .contains("my.counter,dt.metrics.source=micrometer count,delta=12.0 " + clock.wallTime())
+                .contains("my.gauge,dt.metrics.source=micrometer gauge,42.0 " + clock.wallTime())
+                .contains("my.timer,dt.metrics.source=micrometer gauge,min=22.0,max=22.0,sum=22.0,count=1 " + clock.wallTime());
     }
 
     private DynatraceConfig createDefaultDynatraceConfig() {
