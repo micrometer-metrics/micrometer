@@ -28,6 +28,7 @@ import io.micrometer.dynatrace.v2.DynatraceExporterV2;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.util.Arrays;
 import java.util.concurrent.ThreadFactory;
 import java.util.concurrent.TimeUnit;
 
@@ -90,12 +91,30 @@ public class DynatraceMeterRegistry extends StepMeterRegistry {
         config().meterFilter(new MeterFilter() {
             @Override
             public DistributionStatisticConfig configure(Meter.Id id, DistributionStatisticConfig config) {
+                double[] percentiles;
+
+                if (config.getPercentiles() == null) {
+                    percentiles = new double[] {0};
+                }
+                else if (!containsZeroPercentile(config)) {
+                    percentiles = new double[config.getPercentiles().length + 1];
+                    System.arraycopy(config.getPercentiles(), 0, percentiles, 0, config.getPercentiles().length);
+                    percentiles[config.getPercentiles().length] = 0; // theoretically this is already zero
+                }
+                else {
+                    percentiles = config.getPercentiles();
+                }
+
                 return DistributionStatisticConfig.builder()
-                        .percentiles(0)
+                        .percentiles(percentiles)
                         .build()
                         .merge(config);
             }
         });
+    }
+
+    private boolean containsZeroPercentile(DistributionStatisticConfig config) {
+        return Arrays.stream(config.getPercentiles()).anyMatch(percentile -> percentile == 0);
     }
 
     public static class Builder {
