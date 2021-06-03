@@ -119,6 +119,7 @@ public interface Timer extends Meter, HistogramSupport {
      * @param <T> The return type of the {@link Supplier}.
      * @return The return value of {@code f}.
      */
+    @Nullable
     <T> T record(Supplier<T> f);
 
     /**
@@ -129,6 +130,7 @@ public interface Timer extends Meter, HistogramSupport {
      * @return The return value of {@code f}.
      * @throws Exception Any exception bubbling up from the callable.
      */
+    @Nullable
     <T> T recordCallable(Callable<T> f) throws Exception;
 
     /**
