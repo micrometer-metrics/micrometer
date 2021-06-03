@@ -31,6 +31,11 @@ import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
+/**
+ * Tests for {@link DynatraceMeterRegistry}.
+ *
+ * @author Jonatan Ivanov
+ */
 public class DynatraceMeterRegistryTest {
     private DynatraceConfig config;
     private MockClock clock;

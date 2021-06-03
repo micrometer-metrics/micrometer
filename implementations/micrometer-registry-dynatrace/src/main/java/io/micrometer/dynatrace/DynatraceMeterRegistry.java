@@ -40,6 +40,7 @@ import java.util.concurrent.TimeUnit;
  * @author Johnny Lim
  * @author PJ Fanning
  * @author Georg Pirklbauer
+ * @author Jonatan Ivanov
  * @since 1.1.0
  */
 public class DynatraceMeterRegistry extends StepMeterRegistry {

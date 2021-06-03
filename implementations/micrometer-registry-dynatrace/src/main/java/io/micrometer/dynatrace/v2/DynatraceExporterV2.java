@@ -42,7 +42,11 @@ import java.util.stream.Stream;
 import java.util.stream.StreamSupport;
 
 /**
+ * Implementation for Dynatrace v1 metrics API export.
+ *
  * @author Georg Pirklbauer
+ * @author Jonatan Ivanov
+ * @since 1.8.0
  */
 public final class DynatraceExporterV2 extends AbstractDynatraceExporter {
     private static final String METER_EXCEPTION_FORMAT = "Could not serialize meter %s: %s";

@@ -47,6 +47,12 @@ import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
+/**
+ * Tests for {@link DynatraceExporterV2}.
+ *
+ * @author Georg Pirklbauer
+ * @author Jonatan Ivanov
+ */
 class DynatraceExporterV2Test {
     private DynatraceConfig config;
     private MockClock clock;
