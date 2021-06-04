@@ -46,27 +46,27 @@ class TagsTest {
 
     @Test
     void stream() {
-        Tags tags = Tags.of(Tag.of("k1",  "v1"), Tag.of("k1",  "v1"), Tag.of("k2", "v2"));
+        Tags tags = Tags.of(Tag.of("k1", "v1"), Tag.of("k1", "v1"), Tag.of("k2", "v2"));
         assertThat(tags.stream()).hasSize(2);
     }
 
     @Test
     void tagsHashCode() {
-        Tags tags = Tags.of(Tag.of("k1",  "v1"), Tag.of("k1",  "v1"), Tag.of("k2", "v2"));
-        Tags tags2 = Tags.of(Tag.of("k1",  "v1"), Tag.of("k2",  "v2"));
+        Tags tags = Tags.of(Tag.of("k1", "v1"), Tag.of("k1", "v1"), Tag.of("k2", "v2"));
+        Tags tags2 = Tags.of(Tag.of("k1", "v1"), Tag.of("k2", "v2"));
         assertThat(tags.hashCode()).isEqualTo(tags2.hashCode());
     }
 
     @Test
     void tagsToString() {
-        Tags tags = Tags.of(Tag.of("k1",  "v1"), Tag.of("k1",  "v1"), Tag.of("k2", "v2"));
+        Tags tags = Tags.of(Tag.of("k1", "v1"), Tag.of("k1", "v1"), Tag.of("k2", "v2"));
         assertThat(tags.toString()).isEqualTo("[tag(k1=v1),tag(k2=v2)]");
     }
 
     @Test
     void tagsEquality() {
-        Tags tags = Tags.of(Tag.of("k1",  "v1"), Tag.of("k1",  "v1"), Tag.of("k2", "v2"));
-        Tags tags2 = Tags.of(Tag.of("k1",  "v1"), Tag.of("k2",  "v2"));
+        Tags tags = Tags.of(Tag.of("k1", "v1"), Tag.of("k1", "v1"), Tag.of("k2", "v2"));
+        Tags tags2 = Tags.of(Tag.of("k1", "v1"), Tag.of("k2", "v2"));
         assertThat(tags).isEqualTo(tags2);
     }
 

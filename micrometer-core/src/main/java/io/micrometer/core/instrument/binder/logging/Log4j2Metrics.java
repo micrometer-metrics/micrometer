@@ -194,7 +194,7 @@ public class Log4j2Metrics implements MeterBinder, AutoCloseable {
 
 
         private boolean isAsyncLoggerAndEndOfBatch(LogEvent event) {
-            return  isAsyncLogger && event.isEndOfBatch();
+            return isAsyncLogger && event.isEndOfBatch();
         }
 
         private void incrementCounter(LogEvent event) {
