@@ -41,6 +41,7 @@
         </module>
 
         <!-- Whitespace -->
+        <module name="SingleSpaceSeparator" />
         <module name="com.puppycrawl.tools.checkstyle.checks.whitespace.WhitespaceAfterCheck" />
         <module name="com.puppycrawl.tools.checkstyle.checks.whitespace.WhitespaceAroundCheck" />
 
