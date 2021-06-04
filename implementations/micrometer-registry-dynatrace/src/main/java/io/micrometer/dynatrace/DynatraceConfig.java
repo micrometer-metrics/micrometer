@@ -86,7 +86,7 @@ public interface DynatraceConfig extends StepRegistryConfig {
                             if (apiVersionValidation.isValid()) {
                                 return checkAll(this,
                                         config -> {
-                                            if (config.apiVersion() ==  DynatraceApiVersion.V1) {
+                                            if (config.apiVersion() == DynatraceApiVersion.V1) {
                                                 return checkAll(this,
                                                         checkRequired("apiToken", DynatraceConfig::apiToken),
                                                         checkRequired("uri", DynatraceConfig::uri),
