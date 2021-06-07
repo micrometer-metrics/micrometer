@@ -381,7 +381,7 @@ class DynatraceExporterV2Test {
     }
 
     @Test
-    void toCounterLineShouldDropBlankTagValues() {
+    void toCounterLineShouldExportBlankTagValues() {
         Counter.builder("my.counter").tags(Tags.of("tag1", "value1", "tag2", "")).register(meterRegistry);
         Counter counter = meterRegistry.find("my.counter").counter();
         assertNotNull(counter);
