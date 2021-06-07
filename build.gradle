@@ -117,6 +117,7 @@ subprojects {
         license {
             ext.year = Calendar.getInstance().get(Calendar.YEAR)
             skipExistingHeaders = true
+            exclude '**/*.json' // comments not supported
         }
 
         // Publish resolved versions.
