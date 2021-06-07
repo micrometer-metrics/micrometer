@@ -1,0 +1,17 @@
+[
+  {
+    "name":"com.sun.management.OperatingSystemMXBean",
+    "methods":[
+      {"name":"getCpuLoad","parameterTypes":[] },
+      {"name":"getProcessCpuLoad","parameterTypes":[] },
+      {"name":"getSystemCpuLoad","parameterTypes":[] }
+    ]
+  },
+  {
+    "name":"com.sun.management.UnixOperatingSystemMXBean",
+    "methods":[
+      {"name":"getMaxFileDescriptorCount","parameterTypes":[] },
+      {"name":"getOpenFileDescriptorCount","parameterTypes":[] }
+    ]
+  }
+]
