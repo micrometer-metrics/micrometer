@@ -351,7 +351,7 @@ class DynatraceExporterV2Test {
     }
 
     @Test
-    void toGaugeLineShouldDropBlankTagValues() {
+    void toGaugeLineShouldExportBlankTagValues() {
         Gauge.builder("my.gauge", () -> 1.23).tags(Tags.of("tag1", "value1", "tag2", "")).register(meterRegistry);
         Gauge gauge = meterRegistry.find("my.gauge").gauge();
         assertNotNull(gauge);
