@@ -26,13 +26,15 @@ import java.util.List;
  * @author Jon Schneider
  */
 public class MeterPartition extends AbstractPartition<Meter> {
+    public MeterPartition(List<Meter> meters, int partitionSize) {
+        super(meters, partitionSize);
+    }
 
     public MeterPartition(MeterRegistry registry, int partitionSize) {
-        super(registry.getMeters(), partitionSize);
+        this(registry.getMeters(), partitionSize);
     }
 
     public static List<List<Meter>> partition(MeterRegistry registry, int partitionSize) {
         return new MeterPartition(registry, partitionSize);
     }
-
 }

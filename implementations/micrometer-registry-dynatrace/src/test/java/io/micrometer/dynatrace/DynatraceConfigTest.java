@@ -15,6 +15,7 @@
  */
 package io.micrometer.dynatrace;
 
+import com.dynatrace.metric.util.DynatraceMetricApiConstants;
 import io.micrometer.core.instrument.config.validate.InvalidReason;
 import io.micrometer.core.instrument.config.validate.Validated;
 import org.junit.jupiter.api.Test;
@@ -26,11 +27,11 @@ import java.util.Map;
 import static org.assertj.core.api.Assertions.assertThat;
 
 class DynatraceConfigTest {
-    private final Map<String, String> props = new HashMap<>();
-    private final DynatraceConfig config = props::get;
-
     @Test
     void invalid() {
+        Map<String, String> properties = new HashMap<>();
+        DynatraceConfig config = properties::get;
+
         List<Validated.Invalid<?>> failures = config.validate().failures();
         assertThat(failures.size()).isEqualTo(3);
         assertThat(failures.stream().map(Validated::toString)).containsExactlyInAnyOrder(
@@ -85,10 +86,12 @@ class DynatraceConfigTest {
 
     @Test
     void valid() {
-        props.put("dynatrace.apiToken", "secret");
-        props.put("dynatrace.uri", "https://uri.dynatrace.com");
-        props.put("dynatrace.deviceId", "device");
-
+        Map<String, String> properties = new HashMap<String, String>() {{
+            put("dynatrace.apiToken", "secret");
+            put("dynatrace.uri", "https://uri.dynatrace.com");
+            put("dynatrace.deviceId", "device");
+        }};
+        DynatraceConfig config = properties::get;
         assertThat(config.validate().isValid()).isTrue();
     }
 
@@ -104,5 +107,56 @@ class DynatraceConfigTest {
 
         assertThat(config.validate().isValid()).isTrue();
         assertThat(config.apiVersion()).isSameAs(DynatraceApiVersion.V1);
+    }
+
+    @Test
+    void testV2Defaults() {
+        Map<String, String> properties = new HashMap<String, String>() {{
+            put("dynatrace.apiVersion", "v2");
+        }};
+        DynatraceConfig config = properties::get;
+
+        assertThat(config.apiVersion()).isEqualTo(DynatraceApiVersion.V2);
+        assertThat(config.apiToken()).isEmpty();
+        assertThat(config.uri()).isSameAs(DynatraceMetricApiConstants.getDefaultOneAgentEndpoint());
+        assertThat(config.metricKeyPrefix()).isEmpty();
+        assertThat(config.defaultDimensions()).isEmpty();
+        assertThat(config.enrichWithOneAgentMetadata()).isTrue();
+
+        Validated<?> validated = config.validate();
+        assertThat(validated.isValid()).isTrue();
+    }
+
+    @Test
+    void testOneAgentEndpointWithDifferentPort() {
+        Map<String, String> properties = new HashMap<String, String>() {{
+            put("dynatrace.apiVersion", "v2");
+            put("dynatrace.uri", "http://localhost:13333/metrics/ingest");
+        }};
+        DynatraceConfig config = properties::get;
+
+        assertThat(config.apiToken()).isEmpty();
+        assertThat(config.uri()).isEqualTo("http://localhost:13333/metrics/ingest");
+        assertThat(config.apiVersion()).isEqualTo(DynatraceApiVersion.V2);
+
+        Validated<?> validated = config.validate();
+        assertThat(validated.isValid()).isTrue();
+    }
+
+    @Test
+    void testV2requiredPropertiesWithEndpointAndToken() {
+        Map<String, String> properties = new HashMap<String, String>() {{
+            put("dynatrace.apiVersion", "v2");
+            put("dynatrace.uri", "https://uri.dynatrace.com");
+            put("dynatrace.apiToken", "secret");
+        }};
+
+        DynatraceConfig config = properties::get;
+        assertThat(config.apiToken()).isEqualTo("secret");
+        assertThat(config.uri()).isEqualTo("https://uri.dynatrace.com");
+        assertThat(config.apiVersion()).isEqualTo(DynatraceApiVersion.V2);
+
+        Validated<?> validated = config.validate();
+        assertThat(validated.isValid()).isTrue();
     }
 }

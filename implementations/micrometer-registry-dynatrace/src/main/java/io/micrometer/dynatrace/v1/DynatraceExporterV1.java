@@ -19,10 +19,12 @@ package io.micrometer.dynatrace.v1;
 import io.micrometer.core.instrument.*;
 import io.micrometer.core.instrument.config.NamingConvention;
 import io.micrometer.core.instrument.distribution.HistogramSnapshot;
+import io.micrometer.core.instrument.util.MeterPartition;
 import io.micrometer.core.instrument.util.StringUtils;
 import io.micrometer.core.ipc.http.HttpSender;
 import io.micrometer.core.lang.Nullable;
 import io.micrometer.dynatrace.AbstractDynatraceExporter;
+import io.micrometer.dynatrace.DynatraceApiVersion;
 import io.micrometer.dynatrace.DynatraceConfig;
 import io.micrometer.dynatrace.DynatraceNamingConvention;
 import org.slf4j.Logger;
@@ -67,15 +69,15 @@ public class DynatraceExporterV1 extends AbstractDynatraceExporter {
         super(config, clock, httpClient);
 
         this.customMetricEndpointTemplate = config.uri() + "/api/v1/timeseries/";
-        this.namingConvention = new DynatraceNamingConvention();
+        this.namingConvention = new DynatraceNamingConvention(NamingConvention.dot, DynatraceApiVersion.V1);
     }
 
     @Override
-    public void export(@Nonnull List<List<Meter>> partitions) {
+    public void export(@Nonnull List<Meter> meters) {
         String customDeviceMetricEndpoint = config.uri() + "/api/v1/entity/infrastructure/custom/" +
                 config.deviceId() + "?api-token=" + config.apiToken();
 
-        for (List<Meter> batch : partitions) {
+        for (List<Meter> batch : new MeterPartition(meters, config.batchSize())) {
             final List<DynatraceCustomMetric> series = batch.stream()
                     .flatMap(meter -> meter.match(
                             this::writeMeter,
