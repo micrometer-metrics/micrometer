@@ -62,9 +62,9 @@ public class DynatraceMeterRegistryTest {
                 "{ \"linesOk\": 4, \"linesInvalid\": 0, \"error\": null }"
         ));
 
+        Double gauge = meterRegistry.gauge("my.gauge", 42d);
         Counter counter = meterRegistry.counter("my.counter");
         counter.increment(12d);
-        meterRegistry.gauge("my.gauge", 42d);
         Timer timer = meterRegistry.timer("my.timer");
         timer.record(22, MILLISECONDS);
         timer.record(42, MILLISECONDS);
@@ -84,15 +84,14 @@ public class DynatraceMeterRegistryTest {
                 entry("Authorization", "Api-Token apiToken")
         );
         assertThat(request.getEntity()).asString()
-                .hasLineCount(4)
+                .hasLineCount(3)
                 .contains("my.counter,dt.metrics.source=micrometer count,delta=12.0 " + clock.wallTime())
-                .contains("my.gauge,dt.metrics.source=micrometer gauge,42.0 " + clock.wallTime())
-                .contains("my.timer,dt.metrics.source=micrometer gauge,min=0.0,max=42.0,sum=108.0,count=4 " + clock.wallTime())
-                .contains("my.timer.percentile,phi=0,dt.metrics.source=micrometer gauge,0.0 " + clock.wallTime());
+                .contains("my.gauge,dt.metrics.source=micrometer gauge," + gauge.doubleValue() + " " + clock.wallTime())
+                .contains("my.timer,dt.metrics.source=micrometer gauge,min=0.0,max=42.0,sum=108.0,count=4 " + clock.wallTime());
     }
 
     @Test
-    void shouldAddZerothPercentileToExistingOnes() throws Throwable {
+    void shouldTrackZerothPercentileButShouldNotPublishIt() throws Throwable {
         HttpSender.Request.Builder builder = HttpSender.Request.build(config.uri(), httpClient);
         when(httpClient.post(config.uri())).thenReturn(builder);
         Timer timer = Timer.builder("my.timer")
@@ -108,14 +107,13 @@ public class DynatraceMeterRegistryTest {
         HttpSender.Request request = argumentCaptor.getValue();
 
         assertThat(request.getEntity()).asString()
-                .hasLineCount(3)
+                .hasLineCount(2)
                 .contains("my.timer,dt.metrics.source=micrometer gauge,min=22.0,max=22.0,sum=22.0,count=1 " + clock.wallTime())
-                .contains("my.timer.percentile,phi=0,dt.metrics.source=micrometer gauge,0.0 " + clock.wallTime())
                 .contains("my.timer.percentile,phi=0.5,dt.metrics.source=micrometer gauge,0.0 " + clock.wallTime());
     }
 
     @Test
-    void shouldNotAddZerothPercentileIfAlreadyDefined() throws Throwable {
+    void shouldPublishZerothPercentileIfAlreadyDefined() throws Throwable {
         HttpSender.Request.Builder builder = HttpSender.Request.build(config.uri(), httpClient);
         when(httpClient.post(config.uri())).thenReturn(builder);
         Timer timer = Timer.builder("my.timer")
@@ -137,6 +135,27 @@ public class DynatraceMeterRegistryTest {
                 .contains("my.timer.percentile,phi=0.5,dt.metrics.source=micrometer gauge,0.0 " + clock.wallTime());
     }
 
+    @Test
+    void shouldPublishZerothPercentileIfExclusivelyDefined() throws Throwable {
+        HttpSender.Request.Builder builder = HttpSender.Request.build(config.uri(), httpClient);
+        when(httpClient.post(config.uri())).thenReturn(builder);
+        Timer timer = Timer.builder("my.timer")
+                .publishPercentiles(0.0)
+                .register(meterRegistry);
+        timer.record(22, MILLISECONDS);
+        clock.add(config.step());
+
+        meterRegistry.publish();
+
+        ArgumentCaptor<HttpSender.Request> argumentCaptor = ArgumentCaptor.forClass(HttpSender.Request.class);
+        verify(httpClient).send(argumentCaptor.capture());
+        HttpSender.Request request = argumentCaptor.getValue();
+
+        assertThat(request.getEntity()).asString()
+                .hasLineCount(2)
+                .contains("my.timer,dt.metrics.source=micrometer gauge,min=22.0,max=22.0,sum=22.0,count=1 " + clock.wallTime())
+                .contains("my.timer.percentile,phi=0,dt.metrics.source=micrometer gauge,0.0 " + clock.wallTime());
+    }
 
     private DynatraceConfig createDefaultDynatraceConfig() {
         return new DynatraceConfig() {

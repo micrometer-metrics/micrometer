@@ -18,6 +18,7 @@ package io.micrometer.dynatrace;
 import io.micrometer.core.instrument.Clock;
 import io.micrometer.core.instrument.Meter;
 import io.micrometer.core.instrument.config.MeterFilter;
+import io.micrometer.core.instrument.config.MeterFilterReply;
 import io.micrometer.core.instrument.distribution.DistributionStatisticConfig;
 import io.micrometer.core.instrument.step.StepMeterRegistry;
 import io.micrometer.core.instrument.util.NamedThreadFactory;
@@ -29,8 +30,13 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.util.Arrays;
+import java.util.Set;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ThreadFactory;
 import java.util.concurrent.TimeUnit;
+
+import static io.micrometer.core.instrument.config.MeterFilterReply.DENY;
+import static io.micrometer.core.instrument.config.MeterFilterReply.NEUTRAL;
 
 /**
  * {@link StepMeterRegistry} for Dynatrace.
@@ -86,23 +92,29 @@ public class DynatraceMeterRegistry extends StepMeterRegistry {
     /**
      * As the micrometer summary statistics (DistributionSummary, and a number of timer meter types)
      * do not provide the minimum values that are required by Dynatrace to ingest summary metrics,
-     * we add the 0% percentile to each summary statistic and use that as the minimum value.
+     * we add the 0th percentile to each summary statistic and use that as the minimum value.
      */
     private void registerMinPercentile() {
         config().meterFilter(new MeterFilter() {
+            private final Set<String> metersWithArtificialZeroPercentile = ConcurrentHashMap.newKeySet();
+
+            /**
+             * Adds 0th percentile if the user hasn't already added
+             * and tracks those meter names where the 0th percentile was artificially added.
+             */
             @Override
             public DistributionStatisticConfig configure(Meter.Id id, DistributionStatisticConfig config) {
                 double[] percentiles;
 
                 if (config.getPercentiles() == null) {
                     percentiles = new double[] {0};
-                }
-                else if (!containsZeroPercentile(config)) {
+                    metersWithArtificialZeroPercentile.add(id.getName() + ".percentile");
+                } else if (!containsZeroPercentile(config)) {
                     percentiles = new double[config.getPercentiles().length + 1];
                     System.arraycopy(config.getPercentiles(), 0, percentiles, 0, config.getPercentiles().length);
                     percentiles[config.getPercentiles().length] = 0; // theoretically this is already zero
-                }
-                else {
+                    metersWithArtificialZeroPercentile.add(id.getName() + ".percentile");
+                } else {
                     percentiles = config.getPercentiles();
                 }
 
@@ -111,11 +123,23 @@ public class DynatraceMeterRegistry extends StepMeterRegistry {
                         .build()
                         .merge(config);
             }
-        });
-    }
 
-    private boolean containsZeroPercentile(DistributionStatisticConfig config) {
-        return Arrays.stream(config.getPercentiles()).anyMatch(percentile -> percentile == 0);
+            /**
+             * Denies artificially added 0th percentile meters.
+             */
+            @Override
+            public MeterFilterReply accept(Meter.Id id) {
+                return hasArtificialZerothPercentile(id) ? DENY : NEUTRAL;
+            }
+
+            private boolean containsZeroPercentile(DistributionStatisticConfig config) {
+                return Arrays.stream(config.getPercentiles()).anyMatch(percentile -> percentile == 0);
+            }
+
+            private boolean hasArtificialZerothPercentile(Meter.Id id) {
+                return metersWithArtificialZeroPercentile.contains(id.getName()) && "0".equals(id.getTag("phi"));
+            }
+        });
     }
 
     public static class Builder {
