@@ -64,3 +64,12 @@ dependencies {
     implementation 'io.micrometer:micrometer-core:latest.integration'
 }
 ```
+
+## Running Docker integration tests
+
+Micrometer has a number of integration tests that are implemented with [Testcontainers](https://www.testcontainers.org/) and uses Docker. These tests do not run by default.
+
+The integration tests for Elasticsearch use the elasticsearch docker image that has the [Elastic License 2.0](https://github.com/elastic/elasticsearch/blob/master/licenses/ELASTIC-LICENSE-2.0.txt).
+Do not run the Micrometer integration tests if you do not agree to the terms of the license.
+
+You need a Docker daemon running for these tests to work. You can run them with the `dockerTest` task. For example, with the Gradle wrapper: `./gradlew dockerTest`.
