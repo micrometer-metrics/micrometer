@@ -64,3 +64,9 @@ dependencies {
     implementation 'io.micrometer:micrometer-core:latest.integration'
 }
 ```
+
+## Running Docker integration tests
+
+Micrometer has a number of integration tests that are implemented with [Testcontainers](https://www.testcontainers.org/) and uses Docker. These tests do not run by default.
+
+You need a Docker daemon running for these tests to work. You can run them with the `dockerTest` task. For example, with the Gradle wrapper: `./gradlew dockerTest`.
