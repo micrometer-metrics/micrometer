@@ -22,6 +22,7 @@ import java.time.Duration;
 import java.util.concurrent.TimeUnit;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 
 /**
  * Tests for {@link TimeWindowMax}
@@ -44,5 +45,27 @@ class TimeWindowMaxTest {
         }
 
         assertThat(timeWindowMax.poll()).isZero();
+    }
+
+    @Test
+    void testLongPeriaOfInactivity() {
+        timeWindowMax = new TimeWindowMax(clock, 60_000, 3);
+        timeWindowMax.record(32);
+        System.out.println(timeWindowMax.poll()); // prints 32
+
+        // emulate 12 hours of inactivity
+        clock.add(Duration.ofHours(12));
+        assertEquals(0.0, timeWindowMax.poll());
+
+        timeWindowMax.record(666);
+        assertEquals(666, timeWindowMax.poll());
+
+        clock.add(Duration.ofSeconds(62));
+        timeWindowMax.record(500);
+        assertEquals(666, timeWindowMax.poll());
+
+        clock.add(Duration.ofSeconds(62));
+        timeWindowMax.record(100500);
+        assertEquals(100500, timeWindowMax.poll());
     }
 }
