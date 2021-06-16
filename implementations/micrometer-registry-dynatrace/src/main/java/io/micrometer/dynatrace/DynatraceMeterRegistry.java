@@ -141,16 +141,17 @@ public class DynatraceMeterRegistry extends StepMeterRegistry {
                 createCustomMetric(idWithSuffix(id, "count"), wallTime, longTaskTimer.duration(getBaseTimeUnit())));
     }
 
-    private Stream<DynatraceCustomMetric> writeSummary(DistributionSummary summary) {
+    // VisibleForTesting
+    Stream<DynatraceCustomMetric> writeSummary(DistributionSummary summary) {
         final long wallTime = clock.wallTime();
         final Meter.Id id = summary.getId();
         final HistogramSnapshot snapshot = summary.takeSnapshot();
 
         return Stream.of(
-                createCustomMetric(idWithSuffix(id, "sum"), wallTime, snapshot.total(getBaseTimeUnit())),
+                createCustomMetric(idWithSuffix(id, "sum"), wallTime, snapshot.total()),
                 createCustomMetric(idWithSuffix(id, "count"), wallTime, snapshot.count(), DynatraceUnit.Count),
-                createCustomMetric(idWithSuffix(id, "avg"), wallTime, snapshot.mean(getBaseTimeUnit())),
-                createCustomMetric(idWithSuffix(id, "max"), wallTime, snapshot.max(getBaseTimeUnit())));
+                createCustomMetric(idWithSuffix(id, "avg"), wallTime, snapshot.mean()),
+                createCustomMetric(idWithSuffix(id, "max"), wallTime, snapshot.max()));
     }
 
     private Stream<DynatraceCustomMetric> writeFunctionTimer(FunctionTimer timer) {
@@ -213,14 +214,16 @@ public class DynatraceMeterRegistry extends StepMeterRegistry {
                         logger.debug("created {} as custom metric in dynatrace", customMetric.getMetricId());
                         createdCustomMetrics.add(customMetric.getMetricId());
                     })
-                    .onError(response -> {
-                        if (logger.isErrorEnabled()) {
-                            logger.error("failed to create custom metric {} in dynatrace: {}", customMetric.getMetricId(),
-                                    response.body());
-                        }
-                    });
+                    .onError(response ->
+                        logger.error("failed to create custom metric {} in dynatrace: {}",
+                                customMetric.getMetricId(),
+                                response.body()
+                        )
+                    );
         } catch (Throwable e) {
-            logger.error("failed to create custom metric in dynatrace: {}", customMetric.getMetricId(), e);
+            if (logger.isErrorEnabled()) {
+                logger.error("failed to create custom metric in dynatrace: " + customMetric.getMetricId(), e);
+            }
         }
     }
 
