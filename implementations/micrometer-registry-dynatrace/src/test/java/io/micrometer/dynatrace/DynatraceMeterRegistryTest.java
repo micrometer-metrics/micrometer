@@ -42,7 +42,34 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
  */
 class DynatraceMeterRegistryTest {
 
-    private final DynatraceMeterRegistry meterRegistry = createMeterRegistry();
+    private final DynatraceConfig config = new DynatraceConfig() {
+        @Override
+        public String get(String key) {
+            return null;
+        }
+
+        @Override
+        public String uri() {
+            return "http://localhost";
+        }
+
+        @Override
+        public String deviceId() {
+            return "deviceId";
+        }
+
+        @Override
+        public String apiToken() {
+            return "apiToken";
+        }
+    };
+
+    private final MockClock clock = new MockClock();
+
+    private final DynatraceMeterRegistry meterRegistry = DynatraceMeterRegistry.builder(config)
+            .clock(clock)
+            .httpClient(request -> new HttpSender.Response(200, null))
+            .build();
 
     private final ObjectMapper mapper = new ObjectMapper();
 
@@ -268,6 +295,27 @@ class DynatraceMeterRegistryTest {
         assertThat(meterRegistry.writeMeter(meter)).hasSize(2);
     }
 
+    @Test
+    void writeSummary() {
+        DistributionSummary summary = DistributionSummary.builder("my.distribution.summary").register(meterRegistry);
+
+        summary.record(1d);
+        summary.record(2d);
+        summary.record(3d);
+
+        clock.add(config.step());
+
+        List<String> metrics = meterRegistry.writeSummary(summary)
+                .map((metric) -> metric.getTimeSeries().asJson())
+                .collect(Collectors.toList());
+
+        assertThat(metrics).containsExactlyInAnyOrder(
+                "{\"timeseriesId\":\"custom:my.distribution.summary.sum\",\"dataPoints\":[[60001,6]]}",
+                "{\"timeseriesId\":\"custom:my.distribution.summary.count\",\"dataPoints\":[[60001,3]]}",
+                "{\"timeseriesId\":\"custom:my.distribution.summary.avg\",\"dataPoints\":[[60001,2]]}",
+                "{\"timeseriesId\":\"custom:my.distribution.summary.max\",\"dataPoints\":[[60001,3]]}");
+    }
+
     private DynatraceTimeSeries createTimeSeriesWithDimensions(int numberOfDimensions) {
         return createTimeSeriesWithDimensions(numberOfDimensions, "some.metric");
     }
@@ -280,33 +328,6 @@ class DynatraceMeterRegistryTest {
         Map<String, String> map = new HashMap<>();
         IntStream.range(0, numberOfDimensions).forEach(i -> map.put("key" + i, "value" + i));
         return map;
-    }
-
-    private DynatraceMeterRegistry createMeterRegistry() {
-        DynatraceConfig config = new DynatraceConfig() {
-            @Override
-            public String get(String key) {
-                return null;
-            }
-
-            @Override
-            public String uri() {
-                return "http://localhost";
-            }
-
-            @Override
-            public String deviceId() {
-                return "deviceId";
-            }
-
-            @Override
-            public String apiToken() {
-                return "apiToken";
-            }
-        };
-        return DynatraceMeterRegistry.builder(config)
-                .httpClient(request -> new HttpSender.Response(200, null))
-                .build();
     }
 
     private boolean isValidJson(String json) {

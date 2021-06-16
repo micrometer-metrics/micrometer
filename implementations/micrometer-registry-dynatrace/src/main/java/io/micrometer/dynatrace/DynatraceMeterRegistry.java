@@ -141,16 +141,17 @@ public class DynatraceMeterRegistry extends StepMeterRegistry {
                 createCustomMetric(idWithSuffix(id, "count"), wallTime, longTaskTimer.duration(getBaseTimeUnit())));
     }
 
-    private Stream<DynatraceCustomMetric> writeSummary(DistributionSummary summary) {
+    // VisibleForTesting
+    Stream<DynatraceCustomMetric> writeSummary(DistributionSummary summary) {
         final long wallTime = clock.wallTime();
         final Meter.Id id = summary.getId();
         final HistogramSnapshot snapshot = summary.takeSnapshot();
 
         return Stream.of(
-                createCustomMetric(idWithSuffix(id, "sum"), wallTime, snapshot.total(getBaseTimeUnit())),
+                createCustomMetric(idWithSuffix(id, "sum"), wallTime, snapshot.total()),
                 createCustomMetric(idWithSuffix(id, "count"), wallTime, snapshot.count(), DynatraceUnit.Count),
-                createCustomMetric(idWithSuffix(id, "avg"), wallTime, snapshot.mean(getBaseTimeUnit())),
-                createCustomMetric(idWithSuffix(id, "max"), wallTime, snapshot.max(getBaseTimeUnit())));
+                createCustomMetric(idWithSuffix(id, "avg"), wallTime, snapshot.mean()),
+                createCustomMetric(idWithSuffix(id, "max"), wallTime, snapshot.max()));
     }
 
     private Stream<DynatraceCustomMetric> writeFunctionTimer(FunctionTimer timer) {
