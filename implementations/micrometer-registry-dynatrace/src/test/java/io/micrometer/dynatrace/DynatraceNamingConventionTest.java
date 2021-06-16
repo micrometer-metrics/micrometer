@@ -24,7 +24,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 /**
  * Tests for {@link DynatraceNamingConvention}.
  *
- * @author Jonatan Ivanov
+ * @author Georg Pirklbauer
  */
 class DynatraceNamingConventionTest {
 
