@@ -46,8 +46,13 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 class DynatraceExporterV1Test {
 
     private final DynatraceConfig config = createDynatraceConfig();
-    private final DynatraceExporterV1 exporter = createExporter();
     private final MockClock clock = new MockClock();
+
+    private final DynatraceExporterV1 exporter = new DynatraceExporterV1(
+            config,
+            clock,
+            request -> new HttpSender.Response(200, null)
+    );
 
     private final DynatraceMeterRegistry meterRegistry = DynatraceMeterRegistry.builder(config)
             .clock(clock)
@@ -311,13 +316,6 @@ class DynatraceExporterV1Test {
         Map<String, String> map = new HashMap<>();
         IntStream.range(0, numberOfDimensions).forEach(i -> map.put("key" + i, "value" + i));
         return map;
-    }
-
-    private DynatraceExporterV1 createExporter() {
-        DynatraceConfig config = createDynatraceConfig();
-
-        return new DynatraceExporterV1(config, Clock.SYSTEM, request -> new HttpSender.Response(200, null));
-
     }
 
     private DynatraceConfig createDynatraceConfig() {
