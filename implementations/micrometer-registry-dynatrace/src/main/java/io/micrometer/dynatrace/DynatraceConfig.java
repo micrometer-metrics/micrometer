@@ -41,17 +41,19 @@ public interface DynatraceConfig extends StepRegistryConfig {
     }
 
     default String apiToken() {
+        Validated<String> secret = getSecret(this, "apiToken");
         if (apiVersion() == DynatraceApiVersion.V1) {
-            return getSecret(this, "apiToken").required().get();
+            return secret.required().get();
         }
-        return getSecret(this, "apiToken").orElse("");
+        return secret.orElse("");
     }
 
     default String uri() {
+        Validated<String> uri = getUrlString(this, "uri");
         if (apiVersion() == DynatraceApiVersion.V1) {
-            return getUrlString(this, "uri").required().get();
+            return uri.required().get();
         }
-        return getUrlString(this, "uri").orElse(DynatraceMetricApiConstants.getDefaultOneAgentEndpoint());
+        return uri.orElse(DynatraceMetricApiConstants.getDefaultOneAgentEndpoint());
     }
 
     default String deviceId() {
@@ -77,21 +79,40 @@ public interface DynatraceConfig extends StepRegistryConfig {
      * Return the version of the target Dynatrace API. Defaults to v1 if not provided.
      *
      * @return a {@link DynatraceApiVersion} containing the version of the targeted Dynatrace API.
+     * @since 1.8.0
      */
     default DynatraceApiVersion apiVersion() {
         // if not specified, defaults to v1 for backwards compatibility.
         return getEnum(this, DynatraceApiVersion.class, "apiVersion").orElse(DynatraceApiVersion.V1);
     }
 
+    /**
+     * Return metric key prefix.
+     *
+     * @return metric key prefix
+     * @since 1.8.0
+     */
     default String metricKeyPrefix() {
         return getString(this, "metricKeyPrefix").orElse("");
     }
 
+    /**
+     * Return default dimensions.
+     *
+     * @return default dimensions
+     * @since 1.8.0
+     */
     default Map<String, String> defaultDimensions() {
         return Collections.emptyMap();
     }
 
-    default Boolean enrichWithOneAgentMetadata() {
+    /**
+     * Return whether to enrich with OneAgent metadata.
+     *
+     * @return whether to enrich with OneAgent metadata
+     * @since 1.8.0
+     */
+    default boolean enrichWithOneAgentMetadata() {
         return getBoolean(this, "enrichWithOneAgentMetadata").orElse(true);
     }
 

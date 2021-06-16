@@ -26,6 +26,13 @@ import java.util.List;
  * @author Jon Schneider
  */
 public class MeterPartition extends AbstractPartition<Meter> {
+    /**
+     * Create a {@code MeterPartition} instance.
+     *
+     * @param meters meters to partition
+     * @param partitionSize partition size
+     * @since 1.8.0
+     */
     public MeterPartition(List<Meter> meters, int partitionSize) {
         super(meters, partitionSize);
     }

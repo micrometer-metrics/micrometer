@@ -32,6 +32,13 @@ import io.micrometer.dynatrace.v1.DynatraceNamingConventionV1;
 public class DynatraceNamingConvention implements NamingConvention {
     private final NamingConvention versionSpecificNamingConvention;
 
+    /**
+     * Create a {@code DynatraceNamingConvention} instance.
+     *
+     * @param delegate delegate {@link NamingConvention}
+     * @param version Dynatrace API version
+     * @since 1.8.0
+     */
     public DynatraceNamingConvention(NamingConvention delegate, DynatraceApiVersion version) {
         if (version != DynatraceApiVersion.V1) {
             throw new IllegalArgumentException("At the moment, V1 is the only supported version");

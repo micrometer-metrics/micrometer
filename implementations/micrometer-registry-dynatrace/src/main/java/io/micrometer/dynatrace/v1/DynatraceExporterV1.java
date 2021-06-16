@@ -30,7 +30,6 @@ import io.micrometer.dynatrace.DynatraceNamingConvention;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import javax.annotation.Nonnull;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -73,7 +72,7 @@ public class DynatraceExporterV1 extends AbstractDynatraceExporter {
     }
 
     @Override
-    public void export(@Nonnull List<Meter> meters) {
+    public void export(List<Meter> meters) {
         String customDeviceMetricEndpoint = config.uri() + "/api/v1/entity/infrastructure/custom/" +
                 config.deviceId() + "?api-token=" + config.apiToken();
 

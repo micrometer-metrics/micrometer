@@ -81,7 +81,7 @@ public class DynatraceMeterRegistry extends StepMeterRegistry {
 
     @Override
     protected void publish() {
-        exporter.export(this.getMeters());
+        exporter.export(getMeters());
     }
 
     @Override
