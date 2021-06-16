@@ -62,18 +62,6 @@ class DynatraceNamingConventionV1Test {
     }
 
     @Test
-    void testDelegate() {
-        DynatraceNamingConvention dynatraceConvention = new DynatraceNamingConvention();
-        DynatraceNamingConventionV1 v1Convention = convention;
-        assertThat(dynatraceConvention.name("mymetric", Meter.Type.COUNTER, null)).isEqualTo(v1Convention.name("mymetric", Meter.Type.COUNTER, null));
-        assertThat(dynatraceConvention.name("my.name1", Meter.Type.COUNTER, null)).isEqualTo(v1Convention.name("my.name1", Meter.Type.COUNTER, null));
-        assertThat(dynatraceConvention.name("my_name1", Meter.Type.COUNTER, null)).isEqualTo(v1Convention.name("my_name1", Meter.Type.COUNTER, null));
-        assertThat(dynatraceConvention.name("my-name1", Meter.Type.COUNTER, null)).isEqualTo(v1Convention.name("my-name1", Meter.Type.COUNTER, null));
-        assertThat(dynatraceConvention.name("system.load.average.1m", Meter.Type.COUNTER, null))
-                .isEqualTo(v1Convention.name("system.load.average.1m", Meter.Type.COUNTER, null));
-        assertThat(dynatraceConvention.tagKey("{tagTag0}.-")).isEqualTo(v1Convention.tagKey("_tagTag0_.-"));
-    }
-    @Test
     void tagValuesAreTruncated() {
         String expected = String.join("", Collections.nCopies(128, "a"));
         assertThat(convention.tagValue(String.join("", Collections.nCopies(130, "a")))).isEqualTo(expected);

@@ -66,12 +66,11 @@ class DynatraceConfigTest {
 
     @Test
     void invalidVersion() {
-        Map<String, String> properties = new HashMap<String, String>() {{
-            put("dynatrace.apiToken", "secret");
-            put("dynatrace.uri", "https://uri.dynatrace.com");
-            put("dynatrace.deviceId", "device");
-            put("dynatrace.apiVersion", "v-INVALID");
-        }};
+        Map<String, String> properties = new HashMap<>();
+        properties.put("dynatrace.apiToken", "secret");
+        properties.put("dynatrace.uri", "https://uri.dynatrace.com");
+        properties.put("dynatrace.deviceId", "device");
+        properties.put("dynatrace.apiVersion", "v-INVALID");
         DynatraceConfig config = properties::get;
 
         List<Validated.Invalid<?>> failures = config.validate().failures();
@@ -86,22 +85,20 @@ class DynatraceConfigTest {
 
     @Test
     void valid() {
-        Map<String, String> properties = new HashMap<String, String>() {{
-            put("dynatrace.apiToken", "secret");
-            put("dynatrace.uri", "https://uri.dynatrace.com");
-            put("dynatrace.deviceId", "device");
-        }};
+        Map<String, String> properties = new HashMap<>();
+        properties.put("dynatrace.apiToken", "secret");
+        properties.put("dynatrace.uri", "https://uri.dynatrace.com");
+        properties.put("dynatrace.deviceId", "device");
         DynatraceConfig config = properties::get;
         assertThat(config.validate().isValid()).isTrue();
     }
 
     @Test
     void testFallbackToV1() {
-        Map<String, String> properties = new HashMap<String, String>() {{
-            put("dynatrace.apiToken", "secret");
-            put("dynatrace.uri", "https://uri.dynatrace.com");
-            put("dynatrace.deviceId", "device");
-        }};
+        Map<String, String> properties = new HashMap<>();
+        properties.put("dynatrace.apiToken", "secret");
+        properties.put("dynatrace.uri", "https://uri.dynatrace.com");
+        properties.put("dynatrace.deviceId", "device");
 
         DynatraceConfig config = properties::get;
 
@@ -111,9 +108,8 @@ class DynatraceConfigTest {
 
     @Test
     void testV2Defaults() {
-        Map<String, String> properties = new HashMap<String, String>() {{
-            put("dynatrace.apiVersion", "v2");
-        }};
+        Map<String, String> properties = new HashMap<>();
+        properties.put("dynatrace.apiVersion", "v2");
         DynatraceConfig config = properties::get;
 
         assertThat(config.apiVersion()).isEqualTo(DynatraceApiVersion.V2);
@@ -129,10 +125,9 @@ class DynatraceConfigTest {
 
     @Test
     void testOneAgentEndpointWithDifferentPort() {
-        Map<String, String> properties = new HashMap<String, String>() {{
-            put("dynatrace.apiVersion", "v2");
-            put("dynatrace.uri", "http://localhost:13333/metrics/ingest");
-        }};
+        Map<String, String> properties = new HashMap<>();
+        properties.put("dynatrace.apiVersion", "v2");
+        properties.put("dynatrace.uri", "http://localhost:13333/metrics/ingest");
         DynatraceConfig config = properties::get;
 
         assertThat(config.apiToken()).isEmpty();
@@ -144,12 +139,11 @@ class DynatraceConfigTest {
     }
 
     @Test
-    void testV2requiredPropertiesWithEndpointAndToken() {
-        Map<String, String> properties = new HashMap<String, String>() {{
-            put("dynatrace.apiVersion", "v2");
-            put("dynatrace.uri", "https://uri.dynatrace.com");
-            put("dynatrace.apiToken", "secret");
-        }};
+    void testV2WithEndpointAndToken() {
+        Map<String, String> properties = new HashMap<>();
+        properties.put("dynatrace.apiVersion", "v2");
+        properties.put("dynatrace.uri", "https://uri.dynatrace.com");
+        properties.put("dynatrace.apiToken", "secret");
 
         DynatraceConfig config = properties::get;
         assertThat(config.apiToken()).isEqualTo("secret");

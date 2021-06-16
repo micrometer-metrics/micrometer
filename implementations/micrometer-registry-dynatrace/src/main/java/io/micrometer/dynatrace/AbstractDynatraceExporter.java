@@ -19,8 +19,6 @@ import io.micrometer.core.instrument.Clock;
 import io.micrometer.core.instrument.Meter;
 import io.micrometer.core.ipc.http.HttpSender;
 
-import javax.annotation.Nonnull;
-
 import java.util.List;
 import java.util.concurrent.TimeUnit;
 
@@ -45,5 +43,5 @@ public abstract class AbstractDynatraceExporter {
         return TimeUnit.MILLISECONDS;
     }
 
-    public abstract void export(@Nonnull List<Meter> meters);
+    public abstract void export(List<Meter> meters);
 }

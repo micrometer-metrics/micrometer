@@ -28,7 +28,6 @@ import io.micrometer.dynatrace.DynatraceConfig;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import javax.annotation.Nonnull;
 import java.net.MalformedURLException;
 import java.net.URI;
 import java.time.Instant;
@@ -42,19 +41,19 @@ import java.util.stream.Stream;
 import java.util.stream.StreamSupport;
 
 /**
- * Implementation for Dynatrace v1 metrics API export.
+ * Implementation for Dynatrace v2 metrics API export.
  *
  * @author Georg Pirklbauer
  * @author Jonatan Ivanov
  * @since 1.8.0
  */
 public final class DynatraceExporterV2 extends AbstractDynatraceExporter {
-    private static final String METER_EXCEPTION_FORMAT = "Could not serialize meter %s: %s";
+    private static final String METER_EXCEPTION_LOG_FORMAT = "Could not serialize meter {}: {}";
     private static final Pattern EXTRACT_LINES_OK = Pattern.compile("\"linesOk\":\\s?(\\d+)");
     private static final Pattern EXTRACT_LINES_INVALID = Pattern.compile("\"linesInvalid\":\\s?(\\d+)");
     private static final Pattern IS_NULL_ERROR_RESPONSE = Pattern.compile("\"error\":\\s?null");
 
-    private static final Logger logger = LoggerFactory.getLogger(DynatraceExporterV2.class.getName());
+    private static final Logger logger = LoggerFactory.getLogger(DynatraceExporterV2.class);
     private static final Map<String, String> staticDimensions = Collections.singletonMap("dt.metrics.source", "micrometer");
 
     private final String endpoint;
@@ -90,18 +89,18 @@ public final class DynatraceExporterV2 extends AbstractDynatraceExporter {
     private boolean shouldIgnoreToken(DynatraceConfig config) {
         if (config.apiToken().isEmpty()) {
             return true;
-        } else if (config.uri().equals(DynatraceMetricApiConstants.getDefaultOneAgentEndpoint())) {
+        }
+        if (config.uri().equals(DynatraceMetricApiConstants.getDefaultOneAgentEndpoint())) {
             logger.warn("Potential misconfiguration detected: Token is provided, but the endpoint is set to the local OneAgent endpoint, "
                     + "thus the token will be ignored. If exporting to the cluster API endpoint is intended, its URI has to be provided explicitly.");
             return true;
-        } else {
-            return false;
         }
+        return false;
     }
 
     private DimensionList parseDefaultDimensions(Map<String, String> defaultDimensions) {
         List<Dimension> dimensions = Stream.concat(
-                defaultDimensions != null ? defaultDimensions.entrySet().stream() : Stream.empty(),
+                defaultDimensions.entrySet().stream(),
                 staticDimensions.entrySet().stream()
         )
                 .map(entry -> Dimension.create(entry.getKey(), entry.getValue()))
@@ -118,7 +117,7 @@ public final class DynatraceExporterV2 extends AbstractDynatraceExporter {
      * @param meters A list of {@link Meter Meters} that are serialized as one or more metric lines.
      */
     @Override
-    public void export(@Nonnull List<Meter> meters) {
+    public void export(List<Meter> meters) {
         // Lines that are too long to be ingested into Dynatrace, as well as lines that contain NaN
         // or Inf values are dropped and not returned from "toMetricLines", and are therefore dropped.
         List<String> metricLines = meters.stream()
@@ -150,7 +149,7 @@ public final class DynatraceExporterV2 extends AbstractDynatraceExporter {
         try {
             return createMetricBuilder(meter).setDoubleGaugeValue(measurement.getValue()).serialize();
         } catch (MetricException e) {
-            logger.warn(String.format(METER_EXCEPTION_FORMAT, meter.getId().getName(), e.getMessage()));
+            logger.warn(METER_EXCEPTION_LOG_FORMAT, meter.getId().getName(), e.getMessage());
         }
 
         return null;
@@ -164,7 +163,7 @@ public final class DynatraceExporterV2 extends AbstractDynatraceExporter {
         try {
             return createMetricBuilder(meter).setDoubleCounterValueDelta(measurement.getValue()).serialize();
         } catch (MetricException e) {
-            logger.warn(String.format(METER_EXCEPTION_FORMAT, meter.getId().getName(), e.getMessage()));
+            logger.warn(METER_EXCEPTION_LOG_FORMAT, meter.getId().getName(), e.getMessage());
         }
 
         return null;
@@ -178,37 +177,26 @@ public final class DynatraceExporterV2 extends AbstractDynatraceExporter {
         long count = histogramSnapshot.count();
         double total = (timeUnit != null) ? histogramSnapshot.total(timeUnit) : histogramSnapshot.total();
         double max = (timeUnit != null) ? histogramSnapshot.max(timeUnit) : histogramSnapshot.max();
-
-        double min;
-        if (count == 1) {
-            min = max;
-        } else {
-            min = minFromHistogramSnapshot(histogramSnapshot, timeUnit);
-        }
-
+        double min = (count == 1) ? max : minFromHistogramSnapshot(histogramSnapshot, timeUnit);
         return createSummaryLine(meter, min, max, total, count);
     }
 
     private double minFromHistogramSnapshot(HistogramSnapshot histogramSnapshot, TimeUnit timeUnit) {
         ValueAtPercentile[] valuesAtPercentiles = histogramSnapshot.percentileValues();
-        double min = Double.NaN;
-
         for (ValueAtPercentile valueAtPercentile : valuesAtPercentiles) {
             if (valueAtPercentile.percentile() == 0.0) {
-                min = (timeUnit != null) ? valueAtPercentile.value(timeUnit) : valueAtPercentile.value();
-                break;
+                return (timeUnit != null) ? valueAtPercentile.value(timeUnit) : valueAtPercentile.value();
             }
         }
-
-        return min;
+        return Double.NaN;
     }
 
     private Stream<String> createSummaryLine(Meter meter, double min, double max, double total, long count) {
         try {
             String line = createMetricBuilder(meter).setDoubleSummaryValue(min, max, total, count).serialize();
-            return streamOf(Collections.singletonList(line));
+            return Stream.of(line);
         } catch (MetricException e) {
-            logger.warn(String.format(METER_EXCEPTION_FORMAT, meter.getId().getName(), e.getMessage()));
+            logger.warn(METER_EXCEPTION_LOG_FORMAT, meter.getId().getName(), e.getMessage());
         }
 
         return Stream.empty();
@@ -233,9 +221,9 @@ public final class DynatraceExporterV2 extends AbstractDynatraceExporter {
     Stream<String> toFunctionTimerLine(FunctionTimer meter) {
         double total = meter.totalTime(getBaseTimeUnit());
         double average = meter.mean(getBaseTimeUnit());
-        long longCount = Double.valueOf(meter.count()).longValue();
+        long count = Double.valueOf(meter.count()).longValue();
 
-        return createSummaryLine(meter, average, average, total, longCount);
+        return createSummaryLine(meter, average, average, total, count);
     }
 
     Stream<String> toMeterLine(Meter meter) {
@@ -268,9 +256,7 @@ public final class DynatraceExporterV2 extends AbstractDynatraceExporter {
     private void send(List<String> metricLines) {
         try {
             String body = String.join("\n", metricLines);
-            if (logger.isDebugEnabled()) {
-                logger.debug("sending lines:\n" + body);
-            }
+            logger.debug("sending lines:\n{}", body);
 
             HttpSender.Request.Builder requestBuilder = httpClient.post(endpoint);
             if (!ignoreToken) {
@@ -294,7 +280,7 @@ public final class DynatraceExporterV2 extends AbstractDynatraceExporter {
                 Matcher linesOkMatchResult = EXTRACT_LINES_OK.matcher(response.body());
                 Matcher linesInvalidMatchResult = EXTRACT_LINES_INVALID.matcher(response.body());
                 if (linesOkMatchResult.find() && linesInvalidMatchResult.find()) {
-                    logger.info("Sent {} metric lines, linesOk: {}, linesInvalid: {}.",
+                    logger.debug("Sent {} metric lines, linesOk: {}, linesInvalid: {}.",
                             totalSent, linesOkMatchResult.group(1), linesInvalidMatchResult.group(1));
                 } else {
                     logger.warn("Unable to parse response: {}", response.body());

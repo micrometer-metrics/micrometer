@@ -36,7 +36,7 @@ import static org.mockito.Mockito.when;
  *
  * @author Jonatan Ivanov
  */
-public class DynatraceMeterRegistryTest {
+class DynatraceMeterRegistryTest {
     private DynatraceConfig config;
     private MockClock clock;
     private HttpSender httpClient;
@@ -160,25 +160,21 @@ public class DynatraceMeterRegistryTest {
     private DynatraceConfig createDefaultDynatraceConfig() {
         return new DynatraceConfig() {
             @Override
-            @SuppressWarnings("NullableProblems")
             public String get(String key) {
                 return null;
             }
 
             @Override
-            @SuppressWarnings("NullableProblems")
             public String uri() {
                 return "http://localhost";
             }
 
             @Override
-            @SuppressWarnings("NullableProblems")
             public String apiToken() {
                 return "apiToken";
             }
 
             @Override
-            @SuppressWarnings("NullableProblems")
             public DynatraceApiVersion apiVersion() {
                 return DynatraceApiVersion.V2;
             }
