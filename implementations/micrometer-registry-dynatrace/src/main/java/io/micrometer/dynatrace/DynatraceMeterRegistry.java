@@ -214,13 +214,13 @@ public class DynatraceMeterRegistry extends StepMeterRegistry {
                         createdCustomMetrics.add(customMetric.getMetricId());
                     })
                     .onError(response -> {
-                        if (logger.isErrorEnabled()) {
-                            logger.error("failed to create custom metric {} in dynatrace: {}", customMetric.getMetricId(),
-                                    response.body());
-                        }
+                        logger.error("failed to create custom metric {} in dynatrace: {}", customMetric.getMetricId(),
+                                response.body());
                     });
         } catch (Throwable e) {
-            logger.error("failed to create custom metric in dynatrace: {}", customMetric.getMetricId(), e);
+            if (logger.isErrorEnabled()) {
+                logger.error("failed to create custom metric in dynatrace: " + customMetric.getMetricId(), e);
+            }
         }
     }
 
