@@ -332,8 +332,8 @@ class DynatraceExporterV2Test {
 
     @Test
     void gaugeWithInvalidNameShouldBeDropped() {
-        meterRegistry.gauge("~~~", 1.23);
-        Gauge gauge = meterRegistry.find("~~~").gauge();
+        meterRegistry.gauge("", 1.23);
+        Gauge gauge = meterRegistry.find("").gauge();
         assertThat(gauge).isNotNull();
         assertThat(exporter.toGaugeLine(gauge)).isEmpty();
     }
@@ -362,8 +362,8 @@ class DynatraceExporterV2Test {
 
     @Test
     void counterWithInvalidNameShouldBeDropped() {
-        meterRegistry.counter("~~~");
-        Counter counter = meterRegistry.find("~~~").counter();
+        meterRegistry.counter("");
+        Counter counter = meterRegistry.find("").counter();
         assertThat(counter).isNotNull();
         assertThat(exporter.toCounterLine(counter)).isEmpty();
     }
