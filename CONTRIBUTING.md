@@ -67,7 +67,7 @@ dependencies {
 
 ## Running Docker integration tests
 
-Micrometer has a number of integration tests that are implemented with [Testcontainers](https://www.testcontainers.org/) and uses Docker. These tests do not run by default.
+Micrometer has a number of integration tests that are implemented with [Testcontainers](https://www.testcontainers.org/) and use Docker. These tests do not run by default.
 
 The integration tests for Elasticsearch use the elasticsearch docker image that has the [Elastic License 2.0](https://github.com/elastic/elasticsearch/blob/master/licenses/ELASTIC-LICENSE-2.0.txt).
 Do not run the Micrometer integration tests if you do not agree to the terms of the license.
