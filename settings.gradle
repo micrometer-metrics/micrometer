@@ -22,7 +22,12 @@ buildCache {
     }
 }
 gradleEnterprise {
-    server = "https://ge.micrometer.io"
+    server = 'https://ge.micrometer.io'
+    buildScan {
+        if (System.env.'CIRCLE_BUILD_URL') {
+            link 'circleci', System.env.'CIRCLE_BUILD_URL'
+        }
+    }
 }
 
 include 'micrometer-core'
