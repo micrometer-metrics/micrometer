@@ -46,7 +46,7 @@ public class StatsdGauge<T> extends AbstractMeter implements Gauge, StatsdPollab
     @Override
     public double value() {
         T obj = ref.get();
-        return obj != null ? value.applyAsDouble(ref.get()) : Double.NaN;
+        return obj != null ? value.applyAsDouble(obj) : Double.NaN;
     }
 
     @Override
