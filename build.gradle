@@ -95,6 +95,15 @@ subprojects {
             }
         }
 
+        normalization {
+            runtimeClasspath {
+                properties("$buildDir/manifest/${project.name}.properties") {
+                    ignoreProperty 'Build-Date'
+                    ignoreProperty 'Change'
+                }
+            }
+        }
+
         //noinspection GroovyAssignabilityCheck
         test {
             // set heap size for the test JVM(s)
