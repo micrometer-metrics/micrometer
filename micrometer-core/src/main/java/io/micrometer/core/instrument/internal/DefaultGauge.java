@@ -51,7 +51,7 @@ public class DefaultGauge<T> extends AbstractMeter implements Gauge {
         T obj = ref.get();
         if (obj != null) {
             try {
-                return value.applyAsDouble(ref.get());
+                return value.applyAsDouble(obj);
             }
             catch (Throwable ex) {
                 logger.log("Failed to apply the value function for the gauge '" + getId().getName() + "'.", ex);
