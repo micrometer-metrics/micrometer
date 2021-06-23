@@ -6,8 +6,8 @@ pluginManagement {
 }
 
 plugins {
-    id "com.gradle.enterprise" version "3.6.1"
-    id "io.spring.ge.conventions" version "0.0.7"
+    id 'com.gradle.enterprise' version '3.6.3'
+    id 'io.spring.ge.conventions' version '0.0.7'
 }
 
 rootProject.name = 'micrometer'
@@ -22,7 +22,12 @@ buildCache {
     }
 }
 gradleEnterprise {
-    server = "https://ge.micrometer.io"
+    server = 'https://ge.micrometer.io'
+    buildScan {
+        if (System.env.'CIRCLE_BUILD_URL') {
+            link 'circleci', System.env.'CIRCLE_BUILD_URL'
+        }
+    }
 }
 
 include 'micrometer-core'
