@@ -6,8 +6,8 @@ pluginManagement {
 }
 
 plugins {
-    id "com.gradle.enterprise" version "3.6.1"
-    id "io.spring.ge.conventions" version "0.0.7"
+    id 'com.gradle.enterprise' version '3.6.3'
+    id 'io.spring.ge.conventions' version '0.0.7'
 }
 
 rootProject.name = 'micrometer'
