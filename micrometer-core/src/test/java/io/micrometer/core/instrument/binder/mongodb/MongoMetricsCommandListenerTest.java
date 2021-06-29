@@ -1,5 +1,5 @@
 /**
- * Copyright 2019 VMware, Inc.
+ * Copyright 2021 VMware, Inc.
  * <p>
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -81,6 +81,7 @@ class MongoMetricsCommandListenerTest extends AbstractMongoDbTest {
                 "cluster.id", clusterId.get(),
                 "server.address", String.format("%s:%s", HOST, port),
                 "command", "insert",
+                "collection", "testCol",
                 "status", "SUCCESS"
         );
         assertThat(registry.get("mongodb.driver.commands").tags(tags).timer().count()).isEqualTo(1);
@@ -96,6 +97,7 @@ class MongoMetricsCommandListenerTest extends AbstractMongoDbTest {
                 "cluster.id", clusterId.get(),
                 "server.address", String.format("%s:%s", HOST, port),
                 "command", "dropIndexes",
+                "collection", "testCol",
                 "status", "FAILED"
         );
         assertThat(registry.get("mongodb.driver.commands").tags(tags).timer().count()).isEqualTo(1);
@@ -128,6 +130,7 @@ class MongoMetricsCommandListenerTest extends AbstractMongoDbTest {
                     "cluster.id", clusterId.get(),
                     "server.address", String.format("%s:%s", HOST, port),
                     "command", "insert",
+                    "collection", "testCol",
                     "status", "SUCCESS",
                     "mongoz", "5150"
             );
@@ -162,6 +165,7 @@ class MongoMetricsCommandListenerTest extends AbstractMongoDbTest {
                     "cluster.id", clusterId.get(),
                     "server.address", String.format("%s:%s", HOST, port),
                     "command", "dropIndexes",
+                    "collection", "testCol",
                     "status", "FAILED",
                     "mongoz", "5150"
             );

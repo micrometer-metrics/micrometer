@@ -64,6 +64,7 @@ public class MongoMetricsCommandListener implements CommandListener {
 
     @Override
     public void commandStarted(CommandStartedEvent commandStartedEvent) {
+        tagsProvider.commandStarted(commandStartedEvent);
     }
 
     @Override
