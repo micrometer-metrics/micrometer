@@ -41,7 +41,7 @@ class DefaultMongoCommandTagsProviderTest {
     @Test
     void defaultCommandTags() {
         CommandSucceededEvent event = commandSucceededEvent(5150);
-        Iterable<Tag>  tags = tagsProvider.commandTags(event);
+        Iterable<Tag> tags = tagsProvider.commandTags(event);
         assertThat(tags).containsExactlyInAnyOrder(
                 Tag.of("command", "find"),
                 Tag.of("collection", "unknown"),
