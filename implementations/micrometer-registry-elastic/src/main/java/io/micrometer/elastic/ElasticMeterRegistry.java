@@ -430,7 +430,7 @@ public class ElasticMeterRegistry extends StepMeterRegistry {
         }
 
         consumer.accept(sb);
-        sb.append("}");
+        sb.append('}');
 
         return sb.toString();
     }
