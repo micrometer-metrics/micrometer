@@ -100,8 +100,10 @@ subprojects {
                 metaInf {
                     ignoreAttribute 'Build-Date'
                     ignoreAttribute 'Change'
+                    ignoreAttribute 'Module-Origin'
                     ignoreProperty 'Build-Date'
                     ignoreProperty 'Change'
+                    ignoreProperty 'Module-Origin'
                 }
             }
         }
