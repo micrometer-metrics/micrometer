@@ -97,7 +97,9 @@ subprojects {
 
         normalization {
             runtimeClasspath {
-                properties("$buildDir/manifest/${project.name}.properties") {
+                metaInf {
+                    ignoreAttribute 'Build-Date'
+                    ignoreAttribute 'Change'
                     ignoreProperty 'Build-Date'
                     ignoreProperty 'Change'
                 }
