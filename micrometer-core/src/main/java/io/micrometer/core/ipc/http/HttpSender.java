@@ -107,7 +107,7 @@ public interface HttpSender {
 
         @Override
         public String toString() {
-            StringBuilder printed = new StringBuilder(method.toString()).append(" ")
+            StringBuilder printed = new StringBuilder(method.toString()).append(' ')
                     .append(url.toString()).append("\n");
             if (entity.length == 0) {
                 printed.append("<no request body>");
