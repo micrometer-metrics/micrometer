@@ -43,7 +43,7 @@ public class GraphiteHierarchicalNameMapper implements HierarchicalNameMapper {
         for (String tagKey : tagsAsPrefix) {
             String tagValue = id.getTag(tagKey);
             if (tagValue != null) {
-                hierarchicalName.append(convention.tagValue(tagValue)).append(".");
+                hierarchicalName.append(convention.tagValue(tagValue)).append('.');
             }
         }
         hierarchicalName.append(id.getConventionName(convention));
