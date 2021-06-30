@@ -37,13 +37,13 @@ public class DefaultMongoCommandTagsProvider implements MongoCommandTagsProvider
     // The following is all related to extracting collection name
     private final MongoCommandUtil mongoCommandUtil = new MongoCommandUtil();
 
-    private final ConcurrentHashMap<Integer, String> collectionNamesCache = new ConcurrentHashMap<>();
+    private final ConcurrentHashMap<Integer, String> inFlightCommandCollectionNames = new ConcurrentHashMap<>();
 
     @Override
     public Iterable<Tag> commandTags(CommandEvent event) {
         return Tags.of(
                 Tag.of("command", event.getCommandName()),
-                Tag.of("collection", removeCollectionNameFromCache(event)),
+                Tag.of("collection", getAndRemoveCollectionNameForCommand(event)),
                 Tag.of("cluster.id", event.getConnectionDescription().getConnectionId().getServerId().getClusterId().getValue()),
                 Tag.of("server.address", event.getConnectionDescription().getServerAddress().toString()),
                 Tag.of("status", (event instanceof CommandSucceededEvent) ? "SUCCESS" : "FAILED"));
@@ -52,20 +52,20 @@ public class DefaultMongoCommandTagsProvider implements MongoCommandTagsProvider
     @Override
     public void commandStarted(CommandStartedEvent event) {
         mongoCommandUtil.determineCollectionName(event.getCommandName(), event.getCommand())
-                .ifPresent(collectionName -> addCollectionNameToCache(event, collectionName));
+                .ifPresent(collectionName -> addCollectionNameForCommand(event, collectionName));
     }
 
-    private void addCollectionNameToCache(CommandEvent event, String collectionName) {
-        if (collectionNamesCache.size() < 1000) {
-            collectionNamesCache.put(event.getRequestId(), collectionName);
+    private void addCollectionNameForCommand(CommandEvent event, String collectionName) {
+        if (inFlightCommandCollectionNames.size() < 1000) {
+            inFlightCommandCollectionNames.put(event.getRequestId(), collectionName);
             return;
         }
         // Cache over capacity
         WARN_THEN_DEBUG_LOGGER.log("Collection names cache is full - Mongo is not calling listeners properly");
     }
 
-    private String removeCollectionNameFromCache(CommandEvent event) {
-        String collectionName = collectionNamesCache.remove(event.getRequestId());
+    private String getAndRemoveCollectionNameForCommand(CommandEvent event) {
+        String collectionName = inFlightCommandCollectionNames.remove(event.getRequestId());
         return collectionName != null ? collectionName : "unknown";
     }
 }
