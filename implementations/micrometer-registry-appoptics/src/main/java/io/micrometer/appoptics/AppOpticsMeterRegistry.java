@@ -267,7 +267,7 @@ public class AppOpticsMeterRegistry extends StepMeterRegistry {
             // appoptics requires at least one tag for every metric, so we hang something here that may be useful.
             sb.append("\"_type\":\"").append(type).append('"');
             if (!tags.isEmpty())
-                sb.append(",");
+                sb.append(',');
         }
 
         if (!tags.isEmpty()) {
