@@ -205,18 +205,19 @@ public class DynatraceExporterV1 extends AbstractDynatraceExporter {
                     .withJsonContent(customMetric.asJson())
                     .send()
                     .onSuccess(response -> {
-                        logger.debug("created {} as custom metric in dynatrace", customMetric.getMetricId());
+                        logger.debug("created {} as custom metric in Dynatrace", customMetric.getMetricId());
                         createdCustomMetrics.add(customMetric.getMetricId());
                     })
                     .onError(response ->
-                            logger.error("failed to create custom metric {} in dynatrace: {}",
+                            logger.error("failed to create custom metric {} in Dynatrace: Error Code={}, Response Body={}",
                                     customMetric.getMetricId(),
+                                    response.code(),
                                     response.body()
                             )
                     );
         } catch (Throwable e) {
             if (logger.isErrorEnabled()) {
-                logger.error("failed to create custom metric in dynatrace: " + customMetric.getMetricId(), e);
+                logger.error("failed to create custom metric in Dynatrace: " + customMetric.getMetricId(), e);
             }
         }
     }
@@ -234,12 +235,12 @@ public class DynatraceExporterV1 extends AbstractDynatraceExporter {
                             }
                         })
                         .onError(response -> {
-                            logger.error("failed to send metrics to dynatrace: {}", response.body());
+                            logger.error("failed to send metrics to Dynatrace: Error Code={}, Response Body={}", response.code(), response.body());
                             logger.debug("failed metrics payload: {}", postMessage.payload);
                         });
             }
         } catch (Throwable e) {
-            logger.error("failed to send metrics to dynatrace", e);
+            logger.error("failed to send metrics to Dynatrace", e);
         }
     }
 
