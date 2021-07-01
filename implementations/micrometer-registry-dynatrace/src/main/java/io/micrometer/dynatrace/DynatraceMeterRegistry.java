@@ -24,8 +24,8 @@ import io.micrometer.core.instrument.util.StringUtils;
 import io.micrometer.core.ipc.http.HttpSender;
 import io.micrometer.core.ipc.http.HttpUrlConnectionSender;
 import io.micrometer.core.lang.Nullable;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import io.micrometer.core.util.internal.logging.InternalLogger;
+import io.micrometer.core.util.internal.logging.InternalLoggerFactory;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -53,7 +53,7 @@ import static java.nio.charset.StandardCharsets.UTF_8;
 public class DynatraceMeterRegistry extends StepMeterRegistry {
     private static final ThreadFactory DEFAULT_THREAD_FACTORY = new NamedThreadFactory("dynatrace-metrics-publisher");
     private static final int MAX_MESSAGE_SIZE = 15360; //max message size in bytes that Dynatrace will accept
-    private final Logger logger = LoggerFactory.getLogger(DynatraceMeterRegistry.class);
+    private final InternalLogger logger = InternalLoggerFactory.getInstance(DynatraceMeterRegistry.class);
     private final DynatraceConfig config;
     private final HttpSender httpClient;
 
