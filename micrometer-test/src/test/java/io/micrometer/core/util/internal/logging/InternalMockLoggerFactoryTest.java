@@ -72,4 +72,18 @@ class InternalMockLoggerFactoryTest {
 
         assertThat(logger01).isNotSameAs(logger02);
     }
+
+    @Test
+    void shouldBeAbleToInjectAMockedLogger() {
+        TestComponentWithLogger component = FACTORY.injectLogger(TestComponentWithLogger::new);
+        assertThat(component.getLogger()).isSameAs(FACTORY.getLogger(TestComponentWithLogger.class));
+    }
+
+    private static class TestComponentWithLogger {
+        private final InternalLogger logger = InternalLoggerFactory.getInstance(TestComponentWithLogger.class);
+
+        private InternalLogger getLogger() {
+            return this.logger;
+        }
+    }
 }
