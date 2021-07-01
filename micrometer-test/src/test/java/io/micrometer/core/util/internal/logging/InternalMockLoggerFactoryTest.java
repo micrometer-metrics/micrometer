@@ -15,7 +15,6 @@
  */
 package io.micrometer.core.util.internal.logging;
 
-import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -24,19 +23,11 @@ import static org.assertj.core.api.Assertions.assertThat;
  * @author Jonatan Ivanov
  */
 class InternalMockLoggerFactoryTest {
-    @BeforeAll
-    static void setUpClass() {
-        InternalLoggerFactory.setDefaultFactory(new InternalMockLoggerFactory());
-    }
-
-    @Test
-    void defaultFactoryShouldBeInternalMockLoggerFactory() {
-        assertThat(InternalLoggerFactory.getDefaultFactory()).isInstanceOf(InternalMockLoggerFactory.class);
-    }
+    private static final InternalMockLoggerFactory FACTORY = new InternalMockLoggerFactory();
 
     @Test
     void shouldGiveTheRightLoggerByName() {
-        InternalLogger logger = InternalLoggerFactory.getInstance("testLogger");
+        InternalLogger logger = getInstance("testLogger");
 
         assertThat(logger).isInstanceOf(InternalMockLogger.class);
         assertThat(logger.name()).isEqualTo("testLogger");
@@ -44,7 +35,7 @@ class InternalMockLoggerFactoryTest {
 
     @Test
     void shouldGiveTheRightLoggerByClassName() {
-        InternalLogger logger = InternalLoggerFactory.getInstance(InternalMockLoggerFactoryTest.class);
+        InternalLogger logger = getInstance(InternalMockLoggerFactoryTest.class);
 
         assertThat(logger).isInstanceOf(InternalMockLogger.class);
         assertThat(logger.name()).isEqualTo(InternalMockLoggerFactoryTest.class.getName());
@@ -52,33 +43,41 @@ class InternalMockLoggerFactoryTest {
 
     @Test
     void shouldGiveTheSameLoggerForTheSameName() {
-        InternalLogger logger01 = InternalLoggerFactory.getInstance("testLogger");
-        InternalLogger logger02 = InternalLoggerFactory.getInstance("testLogger");
+        InternalLogger logger01 = getInstance("testLogger");
+        InternalLogger logger02 = getInstance("testLogger");
 
         assertThat(logger01).isSameAs(logger02);
     }
 
     @Test
     void shouldGiveTheSameLoggerForTheSameClassName() {
-        InternalLogger logger01 = InternalLoggerFactory.getInstance(InternalMockLoggerFactoryTest.class);
-        InternalLogger logger02 = InternalLoggerFactory.getInstance(InternalMockLoggerFactoryTest.class);
+        InternalLogger logger01 = getInstance(InternalMockLoggerFactoryTest.class);
+        InternalLogger logger02 = getInstance(InternalMockLoggerFactoryTest.class);
 
         assertThat(logger01).isSameAs(logger02);
     }
 
     @Test
     void shouldGiveDifferentLoggersForDifferentNames() {
-        InternalLogger logger01 = InternalLoggerFactory.getInstance("testLogger");
-        InternalLogger logger02 = InternalLoggerFactory.getInstance("testLogger-2");
+        InternalLogger logger01 = getInstance("testLogger");
+        InternalLogger logger02 = getInstance("testLogger-2");
 
         assertThat(logger01).isNotSameAs(logger02);
     }
 
     @Test
     void shouldGiveDifferentLoggersForDifferentClassNames() {
-        InternalLogger logger01 = InternalLoggerFactory.getInstance(InternalMockLoggerFactoryTest.class);
-        InternalLogger logger02 = InternalLoggerFactory.getInstance(InternalMockLoggerFactory.class);
+        InternalLogger logger01 = getInstance(InternalMockLoggerFactoryTest.class);
+        InternalLogger logger02 = getInstance(InternalMockLoggerFactory.class);
 
         assertThat(logger01).isNotSameAs(logger02);
+    }
+
+    private InternalLogger getInstance(Class<?> clazz) {
+        return getInstance(clazz.getName());
+    }
+
+    private InternalLogger getInstance(String name) {
+        return FACTORY.newInstance(name);
     }
 }

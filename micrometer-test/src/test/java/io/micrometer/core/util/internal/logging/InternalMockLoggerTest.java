@@ -18,7 +18,6 @@ package io.micrometer.core.util.internal.logging;
 import java.io.IOException;
 
 import org.junit.jupiter.api.AfterEach;
-import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 
 import static io.micrometer.core.util.internal.logging.InternalLogLevel.DEBUG;
@@ -32,73 +31,67 @@ import static org.assertj.core.api.Assertions.assertThat;
  * @author Jonatan Ivanov
  */
 class InternalMockLoggerTest {
-    private static InternalMockLogger logger;
-
-    @BeforeAll
-    static void setUpClass() {
-        InternalLoggerFactory.setDefaultFactory(new InternalMockLoggerFactory());
-        logger = (InternalMockLogger) InternalLoggerFactory.getInstance("testLogger");
-    }
+    private static final InternalMockLogger LOGGER = (InternalMockLogger) new InternalMockLoggerFactory().newInstance("testLogger");
 
     @AfterEach
     void tearDown() {
-        logger.clear();
+        LOGGER.clear();
     }
 
     @Test
     void shouldHaveTheRightName() {
-        assertThat(logger.name()).isEqualTo("testLogger");
+        assertThat(LOGGER.name()).isEqualTo("testLogger");
     }
 
     @Test
     void shouldBeEmptyIfNeverUsed() {
-        assertThat(logger.getLogEvents()).isEmpty();
+        assertThat(LOGGER.getLogEvents()).isEmpty();
     }
 
     @Test
     void shouldBeEmptyAfterClear() {
-        logger.info("test event");
-        logger.error(new IOException("simulated"));
-        logger.clear();
-        assertThat(logger.getLogEvents()).isEmpty();
+        LOGGER.info("test event");
+        LOGGER.error(new IOException("simulated"));
+        LOGGER.clear();
+        assertThat(LOGGER.getLogEvents()).isEmpty();
     }
 
     @Test
     void everyLevelShouldBeEnabled() {
-        assertThat(logger.isTraceEnabled()).isTrue();
-        assertThat(logger.isDebugEnabled()).isTrue();
-        assertThat(logger.isInfoEnabled()).isTrue();
-        assertThat(logger.isWarnEnabled()).isTrue();
-        assertThat(logger.isErrorEnabled()).isTrue();
+        assertThat(LOGGER.isTraceEnabled()).isTrue();
+        assertThat(LOGGER.isDebugEnabled()).isTrue();
+        assertThat(LOGGER.isInfoEnabled()).isTrue();
+        assertThat(LOGGER.isWarnEnabled()).isTrue();
+        assertThat(LOGGER.isErrorEnabled()).isTrue();
 
-        assertThat(logger.isEnabled(TRACE)).isTrue();
-        assertThat(logger.isEnabled(DEBUG)).isTrue();
-        assertThat(logger.isEnabled(INFO)).isTrue();
-        assertThat(logger.isEnabled(WARN)).isTrue();
-        assertThat(logger.isEnabled(ERROR)).isTrue();
+        assertThat(LOGGER.isEnabled(TRACE)).isTrue();
+        assertThat(LOGGER.isEnabled(DEBUG)).isTrue();
+        assertThat(LOGGER.isEnabled(INFO)).isTrue();
+        assertThat(LOGGER.isEnabled(WARN)).isTrue();
+        assertThat(LOGGER.isEnabled(ERROR)).isTrue();
     }
 
     @Test
     void shouldContainTheRightEventsOnTraceLevel() {
         Throwable cause = new IOException("simulated");
 
-        logger.trace("test event 01");
-        assertThat(logger.getLogEvents()).hasSize(1);
+        LOGGER.trace("test event 01");
+        assertThat(LOGGER.getLogEvents()).hasSize(1);
 
-        logger.trace("test event {}", "02");
-        assertThat(logger.getLogEvents()).hasSize(2);
+        LOGGER.trace("test event {}", "02");
+        assertThat(LOGGER.getLogEvents()).hasSize(2);
 
-        logger.trace("test {} {}", "event", "03");
-        assertThat(logger.getLogEvents()).hasSize(3);
+        LOGGER.trace("test {} {}", "event", "03");
+        assertThat(LOGGER.getLogEvents()).hasSize(3);
 
-        logger.trace("test {} {} {}", "event", "04", "with varargs");
-        assertThat(logger.getLogEvents()).hasSize(4);
+        LOGGER.trace("test {} {} {}", "event", "04", "with varargs");
+        assertThat(LOGGER.getLogEvents()).hasSize(4);
 
-        logger.trace("test event 05", cause);
-        assertThat(logger.getLogEvents()).hasSize(5);
+        LOGGER.trace("test event 05", cause);
+        assertThat(LOGGER.getLogEvents()).hasSize(5);
 
-        logger.trace(cause);
-        assertThat(logger.getLogEvents()).hasSize(6);
+        LOGGER.trace(cause);
+        assertThat(LOGGER.getLogEvents()).hasSize(6);
 
         verifyStandardEvents(TRACE, cause);
     }
@@ -107,23 +100,23 @@ class InternalMockLoggerTest {
     void shouldContainTheRightEventsOnDebugLevel() {
         Throwable cause = new IOException("simulated");
 
-        logger.debug("test event 01");
-        assertThat(logger.getLogEvents()).hasSize(1);
+        LOGGER.debug("test event 01");
+        assertThat(LOGGER.getLogEvents()).hasSize(1);
 
-        logger.debug("test event {}", "02");
-        assertThat(logger.getLogEvents()).hasSize(2);
+        LOGGER.debug("test event {}", "02");
+        assertThat(LOGGER.getLogEvents()).hasSize(2);
 
-        logger.debug("test {} {}", "event", "03");
-        assertThat(logger.getLogEvents()).hasSize(3);
+        LOGGER.debug("test {} {}", "event", "03");
+        assertThat(LOGGER.getLogEvents()).hasSize(3);
 
-        logger.debug("test {} {} {}", "event", "04", "with varargs");
-        assertThat(logger.getLogEvents()).hasSize(4);
+        LOGGER.debug("test {} {} {}", "event", "04", "with varargs");
+        assertThat(LOGGER.getLogEvents()).hasSize(4);
 
-        logger.debug("test event 05", cause);
-        assertThat(logger.getLogEvents()).hasSize(5);
+        LOGGER.debug("test event 05", cause);
+        assertThat(LOGGER.getLogEvents()).hasSize(5);
 
-        logger.debug(cause);
-        assertThat(logger.getLogEvents()).hasSize(6);
+        LOGGER.debug(cause);
+        assertThat(LOGGER.getLogEvents()).hasSize(6);
 
         verifyStandardEvents(DEBUG, cause);
     }
@@ -132,23 +125,23 @@ class InternalMockLoggerTest {
     void shouldContainTheRightEventsOnInfoLevel() {
         Throwable cause = new IOException("simulated");
 
-        logger.info("test event 01");
-        assertThat(logger.getLogEvents()).hasSize(1);
+        LOGGER.info("test event 01");
+        assertThat(LOGGER.getLogEvents()).hasSize(1);
 
-        logger.info("test event {}", "02");
-        assertThat(logger.getLogEvents()).hasSize(2);
+        LOGGER.info("test event {}", "02");
+        assertThat(LOGGER.getLogEvents()).hasSize(2);
 
-        logger.info("test {} {}", "event", "03");
-        assertThat(logger.getLogEvents()).hasSize(3);
+        LOGGER.info("test {} {}", "event", "03");
+        assertThat(LOGGER.getLogEvents()).hasSize(3);
 
-        logger.info("test {} {} {}", "event", "04", "with varargs");
-        assertThat(logger.getLogEvents()).hasSize(4);
+        LOGGER.info("test {} {} {}", "event", "04", "with varargs");
+        assertThat(LOGGER.getLogEvents()).hasSize(4);
 
-        logger.info("test event 05", cause);
-        assertThat(logger.getLogEvents()).hasSize(5);
+        LOGGER.info("test event 05", cause);
+        assertThat(LOGGER.getLogEvents()).hasSize(5);
 
-        logger.info(cause);
-        assertThat(logger.getLogEvents()).hasSize(6);
+        LOGGER.info(cause);
+        assertThat(LOGGER.getLogEvents()).hasSize(6);
 
         verifyStandardEvents(INFO, cause);
     }
@@ -157,23 +150,23 @@ class InternalMockLoggerTest {
     void shouldContainTheRightEventsOnWarnLevel() {
         Throwable cause = new IOException("simulated");
 
-        logger.warn("test event 01");
-        assertThat(logger.getLogEvents()).hasSize(1);
+        LOGGER.warn("test event 01");
+        assertThat(LOGGER.getLogEvents()).hasSize(1);
 
-        logger.warn("test event {}", "02");
-        assertThat(logger.getLogEvents()).hasSize(2);
+        LOGGER.warn("test event {}", "02");
+        assertThat(LOGGER.getLogEvents()).hasSize(2);
 
-        logger.warn("test {} {}", "event", "03");
-        assertThat(logger.getLogEvents()).hasSize(3);
+        LOGGER.warn("test {} {}", "event", "03");
+        assertThat(LOGGER.getLogEvents()).hasSize(3);
 
-        logger.warn("test {} {} {}", "event", "04", "with varargs");
-        assertThat(logger.getLogEvents()).hasSize(4);
+        LOGGER.warn("test {} {} {}", "event", "04", "with varargs");
+        assertThat(LOGGER.getLogEvents()).hasSize(4);
 
-        logger.warn("test event 05", cause);
-        assertThat(logger.getLogEvents()).hasSize(5);
+        LOGGER.warn("test event 05", cause);
+        assertThat(LOGGER.getLogEvents()).hasSize(5);
 
-        logger.warn(cause);
-        assertThat(logger.getLogEvents()).hasSize(6);
+        LOGGER.warn(cause);
+        assertThat(LOGGER.getLogEvents()).hasSize(6);
 
         verifyStandardEvents(WARN, cause);
     }
@@ -182,23 +175,23 @@ class InternalMockLoggerTest {
     void shouldContainTheRightEventsOnErrorLevel() {
         Throwable cause = new IOException("simulated");
 
-        logger.error("test event 01");
-        assertThat(logger.getLogEvents()).hasSize(1);
+        LOGGER.error("test event 01");
+        assertThat(LOGGER.getLogEvents()).hasSize(1);
 
-        logger.error("test event {}", "02");
-        assertThat(logger.getLogEvents()).hasSize(2);
+        LOGGER.error("test event {}", "02");
+        assertThat(LOGGER.getLogEvents()).hasSize(2);
 
-        logger.error("test {} {}", "event", "03");
-        assertThat(logger.getLogEvents()).hasSize(3);
+        LOGGER.error("test {} {}", "event", "03");
+        assertThat(LOGGER.getLogEvents()).hasSize(3);
 
-        logger.error("test {} {} {}", "event", "04", "with varargs");
-        assertThat(logger.getLogEvents()).hasSize(4);
+        LOGGER.error("test {} {} {}", "event", "04", "with varargs");
+        assertThat(LOGGER.getLogEvents()).hasSize(4);
 
-        logger.error("test event 05", cause);
-        assertThat(logger.getLogEvents()).hasSize(5);
+        LOGGER.error("test event 05", cause);
+        assertThat(LOGGER.getLogEvents()).hasSize(5);
 
-        logger.error(cause);
-        assertThat(logger.getLogEvents()).hasSize(6);
+        LOGGER.error(cause);
+        assertThat(LOGGER.getLogEvents()).hasSize(6);
 
         verifyStandardEvents(ERROR, cause);
     }
@@ -207,52 +200,52 @@ class InternalMockLoggerTest {
     void shouldContainTheRightEvents() {
         Throwable cause = new IOException("simulated");
 
-        logger.log(INFO, "test event 01");
-        assertThat(logger.getLogEvents()).hasSize(1);
+        LOGGER.log(INFO, "test event 01");
+        assertThat(LOGGER.getLogEvents()).hasSize(1);
 
-        logger.log(INFO, "test event {}", "02");
-        assertThat(logger.getLogEvents()).hasSize(2);
+        LOGGER.log(INFO, "test event {}", "02");
+        assertThat(LOGGER.getLogEvents()).hasSize(2);
 
-        logger.log(INFO, "test {} {}", "event", "03");
-        assertThat(logger.getLogEvents()).hasSize(3);
+        LOGGER.log(INFO, "test {} {}", "event", "03");
+        assertThat(LOGGER.getLogEvents()).hasSize(3);
 
-        logger.log(INFO, "test {} {} {}", "event", "04", "with varargs");
-        assertThat(logger.getLogEvents()).hasSize(4);
+        LOGGER.log(INFO, "test {} {} {}", "event", "04", "with varargs");
+        assertThat(LOGGER.getLogEvents()).hasSize(4);
 
-        logger.log(INFO, "test event 05", cause);
-        assertThat(logger.getLogEvents()).hasSize(5);
+        LOGGER.log(INFO, "test event 05", cause);
+        assertThat(LOGGER.getLogEvents()).hasSize(5);
 
-        logger.log(INFO, cause);
-        assertThat(logger.getLogEvents()).hasSize(6);
+        LOGGER.log(INFO, cause);
+        assertThat(LOGGER.getLogEvents()).hasSize(6);
 
         verifyStandardEvents(INFO, cause);
     }
 
     private void verifyStandardEvents(InternalLogLevel level, Throwable cause) {
-        assertThat(logger.getLogEvents()).hasSize(6);
+        assertThat(LOGGER.getLogEvents()).hasSize(6);
 
-        assertThat(logger.getLogEvents().get(0).getLevel()).isSameAs(level);
-        assertThat(logger.getLogEvents().get(0).getMessage()).isEqualTo("test event 01");
-        assertThat(logger.getLogEvents().get(0).getCause()).isNull();
+        assertThat(LOGGER.getLogEvents().get(0).getLevel()).isSameAs(level);
+        assertThat(LOGGER.getLogEvents().get(0).getMessage()).isEqualTo("test event 01");
+        assertThat(LOGGER.getLogEvents().get(0).getCause()).isNull();
 
-        assertThat(logger.getLogEvents().get(1).getLevel()).isSameAs(level);
-        assertThat(logger.getLogEvents().get(1).getMessage()).isEqualTo("test event 02");
-        assertThat(logger.getLogEvents().get(1).getCause()).isNull();
+        assertThat(LOGGER.getLogEvents().get(1).getLevel()).isSameAs(level);
+        assertThat(LOGGER.getLogEvents().get(1).getMessage()).isEqualTo("test event 02");
+        assertThat(LOGGER.getLogEvents().get(1).getCause()).isNull();
 
-        assertThat(logger.getLogEvents().get(2).getLevel()).isSameAs(level);
-        assertThat(logger.getLogEvents().get(2).getMessage()).isEqualTo("test event 03");
-        assertThat(logger.getLogEvents().get(2).getCause()).isNull();
+        assertThat(LOGGER.getLogEvents().get(2).getLevel()).isSameAs(level);
+        assertThat(LOGGER.getLogEvents().get(2).getMessage()).isEqualTo("test event 03");
+        assertThat(LOGGER.getLogEvents().get(2).getCause()).isNull();
 
-        assertThat(logger.getLogEvents().get(3).getLevel()).isSameAs(level);
-        assertThat(logger.getLogEvents().get(3).getMessage()).isEqualTo("test event 04 with varargs");
-        assertThat(logger.getLogEvents().get(3).getCause()).isNull();
+        assertThat(LOGGER.getLogEvents().get(3).getLevel()).isSameAs(level);
+        assertThat(LOGGER.getLogEvents().get(3).getMessage()).isEqualTo("test event 04 with varargs");
+        assertThat(LOGGER.getLogEvents().get(3).getCause()).isNull();
 
-        assertThat(logger.getLogEvents().get(4).getLevel()).isSameAs(level);
-        assertThat(logger.getLogEvents().get(4).getMessage()).isEqualTo("test event 05");
-        assertThat(logger.getLogEvents().get(4).getCause()).isSameAs(cause);
+        assertThat(LOGGER.getLogEvents().get(4).getLevel()).isSameAs(level);
+        assertThat(LOGGER.getLogEvents().get(4).getMessage()).isEqualTo("test event 05");
+        assertThat(LOGGER.getLogEvents().get(4).getCause()).isSameAs(cause);
 
-        assertThat(logger.getLogEvents().get(5).getLevel()).isSameAs(level);
-        assertThat(logger.getLogEvents().get(5).getMessage()).isNull();
-        assertThat(logger.getLogEvents().get(5).getCause()).isSameAs(cause);
+        assertThat(LOGGER.getLogEvents().get(5).getLevel()).isSameAs(level);
+        assertThat(LOGGER.getLogEvents().get(5).getMessage()).isNull();
+        assertThat(LOGGER.getLogEvents().get(5).getCause()).isSameAs(cause);
     }
 }
