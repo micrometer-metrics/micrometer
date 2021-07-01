@@ -19,6 +19,11 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import io.micrometer.core.instrument.*;
 import io.micrometer.core.instrument.config.validate.ValidationException;
 import io.micrometer.core.ipc.http.HttpSender;
+import io.micrometer.core.util.internal.logging.InternalLoggerFactory;
+import io.micrometer.core.util.internal.logging.InternalMockLogger;
+import io.micrometer.core.util.internal.logging.InternalMockLoggerFactory;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 
 import java.io.IOException;
@@ -31,9 +36,14 @@ import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 import java.util.stream.Stream;
 
+import static io.micrometer.core.util.internal.logging.InternalLogLevel.DEBUG;
+import static io.micrometer.core.util.internal.logging.InternalLogLevel.ERROR;
 import static java.nio.charset.StandardCharsets.UTF_8;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import static org.mockito.ArgumentMatchers.isA;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.when;
 
 /**
  * Tests for {@link DynatraceMeterRegistry}.
@@ -41,6 +51,7 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
  * @author Johnny Lim
  */
 class DynatraceMeterRegistryTest {
+    private static InternalMockLogger mockLogger;
 
     private final DynatraceConfig config = new DynatraceConfig() {
         @Override
@@ -72,6 +83,17 @@ class DynatraceMeterRegistryTest {
             .build();
 
     private final ObjectMapper mapper = new ObjectMapper();
+
+    @BeforeAll
+    static void setUpClass() {
+        InternalLoggerFactory.setDefaultFactory(new InternalMockLoggerFactory());
+        mockLogger = (InternalMockLogger) InternalLoggerFactory.getInstance(DynatraceMeterRegistry.class);
+    }
+
+    @AfterEach
+    void tearDown() {
+        mockLogger.clear();
+    }
 
     @Test
     void constructorWhenUriIsMissingShouldThrowValidationException() {
@@ -314,6 +336,55 @@ class DynatraceMeterRegistryTest {
                 "{\"timeseriesId\":\"custom:my.distribution.summary.count\",\"dataPoints\":[[60001,3]]}",
                 "{\"timeseriesId\":\"custom:my.distribution.summary.avg\",\"dataPoints\":[[60001,2]]}",
                 "{\"timeseriesId\":\"custom:my.distribution.summary.max\",\"dataPoints\":[[60001,3]]}");
+    }
+
+    @Test
+    void failOnPutShouldHaveProperLogging() {
+        DynatraceMeterRegistry meterRegistry = DynatraceMeterRegistry.builder(config)
+                .clock(clock)
+                .httpClient(request -> new HttpSender.Response(500, "simulated"))
+                .build();
+
+        meterRegistry.gauge("my.gauge", 1d);
+        meterRegistry.publish();
+        Gauge gauge = meterRegistry.find("my.gauge").gauge();
+        assertThat(meterRegistry.writeMeter(gauge)).hasSize(1);
+
+        assertThat(mockLogger.getLogEvents()).hasSize(1);
+        assertThat(mockLogger.getLogEvents().get(0).getLevel()).isSameAs(ERROR);
+        assertThat(mockLogger.getLogEvents().get(0).getMessage()).isEqualTo("failed to create custom metric custom:my.gauge in dynatrace: simulated");
+        assertThat(mockLogger.getLogEvents().get(0).getCause()).isNull();
+    }
+
+    @Test
+    void failOnPostShouldHaveProperLogging() throws Throwable {
+        HttpSender httpClient = mock(HttpSender.class);
+        HttpSender.Request.Builder builder = HttpSender.Request.build("https://test", httpClient);
+        when(httpClient.put(isA(String.class))).thenReturn(builder);
+        when(httpClient.post(isA(String.class))).thenReturn(builder);
+        when(httpClient.send(isA(HttpSender.Request.class))).thenReturn(
+                new HttpSender.Response(200, null),
+                new HttpSender.Response(500, "simulated")
+        );
+
+        DynatraceMeterRegistry meterRegistry = DynatraceMeterRegistry.builder(config)
+                .clock(clock)
+                .httpClient(httpClient)
+                .build();
+
+        meterRegistry.gauge("my.gauge", 1d);
+        meterRegistry.publish();
+        Gauge gauge = meterRegistry.find("my.gauge").gauge();
+        assertThat(meterRegistry.writeMeter(gauge)).hasSize(1);
+
+        assertThat(mockLogger.getLogEvents()).hasSize(3);
+        assertThat(mockLogger.getLogEvents().get(0).getLevel()).isSameAs(DEBUG);
+        assertThat(mockLogger.getLogEvents().get(0).getMessage()).isEqualTo("created custom:my.gauge as custom metric in dynatrace");
+        assertThat(mockLogger.getLogEvents().get(0).getCause()).isNull();
+
+        assertThat(mockLogger.getLogEvents().get(1).getLevel()).isSameAs(ERROR);
+        assertThat(mockLogger.getLogEvents().get(1).getMessage()).isEqualTo("failed to send metrics to dynatrace: simulated");
+        assertThat(mockLogger.getLogEvents().get(1).getCause()).isNull();
     }
 
     private DynatraceTimeSeries createTimeSeriesWithDimensions(int numberOfDimensions) {
