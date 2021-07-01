@@ -256,7 +256,7 @@ public final class DynatraceExporterV2 extends AbstractDynatraceExporter {
     private void send(List<String> metricLines) {
         try {
             String body = String.join("\n", metricLines);
-            logger.debug("sending lines:\n{}", body);
+            logger.debug("Sending lines:\n{}", body);
 
             HttpSender.Request.Builder requestBuilder = httpClient.post(endpoint);
             if (!ignoreToken) {
@@ -268,9 +268,9 @@ public final class DynatraceExporterV2 extends AbstractDynatraceExporter {
                     .withPlainText(body)
                     .send()
                     .onSuccess(response -> handleSuccess(metricLines.size(), response))
-                    .onError(response -> logger.error("Failed metric ingestion. Error code={} response.body={}", response.code(), response.body()));
+                    .onError(response -> logger.error("Failed metric ingestion: Error Code={}, Response Body={}", response.code(), response.body()));
         } catch (Throwable throwable) {
-            logger.error("Failed metric ingestion: {}", throwable.getMessage());
+            logger.error("Failed metric ingestion: {}" + throwable.getMessage(), throwable);
         }
     }
 
@@ -290,7 +290,10 @@ public final class DynatraceExporterV2 extends AbstractDynatraceExporter {
             }
         } else {
             // common pitfall if URI is supplied in V1 format (without endpoint path)
-            logger.error("Expected status code 202, got {}. Did you specify the ingest path (e.g.: /api/v2/metrics/ingest)?", response.code());
+            logger.error("Expected status code 202, got {}.\nResponse Body={}\nDid you specify the ingest path (e.g.: /api/v2/metrics/ingest)?",
+                    response.code(),
+                    response.body()
+            );
         }
     }
 
