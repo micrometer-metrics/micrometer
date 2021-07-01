@@ -80,7 +80,7 @@ class InternalMockLoggerFactoryTest {
     }
 
     private static class TestComponentWithLogger {
-        private final InternalLogger logger =  InternalLoggerFactory.getInstance(TestComponentWithLogger.class);
+        private final InternalLogger logger = InternalLoggerFactory.getInstance(TestComponentWithLogger.class);
 
         private InternalLogger getLogger() {
             return this.logger;
