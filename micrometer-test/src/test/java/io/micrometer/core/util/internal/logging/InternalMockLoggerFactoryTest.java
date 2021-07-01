@@ -27,7 +27,7 @@ class InternalMockLoggerFactoryTest {
 
     @Test
     void shouldGiveTheRightLoggerByName() {
-        InternalLogger logger = getInstance("testLogger");
+        InternalLogger logger = FACTORY.getLogger("testLogger");
 
         assertThat(logger).isInstanceOf(InternalMockLogger.class);
         assertThat(logger.name()).isEqualTo("testLogger");
@@ -35,7 +35,7 @@ class InternalMockLoggerFactoryTest {
 
     @Test
     void shouldGiveTheRightLoggerByClassName() {
-        InternalLogger logger = getInstance(InternalMockLoggerFactoryTest.class);
+        InternalLogger logger = FACTORY.getLogger(InternalMockLoggerFactoryTest.class);
 
         assertThat(logger).isInstanceOf(InternalMockLogger.class);
         assertThat(logger.name()).isEqualTo(InternalMockLoggerFactoryTest.class.getName());
@@ -43,41 +43,33 @@ class InternalMockLoggerFactoryTest {
 
     @Test
     void shouldGiveTheSameLoggerForTheSameName() {
-        InternalLogger logger01 = getInstance("testLogger");
-        InternalLogger logger02 = getInstance("testLogger");
+        InternalLogger logger01 = FACTORY.getLogger("testLogger");
+        InternalLogger logger02 = FACTORY.getLogger("testLogger");
 
         assertThat(logger01).isSameAs(logger02);
     }
 
     @Test
     void shouldGiveTheSameLoggerForTheSameClassName() {
-        InternalLogger logger01 = getInstance(InternalMockLoggerFactoryTest.class);
-        InternalLogger logger02 = getInstance(InternalMockLoggerFactoryTest.class);
+        InternalLogger logger01 = FACTORY.getLogger(InternalMockLoggerFactoryTest.class);
+        InternalLogger logger02 = FACTORY.getLogger(InternalMockLoggerFactoryTest.class);
 
         assertThat(logger01).isSameAs(logger02);
     }
 
     @Test
     void shouldGiveDifferentLoggersForDifferentNames() {
-        InternalLogger logger01 = getInstance("testLogger");
-        InternalLogger logger02 = getInstance("testLogger-2");
+        InternalLogger logger01 = FACTORY.getLogger("testLogger");
+        InternalLogger logger02 = FACTORY.getLogger("testLogger-2");
 
         assertThat(logger01).isNotSameAs(logger02);
     }
 
     @Test
     void shouldGiveDifferentLoggersForDifferentClassNames() {
-        InternalLogger logger01 = getInstance(InternalMockLoggerFactoryTest.class);
-        InternalLogger logger02 = getInstance(InternalMockLoggerFactory.class);
+        InternalLogger logger01 = FACTORY.getLogger(InternalMockLoggerFactoryTest.class);
+        InternalLogger logger02 = FACTORY.getLogger(InternalMockLoggerFactory.class);
 
         assertThat(logger01).isNotSameAs(logger02);
-    }
-
-    private InternalLogger getInstance(Class<?> clazz) {
-        return getInstance(clazz.getName());
-    }
-
-    private InternalLogger getInstance(String name) {
-        return FACTORY.newInstance(name);
     }
 }
