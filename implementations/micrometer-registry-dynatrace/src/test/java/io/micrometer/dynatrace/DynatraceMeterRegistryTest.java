@@ -352,7 +352,7 @@ class DynatraceMeterRegistryTest {
 
         assertThat(mockLogger.getLogEvents()).hasSize(1);
         assertThat(mockLogger.getLogEvents().get(0).getLevel()).isSameAs(ERROR);
-        assertThat(mockLogger.getLogEvents().get(0).getMessage()).isEqualTo("failed to create custom metric custom:my.gauge in dynatrace: simulated");
+        assertThat(mockLogger.getLogEvents().get(0).getMessage()).isEqualTo("failed to create custom metric custom:my.gauge in Dynatrace: Error Code=500, Response Body=simulated");
         assertThat(mockLogger.getLogEvents().get(0).getCause()).isNull();
     }
 
@@ -379,11 +379,11 @@ class DynatraceMeterRegistryTest {
 
         assertThat(mockLogger.getLogEvents()).hasSize(3);
         assertThat(mockLogger.getLogEvents().get(0).getLevel()).isSameAs(DEBUG);
-        assertThat(mockLogger.getLogEvents().get(0).getMessage()).isEqualTo("created custom:my.gauge as custom metric in dynatrace");
+        assertThat(mockLogger.getLogEvents().get(0).getMessage()).isEqualTo("created custom:my.gauge as custom metric in Dynatrace");
         assertThat(mockLogger.getLogEvents().get(0).getCause()).isNull();
 
         assertThat(mockLogger.getLogEvents().get(1).getLevel()).isSameAs(ERROR);
-        assertThat(mockLogger.getLogEvents().get(1).getMessage()).isEqualTo("failed to send metrics to dynatrace: simulated");
+        assertThat(mockLogger.getLogEvents().get(1).getMessage()).isEqualTo("failed to send metrics to Dynatrace: Error Code=500, Response Body=simulated");
         assertThat(mockLogger.getLogEvents().get(1).getCause()).isNull();
     }
 
