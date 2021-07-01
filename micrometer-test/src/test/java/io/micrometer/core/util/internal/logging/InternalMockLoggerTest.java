@@ -31,7 +31,7 @@ import static org.assertj.core.api.Assertions.assertThat;
  * @author Jonatan Ivanov
  */
 class InternalMockLoggerTest {
-    private static final InternalMockLogger LOGGER = (InternalMockLogger) new InternalMockLoggerFactory().newInstance("testLogger");
+    private static final InternalMockLogger LOGGER = new InternalMockLoggerFactory().getLogger("testLogger");
 
     @AfterEach
     void tearDown() {

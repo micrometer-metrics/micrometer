@@ -25,10 +25,18 @@ import java.util.concurrent.ConcurrentHashMap;
  * @author Jonatan Ivanov
  */
 public class InternalMockLoggerFactory extends InternalLoggerFactory {
-    private final ConcurrentHashMap<String, InternalLogger> loggers = new ConcurrentHashMap<>();
+    private final ConcurrentHashMap<String, InternalMockLogger> loggers = new ConcurrentHashMap<>();
+
+    public InternalMockLogger getLogger(Class<?> clazz) {
+        return getLogger(clazz.getName());
+    }
+
+    public InternalMockLogger getLogger(String name) {
+        return loggers.computeIfAbsent(name, InternalMockLogger::new);
+    }
 
     @Override
     protected InternalLogger newInstance(String name) {
-        return loggers.computeIfAbsent(name, InternalMockLogger::new);
+        return getLogger(name);
     }
 }
