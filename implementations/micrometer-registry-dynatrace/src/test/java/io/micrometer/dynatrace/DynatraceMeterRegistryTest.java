@@ -19,11 +19,9 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import io.micrometer.core.instrument.*;
 import io.micrometer.core.instrument.config.validate.ValidationException;
 import io.micrometer.core.ipc.http.HttpSender;
-import io.micrometer.core.util.internal.logging.InternalLoggerFactory;
 import io.micrometer.core.util.internal.logging.InternalMockLogger;
 import io.micrometer.core.util.internal.logging.InternalMockLoggerFactory;
 import org.junit.jupiter.api.AfterEach;
-import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 
 import java.io.IOException;
@@ -51,7 +49,8 @@ import static org.mockito.Mockito.when;
  * @author Johnny Lim
  */
 class DynatraceMeterRegistryTest {
-    private static InternalMockLogger mockLogger;
+    private static final InternalMockLoggerFactory FACTORY = new InternalMockLoggerFactory();
+    private static final InternalMockLogger LOGGER = FACTORY.getLogger(DynatraceMeterRegistry.class);
 
     private final DynatraceConfig config = new DynatraceConfig() {
         @Override
@@ -77,22 +76,14 @@ class DynatraceMeterRegistryTest {
 
     private final MockClock clock = new MockClock();
 
-    private final DynatraceMeterRegistry meterRegistry = DynatraceMeterRegistry.builder(config)
-            .clock(clock)
-            .httpClient(request -> new HttpSender.Response(200, null))
-            .build();
+    private final HttpSender httpClient = request -> new HttpSender.Response(200, null);
+    private final DynatraceMeterRegistry meterRegistry = FACTORY.injectLogger(() -> createRegistry(httpClient));
 
     private final ObjectMapper mapper = new ObjectMapper();
 
-    @BeforeAll
-    static void setUpClass() {
-        InternalLoggerFactory.setDefaultFactory(new InternalMockLoggerFactory());
-        mockLogger = (InternalMockLogger) InternalLoggerFactory.getInstance(DynatraceMeterRegistry.class);
-    }
-
     @AfterEach
     void tearDown() {
-        mockLogger.clear();
+        LOGGER.clear();
     }
 
     @Test
@@ -340,20 +331,18 @@ class DynatraceMeterRegistryTest {
 
     @Test
     void failOnPutShouldHaveProperLogging() {
-        DynatraceMeterRegistry meterRegistry = DynatraceMeterRegistry.builder(config)
-                .clock(clock)
-                .httpClient(request -> new HttpSender.Response(500, "simulated"))
-                .build();
+        HttpSender httpClient = request -> new HttpSender.Response(500, "simulated");
+        DynatraceMeterRegistry meterRegistry = FACTORY.injectLogger(() -> createRegistry(httpClient));
 
         meterRegistry.gauge("my.gauge", 1d);
         meterRegistry.publish();
         Gauge gauge = meterRegistry.find("my.gauge").gauge();
         assertThat(meterRegistry.writeMeter(gauge)).hasSize(1);
 
-        assertThat(mockLogger.getLogEvents()).hasSize(1);
-        assertThat(mockLogger.getLogEvents().get(0).getLevel()).isSameAs(ERROR);
-        assertThat(mockLogger.getLogEvents().get(0).getMessage()).isEqualTo("failed to create custom metric custom:my.gauge in Dynatrace: Error Code=500, Response Body=simulated");
-        assertThat(mockLogger.getLogEvents().get(0).getCause()).isNull();
+        assertThat(LOGGER.getLogEvents()).hasSize(1);
+        assertThat(LOGGER.getLogEvents().get(0).getLevel()).isSameAs(ERROR);
+        assertThat(LOGGER.getLogEvents().get(0).getMessage()).isEqualTo("failed to create custom metric custom:my.gauge in Dynatrace: Error Code=500, Response Body=simulated");
+        assertThat(LOGGER.getLogEvents().get(0).getCause()).isNull();
     }
 
     @Test
@@ -367,24 +356,28 @@ class DynatraceMeterRegistryTest {
                 new HttpSender.Response(500, "simulated")
         );
 
-        DynatraceMeterRegistry meterRegistry = DynatraceMeterRegistry.builder(config)
-                .clock(clock)
-                .httpClient(httpClient)
-                .build();
+        DynatraceMeterRegistry meterRegistry = FACTORY.injectLogger(() -> createRegistry(httpClient));
 
         meterRegistry.gauge("my.gauge", 1d);
         meterRegistry.publish();
         Gauge gauge = meterRegistry.find("my.gauge").gauge();
         assertThat(meterRegistry.writeMeter(gauge)).hasSize(1);
 
-        assertThat(mockLogger.getLogEvents()).hasSize(3);
-        assertThat(mockLogger.getLogEvents().get(0).getLevel()).isSameAs(DEBUG);
-        assertThat(mockLogger.getLogEvents().get(0).getMessage()).isEqualTo("created custom:my.gauge as custom metric in Dynatrace");
-        assertThat(mockLogger.getLogEvents().get(0).getCause()).isNull();
+        assertThat(LOGGER.getLogEvents()).hasSize(3);
+        assertThat(LOGGER.getLogEvents().get(0).getLevel()).isSameAs(DEBUG);
+        assertThat(LOGGER.getLogEvents().get(0).getMessage()).isEqualTo("created custom:my.gauge as custom metric in Dynatrace");
+        assertThat(LOGGER.getLogEvents().get(0).getCause()).isNull();
 
-        assertThat(mockLogger.getLogEvents().get(1).getLevel()).isSameAs(ERROR);
-        assertThat(mockLogger.getLogEvents().get(1).getMessage()).isEqualTo("failed to send metrics to Dynatrace: Error Code=500, Response Body=simulated");
-        assertThat(mockLogger.getLogEvents().get(1).getCause()).isNull();
+        assertThat(LOGGER.getLogEvents().get(1).getLevel()).isSameAs(ERROR);
+        assertThat(LOGGER.getLogEvents().get(1).getMessage()).isEqualTo("failed to send metrics to Dynatrace: Error Code=500, Response Body=simulated");
+        assertThat(LOGGER.getLogEvents().get(1).getCause()).isNull();
+    }
+
+    private DynatraceMeterRegistry createRegistry(HttpSender httpClient) {
+        return DynatraceMeterRegistry.builder(config)
+                .clock(clock)
+                .httpClient(httpClient)
+                .build();
     }
 
     private DynatraceTimeSeries createTimeSeriesWithDimensions(int numberOfDimensions) {
@@ -409,5 +402,4 @@ class DynatraceMeterRegistryTest {
             return false;
         }
     }
-
 }
