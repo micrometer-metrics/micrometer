@@ -215,8 +215,10 @@ public class DynatraceMeterRegistry extends StepMeterRegistry {
                         createdCustomMetrics.add(customMetric.getMetricId());
                     })
                     .onError(response ->
-                        logger.error("failed to create custom metric {} in dynatrace: {}",
+                        logger.error("failed to create custom metric {} in Dynatrace. " +
+                                        "Error code={}, Response body={}",
                                 customMetric.getMetricId(),
+                                response.code(),
                                 response.body()
                         )
                     );
@@ -240,7 +242,8 @@ public class DynatraceMeterRegistry extends StepMeterRegistry {
                             }
                         })
                         .onError(response -> {
-                            logger.error("failed to send metrics to dynatrace: {}", response.body());
+                            logger.error("failed to send metrics to Dynatrace. " +
+                                    "Error code={}, Response body={}", response.code(), response.body());
                             logger.debug("failed metrics payload: {}", postMessage.payload);
                         });
             }
