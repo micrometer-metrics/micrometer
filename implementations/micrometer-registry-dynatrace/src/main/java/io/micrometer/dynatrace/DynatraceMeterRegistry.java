@@ -24,10 +24,10 @@ import io.micrometer.core.instrument.step.StepMeterRegistry;
 import io.micrometer.core.instrument.util.NamedThreadFactory;
 import io.micrometer.core.ipc.http.HttpSender;
 import io.micrometer.core.ipc.http.HttpUrlConnectionSender;
+import io.micrometer.core.util.internal.logging.InternalLogger;
+import io.micrometer.core.util.internal.logging.InternalLoggerFactory;
 import io.micrometer.dynatrace.v1.DynatraceExporterV1;
 import io.micrometer.dynatrace.v2.DynatraceExporterV2;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import java.util.Arrays;
 import java.util.Set;
@@ -51,7 +51,7 @@ import static io.micrometer.core.instrument.config.MeterFilterReply.NEUTRAL;
  */
 public class DynatraceMeterRegistry extends StepMeterRegistry {
     private static final ThreadFactory DEFAULT_THREAD_FACTORY = new NamedThreadFactory("dynatrace-metrics-publisher");
-    private static final Logger logger = LoggerFactory.getLogger(DynatraceMeterRegistry.class);
+    private static final InternalLogger logger = InternalLoggerFactory.getInstance(DynatraceMeterRegistry.class);
 
     private final AbstractDynatraceExporter exporter;
 

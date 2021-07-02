@@ -19,9 +19,12 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import io.micrometer.core.instrument.*;
 import io.micrometer.core.instrument.config.validate.ValidationException;
 import io.micrometer.core.ipc.http.HttpSender;
+import io.micrometer.core.util.internal.logging.InternalMockLogger;
+import io.micrometer.core.util.internal.logging.InternalMockLoggerFactory;
 import io.micrometer.dynatrace.DynatraceApiVersion;
 import io.micrometer.dynatrace.DynatraceConfig;
 import io.micrometer.dynatrace.DynatraceMeterRegistry;
+import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Test;
 
 import java.io.IOException;
@@ -34,9 +37,14 @@ import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 import java.util.stream.Stream;
 
+import static io.micrometer.core.util.internal.logging.InternalLogLevel.DEBUG;
+import static io.micrometer.core.util.internal.logging.InternalLogLevel.ERROR;
 import static java.nio.charset.StandardCharsets.UTF_8;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import static org.mockito.ArgumentMatchers.isA;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.when;
 
 /**
  * Tests for {@link DynatraceExporterV1}.
@@ -44,22 +52,26 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
  * @author Johnny Lim
  */
 class DynatraceExporterV1Test {
+    private static final InternalMockLoggerFactory FACTORY = new InternalMockLoggerFactory();
+    private static final InternalMockLogger LOGGER = FACTORY.getLogger(DynatraceExporterV1.class);
 
     private final DynatraceConfig config = createDynatraceConfig();
     private final MockClock clock = new MockClock();
 
-    private final DynatraceExporterV1 exporter = new DynatraceExporterV1(
-            config,
-            clock,
-            request -> new HttpSender.Response(200, null)
-    );
+    private final HttpSender httpClient = request -> new HttpSender.Response(200, null);
+    private final DynatraceExporterV1 exporter = FACTORY.injectLogger(() -> createExporter(httpClient));
 
     private final DynatraceMeterRegistry meterRegistry = DynatraceMeterRegistry.builder(config)
             .clock(clock)
-            .httpClient(request -> new HttpSender.Response(200, null))
+            .httpClient(httpClient)
             .build();
 
     private final ObjectMapper mapper = new ObjectMapper();
+
+    @AfterEach
+    void tearDown() {
+        LOGGER.clear();
+    }
 
     @Test
     void constructorWhenUriIsMissingShouldThrowValidationException() {
@@ -302,6 +314,52 @@ class DynatraceExporterV1Test {
                 "{\"timeseriesId\":\"custom:my.distribution.summary.count\",\"dataPoints\":[[60001,3]]}",
                 "{\"timeseriesId\":\"custom:my.distribution.summary.avg\",\"dataPoints\":[[60001,2]]}",
                 "{\"timeseriesId\":\"custom:my.distribution.summary.max\",\"dataPoints\":[[60001,3]]}");
+    }
+
+    @Test
+    void failOnPutShouldHaveProperLogging() {
+        HttpSender httpClient = request -> new HttpSender.Response(500, "simulated");
+        DynatraceExporterV1 exporter = FACTORY.injectLogger(() -> createExporter(httpClient));
+
+        meterRegistry.gauge("my.gauge", 1d);
+        Gauge gauge = meterRegistry.find("my.gauge").gauge();
+        exporter.export(Collections.singletonList(gauge));
+
+        assertThat(LOGGER.getLogEvents()).hasSize(1);
+        assertThat(LOGGER.getLogEvents().get(0).getLevel()).isSameAs(ERROR);
+        assertThat(LOGGER.getLogEvents().get(0).getMessage()).isEqualTo("failed to create custom metric custom:my.gauge in Dynatrace: Error Code=500, Response Body=simulated");
+        assertThat(LOGGER.getLogEvents().get(0).getCause()).isNull();
+    }
+
+    @Test
+    void failOnPostShouldHaveProperLogging() throws Throwable {
+        HttpSender httpClient = mock(HttpSender.class);
+        HttpSender.Request.Builder builder = HttpSender.Request.build("https://test", httpClient);
+        when(httpClient.put(isA(String.class))).thenReturn(builder);
+        when(httpClient.post(isA(String.class))).thenReturn(builder);
+        when(httpClient.send(isA(HttpSender.Request.class))).thenReturn(
+                new HttpSender.Response(200, null),
+                new HttpSender.Response(500, "simulated")
+        );
+
+        DynatraceExporterV1 exporter = FACTORY.injectLogger(() -> createExporter(httpClient));
+
+        meterRegistry.gauge("my.gauge", 1d);
+        Gauge gauge = meterRegistry.find("my.gauge").gauge();
+        exporter.export(Collections.singletonList(gauge));
+
+        assertThat(LOGGER.getLogEvents()).hasSize(3);
+        assertThat(LOGGER.getLogEvents().get(0).getLevel()).isSameAs(DEBUG);
+        assertThat(LOGGER.getLogEvents().get(0).getMessage()).isEqualTo("created custom:my.gauge as custom metric in Dynatrace");
+        assertThat(LOGGER.getLogEvents().get(0).getCause()).isNull();
+
+        assertThat(LOGGER.getLogEvents().get(1).getLevel()).isSameAs(ERROR);
+        assertThat(LOGGER.getLogEvents().get(1).getMessage()).isEqualTo("failed to send metrics to Dynatrace: Error Code=500, Response Body=simulated");
+        assertThat(LOGGER.getLogEvents().get(1).getCause()).isNull();
+    }
+
+    private DynatraceExporterV1 createExporter(HttpSender httpClient) {
+        return new DynatraceExporterV1(config, clock, httpClient);
     }
 
     private DynatraceTimeSeries createTimeSeriesWithDimensions(int numberOfDimensions) {
