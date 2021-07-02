@@ -18,9 +18,13 @@ package io.micrometer.dynatrace.v2;
 
 import io.micrometer.core.instrument.*;
 import io.micrometer.core.ipc.http.HttpSender;
+import io.micrometer.core.util.internal.logging.InternalMockLogger;
+import io.micrometer.core.util.internal.logging.InternalMockLoggerFactory;
+import io.micrometer.core.util.internal.logging.LogEvent;
 import io.micrometer.dynatrace.DynatraceApiVersion;
 import io.micrometer.dynatrace.DynatraceConfig;
 import io.micrometer.dynatrace.DynatraceMeterRegistry;
+import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.ArgumentCaptor;
@@ -28,12 +32,14 @@ import org.mockito.ArgumentCaptor;
 import java.time.Duration;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.stream.Collectors;
 
 import static io.micrometer.core.instrument.MockClock.clock;
+import static io.micrometer.core.util.internal.logging.InternalLogLevel.ERROR;
 import static java.lang.Double.NaN;
 import static java.lang.Double.POSITIVE_INFINITY;
 import static java.lang.Double.NEGATIVE_INFINITY;
@@ -53,6 +59,9 @@ import static org.mockito.Mockito.when;
  * @author Jonatan Ivanov
  */
 class DynatraceExporterV2Test {
+    private static final InternalMockLoggerFactory FACTORY = new InternalMockLoggerFactory();
+    private static final InternalMockLogger LOGGER = FACTORY.getLogger(DynatraceExporterV2.class);
+
     private DynatraceConfig config;
     private MockClock clock;
     private HttpSender httpClient;
@@ -65,12 +74,17 @@ class DynatraceExporterV2Test {
         this.clock = new MockClock();
         this.clock.add(System.currentTimeMillis(), MILLISECONDS); // Set the clock to something recent so that the Dynatrace library will not complain.
         this.httpClient = mock(HttpSender.class);
+        this.exporter = FACTORY.injectLogger(() -> createExporter(httpClient));
+
         this.meterRegistry = DynatraceMeterRegistry.builder(config)
                 .clock(clock)
                 .httpClient(httpClient)
                 .build();
+    }
 
-        this.exporter = new DynatraceExporterV2(config, clock, httpClient);
+    @AfterEach
+    void tearDown() {
+        LOGGER.clear();
     }
 
     @Test
@@ -437,6 +451,23 @@ class DynatraceExporterV2Test {
                 .contains("my.counter,dt.metrics.source=micrometer count,delta=12.0 " + clock.wallTime())
                 .contains("my.gauge,dt.metrics.source=micrometer gauge,42.0 " + clock.wallTime())
                 .contains("my.timer,dt.metrics.source=micrometer gauge,min=22.0,max=22.0,sum=22.0,count=1 " + clock.wallTime());
+    }
+
+    @Test
+    void failOnSendShouldHaveProperLogging() throws Throwable {
+        HttpSender.Request.Builder builder = HttpSender.Request.build(config.uri(), httpClient);
+        when(httpClient.post(config.uri())).thenReturn(builder);
+        when(httpClient.send(isA(HttpSender.Request.class))).thenReturn(new HttpSender.Response(500, "simulated"));
+
+        meterRegistry.gauge("my.gauge", 1d);
+        Gauge gauge = meterRegistry.find("my.gauge").gauge();
+        exporter.export(Collections.singletonList(gauge));
+
+        assertThat(LOGGER.getLogEvents()).contains(new LogEvent(ERROR, "Failed metric ingestion: Error Code=500, Response Body=simulated", null));
+    }
+
+    private DynatraceExporterV2 createExporter(HttpSender httpClient) {
+        return new DynatraceExporterV2(config, clock, httpClient);
     }
 
     private DynatraceConfig createDefaultDynatraceConfig() {
