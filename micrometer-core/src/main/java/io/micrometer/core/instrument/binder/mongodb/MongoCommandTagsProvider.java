@@ -16,6 +16,7 @@
 package io.micrometer.core.instrument.binder.mongodb;
 
 import com.mongodb.event.CommandEvent;
+import com.mongodb.event.CommandStartedEvent;
 import io.micrometer.core.instrument.Tag;
 
 /**
@@ -28,9 +29,18 @@ import io.micrometer.core.instrument.Tag;
 public interface MongoCommandTagsProvider {
 
     /**
+     * Signals that a command has started and is a chance for implementations to prepare
+     * or do any necessary pre-processing.
+     *
+     * @param commandStartedEvent event representing the issued command
+     */
+    default void commandStarted(CommandStartedEvent commandStartedEvent) {
+    }
+
+    /**
      * Provides tags to be associated with metrics for the given Mongo command.
      *
-     * @param commandEvent the Mongo command
+     * @param commandEvent event representing the issued command
      * @return tags to associate with metrics recorded for the command
      */
     Iterable<Tag> commandTags(CommandEvent commandEvent);

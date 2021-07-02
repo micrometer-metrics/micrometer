@@ -81,6 +81,7 @@ class MongoMetricsCommandListenerTest extends AbstractMongoDbTest {
                 "cluster.id", clusterId.get(),
                 "server.address", String.format("%s:%s", HOST, port),
                 "command", "insert",
+                "collection", "testCol",
                 "status", "SUCCESS"
         );
         assertThat(registry.get("mongodb.driver.commands").tags(tags).timer().count()).isEqualTo(1);
@@ -96,6 +97,7 @@ class MongoMetricsCommandListenerTest extends AbstractMongoDbTest {
                 "cluster.id", clusterId.get(),
                 "server.address", String.format("%s:%s", HOST, port),
                 "command", "dropIndexes",
+                "collection", "testCol",
                 "status", "FAILED"
         );
         assertThat(registry.get("mongodb.driver.commands").tags(tags).timer().count()).isEqualTo(1);
@@ -128,6 +130,7 @@ class MongoMetricsCommandListenerTest extends AbstractMongoDbTest {
                     "cluster.id", clusterId.get(),
                     "server.address", String.format("%s:%s", HOST, port),
                     "command", "insert",
+                    "collection", "testCol",
                     "status", "SUCCESS",
                     "mongoz", "5150"
             );
@@ -162,6 +165,7 @@ class MongoMetricsCommandListenerTest extends AbstractMongoDbTest {
                     "cluster.id", clusterId.get(),
                     "server.address", String.format("%s:%s", HOST, port),
                     "command", "dropIndexes",
+                    "collection", "testCol",
                     "status", "FAILED",
                     "mongoz", "5150"
             );
