@@ -35,13 +35,15 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 /**
  * Unit test for {@link DefaultMongoCommandTagsProvider}.
+ *
+ * @author Chris Bono
  */
 class DefaultMongoCommandTagsProviderTest {
 
     private final ConnectionDescription connectionDesc = new ConnectionDescription(
             new ServerId(new ClusterId("cluster1"), new ServerAddress("localhost", 5150)));
 
-    private DefaultMongoCommandTagsProvider tagsProvider = new DefaultMongoCommandTagsProvider();
+    private final DefaultMongoCommandTagsProvider tagsProvider = new DefaultMongoCommandTagsProvider();
 
     @Test
     void defaultCommandTags() {
@@ -85,7 +87,7 @@ class DefaultMongoCommandTagsProviderTest {
         assertThat(tags).contains(Tag.of("collection", "unknown"));
     }
 
-    private CommandStartedEvent commandStartedEvent(final int requestId) {
+    private CommandStartedEvent commandStartedEvent(int requestId) {
         return new CommandStartedEvent(
                 requestId,
                 connectionDesc,
@@ -94,7 +96,7 @@ class DefaultMongoCommandTagsProviderTest {
                 new BsonDocument("find", new BsonString("collection-" + requestId)));
     }
 
-    private CommandSucceededEvent commandSucceededEvent(final int requestId) {
+    private CommandSucceededEvent commandSucceededEvent(int requestId) {
         return new CommandSucceededEvent(
                 requestId,
                 connectionDesc,
