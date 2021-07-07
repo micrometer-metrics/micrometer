@@ -33,6 +33,7 @@ public interface MongoCommandTagsProvider {
      * or do any necessary pre-processing.
      *
      * @param commandStartedEvent event representing the issued command
+     * @since 1.8.0
      */
     default void commandStarted(CommandStartedEvent commandStartedEvent) {
     }

@@ -20,6 +20,7 @@ import java.util.HashSet;
 import java.util.Optional;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ConcurrentMap;
 
 import com.mongodb.event.CommandEvent;
 import com.mongodb.event.CommandStartedEvent;
@@ -46,9 +47,9 @@ public class DefaultMongoCommandTagsProvider implements MongoCommandTagsProvider
             "insert", "update", "collMod", "compact", "convertToCapped", "create", "createIndexes", "drop",
             "dropIndexes", "killCursors", "listIndexes", "reIndex"));
 
-    private static final WarnThenDebugLogger WARN_THEN_DEBUG_LOGGER = new WarnThenDebugLogger(MongoMetricsCommandListener.class);
+    private static final WarnThenDebugLogger WARN_THEN_DEBUG_LOGGER = new WarnThenDebugLogger(DefaultMongoCommandTagsProvider.class);
 
-    private final ConcurrentHashMap<Integer, String> inFlightCommandCollectionNames = new ConcurrentHashMap<>();
+    private final ConcurrentMap<Integer, String> inFlightCommandCollectionNames = new ConcurrentHashMap<>();
 
     @Override
     public Iterable<Tag> commandTags(CommandEvent event) {
@@ -84,11 +85,11 @@ public class DefaultMongoCommandTagsProvider implements MongoCommandTagsProvider
      * Attempts to determine the name of the collection a command is operating on.
      *
      * <p>Because some commands either do not have collection info or it is problematic to determine the collection info,
-     * there is an allow list of command names {@link #COMMANDS_WITH_COLLECTION_NAME} used. If {@code commandName} is
+     * there is an allow list of command names {@code COMMANDS_WITH_COLLECTION_NAME} used. If {@code commandName} is
      * not in the allow list or there is no collection info in {@code command}, it will use the content of the
      * {@code 'collection'} field on {@code command}, if it exists.
      *
-     * <p>Taken from <a href="https://github.com/openzipkin/brave/blob/master/instrumentation/mongodb/src/main/java/brave/mongodb/TraceMongoCommandListener.java#L115>TraceMongoCommandListener.java</a>
+     * <p>Taken from <a href="https://github.com/openzipkin/brave/blob/master/instrumentation/mongodb/src/main/java/brave/mongodb/TraceMongoCommandListener.java#L115">TraceMongoCommandListener.java in Brave</a>
      *
      * @param commandName name of the mongo command
      * @param command mongo command object
