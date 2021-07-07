@@ -35,16 +35,16 @@ import java.util.function.Predicate;
 /**
  * <p>
  * Aspect responsible for intercepting all methods annotated with the {@link Counted @Counted}
- * annotation and recording a few counter metrics about their execution status.<br />
+ * annotation and recording a few counter metrics about their execution status.<br>
  * The aspect supports programmatic customizations through constructor-injectable custom logic.
  * </p>
  * <p>
- * You might want to add tags programmatically to the {@link Counter}.<br />
+ * You might want to add tags programmatically to the {@link Counter}.<br>
  * In this case, the tags provider function (<code>Function&lt;ProceedingJoinPoint, Iterable&lt;Tag&gt;&gt;</code>) can help.
  * It receives a {@link ProceedingJoinPoint} and returns the {@link Tag}s that will be attached to the {@link Counter}.
  * </p>
  * <p>
- * You might also want to skip the {@link Counter} creation programmatically.<br />
+ * You might also want to skip the {@link Counter} creation programmatically.<br>
  * One use-case can be having another component in your application that already processes the {@link Counted @Counted} annotation
  * in some cases so that {@code CountedAspect} should not intercept these methods.
  * By using the skip predicate (<code>Predicate&lt;ProceedingJoinPoint&gt;</code>)
