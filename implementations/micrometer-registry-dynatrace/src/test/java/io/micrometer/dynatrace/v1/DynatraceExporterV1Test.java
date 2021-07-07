@@ -19,8 +19,8 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import io.micrometer.core.instrument.*;
 import io.micrometer.core.instrument.config.validate.ValidationException;
 import io.micrometer.core.ipc.http.HttpSender;
-import io.micrometer.core.util.internal.logging.InternalMockLogger;
-import io.micrometer.core.util.internal.logging.InternalMockLoggerFactory;
+import io.micrometer.core.util.internal.logging.MockLogger;
+import io.micrometer.core.util.internal.logging.MockLoggerFactory;
 import io.micrometer.dynatrace.DynatraceApiVersion;
 import io.micrometer.dynatrace.DynatraceConfig;
 import io.micrometer.dynatrace.DynatraceMeterRegistry;
@@ -52,8 +52,8 @@ import static org.mockito.Mockito.when;
  * @author Johnny Lim
  */
 class DynatraceExporterV1Test {
-    private static final InternalMockLoggerFactory FACTORY = new InternalMockLoggerFactory();
-    private static final InternalMockLogger LOGGER = FACTORY.getLogger(DynatraceExporterV1.class);
+    private static final MockLoggerFactory FACTORY = new MockLoggerFactory();
+    private static final MockLogger LOGGER = FACTORY.getLogger(DynatraceExporterV1.class);
 
     private final DynatraceConfig config = createDynatraceConfig();
     private final MockClock clock = new MockClock();

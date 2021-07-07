@@ -18,9 +18,9 @@ package io.micrometer.dynatrace.v2;
 
 import io.micrometer.core.instrument.*;
 import io.micrometer.core.ipc.http.HttpSender;
-import io.micrometer.core.util.internal.logging.InternalMockLogger;
-import io.micrometer.core.util.internal.logging.InternalMockLoggerFactory;
 import io.micrometer.core.util.internal.logging.LogEvent;
+import io.micrometer.core.util.internal.logging.MockLogger;
+import io.micrometer.core.util.internal.logging.MockLoggerFactory;
 import io.micrometer.dynatrace.DynatraceApiVersion;
 import io.micrometer.dynatrace.DynatraceConfig;
 import io.micrometer.dynatrace.DynatraceMeterRegistry;
@@ -59,8 +59,8 @@ import static org.mockito.Mockito.when;
  * @author Jonatan Ivanov
  */
 class DynatraceExporterV2Test {
-    private static final InternalMockLoggerFactory FACTORY = new InternalMockLoggerFactory();
-    private static final InternalMockLogger LOGGER = FACTORY.getLogger(DynatraceExporterV2.class);
+    private static final MockLoggerFactory FACTORY = new MockLoggerFactory();
+    private static final MockLogger LOGGER = FACTORY.getLogger(DynatraceExporterV2.class);
 
     private DynatraceConfig config;
     private MockClock clock;
