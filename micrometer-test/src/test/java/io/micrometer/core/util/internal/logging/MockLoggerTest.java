@@ -30,8 +30,8 @@ import static org.assertj.core.api.Assertions.assertThat;
 /**
  * @author Jonatan Ivanov
  */
-class InternalMockLoggerTest {
-    private static final InternalMockLogger LOGGER = new InternalMockLoggerFactory().getLogger("testLogger");
+class MockLoggerTest {
+    private static final MockLogger LOGGER = new MockLoggerFactory().getLogger("testLogger");
 
     @AfterEach
     void tearDown() {
@@ -52,6 +52,7 @@ class InternalMockLoggerTest {
     void shouldBeEmptyAfterClear() {
         LOGGER.info("test event");
         LOGGER.error(new IOException("simulated"));
+        assertThat(LOGGER.getLogEvents()).hasSize(2);
         LOGGER.clear();
         assertThat(LOGGER.getLogEvents()).isEmpty();
     }
