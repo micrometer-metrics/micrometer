@@ -19,8 +19,8 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import io.micrometer.core.instrument.*;
 import io.micrometer.core.instrument.config.validate.ValidationException;
 import io.micrometer.core.ipc.http.HttpSender;
-import io.micrometer.core.util.internal.logging.InternalMockLogger;
-import io.micrometer.core.util.internal.logging.InternalMockLoggerFactory;
+import io.micrometer.core.util.internal.logging.MockLogger;
+import io.micrometer.core.util.internal.logging.MockLoggerFactory;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Test;
 
@@ -49,8 +49,8 @@ import static org.mockito.Mockito.when;
  * @author Johnny Lim
  */
 class DynatraceMeterRegistryTest {
-    private static final InternalMockLoggerFactory FACTORY = new InternalMockLoggerFactory();
-    private static final InternalMockLogger LOGGER = FACTORY.getLogger(DynatraceMeterRegistry.class);
+    private static final MockLoggerFactory FACTORY = new MockLoggerFactory();
+    private static final MockLogger LOGGER = FACTORY.getLogger(DynatraceMeterRegistry.class);
 
     private final DynatraceConfig config = new DynatraceConfig() {
         @Override

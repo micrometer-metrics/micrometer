@@ -49,24 +49,36 @@ public class OkHttpSender implements HttpSender {
         }
 
         byte[] entity = request.getEntity();
-        String requestMethod = request.getMethod().toString();
+        Method method = request.getMethod();
+        String methodValue = method.toString();
         if (entity.length > 0) {
             String contentType = request.getRequestHeaders().get("Content-Type");
             MediaType mediaType = contentType != null
                     ? MediaType.get(contentType + "; charset=utf-8")
                     : MEDIA_TYPE_APPLICATION_JSON;
             RequestBody body = RequestBody.create(entity, mediaType);
-            requestBuilder.method(requestMethod, body);
+            requestBuilder.method(methodValue, body);
         } else {
-            if (okhttp3.internal.http.HttpMethod.requiresRequestBody(requestMethod)) {
+            if (requiresRequestBody(method)) {
                 RequestBody body = RequestBody.create(entity, MEDIA_TYPE_TEXT_PLAIN);
-                requestBuilder.method(requestMethod, body);
+                requestBuilder.method(methodValue, body);
             } else {
-                requestBuilder.method(requestMethod, null);
+                requestBuilder.method(methodValue, null);
             }
         }
 
         okhttp3.Response response = client.newCall(requestBuilder.build()).execute();
         return new Response(response.code(), response.body() == null ? null : response.body().string());
+    }
+
+    private static boolean requiresRequestBody(Method method) {
+        switch (method) {
+            case POST:
+            case PUT:
+                return true;
+
+            default:
+                return false;
+        }
     }
 }
