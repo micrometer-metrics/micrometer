@@ -21,6 +21,7 @@ import org.junit.jupiter.api.Test;
 
 import static io.micrometer.core.util.internal.logging.InternalLogLevel.INFO;
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatCode;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 /**
@@ -30,7 +31,7 @@ class LogEventTest {
 
     @Test
     void logLevelShouldBeMandatory() {
-        assertThat(new LogEvent(INFO, null, null)).isNotNull();
+        assertThatCode(() -> new LogEvent(INFO, null, null)).doesNotThrowAnyException();
         assertThatThrownBy(() -> new LogEvent(null, null, null))
                 .isInstanceOf(NullPointerException.class)
                 .hasMessage(null)
