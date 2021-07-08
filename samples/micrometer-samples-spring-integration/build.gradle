@@ -19,3 +19,11 @@ dependencies {
     // For running on Java 9+
     runtimeOnly 'com.sun.xml.messaging.saaj:saaj-impl'
 }
+
+bootJar {
+    enabled = false
+}
+
+bootJarMainClassName {
+    enabled = false
+}

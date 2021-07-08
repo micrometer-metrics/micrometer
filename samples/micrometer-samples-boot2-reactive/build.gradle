@@ -14,3 +14,11 @@ dependencies {
         exclude group: 'io.micrometer', module: 'micrometer-core'
     }
 }
+
+bootJar {
+    enabled = false
+}
+
+bootJarMainClassName {
+    enabled = false
+}
