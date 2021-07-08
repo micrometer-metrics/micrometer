@@ -117,7 +117,7 @@ class DynatraceConfigTest {
         assertThat(config.uri()).isSameAs(DynatraceMetricApiConstants.getDefaultOneAgentEndpoint());
         assertThat(config.metricKeyPrefix()).isEmpty();
         assertThat(config.defaultDimensions()).isEmpty();
-        assertThat(config.enrichWithOneAgentMetadata()).isTrue();
+        assertThat(config.enrichWithDynatraceMetadata()).isTrue();
 
         Validated<?> validated = config.validate();
         assertThat(validated.isValid()).isTrue();

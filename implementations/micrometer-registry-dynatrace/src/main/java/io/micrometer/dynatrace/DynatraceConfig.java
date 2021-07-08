@@ -107,13 +107,13 @@ public interface DynatraceConfig extends StepRegistryConfig {
     }
 
     /**
-     * Return whether to enrich with OneAgent metadata.
+     * Return whether to enrich with Dynatrace metadata.
      *
-     * @return whether to enrich with OneAgent metadata
+     * @return whether to enrich with Dynatrace metadata
      * @since 1.8.0
      */
-    default boolean enrichWithOneAgentMetadata() {
-        return getBoolean(this, "enrichWithOneAgentMetadata").orElse(true);
+    default boolean enrichWithDynatraceMetadata() {
+        return getBoolean(this, "enrichWithDynatraceMetadata").orElse(true);
     }
 
     @Override
