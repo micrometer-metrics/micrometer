@@ -21,4 +21,5 @@ management.metrics.export.dynatrace:
   # If you are not using the OneAgent on your host, additionally specify your Dynatrace environment and API token:
   uri: "https://{your-environment-id}.live.dynatrace.com/api/v2/metrics/ingest"
   # uri: "https://{your-domain}/e/{your-environment-id}/api/v2/metrics/ingest" for managed deployments
+
   api-token: "YOUR_TOKEN" # should be read from a secure property source
