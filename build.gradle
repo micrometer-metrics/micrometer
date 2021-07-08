@@ -290,4 +290,4 @@ wrapper {
     gradleVersion = '6.9'
 }
 
-defaultTasks 'check'
+defaultTasks 'build'
