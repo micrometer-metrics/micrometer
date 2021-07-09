@@ -194,18 +194,17 @@ subprojects {
         lockAllConfigurations()
     }
 
-    task resolveAndLockAll {
+    tasks.register('resolveAndLockAll') {
+        description = 'Resolves dependencies of all configurations and writes them into the lock file.'
         doFirst {
-            assert gradle.startParameter.writeDependencyLocks
+            assert gradle.startParameter.writeDependencyLocks : 'Execute resolveAndLockAll --write-locks'
         }
         doLast {
-            def skip = ['annotationProcessor', 'apt', 'testAnnotationProcessor', 'checkstyle',
-                'shadow', 'testApt', 'archives', 'junitPlatform']
-            configurations.each {
-                if (it.canBeResolved && !skip.contains(it.name)) {
-                    it.resolve()
-                }
-            }
+            def skip = ['annotationProcessor', 'apt', 'testAnnotationProcessor', 'checkstyle', 'shadow', 'testApt', 'archives', 'junitPlatform']
+            configurations
+                    .findAll { it.canBeResolved }
+                    .findAll { !skip.contains(it.name) }
+                    .each { it.resolve() }
         }
     }
 
