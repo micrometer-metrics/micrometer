@@ -270,7 +270,7 @@ nexusPublishing {
 }
 
 wrapper {
-    gradleVersion = '6.9'
+    gradleVersion = '7.1.1'
 }
 
 defaultTasks 'build'
