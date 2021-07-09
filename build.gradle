@@ -6,6 +6,7 @@ buildscript {
 
     dependencies {
         classpath 'gradle.plugin.com.hierynomus.gradle.plugins:license-gradle-plugin:0.16.1'
+        classpath 'com.netflix.nebula:nebula-release-plugin:15.3.1'
         classpath 'com.netflix.nebula:nebula-project-plugin:3.4.0'
         classpath 'io.spring.nohttp:nohttp-gradle:0.0.8'
         classpath 'io.github.gradle-nexus:publish-plugin:1.1.0'
@@ -20,15 +21,19 @@ buildscript {
     configurations.classpath.resolutionStrategy.cacheDynamicVersionsFor 0, 'minutes'
 }
 
-apply plugin: 'io.github.gradle-nexus.publish-plugin'
+// TODO: remove this hack, see: https://github.com/nebula-plugins/nebula-release-plugin/issues/213
+def releaseStage = findProperty('release.stage')
+apply plugin: 'nebula.release'
+release.defaultVersionStrategy = nebula.plugin.release.git.opinion.Strategies.SNAPSHOT
 
+apply plugin: 'io.github.gradle-nexus.publish-plugin'
 apply from: 'dependencies.gradle'
 
 allprojects {
-    afterEvaluate { project ->
-        println "I'm configuring $project.name with version $project.version"
-    }
     group = 'io.micrometer'
+    ext.'release.stage' = releaseStage
+
+    afterEvaluate { project -> println "I'm configuring $project.name with version $project.version" }
 }
 
 subprojects {
