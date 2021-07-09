@@ -71,7 +71,7 @@ public final class DynatraceExporterV2 extends AbstractDynatraceExporter {
                 .withPrefix(config.metricKeyPrefix())
                 .withDefaultDimensions(parseDefaultDimensions(config.defaultDimensions()));
 
-        if (config.enrichWithOneAgentMetadata()) {
+        if (config.enrichWithDynatraceMetadata()) {
             factoryBuilder.withOneAgentMetadata();
         }
 
