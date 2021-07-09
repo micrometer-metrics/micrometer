@@ -2,26 +2,20 @@ buildscript {
     repositories {
         mavenCentral()
         gradlePluginPortal()
-        maven {
-            url 'https://repo.spring.io/plugins-release'
-        }
-        mavenLocal()
     }
 
     dependencies {
-        classpath 'io.spring.gradle:spring-release-plugin:0.20.1'
-        classpath 'com.netflix.nebula:nebula-project-plugin:3.4.0'
-        classpath "io.spring.nohttp:nohttp-gradle:0.0.8"
-        classpath "org.gradle:test-retry-gradle-plugin:1.1.9"
-        classpath 'io.github.gradle-nexus:publish-plugin:1.0.0'
+        classpath 'gradle.plugin.com.hierynomus.gradle.plugins:license-gradle-plugin:0.16.1'
+        classpath 'com.netflix.nebula:nebula-release-plugin:15.3.1'
+        classpath 'com.netflix.nebula:nebula-publishing-plugin:17.3.2'
+        classpath 'com.netflix.nebula:nebula-project-plugin:8.0.0'
+        classpath 'io.spring.nohttp:nohttp-gradle:0.0.8'
+        classpath 'org.gradle:test-retry-gradle-plugin:1.3.1'
+        classpath 'io.github.gradle-nexus:publish-plugin:1.1.0'
 
         constraints {
             classpath('org.ow2.asm:asm:7.3.1') {
                 because 'Supports modern JDKs'
-            }
-
-            classpath('org.jfrog.buildinfo:build-info-extractor-gradle:4.13.0') {
-                because 'Need recent version for Gradle 6+ compatibility'
             }
         }
     }
@@ -29,18 +23,19 @@ buildscript {
     configurations.classpath.resolutionStrategy.cacheDynamicVersionsFor 0, 'minutes'
 }
 
-apply plugin: 'io.spring.release'
-apply plugin: 'io.github.gradle-nexus.publish-plugin'
+// TODO: remove this hack, see: https://github.com/nebula-plugins/nebula-release-plugin/issues/213
+def releaseStage = findProperty('release.stage')
+apply plugin: 'nebula.release'
+release.defaultVersionStrategy = nebula.plugin.release.git.opinion.Strategies.SNAPSHOT
 
+apply plugin: 'io.github.gradle-nexus.publish-plugin'
 apply from: 'dependencies.gradle'
 
 allprojects {
-    apply plugin: 'io.spring.license'
-
-    afterEvaluate { project ->
-        println "I'm configuring $project.name with version $project.version"
-    }
     group = 'io.micrometer'
+    ext.'release.stage' = releaseStage ?: 'SNAPSHOT'
+
+    afterEvaluate { project -> println "I'm configuring $project.name with version $project.version" }
 }
 
 subprojects {
@@ -52,6 +47,7 @@ subprojects {
         } else {
             apply plugin: 'java-library'
         }
+        apply plugin: 'com.github.hierynomus.license'
         apply plugin: 'checkstyle'
         apply plugin: 'io.spring.nohttp'
         apply plugin: 'org.gradle.test-retry'
@@ -144,7 +140,18 @@ subprojects {
             }
         }
 
+        project.tasks.withType(Test) { Test testTask ->
+            testTask.testLogging.exceptionFormat = 'full'
+        }
+
         license {
+            header rootProject.file('gradle/licenseHeader.txt')
+            strictCheck true
+            mapping {
+                kt = 'JAVADOC_STYLE'
+            }
+            sourceSets = project.sourceSets
+
             ext.year = Calendar.getInstance().get(Calendar.YEAR)
             skipExistingHeaders = true
             exclude '**/*.json' // comments not supported
@@ -223,23 +230,38 @@ subprojects {
         lockAllConfigurations()
     }
 
-    task resolveAndLockAll {
+    tasks.register('resolveAndLockAll') {
+        description = 'Resolves dependencies of all configurations and writes them into the lock file.'
         doFirst {
-            assert gradle.startParameter.writeDependencyLocks
+            assert gradle.startParameter.writeDependencyLocks : 'Execute resolveAndLockAll --write-locks'
         }
         doLast {
-            def skip = ['annotationProcessor', 'apt', 'testAnnotationProcessor', 'checkstyle',
-                'shadow', 'testApt', 'archives', 'junitPlatform']
-            configurations.each {
-                if (it.canBeResolved && !skip.contains(it.name)) {
-                    it.resolve()
-                }
-            }
+            def skip = ['annotationProcessor', 'apt', 'testAnnotationProcessor', 'checkstyle', 'shadow', 'testApt', 'archives', 'junitPlatform']
+            configurations
+                    .findAll { it.canBeResolved }
+                    .findAll { !skip.contains(it.name) }
+                    .each { it.resolve() }
+        }
+    }
+
+    tasks.register('downloadDependencies') {
+        outputs.upToDateWhen { false }
+        doLast {
+            project.configurations.findAll { it.canBeResolved }*.files
         }
     }
 
     if(!['samples', 'benchmarks'].find{project.name.contains(it)}) {
-        apply plugin: 'io.spring.publishing'
+        apply plugin: 'nebula.maven-publish'
+        apply plugin: 'nebula.maven-manifest'
+        apply plugin: 'nebula.maven-developer'
+        apply plugin: 'nebula.javadoc-jar'
+        apply plugin: 'nebula.source-jar'
+        apply plugin: 'nebula.maven-apache-license'
+        apply plugin: 'nebula.publish-verification'
+        apply plugin: 'nebula.contacts'
+        apply plugin: 'nebula.info'
+        apply plugin: 'nebula.project'
 
         if (project.name != 'micrometer-bom') {
             jar {
@@ -256,11 +278,6 @@ subprojects {
                 moniker 'Tommy Ludwig'
                 github 'shakuzen'
             }
-        }
-
-        if (project.extensions.findByName('bintray')) {
-            bintray.labels = ['micrometer', 'atlas', 'metrics', 'prometheus', 'spectator', 'influx', 'new-relic', 'signalfx', 'wavefront', 'elastic', 'dynatrace', 'azure-monitor', 'appoptics', 'kairos', 'stackdriver']
-            bintray.packageName = 'io.micrometer'
         }
     }
 
@@ -287,7 +304,7 @@ nexusPublishing {
 }
 
 wrapper {
-    gradleVersion = '6.9'
+    gradleVersion = '7.1.1'
 }
 
 defaultTasks 'build'
