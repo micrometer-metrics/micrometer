@@ -88,17 +88,17 @@ workflows:
             branches:
               ignore: /.*/
             tags:
-              only: /^v\d+\.\d+\.\d+(-rc\.\d+)?$/
+              only: /^v\d+\.\d+\.\d+(-(rc|milestone)\.\d+)?$/
       - docker-tests:
           filters:
             branches:
               ignore: /.*/
             tags:
-              only: /^v\d+\.\d+\.\d+(-rc\.\d+)?$/
+              only: /^v\d+\.\d+\.\d+(-(rc|milestone)\.\d+)?$/
       - deploy:
           requires:
             - build
             - docker-tests
           filters:
             tags:
-              only: /^v\d+\.\d+\.\d+(-rc\.\d+)?$/
+              only: /^v\d+\.\d+\.\d+(-(rc|milestone)\.\d+)?$/
