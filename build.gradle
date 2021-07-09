@@ -8,7 +8,7 @@ buildscript {
         classpath 'gradle.plugin.com.hierynomus.gradle.plugins:license-gradle-plugin:0.16.1'
         classpath 'com.netflix.nebula:nebula-release-plugin:15.3.1'
         classpath 'com.netflix.nebula:nebula-publishing-plugin:17.3.2'
-        classpath 'com.netflix.nebula:nebula-project-plugin:3.4.0'
+        classpath 'com.netflix.nebula:nebula-project-plugin:8.0.0'
         classpath 'io.spring.nohttp:nohttp-gradle:0.0.8'
         classpath 'io.github.gradle-nexus:publish-plugin:1.1.0'
 
@@ -240,6 +240,7 @@ subprojects {
         apply plugin: 'nebula.publish-verification'
         apply plugin: 'nebula.contacts'
         apply plugin: 'nebula.info'
+        apply plugin: 'nebula.project'
 
         if (project.name != 'micrometer-bom') {
             jar {
