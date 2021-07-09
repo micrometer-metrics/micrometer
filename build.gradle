@@ -123,6 +123,10 @@ subprojects {
             }
         }
 
+        project.tasks.withType(Test) { Test testTask ->
+            testTask.testLogging.exceptionFormat = 'full'
+        }
+
         license {
             header rootProject.file('gradle/licenseHeader.txt')
             strictCheck true
