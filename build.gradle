@@ -2,14 +2,9 @@ buildscript {
     repositories {
         mavenCentral()
         gradlePluginPortal()
-        maven {
-            url 'https://repo.spring.io/plugins-release'
-        }
-        mavenLocal()
     }
 
     dependencies {
-        classpath 'io.spring.gradle:spring-release-plugin:0.20.1'
         classpath 'com.netflix.nebula:nebula-project-plugin:3.4.0'
         classpath 'io.spring.nohttp:nohttp-gradle:0.0.8'
         classpath 'io.github.gradle-nexus:publish-plugin:1.1.0'
@@ -18,24 +13,17 @@ buildscript {
             classpath('org.ow2.asm:asm:7.3.1') {
                 because 'Supports modern JDKs'
             }
-
-            classpath('org.jfrog.buildinfo:build-info-extractor-gradle:4.13.0') {
-                because 'Need recent version for Gradle 6+ compatibility'
-            }
         }
     }
 
     configurations.classpath.resolutionStrategy.cacheDynamicVersionsFor 0, 'minutes'
 }
 
-apply plugin: 'io.spring.release'
 apply plugin: 'io.github.gradle-nexus.publish-plugin'
 
 apply from: 'dependencies.gradle'
 
 allprojects {
-    apply plugin: 'io.spring.license'
-
     afterEvaluate { project ->
         println "I'm configuring $project.name with version $project.version"
     }
@@ -222,8 +210,6 @@ subprojects {
     }
 
     if(!['samples', 'benchmarks'].find{project.name.contains(it)}) {
-        apply plugin: 'io.spring.publishing'
-
         if (project.name != 'micrometer-bom') {
             jar {
                 manifest.attributes.put('Automatic-Module-Name', project.name.replace('-', '.'))
@@ -239,11 +225,6 @@ subprojects {
                 moniker 'Tommy Ludwig'
                 github 'shakuzen'
             }
-        }
-
-        if (project.extensions.findByName('bintray')) {
-            bintray.labels = ['micrometer', 'atlas', 'metrics', 'prometheus', 'spectator', 'influx', 'new-relic', 'signalfx', 'wavefront', 'elastic', 'dynatrace', 'azure-monitor', 'appoptics', 'kairos', 'stackdriver']
-            bintray.packageName = 'io.micrometer'
         }
     }
 
