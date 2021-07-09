@@ -1,5 +1,5 @@
 plugins {
-    id 'com.github.johnrengelman.shadow' version '6.1.0'
+    id 'com.github.johnrengelman.shadow' version '7.0.0'
 }
 
 dependencies {
@@ -16,7 +16,7 @@ dependencies {
 
 shadowJar {
     configurations = [project.configurations.compileClasspath]
-    archiveClassifier = null
+    archiveClassifier.set('')
     dependencies {
         include(dependency('io.projectreactor:'))
         include(dependency('io.projectreactor.netty:'))
@@ -33,24 +33,17 @@ shadowJar {
     }
 }
 
-// Nebula plugin automatically configures the publication of the normal jar with its dependencies
-// and it's not possible to reconfigure this behavior to allow using shadow's MavenPublication
-// configuration, so we have to manually clean up the POM that nebula sets up instead.
-jar.enabled = false
-jar.dependsOn shadowJar
+// The Nebula Publishing plugin automatically configures the publication of the shadow jar but
+// shadow dependencies are added to the POM as runtime so we manually clean up the POM.
 publishing {
     publications {
         withType(MavenPublication) {
-            artifact(shadowJar)
-
             pom.withXml {
                 asNode()
-                        .dependencies
-                        .dependency
-                        .findAll {
-                    ['reactor-core', 'reactor-netty-core'].contains(it.artifactId.text())
-                }
-                .each { it.parent().remove(it) }
+                    .dependencies
+                    .dependency
+                    .findAll { ['reactor-core', 'reactor-netty-core'].contains(it.artifactId.text()) }
+                    .each { it.parent().remove(it) }
             }
         }
     }
