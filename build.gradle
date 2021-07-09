@@ -208,6 +208,13 @@ subprojects {
         }
     }
 
+    tasks.register('downloadDependencies') {
+        outputs.upToDateWhen { false }
+        doLast {
+            project.configurations.findAll { it.canBeResolved }*.files
+        }
+    }
+
     if(!['samples', 'benchmarks'].find{project.name.contains(it)}) {
         if (project.name != 'micrometer-bom') {
             jar {
