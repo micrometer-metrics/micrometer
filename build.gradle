@@ -5,6 +5,7 @@ buildscript {
     }
 
     dependencies {
+        classpath 'gradle.plugin.com.hierynomus.gradle.plugins:license-gradle-plugin:0.16.1'
         classpath 'com.netflix.nebula:nebula-project-plugin:3.4.0'
         classpath 'io.spring.nohttp:nohttp-gradle:0.0.8'
         classpath 'io.github.gradle-nexus:publish-plugin:1.1.0'
@@ -39,6 +40,7 @@ subprojects {
         } else {
             apply plugin: 'java-library'
         }
+        apply plugin: 'com.github.hierynomus.license'
         apply plugin: 'checkstyle'
         apply plugin: 'io.spring.nohttp'
 
@@ -116,6 +118,13 @@ subprojects {
         }
 
         license {
+            header rootProject.file('gradle/licenseHeader.txt')
+            strictCheck true
+            mapping {
+                kt = 'JAVADOC_STYLE'
+            }
+            sourceSets = project.sourceSets
+
             ext.year = Calendar.getInstance().get(Calendar.YEAR)
             skipExistingHeaders = true
             exclude '**/*.json' // comments not supported
