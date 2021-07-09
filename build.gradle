@@ -232,6 +232,12 @@ subprojects {
 
     if(!['samples', 'benchmarks'].find{project.name.contains(it)}) {
         apply plugin: 'nebula.maven-publish'
+        apply plugin: 'nebula.maven-manifest'
+        apply plugin: 'nebula.maven-developer'
+        apply plugin: 'nebula.javadoc-jar'
+        apply plugin: 'nebula.source-jar'
+        apply plugin: 'nebula.maven-apache-license'
+        apply plugin: 'nebula.publish-verification'
         apply plugin: 'nebula.contacts'
         apply plugin: 'nebula.info'
 
