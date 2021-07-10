@@ -106,12 +106,10 @@ subprojects {
         normalization {
             runtimeClasspath {
                 metaInf {
-                    ignoreAttribute 'Build-Date'
-                    ignoreAttribute 'Change'
-                    ignoreAttribute 'Module-Origin'
-                    ignoreProperty 'Build-Date'
-                    ignoreProperty 'Change'
-                    ignoreProperty 'Module-Origin'
+                    ['Build-Date', 'Change', 'Full-Change', 'Branch', 'Module-Origin'].each {
+                        ignoreAttribute it
+                        ignoreProperty it
+                    }
                 }
             }
         }
