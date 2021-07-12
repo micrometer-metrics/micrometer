@@ -24,7 +24,6 @@ import com.google.cloud.monitoring.v3.MetricServiceClient;
 import com.google.cloud.monitoring.v3.MetricServiceSettings;
 import com.google.monitoring.v3.*;
 import com.google.protobuf.Timestamp;
-import io.micrometer.core.annotation.Incubating;
 import io.micrometer.core.instrument.Timer;
 import io.micrometer.core.instrument.*;
 import io.micrometer.core.instrument.distribution.CountAtBucket;
@@ -61,7 +60,6 @@ import static java.util.stream.StreamSupport.stream;
  * @author Jon Schneider
  * @since 1.1.0
  */
-@Incubating(since = "1.1.0")
 public class StackdriverMeterRegistry extends StepMeterRegistry {
 
     private static final ThreadFactory DEFAULT_THREAD_FACTORY = new NamedThreadFactory("stackdriver-metrics-publisher");
