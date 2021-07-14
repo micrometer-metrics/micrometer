@@ -72,7 +72,7 @@ public final class DynatraceExporterV2 extends AbstractDynatraceExporter {
                 .withDefaultDimensions(parseDefaultDimensions(config.defaultDimensions()));
 
         if (config.enrichWithDynatraceMetadata()) {
-            factoryBuilder.withOneAgentMetadata();
+            factoryBuilder.withDynatraceMetadata();
         }
 
         metricBuilderFactory = factoryBuilder.build();
