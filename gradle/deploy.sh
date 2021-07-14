@@ -1,6 +1,6 @@
 #!/bin/bash -e
 # This script will build the project.
-SWITCHES="-s --console=plain"
+SWITCHES="-s --console=plain -x test"
 # circleci does not like multi-line values so they are base64 encoded
 ORG_GRADLE_PROJECT_SIGNING_KEY="$(echo "$ORG_GRADLE_PROJECT_SIGNING_KEY" | base64 -d)"
 
