@@ -15,18 +15,7 @@ Micrometer is the instrumentation library underpinning Spring Boot 2's metrics c
 
 ## Supported versions
 
-See [Micrometer's support policy](https://micrometer.io/docs/support) for more details.
-
-| Minor version line | LTS | Final patch |
-| ------------------ | --- | ----------- |
-| `1.0.x`            | Yes | `1.0.11`    |
-| `1.1.x`            | Yes | `1.1.19`    |
-| `1.2.x`            | No  | `1.2.2`     |
-| `1.3.x`            | Yes | `1.3.20`    |
-| `1.4.x`            | No  | `1.4.2`     |
-| `1.5.x`            | Yes |  |
-| `1.6.x`            | Yes |  |
-| `1.7.x`            | Yes |  |
+See [Micrometer's support policy](https://micrometer.io/docs/support).
 
 ## Join the discussion
 
