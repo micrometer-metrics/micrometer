@@ -1,4 +1,8 @@
 buildscript {
+    dependencyLocking {
+        lockAllConfigurations()
+    }
+
     repositories {
         mavenCentral()
         gradlePluginPortal()
