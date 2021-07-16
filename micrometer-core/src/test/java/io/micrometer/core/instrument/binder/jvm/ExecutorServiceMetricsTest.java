@@ -262,4 +262,19 @@ class ExecutorServiceMetricsTest {
         registry.get(metricPrefix + "executor.idle").tags(userTags).tag("name", executorName).timer();
         registry.get(metricPrefix + "executor").tags(userTags).tag("name", executorName).timer();
     }
+
+    @Test
+    void newSingleThreadScheduledExecutor() {
+        String executorServiceName = "myExecutorService";
+        ExecutorServiceMetrics.monitor(registry, Executors.newSingleThreadScheduledExecutor(), executorServiceName);
+        // timer metrics still available, even on Java 16+
+        registry.get("executor").tag("name", executorServiceName).timer();
+        if (isJava16OrLater()) return; // see gh-2317; ExecutorServiceMetrics not available for inaccessible JDK internal types
+        registry.get("executor.completed").tag("name", executorServiceName).functionCounter();
+    }
+
+    private boolean isJava16OrLater() {
+        return JRE.currentVersion().compareTo(JRE.JAVA_16) >= 0;
+    }
+
 }
