@@ -17,7 +17,6 @@ buildCache {
         enabled = false
     }
     remote(HttpBuildCache) {
-        enabled = false
         url = 'https://ge.micrometer.io/cache/'
     }
 }
