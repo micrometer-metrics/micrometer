@@ -98,7 +98,19 @@ subprojects {
         normalization {
             runtimeClasspath {
                 metaInf {
-                    ['Build-Date', 'Change', 'Full-Change', 'Branch', 'Module-Origin'].each {
+                    [
+                        'Build-Date',
+                        'Built-By',
+                        'Built-OS',
+                        'Build-Host',
+                        'Build-Job',
+                        'Build-Number',
+                        'Build-Id',
+                        'Change',
+                        'Full-Change',
+                        'Branch',
+                        'Module-Origin'
+                    ].each {
                         ignoreAttribute it
                         ignoreProperty it
                     }
