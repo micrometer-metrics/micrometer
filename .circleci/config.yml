@@ -18,7 +18,7 @@ commands:
     parameters:
       command:
         type: string
-        default: 'check test'
+        default: 'clean build'
     steps:
       - checkout
       - restore_cache:
