@@ -14,7 +14,7 @@ rootProject.name = 'micrometer'
 
 buildCache {
     local {
-        enabled = true
+        enabled = false
     }
     remote(HttpBuildCache) {
         enabled = false
