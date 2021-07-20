@@ -114,6 +114,36 @@ public class JettyConnectionMetrics extends AbstractLifeCycle implements Connect
                 .register(registry);
     }
 
+    /**
+     * Create a {@code JettyConnectionMetrics} instance. {@link Connector#getName()} will be used for
+     * {@literal connector.name} tag.
+     *
+     * @param registry registry to use
+     * @param connector connector to instrument
+     * @since 1.8.0
+     */
+    public JettyConnectionMetrics(MeterRegistry registry, Connector connector) {
+        this(registry, connector, Tags.empty());
+    }
+
+    /**
+     * Create a {@code JettyConnectionMetrics} instance. {@link Connector#getName()} will be used for
+     * {@literal connector.name} tag.
+     *
+     * @param registry registry to use
+     * @param connector connector to instrument
+     * @param tags tags to add to metrics
+     * @since 1.8.0
+     */
+    public JettyConnectionMetrics(MeterRegistry registry, Connector connector, Iterable<Tag> tags) {
+        this(registry, getConnectorNameTag(connector).and(tags));
+    }
+
+    private static Tags getConnectorNameTag(Connector connector) {
+        String name = connector.getName();
+        return Tags.of("connector.name", name != null ? name : "unnamed");
+    }
+
     @Override
     public void onOpened(Connection connection) {
         Timer.Sample started = Timer.start(registry);
@@ -149,7 +179,7 @@ public class JettyConnectionMetrics extends AbstractLifeCycle implements Connect
     public static void addToAllConnectors(Server server, MeterRegistry registry, Iterable<Tag> tags) {
         for (Connector connector : server.getConnectors()) {
             if (connector != null) {
-                connector.addBean(new JettyConnectionMetrics(registry, tags));
+                connector.addBean(new JettyConnectionMetrics(registry, connector, tags));
             }
         }
     }
