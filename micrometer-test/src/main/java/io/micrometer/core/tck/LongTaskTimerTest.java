@@ -15,10 +15,14 @@
  */
 package io.micrometer.core.tck;
 
+import io.micrometer.core.annotation.Timed;
 import io.micrometer.core.instrument.LongTaskTimer;
+import io.micrometer.core.instrument.Meter;
 import io.micrometer.core.instrument.MeterRegistry;
+import io.micrometer.core.instrument.Tag;
 import io.micrometer.core.instrument.distribution.CountAtBucket;
 import io.micrometer.core.instrument.distribution.ValueAtPercentile;
+import io.micrometer.core.instrument.internal.CumulativeHistogramLongTaskTimer;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -122,4 +126,22 @@ interface LongTaskTimerTest {
         assertThat(countAtBuckets[2].bucket(TimeUnit.MINUTES)).isEqualTo(1);
         assertThat(countAtBuckets[2].count()).isEqualTo(11);
     }
+
+    @Test
+    @DisplayName("attributes from @Timed annotation apply to builder")
+    default void timedAnnotation(MeterRegistry registry) {
+        Timed timed = AnnotationHolder.class.getAnnotation(Timed.class);
+        LongTaskTimer ltt = LongTaskTimer.builder(timed).register(registry);
+        Meter.Id id = ltt.getId();
+        assertThat(id.getName()).isEqualTo("my.name");
+        assertThat(id.getTags()).containsExactly(Tag.of("a", "tag"));
+        assertThat(id.getDescription()).isEqualTo("some description");
+        if (ltt instanceof CumulativeHistogramLongTaskTimer) {
+            assertThat(ltt.takeSnapshot().histogramCounts()).isNotEmpty();
+        }
+    }
+
+    @Timed(value = "my.name", longTask = true, extraTags = {"a", "tag"},
+            description = "some description", histogram = true)
+    class AnnotationHolder { }
 }
