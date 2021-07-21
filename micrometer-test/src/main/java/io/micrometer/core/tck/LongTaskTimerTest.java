@@ -143,5 +143,5 @@ interface LongTaskTimerTest {
 
     @Timed(value = "my.name", longTask = true, extraTags = {"a", "tag"},
             description = "some description", histogram = true)
-    class AnnotationHolder {}
+    class AnnotationHolder { }
 }
