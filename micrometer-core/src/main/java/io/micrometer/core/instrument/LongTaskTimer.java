@@ -55,6 +55,7 @@ public interface LongTaskTimer extends Meter, HistogramSupport {
 
         return new Builder(timed.value())
                 .tags(timed.extraTags())
+                .publishPercentileHistogram(timed.histogram())
                 .description(timed.description().isEmpty() ? null : timed.description());
     }
 
