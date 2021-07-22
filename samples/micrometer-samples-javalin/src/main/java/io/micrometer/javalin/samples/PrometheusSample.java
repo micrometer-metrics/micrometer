@@ -115,7 +115,7 @@ class MicrometerPlugin implements Plugin {
 
     @Override
     public void apply(@NonNull Javalin app) {
-        Server server = app.server().server();
+        Server server = app.jettyServer().server();
 
         app.exception(Exception.class, EXCEPTION_HANDLER);
 
@@ -125,7 +125,7 @@ class MicrometerPlugin implements Plugin {
                 String exceptionName = response.getHeader(EXCEPTION_HEADER);
                 response.setHeader(EXCEPTION_HEADER, null);
 
-                String uri = app.servlet().getMatcher()
+                String uri = app.javalinServlet().getMatcher()
                         .findEntries(HandlerType.valueOf(request.getMethod()), request.getPathInfo())
                         .stream()
                         .findAny()

@@ -6,6 +6,6 @@ dependencies {
     implementation project(":micrometer-core")
     implementation project(":micrometer-registry-prometheus")
 
-    implementation 'io.javalin:javalin:3.+'
+    implementation 'io.javalin:javalin:latest.release'
     implementation 'ch.qos.logback:logback-classic:latest.release'
 }
