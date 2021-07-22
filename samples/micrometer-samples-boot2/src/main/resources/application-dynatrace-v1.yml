@@ -28,5 +28,7 @@ management.metrics.export.dynatrace:
 
   api-token: "YOUR_TOKEN" # should be read from a secure property source
 
-  # The v1 exporter requires a device name.
-  device-id: "YOUR_DEVICE_NAME"
+  # The v1 exporter requires a device id.
+  # Only when this property is set, metrics are exported to the Dynatrace v1 endpoint.
+  v1:
+    device-id: "YOUR_DEVICE_NAME"
