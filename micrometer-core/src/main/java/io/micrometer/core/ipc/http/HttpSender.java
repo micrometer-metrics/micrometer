@@ -167,6 +167,13 @@ public interface HttpSender {
                 return this;
             }
 
+            public final Builder withAuthentication(String type, @Nullable String value) {
+                if (value != null && StringUtils.isNotBlank(value)) {
+                    withHeader("Authorization", type + " " + value);
+                }
+                return this;
+            }
+
             /**
              * Set the request body as JSON content type.
              *

@@ -163,6 +163,18 @@ public interface ElasticConfig extends StepRegistryConfig {
     }
 
     /**
+     * The Api Key to use instead of user/password authentication.
+     *
+     * @return The api key
+     * @since 1.8.0
+     */
+    @Nullable
+    default String apiKey() {
+        return getString(this, "apiKey").orElse(null);
+    }
+
+
+    /**
      * The type to be used when writing metrics documents to an index.
      * This configuration is only used with Elasticsearch versions before 7.
      * Default is: "doc"
