@@ -17,6 +17,7 @@ package io.micrometer.dynatrace;
 
 import com.dynatrace.metric.util.DynatraceMetricApiConstants;
 import io.micrometer.core.instrument.config.validate.Validated;
+import io.micrometer.core.instrument.config.validate.ValidationException;
 import io.micrometer.core.instrument.step.StepRegistryConfig;
 import io.micrometer.core.lang.Nullable;
 
@@ -34,7 +35,6 @@ import static io.micrometer.core.instrument.config.validate.PropertyValidator.*;
  * @since 1.1.0
  */
 public interface DynatraceConfig extends StepRegistryConfig {
-
     @Override
     default String prefix() {
         return "dynatrace";
@@ -82,8 +82,20 @@ public interface DynatraceConfig extends StepRegistryConfig {
      * @since 1.8.0
      */
     default DynatraceApiVersion apiVersion() {
-        // if not specified, defaults to v1 for backwards compatibility.
-        return getEnum(this, DynatraceApiVersion.class, "apiVersion").orElse(DynatraceApiVersion.V1);
+        DynatraceApiVersion defaultVersion = DynatraceApiVersion.V2;
+        try {
+            // this.deviceId() will throw if it is not set.
+            if (!this.deviceId().isEmpty()) {
+                // if deviceId is set and not empty, use v1 as default.
+                defaultVersion = DynatraceApiVersion.V1;
+            }
+        } catch (ValidationException ignored) {
+        }
+        // If a device id is specified, use v1 as default. If it is not, use v2.
+        // The version can be overwritten explicitly when creating a MM config
+        // For Spring Boot, v1 is automatically chosen when the device id is set.
+        return getEnum(this, DynatraceApiVersion.class, "apiVersion")
+                .orElse(defaultVersion);
     }
 
     /**

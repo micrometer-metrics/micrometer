@@ -29,8 +29,17 @@ import static org.assertj.core.api.Assertions.assertThat;
 class DynatraceConfigTest {
     @Test
     void invalid() {
-        Map<String, String> properties = new HashMap<>();
-        DynatraceConfig config = properties::get;
+        DynatraceConfig config = new DynatraceConfig() {
+            @Override
+            public String get(String key) {
+                return null;
+            }
+
+            @Override
+            public DynatraceApiVersion apiVersion() {
+                return DynatraceApiVersion.V1;
+            }
+        };
 
         List<Validated.Invalid<?>> failures = config.validate().failures();
         assertThat(failures.size()).isEqualTo(3);
@@ -52,6 +61,11 @@ class DynatraceConfigTest {
             @Override
             public String get(String key) {
                 return null;
+            }
+
+            @Override
+            public DynatraceApiVersion apiVersion() {
+                return DynatraceApiVersion.V1;
             }
         }.validate();
 
@@ -152,5 +166,74 @@ class DynatraceConfigTest {
 
         Validated<?> validated = config.validate();
         assertThat(validated.isValid()).isTrue();
+    }
+
+    @Test
+    void testDeviceIdNotSetFallsBackToV2() {
+        DynatraceConfig config = new DynatraceConfig() {
+            @Override
+            public String get(String key) {
+                return null;
+            }
+        };
+
+        assertThat(config.apiVersion()).isEqualTo(DynatraceApiVersion.V2);
+    }
+
+    @Test
+    void testDeviceIdSetFallsBackToV1() {
+        DynatraceConfig config = new DynatraceConfig() {
+            @Override
+            public String get(String key) {
+                return null;
+            }
+
+            @Override
+            public String deviceId() {
+                return "test";
+            }
+        };
+        assertThat(config.apiVersion()).isEqualTo(DynatraceApiVersion.V1);
+    }
+
+    @Test
+    void testDeviceIdSetAndVersionOverwritten() {
+        DynatraceConfig config = new DynatraceConfig() {
+            @Override
+            public String get(String key) {
+                return null;
+            }
+
+            @Override
+            public String deviceId() {
+                return "test";
+            }
+
+            @Override
+            public DynatraceApiVersion apiVersion() {
+                return DynatraceApiVersion.V2;
+            }
+        };
+
+        assertThat(config.apiVersion()).isEqualTo(DynatraceApiVersion.V2);
+    }
+
+    @Test
+    void testDeviceIdNotSetAndVersionOverwritten() {
+        // This is a nonsense config, v1 always needs a deviceId, but it shows that it is possible
+        // to overwrite the version.
+        DynatraceConfig config = new DynatraceConfig() {
+            @Override
+            public String get(String key) {
+                return null;
+            }
+
+            @Override
+            public DynatraceApiVersion apiVersion() {
+                return DynatraceApiVersion.V1;
+            }
+        };
+
+        assertThat(config.apiVersion()).isEqualTo(DynatraceApiVersion.V1);
     }
 }
