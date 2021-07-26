@@ -568,7 +568,7 @@ public abstract class MeterRegistry {
         Meter m = getOrCreateMeter(config, builder, id, mappedId, noopBuilder);
 
         if (!meterClass.isInstance(m)) {
-            throw new IllegalArgumentException("There is already a registered meter of a different type with the same name");
+            throw new IllegalArgumentException("There is already a registered meter of a different type with the same name: " + id.getName());
         }
         return meterClass.cast(m);
     }
