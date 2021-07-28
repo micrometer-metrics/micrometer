@@ -110,7 +110,7 @@ public class CloudWatchMeterRegistry extends StepMeterRegistry {
                 .metricData(metricData)
                 .build();
         CountDownLatch latch = new CountDownLatch(1);
-        cloudWatchAsyncClient.putMetricData(putMetricDataRequest).whenCompleteAsync((response, t) -> {
+        cloudWatchAsyncClient.putMetricData(putMetricDataRequest).whenComplete((response, t) -> {
             if (t != null) {
                 if (t instanceof AbortedException) {
                     logger.warn("sending metric data was aborted: {}", t.getMessage());
