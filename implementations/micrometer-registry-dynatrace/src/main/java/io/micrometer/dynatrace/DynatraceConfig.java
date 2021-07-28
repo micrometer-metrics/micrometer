@@ -17,7 +17,6 @@ package io.micrometer.dynatrace;
 
 import com.dynatrace.metric.util.DynatraceMetricApiConstants;
 import io.micrometer.core.instrument.config.validate.Validated;
-import io.micrometer.core.instrument.config.validate.ValidationException;
 import io.micrometer.core.instrument.step.StepRegistryConfig;
 import io.micrometer.core.lang.Nullable;
 
@@ -57,7 +56,7 @@ public interface DynatraceConfig extends StepRegistryConfig {
     }
 
     default String deviceId() {
-        return getString(this, "deviceId").required().get();
+        return getString(this, "deviceId").orElse("");
     }
 
     default String technologyType() {
@@ -83,14 +82,11 @@ public interface DynatraceConfig extends StepRegistryConfig {
      */
     default DynatraceApiVersion apiVersion() {
         DynatraceApiVersion defaultVersion = DynatraceApiVersion.V2;
-        try {
-            // this.deviceId() will throw if it is not set.
-            if (!this.deviceId().isEmpty()) {
-                // if deviceId is set and not empty, use v1 as default.
-                defaultVersion = DynatraceApiVersion.V1;
-            }
-        } catch (ValidationException ignored) {
+        if (!deviceId().isEmpty()) {
+            // if deviceId is not empty, use v1 as default.
+            defaultVersion = DynatraceApiVersion.V1;
         }
+
         // If a device id is specified, use v1 as default. If it is not, use v2.
         // The version can be overwritten explicitly when creating a MM config
         // For Spring Boot, v1 is automatically chosen when the device id is set.
@@ -141,7 +137,7 @@ public interface DynatraceConfig extends StepRegistryConfig {
                                                 return checkAll(this,
                                                         checkRequired("apiToken", DynatraceConfig::apiToken),
                                                         checkRequired("uri", DynatraceConfig::uri),
-                                                        checkRequired("deviceId", DynatraceConfig::deviceId),
+                                                        check("deviceId", DynatraceConfig::deviceId).andThen(Validated::nonBlank),
                                                         check("technologyType", DynatraceConfig::technologyType).andThen(Validated::nonBlank)
                                                 );
                                             } else {

@@ -46,7 +46,7 @@ class DynatraceConfigTest {
         assertThat(failures.stream().map(Validated::toString)).containsExactlyInAnyOrder(
                 "Invalid{property='dynatrace.apiToken', value='null', message='is required'}",
                 "Invalid{property='dynatrace.uri', value='null', message='is required'}",
-                "Invalid{property='dynatrace.deviceId', value='null', message='is required'}"
+                "Invalid{property='dynatrace.deviceId', value='', message='cannot be blank'}"
         );
     }
 
@@ -73,8 +73,33 @@ class DynatraceConfigTest {
         assertThat(validate.failures().stream().map(Validated::toString)).containsExactlyInAnyOrder(
                 "Invalid{property='dynatrace.apiToken', value='null', message='is required'}",
                 "Invalid{property='dynatrace.uri', value='null', message='is required'}",
-                "Invalid{property='dynatrace.deviceId', value='null', message='is required'}",
+                "Invalid{property='dynatrace.deviceId', value='', message='cannot be blank'}",
                 "Invalid{property='dynatrace.technologyType', value='', message='cannot be blank'}"
+        );
+    }
+
+    @Test
+    void invalidMissingUriInV2() {
+        Validated<?> validate = new DynatraceConfig() {
+            @Override
+            public String get(String key) {
+                return null;
+            }
+
+            @Override
+            public DynatraceApiVersion apiVersion() {
+                return DynatraceApiVersion.V2;
+            }
+
+            @Override
+            public String uri() {
+                return null;
+            }
+        }.validate();
+
+        assertThat(validate.failures().size()).isEqualTo(1);
+        assertThat(validate.failures().stream().map(Validated::toString)).containsExactlyInAnyOrder(
+                "Invalid{property='dynatrace.uri', value='null', message='is required'}"
         );
     }
 
