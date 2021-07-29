@@ -21,6 +21,8 @@ dependencies {
     testImplementation 'io.projectreactor:reactor-test'
     testImplementation 'ch.qos.logback:logback-classic'
     testImplementation 'org.awaitility:awaitility'
+    // for running tests with UDS on OSX
+    testImplementation 'io.netty:netty-transport-native-kqueue:4.1.66.Final:osx-x86_64'
 }
 
 shadowJar {
