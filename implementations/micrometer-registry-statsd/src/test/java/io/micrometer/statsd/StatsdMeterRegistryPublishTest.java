@@ -26,6 +26,7 @@ import io.netty.handler.logging.LogLevel;
 import io.netty.handler.logging.LoggingHandler;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.condition.OS;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.EnumSource;
 import reactor.core.Disposable;
@@ -46,6 +47,7 @@ import java.util.stream.IntStream;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.awaitility.Awaitility.await;
+import static org.junit.jupiter.api.Assumptions.assumeTrue;
 
 /**
  * Tests {@link StatsdMeterRegistry} metrics publishing functionality.
@@ -65,7 +67,9 @@ class StatsdMeterRegistryPublishTest {
 
     @AfterEach
     void cleanUp() {
-        meterRegistry.close();
+        if (meterRegistry != null) {
+            meterRegistry.close();
+        }
         if (server != null) {
             server.disposeNow();
         }
@@ -74,6 +78,7 @@ class StatsdMeterRegistryPublishTest {
     @ParameterizedTest
     @EnumSource(StatsdProtocol.class)
     void receiveMetricsSuccessfully(StatsdProtocol protocol) throws InterruptedException {
+        skipUdsTestOnWindows(protocol);
         serverLatch = new CountDownLatch(3);
         server = startServer(protocol, 0);
 
@@ -91,6 +96,7 @@ class StatsdMeterRegistryPublishTest {
     @ParameterizedTest
     @EnumSource(StatsdProtocol.class)
     void resumeSendingMetrics_whenServerIntermittentlyFails(StatsdProtocol protocol) throws InterruptedException {
+        skipUdsTestOnWindows(protocol);
         serverLatch = new CountDownLatch(1);
         AtomicInteger writeCount = new AtomicInteger();
         server = startServer(protocol, 0);
@@ -137,6 +143,7 @@ class StatsdMeterRegistryPublishTest {
     @EnumSource(StatsdProtocol.class)
     @Issue("#1676")
     void stopAndStartMeterRegistrySendsMetrics(StatsdProtocol protocol) throws InterruptedException {
+        skipUdsTestOnWindows(protocol);
         serverLatch = new CountDownLatch(3);
         server = startServer(protocol, 0);
 
@@ -178,6 +185,7 @@ class StatsdMeterRegistryPublishTest {
     @ParameterizedTest
     @EnumSource(StatsdProtocol.class)
     void whenBackendInitiallyDown_metricsSentAfterBackendStarts(StatsdProtocol protocol) throws InterruptedException {
+        skipUdsTestOnWindows(protocol);
         AtomicInteger writeCount = new AtomicInteger();
         serverLatch = new CountDownLatch(3);
         // start server to secure an open port
@@ -216,6 +224,7 @@ class StatsdMeterRegistryPublishTest {
     @ParameterizedTest
     @EnumSource(StatsdProtocol.class)
     void whenRegistryStopped_doNotConnectToBackend(StatsdProtocol protocol) throws InterruptedException {
+        skipUdsTestOnWindows(protocol);
         serverLatch = new CountDownLatch(3);
         // start server to secure an open port
         server = startServer(protocol, 0);
@@ -235,6 +244,7 @@ class StatsdMeterRegistryPublishTest {
     @EnumSource(StatsdProtocol.class)
     @Issue("#2177")
     void whenSendError_reconnectsAndWritesNewMetrics(StatsdProtocol protocol) throws InterruptedException {
+        skipUdsTestOnWindows(protocol);
         serverLatch = new CountDownLatch(3);
         server = startServer(protocol, 0);
         final int port = getPort(protocol);
@@ -256,6 +266,11 @@ class StatsdMeterRegistryPublishTest {
         IntStream.range(1, 4).forEach(counter::increment);
         assertThat(serverLatch.await(3, TimeUnit.SECONDS)).isTrue();
         await().pollDelay(Duration.ofSeconds(1)).atMost(Duration.ofSeconds(3)).until(() -> serverMetricReadCount.get() == 3);
+    }
+
+    private void skipUdsTestOnWindows(StatsdProtocol protocol) {
+        if (protocol == StatsdProtocol.UDS_DATAGRAM)
+            assumeTrue(!OS.WINDOWS.isCurrentOs());
     }
 
     private int getPort(StatsdProtocol protocol) {
