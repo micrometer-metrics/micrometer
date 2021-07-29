@@ -26,6 +26,7 @@ import io.micrometer.core.instrument.util.HierarchicalNameMapper;
 import io.micrometer.core.lang.Nullable;
 import io.micrometer.core.util.internal.logging.WarnThenDebugLogger;
 import io.micrometer.statsd.internal.*;
+import io.netty.channel.unix.DomainSocketAddress;
 import io.netty.util.AttributeKey;
 import org.reactivestreams.Publisher;
 import org.reactivestreams.Subscriber;
@@ -40,7 +41,9 @@ import reactor.netty.tcp.TcpClient;
 import reactor.netty.udp.UdpClient;
 import reactor.util.retry.Retry;
 
+import java.net.InetSocketAddress;
 import java.net.PortUnreachableException;
+import java.net.SocketAddress;
 import java.time.Duration;
 import java.util.Arrays;
 import java.util.Map;
@@ -48,10 +51,7 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicReference;
-import java.util.function.Consumer;
-import java.util.function.Function;
-import java.util.function.ToDoubleFunction;
-import java.util.function.ToLongFunction;
+import java.util.function.*;
 import java.util.stream.DoubleStream;
 
 /**
@@ -219,7 +219,9 @@ public class StatsdMeterRegistry extends MeterRegistry {
                     publisher = this.sink.asFlux();
                 }
                 if (statsdConfig.protocol() == StatsdProtocol.UDP) {
-                    prepareUdpClient(publisher);
+                    prepareUdpClient(publisher, () -> InetSocketAddress.createUnresolved(statsdConfig.host(), statsdConfig.port()));
+                } else if (statsdConfig.protocol() == StatsdProtocol.UDS_DATAGRAM) {
+                    prepareUdpClient(publisher, () -> new DomainSocketAddress(statsdConfig.host()));
                 } else if (statsdConfig.protocol() == StatsdProtocol.TCP) {
                     prepareTcpClient(publisher);
                 }
@@ -227,11 +229,10 @@ public class StatsdMeterRegistry extends MeterRegistry {
         }
     }
 
-    private void prepareUdpClient(Publisher<String> publisher) {
+    private void prepareUdpClient(Publisher<String> publisher, Supplier<SocketAddress> remoteAddress) {
         AtomicReference<UdpClient> udpClientReference = new AtomicReference<>();
         UdpClient udpClient = UdpClient.create()
-                .host(statsdConfig.host())
-                .port(statsdConfig.port())
+                .remoteAddress(remoteAddress)
                 .handle((in, out) -> out
                         .sendString(publisher)
                         .neverComplete()
