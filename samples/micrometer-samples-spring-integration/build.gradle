@@ -1,9 +1,14 @@
 plugins {
     id 'java'
-    id 'org.springframework.boot' version '2.5.3'
+    id 'org.springframework.boot' version '2.6.0-M1'
 }
 
 apply plugin: 'io.spring.dependency-management'
+
+repositories {
+    mavenCentral()
+    maven { url "https://repo.spring.io/milestone" }
+}
 
 dependencies {
     implementation project(":micrometer-core")
