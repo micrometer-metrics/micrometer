@@ -56,7 +56,7 @@ import static org.junit.jupiter.api.Assumptions.assumeTrue;
  * @author Johnny Lim
  */
 class StatsdMeterRegistryPublishTest {
-    public static final String UDS_DATAGRAM_SOCKET_PATH = "/tmp/test-server.sock";
+    private static final String UDS_DATAGRAM_SOCKET_PATH = "/tmp/test-server.sock";
 
     StatsdMeterRegistry meterRegistry;
     DisposableChannel server;
