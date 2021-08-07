@@ -98,19 +98,20 @@ class CloudWatchConfigTest {
         assertThat(config.validate().isValid()).isTrue();
     }
 
-    @Test
-    void useStatisticsSet() {
-        props.put("cloudwatch.useStatisticsSet", "true");
-        assertThat(config.useStatisticsSet()).isTrue();
-    }
+
 
     @Test
     void useLegacyPublish() {
-        //config not set
-        assertThat(config.useStatisticsSet()).isFalse();
+        //config not set, default true
+        assertThat(config.useLegacyPublish()).isTrue();
 
-        props.put("cloudwatch.useStatisticsSet", "false");
-        assertThat(config.useStatisticsSet()).isFalse();
+        //config explicitly set to true
+        props.put("cloudwatch.useLegacyPublish", "true");
+        assertThat(config.useLegacyPublish()).isTrue();
+
+        //config explicitly set to false
+        props.put("cloudwatch.useLegacyPublish", "false");
+        assertThat(config.useLegacyPublish()).isFalse();
 
     }
 }

@@ -15,7 +15,14 @@
  */
 package io.micrometer.cloudwatch2;
 
+import io.micrometer.core.instrument.distribution.CountAtBucket;
+import io.micrometer.core.lang.Nullable;
 import software.amazon.awssdk.services.cloudwatch.model.MetricDatum;
+import software.amazon.awssdk.utils.Pair;
+
+import java.util.ArrayList;
+import java.util.List;
+import java.util.concurrent.TimeUnit;
 
 /**
  * Utilities for CloudWatch registry
@@ -32,7 +39,7 @@ final class CloudWatchUtils {
      * Maximum allowed value as specified by
      * {@link MetricDatum#value()}
      */
-    private static final double MAXIMUM_ALLOWED_VALUE = 1.174271e+108;
+    public static final double MAXIMUM_ALLOWED_VALUE = 1.174271e+108;
 
     private CloudWatchUtils() {
     }
@@ -57,6 +64,39 @@ final class CloudWatchUtils {
         // Non-zero magnitude, clamp to allowed range
         double clampedMag = Math.min(Math.max(magnitude, MINIMUM_ALLOWED_VALUE), MAXIMUM_ALLOWED_VALUE);
         return Math.copySign(clampedMag, value);
+    }
+
+    //VisibleForTesting
+    static public List<Pair<List<Double>, List<Double>>> histogramCountsToCloudWatchArrays(CountAtBucket[] histogramCounts, @Nullable TimeUnit baseTimeUnit) {
+        List<Pair<List<Double>, List<Double>>> batches = new ArrayList<>();
+        List<Double> values = new ArrayList<>();
+        List<Double> counts = new ArrayList<>();
+        int lastCount = 0;
+        for (CountAtBucket countAtBucket : histogramCounts) {
+            final double c = countAtBucket.count();
+            if (c - lastCount > 0) {
+                if (baseTimeUnit == null) {
+                    values.add(CloudWatchUtils.clampMetricValue(countAtBucket.bucket()));
+                } else {
+                    values.add(CloudWatchUtils.clampMetricValue(countAtBucket.bucket(baseTimeUnit)));
+
+                }
+                counts.add(c - lastCount);
+                lastCount = (int) c;
+
+                if (values.size() >= 150) {
+                    batches.add(Pair.of(values, counts));
+                    values = new ArrayList<>();
+                    counts = new ArrayList<>();
+                }
+            }
+        }
+
+        if (values.size() > 0) {
+            batches.add(Pair.of(values, counts));
+        }
+
+        return batches;
     }
 
 }

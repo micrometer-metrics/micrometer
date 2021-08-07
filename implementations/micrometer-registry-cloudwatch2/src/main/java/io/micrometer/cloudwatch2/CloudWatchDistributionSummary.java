@@ -31,10 +31,9 @@ public class CloudWatchDistributionSummary extends StepDistributionSummary {
      * @param distributionStatisticConfig   distribution static configuration
      * @param scale                         scale
      * @param stepMillis                    step in milliseconds
-     * @param supportsAggregablePercentiles whether it supports aggregable percentiles
      */
-    public CloudWatchDistributionSummary(Id id, Clock clock, DistributionStatisticConfig distributionStatisticConfig, double scale, long stepMillis, boolean supportsAggregablePercentiles) {
-        super(id, clock, distributionStatisticConfig, scale, stepMillis, supportsAggregablePercentiles);
+    public CloudWatchDistributionSummary(Id id, Clock clock, DistributionStatisticConfig distributionStatisticConfig, double scale, long stepMillis) {
+        super(id, clock, distributionStatisticConfig, scale, stepMillis, true);
         this.min = new TimeWindowMin(clock, distributionStatisticConfig);
     }
 

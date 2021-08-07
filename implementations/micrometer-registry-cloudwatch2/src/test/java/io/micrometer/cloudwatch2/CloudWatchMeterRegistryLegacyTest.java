@@ -31,11 +31,11 @@ import java.util.function.Predicate;
 import java.util.function.Supplier;
 import java.util.stream.Stream;
 
-import static org.assertj.core.api.Assertions.assertThat;
 import static io.micrometer.core.instrument.Meter.Id;
 import static io.micrometer.core.instrument.Meter.Type;
 import static io.micrometer.core.instrument.Meter.Type.DISTRIBUTION_SUMMARY;
 import static io.micrometer.core.instrument.Meter.Type.TIMER;
+import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.Mockito.*;
 
 /**
@@ -43,7 +43,7 @@ import static org.mockito.Mockito.*;
  *
  * @author Johnny Lim
  */
-class CloudWatchMeterRegistryTest {
+class CloudWatchMeterRegistryLegacyTest {
     private static final String METER_NAME = "test";
     private final CloudWatchConfig config = new CloudWatchConfig() {
         @Override
@@ -54,6 +54,11 @@ class CloudWatchMeterRegistryTest {
         @Override
         public String namespace() {
             return "namespace";
+        }
+
+        @Override
+        public boolean useLegacyPublish() {
+            return true;
         }
     };
 
@@ -185,7 +190,7 @@ class CloudWatchMeterRegistryTest {
         when(timer.getId()).thenReturn(meterId);
         when(timer.count()).thenReturn(2L);
 
-        Supplier<Stream<MetricDatum>> streamSupplier = () -> registryBatch.timerData(timer);
+        Supplier<Stream<MetricDatum>> streamSupplier = () -> registryBatch.legacyTimerData(timer);
 
         assertThat(streamSupplier.get().anyMatch(hasAvgMetric(meterId))).isTrue();
         assertThat(streamSupplier.get().anyMatch(hasMaxMetric(meterId))).isTrue();
@@ -198,7 +203,7 @@ class CloudWatchMeterRegistryTest {
         when(timer.getId()).thenReturn(meterId);
         when(timer.count()).thenReturn(0L);
 
-        Supplier<Stream<MetricDatum>> streamSupplier = () -> registryBatch.timerData(timer);
+        Supplier<Stream<MetricDatum>> streamSupplier = () -> registryBatch.legacyTimerData(timer);
 
         assertThat(streamSupplier.get().noneMatch(hasAvgMetric(meterId))).isTrue();
         assertThat(streamSupplier.get().noneMatch(hasMaxMetric(meterId))).isTrue();
@@ -211,7 +216,7 @@ class CloudWatchMeterRegistryTest {
         when(summary.getId()).thenReturn(meterId);
         when(summary.count()).thenReturn(2L);
 
-        Supplier<Stream<MetricDatum>> streamSupplier = () -> registryBatch.summaryData(summary);
+        Supplier<Stream<MetricDatum>> streamSupplier = () -> registryBatch.legacySummaryData(summary);
 
         assertThat(streamSupplier.get().anyMatch(hasAvgMetric(meterId))).isTrue();
         assertThat(streamSupplier.get().anyMatch(hasMaxMetric(meterId))).isTrue();
@@ -224,7 +229,7 @@ class CloudWatchMeterRegistryTest {
         when(summary.getId()).thenReturn(meterId);
         when(summary.count()).thenReturn(0L);
 
-        Supplier<Stream<MetricDatum>> streamSupplier = () -> registryBatch.summaryData(summary);
+        Supplier<Stream<MetricDatum>> streamSupplier = () -> registryBatch.legacySummaryData(summary);
 
         assertThat(streamSupplier.get().noneMatch(hasAvgMetric(meterId))).isTrue();
         assertThat(streamSupplier.get().noneMatch(hasMaxMetric(meterId))).isTrue();

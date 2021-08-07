@@ -32,16 +32,15 @@ public class CloudWatchTimer extends StepTimer {
     /**
      * Create a new {@code StepTimer}.
      *
-     * @param id                            ID
-     * @param clock                         clock
-     * @param distributionStatisticConfig   distribution statistic configuration
-     * @param pauseDetector                 pause detector
-     * @param baseTimeUnit                  base time unit
-     * @param stepDurationMillis            step in milliseconds
-     * @param supportsAggregablePercentiles whether it supports aggregable percentiles
+     * @param id                          ID
+     * @param clock                       clock
+     * @param distributionStatisticConfig distribution statistic configuration
+     * @param pauseDetector               pause detector
+     * @param baseTimeUnit                base time unit
+     * @param stepDurationMillis          step in milliseconds
      */
-    public CloudWatchTimer(Id id, Clock clock, DistributionStatisticConfig distributionStatisticConfig, PauseDetector pauseDetector, TimeUnit baseTimeUnit, long stepDurationMillis, boolean supportsAggregablePercentiles) {
-        super(id, clock, distributionStatisticConfig, pauseDetector, baseTimeUnit, stepDurationMillis, supportsAggregablePercentiles);
+    public CloudWatchTimer(Id id, Clock clock, DistributionStatisticConfig distributionStatisticConfig, PauseDetector pauseDetector, TimeUnit baseTimeUnit, long stepDurationMillis) {
+        super(id, clock, distributionStatisticConfig, pauseDetector, baseTimeUnit, stepDurationMillis, true);
         min = new TimeWindowMin(clock, distributionStatisticConfig);
     }
 
@@ -54,4 +53,5 @@ public class CloudWatchTimer extends StepTimer {
     public double min(final TimeUnit unit) {
         return TimeUtils.nanosToUnit(min.poll(), unit);
     }
+
 }

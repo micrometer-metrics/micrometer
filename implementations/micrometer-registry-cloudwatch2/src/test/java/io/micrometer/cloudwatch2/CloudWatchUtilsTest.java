@@ -15,8 +15,17 @@
  */
 package io.micrometer.cloudwatch2;
 
+import io.micrometer.core.instrument.distribution.CountAtBucket;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.ValueSource;
+import software.amazon.awssdk.utils.Pair;
 
+import java.util.List;
+import java.util.concurrent.ThreadLocalRandom;
+import java.util.concurrent.TimeUnit;
+
+import static io.micrometer.cloudwatch2.CloudWatchUtils.histogramCountsToCloudWatchArrays;
 import static org.assertj.core.api.Assertions.assertThat;
 
 /**
@@ -64,5 +73,46 @@ class CloudWatchUtilsTest {
         assertThat(CloudWatchUtils.clampMetricValue(-10.2))
                 .as("Check negative value")
                 .isEqualTo(-10.2);
+    }
+
+    @Test
+    void serialiseHistogramCounts() {
+        CountAtBucket[] histogramData = new CountAtBucket[]{
+                new CountAtBucket(1.0, 1.0),
+                new CountAtBucket(5.0, 1.0),
+                new CountAtBucket(10.0, 5.0),
+                new CountAtBucket(15.0, 5.0),
+                new CountAtBucket(20.0, 6.0),
+                new CountAtBucket(25.0, 25.0),
+                new CountAtBucket(30.0, 25.0),
+        };
+
+        final List<Pair<List<Double>, List<Double>>> pairs = histogramCountsToCloudWatchArrays(histogramData, TimeUnit.MILLISECONDS);
+
+        assertThat(pairs).hasSize(1);
+        assertThat(pairs.get(0).right()).hasSize(4);
+        assertThat(pairs.get(0).right().stream().mapToDouble(Double::doubleValue).sum()).isEqualTo(25);
+    }
+
+    @ParameterizedTest
+    @ValueSource(ints = {149, 150, 151, 300, 500, 652})
+    void serialiseHistogramCountsBatched(int sampleCount) {
+        CountAtBucket[] histogramData = new CountAtBucket[sampleCount];
+        int c = 0;
+        for (int i = 0; i < sampleCount; i++) {
+            c += ThreadLocalRandom.current().nextInt(1, 5);
+            histogramData[i] = new CountAtBucket((double) i, c);
+        }
+
+        final List<Pair<List<Double>, List<Double>>> pairs = histogramCountsToCloudWatchArrays(histogramData, TimeUnit.MILLISECONDS);
+
+        assertThat(pairs).hasSize((sampleCount / 150) + (sampleCount % 150 == 0 ? 0 : 1));
+        assertThat(pairs.stream()
+                .map(it -> it.right()
+                        .stream()
+                        .mapToDouble(Double::doubleValue)
+                        .sum())
+                .mapToDouble(Double::doubleValue).sum())
+                .isEqualTo(c);
     }
 }

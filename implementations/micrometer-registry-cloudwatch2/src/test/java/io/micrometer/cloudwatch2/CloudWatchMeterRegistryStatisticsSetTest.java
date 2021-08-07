@@ -16,6 +16,7 @@
 package io.micrometer.cloudwatch2;
 
 import io.micrometer.core.instrument.*;
+import io.micrometer.core.instrument.distribution.HistogramSnapshot;
 import org.junit.jupiter.api.Test;
 import org.mockito.ArgumentCaptor;
 import software.amazon.awssdk.services.cloudwatch.model.Dimension;
@@ -57,8 +58,8 @@ class CloudWatchMeterRegistryStatisticsSetTest {
         }
 
         @Override
-        public boolean useStatisticsSet() {
-            return true;
+        public boolean useLegacyPublish() {
+            return false;
         }
     };
 
@@ -189,6 +190,7 @@ class CloudWatchMeterRegistryStatisticsSetTest {
         Id meterId = new Id(METER_NAME, Tags.empty(), null, null, TIMER);
         when(timer.getId()).thenReturn(meterId);
         when(timer.count()).thenReturn(2L);
+        when(timer.takeSnapshot()).thenReturn(new HistogramSnapshot(2, 0, 0, null, null, null));
 
         Supplier<Stream<MetricDatum>> streamSupplier = () -> registryBatch.timerData(timer);
 
@@ -201,6 +203,7 @@ class CloudWatchMeterRegistryStatisticsSetTest {
         Id meterId = new Id(METER_NAME, Tags.empty(), null, null, TIMER);
         when(timer.getId()).thenReturn(meterId);
         when(timer.count()).thenReturn(0L);
+        when(timer.takeSnapshot()).thenReturn(new HistogramSnapshot(0, 0, 0, null, null, null));
 
         Supplier<Stream<MetricDatum>> streamSupplier = () -> registryBatch.timerData(timer);
 
@@ -217,12 +220,12 @@ class CloudWatchMeterRegistryStatisticsSetTest {
         when(summary.max()).thenReturn(5.0);
         when(summary.totalAmount()).thenReturn(6.0);
         when(summary.count()).thenReturn(2L);
+        when(summary.takeSnapshot()).thenReturn(new HistogramSnapshot(2, 1.0, 5.0, null, null, null));
 
         Supplier<Stream<MetricDatum>> streamSupplier = () -> registryBatch.summaryData(summary);
 
         assertThat(streamSupplier.get()).anyMatch(hasStatisticsSet(meterId));
     }
-
 
     @Test
     void shouldNotAddDistributionSumAggregateMetricWhenNoEventHappened() {
@@ -230,6 +233,7 @@ class CloudWatchMeterRegistryStatisticsSetTest {
         Id meterId = new Id(METER_NAME, Tags.empty(), null, null, DISTRIBUTION_SUMMARY);
         when(summary.getId()).thenReturn(meterId);
         when(summary.count()).thenReturn(0L);
+        when(summary.takeSnapshot()).thenReturn(new HistogramSnapshot(0, 0, 0, null, null, null));
 
         Supplier<Stream<MetricDatum>> streamSupplier = () -> registryBatch.summaryData(summary);
 
