@@ -67,7 +67,7 @@ final class CloudWatchUtils {
     }
 
     //VisibleForTesting
-    static public List<Pair<List<Double>, List<Double>>> histogramCountsToCloudWatchArrays(CountAtBucket[] histogramCounts, @Nullable TimeUnit baseTimeUnit) {
+    public static List<Pair<List<Double>, List<Double>>> histogramCountsToCloudWatchArrays(CountAtBucket[] histogramCounts, @Nullable TimeUnit baseTimeUnit) {
         List<Pair<List<Double>, List<Double>>> batches = new ArrayList<>();
         List<Double> values = new ArrayList<>();
         List<Double> counts = new ArrayList<>();
