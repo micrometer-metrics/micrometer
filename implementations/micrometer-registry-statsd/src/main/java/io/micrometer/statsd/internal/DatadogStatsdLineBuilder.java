@@ -20,6 +20,8 @@ import io.micrometer.core.instrument.MeterRegistry;
 import io.micrometer.core.instrument.Statistic;
 import io.micrometer.core.instrument.Tag;
 import io.micrometer.core.instrument.config.NamingConvention;
+import io.micrometer.core.instrument.distribution.DistributionStatisticConfig;
+import io.micrometer.core.instrument.util.DoubleFormat;
 import io.micrometer.core.lang.Nullable;
 
 import java.util.concurrent.ConcurrentHashMap;
@@ -27,7 +29,7 @@ import java.util.concurrent.ConcurrentMap;
 import java.util.stream.Collectors;
 
 public class DatadogStatsdLineBuilder extends FlavorStatsdLineBuilder {
-
+    private static final String TYPE_DISTRIBUTION = "d";
     private static final String ENTITY_ID_TAG_NAME = "dd.internal.entity_id";
 
     private final Object conventionTagsLock = new Object();
@@ -40,14 +42,32 @@ public class DatadogStatsdLineBuilder extends FlavorStatsdLineBuilder {
     @SuppressWarnings("NullableProblems")
     private volatile String tagsNoStat;
     private final ConcurrentMap<Statistic, String> tags = new ConcurrentHashMap<>();
+    private final boolean percentileHistogram;
     // VisibleForTesting
     @Nullable
     String ddEntityId;
 
+    public DatadogStatsdLineBuilder(Meter.Id id, MeterRegistry.Config config, DistributionStatisticConfig distributionStatisticConfig) {
+        super(id, config);
+
+        percentileHistogram = distributionStatisticConfig.isPercentileHistogram();
+        ddEntityId = System.getenv("DD_ENTITY_ID");
+    }
+
     public DatadogStatsdLineBuilder(Meter.Id id, MeterRegistry.Config config) {
         super(id, config);
 
+        percentileHistogram = false;
         ddEntityId = System.getenv("DD_ENTITY_ID");
+    }
+
+    @Override
+    public String histogram(double amount) {
+        if (percentileHistogram) {
+            return line(DoubleFormat.decimalOrNan(amount), null, TYPE_DISTRIBUTION);
+        } else {
+            return super.histogram(amount);
+        }
     }
 
     @Override
