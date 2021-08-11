@@ -371,6 +371,20 @@ class StatsdMeterRegistryTest {
     }
 
     @Test
+    void supportsDatadogDistributions() {
+        final Sinks.Many<String> lines = sink();
+        registry = StatsdMeterRegistry.builder(configWithFlavor(StatsdFlavor.DATADOG))
+                .clock(clock)
+                .lineSink(toLineSink(lines))
+                .build();
+
+        StepVerifier.create(lines.asFlux())
+                .then(() -> DistributionSummary.builder("my.summary").publishPercentileHistogram(true).register(registry).record(1))
+                .expectNext("my.summary:1|d")
+                .verifyComplete();
+    }
+
+    @Test
     void interactWithStoppedRegistry() {
         registry = new StatsdMeterRegistry(configWithFlavor(StatsdFlavor.ETSY), clock);
         registry.stop();

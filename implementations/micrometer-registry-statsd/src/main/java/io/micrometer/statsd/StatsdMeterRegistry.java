@@ -285,14 +285,14 @@ public class StatsdMeterRegistry extends MeterRegistry {
     }
 
     private void retryReplaceClient(Mono<? extends Connection> connectMono) {
-         connectMono
-                 .retryWhen(Retry.backoff(Long.MAX_VALUE, Duration.ofSeconds(1)).maxBackoff(Duration.ofMinutes(1)))
-                 .subscribe(connection -> {
-                     this.statsdConnection.replace(connection);
+        connectMono
+                .retryWhen(Retry.backoff(Long.MAX_VALUE, Duration.ofSeconds(1)).maxBackoff(Duration.ofMinutes(1)))
+                .subscribe(connection -> {
+                    this.statsdConnection.replace(connection);
 
-                     // now that we're connected, start polling gauges and other pollable meter types
-                     startPolling();
-                 });
+                    // now that we're connected, start polling gauges and other pollable meter types
+                    startPolling();
+                });
     }
 
     private void startPolling() {
@@ -327,11 +327,19 @@ public class StatsdMeterRegistry extends MeterRegistry {
     }
 
     private StatsdLineBuilder lineBuilder(Meter.Id id) {
+        return lineBuilder(id, null);
+    }
+
+    private StatsdLineBuilder lineBuilder(Meter.Id id, @Nullable DistributionStatisticConfig distributionStatisticConfig) {
         if (lineBuilderFunction == null) {
             lineBuilderFunction = id2 -> {
                 switch (statsdConfig.flavor()) {
                     case DATADOG:
-                        return new DatadogStatsdLineBuilder(id2, config());
+                        if (distributionStatisticConfig != null) {
+                            return new DatadogStatsdLineBuilder(id2, config(), distributionStatisticConfig);
+                        } else {
+                            return new DatadogStatsdLineBuilder(id2, config());
+                        }
                     case TELEGRAF:
                         return new TelegrafStatsdLineBuilder(id2, config());
                     case SYSDIG:
@@ -361,7 +369,7 @@ public class StatsdMeterRegistry extends MeterRegistry {
 
     @Override
     protected LongTaskTimer newLongTaskTimer(Meter.Id id, DistributionStatisticConfig distributionStatisticConfig) {
-        StatsdLongTaskTimer ltt = new StatsdLongTaskTimer(id, lineBuilder(id), this.sink, clock, statsdConfig.publishUnchangedMeters(),
+        StatsdLongTaskTimer ltt = new StatsdLongTaskTimer(id, lineBuilder(id, distributionStatisticConfig), this.sink, clock, statsdConfig.publishUnchangedMeters(),
                 distributionStatisticConfig, getBaseTimeUnit());
         HistogramGauges.registerWithCommonFormat(ltt, this);
         pollableMeters.put(id, ltt);
@@ -377,7 +385,7 @@ public class StatsdMeterRegistry extends MeterRegistry {
             distributionStatisticConfig = addInfBucket(distributionStatisticConfig);
         }
 
-        Timer timer = new StatsdTimer(id, lineBuilder(id), this.sink, clock, distributionStatisticConfig, pauseDetector, getBaseTimeUnit(),
+        Timer timer = new StatsdTimer(id, lineBuilder(id, distributionStatisticConfig), this.sink, clock, distributionStatisticConfig, pauseDetector, getBaseTimeUnit(),
                 statsdConfig.step().toMillis());
         HistogramGauges.registerWithCommonFormat(timer, this);
         return timer;
@@ -392,7 +400,7 @@ public class StatsdMeterRegistry extends MeterRegistry {
             distributionStatisticConfig = addInfBucket(distributionStatisticConfig);
         }
 
-        DistributionSummary summary = new StatsdDistributionSummary(id, lineBuilder(id), this.sink, clock, distributionStatisticConfig, scale);
+        DistributionSummary summary = new StatsdDistributionSummary(id, lineBuilder(id, distributionStatisticConfig), this.sink, clock, distributionStatisticConfig, scale);
         HistogramGauges.registerWithCommonFormat(summary, this);
         return summary;
     }
