@@ -24,7 +24,6 @@ import org.glassfish.jersey.server.model.ResourceMethod;
 import org.glassfish.jersey.server.monitoring.RequestEvent;
 import org.glassfish.jersey.server.monitoring.RequestEventListener;
 
-import javax.ws.rs.NotFoundException;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -69,7 +68,7 @@ public class MetricsRequestEventListener implements RequestEventListener {
 
         switch (event.getType()) {
             case ON_EXCEPTION:
-                if (!(event.getException() instanceof NotFoundException)) {
+                if (!isNotFoundException(event)) {
                     break;
                 }
             case REQUEST_MATCHED:
@@ -101,6 +100,16 @@ public class MetricsRequestEventListener implements RequestEventListener {
                 }
                 break;
         }
+    }
+
+    private boolean isNotFoundException(RequestEvent event) {
+        Throwable t = event.getException();
+        if (t == null) {
+            return false;
+        }
+        String className = t.getClass().getCanonicalName();
+        return className.equals("jakarta.ws.rs.NotFoundException")
+            || className.equals("javax.ws.rs.NotFoundException");
     }
 
     private Set<Timer> shortTimers(Set<Timed> timed, RequestEvent event) {

@@ -18,9 +18,6 @@ package io.micrometer.jersey2.server;
 import java.util.List;
 import java.util.regex.Pattern;
 
-import javax.ws.rs.core.Response;
-import javax.ws.rs.core.Response.Status;
-
 import io.micrometer.core.instrument.Tag;
 import io.micrometer.core.instrument.binder.http.Outcome;
 import io.micrometer.core.instrument.util.StringUtils;
@@ -48,7 +45,7 @@ public final class JerseyTags {
 
     private static final Tag EXCEPTION_NONE = Tag.of("exception", "None");
 
-    private static final Tag STATUS_SERVER_ERROR = Tag.of("status", String.valueOf(Status.INTERNAL_SERVER_ERROR.getStatusCode()));
+    private static final Tag STATUS_SERVER_ERROR = Tag.of("status", "500");
 
     private static final Tag METHOD_UNKNOWN = Tag.of("method", "UNKNOWN");
 
@@ -107,7 +104,7 @@ public final class JerseyTags {
     }
 
     private static boolean isRedirection(int status) {
-        return Response.Status.Family.familyOf(status) == Response.Status.Family.REDIRECTION;
+        return 300 <= status && status < 400;
     }
 
     private static String getMatchingPattern(RequestEvent event) {
