@@ -1,7 +1,7 @@
 def VERSIONS = [
         'ch.qos.logback:logback-classic:1.2.+',
         'colt:colt:1.2.0',
-        'com.amazonaws:aws-java-sdk-cloudwatch:latest.release',
+        'com.amazonaws:aws-java-sdk-cloudwatch:1.11.+',
         'com.fasterxml.jackson.core:jackson-databind:latest.release',
         'com.github.ben-manes.caffeine:caffeine:2.+',
         'com.github.charithe:kafka-junit:latest.release',
