@@ -16,6 +16,11 @@ dependencies {
     testImplementation 'io.netty:netty-transport-native-kqueue:+:osx-x86_64'
 }
 
+nebulaPublishVerification {
+    // Verification fails due to the `+` version, but since this is a test dependency we don't publish, ignore it.
+    ignore('io.netty:netty-transport-native-kqueue')
+}
+
 shadowJar {
     configurations = [project.configurations.compileClasspath]
     archiveClassifier.set('')
