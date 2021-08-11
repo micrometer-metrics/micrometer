@@ -25,6 +25,8 @@ import java.util.Map;
 
 import static io.micrometer.core.instrument.config.MeterRegistryConfigValidator.*;
 import static io.micrometer.core.instrument.config.validate.PropertyValidator.*;
+import static io.micrometer.dynatrace.DynatraceApiVersion.V1;
+import static io.micrometer.dynatrace.DynatraceApiVersion.V2;
 
 /**
  * Configuration for {@link DynatraceMeterRegistry}
@@ -34,7 +36,6 @@ import static io.micrometer.core.instrument.config.validate.PropertyValidator.*;
  * @since 1.1.0
  */
 public interface DynatraceConfig extends StepRegistryConfig {
-
     @Override
     default String prefix() {
         return "dynatrace";
@@ -42,7 +43,7 @@ public interface DynatraceConfig extends StepRegistryConfig {
 
     default String apiToken() {
         Validated<String> secret = getSecret(this, "apiToken");
-        if (apiVersion() == DynatraceApiVersion.V1) {
+        if (apiVersion() == V1) {
             return secret.required().get();
         }
         return secret.orElse("");
@@ -50,14 +51,14 @@ public interface DynatraceConfig extends StepRegistryConfig {
 
     default String uri() {
         Validated<String> uri = getUrlString(this, "uri");
-        if (apiVersion() == DynatraceApiVersion.V1) {
+        if (apiVersion() == V1) {
             return uri.required().get();
         }
         return uri.orElse(DynatraceMetricApiConstants.getDefaultOneAgentEndpoint());
     }
 
     default String deviceId() {
-        return getString(this, "deviceId").required().get();
+        return getString(this, "deviceId").orElse("");
     }
 
     default String technologyType() {
@@ -82,8 +83,11 @@ public interface DynatraceConfig extends StepRegistryConfig {
      * @since 1.8.0
      */
     default DynatraceApiVersion apiVersion() {
-        // if not specified, defaults to v1 for backwards compatibility.
-        return getEnum(this, DynatraceApiVersion.class, "apiVersion").orElse(DynatraceApiVersion.V1);
+        // If a device id is specified, use v1 as default. If it is not, use v2.
+        // The version can be overwritten explicitly when creating a MM config
+        // For Spring Boot, v1 is automatically chosen when the device id is set.
+        return getEnum(this, DynatraceApiVersion.class, "apiVersion")
+                .orElse(deviceId().isEmpty() ? V2 : V1);
     }
 
     /**
@@ -125,11 +129,11 @@ public interface DynatraceConfig extends StepRegistryConfig {
                             if (apiVersionValidation.isValid()) {
                                 return checkAll(this,
                                         config -> {
-                                            if (config.apiVersion() == DynatraceApiVersion.V1) {
+                                            if (config.apiVersion() == V1) {
                                                 return checkAll(this,
                                                         checkRequired("apiToken", DynatraceConfig::apiToken),
                                                         checkRequired("uri", DynatraceConfig::uri),
-                                                        checkRequired("deviceId", DynatraceConfig::deviceId),
+                                                        check("deviceId", DynatraceConfig::deviceId).andThen(Validated::nonBlank),
                                                         check("technologyType", DynatraceConfig::technologyType).andThen(Validated::nonBlank)
                                                 );
                                             } else {

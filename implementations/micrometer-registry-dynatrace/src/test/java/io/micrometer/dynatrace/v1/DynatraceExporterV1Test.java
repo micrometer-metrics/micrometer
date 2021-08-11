@@ -90,6 +90,11 @@ class DynatraceExporterV1Test {
             public String apiToken() {
                 return "apiToken";
             }
+
+            @Override
+            public DynatraceApiVersion apiVersion() {
+                return DynatraceApiVersion.V1;
+            }
         }, Clock.SYSTEM)).isExactlyInstanceOf(ValidationException.class);
     }
 
@@ -110,6 +115,12 @@ class DynatraceExporterV1Test {
             public String apiToken() {
                 return "apiToken";
             }
+
+            @Override
+            public DynatraceApiVersion apiVersion() {
+                return DynatraceApiVersion.V1;
+            }
+
         }, Clock.SYSTEM)).isExactlyInstanceOf(ValidationException.class);
     }
 
@@ -129,6 +140,11 @@ class DynatraceExporterV1Test {
             @Override
             public String deviceId() {
                 return "deviceId";
+            }
+
+            @Override
+            public DynatraceApiVersion apiVersion() {
+                return DynatraceApiVersion.V1;
             }
         }, Clock.SYSTEM)).isExactlyInstanceOf(ValidationException.class);
     }
