@@ -129,7 +129,7 @@ class StatsdMeterRegistryPublishTest {
         // For UDP, the first change seems to be lost frequently somehow.
         Counter.builder("another.counter").register(meterRegistry).increment();
 
-        if (protocol == StatsdProtocol.TCP) {
+        if (protocol == StatsdProtocol.TCP || protocol == StatsdProtocol.UDS_DATAGRAM) {
             await().until(() -> meterRegistry.statsdConnection.get() != firstClient);
         }
 
