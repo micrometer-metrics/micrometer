@@ -2,11 +2,6 @@ plugins {
     id 'java'
 }
 
-repositories {
-    // TODO remove when reactor-netty 1.0.10 is released
-    maven { url 'https://repo.spring.io/snapshot' }
-}
-
 dependencies {
     implementation platform('io.projectreactor:reactor-bom:2020.0.+')
 

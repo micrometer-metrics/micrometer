@@ -2,27 +2,18 @@ plugins {
     id 'com.github.johnrengelman.shadow' version '7.0.0'
 }
 
-repositories {
-    // TODO remove when reactor-netty 1.0.10 is released
-    maven { url 'https://repo.spring.io/snapshot' }
-}
-
 dependencies {
     api project(':micrometer-core')
 
     implementation 'io.projectreactor:reactor-core'
     implementation 'io.projectreactor.netty:reactor-netty-core'
-    constraints {
-        // TODO remove when reactor-netty 1.0.10 is released
-        implementation 'io.projectreactor.netty:reactor-netty-core:1.0.10-SNAPSHOT'
-    }
 
     testImplementation project(':micrometer-test')
     testImplementation 'io.projectreactor:reactor-test'
     testImplementation 'ch.qos.logback:logback-classic'
     testImplementation 'org.awaitility:awaitility'
-    // for running tests with UDS on OSX
-    testImplementation 'io.netty:netty-transport-native-kqueue:4.1.66.Final:osx-x86_64'
+    // for running tests with UDS on OSX x86-64
+    testImplementation 'io.netty:netty-transport-native-kqueue:+:osx-x86_64'
 }
 
 shadowJar {
