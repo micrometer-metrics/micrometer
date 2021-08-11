@@ -91,7 +91,7 @@ subprojects {
           runtimeOnly version
         }
       }
-      implementation platform('io.projectreactor:reactor-bom:2020.0.+')
+      implementation platform('io.projectreactor:reactor-bom:2020.0.10')
     }
   }
 }
