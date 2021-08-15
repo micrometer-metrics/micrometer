@@ -1,10 +1,10 @@
 dependencies {
     api project(':micrometer-core')
 
-    compileOnly 'org.glassfish.jersey.core:jersey-server'
-    runtimeOnly 'org.glassfish.jersey.inject:jersey-hk2'
+    compileOnly 'org.glassfish.jersey.core:jersey-server:2.+'
+    runtimeOnly 'org.glassfish.jersey.inject:jersey-hk2:2.+'
 
-    testImplementation 'org.glassfish.jersey.test-framework.providers:jersey-test-framework-provider-inmemory'
+    testImplementation 'org.glassfish.jersey.test-framework.providers:jersey-test-framework-provider-inmemory:2.+'
 
     // required by jdk 9
     testRuntimeOnly 'javax.xml.bind:jaxb-api'
