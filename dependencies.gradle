@@ -40,7 +40,6 @@ def VERSIONS = [
         'javax.cache:cache-api:latest.release',
         'javax.inject:javax.inject:1',
         'javax.xml.bind:jaxb-api:2.3.+',
-        'junit:junit:4.12',
         'net.sf.ehcache:ehcache:latest.release',
         'org.apache.httpcomponents:httpasyncclient:latest.release',
         'org.apache.httpcomponents:httpclient:latest.release',
@@ -48,8 +47,6 @@ def VERSIONS = [
         'org.apache.kafka:kafka-streams:2.+',
         'org.apache.logging.log4j:log4j-core:2.+',
         'org.apache.tomcat.embed:tomcat-embed-core:8.+',
-        'org.aspectj:aspectjweaver:1.8.+',
-        'org.assertj:assertj-core:latest.release',
         'org.awaitility:awaitility:latest.release',
         'org.eclipse.jetty:jetty-client:9.+',
         'org.eclipse.jetty:jetty-server:9.+',
@@ -62,12 +59,7 @@ def VERSIONS = [
         'org.hsqldb:hsqldb:2.5.+', // 2.6.0 requires JDK 11.
         'org.jooq:jooq:3.14.+',
         'org.jsr107.ri:cache-ri-impl:1.0.0',
-        'org.junit.jupiter:junit-jupiter:5.7.+',
-        'org.junit.platform:junit-platform-launcher:1.7.+',
-        'org.junit.vintage:junit-vintage-engine:5.7.+',
         'org.latencyutils:LatencyUtils:latest.release',
-        'org.mockito:mockito-core:latest.release',
-        'org.mockito:mockito-inline:latest.release',
         'org.mongodb:mongodb-driver-sync:latest.release',
         'org.slf4j:slf4j-api:1.7.+',
         'org.springframework:spring-context:latest.release',
@@ -78,20 +70,57 @@ def VERSIONS = [
         'software.amazon.awssdk:cloudwatch:latest.release'
 ]
 
+def COMMON_VERSIONS = [
+        'org.aspectj:aspectjweaver:1.8.+',
+        'org.assertj:assertj-core:latest.release',
+        'junit:junit:4.12',
+        'org.junit.jupiter:junit-jupiter:5.7.+',
+        'org.junit.platform:junit-platform-launcher:1.7.+',
+        'org.junit.vintage:junit-vintage-engine:5.7.+',
+        'org.mockito:mockito-core:latest.release',
+        'org.mockito:mockito-inline:latest.release',
+]
+
 subprojects {
-  plugins.withId('java-library') {
-    dependencies {
-      constraints {
-        // Direct dependencies
-        VERSIONS.each {version->
-          // java-library plugin has three root configurations, so we apply constraints too all of
-          // them so they all can use the managed versions.
-          api version
-          compileOnly version
-          runtimeOnly version
+  if (it.name != 'micrometer-jersey3') {
+    plugins.withId('java-library') {
+      dependencies {
+        constraints {
+          // Direct dependencies
+          COMMON_VERSIONS.each { version ->
+            // java-library plugin has three root configurations, so we apply constraints too all of
+            // them so they all can use the managed versions.
+            api version
+            compileOnly version
+            runtimeOnly version
+          }
+          // Direct dependencies
+          VERSIONS.each { version ->
+            // java-library plugin has three root configurations, so we apply constraints too all of
+            // them so they all can use the managed versions.
+            api version
+            compileOnly version
+            runtimeOnly version
+          }
+        }
+        implementation platform('io.projectreactor:reactor-bom:2020.0.10')
+      }
+    }
+  } else {
+    plugins.withId('java-library') {
+      dependencies {
+        constraints {
+          // Direct dependencies
+          COMMON_VERSIONS.each { version ->
+            // java-library plugin has three root configurations, so we apply constraints too all of
+            // them so they all can use the managed versions.
+            api version
+            compileOnly version
+            runtimeOnly version
+          }
         }
       }
-      implementation platform('io.projectreactor:reactor-bom:2020.0.10')
     }
   }
+
 }

@@ -1,0 +1,18 @@
+dependencies {
+    api project(':micrometer-core')
+
+    compileOnly 'org.glassfish.jersey.core:jersey-server:3.+'
+    runtimeOnly 'org.glassfish.jersey.inject:jersey-hk2:3.+'
+
+    testImplementation 'org.glassfish.jersey.test-framework.providers:jersey-test-framework-provider-inmemory:3.+'
+
+    // required by jdk 9
+    testRuntimeOnly 'jakarta.xml.bind:jakarta.xml.bind-api:3.+'
+
+    testImplementation 'org.assertj:assertj-core'
+
+    // See https://github.com/eclipse-ee4j/jersey/issues/3662
+    testImplementation 'junit:junit'
+    testRuntimeOnly 'org.junit.vintage:junit-vintage-engine'
+    testImplementation 'org.mockito:mockito-core'
+}
