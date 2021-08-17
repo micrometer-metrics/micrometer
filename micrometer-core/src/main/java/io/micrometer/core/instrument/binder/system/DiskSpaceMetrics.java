@@ -15,7 +15,6 @@
  */
 package io.micrometer.core.instrument.binder.system;
 
-import io.micrometer.core.annotation.Incubating;
 import io.micrometer.core.instrument.Gauge;
 import io.micrometer.core.instrument.MeterRegistry;
 import io.micrometer.core.instrument.Tag;
