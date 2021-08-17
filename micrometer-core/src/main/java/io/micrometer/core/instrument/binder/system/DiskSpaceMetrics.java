@@ -34,8 +34,8 @@ import static java.util.Collections.emptyList;
  *
  * @author jmcshane
  * @author Johnny Lim
+ * @since 1.8.0
  */
-@Incubating(since = "1.1.0")
 @NonNullApi
 @NonNullFields
 public class DiskSpaceMetrics implements MeterBinder {
