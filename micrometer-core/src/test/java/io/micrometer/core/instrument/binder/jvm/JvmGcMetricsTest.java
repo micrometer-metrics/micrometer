@@ -15,9 +15,15 @@
  */
 package io.micrometer.core.instrument.binder.jvm;
 
+import com.tngtech.archunit.base.DescribedPredicate;
+import com.tngtech.archunit.core.domain.JavaClasses;
+import com.tngtech.archunit.core.importer.ClassFileImporter;
+import com.tngtech.archunit.lang.ArchRule;
 import io.micrometer.core.instrument.simple.SimpleMeterRegistry;
 import org.junit.jupiter.api.Test;
 
+import static com.tngtech.archunit.core.domain.JavaClass.Predicates.resideInAPackage;
+import static com.tngtech.archunit.lang.syntax.ArchRuleDefinition.methods;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.jupiter.api.Assumptions.assumeTrue;
 
@@ -28,6 +34,17 @@ import static org.junit.jupiter.api.Assumptions.assumeTrue;
  */
 @GcTest
 class JvmGcMetricsTest {
+
+    @Test
+    void noJvmImplementationSpecificApiSignatures() {
+        JavaClasses importedClasses = new ClassFileImporter().importPackages("io.micrometer.core.instrument.binder.jvm");
+
+        ArchRule noSunManagementInMethodSignatures = methods()
+                .should().notHaveRawReturnType(resideInAPackage("com.sun.management.."))
+                .andShould().notHaveRawParameterTypes(DescribedPredicate.anyElementThat(resideInAPackage("com.sun.management..")));
+
+        noSunManagementInMethodSignatures.check(importedClasses);
+    }
 
     @Test
     void metersAreBound() {
