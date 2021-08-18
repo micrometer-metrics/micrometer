@@ -22,6 +22,7 @@ def VERSIONS = [
         'com.newrelic.agent.java:newrelic-api:5.+',
         'com.signalfx.public:signalfx-java:1.0.+',
         'com.squareup.okhttp3:okhttp:latest.release',
+        'com.tngtech.archunit:archunit-junit5:latest.release',
         'com.wavefront:wavefront-sdk-java:2.6.+',
         'de.flapdoodle.embed:de.flapdoodle.embed.mongo:2.+',
         'io.dropwizard.metrics:metrics-core:4.0.+',
