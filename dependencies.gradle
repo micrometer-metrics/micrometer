@@ -48,7 +48,7 @@ def VERSIONS = [
         'org.apache.kafka:kafka-clients:2.+',
         'org.apache.kafka:kafka-streams:2.+',
         'org.apache.logging.log4j:log4j-core:2.+',
-        'org.apache.tomcat.embed:tomcat-embed-core:8.5.69',
+        'org.apache.tomcat.embed:tomcat-embed-core:8.+',
         'org.aspectj:aspectjweaver:1.8.+',
         'org.assertj:assertj-core:latest.release',
         'org.awaitility:awaitility:latest.release',
