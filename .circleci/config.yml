@@ -7,6 +7,12 @@ executors:
       GRADLE_OPTS: '-Dorg.gradle.jvmargs="-Xmx2048m -XX:+HeapDumpOnOutOfMemoryError"'
     docker:
       - image: cimg/openjdk:16.0.2
+  circle-jdk11-executor:
+    working_directory: ~/micrometer
+    environment:
+      GRADLE_OPTS: '-Dorg.gradle.jvmargs="-Xmx2048m -XX:+HeapDumpOnOutOfMemoryError"'
+    docker:
+      - image: cimg/openjdk:11.0.11
   machine-executor:
     working_directory: ~/micrometer
     machine:
@@ -52,6 +58,11 @@ jobs:
       - run: ./gradlew shenandoahTest
       - run: ./gradlew zgcTest
 
+  build-jdk11:
+    executor: circle-jdk11-executor
+    steps:
+      - gradlew-build
+
   docker-tests:
     executor: machine-executor
     steps:
@@ -73,10 +84,12 @@ workflows:
   build_prs_deploy_snapshots:
     jobs:
       - build
+      - build-jdk11
       - docker-tests
       - deploy:
           requires:
             - build
+            - build-jdk11
             - docker-tests
           filters:
             branches:
@@ -91,6 +104,12 @@ workflows:
               ignore: /.*/
             tags:
               only: /^v\d+\.\d+\.\d+(-(RC|M)\d+)?$/
+      - build-jdk11:
+          filters:
+            branches:
+              ignore: /.*/
+            tags:
+              only: /^v\d+\.\d+\.\d+(-(RC|M)\d+)?$/
       - docker-tests:
           filters:
             branches:
@@ -100,6 +119,7 @@ workflows:
       - deploy:
           requires:
             - build
+            - build-jdk11
             - docker-tests
           filters:
             tags:
