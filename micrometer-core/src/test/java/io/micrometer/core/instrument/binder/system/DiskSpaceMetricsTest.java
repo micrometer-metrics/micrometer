@@ -15,12 +15,14 @@
  */
 package io.micrometer.core.instrument.binder.system;
 
+import io.micrometer.core.instrument.Gauge;
 import io.micrometer.core.instrument.MeterRegistry;
 import io.micrometer.core.instrument.Tags;
 import io.micrometer.core.instrument.simple.SimpleMeterRegistry;
 import org.junit.jupiter.api.Test;
 
 import java.io.File;
+import java.util.Arrays;
 
 import static org.assertj.core.api.AssertionsForClassTypes.assertThat;
 
@@ -30,6 +32,7 @@ import static org.assertj.core.api.AssertionsForClassTypes.assertThat;
  * @author jmcshane
  * @author Johnny Lim
  * @author Tommy Ludwig
+ * @author Chris Bono
  */
 class DiskSpaceMetricsTest {
 
@@ -41,6 +44,28 @@ class DiskSpaceMetricsTest {
 
         assertThat(registry.get("disk.free").gauge().value()).isNotNaN().isGreaterThan(0);
         assertThat(registry.get("disk.total").gauge().value()).isNotNaN().isGreaterThan(0);
+    }
+
+    @Test
+    void diskSpaceMetricsMultiplePaths() {
+        File path1 = new File(System.getProperty("user.dir"));
+        File path2 = new File(System.getProperty("java.io.tmpdir"));
+        new DiskSpaceMetrics(Arrays.asList(path1, path2)).bindTo(registry);
+
+        Gauge gaugeDiskFreePath1 = registry.get("disk.free").tag("path", path1.getAbsolutePath()).gauge();
+        Gauge gaugeDiskFreePath2 = registry.get("disk.free").tag("path", path2.getAbsolutePath()).gauge();
+
+        Gauge gaugeDiskTotalPath1 = registry.get("disk.total").tag("path", path1.getAbsolutePath()).gauge();
+        Gauge gaugeDiskTotalPath2 = registry.get("disk.total").tag("path", path2.getAbsolutePath()).gauge();
+
+        assertThat(gaugeDiskFreePath1).isNotSameAs(gaugeDiskFreePath2);
+        assertThat(gaugeDiskTotalPath1).isNotSameAs(gaugeDiskTotalPath2);
+
+        assertThat(gaugeDiskFreePath1.value()).isNotNaN().isGreaterThan(0);
+        assertThat(gaugeDiskFreePath2.value()).isNotNaN().isGreaterThan(0);
+
+        assertThat(gaugeDiskTotalPath1.value()).isNotNaN().isGreaterThan(0);
+        assertThat(gaugeDiskTotalPath2.value()).isNotNaN().isGreaterThan(0);
     }
 
     @Test
