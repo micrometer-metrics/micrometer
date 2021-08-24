@@ -1,5 +1,5 @@
 /**
- * Copyright 2020 VMware, Inc.
+ * Copyright 2021 VMware, Inc.
  * <p>
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -96,5 +96,22 @@ class CloudWatchConfigTest {
         props.put("cloudwatch.namespace", "name");
 
         assertThat(config.validate().isValid()).isTrue();
+    }
+
+
+
+    @Test
+    void useLegacyPublish() {
+        //config not set, default true
+        assertThat(config.useLegacyPublish()).isTrue();
+
+        //config explicitly set to true
+        props.put("cloudwatch.useLegacyPublish", "true");
+        assertThat(config.useLegacyPublish()).isTrue();
+
+        //config explicitly set to false
+        props.put("cloudwatch.useLegacyPublish", "false");
+        assertThat(config.useLegacyPublish()).isFalse();
+
     }
 }

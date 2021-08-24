@@ -24,11 +24,8 @@ import io.micrometer.core.instrument.step.StepRegistryConfig;
 import java.time.Duration;
 import java.util.function.Predicate;
 
-import static io.micrometer.core.instrument.config.MeterRegistryConfigValidator.check;
-import static io.micrometer.core.instrument.config.MeterRegistryConfigValidator.checkAll;
-import static io.micrometer.core.instrument.config.MeterRegistryConfigValidator.checkRequired;
-import static io.micrometer.core.instrument.config.validate.PropertyValidator.getInteger;
-import static io.micrometer.core.instrument.config.validate.PropertyValidator.getString;
+import static io.micrometer.core.instrument.config.MeterRegistryConfigValidator.*;
+import static io.micrometer.core.instrument.config.validate.PropertyValidator.*;
 
 /**
  * Configuration for CloudWatch exporting.
@@ -47,6 +44,8 @@ public interface CloudWatchConfig extends StepRegistryConfig {
     default String namespace() {
         return getString(this, "namespace").required().get();
     }
+
+    default boolean useLegacyPublish() { return getBoolean(this, "useLegacyPublish").orElse(true); }
 
     @Override
     default int batchSize() {
@@ -81,4 +80,6 @@ public interface CloudWatchConfig extends StepRegistryConfig {
                                 InvalidReason.MALFORMED))
         );
     }
+
+
 }

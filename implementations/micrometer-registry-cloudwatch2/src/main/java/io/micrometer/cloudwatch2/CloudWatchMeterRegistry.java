@@ -1,5 +1,5 @@
 /**
- * Copyright 2017 VMware, Inc.
+ * Copyright 2021 VMware, Inc.
  * <p>
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,21 +15,25 @@
  */
 package io.micrometer.cloudwatch2;
 
+import io.micrometer.core.instrument.Tag;
 import io.micrometer.core.instrument.Timer;
 import io.micrometer.core.instrument.*;
+import io.micrometer.core.instrument.distribution.DistributionStatisticConfig;
+import io.micrometer.core.instrument.distribution.HistogramGauges;
+import io.micrometer.core.instrument.distribution.HistogramSnapshot;
+import io.micrometer.core.instrument.distribution.pause.PauseDetector;
 import io.micrometer.core.instrument.step.StepMeterRegistry;
 import io.micrometer.core.instrument.util.NamedThreadFactory;
 import io.micrometer.core.instrument.util.StringUtils;
+import io.micrometer.core.lang.NonNull;
 import io.micrometer.core.lang.Nullable;
 import io.micrometer.core.util.internal.logging.WarnThenDebugLogger;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import software.amazon.awssdk.core.exception.AbortedException;
 import software.amazon.awssdk.services.cloudwatch.CloudWatchAsyncClient;
-import software.amazon.awssdk.services.cloudwatch.model.Dimension;
-import software.amazon.awssdk.services.cloudwatch.model.MetricDatum;
-import software.amazon.awssdk.services.cloudwatch.model.PutMetricDataRequest;
-import software.amazon.awssdk.services.cloudwatch.model.StandardUnit;
+import software.amazon.awssdk.services.cloudwatch.model.*;
+import software.amazon.awssdk.utils.Pair;
 
 import java.time.Instant;
 import java.util.*;
@@ -38,6 +42,7 @@ import java.util.concurrent.ThreadFactory;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Stream;
 
+import static io.micrometer.cloudwatch2.CloudWatchUtils.histogramCountsToCloudWatchArrays;
 import static java.util.stream.Collectors.toList;
 import static java.util.stream.StreamSupport.stream;
 
@@ -79,7 +84,11 @@ public class CloudWatchMeterRegistry extends StepMeterRegistry {
         super(config, clock);
         this.cloudWatchAsyncClient = cloudWatchAsyncClient;
         this.config = config;
-        
+
+        if (!config.useLegacyPublish()) {
+            logger.debug("publishing Timer and DistributionSummary as StatisticsSet");
+        }
+
         config().namingConvention(new CloudWatchNamingConvention());
         start(threadFactory);
     }
@@ -95,12 +104,47 @@ public class CloudWatchMeterRegistry extends StepMeterRegistry {
                     interrupted = true;
                 }
             }
-        }
-        finally {
+        } finally {
             if (interrupted) {
                 Thread.currentThread().interrupt();
             }
         }
+    }
+
+    @Override
+    protected DistributionStatisticConfig defaultHistogramConfig() {
+        return DistributionStatisticConfig.builder()
+                .maximumExpectedValue(CloudWatchUtils.MAXIMUM_ALLOWED_VALUE)
+                .build()
+                .merge(super.defaultHistogramConfig());
+    }
+
+    @Override
+    protected Timer newTimer(Meter.Id id, DistributionStatisticConfig distributionStatisticConfig, PauseDetector pauseDetector) {
+        if (config.useLegacyPublish()) {
+            return super.newTimer(id, distributionStatisticConfig, pauseDetector);
+        }
+
+        Timer timer = new CloudWatchTimer(id, clock, distributionStatisticConfig, pauseDetector, getBaseTimeUnit(),
+                this.config.step().toMillis());
+        if (!config.highResolution() || config.useLegacyPublish()) {
+            HistogramGauges.registerWithCommonFormat(timer, this);
+        }
+        return timer;
+    }
+
+    @Override
+    protected DistributionSummary newDistributionSummary(Meter.Id id, DistributionStatisticConfig distributionStatisticConfig, double scale) {
+        if (config.useLegacyPublish()) {
+            return super.newDistributionSummary(id, distributionStatisticConfig, scale);
+
+        }
+        DistributionSummary summary = new CloudWatchDistributionSummary(id, clock, distributionStatisticConfig, scale,
+                config.step().toMillis());
+        if (!config.highResolution() && config.useLegacyPublish()) {
+            HistogramGauges.registerWithCommonFormat(summary, this);
+        }
+        return summary;
     }
 
     // VisibleForTesting
@@ -138,8 +182,8 @@ public class CloudWatchMeterRegistry extends StepMeterRegistry {
         return getMeters().stream().flatMap(m -> m.match(
                 batch::gaugeData,
                 batch::counterData,
-                batch::timerData,
-                batch::summaryData,
+                config.useLegacyPublish() ? batch::legacyTimerData : batch::timerData,
+                config.useLegacyPublish() ? batch::legacySummaryData : batch::summaryData,
                 batch::longTaskTimerData,
                 batch::timeGaugeData,
                 batch::functionCounterData,
@@ -165,7 +209,7 @@ public class CloudWatchMeterRegistry extends StepMeterRegistry {
         }
 
         // VisibleForTesting
-        Stream<MetricDatum> timerData(Timer timer) {
+        Stream<MetricDatum> legacyTimerData(Timer timer) {
             Stream.Builder<MetricDatum> metrics = Stream.builder();
             metrics.add(metricDatum(timer.getId(), "sum", getBaseTimeUnit().name(), timer.totalTime(getBaseTimeUnit())));
             long count = timer.count();
@@ -178,7 +222,29 @@ public class CloudWatchMeterRegistry extends StepMeterRegistry {
         }
 
         // VisibleForTesting
-        Stream<MetricDatum> summaryData(DistributionSummary summary) {
+        Stream<MetricDatum> timerData(Timer timer) {
+            Stream.Builder<MetricDatum> metrics = Stream.builder();
+
+            final HistogramSnapshot snapshot = timer.takeSnapshot();
+            if (snapshot.count() > 0) {
+                final StatisticSet statisticSet = StatisticSet.builder()
+                        .minimum(((CloudWatchTimer) timer).min(getBaseTimeUnit()))
+                        .maximum(snapshot.max(getBaseTimeUnit()))
+                        .sum(snapshot.total(getBaseTimeUnit()))
+                        .sampleCount((double) snapshot.count())
+                        .build();
+                if (config.highResolution() && snapshot.histogramCounts().length > 0) {
+                    metricsForHistogram(metrics, snapshot, timer.getId(), statisticSet);
+                } else {
+                    metrics.add(metricDatum(timer.getId(), toStandardUnit(getBaseTimeUnit().name()), statisticSet));
+                }
+            }
+
+            return metrics.build();
+        }
+
+        // VisibleForTesting
+        Stream<MetricDatum> legacySummaryData(DistributionSummary summary) {
             Stream.Builder<MetricDatum> metrics = Stream.builder();
             metrics.add(metricDatum(summary.getId(), "sum", summary.totalAmount()));
             long count = summary.count();
@@ -188,6 +254,53 @@ public class CloudWatchMeterRegistry extends StepMeterRegistry {
                 metrics.add(metricDatum(summary.getId(), "max", summary.max()));
             }
             return metrics.build();
+        }
+
+        // VisibleForTesting
+        Stream<MetricDatum> summaryData(DistributionSummary summary) {
+            Stream.Builder<MetricDatum> metrics = Stream.builder();
+
+            final HistogramSnapshot snapshot = summary.takeSnapshot();
+            if (snapshot.count() > 0) {
+                final StatisticSet statisticSet = StatisticSet.builder()
+                        .minimum(((CloudWatchDistributionSummary) summary).min())
+                        .maximum(snapshot.max(getBaseTimeUnit()))
+                        .sum(snapshot.total())
+                        .sampleCount((double) snapshot.count())
+                        .build();
+                if (config.highResolution() && snapshot.histogramCounts().length > 0) {
+                    metricsForHistogram(metrics, snapshot, summary.getId(), statisticSet);
+                } else {
+                    metrics.add(metricDatum(summary.getId(), StandardUnit.COUNT, statisticSet));
+                }
+            }
+
+            return metrics.build();
+        }
+
+        private void metricsForHistogram(Stream.Builder<MetricDatum> metrics, HistogramSnapshot snapshot, Meter.Id id, StatisticSet statisticSet) {
+            List<Pair<List<Double>, List<Double>>> valuesCountsTuple = histogramCountsToCloudWatchArrays(snapshot.histogramCounts(), getBaseTimeUnit());
+
+            if (valuesCountsTuple.size() > 0) {
+                final double sampleCountFromHistogram = valuesCountsTuple.stream()
+                        .map(it -> it.right()
+                                .stream()
+                                .mapToDouble(Double::doubleValue)
+                                .sum())
+                        .mapToDouble(Double::doubleValue).sum();
+                logger.debug("{}: Statistic set sample Count {} vs {} from histogram counting", timestamp, statisticSet.sampleCount(), sampleCountFromHistogram);
+
+                valuesCountsTuple.forEach(valuesCountsPair -> metrics.add(metricDatumBuilder(id, null, toStandardUnit(getBaseTimeUnit().name()))
+                        .values(valuesCountsPair.left())
+                        .counts(valuesCountsPair.right())
+                        .statisticValues(StatisticSet.builder()
+                                .maximum(statisticSet.maximum()) //CW automatically clamps histogram samples to min/max from statistic set
+                                .minimum(statisticSet.minimum())
+                                .sum(statisticSet.sum())
+                                .sampleCount(sampleCountFromHistogram) //Without this CW doesn't register percentiles
+                                .build())
+                        .build()));
+            }
         }
 
         private Stream<MetricDatum> longTaskTimerData(LongTaskTimer longTaskTimer) {
@@ -252,21 +365,33 @@ public class CloudWatchMeterRegistry extends StepMeterRegistry {
             return metricDatum(id, suffix, toStandardUnit(unit), value);
         }
 
+        private MetricDatum metricDatum(Meter.Id id, @Nullable StandardUnit standardUnit, StatisticSet statisticSet) {
+            return metricDatumBuilder(id, null, standardUnit == null ? StandardUnit.NONE : standardUnit)
+                    .statisticValues(statisticSet)
+                    .build();
+        }
+
         @Nullable
         private MetricDatum metricDatum(Meter.Id id, @Nullable String suffix, StandardUnit standardUnit, double value) {
             if (Double.isNaN(value)) {
                 return null;
             }
 
+            return metricDatumBuilder(id, suffix, standardUnit)
+                    .value(CloudWatchUtils.clampMetricValue(value))
+                    .build();
+        }
+
+        @NonNull
+        private MetricDatum.Builder metricDatumBuilder(Meter.Id id, @Nullable String suffix, StandardUnit standardUnit) {
             List<Tag> tags = id.getConventionTags(config().namingConvention());
+
             return MetricDatum.builder()
                     .storageResolution(config.highResolution() ? 1 : 60)
                     .metricName(getMetricName(id, suffix))
                     .dimensions(toDimensions(tags))
                     .timestamp(timestamp)
-                    .value(CloudWatchUtils.clampMetricValue(value))
-                    .unit(standardUnit)
-                    .build();
+                    .unit(standardUnit);
         }
 
         // VisibleForTesting
@@ -298,6 +423,7 @@ public class CloudWatchMeterRegistry extends StepMeterRegistry {
             }
             return true;
         }
+
     }
 
     @Override
