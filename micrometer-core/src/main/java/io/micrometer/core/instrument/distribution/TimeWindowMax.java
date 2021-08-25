@@ -131,7 +131,7 @@ public class TimeWindowMax {
         try {
             synchronized (this) {
                 if (timeSinceLastRotateMillis >= durationBetweenRotatesMillis * ringBuffer.length) {
-                    // it past too many time since this instance was used, we can just cleare
+                    // time since last rotation is enough to clear whole ring buffer
                     for (AtomicLong bufferItem: ringBuffer) {
                         bufferItem.set(0);
                     }
