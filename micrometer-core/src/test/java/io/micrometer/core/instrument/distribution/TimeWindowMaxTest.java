@@ -45,4 +45,25 @@ class TimeWindowMaxTest {
 
         assertThat(timeWindowMax.poll()).isZero();
     }
+
+    @Test
+    void testLongPeriodOfInactivity() {
+        timeWindowMax = new TimeWindowMax(clock, 60_000, 3);
+        timeWindowMax.record(32);
+        assertThat(timeWindowMax.poll()).isEqualTo(32); // 0 | 0 | 32
+
+        clock.add(Duration.ofHours(12));
+        assertThat(timeWindowMax.poll()).isZero(); // 0 | 0 | 0
+
+        timeWindowMax.record(666);
+        assertThat(timeWindowMax.poll()).isEqualTo(666); // 0 | 0 | 666
+
+        clock.add(Duration.ofSeconds(62));
+        timeWindowMax.record(500);
+        assertThat(timeWindowMax.poll()).isEqualTo(666); // 0 | 666 | 500
+
+        clock.add(Duration.ofSeconds(62));
+        timeWindowMax.record(100500);
+        assertThat(timeWindowMax.poll()).isEqualTo(100500); // 666 | 500 | 100500
+    }
 }
