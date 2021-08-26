@@ -30,7 +30,7 @@ import java.util.concurrent.TimeUnit;
  */
 @NonNullApi
 @NonNullFields
-public class HazelcastCacheMetrics extends CacheMeterBinder {
+public class HazelcastCacheMetrics extends CacheMeterBinder<Object> {
     private final HazelcastIMapAdapter cache;
 
     /**
