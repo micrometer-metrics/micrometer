@@ -56,7 +56,7 @@ public final class Tags implements Iterable<Tag> {
         int j = 0;
 
         for (int i = 0; i < n - 1; i++)
-            if (!tags[i].getKey().equals(tags[i + 1].getKey()))
+            if (tags[i].compareTo(tags[i + 1]) != 0)
                 tags[j++] = tags[i];
 
         tags[j++] = tags[n - 1];
