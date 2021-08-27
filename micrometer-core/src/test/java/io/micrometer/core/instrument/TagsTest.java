@@ -22,6 +22,7 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.Iterator;
 import java.util.stream.Stream;
+import java.util.Comparator;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
@@ -35,6 +36,16 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
  * @author Johnny Lim
  */
 class TagsTest {
+    static class DatadogTag extends ImmutableTag {
+        public DatadogTag(String key, String value) {
+            super(key, value);
+        }
+
+        @Override
+        public int compareTo(Tag o) {
+            return Comparator.comparing(Tag::getKey).thenComparing(Tag::getValue).compare(this, o);
+        }
+    }
 
     @Test
     void dedup() {
@@ -42,6 +53,19 @@ class TagsTest {
         assertThat(Tags.of("k1", "v1", "k1", "v2")).containsExactly(Tag.of("k1", "v2"));
         assertThat(Tags.of("k1", "v1", "k1", "v2", "k3", "v3")).containsExactly(Tag.of("k1", "v2"), Tag.of("k3", "v3"));
         assertThat(Tags.of("k1", "v1", "k2", "v2", "k2", "v3")).containsExactly(Tag.of("k1", "v1"), Tag.of("k2", "v3"));
+    }
+
+    @Test
+    void dedupWithUniqueTags() {
+        DatadogTag[] tags = {
+                new DatadogTag("k1", "v1"),
+                new DatadogTag("k1", "v2"),
+                new DatadogTag("k2", "v1"),
+                new DatadogTag("k2", "v1")
+        };
+        assertThat(Tags.of(tags)).containsExactly(new DatadogTag("k1", "v1"),
+                new DatadogTag("k1", "v2"),
+                new DatadogTag("k2", "v1"));
     }
 
     @Test
