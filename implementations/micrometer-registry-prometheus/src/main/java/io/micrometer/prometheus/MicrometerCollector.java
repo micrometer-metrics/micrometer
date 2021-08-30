@@ -91,14 +91,10 @@ class MicrometerCollector extends Collector implements Collector.Describable {
 
             case TIMER:
             case DISTRIBUTION_SUMMARY:
-                return Arrays.asList(
-                        new MetricFamilySamples(conventionName, Type.HISTOGRAM, help, Collections.emptyList()),
-                        new MetricFamilySamples(conventionName + "_max", Type.GAUGE, help, Collections.emptyList()));
-
             case LONG_TASK_TIMER:
                 return Arrays.asList(
                         new MetricFamilySamples(conventionName, Type.HISTOGRAM, help, Collections.emptyList()),
-                        new MetricFamilySamples(conventionName, Type.UNTYPED, help, Collections.emptyList()));
+                        new MetricFamilySamples(conventionName + "_max", Type.GAUGE, help, Collections.emptyList()));
 
             default:
                 return Collections.singletonList(
