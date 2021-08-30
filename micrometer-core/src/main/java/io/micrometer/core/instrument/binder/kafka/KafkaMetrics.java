@@ -177,15 +177,12 @@ class KafkaMetrics implements MeterBinder, AutoCloseable {
                 // Kafka has metrics with lower number of tags (e.g. with/without topic or partition tag)
                 // Remove meters with lower number of tags
                 boolean hasLessTags = false;
-                List<Meter> metersForName = registryMetersByNames.getOrDefault(meterName, emptyList());
-                List<Meter> metersWithLessTags = new ArrayList<>(metersForName.size());
-                for (Meter other : metersForName) {
+                for (Meter other : registryMetersByNames.getOrDefault(meterName, emptyList())) {
                     List<Tag> tags = other.getId().getTags();
                     List<Tag> meterTagsWithCommonTags = meterTags(metric, true);
                     if (tags.size() < meterTagsWithCommonTags.size()) {
                         registry.remove(other);
                         registeredMeters.remove(other);
-                        metersWithLessTags.add(other);
                     }
                     // Check if already exists
                     else if (tags.size() == meterTagsWithCommonTags.size())
@@ -194,8 +191,6 @@ class KafkaMetrics implements MeterBinder, AutoCloseable {
                     else hasLessTags = true;
                 }
                 if (hasLessTags) return;
-
-                metersForName.removeAll(metersWithLessTags);
 
                 List<Tag> tags = meterTags(metric);
                 try {
