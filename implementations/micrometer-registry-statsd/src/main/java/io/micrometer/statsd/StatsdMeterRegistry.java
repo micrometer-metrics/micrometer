@@ -335,11 +335,7 @@ public class StatsdMeterRegistry extends MeterRegistry {
             lineBuilderFunction = id2 -> {
                 switch (statsdConfig.flavor()) {
                     case DATADOG:
-                        if (distributionStatisticConfig != null) {
-                            return new DatadogStatsdLineBuilder(id2, config(), distributionStatisticConfig);
-                        } else {
-                            return new DatadogStatsdLineBuilder(id2, config());
-                        }
+                        return new DatadogStatsdLineBuilder(id2, config(), distributionStatisticConfig);
                     case TELEGRAF:
                         return new TelegrafStatsdLineBuilder(id2, config());
                     case SYSDIG:

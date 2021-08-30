@@ -28,6 +28,8 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 import java.util.stream.Collectors;
 
+import static java.lang.Boolean.TRUE;
+
 public class DatadogStatsdLineBuilder extends FlavorStatsdLineBuilder {
     private static final String TYPE_DISTRIBUTION = "d";
     private static final String ENTITY_ID_TAG_NAME = "dd.internal.entity_id";
@@ -47,17 +49,14 @@ public class DatadogStatsdLineBuilder extends FlavorStatsdLineBuilder {
     @Nullable
     String ddEntityId;
 
-    public DatadogStatsdLineBuilder(Meter.Id id, MeterRegistry.Config config, DistributionStatisticConfig distributionStatisticConfig) {
-        super(id, config);
-
-        percentileHistogram = distributionStatisticConfig.isPercentileHistogram();
-        ddEntityId = System.getenv("DD_ENTITY_ID");
+    public DatadogStatsdLineBuilder(Meter.Id id, MeterRegistry.Config config) {
+        this(id, config, null);
     }
 
-    public DatadogStatsdLineBuilder(Meter.Id id, MeterRegistry.Config config) {
+    public DatadogStatsdLineBuilder(Meter.Id id, MeterRegistry.Config config, @Nullable DistributionStatisticConfig distributionStatisticConfig) {
         super(id, config);
 
-        percentileHistogram = false;
+        percentileHistogram = distributionStatisticConfig != null && TRUE.equals(distributionStatisticConfig.isPercentileHistogram());
         ddEntityId = System.getenv("DD_ENTITY_ID");
     }
 
