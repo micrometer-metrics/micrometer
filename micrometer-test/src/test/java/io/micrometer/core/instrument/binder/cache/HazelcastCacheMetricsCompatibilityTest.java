@@ -20,15 +20,29 @@ import com.hazelcast.core.Hazelcast;
 import com.hazelcast.map.IMap;
 import io.micrometer.core.Issue;
 import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 
 import static java.util.Collections.emptyList;
 import static org.assertj.core.api.Assertions.assertThat;
 
-class HazelcastCacheMetricsCompatibilityTest extends CacheMeterBinderCompatibilityKit {
+class HazelcastCacheMetricsCompatibilityTest extends CacheMeterBinderCompatibilityKit<Object> {
     private Config config = new Config();
-    private IMap<String, String> cache = Hazelcast.newHazelcastInstance(config).getMap("mycache");
+    private IMap<String, String> cache;
+
+    @BeforeEach
+    @SuppressWarnings("unchecked")
+    void setup() {
+        this.cache = (IMap<String, String>) super.cache;
+    }
+
+    @Override
+    public void dereferenceCache() {
+        super.dereferenceCache();
+        this.cache.destroy();
+        this.cache = null;
+    }
 
     @Disabled("This only demonstrates why we can't support miss count in Hazelcast.")
     @Issue("#586")
@@ -60,17 +74,22 @@ class HazelcastCacheMetricsCompatibilityTest extends CacheMeterBinderCompatibili
     }
 
     @Override
-    public CacheMeterBinder binder() {
-        return new HazelcastCacheMetrics(cache, emptyList());
+    public IMap<String, String> createCache() {
+        return Hazelcast.newHazelcastInstance(config).getMap("mycache");
+    }
+
+    @Override
+    public CacheMeterBinder<Object> binder() {
+        return new HazelcastCacheMetrics(super.cache, emptyList());
     }
 
     @Override
     public void put(String key, String value) {
-        cache.put(key, value);
+        this.cache.put(key, value);
     }
 
     @Override
     public String get(String key) {
-        return cache.get(key);
+        return this.cache.get(key);
     }
 }
