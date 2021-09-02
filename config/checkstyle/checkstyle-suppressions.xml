@@ -9,4 +9,5 @@
 	<suppress files="samples[\\/].+" checks="IllegalImport" />
 	<suppress files="LogbackMetricsAutoConfiguration" checks="IllegalImport" />
 	<suppress files="io[\\/]micrometer[\\/]jersey2[\\/]server[\\/].+" checks="SpringJUnit5" />
+	<suppress files="io[\\/]micrometer[\\/]samples[\\/]jersey3[\\/].+" checks="SpringJUnit5" />
 </suppressions>

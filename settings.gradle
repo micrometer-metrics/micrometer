@@ -25,7 +25,7 @@ gradleEnterprise {
 include 'micrometer-core'
 include 'micrometer-jersey2'
 
-['core', 'boot2', 'boot2-reactive', 'spring-integration', 'hazelcast', 'hazelcast3', 'javalin'].each { sample ->
+['core', 'boot2', 'boot2-reactive', 'spring-integration', 'hazelcast', 'hazelcast3', 'javalin', 'jersey3'].each { sample ->
     include "micrometer-samples-$sample"
     project(":micrometer-samples-$sample").projectDir = new File(rootProject.projectDir, "samples/micrometer-samples-$sample")
 }
