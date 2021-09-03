@@ -1,8 +1,8 @@
 dependencies {
     api project(':micrometer-core')
 
-    compileOnly 'org.glassfish.jersey.core:jersey-server'
-    runtimeOnly 'org.glassfish.jersey.inject:jersey-hk2'
+    api 'org.glassfish.jersey.core:jersey-server'
+    testRuntimeOnly 'org.glassfish.jersey.inject:jersey-hk2'
 
     testImplementation 'org.glassfish.jersey.test-framework.providers:jersey-test-framework-provider-inmemory'
 
