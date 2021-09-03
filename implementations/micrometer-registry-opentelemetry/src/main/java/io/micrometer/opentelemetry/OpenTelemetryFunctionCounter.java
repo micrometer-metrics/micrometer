@@ -18,17 +18,17 @@ package io.micrometer.opentelemetry;
 import java.util.function.ToDoubleFunction;
 
 import io.micrometer.core.instrument.cumulative.CumulativeFunctionCounter;
-import io.opentelemetry.common.Labels;
-import io.opentelemetry.metrics.AsynchronousInstrument;
-import io.opentelemetry.metrics.DoubleSumObserver;
-import io.opentelemetry.metrics.DoubleUpDownCounter;
-import io.opentelemetry.metrics.DoubleUpDownSumObserver;
+
+import io.opentelemetry.api.common.Attributes;
+import io.opentelemetry.api.metrics.AsynchronousInstrument;
+import io.opentelemetry.api.metrics.DoubleSumObserver;
+import io.opentelemetry.api.metrics.DoubleUpDownSumObserver;
 
 public class OpenTelemetryFunctionCounter<T> extends CumulativeFunctionCounter<T> {
     private final DoubleUpDownSumObserver observer;
-    private final Labels labels;
+    private final Attributes labels;
 
-    public OpenTelemetryFunctionCounter(Id id, T obj, ToDoubleFunction<T> value, DoubleUpDownSumObserver observer, Labels labels) {
+    public OpenTelemetryFunctionCounter(Id id, T obj, ToDoubleFunction<T> value, DoubleUpDownSumObserver observer, Attributes labels) {
         super(id, obj, value);
         this.labels = labels;
         this.observer = observer;

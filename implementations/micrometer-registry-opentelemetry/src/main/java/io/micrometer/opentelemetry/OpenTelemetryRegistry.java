@@ -34,9 +34,10 @@ import io.micrometer.core.instrument.Timer;
 import io.micrometer.core.instrument.distribution.DistributionStatisticConfig;
 import io.micrometer.core.instrument.distribution.pause.PauseDetector;
 import io.micrometer.core.instrument.internal.DefaultMeter;
-import io.opentelemetry.OpenTelemetry;
-import io.opentelemetry.common.Labels;
-import io.opentelemetry.metrics.*;
+import io.opentelemetry.api.OpenTelemetry;
+import io.opentelemetry.api.common.Attributes;
+import io.opentelemetry.api.common.AttributesBuilder;
+import io.opentelemetry.api.metrics.*;
 
 
 /**
@@ -46,7 +47,7 @@ import io.opentelemetry.metrics.*;
  */
 public class OpenTelemetryRegistry extends MeterRegistry {
 
-    final io.opentelemetry.metrics.Meter otelMeter;
+    final io.opentelemetry.api.metrics.Meter otelMeter;
 
     public OpenTelemetryRegistry(OpenTelemetryConfig config, Clock clock) {
         super(clock);
@@ -60,7 +61,7 @@ public class OpenTelemetryRegistry extends MeterRegistry {
         DoubleValueObserver.Builder builder = otelMeter.doubleValueObserverBuilder(id.getName());
         copyValues(builder, id.getDescription(), id.getBaseUnit());
 
-        return new OpenTelemetryGauge<T>(id, obj, valueFunction, builder.build(), labelsFrom(id));
+        return new OpenTelemetryGauge<T>(id, obj, valueFunction, builder.build(), attributesFrom(id));
     }
 
     @Override
@@ -68,7 +69,7 @@ public class OpenTelemetryRegistry extends MeterRegistry {
         DoubleCounter.Builder builder = otelMeter.doubleCounterBuilder(id.getName());
         copyValues(builder, id.getDescription(), id.getBaseUnit());
 
-        return new OpenTelemetryCounter(id, builder.build(), labelsFrom(id));
+        return new OpenTelemetryCounter(id, builder.build(), attributesFrom(id));
     }
 
     @Override
@@ -76,7 +77,7 @@ public class OpenTelemetryRegistry extends MeterRegistry {
         DoubleValueRecorder.Builder builder = otelMeter.doubleValueRecorderBuilder(id.getName());
         copyValues(builder, id.getDescription(), "s");
 
-        return new OpenTelemetryTimer(id, clock, builder.build(), getBaseTimeUnit(), labelsFrom(id));
+        return new OpenTelemetryTimer(id, clock, builder.build(), getBaseTimeUnit(), attributesFrom(id));
     }
 
     @Override
@@ -101,7 +102,7 @@ public class OpenTelemetryRegistry extends MeterRegistry {
 
         return new OpenTelemetryFunctionTimer<T>(id, obj, countFunction, countObserver.build(), totalTimeFunction,
                 durationObserver.build(), totalTimeFunctionUnit, getBaseTimeUnit(),
-                labelsFrom(id));
+                attributesFrom(id));
     }
 
     @Override
@@ -109,7 +110,7 @@ public class OpenTelemetryRegistry extends MeterRegistry {
         DoubleUpDownSumObserver.Builder builder = otelMeter.doubleUpDownSumObserverBuilder(id.getName());
         copyValues(builder, id.getDescription(), id.getBaseUnit());
 
-        return new OpenTelemetryFunctionCounter<T>(id, obj, countFunction, builder.build(), labelsFrom(id));
+        return new OpenTelemetryFunctionCounter<T>(id, obj, countFunction, builder.build(), attributesFrom(id));
     }
 
     @Override
@@ -144,10 +145,10 @@ public class OpenTelemetryRegistry extends MeterRegistry {
         }
     }
 
-    private Labels labelsFrom(Meter.Id id) {
-        Labels.Builder builder = Labels.newBuilder();
+    private Attributes attributesFrom(Meter.Id id) {
+        AttributesBuilder builder = Attributes.builder();
         List<Tag> tags = id.getConventionTags(config().namingConvention());
-        tags.forEach(x -> builder.setLabel(x.getKey(), x.getValue()));
+        tags.forEach(x -> builder.put(x.getKey(), x.getValue()));
         return builder.build();
     }
 }

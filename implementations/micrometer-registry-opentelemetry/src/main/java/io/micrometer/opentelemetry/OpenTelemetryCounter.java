@@ -17,14 +17,16 @@ package io.micrometer.opentelemetry;
 
 import io.micrometer.core.instrument.AbstractMeter;
 import io.micrometer.core.instrument.Counter;
-import io.opentelemetry.common.Labels;
-import io.opentelemetry.metrics.DoubleCounter;
+
+import io.opentelemetry.api.common.Attributes;
+import io.opentelemetry.api.metrics.DoubleCounter;
+
 
 public class OpenTelemetryCounter extends AbstractMeter implements Counter {
     private final DoubleCounter counter;
-    private final Labels labels;
+    private final Attributes labels;
 
-    public OpenTelemetryCounter(Id id, DoubleCounter counter, Labels labels) {
+    public OpenTelemetryCounter(Id id, DoubleCounter counter, Attributes labels) {
         super(id);
         this.counter = counter;
         this.labels = labels;

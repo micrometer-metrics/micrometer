@@ -20,20 +20,20 @@ import java.util.function.ToDoubleFunction;
 import java.util.function.ToLongFunction;
 
 import io.micrometer.core.instrument.cumulative.CumulativeFunctionTimer;
-import io.opentelemetry.common.Labels;
-import io.opentelemetry.metrics.AsynchronousInstrument;
-import io.opentelemetry.metrics.DoubleValueObserver;
+import io.opentelemetry.api.common.Attributes;
+import io.opentelemetry.api.metrics.AsynchronousInstrument;
+import io.opentelemetry.api.metrics.DoubleValueObserver;
 
 public class OpenTelemetryFunctionTimer<T> extends CumulativeFunctionTimer<T> {
     private final DoubleValueObserver countObserver;
     private final DoubleValueObserver durationObserver;
-    private final Labels labels;
+    private final Attributes attributes;
 
     public OpenTelemetryFunctionTimer(Id id, T obj,
                                       ToLongFunction<T> countFunction, DoubleValueObserver countObserver,
                                       ToDoubleFunction<T> totalTimeFunction, DoubleValueObserver valueObserver,
                                       TimeUnit totalTimeFunctionUnit, TimeUnit baseTimeUnit,
-                                      Labels labels) {
+                                      Attributes attributes) {
         super(id, obj, countFunction, totalTimeFunction, totalTimeFunctionUnit, baseTimeUnit);
         this.countObserver = countObserver;
         this.countObserver.setCallback(this::updateCount);
@@ -41,14 +41,14 @@ public class OpenTelemetryFunctionTimer<T> extends CumulativeFunctionTimer<T> {
         this.durationObserver = valueObserver;
         this.durationObserver.setCallback(this::updateDuration);
 
-        this.labels = labels;
+        this.attributes = attributes;
     }
 
     private void updateDuration(AsynchronousInstrument.DoubleResult doubleResult) {
-        doubleResult.observe(totalTime(baseTimeUnit()), labels);
+        doubleResult.observe(totalTime(baseTimeUnit()), attributes);
     }
 
     private void updateCount(AsynchronousInstrument.DoubleResult doubleResult) {
-        doubleResult.observe(count(), labels);
+        doubleResult.observe(count(), attributes);
     }
 }

@@ -1,8 +1,13 @@
 dependencies {
     api project(':micrometer-core')
-    api 'io.opentelemetry:opentelemetry-api:0.8.0'
+    implementation platform('io.opentelemetry:opentelemetry-bom:1.5.0')
+    implementation platform('io.opentelemetry:opentelemetry-bom-alpha:1.5.0-alpha')
 
-    compile 'io.opentelemetry:opentelemetry-sdk:0.8.0'
+    implementation 'io.opentelemetry:opentelemetry-api'
+    implementation 'io.opentelemetry:opentelemetry-sdk'
+    implementation 'io.opentelemetry:opentelemetry-exporter-otlp'
+    implementation 'io.opentelemetry:opentelemetry-api-metrics'
+//    implementation 'io.opentelemetry:opentelemetry-metrics-api:1.5.0-alpha'
 
     testImplementation project(':micrometer-test')
     testImplementation('io.opentelemetry:opentelemetry-exporters-inmemory:0.8.0')
