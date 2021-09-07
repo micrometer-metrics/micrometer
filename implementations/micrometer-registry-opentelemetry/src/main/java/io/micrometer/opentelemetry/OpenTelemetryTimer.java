@@ -26,16 +26,16 @@ import io.micrometer.core.instrument.distribution.Histogram;
 import io.micrometer.core.instrument.distribution.HistogramSnapshot;
 import io.micrometer.core.instrument.distribution.NoopHistogram;
 import io.opentelemetry.api.common.Attributes;
-import io.opentelemetry.metrics.DoubleValueRecorder;
+import io.opentelemetry.api.metrics.DoubleHistogram;
 
 public class OpenTelemetryTimer extends AbstractMeter implements Timer {
-    private final DoubleValueRecorder recorder;
+    private final DoubleHistogram recorder;
     private final TimeUnit baseTimeUnit;
     private final Clock clock;
     private final Attributes attributes;
     protected final Histogram histogram = NoopHistogram.INSTANCE;
 
-    public OpenTelemetryTimer(Id id, Clock clock, DoubleValueRecorder recorder, TimeUnit baseTimeUnit, Attributes attributes) {
+    public OpenTelemetryTimer(Id id, Clock clock, DoubleHistogram recorder, TimeUnit baseTimeUnit, Attributes attributes) {
         super(id);
         this.attributes = attributes;
         this.clock = clock;

@@ -25,19 +25,20 @@ import io.micrometer.core.instrument.MeterRegistry;
 import io.micrometer.core.instrument.MockClock;
 import io.micrometer.core.tck.MeterRegistryCompatibilityKit;
 import io.opentelemetry.exporters.inmemory.InMemoryMetricExporter;
-import io.opentelemetry.sdk.OpenTelemetrySdk;
 import io.opentelemetry.sdk.common.InstrumentationLibraryInfo;
 import io.opentelemetry.sdk.internal.ComponentRegistry;
-import io.opentelemetry.sdk.metrics.MeterSdkProvider;
+import io.opentelemetry.sdk.metrics.SdkMeterProvider;
 import io.opentelemetry.sdk.metrics.export.IntervalMetricReader;
 import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.AfterEach;
 
 class OpenTelemetryMeterRegistryCompatibilityTest extends MeterRegistryCompatibilityKit {
     static InMemoryMetricExporter exporter = InMemoryMetricExporter.create();
+
     static IntervalMetricReader intervalMetricReader = IntervalMetricReader.builder()
             .setMetricExporter(exporter)
-            .setMetricProducers(Collections.singletonList(OpenTelemetrySdk.getMeterProvider().getMetricProducer()))
+            // .getMetricProducer()
+            .setMetricProducers(Collections.singletonList(SdkMeterProvider.builder().build()))
             .setExportIntervalMillis(1000)
             .build();
 
@@ -46,12 +47,13 @@ class OpenTelemetryMeterRegistryCompatibilityTest extends MeterRegistryCompatibi
 
     static {
         try {
-            Field meterSdkRegistry = MeterSdkProvider.class.getDeclaredField("registry");
+            Field meterSdkRegistry = SdkMeterProvider.class.getDeclaredField("registry");
             meterSdkRegistry.setAccessible(true);
             Field componentRegistry = ComponentRegistry.class.getDeclaredField("registry");
             componentRegistry.setAccessible(true);
 
-            ComponentRegistry<?> sdkComponentRegistry = (ComponentRegistry<?>) meterSdkRegistry.get(OpenTelemetrySdk.getMeterProvider());
+            // .getMeterProvider()
+            ComponentRegistry<?> sdkComponentRegistry = (ComponentRegistry<?>) meterSdkRegistry.get(SdkMeterProvider.builder().build());
             staticRegistry = (ConcurrentHashMap<?, ?>) componentRegistry.get(sdkComponentRegistry);
         } catch (NoSuchFieldException | IllegalAccessException e) {
             e.printStackTrace();

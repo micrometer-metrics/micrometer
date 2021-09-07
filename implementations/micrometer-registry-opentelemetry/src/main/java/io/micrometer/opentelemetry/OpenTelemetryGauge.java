@@ -19,8 +19,6 @@ import java.util.function.ToDoubleFunction;
 
 import io.micrometer.core.instrument.internal.DefaultGauge;
 import io.opentelemetry.api.common.Attributes;
-import io.opentelemetry.metrics.AsynchronousInstrument;
-import io.opentelemetry.metrics.DoubleValueObserver;
 
 /**
  * Use an Asynchronous Callback to observe the value of the Micrometer gauge.
@@ -30,17 +28,10 @@ import io.opentelemetry.metrics.DoubleValueObserver;
  * @author Erin Schnabel
  */
 public class OpenTelemetryGauge<T> extends DefaultGauge<T> {
-    private final DoubleValueObserver observer;
     private final Attributes attributes;
 
-    public OpenTelemetryGauge(Id id, T obj, ToDoubleFunction<T> value, DoubleValueObserver observer, Attributes attributes) {
-        super(id, obj, value);
+    public OpenTelemetryGauge(Id id, T obj, ToDoubleFunction<T> valueFunction, Attributes attributes) {
+        super(id, obj, valueFunction);
         this.attributes = attributes;
-        this.observer = observer;
-        this.observer.setCallback(this::update);
-    }
-
-    public void update(AsynchronousInstrument.DoubleResult result) {
-        result.observe(value(), attributes);
     }
 }

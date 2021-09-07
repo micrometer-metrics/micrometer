@@ -24,17 +24,17 @@ import io.opentelemetry.api.metrics.DoubleCounter;
 
 public class OpenTelemetryCounter extends AbstractMeter implements Counter {
     private final DoubleCounter counter;
-    private final Attributes labels;
+    private final Attributes attributes;
 
-    public OpenTelemetryCounter(Id id, DoubleCounter counter, Attributes labels) {
+    public OpenTelemetryCounter(Id id, DoubleCounter counter, Attributes attributes) {
         super(id);
         this.counter = counter;
-        this.labels = labels;
+        this.attributes = attributes;
     }
 
     @Override
     public void increment(double amount) {
-        counter.add(amount, labels);
+        counter.add(amount, attributes);
     }
 
     @Override

@@ -20,22 +20,19 @@ import java.util.function.ToDoubleFunction;
 import io.micrometer.core.instrument.cumulative.CumulativeFunctionCounter;
 
 import io.opentelemetry.api.common.Attributes;
-import io.opentelemetry.api.metrics.AsynchronousInstrument;
-import io.opentelemetry.api.metrics.DoubleSumObserver;
-import io.opentelemetry.api.metrics.DoubleUpDownSumObserver;
 
 public class OpenTelemetryFunctionCounter<T> extends CumulativeFunctionCounter<T> {
-    private final DoubleUpDownSumObserver observer;
+//    private final DoubleUpDownSumObserver observer;
     private final Attributes labels;
 
-    public OpenTelemetryFunctionCounter(Id id, T obj, ToDoubleFunction<T> value, DoubleUpDownSumObserver observer, Attributes labels) {
+    public OpenTelemetryFunctionCounter(Id id, T obj, ToDoubleFunction<T> value, Attributes labels) {
         super(id, obj, value);
         this.labels = labels;
-        this.observer = observer;
-        this.observer.setCallback(this::update);
+//        this.observer = observer;
+//        this.observer.setCallback(this::update);
     }
 
-    public void update(AsynchronousInstrument.DoubleResult result) {
-        result.observe(count(), labels);
-    }
+//    public void update(AsynchronousInstrument.DoubleResult result) {
+//        result.observe(count(), labels);
+//    }
 }

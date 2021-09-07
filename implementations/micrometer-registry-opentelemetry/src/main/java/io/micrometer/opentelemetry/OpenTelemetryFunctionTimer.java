@@ -21,34 +21,18 @@ import java.util.function.ToLongFunction;
 
 import io.micrometer.core.instrument.cumulative.CumulativeFunctionTimer;
 import io.opentelemetry.api.common.Attributes;
-import io.opentelemetry.api.metrics.AsynchronousInstrument;
-import io.opentelemetry.api.metrics.DoubleValueObserver;
+
+import io.opentelemetry.api.metrics.Meter;
 
 public class OpenTelemetryFunctionTimer<T> extends CumulativeFunctionTimer<T> {
-    private final DoubleValueObserver countObserver;
-    private final DoubleValueObserver durationObserver;
     private final Attributes attributes;
 
     public OpenTelemetryFunctionTimer(Id id, T obj,
-                                      ToLongFunction<T> countFunction, DoubleValueObserver countObserver,
-                                      ToDoubleFunction<T> totalTimeFunction, DoubleValueObserver valueObserver,
+                                      ToLongFunction<T> countFunction,
+                                      ToDoubleFunction<T> totalTimeFunction,
                                       TimeUnit totalTimeFunctionUnit, TimeUnit baseTimeUnit,
                                       Attributes attributes) {
         super(id, obj, countFunction, totalTimeFunction, totalTimeFunctionUnit, baseTimeUnit);
-        this.countObserver = countObserver;
-        this.countObserver.setCallback(this::updateCount);
-
-        this.durationObserver = valueObserver;
-        this.durationObserver.setCallback(this::updateDuration);
-
         this.attributes = attributes;
-    }
-
-    private void updateDuration(AsynchronousInstrument.DoubleResult doubleResult) {
-        doubleResult.observe(totalTime(baseTimeUnit()), attributes);
-    }
-
-    private void updateCount(AsynchronousInstrument.DoubleResult doubleResult) {
-        doubleResult.observe(count(), attributes);
     }
 }
