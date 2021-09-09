@@ -334,7 +334,8 @@ class KafkaMetricsTest {
         newValue.record(new MetricConfig(), 2.0, System.currentTimeMillis());
         metrics.put(metricName, newMetricInstance);
         kafkaMetrics.checkAndBindMetrics(registry);
-        assertThat(registry.getMeters()).singleElement().extracting(Meter::measure).satisfies(measurements->
-                assertThat(measurements).singleElement().extracting(Measurement::getValue).isEqualTo(2.0));
+        assertThat(registry.getMeters()).singleElement().extracting(Meter::measure)
+                                        .satisfies(measurements ->
+                                                           assertThat(measurements).singleElement().extracting(Measurement::getValue).isEqualTo(2.0));
     }
 }
