@@ -315,27 +315,34 @@ class KafkaMetricsTest {
     @Issue("#2726")
     @Test
     void shouldAlwaysUseMetricFromSupplierIfInstanceChanges() {
-        //Given
-        Map<MetricName, KafkaMetric> metrics = new HashMap<>();
         MetricName metricName = new MetricName("a0", "b0", "c0", new LinkedHashMap<>());
         Value oldValue = new Value();
-        KafkaMetric oldMetricInstance = new KafkaMetric(this, metricName, oldValue, new MetricConfig(), Time.SYSTEM);
         oldValue.record(new MetricConfig(), 1.0, System.currentTimeMillis());
+        KafkaMetric oldMetricInstance = new KafkaMetric(this, metricName, oldValue, new MetricConfig(), Time.SYSTEM);
+
+        Map<MetricName, KafkaMetric> metrics = new HashMap<>();
         metrics.put(metricName, oldMetricInstance);
-        Supplier<Map<MetricName, ? extends Metric>> supplier = () -> metrics;
-        kafkaMetrics = new KafkaMetrics(supplier);
+
+        kafkaMetrics = new KafkaMetrics(() -> metrics);
         MeterRegistry registry = new SimpleMeterRegistry();
 
         kafkaMetrics.bindTo(registry);
         assertThat(registry.getMeters()).hasSize(1);
 
         Value newValue = new Value();
-        KafkaMetric newMetricInstance = new KafkaMetric(this, metricName, newValue, new MetricConfig(), Time.SYSTEM);
         newValue.record(new MetricConfig(), 2.0, System.currentTimeMillis());
+        KafkaMetric newMetricInstance = new KafkaMetric(this, metricName, newValue, new MetricConfig(), Time.SYSTEM);
         metrics.put(metricName, newMetricInstance);
+
         kafkaMetrics.checkAndBindMetrics(registry);
-        assertThat(registry.getMeters()).singleElement().extracting(Meter::measure)
-                                        .satisfies(measurements ->
-                                                           assertThat(measurements).singleElement().extracting(Measurement::getValue).isEqualTo(2.0));
+        assertThat(registry.getMeters())
+                .singleElement()
+                .extracting(Meter::measure)
+                .satisfies(measurements ->
+                        assertThat(measurements)
+                                .singleElement()
+                                .extracting(Measurement::getValue)
+                                .isEqualTo(2.0)
+                );
     }
 }
