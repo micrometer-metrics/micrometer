@@ -212,29 +212,29 @@ class KafkaMetrics implements MeterBinder, AutoCloseable {
         }
     }
 
-    private Meter bindMeter(MeterRegistry registry, Supplier<Map<MetricName, ? extends Metric>> metrics, MetricName metricName, String name, Iterable<Tag> tags) {
-        Meter meter = registerMeter(registry, metrics, metricName, name, tags);
+    private Meter bindMeter(MeterRegistry registry, Supplier<Map<MetricName, ? extends Metric>> metricsSupplier, MetricName metricName, String meterName, Iterable<Tag> tags) {
+        Meter meter = registerMeter(registry, metricsSupplier, metricName, meterName, tags);
         registeredMeters.add(meter);
         return meter;
     }
 
-    private Meter registerMeter(MeterRegistry registry, Supplier<Map<MetricName, ? extends Metric>> metrics, MetricName metricName, String name, Iterable<Tag> tags) {
-        if (name.endsWith("total") || name.endsWith("count")) {
-            return registerCounter(registry, metrics, metricName, name, tags);
+    private Meter registerMeter(MeterRegistry registry, Supplier<Map<MetricName, ? extends Metric>> metricsSupplier, MetricName metricName, String meterName, Iterable<Tag> tags) {
+        if (meterName.endsWith("total") || meterName.endsWith("count")) {
+            return registerCounter(registry, metricsSupplier, metricName, meterName, tags);
         } else {
-            return registerGauge(registry, metrics, metricName, name, tags);
+            return registerGauge(registry, metricsSupplier, metricName, meterName, tags);
         }
     }
 
-    private Gauge registerGauge(MeterRegistry registry, Supplier<Map<MetricName, ? extends Metric>> metrics, MetricName metricName, String name, Iterable<Tag> tags) {
-        return Gauge.builder(name, metrics, toMetricValue(metricName))
+    private Gauge registerGauge(MeterRegistry registry, Supplier<Map<MetricName, ? extends Metric>> metricsSupplier, MetricName metricName, String meterName, Iterable<Tag> tags) {
+        return Gauge.builder(meterName, metricsSupplier, toMetricValue(metricName))
                 .tags(tags)
                 .description(metricName.description())
                 .register(registry);
     }
 
-    private FunctionCounter registerCounter(MeterRegistry registry, Supplier<Map<MetricName, ? extends Metric>> metrics, MetricName metricName, String name, Iterable<Tag> tags) {
-        return FunctionCounter.builder(name, metrics, toMetricValue(metricName))
+    private FunctionCounter registerCounter(MeterRegistry registry, Supplier<Map<MetricName, ? extends Metric>> metricsSupplier, MetricName metricName, String meterName, Iterable<Tag> tags) {
+        return FunctionCounter.builder(meterName, metricsSupplier, toMetricValue(metricName))
                 .tags(tags)
                 .description(metricName.description())
                 .register(registry);

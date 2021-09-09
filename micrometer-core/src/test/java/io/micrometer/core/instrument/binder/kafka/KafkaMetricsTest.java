@@ -16,6 +16,8 @@
 package io.micrometer.core.instrument.binder.kafka;
 
 import io.micrometer.core.Issue;
+import io.micrometer.core.instrument.Measurement;
+import io.micrometer.core.instrument.Meter;
 import io.micrometer.core.instrument.MeterRegistry;
 import io.micrometer.core.instrument.Tag;
 import io.micrometer.core.instrument.simple.SimpleMeterRegistry;
@@ -29,6 +31,7 @@ import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Test;
 
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.concurrent.atomic.AtomicReference;
@@ -307,5 +310,31 @@ class KafkaMetricsTest {
         assertThat(registry.getMeters()).hasSize(2);
         registry.getMeters().forEach(meter -> assertThat(meter.getId().getTags())
                 .extracting(Tag::getKey).containsOnly("key0", "key1", "client.id", "kafka.version"));
+    }
+
+    @Issue("#2726")
+    @Test
+    void shouldAlwaysUseMetricFromSupplierIfInstanceChanges() {
+        //Given
+        Map<MetricName, KafkaMetric> metrics = new HashMap<>();
+        MetricName metricName = new MetricName("a0", "b0", "c0", new LinkedHashMap<>());
+        Value oldValue = new Value();
+        KafkaMetric oldMetricInstance = new KafkaMetric(this, metricName, oldValue, new MetricConfig(), Time.SYSTEM);
+        oldValue.record(new MetricConfig(), 1.0, System.currentTimeMillis());
+        metrics.put(metricName, oldMetricInstance);
+        Supplier<Map<MetricName, ? extends Metric>> supplier = () -> metrics;
+        kafkaMetrics = new KafkaMetrics(supplier);
+        MeterRegistry registry = new SimpleMeterRegistry();
+
+        kafkaMetrics.bindTo(registry);
+        assertThat(registry.getMeters()).hasSize(1);
+
+        Value newValue = new Value();
+        KafkaMetric newMetricInstance = new KafkaMetric(this, metricName, newValue, new MetricConfig(), Time.SYSTEM);
+        newValue.record(new MetricConfig(), 2.0, System.currentTimeMillis());
+        metrics.put(metricName, newMetricInstance);
+        kafkaMetrics.checkAndBindMetrics(registry);
+        assertThat(registry.getMeters()).singleElement().extracting(Meter::measure).satisfies(measurements->
+                assertThat(measurements).singleElement().extracting(Measurement::getValue).isEqualTo(2.0));
     }
 }
