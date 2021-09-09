@@ -240,14 +240,12 @@ class KafkaMetrics implements MeterBinder, AutoCloseable {
                 .register(registry);
     }
 
-    private static ToDoubleFunction<Supplier<Map<MetricName, ? extends Metric>>> toMetricValue(MetricName metricName) {
-        return metrics -> {
-            final Metric metric = metrics.get().get(metricName);
-            if (metric == null) {
-                return Double.NaN;
-            }
-            return ((Number) metric.metricValue()).doubleValue();
-        };
+    private ToDoubleFunction<Supplier<Map<MetricName, ? extends Metric>>> toMetricValue(MetricName metricName) {
+        return metricsSupplier -> toDouble(metricsSupplier.get().get(metricName));
+    }
+
+    private double toDouble(@Nullable Metric metric) {
+        return (metric != null) ? ((Number) metric.metricValue()).doubleValue() : Double.NaN;
     }
 
     private List<Tag> meterTags(Metric metric, boolean includeCommonTags) {
