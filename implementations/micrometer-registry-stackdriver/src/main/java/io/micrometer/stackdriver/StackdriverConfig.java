@@ -31,6 +31,7 @@ import java.util.Map;
 
 import static io.micrometer.core.instrument.config.MeterRegistryConfigValidator.checkAll;
 import static io.micrometer.core.instrument.config.MeterRegistryConfigValidator.checkRequired;
+import static io.micrometer.core.instrument.config.validate.PropertyValidator.getBoolean;
 import static io.micrometer.core.instrument.config.validate.PropertyValidator.getString;
 
 /**
@@ -62,6 +63,15 @@ public interface StackdriverConfig extends StepRegistryConfig {
 
     default String resourceType() {
         return getString(this, "resourceType").orElse("global");
+    }
+
+    /**
+     * Use semantically correct metric types. E.g. counter used to produce GAUGE metric, while it would be better to use DELTA.
+     *
+     * @return a flag indicating if semantically correct metric types should be used
+     */
+    default boolean useSemanticMetricTypes() {
+        return getBoolean(this, "semanticMetricTypes").orElse(false);
     }
 
     /**

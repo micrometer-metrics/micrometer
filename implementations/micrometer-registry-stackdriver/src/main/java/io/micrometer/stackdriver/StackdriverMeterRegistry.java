@@ -53,6 +53,7 @@ import java.util.stream.Stream;
 
 import static com.google.api.MetricDescriptor.MetricKind.CUMULATIVE;
 import static com.google.api.MetricDescriptor.MetricKind.DELTA;
+import static com.google.api.MetricDescriptor.MetricKind.GAUGE;
 import static java.util.stream.Collectors.groupingBy;
 import static java.util.stream.Collectors.toCollection;
 import static java.util.stream.StreamSupport.stream;
@@ -80,8 +81,7 @@ public class StackdriverMeterRegistry extends StepMeterRegistry {
     /**
      * Metric names for which we have posted a custom metric
      */
-    //VisibleForTesting
-    final Map<String, MetricDescriptor.MetricKind> verifiedDescriptors = new ConcurrentHashMap<>();
+    private final Set<String> verifiedDescriptors = ConcurrentHashMap.newKeySet();
 
     @Nullable
     private MetricServiceSettings metricServiceSettings;
@@ -182,12 +182,14 @@ public class StackdriverMeterRegistry extends StepMeterRegistry {
         }
     }
 
-    private Stream<TimeSeries> createMeter(Batch batch, Meter m) {
+    //VisibleForTesting
+    Stream<TimeSeries> createMeter(Batch batch, Meter m) {
         return stream(m.measure().spliterator(), false)
-                .map(ms -> batch.createTimeSeries(m, ms.getValue(), ms.getStatistic().getTagValueRepresentation()));
+                .map(ms -> batch.createTimeSeries(m, ms.getValue(), ms.getStatistic().getTagValueRepresentation(), GAUGE));
     }
 
-    private Stream<TimeSeries> createFunctionTimer(Batch batch, FunctionTimer timer) {
+    //VisibleForTesting
+    Stream<TimeSeries> createFunctionTimer(Batch batch, FunctionTimer timer) {
         long count = (long) timer.count();
         Distribution.Builder distribution = Distribution.newBuilder()
                 .setMean(timer.mean(getBaseTimeUnit()))
@@ -199,37 +201,46 @@ public class StackdriverMeterRegistry extends StepMeterRegistry {
                 .addBucketCounts(0)
                 .addBucketCounts(count);
 
-        return Stream.of(batch.createTimeSeries(timer, distribution.build()));
+        return Stream.of(batch.createTimeSeries(timer, distribution.build(), null, GAUGE));
     }
 
-    private Stream<TimeSeries> createFunctionCounter(Batch batch, FunctionCounter functionCounter) {
-        return Stream.of(batch.createTimeSeries(functionCounter, functionCounter.count(), null, MetricDescriptor.MetricKind.CUMULATIVE));
+    //VisibleForTesting
+    Stream<TimeSeries> createFunctionCounter(Batch batch, FunctionCounter functionCounter) {
+        return Stream.of(batch.createTimeSeries(functionCounter, functionCounter.count(), null,
+                config.useSemanticMetricTypes() ? CUMULATIVE : GAUGE));
     }
 
-    private Stream<TimeSeries> createTimeGauge(Batch batch, TimeGauge timeGauge) {
-        return Stream.of(batch.createTimeSeries(timeGauge, timeGauge.value(getBaseTimeUnit()), null));
+    //VisibleForTesting
+    Stream<TimeSeries> createTimeGauge(Batch batch, TimeGauge timeGauge) {
+        return Stream.of(batch.createTimeSeries(timeGauge, timeGauge.value(getBaseTimeUnit()), null, GAUGE));
     }
 
-    private Stream<TimeSeries> createSummary(Batch batch, DistributionSummary summary) {
+    //VisibleForTesting
+    Stream<TimeSeries> createSummary(Batch batch, DistributionSummary summary) {
         return batch.createTimeSeries(summary, false);
     }
 
-    private Stream<TimeSeries> createTimer(Batch batch, Timer timer) {
+    //VisibleForTesting
+    Stream<TimeSeries> createTimer(Batch batch, Timer timer) {
         return batch.createTimeSeries(timer, true);
     }
 
-    private Stream<TimeSeries> createGauge(Batch batch, Gauge gauge) {
-        return Stream.of(batch.createTimeSeries(gauge, gauge.value(), null));
+    //VisibleForTesting
+    Stream<TimeSeries> createGauge(Batch batch, Gauge gauge) {
+        return Stream.of(batch.createTimeSeries(gauge, gauge.value(), null, GAUGE));
     }
 
-    private Stream<TimeSeries> createCounter(Batch batch, Counter counter) {
-        return Stream.of(batch.createTimeSeries(counter, counter.count(), null, CUMULATIVE));
+    //VisibleForTesting
+    Stream<TimeSeries> createCounter(Batch batch, Counter counter) {
+        return Stream.of(batch.createTimeSeries(counter, counter.count(), null,
+                config.useSemanticMetricTypes() ? CUMULATIVE : GAUGE));
     }
 
-    private Stream<TimeSeries> createLongTaskTimer(Batch batch, LongTaskTimer longTaskTimer) {
+    //VisibleForTesting
+    Stream<TimeSeries> createLongTaskTimer(Batch batch, LongTaskTimer longTaskTimer) {
         return Stream.of(
-                batch.createTimeSeries(longTaskTimer, longTaskTimer.activeTasks(), "activeTasks"),
-                batch.createTimeSeries(longTaskTimer, longTaskTimer.duration(getBaseTimeUnit()), "duration")
+                batch.createTimeSeries(longTaskTimer, longTaskTimer.activeTasks(), "activeTasks", GAUGE),
+                batch.createTimeSeries(longTaskTimer, longTaskTimer.duration(getBaseTimeUnit()), "duration", GAUGE)
         );
     }
 
@@ -308,62 +319,48 @@ public class StackdriverMeterRegistry extends StepMeterRegistry {
             previousBatchEndTime = wallTime;
         }
 
-        TimeSeries createTimeSeries(Meter meter, double value, @Nullable String statistic) {
-            return createTimeSeries(meter, value, statistic, MetricDescriptor.MetricKind.GAUGE);
-        }
-
         TimeSeries createTimeSeries(Meter meter, double value, @Nullable String statistic, MetricDescriptor.MetricKind metricKind) {
-            return createTimeSeries(meter.getId(), TypedValue.newBuilder().setDoubleValue(value).build(),
+            return createTimeSeries(meter, TypedValue.newBuilder().setDoubleValue(value).build(),
                     MetricDescriptor.ValueType.DOUBLE, statistic, metricKind);
         }
 
-        TimeSeries createTimeSeries(Meter meter, long value, @Nullable String statistic) {
-            return createTimeSeries(meter.getId(), TypedValue.newBuilder().setInt64Value(value).build(),
-                    MetricDescriptor.ValueType.INT64, statistic);
+        TimeSeries createTimeSeries(Meter meter, long value, @Nullable String statistic, MetricDescriptor.MetricKind metricKind) {
+            return createTimeSeries(meter, TypedValue.newBuilder().setInt64Value(value).build(),
+                    MetricDescriptor.ValueType.INT64, statistic, metricKind);
+        }
+
+        TimeSeries createTimeSeries(Meter meter, Distribution distribution, @Nullable String statistic, MetricDescriptor.MetricKind metricKind) {
+            return createTimeSeries(meter, TypedValue.newBuilder().setDistributionValue(distribution).build(),
+                    MetricDescriptor.ValueType.DISTRIBUTION, statistic, metricKind);
         }
 
         Stream<TimeSeries> createTimeSeries(HistogramSupport histogramSupport, boolean timeDomain) {
             HistogramSnapshot snapshot = histogramSupport.takeSnapshot();
             return Stream.concat(
                     Stream.of(
-                            createTimeSeries(histogramSupport, distribution(snapshot, timeDomain)),
+                            createTimeSeries(histogramSupport, distribution(snapshot, timeDomain), null, GAUGE),
                             createTimeSeries(histogramSupport,
                                     timeDomain ? snapshot.max(getBaseTimeUnit()) : snapshot.max(),
-                                    "max"),
-                            createTimeSeries(histogramSupport, snapshot.count(), "count", MetricDescriptor.MetricKind.CUMULATIVE)
+                                    "max",
+                                    GAUGE),
+                            createTimeSeries(histogramSupport, snapshot.count(), "count",
+                                    config.useSemanticMetricTypes() ? CUMULATIVE : GAUGE)
                     ),
                     Arrays.stream(snapshot.percentileValues())
                             .map(valueAtP -> createTimeSeries(histogramSupport,
                                     timeDomain ? valueAtP.value(getBaseTimeUnit()) : valueAtP.value(),
-                                    "p" + DoubleFormat.wholeOrDecimal(valueAtP.percentile() * 100)))
+                                    "p" + DoubleFormat.wholeOrDecimal(valueAtP.percentile() * 100),
+                                    GAUGE))
             );
         }
 
-        TimeSeries createTimeSeries(Meter meter, Distribution distribution) {
-            return createTimeSeries(meter.getId(),
-                    TypedValue.newBuilder().setDistributionValue(distribution).build(),
-                    MetricDescriptor.ValueType.DISTRIBUTION,
-                    null);
-        }
-
-        private TimeSeries createTimeSeries(Meter.Id id, TypedValue typedValue, MetricDescriptor.ValueType valueType,
-                                            @Nullable String statistic) {
-            return createTimeSeries(id, typedValue, valueType, statistic, MetricDescriptor.MetricKind.GAUGE);
-        }
-
-        private TimeSeries createTimeSeries(Meter.Id id, TypedValue typedValue, MetricDescriptor.ValueType valueType,
+        private TimeSeries createTimeSeries(Meter meter, TypedValue typedValue, MetricDescriptor.ValueType valueType,
                                             @Nullable String statistic, MetricDescriptor.MetricKind metricKind) {
-            MetricDescriptor.MetricKind backendMetricKind = metricKind;
+            Meter.Id id = meter.getId();
             if (client != null)
-                backendMetricKind = createMetricDescriptorIfNecessary(client, id, valueType, statistic, metricKind);
+                createMetricDescriptorIfNecessary(client, id, valueType, statistic, metricKind);
 
             String metricType = metricType(id, statistic);
-
-            if (!metricKind.equals(backendMetricKind)) {
-                logger.trace("MetricKind configured in Stackdriver ({}) is not matching the one expected by Micrometer for that kind of Meter ({})." +
-                        "Using Stackdriver's value. Consider deleting MetricDescriptor {} and allowing Micrometer to recreate it.",
-                        backendMetricKind, metricKind, metricType);
-            }
 
             Map<String, String> metricLabels = getConventionTags(id).stream()
                     .collect(Collectors.toMap(Tag::getKey, Tag::getValue));
@@ -378,16 +375,16 @@ public class StackdriverMeterRegistry extends StepMeterRegistry {
                             .putLabels("project_id", config.projectId())
                             .putAllLabels(config.resourceLabels())
                             .build())
-                    .setMetricKind(backendMetricKind) // https://cloud.google.com/monitoring/api/v3/metrics-details#metric-kinds
+                    .setMetricKind(metricKind) // https://cloud.google.com/monitoring/api/v3/metrics-details#metric-kinds
                     .setValueType(valueType)
                     .addPoints(Point.newBuilder()
-                            .setInterval(interval(backendMetricKind))
+                            .setInterval(interval(metricKind))
                             .setValue(typedValue)
                             .build())
                     .build();
         }
 
-        private MetricDescriptor.MetricKind createMetricDescriptorIfNecessary(MetricServiceClient client, Meter.Id id, MetricDescriptor.ValueType valueType,
+        private void createMetricDescriptorIfNecessary(MetricServiceClient client, Meter.Id id, MetricDescriptor.ValueType valueType,
                                                                               @Nullable String statistic, MetricDescriptor.MetricKind metricKind) {
 
             if (verifiedDescriptors.isEmpty()) {
@@ -395,7 +392,7 @@ public class StackdriverMeterRegistry extends StepMeterRegistry {
             }
 
             final String metricType = metricType(id, statistic);
-            if (!verifiedDescriptors.containsKey(metricType)) {
+            if (!verifiedDescriptors.contains(metricType)) {
                 MetricDescriptor descriptor = MetricDescriptor.newBuilder()
                         .setType(metricType)
                         .setDescription(id.getDescription() == null ? "" : id.getDescription())
@@ -414,13 +411,10 @@ public class StackdriverMeterRegistry extends StepMeterRegistry {
 
                 try {
                     client.createMetricDescriptor(request);
-                    verifiedDescriptors.put(metricType, metricKind);
+                    verifiedDescriptors.add(metricType);
                 } catch (ApiException e) {
                     logger.warn("failed to create metric descriptor in Stackdriver for meter " + id, e);
                 }
-                return metricKind;
-            } else {
-                return verifiedDescriptors.get(metricType);
             }
         }
 
@@ -438,7 +432,7 @@ public class StackdriverMeterRegistry extends StepMeterRegistry {
 
                     final MetricServiceClient.ListMetricDescriptorsPagedResponse listMetricDescriptorsPagedResponse = client.listMetricDescriptors(listMetricDescriptorsRequest);
                     listMetricDescriptorsPagedResponse.iterateAll().forEach(
-                            metricDescriptor -> verifiedDescriptors.put(metricDescriptor.getType(), metricDescriptor.getMetricKind()));
+                            metricDescriptor -> verifiedDescriptors.add(metricDescriptor.getType()));
 
                     logger.trace("Pre populated verified descriptors for project: {}, with filter: {}, existing metrics: {}", projectName, filter, verifiedDescriptors);
                 }
