@@ -371,7 +371,7 @@ class StatsdMeterRegistryTest {
     }
 
     @Test
-    void supportsDatadogDistributions() {
+    void summarySentAsDatadogDistribution_whenPercentileHistogramEnabled() {
         final Sinks.Many<String> lines = sink();
         registry = StatsdMeterRegistry.builder(configWithFlavor(StatsdFlavor.DATADOG))
                 .clock(clock)
@@ -381,6 +381,20 @@ class StatsdMeterRegistryTest {
         StepVerifier.create(lines.asFlux())
                 .then(() -> DistributionSummary.builder("my.summary").publishPercentileHistogram(true).register(registry).record(1))
                 .expectNext("my.summary:1|d")
+                .verifyComplete();
+    }
+
+    @Test
+    void timerSentAsDatadogDistribution_whenPercentileHistogramEnabled() {
+        final Sinks.Many<String> lines = sink();
+        registry = StatsdMeterRegistry.builder(configWithFlavor(StatsdFlavor.DATADOG))
+                .clock(clock)
+                .lineSink(toLineSink(lines))
+                .build();
+
+        StepVerifier.create(lines.asFlux())
+                .then(() -> Timer.builder("my.timer").publishPercentileHistogram(true).register(registry).record(2, TimeUnit.SECONDS))
+                .expectNext("my.timer:2000|d")
                 .verifyComplete();
     }
 
