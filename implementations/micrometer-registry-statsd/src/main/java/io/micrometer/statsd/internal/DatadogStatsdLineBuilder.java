@@ -61,12 +61,25 @@ public class DatadogStatsdLineBuilder extends FlavorStatsdLineBuilder {
     }
 
     @Override
+    public String timing(double timeMs) {
+        if (percentileHistogram) {
+            return distributionLine(timeMs);
+        } else {
+            return super.timing(timeMs);
+        }
+    }
+
+    @Override
     public String histogram(double amount) {
         if (percentileHistogram) {
-            return line(DoubleFormat.decimalOrNan(amount), null, TYPE_DISTRIBUTION);
+            return distributionLine(amount);
         } else {
             return super.histogram(amount);
         }
+    }
+
+    private String distributionLine(double amount) {
+        return line(DoubleFormat.decimalOrNan(amount), null, TYPE_DISTRIBUTION);
     }
 
     @Override
