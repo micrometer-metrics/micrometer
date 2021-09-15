@@ -13,22 +13,20 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package io.micrometer.jersey2.server;
+package io.micrometer.core.instrument.binder.jersey.server;
 
+import io.micrometer.core.instrument.Tag;
 import io.micrometer.core.instrument.Tags;
 import org.glassfish.jersey.server.ContainerResponse;
 import org.glassfish.jersey.server.monitoring.RequestEvent;
-
-import io.micrometer.core.instrument.Tag;
 
 /**
  * Default implementation for {@link JerseyTagsProvider}.
  * 
  * @author Michael Weirauch
  * @author Johnny Lim
- * @deprecated use {@link io.micrometer.core.instrument.binder.jersey.server.DefaultJerseyTagsProvider} in micrometer-core instead.
+ * @since 1.8.0
  */
-@Deprecated
 public final class DefaultJerseyTagsProvider implements JerseyTagsProvider {
 
     @Override

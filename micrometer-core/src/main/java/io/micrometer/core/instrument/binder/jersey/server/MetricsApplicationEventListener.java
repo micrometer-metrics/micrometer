@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package io.micrometer.jersey2.server;
+package io.micrometer.core.instrument.binder.jersey.server;
 
 import io.micrometer.core.instrument.MeterRegistry;
 import org.glassfish.jersey.server.monitoring.ApplicationEvent;
@@ -28,9 +28,8 @@ import static java.util.Objects.requireNonNull;
  * {@link RequestEventListener} for instrumenting Jersey server requests.
  *
  * @author Michael Weirauch
- * @deprecated use {@link io.micrometer.core.instrument.binder.jersey.server.MetricsApplicationEventListener} in micrometer-core instead.
+ * @since 1.8.0
  */
-@Deprecated
 public class MetricsApplicationEventListener implements ApplicationEventListener {
 
     private final MeterRegistry meterRegistry;
