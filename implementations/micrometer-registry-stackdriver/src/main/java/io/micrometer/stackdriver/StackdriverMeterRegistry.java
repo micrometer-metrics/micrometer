@@ -51,7 +51,6 @@ import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 import static com.google.api.MetricDescriptor.MetricKind.CUMULATIVE;
-import static com.google.api.MetricDescriptor.MetricKind.DELTA;
 import static com.google.api.MetricDescriptor.MetricKind.GAUGE;
 import static java.util.stream.Collectors.groupingBy;
 import static java.util.stream.Collectors.toCollection;
@@ -72,7 +71,6 @@ public class StackdriverMeterRegistry extends StepMeterRegistry {
      * https://cloud.google.com/monitoring/quotas#custom_metrics_quotas
      */
     private static final int TIMESERIES_PER_REQUEST_LIMIT = 200;
-    private static final EnumSet<MetricDescriptor.MetricKind> requireStartTime = EnumSet.of(DELTA, CUMULATIVE);
     private final Logger logger = LoggerFactory.getLogger(StackdriverMeterRegistry.class);
     private final StackdriverConfig config;
     private long previousBatchEndTime;
@@ -450,7 +448,7 @@ public class StackdriverMeterRegistry extends StepMeterRegistry {
 
         private TimeInterval interval(MetricDescriptor.MetricKind metricKind) {
             TimeInterval.Builder builder = TimeInterval.newBuilder().setEndTime(endTime);
-            if (requireStartTime.contains(metricKind)) {
+            if (CUMULATIVE.equals(metricKind)) {
                 builder.setStartTime(startTime);
             }
             return builder.build();
