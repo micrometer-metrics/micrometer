@@ -246,13 +246,12 @@ subprojects {
 
     tasks.register('resolveAndLockAll') {
         description = 'Resolves dependencies of all configurations and writes them into the lock file.'
+        outputs.upToDateWhen { false }
         doFirst {
-            assert gradle.startParameter.writeDependencyLocks : 'Execute resolveAndLockAll --write-locks'
+            assert gradle.startParameter.writeDependencyLocks || gradle.startParameter.lockedDependenciesToUpdate : 'Execute resolveAndLockAll --write-locks or --update-locks <dependencies>'
         }
         doLast {
-            project.configurations
-                    .findAll { it.canBeResolved }
-                    .each { it.resolve() }
+            project.configurations.findAll { it.canBeResolved }*.resolve()
         }
     }
 
