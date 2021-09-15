@@ -13,19 +13,17 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package io.micrometer.jersey2.server;
-
-import org.glassfish.jersey.server.monitoring.RequestEvent;
+package io.micrometer.core.instrument.binder.jersey.server;
 
 import io.micrometer.core.instrument.Tag;
+import org.glassfish.jersey.server.monitoring.RequestEvent;
 
 /**
  * Provides {@link Tag Tags} for Jersey request metrics.
  * 
  * @author Michael Weirauch
- * @deprecated use {@link io.micrometer.core.instrument.binder.jersey.server.JerseyTagsProvider} in micrometer-core instead.
+ * @since 1.8.0
  */
-@Deprecated
 public interface JerseyTagsProvider {
 
     /**

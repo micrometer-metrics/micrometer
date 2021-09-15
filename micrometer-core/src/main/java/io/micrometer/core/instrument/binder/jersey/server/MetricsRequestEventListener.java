@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package io.micrometer.jersey2.server;
+package io.micrometer.core.instrument.binder.jersey.server;
 
 import io.micrometer.core.annotation.Timed;
 import io.micrometer.core.instrument.LongTaskTimer;
@@ -34,9 +34,8 @@ import static java.util.Objects.requireNonNull;
  *
  * @author Michael Weirauch
  * @author Jon Schneider
- * @deprecated use {@link io.micrometer.core.instrument.binder.jersey.server.MetricsRequestEventListener} in micrometer-core instead.
+ * @since 1.8.0
  */
-@Deprecated
 public class MetricsRequestEventListener implements RequestEventListener {
 
     private final Map<ContainerRequest, Timer.Sample> shortTaskSample = Collections

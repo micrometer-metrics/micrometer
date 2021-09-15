@@ -24,6 +24,7 @@ dependencies {
     optionalApi 'org.eclipse.jetty:jetty-server'
     optionalApi 'org.eclipse.jetty:jetty-client'
     optionalApi 'org.apache.tomcat.embed:tomcat-embed-core'
+    optionalApi 'org.glassfish.jersey.core:jersey-server'
     optionalApi 'io.grpc:grpc-api'
 
     // apache httpcomponents monitoring
@@ -57,6 +58,9 @@ dependencies {
 
     // JUnit 5
     testImplementation 'org.junit.jupiter:junit-jupiter'
+    // See https://github.com/eclipse-ee4j/jersey/issues/3662
+    testImplementation 'junit:junit'
+    testRuntimeOnly 'org.junit.vintage:junit-vintage-engine'
     testImplementation 'com.tngtech.archunit:archunit-junit5'
 
     // Eclipse still needs this (as of 4.7.1a)
@@ -85,6 +89,9 @@ dependencies {
     testImplementation 'org.apache.kafka:kafka-clients'
 
     testImplementation 'org.apache.commons:commons-pool2:2.+'
+
+    testImplementation 'org.glassfish.jersey.test-framework.providers:jersey-test-framework-provider-inmemory'
+    testRuntimeOnly 'org.glassfish.jersey.inject:jersey-hk2'
 
     testImplementation 'ru.lanwen.wiremock:wiremock-junit5'
     testImplementation 'com.github.tomakehurst:wiremock-jre8-standalone'
