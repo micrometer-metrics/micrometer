@@ -29,6 +29,5 @@ org.checkerframework:checker-qual:2.11.1=checkstyle,nohttp
 org.hdrhistogram:HdrHistogram:2.1.12=compileClasspath,default,runtimeClasspath,testCompileClasspath,testRuntimeClasspath
 org.latencyutils:LatencyUtils:2.0.3=default,runtimeClasspath,testRuntimeClasspath
 org.slf4j:slf4j-api:1.7.26=nohttp,nohttp-cli
-org.slf4j:slf4j-api:1.7.30=compileClasspath
-org.slf4j:slf4j-api:1.7.31=default,runtimeClasspath,testCompileClasspath,testRuntimeClasspath
+org.slf4j:slf4j-api:1.7.32=compileClasspath,default,runtimeClasspath,testCompileClasspath,testRuntimeClasspath
 empty=annotationProcessor,archives,signatures,testAnnotationProcessor

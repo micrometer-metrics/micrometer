@@ -58,6 +58,6 @@ org.objenesis:objenesis:3.2=testCompileClasspath,testRuntimeClasspath
 org.opentest4j:opentest4j:1.2.0=testCompileClasspath,testRuntimeClasspath
 org.reactivestreams:reactive-streams:1.0.3=compileClasspath,default,runtimeClasspath,testCompileClasspath,testRuntimeClasspath
 org.slf4j:slf4j-api:1.7.26=nohttp,nohttp-cli
-org.slf4j:slf4j-api:1.7.30=testCompileClasspath,testRuntimeClasspath
+org.slf4j:slf4j-api:1.7.32=testCompileClasspath,testRuntimeClasspath
 ru.lanwen.wiremock:wiremock-junit5:1.3.1=testCompileClasspath,testRuntimeClasspath
 empty=annotationProcessor,archives,shadow,signatures,testAnnotationProcessor
