@@ -6,6 +6,7 @@
 	<suppress files="io[\\/]micrometer[\\/]core[\\/]instrument[\\/]binder[\\/]logging[\\/].+" checks="IllegalImport" />
 	<suppress files="io[\\/]micrometer[\\/]core[\\/]util[\\/]internal[\\/]logging[\\/].+" checks="IllegalImport" />
 	<suppress files="implementations[\\/].+" checks="IllegalImport" />
+	<suppress files="samples[\\/].+" checks="IllegalImport" />
 	<suppress files="LogbackMetricsAutoConfiguration" checks="IllegalImport" />
 	<suppress files="io[\\/]micrometer[\\/]jersey2[\\/]server[\\/].+" checks="SpringJUnit5" />
 </suppressions>

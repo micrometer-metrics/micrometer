@@ -21,10 +21,12 @@ import io.micrometer.core.instrument.Counter;
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.channel.ChannelOutboundHandlerAdapter;
 import io.netty.channel.ChannelPromise;
+import io.netty.channel.unix.DomainSocketAddress;
 import io.netty.handler.logging.LogLevel;
 import io.netty.handler.logging.LoggingHandler;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.condition.OS;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.EnumSource;
 import reactor.core.Disposable;
@@ -34,6 +36,8 @@ import reactor.netty.DisposableChannel;
 import reactor.netty.tcp.TcpServer;
 import reactor.netty.udp.UdpServer;
 
+import java.io.File;
+import java.net.InetSocketAddress;
 import java.time.Duration;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
@@ -43,6 +47,7 @@ import java.util.stream.IntStream;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.awaitility.Awaitility.await;
+import static org.junit.jupiter.api.Assumptions.assumeTrue;
 
 /**
  * Tests {@link StatsdMeterRegistry} metrics publishing functionality.
@@ -51,6 +56,7 @@ import static org.awaitility.Awaitility.await;
  * @author Johnny Lim
  */
 class StatsdMeterRegistryPublishTest {
+    private static final String UDS_DATAGRAM_SOCKET_PATH = "/tmp/test-server.sock";
 
     StatsdMeterRegistry meterRegistry;
     DisposableChannel server;
@@ -61,7 +67,9 @@ class StatsdMeterRegistryPublishTest {
 
     @AfterEach
     void cleanUp() {
-        meterRegistry.close();
+        if (meterRegistry != null) {
+            meterRegistry.close();
+        }
         if (server != null) {
             server.disposeNow();
         }
@@ -70,10 +78,11 @@ class StatsdMeterRegistryPublishTest {
     @ParameterizedTest
     @EnumSource(StatsdProtocol.class)
     void receiveMetricsSuccessfully(StatsdProtocol protocol) throws InterruptedException {
+        skipUdsTestOnWindows(protocol);
         serverLatch = new CountDownLatch(3);
         server = startServer(protocol, 0);
 
-        final int port = server.address().getPort();
+        final int port = getPort(protocol);
 
         meterRegistry = new StatsdMeterRegistry(getUnbufferedConfig(protocol, port), Clock.SYSTEM);
         startRegistryAndWaitForClient();
@@ -87,11 +96,12 @@ class StatsdMeterRegistryPublishTest {
     @ParameterizedTest
     @EnumSource(StatsdProtocol.class)
     void resumeSendingMetrics_whenServerIntermittentlyFails(StatsdProtocol protocol) throws InterruptedException {
+        skipUdsTestOnWindows(protocol);
         serverLatch = new CountDownLatch(1);
         AtomicInteger writeCount = new AtomicInteger();
         server = startServer(protocol, 0);
 
-        final int port = server.address().getPort();
+        final int port = getPort(protocol);
 
         meterRegistry = new StatsdMeterRegistry(getUnbufferedConfig(protocol, port), Clock.SYSTEM);
         startRegistryAndWaitForClient();
@@ -119,7 +129,7 @@ class StatsdMeterRegistryPublishTest {
         // For UDP, the first change seems to be lost frequently somehow.
         Counter.builder("another.counter").register(meterRegistry).increment();
 
-        if (protocol == StatsdProtocol.TCP) {
+        if (protocol == StatsdProtocol.TCP || protocol == StatsdProtocol.UDS_DATAGRAM) {
             await().until(() -> meterRegistry.statsdConnection.get() != firstClient);
         }
 
@@ -133,10 +143,11 @@ class StatsdMeterRegistryPublishTest {
     @EnumSource(StatsdProtocol.class)
     @Issue("#1676")
     void stopAndStartMeterRegistrySendsMetrics(StatsdProtocol protocol) throws InterruptedException {
+        skipUdsTestOnWindows(protocol);
         serverLatch = new CountDownLatch(3);
         server = startServer(protocol, 0);
 
-        final int port = server.address().getPort();
+        final int port = getPort(protocol);
 
         meterRegistry = new StatsdMeterRegistry(getUnbufferedConfig(protocol, port), Clock.SYSTEM);
         startRegistryAndWaitForClient();
@@ -174,11 +185,12 @@ class StatsdMeterRegistryPublishTest {
     @ParameterizedTest
     @EnumSource(StatsdProtocol.class)
     void whenBackendInitiallyDown_metricsSentAfterBackendStarts(StatsdProtocol protocol) throws InterruptedException {
+        skipUdsTestOnWindows(protocol);
         AtomicInteger writeCount = new AtomicInteger();
         serverLatch = new CountDownLatch(3);
         // start server to secure an open port
         server = startServer(protocol, 0);
-        final int port = server.address().getPort();
+        final int port = getPort(protocol);
         server.disposeNow();
         meterRegistry = new StatsdMeterRegistry(getUnbufferedConfig(protocol, port), Clock.SYSTEM);
         meterRegistry.start();
@@ -189,10 +201,10 @@ class StatsdMeterRegistryPublishTest {
             await().until(() -> writeCount.get() == 3);
         }
         server = startServer(protocol, port);
-        if (protocol == StatsdProtocol.TCP) {
-            // client is null until TcpClient first connects
+        if (protocol == StatsdProtocol.TCP || protocol == StatsdProtocol.UDS_DATAGRAM) {
+            // client is null until connection established
             await().until(() -> meterRegistry.statsdConnection.get() != null);
-            // TcpClient may take some time to reconnect to the server
+            // client may take some time to reconnect to the server
             await().until(() -> !clientIsDisposed());
         }
         assertThat(serverLatch.getCount()).isEqualTo(3);
@@ -212,10 +224,11 @@ class StatsdMeterRegistryPublishTest {
     @ParameterizedTest
     @EnumSource(StatsdProtocol.class)
     void whenRegistryStopped_doNotConnectToBackend(StatsdProtocol protocol) throws InterruptedException {
+        skipUdsTestOnWindows(protocol);
         serverLatch = new CountDownLatch(3);
         // start server to secure an open port
         server = startServer(protocol, 0);
-        final int port = server.address().getPort();
+        final int port = getPort(protocol);
         meterRegistry = new StatsdMeterRegistry(getUnbufferedConfig(protocol, port), Clock.SYSTEM);
         startRegistryAndWaitForClient();
         server.disposeNow();
@@ -231,9 +244,10 @@ class StatsdMeterRegistryPublishTest {
     @EnumSource(StatsdProtocol.class)
     @Issue("#2177")
     void whenSendError_reconnectsAndWritesNewMetrics(StatsdProtocol protocol) throws InterruptedException {
+        skipUdsTestOnWindows(protocol);
         serverLatch = new CountDownLatch(3);
         server = startServer(protocol, 0);
-        final int port = server.address().getPort();
+        final int port = getPort(protocol);
         meterRegistry = new StatsdMeterRegistry(getUnbufferedConfig(protocol, port), Clock.SYSTEM);
         startRegistryAndWaitForClient();
         ((Connection) meterRegistry.statsdConnection.get()).addHandler("writeFailure", new ChannelOutboundHandlerAdapter() {
@@ -254,11 +268,21 @@ class StatsdMeterRegistryPublishTest {
         await().pollDelay(Duration.ofSeconds(1)).atMost(Duration.ofSeconds(3)).until(() -> serverMetricReadCount.get() == 3);
     }
 
+    private void skipUdsTestOnWindows(StatsdProtocol protocol) {
+        if (protocol == StatsdProtocol.UDS_DATAGRAM)
+            assumeTrue(!OS.WINDOWS.isCurrentOs());
+    }
+
+    private int getPort(StatsdProtocol protocol) {
+        if (protocol == StatsdProtocol.UDS_DATAGRAM) return 0;
+        return ((InetSocketAddress) server.address()).getPort();
+    }
+
     private void trackWritesForUdpClient(StatsdProtocol protocol, AtomicInteger writeCount) {
         if (protocol == StatsdProtocol.UDP) {
             await().until(() -> meterRegistry.statsdConnection.get() != null);
             ((Connection) meterRegistry.statsdConnection.get())
-                    .addHandler(new LoggingHandler("udpclient", LogLevel.INFO))
+                    .addHandler(new LoggingHandler("testudpclient", LogLevel.INFO))
                     .addHandler(new ChannelOutboundHandlerAdapter() {
                         @Override
                         public void write(ChannelHandlerContext ctx, Object msg, ChannelPromise promise) throws Exception {
@@ -279,10 +303,10 @@ class StatsdMeterRegistryPublishTest {
     }
 
     private DisposableChannel startServer(StatsdProtocol protocol, int port) {
-        if (protocol == StatsdProtocol.UDP) {
+        if (protocol == StatsdProtocol.UDP || protocol == StatsdProtocol.UDS_DATAGRAM) {
             return UdpServer.create()
-                    .host("localhost")
-                    .port(port)
+                    .bindAddress(() -> protocol == StatsdProtocol.UDP ? InetSocketAddress.createUnresolved("localhost", port)
+                            : newDomainSocketAddress())
                     .handle((in, out) ->
                             in.receive().asString()
                                     .flatMap(packet -> {
@@ -323,11 +347,28 @@ class StatsdMeterRegistryPublishTest {
         }
     }
 
+    private static DomainSocketAddress newDomainSocketAddress() {
+        try {
+            File tempFile = new File(UDS_DATAGRAM_SOCKET_PATH);
+            tempFile.delete();
+            tempFile.deleteOnExit();
+            return new DomainSocketAddress(tempFile);
+        }
+        catch (Exception e) {
+            throw new RuntimeException("Error creating a temporary file", e);
+        }
+    }
+
     private StatsdConfig getUnbufferedConfig(StatsdProtocol protocol, int port) {
         return new StatsdConfig() {
             @Override
             public String get(String key) {
                 return null;
+            }
+
+            @Override
+            public String host() {
+                return protocol == StatsdProtocol.UDS_DATAGRAM ? UDS_DATAGRAM_SOCKET_PATH : "localhost";
             }
 
             @Override

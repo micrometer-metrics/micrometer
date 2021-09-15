@@ -100,6 +100,7 @@ public class JettyClientMetricsTest {
                 .tag("outcome", "SUCCESS")
                 .tag("status", "200")
                 .tag("uri", "/ok")
+                .tag("host", "localhost")
                 .timer().count()).isEqualTo(1);
     }
 
@@ -131,6 +132,7 @@ public class JettyClientMetricsTest {
                 .tag("outcome", "SUCCESS")
                 .tag("status", "200")
                 .tag("uri", "/ok")
+                .tag("host", "localhost")
                 .summary().totalAmount()).isEqualTo("123456".length());
     }
 
@@ -146,6 +148,7 @@ public class JettyClientMetricsTest {
                 .tag("outcome", "SERVER_ERROR")
                 .tag("status", "500")
                 .tag("uri", "/error")
+                .tag("host", "localhost")
                 .timer().count()).isEqualTo(1);
     }
 
@@ -161,6 +164,7 @@ public class JettyClientMetricsTest {
                 .tag("outcome", "SERVER_ERROR")
                 .tag("status", "500")
                 .tag("uri", "/errorUnchecked")
+                .tag("host", "localhost")
                 .timer().count()).isEqualTo(1);
     }
 
@@ -176,6 +180,7 @@ public class JettyClientMetricsTest {
                 .tag("outcome", "CLIENT_ERROR")
                 .tag("status", "404")
                 .tag("uri", "NOT_FOUND")
+                .tag("host", "localhost")
                 .timer().count()).isEqualTo(1);
     }
 }

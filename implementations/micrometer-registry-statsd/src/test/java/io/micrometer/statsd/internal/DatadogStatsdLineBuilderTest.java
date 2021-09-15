@@ -17,9 +17,11 @@ package io.micrometer.statsd.internal;
 
 import io.micrometer.core.Issue;
 import io.micrometer.core.instrument.Counter;
+import io.micrometer.core.instrument.DistributionSummary;
 import io.micrometer.core.instrument.MeterRegistry;
 import io.micrometer.core.instrument.Statistic;
 import io.micrometer.core.instrument.config.NamingConvention;
+import io.micrometer.core.instrument.distribution.DistributionStatisticConfig;
 import io.micrometer.core.instrument.simple.SimpleMeterRegistry;
 import org.junit.jupiter.api.Test;
 
@@ -40,6 +42,26 @@ class DatadogStatsdLineBuilderTest {
         assertThat(lb.line("1", Statistic.COUNT, "c")).isEqualTo("myCounter:1|c|#statistic:count,myTag:value");
     }
 
+    @Test
+    void useDistributions() {
+        DistributionSummary s = registry.summary("my.summary", "tag", "value");
+        DatadogStatsdLineBuilder lb = new DatadogStatsdLineBuilder(s.getId(), registry.config(), DistributionStatisticConfig.builder()
+                .percentilesHistogram(true)
+                .build());
+
+        assertThat(lb.histogram(1.0)).isEqualTo("my_summary:1|d|#tag:value");
+    }
+
+    @Test
+    void useHistograms() {
+        DistributionSummary s = registry.summary("my.summary", "tag", "value");
+        DatadogStatsdLineBuilder lb = new DatadogStatsdLineBuilder(s.getId(), registry.config(), DistributionStatisticConfig.builder()
+                .percentilesHistogram(false)
+                .build());
+
+        assertThat(lb.histogram(1.0)).isEqualTo("my_summary:1|h|#tag:value");
+    }
+
     @Issue("#739")
     @Test
     void sanitizeColonsInTagKeys() {
@@ -57,6 +79,17 @@ class DatadogStatsdLineBuilderTest {
 
         registry.config().namingConvention(NamingConvention.dot);
         assertThat(lb.line("1", Statistic.COUNT, "c")).isEqualTo("my_counter:1|c|#statistic:count,my_tag");
+    }
+
+    @Issue("#2417")
+    @Test
+    void appendDdEntityIdTag() {
+        Counter c = registry.counter("my:counter", "mytag", "myvalue");
+        DatadogStatsdLineBuilder lb = new DatadogStatsdLineBuilder(c.getId(), registry.config());
+        lb.ddEntityId = "test-entity-id";
+
+        registry.config().namingConvention(NamingConvention.dot);
+        assertThat(lb.line("1", Statistic.COUNT, "c")).isEqualTo("my_counter:1|c|#statistic:count,mytag:myvalue,dd.internal.entity_id:test-entity-id");
     }
 
     @Issue("#1998")

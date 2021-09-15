@@ -343,7 +343,7 @@ class TomcatMetricsTest {
         assertThat(registry.get("tomcat.global.request.max").timeGauge().value(TimeUnit.MILLISECONDS)).isEqualTo(0.0);
         assertThat(registry.get("tomcat.threads.config.max").gauge().value()).isGreaterThan(0.0);
         assertThat(registry.get("tomcat.threads.busy").gauge().value()).isGreaterThanOrEqualTo(0.0);
-        assertThat(registry.get("tomcat.threads.current").gauge().value()).isGreaterThan(0.0);
+        assertThat(registry.get("tomcat.threads.current").gauge().value()).isGreaterThanOrEqualTo(0.0);
         assertThat(registry.get("tomcat.connections.current").gauge().value()).isGreaterThanOrEqualTo(0.0);
         assertThat(registry.get("tomcat.connections.keepalive.current").gauge().value()).isGreaterThanOrEqualTo(0.0);
         assertThat(registry.get("tomcat.connections.config.max").gauge().value()).isGreaterThan(0.0);

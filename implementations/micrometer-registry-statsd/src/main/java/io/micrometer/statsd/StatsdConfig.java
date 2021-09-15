@@ -59,7 +59,7 @@ public interface StatsdConfig extends MeterRegistryConfig {
     }
 
     /**
-     * @return The host name of the StatsD agent.
+     * @return Host (or socket in case of Unix domain socket protocol) to receive StatsD metrics.
      */
     default String host() {
         return getString(this, "host").orElse("localhost");

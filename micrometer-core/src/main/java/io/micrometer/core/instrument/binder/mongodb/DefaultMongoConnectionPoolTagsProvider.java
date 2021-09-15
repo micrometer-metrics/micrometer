@@ -20,12 +20,12 @@ import io.micrometer.core.instrument.Tag;
 import io.micrometer.core.instrument.Tags;
 
 /**
- * Default implementation for {@link MongoMetricsConnectionPoolTagsProvider}.
+ * Default implementation for {@link MongoConnectionPoolTagsProvider}.
  *
  * @author Gustavo Monarin
  * @since 1.7.0
  */
-public class DefaultMongoMetricsConnectionPoolTagsProvider implements MongoMetricsConnectionPoolTagsProvider {
+public class DefaultMongoConnectionPoolTagsProvider implements MongoConnectionPoolTagsProvider {
 
     @Override
     public Iterable<Tag> connectionPoolTags(final ConnectionPoolCreatedEvent event) {

@@ -33,8 +33,10 @@ import java.lang.management.*;
 import java.time.Duration;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.atomic.AtomicReference;
+import java.util.stream.Collectors;
 
 import static java.util.Collections.emptyList;
 
@@ -53,9 +55,9 @@ public class JvmHeapPressureMetrics implements MeterBinder, AutoCloseable {
     private final long startOfMonitoring = System.nanoTime();
     private final Duration lookback;
     private final TimeWindowSum gcPauseSum;
-    private final AtomicReference<Double> lastOldGenUsageAfterGc = new AtomicReference<>(0.0);
+    private final AtomicReference<Double> lastLongLivedPoolUsageAfterGc = new AtomicReference<>(0.0);
 
-    private final String longLivedPoolName;
+    private final Set<String> longLivedPoolNames;
 
     public JvmHeapPressureMetrics() {
         this(emptyList(), Duration.ofMinutes(5), Duration.ofMinutes(1));
@@ -66,27 +68,21 @@ public class JvmHeapPressureMetrics implements MeterBinder, AutoCloseable {
         this.lookback = lookback;
         this.gcPauseSum = new TimeWindowSum((int) lookback.dividedBy(testEvery.toMillis()).toMillis(), testEvery);
 
-        longLivedPoolName = JvmMemory.getLongLivedHeapPool().map(MemoryPoolMXBean::getName).orElse(null);
+        longLivedPoolNames = JvmMemory.getLongLivedHeapPools().map(MemoryPoolMXBean::getName).collect(Collectors.toSet());
 
         monitor();
     }
 
     @Override
     public void bindTo(@NonNull MeterRegistry registry) {
-
-        if ( longLivedPoolName != null ) {
-            Gauge.Builder<AtomicReference<Double>> builder = Gauge.builder("jvm.memory.usage.after.gc", lastOldGenUsageAfterGc, AtomicReference::get)
+        if (!longLivedPoolNames.isEmpty()) {
+            Gauge.builder("jvm.memory.usage.after.gc", lastLongLivedPoolUsageAfterGc, AtomicReference::get)
                     .tags(tags)
                     .tag("area", "heap")
-                    .description("The percentage of old gen heap used after the last GC event, in the range [0..1]")
-                    .baseUnit(BaseUnits.PERCENT);
-
-            if (JvmMemory.isOldGenPool(longLivedPoolName))
-                builder.tag("generation", "old");
-            else
-                builder.tag("pool", longLivedPoolName);
-
-            builder.register(registry);
+                    .tag("pool", "long-lived")
+                    .description("The percentage of long-lived heap pool used after the last GC event, in the range [0..1]")
+                    .baseUnit(BaseUnits.PERCENT)
+                    .register(registry);
         }
 
         Gauge.builder("jvm.gc.overhead", gcPauseSum,
@@ -119,9 +115,10 @@ public class JvmHeapPressureMetrics implements MeterBinder, AutoCloseable {
 
                 Map<String, MemoryUsage> after = gcInfo.getMemoryUsageAfterGc();
 
-                if (longLivedPoolName != null) {
-                    final long oldAfter = after.get(longLivedPoolName).getUsed();
-                    lastOldGenUsageAfterGc.set(oldAfter / (double) after.get(longLivedPoolName).getMax());
+                if (!longLivedPoolNames.isEmpty()) {
+                    final long usedAfter = longLivedPoolNames.stream().mapToLong(pool -> after.get(pool).getUsed()).sum();
+                    double maxAfter = longLivedPoolNames.stream().mapToLong(pool -> after.get(pool).getMax()).sum();
+                    lastLongLivedPoolUsageAfterGc.set(usedAfter / maxAfter);
                 }
             };
             NotificationEmitter notificationEmitter = (NotificationEmitter) mbean;

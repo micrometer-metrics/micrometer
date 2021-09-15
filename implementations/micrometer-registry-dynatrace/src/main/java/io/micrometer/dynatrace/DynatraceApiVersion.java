@@ -13,25 +13,16 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package io.micrometer.core.instrument.binder.mongodb;
 
-import com.mongodb.event.CommandEvent;
-import io.micrometer.core.instrument.Tag;
+package io.micrometer.dynatrace;
 
 /**
- * Provides {@link Tag Tags} for Mongo command metrics.
+ * An enum containing valid Dynatrace API versions.
  *
- * @author Chris Bono
- * @since 1.7.0
+ * @author Georg Pirklbauer
+ * @since 1.8.0
  */
-@FunctionalInterface
-public interface MongoMetricsCommandTagsProvider {
-
-    /**
-     * Provides tags to be associated with metrics for the given Mongo command.
-     *
-     * @param commandEvent the Mongo command
-     * @return tags to associate with metrics recorded for the command
-     */
-    Iterable<Tag> commandTags(CommandEvent commandEvent);
+public enum DynatraceApiVersion {
+    V1,
+    V2
 }

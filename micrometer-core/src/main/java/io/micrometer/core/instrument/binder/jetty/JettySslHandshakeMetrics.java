@@ -76,6 +76,36 @@ public class JettySslHandshakeMetrics implements SslHandshakeListener {
                 .register(registry);
     }
 
+    /**
+     * Create a {@code JettySslHandshakeMetrics} instance. {@link Connector#getName()} will be used for
+     * {@literal connector.name} tag.
+     *
+     * @param registry registry to use
+     * @param connector connector to instrument
+     * @since 1.8.0
+     */
+    public JettySslHandshakeMetrics(MeterRegistry registry, Connector connector) {
+        this(registry, connector, Tags.empty());
+    }
+
+    /**
+     * Create a {@code JettySslHandshakeMetrics} instance. {@link Connector#getName()} will be used for
+     * {@literal connector.name} tag.
+     *
+     * @param registry registry to use
+     * @param connector connector to instrument
+     * @param tags tags to add to metrics
+     * @since 1.8.0
+     */
+    public JettySslHandshakeMetrics(MeterRegistry registry, Connector connector, Iterable<Tag> tags) {
+        this(registry, getConnectorNameTag(connector).and(tags));
+    }
+
+    private static Tags getConnectorNameTag(Connector connector) {
+        String name = connector.getName();
+        return Tags.of("connector.name", name != null ? name : "unnamed");
+    }
+
     @Override
     public void handshakeSucceeded(Event event) {
         SSLSession session = event.getSSLEngine().getSession();
@@ -98,7 +128,7 @@ public class JettySslHandshakeMetrics implements SslHandshakeListener {
     public static void addToAllConnectors(Server server, MeterRegistry registry, Iterable<Tag> tags) {
         for (Connector connector : server.getConnectors()) {
             if (connector != null) {
-                connector.addBean(new JettySslHandshakeMetrics(registry, tags));
+                connector.addBean(new JettySslHandshakeMetrics(registry, connector, tags));
             }
         }
     }

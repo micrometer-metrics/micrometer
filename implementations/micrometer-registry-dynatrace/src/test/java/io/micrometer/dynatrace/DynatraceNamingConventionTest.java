@@ -1,5 +1,5 @@
 /**
- * Copyright 2017 VMware, Inc.
+ * Copyright 2021 VMware, Inc.
  * <p>
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,6 +16,7 @@
 package io.micrometer.dynatrace;
 
 import io.micrometer.core.instrument.Meter;
+import io.micrometer.dynatrace.v1.DynatraceNamingConventionV1;
 import org.junit.jupiter.api.Test;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -23,39 +24,22 @@ import static org.assertj.core.api.Assertions.assertThat;
 /**
  * Tests for {@link DynatraceNamingConvention}.
  *
- * @author Oriol Barcelona Palau
- * @author Jon Schneider
- * @author Johnny Lim
+ * @author Georg Pirklbauer
  */
 class DynatraceNamingConventionTest {
 
-    private final DynatraceNamingConvention convention = new DynatraceNamingConvention();
+    private final DynatraceNamingConvention dynatraceConvention = new DynatraceNamingConvention();
 
     @Test
-    void nameStartsWithCustomAndColon() {
-        assertThat(convention.name("mymetric", Meter.Type.COUNTER, null)).isEqualTo("custom:mymetric");
+    void testDelegate() {
+        DynatraceNamingConventionV1 v1Convention = new DynatraceNamingConventionV1();
+        assertThat(dynatraceConvention.name("mymetric", Meter.Type.COUNTER, null)).isEqualTo(v1Convention.name("mymetric", Meter.Type.COUNTER, null));
+        assertThat(dynatraceConvention.name("my.name1", Meter.Type.COUNTER, null)).isEqualTo(v1Convention.name("my.name1", Meter.Type.COUNTER, null));
+        assertThat(dynatraceConvention.name("my_name1", Meter.Type.COUNTER, null)).isEqualTo(v1Convention.name("my_name1", Meter.Type.COUNTER, null));
+        assertThat(dynatraceConvention.name("my-name1", Meter.Type.COUNTER, null)).isEqualTo(v1Convention.name("my-name1", Meter.Type.COUNTER, null));
+        assertThat(dynatraceConvention.name("system.load.average.1m", Meter.Type.COUNTER, null))
+                .isEqualTo(v1Convention.name("system.load.average.1m", Meter.Type.COUNTER, null));
+        assertThat(dynatraceConvention.tagKey("{tagTag0}.-")).isEqualTo(v1Convention.tagKey("_tagTag0_.-"));
     }
 
-    @Test
-    void nameShouldAllowAlphanumericUnderscoreAndDash() {
-        assertThat(convention.name("my.name1", Meter.Type.COUNTER, null)).isEqualTo("custom:my.name1");
-        assertThat(convention.name("my_name1", Meter.Type.COUNTER, null)).isEqualTo("custom:my_name1");
-        assertThat(convention.name("my-name1", Meter.Type.COUNTER, null)).isEqualTo("custom:my-name1");
-    }
-
-    @Test
-    void nameShouldSanitize() {
-        assertThat(convention.name("my,name1", Meter.Type.COUNTER, null)).isEqualTo("custom:my_name1");
-    }
-
-    @Test
-    void nameWithSystemLoadAverageOneMintueShouldSanitize() {
-        assertThat(convention.name("system.load.average.1m", Meter.Type.COUNTER, null))
-                .isEqualTo("custom:system.load.average.oneminute");
-    }
-
-    @Test
-    void tagKeysAreSanitized() {
-        assertThat(convention.tagKey("{tagTag0}.-")).isEqualTo("_tagTag0_.-");
-    }
 }

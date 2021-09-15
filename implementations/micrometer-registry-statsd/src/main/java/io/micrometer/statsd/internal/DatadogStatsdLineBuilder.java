@@ -20,13 +20,20 @@ import io.micrometer.core.instrument.MeterRegistry;
 import io.micrometer.core.instrument.Statistic;
 import io.micrometer.core.instrument.Tag;
 import io.micrometer.core.instrument.config.NamingConvention;
+import io.micrometer.core.instrument.distribution.DistributionStatisticConfig;
+import io.micrometer.core.instrument.util.DoubleFormat;
 import io.micrometer.core.lang.Nullable;
 
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 import java.util.stream.Collectors;
 
+import static java.lang.Boolean.TRUE;
+
 public class DatadogStatsdLineBuilder extends FlavorStatsdLineBuilder {
+    private static final String TYPE_DISTRIBUTION = "d";
+    private static final String ENTITY_ID_TAG_NAME = "dd.internal.entity_id";
+
     private final Object conventionTagsLock = new Object();
     @SuppressWarnings({"NullableProblems", "unused"})
     private volatile NamingConvention namingConvention;
@@ -37,9 +44,42 @@ public class DatadogStatsdLineBuilder extends FlavorStatsdLineBuilder {
     @SuppressWarnings("NullableProblems")
     private volatile String tagsNoStat;
     private final ConcurrentMap<Statistic, String> tags = new ConcurrentHashMap<>();
+    private final boolean percentileHistogram;
+    // VisibleForTesting
+    @Nullable
+    String ddEntityId;
 
     public DatadogStatsdLineBuilder(Meter.Id id, MeterRegistry.Config config) {
+        this(id, config, null);
+    }
+
+    public DatadogStatsdLineBuilder(Meter.Id id, MeterRegistry.Config config, @Nullable DistributionStatisticConfig distributionStatisticConfig) {
         super(id, config);
+
+        percentileHistogram = distributionStatisticConfig != null && TRUE.equals(distributionStatisticConfig.isPercentileHistogram());
+        ddEntityId = System.getenv("DD_ENTITY_ID");
+    }
+
+    @Override
+    public String timing(double timeMs) {
+        if (percentileHistogram) {
+            return distributionLine(timeMs);
+        } else {
+            return super.timing(timeMs);
+        }
+    }
+
+    @Override
+    public String histogram(double amount) {
+        if (percentileHistogram) {
+            return distributionLine(amount);
+        } else {
+            return super.histogram(amount);
+        }
+    }
+
+    private String distributionLine(double amount) {
+        return line(DoubleFormat.decimalOrNan(amount), null, TYPE_DISTRIBUTION);
     }
 
     @Override
@@ -56,16 +96,26 @@ public class DatadogStatsdLineBuilder extends FlavorStatsdLineBuilder {
                     return;
                 }
                 this.tags.clear();
-                this.conventionTags = id.getTagsAsIterable().iterator().hasNext() ?
+                String conventionTags = id.getTagsAsIterable().iterator().hasNext() ?
                         id.getConventionTags(next).stream()
-                                .map(t -> formatTag(t))
+                                .map(this::formatTag)
                                 .collect(Collectors.joining(","))
                         : null;
+                this.conventionTags = appendEntityIdTag(conventionTags);
             }
             this.name = next.name(sanitizeName(id.getName()), id.getType(), id.getBaseUnit()) + ":";
             this.tagsNoStat = tags(null, conventionTags, ":", "|#");
             this.namingConvention = next;
         }
+    }
+
+    @Nullable
+    private String appendEntityIdTag(@Nullable String tags) {
+        if (ddEntityId != null && !ddEntityId.trim().isEmpty()) {
+            String entityIdTag = formatTag(Tag.of(ENTITY_ID_TAG_NAME, ddEntityId));
+            return tags == null ? entityIdTag : tags + "," + entityIdTag;
+        }
+        return tags;
     }
 
     private String formatTag(Tag t) {

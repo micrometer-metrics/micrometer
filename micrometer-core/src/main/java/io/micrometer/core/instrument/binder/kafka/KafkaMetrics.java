@@ -34,6 +34,7 @@ import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
 import java.util.function.Supplier;
 import java.util.function.ToDoubleFunction;
+import java.util.stream.Collectors;
 
 import io.micrometer.core.lang.Nullable;
 import io.micrometer.core.util.internal.logging.InternalLogger;
@@ -138,7 +139,7 @@ class KafkaMetrics implements MeterBinder, AutoCloseable {
         }
 
         if (startTime != null) {
-            bindMeter(registry, startTime, meterName(startTime), meterTags(startTime));
+            bindMeter(registry, metricsSupplier, startTime.metricName(), meterName(startTime), meterTags(startTime));
         }
     }
 
@@ -158,6 +159,10 @@ class KafkaMetrics implements MeterBinder, AutoCloseable {
 
         if (!currentMeters.equals(metrics.keySet())) {
             currentMeters = new HashSet<>(metrics.keySet());
+
+            Map<String, List<Meter>> registryMetersByNames = registry.getMeters().stream()
+                    .collect(Collectors.groupingBy(meter -> meter.getId().getName()));
+
             metrics.forEach((name, metric) -> {
                 // Filter out non-numeric values
                 // Filter out metrics from groups that include metadata
@@ -172,7 +177,7 @@ class KafkaMetrics implements MeterBinder, AutoCloseable {
                 // Kafka has metrics with lower number of tags (e.g. with/without topic or partition tag)
                 // Remove meters with lower number of tags
                 boolean hasLessTags = false;
-                for (Meter other : registry.find(meterName).meters()) {
+                for (Meter other : registryMetersByNames.getOrDefault(meterName, emptyList())) {
                     List<Tag> tags = other.getId().getTags();
                     List<Tag> meterTagsWithCommonTags = meterTags(metric, true);
                     if (tags.size() < meterTagsWithCommonTags.size()) {
@@ -186,9 +191,12 @@ class KafkaMetrics implements MeterBinder, AutoCloseable {
                     else hasLessTags = true;
                 }
                 if (hasLessTags) return;
+
                 List<Tag> tags = meterTags(metric);
                 try {
-                    bindMeter(registry, metric, meterName, tags);
+                    Meter meter = bindMeter(registry, metricsSupplier, metric.metricName(), meterName, tags);
+                    List<Meter> meters = registryMetersByNames.computeIfAbsent(meterName, k -> new ArrayList<>());
+                    meters.add(meter);
                 }
                 catch (Exception ex) {
                     String message = ex.getMessage();
@@ -204,35 +212,40 @@ class KafkaMetrics implements MeterBinder, AutoCloseable {
         }
     }
 
-    private void bindMeter(MeterRegistry registry, Metric metric, String name, Iterable<Tag> tags) {
-        Meter meter = registerMeter(registry, metric, name, tags);
+    private Meter bindMeter(MeterRegistry registry, Supplier<Map<MetricName, ? extends Metric>> metricsSupplier, MetricName metricName, String meterName, Iterable<Tag> tags) {
+        Meter meter = registerMeter(registry, metricsSupplier, metricName, meterName, tags);
         registeredMeters.add(meter);
+        return meter;
     }
 
-    private Meter registerMeter(MeterRegistry registry, Metric metric, String name, Iterable<Tag> tags) {
-        if (name.endsWith("total") || name.endsWith("count")) {
-            return registerCounter(registry, metric, name, tags);
+    private Meter registerMeter(MeterRegistry registry, Supplier<Map<MetricName, ? extends Metric>> metricsSupplier, MetricName metricName, String meterName, Iterable<Tag> tags) {
+        if (meterName.endsWith("total") || meterName.endsWith("count")) {
+            return registerCounter(registry, metricsSupplier, metricName, meterName, tags);
         } else {
-            return registerGauge(registry, metric, name, tags);
+            return registerGauge(registry, metricsSupplier, metricName, meterName, tags);
         }
     }
 
-    private Gauge registerGauge(MeterRegistry registry, Metric metric, String name, Iterable<Tag> tags) {
-        return Gauge.builder(name, metric, toMetricValue())
+    private Gauge registerGauge(MeterRegistry registry, Supplier<Map<MetricName, ? extends Metric>> metricsSupplier, MetricName metricName, String meterName, Iterable<Tag> tags) {
+        return Gauge.builder(meterName, metricsSupplier, toMetricValue(metricName))
                 .tags(tags)
-                .description(metric.metricName().description())
+                .description(metricName.description())
                 .register(registry);
     }
 
-    private FunctionCounter registerCounter(MeterRegistry registry, Metric metric, String name, Iterable<Tag> tags) {
-        return FunctionCounter.builder(name, metric, toMetricValue())
+    private FunctionCounter registerCounter(MeterRegistry registry, Supplier<Map<MetricName, ? extends Metric>> metricsSupplier, MetricName metricName, String meterName, Iterable<Tag> tags) {
+        return FunctionCounter.builder(meterName, metricsSupplier, toMetricValue(metricName))
                 .tags(tags)
-                .description(metric.metricName().description())
+                .description(metricName.description())
                 .register(registry);
     }
 
-    private static ToDoubleFunction<Metric> toMetricValue() {
-        return metric -> ((Number) metric.metricValue()).doubleValue();
+    private ToDoubleFunction<Supplier<Map<MetricName, ? extends Metric>>> toMetricValue(MetricName metricName) {
+        return metricsSupplier -> toDouble(metricsSupplier.get().get(metricName));
+    }
+
+    private double toDouble(@Nullable Metric metric) {
+        return (metric != null) ? ((Number) metric.metricValue()).doubleValue() : Double.NaN;
     }
 
     private List<Tag> meterTags(Metric metric, boolean includeCommonTags) {

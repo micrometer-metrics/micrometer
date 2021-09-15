@@ -1,9 +1,14 @@
 plugins {
     id 'java'
-    id 'org.springframework.boot' version '2.4.4'
+    id 'org.springframework.boot' version '2.6.0-M2'
 }
 
 apply plugin: 'io.spring.dependency-management'
+
+repositories {
+    mavenCentral()
+    maven { url "https://repo.spring.io/milestone" }
+}
 
 dependencies {
     implementation project(":micrometer-core")
@@ -13,4 +18,12 @@ dependencies {
     implementation('org.springframework.boot:spring-boot-starter-actuator') {
         exclude group: 'io.micrometer', module: 'micrometer-core'
     }
+}
+
+bootJar {
+    enabled = false
+}
+
+bootJarMainClassName {
+    enabled = false
 }

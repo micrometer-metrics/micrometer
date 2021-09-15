@@ -16,24 +16,33 @@
 package io.micrometer.core.instrument.binder.mongodb;
 
 import com.mongodb.event.CommandEvent;
-import com.mongodb.event.CommandSucceededEvent;
+import com.mongodb.event.CommandStartedEvent;
 import io.micrometer.core.instrument.Tag;
-import io.micrometer.core.instrument.Tags;
 
 /**
- * Default implementation for {@link MongoMetricsCommandTagsProvider}.
+ * Provides {@link Tag Tags} for Mongo command metrics.
  *
  * @author Chris Bono
  * @since 1.7.0
  */
-public class DefaultMongoMetricsCommandTagsProvider implements MongoMetricsCommandTagsProvider {
+@FunctionalInterface
+public interface MongoCommandTagsProvider {
 
-    @Override
-    public Iterable<Tag> commandTags(CommandEvent event) {
-        return Tags.of(
-                Tag.of("command", event.getCommandName()),
-                Tag.of("cluster.id", event.getConnectionDescription().getConnectionId().getServerId().getClusterId().getValue()),
-                Tag.of("server.address", event.getConnectionDescription().getServerAddress().toString()),
-                Tag.of("status", (event instanceof CommandSucceededEvent) ? "SUCCESS" : "FAILED"));
+    /**
+     * Signals that a command has started and is a chance for implementations to prepare
+     * or do any necessary pre-processing.
+     *
+     * @param commandStartedEvent event representing the issued command
+     * @since 1.8.0
+     */
+    default void commandStarted(CommandStartedEvent commandStartedEvent) {
     }
+
+    /**
+     * Provides tags to be associated with metrics for the given Mongo command.
+     *
+     * @param commandEvent event representing the issued command
+     * @return tags to associate with metrics recorded for the command
+     */
+    Iterable<Tag> commandTags(CommandEvent commandEvent);
 }

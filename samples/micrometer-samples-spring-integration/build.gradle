@@ -1,9 +1,14 @@
 plugins {
     id 'java'
-    id 'org.springframework.boot' version '2.4.4'
+    id 'org.springframework.boot' version '2.6.0-M2'
 }
 
 apply plugin: 'io.spring.dependency-management'
+
+repositories {
+    mavenCentral()
+    maven { url "https://repo.spring.io/milestone" }
+}
 
 dependencies {
     implementation project(":micrometer-core")
@@ -18,4 +23,12 @@ dependencies {
 
     // For running on Java 9+
     runtimeOnly 'com.sun.xml.messaging.saaj:saaj-impl'
+}
+
+bootJar {
+    enabled = false
+}
+
+bootJarMainClassName {
+    enabled = false
 }

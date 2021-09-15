@@ -27,6 +27,7 @@ import org.junit.jupiter.api.Test;
 import javax.annotation.Nonnull;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 /**
  * Tests for {@link MeterRegistry}.
@@ -195,5 +196,14 @@ class MeterRegistryTest {
         registry.gauge("my.gauge", 2d);
 
         assertThat(registry.get("my.gauge").gauge().value()).isEqualTo(1d);
+    }
+
+    @Test
+    void shouldNotLetRegisteringMetersTwice() {
+        registry.counter("my.dupe.meter");
+        assertThatThrownBy(() -> registry.timer("my.dupe.meter"))
+                .isInstanceOf(IllegalArgumentException.class)
+                .hasMessage("There is already a registered meter of a different type (CumulativeCounter vs. Timer) with the same name: my.dupe.meter")
+                .hasNoCause();
     }
 }

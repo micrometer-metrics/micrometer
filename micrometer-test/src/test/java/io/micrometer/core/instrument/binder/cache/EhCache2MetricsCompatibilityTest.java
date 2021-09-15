@@ -18,6 +18,7 @@ package io.micrometer.core.instrument.binder.cache;
 import io.micrometer.core.lang.Nullable;
 import net.sf.ehcache.Cache;
 import net.sf.ehcache.CacheManager;
+import net.sf.ehcache.Ehcache;
 import net.sf.ehcache.Element;
 import net.sf.ehcache.config.Configuration;
 import net.sf.ehcache.config.ConfigurationFactory;
@@ -27,18 +28,8 @@ import java.util.UUID;
 
 import static java.util.Collections.emptyList;
 
-class EhCache2MetricsCompatibilityTest extends CacheMeterBinderCompatibilityKit {
+class EhCache2MetricsCompatibilityTest extends CacheMeterBinderCompatibilityKit<Ehcache> {
     private CacheManager cacheManager;
-    private Cache cache;
-
-    EhCache2MetricsCompatibilityTest() {
-        Configuration config = ConfigurationFactory.parseConfiguration();
-        config.setName(UUID.randomUUID().toString());
-
-        this.cacheManager = CacheManager.newInstance(config);
-        this.cacheManager.addCache("mycache");
-        this.cache = cacheManager.getCache("mycache");
-    }
 
     @AfterEach
     void after() {
@@ -46,7 +37,23 @@ class EhCache2MetricsCompatibilityTest extends CacheMeterBinderCompatibilityKit 
     }
 
     @Override
-    public CacheMeterBinder binder() {
+    public void dereferenceCache() {
+        super.dereferenceCache();
+        this.cacheManager.removeAllCaches();
+    }
+
+    @Override
+    public Cache createCache() {
+        Configuration config = ConfigurationFactory.parseConfiguration();
+        config.setName(UUID.randomUUID().toString());
+
+        this.cacheManager = CacheManager.newInstance(config);
+        this.cacheManager.addCache("mycache");
+        return cacheManager.getCache("mycache");
+    }
+
+    @Override
+    public CacheMeterBinder<Ehcache> binder() {
         return new EhCache2Metrics(cache, emptyList());
     }
 

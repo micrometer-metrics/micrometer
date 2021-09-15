@@ -15,7 +15,6 @@
  */
 package io.micrometer.core.ipc.http;
 
-import io.micrometer.core.instrument.util.JsonUtils;
 import io.micrometer.core.instrument.util.StringUtils;
 import io.micrometer.core.lang.Nullable;
 
@@ -107,12 +106,10 @@ public interface HttpSender {
 
         @Override
         public String toString() {
-            StringBuilder printed = new StringBuilder(method.toString()).append(" ")
+            StringBuilder printed = new StringBuilder(method.toString()).append(' ')
                     .append(url.toString()).append("\n");
             if (entity.length == 0) {
                 printed.append("<no request body>");
-            } else if ("application/json".equals(requestHeaders.get("Content-Type"))) {
-                printed.append(JsonUtils.prettyPrint(new String(entity)));
             } else {
                 printed.append(new String(entity));
             }

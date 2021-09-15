@@ -25,7 +25,7 @@ import io.micrometer.core.instrument.Tag;
  * @since 1.7.0
  */
 @FunctionalInterface
-public interface MongoMetricsConnectionPoolTagsProvider {
+public interface MongoConnectionPoolTagsProvider {
 
     /**
      * Provides tags to be associated with the Mongo connection metrics for the given {@link ConnectionPoolCreatedEvent event}.

@@ -57,6 +57,7 @@ import java.util.function.Function;
 import java.util.function.ToDoubleFunction;
 import java.util.function.ToLongFunction;
 
+import static java.lang.String.format;
 import static java.util.Collections.emptyList;
 import static java.util.Objects.requireNonNull;
 
@@ -568,7 +569,12 @@ public abstract class MeterRegistry {
         Meter m = getOrCreateMeter(config, builder, id, mappedId, noopBuilder);
 
         if (!meterClass.isInstance(m)) {
-            throw new IllegalArgumentException("There is already a registered meter of a different type with the same name");
+            throw new IllegalArgumentException(format(
+                    "There is already a registered meter of a different type (%s vs. %s) with the same name: %s",
+                    m.getClass().getSimpleName(),
+                    meterClass.getSimpleName(),
+                    id.getName()
+            ));
         }
         return meterClass.cast(m);
     }
