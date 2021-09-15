@@ -7,6 +7,7 @@
 	<suppress files="io[\\/]micrometer[\\/]core[\\/]util[\\/]internal[\\/]logging[\\/].+" checks="IllegalImport" />
 	<suppress files="implementations[\\/].+" checks="IllegalImport" />
 	<suppress files="samples[\\/].+" checks="IllegalImport" />
+	<suppress files="test[\\/]java[\\/]io[\\/]micrometer[\\/]jersey.+" checks="IllegalImport" />
 	<suppress files="LogbackMetricsAutoConfiguration" checks="IllegalImport" />
 	<suppress files="io[\\/]micrometer[\\/]jersey2[\\/]server[\\/].+" checks="SpringJUnit5" />
 	<suppress files="io[\\/]micrometer[\\/]samples[\\/]jersey3[\\/].+" checks="SpringJUnit5" />
