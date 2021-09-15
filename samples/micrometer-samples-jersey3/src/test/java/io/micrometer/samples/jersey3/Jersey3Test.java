@@ -17,9 +17,9 @@ package io.micrometer.samples.jersey3;
 
 import io.micrometer.core.instrument.MeterRegistry;
 import io.micrometer.core.instrument.Timer;
+import io.micrometer.core.instrument.binder.jersey.server.DefaultJerseyTagsProvider;
+import io.micrometer.core.instrument.binder.jersey.server.MetricsApplicationEventListener;
 import io.micrometer.core.instrument.simple.SimpleMeterRegistry;
-import io.micrometer.jersey2.server.DefaultJerseyTagsProvider;
-import io.micrometer.jersey2.server.MetricsApplicationEventListener;
 import jakarta.ws.rs.core.Application;
 import org.glassfish.jersey.server.ResourceConfig;
 import org.glassfish.jersey.test.JerseyTest;
