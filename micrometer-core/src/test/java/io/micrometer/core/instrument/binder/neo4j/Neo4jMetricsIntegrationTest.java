@@ -55,27 +55,26 @@ public class Neo4jMetricsIntegrationTest {
         metrics.bindTo(registry);
 
         String connectionAcquisitionName = Neo4jMetrics.PREFIX + ".acquisition";
-        assertThat(registry.get(connectionAcquisitionName).tag("result", "successful").functionCounter().count())
+        assertThat(registry.get(connectionAcquisitionName).tag("outcome", "success").functionCounter().count())
                 .isEqualTo(1d);
-        assertThat(registry.get(connectionAcquisitionName).tag("result", "timedOutToAcquire").functionCounter().count())
+        assertThat(registry.get(connectionAcquisitionName).tag("outcome", "timeout").functionCounter().count())
                 .isEqualTo(0d);
 
-        String connectionsName = Neo4jMetrics.PREFIX;
-        assertThat(registry.get(connectionsName).tag("state", "created").functionCounter().count()).isEqualTo(1d);
-        assertThat(registry.get(connectionsName).tag("state", "closed").functionCounter().count()).isEqualTo(0d);
+        String connectionsName = Neo4jMetrics.PREFIX + ".closed";
+        assertThat(registry.get(connectionsName).functionCounter().count()).isEqualTo(0d);
 
         String connectionsCreatedName = Neo4jMetrics.PREFIX + ".creation";
-        assertThat(registry.get(connectionsCreatedName).tag("state", "created").functionCounter().count()).isEqualTo(1d);
-        assertThat(registry.get(connectionsCreatedName).tag("state", "failedToCreate").functionCounter().count())
+        assertThat(registry.get(connectionsCreatedName).tag("outcome", "success").functionCounter().count()).isEqualTo(1d);
+        assertThat(registry.get(connectionsCreatedName).tag("outcome", "failure").functionCounter().count())
                 .isEqualTo(0d);
 
-        String connectionsActiveName = Neo4jMetrics.PREFIX + ".active";
+        String connectionsActiveName = Neo4jMetrics.PREFIX + ".current";
         assertThat(registry.get(connectionsActiveName).tag("state", "idle").gauge().value()).isEqualTo(1d);
         assertThat(registry.get(connectionsActiveName).tag("state", "inUse").gauge().value()).isEqualTo(0d);
 
         // acquire a new connection
         driver.verifyConnectivity();
-        assertThat(registry.get(connectionAcquisitionName).tag("result", "successful").functionCounter().count())
+        assertThat(registry.get(connectionAcquisitionName).tag("outcome", "success").functionCounter().count())
                 .isEqualTo(2d);
 
         driver.close();
@@ -96,7 +95,7 @@ public class Neo4jMetricsIntegrationTest {
         metrics.bindTo(registry);
 
         String connectionsCreatedName = Neo4jMetrics.PREFIX + ".creation";
-        assertThat(registry.get(connectionsCreatedName).tag("state", "failedToCreate").functionCounter().count())
+        assertThat(registry.get(connectionsCreatedName).tag("outcome", "failure").functionCounter().count())
                 .isEqualTo(1d);
 
         driver.close();

@@ -68,50 +68,43 @@ public class Neo4jMetrics implements MeterBinder {
 
             // acquisition attempts
             FunctionCounter.builder(PREFIX + ".acquisition", poolMetrics, ConnectionPoolMetrics::acquired)
-                    .tags(Tags.concat(poolTags, "result", "successful"))
+                    .tags(Tags.concat(poolTags, "outcome", "success"))
                     .baseUnit(BASE_UNIT_CONNECTIONS).description("The amount of connections that have been acquired.")
                     .register(meterRegistry);
 
             FunctionCounter
                     .builder(PREFIX + ".acquisition", poolMetrics, ConnectionPoolMetrics::timedOutToAcquire)
-                    .tags(Tags.concat(poolTags, "result", "timedOutToAcquire"))
+                    .tags(Tags.concat(poolTags, "outcome", "timeout"))
                     .baseUnit(BASE_UNIT_CONNECTIONS)
                     .description("The amount of failures to acquire a connection from a pool within maximum connection "
                                     + "acquisition timeout.")
                     .register(meterRegistry);
 
-            // connections successfully created and closed
-            FunctionCounter.builder(PREFIX, poolMetrics, ConnectionPoolMetrics::created)
-                    .tags(Tags.concat(poolTags, "state", "created"))
-                    .baseUnit(BASE_UNIT_CONNECTIONS).description("The amount of connections have ever been created.")
-                    .register(meterRegistry);
-
-            FunctionCounter.builder(PREFIX, poolMetrics, ConnectionPoolMetrics::closed)
-                    .tags(Tags.concat(poolTags, "state", "closed"))
-                    .baseUnit(BASE_UNIT_CONNECTIONS).description("The amount of connections have been closed.")
-                    .register(meterRegistry);
-
             // creation attempts
             FunctionCounter.builder(PREFIX + ".creation", poolMetrics, ConnectionPoolMetrics::created)
-                    .tags(Tags.concat(poolTags, "state", "created"))
+                    .tags(Tags.concat(poolTags, "outcome", "success"))
                     .baseUnit(BASE_UNIT_CONNECTIONS).description("The amount of connections have ever been created.")
                     .register(meterRegistry);
 
             FunctionCounter.builder(PREFIX + ".creation", poolMetrics, ConnectionPoolMetrics::failedToCreate)
-                    .tags(Tags.concat(poolTags, "state", "failedToCreate"))
+                    .tags(Tags.concat(poolTags, "outcome", "failure"))
                     .baseUnit(BASE_UNIT_CONNECTIONS)
                     .description("The amount of connections have been failed to create.").register(meterRegistry);
 
             // active pool size
-            Gauge.builder(PREFIX + ".active", poolMetrics, ConnectionPoolMetrics::idle)
+            Gauge.builder(PREFIX + ".current", poolMetrics, ConnectionPoolMetrics::idle)
                     .tags(Tags.concat(poolTags, "state", "idle"))
                     .baseUnit(BASE_UNIT_CONNECTIONS).description("The amount of connections that are currently idle.")
                     .register(meterRegistry);
 
-            Gauge.builder(PREFIX + ".active", poolMetrics, ConnectionPoolMetrics::inUse)
+            Gauge.builder(PREFIX + ".current", poolMetrics, ConnectionPoolMetrics::inUse)
                     .tags(Tags.concat(poolTags, "state", "inUse"))
                     .baseUnit(BASE_UNIT_CONNECTIONS).description("The amount of connections that are currently in-use.")
                     .register(meterRegistry);
+
+            FunctionCounter.builder(PREFIX + ".closed", poolMetrics, ConnectionPoolMetrics::failedToCreate)
+                    .baseUnit(BASE_UNIT_CONNECTIONS)
+                    .description("The amount of connections have been closed.").register(meterRegistry);
         };
     }
 

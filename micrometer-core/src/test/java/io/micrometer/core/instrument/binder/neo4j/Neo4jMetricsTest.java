@@ -43,23 +43,22 @@ public class Neo4jMetricsTest {
 
         String connectionAcquisitionName = Neo4jMetrics.PREFIX + ".acquisition";
         assertThat(registry.get(connectionAcquisitionName).functionCounters()).hasSize(2);
-        assertThat(registry.get(connectionAcquisitionName).tag("result", "successful").functionCounter()).isNotNull();
-        assertThat(registry.get(connectionAcquisitionName).tag("result", "timedOutToAcquire").functionCounter()).isNotNull();
-
-        String connectionsName = Neo4jMetrics.PREFIX;
-        assertThat(registry.get(connectionsName).functionCounters()).hasSize(2);
-        assertThat(registry.get(connectionsName).tag("state", "created").functionCounter()).isNotNull();
-        assertThat(registry.get(connectionsName).tag("state", "closed").functionCounter()).isNotNull();
+        assertThat(registry.get(connectionAcquisitionName).tag("outcome", "success").functionCounter()).isNotNull();
+        assertThat(registry.get(connectionAcquisitionName).tag("outcome", "timeout").functionCounter()).isNotNull();
 
         String connectionsCreatedName = Neo4jMetrics.PREFIX + ".creation";
         assertThat(registry.get(connectionsCreatedName).functionCounters()).hasSize(2);
-        assertThat(registry.get(connectionsCreatedName).tag("state", "created").functionCounter()).isNotNull();
-        assertThat(registry.get(connectionsCreatedName).tag("state", "failedToCreate").functionCounter()).isNotNull();
+        assertThat(registry.get(connectionsCreatedName).tag("outcome", "success").functionCounter()).isNotNull();
+        assertThat(registry.get(connectionsCreatedName).tag("outcome", "failure").functionCounter()).isNotNull();
 
-        String connectionsActiveName = Neo4jMetrics.PREFIX + ".active";
+        String connectionsActiveName = Neo4jMetrics.PREFIX + ".current";
         assertThat(registry.get(connectionsActiveName).gauges()).hasSize(2);
         assertThat(registry.get(connectionsActiveName).tag("state", "idle").gauge()).isNotNull();
         assertThat(registry.get(connectionsActiveName).tag("state", "inUse").gauge()).isNotNull();
+
+        String connectionsName = Neo4jMetrics.PREFIX + ".closed";
+        assertThat(registry.get(connectionsName).functionCounters()).hasSize(1);
+        assertThat(registry.get(connectionsName).functionCounter()).isNotNull();
     }
 
     private static Driver mockDriverWithMetrics() {
