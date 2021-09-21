@@ -58,6 +58,9 @@ public class Neo4jMetrics implements MeterBinder {
 
     @Override
     public void bindTo(MeterRegistry meterRegistry) {
+        if (!this.driver.isMetricsEnabled()) {
+            return;
+        }
         Metrics metrics = this.driver.metrics();
         metrics.connectionPoolMetrics().forEach(this.getPoolMetricsBinder(meterRegistry));
     }
@@ -102,7 +105,7 @@ public class Neo4jMetrics implements MeterBinder {
                     .baseUnit(BASE_UNIT_CONNECTIONS).description("The amount of connections that are currently in-use.")
                     .register(meterRegistry);
 
-            FunctionCounter.builder(PREFIX + ".closed", poolMetrics, ConnectionPoolMetrics::failedToCreate)
+            FunctionCounter.builder(PREFIX + ".closed", poolMetrics, ConnectionPoolMetrics::closed)
                     .baseUnit(BASE_UNIT_CONNECTIONS)
                     .description("The amount of connections have been closed.").register(meterRegistry);
         };
