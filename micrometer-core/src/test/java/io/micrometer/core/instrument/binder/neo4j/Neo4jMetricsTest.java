@@ -69,6 +69,7 @@ public class Neo4jMetricsTest {
         when(metrics.connectionPoolMetrics()).thenReturn(Collections.singletonList(connectionPoolMetrics));
 
         Driver driver = mock(Driver.class);
+        when(driver.isMetricsEnabled()).thenReturn(true);
         when(driver.metrics()).thenReturn(metrics);
 
         when(driver.verifyConnectivityAsync()).thenReturn(CompletableFuture.completedFuture(null));
