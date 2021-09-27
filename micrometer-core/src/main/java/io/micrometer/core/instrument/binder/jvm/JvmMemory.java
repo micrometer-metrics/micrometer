@@ -39,7 +39,8 @@ class JvmMemory {
 
     static boolean isConcurrentPhase(String cause, String name) {
         return "No GC".equals(cause)
-                || "Shenandoah Cycles".equals(name);
+                || "Shenandoah Cycles".equals(name)
+                || "ZGC Cycles".equals(name);
     }
 
     static boolean isAllocationPool(String name) {
