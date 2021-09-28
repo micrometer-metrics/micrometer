@@ -16,6 +16,7 @@
 package io.micrometer.core.samples.utils;
 
 import com.google.api.gax.core.FixedCredentialsProvider;
+import com.google.auth.Credentials;
 import com.google.auth.oauth2.ServiceAccountCredentials;
 import com.google.cloud.monitoring.v3.MetricServiceSettings;
 import com.netflix.spectator.atlas.AtlasConfig;
@@ -25,6 +26,8 @@ import io.micrometer.appoptics.AppOpticsMeterRegistry;
 import io.micrometer.atlas.AtlasMeterRegistry;
 import io.micrometer.azuremonitor.AzureMonitorConfig;
 import io.micrometer.azuremonitor.AzureMonitorMeterRegistry;
+import io.micrometer.bigquery.BigQueryConfig;
+import io.micrometer.bigquery.BigQueryMeterRegistry;
 import io.micrometer.core.instrument.Clock;
 import io.micrometer.core.instrument.MeterRegistry;
 import io.micrometer.core.instrument.logging.LoggingMeterRegistry;
@@ -520,6 +523,43 @@ public class SampleRegistries {
                             .setCredentialsProvider(FixedCredentialsProvider.create(ServiceAccountCredentials.fromStream(credentials)))
                             .build()
                     )
+                    .build();
+        } catch (IOException e) {
+            throw new UncheckedIOException(e);
+        }
+    }
+
+    /**
+     * @param serviceAccountJson The fully qualified path on the local file system to a service account's JSON.
+     * @param projectId          The Google Cloud project id found on the dropdown at the top of the Google Cloud console.
+     * @return A BigQuery registry.
+     * @see <a href="https://cloud.google.com/monitoring/docs/reference/libraries#setting_up_authentication">Google Cloud authentication</a>
+     */
+    public static BigQueryMeterRegistry bigquery(String serviceAccountJson, String projectId) {
+        try (InputStream credentialsStream = new FileInputStream(serviceAccountJson)) {
+            Credentials credentials = ServiceAccountCredentials.fromStream(credentialsStream);
+            return BigQueryMeterRegistry
+                    .builder(new BigQueryConfig() {
+                        @Override
+                        public String projectId() {
+                            return projectId;
+                        }
+
+                        @Override
+                        public String get(String key) {
+                            return null;
+                        }
+
+                        @Override
+                        public Duration step() {
+                            return Duration.ofSeconds(60);
+                        }
+
+                        @Override
+                        public Credentials credentials() {
+                            return credentials;
+                        }
+                    })
                     .build();
         } catch (IOException e) {
             throw new UncheckedIOException(e);

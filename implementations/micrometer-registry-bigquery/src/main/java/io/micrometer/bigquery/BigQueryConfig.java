@@ -15,6 +15,7 @@
  */
 package io.micrometer.bigquery;
 
+import com.google.auth.Credentials;
 import io.micrometer.core.instrument.config.validate.Validated;
 import io.micrometer.core.instrument.step.StepRegistryConfig;
 
@@ -90,8 +91,8 @@ public interface BigQueryConfig extends StepRegistryConfig {
      *
      * @return The Google Cloud Project ID.
      */
-    default String project() {
-        return getString(this, "project").required().get();
+    default String projectId() {
+        return getString(this, "projectId").required().get();
     }
 
     /**
@@ -103,11 +104,20 @@ public interface BigQueryConfig extends StepRegistryConfig {
         return getString(this, "table").orElse("metrics");
     }
 
+    /**
+     * Return {@link Credentials} to use.
+     *
+     * @return {@code Credentials} to use
+     */
+    default Credentials credentials() {
+        return null;
+    }
+
     @Override
     default Validated<?> validate() {
         return checkAll(this,
                 c -> StepRegistryConfig.validate(c),
-                checkRequired("project", BigQueryConfig::project),
+                checkRequired("projectId", BigQueryConfig::projectId),
                 checkRequired("dataset", BigQueryConfig::dataset),
                 checkRequired("table", BigQueryConfig::table)
         );

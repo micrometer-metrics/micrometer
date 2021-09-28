@@ -2,7 +2,7 @@ dependencies {
     api project(':micrometer-core')
 
     implementation 'org.slf4j:slf4j-api'
-    implementation 'io.quarkiverse.googlecloudservices:quarkus-google-cloud-bigquery:0.9.0'
+    api 'com.google.cloud:google-cloud-bigquery'
 
     testImplementation project(':micrometer-test')
 }

@@ -36,7 +36,7 @@ class BigQueryConfigTest {
 
     @Test
     void valid() {
-        props.put("bigquery.project", "mygcpproject");
+        props.put("bigquery.projectId", "mygcpproject");
         assertThat(config.validate().isValid()).isTrue();
     }
 }

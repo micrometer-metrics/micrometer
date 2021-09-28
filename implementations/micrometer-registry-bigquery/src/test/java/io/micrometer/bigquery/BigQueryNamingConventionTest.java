@@ -29,7 +29,7 @@ import static org.assertj.core.api.Assertions.catchThrowable;
  * @author Lui Baeumer
  */
 class BigQueryNamingConventionTest {
-    private BigQueryNamingConvention convention = new BigQueryNamingConvention(NamingConvention.snakeCase);
+    private final BigQueryNamingConvention convention = new BigQueryNamingConvention(NamingConvention.snakeCase);
 
     @Test
     void name() {

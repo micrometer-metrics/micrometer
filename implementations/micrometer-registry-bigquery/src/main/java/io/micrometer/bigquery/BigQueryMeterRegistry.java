@@ -35,7 +35,6 @@ import io.micrometer.core.instrument.FunctionTimer;
 import io.micrometer.core.instrument.LongTaskTimer;
 import io.micrometer.core.instrument.Measurement;
 import io.micrometer.core.instrument.Meter;
-import io.micrometer.core.instrument.MeterRegistry;
 import io.micrometer.core.instrument.Tag;
 import io.micrometer.core.instrument.Timer;
 import io.micrometer.core.instrument.step.StepMeterRegistry;
@@ -58,7 +57,7 @@ import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 /**
- * {@link MeterRegistry} for BigQuery.
+ * {@link StepMeterRegistry} for BigQuery.
  *
  * @author Lui Baeumer
  */
@@ -82,7 +81,11 @@ public class BigQueryMeterRegistry extends StepMeterRegistry {
         super(config, clock);
         config().namingConvention(new BigQueryNamingConvention());
         this.config = config;
-        bigquery = BigQueryOptions.getDefaultInstance().getService();
+        BigQueryOptions.Builder builder = BigQueryOptions.newBuilder();
+        if (config.credentials() != null) {
+            builder.setCredentials(config.credentials());
+        }
+        bigquery = builder.build().getService();
         start(threadFactory);
     }
 
@@ -196,8 +199,8 @@ public class BigQueryMeterRegistry extends StepMeterRegistry {
 
                         if (resp.hasErrors()) {
                             logger.error("sending to BigQuery failed with " + resp
-                                    + "; attempt " + i);
-                            if (config.autoCreateFields()) {
+                                    + "; attempt " + i + "/" + maxRetry);
+                            if (i < maxRetry && config.autoCreateFields()) {
                                 createNewFields(request, resp);
 
                                 // it might take some seconds for the changes to become into effect
@@ -304,9 +307,12 @@ public class BigQueryMeterRegistry extends StepMeterRegistry {
             }
         });
 
-        logger.info("going to create new BigQuery fields " + createdFields);
-
-        return createdFields.isEmpty() ? null : Schema.of(fieldList);
+        if (createdFields.isEmpty()) {
+            return null;
+        } else {
+            logger.info("going to create new BigQuery fields " + createdFields);
+            return Schema.of(fieldList);
+        }
     }
 
     // VisibleForTesting

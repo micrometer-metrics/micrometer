@@ -10,7 +10,7 @@ dependencies {
     implementation('ch.qos.logback:logback-classic')
     implementation('org.slf4j:slf4j-api')
 
-    ['atlas', 'prometheus', 'datadog', 'ganglia', 'elastic', 'graphite', 'jmx', 'influx', 'statsd', 'new-relic', 'cloudwatch', 'cloudwatch2', 'signalfx', 'wavefront', 'dynatrace', 'azure-monitor', 'humio', 'appoptics', 'kairos', 'stackdriver'].each { sys ->
+    ['atlas', 'prometheus', 'datadog', 'ganglia', 'elastic', 'graphite', 'jmx', 'influx', 'statsd', 'new-relic', 'cloudwatch', 'cloudwatch2', 'signalfx', 'wavefront', 'dynatrace', 'azure-monitor', 'humio', 'appoptics', 'kairos', 'stackdriver', 'bigquery'].each { sys ->
         implementation project(":micrometer-registry-$sys")
     }
 
@@ -18,6 +18,8 @@ dependencies {
     implementation 'io.projectreactor.netty:reactor-netty-http'
     implementation 'org.apache.kafka:kafka-clients'
     implementation 'com.github.charithe:kafka-junit'
+    implementation 'com.google.cloud:google-cloud-bigquery'
+
     implementation ('io.grpc:grpc-services') {
         exclude module: 'io.grpc:grpc-netty-shaded'
     }

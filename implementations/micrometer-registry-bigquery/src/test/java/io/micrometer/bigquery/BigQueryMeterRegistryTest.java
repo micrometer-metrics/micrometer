@@ -27,6 +27,7 @@ import io.micrometer.core.instrument.TimeGauge;
 import org.junit.jupiter.api.Test;
 
 import java.util.Arrays;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.TimeUnit;
@@ -42,7 +43,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 class BigQueryMeterRegistryTest {
 
     private final BigQueryConfig config = new BigQueryConfig() {
-        public String project() {
+        public String projectId() {
             return "myprj";
         }
 
@@ -147,12 +148,14 @@ class BigQueryMeterRegistryTest {
         List<Measurement> measurements = Arrays.asList(measurement1, measurement2, measurement3, measurement4);
         Meter meter = Meter.builder("my.meter", Meter.Type.GAUGE, measurements).register(this.meterRegistry);
 
+        Map<String, Object> m = new HashMap<>();
+        m.put("_measurement", "my_meter");
+        m.put("metric_type", "gauge");
+        m.put("_time", "1970-01-01 01:00:00.001");
+        m.put("value", 1d);
         assertThat(meterRegistry
                 .writeMeter(meter))
-                .containsOnly(Map.of("_measurement", "my_meter",
-                        "metric_type", "gauge",
-                        "_time", "1970-01-01 01:00:00.001",
-                        "value", 1d));
+                .containsOnly(m);
     }
 
     @Test
@@ -191,12 +194,14 @@ class BigQueryMeterRegistryTest {
             }
         };
 
+        Map<String, Object> m = new HashMap<>();
+        m.put("_measurement", "func_timer");
+        m.put("metric_type", "histogram");
+        m.put("_time", "1970-01-01 01:00:00.001");
+        m.put("count", 1d);
+        m.put("sum", 1d);
+
         assertThat(meterRegistry.writeFunctionTimer(functionTimer))
-                .containsOnly(Map.of("_measurement", "func_timer",
-                        "metric_type", "histogram",
-                        "count", 1d,
-                        "sum", 1d,
-                        "_time", "1970-01-01 01:00:00.001"
-                ));
+                .containsOnly(m);
     }
 }

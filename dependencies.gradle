@@ -8,6 +8,7 @@ def VERSIONS = [
         'com.github.charithe:kafka-junit:latest.release',
         'com.github.tomakehurst:wiremock-jre8-standalone:latest.release',
         'com.google.cloud:google-cloud-monitoring:latest.release',
+        'com.google.cloud:google-cloud-bigquery:latest.release',
         'com.google.dagger:dagger:2.11',
         'com.google.dagger:dagger-compiler:2.11',
         'com.google.guava:guava:latest.release',
