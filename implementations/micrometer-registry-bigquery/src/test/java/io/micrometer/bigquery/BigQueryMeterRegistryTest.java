@@ -15,6 +15,7 @@
  */
 package io.micrometer.bigquery;
 
+import io.micrometer.core.instrument.Clock;
 import io.micrometer.core.instrument.FunctionCounter;
 import io.micrometer.core.instrument.FunctionTimer;
 import io.micrometer.core.instrument.Gauge;
@@ -146,14 +147,38 @@ class BigQueryMeterRegistryTest {
         Measurement measurement3 = new Measurement(() -> Double.NaN, Statistic.VALUE);
         Measurement measurement4 = new Measurement(() -> 1d, Statistic.VALUE);
         List<Measurement> measurements = Arrays.asList(measurement1, measurement2, measurement3, measurement4);
-        Meter meter = Meter.builder("my.meter", Meter.Type.GAUGE, measurements).register(this.meterRegistry);
+        Meter meter = Meter.builder("my.meter", Meter.Type.GAUGE, measurements).register(BigQueryMeterRegistry.builder(config)
+                .clock(new Clock() {
+
+                    @Override
+                    public long wallTime() {
+                        return 10000;
+                    }
+
+                    @Override
+                    public long monotonicTime() {
+                        return 0;
+                    }
+                }).build());
 
         Map<String, Object> m = new HashMap<>();
         m.put("_measurement", "my_meter");
         m.put("metric_type", "gauge");
-        m.put("_time", "1970-01-01 01:00:00.001");
+        m.put("_time", "1970-01-01 01:00:10.000");
         m.put("value", 1d);
-        assertThat(meterRegistry
+        assertThat(BigQueryMeterRegistry.builder(config)
+                .clock(new Clock() {
+
+                    @Override
+                    public long wallTime() {
+                        return 10000;
+                    }
+
+                    @Override
+                    public long monotonicTime() {
+                        return 0;
+                    }
+                }).build()
                 .writeMeter(meter))
                 .containsOnly(m);
     }
@@ -167,6 +192,7 @@ class BigQueryMeterRegistryTest {
 
     @Test
     void nanMeanFunctionTimerShouldNotWriteMean() {
+
         FunctionTimer functionTimer = new FunctionTimer() {
             @Override
             public double count() {
@@ -197,11 +223,25 @@ class BigQueryMeterRegistryTest {
         Map<String, Object> m = new HashMap<>();
         m.put("_measurement", "func_timer");
         m.put("metric_type", "histogram");
-        m.put("_time", "1970-01-01 01:00:00.001");
+        m.put("_time", "1970-01-01 01:00:10.000");
         m.put("count", 1d);
         m.put("sum", 1d);
 
-        assertThat(meterRegistry.writeFunctionTimer(functionTimer))
+        assertThat(BigQueryMeterRegistry.builder(config)
+                .clock(new Clock() {
+
+                    @Override
+                    public long wallTime() {
+                        return 10000;
+                    }
+
+                    @Override
+                    public long monotonicTime() {
+                        return 0;
+                    }
+                }).build()
+                .writeFunctionTimer(functionTimer))
                 .containsOnly(m);
     }
 }
+

@@ -81,7 +81,8 @@ public class BigQueryMeterRegistry extends StepMeterRegistry {
         super(config, clock);
         config().namingConvention(new BigQueryNamingConvention());
         this.config = config;
-        BigQueryOptions.Builder builder = BigQueryOptions.newBuilder();
+        BigQueryOptions.Builder builder = BigQueryOptions.newBuilder()
+                .setProjectId(config.projectId());
         if (config.credentials() != null) {
             builder.setCredentials(config.credentials());
         }
