@@ -51,6 +51,7 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.TimeZone;
 import java.util.concurrent.ThreadFactory;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
@@ -66,7 +67,7 @@ public class BigQueryMeterRegistry extends StepMeterRegistry {
     private final BigQueryConfig config;
     private final Logger logger = LoggerFactory.getLogger(BigQueryMeterRegistry.class);
     private final BigQuery bigquery;
-    private final SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss.SSS");
+    private final SimpleDateFormat sdf;
 
     private final int maxRetry = 3;
 
@@ -79,6 +80,8 @@ public class BigQueryMeterRegistry extends StepMeterRegistry {
      */
     private BigQueryMeterRegistry(BigQueryConfig config, Clock clock, ThreadFactory threadFactory) {
         super(config, clock);
+        sdf = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss.SSS");
+        sdf.setTimeZone(TimeZone.getTimeZone("UTC"));
         config().namingConvention(new BigQueryNamingConvention());
         this.config = config;
         BigQueryOptions.Builder builder = BigQueryOptions.newBuilder()

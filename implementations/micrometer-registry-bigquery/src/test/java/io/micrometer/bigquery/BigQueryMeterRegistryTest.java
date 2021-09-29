@@ -164,7 +164,7 @@ class BigQueryMeterRegistryTest {
         Map<String, Object> m = new HashMap<>();
         m.put("_measurement", "my_meter");
         m.put("metric_type", "gauge");
-        m.put("_time", "1970-01-01 01:00:10.000");
+        m.put("_time", "1970-01-01 00:00:10.000");
         m.put("value", 1d);
         assertThat(BigQueryMeterRegistry.builder(config)
                 .clock(new Clock() {
@@ -223,7 +223,7 @@ class BigQueryMeterRegistryTest {
         Map<String, Object> m = new HashMap<>();
         m.put("_measurement", "func_timer");
         m.put("metric_type", "histogram");
-        m.put("_time", "1970-01-01 01:00:10.000");
+        m.put("_time", "1970-01-01 00:00:10.000");
         m.put("count", 1d);
         m.put("sum", 1d);
 
