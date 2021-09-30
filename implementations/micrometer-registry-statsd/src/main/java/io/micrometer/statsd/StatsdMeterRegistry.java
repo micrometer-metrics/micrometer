@@ -502,7 +502,8 @@ public class StatsdMeterRegistry extends MeterRegistry {
          * Used for completely customizing the StatsD line format. Intended for use by custom, proprietary
          * StatsD flavors.
          *
-         * @param lineBuilderFunction A mapping from a meter ID to a StatsD line generator that knows how to write counts, gauges
+         * @param lineBuilderFunction A mapping from a meter ID and a Distribution statistic configuration
+         *                            to a StatsD line generator that knows how to write counts, gauges
          *                            timers, and histograms in the proprietary format.
          * @return This builder.
          */
@@ -510,6 +511,24 @@ public class StatsdMeterRegistry extends MeterRegistry {
             this.lineBuilderFunction = lineBuilderFunction;
             return this;
         }
+
+
+        /**
+         * Used for completely customizing the StatsD line format. Intended for use by custom, proprietary
+         * StatsD flavors.
+         *
+         * @param lineBuilderFunction A mapping from a meter ID to a StatsD line generator that knows how to write counts, gauges
+         *                            timers, and histograms in the proprietary format.
+         *
+         * @return This builder.
+         * @deprecated Use {@link #lineBuilder(BiFunction)} instead since 1.8.0.
+         */
+        @Deprecated
+        public Builder lineBuilder(Function<Meter.Id, StatsdLineBuilder> lineBuilderFunction) {
+            this.lineBuilderFunction = (id, dsc) -> lineBuilderFunction.apply(id);
+            return this;
+        }
+
 
         public Builder nameMapper(HierarchicalNameMapper nameMapper) {
             this.nameMapper = nameMapper;
