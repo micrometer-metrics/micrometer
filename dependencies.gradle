@@ -3,7 +3,7 @@ def VERSIONS = [
         'colt:colt:1.2.0',
         'com.amazonaws:aws-java-sdk-cloudwatch:latest.release',
         'com.dynatrace.metric.util:dynatrace-metric-utils-java:1.1.+',
-        'com.fasterxml.jackson.core:jackson-databind:latest.release',
+        'com.fasterxml.jackson.core:jackson-databind:2.12.+',
         'com.github.ben-manes.caffeine:caffeine:2.+',
         'com.github.charithe:kafka-junit:latest.release',
         'com.github.tomakehurst:wiremock-jre8-standalone:latest.release',
