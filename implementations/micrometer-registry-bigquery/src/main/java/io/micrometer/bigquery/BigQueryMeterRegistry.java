@@ -69,7 +69,7 @@ public class BigQueryMeterRegistry extends StepMeterRegistry {
     private final BigQuery bigquery;
     private final SimpleDateFormat sdf;
 
-    private final int maxRetry = 3;
+    private static final int MAX_RETRY = 3;
 
     private boolean skipPublishingMetrics;
 
@@ -111,6 +111,7 @@ public class BigQueryMeterRegistry extends StepMeterRegistry {
             if (table == null) {
 
                 Dataset dataset = bigquery.getDataset(config.dataset());
+                logger.debug("the table " + config.table() + " does not exist. dataset=" + dataset);
                 if (dataset == null) {
                     DatasetInfo datasetInfo = DatasetInfo.newBuilder(config.dataset())
                             .build();
@@ -143,8 +144,8 @@ public class BigQueryMeterRegistry extends StepMeterRegistry {
             }
 
         } catch (Throwable e) {
-            logger.error("unable to create BigQuery dataset '{}'",
-                    config.dataset(), e);
+            logger.error("unable to create BigQuery dataset "
+                    + config.dataset(), e);
         }
     }
 
@@ -158,6 +159,7 @@ public class BigQueryMeterRegistry extends StepMeterRegistry {
 
         try {
             for (List<Meter> batch : MeterPartition.partition(this, config.batchSize())) {
+                logger.debug("handle batch size " + batch.size());
                 InsertAllRequest.Builder req = InsertAllRequest.newBuilder(config.dataset(), config.table());
 
                 int cnt = 0;
@@ -175,8 +177,8 @@ public class BigQueryMeterRegistry extends StepMeterRegistry {
                     );
 
                     String measurementExclusionFilter = config.measurementExclusionFilter();
-                    for (Object o : mat.toArray()) {
-                        Map<String, Object> row = (Map<String, Object>) o;
+                    for (Object metric : mat.toArray()) {
+                        Map<String, Object> row = (Map<String, Object>) metric;
 
                         if (measurementExclusionFilter != null
                                 && ((String) row.get("_measurement")).matches(measurementExclusionFilter)) {
@@ -194,23 +196,25 @@ public class BigQueryMeterRegistry extends StepMeterRegistry {
                 }
 
                 if (cnt > 0) {
+                    logger.debug("preparing to publish " + cnt + " entries.");
                     InsertAllRequest request = req.build();
 
                     // send to bigquery
                     int i = 0;
-                    while (i <= maxRetry) {
+                    while (i <= MAX_RETRY) {
                         InsertAllResponse resp = bigquery.insertAll(request);
+                        logger.debug("insert operation result " + resp);
 
                         if (resp.hasErrors()) {
                             logger.error("sending to BigQuery failed with " + resp
-                                    + "; attempt " + i + "/" + maxRetry);
-                            if (i < maxRetry && config.autoCreateFields()) {
+                                    + "; attempt " + i + "/" + MAX_RETRY);
+                            if (i < MAX_RETRY && config.autoCreateFields()) {
                                 createNewFields(request, resp);
 
                                 // it might take some seconds for the changes to become into effect
-                                logger.debug("try again ... " + i + "/" + maxRetry);
+                                logger.debug("try again ... " + i + "/" + MAX_RETRY);
                                 i++;
-                                Thread.sleep(5000 * i * i);
+                                Thread.sleep(5000L * i * i);
                             } else {
                                 break;
                             }
@@ -228,25 +232,29 @@ public class BigQueryMeterRegistry extends StepMeterRegistry {
         } catch (BigQueryException e) {
             // we might create the dataset/table for you, other errors will
             // only be reported
-            if ("notFound".equals(e.getError().getReason())) {
+            logger.warn("could not send metrics to BigQuery", e);
+            if (e.getError() != null && "notFound".equals(e.getError().getReason())) {
                 if (config.autoCreateDataset()) {
-                    logger.info("BigQuery table {} was not found, so try to create it.", config.table(), e);
+                    logger.info("BigQuery table {} was not found, so try to create it.", config.table());
                     createDatasetAndTable();
                 } else {
                     logger.warn("dataset was not found, it will not be created for you. " +
                             "You might want to set autoCreateDataset to let Micrometer create the dataset for you." +
-                            " Alternatively you have to create the dataset manually.", e);
+                            " Alternatively you have to create the dataset manually.");
                     skipPublishingMetrics = true;
                 }
-            } else {
-                logger.error("failed to send metrics to BigQuery", e);
+            } else if (e.getCode() == 403) {
+                logger.warn("You do not have enough privileges to write to BigQuery. Please check your service account "
+                    + config.credentials());
+                skipPublishingMetrics = true;
             }
         } catch (Throwable e) {
             logger.error("failed to send metrics to BigQuery", e);
         }
     }
 
-    private boolean createNewFields(InsertAllRequest request, InsertAllResponse resp) {
+    // create new fields in BigQuery if these are missing
+    private void createNewFields(InsertAllRequest request, InsertAllResponse resp) {
         Map<String, StandardSQLTypeName>
                 potentiallyNonExistingFields = new HashMap<>();
 
@@ -286,12 +294,9 @@ public class BigQueryMeterRegistry extends StepMeterRegistry {
                 updatedTable.update();
 
                 logger.debug("successfully updated fields " + newSchema.getFields());
-
-                return true;
             }
         }
 
-        return false;
     }
 
     private Schema determineNewSchema(Table table, Map<String, StandardSQLTypeName> potentiallyNonExistingFields) {
