@@ -381,11 +381,11 @@ class StatsdMeterRegistryTest {
 
         StepVerifier.create(lines.asFlux())
                 .then(() -> {
-                    Timer.builder("my.timer2").publishPercentileHistogram(false).register(registry).record(20, TimeUnit.SECONDS);
-                    Timer.builder("my.timer").publishPercentileHistogram(true).register(registry).record(2, TimeUnit.SECONDS);
+                    DistributionSummary.builder("my.summary2").publishPercentileHistogram(false).register(registry).record(20);
+                    DistributionSummary.builder("my.summary").publishPercentileHistogram(true).register(registry).record(2);
                 })
-                .expectNext("my.timer2:20000|ms")
-                .expectNext("my.timer:2000|d")
+                .expectNext("my.summary2:20|h")
+                .expectNext("my.summary:2|d")
                 .verifyComplete();
     }
 
