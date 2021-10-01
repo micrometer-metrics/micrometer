@@ -373,28 +373,38 @@ class StatsdMeterRegistryTest {
     @Test
     void summarySentAsDatadogDistribution_whenPercentileHistogramEnabled() {
         final Sinks.Many<String> lines = sink();
-        registry = StatsdMeterRegistry.builder(configWithFlavor(StatsdFlavor.DATADOG))
+        final StatsdConfig config = configWithFlavor(StatsdFlavor.DATADOG);
+        registry = StatsdMeterRegistry.builder(config)
                 .clock(clock)
-                .lineSink(toLineSink(lines))
+                .lineSink(toLineSink(lines, 2))
                 .build();
 
         StepVerifier.create(lines.asFlux())
-                .then(() -> DistributionSummary.builder("my.summary").publishPercentileHistogram(true).register(registry).record(1))
-                .expectNext("my.summary:1|d")
+                .then(() -> {
+                    DistributionSummary.builder("my.summary2").publishPercentileHistogram(false).register(registry).record(20);
+                    DistributionSummary.builder("my.summary").publishPercentileHistogram(true).register(registry).record(2);
+                })
+                .expectNext("my.summary2:20|h")
+                .expectNext("my.summary:2|d")
                 .verifyComplete();
     }
 
     @Test
     void timerSentAsDatadogDistribution_whenPercentileHistogramEnabled() {
         final Sinks.Many<String> lines = sink();
-        registry = StatsdMeterRegistry.builder(configWithFlavor(StatsdFlavor.DATADOG))
+        final StatsdConfig config = configWithFlavor(StatsdFlavor.DATADOG);
+        registry = StatsdMeterRegistry.builder(config)
                 .clock(clock)
-                .lineSink(toLineSink(lines))
+                .lineSink(toLineSink(lines, 2))
                 .build();
 
         StepVerifier.create(lines.asFlux())
-                .then(() -> Timer.builder("my.timer").publishPercentileHistogram(true).register(registry).record(2, TimeUnit.SECONDS))
+                .then(() -> {
+                    Timer.builder("my.timer").publishPercentileHistogram(true).register(registry).record(2, TimeUnit.SECONDS);
+                    Timer.builder("my.timer2").publishPercentileHistogram(false).register(registry).record(20, TimeUnit.SECONDS);
+                })
                 .expectNext("my.timer:2000|d")
+                .expectNext("my.timer2:20000|ms")
                 .verifyComplete();
     }
 

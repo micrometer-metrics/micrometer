@@ -85,7 +85,7 @@ public class StatsdMeterRegistry extends MeterRegistry {
     private Disposable.Swap meterPoller = Disposables.swap();
 
     @Nullable
-    private Function<Meter.Id, StatsdLineBuilder> lineBuilderFunction;
+    private BiFunction<Meter.Id, DistributionStatisticConfig, StatsdLineBuilder> lineBuilderFunction;
 
     @Nullable
     private Consumer<String> lineSink;
@@ -112,7 +112,7 @@ public class StatsdMeterRegistry extends MeterRegistry {
                                 HierarchicalNameMapper nameMapper,
                                 NamingConvention namingConvention,
                                 Clock clock,
-                                @Nullable Function<Meter.Id, StatsdLineBuilder> lineBuilderFunction,
+                                @Nullable BiFunction<Meter.Id, DistributionStatisticConfig, StatsdLineBuilder> lineBuilderFunction,
                                 @Nullable Consumer<String> lineSink) {
         super(clock);
 
@@ -332,10 +332,10 @@ public class StatsdMeterRegistry extends MeterRegistry {
 
     private StatsdLineBuilder lineBuilder(Meter.Id id, @Nullable DistributionStatisticConfig distributionStatisticConfig) {
         if (lineBuilderFunction == null) {
-            lineBuilderFunction = id2 -> {
+            lineBuilderFunction = (id2, dsc2) -> {
                 switch (statsdConfig.flavor()) {
                     case DATADOG:
-                        return new DatadogStatsdLineBuilder(id2, config(), distributionStatisticConfig);
+                        return new DatadogStatsdLineBuilder(id2, config(), dsc2);
                     case TELEGRAF:
                         return new TelegrafStatsdLineBuilder(id2, config());
                     case SYSDIG:
@@ -346,7 +346,7 @@ public class StatsdMeterRegistry extends MeterRegistry {
                 }
             };
         }
-        return lineBuilderFunction.apply(id);
+        return lineBuilderFunction.apply(id, distributionStatisticConfig);
     }
 
     private DistributionStatisticConfig addInfBucket(DistributionStatisticConfig config) {
@@ -483,7 +483,7 @@ public class StatsdMeterRegistry extends MeterRegistry {
         private HierarchicalNameMapper nameMapper = HierarchicalNameMapper.DEFAULT;
 
         @Nullable
-        private Function<Meter.Id, StatsdLineBuilder> lineBuilderFunction = null;
+        private BiFunction<Meter.Id, DistributionStatisticConfig, StatsdLineBuilder> lineBuilderFunction = null;
 
         @Nullable
         private Consumer<String> lineSink;
@@ -502,14 +502,33 @@ public class StatsdMeterRegistry extends MeterRegistry {
          * Used for completely customizing the StatsD line format. Intended for use by custom, proprietary
          * StatsD flavors.
          *
-         * @param lineBuilderFunction A mapping from a meter ID to a StatsD line generator that knows how to write counts, gauges
+         * @param lineBuilderFunction A mapping from a meter ID and a Distribution statistic configuration
+         *                            to a StatsD line generator that knows how to write counts, gauges
          *                            timers, and histograms in the proprietary format.
          * @return This builder.
          */
-        public Builder lineBuilder(Function<Meter.Id, StatsdLineBuilder> lineBuilderFunction) {
+        public Builder lineBuilder(BiFunction<Meter.Id, DistributionStatisticConfig, StatsdLineBuilder> lineBuilderFunction) {
             this.lineBuilderFunction = lineBuilderFunction;
             return this;
         }
+
+
+        /**
+         * Used for completely customizing the StatsD line format. Intended for use by custom, proprietary
+         * StatsD flavors.
+         *
+         * @param lineBuilderFunction A mapping from a meter ID to a StatsD line generator that knows how to write counts, gauges
+         *                            timers, and histograms in the proprietary format.
+         *
+         * @return This builder.
+         * @deprecated Use {@link #lineBuilder(BiFunction)} instead since 1.8.0.
+         */
+        @Deprecated
+        public Builder lineBuilder(Function<Meter.Id, StatsdLineBuilder> lineBuilderFunction) {
+            this.lineBuilderFunction = (id, dsc) -> lineBuilderFunction.apply(id);
+            return this;
+        }
+
 
         public Builder nameMapper(HierarchicalNameMapper nameMapper) {
             this.nameMapper = nameMapper;
