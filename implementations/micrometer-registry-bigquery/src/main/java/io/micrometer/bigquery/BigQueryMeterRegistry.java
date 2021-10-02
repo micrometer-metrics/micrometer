@@ -44,6 +44,7 @@ import io.micrometer.core.instrument.util.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.math.BigDecimal;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -64,13 +65,11 @@ import java.util.stream.Stream;
  */
 public class BigQueryMeterRegistry extends StepMeterRegistry {
     private static final ThreadFactory DEFAULT_THREAD_FACTORY = new NamedThreadFactory("bigquery-metrics-publisher");
+    private static final int MAX_RETRY = 3;
     private final BigQueryConfig config;
     private final Logger logger = LoggerFactory.getLogger(BigQueryMeterRegistry.class);
     private final BigQuery bigquery;
     private final SimpleDateFormat sdf;
-
-    private static final int MAX_RETRY = 3;
-
     private boolean skipPublishingMetrics;
 
     /**
@@ -124,13 +123,12 @@ public class BigQueryMeterRegistry extends StepMeterRegistry {
                                 com.google.cloud.bigquery.Field.of("_time", StandardSQLTypeName.TIMESTAMP),
                                 com.google.cloud.bigquery.Field.of("_measurement", StandardSQLTypeName.STRING),
                                 com.google.cloud.bigquery.Field.of("metric_type", StandardSQLTypeName.STRING),
-
-                                com.google.cloud.bigquery.Field.of("value", StandardSQLTypeName.NUMERIC),
-                                com.google.cloud.bigquery.Field.of("sum", StandardSQLTypeName.NUMERIC),
-                                com.google.cloud.bigquery.Field.of("mean", StandardSQLTypeName.NUMERIC),
-                                com.google.cloud.bigquery.Field.of("upper", StandardSQLTypeName.NUMERIC),
-                                com.google.cloud.bigquery.Field.of("count", StandardSQLTypeName.NUMERIC),
-                                com.google.cloud.bigquery.Field.of("duration", StandardSQLTypeName.NUMERIC)
+                                com.google.cloud.bigquery.Field.of("value", StandardSQLTypeName.BIGNUMERIC),
+                                com.google.cloud.bigquery.Field.of("sum", StandardSQLTypeName.BIGNUMERIC),
+                                com.google.cloud.bigquery.Field.of("mean", StandardSQLTypeName.BIGNUMERIC),
+                                com.google.cloud.bigquery.Field.of("upper", StandardSQLTypeName.BIGNUMERIC),
+                                com.google.cloud.bigquery.Field.of("count", StandardSQLTypeName.BIGNUMERIC),
+                                com.google.cloud.bigquery.Field.of("duration", StandardSQLTypeName.BIGNUMERIC)
                         );
 
                 TableId tableId = TableId.of(config.dataset(), config.table());
@@ -245,7 +243,7 @@ public class BigQueryMeterRegistry extends StepMeterRegistry {
                 }
             } else if (e.getCode() == 403) {
                 logger.warn("You do not have enough privileges to write to BigQuery. Please check your service account "
-                    + config.credentials());
+                        + config.credentials());
                 skipPublishingMetrics = true;
             }
         } catch (Throwable e) {
@@ -270,6 +268,8 @@ public class BigQueryMeterRegistry extends StepMeterRegistry {
 
                     if (value instanceof Integer || value instanceof Long) {
                         potentiallyNonExistingFields.put(key, StandardSQLTypeName.INT64);
+                    } else if (value instanceof BigDecimal || value instanceof Double) {
+                        potentiallyNonExistingFields.put(key, StandardSQLTypeName.BIGNUMERIC);
                     } else if (value instanceof Number) {
                         potentiallyNonExistingFields.put(key, StandardSQLTypeName.NUMERIC);
                     } else if (value instanceof String) {
