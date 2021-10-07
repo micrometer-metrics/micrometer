@@ -113,6 +113,33 @@ public interface BigQueryConfig extends StepRegistryConfig {
         return null;
     }
 
+    /**
+     * The proxy host.
+     *
+     * @return proxy hostname
+     */
+    default String proxyHost() {
+        return null;
+    }
+
+    /**
+     * The proxy port.
+     *
+     * @return proxy port
+     */
+    default Integer proxyPort() {
+        return null;
+    }
+
+    /**
+     * The BigQuery location.
+     *
+     * @return location
+     */
+    default String location() {
+        return null;
+    }
+
     @Override
     default Validated<?> validate() {
         return checkAll(this,

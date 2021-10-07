@@ -15,6 +15,7 @@
  */
 package io.micrometer.bigquery;
 
+import com.google.api.client.http.javanet.NetHttpTransport;
 import com.google.cloud.bigquery.BigQuery;
 import com.google.cloud.bigquery.BigQueryException;
 import com.google.cloud.bigquery.BigQueryOptions;
@@ -29,6 +30,7 @@ import com.google.cloud.bigquery.Table;
 import com.google.cloud.bigquery.TableDefinition;
 import com.google.cloud.bigquery.TableId;
 import com.google.cloud.bigquery.TableInfo;
+import com.google.cloud.http.HttpTransportOptions;
 import io.micrometer.core.instrument.Clock;
 import io.micrometer.core.instrument.DistributionSummary;
 import io.micrometer.core.instrument.FunctionTimer;
@@ -45,6 +47,8 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.math.BigDecimal;
+import java.net.InetSocketAddress;
+import java.net.Proxy;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -88,6 +92,26 @@ public class BigQueryMeterRegistry extends StepMeterRegistry {
         if (config.credentials() != null) {
             builder.setCredentials(config.credentials());
         }
+
+        if (config.proxyHost() != null) {
+
+            // access to www.googleapis.com via proxy
+            builder.setTransportOptions(HttpTransportOptions.newBuilder()
+                    .setHttpTransportFactory(() -> {
+                        Proxy proxy = new Proxy(Proxy.Type.HTTP, new InetSocketAddress(
+                                config.proxyHost(), config.proxyPort()));
+
+                        logger.debug("using proxy " + proxy);
+                        return new NetHttpTransport.Builder()
+                                .setProxy(proxy).build();
+                    })
+                    .build());
+        }
+
+        if (config.location() != null) {
+            builder.setLocation(config.location());
+        }
+
         bigquery = builder.build().getService();
         start(threadFactory);
     }
