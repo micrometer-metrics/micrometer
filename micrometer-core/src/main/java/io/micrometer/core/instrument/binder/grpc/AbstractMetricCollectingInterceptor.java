@@ -41,24 +41,6 @@ import io.micrometer.core.instrument.binder.BaseUnits;
  * @since 1.7.0
  */
 public abstract class AbstractMetricCollectingInterceptor {
-
-    /**
-     * The metrics tag key that belongs to the called service name.
-     */
-    private static final String TAG_SERVICE_NAME = "service";
-    /**
-     * The metrics tag key that belongs to the called method name.
-     */
-    private static final String TAG_METHOD_NAME = "method";
-    /**
-     * The metrics tag key that belongs to the type of the called method.
-     */
-    private static final String TAG_METHOD_TYPE = "methodType";
-    /**
-     * The metrics tag key that belongs to the result status code.
-     */
-    private static final String TAG_STATUS_CODE = "statusCode";
-
     /**
      * Creates a new counter builder for the given method. By default the base unit will be messages.
      *
@@ -67,14 +49,13 @@ public abstract class AbstractMetricCollectingInterceptor {
      * @param description The description of the counter to use.
      * @return The newly created counter builder.
      */
-    protected static Counter.Builder prepareCounterFor(final MethodDescriptor<?, ?> method,
+    protected Counter.Builder prepareCounterFor(final MethodDescriptor<?, ?> method,
             final String name, final String description) {
         return Counter.builder(name)
                 .description(description)
                 .baseUnit(BaseUnits.MESSAGES)
-                .tag(TAG_SERVICE_NAME, method.getServiceName())
-                .tag(TAG_METHOD_NAME, method.getBareMethodName())
-                .tag(TAG_METHOD_TYPE, method.getType().name());
+                .tags(this.tagProvider.getBaseTags(method));
+
     }
 
     /**
@@ -85,13 +66,11 @@ public abstract class AbstractMetricCollectingInterceptor {
      * @param description The description of the timer to use.
      * @return The newly created timer builder.
      */
-    protected static Timer.Builder prepareTimerFor(final MethodDescriptor<?, ?> method,
+    protected Timer.Builder prepareTimerFor(final MethodDescriptor<?, ?> method,
             final String name, final String description) {
         return Timer.builder(name)
                 .description(description)
-                .tag(TAG_SERVICE_NAME, method.getServiceName())
-                .tag(TAG_METHOD_NAME, method.getBareMethodName())
-                .tag(TAG_METHOD_TYPE, method.getType().name());
+                .tags(this.tagProvider.getBaseTags(method));
     }
 
     private final Map<MethodDescriptor<?, ?>, MetricSet> metricsForMethods = new ConcurrentHashMap<>();
@@ -101,6 +80,7 @@ public abstract class AbstractMetricCollectingInterceptor {
     protected final UnaryOperator<Counter.Builder> counterCustomizer;
     protected final UnaryOperator<Timer.Builder> timerCustomizer;
     protected final Status.Code[] eagerInitializedCodes;
+    protected final GrpcTagProvider tagProvider;
 
     /**
      * Creates a new gRPC interceptor that will collect metrics into the given {@link MeterRegistry}. This method won't
@@ -124,10 +104,18 @@ public abstract class AbstractMetricCollectingInterceptor {
     protected AbstractMetricCollectingInterceptor(final MeterRegistry registry,
             final UnaryOperator<Counter.Builder> counterCustomizer,
             final UnaryOperator<Timer.Builder> timerCustomizer, final Status.Code... eagerInitializedCodes) {
+        this(registry, counterCustomizer, timerCustomizer, new DefaultGrpcTagProvider(), eagerInitializedCodes);
+    }
+
+    protected AbstractMetricCollectingInterceptor(final MeterRegistry registry,
+            final UnaryOperator<Counter.Builder> counterCustomizer,
+            final UnaryOperator<Timer.Builder> timerCustomizer, GrpcTagProvider tagProvider,
+            final Status.Code... eagerInitializedCodes) {
         this.registry = registry;
         this.counterCustomizer = counterCustomizer;
         this.timerCustomizer = timerCustomizer;
         this.eagerInitializedCodes = eagerInitializedCodes;
+        this.tagProvider = tagProvider;
     }
 
     /**
@@ -194,13 +182,14 @@ public abstract class AbstractMetricCollectingInterceptor {
     /**
      * Creates a new timer function using the given template. This method initializes the default timers.
      *
+     * @param method The method being invoked.
      * @param timerTemplate The template to create the instances from.
      * @return The newly created function that returns a timer for a given code.
      */
-    protected Function<Code, Timer> asTimerFunction(final Supplier<Timer.Builder> timerTemplate) {
+    protected Function<Code, Timer> asTimerFunction(final MethodDescriptor<?,?> method, final Supplier<Timer.Builder> timerTemplate) {
         final Map<Code, Timer> cache = new EnumMap<>(Code.class);
         final Function<Code, Timer> creator = code -> timerTemplate.get()
-                .tag(TAG_STATUS_CODE, code.name())
+                .tags(this.tagProvider.getTagsForResult(method, code))
                 .register(this.registry);
         final Function<Code, Timer> cacheResolver = code -> cache.computeIfAbsent(code, creator);
         // Eager initialize

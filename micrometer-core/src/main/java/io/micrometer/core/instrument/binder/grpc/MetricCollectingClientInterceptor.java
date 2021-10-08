@@ -91,7 +91,7 @@ public class MetricCollectingClientInterceptor extends AbstractMetricCollectingI
     @Override
     protected Counter newRequestCounterFor(final MethodDescriptor<?, ?> method) {
         return this.counterCustomizer.apply(
-                prepareCounterFor(method,
+                this.prepareCounterFor(method,
                         METRIC_NAME_CLIENT_REQUESTS_SENT,
                         "The total number of requests sent"))
                 .register(this.registry);
@@ -100,7 +100,7 @@ public class MetricCollectingClientInterceptor extends AbstractMetricCollectingI
     @Override
     protected Counter newResponseCounterFor(final MethodDescriptor<?, ?> method) {
         return this.counterCustomizer.apply(
-                prepareCounterFor(method,
+                        this.prepareCounterFor(method,
                         METRIC_NAME_CLIENT_RESPONSES_RECEIVED,
                         "The total number of responses received"))
                 .register(this.registry);
@@ -108,7 +108,7 @@ public class MetricCollectingClientInterceptor extends AbstractMetricCollectingI
 
     @Override
     protected Function<Code, Timer> newTimerFunction(final MethodDescriptor<?, ?> method) {
-        return asTimerFunction(() -> this.timerCustomizer.apply(
+        return asTimerFunction(method, () -> this.timerCustomizer.apply(
                 prepareTimerFor(method,
                         METRIC_NAME_CLIENT_PROCESSING_DURATION,
                         "The total time taken for the client to complete the call, including network delay")));
