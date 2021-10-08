@@ -26,6 +26,10 @@ import java.lang.reflect.Method;
 
 import static org.assertj.core.api.Assertions.fail;
 
+/**
+ * @deprecated use {@link MeterRegistryCompatibilityKit#registry} instead.
+ */
+@Deprecated
 public class RegistryResolver implements ParameterResolver {
     @Override
     public boolean supportsParameter(ParameterContext parameterContext, ExtensionContext extensionContext) throws ParameterResolutionException {
