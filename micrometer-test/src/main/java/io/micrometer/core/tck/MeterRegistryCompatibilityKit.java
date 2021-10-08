@@ -30,7 +30,6 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.extension.ExtendWith;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.CsvSource;
 
@@ -56,7 +55,6 @@ import static org.junit.jupiter.api.Assertions.assertAll;
  * @author Jon Schneider
  * @author Johnny Lim
  */
-@ExtendWith(RegistryResolver.class)
 public abstract class MeterRegistryCompatibilityKit {
 
     // Retain this as a member field to prevent it to be garbage-collected in OpenJ9.
