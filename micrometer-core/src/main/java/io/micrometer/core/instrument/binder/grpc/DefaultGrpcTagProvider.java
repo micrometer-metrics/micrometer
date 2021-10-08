@@ -27,9 +27,10 @@ public class DefaultGrpcTagProvider implements GrpcTagProvider{
     @Override
     public Iterable<Tag> getBaseTags(MethodDescriptor<?, ?> method) {
         return Tags.of(
-                 TAG_SERVICE_NAME, method.getServiceName(),
+                TAG_SERVICE_NAME, method.getServiceName(),
                 TAG_METHOD_NAME, method.getBareMethodName(),
-                TAG_METHOD_TYPE, method.getType().name());
+                TAG_METHOD_TYPE, method.getType().name()
+        );
     }
 
     @Override
