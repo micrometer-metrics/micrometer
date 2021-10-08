@@ -93,6 +93,37 @@ public class MetricCollectingServerInterceptor extends AbstractMetricCollectingI
     }
 
     /**
+     * Creates a new gRPC server interceptor that will collect metrics into the given {@link MeterRegistry}
+     * Also uses the {@link GrpcTagProvider} to create tags
+     *
+     * @param registry The registry to use.
+     * @param grpcTagProvider The GrpcTagProvider to create tags for the method invocations.
+     * @param eagerInitializedCodes The status codes that should be eager initialized.
+     */
+    public MetricCollectingServerInterceptor(final MeterRegistry registry,
+            final GrpcTagProvider grpcTagProvider, final Code... eagerInitializedCodes) {
+        super(registry, grpcTagProvider, eagerInitializedCodes);
+    }
+
+    /**
+     * Creates a new gRPC server interceptor that will collect metrics into the given {@link MeterRegistry} and uses the
+     * given customizers to configure the {@link Counter}s and {@link Timer}s.
+     * Also uses the {@link GrpcTagProvider} to create tags
+     *
+     * @param registry The registry to use.
+     * @param counterCustomizer The unary function that can be used to customize the created counters.
+     * @param timerCustomizer The unary function that can be used to customize the created timers.
+     * @param grpcTagProvider The GrpcTagProvider to create tags for the method invocations.
+     * @param eagerInitializedCodes The status codes that should be eager initialized.
+     */
+    public MetricCollectingServerInterceptor(final MeterRegistry registry,
+            final UnaryOperator<Counter.Builder> counterCustomizer,
+            final UnaryOperator<Timer.Builder> timerCustomizer, final GrpcTagProvider grpcTagProvider,
+            final Code... eagerInitializedCodes) {
+        super(registry, counterCustomizer, timerCustomizer, grpcTagProvider, eagerInitializedCodes);
+    }
+
+    /**
      * Pre-registers the all methods provided by the given service. This will initialize all default counters and timers
      * for those methods.
      *

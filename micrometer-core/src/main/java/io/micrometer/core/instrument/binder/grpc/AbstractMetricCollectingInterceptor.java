@@ -54,7 +54,7 @@ public abstract class AbstractMetricCollectingInterceptor {
         return Counter.builder(name)
                 .description(description)
                 .baseUnit(BaseUnits.MESSAGES)
-                .tags(this.tagProvider.getBaseTags(method));
+                .tags(this.grpcTagProvider.getBaseTags(method));
 
     }
 
@@ -70,7 +70,7 @@ public abstract class AbstractMetricCollectingInterceptor {
             final String name, final String description) {
         return Timer.builder(name)
                 .description(description)
-                .tags(this.tagProvider.getBaseTags(method));
+                .tags(this.grpcTagProvider.getBaseTags(method));
     }
 
     private final Map<MethodDescriptor<?, ?>, MetricSet> metricsForMethods = new ConcurrentHashMap<>();
@@ -80,7 +80,7 @@ public abstract class AbstractMetricCollectingInterceptor {
     protected final UnaryOperator<Counter.Builder> counterCustomizer;
     protected final UnaryOperator<Timer.Builder> timerCustomizer;
     protected final Status.Code[] eagerInitializedCodes;
-    protected final GrpcTagProvider tagProvider;
+    protected final GrpcTagProvider grpcTagProvider;
 
     /**
      * Creates a new gRPC interceptor that will collect metrics into the given {@link MeterRegistry}. This method won't
@@ -106,16 +106,39 @@ public abstract class AbstractMetricCollectingInterceptor {
             final UnaryOperator<Timer.Builder> timerCustomizer, final Status.Code... eagerInitializedCodes) {
         this(registry, counterCustomizer, timerCustomizer, new DefaultGrpcTagProvider(), eagerInitializedCodes);
     }
+    /**
+     * Creates a new gRPC interceptor that will collect metrics into the given {@link MeterRegistry} and uses the given
+     * {@link GrpcTagProvider} to create tags.
+     *
+     * @param registry The registry to use.
+     * @param grpcTagProvider The unary function that can be used to customize the created timers.
+     * @param eagerInitializedCodes The status codes that should be eager initialized.
+     */
+    protected AbstractMetricCollectingInterceptor(final MeterRegistry registry,
+            final GrpcTagProvider grpcTagProvider, final Status.Code... eagerInitializedCodes) {
+        this(registry, UnaryOperator.identity(), UnaryOperator.identity(), grpcTagProvider, eagerInitializedCodes);
+    }
 
+    /**
+     * Creates a new gRPC interceptor that will collect metrics into the given {@link MeterRegistry} and uses the given
+     * customizers to configure the {@link Counter}s and {@link Timer}s. Also uses the {@link GrpcTagProvider} to create
+     * tags
+     *
+     * @param registry The registry to use.
+     * @param counterCustomizer The unary function that can be used to customize the created counters.
+     * @param timerCustomizer The unary function that can be used to customize the created timers.
+     * @param grpcTagProvider The GrpcTagProvider to create tags for the method invocations.
+     * @param eagerInitializedCodes The status codes that should be eager initialized.
+     */
     protected AbstractMetricCollectingInterceptor(final MeterRegistry registry,
             final UnaryOperator<Counter.Builder> counterCustomizer,
-            final UnaryOperator<Timer.Builder> timerCustomizer, GrpcTagProvider tagProvider,
+            final UnaryOperator<Timer.Builder> timerCustomizer, GrpcTagProvider grpcTagProvider,
             final Status.Code... eagerInitializedCodes) {
         this.registry = registry;
         this.counterCustomizer = counterCustomizer;
         this.timerCustomizer = timerCustomizer;
         this.eagerInitializedCodes = eagerInitializedCodes;
-        this.tagProvider = tagProvider;
+        this.grpcTagProvider = grpcTagProvider;
     }
 
     /**
@@ -189,7 +212,7 @@ public abstract class AbstractMetricCollectingInterceptor {
     protected Function<Code, Timer> asTimerFunction(final MethodDescriptor<?,?> method, final Supplier<Timer.Builder> timerTemplate) {
         final Map<Code, Timer> cache = new EnumMap<>(Code.class);
         final Function<Code, Timer> creator = code -> timerTemplate.get()
-                .tags(this.tagProvider.getTagsForResult(method, code))
+                .tags(this.grpcTagProvider.getTagsForResult(method, code))
                 .register(this.registry);
         final Function<Code, Timer> cacheResolver = code -> cache.computeIfAbsent(code, creator);
         // Eager initialize
