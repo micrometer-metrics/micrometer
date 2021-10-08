@@ -209,7 +209,7 @@ public abstract class AbstractMetricCollectingInterceptor {
      * @param timerTemplate The template to create the instances from.
      * @return The newly created function that returns a timer for a given code.
      */
-    protected Function<Code, Timer> asTimerFunction(final MethodDescriptor<?,?> method, final Supplier<Timer.Builder> timerTemplate) {
+    protected Function<Code, Timer> asTimerFunction(final MethodDescriptor<?, ?> method, final Supplier<Timer.Builder> timerTemplate) {
         final Map<Code, Timer> cache = new EnumMap<>(Code.class);
         final Function<Code, Timer> creator = code -> timerTemplate.get()
                 .tags(this.grpcTagProvider.getTagsForResult(method, code))

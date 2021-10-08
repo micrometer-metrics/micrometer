@@ -5,7 +5,7 @@ import io.grpc.Status;
 import io.micrometer.core.instrument.Tag;
 import io.micrometer.core.instrument.Tags;
 
-public class DefaultGrpcTagProvider implements GrpcTagProvider{
+public class DefaultGrpcTagProvider implements GrpcTagProvider {
 
     /**
      * The metrics tag key that belongs to the called service name.
