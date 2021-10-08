@@ -51,6 +51,7 @@ import java.net.InetSocketAddress;
 import java.net.Proxy;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -324,10 +325,12 @@ public class BigQueryMeterRegistry extends StepMeterRegistry {
     }
 
     private Schema determineNewSchema(Table table, Map<String, StandardSQLTypeName> potentiallyNonExistingFields) {
-        Schema schema = table.getDefinition().getSchema();
 
         // Create the new field/column
-        List<com.google.cloud.bigquery.Field> fieldList = new ArrayList<>(schema.getFields());
+        List<com.google.cloud.bigquery.Field> fieldList = new ArrayList<>(
+                table.getDefinition() != null
+                        ? table.getDefinition().getSchema().getFields()
+                        : Collections.emptyList());
         Set<String> existingFields = new HashSet<>();
         fieldList.forEach(f -> existingFields.add(f.getName()));
         logger.debug("existingFields=" + existingFields);
