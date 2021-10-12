@@ -25,6 +25,8 @@ import io.micrometer.core.lang.Nullable;
 
 import java.time.Duration;
 import java.util.Arrays;
+import java.util.Collection;
+import java.util.Collections;
 import java.util.concurrent.Callable;
 import java.util.concurrent.TimeUnit;
 import java.util.function.Supplier;
@@ -43,7 +45,9 @@ public interface Timer extends Meter, HistogramSupport {
      *
      * @return A timing sample with start time recorded.
      * @since 1.1.0
+     * @deprecated use {@link #start(MeterRegistry)} instead
      */
+    @Deprecated
     static Sample start() {
         return start(Clock.SYSTEM);
     }
@@ -55,7 +59,7 @@ public interface Timer extends Meter, HistogramSupport {
      * @return A timing sample with start time recorded.
      */
     static Sample start(MeterRegistry registry) {
-        return start(registry.config().clock());
+        return new Sample(registry.config().clock(), registry.config().getTimerRecordingListeners());
     }
 
     /**
@@ -63,7 +67,9 @@ public interface Timer extends Meter, HistogramSupport {
      *
      * @param clock a clock to be used
      * @return A timing sample with start time recorded.
+     * @deprecated use {@link #start(MeterRegistry)} instead
      */
+    @Deprecated
     static Sample start(Clock clock) {
         return new Sample(clock);
     }
@@ -267,10 +273,29 @@ public interface Timer extends Meter, HistogramSupport {
     class Sample {
         private final long startTime;
         private final Clock clock;
+        private final Collection<TimerRecordingListener> listeners;
 
+        @Deprecated
         Sample(Clock clock) {
+            this(clock, Collections.emptyList());
+        }
+
+        Sample(Clock clock, Collection<TimerRecordingListener> listeners) {
             this.clock = clock;
             this.startTime = clock.monotonicTime();
+            this.listeners = listeners;
+            this.listeners.forEach(listener -> listener.onStart(this));
+        }
+
+        /**
+         * Mark an exception that happened between the sample's start/stop.
+         *
+         * @param throwable exception that happened
+         */
+        public void error(Throwable throwable) {
+            // TODO check stop hasn't been called yet?
+            // TODO doesn't do anything to tags currently; we should make error tagging more first-class
+            this.listeners.forEach(listener -> listener.onError(throwable));
         }
 
         /**
@@ -282,6 +307,7 @@ public interface Timer extends Meter, HistogramSupport {
         public long stop(Timer timer) {
             long durationNs = clock.monotonicTime() - startTime;
             timer.record(durationNs, TimeUnit.NANOSECONDS);
+            this.listeners.forEach(listener -> listener.onStop(this, timer, Duration.ofNanos(durationNs)));
             return durationNs;
         }
     }

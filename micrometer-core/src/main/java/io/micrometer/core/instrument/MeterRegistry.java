@@ -79,6 +79,7 @@ public abstract class MeterRegistry {
     protected final Clock clock;
     private final Object meterMapLock = new Object();
     private volatile MeterFilter[] filters = new MeterFilter[0];
+    private final List<TimerRecordingListener> timerRecordingListeners = new CopyOnWriteArrayList<>();
     private final List<Consumer<Meter>> meterAddedListeners = new CopyOnWriteArrayList<>();
     private final List<Consumer<Meter>> meterRemovedListeners = new CopyOnWriteArrayList<>();
     private final List<BiConsumer<Meter.Id, String>> meterRegistrationFailedListeners = new CopyOnWriteArrayList<>();
@@ -797,6 +798,24 @@ public abstract class MeterRegistry {
         public Config onMeterRegistrationFailed(BiConsumer<Id, String> meterRegistrationFailedListener) {
             meterRegistrationFailedListeners.add(meterRegistrationFailedListener);
             return this;
+        }
+
+        /**
+         * Register an event listener for {@link Timer} recordings made using {@link Timer#start(MeterRegistry)}
+         * and {@link io.micrometer.core.instrument.Timer.Sample#stop(Timer)} methods. You can add arbitrary behavior
+         * in the callbacks provided to get additional behavior out of timing instrumentation.
+         *
+         * @param listener listener to add to the current configuration
+         * @return This configuration instance
+         */
+        public Config timerRecordingListener(TimerRecordingListener listener) {
+            timerRecordingListeners.add(listener);
+            return this;
+        }
+
+        // package-private for minimal visibility
+        Collection<TimerRecordingListener> getTimerRecordingListeners() {
+            return timerRecordingListeners;
         }
 
         /**
