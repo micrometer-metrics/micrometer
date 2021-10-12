@@ -13,9 +13,10 @@ public interface TimerRecordingListener {
     void onStart(Timer.Sample sample);
 
     /**
+     * @param sample sample for which the error happened
      * @param throwable exception that happened during recording
      */
-    void onError(Throwable throwable);
+    void onError(Timer.Sample sample, Throwable throwable);
 
     /**
      * @param sample the sample that was stopped

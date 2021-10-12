@@ -102,6 +102,10 @@ dependencies {
     testImplementation 'org.testcontainers:testcontainers'
     testImplementation 'org.testcontainers:junit-jupiter'
     testImplementation 'org.testcontainers:kafka'
+
+    // Zipkin Brave TimerRecordingListener testing
+    testImplementation 'io.zipkin.brave:brave:latest.release'
+    testImplementation 'io.zipkin.brave:brave-tests:latest.release'
 }
 
 task shenandoahTest(type: Test) {

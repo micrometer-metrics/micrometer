@@ -295,7 +295,7 @@ public interface Timer extends Meter, HistogramSupport {
         public void error(Throwable throwable) {
             // TODO check stop hasn't been called yet?
             // TODO doesn't do anything to tags currently; we should make error tagging more first-class
-            this.listeners.forEach(listener -> listener.onError(throwable));
+            this.listeners.forEach(listener -> listener.onError(this, throwable));
         }
 
         /**
