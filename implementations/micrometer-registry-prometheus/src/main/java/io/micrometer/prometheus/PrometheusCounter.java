@@ -19,25 +19,65 @@ import io.micrometer.core.instrument.AbstractMeter;
 import io.micrometer.core.instrument.Counter;
 import io.micrometer.core.instrument.Meter;
 import io.micrometer.core.instrument.util.MeterEquivalence;
+import io.micrometer.core.lang.NonNull;
+import io.micrometer.core.lang.Nullable;
+import io.prometheus.client.exemplars.CounterExemplarSampler;
+import io.prometheus.client.exemplars.Exemplar;
 
+import java.util.concurrent.atomic.AtomicReference;
 import java.util.concurrent.atomic.DoubleAdder;
 
+/**
+ * {@link Counter} for Prometheus.
+ *
+ * @author Jon Schneider
+ * @author Jonatan Ivanov
+ */
 public class PrometheusCounter extends AbstractMeter implements Counter {
-    private DoubleAdder count = new DoubleAdder();
+    private final DoubleAdder count = new DoubleAdder();
+    private final AtomicReference<Exemplar> exemplar = new AtomicReference<>();
+    @Nullable private final CounterExemplarSampler exemplarSampler;
 
     PrometheusCounter(Meter.Id id) {
+        this(id, null);
+    }
+
+    PrometheusCounter(Meter.Id id, @Nullable CounterExemplarSampler exemplarSampler) {
         super(id);
+        this.exemplarSampler = exemplarSampler;
     }
 
     @Override
     public void increment(double amount) {
-        if (amount > 0)
+        if (amount > 0) {
             count.add(amount);
+            if (exemplarSampler != null) {
+                updateExemplar(amount, exemplarSampler);
+            }
+        }
     }
 
     @Override
     public double count() {
         return count.doubleValue();
+    }
+
+    Exemplar exemplar() {
+        return exemplar.get();
+    }
+
+    // Similar to exemplar.updateAndGet(...) but it does nothing if the next value is null
+    private void updateExemplar(double amount, @NonNull CounterExemplarSampler exemplarSampler) {
+        Exemplar prev;
+        Exemplar next;
+        do {
+            prev = exemplar.get();
+            next = exemplarSampler.sample(amount, prev);
+            if (next == null || next == prev) {
+                return;
+            }
+        }
+        while (!exemplar.compareAndSet(prev, next));
     }
 
     @SuppressWarnings("EqualsWhichDoesntCheckParameterClass")

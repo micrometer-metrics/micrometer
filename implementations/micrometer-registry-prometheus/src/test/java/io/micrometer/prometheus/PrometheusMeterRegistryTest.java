@@ -23,6 +23,8 @@ import io.micrometer.core.instrument.distribution.DistributionStatisticConfig;
 import io.micrometer.core.instrument.distribution.HistogramSnapshot;
 import io.prometheus.client.Collector;
 import io.prometheus.client.CollectorRegistry;
+import io.prometheus.client.exemplars.DefaultExemplarSampler;
+import io.prometheus.client.exemplars.tracer.common.SpanContextSupplier;
 import io.prometheus.client.exporter.common.TextFormat;
 import org.assertj.core.api.Condition;
 import org.junit.jupiter.api.DisplayName;
@@ -52,6 +54,7 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
  *
  * @author Jon Schneider
  * @author Johnny Lim
+ * @author Jonatan Ivanov
  */
 class PrometheusMeterRegistryTest {
     private CollectorRegistry prometheusRegistry = new CollectorRegistry(true);
@@ -635,4 +638,31 @@ class PrometheusMeterRegistryTest {
                 .endsWith("# EOF\n");
     }
 
+    @Test
+    void openMetricsScrapeWithExemplars() {
+        DefaultExemplarSampler exemplarSampler = new DefaultExemplarSampler(new TestSpanContextSupplier());
+        PrometheusMeterRegistry registry = new PrometheusMeterRegistry(PrometheusConfig.DEFAULT, prometheusRegistry, clock, exemplarSampler);
+
+        Counter counter = Counter.builder("my.counter").register(registry);
+        counter.increment();
+
+        assertThat(registry.scrape(TextFormat.CONTENT_TYPE_OPENMETRICS_100))
+                .startsWith("# TYPE my_counter counter\n")
+                .contains("# HELP my_counter  \n")
+                .contains("my_counter_total 1.0 # {span_id=\"testSpanId\",trace_id=\"testTraceId\"} 1.0")
+                .endsWith("# EOF\n");
+    }
+
+    static class TestSpanContextSupplier implements SpanContextSupplier {
+
+        @Override
+        public String getTraceId() {
+            return "testTraceId";
+        }
+
+        @Override
+        public String getSpanId() {
+            return "testSpanId";
+        }
+    }
 }

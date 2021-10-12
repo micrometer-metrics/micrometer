@@ -26,6 +26,7 @@ import io.micrometer.core.instrument.internal.DefaultMeter;
 import io.micrometer.core.lang.Nullable;
 import io.prometheus.client.Collector;
 import io.prometheus.client.CollectorRegistry;
+import io.prometheus.client.exemplars.ExemplarSampler;
 import io.prometheus.client.exporter.common.TextFormat;
 
 import java.io.IOException;
@@ -58,18 +59,25 @@ public class PrometheusMeterRegistry extends MeterRegistry {
     private final PrometheusConfig prometheusConfig;
     private final CollectorRegistry registry;
     private final ConcurrentMap<String, MicrometerCollector> collectorMap = new ConcurrentHashMap<>();
+    @Nullable private final ExemplarSampler exemplarSampler;
+
 
     public PrometheusMeterRegistry(PrometheusConfig config) {
         this(config, new CollectorRegistry(), Clock.SYSTEM);
     }
 
     public PrometheusMeterRegistry(PrometheusConfig config, CollectorRegistry registry, Clock clock) {
+        this(config, registry, clock, null);
+    }
+
+    public PrometheusMeterRegistry(PrometheusConfig config, CollectorRegistry registry, Clock clock, @Nullable ExemplarSampler exemplarSampler) {
         super(clock);
 
         config.requireValid();
 
         this.prometheusConfig = config;
         this.registry = registry;
+        this.exemplarSampler = exemplarSampler;
 
         config().namingConvention(new PrometheusNamingConvention());
         config().onMeterRemoved(this::onMeterRemoved);
@@ -172,11 +180,11 @@ public class PrometheusMeterRegistry extends MeterRegistry {
 
     @Override
     public Counter newCounter(Meter.Id id) {
-        PrometheusCounter counter = new PrometheusCounter(id);
+        PrometheusCounter counter = new PrometheusCounter(id, exemplarSampler);
         applyToCollector(id, (collector) -> {
             List<String> tagValues = tagValues(id);
             collector.add(tagValues, (conventionName, tagKeys) -> Stream.of(new MicrometerCollector.Family(Collector.Type.COUNTER, conventionName,
-                    new Collector.MetricFamilySamples.Sample(conventionName, tagKeys, tagValues, counter.count()))));
+                    new Collector.MetricFamilySamples.Sample(conventionName, tagKeys, tagValues, counter.count(), counter.exemplar()))));
         });
         return counter;
     }
