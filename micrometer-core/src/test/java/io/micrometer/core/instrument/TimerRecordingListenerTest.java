@@ -61,6 +61,7 @@ class TimerRecordingListenerTest {
 
         @Override
         public void onStart(Timer.Sample sample) {
+            // TODO check if onStart has already been called for this sample?
             Span span = tracer.nextSpan().start();
             contextMap.computeIfAbsent(sample, key -> new SpanContext(span, tracer.withSpanInScope(span)));
         }
@@ -72,6 +73,7 @@ class TimerRecordingListenerTest {
 
         @Override
         public void onStop(Timer.Sample sample, Timer timer, Duration duration) {
+            // TODO check if onStart was called for this sample and onStop hasn't been called yet?
             SpanContext context = contextMap.get(sample);
             Span span = context.getSpan().name(timer.getId().getName());
             timer.getId().getTagsAsIterable().forEach(tag -> span.tag(tag.getKey(), tag.getValue()));
