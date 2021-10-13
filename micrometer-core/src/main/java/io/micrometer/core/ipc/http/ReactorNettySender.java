@@ -25,7 +25,9 @@ import reactor.util.function.Tuple2;
  *
  * @author Jon Schneider
  * @since 1.1.0
+ * @deprecated use a different {@link HttpSender} implementation or report your use case for this to the Micrometer project maintainers
  */
+@Deprecated
 public class ReactorNettySender implements HttpSender {
     private final HttpClient httpClient;
 
