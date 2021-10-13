@@ -23,7 +23,6 @@ import io.micrometer.core.instrument.distribution.CountAtBucket;
 import io.micrometer.core.instrument.distribution.DistributionStatisticConfig;
 import io.micrometer.core.instrument.distribution.ValueAtPercentile;
 import io.micrometer.core.instrument.internal.CumulativeHistogramLongTaskTimer;
-import io.micrometer.core.instrument.simple.SimpleMeterRegistry;
 import io.micrometer.core.instrument.util.TimeUtils;
 import org.assertj.core.data.Offset;
 import org.junit.jupiter.api.BeforeEach;
@@ -51,6 +50,8 @@ import static org.junit.jupiter.api.Assertions.assertAll;
 
 /**
  * Base class for {@link MeterRegistry} compatibility tests.
+ * To run a {@link MeterRegistry} implementation against this TCK, make a test class that extends this
+ * and implement the abstract methods.
  *
  * @author Jon Schneider
  * @author Johnny Lim
@@ -475,12 +476,10 @@ public abstract class MeterRegistryCompatibilityKit {
     @Nested
     class TimerTck {
         @DisplayName("autocloseable sample")
-        @ParameterizedTest(name = "when outcome is '{0}'")
+        @ParameterizedTest(name = "when outcome is \"{0}\"")
         @CsvSource({"success", "error"})
         @Issue("#1425")
         void closeable(String outcome) {
-            MeterRegistry registry = new SimpleMeterRegistry();
-
             try (Timer.ResourceSample sample = Timer.resource(registry, "requests")
                     .description("This is an operation")
                     .publishPercentileHistogram()) {
@@ -494,6 +493,7 @@ public abstract class MeterRegistryCompatibilityKit {
                 }
             }
 
+            clock(registry).add(step());
             assertThat(registry.get("requests").tag("outcome", outcome).timer().count())
                     .isEqualTo(1);
         }
@@ -501,8 +501,6 @@ public abstract class MeterRegistryCompatibilityKit {
         @DisplayName("record callable")
         @Test
         void recordCallable() throws Exception {
-            MeterRegistry registry = new SimpleMeterRegistry();
-
             registry.timer("timer").recordCallable(() -> "");
         }
 
