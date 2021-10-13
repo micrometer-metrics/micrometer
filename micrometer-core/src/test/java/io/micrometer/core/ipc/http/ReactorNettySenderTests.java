@@ -29,6 +29,7 @@ import java.util.concurrent.TimeUnit;
 import static com.github.tomakehurst.wiremock.client.WireMock.*;
 import static org.assertj.core.api.Assertions.assertThatExceptionOfType;
 
+@SuppressWarnings("deprecation")
 @ExtendWith(WiremockResolver.class)
 class ReactorNettySenderTests {
     HttpSender httpSender = new ReactorNettySender();
