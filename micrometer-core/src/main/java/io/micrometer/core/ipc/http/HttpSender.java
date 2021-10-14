@@ -174,6 +174,7 @@ public interface HttpSender {
              * @param type authentication type
              * @param credentials authentication credentials
              * @return This request builder.
+             * @since 1.8.0
              */
             public final Builder withAuthentication(String type, @Nullable String credentials) {
                 if (credentials != null && StringUtils.isNotBlank(credentials)) {

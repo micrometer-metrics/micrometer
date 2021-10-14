@@ -121,7 +121,8 @@ public interface ElasticConfig extends StepRegistryConfig {
     }
 
     /**
-     * The Basic Authentication username.
+     * The Basic Authentication username. If {@link #apiKeyCredentials()} is configured,
+     * it will be used for authentication instead of this.
      *
      * @return username for Basic Authentication
      */
@@ -131,7 +132,8 @@ public interface ElasticConfig extends StepRegistryConfig {
     }
 
     /**
-     * The Basic Authentication password.
+     * The Basic Authentication password. If {@link #apiKeyCredentials()} is configured,
+     * it will be used for authentication instead of this.
      *
      * @return password for Basic Authentication
      */
