@@ -314,7 +314,7 @@ class KafkaMetricsTest {
 
     @Issue("#2726")
     @Test
-    void shouldAlwaysUseMetricFromSupplierIfInstanceChanges() {
+    void shouldUseMetricFromSupplierIfInstanceChanges() {
         MetricName metricName = new MetricName("a0", "b0", "c0", new LinkedHashMap<>());
         Value oldValue = new Value();
         oldValue.record(new MetricConfig(), 1.0, System.currentTimeMillis());
@@ -344,5 +344,62 @@ class KafkaMetricsTest {
                                 .extracting(Measurement::getValue)
                                 .isEqualTo(2.0)
                 );
+    }
+
+    @Issue("#2801")
+    @Test
+    void shouldUseMetricFromSupplierIndirectly() {
+        AtomicReference<Map<MetricName, KafkaMetric>> metricsReference = new AtomicReference<>(new HashMap<>());
+
+        MetricName oldMetricName = new MetricName("a0", "b0", "c0", new LinkedHashMap<>());
+        Value oldValue = new Value();
+        oldValue.record(new MetricConfig(), 1.0, System.currentTimeMillis());
+        KafkaMetric oldMetricInstance = new KafkaMetric(this, oldMetricName, oldValue, new MetricConfig(), Time.SYSTEM);
+
+        metricsReference.get().put(oldMetricName, oldMetricInstance);
+
+        kafkaMetrics = new KafkaMetrics(metricsReference::get);
+        MeterRegistry registry = new SimpleMeterRegistry();
+
+        kafkaMetrics.bindTo(registry);
+        assertThat(registry.getMeters()).hasSize(1);
+
+        assertThat(registry.getMeters())
+                .singleElement()
+                .extracting(Meter::measure)
+                .satisfies(measurements ->
+                        assertThat(measurements)
+                                .singleElement()
+                                .extracting(Measurement::getValue)
+                                .isEqualTo(1.0)
+                );
+
+        metricsReference.set(new HashMap<>());
+        MetricName newMetricName = new MetricName("a0", "b0", "c0", new LinkedHashMap<>());
+        Value newValue = new Value();
+        newValue.record(new MetricConfig(), 2.0, System.currentTimeMillis());
+        KafkaMetric newMetricInstance = new KafkaMetric(this, newMetricName, newValue, new MetricConfig(), Time.SYSTEM);
+        metricsReference.get().put(newMetricName, newMetricInstance);
+
+        assertThat(registry.getMeters())
+                .singleElement()
+                .extracting(Meter::measure)
+                .satisfies(measurements ->
+                        assertThat(measurements)
+                                .singleElement()
+                                .extracting(Measurement::getValue)
+                                .isEqualTo(1.0)
+                ); // still referencing the old value since the map is only updated in checkAndBindMetrics
+
+        kafkaMetrics.checkAndBindMetrics(registry);
+        assertThat(registry.getMeters())
+                .singleElement()
+                .extracting(Meter::measure)
+                .satisfies(measurements ->
+                        assertThat(measurements)
+                                .singleElement()
+                                .extracting(Measurement::getValue)
+                                .isEqualTo(2.0)
+                ); // referencing the new value since the map was updated in checkAndBindMetrics
     }
 }
