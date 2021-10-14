@@ -97,14 +97,22 @@ public class MetricsRequestEventListenerTest extends JerseyTest {
             target("not-found").request().get();
         } catch (NotFoundException ignored) {
         }
+
+        assertThat(registry.get(METRIC_NAME)
+                .tags(tagsFrom("NOT_FOUND", "404", "CLIENT_ERROR", null)).timer().count())
+                .isEqualTo(1);
+    }
+
+    @Test
+    public void notFoundIsReportedWithUriOfMatchedResource() {
         try {
             target("throws-not-found-exception").request().get();
         } catch (NotFoundException ignored) {
         }
 
         assertThat(registry.get(METRIC_NAME)
-            .tags(tagsFrom("NOT_FOUND", "404", "CLIENT_ERROR", null)).timer().count())
-            .isEqualTo(2);
+                .tags(tagsFrom("/throws-not-found-exception", "404", "CLIENT_ERROR", null)).timer().count())
+                .isEqualTo(1);
     }
 
     @Test
