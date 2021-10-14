@@ -18,7 +18,7 @@ def VERSIONS = [
         // in hystrix 1.5.12, but Netflix re-released 1.5.11 as 1.5.18 late in 2018.
         // <=1.5.11 or 1.5.18 doesn't break with Micrometer, but open metrics won't be correct necessarily.
         'com.netflix.hystrix:hystrix-core:1.5.12',
-        'com.netflix.spectator:spectator-reg-atlas:latest.release',
+        'com.netflix.spectator:spectator-reg-atlas:0.+',
         'com.newrelic.agent.java:newrelic-api:5.+',
         'com.signalfx.public:signalfx-java:1.0.+',
         'com.squareup.okhttp3:okhttp:latest.release',
@@ -69,8 +69,8 @@ def VERSIONS = [
         'org.junit.platform:junit-platform-launcher:1.7.+',
         'org.junit.vintage:junit-vintage-engine:5.7.+',
         'org.latencyutils:LatencyUtils:latest.release',
-        'org.mockito:mockito-core:latest.release',
-        'org.mockito:mockito-inline:latest.release',
+        'org.mockito:mockito-core:3.+',
+        'org.mockito:mockito-inline:3.+',
         'org.mongodb:mongodb-driver-sync:latest.release',
         'org.slf4j:slf4j-api:1.7.+',
         'org.springframework:spring-context:latest.release',
