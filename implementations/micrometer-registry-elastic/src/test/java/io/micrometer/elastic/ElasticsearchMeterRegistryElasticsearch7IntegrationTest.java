@@ -25,12 +25,7 @@ class ElasticsearchMeterRegistryElasticsearch7IntegrationTest
 
     @Override
     protected String getVersion() {
-        return "7.9.2";
-    }
-
-    @Override
-    protected String getCountTypePath(String indexName) {
-        return "$." + indexName + ".mappings.properties.count.type";
+        return "7.15.0";
     }
 
 }
