@@ -46,7 +46,7 @@ import io.micrometer.core.instrument.Statistic;
 import io.micrometer.core.instrument.TimeGauge;
 import io.micrometer.core.instrument.Timer;
 
-public class MetricSchemaCompatibilityTest {
+class MetricSchemaCompatibilityTest {
 
     private final Map<String, String> config = new HashMap<String, String>() {{
         put("stackdriver.projectId", "projectId");
@@ -100,7 +100,7 @@ public class MetricSchemaCompatibilityTest {
      */
     @Test
     void semanticMetricTypes() {
-        config.put("stackdriver.semanticMetricTypes", "true");
+        config.put("stackdriver.useSemanticMetricTypes", "true");
 
         assertSchemaCompatibility(Collections.singletonList(
                         new Pair(GAUGE, DOUBLE)),
