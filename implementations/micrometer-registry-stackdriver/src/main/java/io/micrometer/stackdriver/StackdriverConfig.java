@@ -66,12 +66,23 @@ public interface StackdriverConfig extends StepRegistryConfig {
     }
 
     /**
-     * Use semantically correct metric types. E.g. counter used to produce GAUGE metric, while it would be better to use DELTA.
+     * Whether to use semantically correct metric types. This is {@code false} by default for the sake
+     * of backwards compatibility.
+     * For example, when this is {@code false}, counter metrics are published as the GAUGE MetricKind.
+     * When this is {@code true}, counter metrics are published as the CUMULATIVE MetricKind.
+     * <p></p>
+     * If you have published metrics to Stackdriver before, switching this flag will cause metrics
+     * publishing to fail until you delete the old MetricDescriptor with the previous MetricKind so that
+     * it can be recreated with the new MetricKind next time that metric is published.
+     * For example, the
+     * <a href="https://cloud.google.com/monitoring/api/ref_v3/rest/v3/projects.metricDescriptors/delete">projects.metricDescriptors.delete API</a>
+     * can be used to delete an existing MetricDescriptor.
      *
-     * @return a flag indicating if semantically correct metric types should be used
+     * @return a flag indicating if semantically correct metric types will be used
+     * @since 1.8.0
      */
     default boolean useSemanticMetricTypes() {
-        return getBoolean(this, "semanticMetricTypes").orElse(false);
+        return getBoolean(this, "useSemanticMetricTypes").orElse(false);
     }
 
     /**
