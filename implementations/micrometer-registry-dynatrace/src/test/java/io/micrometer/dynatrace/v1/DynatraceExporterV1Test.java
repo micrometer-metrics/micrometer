@@ -54,6 +54,7 @@ import static org.mockito.Mockito.when;
 class DynatraceExporterV1Test {
     private static final MockLoggerFactory FACTORY = new MockLoggerFactory();
     private static final MockLogger LOGGER = FACTORY.getLogger(DynatraceExporterV1.class);
+    private static final Double GAUGE_VALUE = 1.0;
 
     private final DynatraceConfig config = createDynatraceConfig();
     private final MockClock clock = new MockClock();
@@ -164,7 +165,7 @@ class DynatraceExporterV1Test {
 
     @Test
     void writeMeterWithGauge() {
-        meterRegistry.gauge("my.gauge", 1d);
+        meterRegistry.gauge("my.gauge", GAUGE_VALUE);
         Gauge gauge = meterRegistry.find("my.gauge").gauge();
         assertThat(exporter.writeMeter(gauge)).hasSize(1);
     }
@@ -180,7 +181,7 @@ class DynatraceExporterV1Test {
     @Test
     void writeMeterWithGaugeWhenChangingFiniteToNaNShouldWork() {
         AtomicBoolean first = new AtomicBoolean(true);
-        meterRegistry.gauge("my.gauge", first, (b) -> b.getAndSet(false) ? 1d : Double.NaN);
+        meterRegistry.gauge("my.gauge", first, (b) -> b.getAndSet(false) ? GAUGE_VALUE : Double.NaN);
         Gauge gauge = meterRegistry.find("my.gauge").gauge();
         Stream<DynatraceCustomMetric> stream = exporter.writeMeter(gauge);
         List<DynatraceCustomMetric> metrics = stream.collect(Collectors.toList());
@@ -190,7 +191,7 @@ class DynatraceExporterV1Test {
         try {
             Map<String, Object> map = mapper.readValue(timeSeries.asJson(), Map.class);
             List<List<Number>> dataPoints = (List<List<Number>>) map.get("dataPoints");
-            assertThat(dataPoints.get(0).get(1).doubleValue()).isEqualTo(1d);
+            assertThat(dataPoints.get(0).get(1).doubleValue()).isEqualTo(GAUGE_VALUE);
         } catch (IOException ex) {
             throw new RuntimeException(ex);
         }
@@ -209,7 +210,7 @@ class DynatraceExporterV1Test {
 
     @Test
     void writeMeterWithTimeGauge() {
-        AtomicReference<Double> obj = new AtomicReference<>(1d);
+        AtomicReference<Double> obj = new AtomicReference<>(GAUGE_VALUE);
         meterRegistry.more().timeGauge("my.timeGauge", Tags.empty(), obj, TimeUnit.SECONDS, AtomicReference::get);
         TimeGauge timeGauge = meterRegistry.find("my.timeGauge").timeGauge();
         assertThat(exporter.writeMeter(timeGauge)).hasSize(1);
@@ -337,7 +338,7 @@ class DynatraceExporterV1Test {
         HttpSender httpClient = request -> new HttpSender.Response(500, "simulated");
         DynatraceExporterV1 exporter = FACTORY.injectLogger(() -> createExporter(httpClient));
 
-        meterRegistry.gauge("my.gauge", 1d);
+        meterRegistry.gauge("my.gauge", GAUGE_VALUE);
         Gauge gauge = meterRegistry.find("my.gauge").gauge();
         exporter.export(Collections.singletonList(gauge));
 
@@ -360,7 +361,7 @@ class DynatraceExporterV1Test {
 
         DynatraceExporterV1 exporter = FACTORY.injectLogger(() -> createExporter(httpClient));
 
-        meterRegistry.gauge("my.gauge", 1d);
+        meterRegistry.gauge("my.gauge", GAUGE_VALUE);
         Gauge gauge = meterRegistry.find("my.gauge").gauge();
         exporter.export(Collections.singletonList(gauge));
 
