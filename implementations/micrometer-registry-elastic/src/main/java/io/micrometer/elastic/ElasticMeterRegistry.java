@@ -200,8 +200,8 @@ public class ElasticMeterRegistry extends StepMeterRegistry {
     }
 
     private HttpSender.Request.Builder authentication(HttpSender.Request.Builder request) {
-        if (StringUtils.isNotBlank(config.apiKey())) {
-            return request.withAuthentication("ApiKey", config.apiKey());
+        if (StringUtils.isNotBlank(config.apiKeyCredentials())) {
+            return request.withAuthentication("ApiKey", config.apiKeyCredentials());
         } else {
             return request.withBasicAuthentication(config.userName(), config.password());
         }

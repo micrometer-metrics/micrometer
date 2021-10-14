@@ -163,14 +163,20 @@ public interface ElasticConfig extends StepRegistryConfig {
     }
 
     /**
-     * The Api Key to use instead of user/password authentication.
+     * Base64-encoded credentials string. From a generated API key, concatenate in UTF-8 format
+     * the unique {@code id}, a colon ({@code :}), and the {@code api_key} in the following format:
+     * <p><pre>{@code <id>:<api_key>}</pre></p>
+     * The above should be the input for Base64 encoding, and the output is the credentials
+     * returned by this method.
+     * If configured, ApiKey type authentication is used instead of username/password authentication.
      *
-     * @return The api key
+     * @return base64-encoded ApiKey authentication credentials
+     * @see <a href="https://www.elastic.co/guide/en/elasticsearch/reference/current/security-api-create-api-key.html">Elasticsearch Guide - Create API key</a>
      * @since 1.8.0
      */
     @Nullable
-    default String apiKey() {
-        return getString(this, "apiKey").orElse(null);
+    default String apiKeyCredentials() {
+        return getSecret(this, "apiKeyCredentials").orElse(null);
     }
 
 

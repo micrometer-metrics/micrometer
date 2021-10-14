@@ -164,9 +164,20 @@ public interface HttpSender {
                 return this;
             }
 
-            public final Builder withAuthentication(String type, @Nullable String value) {
-                if (value != null && StringUtils.isNotBlank(value)) {
-                    withHeader("Authorization", type + " " + value);
+            /**
+             * Configures the {@code Authentication} HTTP header with the given type and credentials.
+             * The format will be:
+             * <p><pre>{@code Authorization: <type> <credentials>}</pre></p>
+             * No encoding will be performed on the {@code credentials}, so if the authentication scheme
+             * expects {@code credentials} to be encoded, encode them before passing them to this method.
+             *
+             * @param type authentication type
+             * @param credentials authentication credentials
+             * @return This request builder.
+             */
+            public final Builder withAuthentication(String type, @Nullable String credentials) {
+                if (credentials != null && StringUtils.isNotBlank(credentials)) {
+                    withHeader("Authorization", type + " " + credentials);
                 }
                 return this;
             }
