@@ -32,6 +32,7 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Supplier;
 import java.util.function.ToDoubleFunction;
 import java.util.stream.Collectors;
@@ -70,6 +71,7 @@ class KafkaMetrics implements MeterBinder, AutoCloseable {
     static final String DEFAULT_VALUE = "unknown";
 
     private final Supplier<Map<MetricName, ? extends Metric>> metricsSupplier;
+    private final AtomicReference<Map<MetricName, ? extends Metric>> metrics = new AtomicReference<>();
     private final Iterable<Tag> extraTags;
     private final Duration refreshInterval;
     private final ScheduledExecutorService scheduler = Executors.newSingleThreadScheduledExecutor(new NamedThreadFactory("micrometer-kafka-metrics"));
@@ -124,7 +126,8 @@ class KafkaMetrics implements MeterBinder, AutoCloseable {
      * Define common tags and meters before binding metrics
      */
     void prepareToBindMetrics(MeterRegistry registry) {
-        Map<MetricName, ? extends Metric> metrics = metricsSupplier.get();
+        this.metrics.set(this.metricsSupplier.get());
+        Map<MetricName, ? extends Metric> metrics = this.metrics.get();
         // Collect static metrics and tags
         Metric startTime = null;
 
@@ -139,7 +142,7 @@ class KafkaMetrics implements MeterBinder, AutoCloseable {
         }
 
         if (startTime != null) {
-            bindMeter(registry, metricsSupplier, startTime.metricName(), meterName(startTime), meterTags(startTime));
+            bindMeter(registry, startTime.metricName(), meterName(startTime), meterTags(startTime));
         }
     }
 
@@ -155,7 +158,8 @@ class KafkaMetrics implements MeterBinder, AutoCloseable {
      * comparing meters last returned from the Kafka client.
      */
     void checkAndBindMetrics(MeterRegistry registry) {
-        Map<MetricName, ? extends Metric> metrics = metricsSupplier.get();
+        this.metrics.set(this.metricsSupplier.get());
+        Map<MetricName, ? extends Metric> metrics = this.metrics.get();
 
         if (!currentMeters.equals(metrics.keySet())) {
             currentMeters = new HashSet<>(metrics.keySet());
@@ -194,7 +198,7 @@ class KafkaMetrics implements MeterBinder, AutoCloseable {
 
                 List<Tag> tags = meterTags(metric);
                 try {
-                    Meter meter = bindMeter(registry, metricsSupplier, metric.metricName(), meterName, tags);
+                    Meter meter = bindMeter(registry, metric.metricName(), meterName, tags);
                     List<Meter> meters = registryMetersByNames.computeIfAbsent(meterName, k -> new ArrayList<>());
                     meters.add(meter);
                 }
@@ -212,36 +216,36 @@ class KafkaMetrics implements MeterBinder, AutoCloseable {
         }
     }
 
-    private Meter bindMeter(MeterRegistry registry, Supplier<Map<MetricName, ? extends Metric>> metricsSupplier, MetricName metricName, String meterName, Iterable<Tag> tags) {
-        Meter meter = registerMeter(registry, metricsSupplier, metricName, meterName, tags);
+    private Meter bindMeter(MeterRegistry registry, MetricName metricName, String meterName, Iterable<Tag> tags) {
+        Meter meter = registerMeter(registry, metricName, meterName, tags);
         registeredMeters.add(meter);
         return meter;
     }
 
-    private Meter registerMeter(MeterRegistry registry, Supplier<Map<MetricName, ? extends Metric>> metricsSupplier, MetricName metricName, String meterName, Iterable<Tag> tags) {
+    private Meter registerMeter(MeterRegistry registry, MetricName metricName, String meterName, Iterable<Tag> tags) {
         if (meterName.endsWith("total") || meterName.endsWith("count")) {
-            return registerCounter(registry, metricsSupplier, metricName, meterName, tags);
+            return registerCounter(registry, metricName, meterName, tags);
         } else {
-            return registerGauge(registry, metricsSupplier, metricName, meterName, tags);
+            return registerGauge(registry, metricName, meterName, tags);
         }
     }
 
-    private Gauge registerGauge(MeterRegistry registry, Supplier<Map<MetricName, ? extends Metric>> metricsSupplier, MetricName metricName, String meterName, Iterable<Tag> tags) {
-        return Gauge.builder(meterName, metricsSupplier, toMetricValue(metricName))
+    private Gauge registerGauge(MeterRegistry registry, MetricName metricName, String meterName, Iterable<Tag> tags) {
+        return Gauge.builder(meterName, this.metrics, toMetricValue(metricName))
                 .tags(tags)
                 .description(metricName.description())
                 .register(registry);
     }
 
-    private FunctionCounter registerCounter(MeterRegistry registry, Supplier<Map<MetricName, ? extends Metric>> metricsSupplier, MetricName metricName, String meterName, Iterable<Tag> tags) {
-        return FunctionCounter.builder(meterName, metricsSupplier, toMetricValue(metricName))
+    private FunctionCounter registerCounter(MeterRegistry registry, MetricName metricName, String meterName, Iterable<Tag> tags) {
+        return FunctionCounter.builder(meterName, this.metrics, toMetricValue(metricName))
                 .tags(tags)
                 .description(metricName.description())
                 .register(registry);
     }
 
-    private ToDoubleFunction<Supplier<Map<MetricName, ? extends Metric>>> toMetricValue(MetricName metricName) {
-        return metricsSupplier -> toDouble(metricsSupplier.get().get(metricName));
+    private ToDoubleFunction<AtomicReference<Map<MetricName, ? extends Metric>>> toMetricValue(MetricName metricName) {
+        return metricsReference -> toDouble(metricsReference.get().get(metricName));
     }
 
     private double toDouble(@Nullable Metric metric) {
