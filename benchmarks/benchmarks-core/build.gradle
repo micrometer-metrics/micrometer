@@ -7,7 +7,7 @@ dependencies {
     jmh project(':micrometer-registry-prometheus')
 
     jmh 'io.dropwizard.metrics5:metrics-core:latest.release'
-    jmh 'io.prometheus:simpleclient_common:latest.release'
+    jmh 'io.prometheus:simpleclient_common:0.10.+'
 
     jmh 'io.dropwizard.metrics:metrics-core'
     jmh 'com.google.guava:guava'
