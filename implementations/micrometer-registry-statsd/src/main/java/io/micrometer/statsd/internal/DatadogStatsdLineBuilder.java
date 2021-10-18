@@ -53,6 +53,14 @@ public class DatadogStatsdLineBuilder extends FlavorStatsdLineBuilder {
         this(id, config, null);
     }
 
+    /**
+     * Create a {@code DatadogStatsdLineBuilder} instance.
+     *
+     * @param id meter ID
+     * @param config meter registry configuration
+     * @param distributionStatisticConfig distribution statistic configuration
+     * @since 1.8.0
+     */
     public DatadogStatsdLineBuilder(Meter.Id id, MeterRegistry.Config config, @Nullable DistributionStatisticConfig distributionStatisticConfig) {
         super(id, config);
 

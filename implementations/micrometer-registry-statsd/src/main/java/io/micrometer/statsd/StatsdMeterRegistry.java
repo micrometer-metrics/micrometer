@@ -506,6 +506,7 @@ public class StatsdMeterRegistry extends MeterRegistry {
          *                            to a StatsD line generator that knows how to write counts, gauges
          *                            timers, and histograms in the proprietary format.
          * @return This builder.
+         * @since 1.8.0
          */
         public Builder lineBuilder(BiFunction<Meter.Id, DistributionStatisticConfig, StatsdLineBuilder> lineBuilderFunction) {
             this.lineBuilderFunction = lineBuilderFunction;
