@@ -138,7 +138,8 @@ public class EhCache2Metrics extends CacheMeterBinder<Ehcache> {
 
     @Nullable
     private StatisticsGateway getStats() {
-        return getCache() != null ? getCache().getStatistics() : null;
+        Ehcache cache = getCache();
+        return cache != null ? cache.getStatistics() : null;
     }
 
     private void missMetrics(MeterRegistry registry) {
