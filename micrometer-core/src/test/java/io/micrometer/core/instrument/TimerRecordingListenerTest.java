@@ -5,15 +5,14 @@ import brave.Tracer;
 import brave.Tracing;
 import brave.handler.MutableSpan;
 import brave.test.TestSpanHandler;
+import io.micrometer.core.instrument.binder.jvm.ExecutorServiceMetrics;
 import io.micrometer.core.instrument.simple.SimpleMeterRegistry;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
 import java.time.Duration;
 import java.util.Random;
-import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.ConcurrentMap;
-import java.util.concurrent.TimeUnit;
+import java.util.concurrent.*;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -44,6 +43,26 @@ class TimerRecordingListenerTest {
         assertThat(span.name()).isEqualTo("payment.processing");
         assertThat(span.tags()).containsOnlyKeys("method").containsValue("credit card");
         assertThat(span.finishTimestamp()).isNotZero();
+    }
+
+    @Test
+    void timeRunnable() throws InterruptedException {
+        Timer.Sample sample = Timer.start(meterRegistry);
+        Span initialSpan = tracing.tracer().currentSpan();
+        Runnable myRunnable = () -> {
+            String traceIdInsideRunnable = tracing.tracer().currentSpan().context().traceIdString();
+            String spanIdInsideRunnable = tracing.tracer().currentSpan().context().spanIdString();
+            assertThat(traceIdInsideRunnable).isEqualTo(initialSpan.context().traceIdString());
+            assertThat(spanIdInsideRunnable).isNotEqualTo(initialSpan.context().spanIdString());
+        };
+        ExecutorService executor = ExecutorServiceMetrics.monitor(meterRegistry, Executors.newCachedThreadPool(), "my.executor");
+        executor.submit(myRunnable);
+        executor.shutdown();
+        assertThat(executor.awaitTermination(200, TimeUnit.MILLISECONDS)).isTrue();
+        sample.stop(Timer.builder("test.timer").register(meterRegistry));
+
+        assertThat(spans.spans()).extracting("name").containsExactly("executor.idle", "executor", "test.timer");
+        assertThat(spans.spans()).extracting("traceId").containsOnly(initialSpan.context().traceIdString());
     }
 
     void pause() throws InterruptedException {
