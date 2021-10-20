@@ -17,11 +17,14 @@ package io.micrometer.core.instrument.binder.cache;
 
 import io.micrometer.core.instrument.*;
 import io.micrometer.core.instrument.binder.BaseUnits;
+import io.micrometer.core.instrument.binder.cache.HazelcastIMapAdapter.LocalMapStats;
 import io.micrometer.core.lang.NonNullApi;
 import io.micrometer.core.lang.NonNullFields;
 import io.micrometer.core.lang.Nullable;
 
 import java.util.concurrent.TimeUnit;
+import java.util.function.ToDoubleFunction;
+import java.util.function.ToLongFunction;
 
 /**
  * Collect metrics on Hazelcast caches, including detailed metrics on storage space, near cache usage, and timings.
@@ -71,7 +74,7 @@ public class HazelcastCacheMetrics extends CacheMeterBinder<Object> {
 
     @Override
     protected Long size() {
-        HazelcastIMapAdapter.LocalMapStats localMapStats = cache.getLocalMapStats();
+        LocalMapStats localMapStats = cache.getLocalMapStats();
         if ( localMapStats != null ) {
             return localMapStats.getOwnedEntryCount();
         }
@@ -87,7 +90,7 @@ public class HazelcastCacheMetrics extends CacheMeterBinder<Object> {
      */
     @Override
     protected long hitCount() {
-        HazelcastIMapAdapter.LocalMapStats localMapStats = cache.getLocalMapStats();
+        LocalMapStats localMapStats = cache.getLocalMapStats();
         if (localMapStats != null) {
             return localMapStats.getHits();
         }
@@ -111,7 +114,7 @@ public class HazelcastCacheMetrics extends CacheMeterBinder<Object> {
 
     @Override
     protected long putCount() {
-        HazelcastIMapAdapter.LocalMapStats localMapStats = cache.getLocalMapStats();
+        LocalMapStats localMapStats = cache.getLocalMapStats();
         if (localMapStats != null) {
             return localMapStats.getPutOperationCount();
         }
@@ -121,29 +124,29 @@ public class HazelcastCacheMetrics extends CacheMeterBinder<Object> {
 
     @Override
     protected void bindImplementationSpecificMetrics(MeterRegistry registry) {
-        Gauge.builder("cache.entries", cache, cache -> cache.getLocalMapStats() != null ? cache.getLocalMapStats().getBackupEntryCount() : Double.NaN)
+        Gauge.builder("cache.entries", cache, cache -> getDouble(cache.getLocalMapStats(), LocalMapStats::getBackupEntryCount))
                 .tags(getTagsWithCacheName()).tag("ownership", "backup")
                 .description("The number of backup entries held by this member")
                 .register(registry);
 
-        Gauge.builder("cache.entries", cache, cache -> cache.getLocalMapStats() != null ? cache.getLocalMapStats().getOwnedEntryCount() : Double.NaN)
+        Gauge.builder("cache.entries", cache, cache -> getDouble(cache.getLocalMapStats(), LocalMapStats::getOwnedEntryCount))
                 .tags(getTagsWithCacheName()).tag("ownership", "owned")
                 .description("The number of owned entries held by this member")
                 .register(registry);
 
-        Gauge.builder("cache.entry.memory", cache, cache -> cache.getLocalMapStats() != null ? cache.getLocalMapStats().getBackupEntryMemoryCost() : Double.NaN)
+        Gauge.builder("cache.entry.memory", cache, cache -> getDouble(cache.getLocalMapStats(), LocalMapStats::getBackupEntryMemoryCost))
                 .tags(getTagsWithCacheName()).tag("ownership", "backup")
                 .description("Memory cost of backup entries held by this member")
                 .baseUnit(BaseUnits.BYTES)
                 .register(registry);
 
-        Gauge.builder("cache.entry.memory", cache, cache -> cache.getLocalMapStats() != null ? cache.getLocalMapStats().getOwnedEntryMemoryCost() : Double.NaN)
+        Gauge.builder("cache.entry.memory", cache, cache -> getDouble(cache.getLocalMapStats(), LocalMapStats::getOwnedEntryMemoryCost))
                 .tags(getTagsWithCacheName()).tag("ownership", "owned")
                 .description("Memory cost of owned entries held by this member")
                 .baseUnit(BaseUnits.BYTES)
                 .register(registry);
 
-        FunctionCounter.builder("cache.partition.gets", cache, cache -> cache.getLocalMapStats() != null ? cache.getLocalMapStats().getGetOperationCount() : Double.NaN)
+        FunctionCounter.builder("cache.partition.gets", cache, cache -> getDouble(cache.getLocalMapStats(), LocalMapStats::getGetOperationCount))
                 .tags(getTagsWithCacheName())
                 .description("The total number of get operations executed against this partition")
                 .register(registry);
@@ -152,24 +155,29 @@ public class HazelcastCacheMetrics extends CacheMeterBinder<Object> {
         nearCacheMetrics(registry);
     }
 
+    private double getDouble(LocalMapStats localMapStats, ToDoubleFunction<LocalMapStats> function) {
+        return localMapStats != null ? function.applyAsDouble(localMapStats) : Double.NaN;
+    }
+
     private void nearCacheMetrics(MeterRegistry registry) {
-        if (cache.getLocalMapStats() != null && cache.getLocalMapStats().getNearCacheStats() != null) {
-            Gauge.builder("cache.near.requests", cache, cache -> cache.getLocalMapStats() != null ? cache.getLocalMapStats().getNearCacheStats().getHits() : Double.NaN)
+        LocalMapStats localMapStats = cache.getLocalMapStats();
+        if (localMapStats != null && localMapStats.getNearCacheStats() != null) {
+            Gauge.builder("cache.near.requests", cache, cache -> getDouble(cache.getLocalMapStats(), (stats) -> stats.getNearCacheStats().getHits()))
                     .tags(getTagsWithCacheName()).tag("result", "hit")
                     .description("The number of hits (reads) of near cache entries owned by this member")
                     .register(registry);
 
-            Gauge.builder("cache.near.requests", cache, cache -> cache.getLocalMapStats() != null ? cache.getLocalMapStats().getNearCacheStats().getMisses() : Double.NaN)
+            Gauge.builder("cache.near.requests", cache, cache -> getDouble(cache.getLocalMapStats(), (stats) -> stats.getNearCacheStats().getMisses()))
                     .tags(getTagsWithCacheName()).tag("result", "miss")
                     .description("The number of hits (reads) of near cache entries owned by this member")
                     .register(registry);
 
-            Gauge.builder("cache.near.evictions", cache, cache -> cache.getLocalMapStats() != null ? cache.getLocalMapStats().getNearCacheStats().getEvictions() : Double.NaN)
+            Gauge.builder("cache.near.evictions", cache, cache -> getDouble(cache.getLocalMapStats(), (stats) -> stats.getNearCacheStats().getEvictions()))
                     .tags(getTagsWithCacheName())
                     .description("The number of evictions of near cache entries owned by this member")
                     .register(registry);
 
-            Gauge.builder("cache.near.persistences", cache, cache -> cache.getLocalMapStats() != null ? cache.getLocalMapStats().getNearCacheStats().getPersistenceCount() : Double.NaN)
+            Gauge.builder("cache.near.persistences", cache, cache -> getDouble(cache.getLocalMapStats(), (stats) -> stats.getNearCacheStats().getPersistenceCount()))
                     .tags(getTagsWithCacheName())
                     .description("The number of Near Cache key persistences (when the pre-load feature is enabled)")
                     .register(registry);
@@ -178,24 +186,28 @@ public class HazelcastCacheMetrics extends CacheMeterBinder<Object> {
 
     private void timings(MeterRegistry registry) {
         FunctionTimer.builder("cache.gets.latency", cache,
-                cache -> cache.getLocalMapStats() != null ? cache.getLocalMapStats().getGetOperationCount() : 0L,
-                cache -> cache.getLocalMapStats() != null ? cache.getLocalMapStats().getTotalGetLatency() : Double.NaN, TimeUnit.MILLISECONDS)
+                cache -> getLong(cache.getLocalMapStats(), LocalMapStats::getGetOperationCount),
+                cache -> getDouble(cache.getLocalMapStats(), LocalMapStats::getTotalGetLatency), TimeUnit.MILLISECONDS)
                 .tags(getTagsWithCacheName())
                 .description("Cache gets")
                 .register(registry);
 
         FunctionTimer.builder("cache.puts.latency", cache,
-                cache -> cache.getLocalMapStats() != null ? cache.getLocalMapStats().getPutOperationCount() : 0L,
-                cache -> cache.getLocalMapStats() != null ? cache.getLocalMapStats().getTotalPutLatency() : Double.NaN, TimeUnit.MILLISECONDS)
+                cache -> getLong(cache.getLocalMapStats(), LocalMapStats::getPutOperationCount),
+                cache -> getDouble(cache.getLocalMapStats(), LocalMapStats::getTotalPutLatency), TimeUnit.MILLISECONDS)
                 .tags(getTagsWithCacheName())
                 .description("Cache puts")
                 .register(registry);
 
         FunctionTimer.builder("cache.removals.latency", cache,
-                cache -> cache.getLocalMapStats() != null ? cache.getLocalMapStats().getRemoveOperationCount() : 0L,
-                cache -> cache.getLocalMapStats() != null ? cache.getLocalMapStats().getTotalRemoveLatency() : Double.NaN, TimeUnit.MILLISECONDS)
+                cache -> getLong(cache.getLocalMapStats(), LocalMapStats::getRemoveOperationCount),
+                cache -> getDouble(cache.getLocalMapStats(), LocalMapStats::getTotalRemoveLatency), TimeUnit.MILLISECONDS)
                 .tags(getTagsWithCacheName())
                 .description("Cache removals")
                 .register(registry);
+    }
+
+    private long getLong(LocalMapStats localMapStats, ToLongFunction<LocalMapStats> function) {
+        return localMapStats != null ? function.applyAsLong(localMapStats) : 0L;
     }
 }
