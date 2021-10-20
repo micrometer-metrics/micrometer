@@ -38,7 +38,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 class CaffeineCacheMetricsTest extends AbstractCacheMetricsTest {
 
     private LoadingCache<String, String> cache = Caffeine.newBuilder().build(key -> "");
-    private CaffeineCacheMetrics metrics = new CaffeineCacheMetrics(cache, "testCache", expectedTag);
+    private CaffeineCacheMetrics<String, String, Cache<String, String>> metrics = new CaffeineCacheMetrics<>(cache, "testCache", expectedTag);
 
     @Test
     void reportExpectedGeneralMetrics() {
@@ -74,7 +74,7 @@ class CaffeineCacheMetricsTest extends AbstractCacheMetricsTest {
     void doNotReportMetricsForNonLoadingCache() {
         MeterRegistry meterRegistry = new SimpleMeterRegistry();
         Cache<Object, Object> cache = Caffeine.newBuilder().build();
-        CaffeineCacheMetrics metrics = new CaffeineCacheMetrics(cache, "testCache", expectedTag);
+        CaffeineCacheMetrics<Object, Object, Cache<Object, Object>> metrics = new CaffeineCacheMetrics<>(cache, "testCache", expectedTag);
         metrics.bindTo(meterRegistry);
 
         assertThat(meterRegistry.find("cache.load.duration").timeGauge()).isNull();

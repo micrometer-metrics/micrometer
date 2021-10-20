@@ -58,7 +58,7 @@ class JCacheMetricsTest extends AbstractCacheMetricsTest {
 
     private CacheManager cacheManager = mock(CacheManager.class);
 
-    private JCacheMetrics metrics;
+    private JCacheMetrics<String, String, Cache<String, String>> metrics;
     private MBeanServer mbeanServer;
     private Long expectedAttributeValue = new Random().nextLong();
 
@@ -67,7 +67,7 @@ class JCacheMetricsTest extends AbstractCacheMetricsTest {
         when(cache.getCacheManager()).thenReturn(cacheManager);
         when(cache.getName()).thenReturn("testCache");
         when(cacheManager.getURI()).thenReturn(new URI("http://localhost"));
-        metrics = new JCacheMetrics(cache, expectedTag);
+        metrics = new JCacheMetrics<>(cache, expectedTag);
 
         // emulate MBean server with MBean used for statistic lookup
         mbeanServer = MBeanServerFactory.createMBeanServer();
@@ -148,7 +148,7 @@ class JCacheMetricsTest extends AbstractCacheMetricsTest {
     void defaultValueWhenObjectNameNotInitialized() throws MalformedObjectNameException {
         // set cacheManager to null to emulate scenario when objectName not initialized
         when(cache.getCacheManager()).thenReturn(null);
-        metrics = new JCacheMetrics(cache, expectedTag);
+        metrics = new JCacheMetrics<>(cache, expectedTag);
 
         assertThat(metrics.hitCount()).isEqualTo(0L);
     }
@@ -157,7 +157,7 @@ class JCacheMetricsTest extends AbstractCacheMetricsTest {
     void doNotReportMetricWhenObjectNameNotInitialized() throws MalformedObjectNameException {
         // set cacheManager to null to emulate scenario when objectName not initialized
         when(cache.getCacheManager()).thenReturn(null);
-        metrics = new JCacheMetrics(cache, expectedTag);
+        metrics = new JCacheMetrics<>(cache, expectedTag);
         MeterRegistry registry = new SimpleMeterRegistry();
         metrics.bindImplementationSpecificMetrics(registry);
 
