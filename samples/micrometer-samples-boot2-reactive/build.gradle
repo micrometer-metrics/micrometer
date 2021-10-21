@@ -18,6 +18,9 @@ dependencies {
     implementation('org.springframework.boot:spring-boot-starter-actuator') {
         exclude group: 'io.micrometer', module: 'micrometer-core'
     }
+    // Tracing
+    // using Zipkin Brave for TimerRecordingListener POC
+    implementation 'io.zipkin.brave:brave:latest.release'
 }
 
 bootJar {
