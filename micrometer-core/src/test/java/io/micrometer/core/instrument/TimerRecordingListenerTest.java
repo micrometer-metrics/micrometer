@@ -67,8 +67,11 @@ class TimerRecordingListenerTest {
         Runnable myRunnable = () -> {
             String traceIdInsideRunnable = tracing.tracer().currentSpan().context().traceIdString();
             String spanIdInsideRunnable = tracing.tracer().currentSpan().context().spanIdString();
+            String parentSpanIdInsideRunnable = tracing.tracer().currentSpan().context().parentIdString();
+
             assertThat(traceIdInsideRunnable).isEqualTo(initialSpan.context().traceIdString());
             assertThat(spanIdInsideRunnable).isNotEqualTo(initialSpan.context().spanIdString());
+            assertThat(parentSpanIdInsideRunnable).isEqualTo(initialSpan.context().spanIdString());
         };
         ExecutorService executor = ExecutorServiceMetrics.monitor(meterRegistry, Executors.newCachedThreadPool(), "my.executor");
         executor.submit(myRunnable);
