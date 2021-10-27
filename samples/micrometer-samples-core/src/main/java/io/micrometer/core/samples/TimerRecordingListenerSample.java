@@ -5,6 +5,7 @@ import java.time.Duration;
 import java.util.UUID;
 
 import io.micrometer.core.instrument.Timer;
+import io.micrometer.core.instrument.Timer.Sample;
 import io.micrometer.core.instrument.TimerRecordingListener;
 import io.micrometer.core.lang.Nullable;
 import io.micrometer.prometheus.PrometheusConfig;
@@ -52,6 +53,12 @@ public class TimerRecordingListenerSample {
 
         private String toString(Timer timer) {
             return timer.getId().getName() + " " + timer.getId().getTags();
+        }
+
+        @Override
+        public void onRestore(Sample sample, CustomContext context) {
+            // TODO Auto-generated method stub
+            
         }
     }
 

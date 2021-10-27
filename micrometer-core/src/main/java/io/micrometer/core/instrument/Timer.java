@@ -275,6 +275,7 @@ public interface Timer extends Meter, HistogramSupport {
      * by calling {@link Sample#stop(Timer)}. Note how the {@link Timer} isn't provided until the
      * sample is stopped, allowing you to determine the timer's tags at the last minute.
      */
+    @SuppressWarnings({ "unchecked", "rawtypes" })
     class Sample {
         private final long startTime;
         private final Clock clock;

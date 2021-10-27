@@ -18,6 +18,8 @@ package io.micrometer.boot2.reactive.samples;
 import brave.Span;
 import brave.Tracer;
 import io.micrometer.core.instrument.Timer;
+import io.micrometer.core.instrument.Timer.Context;
+import io.micrometer.core.instrument.Timer.Sample;
 import io.micrometer.core.instrument.TimerRecordingListener;
 
 import java.time.Duration;
@@ -34,42 +36,34 @@ class BraveTimerRecordingListener implements TimerRecordingListener {
     }
 
     @Override
-    public void onStart(Timer.Sample sample) {
-        // TODO check if onStart has already been called for this sample?
-        Span span = tracer.nextSpan().start();
-        contextMap.computeIfAbsent(sample, key -> new SpanContext(span, tracer.withSpanInScope(span)));
+    public void onStart(Sample sample, Context context) {
+        // TODO Auto-generated method stub
+        
     }
 
     @Override
-    public void onError(Timer.Sample sample, Throwable throwable) {
-        contextMap.get(sample).getSpan().error(throwable);
+    public void onError(Sample sample, Context context, Throwable throwable) {
+        // TODO Auto-generated method stub
+        
     }
 
     @Override
-    public void onStop(Timer.Sample sample, Timer timer, Duration duration) {
-        // TODO check if onStart was called for this sample and onStop hasn't been called yet?
-        SpanContext context = contextMap.get(sample);
-        Span span = context.getSpan().name(timer.getId().getName());
-        timer.getId().getTagsAsIterable().forEach(tag -> span.tag(tag.getKey(), tag.getValue()));
-        context.getSpanInScope().close();
-        span.finish();
+    public void onRestore(Sample sample, Context context) {
+        // TODO Auto-generated method stub
+        
     }
 
-    static class SpanContext {
-        private final Span span;
-        private final Tracer.SpanInScope spanInScope;
-
-        SpanContext(Span span, Tracer.SpanInScope spanInScope) {
-            this.span = span;
-            this.spanInScope = spanInScope;
-        }
-
-        Span getSpan() {
-            return span;
-        }
-
-        Tracer.SpanInScope getSpanInScope() {
-            return spanInScope;
-        }
+    @Override
+    public void onStop(Sample sample, Context context, Timer timer, Duration duration) {
+        // TODO Auto-generated method stub
+        
     }
+
+    @Override
+    public boolean supportsContext(Context context) {
+        // TODO Auto-generated method stub
+        return false;
+    }
+
+   
 }

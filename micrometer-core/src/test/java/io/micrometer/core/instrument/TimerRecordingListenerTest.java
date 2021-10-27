@@ -20,6 +20,8 @@ import brave.Tracer;
 import brave.Tracing;
 import brave.handler.MutableSpan;
 import brave.test.TestSpanHandler;
+import io.micrometer.core.instrument.Timer.Context;
+import io.micrometer.core.instrument.Timer.Sample;
 import io.micrometer.core.instrument.binder.jvm.ExecutorServiceMetrics;
 import io.micrometer.core.instrument.simple.SimpleMeterRegistry;
 import org.junit.jupiter.api.BeforeEach;
@@ -38,7 +40,7 @@ class TimerRecordingListenerTest {
 
     @BeforeEach
     void setup() {
-        meterRegistry.config().timerRecordingListener(new BraveTimerRecordingListener(tracing.tracer()));
+        meterRegistry.config().timerRecordingListener(new BraveTimerRecordingListener());
     }
 
     @Test
@@ -88,52 +90,36 @@ class TimerRecordingListenerTest {
     }
 
     static class BraveTimerRecordingListener implements TimerRecordingListener {
-        final Tracer tracer;
-        // TODO not specific to this listener but leaks are possible where onStart is called but onStop is not
-        ConcurrentMap<Timer.Sample, SpanContext> contextMap = new ConcurrentHashMap<>();
 
-        BraveTimerRecordingListener(Tracer tracer) {
-            this.tracer = tracer;
+        @Override
+        public void onStart(Sample sample, Context context) {
+            // TODO Auto-generated method stub
+            
         }
 
         @Override
-        public void onStart(Timer.Sample sample) {
-            // TODO check if onStart has already been called for this sample?
-            Span span = tracer.nextSpan().start();
-            contextMap.computeIfAbsent(sample, key -> new SpanContext(span, tracer.withSpanInScope(span)));
+        public void onError(Sample sample, Context context, Throwable throwable) {
+            // TODO Auto-generated method stub
+            
         }
 
         @Override
-        public void onError(Timer.Sample sample, Throwable throwable) {
-            contextMap.get(sample).getSpan().error(throwable);
+        public void onRestore(Sample sample, Context context) {
+            // TODO Auto-generated method stub
+            
         }
 
         @Override
-        public void onStop(Timer.Sample sample, Timer timer, Duration duration) {
-            // TODO check if onStart was called for this sample and onStop hasn't been called yet?
-            SpanContext context = contextMap.get(sample);
-            Span span = context.getSpan().name(timer.getId().getName());
-            timer.getId().getTagsAsIterable().forEach(tag -> span.tag(tag.getKey(), tag.getValue()));
-            context.getSpanInScope().close();
-            span.finish();
+        public void onStop(Sample sample, Context context, Timer timer, Duration duration) {
+            // TODO Auto-generated method stub
+            
         }
 
-        static class SpanContext {
-            private final Span span;
-            private final Tracer.SpanInScope spanInScope;
-
-            SpanContext(Span span, Tracer.SpanInScope spanInScope) {
-                this.span = span;
-                this.spanInScope = spanInScope;
-            }
-
-            Span getSpan() {
-                return span;
-            }
-
-            Tracer.SpanInScope getSpanInScope() {
-                return spanInScope;
-            }
+        @Override
+        public boolean supportsContext(Context context) {
+            // TODO Auto-generated method stub
+            return false;
         }
+        
     }
 }
