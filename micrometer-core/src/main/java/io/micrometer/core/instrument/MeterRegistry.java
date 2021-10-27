@@ -79,7 +79,7 @@ public abstract class MeterRegistry {
     protected final Clock clock;
     private final Object meterMapLock = new Object();
     private volatile MeterFilter[] filters = new MeterFilter[0];
-    private final List<TimerRecordingListener> timerRecordingListeners = new CopyOnWriteArrayList<>();
+    private final List<TimerRecordingListener<?>> timerRecordingListeners = new CopyOnWriteArrayList<>();
     private final List<Consumer<Meter>> meterAddedListeners = new CopyOnWriteArrayList<>();
     private final List<Consumer<Meter>> meterRemovedListeners = new CopyOnWriteArrayList<>();
     private final List<BiConsumer<Meter.Id, String>> meterRegistrationFailedListeners = new CopyOnWriteArrayList<>();
@@ -808,13 +808,13 @@ public abstract class MeterRegistry {
          * @param listener listener to add to the current configuration
          * @return This configuration instance
          */
-        public Config timerRecordingListener(TimerRecordingListener listener) {
+        public Config timerRecordingListener(TimerRecordingListener<?> listener) {
             timerRecordingListeners.add(listener);
             return this;
         }
 
         // package-private for minimal visibility
-        Collection<TimerRecordingListener> getTimerRecordingListeners() {
+        Collection<TimerRecordingListener<?>> getTimerRecordingListeners() {
             return timerRecordingListeners;
         }
 

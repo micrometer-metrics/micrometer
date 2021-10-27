@@ -30,6 +30,7 @@ import java.util.Collections;
 import java.util.concurrent.Callable;
 import java.util.concurrent.TimeUnit;
 import java.util.function.Supplier;
+import java.util.stream.Collectors;
 
 /**
  * Timer intended to track of a large number of short running events. Example would be something like
@@ -59,7 +60,11 @@ public interface Timer extends Meter, HistogramSupport {
      * @return A timing sample with start time recorded.
      */
     static Sample start(MeterRegistry registry) {
-        return new Sample(registry.config().clock(), registry.config().getTimerRecordingListeners());
+        return start(registry, null);
+    }
+
+    static Sample start(MeterRegistry registry, @Nullable Context context) {
+        return new Sample(registry.config().clock(), registry.config().getTimerRecordingListeners(), context);
     }
 
     /**
@@ -274,17 +279,25 @@ public interface Timer extends Meter, HistogramSupport {
         private final long startTime;
         private final Clock clock;
         private final Collection<TimerRecordingListener> listeners;
+        @Nullable private final Context context;
 
         @Deprecated
         Sample(Clock clock) {
             this(clock, Collections.emptyList());
         }
 
-        Sample(Clock clock, Collection<TimerRecordingListener> listeners) {
+        Sample(Clock clock, Collection<TimerRecordingListener<?>> listeners) {
+            this(clock, listeners, null);
+        }
+
+        Sample(Clock clock, Collection<TimerRecordingListener<?>> listeners, @Nullable Context context) {
             this.clock = clock;
             this.startTime = clock.monotonicTime();
-            this.listeners = listeners;
-            this.listeners.forEach(listener -> listener.onStart(this));
+            this.context = context;
+            this.listeners = listeners.stream()
+                    .filter(listener -> listener.supportsContext(context))
+                    .collect(Collectors.toList());
+            this.listeners.forEach(listener -> listener.onStart(this, context));
         }
 
         /**
@@ -295,7 +308,8 @@ public interface Timer extends Meter, HistogramSupport {
         public void error(Throwable throwable) {
             // TODO check stop hasn't been called yet?
             // TODO doesn't do anything to tags currently; we should make error tagging more first-class
-            this.listeners.forEach(listener -> listener.onError(this, throwable));
+            this.listeners.forEach(listener -> listener.onError(this, context, throwable));
+
         }
 
         /**
@@ -307,9 +321,12 @@ public interface Timer extends Meter, HistogramSupport {
         public long stop(Timer timer) {
             long durationNs = clock.monotonicTime() - startTime;
             timer.record(durationNs, TimeUnit.NANOSECONDS);
-            this.listeners.forEach(listener -> listener.onStop(this, timer, Duration.ofNanos(durationNs)));
+            this.listeners.forEach(listener -> listener.onStop(this, context, timer, Duration.ofNanos(durationNs)));
             return durationNs;
         }
+    }
+
+    interface Context {
     }
 
     class ResourceSample extends AbstractTimerBuilder<ResourceSample> implements AutoCloseable {
