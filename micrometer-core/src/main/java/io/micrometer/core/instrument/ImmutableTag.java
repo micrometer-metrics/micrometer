@@ -29,12 +29,23 @@ import static java.util.Objects.requireNonNull;
 public class ImmutableTag implements Tag {
     private final String key;
     private final String value;
+    private final Cardinality cardinality;
 
     public ImmutableTag(String key, String value) {
         requireNonNull(key);
         requireNonNull(value);
         this.key = key;
         this.value = value;
+        this.cardinality = Cardinality.LOW; // TODO: or HIGH?
+    }
+
+    public ImmutableTag(String key, String value, Cardinality cardinality) {
+        requireNonNull(key);
+        requireNonNull(value);
+        requireNonNull(cardinality);
+        this.key = key;
+        this.value = value;
+        this.cardinality = cardinality;
     }
 
     @Override
@@ -45,6 +56,11 @@ public class ImmutableTag implements Tag {
     @Override
     public String getValue() {
         return value;
+    }
+
+    @Override
+    public Cardinality getCardinality() {
+        return cardinality;
     }
 
     @Override

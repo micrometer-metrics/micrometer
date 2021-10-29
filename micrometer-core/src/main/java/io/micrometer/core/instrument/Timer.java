@@ -327,7 +327,7 @@ public interface Timer extends Meter, HistogramSupport {
         }
     }
 
-    interface Context {
+    public interface Context {
     }
 
     class ResourceSample extends AbstractTimerBuilder<ResourceSample> implements AutoCloseable {
