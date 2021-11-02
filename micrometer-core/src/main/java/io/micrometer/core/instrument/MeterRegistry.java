@@ -41,13 +41,16 @@ import io.micrometer.core.lang.Nullable;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.Deque;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.NoSuchElementException;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.CopyOnWriteArrayList;
+import java.util.concurrent.LinkedBlockingDeque;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.function.BiConsumer;
@@ -86,6 +89,9 @@ public abstract class MeterRegistry {
     private final Config config = new Config();
     private final More more = new More();
 
+    private final ThreadLocal<Timer.Sample> threadLocalRecordings = new ThreadLocal<>();
+    private final Deque<Timer.Sample> recordings = new LinkedBlockingDeque<>();
+
     // Even though writes are guarded by meterMapLock, iterators across value space are supported
     // Hence, we use CHM to support that iteration without ConcurrentModificationException risk
     private final Map<Id, Meter> meterMap = new ConcurrentHashMap<>();
@@ -114,6 +120,43 @@ public abstract class MeterRegistry {
         requireNonNull(clock);
         this.clock = clock;
     }
+
+    public void setCurrentSample(Timer.Sample recording) {
+        Timer.Sample old = this.threadLocalRecordings.get();
+        if (old != null) {
+//            log.trace(() -> "Putting previous recording to stack [" + old + "]");
+            this.recordings.addFirst(old);
+        }
+        this.threadLocalRecordings.set(recording);
+    }
+
+    /**
+     * Returns the current interval recording.
+     *
+     * @return currently stored recording
+     */
+    public Timer.Sample getCurrentSample() {
+        return this.threadLocalRecordings.get();
+    }
+
+    /**
+     * Removes the current span from thread local and brings back the previous span
+     * to the current thread local.
+     */
+    public void removeCurrentSample() {
+        this.threadLocalRecordings.remove();
+        if (this.recordings.isEmpty()) {
+            return;
+        }
+        try {
+            Timer.Sample first = this.recordings.removeFirst();
+//            log.debug(() -> "Took recording [" + first + "] from thread local");
+            this.threadLocalRecordings.set(first);
+        } catch (NoSuchElementException ex) {
+//            log.trace(ex, () -> "Failed to remove a recording from the queue");
+        }
+    }
+
 
     /**
      * Build a new gauge to be added to the registry. This is guaranteed to only be called if the gauge doesn't already exist.

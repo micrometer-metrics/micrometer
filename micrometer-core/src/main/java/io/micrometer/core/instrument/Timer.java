@@ -42,18 +42,6 @@ import java.util.stream.Collectors;
  */
 public interface Timer extends Meter, HistogramSupport {
     /**
-     * Start a timing sample using the {@link Clock#SYSTEM System clock}.
-     *
-     * @return A timing sample with start time recorded.
-     * @since 1.1.0
-     * @deprecated use {@link #start(MeterRegistry)} instead
-     */
-    @Deprecated
-    static Sample start() {
-        return start(Clock.SYSTEM);
-    }
-
-    /**
      * Start a timing sample.
      *
      * @param registry A meter registry whose clock is to be used
@@ -64,19 +52,10 @@ public interface Timer extends Meter, HistogramSupport {
     }
 
     static Sample start(MeterRegistry registry, @Nullable Context context) {
-        return new Sample(registry.config().clock(), registry.config().getTimerRecordingListeners(), context);
-    }
+        Sample sample = new Sample(registry, context);
+        registry.setCurrentSample(sample);
 
-    /**
-     * Start a timing sample.
-     *
-     * @param clock a clock to be used
-     * @return A timing sample with start time recorded.
-     * @deprecated use {@link #start(MeterRegistry)} instead
-     */
-    @Deprecated
-    static Sample start(Clock clock) {
-        return new Sample(clock);
+        return sample;
     }
 
     static Builder builder(String name) {
@@ -282,20 +261,11 @@ public interface Timer extends Meter, HistogramSupport {
         private final Collection<TimerRecordingListener> listeners;
         @Nullable private final Context context;
 
-        @Deprecated
-        Sample(Clock clock) {
-            this(clock, Collections.emptyList());
-        }
-
-        Sample(Clock clock, Collection<TimerRecordingListener<?>> listeners) {
-            this(clock, listeners, null);
-        }
-
-        Sample(Clock clock, Collection<TimerRecordingListener<?>> listeners, @Nullable Context context) {
-            this.clock = clock;
+        Sample(MeterRegistry registry, @Nullable Context context) {
+            this.clock = registry.config().clock();
             this.startTime = clock.monotonicTime();
             this.context = context;
-            this.listeners = listeners.stream()
+            this.listeners = registry.config().getTimerRecordingListeners().stream()
                     .filter(listener -> listener.supportsContext(context))
                     .collect(Collectors.toList());
             this.listeners.forEach(listener -> listener.onStart(this, context));
@@ -323,7 +293,13 @@ public interface Timer extends Meter, HistogramSupport {
             long durationNs = clock.monotonicTime() - startTime;
             timer.record(durationNs, TimeUnit.NANOSECONDS);
             this.listeners.forEach(listener -> listener.onStop(this, context, timer, Duration.ofNanos(durationNs)));
+
             return durationNs;
+        }
+
+        public Sample restore() {
+            this.listeners.forEach(listener -> listener.onRestore(this, context));
+            return this;
         }
     }
 
