@@ -37,6 +37,8 @@ import io.micrometer.core.instrument.search.RequiredSearch;
 import io.micrometer.core.instrument.search.Search;
 import io.micrometer.core.instrument.util.TimeUtils;
 import io.micrometer.core.lang.Nullable;
+import io.micrometer.core.util.internal.logging.InternalLogger;
+import io.micrometer.core.util.internal.logging.InternalLoggerFactory;
 
 import java.util.ArrayList;
 import java.util.Collection;
@@ -79,6 +81,9 @@ import static java.util.Objects.requireNonNull;
  * @author Johnny Lim
  */
 public abstract class MeterRegistry {
+    
+    private static final InternalLogger LOG = InternalLoggerFactory.getInstance(MeterRegistry.class);
+    
     protected final Clock clock;
     private final Object meterMapLock = new Object();
     private volatile MeterFilter[] filters = new MeterFilter[0];
@@ -121,13 +126,21 @@ public abstract class MeterRegistry {
         this.clock = clock;
     }
 
-    public void setCurrentSample(Timer.Sample recording) {
+    public void setCurrentSample(@Nullable Timer.Sample recording) {
         Timer.Sample old = this.threadLocalRecordings.get();
+        if (old == recording) {
+            return;
+        }
         if (old != null) {
-//            log.trace(() -> "Putting previous recording to stack [" + old + "]");
+            if (LOG.isTraceEnabled()) {
+                LOG.trace("Putting current recording [" + old + "] on stack");
+            }
             this.recordings.addFirst(old);
         }
         this.threadLocalRecordings.set(recording);
+        if (LOG.isTraceEnabled()) {
+            LOG.trace("Current recording is [" + this.threadLocalRecordings.get() + "]");
+        }
     }
 
     /**
@@ -143,17 +156,28 @@ public abstract class MeterRegistry {
      * Removes the current span from thread local and brings back the previous span
      * to the current thread local.
      */
-    public void removeCurrentSample() {
+    public void removeCurrentSample(Timer.Sample sample) {
+        Timer.Sample current = this.threadLocalRecordings.get();
+        if (!current.equals(sample)) {
+            if (LOG.isDebugEnabled()) {
+               LOG.debug("Sample [" + sample + "] that calls close is not the same as the one currently in thread local [" + current + "]");
+            }
+            return;
+        }
         this.threadLocalRecordings.remove();
         if (this.recordings.isEmpty()) {
             return;
         }
         try {
             Timer.Sample first = this.recordings.removeFirst();
-//            log.debug(() -> "Took recording [" + first + "] from thread local");
             this.threadLocalRecordings.set(first);
+            if (LOG.isTraceEnabled()) {
+                LOG.trace("Took recording [" + current + "] from thread local and set previous one from stack [" + first + "] back as current");
+            }
         } catch (NoSuchElementException ex) {
-//            log.trace(ex, () -> "Failed to remove a recording from the queue");
+            if (LOG.isTraceEnabled()) {
+                LOG.trace("Failed to remove a recording from the queue", ex);
+            }
         }
     }
 

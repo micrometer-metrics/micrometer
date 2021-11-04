@@ -30,7 +30,7 @@ import io.micrometer.core.lang.Nullable;
  * @param <REQ> request type
  * @param <RES> response type
  */
-public interface IntervalHttpEvent<REQ extends Request, RES extends Response> extends Timer.Context {
+public abstract class IntervalHttpEvent<REQ extends Request, RES extends Response> extends Timer.Context {
 
     /**
      * Returns the HTTP request.
@@ -38,7 +38,7 @@ public interface IntervalHttpEvent<REQ extends Request, RES extends Response> ex
      * @return request
      */
     @NonNull
-    REQ getRequest();
+    abstract REQ getRequest();
 
     /**
      * Returns the HTTP response.
@@ -46,7 +46,7 @@ public interface IntervalHttpEvent<REQ extends Request, RES extends Response> ex
      * @return response
      */
     @Nullable
-    RES getResponse();
+    abstract RES getResponse();
 
     /**
      * Sets the given HTTP response on the event. Might be {@code null} when an
@@ -55,6 +55,6 @@ public interface IntervalHttpEvent<REQ extends Request, RES extends Response> ex
      * @param response a HTTP response
      * @return this
      */
-    IntervalHttpEvent<REQ, RES> setResponse(RES response);
+    abstract IntervalHttpEvent<REQ, RES> setResponse(RES response);
 
 }

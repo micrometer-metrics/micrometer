@@ -26,7 +26,7 @@ import io.micrometer.core.lang.NonNull;
  * @author Marcin Grzejszczak
  * @since 6.0.0
  */
-public class IntervalHttpServerEvent implements IntervalHttpEvent<HttpServerRequest, HttpServerResponse> {
+public class IntervalHttpServerEvent extends IntervalHttpEvent<HttpServerRequest, HttpServerResponse> {
 
     private final HttpServerRequest request;
 

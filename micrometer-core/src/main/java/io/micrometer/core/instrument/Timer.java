@@ -26,9 +26,11 @@ import io.micrometer.core.lang.Nullable;
 import java.time.Duration;
 import java.util.Arrays;
 import java.util.Collection;
-import java.util.Collections;
+import java.util.HashMap;
+import java.util.Map;
 import java.util.concurrent.Callable;
 import java.util.concurrent.TimeUnit;
+import java.util.function.Function;
 import java.util.function.Supplier;
 import java.util.stream.Collectors;
 
@@ -52,10 +54,7 @@ public interface Timer extends Meter, HistogramSupport {
     }
 
     static Sample start(MeterRegistry registry, @Nullable Context context) {
-        Sample sample = new Sample(registry, context);
-        registry.setCurrentSample(sample);
-
-        return sample;
+        return new Sample(registry, context);
     }
 
     static Builder builder(String name) {
@@ -256,10 +255,12 @@ public interface Timer extends Meter, HistogramSupport {
      */
     @SuppressWarnings({ "unchecked", "rawtypes" })
     class Sample {
+        
         private final long startTime;
         private final Clock clock;
         private final Collection<TimerRecordingListener> listeners;
         @Nullable private final Context context;
+        private final MeterRegistry registry;
 
         Sample(MeterRegistry registry, @Nullable Context context) {
             this.clock = registry.config().clock();
@@ -269,6 +270,8 @@ public interface Timer extends Meter, HistogramSupport {
                     .filter(listener -> listener.supportsContext(context))
                     .collect(Collectors.toList());
             this.listeners.forEach(listener -> listener.onStart(this, context));
+            this.registry = registry;
+            this.registry.setCurrentSample(this);
         }
 
         /**
@@ -293,17 +296,41 @@ public interface Timer extends Meter, HistogramSupport {
             long durationNs = clock.monotonicTime() - startTime;
             timer.record(durationNs, TimeUnit.NANOSECONDS);
             this.listeners.forEach(listener -> listener.onStop(this, context, timer, Duration.ofNanos(durationNs)));
-
+            this.registry.removeCurrentSample(this);
             return durationNs;
         }
 
         public Sample restore() {
             this.listeners.forEach(listener -> listener.onRestore(this, context));
+            this.registry.setCurrentSample(this);
             return this;
         }
     }
 
-    public interface Context {
+    @SuppressWarnings("unchecked")
+    public class Context {
+        private final Map<Class<?>, Object> map = new HashMap<>();
+        
+        public <T> Context put(Class<T> clazz, T object) {
+            this.map.put(clazz, object);
+            return this;
+        }
+        
+        public void remove(Class<?> clazz) {
+            this.map.remove(clazz);
+        }
+        
+        public <T> T get(Class<T> clazz) {
+            return (T) this.map.get(clazz);
+        }
+
+        public <T> T getOrDefault(Class<T> clazz, T defaultObject) {
+            return (T) this.map.getOrDefault(clazz, defaultObject);
+        }
+        
+        public <T> T computeIfAbsent(Class<T> clazz, Function<Class<?>, ? extends T> mappingFunction) {
+            return (T) this.map.computeIfAbsent(clazz, mappingFunction);
+        }
     }
 
     class ResourceSample extends AbstractTimerBuilder<ResourceSample> implements AutoCloseable {
