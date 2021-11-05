@@ -37,6 +37,9 @@ public abstract class AbstractTimer extends AbstractMeter implements Timer {
     protected final Clock clock;
     protected final Histogram histogram;
     private final TimeUnit baseTimeUnit;
+    
+    @Nullable
+    protected TagsProvider<?> tagsProvider;
 
     // Only used when pause detection is enabled
     @Nullable
@@ -91,6 +94,18 @@ public abstract class AbstractTimer extends AbstractMeter implements Timer {
             // noop histogram
             this.histogram = NoopHistogram.INSTANCE;
         }
+    }
+    
+    
+
+    @Override
+    public void setTagsProvider(TagsProvider<?> tagsProvider) {
+        this.tagsProvider = tagsProvider;
+    }
+
+    @Override
+    public TagsProvider<?> getTagsProvider() {
+        return this.tagsProvider;
     }
 
     private void initPauseDetector(PauseDetector pauseDetectorType) {

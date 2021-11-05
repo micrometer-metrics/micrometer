@@ -92,6 +92,23 @@ public interface Timer extends Meter, HistogramSupport {
                 .publishPercentileHistogram(timed.histogram())
                 .publishPercentiles(timed.percentiles().length > 0 ? timed.percentiles() : null);
     }
+    
+    /**
+     * Sets {@link TagsProvider}.
+     * 
+     * @param tagsProvider tags provider
+     */
+    default void setTagsProvider(@Nullable TagsProvider<?> tagsProvider) {
+        
+    }
+    
+    /**
+     * @return tags provider
+     */
+    @Nullable
+    default TagsProvider<?> getTagsProvider() {
+        return null;
+    }
 
     /**
      * Updates the statistics kept by the timer with the specified amount.
@@ -295,6 +312,10 @@ public interface Timer extends Meter, HistogramSupport {
         public long stop(Timer timer) {
             long durationNs = clock.monotonicTime() - startTime;
             timer.record(durationNs, TimeUnit.NANOSECONDS);
+            TagsProvider<?> tagsProvider = timer.getTagsProvider();
+            if (tagsProvider != null && tagsProvider.supportsContext(this.context)) {
+                this.context.setTagsProvider(tagsProvider);
+            }
             this.listeners.forEach(listener -> listener.onStop(this, context, timer, Duration.ofNanos(durationNs)));
             this.registry.removeCurrentSample(this);
             return durationNs;
@@ -311,6 +332,16 @@ public interface Timer extends Meter, HistogramSupport {
     public class Context {
         private final Map<Class<?>, Object> map = new HashMap<>();
         
+        @Nullable
+        private TagsProvider<?> tagsProvider;
+
+        public void setTagsProvider(TagsProvider<?> tagsProvider) {
+            this.tagsProvider = tagsProvider;
+        }
+        
+        public TagsProvider<?> getTagsProvider() {
+            return this.tagsProvider;
+        }
         public <T> Context put(Class<T> clazz, T object) {
             this.map.put(clazz, object);
             return this;
@@ -364,6 +395,11 @@ public interface Timer extends Meter, HistogramSupport {
         @Override
         public Builder tags(String... tags) {
             return super.tags(tags);
+        }
+        
+        @Override
+        public Builder tagsProvider(TagsProvider<?> tagsProvider) {
+            return super.tagsProvider(tagsProvider);
         }
 
         @Override
@@ -447,8 +483,14 @@ public interface Timer extends Meter, HistogramSupport {
          */
         public Timer register(MeterRegistry registry) {
             // the base unit for a timer will be determined by the monitoring system implementation
-            return registry.timer(new Meter.Id(name, tags, null, description, Type.TIMER), distributionConfigBuilder.build(),
+            Tags combinedTags = Tags.of(tags);
+            if (this.tagsProvider != null) {
+                combinedTags = combinedTags.and(this.tagsProvider.getLowCardinalityTags());
+            }
+            Timer timer = registry.timer(new Meter.Id(name, combinedTags, null, description, Type.TIMER), distributionConfigBuilder.build(),
                     pauseDetector == null ? registry.config().pauseDetector() : pauseDetector);
+            timer.setTagsProvider(this.tagsProvider);
+            return timer;
         }
     }
 }
