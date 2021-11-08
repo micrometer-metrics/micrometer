@@ -5,7 +5,7 @@
 <suppressions>
 	<suppress files="io[\\/]micrometer[\\/]core[\\/]instrument[\\/]binder[\\/]logging[\\/].+" checks="IllegalImport" />
 	<suppress files="io[\\/]micrometer[\\/]core[\\/]util[\\/]internal[\\/]logging[\\/].+" checks="IllegalImport" />
-	<suppress files="implementations[\\/].+" checks="IllegalImport" />
+	<suppress files="implementations[\\/].+" id="SLF4JIllegalImportCheck" />
 	<suppress files="samples[\\/].+" checks="IllegalImport" />
 	<suppress files="test[\\/]java[\\/]io[\\/]micrometer[\\/]jersey.+" checks="IllegalImport" />
 	<suppress files="test[\\/]java[\\/]io[\\/]micrometer[\\/]core[\\/]instrument[\\/]binder[\\/]jersey[\\/]server.+" checks="(IllegalImport|SpringJUnit5)" />
