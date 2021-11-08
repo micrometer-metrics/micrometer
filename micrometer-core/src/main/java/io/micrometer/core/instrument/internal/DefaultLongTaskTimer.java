@@ -156,25 +156,23 @@ public class DefaultLongTaskTimer extends AbstractMeter implements LongTaskTimer
             List<CountAtBucket> countAtBuckets = new ArrayList<>(buckets.size());
 
             SampleImpl priorActiveTask = null;
-            int i = 0;
+            int count = 0;
 
             Iterator<SampleImpl> youngestToOldest = activeTasks.descendingIterator();
             while (youngestToOldest.hasNext()) {
                 SampleImpl activeTask = youngestToOldest.next();
-                i++;
-                if (bucket != null) {
-                    if (activeTask.duration(TimeUnit.NANOSECONDS) > bucket) {
-                        countAtBuckets.add(new CountAtBucket(bucket, i - 1));
-                        bucket = buckets.pollFirst();
-                    }
+                while (bucket != null && activeTask.duration(TimeUnit.NANOSECONDS) > bucket) {
+                    countAtBuckets.add(new CountAtBucket(bucket, count));
+                    bucket = buckets.pollFirst();
                 }
+                count++;
 
                 if (percentile != null) {
                     double rank = percentile * (activeTasks.size() + 1);
 
-                    if (i >= rank) {
+                    if (count >= rank) {
                         double percentileValue = activeTask.duration(TimeUnit.NANOSECONDS);
-                        if (i != rank && priorActiveTask != null) {
+                        if (count != rank && priorActiveTask != null) {
                             // interpolate the percentile value when the active task rank is non-integral
                             double priorPercentileValue = priorActiveTask.duration(TimeUnit.NANOSECONDS);
                             percentileValue = priorPercentileValue +
@@ -191,7 +189,7 @@ public class DefaultLongTaskTimer extends AbstractMeter implements LongTaskTimer
 
             // fill out the rest of the cumulative histogram
             while (bucket != null) {
-                countAtBuckets.add(new CountAtBucket(bucket, i));
+                countAtBuckets.add(new CountAtBucket(bucket, count));
                 bucket = buckets.pollFirst();
             }
 

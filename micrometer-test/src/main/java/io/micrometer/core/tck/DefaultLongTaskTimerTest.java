@@ -33,11 +33,12 @@ import static io.micrometer.core.instrument.MockClock.clock;
 import static org.assertj.core.api.Assertions.assertThat;
 
 public class DefaultLongTaskTimerTest {
+
+    MeterRegistry registry = new SimpleMeterRegistry(SimpleConfig.DEFAULT, new MockClock());
+
     @Test
     @DisplayName("supports sending histograms of active task duration")
     void histogram() {
-        MeterRegistry registry = new SimpleMeterRegistry(SimpleConfig.DEFAULT, new MockClock());
-
         LongTaskTimer t = LongTaskTimer.builder("my.timer")
                 .serviceLevelObjectives(Duration.ofSeconds(10), Duration.ofSeconds(40), Duration.ofMinutes(1))
                 .register(registry);
