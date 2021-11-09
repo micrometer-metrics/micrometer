@@ -23,7 +23,7 @@ import io.micrometer.core.instrument.binder.jersey.server.resources.TimedResourc
 import io.micrometer.core.instrument.simple.SimpleMeterRegistry;
 import org.glassfish.jersey.server.ResourceConfig;
 import org.glassfish.jersey.test.JerseyTest;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
 import javax.ws.rs.ProcessingException;
 import javax.ws.rs.core.Application;
@@ -40,7 +40,7 @@ import static org.assertj.core.api.Assertions.assertThatExceptionOfType;
 /**
  * @author Michael Weirauch
  */
-public class MetricsRequestEventListenerTimedTest extends JerseyTest {
+class MetricsRequestEventListenerTimedTest extends JerseyTest {
 
     static {
         Logger.getLogger("org.glassfish.jersey").setLevel(Level.OFF);
@@ -73,7 +73,7 @@ public class MetricsRequestEventListenerTimedTest extends JerseyTest {
     }
 
     @Test
-    public void resourcesAndNotFoundsAreNotAutoTimed() {
+    void resourcesAndNotFoundsAreNotAutoTimed() {
         target("not-timed").request().get();
         target("not-found").request().get();
 
@@ -85,7 +85,7 @@ public class MetricsRequestEventListenerTimedTest extends JerseyTest {
     }
 
     @Test
-    public void resourcesWithAnnotationAreTimed() {
+    void resourcesWithAnnotationAreTimed() {
         target("timed").request().get();
         target("multi-timed").request().get();
 
@@ -103,7 +103,7 @@ public class MetricsRequestEventListenerTimedTest extends JerseyTest {
     }
 
     @Test
-    public void longTaskTimerSupported() throws InterruptedException, ExecutionException {
+    void longTaskTimerSupported() throws InterruptedException, ExecutionException {
         final Future<Response> future = target("long-timed").request().async().get();
 
         /*
@@ -136,14 +136,14 @@ public class MetricsRequestEventListenerTimedTest extends JerseyTest {
     }
 
     @Test
-    public void unnamedLongTaskTimerIsNotSupported() {
+    void unnamedLongTaskTimerIsNotSupported() {
         assertThatExceptionOfType(ProcessingException.class)
             .isThrownBy(() -> target("long-timed-unnamed").request().get())
             .withCauseInstanceOf(IllegalArgumentException.class);
     }
 
     @Test
-    public void classLevelAnnotationIsInherited() {
+    void classLevelAnnotationIsInherited() {
         target("/class/inherited").request().get();
 
         assertThat(registry.get(METRIC_NAME)
@@ -154,7 +154,7 @@ public class MetricsRequestEventListenerTimedTest extends JerseyTest {
     }
 
     @Test
-    public void methodLevelAnnotationOverridesClassLevel() {
+    void methodLevelAnnotationOverridesClassLevel() {
         target("/class/on-method").request().get();
 
         assertThat(registry.get(METRIC_NAME)
