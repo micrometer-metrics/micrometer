@@ -8,9 +8,6 @@ dependencies {
     implementation 'org.glassfish.jersey.containers:jersey-container-jdk-http:3.+'
     runtimeOnly 'org.glassfish.jersey.inject:jersey-hk2:3.+'
 
+    testImplementation project(':micrometer-test')
     testImplementation 'org.glassfish.jersey.test-framework.providers:jersey-test-framework-provider-jdk-http:3.+'
-    testImplementation 'org.junit.jupiter:junit-jupiter'
-    // See https://github.com/eclipse-ee4j/jersey/issues/3662
-    testRuntimeOnly 'org.junit.vintage:junit-vintage-engine'
-    testImplementation 'org.assertj:assertj-core'
 }
