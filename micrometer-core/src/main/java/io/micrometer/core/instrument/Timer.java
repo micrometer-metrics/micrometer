@@ -15,14 +15,6 @@
  */
 package io.micrometer.core.instrument;
 
-import io.micrometer.core.annotation.Incubating;
-import io.micrometer.core.annotation.Timed;
-import io.micrometer.core.instrument.distribution.CountAtBucket;
-import io.micrometer.core.instrument.distribution.HistogramSupport;
-import io.micrometer.core.instrument.distribution.ValueAtPercentile;
-import io.micrometer.core.instrument.distribution.pause.PauseDetector;
-import io.micrometer.core.lang.Nullable;
-
 import java.time.Duration;
 import java.util.Arrays;
 import java.util.Collection;
@@ -33,6 +25,14 @@ import java.util.concurrent.TimeUnit;
 import java.util.function.Function;
 import java.util.function.Supplier;
 import java.util.stream.Collectors;
+
+import io.micrometer.core.annotation.Incubating;
+import io.micrometer.core.annotation.Timed;
+import io.micrometer.core.instrument.distribution.CountAtBucket;
+import io.micrometer.core.instrument.distribution.HistogramSupport;
+import io.micrometer.core.instrument.distribution.ValueAtPercentile;
+import io.micrometer.core.instrument.distribution.pause.PauseDetector;
+import io.micrometer.core.lang.Nullable;
 
 /**
  * Timer intended to track of a large number of short running events. Example would be something like
@@ -91,23 +91,6 @@ public interface Timer extends Meter, HistogramSupport {
                 .description(timed.description().isEmpty() ? null : timed.description())
                 .publishPercentileHistogram(timed.histogram())
                 .publishPercentiles(timed.percentiles().length > 0 ? timed.percentiles() : null);
-    }
-    
-    /**
-     * Sets {@link TagsProvider}.
-     * 
-     * @param tagsProvider tags provider
-     */
-    default void setTagsProvider(@Nullable TagsProvider<?> tagsProvider) {
-        
-    }
-    
-    /**
-     * @return tags provider
-     */
-    @Nullable
-    default TagsProvider<?> getTagsProvider() {
-        return null;
     }
 
     /**
@@ -309,13 +292,23 @@ public interface Timer extends Meter, HistogramSupport {
          * @param timer The timer to record the sample to.
          * @return The total duration of the sample in nanoseconds
          */
+        public long stop(Timer.Builder timer) {
+            if (this.context != null) {
+                timer.tags(this.context.getLowCardinalityTags());
+            }
+            return stop(timer.register(this.registry));
+        }
+
+        // TODO: He we don't have access to the tags anymore so most likely we'll need to remove this method or make it private
+        /**
+         * Records the duration of the operation.
+         *
+         * @param timer The timer to record the sample to.
+         * @return The total duration of the sample in nanoseconds
+         */
         public long stop(Timer timer) {
             long durationNs = clock.monotonicTime() - startTime;
             timer.record(durationNs, TimeUnit.NANOSECONDS);
-            TagsProvider<?> tagsProvider = timer.getTagsProvider();
-            if (tagsProvider != null && tagsProvider.supportsContext(this.context)) {
-                this.context.setTagsProvider(tagsProvider);
-            }
             this.listeners.forEach(listener -> listener.onStop(this, context, timer, Duration.ofNanos(durationNs)));
             this.registry.removeCurrentSample(this);
             return durationNs;
@@ -329,19 +322,9 @@ public interface Timer extends Meter, HistogramSupport {
     }
 
     @SuppressWarnings("unchecked")
-    public class Context {
+    class Context implements TagsProvider {
         private final Map<Class<?>, Object> map = new HashMap<>();
         
-        @Nullable
-        private TagsProvider<?> tagsProvider;
-
-        public void setTagsProvider(TagsProvider<?> tagsProvider) {
-            this.tagsProvider = tagsProvider;
-        }
-        
-        public TagsProvider<?> getTagsProvider() {
-            return this.tagsProvider;
-        }
         public <T> Context put(Class<T> clazz, T object) {
             this.map.put(clazz, object);
             return this;
@@ -395,11 +378,6 @@ public interface Timer extends Meter, HistogramSupport {
         @Override
         public Builder tags(String... tags) {
             return super.tags(tags);
-        }
-        
-        @Override
-        public Builder tagsProvider(TagsProvider<?> tagsProvider) {
-            return super.tagsProvider(tagsProvider);
         }
 
         @Override
@@ -483,14 +461,8 @@ public interface Timer extends Meter, HistogramSupport {
          */
         public Timer register(MeterRegistry registry) {
             // the base unit for a timer will be determined by the monitoring system implementation
-            Tags combinedTags = Tags.of(tags);
-            if (this.tagsProvider != null) {
-                combinedTags = combinedTags.and(this.tagsProvider.getLowCardinalityTags());
-            }
-            Timer timer = registry.timer(new Meter.Id(name, combinedTags, null, description, Type.TIMER), distributionConfigBuilder.build(),
+            return registry.timer(new Id(name, tags, null, description, Type.TIMER), distributionConfigBuilder.build(),
                     pauseDetector == null ? registry.config().pauseDetector() : pauseDetector);
-            timer.setTagsProvider(this.tagsProvider);
-            return timer;
         }
     }
 }

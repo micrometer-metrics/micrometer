@@ -15,7 +15,18 @@
  */
 package io.micrometer.core.instrument;
 
-import io.micrometer.core.instrument.distribution.*;
+import java.util.Map;
+import java.util.concurrent.Callable;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.TimeUnit;
+import java.util.function.Supplier;
+
+import io.micrometer.core.instrument.distribution.DistributionStatisticConfig;
+import io.micrometer.core.instrument.distribution.Histogram;
+import io.micrometer.core.instrument.distribution.HistogramSnapshot;
+import io.micrometer.core.instrument.distribution.NoopHistogram;
+import io.micrometer.core.instrument.distribution.TimeWindowFixedBoundaryHistogram;
+import io.micrometer.core.instrument.distribution.TimeWindowPercentileHistogram;
 import io.micrometer.core.instrument.distribution.pause.ClockDriftPauseDetector;
 import io.micrometer.core.instrument.distribution.pause.PauseDetector;
 import io.micrometer.core.instrument.util.MeterEquivalence;
@@ -24,12 +35,6 @@ import org.LatencyUtils.IntervalEstimator;
 import org.LatencyUtils.SimplePauseDetector;
 import org.LatencyUtils.TimeCappedMovingAverageIntervalEstimator;
 
-import java.util.Map;
-import java.util.concurrent.Callable;
-import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.TimeUnit;
-import java.util.function.Supplier;
-
 public abstract class AbstractTimer extends AbstractMeter implements Timer {
     private static Map<PauseDetector, org.LatencyUtils.PauseDetector> pauseDetectorCache =
             new ConcurrentHashMap<>();
@@ -37,9 +42,6 @@ public abstract class AbstractTimer extends AbstractMeter implements Timer {
     protected final Clock clock;
     protected final Histogram histogram;
     private final TimeUnit baseTimeUnit;
-    
-    @Nullable
-    protected TagsProvider<?> tagsProvider;
 
     // Only used when pause detection is enabled
     @Nullable
@@ -94,18 +96,6 @@ public abstract class AbstractTimer extends AbstractMeter implements Timer {
             // noop histogram
             this.histogram = NoopHistogram.INSTANCE;
         }
-    }
-    
-    
-
-    @Override
-    public void setTagsProvider(TagsProvider<?> tagsProvider) {
-        this.tagsProvider = tagsProvider;
-    }
-
-    @Override
-    public TagsProvider<?> getTagsProvider() {
-        return this.tagsProvider;
     }
 
     private void initPauseDetector(PauseDetector pauseDetectorType) {

@@ -20,15 +20,17 @@ package io.micrometer.core.instrument;
  *
  * @author Marcin Grzejszczak
  */
-public interface TagsProvider<T extends Timer.Context> {
-    
-    Tags getLowCardinalityTags();
-    
-    Tags getHighCardinalityTags();
-    
+public interface TagsProvider {
+
+    default Tags getLowCardinalityTags() {
+        return Tags.empty();
+    }
+
+    default Tags getHighCardinalityTags() {
+        return Tags.empty();
+    }
+
     default Tags getAllTags() {
         return Tags.concat(getLowCardinalityTags(), getHighCardinalityTags());
     }
-    
-    boolean supportsContext(Timer.Context context);
 }

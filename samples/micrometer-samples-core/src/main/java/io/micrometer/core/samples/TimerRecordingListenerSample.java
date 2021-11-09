@@ -62,7 +62,7 @@ public class TimerRecordingListenerSample {
         }
     }
 
-    static class CustomContext implements Timer.Context {
+    static class CustomContext extends Timer.Context {
         private final UUID uuid = UUID.randomUUID();
 
         @Override
@@ -73,7 +73,7 @@ public class TimerRecordingListenerSample {
         }
     }
 
-    static class UnsupportedContext implements Timer.Context {
+    static class UnsupportedContext extends Timer.Context {
         @Override
         public String toString() {
             return "sorry";

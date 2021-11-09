@@ -15,12 +15,12 @@
  */
 package io.micrometer.core.instrument;
 
+import java.time.Duration;
+import java.util.Arrays;
+
 import io.micrometer.core.instrument.distribution.DistributionStatisticConfig;
 import io.micrometer.core.instrument.distribution.pause.PauseDetector;
 import io.micrometer.core.lang.Nullable;
-
-import java.time.Duration;
-import java.util.Arrays;
 
 /**
  * Base builder for {@link Timer}.
@@ -35,7 +35,6 @@ public abstract class AbstractTimerBuilder<B extends AbstractTimerBuilder<B>> {
     protected final String name;
     protected Tags tags = Tags.empty();
     protected final DistributionStatisticConfig.Builder distributionConfigBuilder;
-    protected TagsProvider<?> tagsProvider;
 
     @Nullable
     protected String description;
@@ -56,15 +55,6 @@ public abstract class AbstractTimerBuilder<B extends AbstractTimerBuilder<B>> {
      */
     public B tags(String... tags) {
         return tags(Tags.of(tags));
-    }
-    
-    /**
-     * @param tags Must be an even number of arguments representing key/value pairs of tags.
-     * @return This builder.
-     */
-    public B tagsProvider(TagsProvider<?> tagsProvider) {
-        this.tagsProvider = tagsProvider;
-        return (B) this;
     }
 
     /**
