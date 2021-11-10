@@ -25,7 +25,7 @@ import org.glassfish.jersey.server.internal.monitoring.RequestEventImpl.Builder;
 import org.glassfish.jersey.server.monitoring.RequestEvent;
 import org.glassfish.jersey.server.monitoring.RequestEvent.Type;
 import org.glassfish.jersey.uri.UriTemplate;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
 import javax.ws.rs.NotAcceptableException;
 import java.net.URI;
@@ -45,36 +45,36 @@ import static org.mockito.Mockito.when;
  * @author Michael Weirauch
  * @author Johnny Lim
  */
-public class DefaultJerseyTagsProviderTest {
+class DefaultJerseyTagsProviderTest {
 
     private final DefaultJerseyTagsProvider tagsProvider = new DefaultJerseyTagsProvider();
 
     @Test
-    public void testRootPath() {
+    void testRootPath() {
         assertThat(tagsProvider.httpRequestTags(event(200, null, "/", (String[]) null)))
             .containsExactlyInAnyOrder(tagsFrom("root", 200, null, "SUCCESS"));
     }
 
     @Test
-    public void templatedPathsAreReturned() {
+    void templatedPathsAreReturned() {
         assertThat(tagsProvider.httpRequestTags(event(200, null, "/", "/", "/hello/{name}")))
             .containsExactlyInAnyOrder(tagsFrom("/hello/{name}", 200, null, "SUCCESS"));
     }
 
     @Test
-    public void applicationPathIsPresent() {
+    void applicationPathIsPresent() {
         assertThat(tagsProvider.httpRequestTags(event(200, null, "/app", "/", "/hello")))
             .containsExactlyInAnyOrder(tagsFrom("/app/hello", 200, null, "SUCCESS"));
     }
 
     @Test
-    public void notFoundsAreShunted() {
+    void notFoundsAreShunted() {
         assertThat(tagsProvider.httpRequestTags(event(404, null, "/app", "/", "/not-found")))
             .containsExactlyInAnyOrder(tagsFrom("NOT_FOUND", 404, null, "CLIENT_ERROR"));
     }
 
     @Test
-    public void redirectsAreShunted() {
+    void redirectsAreShunted() {
         assertThat(tagsProvider.httpRequestTags(event(301, null, "/app", "/", "/redirect301")))
             .containsExactlyInAnyOrder(tagsFrom("REDIRECTION", 301, null, "REDIRECTION"));
         assertThat(tagsProvider.httpRequestTags(event(302, null, "/app", "/", "/redirect302")))
@@ -85,7 +85,7 @@ public class DefaultJerseyTagsProviderTest {
 
     @Test
     @SuppressWarnings("serial")
-    public void exceptionsAreMappedCorrectly() {
+    void exceptionsAreMappedCorrectly() {
         assertThat(tagsProvider.httpRequestTags(
             event(500, new IllegalArgumentException(), "/app", (String[]) null)))
             .containsExactlyInAnyOrder(tagsFrom("/app", 500, "IllegalArgumentException", "SERVER_ERROR"));
@@ -101,7 +101,7 @@ public class DefaultJerseyTagsProviderTest {
     }
 
     @Test
-    public void longRequestTags() {
+    void longRequestTags() {
         assertThat(tagsProvider.httpLongRequestTags(event(0, null, "/app", (String[]) null)))
             .containsExactlyInAnyOrder(Tag.of("method", "GET"), Tag.of("uri", "/app"));
     }

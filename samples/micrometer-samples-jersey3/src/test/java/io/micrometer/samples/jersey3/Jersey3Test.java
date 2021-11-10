@@ -23,13 +23,13 @@ import io.micrometer.core.instrument.simple.SimpleMeterRegistry;
 import jakarta.ws.rs.core.Application;
 import org.glassfish.jersey.server.ResourceConfig;
 import org.glassfish.jersey.test.JerseyTest;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
 import java.util.concurrent.TimeUnit;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-public class Jersey3Test extends JerseyTest {
+class Jersey3Test extends JerseyTest {
 
     static final String TIMER_METRIC_NAME = "http.server.requests";
     MeterRegistry registry;
@@ -43,7 +43,7 @@ public class Jersey3Test extends JerseyTest {
     }
 
     @Test
-    public void helloResourceIsTimed() {
+    void helloResourceIsTimed() {
         String response = target("hello/Jersey").request().get(String.class);
         assertThat(response).isEqualTo("Hello, Jersey");
         Timer timer = registry.get(TIMER_METRIC_NAME)

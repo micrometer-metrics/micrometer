@@ -58,9 +58,6 @@ dependencies {
 
     // JUnit 5
     testImplementation 'org.junit.jupiter:junit-jupiter'
-    // See https://github.com/eclipse-ee4j/jersey/issues/3662
-    testImplementation 'junit:junit'
-    testRuntimeOnly 'org.junit.vintage:junit-vintage-engine'
     testImplementation 'com.tngtech.archunit:archunit-junit5'
 
     // Eclipse still needs this (as of 4.7.1a)
