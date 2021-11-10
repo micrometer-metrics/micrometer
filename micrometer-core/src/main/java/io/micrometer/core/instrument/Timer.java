@@ -299,7 +299,7 @@ public interface Timer extends Meter, HistogramSupport {
             return stop(timer.register(this.registry));
         }
 
-        // TODO: He we don't have access to the tags anymore so most likely we'll need to remove this method or make it private
+        // TODO: We'll need to make this private. I'm leaving this for now as it is cause it breaks compilation in quite a few places
         /**
          * Records the duration of the operation.
          *
