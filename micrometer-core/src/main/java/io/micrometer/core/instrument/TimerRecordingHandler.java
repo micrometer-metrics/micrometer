@@ -16,6 +16,10 @@
 package io.micrometer.core.instrument;
 
 import java.time.Duration;
+import java.util.Arrays;
+import java.util.List;
+import java.util.Optional;
+import java.util.stream.Collectors;
 
 import javax.validation.constraints.NotNull;
 
@@ -24,6 +28,8 @@ import io.micrometer.core.lang.Nullable;
 /**
  * Handler with callbacks for the {@link Timer#start(MeterRegistry) start} and
  * {@link io.micrometer.core.instrument.Timer.Sample#stop(Timer) stop} of a {@link Timer} recording.
+ *
+ * @since 2.0.0
  */
 public interface TimerRecordingHandler<T extends Timer.HandlerContext> {
     /**
@@ -58,4 +64,133 @@ public interface TimerRecordingHandler<T extends Timer.HandlerContext> {
      * @return {@code true} when this handler context is supported
      */
     boolean supportsContext(@Nullable Timer.HandlerContext handlerContext);
+
+    /**
+     * Handler wrapping other handlers.
+     *
+     * @since 2.0.0
+     */
+    interface CompositeTimerRecordingHandler extends TimerRecordingHandler<Timer.HandlerContext> {
+        /**
+         * Returns the registered recording handlers.
+         * @return registered handlers
+         */
+        List<TimerRecordingHandler<Timer.HandlerContext>> getHandlers();
+    }
+
+    /**
+     * Handler picking the first matching recording handler from the list.
+     */
+    class FirstMatchingCompositeTimerRecordingHandler implements CompositeTimerRecordingHandler {
+
+        private final List<TimerRecordingHandler<Timer.HandlerContext>> handlers;
+
+        /**
+         * Creates a new instance of {@link FirstMatchingCompositeTimerRecordingHandler}.
+         * @param handlers the handlers that are registered under the composite
+         */
+        public FirstMatchingCompositeTimerRecordingHandler(TimerRecordingHandler<Timer.HandlerContext>... handlers) {
+            this(Arrays.asList(handlers));
+        }
+
+        /**
+         * Creates a new instance of {@link FirstMatchingCompositeTimerRecordingHandler}.
+         * @param handlers the handlers that are registered under the composite
+         */
+        public FirstMatchingCompositeTimerRecordingHandler(List<TimerRecordingHandler<Timer.HandlerContext>> handlers) {
+            this.handlers = handlers;
+        }
+
+        @Override
+        public void onStart(@NotNull Timer.Sample sample, @Nullable Timer.HandlerContext context) {
+            getFirstApplicableListener(context).ifPresent(listener -> listener.onStart(sample, context));
+        }
+
+        @Override
+        public void onError(@NotNull Timer.Sample sample, @Nullable Timer.HandlerContext context, Throwable throwable) {
+            getFirstApplicableListener(context).ifPresent(listener -> listener.onError(sample, context, throwable));
+        }
+
+        @Override
+        public void onRestore(@NotNull Timer.Sample sample, @Nullable Timer.HandlerContext context) {
+            getFirstApplicableListener(context).ifPresent(listener -> listener.onRestore(sample, context));
+        }
+
+        @Override
+        public void onStop(@NotNull Timer.Sample sample, @Nullable Timer.HandlerContext context, @NotNull Timer timer, @NotNull Duration duration) {
+            getFirstApplicableListener(context).ifPresent(listener -> listener.onStop(sample, context, timer, duration));
+        }
+
+        private Optional<TimerRecordingHandler<Timer.HandlerContext>> getFirstApplicableListener(@Nullable Timer.HandlerContext context) {
+            return this.handlers.stream().filter(handler -> handler.supportsContext(context)).findFirst();
+        }
+
+        @Override
+        public boolean supportsContext(@Nullable Timer.HandlerContext handlerContext) {
+            return getFirstApplicableListener(handlerContext).isPresent();
+        }
+
+        @Override
+        public List<TimerRecordingHandler<Timer.HandlerContext>> getHandlers() {
+            return this.handlers;
+        }
+    }
+
+    /**
+     * Handler picking all matching recording handlers from the list.
+     */
+    class AllMatchingCompositeTimerRecordingHandler implements CompositeTimerRecordingHandler {
+
+        private final List<TimerRecordingHandler<Timer.HandlerContext>> handlers;
+
+        /**
+         * Creates a new instance of {@link FirstMatchingCompositeTimerRecordingHandler}.
+         * @param handlers the handlers that are registered under the composite
+         */
+        public AllMatchingCompositeTimerRecordingHandler(TimerRecordingHandler<Timer.HandlerContext>... handlers) {
+            this(Arrays.asList(handlers));
+        }
+
+        /**
+         * Creates a new instance of {@link FirstMatchingCompositeTimerRecordingHandler}.
+         * @param handlers the handlers that are registered under the composite
+         */
+        public AllMatchingCompositeTimerRecordingHandler(List<TimerRecordingHandler<Timer.HandlerContext>> handlers) {
+            this.handlers = handlers;
+        }
+
+        @Override
+        public void onStart(@NotNull Timer.Sample sample, @Nullable Timer.HandlerContext context) {
+            getAllApplicableListeners(context).forEach(listener -> listener.onStart(sample, context));
+        }
+
+        @Override
+        public void onError(@NotNull Timer.Sample sample, @Nullable Timer.HandlerContext context, Throwable throwable) {
+            getAllApplicableListeners(context).forEach(listener -> listener.onError(sample, context, throwable));
+        }
+
+        @Override
+        public void onRestore(@NotNull Timer.Sample sample, @Nullable Timer.HandlerContext context) {
+            getAllApplicableListeners(context).forEach(listener -> listener.onRestore(sample, context));
+        }
+
+        @Override
+        public void onStop(@NotNull Timer.Sample sample, @Nullable Timer.HandlerContext context, @NotNull Timer timer, @NotNull Duration duration) {
+            getAllApplicableListeners(context).forEach(listener -> listener.onStop(sample, context, timer, duration));
+        }
+
+        private List<TimerRecordingHandler<Timer.HandlerContext>> getAllApplicableListeners(@Nullable Timer.HandlerContext context) {
+            return this.handlers.stream().filter(handler -> handler.supportsContext(context)).collect(Collectors.toList());
+        }
+
+        @Override
+        public boolean supportsContext(@Nullable Timer.HandlerContext handlerContext) {
+            return !getAllApplicableListeners(handlerContext).isEmpty();
+        }
+
+        @Override
+        public List<TimerRecordingHandler<Timer.HandlerContext>> getHandlers() {
+            return this.handlers;
+        }
+    }
 }
