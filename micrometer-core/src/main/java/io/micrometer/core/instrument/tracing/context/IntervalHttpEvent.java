@@ -17,16 +17,16 @@
 package io.micrometer.core.instrument.tracing.context;
 
 import io.micrometer.core.instrument.Timer;
-import io.micrometer.core.instrument.transport.http.Request;
-import io.micrometer.core.instrument.transport.http.Response;
 import io.micrometer.core.lang.NonNull;
 import io.micrometer.core.lang.Nullable;
+import io.micrometer.tracing.transport.http.Request;
+import io.micrometer.tracing.transport.http.Response;
 
 /**
  * An IntervalEvent that represents an HTTP event.
  *
  * @author Marcin Grzejszczak
- * @since 6.0.0
+ * @since 2.0.0
  * @param <REQ> request type
  * @param <RES> response type
  */

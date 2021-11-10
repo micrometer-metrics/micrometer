@@ -15,13 +15,11 @@
  */
 package io.micrometer.core.tck;
 
-import org.assertj.core.api.AbstractAssert;
-import org.assertj.core.api.Assertions;
-import org.assertj.core.util.Strings;
-
 import io.micrometer.core.instrument.MeterRegistry;
 import io.micrometer.core.instrument.Tags;
 import io.micrometer.core.instrument.Timer;
+import org.assertj.core.api.AbstractAssert;
+import org.assertj.core.util.Strings;
 
 /**
  * Assertion methods for {@code MeterRegistry}s.

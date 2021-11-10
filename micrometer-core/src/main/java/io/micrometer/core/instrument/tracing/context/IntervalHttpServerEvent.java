@@ -16,15 +16,15 @@
 
 package io.micrometer.core.instrument.tracing.context;
 
-import io.micrometer.core.instrument.transport.http.HttpServerRequest;
-import io.micrometer.core.instrument.transport.http.HttpServerResponse;
 import io.micrometer.core.lang.NonNull;
+import io.micrometer.tracing.transport.http.HttpServerRequest;
+import io.micrometer.tracing.transport.http.HttpServerResponse;
 
 /**
  * An IntervalEvent that represents an HTTP server event.
  *
  * @author Marcin Grzejszczak
- * @since 6.0.0
+ * @since 2.0.0
  */
 public class IntervalHttpServerEvent extends IntervalHttpEvent<HttpServerRequest, HttpServerResponse> {
 

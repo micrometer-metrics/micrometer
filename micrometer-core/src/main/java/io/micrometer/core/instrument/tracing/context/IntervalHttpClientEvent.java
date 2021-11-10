@@ -16,8 +16,8 @@
 
 package io.micrometer.core.instrument.tracing.context;
 
-import io.micrometer.core.instrument.transport.http.HttpClientRequest;
-import io.micrometer.core.instrument.transport.http.HttpClientResponse;
+import io.micrometer.tracing.transport.http.HttpClientRequest;
+import io.micrometer.tracing.transport.http.HttpClientResponse;
 import io.micrometer.core.lang.NonNull;
 
 /**
@@ -25,7 +25,7 @@ import io.micrometer.core.lang.NonNull;
  *
  * @author Jonatan Ivanov
  * @author Marcin Grzejszczak
- * @since 6.0.0
+ * @since 2.0.0
  */
 public class IntervalHttpClientEvent extends IntervalHttpEvent<HttpClientRequest, HttpClientResponse> {
 
