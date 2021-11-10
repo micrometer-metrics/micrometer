@@ -19,7 +19,7 @@ import java.time.Duration;
 
 import io.micrometer.core.instrument.MeterRegistry;
 import io.micrometer.core.instrument.Timer;
-import io.micrometer.core.instrument.TimerRecordingListener;
+import io.micrometer.core.instrument.TimerRecordingHandler;
 import io.micrometer.core.instrument.simple.SimpleMeterRegistry;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
@@ -29,19 +29,19 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatCode;
 
 /**
- * Base class for {@link TimerRecordingListener} compatibility tests that support a concrete type of context only.
- * To run a {@link TimerRecordingListener} implementation against this TCK, make a test class that extends this
+ * Base class for {@link TimerRecordingHandler} compatibility tests that support a concrete type of context only.
+ * To run a {@link TimerRecordingHandler} implementation against this TCK, make a test class that extends this
  * and implement the abstract methods.
  *
  * @author Marcin Grzejszczak
  */
-public abstract class ConcreteContextTimerRecordingListenerCompatibilityKit<T extends Timer.Context> {
+public abstract class ConcreteHandlerContextTimerRecordingHandlerCompatibilityKit<T extends Timer.HandlerContext> {
 
-    protected TimerRecordingListener<T> listener;
+    protected TimerRecordingHandler<T> listener;
 
     protected MeterRegistry meterRegistry = new SimpleMeterRegistry();
 
-    public abstract TimerRecordingListener<T> listener();
+    public abstract TimerRecordingHandler<T> listener();
 
     protected Timer.Sample sample = Timer.start(meterRegistry);
 
@@ -71,11 +71,11 @@ public abstract class ConcreteContextTimerRecordingListenerCompatibilityKit<T ex
         assertThatCode(() -> listener.supportsContext(null)).doesNotThrowAnyException();
         assertThat(listener.supportsContext(null)).as("Listener supports only concrete context - no nulls accepted").isFalse();
 
-        assertThatCode(() -> listener.supportsContext(new NotMatchingContext())).doesNotThrowAnyException();
-        assertThat(listener.supportsContext(new NotMatchingContext())).as("Listener supports only concrete context").isFalse();
+        assertThatCode(() -> listener.supportsContext(new NotMatchingHandlerContext())).doesNotThrowAnyException();
+        assertThat(listener.supportsContext(new NotMatchingHandlerContext())).as("Listener supports only concrete context").isFalse();
     }
 
-    static class NotMatchingContext extends Timer.Context {
+    static class NotMatchingHandlerContext extends Timer.HandlerContext {
 
     }
 }

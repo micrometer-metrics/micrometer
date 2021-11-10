@@ -18,7 +18,7 @@ package io.micrometer.core.tck;
 import java.time.Duration;
 
 import io.micrometer.core.instrument.Timer;
-import io.micrometer.core.instrument.TimerRecordingListener;
+import io.micrometer.core.instrument.TimerRecordingHandler;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -26,18 +26,18 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatCode;
 
 /**
- * Base class for {@link TimerRecordingListener} compatibility tests that support any context.
- * To run a {@link TimerRecordingListener} implementation against this TCK, make a test class that extends this
+ * Base class for {@link TimerRecordingHandler} compatibility tests that support any context.
+ * To run a {@link TimerRecordingHandler} implementation against this TCK, make a test class that extends this
  * and implement the abstract methods.
  *
  * @author Marcin Grzejszczak
  */
-public abstract class AnyContextTimerRecordingListenerCompatibilityKit extends NullContextTimerRecordingListenerCompatibilityKit {
+public abstract class AnyHandlerContextTimerRecordingHandlerCompatibilityKit extends NullHandlerContextTimerRecordingHandlerCompatibilityKit {
 
     @Test
     @DisplayName("compatibility test provides a test context accepting timer recording listener")
     void listenerSupportsAnyContext() {
-        TestContext testContext = new TestContext();
+        TestHandlerContext testContext = new TestHandlerContext();
         assertThatCode(() -> listener.onStart(sample, testContext)).doesNotThrowAnyException();
         assertThatCode(() -> listener.onStop(sample, testContext, Timer.builder("timer for test context")
                 .register(meterRegistry), Duration.ofSeconds(1L))).doesNotThrowAnyException();
@@ -47,7 +47,7 @@ public abstract class AnyContextTimerRecordingListenerCompatibilityKit extends N
         assertThat(listener.supportsContext(testContext)).as("Listener supports any context").isTrue();
     }
 
-    static class TestContext extends Timer.Context {
+    static class TestHandlerContext extends Timer.HandlerContext {
 
     }
 }

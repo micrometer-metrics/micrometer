@@ -53,8 +53,8 @@ public interface Timer extends Meter, HistogramSupport {
         return start(registry, null);
     }
 
-    static Sample start(MeterRegistry registry, @Nullable Context context) {
-        return new Sample(registry, context);
+    static Sample start(MeterRegistry registry, @Nullable HandlerContext handlerContext) {
+        return new Sample(registry, handlerContext);
     }
 
     static Builder builder(String name) {
@@ -258,18 +258,18 @@ public interface Timer extends Meter, HistogramSupport {
         
         private final long startTime;
         private final Clock clock;
-        private final Collection<TimerRecordingListener> listeners;
-        @Nullable private final Context context;
+        private final Collection<TimerRecordingHandler> listeners;
+        @Nullable private final HandlerContext handlerContext;
         private final MeterRegistry registry;
 
-        Sample(MeterRegistry registry, @Nullable Context context) {
+        Sample(MeterRegistry registry, @Nullable HandlerContext handlerContext) {
             this.clock = registry.config().clock();
             this.startTime = clock.monotonicTime();
-            this.context = context;
+            this.handlerContext = handlerContext;
             this.listeners = registry.config().getTimerRecordingListeners().stream()
-                    .filter(listener -> listener.supportsContext(context))
+                    .filter(listener -> listener.supportsContext(handlerContext))
                     .collect(Collectors.toList());
-            this.listeners.forEach(listener -> listener.onStart(this, context));
+            this.listeners.forEach(listener -> listener.onStart(this, handlerContext));
             this.registry = registry;
             this.registry.setCurrentSample(this);
         }
@@ -282,7 +282,7 @@ public interface Timer extends Meter, HistogramSupport {
         public void error(Throwable throwable) {
             // TODO check stop hasn't been called yet?
             // TODO doesn't do anything to tags currently; we should make error tagging more first-class
-            this.listeners.forEach(listener -> listener.onError(this, context, throwable));
+            this.listeners.forEach(listener -> listener.onError(this, handlerContext, throwable));
 
         }
 
@@ -293,8 +293,8 @@ public interface Timer extends Meter, HistogramSupport {
          * @return The total duration of the sample in nanoseconds
          */
         public long stop(Timer.Builder timer) {
-            if (this.context != null) {
-                timer.tags(this.context.getLowCardinalityTags());
+            if (this.handlerContext != null) {
+                timer.tags(this.handlerContext.getLowCardinalityTags());
             }
             return stop(timer.register(this.registry));
         }
@@ -309,23 +309,23 @@ public interface Timer extends Meter, HistogramSupport {
         public long stop(Timer timer) {
             long durationNs = clock.monotonicTime() - startTime;
             timer.record(durationNs, TimeUnit.NANOSECONDS);
-            this.listeners.forEach(listener -> listener.onStop(this, context, timer, Duration.ofNanos(durationNs)));
+            this.listeners.forEach(listener -> listener.onStop(this, handlerContext, timer, Duration.ofNanos(durationNs)));
             this.registry.removeCurrentSample(this);
             return durationNs;
         }
 
         public Sample restore() {
-            this.listeners.forEach(listener -> listener.onRestore(this, context));
+            this.listeners.forEach(listener -> listener.onRestore(this, handlerContext));
             this.registry.setCurrentSample(this);
             return this;
         }
     }
 
     @SuppressWarnings("unchecked")
-    class Context implements TagsProvider {
+    class HandlerContext implements TagsProvider {
         private final Map<Class<?>, Object> map = new HashMap<>();
         
-        public <T> Context put(Class<T> clazz, T object) {
+        public <T> HandlerContext put(Class<T> clazz, T object) {
             this.map.put(clazz, object);
             return this;
         }

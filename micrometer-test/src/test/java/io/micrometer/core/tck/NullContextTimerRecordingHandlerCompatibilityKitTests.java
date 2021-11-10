@@ -18,35 +18,35 @@ package io.micrometer.core.tck;
 import java.time.Duration;
 
 import io.micrometer.core.instrument.Timer;
-import io.micrometer.core.instrument.TimerRecordingListener;
+import io.micrometer.core.instrument.TimerRecordingHandler;
 
-class AnyContextTimerRecordingListenerCompatibilityKitTests extends AnyContextTimerRecordingListenerCompatibilityKit {
+class NullContextTimerRecordingHandlerCompatibilityKitTests extends NullHandlerContextTimerRecordingHandlerCompatibilityKit {
 
     @Override
-    public TimerRecordingListener<Timer.Context> listener() {
-        return new TimerRecordingListener<Timer.Context>() {
+    public TimerRecordingHandler<Timer.HandlerContext> listener() {
+        return new TimerRecordingHandler<Timer.HandlerContext>() {
             @Override
-            public void onStart(Timer.Sample sample, Timer.Context context) {
+            public void onStart(Timer.Sample sample, Timer.HandlerContext handlerContext) {
 
             }
 
             @Override
-            public void onError(Timer.Sample sample, Timer.Context context, Throwable throwable) {
+            public void onError(Timer.Sample sample, Timer.HandlerContext handlerContext, Throwable throwable) {
 
             }
 
             @Override
-            public void onRestore(Timer.Sample sample, Timer.Context context) {
+            public void onRestore(Timer.Sample sample, Timer.HandlerContext handlerContext) {
 
             }
 
             @Override
-            public void onStop(Timer.Sample sample, Timer.Context context, Timer timer, Duration duration) {
+            public void onStop(Timer.Sample sample, Timer.HandlerContext handlerContext, Timer timer, Duration duration) {
 
             }
 
             @Override
-            public boolean supportsContext(Timer.Context context) {
+            public boolean supportsContext(Timer.HandlerContext handlerContext) {
                 return true;
             }
         };

@@ -17,36 +17,45 @@ package io.micrometer.core.instrument;
 
 import java.time.Duration;
 
+import javax.validation.constraints.NotNull;
+
 import io.micrometer.core.lang.Nullable;
 
 /**
- * Listener with callbacks for the {@link Timer#start(MeterRegistry) start} and
+ * Handler with callbacks for the {@link Timer#start(MeterRegistry) start} and
  * {@link io.micrometer.core.instrument.Timer.Sample#stop(Timer) stop} of a {@link Timer} recording.
  */
-public interface TimerRecordingListener<T extends Timer.Context> {
+public interface TimerRecordingHandler<T extends Timer.HandlerContext> {
     /**
      * @param sample the sample that was started
+     * @param context handler context
      */
-    void onStart(Timer.Sample sample, @Nullable T context);
+    void onStart(@NotNull Timer.Sample sample, @Nullable T context);
 
     /**
      * @param sample sample for which the error happened
+     * @param context handler context
      * @param throwable exception that happened during recording
      */
-    void onError(Timer.Sample sample, @Nullable T context, Throwable throwable);
+    void onError(@NotNull Timer.Sample sample, @Nullable T context, Throwable throwable);
     
     /**
      * @param sample sample for which the error happened
-     * @param throwable exception that happened during recording
+     * @param context handler context
      */
-    void onRestore(Timer.Sample sample, @Nullable T context);
+    void onRestore(@NotNull Timer.Sample sample, @Nullable T context);
 
     /**
      * @param sample the sample that was stopped
+     * @param context handler context
      * @param timer the timer to which the recording was made
      * @param duration time recorded
      */
-    void onStop(Timer.Sample sample, @Nullable T context, Timer timer, Duration duration);
+    void onStop(@NotNull Timer.Sample sample, @Nullable T context, @NotNull Timer timer, @NotNull Duration duration);
 
-    boolean supportsContext(@Nullable Timer.Context context);
+    /**
+     * @param handlerContext handler context, may be {@code null}
+     * @return {@code true} when this handler context is supported
+     */
+    boolean supportsContext(@Nullable Timer.HandlerContext handlerContext);
 }

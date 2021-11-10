@@ -30,7 +30,7 @@ import io.micrometer.tracing.transport.http.Response;
  * @param <REQ> request type
  * @param <RES> response type
  */
-public abstract class IntervalHttpEvent<REQ extends Request, RES extends Response> extends Timer.Context {
+public abstract class IntervalHttpEvent<REQ extends Request, RES extends Response> extends Timer.HandlerContext {
 
     /**
      * Returns the HTTP request.

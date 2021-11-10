@@ -19,7 +19,7 @@ import java.time.Duration;
 
 import io.micrometer.core.instrument.MeterRegistry;
 import io.micrometer.core.instrument.Timer;
-import io.micrometer.core.instrument.TimerRecordingListener;
+import io.micrometer.core.instrument.TimerRecordingHandler;
 import io.micrometer.core.instrument.simple.SimpleMeterRegistry;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
@@ -29,19 +29,19 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatCode;
 
 /**
- * Base class for {@link TimerRecordingListener} compatibility tests that support {@code null} contexts only.
- * To run a {@link TimerRecordingListener} implementation against this TCK, make a test class that extends this
+ * Base class for {@link TimerRecordingHandler} compatibility tests that support {@code null} contexts only.
+ * To run a {@link TimerRecordingHandler} implementation against this TCK, make a test class that extends this
  * and implement the abstract methods.
  *
  * @author Marcin Grzejszczak
  */
-public abstract class NullContextTimerRecordingListenerCompatibilityKit {
+public abstract class NullHandlerContextTimerRecordingHandlerCompatibilityKit {
 
-    protected TimerRecordingListener<Timer.Context> listener;
+    protected TimerRecordingHandler<Timer.HandlerContext> listener;
 
     protected MeterRegistry meterRegistry = new SimpleMeterRegistry();
 
-    public abstract TimerRecordingListener<Timer.Context> listener();
+    public abstract TimerRecordingHandler<Timer.HandlerContext> listener();
 
     protected Timer.Sample sample = Timer.start(meterRegistry);
 
