@@ -230,7 +230,7 @@ class TimedHandlerTest {
             public void handle(String path, Request request, HttpServletRequest httpRequest, HttpServletResponse httpResponse) throws ServletException {
                 request.setHandled(true);
                 try {
-                    barrier[0].await();
+                    barrier[0].await(5, TimeUnit.SECONDS);
 
                     Thread.sleep(dispatchTime);
 
@@ -243,7 +243,7 @@ class TimedHandlerTest {
                     throw new ServletException(x);
                 } finally {
                     try {
-                        barrier[1].await();
+                        barrier[1].await(5, TimeUnit.SECONDS);
                     } catch (Exception ignored) {
                     }
                 }
@@ -256,7 +256,7 @@ class TimedHandlerTest {
                 "\r\n";
         connector.executeRequest(request);
 
-        barrier[0].await();
+        barrier[0].await(5, TimeUnit.SECONDS);
 
         assertThat(registry.get("jetty.server.dispatches.open").longTaskTimer().activeTasks()).isEqualTo(1);
 
@@ -281,13 +281,13 @@ class TimedHandlerTest {
             @Override
             public void onComplete(AsyncEvent event) {
                 try {
-                    barrier[2].await();
+                    barrier[2].await(5, TimeUnit.SECONDS);
                 } catch (Exception ignored) {
                 }
             }
         });
 
-        barrier[2].await();
+        barrier[2].await(5, TimeUnit.SECONDS);
 
         assertThat(registry.get("jetty.server.async.expires").counter().count()).isEqualTo(1);
         assertThat(registry.get("jetty.server.dispatches.open").longTaskTimer().activeTasks()).isEqualTo(0);
@@ -308,7 +308,7 @@ class TimedHandlerTest {
             public void handle(String path, Request request, HttpServletRequest httpRequest, HttpServletResponse httpResponse) throws ServletException {
                 request.setHandled(true);
                 try {
-                    barrier[0].await();
+                    barrier[0].await(5, TimeUnit.SECONDS);
 
                     Thread.sleep(dispatchTime);
 
@@ -320,7 +320,7 @@ class TimedHandlerTest {
                     throw new ServletException(x);
                 } finally {
                     try {
-                        barrier[1].await();
+                        barrier[1].await(5, TimeUnit.SECONDS);
                     } catch (Exception ignored) {
                     }
                 }
@@ -333,7 +333,7 @@ class TimedHandlerTest {
                 "\r\n";
         connector.executeRequest(request);
 
-        barrier[0].await();
+        barrier[0].await(5, TimeUnit.SECONDS);
         assertThat(registry.get("jetty.server.dispatches.open").longTaskTimer().activeTasks()).isEqualTo(1);
 
         barrier[1].await(5, TimeUnit.SECONDS);
@@ -364,7 +364,7 @@ class TimedHandlerTest {
         long requestTime = 20;
         Thread.sleep(requestTime);
         asyncHolder.get().complete();
-        latch.await();
+        latch.await(5, TimeUnit.SECONDS);
 
         assertThat(registry.get("jetty.server.requests")
                 .tag("outcome", Outcome.SUCCESS.name())
