@@ -17,8 +17,8 @@
 package io.micrometer.core.instrument.tracing.context;
 
 import io.micrometer.core.lang.NonNull;
-import io.micrometer.tracing.transport.http.HttpServerRequest;
-import io.micrometer.tracing.transport.http.HttpServerResponse;
+import io.micrometer.core.instrument.transport.http.HttpServerRequest;
+import io.micrometer.core.instrument.transport.http.HttpServerResponse;
 
 /**
  * An IntervalEvent that represents an HTTP server event.

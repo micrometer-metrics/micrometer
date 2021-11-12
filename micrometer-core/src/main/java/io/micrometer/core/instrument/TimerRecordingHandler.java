@@ -75,21 +75,22 @@ public interface TimerRecordingHandler<T extends Timer.HandlerContext> {
          * Returns the registered recording handlers.
          * @return registered handlers
          */
-        List<TimerRecordingHandler<Timer.HandlerContext>> getHandlers();
+        List<TimerRecordingHandler> getHandlers();
     }
 
     /**
      * Handler picking the first matching recording handler from the list.
      */
+    @SuppressWarnings({"unchecked", "rawtypes"})
     class FirstMatchingCompositeTimerRecordingHandler implements CompositeTimerRecordingHandler {
 
-        private final List<TimerRecordingHandler<Timer.HandlerContext>> handlers;
+        private final List<TimerRecordingHandler> handlers;
 
         /**
          * Creates a new instance of {@link FirstMatchingCompositeTimerRecordingHandler}.
          * @param handlers the handlers that are registered under the composite
          */
-        public FirstMatchingCompositeTimerRecordingHandler(TimerRecordingHandler<Timer.HandlerContext>... handlers) {
+        public FirstMatchingCompositeTimerRecordingHandler(TimerRecordingHandler... handlers) {
             this(Arrays.asList(handlers));
         }
 
@@ -97,7 +98,7 @@ public interface TimerRecordingHandler<T extends Timer.HandlerContext> {
          * Creates a new instance of {@link FirstMatchingCompositeTimerRecordingHandler}.
          * @param handlers the handlers that are registered under the composite
          */
-        public FirstMatchingCompositeTimerRecordingHandler(List<TimerRecordingHandler<Timer.HandlerContext>> handlers) {
+        public FirstMatchingCompositeTimerRecordingHandler(List<TimerRecordingHandler> handlers) {
             this.handlers = handlers;
         }
 
@@ -121,7 +122,7 @@ public interface TimerRecordingHandler<T extends Timer.HandlerContext> {
             getFirstApplicableListener(context).ifPresent(listener -> listener.onStop(sample, context, timer, duration));
         }
 
-        private Optional<TimerRecordingHandler<Timer.HandlerContext>> getFirstApplicableListener(@Nullable Timer.HandlerContext context) {
+        private Optional<TimerRecordingHandler> getFirstApplicableListener(@Nullable Timer.HandlerContext context) {
             return this.handlers.stream().filter(handler -> handler.supportsContext(context)).findFirst();
         }
 
@@ -131,7 +132,7 @@ public interface TimerRecordingHandler<T extends Timer.HandlerContext> {
         }
 
         @Override
-        public List<TimerRecordingHandler<Timer.HandlerContext>> getHandlers() {
+        public List<TimerRecordingHandler> getHandlers() {
             return this.handlers;
         }
     }
@@ -139,15 +140,16 @@ public interface TimerRecordingHandler<T extends Timer.HandlerContext> {
     /**
      * Handler picking all matching recording handlers from the list.
      */
+    @SuppressWarnings({"unchecked", "rawtypes"})
     class AllMatchingCompositeTimerRecordingHandler implements CompositeTimerRecordingHandler {
 
-        private final List<TimerRecordingHandler<Timer.HandlerContext>> handlers;
+        private final List<TimerRecordingHandler> handlers;
 
         /**
          * Creates a new instance of {@link FirstMatchingCompositeTimerRecordingHandler}.
          * @param handlers the handlers that are registered under the composite
          */
-        public AllMatchingCompositeTimerRecordingHandler(TimerRecordingHandler<Timer.HandlerContext>... handlers) {
+        public AllMatchingCompositeTimerRecordingHandler(TimerRecordingHandler... handlers) {
             this(Arrays.asList(handlers));
         }
 
@@ -155,7 +157,7 @@ public interface TimerRecordingHandler<T extends Timer.HandlerContext> {
          * Creates a new instance of {@link FirstMatchingCompositeTimerRecordingHandler}.
          * @param handlers the handlers that are registered under the composite
          */
-        public AllMatchingCompositeTimerRecordingHandler(List<TimerRecordingHandler<Timer.HandlerContext>> handlers) {
+        public AllMatchingCompositeTimerRecordingHandler(List<TimerRecordingHandler> handlers) {
             this.handlers = handlers;
         }
 
@@ -179,7 +181,7 @@ public interface TimerRecordingHandler<T extends Timer.HandlerContext> {
             getAllApplicableListeners(context).forEach(listener -> listener.onStop(sample, context, timer, duration));
         }
 
-        private List<TimerRecordingHandler<Timer.HandlerContext>> getAllApplicableListeners(@Nullable Timer.HandlerContext context) {
+        private List<TimerRecordingHandler> getAllApplicableListeners(@Nullable Timer.HandlerContext context) {
             return this.handlers.stream().filter(handler -> handler.supportsContext(context)).collect(Collectors.toList());
         }
 
@@ -189,7 +191,7 @@ public interface TimerRecordingHandler<T extends Timer.HandlerContext> {
         }
 
         @Override
-        public List<TimerRecordingHandler<Timer.HandlerContext>> getHandlers() {
+        public List<TimerRecordingHandler> getHandlers() {
             return this.handlers;
         }
     }

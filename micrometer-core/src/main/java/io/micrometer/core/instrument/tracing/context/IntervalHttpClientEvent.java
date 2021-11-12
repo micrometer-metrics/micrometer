@@ -16,8 +16,8 @@
 
 package io.micrometer.core.instrument.tracing.context;
 
-import io.micrometer.tracing.transport.http.HttpClientRequest;
-import io.micrometer.tracing.transport.http.HttpClientResponse;
+import io.micrometer.core.instrument.transport.http.HttpClientRequest;
+import io.micrometer.core.instrument.transport.http.HttpClientResponse;
 import io.micrometer.core.lang.NonNull;
 
 /**
