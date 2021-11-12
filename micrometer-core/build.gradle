@@ -9,11 +9,10 @@ dependencies {
         exclude group: 'org.hdrhistogram', module: 'HdrHistogram'
     }
 
+    optionalApi 'io.micrometer:micrometer-tracing'
+
     // instrumentation options
     optionalApi 'io.dropwizard.metrics:metrics-core'
-
-    // [OBSERVABILITY]
-    optionalApi 'io.micrometer:micrometer-tracing'
 
     // cache monitoring
     optionalApi 'com.google.guava:guava'
