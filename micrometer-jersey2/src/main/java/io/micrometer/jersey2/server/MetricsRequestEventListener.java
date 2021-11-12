@@ -118,8 +118,9 @@ public class MetricsRequestEventListener implements RequestEventListener {
         }
 
         return timed.stream()
-            .map(t -> Timer.builder(t, metricName).tags(tagsProvider.httpRequestTags(event)).register(registry))
-            .collect(Collectors.toSet());
+                .filter(annotation -> !annotation.longTask())
+                .map(t -> Timer.builder(t, metricName).tags(tagsProvider.httpRequestTags(event)).register(registry))
+                .collect(Collectors.toSet());
     }
 
     private Set<LongTaskTimer> longTaskTimers(Set<Timed> timed, RequestEvent event) {

@@ -135,6 +135,33 @@ public class MetricsRequestEventListenerTimedTest extends JerseyTest {
             .isEqualTo(1);
     }
 
+    // See gh-2861
+    @Test
+    public void longTaskTimerOnlyOneMeter() throws InterruptedException, ExecutionException {
+        final Future<Response> future = target("just-long-timed").request().async().get();
+
+        /*
+         * Wait until the request has arrived at the server side. (Async client
+         * processing might be slower in triggering the request resulting in the
+         * assertions below to fail. Thread.sleep() is not an option, so resort
+         * to CountDownLatch.)
+         */
+        longTaskRequestStartedLatch.await();
+
+        // the long running task is timed
+        assertThat(registry.get("long.task.in.request")
+                .tags(Tags.of("method", "GET", "uri", "/just-long-timed"))
+                .longTaskTimer().activeTasks())
+                .isEqualTo(1);
+
+        // finish the long running request
+        longTaskRequestReleaseLatch.countDown();
+        future.get();
+
+        // no meters registered except the one checked above
+        assertThat(registry.getMeters().size()).isOne();
+    }
+
     @Test
     public void unnamedLongTaskTimerIsNotSupported() {
         assertThatExceptionOfType(ProcessingException.class)
