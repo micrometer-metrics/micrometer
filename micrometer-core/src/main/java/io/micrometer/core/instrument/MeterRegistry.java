@@ -39,6 +39,7 @@ import io.micrometer.core.instrument.util.TimeUtils;
 import io.micrometer.core.lang.Nullable;
 import io.micrometer.core.util.internal.logging.InternalLogger;
 import io.micrometer.core.util.internal.logging.InternalLoggerFactory;
+import io.micrometer.core.util.internal.logging.WarnThenDebugLogger;
 
 import java.util.ArrayList;
 import java.util.Collection;
@@ -83,6 +84,7 @@ import static java.util.Objects.requireNonNull;
 public abstract class MeterRegistry {
     
     private static final InternalLogger LOG = InternalLoggerFactory.getInstance(MeterRegistry.class);
+    private static final WarnThenDebugLogger warnThenDebugLogger = new WarnThenDebugLogger(MeterRegistry.class);
     
     protected final Clock clock;
     private final Object meterMapLock = new Object();
@@ -158,10 +160,8 @@ public abstract class MeterRegistry {
      */
     public void removeCurrentSample(Timer.Sample sample) {
         Timer.Sample current = this.threadLocalRecordings.get();
-        if (!current.equals(sample)) {
-            if (LOG.isDebugEnabled()) {
-               LOG.debug("Sample [" + sample + "] that calls close is not the same as the one currently in thread local [" + current + "]");
-            }
+        if (!sample.equals(current)) {
+            warnThenDebugLogger.log("Sample [" + sample + "] is not the same as the one currently in thread local [" + current + "]. This is caused by a mistake in the instrumentation.");
             return;
         }
         this.threadLocalRecordings.remove();
