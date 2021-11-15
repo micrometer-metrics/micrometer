@@ -476,6 +476,44 @@ public abstract class MeterRegistry {
     }
 
     /**
+     * Register a gauge that reports the value of the object after the function
+     * {@code valueFunction} is applied. The registration will keep a weak reference to the object so it will
+     * not prevent garbage collection. Applying {@code valueFunction} on the object should be thread safe.
+     *
+     * @param name          Name of the gauge being registered.
+     * @param description          Description of the gauge being registered.
+     * @param tags          Sequence of dimensions for breaking down the name.
+     * @param stateObject   State object used to compute a value.
+     * @param valueFunction Function that produces an instantaneous gauge value from the state object.
+     * @param <T>           The type of the state object from which the gauge value is extracted.
+     * @return The state object that was passed in so the registration can be done as part of an assignment
+     * statement.
+     */
+    @Nullable
+    public <T> T gauge(String name,String description, Iterable<Tag> tags, @Nullable T stateObject, ToDoubleFunction<T> valueFunction) {
+        Gauge.builder(name, stateObject, valueFunction)
+                .description(description)
+                .tags(tags).register(this);
+        return stateObject;
+    }
+
+    /**
+     * Register a gauge that reports the value of the {@link Number}.
+     *
+     * @param name   Name of the gauge being registered.
+     * @param description   Description of the gauge being registered.
+     * @param tags   Sequence of dimensions for breaking down the name.
+     * @param number Thread-safe implementation of {@link Number} used to access the value.
+     * @param <T>    The type of the number from which the gauge value is extracted.
+     * @return The number that was passed in so the registration can be done as part of an assignment
+     * statement.
+     */
+    @Nullable
+    public <T extends Number> T gauge(String name, String description, Iterable<Tag> tags, T number) {
+        return gauge(name, description, tags, number, Number::doubleValue);
+    }
+
+    /**
      * Register a gauge that reports the value of the {@link Number}.
      *
      * @param name   Name of the gauge being registered.
@@ -505,6 +543,21 @@ public abstract class MeterRegistry {
     }
 
     /**
+     * Register a gauge that reports the value of the {@link Number}.
+     *
+     * @param name   Name of the gauge being registered.
+     * @param description   Description of the gauge being registered.
+     * @param number Thread-safe implementation of {@link Number} used to access the value.
+     * @param <T>    The type of the state object from which the gauge value is extracted.
+     * @return The number that was passed in so the registration can be done as part of an assignment
+     * statement.
+     */
+    @Nullable
+    public <T extends Number> T gauge(String name, String description, T number) {
+        return gauge(name, description, emptyList(), number);
+    }
+
+    /**
      * Register a gauge that reports the value of the object.
      *
      * @param name          Name of the gauge being registered.
@@ -517,6 +570,22 @@ public abstract class MeterRegistry {
     @Nullable
     public <T> T gauge(String name, T stateObject, ToDoubleFunction<T> valueFunction) {
         return gauge(name, emptyList(), stateObject, valueFunction);
+    }
+
+    /**
+     * Register a gauge that reports the value of the object.
+     *
+     * @param name          Name of the gauge being registered.
+     * @param description   Description of the gauge being registered.
+     * @param stateObject   State object used to compute a value.
+     * @param valueFunction Function that produces an instantaneous gauge value from the state object.
+     * @param <T>           The type of the state object from which the gauge value is extracted.
+     * @return The state object that was passed in so the registration can be done as part of an assignment
+     * statement.
+     */
+    @Nullable
+    public <T> T gauge(String name, String description, T stateObject, ToDoubleFunction<T> valueFunction) {
+        return gauge(name, description, emptyList(), stateObject, valueFunction);
     }
 
     /**

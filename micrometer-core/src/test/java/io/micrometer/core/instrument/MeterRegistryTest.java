@@ -199,6 +199,14 @@ class MeterRegistryTest {
     }
 
     @Test
+    void gaugeRegistersGaugeWithDescription() {
+        registry.gauge("my.gauge", "My Gauge", 1d);
+        registry.gauge("my.gauge", "My Gauge",2d);
+
+        assertThat(registry.get("my.gauge").gauge().getId().getDescription()).isEqualTo("My Gauge");
+    }
+
+    @Test
     void shouldNotLetRegisteringMetersTwice() {
         registry.counter("my.dupe.meter");
         assertThatThrownBy(() -> registry.timer("my.dupe.meter"))
