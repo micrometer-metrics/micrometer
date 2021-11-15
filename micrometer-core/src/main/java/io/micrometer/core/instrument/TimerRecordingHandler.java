@@ -21,8 +21,6 @@ import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
 
-import javax.validation.constraints.NotNull;
-
 import io.micrometer.core.lang.Nullable;
 
 /**
@@ -36,20 +34,20 @@ public interface TimerRecordingHandler<T extends Timer.HandlerContext> {
      * @param sample the sample that was started
      * @param context handler context
      */
-    void onStart(@NotNull Timer.Sample sample, @Nullable T context);
+    void onStart(Timer.Sample sample, @Nullable T context);
 
     /**
      * @param sample sample for which the error happened
      * @param context handler context
      * @param throwable exception that happened during recording
      */
-    void onError(@NotNull Timer.Sample sample, @Nullable T context, Throwable throwable);
+    void onError(Timer.Sample sample, @Nullable T context, Throwable throwable);
     
     /**
      * @param sample sample for which the error happened
      * @param context handler context
      */
-    void onRestore(@NotNull Timer.Sample sample, @Nullable T context);
+    void onRestore(Timer.Sample sample, @Nullable T context);
 
     /**
      * @param sample the sample that was stopped
@@ -57,7 +55,7 @@ public interface TimerRecordingHandler<T extends Timer.HandlerContext> {
      * @param timer the timer to which the recording was made
      * @param duration time recorded
      */
-    void onStop(@NotNull Timer.Sample sample, @Nullable T context, @NotNull Timer timer, @NotNull Duration duration);
+    void onStop(Timer.Sample sample, @Nullable T context, Timer timer, Duration duration);
 
     /**
      * @param handlerContext handler context, may be {@code null}
@@ -103,22 +101,22 @@ public interface TimerRecordingHandler<T extends Timer.HandlerContext> {
         }
 
         @Override
-        public void onStart(@NotNull Timer.Sample sample, @Nullable Timer.HandlerContext context) {
+        public void onStart(Timer.Sample sample, @Nullable Timer.HandlerContext context) {
             getFirstApplicableListener(context).ifPresent(listener -> listener.onStart(sample, context));
         }
 
         @Override
-        public void onError(@NotNull Timer.Sample sample, @Nullable Timer.HandlerContext context, Throwable throwable) {
+        public void onError(Timer.Sample sample, @Nullable Timer.HandlerContext context, Throwable throwable) {
             getFirstApplicableListener(context).ifPresent(listener -> listener.onError(sample, context, throwable));
         }
 
         @Override
-        public void onRestore(@NotNull Timer.Sample sample, @Nullable Timer.HandlerContext context) {
+        public void onRestore(Timer.Sample sample, @Nullable Timer.HandlerContext context) {
             getFirstApplicableListener(context).ifPresent(listener -> listener.onRestore(sample, context));
         }
 
         @Override
-        public void onStop(@NotNull Timer.Sample sample, @Nullable Timer.HandlerContext context, @NotNull Timer timer, @NotNull Duration duration) {
+        public void onStop(Timer.Sample sample, @Nullable Timer.HandlerContext context, Timer timer, Duration duration) {
             getFirstApplicableListener(context).ifPresent(listener -> listener.onStop(sample, context, timer, duration));
         }
 
@@ -162,22 +160,22 @@ public interface TimerRecordingHandler<T extends Timer.HandlerContext> {
         }
 
         @Override
-        public void onStart(@NotNull Timer.Sample sample, @Nullable Timer.HandlerContext context) {
+        public void onStart(Timer.Sample sample, @Nullable Timer.HandlerContext context) {
             getAllApplicableListeners(context).forEach(listener -> listener.onStart(sample, context));
         }
 
         @Override
-        public void onError(@NotNull Timer.Sample sample, @Nullable Timer.HandlerContext context, Throwable throwable) {
+        public void onError(Timer.Sample sample, @Nullable Timer.HandlerContext context, Throwable throwable) {
             getAllApplicableListeners(context).forEach(listener -> listener.onError(sample, context, throwable));
         }
 
         @Override
-        public void onRestore(@NotNull Timer.Sample sample, @Nullable Timer.HandlerContext context) {
+        public void onRestore(Timer.Sample sample, @Nullable Timer.HandlerContext context) {
             getAllApplicableListeners(context).forEach(listener -> listener.onRestore(sample, context));
         }
 
         @Override
-        public void onStop(@NotNull Timer.Sample sample, @Nullable Timer.HandlerContext context, @NotNull Timer timer, @NotNull Duration duration) {
+        public void onStop(Timer.Sample sample, @Nullable Timer.HandlerContext context, Timer timer, Duration duration) {
             getAllApplicableListeners(context).forEach(listener -> listener.onStop(sample, context, timer, duration));
         }
 
