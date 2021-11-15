@@ -45,7 +45,7 @@ abstract class AbstractMongoDbTest {
     void startEmbeddedMongoDb() throws IOException {
         MongodStarter starter = getDefaultInstance();
 
-        port = Network.getFreeServerPort();
+        port = Network.freeServerPort(Network.getLocalHost());
 
         MongodConfig mongodConfig = MongodConfig.builder()
                 .version(Version.Main.PRODUCTION)

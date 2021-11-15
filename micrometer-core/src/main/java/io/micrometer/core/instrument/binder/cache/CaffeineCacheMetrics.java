@@ -20,8 +20,11 @@ import com.github.benmanes.caffeine.cache.stats.CacheStats;
 import io.micrometer.core.instrument.*;
 import io.micrometer.core.lang.NonNullApi;
 import io.micrometer.core.lang.NonNullFields;
+import io.micrometer.core.lang.Nullable;
 
 import java.util.concurrent.TimeUnit;
+import java.util.function.Function;
+import java.util.function.ToLongFunction;
 
 /**
  * Collect metrics from Caffeine's {@link com.github.benmanes.caffeine.cache.Cache}. {@link CaffeineStatsCounter} is an
@@ -39,8 +42,7 @@ import java.util.concurrent.TimeUnit;
  */
 @NonNullApi
 @NonNullFields
-public class CaffeineCacheMetrics extends CacheMeterBinder {
-    private final Cache<?, ?> cache;
+public class CaffeineCacheMetrics<K, V, C extends Cache<K, V>> extends CacheMeterBinder<C> {
 
     /**
      * Creates a new {@link CaffeineCacheMetrics} instance.
@@ -50,9 +52,8 @@ public class CaffeineCacheMetrics extends CacheMeterBinder {
      * @param cacheName Will be used to tag metrics with "cache".
      * @param tags      tags to apply to all recorded metrics.
      */
-    public CaffeineCacheMetrics(Cache<?, ?> cache, String cacheName, Iterable<Tag> tags) {
+    public CaffeineCacheMetrics(C cache, String cacheName, Iterable<Tag> tags) {
         super(cache, cacheName, tags);
-        this.cache = cache;
     }
 
     /**
@@ -63,10 +64,12 @@ public class CaffeineCacheMetrics extends CacheMeterBinder {
      * @param cache     The cache to instrument.
      * @param cacheName Will be used to tag metrics with "cache".
      * @param tags      Tags to apply to all recorded metrics. Must be an even number of arguments representing key/value pairs of tags.
+     * @param <K>       Cache key type.
+     * @param <V>       Cache value type.
      * @param <C>       The cache type.
      * @return The instrumented cache, unchanged. The original cache is not wrapped or proxied in any way.
      */
-    public static <C extends Cache<?, ?>> C monitor(MeterRegistry registry, C cache, String cacheName, String... tags) {
+    public static <K, V, C extends Cache<K, V>> C monitor(MeterRegistry registry, C cache, String cacheName, String... tags) {
         return monitor(registry, cache, cacheName, Tags.of(tags));
     }
 
@@ -78,12 +81,14 @@ public class CaffeineCacheMetrics extends CacheMeterBinder {
      * @param cache     The cache to instrument.
      * @param cacheName Will be used to tag metrics with "cache".
      * @param tags      Tags to apply to all recorded metrics.
+     * @param <K>       Cache key type.
+     * @param <V>       Cache value type.
      * @param <C>       The cache type.
      * @return The instrumented cache, unchanged. The original cache is not wrapped or proxied in any way.
      * @see CacheStats
      */
-    public static <C extends Cache<?, ?>> C monitor(MeterRegistry registry, C cache, String cacheName, Iterable<Tag> tags) {
-        new CaffeineCacheMetrics(cache, cacheName, tags).bindTo(registry);
+    public static <K, V, C extends Cache<K, V>> C monitor(MeterRegistry registry, C cache, String cacheName, Iterable<Tag> tags) {
+        new CaffeineCacheMetrics<>(cache, cacheName, tags).bindTo(registry);
         return cache;
     }
 
@@ -95,10 +100,12 @@ public class CaffeineCacheMetrics extends CacheMeterBinder {
      * @param cache     The cache to instrument.
      * @param cacheName Will be used to tag metrics with "cache".
      * @param tags      Tags to apply to all recorded metrics. Must be an even number of arguments representing key/value pairs of tags.
+     * @param <K>       Cache key type.
+     * @param <V>       Cache value type.
      * @param <C>       The cache type.
      * @return The instrumented cache, unchanged. The original cache is not wrapped or proxied in any way.
      */
-    public static <C extends AsyncCache<?, ?>> C monitor(MeterRegistry registry, C cache, String cacheName, String... tags) {
+    public static <K, V, C extends AsyncCache<K, V>> C monitor(MeterRegistry registry, C cache, String cacheName, String... tags) {
         return monitor(registry, cache, cacheName, Tags.of(tags));
     }
 
@@ -110,42 +117,45 @@ public class CaffeineCacheMetrics extends CacheMeterBinder {
      * @param cache     The cache to instrument.
      * @param cacheName Will be used to tag metrics with "cache".
      * @param tags      Tags to apply to all recorded metrics.
+     * @param <K>       Cache key type.
+     * @param <V>       Cache value type.
      * @param <C>       The cache type.
      * @return The instrumented cache, unchanged. The original cache is not wrapped or proxied in any way.
      * @see CacheStats
      */
-    public static <C extends AsyncCache<?, ?>> C monitor(MeterRegistry registry, C cache, String cacheName, Iterable<Tag> tags) {
+    public static <K, V, C extends AsyncCache<K, V>> C monitor(MeterRegistry registry, C cache, String cacheName, Iterable<Tag> tags) {
         monitor(registry, cache.synchronous(), cacheName, tags);
         return cache;
     }
 
     @Override
     protected Long size() {
-        return cache.estimatedSize();
+        return getOrDefault(Cache::estimatedSize, null);
     }
 
     @Override
     protected long hitCount() {
-        return cache.stats().hitCount();
+        return getOrDefault(c -> c.stats().hitCount(), 0L);
     }
 
     @Override
     protected Long missCount() {
-        return cache.stats().missCount();
+        return getOrDefault(c -> c.stats().missCount(), null);
     }
 
     @Override
     protected Long evictionCount() {
-        return cache.stats().evictionCount();
+        return getOrDefault(c -> c.stats().evictionCount(), null);
     }
 
     @Override
     protected long putCount() {
-        return cache.stats().loadCount();
+        return getOrDefault(c -> c.stats().loadCount(), 0L);
     }
 
     @Override
     protected void bindImplementationSpecificMetrics(MeterRegistry registry) {
+        C cache = getCache();
         FunctionCounter.builder("cache.eviction.weight", cache, c -> c.stats().evictionWeight())
                 .tags(getTagsWithCacheName())
                 .description("The sum of weights of evicted entries. This total does not include manual invalidations.")
@@ -171,5 +181,24 @@ public class CaffeineCacheMetrics extends CacheMeterBinder {
                             "because no value was found or an exception was thrown while loading")
                     .register(registry);
         }
+    }
+
+    @Nullable
+    private Long getOrDefault(Function<C, Long> function, @Nullable Long defaultValue) {
+        C cache = getCache();
+        if (cache != null) {
+            return function.apply(cache);
+        }
+
+        return defaultValue;
+    }
+
+    private long getOrDefault(ToLongFunction<C> function, long defaultValue) {
+        C cache = getCache();
+        if (cache != null) {
+            return function.applyAsLong(cache);
+        }
+
+        return defaultValue;
     }
 }

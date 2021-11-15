@@ -161,4 +161,24 @@ public abstract class HttpSenderCompatibilityKit {
                 .withHeader("customHeader", equalTo("customHeaderValue")));
     }
 
+    @Test
+    void authenticationHeader(@WiremockResolver.Wiremock WireMockServer server) throws Throwable {
+        server.stubFor(any(urlEqualTo("/metrics"))
+                .willReturn(unauthorized()));
+
+        HttpSender.Response response = httpSender.newRequest(server.baseUrl() + "/metrics")
+                .withMethod(HttpSender.Method.POST)
+                .withAuthentication("Bearer", "mF_9.B5f-4.1JqM")
+                .send();
+
+        assertThat(response.code()).isEqualTo(401);
+
+        server.verify(WireMock.requestMadeFor(request ->
+                        MatchResult.aggregate(
+                                MatchResult.of(request.getMethod().getName().equals("POST")),
+                                MatchResult.of(request.getUrl().equals("/metrics"))
+                        ))
+                .withHeader("Authorization", equalTo("Bearer mF_9.B5f-4.1JqM")));
+    }
+
 }

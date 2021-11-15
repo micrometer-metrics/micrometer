@@ -15,10 +15,14 @@
  */
 package io.micrometer.core.instrument.binder.cache;
 
+import java.util.function.Function;
+import java.util.function.ToLongFunction;
+
 import io.micrometer.core.instrument.*;
 import io.micrometer.core.instrument.binder.BaseUnits;
 import io.micrometer.core.lang.NonNullApi;
 import io.micrometer.core.lang.NonNullFields;
+import io.micrometer.core.lang.Nullable;
 import net.sf.ehcache.Ehcache;
 import net.sf.ehcache.statistics.StatisticsGateway;
 
@@ -29,12 +33,10 @@ import net.sf.ehcache.statistics.StatisticsGateway;
  */
 @NonNullApi
 @NonNullFields
-public class EhCache2Metrics extends CacheMeterBinder {
-    private final StatisticsGateway stats;
+public class EhCache2Metrics extends CacheMeterBinder<Ehcache> {
 
     public EhCache2Metrics(Ehcache cache, Iterable<Tag> tags) {
         super(cache, cache.getName(), tags);
-        this.stats = cache.getStatistics();
     }
 
     /**
@@ -64,31 +66,32 @@ public class EhCache2Metrics extends CacheMeterBinder {
 
     @Override
     protected Long size() {
-        return stats.getSize();
+        return getOrDefault(StatisticsGateway::getSize, null);
     }
 
     @Override
     protected long hitCount() {
-        return stats.cacheHitCount();
+        return getOrDefault(StatisticsGateway::cacheHitCount, 0L);
     }
 
     @Override
     protected Long missCount() {
-        return stats.cacheMissCount();
+        return getOrDefault(StatisticsGateway::cacheMissCount, null);
     }
 
     @Override
     protected Long evictionCount() {
-        return stats.cacheEvictedCount();
+        return getOrDefault(StatisticsGateway::cacheEvictedCount, null);
     }
 
     @Override
     protected long putCount() {
-        return stats.cachePutCount();
+        return getOrDefault(StatisticsGateway::cachePutCount, 0L);
     }
 
     @Override
     protected void bindImplementationSpecificMetrics(MeterRegistry registry) {
+        StatisticsGateway stats = getStats();
         Gauge.builder("cache.remoteSize", stats, StatisticsGateway::getRemoteSize)
                 .tags(getTagsWithCacheName())
                 .description("The number of entries held remotely in this cache")
@@ -133,7 +136,14 @@ public class EhCache2Metrics extends CacheMeterBinder {
                 .register(registry);
     }
 
+    @Nullable
+    private StatisticsGateway getStats() {
+        Ehcache cache = getCache();
+        return cache != null ? cache.getStatistics() : null;
+    }
+
     private void missMetrics(MeterRegistry registry) {
+        StatisticsGateway stats = getStats();
         FunctionCounter.builder("cache.misses", stats, StatisticsGateway::cacheMissExpiredCount)
                 .tags(getTagsWithCacheName())
                 .tags("reason", "expired")
@@ -148,6 +158,7 @@ public class EhCache2Metrics extends CacheMeterBinder {
     }
 
     private void commitTransactionMetrics(MeterRegistry registry) {
+        StatisticsGateway stats = getStats();
         FunctionCounter.builder("cache.xa.commits", stats, StatisticsGateway::xaCommitReadOnlyCount)
                 .tags(getTagsWithCacheName())
                 .tags("result", "readOnly")
@@ -168,6 +179,7 @@ public class EhCache2Metrics extends CacheMeterBinder {
     }
 
     private void rollbackTransactionMetrics(MeterRegistry registry) {
+        StatisticsGateway stats = getStats();
         FunctionCounter.builder("cache.xa.rollbacks", stats, StatisticsGateway::xaRollbackExceptionCount)
                 .tags(getTagsWithCacheName())
                 .tags("result", "exception")
@@ -182,6 +194,7 @@ public class EhCache2Metrics extends CacheMeterBinder {
     }
 
     private void recoveryTransactionMetrics(MeterRegistry registry) {
+        StatisticsGateway stats = getStats();
         FunctionCounter.builder("cache.xa.recoveries", stats, StatisticsGateway::xaRecoveryNothingCount)
                 .tags(getTagsWithCacheName())
                 .tags("result", "nothing")
@@ -193,5 +206,24 @@ public class EhCache2Metrics extends CacheMeterBinder {
                 .tags("result", "success")
                 .description("Successful recovery transaction")
                 .register(registry);
+    }
+
+    @Nullable
+    private Long getOrDefault(Function<StatisticsGateway, Long> function, @Nullable Long defaultValue) {
+        StatisticsGateway ref = getStats();
+        if (ref != null) {
+            return function.apply(ref);
+        }
+
+        return defaultValue;
+    }
+
+    private long getOrDefault(ToLongFunction<StatisticsGateway> function, long defaultValue) {
+        StatisticsGateway ref = getStats();
+        if (ref != null) {
+            return function.applyAsLong(ref);
+        }
+
+        return defaultValue;
     }
 }

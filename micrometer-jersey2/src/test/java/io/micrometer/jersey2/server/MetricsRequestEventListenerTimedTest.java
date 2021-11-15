@@ -15,6 +15,7 @@
  */
 package io.micrometer.jersey2.server;
 
+import io.micrometer.core.Issue;
 import io.micrometer.core.instrument.MeterRegistry;
 import io.micrometer.core.instrument.Tag;
 import io.micrometer.core.instrument.Tags;
@@ -23,7 +24,7 @@ import io.micrometer.jersey2.server.resources.TimedOnClassResource;
 import io.micrometer.jersey2.server.resources.TimedResource;
 import org.glassfish.jersey.server.ResourceConfig;
 import org.glassfish.jersey.test.JerseyTest;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
 import javax.ws.rs.ProcessingException;
 import javax.ws.rs.core.Application;
@@ -40,7 +41,8 @@ import static org.assertj.core.api.Assertions.assertThatExceptionOfType;
 /**
  * @author Michael Weirauch
  */
-public class MetricsRequestEventListenerTimedTest extends JerseyTest {
+@Deprecated
+class MetricsRequestEventListenerTimedTest extends JerseyTest {
 
     static {
         Logger.getLogger("org.glassfish.jersey").setLevel(Level.OFF);
@@ -73,7 +75,7 @@ public class MetricsRequestEventListenerTimedTest extends JerseyTest {
     }
 
     @Test
-    public void resourcesAndNotFoundsAreNotAutoTimed() {
+    void resourcesAndNotFoundsAreNotAutoTimed() {
         target("not-timed").request().get();
         target("not-found").request().get();
 
@@ -85,7 +87,7 @@ public class MetricsRequestEventListenerTimedTest extends JerseyTest {
     }
 
     @Test
-    public void resourcesWithAnnotationAreTimed() {
+    void resourcesWithAnnotationAreTimed() {
         target("timed").request().get();
         target("multi-timed").request().get();
 
@@ -103,7 +105,7 @@ public class MetricsRequestEventListenerTimedTest extends JerseyTest {
     }
 
     @Test
-    public void longTaskTimerSupported() throws InterruptedException, ExecutionException {
+    void longTaskTimerSupported() throws InterruptedException, ExecutionException {
         final Future<Response> future = target("long-timed").request().async().get();
 
         /*
@@ -136,14 +138,41 @@ public class MetricsRequestEventListenerTimedTest extends JerseyTest {
     }
 
     @Test
-    public void unnamedLongTaskTimerIsNotSupported() {
+    @Issue("gh-2861")
+    void longTaskTimerOnlyOneMeter() throws InterruptedException, ExecutionException {
+        final Future<Response> future = target("just-long-timed").request().async().get();
+
+        /*
+         * Wait until the request has arrived at the server side. (Async client
+         * processing might be slower in triggering the request resulting in the
+         * assertions below to fail. Thread.sleep() is not an option, so resort
+         * to CountDownLatch.)
+         */
+        longTaskRequestStartedLatch.await();
+
+        // the long running task is timed
+        assertThat(registry.get("long.task.in.request")
+                .tags(Tags.of("method", "GET", "uri", "/just-long-timed"))
+                .longTaskTimer().activeTasks())
+                .isEqualTo(1);
+
+        // finish the long running request
+        longTaskRequestReleaseLatch.countDown();
+        future.get();
+
+        // no meters registered except the one checked above
+        assertThat(registry.getMeters().size()).isOne();
+    }
+
+    @Test
+    void unnamedLongTaskTimerIsNotSupported() {
         assertThatExceptionOfType(ProcessingException.class)
             .isThrownBy(() -> target("long-timed-unnamed").request().get())
             .withCauseInstanceOf(IllegalArgumentException.class);
     }
 
     @Test
-    public void classLevelAnnotationIsInherited() {
+    void classLevelAnnotationIsInherited() {
         target("/class/inherited").request().get();
 
         assertThat(registry.get(METRIC_NAME)
@@ -154,7 +183,7 @@ public class MetricsRequestEventListenerTimedTest extends JerseyTest {
     }
 
     @Test
-    public void methodLevelAnnotationOverridesClassLevel() {
+    void methodLevelAnnotationOverridesClassLevel() {
         target("/class/on-method").request().get();
 
         assertThat(registry.get(METRIC_NAME)

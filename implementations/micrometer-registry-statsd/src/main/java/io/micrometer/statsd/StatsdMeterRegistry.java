@@ -85,7 +85,7 @@ public class StatsdMeterRegistry extends MeterRegistry {
     private Disposable.Swap meterPoller = Disposables.swap();
 
     @Nullable
-    private Function<Meter.Id, StatsdLineBuilder> lineBuilderFunction;
+    private BiFunction<Meter.Id, DistributionStatisticConfig, StatsdLineBuilder> lineBuilderFunction;
 
     @Nullable
     private Consumer<String> lineSink;
@@ -112,7 +112,7 @@ public class StatsdMeterRegistry extends MeterRegistry {
                                 HierarchicalNameMapper nameMapper,
                                 NamingConvention namingConvention,
                                 Clock clock,
-                                @Nullable Function<Meter.Id, StatsdLineBuilder> lineBuilderFunction,
+                                @Nullable BiFunction<Meter.Id, DistributionStatisticConfig, StatsdLineBuilder> lineBuilderFunction,
                                 @Nullable Consumer<String> lineSink) {
         super(clock);
 
@@ -285,14 +285,14 @@ public class StatsdMeterRegistry extends MeterRegistry {
     }
 
     private void retryReplaceClient(Mono<? extends Connection> connectMono) {
-         connectMono
-                 .retryWhen(Retry.backoff(Long.MAX_VALUE, Duration.ofSeconds(1)).maxBackoff(Duration.ofMinutes(1)))
-                 .subscribe(connection -> {
-                     this.statsdConnection.replace(connection);
+        connectMono
+                .retryWhen(Retry.backoff(Long.MAX_VALUE, Duration.ofSeconds(1)).maxBackoff(Duration.ofMinutes(1)))
+                .subscribe(connection -> {
+                    this.statsdConnection.replace(connection);
 
-                     // now that we're connected, start polling gauges and other pollable meter types
-                     startPolling();
-                 });
+                    // now that we're connected, start polling gauges and other pollable meter types
+                    startPolling();
+                });
     }
 
     private void startPolling() {
@@ -327,11 +327,15 @@ public class StatsdMeterRegistry extends MeterRegistry {
     }
 
     private StatsdLineBuilder lineBuilder(Meter.Id id) {
+        return lineBuilder(id, null);
+    }
+
+    private StatsdLineBuilder lineBuilder(Meter.Id id, @Nullable DistributionStatisticConfig distributionStatisticConfig) {
         if (lineBuilderFunction == null) {
-            lineBuilderFunction = id2 -> {
+            lineBuilderFunction = (id2, dsc2) -> {
                 switch (statsdConfig.flavor()) {
                     case DATADOG:
-                        return new DatadogStatsdLineBuilder(id2, config());
+                        return new DatadogStatsdLineBuilder(id2, config(), dsc2);
                     case TELEGRAF:
                         return new TelegrafStatsdLineBuilder(id2, config());
                     case SYSDIG:
@@ -342,7 +346,7 @@ public class StatsdMeterRegistry extends MeterRegistry {
                 }
             };
         }
-        return lineBuilderFunction.apply(id);
+        return lineBuilderFunction.apply(id, distributionStatisticConfig);
     }
 
     private DistributionStatisticConfig addInfBucket(DistributionStatisticConfig config) {
@@ -361,7 +365,7 @@ public class StatsdMeterRegistry extends MeterRegistry {
 
     @Override
     protected LongTaskTimer newLongTaskTimer(Meter.Id id, DistributionStatisticConfig distributionStatisticConfig) {
-        StatsdLongTaskTimer ltt = new StatsdLongTaskTimer(id, lineBuilder(id), this.sink, clock, statsdConfig.publishUnchangedMeters(),
+        StatsdLongTaskTimer ltt = new StatsdLongTaskTimer(id, lineBuilder(id, distributionStatisticConfig), this.sink, clock, statsdConfig.publishUnchangedMeters(),
                 distributionStatisticConfig, getBaseTimeUnit());
         HistogramGauges.registerWithCommonFormat(ltt, this);
         pollableMeters.put(id, ltt);
@@ -377,7 +381,7 @@ public class StatsdMeterRegistry extends MeterRegistry {
             distributionStatisticConfig = addInfBucket(distributionStatisticConfig);
         }
 
-        Timer timer = new StatsdTimer(id, lineBuilder(id), this.sink, clock, distributionStatisticConfig, pauseDetector, getBaseTimeUnit(),
+        Timer timer = new StatsdTimer(id, lineBuilder(id, distributionStatisticConfig), this.sink, clock, distributionStatisticConfig, pauseDetector, getBaseTimeUnit(),
                 statsdConfig.step().toMillis());
         HistogramGauges.registerWithCommonFormat(timer, this);
         return timer;
@@ -392,7 +396,7 @@ public class StatsdMeterRegistry extends MeterRegistry {
             distributionStatisticConfig = addInfBucket(distributionStatisticConfig);
         }
 
-        DistributionSummary summary = new StatsdDistributionSummary(id, lineBuilder(id), this.sink, clock, distributionStatisticConfig, scale);
+        DistributionSummary summary = new StatsdDistributionSummary(id, lineBuilder(id, distributionStatisticConfig), this.sink, clock, distributionStatisticConfig, scale);
         HistogramGauges.registerWithCommonFormat(summary, this);
         return summary;
     }
@@ -479,7 +483,7 @@ public class StatsdMeterRegistry extends MeterRegistry {
         private HierarchicalNameMapper nameMapper = HierarchicalNameMapper.DEFAULT;
 
         @Nullable
-        private Function<Meter.Id, StatsdLineBuilder> lineBuilderFunction = null;
+        private BiFunction<Meter.Id, DistributionStatisticConfig, StatsdLineBuilder> lineBuilderFunction = null;
 
         @Nullable
         private Consumer<String> lineSink;
@@ -498,14 +502,34 @@ public class StatsdMeterRegistry extends MeterRegistry {
          * Used for completely customizing the StatsD line format. Intended for use by custom, proprietary
          * StatsD flavors.
          *
-         * @param lineBuilderFunction A mapping from a meter ID to a StatsD line generator that knows how to write counts, gauges
+         * @param lineBuilderFunction A mapping from a meter ID and a Distribution statistic configuration
+         *                            to a StatsD line generator that knows how to write counts, gauges
          *                            timers, and histograms in the proprietary format.
          * @return This builder.
+         * @since 1.8.0
          */
-        public Builder lineBuilder(Function<Meter.Id, StatsdLineBuilder> lineBuilderFunction) {
+        public Builder lineBuilder(BiFunction<Meter.Id, DistributionStatisticConfig, StatsdLineBuilder> lineBuilderFunction) {
             this.lineBuilderFunction = lineBuilderFunction;
             return this;
         }
+
+
+        /**
+         * Used for completely customizing the StatsD line format. Intended for use by custom, proprietary
+         * StatsD flavors.
+         *
+         * @param lineBuilderFunction A mapping from a meter ID to a StatsD line generator that knows how to write counts, gauges
+         *                            timers, and histograms in the proprietary format.
+         *
+         * @return This builder.
+         * @deprecated Use {@link #lineBuilder(BiFunction)} instead since 1.8.0.
+         */
+        @Deprecated
+        public Builder lineBuilder(Function<Meter.Id, StatsdLineBuilder> lineBuilderFunction) {
+            this.lineBuilderFunction = (id, dsc) -> lineBuilderFunction.apply(id);
+            return this;
+        }
+
 
         public Builder nameMapper(HierarchicalNameMapper nameMapper) {
             this.nameMapper = nameMapper;

@@ -23,7 +23,9 @@ import io.micrometer.core.instrument.Tag;
  * Provides {@link Tag Tags} for Jersey request metrics.
  * 
  * @author Michael Weirauch
+ * @deprecated use {@link io.micrometer.core.instrument.binder.jersey.server.JerseyTagsProvider} in micrometer-core instead.
  */
+@Deprecated
 public interface JerseyTagsProvider {
 
     /**

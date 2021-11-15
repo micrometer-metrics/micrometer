@@ -15,6 +15,7 @@
  */
 package io.micrometer.core.instrument.binder.cache;
 
+import com.google.common.cache.Cache;
 import com.google.common.cache.CacheBuilder;
 import com.google.common.cache.CacheLoader;
 import com.google.common.cache.CacheStats;
@@ -43,7 +44,7 @@ class GuavaCacheMetricsTest extends AbstractCacheMetricsTest {
             return "";
         }
     });
-    private GuavaCacheMetrics metrics = new GuavaCacheMetrics(cache, "testCache", expectedTag);
+    private GuavaCacheMetrics<String, String, Cache<String, String>> metrics = new GuavaCacheMetrics<>(cache, "testCache", expectedTag);
 
     @Test
     void reportExpectedMetrics() {

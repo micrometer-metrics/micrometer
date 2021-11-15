@@ -24,7 +24,6 @@ import org.glassfish.jersey.server.model.ResourceMethod;
 import org.glassfish.jersey.server.monitoring.RequestEvent;
 import org.glassfish.jersey.server.monitoring.RequestEventListener;
 
-import javax.ws.rs.NotFoundException;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -35,7 +34,9 @@ import static java.util.Objects.requireNonNull;
  *
  * @author Michael Weirauch
  * @author Jon Schneider
+ * @deprecated use {@link io.micrometer.core.instrument.binder.jersey.server.MetricsRequestEventListener} in micrometer-core instead.
  */
+@Deprecated
 public class MetricsRequestEventListener implements RequestEventListener {
 
     private final Map<ContainerRequest, Timer.Sample> shortTaskSample = Collections
@@ -69,7 +70,7 @@ public class MetricsRequestEventListener implements RequestEventListener {
 
         switch (event.getType()) {
             case ON_EXCEPTION:
-                if (!(event.getException() instanceof NotFoundException)) {
+                if (!isNotFoundException(event)) {
                     break;
                 }
             case REQUEST_MATCHED:
@@ -103,6 +104,16 @@ public class MetricsRequestEventListener implements RequestEventListener {
         }
     }
 
+    private boolean isNotFoundException(RequestEvent event) {
+        Throwable t = event.getException();
+        if (t == null) {
+            return false;
+        }
+        String className = t.getClass().getCanonicalName();
+        return className.equals("jakarta.ws.rs.NotFoundException")
+            || className.equals("javax.ws.rs.NotFoundException");
+    }
+
     private Set<Timer> shortTimers(Set<Timed> timed, RequestEvent event) {
         /*
          * Given we didn't find any matching resource method, 404s will be only
@@ -118,8 +129,9 @@ public class MetricsRequestEventListener implements RequestEventListener {
         }
 
         return timed.stream()
-            .map(t -> Timer.builder(t, metricName).tags(tagsProvider.httpRequestTags(event)).register(registry))
-            .collect(Collectors.toSet());
+                .filter(annotation -> !annotation.longTask())
+                .map(t -> Timer.builder(t, metricName).tags(tagsProvider.httpRequestTags(event)).register(registry))
+                .collect(Collectors.toSet());
     }
 
     private Set<LongTaskTimer> longTaskTimers(Set<Timed> timed, RequestEvent event) {

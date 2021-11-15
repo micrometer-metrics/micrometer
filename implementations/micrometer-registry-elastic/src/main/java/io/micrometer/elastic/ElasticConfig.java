@@ -121,7 +121,8 @@ public interface ElasticConfig extends StepRegistryConfig {
     }
 
     /**
-     * The Basic Authentication username.
+     * The Basic Authentication username. If {@link #apiKeyCredentials()} is configured,
+     * it will be used for authentication instead of this.
      *
      * @return username for Basic Authentication
      */
@@ -131,7 +132,8 @@ public interface ElasticConfig extends StepRegistryConfig {
     }
 
     /**
-     * The Basic Authentication password.
+     * The Basic Authentication password. If {@link #apiKeyCredentials()} is configured,
+     * it will be used for authentication instead of this.
      *
      * @return password for Basic Authentication
      */
@@ -161,6 +163,24 @@ public interface ElasticConfig extends StepRegistryConfig {
     default String indexDateSeparator() {
         return getString(this, "indexDateSeparator").orElse("-");
     }
+
+    /**
+     * Base64-encoded credentials string. From a generated API key, concatenate in UTF-8 format
+     * the unique {@code id}, a colon ({@code :}), and the {@code api_key} in the following format:
+     * <p><pre>{@code <id>:<api_key>}</pre></p>
+     * The above should be the input for Base64 encoding, and the output is the credentials
+     * returned by this method.
+     * If configured, ApiKey type authentication is used instead of username/password authentication.
+     *
+     * @return base64-encoded ApiKey authentication credentials
+     * @see <a href="https://www.elastic.co/guide/en/elasticsearch/reference/current/security-api-create-api-key.html">Elasticsearch Guide - Create API key</a>
+     * @since 1.8.0
+     */
+    @Nullable
+    default String apiKeyCredentials() {
+        return getSecret(this, "apiKeyCredentials").orElse(null);
+    }
+
 
     /**
      * The type to be used when writing metrics documents to an index.

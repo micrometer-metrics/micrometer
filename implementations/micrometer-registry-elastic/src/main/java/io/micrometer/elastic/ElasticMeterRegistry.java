@@ -166,8 +166,7 @@ public class ElasticMeterRegistry extends StepMeterRegistry {
 
         try {
             String uri = config.host() + ES_METRICS_TEMPLATE;
-            if (httpClient.head(uri)
-                    .withBasicAuthentication(config.userName(), config.password())
+            if (connect(HttpSender.Method.HEAD, uri)
                     .send()
                     .onError(response -> {
                         if (response.code() != 404) {
@@ -180,8 +179,7 @@ public class ElasticMeterRegistry extends StepMeterRegistry {
                 return;
             }
 
-            httpClient.put(uri)
-                    .withBasicAuthentication(config.userName(), config.password())
+            connect(HttpSender.Method.PUT, uri)
                     .withJsonContent(getTemplateBody())
                     .send()
                     .onError(response -> logger.error("failed to add metrics template to elastic: {}", response.body()));
@@ -196,6 +194,19 @@ public class ElasticMeterRegistry extends StepMeterRegistry {
     private String getTemplateBody() {
         return TEMPLATE_BODY_AFTER_VERSION_7.apply(config.index() + config.indexDateSeparator());
     }
+
+    private HttpSender.Request.Builder connect(HttpSender.Method method, String uri) {
+        return authentication(this.httpClient.newRequest(uri).withMethod(method));
+    }
+
+    private HttpSender.Request.Builder authentication(HttpSender.Request.Builder request) {
+        if (StringUtils.isNotBlank(config.apiKeyCredentials())) {
+            return request.withAuthentication("ApiKey", config.apiKeyCredentials());
+        } else {
+            return request.withBasicAuthentication(config.userName(), config.password());
+        }
+    }
+
 
     @Override
     protected void publish() {
@@ -218,9 +229,7 @@ public class ElasticMeterRegistry extends StepMeterRegistry {
                         .filter(Optional::isPresent)
                         .map(Optional::get)
                         .collect(joining("\n", "", "\n"));
-                httpClient
-                        .post(uri)
-                        .withBasicAuthentication(config.userName(), config.password())
+                connect(HttpSender.Method.POST, uri)
                         .withJsonContent(requestBody)
                         .send()
                         .onSuccess(response -> {
