@@ -83,6 +83,19 @@ public class TimedResource {
     }
 
     @GET
+    @Path("just-long-timed")
+    @Timed(value = "long.task.in.request", longTask = true)
+    public String justLongTimed() {
+        longTaskRequestStartedLatch.countDown();
+        try {
+            longTaskRequestReleaseLatch.await();
+        } catch (InterruptedException e) {
+            throw new RuntimeException(e);
+        }
+        return "long-timed";
+    }
+
+    @GET
     @Path("long-timed-unnamed")
     @Timed
     @Timed(longTask = true)
