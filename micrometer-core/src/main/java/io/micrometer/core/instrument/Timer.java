@@ -259,17 +259,17 @@ public interface Timer extends Meter, HistogramSupport {
         private final long startTime;
         private final Clock clock;
         private final Collection<TimerRecordingHandler> listeners;
-        @Nullable private final HandlerContext handlerContext;
+        private final HandlerContext handlerContext;
         private final MeterRegistry registry;
 
-        Sample(MeterRegistry registry, @Nullable HandlerContext handlerContext) {
+        Sample(MeterRegistry registry, @Nullable HandlerContext ctx) {
             this.clock = registry.config().clock();
             this.startTime = clock.monotonicTime();
-            this.handlerContext = handlerContext;
+            this.handlerContext = ctx == null ? new HandlerContext() : ctx;
             this.listeners = registry.config().getTimerRecordingListeners().stream()
-                    .filter(listener -> listener.supportsContext(handlerContext))
+                    .filter(listener -> listener.supportsContext(this.handlerContext))
                     .collect(Collectors.toList());
-            this.listeners.forEach(listener -> listener.onStart(this, handlerContext));
+            this.listeners.forEach(listener -> listener.onStart(this, this.handlerContext));
             this.registry = registry;
             this.registry.setCurrentSample(this);
         }
@@ -282,7 +282,7 @@ public interface Timer extends Meter, HistogramSupport {
         public void error(Throwable throwable) {
             // TODO check stop hasn't been called yet?
             // TODO doesn't do anything to tags currently; we should make error tagging more first-class
-            this.listeners.forEach(listener -> listener.onError(this, handlerContext, throwable));
+            this.listeners.forEach(listener -> listener.onError(this, this.handlerContext, throwable));
 
         }
 
@@ -293,9 +293,7 @@ public interface Timer extends Meter, HistogramSupport {
          * @return The total duration of the sample in nanoseconds
          */
         public long stop(Timer.Builder timer) {
-            if (this.handlerContext != null) {
-                timer.tags(this.handlerContext.getLowCardinalityTags());
-            }
+            timer.tags(this.handlerContext.getLowCardinalityTags());
             return stop(timer.register(this.registry));
         }
 
@@ -309,13 +307,13 @@ public interface Timer extends Meter, HistogramSupport {
         public long stop(Timer timer) {
             long durationNs = clock.monotonicTime() - startTime;
             timer.record(durationNs, TimeUnit.NANOSECONDS);
-            this.listeners.forEach(listener -> listener.onStop(this, handlerContext, timer, Duration.ofNanos(durationNs)));
+            this.listeners.forEach(listener -> listener.onStop(this, this.handlerContext, timer, Duration.ofNanos(durationNs)));
             this.registry.removeCurrentSample(this);
             return durationNs;
         }
 
         public Sample restore() {
-            this.listeners.forEach(listener -> listener.onRestore(this, handlerContext));
+            this.listeners.forEach(listener -> listener.onRestore(this, this.handlerContext));
             this.registry.setCurrentSample(this);
             return this;
         }
