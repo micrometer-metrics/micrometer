@@ -15,6 +15,7 @@
  */
 package io.micrometer.jersey2.server;
 
+import io.micrometer.core.Issue;
 import io.micrometer.core.instrument.MeterRegistry;
 import io.micrometer.core.instrument.Tag;
 import io.micrometer.core.instrument.Tags;
@@ -136,9 +137,9 @@ class MetricsRequestEventListenerTimedTest extends JerseyTest {
             .isEqualTo(1);
     }
 
-    // See gh-2861
     @Test
-    public void longTaskTimerOnlyOneMeter() throws InterruptedException, ExecutionException {
+    @Issue("gh-2861")
+    void longTaskTimerOnlyOneMeter() throws InterruptedException, ExecutionException {
         final Future<Response> future = target("just-long-timed").request().async().get();
 
         /*
