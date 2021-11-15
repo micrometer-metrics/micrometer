@@ -9,8 +9,6 @@ dependencies {
         exclude group: 'org.hdrhistogram', module: 'HdrHistogram'
     }
 
-    optionalApi 'io.micrometer:micrometer-tracing'
-
     // instrumentation options
     optionalApi 'io.dropwizard.metrics:metrics-core'
 

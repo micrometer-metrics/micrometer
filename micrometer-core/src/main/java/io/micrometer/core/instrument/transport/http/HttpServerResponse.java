@@ -16,7 +16,7 @@
 
 package io.micrometer.core.instrument.transport.http;
 
-import io.micrometer.tracing.lang.Nullable;
+import io.micrometer.core.lang.Nullable;
 import io.micrometer.core.instrument.transport.Kind;
 
 /**
