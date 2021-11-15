@@ -15,6 +15,17 @@
  */
 package io.micrometer.core.instrument;
 
+import java.time.Duration;
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.concurrent.Callable;
+import java.util.concurrent.TimeUnit;
+import java.util.function.Function;
+import java.util.function.Supplier;
+import java.util.stream.Collectors;
+
 import io.micrometer.core.annotation.Incubating;
 import io.micrometer.core.annotation.Timed;
 import io.micrometer.core.instrument.distribution.CountAtBucket;
@@ -22,12 +33,6 @@ import io.micrometer.core.instrument.distribution.HistogramSupport;
 import io.micrometer.core.instrument.distribution.ValueAtPercentile;
 import io.micrometer.core.instrument.distribution.pause.PauseDetector;
 import io.micrometer.core.lang.Nullable;
-
-import java.time.Duration;
-import java.util.Arrays;
-import java.util.concurrent.Callable;
-import java.util.concurrent.TimeUnit;
-import java.util.function.Supplier;
 
 /**
  * Timer intended to track of a large number of short running events. Example would be something like
@@ -39,33 +44,17 @@ import java.util.function.Supplier;
  */
 public interface Timer extends Meter, HistogramSupport {
     /**
-     * Start a timing sample using the {@link Clock#SYSTEM System clock}.
-     *
-     * @return A timing sample with start time recorded.
-     * @since 1.1.0
-     */
-    static Sample start() {
-        return start(Clock.SYSTEM);
-    }
-
-    /**
      * Start a timing sample.
      *
      * @param registry A meter registry whose clock is to be used
      * @return A timing sample with start time recorded.
      */
     static Sample start(MeterRegistry registry) {
-        return start(registry.config().clock());
+        return start(registry, null);
     }
 
-    /**
-     * Start a timing sample.
-     *
-     * @param clock a clock to be used
-     * @return A timing sample with start time recorded.
-     */
-    static Sample start(Clock clock) {
-        return new Sample(clock);
+    static Sample start(MeterRegistry registry, @Nullable HandlerContext handlerContext) {
+        return new Sample(registry, handlerContext);
     }
 
     static Builder builder(String name) {
@@ -264,15 +253,51 @@ public interface Timer extends Meter, HistogramSupport {
      * by calling {@link Sample#stop(Timer)}. Note how the {@link Timer} isn't provided until the
      * sample is stopped, allowing you to determine the timer's tags at the last minute.
      */
+    @SuppressWarnings({ "unchecked", "rawtypes" })
     class Sample {
+        
         private final long startTime;
         private final Clock clock;
+        private final Collection<TimerRecordingHandler> listeners;
+        private final HandlerContext handlerContext;
+        private final MeterRegistry registry;
 
-        Sample(Clock clock) {
-            this.clock = clock;
+        Sample(MeterRegistry registry, @Nullable HandlerContext ctx) {
+            this.clock = registry.config().clock();
             this.startTime = clock.monotonicTime();
+            this.handlerContext = ctx == null ? new HandlerContext() : ctx;
+            this.listeners = registry.config().getTimerRecordingListeners().stream()
+                    .filter(listener -> listener.supportsContext(this.handlerContext))
+                    .collect(Collectors.toList());
+            this.listeners.forEach(listener -> listener.onStart(this, this.handlerContext));
+            this.registry = registry;
+            this.registry.setCurrentSample(this);
         }
 
+        /**
+         * Mark an exception that happened between the sample's start/stop.
+         *
+         * @param throwable exception that happened
+         */
+        public void error(Throwable throwable) {
+            // TODO check stop hasn't been called yet?
+            // TODO doesn't do anything to tags currently; we should make error tagging more first-class
+            this.listeners.forEach(listener -> listener.onError(this, this.handlerContext, throwable));
+
+        }
+
+        /**
+         * Records the duration of the operation.
+         *
+         * @param timer The timer to record the sample to.
+         * @return The total duration of the sample in nanoseconds
+         */
+        public long stop(Timer.Builder timer) {
+            timer.tags(this.handlerContext.getLowCardinalityTags());
+            return stop(timer.register(this.registry));
+        }
+
+        // TODO: We'll need to make this private. I'm leaving this for now as it is cause it breaks compilation in quite a few places
         /**
          * Records the duration of the operation.
          *
@@ -282,7 +307,41 @@ public interface Timer extends Meter, HistogramSupport {
         public long stop(Timer timer) {
             long durationNs = clock.monotonicTime() - startTime;
             timer.record(durationNs, TimeUnit.NANOSECONDS);
+            this.listeners.forEach(listener -> listener.onStop(this, this.handlerContext, timer, Duration.ofNanos(durationNs)));
+            this.registry.removeCurrentSample(this);
             return durationNs;
+        }
+
+        public Sample restore() {
+            this.listeners.forEach(listener -> listener.onRestore(this, this.handlerContext));
+            this.registry.setCurrentSample(this);
+            return this;
+        }
+    }
+
+    @SuppressWarnings("unchecked")
+    class HandlerContext implements TagsProvider {
+        private final Map<Class<?>, Object> map = new HashMap<>();
+        
+        public <T> HandlerContext put(Class<T> clazz, T object) {
+            this.map.put(clazz, object);
+            return this;
+        }
+        
+        public void remove(Class<?> clazz) {
+            this.map.remove(clazz);
+        }
+        
+        public <T> T get(Class<T> clazz) {
+            return (T) this.map.get(clazz);
+        }
+
+        public <T> T getOrDefault(Class<T> clazz, T defaultObject) {
+            return (T) this.map.getOrDefault(clazz, defaultObject);
+        }
+        
+        public <T> T computeIfAbsent(Class<T> clazz, Function<Class<?>, ? extends T> mappingFunction) {
+            return (T) this.map.computeIfAbsent(clazz, mappingFunction);
         }
     }
 
@@ -400,7 +459,7 @@ public interface Timer extends Meter, HistogramSupport {
          */
         public Timer register(MeterRegistry registry) {
             // the base unit for a timer will be determined by the monitoring system implementation
-            return registry.timer(new Meter.Id(name, tags, null, description, Type.TIMER), distributionConfigBuilder.build(),
+            return registry.timer(new Id(name, tags, null, description, Type.TIMER), distributionConfigBuilder.build(),
                     pauseDetector == null ? registry.config().pauseDetector() : pauseDetector);
         }
     }

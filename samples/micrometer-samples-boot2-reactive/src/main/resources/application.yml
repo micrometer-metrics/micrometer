@@ -15,3 +15,6 @@
 #
 
 management.endpoints.web.exposure.include: '*'
+spring:
+  autoconfigure:
+    exclude: org.springframework.boot.actuate.autoconfigure.metrics.web.client.HttpClientMetricsAutoConfiguration, org.springframework.boot.actuate.autoconfigure.metrics.web.reactive.WebFluxMetricsAutoConfiguration
