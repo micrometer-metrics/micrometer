@@ -25,10 +25,18 @@ import com.signalfx.metrics.flush.AggregateMetricSender;
 import com.signalfx.metrics.protobuf.SignalFxProtocolBuffers;
 import io.micrometer.core.instrument.*;
 import io.micrometer.core.instrument.config.NamingConvention;
+import io.micrometer.core.instrument.distribution.CountAtBucket;
+import io.micrometer.core.instrument.distribution.DistributionStatisticConfig;
+import io.micrometer.core.instrument.distribution.HistogramSnapshot;
+import io.micrometer.core.instrument.distribution.pause.PauseDetector;
 import io.micrometer.core.instrument.step.StepMeterRegistry;
+import io.micrometer.core.instrument.util.DoubleFormat;
 import io.micrometer.core.instrument.util.MeterPartition;
 import io.micrometer.core.instrument.util.NamedThreadFactory;
 import io.micrometer.core.lang.Nullable;
+import java.time.Duration;
+import java.util.ArrayList;
+import java.util.Arrays;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -41,6 +49,7 @@ import java.util.concurrent.TimeUnit;
 import java.util.stream.Stream;
 
 import static com.signalfx.metrics.protobuf.SignalFxProtocolBuffers.MetricType.COUNTER;
+import static com.signalfx.metrics.protobuf.SignalFxProtocolBuffers.MetricType.CUMULATIVE_COUNTER;
 import static com.signalfx.metrics.protobuf.SignalFxProtocolBuffers.MetricType.GAUGE;
 import static java.util.stream.StreamSupport.stream;
 
@@ -59,6 +68,7 @@ public class SignalFxMeterRegistry extends StepMeterRegistry {
     private final HttpEventProtobufReceiverFactory eventReceiverFactory;
     private final Set<OnSendErrorHandler> onSendErrorHandlerCollection = Collections.singleton(
             metricError -> this.logger.warn("failed to send metrics: {}", metricError.getMessage()));
+    private final boolean reportHistogramBuckets;
 
     public SignalFxMeterRegistry(SignalFxConfig config, Clock clock) {
         this(config, clock, DEFAULT_THREAD_FACTORY);
@@ -81,6 +91,7 @@ public class SignalFxMeterRegistry extends StepMeterRegistry {
         SignalFxReceiverEndpoint signalFxEndpoint = new SignalFxEndpoint(apiUri.getScheme(), apiUri.getHost(), port);
         this.dataPointReceiverFactory = new HttpDataPointProtobufReceiverFactory(signalFxEndpoint);
         this.eventReceiverFactory = new HttpEventProtobufReceiverFactory(signalFxEndpoint);
+        this.reportHistogramBuckets = config.reportHistogramBuckets();
 
         config().namingConvention(new SignalFxNamingConvention());
 
@@ -118,6 +129,22 @@ public class SignalFxMeterRegistry extends StepMeterRegistry {
         }
     }
 
+    @Override
+    protected Timer newTimer(Meter.Id id, DistributionStatisticConfig distributionStatisticConfig, PauseDetector pauseDetector) {
+        // TODO: Investigate if the default HistogramGauges metrics should be removed:
+        //  * Adds a new gauge ".histogram" with "le" tag when slo buckets defined.
+        //  * Adds a new gauge ".percentile" with "phi" tag when percentiles buckets are defined.
+        return super.newTimer(id, updateConfig(distributionStatisticConfig), pauseDetector);
+    }
+
+    @Override
+    protected DistributionSummary newDistributionSummary(Meter.Id id, DistributionStatisticConfig distributionStatisticConfig, double scale) {
+        // TODO: Investigate if the default HistogramGauges metrics should be removed:
+        //  * Adds a new gauge ".histogram" with "le" tag when slo buckets defined.
+        //  * Adds a new gauge ".percentile" with "phi" tag when percentiles buckets are defined.
+        return super.newDistributionSummary(id, updateConfig(distributionStatisticConfig), scale);
+    }
+
     private Stream<SignalFxProtocolBuffers.DataPoint.Builder> addMeter(Meter meter) {
         return stream(meter.measure().spliterator(), false).flatMap(measurement -> {
             String statSuffix = NamingConvention.camelCase.tagKey(measurement.getStatistic().toString());
@@ -126,94 +153,150 @@ public class SignalFxMeterRegistry extends StepMeterRegistry {
                 case TOTAL_TIME:
                 case COUNT:
                 case DURATION:
-                    return Stream.of(addDatapoint(meter, COUNTER, statSuffix, measurement.getValue()));
+                    return Stream.of(addDatapoint(meter.getId(), COUNTER, statSuffix,
+                            null, measurement.getValue()));
                 case MAX:
                 case VALUE:
                 case UNKNOWN:
                 case ACTIVE_TASKS:
-                    return Stream.of(addDatapoint(meter, GAUGE, statSuffix, measurement.getValue()));
+                    return Stream.of(addDatapoint(meter.getId(), GAUGE, statSuffix,
+                            null, measurement.getValue()));
             }
             return Stream.empty();
         });
     }
 
-    private SignalFxProtocolBuffers.DataPoint.Builder addDatapoint(Meter meter, SignalFxProtocolBuffers.MetricType metricType, @Nullable String statSuffix, Number value) {
+    private SignalFxProtocolBuffers.DataPoint.Builder addDatapoint(Meter.Id meterId,
+            SignalFxProtocolBuffers.MetricType metricType, @Nullable String statSuffix,
+            @Nullable Tag extraTag, Number value) {
         SignalFxProtocolBuffers.Datum.Builder datumBuilder = SignalFxProtocolBuffers.Datum.newBuilder();
         SignalFxProtocolBuffers.Datum datum = (value instanceof Double ?
                 datumBuilder.setDoubleValue((Double) value) :
                 datumBuilder.setIntValue(value.longValue())
         ).build();
 
-        String metricName = config().namingConvention().name(statSuffix == null ? meter.getId().getName() : meter.getId().getName() + "." + statSuffix,
-                meter.getId().getType(), meter.getId().getBaseUnit());
+        String metricName = config().namingConvention().name(statSuffix == null ?
+                        meterId.getName() : meterId.getName() + statSuffix,
+                meterId.getType(), meterId.getBaseUnit());
 
         SignalFxProtocolBuffers.DataPoint.Builder dataPointBuilder = SignalFxProtocolBuffers.DataPoint.newBuilder()
                 .setMetric(metricName)
                 .setMetricType(metricType)
                 .setValue(datum);
 
-        for (Tag tag : getConventionTags(meter.getId())) {
+        for (Tag tag : getConventionTags(meterId)) {
             dataPointBuilder.addDimensions(SignalFxProtocolBuffers.Dimension.newBuilder()
                     .setKey(tag.getKey())
                     .setValue(tag.getValue())
                     .build());
         }
 
+        if (extraTag != null) {
+            dataPointBuilder.addDimensions(SignalFxProtocolBuffers.Dimension.newBuilder()
+                    .setKey(config().namingConvention().tagKey(extraTag.getKey()))
+                    .setValue(config().namingConvention().tagValue(extraTag.getValue()))
+                    .build());
+        }
+
         return dataPointBuilder;
     }
 
-    // VisibleForTesting
-    Stream<SignalFxProtocolBuffers.DataPoint.Builder> addLongTaskTimer(LongTaskTimer longTaskTimer) {
+    private Stream<SignalFxProtocolBuffers.DataPoint.Builder> addLongTaskTimer(LongTaskTimer longTaskTimer) {
         return Stream.of(
-                addDatapoint(longTaskTimer, GAUGE, "activeTasks", longTaskTimer.activeTasks()),
-                addDatapoint(longTaskTimer, COUNTER, "duration", longTaskTimer.duration(getBaseTimeUnit()))
+                addDatapoint(longTaskTimer.getId(), GAUGE, ".activeTasks",
+                        null, longTaskTimer.activeTasks()),
+                addDatapoint(longTaskTimer.getId(), COUNTER, ".duration",
+                        null, longTaskTimer.duration(getBaseTimeUnit()))
         );
     }
 
     private Stream<SignalFxProtocolBuffers.DataPoint.Builder> addTimeGauge(TimeGauge timeGauge) {
-        return Stream.of(addDatapoint(timeGauge, GAUGE, null, timeGauge.value(getBaseTimeUnit())));
+        return Stream.of(addDatapoint(timeGauge.getId(), GAUGE, null, null,
+                timeGauge.value(getBaseTimeUnit())));
     }
 
     private Stream<SignalFxProtocolBuffers.DataPoint.Builder> addGauge(Gauge gauge) {
-        return Stream.of(addDatapoint(gauge, GAUGE, null, gauge.value()));
+        return Stream.of(addDatapoint(gauge.getId(), GAUGE, null,
+                null, gauge.value()));
     }
 
     private Stream<SignalFxProtocolBuffers.DataPoint.Builder> addCounter(Counter counter) {
-        return Stream.of(addDatapoint(counter, COUNTER, null, counter.count()));
+        return Stream.of(addDatapoint(counter.getId(), COUNTER, null,
+                null, counter.count()));
     }
 
     private Stream<SignalFxProtocolBuffers.DataPoint.Builder> addFunctionCounter(FunctionCounter counter) {
-        return Stream.of(addDatapoint(counter, COUNTER, null, counter.count()));
+        return Stream.of(addDatapoint(counter.getId(), COUNTER, null,
+                null, counter.count()));
     }
 
     private Stream<SignalFxProtocolBuffers.DataPoint.Builder> addTimer(Timer timer) {
-        return Stream.of(
-                addDatapoint(timer, COUNTER, "count", timer.count()),
-                addDatapoint(timer, COUNTER, "totalTime", timer.totalTime(getBaseTimeUnit())),
-                addDatapoint(timer, GAUGE, "avg", timer.mean(getBaseTimeUnit())),
-                addDatapoint(timer, GAUGE, "max", timer.max(getBaseTimeUnit()))
-        );
+        return addHistogramSnapshot(timer.getId(), timer.takeSnapshot());
     }
 
     private Stream<SignalFxProtocolBuffers.DataPoint.Builder> addFunctionTimer(FunctionTimer timer) {
         return Stream.of(
-                addDatapoint(timer, COUNTER, "count", timer.count()),
-                addDatapoint(timer, COUNTER, "totalTime", timer.totalTime(getBaseTimeUnit())),
-                addDatapoint(timer, GAUGE, "avg", timer.mean(getBaseTimeUnit()))
+                addDatapoint(timer.getId(), COUNTER, ".count",
+                        null, timer.count()),
+                addDatapoint(timer.getId(), COUNTER, ".totalTime",
+                        null, timer.totalTime(getBaseTimeUnit())),
+                addDatapoint(timer.getId(), GAUGE, ".avg",
+                        null, timer.mean(getBaseTimeUnit()))
         );
     }
 
     private Stream<SignalFxProtocolBuffers.DataPoint.Builder> addDistributionSummary(DistributionSummary summary) {
-        return Stream.of(
-                addDatapoint(summary, COUNTER, "count", summary.count()),
-                addDatapoint(summary, COUNTER, "totalTime", summary.totalAmount()),
-                addDatapoint(summary, GAUGE, "avg", summary.mean()),
-                addDatapoint(summary, GAUGE, "max", summary.max())
-        );
+        return addHistogramSnapshot(summary.getId(), summary.takeSnapshot());
+    }
+
+    // VisibleForTesting
+    Stream<SignalFxProtocolBuffers.DataPoint.Builder> addHistogramSnapshot(Meter.Id meterId, HistogramSnapshot histogramSnapshot) {
+        Stream<SignalFxProtocolBuffers.DataPoint.Builder> basic = Stream.of(
+                addDatapoint(meterId, COUNTER, ".count", null, histogramSnapshot.count()),
+                addDatapoint(meterId, COUNTER, ".totalTime", null,
+                        histogramSnapshot.total(getBaseTimeUnit())),
+                addDatapoint(meterId, GAUGE, ".avg", null,
+                        histogramSnapshot.mean(getBaseTimeUnit())),
+                addDatapoint(meterId, GAUGE, ".max",
+                        null, histogramSnapshot.max(getBaseTimeUnit())));
+        if (!this.reportHistogramBuckets) {
+            return basic;
+        }
+        CountAtBucket[] histogramCounts = histogramSnapshot.histogramCounts();
+        List<SignalFxProtocolBuffers.DataPoint.Builder> buckets =
+                new ArrayList<>(histogramCounts.length);
+        for (CountAtBucket countAtBucket: histogramCounts) {
+            buckets.add(addDatapoint(meterId, CUMULATIVE_COUNTER, "_bucket",
+                    new ImmutableTag("upper_bound",
+                            isPositiveInf(countAtBucket.bucket()) ? "+Inf" : DoubleFormat.wholeOrDecimal(countAtBucket.bucket(getBaseTimeUnit()))),
+                    countAtBucket.count()));
+        }
+        return Stream.concat(basic, buckets.stream());
     }
 
     @Override
     protected TimeUnit getBaseTimeUnit() {
         return TimeUnit.SECONDS;
+    }
+
+    private static boolean isPositiveInf(double bucket) {
+        return bucket == Double.POSITIVE_INFINITY || bucket == Double.MAX_VALUE;
+    }
+
+
+    private DistributionStatisticConfig updateConfig(DistributionStatisticConfig distributionStatisticConfig) {
+        // Add the +Inf bucket since the "count" resets every export.
+        double[] sla = distributionStatisticConfig.getServiceLevelObjectiveBoundaries();
+        if (!reportHistogramBuckets || sla == null) {
+            return distributionStatisticConfig;
+        }
+        double[] buckets = Arrays.copyOf(sla, sla.length + 1);
+        buckets[buckets.length - 1] = Double.MAX_VALUE;
+        return DistributionStatisticConfig.builder()
+                .expiry(Duration.ofDays(365 * 100)) // effectively a lifetime
+                .bufferLength(1)
+                .serviceLevelObjectives(buckets)
+                .build()
+                .merge(distributionStatisticConfig);
     }
 }
