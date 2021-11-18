@@ -96,7 +96,7 @@ public abstract class MeterRegistry {
     private final Config config = new Config();
     private final More more = new More();
 
-    private final ThreadLocal<Timer.Sample> threadLocalRecordings = new InheritableThreadLocal<>();
+    private final ThreadLocal<Timer.Sample> threadLocalRecordings = new ThreadLocal<>();
     private final Deque<Timer.Sample> recordings = new LinkedBlockingDeque<>();
 
     // Even though writes are guarded by meterMapLock, iterators across value space are supported

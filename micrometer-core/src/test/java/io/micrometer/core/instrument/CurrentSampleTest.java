@@ -19,6 +19,8 @@ import io.micrometer.core.instrument.binder.jvm.ExecutorServiceMetrics;
 import io.micrometer.core.instrument.simple.SimpleMeterRegistry;
 import org.junit.jupiter.api.Test;
 
+import java.util.HashMap;
+import java.util.Map;
 import java.util.concurrent.*;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -28,29 +30,61 @@ class CurrentSampleTest {
     MeterRegistry registry = new SimpleMeterRegistry();
 
     @Test
-    void nestedThreadsCanGetSample() throws ExecutionException, InterruptedException {
+    void nestedSamples_parentChildThreadsInstrumented() throws ExecutionException, InterruptedException {
         ExecutorService taskRunner = ExecutorServiceMetrics.monitor(registry, Executors.newFixedThreadPool(1), "myTaskRunner");
 
         Timer.Sample sample = Timer.start(registry);
         System.out.println("Outside task: " + sample);
-        Future<?> submittedTask = taskRunner.submit(() -> {
+        taskRunner.submit(() -> {
             System.out.println("In task: " + registry.getCurrentSample());
-        });
-        submittedTask.get();
+        }).get();
+
         sample.stop(Timer.builder("my.service"));
+
+        assertThat(registry.getCurrentSample()).isNull();
     }
 
     @Test
-    void startedAndStoppedOnDifferentThread() throws InterruptedException, ExecutionException {
+    void start_thenStopOnChildThread() throws InterruptedException, ExecutionException {
         ExecutorService executor = Executors.newSingleThreadExecutor();
+
         Timer.Sample sample = Timer.start(registry);
-        Future<?> task = executor.submit(() -> {
+
+        executor.submit(() -> {
             assertThat(registry.getCurrentSample()).isEqualTo(sample);
             sample.stop(Timer.builder("my.timer"));
-        });
-        task.get();
-        // fails because current sample removed in child thread not reflected in parent
-        // with InheritableThreadLocal
+        }).get();
+
+        assertThat(registry.getCurrentSample()).isNull();
+    }
+
+    @Test
+    void startOnChildThread_thenStopOnSiblingThread() throws InterruptedException, ExecutionException {
+        ExecutorService executor = Executors.newFixedThreadPool(2);
+        Map<String, Timer.Sample> sampleMap = new HashMap<>();
+
+        executor.submit(() -> {
+            Timer.Sample sample = Timer.start(registry);
+            sampleMap.put("mySample", sample);
+        }).get();
+
+        executor.submit(() -> {
+            Timer.Sample mySample = sampleMap.get("mySample");
+            assertThat(registry.getCurrentSample()).isEqualTo(mySample);
+            mySample.stop(Timer.builder("my.timer"));
+        }).get();
+
+        assertThat(registry.getCurrentSample()).isNull();
+    }
+
+    @Test
+    void nestedSamples_sameThread() {
+        Timer.Sample sample = Timer.start(registry);
+        Timer.Sample sample2 = Timer.start(registry);
+
+        sample.stop(Timer.builder("test1"));
+        sample2.stop(Timer.builder("test2"));
+
         assertThat(registry.getCurrentSample()).isNull();
     }
 }

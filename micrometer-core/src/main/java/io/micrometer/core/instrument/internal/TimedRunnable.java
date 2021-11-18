@@ -17,6 +17,7 @@ package io.micrometer.core.instrument.internal;
 
 import io.micrometer.core.instrument.MeterRegistry;
 import io.micrometer.core.instrument.Timer;
+import io.micrometer.core.lang.Nullable;
 
 /**
  * A wrapper for a {@link Runnable} with idle and execution timings.
@@ -27,26 +28,26 @@ class TimedRunnable implements Runnable {
     private final Timer idleTimer;
     private final Runnable command;
     private final Timer.Sample idleSample;
-//    @Nullable
-//    private final Timer.Sample parentSample;
+    @Nullable
+    private final Timer.Sample parentSample;
 
     TimedRunnable(MeterRegistry registry, Timer executionTimer, Timer idleTimer, Runnable command) {
         this.registry = registry;
         this.executionTimer = executionTimer;
         this.idleTimer = idleTimer;
         this.command = command;
-//        this.parentSample = registry.getCurrentSample();
+        this.parentSample = registry.getCurrentSample();
         this.idleSample = Timer.start(registry);
         // should not be set to current sample after runnable completes
-//        registry.removeCurrentSample(this.idleSample);
+        registry.removeCurrentSample(this.idleSample);
     }
 
     @Override
     public void run() {
-//        idleSample.restore();
+        idleSample.restore();
         idleSample.stop(idleTimer);
-//        if (parentSample != null)
-//            parentSample.restore();
+        if (parentSample != null)
+            parentSample.restore();
         Timer.Sample executionSample = Timer.start(registry);
         try {
             command.run();
