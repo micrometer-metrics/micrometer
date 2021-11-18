@@ -15,6 +15,7 @@
  */
 package io.micrometer.core.instrument;
 
+import java.io.Closeable;
 import java.time.Duration;
 import java.util.Arrays;
 import java.util.Collection;
@@ -271,7 +272,6 @@ public interface Timer extends Meter, HistogramSupport {
                     .collect(Collectors.toList());
             this.listeners.forEach(listener -> listener.onStart(this, this.handlerContext));
             this.registry = registry;
-            this.registry.setCurrentSample(this);
         }
 
         /**
@@ -308,14 +308,28 @@ public interface Timer extends Meter, HistogramSupport {
             long durationNs = clock.monotonicTime() - startTime;
             timer.record(durationNs, TimeUnit.NANOSECONDS);
             this.listeners.forEach(listener -> listener.onStop(this, this.handlerContext, timer, Duration.ofNanos(durationNs)));
-            this.registry.removeCurrentSample(this);
             return durationNs;
         }
 
-        public Sample restore() {
+        public Scope makeCurrent() {
             this.listeners.forEach(listener -> listener.onRestore(this, this.handlerContext));
-            this.registry.setCurrentSample(this);
-            return this;
+            return registry.newScope(this);
+        }
+    }
+
+    class Scope implements Closeable {
+        private final ThreadLocal<Sample> threadLocal;
+        private final Sample previousSample;
+
+        public Scope(ThreadLocal<Sample> threadLocal, Sample currentSample) {
+            this.threadLocal = threadLocal;
+            this.previousSample = threadLocal.get();
+            threadLocal.set(currentSample);
+        }
+
+        @Override
+        public void close() {
+            threadLocal.set(previousSample);
         }
     }
 

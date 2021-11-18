@@ -35,14 +35,16 @@ class CurrentSampleTest {
 
         Timer.Sample sample = Timer.start(registry);
         System.out.println("Outside task: " + sample);
-        taskRunner.submit(() -> {
-            System.out.println("In task: " + registry.getCurrentSample());
-            assertThat(registry.getCurrentSample()).isNotEqualTo(sample);
-        }).get();
-
-        sample.stop(Timer.builder("my.service"));
-
         assertThat(registry.getCurrentSample()).isNull();
+        try (Timer.Scope scope = sample.makeCurrent()) {
+            assertThat(registry.getCurrentSample()).isSameAs(sample);
+            taskRunner.submit(() -> {
+                System.out.println("In task: " + registry.getCurrentSample());
+                assertThat(registry.getCurrentSample()).isNotEqualTo(sample);
+            }).get();
+        }
+        assertThat(registry.getCurrentSample()).isNull();
+        sample.stop(Timer.builder("my.service"));
     }
 
     @Test
@@ -50,10 +52,11 @@ class CurrentSampleTest {
         ExecutorService executor = Executors.newSingleThreadExecutor();
 
         Timer.Sample sample = Timer.start(registry);
-
+        assertThat(registry.getCurrentSample()).isNull();
         executor.submit(() -> {
-            sample.restore();
-            assertThat(registry.getCurrentSample()).isEqualTo(sample);
+            try (Timer.Scope scope = sample.makeCurrent()) {
+                assertThat(registry.getCurrentSample()).isEqualTo(sample);
+            }
             sample.stop(Timer.builder("my.timer"));
         }).get();
 
@@ -62,23 +65,22 @@ class CurrentSampleTest {
 
     @Test
     void startOnChildThread_thenStopOnSiblingThread() throws InterruptedException, ExecutionException {
-        // thread pool with 2 threads, so a different thread is used for the 2 tasks
-        // not guaranteed behavior
-        ExecutorService executor = Executors.newFixedThreadPool(2);
+        // 2 thread pools with 1 thread each, so a different thread is used for the 2 tasks
+        ExecutorService executor = Executors.newFixedThreadPool(1);
+        ExecutorService executor2 = Executors.newFixedThreadPool(1);
         Map<String, Timer.Sample> sampleMap = new HashMap<>();
 
         executor.submit(() -> {
             Timer.Sample sample = Timer.start(registry);
+            assertThat(registry.getCurrentSample()).isNull();
             sampleMap.put("mySample", sample);
-            // once this task finishes, its ThreadLocal still has this sample as current
-            // without this added code
-            registry.removeCurrentSample(sample);
         }).get();
 
-        executor.submit(() -> {
+        executor2.submit(() -> {
             Timer.Sample mySample = sampleMap.get("mySample");
-            mySample.restore();
-            assertThat(registry.getCurrentSample()).isEqualTo(mySample);
+            try (Timer.Scope scope = mySample.makeCurrent()) {
+                assertThat(registry.getCurrentSample()).isEqualTo(mySample);
+            }
             mySample.stop(Timer.builder("my.timer"));
             assertThat(registry.getCurrentSample()).isNull();
         }).get();
@@ -89,9 +91,16 @@ class CurrentSampleTest {
     @Test
     void nestedSamples_sameThread() {
         Timer.Sample sample = Timer.start(registry);
-        Timer.Sample sample2 = Timer.start(registry);
-
-        sample.stop(Timer.builder("test1"));
+        Timer.Sample sample2;
+        assertThat(registry.getCurrentSample()).isNull();
+        try (Timer.Scope scope = sample.makeCurrent()) {
+            sample2 = Timer.start(registry);
+            assertThat(registry.getCurrentSample()).isSameAs(sample);
+        }
+        try (Timer.Scope scope = sample2.makeCurrent()) {
+            sample.stop(Timer.builder("test1"));
+            assertThat(registry.getCurrentSample()).isSameAs(sample2);
+        }
         sample2.stop(Timer.builder("test2"));
 
         assertThat(registry.getCurrentSample()).isNull();
