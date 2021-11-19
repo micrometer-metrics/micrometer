@@ -47,7 +47,17 @@ public interface TimerRecordingHandler<T extends Timer.HandlerContext> {
      * @param sample sample for which the error happened
      * @param context handler context
      */
-    void onRestore(Timer.Sample sample, @Nullable T context);
+    default void onScopeStarted(Timer.Sample sample, @Nullable T context) {
+
+    }
+
+    /**
+     * @param sample sample for which the error happened
+     * @param context handler context
+     */
+    default void onScopeStopped(Timer.Sample sample, @Nullable T context) {
+
+    }
 
     /**
      * @param sample the sample that was stopped
@@ -111,8 +121,8 @@ public interface TimerRecordingHandler<T extends Timer.HandlerContext> {
         }
 
         @Override
-        public void onRestore(Timer.Sample sample, @Nullable Timer.HandlerContext context) {
-            getFirstApplicableListener(context).ifPresent(listener -> listener.onRestore(sample, context));
+        public void onScopeStarted(Timer.Sample sample, @Nullable Timer.HandlerContext context) {
+            getFirstApplicableListener(context).ifPresent(listener -> listener.onScopeStarted(sample, context));
         }
 
         @Override
@@ -170,8 +180,8 @@ public interface TimerRecordingHandler<T extends Timer.HandlerContext> {
         }
 
         @Override
-        public void onRestore(Timer.Sample sample, @Nullable Timer.HandlerContext context) {
-            getAllApplicableListeners(context).forEach(listener -> listener.onRestore(sample, context));
+        public void onScopeStarted(Timer.Sample sample, @Nullable Timer.HandlerContext context) {
+            getAllApplicableListeners(context).forEach(listener -> listener.onScopeStarted(sample, context));
         }
 
         @Override

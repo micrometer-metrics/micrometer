@@ -72,7 +72,7 @@ public class TimerRecordingListenerSample {
         }
 
         @Override
-        public void onRestore(Sample sample, CustomHandlerContext context) {
+        public void onScopeStarted(Sample sample, CustomHandlerContext context) {
             // TODO Auto-generated method stub
             
         }

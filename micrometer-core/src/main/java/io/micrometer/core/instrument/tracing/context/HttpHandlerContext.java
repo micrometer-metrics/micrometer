@@ -30,7 +30,7 @@ import io.micrometer.core.instrument.transport.http.Response;
  * @param <REQ> request type
  * @param <RES> response type
  */
-public abstract class IntervalHttpEvent<REQ extends Request, RES extends Response> extends Timer.HandlerContext {
+public abstract class HttpHandlerContext<REQ extends Request, RES extends Response> extends Timer.HandlerContext {
 
     /**
      * Returns the HTTP request.
@@ -55,6 +55,6 @@ public abstract class IntervalHttpEvent<REQ extends Request, RES extends Respons
      * @param response a HTTP response
      * @return this
      */
-    abstract IntervalHttpEvent<REQ, RES> setResponse(RES response);
+    abstract HttpHandlerContext<REQ, RES> setResponse(RES response);
 
 }

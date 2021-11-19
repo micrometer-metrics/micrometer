@@ -312,23 +312,34 @@ public interface Timer extends Meter, HistogramSupport {
         }
 
         public Scope makeCurrent() {
-            this.listeners.forEach(listener -> listener.onRestore(this, this.handlerContext));
+            this.listeners.forEach(listener -> listener.onScopeStarted(this, this.handlerContext));
             return registry.newScope(this);
+        }
+
+        void closeScope() {
+            this.listeners.forEach(listener -> listener.onScopeStopped(this, this.handlerContext));
         }
     }
 
     class Scope implements Closeable {
         private final ThreadLocal<Sample> threadLocal;
+        private final Sample currentSample;
         private final Sample previousSample;
 
         public Scope(ThreadLocal<Sample> threadLocal, Sample currentSample) {
             this.threadLocal = threadLocal;
+            this.currentSample = currentSample;
             this.previousSample = threadLocal.get();
             threadLocal.set(currentSample);
         }
 
+        public Sample getSample() {
+            return this.currentSample;
+        }
+
         @Override
         public void close() {
+            this.currentSample.closeScope();
             threadLocal.set(previousSample);
         }
     }

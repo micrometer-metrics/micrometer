@@ -26,7 +26,7 @@ import io.micrometer.core.instrument.transport.http.HttpServerResponse;
  * @author Marcin Grzejszczak
  * @since 2.0.0
  */
-public class IntervalHttpServerEvent extends IntervalHttpEvent<HttpServerRequest, HttpServerResponse> {
+public class HttpServerHandlerContext extends HttpHandlerContext<HttpServerRequest, HttpServerResponse> {
 
     private final HttpServerRequest request;
 
@@ -35,11 +35,11 @@ public class IntervalHttpServerEvent extends IntervalHttpEvent<HttpServerRequest
     private Object handler;
 
     /**
-     * Creates a new {@link IntervalHttpServerEvent}.
+     * Creates a new {@link HttpServerHandlerContext}.
      *
      * @param request http server request
      */
-    public IntervalHttpServerEvent(HttpServerRequest request) {
+    public HttpServerHandlerContext(HttpServerRequest request) {
         this.request = request;
     }
 
@@ -55,7 +55,7 @@ public class IntervalHttpServerEvent extends IntervalHttpEvent<HttpServerRequest
      * @param handler handler for this request
      * @return this
      */
-    public IntervalHttpServerEvent setHandler(Object handler) {
+    public HttpServerHandlerContext setHandler(Object handler) {
         this.handler = handler;
         return this;
     }
@@ -66,7 +66,7 @@ public class IntervalHttpServerEvent extends IntervalHttpEvent<HttpServerRequest
     }
 
     @Override
-    public IntervalHttpServerEvent setResponse(HttpServerResponse response) {
+    public HttpServerHandlerContext setResponse(HttpServerResponse response) {
         this.response = response;
         return this;
     }
