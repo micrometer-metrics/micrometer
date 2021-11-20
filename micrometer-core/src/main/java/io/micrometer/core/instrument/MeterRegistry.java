@@ -120,7 +120,7 @@ public abstract class MeterRegistry {
         return localSample.get();
     }
 
-    Timer.Scope newScope(Timer.Sample currentSample) {
+    Timer.Scope openNewScope(Timer.Sample currentSample) {
         return new Timer.Scope(localSample, currentSample);
     }
 

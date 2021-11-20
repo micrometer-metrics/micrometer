@@ -270,7 +270,7 @@ public interface Timer extends Meter, HistogramSupport {
             this.handlers = registry.config().getTimerRecordingHandlers().stream()
                     .filter(handler -> handler.supportsContext(this.handlerContext))
                     .collect(Collectors.toList());
-            this.handlers.forEach(handler -> handler.onStart(this, this.handlerContext));
+            notifyOnSampleStarted();
             this.registry = registry;
         }
 
@@ -282,7 +282,7 @@ public interface Timer extends Meter, HistogramSupport {
         public void error(Throwable throwable) {
             // TODO check stop hasn't been called yet?
             // TODO doesn't do anything to tags currently; we should make error tagging more first-class
-            this.handlers.forEach(handler -> handler.onError(this, this.handlerContext, throwable));
+            notifyOnError(throwable);
 
         }
 
@@ -305,19 +305,36 @@ public interface Timer extends Meter, HistogramSupport {
          * @return The total duration of the sample in nanoseconds
          */
         public long stop(Timer timer) {
-            long durationNs = clock.monotonicTime() - startTime;
-            timer.record(durationNs, TimeUnit.NANOSECONDS);
-            this.handlers.forEach(handler -> handler.onStop(this, this.handlerContext, timer, Duration.ofNanos(durationNs)));
-            return durationNs;
+            long duration = clock.monotonicTime() - startTime;
+            timer.record(duration, TimeUnit.NANOSECONDS);
+            notifyOnSampleStopped(timer, Duration.ofNanos(duration));
+
+            return duration;
         }
 
         public Scope makeCurrent() {
-            this.handlers.forEach(handler -> handler.onScopeOpened(this, this.handlerContext));
-            return registry.newScope(this);
+            notifyOnScopeOpened();
+            return registry.openNewScope(this);
         }
 
-        void closeScope() {
+        private void notifyOnSampleStarted() {
+            this.handlers.forEach(handler -> handler.onStart(this, this.handlerContext));
+        }
+
+        private void notifyOnError(Throwable throwable) {
+            this.handlers.forEach(handler -> handler.onError(this, this.handlerContext, throwable));
+        }
+
+        private void notifyOnScopeOpened() {
+            this.handlers.forEach(handler -> handler.onScopeOpened(this, this.handlerContext));
+        }
+
+        private void notifyOnScopeClosed() {
             this.handlers.forEach(handler -> handler.onScopeClosed(this, this.handlerContext));
+        }
+
+        private void notifyOnSampleStopped(Timer timer, Duration duration) {
+            this.handlers.forEach(handler -> handler.onStop(this, this.handlerContext, timer, duration));
         }
     }
 
@@ -339,7 +356,7 @@ public interface Timer extends Meter, HistogramSupport {
 
         @Override
         public void close() {
-            this.currentSample.closeScope();
+            this.currentSample.notifyOnScopeClosed();
             threadLocal.set(previousSample);
         }
     }
