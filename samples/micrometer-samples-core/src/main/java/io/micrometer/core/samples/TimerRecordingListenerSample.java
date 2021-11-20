@@ -31,7 +31,7 @@ public class TimerRecordingListenerSample {
     private static final PrometheusMeterRegistry registry = new PrometheusMeterRegistry(PrometheusConfig.DEFAULT);
 
     public static void main(String[] args) throws InterruptedException {
-        registry.config().timerRecordingListener(new SampleHandler());
+        registry.config().timerRecordingHandler(new SampleHandler());
         Timer.Builder timerBuilder = Timer.builder("sample.timer").tag("a", "1");
 
         Timer.Sample sample = Timer.start(registry, new CustomHandlerContext());
@@ -72,9 +72,8 @@ public class TimerRecordingListenerSample {
         }
 
         @Override
-        public void onScopeStarted(Sample sample, CustomHandlerContext context) {
+        public void onScopeOpened(Sample sample, CustomHandlerContext context) {
             // TODO Auto-generated method stub
-            
         }
     }
 

@@ -810,20 +810,20 @@ public abstract class MeterRegistry {
         }
 
         /**
-         * Register an event listener for {@link Timer} recordings made using {@link Timer#start(MeterRegistry)}
+         * Register an event handler for {@link Timer} recordings made using {@link Timer#start(MeterRegistry)}
          * and {@link io.micrometer.core.instrument.Timer.Sample#stop(Timer)} methods. You can add arbitrary behavior
          * in the callbacks provided to get additional behavior out of timing instrumentation.
          *
-         * @param listener listener to add to the current configuration
+         * @param handler handler to add to the current configuration
          * @return This configuration instance
          */
-        public Config timerRecordingListener(TimerRecordingHandler<?> listener) {
-            timerRecordingHandlers.add(listener);
+        public Config timerRecordingHandler(TimerRecordingHandler<?> handler) {
+            timerRecordingHandlers.add(handler);
             return this;
         }
 
         // package-private for minimal visibility
-        Collection<TimerRecordingHandler<?>> getTimerRecordingListeners() {
+        Collection<TimerRecordingHandler<?>> getTimerRecordingHandlers() {
             return timerRecordingHandlers;
         }
 

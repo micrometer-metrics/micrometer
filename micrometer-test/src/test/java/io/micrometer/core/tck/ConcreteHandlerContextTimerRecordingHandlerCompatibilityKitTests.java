@@ -36,7 +36,7 @@ class ConcreteHandlerContextTimerRecordingHandlerCompatibilityKitTests extends C
             }
 
             @Override
-            public void onScopeStarted(Timer.Sample sample, Timer.HandlerContext handlerContext) {
+            public void onScopeOpened(Timer.Sample sample, Timer.HandlerContext handlerContext) {
 
             }
 

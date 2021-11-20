@@ -64,7 +64,7 @@ class FirstMatchingCompositeTimerRecordingHandlerTests {
         FirstMatchingCompositeTimerRecordingHandler FirstMatchingCompositeTimerRecordingHandler = new FirstMatchingCompositeTimerRecordingHandler(
                 new NotMatchingListener(), this.matchingListener, new NotMatchingListener());
 
-        FirstMatchingCompositeTimerRecordingHandler.onScopeStarted(sample, null);
+        FirstMatchingCompositeTimerRecordingHandler.onScopeOpened(sample, null);
 
         assertThat(this.matchingListener.restored).isTrue();
     }
@@ -91,7 +91,7 @@ class FirstMatchingCompositeTimerRecordingHandlerTests {
         }
 
         @Override
-        public void onScopeStarted(Timer.Sample sample, Timer.HandlerContext context) {
+        public void onScopeOpened(Timer.Sample sample, Timer.HandlerContext context) {
             this.restored = true;
         }
 
@@ -119,7 +119,7 @@ class FirstMatchingCompositeTimerRecordingHandlerTests {
         }
 
         @Override
-        public void onScopeStarted(Timer.Sample sample, Timer.HandlerContext context) {
+        public void onScopeOpened(Timer.Sample sample, Timer.HandlerContext context) {
             throwAssertionError();
         }
 

@@ -42,7 +42,7 @@ public abstract class AnyHandlerContextTimerRecordingHandlerCompatibilityKit ext
         assertThatCode(() -> listener.onStop(sample, testContext, Timer.builder("timer for test context")
                 .register(meterRegistry), Duration.ofSeconds(1L))).doesNotThrowAnyException();
         assertThatCode(() -> listener.onError(sample, testContext, new RuntimeException())).doesNotThrowAnyException();
-        assertThatCode(() -> listener.onScopeStarted(sample, testContext)).doesNotThrowAnyException();
+        assertThatCode(() -> listener.onScopeOpened(sample, testContext)).doesNotThrowAnyException();
         assertThatCode(() -> listener.supportsContext(testContext)).doesNotThrowAnyException();
         assertThat(listener.supportsContext(testContext)).as("Listener supports any context").isTrue();
     }

@@ -60,7 +60,7 @@ public abstract class ConcreteHandlerContextTimerRecordingHandlerCompatibilityKi
         assertThatCode(() -> listener.onStop(sample, context(), Timer.builder("timer for concrete context")
                 .register(meterRegistry), Duration.ofSeconds(1L))).doesNotThrowAnyException();
         assertThatCode(() -> listener.onError(sample, context(), new RuntimeException())).doesNotThrowAnyException();
-        assertThatCode(() -> listener.onScopeStarted(sample, context())).doesNotThrowAnyException();
+        assertThatCode(() -> listener.onScopeOpened(sample, context())).doesNotThrowAnyException();
     }
 
     @Test

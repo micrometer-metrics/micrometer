@@ -259,7 +259,7 @@ public interface Timer extends Meter, HistogramSupport {
         
         private final long startTime;
         private final Clock clock;
-        private final Collection<TimerRecordingHandler> listeners;
+        private final Collection<TimerRecordingHandler> handlers;
         private final HandlerContext handlerContext;
         private final MeterRegistry registry;
 
@@ -267,10 +267,10 @@ public interface Timer extends Meter, HistogramSupport {
             this.clock = registry.config().clock();
             this.startTime = clock.monotonicTime();
             this.handlerContext = ctx == null ? new HandlerContext() : ctx;
-            this.listeners = registry.config().getTimerRecordingListeners().stream()
-                    .filter(listener -> listener.supportsContext(this.handlerContext))
+            this.handlers = registry.config().getTimerRecordingHandlers().stream()
+                    .filter(handler -> handler.supportsContext(this.handlerContext))
                     .collect(Collectors.toList());
-            this.listeners.forEach(listener -> listener.onStart(this, this.handlerContext));
+            this.handlers.forEach(handler -> handler.onStart(this, this.handlerContext));
             this.registry = registry;
         }
 
@@ -282,7 +282,7 @@ public interface Timer extends Meter, HistogramSupport {
         public void error(Throwable throwable) {
             // TODO check stop hasn't been called yet?
             // TODO doesn't do anything to tags currently; we should make error tagging more first-class
-            this.listeners.forEach(listener -> listener.onError(this, this.handlerContext, throwable));
+            this.handlers.forEach(handler -> handler.onError(this, this.handlerContext, throwable));
 
         }
 
@@ -307,17 +307,17 @@ public interface Timer extends Meter, HistogramSupport {
         public long stop(Timer timer) {
             long durationNs = clock.monotonicTime() - startTime;
             timer.record(durationNs, TimeUnit.NANOSECONDS);
-            this.listeners.forEach(listener -> listener.onStop(this, this.handlerContext, timer, Duration.ofNanos(durationNs)));
+            this.handlers.forEach(handler -> handler.onStop(this, this.handlerContext, timer, Duration.ofNanos(durationNs)));
             return durationNs;
         }
 
         public Scope makeCurrent() {
-            this.listeners.forEach(listener -> listener.onScopeStarted(this, this.handlerContext));
+            this.handlers.forEach(handler -> handler.onScopeOpened(this, this.handlerContext));
             return registry.newScope(this);
         }
 
         void closeScope() {
-            this.listeners.forEach(listener -> listener.onScopeStopped(this, this.handlerContext));
+            this.handlers.forEach(handler -> handler.onScopeClosed(this, this.handlerContext));
         }
     }
 
