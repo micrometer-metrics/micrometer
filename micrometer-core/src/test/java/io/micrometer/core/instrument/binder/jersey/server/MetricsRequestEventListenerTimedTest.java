@@ -160,7 +160,7 @@ class MetricsRequestEventListenerTimedTest extends JerseyTest {
         future.get();
 
         // no meters registered except the one checked above
-        assertThat(registry.getMeters().size()).isOne();
+        assertThat(registry.getMeters().size()).isEqualTo(3);
     }
 
     @Test
@@ -192,7 +192,7 @@ class MetricsRequestEventListenerTimedTest extends JerseyTest {
             .isEqualTo(1);
 
         // class level annotation is not picked up
-        assertThat(registry.getMeters()).hasSize(1);
+        assertThat(registry.getMeters()).hasSize(3);
     }
 
     private static Iterable<Tag> tagsFrom(String uri, int status) {

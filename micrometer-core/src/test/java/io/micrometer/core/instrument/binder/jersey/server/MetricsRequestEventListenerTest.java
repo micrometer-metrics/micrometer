@@ -88,7 +88,38 @@ class MetricsRequestEventListenerTest extends JerseyTest {
             .isEqualTo(1);
 
         // assert we are not auto-timing long task @Timed
-        assertThat(registry.getMeters()).hasSize(4);
+        assertThat(registry.getMeters()).hasSize(12);
+    }
+
+    @Test
+    void resourcesSizeAreRecorded() {
+        target("/").request().get();
+        target("hello").request().get();
+        target("hello/").request().get();
+        target("hello/peter").request().get();
+        target("sub-resource/sub-hello/peter").request().get();
+
+        assertThat(registry.get(METRIC_NAME + ".request.size")
+                .tags(tagsFrom("root", "200", "SUCCESS", null)).summary().count())
+                .isEqualTo(0);
+
+        assertThat(registry.get(METRIC_NAME + ".response.size")
+                .tags(tagsFrom("root", "200", "SUCCESS", null)).summary().count())
+                .isEqualTo(1);
+
+        assertThat(registry.get(METRIC_NAME + ".response.size")
+                .tags(tagsFrom("/hello", "200", "SUCCESS", null)).summary().count())
+                .isEqualTo(2);
+
+        assertThat(registry.get(METRIC_NAME + ".response.size")
+                .tags(tagsFrom("/hello/{name}", "200", "SUCCESS", null)).summary().count())
+                .isEqualTo(1);
+
+        assertThat(registry.get(METRIC_NAME + ".response.size")
+                .tags(tagsFrom("/sub-resource/sub-hello/{name}", "200", "SUCCESS", null)).summary().count())
+                .isEqualTo(1);
+
+        assertThat(registry.getMeters()).hasSize(12);
     }
 
     @Test

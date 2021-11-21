@@ -20,6 +20,7 @@ import io.micrometer.core.instrument.LongTaskTimer;
 import io.micrometer.core.instrument.MeterRegistry;
 import io.micrometer.core.instrument.Timer;
 import org.glassfish.jersey.server.ContainerRequest;
+import org.glassfish.jersey.server.ContainerResponse;
 import org.glassfish.jersey.server.model.ResourceMethod;
 import org.glassfish.jersey.server.monitoring.RequestEvent;
 import org.glassfish.jersey.server.monitoring.RequestEventListener;
@@ -65,6 +66,7 @@ public class MetricsRequestEventListener implements RequestEventListener {
     @Override
     public void onEvent(RequestEvent event) {
         ContainerRequest containerRequest = event.getContainerRequest();
+        ContainerResponse containerResponse = event.getContainerResponse();
         Set<Timed> timedAnnotations;
 
         switch (event.getType()) {
@@ -91,6 +93,11 @@ public class MetricsRequestEventListener implements RequestEventListener {
                     for (Timer timer : shortTimers(timedAnnotations, event)) {
                         shortSample.stop(timer);
                     }
+                }
+
+                registry.summary(metricName + ".request.size", tagsProvider.httpRequestTags(event)).record(containerRequest.getLength());
+                if (containerResponse != null) {
+                    registry.summary(metricName + ".response.size", tagsProvider.httpRequestTags(event)).record(containerResponse.getLength());
                 }
 
                 Collection<LongTaskTimer.Sample> longSamples = this.longTaskSamples.remove(containerRequest);
