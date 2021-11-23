@@ -15,6 +15,7 @@
  */
 package io.micrometer.core.instrument;
 
+import java.io.Closeable;
 import java.time.Duration;
 import java.util.Arrays;
 import java.util.Collection;
@@ -258,7 +259,7 @@ public interface Timer extends Meter, HistogramSupport {
         
         private final long startTime;
         private final Clock clock;
-        private final Collection<TimerRecordingHandler> listeners;
+        private final Collection<TimerRecordingHandler> handlers;
         private final HandlerContext handlerContext;
         private final MeterRegistry registry;
 
@@ -266,12 +267,11 @@ public interface Timer extends Meter, HistogramSupport {
             this.clock = registry.config().clock();
             this.startTime = clock.monotonicTime();
             this.handlerContext = ctx == null ? new HandlerContext() : ctx;
-            this.listeners = registry.config().getTimerRecordingListeners().stream()
-                    .filter(listener -> listener.supportsContext(this.handlerContext))
+            this.handlers = registry.config().getTimerRecordingHandlers().stream()
+                    .filter(handler -> handler.supportsContext(this.handlerContext))
                     .collect(Collectors.toList());
-            this.listeners.forEach(listener -> listener.onStart(this, this.handlerContext));
+            notifyOnSampleStarted();
             this.registry = registry;
-            this.registry.setCurrentSample(this);
         }
 
         /**
@@ -282,7 +282,7 @@ public interface Timer extends Meter, HistogramSupport {
         public void error(Throwable throwable) {
             // TODO check stop hasn't been called yet?
             // TODO doesn't do anything to tags currently; we should make error tagging more first-class
-            this.listeners.forEach(listener -> listener.onError(this, this.handlerContext, throwable));
+            notifyOnError(throwable);
 
         }
 
@@ -305,17 +305,59 @@ public interface Timer extends Meter, HistogramSupport {
          * @return The total duration of the sample in nanoseconds
          */
         public long stop(Timer timer) {
-            long durationNs = clock.monotonicTime() - startTime;
-            timer.record(durationNs, TimeUnit.NANOSECONDS);
-            this.listeners.forEach(listener -> listener.onStop(this, this.handlerContext, timer, Duration.ofNanos(durationNs)));
-            this.registry.removeCurrentSample(this);
-            return durationNs;
+            long duration = clock.monotonicTime() - startTime;
+            timer.record(duration, TimeUnit.NANOSECONDS);
+            notifyOnSampleStopped(timer, Duration.ofNanos(duration));
+
+            return duration;
         }
 
-        public Sample restore() {
-            this.listeners.forEach(listener -> listener.onRestore(this, this.handlerContext));
-            this.registry.setCurrentSample(this);
-            return this;
+        public Scope makeCurrent() {
+            notifyOnScopeOpened();
+            return registry.openNewScope(this);
+        }
+
+        private void notifyOnSampleStarted() {
+            this.handlers.forEach(handler -> handler.onStart(this, this.handlerContext));
+        }
+
+        private void notifyOnError(Throwable throwable) {
+            this.handlers.forEach(handler -> handler.onError(this, this.handlerContext, throwable));
+        }
+
+        private void notifyOnScopeOpened() {
+            this.handlers.forEach(handler -> handler.onScopeOpened(this, this.handlerContext));
+        }
+
+        private void notifyOnScopeClosed() {
+            this.handlers.forEach(handler -> handler.onScopeClosed(this, this.handlerContext));
+        }
+
+        private void notifyOnSampleStopped(Timer timer, Duration duration) {
+            this.handlers.forEach(handler -> handler.onStop(this, this.handlerContext, timer, duration));
+        }
+    }
+
+    class Scope implements Closeable {
+        private final ThreadLocal<Sample> threadLocal;
+        private final Sample currentSample;
+        private final Sample previousSample;
+
+        public Scope(ThreadLocal<Sample> threadLocal, Sample currentSample) {
+            this.threadLocal = threadLocal;
+            this.currentSample = currentSample;
+            this.previousSample = threadLocal.get();
+            threadLocal.set(currentSample);
+        }
+
+        public Sample getSample() {
+            return this.currentSample;
+        }
+
+        @Override
+        public void close() {
+            this.currentSample.notifyOnScopeClosed();
+            threadLocal.set(previousSample);
         }
     }
 

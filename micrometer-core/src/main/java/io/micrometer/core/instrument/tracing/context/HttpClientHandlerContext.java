@@ -27,18 +27,18 @@ import io.micrometer.core.lang.NonNull;
  * @author Marcin Grzejszczak
  * @since 2.0.0
  */
-public class IntervalHttpClientEvent extends IntervalHttpEvent<HttpClientRequest, HttpClientResponse> {
+public class HttpClientHandlerContext extends HttpHandlerContext<HttpClientRequest, HttpClientResponse> {
 
     private final HttpClientRequest request;
 
     private HttpClientResponse response;
 
     /**
-     * Crates a new {@link IntervalHttpClientEvent}.
+     * Crates a new {@link HttpClientHandlerContext}.
      *
      * @param request http client request
      */
-    public IntervalHttpClientEvent(HttpClientRequest request) {
+    public HttpClientHandlerContext(HttpClientRequest request) {
         this.request = request;
     }
 
@@ -54,7 +54,7 @@ public class IntervalHttpClientEvent extends IntervalHttpEvent<HttpClientRequest
     }
 
     @Override
-    public IntervalHttpClientEvent setResponse(HttpClientResponse response) {
+    public HttpClientHandlerContext setResponse(HttpClientResponse response) {
         this.response = response;
         return this;
     }

@@ -19,6 +19,7 @@ import java.io.IOException;
 import java.time.Duration;
 import java.util.UUID;
 
+import io.micrometer.core.instrument.Tags;
 import io.micrometer.core.instrument.Timer;
 import io.micrometer.core.instrument.Timer.Sample;
 import io.micrometer.core.instrument.TimerRecordingHandler;
@@ -30,19 +31,19 @@ public class TimerRecordingListenerSample {
     private static final PrometheusMeterRegistry registry = new PrometheusMeterRegistry(PrometheusConfig.DEFAULT);
 
     public static void main(String[] args) throws InterruptedException {
-        registry.config().timerRecordingListener(new SampleHandler());
-        Timer timer = Timer.builder("sample.timer")
-                .tag("a", "1")
-                .register(registry);
+        registry.config().timerRecordingHandler(new SampleHandler());
+        Timer.Builder timerBuilder = Timer.builder("sample.timer").tag("a", "1");
 
         Timer.Sample sample = Timer.start(registry, new CustomHandlerContext());
-        Thread.sleep(1_000);
-        sample.error(new IOException("simulated"));
-        sample.stop(timer);
+        try (Timer.Scope scope = sample.makeCurrent()) {
+            Thread.sleep(1_000);
+            sample.error(new IOException("simulated"));
+        }
+        sample.stop(timerBuilder);
 
-        Timer.start(registry).stop(timer);
-        Timer.start(registry, null).stop(timer);
-        Timer.start(registry, new UnsupportedHandlerContext()).stop(timer);
+        Timer.start(registry).stop(timerBuilder);
+        Timer.start(registry, null).stop(timerBuilder);
+        Timer.start(registry, new UnsupportedHandlerContext()).stop(timerBuilder);
     }
 
     static class SampleHandler implements TimerRecordingHandler<CustomHandlerContext> {
@@ -63,7 +64,7 @@ public class TimerRecordingListenerSample {
 
         @Override
         public boolean supportsContext(@Nullable Timer.HandlerContext handlerContext) {
-            return handlerContext != null && handlerContext.getClass().isAssignableFrom(CustomHandlerContext.class);
+            return handlerContext instanceof CustomHandlerContext;
         }
 
         private String toString(Timer timer) {
@@ -71,9 +72,8 @@ public class TimerRecordingListenerSample {
         }
 
         @Override
-        public void onRestore(Sample sample, CustomHandlerContext context) {
+        public void onScopeOpened(Sample sample, CustomHandlerContext context) {
             // TODO Auto-generated method stub
-            
         }
     }
 
@@ -81,9 +81,20 @@ public class TimerRecordingListenerSample {
         private final UUID uuid = UUID.randomUUID();
 
         @Override
+        public Tags getLowCardinalityTags() {
+            return Tags.of("status", "ok");
+        }
+
+        @Override
+        public Tags getHighCardinalityTags() {
+            return Tags.of("userId", uuid.toString());
+        }
+
+        @Override
         public String toString() {
-            return "CustomContext{" +
-                    "uuid=" + uuid +
+            return "CustomHandlerContext{" +
+                    "uuid=" + uuid + ", " +
+                    getAllTags() +
                     '}';
         }
     }

@@ -37,23 +37,17 @@ import io.micrometer.core.instrument.search.RequiredSearch;
 import io.micrometer.core.instrument.search.Search;
 import io.micrometer.core.instrument.util.TimeUtils;
 import io.micrometer.core.lang.Nullable;
-import io.micrometer.core.util.internal.logging.InternalLogger;
-import io.micrometer.core.util.internal.logging.InternalLoggerFactory;
-import io.micrometer.core.util.internal.logging.WarnThenDebugLogger;
 
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
-import java.util.Deque;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
-import java.util.NoSuchElementException;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.CopyOnWriteArrayList;
-import java.util.concurrent.LinkedBlockingDeque;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.function.BiConsumer;
@@ -82,10 +76,6 @@ import static java.util.Objects.requireNonNull;
  * @author Johnny Lim
  */
 public abstract class MeterRegistry {
-    
-    private static final InternalLogger LOG = InternalLoggerFactory.getInstance(MeterRegistry.class);
-    private static final WarnThenDebugLogger warnThenDebugLogger = new WarnThenDebugLogger(MeterRegistry.class);
-    
     protected final Clock clock;
     private final Object meterMapLock = new Object();
     private volatile MeterFilter[] filters = new MeterFilter[0];
@@ -95,9 +85,7 @@ public abstract class MeterRegistry {
     private final List<BiConsumer<Meter.Id, String>> meterRegistrationFailedListeners = new CopyOnWriteArrayList<>();
     private final Config config = new Config();
     private final More more = new More();
-
-    private final ThreadLocal<Timer.Sample> threadLocalRecordings = new ThreadLocal<>();
-    private final Deque<Timer.Sample> recordings = new LinkedBlockingDeque<>();
+    private final ThreadLocal<Timer.Sample> localSample = new ThreadLocal<>();
 
     // Even though writes are guarded by meterMapLock, iterators across value space are supported
     // Hence, we use CHM to support that iteration without ConcurrentModificationException risk
@@ -128,59 +116,13 @@ public abstract class MeterRegistry {
         this.clock = clock;
     }
 
-    public void setCurrentSample(@Nullable Timer.Sample recording) {
-        Timer.Sample old = this.threadLocalRecordings.get();
-        if (old == recording) {
-            return;
-        }
-        if (old != null) {
-            if (LOG.isTraceEnabled()) {
-                LOG.trace("Putting current recording [" + old + "] on stack");
-            }
-            this.recordings.addFirst(old);
-        }
-        this.threadLocalRecordings.set(recording);
-        if (LOG.isTraceEnabled()) {
-            LOG.trace("Current recording is [" + this.threadLocalRecordings.get() + "]");
-        }
+    Timer.Sample getCurrentSample() {
+        return localSample.get();
     }
 
-    /**
-     * Returns the current interval recording.
-     *
-     * @return currently stored recording
-     */
-    public Timer.Sample getCurrentSample() {
-        return this.threadLocalRecordings.get();
+    Timer.Scope openNewScope(Timer.Sample currentSample) {
+        return new Timer.Scope(localSample, currentSample);
     }
-
-    /**
-     * Removes the current span from thread local and brings back the previous span
-     * to the current thread local.
-     */
-    public void removeCurrentSample(Timer.Sample sample) {
-        Timer.Sample current = this.threadLocalRecordings.get();
-        if (!sample.equals(current)) {
-            warnThenDebugLogger.log("Sample [" + sample + "] is not the same as the one currently in thread local [" + current + "]. This is caused by a mistake in the instrumentation.");
-            return;
-        }
-        this.threadLocalRecordings.remove();
-        if (this.recordings.isEmpty()) {
-            return;
-        }
-        try {
-            Timer.Sample first = this.recordings.removeFirst();
-            this.threadLocalRecordings.set(first);
-            if (LOG.isTraceEnabled()) {
-                LOG.trace("Took recording [" + current + "] from thread local and set previous one from stack [" + first + "] back as current");
-            }
-        } catch (NoSuchElementException ex) {
-            if (LOG.isTraceEnabled()) {
-                LOG.trace("Failed to remove a recording from the queue", ex);
-            }
-        }
-    }
-
 
     /**
      * Build a new gauge to be added to the registry. This is guaranteed to only be called if the gauge doesn't already exist.
@@ -868,20 +810,20 @@ public abstract class MeterRegistry {
         }
 
         /**
-         * Register an event listener for {@link Timer} recordings made using {@link Timer#start(MeterRegistry)}
+         * Register an event handler for {@link Timer} recordings made using {@link Timer#start(MeterRegistry)}
          * and {@link io.micrometer.core.instrument.Timer.Sample#stop(Timer)} methods. You can add arbitrary behavior
          * in the callbacks provided to get additional behavior out of timing instrumentation.
          *
-         * @param listener listener to add to the current configuration
+         * @param handler handler to add to the current configuration
          * @return This configuration instance
          */
-        public Config timerRecordingListener(TimerRecordingHandler<?> listener) {
-            timerRecordingHandlers.add(listener);
+        public Config timerRecordingHandler(TimerRecordingHandler<?> handler) {
+            timerRecordingHandlers.add(handler);
             return this;
         }
 
         // package-private for minimal visibility
-        Collection<TimerRecordingHandler<?>> getTimerRecordingListeners() {
+        Collection<TimerRecordingHandler<?>> getTimerRecordingHandlers() {
             return timerRecordingHandlers;
         }
 
