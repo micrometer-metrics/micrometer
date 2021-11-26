@@ -75,7 +75,8 @@ class JvmGcMetricsTest {
         if (!binder.isGenerationalGc) {
             return;
         }
-        assertThat(registry.find("jvm.gc.memory.promoted").counter().count()).isPositive();
+        // cannot guarantee an object was promoted, so cannot check for positive count
+        assertThat(registry.find("jvm.gc.memory.promoted").counter()).isNotNull();
     }
 
     @Test
