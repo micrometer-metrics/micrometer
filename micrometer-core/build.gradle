@@ -115,7 +115,7 @@ task zgcTest(type: Test) {
     maxHeapSize = "1500m"
 
     useJUnitPlatform {
-        includeTags 'gc'
+        includeTags 'gc', 'zgc'
     }
 
     jvmArgs '-XX:+UseZGC'
