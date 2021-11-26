@@ -34,7 +34,6 @@ import static com.tngtech.archunit.lang.syntax.ArchRuleDefinition.methods;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.within;
 import static org.awaitility.Awaitility.await;
-import static org.junit.jupiter.api.Assumptions.assumeTrue;
 
 /**
  * Tests for {@link JvmGcMetrics}.
@@ -65,13 +64,18 @@ class JvmGcMetricsTest {
     }
 
     @Test
-    void metersAreBound() {
-        assertThat(registry.find("jvm.gc.live.data.size").gauge()).isNotNull();
-        assertThat(registry.find("jvm.gc.memory.allocated").counter()).isNotNull();
-        assertThat(registry.find("jvm.gc.max.data.size").gauge().value()).isGreaterThan(0);
+    void gcMetricsAvailableAfterGc() {
+        System.gc();
+        await().timeout(200, TimeUnit.MILLISECONDS).alias("NotificationListener takes time after GC")
+                .untilAsserted(() ->
+                        assertThat(registry.find("jvm.gc.live.data.size").gauge().value()).isPositive());
+        assertThat(registry.find("jvm.gc.memory.allocated").counter().count()).isPositive();
+        assertThat(registry.find("jvm.gc.max.data.size").gauge().value()).isPositive();
 
-        assumeTrue(binder.isGenerationalGc);
-        assertThat(registry.find("jvm.gc.memory.promoted").counter()).isNotNull();
+        if (!binder.isGenerationalGc) {
+            return;
+        }
+        assertThat(registry.find("jvm.gc.memory.promoted").counter().count()).isPositive();
     }
 
     @Test
