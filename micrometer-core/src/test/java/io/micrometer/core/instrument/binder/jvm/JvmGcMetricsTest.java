@@ -19,9 +19,12 @@ import com.tngtech.archunit.base.DescribedPredicate;
 import com.tngtech.archunit.core.domain.JavaClasses;
 import com.tngtech.archunit.core.importer.ClassFileImporter;
 import com.tngtech.archunit.lang.ArchRule;
+import io.micrometer.core.Issue;
 import io.micrometer.core.instrument.Timer;
 import io.micrometer.core.instrument.simple.SimpleMeterRegistry;
-import org.junit.jupiter.api.*;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Disabled;
+import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.condition.EnabledForJreRange;
 import org.junit.jupiter.api.condition.JRE;
 
@@ -101,6 +104,11 @@ class JvmGcMetricsTest {
         }
         checkPhaseCount(pausePhaseCount, concurrentPhaseCount);
         checkCollectionTime(pauseTimeMs, concurrentTimeMs);
+    }
+
+    @Test
+    @Issue("gh-2872")
+    void nonGenerationalSizeMetricsNotSetToZero() {
     }
 
     private void checkPhaseCount(long expectedPauseCount, long expectedConcurrentCount) {
