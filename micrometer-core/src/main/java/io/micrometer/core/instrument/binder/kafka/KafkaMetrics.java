@@ -161,12 +161,12 @@ class KafkaMetrics implements MeterBinder, AutoCloseable {
      */
     void checkAndBindMetrics(MeterRegistry registry) {
         try {
-            this.metrics.set(this.metricsSupplier.get());
-            Map<MetricName, ? extends Metric> metrics = this.metrics.get();
+            Map<MetricName, ? extends Metric> currentMetrics = this.metricsSupplier.get();
+            this.metrics.set(currentMetrics);
 
-            if (!currentMeters.equals(metrics.keySet())) {
+            if (!currentMeters.equals(currentMetrics.keySet())) {
                 Set<MetricName> metricsToRemove = currentMeters.stream()
-                        .filter(metricName -> !metrics.containsKey(metricName))
+                        .filter(metricName -> !currentMetrics.containsKey(metricName))
                         .collect(Collectors.toSet());
 
                 for (MetricName metricName : metricsToRemove) {
@@ -177,12 +177,12 @@ class KafkaMetrics implements MeterBinder, AutoCloseable {
                     }
                 }
 
-                currentMeters = new HashSet<>(metrics.keySet());
+                currentMeters = new HashSet<>(currentMetrics.keySet());
 
                 Map<String, List<Meter>> registryMetersByNames = registry.getMeters().stream()
                         .collect(Collectors.groupingBy(meter -> meter.getId().getName()));
 
-                metrics.forEach((name, metric) -> {
+                currentMetrics.forEach((name, metric) -> {
                     // Filter out non-numeric values
                     // Filter out metrics from groups that include metadata
                     if (!(metric.metricValue() instanceof Number) ||
