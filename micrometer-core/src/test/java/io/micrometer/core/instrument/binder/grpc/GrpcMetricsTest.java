@@ -85,7 +85,7 @@ class GrpcMetricsTest {
                 "tacoMethodName", "bare",
                 "tacoType", "UNARY",
                 "tacoServiceName", "service",
-                "tacos","rock"
+                "tacos", "rock"
         );
 
         assertThat( registry.get("grpc.client.responses.received").tags(expectedTags).counter().count()).isEqualTo(1.0);
