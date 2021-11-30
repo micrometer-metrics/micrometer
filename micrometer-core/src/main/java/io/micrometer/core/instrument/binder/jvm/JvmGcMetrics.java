@@ -195,7 +195,10 @@ public class JvmGcMetrics implements MeterBinder, AutoCloseable {
     }
 
     private void countPoolSizeDelta(Map<String, MemoryUsage> before, Map<String, MemoryUsage> after, Counter counter,
-            AtomicLong previousPoolSize, String poolName) {
+            AtomicLong previousPoolSize, @Nullable String poolName) {
+        if (poolName == null) {
+            return;
+        }
         final long beforeBytes = before.get(poolName).getUsed();
         final long afterBytes = after.get(poolName).getUsed();
         final long delta = beforeBytes - previousPoolSize.get();
