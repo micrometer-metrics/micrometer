@@ -32,7 +32,7 @@ public class CounterSample {
         MeterRegistry registry = SampleConfig.myMonitoringSystem();
         Counter counter = registry.counter("counter", "method", "actual");
 
-        AtomicInteger n = new AtomicInteger(0);
+        AtomicInteger n = new AtomicInteger();
         registry.more().counter("counter", Tags.of("method", "function"), n);
 
         RandomEngine r = new MersenneTwister64(0);

@@ -15,7 +15,6 @@
  */
 package io.micrometer.core.ipc.http;
 
-import io.micrometer.core.instrument.util.JsonUtils;
 import io.micrometer.core.instrument.util.StringUtils;
 import io.micrometer.core.lang.Nullable;
 
@@ -107,12 +106,10 @@ public interface HttpSender {
 
         @Override
         public String toString() {
-            StringBuilder printed = new StringBuilder(method.toString()).append(" ")
+            StringBuilder printed = new StringBuilder(method.toString()).append(' ')
                     .append(url.toString()).append("\n");
             if (entity.length == 0) {
                 printed.append("<no request body>");
-            } else if ("application/json".equals(requestHeaders.get("Content-Type"))) {
-                printed.append(JsonUtils.prettyPrint(new String(entity)));
             } else {
                 printed.append(new String(entity));
             }
@@ -163,6 +160,25 @@ public interface HttpSender {
                     String encoded = Base64.getEncoder().encodeToString((user.trim() + ":" + (password == null ? "" : password.trim()))
                             .getBytes(StandardCharsets.UTF_8));
                     withHeader("Authorization", "Basic " + encoded);
+                }
+                return this;
+            }
+
+            /**
+             * Configures the {@code Authentication} HTTP header with the given type and credentials.
+             * The format will be:
+             * <p><pre>{@code Authorization: <type> <credentials>}</pre></p>
+             * No encoding will be performed on the {@code credentials}, so if the authentication scheme
+             * expects {@code credentials} to be encoded, encode them before passing them to this method.
+             *
+             * @param type authentication type
+             * @param credentials authentication credentials
+             * @return This request builder.
+             * @since 1.8.0
+             */
+            public final Builder withAuthentication(String type, @Nullable String credentials) {
+                if (credentials != null && StringUtils.isNotBlank(credentials)) {
+                    withHeader("Authorization", type + " " + credentials);
                 }
                 return this;
             }

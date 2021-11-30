@@ -66,7 +66,7 @@ public class MultiGauge {
                         boolean previouslyDefined = oldRows.contains(rowId);
 
                         if (overwrite && previouslyDefined) {
-                            registry.remove(rowId);
+                            registry.removeByPreFilterId(rowId);
                         }
 
                         if (overwrite || !previouslyDefined) {
@@ -81,7 +81,7 @@ public class MultiGauge {
 
             for (Meter.Id oldRow : oldRows) {
                 if (!newRows.contains(oldRow))
-                    registry.remove(oldRow);
+                    registry.removeByPreFilterId(oldRow);
             }
 
             return newRows;

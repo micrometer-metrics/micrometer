@@ -15,7 +15,7 @@
  */
 package io.micrometer.core.instrument.binder.mongodb;
 
-import com.mongodb.MongoClient;
+import com.mongodb.client.MongoClient;
 import com.mongodb.connection.ServerId;
 import com.mongodb.event.*;
 import io.micrometer.core.annotation.Incubating;
@@ -35,35 +35,55 @@ import java.util.concurrent.atomic.AtomicInteger;
  * {@link ConnectionPoolListener} for collecting connection pool metrics from {@link MongoClient}.
  *
  * @author Christophe Bornet
+ * @author Jonatan Ivanov
  * @since 1.2.0
+ * @implNote This implementation requires MongoDB Java driver 4 or later.
  */
 @NonNullApi
 @NonNullFields
 @Incubating(since = "1.2.0")
-public class MongoMetricsConnectionPoolListener extends ConnectionPoolListenerAdapter {
+public class MongoMetricsConnectionPoolListener implements ConnectionPoolListener {
 
     private static final String METRIC_PREFIX = "mongodb.driver.pool.";
 
-    private final Map<ServerId, AtomicInteger> poolSize = new ConcurrentHashMap<>();
-    private final Map<ServerId, AtomicInteger> checkedOutCount = new ConcurrentHashMap<>();
-    private final Map<ServerId, AtomicInteger> waitQueueSize = new ConcurrentHashMap<>();
+    private final Map<ServerId, AtomicInteger> poolSizes = new ConcurrentHashMap<>();
+    private final Map<ServerId, AtomicInteger> checkedOutCounts = new ConcurrentHashMap<>();
+    private final Map<ServerId, AtomicInteger> waitQueueSizes = new ConcurrentHashMap<>();
     private final Map<ServerId, List<Meter>> meters = new ConcurrentHashMap<>();
 
     private final MeterRegistry registry;
+    private final MongoConnectionPoolTagsProvider tagsProvider;
 
+    /**
+     * Create a new {@code MongoMetricsConnectionPoolListener}.
+     *
+     * @param registry registry to use
+     */
     public MongoMetricsConnectionPoolListener(MeterRegistry registry) {
+        this(registry, new DefaultMongoConnectionPoolTagsProvider());
+    }
+
+    /**
+     * Create a new {@code MongoMetricsConnectionPoolListener}.
+     *
+     * @param registry registry to use
+     * @param tagsProvider tags provider to use
+     * @since 1.7.0
+     */
+    public MongoMetricsConnectionPoolListener(MeterRegistry registry, MongoConnectionPoolTagsProvider tagsProvider) {
         this.registry = registry;
+        this.tagsProvider = tagsProvider;
     }
 
     @Override
-    public void connectionPoolOpened(ConnectionPoolOpenedEvent event) {
+    public void connectionPoolCreated(ConnectionPoolCreatedEvent event) {
         List<Meter> connectionMeters = new ArrayList<>();
-        connectionMeters.add(registerGauge(event.getServerId(), METRIC_PREFIX + "size",
-                "the current size of the connection pool, including idle and and in-use members", poolSize));
-        connectionMeters.add(registerGauge(event.getServerId(), METRIC_PREFIX + "checkedout",
-                "the count of connections that are currently in use", checkedOutCount));
-        connectionMeters.add(registerGauge(event.getServerId(), METRIC_PREFIX + "waitqueuesize",
-                "the current size of the wait queue for a connection from the pool", waitQueueSize));
+        connectionMeters.add(registerGauge(event, METRIC_PREFIX + "size",
+                "the current size of the connection pool, including idle and and in-use members", poolSizes));
+        connectionMeters.add(registerGauge(event, METRIC_PREFIX + "checkedout",
+                "the count of connections that are currently in use", checkedOutCounts));
+        connectionMeters.add(registerGauge(event, METRIC_PREFIX + "waitqueuesize",
+                "the current size of the wait queue for a connection from the pool", waitQueueSizes));
         meters.put(event.getServerId(), connectionMeters);
     }
 
@@ -74,56 +94,71 @@ public class MongoMetricsConnectionPoolListener extends ConnectionPoolListenerAd
             registry.remove(meter);
         }
         meters.remove(serverId);
-        poolSize.remove(serverId);
-        checkedOutCount.remove(serverId);
-        waitQueueSize.remove(serverId);
+        poolSizes.remove(serverId);
+        checkedOutCounts.remove(serverId);
+        waitQueueSizes.remove(serverId);
+    }
+
+    @Override
+    public void connectionCheckOutStarted(ConnectionCheckOutStartedEvent event) {
+        AtomicInteger waitQueueSize = waitQueueSizes.get(event.getServerId());
+        if (waitQueueSize != null) {
+            waitQueueSize.incrementAndGet();
+        }
     }
 
     @Override
     public void connectionCheckedOut(ConnectionCheckedOutEvent event) {
-        checkedOutCount.get(event.getConnectionId().getServerId())
-                .incrementAndGet();
+        AtomicInteger checkedOutCount = checkedOutCounts.get(event.getConnectionId().getServerId());
+        if (checkedOutCount != null) {
+            checkedOutCount.incrementAndGet();
+        }
+
+        AtomicInteger waitQueueSize = waitQueueSizes.get(event.getConnectionId().getServerId());
+        if (waitQueueSize != null) {
+            waitQueueSize.decrementAndGet();
+        }
+    }
+
+    @Override
+    public void connectionCheckOutFailed(ConnectionCheckOutFailedEvent event) {
+        AtomicInteger waitQueueSize = waitQueueSizes.get(event.getServerId());
+        if (waitQueueSize != null) {
+            waitQueueSize.decrementAndGet();
+        }
     }
 
     @Override
     public void connectionCheckedIn(ConnectionCheckedInEvent event) {
-        checkedOutCount.get(event.getConnectionId().getServerId())
-                .decrementAndGet();
-    }
-
-    @SuppressWarnings("deprecation")
-    @Override
-    public void waitQueueEntered(ConnectionPoolWaitQueueEnteredEvent event) {
-        waitQueueSize.get(event.getServerId())
-                .incrementAndGet();
-    }
-
-    @SuppressWarnings("deprecation")
-    @Override
-    public void waitQueueExited(ConnectionPoolWaitQueueExitedEvent event) {
-        waitQueueSize.get(event.getServerId())
-                .decrementAndGet();
+        AtomicInteger checkedOutCount = checkedOutCounts.get(event.getConnectionId().getServerId());
+        if (checkedOutCount != null) {
+            checkedOutCount.decrementAndGet();
+        }
     }
 
     @Override
-    public void connectionAdded(ConnectionAddedEvent event) {
-        poolSize.get(event.getConnectionId().getServerId())
-                .incrementAndGet();
+    public void connectionCreated(ConnectionCreatedEvent event) {
+        AtomicInteger poolSize = poolSizes.get(event.getConnectionId().getServerId());
+        if (poolSize != null) {
+            poolSize.incrementAndGet();
+        }
     }
 
     @Override
-    public void connectionRemoved(ConnectionRemovedEvent event) {
-        poolSize.get(event.getConnectionId().getServerId())
-                .decrementAndGet();
+    public void connectionClosed(ConnectionClosedEvent event) {
+        AtomicInteger poolSize = poolSizes.get(event.getConnectionId().getServerId());
+        if (poolSize != null) {
+            poolSize.decrementAndGet();
+        }
     }
 
-    private Gauge registerGauge(ServerId serverId, String metricName, String description, Map<ServerId, AtomicInteger> metrics) {
-        metrics.put(serverId, new AtomicInteger());
-        return Gauge.builder(metricName, metrics, m -> m.get(serverId).doubleValue())
-                    .description(description)
-                    .tag("cluster.id", serverId.getClusterId().getValue())
-                    .tag("server.address", serverId.getAddress().toString())
-                    .register(registry);
+    private Gauge registerGauge(ConnectionPoolCreatedEvent event, String metricName, String description, Map<ServerId, AtomicInteger> metrics) {
+        AtomicInteger value = new AtomicInteger();
+        metrics.put(event.getServerId(), value);
+        return Gauge.builder(metricName, value, AtomicInteger::doubleValue)
+                .description(description)
+                .tags(tagsProvider.connectionPoolTags(event))
+                .register(registry);
     }
 
 }

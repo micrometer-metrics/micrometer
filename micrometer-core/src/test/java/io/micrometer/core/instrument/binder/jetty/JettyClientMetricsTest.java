@@ -15,6 +15,7 @@
  */
 package io.micrometer.core.instrument.binder.jetty;
 
+import io.micrometer.core.instrument.DistributionSummary;
 import io.micrometer.core.instrument.MockClock;
 import io.micrometer.core.instrument.simple.SimpleConfig;
 import io.micrometer.core.instrument.simple.SimpleMeterRegistry;
@@ -88,7 +89,7 @@ public class JettyClientMetricsTest {
     }
 
     @Test
-    void successfulRequest() throws Exception {
+    void successfulHttpPostRequest() throws Exception {
         Request post = httpClient.POST("http://localhost:" + connector.getLocalPort() + "/ok");
         post.content(new StringContentProvider("123456"));
         post.send();
@@ -99,7 +100,24 @@ public class JettyClientMetricsTest {
                 .tag("outcome", "SUCCESS")
                 .tag("status", "200")
                 .tag("uri", "/ok")
+                .tag("host", "localhost")
                 .timer().count()).isEqualTo(1);
+    }
+
+    @Test
+    void successfulHttpGetRequest() throws Exception {
+        httpClient.GET("http://localhost:" + connector.getLocalPort() + "/ok");
+        httpClient.stop();
+
+        assertTrue(singleRequestLatch.await(10, SECONDS));
+        assertThat(registry.get("jetty.client.requests")
+                .tag("outcome", "SUCCESS")
+                .tag("status", "200")
+                .tag("uri", "/ok")
+                .timer().count()).isEqualTo(1);
+        DistributionSummary requestSizeSummary = registry.get("jetty.client.request.size").summary();
+        assertThat(requestSizeSummary.count()).isEqualTo(1);
+        assertThat(requestSizeSummary.totalAmount()).isEqualTo(0);
     }
 
     @Test
@@ -114,6 +132,7 @@ public class JettyClientMetricsTest {
                 .tag("outcome", "SUCCESS")
                 .tag("status", "200")
                 .tag("uri", "/ok")
+                .tag("host", "localhost")
                 .summary().totalAmount()).isEqualTo("123456".length());
     }
 
@@ -129,6 +148,7 @@ public class JettyClientMetricsTest {
                 .tag("outcome", "SERVER_ERROR")
                 .tag("status", "500")
                 .tag("uri", "/error")
+                .tag("host", "localhost")
                 .timer().count()).isEqualTo(1);
     }
 
@@ -144,6 +164,7 @@ public class JettyClientMetricsTest {
                 .tag("outcome", "SERVER_ERROR")
                 .tag("status", "500")
                 .tag("uri", "/errorUnchecked")
+                .tag("host", "localhost")
                 .timer().count()).isEqualTo(1);
     }
 
@@ -159,6 +180,7 @@ public class JettyClientMetricsTest {
                 .tag("outcome", "CLIENT_ERROR")
                 .tag("status", "404")
                 .tag("uri", "NOT_FOUND")
+                .tag("host", "localhost")
                 .timer().count()).isEqualTo(1);
     }
 }

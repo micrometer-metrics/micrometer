@@ -94,7 +94,7 @@ public class HumioMeterRegistry extends StepMeterRegistry {
                 Map<String, String> datasourceTags = config.tags();
                 if (datasourceTags != null && !datasourceTags.isEmpty()) {
                     tags = datasourceTags.entrySet().stream().map(tag -> "\"" + tag.getKey() + "\": \"" + tag.getValue() + "\"")
-                            .collect(joining(",", "\"tags\":{",  "},"));
+                            .collect(joining(",", "\"tags\":{", "},"));
                 }
 
                 post.withJsonContent(meters.stream()

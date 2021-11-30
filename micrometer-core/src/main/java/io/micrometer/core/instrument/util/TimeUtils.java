@@ -229,10 +229,35 @@ public final class TimeUtils {
     }
 
     public static String format(Duration duration) {
-        // Courtesy of https://stackoverflow.com/a/40487511/510017
-        return duration.toString()
-                .substring(2)
-                .replaceAll("(\\d[HMS])(?!$)", "$1 ")
-                .toLowerCase();
+        int totalSeconds = (int) (duration.toMillis() / 1000);
+        int seconds = totalSeconds % 60;
+        int totalMinutes = totalSeconds / 60;
+        int minutes = totalMinutes % 60;
+        int hours = totalMinutes / 60;
+        StringBuilder sb = new StringBuilder();
+        if (hours > 0) {
+            sb.append(hours);
+            sb.append('h');
+        }
+        if (minutes > 0) {
+            if (sb.length() > 0) {
+                sb.append(' ');
+            }
+            sb.append(minutes);
+            sb.append('m');
+        }
+        int nanos = duration.getNano();
+        if (seconds > 0 || nanos > 0) {
+            if (sb.length() > 0) {
+                sb.append(' ');
+            }
+            sb.append(seconds);
+            if (nanos > 0) {
+                sb.append('.');
+                sb.append(String.format("%09d", nanos).replaceFirst("0+$", ""));
+            }
+            sb.append('s');
+        }
+        return sb.toString();
     }
 }

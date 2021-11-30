@@ -15,13 +15,13 @@
  */
 package io.micrometer.statsd.internal;
 
+import reactor.core.publisher.Flux;
+import reactor.core.publisher.Sinks;
+
 import java.time.Duration;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.stream.Collectors;
-
-import reactor.core.publisher.DirectProcessor;
-import reactor.core.publisher.Flux;
 
 public class BufferingFlux {
 
@@ -43,19 +43,19 @@ public class BufferingFlux {
     public static Flux<String> create(final Flux<String> source, final String delimiter, final int maxByteArraySize, final long maxMillisecondsBetweenEmits) {
         return Flux.defer(() -> {
             final int delimiterSize = delimiter.getBytes().length;
-            final AtomicInteger byteSize = new AtomicInteger(0);
-            final AtomicLong lastTime = new AtomicLong(0);
+            final AtomicInteger byteSize = new AtomicInteger();
+            final AtomicLong lastTime = new AtomicLong();
 
-            final DirectProcessor<Void> intervalEnd = DirectProcessor.create();
+            final Sinks.Empty<Void> intervalEnd = Sinks.empty();
 
             final Flux<String> heartbeat = Flux.interval(Duration.ofMillis(maxMillisecondsBetweenEmits))
                     .map(l -> "")
-                    .takeUntilOther(intervalEnd);
+                    .takeUntilOther(intervalEnd.asMono());
 
             // Create a stream that emits at least once every $maxMillisecondsBetweenEmits, to avoid long pauses between
             // buffer flushes when the source doesn't emit for a while.
             final Flux<String> sourceWithEmptyStringKeepAlive = source
-                    .doOnTerminate(intervalEnd::onComplete)
+                    .doOnTerminate(intervalEnd::tryEmitEmpty)
                     .mergeWith(heartbeat);
 
             return sourceWithEmptyStringKeepAlive

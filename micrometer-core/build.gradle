@@ -24,6 +24,8 @@ dependencies {
     optionalApi 'org.eclipse.jetty:jetty-server'
     optionalApi 'org.eclipse.jetty:jetty-client'
     optionalApi 'org.apache.tomcat.embed:tomcat-embed-core'
+    optionalApi 'org.glassfish.jersey.core:jersey-server'
+    optionalApi 'io.grpc:grpc-api'
 
     // apache httpcomponents monitoring
     optionalApi 'org.apache.httpcomponents:httpclient'
@@ -38,14 +40,14 @@ dependencies {
 
     // reactor
     optionalApi 'io.projectreactor:reactor-core'
-    optionalApi 'io.projectreactor.netty:reactor-netty'
+    optionalApi 'io.projectreactor.netty:reactor-netty-http'
 
     // @Timed AOP
     optionalApi 'org.aspectj:aspectjweaver'
 
     optionalApi 'com.squareup.okhttp3:okhttp'
 
-    optionalApi 'org.mongodb:mongo-java-driver'
+    optionalApi 'org.mongodb:mongodb-driver-sync'
 
     optionalApi 'org.jooq:jooq'
 
@@ -56,18 +58,18 @@ dependencies {
 
     // JUnit 5
     testImplementation 'org.junit.jupiter:junit-jupiter'
+    testImplementation 'com.tngtech.archunit:archunit-junit5'
 
     // Eclipse still needs this (as of 4.7.1a)
     testRuntimeOnly 'org.junit.platform:junit-platform-launcher'
 
-    testImplementation 'org.mockito:mockito-core'
+    testImplementation 'org.mockito:mockito-inline'
 
     testImplementation 'org.hsqldb:hsqldb'
 
     // dependency injection tests
     testImplementation 'javax.inject:javax.inject'
     testImplementation 'org.springframework:spring-context'
-    testImplementation 'org.springframework:spring-test'
     testImplementation 'com.google.inject:guice'
 
     testImplementation 'com.h2database:h2'
@@ -77,20 +79,71 @@ dependencies {
 //    testAnnotationProcessor 'com.google.dagger:dagger-compiler'
 
     testImplementation 'org.assertj:assertj-core'
+    testImplementation 'org.awaitility:awaitility'
 
     testImplementation 'org.ehcache:ehcache'
 
     testImplementation 'org.apache.kafka:kafka-clients'
 
-    testImplementation 'ru.lanwen.wiremock:wiremock-junit5', {
-        exclude group: 'com.github.tomakehurst', module: 'wiremock'
-    }
-    testImplementation 'com.github.tomakehurst:wiremock-jre8'
+    testImplementation 'org.apache.commons:commons-pool2:2.+'
+
+    testImplementation 'org.glassfish.jersey.test-framework.providers:jersey-test-framework-provider-inmemory'
+    testRuntimeOnly 'org.glassfish.jersey.inject:jersey-hk2'
+
+    testImplementation 'ru.lanwen.wiremock:wiremock-junit5'
+    testImplementation 'com.github.tomakehurst:wiremock-jre8-standalone'
 
     testImplementation 'de.flapdoodle.embed:de.flapdoodle.embed.mongo'
+
+    // Log4j2 Async dependency
+    testImplementation 'com.lmax:disruptor:3.4.+'
 
     // Kafka binder IT dependencies
     testImplementation 'org.testcontainers:testcontainers'
     testImplementation 'org.testcontainers:junit-jupiter'
     testImplementation 'org.testcontainers:kafka'
+}
+
+task shenandoahTest(type: Test) {
+    // set heap size for the test JVM(s)
+    maxHeapSize = "1500m"
+
+    useJUnitPlatform {
+        includeTags 'gc'
+    }
+
+    jvmArgs '-XX:+UseShenandoahGC'
+}
+
+task zgcTest(type: Test) {
+    // set heap size for the test JVM(s)
+    maxHeapSize = "1500m"
+
+    useJUnitPlatform {
+        includeTags 'gc'
+    }
+
+    jvmArgs '-XX:+UseZGC'
+}
+
+task openj9BalancedTest(type: Test) {
+    // set heap size for the test JVM(s)
+    maxHeapSize = "1500m"
+
+    useJUnitPlatform {
+        includeTags 'gc'
+    }
+
+    jvmArgs '-Xgcpolicy:balanced'
+}
+
+task openj9ConcurrentScavengeTest(type: Test) {
+    // set heap size for the test JVM(s)
+    maxHeapSize = "1500m"
+
+    useJUnitPlatform {
+        includeTags 'gc'
+    }
+
+    jvmArgs '-Xgc:concurrentScavenge'
 }

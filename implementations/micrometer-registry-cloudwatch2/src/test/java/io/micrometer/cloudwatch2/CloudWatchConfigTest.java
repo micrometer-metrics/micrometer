@@ -15,6 +15,7 @@
  */
 package io.micrometer.cloudwatch2;
 
+import io.micrometer.core.Issue;
 import io.micrometer.core.instrument.config.validate.Validated;
 import org.junit.jupiter.api.Test;
 
@@ -26,6 +27,16 @@ import static org.assertj.core.api.Assertions.assertThat;
 class CloudWatchConfigTest {
     private final Map<String, String> props = new HashMap<>();
     private final CloudWatchConfig config = props::get;
+
+    @Issue("#2088")
+    @Test
+    void highResolution() {
+        props.put("cloudwatch.step", "1m");
+        assertThat(config.highResolution()).isFalse();
+
+        props.put("cloudwatch.step", "10s");
+        assertThat(config.highResolution()).isTrue();
+    }
 
     @Test
     void invalid() {

@@ -56,20 +56,31 @@ class DatadogMetricMetadata {
     }
 
     private final Meter.Id id;
+    private final String type;
     private final boolean descriptionsEnabled;
 
-    DatadogMetricMetadata(Meter.Id id, boolean descriptionsEnabled) {
+    @Nullable
+    private final String overrideBaseUnit;
+
+    DatadogMetricMetadata(Meter.Id id, Statistic statistic, boolean descriptionsEnabled,
+                          @Nullable String overrideBaseUnit) {
         this.id = id;
         this.descriptionsEnabled = descriptionsEnabled;
+        this.overrideBaseUnit = overrideBaseUnit;
+
+        this.type = sanitizeType(statistic);
     }
 
-    public boolean isDescriptionsEnabled() {
-        return descriptionsEnabled;
-    }
-
-    String editDescriptionMetadataBody() {
+    String editMetadataBody() {
         if (descriptionsEnabled && id.getDescription() != null) {
-            return "{\"description\":\"" + StringEscapeUtils.escapeJson(id.getDescription()) + "\"}";
+            String body = "{\"type\":\"" + type + "\"";
+
+            String baseUnit = sanitizeBaseUnit(id.getBaseUnit(), overrideBaseUnit);
+            if (baseUnit != null) {
+                body += ",\"unit\":\"" + baseUnit + "\"";
+            }
+            body += ",\"description\":\"" + StringEscapeUtils.escapeJson(id.getDescription()) + "\"}";
+            return body;
         }
         return null;
     }

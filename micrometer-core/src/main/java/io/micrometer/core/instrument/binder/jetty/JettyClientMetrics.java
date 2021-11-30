@@ -22,7 +22,10 @@ import io.micrometer.core.instrument.Tag;
 import io.micrometer.core.instrument.Timer;
 import io.micrometer.core.instrument.config.MeterFilter;
 import io.micrometer.core.instrument.internal.OnlyOnceLoggingDenyMeterFilter;
+import org.eclipse.jetty.client.api.ContentProvider;
 import org.eclipse.jetty.client.api.Request;
+
+import java.util.Optional;
 
 /**
  * Provides request metrics for Jetty {@link org.eclipse.jetty.client.HttpClient},
@@ -61,7 +64,9 @@ public class JettyClientMetrics implements Request.Listener {
         Timer.Sample sample = Timer.start(registry);
 
         request.onComplete(result -> {
-            long requestLength = result.getRequest().getContent().getLength();
+            long requestLength = Optional.ofNullable(result.getRequest().getContent())
+                    .map(ContentProvider::getLength)
+                    .orElse(0L);
             Iterable<Tag> httpRequestTags = tagsProvider.httpRequestTags(result);
             if (requestLength >= 0) {
                 DistributionSummary.builder(contentSizeMetricName)

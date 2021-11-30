@@ -6,11 +6,23 @@ executors:
     environment:
       GRADLE_OPTS: '-Dorg.gradle.jvmargs="-Xmx2048m -XX:+HeapDumpOnOutOfMemoryError"'
     docker:
-      - image: cimg/openjdk:14.0
+      - image: cimg/openjdk:17.0.0
+  circle-jdk8-executor:
+    working_directory: ~/micrometer
+    environment:
+      GRADLE_OPTS: '-Dorg.gradle.jvmargs="-Xmx2048m -XX:+HeapDumpOnOutOfMemoryError"'
+    docker:
+      - image: cimg/openjdk:8.0.292
+  circle-jdk11-executor:
+    working_directory: ~/micrometer
+    environment:
+      GRADLE_OPTS: '-Dorg.gradle.jvmargs="-Xmx2048m -XX:+HeapDumpOnOutOfMemoryError"'
+    docker:
+      - image: cimg/openjdk:11.0.11
   machine-executor:
     working_directory: ~/micrometer
     machine:
-      image: ubuntu-1604:201903-01
+      image: ubuntu-2004:202107-02
 
 commands:
   gradlew-build:
@@ -18,7 +30,7 @@ commands:
     parameters:
       command:
         type: string
-        default: 'check test'
+        default: 'build'
     steps:
       - checkout
       - restore_cache:
@@ -49,6 +61,18 @@ jobs:
     executor: circle-jdk-executor
     steps:
       - gradlew-build
+      - run: ./gradlew shenandoahTest
+      - run: ./gradlew zgcTest
+
+  build-jdk8:
+    executor: circle-jdk8-executor
+    steps:
+      - gradlew-build
+
+  build-jdk11:
+    executor: circle-jdk11-executor
+    steps:
+      - gradlew-build
 
   docker-tests:
     executor: machine-executor
@@ -66,34 +90,24 @@ jobs:
           name: Deployment
           command: sh ./gradle/deploy.sh
 
-  maven-central-sync:
-    executor: circle-jdk-executor
-    steps:
-      - checkout
-      - run:
-          name: Decrypt properties
-          command: openssl aes-256-cbc -d -in gradle.properties.enc -out gradle.properties -k "$KEY" -md sha256
-      - deploy:
-          name: Maven Central sync
-          # arbitrarily choose one project to run the `mavenCentralSync` task since all use the same Bintray package
-          command: ./gradlew :micrometer-core:mavenCentralSync -Prelease.useLastTag=true -x bintrayPublish -x bintrayUpload -x bintrayCreateVersion -x bintrayCreatePackage
-          # Maven Central Sync might take more than 10 minutes
-          no_output_timeout: 30m
-
 workflows:
   version: 2
   build_prs_deploy_snapshots:
     jobs:
       - build
+      - build-jdk8
+      - build-jdk11
       - docker-tests
       - deploy:
           requires:
             - build
+            - build-jdk8
+            - build-jdk11
             - docker-tests
           filters:
             branches:
               only:
-                - master
+                - main
                 - /\d+\.\d+\.x/
   build_deploy_releases:
     jobs:
@@ -102,30 +116,31 @@ workflows:
             branches:
               ignore: /.*/
             tags:
-              only: /^v\d+\.\d+\.\d+(-rc\.\d+)?$/
+              only: /^v\d+\.\d+\.\d+(-(RC|M)\d+)?$/
+      - build-jdk8:
+          filters:
+            branches:
+              ignore: /.*/
+            tags:
+              only: /^v\d+\.\d+\.\d+(-(RC|M)\d+)?$/
+      - build-jdk11:
+          filters:
+            branches:
+              ignore: /.*/
+            tags:
+              only: /^v\d+\.\d+\.\d+(-(RC|M)\d+)?$/
       - docker-tests:
           filters:
             branches:
               ignore: /.*/
             tags:
-              only: /^v\d+\.\d+\.\d+(-rc\.\d+)?$/
+              only: /^v\d+\.\d+\.\d+(-(RC|M)\d+)?$/
       - deploy:
           requires:
             - build
+            - build-jdk8
+            - build-jdk11
             - docker-tests
           filters:
             tags:
-              only: /^v\d+\.\d+\.\d+(-rc\.\d+)?$/
-      - staging-approval:
-          type: approval
-          requires:
-            - deploy
-          filters:
-            tags:
-              only: /^v\d+\.\d+\.\d+(-rc\.\d+)?$/
-      - maven-central-sync:
-          requires:
-            - staging-approval
-          filters:
-            tags:
-              only: /^v\d+\.\d+\.\d+(-rc\.\d+)?$/
+              only: /^v\d+\.\d+\.\d+(-(RC|M)\d+)?$/

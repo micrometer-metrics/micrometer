@@ -22,17 +22,19 @@ import io.micrometer.core.instrument.binder.BaseUnits;
 import io.micrometer.core.instrument.binder.MeterBinder;
 import io.micrometer.core.lang.NonNullApi;
 import io.micrometer.core.lang.NonNullFields;
-import io.micrometer.core.lang.Nullable;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.core.Filter;
 import org.apache.logging.log4j.core.LogEvent;
 import org.apache.logging.log4j.core.LoggerContext;
+import org.apache.logging.log4j.core.async.AsyncLoggerConfig;
 import org.apache.logging.log4j.core.config.Configuration;
 import org.apache.logging.log4j.core.config.LoggerConfig;
 import org.apache.logging.log4j.core.filter.AbstractFilter;
 import org.apache.logging.log4j.core.filter.CompositeFilter;
 
+import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.List;
 
 import static java.util.Collections.emptyList;
 
@@ -52,8 +54,7 @@ public class Log4j2Metrics implements MeterBinder, AutoCloseable {
     private final Iterable<Tag> tags;
     private final LoggerContext loggerContext;
 
-    @Nullable
-    private MetricsFilter metricsFilter;
+    private List<MetricsFilter> metricsFilters = new ArrayList<>();
 
     public Log4j2Metrics() {
         this(emptyList());
@@ -70,12 +71,10 @@ public class Log4j2Metrics implements MeterBinder, AutoCloseable {
 
     @Override
     public void bindTo(MeterRegistry registry) {
-        metricsFilter = new MetricsFilter(registry, tags);
-        metricsFilter.start();
 
         Configuration configuration = loggerContext.getConfiguration();
         LoggerConfig rootLoggerConfig = configuration.getRootLogger();
-        rootLoggerConfig.addFilter(metricsFilter);
+        rootLoggerConfig.addFilter(createMetricsFilterAndStart(registry, rootLoggerConfig));
 
         loggerContext.getConfiguration().getLoggers().values().stream()
             .filter(loggerConfig -> !loggerConfig.isAdditive())
@@ -93,29 +92,36 @@ public class Log4j2Metrics implements MeterBinder, AutoCloseable {
                 if (logFilter instanceof MetricsFilter) {
                     return;
                 }
-                loggerConfig.addFilter(metricsFilter);
+                loggerConfig.addFilter(createMetricsFilterAndStart(registry, loggerConfig));
             });
 
         loggerContext.updateLoggers(configuration);
     }
 
+    private MetricsFilter createMetricsFilterAndStart(MeterRegistry registry, LoggerConfig loggerConfig) {
+        MetricsFilter metricsFilter = new MetricsFilter(registry, tags, loggerConfig instanceof AsyncLoggerConfig);
+        metricsFilter.start();
+        metricsFilters.add(metricsFilter);
+        return metricsFilter;
+    }
+
     @Override
     public void close() {
-        if (metricsFilter != null) {
+        if (!metricsFilters.isEmpty()) {
             Configuration configuration = loggerContext.getConfiguration();
             LoggerConfig rootLoggerConfig = configuration.getRootLogger();
-            rootLoggerConfig.removeFilter(metricsFilter);
+            metricsFilters.forEach(rootLoggerConfig::removeFilter);
 
             loggerContext.getConfiguration().getLoggers().values().stream()
                 .filter(loggerConfig -> !loggerConfig.isAdditive())
                 .forEach(loggerConfig -> {
                     if (loggerConfig != rootLoggerConfig) {
-                        loggerConfig.removeFilter(metricsFilter);
+                        metricsFilters.forEach(loggerConfig::removeFilter);
                     }
                 });
 
             loggerContext.updateLoggers(configuration);
-            metricsFilter.stop();
+            metricsFilters.forEach(MetricsFilter::stop);
         }
     }
 
@@ -129,8 +135,10 @@ public class Log4j2Metrics implements MeterBinder, AutoCloseable {
         private final Counter infoCounter;
         private final Counter debugCounter;
         private final Counter traceCounter;
+        private final boolean isAsyncLogger;
 
-        MetricsFilter(MeterRegistry registry, Iterable<Tag> tags) {
+        MetricsFilter(MeterRegistry registry, Iterable<Tag> tags, boolean isAsyncLogger) {
+            this.isAsyncLogger = isAsyncLogger;
             fatalCounter = Counter.builder(METER_NAME)
                     .tags(tags)
                     .tags("level", "fatal")
@@ -176,6 +184,20 @@ public class Log4j2Metrics implements MeterBinder, AutoCloseable {
 
         @Override
         public Result filter(LogEvent event) {
+
+            if (!isAsyncLogger || isAsyncLoggerAndEndOfBatch(event)) {
+                incrementCounter(event);
+            }
+
+            return Result.NEUTRAL;
+        }
+
+
+        private boolean isAsyncLoggerAndEndOfBatch(LogEvent event) {
+            return isAsyncLogger && event.isEndOfBatch();
+        }
+
+        private void incrementCounter(LogEvent event) {
             switch (event.getLevel().getStandardLevel()) {
                 case FATAL:
                     fatalCounter.increment();
@@ -198,8 +220,6 @@ public class Log4j2Metrics implements MeterBinder, AutoCloseable {
                 default:
                     break;
             }
-
-            return Result.NEUTRAL;
         }
     }
 }

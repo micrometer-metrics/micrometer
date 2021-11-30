@@ -35,19 +35,25 @@ import java.lang.ref.WeakReference;
  */
 @NonNullApi
 @NonNullFields
-public abstract class CacheMeterBinder implements MeterBinder {
-    private final WeakReference<Object> cache;
+public abstract class CacheMeterBinder<C> implements MeterBinder {
+    private final WeakReference<C> cacheRef;
     private final Iterable<Tag> tags;
 
-    public CacheMeterBinder(Object cache, String cacheName, Iterable<Tag> tags) {
+    public CacheMeterBinder(C cache, String cacheName, Iterable<Tag> tags) {
         this.tags = Tags.concat(tags, "cache", cacheName);
-        this.cache = new WeakReference<>(cache);
+        this.cacheRef = new WeakReference<>(cache);
+    }
+
+    @Nullable
+    protected C getCache() {
+        return cacheRef.get();
     }
 
     @Override
     public final void bindTo(MeterRegistry registry) {
+        C cache = getCache();
         if (size() != null) {
-            Gauge.builder("cache.size", cache.get(),
+            Gauge.builder("cache.size", cache,
                     c -> {
                         Long size = size();
                         return size == null ? 0 : size;
@@ -58,7 +64,7 @@ public abstract class CacheMeterBinder implements MeterBinder {
         }
 
         if (missCount() != null) {
-            FunctionCounter.builder("cache.gets", cache.get(),
+            FunctionCounter.builder("cache.gets", cache,
                     c -> {
                         Long misses = missCount();
                         return misses == null ? 0 : misses;
@@ -68,18 +74,18 @@ public abstract class CacheMeterBinder implements MeterBinder {
                     .register(registry);
         }
 
-        FunctionCounter.builder("cache.gets", cache.get(), c -> hitCount())
+        FunctionCounter.builder("cache.gets", cache, c -> hitCount())
                 .tags(tags).tag("result", "hit")
                 .description("The number of times cache lookup methods have returned a cached value.")
                 .register(registry);
 
-        FunctionCounter.builder("cache.puts", cache.get(), c -> putCount())
+        FunctionCounter.builder("cache.puts", cache, c -> putCount())
                 .tags(tags)
                 .description("The number of entries added to the cache")
                 .register(registry);
 
         if (evictionCount() != null) {
-            FunctionCounter.builder("cache.evictions", cache.get(),
+            FunctionCounter.builder("cache.evictions", cache,
                     c -> {
                         Long evictions = evictionCount();
                         return evictions == null ? 0 : evictions;
@@ -125,6 +131,8 @@ public abstract class CacheMeterBinder implements MeterBinder {
     /**
      * The put mechanism is unimportant - this count applies to entries added to the cache according to a pre-defined
      * load function such as exists in Guava/Caffeine caches as well as manual puts.
+     *
+     * Note that Guava/Caffeine caches don't count manual puts.
      *
      * @return Total number of entries added to the cache. Monotonically increasing count.
      */

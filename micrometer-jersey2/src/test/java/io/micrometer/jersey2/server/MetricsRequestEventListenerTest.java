@@ -23,7 +23,7 @@ import io.micrometer.jersey2.server.mapper.ResourceGoneExceptionMapper;
 import io.micrometer.jersey2.server.resources.TestResource;
 import org.glassfish.jersey.server.ResourceConfig;
 import org.glassfish.jersey.test.JerseyTest;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
 import javax.ws.rs.NotFoundException;
 import javax.ws.rs.core.Application;
@@ -38,7 +38,8 @@ import static org.assertj.core.api.Assertions.assertThat;
  * @author Michael Weirauch
  * @author Johnny Lim
  */
-public class MetricsRequestEventListenerTest extends JerseyTest {
+@Deprecated
+class MetricsRequestEventListenerTest extends JerseyTest {
 
     static {
         Logger.getLogger("org.glassfish.jersey").setLevel(Level.OFF);
@@ -64,7 +65,7 @@ public class MetricsRequestEventListenerTest extends JerseyTest {
     }
 
     @Test
-    public void resourcesAreTimed() {
+    void resourcesAreTimed() {
         target("/").request().get();
         target("hello").request().get();
         target("hello/").request().get();
@@ -92,23 +93,31 @@ public class MetricsRequestEventListenerTest extends JerseyTest {
     }
 
     @Test
-    public void notFoundIsAccumulatedUnderSameUri() {
+    void notFoundIsAccumulatedUnderSameUriIfFromUnmatchedResource() {
         try {
             target("not-found").request().get();
         } catch (NotFoundException ignored) {
         }
+
+        assertThat(registry.get(METRIC_NAME)
+            .tags(tagsFrom("NOT_FOUND", "404", "CLIENT_ERROR", null)).timer().count())
+            .isEqualTo(1);
+    }
+
+    @Test
+    void notFoundIsReportedWithUriOfMatchedResource() {
         try {
             target("throws-not-found-exception").request().get();
         } catch (NotFoundException ignored) {
         }
 
         assertThat(registry.get(METRIC_NAME)
-            .tags(tagsFrom("NOT_FOUND", "404", "CLIENT_ERROR", null)).timer().count())
-            .isEqualTo(2);
+            .tags(tagsFrom("/throws-not-found-exception", "404", "CLIENT_ERROR", null)).timer().count())
+            .isEqualTo(1);
     }
 
     @Test
-    public void redirectsAreAccumulatedUnderSameUri() {
+    void redirectsAreAccumulatedUnderSameUri() {
         target("redirect/302").request().get();
         target("redirect/307").request().get();
 
@@ -122,7 +131,7 @@ public class MetricsRequestEventListenerTest extends JerseyTest {
     }
 
     @Test
-    public void exceptionsAreMappedCorrectly() {
+    void exceptionsAreMappedCorrectly() {
         try {
             target("throws-exception").request().get();
         } catch (Exception ignored) {

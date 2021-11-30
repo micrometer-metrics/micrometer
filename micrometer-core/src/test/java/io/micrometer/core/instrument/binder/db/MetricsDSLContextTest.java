@@ -34,7 +34,14 @@ import static io.micrometer.core.instrument.binder.db.MetricsDSLContext.withMetr
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.failBecauseExceptionWasNotThrown;
 import static org.jooq.impl.DSL.*;
+import static org.mockito.Mockito.mock;
 
+/**
+ * Tests for {@link MetricsDSLContext}.
+ *
+ * @author Jon Schneider
+ * @author Johnny Lim
+ */
 class MetricsDSLContextTest {
     private MeterRegistry meterRegistry = new SimpleMeterRegistry();
 
@@ -177,6 +184,25 @@ class MetricsDSLContextTest {
                     .timer().count())
                     .isEqualTo(1);
         }
+    }
+
+    @Test
+    void userExecuteListenerShouldBePreserved() {
+        ExecuteListener userExecuteListener = mock(ExecuteListener.class);
+        Configuration configuration = new DefaultConfiguration().set(() -> userExecuteListener);
+
+        MetricsDSLContext jooq = withMetrics(using(configuration), meterRegistry, Tags.empty());
+
+        ExecuteListenerProvider[] executeListenerProviders = jooq.configuration().executeListenerProviders();
+        assertThat(executeListenerProviders).hasSize(2);
+        assertThat(executeListenerProviders[0].provide()).isSameAs(userExecuteListener);
+        assertThat(executeListenerProviders[1].provide()).isInstanceOf(JooqExecuteListener.class);
+
+        SelectSelectStep<Record> select = jooq.tag("name", "selectAllAuthors").select(asterisk());
+        executeListenerProviders = select.configuration().executeListenerProviders();
+        assertThat(executeListenerProviders).hasSize(2);
+        assertThat(executeListenerProviders[0].provide()).isSameAs(userExecuteListener);
+        assertThat(executeListenerProviders[1].provide()).isInstanceOf(JooqExecuteListener.class);
     }
 
     @NonNull

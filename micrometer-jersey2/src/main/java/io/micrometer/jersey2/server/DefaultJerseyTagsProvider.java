@@ -26,7 +26,9 @@ import io.micrometer.core.instrument.Tag;
  * 
  * @author Michael Weirauch
  * @author Johnny Lim
+ * @deprecated use {@link io.micrometer.core.instrument.binder.jersey.server.DefaultJerseyTagsProvider} in micrometer-core instead.
  */
+@Deprecated
 public final class DefaultJerseyTagsProvider implements JerseyTagsProvider {
 
     @Override

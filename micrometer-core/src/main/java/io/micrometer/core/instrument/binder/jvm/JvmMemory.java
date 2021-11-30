@@ -21,36 +21,50 @@ import java.lang.management.ManagementFactory;
 import java.lang.management.MemoryPoolMXBean;
 import java.lang.management.MemoryType;
 import java.lang.management.MemoryUsage;
-import java.util.Optional;
 import java.util.function.ToLongFunction;
+import java.util.stream.Stream;
 
 class JvmMemory {
 
     private JvmMemory() {
     }
 
-    static Optional<MemoryPoolMXBean> getOldGen() {
+    static Stream<MemoryPoolMXBean> getLongLivedHeapPools() {
         return ManagementFactory
-                .getPlatformMXBeans(MemoryPoolMXBean.class)
+                .getMemoryPoolMXBeans()
                 .stream()
                 .filter(JvmMemory::isHeap)
-                .filter(mem -> isOldGenPool(mem.getName()))
-                .findAny();
+                .filter(mem -> isLongLivedPool(mem.getName()));
     }
 
-    static boolean isConcurrentPhase(String cause) {
-        return "No GC".equals(cause);
+    static boolean isConcurrentPhase(String cause, String name) {
+        return "No GC".equals(cause)
+                || "Shenandoah Cycles".equals(name)
+                || "ZGC Cycles".equals(name);
     }
 
-    static boolean isYoungGenPool(String name) {
-        return name.endsWith("Eden Space");
+    static boolean isAllocationPool(String name) {
+        return name != null && (name.endsWith("Eden Space")
+                || "Shenandoah".equals(name)
+                || "ZHeap".equals(name)
+                || name.endsWith("nursery-allocate")
+                || name.endsWith("-eden") // "balanced-eden"
+                || "JavaHeap".equals(name) // metronome
+        );
     }
 
-    static boolean isOldGenPool(String name) {
-        return name.endsWith("Old Gen") || name.endsWith("Tenured Gen");
+    static boolean isLongLivedPool(String name) {
+        return name != null && (name.endsWith("Old Gen")
+                || name.endsWith("Tenured Gen")
+                || "Shenandoah".equals(name)
+                || "ZHeap".equals(name)
+                || name.endsWith("balanced-old")
+                || name.contains("tenured") // "tenured", "tenured-SOA", "tenured-LOA"
+                || "JavaHeap".equals(name) // metronome
+        );
     }
 
-    private static boolean isHeap(MemoryPoolMXBean memoryPoolBean) {
+    static boolean isHeap(MemoryPoolMXBean memoryPoolBean) {
         return MemoryType.HEAP.equals(memoryPoolBean.getType());
     }
 

@@ -15,14 +15,14 @@
  */
 package io.micrometer.influx;
 
-import com.google.common.collect.ImmutableSet;
 import io.micrometer.core.instrument.*;
 import org.junit.jupiter.api.Test;
 
-import java.util.Arrays;
+import java.util.HashSet;
 import java.util.List;
 import java.util.stream.Collectors;
 
+import static java.util.Arrays.asList;
 import static org.assertj.core.api.Assertions.assertThat;
 
 /**
@@ -36,7 +36,8 @@ class InfluxMeterRegistryMultipleFieldsTest {
     private final MockClock clock = new MockClock();
     private final InfluxMeterRegistry meterRegistry = new InfluxMeterRegistry.Builder(config)
             .clock(clock)
-            .prefixes(ImmutableSet.of("valid.metric1.name", "invalid.metric.name.", "valid.metric2.name"))
+            .prefixes(new HashSet<>(
+                    asList("valid.metric1.name", "invalid.metric.name.", "valid.metric2.name")))
             .build();
 
     @Test
@@ -52,9 +53,9 @@ class InfluxMeterRegistryMultipleFieldsTest {
         final InfluxMeterRegistry.MeterKey meterKey2 = meterRegistry.createKeyIfMatched(gauge2);
 
         //When
-        final List<String> gaugesInfluxLines = meterRegistry.writeMetersAsSingleMultiFieldLine(Arrays.asList(gauge1, gauge2),
-                meter -> ((Gauge) meter).value(),
-                meterRegistry.getConventionName(meterKey1))
+        final List<String> gaugesInfluxLines = meterRegistry.writeMetersAsSingleMultiFieldLine(asList(gauge1, gauge2),
+                        meter -> ((Gauge) meter).value(),
+                        meterRegistry.getConventionName(meterKey1))
                 .collect(Collectors.toList());
 
         //Then
@@ -78,9 +79,9 @@ class InfluxMeterRegistryMultipleFieldsTest {
         final InfluxMeterRegistry.MeterKey meterKey2 = meterRegistry.createKeyIfMatched(counter2);
 
         //When
-        final List<String> countersInfluxLines = meterRegistry.writeMetersAsSingleMultiFieldLine(Arrays.asList(counter1, counter2),
-                meter -> ((FunctionCounter) meter).count(),
-                meterRegistry.getConventionName(meterKey1))
+        final List<String> countersInfluxLines = meterRegistry.writeMetersAsSingleMultiFieldLine(asList(counter1, counter2),
+                        meter -> ((FunctionCounter) meter).count(),
+                        meterRegistry.getConventionName(meterKey1))
                 .collect(Collectors.toList());
 
         //Then
@@ -103,13 +104,13 @@ class InfluxMeterRegistryMultipleFieldsTest {
         final InfluxMeterRegistry.MeterKey meterKey2 = meterRegistry.createKeyIfMatched(gauge2);
 
         //When
-        final List<String> gaugesInfluxLinesForKey1 = meterRegistry.writeMetersAsSingleMultiFieldLine(Arrays.asList(gauge1),
-                meter -> ((Gauge) meter).value(),
-                meterRegistry.getConventionName(meterKey1))
+        final List<String> gaugesInfluxLinesForKey1 = meterRegistry.writeMetersAsSingleMultiFieldLine(asList(gauge1),
+                        meter -> ((Gauge) meter).value(),
+                        meterRegistry.getConventionName(meterKey1))
                 .collect(Collectors.toList());
-        final List<String> gaugesInfluxLinesForKey2 = meterRegistry.writeMetersAsSingleMultiFieldLine(Arrays.asList(gauge2),
-                meter -> ((Gauge) meter).value(),
-                meterRegistry.getConventionName(meterKey2))
+        final List<String> gaugesInfluxLinesForKey2 = meterRegistry.writeMetersAsSingleMultiFieldLine(asList(gauge2),
+                        meter -> ((Gauge) meter).value(),
+                        meterRegistry.getConventionName(meterKey2))
                 .collect(Collectors.toList());
         //Then
         assertThat(meterKey1).isNotEqualTo(meterKey2);
@@ -145,7 +146,7 @@ class InfluxMeterRegistryMultipleFieldsTest {
         Measurement m1 = new Measurement(() -> 23d, Statistic.VALUE);
         Measurement m2 = new Measurement(() -> 13d, Statistic.VALUE);
         Measurement m3 = new Measurement(() -> 5d, Statistic.TOTAL_TIME);
-        Meter meter = Meter.builder("valid.metric1.name.my.custom", Meter.Type.OTHER, Arrays.asList(m1, m2, m3)).register(meterRegistry);
+        Meter meter = Meter.builder("valid.metric1.name.my.custom", Meter.Type.OTHER, asList(m1, m2, m3)).register(meterRegistry);
 
         //When
         final InfluxMeterRegistry.MeterKey meterKey1 = meterRegistry.createKeyIfMatched(meter);

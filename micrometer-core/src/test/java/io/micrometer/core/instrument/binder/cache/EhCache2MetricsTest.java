@@ -30,10 +30,10 @@ import net.sf.ehcache.statistics.StatisticsGateway;
 import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
-import org.springframework.test.util.ReflectionTestUtils;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.spy;
 import static org.mockito.Mockito.when;
 
 /**
@@ -160,7 +160,7 @@ class EhCache2MetricsTest extends AbstractCacheMetricsTest {
     static void setup() {
         cacheManager = CacheManager.newInstance();
         cacheManager.addCache("testCache");
-        cache = cacheManager.getCache("testCache");
+        cache = spy(cacheManager.getCache("testCache"));
         StatisticsGateway stats = mock(StatisticsGateway.class);
         // generate non-negative random value to address false-positives
         int valueBound = 100000;
@@ -186,7 +186,7 @@ class EhCache2MetricsTest extends AbstractCacheMetricsTest {
         when(stats.xaRollbackSuccessCount()).thenReturn((long) random.nextInt(valueBound));
         when(stats.xaRecoveryRecoveredCount()).thenReturn((long) random.nextInt(valueBound));
         when(stats.xaRecoveryNothingCount()).thenReturn((long) random.nextInt(valueBound));
-        ReflectionTestUtils.setField(cache, "statistics", stats);
+        when(cache.getStatistics()).thenReturn(stats);
     }
 
     @AfterAll

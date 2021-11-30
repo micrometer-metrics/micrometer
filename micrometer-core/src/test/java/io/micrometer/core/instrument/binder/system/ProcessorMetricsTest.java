@@ -71,8 +71,8 @@ class ProcessorMetricsTest {
          * needs some milliseconds of sleep before it actually returns a positive value
          * on a supported system. Thread.sleep() is flaky, though.
          */
-        assertThat(registry.get("system.cpu.usage").gauge().value()).isEqualTo(-1);
-        assertThat(registry.get("process.cpu.usage").gauge().value()).isEqualTo(-1);
+        assertThat(registry.get("system.cpu.usage").gauge().value()).isGreaterThanOrEqualTo(-1);
+        assertThat(registry.get("process.cpu.usage").gauge().value()).isGreaterThanOrEqualTo(-1);
     }
 
     private boolean isOpenJ9() {

@@ -27,7 +27,6 @@ import io.micrometer.core.instrument.distribution.DistributionStatisticConfig;
 import io.micrometer.core.instrument.distribution.HistogramGauges;
 import io.micrometer.core.instrument.distribution.pause.PauseDetector;
 import io.micrometer.core.instrument.internal.DefaultGauge;
-import io.micrometer.core.instrument.internal.DefaultLongTaskTimer;
 import io.micrometer.core.instrument.internal.DefaultMeter;
 import io.micrometer.core.instrument.push.PushMeterRegistry;
 import io.micrometer.core.instrument.util.NamedThreadFactory;
@@ -122,7 +121,7 @@ public class WavefrontMeterRegistry extends PushMeterRegistry {
 
     @Override
     protected LongTaskTimer newLongTaskTimer(Meter.Id id, DistributionStatisticConfig distributionStatisticConfig) {
-        return new DefaultLongTaskTimer(id, clock, getBaseTimeUnit(), distributionStatisticConfig, false);
+        return new WavefrontLongTaskTimer(id, clock, distributionStatisticConfig, getBaseTimeUnit());
     }
 
     @Override
@@ -167,7 +166,7 @@ public class WavefrontMeterRegistry extends PushMeterRegistry {
                 this::publishMeter,
                 this::publishTimer,
                 this::publishSummary,
-                this::publishMeter,
+                this::publishLongTaskTimer,
                 this::publishMeter,
                 this::publishMeter,
                 this::publishFunctionTimer,
@@ -199,6 +198,26 @@ public class WavefrontMeterRegistry extends PushMeterRegistry {
             publishMetric(id, "avg", wallTime, timer.mean(getBaseTimeUnit()));
             publishMetric(id, "max", wallTime, timer.max(getBaseTimeUnit()));
         }
+    }
+
+    private void publishLongTaskTimer(LongTaskTimer timer) {
+        final long wallTime = clock.wallTime();
+
+        final Meter.Id id = timer.getId();
+        final WavefrontLongTaskTimer wfTimer = (WavefrontLongTaskTimer) timer;
+
+        if (wfTimer.isPublishingHistogram()) {
+            publishDistribution(id, wfTimer.flushDistributions());
+        }
+        else {
+            publishMetric(id, "avg", wallTime, timer.mean(getBaseTimeUnit()));
+            publishMetric(id, "max", wallTime, timer.max(getBaseTimeUnit()));
+        }
+
+        // these suffixes have equivalents (count and sum) in the Wavefront histogram implementation, but for consistency
+        // with long task timers that don't publish distribution statistics, we always publish timeseries with these names too.
+        publishMetric(id, "duration", wallTime, timer.duration(getBaseTimeUnit()));
+        publishMetric(id, "active", wallTime, timer.activeTasks());
     }
 
     private void publishSummary(DistributionSummary summary) {
@@ -306,7 +325,8 @@ public class WavefrontMeterRegistry extends PushMeterRegistry {
      */
     public static WavefrontClient.Builder getDefaultSenderBuilder(WavefrontConfig config) {
         return new WavefrontClient.Builder(getWavefrontReportingUri(config),
-                config.apiToken()).batchSize(config.batchSize());
+                config.apiToken()).batchSize(config.batchSize())
+                .flushInterval((int) config.step().toMillis(), TimeUnit.MILLISECONDS);
     }
 
     public static Builder builder(WavefrontConfig config) {

@@ -3,6 +3,8 @@ plugins {
 }
 
 dependencies {
+    implementation platform('io.projectreactor:reactor-bom:2020.0.+')
+
     implementation project(':micrometer-core')
     implementation 'colt:colt'
     implementation('ch.qos.logback:logback-classic')
@@ -13,7 +15,11 @@ dependencies {
     }
 
     implementation 'io.prometheus:simpleclient_pushgateway'
-    implementation 'io.projectreactor.netty:reactor-netty'
+    implementation 'io.projectreactor.netty:reactor-netty-http'
     implementation 'org.apache.kafka:kafka-clients'
     implementation 'com.github.charithe:kafka-junit'
+    implementation ('io.grpc:grpc-services') {
+        exclude module: 'io.grpc:grpc-netty-shaded'
+    }
+
 }

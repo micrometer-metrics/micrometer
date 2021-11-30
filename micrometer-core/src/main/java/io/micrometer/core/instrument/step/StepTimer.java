@@ -23,13 +23,15 @@ import io.micrometer.core.instrument.distribution.pause.PauseDetector;
 import io.micrometer.core.instrument.util.TimeUtils;
 
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.LongAdder;
 
 /**
  * @author Jon Schneider
  */
 public class StepTimer extends AbstractTimer {
-    private final StepLong count;
-    private final StepLong total;
+    private final LongAdder count = new LongAdder();
+    private final LongAdder total = new LongAdder();
+    private final StepTuple2<Long, Long> countTotal;
     private final TimeWindowMax max;
 
     /**
@@ -48,28 +50,26 @@ public class StepTimer extends AbstractTimer {
         final boolean supportsAggregablePercentiles
     ) {
         super(id, clock, distributionStatisticConfig, pauseDetector, baseTimeUnit, supportsAggregablePercentiles);
-
-        count = new StepLong(clock, stepDurationMillis);
-        total = new StepLong(clock, stepDurationMillis);
+        countTotal = new StepTuple2<>(clock, stepDurationMillis, 0L, 0L, count::sumThenReset, total::sumThenReset);
         max = new TimeWindowMax(clock, distributionStatisticConfig);
     }
 
     @Override
     protected void recordNonNegative(final long amount, final TimeUnit unit) {
         final long nanoAmount = (long) TimeUtils.convert(amount, unit, TimeUnit.NANOSECONDS);
-        count.getCurrent().add(1);
-        total.getCurrent().add(nanoAmount);
+        count.add(1);
+        total.add(nanoAmount);
         max.record(nanoAmount);
     }
 
     @Override
     public long count() {
-        return count.poll();
+        return countTotal.poll1();
     }
 
     @Override
     public double totalTime(final TimeUnit unit) {
-        return TimeUtils.nanosToUnit(total.poll(), unit);
+        return TimeUtils.nanosToUnit(countTotal.poll2(), unit);
     }
 
     @Override

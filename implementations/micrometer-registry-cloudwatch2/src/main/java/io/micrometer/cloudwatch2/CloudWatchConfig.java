@@ -15,9 +15,14 @@
  */
 package io.micrometer.cloudwatch2;
 
+import io.micrometer.core.annotation.Incubating;
+import io.micrometer.core.instrument.config.MeterFilter;
 import io.micrometer.core.instrument.config.validate.InvalidReason;
 import io.micrometer.core.instrument.config.validate.Validated;
 import io.micrometer.core.instrument.step.StepRegistryConfig;
+
+import java.time.Duration;
+import java.util.function.Predicate;
 
 import static io.micrometer.core.instrument.config.MeterRegistryConfigValidator.check;
 import static io.micrometer.core.instrument.config.MeterRegistryConfigValidator.checkAll;
@@ -46,6 +51,24 @@ public interface CloudWatchConfig extends StepRegistryConfig {
     @Override
     default int batchSize() {
         return Math.min(getInteger(this, "batchSize").orElse(MAX_BATCH_SIZE), MAX_BATCH_SIZE);
+    }
+
+    /**
+     * Whether to ship high-resolution metrics to CloudWatch at a higher cost. By default, if the step interval
+     * is less than one minute, we assume that high-resolution metrics are also desired.
+     *
+     * This is incubating because CloudWatch supports making this decision on a per-metric level. It's believed
+     * that deciding on a per-registry level leads to simpler configuration and will be satisfactory in most cases.
+     * To only ship a certain subset of metrics at high resolution, two {@link CloudWatchMeterRegistry} instances can be configured.
+     * One is configured with high-resolution and a {@link MeterFilter#denyUnless(Predicate)} filter. The other is configured with
+     * low-resolution and a {@link MeterFilter#deny(Predicate)} filter. Both use the same predicate.
+     *
+     * @return The decision about whether to accept higher cost high-resolution metrics.
+     * @since 1.6.0
+     */
+    @Incubating(since = "1.6.0")
+    default boolean highResolution() {
+        return step().compareTo(Duration.ofMinutes(1)) < 0;
     }
 
     @Override

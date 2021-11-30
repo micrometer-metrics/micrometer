@@ -34,10 +34,12 @@ import static java.util.Collections.emptyList;
  *
  * @author jmcshane
  * @author Johnny Lim
+ * @deprecated use {@link io.micrometer.core.instrument.binder.system.DiskSpaceMetrics} instead.
  */
 @Incubating(since = "1.1.0")
 @NonNullApi
 @NonNullFields
+@Deprecated
 public class DiskSpaceMetrics implements MeterBinder {
     private final Iterable<Tag> tags;
     private final File path;

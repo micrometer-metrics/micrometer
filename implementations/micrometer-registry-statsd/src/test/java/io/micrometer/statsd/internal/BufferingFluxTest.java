@@ -24,7 +24,6 @@ import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.IntStream;
 
-import reactor.core.publisher.DirectProcessor;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 import reactor.test.StepVerifier;
@@ -67,7 +66,7 @@ class BufferingFluxTest {
                 "fourteen bytes"
         );
 
-        Flux<String> buffered = BufferingFlux.create(source, "\n", 27, Long.MAX_VALUE);
+        Flux<String> buffered = BufferingFlux.create(source, "\n", 27, 1000);
 
         StepVerifier.create(buffered)
                 .expectNext("twelve bytes\nfourteen bytes\n")
@@ -99,7 +98,6 @@ class BufferingFluxTest {
     @Test
     void doNotBufferIndefinitely() throws InterruptedException {
         // Produce a value at a more frequent interval than the maxMillisecondsBetweenEmits
-        DirectProcessor<Void> end = DirectProcessor.create();
         Flux<String> source = Flux.interval(Duration.ofMillis(100))
             .map(Object::toString);
 
@@ -108,11 +106,7 @@ class BufferingFluxTest {
         CountDownLatch received = new CountDownLatch(1);
         buffered.subscribe(v -> received.countDown());
 
-        try {
-            received.await(10, TimeUnit.SECONDS);
-        } finally {
-            end.onComplete();
-        }
+        received.await(10, TimeUnit.SECONDS);
     }
 
     /**

@@ -23,6 +23,8 @@ import io.micrometer.core.instrument.distribution.DistributionStatisticConfig;
 import io.micrometer.core.instrument.distribution.TimeWindowMax;
 
 import java.util.Arrays;
+import java.util.concurrent.atomic.DoubleAdder;
+import java.util.concurrent.atomic.LongAdder;
 
 /**
  * Step-normalized {@link io.micrometer.core.instrument.DistributionSummary}.
@@ -31,8 +33,9 @@ import java.util.Arrays;
  * @author Johnny Lim
  */
 public class StepDistributionSummary extends AbstractDistributionSummary {
-    private final StepLong count;
-    private final StepDouble total;
+    private final LongAdder count = new LongAdder();
+    private final DoubleAdder total = new DoubleAdder();
+    private final StepTuple2<Long, Double> countTotal;
     private final TimeWindowMax max;
 
     /**
@@ -48,26 +51,25 @@ public class StepDistributionSummary extends AbstractDistributionSummary {
     public StepDistributionSummary(Id id, Clock clock, DistributionStatisticConfig distributionStatisticConfig, double scale,
                                    long stepMillis, boolean supportsAggregablePercentiles) {
         super(id, clock, distributionStatisticConfig, scale, supportsAggregablePercentiles);
-        this.count = new StepLong(clock, stepMillis);
-        this.total = new StepDouble(clock, stepMillis);
+        this.countTotal = new StepTuple2<>(clock, stepMillis, 0L, 0.0, count::sumThenReset, total::sumThenReset);
         this.max = new TimeWindowMax(clock, distributionStatisticConfig);
     }
 
     @Override
     protected void recordNonNegative(double amount) {
-        count.getCurrent().add(1);
-        total.getCurrent().add(amount);
+        count.add(1);
+        total.add(amount);
         max.record(amount);
     }
 
     @Override
     public long count() {
-        return count.poll();
+        return countTotal.poll1();
     }
 
     @Override
     public double totalAmount() {
-        return total.poll();
+        return countTotal.poll2();
     }
 
     @Override

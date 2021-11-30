@@ -26,6 +26,15 @@ import java.lang.reflect.Method;
 
 import static org.assertj.core.api.Assertions.fail;
 
+/**
+ * This is for internal use by the Micrometer MeterRegistry TCK: {@link MeterRegistryCompatibilityKit}.
+ * It allows resolving the {@link MeterRegistry} under test as a parameter to test methods.
+ * It relies on reflection and implementation details of the java compiler to resolve and invoke
+ * the top-level parent class method {@code registry()}.
+ *
+ * @deprecated use {@link MeterRegistryCompatibilityKit#registry} instead.
+ */
+@Deprecated
 public class RegistryResolver implements ParameterResolver {
     @Override
     public boolean supportsParameter(ParameterContext parameterContext, ExtensionContext extensionContext) throws ParameterResolutionException {

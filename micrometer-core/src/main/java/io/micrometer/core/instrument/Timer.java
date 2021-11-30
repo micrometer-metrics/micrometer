@@ -18,7 +18,6 @@ package io.micrometer.core.instrument;
 import io.micrometer.core.annotation.Incubating;
 import io.micrometer.core.annotation.Timed;
 import io.micrometer.core.instrument.distribution.CountAtBucket;
-import io.micrometer.core.instrument.distribution.DistributionStatisticConfig;
 import io.micrometer.core.instrument.distribution.HistogramSupport;
 import io.micrometer.core.instrument.distribution.ValueAtPercentile;
 import io.micrometer.core.instrument.distribution.pause.PauseDetector;
@@ -52,7 +51,7 @@ public interface Timer extends Meter, HistogramSupport {
     /**
      * Start a timing sample.
      *
-     * @param registry a meter registry whose clock is to be used
+     * @param registry A meter registry whose clock is to be used
      * @return A timing sample with start time recorded.
      */
     static Sample start(MeterRegistry registry) {
@@ -71,6 +70,17 @@ public interface Timer extends Meter, HistogramSupport {
 
     static Builder builder(String name) {
         return new Builder(name);
+    }
+
+    /**
+     * @param registry A meter registry against which the timer will be registered.
+     * @param name     The name of the timer.
+     * @return A timing builder that automatically records a timing on close.
+     * @since 1.6.0
+     */
+    @Incubating(since = "1.6.0")
+    static ResourceSample resource(MeterRegistry registry, String name) {
+        return new ResourceSample(registry, name);
     }
 
     /**
@@ -119,6 +129,7 @@ public interface Timer extends Meter, HistogramSupport {
      * @param <T> The return type of the {@link Supplier}.
      * @return The return value of {@code f}.
      */
+    @Nullable
     <T> T record(Supplier<T> f);
 
     /**
@@ -129,6 +140,7 @@ public interface Timer extends Meter, HistogramSupport {
      * @return The return value of {@code f}.
      * @throws Exception Any exception bubbling up from the callable.
      */
+    @Nullable
     <T> T recordCallable(Callable<T> f) throws Exception;
 
     /**
@@ -187,7 +199,8 @@ public interface Timer extends Meter, HistogramSupport {
      * @return The distribution average for all recorded events.
      */
     default double mean(TimeUnit unit) {
-        return count() == 0 ? 0 : totalTime(unit) / count();
+        long count = count();
+        return count == 0 ? 0 : totalTime(unit) / count;
     }
 
     /**
@@ -252,13 +265,6 @@ public interface Timer extends Meter, HistogramSupport {
      * sample is stopped, allowing you to determine the timer's tags at the last minute.
      */
     class Sample {
-        /**
-         * Tags determined at the start of a request. Useful for event-driven APIs where
-         * some tags are derived from a start event, and others are determined by a terminal
-         * event in some finite state machine.
-         */
-        private Tags tags = Tags.empty();
-
         private final long startTime;
         private final Clock clock;
 
@@ -268,8 +274,7 @@ public interface Timer extends Meter, HistogramSupport {
         }
 
         /**
-         * Records the duration of the operation. Using this method, any tags
-         * stored on the sample are NOT recorded with the timing.
+         * Records the duration of the operation.
          *
          * @param timer The timer to record the sample to.
          * @return The total duration of the sample in nanoseconds
@@ -279,250 +284,110 @@ public interface Timer extends Meter, HistogramSupport {
             timer.record(durationNs, TimeUnit.NANOSECONDS);
             return durationNs;
         }
+    }
 
-        /**
-         * Records the duration of the operation. Using this method, any tags
-         * stored on the sample are recorded with the timing.
-         *
-         * @param registry     The registry to which the timer will be registered.
-         * @param timerBuilder The timer to record the sample to.
-         * @return The total duration of the sample in nanoseconds
-         * @since 1.4.0
-         */
-        @Incubating(since = "1.4.0")
-        public long stop(MeterRegistry registry, Timer.Builder timerBuilder) {
-            return stop(timerBuilder.tags(tags).register(registry));
+    class ResourceSample extends AbstractTimerBuilder<ResourceSample> implements AutoCloseable {
+        private final MeterRegistry registry;
+        private final long startTime;
+
+        ResourceSample(MeterRegistry registry, String name) {
+            super(name);
+            this.registry = registry;
+            this.startTime = registry.config().clock().monotonicTime();
         }
 
-        /**
-         * @param tags Must be an even number of arguments representing key/value pairs of tags.
-         * @return This builder.
-         * @since 1.4.0
-         */
-        @Incubating(since = "1.4.0")
-        public Sample tags(String... tags) {
-            return tags(Tags.of(tags));
-        }
-
-        /**
-         * @param tags Tags to add to the eventual timer.
-         * @return The sample with added tags.
-         * @since 1.4.0
-         */
-        @Incubating(since = "1.4.0")
-        public Sample tags(Iterable<Tag> tags) {
-            this.tags = this.tags.and(tags);
-            return this;
+        @Override
+        public void close() {
+            long durationNs = registry.config().clock().monotonicTime() - startTime;
+            registry
+                    .timer(new Meter.Id(name, tags, null, description, Type.TIMER), distributionConfigBuilder.build(),
+                            pauseDetector == null ? registry.config().pauseDetector() : pauseDetector)
+                    .record(durationNs, TimeUnit.NANOSECONDS);
         }
     }
 
     /**
      * Fluent builder for timers.
      */
-    class Builder {
-        private final String name;
-        private Tags tags = Tags.empty();
-        private final DistributionStatisticConfig.Builder distributionConfigBuilder;
-
-        @Nullable
-        private String description;
-
-        @Nullable
-        private PauseDetector pauseDetector;
-
-        private Builder(String name) {
-            this.name = name;
-            this.distributionConfigBuilder = new DistributionStatisticConfig.Builder();
-            minimumExpectedValue(Duration.ofMillis(1));
-            maximumExpectedValue(Duration.ofSeconds(30));
+    class Builder extends AbstractTimerBuilder<Builder> {
+        Builder(String name) {
+            super(name);
         }
 
-        /**
-         * @param tags Must be an even number of arguments representing key/value pairs of tags.
-         * @return This builder.
-         */
+        @Override
         public Builder tags(String... tags) {
-            return tags(Tags.of(tags));
+            return super.tags(tags);
         }
 
-        /**
-         * @param tags Tags to add to the eventual timer.
-         * @return The timer builder with added tags.
-         */
+        @Override
         public Builder tags(Iterable<Tag> tags) {
-            this.tags = this.tags.and(tags);
-            return this;
+            return super.tags(tags);
         }
 
-        /**
-         * @param key   The tag key.
-         * @param value The tag value.
-         * @return The timer builder with a single added tag.
-         */
+        @Override
         public Builder tag(String key, String value) {
-            this.tags = tags.and(key, value);
-            return this;
+            return super.tag(key, value);
         }
 
-        /**
-         * Produces an additional time series for each requested percentile. This percentile
-         * is computed locally, and so can't be aggregated with percentiles computed across other
-         * dimensions (e.g. in a different instance). Use {@link #publishPercentileHistogram()}
-         * to publish a histogram that can be used to generate aggregable percentile approximations.
-         *
-         * @param percentiles Percentiles to compute and publish. The 95th percentile should be expressed as {@code 0.95}.
-         * @return This builder.
-         */
-        public Builder publishPercentiles(@Nullable double... percentiles) {
-            this.distributionConfigBuilder.percentiles(percentiles);
-            return this;
+        @Override
+        public Builder publishPercentiles(double... percentiles) {
+            return super.publishPercentiles(percentiles);
         }
 
-        /**
-         * Determines the number of digits of precision to maintain on the dynamic range histogram used to compute
-         * percentile approximations. The higher the degrees of precision, the more accurate the approximation is at the
-         * cost of more memory.
-         *
-         * @param digitsOfPrecision The digits of precision to maintain for percentile approximations.
-         * @return This builder.
-         */
-        public Builder percentilePrecision(@Nullable Integer digitsOfPrecision) {
-            this.distributionConfigBuilder.percentilePrecision(digitsOfPrecision);
-            return this;
+        @Override
+        public Builder percentilePrecision(Integer digitsOfPrecision) {
+            return super.percentilePrecision(digitsOfPrecision);
         }
 
-        /**
-         * Adds histogram buckets used to generate aggregable percentile approximations in monitoring
-         * systems that have query facilities to do so (e.g. Prometheus' {@code histogram_quantile},
-         * Atlas' {@code :percentiles}).
-         *
-         * @return This builder.
-         */
+        @Override
         public Builder publishPercentileHistogram() {
-            return publishPercentileHistogram(true);
+            return super.publishPercentileHistogram();
         }
 
-        /**
-         * Adds histogram buckets used to generate aggregable percentile approximations in monitoring
-         * systems that have query facilities to do so (e.g. Prometheus' {@code histogram_quantile},
-         * Atlas' {@code :percentiles}).
-         *
-         * @param enabled Determines whether percentile histograms should be published.
-         * @return This builder.
-         */
-        public Builder publishPercentileHistogram(@Nullable Boolean enabled) {
-            this.distributionConfigBuilder.percentilesHistogram(enabled);
-            return this;
+        @Override
+        public Builder publishPercentileHistogram(Boolean enabled) {
+            return super.publishPercentileHistogram(enabled);
         }
 
-        /**
-         * Publish at a minimum a histogram containing your defined service level objective (SLO) boundaries.
-         * When used in conjunction with {@link Builder#publishPercentileHistogram()}, the boundaries defined
-         * here are included alongside other buckets used to generate aggregable percentile approximations.
-         *
-         * @param sla Publish SLO boundaries in the set of histogram buckets shipped to the monitoring system.
-         * @return This builder.
-         * @deprecated Use {{@link #serviceLevelObjectives(Duration...)}} instead. "Service Level Agreement" is
-         * more formally the agreement between an engineering organization and the business. Service Level Objectives
-         * are set more conservatively than the SLA to provide some wiggle room while still satisfying the business
-         * requirement. SLOs are the threshold we intend to measure against, then.
-         */
-        @Deprecated
-        public Builder sla(@Nullable Duration... sla) {
-            return serviceLevelObjectives(sla);
+        @SuppressWarnings("deprecation")
+        @Override
+        public Builder sla(Duration... sla) {
+            return super.sla(sla);
         }
 
-        /**
-         * Publish at a minimum a histogram containing your defined service level objective (SLO) boundaries.
-         * When used in conjunction with {@link Builder#publishPercentileHistogram()}, the boundaries defined
-         * here are included alongside other buckets used to generate aggregable percentile approximations.
-         *
-         * @param slos Publish SLO boundaries in the set of histogram buckets shipped to the monitoring system.
-         * @return This builder.
-         * @since 1.5.0
-         */
-        public Builder serviceLevelObjectives(@Nullable Duration... slos) {
-            if (slos != null) {
-                this.distributionConfigBuilder.serviceLevelObjectives(Arrays.stream(slos).mapToDouble(Duration::toNanos).toArray());
-            }
-            return this;
+        @Override
+        public Builder serviceLevelObjectives(Duration... slos) {
+            return super.serviceLevelObjectives(slos);
         }
 
-        /**
-         * Sets the minimum value that this timer is expected to observe. Sets a lower bound
-         * on histogram buckets that are shipped to monitoring systems that support aggregable percentile approximations.
-         *
-         * @param min The minimum value that this timer is expected to observe.
-         * @return This builder.
-         */
-        public Builder minimumExpectedValue(@Nullable Duration min) {
-            if (min != null)
-                this.distributionConfigBuilder.minimumExpectedValue((double) min.toNanos());
-            return this;
+        @Override
+        public Builder minimumExpectedValue(Duration min) {
+            return super.minimumExpectedValue(min);
         }
 
-        /**
-         * Sets the maximum value that this timer is expected to observe. Sets an upper bound
-         * on histogram buckets that are shipped to monitoring systems that support aggregable percentile approximations.
-         *
-         * @param max The maximum value that this timer is expected to observe.
-         * @return This builder.
-         */
-        public Builder maximumExpectedValue(@Nullable Duration max) {
-            if (max != null)
-                this.distributionConfigBuilder.maximumExpectedValue((double) max.toNanos());
-            return this;
+        @Override
+        public Builder maximumExpectedValue(Duration max) {
+            return super.maximumExpectedValue(max);
         }
 
-        /**
-         * Statistics emanating from a timer like max, percentiles, and histogram counts decay over time to
-         * give greater weight to recent samples (exception: histogram counts are cumulative for those systems that expect cumulative
-         * histogram buckets). Samples are accumulated to such statistics in ring buffers which rotate after
-         * this expiry, with a buffer length of {@link #distributionStatisticBufferLength(Integer)}.
-         *
-         * @param expiry The amount of time samples are accumulated to a histogram before it is reset and rotated.
-         * @return This builder.
-         */
-        public Builder distributionStatisticExpiry(@Nullable Duration expiry) {
-            this.distributionConfigBuilder.expiry(expiry);
-            return this;
+        @Override
+        public Builder distributionStatisticExpiry(Duration expiry) {
+            return super.distributionStatisticExpiry(expiry);
         }
 
-        /**
-         * Statistics emanating from a timer like max, percentiles, and histogram counts decay over time to
-         * give greater weight to recent samples (exception: histogram counts are cumulative for those systems that expect cumulative
-         * histogram buckets). Samples are accumulated to such statistics in ring buffers which rotate after
-         * {@link #distributionStatisticExpiry(Duration)}, with this buffer length.
-         *
-         * @param bufferLength The number of histograms to keep in the ring buffer.
-         * @return This builder.
-         */
-        public Builder distributionStatisticBufferLength(@Nullable Integer bufferLength) {
-            this.distributionConfigBuilder.bufferLength(bufferLength);
-            return this;
+        @Override
+        public Builder distributionStatisticBufferLength(Integer bufferLength) {
+            return super.distributionStatisticBufferLength(bufferLength);
         }
 
-        /**
-         * Sets the pause detector implementation to use for this timer. Can also be configured on a registry-level with
-         * {@link MeterRegistry.Config#pauseDetector(PauseDetector)}.
-         *
-         * @param pauseDetector The pause detector implementation to use.
-         * @return This builder.
-         * @see io.micrometer.core.instrument.distribution.pause.NoPauseDetector
-         * @see io.micrometer.core.instrument.distribution.pause.ClockDriftPauseDetector
-         */
-        public Builder pauseDetector(@Nullable PauseDetector pauseDetector) {
-            this.pauseDetector = pauseDetector;
-            return this;
+        @Override
+        public Builder pauseDetector(PauseDetector pauseDetector) {
+            return super.pauseDetector(pauseDetector);
         }
 
-        /**
-         * @param description Description text of the eventual timer.
-         * @return This builder.
-         */
-        public Builder description(@Nullable String description) {
-            this.description = description;
-            return this;
+        @Override
+        public Builder description(String description) {
+            return super.description(description);
         }
 
         /**

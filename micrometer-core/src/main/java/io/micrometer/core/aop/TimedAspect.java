@@ -33,20 +33,51 @@ import java.lang.reflect.Method;
 import java.util.Optional;
 import java.util.concurrent.CompletionStage;
 import java.util.function.Function;
+import java.util.function.Predicate;
 
 /**
- * AspectJ aspect for intercepting types or methods annotated with {@link Timed @Timed}.
+ * <p>
+ * AspectJ aspect for intercepting types or methods annotated with {@link Timed @Timed}.<br>
+ * The aspect supports programmatic customizations through constructor-injectable custom logic.
+ * </p>
+ * <p>
+ * You might want to add tags programmatically to the {@link Timer}.<br>
+ * In this case, the tags provider function (<code>Function&lt;ProceedingJoinPoint, Iterable&lt;Tag&gt;&gt;</code>) can help.
+ * It receives a {@link ProceedingJoinPoint} and returns the {@link Tag}s that will be attached to the {@link Timer}.
+ * </p>
+ * <p>
+ * You might also want to skip the {@link Timer} creation programmatically.<br>
+ * One use-case can be having another component in your application that already processes the {@link Timed @Timed} annotation
+ * in some cases so that {@code TimedAspect} should not intercept these methods. E.g.: Spring Boot does this for its controllers.
+ * By using the skip predicate (<code>Predicate&lt;ProceedingJoinPoint&gt;</code>)
+ * you can tell the {@code TimedAspect} when not to create a {@link Timer}.
+ *
+ * Here's an example to disable {@link Timer} creation for Spring controllers:
+ *</p>
+ * <pre>
+ * &#064;Bean
+ * public TimedAspect timedAspect(MeterRegistry meterRegistry) {
+ *     return new TimedAspect(meterRegistry, this::skipControllers);
+ * }
+ *
+ * private boolean skipControllers(ProceedingJoinPoint pjp) {
+ *     Class&lt;?&gt; targetClass = pjp.getTarget().getClass();
+ *     return targetClass.isAnnotationPresent(RestController.class) || targetClass.isAnnotationPresent(Controller.class);
+ * }
+ * </pre>
  *
  * @author David J. M. Karlsen
  * @author Jon Schneider
  * @author Johnny Lim
  * @author Nejc Korasa
+ * @author Jonatan Ivanov
  * @since 1.0.0
  */
 @Aspect
 @NonNullApi
 @Incubating(since = "1.0.0")
 public class TimedAspect {
+    private static final Predicate<ProceedingJoinPoint> DONT_SKIP_ANYTHING = pjp -> false;
     public static final String DEFAULT_METRIC_NAME = "method.timed";
     public static final String DEFAULT_EXCEPTION_TAG_VALUE = "none";
 
@@ -59,9 +90,10 @@ public class TimedAspect {
 
     private final MeterRegistry registry;
     private final Function<ProceedingJoinPoint, Iterable<Tag>> tagsBasedOnJoinPoint;
+    private final Predicate<ProceedingJoinPoint> shouldSkip;
 
     /**
-     * Create a {@code TimedAspect} instance with {@link Metrics#globalRegistry}.
+     * Creates a {@code TimedAspect} instance with {@link Metrics#globalRegistry}.
      *
      * @since 1.2.0
      */
@@ -69,20 +101,61 @@ public class TimedAspect {
         this(Metrics.globalRegistry);
     }
 
+    /**
+     * Creates a {@code TimedAspect} instance with the given {@code registry}.
+     *
+     * @param registry Where we're going to register metrics.
+     */
     public TimedAspect(MeterRegistry registry) {
-        this(registry, pjp ->
-                Tags.of("class", pjp.getStaticPart().getSignature().getDeclaringTypeName(),
-                        "method", pjp.getStaticPart().getSignature().getName())
+        this(registry, DONT_SKIP_ANYTHING);
+    }
+
+    /**
+     * Creates a {@code TimedAspect} instance with the given {@code registry} and tags provider function.
+     *
+     * @param registry Where we're going to register metrics.
+     * @param tagsBasedOnJoinPoint A function to generate tags given a join point.
+     */
+    public TimedAspect(MeterRegistry registry, Function<ProceedingJoinPoint, Iterable<Tag>> tagsBasedOnJoinPoint) {
+        this(registry, tagsBasedOnJoinPoint, DONT_SKIP_ANYTHING);
+    }
+
+    /**
+     * Creates a {@code TimedAspect} instance with the given {@code registry} and skip predicate.
+     *
+     * @param registry Where we're going to register metrics.
+     * @param shouldSkip A predicate to decide if creating the timer should be skipped or not.
+     * @since 1.7.0
+     */
+    public TimedAspect(MeterRegistry registry, Predicate<ProceedingJoinPoint> shouldSkip) {
+        this(
+                registry,
+                pjp -> Tags.of("class", pjp.getStaticPart().getSignature().getDeclaringTypeName(),
+                        "method", pjp.getStaticPart().getSignature().getName()),
+                shouldSkip
         );
     }
 
-    public TimedAspect(MeterRegistry registry, Function<ProceedingJoinPoint, Iterable<Tag>> tagsBasedOnJoinPoint) {
+    /**
+     * Creates a {@code TimedAspect} instance with the given {@code registry}, tags provider function and skip predicate.
+     *
+     * @param registry Where we're going to register metrics.
+     * @param tagsBasedOnJoinPoint A function to generate tags given a join point.
+     * @param shouldSkip A predicate to decide if creating the timer should be skipped or not.
+     * @since 1.7.0
+     */
+    public TimedAspect(MeterRegistry registry, Function<ProceedingJoinPoint, Iterable<Tag>> tagsBasedOnJoinPoint, Predicate<ProceedingJoinPoint> shouldSkip) {
         this.registry = registry;
         this.tagsBasedOnJoinPoint = tagsBasedOnJoinPoint;
+        this.shouldSkip = shouldSkip;
     }
 
     @Around("execution (@io.micrometer.core.annotation.Timed * *.*(..))")
     public Object timedMethod(ProceedingJoinPoint pjp) throws Throwable {
+        if (shouldSkip.test(pjp)) {
+            return pjp.proceed();
+        }
+
         Method method = ((MethodSignature) pjp.getSignature()).getMethod();
         Timed timed = method.getAnnotation(Timed.class);
         if (timed == null) {

@@ -20,7 +20,7 @@ import io.micrometer.core.lang.Nullable;
 /**
  * Utilities for JSON escaping {@code String}.
  *
- * <h3>Implementation Approach</h3>
+ * <h2>Implementation Approach</h2>
  * This uses a replacement char array to perform escaping, an idea from Square/Moshi. In their case,
  * it was an internal detail of {@code com.squareup.moshi.JsonUtf8Writer}, licensed Apache 2.0
  * Copyright 2010 Google Inc. The comments and initialization of {@code REPLACEMENT_CHARS} came

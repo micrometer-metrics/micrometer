@@ -26,14 +26,29 @@ import static org.assertj.core.api.Assertions.assertThat;
 /**
  * @author Jon Schneider
  */
-public abstract class CacheMeterBinderCompatibilityKit {
+public abstract class CacheMeterBinderCompatibilityKit<C> {
     private MeterRegistry registry = new SimpleMeterRegistry();
-    private CacheMeterBinder binder;
+    private CacheMeterBinder<C> binder;
+    protected C cache;
+
+    /**
+     * The return value will be assigned to {@link this#cache}.
+     * @return cache to use for tests
+     * @see this#bindToRegistry()
+     */
+    public abstract C createCache();
+
+    /**
+     * Performs any actions necessary to fully dereference the cache object.
+     */
+    public void dereferenceCache() {
+        this.cache = null;
+    }
 
     /**
      * @return A cache binder bound to a cache named "mycache".
      */
-    public abstract CacheMeterBinder binder();
+    public abstract CacheMeterBinder<C> binder();
 
     public abstract void put(String key, String value);
 
@@ -42,6 +57,7 @@ public abstract class CacheMeterBinderCompatibilityKit {
 
     @BeforeEach
     void bindToRegistry() {
+        this.cache = createCache();
         this.binder = binder();
         this.binder.bindTo(registry);
     }
@@ -92,5 +108,15 @@ public abstract class CacheMeterBinderCompatibilityKit {
                     .functionCounter().count())
                     .isIn(1.0, 2.0);
         }
+    }
+
+    @Test
+    void dereferencedCacheIsGarbageCollected() {
+        assertThat(binder.getCache()).isNotNull();
+
+        dereferenceCache();
+        System.gc();
+
+        assertThat(binder.getCache()).isNull();
     }
 }

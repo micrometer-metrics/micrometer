@@ -25,12 +25,14 @@ import io.micrometer.core.instrument.distribution.pause.PauseDetector;
 import io.micrometer.core.instrument.search.MeterNotFoundException;
 import io.micrometer.core.instrument.simple.SimpleMeterRegistry;
 import io.micrometer.core.lang.NonNull;
+import org.aspectj.lang.ProceedingJoinPoint;
 import org.junit.jupiter.api.Test;
 import org.springframework.aop.aspectj.annotation.AspectJProxyFactory;
 
 import javax.annotation.Nonnull;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionException;
+import java.util.function.Predicate;
 
 import static java.util.concurrent.CompletableFuture.supplyAsync;
 import static org.assertj.core.api.Assertions.*;
@@ -52,6 +54,20 @@ class TimedAspectTest {
                 .tag("method", "call")
                 .tag("extra", "tag")
                 .timer().count()).isEqualTo(1);
+    }
+
+    @Test
+    void timeMethodWithSkipPredicate() {
+        MeterRegistry registry = new SimpleMeterRegistry();
+
+        AspectJProxyFactory pf = new AspectJProxyFactory(new TimedService());
+        pf.addAspect(new TimedAspect(registry, (Predicate<ProceedingJoinPoint>) pjp -> true));
+
+        TimedService service = pf.getProxy();
+
+        service.call();
+
+        assertThat(registry.find("call").timer()).isNull();
     }
 
     @Test

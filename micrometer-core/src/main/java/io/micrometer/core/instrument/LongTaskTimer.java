@@ -55,6 +55,7 @@ public interface LongTaskTimer extends Meter, HistogramSupport {
 
         return new Builder(timed.value())
                 .tags(timed.extraTags())
+                .publishPercentileHistogram(timed.histogram())
                 .description(timed.description().isEmpty() ? null : timed.description());
     }
 
@@ -137,6 +138,16 @@ public interface LongTaskTimer extends Meter, HistogramSupport {
      * @return The current number of tasks being executed.
      */
     int activeTasks();
+
+    /**
+     * @param unit The base unit of time to scale the mean to.
+     * @return The distribution average for all recorded events.
+     * @since 1.5.1
+     */
+    default double mean(TimeUnit unit) {
+        int activeTasks = activeTasks();
+        return activeTasks == 0 ? 0 : duration(unit) / activeTasks;
+    }
 
     /**
      * The amount of time the longest running task has been running

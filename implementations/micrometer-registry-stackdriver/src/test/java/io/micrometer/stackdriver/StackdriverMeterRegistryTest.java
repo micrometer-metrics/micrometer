@@ -60,4 +60,14 @@ class StackdriverMeterRegistryTest {
         List<Long> bucketCountsList = distribution.getBucketCountsList();
         assertThat(bucketCountsList.get(bucketCountsList.size() - 1)).isNotNegative();
     }
+
+    @Test
+    @Issue("#2045")
+    void batchDistributionWhenHistogramSnapshotIsEmpty() {
+        StackdriverMeterRegistry.Batch batch = meterRegistry.new Batch();
+        HistogramSnapshot histogramSnapshot = HistogramSnapshot.empty(0, 0.0, 0.0);
+        Distribution distribution = batch.distribution(histogramSnapshot, false);
+        assertThat(distribution.getBucketOptions().getExplicitBuckets().getBoundsCount()).isEqualTo(1);
+        assertThat(distribution.getBucketCountsList()).hasSize(1);
+    }
 }

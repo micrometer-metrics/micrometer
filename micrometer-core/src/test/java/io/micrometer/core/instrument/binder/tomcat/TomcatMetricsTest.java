@@ -15,6 +15,8 @@
  */
 package io.micrometer.core.instrument.binder.tomcat;
 
+import io.micrometer.core.Issue;
+import io.micrometer.core.instrument.FunctionTimer;
 import io.micrometer.core.instrument.MockClock;
 import io.micrometer.core.instrument.Tag;
 import io.micrometer.core.instrument.Tags;
@@ -34,21 +36,24 @@ import org.apache.http.client.methods.HttpPost;
 import org.apache.http.entity.StringEntity;
 import org.apache.http.impl.client.CloseableHttpClient;
 import org.apache.http.impl.client.HttpClients;
-import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
+import javax.servlet.Servlet;
+import javax.servlet.ServletException;
+import javax.servlet.http.HttpServlet;
+import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
-import java.net.ServerSocket;
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.Collections;
 import java.util.concurrent.Callable;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 
-import javax.servlet.http.HttpServlet;
-import javax.servlet.http.HttpServletRequest;
-import javax.servlet.http.HttpServletResponse;
-
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.fail;
+import static org.awaitility.Awaitility.await;
 
 
 /**
@@ -64,17 +69,6 @@ class TomcatMetricsTest {
     private SimpleMeterRegistry registry = new SimpleMeterRegistry(SimpleConfig.DEFAULT, new MockClock());
 
     private int port;
-
-    @BeforeEach
-    void setUp() throws IOException {
-        this.port = getAvailablePort();
-    }
-
-    private int getAvailablePort() throws IOException {
-        try (ServerSocket serverSocket = new ServerSocket(0)) {
-            return serverSocket.getLocalPort();
-        }
-    }
 
     @Test
     void managerBasedMetrics() {
@@ -133,7 +127,7 @@ class TomcatMetricsTest {
     }
 
     @Test
-    void mbeansAvailableAfterBinder() throws Exception {
+    void whenTomcatMetricsBoundBeforeTomcatStarted_mbeanMetricsRegisteredEventually() throws Exception {
         TomcatMetrics.monitor(registry, null);
 
         CountDownLatch latch = new CountDownLatch(1);
@@ -152,17 +146,17 @@ class TomcatMetricsTest {
         };
 
         runTomcat(servlet, () -> {
-            assertThat(latch.await(10, TimeUnit.SECONDS)).isTrue();
+            assertThat(latch.await(5, TimeUnit.SECONDS)).isTrue();
 
             checkMbeansInitialState();
 
             try (CloseableHttpClient httpClient = HttpClients.createDefault()) {
-                HttpPost post = new HttpPost("http://localhost:" + this.port + "/");
+                HttpPost post = new HttpPost("http://localhost:" + this.port + "/0");
                 post.setEntity(new StringEntity("you there?"));
                 CloseableHttpResponse response1 = httpClient.execute(post);
 
                 CloseableHttpResponse response2 = httpClient.execute(
-                        new HttpGet("http://localhost:" + this.port + "/nowhere"));
+                        new HttpGet("http://localhost:" + this.port + "/0/no-get"));
 
                 long expectedSentBytes = response1.getEntity().getContentLength()
                         + response2.getEntity().getContentLength();
@@ -174,7 +168,7 @@ class TomcatMetricsTest {
     }
 
     @Test
-    void mbeansAvailableBeforeBinder() throws Exception {
+    void whenTomcatMetricsBoundAfterTomcatStarted_mbeanMetricsRegisteredImmediately() throws Exception {
         HttpServlet servlet = new HttpServlet() {
             @Override
             protected void doPost(HttpServletRequest req, HttpServletResponse resp) throws IOException {
@@ -190,12 +184,12 @@ class TomcatMetricsTest {
             checkMbeansInitialState();
 
             try (CloseableHttpClient httpClient = HttpClients.createDefault()) {
-                HttpPost post = new HttpPost("http://localhost:" + this.port + "/");
+                HttpPost post = new HttpPost("http://localhost:" + this.port + "/0");
                 post.setEntity(new StringEntity("you there?"));
                 CloseableHttpResponse response1 = httpClient.execute(post);
 
                 CloseableHttpResponse response2 = httpClient.execute(
-                        new HttpGet("http://localhost:" + this.port + "/nowhere"));
+                        new HttpGet("http://localhost:" + this.port + "/0/no-get"));
 
                 long expectedSentBytes = response1.getEntity().getContentLength()
                         + response2.getEntity().getContentLength();
@@ -206,19 +200,130 @@ class TomcatMetricsTest {
         });
     }
 
+    @Test
+    @Issue("#1989")
+    void whenMultipleServlets_thenRegisterMetricsForAllServlets() throws Exception {
+        Collection<Servlet> servlets = Arrays.asList(new HttpServlet() {
+            @Override
+            protected void doPost(HttpServletRequest req, HttpServletResponse resp) throws IOException {
+                IOUtils.toString(req.getInputStream());
+                sleep();
+                resp.getOutputStream().write("yes".getBytes());
+            }
+        }, new HttpServlet() {
+            @Override
+            protected void doGet(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
+                IOUtils.toString(req.getInputStream());
+                sleep();
+                resp.getOutputStream().write("hi".getBytes());
+            }
+        });
+
+        runTomcat(servlets, () -> {
+            TomcatMetrics.monitor(registry, null);
+
+            checkMbeansInitialState();
+
+            try (CloseableHttpClient httpClient = HttpClients.createDefault()) {
+                HttpPost post = new HttpPost("http://localhost:" + this.port + "/0");
+                post.setEntity(new StringEntity("you there?"));
+                CloseableHttpResponse response1 = httpClient.execute(post);
+
+                CloseableHttpResponse response2 = httpClient.execute(
+                        new HttpGet("http://localhost:" + this.port + "/1"));
+
+                FunctionTimer servlet0 = registry.get("tomcat.servlet.request").tag("name", "servlet0").functionTimer();
+                FunctionTimer servlet1 = registry.get("tomcat.servlet.request").tag("name", "servlet1").functionTimer();
+                assertThat(servlet0.count()).isEqualTo(1);
+                assertThat(servlet0.totalTime(TimeUnit.MILLISECONDS)).isGreaterThanOrEqualTo(PROCESSING_TIME_IN_MILLIS);
+                assertThat(servlet1.count()).isEqualTo(1);
+                assertThat(servlet1.totalTime(TimeUnit.MILLISECONDS)).isGreaterThanOrEqualTo(PROCESSING_TIME_IN_MILLIS);
+            }
+
+            return null;
+        });
+    }
+
+    @Test
+    @Issue("#1989")
+    void whenMultipleServletsAndTomcatMetricsBoundBeforeTomcatStarted_thenEventuallyRegisterMetricsForAllServlets() throws Exception {
+        TomcatMetrics.monitor(registry, null);
+        CountDownLatch latch0 = new CountDownLatch(1);
+        CountDownLatch latch1 = new CountDownLatch(1);
+        registry.config().onMeterAdded(m -> {
+            if (m.getId().getName().equals("tomcat.servlet.error")) {
+                if ("servlet0".equals(m.getId().getTag("name"))) {
+                    latch0.countDown();
+                } else if ("servlet1".equals(m.getId().getTag("name"))) {
+                    latch1.countDown();
+                }
+            }
+        });
+
+        Collection<Servlet> servlets = Arrays.asList(new HttpServlet() {
+            @Override
+            protected void doPost(HttpServletRequest req, HttpServletResponse resp) throws IOException {
+                IOUtils.toString(req.getInputStream());
+                sleep();
+                resp.getOutputStream().write("yes".getBytes());
+            }
+        }, new HttpServlet() {
+            @Override
+            protected void doGet(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
+                IOUtils.toString(req.getInputStream());
+                sleep();
+                resp.getOutputStream().write("hi".getBytes());
+            }
+        });
+
+        runTomcat(servlets, () -> {
+            assertThat(latch0.await(3, TimeUnit.SECONDS)).isTrue();
+            assertThat(latch1.await(3, TimeUnit.SECONDS)).isTrue();
+
+            checkMbeansInitialState();
+
+            try (CloseableHttpClient httpClient = HttpClients.createDefault()) {
+                HttpPost post = new HttpPost("http://localhost:" + this.port + "/0");
+                post.setEntity(new StringEntity("you there?"));
+                CloseableHttpResponse response1 = httpClient.execute(post);
+
+                CloseableHttpResponse response2 = httpClient.execute(
+                        new HttpGet("http://localhost:" + this.port + "/1"));
+
+                FunctionTimer servlet0 = registry.get("tomcat.servlet.request").tag("name", "servlet0").functionTimer();
+                FunctionTimer servlet1 = registry.get("tomcat.servlet.request").tag("name", "servlet1").functionTimer();
+                assertThat(servlet0.count()).isEqualTo(1);
+                assertThat(servlet0.totalTime(TimeUnit.MILLISECONDS)).isGreaterThanOrEqualTo(PROCESSING_TIME_IN_MILLIS);
+                assertThat(servlet1.count()).isEqualTo(1);
+                assertThat(servlet1.totalTime(TimeUnit.MILLISECONDS)).isGreaterThanOrEqualTo(PROCESSING_TIME_IN_MILLIS);
+            }
+
+            return null;
+        });
+    }
 
     void runTomcat(HttpServlet servlet, Callable<Void> doWithTomcat) throws Exception {
+        runTomcat(Collections.singleton(servlet), doWithTomcat);
+    }
+
+    void runTomcat(Collection<Servlet> servlets, Callable<Void> doWithTomcat) throws Exception {
         Tomcat server = new Tomcat();
         try {
             StandardHost host = new StandardHost();
             host.setName("localhost");
             server.setHost(host);
-            server.setPort(this.port);
+            server.setPort(0);
             server.start();
 
+            this.port = server.getConnector().getLocalPort();
+
             Context context = server.addContext("", null);
-            server.addServlet("", "servletname", servlet);
-            context.addServletMappingDecoded("/", "servletname");
+            int i = 0;
+            for (Servlet servlet : servlets) {
+                server.addServlet("", "servlet" + i, servlet);
+                context.addServletMappingDecoded("/" + i + "/*", "servlet" + i);
+                i++;
+            }
 
             doWithTomcat.call();
 
@@ -237,15 +342,19 @@ class TomcatMetricsTest {
         assertThat(registry.get("tomcat.global.request").functionTimer().totalTime(TimeUnit.MILLISECONDS)).isEqualTo(0.0);
         assertThat(registry.get("tomcat.global.request.max").timeGauge().value(TimeUnit.MILLISECONDS)).isEqualTo(0.0);
         assertThat(registry.get("tomcat.threads.config.max").gauge().value()).isGreaterThan(0.0);
-        assertThat(registry.get("tomcat.threads.busy").gauge().value()).isEqualTo(0.0);
-        assertThat(registry.get("tomcat.threads.current").gauge().value()).isGreaterThan(0.0);
+        assertThat(registry.get("tomcat.threads.busy").gauge().value()).isGreaterThanOrEqualTo(0.0);
+        assertThat(registry.get("tomcat.threads.current").gauge().value()).isGreaterThanOrEqualTo(0.0);
+        assertThat(registry.get("tomcat.connections.current").gauge().value()).isGreaterThanOrEqualTo(0.0);
+        assertThat(registry.get("tomcat.connections.keepalive.current").gauge().value()).isGreaterThanOrEqualTo(0.0);
+        assertThat(registry.get("tomcat.connections.config.max").gauge().value()).isGreaterThan(0.0);
         assertThat(registry.get("tomcat.cache.access").functionCounter().count()).isEqualTo(0.0);
         assertThat(registry.get("tomcat.cache.hit").functionCounter().count()).isEqualTo(0.0);
         assertThat(registry.get("tomcat.servlet.error").functionCounter().count()).isEqualTo(0.0);
     }
 
     private void checkMbeansAfterRequests(long expectedSentBytes) {
-        assertThat(registry.get("tomcat.global.sent").functionCounter().count()).isEqualTo(expectedSentBytes);
+        await().atMost(5, TimeUnit.SECONDS)
+                .until(() -> registry.get("tomcat.global.sent").functionCounter().count() == expectedSentBytes);
         assertThat(registry.get("tomcat.global.received").functionCounter().count()).isEqualTo(10.0);
         assertThat(registry.get("tomcat.global.error").functionCounter().count()).isEqualTo(1.0);
         assertThat(registry.get("tomcat.global.request").functionTimer().count()).isEqualTo(2.0);
@@ -254,6 +363,9 @@ class TomcatMetricsTest {
         assertThat(registry.get("tomcat.threads.config.max").gauge().value()).isGreaterThan(0.0);
         assertThat(registry.get("tomcat.threads.busy").gauge().value()).isGreaterThanOrEqualTo(0.0);
         assertThat(registry.get("tomcat.threads.current").gauge().value()).isGreaterThan(0.0);
+        assertThat(registry.get("tomcat.connections.current").gauge().value()).isGreaterThanOrEqualTo(0.0);
+        assertThat(registry.get("tomcat.connections.keepalive.current").gauge().value()).isGreaterThanOrEqualTo(0.0);
+        assertThat(registry.get("tomcat.connections.config.max").gauge().value()).isGreaterThan(0.0);
         assertThat(registry.get("tomcat.cache.access").functionCounter().count()).isEqualTo(0.0);
         assertThat(registry.get("tomcat.cache.hit").functionCounter().count()).isEqualTo(0.0);
         assertThat(registry.get("tomcat.servlet.error").functionCounter().count()).isEqualTo(1.0);

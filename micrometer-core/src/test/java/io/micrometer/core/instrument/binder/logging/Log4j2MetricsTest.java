@@ -29,13 +29,16 @@ import org.apache.logging.log4j.core.config.Configuration;
 import org.apache.logging.log4j.core.config.ConfigurationSource;
 import org.apache.logging.log4j.core.config.Configurator;
 import org.apache.logging.log4j.core.config.LoggerConfig;
-import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.AfterAll;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
 import java.io.IOException;
+import java.time.Duration;
 
 import static java.util.Collections.emptyList;
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.awaitility.Awaitility.await;
 
 /**
  * Tests for {@link Log4j2Metrics}.
@@ -47,8 +50,13 @@ class Log4j2MetricsTest {
 
     private final MeterRegistry registry = new SimpleMeterRegistry(SimpleConfig.DEFAULT, new MockClock());
 
-    @AfterEach
+    @BeforeEach
     void cleanUp() {
+        LogManager.shutdown();
+    }
+
+    @AfterAll
+    static void cleanUpAfterAll() {
         LogManager.shutdown();
     }
 
@@ -152,4 +160,21 @@ class Log4j2MetricsTest {
         logger1.info("Hello, world!");
         assertThat(registry.get("log4j2.events").tags("level", "info").counter().count()).isEqualTo(1);
     }
+
+    @Issue("#2176")
+    @Test
+    void asyncLogShouldNotBeDuplicated() throws IOException {
+        ConfigurationSource source = new ConfigurationSource(getClass().getResourceAsStream("/binder/logging/log4j2-async-logger.xml"));
+        Configurator.initialize(null, source);
+
+        Logger logger = LogManager.getLogger(Log4j2MetricsTest.class);
+
+        new Log4j2Metrics().bindTo(registry);
+
+        assertThat(registry.get("log4j2.events").tags("level", "info").counter().count()).isEqualTo(0);
+        logger.info("Hello, world!");
+        await().atMost(Duration.ofSeconds(1))
+                .until(() -> registry.get("log4j2.events").tags("level", "info").counter().count() == 1);
+    }
+
 }

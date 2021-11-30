@@ -1,18 +1,12 @@
 dependencies {
     api project(':micrometer-core')
 
-    compileOnly 'org.glassfish.jersey.core:jersey-server'
-    runtimeOnly 'org.glassfish.jersey.inject:jersey-hk2'
+    api 'org.glassfish.jersey.core:jersey-server'
+    testRuntimeOnly 'org.glassfish.jersey.inject:jersey-hk2'
 
+    testImplementation project(':micrometer-test')
     testImplementation 'org.glassfish.jersey.test-framework.providers:jersey-test-framework-provider-inmemory'
 
     // required by jdk 9
     testRuntimeOnly 'javax.xml.bind:jaxb-api'
-
-    testImplementation 'org.assertj:assertj-core'
-
-    // See https://github.com/eclipse-ee4j/jersey/issues/3662
-    testImplementation 'junit:junit'
-    testRuntimeOnly 'org.junit.vintage:junit-vintage-engine'
-    testImplementation 'org.mockito:mockito-core'
 }

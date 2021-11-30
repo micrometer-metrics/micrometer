@@ -18,6 +18,7 @@ package io.micrometer.core.instrument.internal;
 import io.micrometer.core.instrument.AbstractMeter;
 import io.micrometer.core.instrument.Clock;
 import io.micrometer.core.instrument.LongTaskTimer;
+import io.micrometer.core.instrument.Meter;
 import io.micrometer.core.instrument.distribution.CountAtBucket;
 import io.micrometer.core.instrument.distribution.DistributionStatisticConfig;
 import io.micrometer.core.instrument.distribution.HistogramSnapshot;
@@ -27,7 +28,9 @@ import io.micrometer.core.instrument.util.TimeUtils;
 
 import java.util.*;
 import java.util.concurrent.*;
+import java.util.function.Consumer;
 import java.util.stream.Collectors;
+import java.util.stream.StreamSupport;
 
 public class DefaultLongTaskTimer extends AbstractMeter implements LongTaskTimer {
     /**
@@ -52,7 +55,7 @@ public class DefaultLongTaskTimer extends AbstractMeter implements LongTaskTimer
      *
      * @param id ID
      * @param clock clock
-     * @deprecated Use {@link #DefaultLongTaskTimer(Id, Clock, TimeUnit, DistributionStatisticConfig, boolean)} instead.
+     * @deprecated Use {@link #DefaultLongTaskTimer(Meter.Id, Clock, TimeUnit, DistributionStatisticConfig, boolean)} instead.
      */
     @Deprecated
     public DefaultLongTaskTimer(Id id, Clock clock) {
@@ -106,6 +109,10 @@ public class DefaultLongTaskTimer extends AbstractMeter implements LongTaskTimer
         return activeTasks.size();
     }
 
+    protected void forEachActive(Consumer<Sample> sample) {
+        activeTasks.forEach(sample);
+    }
+
     @Override
     public TimeUnit baseTimeUnit() {
         return baseTimeUnit;
@@ -149,28 +156,29 @@ public class DefaultLongTaskTimer extends AbstractMeter implements LongTaskTimer
 
             List<CountAtBucket> countAtBuckets = new ArrayList<>(buckets.size());
 
-            SampleImpl priorActiveTask = null;
-            int i = 0;
+            Double priorActiveTaskDuration = null;
+            int count = 0;
 
-            Iterator<SampleImpl> youngestToOldest = activeTasks.descendingIterator();
-            while (youngestToOldest.hasNext()) {
-                SampleImpl activeTask = youngestToOldest.next();
-                i++;
-                if (bucket != null) {
-                    if (activeTask.duration(TimeUnit.NANOSECONDS) > bucket) {
-                        countAtBuckets.add(new CountAtBucket(bucket, i - 1));
-                        bucket = buckets.pollFirst();
-                    }
+            // Make snapshot of active task durations
+            List<Double> youngestToOldestDurations = StreamSupport.stream(((Iterable<SampleImpl>) activeTasks::descendingIterator).spliterator(), false)
+                    .sequential()
+                    .map(task -> task.duration(TimeUnit.NANOSECONDS))
+                    .collect(Collectors.toList());
+            for (Double activeTaskDuration : youngestToOldestDurations) {
+                while (bucket != null && activeTaskDuration > bucket) {
+                    countAtBuckets.add(new CountAtBucket(bucket, count));
+                    bucket = buckets.pollFirst();
                 }
+                count++;
 
                 if (percentile != null) {
                     double rank = percentile * (activeTasks.size() + 1);
 
-                    if (i >= rank) {
-                        double percentileValue = activeTask.duration(TimeUnit.NANOSECONDS);
-                        if (i != rank && priorActiveTask != null) {
+                    if (count >= rank) {
+                        double percentileValue = activeTaskDuration;
+                        if (count != rank && priorActiveTaskDuration != null) {
                             // interpolate the percentile value when the active task rank is non-integral
-                            double priorPercentileValue = priorActiveTask.duration(TimeUnit.NANOSECONDS);
+                            double priorPercentileValue = priorActiveTaskDuration;
                             percentileValue = priorPercentileValue +
                                     ((percentileValue - priorPercentileValue) * (rank - (int) rank));
                         }
@@ -180,12 +188,12 @@ public class DefaultLongTaskTimer extends AbstractMeter implements LongTaskTimer
                     }
                 }
 
-                priorActiveTask = activeTask;
+                priorActiveTaskDuration = activeTaskDuration;
             }
 
             // fill out the rest of the cumulative histogram
             while (bucket != null) {
-                countAtBuckets.add(new CountAtBucket(bucket, i));
+                countAtBuckets.add(new CountAtBucket(bucket, count));
                 bucket = buckets.pollFirst();
             }
 
@@ -214,7 +222,7 @@ public class DefaultLongTaskTimer extends AbstractMeter implements LongTaskTimer
 
     class SampleImpl extends Sample {
         private final long startTime;
-        private volatile boolean stopped = false;
+        private volatile boolean stopped;
 
         private SampleImpl() {
             this.startTime = clock.monotonicTime();

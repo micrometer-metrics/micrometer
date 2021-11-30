@@ -20,6 +20,7 @@ import com.netflix.spectator.api.Id;
 import com.netflix.spectator.api.Registry;
 import com.netflix.spectator.api.histogram.PercentileDistributionSummary;
 import com.netflix.spectator.api.histogram.PercentileTimer;
+import com.netflix.spectator.api.patterns.PolledMeter;
 import com.netflix.spectator.atlas.AtlasConfig;
 import com.netflix.spectator.atlas.AtlasRegistry;
 import io.micrometer.core.instrument.*;
@@ -164,7 +165,9 @@ public class AtlasMeterRegistry extends MeterRegistry {
     @Override
     protected <T> FunctionCounter newFunctionCounter(Meter.Id id, T obj, ToDoubleFunction<T> countFunction) {
         FunctionCounter fc = new StepFunctionCounter<>(id, clock, atlasConfig.step().toMillis(), obj, countFunction);
-        newMeter(id, Meter.Type.COUNTER, fc.measure());
+        PolledMeter.using(registry)
+                .withId(spectatorId(id))
+                .monitorMonotonicCounter(obj, obj2 -> (long) countFunction.applyAsDouble(obj2));
         return fc;
     }
 

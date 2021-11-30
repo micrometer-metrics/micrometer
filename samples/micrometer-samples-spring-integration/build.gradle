@@ -1,12 +1,13 @@
 plugins {
     id 'java'
-    id "io.spring.dependency-management" version "1.0.3.RELEASE"
+    id 'org.springframework.boot' version '2.6.0-M3'
 }
 
-dependencyManagement {
-    imports {
-        mavenBom 'org.springframework.boot:spring-boot-dependencies:2.2.6.RELEASE'
-    }
+apply plugin: 'io.spring.dependency-management'
+
+repositories {
+    mavenCentral()
+    maven { url "https://repo.spring.io/milestone" }
 }
 
 dependencies {
@@ -21,6 +22,13 @@ dependencies {
     implementation 'org.springframework.integration:spring-integration-xml'
 
     // For running on Java 9+
-    runtimeOnly 'javax.xml.soap:javax.xml.soap-api:1.4.0'
-    runtimeOnly 'com.sun.xml.messaging.saaj:saaj-impl:1.5.1'
+    runtimeOnly 'com.sun.xml.messaging.saaj:saaj-impl'
+}
+
+bootJar {
+    enabled = false
+}
+
+bootJarMainClassName {
+    enabled = false
 }

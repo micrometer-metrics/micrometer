@@ -1,8 +1,9 @@
-apply plugin: "me.champeau.gradle.jmh"
+plugins {
+    id "me.champeau.jmh" version "0.6.6"
+}
 
 dependencies {
     jmh project(':micrometer-core')
-    jmh project(':micrometer-samples-core')
     jmh project(':micrometer-registry-prometheus')
 
     jmh 'io.dropwizard.metrics5:metrics-core:latest.release'
@@ -22,6 +23,6 @@ jmh {
     fork = 1
     warmupIterations = 1
     iterations = 1
-    duplicateClassesStrategy = 'exclude'
+    duplicateClassesStrategy = DuplicatesStrategy.EXCLUDE
     zip64 = true
 }

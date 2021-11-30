@@ -62,7 +62,7 @@ public class InfluxNamingConvention implements NamingConvention {
 
     @Override
     public String tagValue(String value) {
-        return escape(this.delegate.tagValue(value));
+        return escape(this.delegate.tagValue(value).replace('\n', ' '));
     }
 
     private String escape(String string) {

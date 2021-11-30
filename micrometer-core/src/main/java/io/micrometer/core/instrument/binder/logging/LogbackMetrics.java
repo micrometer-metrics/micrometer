@@ -110,8 +110,11 @@ public class LogbackMetrics implements MeterBinder, AutoCloseable {
      */
     public static void ignoreMetrics(Runnable r) {
         ignoreMetrics.set(true);
-        r.run();
-        ignoreMetrics.remove();
+        try {
+            r.run();
+        } finally {
+            ignoreMetrics.remove();
+        }  
     }
 
     @Override
