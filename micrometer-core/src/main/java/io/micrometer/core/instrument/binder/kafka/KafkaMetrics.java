@@ -160,71 +160,78 @@ class KafkaMetrics implements MeterBinder, AutoCloseable {
      * comparing meters last returned from the Kafka client.
      */
     void checkAndBindMetrics(MeterRegistry registry) {
-        this.metrics.set(this.metricsSupplier.get());
-        Map<MetricName, ? extends Metric> metrics = this.metrics.get();
+        try {
+            this.metrics.set(this.metricsSupplier.get());
+            Map<MetricName, ? extends Metric> metrics = this.metrics.get();
 
-        if (!currentMeters.equals(metrics.keySet())) {
-            Set<MetricName> metricsToRemove = currentMeters.stream()
-                    .filter(metricName -> !metrics.containsKey(metricName))
-                    .collect(Collectors.toSet());
+            if (!currentMeters.equals(metrics.keySet())) {
+                Set<MetricName> metricsToRemove = currentMeters.stream()
+                        .filter(metricName -> !metrics.containsKey(metricName))
+                        .collect(Collectors.toSet());
 
-            for (MetricName metricName : metricsToRemove) {
-                Meter.Id id = meterIdForComparison(metricName);
-                Meter meter = registry.remove(id);
-                registeredMeters.remove(meter);
+                for (MetricName metricName : metricsToRemove) {
+                    Meter.Id id = meterIdForComparison(metricName);
+                    Meter meter = registry.remove(id);
+                    if (meter != null) {
+                        registeredMeters.remove(meter);
+                    }
+                }
+
+                currentMeters = new HashSet<>(metrics.keySet());
+
+                Map<String, List<Meter>> registryMetersByNames = registry.getMeters().stream()
+                        .collect(Collectors.groupingBy(meter -> meter.getId().getName()));
+
+                metrics.forEach((name, metric) -> {
+                    // Filter out non-numeric values
+                    // Filter out metrics from groups that include metadata
+                    if (!(metric.metricValue() instanceof Number) ||
+                            METRIC_GROUP_APP_INFO.equals(name.group()) ||
+                            METRIC_GROUP_METRICS_COUNT.equals(name.group())) {
+                        return;
+                    }
+
+                    String meterName = meterName(name);
+
+                    // Kafka has metrics with lower number of tags (e.g. with/without topic or partition tag)
+                    // Remove meters with lower number of tags
+                    boolean hasLessTags = false;
+                    for (Meter other : registryMetersByNames.getOrDefault(meterName, emptyList())) {
+                        List<Tag> tags = other.getId().getTags();
+                        List<Tag> meterTagsWithCommonTags = meterTags(name, true);
+                        if (tags.size() < meterTagsWithCommonTags.size()) {
+                            registry.remove(other);
+                            registeredMeters.remove(other);
+                        }
+                        // Check if already exists
+                        else if (tags.size() == meterTagsWithCommonTags.size())
+                            if (tags.containsAll(meterTagsWithCommonTags)) return;
+                            else break;
+                        else hasLessTags = true;
+                    }
+                    if (hasLessTags) return;
+
+                    List<Tag> tags = meterTags(name);
+                    try {
+                        Meter meter = bindMeter(registry, metric.metricName(), meterName, tags);
+                        List<Meter> meters = registryMetersByNames.computeIfAbsent(meterName, k -> new ArrayList<>());
+                        meters.add(meter);
+                    }
+                    catch (Exception ex) {
+                        String message = ex.getMessage();
+                        if (message != null && message.contains("Prometheus requires")) {
+                            warnThenDebugLogger.log("Failed to bind meter: " + meterName + " " + tags
+                                    + ". However, this could happen and might be restored in the next refresh.");
+                        }
+                        else {
+                            log.warn("Failed to bind meter: " + meterName + " " + tags + ".", ex);
+                        }
+                    }
+                });
             }
-
-            currentMeters = new HashSet<>(metrics.keySet());
-
-            Map<String, List<Meter>> registryMetersByNames = registry.getMeters().stream()
-                    .collect(Collectors.groupingBy(meter -> meter.getId().getName()));
-
-            metrics.forEach((name, metric) -> {
-                // Filter out non-numeric values
-                // Filter out metrics from groups that include metadata
-                if (!(metric.metricValue() instanceof Number) ||
-                        METRIC_GROUP_APP_INFO.equals(name.group()) ||
-                        METRIC_GROUP_METRICS_COUNT.equals(name.group())) {
-                    return;
-                }
-
-                String meterName = meterName(name);
-
-                // Kafka has metrics with lower number of tags (e.g. with/without topic or partition tag)
-                // Remove meters with lower number of tags
-                boolean hasLessTags = false;
-                for (Meter other : registryMetersByNames.getOrDefault(meterName, emptyList())) {
-                    List<Tag> tags = other.getId().getTags();
-                    List<Tag> meterTagsWithCommonTags = meterTags(name, true);
-                    if (tags.size() < meterTagsWithCommonTags.size()) {
-                        registry.remove(other);
-                        registeredMeters.remove(other);
-                    }
-                    // Check if already exists
-                    else if (tags.size() == meterTagsWithCommonTags.size())
-                        if (tags.containsAll(meterTagsWithCommonTags)) return;
-                        else break;
-                    else hasLessTags = true;
-                }
-                if (hasLessTags) return;
-
-                List<Tag> tags = meterTags(name);
-                try {
-                    Meter meter = bindMeter(registry, metric.metricName(), meterName, tags);
-                    List<Meter> meters = registryMetersByNames.computeIfAbsent(meterName, k -> new ArrayList<>());
-                    meters.add(meter);
-                }
-                catch (Exception ex) {
-                    String message = ex.getMessage();
-                    if (message != null && message.contains("Prometheus requires")) {
-                        warnThenDebugLogger.log("Failed to bind meter: " + meterName + " " + tags
-                                + ". However, this could happen and might be restored in the next refresh.");
-                    }
-                    else {
-                        log.warn("Failed to bind meter: " + meterName + " " + tags + ".", ex);
-                    }
-                }
-            });
+        }
+        catch (Exception e) {
+            log.warn("Failed to bind KafkaMetric", e);
         }
     }
 

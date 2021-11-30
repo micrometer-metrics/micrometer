@@ -503,6 +503,35 @@ class KafkaMetricsTest {
         assertThat(registry.getMeters()).hasSize(0);
     }
 
+    @Issue("#2879")
+    @Test
+    void removeShouldWorkForNonExistingMeters() {
+        Map<MetricName, Metric> kafkaMetricMap = new HashMap<>();
+        Supplier<Map<MetricName, ? extends Metric>> supplier = () -> kafkaMetricMap;
+        kafkaMetrics = new KafkaMetrics(supplier);
+        MeterRegistry registry = new SimpleMeterRegistry();
+        kafkaMetrics.bindTo(registry);
+        assertThat(registry.getMeters()).hasSize(0);
+
+        MetricName aMetric = createMetricName("a");
+        kafkaMetricMap.put(aMetric, createKafkaMetric(aMetric));
+        kafkaMetrics.checkAndBindMetrics(registry);
+        assertThat(registry.getMeters()).hasSize(1);
+
+        kafkaMetricMap.clear();
+        registry.forEachMeter(registry::remove);
+        kafkaMetrics.checkAndBindMetrics(registry);
+        assertThat(registry.getMeters()).hasSize(0);
+    }
+
+    @Issue("#2879")
+    @Test
+    void checkAndBindMetricsShouldNotFail() {
+        kafkaMetrics = new KafkaMetrics(() -> { throw new RuntimeException("simulated"); });
+        MeterRegistry registry = new SimpleMeterRegistry();
+        kafkaMetrics.checkAndBindMetrics(registry);
+    }
+
     @SuppressWarnings("unchecked")
     private MetricName createMetricName(String name) {
         return createMetricName(name, EMPTY_MAP);
