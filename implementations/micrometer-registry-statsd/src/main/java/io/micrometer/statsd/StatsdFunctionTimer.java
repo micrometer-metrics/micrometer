@@ -25,13 +25,13 @@ import java.util.function.ToLongFunction;
 
 public class StatsdFunctionTimer<T> extends CumulativeFunctionTimer<T> implements StatsdPollable {
     private final StatsdLineBuilder lineBuilder;
-    private final Sinks.Many<String> sink;
+    private final Sinks.SinksMultiproducer<String> sink;
     private final AtomicReference<Long> lastCount = new AtomicReference<>(0L);
     private final AtomicReference<Double> lastTime = new AtomicReference<>(0.0);
 
     StatsdFunctionTimer(Id id, T obj, ToLongFunction<T> countFunction, ToDoubleFunction<T> totalTimeFunction,
                         TimeUnit totalTimeFunctionUnit, TimeUnit baseTimeUnit,
-                        StatsdLineBuilder lineBuilder, Sinks.Many<String> sink) {
+                        StatsdLineBuilder lineBuilder, Sinks.SinksMultiproducer<String> sink) {
         super(id, obj, countFunction, totalTimeFunction, totalTimeFunctionUnit, baseTimeUnit);
         this.lineBuilder = lineBuilder;
         this.sink = sink;
@@ -53,7 +53,7 @@ public class StatsdFunctionTimer<T> extends CumulativeFunctionTimer<T> implement
                     // occurrences.
                     double timingAverage = newTimingsSum / newTimingsCount;
                     for (int i = 0; i < newTimingsCount; i++) {
-                        sink.tryEmitNext(lineBuilder.timing(timingAverage));
+                        sink.trySubmitNext(lineBuilder.timing(timingAverage));
                     }
 
                     return totalTime;

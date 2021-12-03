@@ -31,11 +31,11 @@ public class StatsdTimer extends AbstractTimer {
     private final LongAdder count = new LongAdder();
     private final DoubleAdder totalTime = new DoubleAdder();
     private final StatsdLineBuilder lineBuilder;
-    private final Sinks.Many<String> sink;
+    private final Sinks.SinksMultiproducer<String> sink;
     private StepDouble max;
     private volatile boolean shutdown;
 
-    StatsdTimer(Id id, StatsdLineBuilder lineBuilder, Sinks.Many<String> sink, Clock clock,
+    StatsdTimer(Id id, StatsdLineBuilder lineBuilder, Sinks.SinksMultiproducer<String> sink, Clock clock,
                 DistributionStatisticConfig distributionStatisticConfig, PauseDetector pauseDetector, TimeUnit baseTimeUnit, long stepMillis) {
         super(id, clock, distributionStatisticConfig, pauseDetector, baseTimeUnit, false);
         this.max = new StepDouble(clock, stepMillis);
@@ -54,7 +54,7 @@ public class StatsdTimer extends AbstractTimer {
             // not necessary to ship max, as most StatsD agents calculate this themselves
             max.getCurrent().add(Math.max(msAmount - max.getCurrent().doubleValue(), 0));
 
-            sink.tryEmitNext(lineBuilder.timing(msAmount));
+            sink.trySubmitNext(lineBuilder.timing(msAmount));
         }
     }
 

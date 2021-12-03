@@ -27,11 +27,11 @@ import java.util.concurrent.atomic.DoubleAdder;
  */
 public class StatsdCounter extends AbstractMeter implements Counter {
     private final StatsdLineBuilder lineBuilder;
-    private final Sinks.Many<String> sink;
+    private final Sinks.SinksMultiproducer<String> sink;
     private DoubleAdder count = new DoubleAdder();
     private volatile boolean shutdown;
 
-    StatsdCounter(Id id, StatsdLineBuilder lineBuilder, Sinks.Many<String> sink) {
+    StatsdCounter(Id id, StatsdLineBuilder lineBuilder, Sinks.SinksMultiproducer<String> sink) {
         super(id);
         this.lineBuilder = lineBuilder;
         this.sink = sink;
@@ -41,7 +41,7 @@ public class StatsdCounter extends AbstractMeter implements Counter {
     public void increment(double amount) {
         if (!shutdown && amount > 0) {
             count.add(amount);
-            sink.tryEmitNext(lineBuilder.count((long) amount));
+            sink.trySubmitNext(lineBuilder.count((long) amount));
         }
     }
 

@@ -24,19 +24,11 @@ import reactor.core.publisher.Sinks;
  * This suppresses logback event metrics during Sink operations to avoid
  * infinite loops.
  */
-public class LogbackMetricsSuppressingManySink implements Sinks.Many<String> {
-    private final Sinks.Many<String> delegate;
+public class LogbackMetricsSuppressingMultiproducer implements Sinks.SinksMultiproducer<String> {
+    private final Sinks.SinksMultiproducer<String> delegate;
 
-    public LogbackMetricsSuppressingManySink(Sinks.Many<String> delegate) {
+    public LogbackMetricsSuppressingMultiproducer(Sinks.SinksMultiproducer<String> delegate) {
         this.delegate = delegate;
-    }
-
-    @Override
-    public Sinks.EmitResult tryEmitNext(String s) {
-        LogbackMetrics.ignoreMetrics(() -> delegate.tryEmitNext(s));
-        // We want to silently drop the element if not emitted for any reason
-        // We do not use the returned result
-        return Sinks.EmitResult.OK;
     }
 
     @Override
@@ -54,21 +46,6 @@ public class LogbackMetricsSuppressingManySink implements Sinks.Many<String> {
     }
 
     @Override
-    public void emitNext(String s, Sinks.EmitFailureHandler failureHandler) {
-        LogbackMetrics.ignoreMetrics(() -> delegate.emitNext(s, failureHandler));
-    }
-
-    @Override
-    public void emitComplete(Sinks.EmitFailureHandler failureHandler) {
-        LogbackMetrics.ignoreMetrics(() -> delegate.emitComplete(failureHandler));
-    }
-
-    @Override
-    public void emitError(Throwable error, Sinks.EmitFailureHandler failureHandler) {
-        LogbackMetrics.ignoreMetrics(() -> delegate.emitError(error, failureHandler));
-    }
-
-    @Override
     public int currentSubscriberCount() {
         return delegate.currentSubscriberCount();
     }
@@ -79,7 +56,9 @@ public class LogbackMetricsSuppressingManySink implements Sinks.Many<String> {
     }
 
     @Override
-    public Object scanUnsafe(Attr key) {
-        return delegate.scanUnsafe(key);
+    public Sinks.MultiproducerEmitResult<String> trySubmitNext(String value) {
+        LogbackMetrics.ignoreMetrics(() -> delegate.trySubmitNext(value));
+        // We do not use the returned result
+        return new Sinks.MultiproducerEmitResult<>(Sinks.EmitResult.OK, null);
     }
 }

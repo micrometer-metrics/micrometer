@@ -26,14 +26,14 @@ import java.util.concurrent.atomic.AtomicReference;
 
 public class StatsdLongTaskTimer extends DefaultLongTaskTimer implements StatsdPollable {
     private final StatsdLineBuilder lineBuilder;
-    private final Sinks.Many<String> sink;
+    private final Sinks.SinksMultiproducer<String> sink;
 
     private final AtomicReference<Long> lastActive = new AtomicReference<>(Long.MIN_VALUE);
     private final AtomicReference<Double> lastDuration = new AtomicReference<>(Double.NEGATIVE_INFINITY);
 
     private final boolean alwaysPublish;
 
-    StatsdLongTaskTimer(Id id, StatsdLineBuilder lineBuilder, Sinks.Many<String> sink, Clock clock, boolean alwaysPublish,
+    StatsdLongTaskTimer(Id id, StatsdLineBuilder lineBuilder, Sinks.SinksMultiproducer<String> sink, Clock clock, boolean alwaysPublish,
                         DistributionStatisticConfig distributionStatisticConfig, TimeUnit baseTimeUnit) {
         super(id, clock, baseTimeUnit, distributionStatisticConfig, false);
         this.lineBuilder = lineBuilder;
@@ -45,17 +45,17 @@ public class StatsdLongTaskTimer extends DefaultLongTaskTimer implements StatsdP
     public void poll() {
         long active = activeTasks();
         if (alwaysPublish || lastActive.getAndSet(active) != active) {
-            sink.tryEmitNext(lineBuilder.gauge(active, Statistic.ACTIVE_TASKS));
+            sink.trySubmitNext(lineBuilder.gauge(active, Statistic.ACTIVE_TASKS));
         }
 
         double duration = duration(TimeUnit.MILLISECONDS);
         if (alwaysPublish || lastDuration.getAndSet(duration) != duration) {
-            sink.tryEmitNext(lineBuilder.gauge(duration, Statistic.DURATION));
+            sink.trySubmitNext(lineBuilder.gauge(duration, Statistic.DURATION));
         }
 
         double max = max(TimeUnit.MILLISECONDS);
         if (alwaysPublish || lastDuration.getAndSet(duration) != duration) {
-            sink.tryEmitNext(lineBuilder.gauge(max, Statistic.MAX));
+            sink.trySubmitNext(lineBuilder.gauge(max, Statistic.MAX));
         }
     }
 }

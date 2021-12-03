@@ -31,10 +31,10 @@ public class StatsdDistributionSummary extends AbstractDistributionSummary {
     private final DoubleAdder amount = new DoubleAdder();
     private final TimeWindowMax max;
     private final StatsdLineBuilder lineBuilder;
-    private final Sinks.Many<String> sink;
+    private final Sinks.SinksMultiproducer<String> sink;
     private volatile boolean shutdown;
 
-    StatsdDistributionSummary(Id id, StatsdLineBuilder lineBuilder, Sinks.Many<String> sink, Clock clock,
+    StatsdDistributionSummary(Id id, StatsdLineBuilder lineBuilder, Sinks.SinksMultiproducer<String> sink, Clock clock,
                               DistributionStatisticConfig distributionStatisticConfig, double scale) {
         super(id, clock, distributionStatisticConfig, scale, false);
         this.max = new TimeWindowMax(clock, distributionStatisticConfig);
@@ -48,7 +48,7 @@ public class StatsdDistributionSummary extends AbstractDistributionSummary {
             count.increment();
             this.amount.add(amount);
             max.record(amount);
-            sink.tryEmitNext(lineBuilder.histogram(amount));
+            sink.trySubmitNext(lineBuilder.histogram(amount));
         }
     }
 

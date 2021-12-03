@@ -5,7 +5,7 @@ plugins {
 dependencies {
     api project(':micrometer-core')
 
-    implementation 'io.projectreactor:reactor-core'
+    implementation 'io.projectreactor:reactor-core:3.4.13-SNAPSHOT'
     implementation 'io.projectreactor.netty:reactor-netty-core'
 
     testImplementation project(':micrometer-test')

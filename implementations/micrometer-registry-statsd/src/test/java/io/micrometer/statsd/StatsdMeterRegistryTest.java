@@ -301,7 +301,7 @@ class StatsdMeterRegistryTest {
 
         // Cause the processor to get into a state that would make it perform logging at DEBUG level.
         ((Logger) LoggerFactory.getLogger(Operators.class)).setLevel(Level.DEBUG);
-        registry.sink.emitComplete((signalType, emitResult) -> { throw new RuntimeException("could not emit complete"); });
+        registry.sink.tryEmitError(new RuntimeException("could not emit complete"));
 
         registry.counter("my.counter").increment();
     }

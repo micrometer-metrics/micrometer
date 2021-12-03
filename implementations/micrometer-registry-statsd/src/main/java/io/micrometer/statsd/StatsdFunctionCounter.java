@@ -30,10 +30,10 @@ import java.util.function.ToDoubleFunction;
  */
 public class StatsdFunctionCounter<T> extends CumulativeFunctionCounter<T> implements StatsdPollable {
     private final StatsdLineBuilder lineBuilder;
-    private final Sinks.Many<String> sink;
+    private final Sinks.SinksMultiproducer<String> sink;
     private final AtomicReference<Long> lastValue = new AtomicReference<>(0L);
 
-    StatsdFunctionCounter(Id id, T obj, ToDoubleFunction<T> f, StatsdLineBuilder lineBuilder, Sinks.Many<String> sink) {
+    StatsdFunctionCounter(Id id, T obj, ToDoubleFunction<T> f, StatsdLineBuilder lineBuilder, Sinks.SinksMultiproducer<String> sink) {
         super(id, obj, f);
         this.lineBuilder = lineBuilder;
         this.sink = sink;
@@ -43,7 +43,7 @@ public class StatsdFunctionCounter<T> extends CumulativeFunctionCounter<T> imple
     public void poll() {
         lastValue.updateAndGet(prev -> {
             long count = (long) count();
-            sink.tryEmitNext(lineBuilder.count(count - prev));
+            sink.trySubmitNext(lineBuilder.count(count - prev));
             return count;
         });
     }

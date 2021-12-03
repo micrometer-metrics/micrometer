@@ -75,6 +75,28 @@ class StatsdMeterRegistryPublishTest {
         }
     }
 
+    @Issue("2880")
+    @ParameterizedTest
+    @EnumSource(StatsdProtocol.class)
+    void receiveParallelMetricsSuccessfully(StatsdProtocol protocol) throws InterruptedException {
+        final int N = 10;
+
+        skipUdsTestOnWindows(protocol);
+        serverLatch = new CountDownLatch(N);
+        server = startServer(protocol, 0);
+        final int port = getPort(protocol);
+
+        meterRegistry = new StatsdMeterRegistry(getUnbufferedConfig(protocol, port), Clock.SYSTEM);
+        startRegistryAndWaitForClient();
+        Counter counter = Counter.builder("my.counter").register(meterRegistry);
+
+        IntStream.range(0, N)
+                .parallel()
+                .forEach(ignored -> counter.increment());
+
+        assertThat(serverLatch.await(3, TimeUnit.SECONDS)).isTrue();
+    }
+
     @ParameterizedTest
     @EnumSource(StatsdProtocol.class)
     void receiveMetricsSuccessfully(StatsdProtocol protocol) throws InterruptedException {

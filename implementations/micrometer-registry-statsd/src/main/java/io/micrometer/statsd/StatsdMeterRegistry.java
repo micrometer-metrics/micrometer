@@ -80,7 +80,10 @@ public class StatsdMeterRegistry extends MeterRegistry {
     private final HierarchicalNameMapper nameMapper;
     private final Map<Meter.Id, StatsdPollable> pollableMeters = new ConcurrentHashMap<>();
     private final AtomicBoolean started = new AtomicBoolean();
-    Sinks.Many<String> sink = new NoopManySink();
+    Sinks.SinksMultiproducer<String> sink = Sinks.batchingMultiproducer(
+            spec -> spec.multicast().directBestEffort(),
+            element -> warnThenDebugLogger.log("Sink is terminated, unable to emit: " + element)
+    );
     Disposable.Swap statsdConnection = Disposables.swap();
     private Disposable.Swap meterPoller = Disposables.swap();
 
@@ -143,11 +146,11 @@ public class StatsdMeterRegistry extends MeterRegistry {
         );
 
         if (config.enabled()) {
-            this.sink = Sinks.many().multicast().directBestEffort();
+            this.sink = Sinks.batchingMultiproducer(spec -> spec.multicast().directBestEffort(), System.out::println);
 
             try {
                 Class.forName("ch.qos.logback.classic.turbo.TurboFilter", false, getClass().getClassLoader());
-                this.sink = new LogbackMetricsSuppressingManySink(this.sink);
+                this.sink = new LogbackMetricsSuppressingMultiproducer(this.sink);
             } catch (ClassNotFoundException ignore) { }
             start();
         }
@@ -427,13 +430,13 @@ public class StatsdMeterRegistry extends MeterRegistry {
                 case COUNT:
                 case TOTAL:
                 case TOTAL_TIME:
-                    pollableMeters.put(id.withTag(stat), () -> this.sink.tryEmitNext(line.count((long) ms.getValue(), stat)));
+                    pollableMeters.put(id.withTag(stat), () -> this.sink.trySubmitNext(line.count((long) ms.getValue(), stat)));
                     break;
                 case VALUE:
                 case ACTIVE_TASKS:
                 case DURATION:
                 case UNKNOWN:
-                    pollableMeters.put(id.withTag(stat), () -> this.sink.tryEmitNext(line.gauge(ms.getValue(), stat)));
+                    pollableMeters.put(id.withTag(stat), () -> this.sink.trySubmitNext(line.gauge(ms.getValue(), stat)));
                     break;
             }
         });
