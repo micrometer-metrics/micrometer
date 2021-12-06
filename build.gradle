@@ -33,12 +33,18 @@ apply plugin: 'nebula.release'
 release.defaultVersionStrategy = nebula.plugin.release.git.opinion.Strategies.SNAPSHOT
 
 apply plugin: 'io.github.gradle-nexus.publish-plugin'
+apply plugin: 'jacoco'
 apply from: 'dependencies.gradle'
 
 allprojects {
     version = "2.0.0-SNAPSHOT"
     group = 'io.micrometer'
     ext.'release.stage' = releaseStage ?: 'SNAPSHOT'
+
+    repositories {
+        mavenCentral()
+        mavenLocal()
+    }
 
     afterEvaluate { project -> println "I'm configuring $project.name with version $project.version" }
 }
@@ -276,12 +282,18 @@ subprojects {
         apply plugin: 'nebula.project'
 
         if (project.name != 'micrometer-bom') {
+            apply plugin: 'jacoco'
+
             jar {
                 manifest.attributes.put('Automatic-Module-Name', project.name.replace('-', '.'))
                 metaInf {
                     from "$rootDir/LICENSE"
                     from "$rootDir/NOTICE"
                 }
+            }
+
+            jacocoTestReport {
+                dependsOn test
             }
         }
 
@@ -295,13 +307,20 @@ subprojects {
 
     description = 'Application monitoring instrumentation facade'
 
-    repositories {
-        mavenCentral()
-        mavenLocal()
-    }
-
     def check = tasks.findByName('check')
     if (check) project.rootProject.tasks.releaseCheck.dependsOn check
+}
+
+tasks.register('jacocoTestReport', JacocoReport) {
+    def projectsWithReport = subprojects.findAll { subproject -> subproject.tasks.find{ it.name == 'jacocoTestReport' } }
+    dependsOn projectsWithReport.jacocoTestReport
+    additionalSourceDirs(files(projectsWithReport.sourceSets.main.allSource.srcDirs))
+    additionalClassDirs(files(projectsWithReport.sourceSets.main.output))
+    executionData(files(projectsWithReport.jacocoTestReport.executionData))
+}
+
+tasks.register('clean', Delete) {
+    delete 'build'
 }
 
 nexusPublishing {
