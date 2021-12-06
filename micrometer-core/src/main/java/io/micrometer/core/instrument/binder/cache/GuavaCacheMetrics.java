@@ -21,17 +21,18 @@ import com.google.common.cache.LoadingCache;
 import io.micrometer.core.instrument.*;
 import io.micrometer.core.lang.NonNullApi;
 import io.micrometer.core.lang.NonNullFields;
+import io.micrometer.core.lang.Nullable;
 
 import java.util.concurrent.TimeUnit;
+import java.util.function.Function;
+import java.util.function.ToLongFunction;
 
 /**
  * @author Jon Schneider
  */
 @NonNullApi
 @NonNullFields
-public class GuavaCacheMetrics extends CacheMeterBinder {
-    private final Cache<?, ?> cache;
-
+public class GuavaCacheMetrics<K, V, C extends Cache<K, V>> extends CacheMeterBinder<C> {
     /**
      * Record metrics on a Guava cache. You must call {@link CacheBuilder#recordStats()} prior to building the cache
      * for metrics to be recorded.
@@ -40,11 +41,13 @@ public class GuavaCacheMetrics extends CacheMeterBinder {
      * @param cache     The cache to instrument.
      * @param cacheName Will be used to tag metrics with "cache".
      * @param tags      Tags to apply to all recorded metrics. Must be an even number of arguments representing key/value pairs of tags.
+     * @param <K>       Cache key type.
+     * @param <V>       Cache value type.
      * @param <C>       The cache type.
      * @return The instrumented cache, unchanged. The original cache is not wrapped or proxied in any way.
      * @see com.google.common.cache.CacheStats
      */
-    public static <C extends Cache<?, ?>> C monitor(MeterRegistry registry, C cache, String cacheName, String... tags) {
+    public static <K, V, C extends Cache<K, V>> C monitor(MeterRegistry registry, C cache, String cacheName, String... tags) {
         return monitor(registry, cache, cacheName, Tags.of(tags));
     }
 
@@ -56,47 +59,49 @@ public class GuavaCacheMetrics extends CacheMeterBinder {
      * @param cache     The cache to instrument.
      * @param cacheName The name prefix of the metrics.
      * @param tags      Tags to apply to all recorded metrics.
+     * @param <K>       Cache key type.
+     * @param <V>       Cache value type.
      * @param <C>       The cache type.
      * @return The instrumented cache, unchanged. The original cache is not wrapped or proxied in any way.
      * @see com.google.common.cache.CacheStats
      */
-    public static <C extends Cache<?, ?>> C monitor(MeterRegistry registry, C cache, String cacheName, Iterable<Tag> tags) {
-        new GuavaCacheMetrics(cache, cacheName, tags).bindTo(registry);
+    public static <K, V, C extends Cache<K, V>> C monitor(MeterRegistry registry, C cache, String cacheName, Iterable<Tag> tags) {
+        new GuavaCacheMetrics<>(cache, cacheName, tags).bindTo(registry);
         return cache;
     }
 
-    public GuavaCacheMetrics(Cache<?, ?> cache, String cacheName, Iterable<Tag> tags) {
+    public GuavaCacheMetrics(C cache, String cacheName, Iterable<Tag> tags) {
         super(cache, cacheName, tags);
-        this.cache = cache;
     }
 
     @Override
     protected Long size() {
-        return cache.size();
+        return getOrDefault(Cache::size, null);
     }
 
     @Override
     protected long hitCount() {
-        return cache.stats().hitCount();
+        return getOrDefault(c -> c.stats().hitCount(), 0L);
     }
 
     @Override
     protected Long missCount() {
-        return cache.stats().missCount();
+        return getOrDefault(c -> c.stats().missCount(), null);
     }
 
     @Override
     protected Long evictionCount() {
-        return cache.stats().evictionCount();
+        return getOrDefault(c -> c.stats().evictionCount(), null);
     }
 
     @Override
     protected long putCount() {
-        return cache.stats().loadCount();
+        return getOrDefault(c -> c.stats().loadCount(), 0L);
     }
 
     @Override
     protected void bindImplementationSpecificMetrics(MeterRegistry registry) {
+        C cache = getCache();
         if (cache instanceof LoadingCache) {
             // dividing these gives you a measure of load latency
             TimeGauge.builder("cache.load.duration", cache, TimeUnit.NANOSECONDS, c -> c.stats().totalLoadTime())
@@ -114,5 +119,24 @@ public class GuavaCacheMetrics extends CacheMeterBinder {
                     .description("The number of times cache lookup methods threw an exception while loading a new value")
                     .register(registry);
         }
+    }
+
+    @Nullable
+    private Long getOrDefault(Function<Cache<?, ?>, Long> function, @Nullable Long defaultValue) {
+        C ref = getCache();
+        if (ref != null) {
+            return function.apply(ref);
+        }
+
+        return defaultValue;
+    }
+
+    private long getOrDefault(ToLongFunction<Cache<?, ?>> function, long defaultValue) {
+        C ref = getCache();
+        if (ref != null) {
+            return function.applyAsLong(ref);
+        }
+
+        return defaultValue;
     }
 }

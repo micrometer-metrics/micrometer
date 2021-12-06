@@ -106,14 +106,14 @@ public class KafkaConsumerMetrics implements MeterBinder, AutoCloseable {
                     meters.add(registerGaugeForObject(registry, o, "records-lead-avg", tags, "The average lead of the partition.", "records"));
                 }
             // metrics reported per consumer and topic
-            }  else if (tags.stream().anyMatch(t -> t.getKey().equals("topic"))) {
+            } else if (tags.stream().anyMatch(t -> t.getKey().equals("topic"))) {
                 meters.add(registerGaugeForObject(registry, o, "fetch-size-avg", tags, "The average number of bytes fetched per request.", BaseUnits.BYTES));
                 meters.add(registerGaugeForObject(registry, o, "fetch-size-max", tags, "The maximum number of bytes fetched per request.", BaseUnits.BYTES));
                 meters.add(registerGaugeForObject(registry, o, "records-per-request-avg", tags, "The average number of records in each request.", "records"));
                 meters.add(registerFunctionCounterForObject(registry, o, "bytes-consumed-total", tags, "The total number of bytes consumed.", BaseUnits.BYTES));
                 meters.add(registerFunctionCounterForObject(registry, o, "records-consumed-total", tags, "The total number of records consumed.", "records"));
             // metrics reported just per consumer
-            }  else {
+            } else {
                 meters.add(registerFunctionCounterForObject(registry, o, "fetch-total", tags, "The number of fetch requests.", "requests"));
                 meters.add(registerTimeGaugeForObject(registry, o, "fetch-latency-avg", tags, "The average time taken for a fetch request."));
                 meters.add(registerTimeGaugeForObject(registry, o, "fetch-latency-max", tags, "The max time taken for a fetch request."));
@@ -293,14 +293,26 @@ public class KafkaConsumerMetrics implements MeterBinder, AutoCloseable {
         NotificationFilter registrationFilter = createNotificationFilter(type,
                 MBeanServerNotification.REGISTRATION_NOTIFICATION);
         addNotificationListener(registrationListener, registrationFilter);
+        notificationListenerCleanUpRunnables.add(() -> removeNotificationListener(registrationListener));
+    }
+
+    private void removeNotificationListener(NotificationListener notificationListener) {
+        try {
+            mBeanServer.removeNotificationListener(MBeanServerDelegate.DELEGATE_NAME, notificationListener);
+        } catch (InstanceNotFoundException | ListenerNotFoundException ignored) {
+        }
     }
 
     private void addUnregistrationListener(MeterRegistry registry, String type, ObjectName o, List<Meter> meters) {
-        NotificationListener unregistrationListener = (notification2, handback2) -> {
-            MBeanServerNotification mbs2 = (MBeanServerNotification) notification2;
-            ObjectName o2 = mbs2.getMBeanName();
-            if (o2.equals(o)) {
-                meters.stream().forEach(registry::remove);
+        NotificationListener unregistrationListener = new NotificationListener() {
+            @Override
+            public void handleNotification(Notification notification2, Object handback2) {
+                MBeanServerNotification mbs2 = (MBeanServerNotification) notification2;
+                ObjectName o2 = mbs2.getMBeanName();
+                if (o2.equals(o)) {
+                    meters.stream().forEach(registry::remove);
+                }
+                removeNotificationListener(this);
             }
         };
         NotificationFilter unregistrationFilter = createNotificationFilter(type,
@@ -321,12 +333,6 @@ public class KafkaConsumerMetrics implements MeterBinder, AutoCloseable {
     private void addNotificationListener(NotificationListener listener, NotificationFilter filter) {
         try {
             mBeanServer.addNotificationListener(MBeanServerDelegate.DELEGATE_NAME, listener, filter, null);
-            notificationListenerCleanUpRunnables.add(() -> {
-                try {
-                    mBeanServer.removeNotificationListener(MBeanServerDelegate.DELEGATE_NAME, listener);
-                } catch (InstanceNotFoundException | ListenerNotFoundException ignored) {
-                }
-            });
         } catch (InstanceNotFoundException e) {
             throw new RuntimeException("Error registering Kafka MBean listener", e);
         }

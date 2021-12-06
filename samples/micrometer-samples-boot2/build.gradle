@@ -1,17 +1,18 @@
 plugins {
     id 'java'
-    id "io.spring.dependency-management" version "1.0.3.RELEASE"
+    id 'org.springframework.boot' version '2.6.0-M3'
 }
 
-dependencyManagement {
-    imports {
-        mavenBom 'org.springframework.boot:spring-boot-dependencies:2.2.6.RELEASE'
-    }
+apply plugin: 'io.spring.dependency-management'
+
+repositories {
+    mavenCentral()
+    maven { url "https://repo.spring.io/milestone" }
 }
 
 dependencies {
     implementation project(":micrometer-core")
-    ['atlas', 'azure-monitor', 'prometheus', 'datadog', 'elastic', 'ganglia', 'graphite', 'jmx', 'influx', 'statsd', 'new-relic', 'cloudwatch', 'cloudwatch2', 'signalfx', 'wavefront', 'elastic', 'dynatrace', 'humio', 'appoptics', 'stackdriver'].each { sys ->
+    ['atlas', 'azure-monitor', 'prometheus', 'datadog', 'elastic', 'ganglia', 'graphite', 'health', 'jmx', 'influx', 'statsd', 'new-relic', 'cloudwatch', 'cloudwatch2', 'signalfx', 'wavefront', 'elastic', 'dynatrace', 'humio', 'appoptics', 'stackdriver'].each { sys ->
         implementation project(":micrometer-registry-$sys")
     }
 
@@ -19,8 +20,12 @@ dependencies {
     implementation('org.springframework.boot:spring-boot-starter-actuator') {
         exclude group: 'io.micrometer', module: 'micrometer-core'
     }
+}
 
-    // For running on Java 9+
-    runtimeOnly 'javax.xml.soap:javax.xml.soap-api:1.4.0'
-    runtimeOnly 'com.sun.xml.messaging.saaj:saaj-impl:1.5.1'
+bootJar {
+    enabled = false
+}
+
+bootJarMainClassName {
+    enabled = false
 }

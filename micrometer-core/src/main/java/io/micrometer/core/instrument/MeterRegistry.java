@@ -50,12 +50,14 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.function.BiConsumer;
 import java.util.function.BiFunction;
 import java.util.function.Consumer;
 import java.util.function.Function;
 import java.util.function.ToDoubleFunction;
 import java.util.function.ToLongFunction;
 
+import static java.lang.String.format;
 import static java.util.Collections.emptyList;
 import static java.util.Objects.requireNonNull;
 
@@ -79,6 +81,7 @@ public abstract class MeterRegistry {
     private volatile MeterFilter[] filters = new MeterFilter[0];
     private final List<Consumer<Meter>> meterAddedListeners = new CopyOnWriteArrayList<>();
     private final List<Consumer<Meter>> meterRemovedListeners = new CopyOnWriteArrayList<>();
+    private final List<BiConsumer<Meter.Id, String>> meterRegistrationFailedListeners = new CopyOnWriteArrayList<>();
     private final Config config = new Config();
     private final More more = new More();
 
@@ -94,7 +97,7 @@ public abstract class MeterRegistry {
     // Guarded by meterMapLock for both reads and writes
     private final Map<Id, Set<Id>> syntheticAssociations = new HashMap<>();
 
-    private final AtomicBoolean closed = new AtomicBoolean(false);
+    private final AtomicBoolean closed = new AtomicBoolean();
     private PauseDetector pauseDetector = new NoPauseDetector();
 
     /**
@@ -135,7 +138,7 @@ public abstract class MeterRegistry {
      *
      * @param id The id that uniquely identifies the long task timer.
      * @return A new long task timer.
-     * @deprecated Implement {@link #newLongTaskTimer(Id, DistributionStatisticConfig)} instead.
+     * @deprecated Implement {@link #newLongTaskTimer(Meter.Id, DistributionStatisticConfig)} instead.
      */
     @SuppressWarnings("DeprecatedIsStillUsed")
     @Deprecated
@@ -566,7 +569,12 @@ public abstract class MeterRegistry {
         Meter m = getOrCreateMeter(config, builder, id, mappedId, noopBuilder);
 
         if (!meterClass.isInstance(m)) {
-            throw new IllegalArgumentException("There is already a registered meter of a different type with the same name");
+            throw new IllegalArgumentException(format(
+                    "There is already a registered meter of a different type (%s vs. %s) with the same name: %s",
+                    m.getClass().getSimpleName(),
+                    meterClass.getSimpleName(),
+                    id.getName()
+            ));
         }
         return meterClass.cast(m);
     }
@@ -642,6 +650,9 @@ public abstract class MeterRegistry {
     }
 
     /**
+     * Remove a {@link Meter} from this {@link MeterRegistry registry}. This is expected to be a {@link Meter} with
+     * the same {@link Id} returned when registering a meter - which will have {@link MeterFilter}s applied to it.
+     *
      * @param meter The meter to remove
      * @return The removed meter, or null if the provided meter is not currently registered.
      * @since 1.1.0
@@ -653,6 +664,24 @@ public abstract class MeterRegistry {
     }
 
     /**
+     * Remove a {@link Meter} from this {@link MeterRegistry registry} based on its {@link Id}
+     * before applying this registry's {@link MeterFilter}s to the given {@link Id}.
+     *
+     * @param preFilterId the id of the meter to remove
+     * @return The removed meter, or null if the meter is not found
+     * @since 1.3.16
+     */
+    @Incubating(since = "1.3.16")
+    @Nullable
+    public Meter removeByPreFilterId(Meter.Id preFilterId) {
+        return remove(getMappedId(preFilterId));
+    }
+
+    /**
+     * Remove a {@link Meter} from this {@link MeterRegistry registry} based the given {@link Id} as-is. The registry's
+     * {@link MeterFilter}s will not be applied to it. You can use the {@link Id} of the {@link Meter} returned
+     * when registering a meter, since that will have {@link MeterFilter}s already applied to it.
+     *
      * @param mappedId The id of the meter to remove
      * @return The removed meter, or null if no meter matched the provided id.
      * @since 1.1.0
@@ -754,6 +783,19 @@ public abstract class MeterRegistry {
         @Incubating(since = "1.1.0")
         public Config onMeterRemoved(Consumer<Meter> meterRemovedListener) {
             meterRemovedListeners.add(meterRemovedListener);
+            return this;
+        }
+
+        /**
+         * Register an event listener for meter registration failures.
+         *
+         * @param meterRegistrationFailedListener An event listener for meter registration failures
+         * @return This configuration instance
+         * @since 1.6.0
+         */
+        @Incubating(since = "1.6.0")
+        public Config onMeterRegistrationFailed(BiConsumer<Id, String> meterRegistrationFailedListener) {
+            meterRegistrationFailedListeners.add(meterRegistrationFailedListener);
             return this;
         }
 
@@ -978,5 +1020,18 @@ public abstract class MeterRegistry {
      */
     public boolean isClosed() {
         return closed.get();
+    }
+
+    /**
+     * Handle a meter registration failure.
+     *
+     * @param id The id that was attempted, but for which registration failed.
+     * @param reason The reason why the meter registration has failed
+     * @since 1.6.0
+     */
+    protected void meterRegistrationFailed(Meter.Id id, @Nullable String reason) {
+        for (BiConsumer<Id, String> listener : meterRegistrationFailedListeners) {
+            listener.accept(id, reason);
+        }
     }
 }

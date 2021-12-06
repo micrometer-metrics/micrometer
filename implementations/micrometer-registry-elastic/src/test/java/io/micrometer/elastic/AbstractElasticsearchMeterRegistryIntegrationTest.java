@@ -25,6 +25,7 @@ import org.junit.jupiter.api.Test;
 import org.testcontainers.elasticsearch.ElasticsearchContainer;
 import org.testcontainers.junit.jupiter.Container;
 import org.testcontainers.junit.jupiter.Testcontainers;
+import org.testcontainers.utility.DockerImageName;
 
 import java.time.Duration;
 
@@ -39,15 +40,15 @@ import static org.assertj.core.api.Assertions.assertThat;
 @Tag("docker")
 abstract class AbstractElasticsearchMeterRegistryIntegrationTest {
 
-    private static final String USER = "elastic";
-    private static final String PASSWORD = "changeme";
+    protected static final String USER = "elastic";
+    protected static final String PASSWORD = "changeme";
 
     @Container
-    private final ElasticsearchContainer elasticsearch = new ElasticsearchContainer(getDockerImageName(getVersion()));
+    private final ElasticsearchContainer elasticsearch = getContainer();
 
-    private final HttpSender httpSender = new HttpUrlConnectionSender();
+    protected final HttpSender httpSender = new HttpUrlConnectionSender();
 
-    private String host;
+    protected String host;
     private ElasticMeterRegistry registry;
 
     protected abstract String getVersion();
@@ -55,8 +56,37 @@ abstract class AbstractElasticsearchMeterRegistryIntegrationTest {
     @BeforeEach
     void setUp() {
         host = "http://" + elasticsearch.getHttpHostAddress();
+        registry = ElasticMeterRegistry.builder(getConfig()).build();
+    }
 
-        ElasticConfig config = new ElasticConfig() {
+    @Test
+    void indexTemplateShouldApply() throws Throwable {
+        String response = sendHttpGet(host);
+        String versionNumber = JsonPath.parse(response).read("$.version.number");
+        assertThat(versionNumber).isEqualTo(getVersion());
+
+        Counter counter = registry.counter("test.counter");
+        counter.increment();
+
+        registry.publish();
+
+        String indexName = registry.indexName();
+        String mapping = sendHttpGet(host + "/" + indexName + "/_mapping");
+        String countType = JsonPath.parse(mapping).read(getCountTypePath(indexName));
+        assertThat(countType).isEqualTo("double");
+    }
+
+    protected String getCountTypePath(String indexName) {
+        return "$." + indexName + ".mappings.properties.count.type";
+    }
+
+    protected ElasticsearchContainer getContainer() {
+        return new ElasticsearchContainer(DockerImageName.parse(getDockerImageName(getVersion())))
+                .withPassword(PASSWORD);
+    }
+
+    protected ElasticConfig getConfig() {
+        return new ElasticConfig() {
             @Override
             public String get(String key) {
                 return null;
@@ -82,28 +112,6 @@ abstract class AbstractElasticsearchMeterRegistryIntegrationTest {
                 return PASSWORD;
             }
         };
-        registry = ElasticMeterRegistry.builder(config).build();
-    }
-
-    @Test
-    void indexTemplateShouldApply() throws Throwable {
-        String response = sendHttpGet(host);
-        String versionNumber = JsonPath.parse(response).read("$.version.number");
-        assertThat(versionNumber).isEqualTo(getVersion());
-
-        Counter counter = registry.counter("test.counter");
-        counter.increment();
-
-        registry.publish();
-
-        String indexName = registry.indexName();
-        String mapping = sendHttpGet(host + "/" + indexName + "/_mapping");
-        String countType = JsonPath.parse(mapping).read(getCountTypePath(indexName));
-        assertThat(countType).isEqualTo("double");
-    }
-
-    protected String getCountTypePath(String indexName) {
-        return "$." + indexName + ".mappings.doc.properties.count.type";
     }
 
     private String sendHttpGet(String uri) throws Throwable {
@@ -111,7 +119,7 @@ abstract class AbstractElasticsearchMeterRegistryIntegrationTest {
     }
 
     private static String getDockerImageName(String version) {
-        return "docker.elastic.co/elasticsearch/elasticsearch-oss:" + version;
+        return "docker.elastic.co/elasticsearch/elasticsearch:" + version;
     }
 
 }

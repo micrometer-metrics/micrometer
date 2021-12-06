@@ -5,13 +5,9 @@ dependencies {
 
     api 'org.junit.jupiter:junit-jupiter'
 
-    api 'ru.lanwen.wiremock:wiremock-junit5', {
-        exclude group: 'com.github.tomakehurst', module: 'wiremock'
-    }
-    api 'com.github.tomakehurst:wiremock-jre8'
+    api 'ru.lanwen.wiremock:wiremock-junit5'
+    api 'com.github.tomakehurst:wiremock-jre8-standalone'
     api 'org.mockito:mockito-core'
-    api 'org.testcontainers:testcontainers'
-    api 'org.testcontainers:junit-jupiter'
 
     testImplementation 'org.jsr107.ri:cache-ri-impl'
 
@@ -23,5 +19,5 @@ dependencies {
     testImplementation 'javax.cache:cache-api'
     testImplementation 'com.hazelcast:hazelcast'
     testImplementation 'com.squareup.okhttp3:okhttp'
-    testImplementation 'io.projectreactor.netty:reactor-netty'
+    testImplementation 'io.projectreactor.netty:reactor-netty-http'
 }

@@ -15,17 +15,26 @@
  */
 package io.micrometer.samples.hazelcast3;
 
+import com.hazelcast.config.Config;
 import com.hazelcast.core.Hazelcast;
 import com.hazelcast.core.IMap;
 import io.micrometer.core.instrument.binder.cache.CacheMeterBinder;
 import io.micrometer.core.instrument.binder.cache.CacheMeterBinderCompatibilityKit;
 import io.micrometer.core.instrument.binder.cache.HazelcastCacheMetrics;
 import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
 
 import static java.util.Collections.emptyList;
 
-class Hazelcast3CacheMetricsCompatibilityTest extends CacheMeterBinderCompatibilityKit {
-    private IMap<String, String> cache = Hazelcast.newHazelcastInstance().getMap("mycache");
+class Hazelcast3CacheMetricsCompatibilityTest extends CacheMeterBinderCompatibilityKit<Object> {
+    private Config config = new Config("hazelcast3-cache-test");
+    private IMap<String, String> cache;
+
+    @BeforeEach
+    @SuppressWarnings("unchecked")
+    void setup() {
+        this.cache = (IMap<String, String>) super.cache;
+    }
 
     @AfterEach
     void cleanup() {
@@ -33,17 +42,29 @@ class Hazelcast3CacheMetricsCompatibilityTest extends CacheMeterBinderCompatibil
     }
 
     @Override
-    public CacheMeterBinder binder() {
-        return new HazelcastCacheMetrics(cache, emptyList());
+    public void dereferenceCache() {
+        super.dereferenceCache();
+        Hazelcast.getOrCreateHazelcastInstance(config).getMap("mycache").destroy();
+        this.cache = null;
+    }
+
+    @Override
+    public IMap<String, String> createCache() {
+        return Hazelcast.newHazelcastInstance(config).getMap("mycache");
+    }
+
+    @Override
+    public CacheMeterBinder<Object> binder() {
+        return new HazelcastCacheMetrics(super.cache, emptyList());
     }
 
     @Override
     public void put(String key, String value) {
-        cache.put(key, value);
+        this.cache.put(key, value);
     }
 
     @Override
     public String get(String key) {
-        return cache.get(key);
+        return this.cache.get(key);
     }
 }

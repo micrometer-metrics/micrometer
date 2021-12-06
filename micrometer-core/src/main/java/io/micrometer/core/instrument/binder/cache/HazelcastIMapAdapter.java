@@ -18,8 +18,11 @@ package io.micrometer.core.instrument.binder.cache;
 import java.lang.invoke.MethodHandle;
 import java.lang.invoke.MethodHandles;
 import java.lang.invoke.MethodType;
+import java.lang.ref.WeakReference;
 
 import static java.lang.invoke.MethodType.methodType;
+
+import io.micrometer.core.lang.Nullable;
 
 /**
  * Adapter for Hazelcast {@code IMap} class created to provide support for both Hazelcast 3 and Hazelcast 4 at the
@@ -28,18 +31,21 @@ import static java.lang.invoke.MethodType.methodType;
  * @implNote Note that {@link MethodHandle} is used, so the performance does not suffer.
  */
 class HazelcastIMapAdapter {
+    private static final Class<?> CLASS_I_MAP = resolveOneOf("com.hazelcast.map.IMap", "com.hazelcast.core.IMap");
+    private static final Class<?> CLASS_LOCAL_MAP = resolveOneOf("com.hazelcast.map.LocalMapStats", "com.hazelcast.monitor.LocalMapStats");
+    private static final Class<?> CLASS_NEAR_CACHE_STATS = resolveOneOf("com.hazelcast.nearcache.NearCacheStats", "com.hazelcast.monitor.NearCacheStats");
     private static final MethodHandle GET_NAME;
     private static final MethodHandle GET_LOCAL_MAP_STATS;
 
     static {
         GET_NAME = resolveIMapMethod("getName", methodType(String.class));
-        GET_LOCAL_MAP_STATS = resolveIMapMethod("getLocalMapStats", methodType(resolveLocalMapStatsImplementation()));
+        GET_LOCAL_MAP_STATS = resolveIMapMethod("getLocalMapStats", methodType(CLASS_LOCAL_MAP));
     }
 
-    private Object cache;
+    private final WeakReference<Object> cache;
 
     HazelcastIMapAdapter(Object cache) {
-        this.cache = cache;
+        this.cache = new WeakReference<>(cache);
     }
 
     static String nameOf(Object cache) {
@@ -50,8 +56,14 @@ class HazelcastIMapAdapter {
         }
     }
 
+    @Nullable
     LocalMapStats getLocalMapStats() {
-        Object result = invoke(GET_LOCAL_MAP_STATS, cache);
+        Object ref = cache.get();
+        if (ref == null) {
+            return null;
+        }
+
+        Object result = invoke(GET_LOCAL_MAP_STATS, ref);
         return result == null ? null : new LocalMapStats(result);
     }
 
@@ -71,22 +83,22 @@ class HazelcastIMapAdapter {
         private static final MethodHandle GET_TOTAL_REMOVE_LATENCY;
 
         static {
-            GET_NEAR_CACHE_STATS = resolveLocalMapStatsMethod("getNearCacheStats", methodType(resolveNearCacheStatsImplementation()));
+            GET_NEAR_CACHE_STATS = resolveMethod("getNearCacheStats", methodType(CLASS_NEAR_CACHE_STATS));
 
-            GET_OWNED_ENTRY_COUNT = resolveLocalMapStatsMethod("getOwnedEntryCount", methodType(long.class));
-            GET_HITS = resolveLocalMapStatsMethod("getHits", methodType(long.class));
-            GET_PUT_OPERATION_COUNT = resolveLocalMapStatsMethod("getPutOperationCount", methodType(long.class));
-            GET_BACKUP_ENTRY_COUNT = resolveLocalMapStatsMethod("getBackupEntryCount", methodType(long.class));
-            GET_BACKUP_ENTRY_MEMORY_COST = resolveLocalMapStatsMethod("getBackupEntryMemoryCost", methodType(long.class));
-            GET_OWNED_ENTRY_MEMORY_COST = resolveLocalMapStatsMethod("getOwnedEntryMemoryCost", methodType(long.class));
-            GET_GET_OPERATION_COUNT = resolveLocalMapStatsMethod("getGetOperationCount", methodType(long.class));
-            GET_TOTAL_GET_LATENCY = resolveLocalMapStatsMethod("getTotalGetLatency", methodType(long.class));
-            GET_TOTAL_PUT_LATENCY = resolveLocalMapStatsMethod("getTotalPutLatency", methodType(long.class));
-            GET_REMOVE_OPERATION_COUNT = resolveLocalMapStatsMethod("getRemoveOperationCount", methodType(long.class));
-            GET_TOTAL_REMOVE_LATENCY = resolveLocalMapStatsMethod("getTotalRemoveLatency", methodType(long.class));
+            GET_OWNED_ENTRY_COUNT = resolveMethod("getOwnedEntryCount", methodType(long.class));
+            GET_HITS = resolveMethod("getHits", methodType(long.class));
+            GET_PUT_OPERATION_COUNT = resolveMethod("getPutOperationCount", methodType(long.class));
+            GET_BACKUP_ENTRY_COUNT = resolveMethod("getBackupEntryCount", methodType(long.class));
+            GET_BACKUP_ENTRY_MEMORY_COST = resolveMethod("getBackupEntryMemoryCost", methodType(long.class));
+            GET_OWNED_ENTRY_MEMORY_COST = resolveMethod("getOwnedEntryMemoryCost", methodType(long.class));
+            GET_GET_OPERATION_COUNT = resolveMethod("getGetOperationCount", methodType(long.class));
+            GET_TOTAL_GET_LATENCY = resolveMethod("getTotalGetLatency", methodType(long.class));
+            GET_TOTAL_PUT_LATENCY = resolveMethod("getTotalPutLatency", methodType(long.class));
+            GET_REMOVE_OPERATION_COUNT = resolveMethod("getRemoveOperationCount", methodType(long.class));
+            GET_TOTAL_REMOVE_LATENCY = resolveMethod("getTotalRemoveLatency", methodType(long.class));
         }
 
-        private Object localMapStats;
+        private final Object localMapStats;
 
         LocalMapStats(Object localMapStats) {
             this.localMapStats = localMapStats;
@@ -141,10 +153,9 @@ class HazelcastIMapAdapter {
             return (long) invoke(GET_TOTAL_REMOVE_LATENCY, localMapStats);
         }
 
-        private static MethodHandle resolveLocalMapStatsMethod(String name, MethodType mt) {
+        private static MethodHandle resolveMethod(String name, MethodType mt) {
             try {
-                return MethodHandles.publicLookup()
-                        .findVirtual(resolveLocalMapStatsImplementation(), name, mt);
+                return MethodHandles.publicLookup().findVirtual(CLASS_LOCAL_MAP, name, mt);
             } catch (NoSuchMethodException | IllegalAccessException e) {
                 throw new IllegalStateException(e);
             }
@@ -158,10 +169,10 @@ class HazelcastIMapAdapter {
         private static final MethodHandle GET_PERSISTENCE_COUNT;
 
         static {
-            GET_HITS = resolveNearCacheStatsMethod("getHits", methodType(long.class));
-            GET_MISSES = resolveNearCacheStatsMethod("getMisses", methodType(long.class));
-            GET_EVICTIONS = resolveNearCacheStatsMethod("getEvictions", methodType(long.class));
-            GET_PERSISTENCE_COUNT = resolveNearCacheStatsMethod("getPersistenceCount", methodType(long.class));
+            GET_HITS = resolveMethod("getHits", methodType(long.class));
+            GET_MISSES = resolveMethod("getMisses", methodType(long.class));
+            GET_EVICTIONS = resolveMethod("getEvictions", methodType(long.class));
+            GET_PERSISTENCE_COUNT = resolveMethod("getPersistenceCount", methodType(long.class));
         }
 
         private Object nearCacheStats;
@@ -186,10 +197,9 @@ class HazelcastIMapAdapter {
             return (long) invoke(GET_PERSISTENCE_COUNT, nearCacheStats);
         }
 
-        private static MethodHandle resolveNearCacheStatsMethod(String name, MethodType mt) {
+        private static MethodHandle resolveMethod(String name, MethodType mt) {
             try {
-                return MethodHandles.publicLookup()
-                        .findVirtual(resolveNearCacheStatsImplementation(), name, mt);
+                return MethodHandles.publicLookup().findVirtual(CLASS_NEAR_CACHE_STATS, name, mt);
             } catch (NoSuchMethodException | IllegalAccessException e) {
                 throw new IllegalStateException(e);
             }
@@ -198,23 +208,10 @@ class HazelcastIMapAdapter {
 
     private static MethodHandle resolveIMapMethod(String name, MethodType mt) {
         try {
-            return MethodHandles.publicLookup()
-                    .findVirtual(resolveIMapImplementation(), name, mt);
+            return MethodHandles.publicLookup().findVirtual(CLASS_I_MAP, name, mt);
         } catch (NoSuchMethodException | IllegalAccessException e) {
             throw new IllegalStateException(e);
         }
-    }
-
-    private static Class<?> resolveIMapImplementation() {
-        return resolveOneOf("com.hazelcast.map.IMap", "com.hazelcast.core.IMap");
-    }
-
-    private static Class<?> resolveLocalMapStatsImplementation() {
-        return resolveOneOf("com.hazelcast.map.LocalMapStats", "com.hazelcast.monitor.LocalMapStats");
-    }
-
-    private static Class<?> resolveNearCacheStatsImplementation() {
-        return resolveOneOf("com.hazelcast.nearcache.NearCacheStats", "com.hazelcast.monitor.NearCacheStats");
     }
 
     private static Class<?> resolveOneOf(String class1, String class2) {

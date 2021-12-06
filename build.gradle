@@ -1,25 +1,25 @@
 buildscript {
-    repositories {
-        jcenter()
-        gradlePluginPortal()
-        maven {
-            url 'https://repo.spring.io/plugins-release'
-        }
-        mavenLocal()
+    dependencyLocking {
+        lockAllConfigurations()
     }
+
+    repositories {
+        mavenCentral()
+        gradlePluginPortal()
+    }
+
     dependencies {
-        classpath 'io.spring.gradle:spring-release-plugin:0.20.1'
-        classpath 'me.champeau.gradle:jmh-gradle-plugin:0.5.0'
-        classpath 'com.netflix.nebula:nebula-project-plugin:3.4.0'
-        classpath "io.spring.nohttp:nohttp-gradle:0.0.4.RELEASE"
+        classpath 'gradle.plugin.com.hierynomus.gradle.plugins:license-gradle-plugin:0.16.1'
+        classpath 'com.netflix.nebula:nebula-release-plugin:15.3.1'
+        classpath 'com.netflix.nebula:nebula-publishing-plugin:17.3.2'
+        classpath 'com.netflix.nebula:nebula-project-plugin:8.1.0'
+        classpath 'io.spring.nohttp:nohttp-gradle:0.0.10'
+        classpath 'org.gradle:test-retry-gradle-plugin:1.3.1'
+        classpath 'io.github.gradle-nexus:publish-plugin:1.1.0'
 
         constraints {
             classpath('org.ow2.asm:asm:7.3.1') {
                 because 'Supports modern JDKs'
-            }
-
-            classpath('org.jfrog.buildinfo:build-info-extractor-gradle:4.13.0') {
-                because 'Need recent version for Gradle 6+ compatibility'
             }
         }
     }
@@ -27,28 +27,34 @@ buildscript {
     configurations.classpath.resolutionStrategy.cacheDynamicVersionsFor 0, 'minutes'
 }
 
-apply plugin: 'io.spring.release'
+// TODO: remove this hack, see: https://github.com/nebula-plugins/nebula-release-plugin/issues/213
+def releaseStage = findProperty('release.stage')
+apply plugin: 'nebula.release'
+release.defaultVersionStrategy = nebula.plugin.release.git.opinion.Strategies.SNAPSHOT
 
+apply plugin: 'io.github.gradle-nexus.publish-plugin'
 apply from: 'dependencies.gradle'
 
 allprojects {
-    apply plugin: 'io.spring.license'
-
-    afterEvaluate { project ->
-        println "I'm configuring $project.name with version $project.version"
-    }
     group = 'io.micrometer'
+    ext.'release.stage' = releaseStage ?: 'SNAPSHOT'
+
+    afterEvaluate { project -> println "I'm configuring $project.name with version $project.version" }
 }
 
 subprojects {
+    apply plugin: 'signing'
+
     if (project.name != 'micrometer-bom') {
-        if (project.name.contains('samples')) {
+        if (project.name.contains('samples') || project.name.contains('benchmarks')) {
             apply plugin: 'java'
         } else {
             apply plugin: 'java-library'
         }
+        apply plugin: 'com.github.hierynomus.license'
         apply plugin: 'checkstyle'
         apply plugin: 'io.spring.nohttp'
+        apply plugin: 'org.gradle.test-retry'
 
         java {
             // It is more idiomatic to define different features for different sets of optional
@@ -67,7 +73,7 @@ subprojects {
         dependencies {
             // JSR-305 only used for non-required meta-annotations
             optionalApi "com.google.code.findbugs:jsr305:latest.release"
-            checkstyle("io.spring.javaformat:spring-javaformat-checkstyle:0.0.20")
+            checkstyle("io.spring.javaformat:spring-javaformat-checkstyle:latest.release")
         }
 
         tasks {
@@ -80,7 +86,7 @@ subprojects {
 
                 // ensure Java 8 baseline is enforced for main source
                 if (JavaVersion.current().isJava9Compatible()) {
-                    options.compilerArgs.addAll(['--release', '8'])
+                    options.release = 8
                 }
             }
             compileTestJava {
@@ -88,6 +94,39 @@ subprojects {
                 options.compilerArgs << '-Xlint:unchecked' << '-Xlint:deprecation'
                 sourceCompatibility = JavaVersion.VERSION_1_8
                 targetCompatibility = JavaVersion.VERSION_1_8
+            }
+
+            javadoc {
+                configure(options) {
+                    tags(
+                        'apiNote:a:API Note:',
+                        'implSpec:a:Implementation Requirements:',
+                        'implNote:a:Implementation Note:'
+                    )
+                }
+            }
+        }
+
+        normalization {
+            runtimeClasspath {
+                metaInf {
+                    [
+                        'Build-Date',
+                        'Built-By',
+                        'Built-OS',
+                        'Build-Host',
+                        'Build-Job',
+                        'Build-Number',
+                        'Build-Id',
+                        'Change',
+                        'Full-Change',
+                        'Branch',
+                        'Module-Origin'
+                    ].each {
+                        ignoreAttribute it
+                        ignoreProperty it
+                    }
+                }
             }
         }
 
@@ -98,6 +137,11 @@ subprojects {
 
             useJUnitPlatform {
                 excludeTags 'docker'
+            }
+
+            retry {
+                maxFailures = 5
+                maxRetries = 3
             }
         }
 
@@ -110,13 +154,28 @@ subprojects {
             }
         }
 
+        project.tasks.withType(Test) { Test testTask ->
+            testTask.testLogging.exceptionFormat = 'full'
+        }
+
         license {
+            header rootProject.file('gradle/licenseHeader.txt')
+            strictCheck true
+            mapping {
+                kt = 'JAVADOC_STYLE'
+            }
+            sourceSets = project.sourceSets
+
             ext.year = Calendar.getInstance().get(Calendar.YEAR)
             skipExistingHeaders = true
+            exclude '**/*.json' // comments not supported
         }
 
         // Publish resolved versions.
         plugins.withId('maven-publish') {
+            sourceCompatibility = JavaVersion.VERSION_1_8
+            targetCompatibility = JavaVersion.VERSION_1_8
+
             publishing {
                 publications {
                     nebula(MavenPublication) {
@@ -149,6 +208,30 @@ subprojects {
                     suppressAllPomMetadataWarnings()
                 }
             }
+            repositories {
+                maven {
+                    name = 'Snapshot'
+                    url = 'https://repo.spring.io/snapshot'
+                    credentials {
+                        username findProperty('SNAPSHOT_REPO_USER')
+                        password findProperty('SNAPSHOT_REPO_PASSWORD')
+                    }
+                }
+                maven {
+                    name = 'Milestone'
+                    url = 'https://repo.spring.io/milestone'
+                    credentials {
+                        username findProperty('MILESTONE_REPO_USER')
+                        password findProperty('MILESTONE_REPO_PASSWORD')
+                    }
+                }
+            }
+        }
+
+        signing {
+            required = System.env.CIRCLE_STAGE == 'deploy'
+            useInMemoryPgpKeys(findProperty('SIGNING_KEY'), findProperty('SIGNING_PASSWORD'))
+            sign publishing.publications.nebula
         }
 
         // Nebula doesn't interface with Gradle's module format so just disable it for now.
@@ -161,27 +244,43 @@ subprojects {
         lockAllConfigurations()
     }
 
-    task resolveAndLockAll {
+    tasks.register('resolveAndLockAll') {
+        description = 'Resolves dependencies of all configurations and writes them into the lock file.'
+        outputs.upToDateWhen { false }
         doFirst {
-            assert gradle.startParameter.writeDependencyLocks
+            assert gradle.startParameter.writeDependencyLocks || gradle.startParameter.lockedDependenciesToUpdate : 'Execute resolveAndLockAll --write-locks or --update-locks <dependencies>'
         }
         doLast {
-            def skip = ['annotationProcessor', 'apt', 'testAnnotationProcessor', 'checkstyle',
-                'shadow', 'testApt', 'archives', 'junitPlatform']
-            configurations.each {
-                if (it.canBeResolved && !skip.contains(it.name)) {
-                    it.resolve()
-                }
-            }
+            project.configurations.findAll { it.canBeResolved }*.resolve()
+        }
+    }
+
+    tasks.register('downloadDependencies') {
+        outputs.upToDateWhen { false }
+        doLast {
+            project.configurations.findAll { it.canBeResolved }*.files
         }
     }
 
     if(!['samples', 'benchmarks'].find{project.name.contains(it)}) {
-        apply plugin: 'io.spring.publishing'
+        apply plugin: 'nebula.maven-publish'
+        apply plugin: 'nebula.maven-manifest'
+        apply plugin: 'nebula.maven-developer'
+        apply plugin: 'nebula.javadoc-jar'
+        apply plugin: 'nebula.source-jar'
+        apply plugin: 'nebula.maven-apache-license'
+        apply plugin: 'nebula.publish-verification'
+        apply plugin: 'nebula.contacts'
+        apply plugin: 'nebula.info'
+        apply plugin: 'nebula.project'
 
         if (project.name != 'micrometer-bom') {
             jar {
                 manifest.attributes.put('Automatic-Module-Name', project.name.replace('-', '.'))
+                metaInf {
+                    from "$rootDir/LICENSE"
+                    from "$rootDir/NOTICE"
+                }
             }
         }
 
@@ -190,11 +289,6 @@ subprojects {
                 moniker 'Tommy Ludwig'
                 github 'shakuzen'
             }
-        }
-
-        if (project.extensions.findByName('bintray')) {
-            bintray.labels = ['micrometer', 'atlas', 'metrics', 'prometheus', 'spectator', 'influx', 'new-relic', 'signalfx', 'wavefront', 'elastic', 'dynatrace', 'azure-monitor', 'appoptics', 'kairos', 'stackdriver']
-            bintray.packageName = 'io.micrometer'
         }
     }
 
@@ -209,8 +303,19 @@ subprojects {
     if (check) project.rootProject.tasks.releaseCheck.dependsOn check
 }
 
+nexusPublishing {
+    repositories {
+        mavenCentral {
+            nexusUrl.set(uri('https://s01.oss.sonatype.org/service/local/'))
+            snapshotRepositoryUrl.set(uri('https://repo.spring.io/snapshot/')) // not used but necessary for the plugin
+            username = findProperty('MAVEN_CENTRAL_USER')
+            password = findProperty('MAVEN_CENTRAL_PASSWORD')
+        }
+    }
+}
+
 wrapper {
-    gradleVersion = '6.3'
+    gradleVersion = '7.3'
 }
 
 defaultTasks 'build'

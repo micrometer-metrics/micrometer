@@ -28,7 +28,7 @@ class StatsdGaugeTest {
 
     @Test
     void shouldAlwaysPublishValue() {
-        AtomicInteger lines = new AtomicInteger(0);
+        AtomicInteger lines = new AtomicInteger();
         MeterRegistry registry = StatsdMeterRegistry.builder(StatsdConfig.DEFAULT)
                 .lineSink(l -> lines.incrementAndGet())
                 .build();
@@ -44,7 +44,7 @@ class StatsdGaugeTest {
 
     @Test
     void shouldOnlyPublishValueWhenValueChanges() {
-        AtomicInteger lines = new AtomicInteger(0);
+        AtomicInteger lines = new AtomicInteger();
         MeterRegistry registry = StatsdMeterRegistry
                 .builder(new StatsdConfig() {
                     @Override

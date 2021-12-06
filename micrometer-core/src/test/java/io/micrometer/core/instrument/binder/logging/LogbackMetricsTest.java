@@ -40,17 +40,19 @@ import static org.assertj.core.api.Assertions.assertThat;
 class LogbackMetricsTest {
     private MeterRegistry registry = new SimpleMeterRegistry(SimpleConfig.DEFAULT, new MockClock());
     private Logger logger = (Logger) LoggerFactory.getLogger("foo");
-    private LogbackMetrics logbackMetrics;
-    
+    LogbackMetrics logbackMetrics;
+
     @BeforeEach
     void bindLogbackMetrics() {
         logbackMetrics = new LogbackMetrics();
         logbackMetrics.bindTo(registry);
     }
-    
+
     @AfterEach
-    void tearDown() {
-        logbackMetrics.close();
+    void closeLogbackMetrics() {
+        if (logbackMetrics != null) {
+            logbackMetrics.close();
+        }
     }
 
     @Test
@@ -77,12 +79,13 @@ class LogbackMetricsTest {
 
     @Issue("#411")
     @Test
-    void ignoringMetricsInsideCounters() {
+    void ignoringLogMetricsInsideCounters() {
         registry = new LoggingCounterMeterRegistry();
         try (LogbackMetrics logbackMetrics = new LogbackMetrics()) {
             logbackMetrics.bindTo(registry);
             registry.counter("my.counter").increment();
         }
+        assertThat(registry.get("logback.events").tags("level", "info").counter().count()).isZero();
     }
 
     @Issue("#421")
@@ -110,6 +113,22 @@ class LogbackMetricsTest {
         assertThat(loggerContext.getTurboFilterList()).hasSize(1);
         loggerContext.reset();
         assertThat(loggerContext.getTurboFilterList()).hasSize(1);
+    }
+
+    @Issue("#2270")
+    @Test
+    void resetIgnoreMetricsWhenRunnableThrows() {
+        Counter infoLogCounter = registry.get("logback.events").tag("level", "info").counter();
+        logger.info("hi");
+        assertThat(infoLogCounter.count()).isEqualTo(1);
+        try {
+            LogbackMetrics.ignoreMetrics(() -> {
+                throw new RuntimeException();
+            });
+        } catch (RuntimeException ignore) {
+        }
+        logger.info("hi");
+        assertThat(infoLogCounter.count()).isEqualTo(2);
     }
 
     @NonNullApi

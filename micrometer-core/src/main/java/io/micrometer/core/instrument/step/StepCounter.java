@@ -20,7 +20,7 @@ import io.micrometer.core.instrument.Clock;
 import io.micrometer.core.instrument.Counter;
 
 /**
- * Counter that reports a rate per second to a monitoring system. Note that {@link #count()}
+ * Counter that reports a rate per step interval to a monitoring system. Note that {@link #count()}
  * will report the number of events in the last complete interval rather than the total for
  * the life of the process.
  *

@@ -52,7 +52,6 @@ public class HistogramGauges {
                 percentile -> Tags.concat(id.getTagsAsIterable(), "phi", DoubleFormat.decimalOrNan(percentile.percentile())),
                 percentile -> percentile.value(baseTimeUnit),
                 bucket -> id.getName() + ".histogram",
-                // We look for Long.MAX_VALUE to ensure a sensible tag on our +Inf bucket
                 bucket -> Tags.concat(id.getTagsAsIterable(), "le", bucket.isPositiveInf()
                         ? "+Inf" : DoubleFormat.wholeOrDecimal(bucket.bucket(baseTimeUnit))));
     }
@@ -77,7 +76,6 @@ public class HistogramGauges {
                 percentile -> Tags.concat(id.getTagsAsIterable(), "phi", DoubleFormat.decimalOrNan(percentile.percentile())),
                 ValueAtPercentile::value,
                 bucket -> id.getName() + ".histogram",
-                // We look for Long.MAX_VALUE to ensure a sensible tag on our +Inf bucket
                 bucket -> Tags.concat(id.getTagsAsIterable(), "le", bucket.isPositiveInf()
                         ? "+Inf" : DoubleFormat.wholeOrDecimal(bucket.bucket())));
     }

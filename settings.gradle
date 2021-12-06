@@ -1,16 +1,38 @@
+pluginManagement {
+    repositories {
+        gradlePluginPortal()
+        maven { url 'https://repo.spring.io/release' }
+        maven { url "https://repo.spring.io/milestone" }
+    }
+}
+
+plugins {
+    id 'com.gradle.enterprise' version '3.7.1'
+    id 'io.spring.ge.conventions' version '0.0.8'
+}
+
 rootProject.name = 'micrometer'
+
+buildCache {
+    remote(HttpBuildCache) {
+        url = 'https://ge.micrometer.io/cache/'
+    }
+}
+gradleEnterprise {
+    server = 'https://ge.micrometer.io'
+}
 
 include 'micrometer-core'
 include 'micrometer-jersey2'
 
-['core', 'boot2', 'spring-integration', 'hazelcast', 'hazelcast3'].each { sample ->
+['core', 'boot2', 'boot2-reactive', 'spring-integration', 'hazelcast', 'hazelcast3', 'javalin', 'jersey3'].each { sample ->
     include "micrometer-samples-$sample"
     project(":micrometer-samples-$sample").projectDir = new File(rootProject.projectDir, "samples/micrometer-samples-$sample")
 }
 
 include 'micrometer-test'
 
-['atlas', 'prometheus', 'datadog', 'elastic', 'ganglia', 'graphite', 'jmx', 'influx', 'statsd', 'new-relic', 'cloudwatch', 'cloudwatch2', 'signalfx', 'wavefront', 'dynatrace', 'azure-monitor', 'humio', 'appoptics', 'kairos', 'stackdriver', 'opentsdb'].each { sys ->
+['atlas', 'prometheus', 'datadog', 'elastic', 'ganglia', 'graphite', 'health', 'jmx', 'influx', 'statsd', 'new-relic', 'cloudwatch', 'cloudwatch2', 'signalfx', 'wavefront', 'dynatrace', 'azure-monitor', 'humio', 'appoptics', 'kairos', 'stackdriver', 'opentsdb'].each { sys ->
     include "micrometer-registry-$sys"
     project(":micrometer-registry-$sys").projectDir = new File(rootProject.projectDir, "implementations/micrometer-registry-$sys")
 }

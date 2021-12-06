@@ -28,7 +28,9 @@ import static java.util.Objects.requireNonNull;
  * {@link RequestEventListener} for instrumenting Jersey server requests.
  *
  * @author Michael Weirauch
+ * @deprecated use {@link io.micrometer.core.instrument.binder.jersey.server.MetricsApplicationEventListener} in micrometer-core instead.
  */
+@Deprecated
 public class MetricsApplicationEventListener implements ApplicationEventListener {
 
     private final MeterRegistry meterRegistry;

@@ -18,12 +18,10 @@ package io.micrometer.influx;
 import io.micrometer.core.instrument.*;
 import io.micrometer.core.instrument.Timer;
 import io.micrometer.core.instrument.step.StepMeterRegistry;
-import io.micrometer.core.instrument.util.DoubleFormat;
-import io.micrometer.core.instrument.util.NamedThreadFactory;
-import io.micrometer.core.instrument.util.StringUtils;
-import io.micrometer.core.instrument.util.TimeUtils;
+import io.micrometer.core.instrument.util.*;
 import io.micrometer.core.ipc.http.HttpSender;
 import io.micrometer.core.ipc.http.HttpUrlConnectionSender;
+import io.micrometer.core.lang.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -34,7 +32,6 @@ import java.util.concurrent.ThreadFactory;
 import java.util.concurrent.TimeUnit;
 import java.util.function.Function;
 import java.util.function.Predicate;
-import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 import static java.util.Collections.emptySet;
@@ -42,6 +39,7 @@ import static java.util.stream.Collectors.joining;
 
 /**
  * {@link MeterRegistry} for InfluxDB.
+ * Since Micrometer 1.7, this supports InfluxDB v2 and v1.
  *
  * @author Jon Schneider
  * @author Johnny Lim
@@ -81,12 +79,20 @@ public class InfluxMeterRegistry extends StepMeterRegistry {
         start(threadFactory);
     }
 
+    @Override
+    public void start(ThreadFactory threadFactory) {
+        super.start(threadFactory);
+        if (config.enabled()) {
+            logger.info("Using InfluxDB API version {} to write metrics", config.apiVersion());
+        }
+    }
+
     public static Builder builder(InfluxConfig config) {
         return new Builder(config);
     }
 
     private void createDatabaseIfNecessary() {
-        if (!config.autoCreateDb() || databaseExists)
+        if (!config.autoCreateDb() || databaseExists || config.apiVersion() == InfluxApiVersion.V2)
             return;
 
         try {
@@ -95,9 +101,12 @@ public class InfluxMeterRegistry extends StepMeterRegistry {
                     .setRetentionReplicationFactor(config.retentionReplicationFactor())
                     .setRetentionShardDuration(config.retentionShardDuration()).build();
 
-            httpClient
+            HttpSender.Request.Builder requestBuilder = httpClient
                     .post(config.uri() + "/query?q=" + URLEncoder.encode(createDatabaseQuery, "UTF-8"))
-                    .withBasicAuthentication(config.userName(), config.password())
+                    .withBasicAuthentication(config.userName(), config.password());
+            config.apiVersion().addHeaderToken(config, requestBuilder);
+
+            requestBuilder
                     .send()
                     .onSuccess(response -> {
                         logger.debug("influx database {} is ready to receive metrics", config.db());
@@ -114,13 +123,10 @@ public class InfluxMeterRegistry extends StepMeterRegistry {
         createDatabaseIfNecessary();
 
         try {
-            String influxEndpoint = config.uri() + "/write?consistency=" + config.consistency().toString().toLowerCase() + "&precision=ms&db=" + config.db();
-            if (StringUtils.isNotBlank(config.retentionPolicy())) {
-                influxEndpoint += "&rp=" + config.retentionPolicy();
-            }
+            String influxEndpoint = config.apiVersion().writeEndpoint(config);
 
             if (prefixes == null || prefixes.isEmpty()) {
-                logger.info("prefixes are empty");
+                logger.debug("prefixes are empty");
                 publishMetrics(influxEndpoint, getMeters());
             } else {
                 splitAndPublishMetrics(influxEndpoint);
@@ -150,6 +156,7 @@ public class InfluxMeterRegistry extends StepMeterRegistry {
     }
 
     // VisibleForTesting
+    @Nullable
     MeterKey createKeyIfMatched(Meter meter) {
         if (meter instanceof Gauge || meter instanceof Counter || meter instanceof FunctionCounter) {
             final Meter.Id meterId = meter.getId();
@@ -168,7 +175,7 @@ public class InfluxMeterRegistry extends StepMeterRegistry {
 
     private void publishMetrics(String influxEndpoint, List<Meter> meters) throws Throwable {
         logger.debug("publish meters without prefixes");
-        for (List<Meter> batch : InfluxMeterPartition.partition(meters, config.batchSize())) {
+        for (List<Meter> batch : new MeterPartition(meters, config.batchSize())) {
             publishMetrics(influxEndpoint, batch.size(), batch.stream()
                     .flatMap(m -> m.match(
                             gauge -> writeGauge(gauge.getId(), gauge.value()),
@@ -186,7 +193,7 @@ public class InfluxMeterRegistry extends StepMeterRegistry {
 
     private void publishMetrics(String influxEndpoint, Map<MeterKey, List<Meter>> metersMap) throws Throwable {
         logger.debug("publish meters with prefixes");
-        for (List<MeterKey> batch : InfluxMeterPartition.partition(metersMap.keySet().stream().collect(Collectors.toList()), config.batchSize())) {
+        for (List<MeterKey> batch : InfluxMeterPartition.partition(new ArrayList<>(metersMap.keySet()), config.batchSize())) {
             publishMetrics(influxEndpoint, batch.size(), batch.stream()
                     .flatMap(k -> writeMetersAsSingleMultiFieldLine(metersMap.get(k),
                             meter -> match(meter,
@@ -201,8 +208,11 @@ public class InfluxMeterRegistry extends StepMeterRegistry {
 
     private void publishMetrics(String influxEndpoint, int metersCount, String content) throws Throwable {
         logger.debug("send to InfluxDB metrics: {}", content);
-        httpClient.post(influxEndpoint)
-                .withBasicAuthentication(config.userName(), config.password())
+        HttpSender.Request.Builder requestBuilder = httpClient
+                .post(influxEndpoint)
+                .withBasicAuthentication(config.userName(), config.password());
+        config.apiVersion().addHeaderToken(config, requestBuilder);
+        requestBuilder
                 .withPlainText(content)
                 .compressWhen(config::compressed)
                 .send()
@@ -256,7 +266,7 @@ public class InfluxMeterRegistry extends StepMeterRegistry {
             return visitGauge.apply((Gauge) meter);
         } else if (meter instanceof FunctionCounter) {
             return visitFunctionCounter.apply((FunctionCounter) meter);
-        }  else {
+        } else {
             return visitCounter.apply((Counter) meter);
         }
     }
@@ -289,7 +299,7 @@ public class InfluxMeterRegistry extends StepMeterRegistry {
         if (fields.isEmpty()) {
             return Stream.empty();
         }
-        final Meter.Id id = meters.get(0).getId();//get first from list, because all have the same tags
+        final Meter.Id id = meters.get(0).getId(); //get first from list, because all have the same tags
         return Stream.of(influxLineProtocol(id, id.getType().name().toLowerCase(), fields.stream(), meterName));
     }
 
@@ -305,14 +315,20 @@ public class InfluxMeterRegistry extends StepMeterRegistry {
         return new Field(fieldKey, value);
     }
 
-    private Stream<String> writeFunctionTimer(FunctionTimer timer) {
-        Stream<Field> fields = Stream.of(
-                new Field("sum", timer.totalTime(getBaseTimeUnit())),
-                new Field("count", timer.count()),
-                new Field("mean", timer.mean(getBaseTimeUnit()))
-        );
-
-        return Stream.of(influxLineProtocol(timer.getId(), "histogram", fields));
+    // VisibleForTesting
+    Stream<String> writeFunctionTimer(FunctionTimer timer) {
+        double sum = timer.totalTime(getBaseTimeUnit());
+        if (Double.isFinite(sum)) {
+            Stream.Builder<Field> builder = Stream.builder();
+            builder.add(new Field("sum", sum));
+            builder.add(new Field("count", timer.count()));
+            double mean = timer.mean(getBaseTimeUnit());
+            if (Double.isFinite(mean)) {
+                builder.add(new Field("mean", mean));
+            }
+            return Stream.of(influxLineProtocol(timer.getId(), "histogram", builder.build()));
+        }
+        return Stream.empty();
     }
 
     private Stream<String> writeTimer(Timer timer) {

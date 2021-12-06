@@ -26,7 +26,6 @@ import org.apache.catalina.Manager;
 import javax.management.*;
 import java.lang.management.ManagementFactory;
 import java.util.Collections;
-import java.util.Comparator;
 import java.util.List;
 import java.util.Set;
 import java.util.concurrent.Callable;
@@ -71,6 +70,10 @@ public class TomcatMetrics implements MeterBinder, AutoCloseable {
         this.manager = manager;
         this.tags = tags;
         this.mBeanServer = mBeanServer;
+
+        if (manager != null) {
+            this.jmxDomain = manager.getContext().getDomain();
+        }
     }
 
     public static void monitor(MeterRegistry registry, @Nullable Manager manager, String... tags) {
@@ -135,7 +138,7 @@ public class TomcatMetrics implements MeterBinder, AutoCloseable {
     }
 
     private void registerThreadPoolMetrics(MeterRegistry registry) {
-        registerMetricsEventually("type", "ThreadPool", (name, allTags) -> {
+        registerMetricsEventually(":type=ThreadPool,name=*", (name, allTags) -> {
             Gauge.builder("tomcat.threads.config.max", mBeanServer,
                     s -> safeDouble(() -> s.getAttribute(name, "maxThreads")))
                     .tags(allTags)
@@ -153,11 +156,29 @@ public class TomcatMetrics implements MeterBinder, AutoCloseable {
                     .tags(allTags)
                     .baseUnit(BaseUnits.THREADS)
                     .register(registry);
+
+            Gauge.builder("tomcat.connections.current", mBeanServer,
+                    s -> safeDouble(() -> s.getAttribute(name, "connectionCount")))
+                    .tags(allTags)
+                    .baseUnit(BaseUnits.CONNECTIONS)
+                    .register(registry);
+
+            Gauge.builder("tomcat.connections.keepalive.current", mBeanServer,
+                    s -> safeDouble(() -> s.getAttribute(name, "keepAliveCount")))
+                    .tags(allTags)
+                    .baseUnit(BaseUnits.CONNECTIONS)
+                    .register(registry);
+
+            Gauge.builder("tomcat.connections.config.max", mBeanServer,
+                    s -> safeDouble(() -> s.getAttribute(name, "maxConnections")))
+                    .tags(allTags)
+                    .baseUnit(BaseUnits.CONNECTIONS)
+                    .register(registry);
         });
     }
 
     private void registerCacheMetrics(MeterRegistry registry) {
-        registerMetricsEventually("type", "StringCache", (name, allTags) -> {
+        registerMetricsEventually(":type=StringCache", (name, allTags) -> {
             FunctionCounter.builder("tomcat.cache.access", mBeanServer,
                     s -> safeDouble(() -> s.getAttribute(name, "accessCount")))
                     .tags(allTags)
@@ -167,11 +188,11 @@ public class TomcatMetrics implements MeterBinder, AutoCloseable {
                     s -> safeDouble(() -> s.getAttribute(name, "hitCount")))
                     .tags(allTags)
                     .register(registry);
-        }, false);
+        });
     }
 
     private void registerServletMetrics(MeterRegistry registry) {
-        registerMetricsEventually("j2eeType", "Servlet", (name, allTags) -> {
+        registerMetricsEventually(":j2eeType=Servlet,name=*,*", (name, allTags) -> {
             FunctionCounter.builder("tomcat.servlet.error", mBeanServer,
                     s -> safeDouble(() -> s.getAttribute(name, "errorCount")))
                     .tags(allTags)
@@ -191,7 +212,7 @@ public class TomcatMetrics implements MeterBinder, AutoCloseable {
     }
 
     private void registerGlobalRequestMetrics(MeterRegistry registry) {
-        registerMetricsEventually("type", "GlobalRequestProcessor", (name, allTags) -> {
+        registerMetricsEventually(":type=GlobalRequestProcessor,name=*", (name, allTags) -> {
             FunctionCounter.builder("tomcat.global.sent", mBeanServer,
                 s -> safeDouble(() -> s.getAttribute(name, "bytesSent")))
                 .tags(allTags)
@@ -222,28 +243,17 @@ public class TomcatMetrics implements MeterBinder, AutoCloseable {
         });
     }
 
-    private void registerMetricsEventually(String key, String value, BiConsumer<ObjectName, Iterable<Tag>> perObject) {
-        registerMetricsEventually(key, value, perObject, true);
-    }
-
     /**
-     * If the MBean already exists, register metrics immediately. Otherwise register an MBean registration listener
-     * with the MBeanServer and register metrics when/if the MBean becomes available.
+     * If the Tomcat MBeans already exist, register metrics immediately. Otherwise register an MBean registration listener
+     * with the MBeanServer and register metrics when/if the MBeans becomes available.
      */
-    private void registerMetricsEventually(String key, String value, BiConsumer<ObjectName, Iterable<Tag>> perObject, boolean hasName) {
+    private void registerMetricsEventually(String namePatternSuffix, BiConsumer<ObjectName, Iterable<Tag>> perObject) {
         if (getJmxDomain() != null) {
-            try {
-                String name = getJmxDomain() + ":" + key + "=" + value + (hasName ? ",name=*,*" : "");
-                Set<ObjectName> objectNames = this.mBeanServer.queryNames(new ObjectName(name), null);
-                if (!objectNames.isEmpty()) {
-                    // MBean is present, so we can register metrics now.
-                    objectNames.stream().sorted(Comparator.reverseOrder()).findFirst()
-                            .ifPresent(objectName -> perObject.accept(objectName, Tags.concat(tags, nameTag(objectName))));
-                    return;
-                }
-            } catch (MalformedObjectNameException e) {
-                // should never happen
-                throw new RuntimeException("Error registering Tomcat JMX based metrics", e);
+            Set<ObjectName> objectNames = this.mBeanServer.queryNames(getNamePattern(namePatternSuffix), null);
+            if (!objectNames.isEmpty()) {
+                // MBeans are present, so we can register metrics now.
+                objectNames.forEach(objectName -> perObject.accept(objectName, Tags.concat(tags, nameTag(objectName))));
+                return;
             }
         }
 
@@ -255,6 +265,10 @@ public class TomcatMetrics implements MeterBinder, AutoCloseable {
                 MBeanServerNotification mBeanServerNotification = (MBeanServerNotification) notification;
                 ObjectName objectName = mBeanServerNotification.getMBeanName();
                 perObject.accept(objectName, Tags.concat(tags, nameTag(objectName)));
+                if (getNamePattern(namePatternSuffix).isPattern()) {
+                    // patterns can match multiple MBeans so don't remove listener
+                    return;
+                }
                 try {
                     mBeanServer.removeNotificationListener(MBeanServerDelegate.DELEGATE_NAME, this);
                     notificationListeners.remove(this);
@@ -272,7 +286,7 @@ public class TomcatMetrics implements MeterBinder, AutoCloseable {
 
             // we can safely downcast now
             ObjectName objectName = ((MBeanServerNotification) notification).getMBeanName();
-            return objectName.getDomain().equals(getJmxDomain()) && objectName.getKeyProperty(key).equals(value);
+            return getNamePattern(namePatternSuffix).apply(objectName);
         };
 
         try {
@@ -280,6 +294,15 @@ public class TomcatMetrics implements MeterBinder, AutoCloseable {
         } catch (InstanceNotFoundException e) {
             // should never happen
             throw new RuntimeException("Error registering MBean listener", e);
+        }
+    }
+
+    private ObjectName getNamePattern(String namePatternSuffix) {
+        try {
+            return new ObjectName(getJmxDomain() + namePatternSuffix);
+        } catch (MalformedObjectNameException e) {
+            // should never happen
+            throw new RuntimeException("Error registering Tomcat JMX based metrics", e);
         }
     }
 

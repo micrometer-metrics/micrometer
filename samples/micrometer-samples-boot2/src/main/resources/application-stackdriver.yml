@@ -18,4 +18,3 @@ management.metrics.export.stackdriver:
   enabled: true
   step: 10s
   project-id: projectid
-  service-account-credentials: file:///Users/me/Downloads/my-creds.json

@@ -32,7 +32,6 @@ import org.eclipse.jetty.server.ServerConnector;
 import org.eclipse.jetty.util.component.AbstractLifeCycle;
 import org.eclipse.jetty.util.component.LifeCycle;
 import org.junit.jupiter.api.AfterEach;
-import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
 import java.util.concurrent.CountDownLatch;
@@ -47,7 +46,6 @@ class JettyConnectionMetricsTest {
     private ServerConnector connector = new ServerConnector(server);
     private CloseableHttpClient client = HttpClients.createDefault();
 
-    @BeforeEach
     void setup() throws Exception {
         connector.addBean(new JettyConnectionMetrics(registry));
         server.setConnectors(new Connector[]{connector});
@@ -63,6 +61,7 @@ class JettyConnectionMetricsTest {
 
     @Test
     void contributesServerConnectorMetrics() throws Exception {
+        setup();
         HttpPost post = new HttpPost("http://localhost:" + connector.getLocalPort());
         post.setEntity(new StringEntity("123456"));
 
@@ -92,6 +91,7 @@ class JettyConnectionMetricsTest {
 
     @Test
     void contributesClientConnectorMetrics() throws Exception {
+        setup();
         HttpClient httpClient = new HttpClient();
         httpClient.setFollowRedirects(false);
         httpClient.addBean(new JettyConnectionMetrics(registry));
@@ -116,5 +116,22 @@ class JettyConnectionMetricsTest {
         assertThat(registry.get("jetty.connections.request").tag("type", "client").timer().count())
                 .isEqualTo(1);
         assertThat(registry.get("jetty.connections.bytes.out").summary().totalAmount()).isGreaterThan(1);
+    }
+
+    @Test
+    void passingConnectorAddsConnectorNameTag() {
+        new JettyConnectionMetrics(registry, connector);
+
+        assertThat(registry.get("jetty.connections.messages.in").counter().getId().getTag("connector.name"))
+                .isEqualTo("unnamed");
+    }
+
+    @Test
+    void namedConnectorsGetTaggedWithName() {
+        connector.setName("super-fast-connector");
+        new JettyConnectionMetrics(registry, connector);
+
+        assertThat(registry.get("jetty.connections.messages.in").counter().getId().getTag("connector.name"))
+                .isEqualTo("super-fast-connector");
     }
 }

@@ -3,7 +3,7 @@ dependencies {
 
     api 'com.google.cloud:google-cloud-monitoring'
     implementation 'org.slf4j:slf4j-api'
-    implementation 'ch.qos.logback:logback-classic'
+    compileOnly 'ch.qos.logback:logback-classic'
 
     testImplementation project(':micrometer-test')
 }

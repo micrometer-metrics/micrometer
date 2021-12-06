@@ -61,6 +61,12 @@ class SearchTest {
     }
 
     @Test
+    void allMetersWithTagByPredicate() {
+        assertThat(Search.in(registry).tag("k", v -> v.equals("v")).meters()).hasSize(3);
+        assertThat(Search.in(registry).tag("k2", v -> v.equals("v")).meters()).isEmpty();
+    }
+
+    @Test
     void allMetersWithTagKey() {
         assertThat(Search.in(registry).tagKeys("k", "k2").counter()).isNotNull();
     }

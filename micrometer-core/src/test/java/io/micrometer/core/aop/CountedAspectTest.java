@@ -20,10 +20,12 @@ import io.micrometer.core.instrument.Counter;
 import io.micrometer.core.instrument.MeterRegistry;
 import io.micrometer.core.instrument.search.MeterNotFoundException;
 import io.micrometer.core.instrument.simple.SimpleMeterRegistry;
+import org.aspectj.lang.ProceedingJoinPoint;
 import org.junit.jupiter.api.Test;
 import org.springframework.aop.aspectj.annotation.AspectJProxyFactory;
 
 import java.util.concurrent.CompletableFuture;
+import java.util.function.Predicate;
 
 import static java.util.concurrent.CompletableFuture.supplyAsync;
 import static org.assertj.core.api.Assertions.assertThat;
@@ -60,6 +62,18 @@ class CountedAspectTest {
 
         assertThat(counter.count()).isOne();
         assertThat(counter.getId().getDescription()).isNull();
+    }
+
+    @Test
+    void countedWithSkipPredicate() {
+        CountedService countedService = getAdvisedService(
+                new CountedService(),
+                new CountedAspect(meterRegistry, (Predicate<ProceedingJoinPoint>) proceedingJoinPoint -> true)
+        );
+
+        countedService.succeedWithMetrics();
+
+        assertThat(meterRegistry.find("metric.success").counter()).isNull();
     }
 
     @Test
@@ -204,8 +218,12 @@ class CountedAspectTest {
     }
 
     private <T> T getAdvisedService(T countedService) {
+        return getAdvisedService(countedService, new CountedAspect(meterRegistry));
+    }
+
+    private <T> T getAdvisedService(T countedService, CountedAspect countedAspect) {
         AspectJProxyFactory proxyFactory = new AspectJProxyFactory(countedService);
-        proxyFactory.addAspect(new CountedAspect(meterRegistry));
+        proxyFactory.addAspect(countedAspect);
         return proxyFactory.getProxy();
     }
 

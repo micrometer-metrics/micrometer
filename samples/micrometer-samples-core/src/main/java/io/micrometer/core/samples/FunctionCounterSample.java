@@ -28,7 +28,7 @@ public class FunctionCounterSample {
     public static void main(String[] args) {
         MeterRegistry registry = SampleConfig.myMonitoringSystem();
 
-        AtomicInteger n = new AtomicInteger(0);
+        AtomicInteger n = new AtomicInteger();
 
         FunctionCounter.builder("my.fcounter", n, AtomicInteger::get)
             .baseUnit("happiness")

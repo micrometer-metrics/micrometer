@@ -32,7 +32,7 @@ abstract class AbstractCacheMetricsTest {
     /**
      * Verifies base metrics presence
      */
-    protected void verifyCommonCacheMetrics(MeterRegistry meterRegistry, CacheMeterBinder meterBinder) {
+    protected void verifyCommonCacheMetrics(MeterRegistry meterRegistry, CacheMeterBinder<?> meterBinder) {
         meterRegistry.get("cache.puts").tags(expectedTag).functionCounter();
         meterRegistry.get("cache.gets").tags(expectedTag).tag("result", "hit").functionCounter();
 

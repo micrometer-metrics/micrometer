@@ -40,9 +40,10 @@ import java.util.List;
  */
 @NonNullApi
 @NonNullFields
-public class JCacheMetrics extends CacheMeterBinder {
+public class JCacheMetrics<K, V, C extends Cache<K, V>> extends CacheMeterBinder<C> {
+    // VisibleForTesting
     @Nullable
-    private ObjectName objectName;
+    ObjectName objectName;
 
     /**
      * Record metrics on a JCache cache.
@@ -71,11 +72,11 @@ public class JCacheMetrics extends CacheMeterBinder {
      * @return The instrumented cache, unchanged. The original cache is not wrapped or proxied in any way.
      */
     public static <K, V, C extends Cache<K, V>> C monitor(MeterRegistry registry, C cache, Iterable<Tag> tags) {
-        new JCacheMetrics(cache, tags).bindTo(registry);
+        new JCacheMetrics<>(cache, tags).bindTo(registry);
         return cache;
     }
 
-    public JCacheMetrics(Cache<?, ?> cache, Iterable<Tag> tags) {
+    public JCacheMetrics(C cache, Iterable<Tag> tags) {
         super(cache, cache.getName(), tags);
         try {
             CacheManager cacheManager = cache.getCacheManager();

@@ -112,4 +112,74 @@ class GraphiteMeterRegistryTest {
         assertTrue(receiveLatch.await(10, TimeUnit.SECONDS), "line was received");
         server.dispose();
     }
+
+
+    /**
+     * The Dropwizard Graphite Reporter Appends metric attributes to the label (min, max, p95, etc).
+     * This test ensures that they are sent as a separate `metricattribute` tag instead of appending it to an existing tag value
+     * See  https://github.com/micrometer-metrics/micrometer/issues/2069
+     */
+    @Test
+        //
+        //We need to make sure that it is included as a separate tag instead of
+    void taggedMetrics() throws InterruptedException {
+        final CountDownLatch receiveLatch = new CountDownLatch(1);
+
+        final GraphiteMeterRegistry registry = new GraphiteMeterRegistry(new GraphiteConfig() {
+            @Override
+            @Nullable
+            public String get(String key) {
+                return null;
+            }
+
+            @Override
+            public boolean graphiteTagsEnabled() {
+                return true;
+            }
+
+            @Override
+            public Duration step() {
+                return Duration.ofSeconds(1);
+            }
+
+            @Override
+            public GraphiteProtocol protocol() {
+                return GraphiteProtocol.UDP;
+            }
+
+            @Override
+            public int port() {
+                return PORT;
+            }
+
+            @Override
+            public String[] tagsAsPrefix() {
+                return new String[] {};
+            }
+        }, mockClock);
+
+        Connection server = UdpServer.create()
+                .option(ChannelOption.SO_REUSEADDR, true)
+                .host("localhost")
+                .port(PORT)
+                .handle((in, out) -> {
+                    in.receive()
+                            .asString()
+                            .subscribe(line -> {
+                                assertThat(line).startsWith("my.timer;key=value;metricattribute=max ");
+                                receiveLatch.countDown();
+                            });
+                    return Flux.never();
+                })
+                .bind()
+                .doOnSuccess(v -> {
+                    registry.timer("my.timer", "key", "value")
+                            .record(1, TimeUnit.MILLISECONDS);
+                    registry.close();
+                })
+                .block(Duration.ofSeconds(10));
+
+        assertTrue(receiveLatch.await(10, TimeUnit.SECONDS), "line was received");
+        server.dispose();
+    }
 }

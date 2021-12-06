@@ -15,20 +15,24 @@
  */
 package io.micrometer.core.instrument.binder.jvm;
 
+import io.micrometer.core.Issue;
 import io.micrometer.core.instrument.MeterRegistry;
 import io.micrometer.core.instrument.MockClock;
 import io.micrometer.core.instrument.Tag;
 import io.micrometer.core.instrument.Tags;
+import io.micrometer.core.instrument.search.MeterNotFoundException;
 import io.micrometer.core.instrument.simple.SimpleConfig;
 import io.micrometer.core.instrument.simple.SimpleMeterRegistry;
-import io.micrometer.core.lang.Nullable;
 import org.junit.jupiter.api.DisplayName;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.condition.DisabledForJreRange;
+import org.junit.jupiter.api.condition.JRE;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.CsvSource;
 
 import java.util.concurrent.*;
 
-import static org.assertj.core.api.AssertionsForClassTypes.assertThat;
+import static org.assertj.core.api.AssertionsForClassTypes.*;
 
 /**
  * Tests for {@link ExecutorServiceMetrics}.
@@ -44,7 +48,7 @@ class ExecutorServiceMetricsTest {
 
     @DisplayName("Normal executor can be instrumented after being initialized")
     @ParameterizedTest
-    @CsvSource({ "custom,custom.", "custom.,custom." , ",''", "' ',''" })
+    @CsvSource({ "custom,custom.", "custom.,custom.", ",''", "' ',''" })
     void executor(String metricPrefix, String expectedMetricPrefix) throws InterruptedException {
         CountDownLatch lock = new CountDownLatch(1);
         Executor exec = r -> {
@@ -63,7 +67,7 @@ class ExecutorServiceMetricsTest {
 
     @DisplayName("ExecutorService is casted from Executor when necessary")
     @ParameterizedTest
-    @CsvSource({ "custom,custom.", "custom.,custom." , ",''", "' ',''" })
+    @CsvSource({ "custom,custom.", "custom.,custom.", ",''", "' ',''" })
     void executorCasting(String metricPrefix, String expectedMetricPrefix) {
         Executor exec = Executors.newFixedThreadPool(2);
         monitorExecutorService("exec", metricPrefix, exec);
@@ -72,7 +76,7 @@ class ExecutorServiceMetricsTest {
 
     @DisplayName("thread pool executor can be instrumented after being initialized")
     @ParameterizedTest
-    @CsvSource({ "custom,custom.", "custom.,custom." , ",''", "' ',''" })
+    @CsvSource({ "custom,custom.", "custom.,custom.", ",''", "' ',''" })
     void threadPoolExecutor(String metricPrefix, String expectedMetricPrefix) {
         ExecutorService exec = Executors.newFixedThreadPool(2);
         monitorExecutorService("exec", metricPrefix, exec);
@@ -81,7 +85,7 @@ class ExecutorServiceMetricsTest {
 
     @DisplayName("Scheduled thread pool executor can be instrumented after being initialized")
     @ParameterizedTest
-    @CsvSource({ "custom,custom.", "custom.,custom." , ",''", "' ',''" })
+    @CsvSource({ "custom,custom.", "custom.,custom.", ",''", "' ',''" })
     void scheduledThreadPoolExecutor(String metricPrefix, String expectedMetricPrefix) {
         ScheduledExecutorService exec = Executors.newScheduledThreadPool(2);
         monitorExecutorService("exec", metricPrefix, exec);
@@ -90,7 +94,7 @@ class ExecutorServiceMetricsTest {
 
     @DisplayName("ScheduledExecutorService is casted from Executor when necessary")
     @ParameterizedTest
-    @CsvSource({ "custom,custom.", "custom.,custom." , ",''", "' ',''" })
+    @CsvSource({ "custom,custom.", "custom.,custom.", ",''", "' ',''" })
     void scheduledThreadPoolExecutorAsExecutor(String metricPrefix, String expectedMetricPrefix) {
         Executor exec = Executors.newScheduledThreadPool(2);
         monitorExecutorService("exec", metricPrefix, exec);
@@ -99,7 +103,7 @@ class ExecutorServiceMetricsTest {
 
     @DisplayName("ScheduledExecutorService is casted from ExecutorService when necessary")
     @ParameterizedTest
-    @CsvSource({ "custom,custom.", "custom.,custom." , ",''", "' ',''" })
+    @CsvSource({ "custom,custom.", "custom.,custom.", ",''", "' ',''" })
     void scheduledThreadPoolExecutorAsExecutorService(String metricPrefix, String expectedMetricPrefix) {
         ExecutorService exec = Executors.newScheduledThreadPool(2);
         monitorExecutorService("exec", metricPrefix, exec);
@@ -107,8 +111,9 @@ class ExecutorServiceMetricsTest {
     }
 
     @DisplayName("ExecutorService can be monitored with a default set of metrics")
+    @DisabledForJreRange(min = JRE.JAVA_16, disabledReason = "See gh-2317 for why we can't run this full test on Java 16+")
     @ParameterizedTest
-    @CsvSource({ "custom,custom.", "custom.,custom." , ",''", "' ',''" })
+    @CsvSource({ "custom,custom.", "custom.,custom.", ",''", "' ',''" })
     void monitorExecutorService(String metricPrefix, String expectedMetricPrefix) throws InterruptedException {
         ExecutorService pool = monitorExecutorService("beep.pool", metricPrefix,
                                                       Executors.newSingleThreadExecutor());
@@ -138,9 +143,17 @@ class ExecutorServiceMetricsTest {
         assertThat(registry.get(expectedMetricPrefix + "executor.queued").tags(userTags).gauge().value()).isEqualTo(0.0);
     }
 
+    @DisplayName("No exception thrown trying to monitor Executors private class")
+    @Test
+    @Issue("#2447") // Note: only reproduces on Java 16+ or with --illegal-access=deny
+    void monitorExecutorsExecutorServicePrivateClass() {
+        assertThatCode(() -> ExecutorServiceMetrics.monitor(registry, Executors.newSingleThreadExecutor(), ""))
+                .doesNotThrowAnyException();
+    }
+
     @DisplayName("ScheduledExecutorService can be monitored with a default set of metrics")
     @ParameterizedTest
-    @CsvSource({ "custom,custom.", "custom.,custom." , ",''", "' ',''" })
+    @CsvSource({ "custom,custom.", "custom.,custom.", ",''", "' ',''" })
     void monitorScheduledExecutorService(String metricPrefix, String expectedMetricPrefix)
             throws TimeoutException, ExecutionException, InterruptedException {
         ScheduledExecutorService pool = monitorExecutorService("scheduled.pool", metricPrefix,
@@ -169,9 +182,8 @@ class ExecutorServiceMetricsTest {
         };
         ScheduledFuture<?> runnableResult = pool.schedule(scheduledBeepRunnable, 15, TimeUnit.MILLISECONDS);
 
-        assertThat(registry.get(expectedMetricPrefix + "executor.scheduled.once").tags(userTags).tag("name",
-                                                                                             "scheduled.pool")
-                           .counter().count()).isEqualTo(2);
+        assertThat(registry.get(expectedMetricPrefix + "executor.scheduled.once")
+                .tags(userTags).tag("name", "scheduled.pool").counter().count()).isEqualTo(2);
 
         assertThat(callableTaskStart.await(1, TimeUnit.SECONDS)).isTrue();
         assertThat(runnableTaskStart.await(1, TimeUnit.SECONDS)).isTrue();
@@ -191,7 +203,7 @@ class ExecutorServiceMetricsTest {
 
     @DisplayName("ScheduledExecutorService repetitive tasks can be monitored with a default set of metrics")
     @ParameterizedTest
-    @CsvSource({ "custom,custom.", "custom.,custom." , ",''", "' ',''" })
+    @CsvSource({ "custom,custom.", "custom.,custom.", ",''", "' ',''" })
     void monitorScheduledExecutorServiceWithRepetitiveTasks(String metricPrefix, String expectedMetricPrefix) throws InterruptedException {
         ScheduledExecutorService pool = monitorExecutorService("scheduled.pool", metricPrefix,
                                                                Executors.newScheduledThreadPool(1));
@@ -240,7 +252,7 @@ class ExecutorServiceMetricsTest {
         }
     }
 
-    private void assertThreadPoolExecutorMetrics(String executorName, @Nullable String metricPrefix) {
+    private void assertThreadPoolExecutorMetrics(String executorName, String metricPrefix) {
         registry.get(metricPrefix + "executor.completed").tags(userTags).tag("name", executorName).meter();
         registry.get(metricPrefix + "executor.queued").tags(userTags).tag("name", executorName).gauge();
         registry.get(metricPrefix + "executor.queue.remaining").tags(userTags).tag("name", executorName).gauge();
@@ -251,4 +263,29 @@ class ExecutorServiceMetricsTest {
         registry.get(metricPrefix + "executor.idle").tags(userTags).tag("name", executorName).timer();
         registry.get(metricPrefix + "executor").tags(userTags).tag("name", executorName).timer();
     }
+
+    @Test
+    void newSingleThreadScheduledExecutor() {
+        String executorServiceName = "myExecutorService";
+        ExecutorServiceMetrics.monitor(registry, Executors.newSingleThreadScheduledExecutor(), executorServiceName);
+        // timer metrics still available, even on Java 16+
+        registry.get("executor").tag("name", executorServiceName).timer();
+        if (isJava16OrLater()) return; // see gh-2317; ExecutorServiceMetrics not available for inaccessible JDK internal types
+        registry.get("executor.completed").tag("name", executorServiceName).functionCounter();
+    }
+
+    private boolean isJava16OrLater() {
+        return JRE.currentVersion().compareTo(JRE.JAVA_16) >= 0;
+    }
+
+    @Test
+    void newSingleThreadScheduledExecutorWhenReflectiveAccessIsDisabled() {
+        String executorServiceName = "myExecutorService";
+        ExecutorServiceMetrics.disableIllegalReflectiveAccess();
+        ExecutorServiceMetrics.monitor(registry, Executors.newSingleThreadScheduledExecutor(), executorServiceName);
+        registry.get("executor").tag("name", executorServiceName).timer();
+        assertThatThrownBy(() -> registry.get("executor.completed").tag("name", executorServiceName).functionCounter())
+                .isExactlyInstanceOf(MeterNotFoundException.class);
+    }
+
 }

@@ -4,5 +4,5 @@ dependencies {
     api 'io.dropwizard.metrics:metrics-graphite'
 
     testImplementation project(':micrometer-test')
-    testImplementation 'io.projectreactor.netty:reactor-netty'
+    testImplementation 'io.projectreactor.netty:reactor-netty-core'
 }

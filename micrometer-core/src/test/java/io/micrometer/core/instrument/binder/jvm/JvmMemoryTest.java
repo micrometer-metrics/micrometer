@@ -17,17 +17,20 @@ package io.micrometer.core.instrument.binder.jvm;
 
 import org.junit.jupiter.api.Test;
 
-import java.lang.management.MemoryPoolMXBean;
-import java.util.Optional;
-
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.junit.jupiter.api.Assertions.*;
 
+@GcTest
 class JvmMemoryTest {
+    @Test
+    void getLongLivedHeapPool() {
+        assertThat(JvmMemory.getLongLivedHeapPools()).isNotEmpty();
+    }
 
     @Test
-    void assertJvmMemoryGetOldGen() {
-        Optional<MemoryPoolMXBean> oldGen = JvmMemory.getOldGen();
-        assertThat(oldGen).isNotEmpty();
+    void assertTolerateNullName() {
+        // There is a way for the name passed to these methods to be null.
+        // Ensure they don't fail;
+        assertThat(JvmMemory.isLongLivedPool(null)).isFalse();
+        assertThat(JvmMemory.isAllocationPool(null)).isFalse();
     }
 }

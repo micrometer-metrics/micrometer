@@ -20,10 +20,11 @@ import io.micrometer.core.instrument.*;
 import io.micrometer.core.instrument.binder.BaseUnits;
 import io.micrometer.core.instrument.composite.CompositeMeterRegistry;
 import io.micrometer.core.instrument.distribution.DistributionStatisticConfig;
+import io.micrometer.core.instrument.distribution.HistogramSnapshot;
 import io.prometheus.client.Collector;
 import io.prometheus.client.CollectorRegistry;
+import io.prometheus.client.exporter.common.TextFormat;
 import org.assertj.core.api.Condition;
-import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -31,13 +32,19 @@ import java.time.Duration;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.Enumeration;
+import java.util.HashSet;
+import java.util.List;
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 
 import static io.micrometer.core.instrument.MockClock.clock;
 import static java.util.Collections.emptyList;
-import static org.assertj.core.api.Assertions.assertThat;
-import static org.assertj.core.api.Assertions.offset;
+import static org.assertj.core.api.Assertions.*;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 
 /**
@@ -51,16 +58,39 @@ class PrometheusMeterRegistryTest {
     private MockClock clock = new MockClock();
     private PrometheusMeterRegistry registry = new PrometheusMeterRegistry(PrometheusConfig.DEFAULT, prometheusRegistry, clock);
 
-    @BeforeEach
-    void before() {
-        registry.config().namingConvention(new PrometheusDurationNamingConvention());
+    @Test
+    void metersWithSameNameAndDifferentTagsContinueSilently() {
+        String meterName = "my.counter";
+        registry.counter(meterName, "k1", "v1");
+        registry.counter(meterName, "k2", "v2");
+        registry.counter(meterName, "k3", "v3");
+    }
+
+    @Test
+    void meterRegistrationFailedListenerCalledOnSameNameDifferentTags() throws InterruptedException {
+        CountDownLatch failedLatch = new CountDownLatch(1);
+        registry.config().onMeterRegistrationFailed((id, reason) -> failedLatch.countDown());
+        registry.counter("my.counter");
+        registry.counter("my.counter", "k", "v").increment();
+
+        assertThat(failedLatch.await(1, TimeUnit.SECONDS)).isTrue();
+
+        assertThatThrownBy(() -> registry
+                .throwExceptionOnRegistrationFailure()
+                .counter("my.counter", "k1", "v1")
+        )
+                .isInstanceOf(IllegalArgumentException.class)
+                .hasMessageStartingWith("Prometheus requires that all meters with the same name have the same set of tag keys.");
+
+        assertThatThrownBy(() -> registry.counter("my.counter", "k2", "v2"))
+                .isInstanceOf(IllegalArgumentException.class)
+                .hasMessageStartingWith("Prometheus requires that all meters with the same name have the same set of tag keys.");
     }
 
     @Test
     void baseUnitMakesItToScrape() {
-        AtomicInteger n = new AtomicInteger(0);
+        AtomicInteger n = new AtomicInteger();
         Gauge.builder("gauge", n, AtomicInteger::get).tags("a", "b").baseUnit(BaseUnits.BYTES).register(registry);
-        assertThat(prometheusRegistry).extracting("namesToCollectors").extracting("gauge_bytes").isNotNull();
         assertThat(registry.scrape()).contains("gauge_bytes");
     }
 
@@ -72,7 +102,7 @@ class PrometheusMeterRegistryTest {
                 .register(registry);
         DistributionSummary.builder("ds").publishPercentiles(0.5).register(registry);
 
-        assertThat(prometheusRegistry.metricFamilySamples()).has(withNameAndQuantile("timer_duration_seconds"));
+        assertThat(prometheusRegistry.metricFamilySamples()).has(withNameAndQuantile("timer_seconds"));
         assertThat(prometheusRegistry.metricFamilySamples()).has(withNameAndQuantile("ds"));
     }
 
@@ -119,11 +149,11 @@ class PrometheusMeterRegistryTest {
         LongTaskTimer.builder("long.task.timer").description("my long task timer").register(registry);
 
         assertThat(registry.scrape())
-                .contains("HELP timer_duration_seconds my timer")
+                .contains("HELP timer_seconds my timer")
                 .contains("HELP summary my summary")
                 .contains("HELP gauge my gauge")
                 .contains("HELP counter_total my counter")
-                .contains("HELP long_task_timer_duration_seconds my long task timer");
+                .contains("HELP long_task_timer_seconds my long task timer");
     }
 
     @Issue("#249")
@@ -133,8 +163,8 @@ class PrometheusMeterRegistryTest {
         Timer.builder("t2").publishPercentileHistogram().register(registry);
 
         assertThat(registry.scrape())
-                .contains("# TYPE t1_duration_seconds summary")
-                .contains("# TYPE t2_duration_seconds histogram");
+                .contains("# TYPE t1_seconds summary")
+                .contains("# TYPE t2_seconds histogram");
     }
 
     @Test
@@ -176,7 +206,7 @@ class PrometheusMeterRegistryTest {
         t.record(106, TimeUnit.SECONDS);
 
         assertThat(registry.scrape())
-                .contains("t1_duration_seconds_bucket{le=\"+Inf\",} 1.0");
+                .contains("t1_seconds_bucket{le=\"+Inf\",} 1.0");
     }
 
     @Issue("#265")
@@ -192,7 +222,7 @@ class PrometheusMeterRegistryTest {
         clock.addSeconds(60);
 
         assertThat(registry.scrape())
-                .contains("t1_duration_seconds_bucket{le=\"0.1\",} 1.0");
+                .contains("t1_seconds_bucket{le=\"0.1\",} 1.0");
     }
 
     @Issue("#265")
@@ -209,6 +239,31 @@ class PrometheusMeterRegistryTest {
 
         assertThat(registry.scrape())
                 .contains("s1_bucket{le=\"100.0\",} 1.0");
+    }
+
+    @Test
+    void percentileHistogramWithUpperBoundContainsExactlyOneInf() {
+
+        DistributionSummary s = DistributionSummary.builder("s")
+                .publishPercentileHistogram()
+                .maximumExpectedValue(3.0)
+                .register(registry);
+
+        s.record(100);
+
+        assertThat(registry.scrape()).containsOnlyOnce("s_bucket{le=\"+Inf\",} 1.0");
+    }
+
+    @Test
+    void percentileHistogramWithoutUpperBoundContainsExactlyOneInf() {
+
+        DistributionSummary s = DistributionSummary.builder("s")
+                .publishPercentileHistogram()
+                .register(registry);
+
+        s.record(100);
+
+        assertThat(registry.scrape()).containsOnlyOnce("s_bucket{le=\"+Inf\",} 1.0");
     }
 
     @Issue("#247")
@@ -250,7 +305,7 @@ class PrometheusMeterRegistryTest {
         assertThat(registry.scrape()).contains("my_summary_bucket{le=\"1.0\",} 1.0");
 
         Timer.builder("my.timer").serviceLevelObjectives(Duration.ofMillis(1)).register(registry).record(1, TimeUnit.MILLISECONDS);
-        assertThat(registry.scrape()).contains("my_timer_duration_seconds_bucket{le=\"0.001\",} 1.0");
+        assertThat(registry.scrape()).contains("my_timer_seconds_bucket{le=\"0.001\",} 1.0");
     }
 
     @Issue("#61")
@@ -262,11 +317,11 @@ class PrometheusMeterRegistryTest {
 
         assertThat(timer.max(TimeUnit.SECONDS)).isEqualTo(1);
         assertThat(timer.max(TimeUnit.MILLISECONDS)).isEqualTo(1000);
-        assertThat(registry.scrape()).contains("my_timer_duration_seconds_max 1.0");
+        assertThat(registry.scrape()).contains("my_timer_seconds_max 1.0");
 
         clock(registry).add(Duration.ofMillis(PrometheusConfig.DEFAULT.step().toMillis() * bufferLength()));
         assertThat(timer.max(TimeUnit.SECONDS)).isEqualTo(0);
-        assertThat(registry.scrape()).contains("my_timer_duration_seconds_max 0.0");
+        assertThat(registry.scrape()).contains("my_timer_seconds_max 0.0");
     }
 
     private int bufferLength() {
@@ -300,13 +355,6 @@ class PrometheusMeterRegistryTest {
                 .contains("api_requests_total 1.0");
     }
 
-    @Issue("#266")
-    @Test
-    void twoMetricsWithDifferentTags() {
-        registry.counter("count", "k", "v", "k2", "v2");
-        assertThrows(IllegalArgumentException.class, () -> registry.counter("count", "k", "v"));
-    }
-
     private Condition<Enumeration<Collector.MetricFamilySamples>> withNameAndQuantile(String name) {
         return new Condition<>(m -> {
             while (m.hasMoreElements()) {
@@ -327,12 +375,12 @@ class PrometheusMeterRegistryTest {
         timer.record(20, TimeUnit.SECONDS);
 
         String scraped = registry.scrape();
-        assertThat(scraped).contains("# TYPE my_timer_duration_seconds_max gauge");
-        assertThat(scraped).contains("my_timer_duration_seconds_max 20.0");
+        assertThat(scraped).contains("# TYPE my_timer_seconds_max gauge");
+        assertThat(scraped).contains("my_timer_seconds_max 20.0");
 
-        assertThat(scraped).contains("# TYPE my_timer_duration_seconds summary");
-        assertThat(scraped).contains("my_timer_duration_seconds_count 2.0");
-        assertThat(scraped).contains("my_timer_duration_seconds_sum 20.01");
+        assertThat(scraped).contains("# TYPE my_timer_seconds summary");
+        assertThat(scraped).contains("my_timer_seconds_count 2.0");
+        assertThat(scraped).contains("my_timer_seconds_sum 20.01");
     }
 
     @Issue("#519")
@@ -360,10 +408,10 @@ class PrometheusMeterRegistryTest {
         timer2.record(1, TimeUnit.SECONDS);
 
         String scraped = registry.scrape();
-        assertThat(scraped).containsOnlyOnce("# TYPE my_timer_duration_seconds_max gauge");
-        assertThat(scraped).containsOnlyOnce("# HELP my_timer_duration_seconds_max");
-        assertThat(scraped).containsOnlyOnce("# TYPE my_timer_duration_seconds summary");
-        assertThat(scraped).containsOnlyOnce("# HELP my_timer_duration_seconds ");
+        assertThat(scraped).containsOnlyOnce("# TYPE my_timer_seconds_max gauge");
+        assertThat(scraped).containsOnlyOnce("# HELP my_timer_seconds_max");
+        assertThat(scraped).containsOnlyOnce("# TYPE my_timer_seconds summary");
+        assertThat(scraped).containsOnlyOnce("# HELP my_timer_seconds ");
     }
 
     @Issue("#989")
@@ -374,11 +422,11 @@ class PrometheusMeterRegistryTest {
                 .publishPercentiles(0.5)
                 .register(registry);
 
-        assertThat(prometheusRegistry.metricFamilySamples()).has(withNameAndQuantile("timer_to_be_removed_duration_seconds"));
+        assertThat(prometheusRegistry.metricFamilySamples()).has(withNameAndQuantile("timer_to_be_removed_seconds"));
 
         registry.remove(timer);
 
-        assertThat(prometheusRegistry.metricFamilySamples()).doesNotHave(withNameAndQuantile("timer_to_be_removed_duration_seconds"));
+        assertThat(prometheusRegistry.metricFamilySamples()).doesNotHave(withNameAndQuantile("timer_to_be_removed_seconds"));
     }
 
     @Test
@@ -425,8 +473,166 @@ class PrometheusMeterRegistryTest {
 
     @Issue("#1883")
     @Test
-    void canFilterCollectorRegistryByName() {
-        Counter.builder("my.count").register(registry);
-        assertThat(registry.getPrometheusRegistry().filteredMetricFamilySamples(Collections.singleton("my_count_total")).hasMoreElements()).isTrue();
+    void namesToCollectors() {
+        AtomicInteger n = new AtomicInteger();
+        Gauge.builder("gauge", n, AtomicInteger::get).tags("a", "b").baseUnit(BaseUnits.BYTES).register(registry);
+        assertThat(prometheusRegistry).extracting("namesToCollectors").extracting("gauge_bytes").isNotNull();
     }
+
+    @Issue("#1883")
+    @Test
+    void filteredMetricFamilySamplesWithCounter() {
+        String[] names = { "my_count_total" };
+
+        Counter.builder("my.count").register(registry);
+        assertFilteredMetricFamilySamples(names, names);
+    }
+
+    private void assertFilteredMetricFamilySamples(String[] includedNames, String[] expectedNames) {
+        Enumeration<Collector.MetricFamilySamples> metricFamilySamples = registry.getPrometheusRegistry()
+                .filteredMetricFamilySamples(new HashSet<>(Arrays.asList(includedNames)));
+        String[] names = Collections.list(metricFamilySamples).stream()
+                .flatMap(metricFamilySample -> metricFamilySample.samples.stream()).map(sample -> sample.name)
+                .toArray(String[]::new);
+        assertThat(names).containsExactlyInAnyOrder(expectedNames);
+    }
+
+    @Issue("#1883")
+    @Test
+    void filteredMetricFamilySamplesWithGauge() {
+        String[] names = { "my_gauge" };
+
+        Gauge.builder("my.gauge", () -> 1d).register(registry);
+        assertFilteredMetricFamilySamples(names, names);
+    }
+
+    @Issue("#1883")
+    @Test
+    void filteredMetricFamilySamplesWithTimer() {
+        String[] names = {
+                "my_timer_seconds_count",
+                "my_timer_seconds_sum",
+                "my_timer_seconds_max" };
+
+        Timer.builder("my.timer").register(registry);
+        assertFilteredMetricFamilySamples(names, names);
+    }
+
+    @Issue("#1883")
+    @Test
+    void filteredMetricFamilySamplesWithLongTaskTimer() {
+        String[] includedNames = {
+                "my_long_task_timer_seconds",
+                "my_long_task_timer_seconds_max",
+                "my_long_task_timer_seconds_active_count",
+                "my_long_task_timer_seconds_duration_sum" };
+        String[] expectedNames = {
+                "my_long_task_timer_seconds_max",
+                "my_long_task_timer_seconds_active_count",
+                "my_long_task_timer_seconds_duration_sum" };
+
+        LongTaskTimer.builder("my.long.task.timer").register(registry);
+        assertFilteredMetricFamilySamples(includedNames, expectedNames);
+    }
+
+    @Issue("#1883")
+    @Test
+    void filteredMetricFamilySamplesWithDistributionSummary() {
+        String[] names = {
+                "my_distribution_summary_count",
+                "my_distribution_summary_sum",
+                "my_distribution_summary_max" };
+
+        DistributionSummary.builder("my.distribution.summary").register(registry);
+        assertFilteredMetricFamilySamples(names, names);
+    }
+
+    @Issue("#1883")
+    @Test
+    void filteredMetricFamilySamplesWithCustomMeter() {
+        String[] includedNames = {
+                "my_custom_meter",
+                "my_custom_meter_sum",
+                "my_custom_meter_max" };
+        String[] expectedNames = {
+                "my_custom_meter_sum",
+                "my_custom_meter_max" };
+
+        List<Measurement> measurements = Arrays.asList(
+                new Measurement(() -> 1d, Statistic.TOTAL),
+                new Measurement(() -> 1d, Statistic.MAX));
+        Meter.builder("my.custom.meter", Meter.Type.OTHER, measurements).register(registry);
+        assertFilteredMetricFamilySamples(includedNames, expectedNames);
+    }
+
+    @Issue("#2060")
+    @Test
+    void timerSumAndMaxHaveCorrectBaseUnit_whenPercentileHistogramEnabled() {
+        Timer timer = Timer.builder("my.timer")
+                .publishPercentileHistogram()
+                .register(registry);
+
+        timer.record(1, TimeUnit.SECONDS);
+        HistogramSnapshot histogramSnapshot = timer.takeSnapshot();
+        assertThat(histogramSnapshot.total(TimeUnit.SECONDS)).isEqualTo(1);
+        assertThat(histogramSnapshot.max(TimeUnit.SECONDS)).isEqualTo(1);
+        String scrape = registry.scrape();
+        assertThat(scrape).contains("my_timer_seconds_sum 1.0\n");
+        assertThat(scrape).contains("my_timer_seconds_max 1.0\n");
+    }
+
+    @Test
+    void scrapeWithLongTaskTimer() {
+        LongTaskTimer.builder("my.long.task.timer").register(registry);
+        assertThat(registry.scrape())
+                .contains("my_long_task_timer_seconds_max")
+                .contains("my_long_task_timer_seconds_active_count")
+                .contains("my_long_task_timer_seconds_duration_sum");
+    }
+
+    @Issue("#2087")
+    @Test
+    void meterTriggeringAnotherMeterWhenCollectingValue() {
+        ExecutorService executorService = Executors.newSingleThreadExecutor();
+
+        Gauge.builder("my.gauge", () -> {
+            Future<?> future = executorService.submit(() -> {
+                Gauge.builder("another.gauge", () -> 2d).register(registry);
+            });
+
+            try {
+                future.get();
+            } catch (InterruptedException ex) {
+                Thread.currentThread().interrupt();
+                throw new RuntimeException(ex);
+            } catch (ExecutionException ex) {
+                throw new RuntimeException(ex);
+            }
+            return 1d;
+        }).register(registry);
+
+        assertThat(registry.get("my.gauge").gauge().value()).isEqualTo(1d);
+        assertThat(registry.get("another.gauge").gauge().value()).isEqualTo(2d);
+
+        executorService.shutdownNow();
+    }
+
+    @Test
+    void openMetricsScrape() {
+        Counter.builder("my.counter").baseUnit("bytes").register(registry);
+        Timer.builder("my.timer").register(registry);
+        assertThat(registry.scrape(TextFormat.CONTENT_TYPE_OPENMETRICS_100))
+                .contains("# TYPE my_counter_bytes counter\n" +
+                        "# HELP my_counter_bytes  \n" +
+                        "my_counter_bytes_total 0.0\n")
+                .contains("# TYPE my_timer_seconds_max gauge\n" +
+                        "# HELP my_timer_seconds_max  \n" +
+                        "my_timer_seconds_max 0.0\n")
+                .contains("# TYPE my_timer_seconds summary\n" +
+                        "# HELP my_timer_seconds  \n" +
+                        "my_timer_seconds_count 0.0\n" +
+                        "my_timer_seconds_sum 0.0\n")
+                .endsWith("# EOF\n");
+    }
+
 }

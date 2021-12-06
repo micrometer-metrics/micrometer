@@ -30,6 +30,7 @@ import org.junit.jupiter.api.Test;
 import org.testcontainers.containers.KafkaContainer;
 import org.testcontainers.junit.jupiter.Container;
 import org.testcontainers.junit.jupiter.Testcontainers;
+import org.testcontainers.utility.DockerImageName;
 
 import java.time.Duration;
 import java.util.Collections;
@@ -42,7 +43,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 @Tag("docker")
 class KafkaClientMetricsIntegrationTest {
     @Container
-    private KafkaContainer kafkaContainer = new KafkaContainer();
+    private KafkaContainer kafkaContainer = new KafkaContainer(DockerImageName.parse("confluentinc/cp-kafka:5.5.1"));
 
     @Test
     void shouldManageProducerAndConsumerMetrics() {
@@ -62,7 +63,7 @@ class KafkaClientMetricsIntegrationTest {
         int producerMetrics = registry.getMeters().size();
         assertThat(registry.getMeters()).hasSizeGreaterThan(0);
         assertThat(registry.getMeters())
-                .extracting(m -> m.getId().getTag("kafka-version"))
+                .extracting(m -> m.getId().getTag("kafka.version"))
                 .allMatch(v -> !v.isEmpty());
 
         Properties consumerConfigs = new Properties();
@@ -82,7 +83,7 @@ class KafkaClientMetricsIntegrationTest {
         int producerAndConsumerMetrics = registry.getMeters().size();
         assertThat(registry.getMeters()).hasSizeGreaterThan(producerMetrics);
         assertThat(registry.getMeters())
-                .extracting(m -> m.getId().getTag("kafka-version"))
+                .extracting(m -> m.getId().getTag("kafka.version"))
                 .allMatch(v -> !v.isEmpty());
 
         String topic = "test";
@@ -98,7 +99,7 @@ class KafkaClientMetricsIntegrationTest {
         int producerAndConsumerMetricsAfterSend = registry.getMeters().size();
         assertThat(registry.getMeters()).hasSizeGreaterThan(producerAndConsumerMetrics);
         assertThat(registry.getMeters())
-                .extracting(m -> m.getId().getTag("kafka-version"))
+                .extracting(m -> m.getId().getTag("kafka.version"))
                 .allMatch(v -> !v.isEmpty());
 
         consumer.subscribe(Collections.singletonList(topic));
@@ -113,7 +114,7 @@ class KafkaClientMetricsIntegrationTest {
 
         assertThat(registry.getMeters()).hasSizeGreaterThan(producerAndConsumerMetricsAfterSend);
         assertThat(registry.getMeters())
-                .extracting(m -> m.getId().getTag("kafka-version"))
+                .extracting(m -> m.getId().getTag("kafka.version"))
                 .allMatch(v -> !v.isEmpty());
 
         //Printing out for discovery purposes

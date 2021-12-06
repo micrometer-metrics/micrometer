@@ -23,10 +23,10 @@ import io.micrometer.core.instrument.util.MeterPartition;
 import io.micrometer.core.instrument.util.NamedThreadFactory;
 import io.micrometer.core.ipc.http.HttpSender;
 import io.micrometer.core.ipc.http.HttpUrlConnectionSender;
+import io.micrometer.core.lang.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import javax.annotation.Nullable;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
@@ -186,7 +186,6 @@ public class AppOpticsMeterRegistry extends StepMeterRegistry {
         return Optional.of(write(timeGauge.getId(), "timeGauge", Fields.Value.tag(), decimal(value)));
     }
 
-    @Nullable
     private Optional<String> writeCounter(Counter counter) {
         double count = counter.count();
         if (count > 0) {
@@ -197,7 +196,6 @@ public class AppOpticsMeterRegistry extends StepMeterRegistry {
     }
 
     // VisibleForTesting
-    @Nullable
     Optional<String> writeFunctionCounter(FunctionCounter counter) {
         double count = counter.count();
         if (Double.isFinite(count) && count > 0) {
@@ -207,7 +205,6 @@ public class AppOpticsMeterRegistry extends StepMeterRegistry {
         return Optional.empty();
     }
 
-    @Nullable
     private Optional<String> writeFunctionTimer(FunctionTimer timer) {
         double count = timer.count();
         if (count > 0) {
@@ -218,7 +215,6 @@ public class AppOpticsMeterRegistry extends StepMeterRegistry {
         return Optional.empty();
     }
 
-    @Nullable
     private Optional<String> writeTimer(Timer timer) {
         HistogramSnapshot snapshot = timer.takeSnapshot();
         long count = snapshot.count();
@@ -231,7 +227,6 @@ public class AppOpticsMeterRegistry extends StepMeterRegistry {
         return Optional.empty();
     }
 
-    @Nullable
     private Optional<String> writeSummary(DistributionSummary summary) {
         HistogramSnapshot snapshot = summary.takeSnapshot();
         if (snapshot.count() > 0) {
@@ -243,7 +238,6 @@ public class AppOpticsMeterRegistry extends StepMeterRegistry {
         return Optional.empty();
     }
 
-    @Nullable
     private Optional<String> writeLongTaskTimer(LongTaskTimer timer) {
         int activeTasks = timer.activeTasks();
         if (activeTasks > 0) {
@@ -273,7 +267,7 @@ public class AppOpticsMeterRegistry extends StepMeterRegistry {
             // appoptics requires at least one tag for every metric, so we hang something here that may be useful.
             sb.append("\"_type\":\"").append(type).append('"');
             if (!tags.isEmpty())
-                sb.append(",");
+                sb.append(',');
         }
 
         if (!tags.isEmpty()) {

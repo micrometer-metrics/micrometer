@@ -25,10 +25,10 @@ import javax.cache.expiry.AccessedExpiryPolicy;
 import static java.util.Collections.emptyList;
 import static javax.cache.expiry.Duration.ONE_HOUR;
 
-class JCacheMetricsCompatibilityTest extends CacheMeterBinderCompatibilityKit {
-    private Cache<String, String> cache;
+class JCacheMetricsCompatibilityTest extends CacheMeterBinderCompatibilityKit<Cache<String, String>> {
 
-    JCacheMetricsCompatibilityTest() {
+    @Override
+    public Cache<String, String> createCache() {
         CacheManager cacheManager = new RICachingProvider().getCacheManager();
 
         MutableConfiguration<String, String> configuration = new MutableConfiguration<>();
@@ -36,12 +36,12 @@ class JCacheMetricsCompatibilityTest extends CacheMeterBinderCompatibilityKit {
                 .setExpiryPolicyFactory(AccessedExpiryPolicy.factoryOf(ONE_HOUR))
                 .setStatisticsEnabled(true);
 
-        this.cache = cacheManager.createCache("mycache", configuration);
+        return cacheManager.createCache("mycache", configuration);
     }
 
     @Override
-    public CacheMeterBinder binder() {
-        return new JCacheMetrics(cache, emptyList());
+    public CacheMeterBinder<Cache<String, String>> binder() {
+        return new JCacheMetrics<>(cache, emptyList());
     }
 
     @Override

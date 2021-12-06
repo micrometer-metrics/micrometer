@@ -55,6 +55,7 @@ public class InstrumentedQueuedThreadPool extends QueuedThreadPool {
      * @param registry   where metrics will be bound
      * @param tags       tags to apply to metrics bound from this
      * @param maxThreads maximum threads for the thread pool
+     * @since 1.5.0
      */
     public InstrumentedQueuedThreadPool(MeterRegistry registry, Iterable<Tag> tags, int maxThreads) {
         super(maxThreads);
@@ -69,6 +70,7 @@ public class InstrumentedQueuedThreadPool extends QueuedThreadPool {
      * @param tags       tags to apply to metrics bound from this
      * @param maxThreads maximum threads for the thread pool
      * @param minThreads minimum threads for the thread pool
+     * @since 1.5.0
      */
     public InstrumentedQueuedThreadPool(MeterRegistry registry, Iterable<Tag> tags, int maxThreads, int minThreads) {
         super(maxThreads, minThreads);
@@ -84,6 +86,7 @@ public class InstrumentedQueuedThreadPool extends QueuedThreadPool {
      * @param maxThreads  maximum threads for the thread pool
      * @param minThreads  minimum threads for the thread pool
      * @param idleTimeout timeout for idle threads in pool
+     * @since 1.5.0
      */
     public InstrumentedQueuedThreadPool(MeterRegistry registry,
                                         Iterable<Tag> tags,
@@ -104,6 +107,7 @@ public class InstrumentedQueuedThreadPool extends QueuedThreadPool {
      * @param minThreads  minimum threads for the thread pool
      * @param idleTimeout timeout for idle threads in pool
      * @param queue       backing queue for thread pool tasks
+     * @since 1.5.0
      */
     public InstrumentedQueuedThreadPool(MeterRegistry registry,
                                         Iterable<Tag> tags,

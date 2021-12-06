@@ -20,6 +20,7 @@ import com.wavefront.sdk.common.WavefrontSender;
 import com.wavefront.sdk.common.clients.WavefrontClient;
 import com.wavefront.sdk.entities.histograms.HistogramGranularity;
 import com.wavefront.sdk.entities.histograms.WavefrontHistogramImpl;
+import io.micrometer.core.Issue;
 import io.micrometer.core.instrument.Measurement;
 import io.micrometer.core.instrument.Meter;
 import io.micrometer.core.instrument.MockClock;
@@ -29,9 +30,11 @@ import org.junit.jupiter.api.Test;
 
 import java.io.IOException;
 import java.net.URI;
+import java.time.Duration;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
+import java.util.concurrent.TimeUnit;
 
 import static org.assertj.core.api.Assertions.*;
 import static org.mockito.Mockito.*;
@@ -76,7 +79,7 @@ class WavefrontMeterRegistryTest {
     void publishMetric() throws IOException {
         Meter.Id id = registry.counter("name").getId();
         long time = System.currentTimeMillis();
-        registry.publishMetric(id, null, System.currentTimeMillis(), 1d);
+        registry.publishMetric(id, null, time, 1d);
         verify(wavefrontSender, times(1)).sendMetric("name", 1d, time, "host", Collections.emptyMap());
         verifyNoMoreInteractions(wavefrontSender);
     }
@@ -130,6 +133,14 @@ class WavefrontMeterRegistryTest {
     }
 
     @Test
+    @Issue("#2173")
+    void defaultStepConfigAffectsWavefrontBuilder() {
+        WavefrontClient.Builder defaultSenderBuilder = WavefrontMeterRegistry.getDefaultSenderBuilder(config);
+        assertThat(defaultSenderBuilder).hasFieldOrPropertyWithValue("flushInterval", 60_000L);
+        assertThat(defaultSenderBuilder).hasFieldOrPropertyWithValue("flushIntervalTimeUnit", TimeUnit.MILLISECONDS);
+    }
+
+    @Test
     void configureDefaultSenderWithCustomConfig() {
         WavefrontConfig customConfig = new WavefrontConfig() {
             @Override
@@ -151,10 +162,19 @@ class WavefrontMeterRegistryTest {
             public int batchSize() {
                 return 20;
             }
+
+            @Override
+            public Duration step() {
+                return Duration.ofSeconds(15);
+            }
         };
-        WavefrontClient sender = WavefrontMeterRegistry.getDefaultSenderBuilder(customConfig).build();
-        assertThat(sender).extracting("reportingService").hasFieldOrPropertyWithValue("uri", URI.create("https://example.com"));
-        assertThat(sender).extracting("reportingService").hasFieldOrPropertyWithValue("token", "apiToken");
+        WavefrontClient.Builder builder = WavefrontMeterRegistry.getDefaultSenderBuilder(customConfig);
+        WavefrontClient sender = builder.build();
+        assertThat(builder).hasFieldOrPropertyWithValue("flushInterval", 15_000L);
+        assertThat(builder).hasFieldOrPropertyWithValue("flushIntervalTimeUnit", TimeUnit.MILLISECONDS);
+        assertThat(sender).extracting("metricsReportingService")
+                .hasFieldOrPropertyWithValue("uri", URI.create("https://example.com"))
+                .hasFieldOrPropertyWithValue("token", "apiToken");
         assertThat(sender).hasFieldOrPropertyWithValue("batchSize", 20);
     }
 
