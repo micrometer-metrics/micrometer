@@ -70,7 +70,7 @@ public interface StackdriverConfig extends StepRegistryConfig {
      * of backwards compatibility.
      * For example, when this is {@code false}, counter metrics are published as the GAUGE MetricKind.
      * When this is {@code true}, counter metrics are published as the CUMULATIVE MetricKind.
-     * <p>
+     * <p></p>
      * If you have published metrics to Stackdriver before, switching this flag will cause metrics
      * publishing to fail until you delete the old MetricDescriptor with the previous MetricKind so that
      * it can be recreated with the new MetricKind next time that metric is published.

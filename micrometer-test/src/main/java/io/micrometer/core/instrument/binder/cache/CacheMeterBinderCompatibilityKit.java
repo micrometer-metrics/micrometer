@@ -32,9 +32,9 @@ public abstract class CacheMeterBinderCompatibilityKit<C> {
     protected C cache;
 
     /**
-     * The return value will be assigned to {@link #cache}.
+     * The return value will be assigned to {@link this#cache}.
      * @return cache to use for tests
-     * @see #bindToRegistry()
+     * @see this#bindToRegistry()
      */
     public abstract C createCache();
 
