@@ -28,7 +28,7 @@ import io.micrometer.core.util.internal.logging.WarnThenDebugLogger;
 import io.micrometer.statsd.internal.*;
 import io.netty.channel.unix.DomainSocketAddress;
 import io.netty.util.AttributeKey;
-import io.netty.util.internal.shaded.org.jctools.queues.MpscUnboundedArrayQueue;
+import io.netty.util.internal.shaded.org.jctools.queues.MpscArrayQueue;
 import org.reactivestreams.Publisher;
 import org.reactivestreams.Subscriber;
 import org.reactivestreams.Subscription;
@@ -202,7 +202,7 @@ public class StatsdMeterRegistry extends MeterRegistry {
                 Sinks.Many<String> sink = Sinks.unsafe()
                                                .many()
                                                .unicast()
-                                               .onBackpressureBuffer(new MpscUnboundedArrayQueue<>(256));
+                                               .onBackpressureBuffer(new MpscArrayQueue<>(Queues.SMALL_BUFFER_SIZE));
 
                 if (HAS_TURBO_FILTER) {
                     sink = new LogbackMetricsSuppressingManySink(sink);
@@ -240,7 +240,7 @@ public class StatsdMeterRegistry extends MeterRegistry {
             } else {
                 final Publisher<String> publisher;
                 if (statsdConfig.buffered()) {
-                    publisher = BufferingFlux.create(this.sink.asFlux().publish().autoConnect(), "\n",
+                    publisher = BufferingFlux.create(this.sink.asFlux(), "\n",
                                                      statsdConfig.maxPacketLength(), statsdConfig.pollingFrequency().toMillis())
                             .onBackpressureLatest();
                 } else {
