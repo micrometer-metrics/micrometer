@@ -62,7 +62,7 @@ def VERSIONS = [
         'org.hsqldb:hsqldb:2.5.+', // 2.6.0 requires JDK 11.
         'org.jooq:jooq:3.14.+',
         'org.jsr107.ri:cache-ri-impl:1.0.0',
-        'org.junit.jupiter:junit-jupiter:5.8.+',
+        'org.junit.jupiter:junit-jupiter:5.8.+', // Not using latest.release to avoid using a milestone version.
         'org.junit.platform:junit-platform-launcher:1.8.+',
         'org.latencyutils:LatencyUtils:latest.release',
         'org.mockito:mockito-core:latest.release',
