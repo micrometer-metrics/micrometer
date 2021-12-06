@@ -448,7 +448,7 @@ public class StackdriverMeterRegistry extends StepMeterRegistry {
 
         private TimeInterval interval(MetricDescriptor.MetricKind metricKind) {
             TimeInterval.Builder builder = TimeInterval.newBuilder().setEndTime(endTime);
-            if (CUMULATIVE.equals(metricKind)) {
+            if (metricKind == CUMULATIVE) {
                 builder.setStartTime(startTime);
             }
             return builder.build();

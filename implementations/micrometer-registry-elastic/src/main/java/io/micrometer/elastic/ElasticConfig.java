@@ -167,7 +167,7 @@ public interface ElasticConfig extends StepRegistryConfig {
     /**
      * Base64-encoded credentials string. From a generated API key, concatenate in UTF-8 format
      * the unique {@code id}, a colon ({@code :}), and the {@code api_key} in the following format:
-     * <p><pre>{@code <id>:<api_key>}</pre></p>
+     * <pre>{@code <id>:<api_key>}</pre>
      * The above should be the input for Base64 encoding, and the output is the credentials
      * returned by this method.
      * If configured, ApiKey type authentication is used instead of username/password authentication.

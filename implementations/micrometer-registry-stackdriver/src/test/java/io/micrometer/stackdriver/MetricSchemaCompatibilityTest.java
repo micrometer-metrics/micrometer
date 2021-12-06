@@ -48,14 +48,12 @@ import io.micrometer.core.instrument.Timer;
 
 class MetricSchemaCompatibilityTest {
 
-    private final Map<String, String> config = new HashMap<String, String>() {{
-        put("stackdriver.projectId", "projectId");
-    }};
+    private final Map<String, String> config = new HashMap<>(Collections.singletonMap("stackdriver.projectId", "projectId"));
     private final StackdriverMeterRegistry registry = new StackdriverMeterRegistry(config::get, new MockClock());
     private final StackdriverMeterRegistry.Batch batch = registry.new Batch();
 
     /**
-     * Assuring that when the configuration flag semanticMetricTypes is NOT set,
+     * Assuring that when the configuration flag useSemanticMetricTypes is NOT set,
      * created metric types match the old behavior.
      */
     @Test
@@ -95,7 +93,7 @@ class MetricSchemaCompatibilityTest {
     }
 
     /**
-     * Assuring that when the configuration flag semanticMetricTypes is set,
+     * Assuring that when the configuration flag useSemanticMetricTypes is set,
      * metric types matching their meaning are used.
      */
     @Test
