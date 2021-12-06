@@ -44,9 +44,6 @@ class ElasticsearchApiKeyIntegrationTest extends ElasticsearchMeterRegistryElast
         } catch (Throwable e) {
             throw new RuntimeException(e);
         }
-        if (apiKeyCredentials == null)
-            throw new RuntimeException("Could not get the API key");
-
         return new ElasticConfig() {
             @Override
             public String get(String key) {
