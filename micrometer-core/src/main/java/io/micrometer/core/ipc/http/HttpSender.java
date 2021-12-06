@@ -156,18 +156,18 @@ public interface HttpSender {
              * @return This request builder.
              */
             public final Builder withBasicAuthentication(@Nullable String user, @Nullable String password) {
-                if (user != null && StringUtils.isNotBlank(user)) {
+                if (StringUtils.isNotBlank(user)) {
                     String encoded = Base64.getEncoder().encodeToString((user.trim() + ":" + (password == null ? "" : password.trim()))
                             .getBytes(StandardCharsets.UTF_8));
-                    withHeader("Authorization", "Basic " + encoded);
+                    withAuthentication("Basic", encoded);
                 }
                 return this;
             }
 
             /**
-             * Configures the {@code Authentication} HTTP header with the given type and credentials.
+             * Configures the {@code Authorization} HTTP header with the given type and credentials.
              * The format will be:
-             * <p><pre>{@code Authorization: <type> <credentials>}</pre></p>
+             * <pre>{@code Authorization: <type> <credentials>}</pre>
              * No encoding will be performed on the {@code credentials}, so if the authentication scheme
              * expects {@code credentials} to be encoded, encode them before passing them to this method.
              *
@@ -177,7 +177,7 @@ public interface HttpSender {
              * @since 1.8.0
              */
             public final Builder withAuthentication(String type, @Nullable String credentials) {
-                if (credentials != null && StringUtils.isNotBlank(credentials)) {
+                if (StringUtils.isNotBlank(credentials)) {
                     withHeader("Authorization", type + " " + credentials);
                 }
                 return this;
