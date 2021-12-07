@@ -1,19 +1,31 @@
+/**
+ * Copyright 2017 VMware, Inc.
+ * <p>
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ * <p>
+ * https://www.apache.org/licenses/LICENSE-2.0
+ * <p>
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
 package io.micrometer.benchmark.core;
 
 import java.time.Duration;
-import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.stream.Collectors;
-import java.util.stream.IntStream;
 
 import io.micrometer.statsd.internal.BufferingFlux;
 import org.openjdk.jmh.annotations.Benchmark;
 import org.openjdk.jmh.annotations.BenchmarkMode;
-import org.openjdk.jmh.annotations.Fork;
 import org.openjdk.jmh.annotations.Measurement;
 import org.openjdk.jmh.annotations.Mode;
-import org.openjdk.jmh.annotations.OutputTimeUnit;
 import org.openjdk.jmh.annotations.Param;
 import org.openjdk.jmh.annotations.Scope;
 import org.openjdk.jmh.annotations.Setup;
@@ -21,6 +33,7 @@ import org.openjdk.jmh.annotations.State;
 import org.openjdk.jmh.annotations.Warmup;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Sinks;
+import reactor.core.scheduler.Schedulers;
 
 @BenchmarkMode(Mode.Throughput)
 @Warmup(iterations = 2, time = 5)
@@ -28,7 +41,7 @@ import reactor.core.publisher.Sinks;
 @State(Scope.Benchmark)
 public class BufferingFluxBenchmark {
 
-    static final String[] FAKE_WORDS = {
+    private static final String[] FAKE_WORDS = {
             "Hello_world",
             "world",
             "Hello_Hello_hello_world"
@@ -37,10 +50,10 @@ public class BufferingFluxBenchmark {
     @Param({ "100000" })
     public int times;
 
-    @Param({ "10",  "100", "1000"})
+    @Param({ "10", "100", "1000"})
     public int size;
 
-    Flux<String> source;
+    private Flux<String> source;
 
     @Setup
     public void setup() {
@@ -50,14 +63,14 @@ public class BufferingFluxBenchmark {
     @Benchmark
     public void bufferingFlux() {
         source
-                .transform(f -> BufferingFlux.create(f, "\n", size, 100))
+                .transform(f -> BufferingFlux.create(f, "\n", size, 10))
                 .blockLast();
     }
 
     @Benchmark
     public void bufferingFluxOld() {
         source
-                .transform(f -> create(f, "\n", size, 100))
+                .transform(f -> create(f, "\n", size, 10))
                 .blockLast();
     }
 
@@ -70,7 +83,8 @@ public class BufferingFluxBenchmark {
 
             final Sinks.Empty<Void> intervalEnd = Sinks.empty();
 
-            final Flux<String> heartbeat = Flux.interval(Duration.ofMillis(maxMillisecondsBetweenEmits))
+            final Flux<String> heartbeat =
+                    Flux.interval(Duration.ofMillis(maxMillisecondsBetweenEmits), Schedulers.boundedElastic())
                                                .map(l -> "")
                                                .takeUntilOther(intervalEnd.asMono());
 
