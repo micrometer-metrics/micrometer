@@ -15,18 +15,31 @@
  */
 package io.micrometer.core.instrument.binder.jvm;
 
+import com.sun.management.GarbageCollectionNotificationInfo;
 import com.tngtech.archunit.base.DescribedPredicate;
 import com.tngtech.archunit.core.domain.JavaClasses;
 import com.tngtech.archunit.core.importer.ClassFileImporter;
 import com.tngtech.archunit.lang.ArchRule;
+import io.micrometer.core.Issue;
 import io.micrometer.core.instrument.Timer;
+import io.micrometer.core.instrument.binder.jvm.JvmGcMetrics.GcMetricsNotificationListener;
 import io.micrometer.core.instrument.simple.SimpleMeterRegistry;
-import org.junit.jupiter.api.*;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Disabled;
+import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.condition.EnabledForJreRange;
 import org.junit.jupiter.api.condition.JRE;
 
+import javax.management.ListenerNotFoundException;
+import javax.management.Notification;
+import javax.management.NotificationEmitter;
+import javax.management.NotificationListener;
 import java.lang.management.GarbageCollectorMXBean;
 import java.lang.management.ManagementFactory;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.List;
 import java.util.concurrent.TimeUnit;
 
 import static com.tngtech.archunit.core.domain.JavaClass.Predicates.resideInAPackage;
@@ -101,6 +114,57 @@ class JvmGcMetricsTest {
         }
         checkPhaseCount(pausePhaseCount, concurrentPhaseCount);
         checkCollectionTime(pauseTimeMs, concurrentTimeMs);
+    }
+
+    @Test
+    @Issue("gh-2872")
+    void sizeMetricsNotSetToZero() {
+        GcMetricsNotificationListener gcMetricsNotificationListener = binder.gcNotificationListener;
+        NotificationCapturingListener capturingListener = new NotificationCapturingListener();
+        Collection<Runnable> notificationListenerCleanUpRunnables = new ArrayList<>();
+
+        // register capturing notification listener
+        for (GarbageCollectorMXBean gcBean : ManagementFactory.getGarbageCollectorMXBeans()) {
+            if (!(gcBean instanceof NotificationEmitter)) {
+                continue;
+            }
+            NotificationEmitter notificationEmitter = (NotificationEmitter) gcBean;
+            notificationEmitter.addNotificationListener(capturingListener, notification -> notification.getType().equals(GarbageCollectionNotificationInfo.GARBAGE_COLLECTION_NOTIFICATION), null);
+            notificationListenerCleanUpRunnables.add(() -> {
+                try {
+                    notificationEmitter.removeNotificationListener(capturingListener);
+                } catch (ListenerNotFoundException ignore) {
+                }
+            });
+        }
+
+        try {
+            System.gc(); // capture real gc notifications
+            List<Notification> notifications = capturingListener.getNotifications();
+            assertThat(notifications).isNotEmpty();
+            // replay each notification and check size metrics not set to zero
+            for (Notification notification : notifications) {
+                gcMetricsNotificationListener.handleNotification(notification, null);
+                assertThat(registry.get("jvm.gc.live.data.size").gauge().value()).isPositive();
+                assertThat(registry.get("jvm.gc.max.data.size").gauge().value()).isPositive();
+            }
+        } finally {
+            notificationListenerCleanUpRunnables.forEach(Runnable::run);
+        }
+    }
+
+    static class NotificationCapturingListener implements NotificationListener {
+
+        private final List<Notification> notifications = new ArrayList<>();
+
+        List<Notification> getNotifications() {
+            return Collections.unmodifiableList(notifications);
+        }
+
+        @Override
+        public void handleNotification(Notification notification, Object handback) {
+            notifications.add(notification);
+        }
     }
 
     private void checkPhaseCount(long expectedPauseCount, long expectedConcurrentCount) {
