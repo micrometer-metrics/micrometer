@@ -19,21 +19,21 @@ import io.micrometer.core.instrument.Clock;
 import io.micrometer.core.instrument.Statistic;
 import io.micrometer.core.instrument.distribution.DistributionStatisticConfig;
 import io.micrometer.core.instrument.internal.DefaultLongTaskTimer;
-import reactor.core.publisher.Sinks;
+import reactor.core.publisher.FluxSink;
 
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicReference;
 
 public class StatsdLongTaskTimer extends DefaultLongTaskTimer implements StatsdPollable {
     private final StatsdLineBuilder lineBuilder;
-    private final Sinks.Many<String> sink;
+    private final FluxSink<String> sink;
 
     private final AtomicReference<Long> lastActive = new AtomicReference<>(Long.MIN_VALUE);
     private final AtomicReference<Double> lastDuration = new AtomicReference<>(Double.NEGATIVE_INFINITY);
 
     private final boolean alwaysPublish;
 
-    StatsdLongTaskTimer(Id id, StatsdLineBuilder lineBuilder, Sinks.Many<String> sink, Clock clock, boolean alwaysPublish,
+    StatsdLongTaskTimer(Id id, StatsdLineBuilder lineBuilder, FluxSink<String> sink, Clock clock, boolean alwaysPublish,
                         DistributionStatisticConfig distributionStatisticConfig, TimeUnit baseTimeUnit) {
         super(id, clock, baseTimeUnit, distributionStatisticConfig, false);
         this.lineBuilder = lineBuilder;
@@ -45,17 +45,17 @@ public class StatsdLongTaskTimer extends DefaultLongTaskTimer implements StatsdP
     public void poll() {
         long active = activeTasks();
         if (alwaysPublish || lastActive.getAndSet(active) != active) {
-            sink.tryEmitNext(lineBuilder.gauge(active, Statistic.ACTIVE_TASKS));
+            sink.next(lineBuilder.gauge(active, Statistic.ACTIVE_TASKS));
         }
 
         double duration = duration(TimeUnit.MILLISECONDS);
         if (alwaysPublish || lastDuration.getAndSet(duration) != duration) {
-            sink.tryEmitNext(lineBuilder.gauge(duration, Statistic.DURATION));
+            sink.next(lineBuilder.gauge(duration, Statistic.DURATION));
         }
 
         double max = max(TimeUnit.MILLISECONDS);
         if (alwaysPublish || lastDuration.getAndSet(duration) != duration) {
-            sink.tryEmitNext(lineBuilder.gauge(max, Statistic.MAX));
+            sink.next(lineBuilder.gauge(max, Statistic.MAX));
         }
     }
 }
