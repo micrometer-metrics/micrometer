@@ -78,21 +78,7 @@ import java.util.stream.DoubleStream;
 public class StatsdMeterRegistry extends MeterRegistry {
     private static final WarnThenDebugLogger warnThenDebugLogger = new WarnThenDebugLogger(StatsdMeterRegistry.class);
 
-    private static final boolean HAS_TURBO_FILTER;
-
-    static {
-        ClassNotFoundException e = null;
-        try {
-            Class.forName("ch.qos.logback.classic.turbo.TurboFilter",
-                    false,
-                    StatsdMeterRegistry.class.getClassLoader());
-        }
-        catch (ClassNotFoundException ex) {
-            e = ex;
-        }
-
-        HAS_TURBO_FILTER = e == null;
-    }
+    private static final boolean HAS_TURBO_FILTER = hasTurboFilter();
 
     private final StatsdConfig statsdConfig;
     private final HierarchicalNameMapper nameMapper;
@@ -182,6 +168,16 @@ public class StatsdMeterRegistry extends MeterRegistry {
         }
     }
 
+    private static boolean hasTurboFilter() {
+        try {
+            Class.forName("ch.qos.logback.classic.turbo.TurboFilter", false, StatsdMeterRegistry.class.getClassLoader());
+            return true;
+        }
+        catch (ClassNotFoundException ex) {
+            return false;
+        }
+    }
+
     private <M extends Meter> void removePollableMeter(M m) {
         pollableMeters.remove(m.getId());
     }
@@ -199,10 +195,7 @@ public class StatsdMeterRegistry extends MeterRegistry {
     public void start() {
         if (started.compareAndSet(false, true)) {
             if (statsdConfig.enabled()) {
-                Sinks.Many<String> sink = Sinks.unsafe()
-                                               .many()
-                                               .unicast()
-                                               .onBackpressureBuffer(new MpscArrayQueue<>(Queues.SMALL_BUFFER_SIZE));
+                Sinks.Many<String> sink = Sinks.unsafe().many().unicast().onBackpressureBuffer(new MpscArrayQueue<>(Queues.SMALL_BUFFER_SIZE));
 
                 if (HAS_TURBO_FILTER) {
                     sink = new LogbackMetricsSuppressingManySink(sink);
@@ -240,8 +233,7 @@ public class StatsdMeterRegistry extends MeterRegistry {
             } else {
                 final Publisher<String> publisher;
                 if (statsdConfig.buffered()) {
-                    publisher = BufferingFlux.create(this.sink.asFlux(), "\n",
-                                                     statsdConfig.maxPacketLength(), statsdConfig.pollingFrequency().toMillis())
+                    publisher = BufferingFlux.create(this.sink.asFlux(), "\n", statsdConfig.maxPacketLength(), statsdConfig.pollingFrequency().toMillis())
                             .onBackpressureLatest();
                 } else {
                     publisher = this.sink.asFlux().publish().autoConnect();
