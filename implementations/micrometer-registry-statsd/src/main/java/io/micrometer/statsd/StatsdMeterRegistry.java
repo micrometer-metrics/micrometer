@@ -33,12 +33,14 @@ import org.reactivestreams.Subscriber;
 import org.reactivestreams.Subscription;
 import reactor.core.Disposable;
 import reactor.core.Disposables;
+import reactor.core.publisher.DirectProcessor;
 import reactor.core.publisher.Flux;
+import reactor.core.publisher.FluxSink;
 import reactor.core.publisher.Mono;
-import reactor.core.publisher.Sinks;
 import reactor.netty.Connection;
 import reactor.netty.tcp.TcpClient;
 import reactor.netty.udp.UdpClient;
+import reactor.util.context.Context;
 import reactor.util.retry.Retry;
 
 import java.net.InetSocketAddress;
@@ -80,7 +82,8 @@ public class StatsdMeterRegistry extends MeterRegistry {
     private final HierarchicalNameMapper nameMapper;
     private final Map<Meter.Id, StatsdPollable> pollableMeters = new ConcurrentHashMap<>();
     private final AtomicBoolean started = new AtomicBoolean();
-    Sinks.Many<String> sink = new NoopManySink();
+    DirectProcessor<String> processor = DirectProcessor.create();
+    FluxSink<String> sink = new NoopFluxSink();
     Disposable.Swap statsdConnection = Disposables.swap();
     private Disposable.Swap meterPoller = Disposables.swap();
 
@@ -143,11 +146,11 @@ public class StatsdMeterRegistry extends MeterRegistry {
         );
 
         if (config.enabled()) {
-            this.sink = Sinks.many().multicast().directBestEffort();
+            this.sink = processor.sink();
 
             try {
                 Class.forName("ch.qos.logback.classic.turbo.TurboFilter", false, getClass().getClassLoader());
-                this.sink = new LogbackMetricsSuppressingManySink(this.sink);
+                this.sink = new LogbackMetricsSuppressingFluxSink(this.sink);
             } catch (ClassNotFoundException ignore) { }
             start();
         }
@@ -186,7 +189,7 @@ public class StatsdMeterRegistry extends MeterRegistry {
     public void start() {
         if (started.compareAndSet(false, true)) {
             if (lineSink != null) {
-                this.sink.asFlux().subscribe(new Subscriber<String>() {
+                this.processor.subscribe(new Subscriber<String>() {
                     @Override
                     public void onSubscribe(Subscription s) {
                         s.request(Long.MAX_VALUE);
@@ -213,10 +216,10 @@ public class StatsdMeterRegistry extends MeterRegistry {
             } else {
                 final Publisher<String> publisher;
                 if (statsdConfig.buffered()) {
-                    publisher = BufferingFlux.create(this.sink.asFlux(), "\n", statsdConfig.maxPacketLength(), statsdConfig.pollingFrequency().toMillis())
+                    publisher = BufferingFlux.create(Flux.from(this.processor), "\n", statsdConfig.maxPacketLength(), statsdConfig.pollingFrequency().toMillis())
                             .onBackpressureLatest();
                 } else {
-                    publisher = this.sink.asFlux();
+                    publisher = this.processor;
                 }
                 if (statsdConfig.protocol() == StatsdProtocol.UDP) {
                     prepareUdpClient(publisher, () -> InetSocketAddress.createUnresolved(statsdConfig.host(), statsdConfig.port()));
@@ -427,13 +430,13 @@ public class StatsdMeterRegistry extends MeterRegistry {
                 case COUNT:
                 case TOTAL:
                 case TOTAL_TIME:
-                    pollableMeters.put(id.withTag(stat), () -> this.sink.tryEmitNext(line.count((long) ms.getValue(), stat)));
+                    pollableMeters.put(id.withTag(stat), () -> this.sink.next(line.count((long) ms.getValue(), stat)));
                     break;
                 case VALUE:
                 case ACTIVE_TASKS:
                 case DURATION:
                 case UNKNOWN:
-                    pollableMeters.put(id.withTag(stat), () -> this.sink.tryEmitNext(line.gauge(ms.getValue(), stat)));
+                    pollableMeters.put(id.withTag(stat), () -> this.sink.next(line.gauge(ms.getValue(), stat)));
                     break;
             }
         });
@@ -546,48 +549,49 @@ public class StatsdMeterRegistry extends MeterRegistry {
         }
     }
 
-    private static final class NoopManySink implements Sinks.Many<String> {
+    private static final class NoopFluxSink implements FluxSink<String> {
 
         @Override
-        public Sinks.EmitResult tryEmitNext(String s) {
-            return Sinks.EmitResult.OK;
+        public FluxSink<String> next(String s) {
+            return this;
         }
 
         @Override
-        public Sinks.EmitResult tryEmitComplete() {
-            return Sinks.EmitResult.OK;
+        public void complete() {
         }
 
         @Override
-        public Sinks.EmitResult tryEmitError(Throwable error) {
-            return Sinks.EmitResult.OK;
+        public void error(Throwable e) {
         }
 
         @Override
-        public void emitNext(String s, Sinks.EmitFailureHandler failureHandler) {
+        public Context currentContext() {
+            return Context.empty();
         }
 
         @Override
-        public void emitComplete(Sinks.EmitFailureHandler failureHandler) {
-        }
-
-        @Override
-        public void emitError(Throwable error, Sinks.EmitFailureHandler failureHandler) {
-        }
-
-        @Override
-        public int currentSubscriberCount() {
+        public long requestedFromDownstream() {
             return 0;
         }
 
         @Override
-        public Flux<String> asFlux() {
-            return Flux.empty();
+        public boolean isCancelled() {
+            return false;
         }
 
         @Override
-        public Object scanUnsafe(Attr key) {
-            return null;
+        public FluxSink<String> onRequest(LongConsumer consumer) {
+            return this;
+        }
+
+        @Override
+        public FluxSink<String> onCancel(Disposable d) {
+            return this;
+        }
+
+        @Override
+        public FluxSink<String> onDispose(Disposable d) {
+            return this;
         }
     }
 }
