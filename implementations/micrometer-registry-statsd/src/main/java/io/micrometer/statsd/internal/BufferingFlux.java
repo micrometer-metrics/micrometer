@@ -15,8 +15,8 @@
  */
 package io.micrometer.statsd.internal;
 
+import reactor.core.publisher.DirectProcessor;
 import reactor.core.publisher.Flux;
-import reactor.core.publisher.Sinks;
 
 import java.time.Duration;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -46,16 +46,16 @@ public class BufferingFlux {
             final AtomicInteger byteSize = new AtomicInteger();
             final AtomicLong lastTime = new AtomicLong();
 
-            final Sinks.Empty<Void> intervalEnd = Sinks.empty();
+            final DirectProcessor<Void> intervalEnd = DirectProcessor.create();
 
             final Flux<String> heartbeat = Flux.interval(Duration.ofMillis(maxMillisecondsBetweenEmits))
                     .map(l -> "")
-                    .takeUntilOther(intervalEnd.asMono());
+                    .takeUntilOther(intervalEnd);
 
             // Create a stream that emits at least once every $maxMillisecondsBetweenEmits, to avoid long pauses between
             // buffer flushes when the source doesn't emit for a while.
             final Flux<String> sourceWithEmptyStringKeepAlive = source
-                    .doOnTerminate(intervalEnd::tryEmitEmpty)
+                    .doOnTerminate(intervalEnd::onComplete)
                     .mergeWith(heartbeat);
 
             return sourceWithEmptyStringKeepAlive
