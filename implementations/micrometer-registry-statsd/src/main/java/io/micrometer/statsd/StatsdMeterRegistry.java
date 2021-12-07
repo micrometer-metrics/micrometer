@@ -28,6 +28,7 @@ import io.micrometer.core.util.internal.logging.WarnThenDebugLogger;
 import io.micrometer.statsd.internal.*;
 import io.netty.channel.unix.DomainSocketAddress;
 import io.netty.util.AttributeKey;
+import io.netty.util.internal.shaded.org.jctools.queues.MpscArrayQueue;
 import org.reactivestreams.Publisher;
 import org.reactivestreams.Subscriber;
 import org.reactivestreams.Subscription;
@@ -39,6 +40,7 @@ import reactor.core.publisher.Sinks;
 import reactor.netty.Connection;
 import reactor.netty.tcp.TcpClient;
 import reactor.netty.udp.UdpClient;
+import reactor.util.concurrent.Queues;
 import reactor.util.retry.Retry;
 
 import java.net.InetSocketAddress;
@@ -76,6 +78,8 @@ import java.util.stream.DoubleStream;
 public class StatsdMeterRegistry extends MeterRegistry {
     private static final WarnThenDebugLogger warnThenDebugLogger = new WarnThenDebugLogger(StatsdMeterRegistry.class);
 
+    private static final boolean HAS_TURBO_FILTER = hasTurboFilter();
+
     private final StatsdConfig statsdConfig;
     private final HierarchicalNameMapper nameMapper;
     private final Map<Meter.Id, StatsdPollable> pollableMeters = new ConcurrentHashMap<>();
@@ -83,6 +87,7 @@ public class StatsdMeterRegistry extends MeterRegistry {
     Sinks.Many<String> sink = new NoopManySink();
     Disposable.Swap statsdConnection = Disposables.swap();
     private Disposable.Swap meterPoller = Disposables.swap();
+
 
     @Nullable
     private BiFunction<Meter.Id, DistributionStatisticConfig, StatsdLineBuilder> lineBuilderFunction;
@@ -143,12 +148,6 @@ public class StatsdMeterRegistry extends MeterRegistry {
         );
 
         if (config.enabled()) {
-            this.sink = Sinks.many().multicast().directBestEffort();
-
-            try {
-                Class.forName("ch.qos.logback.classic.turbo.TurboFilter", false, getClass().getClassLoader());
-                this.sink = new LogbackMetricsSuppressingManySink(this.sink);
-            } catch (ClassNotFoundException ignore) { }
             start();
         }
     }
@@ -169,6 +168,16 @@ public class StatsdMeterRegistry extends MeterRegistry {
         }
     }
 
+    private static boolean hasTurboFilter() {
+        try {
+            Class.forName("ch.qos.logback.classic.turbo.TurboFilter", false, StatsdMeterRegistry.class.getClassLoader());
+            return true;
+        }
+        catch (ClassNotFoundException ex) {
+            return false;
+        }
+    }
+
     private <M extends Meter> void removePollableMeter(M m) {
         pollableMeters.remove(m.getId());
     }
@@ -185,6 +194,17 @@ public class StatsdMeterRegistry extends MeterRegistry {
 
     public void start() {
         if (started.compareAndSet(false, true)) {
+            if (statsdConfig.enabled()) {
+                Sinks.Many<String> sink = Sinks.unsafe().many().unicast().onBackpressureBuffer(new MpscArrayQueue<>(Queues.SMALL_BUFFER_SIZE));
+
+                if (HAS_TURBO_FILTER) {
+                    sink = new LogbackMetricsSuppressingManySink(sink);
+                }
+
+                this.sink = sink;
+            }
+
+
             if (lineSink != null) {
                 this.sink.asFlux().subscribe(new Subscriber<String>() {
                     @Override
@@ -216,7 +236,7 @@ public class StatsdMeterRegistry extends MeterRegistry {
                     publisher = BufferingFlux.create(this.sink.asFlux(), "\n", statsdConfig.maxPacketLength(), statsdConfig.pollingFrequency().toMillis())
                             .onBackpressureLatest();
                 } else {
-                    publisher = this.sink.asFlux();
+                    publisher = this.sink.asFlux().publish().autoConnect();
                 }
                 if (statsdConfig.protocol() == StatsdProtocol.UDP) {
                     prepareUdpClient(publisher, () -> InetSocketAddress.createUnresolved(statsdConfig.host(), statsdConfig.port()));
@@ -302,6 +322,7 @@ public class StatsdMeterRegistry extends MeterRegistry {
     }
 
     public void stop() {
+        sink.tryEmitComplete();
         if (started.compareAndSet(true, false)) {
             if (statsdConnection.get() != null) {
                 statsdConnection.get().dispose();
