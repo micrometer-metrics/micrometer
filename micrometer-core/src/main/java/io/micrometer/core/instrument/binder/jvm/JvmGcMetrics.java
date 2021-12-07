@@ -98,13 +98,16 @@ public class JvmGcMetrics implements MeterBinder, AutoCloseable {
         this.tags = tags;
     }
 
+    // VisibleForTesting
+    GcMetricsNotificationListener gcNotificationListener;
+
     @Override
     public void bindTo(MeterRegistry registry) {
         if (!this.managementExtensionsPresent) {
             return;
         }
 
-        NotificationListener gcNotificationListener = new GcMetricsNotificationListener(registry);
+        gcNotificationListener = new GcMetricsNotificationListener(registry);
 
         double maxLongLivedPoolBytes = getLongLivedHeapPools().mapToDouble(mem -> getUsageValue(mem, MemoryUsage::getMax)).sum();
 
