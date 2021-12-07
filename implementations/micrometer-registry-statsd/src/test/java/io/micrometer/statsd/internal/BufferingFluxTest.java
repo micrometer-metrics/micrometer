@@ -41,55 +41,63 @@ class BufferingFluxTest {
 
     @Test
     void bufferSingleStrings() {
-        Flux<String> source = Flux.just(
-                "twelve bytes",
-                "fourteen bytes",
-                "twelve bytes",
-                "fourteen bytes"
-        ).delayElements(Duration.ofMillis(50));
 
-        Flux<String> buffered = BufferingFlux.create(source, "\n", 14, 200);
+        StepVerifier.withVirtualTime(() -> {
+                        Flux<String> source = Flux.just("twelve bytes",
+                                                          "fourteen bytes",
+                                                          "twelve bytes",
+                                                          "fourteen bytes")
+                                                  .delayElements(Duration.ofMillis(50));
 
-        StepVerifier.create(buffered)
-                .expectNext("twelve bytes\n")
-                .expectNext("fourteen bytes\n")
-                .expectNext("twelve bytes\n")
-                .expectNext("fourteen bytes\n")
-                .verifyComplete();
+                        return BufferingFlux.create(source, "\n", 14, 200);
+                    })
+                    .thenAwait(Duration.ofMillis(100))
+                    .expectNext("twelve bytes\n")
+                    .thenAwait(Duration.ofMillis(50))
+                    .expectNext("fourteen bytes\n")
+                    .thenAwait(Duration.ofMillis(50))
+                    .expectNext("twelve bytes\n")
+                    .expectNext("fourteen bytes\n")
+                    .verifyComplete();
     }
 
     @Test
     void bufferMultipleStrings() {
-        Flux<String> source = Flux.just(
-                "twelve bytes",
-                "fourteen bytes",
-                "twelve bytes",
-                "fourteen bytes"
-        );
+        StepVerifier.withVirtualTime(() -> {
+                        Flux<String> source = Flux.just("twelve bytes",
+                                "fourteen bytes",
+                                "twelve bytes",
+                                "fourteen bytes");
 
-        Flux<String> buffered = BufferingFlux.create(source, "\n", 28, 1000);
-
-        StepVerifier.create(buffered)
-                .expectNext("twelve bytes\nfourteen bytes\n")
-                .expectNext("twelve bytes\nfourteen bytes\n")
-                .verifyComplete();
+                        return BufferingFlux.create(source, "\n", 28, 1000);
+                    })
+                    .expectNext("twelve bytes\nfourteen bytes\n")
+                    .expectNext("twelve bytes\nfourteen bytes\n")
+                    .verifyComplete();
     }
 
     @Test
     void bufferUntilTimeout() {
-        Flux<String> source = Flux.concat(
-                Mono.just("twelve bytes"),
-                Mono.just("fourteen bytes"),
-                Mono.just("twelve bytes"),
-                Mono.just("fourteen bytes").delayElement(Duration.ofMillis(65)) // avoid multiples of maxMillisecondsBetweenEmits to avoid race condition
-        );
+        StepVerifier.withVirtualTime(() -> {
+                        Flux<String> source = Flux.concat(Mono.just("twelve bytes"),
+                                Mono.just("fourteen bytes"),
+                                Mono.just("twelve bytes"),
+                                Mono.just("fourteen bytes")
+                                    .delayElement(Duration.ofMillis(65))
+                                // avoid multiples of maxMillisecondsBetweenEmits to avoid race condition
+                        );
 
-        Flux<String> buffered = BufferingFlux.create(source, "\n", Integer.MAX_VALUE, 50);
+                        Flux<String> buffered =
+                                BufferingFlux.create(source, "\n", Integer.MAX_VALUE, 50);
 
-        StepVerifier.create(buffered)
-                .expectNext("twelve bytes\nfourteen bytes\ntwelve bytes\n")
-                .expectNext("fourteen bytes\n")
-                .verifyComplete();
+                        return buffered;
+                    })
+                    .expectSubscription()
+                    .thenAwait(Duration.ofMillis(50))
+                    .expectNext("twelve bytes\nfourteen bytes\ntwelve bytes\n")
+                    .thenAwait(Duration.ofMillis(15))
+                    .expectNext("fourteen bytes\n")
+                    .verifyComplete();
     }
 
     /**
@@ -97,17 +105,18 @@ class BufferingFluxTest {
      * caused it to never emit the events until it reached the maxByteArraySize
      */
     @Test
-    void doNotBufferIndefinitely() throws InterruptedException {
-        // Produce a value at a more frequent interval than the maxMillisecondsBetweenEmits
-        Flux<String> source = Flux.interval(Duration.ofMillis(100))
-            .map(Object::toString);
+    void doNotBufferIndefinitely() {
+        StepVerifier.withVirtualTime(() -> {
+                        // Produce a value at a more frequent interval than the maxMillisecondsBetweenEmits
+                        Flux<String> source = Flux.interval(Duration.ofMillis(100))
+                                                  .map(Object::toString);
 
-        Flux<String> buffered = BufferingFlux.create(source, "\n", Integer.MAX_VALUE, 200);
-
-        CountDownLatch received = new CountDownLatch(1);
-        buffered.subscribe(v -> received.countDown());
-
-        Assertions.assertThat(received.await(10, TimeUnit.SECONDS)).isTrue();
+                        return BufferingFlux.create(source, "\n", Integer.MAX_VALUE, 200);
+                    })
+                    .thenAwait(Duration.ofMillis(200))
+                    .expectNextCount(1)
+                    .thenCancel()
+                    .verify();
     }
 
     /**

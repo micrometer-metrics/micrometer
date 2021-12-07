@@ -49,8 +49,7 @@ public class BufferingFlux {
                 delimiter,
                 maxByteArraySize,
                 maxMillisecondsBetweenEmits,
-                Schedulers.boundedElastic()
-                          .createWorker(),
+                Schedulers.boundedElastic(),
                 s)));
     }
 
@@ -64,7 +63,7 @@ public class BufferingFlux {
         final int maxByteArraySize;
         final long maxMillisecondsBetweenEmits;
 
-        final Scheduler.Worker worker;
+        final Scheduler scheduler;
         final CoreSubscriber<? super String> actual;
 
         Subscription s;
@@ -84,13 +83,13 @@ public class BufferingFlux {
                 String delimiter,
                 int size,
                 long emits,
-                Scheduler.Worker worker,
+                Scheduler scheduler,
                 CoreSubscriber<? super String> actual) {
             this.delimiter = delimiter;
             this.delimiterSize = delimiter.getBytes().length;
             this.maxByteArraySize = size;
             this.maxMillisecondsBetweenEmits = emits;
-            this.worker = worker;
+            this.scheduler = scheduler;
 
             this.actual = actual;
         }
@@ -99,14 +98,14 @@ public class BufferingFlux {
         public void onSubscribe(Subscription s) {
             if (Operators.validate(this.s, s)) {
                 this.s = s;
-                this.disposable = this.worker.schedulePeriodically(this,
+                this.disposable = this.scheduler.schedulePeriodically(this,
                         this.maxMillisecondsBetweenEmits,
                         this.maxMillisecondsBetweenEmits,
                         TimeUnit.MILLISECONDS);
 
                 this.actual.onSubscribe(this);
                 // Update last time to now if this is the first time
-                this.lastTime = System.currentTimeMillis();
+                this.lastTime = scheduler.now(TimeUnit.MILLISECONDS);
                 s.request(Long.MAX_VALUE);
             }
         }
@@ -119,7 +118,7 @@ public class BufferingFlux {
 
             final int nextBytesSize = previousBytesSize + bytesLength;
             if (nextBytesSize > this.maxByteArraySize) {
-                this.lastTime = System.currentTimeMillis();
+                this.lastTime = scheduler.now(TimeUnit.MILLISECONDS);
                 // This creates a buffer, reset size
                 this.byteSize = bytesLength;
                 this.buffer = line + delimiter; // reset buffer and set this line to the next chunk
@@ -143,10 +142,10 @@ public class BufferingFlux {
         }
 
         private synchronized void tryTimeout() {
-            final long now = System.currentTimeMillis();
+            final long now = scheduler.now(TimeUnit.MILLISECONDS);
             final long last = lastTime;
             final long diff = now - last;
-            if (diff > this.maxMillisecondsBetweenEmits && this.byteSize > 0) {
+            if (diff >= this.maxMillisecondsBetweenEmits && this.byteSize > 0) {
                 final String previousBuffer = this.buffer;
                 this.lastTime = now;
 
