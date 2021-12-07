@@ -24,6 +24,7 @@ import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.IntStream;
 
+import org.assertj.core.api.Assertions;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 import reactor.test.StepVerifier;
@@ -66,7 +67,7 @@ class BufferingFluxTest {
                 "fourteen bytes"
         );
 
-        Flux<String> buffered = BufferingFlux.create(source, "\n", 27, 1000);
+        Flux<String> buffered = BufferingFlux.create(source, "\n", 28, 1000);
 
         StepVerifier.create(buffered)
                 .expectNext("twelve bytes\nfourteen bytes\n")
@@ -106,7 +107,7 @@ class BufferingFluxTest {
         CountDownLatch received = new CountDownLatch(1);
         buffered.subscribe(v -> received.countDown());
 
-        received.await(10, TimeUnit.SECONDS);
+        Assertions.assertThat(received.await(10, TimeUnit.SECONDS)).isTrue();
     }
 
     /**
