@@ -3,10 +3,10 @@
 # This file is expected to be part of source control.
 antlr:antlr:2.7.7=checkstyle,nohttp
 ch.qos.logback:logback-classic:1.2.3=checkstyle,nohttp,nohttp-cli
-ch.qos.logback:logback-classic:1.2.6=compileClasspath
+ch.qos.logback:logback-classic:1.2.7=compileClasspath
 ch.qos.logback:logback-core:1.2.3=checkstyle,nohttp,nohttp-cli
-ch.qos.logback:logback-core:1.2.6=compileClasspath
-com.github.tomakehurst:wiremock-jre8-standalone:2.31.0=testCompileClasspath,testRuntimeClasspath
+ch.qos.logback:logback-core:1.2.7=compileClasspath
+com.github.tomakehurst:wiremock-jre8-standalone:2.32.0=testCompileClasspath,testRuntimeClasspath
 com.google.android:annotations:4.1.1.4=default,runtimeClasspath,testRuntimeClasspath
 com.google.api.grpc:proto-google-cloud-monitoring-v3:3.1.0=compileClasspath,default,runtimeClasspath,testCompileClasspath,testRuntimeClasspath
 com.google.api.grpc:proto-google-common-protos:2.6.0=compileClasspath,default,runtimeClasspath,testCompileClasspath,testRuntimeClasspath
