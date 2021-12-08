@@ -26,9 +26,9 @@ def VERSIONS = [
         'com.tngtech.archunit:archunit-junit5:latest.release',
         'com.wavefront:wavefront-sdk-java:latest.release',
         'de.flapdoodle.embed:de.flapdoodle.embed.mongo:latest.release',
-        'io.dropwizard.metrics:metrics-core:4.0.+',
-        'io.dropwizard.metrics:metrics-graphite:4.1.+',
-        'io.dropwizard.metrics:metrics-jmx:4.0.+',
+        'io.dropwizard.metrics:metrics-core:4.+',
+        'io.dropwizard.metrics:metrics-graphite:4.+',
+        'io.dropwizard.metrics:metrics-jmx:4.+',
         // all io.grpc libraries must use the same version
         'io.grpc:grpc-api:latest.release',
         'io.grpc:grpc-core:latest.release',

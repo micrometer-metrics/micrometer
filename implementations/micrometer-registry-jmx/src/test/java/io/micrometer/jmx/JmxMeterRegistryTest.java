@@ -46,7 +46,7 @@ class JmxMeterRegistryTest {
         clock.addSeconds(6);
 
         MBeanServer mbs = ManagementFactory.getPlatformMBeanServer();
-        Double oneMinuteRate = (Double) mbs.getAttribute(new ObjectName(JmxConfig.DEFAULT.domain() + ":name=" + nameOfTimer), "OneMinuteRate");
+        Double oneMinuteRate = (Double) mbs.getAttribute(new ObjectName(String.format("%s:name=%s,type=timers", JmxConfig.DEFAULT.domain(), nameOfTimer)), "OneMinuteRate");
 
         assertThat(oneMinuteRate).isGreaterThan(0.0);
     }
