@@ -118,7 +118,7 @@ class JvmGcMetricsTest {
 
     @Test
     @Issue("gh-2872")
-    void sizeMetricsNotSetToZero() {
+    void sizeMetricsNotSetToZero() throws InterruptedException {
         GcMetricsNotificationListener gcMetricsNotificationListener = binder.gcNotificationListener;
         NotificationCapturingListener capturingListener = new NotificationCapturingListener();
         Collection<Runnable> notificationListenerCleanUpRunnables = new ArrayList<>();
@@ -139,7 +139,13 @@ class JvmGcMetricsTest {
         }
 
         try {
-            System.gc(); // capture real gc notifications
+            // capture real gc notifications
+            System.gc();
+            // reduce flakiness by sleeping to give time for gc notifications to be sent to listeners.
+            // note: we cannot just wait for any notification because we don't know how many notifications to expect.
+            // this can still be flawed if we didn't wait for all notifications and proceed with assertions on an
+            // incomplete set of notifications.
+            Thread.sleep(100);
             List<Notification> notifications = capturingListener.getNotifications();
             assertThat(notifications).isNotEmpty();
             // replay each notification and check size metrics not set to zero
