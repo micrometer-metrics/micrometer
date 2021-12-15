@@ -3,9 +3,9 @@
 # This file is expected to be part of source control.
 antlr:antlr:2.7.7=checkstyle,nohttp
 ch.qos.logback:logback-classic:1.2.3=checkstyle,nohttp,nohttp-cli
-ch.qos.logback:logback-classic:1.2.7=compileClasspath,default,runtimeClasspath,testCompileClasspath,testRuntimeClasspath
+ch.qos.logback:logback-classic:1.2.8=compileClasspath,default,runtimeClasspath,testCompileClasspath,testRuntimeClasspath
 ch.qos.logback:logback-core:1.2.3=checkstyle,nohttp,nohttp-cli
-ch.qos.logback:logback-core:1.2.7=compileClasspath,default,runtimeClasspath,testCompileClasspath,testRuntimeClasspath
+ch.qos.logback:logback-core:1.2.8=compileClasspath,default,runtimeClasspath,testCompileClasspath,testRuntimeClasspath
 com.google.code.findbugs:jsr305:3.0.2=checkstyle,compileClasspath,nohttp,runtimeClasspath,testCompileClasspath,testRuntimeClasspath
 com.google.errorprone:error_prone_annotations:2.3.4=nohttp
 com.google.errorprone:error_prone_annotations:2.5.1=checkstyle
