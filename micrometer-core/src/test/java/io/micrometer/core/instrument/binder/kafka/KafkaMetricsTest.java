@@ -37,7 +37,6 @@ import java.util.Map;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Supplier;
 
-import static java.util.Collections.EMPTY_MAP;
 import static org.assertj.core.api.Assertions.assertThat;
 
 class KafkaMetricsTest {
@@ -532,9 +531,8 @@ class KafkaMetricsTest {
         kafkaMetrics.checkAndBindMetrics(registry);
     }
 
-    @SuppressWarnings("unchecked")
     private MetricName createMetricName(String name) {
-        return createMetricName(name, EMPTY_MAP);
+        return createMetricName(name, Collections.emptyMap());
     }
 
     private MetricName createMetricName(String name, String... keyValues) {
