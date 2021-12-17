@@ -38,10 +38,6 @@ dependencies {
     optionalApi 'ch.qos.logback:logback-classic'
     optionalApi 'org.apache.logging.log4j:log4j-core'
 
-    // reactor
-    optionalApi 'io.projectreactor:reactor-core'
-    optionalApi 'io.projectreactor.netty:reactor-netty-http'
-
     // @Timed AOP
     optionalApi 'org.aspectj:aspectjweaver'
 
