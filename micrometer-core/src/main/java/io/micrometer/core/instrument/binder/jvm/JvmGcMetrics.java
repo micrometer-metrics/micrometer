@@ -156,7 +156,7 @@ public class JvmGcMetrics implements MeterBinder, AutoCloseable {
     class GcMetricsNotificationListener implements NotificationListener {
         private final MeterRegistry registry;
 
-        public GcMetricsNotificationListener(MeterRegistry registry) {
+        GcMetricsNotificationListener(MeterRegistry registry) {
             this.registry = registry;
         }
 
@@ -188,7 +188,7 @@ public class JvmGcMetrics implements MeterBinder, AutoCloseable {
             final Map<String, MemoryUsage> before = gcInfo.getMemoryUsageBeforeGc();
             final Map<String, MemoryUsage> after = gcInfo.getMemoryUsageAfterGc();
 
-            countPoolSizeDelta(before, after, allocatedBytes, allocationPoolSizeAfter, allocationPoolName);
+            countPoolSizeDelta(before, after);
 
             final long longLivedBefore = longLivedPoolNames.stream().mapToLong(pool -> before.get(pool).getUsed()).sum();
             final long longLivedAfter = longLivedPoolNames.stream().mapToLong(pool -> after.get(pool).getUsed()).sum();
@@ -208,19 +208,18 @@ public class JvmGcMetrics implements MeterBinder, AutoCloseable {
             }
         }
 
-    private void countPoolSizeDelta(Map<String, MemoryUsage> before, Map<String, MemoryUsage> after, Counter counter,
-            AtomicLong previousPoolSize, @Nullable String poolName) {
-        if (poolName == null) {
-            return;
+        private void countPoolSizeDelta(Map<String, MemoryUsage> before, Map<String, MemoryUsage> after) {
+            if (allocationPoolName == null) {
+                return;
+            }
+            final long beforeBytes = before.get(allocationPoolName).getUsed();
+            final long afterBytes = after.get(allocationPoolName).getUsed();
+            final long delta = beforeBytes - allocationPoolSizeAfter.get();
+            allocationPoolSizeAfter.set(afterBytes);
+            if (delta > 0L) {
+                allocatedBytes.increment(delta);
+            }
         }
-        final long beforeBytes = before.get(poolName).getUsed();
-        final long afterBytes = after.get(poolName).getUsed();
-        final long delta = beforeBytes - previousPoolSize.get();
-        previousPoolSize.set(afterBytes);
-        if (delta > 0L) {
-            counter.increment(delta);
-        }
-    }
 
         private boolean shouldUpdateDataSizeMetrics(String gcName) {
             return nonGenerationalGcShouldUpdateDataSize(gcName) || isMajorGenerationalGc(gcName);
