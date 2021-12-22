@@ -43,6 +43,7 @@ io.netty:netty-transport:4.1.70.Final=jmh,jmhRuntimeClasspath
 io.projectreactor.netty:reactor-netty-core:1.0.13=jmh,jmhRuntimeClasspath
 io.projectreactor:reactor-bom:2020.0.13=jmh,jmhRuntimeClasspath
 io.projectreactor:reactor-core:3.4.12=jmh,jmhCompileClasspath,jmhRuntimeClasspath
+io.projectreactor:reactor-bom:2020.0.14=jmh,jmhRuntimeClasspath
 io.prometheus:simpleclient:0.12.0=jmh,jmhCompileClasspath,jmhRuntimeClasspath
 io.prometheus:simpleclient_common:0.12.0=jmh,jmhCompileClasspath,jmhRuntimeClasspath
 io.prometheus:simpleclient_tracer_common:0.12.0=jmh,jmhCompileClasspath,jmhRuntimeClasspath
