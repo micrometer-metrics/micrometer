@@ -19,5 +19,4 @@ dependencies {
     testImplementation 'javax.cache:cache-api'
     testImplementation 'com.hazelcast:hazelcast'
     testImplementation 'com.squareup.okhttp3:okhttp'
-    testImplementation 'io.projectreactor.netty:reactor-netty-http'
 }
