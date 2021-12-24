@@ -287,7 +287,8 @@ public interface Timer extends Meter, HistogramSupport {
         }
 
         /**
-         * Records the duration of the operation.
+         * Records the duration of the operation and adds tags to the {@link Timer.Builder} based on the
+         * {@link HandlerContext} for this {@link Sample}.
          *
          * @param timer The timer to record the sample to.
          * @return The total duration of the sample in nanoseconds
