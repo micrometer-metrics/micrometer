@@ -103,6 +103,7 @@ subprojects {
                         'implSpec:a:Implementation Requirements:',
                         'implNote:a:Implementation Note:'
                     )
+                    options.addBooleanOption('Xdoclint:all,-missing', true)
                 }
             }
         }

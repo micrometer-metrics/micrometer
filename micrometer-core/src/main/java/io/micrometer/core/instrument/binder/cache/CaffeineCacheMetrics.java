@@ -32,7 +32,6 @@ import java.util.concurrent.TimeUnit;
  * Cache<String, String> cache = Caffeine.newBuilder().recordStats().build();
  * CaffeineCacheMetrics.monitor(registry, cache, "mycache", "region", "test");
  * }</pre>
- * <p>
  *
  * @author Clint Checketts
  * @see CaffeineStatsCounter
