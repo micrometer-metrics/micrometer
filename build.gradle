@@ -97,13 +97,18 @@ subprojects {
             }
 
             javadoc {
-                configure(options) {
-                    tags(
-                        'apiNote:a:API Note:',
-                        'implSpec:a:Implementation Requirements:',
-                        'implNote:a:Implementation Note:'
-                    )
-                    options.addBooleanOption('Xdoclint:all,-missing', true)
+                if (project.name.contains('samples')) {
+                    enabled = false
+                }
+                else {
+                    configure(options) {
+                        tags(
+                            'apiNote:a:API Note:',
+                            'implSpec:a:Implementation Requirements:',
+                            'implNote:a:Implementation Note:'
+                        )
+                        options.addBooleanOption('Xdoclint:all,-missing', true)
+                    }
                 }
             }
         }
