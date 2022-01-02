@@ -19,6 +19,7 @@ package io.micrometer.core.instrument.binder.commonspool2;
 import io.micrometer.core.instrument.*;
 import io.micrometer.core.instrument.binder.BaseUnits;
 import io.micrometer.core.instrument.binder.MeterBinder;
+import io.micrometer.core.instrument.util.NamedThreadFactory;
 import io.micrometer.core.lang.NonNull;
 import io.micrometer.core.lang.Nullable;
 import io.micrometer.core.util.internal.logging.InternalLogger;
@@ -50,7 +51,7 @@ public class CommonsObjectPool2Metrics implements MeterBinder, AutoCloseable {
 
     private static final String[] TYPES = new String[]{"GenericObjectPool", "GenericKeyedObjectPool"};
 
-    private final ExecutorService executor = Executors.newSingleThreadExecutor();
+    private final ExecutorService executor = Executors.newSingleThreadExecutor(new NamedThreadFactory("commons-pool-metrics-updater"));
 
     private final MBeanServer mBeanServer;
     private final Iterable<Tag> tags;

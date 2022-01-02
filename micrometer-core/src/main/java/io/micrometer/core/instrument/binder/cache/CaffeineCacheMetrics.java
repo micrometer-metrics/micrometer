@@ -35,7 +35,6 @@ import java.util.function.ToLongFunction;
  * Cache<String, String> cache = Caffeine.newBuilder().recordStats().build();
  * CaffeineCacheMetrics.monitor(registry, cache, "mycache", "region", "test");
  * }</pre>
- * <p>
  *
  * @author Clint Checketts
  * @see CaffeineStatsCounter
