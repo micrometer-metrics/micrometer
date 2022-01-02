@@ -6,7 +6,10 @@ dependencies {
     api project(':micrometer-core')
 
     implementation 'io.projectreactor:reactor-core'
-    implementation 'io.projectreactor.netty:reactor-netty-core'
+    implementation('io.projectreactor.netty:reactor-netty-core') {
+        // We do not use HTTP modules; exclude to avoid false positive CVE reports
+        exclude module: 'netty-codec-http'
+    }
 
     testImplementation project(':micrometer-test')
     testImplementation 'io.projectreactor:reactor-test'

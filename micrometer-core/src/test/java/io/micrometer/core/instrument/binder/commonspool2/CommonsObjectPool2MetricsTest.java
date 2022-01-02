@@ -25,6 +25,7 @@ import org.apache.commons.pool2.impl.DefaultPooledObject;
 import org.apache.commons.pool2.impl.GenericKeyedObjectPool;
 import org.apache.commons.pool2.impl.GenericObjectPool;
 import org.apache.commons.pool2.impl.GenericObjectPoolConfig;
+import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Test;
 
 import java.util.Arrays;
@@ -42,6 +43,11 @@ class CommonsObjectPool2MetricsTest {
     private Tags tags = Tags.of("app", "myapp", "version", "1");
     private final MeterRegistry registry = new SimpleMeterRegistry();
     private final CommonsObjectPool2Metrics commonsObjectPool2Metrics = new CommonsObjectPool2Metrics(tags);
+
+    @AfterEach
+    void afterEach() {
+        commonsObjectPool2Metrics.close();
+    }
 
     @Test
     void verifyMetricsWithExpectedTags() {
