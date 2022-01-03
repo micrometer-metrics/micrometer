@@ -36,7 +36,6 @@ apply plugin: 'io.github.gradle-nexus.publish-plugin'
 apply from: 'dependencies.gradle'
 
 allprojects {
-    version = "2.0.0-SNAPSHOT"
     group = 'io.micrometer'
     ext.'release.stage' = releaseStage ?: 'SNAPSHOT'
 
