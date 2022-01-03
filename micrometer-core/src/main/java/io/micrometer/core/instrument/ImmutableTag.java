@@ -15,9 +15,9 @@
  */
 package io.micrometer.core.instrument;
 
-import java.util.Objects;
-
 import io.micrometer.core.lang.Nullable;
+
+import java.util.Objects;
 
 import static java.util.Objects.requireNonNull;
 
