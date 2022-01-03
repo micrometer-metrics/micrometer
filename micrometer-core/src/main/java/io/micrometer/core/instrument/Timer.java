@@ -301,9 +301,11 @@ public interface Timer extends Meter, HistogramSupport {
         /**
          * Records the duration of the operation.
          *
+         * @deprecated Will be removed in a subsequent milestone release, please use {@link Sample#stop(Builder)}.
          * @param timer The timer to record the sample to.
          * @return The total duration of the sample in nanoseconds
          */
+        @Deprecated
         public long stop(Timer timer) {
             long duration = clock.monotonicTime() - startTime;
             timer.record(duration, TimeUnit.NANOSECONDS);
