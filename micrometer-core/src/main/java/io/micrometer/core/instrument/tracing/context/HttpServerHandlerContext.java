@@ -31,8 +31,6 @@ public class HttpServerHandlerContext extends HttpHandlerContext<HttpServerReque
 
     private HttpServerResponse response;
 
-    private Object handler;
-
     /**
      * Creates a new {@link HttpServerHandlerContext}.
      *
@@ -46,17 +44,6 @@ public class HttpServerHandlerContext extends HttpHandlerContext<HttpServerReque
     @Override
     public HttpServerRequest getRequest() {
         return this.request;
-    }
-
-    /**
-     * Sets a request handler.
-     *
-     * @param handler handler for this request
-     * @return this
-     */
-    public HttpServerHandlerContext setHandler(Object handler) {
-        this.handler = handler;
-        return this;
     }
 
     @Override
