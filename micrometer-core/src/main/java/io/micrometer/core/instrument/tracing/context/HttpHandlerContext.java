@@ -16,10 +16,10 @@
 package io.micrometer.core.instrument.tracing.context;
 
 import io.micrometer.core.instrument.Timer;
+import io.micrometer.core.instrument.transport.http.HttpRequest;
+import io.micrometer.core.instrument.transport.http.HttpResponse;
 import io.micrometer.core.lang.NonNull;
 import io.micrometer.core.lang.Nullable;
-import io.micrometer.core.instrument.transport.http.Request;
-import io.micrometer.core.instrument.transport.http.Response;
 
 /**
  * {@link io.micrometer.core.instrument.Timer.HandlerContext HandlerContext} for an HTTP exchange.
@@ -29,7 +29,7 @@ import io.micrometer.core.instrument.transport.http.Response;
  * @param <REQ> request type
  * @param <RES> response type
  */
-public abstract class HttpHandlerContext<REQ extends Request, RES extends Response> extends Timer.HandlerContext {
+public abstract class HttpHandlerContext<REQ extends HttpRequest, RES extends HttpResponse> extends Timer.HandlerContext {
 
     /**
      * Returns the HTTP request.
