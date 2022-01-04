@@ -20,7 +20,7 @@ import io.micrometer.core.instrument.transport.http.HttpServerRequest;
 import io.micrometer.core.instrument.transport.http.HttpServerResponse;
 
 /**
- * An IntervalEvent that represents an HTTP server event.
+ * {@link io.micrometer.core.instrument.Timer.HandlerContext HandlerContext} for an HTTP server request/response.
  *
  * @author Marcin Grzejszczak
  * @since 2.0.0
