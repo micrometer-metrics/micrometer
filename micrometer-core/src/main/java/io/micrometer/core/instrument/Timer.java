@@ -340,6 +340,9 @@ public interface Timer extends Meter, HistogramSupport {
         }
     }
 
+    /**
+     * Nestable bounding for {@link Timer timed} operations that capture and pass along already opened scopes.
+     */
     class Scope implements Closeable {
         private final ThreadLocal<Sample> threadLocal;
         private final Sample currentSample;
@@ -363,10 +366,14 @@ public interface Timer extends Meter, HistogramSupport {
         }
     }
 
+    /**
+     * Context for {@link Sample} instances used by {@link TimerRecordingHandler} to pass arbitrary objects between
+     * handler methods. Usage is similar to the JDK {@link Map} API.
+     */
     @SuppressWarnings("unchecked")
     class HandlerContext implements TagsProvider {
         private final Map<Class<?>, Object> map = new HashMap<>();
-        
+
         public <T> HandlerContext put(Class<T> clazz, T object) {
             this.map.put(clazz, object);
             return this;
