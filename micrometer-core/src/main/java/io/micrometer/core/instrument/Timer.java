@@ -51,10 +51,10 @@ public interface Timer extends Meter, HistogramSupport {
      * @return A timing sample with start time recorded.
      */
     static Sample start(MeterRegistry registry) {
-        return start(registry, null);
+        return start(registry, new HandlerContext());
     }
 
-    static Sample start(MeterRegistry registry, @Nullable HandlerContext handlerContext) {
+    static Sample start(MeterRegistry registry, HandlerContext handlerContext) {
         return new Sample(registry, handlerContext);
     }
 
@@ -263,10 +263,10 @@ public interface Timer extends Meter, HistogramSupport {
         private final HandlerContext handlerContext;
         private final MeterRegistry registry;
 
-        Sample(MeterRegistry registry, @Nullable HandlerContext ctx) {
+        Sample(MeterRegistry registry, HandlerContext ctx) {
             this.clock = registry.config().clock();
             this.startTime = clock.monotonicTime();
-            this.handlerContext = ctx == null ? new HandlerContext() : ctx;
+            this.handlerContext = ctx;
             this.handlers = registry.config().getTimerRecordingHandlers().stream()
                     .filter(handler -> handler.supportsContext(this.handlerContext))
                     .collect(Collectors.toList());
