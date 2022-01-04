@@ -110,31 +110,31 @@ public interface TimerRecordingHandler<T extends Timer.HandlerContext> {
 
         @Override
         public void onStart(Timer.Sample sample, @Nullable Timer.HandlerContext context) {
-            getFirstApplicableListener(context).ifPresent(listener -> listener.onStart(sample, context));
+            getFirstApplicableHandler(context).ifPresent(handler -> handler.onStart(sample, context));
         }
 
         @Override
         public void onError(Timer.Sample sample, @Nullable Timer.HandlerContext context, Throwable throwable) {
-            getFirstApplicableListener(context).ifPresent(listener -> listener.onError(sample, context, throwable));
+            getFirstApplicableHandler(context).ifPresent(handler -> handler.onError(sample, context, throwable));
         }
 
         @Override
         public void onScopeOpened(Timer.Sample sample, @Nullable Timer.HandlerContext context) {
-            getFirstApplicableListener(context).ifPresent(listener -> listener.onScopeOpened(sample, context));
+            getFirstApplicableHandler(context).ifPresent(handler -> handler.onScopeOpened(sample, context));
         }
 
         @Override
         public void onStop(Timer.Sample sample, @Nullable Timer.HandlerContext context, Timer timer, Duration duration) {
-            getFirstApplicableListener(context).ifPresent(listener -> listener.onStop(sample, context, timer, duration));
+            getFirstApplicableHandler(context).ifPresent(handler -> handler.onStop(sample, context, timer, duration));
         }
 
-        private Optional<TimerRecordingHandler> getFirstApplicableListener(@Nullable Timer.HandlerContext context) {
+        private Optional<TimerRecordingHandler> getFirstApplicableHandler(@Nullable Timer.HandlerContext context) {
             return this.handlers.stream().filter(handler -> handler.supportsContext(context)).findFirst();
         }
 
         @Override
         public boolean supportsContext(@Nullable Timer.HandlerContext handlerContext) {
-            return getFirstApplicableListener(handlerContext).isPresent();
+            return getFirstApplicableHandler(handlerContext).isPresent();
         }
 
         @Override
@@ -169,31 +169,31 @@ public interface TimerRecordingHandler<T extends Timer.HandlerContext> {
 
         @Override
         public void onStart(Timer.Sample sample, @Nullable Timer.HandlerContext context) {
-            getAllApplicableListeners(context).forEach(listener -> listener.onStart(sample, context));
+            getAllApplicableHandlers(context).forEach(handler -> handler.onStart(sample, context));
         }
 
         @Override
         public void onError(Timer.Sample sample, @Nullable Timer.HandlerContext context, Throwable throwable) {
-            getAllApplicableListeners(context).forEach(listener -> listener.onError(sample, context, throwable));
+            getAllApplicableHandlers(context).forEach(handler -> handler.onError(sample, context, throwable));
         }
 
         @Override
         public void onScopeOpened(Timer.Sample sample, @Nullable Timer.HandlerContext context) {
-            getAllApplicableListeners(context).forEach(listener -> listener.onScopeOpened(sample, context));
+            getAllApplicableHandlers(context).forEach(handler -> handler.onScopeOpened(sample, context));
         }
 
         @Override
         public void onStop(Timer.Sample sample, @Nullable Timer.HandlerContext context, Timer timer, Duration duration) {
-            getAllApplicableListeners(context).forEach(listener -> listener.onStop(sample, context, timer, duration));
+            getAllApplicableHandlers(context).forEach(handler -> handler.onStop(sample, context, timer, duration));
         }
 
-        private List<TimerRecordingHandler> getAllApplicableListeners(@Nullable Timer.HandlerContext context) {
+        private List<TimerRecordingHandler> getAllApplicableHandlers(@Nullable Timer.HandlerContext context) {
             return this.handlers.stream().filter(handler -> handler.supportsContext(context)).collect(Collectors.toList());
         }
 
         @Override
         public boolean supportsContext(@Nullable Timer.HandlerContext handlerContext) {
-            return !getAllApplicableListeners(handlerContext).isEmpty();
+            return !getAllApplicableHandlers(handlerContext).isEmpty();
         }
 
         @Override

@@ -27,7 +27,7 @@ import io.micrometer.core.lang.Nullable;
 import io.micrometer.prometheus.PrometheusConfig;
 import io.micrometer.prometheus.PrometheusMeterRegistry;
 
-public class TimerRecordingListenerSample {
+public class TimerRecordingHandlerSample {
     private static final PrometheusMeterRegistry registry = new PrometheusMeterRegistry(PrometheusConfig.DEFAULT);
 
     public static void main(String[] args) throws InterruptedException {
@@ -42,8 +42,10 @@ public class TimerRecordingListenerSample {
         sample.stop(timerBuilder);
 
         Timer.start(registry).stop(timerBuilder);
-        Timer.start(registry, null).stop(timerBuilder);
         Timer.start(registry, new UnsupportedHandlerContext()).stop(timerBuilder);
+
+        System.out.println();
+        System.out.println(registry.scrape());
     }
 
     static class SampleHandler implements TimerRecordingHandler<CustomHandlerContext> {

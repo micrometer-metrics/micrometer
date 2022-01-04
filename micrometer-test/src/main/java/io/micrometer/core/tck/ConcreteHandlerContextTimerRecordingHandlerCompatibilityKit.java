@@ -37,11 +37,11 @@ import static org.assertj.core.api.Assertions.assertThatCode;
  */
 public abstract class ConcreteHandlerContextTimerRecordingHandlerCompatibilityKit<T extends Timer.HandlerContext> {
 
-    protected TimerRecordingHandler<T> listener;
+    protected TimerRecordingHandler<T> handler;
 
     protected MeterRegistry meterRegistry = new SimpleMeterRegistry();
 
-    public abstract TimerRecordingHandler<T> listener();
+    public abstract TimerRecordingHandler<T> handler();
 
     protected Timer.Sample sample = Timer.start(meterRegistry);
 
@@ -50,29 +50,29 @@ public abstract class ConcreteHandlerContextTimerRecordingHandlerCompatibilityKi
     @BeforeEach
     void setup() {
         // assigned here rather than at initialization so subclasses can use fields in their registry() implementation
-        listener = listener();
+        handler = handler();
     }
 
     @Test
-    @DisplayName("compatibility test provides a null accepting context timer recording listener")
-    void listenerSupportsConcreteContextForListenerMethods() {
-        assertThatCode(() -> listener.onStart(sample, context())).doesNotThrowAnyException();
-        assertThatCode(() -> listener.onStop(sample, context(), Timer.builder("timer for concrete context")
+    @DisplayName("compatibility test provides a null accepting context timer recording handler")
+    void handlerSupportsConcreteContextForHandlerMethods() {
+        assertThatCode(() -> handler.onStart(sample, context())).doesNotThrowAnyException();
+        assertThatCode(() -> handler.onStop(sample, context(), Timer.builder("timer for concrete context")
                 .register(meterRegistry), Duration.ofSeconds(1L))).doesNotThrowAnyException();
-        assertThatCode(() -> listener.onError(sample, context(), new RuntimeException())).doesNotThrowAnyException();
-        assertThatCode(() -> listener.onScopeOpened(sample, context())).doesNotThrowAnyException();
+        assertThatCode(() -> handler.onError(sample, context(), new RuntimeException())).doesNotThrowAnyException();
+        assertThatCode(() -> handler.onScopeOpened(sample, context())).doesNotThrowAnyException();
     }
 
     @Test
-    void listenerSupportsConcreteContextOnly() {
-        assertThatCode(() -> listener.supportsContext(context())).doesNotThrowAnyException();
-        assertThat(listener.supportsContext(context())).as("Listener supports only concrete context").isTrue();
+    void handlerSupportsConcreteContextOnly() {
+        assertThatCode(() -> handler.supportsContext(context())).doesNotThrowAnyException();
+        assertThat(handler.supportsContext(context())).as("Handler supports only concrete context").isTrue();
 
-        assertThatCode(() -> listener.supportsContext(null)).doesNotThrowAnyException();
-        assertThat(listener.supportsContext(null)).as("Listener supports only concrete context - no nulls accepted").isFalse();
+        assertThatCode(() -> handler.supportsContext(null)).doesNotThrowAnyException();
+        assertThat(handler.supportsContext(null)).as("Handler supports only concrete context - no nulls accepted").isFalse();
 
-        assertThatCode(() -> listener.supportsContext(new NotMatchingHandlerContext())).doesNotThrowAnyException();
-        assertThat(listener.supportsContext(new NotMatchingHandlerContext())).as("Listener supports only concrete context").isFalse();
+        assertThatCode(() -> handler.supportsContext(new NotMatchingHandlerContext())).doesNotThrowAnyException();
+        assertThat(handler.supportsContext(new NotMatchingHandlerContext())).as("Handler supports only concrete context").isFalse();
     }
 
     static class NotMatchingHandlerContext extends Timer.HandlerContext {

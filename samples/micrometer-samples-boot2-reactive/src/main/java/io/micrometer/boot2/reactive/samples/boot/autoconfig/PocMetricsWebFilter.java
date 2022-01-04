@@ -42,7 +42,7 @@ import java.util.Set;
 
 /**
  * Copy of {@link org.springframework.boot.actuate.metrics.web.reactive.server.MetricsWebFilter}.
- * Uses Timer start/stop instead of recording duration so the timer recording listener is used.
+ * Uses Timer start/stop instead of recording duration so the timer recording handler is used.
  */
 @Order(Ordered.HIGHEST_PRECEDENCE + 1)
 public class PocMetricsWebFilter implements WebFilter {

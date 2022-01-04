@@ -35,16 +35,16 @@ import static org.assertj.core.api.Assertions.assertThatCode;
 public abstract class AnyHandlerContextTimerRecordingHandlerCompatibilityKit extends NullHandlerContextTimerRecordingHandlerCompatibilityKit {
 
     @Test
-    @DisplayName("compatibility test provides a test context accepting timer recording listener")
-    void listenerSupportsAnyContext() {
+    @DisplayName("compatibility test provides a test context accepting timer recording handler")
+    void handlerSupportsAnyContext() {
         TestHandlerContext testContext = new TestHandlerContext();
-        assertThatCode(() -> listener.onStart(sample, testContext)).doesNotThrowAnyException();
-        assertThatCode(() -> listener.onStop(sample, testContext, Timer.builder("timer for test context")
+        assertThatCode(() -> handler.onStart(sample, testContext)).doesNotThrowAnyException();
+        assertThatCode(() -> handler.onStop(sample, testContext, Timer.builder("timer for test context")
                 .register(meterRegistry), Duration.ofSeconds(1L))).doesNotThrowAnyException();
-        assertThatCode(() -> listener.onError(sample, testContext, new RuntimeException())).doesNotThrowAnyException();
-        assertThatCode(() -> listener.onScopeOpened(sample, testContext)).doesNotThrowAnyException();
-        assertThatCode(() -> listener.supportsContext(testContext)).doesNotThrowAnyException();
-        assertThat(listener.supportsContext(testContext)).as("Listener supports any context").isTrue();
+        assertThatCode(() -> handler.onError(sample, testContext, new RuntimeException())).doesNotThrowAnyException();
+        assertThatCode(() -> handler.onScopeOpened(sample, testContext)).doesNotThrowAnyException();
+        assertThatCode(() -> handler.supportsContext(testContext)).doesNotThrowAnyException();
+        assertThat(handler.supportsContext(testContext)).as("Handler supports any context").isTrue();
     }
 
     static class TestHandlerContext extends Timer.HandlerContext {

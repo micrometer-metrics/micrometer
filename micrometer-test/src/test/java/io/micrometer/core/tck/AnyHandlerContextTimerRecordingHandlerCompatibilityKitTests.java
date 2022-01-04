@@ -23,7 +23,7 @@ import io.micrometer.core.instrument.TimerRecordingHandler;
 class AnyHandlerContextTimerRecordingHandlerCompatibilityKitTests extends AnyHandlerContextTimerRecordingHandlerCompatibilityKit {
 
     @Override
-    public TimerRecordingHandler<Timer.HandlerContext> listener() {
+    public TimerRecordingHandler<Timer.HandlerContext> handler() {
         return new TimerRecordingHandler<Timer.HandlerContext>() {
             @Override
             public void onStart(Timer.Sample sample, Timer.HandlerContext handlerContext) {

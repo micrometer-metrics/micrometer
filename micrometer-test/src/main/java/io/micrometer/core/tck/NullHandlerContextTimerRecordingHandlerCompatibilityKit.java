@@ -37,30 +37,30 @@ import static org.assertj.core.api.Assertions.assertThatCode;
  */
 public abstract class NullHandlerContextTimerRecordingHandlerCompatibilityKit {
 
-    protected TimerRecordingHandler<Timer.HandlerContext> listener;
+    protected TimerRecordingHandler<Timer.HandlerContext> handler;
 
     protected MeterRegistry meterRegistry = new SimpleMeterRegistry();
 
-    public abstract TimerRecordingHandler<Timer.HandlerContext> listener();
+    public abstract TimerRecordingHandler<Timer.HandlerContext> handler();
 
     protected Timer.Sample sample = Timer.start(meterRegistry);
 
     @BeforeEach
     void setup() {
         // assigned here rather than at initialization so subclasses can use fields in their registry() implementation
-        listener = listener();
+        handler = handler();
     }
 
     @Test
-    @DisplayName("compatibility test provides a null accepting context timer recording listener")
-    void listenerSupportsNullContext() {
-        assertThatCode(() -> listener.onStart(sample, null)).doesNotThrowAnyException();
-        assertThatCode(() -> listener.onStop(sample, null, Timer.builder("timer for null context")
+    @DisplayName("compatibility test provides a null accepting context timer recording handler")
+    void handlerSupportsNullContext() {
+        assertThatCode(() -> handler.onStart(sample, null)).doesNotThrowAnyException();
+        assertThatCode(() -> handler.onStop(sample, null, Timer.builder("timer for null context")
                 .register(meterRegistry), Duration.ofSeconds(1L))).doesNotThrowAnyException();
-        assertThatCode(() -> listener.onError(sample, null, new RuntimeException())).doesNotThrowAnyException();
-        assertThatCode(() -> listener.onScopeOpened(sample, null)).doesNotThrowAnyException();
-        assertThatCode(() -> listener.supportsContext(null)).doesNotThrowAnyException();
-        assertThat(listener.supportsContext(null)).as("Listener supports null context").isTrue();
+        assertThatCode(() -> handler.onError(sample, null, new RuntimeException())).doesNotThrowAnyException();
+        assertThatCode(() -> handler.onScopeOpened(sample, null)).doesNotThrowAnyException();
+        assertThatCode(() -> handler.supportsContext(null)).doesNotThrowAnyException();
+        assertThat(handler.supportsContext(null)).as("Handler supports null context").isTrue();
     }
 }
 

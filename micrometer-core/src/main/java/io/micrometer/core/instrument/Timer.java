@@ -256,7 +256,7 @@ public interface Timer extends Meter, HistogramSupport {
      */
     @SuppressWarnings({ "unchecked", "rawtypes" })
     class Sample {
-        
+
         private final long startTime;
         private final Clock clock;
         private final Collection<TimerRecordingHandler> handlers;

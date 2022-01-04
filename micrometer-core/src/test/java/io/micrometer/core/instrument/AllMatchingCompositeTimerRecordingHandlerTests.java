@@ -25,57 +25,57 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 class AllMatchingCompositeTimerRecordingHandlerTests {
 
-    MatchingListener matchingListener = new MatchingListener();
+    MatchingHandler matchingHandler = new MatchingHandler();
 
-    MatchingListener matchingListener2 = new MatchingListener();
+    MatchingHandler matchingHandler2 = new MatchingHandler();
 
     Timer.Sample sample = Timer.start(new SimpleMeterRegistry());
 
     @Test
-    void should_run_on_start_only_for_first_matching_listener() {
+    void should_run_on_start_only_for_first_matching_handler() {
         AllMatchingCompositeTimerRecordingHandler allMatchingCompositeTimerRecordingHandler = new AllMatchingCompositeTimerRecordingHandler(
-                new NotMatchingListener(), this.matchingListener, new NotMatchingListener(), this.matchingListener2);
+                new NotMatchingHandler(), this.matchingHandler, new NotMatchingHandler(), this.matchingHandler2);
 
         allMatchingCompositeTimerRecordingHandler.onStart(sample, null);
 
-        assertThat(this.matchingListener.started).isTrue();
-        assertThat(this.matchingListener2.started).isTrue();
+        assertThat(this.matchingHandler.started).isTrue();
+        assertThat(this.matchingHandler2.started).isTrue();
     }
 
     @Test
-    void should_run_on_stop_only_for_first_matching_listener() {
+    void should_run_on_stop_only_for_first_matching_handler() {
         AllMatchingCompositeTimerRecordingHandler allMatchingCompositeTimerRecordingHandler = new AllMatchingCompositeTimerRecordingHandler(
-                new NotMatchingListener(), this.matchingListener, new NotMatchingListener(), this.matchingListener2);
+                new NotMatchingHandler(), this.matchingHandler, new NotMatchingHandler(), this.matchingHandler2);
 
         allMatchingCompositeTimerRecordingHandler.onStop(sample, null, null, null);
 
-        assertThat(this.matchingListener.stopped).isTrue();
-        assertThat(this.matchingListener2.stopped).isTrue();
+        assertThat(this.matchingHandler.stopped).isTrue();
+        assertThat(this.matchingHandler2.stopped).isTrue();
     }
 
     @Test
-    void should_run_on_error_only_for_first_matching_listener() {
+    void should_run_on_error_only_for_first_matching_handler() {
         AllMatchingCompositeTimerRecordingHandler allMatchingCompositeTimerRecordingHandler = new AllMatchingCompositeTimerRecordingHandler(
-                new NotMatchingListener(), this.matchingListener, new NotMatchingListener(), this.matchingListener2);
+                new NotMatchingHandler(), this.matchingHandler, new NotMatchingHandler(), this.matchingHandler2);
 
         allMatchingCompositeTimerRecordingHandler.onError(sample, null, new RuntimeException());
 
-        assertThat(this.matchingListener.errored).isTrue();
-        assertThat(this.matchingListener2.errored).isTrue();
+        assertThat(this.matchingHandler.errored).isTrue();
+        assertThat(this.matchingHandler2.errored).isTrue();
     }
 
     @Test
-    void should_run_on_restore_only_for_first_matching_listener() {
+    void should_run_on_restore_only_for_first_matching_handler() {
         AllMatchingCompositeTimerRecordingHandler allMatchingCompositeTimerRecordingHandler = new AllMatchingCompositeTimerRecordingHandler(
-                new NotMatchingListener(), this.matchingListener, new NotMatchingListener(), this.matchingListener2);
+                new NotMatchingHandler(), this.matchingHandler, new NotMatchingHandler(), this.matchingHandler2);
 
         allMatchingCompositeTimerRecordingHandler.onScopeOpened(sample, null);
 
-        assertThat(this.matchingListener.restored).isTrue();
-        assertThat(this.matchingListener2.restored).isTrue();
+        assertThat(this.matchingHandler.restored).isTrue();
+        assertThat(this.matchingHandler2.restored).isTrue();
     }
 
-    static class MatchingListener implements TimerRecordingHandler {
+    static class MatchingHandler implements TimerRecordingHandler {
 
         boolean started;
 
@@ -112,7 +112,7 @@ class AllMatchingCompositeTimerRecordingHandlerTests {
         }
     }
 
-    static class NotMatchingListener implements TimerRecordingHandler {
+    static class NotMatchingHandler implements TimerRecordingHandler {
 
         @Override
         public void onStart(Timer.Sample sample, Timer.HandlerContext context) {
@@ -140,7 +140,7 @@ class AllMatchingCompositeTimerRecordingHandlerTests {
         }
 
         private void throwAssertionError() {
-            throw new AssertionError("Not matching listener must not be called");
+            throw new AssertionError("Not matching handler must not be called");
         }
 
     }
