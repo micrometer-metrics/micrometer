@@ -54,6 +54,6 @@ public abstract class HttpHandlerContext<REQ extends Request, RES extends Respon
      * @param response HTTP response
      * @return this
      */
-    abstract HttpHandlerContext<REQ, RES> setResponse(RES response);
+    abstract HttpHandlerContext<REQ, RES> setResponse(@Nullable RES response);
 
 }
