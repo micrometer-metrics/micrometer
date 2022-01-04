@@ -22,7 +22,7 @@ import io.micrometer.core.instrument.transport.http.Request;
 import io.micrometer.core.instrument.transport.http.Response;
 
 /**
- * An IntervalEvent that represents an HTTP event.
+ * {@link io.micrometer.core.instrument.Timer.HandlerContext HandlerContext} for an HTTP exchange.
  *
  * @author Marcin Grzejszczak
  * @since 2.0.0
@@ -48,10 +48,10 @@ public abstract class HttpHandlerContext<REQ extends Request, RES extends Respon
     abstract RES getResponse();
 
     /**
-     * Sets the given HTTP response on the event. Might be {@code null} when an
-     * exception occurred and there's no response.
+     * Sets the given HTTP response for this context. Might be {@code null} when an
+     * exception occurred and there is no response.
      *
-     * @param response a HTTP response
+     * @param response HTTP response
      * @return this
      */
     abstract HttpHandlerContext<REQ, RES> setResponse(RES response);
