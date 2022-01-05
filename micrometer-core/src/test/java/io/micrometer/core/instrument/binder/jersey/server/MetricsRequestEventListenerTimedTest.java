@@ -32,6 +32,8 @@ import javax.ws.rs.core.Response;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
@@ -104,7 +106,7 @@ class MetricsRequestEventListenerTimedTest extends JerseyTest {
     }
 
     @Test
-    void longTaskTimerSupported() throws InterruptedException, ExecutionException {
+    void longTaskTimerSupported() throws InterruptedException, ExecutionException, TimeoutException {
         final Future<Response> future = target("long-timed").request().async().get();
 
         /*
@@ -113,7 +115,7 @@ class MetricsRequestEventListenerTimedTest extends JerseyTest {
          * assertions below to fail. Thread.sleep() is not an option, so resort
          * to CountDownLatch.)
          */
-        longTaskRequestStartedLatch.await();
+        longTaskRequestStartedLatch.await(5, TimeUnit.SECONDS);
 
         // the request is not timed, yet
         assertThat(registry.find(METRIC_NAME).tags(tagsFrom("/timed", 200)).timer())
@@ -127,7 +129,7 @@ class MetricsRequestEventListenerTimedTest extends JerseyTest {
 
         // finish the long running request
         longTaskRequestReleaseLatch.countDown();
-        future.get();
+        future.get(5, TimeUnit.SECONDS);
 
         // the request is timed after the long running request completed
         assertThat(registry.get(METRIC_NAME)
@@ -138,7 +140,7 @@ class MetricsRequestEventListenerTimedTest extends JerseyTest {
 
     @Test
     @Issue("gh-2861")
-    void longTaskTimerOnlyOneMeter() throws InterruptedException, ExecutionException {
+    void longTaskTimerOnlyOneMeter() throws InterruptedException, ExecutionException, TimeoutException {
         final Future<Response> future = target("just-long-timed").request().async().get();
 
         /*
@@ -147,7 +149,7 @@ class MetricsRequestEventListenerTimedTest extends JerseyTest {
          * assertions below to fail. Thread.sleep() is not an option, so resort
          * to CountDownLatch.)
          */
-        longTaskRequestStartedLatch.await();
+        longTaskRequestStartedLatch.await(5, TimeUnit.SECONDS);
 
         // the long running task is timed
         assertThat(registry.get("long.task.in.request")
@@ -157,7 +159,7 @@ class MetricsRequestEventListenerTimedTest extends JerseyTest {
 
         // finish the long running request
         longTaskRequestReleaseLatch.countDown();
-        future.get();
+        future.get(5, TimeUnit.SECONDS);
 
         // no meters registered except the one checked above
         assertThat(registry.getMeters().size()).isOne();
