@@ -140,7 +140,7 @@ class MetricsRequestEventListenerTimedTest extends JerseyTest {
 
     @Test
     @Issue("gh-2861")
-    void longTaskTimerOnlyOneMeter() throws InterruptedException, ExecutionException {
+    void longTaskTimerOnlyOneMeter() throws InterruptedException, ExecutionException, TimeoutException {
         final Future<Response> future = target("just-long-timed").request().async().get();
 
         /*
@@ -149,7 +149,7 @@ class MetricsRequestEventListenerTimedTest extends JerseyTest {
          * assertions below to fail. Thread.sleep() is not an option, so resort
          * to CountDownLatch.)
          */
-        longTaskRequestStartedLatch.await();
+        longTaskRequestStartedLatch.await(5, TimeUnit.SECONDS);
 
         // the long running task is timed
         assertThat(registry.get("long.task.in.request")
@@ -159,7 +159,7 @@ class MetricsRequestEventListenerTimedTest extends JerseyTest {
 
         // finish the long running request
         longTaskRequestReleaseLatch.countDown();
-        future.get();
+        future.get(5, TimeUnit.SECONDS);
 
         // no meters registered except the one checked above
         assertThat(registry.getMeters().size()).isOne();
