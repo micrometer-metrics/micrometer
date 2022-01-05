@@ -168,7 +168,7 @@ subprojects {
             header rootProject.file('gradle/licenseHeader.txt')
             strictCheck true
             mapping {
-                kt = 'JAVADOC_STYLE'
+                java = 'SLASHSTAR_STYLE'
             }
             sourceSets = project.sourceSets
 
