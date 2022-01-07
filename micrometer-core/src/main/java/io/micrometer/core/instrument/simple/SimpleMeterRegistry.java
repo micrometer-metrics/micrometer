@@ -15,6 +15,7 @@
  */
 package io.micrometer.core.instrument.simple;
 
+import io.micrometer.core.annotation.Incubating;
 import io.micrometer.core.instrument.*;
 import io.micrometer.core.instrument.cumulative.*;
 import io.micrometer.core.instrument.distribution.DistributionStatisticConfig;
@@ -26,9 +27,12 @@ import io.micrometer.core.instrument.internal.DefaultMeter;
 import io.micrometer.core.instrument.step.*;
 import io.micrometer.core.lang.Nullable;
 
+import java.util.Comparator;
 import java.util.concurrent.TimeUnit;
 import java.util.function.ToDoubleFunction;
 import java.util.function.ToLongFunction;
+import java.util.stream.Collectors;
+import java.util.stream.StreamSupport;
 
 /**
  * A minimal meter registry implementation primarily used for tests.
@@ -158,5 +162,43 @@ public class SimpleMeterRegistry extends MeterRegistry {
                 .expiry(config.step())
                 .build()
                 .merge(DistributionStatisticConfig.DEFAULT);
+    }
+
+    /**
+     * A very simple implementation that tries to represent the contents of the registry.
+     * The output is meant to be readable by humans, please do not parse it programmatically because the format can change.
+     *
+     * @return text representation of the meters in the registry
+     */
+    @Incubating(since = "2022-01-06")
+    @Override
+    public String toString() {
+        return this.getMeters().stream()
+                .sorted(Comparator.comparing(meter -> meter.getId().getName()))
+                .map(this::toString)
+                .collect(Collectors.joining("\n"));
+    }
+
+    private String toString(Meter meter) {
+        String name = meter.getId().getName();
+        Meter.Type type = meter.getId().getType();
+        String baseUnit = meter.getId().getBaseUnit();
+        String tags = meter.getId().getTags().stream()
+                .map(this::toString)
+                .collect(Collectors.joining(", "));
+
+        return StreamSupport.stream(meter.measure().spliterator(), false)
+                .map(measurement -> toString(name, type, baseUnit, tags, measurement))
+                .collect(Collectors.joining("\n"));
+    }
+
+    private String toString(Tag tag) {
+        return String.format("%s='%s'", tag.getKey(), tag.getValue());
+    }
+
+    private String toString(String name, Meter.Type type, @Nullable String baseUnit, String tags, Measurement measurement) {
+        String statistic = measurement.getStatistic().toString().toLowerCase();
+        String unit = baseUnit != null ? "." + baseUnit : "";
+        return String.format("%s.%s%s(%s)[%s] %s", name, statistic, unit, type, tags, measurement.getValue());
     }
 }
