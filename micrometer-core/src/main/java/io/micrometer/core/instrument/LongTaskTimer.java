@@ -195,7 +195,7 @@ public interface LongTaskTimer extends Meter, HistogramSupport {
     default Iterable<Measurement> measure() {
         return Arrays.asList(
                 new Measurement(() -> (double) activeTasks(), Statistic.ACTIVE_TASKS),
-                new Measurement(() -> duration(TimeUnit.NANOSECONDS), Statistic.DURATION)
+                new Measurement(() -> duration(baseTimeUnit()), Statistic.DURATION)
         );
     }
 
