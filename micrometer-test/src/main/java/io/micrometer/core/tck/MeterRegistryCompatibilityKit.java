@@ -391,7 +391,6 @@ public abstract class MeterRegistryCompatibilityKit {
                         assertThat(m.getStatistic()).isSameAs(DURATION);
                     })
             );
-            sample.stop();
 
             clock(registry).add(10, TimeUnit.NANOSECONDS);
             sample.stop();
