@@ -180,7 +180,7 @@ class SimpleMeterRegistryTest {
                 + "custom.meter.value(OTHER)[] 42.0\n"
                 + "custom.meter.unknown(OTHER)[] 21.0\n"
                 + "handler.active_tasks.seconds(LONG_TASK_TIMER)[] 1.0\n"
-                + "handler.duration.seconds(LONG_TASK_TIMER)[] 3.0E9\n" // this should be 3.0 but there is a bug in LongTaskTimer (fixing later)
+                + "handler.duration.seconds(LONG_TASK_TIMER)[] 3.0\n"
                 + "latency.count.seconds(TIMER)[method='GET', service='test', uri='/api/people'] 10.0\n"
                 + "latency.total_time.seconds(TIMER)[method='GET', service='test', uri='/api/people'] 0.29\n"
                 + "latency.max.seconds(TIMER)[method='GET', service='test', uri='/api/people'] 0.038\n"
