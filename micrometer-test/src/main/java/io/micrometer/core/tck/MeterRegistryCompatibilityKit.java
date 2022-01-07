@@ -629,6 +629,22 @@ public abstract class MeterRegistryCompatibilityKit {
         }
 
         @Test
+        @DisplayName("record with stateful Sample and Scope instances")
+        void recordWithSampleAndScope() {
+            Timer.Sample sample = Timer.start(registry);
+            try (Timer.Scope scope = sample.makeCurrent()) {
+                assertThat(scope.getSample()).isSameAs(sample);
+                clock(registry).add(10, TimeUnit.NANOSECONDS);
+            }
+            sample.stop(Timer.builder("myTimer"));
+            clock(registry).add(step());
+
+            Timer timer = registry.timer("myTimer");
+            assertAll(() -> assertEquals(1L, timer.count()),
+                    () -> assertEquals(10, timer.totalTime(TimeUnit.NANOSECONDS), 1.0e-12));
+        }
+
+        @Test
         void recordMax() {
             Timer timer = registry.timer("my.timer");
             timer.record(10, TimeUnit.MILLISECONDS);
