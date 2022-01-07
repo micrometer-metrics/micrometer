@@ -171,8 +171,7 @@ public class SimpleMeterRegistry extends MeterRegistry {
      * @return text representation of the meters in the registry
      */
     @Incubating(since = "2022-01-06")
-    @Override
-    public String toString() {
+    public String getMetersAsString() {
         return this.getMeters().stream()
                 .sorted(Comparator.comparing(meter -> meter.getId().getName()))
                 .map(this::toString)

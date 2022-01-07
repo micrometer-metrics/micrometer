@@ -171,7 +171,7 @@ class SimpleMeterRegistryTest {
                 )
         ).register(registry);
 
-        assertThat(registry.toString()).isEqualTo(""
+        assertThat(registry.getMetersAsString()).isEqualTo(""
                 + "answers.count(COUNTER)[correct='true'] 2.0\n"
                 + "answers.count(COUNTER)[correct='false'] 1.0\n"
                 + "cache.latency.count.seconds(TIMER)[] 5.0\n"
