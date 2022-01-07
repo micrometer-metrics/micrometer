@@ -33,8 +33,6 @@ import java.util.List;
 import java.util.concurrent.TimeUnit;
 
 import static io.micrometer.core.instrument.MockClock.clock;
-import static io.micrometer.core.instrument.Statistic.ACTIVE_TASKS;
-import static io.micrometer.core.instrument.Statistic.DURATION;
 import static org.assertj.core.api.Assertions.assertThat;
 
 public class DefaultLongTaskTimerTest {
@@ -95,26 +93,5 @@ public class DefaultLongTaskTimerTest {
         while (index < countAtBuckets.length) {
             assertThat(countAtBuckets[index++].count()).isEqualTo(2);
         }
-    }
-
-    @Test
-    void measure() {
-        MockClock clock = new MockClock();
-        SimpleMeterRegistry registry = new SimpleMeterRegistry(SimpleConfig.DEFAULT, clock);
-        LongTaskTimer ltt = LongTaskTimer.builder("test.ltt").register(registry);
-        LongTaskTimer.Sample sample = ltt.start();
-        clock.add(Duration.ofSeconds(3));
-
-        assertThat(ltt.measure()).satisfiesExactlyInAnyOrder(
-                measurement -> assertThat(measurement).satisfies(m -> {
-                    assertThat(m.getValue()).isEqualTo(1.0);
-                    assertThat(m.getStatistic()).isSameAs(ACTIVE_TASKS);
-                }),
-                measurement -> assertThat(measurement).satisfies(m -> {
-                    assertThat(m.getValue()).isEqualTo(3.0);
-                    assertThat(m.getStatistic()).isSameAs(DURATION);
-                })
-        );
-        sample.stop();
     }
 }
