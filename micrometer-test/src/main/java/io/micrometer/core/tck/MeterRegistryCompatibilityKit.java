@@ -32,6 +32,7 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.CsvSource;
 
+import java.io.IOException;
 import java.time.Duration;
 import java.util.*;
 import java.util.concurrent.TimeUnit;
@@ -46,9 +47,15 @@ import static io.micrometer.core.instrument.util.TimeUtils.millisToUnit;
 import static java.util.Collections.emptyList;
 import static java.util.Objects.requireNonNull;
 import static org.assertj.core.api.Assertions.*;
-import static org.assertj.core.api.Assertions.within;
 import static org.junit.jupiter.api.Assertions.*;
-import static org.junit.jupiter.api.Assertions.assertAll;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.ArgumentMatchers.isA;
+import static org.mockito.ArgumentMatchers.same;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.verifyNoMoreInteractions;
+import static org.mockito.Mockito.when;
 
 /**
  * Base class for {@link MeterRegistry} compatibility tests.
@@ -640,6 +647,44 @@ public abstract class MeterRegistryCompatibilityKit {
             clock(registry).add(step());
 
             Timer timer = registry.timer("myTimer");
+            assertAll(() -> assertEquals(1L, timer.count()),
+                    () -> assertEquals(10, timer.totalTime(TimeUnit.NANOSECONDS), 1.0e-12));
+        }
+
+        @Test
+        @DisplayName("record using handlers")
+        void recordWithHandlers() {
+            @SuppressWarnings("unchecked")
+            TimerRecordingHandler<Timer.HandlerContext> handler = mock(TimerRecordingHandler.class);
+            @SuppressWarnings("unchecked")
+            TimerRecordingHandler<Timer.HandlerContext> handlerThatHandlesNothing = mock(TimerRecordingHandler.class);
+            registry.config().timerRecordingHandler(handler);
+            registry.config().timerRecordingHandler(handlerThatHandlesNothing);
+            when(handler.supportsContext(any())).thenReturn(true);
+            when(handlerThatHandlesNothing.supportsContext(any())).thenReturn(false);
+
+            Timer.Sample sample = Timer.start(registry);
+            verify(handler).supportsContext(isA(Timer.HandlerContext.class));
+            verify(handler).onStart(same(sample), isA(Timer.HandlerContext.class));
+            verify(handlerThatHandlesNothing).supportsContext(isA(Timer.HandlerContext.class));
+            verifyNoMoreInteractions(handlerThatHandlesNothing);
+
+            try (Timer.Scope scope = sample.makeCurrent()) {
+                verify(handler).onScopeOpened(same(sample), isA(Timer.HandlerContext.class));
+                assertThat(scope.getSample()).isSameAs(sample);
+
+                clock(registry).add(10, TimeUnit.NANOSECONDS);
+                Throwable exception = new IOException("simulated");
+                sample.error(exception);
+                verify(handler).onError(same(sample), isA(Timer.HandlerContext.class), same(exception));
+            }
+            verify(handler).onScopeClosed(same(sample), isA(Timer.HandlerContext.class));
+            sample.stop(Timer.builder("myTimer"));
+
+            Timer timer = registry.timer("myTimer");
+            verify(handler).onStop(same(sample), isA(Timer.HandlerContext.class), same(timer), eq(Duration.ofNanos(10)));
+            clock(registry).add(step());
+
             assertAll(() -> assertEquals(1L, timer.count()),
                     () -> assertEquals(10, timer.totalTime(TimeUnit.NANOSECONDS), 1.0e-12));
         }
