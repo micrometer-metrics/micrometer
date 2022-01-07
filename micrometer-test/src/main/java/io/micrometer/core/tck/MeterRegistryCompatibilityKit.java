@@ -618,13 +618,12 @@ public abstract class MeterRegistryCompatibilityKit {
         @Test
         @DisplayName("record with stateful Sample instance")
         void recordWithSample() {
-            Timer timer = registry.timer("myTimer");
             Timer.Sample sample = Timer.start(registry);
-
             clock(registry).add(10, TimeUnit.NANOSECONDS);
-            sample.stop(timer);
+            sample.stop(Timer.builder("myTimer"));
             clock(registry).add(step());
 
+            Timer timer = registry.timer("myTimer");
             assertAll(() -> assertEquals(1L, timer.count()),
                     () -> assertEquals(10, timer.totalTime(TimeUnit.NANOSECONDS), 1.0e-12));
         }
