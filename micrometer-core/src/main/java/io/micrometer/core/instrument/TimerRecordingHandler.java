@@ -25,7 +25,7 @@ import io.micrometer.core.lang.Nullable;
 
 /**
  * Handler with callbacks for the {@link Timer#start(MeterRegistry) start} and
- * {@link io.micrometer.core.instrument.Timer.Sample#stop(Timer) stop} of a {@link Timer} recording.
+ * {@link io.micrometer.core.instrument.Timer.Sample#stop(Timer.Builder) stop} of a {@link Timer} recording.
  *
  * @since 2.0.0
  */
