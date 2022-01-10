@@ -383,7 +383,7 @@ public interface Timer extends Meter, HistogramSupport {
             this.map.remove(clazz);
         }
         
-        public <T> T get(Class<T> clazz) {
+        @Nullable public <T> T get(Class<T> clazz) {
             return (T) this.map.get(clazz);
         }
 
