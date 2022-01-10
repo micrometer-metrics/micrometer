@@ -15,7 +15,9 @@
  */
 package io.micrometer.core.instrument.tracing.context;
 
+import io.micrometer.core.instrument.Tags;
 import io.micrometer.core.instrument.Timer;
+import io.micrometer.core.instrument.binder.http.HttpTagsProvider;
 import io.micrometer.core.instrument.transport.http.HttpRequest;
 import io.micrometer.core.instrument.transport.http.HttpResponse;
 import io.micrometer.core.lang.NonNull;
@@ -30,6 +32,16 @@ import io.micrometer.core.lang.Nullable;
  * @param <RES> response type
  */
 public abstract class HttpHandlerContext<REQ extends HttpRequest, RES extends HttpResponse> extends Timer.HandlerContext {
+
+    private final HttpTagsProvider tagsProvider;
+
+    public HttpHandlerContext() {
+        this(HttpTagsProvider.DEFAULT);
+    }
+
+    public HttpHandlerContext(HttpTagsProvider tagsProvider) {
+        this.tagsProvider = tagsProvider;
+    }
 
     /**
      * Returns the HTTP request.
@@ -56,4 +68,9 @@ public abstract class HttpHandlerContext<REQ extends HttpRequest, RES extends Ht
      */
     abstract HttpHandlerContext<REQ, RES> setResponse(@Nullable RES response);
 
+    @NonNull
+    @Override
+    public Tags getLowCardinalityTags() {
+        return this.tagsProvider.getLowCardinalityTags(getRequest(), getResponse(), null);
+    }
 }

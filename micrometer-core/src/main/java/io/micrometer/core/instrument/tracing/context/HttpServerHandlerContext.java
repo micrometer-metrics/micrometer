@@ -15,6 +15,7 @@
  */
 package io.micrometer.core.instrument.tracing.context;
 
+import io.micrometer.core.instrument.binder.http.HttpTagsProvider;
 import io.micrometer.core.lang.NonNull;
 import io.micrometer.core.instrument.transport.http.HttpServerRequest;
 import io.micrometer.core.instrument.transport.http.HttpServerResponse;
@@ -37,6 +38,12 @@ public class HttpServerHandlerContext extends HttpHandlerContext<HttpServerReque
      * @param request http server request
      */
     public HttpServerHandlerContext(HttpServerRequest request) {
+        super();
+        this.request = request;
+    }
+
+    public HttpServerHandlerContext(HttpServerRequest request, HttpTagsProvider tagsProvider) {
+        super(tagsProvider);
         this.request = request;
     }
 
