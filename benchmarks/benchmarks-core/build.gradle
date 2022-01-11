@@ -5,11 +5,13 @@ plugins {
 dependencies {
     jmh project(':micrometer-core')
     jmh project(':micrometer-registry-prometheus')
+    jmh project(':micrometer-registry-statsd')
 
     jmh 'io.dropwizard.metrics5:metrics-core:latest.release'
     jmh 'io.prometheus:simpleclient_common:0.12.+'
 
     jmh 'io.dropwizard.metrics:metrics-core'
+    jmh 'io.projectreactor:reactor-core:latest.release'
     jmh 'com.google.guava:guava'
 
     jmh 'org.openjdk.jmh:jmh-core:latest.release'

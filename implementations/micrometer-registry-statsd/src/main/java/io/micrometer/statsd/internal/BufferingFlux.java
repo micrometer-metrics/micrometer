@@ -15,13 +15,17 @@
  */
 package io.micrometer.statsd.internal;
 
-import reactor.core.publisher.DirectProcessor;
+import org.reactivestreams.Subscription;
+import reactor.core.CoreSubscriber;
+import reactor.core.Disposable;
+import reactor.core.Fuseable;
 import reactor.core.publisher.Flux;
+import reactor.core.publisher.Operators;
+import reactor.core.scheduler.Scheduler;
+import reactor.core.scheduler.Schedulers;
 
-import java.time.Duration;
-import java.util.concurrent.atomic.AtomicInteger;
-import java.util.concurrent.atomic.AtomicLong;
-import java.util.stream.Collectors;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicLongFieldUpdater;
 
 public class BufferingFlux {
 
@@ -41,60 +45,180 @@ public class BufferingFlux {
      * @see <a href="https://en.wikipedia.org/wiki/Nagle%27s_algorithm">Nagle's algorithm</a>
      */
     public static Flux<String> create(final Flux<String> source, final String delimiter, final int maxByteArraySize, final long maxMillisecondsBetweenEmits) {
-        return Flux.defer(() -> {
-            final int delimiterSize = delimiter.getBytes().length;
-            final AtomicInteger byteSize = new AtomicInteger();
-            final AtomicLong lastTime = new AtomicLong();
+        return source.transform(Operators.<String, String>lift((__, s) -> new BufferingSubscriber(
+                delimiter,
+                maxByteArraySize,
+                maxMillisecondsBetweenEmits,
+                Schedulers.boundedElastic(),
+                s)));
+    }
 
-            final DirectProcessor<Void> intervalEnd = DirectProcessor.create();
 
-            final Flux<String> heartbeat = Flux.interval(Duration.ofMillis(maxMillisecondsBetweenEmits))
-                    .map(l -> "")
-                    .takeUntilOther(intervalEnd);
+    static class BufferingSubscriber implements CoreSubscriber<String>, Subscription,
+                                         Fuseable.QueueSubscription<String>, Runnable {
 
-            // Create a stream that emits at least once every $maxMillisecondsBetweenEmits, to avoid long pauses between
-            // buffer flushes when the source doesn't emit for a while.
-            final Flux<String> sourceWithEmptyStringKeepAlive = source
-                    .doOnTerminate(intervalEnd::onComplete)
-                    .mergeWith(heartbeat);
 
-            return sourceWithEmptyStringKeepAlive
-                    .bufferUntil(line -> {
-                        final int bytesLength = line.getBytes().length;
-                        final long now = System.currentTimeMillis();
-                        // Update last time to now if this is the first time
-                        lastTime.compareAndSet(0, now);
-                        final long last = lastTime.get();
-                        long diff;
-                        if (last != 0L) {
-                            diff = now - last;
-                            if (diff > maxMillisecondsBetweenEmits && byteSize.get() > 0) {
-                                // This creates a buffer, reset size
-                                byteSize.set(bytesLength);
-                                lastTime.compareAndSet(last, now);
-                                return true;
-                            }
-                        }
+        final String delimiter;
+        final int delimiterSize;
+        final int maxByteArraySize;
+        final long maxMillisecondsBetweenEmits;
 
-                        int additionalBytes = bytesLength;
-                        if (additionalBytes > 0 && byteSize.get() > 0) {
-                            additionalBytes += delimiterSize;  // Make up for the delimiter that's added when joining the strings
-                        }
+        final Scheduler scheduler;
+        final CoreSubscriber<? super String> actual;
 
-                        final int projectedBytes = byteSize.addAndGet(additionalBytes);
+        Subscription s;
+        Disposable disposable;
 
-                        if (projectedBytes > maxByteArraySize) {
-                            // This creates a buffer, reset size
-                            byteSize.set(bytesLength);
-                            lastTime.compareAndSet(last, now);
-                            return true;
-                        }
+        int byteSize = 0;
+        long lastTime = 0;
 
-                        return false;
-                    }, true)
-                    .map(lines -> lines.stream()
-                            .filter(line -> !line.isEmpty())
-                            .collect(Collectors.joining(delimiter, "", delimiter)));
-        });
+
+        String buffer = "";
+
+        volatile long requested;
+        static final AtomicLongFieldUpdater<BufferingSubscriber> REQUESTED =
+                AtomicLongFieldUpdater.newUpdater(BufferingSubscriber.class, "requested");
+
+        BufferingSubscriber(
+                String delimiter,
+                int size,
+                long emits,
+                Scheduler scheduler,
+                CoreSubscriber<? super String> actual) {
+            this.delimiter = delimiter;
+            this.delimiterSize = delimiter.getBytes().length;
+            this.maxByteArraySize = size;
+            this.maxMillisecondsBetweenEmits = emits;
+            this.scheduler = scheduler;
+
+            this.actual = actual;
+        }
+
+        @Override
+        public void onSubscribe(Subscription s) {
+            if (Operators.validate(this.s, s)) {
+                this.s = s;
+                this.disposable = this.scheduler.schedulePeriodically(this,
+                        this.maxMillisecondsBetweenEmits,
+                        this.maxMillisecondsBetweenEmits,
+                        TimeUnit.MILLISECONDS);
+
+                this.actual.onSubscribe(this);
+                // Update last time to now if this is the first time
+                this.lastTime = scheduler.now(TimeUnit.MILLISECONDS);
+                s.request(Long.MAX_VALUE);
+            }
+        }
+
+        @Override
+        public synchronized void onNext(String line) {
+            final int bytesLength = line.getBytes().length + delimiterSize;
+            final String previousBuffer = this.buffer;
+            final int previousBytesSize = this.byteSize;
+
+            final int nextBytesSize = previousBytesSize + bytesLength;
+            if (nextBytesSize > this.maxByteArraySize) {
+                this.lastTime = scheduler.now(TimeUnit.MILLISECONDS);
+                // This creates a buffer, reset size
+                this.byteSize = bytesLength;
+                this.buffer = line + delimiter; // reset buffer and set this line to the next chunk
+
+                final long requested = this.requested;
+                if (requested > 0) {
+                    this.actual.onNext(previousBuffer);
+                    if (requested != Long.MAX_VALUE) {
+                        REQUESTED.decrementAndGet(this);
+                    }
+                }
+            } else {
+                this.byteSize = nextBytesSize;
+                this.buffer = previousBuffer + line + delimiter;
+            }
+        }
+
+        @Override
+        public void run() {
+            this.tryTimeout();
+        }
+
+        private synchronized void tryTimeout() {
+            final long now = scheduler.now(TimeUnit.MILLISECONDS);
+            final long last = lastTime;
+            final long diff = now - last;
+            if (diff >= this.maxMillisecondsBetweenEmits && this.byteSize > 0) {
+                final String previousBuffer = this.buffer;
+                this.lastTime = now;
+
+                // This creates a buffer, reset size
+                this.byteSize = 0;
+                this.buffer = ""; // reset buffer and set this line to the next chunk
+
+                final long requested = this.requested;
+                if (requested > 0) {
+                    this.actual.onNext(previousBuffer);
+                    if (requested != Long.MAX_VALUE) {
+                        REQUESTED.decrementAndGet(this);
+                    }
+                }
+            }
+        }
+
+        @Override
+        public synchronized void onError(Throwable t) {
+            this.disposable.dispose();
+            this.actual.onError(t);
+        }
+
+        @Override
+        public synchronized void onComplete() {
+            this.disposable.dispose();
+
+            final String buffer = this.buffer;
+            if (!buffer.isEmpty()) {
+                if (this.requested > 0) {
+                    this.actual.onNext(buffer);
+                }
+            }
+
+            this.actual.onComplete();
+        }
+
+        @Override
+        public void request(long n) {
+            if (Operators.validate(n)) {
+                Operators.addCap(REQUESTED, this, n);
+            }
+        }
+
+        @Override
+        public void cancel() {
+            this.disposable.dispose();
+            this.s.cancel();
+        }
+
+        @Override
+        public int requestFusion(int requestedMode) {
+            return Fuseable.NONE;
+        }
+
+        @Override
+        public String poll() {
+            return null;
+        }
+
+        @Override
+        public int size() {
+            return 0;
+        }
+
+        @Override
+        public boolean isEmpty() {
+            return false;
+        }
+
+        @Override
+        public void clear() {
+
+        }
     }
 }
