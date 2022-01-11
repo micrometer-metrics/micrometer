@@ -395,6 +395,10 @@ public interface Timer extends Meter, HistogramSupport {
         public <T> T computeIfAbsent(Class<T> clazz, Function<Class<?>, ? extends T> mappingFunction) {
             return (T) this.map.computeIfAbsent(clazz, mappingFunction);
         }
+
+        public void clear() {
+            this.map.clear();
+        }
     }
 
     class ResourceSample extends AbstractTimerBuilder<ResourceSample> implements AutoCloseable {
