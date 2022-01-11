@@ -102,7 +102,7 @@ public class ProcessorMetrics implements MeterBinder {
         if (systemCpuUsage != null) {
             Gauge.builder("system.cpu.usage", operatingSystemBean, x -> invoke(systemCpuUsage))
                 .tags(tags)
-                .description("The \"recent cpu usage\" for the whole system")
+                .description("The \"recent cpu usage\" of the system the application is running in")
                 .register(registry);
         }
 
