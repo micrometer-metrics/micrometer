@@ -34,12 +34,14 @@ commands:
     steps:
       - checkout
       - restore_cache:
-          key: gradle-dependencies-{{ checksum "build.gradle" }}
+          keys:
+            - gradle-dependencies-{{ .Branch }}-{{ checksum "build.gradle" }}
+            - gradle-dependencies-{{ .Branch }}
       - run:
           name: downloadDependencies
           command: ./gradlew downloadDependencies --console=plain
       - save_cache:
-          key: gradle-dependencies-{{ checksum "build.gradle" }}
+          key: gradle-dependencies-{{ .Branch }}-{{ checksum "build.gradle" }}
           paths:
             - ~/.gradle
       - run:
