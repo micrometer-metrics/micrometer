@@ -1,14 +1,36 @@
 pluginManagement {
     repositories {
-        gradlePluginPortal()
+        mavenCentral()
         maven { url 'https://repo.spring.io/release' }
-        maven { url "https://repo.spring.io/milestone" }
+        gradlePluginPortal {
+            content {
+                includeGroup('org.gradle')
+                includeGroup('org.gradle.kotlin')
+                includeGroup('org.gradle.kotlin.kotlin-dsl')
+
+                includeGroup('com.gradle')
+                includeGroup('com.gradle.enterprise')
+
+                includeGroup('me.champeau.jmh')
+                includeGroup('io.github.gradle-nexus')
+                includeGroup('gradle.plugin.com.hierynomus.gradle.plugins')
+                includeGroup('org.ajoberstar.grgit')
+                includeGroup('io.spring.nohttp')
+                includeGroup('com.github.johnrengelman.shadow')
+                includeGroup('gradle.plugin.com.github.johnrengelman')
+            }
+
+            metadataSources {
+                mavenPom()
+                ignoreGradleMetadataRedirection()
+            }
+        }
     }
 }
 
 plugins {
     id 'com.gradle.enterprise' version '3.8'
-    id 'io.spring.ge.conventions' version '0.0.8'
+    id 'io.spring.ge.conventions' version '0.0.9'
 }
 
 rootProject.name = 'micrometer'
