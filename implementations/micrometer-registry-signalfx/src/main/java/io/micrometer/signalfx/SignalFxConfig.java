@@ -43,6 +43,15 @@ public interface SignalFxConfig extends StepRegistryConfig {
     }
 
     /**
+     * Returns {@code true} if the signalfx registry should emit histogram buckets.
+     *
+     * @return {@code true} if the signalfx registry should emit histogram buckets.
+     */
+    default Boolean fixHistogramBucketsType() {
+        return getBoolean(this, "reportHistogramBuckets").orElse(false);
+    }
+
+    /**
      * @return The URI to ship metrics to. If you need to publish metrics to an internal proxy en route to
      * SignalFx, you can define the location of the proxy with this.
      */

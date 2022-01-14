@@ -25,6 +25,8 @@ import com.signalfx.metrics.flush.AggregateMetricSender;
 import com.signalfx.metrics.protobuf.SignalFxProtocolBuffers;
 import io.micrometer.core.instrument.*;
 import io.micrometer.core.instrument.config.NamingConvention;
+import io.micrometer.core.instrument.distribution.DistributionStatisticConfig;
+import io.micrometer.core.instrument.distribution.pause.PauseDetector;
 import io.micrometer.core.instrument.step.StepMeterRegistry;
 import io.micrometer.core.instrument.util.MeterPartition;
 import io.micrometer.core.instrument.util.NamedThreadFactory;
@@ -33,6 +35,8 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.net.URI;
+import java.time.Duration;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 import java.util.Set;
@@ -41,6 +45,7 @@ import java.util.concurrent.TimeUnit;
 import java.util.stream.Stream;
 
 import static com.signalfx.metrics.protobuf.SignalFxProtocolBuffers.MetricType.COUNTER;
+import static com.signalfx.metrics.protobuf.SignalFxProtocolBuffers.MetricType.CUMULATIVE_COUNTER;
 import static com.signalfx.metrics.protobuf.SignalFxProtocolBuffers.MetricType.GAUGE;
 import static java.util.stream.StreamSupport.stream;
 
@@ -59,6 +64,7 @@ public class SignalFxMeterRegistry extends StepMeterRegistry {
     private final HttpEventProtobufReceiverFactory eventReceiverFactory;
     private final Set<OnSendErrorHandler> onSendErrorHandlerCollection = Collections.singleton(
             metricError -> this.logger.warn("failed to send metrics: {}", metricError.getMessage()));
+    private final boolean fixHistogramBucketsType;
 
     public SignalFxMeterRegistry(SignalFxConfig config, Clock clock) {
         this(config, clock, DEFAULT_THREAD_FACTORY);
@@ -81,6 +87,7 @@ public class SignalFxMeterRegistry extends StepMeterRegistry {
         SignalFxReceiverEndpoint signalFxEndpoint = new SignalFxEndpoint(apiUri.getScheme(), apiUri.getHost(), port);
         this.dataPointReceiverFactory = new HttpDataPointProtobufReceiverFactory(signalFxEndpoint);
         this.eventReceiverFactory = new HttpEventProtobufReceiverFactory(signalFxEndpoint);
+        this.fixHistogramBucketsType = config.fixHistogramBucketsType();
 
         config().namingConvention(new SignalFxNamingConvention());
 
@@ -118,7 +125,22 @@ public class SignalFxMeterRegistry extends StepMeterRegistry {
         }
     }
 
-    private Stream<SignalFxProtocolBuffers.DataPoint.Builder> addMeter(Meter meter) {
+    @Override
+    protected Timer newTimer(Meter.Id id, DistributionStatisticConfig distributionStatisticConfig, PauseDetector pauseDetector) {
+        return super.newTimer(id, updateConfig(distributionStatisticConfig), pauseDetector);
+    }
+
+    @Override
+    protected DistributionSummary newDistributionSummary(Meter.Id id, DistributionStatisticConfig distributionStatisticConfig, double scale) {
+        return super.newDistributionSummary(id, updateConfig(distributionStatisticConfig), scale);
+    }
+
+    @Override
+    protected LongTaskTimer newLongTaskTimer(Meter.Id id, DistributionStatisticConfig distributionStatisticConfig) {
+        return super.newLongTaskTimer(id, updateConfig(distributionStatisticConfig));
+    }
+
+    Stream<SignalFxProtocolBuffers.DataPoint.Builder> addMeter(Meter meter) {
         return stream(meter.measure().spliterator(), false).flatMap(measurement -> {
             String statSuffix = NamingConvention.camelCase.tagKey(measurement.getStatistic().toString());
             switch (measurement.getStatistic()) {
@@ -170,23 +192,28 @@ public class SignalFxMeterRegistry extends StepMeterRegistry {
         );
     }
 
-    private Stream<SignalFxProtocolBuffers.DataPoint.Builder> addTimeGauge(TimeGauge timeGauge) {
+    Stream<SignalFxProtocolBuffers.DataPoint.Builder> addTimeGauge(TimeGauge timeGauge) {
         return Stream.of(addDatapoint(timeGauge, GAUGE, null, timeGauge.value(getBaseTimeUnit())));
     }
 
-    private Stream<SignalFxProtocolBuffers.DataPoint.Builder> addGauge(Gauge gauge) {
+    Stream<SignalFxProtocolBuffers.DataPoint.Builder> addGauge(Gauge gauge) {
+        if (fixHistogramBucketsType
+                && gauge.getId().syntheticAssociation() != null
+                && gauge.getId().getName().endsWith(".histogram")) {
+            return Stream.of(addDatapoint(gauge, CUMULATIVE_COUNTER, null, gauge.value()));
+        }
         return Stream.of(addDatapoint(gauge, GAUGE, null, gauge.value()));
     }
 
-    private Stream<SignalFxProtocolBuffers.DataPoint.Builder> addCounter(Counter counter) {
+    Stream<SignalFxProtocolBuffers.DataPoint.Builder> addCounter(Counter counter) {
         return Stream.of(addDatapoint(counter, COUNTER, null, counter.count()));
     }
 
-    private Stream<SignalFxProtocolBuffers.DataPoint.Builder> addFunctionCounter(FunctionCounter counter) {
+    Stream<SignalFxProtocolBuffers.DataPoint.Builder> addFunctionCounter(FunctionCounter counter) {
         return Stream.of(addDatapoint(counter, COUNTER, null, counter.count()));
     }
 
-    private Stream<SignalFxProtocolBuffers.DataPoint.Builder> addTimer(Timer timer) {
+    Stream<SignalFxProtocolBuffers.DataPoint.Builder> addTimer(Timer timer) {
         return Stream.of(
                 addDatapoint(timer, COUNTER, "count", timer.count()),
                 addDatapoint(timer, COUNTER, "totalTime", timer.totalTime(getBaseTimeUnit())),
@@ -195,7 +222,7 @@ public class SignalFxMeterRegistry extends StepMeterRegistry {
         );
     }
 
-    private Stream<SignalFxProtocolBuffers.DataPoint.Builder> addFunctionTimer(FunctionTimer timer) {
+    Stream<SignalFxProtocolBuffers.DataPoint.Builder> addFunctionTimer(FunctionTimer timer) {
         return Stream.of(
                 addDatapoint(timer, COUNTER, "count", timer.count()),
                 addDatapoint(timer, COUNTER, "totalTime", timer.totalTime(getBaseTimeUnit())),
@@ -203,7 +230,7 @@ public class SignalFxMeterRegistry extends StepMeterRegistry {
         );
     }
 
-    private Stream<SignalFxProtocolBuffers.DataPoint.Builder> addDistributionSummary(DistributionSummary summary) {
+    Stream<SignalFxProtocolBuffers.DataPoint.Builder> addDistributionSummary(DistributionSummary summary) {
         return Stream.of(
                 addDatapoint(summary, COUNTER, "count", summary.count()),
                 addDatapoint(summary, COUNTER, "totalTime", summary.totalAmount()),
@@ -215,5 +242,31 @@ public class SignalFxMeterRegistry extends StepMeterRegistry {
     @Override
     protected TimeUnit getBaseTimeUnit() {
         return TimeUnit.SECONDS;
+    }
+
+    private DistributionStatisticConfig updateConfig(
+            DistributionStatisticConfig distributionStatisticConfig) {
+        // Add the +Inf bucket since the "count" resets every export.
+        double[] sla = distributionStatisticConfig.getServiceLevelObjectiveBoundaries();
+        if (sla == null || sla.length == 0) {
+            return distributionStatisticConfig;
+        }
+        double[] newSLA = sla;
+        if (!isPositiveInf(sla[sla.length - 1])) {
+            newSLA = Arrays.copyOf(sla, sla.length + 1);
+            newSLA[newSLA.length - 1] = Double.MAX_VALUE;
+        }
+        return DistributionStatisticConfig.builder()
+                // Set the expiration duration for the histogram counts to be effectively a lifetime.
+                // Without this, the counts are reset every expiry duration.
+                .expiry(Duration.ofNanos(Long.MAX_VALUE)) // effectively a lifetime
+                .bufferLength(1)
+                .serviceLevelObjectives(newSLA)
+                .build()
+                .merge(distributionStatisticConfig);
+    }
+
+    private static boolean isPositiveInf(double bucket) {
+        return bucket == Double.POSITIVE_INFINITY || bucket == Double.MAX_VALUE || (long) bucket == Long.MAX_VALUE;
     }
 }
