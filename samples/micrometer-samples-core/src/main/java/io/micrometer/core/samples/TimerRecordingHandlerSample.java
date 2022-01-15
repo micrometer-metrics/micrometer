@@ -21,7 +21,6 @@ import java.util.UUID;
 
 import io.micrometer.core.instrument.Tags;
 import io.micrometer.core.instrument.Timer;
-import io.micrometer.core.instrument.Timer.Sample;
 import io.micrometer.core.instrument.TimerRecordingHandler;
 import io.micrometer.core.lang.Nullable;
 import io.micrometer.prometheus.PrometheusConfig;
@@ -73,10 +72,6 @@ public class TimerRecordingHandlerSample {
             return timer.getId().getName() + " " + timer.getId().getTags();
         }
 
-        @Override
-        public void onScopeOpened(Sample sample, CustomHandlerContext context) {
-            // TODO Auto-generated method stub
-        }
     }
 
     static class CustomHandlerContext extends Timer.HandlerContext {

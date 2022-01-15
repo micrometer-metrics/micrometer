@@ -91,8 +91,7 @@ public class PocMetricsWebClientFilterFunction implements ExchangeFilterFunction
     }
 
     private void recordTimer(Iterable<Tag> tags, Timer.Sample sample) {
-        sample.stop(this.autoTimer.builder(this.metricName).tags(tags).description("Timer of WebClient operation")
-                .register(this.meterRegistry));
+        sample.stop(this.autoTimer.builder(this.metricName).tags(tags).description("Timer of WebClient operation"));
     }
 
     private Timer.Sample getSample(ContextView context) {

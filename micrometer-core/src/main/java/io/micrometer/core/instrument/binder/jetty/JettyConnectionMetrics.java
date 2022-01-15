@@ -165,8 +165,7 @@ public class JettyConnectionMetrics extends AbstractLifeCycle implements Connect
             sample.stop(Timer.builder("jetty.connections.request")
                     .description("Jetty client or server requests")
                     .tag("type", serverOrClient)
-                    .tags(tags)
-                    .register(registry));
+                    .tags(tags));
         }
 
         messagesIn.increment(connection.getMessagesIn());

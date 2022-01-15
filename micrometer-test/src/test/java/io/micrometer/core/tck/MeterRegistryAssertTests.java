@@ -40,9 +40,9 @@ class MeterRegistryAssertTests {
     void assertionErrorThrownWhenTimerPresentButWrongTagKeys() {
         Timer.start(this.simpleMeterRegistry).stop(Timer.builder("matching-metric-name").tag("notmatching-tag", "baz"));
         
-        assertThatThrownBy(() -> meterRegistryAssert.hasTimerWithNameAndTagKeys("matching-metric-name", "non-existant-tag"))
-        .isInstanceOf(AssertionError.class)
-        .hasMessage("Expected a timer with name <matching-metric-name> and tag keys <non-existant-tag> but found none");
+        assertThatThrownBy(() -> meterRegistryAssert.hasTimerWithNameAndTagKeys("matching-metric-name", "non-existent-tag"))
+            .isInstanceOf(AssertionError.class)
+            .hasMessage("Expected a timer with name <matching-metric-name> and tag keys <non-existent-tag> but found none");
     }
     
     @Test
@@ -50,8 +50,8 @@ class MeterRegistryAssertTests {
         Timer.start(this.simpleMeterRegistry).stop(Timer.builder("matching-metric-name").tag("matching-tag", "not-matching-value"));
         
         assertThatThrownBy(() -> meterRegistryAssert.hasTimerWithNameAndTags("matching-metric-name", Tags.of("matching-tag", "some-value")))
-        .isInstanceOf(AssertionError.class)
-        .hasMessage("Expected a timer with name <matching-metric-name> and tags <[tag(matching-tag=some-value)]> but found none");
+            .isInstanceOf(AssertionError.class)
+            .hasMessage("Expected a timer with name <matching-metric-name> and tags <[tag(matching-tag=some-value)]> but found none");
     }
     
     @Test
@@ -59,7 +59,7 @@ class MeterRegistryAssertTests {
         Timer.start(this.simpleMeterRegistry).stop(Timer.builder("foo"));
         
         assertThatCode(() -> meterRegistryAssert.hasTimerWithName("foo"))
-        .doesNotThrowAnyException();
+            .doesNotThrowAnyException();
     }
     
     @Test
@@ -67,7 +67,7 @@ class MeterRegistryAssertTests {
         Timer.start(this.simpleMeterRegistry).stop(Timer.builder("matching-metric-name").tag("matching-tag", "baz"));
         
         assertThatCode(() -> meterRegistryAssert.hasTimerWithNameAndTagKeys("matching-metric-name", "matching-tag"))
-        .doesNotThrowAnyException();
+            .doesNotThrowAnyException();
     }
     
     @Test
@@ -75,7 +75,7 @@ class MeterRegistryAssertTests {
         Timer.start(this.simpleMeterRegistry).stop(Timer.builder("matching-metric-name").tag("matching-tag", "matching-value"));
         
         assertThatCode(() -> meterRegistryAssert.hasTimerWithNameAndTags("matching-metric-name", Tags.of("matching-tag", "matching-value")))
-        .doesNotThrowAnyException();
+            .doesNotThrowAnyException();
     }
 
 }

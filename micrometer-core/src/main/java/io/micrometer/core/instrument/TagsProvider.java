@@ -19,6 +19,7 @@ package io.micrometer.core.instrument;
  * A provider of tags.
  *
  * @author Marcin Grzejszczak
+ * @since 2.0.0
  */
 public interface TagsProvider {
 

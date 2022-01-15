@@ -22,6 +22,7 @@ import io.micrometer.core.instrument.transport.http.HttpResponse;
 /**
  * Default implementation of {@link HttpTagsProvider} that can be extended for customization.
  *
+ * @author Tommy Ludwig
  * @since 2.0.0
  */
 public class DefaultHttpTagsProvider implements HttpTagsProvider {

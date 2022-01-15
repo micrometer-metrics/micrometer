@@ -33,12 +33,11 @@ public class HttpServerHandlerContext extends HttpHandlerContext<HttpServerReque
     private HttpServerResponse response;
 
     /**
-     * Creates a new {@link HttpServerHandlerContext}.
+     * Creates a new {@code HttpServerHandlerContext}.
      *
      * @param request http server request
      */
     public HttpServerHandlerContext(HttpServerRequest request) {
-        super();
         this.request = request;
     }
 

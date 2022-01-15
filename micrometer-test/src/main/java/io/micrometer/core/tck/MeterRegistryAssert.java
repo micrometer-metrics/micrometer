@@ -19,15 +19,15 @@ import io.micrometer.core.instrument.MeterRegistry;
 import io.micrometer.core.instrument.Tags;
 import io.micrometer.core.instrument.Timer;
 import org.assertj.core.api.AbstractAssert;
-import org.assertj.core.util.Strings;
 
 /**
  * Assertion methods for {@code MeterRegistry}s.
  * <p>
- * To create a new instance of this class, invoke <code>{@link MeterRegistryAssert#assertThat(MeterRegistry)}</code> 
- * or <code>{@link MeterRegistryAssert#then(MeterRegistry)}</code>.
+ * To create a new instance of this class, invoke {@link MeterRegistryAssert#assertThat(MeterRegistry)}
+ * or {@link MeterRegistryAssert#then(MeterRegistry)}.
  *
  * @author Marcin Grzejszczak
+ * @since 2.0.0
  */
 public class MeterRegistryAssert extends AbstractAssert<MeterRegistryAssert, MeterRegistry> {
 
@@ -65,8 +65,8 @@ public class MeterRegistryAssert extends AbstractAssert<MeterRegistryAssert, Met
      */
     public MeterRegistryAssert hasTimerWithName(String timerName) {
         isNotNull();
-        Timer findTimer = actual.find(timerName).timer();
-        if (findTimer == null) {
+        Timer foundTimer = actual.find(timerName).timer();
+        if (foundTimer == null) {
             failWithMessage("Expected a timer with name <%s> but found none", timerName);
         }
         return this;
@@ -83,8 +83,8 @@ public class MeterRegistryAssert extends AbstractAssert<MeterRegistryAssert, Met
      */
     public MeterRegistryAssert hasTimerWithNameAndTags(String timerName, Tags tags) {
         isNotNull();
-        Timer findTimer = actual.find(timerName).tags(tags).timer();
-        if (findTimer == null) {
+        Timer foundTimer = actual.find(timerName).tags(tags).timer();
+        if (foundTimer == null) {
             failWithMessage("Expected a timer with name <%s> and tags <%s> but found none", timerName, tags);
         }
         return this;
@@ -101,12 +101,11 @@ public class MeterRegistryAssert extends AbstractAssert<MeterRegistryAssert, Met
      */
     public MeterRegistryAssert hasTimerWithNameAndTagKeys(String timerName, String... tagKeys) {
         isNotNull();
-        Timer findTimer = actual.find(timerName).tagKeys(tagKeys).timer();
-        if (findTimer == null) {
-            failWithMessage("Expected a timer with name <%s> and tag keys <%s> but found none", timerName, Strings.join(tagKeys).with(","));
+        Timer foundTimer = actual.find(timerName).tagKeys(tagKeys).timer();
+        if (foundTimer == null) {
+            failWithMessage("Expected a timer with name <%s> and tag keys <%s> but found none", timerName, String.join(",", tagKeys));
         }
         return this;
     }
 
 }
-

@@ -39,18 +39,18 @@ class WebFluxMetricsTemporaryConfig {
 
     private final MetricsProperties properties;
 
-    public WebFluxMetricsTemporaryConfig(MetricsProperties properties) {
+    WebFluxMetricsTemporaryConfig(MetricsProperties properties) {
         this.properties = properties;
     }
 
     @Bean
-    public DefaultWebFluxTagsProvider webFluxTagsProvider(ObjectProvider<WebFluxTagsContributor> contributors) {
+    DefaultWebFluxTagsProvider webFluxTagsProvider(ObjectProvider<WebFluxTagsContributor> contributors) {
         return new DefaultWebFluxTagsProvider(this.properties.getWeb().getServer().getRequest().isIgnoreTrailingSlash(),
                 contributors.orderedStream().collect(Collectors.toList()));
     }
 
     @Bean
-    public PocMetricsWebFilter webfluxMetrics(MeterRegistry registry, WebFluxTagsProvider tagConfigurer) {
+    PocMetricsWebFilter webfluxMetrics(MeterRegistry registry, WebFluxTagsProvider tagConfigurer) {
         MetricsProperties.Web.Server.ServerRequest request = this.properties.getWeb().getServer().getRequest();
         return new PocMetricsWebFilter(registry, tagConfigurer, request.getMetricName(), request.getAutotime());
     }

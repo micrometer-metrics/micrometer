@@ -31,42 +31,42 @@ class FirstMatchingCompositeTimerRecordingHandlerTests {
 
     @Test
     void should_run_on_start_only_for_first_matching_handler() {
-        FirstMatchingCompositeTimerRecordingHandler FirstMatchingCompositeTimerRecordingHandler = new FirstMatchingCompositeTimerRecordingHandler(
+        FirstMatchingCompositeTimerRecordingHandler firstMatchingCompositeTimerRecordingHandler = new FirstMatchingCompositeTimerRecordingHandler(
                 new NotMatchingHandler(), this.matchingHandler, new NotMatchingHandler());
 
-        FirstMatchingCompositeTimerRecordingHandler.onStart(sample, null);
+        firstMatchingCompositeTimerRecordingHandler.onStart(sample, null);
 
         assertThat(this.matchingHandler.started).isTrue();
     }
 
     @Test
     void should_run_on_stop_only_for_first_matching_handler() {
-        FirstMatchingCompositeTimerRecordingHandler FirstMatchingCompositeTimerRecordingHandler = new FirstMatchingCompositeTimerRecordingHandler(
+        FirstMatchingCompositeTimerRecordingHandler firstMatchingCompositeTimerRecordingHandler = new FirstMatchingCompositeTimerRecordingHandler(
                 new NotMatchingHandler(), this.matchingHandler, new NotMatchingHandler());
 
-        FirstMatchingCompositeTimerRecordingHandler.onStop(sample, null, null, null);
+        firstMatchingCompositeTimerRecordingHandler.onStop(sample, null, null, null);
 
         assertThat(this.matchingHandler.stopped).isTrue();
     }
 
     @Test
     void should_run_on_error_only_for_first_matching_handler() {
-        FirstMatchingCompositeTimerRecordingHandler FirstMatchingCompositeTimerRecordingHandler = new FirstMatchingCompositeTimerRecordingHandler(
+        FirstMatchingCompositeTimerRecordingHandler firstMatchingCompositeTimerRecordingHandler = new FirstMatchingCompositeTimerRecordingHandler(
                 new NotMatchingHandler(), this.matchingHandler, new NotMatchingHandler());
 
-        FirstMatchingCompositeTimerRecordingHandler.onError(sample, null, new RuntimeException());
+        firstMatchingCompositeTimerRecordingHandler.onError(sample, null, new RuntimeException());
 
         assertThat(this.matchingHandler.errored).isTrue();
     }
 
     @Test
-    void should_run_on_restore_only_for_first_matching_handler() {
-        FirstMatchingCompositeTimerRecordingHandler FirstMatchingCompositeTimerRecordingHandler = new FirstMatchingCompositeTimerRecordingHandler(
+    void should_run_on_scope_opened_only_for_first_matching_handler() {
+        FirstMatchingCompositeTimerRecordingHandler firstMatchingCompositeTimerRecordingHandler = new FirstMatchingCompositeTimerRecordingHandler(
                 new NotMatchingHandler(), this.matchingHandler, new NotMatchingHandler());
 
-        FirstMatchingCompositeTimerRecordingHandler.onScopeOpened(sample, null);
+        firstMatchingCompositeTimerRecordingHandler.onScopeOpened(sample, null);
 
-        assertThat(this.matchingHandler.restored).isTrue();
+        assertThat(this.matchingHandler.scopeOpened).isTrue();
     }
 
     static class MatchingHandler implements TimerRecordingHandler {
@@ -77,7 +77,7 @@ class FirstMatchingCompositeTimerRecordingHandlerTests {
 
         boolean errored;
 
-        boolean restored;
+        boolean scopeOpened;
 
 
         @Override
@@ -92,7 +92,7 @@ class FirstMatchingCompositeTimerRecordingHandlerTests {
 
         @Override
         public void onScopeOpened(Timer.Sample sample, Timer.HandlerContext context) {
-            this.restored = true;
+            this.scopeOpened = true;
         }
 
         @Override

@@ -1,5 +1,5 @@
 /**
- * Copyright 2020 VMware, Inc.
+ * Copyright 2022 VMware, Inc.
  * <p>
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -23,6 +23,8 @@ import io.micrometer.core.instrument.transport.http.HttpResponse;
  * Provides tags for HTTP-related metrics.
  *
  * @see HttpTags
+ * @author Tommy Ludwig
+ * @since 2.0.0
  */
 public interface HttpTagsProvider {
 

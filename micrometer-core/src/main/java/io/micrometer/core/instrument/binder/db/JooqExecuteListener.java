@@ -103,7 +103,6 @@ class JooqExecuteListener extends DefaultExecuteListener {
                 .tag("type", ctx.type().name().toLowerCase())
                 .tag("exception", exceptionName)
                 .tag("exception.subclass", exceptionSubclass)
-                .tags(tags)
-                .register(registry));
+                .tags(tags));
     }
 }

@@ -15,7 +15,6 @@
  */
 package io.micrometer.core.instrument;
 
-import io.micrometer.core.instrument.binder.jvm.ExecutorServiceMetrics;
 import io.micrometer.core.instrument.simple.SimpleMeterRegistry;
 import org.junit.jupiter.api.Test;
 
@@ -31,7 +30,7 @@ class CurrentSampleTest {
 
     @Test
     void nestedSamples_parentChildThreadsInstrumented() throws ExecutionException, InterruptedException {
-        ExecutorService taskRunner = ExecutorServiceMetrics.monitor(registry, Executors.newFixedThreadPool(1), "myTaskRunner");
+        ExecutorService taskRunner = Executors.newSingleThreadExecutor();
 
         Timer.Sample sample = Timer.start(registry);
         System.out.println("Outside task: " + sample);
@@ -66,8 +65,8 @@ class CurrentSampleTest {
     @Test
     void startOnChildThread_thenStopOnSiblingThread() throws InterruptedException, ExecutionException {
         // 2 thread pools with 1 thread each, so a different thread is used for the 2 tasks
-        ExecutorService executor = Executors.newFixedThreadPool(1);
-        ExecutorService executor2 = Executors.newFixedThreadPool(1);
+        ExecutorService executor = Executors.newSingleThreadExecutor();
+        ExecutorService executor2 = Executors.newSingleThreadExecutor();
         Map<String, Timer.Sample> sampleMap = new HashMap<>();
 
         executor.submit(() -> {
