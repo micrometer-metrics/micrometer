@@ -1,5 +1,5 @@
 /**
- * Copyright 2021 VMware, Inc.
+ * Copyright 2022 VMware, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -28,15 +28,20 @@ import io.micrometer.core.instrument.util.StringUtils;
  * @since 2.0.0
  */
 public class HttpTags {
-    private static final Tag EXCEPTION_NONE = Tag.of("exception", "None");
+    private static final String METHOD = "method";
+    private static final String STATUS = "status";
+    private static final String EXCEPTION = "exception";
+    private static final String URI = "uri";
 
-    private static final Tag STATUS_UNKNOWN = Tag.of("status", "UNKNOWN");
+    private static final String UNKNOWN = "UNKNOWN";
 
-    private static final Tag METHOD_UNKNOWN = Tag.of("method", "UNKNOWN");
+    private static final Tag EXCEPTION_NONE = Tag.of(EXCEPTION, "None");
 
-    private static final Tag OUTCOME_UNKNOWN = Tag.of("outcome", "UNKNOWN");
+    private static final Tag STATUS_UNKNOWN = Tag.of(STATUS, UNKNOWN);
 
-    private static final Tag URI_UNKNOWN = Tag.of("uri", "UNKNOWN");
+    private static final Tag METHOD_UNKNOWN = Tag.of(METHOD, UNKNOWN);
+
+    private static final Tag URI_UNKNOWN = Tag.of(URI, UNKNOWN);
 
     private HttpTags() {
     }
@@ -48,7 +53,7 @@ public class HttpTags {
      * @return the method tag whose value is a capitalized method (e.g. GET).
      */
     public static Tag method(HttpRequest request) {
-        return (request != null) ? Tag.of("method", request.method()) : METHOD_UNKNOWN;
+        return (request != null) ? Tag.of(METHOD, request.method()) : METHOD_UNKNOWN;
     }
 
     /**
@@ -57,11 +62,11 @@ public class HttpTags {
      * @return the status tag derived from the status of the response
      */
     public static Tag status(HttpResponse response) {
-        return (response != null) ? Tag.of("status", Integer.toString(response.statusCode())) : STATUS_UNKNOWN;
+        return (response != null) ? Tag.of(STATUS, Integer.toString(response.statusCode())) : STATUS_UNKNOWN;
     }
 
     /**
-     * Creates a {@code exception} tag based on the {@link Class#getSimpleName() simple
+     * Creates an {@code exception} tag based on the {@link Class#getSimpleName() simple
      * name} of the class of the given {@code exception}.
      * @param exception the exception, may be {@code null}
      * @return the exception tag derived from the exception
@@ -69,7 +74,7 @@ public class HttpTags {
     public static Tag exception(Throwable exception) {
         if (exception != null) {
             String simpleName = exception.getClass().getSimpleName();
-            return Tag.of("exception", StringUtils.isNotBlank(simpleName) ? simpleName : exception.getClass().getName());
+            return Tag.of(EXCEPTION, StringUtils.isNotBlank(simpleName) ? simpleName : exception.getClass().getName());
         }
         return EXCEPTION_NONE;
     }
@@ -80,11 +85,11 @@ public class HttpTags {
      * @return the outcome tag derived from the status of the response
      */
     public static Tag outcome(HttpResponse response) {
-        return (response != null) ? Outcome.forStatus(response.statusCode()).asTag() : OUTCOME_UNKNOWN;
+        return ((response != null) ? Outcome.forStatus(response.statusCode()) : Outcome.UNKNOWN).asTag();
     }
 
     public static Tag uri(HttpRequest request) {
         String uri = request.route();
-        return uri == null ? URI_UNKNOWN : Tag.of("uri", uri);
+        return uri == null ? URI_UNKNOWN : Tag.of(URI, uri);
     }
 }

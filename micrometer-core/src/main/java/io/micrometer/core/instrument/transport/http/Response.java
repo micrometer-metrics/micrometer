@@ -34,7 +34,7 @@ public interface Response {
     /**
      * Returns the header names.
      *
-     * @return list of header names
+     * @return collection of header names
      */
     Collection<String> headerNames();
 
@@ -64,7 +64,7 @@ public interface Response {
     /**
      * Returns the transport kind.
      *
-     * @return the remote kind describing the direction and type of the request
+     * @return the remote kind describing the direction and type of the response
      */
     Kind kind();
 

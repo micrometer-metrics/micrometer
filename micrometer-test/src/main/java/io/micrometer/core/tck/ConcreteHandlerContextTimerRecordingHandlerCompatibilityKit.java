@@ -34,6 +34,7 @@ import static org.assertj.core.api.Assertions.assertThatCode;
  * and implement the abstract methods.
  *
  * @author Marcin Grzejszczak
+ * @since 2.0.0
  */
 public abstract class ConcreteHandlerContextTimerRecordingHandlerCompatibilityKit<T extends Timer.HandlerContext> {
 
@@ -54,7 +55,7 @@ public abstract class ConcreteHandlerContextTimerRecordingHandlerCompatibilityKi
     }
 
     @Test
-    @DisplayName("compatibility test provides a null accepting context timer recording handler")
+    @DisplayName("compatibility test provides a concrete context accepting timer recording handler")
     void handlerSupportsConcreteContextForHandlerMethods() {
         assertThatCode(() -> handler.onStart(sample, context())).doesNotThrowAnyException();
         assertThatCode(() -> handler.onStop(sample, context(), Timer.builder("timer for concrete context")

@@ -811,11 +811,12 @@ public abstract class MeterRegistry {
 
         /**
          * Register an event handler for {@link Timer} recordings made using {@link Timer#start(MeterRegistry)}
-         * and {@link io.micrometer.core.instrument.Timer.Sample#stop(Timer)} methods. You can add arbitrary behavior
+         * and {@link io.micrometer.core.instrument.Timer.Sample#stop(Timer.Builder)} methods. You can add arbitrary behavior
          * in the callbacks provided to get additional behavior out of timing instrumentation.
          *
          * @param handler handler to add to the current configuration
          * @return This configuration instance
+         * @since 2.0.0
          */
         public Config timerRecordingHandler(TimerRecordingHandler<?> handler) {
             timerRecordingHandlers.add(handler);

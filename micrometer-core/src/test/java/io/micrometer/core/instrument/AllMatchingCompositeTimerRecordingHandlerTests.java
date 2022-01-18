@@ -32,7 +32,7 @@ class AllMatchingCompositeTimerRecordingHandlerTests {
     Timer.Sample sample = Timer.start(new SimpleMeterRegistry());
 
     @Test
-    void should_run_on_start_only_for_first_matching_handler() {
+    void should_run_on_start_for_all_matching_handlers() {
         AllMatchingCompositeTimerRecordingHandler allMatchingCompositeTimerRecordingHandler = new AllMatchingCompositeTimerRecordingHandler(
                 new NotMatchingHandler(), this.matchingHandler, new NotMatchingHandler(), this.matchingHandler2);
 
@@ -43,7 +43,7 @@ class AllMatchingCompositeTimerRecordingHandlerTests {
     }
 
     @Test
-    void should_run_on_stop_only_for_first_matching_handler() {
+    void should_run_on_stop_for_all_matching_handlers() {
         AllMatchingCompositeTimerRecordingHandler allMatchingCompositeTimerRecordingHandler = new AllMatchingCompositeTimerRecordingHandler(
                 new NotMatchingHandler(), this.matchingHandler, new NotMatchingHandler(), this.matchingHandler2);
 
@@ -54,7 +54,7 @@ class AllMatchingCompositeTimerRecordingHandlerTests {
     }
 
     @Test
-    void should_run_on_error_only_for_first_matching_handler() {
+    void should_run_on_error_for_all_matching_handlers() {
         AllMatchingCompositeTimerRecordingHandler allMatchingCompositeTimerRecordingHandler = new AllMatchingCompositeTimerRecordingHandler(
                 new NotMatchingHandler(), this.matchingHandler, new NotMatchingHandler(), this.matchingHandler2);
 
@@ -65,14 +65,14 @@ class AllMatchingCompositeTimerRecordingHandlerTests {
     }
 
     @Test
-    void should_run_on_restore_only_for_first_matching_handler() {
+    void should_run_on_scope_opened_for_all_matching_handlers() {
         AllMatchingCompositeTimerRecordingHandler allMatchingCompositeTimerRecordingHandler = new AllMatchingCompositeTimerRecordingHandler(
                 new NotMatchingHandler(), this.matchingHandler, new NotMatchingHandler(), this.matchingHandler2);
 
         allMatchingCompositeTimerRecordingHandler.onScopeOpened(sample, null);
 
-        assertThat(this.matchingHandler.restored).isTrue();
-        assertThat(this.matchingHandler2.restored).isTrue();
+        assertThat(this.matchingHandler.scopeOpened).isTrue();
+        assertThat(this.matchingHandler2.scopeOpened).isTrue();
     }
 
     static class MatchingHandler implements TimerRecordingHandler {
@@ -83,7 +83,7 @@ class AllMatchingCompositeTimerRecordingHandlerTests {
 
         boolean errored;
 
-        boolean restored;
+        boolean scopeOpened;
 
 
         @Override
@@ -98,7 +98,7 @@ class AllMatchingCompositeTimerRecordingHandlerTests {
 
         @Override
         public void onScopeOpened(Timer.Sample sample, Timer.HandlerContext context) {
-            this.restored = true;
+            this.scopeOpened = true;
         }
 
         @Override

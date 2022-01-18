@@ -54,6 +54,14 @@ public interface Timer extends Meter, HistogramSupport {
         return start(registry, new HandlerContext());
     }
 
+    /**
+     * Start a timing sample.
+     *
+     * @param registry A meter registry whose clock is to be used
+     * @param handlerContext handler context
+     * @return A timing sample with start time recorded.
+     * @since 2.0.0
+     */
     static Sample start(MeterRegistry registry, HandlerContext handlerContext) {
         return new Sample(registry, handlerContext);
     }
@@ -251,7 +259,7 @@ public interface Timer extends Meter, HistogramSupport {
 
     /**
      * Maintains state on the clock's start position for a latency sample. Complete the timing
-     * by calling {@link Sample#stop(Timer)}. Note how the {@link Timer} isn't provided until the
+     * by calling {@link Sample#stop(Timer.Builder)}. Note how the {@link Timer} isn't provided until the
      * sample is stopped, allowing you to determine the timer's tags at the last minute.
      */
     @SuppressWarnings({ "unchecked", "rawtypes" })
@@ -278,24 +286,25 @@ public interface Timer extends Meter, HistogramSupport {
          * Mark an exception that happened between the sample's start/stop.
          *
          * @param throwable exception that happened
+         * @since 2.0.0
          */
         public void error(Throwable throwable) {
             // TODO check stop hasn't been called yet?
             // TODO doesn't do anything to tags currently; we should make error tagging more first-class
             notifyOnError(throwable);
-
         }
 
         /**
          * Records the duration of the operation and adds tags to the {@link Timer.Builder} based on the
          * {@link HandlerContext} for this {@link Sample}.
          *
-         * @param timer The timer to record the sample to.
+         * @param timerBuilder The timer builder to record the sample to.
          * @return The total duration of the sample in nanoseconds
+         * @since 2.0.0
          */
-        public long stop(Timer.Builder timer) {
-            timer.tags(this.handlerContext.getLowCardinalityTags());
-            return stop(timer.register(this.registry));
+        public long stop(Timer.Builder timerBuilder) {
+            timerBuilder.tags(this.handlerContext.getLowCardinalityTags());
+            return stop(timerBuilder.register(this.registry));
         }
 
         // TODO: We'll need to make this private. I'm leaving this for now as it is cause it breaks compilation in quite a few places
@@ -315,6 +324,12 @@ public interface Timer extends Meter, HistogramSupport {
             return duration;
         }
 
+        /**
+         * Make this sample current.
+         *
+         * @return newly opened scope
+         * @since 2.0.0
+         */
         public Scope makeCurrent() {
             notifyOnScopeOpened();
             return registry.openNewScope(this);
@@ -343,6 +358,8 @@ public interface Timer extends Meter, HistogramSupport {
 
     /**
      * Nestable bounding for {@link Timer timed} operations that capture and pass along already opened scopes.
+     *
+     * @since 2.0.0
      */
     class Scope implements Closeable {
         private final ThreadLocal<Sample> threadLocal;
@@ -370,6 +387,8 @@ public interface Timer extends Meter, HistogramSupport {
     /**
      * Context for {@link Sample} instances used by {@link TimerRecordingHandler} to pass arbitrary objects between
      * handler methods. Usage is similar to the JDK {@link Map} API.
+     *
+     * @since 2.0.0
      */
     @SuppressWarnings("unchecked")
     class HandlerContext implements TagsProvider {

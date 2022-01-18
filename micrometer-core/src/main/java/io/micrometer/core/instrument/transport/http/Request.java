@@ -33,7 +33,7 @@ public interface Request {
     /**
      * Returns the header names.
      *
-     * @return list of header names
+     * @return collection of header names
      */
     Collection<String> headerNames();
 

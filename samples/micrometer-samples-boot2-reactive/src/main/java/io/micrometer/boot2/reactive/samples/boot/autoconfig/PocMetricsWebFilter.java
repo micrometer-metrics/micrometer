@@ -104,7 +104,7 @@ public class PocMetricsWebFilter implements WebFilter {
             Set<Timed> annotations = getTimedAnnotations(handler);
             Iterable<Tag> tags = this.tagsProvider.httpRequestTags(exchange, cause);
             AutoTimer.apply(this.autoTimer, this.metricName, annotations,
-                    (builder) -> sample.stop(builder.tags(tags).register(this.registry)));
+                    (builder) -> sample.stop(builder.tags(tags)));
         }
         catch (Exception ex) {
             logger.warn("Failed to record timer metrics", ex);

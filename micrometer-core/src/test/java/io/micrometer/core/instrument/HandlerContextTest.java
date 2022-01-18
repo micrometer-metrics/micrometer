@@ -48,7 +48,7 @@ class HandlerContextTest {
     }
 
     @Test
-    void overWrittenValuesShouldBeUpdated() {
+    void overwrittenValuesShouldBeUpdated() {
         handlerContext
                 .put(String.class, "42")
                 .put(Integer.class, 123)
@@ -58,7 +58,7 @@ class HandlerContextTest {
     }
 
     @Test
-    void removedItemsShouldNotPresent() {
+    void removedItemsShouldNotBePresent() {
         handlerContext
                 .put(String.class, "42")
                 .put(Integer.class, 123)

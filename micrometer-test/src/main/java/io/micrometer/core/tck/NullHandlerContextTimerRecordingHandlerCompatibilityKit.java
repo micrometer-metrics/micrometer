@@ -34,6 +34,7 @@ import static org.assertj.core.api.Assertions.assertThatCode;
  * and implement the abstract methods.
  *
  * @author Marcin Grzejszczak
+ * @since 2.0.0
  */
 public abstract class NullHandlerContextTimerRecordingHandlerCompatibilityKit {
 
@@ -52,7 +53,7 @@ public abstract class NullHandlerContextTimerRecordingHandlerCompatibilityKit {
     }
 
     @Test
-    @DisplayName("compatibility test provides a null accepting context timer recording handler")
+    @DisplayName("compatibility test provides a null context accepting timer recording handler")
     void handlerSupportsNullContext() {
         assertThatCode(() -> handler.onStart(sample, null)).doesNotThrowAnyException();
         assertThatCode(() -> handler.onStop(sample, null, Timer.builder("timer for null context")

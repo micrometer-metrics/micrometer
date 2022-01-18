@@ -21,7 +21,6 @@ import org.junit.jupiter.api.Test;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.verifyNoMoreInteractions;
 
 /**
  * Tests for {@link HttpClientHandlerContext}.
@@ -34,7 +33,6 @@ class HttpClientHandlerContextTest {
     void gettersAndSettersShouldWork() {
         HttpClientRequest request = mock(HttpClientRequest.class);
         HttpClientResponse response = mock(HttpClientResponse.class);
-        verifyNoMoreInteractions(request, response);
 
         HttpClientHandlerContext context = new HttpClientHandlerContext(request);
         assertThat(context.getRequest()).isSameAs(request);

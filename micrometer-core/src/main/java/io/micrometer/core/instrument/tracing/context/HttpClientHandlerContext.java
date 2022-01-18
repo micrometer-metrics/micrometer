@@ -35,12 +35,11 @@ public class HttpClientHandlerContext extends HttpHandlerContext<HttpClientReque
     private HttpClientResponse response;
 
     /**
-     * Crates a new {@link HttpClientHandlerContext}.
+     * Creates a new {@code HttpClientHandlerContext}.
      *
      * @param request http client request
      */
     public HttpClientHandlerContext(HttpClientRequest request) {
-        super();
         this.request = request;
     }
 
