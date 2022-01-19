@@ -22,7 +22,7 @@ import io.grpc.ForwardingServerCallListener.SimpleForwardingServerCallListener;
 import io.grpc.ServerCall;
 import io.grpc.ServerCall.Listener;
 import io.grpc.Status;
-import io.micrometer.core.instrument.Counter;
+import io.micrometer.api.instrument.Counter;
 
 /**
  * A simple forwarding server call listener that collects metrics.

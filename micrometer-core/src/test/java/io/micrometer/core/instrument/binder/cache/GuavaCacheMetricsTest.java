@@ -21,12 +21,13 @@ import com.google.common.cache.CacheLoader;
 import com.google.common.cache.CacheStats;
 import com.google.common.cache.LoadingCache;
 
-import io.micrometer.core.instrument.FunctionCounter;
-import io.micrometer.core.instrument.Gauge;
-import io.micrometer.core.instrument.MeterRegistry;
-import io.micrometer.core.instrument.Tags;
-import io.micrometer.core.instrument.TimeGauge;
-import io.micrometer.core.instrument.simple.SimpleMeterRegistry;
+import io.micrometer.api.instrument.FunctionCounter;
+import io.micrometer.api.instrument.Gauge;
+import io.micrometer.api.instrument.MeterRegistry;
+import io.micrometer.api.instrument.Tags;
+import io.micrometer.api.instrument.TimeGauge;
+import io.micrometer.api.instrument.cache.AbstractCacheMetricsTest;
+import io.micrometer.api.instrument.simple.SimpleMeterRegistry;
 
 import org.junit.jupiter.api.Test;
 

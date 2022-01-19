@@ -15,12 +15,12 @@
  */
 package io.micrometer.core.instrument.binder.tomcat;
 
-import io.micrometer.core.instrument.*;
-import io.micrometer.core.instrument.binder.BaseUnits;
-import io.micrometer.core.instrument.binder.MeterBinder;
-import io.micrometer.core.lang.NonNullApi;
-import io.micrometer.core.lang.NonNullFields;
-import io.micrometer.core.lang.Nullable;
+import io.micrometer.api.instrument.*;
+import io.micrometer.api.instrument.binder.BaseUnits;
+import io.micrometer.api.instrument.binder.MeterBinder;
+import io.micrometer.api.lang.NonNullApi;
+import io.micrometer.api.lang.NonNullFields;
+import io.micrometer.api.lang.Nullable;
 import org.apache.catalina.Manager;
 
 import javax.management.*;

@@ -16,11 +16,11 @@
 package io.micrometer.newrelic;
 
 import com.newrelic.api.agent.*;
-import io.micrometer.core.instrument.*;
-import io.micrometer.core.instrument.config.NamingConvention;
-import io.micrometer.core.instrument.config.validate.ValidationException;
-import io.micrometer.core.instrument.util.NamedThreadFactory;
-import io.micrometer.core.ipc.http.HttpSender;
+import io.micrometer.api.instrument.*;
+import io.micrometer.api.instrument.config.NamingConvention;
+import io.micrometer.api.instrument.config.validate.ValidationException;
+import io.micrometer.api.instrument.util.NamedThreadFactory;
+import io.micrometer.api.ipc.http.HttpSender;
 import io.micrometer.newrelic.NewRelicMeterRegistryTest.MockNewRelicAgent.MockNewRelicInsights;
 import org.junit.jupiter.api.Test;
 

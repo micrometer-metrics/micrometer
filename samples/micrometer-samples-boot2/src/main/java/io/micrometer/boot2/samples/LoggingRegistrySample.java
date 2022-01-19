@@ -16,9 +16,9 @@
 package io.micrometer.boot2.samples;
 
 import io.micrometer.boot2.samples.components.PersonController;
-import io.micrometer.core.instrument.Clock;
-import io.micrometer.core.instrument.logging.LoggingMeterRegistry;
-import io.micrometer.core.instrument.logging.LoggingRegistryConfig;
+import io.micrometer.api.instrument.Clock;
+import io.micrometer.api.instrument.logging.LoggingMeterRegistry;
+import io.micrometer.api.instrument.logging.LoggingRegistryConfig;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.boot.builder.SpringApplicationBuilder;
 import org.springframework.context.annotation.Bean;

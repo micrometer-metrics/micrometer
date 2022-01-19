@@ -15,7 +15,7 @@
  */
 package io.micrometer.cloudwatch2;
 
-import io.micrometer.core.instrument.util.AbstractPartition;
+import io.micrometer.api.instrument.util.AbstractPartition;
 import software.amazon.awssdk.services.cloudwatch.model.MetricDatum;
 
 import java.util.List;

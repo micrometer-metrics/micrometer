@@ -15,10 +15,10 @@
  */
 package io.micrometer.prometheus;
 
-import io.micrometer.core.instrument.AbstractMeter;
-import io.micrometer.core.instrument.Counter;
-import io.micrometer.core.instrument.Meter;
-import io.micrometer.core.instrument.util.MeterEquivalence;
+import io.micrometer.api.instrument.AbstractMeter;
+import io.micrometer.api.instrument.Counter;
+import io.micrometer.api.instrument.Meter;
+import io.micrometer.api.instrument.util.MeterEquivalence;
 
 import java.util.concurrent.atomic.DoubleAdder;
 

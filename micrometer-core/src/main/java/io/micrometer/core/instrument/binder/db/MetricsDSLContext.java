@@ -15,10 +15,10 @@
  */
 package io.micrometer.core.instrument.binder.db;
 
-import io.micrometer.core.annotation.Incubating;
-import io.micrometer.core.instrument.MeterRegistry;
-import io.micrometer.core.instrument.Tag;
-import io.micrometer.core.instrument.Tags;
+import io.micrometer.api.annotation.Incubating;
+import io.micrometer.api.instrument.MeterRegistry;
+import io.micrometer.api.instrument.Tag;
+import io.micrometer.api.instrument.Tags;
 import org.jooq.*;
 import org.jooq.Record;
 import org.jooq.conf.Settings;

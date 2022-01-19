@@ -17,8 +17,8 @@ package io.micrometer.core.tck;
 
 import java.time.Duration;
 
-import io.micrometer.core.instrument.Timer;
-import io.micrometer.core.instrument.TimerRecordingHandler;
+import io.micrometer.api.instrument.Timer;
+import io.micrometer.api.instrument.TimerRecordingHandler;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 

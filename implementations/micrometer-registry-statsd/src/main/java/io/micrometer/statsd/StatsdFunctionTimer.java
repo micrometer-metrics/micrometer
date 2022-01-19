@@ -15,7 +15,7 @@
  */
 package io.micrometer.statsd;
 
-import io.micrometer.core.instrument.cumulative.CumulativeFunctionTimer;
+import io.micrometer.api.instrument.cumulative.CumulativeFunctionTimer;
 import reactor.core.publisher.FluxSink;
 
 import java.util.concurrent.TimeUnit;

@@ -15,8 +15,8 @@
  */
 package io.micrometer.atlas;
 
-import io.micrometer.core.instrument.Statistic;
-import io.micrometer.core.lang.Nullable;
+import io.micrometer.api.instrument.Statistic;
+import io.micrometer.api.lang.Nullable;
 
 import static com.netflix.spectator.api.Statistic.*;
 

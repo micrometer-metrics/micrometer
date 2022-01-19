@@ -20,7 +20,7 @@ import io.grpc.Metadata;
 import io.grpc.ServerCall;
 import io.grpc.Status;
 import io.grpc.Status.Code;
-import io.micrometer.core.instrument.Counter;
+import io.micrometer.api.instrument.Counter;
 
 /**
  * A simple forwarding server call that collects metrics.

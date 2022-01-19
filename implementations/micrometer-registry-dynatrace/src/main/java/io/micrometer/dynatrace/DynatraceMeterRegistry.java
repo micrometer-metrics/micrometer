@@ -15,17 +15,17 @@
  */
 package io.micrometer.dynatrace;
 
-import io.micrometer.core.instrument.Clock;
-import io.micrometer.core.instrument.Meter;
-import io.micrometer.core.instrument.config.MeterFilter;
-import io.micrometer.core.instrument.config.MeterFilterReply;
-import io.micrometer.core.instrument.distribution.DistributionStatisticConfig;
-import io.micrometer.core.instrument.step.StepMeterRegistry;
-import io.micrometer.core.instrument.util.NamedThreadFactory;
-import io.micrometer.core.ipc.http.HttpSender;
-import io.micrometer.core.ipc.http.HttpUrlConnectionSender;
-import io.micrometer.core.util.internal.logging.InternalLogger;
-import io.micrometer.core.util.internal.logging.InternalLoggerFactory;
+import io.micrometer.api.instrument.Clock;
+import io.micrometer.api.instrument.Meter;
+import io.micrometer.api.instrument.config.MeterFilter;
+import io.micrometer.api.instrument.config.MeterFilterReply;
+import io.micrometer.api.instrument.distribution.DistributionStatisticConfig;
+import io.micrometer.api.instrument.step.StepMeterRegistry;
+import io.micrometer.api.instrument.util.NamedThreadFactory;
+import io.micrometer.api.ipc.http.HttpSender;
+import io.micrometer.api.ipc.http.HttpUrlConnectionSender;
+import io.micrometer.api.internal.logging.InternalLogger;
+import io.micrometer.api.internal.logging.InternalLoggerFactory;
 import io.micrometer.dynatrace.v1.DynatraceExporterV1;
 import io.micrometer.dynatrace.v2.DynatraceExporterV2;
 
@@ -35,8 +35,8 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ThreadFactory;
 import java.util.concurrent.TimeUnit;
 
-import static io.micrometer.core.instrument.config.MeterFilterReply.DENY;
-import static io.micrometer.core.instrument.config.MeterFilterReply.NEUTRAL;
+import static io.micrometer.api.instrument.config.MeterFilterReply.DENY;
+import static io.micrometer.api.instrument.config.MeterFilterReply.NEUTRAL;
 
 /**
  * {@link StepMeterRegistry} for Dynatrace.

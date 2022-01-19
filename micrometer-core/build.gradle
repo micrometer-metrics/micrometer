@@ -1,16 +1,6 @@
-plugins {
-    id 'idea'
-}
-
+// TODO module description
 dependencies {
-    // TODO(anuraaga): HdrHistogram is exposed in the micrometer API but probably shouldn't be
-    api 'org.hdrhistogram:HdrHistogram'
-    implementation('org.latencyutils:LatencyUtils') {
-        exclude group: 'org.hdrhistogram', module: 'HdrHistogram'
-    }
-
-    // instrumentation options
-    optionalApi 'io.dropwizard.metrics:metrics-core'
+    api project(':micrometer-api')
 
     // cache monitoring
     optionalApi 'com.google.guava:guava'
@@ -38,9 +28,6 @@ dependencies {
     optionalApi 'ch.qos.logback:logback-classic'
     optionalApi 'org.apache.logging.log4j:log4j-core'
 
-    // @Timed AOP
-    optionalApi 'org.aspectj:aspectjweaver'
-
     optionalApi 'com.squareup.okhttp3:okhttp'
 
     optionalApi 'org.mongodb:mongodb-driver-sync'
@@ -50,14 +37,13 @@ dependencies {
     optionalApi 'org.apache.kafka:kafka-clients'
     optionalApi 'org.apache.kafka:kafka-streams'
 
+    testImplementation project(':micrometer-test')
+
     testImplementation 'io.projectreactor:reactor-test'
 
     // JUnit 5
     testImplementation 'org.junit.jupiter:junit-jupiter'
     testImplementation 'com.tngtech.archunit:archunit-junit5'
-
-    // Eclipse still needs this (as of 4.7.1a)
-    testRuntimeOnly 'org.junit.platform:junit-platform-launcher'
 
     testImplementation 'org.mockito:mockito-inline'
 
@@ -85,6 +71,8 @@ dependencies {
 
     testImplementation 'org.glassfish.jersey.test-framework.providers:jersey-test-framework-provider-inmemory'
     testRuntimeOnly 'org.glassfish.jersey.inject:jersey-hk2'
+
+    testImplementation 'org.jsr107.ri:cache-ri-impl'
 
     testImplementation 'ru.lanwen.wiremock:wiremock-junit5'
     testImplementation 'com.github.tomakehurst:wiremock-jre8-standalone'

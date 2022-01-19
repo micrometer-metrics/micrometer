@@ -1,0 +1,44 @@
+// TODO module description
+dependencies {
+    // TODO(anuraaga): HdrHistogram is exposed in the micrometer API but probably shouldn't be
+    api 'org.hdrhistogram:HdrHistogram'
+    implementation('org.latencyutils:LatencyUtils') {
+        exclude group: 'org.hdrhistogram', module: 'HdrHistogram'
+    }
+
+    // internal logging facade
+    optionalApi 'org.slf4j:slf4j-api'
+
+    // Aspects
+    optionalApi 'org.aspectj:aspectjweaver'
+
+    // OkHttpSender optional implementation
+    optionalApi 'com.squareup.okhttp3:okhttp'
+
+    // HttpServlet TagsProvider
+    optionalApi 'javax.servlet:javax.servlet-api'
+
+    // TODO move dropwizard out of api module?
+    // DropwizardMeterRegistry for e.g. JMX registry
+    optionalApi 'io.dropwizard.metrics:metrics-core'
+
+    testImplementation 'org.junit.jupiter:junit-jupiter'
+    testImplementation 'org.assertj:assertj-core'
+    testImplementation 'org.mockito:mockito-core'
+
+    // TODO we only have this dependency for one test not really Reactor-specific. remove in the future?
+    // see CompositeMeterRegistryTest#noDeadlockOnAddingAndRemovingRegistries
+    testImplementation 'io.projectreactor:reactor-core'
+
+    // dependency injection tests
+    testImplementation 'javax.inject:javax.inject'
+    testImplementation 'javax.annotation:javax.annotation-api'
+    testImplementation 'org.springframework:spring-context'
+    testImplementation 'com.google.inject:guice'
+    // Uncomment these if you are interested in testing injection with dagger in MeterRegistryInjectionTest
+//    testImplementation 'com.google.dagger:dagger'
+//    testAnnotationProcessor 'com.google.dagger:dagger-compiler'
+
+    // for testing HttpSender implementations
+    testImplementation 'com.github.tomakehurst:wiremock-jre8-standalone'
+}

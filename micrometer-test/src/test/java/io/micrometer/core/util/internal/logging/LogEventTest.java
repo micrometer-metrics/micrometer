@@ -17,9 +17,10 @@ package io.micrometer.core.util.internal.logging;
 
 import java.io.IOException;
 
+import io.micrometer.api.internal.logging.LogEvent;
 import org.junit.jupiter.api.Test;
 
-import static io.micrometer.core.util.internal.logging.InternalLogLevel.INFO;
+import static io.micrometer.api.internal.logging.InternalLogLevel.INFO;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatCode;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;

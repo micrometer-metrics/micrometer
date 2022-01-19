@@ -17,7 +17,7 @@ package io.micrometer.core.instrument.binder.mongodb;
 
 import com.mongodb.event.CommandEvent;
 import com.mongodb.event.CommandStartedEvent;
-import io.micrometer.core.instrument.Tag;
+import io.micrometer.api.instrument.Tag;
 
 /**
  * Provides {@link Tag Tags} for Mongo command metrics.

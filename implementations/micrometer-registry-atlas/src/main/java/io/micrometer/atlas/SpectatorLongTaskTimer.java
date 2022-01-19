@@ -15,13 +15,13 @@
  */
 package io.micrometer.atlas;
 
-import io.micrometer.core.instrument.Clock;
-import io.micrometer.core.instrument.LongTaskTimer;
-import io.micrometer.core.instrument.Meter;
-import io.micrometer.core.instrument.distribution.DistributionStatisticConfig;
-import io.micrometer.core.instrument.internal.DefaultLongTaskTimer;
-import io.micrometer.core.instrument.util.MeterEquivalence;
-import io.micrometer.core.instrument.util.TimeUtils;
+import io.micrometer.api.instrument.Clock;
+import io.micrometer.api.instrument.LongTaskTimer;
+import io.micrometer.api.instrument.Meter;
+import io.micrometer.api.instrument.distribution.DistributionStatisticConfig;
+import io.micrometer.api.instrument.internal.DefaultLongTaskTimer;
+import io.micrometer.api.instrument.util.MeterEquivalence;
+import io.micrometer.api.instrument.util.TimeUtils;
 
 import java.util.concurrent.TimeUnit;
 

@@ -15,14 +15,14 @@
  */
 package io.micrometer.statsd.internal;
 
-import io.micrometer.core.instrument.Meter;
-import io.micrometer.core.instrument.MeterRegistry;
-import io.micrometer.core.instrument.Statistic;
-import io.micrometer.core.instrument.Tag;
-import io.micrometer.core.instrument.config.NamingConvention;
-import io.micrometer.core.instrument.distribution.DistributionStatisticConfig;
-import io.micrometer.core.instrument.util.DoubleFormat;
-import io.micrometer.core.lang.Nullable;
+import io.micrometer.api.instrument.Meter;
+import io.micrometer.api.instrument.MeterRegistry;
+import io.micrometer.api.instrument.Statistic;
+import io.micrometer.api.instrument.Tag;
+import io.micrometer.api.instrument.config.NamingConvention;
+import io.micrometer.api.instrument.distribution.DistributionStatisticConfig;
+import io.micrometer.api.instrument.util.DoubleFormat;
+import io.micrometer.api.lang.Nullable;
 
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;

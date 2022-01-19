@@ -16,9 +16,9 @@
 package io.micrometer.datadog;
 
 import io.micrometer.core.Issue;
-import io.micrometer.core.instrument.Meter;
-import io.micrometer.core.instrument.config.NamingConvention;
-import io.micrometer.core.lang.Nullable;
+import io.micrometer.api.instrument.Meter;
+import io.micrometer.api.instrument.config.NamingConvention;
+import io.micrometer.api.lang.Nullable;
 import org.junit.jupiter.api.Test;
 
 import static org.assertj.core.api.Assertions.assertThat;

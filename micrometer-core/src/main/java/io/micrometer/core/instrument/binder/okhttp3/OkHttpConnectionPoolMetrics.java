@@ -15,13 +15,13 @@
  */
 package io.micrometer.core.instrument.binder.okhttp3;
 
-import io.micrometer.core.instrument.Gauge;
-import io.micrometer.core.instrument.MeterRegistry;
-import io.micrometer.core.instrument.Tag;
-import io.micrometer.core.instrument.Tags;
-import io.micrometer.core.instrument.binder.BaseUnits;
-import io.micrometer.core.instrument.binder.MeterBinder;
-import io.micrometer.core.lang.NonNull;
+import io.micrometer.api.instrument.Gauge;
+import io.micrometer.api.instrument.MeterRegistry;
+import io.micrometer.api.instrument.Tag;
+import io.micrometer.api.instrument.Tags;
+import io.micrometer.api.instrument.binder.BaseUnits;
+import io.micrometer.api.instrument.binder.MeterBinder;
+import io.micrometer.api.lang.NonNull;
 import okhttp3.ConnectionPool;
 
 import java.util.Collections;

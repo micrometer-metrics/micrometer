@@ -15,10 +15,10 @@
  */
 package io.micrometer.statsd;
 
-import io.micrometer.core.instrument.AbstractMeter;
-import io.micrometer.core.instrument.Gauge;
-import io.micrometer.core.instrument.util.MeterEquivalence;
-import io.micrometer.core.lang.Nullable;
+import io.micrometer.api.instrument.AbstractMeter;
+import io.micrometer.api.instrument.Gauge;
+import io.micrometer.api.instrument.util.MeterEquivalence;
+import io.micrometer.api.lang.Nullable;
 import reactor.core.publisher.FluxSink;
 
 import java.lang.ref.WeakReference;

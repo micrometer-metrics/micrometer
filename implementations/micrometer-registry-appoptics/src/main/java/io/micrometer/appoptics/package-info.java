@@ -17,5 +17,5 @@
 @NonNullFields
 package io.micrometer.appoptics;
 
-import io.micrometer.core.lang.NonNullApi;
-import io.micrometer.core.lang.NonNullFields;
+import io.micrometer.api.lang.NonNullApi;
+import io.micrometer.api.lang.NonNullFields;

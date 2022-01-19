@@ -15,16 +15,16 @@
  */
 package io.micrometer.signalfx;
 
-import io.micrometer.core.instrument.config.validate.Validated;
-import io.micrometer.core.instrument.step.StepRegistryConfig;
+import io.micrometer.api.instrument.config.validate.Validated;
+import io.micrometer.api.instrument.step.StepRegistryConfig;
 
 import java.net.InetAddress;
 import java.net.UnknownHostException;
 import java.time.Duration;
 
-import static io.micrometer.core.instrument.config.MeterRegistryConfigValidator.checkAll;
-import static io.micrometer.core.instrument.config.MeterRegistryConfigValidator.checkRequired;
-import static io.micrometer.core.instrument.config.validate.PropertyValidator.*;
+import static io.micrometer.api.instrument.config.MeterRegistryConfigValidator.checkAll;
+import static io.micrometer.api.instrument.config.MeterRegistryConfigValidator.checkRequired;
+import static io.micrometer.api.instrument.config.validate.PropertyValidator.*;
 
 /**
  * Configuration for {@link SignalFxMeterRegistry}.

@@ -15,18 +15,18 @@
  */
 package io.micrometer.core.instrument.binder.jvm;
 
-import io.micrometer.core.instrument.*;
-import io.micrometer.core.instrument.binder.BaseUnits;
-import io.micrometer.core.instrument.binder.MeterBinder;
-import io.micrometer.core.instrument.internal.TimedExecutor;
-import io.micrometer.core.instrument.internal.TimedExecutorService;
-import io.micrometer.core.instrument.internal.TimedScheduledExecutorService;
-import io.micrometer.core.instrument.util.StringUtils;
-import io.micrometer.core.lang.NonNullApi;
-import io.micrometer.core.lang.NonNullFields;
-import io.micrometer.core.lang.Nullable;
-import io.micrometer.core.util.internal.logging.InternalLogger;
-import io.micrometer.core.util.internal.logging.InternalLoggerFactory;
+import io.micrometer.api.instrument.*;
+import io.micrometer.api.instrument.binder.BaseUnits;
+import io.micrometer.api.instrument.binder.MeterBinder;
+import io.micrometer.api.instrument.internal.TimedExecutor;
+import io.micrometer.api.instrument.internal.TimedExecutorService;
+import io.micrometer.api.instrument.internal.TimedScheduledExecutorService;
+import io.micrometer.api.instrument.util.StringUtils;
+import io.micrometer.api.lang.NonNullApi;
+import io.micrometer.api.lang.NonNullFields;
+import io.micrometer.api.lang.Nullable;
+import io.micrometer.api.internal.logging.InternalLogger;
+import io.micrometer.api.internal.logging.InternalLoggerFactory;
 
 import java.lang.reflect.Field;
 import java.util.concurrent.*;

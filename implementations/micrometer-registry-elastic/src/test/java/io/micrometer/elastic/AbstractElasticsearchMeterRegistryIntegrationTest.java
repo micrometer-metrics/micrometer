@@ -16,9 +16,9 @@
 package io.micrometer.elastic;
 
 import com.jayway.jsonpath.JsonPath;
-import io.micrometer.core.instrument.Counter;
-import io.micrometer.core.ipc.http.HttpSender;
-import io.micrometer.core.ipc.http.HttpUrlConnectionSender;
+import io.micrometer.api.instrument.Counter;
+import io.micrometer.api.ipc.http.HttpSender;
+import io.micrometer.api.ipc.http.HttpUrlConnectionSender;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;

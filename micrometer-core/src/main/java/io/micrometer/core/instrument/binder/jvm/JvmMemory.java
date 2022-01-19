@@ -15,7 +15,7 @@
  */
 package io.micrometer.core.instrument.binder.jvm;
 
-import io.micrometer.core.lang.Nullable;
+import io.micrometer.api.lang.Nullable;
 
 import java.lang.management.ManagementFactory;
 import java.lang.management.MemoryPoolMXBean;

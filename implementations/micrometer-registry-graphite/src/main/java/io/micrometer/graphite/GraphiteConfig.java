@@ -15,16 +15,16 @@
  */
 package io.micrometer.graphite;
 
-import io.micrometer.core.instrument.config.validate.Validated;
-import io.micrometer.core.instrument.dropwizard.DropwizardConfig;
-import io.micrometer.core.lang.Nullable;
+import io.micrometer.api.instrument.config.validate.Validated;
+import io.micrometer.api.instrument.dropwizard.DropwizardConfig;
+import io.micrometer.api.lang.Nullable;
 
 import java.util.concurrent.TimeUnit;
 
-import static io.micrometer.core.instrument.config.MeterRegistryConfigValidator.check;
-import static io.micrometer.core.instrument.config.MeterRegistryConfigValidator.checkAll;
-import static io.micrometer.core.instrument.config.MeterRegistryConfigValidator.checkRequired;
-import static io.micrometer.core.instrument.config.validate.PropertyValidator.*;
+import static io.micrometer.api.instrument.config.MeterRegistryConfigValidator.check;
+import static io.micrometer.api.instrument.config.MeterRegistryConfigValidator.checkAll;
+import static io.micrometer.api.instrument.config.MeterRegistryConfigValidator.checkRequired;
+import static io.micrometer.api.instrument.config.validate.PropertyValidator.*;
 
 /**
  * Configuration for {@link GraphiteMeterRegistry}.

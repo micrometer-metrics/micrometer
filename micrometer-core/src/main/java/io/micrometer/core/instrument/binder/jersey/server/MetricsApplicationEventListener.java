@@ -15,7 +15,7 @@
  */
 package io.micrometer.core.instrument.binder.jersey.server;
 
-import io.micrometer.core.instrument.MeterRegistry;
+import io.micrometer.api.instrument.MeterRegistry;
 import org.glassfish.jersey.server.monitoring.ApplicationEvent;
 import org.glassfish.jersey.server.monitoring.ApplicationEventListener;
 import org.glassfish.jersey.server.monitoring.RequestEvent;

@@ -15,8 +15,8 @@
  */
 package io.micrometer.ganglia;
 
-import io.micrometer.core.instrument.Clock;
-import io.micrometer.core.instrument.Meter;
+import io.micrometer.api.instrument.Clock;
+import io.micrometer.api.instrument.Meter;
 import org.junit.jupiter.api.Test;
 
 import static org.assertj.core.api.Assertions.assertThat;

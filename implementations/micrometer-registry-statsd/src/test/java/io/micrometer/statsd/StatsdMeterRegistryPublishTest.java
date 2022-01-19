@@ -16,8 +16,8 @@
 package io.micrometer.statsd;
 
 import io.micrometer.core.Issue;
-import io.micrometer.core.instrument.Clock;
-import io.micrometer.core.instrument.Counter;
+import io.micrometer.api.instrument.Clock;
+import io.micrometer.api.instrument.Counter;
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.channel.ChannelOutboundHandlerAdapter;
 import io.netty.channel.ChannelPromise;

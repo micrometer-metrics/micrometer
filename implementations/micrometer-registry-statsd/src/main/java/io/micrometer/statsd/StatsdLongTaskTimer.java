@@ -15,10 +15,10 @@
  */
 package io.micrometer.statsd;
 
-import io.micrometer.core.instrument.Clock;
-import io.micrometer.core.instrument.Statistic;
-import io.micrometer.core.instrument.distribution.DistributionStatisticConfig;
-import io.micrometer.core.instrument.internal.DefaultLongTaskTimer;
+import io.micrometer.api.instrument.Clock;
+import io.micrometer.api.instrument.Statistic;
+import io.micrometer.api.instrument.distribution.DistributionStatisticConfig;
+import io.micrometer.api.instrument.internal.DefaultLongTaskTimer;
 import reactor.core.publisher.FluxSink;
 
 import java.util.concurrent.TimeUnit;

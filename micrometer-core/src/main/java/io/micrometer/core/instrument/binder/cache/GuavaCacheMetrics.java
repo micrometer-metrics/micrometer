@@ -18,10 +18,11 @@ package io.micrometer.core.instrument.binder.cache;
 import com.google.common.cache.Cache;
 import com.google.common.cache.CacheBuilder;
 import com.google.common.cache.LoadingCache;
-import io.micrometer.core.instrument.*;
-import io.micrometer.core.lang.NonNullApi;
-import io.micrometer.core.lang.NonNullFields;
-import io.micrometer.core.lang.Nullable;
+import io.micrometer.api.instrument.*;
+import io.micrometer.api.instrument.cache.CacheMeterBinder;
+import io.micrometer.api.lang.NonNullApi;
+import io.micrometer.api.lang.NonNullFields;
+import io.micrometer.api.lang.Nullable;
 
 import java.util.concurrent.TimeUnit;
 import java.util.function.Function;

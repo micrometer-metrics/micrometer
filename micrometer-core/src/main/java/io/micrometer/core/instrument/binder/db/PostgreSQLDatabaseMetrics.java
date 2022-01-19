@@ -15,11 +15,11 @@
  */
 package io.micrometer.core.instrument.binder.db;
 
-import io.micrometer.core.instrument.*;
-import io.micrometer.core.instrument.binder.BaseUnits;
-import io.micrometer.core.instrument.binder.MeterBinder;
-import io.micrometer.core.lang.NonNullApi;
-import io.micrometer.core.lang.NonNullFields;
+import io.micrometer.api.instrument.*;
+import io.micrometer.api.instrument.binder.BaseUnits;
+import io.micrometer.api.instrument.binder.MeterBinder;
+import io.micrometer.api.lang.NonNullApi;
+import io.micrometer.api.lang.NonNullFields;
 
 import javax.sql.DataSource;
 import java.sql.Connection;

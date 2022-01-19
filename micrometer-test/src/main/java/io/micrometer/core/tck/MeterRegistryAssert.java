@@ -15,9 +15,9 @@
  */
 package io.micrometer.core.tck;
 
-import io.micrometer.core.instrument.MeterRegistry;
-import io.micrometer.core.instrument.Tags;
-import io.micrometer.core.instrument.Timer;
+import io.micrometer.api.instrument.MeterRegistry;
+import io.micrometer.api.instrument.Tags;
+import io.micrometer.api.instrument.Timer;
 import org.assertj.core.api.AbstractAssert;
 
 /**

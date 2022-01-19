@@ -15,8 +15,8 @@
  */
 package io.micrometer.core.instrument.binder.db;
 
-import io.micrometer.core.instrument.MeterRegistry;
-import io.micrometer.core.instrument.simple.SimpleMeterRegistry;
+import io.micrometer.api.instrument.MeterRegistry;
+import io.micrometer.api.instrument.simple.SimpleMeterRegistry;
 import org.hsqldb.jdbc.JDBCDataSource;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;

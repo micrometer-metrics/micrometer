@@ -15,9 +15,9 @@
  */
 package io.micrometer.core.samples;
 
-import io.micrometer.core.instrument.Counter;
-import io.micrometer.core.instrument.FunctionCounter;
-import io.micrometer.core.instrument.MeterRegistry;
+import io.micrometer.api.instrument.Counter;
+import io.micrometer.api.instrument.FunctionCounter;
+import io.micrometer.api.instrument.MeterRegistry;
 import io.micrometer.core.samples.utils.SampleConfig;
 import reactor.core.publisher.Flux;
 

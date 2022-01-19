@@ -17,10 +17,7 @@ package io.micrometer.boot2.samples.components;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.common.cache.CacheBuilder;
-import io.micrometer.core.instrument.Tag;
-import io.micrometer.core.instrument.Tags;
-import org.springframework.boot.actuate.metrics.web.servlet.DefaultWebMvcTagsProvider;
-import org.springframework.boot.actuate.metrics.web.servlet.WebMvcTagsProvider;
+import io.micrometer.api.instrument.Tags;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.web.filter.OncePerRequestFilter;
@@ -34,7 +31,6 @@ import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
 import java.time.Duration;
 import java.util.Map;
-import java.util.Optional;
 
 /**
  * Demonstrates how to add custom tags based on the contents of the response body.
@@ -71,17 +67,20 @@ public class HttpMetricsTagConfiguration {
         };
     }
 
-    @Bean
-    WebMvcTagsProvider webMvcTagsProvider() {
-        return new DefaultWebMvcTagsProvider() {
-            @Override
-            public Iterable<Tag> getTags(HttpServletRequest request, HttpServletResponse response,
-                                         Object handler, Throwable exception) {
-                return Tags.concat(
-                        super.getTags(request, response, handler, exception),
-                        Optional.ofNullable(responseTags.remove(response)).orElse(Tags.empty())
-                );
-            }
-        };
-    }
+    // TODO move Spring Boot samples outside of this repo
+    // This will fail to compile since published Spring Boot versions are based on Micrometer 1.x and
+    // we have changed the package for Micrometer API it uses.
+//    @Bean
+//    WebMvcTagsProvider webMvcTagsProvider() {
+//        return new DefaultWebMvcTagsProvider() {
+//            @Override
+//            public Iterable<Tag> getTags(HttpServletRequest request, HttpServletResponse response,
+//                                         Object handler, Throwable exception) {
+//                return Tags.concat(
+//                        super.getTags(request, response, handler, exception),
+//                        Optional.ofNullable(responseTags.remove(response)).orElse(Tags.empty())
+//                );
+//            }
+//        };
+//    }
 }

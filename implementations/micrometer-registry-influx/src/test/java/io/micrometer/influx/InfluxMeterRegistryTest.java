@@ -15,7 +15,7 @@
  */
 package io.micrometer.influx;
 
-import io.micrometer.core.instrument.*;
+import io.micrometer.api.instrument.*;
 import org.junit.jupiter.api.Test;
 
 import java.util.Arrays;

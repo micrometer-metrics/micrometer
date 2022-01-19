@@ -16,13 +16,13 @@
 package io.micrometer.core.instrument.binder.tomcat;
 
 import io.micrometer.core.Issue;
-import io.micrometer.core.instrument.FunctionTimer;
-import io.micrometer.core.instrument.MockClock;
-import io.micrometer.core.instrument.Tag;
-import io.micrometer.core.instrument.Tags;
-import io.micrometer.core.instrument.simple.SimpleConfig;
-import io.micrometer.core.instrument.simple.SimpleMeterRegistry;
-import io.micrometer.core.instrument.util.IOUtils;
+import io.micrometer.api.instrument.FunctionTimer;
+import io.micrometer.api.instrument.MockClock;
+import io.micrometer.api.instrument.Tag;
+import io.micrometer.api.instrument.Tags;
+import io.micrometer.api.instrument.simple.SimpleConfig;
+import io.micrometer.api.instrument.simple.SimpleMeterRegistry;
+import io.micrometer.api.instrument.util.IOUtils;
 import org.apache.catalina.Context;
 import org.apache.catalina.core.StandardContext;
 import org.apache.catalina.core.StandardHost;

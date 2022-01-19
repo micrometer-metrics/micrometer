@@ -15,14 +15,14 @@
  */
 package io.micrometer.core.instrument.binder.commonspool2;
 
-import io.micrometer.core.instrument.*;
-import io.micrometer.core.instrument.binder.BaseUnits;
-import io.micrometer.core.instrument.binder.MeterBinder;
-import io.micrometer.core.instrument.util.NamedThreadFactory;
-import io.micrometer.core.lang.NonNull;
-import io.micrometer.core.lang.Nullable;
-import io.micrometer.core.util.internal.logging.InternalLogger;
-import io.micrometer.core.util.internal.logging.InternalLoggerFactory;
+import io.micrometer.api.instrument.*;
+import io.micrometer.api.instrument.binder.BaseUnits;
+import io.micrometer.api.instrument.binder.MeterBinder;
+import io.micrometer.api.instrument.util.NamedThreadFactory;
+import io.micrometer.api.lang.NonNull;
+import io.micrometer.api.lang.Nullable;
+import io.micrometer.api.internal.logging.InternalLogger;
+import io.micrometer.api.internal.logging.InternalLoggerFactory;
 
 import javax.management.*;
 import java.lang.management.ManagementFactory;

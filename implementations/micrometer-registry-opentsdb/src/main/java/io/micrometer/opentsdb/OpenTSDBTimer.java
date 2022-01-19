@@ -15,19 +15,20 @@
  */
 package io.micrometer.opentsdb;
 
-import io.micrometer.core.instrument.AbstractTimer;
-import io.micrometer.core.instrument.Clock;
-import io.micrometer.core.instrument.distribution.*;
-import io.micrometer.core.instrument.distribution.pause.PauseDetector;
-import io.micrometer.core.instrument.util.TimeUtils;
-import io.micrometer.core.lang.Nullable;
+import io.micrometer.api.instrument.AbstractTimer;
+import io.micrometer.api.instrument.Clock;
+import io.micrometer.api.instrument.Timer;
+import io.micrometer.api.instrument.distribution.*;
+import io.micrometer.api.instrument.distribution.pause.PauseDetector;
+import io.micrometer.api.instrument.util.TimeUtils;
+import io.micrometer.api.lang.Nullable;
 
 import java.time.Duration;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.LongAdder;
 
 /**
- * {@link io.micrometer.core.instrument.Timer} for OpenTSDB.
+ * {@link Timer} for OpenTSDB.
  *
  * @author Jon Schneider
  * @author Nikolay Ustinov

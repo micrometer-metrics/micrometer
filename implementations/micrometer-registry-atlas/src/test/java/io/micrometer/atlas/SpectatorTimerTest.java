@@ -16,14 +16,14 @@
 package io.micrometer.atlas;
 
 import com.netflix.spectator.atlas.AtlasConfig;
-import io.micrometer.core.instrument.MockClock;
-import io.micrometer.core.instrument.Timer;
+import io.micrometer.api.instrument.MockClock;
+import io.micrometer.api.instrument.Timer;
 import org.junit.jupiter.api.Test;
 
 import java.time.Duration;
 import java.util.concurrent.TimeUnit;
 
-import static io.micrometer.core.instrument.MockClock.clock;
+import static io.micrometer.api.instrument.MockClock.clock;
 import static org.assertj.core.api.Assertions.assertThat;
 
 class SpectatorTimerTest {

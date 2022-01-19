@@ -17,7 +17,7 @@ package io.micrometer.newrelic;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-import io.micrometer.core.instrument.Meter.Type;
+import io.micrometer.api.instrument.Meter.Type;
 import org.junit.jupiter.api.Test;
 
 /**

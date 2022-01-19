@@ -15,9 +15,9 @@
  */
 package io.micrometer.dynatrace.v1;
 
-import io.micrometer.core.instrument.util.DoubleFormat;
-import io.micrometer.core.instrument.util.StringEscapeUtils;
-import io.micrometer.core.lang.Nullable;
+import io.micrometer.api.instrument.util.DoubleFormat;
+import io.micrometer.api.instrument.util.StringEscapeUtils;
+import io.micrometer.api.lang.Nullable;
 
 import java.util.Map;
 import java.util.stream.Collectors;

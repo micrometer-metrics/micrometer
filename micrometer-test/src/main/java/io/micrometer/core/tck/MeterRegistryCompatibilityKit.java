@@ -15,15 +15,15 @@
  */
 package io.micrometer.core.tck;
 
+import io.micrometer.api.instrument.*;
+import io.micrometer.api.instrument.Timer;
 import io.micrometer.core.Issue;
-import io.micrometer.core.annotation.Timed;
-import io.micrometer.core.instrument.*;
-import io.micrometer.core.instrument.Timer;
-import io.micrometer.core.instrument.distribution.CountAtBucket;
-import io.micrometer.core.instrument.distribution.DistributionStatisticConfig;
-import io.micrometer.core.instrument.distribution.ValueAtPercentile;
-import io.micrometer.core.instrument.internal.CumulativeHistogramLongTaskTimer;
-import io.micrometer.core.instrument.util.TimeUtils;
+import io.micrometer.api.annotation.Timed;
+import io.micrometer.api.instrument.distribution.CountAtBucket;
+import io.micrometer.api.instrument.distribution.DistributionStatisticConfig;
+import io.micrometer.api.instrument.distribution.ValueAtPercentile;
+import io.micrometer.api.instrument.internal.CumulativeHistogramLongTaskTimer;
+import io.micrometer.api.instrument.util.TimeUtils;
 import org.assertj.core.data.Offset;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
@@ -40,10 +40,10 @@ import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.function.Supplier;
 
-import static io.micrometer.core.instrument.MockClock.clock;
-import static io.micrometer.core.instrument.Statistic.ACTIVE_TASKS;
-import static io.micrometer.core.instrument.Statistic.DURATION;
-import static io.micrometer.core.instrument.util.TimeUtils.millisToUnit;
+import static io.micrometer.api.instrument.MockClock.clock;
+import static io.micrometer.api.instrument.Statistic.ACTIVE_TASKS;
+import static io.micrometer.api.instrument.Statistic.DURATION;
+import static io.micrometer.api.instrument.util.TimeUtils.millisToUnit;
 import static java.util.Collections.emptyList;
 import static java.util.Objects.requireNonNull;
 import static org.assertj.core.api.Assertions.*;

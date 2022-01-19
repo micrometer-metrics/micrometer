@@ -15,7 +15,7 @@
  */
 package io.micrometer.core.instrument.binder.httpcomponents;
 
-import io.micrometer.core.instrument.Tags;
+import io.micrometer.api.instrument.Tags;
 import org.apache.http.HttpHost;
 import org.apache.http.conn.routing.HttpRoute;
 import org.apache.http.protocol.HttpContext;

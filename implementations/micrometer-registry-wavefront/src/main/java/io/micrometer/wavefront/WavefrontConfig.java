@@ -15,16 +15,16 @@
  */
 package io.micrometer.wavefront;
 
-import io.micrometer.core.instrument.config.validate.InvalidReason;
-import io.micrometer.core.instrument.config.validate.Validated;
-import io.micrometer.core.instrument.push.PushRegistryConfig;
-import io.micrometer.core.lang.Nullable;
+import io.micrometer.api.instrument.config.validate.InvalidReason;
+import io.micrometer.api.instrument.config.validate.Validated;
+import io.micrometer.api.instrument.push.PushRegistryConfig;
+import io.micrometer.api.lang.Nullable;
 
 import java.net.InetAddress;
 import java.net.UnknownHostException;
 
-import static io.micrometer.core.instrument.config.MeterRegistryConfigValidator.*;
-import static io.micrometer.core.instrument.config.validate.PropertyValidator.*;
+import static io.micrometer.api.instrument.config.MeterRegistryConfigValidator.*;
+import static io.micrometer.api.instrument.config.validate.PropertyValidator.*;
 
 /**
  * Configuration for {@link WavefrontMeterRegistry}.
