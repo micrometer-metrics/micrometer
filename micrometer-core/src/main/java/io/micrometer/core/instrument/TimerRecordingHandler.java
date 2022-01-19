@@ -125,6 +125,11 @@ public interface TimerRecordingHandler<T extends Timer.HandlerContext> {
         }
 
         @Override
+        public void onScopeClosed(Timer.Sample sample, @Nullable Timer.HandlerContext context) {
+            getFirstApplicableHandler(context).ifPresent(handler -> handler.onScopeClosed(sample, context));
+        }
+
+        @Override
         public void onStop(Timer.Sample sample, @Nullable Timer.HandlerContext context, Timer timer, Duration duration) {
             getFirstApplicableHandler(context).ifPresent(handler -> handler.onStop(sample, context, timer, duration));
         }
@@ -181,6 +186,11 @@ public interface TimerRecordingHandler<T extends Timer.HandlerContext> {
         @Override
         public void onScopeOpened(Timer.Sample sample, @Nullable Timer.HandlerContext context) {
             getAllApplicableHandlers(context).forEach(handler -> handler.onScopeOpened(sample, context));
+        }
+
+        @Override
+        public void onScopeClosed(Timer.Sample sample, @Nullable Timer.HandlerContext context) {
+            getAllApplicableHandlers(context).forEach(handler -> handler.onScopeClosed(sample, context));
         }
 
         @Override

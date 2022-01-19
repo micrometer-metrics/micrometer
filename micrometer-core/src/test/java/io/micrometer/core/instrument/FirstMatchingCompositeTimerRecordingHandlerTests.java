@@ -69,6 +69,16 @@ class FirstMatchingCompositeTimerRecordingHandlerTests {
         assertThat(this.matchingHandler.scopeOpened).isTrue();
     }
 
+    @Test
+    void should_run_on_scope_closed_only_for_first_matching_handler() {
+        FirstMatchingCompositeTimerRecordingHandler firstMatchingCompositeTimerRecordingHandler = new FirstMatchingCompositeTimerRecordingHandler(
+                new NotMatchingHandler(), this.matchingHandler, new NotMatchingHandler());
+
+        firstMatchingCompositeTimerRecordingHandler.onScopeClosed(sample, null);
+
+        assertThat(this.matchingHandler.scopeClosed).isTrue();
+    }
+
     static class MatchingHandler implements TimerRecordingHandler {
 
         boolean started;
@@ -78,6 +88,8 @@ class FirstMatchingCompositeTimerRecordingHandlerTests {
         boolean errored;
 
         boolean scopeOpened;
+
+        boolean scopeClosed;
 
 
         @Override
@@ -93,6 +105,11 @@ class FirstMatchingCompositeTimerRecordingHandlerTests {
         @Override
         public void onScopeOpened(Timer.Sample sample, Timer.HandlerContext context) {
             this.scopeOpened = true;
+        }
+
+        @Override
+        public void onScopeClosed(Timer.Sample sample, Timer.HandlerContext context) {
+            this.scopeClosed = true;
         }
 
         @Override
