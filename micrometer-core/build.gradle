@@ -1,4 +1,5 @@
-// TODO module description
+description 'Core module of Micrometer containing instrumentation of third-party libraries using micrometer-api'
+
 dependencies {
     api project(':micrometer-api')
 
@@ -72,6 +73,7 @@ dependencies {
     testImplementation 'org.glassfish.jersey.test-framework.providers:jersey-test-framework-provider-inmemory'
     testRuntimeOnly 'org.glassfish.jersey.inject:jersey-hk2'
 
+    // JCache metrics test
     testImplementation 'org.jsr107.ri:cache-ri-impl'
 
     testImplementation 'ru.lanwen.wiremock:wiremock-junit5'

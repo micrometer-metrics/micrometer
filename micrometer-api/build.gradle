@@ -1,4 +1,5 @@
-// TODO module description
+description 'API module of Micrometer used to write instrumentation or a registry implementation'
+
 dependencies {
     // TODO(anuraaga): HdrHistogram is exposed in the micrometer API but probably shouldn't be
     api 'org.hdrhistogram:HdrHistogram'
