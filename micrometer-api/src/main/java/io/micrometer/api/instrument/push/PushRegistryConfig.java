@@ -16,12 +16,13 @@
 package io.micrometer.api.instrument.push;
 
 import io.micrometer.api.instrument.config.MeterRegistryConfig;
-import io.micrometer.api.instrument.config.MeterRegistryConfigValidator;
-import io.micrometer.api.instrument.config.validate.PropertyValidator;
 import io.micrometer.api.instrument.config.validate.Validated;
 import io.micrometer.api.ipc.http.HttpSender;
 
 import java.time.Duration;
+
+import static io.micrometer.api.instrument.config.MeterRegistryConfigValidator.*;
+import static io.micrometer.api.instrument.config.validate.PropertyValidator.*;
 
 /**
  * Common configuration settings for any registry that pushes aggregated
@@ -34,14 +35,14 @@ public interface PushRegistryConfig extends MeterRegistryConfig {
      * @return The step size (reporting frequency) to use. The default is 1 minute.
      */
     default Duration step() {
-        return PropertyValidator.getDuration(this, "step").orElse(Duration.ofMinutes(1));
+        return getDuration(this, "step").orElse(Duration.ofMinutes(1));
     }
 
     /**
      * @return {@code true} if publishing is enabled. Default is {@code true}.
      */
     default boolean enabled() {
-        return PropertyValidator.getBoolean(this, "enabled").orElse(true);
+        return getBoolean(this, "enabled").orElse(true);
     }
 
     /**
@@ -55,7 +56,7 @@ public interface PushRegistryConfig extends MeterRegistryConfig {
      */
     @Deprecated
     default int numThreads() {
-        return PropertyValidator.getInteger(this, "numThreads").orElse(2);
+        return getInteger(this, "numThreads").orElse(2);
     }
 
     /**
@@ -66,7 +67,7 @@ public interface PushRegistryConfig extends MeterRegistryConfig {
      */
     @Deprecated
     default Duration connectTimeout() {
-        return PropertyValidator.getDuration(this, "connectTimeout").orElse(Duration.ofSeconds(1));
+        return getDuration(this, "connectTimeout").orElse(Duration.ofSeconds(1));
     }
 
     /**
@@ -77,7 +78,7 @@ public interface PushRegistryConfig extends MeterRegistryConfig {
      */
     @Deprecated
     default Duration readTimeout() {
-        return PropertyValidator.getDuration(this, "readTimeout").orElse(Duration.ofSeconds(10));
+        return getDuration(this, "readTimeout").orElse(Duration.ofSeconds(10));
     }
 
     /**
@@ -86,7 +87,7 @@ public interface PushRegistryConfig extends MeterRegistryConfig {
      * 10,000.
      */
     default int batchSize() {
-        return PropertyValidator.getInteger(this, "batchSize").orElse(10000);
+        return getInteger(this, "batchSize").orElse(10000);
     }
 
     @Override
@@ -102,12 +103,12 @@ public interface PushRegistryConfig extends MeterRegistryConfig {
      * @since 1.5.0
      */
     static Validated<?> validate(PushRegistryConfig config) {
-        return MeterRegistryConfigValidator.checkAll(config,
-                MeterRegistryConfigValidator.check("step", PushRegistryConfig::step),
-                MeterRegistryConfigValidator.check("connectTimeout", PushRegistryConfig::connectTimeout),
-                MeterRegistryConfigValidator.check("readTimeout", PushRegistryConfig::readTimeout),
-                MeterRegistryConfigValidator.check("batchSize", PushRegistryConfig::batchSize),
-                MeterRegistryConfigValidator.check("numThreads", PushRegistryConfig::numThreads)
+        return checkAll(config,
+                check("step", PushRegistryConfig::step),
+                check("connectTimeout", PushRegistryConfig::connectTimeout),
+                check("readTimeout", PushRegistryConfig::readTimeout),
+                check("batchSize", PushRegistryConfig::batchSize),
+                check("numThreads", PushRegistryConfig::numThreads)
         );
     }
 }
