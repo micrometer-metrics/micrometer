@@ -11,7 +11,7 @@ def VERSIONS = [
         'com.google.dagger:dagger:2.11',
         'com.google.dagger:dagger-compiler:2.11',
         'com.google.guava:guava:latest.release',
-        'com.google.inject:guice:4.1.0',
+        'com.google.inject:guice:5.+',
         'com.hazelcast:hazelcast:latest.release',
         'com.h2database:h2:latest.release',
         'com.microsoft.azure:applicationinsights-core:latest.release',
