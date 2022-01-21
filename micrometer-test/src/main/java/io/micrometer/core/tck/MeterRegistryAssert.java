@@ -67,11 +67,42 @@ public class MeterRegistryAssert extends AbstractAssert<MeterRegistryAssert, Met
         isNotNull();
         Timer foundTimer = actual.find(timerName).timer();
         if (foundTimer == null) {
-            failWithMessage("Expected a timer with name <%s> but found none", timerName);
+            failWithMessage("Expected a timer with name <%s> but found none.\nFound following metrics %s", timerName, allMetrics());
         }
         return this;
     }
-    
+
+    /**
+     * Verifies that a timer with given name does not exist in the provided {@link MeterRegistry}.
+     *
+     * @param timerName name of the timer that should not be present
+     * @return this
+     * @throws AssertionError if there is a timer registered under given name.
+     */
+    public MeterRegistryAssert doesNotHaveTimerWithName(String timerName) {
+        isNotNull();
+        Timer foundTimer = actual.find(timerName).timer();
+        if (foundTimer != null) {
+            failWithMessage("Expected no timer with name <%s> but found one with tags <%s>", timerName, foundTimer.getId().getTags());
+        }
+        return this;
+    }
+
+    /**
+     * Verifies that there's no current {@link Timer.Sample} left in the {@link MeterRegistry}.
+     *
+     * @return this
+     * @throws AssertionError if there is a current sample remaining in the registry
+     */
+    public MeterRegistryAssert doesNotHaveRemainingSample() {
+        isNotNull();
+        Timer.Sample currentSample = actual.getCurrentSample();
+        if (currentSample != null) {
+            failWithMessage("Expected no current sample in the registry but found one");
+        }
+        return this;
+    }
+
     /**
      * Verifies that a timer with given name and key-value tags exists in the provided {@link MeterRegistry}.
      * 
@@ -85,7 +116,24 @@ public class MeterRegistryAssert extends AbstractAssert<MeterRegistryAssert, Met
         isNotNull();
         Timer foundTimer = actual.find(timerName).tags(tags).timer();
         if (foundTimer == null) {
-            failWithMessage("Expected a timer with name <%s> and tags <%s> but found none", timerName, tags);
+            failWithMessage("Expected a timer with name <%s> and tags <%s> but found none.\nFound following metrics %s", timerName, tags, allMetrics());
+        }
+        return this;
+    }
+
+    /**
+     * Verifies that a timer with given name and key-value tags does not exist in the provided {@link MeterRegistry}.
+     *
+     * @param timerName name of the timer
+     * @param tags key-value pairs of tags
+     * @return this
+     * @throws AssertionError if there is a timer registered under given name with given tags.
+     */
+    public MeterRegistryAssert doesNotHaveTimerWithNameAndTags(String timerName, Tags tags) {
+        isNotNull();
+        Timer foundTimer = actual.find(timerName).tags(tags).timer();
+        if (foundTimer != null) {
+            failWithMessage("Expected no timer with name <%s> and tags <%s> but found one", timerName, tags);
         }
         return this;
     }
@@ -103,9 +151,36 @@ public class MeterRegistryAssert extends AbstractAssert<MeterRegistryAssert, Met
         isNotNull();
         Timer foundTimer = actual.find(timerName).tagKeys(tagKeys).timer();
         if (foundTimer == null) {
-            failWithMessage("Expected a timer with name <%s> and tag keys <%s> but found none", timerName, String.join(",", tagKeys));
+            failWithMessage("Expected a timer with name <%s> and tag keys <%s> but found none.\nFound following metrics %s", timerName, String.join(",", tagKeys), allMetrics());
         }
         return this;
+    }
+
+    /**
+     * Verifies that a timer with given name and tag keys does not exist in the provided {@link MeterRegistry}.
+     *
+     * @param timerName name of the timer
+     * @param tagKeys tag keys
+     * @return this
+     * @throws AssertionError if there is a timer registered under given name with given tag keys.
+     */
+    public MeterRegistryAssert doesNotHaveTimerWithNameAndTagKeys(String timerName, String... tagKeys) {
+        isNotNull();
+        Timer foundTimer = actual.find(timerName).tagKeys(tagKeys).timer();
+        if (foundTimer != null) {
+            failWithMessage("Expected a timer with name <%s> and tag keys <%s> but found one", timerName, String.join(",", tagKeys));
+        }
+        return this;
+    }
+
+    private String allMetrics() {
+        StringBuilder stringBuilder = new StringBuilder();
+        actual.forEachMeter(meter -> stringBuilder.append("\n\tMeter with name <")
+                .append(meter.getId().getName()).append(">")
+                .append(" and type <").append(meter.getId().getType()).append(">")
+                .append(" \n\t\thas the following tags <")
+                .append(meter.getId().getTags()).append(">\n"));
+        return stringBuilder.toString();
     }
 
 }
