@@ -16,7 +16,7 @@
 package io.micrometer.elastic;
 
 import com.jayway.jsonpath.JsonPath;
-import io.micrometer.core.ipc.http.HttpSender;
+import io.micrometer.api.ipc.http.HttpSender;
 import org.testcontainers.elasticsearch.ElasticsearchContainer;
 
 import java.nio.charset.StandardCharsets;

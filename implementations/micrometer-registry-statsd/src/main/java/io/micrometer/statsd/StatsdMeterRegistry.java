@@ -15,16 +15,16 @@
  */
 package io.micrometer.statsd;
 
-import io.micrometer.core.annotation.Incubating;
-import io.micrometer.core.instrument.*;
-import io.micrometer.core.instrument.config.NamingConvention;
-import io.micrometer.core.instrument.distribution.DistributionStatisticConfig;
-import io.micrometer.core.instrument.distribution.HistogramGauges;
-import io.micrometer.core.instrument.distribution.pause.PauseDetector;
-import io.micrometer.core.instrument.internal.DefaultMeter;
-import io.micrometer.core.instrument.util.HierarchicalNameMapper;
-import io.micrometer.core.lang.Nullable;
-import io.micrometer.core.util.internal.logging.WarnThenDebugLogger;
+import io.micrometer.api.annotation.Incubating;
+import io.micrometer.api.instrument.*;
+import io.micrometer.api.instrument.config.NamingConvention;
+import io.micrometer.api.instrument.distribution.DistributionStatisticConfig;
+import io.micrometer.api.instrument.distribution.HistogramGauges;
+import io.micrometer.api.instrument.distribution.pause.PauseDetector;
+import io.micrometer.api.instrument.internal.DefaultMeter;
+import io.micrometer.api.instrument.util.HierarchicalNameMapper;
+import io.micrometer.api.lang.Nullable;
+import io.micrometer.api.internal.logging.WarnThenDebugLogger;
 import io.micrometer.statsd.internal.*;
 import io.netty.channel.unix.DomainSocketAddress;
 import io.netty.util.AttributeKey;
@@ -101,7 +101,7 @@ public class StatsdMeterRegistry extends MeterRegistry {
 
     /**
      * Use this constructor for Etsy-flavored StatsD when you need to influence the way Micrometer's dimensional
-     * {@link io.micrometer.core.instrument.Meter.Id Meter.Id} is written to a flat hierarchical name.
+     * {@link Meter.Id Meter.Id} is written to a flat hierarchical name.
      *
      * @param config     The StatsD configuration.
      * @param nameMapper A strategy for flattening dimensional IDs.

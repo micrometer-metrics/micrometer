@@ -15,8 +15,8 @@
  */
 package io.micrometer.core.instrument.binder.jersey.server;
 
-import io.micrometer.core.annotation.Timed;
-import io.micrometer.core.annotation.TimedSet;
+import io.micrometer.api.annotation.Timed;
+import io.micrometer.api.annotation.TimedSet;
 
 import java.lang.reflect.AnnotatedElement;
 import java.util.Arrays;

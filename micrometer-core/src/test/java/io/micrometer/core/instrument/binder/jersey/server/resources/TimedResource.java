@@ -15,7 +15,7 @@
  */
 package io.micrometer.core.instrument.binder.jersey.server.resources;
 
-import io.micrometer.core.annotation.Timed;
+import io.micrometer.api.annotation.Timed;
 
 import javax.ws.rs.GET;
 import javax.ws.rs.Path;

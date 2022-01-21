@@ -15,7 +15,8 @@
  */
 package io.micrometer.core.instrument.binder.jersey.server;
 
-import io.micrometer.core.instrument.Tag;
+import io.micrometer.api.instrument.LongTaskTimer;
+import io.micrometer.api.instrument.Tag;
 import org.glassfish.jersey.server.monitoring.RequestEvent;
 
 /**
@@ -37,7 +38,7 @@ public interface JerseyTagsProvider {
 
     /**
      * Provides tags to be associated with the
-     * {@link io.micrometer.core.instrument.LongTaskTimer} which instruments the
+     * {@link LongTaskTimer} which instruments the
      * given long-running {@code event}.
      *
      * @param event

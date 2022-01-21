@@ -15,11 +15,14 @@
  */
 package io.micrometer.influx;
 
-import io.micrometer.core.instrument.*;
-import io.micrometer.core.instrument.step.StepMeterRegistry;
-import io.micrometer.core.instrument.util.*;
-import io.micrometer.core.ipc.http.HttpSender;
-import io.micrometer.core.ipc.http.HttpUrlConnectionSender;
+import io.micrometer.api.instrument.*;
+import io.micrometer.api.instrument.step.StepMeterRegistry;
+import io.micrometer.api.instrument.util.DoubleFormat;
+import io.micrometer.api.instrument.util.MeterPartition;
+import io.micrometer.api.instrument.util.NamedThreadFactory;
+import io.micrometer.api.instrument.util.StringUtils;
+import io.micrometer.api.ipc.http.HttpSender;
+import io.micrometer.api.ipc.http.HttpUrlConnectionSender;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 

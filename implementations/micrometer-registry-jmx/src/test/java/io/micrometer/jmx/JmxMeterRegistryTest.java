@@ -16,8 +16,8 @@
 package io.micrometer.jmx;
 
 import io.micrometer.core.Issue;
-import io.micrometer.core.instrument.MockClock;
-import io.micrometer.core.instrument.Timer;
+import io.micrometer.api.instrument.MockClock;
+import io.micrometer.api.instrument.Timer;
 import org.junit.jupiter.api.Test;
 
 import javax.management.*;

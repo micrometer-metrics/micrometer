@@ -16,11 +16,11 @@
 package io.micrometer.statsd.internal;
 
 import io.micrometer.core.Issue;
-import io.micrometer.core.instrument.Counter;
-import io.micrometer.core.instrument.MeterRegistry;
-import io.micrometer.core.instrument.Statistic;
-import io.micrometer.core.instrument.config.NamingConvention;
-import io.micrometer.core.instrument.simple.SimpleMeterRegistry;
+import io.micrometer.api.instrument.Counter;
+import io.micrometer.api.instrument.MeterRegistry;
+import io.micrometer.api.instrument.Statistic;
+import io.micrometer.api.instrument.config.NamingConvention;
+import io.micrometer.api.instrument.simple.SimpleMeterRegistry;
 import org.junit.jupiter.api.Test;
 
 import static org.assertj.core.api.Assertions.assertThat;

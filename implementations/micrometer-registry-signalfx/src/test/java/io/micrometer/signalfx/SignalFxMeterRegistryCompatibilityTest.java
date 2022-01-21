@@ -15,9 +15,9 @@
  */
 package io.micrometer.signalfx;
 
-import io.micrometer.core.instrument.MeterRegistry;
-import io.micrometer.core.instrument.MockClock;
-import io.micrometer.core.lang.Nullable;
+import io.micrometer.api.instrument.MeterRegistry;
+import io.micrometer.api.instrument.MockClock;
+import io.micrometer.api.lang.Nullable;
 import io.micrometer.core.tck.MeterRegistryCompatibilityKit;
 
 import java.time.Duration;

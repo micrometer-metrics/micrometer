@@ -17,10 +17,10 @@ package io.micrometer.core.tck;
 
 import java.time.Duration;
 
-import io.micrometer.core.instrument.MeterRegistry;
-import io.micrometer.core.instrument.Timer;
-import io.micrometer.core.instrument.TimerRecordingHandler;
-import io.micrometer.core.instrument.simple.SimpleMeterRegistry;
+import io.micrometer.api.instrument.MeterRegistry;
+import io.micrometer.api.instrument.Timer;
+import io.micrometer.api.instrument.TimerRecordingHandler;
+import io.micrometer.api.instrument.simple.SimpleMeterRegistry;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;

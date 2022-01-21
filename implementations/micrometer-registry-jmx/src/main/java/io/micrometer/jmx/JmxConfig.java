@@ -15,7 +15,7 @@
  */
 package io.micrometer.jmx;
 
-import io.micrometer.core.instrument.dropwizard.DropwizardConfig;
+import io.micrometer.api.instrument.dropwizard.DropwizardConfig;
 
 public interface JmxConfig extends DropwizardConfig {
     /**

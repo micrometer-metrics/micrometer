@@ -15,17 +15,17 @@
  */
 package io.micrometer.core.instrument.binder.kafka;
 
-import io.micrometer.core.annotation.Incubating;
-import io.micrometer.core.instrument.FunctionCounter;
-import io.micrometer.core.instrument.Gauge;
-import io.micrometer.core.instrument.Meter;
-import io.micrometer.core.instrument.MeterRegistry;
-import io.micrometer.core.instrument.Tag;
-import io.micrometer.core.instrument.Tags;
-import io.micrometer.core.instrument.binder.MeterBinder;
-import io.micrometer.core.instrument.util.NamedThreadFactory;
-import io.micrometer.core.lang.NonNullApi;
-import io.micrometer.core.lang.NonNullFields;
+import io.micrometer.api.annotation.Incubating;
+import io.micrometer.api.instrument.FunctionCounter;
+import io.micrometer.api.instrument.Gauge;
+import io.micrometer.api.instrument.Meter;
+import io.micrometer.api.instrument.MeterRegistry;
+import io.micrometer.api.instrument.Tag;
+import io.micrometer.api.instrument.Tags;
+import io.micrometer.api.instrument.binder.MeterBinder;
+import io.micrometer.api.instrument.util.NamedThreadFactory;
+import io.micrometer.api.lang.NonNullApi;
+import io.micrometer.api.lang.NonNullFields;
 
 import java.time.Duration;
 import java.util.*;
@@ -38,14 +38,14 @@ import java.util.function.Supplier;
 import java.util.function.ToDoubleFunction;
 import java.util.stream.Collectors;
 
-import io.micrometer.core.lang.Nullable;
-import io.micrometer.core.util.internal.logging.InternalLogger;
-import io.micrometer.core.util.internal.logging.InternalLoggerFactory;
-import io.micrometer.core.util.internal.logging.WarnThenDebugLogger;
+import io.micrometer.api.lang.Nullable;
+import io.micrometer.api.internal.logging.InternalLogger;
+import io.micrometer.api.internal.logging.InternalLoggerFactory;
+import io.micrometer.api.internal.logging.WarnThenDebugLogger;
 import org.apache.kafka.common.Metric;
 import org.apache.kafka.common.MetricName;
 
-import static io.micrometer.core.instrument.Meter.Type.OTHER;
+import static io.micrometer.api.instrument.Meter.Type.OTHER;
 import static java.util.Collections.emptyList;
 
 /**

@@ -15,11 +15,11 @@
  */
 package io.micrometer.statsd.internal;
 
-import io.micrometer.core.instrument.Meter;
-import io.micrometer.core.instrument.MeterRegistry;
-import io.micrometer.core.instrument.Statistic;
-import io.micrometer.core.instrument.util.DoubleFormat;
-import io.micrometer.core.lang.Nullable;
+import io.micrometer.api.instrument.Meter;
+import io.micrometer.api.instrument.MeterRegistry;
+import io.micrometer.api.instrument.Statistic;
+import io.micrometer.api.instrument.util.DoubleFormat;
+import io.micrometer.api.lang.Nullable;
 import io.micrometer.statsd.StatsdLineBuilder;
 
 import java.util.Objects;

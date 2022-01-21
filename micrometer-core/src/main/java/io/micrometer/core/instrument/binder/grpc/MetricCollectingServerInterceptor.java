@@ -29,9 +29,9 @@ import io.grpc.ServerServiceDefinition;
 import io.grpc.ServiceDescriptor;
 import io.grpc.Status;
 import io.grpc.Status.Code;
-import io.micrometer.core.instrument.Counter;
-import io.micrometer.core.instrument.MeterRegistry;
-import io.micrometer.core.instrument.Timer;
+import io.micrometer.api.instrument.Counter;
+import io.micrometer.api.instrument.MeterRegistry;
+import io.micrometer.api.instrument.Timer;
 
 /**
  * A gRPC server interceptor that will collect metrics using the given {@link MeterRegistry}.

@@ -17,10 +17,10 @@ package io.micrometer.stackdriver;
 
 import java.util.regex.Pattern;
 
-import io.micrometer.core.instrument.Meter;
-import io.micrometer.core.instrument.config.NamingConvention;
-import io.micrometer.core.instrument.util.StringUtils;
-import io.micrometer.core.lang.Nullable;
+import io.micrometer.api.instrument.Meter;
+import io.micrometer.api.instrument.config.NamingConvention;
+import io.micrometer.api.instrument.util.StringUtils;
+import io.micrometer.api.lang.Nullable;
 
 /**
  * {@link NamingConvention} for Stackdriver.

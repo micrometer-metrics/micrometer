@@ -16,8 +16,8 @@
 package io.micrometer.core.instrument.binder.mongodb;
 
 import com.mongodb.event.ConnectionPoolCreatedEvent;
-import io.micrometer.core.instrument.Tag;
-import io.micrometer.core.instrument.Tags;
+import io.micrometer.api.instrument.Tag;
+import io.micrometer.api.instrument.Tags;
 
 /**
  * Default implementation for {@link MongoConnectionPoolTagsProvider}.

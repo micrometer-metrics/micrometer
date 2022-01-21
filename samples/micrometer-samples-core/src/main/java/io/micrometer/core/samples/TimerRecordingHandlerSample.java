@@ -19,10 +19,10 @@ import java.io.IOException;
 import java.time.Duration;
 import java.util.UUID;
 
-import io.micrometer.core.instrument.Tags;
-import io.micrometer.core.instrument.Timer;
-import io.micrometer.core.instrument.TimerRecordingHandler;
-import io.micrometer.core.lang.Nullable;
+import io.micrometer.api.instrument.Tags;
+import io.micrometer.api.instrument.Timer;
+import io.micrometer.api.instrument.TimerRecordingHandler;
+import io.micrometer.api.lang.Nullable;
 import io.micrometer.prometheus.PrometheusConfig;
 import io.micrometer.prometheus.PrometheusMeterRegistry;
 

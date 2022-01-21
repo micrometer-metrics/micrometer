@@ -15,8 +15,8 @@
  */
 package io.micrometer.core.instrument.binder.jetty;
 
-import io.micrometer.core.instrument.MeterRegistry;
-import io.micrometer.core.instrument.Tag;
+import io.micrometer.api.instrument.MeterRegistry;
+import io.micrometer.api.instrument.Tag;
 import org.eclipse.jetty.util.thread.QueuedThreadPool;
 
 import java.util.concurrent.BlockingQueue;

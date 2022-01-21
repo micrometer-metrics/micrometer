@@ -15,12 +15,12 @@
  */
 package io.micrometer.newrelic;
 
-import io.micrometer.core.instrument.*;
-import io.micrometer.core.instrument.config.NamingConvention;
-import io.micrometer.core.instrument.util.DoubleFormat;
-import io.micrometer.core.instrument.util.MeterPartition;
-import io.micrometer.core.ipc.http.HttpSender;
-import io.micrometer.core.ipc.http.HttpUrlConnectionSender;
+import io.micrometer.api.instrument.*;
+import io.micrometer.api.instrument.config.NamingConvention;
+import io.micrometer.api.instrument.util.DoubleFormat;
+import io.micrometer.api.instrument.util.MeterPartition;
+import io.micrometer.api.ipc.http.HttpSender;
+import io.micrometer.api.ipc.http.HttpUrlConnectionSender;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -35,7 +35,7 @@ import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
-import static io.micrometer.core.instrument.util.StringEscapeUtils.escapeJson;
+import static io.micrometer.api.instrument.util.StringEscapeUtils.escapeJson;
 
 /**
  * Publishes metrics to New Relic Insights REST API.

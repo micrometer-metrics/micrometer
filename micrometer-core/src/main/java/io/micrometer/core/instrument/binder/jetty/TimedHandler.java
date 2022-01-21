@@ -15,12 +15,12 @@
  */
 package io.micrometer.core.instrument.binder.jetty;
 
-import io.micrometer.core.instrument.*;
-import io.micrometer.core.instrument.binder.BaseUnits;
-import io.micrometer.core.instrument.binder.http.DefaultHttpServletRequestTagsProvider;
-import io.micrometer.core.instrument.binder.http.HttpServletRequestTagsProvider;
-import io.micrometer.core.lang.NonNullApi;
-import io.micrometer.core.lang.NonNullFields;
+import io.micrometer.api.instrument.*;
+import io.micrometer.api.instrument.binder.BaseUnits;
+import io.micrometer.api.instrument.transport.http.tags.DefaultHttpServletRequestTagsProvider;
+import io.micrometer.api.instrument.transport.http.tags.HttpServletRequestTagsProvider;
+import io.micrometer.api.lang.NonNullApi;
+import io.micrometer.api.lang.NonNullFields;
 import org.eclipse.jetty.http.HttpStatus;
 import org.eclipse.jetty.server.AsyncContextEvent;
 import org.eclipse.jetty.server.Handler;

@@ -23,17 +23,17 @@ import com.netflix.spectator.api.histogram.PercentileTimer;
 import com.netflix.spectator.api.patterns.PolledMeter;
 import com.netflix.spectator.atlas.AtlasConfig;
 import com.netflix.spectator.atlas.AtlasRegistry;
-import io.micrometer.core.instrument.*;
-import io.micrometer.core.instrument.distribution.DistributionStatisticConfig;
-import io.micrometer.core.instrument.distribution.HistogramGauges;
-import io.micrometer.core.instrument.distribution.HistogramSupport;
-import io.micrometer.core.instrument.distribution.ValueAtPercentile;
-import io.micrometer.core.instrument.distribution.pause.PauseDetector;
-import io.micrometer.core.instrument.internal.DefaultMeter;
-import io.micrometer.core.instrument.step.StepFunctionCounter;
-import io.micrometer.core.instrument.step.StepFunctionTimer;
-import io.micrometer.core.instrument.util.DoubleFormat;
-import io.micrometer.core.lang.Nullable;
+import io.micrometer.api.instrument.*;
+import io.micrometer.api.instrument.distribution.DistributionStatisticConfig;
+import io.micrometer.api.instrument.distribution.HistogramGauges;
+import io.micrometer.api.instrument.distribution.HistogramSupport;
+import io.micrometer.api.instrument.distribution.ValueAtPercentile;
+import io.micrometer.api.instrument.distribution.pause.PauseDetector;
+import io.micrometer.api.instrument.internal.DefaultMeter;
+import io.micrometer.api.instrument.step.StepFunctionCounter;
+import io.micrometer.api.instrument.step.StepFunctionTimer;
+import io.micrometer.api.instrument.util.DoubleFormat;
+import io.micrometer.api.lang.Nullable;
 
 import java.util.List;
 import java.util.concurrent.TimeUnit;
@@ -93,14 +93,14 @@ public class AtlasMeterRegistry extends MeterRegistry {
     }
 
     @Override
-    protected io.micrometer.core.instrument.Counter newCounter(Meter.Id id) {
+    protected Counter newCounter(Meter.Id id) {
         return new SpectatorCounter(id, registry.counter(spectatorId(id)));
     }
 
     @SuppressWarnings("ConstantConditions")
     @Override
-    protected io.micrometer.core.instrument.DistributionSummary newDistributionSummary(Meter.Id id, DistributionStatisticConfig distributionStatisticConfig,
-                                                                                       double scale) {
+    protected DistributionSummary newDistributionSummary(Meter.Id id, DistributionStatisticConfig distributionStatisticConfig,
+                                                         double scale) {
         com.netflix.spectator.api.DistributionSummary internalSummary;
 
         if (distributionStatisticConfig.isPercentileHistogram()) {
@@ -156,7 +156,7 @@ public class AtlasMeterRegistry extends MeterRegistry {
     }
 
     @Override
-    protected <T> io.micrometer.core.instrument.Gauge newGauge(Meter.Id id, @Nullable T obj, ToDoubleFunction<T> valueFunction) {
+    protected <T> Gauge newGauge(Meter.Id id, @Nullable T obj, ToDoubleFunction<T> valueFunction) {
         com.netflix.spectator.api.Gauge gauge = new SpectatorToDoubleGauge<>(registry.clock(), spectatorId(id), obj, valueFunction);
         registry.register(gauge);
         return new SpectatorGauge(id, gauge);
@@ -187,7 +187,7 @@ public class AtlasMeterRegistry extends MeterRegistry {
     }
 
     @Override
-    protected Meter newMeter(Meter.Id id, Meter.Type type, Iterable<io.micrometer.core.instrument.Measurement> measurements) {
+    protected Meter newMeter(Meter.Id id, Meter.Type type, Iterable<Measurement> measurements) {
         Id spectatorId = spectatorId(id);
         com.netflix.spectator.api.AbstractMeter<Id> spectatorMeter = new com.netflix.spectator.api.AbstractMeter<Id>(registry.clock(), spectatorId, spectatorId) {
             @Override

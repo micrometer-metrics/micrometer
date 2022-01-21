@@ -15,8 +15,8 @@
  */
 package io.micrometer.opentsdb;
 
+import io.micrometer.api.instrument.*;
 import io.micrometer.core.Issue;
-import io.micrometer.core.instrument.*;
 import org.junit.jupiter.api.Test;
 
 import java.time.Duration;

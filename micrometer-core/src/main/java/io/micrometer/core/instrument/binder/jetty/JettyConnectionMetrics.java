@@ -15,16 +15,16 @@
  */
 package io.micrometer.core.instrument.binder.jetty;
 
-import io.micrometer.core.instrument.Counter;
-import io.micrometer.core.instrument.DistributionSummary;
-import io.micrometer.core.instrument.Gauge;
-import io.micrometer.core.instrument.MeterRegistry;
-import io.micrometer.core.instrument.Tag;
-import io.micrometer.core.instrument.Tags;
-import io.micrometer.core.instrument.Timer;
-import io.micrometer.core.instrument.binder.BaseUnits;
-import io.micrometer.core.instrument.distribution.DistributionStatisticConfig;
-import io.micrometer.core.instrument.distribution.TimeWindowMax;
+import io.micrometer.api.instrument.Counter;
+import io.micrometer.api.instrument.DistributionSummary;
+import io.micrometer.api.instrument.Gauge;
+import io.micrometer.api.instrument.MeterRegistry;
+import io.micrometer.api.instrument.Tag;
+import io.micrometer.api.instrument.Tags;
+import io.micrometer.api.instrument.Timer;
+import io.micrometer.api.instrument.binder.BaseUnits;
+import io.micrometer.api.instrument.distribution.DistributionStatisticConfig;
+import io.micrometer.api.instrument.distribution.TimeWindowMax;
 import java.util.HashMap;
 import java.util.Map;
 import org.eclipse.jetty.io.Connection;

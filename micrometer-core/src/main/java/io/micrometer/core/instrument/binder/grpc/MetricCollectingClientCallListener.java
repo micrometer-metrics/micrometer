@@ -21,7 +21,7 @@ import io.grpc.ClientCall;
 import io.grpc.ForwardingClientCallListener.SimpleForwardingClientCallListener;
 import io.grpc.Metadata;
 import io.grpc.Status;
-import io.micrometer.core.instrument.Counter;
+import io.micrometer.api.instrument.Counter;
 
 /**
  * A simple forwarding client call listener that collects metrics.

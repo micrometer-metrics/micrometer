@@ -15,12 +15,12 @@
  */
 package io.micrometer.core.instrument.binder.system;
 
-import io.micrometer.core.instrument.MeterRegistry;
-import io.micrometer.core.instrument.Tag;
-import io.micrometer.core.instrument.TimeGauge;
-import io.micrometer.core.instrument.binder.MeterBinder;
-import io.micrometer.core.lang.NonNullApi;
-import io.micrometer.core.lang.NonNullFields;
+import io.micrometer.api.instrument.MeterRegistry;
+import io.micrometer.api.instrument.Tag;
+import io.micrometer.api.instrument.TimeGauge;
+import io.micrometer.api.instrument.binder.MeterBinder;
+import io.micrometer.api.lang.NonNullApi;
+import io.micrometer.api.lang.NonNullFields;
 
 import java.lang.management.ManagementFactory;
 import java.lang.management.RuntimeMXBean;

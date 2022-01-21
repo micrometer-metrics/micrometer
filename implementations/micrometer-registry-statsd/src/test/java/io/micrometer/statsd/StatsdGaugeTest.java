@@ -15,8 +15,8 @@
  */
 package io.micrometer.statsd;
 
-import io.micrometer.core.instrument.Gauge;
-import io.micrometer.core.instrument.MeterRegistry;
+import io.micrometer.api.instrument.Gauge;
+import io.micrometer.api.instrument.MeterRegistry;
 import org.junit.jupiter.api.Test;
 
 import java.util.concurrent.atomic.AtomicInteger;

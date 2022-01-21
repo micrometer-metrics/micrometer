@@ -16,15 +16,15 @@
 package io.micrometer.dynatrace;
 
 import com.dynatrace.metric.util.DynatraceMetricApiConstants;
-import io.micrometer.core.instrument.config.validate.Validated;
-import io.micrometer.core.instrument.step.StepRegistryConfig;
-import io.micrometer.core.lang.Nullable;
+import io.micrometer.api.instrument.config.validate.Validated;
+import io.micrometer.api.instrument.step.StepRegistryConfig;
+import io.micrometer.api.lang.Nullable;
 
 import java.util.Collections;
 import java.util.Map;
 
-import static io.micrometer.core.instrument.config.MeterRegistryConfigValidator.*;
-import static io.micrometer.core.instrument.config.validate.PropertyValidator.*;
+import static io.micrometer.api.instrument.config.MeterRegistryConfigValidator.*;
+import static io.micrometer.api.instrument.config.validate.PropertyValidator.*;
 import static io.micrometer.dynatrace.DynatraceApiVersion.V1;
 import static io.micrometer.dynatrace.DynatraceApiVersion.V2;
 

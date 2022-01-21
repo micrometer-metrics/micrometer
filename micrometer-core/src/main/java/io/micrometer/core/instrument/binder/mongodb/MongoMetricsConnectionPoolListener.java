@@ -18,12 +18,12 @@ package io.micrometer.core.instrument.binder.mongodb;
 import com.mongodb.client.MongoClient;
 import com.mongodb.connection.ServerId;
 import com.mongodb.event.*;
-import io.micrometer.core.annotation.Incubating;
-import io.micrometer.core.instrument.Gauge;
-import io.micrometer.core.instrument.Meter;
-import io.micrometer.core.instrument.MeterRegistry;
-import io.micrometer.core.lang.NonNullApi;
-import io.micrometer.core.lang.NonNullFields;
+import io.micrometer.api.annotation.Incubating;
+import io.micrometer.api.instrument.Gauge;
+import io.micrometer.api.instrument.Meter;
+import io.micrometer.api.instrument.MeterRegistry;
+import io.micrometer.api.lang.NonNullApi;
+import io.micrometer.api.lang.NonNullFields;
 
 import java.util.ArrayList;
 import java.util.List;

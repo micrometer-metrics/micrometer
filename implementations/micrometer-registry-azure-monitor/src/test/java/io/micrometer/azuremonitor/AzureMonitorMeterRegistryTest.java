@@ -19,11 +19,11 @@ import java.time.Duration;
 import java.util.concurrent.TimeUnit;
 
 import com.microsoft.applicationinsights.TelemetryConfiguration;
-import io.micrometer.core.instrument.DistributionSummary;
-import io.micrometer.core.instrument.FunctionTimer;
-import io.micrometer.core.instrument.MockClock;
-import io.micrometer.core.instrument.Timer;
-import io.micrometer.core.instrument.config.validate.ValidationException;
+import io.micrometer.api.instrument.DistributionSummary;
+import io.micrometer.api.instrument.FunctionTimer;
+import io.micrometer.api.instrument.MockClock;
+import io.micrometer.api.instrument.Timer;
+import io.micrometer.api.instrument.config.validate.ValidationException;
 import org.junit.jupiter.api.Test;
 
 import static org.assertj.core.api.Assertions.assertThat;

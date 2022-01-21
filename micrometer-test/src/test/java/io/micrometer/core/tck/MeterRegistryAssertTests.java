@@ -15,9 +15,9 @@
  */
 package io.micrometer.core.tck;
 
-import io.micrometer.core.instrument.Tags;
-import io.micrometer.core.instrument.Timer;
-import io.micrometer.core.instrument.simple.SimpleMeterRegistry;
+import io.micrometer.api.instrument.Tags;
+import io.micrometer.api.instrument.Timer;
+import io.micrometer.api.instrument.simple.SimpleMeterRegistry;
 import org.junit.jupiter.api.Test;
 
 import static org.assertj.core.api.Assertions.assertThatCode;

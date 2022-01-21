@@ -18,11 +18,12 @@ package io.micrometer.core.instrument.binder.cache;
 import java.util.function.Function;
 import java.util.function.ToLongFunction;
 
-import io.micrometer.core.instrument.*;
-import io.micrometer.core.instrument.binder.BaseUnits;
-import io.micrometer.core.lang.NonNullApi;
-import io.micrometer.core.lang.NonNullFields;
-import io.micrometer.core.lang.Nullable;
+import io.micrometer.api.instrument.*;
+import io.micrometer.api.instrument.binder.BaseUnits;
+import io.micrometer.api.instrument.cache.CacheMeterBinder;
+import io.micrometer.api.lang.NonNullApi;
+import io.micrometer.api.lang.NonNullFields;
+import io.micrometer.api.lang.Nullable;
 import net.sf.ehcache.Ehcache;
 import net.sf.ehcache.statistics.StatisticsGateway;
 

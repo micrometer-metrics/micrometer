@@ -15,7 +15,7 @@
  */
 package io.micrometer.influx;
 
-import io.micrometer.core.lang.Nullable;
+import io.micrometer.api.lang.Nullable;
 
 import java.util.Objects;
 import java.util.stream.Stream;

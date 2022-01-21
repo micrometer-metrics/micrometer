@@ -15,13 +15,13 @@
  */
 package io.micrometer.core.instrument.binder.okhttp3;
 
-import io.micrometer.core.instrument.MeterRegistry;
-import io.micrometer.core.instrument.Tag;
-import io.micrometer.core.instrument.Tags;
-import io.micrometer.core.instrument.Timer;
-import io.micrometer.core.lang.NonNullApi;
-import io.micrometer.core.lang.NonNullFields;
-import io.micrometer.core.lang.Nullable;
+import io.micrometer.api.instrument.MeterRegistry;
+import io.micrometer.api.instrument.Tag;
+import io.micrometer.api.instrument.Tags;
+import io.micrometer.api.instrument.Timer;
+import io.micrometer.api.lang.NonNullApi;
+import io.micrometer.api.lang.NonNullFields;
+import io.micrometer.api.lang.Nullable;
 import okhttp3.*;
 import okhttp3.EventListener;
 

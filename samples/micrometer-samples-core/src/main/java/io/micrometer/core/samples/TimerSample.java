@@ -18,9 +18,9 @@ package io.micrometer.core.samples;
 import cern.jet.random.Normal;
 import cern.jet.random.engine.MersenneTwister64;
 import cern.jet.random.engine.RandomEngine;
-import io.micrometer.core.instrument.FunctionTimer;
-import io.micrometer.core.instrument.MeterRegistry;
-import io.micrometer.core.instrument.Timer;
+import io.micrometer.api.instrument.FunctionTimer;
+import io.micrometer.api.instrument.MeterRegistry;
+import io.micrometer.api.instrument.Timer;
 import io.micrometer.core.samples.utils.SampleConfig;
 import reactor.core.publisher.Flux;
 

@@ -16,9 +16,9 @@
 package io.micrometer.prometheus;
 
 import io.micrometer.core.Issue;
-import io.micrometer.core.instrument.Meter;
-import io.micrometer.core.instrument.Metrics;
-import io.micrometer.core.instrument.config.NamingConvention;
+import io.micrometer.api.instrument.Meter;
+import io.micrometer.api.instrument.Metrics;
+import io.micrometer.api.instrument.config.NamingConvention;
 import io.prometheus.client.Collector;
 import org.junit.jupiter.api.Test;
 

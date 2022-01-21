@@ -15,9 +15,9 @@
  */
 package io.micrometer.core.instrument.binder.jetty;
 
-import io.micrometer.core.annotation.Incubating;
-import io.micrometer.core.instrument.Tag;
-import io.micrometer.core.instrument.Tags;
+import io.micrometer.api.annotation.Incubating;
+import io.micrometer.api.instrument.Tag;
+import io.micrometer.api.instrument.Tags;
 import org.eclipse.jetty.client.api.Result;
 
 /**

@@ -15,18 +15,18 @@
  */
 package io.micrometer.health;
 
-import io.micrometer.core.instrument.Meter;
-import io.micrometer.core.instrument.MockClock;
-import io.micrometer.core.instrument.Timer;
+import io.micrometer.api.instrument.Meter;
+import io.micrometer.api.instrument.MockClock;
+import io.micrometer.api.instrument.Timer;
 import io.micrometer.core.instrument.binder.jvm.JvmMemoryMetrics;
-import io.micrometer.core.instrument.config.MeterFilter;
+import io.micrometer.api.instrument.config.MeterFilter;
 import io.micrometer.health.objectives.JvmServiceLevelObjectives;
 import org.junit.jupiter.api.Test;
 
 import java.time.Duration;
 import java.util.concurrent.TimeUnit;
 
-import static io.micrometer.core.instrument.MockClock.clock;
+import static io.micrometer.api.instrument.MockClock.clock;
 import static org.assertj.core.api.Assertions.assertThat;
 
 /**

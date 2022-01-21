@@ -15,10 +15,10 @@
  */
 package io.micrometer.core.instrument.binder.jersey.server;
 
-import io.micrometer.core.annotation.Timed;
-import io.micrometer.core.instrument.LongTaskTimer;
-import io.micrometer.core.instrument.MeterRegistry;
-import io.micrometer.core.instrument.Timer;
+import io.micrometer.api.annotation.Timed;
+import io.micrometer.api.instrument.LongTaskTimer;
+import io.micrometer.api.instrument.MeterRegistry;
+import io.micrometer.api.instrument.Timer;
 import org.glassfish.jersey.server.ContainerRequest;
 import org.glassfish.jersey.server.model.ResourceMethod;
 import org.glassfish.jersey.server.monitoring.RequestEvent;

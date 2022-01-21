@@ -23,7 +23,7 @@ import com.mongodb.connection.ConnectionDescription;
 import com.mongodb.connection.ServerId;
 import com.mongodb.event.CommandStartedEvent;
 import com.mongodb.event.CommandSucceededEvent;
-import io.micrometer.core.instrument.Tag;
+import io.micrometer.api.instrument.Tag;
 import org.bson.BsonBoolean;
 import org.bson.BsonDocument;
 import org.bson.BsonElement;

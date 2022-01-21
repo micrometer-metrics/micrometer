@@ -15,9 +15,9 @@
  */
 package io.micrometer.core.instrument.binder.jersey.server;
 
-import io.micrometer.core.instrument.Tag;
-import io.micrometer.core.instrument.binder.http.Outcome;
-import io.micrometer.core.instrument.util.StringUtils;
+import io.micrometer.api.instrument.Tag;
+import io.micrometer.api.instrument.transport.http.tags.Outcome;
+import io.micrometer.api.instrument.util.StringUtils;
 import org.glassfish.jersey.server.ContainerRequest;
 import org.glassfish.jersey.server.ContainerResponse;
 import org.glassfish.jersey.server.ExtendedUriInfo;

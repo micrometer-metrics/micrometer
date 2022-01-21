@@ -15,9 +15,9 @@
  */
 package io.micrometer.core.instrument.binder.system;
 
-import io.micrometer.core.instrument.MeterRegistry;
-import io.micrometer.core.instrument.Tags;
-import io.micrometer.core.instrument.simple.SimpleMeterRegistry;
+import io.micrometer.api.instrument.MeterRegistry;
+import io.micrometer.api.instrument.Tags;
+import io.micrometer.api.instrument.simple.SimpleMeterRegistry;
 import org.junit.jupiter.api.Test;
 
 import java.io.File;

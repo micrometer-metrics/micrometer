@@ -16,11 +16,11 @@
 package io.micrometer.core.instrument.binder.kafka;
 
 import io.micrometer.core.Issue;
-import io.micrometer.core.instrument.Measurement;
-import io.micrometer.core.instrument.Meter;
-import io.micrometer.core.instrument.MeterRegistry;
-import io.micrometer.core.instrument.Tag;
-import io.micrometer.core.instrument.simple.SimpleMeterRegistry;
+import io.micrometer.api.instrument.Measurement;
+import io.micrometer.api.instrument.Meter;
+import io.micrometer.api.instrument.MeterRegistry;
+import io.micrometer.api.instrument.Tag;
+import io.micrometer.api.instrument.simple.SimpleMeterRegistry;
 import org.apache.kafka.common.Metric;
 import org.apache.kafka.common.MetricName;
 import org.apache.kafka.common.metrics.KafkaMetric;

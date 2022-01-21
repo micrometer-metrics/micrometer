@@ -15,15 +15,15 @@
  */
 package io.micrometer.prometheus;
 
-import io.micrometer.core.instrument.*;
-import io.micrometer.core.instrument.cumulative.CumulativeFunctionCounter;
-import io.micrometer.core.instrument.cumulative.CumulativeFunctionTimer;
-import io.micrometer.core.instrument.distribution.*;
-import io.micrometer.core.instrument.distribution.pause.PauseDetector;
-import io.micrometer.core.instrument.internal.CumulativeHistogramLongTaskTimer;
-import io.micrometer.core.instrument.internal.DefaultGauge;
-import io.micrometer.core.instrument.internal.DefaultMeter;
-import io.micrometer.core.lang.Nullable;
+import io.micrometer.api.instrument.*;
+import io.micrometer.api.instrument.cumulative.CumulativeFunctionCounter;
+import io.micrometer.api.instrument.cumulative.CumulativeFunctionTimer;
+import io.micrometer.api.instrument.distribution.*;
+import io.micrometer.api.instrument.distribution.pause.PauseDetector;
+import io.micrometer.api.instrument.internal.CumulativeHistogramLongTaskTimer;
+import io.micrometer.api.instrument.internal.DefaultGauge;
+import io.micrometer.api.instrument.internal.DefaultMeter;
+import io.micrometer.api.lang.Nullable;
 import io.prometheus.client.Collector;
 import io.prometheus.client.CollectorRegistry;
 import io.prometheus.client.exporter.common.TextFormat;
@@ -264,7 +264,7 @@ public class PrometheusMeterRegistry extends MeterRegistry {
     }
 
     @Override
-    protected io.micrometer.core.instrument.Timer newTimer(Meter.Id id, DistributionStatisticConfig distributionStatisticConfig, PauseDetector pauseDetector) {
+    protected Timer newTimer(Meter.Id id, DistributionStatisticConfig distributionStatisticConfig, PauseDetector pauseDetector) {
         PrometheusTimer timer = new PrometheusTimer(id, clock, distributionStatisticConfig, pauseDetector, prometheusConfig.histogramFlavor());
         applyToCollector(id, (collector) ->
                 addDistributionStatisticSamples(distributionStatisticConfig, collector, timer, tagValues(id), false));
@@ -272,7 +272,7 @@ public class PrometheusMeterRegistry extends MeterRegistry {
     }
 
     @Override
-    protected <T> io.micrometer.core.instrument.Gauge newGauge(Meter.Id id, @Nullable T obj, ToDoubleFunction<T> valueFunction) {
+    protected <T> Gauge newGauge(Meter.Id id, @Nullable T obj, ToDoubleFunction<T> valueFunction) {
         Gauge gauge = new DefaultGauge<>(id, obj, valueFunction);
         applyToCollector(id, (collector) -> {
             List<String> tagValues = tagValues(id);
@@ -502,7 +502,7 @@ public class PrometheusMeterRegistry extends MeterRegistry {
     }
 
     /**
-     * For use with {@link io.micrometer.core.instrument.MeterRegistry.Config#onMeterRegistrationFailed(BiConsumer)
+     * For use with {@link MeterRegistry.Config#onMeterRegistrationFailed(BiConsumer)
      * MeterRegistry.Config#onMeterRegistrationFailed(BiConsumer)} when you want meters with the same name but different
      * tags to cause an unchecked exception.
      *
