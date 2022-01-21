@@ -116,7 +116,7 @@ public abstract class MeterRegistry {
         this.clock = clock;
     }
 
-    @Nullable Timer.Sample getCurrentSample() {
+    @Nullable public Timer.Sample getCurrentSample() {
         return localSample.get();
     }
 

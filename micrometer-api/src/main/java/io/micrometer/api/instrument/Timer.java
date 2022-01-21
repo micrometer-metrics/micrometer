@@ -394,6 +394,17 @@ public interface Timer extends Meter, HistogramSupport {
     class HandlerContext implements TagsProvider {
         private final Map<Class<?>, Object> map = new HashMap<>();
 
+        /**
+         * The name of the recorded measurement in the context of the {@link TimerRecordingHandler}.
+         * The Timer itself has a name but you might want to use a different name in the {@link TimerRecordingHandler}.
+         * This method makes it possible to use a different name.
+         *
+         * @return the contextual name
+         */
+        @Nullable public String getContextualName() {
+            return null;
+        }
+
         public <T> HandlerContext put(Class<T> clazz, T object) {
             this.map.put(clazz, object);
             return this;
