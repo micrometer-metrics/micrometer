@@ -15,6 +15,9 @@
  */
 package io.micrometer.core.tck;
 
+import java.util.List;
+import java.util.stream.Collectors;
+
 import io.micrometer.api.instrument.MeterRegistry;
 import io.micrometer.api.instrument.Tags;
 import io.micrometer.api.instrument.Timer;
@@ -56,8 +59,22 @@ public class MeterRegistryAssert extends AbstractAssert<MeterRegistryAssert, Met
     }
 
     /**
+     * Verifies that there are no metrics in the registry.
+     *
+     * @return this
+     * @throws AssertionError if there are any metrics registered
+     */
+    public MeterRegistryAssert hasNoMetrics() {
+        isNotNull();
+        List<String> metricsNames = actual.getMeters().stream().map(meter -> meter.getId().getName()).collect(Collectors.toList());
+        if (!metricsNames.isEmpty()) {
+            failWithMessage("Expected no metrics, but got metrics with following names <%s>", String.join(",", metricsNames));
+        }
+        return this;
+    }
+    /**
      * Verifies that a timer with given name exists in the provided {@link MeterRegistry}.
-     * 
+     *
      * @param timerName name of the timer
      * @return this
      * @throws AssertionError if the actual value is {@code null}.

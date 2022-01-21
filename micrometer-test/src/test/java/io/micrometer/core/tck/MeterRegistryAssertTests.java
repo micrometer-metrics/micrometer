@@ -29,7 +29,16 @@ class MeterRegistryAssertTests {
     SimpleMeterRegistry simpleMeterRegistry = new SimpleMeterRegistry();
     
     MeterRegistryAssert meterRegistryAssert = new MeterRegistryAssert(simpleMeterRegistry);
-    
+
+    @Test
+    void assertionErrorThrownWhenMetricsArePresent() {
+        Timer.start(this.simpleMeterRegistry).stop(Timer.builder("matching-metric-name"));
+
+        assertThatThrownBy(() -> meterRegistryAssert.hasNoMetrics())
+                .isInstanceOf(AssertionError.class)
+                .hasMessageContaining("Expected no metrics, but got metrics with following names <matching-metric-name>");
+    }
+
     @Test
     void assertionErrorThrownWhenNoTimerUsingAssertThat() {
         assertThatThrownBy(() -> MeterRegistryAssert.assertThat(simpleMeterRegistry).hasTimerWithName("foo"))
@@ -108,9 +117,15 @@ class MeterRegistryAssertTests {
     }
     
     @Test
+    void noAssertionErrorThrownWhenNoMetricsRegistered() {
+        assertThatCode(() -> meterRegistryAssert.hasNoMetrics())
+            .doesNotThrowAnyException();
+    }
+
+    @Test
     void noAssertionErrorThrownWhenTimerPresent() {
         Timer.start(this.simpleMeterRegistry).stop(Timer.builder("foo"));
-        
+
         assertThatCode(() -> meterRegistryAssert.hasTimerWithName("foo"))
             .doesNotThrowAnyException();
     }
