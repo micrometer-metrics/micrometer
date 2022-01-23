@@ -1,12 +1,12 @@
-/**
- * Copyright 2019 VMware, Inc.
- * <p>
+/*
+ * Copyright 2022 VMware, Inc.
+ *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * <p>
+ *
  * https://www.apache.org/licenses/LICENSE-2.0
- * <p>
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -45,7 +45,7 @@ import static io.micrometer.core.instrument.binder.db.PostgreSQLDatabaseMetrics.
  */
 @Testcontainers
 @Tag("docker")
-public class PostgreSQLDatabaseMetricsIntegrationTest {
+class PostgreSQLDatabaseMetricsIntegrationTest {
 
     @Container
     private final PostgreSQLContainer<?> postgres = new PostgreSQLContainer<>(getDockerImageName());
@@ -58,8 +58,8 @@ public class PostgreSQLDatabaseMetricsIntegrationTest {
     private static final long PGSTAT_STAT_INTERVAL = 500L + 50L;
 
     @BeforeEach
-    void setup() throws InterruptedException {
-        dataSource = createDatasource();
+    void setup() {
+        dataSource = createDataSource();
         tags = Tags.of("database", postgres.getDatabaseName());
 
         new PostgreSQLDatabaseMetrics(dataSource, postgres.getDatabaseName()).bindTo(registry);
@@ -136,23 +136,23 @@ public class PostgreSQLDatabaseMetricsIntegrationTest {
         assertThat(get(ROWS_DEAD).gauge().value()).isGreaterThan(deadRowsBefore);
     }
 
-    private DataSource createDatasource() {
-        final PGSimpleDataSource result = new PGSimpleDataSource();
-        result.setURL(postgres.getJdbcUrl());
-        result.setUser(postgres.getUsername());
-        result.setPassword(postgres.getPassword());
-        result.setDatabaseName(postgres.getDatabaseName());
-        return result;
+    private DataSource createDataSource() {
+        final PGSimpleDataSource dataSource = new PGSimpleDataSource();
+        dataSource.setURL(postgres.getJdbcUrl());
+        dataSource.setUser(postgres.getUsername());
+        dataSource.setPassword(postgres.getPassword());
+        dataSource.setDatabaseName(postgres.getDatabaseName());
+        return dataSource;
     }
 
-    private void executeSql(String ... statements) throws SQLException {
+    private void executeSql(String... statements) throws SQLException {
         try (final Connection connection = dataSource.getConnection()) {
             executeSql(connection, statements);
         }
     }
 
-    private void executeSql(Connection connection, String ... statements) throws SQLException {
-        for (String sql: statements) {
+    private void executeSql(Connection connection, String... statements) throws SQLException {
+        for (String sql : statements) {
             try (final PreparedStatement stmt = connection.prepareStatement(sql)) {
                 stmt.execute();
             }
