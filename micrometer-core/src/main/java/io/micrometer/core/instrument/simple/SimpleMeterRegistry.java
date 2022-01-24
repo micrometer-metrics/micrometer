@@ -169,8 +169,9 @@ public class SimpleMeterRegistry extends MeterRegistry {
      * The output is meant to be readable by humans, please do not parse it programmatically because the format can change.
      *
      * @return text representation of the meters in the registry
+     * @since 1.9.0
      */
-    @Incubating(since = "2022-01-06")
+    @Incubating(since = "1.9.0")
     public String getMetersAsString() {
         return this.getMeters().stream()
                 .sorted(Comparator.comparing(meter -> meter.getId().getName()))
@@ -179,25 +180,41 @@ public class SimpleMeterRegistry extends MeterRegistry {
     }
 
     private String toString(Meter meter) {
-        String name = meter.getId().getName();
-        Meter.Type type = meter.getId().getType();
-        String baseUnit = meter.getId().getBaseUnit();
-        String tags = meter.getId().getTags().stream()
+        Meter.Id id = meter.getId();
+        String tags = id.getTags().stream()
                 .map(this::toString)
                 .collect(Collectors.joining(", "));
-
-        return StreamSupport.stream(meter.measure().spliterator(), false)
-                .map(measurement -> toString(name, type, baseUnit, tags, measurement))
-                .collect(Collectors.joining("\n"));
+        String baseUnit = id.getBaseUnit();
+        String meterUnitSuffix = baseUnit != null ? " " + baseUnit : "";
+        String measurements = StreamSupport.stream(meter.measure().spliterator(), false)
+                .map((measurement) -> toString(measurement, meterUnitSuffix))
+                .collect(Collectors.joining(", "));
+        return String.format("%s(%s)[%s]; %s", id.getName(), id.getType(), tags, measurements);
     }
 
     private String toString(Tag tag) {
         return String.format("%s='%s'", tag.getKey(), tag.getValue());
     }
 
-    private String toString(String name, Meter.Type type, @Nullable String baseUnit, String tags, Measurement measurement) {
-        String statistic = measurement.getStatistic().toString().toLowerCase();
-        String unit = baseUnit != null ? "." + baseUnit : "";
-        return String.format("%s.%s%s(%s)[%s] %s", name, statistic, unit, type, tags, measurement.getValue());
+    private String toString(Measurement measurement, String meterUnitSuffix) {
+        Statistic statistic = measurement.getStatistic();
+        return String.format("%s=%s%s",
+                statistic.toString().toLowerCase(),
+                measurement.getValue(),
+                getUnitSuffix(statistic, meterUnitSuffix));
+    }
+
+    private String getUnitSuffix(Statistic statistic, String meterUnitSuffix) {
+        switch (statistic) {
+            case DURATION:
+            case TOTAL_TIME:
+            case TOTAL:
+            case MAX:
+            case VALUE:
+                return meterUnitSuffix;
+
+            default:
+                return "";
+        }
     }
 }

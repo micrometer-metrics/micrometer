@@ -171,24 +171,16 @@ class SimpleMeterRegistryTest {
                 )
         ).register(registry);
 
-        assertThat(registry.getMetersAsString()).isEqualTo(""
-                + "answers.count(COUNTER)[correct='true'] 2.0\n"
-                + "answers.count(COUNTER)[correct='false'] 1.0\n"
-                + "cache.latency.count.seconds(TIMER)[] 5.0\n"
-                + "cache.latency.total_time.seconds(TIMER)[] 0.1\n"
-                + "cache.miss.count(COUNTER)[] 42.0\n"
-                + "custom.meter.value(OTHER)[] 42.0\n"
-                + "custom.meter.unknown(OTHER)[] 21.0\n"
-                + "handler.active_tasks.seconds(LONG_TASK_TIMER)[] 1.0\n"
-                + "handler.duration.seconds(LONG_TASK_TIMER)[] 3.0\n"
-                + "latency.count.seconds(TIMER)[method='GET', service='test', uri='/api/people'] 10.0\n"
-                + "latency.total_time.seconds(TIMER)[method='GET', service='test', uri='/api/people'] 0.29\n"
-                + "latency.max.seconds(TIMER)[method='GET', service='test', uri='/api/people'] 0.038\n"
-                + "processing.time.value.seconds(GAUGE)[] 0.3\n"
-                + "request.size.count.bytes(DISTRIBUTION_SUMMARY)[] 10.0\n"
-                + "request.size.total.bytes(DISTRIBUTION_SUMMARY)[] 1450.0\n"
-                + "request.size.max.bytes(DISTRIBUTION_SUMMARY)[] 190.0\n"
-                + "temperature.value.celsius(GAUGE)[] 24.0");
+        assertThat(registry.getMetersAsString()).isEqualTo("answers(COUNTER)[correct='true']; count=2.0\n" +
+                "answers(COUNTER)[correct='false']; count=1.0\n" +
+                "cache.latency(TIMER)[]; count=5.0, total_time=0.1 seconds\n" +
+                "cache.miss(COUNTER)[]; count=42.0\n" +
+                "custom.meter(OTHER)[]; value=42.0, unknown=21.0\n" +
+                "handler(LONG_TASK_TIMER)[]; active_tasks=1.0, duration=3.0 seconds\n" +
+                "latency(TIMER)[method='GET', service='test', uri='/api/people']; count=10.0, total_time=0.29 seconds, max=0.038 seconds\n" +
+                "processing.time(GAUGE)[]; value=0.3 seconds\n" +
+                "request.size(DISTRIBUTION_SUMMARY)[]; count=10.0, total=1450.0 bytes, max=190.0 bytes\n" +
+                "temperature(GAUGE)[]; value=24.0 celsius");
         sample.stop();
     }
 
