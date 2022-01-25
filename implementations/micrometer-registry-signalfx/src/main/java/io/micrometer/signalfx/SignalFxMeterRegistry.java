@@ -246,14 +246,14 @@ public class SignalFxMeterRegistry extends StepMeterRegistry {
 
     private DistributionStatisticConfig updateConfig(
             DistributionStatisticConfig distributionStatisticConfig) {
-        // Add the +Inf bucket since the "count" resets every export.
-        double[] sla = distributionStatisticConfig.getServiceLevelObjectiveBoundaries();
-        if (sla == null || sla.length == 0) {
+        double[] sloBoundaries = distributionStatisticConfig.getServiceLevelObjectiveBoundaries();
+        if (sloBoundaries == null || sloBoundaries.length == 0) {
             return distributionStatisticConfig;
         }
-        double[] newSLA = sla;
-        if (!isPositiveInf(sla[sla.length - 1])) {
-            newSLA = Arrays.copyOf(sla, sla.length + 1);
+        double[] newSLA = sloBoundaries;
+        // Add the +Inf bucket since the "count" resets every export.
+        if (!isPositiveInf(sloBoundaries[sloBoundaries.length - 1])) {
+            newSLA = Arrays.copyOf(sloBoundaries, sloBoundaries.length + 1);
             newSLA[newSLA.length - 1] = Double.MAX_VALUE;
         }
         return DistributionStatisticConfig.builder()

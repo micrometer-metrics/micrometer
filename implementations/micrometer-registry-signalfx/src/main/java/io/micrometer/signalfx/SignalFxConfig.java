@@ -43,12 +43,14 @@ public interface SignalFxConfig extends StepRegistryConfig {
     }
 
     /**
-     * Returns {@code true} if the signalfx registry should emit histogram buckets.
+     * Returns {@code true} if the signalfx registry should emit histogram buckets as
+     * CumulativeCounter instead of Gauge (as it is by default).
      *
-     * @return {@code true} if the signalfx registry should emit histogram buckets.
+     * @return {@code true} if the signalfx registry should emit histogram buckets as
+     * CumulativeCounter instead of Gauge (as it is by default).
      */
     default Boolean fixHistogramBucketsType() {
-        return getBoolean(this, "reportHistogramBuckets").orElse(false);
+        return getBoolean(this, "fixHistogramBucketsType").orElse(false);
     }
 
     /**
