@@ -1,5 +1,5 @@
 /*
- * Copyright 2017 VMware, Inc.
+ * Copyright 2022 VMware, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,54 +19,65 @@ import io.micrometer.api.instrument.Timer;
 
 /**
  * In order to describe your spans via e.g. enums instead of Strings you can use this
- * interface that returns all the characteristics of a span. We can
+ * interface that returns all the characteristics of a sample. We can
  * analyze the sources and reuse this information to build a table of known metrics, their
- * names, tags and events.
+ * names and tags.
  *
- * We can generate documentation for all created spans but certain requirements need to be
+ * We can generate documentation for all created samples but certain requirements need to be
  * met.
  *
  * <ul>
  *     <li>Metrics are grouped within an enum - the enum implements the {@link DocumentedSample} interface</li>
  *     <li>If the span contains {@link TagKey} then those need to be declared as nested enums</li>
- *     <li>The {@link DocumentedSample#getHighCardinalityTagKeys()} ()} need to call the nested enum's {@code values()} method to retrieve the array of allowed keys / events</li>
- *     <li>The {@link DocumentedSample#getLowCardinalityTagKeys()} ()} ()} need to call the nested enum's {@code values()} method to retrieve the array of allowed keys / events</li>
+ *     <li>The {@link DocumentedSample#getHighCardinalityTagKeys()} need to call the nested enum's {@code values()} method to retrieve the array of allowed keys / events</li>
+ *     <li>The {@link DocumentedSample#getLowCardinalityTagKeys()} need to call the nested enum's {@code values()} method to retrieve the array of allowed keys / events</li>
  *     <li>Javadocs around enums will be used as description</li>
  *     <li>If you want to merge different {@link TagKey} enum {@code values()} methods you need to call the {@link TagKey#merge(TagKey[]...)} method</li>
  * </ul>
  *
  * @author Marcin Grzejszczak
- * @since 1.0.0
+ * @since 2.0.0
  */
 public interface DocumentedSample {
 
     /**
+     * Empty tag keys.
+     */
+    TagKey[] EMPTY = new TagKey[0];
+
+    /**
+     * Metric name.
+     *
      * @return metric name
      */
     String getName();
 
     /**
+     * Low cardinality tags.
+     *
      * @return allowed tag keys for low cardinality tags
      */
     default TagKey[] getLowCardinalityTagKeys() {
-        return new TagKey[0];
+        return EMPTY;
     }
 
     /**
+     * High cardinality tags.
+     *
      * @return allowed tag keys for high cardinality tags
      */
     default TagKey[] getHighCardinalityTagKeys() {
-        return new TagKey[0];
+        return EMPTY;
     }
 
-    // TODO: Does this make sense?
     /**
      * Returns required prefix to be there for tags. Example {@code foo.} would
      * require the tags to have a {code foo} prefix like this for tags:
      * {@code foo.bar=true}.
+     *
      * @return required prefix
      */
-    default String prefix() {
+    default String getPrefix() {
         return "";
     }
 

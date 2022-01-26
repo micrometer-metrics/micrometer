@@ -1,5 +1,5 @@
 /*
- * Copyright 2017 VMware, Inc.
+ * Copyright 2022 VMware, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -23,7 +23,7 @@ import io.micrometer.api.instrument.Tag;
  * Represents a tag key.
  *
  * @author Marcin Grzejszczak
- * @since 1.0.0
+ * @since 2.0.0
  */
 public interface TagKey {
 
