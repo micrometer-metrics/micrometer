@@ -136,7 +136,9 @@ public class TimedHandler extends HandlerWrapper implements Graceful {
                 sample.stop(Timer.builder("jetty.server.requests")
                         .description("HTTP requests to the Jetty server")
                         .tags(tagsProvider.getTags(request, response))
-                        .tags(tags));
+                        .tags(tags)
+                        .register(registry)
+                );
 
                 requestSample.stop();
 
@@ -198,7 +200,9 @@ public class TimedHandler extends HandlerWrapper implements Graceful {
             sample.stop(Timer.builder("jetty.server.requests")
                     .description("HTTP requests to the Jetty server")
                     .tags(tagsProvider.getTags(request, request.getResponse()))
-                    .tags(tags));
+                    .tags(tags)
+                    .register(registry)
+            );
 
             lttSample.stop();
         }

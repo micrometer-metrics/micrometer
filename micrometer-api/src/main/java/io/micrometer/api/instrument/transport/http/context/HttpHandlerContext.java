@@ -15,8 +15,8 @@
  */
 package io.micrometer.api.instrument.transport.http.context;
 
+import io.micrometer.api.instrument.Observation;
 import io.micrometer.api.instrument.Tags;
-import io.micrometer.api.instrument.Timer;
 import io.micrometer.api.instrument.transport.http.HttpRequest;
 import io.micrometer.api.instrument.transport.http.HttpResponse;
 import io.micrometer.api.instrument.transport.http.tags.HttpTagsProvider;
@@ -24,14 +24,14 @@ import io.micrometer.api.lang.NonNull;
 import io.micrometer.api.lang.Nullable;
 
 /**
- * {@link Timer.HandlerContext HandlerContext} for an HTTP exchange.
+ * {@link Observation.Context} for an HTTP exchange.
  *
  * @author Marcin Grzejszczak
  * @since 2.0.0
  * @param <REQ> request type
  * @param <RES> response type
  */
-public abstract class HttpHandlerContext<REQ extends HttpRequest, RES extends HttpResponse> extends Timer.HandlerContext {
+public abstract class HttpHandlerContext<REQ extends HttpRequest, RES extends HttpResponse> extends Observation.Context {
 
     private final HttpTagsProvider tagsProvider;
 

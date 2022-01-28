@@ -15,14 +15,14 @@
  */
 package io.micrometer.api.instrument.transport.http.context;
 
-import io.micrometer.api.instrument.Timer;
+import io.micrometer.api.instrument.Observation;
 import io.micrometer.api.instrument.transport.http.tags.HttpTagsProvider;
 import io.micrometer.api.instrument.transport.http.HttpClientRequest;
 import io.micrometer.api.instrument.transport.http.HttpClientResponse;
 import io.micrometer.api.lang.NonNull;
 
 /**
- * {@link Timer.HandlerContext HandlerContext}
+ * {@link Observation.Context Context}
  * for an HTTP client request/response.
  *
  * @author Jonatan Ivanov

@@ -79,13 +79,13 @@ public abstract class MeterRegistry {
     protected final Clock clock;
     private final Object meterMapLock = new Object();
     private volatile MeterFilter[] filters = new MeterFilter[0];
-    private final List<TimerRecordingHandler<?>> timerRecordingHandlers = new CopyOnWriteArrayList<>();
+    private final List<ObservationHandler<?>> observationHandlers = new CopyOnWriteArrayList<>();
     private final List<Consumer<Meter>> meterAddedListeners = new CopyOnWriteArrayList<>();
     private final List<Consumer<Meter>> meterRemovedListeners = new CopyOnWriteArrayList<>();
     private final List<BiConsumer<Meter.Id, String>> meterRegistrationFailedListeners = new CopyOnWriteArrayList<>();
     private final Config config = new Config();
     private final More more = new More();
-    private final ThreadLocal<Timer.Sample> localSample = new ThreadLocal<>();
+    private final ThreadLocal<Observation> localObservation = new ThreadLocal<>();
 
     // Even though writes are guarded by meterMapLock, iterators across value space are supported
     // Hence, we use CHM to support that iteration without ConcurrentModificationException risk
@@ -116,12 +116,13 @@ public abstract class MeterRegistry {
         this.clock = clock;
     }
 
-    @Nullable public Timer.Sample getCurrentSample() {
-        return localSample.get();
+    @Nullable
+    public Observation getCurrentObservation() {
+        return this.localObservation.get();
     }
 
-    Timer.Scope openNewScope(Timer.Sample currentSample) {
-        return new Timer.Scope(localSample, currentSample);
+    void setCurrentObservation(@Nullable Observation current) {
+        this.localObservation.set(current);
     }
 
     /**
@@ -567,6 +568,14 @@ public abstract class MeterRegistry {
         return gauge(name, tags, map, Map::size);
     }
 
+    public Observation observation(String name) {
+        return observationHandlers.isEmpty() ? NoopObservation.INSTANCE : new SimpleObservation(name, this);
+    }
+
+    public Observation observation(String name, Observation.Context context) {
+        return observationHandlers.isEmpty() ? NoopObservation.INSTANCE : new SimpleObservation(name, this, context);
+    }
+
     private <M extends Meter> M registerMeterIfNecessary(Class<M> meterClass, Meter.Id id, Function<Meter.Id, M> builder,
                                                          Function<Meter.Id, M> noopBuilder) {
         return registerMeterIfNecessary(meterClass, id, null, (id2, conf) -> builder.apply(id2), noopBuilder);
@@ -810,22 +819,20 @@ public abstract class MeterRegistry {
         }
 
         /**
-         * Register an event handler for {@link Timer} recordings made using {@link Timer#start(MeterRegistry)}
-         * and {@link Timer.Sample#stop(Timer.Builder)} methods. You can add arbitrary behavior
-         * in the callbacks provided to get additional behavior out of timing instrumentation.
+         * Register a handler for the {@link Observation observations}.
          *
          * @param handler handler to add to the current configuration
          * @return This configuration instance
          * @since 2.0.0
          */
-        public Config timerRecordingHandler(TimerRecordingHandler<?> handler) {
-            timerRecordingHandlers.add(handler);
+        public Config observationHandler(ObservationHandler<?> handler) {
+            observationHandlers.add(handler);
             return this;
         }
 
         // package-private for minimal visibility
-        Collection<TimerRecordingHandler<?>> getTimerRecordingHandlers() {
-            return timerRecordingHandlers;
+        Collection<ObservationHandler<?>> getObservationHandlers() {
+            return observationHandlers;
         }
 
         /**
