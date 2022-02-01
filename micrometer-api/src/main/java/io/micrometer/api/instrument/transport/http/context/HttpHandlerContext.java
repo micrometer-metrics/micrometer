@@ -15,7 +15,7 @@
  */
 package io.micrometer.api.instrument.transport.http.context;
 
-import io.micrometer.api.instrument.Observation;
+import io.micrometer.api.instrument.observation.Observation;
 import io.micrometer.api.instrument.Tags;
 import io.micrometer.api.instrument.transport.http.HttpRequest;
 import io.micrometer.api.instrument.transport.http.HttpResponse;

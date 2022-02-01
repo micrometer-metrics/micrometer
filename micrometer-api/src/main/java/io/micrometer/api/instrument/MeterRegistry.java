@@ -79,13 +79,11 @@ public abstract class MeterRegistry {
     protected final Clock clock;
     private final Object meterMapLock = new Object();
     private volatile MeterFilter[] filters = new MeterFilter[0];
-    private final List<ObservationHandler<?>> observationHandlers = new CopyOnWriteArrayList<>();
     private final List<Consumer<Meter>> meterAddedListeners = new CopyOnWriteArrayList<>();
     private final List<Consumer<Meter>> meterRemovedListeners = new CopyOnWriteArrayList<>();
     private final List<BiConsumer<Meter.Id, String>> meterRegistrationFailedListeners = new CopyOnWriteArrayList<>();
     private final Config config = new Config();
     private final More more = new More();
-    private final ThreadLocal<Observation> localObservation = new ThreadLocal<>();
 
     // Even though writes are guarded by meterMapLock, iterators across value space are supported
     // Hence, we use CHM to support that iteration without ConcurrentModificationException risk
@@ -114,15 +112,6 @@ public abstract class MeterRegistry {
     protected MeterRegistry(Clock clock) {
         requireNonNull(clock);
         this.clock = clock;
-    }
-
-    @Nullable
-    public Observation getCurrentObservation() {
-        return this.localObservation.get();
-    }
-
-    void setCurrentObservation(@Nullable Observation current) {
-        this.localObservation.set(current);
     }
 
     /**
@@ -568,14 +557,6 @@ public abstract class MeterRegistry {
         return gauge(name, tags, map, Map::size);
     }
 
-    public Observation observation(String name) {
-        return observationHandlers.isEmpty() ? NoopObservation.INSTANCE : new SimpleObservation(name, this);
-    }
-
-    public Observation observation(String name, Observation.Context context) {
-        return observationHandlers.isEmpty() ? NoopObservation.INSTANCE : new SimpleObservation(name, this, context);
-    }
-
     private <M extends Meter> M registerMeterIfNecessary(Class<M> meterClass, Meter.Id id, Function<Meter.Id, M> builder,
                                                          Function<Meter.Id, M> noopBuilder) {
         return registerMeterIfNecessary(meterClass, id, null, (id2, conf) -> builder.apply(id2), noopBuilder);
@@ -816,23 +797,6 @@ public abstract class MeterRegistry {
         public Config onMeterRegistrationFailed(BiConsumer<Id, String> meterRegistrationFailedListener) {
             meterRegistrationFailedListeners.add(meterRegistrationFailedListener);
             return this;
-        }
-
-        /**
-         * Register a handler for the {@link Observation observations}.
-         *
-         * @param handler handler to add to the current configuration
-         * @return This configuration instance
-         * @since 2.0.0
-         */
-        public Config observationHandler(ObservationHandler<?> handler) {
-            observationHandlers.add(handler);
-            return this;
-        }
-
-        // package-private for minimal visibility
-        Collection<ObservationHandler<?>> getObservationHandlers() {
-            return observationHandlers;
         }
 
         /**

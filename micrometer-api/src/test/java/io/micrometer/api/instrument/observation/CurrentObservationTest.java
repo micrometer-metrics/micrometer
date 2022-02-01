@@ -13,8 +13,10 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package io.micrometer.api.instrument;
+package io.micrometer.api.instrument.observation;
 
+import io.micrometer.api.instrument.MeterRegistry;
+import io.micrometer.api.instrument.observation.Observation;
 import io.micrometer.api.instrument.simple.SimpleMeterRegistry;
 import org.junit.jupiter.api.Test;
 
@@ -25,7 +27,7 @@ import java.util.concurrent.*;
 import static org.assertj.core.api.Assertions.assertThat;
 
 class CurrentObservationTest {
-    private final MeterRegistry registry = new SimpleMeterRegistry();
+    private final ObservationRegistry registry = new SimpleObservationRegistry();
 
     @Test
     void nestedSamples_parentChildThreadsInstrumented() throws ExecutionException, InterruptedException {

@@ -19,31 +19,45 @@ import java.io.IOException;
 import java.time.Instant;
 import java.util.UUID;
 
-import io.micrometer.api.instrument.Observation;
-import io.micrometer.api.instrument.ObservationHandler;
+import io.micrometer.api.instrument.observation.Observation;
+import io.micrometer.api.instrument.observation.ObservationHandler;
 import io.micrometer.api.instrument.Tags;
+import io.micrometer.api.instrument.observation.ObservationRegistry;
+import io.micrometer.api.instrument.observation.TimerObservationRegistry;
 import io.micrometer.prometheus.PrometheusConfig;
 import io.micrometer.prometheus.PrometheusMeterRegistry;
 
 public class ObservationHandlerSample {
     private static final PrometheusMeterRegistry registry = new PrometheusMeterRegistry(PrometheusConfig.DEFAULT);
 
-    public static void main(String[] args) throws InterruptedException {
-        registry.config().observationHandler(new SampleHandler());
+    private static final ObservationRegistry observationRegistry = new TimerObservationRegistry(registry);
 
-        Observation observation = registry.observation("sample.operation", new CustomContext())
+    public static void main(String[] args) throws InterruptedException {
+        observationRegistry.config().observationHandler(new SampleHandler());
+        observationRegistry.config().observationPredicate((s, context) -> {
+            boolean observationEnabled = !"sample.ignored".equals(s);
+            if (!observationEnabled) {
+                System.out.println("Ignoring sample.ignored");
+            }
+            return observationEnabled;
+        });
+
+        Observation observation = observationRegistry.observation("sample.operation", new CustomContext())
                 .displayName("CALL sampleOperation")
                 .lowCardinalityTag("a", "1")
                 .highCardinalityTag("time", Instant.now().toString())
                 .start();
+
         try (Observation.Scope scope = observation.openScope()) {
             Thread.sleep(1_000);
             observation.error(new IOException("simulated"));
         }
         observation.stop();
 
-        registry.observation("sample.operation").start().stop();
-        registry.observation("sample.operation", new UnsupportedHandlerContext()).start().stop();
+        observationRegistry.start("sample.operation").stop();
+        observationRegistry.start("sample.operation", new UnsupportedHandlerContext()).stop();
+
+        observationRegistry.start("sample.ignored", new CustomContext()).stop();
 
         System.out.println();
         System.out.println(registry.scrape());
@@ -52,12 +66,15 @@ public class ObservationHandlerSample {
     static class SampleHandler implements ObservationHandler<CustomContext> {
         @Override
         public void onStart(Observation observation, CustomContext context) {
+            if (context.getName().equals("sample.ignored")) {
+                throw new AssertionError("Boom!");
+            }
             System.out.println("start: " + observation);
         }
 
         @Override
-        public void onError(Observation observation, CustomContext context) {
-            System.out.println("error: " + observation);
+        public void onError(Observation observation, CustomContext context, Throwable throwable) {
+            System.out.println("error: " + observation + " " + throwable);
         }
 
         @Override

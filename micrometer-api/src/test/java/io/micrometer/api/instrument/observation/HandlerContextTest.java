@@ -13,24 +13,25 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package io.micrometer.api.instrument;
+package io.micrometer.api.instrument.observation;
 
+import io.micrometer.api.instrument.Timer;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
 /**
- * Tests for {@link Timer.HandlerContext}.
+ * Tests for {@link Observation.Context}.
  *
  * @author Jonatan Ivanov
  */
 class HandlerContextTest {
-    private Timer.HandlerContext handlerContext;
+    private Observation.Context handlerContext;
 
     @BeforeEach
     void setUp() {
-        this.handlerContext = new Timer.HandlerContext();
+        this.handlerContext = new Observation.Context();
     }
 
     @Test

@@ -106,21 +106,6 @@ public class MeterRegistryAssert extends AbstractAssert<MeterRegistryAssert, Met
     }
 
     /**
-     * Verifies that there's no current {@link Timer.Sample} left in the {@link MeterRegistry}.
-     *
-     * @return this
-     * @throws AssertionError if there is a current sample remaining in the registry
-     */
-    public MeterRegistryAssert doesNotHaveRemainingSample() {
-        isNotNull();
-        Timer.Sample currentSample = actual.getCurrentSample();
-        if (currentSample != null) {
-            failWithMessage("Expected no current sample in the registry but found one");
-        }
-        return this;
-    }
-
-    /**
      * Verifies that a timer with given name and key-value tags exists in the provided {@link MeterRegistry}.
      * 
      * @param timerName name of the timer

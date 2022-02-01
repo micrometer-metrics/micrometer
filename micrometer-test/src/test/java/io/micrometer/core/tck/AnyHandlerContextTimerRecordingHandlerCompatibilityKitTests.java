@@ -15,38 +15,36 @@
  */
 package io.micrometer.core.tck;
 
-import java.time.Duration;
-
-import io.micrometer.api.instrument.Timer;
-import io.micrometer.api.instrument.TimerRecordingHandler;
+import io.micrometer.api.instrument.observation.Observation;
+import io.micrometer.api.instrument.observation.ObservationHandler;
 
 class AnyHandlerContextTimerRecordingHandlerCompatibilityKitTests extends AnyHandlerContextTimerRecordingHandlerCompatibilityKit {
 
     @Override
-    public TimerRecordingHandler<Timer.HandlerContext> handler() {
-        return new TimerRecordingHandler<Timer.HandlerContext>() {
+    public ObservationHandler<Observation.Context> handler() {
+        return new ObservationHandler<Observation.Context>() {
             @Override
-            public void onStart(Timer.Sample sample, Timer.HandlerContext handlerContext) {
+            public void onStart(Observation sample, Observation.Context handlerContext) {
 
             }
 
             @Override
-            public void onError(Timer.Sample sample, Timer.HandlerContext handlerContext, Throwable throwable) {
+            public void onError(Observation sample, Observation.Context handlerContext, Throwable throwable) {
 
             }
 
             @Override
-            public void onScopeOpened(Timer.Sample sample, Timer.HandlerContext handlerContext) {
+            public void onScopeOpened(Observation sample, Observation.Context handlerContext) {
 
             }
 
             @Override
-            public void onStop(Timer.Sample sample, Timer.HandlerContext handlerContext, Timer timer, Duration duration) {
+            public void onStop(Observation sample, Observation.Context handlerContext) {
 
             }
 
             @Override
-            public boolean supportsContext(Timer.HandlerContext handlerContext) {
+            public boolean supportsContext(Observation.Context handlerContext) {
                 return true;
             }
         };

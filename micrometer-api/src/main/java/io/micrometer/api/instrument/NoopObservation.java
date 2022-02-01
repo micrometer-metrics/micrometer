@@ -3,6 +3,7 @@ package io.micrometer.api.instrument;
 import java.time.Duration;
 import java.util.Collections;
 
+import io.micrometer.api.instrument.observation.Observation;
 import io.micrometer.api.lang.Nullable;
 
 public class NoopObservation implements Observation {
@@ -13,33 +14,8 @@ public class NoopObservation implements Observation {
     }
 
     @Override
-    public String getName() {
-        return "noop";
-    }
-
-    @Override
-    public String getDescription() {
-        return "noop";
-    }
-
-    @Override
-    public Observation description(String description) {
-        return this;
-    }
-
-    @Override
-    public String getDisplayName() {
-        return "noop";
-    }
-
-    @Override
     public Observation displayName(String displayName) {
         return this;
-    }
-
-    @Override
-    public Iterable<Tag> getLowCardinalityTags() {
-        return TAGS;
     }
 
     @Override
@@ -53,11 +29,6 @@ public class NoopObservation implements Observation {
     }
 
     @Override
-    public Iterable<Tag> getHighCardinalityTags() {
-        return TAGS;
-    }
-
-    @Override
     public Observation highCardinalityTag(Tag tag) {
         return this;
     }
@@ -67,35 +38,9 @@ public class NoopObservation implements Observation {
         return this;
     }
 
-    @Nullable
-    @Override
-    public Throwable getError() {
-        return null;
-    }
-
     @Override
     public Observation error(Throwable error) {
         return this;
-    }
-
-    @Override
-    public Duration getDuration() {
-        return Duration.ZERO;
-    }
-
-    @Override
-    public long getStartNanos() {
-        return 0;
-    }
-
-    @Override
-    public long getStopNanos() {
-        return 0;
-    }
-
-    @Override
-    public long getStartWallTime() {
-        return 0;
     }
 
     @Override

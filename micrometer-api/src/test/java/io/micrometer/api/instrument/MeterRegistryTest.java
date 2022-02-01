@@ -207,30 +207,4 @@ class MeterRegistryTest {
                 .hasMessage("There is already a registered meter of a different type (CumulativeCounter vs. Timer) with the same name: my.dupe.meter")
                 .hasNoCause();
     }
-
-    @Test
-    void openingScopeShouldSetSampleAsCurrent() {
-        Timer.Builder timerBuilder = Timer.builder("test.timer");
-        Timer.Sample sample = Timer.start(registry);
-        Timer.Scope scope = registry.openNewScope(sample);
-
-        assertThat(registry.getCurrentSample()).isSameAs(sample);
-
-        scope.close();
-        sample.stop(timerBuilder);
-
-        assertThat(registry.getCurrentSample()).isNull();
-    }
-
-    @Test
-    void timerRecordingHandlerShouldAddThePassedHandler() {
-        TimerRecordingHandler<?> handler1 = mock(TimerRecordingHandler.class);
-        TimerRecordingHandler<?> handler2 = mock(TimerRecordingHandler.class);
-
-        registry.config().timerRecordingHandler(handler1);
-        assertThat(registry.config().getTimerRecordingHandlers()).containsExactly(handler1);
-
-        registry.config().timerRecordingHandler(handler2);
-        assertThat(registry.config().getTimerRecordingHandlers()).containsExactlyInAnyOrder(handler1, handler2);
-    }
 }

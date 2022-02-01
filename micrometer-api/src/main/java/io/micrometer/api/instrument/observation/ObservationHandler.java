@@ -1,4 +1,4 @@
-package io.micrometer.api.instrument;
+package io.micrometer.api.instrument.observation;
 
 import java.util.Arrays;
 import java.util.List;
@@ -8,7 +8,7 @@ import java.util.stream.Stream;
 public interface ObservationHandler<T extends Observation.Context> {
     void onStart(Observation observation, T context);
 
-    void onError(Observation observation, T context);
+    void onError(Observation observation, T context, Throwable throwable);
 
     default void onScopeOpened(Observation observation, T context) {
     }
@@ -67,8 +67,8 @@ public interface ObservationHandler<T extends Observation.Context> {
         }
 
         @Override
-        public void onError(Observation observation, Observation.Context context) {
-            getFirstApplicableHandler(context).ifPresent(handler -> handler.onError(observation, context));
+        public void onError(Observation observation, Observation.Context context, Throwable throwable) {
+            getFirstApplicableHandler(context).ifPresent(handler -> handler.onError(observation, context, throwable));
         }
 
         @Override
@@ -130,8 +130,8 @@ public interface ObservationHandler<T extends Observation.Context> {
         }
 
         @Override
-        public void onError(Observation observation, Observation.Context context) {
-            getAllApplicableHandlers(context).forEach(handler -> handler.onError(observation, context));
+        public void onError(Observation observation, Observation.Context context, Throwable throwable) {
+            getAllApplicableHandlers(context).forEach(handler -> handler.onError(observation, context, throwable));
         }
 
         @Override

@@ -18,7 +18,7 @@ package io.micrometer.core.tck;
 import io.micrometer.api.instrument.observation.Observation;
 import io.micrometer.api.instrument.observation.ObservationHandler;
 
-class NullContextTimerRecordingHandlerCompatibilityKitTests extends NullHandlerContextTimerRecordingHandlerCompatibilityKit {
+class ConcreteHandlerContextObservationHandlerCompatibilityKitTests extends ConcreteHandlerContextObservationHandlerCompatibilityKit {
 
     @Override
     public ObservationHandler<Observation.Context> handler() {
@@ -45,8 +45,17 @@ class NullContextTimerRecordingHandlerCompatibilityKitTests extends NullHandlerC
 
             @Override
             public boolean supportsContext(Observation.Context handlerContext) {
-                return true;
+                return handlerContext instanceof MyHandlerContext;
             }
         };
+    }
+
+    @Override
+    public Observation.Context context() {
+        return new MyHandlerContext();
+    }
+
+    static class MyHandlerContext extends Observation.Context {
+
     }
 }

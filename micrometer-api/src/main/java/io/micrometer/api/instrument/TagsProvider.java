@@ -23,15 +23,48 @@ package io.micrometer.api.instrument;
  */
 public interface TagsProvider {
 
+    /**
+     * Default low cardinality tags.
+     *
+     * @return tags
+     */
     default Tags getLowCardinalityTags() {
         return Tags.empty();
     }
 
+    /**
+     * Default high cardinality tags.
+     *
+     * @return tags
+     */
     default Tags getHighCardinalityTags() {
         return Tags.empty();
     }
 
+    /**
+     * Default low cardinality tags.
+     *
+     * @return tags
+     */
     default Tags getAllTags() {
-        return Tags.concat(getLowCardinalityTags(), getHighCardinalityTags());
+        return Tags.concat(getLowCardinalityTags(), getHighCardinalityTags()).and(getAdditionalLowCardinalityTags()).and(getAdditionalHighCardinalityTags());
+    }
+
+    /**
+     * Additional to the default low cardinality tags. Can be set at runtime.
+     *
+     * @return tags
+     */
+    default Tags getAdditionalLowCardinalityTags() {
+        return Tags.empty();
+    }
+
+    /**
+     * Additional to the default high cardinality tags. Can be set at runtime.
+     *
+     * @return tags
+     */
+    default Tags getAdditionalHighCardinalityTags() {
+        return Tags.empty();
     }
 }

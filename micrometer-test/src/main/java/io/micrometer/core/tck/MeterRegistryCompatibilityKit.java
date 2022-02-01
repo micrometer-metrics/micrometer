@@ -17,6 +17,8 @@ package io.micrometer.core.tck;
 
 import io.micrometer.api.instrument.*;
 import io.micrometer.api.instrument.Timer;
+import io.micrometer.api.instrument.observation.Observation;
+import io.micrometer.api.instrument.observation.ObservationHandler;
 import io.micrometer.core.Issue;
 import io.micrometer.api.annotation.Timed;
 import io.micrometer.api.instrument.distribution.CountAtBucket;
@@ -650,44 +652,6 @@ public abstract class MeterRegistryCompatibilityKit {
 //            assertAll(() -> assertEquals(1L, timer.count()),
 //                    () -> assertEquals(10, timer.totalTime(TimeUnit.NANOSECONDS), 1.0e-12));
 //        }
-
-        @Test
-        @DisplayName("record using handlers")
-        void recordWithHandlers() {
-            @SuppressWarnings("unchecked")
-            ObservationHandler<Observation.Context> handler = mock(ObservationHandler.class);
-            @SuppressWarnings("unchecked")
-            ObservationHandler<Observation.Context> handlerThatHandlesNothing = mock(ObservationHandler.class);
-            registry.config().observationHandler(handler);
-            registry.config().observationHandler(handlerThatHandlesNothing);
-            when(handler.supportsContext(any())).thenReturn(true);
-            when(handlerThatHandlesNothing.supportsContext(any())).thenReturn(false);
-
-            Observation observation = registry.observation("myObservation");
-            verify(handler).supportsContext(isA(Observation.Context.class));
-            verify(handler).onStart(same(observation), isA(Observation.Context.class));
-            verify(handlerThatHandlesNothing).supportsContext(isA(Observation.Context.class));
-            verifyNoMoreInteractions(handlerThatHandlesNothing);
-
-            try (Observation.Scope scope = observation.openScope()) {
-                verify(handler).onScopeOpened(same(observation), isA(Observation.Context.class));
-                assertThat(scope.getCurrentObservation()).isSameAs(observation);
-
-                clock(registry).add(10, TimeUnit.NANOSECONDS);
-                Throwable exception = new IOException("simulated");
-                observation.error(exception);
-                verify(handler).onError(same(observation), isA(Observation.Context.class));
-            }
-            verify(handler).onScopeClosed(same(observation), isA(Observation.Context.class));
-            observation.stop();
-
-            Timer timer = registry.timer("myTimer");
-            verify(handler).onStop(same(observation), isA(Observation.Context.class));
-            clock(registry).add(step());
-
-            assertAll(() -> assertEquals(1L, timer.count()),
-                    () -> assertEquals(10, timer.totalTime(TimeUnit.NANOSECONDS), 1.0e-12));
-        }
 
         @Test
         void recordMax() {
