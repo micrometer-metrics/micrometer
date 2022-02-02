@@ -20,7 +20,6 @@ import java.util.List;
 import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.function.BiPredicate;
 
-import io.micrometer.api.instrument.MeterRegistry;
 import io.micrometer.api.instrument.NoopObservation;
 import io.micrometer.api.lang.Nullable;
 

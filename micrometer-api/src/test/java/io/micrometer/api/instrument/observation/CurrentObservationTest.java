@@ -15,9 +15,6 @@
  */
 package io.micrometer.api.instrument.observation;
 
-import io.micrometer.api.instrument.MeterRegistry;
-import io.micrometer.api.instrument.observation.Observation;
-import io.micrometer.api.instrument.simple.SimpleMeterRegistry;
 import org.junit.jupiter.api.Test;
 
 import java.util.HashMap;
@@ -77,7 +74,7 @@ class CurrentObservationTest {
         }).get();
 
         executor2.submit(() -> {
-            Observation myObservation= observationMap.get("myObservation");
+            Observation myObservation = observationMap.get("myObservation");
             try (Observation.Scope scope = myObservation.openScope()) {
                 assertThat(registry.getCurrentObservation()).isEqualTo(myObservation);
             }

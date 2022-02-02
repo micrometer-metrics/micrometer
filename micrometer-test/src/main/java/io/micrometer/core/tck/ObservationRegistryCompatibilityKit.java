@@ -17,24 +17,16 @@ package io.micrometer.core.tck;
 
 import java.io.IOException;
 import java.time.Duration;
-import java.util.concurrent.TimeUnit;
 
 import io.micrometer.api.instrument.MeterRegistry;
-import io.micrometer.api.instrument.Timer;
 import io.micrometer.api.instrument.observation.Observation;
 import io.micrometer.api.instrument.observation.ObservationHandler;
 import io.micrometer.api.instrument.observation.ObservationRegistry;
-import io.micrometer.api.instrument.observation.SimpleObservationRegistry;
-import io.micrometer.api.instrument.observation.TimerObservationRegistry;
-import io.micrometer.api.instrument.simple.SimpleMeterRegistry;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
-import static io.micrometer.api.instrument.MockClock.clock;
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.junit.jupiter.api.Assertions.assertAll;
-import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.isA;
 import static org.mockito.ArgumentMatchers.same;
@@ -88,7 +80,7 @@ public abstract class ObservationRegistryCompatibilityKit {
 
             Throwable exception = new IOException("simulated");
             observation.error(exception);
-            verify(handler).onError(same(observation), isA(Observation.Context.class), isA(IOException.class));
+            verify(handler).onError(same(observation), isA(Observation.Context.class));
         }
         verify(handler).onScopeClosed(same(observation), isA(Observation.Context.class));
         observation.stop();

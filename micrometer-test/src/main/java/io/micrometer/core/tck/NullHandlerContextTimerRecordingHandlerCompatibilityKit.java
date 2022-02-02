@@ -55,7 +55,7 @@ public abstract class NullHandlerContextTimerRecordingHandlerCompatibilityKit {
     void handlerSupportsNullContext() {
         assertThatCode(() -> handler.onStart(sample, null)).doesNotThrowAnyException();
         assertThatCode(() -> handler.onStop(sample, null)).doesNotThrowAnyException();
-        assertThatCode(() -> handler.onError(sample, null, new RuntimeException())).doesNotThrowAnyException();
+        assertThatCode(() -> handler.onError(sample, null)).doesNotThrowAnyException();
         assertThatCode(() -> handler.onScopeOpened(sample, null)).doesNotThrowAnyException();
         assertThatCode(() -> handler.supportsContext(null)).doesNotThrowAnyException();
         assertThat(handler.supportsContext(null)).as("Handler supports null context").isTrue();

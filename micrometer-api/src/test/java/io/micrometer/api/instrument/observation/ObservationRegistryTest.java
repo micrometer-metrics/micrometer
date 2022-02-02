@@ -15,24 +15,11 @@
  */
 package io.micrometer.api.instrument.observation;
 
-import javax.annotation.Nonnull;
-
-import io.micrometer.api.instrument.Counter;
-import io.micrometer.api.instrument.Meter;
 import io.micrometer.api.instrument.MeterRegistry;
 import io.micrometer.api.instrument.NoopObservation;
-import io.micrometer.api.instrument.Timer;
-import io.micrometer.api.instrument.config.MeterFilter;
-import io.micrometer.api.instrument.config.MeterFilterReply;
-import io.micrometer.api.instrument.distribution.DistributionStatisticConfig;
-import io.micrometer.api.instrument.distribution.pause.PauseDetector;
-import io.micrometer.api.instrument.noop.NoopCounter;
-import io.micrometer.api.instrument.noop.NoopTimer;
-import io.micrometer.api.instrument.simple.SimpleMeterRegistry;
 import org.junit.jupiter.api.Test;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.Mockito.mock;
 
 /**

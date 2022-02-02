@@ -15,17 +15,35 @@
  */
 package io.micrometer.core.tck;
 
-import io.micrometer.api.instrument.*;
-import io.micrometer.api.instrument.Timer;
-import io.micrometer.api.instrument.observation.Observation;
-import io.micrometer.api.instrument.observation.ObservationHandler;
-import io.micrometer.core.Issue;
+import java.time.Duration;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicInteger;
+import java.util.concurrent.atomic.AtomicLong;
+import java.util.function.Supplier;
+
 import io.micrometer.api.annotation.Timed;
+import io.micrometer.api.instrument.Counter;
+import io.micrometer.api.instrument.DistributionSummary;
+import io.micrometer.api.instrument.FunctionTimer;
+import io.micrometer.api.instrument.Gauge;
+import io.micrometer.api.instrument.LongTaskTimer;
+import io.micrometer.api.instrument.Meter;
+import io.micrometer.api.instrument.MeterRegistry;
+import io.micrometer.api.instrument.Statistic;
+import io.micrometer.api.instrument.Tag;
+import io.micrometer.api.instrument.Timer;
 import io.micrometer.api.instrument.distribution.CountAtBucket;
 import io.micrometer.api.instrument.distribution.DistributionStatisticConfig;
 import io.micrometer.api.instrument.distribution.ValueAtPercentile;
 import io.micrometer.api.instrument.internal.CumulativeHistogramLongTaskTimer;
 import io.micrometer.api.instrument.util.TimeUtils;
+import io.micrometer.core.Issue;
 import org.assertj.core.data.Offset;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
@@ -34,30 +52,19 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.CsvSource;
 
-import java.io.IOException;
-import java.time.Duration;
-import java.util.*;
-import java.util.concurrent.TimeUnit;
-import java.util.concurrent.atomic.AtomicInteger;
-import java.util.concurrent.atomic.AtomicLong;
-import java.util.function.Supplier;
-
 import static io.micrometer.api.instrument.MockClock.clock;
 import static io.micrometer.api.instrument.Statistic.ACTIVE_TASKS;
 import static io.micrometer.api.instrument.Statistic.DURATION;
 import static io.micrometer.api.instrument.util.TimeUtils.millisToUnit;
 import static java.util.Collections.emptyList;
 import static java.util.Objects.requireNonNull;
-import static org.assertj.core.api.Assertions.*;
-import static org.junit.jupiter.api.Assertions.*;
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.eq;
-import static org.mockito.ArgumentMatchers.isA;
-import static org.mockito.ArgumentMatchers.same;
-import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.verifyNoMoreInteractions;
-import static org.mockito.Mockito.when;
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.offset;
+import static org.assertj.core.api.Assertions.within;
+import static org.junit.jupiter.api.Assertions.assertAll;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 /**
  * Base class for {@link MeterRegistry} compatibility tests.

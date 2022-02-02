@@ -16,15 +16,10 @@
 package io.micrometer.core.tck;
 
 import java.time.Duration;
-import java.time.temporal.TemporalUnit;
 
-import io.micrometer.api.instrument.observation.Observation;
 import io.micrometer.api.instrument.observation.ObservationRegistry;
 import io.micrometer.api.instrument.observation.SimpleObservationRegistry;
 import io.micrometer.api.instrument.simple.SimpleConfig;
-import org.junit.jupiter.api.Test;
-
-import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 class ObservationRegistryCompatibilityKitTests extends ObservationRegistryCompatibilityKit {
 

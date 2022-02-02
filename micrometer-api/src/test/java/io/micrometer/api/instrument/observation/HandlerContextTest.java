@@ -15,7 +15,6 @@
  */
 package io.micrometer.api.instrument.observation;
 
-import io.micrometer.api.instrument.Timer;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 

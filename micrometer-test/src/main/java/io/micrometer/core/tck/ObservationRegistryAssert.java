@@ -15,12 +15,6 @@
  */
 package io.micrometer.core.tck;
 
-import java.util.List;
-import java.util.stream.Collectors;
-
-import io.micrometer.api.instrument.MeterRegistry;
-import io.micrometer.api.instrument.Tags;
-import io.micrometer.api.instrument.Timer;
 import io.micrometer.api.instrument.observation.Observation;
 import io.micrometer.api.instrument.observation.ObservationRegistry;
 import org.assertj.core.api.AbstractAssert;

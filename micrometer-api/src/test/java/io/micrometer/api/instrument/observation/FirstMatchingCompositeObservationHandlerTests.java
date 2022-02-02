@@ -53,7 +53,7 @@ class FirstMatchingCompositeObservationHandlerTests {
         FirstMatchingCompositeObservationHandler firstMatchingCompositeTimerRecordingHandler = new FirstMatchingCompositeObservationHandler(
                 new NotMatchingHandler(), this.matchingHandler, new NotMatchingHandler());
 
-        firstMatchingCompositeTimerRecordingHandler.onError(sample, null, new RuntimeException());
+        firstMatchingCompositeTimerRecordingHandler.onError(sample, null);
 
         assertThat(this.matchingHandler.errored).isTrue();
     }
@@ -78,7 +78,7 @@ class FirstMatchingCompositeObservationHandlerTests {
         assertThat(this.matchingHandler.scopeClosed).isTrue();
     }
 
-    static class MatchingHandler implements ObservationHandler {
+    static class MatchingHandler implements ObservationHandler<Observation.Context> {
 
         boolean started;
 
@@ -97,7 +97,7 @@ class FirstMatchingCompositeObservationHandlerTests {
         }
 
         @Override
-        public void onError(Observation observation, Observation.Context context, Throwable throwable) {
+        public void onError(Observation observation, Observation.Context context) {
             this.errored = true;
         }
 
@@ -122,7 +122,7 @@ class FirstMatchingCompositeObservationHandlerTests {
         }
     }
 
-    static class NotMatchingHandler implements ObservationHandler {
+    static class NotMatchingHandler implements ObservationHandler<Observation.Context> {
 
         @Override
         public void onStart(Observation observation, Observation.Context context) {
@@ -130,7 +130,7 @@ class FirstMatchingCompositeObservationHandlerTests {
         }
 
         @Override
-        public void onError(Observation observation, Observation.Context context, Throwable throwable) {
+        public void onError(Observation observation, Observation.Context context) {
             throwAssertionError();
         }
 

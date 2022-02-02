@@ -1,7 +1,21 @@
+/*
+ * Copyright 2022 VMware, Inc.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ * https://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
 package io.micrometer.api.instrument.observation;
 
 import java.util.ArrayDeque;
-import java.util.Collection;
 import java.util.Deque;
 import java.util.stream.Collectors;
 
@@ -10,7 +24,6 @@ import io.micrometer.api.lang.Nullable;
 
 public class SimpleObservation implements Observation {
     private final ObservationRegistry registry;
-    @Nullable private Throwable error;
     private final Context context;
     @SuppressWarnings("rawtypes")
     private final Deque<ObservationHandler> handlers;
@@ -47,7 +60,7 @@ public class SimpleObservation implements Observation {
 
     @Override
     public Observation error(Throwable error) {
-        this.error = error;
+        this.context.setError(error);
         this.notifyOnError();
         return this;
     }
@@ -73,7 +86,7 @@ public class SimpleObservation implements Observation {
     public String toString() {
         return "{"
                 + "name=" + this.context.getName() + "(" + this.context.getDisplayName() + ")"
-                + ", error=" + this.error
+                + ", error=" + this.context.getError()
                 + ", context=" + this.context
                 + '}';
     }
@@ -85,7 +98,7 @@ public class SimpleObservation implements Observation {
 
     @SuppressWarnings("unchecked")
     private void notifyOnError() {
-        this.handlers.forEach(handler -> handler.onError(this, this.context, this.error));
+        this.handlers.forEach(handler -> handler.onError(this, this.context));
     }
 
     @SuppressWarnings("unchecked")

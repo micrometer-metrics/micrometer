@@ -29,7 +29,7 @@ class ConcreteHandlerContextObservationHandlerCompatibilityKitTests extends Conc
             }
 
             @Override
-            public void onError(Observation sample, Observation.Context handlerContext, Throwable throwable) {
+            public void onError(Observation sample, Observation.Context handlerContext) {
 
             }
 

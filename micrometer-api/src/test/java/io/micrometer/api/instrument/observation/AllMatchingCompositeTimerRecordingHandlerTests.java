@@ -15,11 +15,7 @@
  */
 package io.micrometer.api.instrument.observation;
 
-import java.time.Duration;
-
-import io.micrometer.api.instrument.Timer;
 import io.micrometer.api.instrument.observation.ObservationHandler.AllMatchingCompositeObservationHandler;
-import io.micrometer.api.instrument.simple.SimpleMeterRegistry;
 import org.junit.jupiter.api.Test;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -61,7 +57,7 @@ class AllMatchingCompositeTimerRecordingHandlerTests {
         AllMatchingCompositeObservationHandler allMatchingCompositeTimerRecordingHandler = new AllMatchingCompositeObservationHandler(
                 new NotMatchingHandler(), this.matchingHandler, new NotMatchingHandler(), this.matchingHandler2);
 
-        allMatchingCompositeTimerRecordingHandler.onError(sample, null, new RuntimeException());
+        allMatchingCompositeTimerRecordingHandler.onError(sample, null);
 
         assertThat(this.matchingHandler.errored).isTrue();
         assertThat(this.matchingHandler2.errored).isTrue();
@@ -89,7 +85,7 @@ class AllMatchingCompositeTimerRecordingHandlerTests {
         assertThat(this.matchingHandler2.scopeClosed).isTrue();
     }
 
-    static class MatchingHandler implements ObservationHandler {
+    static class MatchingHandler implements ObservationHandler<Observation.Context> {
 
         boolean started;
 
@@ -108,7 +104,7 @@ class AllMatchingCompositeTimerRecordingHandlerTests {
         }
 
         @Override
-        public void onError(Observation observation, Observation.Context context, Throwable throwable) {
+        public void onError(Observation observation, Observation.Context context) {
             this.errored = true;
         }
 
@@ -133,7 +129,7 @@ class AllMatchingCompositeTimerRecordingHandlerTests {
         }
     }
 
-    static class NotMatchingHandler implements ObservationHandler {
+    static class NotMatchingHandler implements ObservationHandler<Observation.Context> {
 
         @Override
         public void onStart(Observation observation, Observation.Context context) {
@@ -141,7 +137,7 @@ class AllMatchingCompositeTimerRecordingHandlerTests {
         }
 
         @Override
-        public void onError(Observation observation, Observation.Context context, Throwable throwable) {
+        public void onError(Observation observation, Observation.Context context) {
             throwAssertionError();
         }
 

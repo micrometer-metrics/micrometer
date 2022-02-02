@@ -73,8 +73,8 @@ public class ObservationHandlerSample {
         }
 
         @Override
-        public void onError(Observation observation, CustomContext context, Throwable throwable) {
-            System.out.println("error: " + observation + " " + throwable);
+        public void onError(Observation observation, CustomContext context) {
+            System.out.println("error: " + observation + " " + context.getError());
         }
 
         @Override
