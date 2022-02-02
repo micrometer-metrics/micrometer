@@ -33,7 +33,7 @@ class FirstMatchingCompositeObservationHandlerTests {
         FirstMatchingCompositeObservationHandler firstMatchingCompositeTimerRecordingHandler = new FirstMatchingCompositeObservationHandler(
                 new NotMatchingHandler(), this.matchingHandler, new NotMatchingHandler());
 
-        firstMatchingCompositeTimerRecordingHandler.onStart(sample, null);
+        firstMatchingCompositeTimerRecordingHandler.onStart(null);
 
         assertThat(this.matchingHandler.started).isTrue();
     }
@@ -43,7 +43,7 @@ class FirstMatchingCompositeObservationHandlerTests {
         FirstMatchingCompositeObservationHandler firstMatchingCompositeTimerRecordingHandler = new FirstMatchingCompositeObservationHandler(
                 new NotMatchingHandler(), this.matchingHandler, new NotMatchingHandler());
 
-        firstMatchingCompositeTimerRecordingHandler.onStop(sample, null);
+        firstMatchingCompositeTimerRecordingHandler.onStop(null);
 
         assertThat(this.matchingHandler.stopped).isTrue();
     }
@@ -53,7 +53,7 @@ class FirstMatchingCompositeObservationHandlerTests {
         FirstMatchingCompositeObservationHandler firstMatchingCompositeTimerRecordingHandler = new FirstMatchingCompositeObservationHandler(
                 new NotMatchingHandler(), this.matchingHandler, new NotMatchingHandler());
 
-        firstMatchingCompositeTimerRecordingHandler.onError(sample, null);
+        firstMatchingCompositeTimerRecordingHandler.onError(null);
 
         assertThat(this.matchingHandler.errored).isTrue();
     }
@@ -63,7 +63,7 @@ class FirstMatchingCompositeObservationHandlerTests {
         FirstMatchingCompositeObservationHandler firstMatchingCompositeTimerRecordingHandler = new FirstMatchingCompositeObservationHandler(
                 new NotMatchingHandler(), this.matchingHandler, new NotMatchingHandler());
 
-        firstMatchingCompositeTimerRecordingHandler.onScopeOpened(sample, null);
+        firstMatchingCompositeTimerRecordingHandler.onScopeOpened(null);
 
         assertThat(this.matchingHandler.scopeOpened).isTrue();
     }
@@ -73,7 +73,7 @@ class FirstMatchingCompositeObservationHandlerTests {
         FirstMatchingCompositeObservationHandler firstMatchingCompositeTimerRecordingHandler = new FirstMatchingCompositeObservationHandler(
                 new NotMatchingHandler(), this.matchingHandler, new NotMatchingHandler());
 
-        firstMatchingCompositeTimerRecordingHandler.onScopeClosed(sample, null);
+        firstMatchingCompositeTimerRecordingHandler.onScopeClosed(null);
 
         assertThat(this.matchingHandler.scopeClosed).isTrue();
     }
@@ -92,27 +92,27 @@ class FirstMatchingCompositeObservationHandlerTests {
 
 
         @Override
-        public void onStart(Observation observation, Observation.Context context) {
+        public void onStart(Observation.Context context) {
             this.started = true;
         }
 
         @Override
-        public void onError(Observation observation, Observation.Context context) {
+        public void onError(Observation.Context context) {
             this.errored = true;
         }
 
         @Override
-        public void onScopeOpened(Observation observation, Observation.Context context) {
+        public void onScopeOpened(Observation.Context context) {
             this.scopeOpened = true;
         }
 
         @Override
-        public void onScopeClosed(Observation observation, Observation.Context context) {
+        public void onScopeClosed(Observation.Context context) {
             this.scopeClosed = true;
         }
 
         @Override
-        public void onStop(Observation observation, Observation.Context context) {
+        public void onStop(Observation.Context context) {
             this.stopped = true;
         }
 
@@ -125,22 +125,22 @@ class FirstMatchingCompositeObservationHandlerTests {
     static class NotMatchingHandler implements ObservationHandler<Observation.Context> {
 
         @Override
-        public void onStart(Observation observation, Observation.Context context) {
+        public void onStart(Observation.Context context) {
             throwAssertionError();
         }
 
         @Override
-        public void onError(Observation observation, Observation.Context context) {
+        public void onError(Observation.Context context) {
             throwAssertionError();
         }
 
         @Override
-        public void onScopeOpened(Observation observation, Observation.Context context) {
+        public void onScopeOpened(Observation.Context context) {
             throwAssertionError();
         }
 
         @Override
-        public void onStop(Observation observation, Observation.Context context) {
+        public void onStop(Observation.Context context) {
             throwAssertionError();
         }
 

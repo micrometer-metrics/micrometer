@@ -24,22 +24,22 @@ class ConcreteHandlerContextObservationHandlerCompatibilityKitTests extends Conc
     public ObservationHandler<Observation.Context> handler() {
         return new ObservationHandler<Observation.Context>() {
             @Override
-            public void onStart(Observation sample, Observation.Context handlerContext) {
+            public void onStart(Observation.Context handlerContext) {
 
             }
 
             @Override
-            public void onError(Observation sample, Observation.Context handlerContext) {
+            public void onError(Observation.Context handlerContext) {
 
             }
 
             @Override
-            public void onScopeOpened(Observation sample, Observation.Context handlerContext) {
+            public void onScopeOpened(Observation.Context handlerContext) {
 
             }
 
             @Override
-            public void onStop(Observation sample, Observation.Context handlerContext) {
+            public void onStop(Observation.Context handlerContext) {
 
             }
 

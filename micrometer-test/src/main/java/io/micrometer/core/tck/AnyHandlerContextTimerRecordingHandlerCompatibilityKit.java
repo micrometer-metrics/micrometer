@@ -37,10 +37,10 @@ public abstract class AnyHandlerContextTimerRecordingHandlerCompatibilityKit ext
     @DisplayName("compatibility test provides a test context accepting timer recording handler")
     void handlerSupportsAnyContext() {
         TestHandlerContext testContext = new TestHandlerContext();
-        assertThatCode(() -> handler.onStart(sample, testContext)).doesNotThrowAnyException();
-        assertThatCode(() -> handler.onStop(sample, testContext)).doesNotThrowAnyException();
-        assertThatCode(() -> handler.onError(sample, testContext)).doesNotThrowAnyException();
-        assertThatCode(() -> handler.onScopeOpened(sample, testContext)).doesNotThrowAnyException();
+        assertThatCode(() -> handler.onStart(testContext)).doesNotThrowAnyException();
+        assertThatCode(() -> handler.onStop(testContext)).doesNotThrowAnyException();
+        assertThatCode(() -> handler.onError(testContext)).doesNotThrowAnyException();
+        assertThatCode(() -> handler.onScopeOpened(testContext)).doesNotThrowAnyException();
         assertThatCode(() -> handler.supportsContext(testContext)).doesNotThrowAnyException();
         assertThat(handler.supportsContext(testContext)).as("Handler supports any context").isTrue();
     }

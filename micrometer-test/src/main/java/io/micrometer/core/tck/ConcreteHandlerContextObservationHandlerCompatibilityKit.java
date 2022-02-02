@@ -55,10 +55,10 @@ public abstract class ConcreteHandlerContextObservationHandlerCompatibilityKit<T
     @Test
     @DisplayName("compatibility test provides a concrete context accepting timer recording handler")
     void handlerSupportsConcreteContextForHandlerMethods() {
-        assertThatCode(() -> handler.onStart(sample, context())).doesNotThrowAnyException();
-        assertThatCode(() -> handler.onStop(sample, context())).doesNotThrowAnyException();
-        assertThatCode(() -> handler.onError(sample, context())).doesNotThrowAnyException();
-        assertThatCode(() -> handler.onScopeOpened(sample, context())).doesNotThrowAnyException();
+        assertThatCode(() -> handler.onStart(context())).doesNotThrowAnyException();
+        assertThatCode(() -> handler.onStop(context())).doesNotThrowAnyException();
+        assertThatCode(() -> handler.onError(context())).doesNotThrowAnyException();
+        assertThatCode(() -> handler.onScopeOpened(context())).doesNotThrowAnyException();
     }
 
     @Test

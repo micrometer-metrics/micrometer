@@ -93,28 +93,28 @@ public class SimpleObservation implements Observation {
 
     @SuppressWarnings("unchecked")
     private void notifyOnObservationStarted() {
-        this.handlers.forEach(handler -> handler.onStart(this, this.context));
+        this.handlers.forEach(handler -> handler.onStart(this.context));
     }
 
     @SuppressWarnings("unchecked")
     private void notifyOnError() {
-        this.handlers.forEach(handler -> handler.onError(this, this.context));
+        this.handlers.forEach(handler -> handler.onError(this.context));
     }
 
     @SuppressWarnings("unchecked")
     private void notifyOnScopeOpened() {
-        this.handlers.forEach(handler -> handler.onScopeOpened(this, this.context));
+        this.handlers.forEach(handler -> handler.onScopeOpened(this.context));
     }
 
     @SuppressWarnings("unchecked")
     private void notifyOnScopeClosed() {
-        this.handlers.forEach(handler -> handler.onScopeClosed(this, this.context));
+        this.handlers.forEach(handler -> handler.onScopeClosed(this.context));
     }
 
     @SuppressWarnings("unchecked")
     private void notifyOnObservationStopped() {
         // TODO: We're closing from end till beggining - e.g. we started with handlers with ids 1,2,3 and we need to call close on 3,2,1
-        this.handlers.descendingIterator().forEachRemaining(handler -> handler.onStop(this, this.context));
+        this.handlers.descendingIterator().forEachRemaining(handler -> handler.onStop(this.context));
     }
 
     static class SimpleScope implements Scope {

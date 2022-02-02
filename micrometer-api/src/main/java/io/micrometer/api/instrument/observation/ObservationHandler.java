@@ -21,17 +21,17 @@ import java.util.Optional;
 import java.util.stream.Stream;
 
 public interface ObservationHandler<T extends Observation.Context> {
-    void onStart(Observation observation, T context);
+    void onStart(T context);
 
-    void onError(Observation observation, T context);
+    void onError(T context);
 
-    default void onScopeOpened(Observation observation, T context) {
+    default void onScopeOpened(T context) {
     }
 
-    default void onScopeClosed(Observation observation, T context) {
+    default void onScopeClosed(T context) {
     }
 
-    void onStop(Observation observation, T context);
+    void onStop(T context);
 
     boolean supportsContext(Observation.Context context);
 
@@ -77,28 +77,28 @@ public interface ObservationHandler<T extends Observation.Context> {
         }
 
         @Override
-        public void onStart(Observation observation, Observation.Context context) {
-            getFirstApplicableHandler(context).ifPresent(handler -> handler.onStart(observation, context));
+        public void onStart(Observation.Context context) {
+            getFirstApplicableHandler(context).ifPresent(handler -> handler.onStart(context));
         }
 
         @Override
-        public void onError(Observation observation, Observation.Context context) {
-            getFirstApplicableHandler(context).ifPresent(handler -> handler.onError(observation, context));
+        public void onError(Observation.Context context) {
+            getFirstApplicableHandler(context).ifPresent(handler -> handler.onError(context));
         }
 
         @Override
-        public void onScopeOpened(Observation observation, Observation.Context context) {
-            getFirstApplicableHandler(context).ifPresent(handler -> handler.onScopeOpened(observation, context));
+        public void onScopeOpened(Observation.Context context) {
+            getFirstApplicableHandler(context).ifPresent(handler -> handler.onScopeOpened(context));
         }
 
         @Override
-        public void onScopeClosed(Observation observation, Observation.Context context) {
-            getFirstApplicableHandler(context).ifPresent(handler -> handler.onScopeClosed(observation, context));
+        public void onScopeClosed(Observation.Context context) {
+            getFirstApplicableHandler(context).ifPresent(handler -> handler.onScopeClosed(context));
         }
 
         @Override
-        public void onStop(Observation observation, Observation.Context context) {
-            getFirstApplicableHandler(context).ifPresent(handler -> handler.onStop(observation, context));
+        public void onStop(Observation.Context context) {
+            getFirstApplicableHandler(context).ifPresent(handler -> handler.onStop(context));
         }
 
         @Override
@@ -140,28 +140,28 @@ public interface ObservationHandler<T extends Observation.Context> {
         }
 
         @Override
-        public void onStart(Observation observation, Observation.Context context) {
-            getAllApplicableHandlers(context).forEach(handler -> handler.onStart(observation, context));
+        public void onStart(Observation.Context context) {
+            getAllApplicableHandlers(context).forEach(handler -> handler.onStart(context));
         }
 
         @Override
-        public void onError(Observation observation, Observation.Context context) {
-            getAllApplicableHandlers(context).forEach(handler -> handler.onError(observation, context));
+        public void onError(Observation.Context context) {
+            getAllApplicableHandlers(context).forEach(handler -> handler.onError(context));
         }
 
         @Override
-        public void onScopeOpened(Observation observation, Observation.Context context) {
-            getAllApplicableHandlers(context).forEach(handler -> handler.onScopeOpened(observation, context));
+        public void onScopeOpened(Observation.Context context) {
+            getAllApplicableHandlers(context).forEach(handler -> handler.onScopeOpened(context));
         }
 
         @Override
-        public void onScopeClosed(Observation observation, Observation.Context context) {
-            getAllApplicableHandlers(context).forEach(handler -> handler.onScopeClosed(observation, context));
+        public void onScopeClosed(Observation.Context context) {
+            getAllApplicableHandlers(context).forEach(handler -> handler.onScopeClosed(context));
         }
 
         @Override
-        public void onStop(Observation observation, Observation.Context context) {
-            getAllApplicableHandlers(context).forEach(handler -> handler.onStop(observation, context));
+        public void onStop(Observation.Context context) {
+            getAllApplicableHandlers(context).forEach(handler -> handler.onStop(context));
         }
 
         @Override

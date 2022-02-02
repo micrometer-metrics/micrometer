@@ -65,31 +65,31 @@ public class ObservationHandlerSample {
 
     static class SampleHandler implements ObservationHandler<CustomContext> {
         @Override
-        public void onStart(Observation observation, CustomContext context) {
+        public void onStart(CustomContext context) {
             if (context.getName().equals("sample.ignored")) {
                 throw new AssertionError("Boom!");
             }
-            System.out.println("start: " + observation);
+            System.out.println("start: " + context);
         }
 
         @Override
-        public void onError(Observation observation, CustomContext context) {
-            System.out.println("error: " + observation + " " + context.getError());
+        public void onError(CustomContext context) {
+            System.out.println("error: " + context.getError() + " " + context.getError());
         }
 
         @Override
-        public void onScopeOpened(Observation observation, CustomContext context) {
-            System.out.println("context-opened: " + observation);
+        public void onScopeOpened(CustomContext context) {
+            System.out.println("scope-opened: " + context);
         }
 
         @Override
-        public void onScopeClosed(Observation observation, CustomContext context) {
-            System.out.println("context-closed: " + observation);
+        public void onScopeClosed(CustomContext context) {
+            System.out.println("scope-closed: " + context);
         }
 
         @Override
-        public void onStop(Observation observation, CustomContext context) {
-            System.out.println("stop: " + observation);
+        public void onStop(CustomContext context) {
+            System.out.println("stop: " + context);
         }
 
         @Override

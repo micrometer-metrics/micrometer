@@ -53,10 +53,10 @@ public abstract class NullHandlerContextTimerRecordingHandlerCompatibilityKit {
     @Test
     @DisplayName("compatibility test provides a null context accepting timer recording handler")
     void handlerSupportsNullContext() {
-        assertThatCode(() -> handler.onStart(sample, null)).doesNotThrowAnyException();
-        assertThatCode(() -> handler.onStop(sample, null)).doesNotThrowAnyException();
-        assertThatCode(() -> handler.onError(sample, null)).doesNotThrowAnyException();
-        assertThatCode(() -> handler.onScopeOpened(sample, null)).doesNotThrowAnyException();
+        assertThatCode(() -> handler.onStart(null)).doesNotThrowAnyException();
+        assertThatCode(() -> handler.onStop(null)).doesNotThrowAnyException();
+        assertThatCode(() -> handler.onError(null)).doesNotThrowAnyException();
+        assertThatCode(() -> handler.onScopeOpened(null)).doesNotThrowAnyException();
         assertThatCode(() -> handler.supportsContext(null)).doesNotThrowAnyException();
         assertThat(handler.supportsContext(null)).as("Handler supports null context").isTrue();
     }

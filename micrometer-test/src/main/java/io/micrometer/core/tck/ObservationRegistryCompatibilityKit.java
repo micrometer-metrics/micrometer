@@ -29,7 +29,6 @@ import org.junit.jupiter.api.Test;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.isA;
-import static org.mockito.ArgumentMatchers.same;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoMoreInteractions;
@@ -70,19 +69,19 @@ public abstract class ObservationRegistryCompatibilityKit {
 
         Observation observation = registry.start("myObservation");
         verify(handler).supportsContext(isA(Observation.Context.class));
-        verify(handler).onStart(same(observation), isA(Observation.Context.class));
+        verify(handler).onStart(isA(Observation.Context.class));
         verify(handlerThatHandlesNothing).supportsContext(isA(Observation.Context.class));
         verifyNoMoreInteractions(handlerThatHandlesNothing);
 
         try (Observation.Scope scope = observation.openScope()) {
-            verify(handler).onScopeOpened(same(observation), isA(Observation.Context.class));
+            verify(handler).onScopeOpened(isA(Observation.Context.class));
             assertThat(scope.getCurrentObservation()).isSameAs(observation);
 
             Throwable exception = new IOException("simulated");
             observation.error(exception);
-            verify(handler).onError(same(observation), isA(Observation.Context.class));
+            verify(handler).onError(isA(Observation.Context.class));
         }
-        verify(handler).onScopeClosed(same(observation), isA(Observation.Context.class));
+        verify(handler).onScopeClosed(isA(Observation.Context.class));
         observation.stop();
     }
 }

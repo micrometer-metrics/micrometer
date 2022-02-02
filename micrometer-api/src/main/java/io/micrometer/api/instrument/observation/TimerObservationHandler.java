@@ -33,17 +33,17 @@ public class TimerObservationHandler implements ObservationHandler<Observation.C
     }
 
     @Override
-    public void onStart(Observation observation, Observation.Context context) {
+    public void onStart(Observation.Context context) {
         Timer.Sample sample = Timer.start(meterRegistry);
         context.put(Timer.Sample.class, sample);
     }
 
     @Override
-    public void onError(Observation observation, Observation.Context context) {
+    public void onError(Observation.Context context) {
     }
 
     @Override
-    public void onStop(Observation observation, Observation.Context context) {
+    public void onStop(Observation.Context context) {
         Timer.Sample sample = context.get(Timer.Sample.class);
         sample.stop(Timer.builder(context.getName())
                 .tag("error", context.getError().map(Throwable::getMessage).orElse("none"))
