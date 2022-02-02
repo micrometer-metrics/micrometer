@@ -41,8 +41,8 @@ public class SimpleObservation implements Observation {
     }
 
     @Override
-    public Observation displayName(String displayName) {
-        this.context.setDisplayName(displayName);
+    public Observation contextualName(String contextualName) {
+        this.context.setContextualName(contextualName);
         return this;
     }
 
@@ -85,7 +85,7 @@ public class SimpleObservation implements Observation {
     @Override
     public String toString() {
         return "{"
-                + "name=" + this.context.getName() + "(" + this.context.getDisplayName() + ")"
+                + "name=" + this.context.getName() + "(" + this.context.getContextualName() + ")"
                 + ", error=" + this.context.getError()
                 + ", context=" + this.context
                 + '}';

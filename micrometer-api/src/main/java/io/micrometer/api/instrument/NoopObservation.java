@@ -25,7 +25,7 @@ public class NoopObservation implements Observation {
     }
 
     @Override
-    public Observation displayName(String displayName) {
+    public Observation contextualName(String contextualName) {
         return this;
     }
 

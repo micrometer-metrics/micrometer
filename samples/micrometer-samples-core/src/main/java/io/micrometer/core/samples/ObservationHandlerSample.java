@@ -43,7 +43,7 @@ public class ObservationHandlerSample {
         });
 
         Observation observation = observationRegistry.observation("sample.operation", new CustomContext())
-                .displayName("CALL sampleOperation")
+                .contextualName("CALL sampleOperation")
                 .lowCardinalityTag("a", "1")
                 .highCardinalityTag("time", Instant.now().toString())
                 .start();

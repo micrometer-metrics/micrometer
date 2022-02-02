@@ -30,20 +30,20 @@ import io.micrometer.api.lang.Nullable;
 /*
 
 We moved out all the getters - this API will provide a nice way to set things ON THE CONTEXT
-* We've added additionalLowCardinality and high cardinliaty tags on the context, tagsprovider is immutable
+We've added additionalLowCardinality and high cardinality tags on the context, tags provider is immutable
 We remove timing information - there's no gain in unifying the time (e.g. same time for metrics & spans). It's up to the handlers
 to take control of doing measurements. If a handler is buggy we will see that in its timing information.
 We removed the throwable getter to explicitly pass the throwable to the handler - that's the only parameter that will never change (onError - you have to have an error there)
- */
+*/
 public interface Observation {
 
     /**
      * Sets the display name (a more human-readable name).
      *
-     * @param displayName display name
+     * @param contextualName contextual name
      * @return this
      */
-    Observation displayName(String displayName);
+    Observation contextualName(String contextualName);
 
     /**
      * Sets an additional low cardinality tag.
@@ -125,7 +125,7 @@ public interface Observation {
 
         private String name;
 
-        private String displayName;
+        private String contextualName;
 
         @Nullable private Throwable error;
 
@@ -147,12 +147,12 @@ public interface Observation {
             return this;
         }
 
-        public String getDisplayName() {
-            return this.displayName;
+        public String getContextualName() {
+            return this.contextualName;
         }
 
-        public Context setDisplayName(String displayName) {
-            this.displayName = displayName;
+        public Context setContextualName(String contextualName) {
+            this.contextualName = contextualName;
             return this;
         }
 
@@ -212,7 +212,7 @@ public interface Observation {
             return "Context{" +
                     "map=" + map +
                     ", name='" + name + '\'' +
-                    ", displayName='" + displayName + '\'' +
+                    ", contextualName='" + contextualName + '\'' +
                     ", lowCardinalityTags=" + getLowCardinalityTags() +
                     ", additionalLowCardinalityTags=" + additionalLowCardinalityTags +
                     ", highCardinalityTags=" + getHighCardinalityTags() +
