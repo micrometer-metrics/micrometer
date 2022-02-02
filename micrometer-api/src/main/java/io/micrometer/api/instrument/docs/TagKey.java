@@ -28,21 +28,23 @@ import io.micrometer.api.instrument.Tag;
 public interface TagKey {
 
     /**
-     * Merges arrays of tags.
-     * @param tags array of tags
-     * @return a merged array of tags
+     * Merges arrays of tag keys.
+     * @param tagKeys arrays of tag keys
+     * @return a merged array of tag keys
      */
-    static TagKey[] merge(TagKey[]... tags) {
-        return Arrays.stream(tags).flatMap(Arrays::stream).toArray(TagKey[]::new);
+    static TagKey[] merge(TagKey[]... tagKeys) {
+        return Arrays.stream(tagKeys).flatMap(Arrays::stream).toArray(TagKey[]::new);
     }
 
     /**
+     * Returns tag key.
+     *
      * @return tag key
      */
     String getKey();
 
     /**
-     * Returns a tag for this {@link TagKey}.
+     * Returns a tag for this {@code TagKey}.
      *
      * @param value value to append to this tag
      * @return tag

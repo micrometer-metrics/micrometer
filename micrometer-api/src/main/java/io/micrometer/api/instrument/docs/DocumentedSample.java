@@ -18,7 +18,7 @@ package io.micrometer.api.instrument.docs;
 import io.micrometer.api.instrument.Timer;
 
 /**
- * In order to describe your spans via e.g. enums instead of Strings you can use this
+ * In order to describe your samples via e.g. enums instead of Strings you can use this
  * interface that returns all the characteristics of a sample. We can
  * analyze the sources and reuse this information to build a table of known metrics, their
  * names and tags.
@@ -27,10 +27,10 @@ import io.micrometer.api.instrument.Timer;
  * met.
  *
  * <ul>
- *     <li>Metrics are grouped within an enum - the enum implements the {@link DocumentedSample} interface</li>
- *     <li>If the span contains {@link TagKey} then those need to be declared as nested enums</li>
- *     <li>The {@link DocumentedSample#getHighCardinalityTagKeys()} need to call the nested enum's {@code values()} method to retrieve the array of allowed keys / events</li>
- *     <li>The {@link DocumentedSample#getLowCardinalityTagKeys()} need to call the nested enum's {@code values()} method to retrieve the array of allowed keys / events</li>
+ *     <li>Metrics are grouped within an enum - the enum implements the {@code DocumentedSample} interface</li>
+ *     <li>If the sample contains {@link TagKey} then those need to be declared as nested enums</li>
+ *     <li>The {@link DocumentedSample#getHighCardinalityTagKeys()} need to call the nested enum's {@code values()} method to retrieve the array of allowed keys</li>
+ *     <li>The {@link DocumentedSample#getLowCardinalityTagKeys()} need to call the nested enum's {@code values()} method to retrieve the array of allowed keys</li>
  *     <li>Javadocs around enums will be used as description</li>
  *     <li>If you want to merge different {@link TagKey} enum {@code values()} methods you need to call the {@link TagKey#merge(TagKey[]...)} method</li>
  * </ul>
@@ -71,8 +71,8 @@ public interface DocumentedSample {
     }
 
     /**
-     * Returns required prefix to be there for tags. Example {@code foo.} would
-     * require the tags to have a {code foo} prefix like this for tags:
+     * Returns required prefix to be there for tags. For example, {@code foo.} would
+     * require the tags to have a {@code foo.} prefix like this:
      * {@code foo.bar=true}.
      *
      * @return required prefix
