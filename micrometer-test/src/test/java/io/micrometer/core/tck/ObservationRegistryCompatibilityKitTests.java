@@ -18,12 +18,12 @@ package io.micrometer.core.tck;
 import java.time.Duration;
 
 import io.micrometer.api.instrument.observation.ObservationRegistry;
-import io.micrometer.api.instrument.observation.SimpleObservationRegistry;
 import io.micrometer.api.instrument.simple.SimpleConfig;
+import io.micrometer.api.instrument.simple.SimpleMeterRegistry;
 
 class ObservationRegistryCompatibilityKitTests extends ObservationRegistryCompatibilityKit {
 
-    ObservationRegistry registry = new SimpleObservationRegistry();
+    ObservationRegistry registry = new SimpleMeterRegistry();
 
     @Override
     public ObservationRegistry registry() {

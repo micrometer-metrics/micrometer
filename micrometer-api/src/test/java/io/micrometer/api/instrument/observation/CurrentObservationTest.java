@@ -15,6 +15,7 @@
  */
 package io.micrometer.api.instrument.observation;
 
+import io.micrometer.api.instrument.simple.SimpleMeterRegistry;
 import org.junit.jupiter.api.Test;
 
 import java.util.HashMap;
@@ -24,13 +25,13 @@ import java.util.concurrent.*;
 import static org.assertj.core.api.Assertions.assertThat;
 
 class CurrentObservationTest {
-    private final ObservationRegistry registry = new SimpleObservationRegistry();
+    private final ObservationRegistry registry = new SimpleMeterRegistry();
 
     @Test
     void nestedSamples_parentChildThreadsInstrumented() throws ExecutionException, InterruptedException {
         ExecutorService taskRunner = Executors.newSingleThreadExecutor();
 
-        Observation observation = registry.observation("test.observation");
+        Observation observation = Observation.createNotStarted("test.observation", registry);
         System.out.println("Outside task: " + observation);
         assertThat(registry.getCurrentObservation()).isNull();
         try (Observation.Scope scope = observation.openScope()) {
@@ -48,7 +49,7 @@ class CurrentObservationTest {
     void start_thenStopOnChildThread() throws InterruptedException, ExecutionException {
         ExecutorService executor = Executors.newSingleThreadExecutor();
 
-        Observation observation = registry.observation("test.observation");
+        Observation observation = Observation.createNotStarted("test.observation", registry);
         assertThat(registry.getCurrentObservation()).isNull();
         executor.submit(() -> {
             try (Observation.Scope scope = observation.openScope()) {
@@ -68,7 +69,7 @@ class CurrentObservationTest {
         Map<String, Observation> observationMap = new HashMap<>();
 
         executor.submit(() -> {
-            Observation observation = registry.observation("test.observation");
+            Observation observation = Observation.createNotStarted("test.observation", registry);
             assertThat(registry.getCurrentObservation()).isNull();
             observationMap.put("myObservation", observation);
         }).get();
@@ -87,11 +88,11 @@ class CurrentObservationTest {
 
     @Test
     void nestedSamples_sameThread() {
-        Observation observation = registry.observation("observation1");
+        Observation observation = Observation.createNotStarted("observation1", registry);
         Observation observation2;
         assertThat(registry.getCurrentObservation()).isNull();
         try (Observation.Scope scope = observation.openScope()) {
-            observation2 = registry.observation("observation2");
+            observation2 = Observation.createNotStarted("observation2", registry);
             assertThat(registry.getCurrentObservation()).isSameAs(observation);
         }
         try (Observation.Scope scope = observation2.openScope()) {

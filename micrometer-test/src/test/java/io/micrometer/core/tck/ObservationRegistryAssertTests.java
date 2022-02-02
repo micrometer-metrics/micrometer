@@ -17,7 +17,7 @@ package io.micrometer.core.tck;
 
 import io.micrometer.api.instrument.observation.Observation;
 import io.micrometer.api.instrument.observation.ObservationRegistry;
-import io.micrometer.api.instrument.observation.SimpleObservationRegistry;
+import io.micrometer.api.instrument.simple.SimpleMeterRegistry;
 import org.junit.jupiter.api.Test;
 
 import static org.assertj.core.api.Assertions.assertThatCode;
@@ -25,13 +25,13 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 class ObservationRegistryAssertTests {
 
-    ObservationRegistry registry = new SimpleObservationRegistry();
+    ObservationRegistry registry = new SimpleMeterRegistry();
 
     ObservationRegistryAssert registryAssert = new ObservationRegistryAssert(registry);
 
     @Test
     void assertionErrorThrownWhenRemainingSampleFound() {
-        Observation sample = this.registry.start("hello");
+        Observation sample = Observation.start("hello", registry);
 
         try (Observation.Scope ws = sample.openScope()) {
             assertThatThrownBy(() -> registryAssert.doesNotHaveRemainingObservation())

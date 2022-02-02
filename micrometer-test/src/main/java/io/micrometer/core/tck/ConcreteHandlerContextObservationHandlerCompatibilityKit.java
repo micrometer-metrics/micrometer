@@ -18,7 +18,7 @@ package io.micrometer.core.tck;
 import io.micrometer.api.instrument.observation.Observation;
 import io.micrometer.api.instrument.observation.ObservationHandler;
 import io.micrometer.api.instrument.observation.ObservationRegistry;
-import io.micrometer.api.instrument.observation.SimpleObservationRegistry;
+import io.micrometer.api.instrument.simple.SimpleMeterRegistry;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -38,11 +38,11 @@ public abstract class ConcreteHandlerContextObservationHandlerCompatibilityKit<T
 
     protected ObservationHandler<T> handler;
 
-    protected ObservationRegistry meterRegistry = new SimpleObservationRegistry();
+    protected ObservationRegistry meterRegistry = new SimpleMeterRegistry();
 
     public abstract ObservationHandler<T> handler();
 
-    protected Observation sample = meterRegistry.observation("hello");
+    protected Observation sample = Observation.createNotStarted("hello", meterRegistry);
 
     public abstract T context();
 

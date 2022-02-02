@@ -17,6 +17,7 @@ package io.micrometer.api.instrument.observation;
 
 import io.micrometer.api.instrument.MeterRegistry;
 import io.micrometer.api.instrument.NoopObservation;
+import io.micrometer.api.instrument.simple.SimpleMeterRegistry;
 import org.junit.jupiter.api.Test;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -29,11 +30,11 @@ import static org.mockito.Mockito.mock;
  * @author Johnny Lim
  */
 class ObservationRegistryTest {
-    private ObservationRegistry registry = new SimpleObservationRegistry();
+    private ObservationRegistry registry = new SimpleMeterRegistry();
     
     @Test
     void openingScopeShouldSetSampleAsCurrent() {
-        Observation sample = registry.start("test.timer");
+        Observation sample = Observation.start("test.timer", registry);
         Observation.Scope scope = sample.openScope();
 
         assertThat(registry.getCurrentObservation()).isSameAs(sample);
@@ -49,19 +50,19 @@ class ObservationRegistryTest {
         ObservationHandler<?> handler1 = mock(ObservationHandler.class);
         ObservationHandler<?> handler2 = mock(ObservationHandler.class);
 
-        registry.config().observationHandler(handler1);
-        assertThat(registry.config().getObservationHandlers()).containsExactly(handler1);
+        registry.observationConfig().observationHandler(handler1);
+        assertThat(registry.observationConfig().getObservationHandlers()).containsExactly(handler1);
 
-        registry.config().observationHandler(handler2);
-        assertThat(registry.config().getObservationHandlers()).containsExactlyInAnyOrder(handler1, handler2);
+        registry.observationConfig().observationHandler(handler2);
+        assertThat(registry.observationConfig().getObservationHandlers()).containsExactlyInAnyOrder(handler1, handler2);
     }
 
 
     @Test
     void observationShouldBeNoOpWhenPredicateApplicable() {
-        registry.config().observationPredicate((name, context) -> !name.equals("test.timer"));
+        registry.observationConfig().observationPredicate((name, context) -> !name.equals("test.timer"));
 
-        Observation sample = registry.start("test.timer");
+        Observation sample = Observation.start("test.timer", registry);
 
         assertThat(sample).isSameAs(NoopObservation.INSTANCE);
     }

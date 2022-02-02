@@ -22,19 +22,16 @@ import java.util.UUID;
 import io.micrometer.api.instrument.observation.Observation;
 import io.micrometer.api.instrument.observation.ObservationHandler;
 import io.micrometer.api.instrument.Tags;
-import io.micrometer.api.instrument.observation.ObservationRegistry;
-import io.micrometer.api.instrument.observation.TimerObservationRegistry;
 import io.micrometer.prometheus.PrometheusConfig;
 import io.micrometer.prometheus.PrometheusMeterRegistry;
 
 public class ObservationHandlerSample {
     private static final PrometheusMeterRegistry registry = new PrometheusMeterRegistry(PrometheusConfig.DEFAULT);
 
-    private static final ObservationRegistry observationRegistry = new TimerObservationRegistry(registry);
-
     public static void main(String[] args) throws InterruptedException {
-        observationRegistry.config().observationHandler(new SampleHandler());
-        observationRegistry.config().observationPredicate((s, context) -> {
+        registry.withTimerObservationHandler();
+        registry.observationConfig().observationHandler(new SampleHandler());
+        registry.observationConfig().observationPredicate((s, context) -> {
             boolean observationEnabled = !"sample.ignored".equals(s);
             if (!observationEnabled) {
                 System.out.println("Ignoring sample.ignored");
@@ -42,7 +39,7 @@ public class ObservationHandlerSample {
             return observationEnabled;
         });
 
-        Observation observation = observationRegistry.observation("sample.operation", new CustomContext())
+        Observation observation = Observation.createNotStarted("sample.operation", new CustomContext(), registry)
                 .contextualName("CALL sampleOperation")
                 .lowCardinalityTag("a", "1")
                 .highCardinalityTag("time", Instant.now().toString())
@@ -54,10 +51,10 @@ public class ObservationHandlerSample {
         }
         observation.stop();
 
-        observationRegistry.start("sample.operation").stop();
-        observationRegistry.start("sample.operation", new UnsupportedHandlerContext()).stop();
+        Observation.start("sample.operation", registry).stop();
+        Observation.start("sample.operation", new UnsupportedHandlerContext(), registry).stop();
 
-        observationRegistry.start("sample.ignored", new CustomContext()).stop();
+        Observation.start("sample.ignored", new CustomContext(), registry).stop();
 
         System.out.println();
         System.out.println(registry.scrape());
