@@ -105,12 +105,13 @@ class SimpleObservation implements Observation {
 
     @SuppressWarnings("unchecked")
     private void notifyOnScopeClosed() {
-        this.handlers.forEach(handler -> handler.onScopeClosed(this.context));
+        // We're closing from end till the beginning - e.g. we opened scope with handlers with ids 1,2,3 and we need to close the scope in order 3,2,1
+        this.handlers.descendingIterator().forEachRemaining(handler -> handler.onScopeClosed(this.context));
     }
 
     @SuppressWarnings("unchecked")
     private void notifyOnObservationStopped() {
-        // TODO: We're closing from end till beggining - e.g. we started with handlers with ids 1,2,3 and we need to call close on 3,2,1
+        // We're closing from end till the beginning - e.g. we started with handlers with ids 1,2,3 and we need to call close on 3,2,1
         this.handlers.descendingIterator().forEachRemaining(handler -> handler.onStop(this.context));
     }
 
