@@ -24,7 +24,7 @@ import io.micrometer.api.instrument.Timer;
  * @author Marcin Grzejszczak
  * @since 2.0.0
  */
-public class TimerObservationHandler implements ObservationHandler<Observation.Context> {
+public class TimerObservationHandler implements MeterObservationHandler<Observation.Context> {
 
     private final MeterRegistry meterRegistry;
 
@@ -39,12 +39,8 @@ public class TimerObservationHandler implements ObservationHandler<Observation.C
     }
 
     @Override
-    public void onError(Observation.Context context) {
-    }
-
-    @Override
     public void onStop(Observation.Context context) {
-        Timer.Sample sample = context.get(Timer.Sample.class);
+        Timer.Sample sample = context.getRequired(Timer.Sample.class);
         sample.stop(Timer.builder(context.getName())
                 .tag("error", context.getError().map(Throwable::getMessage).orElse("none"))
                 .tags(context.getLowCardinalityTags().and(context.getAdditionalLowCardinalityTags()))

@@ -20,24 +20,76 @@ import java.util.List;
 import java.util.Optional;
 import java.util.stream.Stream;
 
+/**
+ * Handler for an {@link Observation}. Hooks in to the lifecycle of an observation.
+ * Example of handler implementations can create metrics, spans or logs.
+ *
+ * @author Jonatan Ivanov
+ * @author Tommy Ludwig
+ * @author Marcin Grzejszczak
+ * @param <T> type of handler context
+ * @since 2.0.0
+ * @see MeterObservationHandler
+ * @see TimerObservationHandler
+ */
 public interface ObservationHandler<T extends Observation.Context> {
-    void onStart(T context);
+    /**
+     * Reacts to starting of an {@link Observation}.
+     *
+     * @param context a {@link Observation.Context}
+     */
+    default void onStart(T context) {
 
-    void onError(T context);
+    }
 
+    /**
+     * Reacts to an error during an {@link Observation}.
+     *
+     * @param context a {@link Observation.Context}
+     */
+    default void onError(T context) {
+
+    }
+
+    /**
+     * Reacts to starting of a {@link Observation.Scope}.
+     *
+     * @param context a {@link Observation.Context}
+     */
     default void onScopeOpened(T context) {
     }
 
+    /**
+     * Reacts to stopping of a {@link Observation.Scope}.
+     *
+     * @param context a {@link Observation.Context}
+     */
     default void onScopeClosed(T context) {
     }
 
-    void onStop(T context);
+    /**
+     * Reacts to stopping of an {@link Observation}.
+     *
+     * @param context a {@link Observation.Context}
+     */
+    default void onStop(T context) {
 
+    }
+
+    /**
+     * Tells the framework whether this handler should be applied for
+     * a given {@link Observation.Context}.
+     *
+     * @param context a {@link Observation.Context}
+     * @return {@code true} when this handler should be applied
+     */
     boolean supportsContext(Observation.Context context);
 
 
     /**
      * Handler wrapping other handlers.
+     *
+     * @since 1.0.0
      */
     @SuppressWarnings("rawtypes")
     interface CompositeObservationHandler extends ObservationHandler<Observation.Context> {
@@ -50,6 +102,7 @@ public interface ObservationHandler<T extends Observation.Context> {
 
     /**
      * Handler picking the first matching recording handler from the list.
+     * @since 1.0.0
      */
     @SuppressWarnings({"unchecked", "rawtypes"})
     class FirstMatchingCompositeObservationHandler implements CompositeObservationHandler {

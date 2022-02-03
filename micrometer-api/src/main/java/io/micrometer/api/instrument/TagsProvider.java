@@ -42,12 +42,12 @@ public interface TagsProvider {
     }
 
     /**
-     * Default low cardinality tags.
+     * All tags.
      *
      * @return tags
      */
     default Tags getAllTags() {
-        return Tags.concat(getLowCardinalityTags(), getHighCardinalityTags()).and(getAdditionalLowCardinalityTags()).and(getAdditionalHighCardinalityTags());
+        return Tags.concat(getAllLowCardinalityTags(), getAllHighCardinalityTags());
     }
 
     /**
@@ -66,5 +66,23 @@ public interface TagsProvider {
      */
     default Tags getAdditionalHighCardinalityTags() {
         return Tags.empty();
+    }
+
+    /**
+     * All low cardinality tags.
+     *
+     * @return tags
+     */
+    default Tags getAllLowCardinalityTags() {
+        return Tags.concat(getLowCardinalityTags(), getAdditionalLowCardinalityTags());
+    }
+
+    /**
+     * All high cardinality tags.
+     *
+     * @return tags
+     */
+    default Tags getAllHighCardinalityTags() {
+        return Tags.concat(getHighCardinalityTags(), getAdditionalHighCardinalityTags());
     }
 }

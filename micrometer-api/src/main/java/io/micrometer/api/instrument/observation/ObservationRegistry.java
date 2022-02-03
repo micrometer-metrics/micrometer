@@ -24,13 +24,37 @@ import io.micrometer.api.instrument.NoopObservation;
 import io.micrometer.api.lang.Nullable;
 
 /**
+ * Implementations of this interface are responsible for managing state of an {@link Observation}.
+ *
+ * @author Jonatan Ivanov
+ * @author Tommy Ludwig
+ * @author Marcin Grzejszczak
+ * @since 2.0.0
  */
 public interface ObservationRegistry {
+    /**
+     * When previously set will allow to retrieve the {@link Observation} at any point in time.
+     *
+     * Example: if an {@link Observation} was put in {@link Observation.Scope} then this
+     * method will return the current present {@link Observation} within the scope.
+     *
+     * @return current observation or {@code null} if it's not present
+     */
     @Nullable
     Observation getCurrentObservation();
 
+    /**
+     * Sets the observation as current.
+     *
+     * @param current observation
+     */
     void setCurrentObservation(@Nullable Observation current);
 
+    /**
+     * Configuration options for this registry.
+     *
+     * @return observation configuration
+     */
     ObservationConfig observationConfig();
 
     /**
@@ -38,9 +62,9 @@ public interface ObservationRegistry {
      */
     class ObservationConfig {
 
-        private List<ObservationHandler<?>> observationHandlers = new CopyOnWriteArrayList<>();
+        private final List<ObservationHandler<?>> observationHandlers = new CopyOnWriteArrayList<>();
 
-        private List<BiPredicate<String, Observation.Context>> observationPredicates = new CopyOnWriteArrayList<>();
+        private final List<BiPredicate<String, Observation.Context>> observationPredicates = new CopyOnWriteArrayList<>();
 
         /**
          * Register a handler for the {@link Observation observations}.
