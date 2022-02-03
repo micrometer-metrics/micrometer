@@ -55,7 +55,7 @@ class MongoMetricsConnectionPoolListenerTest extends AbstractMongoDbTest {
                         .addConnectionPoolListener(new MongoMetricsConnectionPoolListener(registry))
                 )
                 .applyToClusterSettings(builder -> builder
-                        .hosts(singletonList(new ServerAddress(HOST, port)))
+                        .hosts(singletonList(new ServerAddress(host, port)))
                         .addClusterListener(new ClusterListener() {
                             @Override
                             public void clusterOpening(ClusterOpeningEvent event) {
@@ -70,7 +70,7 @@ class MongoMetricsConnectionPoolListenerTest extends AbstractMongoDbTest {
 
         Tags tags = Tags.of(
                 "cluster.id", clusterId.get(),
-                "server.address", String.format("%s:%s", HOST, port)
+                "server.address", String.format("%s:%s", host, port)
         );
 
         assertThat(registry.get("mongodb.driver.pool.size").tags(tags).gauge().value()).isEqualTo(2);
@@ -100,7 +100,7 @@ class MongoMetricsConnectionPoolListenerTest extends AbstractMongoDbTest {
                         .addConnectionPoolListener(connectionPoolListener)
                 )
                 .applyToClusterSettings(builder -> builder
-                        .hosts(singletonList(new ServerAddress(HOST, port)))
+                        .hosts(singletonList(new ServerAddress(host, port)))
                         .addClusterListener(new ClusterListener() {
                             @Override
                             public void clusterOpening(ClusterOpeningEvent event) {
@@ -115,7 +115,7 @@ class MongoMetricsConnectionPoolListenerTest extends AbstractMongoDbTest {
 
         Tags tags = Tags.of(
                 "cluster.id", clusterId.get(),
-                "server.address", String.format("%s:%s", HOST, port),
+                "server.address", String.format("%s:%s", host, port),
                 "my.custom.connection.pool.identifier", "custom"
         );
 
@@ -132,7 +132,7 @@ class MongoMetricsConnectionPoolListenerTest extends AbstractMongoDbTest {
 
     @Issue("#2384")
     void whenConnectionCheckedInAfterPoolClose_thenNoExceptionThrown() {
-        ServerId serverId = new ServerId(new ClusterId(), new ServerAddress(HOST, port));
+        ServerId serverId = new ServerId(new ClusterId(), new ServerAddress(host, port));
         ConnectionId connectionId = new ConnectionId(serverId);
         MongoMetricsConnectionPoolListener listener = new MongoMetricsConnectionPoolListener(registry);
         listener.connectionPoolCreated(new ConnectionPoolCreatedEvent(serverId, ConnectionPoolSettings.builder().build()));

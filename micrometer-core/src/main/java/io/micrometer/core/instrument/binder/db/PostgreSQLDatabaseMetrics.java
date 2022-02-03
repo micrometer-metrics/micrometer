@@ -303,26 +303,26 @@ public class PostgreSQLDatabaseMetrics implements MeterBinder {
     }
 
     static final class Names {
-        public static final String SIZE = of("size");
-        public static final String CONNECTIONS = of("connections");
-        public static final String BLOCKS_HITS = of("blocks.hits");
-        public static final String BLOCKS_READS = of("blocks.reads");
-        public static final String TRANSACTIONS = of("transactions");
-        public static final String LOCKS = of("locks");
-        public static final String TEMP_WRITES = of("temp.writes");
+        static final String SIZE = of("size");
+        static final String CONNECTIONS = of("connections");
+        static final String BLOCKS_HITS = of("blocks.hits");
+        static final String BLOCKS_READS = of("blocks.reads");
+        static final String TRANSACTIONS = of("transactions");
+        static final String LOCKS = of("locks");
+        static final String TEMP_WRITES = of("temp.writes");
 
-        public static final String ROWS_FETCHED = of("rows.fetched");
-        public static final String ROWS_INSERTED = of("rows.inserted");
-        public static final String ROWS_UPDATED = of("rows.updated");
-        public static final String ROWS_DELETED = of("rows.deleted");
-        public static final String ROWS_DEAD = of("rows.dead");
+        static final String ROWS_FETCHED = of("rows.fetched");
+        static final String ROWS_INSERTED = of("rows.inserted");
+        static final String ROWS_UPDATED = of("rows.updated");
+        static final String ROWS_DELETED = of("rows.deleted");
+        static final String ROWS_DEAD = of("rows.dead");
 
-        public static final String CHECKPOINTS_TIMED = of("checkpoints.timed");
-        public static final String CHECKPOINTS_REQUESTED = of("checkpoints.requested");
+        static final String CHECKPOINTS_TIMED = of("checkpoints.timed");
+        static final String CHECKPOINTS_REQUESTED = of("checkpoints.requested");
 
-        public static final String BUFFERS_CHECKPOINT = of("buffers.checkpoint");
-        public static final String BUFFERS_CLEAN = of("buffers.clean");
-        public static final String BUFFERS_BACKEND = of("buffers.backend");
+        static final String BUFFERS_CHECKPOINT = of("buffers.checkpoint");
+        static final String BUFFERS_CLEAN = of("buffers.clean");
+        static final String BUFFERS_BACKEND = of("buffers.backend");
 
         private static String of(String name) {
             return "postgres." + name;

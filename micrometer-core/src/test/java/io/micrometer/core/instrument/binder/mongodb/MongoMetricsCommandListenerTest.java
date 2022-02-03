@@ -61,7 +61,7 @@ class MongoMetricsCommandListenerTest extends AbstractMongoDbTest {
         MongoClientSettings settings = MongoClientSettings.builder()
                 .addCommandListener(new MongoMetricsCommandListener(registry))
                 .applyToClusterSettings(builder -> builder
-                        .hosts(singletonList(new ServerAddress(HOST, port)))
+                        .hosts(singletonList(new ServerAddress(host, port)))
                         .addClusterListener(new ClusterListener() {
                             @Override
                             public void clusterOpening(ClusterOpeningEvent event) {
@@ -79,7 +79,7 @@ class MongoMetricsCommandListenerTest extends AbstractMongoDbTest {
 
         Tags tags = Tags.of(
                 "cluster.id", clusterId.get(),
-                "server.address", String.format("%s:%s", HOST, port),
+                "server.address", String.format("%s:%s", host, port),
                 "command", "insert",
                 "collection", "testCol",
                 "status", "SUCCESS"
@@ -95,7 +95,7 @@ class MongoMetricsCommandListenerTest extends AbstractMongoDbTest {
 
         Tags tags = Tags.of(
                 "cluster.id", clusterId.get(),
-                "server.address", String.format("%s:%s", HOST, port),
+                "server.address", String.format("%s:%s", host, port),
                 "command", "dropIndexes",
                 "collection", "testCol",
                 "status", "FAILED"
@@ -114,7 +114,7 @@ class MongoMetricsCommandListenerTest extends AbstractMongoDbTest {
         MongoClientSettings settings = MongoClientSettings.builder()
                 .addCommandListener(new MongoMetricsCommandListener(registry, tagsProvider))
                 .applyToClusterSettings(builder -> builder
-                        .hosts(singletonList(new ServerAddress(HOST, port)))
+                        .hosts(singletonList(new ServerAddress(host, port)))
                         .addClusterListener(new ClusterListener() {
                             @Override
                             public void clusterOpening(ClusterOpeningEvent event) {
@@ -128,7 +128,7 @@ class MongoMetricsCommandListenerTest extends AbstractMongoDbTest {
                     .insertOne(new Document("testDoc", new Date()));
             Tags tags = Tags.of(
                     "cluster.id", clusterId.get(),
-                    "server.address", String.format("%s:%s", HOST, port),
+                    "server.address", String.format("%s:%s", host, port),
                     "command", "insert",
                     "collection", "testCol",
                     "status", "SUCCESS",
@@ -149,7 +149,7 @@ class MongoMetricsCommandListenerTest extends AbstractMongoDbTest {
         MongoClientSettings settings = MongoClientSettings.builder()
                 .addCommandListener(new MongoMetricsCommandListener(registry, tagsProvider))
                 .applyToClusterSettings(builder -> builder
-                        .hosts(singletonList(new ServerAddress(HOST, port)))
+                        .hosts(singletonList(new ServerAddress(host, port)))
                         .addClusterListener(new ClusterListener() {
                             @Override
                             public void clusterOpening(ClusterOpeningEvent event) {
@@ -163,7 +163,7 @@ class MongoMetricsCommandListenerTest extends AbstractMongoDbTest {
                     .dropIndex("nonExistentIndex");
             Tags tags = Tags.of(
                     "cluster.id", clusterId.get(),
-                    "server.address", String.format("%s:%s", HOST, port),
+                    "server.address", String.format("%s:%s", host, port),
                     "command", "dropIndexes",
                     "collection", "testCol",
                     "status", "FAILED",
