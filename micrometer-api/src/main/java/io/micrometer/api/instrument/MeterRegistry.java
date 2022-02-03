@@ -88,19 +88,19 @@ public abstract class MeterRegistry implements ObservationRegistry {
     private final Config config = new Config();
     private final More more = new More();
 
-    private final ThreadLocal<Observation> localObservation = new ThreadLocal<>();
+    private static final ThreadLocal<Observation> localObservation = new ThreadLocal<>();
 
     private final ObservationConfig observationConfig = new ObservationConfig();
 
     @Nullable
     @Override
     public Observation getCurrentObservation() {
-        return this.localObservation.get();
+        return localObservation.get();
     }
 
     @Override
     public void setCurrentObservation(@Nullable Observation current) {
-        this.localObservation.set(current);
+        localObservation.set(current);
     }
 
     @Override
