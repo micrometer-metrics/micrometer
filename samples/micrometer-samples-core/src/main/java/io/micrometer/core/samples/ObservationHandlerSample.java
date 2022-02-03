@@ -29,15 +29,15 @@ public class ObservationHandlerSample {
     private static final PrometheusMeterRegistry registry = new PrometheusMeterRegistry(PrometheusConfig.DEFAULT);
 
     public static void main(String[] args) throws InterruptedException {
-        registry.withTimerObservationHandler();
-        registry.observationConfig().observationHandler(new SampleHandler());
-        registry.observationConfig().observationPredicate((s, context) -> {
-            boolean observationEnabled = !"sample.ignored".equals(s);
-            if (!observationEnabled) {
-                System.out.println("Ignoring sample.ignored");
-            }
-            return observationEnabled;
-        });
+        registry.withTimerObservationHandler()
+                .observationHandler(new SampleHandler())
+                .observationPredicate((s, context) -> {
+                    boolean observationEnabled = !"sample.ignored".equals(s);
+                    if (!observationEnabled) {
+                        System.out.println("Ignoring sample.ignored");
+                    }
+                    return observationEnabled;
+                });
 
         Observation observation = Observation.createNotStarted("sample.operation", new CustomContext(), registry)
                 .contextualName("CALL sampleOperation")

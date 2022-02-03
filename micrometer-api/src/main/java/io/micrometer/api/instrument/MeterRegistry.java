@@ -109,8 +109,9 @@ public abstract class MeterRegistry implements ObservationRegistry {
     }
 
     //TODO Want this under observationConfig but not sure that's possible
-    public void withTimerObservationHandler() {
-        observationConfig().observationHandler(new TimerObservationHandler(this));
+    public ObservationConfig withTimerObservationHandler() {
+        this.observationConfig.observationHandler(new TimerObservationHandler(this));
+        return this.observationConfig;
     }
 
     // Even though writes are guarded by meterMapLock, iterators across value space are supported
