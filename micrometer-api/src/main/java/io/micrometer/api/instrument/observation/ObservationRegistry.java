@@ -31,60 +31,12 @@ public interface ObservationRegistry {
 
     void setCurrentObservation(@Nullable Observation current);
 
-    /**
-     * !!!!!!!!!!!!!!!!!!!! THIS IS NOT STARTED !!!!!!!!!!!!!!!!!!!!
-     * !!!!!!!!!!!!!!!!!!!! REMEMBER TO CALL START() OTHERWISE YOU WILL FILE ISSUES THAT STUFF IS NOT WORKING !!!!!!!!!!!!!!!!!!!!
-     * @param name observation name
-     * @return this
-     */
-    default Observation observation(String name) {
-        if (config().isObservationEnabled(name, null)) {
-            return new SimpleObservation(name, this, new Observation.Context());
-        }
-        return NoopObservation.INSTANCE;
-    }
-
-    /**
-     * !!!!!!!!!!!!!!!!!!!! THIS IS NOT STARTED !!!!!!!!!!!!!!!!!!!!
-     * !!!!!!!!!!!!!!!!!!!! REMEMBER TO CALL START() OTHERWISE YOU WILL FILE ISSUES THAT STUFF IS NOT WORKING !!!!!!!!!!!!!!!!!!!!
-     * @param name observation name
-     * @param context context
-     * @return this
-     */
-    default Observation observation(String name, Observation.Context context) {
-        if (config().isObservationEnabled(name, context)) {
-            return new SimpleObservation(name, this, context);
-        }
-        return NoopObservation.INSTANCE;
-    }
-
-    /**
-     * Started observation.
-     *
-     * @param name observation name
-     * @return this
-     */
-    default Observation start(String name) {
-        return observation(name).start();
-    }
-
-    /**
-     * Started observation.
-     *
-     * @param name observation name
-     * @param context context
-     * @return this
-     */
-    default Observation start(String name, Observation.Context context) {
-        return observation(name, context).start();
-    }
-
-    Config config();
+    ObservationConfig observationConfig();
 
     /**
      * Access to configuration options for this registry.
      */
-    class Config {
+    class ObservationConfig {
 
         private List<ObservationHandler<?>> observationHandlers = new CopyOnWriteArrayList<>();
 
@@ -95,9 +47,8 @@ public interface ObservationRegistry {
          *
          * @param handler handler to add to the current configuration
          * @return This configuration instance
-         * @since 2.0.0
          */
-        public ObservationRegistry.Config observationHandler(ObservationHandler<?> handler) {
+        public ObservationConfig observationHandler(ObservationHandler<?> handler) {
             this.observationHandlers.add(handler);
             return this;
         }
@@ -108,9 +59,8 @@ public interface ObservationRegistry {
          *
          * @param predicate predicate
          * @return This configuration instance
-         * @since 2.0.0
          */
-        public ObservationRegistry.Config observationPredicate(BiPredicate<String, Observation.Context> predicate) {
+        public ObservationConfig observationPredicate(BiPredicate<String, Observation.Context> predicate) {
             this.observationPredicates.add(predicate);
             return this;
         }

@@ -22,20 +22,17 @@ import java.util.stream.Collectors;
 import io.micrometer.api.instrument.Tag;
 import io.micrometer.api.lang.Nullable;
 
-public class SimpleObservation implements Observation {
+class SimpleObservation implements Observation {
     private final ObservationRegistry registry;
     private final Context context;
     @SuppressWarnings("rawtypes")
     private final Deque<ObservationHandler> handlers;
 
-    public SimpleObservation(String name, ObservationRegistry registry) {
-        this(name, registry, new Context());
-    }
-
-    public SimpleObservation(String name, ObservationRegistry registry, Context context) {
+    // package private so only instantiated by us
+    SimpleObservation(String name, ObservationRegistry registry, Context context) {
         this.registry = registry;
         this.context = context.setName(name);
-        this.handlers = registry.config().getObservationHandlers().stream()
+        this.handlers = registry.observationConfig().getObservationHandlers().stream()
                 .filter(handler -> handler.supportsContext(this.context))
                 .collect(Collectors.toCollection(ArrayDeque::new));
     }

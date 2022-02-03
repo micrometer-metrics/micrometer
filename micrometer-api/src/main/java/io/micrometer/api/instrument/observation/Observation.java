@@ -22,6 +22,7 @@ import java.util.Optional;
 import java.util.Set;
 import java.util.function.Function;
 
+import io.micrometer.api.instrument.NoopObservation;
 import io.micrometer.api.instrument.Tag;
 import io.micrometer.api.instrument.Tags;
 import io.micrometer.api.instrument.TagsProvider;
@@ -36,6 +37,33 @@ to take control of doing measurements. If a handler is buggy we will see that in
 We removed the throwable getter to explicitly pass the throwable to the handler - that's the only parameter that will never change (onError - you have to have an error there)
 */
 public interface Observation {
+
+    static Observation start(String name, ObservationRegistry registry) {
+        return start(name, null, registry);
+    }
+
+    static Observation start(String name, @Nullable Context context, ObservationRegistry registry) {
+        return createNotStarted(name, context, registry).start();
+    }
+
+    /**
+     * !!!!!!!!!!!!!!!!!!!! THIS IS NOT STARTED !!!!!!!!!!!!!!!!!!!!
+     * !!!!!!!!!!!!!!!!!!!! REMEMBER TO CALL START() OTHERWISE YOU WILL FILE ISSUES THAT STUFF IS NOT WORKING !!!!!!!!!!!!!!!!!!!!
+     */
+    static Observation createNotStarted(String name, ObservationRegistry registry) {
+        return createNotStarted(name, null, registry);
+    }
+
+    /**
+     * !!!!!!!!!!!!!!!!!!!! THIS IS NOT STARTED !!!!!!!!!!!!!!!!!!!!
+     * !!!!!!!!!!!!!!!!!!!! REMEMBER TO CALL START() OTHERWISE YOU WILL FILE ISSUES THAT STUFF IS NOT WORKING !!!!!!!!!!!!!!!!!!!!
+     */
+    static Observation createNotStarted(String name, @Nullable Context context, ObservationRegistry registry) {
+        if (!registry.observationConfig().isObservationEnabled(name, context)) {
+            return NoopObservation.INSTANCE;
+        }
+        return new SimpleObservation(name, registry, context == null ? new Context() : context);
+    }
 
     /**
      * Sets the display name (a more human-readable name).

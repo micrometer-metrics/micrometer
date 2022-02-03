@@ -16,6 +16,7 @@
 package io.micrometer.api.instrument.observation;
 
 import io.micrometer.api.instrument.observation.ObservationHandler.FirstMatchingCompositeObservationHandler;
+import io.micrometer.api.instrument.simple.SimpleMeterRegistry;
 import org.junit.jupiter.api.Test;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -24,9 +25,9 @@ class FirstMatchingCompositeObservationHandlerTests {
 
     MatchingHandler matchingHandler = new MatchingHandler();
 
-    ObservationRegistry registry = new SimpleObservationRegistry();
+    ObservationRegistry registry = new SimpleMeterRegistry();
 
-    Observation sample = registry.start("hello");
+    Observation sample = Observation.start("hello", registry);
 
     @Test
     void should_run_on_start_only_for_first_matching_handler() {

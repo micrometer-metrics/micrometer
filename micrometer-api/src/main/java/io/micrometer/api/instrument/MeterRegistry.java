@@ -32,6 +32,9 @@ import io.micrometer.api.instrument.noop.NoopLongTaskTimer;
 import io.micrometer.api.instrument.noop.NoopMeter;
 import io.micrometer.api.instrument.noop.NoopTimeGauge;
 import io.micrometer.api.instrument.noop.NoopTimer;
+import io.micrometer.api.instrument.observation.Observation;
+import io.micrometer.api.instrument.observation.ObservationRegistry;
+import io.micrometer.api.instrument.observation.TimerObservationHandler;
 import io.micrometer.api.instrument.search.MeterNotFoundException;
 import io.micrometer.api.instrument.search.RequiredSearch;
 import io.micrometer.api.instrument.search.Search;
@@ -75,7 +78,7 @@ import static java.util.Objects.requireNonNull;
  * @author Jon Schneider
  * @author Johnny Lim
  */
-public abstract class MeterRegistry {
+public abstract class MeterRegistry implements ObservationRegistry {
     protected final Clock clock;
     private final Object meterMapLock = new Object();
     private volatile MeterFilter[] filters = new MeterFilter[0];
@@ -84,6 +87,31 @@ public abstract class MeterRegistry {
     private final List<BiConsumer<Meter.Id, String>> meterRegistrationFailedListeners = new CopyOnWriteArrayList<>();
     private final Config config = new Config();
     private final More more = new More();
+
+    private final ThreadLocal<Observation> localObservation = new ThreadLocal<>();
+
+    private final ObservationConfig observationConfig = new ObservationConfig();
+
+    @Nullable
+    @Override
+    public Observation getCurrentObservation() {
+        return this.localObservation.get();
+    }
+
+    @Override
+    public void setCurrentObservation(@Nullable Observation current) {
+        this.localObservation.set(current);
+    }
+
+    @Override
+    public ObservationConfig observationConfig() {
+        return this.observationConfig;
+    }
+
+    //TODO Want this under observationConfig but not sure that's possible
+    public void withTimerObservationHandler() {
+        observationConfig().observationHandler(new TimerObservationHandler(this));
+    }
 
     // Even though writes are guarded by meterMapLock, iterators across value space are supported
     // Hence, we use CHM to support that iteration without ConcurrentModificationException risk

@@ -62,12 +62,12 @@ public abstract class ObservationRegistryCompatibilityKit {
         ObservationHandler<Observation.Context> handler = mock(ObservationHandler.class);
         @SuppressWarnings("unchecked")
         ObservationHandler<Observation.Context> handlerThatHandlesNothing = mock(ObservationHandler.class);
-        registry.config().observationHandler(handler);
-        registry.config().observationHandler(handlerThatHandlesNothing);
+        registry.observationConfig().observationHandler(handler);
+        registry.observationConfig().observationHandler(handlerThatHandlesNothing);
         when(handler.supportsContext(any())).thenReturn(true);
         when(handlerThatHandlesNothing.supportsContext(any())).thenReturn(false);
 
-        Observation observation = registry.start("myObservation");
+        Observation observation = Observation.start("myObservation", registry);
         verify(handler).supportsContext(isA(Observation.Context.class));
         verify(handler).onStart(isA(Observation.Context.class));
         verify(handlerThatHandlesNothing).supportsContext(isA(Observation.Context.class));
