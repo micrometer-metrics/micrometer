@@ -15,11 +15,9 @@
  */
 package io.micrometer.core.tck;
 
-import java.time.Duration;
-
-import io.micrometer.api.instrument.MeterRegistry;
-import io.micrometer.api.instrument.Timer;
-import io.micrometer.api.instrument.TimerRecordingHandler;
+import io.micrometer.api.instrument.observation.Observation;
+import io.micrometer.api.instrument.observation.ObservationHandler;
+import io.micrometer.api.instrument.observation.ObservationRegistry;
 import io.micrometer.api.instrument.simple.SimpleMeterRegistry;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
@@ -29,8 +27,8 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatCode;
 
 /**
- * Base class for {@link TimerRecordingHandler} compatibility tests that support {@code null} contexts only.
- * To run a {@link TimerRecordingHandler} implementation against this TCK, make a test class that extends this
+ * Base class for {@link ObservationHandler} compatibility tests that support {@code null} contexts only.
+ * To run a {@link ObservationHandler} implementation against this TCK, make a test class that extends this
  * and implement the abstract methods.
  *
  * @author Marcin Grzejszczak
@@ -38,13 +36,13 @@ import static org.assertj.core.api.Assertions.assertThatCode;
  */
 public abstract class NullHandlerContextTimerRecordingHandlerCompatibilityKit {
 
-    protected TimerRecordingHandler<Timer.HandlerContext> handler;
+    protected ObservationHandler<Observation.Context> handler;
 
-    protected MeterRegistry meterRegistry = new SimpleMeterRegistry();
+    protected ObservationRegistry meterRegistry = new SimpleMeterRegistry();
 
-    public abstract TimerRecordingHandler<Timer.HandlerContext> handler();
+    public abstract ObservationHandler<Observation.Context> handler();
 
-    protected Timer.Sample sample = Timer.start(meterRegistry);
+    protected Observation sample = Observation.createNotStarted("hello", meterRegistry);
 
     @BeforeEach
     void setup() {
@@ -55,11 +53,10 @@ public abstract class NullHandlerContextTimerRecordingHandlerCompatibilityKit {
     @Test
     @DisplayName("compatibility test provides a null context accepting timer recording handler")
     void handlerSupportsNullContext() {
-        assertThatCode(() -> handler.onStart(sample, null)).doesNotThrowAnyException();
-        assertThatCode(() -> handler.onStop(sample, null, Timer.builder("timer for null context")
-                .register(meterRegistry), Duration.ofSeconds(1L))).doesNotThrowAnyException();
-        assertThatCode(() -> handler.onError(sample, null, new RuntimeException())).doesNotThrowAnyException();
-        assertThatCode(() -> handler.onScopeOpened(sample, null)).doesNotThrowAnyException();
+        assertThatCode(() -> handler.onStart(null)).doesNotThrowAnyException();
+        assertThatCode(() -> handler.onStop(null)).doesNotThrowAnyException();
+        assertThatCode(() -> handler.onError(null)).doesNotThrowAnyException();
+        assertThatCode(() -> handler.onScopeOpened(null)).doesNotThrowAnyException();
         assertThatCode(() -> handler.supportsContext(null)).doesNotThrowAnyException();
         assertThat(handler.supportsContext(null)).as("Handler supports null context").isTrue();
     }

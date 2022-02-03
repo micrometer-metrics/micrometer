@@ -32,6 +32,9 @@ import io.micrometer.api.instrument.noop.NoopLongTaskTimer;
 import io.micrometer.api.instrument.noop.NoopMeter;
 import io.micrometer.api.instrument.noop.NoopTimeGauge;
 import io.micrometer.api.instrument.noop.NoopTimer;
+import io.micrometer.api.instrument.observation.Observation;
+import io.micrometer.api.instrument.observation.ObservationRegistry;
+import io.micrometer.api.instrument.observation.TimerObservationHandler;
 import io.micrometer.api.instrument.search.MeterNotFoundException;
 import io.micrometer.api.instrument.search.RequiredSearch;
 import io.micrometer.api.instrument.search.Search;
@@ -75,17 +78,40 @@ import static java.util.Objects.requireNonNull;
  * @author Jon Schneider
  * @author Johnny Lim
  */
-public abstract class MeterRegistry {
+public abstract class MeterRegistry implements ObservationRegistry {
     protected final Clock clock;
     private final Object meterMapLock = new Object();
     private volatile MeterFilter[] filters = new MeterFilter[0];
-    private final List<TimerRecordingHandler<?>> timerRecordingHandlers = new CopyOnWriteArrayList<>();
     private final List<Consumer<Meter>> meterAddedListeners = new CopyOnWriteArrayList<>();
     private final List<Consumer<Meter>> meterRemovedListeners = new CopyOnWriteArrayList<>();
     private final List<BiConsumer<Meter.Id, String>> meterRegistrationFailedListeners = new CopyOnWriteArrayList<>();
     private final Config config = new Config();
     private final More more = new More();
-    private final ThreadLocal<Timer.Sample> localSample = new ThreadLocal<>();
+
+    private final ThreadLocal<Observation> localObservation = new ThreadLocal<>();
+
+    private final ObservationConfig observationConfig = new ObservationConfig();
+
+    @Nullable
+    @Override
+    public Observation getCurrentObservation() {
+        return this.localObservation.get();
+    }
+
+    @Override
+    public void setCurrentObservation(@Nullable Observation current) {
+        this.localObservation.set(current);
+    }
+
+    @Override
+    public ObservationConfig observationConfig() {
+        return this.observationConfig;
+    }
+
+    //TODO Want this under observationConfig but not sure that's possible
+    public void withTimerObservationHandler() {
+        observationConfig().observationHandler(new TimerObservationHandler(this));
+    }
 
     // Even though writes are guarded by meterMapLock, iterators across value space are supported
     // Hence, we use CHM to support that iteration without ConcurrentModificationException risk
@@ -114,14 +140,6 @@ public abstract class MeterRegistry {
     protected MeterRegistry(Clock clock) {
         requireNonNull(clock);
         this.clock = clock;
-    }
-
-    @Nullable public Timer.Sample getCurrentSample() {
-        return localSample.get();
-    }
-
-    Timer.Scope openNewScope(Timer.Sample currentSample) {
-        return new Timer.Scope(localSample, currentSample);
     }
 
     /**
@@ -807,25 +825,6 @@ public abstract class MeterRegistry {
         public Config onMeterRegistrationFailed(BiConsumer<Id, String> meterRegistrationFailedListener) {
             meterRegistrationFailedListeners.add(meterRegistrationFailedListener);
             return this;
-        }
-
-        /**
-         * Register an event handler for {@link Timer} recordings made using {@link Timer#start(MeterRegistry)}
-         * and {@link Timer.Sample#stop(Timer.Builder)} methods. You can add arbitrary behavior
-         * in the callbacks provided to get additional behavior out of timing instrumentation.
-         *
-         * @param handler handler to add to the current configuration
-         * @return This configuration instance
-         * @since 2.0.0
-         */
-        public Config timerRecordingHandler(TimerRecordingHandler<?> handler) {
-            timerRecordingHandlers.add(handler);
-            return this;
-        }
-
-        // package-private for minimal visibility
-        Collection<TimerRecordingHandler<?>> getTimerRecordingHandlers() {
-            return timerRecordingHandlers;
         }
 
         /**

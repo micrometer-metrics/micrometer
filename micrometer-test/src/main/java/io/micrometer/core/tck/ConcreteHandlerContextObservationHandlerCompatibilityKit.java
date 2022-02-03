@@ -15,11 +15,9 @@
  */
 package io.micrometer.core.tck;
 
-import java.time.Duration;
-
-import io.micrometer.api.instrument.MeterRegistry;
-import io.micrometer.api.instrument.Timer;
-import io.micrometer.api.instrument.TimerRecordingHandler;
+import io.micrometer.api.instrument.observation.Observation;
+import io.micrometer.api.instrument.observation.ObservationHandler;
+import io.micrometer.api.instrument.observation.ObservationRegistry;
 import io.micrometer.api.instrument.simple.SimpleMeterRegistry;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
@@ -29,22 +27,22 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatCode;
 
 /**
- * Base class for {@link TimerRecordingHandler} compatibility tests that support a concrete type of context only.
- * To run a {@link TimerRecordingHandler} implementation against this TCK, make a test class that extends this
+ * Base class for {@link ObservationHandler} compatibility tests that support a concrete type of context only.
+ * To run a {@link ObservationHandler} implementation against this TCK, make a test class that extends this
  * and implement the abstract methods.
  *
  * @author Marcin Grzejszczak
  * @since 2.0.0
  */
-public abstract class ConcreteHandlerContextTimerRecordingHandlerCompatibilityKit<T extends Timer.HandlerContext> {
+public abstract class ConcreteHandlerContextObservationHandlerCompatibilityKit<T extends Observation.Context> {
 
-    protected TimerRecordingHandler<T> handler;
+    protected ObservationHandler<T> handler;
 
-    protected MeterRegistry meterRegistry = new SimpleMeterRegistry();
+    protected ObservationRegistry meterRegistry = new SimpleMeterRegistry();
 
-    public abstract TimerRecordingHandler<T> handler();
+    public abstract ObservationHandler<T> handler();
 
-    protected Timer.Sample sample = Timer.start(meterRegistry);
+    protected Observation sample = Observation.createNotStarted("hello", meterRegistry);
 
     public abstract T context();
 
@@ -57,11 +55,10 @@ public abstract class ConcreteHandlerContextTimerRecordingHandlerCompatibilityKi
     @Test
     @DisplayName("compatibility test provides a concrete context accepting timer recording handler")
     void handlerSupportsConcreteContextForHandlerMethods() {
-        assertThatCode(() -> handler.onStart(sample, context())).doesNotThrowAnyException();
-        assertThatCode(() -> handler.onStop(sample, context(), Timer.builder("timer for concrete context")
-                .register(meterRegistry), Duration.ofSeconds(1L))).doesNotThrowAnyException();
-        assertThatCode(() -> handler.onError(sample, context(), new RuntimeException())).doesNotThrowAnyException();
-        assertThatCode(() -> handler.onScopeOpened(sample, context())).doesNotThrowAnyException();
+        assertThatCode(() -> handler.onStart(context())).doesNotThrowAnyException();
+        assertThatCode(() -> handler.onStop(context())).doesNotThrowAnyException();
+        assertThatCode(() -> handler.onError(context())).doesNotThrowAnyException();
+        assertThatCode(() -> handler.onScopeOpened(context())).doesNotThrowAnyException();
     }
 
     @Test
@@ -76,7 +73,7 @@ public abstract class ConcreteHandlerContextTimerRecordingHandlerCompatibilityKi
         assertThat(handler.supportsContext(new NotMatchingHandlerContext())).as("Handler supports only concrete context").isFalse();
     }
 
-    static class NotMatchingHandlerContext extends Timer.HandlerContext {
+    static class NotMatchingHandlerContext extends Observation.Context {
 
     }
 }

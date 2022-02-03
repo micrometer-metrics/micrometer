@@ -201,7 +201,9 @@ public class TimedAspect {
                     .tags(EXCEPTION_TAG, exceptionClass)
                     .tags(tagsBasedOnJoinPoint.apply(pjp))
                     .publishPercentileHistogram(timed.histogram())
-                    .publishPercentiles(timed.percentiles().length == 0 ? null : timed.percentiles()));
+                    .publishPercentiles(timed.percentiles().length == 0 ? null : timed.percentiles())
+                    .register(registry)
+            );
         } catch (Exception e) {
             // ignoring on purpose
         }

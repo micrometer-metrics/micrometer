@@ -15,17 +15,11 @@
  */
 package io.micrometer.api.instrument;
 
-import java.io.Closeable;
 import java.time.Duration;
 import java.util.Arrays;
-import java.util.Collection;
-import java.util.HashMap;
-import java.util.Map;
 import java.util.concurrent.Callable;
 import java.util.concurrent.TimeUnit;
-import java.util.function.Function;
 import java.util.function.Supplier;
-import java.util.stream.Collectors;
 
 import io.micrometer.api.annotation.Incubating;
 import io.micrometer.api.annotation.Timed;
@@ -45,25 +39,32 @@ import io.micrometer.api.lang.Nullable;
  */
 public interface Timer extends Meter, HistogramSupport {
     /**
-     * Start a timing sample.
+     * Start a timing sample using the {@link Clock#SYSTEM System clock}.
      *
-     * @param registry A meter registry whose clock is to be used
      * @return A timing sample with start time recorded.
+     * @since 1.1.0
      */
-    static Sample start(MeterRegistry registry) {
-        return start(registry, new HandlerContext());
+    static Sample start() {
+        return start(Clock.SYSTEM);
     }
 
     /**
      * Start a timing sample.
      *
      * @param registry A meter registry whose clock is to be used
-     * @param handlerContext handler context
      * @return A timing sample with start time recorded.
-     * @since 2.0.0
      */
-    static Sample start(MeterRegistry registry, HandlerContext handlerContext) {
-        return new Sample(registry, handlerContext);
+    static Sample start(MeterRegistry registry) {
+        return start(registry.config().clock());
+    }
+
+    /**
+     * Start a timing sample.
+     *
+     * @return A timing sample with start time recorded.
+     */
+    static Sample start(Clock clock) {
+        return new Sample(clock);
     }
 
     static Builder builder(String name) {
@@ -259,175 +260,28 @@ public interface Timer extends Meter, HistogramSupport {
 
     /**
      * Maintains state on the clock's start position for a latency sample. Complete the timing
-     * by calling {@link Sample#stop(Timer.Builder)}. Note how the {@link Timer} isn't provided until the
+     * by calling {@link Sample#stop(Timer)}. Note how the {@link Timer} isn't provided until the
      * sample is stopped, allowing you to determine the timer's tags at the last minute.
      */
-    @SuppressWarnings({ "unchecked", "rawtypes" })
     class Sample {
-
         private final long startTime;
         private final Clock clock;
-        private final Collection<TimerRecordingHandler> handlers;
-        private final HandlerContext handlerContext;
-        private final MeterRegistry registry;
 
-        Sample(MeterRegistry registry, HandlerContext ctx) {
-            this.clock = registry.config().clock();
+        Sample(Clock clock) {
+            this.clock = clock;
             this.startTime = clock.monotonicTime();
-            this.handlerContext = ctx;
-            this.handlers = registry.config().getTimerRecordingHandlers().stream()
-                    .filter(handler -> handler.supportsContext(this.handlerContext))
-                    .collect(Collectors.toList());
-            notifyOnSampleStarted();
-            this.registry = registry;
         }
 
-        /**
-         * Mark an exception that happened between the sample's start/stop.
-         *
-         * @param throwable exception that happened
-         * @since 2.0.0
-         */
-        public void error(Throwable throwable) {
-            // TODO check stop hasn't been called yet?
-            // TODO doesn't do anything to tags currently; we should make error tagging more first-class
-            notifyOnError(throwable);
-        }
-
-        /**
-         * Records the duration of the operation and adds tags to the {@link Timer.Builder} based on the
-         * {@link HandlerContext} for this {@link Sample}.
-         *
-         * @param timerBuilder The timer builder to record the sample to.
-         * @return The total duration of the sample in nanoseconds
-         * @since 2.0.0
-         */
-        public long stop(Timer.Builder timerBuilder) {
-            timerBuilder.tags(this.handlerContext.getLowCardinalityTags());
-            return stop(timerBuilder.register(this.registry));
-        }
-
-        // TODO: We'll need to make this private. I'm leaving this for now as it is cause it breaks compilation in quite a few places
         /**
          * Records the duration of the operation.
          *
-         * @deprecated Will be removed in a subsequent milestone release, please use {@link Sample#stop(Builder)}.
          * @param timer The timer to record the sample to.
          * @return The total duration of the sample in nanoseconds
          */
-        @Deprecated
         public long stop(Timer timer) {
-            long duration = clock.monotonicTime() - startTime;
-            timer.record(duration, TimeUnit.NANOSECONDS);
-            notifyOnSampleStopped(timer, Duration.ofNanos(duration));
-
-            return duration;
-        }
-
-        /**
-         * Make this sample current.
-         *
-         * @return newly opened scope
-         * @since 2.0.0
-         */
-        public Scope makeCurrent() {
-            notifyOnScopeOpened();
-            return registry.openNewScope(this);
-        }
-
-        private void notifyOnSampleStarted() {
-            this.handlers.forEach(handler -> handler.onStart(this, this.handlerContext));
-        }
-
-        private void notifyOnError(Throwable throwable) {
-            this.handlers.forEach(handler -> handler.onError(this, this.handlerContext, throwable));
-        }
-
-        private void notifyOnScopeOpened() {
-            this.handlers.forEach(handler -> handler.onScopeOpened(this, this.handlerContext));
-        }
-
-        private void notifyOnScopeClosed() {
-            this.handlers.forEach(handler -> handler.onScopeClosed(this, this.handlerContext));
-        }
-
-        private void notifyOnSampleStopped(Timer timer, Duration duration) {
-            this.handlers.forEach(handler -> handler.onStop(this, this.handlerContext, timer, duration));
-        }
-    }
-
-    /**
-     * Nestable bounding for {@link Timer timed} operations that capture and pass along already opened scopes.
-     *
-     * @since 2.0.0
-     */
-    class Scope implements Closeable {
-        private final ThreadLocal<Sample> threadLocal;
-        private final Sample currentSample;
-        private final Sample previousSample;
-
-        public Scope(ThreadLocal<Sample> threadLocal, Sample currentSample) {
-            this.threadLocal = threadLocal;
-            this.currentSample = currentSample;
-            this.previousSample = threadLocal.get();
-            threadLocal.set(currentSample);
-        }
-
-        public Sample getSample() {
-            return this.currentSample;
-        }
-
-        @Override
-        public void close() {
-            this.currentSample.notifyOnScopeClosed();
-            threadLocal.set(previousSample);
-        }
-    }
-
-    /**
-     * Context for {@link Sample} instances used by {@link TimerRecordingHandler} to pass arbitrary objects between
-     * handler methods. Usage is similar to the JDK {@link Map} API.
-     *
-     * @since 2.0.0
-     */
-    @SuppressWarnings("unchecked")
-    class HandlerContext implements TagsProvider {
-        private final Map<Class<?>, Object> map = new HashMap<>();
-
-        /**
-         * The name of the recorded measurement in the context of the {@link TimerRecordingHandler}.
-         * The Timer itself has a name but you might want to use a different name in the {@link TimerRecordingHandler}.
-         * This method makes it possible to use a different name.
-         *
-         * @return the contextual name
-         */
-        @Nullable public String getContextualName() {
-            return null;
-        }
-
-        public <T> HandlerContext put(Class<T> clazz, T object) {
-            this.map.put(clazz, object);
-            return this;
-        }
-        
-        public void remove(Class<?> clazz) {
-            this.map.remove(clazz);
-        }
-        
-        @Nullable public <T> T get(Class<T> clazz) {
-            return (T) this.map.get(clazz);
-        }
-
-        public <T> T getOrDefault(Class<T> clazz, T defaultObject) {
-            return (T) this.map.getOrDefault(clazz, defaultObject);
-        }
-        
-        public <T> T computeIfAbsent(Class<T> clazz, Function<Class<?>, ? extends T> mappingFunction) {
-            return (T) this.map.computeIfAbsent(clazz, mappingFunction);
-        }
-
-        public void clear() {
-            this.map.clear();
+            long durationNs = clock.monotonicTime() - startTime;
+            timer.record(durationNs, TimeUnit.NANOSECONDS);
+            return durationNs;
         }
     }
 
@@ -545,7 +399,7 @@ public interface Timer extends Meter, HistogramSupport {
          */
         public Timer register(MeterRegistry registry) {
             // the base unit for a timer will be determined by the monitoring system implementation
-            return registry.timer(new Id(name, tags, null, description, Type.TIMER), distributionConfigBuilder.build(),
+            return registry.timer(new Meter.Id(name, tags, null, description, Type.TIMER), distributionConfigBuilder.build(),
                     pauseDetector == null ? registry.config().pauseDetector() : pauseDetector);
         }
     }

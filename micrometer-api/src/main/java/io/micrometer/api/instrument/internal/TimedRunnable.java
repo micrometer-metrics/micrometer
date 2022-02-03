@@ -27,7 +27,7 @@ class TimedRunnable implements Runnable {
     private final Timer idleTimer;
     private final Runnable command;
     private final Timer.Sample idleSample;
-    private final Timer.Scope idleScope;
+//    private final Timer.Scope idleScope;
 
     TimedRunnable(MeterRegistry registry, Timer executionTimer, Timer idleTimer, Runnable command) {
         this.registry = registry;
@@ -35,17 +35,19 @@ class TimedRunnable implements Runnable {
         this.idleTimer = idleTimer;
         this.command = command;
         this.idleSample = Timer.start(registry);
-        this.idleScope = this.idleSample.makeCurrent();
+//        this.idleScope = this.idleSample.makeCurrent();
     }
 
     @Override
     public void run() {
-        idleScope.close();
+//        idleScope.close();
         idleSample.stop(idleTimer);
         Timer.Sample executionSample = Timer.start(registry);
-        try (Timer.Scope scope = executionSample.makeCurrent()) {
+//        try (Timer.Scope scope = executionSample.makeCurrent()) {
+        try {
             command.run();
-        } finally {
+        }
+        finally {
             executionSample.stop(executionTimer);
         }
     }
