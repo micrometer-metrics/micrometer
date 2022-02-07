@@ -121,7 +121,7 @@ public class ElasticMeterRegistry extends StepMeterRegistry {
 
     private final DateTimeFormatter indexDateFormatter;
 
-    private final String createLine;
+    private final String actionLine;
 
     private volatile boolean checkedForIndexTemplate;
 
@@ -147,9 +147,9 @@ public class ElasticMeterRegistry extends StepMeterRegistry {
         indexDateFormatter = DateTimeFormatter.ofPattern(config.indexDateFormat());
         this.httpClient = httpClient;
         if (StringUtils.isNotEmpty(config.pipeline())) {
-            createLine = "{ \"create\" : {\"pipeline\":\"" + config.pipeline() + "\"} }\n";
+            actionLine = "{ \"create\" : {\"pipeline\":\"" + config.pipeline() + "\"} }\n";
         } else {
-            createLine = "{ \"create\" : {} }\n";
+            actionLine = "{ \"create\" : {} }\n";
         }
 
         start(threadFactory);
@@ -404,7 +404,7 @@ public class ElasticMeterRegistry extends StepMeterRegistry {
 
     // VisibleForTesting
     String writeDocument(Meter meter, Consumer<StringBuilder> consumer) {
-        StringBuilder sb = new StringBuilder(createLine);
+        StringBuilder sb = new StringBuilder(actionLine);
         String timestamp = generateTimestamp();
         String name = getConventionName(meter.getId());
         String type = meter.getId().getType().toString().toLowerCase();
