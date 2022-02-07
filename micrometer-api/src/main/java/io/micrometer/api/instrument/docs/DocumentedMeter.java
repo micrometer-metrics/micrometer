@@ -17,6 +17,7 @@
 package io.micrometer.api.instrument.docs;
 
 import io.micrometer.api.instrument.Meter;
+import io.micrometer.api.lang.Nullable;
 
 /**
  * In order to describe your metrics via e.g. enums instead of Strings you can use this
@@ -53,7 +54,10 @@ public interface DocumentedMeter {
      *
      * @return base unit
      */
-    String getBaseUnit();
+    @Nullable
+    default String getBaseUnit() {
+        return null;
+    }
 
     /**
      * Type of this metric.

@@ -30,14 +30,15 @@ public class ObservationHandlerSample {
 
     public static void main(String[] args) throws InterruptedException {
         registry.withTimerObservationHandler()
-                .observationHandler(new SampleHandler())
-                .observationPredicate((s, context) -> {
-                    boolean observationEnabled = !"sample.ignored".equals(s);
-                    if (!observationEnabled) {
-                        System.out.println("Ignoring sample.ignored");
-                    }
-                    return observationEnabled;
-                });
+                .observationConfig()
+                    .observationHandler(new SampleHandler())
+                    .observationPredicate((s, context) -> {
+                        boolean observationEnabled = !"sample.ignored".equals(s);
+                        if (!observationEnabled) {
+                            System.out.println("Ignoring sample.ignored");
+                        }
+                        return observationEnabled;
+                    });
 
         Observation observation = Observation.createNotStarted("sample.operation", new CustomContext(), registry)
                 .contextualName("CALL sampleOperation")
