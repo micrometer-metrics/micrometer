@@ -16,8 +16,6 @@
 
 package io.micrometer.api.instrument.docs;
 
-import java.util.concurrent.TimeUnit;
-
 import io.micrometer.api.instrument.Meter;
 
 /**
