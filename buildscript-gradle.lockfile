@@ -46,6 +46,7 @@ de.regnis.q.sequence:sequence-library:1.0.3=classpath
 gradle.plugin.com.hierynomus.gradle.plugins:license-gradle-plugin:0.16.1=classpath
 info.picocli:picocli:4.3.1=classpath
 io.github.gradle-nexus:publish-plugin:1.1.0=classpath
+info.solidsoft.gradle.pitest:gradle-pitest-plugin:1.7.0=classpath
 io.spring.nohttp:nohttp-checkstyle:0.0.10=classpath
 io.spring.nohttp:nohttp-gradle:0.0.10=classpath
 io.spring.nohttp:nohttp:0.0.10=classpath

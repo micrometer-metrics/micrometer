@@ -16,6 +16,7 @@ buildscript {
         classpath 'io.spring.nohttp:nohttp-gradle:0.0.10'
         classpath 'org.gradle:test-retry-gradle-plugin:1.3.1'
         classpath 'io.github.gradle-nexus:publish-plugin:1.1.0'
+        classpath 'info.solidsoft.gradle.pitest:gradle-pitest-plugin:1.7.0'
 
         constraints {
             classpath('org.ow2.asm:asm:7.3.1') {
@@ -42,6 +43,8 @@ allprojects {
     afterEvaluate { project -> println "I'm configuring $project.name with version $project.version" }
 }
 
+apply plugin: 'info.solidsoft.pitest.aggregator' // to 'pitestReportAggregate' appear
+
 subprojects {
     apply plugin: 'signing'
 
@@ -50,11 +53,24 @@ subprojects {
             apply plugin: 'java'
         } else {
             apply plugin: 'java-library'
+
+            apply plugin: 'info.solidsoft.pitest'
+
+            pitest {
+                // export mutations.xml and line coverage for aggregation
+                outputFormats = ["XML"]
+                exportLineCoverage = true
+                timestampedReports = false
+                junit5PluginVersion = '0.15'
+            }
+
+            build.dependsOn 'pitest'
         }
         apply plugin: 'com.github.hierynomus.license'
         apply plugin: 'checkstyle'
         apply plugin: 'io.spring.nohttp'
         apply plugin: 'org.gradle.test-retry'
+
 
         java {
             // It is more idiomatic to define different features for different sets of optional

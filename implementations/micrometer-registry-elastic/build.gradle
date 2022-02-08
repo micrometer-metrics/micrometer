@@ -9,3 +9,8 @@ dependencies {
     testImplementation 'com.jayway.jsonpath:json-path:latest.release'
     testImplementation 'ch.qos.logback:logback-classic'
 }
+
+// This module hangs indefinitely
+pitest {
+    targetClasses = []
+}
