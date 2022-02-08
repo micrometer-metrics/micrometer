@@ -1,5 +1,5 @@
 /*
- * Copyright 2021 VMware, Inc.
+ * Copyright 2022 VMware, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -22,11 +22,10 @@ import java.util.UUID;
 import io.micrometer.api.instrument.observation.Observation;
 import io.micrometer.api.instrument.observation.ObservationHandler;
 import io.micrometer.api.instrument.Tags;
-import io.micrometer.prometheus.PrometheusConfig;
-import io.micrometer.prometheus.PrometheusMeterRegistry;
+import io.micrometer.api.instrument.simple.SimpleMeterRegistry;
 
 public class ObservationHandlerSample {
-    private static final PrometheusMeterRegistry registry = new PrometheusMeterRegistry(PrometheusConfig.DEFAULT);
+    private static final SimpleMeterRegistry registry = new SimpleMeterRegistry();
 
     public static void main(String[] args) throws InterruptedException {
         registry.withTimerObservationHandler()
@@ -52,13 +51,12 @@ public class ObservationHandlerSample {
         }
         observation.stop();
 
-        Observation.start("sample.operation", registry).stop();
-        Observation.start("sample.operation", new UnsupportedHandlerContext(), registry).stop();
-
+        Observation.start("sample.no-context", registry).stop();
+        Observation.start("sample.unsupported", new UnsupportedHandlerContext(), registry).stop();
         Observation.start("sample.ignored", new CustomContext(), registry).stop();
 
         System.out.println();
-        System.out.println(registry.scrape());
+        System.out.println(registry.getMetersAsString());
     }
 
     static class SampleHandler implements ObservationHandler<CustomContext> {
@@ -72,7 +70,7 @@ public class ObservationHandlerSample {
 
         @Override
         public void onError(CustomContext context) {
-            System.out.println("error: " + context.getError() + " " + context.getError());
+            System.out.println("error: " + context.getError() + " " + context);
         }
 
         @Override

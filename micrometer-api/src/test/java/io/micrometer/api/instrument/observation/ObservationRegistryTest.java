@@ -16,7 +16,6 @@
 package io.micrometer.api.instrument.observation;
 
 import io.micrometer.api.instrument.MeterRegistry;
-import io.micrometer.api.instrument.NoopObservation;
 import io.micrometer.api.instrument.simple.SimpleMeterRegistry;
 import org.junit.jupiter.api.Test;
 
@@ -30,19 +29,19 @@ import static org.mockito.Mockito.mock;
  * @author Johnny Lim
  */
 class ObservationRegistryTest {
-    private ObservationRegistry registry = new SimpleMeterRegistry();
+    private final ObservationRegistry registry = new SimpleMeterRegistry();
     
     @Test
     void openingScopeShouldSetSampleAsCurrent() {
         Observation sample = Observation.start("test.timer", registry);
         Observation.Scope scope = sample.openScope();
 
-        assertThat(registry.getCurrentObservation()).isSameAs(sample);
+        assertThat(registry.getCurrentObservation()).containsSame(sample);
 
         scope.close();
         sample.stop();
 
-        assertThat(registry.getCurrentObservation()).isNull();
+        assertThat(registry.getCurrentObservation()).isEmpty();
     }
 
     @Test

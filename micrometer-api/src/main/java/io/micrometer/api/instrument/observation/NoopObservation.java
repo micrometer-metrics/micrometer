@@ -13,11 +13,19 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package io.micrometer.api.instrument;
+package io.micrometer.api.instrument.observation;
 
-import io.micrometer.api.instrument.observation.Observation;
-import io.micrometer.api.lang.Nullable;
+import io.micrometer.api.instrument.Tag;
 
+/**
+ * No-op implementation of {@link Observation} so that we can disable the instrumentation logic.
+ *
+ * @author Jonatan Ivanov
+ * @author Tommy Ludwig
+ * @author Marcin Grzejszczak
+ *
+ * @since 2.0.0
+ */
 public class NoopObservation implements Observation {
     public static final NoopObservation INSTANCE = new NoopObservation();
 
@@ -69,9 +77,8 @@ public class NoopObservation implements Observation {
     }
 
     static class NoOpScope implements Scope {
-        static final NoOpScope INSTANCE = new NoOpScope();
+        private static final Scope INSTANCE = new NoOpScope();
 
-        @Nullable
         @Override
         public Observation getCurrentObservation() {
             return NoopObservation.INSTANCE;

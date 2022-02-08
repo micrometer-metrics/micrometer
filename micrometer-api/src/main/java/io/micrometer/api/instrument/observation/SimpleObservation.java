@@ -22,6 +22,15 @@ import java.util.stream.Collectors;
 import io.micrometer.api.instrument.Tag;
 import io.micrometer.api.lang.Nullable;
 
+/**
+ * Default implementation of {@link Observation}.
+ *
+ * @author Jonatan Ivanov
+ * @author Tommy Ludwig
+ * @author Marcin Grzejszczak
+ *
+ * @since 2.0.0
+ */
 class SimpleObservation implements Observation {
     private final ObservationRegistry registry;
     private final Context context;
@@ -123,7 +132,7 @@ class SimpleObservation implements Observation {
         SimpleScope(ObservationRegistry registry, SimpleObservation current) {
             this.registry = registry;
             this.currentObservation = current;
-            this.previousObservation = registry.getCurrentObservation();
+            this.previousObservation = registry.getCurrentObservation().orElse(null);
             this.registry.setCurrentObservation(current);
         }
 

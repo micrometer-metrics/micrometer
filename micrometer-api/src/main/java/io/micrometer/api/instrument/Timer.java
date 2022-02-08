@@ -61,6 +61,7 @@ public interface Timer extends Meter, HistogramSupport {
     /**
      * Start a timing sample.
      *
+     * @param clock a clock to be used
      * @return A timing sample with start time recorded.
      */
     static Sample start(Clock clock) {

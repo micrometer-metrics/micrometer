@@ -48,6 +48,7 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.CopyOnWriteArrayList;
@@ -77,6 +78,9 @@ import static java.util.Objects.requireNonNull;
  *
  * @author Jon Schneider
  * @author Johnny Lim
+ * @author Jonatan Ivanov
+ * @author Tommy Ludwig
+ * @author Marcin Grzejszczak
  */
 public abstract class MeterRegistry implements ObservationRegistry {
     protected final Clock clock;
@@ -92,10 +96,9 @@ public abstract class MeterRegistry implements ObservationRegistry {
 
     private final ObservationConfig observationConfig = new ObservationConfig();
 
-    @Nullable
     @Override
-    public Observation getCurrentObservation() {
-        return localObservation.get();
+    public Optional<Observation> getCurrentObservation() {
+        return Optional.ofNullable(localObservation.get());
     }
 
     @Override

@@ -63,10 +63,8 @@ public class ObservationRegistryAssert extends AbstractAssert<ObservationRegistr
      */
     public ObservationRegistryAssert doesNotHaveRemainingObservation() {
         isNotNull();
-        Observation current = actual.getCurrentObservation();
-        if (current != null) {
-            failWithMessage("Expected no current observation in the registry but found one");
-        }
+        actual.getCurrentObservation()
+                .ifPresent(obs -> failWithMessage("Expected no current observation in the registry but found one"));
         return this;
     }
 

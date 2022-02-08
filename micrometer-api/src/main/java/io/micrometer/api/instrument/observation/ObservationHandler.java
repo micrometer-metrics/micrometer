@@ -24,13 +24,14 @@ import java.util.stream.Stream;
  * Handler for an {@link Observation}. Hooks in to the lifecycle of an observation.
  * Example of handler implementations can create metrics, spans or logs.
  *
+ * @param <T> type of handler context
+ * @see MeterObservationHandler
+ * @see TimerObservationHandler
+ *
  * @author Jonatan Ivanov
  * @author Tommy Ludwig
  * @author Marcin Grzejszczak
- * @param <T> type of handler context
  * @since 2.0.0
- * @see MeterObservationHandler
- * @see TimerObservationHandler
  */
 public interface ObservationHandler<T extends Observation.Context> {
     /**
@@ -39,7 +40,6 @@ public interface ObservationHandler<T extends Observation.Context> {
      * @param context a {@link Observation.Context}
      */
     default void onStart(T context) {
-
     }
 
     /**
@@ -48,11 +48,10 @@ public interface ObservationHandler<T extends Observation.Context> {
      * @param context a {@link Observation.Context}
      */
     default void onError(T context) {
-
     }
 
     /**
-     * Reacts to starting of a {@link Observation.Scope}.
+     * Reacts to opening of a {@link Observation.Scope}.
      *
      * @param context a {@link Observation.Context}
      */
@@ -60,7 +59,7 @@ public interface ObservationHandler<T extends Observation.Context> {
     }
 
     /**
-     * Reacts to stopping of a {@link Observation.Scope}.
+     * Reacts to closing of a {@link Observation.Scope}.
      *
      * @param context a {@link Observation.Context}
      */
@@ -73,36 +72,30 @@ public interface ObservationHandler<T extends Observation.Context> {
      * @param context a {@link Observation.Context}
      */
     default void onStop(T context) {
-
     }
 
     /**
-     * Tells the framework whether this handler should be applied for
-     * a given {@link Observation.Context}.
+     * Tells the registry whether this handler should be applied for a given {@link Observation.Context}.
      *
      * @param context a {@link Observation.Context}
-     * @return {@code true} when this handler should be applied
+     * @return {@code true} when this handler should be used
      */
     boolean supportsContext(Observation.Context context);
 
-
     /**
      * Handler wrapping other handlers.
-     *
-     * @since 1.0.0
      */
     @SuppressWarnings("rawtypes")
     interface CompositeObservationHandler extends ObservationHandler<Observation.Context> {
         /**
-         * Returns the registered recording handlers.
+         * Returns the registered handlers.
          * @return registered handlers
          */
         List<ObservationHandler> getHandlers();
     }
 
     /**
-     * Handler picking the first matching recording handler from the list.
-     * @since 1.0.0
+     * Handler picking the first matching handler from the list.
      */
     @SuppressWarnings({"unchecked", "rawtypes"})
     class FirstMatchingCompositeObservationHandler implements CompositeObservationHandler {
@@ -165,7 +158,7 @@ public interface ObservationHandler<T extends Observation.Context> {
     }
 
     /**
-     * Handler picking all matching recording handlers from the list.
+     * Handler picking all matching handlers from the list.
      */
     @SuppressWarnings({"unchecked", "rawtypes"})
     class AllMatchingCompositeObservationHandler implements CompositeObservationHandler {

@@ -33,15 +33,15 @@ class CurrentObservationTest {
 
         Observation observation = Observation.createNotStarted("test.observation", registry);
         System.out.println("Outside task: " + observation);
-        assertThat(registry.getCurrentObservation()).isNull();
+        assertThat(registry.getCurrentObservation()).isEmpty();
         try (Observation.Scope scope = observation.openScope()) {
-            assertThat(registry.getCurrentObservation()).isSameAs(observation);
+            assertThat(registry.getCurrentObservation()).containsSame(observation);
             taskRunner.submit(() -> {
-                System.out.println("In task: " + registry.getCurrentObservation());
-                assertThat(registry.getCurrentObservation()).isNotEqualTo(observation);
+                System.out.println("In task: " + registry.getCurrentObservation().orElse(null));
+                assertThat(registry.getCurrentObservation().orElse(null)).isNotEqualTo(observation);
             }).get();
         }
-        assertThat(registry.getCurrentObservation()).isNull();
+        assertThat(registry.getCurrentObservation()).isEmpty();
         observation.stop();
     }
 
@@ -50,15 +50,15 @@ class CurrentObservationTest {
         ExecutorService executor = Executors.newSingleThreadExecutor();
 
         Observation observation = Observation.createNotStarted("test.observation", registry);
-        assertThat(registry.getCurrentObservation()).isNull();
+        assertThat(registry.getCurrentObservation()).isEmpty();
         executor.submit(() -> {
             try (Observation.Scope scope = observation.openScope()) {
-                assertThat(registry.getCurrentObservation()).isEqualTo(observation);
+                assertThat(registry.getCurrentObservation()).containsSame(observation);
             }
             observation.stop();
         }).get();
 
-        assertThat(registry.getCurrentObservation()).isNull();
+        assertThat(registry.getCurrentObservation()).isEmpty();
     }
 
     @Test
@@ -70,37 +70,37 @@ class CurrentObservationTest {
 
         executor.submit(() -> {
             Observation observation = Observation.createNotStarted("test.observation", registry);
-            assertThat(registry.getCurrentObservation()).isNull();
+            assertThat(registry.getCurrentObservation()).isEmpty();
             observationMap.put("myObservation", observation);
         }).get();
 
         executor2.submit(() -> {
             Observation myObservation = observationMap.get("myObservation");
             try (Observation.Scope scope = myObservation.openScope()) {
-                assertThat(registry.getCurrentObservation()).isEqualTo(myObservation);
+                assertThat(registry.getCurrentObservation()).containsSame(myObservation);
             }
             myObservation.stop();
-            assertThat(registry.getCurrentObservation()).isNull();
+            assertThat(registry.getCurrentObservation()).isEmpty();
         }).get();
 
-        assertThat(registry.getCurrentObservation()).isNull();
+        assertThat(registry.getCurrentObservation()).isEmpty();
     }
 
     @Test
     void nestedSamples_sameThread() {
         Observation observation = Observation.createNotStarted("observation1", registry);
         Observation observation2;
-        assertThat(registry.getCurrentObservation()).isNull();
+        assertThat(registry.getCurrentObservation()).isEmpty();
         try (Observation.Scope scope = observation.openScope()) {
             observation2 = Observation.createNotStarted("observation2", registry);
-            assertThat(registry.getCurrentObservation()).isSameAs(observation);
+            assertThat(registry.getCurrentObservation()).containsSame(observation);
         }
         try (Observation.Scope scope = observation2.openScope()) {
             observation.stop();
-            assertThat(registry.getCurrentObservation()).isSameAs(observation2);
+            assertThat(registry.getCurrentObservation()).containsSame(observation2);
         }
         observation2.stop();
 
-        assertThat(registry.getCurrentObservation()).isNull();
+        assertThat(registry.getCurrentObservation()).isEmpty();
     }
 }
