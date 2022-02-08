@@ -18,7 +18,6 @@ package io.micrometer.api.instrument.observation;
 import java.util.Collection;
 import java.util.List;
 import java.util.concurrent.CopyOnWriteArrayList;
-import java.util.function.BiPredicate;
 
 import io.micrometer.api.instrument.NoopObservation;
 import io.micrometer.api.lang.Nullable;
@@ -64,7 +63,7 @@ public interface ObservationRegistry {
 
         private final List<ObservationHandler<?>> observationHandlers = new CopyOnWriteArrayList<>();
 
-        private final List<BiPredicate<String, Observation.Context>> observationPredicates = new CopyOnWriteArrayList<>();
+        private final List<ObservationPredicate> observationPredicates = new CopyOnWriteArrayList<>();
 
         /**
          * Register a handler for the {@link Observation observations}.
@@ -84,7 +83,7 @@ public interface ObservationRegistry {
          * @param predicate predicate
          * @return This configuration instance
          */
-        public ObservationConfig observationPredicate(BiPredicate<String, Observation.Context> predicate) {
+        public ObservationConfig observationPredicate(ObservationPredicate predicate) {
             this.observationPredicates.add(predicate);
             return this;
         }
