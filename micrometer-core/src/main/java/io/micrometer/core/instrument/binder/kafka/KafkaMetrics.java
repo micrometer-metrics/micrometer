@@ -91,7 +91,7 @@ class KafkaMetrics implements MeterBinder, AutoCloseable {
     @Nullable
     private volatile MeterRegistry registry;
 
-    private final Set<Meter.Id> registeredMeters = ConcurrentHashMap.newKeySet();
+    private final Set<Meter.Id> registeredMeterIds = ConcurrentHashMap.newKeySet();
 
     KafkaMetrics(Supplier<Map<MetricName, ? extends Metric>> metricsSupplier) {
         this(metricsSupplier, emptyList());
@@ -172,7 +172,7 @@ class KafkaMetrics implements MeterBinder, AutoCloseable {
                 for (MetricName metricName : metricsToRemove) {
                     Meter.Id id = meterIdForComparison(metricName);
                     registry.remove(id);
-                    registeredMeters.remove(id);
+                    registeredMeterIds.remove(id);
                 }
 
                 currentMeters = new HashSet<>(currentMetrics.keySet());
@@ -195,11 +195,12 @@ class KafkaMetrics implements MeterBinder, AutoCloseable {
                     // Remove meters with lower number of tags
                     boolean hasLessTags = false;
                     for (Meter other : registryMetersByNames.getOrDefault(meterName, emptyList())) {
-                        List<Tag> tags = other.getId().getTags();
+                        Meter.Id otherId = other.getId();
+                        List<Tag> tags = otherId.getTags();
                         List<Tag> meterTagsWithCommonTags = meterTags(name, true);
                         if (tags.size() < meterTagsWithCommonTags.size()) {
-                            registry.remove(other.getId());
-                            registeredMeters.remove(other.getId());
+                            registry.remove(otherId);
+                            registeredMeterIds.remove(otherId);
                         }
                         // Check if already exists
                         else if (tags.size() == meterTagsWithCommonTags.size())
@@ -235,7 +236,7 @@ class KafkaMetrics implements MeterBinder, AutoCloseable {
 
     private Meter bindMeter(MeterRegistry registry, MetricName metricName, String meterName, Iterable<Tag> tags) {
         Meter meter = registerMeter(registry, metricName, meterName, tags);
-        registeredMeters.add(meter.getId());
+        registeredMeterIds.add(meter.getId());
         return meter;
     }
 
@@ -297,7 +298,7 @@ class KafkaMetrics implements MeterBinder, AutoCloseable {
     public void close() {
         this.scheduler.shutdownNow();
 
-        for (Meter.Id id : registeredMeters) {
+        for (Meter.Id id : registeredMeterIds) {
             registry.remove(id);
         }
     }
