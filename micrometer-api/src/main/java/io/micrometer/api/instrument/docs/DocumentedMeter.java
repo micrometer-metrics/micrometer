@@ -106,4 +106,15 @@ public interface DocumentedMeter {
         return null;
     }
 
+    /**
+     * Returns required prefix to be there for tags. For example, {@code foo.} would
+     * require the tags to have a {@code foo.} prefix like this:
+     * {@code foo.bar=true}.
+     *
+     * @return required prefix
+     */
+    default String getPrefix() {
+        return "";
+    }
+
 }
