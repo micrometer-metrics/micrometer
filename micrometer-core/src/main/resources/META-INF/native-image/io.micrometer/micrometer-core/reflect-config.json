@@ -12,5 +12,13 @@
       {"name":"getMaxFileDescriptorCount","parameterTypes":[] },
       {"name":"getOpenFileDescriptorCount","parameterTypes":[] }
     ]
+  },
+  {
+    "name":"org.HdrHistogram.ConcurrentHistogram",
+    "methods":[{"name":"<init>","parameterTypes":["long","long","int"] }]
+  },
+  {
+    "name":"org.HdrHistogram.Histogram",
+    "methods":[{"name":"<init>","parameterTypes":["long","long","int"] }]
   }
 ]
