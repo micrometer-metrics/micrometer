@@ -43,6 +43,7 @@ def VERSIONS = [
         'net.sf.ehcache:ehcache:latest.release',
         'org.apache.httpcomponents:httpasyncclient:latest.release',
         'org.apache.httpcomponents:httpclient:latest.release',
+        'org.apache.httpcomponents.client5:httpclient5:latest.release',
         'org.apache.kafka:kafka-clients:2.+',
         'org.apache.kafka:kafka-streams:2.+',
         'org.apache.logging.log4j:log4j-core:2.+',
