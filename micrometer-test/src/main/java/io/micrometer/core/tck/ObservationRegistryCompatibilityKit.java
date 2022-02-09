@@ -56,8 +56,8 @@ public abstract class ObservationRegistryCompatibilityKit {
     }
 
     @Test
-    @DisplayName("record using handlers")
-    void recordWithHandlers() {
+    @DisplayName("observe using handlers")
+    void observeWithHandlers() {
         @SuppressWarnings("unchecked")
         ObservationHandler<Observation.Context> handler = mock(ObservationHandler.class);
         @SuppressWarnings("unchecked")

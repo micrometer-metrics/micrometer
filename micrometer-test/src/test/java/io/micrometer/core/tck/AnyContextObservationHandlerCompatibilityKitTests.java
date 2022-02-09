@@ -18,33 +18,29 @@ package io.micrometer.core.tck;
 import io.micrometer.api.instrument.observation.Observation;
 import io.micrometer.api.instrument.observation.ObservationHandler;
 
-class NullContextTimerRecordingHandlerCompatibilityKitTests extends NullHandlerContextTimerRecordingHandlerCompatibilityKit {
+class AnyContextObservationHandlerCompatibilityKitTests extends AnyContextObservationHandlerCompatibilityKit {
 
     @Override
     public ObservationHandler<Observation.Context> handler() {
         return new ObservationHandler<Observation.Context>() {
             @Override
-            public void onStart(Observation.Context handlerContext) {
-
+            public void onStart(Observation.Context context) {
             }
 
             @Override
-            public void onError(Observation.Context handlerContext) {
-
+            public void onError(Observation.Context context) {
             }
 
             @Override
-            public void onScopeOpened(Observation.Context handlerContext) {
-
+            public void onScopeOpened(Observation.Context context) {
             }
 
             @Override
-            public void onStop(Observation.Context handlerContext) {
-
+            public void onStop(Observation.Context context) {
             }
 
             @Override
-            public boolean supportsContext(Observation.Context handlerContext) {
+            public boolean supportsContext(Observation.Context context) {
                 return true;
             }
         };

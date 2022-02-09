@@ -27,22 +27,24 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatCode;
 
 /**
- * Base class for {@link ObservationHandler} compatibility tests that support {@code null} contexts only.
+ * Base class for {@link ObservationHandler} compatibility tests that support a concrete type of context only.
  * To run a {@link ObservationHandler} implementation against this TCK, make a test class that extends this
  * and implement the abstract methods.
  *
  * @author Marcin Grzejszczak
  * @since 2.0.0
  */
-public abstract class NullHandlerContextTimerRecordingHandlerCompatibilityKit {
+public abstract class ConcreteContextObservationHandlerCompatibilityKit<T extends Observation.Context> {
 
-    protected ObservationHandler<Observation.Context> handler;
+    protected ObservationHandler<T> handler;
 
     protected ObservationRegistry meterRegistry = new SimpleMeterRegistry();
 
-    public abstract ObservationHandler<Observation.Context> handler();
+    public abstract ObservationHandler<T> handler();
 
     protected Observation sample = Observation.createNotStarted("hello", meterRegistry);
+
+    public abstract T context();
 
     @BeforeEach
     void setup() {
@@ -51,14 +53,28 @@ public abstract class NullHandlerContextTimerRecordingHandlerCompatibilityKit {
     }
 
     @Test
-    @DisplayName("compatibility test provides a null context accepting timer recording handler")
-    void handlerSupportsNullContext() {
-        assertThatCode(() -> handler.onStart(null)).doesNotThrowAnyException();
-        assertThatCode(() -> handler.onStop(null)).doesNotThrowAnyException();
-        assertThatCode(() -> handler.onError(null)).doesNotThrowAnyException();
-        assertThatCode(() -> handler.onScopeOpened(null)).doesNotThrowAnyException();
+    @DisplayName("compatibility test provides a concrete context accepting observation handler")
+    void handlerSupportsConcreteContextForHandlerMethods() {
+        assertThatCode(() -> handler.onStart(context())).doesNotThrowAnyException();
+        assertThatCode(() -> handler.onStop(context())).doesNotThrowAnyException();
+        assertThatCode(() -> handler.onError(context())).doesNotThrowAnyException();
+        assertThatCode(() -> handler.onScopeOpened(context())).doesNotThrowAnyException();
+    }
+
+    @Test
+    void handlerSupportsConcreteContextOnly() {
+        assertThatCode(() -> handler.supportsContext(context())).doesNotThrowAnyException();
+        assertThat(handler.supportsContext(context())).as("Handler supports only concrete context").isTrue();
+
         assertThatCode(() -> handler.supportsContext(null)).doesNotThrowAnyException();
-        assertThat(handler.supportsContext(null)).as("Handler supports null context").isTrue();
+        assertThat(handler.supportsContext(null)).as("Handler supports only concrete context - no nulls accepted").isFalse();
+
+        assertThatCode(() -> handler.supportsContext(new NotMatchingContext())).doesNotThrowAnyException();
+        assertThat(handler.supportsContext(new NotMatchingContext())).as("Handler supports only concrete context").isFalse();
+    }
+
+    static class NotMatchingContext extends Observation.Context {
+
     }
 }
 

@@ -45,7 +45,7 @@ class ObservationRegistryTest {
     }
 
     @Test
-    void timerRecordingHandlerShouldAddThePassedHandler() {
+    void observationHandlersShouldBeAddedToTheRegistry() {
         ObservationHandler<?> handler1 = mock(ObservationHandler.class);
         ObservationHandler<?> handler2 = mock(ObservationHandler.class);
 

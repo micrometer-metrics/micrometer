@@ -52,7 +52,7 @@ public class ObservationHandlerSample {
         observation.stop();
 
         Observation.start("sample.no-context", registry).stop();
-        Observation.start("sample.unsupported", new UnsupportedHandlerContext(), registry).stop();
+        Observation.start("sample.unsupported", new UnsupportedContext(), registry).stop();
         Observation.start("sample.ignored", new CustomContext(), registry).stop();
 
         System.out.println();
@@ -109,11 +109,11 @@ public class ObservationHandlerSample {
 
         @Override
         public String toString() {
-            return "CustomHandlerContext{" + uuid + '}';
+            return "CustomContext{" + uuid + '}';
         }
     }
 
-    static class UnsupportedHandlerContext extends Observation.Context {
+    static class UnsupportedContext extends Observation.Context {
         @Override
         public String toString() {
             return "sorry";

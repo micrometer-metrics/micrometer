@@ -24,7 +24,7 @@ import java.util.stream.Stream;
  * Handler for an {@link Observation}. Hooks in to the lifecycle of an observation.
  * Example of handler implementations can create metrics, spans or logs.
  *
- * @param <T> type of handler context
+ * @param <T> type of context
  * @see MeterObservationHandler
  * @see TimerObservationHandler
  *
