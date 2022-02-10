@@ -95,6 +95,7 @@ public abstract class MeterRegistry implements ObservationRegistry {
 
     private final ObservationConfig observationConfig = new ObservationConfig();
 
+    @Nullable
     @Override
     public Observation getCurrentObservation() {
         return localObservation.get();
