@@ -29,7 +29,6 @@ import org.eclipse.jetty.client.util.StringContentProvider;
 import org.eclipse.jetty.server.Connector;
 import org.eclipse.jetty.server.Server;
 import org.eclipse.jetty.server.ServerConnector;
-import org.eclipse.jetty.util.component.AbstractLifeCycle;
 import org.eclipse.jetty.util.component.LifeCycle;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Test;
@@ -73,7 +72,7 @@ class JettyConnectionMetricsTest {
         }
 
         CountDownLatch latch = new CountDownLatch(1);
-        connector.addLifeCycleListener(new AbstractLifeCycle.AbstractLifeCycleListener() {
+        connector.addLifeCycleListener(new LifeCycle.Listener() {
             @Override
             public void lifeCycleStopped(LifeCycle event) {
                 latch.countDown();
@@ -97,7 +96,7 @@ class JettyConnectionMetricsTest {
         httpClient.addBean(new JettyConnectionMetrics(registry));
 
         CountDownLatch latch = new CountDownLatch(1);
-        httpClient.addLifeCycleListener(new AbstractLifeCycle.AbstractLifeCycleListener() {
+        httpClient.addLifeCycleListener(new LifeCycle.Listener() {
             @Override
             public void lifeCycleStopped(LifeCycle event) {
                 latch.countDown();
