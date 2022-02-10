@@ -48,7 +48,6 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
-import java.util.Optional;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.CopyOnWriteArrayList;
@@ -97,8 +96,8 @@ public abstract class MeterRegistry implements ObservationRegistry {
     private final ObservationConfig observationConfig = new ObservationConfig();
 
     @Override
-    public Optional<Observation> getCurrentObservation() {
-        return Optional.ofNullable(localObservation.get());
+    public Observation getCurrentObservation() {
+        return localObservation.get();
     }
 
     @Override

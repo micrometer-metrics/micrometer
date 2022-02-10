@@ -17,7 +17,6 @@ package io.micrometer.api.instrument.observation;
 
 import java.util.Collection;
 import java.util.List;
-import java.util.Optional;
 import java.util.concurrent.CopyOnWriteArrayList;
 
 import io.micrometer.api.lang.Nullable;
@@ -38,9 +37,10 @@ public interface ObservationRegistry {
      * Example: if an {@link Observation} was put in {@link Observation.Scope} then this
      * method will return the current present {@link Observation} within the scope.
      *
-     * @return current observation
+     * @return current observation or {@code null} if it's not present
      */
-    Optional<Observation> getCurrentObservation();
+    @Nullable
+    Observation getCurrentObservation();
 
     /**
      * Sets the observation as current.

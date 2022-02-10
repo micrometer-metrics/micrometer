@@ -132,7 +132,7 @@ class SimpleObservation implements Observation {
         SimpleScope(ObservationRegistry registry, SimpleObservation current) {
             this.registry = registry;
             this.currentObservation = current;
-            this.previousObservation = registry.getCurrentObservation().orElse(null);
+            this.previousObservation = registry.getCurrentObservation();
             this.registry.setCurrentObservation(current);
         }
 

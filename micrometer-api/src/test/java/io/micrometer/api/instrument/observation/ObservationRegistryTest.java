@@ -36,12 +36,12 @@ class ObservationRegistryTest {
         Observation sample = Observation.start("test.timer", registry);
         Observation.Scope scope = sample.openScope();
 
-        assertThat(registry.getCurrentObservation()).containsSame(sample);
+        assertThat(registry.getCurrentObservation()).isSameAs(sample);
 
         scope.close();
         sample.stop();
 
-        assertThat(registry.getCurrentObservation()).isEmpty();
+        assertThat(registry.getCurrentObservation()).isNull();
     }
 
     @Test
