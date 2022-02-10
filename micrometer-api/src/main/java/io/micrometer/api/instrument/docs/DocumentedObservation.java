@@ -47,11 +47,21 @@ public interface DocumentedObservation {
     TagKey[] EMPTY = new TagKey[0];
 
     /**
-     * Metric name.
+     * Technical name (e.g metric name).
      *
-     * @return metric name
+     * @return name
      */
     String getName();
+
+    /**
+     * More human readable name available within the given context
+     * (e.g. span name).
+     *
+     * @return contextual name
+     */
+    default String getContextualName() {
+        return null;
+    }
 
     /**
      * Builds a name from provided vars. Follows the {@link String#format(String, Object...)} patterns.
