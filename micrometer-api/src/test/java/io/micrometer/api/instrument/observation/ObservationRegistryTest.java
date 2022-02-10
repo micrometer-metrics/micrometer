@@ -65,4 +65,12 @@ class ObservationRegistryTest {
 
         assertThat(sample).isSameAs(NoopObservation.INSTANCE);
     }
+
+    @Test
+    void observationShouldBeNoOpWhenNullRegistry() {
+        assertThat(Observation.start("test.timer", null)).isSameAs(NoopObservation.INSTANCE);
+        assertThat(Observation.start("test.timer", new Observation.Context(), null)).isSameAs(NoopObservation.INSTANCE);
+        assertThat(Observation.createNotStarted("test.timer", null)).isSameAs(NoopObservation.INSTANCE);
+        assertThat(Observation.createNotStarted("test.timer", new Observation.Context(), null)).isSameAs(NoopObservation.INSTANCE);
+    }
 }

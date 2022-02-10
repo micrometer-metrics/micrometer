@@ -49,17 +49,19 @@ public interface Observation {
 
     /**
      * Creates and starts an {@link Observation}.
+     * When no registry is passed or observation is not applicable will return a no-op observation.
      *
      * @param name name of the observation
      * @param registry observation registry
      * @return started observation
      */
-    static Observation start(String name, ObservationRegistry registry) {
+    static Observation start(String name, @Nullable ObservationRegistry registry) {
         return start(name, null, registry);
     }
 
     /**
      * Creates and starts an {@link Observation}.
+     * When no registry is passed or observation is not applicable will return a no-op observation.
      *
      * @param name name of the observation
      * @param context mutable context
@@ -73,26 +75,28 @@ public interface Observation {
     /**
      * Creates but <b>does not start</b> an {@link Observation}. Remember to call
      * {@link Observation#start()} when you want the measurements to start.
+     * When no registry is passed or observation is not applicable will return a no-op observation.
      *
      * @param name name of the observation
      * @param registry observation registry
      * @return created but not started observation
      */
-    static Observation createNotStarted(String name, ObservationRegistry registry) {
+    static Observation createNotStarted(String name, @Nullable ObservationRegistry registry) {
         return createNotStarted(name, null, registry);
     }
 
     /**
      * Creates but <b>does not start</b> an {@link Observation}. Remember to call
      * {@link Observation#start()} when you want the measurements to start.
+     * When no registry is passed or observation is not applicable will return a no-op observation.
      *
      * @param name name of the observation
      * @param context mutable context
      * @param registry observation registry
      * @return created but not started observation
      */
-    static Observation createNotStarted(String name, @Nullable Context context, ObservationRegistry registry) {
-        if (!registry.observationConfig().isObservationEnabled(name, context)) {
+    static Observation createNotStarted(String name, @Nullable Context context, @Nullable ObservationRegistry registry) {
+        if (registry == null || !registry.observationConfig().isObservationEnabled(name, context)) {
             return NoopObservation.INSTANCE;
         }
         return new SimpleObservation(name, registry, context == null ? new Context() : context);
