@@ -1,5 +1,5 @@
 /*
- * Copyright 2013-2021 the original author or authors.
+ * Copyright 2013-2022 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -34,7 +34,7 @@ import io.micrometer.api.lang.Nullable;
  * </ul>
  *
  * @author Marcin Grzejszczak
- * @since 1.0.0
+ * @since 2.0.0
  */
 public interface DocumentedMeter {
     /**

@@ -31,50 +31,50 @@ class FirstMatchingCompositeObservationHandlerTests {
 
     @Test
     void should_run_on_start_only_for_first_matching_handler() {
-        FirstMatchingCompositeObservationHandler firstMatchingCompositeTimerRecordingHandler = new FirstMatchingCompositeObservationHandler(
+        FirstMatchingCompositeObservationHandler firstMatchingHandler = new FirstMatchingCompositeObservationHandler(
                 new NotMatchingHandler(), this.matchingHandler, new NotMatchingHandler());
 
-        firstMatchingCompositeTimerRecordingHandler.onStart(null);
+        firstMatchingHandler.onStart(null);
 
         assertThat(this.matchingHandler.started).isTrue();
     }
 
     @Test
     void should_run_on_stop_only_for_first_matching_handler() {
-        FirstMatchingCompositeObservationHandler firstMatchingCompositeTimerRecordingHandler = new FirstMatchingCompositeObservationHandler(
+        FirstMatchingCompositeObservationHandler firstMatchingHandler = new FirstMatchingCompositeObservationHandler(
                 new NotMatchingHandler(), this.matchingHandler, new NotMatchingHandler());
 
-        firstMatchingCompositeTimerRecordingHandler.onStop(null);
+        firstMatchingHandler.onStop(null);
 
         assertThat(this.matchingHandler.stopped).isTrue();
     }
 
     @Test
     void should_run_on_error_only_for_first_matching_handler() {
-        FirstMatchingCompositeObservationHandler firstMatchingCompositeTimerRecordingHandler = new FirstMatchingCompositeObservationHandler(
+        FirstMatchingCompositeObservationHandler firstMatchingHandler = new FirstMatchingCompositeObservationHandler(
                 new NotMatchingHandler(), this.matchingHandler, new NotMatchingHandler());
 
-        firstMatchingCompositeTimerRecordingHandler.onError(null);
+        firstMatchingHandler.onError(null);
 
         assertThat(this.matchingHandler.errored).isTrue();
     }
 
     @Test
     void should_run_on_scope_opened_only_for_first_matching_handler() {
-        FirstMatchingCompositeObservationHandler firstMatchingCompositeTimerRecordingHandler = new FirstMatchingCompositeObservationHandler(
+        FirstMatchingCompositeObservationHandler firstMatchingHandler = new FirstMatchingCompositeObservationHandler(
                 new NotMatchingHandler(), this.matchingHandler, new NotMatchingHandler());
 
-        firstMatchingCompositeTimerRecordingHandler.onScopeOpened(null);
+        firstMatchingHandler.onScopeOpened(null);
 
         assertThat(this.matchingHandler.scopeOpened).isTrue();
     }
 
     @Test
     void should_run_on_scope_closed_only_for_first_matching_handler() {
-        FirstMatchingCompositeObservationHandler firstMatchingCompositeTimerRecordingHandler = new FirstMatchingCompositeObservationHandler(
+        FirstMatchingCompositeObservationHandler firstMatchingHandler = new FirstMatchingCompositeObservationHandler(
                 new NotMatchingHandler(), this.matchingHandler, new NotMatchingHandler());
 
-        firstMatchingCompositeTimerRecordingHandler.onScopeClosed(null);
+        firstMatchingHandler.onScopeClosed(null);
 
         assertThat(this.matchingHandler.scopeClosed).isTrue();
     }
@@ -118,7 +118,7 @@ class FirstMatchingCompositeObservationHandlerTests {
         }
 
         @Override
-        public boolean supportsContext(Observation.Context handlerContext) {
+        public boolean supportsContext(Observation.Context context) {
             return true;
         }
     }
@@ -146,7 +146,7 @@ class FirstMatchingCompositeObservationHandlerTests {
         }
 
         @Override
-        public boolean supportsContext(Observation.Context handlerContext) {
+        public boolean supportsContext(Observation.Context context) {
             return false;
         }
 

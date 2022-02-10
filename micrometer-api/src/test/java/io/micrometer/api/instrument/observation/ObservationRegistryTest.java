@@ -16,7 +16,6 @@
 package io.micrometer.api.instrument.observation;
 
 import io.micrometer.api.instrument.MeterRegistry;
-import io.micrometer.api.instrument.NoopObservation;
 import io.micrometer.api.instrument.simple.SimpleMeterRegistry;
 import org.junit.jupiter.api.Test;
 
@@ -30,7 +29,7 @@ import static org.mockito.Mockito.mock;
  * @author Johnny Lim
  */
 class ObservationRegistryTest {
-    private ObservationRegistry registry = new SimpleMeterRegistry();
+    private final ObservationRegistry registry = new SimpleMeterRegistry();
     
     @Test
     void openingScopeShouldSetSampleAsCurrent() {
@@ -46,7 +45,7 @@ class ObservationRegistryTest {
     }
 
     @Test
-    void timerRecordingHandlerShouldAddThePassedHandler() {
+    void observationHandlersShouldBeAddedToTheRegistry() {
         ObservationHandler<?> handler1 = mock(ObservationHandler.class);
         ObservationHandler<?> handler2 = mock(ObservationHandler.class);
 

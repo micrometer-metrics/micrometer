@@ -23,7 +23,6 @@ import java.util.Set;
 import java.util.function.Function;
 import java.util.function.Supplier;
 
-import io.micrometer.api.instrument.NoopObservation;
 import io.micrometer.api.instrument.Tag;
 import io.micrometer.api.instrument.Tags;
 import io.micrometer.api.instrument.TagsProvider;
@@ -227,9 +226,8 @@ public interface Observation {
         /**
          * Current observation available within this scope.
          *
-         * @return current observation or {@code null} if one is not present
+         * @return current observation that this scope was created by
          */
-        @Nullable
         Observation getCurrentObservation();
 
         @Override

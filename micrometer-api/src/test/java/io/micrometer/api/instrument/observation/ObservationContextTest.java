@@ -25,67 +25,67 @@ import static org.assertj.core.api.Assertions.assertThat;
  *
  * @author Jonatan Ivanov
  */
-class HandlerContextTest {
-    private Observation.Context handlerContext;
+class ObservationContextTest {
+    private Observation.Context context;
 
     @BeforeEach
     void setUp() {
-        this.handlerContext = new Observation.Context();
+        this.context = new Observation.Context();
     }
 
     @Test
     void shouldBeEmptyByDefault() {
-        assertThat(handlerContext.get(String.class)).isNull();
+        assertThat(context.get(String.class)).isNull();
     }
 
     @Test
     void getShouldReturnWhatWasPutPreviously() {
-        assertThat(handlerContext.put(String.class, "42")).isSameAs(handlerContext);
-        assertThat(handlerContext.get(String.class)).isEqualTo("42");
+        assertThat(context.put(String.class, "42")).isSameAs(context);
+        assertThat(context.get(String.class)).isEqualTo("42");
 
-        assertThat(handlerContext.put(Integer.class, 123)).isSameAs(handlerContext);
-        assertThat(handlerContext.get(Integer.class)).isEqualTo(123);
+        assertThat(context.put(Integer.class, 123)).isSameAs(context);
+        assertThat(context.get(Integer.class)).isEqualTo(123);
     }
 
     @Test
     void overwrittenValuesShouldBeUpdated() {
-        handlerContext
+        context
                 .put(String.class, "42")
                 .put(Integer.class, 123)
                 .put(String.class, "24");
-        assertThat(handlerContext.get(String.class)).isEqualTo("24");
-        assertThat(handlerContext.get(Integer.class)).isEqualTo(123);
+        assertThat(context.get(String.class)).isEqualTo("24");
+        assertThat(context.get(Integer.class)).isEqualTo(123);
     }
 
     @Test
     void removedItemsShouldNotBePresent() {
-        handlerContext
+        context
                 .put(String.class, "42")
                 .put(Integer.class, 123)
                 .remove(String.class);
-        assertThat(handlerContext.get(Integer.class)).isEqualTo(123);
-        assertThat(handlerContext.get(String.class)).isNull();
+        assertThat(context.get(Integer.class)).isEqualTo(123);
+        assertThat(context.get(String.class)).isNull();
     }
 
     @Test
     void removeNonExistingItemShouldNotFail() {
-        handlerContext.remove(String.class);
+        context.remove(String.class);
     }
 
     @Test
     void getOrDefaultShouldUseFallbackValue() {
-        handlerContext.put(String.class, "42");
-        assertThat(handlerContext.getOrDefault(String.class, "abc")).isEqualTo("42");
-        assertThat(handlerContext.getOrDefault(Integer.class, 123)).isEqualTo(123);
+        context.put(String.class, "42");
+        assertThat(context.getOrDefault(String.class, "abc")).isEqualTo("42");
+        assertThat(context.getOrDefault(Integer.class, 123)).isEqualTo(123);
     }
 
     @Test
     void computeIfAbsentShouldUseFallbackValue() {
-        handlerContext.put(String.class, "42");
-        assertThat(handlerContext.computeIfAbsent(String.class, clazz -> "abc")).isEqualTo("42");
-        assertThat(handlerContext.get(String.class)).isEqualTo("42");
+        context.put(String.class, "42");
+        assertThat(context.computeIfAbsent(String.class, clazz -> "abc")).isEqualTo("42");
+        assertThat(context.get(String.class)).isEqualTo("42");
 
-        assertThat(handlerContext.computeIfAbsent(Integer.class, clazz -> 123)).isEqualTo(123);
-        assertThat(handlerContext.get(Integer.class)).isEqualTo(123);
+        assertThat(context.computeIfAbsent(Integer.class, clazz -> 123)).isEqualTo(123);
+        assertThat(context.get(Integer.class)).isEqualTo(123);
     }
 }

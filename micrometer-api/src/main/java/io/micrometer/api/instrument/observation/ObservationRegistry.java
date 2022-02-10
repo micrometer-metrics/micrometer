@@ -1,5 +1,5 @@
 /*
- * Copyright 2017 VMware, Inc.
+ * Copyright 2022 VMware, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,7 +19,6 @@ import java.util.Collection;
 import java.util.List;
 import java.util.concurrent.CopyOnWriteArrayList;
 
-import io.micrometer.api.instrument.NoopObservation;
 import io.micrometer.api.lang.Nullable;
 
 /**
@@ -28,6 +27,7 @@ import io.micrometer.api.lang.Nullable;
  * @author Jonatan Ivanov
  * @author Tommy Ludwig
  * @author Marcin Grzejszczak
+ *
  * @since 2.0.0
  */
 public interface ObservationRegistry {

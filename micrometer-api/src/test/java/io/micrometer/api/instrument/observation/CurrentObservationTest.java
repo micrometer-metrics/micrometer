@@ -53,7 +53,7 @@ class CurrentObservationTest {
         assertThat(registry.getCurrentObservation()).isNull();
         executor.submit(() -> {
             try (Observation.Scope scope = observation.openScope()) {
-                assertThat(registry.getCurrentObservation()).isEqualTo(observation);
+                assertThat(registry.getCurrentObservation()).isSameAs(observation);
             }
             observation.stop();
         }).get();
@@ -77,7 +77,7 @@ class CurrentObservationTest {
         executor2.submit(() -> {
             Observation myObservation = observationMap.get("myObservation");
             try (Observation.Scope scope = myObservation.openScope()) {
-                assertThat(registry.getCurrentObservation()).isEqualTo(myObservation);
+                assertThat(registry.getCurrentObservation()).isSameAs(myObservation);
             }
             myObservation.stop();
             assertThat(registry.getCurrentObservation()).isNull();

@@ -31,15 +31,15 @@ import io.micrometer.api.lang.Nullable;
  * @param <REQ> request type
  * @param <RES> response type
  */
-public abstract class HttpHandlerContext<REQ extends HttpRequest, RES extends HttpResponse> extends Observation.Context {
+public abstract class HttpContext<REQ extends HttpRequest, RES extends HttpResponse> extends Observation.Context {
 
     private final HttpTagsProvider tagsProvider;
 
-    public HttpHandlerContext() {
+    public HttpContext() {
         this(HttpTagsProvider.DEFAULT);
     }
 
-    public HttpHandlerContext(HttpTagsProvider tagsProvider) {
+    public HttpContext(HttpTagsProvider tagsProvider) {
         this.tagsProvider = tagsProvider;
     }
 
@@ -66,7 +66,7 @@ public abstract class HttpHandlerContext<REQ extends HttpRequest, RES extends Ht
      * @param response HTTP response
      * @return this
      */
-    abstract HttpHandlerContext<REQ, RES> setResponse(@Nullable RES response);
+    abstract HttpContext<REQ, RES> setResponse(@Nullable RES response);
 
     @NonNull
     @Override

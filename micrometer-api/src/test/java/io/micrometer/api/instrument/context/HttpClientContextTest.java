@@ -15,27 +15,27 @@
  */
 package io.micrometer.api.instrument.context;
 
-import io.micrometer.api.instrument.transport.http.HttpServerRequest;
-import io.micrometer.api.instrument.transport.http.HttpServerResponse;
-import io.micrometer.api.instrument.transport.http.context.HttpServerHandlerContext;
+import io.micrometer.api.instrument.transport.http.HttpClientRequest;
+import io.micrometer.api.instrument.transport.http.HttpClientResponse;
+import io.micrometer.api.instrument.transport.http.context.HttpClientContext;
 import org.junit.jupiter.api.Test;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.Mockito.mock;
 
 /**
- * Tests for {@link HttpServerHandlerContext}.
+ * Tests for {@link HttpClientContext}.
  *
  * @author Jonatan Ivanov
  */
-class HttpServerHandlerContextTests {
+class HttpClientContextTest {
 
     @Test
     void gettersAndSettersShouldWork() {
-        HttpServerRequest request = mock(HttpServerRequest.class);
-        HttpServerResponse response = mock(HttpServerResponse.class);
+        HttpClientRequest request = mock(HttpClientRequest.class);
+        HttpClientResponse response = mock(HttpClientResponse.class);
 
-        HttpServerHandlerContext context = new HttpServerHandlerContext(request);
+        HttpClientContext context = new HttpClientContext(request);
         assertThat(context.getRequest()).isSameAs(request);
         assertThat(context.getResponse()).isNull();
 

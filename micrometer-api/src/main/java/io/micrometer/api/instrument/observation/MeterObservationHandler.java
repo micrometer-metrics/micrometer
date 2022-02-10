@@ -19,7 +19,7 @@ package io.micrometer.api.instrument.observation;
  * Marker interface for meter handlers.
  *
  * @author Marcin Grzejszczak
- * @param <T> type of handler context
+ * @param <T> type of context
  * @since 2.0.0
  */
 public interface MeterObservationHandler<T extends Observation.Context> extends ObservationHandler<T> {

@@ -17,8 +17,6 @@ package io.micrometer.api.instrument.observation;
 
 import java.util.function.BiPredicate;
 
-import io.micrometer.api.instrument.NoopObservation;
-
 /**
  * A predicate to define whether {@link Observation observation} should be
  * created or a {@link NoopObservation} instead.

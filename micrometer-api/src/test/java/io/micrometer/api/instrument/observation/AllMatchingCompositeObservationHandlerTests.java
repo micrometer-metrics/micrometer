@@ -21,7 +21,7 @@ import org.junit.jupiter.api.Test;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-class AllMatchingCompositeTimerRecordingHandlerTests {
+class AllMatchingCompositeObservationHandlerTests {
 
     MatchingHandler matchingHandler = new MatchingHandler();
 
@@ -33,10 +33,10 @@ class AllMatchingCompositeTimerRecordingHandlerTests {
 
     @Test
     void should_run_on_start_for_all_matching_handlers() {
-        AllMatchingCompositeObservationHandler allMatchingCompositeTimerRecordingHandler = new AllMatchingCompositeObservationHandler(
+        AllMatchingCompositeObservationHandler allMatchingHandler = new AllMatchingCompositeObservationHandler(
                 new NotMatchingHandler(), this.matchingHandler, new NotMatchingHandler(), this.matchingHandler2);
 
-        allMatchingCompositeTimerRecordingHandler.onStart(null);
+        allMatchingHandler.onStart(null);
 
         assertThat(this.matchingHandler.started).isTrue();
         assertThat(this.matchingHandler2.started).isTrue();
@@ -44,10 +44,10 @@ class AllMatchingCompositeTimerRecordingHandlerTests {
 
     @Test
     void should_run_on_stop_for_all_matching_handlers() {
-        AllMatchingCompositeObservationHandler allMatchingCompositeTimerRecordingHandler = new AllMatchingCompositeObservationHandler(
+        AllMatchingCompositeObservationHandler allMatchingHandler = new AllMatchingCompositeObservationHandler(
                 new NotMatchingHandler(), this.matchingHandler, new NotMatchingHandler(), this.matchingHandler2);
 
-        allMatchingCompositeTimerRecordingHandler.onStop(null);
+        allMatchingHandler.onStop(null);
 
         assertThat(this.matchingHandler.stopped).isTrue();
         assertThat(this.matchingHandler2.stopped).isTrue();
@@ -55,10 +55,10 @@ class AllMatchingCompositeTimerRecordingHandlerTests {
 
     @Test
     void should_run_on_error_for_all_matching_handlers() {
-        AllMatchingCompositeObservationHandler allMatchingCompositeTimerRecordingHandler = new AllMatchingCompositeObservationHandler(
+        AllMatchingCompositeObservationHandler allMatchingHandler = new AllMatchingCompositeObservationHandler(
                 new NotMatchingHandler(), this.matchingHandler, new NotMatchingHandler(), this.matchingHandler2);
 
-        allMatchingCompositeTimerRecordingHandler.onError(null);
+        allMatchingHandler.onError(null);
 
         assertThat(this.matchingHandler.errored).isTrue();
         assertThat(this.matchingHandler2.errored).isTrue();
@@ -66,10 +66,10 @@ class AllMatchingCompositeTimerRecordingHandlerTests {
 
     @Test
     void should_run_on_scope_opened_for_all_matching_handlers() {
-        AllMatchingCompositeObservationHandler allMatchingCompositeTimerRecordingHandler = new AllMatchingCompositeObservationHandler(
+        AllMatchingCompositeObservationHandler allMatchingHandler = new AllMatchingCompositeObservationHandler(
                 new NotMatchingHandler(), this.matchingHandler, new NotMatchingHandler(), this.matchingHandler2);
 
-        allMatchingCompositeTimerRecordingHandler.onScopeOpened(null);
+        allMatchingHandler.onScopeOpened(null);
 
         assertThat(this.matchingHandler.scopeOpened).isTrue();
         assertThat(this.matchingHandler2.scopeOpened).isTrue();
@@ -77,10 +77,10 @@ class AllMatchingCompositeTimerRecordingHandlerTests {
 
     @Test
     void should_run_on_scope_closed_for_all_matching_handlers() {
-        AllMatchingCompositeObservationHandler allMatchingCompositeTimerRecordingHandler = new AllMatchingCompositeObservationHandler(
+        AllMatchingCompositeObservationHandler allMatchingHandler = new AllMatchingCompositeObservationHandler(
                 new NotMatchingHandler(), this.matchingHandler, new NotMatchingHandler(), this.matchingHandler2);
 
-        allMatchingCompositeTimerRecordingHandler.onScopeClosed(null);
+        allMatchingHandler.onScopeClosed(null);
 
         assertThat(this.matchingHandler.scopeClosed).isTrue();
         assertThat(this.matchingHandler2.scopeClosed).isTrue();
@@ -125,7 +125,7 @@ class AllMatchingCompositeTimerRecordingHandlerTests {
         }
 
         @Override
-        public boolean supportsContext(Observation.Context handlerContext) {
+        public boolean supportsContext(Observation.Context context) {
             return true;
         }
     }
@@ -153,7 +153,7 @@ class AllMatchingCompositeTimerRecordingHandlerTests {
         }
 
         @Override
-        public boolean supportsContext(Observation.Context handlerContext) {
+        public boolean supportsContext(Observation.Context context) {
             return false;
         }
 

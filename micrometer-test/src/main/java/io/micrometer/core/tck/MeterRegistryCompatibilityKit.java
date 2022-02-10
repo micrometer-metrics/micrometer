@@ -42,6 +42,7 @@ import io.micrometer.api.instrument.distribution.CountAtBucket;
 import io.micrometer.api.instrument.distribution.DistributionStatisticConfig;
 import io.micrometer.api.instrument.distribution.ValueAtPercentile;
 import io.micrometer.api.instrument.internal.CumulativeHistogramLongTaskTimer;
+import io.micrometer.api.instrument.observation.Observation;
 import io.micrometer.api.instrument.util.TimeUtils;
 import io.micrometer.core.Issue;
 import org.assertj.core.data.Offset;
@@ -87,7 +88,7 @@ public abstract class MeterRegistryCompatibilityKit {
     @BeforeEach
     void setup() {
         // assigned here rather than at initialization so subclasses can use fields in their registry() implementation
-        registry = registry();
+        registry = registry().withTimerObservationHandler();
     }
 
     @Test
@@ -631,34 +632,34 @@ public abstract class MeterRegistryCompatibilityKit {
             }
         }
 
-//        @Test
-//        @DisplayName("record with stateful Observation instance")
-//        void recordWithObservation() {
-//            Timer.Sample sample = Timer.start(registry);
-//            clock(registry).add(10, TimeUnit.NANOSECONDS);
-//            sample.stop(Timer.builder("myTimer"));
-//            clock(registry).add(step());
-//
-//            Timer timer = registry.timer("myTimer");
-//            assertAll(() -> assertEquals(1L, timer.count()),
-//                    () -> assertEquals(10, timer.totalTime(TimeUnit.NANOSECONDS), 1.0e-12));
-//        }
+        @Test
+        @DisplayName("record with stateful Observation instance")
+        void recordWithObservation() {
+            Observation observation = Observation.start("myObservation", registry);
+            clock(registry).add(10, TimeUnit.NANOSECONDS);
+            observation.stop();
+            clock(registry).add(step());
 
-//        @Test
-//        @DisplayName("record with stateful Observation and Scope instances")
-//        void recordWithObservationAndScope() {
-//            Timer.Sample sample = Timer.start(registry);
-//            try (Timer.Scope scope = sample.makeCurrent()) {
-//                assertThat(scope.getSample()).isSameAs(sample);
-//                clock(registry).add(10, TimeUnit.NANOSECONDS);
-//            }
-//            sample.stop(Timer.builder("myTimer"));
-//            clock(registry).add(step());
-//
-//            Timer timer = registry.timer("myTimer");
-//            assertAll(() -> assertEquals(1L, timer.count()),
-//                    () -> assertEquals(10, timer.totalTime(TimeUnit.NANOSECONDS), 1.0e-12));
-//        }
+            Timer timer = registry.timer("myObservation", "error", "none");
+            assertAll(() -> assertEquals(1L, timer.count()),
+                    () -> assertEquals(10, timer.totalTime(TimeUnit.NANOSECONDS), 1.0e-12));
+        }
+
+        @Test
+        @DisplayName("record with stateful Observation and Scope instances")
+        void recordWithObservationAndScope() {
+            Observation observation = Observation.start("myObservation", registry);
+            try (Observation.Scope scope = observation.openScope()) {
+                assertThat(scope.getCurrentObservation()).isSameAs(observation);
+                clock(registry).add(10, TimeUnit.NANOSECONDS);
+            }
+            observation.stop();
+            clock(registry).add(step());
+
+            Timer timer = registry.timer("myObservation", "error", "none");
+            assertAll(() -> assertEquals(1L, timer.count()),
+                    () -> assertEquals(10, timer.totalTime(TimeUnit.NANOSECONDS), 1.0e-12));
+        }
 
         @Test
         void recordMax() {

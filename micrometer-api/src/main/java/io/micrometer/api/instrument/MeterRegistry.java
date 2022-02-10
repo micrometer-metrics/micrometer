@@ -77,6 +77,9 @@ import static java.util.Objects.requireNonNull;
  *
  * @author Jon Schneider
  * @author Johnny Lim
+ * @author Jonatan Ivanov
+ * @author Tommy Ludwig
+ * @author Marcin Grzejszczak
  */
 public abstract class MeterRegistry implements ObservationRegistry {
     protected final Clock clock;

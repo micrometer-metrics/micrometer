@@ -17,51 +17,49 @@ package io.micrometer.api.instrument.transport.http.context;
 
 import io.micrometer.api.instrument.observation.Observation;
 import io.micrometer.api.instrument.transport.http.tags.HttpTagsProvider;
-import io.micrometer.api.instrument.transport.http.HttpClientRequest;
-import io.micrometer.api.instrument.transport.http.HttpClientResponse;
 import io.micrometer.api.lang.NonNull;
+import io.micrometer.api.instrument.transport.http.HttpServerRequest;
+import io.micrometer.api.instrument.transport.http.HttpServerResponse;
 
 /**
- * {@link Observation.Context Context}
- * for an HTTP client request/response.
+ * {@link Observation.Context Context} for an HTTP server request/response.
  *
- * @author Jonatan Ivanov
  * @author Marcin Grzejszczak
  * @since 2.0.0
  */
-public class HttpClientHandlerContext extends HttpHandlerContext<HttpClientRequest, HttpClientResponse> {
+public class HttpServerContext extends HttpContext<HttpServerRequest, HttpServerResponse> {
 
-    private final HttpClientRequest request;
+    private final HttpServerRequest request;
 
-    private HttpClientResponse response;
+    private HttpServerResponse response;
 
     /**
-     * Creates a new {@code HttpClientHandlerContext}.
+     * Creates a new {@code HttpServerContext}.
      *
-     * @param request http client request
+     * @param request http server request
      */
-    public HttpClientHandlerContext(HttpClientRequest request) {
+    public HttpServerContext(HttpServerRequest request) {
         this.request = request;
     }
 
-    public HttpClientHandlerContext(HttpClientRequest request, HttpTagsProvider tagsProvider) {
+    public HttpServerContext(HttpServerRequest request, HttpTagsProvider tagsProvider) {
         super(tagsProvider);
         this.request = request;
     }
 
     @NonNull
     @Override
-    public HttpClientRequest getRequest() {
+    public HttpServerRequest getRequest() {
         return this.request;
     }
 
     @Override
-    public HttpClientResponse getResponse() {
+    public HttpServerResponse getResponse() {
         return this.response;
     }
 
     @Override
-    public HttpClientHandlerContext setResponse(HttpClientResponse response) {
+    public HttpServerContext setResponse(HttpServerResponse response) {
         this.response = response;
         return this;
     }

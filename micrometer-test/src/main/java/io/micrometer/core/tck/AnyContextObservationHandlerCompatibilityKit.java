@@ -31,12 +31,12 @@ import static org.assertj.core.api.Assertions.assertThatCode;
  * @author Marcin Grzejszczak
  * @since 2.0.0
  */
-public abstract class AnyHandlerContextTimerRecordingHandlerCompatibilityKit extends NullHandlerContextTimerRecordingHandlerCompatibilityKit {
+public abstract class AnyContextObservationHandlerCompatibilityKit extends NullContextObservationHandlerCompatibilityKit {
 
     @Test
-    @DisplayName("compatibility test provides a test context accepting timer recording handler")
+    @DisplayName("compatibility test provides a test context accepting observation handler")
     void handlerSupportsAnyContext() {
-        TestHandlerContext testContext = new TestHandlerContext();
+        TestContext testContext = new TestContext();
         assertThatCode(() -> handler.onStart(testContext)).doesNotThrowAnyException();
         assertThatCode(() -> handler.onStop(testContext)).doesNotThrowAnyException();
         assertThatCode(() -> handler.onError(testContext)).doesNotThrowAnyException();
@@ -45,8 +45,7 @@ public abstract class AnyHandlerContextTimerRecordingHandlerCompatibilityKit ext
         assertThat(handler.supportsContext(testContext)).as("Handler supports any context").isTrue();
     }
 
-    static class TestHandlerContext extends Observation.Context {
-
+    static class TestContext extends Observation.Context {
     }
 }
 
