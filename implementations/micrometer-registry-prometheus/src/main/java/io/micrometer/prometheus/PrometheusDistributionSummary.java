@@ -15,15 +15,22 @@
  */
 package io.micrometer.prometheus;
 
-import io.micrometer.core.instrument.AbstractDistributionSummary;
-import io.micrometer.core.instrument.Clock;
-import io.micrometer.core.instrument.distribution.*;
-import io.micrometer.core.instrument.util.MeterEquivalence;
-import io.micrometer.core.lang.Nullable;
-
 import java.time.Duration;
 import java.util.concurrent.atomic.DoubleAdder;
 import java.util.concurrent.atomic.LongAdder;
+
+import io.micrometer.core.instrument.AbstractDistributionSummary;
+import io.micrometer.core.instrument.Clock;
+import io.micrometer.core.instrument.distribution.CountAtBucket;
+import io.micrometer.core.instrument.distribution.DistributionStatisticConfig;
+import io.micrometer.core.instrument.distribution.FixedBoundaryVictoriaMetricsHistogram;
+import io.micrometer.core.instrument.distribution.Histogram;
+import io.micrometer.core.instrument.distribution.HistogramSnapshot;
+import io.micrometer.core.instrument.distribution.TimeWindowMax;
+import io.micrometer.core.instrument.util.MeterEquivalence;
+import io.micrometer.core.lang.Nullable;
+import io.prometheus.client.exemplars.Exemplar;
+import io.prometheus.client.exemplars.HistogramExemplarSampler;
 
 public class PrometheusDistributionSummary extends AbstractDistributionSummary {
     private static final CountAtBucket[] EMPTY_HISTOGRAM = new CountAtBucket[0];
@@ -34,34 +41,51 @@ public class PrometheusDistributionSummary extends AbstractDistributionSummary {
     private final TimeWindowMax max;
 
     private final HistogramFlavor histogramFlavor;
+    @Nullable
+    private final HistogramExemplarSampler exemplarSampler;
 
-    PrometheusDistributionSummary(Id id, Clock clock, DistributionStatisticConfig distributionStatisticConfig, double scale, HistogramFlavor histogramFlavor) {
-        super(id, clock,
-                DistributionStatisticConfig.builder()
-                        .percentilesHistogram(false)
-                        .serviceLevelObjectives()
-                        .build()
-                        .merge(distributionStatisticConfig),
-                scale, false);
+    /*
+     * Allow to retrieve examplar for a specific bucket. We retrieve it through our
+     * specific implementation of histogram because this is this class that knwo at
+     * which bucket correspond each measure. (for counter we only have one, so this
+     * information can be store in Counter class)
+     */
+    public Exemplar getExemplar(double bucket) {
+        Exemplar retour = null;
+        if (histogram != null && histogram instanceof TimeWindowFixedBoundaryHistogramWithExemplar) {
+            return ((TimeWindowFixedBoundaryHistogramWithExemplar) histogram).getExemplar(bucket);
+        }
+        return retour;
+    }
+
+    PrometheusDistributionSummary(Id id, Clock clock, DistributionStatisticConfig distributionStatisticConfig,
+            double scale, HistogramFlavor histogramFlavor, @Nullable HistogramExemplarSampler exemplarSampler) {
+        super(id, clock, DistributionStatisticConfig.builder().percentilesHistogram(false).serviceLevelObjectives()
+                .build().merge(distributionStatisticConfig), scale, false);
 
         this.histogramFlavor = histogramFlavor;
+        this.exemplarSampler = exemplarSampler;
         this.max = new TimeWindowMax(clock, distributionStatisticConfig);
 
         if (distributionStatisticConfig.isPublishingHistogram()) {
             switch (histogramFlavor) {
-                case Prometheus:
-                    histogram = new TimeWindowFixedBoundaryHistogram(clock, DistributionStatisticConfig.builder()
-                            .expiry(Duration.ofDays(1825)) // effectively never roll over
-                            .bufferLength(1)
-                            .build()
-                            .merge(distributionStatisticConfig), true);
-                    break;
-                case VictoriaMetrics:
-                    histogram = new FixedBoundaryVictoriaMetricsHistogram();
-                    break;
-                default:
-                    histogram = null;
-                    break;
+            case Prometheus:
+                // We use as custom TimeWindowFixedBoundaryHistogram that support
+                // ExamplarSampler in ctor.
+                // This Sampler can be an applicative one or the standard provides in Spring or
+                // SpringBoot configuration
+                histogram = new TimeWindowFixedBoundaryHistogramWithExemplar(clock,
+                        DistributionStatisticConfig.builder().expiry(Duration.ofDays(1825)) // effectively never roll
+                                                                                            // over
+                                .bufferLength(1).build().merge(distributionStatisticConfig),
+                        true, this.exemplarSampler);
+                break;
+            case VictoriaMetrics:
+                histogram = new FixedBoundaryVictoriaMetricsHistogram();
+                break;
+            default:
+                histogram = null;
+                break;
             }
         } else {
             histogram = null;
@@ -109,8 +133,9 @@ public class PrometheusDistributionSummary extends AbstractDistributionSummary {
     }
 
     /**
-     * For Prometheus we cannot use the histogram counts from HistogramSnapshot, as it is based on a
-     * rolling histogram. Prometheus requires a histogram that accumulates values over the lifetime of the app.
+     * For Prometheus we cannot use the histogram counts from HistogramSnapshot, as
+     * it is based on a rolling histogram. Prometheus requires a histogram that
+     * accumulates values over the lifetime of the app.
      *
      * @return Cumulative histogram buckets.
      */
@@ -126,11 +151,7 @@ public class PrometheusDistributionSummary extends AbstractDistributionSummary {
             return snapshot;
         }
 
-        return new HistogramSnapshot(snapshot.count(),
-                snapshot.total(),
-                snapshot.max(),
-                snapshot.percentileValues(),
-                histogramCounts(),
-                snapshot::outputSummary);
+        return new HistogramSnapshot(snapshot.count(), snapshot.total(), snapshot.max(), snapshot.percentileValues(),
+                histogramCounts(), snapshot::outputSummary);
     }
 }

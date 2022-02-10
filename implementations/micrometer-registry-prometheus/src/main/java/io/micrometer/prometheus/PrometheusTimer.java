@@ -15,16 +15,22 @@
  */
 package io.micrometer.prometheus;
 
-import io.micrometer.core.instrument.AbstractTimer;
-import io.micrometer.core.instrument.Clock;
-import io.micrometer.core.instrument.distribution.*;
-import io.micrometer.core.instrument.distribution.pause.PauseDetector;
-import io.micrometer.core.instrument.util.TimeUtils;
-import io.micrometer.core.lang.Nullable;
-
 import java.time.Duration;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.LongAdder;
+
+import io.micrometer.core.instrument.AbstractTimer;
+import io.micrometer.core.instrument.Clock;
+import io.micrometer.core.instrument.distribution.CountAtBucket;
+import io.micrometer.core.instrument.distribution.DistributionStatisticConfig;
+import io.micrometer.core.instrument.distribution.FixedBoundaryVictoriaMetricsHistogram;
+import io.micrometer.core.instrument.distribution.Histogram;
+import io.micrometer.core.instrument.distribution.HistogramSnapshot;
+import io.micrometer.core.instrument.distribution.TimeWindowFixedBoundaryHistogram;
+import io.micrometer.core.instrument.distribution.TimeWindowMax;
+import io.micrometer.core.instrument.distribution.pause.PauseDetector;
+import io.micrometer.core.instrument.util.TimeUtils;
+import io.micrometer.core.lang.Nullable;
 
 public class PrometheusTimer extends AbstractTimer {
     private static final CountAtBucket[] EMPTY_HISTOGRAM = new CountAtBucket[0];

@@ -15,14 +15,16 @@
  */
 package io.micrometer.prometheus;
 
-import io.micrometer.core.instrument.config.MeterRegistryConfig;
-import io.micrometer.core.instrument.config.validate.Validated;
+import static io.micrometer.core.instrument.config.MeterRegistryConfigValidator.checkAll;
+import static io.micrometer.core.instrument.config.MeterRegistryConfigValidator.checkRequired;
+import static io.micrometer.core.instrument.config.validate.PropertyValidator.getBoolean;
+import static io.micrometer.core.instrument.config.validate.PropertyValidator.getDuration;
+import static io.micrometer.core.instrument.config.validate.PropertyValidator.getEnum;
 
 import java.time.Duration;
 
-import static io.micrometer.core.instrument.config.MeterRegistryConfigValidator.checkAll;
-import static io.micrometer.core.instrument.config.MeterRegistryConfigValidator.checkRequired;
-import static io.micrometer.core.instrument.config.validate.PropertyValidator.*;
+import io.micrometer.core.instrument.config.MeterRegistryConfig;
+import io.micrometer.core.instrument.config.validate.Validated;
 
 /**
  * Configuration for {@link PrometheusMeterRegistry}.

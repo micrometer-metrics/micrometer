@@ -15,11 +15,11 @@
  */
 package io.micrometer.prometheus;
 
+import java.util.regex.Pattern;
+
 import io.micrometer.core.instrument.Meter;
 import io.micrometer.core.instrument.config.NamingConvention;
 import io.micrometer.core.lang.Nullable;
-
-import java.util.regex.Pattern;
 
 /**
  * See https://prometheus.io/docs/concepts/data_model/#metric-names-and-labels

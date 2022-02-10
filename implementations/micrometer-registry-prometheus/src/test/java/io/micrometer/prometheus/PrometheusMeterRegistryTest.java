@@ -152,7 +152,7 @@ class PrometheusMeterRegistryTest {
                 .contains("HELP timer_seconds my timer")
                 .contains("HELP summary my summary")
                 .contains("HELP gauge my gauge")
-                .contains("HELP counter_total my counter")
+                .contains("HELP counter my counter")
                 .contains("HELP long_task_timer_seconds my long task timer");
     }
 
@@ -206,7 +206,7 @@ class PrometheusMeterRegistryTest {
         t.record(106, TimeUnit.SECONDS);
 
         assertThat(registry.scrape())
-                .contains("t1_seconds_bucket{le=\"+Inf\",} 1.0");
+                .contains("t1_seconds_bucket{le=\"+Inf\"} 1.0");
     }
 
     @Issue("#265")
@@ -222,7 +222,7 @@ class PrometheusMeterRegistryTest {
         clock.addSeconds(60);
 
         assertThat(registry.scrape())
-                .contains("t1_seconds_bucket{le=\"0.1\",} 1.0");
+                .contains("t1_seconds_bucket{le=\"0.1\"} 1.0");
     }
 
     @Issue("#265")
@@ -238,7 +238,7 @@ class PrometheusMeterRegistryTest {
         clock.addSeconds(60);
 
         assertThat(registry.scrape())
-                .contains("s1_bucket{le=\"100.0\",} 1.0");
+                .contains("s1_bucket{le=\"100.0\"} 1.0");
     }
 
     @Test
@@ -251,7 +251,7 @@ class PrometheusMeterRegistryTest {
 
         s.record(100);
 
-        assertThat(registry.scrape()).containsOnlyOnce("s_bucket{le=\"+Inf\",} 1.0");
+        assertThat(registry.scrape()).containsOnlyOnce("s_bucket{le=\"+Inf\"} 1.0");
     }
 
     @Test
@@ -263,7 +263,7 @@ class PrometheusMeterRegistryTest {
 
         s.record(100);
 
-        assertThat(registry.scrape()).containsOnlyOnce("s_bucket{le=\"+Inf\",} 1.0");
+        assertThat(registry.scrape()).containsOnlyOnce("s_bucket{le=\"+Inf\"} 1.0");
     }
 
     @Issue("#247")
@@ -280,8 +280,8 @@ class PrometheusMeterRegistryTest {
         ds.record(62);
 
         assertThat(registry.scrape())
-                .contains("ds_bucket{le=\"1.0\",}")
-                .contains("ds_bucket{le=\"2100.0\",} 3.0");
+                .contains("ds_bucket{le=\"1.0\"}")
+                .contains("ds_bucket{le=\"2100.0\"} 3.0");
     }
 
     @Issue("#127")
@@ -295,17 +295,17 @@ class PrometheusMeterRegistryTest {
 
         speedIndexRatings.record(0);
 
-        assertThat(registry.scrape()).contains("speed_index_bucket{page=\"home\",le=\"+Inf\",} 1.0");
+        assertThat(registry.scrape()).contains("speed_index_bucket{page=\"home\",le=\"+Inf\"} 1.0");
     }
 
     @Issue("#370")
     @Test
     void serviceLevelObjectivesOnlyNoPercentileHistogram() {
         DistributionSummary.builder("my.summary").serviceLevelObjectives(1.0).register(registry).record(1);
-        assertThat(registry.scrape()).contains("my_summary_bucket{le=\"1.0\",} 1.0");
+        assertThat(registry.scrape()).contains("my_summary_bucket{le=\"1.0\"} 1.0");
 
         Timer.builder("my.timer").serviceLevelObjectives(Duration.ofMillis(1)).register(registry).record(1, TimeUnit.MILLISECONDS);
-        assertThat(registry.scrape()).contains("my_timer_seconds_bucket{le=\"0.001\",} 1.0");
+        assertThat(registry.scrape()).contains("my_timer_seconds_bucket{le=\"0.001\"} 1.0");
     }
 
     @Issue("#61")

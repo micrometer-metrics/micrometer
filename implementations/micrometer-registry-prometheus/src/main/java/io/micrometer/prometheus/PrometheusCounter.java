@@ -19,20 +19,59 @@ import io.micrometer.core.instrument.AbstractMeter;
 import io.micrometer.core.instrument.Counter;
 import io.micrometer.core.instrument.Meter;
 import io.micrometer.core.instrument.util.MeterEquivalence;
+import io.prometheus.client.exemplars.CounterExemplarSampler;
+import io.prometheus.client.exemplars.Exemplar;
 
+import java.util.concurrent.atomic.AtomicReference;
 import java.util.concurrent.atomic.DoubleAdder;
+
+import io.micrometer.core.lang.NonNull;
+import io.micrometer.core.lang.Nullable;
 
 public class PrometheusCounter extends AbstractMeter implements Counter {
     private DoubleAdder count = new DoubleAdder();
+    private final AtomicReference<Exemplar> exemplar = new AtomicReference<>();
+    @Nullable
+    private final CounterExemplarSampler exemplarSampler;
+
+    // Allow to get back examplar for Sample creation on counter creation
+    Exemplar exemplar() {
+        return exemplar.get();
+    }
 
     PrometheusCounter(Meter.Id id) {
+        this(id, null);
+    }
+
+    PrometheusCounter(Meter.Id id, @Nullable CounterExemplarSampler exemplarSampler) {
         super(id);
+        this.exemplarSampler = exemplarSampler;
     }
 
     @Override
     public void increment(double amount) {
         if (amount > 0)
             count.add(amount);
+        if (exemplarSampler != null) {
+            updateExemplar(amount, exemplarSampler);
+        }
+    }
+
+    /*
+     * Ask for sample to eventually update the current exemplar for counter The
+     * sampler used is the standard one from micrometer that apply a time windows
+     * around 7 secondes for change
+     */
+    private void updateExemplar(double amount, @NonNull CounterExemplarSampler exemplarSampler) {
+        Exemplar prev;
+        Exemplar next;
+        do {
+            prev = exemplar.get();
+            next = exemplarSampler.sample(amount, prev);
+            if (next == null || next == prev) {
+                return;
+            }
+        } while (!exemplar.compareAndSet(prev, next));
     }
 
     @Override

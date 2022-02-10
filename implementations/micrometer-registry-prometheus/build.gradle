@@ -4,4 +4,6 @@ dependencies {
     api 'io.prometheus:simpleclient_common'
 
     testImplementation project(':micrometer-test')
+	
+	api 'io.opentelemetry:opentelemetry-api:1.11.0'
 }
