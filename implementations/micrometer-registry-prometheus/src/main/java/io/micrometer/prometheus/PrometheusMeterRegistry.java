@@ -22,6 +22,7 @@ import static java.util.stream.StreamSupport.stream;
 import java.io.IOException;
 import java.io.StringWriter;
 import java.io.Writer;
+import java.util.ArrayList;
 import java.util.Enumeration;
 import java.util.LinkedList;
 import java.util.List;
@@ -126,6 +127,7 @@ public class PrometheusMeterRegistry extends MeterRegistry {
     }
 
     /**
+     * Allow to scrape data
      * @return Content in OpenMetrics text format for the response body of an
      *         endpoint designated for Prometheus to scrape.
      * 
@@ -420,7 +422,7 @@ public class PrometheusMeterRegistry extends MeterRegistry {
 
                 return Stream.of(new MicrometerCollector.Family(finalPromType, conventionName,
                         stream(measurements.spliterator(), false).map(m -> {
-                            List<String> statValues = new LinkedList<>(tagValues);
+                            List<String> statValues = new ArrayList<String>(tagValues);
                             statValues.add(m.getStatistic().toString());
 
                             String name = conventionName;
@@ -437,6 +439,8 @@ public class PrometheusMeterRegistry extends MeterRegistry {
                                 break;
                             case DURATION:
                                 name += "_duration_sum";
+                                break;
+                            default:
                                 break;
                             }
 
@@ -506,7 +510,7 @@ public class PrometheusMeterRegistry extends MeterRegistry {
                     }
 
                     // the +Inf bucket should always equal `count`
-                    final List<String> histogramValues = new LinkedList<>(tagValues);
+                    final List<String> histogramValues = new ArrayList<>(tagValues);
                     histogramValues.add("+Inf");
                     samples.add(new Collector.MetricFamilySamples.Sample(sampleName, histogramKeys, histogramValues,
                             count));
@@ -515,7 +519,7 @@ public class PrometheusMeterRegistry extends MeterRegistry {
                     histogramKeys.add("vmrange");
 
                     for (CountAtBucket c : histogramCounts) {
-                        final List<String> histogramValuesVM = new LinkedList<>(tagValues);
+                        final List<String> histogramValuesVM = new ArrayList<>(tagValues);
                         histogramValuesVM.add(FixedBoundaryVictoriaMetricsHistogram.getRangeTagValue(c.bucket()));
                         samples.add(new Collector.MetricFamilySamples.Sample(sampleName, histogramKeys,
                                 histogramValuesVM, c.count()));
