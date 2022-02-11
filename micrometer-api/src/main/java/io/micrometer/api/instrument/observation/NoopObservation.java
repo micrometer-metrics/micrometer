@@ -53,11 +53,6 @@ class NoopObservation implements Observation {
     }
 
     @Override
-    public Observation tagsProvider(TagsProvider<?> tagsProvider) {
-        return this;
-    }
-
-    @Override
     public Observation highCardinalityTag(String key, String value) {
         return this;
     }

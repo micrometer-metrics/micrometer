@@ -16,9 +16,8 @@
 package io.micrometer.api.instrument.observation;
 
 import java.util.ArrayDeque;
-import java.util.ArrayList;
+import java.util.Collection;
 import java.util.Deque;
-import java.util.List;
 import java.util.stream.Collectors;
 
 import io.micrometer.api.instrument.Tag;
@@ -35,17 +34,19 @@ import io.micrometer.api.lang.Nullable;
  */
 class SimpleObservation implements Observation {
     private final ObservationRegistry registry;
-    @SuppressWarnings("rawtypes")
-    private List<TagsProvider> tagsProviders;
     private final Context context;
+    @SuppressWarnings("rawtypes")
+    private final Collection<TagsProvider> tagsProviders;
     @SuppressWarnings("rawtypes")
     private final Deque<ObservationHandler> handlers;
 
     // package private so only instantiated by us
     SimpleObservation(String name, ObservationRegistry registry, Context context) {
         this.registry = registry;
-        this.tagsProviders = new ArrayList<>();
         this.context = context.setName(name);
+        this.tagsProviders = registry.observationConfig().getTagsProviders().stream()
+                .filter(tagsProvider -> tagsProvider.supportsContext(context))
+                .collect(Collectors.toList());
         this.handlers = registry.observationConfig().getObservationHandlers().stream()
                 .filter(handler -> handler.supportsContext(this.context))
                 .collect(Collectors.toCollection(ArrayDeque::new));
@@ -66,14 +67,6 @@ class SimpleObservation implements Observation {
     @Override
     public Observation highCardinalityTag(Tag tag) {
         this.context.addHighCardinalityTag(tag);
-        return this;
-    }
-
-    @Override
-    public Observation tagsProvider(TagsProvider<?> tagsProvider) {
-        if (tagsProvider.supportsContext(context)) {
-            this.tagsProviders.add(tagsProvider);
-        }
         return this;
     }
 

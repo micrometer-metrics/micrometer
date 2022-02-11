@@ -31,6 +31,8 @@ public class ObservationHandlerSample {
         registry.withTimerObservationHandler()
                 .observationConfig()
                     .observationHandler(new SampleHandler())
+                    .tagsProvider(new CustomTagsProvider())
+                    .tagsProvider(context -> false)
                     .observationPredicate((s, context) -> {
                         boolean observationEnabled = !"sample.ignored".equals(s);
                         if (!observationEnabled) {
@@ -40,8 +42,6 @@ public class ObservationHandlerSample {
                     });
 
         Observation observation = Observation.createNotStarted("sample.operation", new CustomContext(), registry)
-                .tagsProvider(new CustomTagsProvider())
-                .tagsProvider(context -> false)
                 .contextualName("CALL sampleOperation")
                 .lowCardinalityTag("a", "1")
                 .highCardinalityTag("time", Instant.now().toString())

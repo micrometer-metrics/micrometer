@@ -148,14 +148,6 @@ public interface Observation {
     Observation highCardinalityTag(Tag tag);
 
     /**
-     * Adds a tags provider that can be used to attach tags to the observation
-     *
-     * @param tagsProvider tags provider
-     * @return this
-     */
-    Observation tagsProvider(TagsProvider<?> tagsProvider);
-
-    /**
      * Sets a high cardinality tag. High cardinality means that this tag
      * will have possible an unbounded number of possible values. An HTTP URL is a good example
      * of such a tag (e.g. /foo/bar, /foo/baz etc.).

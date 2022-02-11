@@ -65,6 +65,8 @@ public interface ObservationRegistry {
 
         private final List<ObservationPredicate> observationPredicates = new CopyOnWriteArrayList<>();
 
+        private final List<Observation.TagsProvider<?>> tagsProviders = new CopyOnWriteArrayList<>();
+
         /**
          * Register a handler for the {@link Observation observations}.
          *
@@ -89,6 +91,17 @@ public interface ObservationRegistry {
         }
 
         /**
+         * Register a tags provider for the {@link Observation observations}.
+         *
+         * @param tagsProvider tags provider to add to the current configuration
+         * @return This configuration instance
+         */
+        public ObservationConfig tagsProvider(Observation.TagsProvider<?> tagsProvider) {
+            this.tagsProviders.add(tagsProvider);
+            return this;
+        }
+
+        /**
          * Check to assert whether {@link Observation} should be created or {@link NoopObservation} instead.
          *
          * @param name observation technical name
@@ -102,6 +115,10 @@ public interface ObservationRegistry {
         // package-private for minimal visibility
         Collection<ObservationHandler<?>> getObservationHandlers() {
             return observationHandlers;
+        }
+
+        Collection<Observation.TagsProvider<?>> getTagsProviders() {
+            return tagsProviders;
         }
     }
 }
