@@ -15,43 +15,91 @@
  */
 package io.micrometer.api.instrument;
 
+import io.micrometer.api.instrument.observation.Observation;
 import org.junit.jupiter.api.Test;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
 /**
- * Tests for {@link TagsProvider}.
+ * Tests for {@link Observation.TagsProvider}.
  *
  * @author Jonatan Ivanov
  */
 class TagsProviderTest {
-
     @Test
     void tagsShouldBeEmptyByDefault() {
-        TagsProvider tagsProvider = new DefaultTestTagsProvider();
-        assertThat(tagsProvider.getLowCardinalityTags()).isEmpty();
-        assertThat(tagsProvider.getHighCardinalityTags()).isEmpty();
-        assertThat(tagsProvider.getAllTags()).isEmpty();
+        Observation.TagsProvider<Observation.Context> tagsProvider = new TestTagsProvider();
+
+        assertThat(tagsProvider.getLowCardinalityTags(new Observation.Context())).isEmpty();
+        assertThat(tagsProvider.getHighCardinalityTags(new Observation.Context())).isEmpty();
     }
 
     @Test
-    void getAllTagsShouldReturnTheConcatenatedResult() {
-        TagsProvider tagsProvider = new CustomTestTagsProvider();
-        assertThat(tagsProvider.getAllTags()).containsExactlyInAnyOrder(Tag.of("app.name", "testapp"), Tag.of("user.id", "42"));
+    void tagsShouldBeMergedIntoCompositeByDefault() {
+        Observation.TagsProvider<Observation.Context> tagsProvider = new Observation.TagsProvider.CompositeTagsProvider(
+                new MatchingTestTagsProvider(), new AnotherMatchingTestTagsProvider(), new NotMatchingTestTagsProvider()
+        );
+
+        assertThat(tagsProvider.getLowCardinalityTags(new Observation.Context())).containsExactlyInAnyOrder(Tag.of("matching-low-1", ""), Tag.of("matching-low-2", ""));
+        assertThat(tagsProvider.getHighCardinalityTags(new Observation.Context())).containsExactlyInAnyOrder(Tag.of("matching-high-1", ""), Tag.of("matching-high-2", ""));
     }
 
-    static class DefaultTestTagsProvider implements TagsProvider {
-    }
-
-    static class CustomTestTagsProvider implements TagsProvider {
+    static class TestTagsProvider implements Observation.TagsProvider<Observation.Context> {
         @Override
-        public Tags getLowCardinalityTags() {
-            return Tags.of("app.name", "testapp");
+        public boolean supportsContext(Observation.Context context) {
+            return true;
+        }
+    }
+
+    static class MatchingTestTagsProvider implements Observation.TagsProvider<Observation.Context> {
+        @Override
+        public boolean supportsContext(Observation.Context context) {
+            return true;
         }
 
         @Override
-        public Tags getHighCardinalityTags() {
-            return Tags.of("user.id", "42");
+        public Tags getLowCardinalityTags(Observation.Context context) {
+            return Tags.of(Tag.of("matching-low-1", ""));
+        }
+
+        @Override
+        public Tags getHighCardinalityTags(Observation.Context context) {
+            return Tags.of(Tag.of("matching-high-1", ""));
+        }
+    }
+
+
+    static class AnotherMatchingTestTagsProvider implements Observation.TagsProvider<Observation.Context> {
+        @Override
+        public boolean supportsContext(Observation.Context context) {
+            return true;
+        }
+
+        @Override
+        public Tags getLowCardinalityTags(Observation.Context context) {
+            return Tags.of(Tag.of("matching-low-2", ""));
+        }
+
+        @Override
+        public Tags getHighCardinalityTags(Observation.Context context) {
+            return Tags.of(Tag.of("matching-high-2", ""));
+        }
+    }
+
+    static class NotMatchingTestTagsProvider implements Observation.TagsProvider<Observation.Context> {
+        @Override
+        public boolean supportsContext(Observation.Context context) {
+            return false;
+        }
+
+        @Override
+        public Tags getLowCardinalityTags(Observation.Context context) {
+            return Tags.of(Tag.of("not-matching-low", ""));
+        }
+
+        @Override
+        public Tags getHighCardinalityTags(Observation.Context context) {
+            return Tags.of(Tag.of("not-matching-high", ""));
         }
     }
 }

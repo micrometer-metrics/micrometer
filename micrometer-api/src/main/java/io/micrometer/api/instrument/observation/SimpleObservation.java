@@ -16,7 +16,9 @@
 package io.micrometer.api.instrument.observation;
 
 import java.util.ArrayDeque;
+import java.util.ArrayList;
 import java.util.Deque;
+import java.util.List;
 import java.util.stream.Collectors;
 
 import io.micrometer.api.instrument.Tag;
@@ -33,6 +35,8 @@ import io.micrometer.api.lang.Nullable;
  */
 class SimpleObservation implements Observation {
     private final ObservationRegistry registry;
+    @SuppressWarnings("rawtypes")
+    private List<TagsProvider> tagsProviders;
     private final Context context;
     @SuppressWarnings("rawtypes")
     private final Deque<ObservationHandler> handlers;
@@ -40,6 +44,7 @@ class SimpleObservation implements Observation {
     // package private so only instantiated by us
     SimpleObservation(String name, ObservationRegistry registry, Context context) {
         this.registry = registry;
+        this.tagsProviders = new ArrayList<>();
         this.context = context.setName(name);
         this.handlers = registry.observationConfig().getObservationHandlers().stream()
                 .filter(handler -> handler.supportsContext(this.context))
@@ -65,6 +70,14 @@ class SimpleObservation implements Observation {
     }
 
     @Override
+    public Observation tagsProvider(TagsProvider<?> tagsProvider) {
+        if (tagsProvider.supportsContext(context)) {
+            this.tagsProviders.add(tagsProvider);
+        }
+        return this;
+    }
+
+    @Override
     public Observation error(Throwable error) {
         this.context.setError(error);
         this.notifyOnError();
@@ -76,8 +89,13 @@ class SimpleObservation implements Observation {
         return this;
     }
 
+    @SuppressWarnings({"rawtypes", "unchecked"})
     @Override
     public void stop() {
+        for (TagsProvider tagsProvider : tagsProviders) {
+            this.context.addLowCardinalityTags(tagsProvider.getLowCardinalityTags(context));
+            this.context.addHighCardinalityTags(tagsProvider.getHighCardinalityTags(context));
+        }
         this.notifyOnObservationStopped();
     }
 

@@ -43,7 +43,7 @@ public class TimerObservationHandler implements MeterObservationHandler<Observat
         Timer.Sample sample = context.getRequired(Timer.Sample.class);
         sample.stop(Timer.builder(context.getName())
                 .tag("error", context.getError().map(Throwable::getMessage).orElse("none"))
-                .tags(context.getLowCardinalityTags().and(context.getAdditionalLowCardinalityTags()))
+                .tags(context.getLowCardinalityTags())
                 .register(this.meterRegistry));
     }
 

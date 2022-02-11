@@ -15,17 +15,19 @@
  */
 package io.micrometer.api.instrument.observation;
 
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.LinkedHashSet;
+import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
 import java.util.function.Function;
 import java.util.function.Supplier;
+import java.util.stream.Stream;
 
 import io.micrometer.api.instrument.Tag;
 import io.micrometer.api.instrument.Tags;
-import io.micrometer.api.instrument.TagsProvider;
 import io.micrometer.api.instrument.Timer;
 import io.micrometer.api.lang.NonNull;
 import io.micrometer.api.lang.Nullable;
@@ -146,6 +148,14 @@ public interface Observation {
     Observation highCardinalityTag(Tag tag);
 
     /**
+     * Adds a tags provider that can be used to attach tags to the observation
+     *
+     * @param tagsProvider tags provider
+     * @return this
+     */
+    Observation tagsProvider(TagsProvider<?> tagsProvider);
+
+    /**
      * Sets a high cardinality tag. High cardinality means that this tag
      * will have possible an unbounded number of possible values. An HTTP URL is a good example
      * of such a tag (e.g. /foo/bar, /foo/baz etc.).
@@ -245,7 +255,7 @@ public interface Observation {
      * @since 2.0.0
      */
     @SuppressWarnings("unchecked")
-    class Context implements TagsProvider {
+    class Context {
         private final Map<Class<?>, Object> map = new HashMap<>();
 
         private String name;
@@ -255,9 +265,9 @@ public interface Observation {
         @Nullable
         private Throwable error;
 
-        private final Set<Tag> additionalLowCardinalityTags = new LinkedHashSet<>();
+        private final Set<Tag> lowCardinalityTags = new LinkedHashSet<>();
 
-        private final Set<Tag> additionalHighCardinalityTags = new LinkedHashSet<>();
+        private final Set<Tag> highCardinalityTags = new LinkedHashSet<>();
 
         /**
          * Puts an element to the context.
@@ -414,35 +424,56 @@ public interface Observation {
         }
 
         /**
-         * Adds an additional low cardinality tag - those will be appended to those
-         * passed via the {@link TagsProvider#getLowCardinalityTags()} method.
+         * Adds a low cardinality tag - those will be appended to those
+         * fetched from the {@link TagsProvider#getLowCardinalityTags(Context)} method.
          *
          * @param tag a tag
          */
-        public void addLowCardinalityTag(Tag tag) {
-            this.additionalLowCardinalityTags.add(tag);
+        void addLowCardinalityTag(Tag tag) {
+            this.lowCardinalityTags.add(tag);
         }
 
         /**
-         * Adds an additional high cardinality tag - those will be appended to those
-         * passed via the {@link TagsProvider#getLowCardinalityTags()} ()} method.
+         * Adds a high cardinality tag - those will be appended to those
+         * fetched from the {@link TagsProvider#getHighCardinalityTags(Context)} method.
          *
          * @param tag a tag
          */
-        public void addHighCardinalityTag(Tag tag) {
-            this.additionalHighCardinalityTags.add(tag);
+        void addHighCardinalityTag(Tag tag) {
+            this.highCardinalityTags.add(tag);
         }
 
-        @Override
-        @NonNull
-        public Tags getAdditionalLowCardinalityTags() {
-            return Tags.of(this.additionalLowCardinalityTags);
+        /**
+         * Adds multiple low cardinality tags at once.
+         *
+         * @param tags collection of tags
+         */
+        void addLowCardinalityTags(Tags tags) {
+            tags.stream().forEach(this::addLowCardinalityTag);
         }
 
-        @Override
+        /**
+         * Adds multiple high cardinality tags at once.
+         *
+         * @param tags collection of tags
+         */
+        void addHighCardinalityTags(Tags tags) {
+            tags.stream().forEach(this::addHighCardinalityTag);
+        }
+
         @NonNull
-        public Tags getAdditionalHighCardinalityTags() {
-            return Tags.of(this.additionalHighCardinalityTags);
+        public Tags getLowCardinalityTags() {
+            return Tags.of(this.lowCardinalityTags);
+        }
+
+        @NonNull
+        public Tags getHighCardinalityTags() {
+            return Tags.of(this.highCardinalityTags);
+        }
+
+        @NonNull
+        public Tags getAllTags() {
+            return this.getLowCardinalityTags().and(this.getHighCardinalityTags());
         }
 
         @Override
@@ -452,10 +483,106 @@ public interface Observation {
                     ", name='" + name + '\'' +
                     ", contextualName='" + contextualName + '\'' +
                     ", lowCardinalityTags=" + getLowCardinalityTags() +
-                    ", additionalLowCardinalityTags=" + additionalLowCardinalityTags +
                     ", highCardinalityTags=" + getHighCardinalityTags() +
-                    ", additionalHighCardinalityTags=" + additionalHighCardinalityTags +
                     '}';
+        }
+    }
+
+    /**
+     * A provider of tags.
+     *
+     * @author Marcin Grzejszczak
+     * @since 2.0.0
+     */
+    interface TagsProvider<T extends Context> {
+
+        /**
+         * Empty instance of the tags provider.
+         */
+        TagsProvider<Context> EMPTY = context -> false;
+
+        /**
+         * Low cardinality tags.
+         *
+         * @return tags
+         */
+        default Tags getLowCardinalityTags(T context) {
+            return Tags.empty();
+        }
+
+        /**
+         * High cardinality tags.
+         *
+         * @return tags
+         */
+        default Tags getHighCardinalityTags(T context) {
+            return Tags.empty();
+        }
+
+        /**
+         * Tells whether this tags provider should be applied for a given {@link Context}.
+         *
+         * @param context a {@link Context}
+         * @return {@code true} when this tags provider should be used
+         */
+        boolean supportsContext(Context context);
+
+        /**
+         * Tags provider wrapping other tags providers.
+         */
+        @SuppressWarnings({"rawtypes", "unchecked"})
+        class CompositeTagsProvider implements TagsProvider<Observation.Context> {
+
+            private final List<TagsProvider> tagsProviders;
+
+            /**
+             * Creates a new instance of {@code CompositeTagsProvider}.
+             * @param tagsProviders the tags providers that are registered under the composite
+             */
+            public CompositeTagsProvider(TagsProvider... tagsProviders) {
+                this(Arrays.asList(tagsProviders));
+            }
+
+            /**
+             * Creates a new instance of {@code CompositeTagsProvider}.
+             * @param tagsProviders the tags providers that are registered under the composite
+             */
+            public CompositeTagsProvider(List<TagsProvider> tagsProviders) {
+                this.tagsProviders = tagsProviders;
+            }
+
+            @Override
+            public Tags getLowCardinalityTags(Context context) {
+                return getProvidersForContext(context)
+                        .map(tagsProvider -> tagsProvider.getLowCardinalityTags(context))
+                        .reduce(Tags::and)
+                        .orElse(Tags.empty());
+            }
+
+            private Stream<TagsProvider> getProvidersForContext(Context context) {
+                return this.tagsProviders.stream().filter(tagsProvider -> tagsProvider.supportsContext(context));
+            }
+
+            @Override
+            public Tags getHighCardinalityTags(Context context) {
+                return getProvidersForContext(context)
+                        .map(tagsProvider -> tagsProvider.getHighCardinalityTags(context))
+                        .reduce(Tags::and)
+                        .orElse(Tags.empty());
+            }
+
+            @Override
+            public boolean supportsContext(Context context) {
+                return this.tagsProviders.stream().anyMatch(tagsProvider -> tagsProvider.supportsContext(context));
+            }
+
+            /**
+             * Returns the tags providers.
+             * @return registered tags providers
+             */
+            public List<TagsProvider> getTagsProviders() {
+                return this.tagsProviders;
+            }
         }
     }
 }

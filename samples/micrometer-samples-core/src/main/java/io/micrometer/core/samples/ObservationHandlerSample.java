@@ -40,6 +40,8 @@ public class ObservationHandlerSample {
                     });
 
         Observation observation = Observation.createNotStarted("sample.operation", new CustomContext(), registry)
+                .tagsProvider(new CustomTagsProvider())
+                .tagsProvider(context -> false)
                 .contextualName("CALL sampleOperation")
                 .lowCardinalityTag("a", "1")
                 .highCardinalityTag("time", Instant.now().toString())
@@ -98,18 +100,29 @@ public class ObservationHandlerSample {
         private final UUID uuid = UUID.randomUUID();
 
         @Override
-        public Tags getLowCardinalityTags() {
-            return Tags.of("status", "ok");
-        }
-
-        @Override
-        public Tags getHighCardinalityTags() {
-            return Tags.of("userId", uuid.toString());
-        }
-
-        @Override
         public String toString() {
-            return "CustomContext{" + uuid + '}';
+            return "CustomContext{" +
+                    "uuid=" + uuid +
+                    " lowCardinalityTags=" + getLowCardinalityTags() +
+                    " highCardinalityTags=" + getHighCardinalityTags() +
+                    '}';
+        }
+    }
+
+    static class CustomTagsProvider implements Observation.TagsProvider<CustomContext> {
+        @Override
+        public Tags getLowCardinalityTags(CustomContext context) {
+            return Tags.of("className", context.getClass().getSimpleName());
+        }
+
+        @Override
+        public Tags getHighCardinalityTags(CustomContext context) {
+            return Tags.of("userId", context.uuid.toString());
+        }
+
+        @Override
+        public boolean supportsContext(Observation.Context context) {
+            return context instanceof CustomContext;
         }
     }
 
