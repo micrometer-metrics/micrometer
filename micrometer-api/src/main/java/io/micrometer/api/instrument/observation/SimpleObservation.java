@@ -16,9 +16,7 @@
 package io.micrometer.api.instrument.observation;
 
 import java.util.ArrayDeque;
-import java.util.ArrayList;
 import java.util.Deque;
-import java.util.List;
 import java.util.stream.Collectors;
 
 import io.micrometer.api.instrument.Tag;
@@ -36,7 +34,7 @@ import io.micrometer.api.lang.Nullable;
 class SimpleObservation implements Observation {
     private final ObservationRegistry registry;
     @SuppressWarnings("rawtypes")
-    private List<TagsProvider> tagsProviders;
+    private TagsProvider tagsProvider;
     private final Context context;
     @SuppressWarnings("rawtypes")
     private final Deque<ObservationHandler> handlers;
@@ -44,7 +42,7 @@ class SimpleObservation implements Observation {
     // package private so only instantiated by us
     SimpleObservation(String name, ObservationRegistry registry, Context context) {
         this.registry = registry;
-        this.tagsProviders = new ArrayList<>();
+        this.tagsProvider = TagsProvider.EMPTY;
         this.context = context.setName(name);
         this.handlers = registry.observationConfig().getObservationHandlers().stream()
                 .filter(handler -> handler.supportsContext(this.context))
@@ -72,7 +70,7 @@ class SimpleObservation implements Observation {
     @Override
     public Observation tagsProvider(TagsProvider<?> tagsProvider) {
         if (tagsProvider.supportsContext(context)) {
-            this.tagsProviders.add(tagsProvider);
+            this.tagsProvider = tagsProvider;
         }
         return this;
     }
@@ -92,10 +90,8 @@ class SimpleObservation implements Observation {
     @SuppressWarnings({"rawtypes", "unchecked"})
     @Override
     public void stop() {
-        for (TagsProvider tagsProvider : tagsProviders) {
-            this.context.addLowCardinalityTags(tagsProvider.getLowCardinalityTags(context));
-            this.context.addHighCardinalityTags(tagsProvider.getHighCardinalityTags(context));
-        }
+        this.context.addLowCardinalityTags(tagsProvider.getLowCardinalityTags(context));
+        this.context.addHighCardinalityTags(tagsProvider.getHighCardinalityTags(context));
         this.notifyOnObservationStopped();
     }
 

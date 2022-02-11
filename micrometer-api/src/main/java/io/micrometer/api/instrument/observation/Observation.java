@@ -148,7 +148,7 @@ public interface Observation {
     Observation highCardinalityTag(Tag tag);
 
     /**
-     * Adds a tags provider that can be used to attach tags to the observation
+     * Sets the tags provider that can be used to attach tags to the observation
      *
      * @param tagsProvider tags provider
      * @return this
@@ -559,16 +559,16 @@ public interface Observation {
                         .orElse(Tags.empty());
             }
 
-            private Stream<TagsProvider> getProvidersForContext(Context context) {
-                return this.tagsProviders.stream().filter(tagsProvider -> tagsProvider.supportsContext(context));
-            }
-
             @Override
             public Tags getHighCardinalityTags(Context context) {
                 return getProvidersForContext(context)
                         .map(tagsProvider -> tagsProvider.getHighCardinalityTags(context))
                         .reduce(Tags::and)
                         .orElse(Tags.empty());
+            }
+
+            private Stream<TagsProvider> getProvidersForContext(Context context) {
+                return this.tagsProviders.stream().filter(tagsProvider -> tagsProvider.supportsContext(context));
             }
 
             @Override
