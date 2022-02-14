@@ -19,7 +19,7 @@ def VERSIONS = [
         // in hystrix 1.5.12, but Netflix re-released 1.5.11 as 1.5.18 late in 2018.
         // <=1.5.11 or 1.5.18 doesn't break with Micrometer, but open metrics won't be correct necessarily.
         'com.netflix.hystrix:hystrix-core:1.5.12',
-        'com.netflix.spectator:spectator-reg-atlas:latest.release',
+        'com.netflix.spectator:spectator-reg-atlas:1.0.+',
         'com.newrelic.agent.java:newrelic-api:5.+',
         'com.signalfx.public:signalfx-java:latest.release',
         'com.squareup.okhttp3:okhttp:latest.release',
