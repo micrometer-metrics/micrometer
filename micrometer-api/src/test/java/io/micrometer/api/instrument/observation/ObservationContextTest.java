@@ -35,16 +35,16 @@ class ObservationContextTest {
 
     @Test
     void shouldBeEmptyByDefault() {
-        assertThat(context.get(String.class)).isNull();
+        assertThat((String) context.get(String.class)).isNull();
     }
 
     @Test
     void getShouldReturnWhatWasPutPreviously() {
         assertThat(context.put(String.class, "42")).isSameAs(context);
-        assertThat(context.get(String.class)).isEqualTo("42");
+        assertThat((String) context.get(String.class)).isEqualTo("42");
 
         assertThat(context.put(Integer.class, 123)).isSameAs(context);
-        assertThat(context.get(Integer.class)).isEqualTo(123);
+        assertThat((Integer) context.get(Integer.class)).isEqualTo(123);
     }
 
     @Test
@@ -53,8 +53,8 @@ class ObservationContextTest {
                 .put(String.class, "42")
                 .put(Integer.class, 123)
                 .put(String.class, "24");
-        assertThat(context.get(String.class)).isEqualTo("24");
-        assertThat(context.get(Integer.class)).isEqualTo(123);
+        assertThat((String) context.get(String.class)).isEqualTo("24");
+        assertThat((Integer) context.get(Integer.class)).isEqualTo(123);
     }
 
     @Test
@@ -63,8 +63,8 @@ class ObservationContextTest {
                 .put(String.class, "42")
                 .put(Integer.class, 123)
                 .remove(String.class);
-        assertThat(context.get(Integer.class)).isEqualTo(123);
-        assertThat(context.get(String.class)).isNull();
+        assertThat((Integer) context.get(Integer.class)).isEqualTo(123);
+        assertThat((String) context.get(String.class)).isNull();
     }
 
     @Test
@@ -82,10 +82,10 @@ class ObservationContextTest {
     @Test
     void computeIfAbsentShouldUseFallbackValue() {
         context.put(String.class, "42");
-        assertThat(context.computeIfAbsent(String.class, clazz -> "abc")).isEqualTo("42");
-        assertThat(context.get(String.class)).isEqualTo("42");
+        assertThat((String) context.computeIfAbsent(String.class, clazz -> "abc")).isEqualTo("42");
+        assertThat((String) context.get(String.class)).isEqualTo("42");
 
-        assertThat(context.computeIfAbsent(Integer.class, clazz -> 123)).isEqualTo(123);
-        assertThat(context.get(Integer.class)).isEqualTo(123);
+        assertThat((Integer) context.computeIfAbsent(Integer.class, clazz -> 123)).isEqualTo(123);
+        assertThat((Integer) context.get(Integer.class)).isEqualTo(123);
     }
 }

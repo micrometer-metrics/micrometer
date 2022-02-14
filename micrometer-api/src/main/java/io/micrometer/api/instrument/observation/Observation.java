@@ -256,7 +256,7 @@ public interface Observation {
      */
     @SuppressWarnings("unchecked")
     class Context {
-        private final Map<Class<?>, Object> map = new HashMap<>();
+        private final Map<Object, Object> map = new HashMap<>();
 
         private String name;
 
@@ -272,13 +272,13 @@ public interface Observation {
         /**
          * Puts an element to the context.
          *
-         * @param clazz key
+         * @param key key
          * @param object value
-         * @param <T> type of value
+         * @param <T> value type
          * @return this for chaining
          */
-        public <T> Context put(Class<T> clazz, T object) {
-            this.map.put(clazz, object);
+        public <T> Context put(Object key, T object) {
+            this.map.put(key, object);
             return this;
         }
 
@@ -346,36 +346,36 @@ public interface Observation {
         /**
          * Removes an entry from the context.
          *
-         * @param clazz key by which to remove an entry
+         * @param key key by which to remove an entry
          */
-        public void remove(Class<?> clazz) {
-            this.map.remove(clazz);
+        public void remove(Object key) {
+            this.map.remove(key);
         }
 
         /**
          * Gets an entry from the context. Returns {@code null} when entry is not present.
          *
-         * @param clazz key
-         * @param <T> key type
+         * @param key key
+         * @param <T> value type
          * @return entry or {@code null} if not present
          */
         @Nullable
-        public <T> T get(Class<T> clazz) {
-            return (T) this.map.get(clazz);
+        public <T> T get(Object key) {
+            return (T) this.map.get(key);
         }
 
         /**
          * Gets an entry from the context. Throws exception when entry is not present.
          *
-         * @param clazz key
-         * @param <T> key type
+         * @param key key
+         * @param <T> value type
          * @return entry ot exception if not present
          */
         @NonNull
-        public <T> T getRequired(Class<T> clazz) {
-            T object = (T) this.map.get(clazz);
+        public <T> T getRequired(Object key) {
+            T object = (T) this.map.get(key);
             if (object == null) {
-                throw new IllegalArgumentException("Context does not have an entry for key [" + clazz + "]");
+                throw new IllegalArgumentException("Context does not have an entry for key [" + key + "]");
             }
             return object;
         }
@@ -383,37 +383,36 @@ public interface Observation {
         /**
          * Checks if context contains a key.
          *
-         * @param clazz key
-         * @param <T> key type
+         * @param key key
          * @return {@code true} when the context contains the entry with the given key
          */
-        public <T> boolean containsKey(Class<T> clazz) {
-            return this.map.containsKey(clazz);
+        public boolean containsKey(Object key) {
+            return this.map.containsKey(key);
         }
 
         /**
          * Returns an element or default if not present.
          *
-         * @param clazz key
+         * @param key key
          * @param defaultObject default object to return
-         * @param <T> object type
+         * @param <T> value type
          * @return object or default if not present
          */
-        public <T> T getOrDefault(Class<T> clazz, T defaultObject) {
-            return (T) this.map.getOrDefault(clazz, defaultObject);
+        public <T> T getOrDefault(Object key, T defaultObject) {
+            return (T) this.map.getOrDefault(key, defaultObject);
         }
 
         /**
          * Returns an element or calls a mapping function if entry not present.
          * The function will insert the value to the map.
          *
-         * @param clazz key
+         * @param key key
          * @param mappingFunction mapping function
-         * @param <T> object type
+         * @param <T> value type
          * @return object or one derrived from the mapping function if not present
          */
-        public <T> T computeIfAbsent(Class<T> clazz, Function<Class<?>, ? extends T> mappingFunction) {
-            return (T) this.map.computeIfAbsent(clazz, mappingFunction);
+        public <T> T computeIfAbsent(Object key, Function<Object, ? extends T> mappingFunction) {
+            return (T) this.map.computeIfAbsent(key, mappingFunction);
         }
 
         /**
