@@ -48,5 +48,5 @@ org.openjdk.jmh:jmh-generator-reflection:1.29=jmh,jmhCompileClasspath,jmhRuntime
 org.ow2.asm:asm:9.0=jmh,jmhCompileClasspath,jmhRuntimeClasspath
 org.reflections:reflections:0.9.12=checkstyle
 org.slf4j:slf4j-api:1.7.26=nohttp,nohttp-cli
-org.slf4j:slf4j-api:1.7.32=jmh,jmhCompileClasspath,jmhRuntimeClasspath
+org.slf4j:slf4j-api:1.7.36=jmh,jmhCompileClasspath,jmhRuntimeClasspath
 empty=annotationProcessor,archives,default,signatures,testAnnotationProcessor

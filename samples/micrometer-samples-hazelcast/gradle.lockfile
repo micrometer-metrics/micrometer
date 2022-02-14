@@ -40,5 +40,5 @@ org.javassist:javassist:3.26.0-GA=checkstyle
 org.latencyutils:LatencyUtils:2.0.3=default,runtimeClasspath,testRuntimeClasspath
 org.reflections:reflections:0.9.12=checkstyle
 org.slf4j:slf4j-api:1.7.26=nohttp,nohttp-cli
-org.slf4j:slf4j-api:1.7.32=compileClasspath,default,runtimeClasspath,testCompileClasspath,testRuntimeClasspath
+org.slf4j:slf4j-api:1.7.36=compileClasspath,default,runtimeClasspath,testCompileClasspath,testRuntimeClasspath
 empty=annotationProcessor,archives,signatures,testAnnotationProcessor
