@@ -73,14 +73,16 @@ public final class DynatraceExporterV2 extends AbstractDynatraceExporter {
         metricBuilderFactory = factoryBuilder.build();
     }
 
-    private boolean endpointIsInvalid(String uri) {
+    private boolean isValidEndpoint(String uri) {
         try {
             //noinspection ResultOfMethodCallIgnored
             URI.create(uri).toURL();
-        } catch (IllegalArgumentException | MalformedURLException ex) {
-            return true;
         }
-        return false;
+        catch (IllegalArgumentException | MalformedURLException ex) {
+            return false;
+        }
+
+        return true;
     }
 
     private boolean shouldIgnoreToken(DynatraceConfig config) {
@@ -252,8 +254,8 @@ public final class DynatraceExporterV2 extends AbstractDynatraceExporter {
 
     private void send(List<String> metricLines) {
         String endpoint = config.uri();
-        if (endpointIsInvalid(endpoint)) {
-            logger.warn("Endpoint invalid. Skipping export... ({})", endpoint);
+        if (!isValidEndpoint(endpoint)) {
+            logger.warn("Invalid endpoint, skipping export... ({})", endpoint);
             return;
         }
         try {

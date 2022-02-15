@@ -30,7 +30,9 @@ import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 
+import static java.util.concurrent.TimeUnit.SECONDS;
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.awaitility.Awaitility.await;
 
 class DynatraceConfigTest {
     private static final String nonExistentConfigFileName = UUID.randomUUID().toString();
@@ -277,7 +279,7 @@ class DynatraceConfigTest {
     }
 
     @Test
-    void testFileBasedConfig() throws IOException, InterruptedException {
+    void testFileBasedConfig() throws IOException {
         String uuid = UUID.randomUUID().toString();
         final Path tempFile = Files.createTempFile(uuid, ".properties");
 
@@ -285,13 +287,7 @@ class DynatraceConfigTest {
                 ("DT_METRICS_INGEST_URL = https://your-dynatrace-ingest-url/api/v2/metrics/ingest\n" +
                         "DT_METRICS_INGEST_API_TOKEN = YOUR.DYNATRACE.TOKEN").getBytes());
 
-        // sleep for a short time so that the change can be picked up by the watcher
-        // This is only required in scenarios where writing and reading the file happens in very rapid succession
-        // (e.g. if both are done in one thread, as is the case in these tests).
-        Thread.sleep(10);
-
         FileBasedConfigurationTestHelper.forceOverwriteConfig(tempFile.toString());
-
         DynatraceConfig config = new DynatraceConfig() {
             @Override
             public String get(String key) {
@@ -304,6 +300,7 @@ class DynatraceConfigTest {
             }
         };
 
+        await().atMost(1, SECONDS).until(() -> config.apiToken().equals("YOUR.DYNATRACE.TOKEN"));
         assertThat(config.apiToken()).isEqualTo("YOUR.DYNATRACE.TOKEN");
         assertThat(config.uri()).isEqualTo("https://your-dynatrace-ingest-url/api/v2/metrics/ingest");
 
@@ -311,9 +308,7 @@ class DynatraceConfigTest {
                 ("DT_METRICS_INGEST_URL = https://a-different-url/api/v2/metrics/ingest\n" +
                         "DT_METRICS_INGEST_API_TOKEN = A.DIFFERENT.TOKEN").getBytes());
 
-        // sleep for a short time so that the change can be picked up by the watcher
-        Thread.sleep(10);
-
+        await().atMost(10, SECONDS).until(() -> config.apiToken().equals("A.DIFFERENT.TOKEN"));
         assertThat(config.apiToken()).isEqualTo("A.DIFFERENT.TOKEN");
         assertThat(config.uri()).isEqualTo("https://a-different-url/api/v2/metrics/ingest");
         

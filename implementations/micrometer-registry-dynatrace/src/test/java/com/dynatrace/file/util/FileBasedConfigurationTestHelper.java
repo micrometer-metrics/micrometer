@@ -16,6 +16,11 @@
 
 package com.dynatrace.file.util;
 
+/**
+ * This is needed because {@link DynatraceFileBasedConfigurationProvider#forceOverwriteConfig(String)} is not public.
+ *
+ * @author Georg Pirklbauer
+ */
 public class FileBasedConfigurationTestHelper {
     // This allows overwriting the file location of the file-based configuration for testing.
     public static void forceOverwriteConfig(String filename) {

@@ -47,6 +47,7 @@ import static java.util.concurrent.TimeUnit.MILLISECONDS;
 import static java.util.concurrent.TimeUnit.SECONDS;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.entry;
+import static org.awaitility.Awaitility.await;
 import static org.mockito.ArgumentMatchers.isA;
 import static org.mockito.Mockito.*;
 
@@ -469,8 +470,6 @@ class DynatraceExporterV2Test {
         String randomUuid = UUID.randomUUID().toString();
         final Path tempFile = Files.createTempFile(randomUuid, ".properties");
 
-        FileBasedConfigurationTestHelper.forceOverwriteConfig(tempFile.toString());
-
         DynatraceConfig config = new DynatraceConfig() {
             // if nothing is set for uri and token, read from the file watcher
             @Override
@@ -509,11 +508,8 @@ class DynatraceExporterV2Test {
                 ("DT_METRICS_INGEST_URL = " + firstUri + "\n" +
                         "DT_METRICS_INGEST_API_TOKEN = YOUR.DYNATRACE.TOKEN.FIRST").getBytes());
 
-        // sleep for a short time so that the change can be picked up by the watcher
-        // This is only required in scenarios where writing and reading the file happens in very rapid succession
-        // (e.g. if both are done in one thread, as is the case in these tests).
-        Thread.sleep(10);
-
+        FileBasedConfigurationTestHelper.forceOverwriteConfig(tempFile.toString());
+        await().atMost(1, SECONDS).until(() -> config.uri().equals(firstUri));
         Counter counter = meterRegistry.counter("test.counter");
         counter.increment(10);
         clock.add(config.step());
@@ -540,7 +536,7 @@ class DynatraceExporterV2Test {
                 ("DT_METRICS_INGEST_URL = " + secondUri + "\n" +
                         "DT_METRICS_INGEST_API_TOKEN = YOUR.DYNATRACE.TOKEN.SECOND").getBytes());
 
-        Thread.sleep(10);
+        await().atMost(10, SECONDS).until(() -> config.uri().equals(secondUri));
         exporter.export(Collections.singletonList(counter));
 
         ArgumentCaptor<HttpSender.Request> secondRequestCaptor = ArgumentCaptor.forClass(HttpSender.Request.class);

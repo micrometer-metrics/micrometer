@@ -62,9 +62,7 @@ public interface DynatraceConfig extends StepRegistryConfig {
             return uri.required().get();
         }
 
-        return uri.orElse(
-                DynatraceFileBasedConfigurationProvider.getInstance().getMetricIngestEndpoint()
-        );
+        return uri.orElse(DynatraceFileBasedConfigurationProvider.getInstance().getMetricIngestEndpoint());
     }
 
     default String deviceId() {
