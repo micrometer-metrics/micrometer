@@ -230,6 +230,39 @@ public interface Observation {
     }
 
     /**
+     * Tries to run the action against an Observation. If the
+     * Observation is null, we just run the action, otherwise
+     * we run the action in scope.
+     *
+     * @param parent observation, potentially {@code null}
+     * @param action action to run
+     */
+    static void tryScoped(@Nullable Observation parent, Runnable action) {
+        if (parent != null) {
+            parent.scoped(action);
+        }
+        else {
+            action.run();
+        }
+    }
+
+    /**
+     * Tries to run the action against an Observation. If the
+     * Observation is null, we just run the action, otherwise
+     * we run the action in scope.
+     *
+     * @param parent observation, potentially {@code null}
+     * @param action action to run
+     * @return result of the action
+     */
+    static <T> T tryScoped(@Nullable Observation parent, Supplier<T> action) {
+        if (parent != null) {
+            return parent.scoped(action);
+        }
+        return action.get();
+    }
+
+    /**
      * Scope represent an action within which certain resources
      * (e.g. tracing context) are put in scope (e.g. in a ThreadLocal).
      * When the scope is closed the resources will be removed from the scope.
