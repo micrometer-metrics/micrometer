@@ -231,6 +231,22 @@ class DynatraceExporterV2Test {
     }
 
     @Test
+    void toTimerLine_DropIfCountIsZero() {
+        Timer timer = meterRegistry.timer("my.timer");
+        timer.record(Duration.ofMillis(60));
+        clock.add(config.step());
+
+        List<String> lines = exporter.toTimerLine(timer).collect(Collectors.toList());
+        assertThat(lines).hasSize(1);
+        assertThat(lines.get(0)).isEqualTo("my.timer,dt.metrics.source=micrometer gauge,min=60.0,max=60.0,sum=60.0,count=1 " + clock.wallTime());
+
+        clock.add(config.step());
+        // Before the update to drop zero count lines, this would contain 1 line (with count=0), which is not desired.
+        List<String> zeroCountLines = exporter.toTimerLine(timer).collect(Collectors.toList());
+        assertThat(zeroCountLines).isEmpty();
+    }
+
+    @Test
     void toFunctionTimerLineShouldDropNanMean() {
         FunctionTimer functionTimer = new FunctionTimer() {
             @Override
@@ -327,6 +343,22 @@ class DynatraceExporterV2Test {
         List<String> lines = exporter.toDistributionSummaryLine(summary).collect(Collectors.toList());
         assertThat(lines).hasSize(1);
         assertThat(lines.get(0)).isEqualTo("my.summary,dt.metrics.source=micrometer gauge,min=0.0,max=5.4,sum=10.9,count=4 " + clock.wallTime());
+    }
+
+    @Test
+    void testToDistributionSummaryLine_DropsLineIfCountIsZero() {
+        DistributionSummary summary = DistributionSummary.builder("my.summary").register(meterRegistry);
+        summary.record(3.1);
+        clock.add(config.step());
+
+        List<String> nonEmptyLines = exporter.toDistributionSummaryLine(summary).collect(Collectors.toList());
+        assertThat(nonEmptyLines).hasSize(1);
+        assertThat(nonEmptyLines.get(0)).isEqualTo("my.summary,dt.metrics.source=micrometer gauge,min=3.1,max=3.1,sum=3.1,count=1 " + clock.wallTime());
+
+        clock.add(config.step());
+        // Before the update to drop zero count lines, this would contain 1 line (with count=0), which is not desired.
+        List<String> zeroCountLines = exporter.toDistributionSummaryLine(summary).collect(Collectors.toList());
+        assertThat(zeroCountLines).isEmpty();
     }
 
     @Test
