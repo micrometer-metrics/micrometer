@@ -15,8 +15,11 @@
  */
 package io.micrometer.dynatrace.v2;
 
+import com.dynatrace.file.util.FileBasedConfigurationTestHelper;
+import io.micrometer.core.instrument.Timer;
 import io.micrometer.core.instrument.*;
 import io.micrometer.core.ipc.http.HttpSender;
+import io.micrometer.core.lang.Nullable;
 import io.micrometer.core.util.internal.logging.LogEvent;
 import io.micrometer.core.util.internal.logging.MockLogger;
 import io.micrometer.core.util.internal.logging.MockLoggerFactory;
@@ -28,28 +31,24 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.ArgumentCaptor;
 
+import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.time.Duration;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.List;
+import java.util.*;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.stream.Collectors;
 
 import static io.micrometer.core.instrument.MockClock.clock;
 import static io.micrometer.core.util.internal.logging.InternalLogLevel.ERROR;
-import static java.lang.Double.NaN;
-import static java.lang.Double.POSITIVE_INFINITY;
-import static java.lang.Double.NEGATIVE_INFINITY;
+import static java.lang.Double.*;
 import static java.util.concurrent.TimeUnit.MILLISECONDS;
 import static java.util.concurrent.TimeUnit.SECONDS;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.entry;
 import static org.mockito.ArgumentMatchers.isA;
-import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.when;
+import static org.mockito.Mockito.*;
 
 /**
  * Tests for {@link DynatraceExporterV2}.
@@ -463,6 +462,99 @@ class DynatraceExporterV2Test {
         exporter.export(Collections.singletonList(gauge));
 
         assertThat(LOGGER.getLogEvents()).contains(new LogEvent(ERROR, "Failed metric ingestion: Error Code=500, Response Body=simulated", null));
+    }
+
+    @Test
+    void endpointPickedUpBetweenExportsAndChangedPropertiesFile() throws Throwable {
+        String randomUuid = UUID.randomUUID().toString();
+        final Path tempFile = Files.createTempFile(randomUuid, ".properties");
+
+        FileBasedConfigurationTestHelper.forceOverwriteConfig(tempFile.toString());
+
+        DynatraceConfig config = new DynatraceConfig() {
+            // if nothing is set for uri and token, read from the file watcher
+            @Override
+            public DynatraceApiVersion apiVersion() {
+                return DynatraceApiVersion.V2;
+            }
+
+            @Nullable
+            @Override
+            public String get(String key) {
+                return null;
+            }
+        };
+
+        // set up mocks
+        HttpSender httpSender = mock(HttpSender.class);
+        MockClock clock = new MockClock();
+        DynatraceExporterV2 exporter = new DynatraceExporterV2(config, clock, httpSender);
+        DynatraceMeterRegistry meterRegistry = DynatraceMeterRegistry.builder(config).httpClient(httpSender).clock(clock).build();
+
+        when(httpSender.post(anyString())).thenCallRealMethod();
+        when(httpSender.newRequest(anyString())).thenCallRealMethod();
+        when(httpSender.send(any())).thenReturn(new HttpSender.Response(202, "{\n" +
+                "  \"linesOk\": 1,\n" +
+                "  \"linesInvalid\": 0,\n" +
+                "  \"error\": null,\n" +
+                "  \"warnings\": null\n" +
+                "}"));
+
+        // fill the file with content
+        final String baseUri = "https://your-dynatrace-ingest-url/api/v2/metrics/ingest/";
+        final String firstUri = baseUri + "first";
+        final String secondUri = baseUri + "second";
+
+        Files.write(tempFile,
+                ("DT_METRICS_INGEST_URL = " + firstUri + "\n" +
+                        "DT_METRICS_INGEST_API_TOKEN = YOUR.DYNATRACE.TOKEN.FIRST").getBytes());
+
+        // sleep for a short time so that the change can be picked up by the watcher
+        // This is only required in scenarios where writing and reading the file happens in very rapid succession
+        // (e.g. if both are done in one thread, as is the case in these tests).
+        Thread.sleep(10);
+
+        Counter counter = meterRegistry.counter("test.counter");
+        counter.increment(10);
+        clock.add(config.step());
+        exporter.export(Collections.singletonList(counter));
+
+        ArgumentCaptor<HttpSender.Request> firstRequestCaptor = ArgumentCaptor.forClass(HttpSender.Request.class);
+        verify(httpSender, times(1)).send(firstRequestCaptor.capture());
+        HttpSender.Request firstRequest = firstRequestCaptor.getValue();
+
+        assertThat(firstRequest.getUrl().toString()).isEqualTo(firstUri);
+        assertThat(firstRequest.getRequestHeaders()).containsOnly(
+                entry("Content-Type", "text/plain"),
+                entry("User-Agent", "micrometer"),
+                entry("Authorization", "Api-Token YOUR.DYNATRACE.TOKEN.FIRST")
+        );
+        String firstReqBody = new String(firstRequest.getEntity(), StandardCharsets.UTF_8);
+        assertThat(firstReqBody).isEqualTo("test.counter,dt.metrics.source=micrometer count,delta=10.0");
+
+        counter.increment(30);
+        clock.add(config.step());
+
+        // overwrite the file content to use the second uri
+        Files.write(tempFile,
+                ("DT_METRICS_INGEST_URL = " + secondUri + "\n" +
+                        "DT_METRICS_INGEST_API_TOKEN = YOUR.DYNATRACE.TOKEN.SECOND").getBytes());
+
+        Thread.sleep(10);
+        exporter.export(Collections.singletonList(counter));
+
+        ArgumentCaptor<HttpSender.Request> secondRequestCaptor = ArgumentCaptor.forClass(HttpSender.Request.class);
+        verify(httpSender, times(2)).send(secondRequestCaptor.capture());
+        HttpSender.Request secondRequest = secondRequestCaptor.getValue();
+
+        assertThat(secondRequest.getUrl().toString()).isEqualTo(secondUri);
+        assertThat(secondRequest.getRequestHeaders()).containsOnly(
+                entry("Content-Type", "text/plain"),
+                entry("User-Agent", "micrometer"),
+                entry("Authorization", "Api-Token YOUR.DYNATRACE.TOKEN.SECOND")
+        );
+        String secondReqBody = new String(secondRequest.getEntity(), StandardCharsets.UTF_8);
+        assertThat(secondReqBody).isEqualTo("test.counter,dt.metrics.source=micrometer count,delta=30.0");
     }
 
     private DynatraceExporterV2 createExporter(HttpSender httpClient) {
