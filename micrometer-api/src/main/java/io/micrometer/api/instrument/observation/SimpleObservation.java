@@ -71,6 +71,14 @@ class SimpleObservation implements Observation {
     }
 
     @Override
+    public Observation tagsProvider(TagsProvider<?> tagsProvider) {
+        if (tagsProvider.supportsContext(context)) {
+            this.tagsProviders.add(tagsProvider);
+        }
+        return this;
+    }
+
+    @Override
     public Observation error(Throwable error) {
         this.context.setError(error);
         this.notifyOnError();

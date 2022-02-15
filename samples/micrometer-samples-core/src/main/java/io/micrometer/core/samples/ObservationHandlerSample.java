@@ -43,6 +43,7 @@ public class ObservationHandlerSample {
 
         Observation observation = Observation.createNotStarted("sample.operation", new CustomContext(), registry)
                 .contextualName("CALL sampleOperation")
+                .tagsProvider(new CustomLocalTagsProvider())
                 .lowCardinalityTag("a", "1")
                 .highCardinalityTag("time", Instant.now().toString())
                 .start();
@@ -118,6 +119,23 @@ public class ObservationHandlerSample {
         @Override
         public Tags getHighCardinalityTags(CustomContext context) {
             return Tags.of("userId", context.uuid.toString());
+        }
+
+        @Override
+        public boolean supportsContext(Observation.Context context) {
+            return context instanceof CustomContext;
+        }
+    }
+
+    static class CustomLocalTagsProvider implements Observation.TagsProvider<CustomContext> {
+        @Override
+        public Tags getLowCardinalityTags(CustomContext context) {
+            return Tags.of("localClassName", context.getClass().getSimpleName());
+        }
+
+        @Override
+        public Tags getHighCardinalityTags(CustomContext context) {
+            return Tags.of("localUserId", context.uuid.toString());
         }
 
         @Override

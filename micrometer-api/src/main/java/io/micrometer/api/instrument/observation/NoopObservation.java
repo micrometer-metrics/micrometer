@@ -58,6 +58,11 @@ class NoopObservation implements Observation {
     }
 
     @Override
+    public Observation tagsProvider(TagsProvider<?> tagsProvider) {
+        return this;
+    }
+
+    @Override
     public Observation error(Throwable error) {
         return this;
     }

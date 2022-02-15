@@ -161,6 +161,14 @@ public interface Observation {
     }
 
     /**
+     * Adds a tags provider that can be used to attach tags to the observation
+     *
+     * @param tagsProvider tags provider
+     * @return this
+     */
+    Observation tagsProvider(TagsProvider<?> tagsProvider);
+
+    /**
      * Sets an error.
      *
      * @param error error
