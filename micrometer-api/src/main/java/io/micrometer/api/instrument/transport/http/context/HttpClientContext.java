@@ -30,9 +30,16 @@ import io.micrometer.api.lang.NonNull;
  */
 public class HttpClientContext extends HttpContext<HttpClientRequest, HttpClientResponse> {
 
-    private final HttpClientRequest request;
+    private HttpClientRequest request;
 
     private HttpClientResponse response;
+
+    /**
+     * Creates a new {@code HttpClientContext}.
+     */
+    public HttpClientContext() {
+
+    }
 
     /**
      * Creates a new {@code HttpClientContext}.
@@ -60,9 +67,17 @@ public class HttpClientContext extends HttpContext<HttpClientRequest, HttpClient
     }
 
     @Override
+    public HttpClientContext setRequest(HttpClientRequest request) {
+        this.request = request;
+        return this;
+    }
+
+    @Override
     public HttpClientContext setResponse(HttpClientResponse response) {
         this.response = response;
         return this;
     }
+
+
 
 }

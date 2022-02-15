@@ -60,6 +60,15 @@ public abstract class HttpContext<REQ extends HttpRequest, RES extends HttpRespo
     abstract RES getResponse();
 
     /**
+     * Sets the given HTTP request for this context. Might be {@code null} when an
+     * exception occurred and there is no request.
+     *
+     * @param request HTTP response
+     * @return this
+     */
+    abstract HttpContext<REQ, RES> setRequest(@Nullable REQ request);
+
+    /**
      * Sets the given HTTP response for this context. Might be {@code null} when an
      * exception occurred and there is no response.
      *

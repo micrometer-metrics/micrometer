@@ -29,9 +29,16 @@ import io.micrometer.api.instrument.transport.http.HttpServerResponse;
  */
 public class HttpServerContext extends HttpContext<HttpServerRequest, HttpServerResponse> {
 
-    private final HttpServerRequest request;
+    private HttpServerRequest request;
 
     private HttpServerResponse response;
+
+    /**
+     * Creates a new {@code HttpServerContext}.
+     */
+    public HttpServerContext() {
+
+    }
 
     /**
      * Creates a new {@code HttpServerContext}.
@@ -39,11 +46,6 @@ public class HttpServerContext extends HttpContext<HttpServerRequest, HttpServer
      * @param request http server request
      */
     public HttpServerContext(HttpServerRequest request) {
-        this.request = request;
-    }
-
-    public HttpServerContext(HttpServerRequest request, HttpTagsProvider tagsProvider) {
-        super(tagsProvider);
         this.request = request;
     }
 
@@ -56,6 +58,12 @@ public class HttpServerContext extends HttpContext<HttpServerRequest, HttpServer
     @Override
     public HttpServerResponse getResponse() {
         return this.response;
+    }
+
+    @Override
+    public HttpServerContext setRequest(HttpServerRequest request) {
+        this.request = request;
+        return this;
     }
 
     @Override
