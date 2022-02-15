@@ -16,10 +16,9 @@
 package io.micrometer.api.instrument.transport.http.context;
 
 import io.micrometer.api.instrument.observation.Observation;
-import io.micrometer.api.instrument.transport.http.tags.HttpTagsProvider;
-import io.micrometer.api.lang.NonNull;
 import io.micrometer.api.instrument.transport.http.HttpServerRequest;
 import io.micrometer.api.instrument.transport.http.HttpServerResponse;
+import io.micrometer.api.lang.NonNull;
 
 /**
  * {@link Observation.Context Context} for an HTTP server request/response.
