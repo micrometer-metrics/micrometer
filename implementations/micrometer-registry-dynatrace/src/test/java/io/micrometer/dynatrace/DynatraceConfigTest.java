@@ -15,18 +15,34 @@
  */
 package io.micrometer.dynatrace;
 
+import com.dynatrace.file.util.FileBasedConfigurationTestHelper;
 import com.dynatrace.metric.util.DynatraceMetricApiConstants;
 import io.micrometer.api.instrument.config.validate.InvalidReason;
 import io.micrometer.api.instrument.config.validate.Validated;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
+import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.UUID;
 
+import static java.util.concurrent.TimeUnit.SECONDS;
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.awaitility.Awaitility.await;
 
 class DynatraceConfigTest {
+    private static final String nonExistentConfigFileName = UUID.randomUUID().toString();
+    
+    @BeforeEach
+    void setUp() {
+        // Make sure that all tests use the default configuration, even if there's an `endpoint.properties` file in place
+        FileBasedConfigurationTestHelper.forceOverwriteConfig(nonExistentConfigFileName);
+    }
+
     @Test
     void invalid() {
         DynatraceConfig config = new DynatraceConfig() {
@@ -260,5 +276,42 @@ class DynatraceConfigTest {
         };
 
         assertThat(config.apiVersion()).isEqualTo(DynatraceApiVersion.V1);
+    }
+
+    @Test
+    void testFileBasedConfig() throws IOException {
+        String uuid = UUID.randomUUID().toString();
+        final Path tempFile = Files.createTempFile(uuid, ".properties");
+
+        Files.write(tempFile,
+                ("DT_METRICS_INGEST_URL = https://your-dynatrace-ingest-url/api/v2/metrics/ingest\n" +
+                        "DT_METRICS_INGEST_API_TOKEN = YOUR.DYNATRACE.TOKEN").getBytes());
+
+        FileBasedConfigurationTestHelper.forceOverwriteConfig(tempFile.toString());
+        DynatraceConfig config = new DynatraceConfig() {
+            @Override
+            public String get(String key) {
+                return null;
+            }
+
+            @Override
+            public DynatraceApiVersion apiVersion() {
+                return DynatraceApiVersion.V2;
+            }
+        };
+
+        await().atMost(1, SECONDS).until(() -> config.apiToken().equals("YOUR.DYNATRACE.TOKEN"));
+        assertThat(config.apiToken()).isEqualTo("YOUR.DYNATRACE.TOKEN");
+        assertThat(config.uri()).isEqualTo("https://your-dynatrace-ingest-url/api/v2/metrics/ingest");
+
+        Files.write(tempFile,
+                ("DT_METRICS_INGEST_URL = https://a-different-url/api/v2/metrics/ingest\n" +
+                        "DT_METRICS_INGEST_API_TOKEN = A.DIFFERENT.TOKEN").getBytes());
+
+        await().atMost(10, SECONDS).until(() -> config.apiToken().equals("A.DIFFERENT.TOKEN"));
+        assertThat(config.apiToken()).isEqualTo("A.DIFFERENT.TOKEN");
+        assertThat(config.uri()).isEqualTo("https://a-different-url/api/v2/metrics/ingest");
+        
+        Files.deleteIfExists(tempFile);
     }
 }

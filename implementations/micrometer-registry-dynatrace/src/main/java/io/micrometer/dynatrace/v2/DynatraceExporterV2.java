@@ -55,16 +55,12 @@ public final class DynatraceExporterV2 extends AbstractDynatraceExporter {
     private final InternalLogger logger = InternalLoggerFactory.getInstance(DynatraceExporterV2.class);
     private static final Map<String, String> staticDimensions = Collections.singletonMap("dt.metrics.source", "micrometer");
 
-    private final String endpoint;
-    private final boolean ignoreToken;
     private final MetricBuilderFactory metricBuilderFactory;
 
     public DynatraceExporterV2(DynatraceConfig config, Clock clock, HttpSender httpClient) {
         super(config, clock, httpClient);
-        this.endpoint = config.uri();
-        showErrorIfEndpointIsInvalid(endpoint);
-        ignoreToken = shouldIgnoreToken(config);
-        logger.info("Exporting to endpoint {}", this.endpoint);
+
+        logger.info("Exporting to endpoint {}", config.uri());
 
         MetricBuilderFactory.MetricBuilderFactoryBuilder factoryBuilder = MetricBuilderFactory.builder()
                 .withPrefix(config.metricKeyPrefix())
@@ -77,12 +73,16 @@ public final class DynatraceExporterV2 extends AbstractDynatraceExporter {
         metricBuilderFactory = factoryBuilder.build();
     }
 
-    private void showErrorIfEndpointIsInvalid(String uri) {
+    private boolean isValidEndpoint(String uri) {
         try {
+            //noinspection ResultOfMethodCallIgnored
             URI.create(uri).toURL();
-        } catch (IllegalArgumentException | MalformedURLException ex) {
-            logger.error("Invalid URI provided, exporting will fail: {}", uri);
         }
+        catch (IllegalArgumentException | MalformedURLException ex) {
+            return false;
+        }
+
+        return true;
     }
 
     private boolean shouldIgnoreToken(DynatraceConfig config) {
@@ -174,6 +174,10 @@ public final class DynatraceExporterV2 extends AbstractDynatraceExporter {
 
     private Stream<String> toSummaryLine(Meter meter, HistogramSnapshot histogramSnapshot, TimeUnit timeUnit) {
         long count = histogramSnapshot.count();
+        if (count < 1) {
+            logger.debug("Summary with 0 count dropped: %s", meter.getId().getName());
+            return Stream.empty();
+        }
         double total = (timeUnit != null) ? histogramSnapshot.total(timeUnit) : histogramSnapshot.total();
         double max = (timeUnit != null) ? histogramSnapshot.max(timeUnit) : histogramSnapshot.max();
         double min = (count == 1) ? max : minFromHistogramSnapshot(histogramSnapshot, timeUnit);
@@ -218,9 +222,13 @@ public final class DynatraceExporterV2 extends AbstractDynatraceExporter {
     }
 
     Stream<String> toFunctionTimerLine(FunctionTimer meter) {
+        long count = (long) meter.count();
+        if (count < 1) {
+            logger.debug("Timer with 0 count dropped: %s", meter.getId().getName());
+            return Stream.empty();
+        }
         double total = meter.totalTime(getBaseTimeUnit());
         double average = meter.mean(getBaseTimeUnit());
-        long count = Double.valueOf(meter.count()).longValue();
 
         return createSummaryLine(meter, average, average, total, count);
     }
@@ -253,12 +261,19 @@ public final class DynatraceExporterV2 extends AbstractDynatraceExporter {
     }
 
     private void send(List<String> metricLines) {
+        String endpoint = config.uri();
+        if (!isValidEndpoint(endpoint)) {
+            logger.warn("Invalid endpoint, skipping export... ({})", endpoint);
+            return;
+        }
         try {
+            logger.debug("Sending {} lines to {}", metricLines.size(), endpoint);
+
             String body = String.join("\n", metricLines);
             logger.debug("Sending lines:\n{}", body);
 
             HttpSender.Request.Builder requestBuilder = httpClient.post(endpoint);
-            if (!ignoreToken) {
+            if (!shouldIgnoreToken(config)) {
                 requestBuilder.withHeader("Authorization", "Api-Token " + config.apiToken());
             }
 
