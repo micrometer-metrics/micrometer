@@ -15,8 +15,10 @@
  */
 package io.micrometer.api.instrument.observation;
 
+import java.util.Arrays;
+import java.util.List;
+
 import io.micrometer.api.instrument.observation.ObservationHandler.AllMatchingCompositeObservationHandler;
-import io.micrometer.api.instrument.simple.SimpleMeterRegistry;
 import org.junit.jupiter.api.Test;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -26,10 +28,6 @@ class AllMatchingCompositeObservationHandlerTests {
     MatchingHandler matchingHandler = new MatchingHandler();
 
     MatchingHandler matchingHandler2 = new MatchingHandler();
-
-    ObservationRegistry registry = new SimpleMeterRegistry();
-
-    Observation sample = Observation.start("hello", registry);
 
     @Test
     void should_run_on_start_for_all_matching_handlers() {
@@ -84,6 +82,20 @@ class AllMatchingCompositeObservationHandlerTests {
 
         assertThat(this.matchingHandler.scopeClosed).isTrue();
         assertThat(this.matchingHandler2.scopeClosed).isTrue();
+    }
+
+    @Test
+    void should_support_the_context_if_any_handler_supports_it() {
+        AllMatchingCompositeObservationHandler allMatchingHandler = new AllMatchingCompositeObservationHandler(
+                new NotMatchingHandler(), this.matchingHandler, new NotMatchingHandler(), this.matchingHandler2);
+        assertThat(allMatchingHandler.supportsContext(new Observation.Context())).isTrue();
+    }
+
+    @Test
+    void should_return_handlers() {
+        List<ObservationHandler> handlers = Arrays.asList(new NotMatchingHandler(), this.matchingHandler, new NotMatchingHandler(), this.matchingHandler2);
+        AllMatchingCompositeObservationHandler allMatchingHandler = new AllMatchingCompositeObservationHandler(handlers);
+        assertThat(allMatchingHandler.getHandlers()).isSameAs(handlers);
     }
 
     static class MatchingHandler implements ObservationHandler<Observation.Context> {

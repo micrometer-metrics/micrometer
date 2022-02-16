@@ -15,7 +15,6 @@
  */
 package io.micrometer.api.instrument.observation;
 
-import io.micrometer.api.instrument.MeterRegistry;
 import io.micrometer.api.instrument.simple.SimpleMeterRegistry;
 import org.junit.jupiter.api.Test;
 
@@ -23,10 +22,11 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.Mockito.mock;
 
 /**
- * Tests for {@link MeterRegistry}.
+ * Tests for {@link ObservationRegistry}.
  *
- * @author Jon Schneider
- * @author Johnny Lim
+ * @author Jonatan Ivanov
+ * @author Tommy Ludwig
+ * @author Marcin Grzejszczak
  */
 class ObservationRegistryTest {
     private final ObservationRegistry registry = new SimpleMeterRegistry();
@@ -72,5 +72,14 @@ class ObservationRegistryTest {
         assertThat(Observation.start("test.timer", new Observation.Context(), null)).isSameAs(NoopObservation.INSTANCE);
         assertThat(Observation.createNotStarted("test.timer", null)).isSameAs(NoopObservation.INSTANCE);
         assertThat(Observation.createNotStarted("test.timer", new Observation.Context(), null)).isSameAs(NoopObservation.INSTANCE);
+    }
+
+    @Test
+    void observationShouldNotBeNoOpWhenNonNullRegistry() {
+        ObservationRegistry registry = new SimpleMeterRegistry();
+        assertThat(Observation.start("test.timer", registry)).isInstanceOf(SimpleObservation.class);
+        assertThat(Observation.start("test.timer", new Observation.Context(), registry)).isInstanceOf(SimpleObservation.class);
+        assertThat(Observation.createNotStarted("test.timer", registry)).isInstanceOf(SimpleObservation.class);
+        assertThat(Observation.createNotStarted("test.timer", new Observation.Context(), registry)).isInstanceOf(SimpleObservation.class);
     }
 }

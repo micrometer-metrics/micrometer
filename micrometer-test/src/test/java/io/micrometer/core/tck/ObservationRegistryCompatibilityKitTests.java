@@ -23,11 +23,9 @@ import io.micrometer.api.instrument.simple.SimpleMeterRegistry;
 
 class ObservationRegistryCompatibilityKitTests extends ObservationRegistryCompatibilityKit {
 
-    ObservationRegistry registry = new SimpleMeterRegistry();
-
     @Override
     public ObservationRegistry registry() {
-        return this.registry;
+        return new SimpleMeterRegistry();
     }
 
     @Override

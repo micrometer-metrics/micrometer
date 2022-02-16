@@ -19,6 +19,7 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 /**
  * Tests for {@link Observation.Context}.
@@ -35,15 +36,18 @@ class ObservationContextTest {
 
     @Test
     void shouldBeEmptyByDefault() {
+        assertThat(context.containsKey(String.class)).isFalse();
         assertThat((String) context.get(String.class)).isNull();
     }
 
     @Test
     void getShouldReturnWhatWasPutPreviously() {
         assertThat(context.put(String.class, "42")).isSameAs(context);
+        assertThat(context.containsKey(String.class)).isTrue();
         assertThat((String) context.get(String.class)).isEqualTo("42");
 
         assertThat(context.put(Integer.class, 123)).isSameAs(context);
+        assertThat(context.containsKey(Integer.class)).isTrue();
         assertThat((Integer) context.get(Integer.class)).isEqualTo(123);
     }
 
@@ -54,6 +58,33 @@ class ObservationContextTest {
                 .put(Integer.class, 123)
                 .put(String.class, "24");
         assertThat((String) context.get(String.class)).isEqualTo("24");
+        assertThat((Integer) context.get(Integer.class)).isEqualTo(123);
+    }
+
+    @Test
+    void getOrDefaultShouldUseFallbackValue() {
+        context.put(String.class, "42");
+        assertThat(context.getOrDefault(String.class, "abc")).isEqualTo("42");
+        assertThat(context.getOrDefault(Integer.class, 123)).isEqualTo(123);
+    }
+
+    @Test
+    void getRequiredShouldFailIfThereIsNoValue() {
+        context.put(String.class, "42");
+        assertThat((String) context.getRequired(String.class)).isEqualTo("42");
+        assertThatThrownBy(() -> context.getRequired(Integer.class))
+                .isInstanceOf(IllegalArgumentException.class)
+                .hasMessage("Context does not have an entry for key [class java.lang.Integer]")
+                .hasNoCause();
+    }
+
+    @Test
+    void computeIfAbsentShouldUseFallbackValue() {
+        context.put(String.class, "42");
+        assertThat((String) context.computeIfAbsent(String.class, clazz -> "abc")).isEqualTo("42");
+        assertThat((String) context.get(String.class)).isEqualTo("42");
+
+        assertThat((Integer) context.computeIfAbsent(Integer.class, clazz -> 123)).isEqualTo(123);
         assertThat((Integer) context.get(Integer.class)).isEqualTo(123);
     }
 
@@ -73,19 +104,17 @@ class ObservationContextTest {
     }
 
     @Test
-    void getOrDefaultShouldUseFallbackValue() {
-        context.put(String.class, "42");
-        assertThat(context.getOrDefault(String.class, "abc")).isEqualTo("42");
-        assertThat(context.getOrDefault(Integer.class, 123)).isEqualTo(123);
+    void itemsShouldNotBePresentAfterClear() {
+        context
+                .put(String.class, "42")
+                .put(Integer.class, 123)
+                .clear();
+        assertThat((Integer) context.get(Integer.class)).isNull();
+        assertThat((String) context.get(String.class)).isNull();
     }
 
     @Test
-    void computeIfAbsentShouldUseFallbackValue() {
-        context.put(String.class, "42");
-        assertThat((String) context.computeIfAbsent(String.class, clazz -> "abc")).isEqualTo("42");
-        assertThat((String) context.get(String.class)).isEqualTo("42");
-
-        assertThat((Integer) context.computeIfAbsent(Integer.class, clazz -> 123)).isEqualTo(123);
-        assertThat((Integer) context.get(Integer.class)).isEqualTo(123);
+    void cleanEmptyContextShouldNotFail() {
+        context.clear();
     }
 }

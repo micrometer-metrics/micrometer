@@ -15,19 +15,16 @@
  */
 package io.micrometer.api.instrument.observation;
 
+import java.util.Arrays;
+import java.util.List;
+
 import io.micrometer.api.instrument.observation.ObservationHandler.FirstMatchingCompositeObservationHandler;
-import io.micrometer.api.instrument.simple.SimpleMeterRegistry;
 import org.junit.jupiter.api.Test;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
 class FirstMatchingCompositeObservationHandlerTests {
-
     MatchingHandler matchingHandler = new MatchingHandler();
-
-    ObservationRegistry registry = new SimpleMeterRegistry();
-
-    Observation sample = Observation.start("hello", registry);
 
     @Test
     void should_run_on_start_only_for_first_matching_handler() {
@@ -77,6 +74,20 @@ class FirstMatchingCompositeObservationHandlerTests {
         firstMatchingHandler.onScopeClosed(null);
 
         assertThat(this.matchingHandler.scopeClosed).isTrue();
+    }
+
+    @Test
+    void should_support_the_context_if_any_handler_supports_it() {
+        FirstMatchingCompositeObservationHandler firstMatchingHandler = new FirstMatchingCompositeObservationHandler(
+                new NotMatchingHandler(), this.matchingHandler, new NotMatchingHandler());
+        assertThat(firstMatchingHandler.supportsContext(new Observation.Context())).isTrue();
+    }
+
+    @Test
+    void should_return_handlers() {
+        List<ObservationHandler> handlers = Arrays.asList(new NotMatchingHandler(), this.matchingHandler, new NotMatchingHandler());
+        FirstMatchingCompositeObservationHandler firstMatchingHandler = new FirstMatchingCompositeObservationHandler(handlers);
+        assertThat(firstMatchingHandler.getHandlers()).isSameAs(handlers);
     }
 
     static class MatchingHandler implements ObservationHandler<Observation.Context> {
