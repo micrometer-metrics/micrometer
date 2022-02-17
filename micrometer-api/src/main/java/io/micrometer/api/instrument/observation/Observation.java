@@ -521,6 +521,23 @@ public interface Observation {
     }
 
     /**
+     * Interface to be implemented by any object that wishes to be able
+     * to update the default {@link TagsProvider}.
+     *
+     * @param <T> {@link TagsProvider} type
+     * @author Marcin Grzejszczak
+     * @since 2.0.0
+     */
+    interface TagsProviderAware<T extends TagsProvider<?>> {
+        /**
+         * Overrides the default tags provider.
+         *
+         * @param tagsProvider tags provider
+         */
+        void setTagsProvider(T tagsProvider);
+    }
+
+    /**
      * A provider of tags.
      *
      * @author Marcin Grzejszczak
