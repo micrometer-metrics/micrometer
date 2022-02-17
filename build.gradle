@@ -303,6 +303,9 @@ subprojects {
     repositories {
         mavenCentral()
         mavenLocal()
+        maven {
+            url 'https://repo.spring.io/snapshot/' // for context-propagation API
+        }
     }
 
     def check = tasks.findByName('check')
