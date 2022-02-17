@@ -7,6 +7,8 @@ dependencies {
         exclude group: 'org.hdrhistogram', module: 'HdrHistogram'
     }
 
+    optionalApi 'io.micrometer:context-propagation-api'
+
     // internal logging facade
     optionalApi 'org.slf4j:slf4j-api'
 

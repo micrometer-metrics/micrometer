@@ -44,6 +44,8 @@ def VERSIONS = [
         'javax.inject:javax.inject:1',
         'javax.servlet:javax.servlet-api:latest.release',
         'javax.xml.bind:jaxb-api:2.3.+',
+        // TODO: Consider where this should live
+        'io.micrometer:context-propagation-api:1.0.0-SNAPSHOT',
         'net.sf.ehcache:ehcache:latest.release',
         'org.apache.httpcomponents:httpasyncclient:latest.release',
         'org.apache.httpcomponents:httpclient:latest.release',
