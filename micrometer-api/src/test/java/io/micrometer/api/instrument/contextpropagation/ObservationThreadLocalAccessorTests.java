@@ -19,11 +19,9 @@ import io.micrometer.api.instrument.observation.Observation;
 import io.micrometer.api.instrument.observation.ObservationRegistry;
 import io.micrometer.api.instrument.simple.SimpleMeterRegistry;
 import io.micrometer.contextpropagation.ContextContainer;
-import org.assertj.core.api.BDDAssertions;
 import org.junit.jupiter.api.Test;
 
 import static org.assertj.core.api.BDDAssertions.then;
-import static org.junit.jupiter.api.Assertions.*;
 
 class ObservationThreadLocalAccessorTests {
 
