@@ -230,12 +230,14 @@ public abstract class ObservationRegistryCompatibilityKit {
 
             assertThat(context.getContextualName()).isEqualTo("test.observation.42");
             assertThat(context.getError()).containsSame(exception);
+
             assertThat(context.toString())
-                    .containsOnlyOnce("map={context.field=42}")
                     .containsOnlyOnce("name='test.observation'")
                     .containsOnlyOnce("contextualName='test.observation.42'")
-                    .containsOnlyOnce("lowCardinalityTags=[tag(global.context.class=TestContext),tag(lcTag1=1),tag(lcTag2=2),tag(local.context.class=TestContext)]")
-                    .containsOnlyOnce("highCardinalityTags=[tag(global.uuid=" + testContext.uuid + "),tag(hcTag1=3),tag(hcTag2=4),tag(local.uuid=" + testContext.uuid + ")]");
+                    .containsOnlyOnce("error='java.io.IOException: simulated'")
+                    .containsOnlyOnce("lowCardinalityTags=[lcTag1='1', lcTag2='2', global.context.class='TestContext', local.context.class='TestContext']")
+                    .containsOnlyOnce("highCardinalityTags=[hcTag1='3', hcTag2='4', global.uuid='" + testContext.uuid + "', local.uuid='" + testContext.uuid + "']")
+                    .containsOnlyOnce("map=[context.field='42']");
         });
     }
 

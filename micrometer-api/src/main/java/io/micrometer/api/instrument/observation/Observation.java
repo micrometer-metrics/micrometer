@@ -16,6 +16,7 @@
 package io.micrometer.api.instrument.observation;
 
 import java.util.Arrays;
+import java.util.Collection;
 import java.util.HashMap;
 import java.util.LinkedHashSet;
 import java.util.List;
@@ -24,6 +25,7 @@ import java.util.Optional;
 import java.util.Set;
 import java.util.function.Function;
 import java.util.function.Supplier;
+import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 import io.micrometer.api.instrument.Tag;
@@ -303,19 +305,6 @@ public interface Observation {
         private final Set<Tag> highCardinalityTags = new LinkedHashSet<>();
 
         /**
-         * Puts an element to the context.
-         *
-         * @param key key
-         * @param object value
-         * @param <T> value type
-         * @return this for chaining
-         */
-        public <T> Context put(Object key, T object) {
-            this.map.put(key, object);
-            return this;
-        }
-
-        /**
          * The observation name.
          *
          * @return name
@@ -377,12 +366,16 @@ public interface Observation {
         }
 
         /**
-         * Removes an entry from the context.
+         * Puts an element to the context.
          *
-         * @param key key by which to remove an entry
+         * @param key key
+         * @param object value
+         * @param <T> value type
+         * @return this for chaining
          */
-        public void remove(Object key) {
-            this.map.remove(key);
+        public <T> Context put(Object key, T object) {
+            this.map.put(key, object);
+            return this;
         }
 
         /**
@@ -395,6 +388,15 @@ public interface Observation {
         @Nullable
         public <T> T get(Object key) {
             return (T) this.map.get(key);
+        }
+
+        /**
+         * Removes an entry from the context.
+         *
+         * @param key key by which to remove an entry
+         */
+        public void remove(Object key) {
+            this.map.remove(key);
         }
 
         /**
@@ -510,13 +512,24 @@ public interface Observation {
 
         @Override
         public String toString() {
-            return "Context{" +
-                    "map=" + map +
-                    ", name='" + name + '\'' +
+            return "name='" + name + '\'' +
                     ", contextualName='" + contextualName + '\'' +
-                    ", lowCardinalityTags=" + getLowCardinalityTags() +
-                    ", highCardinalityTags=" + getHighCardinalityTags() +
-                    '}';
+                    ", error='" + error + '\'' +
+                    ", lowCardinalityTags=" + toString(lowCardinalityTags) +
+                    ", highCardinalityTags=" + toString(highCardinalityTags) +
+                    ", map=" + toString(map);
+        }
+
+        private String toString(Collection<Tag> tags) {
+            return tags.stream()
+                    .map(tag -> String.format("%s='%s'", tag.getKey(), tag.getValue()))
+                    .collect(Collectors.joining(", ", "[", "]"));
+        }
+
+        private String toString(Map<Object, Object> map) {
+            return map.entrySet().stream()
+                    .map(entry -> String.format("%s='%s'", entry.getKey(), entry.getValue()))
+                    .collect(Collectors.joining(", ", "[", "]"));
         }
     }
 
