@@ -20,8 +20,9 @@ import java.time.Instant;
 import java.util.UUID;
 
 import io.micrometer.api.instrument.observation.Observation;
-import io.micrometer.api.instrument.observation.ObservationHandler;
 import io.micrometer.api.instrument.Tags;
+import io.micrometer.api.instrument.observation.ObservationPredicate;
+import io.micrometer.api.instrument.observation.ObservationTextPublisher;
 import io.micrometer.api.instrument.simple.SimpleMeterRegistry;
 
 public class ObservationHandlerSample {
@@ -30,16 +31,9 @@ public class ObservationHandlerSample {
     public static void main(String[] args) throws InterruptedException {
         registry.withTimerObservationHandler()
                 .observationConfig()
-                    .observationHandler(new SampleHandler())
+                    .observationHandler(new ObservationTextPublisher(System.out::println))
                     .tagsProvider(new CustomTagsProvider())
-                    .tagsProvider(context -> false)
-                    .observationPredicate((s, context) -> {
-                        boolean observationEnabled = !"sample.ignored".equals(s);
-                        if (!observationEnabled) {
-                            System.out.println("Ignoring sample.ignored");
-                        }
-                        return observationEnabled;
-                    });
+                    .observationPredicate(new IgnoringObservationPredicate());
 
         Observation observation = Observation.createNotStarted("sample.operation", new CustomContext(), registry)
                 .contextualName("CALL sampleOperation")
@@ -58,56 +52,12 @@ public class ObservationHandlerSample {
         Observation.start("sample.unsupported", new UnsupportedContext(), registry).stop();
         Observation.start("sample.ignored", new CustomContext(), registry).stop();
 
-        System.out.println();
+        System.out.println("---");
         System.out.println(registry.getMetersAsString());
-    }
-
-    static class SampleHandler implements ObservationHandler<CustomContext> {
-        @Override
-        public void onStart(CustomContext context) {
-            if (context.getName().equals("sample.ignored")) {
-                throw new AssertionError("Boom!");
-            }
-            System.out.println("start: " + context);
-        }
-
-        @Override
-        public void onError(CustomContext context) {
-            System.out.println("error: " + context.getError() + " " + context);
-        }
-
-        @Override
-        public void onScopeOpened(CustomContext context) {
-            System.out.println("scope-opened: " + context);
-        }
-
-        @Override
-        public void onScopeClosed(CustomContext context) {
-            System.out.println("scope-closed: " + context);
-        }
-
-        @Override
-        public void onStop(CustomContext context) {
-            System.out.println("stop: " + context);
-        }
-
-        @Override
-        public boolean supportsContext(Observation.Context context) {
-            return context instanceof CustomContext;
-        }
     }
 
     static class CustomContext extends Observation.Context {
         private final UUID uuid = UUID.randomUUID();
-
-        @Override
-        public String toString() {
-            return "CustomContext{" +
-                    "uuid=" + uuid +
-                    " lowCardinalityTags=" + getLowCardinalityTags() +
-                    " highCardinalityTags=" + getHighCardinalityTags() +
-                    '}';
-        }
     }
 
     static class CustomTagsProvider implements Observation.TagsProvider<CustomContext> {
@@ -148,6 +98,18 @@ public class ObservationHandlerSample {
         @Override
         public String toString() {
             return "sorry";
+        }
+    }
+
+    static class IgnoringObservationPredicate implements ObservationPredicate {
+        @Override
+        public boolean test(String name, Observation.Context context) {
+            boolean observationIgnored = "sample.ignored".equals(name);
+            if (observationIgnored) {
+                System.out.println("Ignoring " + name);
+            }
+
+            return !observationIgnored;
         }
     }
 }
