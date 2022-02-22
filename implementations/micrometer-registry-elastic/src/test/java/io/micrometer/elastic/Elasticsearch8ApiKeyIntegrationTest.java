@@ -1,5 +1,5 @@
 /*
- * Copyright 2019 VMware, Inc.
+ * Copyright 2022 VMware, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,16 +16,15 @@
 package io.micrometer.elastic;
 
 /**
- * Integration tests on {@link ElasticMeterRegistry} for Elasticsearch 7.
+ * Integration tests with API key authentication for Elasticsearch 8.
  *
  * @author Johnny Lim
  */
-class ElasticsearchMeterRegistryElasticsearch7IntegrationTest
-        extends AbstractElasticsearchMeterRegistryIntegrationTest {
+class Elasticsearch8ApiKeyIntegrationTest extends AbstractElasticsearchApiKeyIntegrationTest {
 
     @Override
     protected String getVersion() {
-        return VERSION_7;
+        return VERSION_8;
     }
 
 }
