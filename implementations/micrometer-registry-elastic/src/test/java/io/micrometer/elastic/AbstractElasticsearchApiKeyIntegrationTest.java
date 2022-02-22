@@ -24,9 +24,12 @@ import java.time.Duration;
 import java.util.Base64;
 
 /**
- * Test Elasticsearch backend with API key authentication.
+ * Base class for testing Elasticsearch backend with API key authentication.
+ *
+ * @author Tommy Ludwig
+ * @author Johnny Lim
  */
-class ElasticsearchApiKeyIntegrationTest extends ElasticsearchMeterRegistryElasticsearch7IntegrationTest {
+abstract class AbstractElasticsearchApiKeyIntegrationTest extends AbstractElasticsearchMeterRegistryIntegrationTest {
 
     @Override
     protected ElasticConfig getConfig() {
