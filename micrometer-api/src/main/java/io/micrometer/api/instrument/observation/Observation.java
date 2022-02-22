@@ -394,9 +394,10 @@ public interface Observation {
          * Removes an entry from the context.
          *
          * @param key key by which to remove an entry
+         * @return the previous value associated with key, or null if there was no mapping for key.
          */
-        public void remove(Object key) {
-            this.map.remove(key);
+        public Object remove(Object key) {
+            return this.map.remove(key);
         }
 
         /**
