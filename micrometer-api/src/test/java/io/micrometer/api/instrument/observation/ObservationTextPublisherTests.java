@@ -77,6 +77,13 @@ class ObservationTextPublisherTests {
         assertThat(publisher.supportsContext(createTestContext())).isTrue();
     }
 
+    @Test
+    void shouldConvertContextUsingTheConverter() {
+        ObservationHandler<Observation.Context> publisher = new ObservationTextPublisher(consumer, context -> true, context -> "test");
+        publisher.onStart(createTestContext());
+        assertThat(consumer.toString()).isEqualTo("START - test");
+    }
+
     private Observation.Context createTestContext() {
         Observation.Context context = new Observation.Context()
                 .setName("testName")

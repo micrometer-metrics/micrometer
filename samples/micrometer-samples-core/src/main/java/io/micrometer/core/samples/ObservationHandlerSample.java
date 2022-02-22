@@ -22,7 +22,6 @@ import java.util.UUID;
 import io.micrometer.api.instrument.observation.Observation;
 import io.micrometer.api.instrument.Tags;
 import io.micrometer.api.instrument.observation.ObservationPredicate;
-import io.micrometer.api.instrument.observation.ObservationTextPublisher;
 import io.micrometer.api.instrument.simple.SimpleMeterRegistry;
 
 public class ObservationHandlerSample {
@@ -30,8 +29,8 @@ public class ObservationHandlerSample {
 
     public static void main(String[] args) throws InterruptedException {
         registry.withTimerObservationHandler()
+                .withLoggingObservationHandler()
                 .observationConfig()
-                    .observationHandler(new ObservationTextPublisher(System.out::println))
                     .tagsProvider(new CustomTagsProvider())
                     .observationPredicate(new IgnoringObservationPredicate());
 

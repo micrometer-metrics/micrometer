@@ -34,6 +34,7 @@ import io.micrometer.api.instrument.noop.NoopTimeGauge;
 import io.micrometer.api.instrument.noop.NoopTimer;
 import io.micrometer.api.instrument.observation.Observation;
 import io.micrometer.api.instrument.observation.ObservationRegistry;
+import io.micrometer.api.instrument.observation.ObservationTextPublisher;
 import io.micrometer.api.instrument.observation.TimerObservationHandler;
 import io.micrometer.api.instrument.search.MeterNotFoundException;
 import io.micrometer.api.instrument.search.RequiredSearch;
@@ -114,6 +115,11 @@ public abstract class MeterRegistry implements ObservationRegistry {
     //TODO Want this under observationConfig but not sure that's possible
     public MeterRegistry withTimerObservationHandler() {
         this.observationConfig.observationHandler(new TimerObservationHandler(this));
+        return this;
+    }
+
+    public MeterRegistry withLoggingObservationHandler() {
+        this.observationConfig.observationHandler(new ObservationTextPublisher());
         return this;
     }
 

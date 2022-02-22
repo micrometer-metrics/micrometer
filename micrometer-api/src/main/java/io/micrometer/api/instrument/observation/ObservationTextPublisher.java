@@ -16,7 +16,10 @@
 package io.micrometer.api.instrument.observation;
 
 import java.util.function.Consumer;
+import java.util.function.Function;
 import java.util.function.Predicate;
+
+import io.micrometer.api.internal.logging.InternalLoggerFactory;
 
 /**
  * An {@link ObservationHandler} that converts the context to text and Publishes it to the {@link Consumer} of your choice.
@@ -27,6 +30,14 @@ import java.util.function.Predicate;
 public class ObservationTextPublisher implements ObservationHandler<Observation.Context> {
     private final Consumer<String> consumer;
     private final Predicate<Observation.Context> supportsContextPredicate;
+    private final Function<Observation.Context, String> converter;
+
+    /**
+     * Creates a publisher that sends the context as text to the given {@link Consumer}.
+     */
+    public ObservationTextPublisher() {
+        this(InternalLoggerFactory.getInstance(ObservationTextPublisher.class)::info, context -> true, String::valueOf);
+    }
 
     /**
      * Creates a publisher that sends the context as text to the given {@link Consumer}.
@@ -34,7 +45,7 @@ public class ObservationTextPublisher implements ObservationHandler<Observation.
      * @param consumer Where to publish the context as text
      */
     public ObservationTextPublisher(Consumer<String> consumer) {
-        this(consumer, context -> true);
+        this(consumer, context -> true, String::valueOf);
     }
 
     /**
@@ -44,8 +55,20 @@ public class ObservationTextPublisher implements ObservationHandler<Observation.
      * @param supportsContextPredicate Whether the publisher should support the given context
      */
     public ObservationTextPublisher(Consumer<String> consumer, Predicate<Observation.Context> supportsContextPredicate) {
+        this(consumer, supportsContextPredicate, String::valueOf);
+    }
+
+    /**
+     * Creates a publisher that sends the context as text to the given {@link Consumer} if the {@link Predicate} returns true.
+     *
+     * @param consumer Where to publish the context as text
+     * @param supportsContextPredicate Whether the publisher should support the given context
+     * @param converter Converts the {@link Observation.Context} to a {@link String}
+     */
+    public ObservationTextPublisher(Consumer<String> consumer, Predicate<Observation.Context> supportsContextPredicate, Function<Observation.Context, String> converter) {
         this.consumer = consumer;
         this.supportsContextPredicate = supportsContextPredicate;
+        this.converter = converter;
     }
 
     @Override
@@ -79,6 +102,6 @@ public class ObservationTextPublisher implements ObservationHandler<Observation.
     }
 
     private void publish(String event, Observation.Context context) {
-        this.consumer.accept(String.format("%5s - %s", event, context));
+        this.consumer.accept(String.format("%5s - %s", event, converter.apply(context)));
     }
 }
