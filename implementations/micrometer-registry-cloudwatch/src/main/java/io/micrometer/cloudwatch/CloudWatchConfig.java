@@ -15,9 +15,15 @@
  */
 package io.micrometer.cloudwatch;
 
-import io.micrometer.api.instrument.config.InvalidConfigurationException;
-import io.micrometer.api.instrument.config.MissingRequiredConfigurationException;
+import io.micrometer.api.instrument.config.validate.InvalidReason;
+import io.micrometer.api.instrument.config.validate.Validated;
 import io.micrometer.api.instrument.step.StepRegistryConfig;
+
+import static io.micrometer.api.instrument.config.MeterRegistryConfigValidator.check;
+import static io.micrometer.api.instrument.config.MeterRegistryConfigValidator.checkAll;
+import static io.micrometer.api.instrument.config.MeterRegistryConfigValidator.checkRequired;
+import static io.micrometer.api.instrument.config.validate.PropertyValidator.getInteger;
+import static io.micrometer.api.instrument.config.validate.PropertyValidator.getString;
 
 /**
  * Configuration for CloudWatch exporting.
@@ -37,23 +43,23 @@ public interface CloudWatchConfig extends StepRegistryConfig {
     }
 
     default String namespace() {
-        String v = get(prefix() + ".namespace");
-        if (v == null)
-            throw new MissingRequiredConfigurationException("namespace must be set to report metrics to CloudWatch");
-        return v;
+        return getString(this, "namespace").required().get();
     }
 
     @Override
     default int batchSize() {
-        String v = get(prefix() + ".batchSize");
-        if (v == null) {
-            return MAX_BATCH_SIZE;
-        }
-        int vInt = Integer.parseInt(v);
-        if (vInt > MAX_BATCH_SIZE)
-            throw new InvalidConfigurationException("batchSize must be <= " + MAX_BATCH_SIZE);
+        return Math.min(getInteger(this, "batchSize").orElse(MAX_BATCH_SIZE), MAX_BATCH_SIZE);
+    }
 
-        return vInt;
+    @Override
+    default Validated<?> validate() {
+        return checkAll(this,
+                (CloudWatchConfig c) -> StepRegistryConfig.validate(c),
+                checkRequired("namespace", CloudWatchConfig::namespace),
+                check("batchSize", CloudWatchConfig::batchSize)
+                        .andThen(v -> v.invalidateWhen(b -> b > MAX_BATCH_SIZE, "cannot be greater than " + MAX_BATCH_SIZE,
+                                InvalidReason.MALFORMED))
+        );
     }
 
 }
