@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package io.micrometer.core.instrument.binder.cache;
+package io.micrometer.binder.cache;
 
 import io.micrometer.core.instrument.MeterRegistry;
 import io.micrometer.core.instrument.simple.SimpleMeterRegistry;
@@ -26,7 +26,6 @@ import static org.assertj.core.api.Assertions.assertThat;
 /**
  * @author Jon Schneider
  */
-@Deprecated
 public abstract class CacheMeterBinderCompatibilityKit<C> {
     private MeterRegistry registry = new SimpleMeterRegistry();
     private CacheMeterBinder<C> binder;
