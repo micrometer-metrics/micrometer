@@ -30,6 +30,7 @@ import io.micrometer.core.lang.Nullable;
  *
  * @implNote Note that {@link MethodHandle} is used, so the performance does not suffer.
  */
+@Deprecated
 class HazelcastIMapAdapter {
     private static final Class<?> CLASS_I_MAP = resolveOneOf("com.hazelcast.map.IMap", "com.hazelcast.core.IMap");
     private static final Class<?> CLASS_LOCAL_MAP = resolveOneOf("com.hazelcast.map.LocalMapStats", "com.hazelcast.monitor.LocalMapStats");

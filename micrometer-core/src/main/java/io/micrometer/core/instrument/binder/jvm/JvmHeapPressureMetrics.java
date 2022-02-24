@@ -47,6 +47,7 @@ import static java.util.Collections.emptyList;
  * @author Jon Schneider
  * @since 1.4.0
  */
+@Deprecated
 public class JvmHeapPressureMetrics implements MeterBinder, AutoCloseable {
     private final Iterable<Tag> tags;
 

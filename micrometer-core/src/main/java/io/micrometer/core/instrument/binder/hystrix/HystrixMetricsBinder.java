@@ -28,6 +28,7 @@ import io.micrometer.core.lang.NonNullFields;
 
 @NonNullApi
 @NonNullFields
+@Deprecated
 public class HystrixMetricsBinder implements MeterBinder {
 
     @Override

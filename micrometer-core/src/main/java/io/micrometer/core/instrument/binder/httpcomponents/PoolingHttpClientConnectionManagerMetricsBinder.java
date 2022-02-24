@@ -33,6 +33,7 @@ import org.apache.http.pool.ConnPoolControl;
  * @author Benjamin Hubert (benjamin.hubert@willhaben.at)
  * @since 1.3.0
  */
+@Deprecated
 public class PoolingHttpClientConnectionManagerMetricsBinder implements MeterBinder {
 
     private final ConnPoolControl<HttpRoute> connPoolControl;

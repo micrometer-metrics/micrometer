@@ -42,6 +42,7 @@ import java.util.concurrent.atomic.AtomicInteger;
 @NonNullApi
 @NonNullFields
 @Incubating(since = "1.2.0")
+@Deprecated
 public class MongoMetricsConnectionPoolListener implements ConnectionPoolListener {
 
     private static final String METRIC_PREFIX = "mongodb.driver.pool.";

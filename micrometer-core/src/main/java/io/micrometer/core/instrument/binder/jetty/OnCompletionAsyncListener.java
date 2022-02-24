@@ -23,6 +23,7 @@ import javax.servlet.AsyncListener;
  * uses only object references to work around
  * <a href="https://issues.redhat.com/browse/WFLY-13345">WFLY-13345</a>
  */
+@Deprecated
 class OnCompletionAsyncListener implements AsyncListener {
 
     private final Object handler;

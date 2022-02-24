@@ -25,6 +25,7 @@ import io.micrometer.core.instrument.binder.MeterBinder;
  * @author Erin Schnabel
  * @since 1.7.0
  */
+@Deprecated
 public class JvmInfoMetrics implements MeterBinder {
 
     @Override

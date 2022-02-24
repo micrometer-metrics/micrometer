@@ -25,6 +25,7 @@ import io.micrometer.core.instrument.Tag;
  * @since 1.7.0
  */
 @FunctionalInterface
+@Deprecated
 public interface MongoConnectionPoolTagsProvider {
 
     /**

@@ -37,6 +37,7 @@ import static java.util.Collections.emptyList;
  */
 @NonNullApi
 @NonNullFields
+@Deprecated
 public class DiskSpaceMetrics implements MeterBinder {
     private final Iterable<Tag> tags;
     private final File path;

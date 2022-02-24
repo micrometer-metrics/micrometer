@@ -35,6 +35,7 @@ import io.micrometer.core.lang.NonNullFields;
  */
 @NonNullApi
 @NonNullFields
+@Deprecated
 public class MicrometerMetricsPublisherThreadPool implements HystrixMetricsPublisherThreadPool {
   private static final String NAME_HYSTRIX_THREADPOOL = "hystrix.threadpool";
 

@@ -30,6 +30,7 @@ import static java.util.Objects.requireNonNull;
  * @author Michael Weirauch
  * @since 1.8.0
  */
+@Deprecated
 public class MetricsApplicationEventListener implements ApplicationEventListener {
 
     private final MeterRegistry meterRegistry;

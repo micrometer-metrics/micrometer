@@ -51,6 +51,7 @@ import org.eclipse.jetty.util.component.AbstractLifeCycle;
  * @author Jon Schneider
  * @since 1.4.0
  */
+@Deprecated
 public class JettyConnectionMetrics extends AbstractLifeCycle implements Connection.Listener {
     private final MeterRegistry registry;
     private final Iterable<Tag> tags;

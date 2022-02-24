@@ -27,6 +27,7 @@ import org.glassfish.jersey.server.monitoring.RequestEvent;
  * @author Johnny Lim
  * @since 1.8.0
  */
+@Deprecated
 public final class DefaultJerseyTagsProvider implements JerseyTagsProvider {
 
     @Override

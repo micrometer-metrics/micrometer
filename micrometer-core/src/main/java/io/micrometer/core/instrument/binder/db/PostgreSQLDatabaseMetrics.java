@@ -41,6 +41,7 @@ import java.util.function.DoubleSupplier;
  */
 @NonNullApi
 @NonNullFields
+@Deprecated
 public class PostgreSQLDatabaseMetrics implements MeterBinder {
 
     private static final String SELECT = "SELECT ";

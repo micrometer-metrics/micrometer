@@ -25,6 +25,7 @@ import io.micrometer.core.instrument.Tags;
  * @author Gustavo Monarin
  * @since 1.7.0
  */
+@Deprecated
 public class DefaultMongoConnectionPoolTagsProvider implements MongoConnectionPoolTagsProvider {
 
     @Override

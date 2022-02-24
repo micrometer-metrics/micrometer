@@ -33,6 +33,7 @@ import java.util.regex.Pattern;
  * @author Jon Schneider
  * @since 1.5.0
  */
+@Deprecated
 public final class JettyClientTags {
 
     private static final Tag URI_NOT_FOUND = Tag.of("uri", "NOT_FOUND");

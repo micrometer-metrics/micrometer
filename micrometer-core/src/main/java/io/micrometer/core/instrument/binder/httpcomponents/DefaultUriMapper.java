@@ -26,6 +26,7 @@ import java.util.function.Function;
  * @author Benjamin Hubert
  * @since 1.4.0
  */
+@Deprecated
 public class DefaultUriMapper implements Function<HttpRequest, String> {
 
     /**

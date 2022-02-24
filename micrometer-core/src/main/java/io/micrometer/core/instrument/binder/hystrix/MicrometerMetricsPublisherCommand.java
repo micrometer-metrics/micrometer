@@ -34,6 +34,7 @@ import java.util.concurrent.TimeUnit;
  */
 @NonNullApi
 @NonNullFields
+@Deprecated
 public class MicrometerMetricsPublisherCommand implements HystrixMetricsPublisherCommand {
     private static final InternalLogger LOG = InternalLoggerFactory.getInstance(MicrometerMetricsPublisherCommand.class);
 

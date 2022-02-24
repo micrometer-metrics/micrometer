@@ -36,6 +36,7 @@ import static java.util.Objects.requireNonNull;
  * @author Jon Schneider
  * @since 1.8.0
  */
+@Deprecated
 public class MetricsRequestEventListener implements RequestEventListener {
 
     private final Map<ContainerRequest, Timer.Sample> shortTaskSample = Collections

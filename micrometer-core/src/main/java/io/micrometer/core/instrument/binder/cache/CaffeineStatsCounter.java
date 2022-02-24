@@ -59,6 +59,7 @@ import java.util.concurrent.TimeUnit;
  */
 @NonNullApi
 @NonNullFields
+@Deprecated
 public final class CaffeineStatsCounter implements StatsCounter {
 
     private final MeterRegistry registry;

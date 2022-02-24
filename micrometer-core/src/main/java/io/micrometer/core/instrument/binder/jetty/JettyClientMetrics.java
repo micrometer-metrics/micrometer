@@ -36,6 +36,7 @@ import java.util.Optional;
  * @since 1.5.0
  */
 @Incubating(since = "1.5.0")
+@Deprecated
 public class JettyClientMetrics implements Request.Listener {
     private final MeterRegistry registry;
     private final JettyClientTagsProvider tagsProvider;

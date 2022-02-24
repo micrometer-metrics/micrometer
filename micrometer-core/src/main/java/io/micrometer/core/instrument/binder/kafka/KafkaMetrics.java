@@ -59,6 +59,7 @@ import static java.util.Collections.emptyList;
 @Incubating(since = "1.4.0")
 @NonNullApi
 @NonNullFields
+@Deprecated
 class KafkaMetrics implements MeterBinder, AutoCloseable {
     private static final InternalLogger log = InternalLoggerFactory.getInstance(KafkaMetrics.class);
     private static final WarnThenDebugLogger warnThenDebugLogger = new WarnThenDebugLogger(KafkaMetrics.class);

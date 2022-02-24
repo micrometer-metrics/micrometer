@@ -27,6 +27,7 @@ import org.jooq.impl.DefaultExecuteListener;
 
 import java.util.function.Supplier;
 
+@Deprecated
 class JooqExecuteListener extends DefaultExecuteListener {
     private final MeterRegistry registry;
     private final Iterable<Tag> tags;

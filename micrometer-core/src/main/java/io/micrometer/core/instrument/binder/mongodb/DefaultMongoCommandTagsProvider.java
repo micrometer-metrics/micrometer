@@ -39,6 +39,7 @@ import org.bson.BsonValue;
  * @author Chris Bono
  * @since 1.7.0
  */
+@Deprecated
 public class DefaultMongoCommandTagsProvider implements MongoCommandTagsProvider {
 
     // See https://docs.mongodb.com/manual/reference/command for the command reference

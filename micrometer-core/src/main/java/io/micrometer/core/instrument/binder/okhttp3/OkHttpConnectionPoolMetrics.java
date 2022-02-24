@@ -40,6 +40,7 @@ import java.util.concurrent.CountDownLatch;
  * @author Ben Hubert
  * @since 1.6.0
  */
+@Deprecated
 public class OkHttpConnectionPoolMetrics implements MeterBinder {
 
     private static final String DEFAULT_NAME_PREFIX = "okhttp.pool";

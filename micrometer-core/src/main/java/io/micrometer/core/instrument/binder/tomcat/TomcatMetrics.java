@@ -44,6 +44,7 @@ import java.util.function.BiConsumer;
  */
 @NonNullApi
 @NonNullFields
+@Deprecated
 public class TomcatMetrics implements MeterBinder, AutoCloseable {
 
     private static final String JMX_DOMAIN_EMBEDDED = "Tomcat";

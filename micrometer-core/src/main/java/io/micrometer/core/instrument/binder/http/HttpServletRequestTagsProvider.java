@@ -29,6 +29,7 @@ import javax.servlet.http.HttpServletResponse;
  */
 @Incubating(since = "1.4.0")
 @FunctionalInterface
+@Deprecated
 public interface HttpServletRequestTagsProvider {
     /**
      * Provides tags to be associated with metrics for the given {@code request} and

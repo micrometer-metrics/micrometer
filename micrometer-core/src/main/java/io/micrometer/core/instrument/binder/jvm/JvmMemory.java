@@ -24,6 +24,7 @@ import java.lang.management.MemoryUsage;
 import java.util.function.ToLongFunction;
 import java.util.stream.Stream;
 
+@Deprecated
 class JvmMemory {
 
     private JvmMemory() {

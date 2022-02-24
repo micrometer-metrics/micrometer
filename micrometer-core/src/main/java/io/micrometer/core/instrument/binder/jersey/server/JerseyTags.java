@@ -35,6 +35,7 @@ import java.util.regex.Pattern;
  * @author Johnny Lim
  * @since 1.8.0
  */
+@Deprecated
 public final class JerseyTags {
 
     private static final Tag URI_NOT_FOUND = Tag.of("uri", "NOT_FOUND");

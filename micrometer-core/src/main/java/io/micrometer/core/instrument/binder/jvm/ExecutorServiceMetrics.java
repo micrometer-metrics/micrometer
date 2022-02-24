@@ -48,6 +48,7 @@ import static java.util.Arrays.asList;
  */
 @NonNullApi
 @NonNullFields
+@Deprecated
 public class ExecutorServiceMetrics implements MeterBinder {
     private static boolean allowIllegalReflectiveAccess = true;
 

@@ -38,6 +38,7 @@ import static java.util.Collections.emptyList;
  */
 @NonNullApi
 @NonNullFields
+@Deprecated
 public class JvmThreadMetrics implements MeterBinder {
     private final Iterable<Tag> tags;
 

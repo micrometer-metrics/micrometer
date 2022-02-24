@@ -24,6 +24,7 @@ import org.glassfish.jersey.server.monitoring.RequestEvent;
  * @author Michael Weirauch
  * @since 1.8.0
  */
+@Deprecated
 public interface JerseyTagsProvider {
 
     /**

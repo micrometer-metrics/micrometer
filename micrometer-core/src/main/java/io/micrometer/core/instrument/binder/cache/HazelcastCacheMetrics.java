@@ -33,6 +33,7 @@ import java.util.function.ToLongFunction;
  */
 @NonNullApi
 @NonNullFields
+@Deprecated
 public class HazelcastCacheMetrics extends CacheMeterBinder<Object> {
     private final HazelcastIMapAdapter cache;
 

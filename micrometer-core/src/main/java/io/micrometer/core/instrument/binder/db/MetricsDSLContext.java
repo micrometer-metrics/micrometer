@@ -67,6 +67,7 @@ import java.util.stream.Stream;
  * @since 1.4.0
  */
 @Incubating(since = "1.4.0")
+@Deprecated
 public class MetricsDSLContext implements DSLContext {
     private final DSLContext context;
     private final MeterRegistry registry;

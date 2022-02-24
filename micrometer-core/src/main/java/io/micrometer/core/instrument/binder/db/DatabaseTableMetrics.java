@@ -36,6 +36,7 @@ import java.util.function.ToDoubleFunction;
  */
 @NonNullApi
 @NonNullFields
+@Deprecated
 public class DatabaseTableMetrics implements MeterBinder {
     private final DataSource dataSource;
     private final String query;

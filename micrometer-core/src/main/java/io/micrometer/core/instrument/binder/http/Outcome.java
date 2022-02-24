@@ -23,6 +23,7 @@ import io.micrometer.core.instrument.Tag;
  * @author Andy Wilkinson
  * @since 1.4.0
  */
+@Deprecated
 public enum Outcome {
 
     /**

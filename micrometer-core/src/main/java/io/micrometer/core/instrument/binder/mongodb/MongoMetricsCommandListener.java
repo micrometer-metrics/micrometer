@@ -35,6 +35,7 @@ import java.util.concurrent.TimeUnit;
 @NonNullApi
 @NonNullFields
 @Incubating(since = "1.2.0")
+@Deprecated
 public class MongoMetricsCommandListener implements CommandListener {
 
     private final MeterRegistry registry;

@@ -47,6 +47,7 @@ import static java.util.Collections.emptyList;
  */
 @NonNullApi
 @NonNullFields
+@Deprecated
 public class FileDescriptorMetrics implements MeterBinder {
 
     /**

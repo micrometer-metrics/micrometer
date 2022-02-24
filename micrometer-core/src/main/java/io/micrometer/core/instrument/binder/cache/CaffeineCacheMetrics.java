@@ -41,6 +41,7 @@ import java.util.function.ToLongFunction;
  */
 @NonNullApi
 @NonNullFields
+@Deprecated
 public class CaffeineCacheMetrics<K, V, C extends Cache<K, V>> extends CacheMeterBinder<C> {
 
     /**

@@ -32,6 +32,7 @@ import java.util.function.ToLongFunction;
  */
 @NonNullApi
 @NonNullFields
+@Deprecated
 public class GuavaCacheMetrics<K, V, C extends Cache<K, V>> extends CacheMeterBinder<C> {
     /**
      * Record metrics on a Guava cache. You must call {@link CacheBuilder#recordStats()} prior to building the cache

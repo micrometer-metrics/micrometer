@@ -41,6 +41,7 @@ import static java.util.Collections.emptyList;
  */
 @NonNullApi
 @NonNullFields
+@Deprecated
 public class LogbackMetrics implements MeterBinder, AutoCloseable {
     static ThreadLocal<Boolean> ignoreMetrics = new ThreadLocal<>();
 
@@ -129,6 +130,7 @@ public class LogbackMetrics implements MeterBinder, AutoCloseable {
 
 @NonNullApi
 @NonNullFields
+@Deprecated
 class MetricsTurboFilter extends TurboFilter {
     private final Counter errorCounter;
     private final Counter warnCounter;

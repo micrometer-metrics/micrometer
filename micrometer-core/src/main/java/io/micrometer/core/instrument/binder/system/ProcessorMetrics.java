@@ -49,6 +49,7 @@ import static java.util.Objects.requireNonNull;
  */
 @NonNullApi
 @NonNullFields
+@Deprecated
 public class ProcessorMetrics implements MeterBinder {
 
     /** List of public, exported interface class names from supported JVM implementations. */

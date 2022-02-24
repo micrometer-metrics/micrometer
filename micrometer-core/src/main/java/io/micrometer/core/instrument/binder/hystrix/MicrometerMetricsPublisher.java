@@ -29,6 +29,7 @@ import io.micrometer.core.lang.NonNullFields;
  */
 @NonNullApi
 @NonNullFields
+@Deprecated
 public class MicrometerMetricsPublisher extends HystrixMetricsPublisher {
     private final MeterRegistry registry;
     private HystrixMetricsPublisher metricsPublisher;

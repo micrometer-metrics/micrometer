@@ -51,6 +51,7 @@ import java.util.function.Function;
  * @since 1.2.0
  */
 @Incubating(since = "1.2.0")
+@Deprecated
 public class MicrometerHttpRequestExecutor extends HttpRequestExecutor {
 
     /**

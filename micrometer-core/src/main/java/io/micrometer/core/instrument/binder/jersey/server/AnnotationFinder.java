@@ -18,6 +18,7 @@ package io.micrometer.core.instrument.binder.jersey.server;
 import java.lang.annotation.Annotation;
 import java.lang.reflect.AnnotatedElement;
 
+@Deprecated
 public interface AnnotationFinder {
     AnnotationFinder DEFAULT = new AnnotationFinder() {
     };

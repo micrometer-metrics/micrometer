@@ -39,6 +39,7 @@ import org.apache.kafka.common.Metric;
 @Incubating(since = "1.4.0")
 @NonNullApi
 @NonNullFields
+@Deprecated
 public class KafkaClientMetrics extends KafkaMetrics {
 
     /**

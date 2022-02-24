@@ -28,6 +28,7 @@ import org.eclipse.jetty.client.api.Result;
  * @since 1.5.0
  */
 @Incubating(since = "1.5.0")
+@Deprecated
 public interface JettyClientTagsProvider {
 
     /**

@@ -35,6 +35,7 @@ import java.lang.ref.WeakReference;
  */
 @NonNullApi
 @NonNullFields
+@Deprecated
 public abstract class CacheMeterBinder<C> implements MeterBinder {
     private final WeakReference<C> cacheRef;
     private final Iterable<Tag> tags;

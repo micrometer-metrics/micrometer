@@ -47,6 +47,7 @@ import static java.util.Collections.emptyList;
  */
 @NonNullApi
 @NonNullFields
+@Deprecated
 public class Log4j2Metrics implements MeterBinder, AutoCloseable {
 
     private static final String METER_NAME = "log4j2.events";

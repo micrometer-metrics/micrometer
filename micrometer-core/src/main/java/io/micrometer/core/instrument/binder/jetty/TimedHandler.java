@@ -47,6 +47,7 @@ import java.util.concurrent.atomic.AtomicInteger;
  */
 @NonNullApi
 @NonNullFields
+@Deprecated
 public class TimedHandler extends HandlerWrapper implements Graceful {
     private static final String SAMPLE_REQUEST_TIMER_ATTRIBUTE = "__micrometer_timer_sample";
     private static final String SAMPLE_REQUEST_LONG_TASK_TIMER_ATTRIBUTE = "__micrometer_ltt_sample";

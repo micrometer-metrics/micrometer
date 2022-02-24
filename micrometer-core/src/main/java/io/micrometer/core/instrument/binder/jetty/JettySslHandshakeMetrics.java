@@ -45,6 +45,7 @@ import javax.net.ssl.SSLSession;
  * @author Johnny Lim
  * @since 1.5.0
  */
+@Deprecated
 public class JettySslHandshakeMetrics implements SslHandshakeListener {
     private static final String METER_NAME = "jetty.ssl.handshakes";
     private static final String DESCRIPTION = "SSL/TLS handshakes";

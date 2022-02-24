@@ -37,6 +37,7 @@ import org.apache.kafka.streams.KafkaStreams;
 @Incubating(since = "1.4.0")
 @NonNullApi
 @NonNullFields
+@Deprecated
 public class KafkaStreamsMetrics extends KafkaMetrics {
 
     /**

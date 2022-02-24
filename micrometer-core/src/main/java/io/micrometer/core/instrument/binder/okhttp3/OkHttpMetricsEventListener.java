@@ -53,6 +53,7 @@ import static java.util.stream.StreamSupport.stream;
  */
 @NonNullApi
 @NonNullFields
+@Deprecated
 public class OkHttpMetricsEventListener extends EventListener {
 
     /**

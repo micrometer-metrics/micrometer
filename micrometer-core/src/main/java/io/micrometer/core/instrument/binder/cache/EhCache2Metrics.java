@@ -33,6 +33,7 @@ import net.sf.ehcache.statistics.StatisticsGateway;
  */
 @NonNullApi
 @NonNullFields
+@Deprecated
 public class EhCache2Metrics extends CacheMeterBinder<Ehcache> {
 
     public EhCache2Metrics(Ehcache cache, Iterable<Tag> tags) {

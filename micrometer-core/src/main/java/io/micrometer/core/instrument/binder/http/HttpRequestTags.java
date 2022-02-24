@@ -29,6 +29,7 @@ import javax.servlet.http.HttpServletResponse;
  * @since 1.4.0
  */
 @Incubating(since = "1.4.0")
+@Deprecated
 public class HttpRequestTags {
     private static final Tag EXCEPTION_NONE = Tag.of("exception", "None");
 

@@ -43,6 +43,7 @@ import static java.util.Collections.emptyList;
  * @author Chao Chang
  * @since 1.6.0
  */
+@Deprecated
 public class CommonsObjectPool2Metrics implements MeterBinder, AutoCloseable {
     private static final InternalLogger log = InternalLoggerFactory.getInstance(CommonsObjectPool2Metrics.class);
     private static final String JMX_DOMAIN = "org.apache.commons.pool2";

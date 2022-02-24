@@ -43,6 +43,7 @@ import static java.util.Collections.emptyList;
  */
 @NonNullApi
 @NonNullFields
+@Deprecated
 public class JvmMemoryMetrics implements MeterBinder {
     private final Iterable<Tag> tags;
 

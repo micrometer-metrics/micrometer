@@ -40,6 +40,7 @@ import java.util.List;
  */
 @NonNullApi
 @NonNullFields
+@Deprecated
 public class JCacheMetrics<K, V, C extends Cache<K, V>> extends CacheMeterBinder<C> {
     // VisibleForTesting
     @Nullable

@@ -41,6 +41,7 @@ import org.eclipse.jetty.util.thread.ThreadPool.SizedThreadPool;
  * @since 1.1.0
  * @see InstrumentedQueuedThreadPool
  */
+@Deprecated
 public class JettyServerThreadPoolMetrics implements MeterBinder {
 
     private final ThreadPool threadPool;
