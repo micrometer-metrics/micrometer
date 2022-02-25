@@ -29,6 +29,7 @@ import java.util.function.ToLongFunction;
 /**
  * Collect metrics on Hazelcast caches, including detailed metrics on storage space, near cache usage, and timings.
  *
+ * @deprecated Scheduled for removal in 2.0.0, please use {@code io.micrometer.binder.cache.HazelcastCacheMetrics}
  * @author Jon Schneider
  */
 @NonNullApi

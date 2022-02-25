@@ -32,6 +32,7 @@ import static java.util.Objects.requireNonNull;
 /**
  * {@link RequestEventListener} recording timings for Jersey server requests.
  *
+ * @deprecated Scheduled for removal in 2.0.0, please use {@code io.micrometer.binder.jersey.server.MetricsRequestEventListener}
  * @author Michael Weirauch
  * @author Jon Schneider
  * @since 1.8.0

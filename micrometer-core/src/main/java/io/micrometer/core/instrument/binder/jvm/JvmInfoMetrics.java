@@ -22,6 +22,7 @@ import io.micrometer.core.instrument.binder.MeterBinder;
 /**
  * {@link MeterBinder} for JVM information.
  *
+ * @deprecated Scheduled for removal in 2.0.0, please use {@code io.micrometer.binder.jvm.JvmInfoMetrics}
  * @author Erin Schnabel
  * @since 1.7.0
  */

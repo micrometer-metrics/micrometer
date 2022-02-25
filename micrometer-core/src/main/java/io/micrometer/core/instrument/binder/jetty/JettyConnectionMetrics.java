@@ -48,6 +48,7 @@ import org.eclipse.jetty.util.component.AbstractLifeCycle;
  *
  * Alternatively, configure on all connectors with {@link JettyConnectionMetrics#addToAllConnectors(Server, MeterRegistry, Iterable)}.
  *
+ * @deprecated Scheduled for removal in 2.0.0, please use {@code io.micrometer.binder.jetty.JettyConnectionMetrics}
  * @author Jon Schneider
  * @since 1.4.0
  */

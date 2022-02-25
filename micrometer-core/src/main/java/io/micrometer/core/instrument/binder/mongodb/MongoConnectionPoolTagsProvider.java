@@ -21,6 +21,7 @@ import io.micrometer.core.instrument.Tag;
 /**
  * Provides {@link Tag Tags} for Mongo connection pool metrics.
  *
+ * @deprecated Scheduled for removal in 2.0.0, please use {@code io.micrometer.binder.mongodb.MongoConnectionPoolTagsProvider}
  * @author Gustavo Monarin
  * @since 1.7.0
  */

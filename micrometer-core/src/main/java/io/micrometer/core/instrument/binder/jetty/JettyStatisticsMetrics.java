@@ -27,7 +27,7 @@ import java.util.function.ToDoubleFunction;
 import java.util.function.ToLongFunction;
 
 /**
- * @deprecated Since 1.4.0. Use {@link TimedHandler} instead.
+ * @deprecated Since 1.4.0. Use {@code io.micrometer.binder.jetty.TimedHandler} instead.
  */
 @Deprecated
 @NonNullApi

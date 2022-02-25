@@ -31,6 +31,7 @@ import org.apache.kafka.common.Metric;
  * <p>
  * Meter names have the following convention: {@code kafka.(metric_group).(metric_name)}
  *
+ * @deprecated Scheduled for removal in 2.0.0, please use {@code io.micrometer.binder.kafka.KafkaClientMetrics}
  * @author Jorge Quilcate
  * @see <a href="https://docs.confluent.io/current/kafka/monitoring.html">Kakfa monitoring
  * documentation</a>

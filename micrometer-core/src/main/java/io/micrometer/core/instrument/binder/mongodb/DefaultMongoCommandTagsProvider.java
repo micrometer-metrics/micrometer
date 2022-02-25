@@ -36,6 +36,7 @@ import org.bson.BsonValue;
 /**
  * Default implementation for {@link MongoCommandTagsProvider}.
  *
+ * @deprecated Scheduled for removal in 2.0.0, please use {@code io.micrometer.binder.mongodb.DefaultMongoCommandTagsProvider}
  * @author Chris Bono
  * @since 1.7.0
  */

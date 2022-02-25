@@ -33,6 +33,7 @@ import static java.util.Collections.emptyList;
 /**
  * {@link MeterBinder} for JVM threads.
  *
+ * @deprecated Scheduled for removal in 2.0.0, please use {@code io.micrometer.binder.jvm.JvmThreadMetrics}
  * @author Jon Schneider
  * @author Johnny Lim
  */

@@ -32,6 +32,7 @@ import java.sql.SQLException;
 import java.util.function.ToDoubleFunction;
 
 /**
+ * @deprecated Scheduled for removal in 2.0.0, please use {@code io.micrometer.binder.db.DatabaseTableMetrics}
  * @author Jon Schneider
  */
 @NonNullApi

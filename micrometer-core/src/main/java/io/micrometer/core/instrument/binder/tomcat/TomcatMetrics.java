@@ -38,6 +38,7 @@ import java.util.function.BiConsumer;
  * <p>Note: the {@link #close()} method should be called when the application shuts down
  * to clean up listeners this binder registers.
  *
+ * @deprecated Scheduled for removal in 2.0.0, please use {@code io.micrometer.binder.tomcat.TomcatMetrics}
  * @author Clint Checketts
  * @author Jon Schneider
  * @author Johnny Lim

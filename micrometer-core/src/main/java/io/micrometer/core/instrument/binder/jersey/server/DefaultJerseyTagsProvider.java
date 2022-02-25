@@ -22,7 +22,8 @@ import org.glassfish.jersey.server.monitoring.RequestEvent;
 
 /**
  * Default implementation for {@link JerseyTagsProvider}.
- * 
+ *
+ * @deprecated Scheduled for removal in 2.0.0, please use {@code io.micrometer.binder.jersey.server.DefaultJerseyTagsProvider}
  * @author Michael Weirauch
  * @author Johnny Lim
  * @since 1.8.0

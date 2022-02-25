@@ -29,6 +29,7 @@ import io.micrometer.core.lang.Nullable;
  * same time. Dynamically checks which Hazelcast version is on the classpath and resolves the right classes.
  *
  * @implNote Note that {@link MethodHandle} is used, so the performance does not suffer.
+ * @deprecated Scheduled for removal in 2.0.0, please use {@code io.micrometer.binder.cache.HazelcastIMapAdapter}
  */
 @Deprecated
 class HazelcastIMapAdapter {

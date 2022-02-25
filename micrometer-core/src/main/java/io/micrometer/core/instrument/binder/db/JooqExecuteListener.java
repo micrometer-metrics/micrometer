@@ -27,6 +27,9 @@ import org.jooq.impl.DefaultExecuteListener;
 
 import java.util.function.Supplier;
 
+/**
+ * @deprecated Scheduled for removal in 2.0.0, please use {@code io.micrometer.binder.db.JooqExecuteListener}
+ */
 @Deprecated
 class JooqExecuteListener extends DefaultExecuteListener {
     private final MeterRegistry registry;

@@ -25,6 +25,7 @@ import javax.servlet.http.HttpServletResponse;
 /**
  * Tags for HTTP requests.
  *
+ * @deprecated Scheduled for removal in 2.0.0, please use {@code io.micrometer.binder.http.HttpRequestTags}
  * @author Jon Schneider
  * @since 1.4.0
  */

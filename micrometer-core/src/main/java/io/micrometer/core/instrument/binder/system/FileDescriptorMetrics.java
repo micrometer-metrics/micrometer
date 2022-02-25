@@ -42,6 +42,7 @@ import static java.util.Collections.emptyList;
  * <li>J9</li>
  * </ul>
  *
+ * @deprecated Scheduled for removal in 2.0.0, please use {@code io.micrometer.binder.system.FileDescriptorMetrics}
  * @author Michael Weirauch
  * @author Tommy Ludwig
  */

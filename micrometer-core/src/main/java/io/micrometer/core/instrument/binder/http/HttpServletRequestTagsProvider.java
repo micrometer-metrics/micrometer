@@ -24,6 +24,7 @@ import javax.servlet.http.HttpServletResponse;
 /**
  * Provides {@link Tag Tags} for HTTP Servlet request handling.
  *
+ * @deprecated Scheduled for removal in 2.0.0, please use {@code io.micrometer.binder.http.HttpServletRequestTagsProvider}
  * @author Jon Schneider
  * @since 1.4.0
  */

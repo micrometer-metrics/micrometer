@@ -25,6 +25,7 @@ import io.micrometer.core.lang.NonNullApi;
 import io.micrometer.core.lang.NonNullFields;
 
 /**
+ * @deprecated Scheduled for removal in 2.0.0, please use {@code io.micrometer.binder.hystrix.MicrometerMetricsPublisher}
  * @author Clint Checketts
  */
 @NonNullApi

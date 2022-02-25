@@ -42,6 +42,7 @@ import java.util.concurrent.atomic.AtomicInteger;
 /**
  * Adapted from Jetty's <a href="https://github.com/eclipse/jetty.project/blob/jetty-9.4.x/jetty-server/src/main/java/org/eclipse/jetty/server/handler/StatisticsHandler.java">StatisticsHandler</a>.
  *
+ * @deprecated Scheduled for removal in 2.0.0, please use {@code io.micrometer.binder.jetty.TimedHandler}
  * @author Jon Schneider
  * @since 1.4.0
  */

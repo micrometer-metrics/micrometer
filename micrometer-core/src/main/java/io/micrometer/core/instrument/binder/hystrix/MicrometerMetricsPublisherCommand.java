@@ -30,6 +30,7 @@ import java.util.Map;
 import java.util.concurrent.TimeUnit;
 
 /**
+ * @deprecated Scheduled for removal in 2.0.0, please use {@code io.micrometer.binder.hystrix.MicrometerMetricsPublisherCommand}
  * @author Clint Checketts
  */
 @NonNullApi
