@@ -200,6 +200,34 @@ public interface Observation {
      */
     Scope openScope();
 
+    default void observe(Runnable runnable) {
+        this.start();
+        try (Scope scope = openScope()) {
+            runnable.run();
+        }
+        catch (Exception exception) {
+            this.error(exception);
+            throw exception;
+        }
+        finally {
+            this.stop();
+        }
+    }
+
+    default <T> T observe(Supplier<T> supplier) {
+        this.start();
+        try (Scope scope = openScope()) {
+            return supplier.get();
+        }
+        catch (Exception exception) {
+            this.error(exception);
+            throw exception;
+        }
+        finally {
+            this.stop();
+        }
+    }
+
     /**
      * Wraps the given action in scope.
      *

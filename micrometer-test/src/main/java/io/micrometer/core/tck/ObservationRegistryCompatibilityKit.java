@@ -35,6 +35,7 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.isA;
 import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoMoreInteractions;
 import static org.mockito.Mockito.when;
@@ -88,6 +89,98 @@ public abstract class ObservationRegistryCompatibilityKit {
         }
         verify(handler).onScopeClosed(isA(Observation.Context.class));
         observation.stop();
+    }
+
+    @Test
+    void runnableShouldBeObserved() {
+        ObservationHandler<Observation.Context> handler = mock(ObservationHandler.class);
+        when(handler.supportsContext(isA(Observation.Context.class))).thenReturn(true);
+        registry.observationConfig().observationHandler(handler);
+        Observation observation = Observation.createNotStarted("myObservation", registry);
+
+        observation.observe((Runnable) () -> assertThat(registry.getCurrentObservation()).isSameAs(observation));
+        assertThat(registry.getCurrentObservation()).isNull();
+
+        verify(handler).supportsContext(isA(Observation.Context.class));
+        verify(handler).onStart(isA(Observation.Context.class));
+        verify(handler).onScopeOpened(isA(Observation.Context.class));
+        verify(handler).onScopeClosed(isA(Observation.Context.class));
+        verify(handler, times(0)).onError(isA(Observation.Context.class));
+        verify(handler).onStop(isA(Observation.Context.class));
+    }
+
+    @Test
+    void runnableThrowingErrorShouldBeObserved() {
+        ObservationHandler<Observation.Context> handler = mock(ObservationHandler.class);
+        when(handler.supportsContext(isA(Observation.Context.class))).thenReturn(true);
+        registry.observationConfig().observationHandler(handler);
+        Observation observation = Observation.createNotStarted("myObservation", registry);
+
+        assertThatThrownBy(() ->
+            observation.observe((Runnable) () -> {
+                assertThat(registry.getCurrentObservation()).isSameAs(observation);
+                throw new RuntimeException("simulated");
+            })
+        ).isInstanceOf(RuntimeException.class)
+                .hasMessage("simulated")
+                .hasNoCause();
+
+        assertThat(registry.getCurrentObservation()).isNull();
+
+        verify(handler).supportsContext(isA(Observation.Context.class));
+        verify(handler).onStart(isA(Observation.Context.class));
+        verify(handler).onScopeOpened(isA(Observation.Context.class));
+        verify(handler).onScopeClosed(isA(Observation.Context.class));
+        verify(handler).onError(isA(Observation.Context.class));
+        verify(handler).onStop(isA(Observation.Context.class));
+    }
+
+    @Test
+    void supplierShouldBeObserved() {
+        ObservationHandler<Observation.Context> handler = mock(ObservationHandler.class);
+        when(handler.supportsContext(isA(Observation.Context.class))).thenReturn(true);
+        registry.observationConfig().observationHandler(handler);
+        Observation observation = Observation.createNotStarted("myObservation", registry);
+
+        String result = observation.observe((Supplier<String>) () -> {
+            assertThat(registry.getCurrentObservation()).isSameAs(observation);
+            return "test";
+        });
+        assertThat(result).isEqualTo("test");
+        assertThat(registry.getCurrentObservation()).isNull();
+
+        verify(handler).supportsContext(isA(Observation.Context.class));
+        verify(handler).onStart(isA(Observation.Context.class));
+        verify(handler).onScopeOpened(isA(Observation.Context.class));
+        verify(handler).onScopeClosed(isA(Observation.Context.class));
+        verify(handler, times(0)).onError(isA(Observation.Context.class));
+        verify(handler).onStop(isA(Observation.Context.class));
+    }
+
+    @Test
+    void supplierThrowingErrorShouldBeObserved() {
+        ObservationHandler<Observation.Context> handler = mock(ObservationHandler.class);
+        when(handler.supportsContext(isA(Observation.Context.class))).thenReturn(true);
+        registry.observationConfig().observationHandler(handler);
+        Observation observation = Observation.createNotStarted("myObservation", registry);
+
+        assertThatThrownBy(() ->
+                observation.observe((Supplier<String>) () -> {
+                    assertThat(registry.getCurrentObservation()).isSameAs(observation);
+                    throw new RuntimeException("simulated");
+                })
+        ).isInstanceOf(RuntimeException.class)
+                .hasMessage("simulated")
+                .hasNoCause();
+
+        assertThat(registry.getCurrentObservation()).isNull();
+
+        verify(handler).supportsContext(isA(Observation.Context.class));
+        verify(handler).onStart(isA(Observation.Context.class));
+        verify(handler).onScopeOpened(isA(Observation.Context.class));
+        verify(handler).onScopeClosed(isA(Observation.Context.class));
+        verify(handler).onError(isA(Observation.Context.class));
+        verify(handler).onStop(isA(Observation.Context.class));
     }
 
     @Test
