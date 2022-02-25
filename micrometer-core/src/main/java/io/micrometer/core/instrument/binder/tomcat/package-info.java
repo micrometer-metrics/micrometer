@@ -15,7 +15,3 @@
  */
 @Deprecated
 package io.micrometer.core.instrument.binder.tomcat;
-
-/**
- * Provides a general-purpose mechanism for injecting a tags provider into various HTTP frameworks.
- */

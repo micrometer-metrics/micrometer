@@ -14,7 +14,3 @@
  * limitations under the License.
  */
 package io.micrometer.binder.http;
-
-/**
- * Provides a general-purpose mechanism for injecting a tags provider into various HTTP frameworks.
- */

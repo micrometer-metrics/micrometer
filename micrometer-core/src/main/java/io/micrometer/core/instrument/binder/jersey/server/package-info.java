@@ -15,7 +15,3 @@
  */
 @Deprecated
 package io.micrometer.core.instrument.binder.jersey.server;
-
-/**
- * Provides a general-purpose mechanism for injecting a tags provider into various HTTP frameworks.
- */
