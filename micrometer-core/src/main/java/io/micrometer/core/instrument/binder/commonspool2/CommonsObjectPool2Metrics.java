@@ -40,9 +40,11 @@ import static java.util.Collections.emptyList;
  * Apache Commons Pool 2.x metrics collected from metrics exposed via the MBeanServer.
  * Metrics are exposed for each object pool.
  *
+ * @deprecated Scheduled for removal in 2.0.0, please use {@code io.micrometer.binder.commonspool2.CommonsObjectPool2Metrics}
  * @author Chao Chang
  * @since 1.6.0
  */
+@Deprecated
 public class CommonsObjectPool2Metrics implements MeterBinder, AutoCloseable {
     private static final InternalLogger log = InternalLoggerFactory.getInstance(CommonsObjectPool2Metrics.class);
     private static final String JMX_DOMAIN = "org.apache.commons.pool2";

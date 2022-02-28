@@ -25,10 +25,12 @@ import javax.servlet.http.HttpServletResponse;
 /**
  * Default {@link HttpServletRequestTagsProvider}.
  *
+ * @deprecated Scheduled for removal in 2.0.0, please use {@code io.micrometer.binder.http.DefaultHttpServletRequestTagsProvider}
  * @author Jon Schneider
  * @since 1.4.0
  */
 @Incubating(since = "1.4.0")
+@Deprecated
 public class DefaultHttpServletRequestTagsProvider implements HttpServletRequestTagsProvider {
     @Override
     public Iterable<Tag> getTags(HttpServletRequest request, HttpServletResponse response) {

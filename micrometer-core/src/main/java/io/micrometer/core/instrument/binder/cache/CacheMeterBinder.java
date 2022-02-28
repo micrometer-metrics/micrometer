@@ -31,10 +31,12 @@ import java.lang.ref.WeakReference;
  * Having this common base set of metrics ensures that you can reason about basic cache performance
  * in a dimensional slice that spans different cache implementations in your application.
  *
+ * @deprecated Scheduled for removal in 2.0.0, please use {@code io.micrometer.binder.cache.CacheMeterBinder}
  * @author Jon Schneider
  */
 @NonNullApi
 @NonNullFields
+@Deprecated
 public abstract class CacheMeterBinder<C> implements MeterBinder {
     private final WeakReference<C> cacheRef;
     private final Iterable<Tag> tags;

@@ -51,6 +51,7 @@ import static java.util.Collections.emptyList;
 /**
  * Kafka metrics binder. This should be closed on application shutdown to clean up resources.
  *
+ * @deprecated Scheduled for removal in 2.0.0, please use {@code io.micrometer.binder.kafka.KafkaMetrics}
  * @author Jorge Quilcate
  * @see <a href="https://docs.confluent.io/current/kafka/monitoring.html">Kakfa monitoring
  * documentation</a>
@@ -59,6 +60,7 @@ import static java.util.Collections.emptyList;
 @Incubating(since = "1.4.0")
 @NonNullApi
 @NonNullFields
+@Deprecated
 class KafkaMetrics implements MeterBinder, AutoCloseable {
     private static final InternalLogger log = InternalLoggerFactory.getInstance(KafkaMetrics.class);
     private static final WarnThenDebugLogger warnThenDebugLogger = new WarnThenDebugLogger(KafkaMetrics.class);

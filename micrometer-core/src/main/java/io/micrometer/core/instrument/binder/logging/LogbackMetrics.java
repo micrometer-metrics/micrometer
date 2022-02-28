@@ -37,10 +37,12 @@ import java.util.Map;
 import static java.util.Collections.emptyList;
 
 /**
+ * @deprecated Scheduled for removal in 2.0.0, please use {@code io.micrometer.binder.logging.LogbackMetrics}
  * @author Jon Schneider
  */
 @NonNullApi
 @NonNullFields
+@Deprecated
 public class LogbackMetrics implements MeterBinder, AutoCloseable {
     static ThreadLocal<Boolean> ignoreMetrics = new ThreadLocal<>();
 
@@ -129,6 +131,7 @@ public class LogbackMetrics implements MeterBinder, AutoCloseable {
 
 @NonNullApi
 @NonNullFields
+@Deprecated
 class MetricsTurboFilter extends TurboFilter {
     private final Counter errorCounter;
     private final Counter warnCounter;

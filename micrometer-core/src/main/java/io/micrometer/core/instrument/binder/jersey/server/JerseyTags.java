@@ -31,10 +31,12 @@ import java.util.regex.Pattern;
  * Factory methods for {@link Tag Tags} associated with a request-response exchange that
  * is handled by Jersey server.
  *
+ * @deprecated Scheduled for removal in 2.0.0, please use {@code io.micrometer.binder.jersey.server.JerseyTags}
  * @author Michael Weirauch
  * @author Johnny Lim
  * @since 1.8.0
  */
+@Deprecated
 public final class JerseyTags {
 
     private static final Tag URI_NOT_FOUND = Tag.of("uri", "NOT_FOUND");

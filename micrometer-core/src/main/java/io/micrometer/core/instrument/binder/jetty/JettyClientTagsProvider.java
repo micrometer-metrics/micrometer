@@ -24,10 +24,12 @@ import org.eclipse.jetty.client.api.Result;
  * Provides {@link Tag Tags} for Jetty {@link org.eclipse.jetty.client.HttpClient} request metrics.
  * Incubating in case there emerges a better way to handle path variable detection.
  *
+ * @deprecated Scheduled for removal in 2.0.0, please use {@code io.micrometer.binder.jetty.JettyClientTagsProvider}
  * @author Jon Schneider
  * @since 1.5.0
  */
 @Incubating(since = "1.5.0")
+@Deprecated
 public interface JettyClientTagsProvider {
 
     /**

@@ -13,8 +13,5 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+@Deprecated
 package io.micrometer.core.instrument.binder.http;
-
-/**
- * Provides a general-purpose mechanism for injecting a tags provider into various HTTP frameworks.
- */

@@ -16,7 +16,7 @@
 package io.micrometer.core.samples;
 
 import io.micrometer.core.instrument.MeterRegistry;
-import io.micrometer.core.instrument.binder.jvm.ExecutorServiceMetrics;
+import io.micrometer.binder.jvm.ExecutorServiceMetrics;
 import io.micrometer.core.samples.utils.SampleConfig;
 import reactor.core.publisher.Mono;
 

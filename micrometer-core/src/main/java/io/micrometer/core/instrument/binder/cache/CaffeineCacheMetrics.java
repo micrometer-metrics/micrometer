@@ -36,11 +36,13 @@ import java.util.function.ToLongFunction;
  * CaffeineCacheMetrics.monitor(registry, cache, "mycache", "region", "test");
  * }</pre>
  *
+ * @deprecated Scheduled for removal in 2.0.0, please use {@code io.micrometer.binder.cache.CaffeineCacheMetrics}
  * @author Clint Checketts
  * @see CaffeineStatsCounter
  */
 @NonNullApi
 @NonNullFields
+@Deprecated
 public class CaffeineCacheMetrics<K, V, C extends Cache<K, V>> extends CacheMeterBinder<C> {
 
     /**

@@ -29,10 +29,12 @@ import net.sf.ehcache.statistics.StatisticsGateway;
 /**
  * Collect metrics on EhCache caches, including detailed metrics on transactions and storage space.
  *
+ * @deprecated Scheduled for removal in 2.0.0, please use {@code io.micrometer.binder.cache.EhCache2Metrics}
  * @author Jon Schneider
  */
 @NonNullApi
 @NonNullFields
+@Deprecated
 public class EhCache2Metrics extends CacheMeterBinder<Ehcache> {
 
     public EhCache2Metrics(Ehcache cache, Iterable<Tag> tags) {

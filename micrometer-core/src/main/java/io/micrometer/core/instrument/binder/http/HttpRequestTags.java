@@ -25,10 +25,12 @@ import javax.servlet.http.HttpServletResponse;
 /**
  * Tags for HTTP requests.
  *
+ * @deprecated Scheduled for removal in 2.0.0, please use {@code io.micrometer.binder.http.HttpRequestTags}
  * @author Jon Schneider
  * @since 1.4.0
  */
 @Incubating(since = "1.4.0")
+@Deprecated
 public class HttpRequestTags {
     private static final Tag EXCEPTION_NONE = Tag.of("exception", "None");
 

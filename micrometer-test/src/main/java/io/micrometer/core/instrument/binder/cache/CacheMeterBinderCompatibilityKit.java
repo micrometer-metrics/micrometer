@@ -26,6 +26,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 /**
  * @author Jon Schneider
  */
+@Deprecated
 public abstract class CacheMeterBinderCompatibilityKit<C> {
     private MeterRegistry registry = new SimpleMeterRegistry();
     private CacheMeterBinder<C> binder;

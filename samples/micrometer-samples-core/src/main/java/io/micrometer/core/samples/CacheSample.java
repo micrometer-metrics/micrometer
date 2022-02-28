@@ -18,7 +18,7 @@ package io.micrometer.core.samples;
 import com.google.common.cache.Cache;
 import com.google.common.cache.CacheBuilder;
 import io.micrometer.core.instrument.MeterRegistry;
-import io.micrometer.core.instrument.binder.cache.GuavaCacheMetrics;
+import io.micrometer.binder.cache.GuavaCacheMetrics;
 import io.micrometer.core.samples.utils.SampleConfig;
 import io.netty.buffer.ByteBuf;
 import io.netty.handler.codec.DelimiterBasedFrameDecoder;

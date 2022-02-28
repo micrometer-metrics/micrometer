@@ -30,9 +30,11 @@ import java.util.regex.Pattern;
  * Factory methods for {@link Tag Tags} associated with a request-response exchange that
  * is handled by Jetty {@link org.eclipse.jetty.client.HttpClient}.
  *
+ * @deprecated Scheduled for removal in 2.0.0, please use {@code io.micrometer.binder.jetty.JettyClientTags}
  * @author Jon Schneider
  * @since 1.5.0
  */
+@Deprecated
 public final class JettyClientTags {
 
     private static final Tag URI_NOT_FOUND = Tag.of("uri", "NOT_FOUND");

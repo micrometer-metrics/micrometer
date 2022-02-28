@@ -51,6 +51,7 @@ import java.util.concurrent.TimeUnit;
  *     .build();
  * }</pre>
  *
+ * @deprecated Scheduled for removal in 2.0.0, please use {@code io.micrometer.binder.cache.CaffeineStatsCounter}
  * @author Ben Manes
  * @author John Karp
  * @author Johnny Lim
@@ -59,6 +60,7 @@ import java.util.concurrent.TimeUnit;
  */
 @NonNullApi
 @NonNullFields
+@Deprecated
 public final class CaffeineStatsCounter implements StatsCounter {
 
     private final MeterRegistry registry;
