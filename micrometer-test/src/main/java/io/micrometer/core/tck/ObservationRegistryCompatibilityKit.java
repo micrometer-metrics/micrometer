@@ -18,6 +18,7 @@ package io.micrometer.core.tck;
 import java.io.IOException;
 import java.time.Duration;
 import java.util.UUID;
+import java.util.concurrent.Callable;
 import java.util.function.Consumer;
 import java.util.function.Supplier;
 
@@ -136,6 +137,50 @@ public abstract class ObservationRegistryCompatibilityKit {
     }
 
     @Test
+    void checkedRunnableShouldBeObserved() throws Exception {
+        ObservationHandler<Observation.Context> handler = mock(ObservationHandler.class);
+        when(handler.supportsContext(isA(Observation.Context.class))).thenReturn(true);
+        registry.observationConfig().observationHandler(handler);
+        Observation observation = Observation.createNotStarted("myObservation", registry);
+
+        observation.observeChecked((Observation.CheckedRunnable) () -> assertThat(registry.getCurrentObservation()).isSameAs(observation));
+        assertThat(registry.getCurrentObservation()).isNull();
+
+        verify(handler).supportsContext(isA(Observation.Context.class));
+        verify(handler).onStart(isA(Observation.Context.class));
+        verify(handler).onScopeOpened(isA(Observation.Context.class));
+        verify(handler).onScopeClosed(isA(Observation.Context.class));
+        verify(handler, times(0)).onError(isA(Observation.Context.class));
+        verify(handler).onStop(isA(Observation.Context.class));
+    }
+
+    @Test
+    void checkedRunnableThrowingErrorShouldBeObserved() {
+        ObservationHandler<Observation.Context> handler = mock(ObservationHandler.class);
+        when(handler.supportsContext(isA(Observation.Context.class))).thenReturn(true);
+        registry.observationConfig().observationHandler(handler);
+        Observation observation = Observation.createNotStarted("myObservation", registry);
+
+        assertThatThrownBy(() ->
+                observation.observeChecked((Observation.CheckedRunnable) () -> {
+                    assertThat(registry.getCurrentObservation()).isSameAs(observation);
+                    throw new IOException("simulated");
+                })
+        ).isInstanceOf(IOException.class)
+                .hasMessage("simulated")
+                .hasNoCause();
+
+        assertThat(registry.getCurrentObservation()).isNull();
+
+        verify(handler).supportsContext(isA(Observation.Context.class));
+        verify(handler).onStart(isA(Observation.Context.class));
+        verify(handler).onScopeOpened(isA(Observation.Context.class));
+        verify(handler).onScopeClosed(isA(Observation.Context.class));
+        verify(handler).onError(isA(Observation.Context.class));
+        verify(handler).onStop(isA(Observation.Context.class));
+    }
+
+    @Test
     void supplierShouldBeObserved() {
         ObservationHandler<Observation.Context> handler = mock(ObservationHandler.class);
         when(handler.supportsContext(isA(Observation.Context.class))).thenReturn(true);
@@ -170,6 +215,54 @@ public abstract class ObservationRegistryCompatibilityKit {
                     throw new RuntimeException("simulated");
                 })
         ).isInstanceOf(RuntimeException.class)
+                .hasMessage("simulated")
+                .hasNoCause();
+
+        assertThat(registry.getCurrentObservation()).isNull();
+
+        verify(handler).supportsContext(isA(Observation.Context.class));
+        verify(handler).onStart(isA(Observation.Context.class));
+        verify(handler).onScopeOpened(isA(Observation.Context.class));
+        verify(handler).onScopeClosed(isA(Observation.Context.class));
+        verify(handler).onError(isA(Observation.Context.class));
+        verify(handler).onStop(isA(Observation.Context.class));
+    }
+
+    @Test
+    void callableShouldBeObserved() throws Exception {
+        ObservationHandler<Observation.Context> handler = mock(ObservationHandler.class);
+        when(handler.supportsContext(isA(Observation.Context.class))).thenReturn(true);
+        registry.observationConfig().observationHandler(handler);
+        Observation observation = Observation.createNotStarted("myObservation", registry);
+
+        String result = observation.observeChecked((Callable<String>) () -> {
+            assertThat(registry.getCurrentObservation()).isSameAs(observation);
+            return "test";
+        });
+        assertThat(result).isEqualTo("test");
+        assertThat(registry.getCurrentObservation()).isNull();
+
+        verify(handler).supportsContext(isA(Observation.Context.class));
+        verify(handler).onStart(isA(Observation.Context.class));
+        verify(handler).onScopeOpened(isA(Observation.Context.class));
+        verify(handler).onScopeClosed(isA(Observation.Context.class));
+        verify(handler, times(0)).onError(isA(Observation.Context.class));
+        verify(handler).onStop(isA(Observation.Context.class));
+    }
+
+    @Test
+    void callableThrowingErrorShouldBeObserved() {
+        ObservationHandler<Observation.Context> handler = mock(ObservationHandler.class);
+        when(handler.supportsContext(isA(Observation.Context.class))).thenReturn(true);
+        registry.observationConfig().observationHandler(handler);
+        Observation observation = Observation.createNotStarted("myObservation", registry);
+
+        assertThatThrownBy(() ->
+                observation.observeChecked((Callable<String>) () -> {
+                    assertThat(registry.getCurrentObservation()).isSameAs(observation);
+                    throw new IOException("simulated");
+                })
+        ).isInstanceOf(IOException.class)
                 .hasMessage("simulated")
                 .hasNoCause();
 
