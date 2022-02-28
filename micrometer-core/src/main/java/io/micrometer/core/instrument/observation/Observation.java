@@ -23,6 +23,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
+import java.util.concurrent.Callable;
 import java.util.function.Function;
 import java.util.function.Supplier;
 import java.util.stream.Collectors;
@@ -227,6 +228,32 @@ public interface Observation {
     }
 
     /**
+     * Observes the passed {@link CheckedRunnable}, this means the followings:
+     *   - Starts the {@code Observation}
+     *   - Opens a {@code Scope}
+     *   - Calls {@link CheckedRunnable#run()}
+     *   - Closes the {@code Scope}
+     *   - Signals the error to the {@code Observation} if any
+     *   - Stops the {@code Observation}
+     *
+     * @param checkedRunnable the {@link CheckedRunnable} to run
+     */
+    @SuppressWarnings("unused")
+    default void observeChecked(CheckedRunnable checkedRunnable) throws Exception {
+        this.start();
+        try (Scope scope = openScope()) {
+            checkedRunnable.run();
+        }
+        catch (Exception exception) {
+            this.error(exception);
+            throw exception;
+        }
+        finally {
+            this.stop();
+        }
+    }
+
+    /**
      * Observes the passed {@link Supplier}, this means the followings:
      *   - Starts the {@code Observation}
      *   - Opens a {@code Scope}
@@ -244,6 +271,34 @@ public interface Observation {
         this.start();
         try (Scope scope = openScope()) {
             return supplier.get();
+        }
+        catch (Exception exception) {
+            this.error(exception);
+            throw exception;
+        }
+        finally {
+            this.stop();
+        }
+    }
+
+    /**
+     * Observes the passed {@link Callable}, this means the followings:
+     *   - Starts the {@code Observation}
+     *   - Opens a {@code Scope}
+     *   - Calls {@link Callable#call()}
+     *   - Closes the {@code Scope}
+     *   - Signals the error to the {@code Observation} if any
+     *   - Stops the {@code Observation}
+     *
+     * @param callable the {@link Callable} to call
+     * @param <T> the type parameter of the {@link Callable}
+     * @return the result from {@link Callable#call()}
+     */
+    @SuppressWarnings("unused")
+    default <T> T observeChecked(Callable<T> callable) throws Exception {
+        this.start();
+        try (Scope scope = openScope()) {
+            return callable.call();
         }
         catch (Exception exception) {
             this.error(exception);
@@ -703,5 +758,13 @@ public interface Observation {
                 return this.tagsProviders;
             }
         }
+    }
+
+    /**
+     * A functional interface like {@link Runnable} but it can throw exceptions.
+     */
+    @FunctionalInterface
+    interface CheckedRunnable {
+        void run() throws Exception;
     }
 }
