@@ -103,14 +103,6 @@ dependencies {
     testImplementation 'org.postgresql:postgresql'
 
     testImplementation 'org.testcontainers:mongodb'
-
-    // Cache metrics implementations
-    testImplementation 'org.jsr107.ri:cache-ri-impl'
-    testImplementation 'com.google.guava:guava'
-    testImplementation 'com.github.ben-manes.caffeine:caffeine'
-    testImplementation 'net.sf.ehcache:ehcache'
-    testImplementation 'javax.cache:cache-api'
-    testImplementation 'com.hazelcast:hazelcast'
 }
 
 task shenandoahTest(type: Test) {

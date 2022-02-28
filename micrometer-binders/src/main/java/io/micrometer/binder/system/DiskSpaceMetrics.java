@@ -33,7 +33,11 @@ import static java.util.Collections.emptyList;
  *
  * @author jmcshane
  * @author Johnny Lim
+<<<<<<<< HEAD:micrometer-binders/src/main/java/io/micrometer/binder/system/DiskSpaceMetrics.java
  * @since 1.8.0
+========
+ * @deprecated use {@code io.micrometer.binder.system.DiskSpaceMetrics} instead.
+>>>>>>>> 598a6b4ef (Deprecating core.instrument.binder and move classes to binder package (#3043)):micrometer-core/src/main/java/io/micrometer/core/instrument/binder/jvm/DiskSpaceMetrics.java
  */
 @NonNullApi
 @NonNullFields
