@@ -201,6 +201,58 @@ public interface Observation {
     Scope openScope();
 
     /**
+     * Observes the passed {@link Runnable}, this means the followings:
+     *   - Starts the {@code Observation}
+     *   - Opens a {@code Scope}
+     *   - Calls {@link Runnable#run()}
+     *   - Closes the {@code Scope}
+     *   - Signals the error to the {@code Observation} if any
+     *   - Stops the {@code Observation}
+     *
+     * @param runnable the {@link Runnable} to run
+     */
+    default void observe(Runnable runnable) {
+        this.start();
+        try (Scope scope = openScope()) {
+            runnable.run();
+        }
+        catch (Exception exception) {
+            this.error(exception);
+            throw exception;
+        }
+        finally {
+            this.stop();
+        }
+    }
+
+    /**
+     * Observes the passed {@link Supplier}, this means the followings:
+     *   - Starts the {@code Observation}
+     *   - Opens a {@code Scope}
+     *   - Calls {@link Supplier#get()}
+     *   - Closes the {@code Scope}
+     *   - Signals the error to the {@code Observation} if any
+     *   - Stops the {@code Observation}
+     *
+     * @param supplier the {@link Supplier} to call
+     * @param <T> the type parameter of the {@link Supplier}
+     * @return the result from {@link Supplier#get()}
+     */
+    default <T> T observe(Supplier<T> supplier) {
+        this.start();
+        try (Scope scope = openScope()) {
+            return supplier.get();
+        }
+        catch (Exception exception) {
+            this.error(exception);
+            throw exception;
+        }
+        finally {
+            this.stop();
+        }
+    }
+
+    /**
      * Wraps the given action in scope.
      *
      * @param action action to run
