@@ -211,6 +211,7 @@ public interface Observation {
      *
      * @param runnable the {@link Runnable} to run
      */
+    @SuppressWarnings("unused")
     default void observe(Runnable runnable) {
         this.start();
         try (Scope scope = openScope()) {
@@ -238,6 +239,7 @@ public interface Observation {
      * @param <T> the type parameter of the {@link Supplier}
      * @return the result from {@link Supplier#get()}
      */
+    @SuppressWarnings("unused")
     default <T> T observe(Supplier<T> supplier) {
         this.start();
         try (Scope scope = openScope()) {
@@ -257,6 +259,7 @@ public interface Observation {
      *
      * @param action action to run
      */
+    @SuppressWarnings("unused")
     default void scoped(Runnable action) {
         try (Scope scope = openScope()) {
             action.run();
@@ -273,6 +276,7 @@ public interface Observation {
      * @param action action to run
      * @return result of the action
      */
+    @SuppressWarnings("unused")
     default <T> T scoped(Supplier<T> action) {
         try (Scope scope = openScope()) {
             return action.get();
@@ -497,7 +501,7 @@ public interface Observation {
          * @param key key
          * @param mappingFunction mapping function
          * @param <T> value type
-         * @return object or one derrived from the mapping function if not present
+         * @return object or one derived from the mapping function if not present
          */
         public <T> T computeIfAbsent(Object key, Function<Object, ? extends T> mappingFunction) {
             return (T) this.map.computeIfAbsent(key, mappingFunction);
