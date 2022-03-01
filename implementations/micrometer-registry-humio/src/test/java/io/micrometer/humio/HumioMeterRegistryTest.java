@@ -16,14 +16,14 @@
 package io.micrometer.humio;
 
 import com.github.tomakehurst.wiremock.WireMockServer;
-import io.micrometer.api.instrument.FunctionCounter;
-import io.micrometer.api.instrument.Gauge;
-import io.micrometer.api.instrument.Measurement;
-import io.micrometer.api.instrument.Meter;
-import io.micrometer.api.instrument.MockClock;
-import io.micrometer.api.instrument.Statistic;
-import io.micrometer.api.instrument.Tags;
-import io.micrometer.api.instrument.TimeGauge;
+import io.micrometer.core.instrument.FunctionCounter;
+import io.micrometer.core.instrument.Gauge;
+import io.micrometer.core.instrument.Measurement;
+import io.micrometer.core.instrument.Meter;
+import io.micrometer.core.instrument.MockClock;
+import io.micrometer.core.instrument.Statistic;
+import io.micrometer.core.instrument.Tags;
+import io.micrometer.core.instrument.TimeGauge;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import ru.lanwen.wiremock.ext.WiremockResolver;

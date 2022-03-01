@@ -15,9 +15,9 @@
  */
 package io.micrometer.atlas;
 
-import io.micrometer.api.instrument.AbstractMeter;
-import io.micrometer.api.instrument.Gauge;
-import io.micrometer.api.instrument.util.MeterEquivalence;
+import io.micrometer.core.instrument.AbstractMeter;
+import io.micrometer.core.instrument.Gauge;
+import io.micrometer.core.instrument.util.MeterEquivalence;
 
 public class SpectatorGauge extends AbstractMeter implements Gauge {
     private com.netflix.spectator.api.Gauge gauge;

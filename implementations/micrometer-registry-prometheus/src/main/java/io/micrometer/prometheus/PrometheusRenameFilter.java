@@ -15,8 +15,8 @@
  */
 package io.micrometer.prometheus;
 
-import io.micrometer.api.instrument.Meter;
-import io.micrometer.api.instrument.config.MeterFilter;
+import io.micrometer.core.instrument.Meter;
+import io.micrometer.core.instrument.config.MeterFilter;
 
 import java.util.HashMap;
 import java.util.Map;

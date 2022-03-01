@@ -15,10 +15,10 @@
  */
 package io.micrometer.core.instrument.binder.system;
 
-import io.micrometer.api.instrument.MeterRegistry;
-import io.micrometer.api.instrument.MockClock;
-import io.micrometer.api.instrument.simple.SimpleConfig;
-import io.micrometer.api.instrument.simple.SimpleMeterRegistry;
+import io.micrometer.core.instrument.MeterRegistry;
+import io.micrometer.core.instrument.MockClock;
+import io.micrometer.core.instrument.simple.SimpleConfig;
+import io.micrometer.core.instrument.simple.SimpleMeterRegistry;
 import org.junit.jupiter.api.Test;
 
 import java.lang.management.RuntimeMXBean;

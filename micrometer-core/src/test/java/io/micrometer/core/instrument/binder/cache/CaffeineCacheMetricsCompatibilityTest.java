@@ -17,8 +17,8 @@ package io.micrometer.core.instrument.binder.cache;
 
 import com.github.benmanes.caffeine.cache.Caffeine;
 import com.github.benmanes.caffeine.cache.LoadingCache;
-import io.micrometer.api.instrument.cache.CacheMeterBinder;
-import io.micrometer.api.instrument.cache.CacheMeterBinderCompatibilityKit;
+import io.micrometer.core.instrument.cache.CacheMeterBinder;
+import io.micrometer.core.instrument.cache.CacheMeterBinderCompatibilityKit;
 
 import java.util.concurrent.atomic.AtomicReference;
 

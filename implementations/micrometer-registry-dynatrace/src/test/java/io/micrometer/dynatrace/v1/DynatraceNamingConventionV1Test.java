@@ -15,7 +15,7 @@
  */
 package io.micrometer.dynatrace.v1;
 
-import io.micrometer.api.instrument.Meter;
+import io.micrometer.core.instrument.Meter;
 import io.micrometer.dynatrace.DynatraceNamingConvention;
 import org.junit.jupiter.api.Test;
 

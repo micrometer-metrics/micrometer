@@ -17,11 +17,11 @@ package io.micrometer.samples.hazelcast4;
 
 import com.hazelcast.core.Hazelcast;
 import com.hazelcast.map.IMap;
-import io.micrometer.api.instrument.Clock;
-import io.micrometer.api.instrument.MeterRegistry;
-import io.micrometer.core.instrument.binder.cache.HazelcastCacheMetrics;
-import io.micrometer.api.instrument.logging.LoggingMeterRegistry;
-import io.micrometer.api.instrument.logging.LoggingRegistryConfig;
+import io.micrometer.core.instrument.Clock;
+import io.micrometer.core.instrument.MeterRegistry;
+import io.micrometer.binder.cache.HazelcastCacheMetrics;
+import io.micrometer.core.instrument.logging.LoggingMeterRegistry;
+import io.micrometer.core.instrument.logging.LoggingRegistryConfig;
 
 import java.time.Duration;
 

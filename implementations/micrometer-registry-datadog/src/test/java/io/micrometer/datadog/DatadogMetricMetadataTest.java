@@ -15,11 +15,11 @@
  */
 package io.micrometer.datadog;
 
-import io.micrometer.api.instrument.Clock;
-import io.micrometer.api.instrument.Counter;
-import io.micrometer.api.instrument.Statistic;
-import io.micrometer.api.instrument.Timer;
-import io.micrometer.api.instrument.simple.SimpleMeterRegistry;
+import io.micrometer.core.instrument.Clock;
+import io.micrometer.core.instrument.Counter;
+import io.micrometer.core.instrument.Statistic;
+import io.micrometer.core.instrument.Timer;
+import io.micrometer.core.instrument.simple.SimpleMeterRegistry;
 import org.junit.jupiter.api.Test;
 
 import static org.assertj.core.api.Assertions.assertThat;

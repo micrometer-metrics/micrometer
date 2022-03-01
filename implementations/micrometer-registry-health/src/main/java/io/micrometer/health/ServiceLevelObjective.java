@@ -15,15 +15,15 @@
  */
 package io.micrometer.health;
 
-import io.micrometer.api.instrument.*;
-import io.micrometer.api.instrument.Timer;
-import io.micrometer.api.instrument.binder.MeterBinder;
-import io.micrometer.api.instrument.composite.CompositeMeterRegistry;
-import io.micrometer.api.instrument.config.MeterFilter;
-import io.micrometer.api.instrument.distribution.HistogramSupport;
-import io.micrometer.api.instrument.distribution.ValueAtPercentile;
-import io.micrometer.api.instrument.search.Search;
-import io.micrometer.api.lang.Nullable;
+import io.micrometer.core.instrument.*;
+import io.micrometer.core.instrument.Timer;
+import io.micrometer.core.instrument.binder.MeterBinder;
+import io.micrometer.core.instrument.composite.CompositeMeterRegistry;
+import io.micrometer.core.instrument.config.MeterFilter;
+import io.micrometer.core.instrument.distribution.HistogramSupport;
+import io.micrometer.core.instrument.distribution.ValueAtPercentile;
+import io.micrometer.core.instrument.search.Search;
+import io.micrometer.core.lang.Nullable;
 
 import java.text.DecimalFormat;
 import java.text.DecimalFormatSymbols;

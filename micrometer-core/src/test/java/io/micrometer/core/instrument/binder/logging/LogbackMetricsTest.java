@@ -20,14 +20,14 @@ import ch.qos.logback.classic.Logger;
 import ch.qos.logback.classic.LoggerContext;
 
 import io.micrometer.core.Issue;
-import io.micrometer.api.instrument.Counter;
-import io.micrometer.api.instrument.Meter;
-import io.micrometer.api.instrument.MeterRegistry;
-import io.micrometer.api.instrument.MockClock;
-import io.micrometer.api.instrument.cumulative.CumulativeCounter;
-import io.micrometer.api.instrument.simple.SimpleConfig;
-import io.micrometer.api.instrument.simple.SimpleMeterRegistry;
-import io.micrometer.api.lang.NonNullApi;
+import io.micrometer.core.instrument.Counter;
+import io.micrometer.core.instrument.Meter;
+import io.micrometer.core.instrument.MeterRegistry;
+import io.micrometer.core.instrument.MockClock;
+import io.micrometer.core.instrument.cumulative.CumulativeCounter;
+import io.micrometer.core.instrument.simple.SimpleConfig;
+import io.micrometer.core.instrument.simple.SimpleMeterRegistry;
+import io.micrometer.core.lang.NonNullApi;
 
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;

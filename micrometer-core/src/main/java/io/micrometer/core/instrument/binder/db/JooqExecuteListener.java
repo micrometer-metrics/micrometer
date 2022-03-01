@@ -15,10 +15,10 @@
  */
 package io.micrometer.core.instrument.binder.db;
 
-import io.micrometer.api.instrument.MeterRegistry;
-import io.micrometer.api.instrument.Tag;
-import io.micrometer.api.instrument.Timer;
-import io.micrometer.api.instrument.util.StringUtils;
+import io.micrometer.core.instrument.MeterRegistry;
+import io.micrometer.core.instrument.Tag;
+import io.micrometer.core.instrument.Timer;
+import io.micrometer.core.instrument.util.StringUtils;
 import java.util.HashMap;
 import java.util.Map;
 import org.jooq.ExecuteContext;
@@ -27,6 +27,10 @@ import org.jooq.impl.DefaultExecuteListener;
 
 import java.util.function.Supplier;
 
+/**
+ * @deprecated Scheduled for removal in 2.0.0, please use {@code io.micrometer.binder.db.JooqExecuteListener}
+ */
+@Deprecated
 class JooqExecuteListener extends DefaultExecuteListener {
     private final MeterRegistry registry;
     private final Iterable<Tag> tags;

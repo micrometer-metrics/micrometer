@@ -17,7 +17,7 @@ package io.micrometer.boot2.samples.components;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.common.cache.CacheBuilder;
-import io.micrometer.api.instrument.Tags;
+import io.micrometer.core.instrument.Tags;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.web.filter.OncePerRequestFilter;

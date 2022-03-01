@@ -25,10 +25,10 @@ import java.util.concurrent.ConcurrentMap;
 import com.mongodb.event.CommandEvent;
 import com.mongodb.event.CommandStartedEvent;
 import com.mongodb.event.CommandSucceededEvent;
-import io.micrometer.api.instrument.Tag;
-import io.micrometer.api.instrument.Tags;
-import io.micrometer.api.instrument.util.StringUtils;
-import io.micrometer.api.internal.logging.WarnThenDebugLogger;
+import io.micrometer.core.instrument.Tag;
+import io.micrometer.core.instrument.Tags;
+import io.micrometer.core.instrument.util.StringUtils;
+import io.micrometer.core.util.internal.logging.WarnThenDebugLogger;
 import org.bson.BsonDocument;
 import org.bson.BsonString;
 import org.bson.BsonValue;
@@ -36,9 +36,11 @@ import org.bson.BsonValue;
 /**
  * Default implementation for {@link MongoCommandTagsProvider}.
  *
+ * @deprecated Scheduled for removal in 2.0.0, please use {@code io.micrometer.binder.mongodb.DefaultMongoCommandTagsProvider}
  * @author Chris Bono
  * @since 1.7.0
  */
+@Deprecated
 public class DefaultMongoCommandTagsProvider implements MongoCommandTagsProvider {
 
     // See https://docs.mongodb.com/manual/reference/command for the command reference

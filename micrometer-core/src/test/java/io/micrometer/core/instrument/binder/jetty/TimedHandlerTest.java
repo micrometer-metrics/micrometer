@@ -15,11 +15,11 @@
  */
 package io.micrometer.core.instrument.binder.jetty;
 
-import io.micrometer.api.instrument.MockClock;
-import io.micrometer.api.instrument.Tags;
-import io.micrometer.api.instrument.transport.http.tags.Outcome;
-import io.micrometer.api.instrument.simple.SimpleConfig;
-import io.micrometer.api.instrument.simple.SimpleMeterRegistry;
+import io.micrometer.core.instrument.MockClock;
+import io.micrometer.core.instrument.Tags;
+import io.micrometer.core.instrument.transport.http.tags.Outcome;
+import io.micrometer.core.instrument.simple.SimpleConfig;
+import io.micrometer.core.instrument.simple.SimpleMeterRegistry;
 import org.eclipse.jetty.http.HttpStatus;
 import org.eclipse.jetty.server.LocalConnector;
 import org.eclipse.jetty.server.Request;

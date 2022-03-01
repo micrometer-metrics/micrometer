@@ -16,10 +16,10 @@
 package io.micrometer.core.instrument.binder.logging;
 
 import io.micrometer.core.Issue;
-import io.micrometer.api.instrument.MeterRegistry;
-import io.micrometer.api.instrument.MockClock;
-import io.micrometer.api.instrument.simple.SimpleConfig;
-import io.micrometer.api.instrument.simple.SimpleMeterRegistry;
+import io.micrometer.core.instrument.MeterRegistry;
+import io.micrometer.core.instrument.MockClock;
+import io.micrometer.core.instrument.simple.SimpleConfig;
+import io.micrometer.core.instrument.simple.SimpleMeterRegistry;
 
 import org.apache.logging.log4j.Level;
 import org.apache.logging.log4j.LogManager;

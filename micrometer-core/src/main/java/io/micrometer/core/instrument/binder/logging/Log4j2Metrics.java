@@ -15,13 +15,13 @@
  */
 package io.micrometer.core.instrument.binder.logging;
 
-import io.micrometer.api.instrument.Counter;
-import io.micrometer.api.instrument.MeterRegistry;
-import io.micrometer.api.instrument.Tag;
-import io.micrometer.api.instrument.binder.BaseUnits;
-import io.micrometer.api.instrument.binder.MeterBinder;
-import io.micrometer.api.lang.NonNullApi;
-import io.micrometer.api.lang.NonNullFields;
+import io.micrometer.core.instrument.Counter;
+import io.micrometer.core.instrument.MeterRegistry;
+import io.micrometer.core.instrument.Tag;
+import io.micrometer.core.instrument.binder.BaseUnits;
+import io.micrometer.core.instrument.binder.MeterBinder;
+import io.micrometer.core.lang.NonNullApi;
+import io.micrometer.core.lang.NonNullFields;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.core.Filter;
 import org.apache.logging.log4j.core.LogEvent;
@@ -41,12 +41,14 @@ import static java.util.Collections.emptyList;
 /**
  * {@link MeterBinder} for Apache Log4j 2.
  *
+ * @deprecated Scheduled for removal in 2.0.0, please use {@code io.micrometer.binder.logging.Log4j2Metrics}
  * @author Steven Sheehy
  * @author Johnny Lim
  * @since 1.1.0
  */
 @NonNullApi
 @NonNullFields
+@Deprecated
 public class Log4j2Metrics implements MeterBinder, AutoCloseable {
 
     private static final String METER_NAME = "log4j2.events";

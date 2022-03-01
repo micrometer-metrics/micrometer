@@ -15,7 +15,7 @@
  */
 package io.micrometer.benchmark.core;
 
-import io.micrometer.api.instrument.Tags;
+import io.micrometer.core.instrument.Tags;
 import org.openjdk.jmh.annotations.*;
 import org.openjdk.jmh.runner.Runner;
 import org.openjdk.jmh.runner.RunnerException;

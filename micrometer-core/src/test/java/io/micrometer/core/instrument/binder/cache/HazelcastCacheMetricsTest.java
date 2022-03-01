@@ -22,13 +22,13 @@ import com.hazelcast.nearcache.NearCacheStats;
 import com.hazelcast.internal.monitor.impl.LocalMapStatsImpl;
 import com.hazelcast.internal.monitor.impl.NearCacheStatsImpl;
 
-import io.micrometer.api.instrument.FunctionCounter;
-import io.micrometer.api.instrument.FunctionTimer;
-import io.micrometer.api.instrument.Gauge;
-import io.micrometer.api.instrument.MeterRegistry;
-import io.micrometer.api.instrument.Tags;
-import io.micrometer.api.instrument.cache.AbstractCacheMetricsTest;
-import io.micrometer.api.instrument.simple.SimpleMeterRegistry;
+import io.micrometer.core.instrument.FunctionCounter;
+import io.micrometer.core.instrument.FunctionTimer;
+import io.micrometer.core.instrument.Gauge;
+import io.micrometer.core.instrument.MeterRegistry;
+import io.micrometer.core.instrument.Tags;
+import io.micrometer.core.instrument.cache.AbstractCacheMetricsTest;
+import io.micrometer.core.instrument.simple.SimpleMeterRegistry;
 
 import java.util.HashMap;
 import java.util.Random;

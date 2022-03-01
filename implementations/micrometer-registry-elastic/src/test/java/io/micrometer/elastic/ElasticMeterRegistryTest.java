@@ -15,7 +15,7 @@
  */
 package io.micrometer.elastic;
 
-import io.micrometer.api.instrument.*;
+import io.micrometer.core.instrument.*;
 import io.micrometer.core.Issue;
 import org.junit.jupiter.api.Test;
 
@@ -48,7 +48,7 @@ class ElasticMeterRegistryTest {
     @Test
     void writeTimer() {
         Timer timer = Timer.builder("myTimer").register(registry);
-        assertThat(registry.writeTimer(timer)).contains("{ \"index\" : {} }\n{\"@timestamp\":\"1970-01-01T00:00:00.001Z\",\"name\":\"myTimer\",\"type\":\"timer\",\"count\":0,\"sum\":0.0,\"mean\":0.0,\"max\":0.0}");
+        assertThat(registry.writeTimer(timer)).contains("{ \"create\" : {} }\n{\"@timestamp\":\"1970-01-01T00:00:00.001Z\",\"name\":\"myTimer\",\"type\":\"timer\",\"count\":0,\"sum\":0.0,\"mean\":0.0,\"max\":0.0}");
     }
 
     @Test
@@ -57,7 +57,7 @@ class ElasticMeterRegistryTest {
         counter.increment();
         clock.add(config.step());
         assertThat(registry.writeCounter(counter))
-                .contains("{ \"index\" : {} }\n{\"@timestamp\":\"1970-01-01T00:01:00.001Z\",\"name\":\"myCounter\",\"type\":\"counter\",\"count\":1.0}");
+                .contains("{ \"create\" : {} }\n{\"@timestamp\":\"1970-01-01T00:01:00.001Z\",\"name\":\"myCounter\",\"type\":\"counter\",\"count\":1.0}");
     }
 
     @Test
@@ -65,7 +65,7 @@ class ElasticMeterRegistryTest {
         FunctionCounter counter = FunctionCounter.builder("myCounter", 123.0, Number::doubleValue).register(registry);
         clock.add(config.step());
         assertThat(registry.writeFunctionCounter(counter))
-                .contains("{ \"index\" : {} }\n{\"@timestamp\":\"1970-01-01T00:01:00.001Z\",\"name\":\"myCounter\",\"type\":\"counter\",\"count\":123.0}");
+                .contains("{ \"create\" : {} }\n{\"@timestamp\":\"1970-01-01T00:01:00.001Z\",\"name\":\"myCounter\",\"type\":\"counter\",\"count\":123.0}");
     }
 
     @Test
@@ -86,21 +86,21 @@ class ElasticMeterRegistryTest {
     void writeGauge() {
         Gauge gauge = Gauge.builder("myGauge", 123.0, Number::doubleValue).register(registry);
         assertThat(registry.writeGauge(gauge))
-                .contains("{ \"index\" : {} }\n{\"@timestamp\":\"1970-01-01T00:00:00.001Z\",\"name\":\"myGauge\",\"type\":\"gauge\",\"value\":123.0}");
+                .contains("{ \"create\" : {} }\n{\"@timestamp\":\"1970-01-01T00:00:00.001Z\",\"name\":\"myGauge\",\"type\":\"gauge\",\"value\":123.0}");
     }
 
     @Test
     void writeTimeGauge() {
         TimeGauge gauge = TimeGauge.builder("myGauge", 123.0, TimeUnit.MILLISECONDS, Number::doubleValue).register(registry);
         assertThat(registry.writeTimeGauge(gauge))
-                .contains("{ \"index\" : {} }\n{\"@timestamp\":\"1970-01-01T00:00:00.001Z\",\"name\":\"myGauge\",\"type\":\"gauge\",\"value\":123.0}");
+                .contains("{ \"create\" : {} }\n{\"@timestamp\":\"1970-01-01T00:00:00.001Z\",\"name\":\"myGauge\",\"type\":\"gauge\",\"value\":123.0}");
     }
 
     @Test
     void writeLongTaskTimer() {
         LongTaskTimer timer = LongTaskTimer.builder("longTaskTimer").register(registry);
         assertThat(registry.writeLongTaskTimer(timer))
-                .contains("{ \"index\" : {} }\n{\"@timestamp\":\"1970-01-01T00:00:00.001Z\",\"name\":\"longTaskTimer\",\"type\":\"long_task_timer\",\"activeTasks\":0,\"duration\":0.0}");
+                .contains("{ \"create\" : {} }\n{\"@timestamp\":\"1970-01-01T00:00:00.001Z\",\"name\":\"longTaskTimer\",\"type\":\"long_task_timer\",\"activeTasks\":0,\"duration\":0.0}");
     }
 
     @Test
@@ -110,14 +110,14 @@ class ElasticMeterRegistryTest {
         summary.record(456);
         clock.add(config.step());
         assertThat(registry.writeSummary(summary))
-                .contains("{ \"index\" : {} }\n{\"@timestamp\":\"1970-01-01T00:01:00.001Z\",\"name\":\"summary\",\"type\":\"distribution_summary\",\"count\":2,\"sum\":579.0,\"mean\":289.5,\"max\":456.0}");
+                .contains("{ \"create\" : {} }\n{\"@timestamp\":\"1970-01-01T00:01:00.001Z\",\"name\":\"summary\",\"type\":\"distribution_summary\",\"count\":2,\"sum\":579.0,\"mean\":289.5,\"max\":456.0}");
     }
 
     @Test
     void writeMeter() {
         Timer timer = Timer.builder("myTimer").register(registry);
         assertThat(registry.writeMeter(timer))
-                .contains("{ \"index\" : {} }\n{\"@timestamp\":\"1970-01-01T00:00:00.001Z\",\"name\":\"myTimer\",\"type\":\"timer\",\"count\":\"0.0\",\"total\":\"0.0\",\"max\":\"0.0\"}");
+                .contains("{ \"create\" : {} }\n{\"@timestamp\":\"1970-01-01T00:00:00.001Z\",\"name\":\"myTimer\",\"type\":\"timer\",\"count\":\"0.0\",\"total\":\"0.0\",\"max\":\"0.0\"}");
     }
 
     @Test
@@ -139,7 +139,7 @@ class ElasticMeterRegistryTest {
         Measurement measurement5 = new Measurement(() -> 2d, Statistic.VALUE);
         List<Measurement> measurements = Arrays.asList(measurement1, measurement2, measurement3, measurement4, measurement5);
         Meter meter = Meter.builder("my.meter", Meter.Type.GAUGE, measurements).register(this.registry);
-        assertThat(registry.writeMeter(meter)).contains("{ \"index\" : {} }\n" +
+        assertThat(registry.writeMeter(meter)).contains("{ \"create\" : {} }\n" +
                 "{\"@timestamp\":\"1970-01-01T00:00:00.001Z\",\"name\":\"my_meter\",\"type\":\"gauge\",\"value\":\"1.0\",\"value\":\"2.0\"}");
     }
 
@@ -148,7 +148,7 @@ class ElasticMeterRegistryTest {
         Counter counter = Counter.builder("myCounter").tag("foo", "bar").tag("spam", "eggs").register(registry);
         counter.increment();
         clock.add(config.step());
-        assertThat(registry.writeCounter(counter)).contains("{ \"index\" : {} }\n" +
+        assertThat(registry.writeCounter(counter)).contains("{ \"create\" : {} }\n" +
                 "{\"@timestamp\":\"1970-01-01T00:01:00.001Z\",\"name\":\"myCounter\",\"type\":\"counter\",\"foo\":\"bar\",\"spam\":\"eggs\",\"count\":1.0}");
     }
 
@@ -168,7 +168,7 @@ class ElasticMeterRegistryTest {
         Counter c = Counter.builder("counter").register(registry);
         c.increment(10);
         clock.add(config.step());
-        assertThat(registry.writeCounter(c)).contains("{ \"index\" : {} }\n" +
+        assertThat(registry.writeCounter(c)).contains("{ \"create\" : {} }\n" +
                 "{\"@timestamp\":\"1970-01-01T00:01:00.001Z\",\"name\":\"counter\",\"type\":\"counter\",\"count\":10.0}");
     }
 

@@ -14,6 +14,7 @@
  * limitations under the License.
  */
 @NonNullApi
+@Deprecated
 package io.micrometer.core.instrument.binder.cache;
 
-import io.micrometer.api.lang.NonNullApi;
+import io.micrometer.core.lang.NonNullApi;

@@ -33,18 +33,18 @@ import org.junit.jupiter.api.Test;
 import com.google.api.MetricDescriptor;
 import com.google.monitoring.v3.TimeSeries;
 
-import io.micrometer.api.instrument.Counter;
-import io.micrometer.api.instrument.DistributionSummary;
-import io.micrometer.api.instrument.FunctionCounter;
-import io.micrometer.api.instrument.FunctionTimer;
-import io.micrometer.api.instrument.Gauge;
-import io.micrometer.api.instrument.LongTaskTimer;
-import io.micrometer.api.instrument.Measurement;
-import io.micrometer.api.instrument.Meter;
-import io.micrometer.api.instrument.MockClock;
-import io.micrometer.api.instrument.Statistic;
-import io.micrometer.api.instrument.TimeGauge;
-import io.micrometer.api.instrument.Timer;
+import io.micrometer.core.instrument.Counter;
+import io.micrometer.core.instrument.DistributionSummary;
+import io.micrometer.core.instrument.FunctionCounter;
+import io.micrometer.core.instrument.FunctionTimer;
+import io.micrometer.core.instrument.Gauge;
+import io.micrometer.core.instrument.LongTaskTimer;
+import io.micrometer.core.instrument.Measurement;
+import io.micrometer.core.instrument.Meter;
+import io.micrometer.core.instrument.MockClock;
+import io.micrometer.core.instrument.Statistic;
+import io.micrometer.core.instrument.TimeGauge;
+import io.micrometer.core.instrument.Timer;
 
 class MetricSchemaCompatibilityTest {
 

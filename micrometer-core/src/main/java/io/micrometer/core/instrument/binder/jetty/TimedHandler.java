@@ -15,12 +15,12 @@
  */
 package io.micrometer.core.instrument.binder.jetty;
 
-import io.micrometer.api.instrument.*;
-import io.micrometer.api.instrument.binder.BaseUnits;
-import io.micrometer.api.instrument.transport.http.tags.DefaultHttpServletRequestTagsProvider;
-import io.micrometer.api.instrument.transport.http.tags.HttpServletRequestTagsProvider;
-import io.micrometer.api.lang.NonNullApi;
-import io.micrometer.api.lang.NonNullFields;
+import io.micrometer.core.instrument.*;
+import io.micrometer.core.instrument.binder.BaseUnits;
+import io.micrometer.core.instrument.transport.http.tags.DefaultHttpServletRequestTagsProvider;
+import io.micrometer.core.instrument.transport.http.tags.HttpServletRequestTagsProvider;
+import io.micrometer.core.lang.NonNullApi;
+import io.micrometer.core.lang.NonNullFields;
 import org.eclipse.jetty.http.HttpStatus;
 import org.eclipse.jetty.server.AsyncContextEvent;
 import org.eclipse.jetty.server.Handler;
@@ -42,11 +42,13 @@ import java.util.concurrent.atomic.AtomicInteger;
 /**
  * Adapted from Jetty's <a href="https://github.com/eclipse/jetty.project/blob/jetty-9.4.x/jetty-server/src/main/java/org/eclipse/jetty/server/handler/StatisticsHandler.java">StatisticsHandler</a>.
  *
+ * @deprecated Scheduled for removal in 2.0.0, please use {@code io.micrometer.binder.jetty.TimedHandler}
  * @author Jon Schneider
  * @since 1.4.0
  */
 @NonNullApi
 @NonNullFields
+@Deprecated
 public class TimedHandler extends HandlerWrapper implements Graceful {
     private static final String SAMPLE_REQUEST_TIMER_ATTRIBUTE = "__micrometer_timer_sample";
     private static final String SAMPLE_REQUEST_LONG_TASK_TIMER_ATTRIBUTE = "__micrometer_ltt_sample";

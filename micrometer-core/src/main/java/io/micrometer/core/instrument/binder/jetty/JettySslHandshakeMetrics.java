@@ -15,11 +15,11 @@
  */
 package io.micrometer.core.instrument.binder.jetty;
 
-import io.micrometer.api.instrument.Counter;
-import io.micrometer.api.instrument.MeterRegistry;
-import io.micrometer.api.instrument.Tag;
-import io.micrometer.api.instrument.Tags;
-import io.micrometer.api.instrument.binder.BaseUnits;
+import io.micrometer.core.instrument.Counter;
+import io.micrometer.core.instrument.MeterRegistry;
+import io.micrometer.core.instrument.Tag;
+import io.micrometer.core.instrument.Tags;
+import io.micrometer.core.instrument.binder.BaseUnits;
 import org.eclipse.jetty.io.ssl.SslHandshakeListener;
 import org.eclipse.jetty.server.Connector;
 import org.eclipse.jetty.server.Server;
@@ -41,10 +41,12 @@ import javax.net.ssl.SSLSession;
  *
  * Alternatively, configure on all connectors with {@link JettySslHandshakeMetrics#addToAllConnectors(Server, MeterRegistry, Iterable)}.
  *
+ * @deprecated Scheduled for removal in 2.0.0, please use {@code io.micrometer.binder.jetty.JettySslHandshakeMetrics}
  * @author John Karp
  * @author Johnny Lim
  * @since 1.5.0
  */
+@Deprecated
 public class JettySslHandshakeMetrics implements SslHandshakeListener {
     private static final String METER_NAME = "jetty.ssl.handshakes";
     private static final String DESCRIPTION = "SSL/TLS handshakes";

@@ -15,9 +15,9 @@
  */
 package io.micrometer.statsd;
 
-import io.micrometer.api.instrument.AbstractMeter;
-import io.micrometer.api.instrument.Counter;
-import io.micrometer.api.instrument.util.MeterEquivalence;
+import io.micrometer.core.instrument.AbstractMeter;
+import io.micrometer.core.instrument.Counter;
+import io.micrometer.core.instrument.util.MeterEquivalence;
 import reactor.core.publisher.FluxSink;
 
 import java.util.concurrent.atomic.DoubleAdder;

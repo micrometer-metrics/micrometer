@@ -27,18 +27,20 @@ import io.grpc.MethodDescriptor;
 import io.grpc.ServiceDescriptor;
 import io.grpc.Status;
 import io.grpc.Status.Code;
-import io.micrometer.api.instrument.Counter;
-import io.micrometer.api.instrument.MeterRegistry;
-import io.micrometer.api.instrument.Timer;
-import io.micrometer.api.instrument.Timer.Sample;
-import io.micrometer.api.instrument.binder.BaseUnits;
+import io.micrometer.core.instrument.Counter;
+import io.micrometer.core.instrument.MeterRegistry;
+import io.micrometer.core.instrument.Timer;
+import io.micrometer.core.instrument.Timer.Sample;
+import io.micrometer.core.instrument.binder.BaseUnits;
 
 /**
  * An abstract gRPC interceptor that will collect metrics.
  *
+ * @deprecated Scheduled for removal in 2.0.0, please use {@code io.micrometer.binder.grpc.AbstractMetricCollectingInterceptor}
  * @author Daniel Theuke (daniel.theuke@heuboe.de)
  * @since 1.7.0
  */
+@Deprecated
 public abstract class AbstractMetricCollectingInterceptor {
 
     /**

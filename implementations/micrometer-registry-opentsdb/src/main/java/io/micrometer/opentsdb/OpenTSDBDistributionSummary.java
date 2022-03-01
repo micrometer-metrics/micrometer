@@ -15,12 +15,12 @@
  */
 package io.micrometer.opentsdb;
 
-import io.micrometer.api.instrument.DistributionSummary;
-import io.micrometer.api.instrument.AbstractDistributionSummary;
-import io.micrometer.api.instrument.Clock;
-import io.micrometer.api.instrument.distribution.*;
-import io.micrometer.api.instrument.util.MeterEquivalence;
-import io.micrometer.api.lang.Nullable;
+import io.micrometer.core.instrument.DistributionSummary;
+import io.micrometer.core.instrument.AbstractDistributionSummary;
+import io.micrometer.core.instrument.Clock;
+import io.micrometer.core.instrument.distribution.*;
+import io.micrometer.core.instrument.util.MeterEquivalence;
+import io.micrometer.core.lang.Nullable;
 
 import java.time.Duration;
 import java.util.concurrent.atomic.DoubleAdder;

@@ -15,8 +15,8 @@
  */
 package io.micrometer.core.instrument.binder.cache;
 
-import io.micrometer.api.instrument.cache.CacheMeterBinder;
-import io.micrometer.api.instrument.cache.CacheMeterBinderCompatibilityKit;
+import io.micrometer.core.instrument.cache.CacheMeterBinder;
+import io.micrometer.core.instrument.cache.CacheMeterBinderCompatibilityKit;
 import org.jsr107.ri.spi.RICachingProvider;
 
 import javax.cache.Cache;

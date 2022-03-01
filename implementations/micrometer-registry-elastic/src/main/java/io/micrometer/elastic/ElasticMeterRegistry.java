@@ -15,15 +15,15 @@
  */
 package io.micrometer.elastic;
 
-import io.micrometer.api.instrument.*;
-import io.micrometer.api.instrument.distribution.HistogramSnapshot;
-import io.micrometer.api.instrument.step.StepMeterRegistry;
-import io.micrometer.api.instrument.util.MeterPartition;
-import io.micrometer.api.instrument.util.NamedThreadFactory;
-import io.micrometer.api.instrument.util.StringUtils;
-import io.micrometer.api.ipc.http.HttpSender;
-import io.micrometer.api.ipc.http.HttpUrlConnectionSender;
-import io.micrometer.api.lang.NonNull;
+import io.micrometer.core.instrument.*;
+import io.micrometer.core.instrument.distribution.HistogramSnapshot;
+import io.micrometer.core.instrument.step.StepMeterRegistry;
+import io.micrometer.core.instrument.util.MeterPartition;
+import io.micrometer.core.instrument.util.NamedThreadFactory;
+import io.micrometer.core.instrument.util.StringUtils;
+import io.micrometer.core.ipc.http.HttpSender;
+import io.micrometer.core.ipc.http.HttpUrlConnectionSender;
+import io.micrometer.core.lang.NonNull;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -42,7 +42,7 @@ import java.util.function.Function;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-import static io.micrometer.api.instrument.util.StringEscapeUtils.escapeJson;
+import static io.micrometer.core.instrument.util.StringEscapeUtils.escapeJson;
 import static java.util.stream.Collectors.joining;
 
 /**
@@ -121,7 +121,7 @@ public class ElasticMeterRegistry extends StepMeterRegistry {
 
     private final DateTimeFormatter indexDateFormatter;
 
-    private final String indexLine;
+    private final String actionLine;
 
     private volatile boolean checkedForIndexTemplate;
 
@@ -147,9 +147,9 @@ public class ElasticMeterRegistry extends StepMeterRegistry {
         indexDateFormatter = DateTimeFormatter.ofPattern(config.indexDateFormat());
         this.httpClient = httpClient;
         if (StringUtils.isNotEmpty(config.pipeline())) {
-            indexLine = "{ \"index\" : {\"pipeline\":\"" + config.pipeline() + "\"} }\n";
+            actionLine = "{ \"create\" : {\"pipeline\":\"" + config.pipeline() + "\"} }\n";
         } else {
-            indexLine = "{ \"index\" : {} }\n";
+            actionLine = "{ \"create\" : {} }\n";
         }
 
         start(threadFactory);
@@ -404,7 +404,7 @@ public class ElasticMeterRegistry extends StepMeterRegistry {
 
     // VisibleForTesting
     String writeDocument(Meter meter, Consumer<StringBuilder> consumer) {
-        StringBuilder sb = new StringBuilder(indexLine);
+        StringBuilder sb = new StringBuilder(actionLine);
         String timestamp = generateTimestamp();
         String name = getConventionName(meter.getId());
         String type = meter.getId().getType().toString().toLowerCase();

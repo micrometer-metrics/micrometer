@@ -17,13 +17,13 @@ package io.micrometer.core.instrument.binder.jvm;
 
 import com.sun.management.GarbageCollectionNotificationInfo;
 import com.sun.management.GcInfo;
-import io.micrometer.api.instrument.Gauge;
-import io.micrometer.api.instrument.MeterRegistry;
-import io.micrometer.api.instrument.Tag;
-import io.micrometer.api.instrument.binder.BaseUnits;
-import io.micrometer.api.instrument.binder.MeterBinder;
-import io.micrometer.api.instrument.distribution.TimeWindowSum;
-import io.micrometer.api.lang.NonNull;
+import io.micrometer.core.instrument.Gauge;
+import io.micrometer.core.instrument.MeterRegistry;
+import io.micrometer.core.instrument.Tag;
+import io.micrometer.core.instrument.binder.BaseUnits;
+import io.micrometer.core.instrument.binder.MeterBinder;
+import io.micrometer.core.instrument.distribution.TimeWindowSum;
+import io.micrometer.core.lang.NonNull;
 
 import javax.management.ListenerNotFoundException;
 import javax.management.NotificationEmitter;
@@ -44,9 +44,11 @@ import static java.util.Collections.emptyList;
  * Provides methods to access measurements of low pool memory and heavy GC overhead as described in
  * <a href="https://www.jetbrains.com/help/teamcity/teamcity-memory-monitor.html">TeamCity's Memory Monitor</a>.
  *
+ * @deprecated Scheduled for removal in 2.0.0, please use {@code io.micrometer.binder.jvm.JvmHeapPressureMetrics}
  * @author Jon Schneider
  * @since 1.4.0
  */
+@Deprecated
 public class JvmHeapPressureMetrics implements MeterBinder, AutoCloseable {
     private final Iterable<Tag> tags;
 

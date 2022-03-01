@@ -15,10 +15,10 @@
  */
 package io.micrometer.atlas;
 
-import io.micrometer.api.instrument.AbstractMeter;
-import io.micrometer.api.instrument.Counter;
-import io.micrometer.api.instrument.Meter;
-import io.micrometer.api.instrument.util.MeterEquivalence;
+import io.micrometer.core.instrument.AbstractMeter;
+import io.micrometer.core.instrument.Counter;
+import io.micrometer.core.instrument.Meter;
+import io.micrometer.core.instrument.util.MeterEquivalence;
 
 public class SpectatorCounter extends AbstractMeter implements Counter {
     private com.netflix.spectator.api.Counter counter;

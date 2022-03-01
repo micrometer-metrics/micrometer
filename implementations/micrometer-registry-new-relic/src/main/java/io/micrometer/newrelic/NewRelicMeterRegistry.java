@@ -18,12 +18,12 @@ package io.micrometer.newrelic;
 import java.util.concurrent.ThreadFactory;
 import java.util.concurrent.TimeUnit;
 
-import io.micrometer.api.instrument.Clock;
-import io.micrometer.api.instrument.config.NamingConvention;
-import io.micrometer.api.instrument.step.StepMeterRegistry;
-import io.micrometer.api.instrument.util.NamedThreadFactory;
-import io.micrometer.api.ipc.http.HttpSender;
-import io.micrometer.api.lang.Nullable;
+import io.micrometer.core.instrument.Clock;
+import io.micrometer.core.instrument.config.NamingConvention;
+import io.micrometer.core.instrument.step.StepMeterRegistry;
+import io.micrometer.core.instrument.util.NamedThreadFactory;
+import io.micrometer.core.ipc.http.HttpSender;
+import io.micrometer.core.lang.Nullable;
 
 /**
  * Publishes metrics to New Relic Insights based on client provider selected (API or Java Agent).

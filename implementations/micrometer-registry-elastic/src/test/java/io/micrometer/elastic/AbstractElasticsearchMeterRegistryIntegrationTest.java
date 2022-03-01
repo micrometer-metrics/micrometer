@@ -16,9 +16,9 @@
 package io.micrometer.elastic;
 
 import com.jayway.jsonpath.JsonPath;
-import io.micrometer.api.instrument.Counter;
-import io.micrometer.api.ipc.http.HttpSender;
-import io.micrometer.api.ipc.http.HttpUrlConnectionSender;
+import io.micrometer.core.instrument.Counter;
+import io.micrometer.core.ipc.http.HttpSender;
+import io.micrometer.core.ipc.http.HttpUrlConnectionSender;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
@@ -39,6 +39,9 @@ import static org.assertj.core.api.Assertions.assertThat;
 @Testcontainers
 @Tag("docker")
 abstract class AbstractElasticsearchMeterRegistryIntegrationTest {
+
+    protected static final String VERSION_7 = "7.17.0";
+    protected static final String VERSION_8 = "8.0.0";
 
     protected static final String USER = "elastic";
     protected static final String PASSWORD = "changeme";

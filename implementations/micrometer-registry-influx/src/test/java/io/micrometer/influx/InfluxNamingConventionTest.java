@@ -16,8 +16,8 @@
 package io.micrometer.influx;
 
 import io.micrometer.core.Issue;
-import io.micrometer.api.instrument.Meter;
-import io.micrometer.api.instrument.config.NamingConvention;
+import io.micrometer.core.instrument.Meter;
+import io.micrometer.core.instrument.config.NamingConvention;
 import org.junit.jupiter.api.Test;
 
 import static org.assertj.core.api.Assertions.assertThat;

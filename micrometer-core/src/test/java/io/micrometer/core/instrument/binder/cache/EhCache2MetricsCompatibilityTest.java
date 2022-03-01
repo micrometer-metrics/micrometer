@@ -15,9 +15,9 @@
  */
 package io.micrometer.core.instrument.binder.cache;
 
-import io.micrometer.api.instrument.cache.CacheMeterBinder;
-import io.micrometer.api.instrument.cache.CacheMeterBinderCompatibilityKit;
-import io.micrometer.api.lang.Nullable;
+import io.micrometer.core.instrument.cache.CacheMeterBinder;
+import io.micrometer.core.instrument.cache.CacheMeterBinderCompatibilityKit;
+import io.micrometer.core.lang.Nullable;
 import net.sf.ehcache.Cache;
 import net.sf.ehcache.CacheManager;
 import net.sf.ehcache.Ehcache;

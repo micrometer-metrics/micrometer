@@ -17,9 +17,9 @@ package io.micrometer.jmx;
 
 import com.codahale.metrics.MetricRegistry;
 import com.codahale.metrics.jmx.JmxReporter;
-import io.micrometer.api.instrument.Clock;
-import io.micrometer.api.instrument.dropwizard.DropwizardMeterRegistry;
-import io.micrometer.api.instrument.util.HierarchicalNameMapper;
+import io.micrometer.core.instrument.Clock;
+import io.micrometer.core.instrument.dropwizard.DropwizardMeterRegistry;
+import io.micrometer.core.instrument.util.HierarchicalNameMapper;
 
 /**
  * @author Jon Schneider

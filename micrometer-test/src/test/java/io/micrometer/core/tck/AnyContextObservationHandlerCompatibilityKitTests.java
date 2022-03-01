@@ -15,8 +15,8 @@
  */
 package io.micrometer.core.tck;
 
-import io.micrometer.api.instrument.observation.Observation;
-import io.micrometer.api.instrument.observation.ObservationHandler;
+import io.micrometer.core.instrument.observation.Observation;
+import io.micrometer.core.instrument.observation.ObservationHandler;
 
 class AnyContextObservationHandlerCompatibilityKitTests extends AnyContextObservationHandlerCompatibilityKit {
 

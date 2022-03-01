@@ -15,13 +15,13 @@
  */
 package io.micrometer.core.instrument.binder.jetty;
 
-import io.micrometer.api.annotation.Incubating;
-import io.micrometer.api.instrument.DistributionSummary;
-import io.micrometer.api.instrument.MeterRegistry;
-import io.micrometer.api.instrument.Tag;
-import io.micrometer.api.instrument.Timer;
-import io.micrometer.api.instrument.config.MeterFilter;
-import io.micrometer.api.instrument.internal.OnlyOnceLoggingDenyMeterFilter;
+import io.micrometer.core.annotation.Incubating;
+import io.micrometer.core.instrument.DistributionSummary;
+import io.micrometer.core.instrument.MeterRegistry;
+import io.micrometer.core.instrument.Tag;
+import io.micrometer.core.instrument.Timer;
+import io.micrometer.core.instrument.config.MeterFilter;
+import io.micrometer.core.instrument.internal.OnlyOnceLoggingDenyMeterFilter;
 import org.eclipse.jetty.client.api.ContentProvider;
 import org.eclipse.jetty.client.api.Request;
 
@@ -32,10 +32,12 @@ import java.util.Optional;
  * configured as a {@link org.eclipse.jetty.client.api.Request.Listener Request.Listener}.
  * Incubating in case there emerges a better way to handle path variable detection.
  *
+ * @deprecated Scheduled for removal in 2.0.0, please use {@code io.micrometer.binder.jetty.JettyClientMetrics}
  * @author Jon Schneider
  * @since 1.5.0
  */
 @Incubating(since = "1.5.0")
+@Deprecated
 public class JettyClientMetrics implements Request.Listener {
     private final MeterRegistry registry;
     private final JettyClientTagsProvider tagsProvider;

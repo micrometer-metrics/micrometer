@@ -15,9 +15,9 @@
  */
 package io.micrometer.dynatrace;
 
-import io.micrometer.api.instrument.Clock;
-import io.micrometer.api.instrument.Meter;
-import io.micrometer.api.ipc.http.HttpSender;
+import io.micrometer.core.instrument.Clock;
+import io.micrometer.core.instrument.Meter;
+import io.micrometer.core.ipc.http.HttpSender;
 
 import java.util.List;
 import java.util.concurrent.TimeUnit;

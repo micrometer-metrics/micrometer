@@ -15,12 +15,12 @@
  */
 package io.micrometer.opentsdb;
 
-import io.micrometer.api.instrument.config.validate.Validated;
-import io.micrometer.api.instrument.push.PushRegistryConfig;
-import io.micrometer.api.lang.Nullable;
+import io.micrometer.core.instrument.config.validate.Validated;
+import io.micrometer.core.instrument.push.PushRegistryConfig;
+import io.micrometer.core.lang.Nullable;
 
-import static io.micrometer.api.instrument.config.MeterRegistryConfigValidator.*;
-import static io.micrometer.api.instrument.config.validate.PropertyValidator.*;
+import static io.micrometer.core.instrument.config.MeterRegistryConfigValidator.*;
+import static io.micrometer.core.instrument.config.validate.PropertyValidator.*;
 
 /**
  * Configuration for {@link OpenTSDBMeterRegistry}.

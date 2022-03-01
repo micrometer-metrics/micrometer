@@ -15,8 +15,8 @@
  */
 package io.micrometer.signalfx;
 
-import io.micrometer.api.instrument.LongTaskTimer;
-import io.micrometer.api.instrument.MockClock;
+import io.micrometer.core.instrument.LongTaskTimer;
+import io.micrometer.core.instrument.MockClock;
 import org.junit.jupiter.api.Test;
 
 import static org.assertj.core.api.Assertions.assertThat;

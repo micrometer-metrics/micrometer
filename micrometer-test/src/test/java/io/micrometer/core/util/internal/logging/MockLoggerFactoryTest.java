@@ -15,10 +15,6 @@
  */
 package io.micrometer.core.util.internal.logging;
 
-import io.micrometer.api.internal.logging.InternalLogger;
-import io.micrometer.api.internal.logging.InternalLoggerFactory;
-import io.micrometer.api.internal.logging.MockLogger;
-import io.micrometer.api.internal.logging.MockLoggerFactory;
 import org.junit.jupiter.api.Test;
 
 import static org.assertj.core.api.Assertions.assertThat;

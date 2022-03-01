@@ -15,13 +15,13 @@
  */
 package io.micrometer.core.instrument.binder.okhttp3;
 
-import io.micrometer.api.instrument.MeterRegistry;
-import io.micrometer.api.instrument.Tag;
-import io.micrometer.api.instrument.Tags;
-import io.micrometer.api.instrument.Timer;
-import io.micrometer.api.lang.NonNullApi;
-import io.micrometer.api.lang.NonNullFields;
-import io.micrometer.api.lang.Nullable;
+import io.micrometer.core.instrument.MeterRegistry;
+import io.micrometer.core.instrument.Tag;
+import io.micrometer.core.instrument.Tags;
+import io.micrometer.core.instrument.Timer;
+import io.micrometer.core.lang.NonNullApi;
+import io.micrometer.core.lang.NonNullFields;
+import io.micrometer.core.lang.Nullable;
 import okhttp3.*;
 import okhttp3.EventListener;
 
@@ -46,6 +46,7 @@ import static java.util.stream.StreamSupport.stream;
  * {@literal uri} tag or you can configure a {@link Builder#uriMapper(Function) URI mapper} to provide your own tag
  * values for {@literal uri} tag.
  *
+ * @deprecated Scheduled for removal in 2.0.0, please use {@code io.micrometer.binder.okhttp3.OkHttpMetricsEventListener}
  * @author Bjarte S. Karlsen
  * @author Jon Schneider
  * @author Nurettin Yilmaz
@@ -53,6 +54,7 @@ import static java.util.stream.StreamSupport.stream;
  */
 @NonNullApi
 @NonNullFields
+@Deprecated
 public class OkHttpMetricsEventListener extends EventListener {
 
     /**

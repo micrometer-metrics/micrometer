@@ -15,13 +15,13 @@
  */
 package io.micrometer.core.instrument.binder.cache;
 
-import io.micrometer.api.instrument.*;
-import io.micrometer.api.instrument.binder.BaseUnits;
-import io.micrometer.api.instrument.cache.CacheMeterBinder;
+import io.micrometer.core.instrument.*;
+import io.micrometer.core.instrument.binder.BaseUnits;
 import io.micrometer.core.instrument.binder.cache.HazelcastIMapAdapter.LocalMapStats;
-import io.micrometer.api.lang.NonNullApi;
-import io.micrometer.api.lang.NonNullFields;
-import io.micrometer.api.lang.Nullable;
+import io.micrometer.core.instrument.cache.CacheMeterBinder;
+import io.micrometer.core.lang.NonNullApi;
+import io.micrometer.core.lang.NonNullFields;
+import io.micrometer.core.lang.Nullable;
 
 import java.util.concurrent.TimeUnit;
 import java.util.function.ToDoubleFunction;
@@ -30,10 +30,12 @@ import java.util.function.ToLongFunction;
 /**
  * Collect metrics on Hazelcast caches, including detailed metrics on storage space, near cache usage, and timings.
  *
+ * @deprecated Scheduled for removal in 2.0.0, please use {@code io.micrometer.binder.cache.HazelcastCacheMetrics}
  * @author Jon Schneider
  */
 @NonNullApi
 @NonNullFields
+@Deprecated
 public class HazelcastCacheMetrics extends CacheMeterBinder<Object> {
     private final HazelcastIMapAdapter cache;
 

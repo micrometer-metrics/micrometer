@@ -15,7 +15,7 @@
  */
 package io.micrometer.stackdriver;
 
-import io.micrometer.api.instrument.config.validate.Validated;
+import io.micrometer.core.instrument.config.validate.Validated;
 import org.junit.jupiter.api.Test;
 
 import java.util.HashMap;

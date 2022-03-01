@@ -15,15 +15,15 @@
  */
 package io.micrometer.cloudwatch;
 
-import io.micrometer.api.instrument.config.validate.InvalidReason;
-import io.micrometer.api.instrument.config.validate.Validated;
-import io.micrometer.api.instrument.step.StepRegistryConfig;
+import io.micrometer.core.instrument.config.validate.InvalidReason;
+import io.micrometer.core.instrument.config.validate.Validated;
+import io.micrometer.core.instrument.step.StepRegistryConfig;
 
-import static io.micrometer.api.instrument.config.MeterRegistryConfigValidator.check;
-import static io.micrometer.api.instrument.config.MeterRegistryConfigValidator.checkAll;
-import static io.micrometer.api.instrument.config.MeterRegistryConfigValidator.checkRequired;
-import static io.micrometer.api.instrument.config.validate.PropertyValidator.getInteger;
-import static io.micrometer.api.instrument.config.validate.PropertyValidator.getString;
+import static io.micrometer.core.instrument.config.MeterRegistryConfigValidator.check;
+import static io.micrometer.core.instrument.config.MeterRegistryConfigValidator.checkAll;
+import static io.micrometer.core.instrument.config.MeterRegistryConfigValidator.checkRequired;
+import static io.micrometer.core.instrument.config.validate.PropertyValidator.getInteger;
+import static io.micrometer.core.instrument.config.validate.PropertyValidator.getString;
 
 /**
  * Configuration for CloudWatch exporting.

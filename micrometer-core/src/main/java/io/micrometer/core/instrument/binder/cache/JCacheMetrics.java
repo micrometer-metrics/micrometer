@@ -15,15 +15,15 @@
  */
 package io.micrometer.core.instrument.binder.cache;
 
-import io.micrometer.api.instrument.Gauge;
-import io.micrometer.api.instrument.MeterRegistry;
-import io.micrometer.api.instrument.Tag;
-import io.micrometer.api.instrument.Tags;
-import io.micrometer.api.instrument.cache.CacheMeterBinder;
-import io.micrometer.api.instrument.config.InvalidConfigurationException;
-import io.micrometer.api.lang.NonNullApi;
-import io.micrometer.api.lang.NonNullFields;
-import io.micrometer.api.lang.Nullable;
+import io.micrometer.core.instrument.Gauge;
+import io.micrometer.core.instrument.MeterRegistry;
+import io.micrometer.core.instrument.Tag;
+import io.micrometer.core.instrument.Tags;
+import io.micrometer.core.instrument.cache.CacheMeterBinder;
+import io.micrometer.core.instrument.config.InvalidConfigurationException;
+import io.micrometer.core.lang.NonNullApi;
+import io.micrometer.core.lang.NonNullFields;
+import io.micrometer.core.lang.Nullable;
 
 import javax.cache.Cache;
 import javax.cache.CacheManager;
@@ -37,10 +37,12 @@ import java.util.List;
  * Note that JSR-107 does not provide any insight into the size or estimated size of the cache, so
  * the size metric of a JCache cache will always report 0.
  *
+ * @deprecated Scheduled for removal in 2.0.0, please use {@code io.micrometer.binder.cache.JCacheMetrics}
  * @author Jon Schneider
  */
 @NonNullApi
 @NonNullFields
+@Deprecated
 public class JCacheMetrics<K, V, C extends Cache<K, V>> extends CacheMeterBinder<C> {
     // VisibleForTesting
     @Nullable

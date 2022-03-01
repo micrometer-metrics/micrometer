@@ -15,11 +15,11 @@
  */
 package io.micrometer.core.instrument.binder.httpcomponents;
 
-import io.micrometer.api.annotation.Incubating;
-import io.micrometer.api.instrument.MeterRegistry;
-import io.micrometer.api.instrument.Tag;
-import io.micrometer.api.instrument.Tags;
-import io.micrometer.api.instrument.Timer;
+import io.micrometer.core.annotation.Incubating;
+import io.micrometer.core.instrument.MeterRegistry;
+import io.micrometer.core.instrument.Tag;
+import io.micrometer.core.instrument.Tags;
+import io.micrometer.core.instrument.Timer;
 import org.apache.http.HttpRequest;
 import org.apache.http.HttpRequestInterceptor;
 import org.apache.http.HttpResponseInterceptor;
@@ -44,10 +44,12 @@ import java.util.function.Function;
  *             .build();
  * }</pre>
  *
+ * @deprecated Scheduled for removal in 2.0.0, please use {@code io.micrometer.binder.httpcomponents.MicrometerHttpClientInterceptor}
  * @author Jon Schneider
  * @since 1.4.0
  */
 @Incubating(since = "1.4.0")
+@Deprecated
 public class MicrometerHttpClientInterceptor {
     private static final String METER_NAME = "httpcomponents.httpclient.request";
 
