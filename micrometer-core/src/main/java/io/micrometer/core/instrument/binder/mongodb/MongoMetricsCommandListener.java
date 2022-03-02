@@ -28,7 +28,6 @@ import java.util.concurrent.TimeUnit;
 /**
  * {@link CommandListener} for collecting command metrics from {@link MongoClient}.
  *
- * @deprecated Scheduled for removal in 2.0.0, please use {@code io.micrometer.binder.mongodb.MongoMetricsCommandListener}
  * @author Christophe Bornet
  * @author Chris Bono
  * @since 1.2.0
@@ -36,7 +35,6 @@ import java.util.concurrent.TimeUnit;
 @NonNullApi
 @NonNullFields
 @Incubating(since = "1.2.0")
-@Deprecated
 public class MongoMetricsCommandListener implements CommandListener {
 
     private final MeterRegistry registry;

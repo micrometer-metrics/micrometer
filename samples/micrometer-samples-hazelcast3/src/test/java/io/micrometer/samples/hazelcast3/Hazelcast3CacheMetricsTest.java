@@ -22,7 +22,7 @@ import com.hazelcast.monitor.LocalMapStats;
 import com.hazelcast.monitor.NearCacheStats;
 import com.hazelcast.monitor.impl.LocalMapStatsImpl;
 import io.micrometer.core.instrument.*;
-import io.micrometer.binder.cache.HazelcastCacheMetrics;
+import io.micrometer.core.instrument.binder.cache.HazelcastCacheMetrics;
 import io.micrometer.core.instrument.search.RequiredSearch;
 import io.micrometer.core.instrument.simple.SimpleMeterRegistry;
 import org.junit.jupiter.api.AfterEach;

@@ -1,6 +1,5 @@
 dependencies {
     api project(':micrometer-core')
-    api project(':micrometer-binders')
 
     api 'org.assertj:assertj-core'
 

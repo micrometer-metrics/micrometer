@@ -25,7 +25,7 @@ import java.util.concurrent.Executor;
 /**
  * An {@link Executor} that is timed. This class is for internal use.
  *
- * @see "io.micrometer.binder.jvm.ExecutorServiceMetrics"
+ * @see io.micrometer.core.instrument.binder.jvm.ExecutorServiceMetrics
  */
 public class TimedExecutor implements Executor {
     private final MeterRegistry registry;

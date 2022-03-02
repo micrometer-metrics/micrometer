@@ -19,7 +19,7 @@ import ch.qos.logback.classic.Level;
 import ch.qos.logback.classic.Logger;
 import io.micrometer.core.Issue;
 import io.micrometer.core.instrument.*;
-import io.micrometer.binder.logging.LogbackMetrics;
+import io.micrometer.core.instrument.binder.logging.LogbackMetrics;
 import io.micrometer.core.instrument.config.NamingConvention;
 import io.micrometer.core.lang.Nullable;
 import org.junit.jupiter.api.AfterEach;

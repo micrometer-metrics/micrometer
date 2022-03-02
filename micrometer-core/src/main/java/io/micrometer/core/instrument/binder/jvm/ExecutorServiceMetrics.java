@@ -42,14 +42,12 @@ import static java.util.Arrays.asList;
  * a wrapper type for {@link ExecutorService}, like {@link TimedExecutorService}. Make sure to pass the underlying,
  * unwrapped ExecutorService to this MeterBinder, if it is wrapped in another type.
  *
- * @deprecated Scheduled for removal in 2.0.0, please use {@code io.micrometer.binder.jvm.ExecutorServiceMetrics}
  * @author Jon Schneider
  * @author Clint Checketts
  * @author Johnny Lim
  */
 @NonNullApi
 @NonNullFields
-@Deprecated
 public class ExecutorServiceMetrics implements MeterBinder {
     private static boolean allowIllegalReflectiveAccess = true;
 

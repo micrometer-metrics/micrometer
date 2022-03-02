@@ -29,9 +29,7 @@ import io.micrometer.core.instrument.Counter;
  *
  * @param <Q> The type of message received one or more times from the client.
  * @author Daniel Theuke (daniel.theuke@heuboe.de)
- * @deprecated Scheduled for removal in 2.0.0, please use {@code io.micrometer.binder.grpc.MetricCollectingServerCallListener}
  */
-@Deprecated
 class MetricCollectingServerCallListener<Q> extends SimpleForwardingServerCallListener<Q> {
 
     private final Counter requestCounter;

@@ -31,12 +31,10 @@ import io.micrometer.core.lang.NonNullFields;
 /**
  * Micrometer publisher for Hystrix thread pool metrics.
  *
- * @deprecated Scheduled for removal in 2.0.0, please use {@code io.micrometer.binder.hystrix.MicrometerMetricsPublisherThreadPool}
  * @since 1.2.0
  */
 @NonNullApi
 @NonNullFields
-@Deprecated
 public class MicrometerMetricsPublisherThreadPool implements HystrixMetricsPublisherThreadPool {
   private static final String NAME_HYSTRIX_THREADPOOL = "hystrix.threadpool";
 

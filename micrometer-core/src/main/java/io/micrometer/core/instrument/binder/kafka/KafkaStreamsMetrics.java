@@ -29,7 +29,6 @@ import org.apache.kafka.streams.KafkaStreams;
  * <p>
  * Meter names have the following convention: {@code kafka.(metric_group).(metric_name)}
  *
- * @deprecated Scheduled for removal in 2.0.0, please use {@code io.micrometer.binder.kafka.KafkaStreamsMetrics}
  * @author Jorge Quilcate
  * @see <a href="https://docs.confluent.io/current/kafka/monitoring.html">Kakfa monitoring
  * documentation</a>
@@ -38,7 +37,6 @@ import org.apache.kafka.streams.KafkaStreams;
 @Incubating(since = "1.4.0")
 @NonNullApi
 @NonNullFields
-@Deprecated
 public class KafkaStreamsMetrics extends KafkaMetrics {
 
     /**

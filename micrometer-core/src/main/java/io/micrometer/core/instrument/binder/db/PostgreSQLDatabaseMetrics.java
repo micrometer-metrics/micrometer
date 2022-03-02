@@ -33,7 +33,6 @@ import java.util.function.DoubleSupplier;
 /**
  * {@link MeterBinder} for a PostgreSQL database.
  *
- * @deprecated Scheduled for removal in 2.0.0, please use {@code io.micrometer.binder.db.PostgreSQLDatabaseMetrics}
  * @author Kristof Depypere
  * @author Jon Schneider
  * @author Johnny Lim
@@ -42,7 +41,6 @@ import java.util.function.DoubleSupplier;
  */
 @NonNullApi
 @NonNullFields
-@Deprecated
 public class PostgreSQLDatabaseMetrics implements MeterBinder {
 
     private static final String SELECT = "SELECT ";

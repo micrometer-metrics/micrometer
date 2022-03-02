@@ -1,6 +1,5 @@
 dependencies {
     api project(':micrometer-core')
-    api project(':micrometer-binders')
 
     implementation 'org.slf4j:slf4j-api'
 

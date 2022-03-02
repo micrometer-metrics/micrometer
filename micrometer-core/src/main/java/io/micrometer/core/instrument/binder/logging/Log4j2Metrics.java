@@ -41,14 +41,12 @@ import static java.util.Collections.emptyList;
 /**
  * {@link MeterBinder} for Apache Log4j 2.
  *
- * @deprecated Scheduled for removal in 2.0.0, please use {@code io.micrometer.binder.logging.Log4j2Metrics}
  * @author Steven Sheehy
  * @author Johnny Lim
  * @since 1.1.0
  */
 @NonNullApi
 @NonNullFields
-@Deprecated
 public class Log4j2Metrics implements MeterBinder, AutoCloseable {
 
     private static final String METER_NAME = "log4j2.events";
