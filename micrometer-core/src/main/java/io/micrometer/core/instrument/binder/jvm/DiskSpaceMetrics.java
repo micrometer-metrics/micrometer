@@ -34,7 +34,7 @@ import static java.util.Collections.emptyList;
  *
  * @author jmcshane
  * @author Johnny Lim
- * @deprecated use {@link io.micrometer.core.instrument.binder.system.DiskSpaceMetrics} instead.
+ * @deprecated use {@code io.micrometer.binder.system.DiskSpaceMetrics} in the micrometer-binders module instead.
  */
 @Incubating(since = "1.1.0")
 @NonNullApi

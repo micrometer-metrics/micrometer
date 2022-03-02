@@ -17,10 +17,10 @@ package io.micrometer.samples.jersey3;
 
 import com.sun.net.httpserver.HttpHandler;
 import com.sun.net.httpserver.HttpServer;
+import io.micrometer.binder.jersey.server.DefaultJerseyTagsProvider;
+import io.micrometer.binder.jersey.server.MetricsApplicationEventListener;
 import io.micrometer.core.instrument.Clock;
 import io.micrometer.core.instrument.MeterRegistry;
-import io.micrometer.core.instrument.binder.jersey.server.DefaultJerseyTagsProvider;
-import io.micrometer.core.instrument.binder.jersey.server.MetricsApplicationEventListener;
 import io.micrometer.core.instrument.logging.LoggingMeterRegistry;
 import io.micrometer.core.instrument.logging.LoggingRegistryConfig;
 import jakarta.ws.rs.core.Application;

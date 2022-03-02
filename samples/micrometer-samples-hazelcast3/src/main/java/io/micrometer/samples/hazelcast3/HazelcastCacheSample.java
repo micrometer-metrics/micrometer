@@ -17,9 +17,9 @@ package io.micrometer.samples.hazelcast3;
 
 import com.hazelcast.core.Hazelcast;
 import com.hazelcast.core.IMap;
+import io.micrometer.binder.cache.HazelcastCacheMetrics;
 import io.micrometer.core.instrument.Clock;
 import io.micrometer.core.instrument.MeterRegistry;
-import io.micrometer.core.instrument.binder.cache.HazelcastCacheMetrics;
 import io.micrometer.core.instrument.logging.LoggingMeterRegistry;
 import io.micrometer.core.instrument.logging.LoggingRegistryConfig;
 

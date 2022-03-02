@@ -23,7 +23,7 @@ gradleEnterprise {
     server = 'https://ge.micrometer.io'
 }
 
-include 'micrometer-core'
+include 'micrometer-core', 'micrometer-binders'
 
 ['core', 'boot2', 'boot2-reactive', 'spring-integration', 'hazelcast', 'hazelcast3', 'javalin', 'jersey3'].each { sample ->
     include "micrometer-samples-$sample"

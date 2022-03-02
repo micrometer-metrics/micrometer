@@ -17,8 +17,8 @@ package io.micrometer.core.samples;
 
 import com.github.charithe.kafka.EphemeralKafkaBroker;
 import com.github.charithe.kafka.KafkaHelper;
+import io.micrometer.binder.kafka.KafkaClientMetrics;
 import io.micrometer.core.instrument.MeterRegistry;
-import io.micrometer.core.instrument.binder.kafka.KafkaClientMetrics;
 import io.micrometer.core.samples.utils.SampleConfig;
 import org.apache.kafka.clients.consumer.KafkaConsumer;
 import org.apache.kafka.clients.producer.KafkaProducer;

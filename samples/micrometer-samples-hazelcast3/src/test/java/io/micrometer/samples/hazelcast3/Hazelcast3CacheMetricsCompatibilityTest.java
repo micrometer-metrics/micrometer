@@ -18,9 +18,9 @@ package io.micrometer.samples.hazelcast3;
 import com.hazelcast.config.Config;
 import com.hazelcast.core.Hazelcast;
 import com.hazelcast.core.IMap;
+import io.micrometer.binder.cache.HazelcastCacheMetrics;
 import io.micrometer.core.instrument.binder.cache.CacheMeterBinder;
 import io.micrometer.core.instrument.binder.cache.CacheMeterBinderCompatibilityKit;
-import io.micrometer.core.instrument.binder.cache.HazelcastCacheMetrics;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 

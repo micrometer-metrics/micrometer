@@ -27,7 +27,7 @@ import java.util.function.ToDoubleFunction;
 import java.util.function.ToLongFunction;
 
 /**
- * @deprecated Since 1.4.0. Use {@link TimedHandler} instead.
+ * @deprecated Use {@code TimedHandler} instead.
  */
 @Deprecated
 @NonNullApi

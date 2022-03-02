@@ -4,6 +4,7 @@ plugins {
 
 dependencies {
     implementation project(":micrometer-core")
+    implementation project(':micrometer-binders')
     implementation project(":micrometer-registry-prometheus")
 
     implementation 'io.javalin:javalin:latest.release'
