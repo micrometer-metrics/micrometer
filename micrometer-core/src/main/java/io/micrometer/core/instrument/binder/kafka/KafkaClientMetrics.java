@@ -15,10 +15,10 @@
  */
 package io.micrometer.core.instrument.binder.kafka;
 
-import io.micrometer.api.annotation.Incubating;
-import io.micrometer.api.instrument.Tag;
-import io.micrometer.api.lang.NonNullApi;
-import io.micrometer.api.lang.NonNullFields;
+import io.micrometer.core.annotation.Incubating;
+import io.micrometer.core.instrument.Tag;
+import io.micrometer.core.lang.NonNullApi;
+import io.micrometer.core.lang.NonNullFields;
 import org.apache.kafka.clients.admin.AdminClient;
 import org.apache.kafka.clients.consumer.Consumer;
 import org.apache.kafka.clients.producer.Producer;
@@ -31,6 +31,7 @@ import org.apache.kafka.common.Metric;
  * <p>
  * Meter names have the following convention: {@code kafka.(metric_group).(metric_name)}
  *
+ * @deprecated Scheduled for removal in 2.0.0, please use {@code io.micrometer.binder.kafka.KafkaClientMetrics}
  * @author Jorge Quilcate
  * @see <a href="https://docs.confluent.io/current/kafka/monitoring.html">Kakfa monitoring
  * documentation</a>
@@ -39,6 +40,7 @@ import org.apache.kafka.common.Metric;
 @Incubating(since = "1.4.0")
 @NonNullApi
 @NonNullFields
+@Deprecated
 public class KafkaClientMetrics extends KafkaMetrics {
 
     /**

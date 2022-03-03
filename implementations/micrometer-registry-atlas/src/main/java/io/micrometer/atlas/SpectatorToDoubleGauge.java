@@ -16,7 +16,7 @@
 package io.micrometer.atlas;
 
 import com.netflix.spectator.api.*;
-import io.micrometer.api.lang.Nullable;
+import io.micrometer.core.lang.Nullable;
 
 import java.util.Collections;
 import java.util.function.ToDoubleFunction;

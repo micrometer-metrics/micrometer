@@ -19,10 +19,10 @@ import java.io.IOException;
 import java.time.Instant;
 import java.util.UUID;
 
-import io.micrometer.api.instrument.observation.Observation;
-import io.micrometer.api.instrument.Tags;
-import io.micrometer.api.instrument.observation.ObservationPredicate;
-import io.micrometer.api.instrument.simple.SimpleMeterRegistry;
+import io.micrometer.core.instrument.observation.Observation;
+import io.micrometer.core.instrument.Tags;
+import io.micrometer.core.instrument.observation.ObservationPredicate;
+import io.micrometer.core.instrument.simple.SimpleMeterRegistry;
 
 public class ObservationHandlerSample {
     private static final SimpleMeterRegistry registry = new SimpleMeterRegistry();

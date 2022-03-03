@@ -25,9 +25,9 @@ import io.grpc.ClientCall;
 import io.grpc.ClientInterceptor;
 import io.grpc.MethodDescriptor;
 import io.grpc.Status.Code;
-import io.micrometer.api.instrument.Counter;
-import io.micrometer.api.instrument.MeterRegistry;
-import io.micrometer.api.instrument.Timer;
+import io.micrometer.core.instrument.Counter;
+import io.micrometer.core.instrument.MeterRegistry;
+import io.micrometer.core.instrument.Timer;
 
 /**
  * A gRPC client interceptor that will collect metrics using the given {@link MeterRegistry}.
@@ -44,9 +44,11 @@ import io.micrometer.api.instrument.Timer;
  * channel.newCall(method, options);
  * </pre>
  *
+ * @deprecated Scheduled for removal in 2.0.0, please use {@code io.micrometer.binder.grpc.MetricCollectingClientInterceptor}
  * @author Daniel Theuke (daniel.theuke@heuboe.de)
  * @since 1.7.0
  */
+@Deprecated
 public class MetricCollectingClientInterceptor extends AbstractMetricCollectingInterceptor
         implements ClientInterceptor {
 

@@ -6,6 +6,7 @@ dependencies {
     implementation platform('io.projectreactor:reactor-bom:2020.0.+')
 
     implementation project(':micrometer-core')
+    implementation project(':micrometer-binders')
     implementation 'colt:colt'
     implementation('ch.qos.logback:logback-classic')
     implementation('org.slf4j:slf4j-api')

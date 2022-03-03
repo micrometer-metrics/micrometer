@@ -15,11 +15,11 @@
  */
 package io.micrometer.core.instrument.binder.db;
 
-import io.micrometer.api.instrument.*;
-import io.micrometer.api.instrument.binder.BaseUnits;
-import io.micrometer.api.instrument.binder.MeterBinder;
-import io.micrometer.api.lang.NonNullApi;
-import io.micrometer.api.lang.NonNullFields;
+import io.micrometer.core.instrument.*;
+import io.micrometer.core.instrument.binder.BaseUnits;
+import io.micrometer.core.instrument.binder.MeterBinder;
+import io.micrometer.core.lang.NonNullApi;
+import io.micrometer.core.lang.NonNullFields;
 
 import javax.sql.DataSource;
 import java.sql.Connection;
@@ -33,6 +33,7 @@ import java.util.function.DoubleSupplier;
 /**
  * {@link MeterBinder} for a PostgreSQL database.
  *
+ * @deprecated Scheduled for removal in 2.0.0, please use {@code io.micrometer.binder.db.PostgreSQLDatabaseMetrics}
  * @author Kristof Depypere
  * @author Jon Schneider
  * @author Johnny Lim
@@ -41,6 +42,7 @@ import java.util.function.DoubleSupplier;
  */
 @NonNullApi
 @NonNullFields
+@Deprecated
 public class PostgreSQLDatabaseMetrics implements MeterBinder {
 
     private static final String SELECT = "SELECT ";

@@ -15,12 +15,12 @@
  */
 package io.micrometer.statsd;
 
-import io.micrometer.api.instrument.AbstractDistributionSummary;
-import io.micrometer.api.instrument.Clock;
-import io.micrometer.api.instrument.distribution.DistributionStatisticConfig;
-import io.micrometer.api.instrument.distribution.TimeWindowMax;
-import io.micrometer.api.instrument.util.MeterEquivalence;
-import io.micrometer.api.lang.Nullable;
+import io.micrometer.core.instrument.AbstractDistributionSummary;
+import io.micrometer.core.instrument.Clock;
+import io.micrometer.core.instrument.distribution.DistributionStatisticConfig;
+import io.micrometer.core.instrument.distribution.TimeWindowMax;
+import io.micrometer.core.instrument.util.MeterEquivalence;
+import io.micrometer.core.lang.Nullable;
 import reactor.core.publisher.FluxSink;
 
 import java.util.concurrent.atomic.DoubleAdder;

@@ -21,11 +21,11 @@ import java.util.UUID;
 import java.util.function.Consumer;
 import java.util.function.Supplier;
 
-import io.micrometer.api.instrument.Tag;
-import io.micrometer.api.instrument.Tags;
-import io.micrometer.api.instrument.observation.Observation;
-import io.micrometer.api.instrument.observation.ObservationHandler;
-import io.micrometer.api.instrument.observation.ObservationRegistry;
+import io.micrometer.core.instrument.Tag;
+import io.micrometer.core.instrument.Tags;
+import io.micrometer.core.instrument.observation.Observation;
+import io.micrometer.core.instrument.observation.ObservationHandler;
+import io.micrometer.core.instrument.observation.ObservationRegistry;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;

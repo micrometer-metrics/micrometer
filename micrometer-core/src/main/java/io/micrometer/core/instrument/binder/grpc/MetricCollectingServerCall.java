@@ -20,7 +20,7 @@ import io.grpc.Metadata;
 import io.grpc.ServerCall;
 import io.grpc.Status;
 import io.grpc.Status.Code;
-import io.micrometer.api.instrument.Counter;
+import io.micrometer.core.instrument.Counter;
 
 /**
  * A simple forwarding server call that collects metrics.
@@ -28,7 +28,9 @@ import io.micrometer.api.instrument.Counter;
  * @param <Q> The type of message received one or more times from the client.
  * @param <A> The type of message sent one or more times to the client.
  * @author Daniel Theuke (daniel.theuke@heuboe.de)
+ * @deprecated Scheduled for removal in 2.0.0, please use {@code io.micrometer.binder.grpc.MetricCollectingServerCall}
  */
+@Deprecated
 class MetricCollectingServerCall<Q, A> extends SimpleForwardingServerCall<Q, A> {
 
     private final Counter responseCounter;

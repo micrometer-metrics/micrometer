@@ -15,17 +15,17 @@
  */
 package io.micrometer.health;
 
-import io.micrometer.api.annotation.Incubating;
-import io.micrometer.api.instrument.Clock;
-import io.micrometer.api.instrument.Meter;
-import io.micrometer.api.instrument.binder.MeterBinder;
-import io.micrometer.api.instrument.config.MeterFilter;
-import io.micrometer.api.instrument.config.MeterFilterReply;
-import io.micrometer.api.instrument.simple.CountingMode;
-import io.micrometer.api.instrument.simple.SimpleConfig;
-import io.micrometer.api.instrument.simple.SimpleMeterRegistry;
-import io.micrometer.api.instrument.util.NamedThreadFactory;
-import io.micrometer.api.lang.Nullable;
+import io.micrometer.core.annotation.Incubating;
+import io.micrometer.core.instrument.Clock;
+import io.micrometer.core.instrument.Meter;
+import io.micrometer.core.instrument.binder.MeterBinder;
+import io.micrometer.core.instrument.config.MeterFilter;
+import io.micrometer.core.instrument.config.MeterFilterReply;
+import io.micrometer.core.instrument.simple.CountingMode;
+import io.micrometer.core.instrument.simple.SimpleConfig;
+import io.micrometer.core.instrument.simple.SimpleMeterRegistry;
+import io.micrometer.core.instrument.util.NamedThreadFactory;
+import io.micrometer.core.lang.Nullable;
 
 import java.time.Duration;
 import java.util.ArrayList;

@@ -15,15 +15,15 @@
  */
 package io.micrometer.newrelic;
 
-import io.micrometer.api.instrument.config.validate.InvalidReason;
-import io.micrometer.api.instrument.config.validate.Validated;
-import io.micrometer.api.instrument.step.StepRegistryConfig;
-import io.micrometer.api.instrument.util.StringUtils;
-import io.micrometer.api.lang.Nullable;
+import io.micrometer.core.instrument.config.validate.InvalidReason;
+import io.micrometer.core.instrument.config.validate.Validated;
+import io.micrometer.core.instrument.step.StepRegistryConfig;
+import io.micrometer.core.instrument.util.StringUtils;
+import io.micrometer.core.lang.Nullable;
 
-import static io.micrometer.api.instrument.config.MeterRegistryConfigValidator.*;
-import static io.micrometer.api.instrument.util.StringUtils.isBlank;
-import static io.micrometer.api.instrument.config.validate.PropertyValidator.*;
+import static io.micrometer.core.instrument.config.MeterRegistryConfigValidator.*;
+import static io.micrometer.core.instrument.util.StringUtils.isBlank;
+import static io.micrometer.core.instrument.config.validate.PropertyValidator.*;
 
 /**
  * Configuration for {@link NewRelicMeterRegistry}.

@@ -15,14 +15,14 @@
  */
 package io.micrometer.core.instrument.binder.commonspool2;
 
-import io.micrometer.api.instrument.*;
-import io.micrometer.api.instrument.binder.BaseUnits;
-import io.micrometer.api.instrument.binder.MeterBinder;
-import io.micrometer.api.instrument.util.NamedThreadFactory;
-import io.micrometer.api.lang.NonNull;
-import io.micrometer.api.lang.Nullable;
-import io.micrometer.api.internal.logging.InternalLogger;
-import io.micrometer.api.internal.logging.InternalLoggerFactory;
+import io.micrometer.core.instrument.*;
+import io.micrometer.core.instrument.binder.BaseUnits;
+import io.micrometer.core.instrument.binder.MeterBinder;
+import io.micrometer.core.instrument.util.NamedThreadFactory;
+import io.micrometer.core.lang.NonNull;
+import io.micrometer.core.lang.Nullable;
+import io.micrometer.core.util.internal.logging.InternalLogger;
+import io.micrometer.core.util.internal.logging.InternalLoggerFactory;
 
 import javax.management.*;
 import java.lang.management.ManagementFactory;
@@ -40,9 +40,11 @@ import static java.util.Collections.emptyList;
  * Apache Commons Pool 2.x metrics collected from metrics exposed via the MBeanServer.
  * Metrics are exposed for each object pool.
  *
+ * @deprecated Scheduled for removal in 2.0.0, please use {@code io.micrometer.binder.commonspool2.CommonsObjectPool2Metrics}
  * @author Chao Chang
  * @since 1.6.0
  */
+@Deprecated
 public class CommonsObjectPool2Metrics implements MeterBinder, AutoCloseable {
     private static final InternalLogger log = InternalLoggerFactory.getInstance(CommonsObjectPool2Metrics.class);
     private static final String JMX_DOMAIN = "org.apache.commons.pool2";

@@ -15,7 +15,7 @@
  */
 package io.micrometer.azuremonitor;
 
-import io.micrometer.api.instrument.Meter.Type;
+import io.micrometer.core.instrument.Meter.Type;
 import org.junit.jupiter.api.Test;
 
 import static org.assertj.core.api.Assertions.assertThat;

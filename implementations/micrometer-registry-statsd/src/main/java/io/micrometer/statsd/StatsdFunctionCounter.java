@@ -15,8 +15,8 @@
  */
 package io.micrometer.statsd;
 
-import io.micrometer.api.instrument.FunctionCounter;
-import io.micrometer.api.instrument.cumulative.CumulativeFunctionCounter;
+import io.micrometer.core.instrument.FunctionCounter;
+import io.micrometer.core.instrument.cumulative.CumulativeFunctionCounter;
 import reactor.core.publisher.FluxSink;
 
 import java.util.concurrent.atomic.AtomicReference;

@@ -18,11 +18,11 @@ package io.micrometer.core.instrument.binder.hystrix;
 import com.netflix.hystrix.*;
 import com.netflix.hystrix.metric.HystrixCommandCompletionStream;
 import com.netflix.hystrix.strategy.metrics.HystrixMetricsPublisherCommand;
-import io.micrometer.api.instrument.*;
-import io.micrometer.api.lang.NonNullApi;
-import io.micrometer.api.lang.NonNullFields;
-import io.micrometer.api.internal.logging.InternalLogger;
-import io.micrometer.api.internal.logging.InternalLoggerFactory;
+import io.micrometer.core.instrument.*;
+import io.micrometer.core.lang.NonNullApi;
+import io.micrometer.core.lang.NonNullFields;
+import io.micrometer.core.util.internal.logging.InternalLogger;
+import io.micrometer.core.util.internal.logging.InternalLoggerFactory;
 
 import java.util.Arrays;
 import java.util.HashMap;
@@ -30,10 +30,12 @@ import java.util.Map;
 import java.util.concurrent.TimeUnit;
 
 /**
+ * @deprecated Scheduled for removal in 2.0.0, please use {@code io.micrometer.binder.hystrix.MicrometerMetricsPublisherCommand}
  * @author Clint Checketts
  */
 @NonNullApi
 @NonNullFields
+@Deprecated
 public class MicrometerMetricsPublisherCommand implements HystrixMetricsPublisherCommand {
     private static final InternalLogger LOG = InternalLoggerFactory.getInstance(MicrometerMetricsPublisherCommand.class);
 

@@ -16,13 +16,13 @@
 package io.micrometer.dynatrace.v2;
 
 import com.dynatrace.file.util.FileBasedConfigurationTestHelper;
-import io.micrometer.api.instrument.*;
-import io.micrometer.api.instrument.Timer;
-import io.micrometer.api.ipc.http.HttpSender;
-import io.micrometer.api.internal.logging.LogEvent;
-import io.micrometer.api.internal.logging.MockLogger;
-import io.micrometer.api.internal.logging.MockLoggerFactory;
-import io.micrometer.api.lang.Nullable;
+import io.micrometer.core.instrument.*;
+import io.micrometer.core.instrument.Timer;
+import io.micrometer.core.ipc.http.HttpSender;
+import io.micrometer.core.util.internal.logging.LogEvent;
+import io.micrometer.core.util.internal.logging.MockLogger;
+import io.micrometer.core.util.internal.logging.MockLoggerFactory;
+import io.micrometer.core.lang.Nullable;
 import io.micrometer.dynatrace.DynatraceApiVersion;
 import io.micrometer.dynatrace.DynatraceConfig;
 import io.micrometer.dynatrace.DynatraceMeterRegistry;
@@ -40,8 +40,8 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.stream.Collectors;
 
-import static io.micrometer.api.instrument.MockClock.clock;
-import static io.micrometer.api.internal.logging.InternalLogLevel.ERROR;
+import static io.micrometer.core.instrument.MockClock.clock;
+import static io.micrometer.core.util.internal.logging.InternalLogLevel.ERROR;
 import static java.lang.Double.NaN;
 import static java.lang.Double.POSITIVE_INFINITY;
 import static java.lang.Double.NEGATIVE_INFINITY;

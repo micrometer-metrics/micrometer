@@ -15,7 +15,7 @@
  */
 package io.micrometer.opentsdb;
 
-import io.micrometer.api.instrument.*;
+import io.micrometer.core.instrument.*;
 import io.micrometer.core.Issue;
 import org.junit.jupiter.api.Test;
 

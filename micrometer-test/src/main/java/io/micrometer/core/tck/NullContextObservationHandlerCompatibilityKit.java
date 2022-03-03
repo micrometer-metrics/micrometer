@@ -15,10 +15,10 @@
  */
 package io.micrometer.core.tck;
 
-import io.micrometer.api.instrument.observation.Observation;
-import io.micrometer.api.instrument.observation.ObservationHandler;
-import io.micrometer.api.instrument.observation.ObservationRegistry;
-import io.micrometer.api.instrument.simple.SimpleMeterRegistry;
+import io.micrometer.core.instrument.observation.Observation;
+import io.micrometer.core.instrument.observation.ObservationHandler;
+import io.micrometer.core.instrument.observation.ObservationRegistry;
+import io.micrometer.core.instrument.simple.SimpleMeterRegistry;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;

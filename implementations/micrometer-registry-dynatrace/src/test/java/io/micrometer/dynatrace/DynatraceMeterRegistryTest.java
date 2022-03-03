@@ -15,10 +15,10 @@
  */
 package io.micrometer.dynatrace;
 
-import io.micrometer.api.instrument.Counter;
-import io.micrometer.api.instrument.MockClock;
-import io.micrometer.api.instrument.Timer;
-import io.micrometer.api.ipc.http.HttpSender;
+import io.micrometer.core.instrument.Counter;
+import io.micrometer.core.instrument.MockClock;
+import io.micrometer.core.instrument.Timer;
+import io.micrometer.core.ipc.http.HttpSender;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.ArgumentCaptor;

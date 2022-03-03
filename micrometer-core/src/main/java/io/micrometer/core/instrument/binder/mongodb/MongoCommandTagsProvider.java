@@ -17,15 +17,17 @@ package io.micrometer.core.instrument.binder.mongodb;
 
 import com.mongodb.event.CommandEvent;
 import com.mongodb.event.CommandStartedEvent;
-import io.micrometer.api.instrument.Tag;
+import io.micrometer.core.instrument.Tag;
 
 /**
  * Provides {@link Tag Tags} for Mongo command metrics.
  *
+ * @deprecated Scheduled for removal in 2.0.0, please use {@code io.micrometer.binder.mongodb.MongoCommandTagsProvider}
  * @author Chris Bono
  * @since 1.7.0
  */
 @FunctionalInterface
+@Deprecated
 public interface MongoCommandTagsProvider {
 
     /**

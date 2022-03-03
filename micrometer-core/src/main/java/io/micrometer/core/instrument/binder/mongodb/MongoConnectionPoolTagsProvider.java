@@ -16,15 +16,17 @@
 package io.micrometer.core.instrument.binder.mongodb;
 
 import com.mongodb.event.ConnectionPoolCreatedEvent;
-import io.micrometer.api.instrument.Tag;
+import io.micrometer.core.instrument.Tag;
 
 /**
  * Provides {@link Tag Tags} for Mongo connection pool metrics.
  *
+ * @deprecated Scheduled for removal in 2.0.0, please use {@code io.micrometer.binder.mongodb.MongoConnectionPoolTagsProvider}
  * @author Gustavo Monarin
  * @since 1.7.0
  */
 @FunctionalInterface
+@Deprecated
 public interface MongoConnectionPoolTagsProvider {
 
     /**

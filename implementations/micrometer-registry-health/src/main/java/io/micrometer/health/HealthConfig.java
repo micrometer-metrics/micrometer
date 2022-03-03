@@ -15,11 +15,11 @@
  */
 package io.micrometer.health;
 
-import io.micrometer.api.instrument.config.MeterRegistryConfig;
+import io.micrometer.core.instrument.config.MeterRegistryConfig;
 
 import java.time.Duration;
 
-import static io.micrometer.api.instrument.config.validate.PropertyValidator.getDuration;
+import static io.micrometer.core.instrument.config.validate.PropertyValidator.getDuration;
 
 /**
  * {@link MeterRegistryConfig} for {@link HealthMeterRegistry}.

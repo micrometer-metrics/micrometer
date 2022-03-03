@@ -15,16 +15,18 @@
  */
 package io.micrometer.core.instrument.binder.jvm;
 
-import io.micrometer.api.instrument.Gauge;
-import io.micrometer.api.instrument.MeterRegistry;
-import io.micrometer.api.instrument.binder.MeterBinder;
+import io.micrometer.core.instrument.Gauge;
+import io.micrometer.core.instrument.MeterRegistry;
+import io.micrometer.core.instrument.binder.MeterBinder;
 
 /**
  * {@link MeterBinder} for JVM information.
  *
+ * @deprecated Scheduled for removal in 2.0.0, please use {@code io.micrometer.binder.jvm.JvmInfoMetrics}
  * @author Erin Schnabel
  * @since 1.7.0
  */
+@Deprecated
 public class JvmInfoMetrics implements MeterBinder {
 
     @Override

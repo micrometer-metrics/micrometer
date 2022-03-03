@@ -15,12 +15,12 @@
  */
 package io.micrometer.core.instrument.binder.tomcat;
 
-import io.micrometer.api.instrument.*;
-import io.micrometer.api.instrument.binder.BaseUnits;
-import io.micrometer.api.instrument.binder.MeterBinder;
-import io.micrometer.api.lang.NonNullApi;
-import io.micrometer.api.lang.NonNullFields;
-import io.micrometer.api.lang.Nullable;
+import io.micrometer.core.instrument.*;
+import io.micrometer.core.instrument.binder.BaseUnits;
+import io.micrometer.core.instrument.binder.MeterBinder;
+import io.micrometer.core.lang.NonNullApi;
+import io.micrometer.core.lang.NonNullFields;
+import io.micrometer.core.lang.Nullable;
 import org.apache.catalina.Manager;
 
 import javax.management.*;
@@ -38,12 +38,14 @@ import java.util.function.BiConsumer;
  * <p>Note: the {@link #close()} method should be called when the application shuts down
  * to clean up listeners this binder registers.
  *
+ * @deprecated Scheduled for removal in 2.0.0, please use {@code io.micrometer.binder.tomcat.TomcatMetrics}
  * @author Clint Checketts
  * @author Jon Schneider
  * @author Johnny Lim
  */
 @NonNullApi
 @NonNullFields
+@Deprecated
 public class TomcatMetrics implements MeterBinder, AutoCloseable {
 
     private static final String JMX_DOMAIN_EMBEDDED = "Tomcat";

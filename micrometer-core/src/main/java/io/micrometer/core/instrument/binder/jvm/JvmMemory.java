@@ -15,7 +15,7 @@
  */
 package io.micrometer.core.instrument.binder.jvm;
 
-import io.micrometer.api.lang.Nullable;
+import io.micrometer.core.lang.Nullable;
 
 import java.lang.management.ManagementFactory;
 import java.lang.management.MemoryPoolMXBean;
@@ -24,6 +24,10 @@ import java.lang.management.MemoryUsage;
 import java.util.function.ToLongFunction;
 import java.util.stream.Stream;
 
+/**
+ * @deprecated Scheduled for removal in 2.0.0, please use {@code io.micrometer.binder.jvm.JvmMemory}
+ */
+@Deprecated
 class JvmMemory {
 
     private JvmMemory() {

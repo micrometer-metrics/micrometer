@@ -17,8 +17,8 @@ package io.micrometer.statsd;
 
 import ch.qos.logback.classic.Level;
 import ch.qos.logback.classic.Logger;
-import io.micrometer.api.instrument.MeterRegistry;
-import io.micrometer.api.instrument.MockClock;
+import io.micrometer.core.instrument.MeterRegistry;
+import io.micrometer.core.instrument.MockClock;
 import io.micrometer.core.tck.MeterRegistryCompatibilityKit;
 import org.junit.jupiter.api.BeforeAll;
 import org.slf4j.LoggerFactory;

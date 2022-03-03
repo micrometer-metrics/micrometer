@@ -15,9 +15,9 @@
  */
 package io.micrometer.core.instrument.binder.jersey.server;
 
-import io.micrometer.api.instrument.Tag;
-import io.micrometer.api.instrument.transport.http.tags.Outcome;
-import io.micrometer.api.instrument.util.StringUtils;
+import io.micrometer.core.instrument.Tag;
+import io.micrometer.core.instrument.binder.http.Outcome;
+import io.micrometer.core.instrument.util.StringUtils;
 import org.glassfish.jersey.server.ContainerRequest;
 import org.glassfish.jersey.server.ContainerResponse;
 import org.glassfish.jersey.server.ExtendedUriInfo;
@@ -31,10 +31,12 @@ import java.util.regex.Pattern;
  * Factory methods for {@link Tag Tags} associated with a request-response exchange that
  * is handled by Jersey server.
  *
+ * @deprecated Scheduled for removal in 2.0.0, please use {@code io.micrometer.binder.jersey.server.JerseyTags}
  * @author Michael Weirauch
  * @author Johnny Lim
  * @since 1.8.0
  */
+@Deprecated
 public final class JerseyTags {
 
     private static final Tag URI_NOT_FOUND = Tag.of("uri", "NOT_FOUND");

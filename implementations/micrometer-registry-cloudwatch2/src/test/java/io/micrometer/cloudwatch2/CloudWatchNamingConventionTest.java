@@ -15,7 +15,7 @@
  */
 package io.micrometer.cloudwatch2;
 
-import io.micrometer.api.instrument.config.NamingConvention;
+import io.micrometer.core.instrument.config.NamingConvention;
 import org.junit.jupiter.api.Test;
 
 import java.util.Collections;

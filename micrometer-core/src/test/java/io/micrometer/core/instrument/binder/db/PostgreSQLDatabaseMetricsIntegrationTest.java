@@ -15,10 +15,10 @@
  */
 package io.micrometer.core.instrument.binder.db;
 
-import io.micrometer.api.instrument.MeterRegistry;
-import io.micrometer.api.instrument.Tags;
-import io.micrometer.api.instrument.search.RequiredSearch;
-import io.micrometer.api.instrument.simple.SimpleMeterRegistry;
+import io.micrometer.core.instrument.MeterRegistry;
+import io.micrometer.core.instrument.Tags;
+import io.micrometer.core.instrument.search.RequiredSearch;
+import io.micrometer.core.instrument.simple.SimpleMeterRegistry;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;

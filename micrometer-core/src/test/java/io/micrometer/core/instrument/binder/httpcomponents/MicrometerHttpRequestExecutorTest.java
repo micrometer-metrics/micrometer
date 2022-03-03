@@ -16,13 +16,13 @@
 package io.micrometer.core.instrument.binder.httpcomponents;
 
 import com.github.tomakehurst.wiremock.WireMockServer;
-import io.micrometer.api.instrument.MeterRegistry;
-import io.micrometer.api.instrument.MockClock;
-import io.micrometer.api.instrument.Tag;
-import io.micrometer.api.instrument.Tags;
-import io.micrometer.api.instrument.search.MeterNotFoundException;
-import io.micrometer.api.instrument.simple.SimpleConfig;
-import io.micrometer.api.instrument.simple.SimpleMeterRegistry;
+import io.micrometer.core.instrument.MeterRegistry;
+import io.micrometer.core.instrument.MockClock;
+import io.micrometer.core.instrument.Tag;
+import io.micrometer.core.instrument.Tags;
+import io.micrometer.core.instrument.search.MeterNotFoundException;
+import io.micrometer.core.instrument.simple.SimpleConfig;
+import io.micrometer.core.instrument.simple.SimpleMeterRegistry;
 import org.apache.http.client.HttpClient;
 import org.apache.http.client.methods.HttpGet;
 import org.apache.http.client.methods.HttpPost;

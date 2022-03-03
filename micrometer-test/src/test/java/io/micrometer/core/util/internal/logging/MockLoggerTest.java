@@ -17,17 +17,14 @@ package io.micrometer.core.util.internal.logging;
 
 import java.io.IOException;
 
-import io.micrometer.api.internal.logging.InternalLogLevel;
-import io.micrometer.api.internal.logging.MockLogger;
-import io.micrometer.api.internal.logging.MockLoggerFactory;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Test;
 
-import static io.micrometer.api.internal.logging.InternalLogLevel.DEBUG;
-import static io.micrometer.api.internal.logging.InternalLogLevel.ERROR;
-import static io.micrometer.api.internal.logging.InternalLogLevel.INFO;
-import static io.micrometer.api.internal.logging.InternalLogLevel.TRACE;
-import static io.micrometer.api.internal.logging.InternalLogLevel.WARN;
+import static io.micrometer.core.util.internal.logging.InternalLogLevel.DEBUG;
+import static io.micrometer.core.util.internal.logging.InternalLogLevel.ERROR;
+import static io.micrometer.core.util.internal.logging.InternalLogLevel.INFO;
+import static io.micrometer.core.util.internal.logging.InternalLogLevel.TRACE;
+import static io.micrometer.core.util.internal.logging.InternalLogLevel.WARN;
 import static org.assertj.core.api.Assertions.assertThat;
 
 /**

@@ -1,7 +1,8 @@
 description 'Test compatibility kit for extensions of Micrometer'
 
 dependencies {
-    api project(':micrometer-api')
+    api project(':micrometer-core')
+    api project(':micrometer-binders')
 
     api 'org.assertj:assertj-core'
 

@@ -15,10 +15,10 @@
  */
 package io.micrometer.core.instrument.binder.jersey.server;
 
-import io.micrometer.api.annotation.Timed;
-import io.micrometer.api.instrument.LongTaskTimer;
-import io.micrometer.api.instrument.MeterRegistry;
-import io.micrometer.api.instrument.Timer;
+import io.micrometer.core.annotation.Timed;
+import io.micrometer.core.instrument.LongTaskTimer;
+import io.micrometer.core.instrument.MeterRegistry;
+import io.micrometer.core.instrument.Timer;
 import org.glassfish.jersey.server.ContainerRequest;
 import org.glassfish.jersey.server.model.ResourceMethod;
 import org.glassfish.jersey.server.monitoring.RequestEvent;
@@ -32,10 +32,12 @@ import static java.util.Objects.requireNonNull;
 /**
  * {@link RequestEventListener} recording timings for Jersey server requests.
  *
+ * @deprecated Scheduled for removal in 2.0.0, please use {@code io.micrometer.binder.jersey.server.MetricsRequestEventListener}
  * @author Michael Weirauch
  * @author Jon Schneider
  * @since 1.8.0
  */
+@Deprecated
 public class MetricsRequestEventListener implements RequestEventListener {
 
     private final Map<ContainerRequest, Timer.Sample> shortTaskSample = Collections

@@ -16,12 +16,12 @@
 package io.micrometer.core.instrument.binder.okhttp3;
 
 import com.github.tomakehurst.wiremock.WireMockServer;
-import io.micrometer.api.instrument.MeterRegistry;
-import io.micrometer.api.instrument.MockClock;
-import io.micrometer.api.instrument.Tag;
-import io.micrometer.api.instrument.Tags;
-import io.micrometer.api.instrument.simple.SimpleConfig;
-import io.micrometer.api.instrument.simple.SimpleMeterRegistry;
+import io.micrometer.core.instrument.MeterRegistry;
+import io.micrometer.core.instrument.MockClock;
+import io.micrometer.core.instrument.Tag;
+import io.micrometer.core.instrument.Tags;
+import io.micrometer.core.instrument.simple.SimpleConfig;
+import io.micrometer.core.instrument.simple.SimpleMeterRegistry;
 import okhttp3.Cache;
 import okhttp3.OkHttpClient;
 import okhttp3.Request;

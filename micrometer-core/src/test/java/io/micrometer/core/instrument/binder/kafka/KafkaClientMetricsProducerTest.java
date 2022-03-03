@@ -15,9 +15,9 @@
  */
 package io.micrometer.core.instrument.binder.kafka;
 
-import io.micrometer.api.instrument.MeterRegistry;
-import io.micrometer.api.instrument.Tags;
-import io.micrometer.api.instrument.simple.SimpleMeterRegistry;
+import io.micrometer.core.instrument.MeterRegistry;
+import io.micrometer.core.instrument.Tags;
+import io.micrometer.core.instrument.simple.SimpleMeterRegistry;
 import java.util.Properties;
 import org.apache.kafka.clients.producer.KafkaProducer;
 import org.apache.kafka.clients.producer.Producer;

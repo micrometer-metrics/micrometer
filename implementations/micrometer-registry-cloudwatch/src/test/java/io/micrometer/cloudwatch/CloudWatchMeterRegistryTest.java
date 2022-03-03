@@ -17,7 +17,7 @@ package io.micrometer.cloudwatch;
 
 import com.amazonaws.services.cloudwatch.model.Dimension;
 import com.amazonaws.services.cloudwatch.model.MetricDatum;
-import io.micrometer.api.instrument.*;
+import io.micrometer.core.instrument.*;
 import org.junit.jupiter.api.Test;
 import org.mockito.ArgumentCaptor;
 
@@ -31,10 +31,10 @@ import java.util.function.Supplier;
 import java.util.stream.Stream;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static io.micrometer.api.instrument.Meter.Id;
-import static io.micrometer.api.instrument.Meter.Type;
-import static io.micrometer.api.instrument.Meter.Type.DISTRIBUTION_SUMMARY;
-import static io.micrometer.api.instrument.Meter.Type.TIMER;
+import static io.micrometer.core.instrument.Meter.Id;
+import static io.micrometer.core.instrument.Meter.Type;
+import static io.micrometer.core.instrument.Meter.Type.DISTRIBUTION_SUMMARY;
+import static io.micrometer.core.instrument.Meter.Type.TIMER;
 import static org.mockito.Mockito.*;
 
 /**

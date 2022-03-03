@@ -15,13 +15,13 @@
  */
 package io.micrometer.core.instrument.binder.system;
 
-import io.micrometer.api.instrument.Gauge;
-import io.micrometer.api.instrument.MeterRegistry;
-import io.micrometer.api.instrument.Tag;
-import io.micrometer.api.instrument.binder.MeterBinder;
-import io.micrometer.api.lang.NonNullApi;
-import io.micrometer.api.lang.NonNullFields;
-import io.micrometer.api.lang.Nullable;
+import io.micrometer.core.instrument.Gauge;
+import io.micrometer.core.instrument.MeterRegistry;
+import io.micrometer.core.instrument.Tag;
+import io.micrometer.core.instrument.binder.MeterBinder;
+import io.micrometer.core.lang.NonNullApi;
+import io.micrometer.core.lang.NonNullFields;
+import io.micrometer.core.lang.Nullable;
 
 import java.lang.management.ManagementFactory;
 import java.lang.management.OperatingSystemMXBean;
@@ -42,6 +42,7 @@ import static java.util.Objects.requireNonNull;
  *     <li>J9</li>
  * </ul>
  *
+ * @deprecated Scheduled for removal in 2.0.0, please use {@code io.micrometer.binder.system.ProcessorMetrics}
  * @author Jon Schneider
  * @author Michael Weirauch
  * @author Clint Checketts
@@ -49,6 +50,7 @@ import static java.util.Objects.requireNonNull;
  */
 @NonNullApi
 @NonNullFields
+@Deprecated
 public class ProcessorMetrics implements MeterBinder {
 
     /** List of public, exported interface class names from supported JVM implementations. */

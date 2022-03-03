@@ -15,12 +15,12 @@
  */
 package io.micrometer.core.instrument.binder.system;
 
-import io.micrometer.api.instrument.MeterRegistry;
-import io.micrometer.api.instrument.Tag;
-import io.micrometer.api.instrument.TimeGauge;
-import io.micrometer.api.instrument.binder.MeterBinder;
-import io.micrometer.api.lang.NonNullApi;
-import io.micrometer.api.lang.NonNullFields;
+import io.micrometer.core.instrument.MeterRegistry;
+import io.micrometer.core.instrument.Tag;
+import io.micrometer.core.instrument.TimeGauge;
+import io.micrometer.core.instrument.binder.MeterBinder;
+import io.micrometer.core.lang.NonNullApi;
+import io.micrometer.core.lang.NonNullFields;
 
 import java.lang.management.ManagementFactory;
 import java.lang.management.RuntimeMXBean;
@@ -31,10 +31,12 @@ import static java.util.Collections.emptyList;
 /**
  * Uptime metrics.
  *
+ * @deprecated Scheduled for removal in 2.0.0, please use {@code io.micrometer.binder.system.UptimeMetrics}
  * @author Michael Weirauch
  */
 @NonNullApi
 @NonNullFields
+@Deprecated
 public class UptimeMetrics implements MeterBinder {
 
     private final RuntimeMXBean runtimeMXBean;

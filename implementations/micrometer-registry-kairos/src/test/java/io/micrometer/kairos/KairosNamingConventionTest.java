@@ -15,7 +15,7 @@
  */
 package io.micrometer.kairos;
 
-import io.micrometer.api.instrument.Meter;
+import io.micrometer.core.instrument.Meter;
 import org.junit.jupiter.api.Test;
 
 import static org.assertj.core.api.Assertions.assertThat;

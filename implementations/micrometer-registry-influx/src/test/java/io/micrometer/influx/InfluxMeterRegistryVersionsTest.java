@@ -22,11 +22,11 @@ import java.util.concurrent.TimeUnit;
 
 import com.github.tomakehurst.wiremock.WireMockServer;
 import com.github.tomakehurst.wiremock.client.BasicCredentials;
-import io.micrometer.api.instrument.Counter;
-import io.micrometer.api.instrument.MockClock;
-import io.micrometer.api.instrument.config.validate.Validated;
-import io.micrometer.api.instrument.config.validate.ValidationException;
-import io.micrometer.api.lang.NonNull;
+import io.micrometer.core.instrument.Counter;
+import io.micrometer.core.instrument.MockClock;
+import io.micrometer.core.instrument.config.validate.Validated;
+import io.micrometer.core.instrument.config.validate.ValidationException;
+import io.micrometer.core.lang.NonNull;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import ru.lanwen.wiremock.ext.WiremockResolver;

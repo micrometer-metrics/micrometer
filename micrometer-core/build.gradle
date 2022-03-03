@@ -1,7 +1,26 @@
 description 'Core module of Micrometer containing instrumentation of third-party libraries using micrometer-api'
 
 dependencies {
-    api project(':micrometer-api')
+    // TODO(anuraaga): HdrHistogram is exposed in the micrometer API but probably shouldn't be
+    api 'org.hdrhistogram:HdrHistogram'
+    implementation('org.latencyutils:LatencyUtils') {
+        exclude group: 'org.hdrhistogram', module: 'HdrHistogram'
+    }
+
+    optionalApi 'io.micrometer:context-propagation-api'
+
+    // internal logging facade
+    optionalApi 'org.slf4j:slf4j-api'
+
+    // Aspects
+    optionalApi 'org.aspectj:aspectjweaver'
+
+    // HttpServlet TagsProvider
+    optionalApi 'javax.servlet:javax.servlet-api'
+
+    // TODO move dropwizard out of core module?
+    // DropwizardMeterRegistry for e.g. JMX registry
+    optionalApi 'io.dropwizard.metrics:metrics-core'
 
     // cache monitoring
     optionalApi 'com.google.guava:guava'
@@ -41,6 +60,18 @@ dependencies {
 
     testImplementation 'io.projectreactor:reactor-test'
 
+    // dependency injection tests
+    testImplementation 'javax.inject:javax.inject'
+    testImplementation 'javax.annotation:javax.annotation-api'
+    testImplementation 'org.springframework:spring-context'
+    testImplementation 'com.google.inject:guice'
+    // Uncomment these if you are interested in testing injection with dagger in MeterRegistryInjectionTest
+//    testImplementation 'com.google.dagger:dagger'
+//    testAnnotationProcessor 'com.google.dagger:dagger-compiler'
+
+    // for testing HttpSender implementations
+    testImplementation 'com.github.tomakehurst:wiremock-jre8-standalone'
+
     // JUnit 5
     testImplementation 'org.junit.jupiter:junit-jupiter'
     testImplementation 'com.tngtech.archunit:archunit-junit5'
@@ -48,12 +79,6 @@ dependencies {
     testImplementation 'org.mockito:mockito-inline'
 
     testImplementation 'org.hsqldb:hsqldb'
-
-    // dependency injection tests
-    testImplementation 'javax.inject:javax.inject'
-    testImplementation 'org.springframework:spring-context'
-    testImplementation 'com.google.inject:guice'
-
     testImplementation 'com.h2database:h2'
 
     // Uncomment these if you are interested in testing injection with dagger in MeterRegistryInjectionTest

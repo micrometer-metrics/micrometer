@@ -18,11 +18,11 @@ package io.micrometer.atlas;
 import com.netflix.spectator.api.Measurement;
 import com.netflix.spectator.api.Statistic;
 import com.netflix.spectator.api.Timer;
-import io.micrometer.api.instrument.AbstractTimer;
-import io.micrometer.api.instrument.Clock;
-import io.micrometer.api.instrument.distribution.DistributionStatisticConfig;
-import io.micrometer.api.instrument.distribution.pause.PauseDetector;
-import io.micrometer.api.instrument.util.TimeUtils;
+import io.micrometer.core.instrument.AbstractTimer;
+import io.micrometer.core.instrument.Clock;
+import io.micrometer.core.instrument.distribution.DistributionStatisticConfig;
+import io.micrometer.core.instrument.distribution.pause.PauseDetector;
+import io.micrometer.core.instrument.util.TimeUtils;
 
 import java.util.concurrent.TimeUnit;
 

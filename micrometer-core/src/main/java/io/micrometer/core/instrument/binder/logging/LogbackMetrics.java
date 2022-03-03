@@ -21,13 +21,13 @@ import ch.qos.logback.classic.LoggerContext;
 import ch.qos.logback.classic.spi.LoggerContextListener;
 import ch.qos.logback.classic.turbo.TurboFilter;
 import ch.qos.logback.core.spi.FilterReply;
-import io.micrometer.api.instrument.Counter;
-import io.micrometer.api.instrument.MeterRegistry;
-import io.micrometer.api.instrument.Tag;
-import io.micrometer.api.instrument.binder.BaseUnits;
-import io.micrometer.api.instrument.binder.MeterBinder;
-import io.micrometer.api.lang.NonNullApi;
-import io.micrometer.api.lang.NonNullFields;
+import io.micrometer.core.instrument.Counter;
+import io.micrometer.core.instrument.MeterRegistry;
+import io.micrometer.core.instrument.Tag;
+import io.micrometer.core.instrument.binder.BaseUnits;
+import io.micrometer.core.instrument.binder.MeterBinder;
+import io.micrometer.core.lang.NonNullApi;
+import io.micrometer.core.lang.NonNullFields;
 import org.slf4j.LoggerFactory;
 import org.slf4j.Marker;
 
@@ -37,10 +37,12 @@ import java.util.Map;
 import static java.util.Collections.emptyList;
 
 /**
+ * @deprecated Scheduled for removal in 2.0.0, please use {@code io.micrometer.binder.logging.LogbackMetrics}
  * @author Jon Schneider
  */
 @NonNullApi
 @NonNullFields
+@Deprecated
 public class LogbackMetrics implements MeterBinder, AutoCloseable {
     static ThreadLocal<Boolean> ignoreMetrics = new ThreadLocal<>();
 
@@ -129,6 +131,7 @@ public class LogbackMetrics implements MeterBinder, AutoCloseable {
 
 @NonNullApi
 @NonNullFields
+@Deprecated
 class MetricsTurboFilter extends TurboFilter {
     private final Counter errorCounter;
     private final Counter warnCounter;

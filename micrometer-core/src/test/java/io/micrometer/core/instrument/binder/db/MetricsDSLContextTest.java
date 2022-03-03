@@ -15,10 +15,10 @@
  */
 package io.micrometer.core.instrument.binder.db;
 
-import io.micrometer.api.instrument.MeterRegistry;
-import io.micrometer.api.instrument.Tags;
-import io.micrometer.api.instrument.simple.SimpleMeterRegistry;
-import io.micrometer.api.lang.NonNull;
+import io.micrometer.core.instrument.MeterRegistry;
+import io.micrometer.core.instrument.Tags;
+import io.micrometer.core.instrument.simple.SimpleMeterRegistry;
+import io.micrometer.core.lang.NonNull;
 import org.jooq.*;
 import org.jooq.Record;
 import org.jooq.exception.DataAccessException;

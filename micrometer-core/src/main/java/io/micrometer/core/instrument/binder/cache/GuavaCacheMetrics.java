@@ -18,21 +18,22 @@ package io.micrometer.core.instrument.binder.cache;
 import com.google.common.cache.Cache;
 import com.google.common.cache.CacheBuilder;
 import com.google.common.cache.LoadingCache;
-import io.micrometer.api.instrument.*;
-import io.micrometer.api.instrument.cache.CacheMeterBinder;
-import io.micrometer.api.lang.NonNullApi;
-import io.micrometer.api.lang.NonNullFields;
-import io.micrometer.api.lang.Nullable;
+import io.micrometer.core.instrument.*;
+import io.micrometer.core.lang.NonNullApi;
+import io.micrometer.core.lang.NonNullFields;
+import io.micrometer.core.lang.Nullable;
 
 import java.util.concurrent.TimeUnit;
 import java.util.function.Function;
 import java.util.function.ToLongFunction;
 
 /**
+ * @deprecated Scheduled for removal in 2.0.0, please use {@code io.micrometer.binder.cache.GuavaCacheMetrics}
  * @author Jon Schneider
  */
 @NonNullApi
 @NonNullFields
+@Deprecated
 public class GuavaCacheMetrics<K, V, C extends Cache<K, V>> extends CacheMeterBinder<C> {
     /**
      * Record metrics on a Guava cache. You must call {@link CacheBuilder#recordStats()} prior to building the cache

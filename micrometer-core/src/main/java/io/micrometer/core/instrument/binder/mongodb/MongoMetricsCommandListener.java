@@ -17,17 +17,18 @@ package io.micrometer.core.instrument.binder.mongodb;
 
 import com.mongodb.client.MongoClient;
 import com.mongodb.event.*;
-import io.micrometer.api.annotation.Incubating;
-import io.micrometer.api.instrument.MeterRegistry;
-import io.micrometer.api.instrument.Timer;
-import io.micrometer.api.lang.NonNullApi;
-import io.micrometer.api.lang.NonNullFields;
+import io.micrometer.core.annotation.Incubating;
+import io.micrometer.core.instrument.MeterRegistry;
+import io.micrometer.core.instrument.Timer;
+import io.micrometer.core.lang.NonNullApi;
+import io.micrometer.core.lang.NonNullFields;
 
 import java.util.concurrent.TimeUnit;
 
 /**
  * {@link CommandListener} for collecting command metrics from {@link MongoClient}.
  *
+ * @deprecated Scheduled for removal in 2.0.0, please use {@code io.micrometer.binder.mongodb.MongoMetricsCommandListener}
  * @author Christophe Bornet
  * @author Chris Bono
  * @since 1.2.0
@@ -35,6 +36,7 @@ import java.util.concurrent.TimeUnit;
 @NonNullApi
 @NonNullFields
 @Incubating(since = "1.2.0")
+@Deprecated
 public class MongoMetricsCommandListener implements CommandListener {
 
     private final MeterRegistry registry;

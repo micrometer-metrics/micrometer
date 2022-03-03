@@ -17,9 +17,9 @@ package io.micrometer.core.tck;
 
 import java.time.Duration;
 
-import io.micrometer.api.instrument.observation.ObservationRegistry;
-import io.micrometer.api.instrument.simple.SimpleConfig;
-import io.micrometer.api.instrument.simple.SimpleMeterRegistry;
+import io.micrometer.core.instrument.observation.ObservationRegistry;
+import io.micrometer.core.instrument.simple.SimpleConfig;
+import io.micrometer.core.instrument.simple.SimpleMeterRegistry;
 
 class ObservationRegistryCompatibilityKitTests extends ObservationRegistryCompatibilityKit {
 

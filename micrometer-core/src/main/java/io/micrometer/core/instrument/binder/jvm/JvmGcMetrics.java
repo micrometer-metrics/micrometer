@@ -17,15 +17,15 @@ package io.micrometer.core.instrument.binder.jvm;
 
 import com.sun.management.GarbageCollectionNotificationInfo;
 import com.sun.management.GcInfo;
-import io.micrometer.api.instrument.*;
-import io.micrometer.api.instrument.Timer;
-import io.micrometer.api.instrument.binder.BaseUnits;
-import io.micrometer.api.instrument.binder.MeterBinder;
-import io.micrometer.api.lang.NonNullApi;
-import io.micrometer.api.lang.NonNullFields;
-import io.micrometer.api.lang.Nullable;
-import io.micrometer.api.internal.logging.InternalLogger;
-import io.micrometer.api.internal.logging.InternalLoggerFactory;
+import io.micrometer.core.instrument.*;
+import io.micrometer.core.instrument.Timer;
+import io.micrometer.core.instrument.binder.BaseUnits;
+import io.micrometer.core.instrument.binder.MeterBinder;
+import io.micrometer.core.lang.NonNullApi;
+import io.micrometer.core.lang.NonNullFields;
+import io.micrometer.core.lang.Nullable;
+import io.micrometer.core.util.internal.logging.InternalLogger;
+import io.micrometer.core.util.internal.logging.InternalLoggerFactory;
 
 import javax.management.ListenerNotFoundException;
 import javax.management.Notification;
@@ -51,12 +51,14 @@ import static java.util.Collections.emptyList;
  * This provides metrics for OpenJDK garbage collectors (serial, parallel, G1, Shenandoah, ZGC)
  * and for OpenJ9 garbage collectors (gencon, balanced, opthruput, optavgpause, metronome).
  *
+ * @deprecated Scheduled for removal in 2.0.0, please use {@code io.micrometer.binder.jvm.JvmGcMetrics}
  * @author Jon Schneider
  * @author Tommy Ludwig
  * @see GarbageCollectorMXBean
  */
 @NonNullApi
 @NonNullFields
+@Deprecated
 public class JvmGcMetrics implements MeterBinder, AutoCloseable {
 
     private static final InternalLogger log = InternalLoggerFactory.getInstance(JvmGcMetrics.class);

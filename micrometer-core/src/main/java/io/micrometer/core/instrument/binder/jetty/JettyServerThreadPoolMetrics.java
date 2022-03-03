@@ -15,10 +15,10 @@
  */
 package io.micrometer.core.instrument.binder.jetty;
 
-import io.micrometer.api.instrument.Gauge;
-import io.micrometer.api.instrument.MeterRegistry;
-import io.micrometer.api.instrument.Tag;
-import io.micrometer.api.instrument.binder.MeterBinder;
+import io.micrometer.core.instrument.Gauge;
+import io.micrometer.core.instrument.MeterRegistry;
+import io.micrometer.core.instrument.Tag;
+import io.micrometer.core.instrument.binder.MeterBinder;
 import org.eclipse.jetty.util.thread.QueuedThreadPool;
 import org.eclipse.jetty.util.thread.ThreadPool;
 import org.eclipse.jetty.util.thread.ThreadPool.SizedThreadPool;
@@ -35,12 +35,14 @@ import org.eclipse.jetty.util.thread.ThreadPool.SizedThreadPool;
  *     }
  * </pre>
  *
+ * @deprecated Scheduled for removal in 2.0.0, please use {@code io.micrometer.binder.jetty.JettyServerThreadPoolMetrics}
  * @author Manabu Matsuzaki
  * @author Andy Wilkinson
  * @author Johnny Lim
  * @since 1.1.0
  * @see InstrumentedQueuedThreadPool
  */
+@Deprecated
 public class JettyServerThreadPoolMetrics implements MeterBinder {
 
     private final ThreadPool threadPool;

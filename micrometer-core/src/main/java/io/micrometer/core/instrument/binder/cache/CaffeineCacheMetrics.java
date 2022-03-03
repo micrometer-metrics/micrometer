@@ -17,11 +17,10 @@ package io.micrometer.core.instrument.binder.cache;
 
 import com.github.benmanes.caffeine.cache.*;
 import com.github.benmanes.caffeine.cache.stats.CacheStats;
-import io.micrometer.api.instrument.*;
-import io.micrometer.api.instrument.cache.CacheMeterBinder;
-import io.micrometer.api.lang.NonNullApi;
-import io.micrometer.api.lang.NonNullFields;
-import io.micrometer.api.lang.Nullable;
+import io.micrometer.core.instrument.*;
+import io.micrometer.core.lang.NonNullApi;
+import io.micrometer.core.lang.NonNullFields;
+import io.micrometer.core.lang.Nullable;
 
 import java.util.concurrent.TimeUnit;
 import java.util.function.Function;
@@ -37,11 +36,13 @@ import java.util.function.ToLongFunction;
  * CaffeineCacheMetrics.monitor(registry, cache, "mycache", "region", "test");
  * }</pre>
  *
+ * @deprecated Scheduled for removal in 2.0.0, please use {@code io.micrometer.binder.cache.CaffeineCacheMetrics}
  * @author Clint Checketts
  * @see CaffeineStatsCounter
  */
 @NonNullApi
 @NonNullFields
+@Deprecated
 public class CaffeineCacheMetrics<K, V, C extends Cache<K, V>> extends CacheMeterBinder<C> {
 
     /**

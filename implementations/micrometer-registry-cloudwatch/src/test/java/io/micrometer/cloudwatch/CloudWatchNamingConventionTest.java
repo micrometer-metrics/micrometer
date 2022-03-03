@@ -17,7 +17,7 @@ package io.micrometer.cloudwatch;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-import io.micrometer.api.instrument.config.NamingConvention;
+import io.micrometer.core.instrument.config.NamingConvention;
 import org.junit.jupiter.api.Test;
 
 import java.util.Collections;

@@ -20,5 +20,5 @@
 @NonNullFields
 package io.micrometer.health;
 
-import io.micrometer.api.lang.NonNullApi;
-import io.micrometer.api.lang.NonNullFields;
+import io.micrometer.core.lang.NonNullApi;
+import io.micrometer.core.lang.NonNullFields;

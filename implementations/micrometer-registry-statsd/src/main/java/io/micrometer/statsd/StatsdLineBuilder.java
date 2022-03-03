@@ -15,8 +15,8 @@
  */
 package io.micrometer.statsd;
 
-import io.micrometer.api.instrument.Meter;
-import io.micrometer.api.instrument.Statistic;
+import io.micrometer.core.instrument.Meter;
+import io.micrometer.core.instrument.Statistic;
 
 /**
  * A StatsD format serializer for an individual {@link Meter}. There is an instance per

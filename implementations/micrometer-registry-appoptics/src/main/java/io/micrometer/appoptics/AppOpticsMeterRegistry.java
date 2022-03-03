@@ -15,15 +15,15 @@
  */
 package io.micrometer.appoptics;
 
-import io.micrometer.api.instrument.*;
-import io.micrometer.api.instrument.config.MeterFilter;
-import io.micrometer.api.instrument.distribution.HistogramSnapshot;
-import io.micrometer.api.instrument.step.StepMeterRegistry;
-import io.micrometer.api.instrument.util.MeterPartition;
-import io.micrometer.api.instrument.util.NamedThreadFactory;
-import io.micrometer.api.ipc.http.HttpSender;
-import io.micrometer.api.ipc.http.HttpUrlConnectionSender;
-import io.micrometer.api.lang.Nullable;
+import io.micrometer.core.instrument.*;
+import io.micrometer.core.instrument.config.MeterFilter;
+import io.micrometer.core.instrument.distribution.HistogramSnapshot;
+import io.micrometer.core.instrument.step.StepMeterRegistry;
+import io.micrometer.core.instrument.util.MeterPartition;
+import io.micrometer.core.instrument.util.NamedThreadFactory;
+import io.micrometer.core.ipc.http.HttpSender;
+import io.micrometer.core.ipc.http.HttpUrlConnectionSender;
+import io.micrometer.core.lang.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -35,8 +35,8 @@ import java.util.concurrent.ThreadFactory;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 
-import static io.micrometer.api.instrument.util.DoubleFormat.decimal;
-import static io.micrometer.api.instrument.util.StringEscapeUtils.escapeJson;
+import static io.micrometer.core.instrument.util.DoubleFormat.decimal;
+import static io.micrometer.core.instrument.util.StringEscapeUtils.escapeJson;
 import static java.util.stream.Collectors.joining;
 
 /**

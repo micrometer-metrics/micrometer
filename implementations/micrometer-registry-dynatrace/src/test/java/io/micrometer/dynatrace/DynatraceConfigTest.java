@@ -17,8 +17,8 @@ package io.micrometer.dynatrace;
 
 import com.dynatrace.file.util.FileBasedConfigurationTestHelper;
 import com.dynatrace.metric.util.DynatraceMetricApiConstants;
-import io.micrometer.api.instrument.config.validate.InvalidReason;
-import io.micrometer.api.instrument.config.validate.Validated;
+import io.micrometer.core.instrument.config.validate.InvalidReason;
+import io.micrometer.core.instrument.config.validate.Validated;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 

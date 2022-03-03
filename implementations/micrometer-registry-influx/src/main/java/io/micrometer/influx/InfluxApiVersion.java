@@ -18,8 +18,8 @@ package io.micrometer.influx;
 import java.io.UnsupportedEncodingException;
 import java.net.URLEncoder;
 
-import io.micrometer.api.instrument.util.StringUtils;
-import io.micrometer.api.ipc.http.HttpSender;
+import io.micrometer.core.instrument.util.StringUtils;
+import io.micrometer.core.ipc.http.HttpSender;
 
 /**
  * Enum for the version of the InfluxDB API.

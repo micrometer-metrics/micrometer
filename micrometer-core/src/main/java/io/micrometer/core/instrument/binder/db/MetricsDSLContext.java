@@ -15,10 +15,10 @@
  */
 package io.micrometer.core.instrument.binder.db;
 
-import io.micrometer.api.annotation.Incubating;
-import io.micrometer.api.instrument.MeterRegistry;
-import io.micrometer.api.instrument.Tag;
-import io.micrometer.api.instrument.Tags;
+import io.micrometer.core.annotation.Incubating;
+import io.micrometer.core.instrument.MeterRegistry;
+import io.micrometer.core.instrument.Tag;
+import io.micrometer.core.instrument.Tags;
 import org.jooq.*;
 import org.jooq.Record;
 import org.jooq.conf.Settings;
@@ -62,11 +62,13 @@ import java.util.stream.Stream;
  *
  * This requires jOOQ 3.14.0 or later.
  *
+ * @deprecated Scheduled for removal in 2.0.0, please use {@code io.micrometer.binder.db.MetricsDSLContext}
  * @author Jon Schneider
  * @author Johnny Lim
  * @since 1.4.0
  */
 @Incubating(since = "1.4.0")
+@Deprecated
 public class MetricsDSLContext implements DSLContext {
     private final DSLContext context;
     private final MeterRegistry registry;

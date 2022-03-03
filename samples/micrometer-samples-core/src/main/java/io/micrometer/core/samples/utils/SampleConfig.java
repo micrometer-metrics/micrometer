@@ -15,7 +15,7 @@
  */
 package io.micrometer.core.samples.utils;
 
-import io.micrometer.api.instrument.MeterRegistry;
+import io.micrometer.core.instrument.MeterRegistry;
 
 // Run: git update-index --assume-unchanged **/SampleConfig.java
 // If you legitimately need to change this file, you can undo this with: git update-index --no-assume-unchanged **/SampleConfig.java

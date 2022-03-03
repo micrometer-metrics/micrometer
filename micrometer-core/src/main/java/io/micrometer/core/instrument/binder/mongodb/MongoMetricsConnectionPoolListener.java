@@ -18,12 +18,12 @@ package io.micrometer.core.instrument.binder.mongodb;
 import com.mongodb.client.MongoClient;
 import com.mongodb.connection.ServerId;
 import com.mongodb.event.*;
-import io.micrometer.api.annotation.Incubating;
-import io.micrometer.api.instrument.Gauge;
-import io.micrometer.api.instrument.Meter;
-import io.micrometer.api.instrument.MeterRegistry;
-import io.micrometer.api.lang.NonNullApi;
-import io.micrometer.api.lang.NonNullFields;
+import io.micrometer.core.annotation.Incubating;
+import io.micrometer.core.instrument.Gauge;
+import io.micrometer.core.instrument.Meter;
+import io.micrometer.core.instrument.MeterRegistry;
+import io.micrometer.core.lang.NonNullApi;
+import io.micrometer.core.lang.NonNullFields;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -34,6 +34,7 @@ import java.util.concurrent.atomic.AtomicInteger;
 /**
  * {@link ConnectionPoolListener} for collecting connection pool metrics from {@link MongoClient}.
  *
+ * @deprecated Scheduled for removal in 2.0.0, please use {@code io.micrometer.binder.mongodb.MongoMetricsConnectionPoolListener}
  * @author Christophe Bornet
  * @author Jonatan Ivanov
  * @since 1.2.0
@@ -42,6 +43,7 @@ import java.util.concurrent.atomic.AtomicInteger;
 @NonNullApi
 @NonNullFields
 @Incubating(since = "1.2.0")
+@Deprecated
 public class MongoMetricsConnectionPoolListener implements ConnectionPoolListener {
 
     private static final String METRIC_PREFIX = "mongodb.driver.pool.";

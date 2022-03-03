@@ -15,14 +15,16 @@
  */
 package io.micrometer.prometheus;
 
-import io.micrometer.api.instrument.*;
+import io.micrometer.core.instrument.*;
 import io.micrometer.core.Issue;
-import io.micrometer.api.instrument.binder.BaseUnits;
-import io.micrometer.api.instrument.composite.CompositeMeterRegistry;
-import io.micrometer.api.instrument.distribution.DistributionStatisticConfig;
-import io.micrometer.api.instrument.distribution.HistogramSnapshot;
+import io.micrometer.core.instrument.binder.BaseUnits;
+import io.micrometer.core.instrument.composite.CompositeMeterRegistry;
+import io.micrometer.core.instrument.distribution.DistributionStatisticConfig;
+import io.micrometer.core.instrument.distribution.HistogramSnapshot;
 import io.prometheus.client.Collector;
 import io.prometheus.client.CollectorRegistry;
+import io.prometheus.client.exemplars.DefaultExemplarSampler;
+import io.prometheus.client.exemplars.tracer.common.SpanContextSupplier;
 import io.prometheus.client.exporter.common.TextFormat;
 import org.assertj.core.api.Condition;
 import org.junit.jupiter.api.DisplayName;
@@ -42,7 +44,7 @@ import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 
-import static io.micrometer.api.instrument.MockClock.clock;
+import static io.micrometer.core.instrument.MockClock.clock;
 import static java.util.Collections.emptyList;
 import static org.assertj.core.api.Assertions.*;
 import static org.junit.jupiter.api.Assertions.assertThrows;
@@ -52,6 +54,7 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
  *
  * @author Jon Schneider
  * @author Johnny Lim
+ * @author Jonatan Ivanov
  */
 class PrometheusMeterRegistryTest {
     private CollectorRegistry prometheusRegistry = new CollectorRegistry(true);
@@ -635,4 +638,31 @@ class PrometheusMeterRegistryTest {
                 .endsWith("# EOF\n");
     }
 
+    @Test
+    void openMetricsScrapeWithExemplars() {
+        DefaultExemplarSampler exemplarSampler = new DefaultExemplarSampler(new TestSpanContextSupplier());
+        PrometheusMeterRegistry registry = new PrometheusMeterRegistry(PrometheusConfig.DEFAULT, prometheusRegistry, clock, exemplarSampler);
+
+        Counter counter = Counter.builder("my.counter").register(registry);
+        counter.increment();
+
+        assertThat(registry.scrape(TextFormat.CONTENT_TYPE_OPENMETRICS_100))
+                .startsWith("# TYPE my_counter counter\n")
+                .contains("# HELP my_counter  \n")
+                .contains("my_counter_total 1.0 # {span_id=\"testSpanId\",trace_id=\"testTraceId\"} 1.0")
+                .endsWith("# EOF\n");
+    }
+
+    static class TestSpanContextSupplier implements SpanContextSupplier {
+
+        @Override
+        public String getTraceId() {
+            return "testTraceId";
+        }
+
+        @Override
+        public String getSpanId() {
+            return "testSpanId";
+        }
+    }
 }
