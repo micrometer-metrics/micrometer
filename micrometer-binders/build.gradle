@@ -1,14 +1,6 @@
-plugins {
-    id 'idea'
-}
+description 'Instrumentation of components using Micrometer'
 
 dependencies {
-    // TODO(anuraaga): HdrHistogram is exposed in the micrometer API but probably shouldn't be
-    api 'org.hdrhistogram:HdrHistogram'
-    implementation('org.latencyutils:LatencyUtils') {
-        exclude group: 'org.hdrhistogram', module: 'HdrHistogram'
-    }
-
     api project(':micrometer-core')
 
     // cache monitoring
@@ -39,7 +31,6 @@ dependencies {
     optionalApi 'ch.qos.logback:logback-classic'
     optionalApi 'org.apache.logging.log4j:log4j-core'
 
-    // @Timed AOP
     optionalApi 'com.squareup.okhttp3:okhttp'
 
     optionalApi 'org.mongodb:mongodb-driver-sync'
@@ -103,6 +94,8 @@ dependencies {
     testImplementation 'org.postgresql:postgresql'
 
     testImplementation 'org.testcontainers:mongodb'
+
+    testImplementation 'org.jsr107.ri:cache-ri-impl'
 }
 
 task shenandoahTest(type: Test) {

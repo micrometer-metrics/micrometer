@@ -20,11 +20,9 @@ import io.micrometer.core.instrument.Tag;
 /**
  * The outcome of an HTTP request.
  *
- * @deprecated Scheduled for removal in 2.0.0, please use {@code io.micrometer.binder.http.Outcome}
  * @author Andy Wilkinson
  * @since 1.4.0
  */
-@Deprecated
 public enum Outcome {
 
     /**

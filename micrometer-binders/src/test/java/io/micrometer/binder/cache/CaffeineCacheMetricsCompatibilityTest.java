@@ -19,8 +19,8 @@ import java.util.concurrent.atomic.AtomicReference;
 
 import com.github.benmanes.caffeine.cache.Caffeine;
 import com.github.benmanes.caffeine.cache.LoadingCache;
-import io.micrometer.core.instrument.cache.CacheMeterBinder;
-import io.micrometer.core.instrument.cache.CacheMeterBinderCompatibilityKit;
+import io.micrometer.core.instrument.binder.cache.CacheMeterBinder;
+import io.micrometer.core.instrument.binder.cache.CacheMeterBinderCompatibilityKit;
 
 import static java.util.Collections.emptyList;
 

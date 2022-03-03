@@ -18,8 +18,8 @@ package io.micrometer.binder.jersey.server;
 import java.util.List;
 import java.util.regex.Pattern;
 
-import io.micrometer.binder.http.Outcome;
 import io.micrometer.core.instrument.Tag;
+import io.micrometer.core.instrument.binder.http.Outcome;
 import io.micrometer.core.instrument.util.StringUtils;
 import org.glassfish.jersey.server.ContainerRequest;
 import org.glassfish.jersey.server.ContainerResponse;

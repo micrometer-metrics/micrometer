@@ -17,8 +17,8 @@ package io.micrometer.binder.cache;
 
 import java.util.UUID;
 
-import io.micrometer.core.instrument.cache.CacheMeterBinder;
-import io.micrometer.core.instrument.cache.CacheMeterBinderCompatibilityKit;
+import io.micrometer.core.instrument.binder.cache.CacheMeterBinder;
+import io.micrometer.core.instrument.binder.cache.CacheMeterBinderCompatibilityKit;
 import io.micrometer.core.lang.Nullable;
 import net.sf.ehcache.Cache;
 import net.sf.ehcache.CacheManager;
