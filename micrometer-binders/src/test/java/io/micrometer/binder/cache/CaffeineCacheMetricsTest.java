@@ -23,21 +23,21 @@ import io.micrometer.core.instrument.FunctionCounter;
 import io.micrometer.core.instrument.MeterRegistry;
 import io.micrometer.core.instrument.Tags;
 import io.micrometer.core.instrument.TimeGauge;
-import io.micrometer.binder.cache.CaffeineCacheMetrics;
+import io.micrometer.core.instrument.binder.cache.AbstractCacheMetricsTest;
 import io.micrometer.core.instrument.simple.SimpleMeterRegistry;
 import org.junit.jupiter.api.Test;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
 /**
- * Tests for {@link io.micrometer.binder.cache.CaffeineCacheMetrics}.
+ * Tests for {@link CaffeineCacheMetrics}.
  *
  * @author Oleksii Bondar
  */
 class CaffeineCacheMetricsTest extends AbstractCacheMetricsTest {
 
     private LoadingCache<String, String> cache = Caffeine.newBuilder().build(key -> "");
-    private io.micrometer.binder.cache.CaffeineCacheMetrics<String, String, Cache<String, String>> metrics = new io.micrometer.binder.cache.CaffeineCacheMetrics<>(cache, "testCache", expectedTag);
+    private CaffeineCacheMetrics<String, String, Cache<String, String>> metrics = new io.micrometer.binder.cache.CaffeineCacheMetrics<>(cache, "testCache", expectedTag);
 
     @Test
     void reportExpectedGeneralMetrics() {
@@ -64,7 +64,7 @@ class CaffeineCacheMetricsTest extends AbstractCacheMetricsTest {
     @Test
     void constructInstanceViaStaticMethodMonitor() {
         MeterRegistry meterRegistry = new SimpleMeterRegistry();
-        io.micrometer.binder.cache.CaffeineCacheMetrics.monitor(meterRegistry, cache, "testCache", expectedTag);
+        CaffeineCacheMetrics.monitor(meterRegistry, cache, "testCache", expectedTag);
 
         meterRegistry.get("cache.eviction.weight").tags(expectedTag).functionCounter();
     }

@@ -18,8 +18,8 @@ package io.micrometer.binder.jetty;
 import java.util.function.Function;
 import java.util.regex.Pattern;
 
-import io.micrometer.binder.http.Outcome;
 import io.micrometer.core.instrument.Tag;
+import io.micrometer.core.instrument.binder.http.Outcome;
 import io.micrometer.core.instrument.util.StringUtils;
 import org.eclipse.jetty.client.api.Request;
 import org.eclipse.jetty.client.api.Response;

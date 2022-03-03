@@ -13,8 +13,10 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package io.micrometer.core.instrument.binder.cache;
+package io.micrometer.binder.cache;
 
+import io.micrometer.core.instrument.binder.cache.CacheMeterBinder;
+import io.micrometer.core.instrument.binder.cache.CacheMeterBinderCompatibilityKit;
 import io.micrometer.core.lang.Nullable;
 import net.sf.ehcache.Cache;
 import net.sf.ehcache.CacheManager;
