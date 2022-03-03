@@ -16,7 +16,7 @@ dependencies {
     testImplementation 'io.projectreactor:reactor-test'
     testImplementation 'ch.qos.logback:logback-classic'
     testImplementation 'org.awaitility:awaitility'
-    // for running tests with UDS on OSX (intel and ARM)
+    // for running tests with UDS on OSX
     testImplementation 'io.netty:netty-transport-native-kqueue:+:osx-x86_64'
     testImplementation 'io.netty:netty-transport-native-kqueue:+:osx-aarch_64'
 }
