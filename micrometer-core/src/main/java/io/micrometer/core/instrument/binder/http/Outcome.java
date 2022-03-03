@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package io.micrometer.core.instrument.transport.http.tags;
+package io.micrometer.core.instrument.binder.http;
 
 import io.micrometer.core.instrument.Tag;
 

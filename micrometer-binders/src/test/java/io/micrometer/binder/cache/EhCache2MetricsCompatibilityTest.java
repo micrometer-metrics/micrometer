@@ -15,8 +15,6 @@
  */
 package io.micrometer.binder.cache;
 
-import java.util.UUID;
-
 import io.micrometer.core.instrument.binder.cache.CacheMeterBinder;
 import io.micrometer.core.instrument.binder.cache.CacheMeterBinderCompatibilityKit;
 import io.micrometer.core.lang.Nullable;
@@ -27,6 +25,8 @@ import net.sf.ehcache.Element;
 import net.sf.ehcache.config.Configuration;
 import net.sf.ehcache.config.ConfigurationFactory;
 import org.junit.jupiter.api.AfterEach;
+
+import java.util.UUID;
 
 import static java.util.Collections.emptyList;
 

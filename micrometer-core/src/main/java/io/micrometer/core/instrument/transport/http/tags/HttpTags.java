@@ -16,6 +16,7 @@
 package io.micrometer.core.instrument.transport.http.tags;
 
 import io.micrometer.core.instrument.Tag;
+import io.micrometer.core.instrument.binder.http.Outcome;
 import io.micrometer.core.instrument.transport.http.HttpRequest;
 import io.micrometer.core.instrument.transport.http.HttpResponse;
 import io.micrometer.core.instrument.util.StringUtils;
