@@ -30,14 +30,15 @@ import io.micrometer.core.instrument.observation.ObservationRegistry;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
+import org.mockito.InOrder;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.isA;
+import static org.mockito.Mockito.inOrder;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.times;
-import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoMoreInteractions;
 import static org.mockito.Mockito.when;
 
@@ -75,21 +76,23 @@ public abstract class ObservationRegistryCompatibilityKit {
         when(handlerThatHandlesNothing.supportsContext(any())).thenReturn(false);
 
         Observation observation = Observation.start("myObservation", registry);
-        verify(handler).supportsContext(isA(Observation.Context.class));
-        verify(handler).onStart(isA(Observation.Context.class));
-        verify(handlerThatHandlesNothing).supportsContext(isA(Observation.Context.class));
+        InOrder inOrder = inOrder(handler, handlerThatHandlesNothing);
+        inOrder.verify(handler).supportsContext(isA(Observation.Context.class));
+        inOrder.verify(handlerThatHandlesNothing).supportsContext(isA(Observation.Context.class));
+        inOrder.verify(handler).onStart(isA(Observation.Context.class));
         verifyNoMoreInteractions(handlerThatHandlesNothing);
 
         try (Observation.Scope scope = observation.openScope()) {
-            verify(handler).onScopeOpened(isA(Observation.Context.class));
+            inOrder.verify(handler).onScopeOpened(isA(Observation.Context.class));
             assertThat(scope.getCurrentObservation()).isSameAs(observation);
 
             Throwable exception = new IOException("simulated");
             observation.error(exception);
-            verify(handler).onError(isA(Observation.Context.class));
+            inOrder.verify(handler).onError(isA(Observation.Context.class));
         }
-        verify(handler).onScopeClosed(isA(Observation.Context.class));
+        inOrder.verify(handler).onScopeClosed(isA(Observation.Context.class));
         observation.stop();
+        inOrder.verify(handler).onStop(isA(Observation.Context.class));
     }
 
     @Test
@@ -102,12 +105,13 @@ public abstract class ObservationRegistryCompatibilityKit {
         observation.observe((Runnable) () -> assertThat(registry.getCurrentObservation()).isSameAs(observation));
         assertThat(registry.getCurrentObservation()).isNull();
 
-        verify(handler).supportsContext(isA(Observation.Context.class));
-        verify(handler).onStart(isA(Observation.Context.class));
-        verify(handler).onScopeOpened(isA(Observation.Context.class));
-        verify(handler).onScopeClosed(isA(Observation.Context.class));
-        verify(handler, times(0)).onError(isA(Observation.Context.class));
-        verify(handler).onStop(isA(Observation.Context.class));
+        InOrder inOrder = inOrder(handler);
+        inOrder.verify(handler).supportsContext(isA(Observation.Context.class));
+        inOrder.verify(handler).onStart(isA(Observation.Context.class));
+        inOrder.verify(handler).onScopeOpened(isA(Observation.Context.class));
+        inOrder.verify(handler).onScopeClosed(isA(Observation.Context.class));
+        inOrder.verify(handler, times(0)).onError(isA(Observation.Context.class));
+        inOrder.verify(handler).onStop(isA(Observation.Context.class));
     }
 
     @Test
@@ -128,12 +132,13 @@ public abstract class ObservationRegistryCompatibilityKit {
 
         assertThat(registry.getCurrentObservation()).isNull();
 
-        verify(handler).supportsContext(isA(Observation.Context.class));
-        verify(handler).onStart(isA(Observation.Context.class));
-        verify(handler).onScopeOpened(isA(Observation.Context.class));
-        verify(handler).onScopeClosed(isA(Observation.Context.class));
-        verify(handler).onError(isA(Observation.Context.class));
-        verify(handler).onStop(isA(Observation.Context.class));
+        InOrder inOrder = inOrder(handler);
+        inOrder.verify(handler).supportsContext(isA(Observation.Context.class));
+        inOrder.verify(handler).onStart(isA(Observation.Context.class));
+        inOrder.verify(handler).onScopeOpened(isA(Observation.Context.class));
+        inOrder.verify(handler).onScopeClosed(isA(Observation.Context.class));
+        inOrder.verify(handler).onError(isA(Observation.Context.class));
+        inOrder.verify(handler).onStop(isA(Observation.Context.class));
     }
 
     @Test
@@ -146,12 +151,13 @@ public abstract class ObservationRegistryCompatibilityKit {
         observation.observeChecked((Observation.CheckedRunnable) () -> assertThat(registry.getCurrentObservation()).isSameAs(observation));
         assertThat(registry.getCurrentObservation()).isNull();
 
-        verify(handler).supportsContext(isA(Observation.Context.class));
-        verify(handler).onStart(isA(Observation.Context.class));
-        verify(handler).onScopeOpened(isA(Observation.Context.class));
-        verify(handler).onScopeClosed(isA(Observation.Context.class));
-        verify(handler, times(0)).onError(isA(Observation.Context.class));
-        verify(handler).onStop(isA(Observation.Context.class));
+        InOrder inOrder = inOrder(handler);
+        inOrder.verify(handler).supportsContext(isA(Observation.Context.class));
+        inOrder.verify(handler).onStart(isA(Observation.Context.class));
+        inOrder.verify(handler).onScopeOpened(isA(Observation.Context.class));
+        inOrder.verify(handler).onScopeClosed(isA(Observation.Context.class));
+        inOrder.verify(handler, times(0)).onError(isA(Observation.Context.class));
+        inOrder.verify(handler).onStop(isA(Observation.Context.class));
     }
 
     @Test
@@ -172,12 +178,13 @@ public abstract class ObservationRegistryCompatibilityKit {
 
         assertThat(registry.getCurrentObservation()).isNull();
 
-        verify(handler).supportsContext(isA(Observation.Context.class));
-        verify(handler).onStart(isA(Observation.Context.class));
-        verify(handler).onScopeOpened(isA(Observation.Context.class));
-        verify(handler).onScopeClosed(isA(Observation.Context.class));
-        verify(handler).onError(isA(Observation.Context.class));
-        verify(handler).onStop(isA(Observation.Context.class));
+        InOrder inOrder = inOrder(handler);
+        inOrder.verify(handler).supportsContext(isA(Observation.Context.class));
+        inOrder.verify(handler).onStart(isA(Observation.Context.class));
+        inOrder.verify(handler).onScopeOpened(isA(Observation.Context.class));
+        inOrder.verify(handler).onScopeClosed(isA(Observation.Context.class));
+        inOrder.verify(handler).onError(isA(Observation.Context.class));
+        inOrder.verify(handler).onStop(isA(Observation.Context.class));
     }
 
     @Test
@@ -194,12 +201,13 @@ public abstract class ObservationRegistryCompatibilityKit {
         assertThat(result).isEqualTo("test");
         assertThat(registry.getCurrentObservation()).isNull();
 
-        verify(handler).supportsContext(isA(Observation.Context.class));
-        verify(handler).onStart(isA(Observation.Context.class));
-        verify(handler).onScopeOpened(isA(Observation.Context.class));
-        verify(handler).onScopeClosed(isA(Observation.Context.class));
-        verify(handler, times(0)).onError(isA(Observation.Context.class));
-        verify(handler).onStop(isA(Observation.Context.class));
+        InOrder inOrder = inOrder(handler);
+        inOrder.verify(handler).supportsContext(isA(Observation.Context.class));
+        inOrder.verify(handler).onStart(isA(Observation.Context.class));
+        inOrder.verify(handler).onScopeOpened(isA(Observation.Context.class));
+        inOrder.verify(handler).onScopeClosed(isA(Observation.Context.class));
+        inOrder.verify(handler, times(0)).onError(isA(Observation.Context.class));
+        inOrder.verify(handler).onStop(isA(Observation.Context.class));
     }
 
     @Test
@@ -220,12 +228,13 @@ public abstract class ObservationRegistryCompatibilityKit {
 
         assertThat(registry.getCurrentObservation()).isNull();
 
-        verify(handler).supportsContext(isA(Observation.Context.class));
-        verify(handler).onStart(isA(Observation.Context.class));
-        verify(handler).onScopeOpened(isA(Observation.Context.class));
-        verify(handler).onScopeClosed(isA(Observation.Context.class));
-        verify(handler).onError(isA(Observation.Context.class));
-        verify(handler).onStop(isA(Observation.Context.class));
+        InOrder inOrder = inOrder(handler);
+        inOrder.verify(handler).supportsContext(isA(Observation.Context.class));
+        inOrder.verify(handler).onStart(isA(Observation.Context.class));
+        inOrder.verify(handler).onScopeOpened(isA(Observation.Context.class));
+        inOrder.verify(handler).onScopeClosed(isA(Observation.Context.class));
+        inOrder.verify(handler).onError(isA(Observation.Context.class));
+        inOrder.verify(handler).onStop(isA(Observation.Context.class));
     }
 
     @Test
@@ -242,12 +251,13 @@ public abstract class ObservationRegistryCompatibilityKit {
         assertThat(result).isEqualTo("test");
         assertThat(registry.getCurrentObservation()).isNull();
 
-        verify(handler).supportsContext(isA(Observation.Context.class));
-        verify(handler).onStart(isA(Observation.Context.class));
-        verify(handler).onScopeOpened(isA(Observation.Context.class));
-        verify(handler).onScopeClosed(isA(Observation.Context.class));
-        verify(handler, times(0)).onError(isA(Observation.Context.class));
-        verify(handler).onStop(isA(Observation.Context.class));
+        InOrder inOrder = inOrder(handler);
+        inOrder.verify(handler).supportsContext(isA(Observation.Context.class));
+        inOrder.verify(handler).onStart(isA(Observation.Context.class));
+        inOrder.verify(handler).onScopeOpened(isA(Observation.Context.class));
+        inOrder.verify(handler).onScopeClosed(isA(Observation.Context.class));
+        inOrder.verify(handler, times(0)).onError(isA(Observation.Context.class));
+        inOrder.verify(handler).onStop(isA(Observation.Context.class));
     }
 
     @Test
@@ -268,12 +278,13 @@ public abstract class ObservationRegistryCompatibilityKit {
 
         assertThat(registry.getCurrentObservation()).isNull();
 
-        verify(handler).supportsContext(isA(Observation.Context.class));
-        verify(handler).onStart(isA(Observation.Context.class));
-        verify(handler).onScopeOpened(isA(Observation.Context.class));
-        verify(handler).onScopeClosed(isA(Observation.Context.class));
-        verify(handler).onError(isA(Observation.Context.class));
-        verify(handler).onStop(isA(Observation.Context.class));
+        InOrder inOrder = inOrder(handler);
+        inOrder.verify(handler).supportsContext(isA(Observation.Context.class));
+        inOrder.verify(handler).onStart(isA(Observation.Context.class));
+        inOrder.verify(handler).onScopeOpened(isA(Observation.Context.class));
+        inOrder.verify(handler).onScopeClosed(isA(Observation.Context.class));
+        inOrder.verify(handler).onError(isA(Observation.Context.class));
+        inOrder.verify(handler).onStop(isA(Observation.Context.class));
     }
 
     @Test
