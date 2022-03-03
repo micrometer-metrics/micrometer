@@ -15,10 +15,6 @@
  */
 package io.micrometer.benchmark.compare;
 
-import io.micrometer.core.instrument.Counter;
-import io.micrometer.core.instrument.Meter;
-import io.micrometer.core.instrument.MeterRegistry;
-import io.micrometer.core.instrument.simple.SimpleMeterRegistry;
 import org.openjdk.jmh.annotations.*;
 import org.openjdk.jmh.infra.Blackhole;
 import org.openjdk.jmh.profile.GCProfiler;
@@ -60,22 +56,22 @@ public class CompareCountersWithOtherLibraries {
 
     @State(Scope.Benchmark)
     public static class MicrometerState {
-        MeterRegistry registry;
-        Counter counter;
-        Counter counterWithTags;
+        io.micrometer.core.instrument.MeterRegistry registry;
+        io.micrometer.core.instrument.Counter counter;
+        io.micrometer.core.instrument.Counter counterWithTags;
 
         @Setup(Level.Trial)
         public void setup() {
-            registry = new SimpleMeterRegistry();
+            registry = new io.micrometer.core.instrument.simple.SimpleMeterRegistry();
             counter = registry.counter("untagged");
             counterWithTags = registry.counter("tagged", "key1", "value1", "key2", "value2");
         }
 
         @TearDown(Level.Trial)
         public void tearDown(Blackhole hole) {
-            for (Meter m : registry.getMeters()) {
-                if (m instanceof Counter) {
-                    hole.consume(((Counter) m).count());
+            for (io.micrometer.core.instrument.Meter m : registry.getMeters()) {
+                if (m instanceof io.micrometer.core.instrument.Counter) {
+                    hole.consume(((io.micrometer.core.instrument.Counter) m).count());
                 }
             }
         }

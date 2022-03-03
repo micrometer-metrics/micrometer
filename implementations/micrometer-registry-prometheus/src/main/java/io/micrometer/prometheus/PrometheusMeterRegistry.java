@@ -272,7 +272,7 @@ public class PrometheusMeterRegistry extends MeterRegistry {
     }
 
     @Override
-    protected Timer newTimer(Meter.Id id, DistributionStatisticConfig distributionStatisticConfig, PauseDetector pauseDetector) {
+    protected io.micrometer.core.instrument.Timer newTimer(Meter.Id id, DistributionStatisticConfig distributionStatisticConfig, PauseDetector pauseDetector) {
         PrometheusTimer timer = new PrometheusTimer(id, clock, distributionStatisticConfig, pauseDetector, prometheusConfig.histogramFlavor());
         applyToCollector(id, (collector) ->
                 addDistributionStatisticSamples(distributionStatisticConfig, collector, timer, tagValues(id), false));
@@ -280,7 +280,7 @@ public class PrometheusMeterRegistry extends MeterRegistry {
     }
 
     @Override
-    protected <T> Gauge newGauge(Meter.Id id, @Nullable T obj, ToDoubleFunction<T> valueFunction) {
+    protected <T> io.micrometer.core.instrument.Gauge newGauge(Meter.Id id, @Nullable T obj, ToDoubleFunction<T> valueFunction) {
         Gauge gauge = new DefaultGauge<>(id, obj, valueFunction);
         applyToCollector(id, (collector) -> {
             List<String> tagValues = tagValues(id);
@@ -510,7 +510,7 @@ public class PrometheusMeterRegistry extends MeterRegistry {
     }
 
     /**
-     * For use with {@link MeterRegistry.Config#onMeterRegistrationFailed(BiConsumer)
+     * For use with {@link io.micrometer.core.instrument.MeterRegistry.Config#onMeterRegistrationFailed(BiConsumer)
      * MeterRegistry.Config#onMeterRegistrationFailed(BiConsumer)} when you want meters with the same name but different
      * tags to cause an unchecked exception.
      *

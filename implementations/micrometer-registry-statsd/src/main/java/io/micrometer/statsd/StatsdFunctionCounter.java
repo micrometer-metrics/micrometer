@@ -15,7 +15,6 @@
  */
 package io.micrometer.statsd;
 
-import io.micrometer.core.instrument.FunctionCounter;
 import io.micrometer.core.instrument.cumulative.CumulativeFunctionCounter;
 import reactor.core.publisher.FluxSink;
 
@@ -23,7 +22,7 @@ import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.ToDoubleFunction;
 
 /**
- * {@link FunctionCounter} for StatsD.
+ * {@link io.micrometer.core.instrument.FunctionCounter} for StatsD.
  *
  * @param <T> the type of the state object from which the counter value is extracted
  *

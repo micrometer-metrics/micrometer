@@ -346,7 +346,7 @@ class StatsdMeterRegistryTest {
         registry = new StatsdMeterRegistry(configWithFlavor(StatsdFlavor.ETSY), clock);
         Timer.builder("my.timer").serviceLevelObjectives(Duration.ofMillis(1)).register(registry);
 
-        // A MeterNotFoundException is thrown if the gauge isn't present
+        // A io.micrometer.core.instrument.search.MeterNotFoundException is thrown if the gauge isn't present
         registry.get("my.timer.histogram").tag("le", "+Inf").gauge();
     }
 
@@ -355,7 +355,7 @@ class StatsdMeterRegistryTest {
         registry = new StatsdMeterRegistry(configWithFlavor(StatsdFlavor.ETSY), clock);
         DistributionSummary summary = DistributionSummary.builder("my.distribution").serviceLevelObjectives(1.0).register(registry);
 
-        // A MeterNotFoundException is thrown if the gauge isn't present
+        // A io.micrometer.core.instrument.search.MeterNotFoundException is thrown if the gauge isn't present
         registry.get("my.distribution.histogram").tag("le", "+Inf").gauge();
     }
 

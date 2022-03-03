@@ -17,7 +17,6 @@ package io.micrometer.opentsdb;
 
 import io.micrometer.core.instrument.AbstractTimer;
 import io.micrometer.core.instrument.Clock;
-import io.micrometer.core.instrument.Timer;
 import io.micrometer.core.instrument.distribution.*;
 import io.micrometer.core.instrument.distribution.pause.PauseDetector;
 import io.micrometer.core.instrument.util.TimeUtils;
@@ -28,7 +27,7 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.LongAdder;
 
 /**
- * {@link Timer} for OpenTSDB.
+ * {@link io.micrometer.core.instrument.Timer} for OpenTSDB.
  *
  * @author Jon Schneider
  * @author Nikolay Ustinov

@@ -16,8 +16,8 @@
 package io.micrometer.dynatrace.v2;
 
 import com.dynatrace.metric.util.*;
-import io.micrometer.core.instrument.*;
 import io.micrometer.core.instrument.Timer;
+import io.micrometer.core.instrument.*;
 import io.micrometer.core.instrument.distribution.HistogramSnapshot;
 import io.micrometer.core.instrument.distribution.ValueAtPercentile;
 import io.micrometer.core.instrument.util.AbstractPartition;

@@ -15,7 +15,6 @@
  */
 package io.micrometer.opentsdb;
 
-import io.micrometer.core.instrument.DistributionSummary;
 import io.micrometer.core.instrument.AbstractDistributionSummary;
 import io.micrometer.core.instrument.Clock;
 import io.micrometer.core.instrument.distribution.*;
@@ -27,7 +26,7 @@ import java.util.concurrent.atomic.DoubleAdder;
 import java.util.concurrent.atomic.LongAdder;
 
 /**
- * {@link DistributionSummary} for OpenTSDB.
+ * {@link io.micrometer.core.instrument.DistributionSummary} for OpenTSDB.
  *
  * @author Jon Schneider
  * @author Nikolay Ustinov

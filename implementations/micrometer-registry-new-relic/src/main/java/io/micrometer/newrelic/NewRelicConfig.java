@@ -22,8 +22,8 @@ import io.micrometer.core.instrument.util.StringUtils;
 import io.micrometer.core.lang.Nullable;
 
 import static io.micrometer.core.instrument.config.MeterRegistryConfigValidator.*;
-import static io.micrometer.core.instrument.util.StringUtils.isBlank;
 import static io.micrometer.core.instrument.config.validate.PropertyValidator.*;
+import static io.micrometer.core.instrument.util.StringUtils.isBlank;
 
 /**
  * Configuration for {@link NewRelicMeterRegistry}.

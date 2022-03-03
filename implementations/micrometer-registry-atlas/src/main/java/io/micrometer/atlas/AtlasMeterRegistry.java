@@ -93,14 +93,14 @@ public class AtlasMeterRegistry extends MeterRegistry {
     }
 
     @Override
-    protected Counter newCounter(Meter.Id id) {
+    protected io.micrometer.core.instrument.Counter newCounter(Meter.Id id) {
         return new SpectatorCounter(id, registry.counter(spectatorId(id)));
     }
 
     @SuppressWarnings("ConstantConditions")
     @Override
-    protected DistributionSummary newDistributionSummary(Meter.Id id, DistributionStatisticConfig distributionStatisticConfig,
-                                                         double scale) {
+    protected io.micrometer.core.instrument.DistributionSummary newDistributionSummary(Meter.Id id, DistributionStatisticConfig distributionStatisticConfig,
+                                                                                       double scale) {
         com.netflix.spectator.api.DistributionSummary internalSummary;
 
         if (distributionStatisticConfig.isPercentileHistogram()) {
@@ -156,7 +156,7 @@ public class AtlasMeterRegistry extends MeterRegistry {
     }
 
     @Override
-    protected <T> Gauge newGauge(Meter.Id id, @Nullable T obj, ToDoubleFunction<T> valueFunction) {
+    protected <T> io.micrometer.core.instrument.Gauge newGauge(Meter.Id id, @Nullable T obj, ToDoubleFunction<T> valueFunction) {
         com.netflix.spectator.api.Gauge gauge = new SpectatorToDoubleGauge<>(registry.clock(), spectatorId(id), obj, valueFunction);
         registry.register(gauge);
         return new SpectatorGauge(id, gauge);
@@ -187,7 +187,7 @@ public class AtlasMeterRegistry extends MeterRegistry {
     }
 
     @Override
-    protected Meter newMeter(Meter.Id id, Meter.Type type, Iterable<Measurement> measurements) {
+    protected Meter newMeter(Meter.Id id, Meter.Type type, Iterable<io.micrometer.core.instrument.Measurement> measurements) {
         Id spectatorId = spectatorId(id);
         com.netflix.spectator.api.AbstractMeter<Id> spectatorMeter = new com.netflix.spectator.api.AbstractMeter<Id>(registry.clock(), spectatorId, spectatorId) {
             @Override

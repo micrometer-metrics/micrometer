@@ -23,9 +23,8 @@ import com.codahale.metrics.UniformReservoir;
 import com.google.common.collect.Iterators;
 import com.google.common.primitives.Doubles;
 ////CHECKSTYLE:ON
-import io.micrometer.core.instrument.DistributionSummary;
-import io.micrometer.core.instrument.MeterRegistry;
 import io.micrometer.core.instrument.Clock;
+import io.micrometer.core.instrument.DistributionSummary;
 import io.micrometer.core.instrument.distribution.DistributionStatisticConfig;
 import io.micrometer.core.instrument.distribution.PercentileHistogramBuckets;
 import io.micrometer.core.instrument.simple.SimpleMeterRegistry;
@@ -101,8 +100,8 @@ public class CompareHistogramsWithOtherLibraries {
     @State(Scope.Benchmark)
     public static class MicrometerState {
 
-        MeterRegistry registry;
-        DistributionSummary summary;
+        io.micrometer.core.instrument.MeterRegistry registry;
+        io.micrometer.core.instrument.DistributionSummary summary;
 
         @Setup(Level.Iteration)
         public void setup() {
@@ -122,8 +121,8 @@ public class CompareHistogramsWithOtherLibraries {
     @State(Scope.Benchmark)
     public static class MicrometerPlainSummaryState {
 
-        MeterRegistry registry;
-        DistributionSummary summary;
+        io.micrometer.core.instrument.MeterRegistry registry;
+        io.micrometer.core.instrument.DistributionSummary summary;
 
         @Setup(Level.Iteration)
         public void setup() {

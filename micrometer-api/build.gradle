@@ -1,5 +1,0 @@
-description 'API module of Micrometer used to write instrumentation or a registry implementation'
-
-dependencies {
-
-}

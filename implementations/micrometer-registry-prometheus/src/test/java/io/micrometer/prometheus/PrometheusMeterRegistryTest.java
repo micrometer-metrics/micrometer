@@ -15,8 +15,8 @@
  */
 package io.micrometer.prometheus;
 
-import io.micrometer.core.instrument.*;
 import io.micrometer.core.Issue;
+import io.micrometer.core.instrument.*;
 import io.micrometer.core.instrument.binder.BaseUnits;
 import io.micrometer.core.instrument.composite.CompositeMeterRegistry;
 import io.micrometer.core.instrument.distribution.DistributionStatisticConfig;
