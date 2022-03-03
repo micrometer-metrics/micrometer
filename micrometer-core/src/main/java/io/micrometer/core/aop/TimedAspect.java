@@ -15,20 +15,25 @@
  */
 package io.micrometer.core.aop;
 
-import java.lang.reflect.Method;
-import java.util.Optional;
-import java.util.concurrent.CompletionStage;
-import java.util.function.Function;
-import java.util.function.Predicate;
-
 import io.micrometer.core.annotation.Incubating;
 import io.micrometer.core.annotation.Timed;
-import io.micrometer.core.instrument.*;
+import io.micrometer.core.instrument.LongTaskTimer;
+import io.micrometer.core.instrument.MeterRegistry;
+import io.micrometer.core.instrument.Tag;
+import io.micrometer.core.instrument.Tags;
+import io.micrometer.core.instrument.Timer;
+import io.micrometer.core.instrument.Metrics;
 import io.micrometer.core.lang.NonNullApi;
 import org.aspectj.lang.ProceedingJoinPoint;
 import org.aspectj.lang.annotation.Around;
 import org.aspectj.lang.annotation.Aspect;
 import org.aspectj.lang.reflect.MethodSignature;
+
+import java.lang.reflect.Method;
+import java.util.Optional;
+import java.util.concurrent.CompletionStage;
+import java.util.function.Function;
+import java.util.function.Predicate;
 
 /**
  * <p>
@@ -202,8 +207,7 @@ public class TimedAspect {
                     .tags(tagsBasedOnJoinPoint.apply(pjp))
                     .publishPercentileHistogram(timed.histogram())
                     .publishPercentiles(timed.percentiles().length == 0 ? null : timed.percentiles())
-                    .register(registry)
-            );
+                    .register(registry));
         } catch (Exception e) {
             // ignoring on purpose
         }

@@ -1,4 +1,4 @@
-description 'Core module of Micrometer containing instrumentation of third-party libraries using micrometer-api'
+description 'Core module of Micrometer containing instrumentation API and implementation'
 
 dependencies {
     // TODO(anuraaga): HdrHistogram is exposed in the micrometer API but probably shouldn't be
@@ -8,9 +8,6 @@ dependencies {
     }
 
     optionalApi 'io.micrometer:context-propagation-api'
-
-    // internal logging facade
-    optionalApi 'org.slf4j:slf4j-api'
 
     // Aspects
     optionalApi 'org.aspectj:aspectjweaver'

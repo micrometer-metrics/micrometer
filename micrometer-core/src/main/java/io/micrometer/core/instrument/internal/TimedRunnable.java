@@ -42,8 +42,7 @@ class TimedRunnable implements Runnable {
         Timer.Sample executionSample = Timer.start(registry);
         try {
             command.run();
-        }
-        finally {
+        } finally {
             executionSample.stop(executionTimer);
         }
     }

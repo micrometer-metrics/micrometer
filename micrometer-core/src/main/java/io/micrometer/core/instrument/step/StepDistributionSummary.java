@@ -15,7 +15,6 @@
  */
 package io.micrometer.core.instrument.step;
 
-import io.micrometer.core.instrument.DistributionSummary;
 import io.micrometer.core.instrument.AbstractDistributionSummary;
 import io.micrometer.core.instrument.Clock;
 import io.micrometer.core.instrument.Measurement;
@@ -28,7 +27,7 @@ import java.util.concurrent.atomic.DoubleAdder;
 import java.util.concurrent.atomic.LongAdder;
 
 /**
- * Step-normalized {@link DistributionSummary}.
+ * Step-normalized {@link io.micrometer.core.instrument.DistributionSummary}.
  *
  * @author Jon Schneider
  * @author Johnny Lim

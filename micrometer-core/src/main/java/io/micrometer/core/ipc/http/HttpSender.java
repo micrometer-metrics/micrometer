@@ -15,7 +15,6 @@
  */
 package io.micrometer.core.ipc.http;
 
-import io.micrometer.core.instrument.MeterRegistry;
 import io.micrometer.core.instrument.util.StringUtils;
 import io.micrometer.core.lang.Nullable;
 
@@ -34,7 +33,7 @@ import java.util.function.Supplier;
 import java.util.zip.GZIPOutputStream;
 
 /**
- * A general-purpose interface for controlling how {@link MeterRegistry} implementations
+ * A general-purpose interface for controlling how {@link io.micrometer.core.instrument.MeterRegistry} implementations
  * perform HTTP calls for various purposes. This interface can be used to inject more advanced customization like SSL
  * verification, key loading, etc. without requiring further additions to registry configurations.
  *

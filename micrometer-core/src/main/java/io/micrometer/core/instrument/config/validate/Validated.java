@@ -16,7 +16,6 @@
 package io.micrometer.core.instrument.config.validate;
 
 import io.micrometer.core.annotation.Incubating;
-import io.micrometer.core.instrument.config.MeterRegistryConfig;
 import io.micrometer.core.instrument.util.StringUtils;
 import io.micrometer.core.lang.NonNull;
 import io.micrometer.core.lang.Nullable;
@@ -35,7 +34,7 @@ import java.util.stream.Stream;
 import static java.util.stream.StreamSupport.stream;
 
 /**
- * Validation support for {@link MeterRegistryConfig}.
+ * Validation support for {@link io.micrometer.core.instrument.config.MeterRegistryConfig}.
  *
  * @author Jon Schneider
  * @since 1.5.0

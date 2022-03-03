@@ -27,7 +27,7 @@ import java.util.concurrent.*;
 import static java.util.stream.Collectors.toList;
 
 /**
- * An {@link ExecutorService} that is timed. This class is for internal use.
+ * An {@link java.util.concurrent.ExecutorService} that is timed. This class is for internal use.
  *
  * @author Jon Schneider
  * @see "io.micrometer.binder.jvm.ExecutorServiceMetrics"

@@ -124,8 +124,7 @@ public class MicrometerHttpRequestExecutor extends HttpRequestExecutor {
             timerSample.stop(Timer.builder(METER_NAME)
                     .description("Duration of Apache HttpClient request execution")
                     .tags(tags)
-                    .register(registry)
-            );
+                    .register(registry));
         }
     }
 

@@ -15,7 +15,6 @@
  */
 package io.micrometer.core.instrument.config;
 
-import io.micrometer.core.instrument.config.validate.PropertyValidator;
 import io.micrometer.core.instrument.config.validate.Validated;
 import io.micrometer.core.instrument.config.validate.ValidationException;
 
@@ -40,7 +39,7 @@ public class MeterRegistryConfigValidator {
 
     /**
      * Specifies how to retrieve a property on a configuration object, which in turn may use
-     * {@link PropertyValidator} to validate the format of the
+     * {@link io.micrometer.core.instrument.config.validate.PropertyValidator} to validate the format of the
      * source of the property's value based on the configuration's {@link MeterRegistryConfig#get(String)} implementation.
      * Alternatively the getter method used to fetch the property may be overridden directly by a programmer as they instantiate
      * the configuration interface.

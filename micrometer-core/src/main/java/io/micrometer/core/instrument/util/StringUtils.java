@@ -27,7 +27,7 @@ public final class StringUtils {
     /**
      * Check if the String is null or has only whitespaces.
      *
-     * Modified from {@code org.apache.commons.lang.StringUtils#isBlank(String)}.
+     * Modified from {@link org.apache.commons.lang.StringUtils#isBlank(String)}.
      *
      * @param string String to check
      * @return {@code true} if the String is null or has only whitespaces

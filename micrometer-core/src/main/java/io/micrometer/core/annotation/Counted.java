@@ -15,8 +15,6 @@
  */
 package io.micrometer.core.annotation;
 
-import io.micrometer.core.aop.CountedAspect;
-
 import java.lang.annotation.*;
 
 /**
@@ -31,7 +29,7 @@ import java.lang.annotation.*;
  *
  * @author Ali Dehghani
  * @since 1.2.0
- * @see CountedAspect
+ * @see io.micrometer.core.aop.CountedAspect
  */
 @Inherited
 @Target(ElementType.METHOD)

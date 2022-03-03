@@ -15,12 +15,6 @@
  */
 package io.micrometer.core.instrument;
 
-import java.time.Duration;
-import java.util.Arrays;
-import java.util.concurrent.Callable;
-import java.util.concurrent.TimeUnit;
-import java.util.function.Supplier;
-
 import io.micrometer.core.annotation.Incubating;
 import io.micrometer.core.annotation.Timed;
 import io.micrometer.core.instrument.distribution.CountAtBucket;
@@ -28,6 +22,12 @@ import io.micrometer.core.instrument.distribution.HistogramSupport;
 import io.micrometer.core.instrument.distribution.ValueAtPercentile;
 import io.micrometer.core.instrument.distribution.pause.PauseDetector;
 import io.micrometer.core.lang.Nullable;
+
+import java.time.Duration;
+import java.util.Arrays;
+import java.util.concurrent.Callable;
+import java.util.concurrent.TimeUnit;
+import java.util.function.Supplier;
 
 /**
  * Timer intended to track of a large number of short running events. Example would be something like

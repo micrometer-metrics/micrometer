@@ -17,15 +17,13 @@ package io.micrometer.core.instrument.dropwizard;
 
 import com.codahale.metrics.EWMA;
 import io.micrometer.core.instrument.Clock;
-import io.micrometer.core.instrument.FunctionCounter;
-import io.micrometer.core.instrument.FunctionTimer;
 
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicLong;
 
 /**
- * For use in Dropwizard implementations of {@link FunctionTimer}
- * and {@link FunctionCounter}.
+ * For use in Dropwizard implementations of {@link io.micrometer.core.instrument.FunctionTimer}
+ * and {@link io.micrometer.core.instrument.FunctionCounter}.
  */
 class DropwizardRate {
     private static final long TICK_INTERVAL = TimeUnit.SECONDS.toNanos(5);

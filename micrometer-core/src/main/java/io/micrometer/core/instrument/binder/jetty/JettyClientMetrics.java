@@ -81,8 +81,7 @@ public class JettyClientMetrics implements Request.Listener {
             sample.stop(Timer.builder(timingMetricName)
                     .description("Jetty HTTP client request timing")
                     .tags(httpRequestTags)
-                    .register(registry)
-            );
+                    .register(registry));
         });
     }
 

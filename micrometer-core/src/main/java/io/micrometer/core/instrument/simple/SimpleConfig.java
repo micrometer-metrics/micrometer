@@ -16,11 +16,14 @@
 package io.micrometer.core.instrument.simple;
 
 import io.micrometer.core.instrument.config.MeterRegistryConfig;
-import io.micrometer.core.instrument.config.MeterRegistryConfigValidator;
-import io.micrometer.core.instrument.config.validate.PropertyValidator;
 import io.micrometer.core.instrument.config.validate.Validated;
 
 import java.time.Duration;
+
+import static io.micrometer.core.instrument.config.MeterRegistryConfigValidator.check;
+import static io.micrometer.core.instrument.config.MeterRegistryConfigValidator.checkAll;
+import static io.micrometer.core.instrument.config.validate.PropertyValidator.getDuration;
+import static io.micrometer.core.instrument.config.validate.PropertyValidator.getEnum;
 
 /**
  * Configuration for {@link SimpleMeterRegistry}.
@@ -39,7 +42,7 @@ public interface SimpleConfig extends MeterRegistryConfig {
      * @return The step size (reporting frequency) to use.
      */
     default Duration step() {
-        return PropertyValidator.getDuration(this, "step").orElse(Duration.ofMinutes(1));
+        return getDuration(this, "step").orElse(Duration.ofMinutes(1));
     }
 
     /**
@@ -47,14 +50,14 @@ public interface SimpleConfig extends MeterRegistryConfig {
      * a rate normalized form representing changes in the last {@link #step()}.
      */
     default CountingMode mode() {
-        return PropertyValidator.getEnum(this, CountingMode.class, "mode").orElse(CountingMode.CUMULATIVE);
+        return getEnum(this, CountingMode.class, "mode").orElse(CountingMode.CUMULATIVE);
     }
 
     @Override
     default Validated<?> validate() {
-        return MeterRegistryConfigValidator.checkAll(this,
-                MeterRegistryConfigValidator.check("step", SimpleConfig::step),
-                MeterRegistryConfigValidator.check("mode", SimpleConfig::mode)
+        return checkAll(this,
+                check("step", SimpleConfig::step),
+                check("mode", SimpleConfig::mode)
         );
     }
 }

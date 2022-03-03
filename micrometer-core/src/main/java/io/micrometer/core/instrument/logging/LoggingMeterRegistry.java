@@ -16,15 +16,11 @@
 package io.micrometer.core.instrument.logging;
 
 import io.micrometer.core.annotation.Incubating;
-import io.micrometer.core.instrument.MeterRegistry;
 import io.micrometer.core.instrument.Clock;
 import io.micrometer.core.instrument.DistributionSummary;
 import io.micrometer.core.instrument.Meter;
 import io.micrometer.core.instrument.Timer;
 import io.micrometer.core.instrument.binder.BaseUnits;
-import io.micrometer.core.instrument.util.DoubleFormat;
-import io.micrometer.core.instrument.util.NamedThreadFactory;
-import io.micrometer.core.instrument.util.TimeUtils;
 import io.micrometer.core.instrument.config.NamingConvention;
 import io.micrometer.core.instrument.distribution.DistributionStatisticConfig;
 import io.micrometer.core.instrument.distribution.HistogramSnapshot;
@@ -32,6 +28,8 @@ import io.micrometer.core.instrument.distribution.pause.PauseDetector;
 import io.micrometer.core.instrument.step.StepDistributionSummary;
 import io.micrometer.core.instrument.step.StepMeterRegistry;
 import io.micrometer.core.instrument.step.StepTimer;
+import io.micrometer.core.instrument.util.NamedThreadFactory;
+import io.micrometer.core.instrument.util.TimeUtils;
 import io.micrometer.core.lang.Nullable;
 import io.micrometer.core.util.internal.logging.InternalLogger;
 import io.micrometer.core.util.internal.logging.InternalLoggerFactory;
@@ -43,10 +41,11 @@ import java.util.function.Consumer;
 import java.util.function.Function;
 import java.util.stream.StreamSupport;
 
+import static io.micrometer.core.instrument.util.DoubleFormat.decimalOrNan;
 import static java.util.stream.Collectors.joining;
 
 /**
- * Logging {@link MeterRegistry}.
+ * Logging {@link io.micrometer.core.instrument.MeterRegistry}.
  *
  * @author Jon Schneider
  * @since 1.1.0
@@ -162,7 +161,7 @@ public class LoggingMeterRegistry extends StepMeterRegistry {
                         case COUNT:
                             return "throughput=" + print.rate(ms.getValue());
                         default:
-                            return msLine + DoubleFormat.decimalOrNan(ms.getValue());
+                            return msLine + decimalOrNan(ms.getValue());
                     }
                 })
                 .collect(joining(", ", print.id() + " ", ""));
@@ -200,7 +199,7 @@ public class LoggingMeterRegistry extends StepMeterRegistry {
         }
 
         String unitlessRate(double rate) {
-            return DoubleFormat.decimalOrNan(rate / (double) config.step().getSeconds()) + "/s";
+            return decimalOrNan(rate / (double) config.step().getSeconds()) + "/s";
         }
 
         String value(double value) {
@@ -210,10 +209,10 @@ public class LoggingMeterRegistry extends StepMeterRegistry {
         // see https://stackoverflow.com/a/3758880/510017
         String humanReadableByteCount(double bytes) {
             int unit = 1024;
-            if (bytes < unit || Double.isNaN(bytes)) return DoubleFormat.decimalOrNan(bytes) + " B";
+            if (bytes < unit || Double.isNaN(bytes)) return decimalOrNan(bytes) + " B";
             int exp = (int) (Math.log(bytes) / Math.log(unit));
             String pre = "KMGTPE".charAt(exp - 1) + "i";
-            return DoubleFormat.decimalOrNan(bytes / Math.pow(unit, exp)) + " " + pre + "B";
+            return decimalOrNan(bytes / Math.pow(unit, exp)) + " " + pre + "B";
         }
 
         String humanReadableBaseUnit(double value) {
@@ -221,7 +220,7 @@ public class LoggingMeterRegistry extends StepMeterRegistry {
             if (BaseUnits.BYTES.equals(baseUnit)) {
                 return humanReadableByteCount(value);
             }
-            return DoubleFormat.decimalOrNan(value) + (baseUnit != null ? " " + baseUnit : "");
+            return decimalOrNan(value) + (baseUnit != null ? " " + baseUnit : "");
         }
     }
 

@@ -15,9 +15,6 @@
  */
 package io.micrometer.core.annotation;
 
-import io.micrometer.core.instrument.LongTaskTimer;
-import io.micrometer.core.instrument.Timer;
-
 import java.lang.annotation.*;
 
 @Target({ElementType.ANNOTATION_TYPE, ElementType.TYPE, ElementType.METHOD})
@@ -36,39 +33,39 @@ public @interface Timed {
      * List of key-value pair arguments to supply the Timer as extra tags.
      *
      * @return key-value pair of tags
-     * @see Timer.Builder#tags(String...)
+     * @see io.micrometer.core.instrument.Timer.Builder#tags(String...)
      */
     String[] extraTags() default {};
 
     /**
-     * Flag of whether the Timer should be a {@link LongTaskTimer}.
+     * Flag of whether the Timer should be a {@link io.micrometer.core.instrument.LongTaskTimer}.
      *
      * @return whether the timer is a LongTaskTimer
      */
     boolean longTask() default false;
 
     /**
-     * List of percentiles to calculate client-side for the {@link Timer}.
+     * List of percentiles to calculate client-side for the {@link io.micrometer.core.instrument.Timer}.
      * For example, the 95th percentile should be passed as {@code 0.95}.
      * 
      * @return percentiles to calculate
-     * @see Timer.Builder#publishPercentiles(double...)
+     * @see io.micrometer.core.instrument.Timer.Builder#publishPercentiles(double...) 
      */
     double[] percentiles() default {};
 
     /**
-     * Whether to enable recording of a percentile histogram for the {@link Timer Timer}.
+     * Whether to enable recording of a percentile histogram for the {@link io.micrometer.core.instrument.Timer Timer}.
      * 
      * @return whether percentile histogram is enabled
-     * @see Timer.Builder#publishPercentileHistogram(Boolean)
+     * @see io.micrometer.core.instrument.Timer.Builder#publishPercentileHistogram(Boolean) 
      */
     boolean histogram() default false;
 
     /**
-     * Description of the {@link Timer}.
+     * Description of the {@link io.micrometer.core.instrument.Timer}.
      *
      * @return meter description
-     * @see Timer.Builder#description(String)
+     * @see io.micrometer.core.instrument.Timer.Builder#description(String)
      */
     String description() default "";
 }
