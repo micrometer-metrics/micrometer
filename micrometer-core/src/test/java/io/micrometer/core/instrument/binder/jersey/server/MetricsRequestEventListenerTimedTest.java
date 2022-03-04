@@ -15,10 +15,10 @@
  */
 package io.micrometer.core.instrument.binder.jersey.server;
 
+import io.micrometer.core.Issue;
 import io.micrometer.core.instrument.MeterRegistry;
 import io.micrometer.core.instrument.Tag;
 import io.micrometer.core.instrument.Tags;
-import io.micrometer.core.Issue;
 import io.micrometer.core.instrument.binder.jersey.server.resources.TimedOnClassResource;
 import io.micrometer.core.instrument.binder.jersey.server.resources.TimedResource;
 import io.micrometer.core.instrument.simple.SimpleMeterRegistry;

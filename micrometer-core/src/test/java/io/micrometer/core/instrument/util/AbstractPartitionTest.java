@@ -17,7 +17,6 @@ package io.micrometer.core.instrument.util;
 
 import java.util.ArrayList;
 import java.util.List;
-
 import org.junit.jupiter.api.Test;
 
 import static io.micrometer.core.instrument.util.AbstractPartition.partitionCount;

@@ -15,7 +15,7 @@
  */
 package io.micrometer.core.instrument.step;
 
-import io.micrometer.core.instrument.MockClock;
+import io.micrometer.core.instrument.*;
 import org.junit.jupiter.api.Test;
 
 import java.time.Duration;
