@@ -261,9 +261,9 @@ public abstract class ObservationRegistryCompatibilityKit {
 
     @Test
     void supplierShouldNotBeParentScopedIfParentIsNull() {
-        String result = Observation.tryScoped(
+        Observation.tryScoped(
                 null,
-                (Supplier<String>) () -> {
+                () -> {
                     assertThat(registry.getCurrentObservation()).isNull();
                     return "test";
                 });
