@@ -15,6 +15,21 @@
  */
 package io.micrometer.binder.db;
 
+import io.micrometer.core.annotation.Incubating;
+import io.micrometer.core.instrument.MeterRegistry;
+import io.micrometer.core.instrument.Tag;
+import io.micrometer.core.instrument.Tags;
+import org.jooq.*;
+import org.jooq.Record;
+import org.jooq.conf.Settings;
+import org.jooq.exception.*;
+import org.jooq.impl.DSL;
+import org.jooq.tools.jdbc.MockCallable;
+import org.jooq.tools.jdbc.MockDataProvider;
+import org.jooq.tools.jdbc.MockRunnable;
+import org.jooq.util.xml.jaxb.InformationSchema;
+
+import javax.sql.DataSource;
 import java.math.BigInteger;
 import java.sql.Connection;
 import java.sql.DatabaseMetaData;
@@ -30,26 +45,6 @@ import java.util.concurrent.Executor;
 import java.util.function.BiFunction;
 import java.util.function.Function;
 import java.util.stream.Stream;
-
-import javax.sql.DataSource;
-
-import io.micrometer.core.annotation.Incubating;
-import io.micrometer.core.instrument.MeterRegistry;
-import io.micrometer.core.instrument.Tag;
-import io.micrometer.core.instrument.Tags;
-import org.jooq.Record;
-import org.jooq.*;
-import org.jooq.conf.Settings;
-import org.jooq.exception.ConfigurationException;
-import org.jooq.exception.DataAccessException;
-import org.jooq.exception.InvalidResultException;
-import org.jooq.exception.NoDataFoundException;
-import org.jooq.exception.TooManyRowsException;
-import org.jooq.impl.DSL;
-import org.jooq.tools.jdbc.MockCallable;
-import org.jooq.tools.jdbc.MockDataProvider;
-import org.jooq.tools.jdbc.MockRunnable;
-import org.jooq.util.xml.jaxb.InformationSchema;
 
 /**
  * Time SQL queries passing through jOOQ.

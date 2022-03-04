@@ -19,6 +19,7 @@ import java.util.function.Consumer;
 import java.util.function.Supplier;
 
 import io.grpc.ForwardingServerCallListener.SimpleForwardingServerCallListener;
+import io.grpc.ServerCall;
 import io.grpc.ServerCall.Listener;
 import io.grpc.Status;
 import io.micrometer.core.instrument.Counter;
@@ -36,7 +37,7 @@ class MetricCollectingServerCallListener<Q> extends SimpleForwardingServerCallLi
     private final Consumer<Status.Code> responseStatusTiming;
 
     /**
-     * Creates a new delegating {@link Listener} that will wrap the given server call listener to collect metrics.
+     * Creates a new delegating {@link ServerCall.Listener} that will wrap the given server call listener to collect metrics.
      *
      * @param delegate The original listener to wrap.
      * @param requestCounter The counter for incoming requests.

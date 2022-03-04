@@ -15,27 +15,20 @@
  */
 package io.micrometer.binder.cache;
 
-import java.util.concurrent.TimeUnit;
-import java.util.function.Function;
-import java.util.function.ToLongFunction;
-
-import com.github.benmanes.caffeine.cache.AsyncCache;
-import com.github.benmanes.caffeine.cache.Cache;
-import com.github.benmanes.caffeine.cache.Caffeine;
-import com.github.benmanes.caffeine.cache.LoadingCache;
+import com.github.benmanes.caffeine.cache.*;
 import com.github.benmanes.caffeine.cache.stats.CacheStats;
-import io.micrometer.core.instrument.FunctionCounter;
-import io.micrometer.core.instrument.MeterRegistry;
-import io.micrometer.core.instrument.Tag;
-import io.micrometer.core.instrument.Tags;
-import io.micrometer.core.instrument.TimeGauge;
+import io.micrometer.core.instrument.*;
 import io.micrometer.core.instrument.binder.cache.CacheMeterBinder;
 import io.micrometer.core.lang.NonNullApi;
 import io.micrometer.core.lang.NonNullFields;
 import io.micrometer.core.lang.Nullable;
 
+import java.util.concurrent.TimeUnit;
+import java.util.function.Function;
+import java.util.function.ToLongFunction;
+
 /**
- * Collect metrics from Caffeine's {@link Cache}. {@link CaffeineStatsCounter} is an
+ * Collect metrics from Caffeine's {@link com.github.benmanes.caffeine.cache.Cache}. {@link CaffeineStatsCounter} is an
  * alternative that can collect more detailed statistics.
  * <p>
  * Note that {@code recordStats()} is required to gather non-zero statistics:

@@ -15,9 +15,7 @@
  */
 package io.micrometer.binder.cache;
 
-import java.util.Arrays;
-import java.util.EnumMap;
-import java.util.concurrent.TimeUnit;
+import static java.util.Objects.requireNonNull;
 
 import com.github.benmanes.caffeine.cache.Cache;
 import com.github.benmanes.caffeine.cache.RemovalCause;
@@ -33,7 +31,9 @@ import io.micrometer.core.instrument.Timer;
 import io.micrometer.core.lang.NonNullApi;
 import io.micrometer.core.lang.NonNullFields;
 
-import static java.util.Objects.requireNonNull;
+import java.util.Arrays;
+import java.util.EnumMap;
+import java.util.concurrent.TimeUnit;
 
 /**
  * A {@link StatsCounter} instrumented with Micrometer. This will provide more detailed metrics than using

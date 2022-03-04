@@ -15,8 +15,6 @@
  */
 package io.micrometer.binder.jetty;
 
-import javax.net.ssl.SSLSession;
-
 import io.micrometer.core.instrument.Counter;
 import io.micrometer.core.instrument.MeterRegistry;
 import io.micrometer.core.instrument.Tag;
@@ -25,6 +23,8 @@ import io.micrometer.core.instrument.binder.BaseUnits;
 import org.eclipse.jetty.io.ssl.SslHandshakeListener;
 import org.eclipse.jetty.server.Connector;
 import org.eclipse.jetty.server.Server;
+
+import javax.net.ssl.SSLSession;
 
 /**
  * Jetty SSL/TLS handshake metrics.<br><br>

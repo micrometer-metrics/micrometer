@@ -15,9 +15,6 @@
  */
 package io.micrometer.binder.logging;
 
-import java.util.HashMap;
-import java.util.Map;
-
 import ch.qos.logback.classic.Level;
 import ch.qos.logback.classic.Logger;
 import ch.qos.logback.classic.LoggerContext;
@@ -33,6 +30,9 @@ import io.micrometer.core.lang.NonNullApi;
 import io.micrometer.core.lang.NonNullFields;
 import org.slf4j.LoggerFactory;
 import org.slf4j.Marker;
+
+import java.util.HashMap;
+import java.util.Map;
 
 import static java.util.Collections.emptyList;
 

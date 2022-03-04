@@ -15,22 +15,18 @@
  */
 package io.micrometer.binder.cache;
 
-import java.util.concurrent.TimeUnit;
-import java.util.function.Function;
-import java.util.function.ToLongFunction;
-
 import com.google.common.cache.Cache;
 import com.google.common.cache.CacheBuilder;
 import com.google.common.cache.LoadingCache;
-import io.micrometer.core.instrument.FunctionCounter;
-import io.micrometer.core.instrument.MeterRegistry;
-import io.micrometer.core.instrument.Tag;
-import io.micrometer.core.instrument.Tags;
-import io.micrometer.core.instrument.TimeGauge;
+import io.micrometer.core.instrument.*;
 import io.micrometer.core.instrument.binder.cache.CacheMeterBinder;
 import io.micrometer.core.lang.NonNullApi;
 import io.micrometer.core.lang.NonNullFields;
 import io.micrometer.core.lang.Nullable;
+
+import java.util.concurrent.TimeUnit;
+import java.util.function.Function;
+import java.util.function.ToLongFunction;
 
 /**
  * @author Jon Schneider

@@ -15,11 +15,11 @@
  */
 package io.micrometer.binder.jetty;
 
-import java.util.concurrent.BlockingQueue;
-
 import io.micrometer.core.instrument.MeterRegistry;
 import io.micrometer.core.instrument.Tag;
 import org.eclipse.jetty.util.thread.QueuedThreadPool;
+
+import java.util.concurrent.BlockingQueue;
 
 /**
  * A {@link QueuedThreadPool} that binds metrics about the Jetty server thread pool.

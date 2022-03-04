@@ -27,6 +27,7 @@ import io.grpc.ServerCallHandler;
 import io.grpc.ServerInterceptor;
 import io.grpc.ServerServiceDefinition;
 import io.grpc.ServiceDescriptor;
+import io.grpc.Status;
 import io.grpc.Status.Code;
 import io.micrometer.core.instrument.Counter;
 import io.micrometer.core.instrument.MeterRegistry;
@@ -145,7 +146,7 @@ public class MetricCollectingServerInterceptor extends AbstractMetricCollectingI
             final ServerCallHandler<Q, A> next) {
 
         final MetricSet metrics = metricsFor(call.getMethodDescriptor());
-        final Consumer<Code> responseStatusTiming = metrics.newProcessingDurationTiming(this.registry);
+        final Consumer<Status.Code> responseStatusTiming = metrics.newProcessingDurationTiming(this.registry);
 
         final MetricCollectingServerCall<Q, A> monitoringCall =
                 new MetricCollectingServerCall<>(call, metrics.getResponseCounter());

@@ -15,11 +15,6 @@
  */
 package io.micrometer.binder.httpcomponents;
 
-import java.io.IOException;
-import java.util.Collections;
-import java.util.Optional;
-import java.util.function.Function;
-
 import io.micrometer.core.annotation.Incubating;
 import io.micrometer.core.instrument.MeterRegistry;
 import io.micrometer.core.instrument.Tag;
@@ -31,6 +26,11 @@ import org.apache.http.HttpRequest;
 import org.apache.http.HttpResponse;
 import org.apache.http.protocol.HttpContext;
 import org.apache.http.protocol.HttpRequestExecutor;
+
+import java.io.IOException;
+import java.util.Collections;
+import java.util.Optional;
+import java.util.function.Function;
 
 /**
  * This HttpRequestExecutor tracks the request duration of every request, that

@@ -15,10 +15,6 @@
  */
 package io.micrometer.binder.okhttp3;
 
-import java.util.Collections;
-import java.util.Optional;
-import java.util.concurrent.CountDownLatch;
-
 import io.micrometer.core.instrument.Gauge;
 import io.micrometer.core.instrument.MeterRegistry;
 import io.micrometer.core.instrument.Tag;
@@ -27,6 +23,10 @@ import io.micrometer.core.instrument.binder.BaseUnits;
 import io.micrometer.core.instrument.binder.MeterBinder;
 import io.micrometer.core.lang.NonNull;
 import okhttp3.ConnectionPool;
+
+import java.util.Collections;
+import java.util.Optional;
+import java.util.concurrent.CountDownLatch;
 
 /**
  * MeterBinder for collecting metrics of a given OkHttp {@link ConnectionPool}.

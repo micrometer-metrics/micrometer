@@ -15,17 +15,17 @@
  */
 package io.micrometer.binder.db;
 
-import java.util.HashMap;
-import java.util.Map;
-import java.util.function.Supplier;
-
 import io.micrometer.core.instrument.MeterRegistry;
 import io.micrometer.core.instrument.Tag;
 import io.micrometer.core.instrument.Timer;
 import io.micrometer.core.instrument.util.StringUtils;
+import java.util.HashMap;
+import java.util.Map;
 import org.jooq.ExecuteContext;
 import org.jooq.exception.DataAccessException;
 import org.jooq.impl.DefaultExecuteListener;
+
+import java.util.function.Supplier;
 
 class JooqExecuteListener extends DefaultExecuteListener {
     private final MeterRegistry registry;
