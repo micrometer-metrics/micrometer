@@ -25,6 +25,7 @@ import java.util.function.UnaryOperator;
 
 import io.grpc.MethodDescriptor;
 import io.grpc.ServiceDescriptor;
+import io.grpc.Status;
 import io.grpc.Status.Code;
 import io.micrometer.core.instrument.Counter;
 import io.micrometer.core.instrument.MeterRegistry;
@@ -98,7 +99,7 @@ public abstract class AbstractMetricCollectingInterceptor {
 
     protected final UnaryOperator<Counter.Builder> counterCustomizer;
     protected final UnaryOperator<Timer.Builder> timerCustomizer;
-    protected final Code[] eagerInitializedCodes;
+    protected final Status.Code[] eagerInitializedCodes;
 
     /**
      * Creates a new gRPC interceptor that will collect metrics into the given {@link MeterRegistry}. This method won't
@@ -121,7 +122,7 @@ public abstract class AbstractMetricCollectingInterceptor {
      */
     protected AbstractMetricCollectingInterceptor(final MeterRegistry registry,
             final UnaryOperator<Counter.Builder> counterCustomizer,
-            final UnaryOperator<Timer.Builder> timerCustomizer, final Code... eagerInitializedCodes) {
+            final UnaryOperator<Timer.Builder> timerCustomizer, final Status.Code... eagerInitializedCodes) {
         this.registry = registry;
         this.counterCustomizer = counterCustomizer;
         this.timerCustomizer = timerCustomizer;
@@ -268,8 +269,8 @@ public abstract class AbstractMetricCollectingInterceptor {
          * @return The newly created consumer that will report the processing duration since calling this method and
          *         invoking the returned consumer along with the status code.
          */
-        public Consumer<Code> newProcessingDurationTiming(final MeterRegistry registry) {
-            final Sample timerSample = Timer.start(registry);
+        public Consumer<Status.Code> newProcessingDurationTiming(final MeterRegistry registry) {
+            final Timer.Sample timerSample = Timer.start(registry);
             return code -> timerSample.stop(this.timerFunction.apply(code));
         }
 

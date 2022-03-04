@@ -20,7 +20,7 @@ import org.glassfish.jersey.server.monitoring.RequestEvent;
 
 /**
  * Provides {@link Tag Tags} for Jersey request metrics.
- * 
+ *
  * @author Michael Weirauch
  * @since 1.8.0
  */

@@ -15,8 +15,6 @@
  */
 package io.micrometer.binder.jetty;
 
-import java.util.Optional;
-
 import io.micrometer.core.annotation.Incubating;
 import io.micrometer.core.instrument.DistributionSummary;
 import io.micrometer.core.instrument.MeterRegistry;
@@ -27,9 +25,11 @@ import io.micrometer.core.instrument.internal.OnlyOnceLoggingDenyMeterFilter;
 import org.eclipse.jetty.client.api.ContentProvider;
 import org.eclipse.jetty.client.api.Request;
 
+import java.util.Optional;
+
 /**
  * Provides request metrics for Jetty {@link org.eclipse.jetty.client.HttpClient},
- * configured as a {@link Request.Listener Request.Listener}.
+ * configured as a {@link org.eclipse.jetty.client.api.Request.Listener Request.Listener}.
  * Incubating in case there emerges a better way to handle path variable detection.
  *
  * @author Jon Schneider

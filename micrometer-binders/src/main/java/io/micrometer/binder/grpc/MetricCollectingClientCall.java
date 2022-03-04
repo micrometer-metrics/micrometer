@@ -57,7 +57,7 @@ class MetricCollectingClientCall<Q, A> extends SimpleForwardingClientCall<Q, A> 
     }
 
     @Override
-    public void start(final Listener<A> responseListener, final Metadata metadata) {
+    public void start(final ClientCall.Listener<A> responseListener, final Metadata metadata) {
         super.start(
                 new MetricCollectingClientCallListener<>(
                         responseListener,
