@@ -19,30 +19,17 @@ import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.boot.builder.SpringApplicationBuilder;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RestController;
-import org.springframework.web.reactive.function.client.WebClient;
 import reactor.core.publisher.Mono;
 
 @SpringBootApplication
 @RestController
 public class PrometheusSample {
-
-    private final WebClient webClient;
-
-    public PrometheusSample(WebClient webClient) {
-        this.webClient = webClient;
-    }
-
     public static void main(String[] args) {
         new SpringApplicationBuilder(PrometheusSample.class).profiles("prometheus").run(args);
     }
 
     @GetMapping
-    public Mono<String> hi() {
+    public Mono<String> root() {
         return Mono.just("hi");
-    }
-
-    @GetMapping("callExternal")
-    Mono<String> callExternal() {
-        return this.webClient.get().uri("https://httpbin.org/headers").retrieve().bodyToMono(String.class);
     }
 }

@@ -15,9 +15,6 @@
  */
 package io.micrometer.core.ipc.http;
 
-import io.micrometer.core.ipc.http.HttpSender;
-import io.micrometer.core.ipc.http.OkHttpSender;
-
 class OkHttpSenderTest extends HttpSenderCompatibilityKit {
     @Override
     public HttpSender httpClient() {
