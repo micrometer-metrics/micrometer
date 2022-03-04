@@ -51,7 +51,7 @@ class DropwizardGaugeTest {
                 return null;
             }
         });
-        assertThat(gauge.value()).isEqualTo(Double.NaN);
+        assertThat(gauge.value()).isNaN();
     }
 
 }
