@@ -71,9 +71,12 @@ public abstract class PushMeterRegistry extends MeterRegistry {
             logger.info("publishing metrics for " + this.getClass().getSimpleName() + " every " + TimeUtils.format(config.step()));
 
             scheduledExecutorService = Executors.newSingleThreadScheduledExecutor(threadFactory);
-            // time publication to happen just after StepValue finishes the step
+            // if aligned, time publication to happen just after StepValue finishes the step
             long stepMillis = config.step().toMillis();
-            long initialDelayMillis = stepMillis - (clock.wallTime() % stepMillis) + 1;
+            long initialDelayMillis = stepMillis;
+            if (config.stepAlignment()) {
+                initialDelayMillis -= (clock.wallTime() % stepMillis) + 1;
+            }
             scheduledExecutorService.scheduleAtFixedRate(this::publishSafely,
                                                          initialDelayMillis, stepMillis, TimeUnit.MILLISECONDS);
         }
