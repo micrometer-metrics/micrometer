@@ -304,7 +304,11 @@ subprojects {
         mavenCentral()
         mavenLocal()
         maven {
-            url 'https://repo.spring.io/snapshot/' // for context-propagation API
+            url 'https://repo.spring.io/snapshot/'
+            content {
+                // we only need the snapshot repo for the context-propagation-api
+                includeModule 'io.micrometer', 'context-propagation-api'
+            }
         }
     }
 
