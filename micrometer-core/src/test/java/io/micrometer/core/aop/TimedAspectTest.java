@@ -16,6 +16,7 @@
 package io.micrometer.core.aop;
 
 import io.micrometer.core.annotation.Timed;
+import io.micrometer.core.aop.TimedAspect;
 import io.micrometer.core.instrument.LongTaskTimer;
 import io.micrometer.core.instrument.Meter.Id;
 import io.micrometer.core.instrument.MeterRegistry;
@@ -50,7 +51,7 @@ class TimedAspectTest {
         service.call();
 
         assertThat(registry.get("call")
-                .tag("class", "io.micrometer.core.aop.TimedAspectTest$TimedService")
+                .tag("class", this.getClass().getName() + "$TimedService")
                 .tag("method", "call")
                 .tag("extra", "tag")
                 .timer().count()).isEqualTo(1);
@@ -82,7 +83,7 @@ class TimedAspectTest {
         service.longCall();
 
         assertThat(registry.get("longCall")
-                .tag("class", "io.micrometer.core.aop.TimedAspectTest$TimedService")
+                .tag("class", this.getClass().getName() + "$TimedService")
                 .tag("method", "longCall")
                 .tag("extra", "tag")
                 .longTaskTimers().size()).isEqualTo(1);
@@ -101,7 +102,7 @@ class TimedAspectTest {
         
         assertThatExceptionOfType(MeterNotFoundException.class).isThrownBy(() -> {
             failingRegistry.get("call")
-                    .tag("class", "io.micrometer.core.aop.TimedAspectTest$TimedService")
+                    .tag("class", this.getClass().getName() + "$TimedService")
                     .tag("method", "call")
                     .tag("extra", "tag")
                     .timer();
@@ -121,7 +122,7 @@ class TimedAspectTest {
 
         assertThatExceptionOfType(MeterNotFoundException.class).isThrownBy(() -> {
             failingRegistry.get("longCall")
-                    .tag("class", "io.micrometer.core.aop.TimedAspectTest$TimedService")
+                    .tag("class", this.getClass().getName() + "$TimedService")
                     .tag("method", "longCall")
                     .tag("extra", "tag")
                     .longTaskTimer();
@@ -141,7 +142,7 @@ class TimedAspectTest {
         CompletableFuture<?> completableFuture = service.call(guardedResult);
 
         assertThat(registry.find("call")
-                .tag("class", "io.micrometer.core.aop.TimedAspectTest$AsyncTimedService")
+                .tag("class", this.getClass().getName() + "$AsyncTimedService")
                 .tag("method", "call")
                 .tag("extra", "tag")
                 .tag("exception", "none")
@@ -151,7 +152,7 @@ class TimedAspectTest {
         completableFuture.join();
 
         assertThat(registry.get("call")
-                .tag("class", "io.micrometer.core.aop.TimedAspectTest$AsyncTimedService")
+                .tag("class", this.getClass().getName() + "$AsyncTimedService")
                 .tag("method", "call")
                 .tag("extra", "tag")
                 .tag("exception", "none")
@@ -171,7 +172,7 @@ class TimedAspectTest {
         CompletableFuture<?> completableFuture = service.call(guardedResult);
 
         assertThat(registry.find("call")
-                .tag("class", "io.micrometer.core.aop.TimedAspectTest$AsyncTimedService")
+                .tag("class", this.getClass().getName() + "$AsyncTimedService")
                 .tag("method", "call")
                 .tag("extra", "tag")
                 .tag("exception", "NullPointerException")
@@ -181,7 +182,7 @@ class TimedAspectTest {
         catchThrowableOfType(completableFuture::join, CompletionException.class);
 
         assertThat(registry.get("call")
-                .tag("class", "io.micrometer.core.aop.TimedAspectTest$AsyncTimedService")
+                .tag("class", this.getClass().getName() + "$AsyncTimedService")
                 .tag("method", "call")
                 .tag("extra", "tag")
                 .tag("exception", "NullPointerException")
@@ -201,7 +202,7 @@ class TimedAspectTest {
         CompletableFuture<?> completableFuture = service.longCall(guardedResult);
 
         assertThat(registry.find("longCall")
-                .tag("class", "io.micrometer.core.aop.TimedAspectTest$AsyncTimedService")
+                .tag("class", this.getClass().getName() + "$AsyncTimedService")
                 .tag("method", "longCall")
                 .tag("extra", "tag")
                 .longTaskTimer().activeTasks()).isEqualTo(1);
@@ -210,7 +211,7 @@ class TimedAspectTest {
         completableFuture.join();
 
         assertThat(registry.get("longCall")
-                .tag("class", "io.micrometer.core.aop.TimedAspectTest$AsyncTimedService")
+                .tag("class", this.getClass().getName() + "$AsyncTimedService")
                 .tag("method", "longCall")
                 .tag("extra", "tag")
                 .longTaskTimer().activeTasks()).isEqualTo(0);
@@ -229,7 +230,7 @@ class TimedAspectTest {
         CompletableFuture<?> completableFuture = service.longCall(guardedResult);
 
         assertThat(registry.find("longCall")
-                .tag("class", "io.micrometer.core.aop.TimedAspectTest$AsyncTimedService")
+                .tag("class", this.getClass().getName() + "$AsyncTimedService")
                 .tag("method", "longCall")
                 .tag("extra", "tag")
                 .longTaskTimer().activeTasks()).isEqualTo(1);
@@ -238,7 +239,7 @@ class TimedAspectTest {
         catchThrowableOfType(completableFuture::join, CompletionException.class);
 
         assertThat(registry.get("longCall")
-                .tag("class", "io.micrometer.core.aop.TimedAspectTest$AsyncTimedService")
+                .tag("class", this.getClass().getName() + "$AsyncTimedService")
                 .tag("method", "longCall")
                 .tag("extra", "tag")
                 .longTaskTimer().activeTasks()).isEqualTo(0);
@@ -259,7 +260,7 @@ class TimedAspectTest {
         completableFuture.join();
 
         assertThatExceptionOfType(MeterNotFoundException.class).isThrownBy(() -> failingRegistry.get("call")
-                .tag("class", "io.micrometer.core.aop.TimedAspectTest$AsyncTimedService")
+                .tag("class", this.getClass().getName() + "$AsyncTimedService")
                 .tag("method", "call")
                 .tag("extra", "tag")
                 .tag("exception", "none")
@@ -282,7 +283,7 @@ class TimedAspectTest {
 
         assertThatExceptionOfType(MeterNotFoundException.class).isThrownBy(() -> {
             failingRegistry.get("longCall")
-                    .tag("class", "io.micrometer.core.aop.TimedAspectTest$AsyncTimedService")
+                    .tag("class", this.getClass().getName() + "$AsyncTimedService")
                     .tag("method", "longCall")
                     .tag("extra", "tag")
                     .longTaskTimer();

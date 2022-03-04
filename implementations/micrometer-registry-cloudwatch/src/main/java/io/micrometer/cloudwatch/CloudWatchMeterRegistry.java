@@ -82,11 +82,6 @@ public class CloudWatchMeterRegistry extends StepMeterRegistry {
                                    AmazonCloudWatchAsync amazonCloudWatchAsync, ThreadFactory threadFactory) {
         super(config, clock);
 
-        if (config.namespace() == null) {
-            throw new io.micrometer.core.instrument.config.MissingRequiredConfigurationException(
-                    "namespace must be set to report metrics to CloudWatch");
-        }
-
         this.amazonCloudWatchAsync = amazonCloudWatchAsync;
         this.config = config;
         config().namingConvention(new CloudWatchNamingConvention());

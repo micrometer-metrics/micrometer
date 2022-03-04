@@ -32,6 +32,10 @@ import io.micrometer.core.instrument.noop.NoopLongTaskTimer;
 import io.micrometer.core.instrument.noop.NoopMeter;
 import io.micrometer.core.instrument.noop.NoopTimeGauge;
 import io.micrometer.core.instrument.noop.NoopTimer;
+import io.micrometer.core.instrument.observation.Observation;
+import io.micrometer.core.instrument.observation.ObservationRegistry;
+import io.micrometer.core.instrument.observation.ObservationTextPublisher;
+import io.micrometer.core.instrument.observation.TimerObservationHandler;
 import io.micrometer.core.instrument.search.MeterNotFoundException;
 import io.micrometer.core.instrument.search.RequiredSearch;
 import io.micrometer.core.instrument.search.Search;
@@ -74,8 +78,11 @@ import static java.util.Objects.requireNonNull;
  *
  * @author Jon Schneider
  * @author Johnny Lim
+ * @author Jonatan Ivanov
+ * @author Tommy Ludwig
+ * @author Marcin Grzejszczak
  */
-public abstract class MeterRegistry {
+public abstract class MeterRegistry implements ObservationRegistry {
     protected final Clock clock;
     private final Object meterMapLock = new Object();
     private volatile MeterFilter[] filters = new MeterFilter[0];
@@ -84,6 +91,37 @@ public abstract class MeterRegistry {
     private final List<BiConsumer<Meter.Id, String>> meterRegistrationFailedListeners = new CopyOnWriteArrayList<>();
     private final Config config = new Config();
     private final More more = new More();
+
+    private static final ThreadLocal<Observation> localObservation = new ThreadLocal<>();
+
+    private final ObservationConfig observationConfig = new ObservationConfig();
+
+    @Nullable
+    @Override
+    public Observation getCurrentObservation() {
+        return localObservation.get();
+    }
+
+    @Override
+    public void setCurrentObservation(@Nullable Observation current) {
+        localObservation.set(current);
+    }
+
+    @Override
+    public ObservationConfig observationConfig() {
+        return this.observationConfig;
+    }
+
+    //TODO Want this under observationConfig but not sure that's possible
+    public MeterRegistry withTimerObservationHandler() {
+        this.observationConfig.observationHandler(new TimerObservationHandler(this));
+        return this;
+    }
+
+    public MeterRegistry withLoggingObservationHandler() {
+        this.observationConfig.observationHandler(new ObservationTextPublisher());
+        return this;
+    }
 
     // Even though writes are guarded by meterMapLock, iterators across value space are supported
     // Hence, we use CHM to support that iteration without ConcurrentModificationException risk
@@ -137,27 +175,11 @@ public abstract class MeterRegistry {
      * Build a new long task timer to be added to the registry. This is guaranteed to only be called if the long task timer doesn't already exist.
      *
      * @param id The id that uniquely identifies the long task timer.
-     * @return A new long task timer.
-     * @deprecated Implement {@link #newLongTaskTimer(Meter.Id, DistributionStatisticConfig)} instead.
-     */
-    @SuppressWarnings("DeprecatedIsStillUsed")
-    @Deprecated
-    protected LongTaskTimer newLongTaskTimer(Meter.Id id) {
-        throw new UnsupportedOperationException("MeterRegistry implementations may still override this, but it is only " +
-                "invoked by the overloaded form of newLongTaskTimer for backwards compatibility.");
-    }
-
-    /**
-     * Build a new long task timer to be added to the registry. This is guaranteed to only be called if the long task timer doesn't already exist.
-     *
-     * @param id The id that uniquely identifies the long task timer.
      * @param distributionStatisticConfig Configuration for published distribution statistics.
      * @return A new long task timer.
      * @since 1.5.0
      */
-    protected LongTaskTimer newLongTaskTimer(Meter.Id id, DistributionStatisticConfig distributionStatisticConfig) {
-        return newLongTaskTimer(id); // default implementation for backwards compatibility
-    }
+    protected abstract LongTaskTimer newLongTaskTimer(Meter.Id id, DistributionStatisticConfig distributionStatisticConfig);
 
     /**
      * Build a new timer to be added to the registry. This is guaranteed to only be called if the timer doesn't already exist.

@@ -9,7 +9,6 @@ dependencies {
     optionalApi 'net.sf.ehcache:ehcache'
     optionalApi 'javax.cache:cache-api'
     optionalApi 'com.hazelcast:hazelcast'
-    optionalApi 'org.hibernate:hibernate-entitymanager'
 
     // server runtime monitoring
     optionalApi 'org.eclipse.jetty:jetty-server'

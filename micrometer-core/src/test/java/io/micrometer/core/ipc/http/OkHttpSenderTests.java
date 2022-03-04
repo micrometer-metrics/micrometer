@@ -15,11 +15,10 @@
  */
 package io.micrometer.core.ipc.http;
 
-import com.github.tomakehurst.wiremock.WireMockServer;
+import com.github.tomakehurst.wiremock.junit5.WireMockRuntimeInfo;
+import com.github.tomakehurst.wiremock.junit5.WireMockTest;
 import okhttp3.OkHttpClient;
 import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.extension.ExtendWith;
-import ru.lanwen.wiremock.ext.WiremockResolver;
 
 import java.net.SocketTimeoutException;
 import java.util.concurrent.TimeUnit;
@@ -27,28 +26,28 @@ import java.util.concurrent.TimeUnit;
 import static com.github.tomakehurst.wiremock.client.WireMock.*;
 import static org.assertj.core.api.Assertions.assertThatExceptionOfType;
 
-@ExtendWith(WiremockResolver.class)
+@WireMockTest
 class OkHttpSenderTests {
     HttpSender httpSender = new OkHttpSender();
 
     @Test
-    void customReadTimeoutHonored(@WiremockResolver.Wiremock WireMockServer server) throws Throwable {
+    void customReadTimeoutHonored(WireMockRuntimeInfo wmInfo) throws Throwable {
         this.httpSender = new OkHttpSender(new OkHttpClient.Builder().readTimeout(1, TimeUnit.MILLISECONDS).build());
-        server.stubFor(any(urlEqualTo("/metrics")).willReturn(ok().withFixedDelay(5)));
+        stubFor(any(urlEqualTo("/metrics")).willReturn(ok().withFixedDelay(5)));
 
         assertThatExceptionOfType(SocketTimeoutException.class)
-                .isThrownBy(() -> httpSender.post(server.baseUrl() + "/metrics").send());
+                .isThrownBy(() -> httpSender.post(wmInfo.getHttpBaseUrl() + "/metrics").send());
     }
 
     @Test
-    void appendUtf8CharsetContentType(@WiremockResolver.Wiremock WireMockServer server) throws Throwable {
-        server.stubFor(any(urlEqualTo("/metrics")));
+    void appendUtf8CharsetContentType(WireMockRuntimeInfo wmInfo) throws Throwable {
+        stubFor(any(urlEqualTo("/metrics")));
 
-        this.httpSender.post(server.baseUrl() + "/metrics")
+        this.httpSender.post(wmInfo.getHttpBaseUrl() + "/metrics")
                 .withContent("application/xml", "<xml></xml>")
                 .send();
 
-        server.verify(postRequestedFor(urlEqualTo("/metrics"))
+        verify(postRequestedFor(urlEqualTo("/metrics"))
                 .withHeader("Content-Type", equalTo("application/xml; charset=utf-8")));
     }
 }

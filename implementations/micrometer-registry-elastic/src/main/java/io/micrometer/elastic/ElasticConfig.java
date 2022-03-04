@@ -181,21 +181,6 @@ public interface ElasticConfig extends StepRegistryConfig {
         return getSecret(this, "apiKeyCredentials").orElse(null);
     }
 
-
-    /**
-     * The type to be used when writing metrics documents to an index.
-     * This configuration is only used with Elasticsearch versions before 7.
-     * Default is: "doc"
-     *
-     * @return document type
-     * @since 1.4.0
-     * @deprecated This is no-op due to removal of mapping types since Elasticsearch 7.
-     */
-    @Deprecated
-    default String documentType() {
-        return getString(this, "documentType").orElse("doc");
-    }
-
     @Override
     default Validated<?> validate() {
         return checkAll(this,
@@ -216,8 +201,7 @@ public interface ElasticConfig extends StepRegistryConfig {
                                 return true;
                             }
                         }, "invalid date format", InvalidReason.MALFORMED)),
-                checkRequired("indexDateSeparator", ElasticConfig::indexDateSeparator),
-                checkRequired("documentType", ElasticConfig::documentType)
+                checkRequired("indexDateSeparator", ElasticConfig::indexDateSeparator)
         );
     }
 }

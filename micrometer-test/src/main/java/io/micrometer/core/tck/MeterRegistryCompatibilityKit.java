@@ -23,6 +23,7 @@ import io.micrometer.core.instrument.distribution.CountAtBucket;
 import io.micrometer.core.instrument.distribution.DistributionStatisticConfig;
 import io.micrometer.core.instrument.distribution.ValueAtPercentile;
 import io.micrometer.core.instrument.internal.CumulativeHistogramLongTaskTimer;
+import io.micrometer.core.instrument.observation.Observation;
 import io.micrometer.core.instrument.util.TimeUtils;
 import org.assertj.core.data.Offset;
 import org.junit.jupiter.api.BeforeEach;
@@ -71,7 +72,7 @@ public abstract class MeterRegistryCompatibilityKit {
     @BeforeEach
     void setup() {
         // assigned here rather than at initialization so subclasses can use fields in their registry() implementation
-        registry = registry();
+        registry = registry().withTimerObservationHandler();
     }
 
     @Test
@@ -625,6 +626,35 @@ public abstract class MeterRegistryCompatibilityKit {
             sample.stop(timer);
             clock(registry).add(step());
 
+            assertAll(() -> assertEquals(1L, timer.count()),
+                    () -> assertEquals(10, timer.totalTime(TimeUnit.NANOSECONDS), 1.0e-12));
+        }
+
+        @Test
+        @DisplayName("record with stateful Observation instance")
+        void recordWithObservation() {
+            Observation observation = Observation.start("myObservation", registry);
+            clock(registry).add(10, TimeUnit.NANOSECONDS);
+            observation.stop();
+            clock(registry).add(step());
+
+            Timer timer = registry.timer("myObservation", "error", "none");
+            assertAll(() -> assertEquals(1L, timer.count()),
+                    () -> assertEquals(10, timer.totalTime(TimeUnit.NANOSECONDS), 1.0e-12));
+        }
+
+        @Test
+        @DisplayName("record with stateful Observation and Scope instances")
+        void recordWithObservationAndScope() {
+            Observation observation = Observation.start("myObservation", registry);
+            try (Observation.Scope scope = observation.openScope()) {
+                assertThat(scope.getCurrentObservation()).isSameAs(observation);
+                clock(registry).add(10, TimeUnit.NANOSECONDS);
+            }
+            observation.stop();
+            clock(registry).add(step());
+
+            Timer timer = registry.timer("myObservation", "error", "none");
             assertAll(() -> assertEquals(1L, timer.count()),
                     () -> assertEquals(10, timer.totalTime(TimeUnit.NANOSECONDS), 1.0e-12));
         }

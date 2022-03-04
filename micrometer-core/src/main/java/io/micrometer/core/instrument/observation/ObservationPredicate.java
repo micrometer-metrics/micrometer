@@ -1,5 +1,5 @@
 /*
- * Copyright 2017 VMware, Inc.
+ * Copyright 2022 VMware, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,16 +13,19 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package io.micrometer.core.instrument.config;
+package io.micrometer.core.instrument.observation;
+
+import java.util.function.BiPredicate;
 
 /**
- * Signals that a piece of required configuration has not been provided.
+ * A predicate to define whether {@link Observation observation} should be
+ * created or a {@link NoopObservation} instead.
  *
- * @deprecated since 1.5.0 replaced with {@link io.micrometer.core.instrument.config.validate.Validated} API.
+ * @author Jonatan Ivanov
+ * @author Tommy Ludwig
+ * @author Marcin Grzejszczak
+ * @since 2.0.0
  */
-@Deprecated
-public class MissingRequiredConfigurationException extends IllegalStateException {
-    public MissingRequiredConfigurationException(String s) {
-        super(s);
-    }
+public interface ObservationPredicate extends BiPredicate<String, Observation.Context> {
+
 }

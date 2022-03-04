@@ -15,7 +15,6 @@
  */
 package io.micrometer.ganglia;
 
-import com.codahale.metrics.MetricRegistry;
 import info.ganglia.gmetric4j.gmetric.GMetric;
 import info.ganglia.gmetric4j.gmetric.GMetricSlope;
 import info.ganglia.gmetric4j.gmetric.GMetricType;
@@ -82,20 +81,6 @@ public class GangliaMeterRegistry extends StepMeterRegistry {
         } catch (IOException e) {
             throw new RuntimeException("Failed to configure Ganglia metrics reporting", e);
         }
-    }
-
-    /**
-     * @param config         The registry configuration.
-     * @param clock          The clock to use for timings.
-     * @param nameMapper     The name mapper to use in converting dimensional metrics to hierarchical names.
-     * @param metricRegistry Ignored as of Micrometer 1.1.0.
-     * @deprecated The Ganglia registry no longer uses Dropwizard as of Micrometer 1.1.0, because Dropwizard
-     * dropped support for Ganglia in its 4.0.0 release. Use {@link #builder(GangliaConfig)} instead.
-     */
-    @SuppressWarnings("unused")
-    @Deprecated
-    public GangliaMeterRegistry(GangliaConfig config, Clock clock, HierarchicalNameMapper nameMapper, MetricRegistry metricRegistry) {
-        this(config, clock, nameMapper);
     }
 
     public static Builder builder(GangliaConfig config) {

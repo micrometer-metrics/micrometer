@@ -21,6 +21,7 @@ import io.micrometer.core.instrument.binder.BaseUnits;
 import io.micrometer.core.instrument.config.MeterFilter;
 import io.micrometer.core.instrument.config.NamingConvention;
 import io.micrometer.core.instrument.distribution.pause.ClockDriftPauseDetector;
+import io.micrometer.core.instrument.observation.Observation;
 import io.micrometer.core.instrument.simple.SimpleConfig;
 import io.micrometer.core.instrument.simple.SimpleMeterRegistry;
 import io.micrometer.core.instrument.step.StepMeterRegistry;
@@ -486,6 +487,16 @@ class CompositeMeterRegistryTest {
 
         assertThat(this.composite.getMeters()).isEmpty();
         assertThat(this.simple.getMeters()).isEmpty();
+    }
+
+    @Test
+    void withTimerObservationHandler() {
+        this.composite.withTimerObservationHandler();
+        this.composite.add(this.simple);
+
+        Observation.start("obs", this.composite).stop();
+
+        assertThat(this.simple.get("obs").timer()).isNotNull();
     }
 
 }

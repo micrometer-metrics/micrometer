@@ -1,6 +1,4 @@
-plugins {
-    id 'idea'
-}
+description 'Core module of Micrometer containing instrumentation API and implementation'
 
 dependencies {
     // TODO(anuraaga): HdrHistogram is exposed in the micrometer API but probably shouldn't be
@@ -9,7 +7,16 @@ dependencies {
         exclude group: 'org.hdrhistogram', module: 'HdrHistogram'
     }
 
-    // instrumentation options
+    optionalApi 'io.micrometer:context-propagation-api'
+
+    // Aspects
+    optionalApi 'org.aspectj:aspectjweaver'
+
+    // HttpServlet TagsProvider
+    optionalApi 'javax.servlet:javax.servlet-api'
+
+    // TODO move dropwizard out of core module?
+    // DropwizardMeterRegistry for e.g. JMX registry
     optionalApi 'io.dropwizard.metrics:metrics-core'
 
     // cache monitoring
@@ -18,7 +25,6 @@ dependencies {
     optionalApi 'net.sf.ehcache:ehcache'
     optionalApi 'javax.cache:cache-api'
     optionalApi 'com.hazelcast:hazelcast'
-    optionalApi 'org.hibernate:hibernate-entitymanager'
 
     // server runtime monitoring
     optionalApi 'org.eclipse.jetty:jetty-server'
@@ -38,9 +44,6 @@ dependencies {
     optionalApi 'ch.qos.logback:logback-classic'
     optionalApi 'org.apache.logging.log4j:log4j-core'
 
-    // @Timed AOP
-    optionalApi 'org.aspectj:aspectjweaver'
-
     optionalApi 'com.squareup.okhttp3:okhttp'
 
     optionalApi 'org.mongodb:mongodb-driver-sync'
@@ -50,24 +53,29 @@ dependencies {
     optionalApi 'org.apache.kafka:kafka-clients'
     optionalApi 'org.apache.kafka:kafka-streams'
 
+    testImplementation project(':micrometer-test')
+
     testImplementation 'io.projectreactor:reactor-test'
+
+    // dependency injection tests
+    testImplementation 'javax.inject:javax.inject'
+    testImplementation 'javax.annotation:javax.annotation-api'
+    testImplementation 'org.springframework:spring-context'
+    testImplementation 'com.google.inject:guice'
+    // Uncomment these if you are interested in testing injection with dagger in MeterRegistryInjectionTest
+//    testImplementation 'com.google.dagger:dagger'
+//    testAnnotationProcessor 'com.google.dagger:dagger-compiler'
+
+    // for testing HttpSender implementations
+    testImplementation 'com.github.tomakehurst:wiremock-jre8-standalone'
 
     // JUnit 5
     testImplementation 'org.junit.jupiter:junit-jupiter'
     testImplementation 'com.tngtech.archunit:archunit-junit5'
 
-    // Eclipse still needs this (as of 4.7.1a)
-    testRuntimeOnly 'org.junit.platform:junit-platform-launcher'
-
     testImplementation 'org.mockito:mockito-inline'
 
     testImplementation 'org.hsqldb:hsqldb'
-
-    // dependency injection tests
-    testImplementation 'javax.inject:javax.inject'
-    testImplementation 'org.springframework:spring-context'
-    testImplementation 'com.google.inject:guice'
-
     testImplementation 'com.h2database:h2'
 
     // Uncomment these if you are interested in testing injection with dagger in MeterRegistryInjectionTest
@@ -85,6 +93,9 @@ dependencies {
 
     testImplementation 'org.glassfish.jersey.test-framework.providers:jersey-test-framework-provider-inmemory'
     testRuntimeOnly 'org.glassfish.jersey.inject:jersey-hk2'
+
+    // JCache metrics test
+    testImplementation 'org.jsr107.ri:cache-ri-impl'
 
     testImplementation 'ru.lanwen.wiremock:wiremock-junit5'
     testImplementation 'com.github.tomakehurst:wiremock-jre8-standalone'

@@ -8,7 +8,6 @@
 	<suppress files="io[\\/]micrometer[\\/]binder[\\/]logging[\\/].+" checks="IllegalImport" />
 	<suppress files="implementations[\\/].+" id="SLF4JIllegalImportCheck" />
 	<suppress files="samples[\\/].+" checks="IllegalImport" />
-	<suppress files="test[\\/]java[\\/]io[\\/]micrometer[\\/]jersey.+" checks="IllegalImport" />
 	<suppress files="test[\\/]java[\\/]io[\\/]micrometer[\\/]core[\\/]instrument[\\/]binder[\\/]jersey[\\/]server.+" checks="(IllegalImport)" />
 	<suppress files="test[\\/]java[\\/]io[\\/]micrometer[\\/]binder[\\/]jersey[\\/]server.+" checks="(IllegalImport)" />
 	<suppress files="LogbackMetricsAutoConfiguration" checks="IllegalImport" />
