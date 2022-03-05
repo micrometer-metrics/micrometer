@@ -31,7 +31,7 @@ class OkHttpSenderTests {
     HttpSender httpSender = new OkHttpSender();
 
     @Test
-    void customReadTimeoutHonored(WireMockRuntimeInfo wmInfo) throws Throwable {
+    void customReadTimeoutHonored(WireMockRuntimeInfo wmInfo) {
         this.httpSender = new OkHttpSender(new OkHttpClient.Builder().readTimeout(1, TimeUnit.MILLISECONDS).build());
         stubFor(any(urlEqualTo("/metrics")).willReturn(ok().withFixedDelay(5)));
 

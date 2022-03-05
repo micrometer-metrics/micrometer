@@ -30,7 +30,7 @@ class HttpUrlConnectionSenderTests {
     HttpSender httpSender = new HttpUrlConnectionSender();
 
     @Test
-    void customReadTimeoutHonored(WireMockRuntimeInfo wmInfo) throws Throwable {
+    void customReadTimeoutHonored(WireMockRuntimeInfo wmInfo) {
         this.httpSender = new HttpUrlConnectionSender(Duration.ofSeconds(1), Duration.ofMillis(1));
         stubFor(any(urlEqualTo("/metrics")).willReturn(ok().withFixedDelay(5)));
 

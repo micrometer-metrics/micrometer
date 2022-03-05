@@ -15,9 +15,8 @@ dependencies {
     // HttpServlet TagsProvider
     optionalApi 'javax.servlet:javax.servlet-api'
 
-    // TODO move dropwizard out of core module?
-    // DropwizardMeterRegistry for e.g. JMX registry
-    optionalApi 'io.dropwizard.metrics:metrics-core'
+    // instrumentation options
+    optionalApi 'io.dropwizard.metrics:metrics-core' // TODO move dropwizard out of core module? DropwizardMeterRegistry for e.g. JMX registry
 
     // cache monitoring
     optionalApi 'com.google.guava:guava'
@@ -62,9 +61,10 @@ dependencies {
     testImplementation 'javax.annotation:javax.annotation-api'
     testImplementation 'org.springframework:spring-context'
     testImplementation 'com.google.inject:guice'
+
     // Uncomment these if you are interested in testing injection with dagger in MeterRegistryInjectionTest
-//    testImplementation 'com.google.dagger:dagger'
-//    testAnnotationProcessor 'com.google.dagger:dagger-compiler'
+    // testImplementation 'com.google.dagger:dagger'
+    // testAnnotationProcessor 'com.google.dagger:dagger-compiler'
 
     // for testing HttpSender implementations
     testImplementation 'com.github.tomakehurst:wiremock-jre8-standalone'
@@ -77,10 +77,6 @@ dependencies {
 
     testImplementation 'org.hsqldb:hsqldb'
     testImplementation 'com.h2database:h2'
-
-    // Uncomment these if you are interested in testing injection with dagger in MeterRegistryInjectionTest
-//    testImplementation 'com.google.dagger:dagger'
-//    testAnnotationProcessor 'com.google.dagger:dagger-compiler'
 
     testImplementation 'org.assertj:assertj-core'
     testImplementation 'org.awaitility:awaitility'
