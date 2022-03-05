@@ -56,7 +56,7 @@ class CountedAspectTest {
 
         Counter counter = meterRegistry.get("metric.success")
                 .tag("method", "succeedWithMetrics")
-                .tag("class", "io.micrometer.core.aop.CountedAspectTest$CountedService")
+                .tag("class", this.getClass().getName() + "$CountedService")
                 .tag("extra", "tag")
                 .tag("result", "success").counter();
 
@@ -85,7 +85,7 @@ class CountedAspectTest {
 
         Counter counter = meterRegistry.get("metric.failing")
                 .tag("method", "fail")
-                .tag("class", "io.micrometer.core.aop.CountedAspectTest$CountedService")
+                .tag("class", this.getClass().getName() + "$CountedService")
                 .tag("exception", "RuntimeException")
                 .tag("result", "failure").counter();
 
@@ -124,7 +124,7 @@ class CountedAspectTest {
 
         assertThat(meterRegistry.find("metric.success")
                 .tag("method", "succeedWithMetrics")
-                .tag("class", "io.micrometer.core.aop.CountedAspectTest$AsyncCountedService")
+                .tag("class", this.getClass().getName() + "$AsyncCountedService")
                 .tag("extra", "tag")
                 .tag("exception", "none")
                 .tag("result", "success").counter()).isNull();
@@ -134,7 +134,7 @@ class CountedAspectTest {
 
         Counter counterAfterCompletion = meterRegistry.get("metric.success")
                 .tag("method", "succeedWithMetrics")
-                .tag("class", "io.micrometer.core.aop.CountedAspectTest$AsyncCountedService")
+                .tag("class", this.getClass().getName() + "$AsyncCountedService")
                 .tag("extra", "tag")
                 .tag("exception", "none")
                 .tag("result", "success").counter();
@@ -150,7 +150,7 @@ class CountedAspectTest {
 
         assertThat(meterRegistry.find("metric.failing")
                 .tag("method", "fail")
-                .tag("class", "io.micrometer.core.aop.CountedAspectTest$AsyncCountedService")
+                .tag("class", this.getClass().getName() + "$AsyncCountedService")
                 .tag("exception", "RuntimeException")
                 .tag("result", "failure").counter()).isNull();
 
@@ -159,7 +159,7 @@ class CountedAspectTest {
 
         Counter counter = meterRegistry.get("metric.failing")
                 .tag("method", "fail")
-                .tag("class", "io.micrometer.core.aop.CountedAspectTest$AsyncCountedService")
+                .tag("class", this.getClass().getName() + "$AsyncCountedService")
                 .tag("exception", "RuntimeException")
                 .tag("result", "failure").counter();
 
