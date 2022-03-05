@@ -242,8 +242,7 @@ class DynatraceExporterV2Test {
 
         clock.add(config.step());
         // Before the update to drop zero count lines, this would contain 1 line (with count=0), which is not desired.
-        List<String> zeroCountLines = exporter.toTimerLine(timer).collect(Collectors.toList());
-        assertThat(zeroCountLines).isEmpty();
+        assertThat(exporter.toTimerLine(timer)).isEmpty();
     }
 
     @Test
@@ -357,8 +356,7 @@ class DynatraceExporterV2Test {
 
         clock.add(config.step());
         // Before the update to drop zero count lines, this would contain 1 line (with count=0), which is not desired.
-        List<String> zeroCountLines = exporter.toDistributionSummaryLine(summary).collect(Collectors.toList());
-        assertThat(zeroCountLines).isEmpty();
+        assertThat(exporter.toDistributionSummaryLine(summary)).isEmpty();
     }
 
     @Test
