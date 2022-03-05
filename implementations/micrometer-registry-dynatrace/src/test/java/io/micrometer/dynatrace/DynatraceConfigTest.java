@@ -301,7 +301,6 @@ class DynatraceConfigTest {
         };
 
         await().atMost(1, SECONDS).until(() -> config.apiToken().equals("YOUR.DYNATRACE.TOKEN"));
-        assertThat(config.apiToken()).isEqualTo("YOUR.DYNATRACE.TOKEN");
         assertThat(config.uri()).isEqualTo("https://your-dynatrace-ingest-url/api/v2/metrics/ingest");
 
         Files.write(tempFile,
@@ -309,7 +308,6 @@ class DynatraceConfigTest {
                         "DT_METRICS_INGEST_API_TOKEN = A.DIFFERENT.TOKEN").getBytes());
 
         await().atMost(10, SECONDS).until(() -> config.apiToken().equals("A.DIFFERENT.TOKEN"));
-        assertThat(config.apiToken()).isEqualTo("A.DIFFERENT.TOKEN");
         assertThat(config.uri()).isEqualTo("https://a-different-url/api/v2/metrics/ingest");
         
         Files.deleteIfExists(tempFile);
