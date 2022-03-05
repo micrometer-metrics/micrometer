@@ -15,17 +15,11 @@
  */
 package io.micrometer.binder.httpcomponents;
 
-import java.io.IOException;
-import java.util.List;
-import java.util.stream.Collectors;
-
 import com.github.tomakehurst.wiremock.WireMockServer;
 import io.micrometer.core.instrument.MeterRegistry;
 import io.micrometer.core.instrument.MockClock;
 import io.micrometer.core.instrument.Tag;
 import io.micrometer.core.instrument.Tags;
-import io.micrometer.binder.httpcomponents.DefaultUriMapper;
-import io.micrometer.binder.httpcomponents.MicrometerHttpRequestExecutor;
 import io.micrometer.core.instrument.search.MeterNotFoundException;
 import io.micrometer.core.instrument.simple.SimpleConfig;
 import io.micrometer.core.instrument.simple.SimpleMeterRegistry;
@@ -40,15 +34,16 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import ru.lanwen.wiremock.ext.WiremockResolver;
 
-import static com.github.tomakehurst.wiremock.client.WireMock.aResponse;
-import static com.github.tomakehurst.wiremock.client.WireMock.any;
-import static com.github.tomakehurst.wiremock.client.WireMock.anyUrl;
-import static com.github.tomakehurst.wiremock.client.WireMock.urlEqualTo;
+import java.io.IOException;
+import java.util.List;
+import java.util.stream.Collectors;
+
+import static com.github.tomakehurst.wiremock.client.WireMock.*;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 
 /**
- * Unit tests for {@link io.micrometer.binder.httpcomponents.MicrometerHttpRequestExecutor}.
+ * Unit tests for {@link MicrometerHttpRequestExecutor}.
  *
  * @author Benjamin Hubert (benjamin.hubert@willhaben.at)
  */
@@ -163,7 +158,7 @@ class MicrometerHttpRequestExecutorTest {
 
     @Test
     void waitForContinueGetsPassedToSuper() {
-        io.micrometer.binder.httpcomponents.MicrometerHttpRequestExecutor requestExecutor = io.micrometer.binder.httpcomponents.MicrometerHttpRequestExecutor.builder(registry)
+        MicrometerHttpRequestExecutor requestExecutor = MicrometerHttpRequestExecutor.builder(registry)
                 .waitForContinue(1000)
                 .build();
         assertThat(requestExecutor).hasFieldOrPropertyWithValue("waitForContinue", 1000);
@@ -172,7 +167,7 @@ class MicrometerHttpRequestExecutorTest {
     @Test
     void uriMapperWorksAsExpected(@WiremockResolver.Wiremock WireMockServer server) throws IOException {
         server.stubFor(any(anyUrl()));
-        io.micrometer.binder.httpcomponents.MicrometerHttpRequestExecutor executor = io.micrometer.binder.httpcomponents.MicrometerHttpRequestExecutor.builder(registry)
+        MicrometerHttpRequestExecutor executor = MicrometerHttpRequestExecutor.builder(registry)
                 .uriMapper(request -> request.getRequestLine().getUri())
                 .build();
         HttpClient client = client(executor);
@@ -194,7 +189,7 @@ class MicrometerHttpRequestExecutorTest {
     @Test
     void additionalTagsAreExposed(@WiremockResolver.Wiremock WireMockServer server) throws IOException {
         server.stubFor(any(anyUrl()));
-        io.micrometer.binder.httpcomponents.MicrometerHttpRequestExecutor executor = io.micrometer.binder.httpcomponents.MicrometerHttpRequestExecutor.builder(registry)
+        MicrometerHttpRequestExecutor executor = MicrometerHttpRequestExecutor.builder(registry)
                 .tags(Tags.of("foo", "bar", "some.key", "value"))
                 .exportTagsForRoute(true)
                 .build();
@@ -208,14 +203,14 @@ class MicrometerHttpRequestExecutorTest {
     @Test
     void settingNullRegistryThrowsException() {
         assertThrows(IllegalArgumentException.class, () ->
-                io.micrometer.binder.httpcomponents.MicrometerHttpRequestExecutor.builder(null)
+                MicrometerHttpRequestExecutor.builder(null)
                         .build());
     }
 
     @Test
     void overridingUriMapperWithNullThrowsException() {
         assertThrows(IllegalArgumentException.class, () ->
-                io.micrometer.binder.httpcomponents.MicrometerHttpRequestExecutor.builder(registry)
+                MicrometerHttpRequestExecutor.builder(registry)
                         .uriMapper(null)
                         .build()
         );
@@ -224,7 +219,7 @@ class MicrometerHttpRequestExecutorTest {
     @Test
     void overrideExtraTagsDoesNotThrowAnException(@WiremockResolver.Wiremock WireMockServer server) throws IOException {
         server.stubFor(any(anyUrl()));
-        io.micrometer.binder.httpcomponents.MicrometerHttpRequestExecutor executor = io.micrometer.binder.httpcomponents.MicrometerHttpRequestExecutor.builder(registry)
+        MicrometerHttpRequestExecutor executor = MicrometerHttpRequestExecutor.builder(registry)
                 .tags(null)
                 .build();
         HttpClient client = client(executor);

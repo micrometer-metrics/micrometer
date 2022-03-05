@@ -24,7 +24,6 @@ import com.mongodb.connection.ServerId;
 import com.mongodb.event.CommandStartedEvent;
 import com.mongodb.event.CommandSucceededEvent;
 import io.micrometer.core.instrument.Tag;
-import io.micrometer.binder.mongodb.DefaultMongoCommandTagsProvider;
 import org.bson.BsonBoolean;
 import org.bson.BsonDocument;
 import org.bson.BsonElement;
@@ -35,7 +34,7 @@ import org.junit.jupiter.api.Test;
 import static org.assertj.core.api.Assertions.assertThat;
 
 /**
- * Unit test for {@link io.micrometer.binder.mongodb.DefaultMongoCommandTagsProvider}.
+ * Unit test for {@link DefaultMongoCommandTagsProvider}.
  *
  * @author Chris Bono
  */
@@ -44,7 +43,7 @@ class DefaultMongoCommandTagsProviderTest {
     private final ConnectionDescription connectionDesc = new ConnectionDescription(
             new ServerId(new ClusterId("cluster1"), new ServerAddress("localhost", 5150)));
 
-    private final io.micrometer.binder.mongodb.DefaultMongoCommandTagsProvider tagsProvider = new DefaultMongoCommandTagsProvider();
+    private final DefaultMongoCommandTagsProvider tagsProvider = new DefaultMongoCommandTagsProvider();
 
     @Test
     void defaultCommandTags() {

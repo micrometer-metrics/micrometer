@@ -15,13 +15,8 @@
  */
 package io.micrometer.binder.commonspool2;
 
-import java.util.Arrays;
-import java.util.concurrent.CountDownLatch;
-import java.util.concurrent.TimeUnit;
-
 import io.micrometer.core.instrument.MeterRegistry;
 import io.micrometer.core.instrument.Tags;
-import io.micrometer.binder.commonspool2.CommonsObjectPool2Metrics;
 import io.micrometer.core.instrument.simple.SimpleMeterRegistry;
 import org.apache.commons.pool2.BaseKeyedPooledObjectFactory;
 import org.apache.commons.pool2.BasePooledObjectFactory;
@@ -33,6 +28,10 @@ import org.apache.commons.pool2.impl.GenericObjectPoolConfig;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Test;
 
+import java.util.Arrays;
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.TimeUnit;
+
 import static org.assertj.core.api.Assertions.assertThat;
 
 /**
@@ -43,7 +42,7 @@ class CommonsObjectPool2MetricsTest {
 
     private Tags tags = Tags.of("app", "myapp", "version", "1");
     private final MeterRegistry registry = new SimpleMeterRegistry();
-    private final io.micrometer.binder.commonspool2.CommonsObjectPool2Metrics commonsObjectPool2Metrics = new CommonsObjectPool2Metrics(tags);
+    private final CommonsObjectPool2Metrics commonsObjectPool2Metrics = new CommonsObjectPool2Metrics(tags);
 
     @AfterEach
     void afterEach() {

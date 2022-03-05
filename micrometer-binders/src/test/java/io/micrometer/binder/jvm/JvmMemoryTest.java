@@ -23,14 +23,14 @@ import static org.assertj.core.api.Assertions.assertThat;
 class JvmMemoryTest {
     @Test
     void getLongLivedHeapPool() {
-        assertThat(io.micrometer.binder.jvm.JvmMemory.getLongLivedHeapPools()).isNotEmpty();
+        assertThat(JvmMemory.getLongLivedHeapPools()).isNotEmpty();
     }
 
     @Test
     void assertTolerateNullName() {
         // There is a way for the name passed to these methods to be null.
         // Ensure they don't fail;
-        assertThat(io.micrometer.binder.jvm.JvmMemory.isLongLivedPool(null)).isFalse();
-        assertThat(io.micrometer.binder.jvm.JvmMemory.isAllocationPool(null)).isFalse();
+        assertThat(JvmMemory.isLongLivedPool(null)).isFalse();
+        assertThat(JvmMemory.isAllocationPool(null)).isFalse();
     }
 }

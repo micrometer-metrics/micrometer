@@ -18,7 +18,6 @@ package io.micrometer.binder.jvm;
 import io.micrometer.core.instrument.Gauge;
 import io.micrometer.core.instrument.MeterRegistry;
 import io.micrometer.core.instrument.binder.BaseUnits;
-import io.micrometer.binder.jvm.JvmMemoryMetrics;
 import io.micrometer.core.instrument.simple.SimpleMeterRegistry;
 import org.junit.jupiter.api.Test;
 

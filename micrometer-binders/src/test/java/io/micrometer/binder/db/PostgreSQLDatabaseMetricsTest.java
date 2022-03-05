@@ -15,34 +15,18 @@
  */
 package io.micrometer.binder.db;
 
-import javax.sql.DataSource;
-
 import io.micrometer.core.instrument.MeterRegistry;
 import io.micrometer.core.instrument.Tags;
-import io.micrometer.binder.db.PostgreSQLDatabaseMetrics;
 import io.micrometer.core.instrument.search.RequiredSearch;
 import io.micrometer.core.instrument.simple.SimpleMeterRegistry;
 import org.junit.jupiter.api.Test;
 
-import static io.micrometer.binder.db.PostgreSQLDatabaseMetrics.Names.BLOCKS_HITS;
-import static io.micrometer.binder.db.PostgreSQLDatabaseMetrics.Names.BLOCKS_READS;
-import static io.micrometer.binder.db.PostgreSQLDatabaseMetrics.Names.BUFFERS_BACKEND;
-import static io.micrometer.binder.db.PostgreSQLDatabaseMetrics.Names.BUFFERS_CHECKPOINT;
-import static io.micrometer.binder.db.PostgreSQLDatabaseMetrics.Names.BUFFERS_CLEAN;
-import static io.micrometer.binder.db.PostgreSQLDatabaseMetrics.Names.CHECKPOINTS_REQUESTED;
-import static io.micrometer.binder.db.PostgreSQLDatabaseMetrics.Names.CHECKPOINTS_TIMED;
-import static io.micrometer.binder.db.PostgreSQLDatabaseMetrics.Names.CONNECTIONS;
-import static io.micrometer.binder.db.PostgreSQLDatabaseMetrics.Names.LOCKS;
-import static io.micrometer.binder.db.PostgreSQLDatabaseMetrics.Names.ROWS_DEAD;
-import static io.micrometer.binder.db.PostgreSQLDatabaseMetrics.Names.ROWS_DELETED;
-import static io.micrometer.binder.db.PostgreSQLDatabaseMetrics.Names.ROWS_FETCHED;
-import static io.micrometer.binder.db.PostgreSQLDatabaseMetrics.Names.ROWS_INSERTED;
-import static io.micrometer.binder.db.PostgreSQLDatabaseMetrics.Names.ROWS_UPDATED;
-import static io.micrometer.binder.db.PostgreSQLDatabaseMetrics.Names.SIZE;
-import static io.micrometer.binder.db.PostgreSQLDatabaseMetrics.Names.TEMP_WRITES;
-import static io.micrometer.binder.db.PostgreSQLDatabaseMetrics.Names.TRANSACTIONS;
+import javax.sql.DataSource;
+
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.Mockito.mock;
+
+import static io.micrometer.binder.db.PostgreSQLDatabaseMetrics.Names.*;
 
 /**
  * @author Kristof Depypere
@@ -57,7 +41,7 @@ class PostgreSQLDatabaseMetricsTest {
 
     @Test
     void shouldRegisterPostgreSqlMetrics() {
-        io.micrometer.binder.db.PostgreSQLDatabaseMetrics metrics = new io.micrometer.binder.db.PostgreSQLDatabaseMetrics(dataSource, DATABASE_NAME);
+        PostgreSQLDatabaseMetrics metrics = new PostgreSQLDatabaseMetrics(dataSource, DATABASE_NAME);
         metrics.bindTo(registry);
 
         get(SIZE).gauge();
@@ -85,7 +69,7 @@ class PostgreSQLDatabaseMetricsTest {
 
     @Test
     void shouldBridgePgStatReset() {
-        io.micrometer.binder.db.PostgreSQLDatabaseMetrics metrics = new io.micrometer.binder.db.PostgreSQLDatabaseMetrics(dataSource, DATABASE_NAME);
+        PostgreSQLDatabaseMetrics metrics = new PostgreSQLDatabaseMetrics(dataSource, DATABASE_NAME);
         metrics.bindTo(registry);
 
         metrics.resettableFunctionalCounter(FUNCTIONAL_COUNTER_KEY, () -> 5);
@@ -100,7 +84,7 @@ class PostgreSQLDatabaseMetricsTest {
 
     @Test
     void shouldBridgeDoublePgStatReset() {
-        io.micrometer.binder.db.PostgreSQLDatabaseMetrics metrics = new PostgreSQLDatabaseMetrics(dataSource, DATABASE_NAME);
+        PostgreSQLDatabaseMetrics metrics = new PostgreSQLDatabaseMetrics(dataSource, DATABASE_NAME);
         metrics.bindTo(registry);
 
         metrics.resettableFunctionalCounter(FUNCTIONAL_COUNTER_KEY, () -> 5);

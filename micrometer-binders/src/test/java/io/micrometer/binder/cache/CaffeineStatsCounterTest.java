@@ -15,7 +15,7 @@
  */
 package io.micrometer.binder.cache;
 
-import java.util.concurrent.TimeUnit;
+import static org.assertj.core.api.Assertions.assertThat;
 
 import com.github.benmanes.caffeine.cache.Cache;
 import com.github.benmanes.caffeine.cache.Caffeine;
@@ -24,7 +24,6 @@ import io.micrometer.core.instrument.DistributionSummary;
 import io.micrometer.core.instrument.MeterRegistry;
 import io.micrometer.core.instrument.Tags;
 import io.micrometer.core.instrument.Timer;
-import io.micrometer.binder.cache.CaffeineStatsCounter;
 import io.micrometer.core.instrument.search.RequiredSearch;
 import io.micrometer.core.instrument.simple.SimpleMeterRegistry;
 import org.junit.jupiter.api.BeforeEach;
@@ -32,10 +31,10 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.EnumSource;
 
-import static org.assertj.core.api.Assertions.assertThat;
+import java.util.concurrent.TimeUnit;
 
 /**
- * Tests for {@link io.micrometer.binder.cache.CaffeineStatsCounter}.
+ * Tests for {@link CaffeineStatsCounter}.
  *
  * @author John Karp
  */
@@ -44,7 +43,7 @@ class CaffeineStatsCounterTest {
     private static final Tags USER_TAGS = Tags.of("k", "v");
     private static final Tags TAGS = Tags.concat(USER_TAGS, "cache", CACHE_NAME);
 
-    private io.micrometer.binder.cache.CaffeineStatsCounter stats;
+    private CaffeineStatsCounter stats;
     private MeterRegistry registry;
 
     @BeforeEach

@@ -15,14 +15,10 @@
  */
 package io.micrometer.binder.httpcomponents;
 
-import java.util.concurrent.Future;
-
 import com.github.tomakehurst.wiremock.WireMockServer;
 import io.micrometer.core.instrument.MeterRegistry;
 import io.micrometer.core.instrument.MockClock;
 import io.micrometer.core.instrument.Tags;
-import io.micrometer.binder.httpcomponents.DefaultUriMapper;
-import io.micrometer.binder.httpcomponents.MicrometerHttpClientInterceptor;
 import io.micrometer.core.instrument.simple.SimpleConfig;
 import io.micrometer.core.instrument.simple.SimpleMeterRegistry;
 import org.apache.http.HttpResponse;
@@ -34,12 +30,14 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import ru.lanwen.wiremock.ext.WiremockResolver;
 
+import java.util.concurrent.Future;
+
 import static com.github.tomakehurst.wiremock.client.WireMock.any;
 import static com.github.tomakehurst.wiremock.client.WireMock.anyUrl;
 import static org.assertj.core.api.Assertions.assertThat;
 
 /**
- * Tests for {@link io.micrometer.binder.httpcomponents.MicrometerHttpClientInterceptor}.
+ * Tests for {@link MicrometerHttpClientInterceptor}.
  *
  * @author Jon Schneider
  * @author Johnny Lim
@@ -72,7 +70,7 @@ class MicrometerHttpClientInterceptorTest {
     @Test
     void uriIsReadFromHttpHeader(@WiremockResolver.Wiremock WireMockServer server) throws Exception {
         server.stubFor(any(anyUrl()));
-        io.micrometer.binder.httpcomponents.MicrometerHttpClientInterceptor interceptor = new io.micrometer.binder.httpcomponents.MicrometerHttpClientInterceptor(registry, Tags.empty(), true);
+        MicrometerHttpClientInterceptor interceptor = new MicrometerHttpClientInterceptor(registry, Tags.empty(), true);
         CloseableHttpAsyncClient client = asyncClient(interceptor);
         client.start();
         HttpGet request = new HttpGet(server.baseUrl());
@@ -89,7 +87,7 @@ class MicrometerHttpClientInterceptorTest {
     }
 
     private CloseableHttpAsyncClient asyncClient() {
-        io.micrometer.binder.httpcomponents.MicrometerHttpClientInterceptor interceptor = new io.micrometer.binder.httpcomponents.MicrometerHttpClientInterceptor(registry,
+        MicrometerHttpClientInterceptor interceptor = new MicrometerHttpClientInterceptor(registry,
                 request -> request.getRequestLine().getUri(),
                 Tags.empty(),
                 true);

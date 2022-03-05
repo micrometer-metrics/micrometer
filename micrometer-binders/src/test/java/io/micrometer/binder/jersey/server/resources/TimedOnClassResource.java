@@ -15,19 +15,19 @@
  */
 package io.micrometer.binder.jersey.server.resources;
 
+import io.micrometer.core.annotation.Timed;
+
 import javax.ws.rs.GET;
 import javax.ws.rs.Path;
 import javax.ws.rs.Produces;
 import javax.ws.rs.core.MediaType;
-
-import io.micrometer.core.annotation.Timed;
 
 /**
  * @author Michael Weirauch
  */
 @Path("/class")
 @Produces(MediaType.TEXT_PLAIN)
-@Timed(extraTags = {"on", "class"})
+@Timed(extraTags = { "on", "class" })
 public class TimedOnClassResource {
 
     @GET
@@ -38,7 +38,7 @@ public class TimedOnClassResource {
 
     @GET
     @Path("on-method")
-    @Timed(extraTags = {"on", "method"})
+    @Timed(extraTags = { "on", "method" })
     public String onMethod() {
         return "on-method";
     }

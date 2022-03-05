@@ -15,18 +15,7 @@
  */
 package io.micrometer.binder.jvm;
 
-import java.util.concurrent.Callable;
-import java.util.concurrent.CountDownLatch;
-import java.util.concurrent.ExecutionException;
-import java.util.concurrent.Executor;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
-import java.util.concurrent.ScheduledExecutorService;
-import java.util.concurrent.ScheduledFuture;
-import java.util.concurrent.TimeUnit;
-import java.util.concurrent.TimeoutException;
-
-import io.micrometer.binder.Issue;
+import io.micrometer.core.Issue;
 import io.micrometer.core.instrument.MeterRegistry;
 import io.micrometer.core.instrument.MockClock;
 import io.micrometer.core.instrument.Tag;
@@ -41,12 +30,12 @@ import org.junit.jupiter.api.condition.JRE;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.CsvSource;
 
-import static org.assertj.core.api.AssertionsForClassTypes.assertThat;
-import static org.assertj.core.api.AssertionsForClassTypes.assertThatCode;
-import static org.assertj.core.api.AssertionsForClassTypes.assertThatThrownBy;
+import java.util.concurrent.*;
+
+import static org.assertj.core.api.AssertionsForClassTypes.*;
 
 /**
- * Tests for {@link io.micrometer.binder.jvm.ExecutorServiceMetrics}.
+ * Tests for {@link ExecutorServiceMetrics}.
  *
  * @author Clint Checketts
  * @author Jon Schneider
@@ -158,7 +147,7 @@ class ExecutorServiceMetricsTest {
     @Test
     @Issue("#2447") // Note: only reproduces on Java 16+ or with --illegal-access=deny
     void monitorExecutorsExecutorServicePrivateClass() {
-        assertThatCode(() -> io.micrometer.binder.jvm.ExecutorServiceMetrics.monitor(registry, Executors.newSingleThreadExecutor(), ""))
+        assertThatCode(() -> ExecutorServiceMetrics.monitor(registry, Executors.newSingleThreadExecutor(), ""))
                 .doesNotThrowAnyException();
     }
 
@@ -257,9 +246,9 @@ class ExecutorServiceMetricsTest {
     @SuppressWarnings("unchecked")
     private <T extends Executor> T monitorExecutorService(String executorName, String metricPrefix, T exec) {
         if (metricPrefix == null) {
-            return (T) io.micrometer.binder.jvm.ExecutorServiceMetrics.monitor(registry, exec, executorName, userTags);
+            return (T) ExecutorServiceMetrics.monitor(registry, exec, executorName, userTags);
         } else {
-            return (T) io.micrometer.binder.jvm.ExecutorServiceMetrics.monitor(registry, exec, executorName, metricPrefix, userTags);
+            return (T) ExecutorServiceMetrics.monitor(registry, exec, executorName, metricPrefix, userTags);
         }
     }
 
@@ -278,7 +267,7 @@ class ExecutorServiceMetricsTest {
     @Test
     void newSingleThreadScheduledExecutor() {
         String executorServiceName = "myExecutorService";
-        io.micrometer.binder.jvm.ExecutorServiceMetrics.monitor(registry, Executors.newSingleThreadScheduledExecutor(), executorServiceName);
+        ExecutorServiceMetrics.monitor(registry, Executors.newSingleThreadScheduledExecutor(), executorServiceName);
         // timer metrics still available, even on Java 16+
         registry.get("executor").tag("name", executorServiceName).timer();
         if (isJava16OrLater()) return; // see gh-2317; ExecutorServiceMetrics not available for inaccessible JDK internal types
@@ -292,7 +281,7 @@ class ExecutorServiceMetricsTest {
     @Test
     void newSingleThreadScheduledExecutorWhenReflectiveAccessIsDisabled() {
         String executorServiceName = "myExecutorService";
-        io.micrometer.binder.jvm.ExecutorServiceMetrics.disableIllegalReflectiveAccess();
+        ExecutorServiceMetrics.disableIllegalReflectiveAccess();
         ExecutorServiceMetrics.monitor(registry, Executors.newSingleThreadScheduledExecutor(), executorServiceName);
         registry.get("executor").tag("name", executorServiceName).timer();
         assertThatThrownBy(() -> registry.get("executor.completed").tag("name", executorServiceName).functionCounter())

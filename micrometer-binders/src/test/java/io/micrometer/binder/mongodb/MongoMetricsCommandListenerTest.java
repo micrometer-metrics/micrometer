@@ -15,11 +15,6 @@
  */
 package io.micrometer.binder.mongodb;
 
-import java.util.Date;
-import java.util.HashMap;
-import java.util.Map;
-import java.util.concurrent.atomic.AtomicReference;
-
 import com.mongodb.MongoClientSettings;
 import com.mongodb.ServerAddress;
 import com.mongodb.client.MongoClient;
@@ -30,9 +25,6 @@ import com.mongodb.event.CommandEvent;
 import io.micrometer.core.instrument.MeterRegistry;
 import io.micrometer.core.instrument.Tag;
 import io.micrometer.core.instrument.Tags;
-import io.micrometer.binder.mongodb.DefaultMongoCommandTagsProvider;
-import io.micrometer.binder.mongodb.MongoCommandTagsProvider;
-import io.micrometer.binder.mongodb.MongoMetricsCommandListener;
 import io.micrometer.core.instrument.search.MeterNotFoundException;
 import io.micrometer.core.instrument.simple.SimpleMeterRegistry;
 import org.bson.Document;
@@ -40,11 +32,16 @@ import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
+import java.util.Date;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.concurrent.atomic.AtomicReference;
+
 import static java.util.Collections.singletonList;
 import static org.assertj.core.api.Assertions.assertThat;
 
 /**
- * Tests for {@link io.micrometer.binder.mongodb.MongoMetricsCommandListener}.
+ * Tests for {@link MongoMetricsCommandListener}.
  *
  * @author Christophe Bornet
  * @author Chris Bono
@@ -62,7 +59,7 @@ class MongoMetricsCommandListenerTest extends AbstractMongoDbTest {
         registry = new SimpleMeterRegistry();
         clusterId = new AtomicReference<>();
         MongoClientSettings settings = MongoClientSettings.builder()
-                .addCommandListener(new io.micrometer.binder.mongodb.MongoMetricsCommandListener(registry))
+                .addCommandListener(new MongoMetricsCommandListener(registry))
                 .applyToClusterSettings(builder -> builder
                         .hosts(singletonList(new ServerAddress(host, port)))
                         .addClusterListener(new ClusterListener() {
@@ -108,14 +105,14 @@ class MongoMetricsCommandListenerTest extends AbstractMongoDbTest {
 
     @Test
     void shouldCreateSuccessCommandMetricWithCustomSettings() {
-        io.micrometer.binder.mongodb.MongoCommandTagsProvider tagsProvider = new io.micrometer.binder.mongodb.DefaultMongoCommandTagsProvider() {
+        MongoCommandTagsProvider tagsProvider = new DefaultMongoCommandTagsProvider() {
             @Override
             public Iterable<Tag> commandTags(CommandEvent event) {
                 return Tags.of(super.commandTags(event)).and(Tag.of("mongoz", "5150"));
             }
         };
         MongoClientSettings settings = MongoClientSettings.builder()
-                .addCommandListener(new io.micrometer.binder.mongodb.MongoMetricsCommandListener(registry, tagsProvider))
+                .addCommandListener(new MongoMetricsCommandListener(registry, tagsProvider))
                 .applyToClusterSettings(builder -> builder
                         .hosts(singletonList(new ServerAddress(host, port)))
                         .addClusterListener(new ClusterListener() {

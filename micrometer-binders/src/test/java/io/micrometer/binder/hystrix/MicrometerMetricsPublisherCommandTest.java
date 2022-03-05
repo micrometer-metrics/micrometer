@@ -15,18 +15,12 @@
  */
 package io.micrometer.binder.hystrix;
 
-import com.netflix.hystrix.Hystrix;
-import com.netflix.hystrix.HystrixCommand;
-import com.netflix.hystrix.HystrixCommandGroupKey;
-import com.netflix.hystrix.HystrixCommandKey;
-import com.netflix.hystrix.HystrixCommandProperties;
-import com.netflix.hystrix.HystrixEventType;
+import com.netflix.hystrix.*;
 import com.netflix.hystrix.strategy.HystrixPlugins;
 import com.netflix.hystrix.strategy.metrics.HystrixMetricsPublisher;
 import io.micrometer.core.instrument.MeterRegistry;
 import io.micrometer.core.instrument.Tag;
 import io.micrometer.core.instrument.Tags;
-import io.micrometer.binder.hystrix.MicrometerMetricsPublisher;
 import io.micrometer.core.instrument.simple.SimpleMeterRegistry;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
@@ -59,7 +53,7 @@ class MicrometerMetricsPublisherCommandTest {
     void cumulativeCounters() throws Exception {
         HystrixMetricsPublisher metricsPublisher = HystrixPlugins.getInstance().getMetricsPublisher();
         HystrixPlugins.reset();
-        HystrixPlugins.getInstance().registerMetricsPublisher(new io.micrometer.binder.hystrix.MicrometerMetricsPublisher(registry, metricsPublisher));
+        HystrixPlugins.getInstance().registerMetricsPublisher(new MicrometerMetricsPublisher(registry, metricsPublisher));
         HystrixCommandKey key = HystrixCommandKey.Factory.asKey("MicrometerCOMMAND-A");
 
         for (int i = 0; i < 3; i++) {

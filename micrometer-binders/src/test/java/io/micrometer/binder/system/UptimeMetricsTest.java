@@ -15,14 +15,13 @@
  */
 package io.micrometer.binder.system;
 
-import java.lang.management.RuntimeMXBean;
-
 import io.micrometer.core.instrument.MeterRegistry;
 import io.micrometer.core.instrument.MockClock;
-import io.micrometer.binder.system.UptimeMetrics;
 import io.micrometer.core.instrument.simple.SimpleConfig;
 import io.micrometer.core.instrument.simple.SimpleMeterRegistry;
 import org.junit.jupiter.api.Test;
+
+import java.lang.management.RuntimeMXBean;
 
 import static java.util.Collections.emptyList;
 import static org.assertj.core.api.AssertionsForClassTypes.assertThat;
@@ -39,7 +38,7 @@ class UptimeMetricsTest {
     @Test
     void uptimeMetricsRuntime() {
         MeterRegistry registry = new SimpleMeterRegistry(SimpleConfig.DEFAULT, new MockClock());
-        new io.micrometer.binder.system.UptimeMetrics().bindTo(registry);
+        new UptimeMetrics().bindTo(registry);
 
         registry.get("process.uptime").timeGauge();
         registry.get("process.start.time").timeGauge();

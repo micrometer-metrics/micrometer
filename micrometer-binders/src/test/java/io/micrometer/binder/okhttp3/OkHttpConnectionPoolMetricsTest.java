@@ -18,7 +18,6 @@ package io.micrometer.binder.okhttp3;
 import io.micrometer.core.instrument.MeterRegistry;
 import io.micrometer.core.instrument.MockClock;
 import io.micrometer.core.instrument.Tags;
-import io.micrometer.binder.okhttp3.OkHttpConnectionPoolMetrics;
 import io.micrometer.core.instrument.search.MeterNotFoundException;
 import io.micrometer.core.instrument.simple.SimpleConfig;
 import io.micrometer.core.instrument.simple.SimpleMeterRegistry;
@@ -39,53 +38,53 @@ class OkHttpConnectionPoolMetricsTest {
 
     @Test
     void creationWithNullConnectionPoolThrowsException() {
-        assertThrows(IllegalArgumentException.class, () -> new io.micrometer.binder.okhttp3.OkHttpConnectionPoolMetrics(null));
-        assertThrows(IllegalArgumentException.class, () -> new io.micrometer.binder.okhttp3.OkHttpConnectionPoolMetrics(null, Tags.empty()));
-        assertThrows(IllegalArgumentException.class, () -> new io.micrometer.binder.okhttp3.OkHttpConnectionPoolMetrics(null, "irrelevant", Tags.empty()));
+        assertThrows(IllegalArgumentException.class, () -> new OkHttpConnectionPoolMetrics(null));
+        assertThrows(IllegalArgumentException.class, () -> new OkHttpConnectionPoolMetrics(null, Tags.empty()));
+        assertThrows(IllegalArgumentException.class, () -> new OkHttpConnectionPoolMetrics(null, "irrelevant", Tags.empty()));
     }
 
     @Test
     void creationWithNullNamePrefixThrowsException() {
-        assertThrows(IllegalArgumentException.class, () -> new io.micrometer.binder.okhttp3.OkHttpConnectionPoolMetrics(connectionPool, null, Tags.empty()));
+        assertThrows(IllegalArgumentException.class, () -> new OkHttpConnectionPoolMetrics(connectionPool, null, Tags.empty()));
     }
 
     @Test
     void creationWithNullTagsThrowsException() {
-        assertThrows(IllegalArgumentException.class, () -> new io.micrometer.binder.okhttp3.OkHttpConnectionPoolMetrics(connectionPool, null));
-        assertThrows(IllegalArgumentException.class, () -> new io.micrometer.binder.okhttp3.OkHttpConnectionPoolMetrics(connectionPool, "irrelevant.name", null));
+        assertThrows(IllegalArgumentException.class, () -> new OkHttpConnectionPoolMetrics(connectionPool, null));
+        assertThrows(IllegalArgumentException.class, () -> new OkHttpConnectionPoolMetrics(connectionPool, "irrelevant.name", null));
     }
 
     @Test
     void instanceUsesDefaultNamePrefix() {
-        io.micrometer.binder.okhttp3.OkHttpConnectionPoolMetrics instance = new io.micrometer.binder.okhttp3.OkHttpConnectionPoolMetrics(connectionPool);
+        OkHttpConnectionPoolMetrics instance = new OkHttpConnectionPoolMetrics(connectionPool);
         instance.bindTo(registry);
         registry.get("okhttp.pool.connection.count"); // does not throw MeterNotFoundException
     }
 
     @Test
     void instanceUsesDefaultNamePrefixAndGivenTag() {
-        io.micrometer.binder.okhttp3.OkHttpConnectionPoolMetrics instance = new io.micrometer.binder.okhttp3.OkHttpConnectionPoolMetrics(connectionPool, Tags.of("foo", "bar"));
+        OkHttpConnectionPoolMetrics instance = new OkHttpConnectionPoolMetrics(connectionPool, Tags.of("foo", "bar"));
         instance.bindTo(registry);
         registry.get("okhttp.pool.connection.count").tags("foo", "bar"); // does not throw MeterNotFoundException
     }
 
     @Test
     void instanceUsesGivenNamePrefix() {
-        io.micrometer.binder.okhttp3.OkHttpConnectionPoolMetrics instance = new io.micrometer.binder.okhttp3.OkHttpConnectionPoolMetrics(connectionPool, "some.meter", Tags.empty());
+        OkHttpConnectionPoolMetrics instance = new OkHttpConnectionPoolMetrics(connectionPool, "some.meter", Tags.empty());
         instance.bindTo(registry);
         registry.get("some.meter.connection.count"); // does not throw MeterNotFoundException
     }
 
     @Test
     void instanceUsesGivenNamePrefixAndTag() {
-        io.micrometer.binder.okhttp3.OkHttpConnectionPoolMetrics instance = new io.micrometer.binder.okhttp3.OkHttpConnectionPoolMetrics(connectionPool, "another.meter", Tags.of("bar", "baz"));
+        OkHttpConnectionPoolMetrics instance = new OkHttpConnectionPoolMetrics(connectionPool, "another.meter", Tags.of("bar", "baz"));
         instance.bindTo(registry);
         registry.get("another.meter.connection.count").tags("bar", "baz"); // does not throw MeterNotFoundException
     }
 
     @Test
     void activeAndIdle() {
-        io.micrometer.binder.okhttp3.OkHttpConnectionPoolMetrics instance = new io.micrometer.binder.okhttp3.OkHttpConnectionPoolMetrics(connectionPool, Tags.of("foo", "bar"));
+        OkHttpConnectionPoolMetrics instance = new OkHttpConnectionPoolMetrics(connectionPool, Tags.of("foo", "bar"));
         instance.bindTo(registry);
         when(connectionPool.connectionCount()).thenReturn(17);
         when(connectionPool.idleConnectionCount()).thenReturn(10, 9);
@@ -107,7 +106,7 @@ class OkHttpConnectionPoolMetricsTest {
 
     @Test
     void maxIfGiven() {
-        io.micrometer.binder.okhttp3.OkHttpConnectionPoolMetrics instance = new io.micrometer.binder.okhttp3.OkHttpConnectionPoolMetrics(connectionPool, "huge.pool", Tags.of("foo", "bar"), 1234);
+        OkHttpConnectionPoolMetrics instance = new OkHttpConnectionPoolMetrics(connectionPool, "huge.pool", Tags.of("foo", "bar"), 1234);
         instance.bindTo(registry);
         assertThat(registry.get("huge.pool.connection.limit")
                 .tags(Tags.of("foo", "bar"))
@@ -116,7 +115,7 @@ class OkHttpConnectionPoolMetricsTest {
 
     @Test
     void maxIfNotGiven() {
-        io.micrometer.binder.okhttp3.OkHttpConnectionPoolMetrics instance = new OkHttpConnectionPoolMetrics(connectionPool, "huge.pool", Tags.of("foo", "bar"), null);
+        OkHttpConnectionPoolMetrics instance = new OkHttpConnectionPoolMetrics(connectionPool, "huge.pool", Tags.of("foo", "bar"), null);
         instance.bindTo(registry);
         assertThrows(MeterNotFoundException.class, () -> registry.get("huge.pool.connection.limit")
                 .tags(Tags.of("foo", "bar"))

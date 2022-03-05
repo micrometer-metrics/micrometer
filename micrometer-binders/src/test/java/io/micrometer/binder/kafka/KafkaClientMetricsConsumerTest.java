@@ -15,12 +15,10 @@
  */
 package io.micrometer.binder.kafka;
 
-import java.util.Properties;
-
 import io.micrometer.core.instrument.MeterRegistry;
 import io.micrometer.core.instrument.Tags;
-import io.micrometer.binder.kafka.KafkaClientMetrics;
 import io.micrometer.core.instrument.simple.SimpleMeterRegistry;
+import java.util.Properties;
 import org.apache.kafka.clients.consumer.Consumer;
 import org.apache.kafka.clients.consumer.KafkaConsumer;
 import org.apache.kafka.common.serialization.StringDeserializer;
@@ -37,7 +35,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 class KafkaClientMetricsConsumerTest {
     private static final String BOOTSTRAP_SERVERS = "localhost:9092";
     private Tags tags = Tags.of("app", "myapp", "version", "1");
-    io.micrometer.binder.kafka.KafkaClientMetrics metrics;
+    KafkaClientMetrics metrics;
 
     @AfterEach
     void afterEach() {
@@ -47,7 +45,7 @@ class KafkaClientMetricsConsumerTest {
 
     @Test void shouldCreateMeters() {
         try (Consumer<String, String> consumer = createConsumer()) {
-            metrics = new io.micrometer.binder.kafka.KafkaClientMetrics(consumer);
+            metrics = new KafkaClientMetrics(consumer);
             MeterRegistry registry = new SimpleMeterRegistry();
 
             metrics.bindTo(registry);

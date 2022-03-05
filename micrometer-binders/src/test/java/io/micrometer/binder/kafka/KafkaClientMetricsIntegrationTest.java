@@ -15,11 +15,6 @@
  */
 package io.micrometer.binder.kafka;
 
-import java.time.Duration;
-import java.util.Collections;
-import java.util.Properties;
-
-import io.micrometer.binder.kafka.KafkaClientMetrics;
 import io.micrometer.core.instrument.simple.SimpleMeterRegistry;
 import org.apache.kafka.clients.consumer.Consumer;
 import org.apache.kafka.clients.consumer.ConsumerConfig;
@@ -36,6 +31,10 @@ import org.testcontainers.containers.KafkaContainer;
 import org.testcontainers.junit.jupiter.Container;
 import org.testcontainers.junit.jupiter.Testcontainers;
 import org.testcontainers.utility.DockerImageName;
+
+import java.time.Duration;
+import java.util.Collections;
+import java.util.Properties;
 
 import static java.lang.System.out;
 import static org.assertj.core.api.Assertions.assertThat;
@@ -58,7 +57,7 @@ class KafkaClientMetricsIntegrationTest {
         Producer<String, String> producer = new KafkaProducer<>(
                 producerConfigs, new StringSerializer(), new StringSerializer());
 
-        io.micrometer.binder.kafka.KafkaClientMetrics producerKafkaMetrics = new io.micrometer.binder.kafka.KafkaClientMetrics(producer);
+        KafkaClientMetrics producerKafkaMetrics = new KafkaClientMetrics(producer);
         producerKafkaMetrics.bindTo(registry);
 
         int producerMetrics = registry.getMeters().size();
@@ -74,7 +73,7 @@ class KafkaClientMetricsIntegrationTest {
         Consumer<String, String> consumer = new KafkaConsumer<>(
                 consumerConfigs, new StringDeserializer(), new StringDeserializer());
 
-        io.micrometer.binder.kafka.KafkaClientMetrics consumerKafkaMetrics = new io.micrometer.binder.kafka.KafkaClientMetrics(consumer);
+        KafkaClientMetrics consumerKafkaMetrics = new KafkaClientMetrics(consumer);
         consumerKafkaMetrics.bindTo(registry);
 
         //Printing out for discovery purposes
@@ -138,7 +137,7 @@ class KafkaClientMetricsIntegrationTest {
         Producer<String, String> producer1 = new KafkaProducer<>(
                 producer1Configs, new StringSerializer(), new StringSerializer());
 
-        io.micrometer.binder.kafka.KafkaClientMetrics producer1KafkaMetrics = new io.micrometer.binder.kafka.KafkaClientMetrics(producer1);
+        KafkaClientMetrics producer1KafkaMetrics = new KafkaClientMetrics(producer1);
         producer1KafkaMetrics.bindTo(registry);
 
         int producer1Metrics = registry.getMeters().size();
@@ -159,7 +158,7 @@ class KafkaClientMetricsIntegrationTest {
         Producer<String, String> producer2 = new KafkaProducer<>(
                 producer2Configs, new StringSerializer(), new StringSerializer());
 
-        io.micrometer.binder.kafka.KafkaClientMetrics producer2KafkaMetrics = new KafkaClientMetrics(producer2);
+        KafkaClientMetrics producer2KafkaMetrics = new KafkaClientMetrics(producer2);
         producer2KafkaMetrics.bindTo(registry);
 
         producer2.send(new ProducerRecord<>("topic1", "foo"));

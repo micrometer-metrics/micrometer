@@ -15,21 +15,7 @@
  */
 package io.micrometer.binder.tomcat;
 
-import java.io.IOException;
-import java.util.Arrays;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.concurrent.Callable;
-import java.util.concurrent.CountDownLatch;
-import java.util.concurrent.TimeUnit;
-
-import javax.servlet.Servlet;
-import javax.servlet.ServletException;
-import javax.servlet.http.HttpServlet;
-import javax.servlet.http.HttpServletRequest;
-import javax.servlet.http.HttpServletResponse;
-
-import io.micrometer.binder.Issue;
+import io.micrometer.core.Issue;
 import io.micrometer.core.instrument.FunctionTimer;
 import io.micrometer.core.instrument.MockClock;
 import io.micrometer.core.instrument.Tag;
@@ -52,13 +38,26 @@ import org.apache.http.impl.client.CloseableHttpClient;
 import org.apache.http.impl.client.HttpClients;
 import org.junit.jupiter.api.Test;
 
+import javax.servlet.Servlet;
+import javax.servlet.ServletException;
+import javax.servlet.http.HttpServlet;
+import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpServletResponse;
+import java.io.IOException;
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.concurrent.Callable;
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.TimeUnit;
+
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.fail;
 import static org.awaitility.Awaitility.await;
 
 
 /**
- * Tests for {@link io.micrometer.binder.tomcat.TomcatMetrics}.
+ * Tests for {@link TomcatMetrics}.
  *
  * @author Clint Checketts
  * @author Jon Schneider
@@ -109,7 +108,7 @@ class TomcatMetricsTest {
         manager.remove(expiredSession, true);
 
         Iterable<Tag> tags = Tags.of("metricTag", "val1");
-        io.micrometer.binder.tomcat.TomcatMetrics.monitor(registry, manager, tags);
+        TomcatMetrics.monitor(registry, manager, tags);
 
         assertThat(registry.get("tomcat.sessions.active.max").tags(tags).gauge().value()).isEqualTo(3.0);
         assertThat(registry.get("tomcat.sessions.active.current").tags(tags).gauge().value()).isEqualTo(2.0);
@@ -129,7 +128,7 @@ class TomcatMetricsTest {
 
     @Test
     void whenTomcatMetricsBoundBeforeTomcatStarted_mbeanMetricsRegisteredEventually() throws Exception {
-        io.micrometer.binder.tomcat.TomcatMetrics.monitor(registry, null);
+        TomcatMetrics.monitor(registry, null);
 
         CountDownLatch latch = new CountDownLatch(1);
         registry.config().onMeterAdded(m -> {
@@ -180,7 +179,7 @@ class TomcatMetricsTest {
         };
 
         runTomcat(servlet, () -> {
-            io.micrometer.binder.tomcat.TomcatMetrics.monitor(registry, null);
+            TomcatMetrics.monitor(registry, null);
 
             checkMbeansInitialState();
 
@@ -221,7 +220,7 @@ class TomcatMetricsTest {
         });
 
         runTomcat(servlets, () -> {
-            io.micrometer.binder.tomcat.TomcatMetrics.monitor(registry, null);
+            TomcatMetrics.monitor(registry, null);
 
             checkMbeansInitialState();
 

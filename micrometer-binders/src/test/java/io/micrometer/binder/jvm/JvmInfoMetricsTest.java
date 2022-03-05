@@ -15,20 +15,20 @@
  */
 package io.micrometer.binder.jvm;
 
-import java.util.Collection;
-
 import io.micrometer.core.instrument.Gauge;
 import io.micrometer.core.instrument.Meter;
 import io.micrometer.core.instrument.MeterRegistry;
-import io.micrometer.binder.jvm.JvmInfoMetrics;
 import io.micrometer.core.instrument.search.Search;
 import io.micrometer.core.instrument.simple.SimpleMeterRegistry;
 import org.junit.jupiter.api.Test;
 
+
+import java.util.Collection;
+
 import static org.assertj.core.api.Assertions.assertThat;
 
 /**
- * Tests for {@link io.micrometer.binder.jvm.JvmInfoMetrics}.
+ * Tests for {@link JvmInfoMetrics}.
  *
  * @author Erin Schnabel
  */

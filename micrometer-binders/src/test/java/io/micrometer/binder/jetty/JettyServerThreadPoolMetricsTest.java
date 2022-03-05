@@ -15,11 +15,8 @@
  */
 package io.micrometer.binder.jetty;
 
-import java.util.Collections;
-
 import io.micrometer.core.instrument.MockClock;
 import io.micrometer.core.instrument.Tag;
-import io.micrometer.binder.jetty.InstrumentedQueuedThreadPool;
 import io.micrometer.core.instrument.simple.SimpleConfig;
 import io.micrometer.core.instrument.simple.SimpleMeterRegistry;
 import org.eclipse.jetty.server.Connector;
@@ -29,6 +26,8 @@ import org.eclipse.jetty.util.thread.QueuedThreadPool;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+
+import java.util.Collections;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
