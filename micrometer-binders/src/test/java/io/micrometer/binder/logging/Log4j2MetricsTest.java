@@ -15,14 +15,12 @@
  */
 package io.micrometer.binder.logging;
 
-import java.io.IOException;
-import java.time.Duration;
-
-import io.micrometer.binder.Issue;
+import io.micrometer.core.Issue;
 import io.micrometer.core.instrument.MeterRegistry;
 import io.micrometer.core.instrument.MockClock;
 import io.micrometer.core.instrument.simple.SimpleConfig;
 import io.micrometer.core.instrument.simple.SimpleMeterRegistry;
+
 import org.apache.logging.log4j.Level;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -35,12 +33,15 @@ import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
+import java.io.IOException;
+import java.time.Duration;
+
 import static java.util.Collections.emptyList;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.awaitility.Awaitility.await;
 
 /**
- * Tests for {@link io.micrometer.binder.logging.Log4j2Metrics}.
+ * Tests for {@link Log4j2Metrics}.
  *
  * @author Steven Sheehy
  * @author Johnny Lim
@@ -61,7 +62,7 @@ class Log4j2MetricsTest {
 
     @Test
     void log4j2LevelMetrics() {
-        new io.micrometer.binder.logging.Log4j2Metrics().bindTo(registry);
+        new Log4j2Metrics().bindTo(registry);
 
         assertThat(registry.get("log4j2.events").counter().count()).isEqualTo(0.0);
 
@@ -92,7 +93,7 @@ class Log4j2MetricsTest {
         LoggerConfig loggerConfig = configuration.getLoggerConfig("additivityDisabledLogger");
         loggerConfig.setAdditive(false);
 
-        new io.micrometer.binder.logging.Log4j2Metrics().bindTo(registry);
+        new Log4j2Metrics().bindTo(registry);
 
         assertThat(registry.get("log4j2.events").tags("level", "info").counter().count()).isEqualTo(0);
 
@@ -108,7 +109,7 @@ class Log4j2MetricsTest {
 
         Logger logger = LogManager.getLogger(Log4j2MetricsTest.class);
 
-        new io.micrometer.binder.logging.Log4j2Metrics().bindTo(registry);
+        new Log4j2Metrics().bindTo(registry);
 
         assertThat(registry.get("log4j2.events").tags("level", "info").counter().count()).isEqualTo(0);
 
@@ -118,7 +119,7 @@ class Log4j2MetricsTest {
 
     @Test
     void isLevelEnabledDoesntContributeToCounts() {
-        new io.micrometer.binder.logging.Log4j2Metrics().bindTo(registry);
+        new Log4j2Metrics().bindTo(registry);
 
         Logger logger = LogManager.getLogger(Log4j2MetricsTest.class);
         logger.isErrorEnabled();
@@ -128,10 +129,10 @@ class Log4j2MetricsTest {
 
     @Test
     void removeFilterFromLoggerContextOnClose() {
-        new io.micrometer.binder.logging.Log4j2Metrics().bindTo(registry);
+        new Log4j2Metrics().bindTo(registry);
 
         LoggerContext loggerContext = new LoggerContext("test");
-        io.micrometer.binder.logging.Log4j2Metrics log4j2Metrics = new io.micrometer.binder.logging.Log4j2Metrics(emptyList(), loggerContext);
+        Log4j2Metrics log4j2Metrics = new Log4j2Metrics(emptyList(), loggerContext);
         log4j2Metrics.bindTo(registry);
 
         LoggerConfig loggerConfig = loggerContext.getConfiguration().getLoggerConfig(LogManager.ROOT_LOGGER_NAME);
@@ -153,7 +154,7 @@ class Log4j2MetricsTest {
         Logger logger1 = loggerContext.getLogger("com.test.log1");
         loggerContext.getLogger("com.test.log2");
 
-        new io.micrometer.binder.logging.Log4j2Metrics(emptyList(), loggerContext).bindTo(registry);
+        new Log4j2Metrics(emptyList(), loggerContext).bindTo(registry);
 
         assertThat(registry.get("log4j2.events").tags("level", "info").counter().count()).isEqualTo(0);
         logger1.info("Hello, world!");

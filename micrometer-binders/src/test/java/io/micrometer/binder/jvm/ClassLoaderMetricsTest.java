@@ -16,7 +16,6 @@
 package io.micrometer.binder.jvm;
 
 import io.micrometer.core.instrument.MeterRegistry;
-import io.micrometer.binder.jvm.ClassLoaderMetrics;
 import io.micrometer.core.instrument.simple.SimpleMeterRegistry;
 import org.junit.jupiter.api.Test;
 

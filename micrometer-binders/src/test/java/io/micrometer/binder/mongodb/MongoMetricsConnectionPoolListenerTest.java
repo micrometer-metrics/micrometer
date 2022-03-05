@@ -15,8 +15,6 @@
  */
 package io.micrometer.binder.mongodb;
 
-import java.util.concurrent.atomic.AtomicReference;
-
 import com.mongodb.MongoClientSettings;
 import com.mongodb.ServerAddress;
 import com.mongodb.client.MongoClient;
@@ -25,24 +23,21 @@ import com.mongodb.connection.ClusterId;
 import com.mongodb.connection.ConnectionId;
 import com.mongodb.connection.ConnectionPoolSettings;
 import com.mongodb.connection.ServerId;
-import com.mongodb.event.ClusterListener;
-import com.mongodb.event.ClusterOpeningEvent;
-import com.mongodb.event.ConnectionCheckedInEvent;
-import com.mongodb.event.ConnectionCheckedOutEvent;
-import com.mongodb.event.ConnectionPoolClosedEvent;
-import com.mongodb.event.ConnectionPoolCreatedEvent;
-import io.micrometer.binder.Issue;
+import com.mongodb.event.*;
+import io.micrometer.core.Issue;
 import io.micrometer.core.instrument.MeterRegistry;
 import io.micrometer.core.instrument.Tags;
 import io.micrometer.core.instrument.simple.SimpleMeterRegistry;
 import org.junit.jupiter.api.Test;
+
+import java.util.concurrent.atomic.AtomicReference;
 
 import static java.util.Collections.singletonList;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatCode;
 
 /**
- * Tests for {@link io.micrometer.binder.mongodb.MongoMetricsConnectionPoolListener}.
+ * Tests for {@link MongoMetricsConnectionPoolListener}.
  *
  * @author Christophe Bornet
  * @author Jonatan Ivanov
@@ -57,7 +52,7 @@ class MongoMetricsConnectionPoolListenerTest extends AbstractMongoDbTest {
         MongoClientSettings settings = MongoClientSettings.builder()
                 .applyToConnectionPoolSettings(builder -> builder
                         .minSize(2)
-                        .addConnectionPoolListener(new io.micrometer.binder.mongodb.MongoMetricsConnectionPoolListener(registry))
+                        .addConnectionPoolListener(new MongoMetricsConnectionPoolListener(registry))
                 )
                 .applyToClusterSettings(builder -> builder
                         .hosts(singletonList(new ServerAddress(host, port)))
@@ -93,7 +88,7 @@ class MongoMetricsConnectionPoolListenerTest extends AbstractMongoDbTest {
     void shouldCreatePoolMetricsWithCustomTags() {
         MeterRegistry registry = new SimpleMeterRegistry();
         AtomicReference<String> clusterId = new AtomicReference<>();
-        io.micrometer.binder.mongodb.MongoMetricsConnectionPoolListener connectionPoolListener = new io.micrometer.binder.mongodb.MongoMetricsConnectionPoolListener(registry, e ->
+        MongoMetricsConnectionPoolListener connectionPoolListener = new MongoMetricsConnectionPoolListener(registry, e ->
                 Tags.of(
                         "cluster.id", e.getServerId().getClusterId().getValue(),
                         "server.address", e.getServerId().getAddress().toString(),
@@ -139,7 +134,7 @@ class MongoMetricsConnectionPoolListenerTest extends AbstractMongoDbTest {
     void whenConnectionCheckedInAfterPoolClose_thenNoExceptionThrown() {
         ServerId serverId = new ServerId(new ClusterId(), new ServerAddress(host, port));
         ConnectionId connectionId = new ConnectionId(serverId);
-        io.micrometer.binder.mongodb.MongoMetricsConnectionPoolListener listener = new MongoMetricsConnectionPoolListener(registry);
+        MongoMetricsConnectionPoolListener listener = new MongoMetricsConnectionPoolListener(registry);
         listener.connectionPoolCreated(new ConnectionPoolCreatedEvent(serverId, ConnectionPoolSettings.builder().build()));
         listener.connectionCheckedOut(new ConnectionCheckedOutEvent(connectionId));
         listener.connectionPoolClosed(new ConnectionPoolClosedEvent(serverId));

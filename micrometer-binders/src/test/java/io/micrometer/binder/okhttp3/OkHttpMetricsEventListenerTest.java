@@ -15,17 +15,11 @@
  */
 package io.micrometer.binder.okhttp3;
 
-import java.io.IOException;
-import java.nio.file.Path;
-import java.util.concurrent.TimeUnit;
-import java.util.function.Function;
-
 import com.github.tomakehurst.wiremock.WireMockServer;
 import io.micrometer.core.instrument.MeterRegistry;
 import io.micrometer.core.instrument.MockClock;
 import io.micrometer.core.instrument.Tag;
 import io.micrometer.core.instrument.Tags;
-import io.micrometer.binder.okhttp3.OkHttpMetricsEventListener;
 import io.micrometer.core.instrument.simple.SimpleConfig;
 import io.micrometer.core.instrument.simple.SimpleMeterRegistry;
 import okhttp3.Cache;
@@ -37,14 +31,17 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.junit.jupiter.api.io.TempDir;
 import ru.lanwen.wiremock.ext.WiremockResolver;
 
-import static com.github.tomakehurst.wiremock.client.WireMock.aResponse;
-import static com.github.tomakehurst.wiremock.client.WireMock.any;
-import static com.github.tomakehurst.wiremock.client.WireMock.anyUrl;
+import java.io.IOException;
+import java.nio.file.Path;
+import java.util.concurrent.TimeUnit;
+import java.util.function.Function;
+
+import static com.github.tomakehurst.wiremock.client.WireMock.*;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.fail;
 
 /**
- * Tests for {@link io.micrometer.binder.okhttp3.OkHttpMetricsEventListener}.
+ * Tests for {@link OkHttpMetricsEventListener}.
  *
  * @author Bjarte S. Karlsen
  * @author Jon Schneider
@@ -60,7 +57,7 @@ class OkHttpMetricsEventListenerTest {
     private MeterRegistry registry = new SimpleMeterRegistry(SimpleConfig.DEFAULT, new MockClock());
 
     private OkHttpClient client = new OkHttpClient.Builder()
-            .eventListener(io.micrometer.binder.okhttp3.OkHttpMetricsEventListener.builder(registry, "okhttp.requests")
+            .eventListener(OkHttpMetricsEventListener.builder(registry, "okhttp.requests")
                     .tags(Tags.of("foo", "bar"))
                     .uriMapper(URI_MAPPER)
                     .build())
@@ -110,7 +107,7 @@ class OkHttpMetricsEventListenerTest {
 
         OkHttpClient client = new OkHttpClient.Builder()
                 .connectTimeout(1, TimeUnit.MILLISECONDS)
-                .eventListener(io.micrometer.binder.okhttp3.OkHttpMetricsEventListener.builder(registry, "okhttp.requests")
+                .eventListener(OkHttpMetricsEventListener.builder(registry, "okhttp.requests")
                         .tags(Tags.of("foo", "bar"))
                         .uriMapper(URI_MAPPER)
                         .build())
@@ -133,11 +130,11 @@ class OkHttpMetricsEventListenerTest {
         server.stubFor(any(anyUrl()));
         Request request = new Request.Builder()
                 .url(server.baseUrl() + "/helloworld.txt")
-                .header(io.micrometer.binder.okhttp3.OkHttpMetricsEventListener.URI_PATTERN, "/")
+                .header(OkHttpMetricsEventListener.URI_PATTERN, "/")
                 .build();
 
         client = new OkHttpClient.Builder()
-                .eventListener(io.micrometer.binder.okhttp3.OkHttpMetricsEventListener.builder(registry, "okhttp.requests")
+                .eventListener(OkHttpMetricsEventListener.builder(registry, "okhttp.requests")
                         .tags(Tags.of("foo", "bar"))
                         .build())
                 .build();
@@ -156,7 +153,7 @@ class OkHttpMetricsEventListenerTest {
     void uriTagWorksWithUriMapper(@WiremockResolver.Wiremock WireMockServer server) throws IOException {
         server.stubFor(any(anyUrl()));
         OkHttpClient client = new OkHttpClient.Builder()
-                .eventListener(io.micrometer.binder.okhttp3.OkHttpMetricsEventListener.builder(registry, "okhttp.requests")
+                .eventListener(OkHttpMetricsEventListener.builder(registry, "okhttp.requests")
                         .uriMapper(req -> req.url().encodedPath())
                         .tags(Tags.of("foo", "bar"))
                         .build())
@@ -180,7 +177,7 @@ class OkHttpMetricsEventListenerTest {
     void contextSpecificTags(@WiremockResolver.Wiremock WireMockServer server) throws IOException {
         server.stubFor(any(anyUrl()));
         OkHttpClient client = new OkHttpClient.Builder()
-                .eventListener(io.micrometer.binder.okhttp3.OkHttpMetricsEventListener.builder(registry, "okhttp.requests")
+                .eventListener(OkHttpMetricsEventListener.builder(registry, "okhttp.requests")
                         .tag((req, res) -> Tag.of("another.uri", req.url().encodedPath()))
                         .build())
                 .build();
@@ -199,7 +196,7 @@ class OkHttpMetricsEventListenerTest {
     @Test
     void cachedResponsesDoNotLeakMemory(
             @WiremockResolver.Wiremock WireMockServer server, @TempDir Path tempDir) throws IOException {
-        io.micrometer.binder.okhttp3.OkHttpMetricsEventListener listener = io.micrometer.binder.okhttp3.OkHttpMetricsEventListener.builder(registry, "okhttp.requests").build();
+        OkHttpMetricsEventListener listener = OkHttpMetricsEventListener.builder(registry, "okhttp.requests").build();
         OkHttpClient clientWithCache = new OkHttpClient.Builder()
                 .eventListener(listener)
                 .cache(new Cache(tempDir.toFile(), 55555))
@@ -242,7 +239,7 @@ class OkHttpMetricsEventListenerTest {
     void hostTagCanBeDisabled(@WiremockResolver.Wiremock WireMockServer server) throws IOException {
         server.stubFor(any(anyUrl()));
         OkHttpClient client = new OkHttpClient.Builder()
-                .eventListener(io.micrometer.binder.okhttp3.OkHttpMetricsEventListener.builder(registry, "okhttp.requests")
+                .eventListener(OkHttpMetricsEventListener.builder(registry, "okhttp.requests")
                         .includeHostTag(false)
                         .build())
                 .build();
@@ -262,8 +259,8 @@ class OkHttpMetricsEventListenerTest {
 
     @Test
     void timeWhenRequestIsNull() {
-        io.micrometer.binder.okhttp3.OkHttpMetricsEventListener listener = io.micrometer.binder.okhttp3.OkHttpMetricsEventListener.builder(registry, "okhttp.requests").build();
-        io.micrometer.binder.okhttp3.OkHttpMetricsEventListener.CallState state = new io.micrometer.binder.okhttp3.OkHttpMetricsEventListener.CallState(registry.config().clock().monotonicTime(), null);
+        OkHttpMetricsEventListener listener = OkHttpMetricsEventListener.builder(registry, "okhttp.requests").build();
+        OkHttpMetricsEventListener.CallState state = new OkHttpMetricsEventListener.CallState(registry.config().clock().monotonicTime(), null);
         listener.time(state);
 
         assertThat(registry.get("okhttp.requests")
@@ -276,9 +273,9 @@ class OkHttpMetricsEventListenerTest {
 
     @Test
     void timeWhenRequestIsNullAndRequestTagKeysAreGiven() {
-        io.micrometer.binder.okhttp3.OkHttpMetricsEventListener listener = io.micrometer.binder.okhttp3.OkHttpMetricsEventListener.builder(registry, "okhttp.requests")
+        OkHttpMetricsEventListener listener = OkHttpMetricsEventListener.builder(registry, "okhttp.requests")
                 .requestTagKeys("tag1", "tag2").build();
-        io.micrometer.binder.okhttp3.OkHttpMetricsEventListener.CallState state = new io.micrometer.binder.okhttp3.OkHttpMetricsEventListener.CallState(registry.config().clock().monotonicTime(), null);
+        OkHttpMetricsEventListener.CallState state = new OkHttpMetricsEventListener.CallState(registry.config().clock().monotonicTime(), null);
         listener.time(state);
 
         assertThat(registry.get("okhttp.requests")

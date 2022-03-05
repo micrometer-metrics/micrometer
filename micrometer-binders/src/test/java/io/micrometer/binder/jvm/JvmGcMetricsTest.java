@@ -15,25 +15,12 @@
  */
 package io.micrometer.binder.jvm;
 
-import java.lang.management.GarbageCollectorMXBean;
-import java.lang.management.ManagementFactory;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.List;
-import java.util.concurrent.TimeUnit;
-
-import javax.management.ListenerNotFoundException;
-import javax.management.Notification;
-import javax.management.NotificationEmitter;
-import javax.management.NotificationListener;
-
 import com.sun.management.GarbageCollectionNotificationInfo;
 import com.tngtech.archunit.base.DescribedPredicate;
 import com.tngtech.archunit.core.domain.JavaClasses;
 import com.tngtech.archunit.core.importer.ClassFileImporter;
 import com.tngtech.archunit.lang.ArchRule;
-import io.micrometer.binder.Issue;
+import io.micrometer.core.Issue;
 import io.micrometer.core.instrument.Timer;
 import io.micrometer.binder.jvm.JvmGcMetrics.GcMetricsNotificationListener;
 import io.micrometer.core.instrument.simple.SimpleMeterRegistry;
@@ -43,6 +30,18 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.condition.EnabledForJreRange;
 import org.junit.jupiter.api.condition.JRE;
 
+import javax.management.ListenerNotFoundException;
+import javax.management.Notification;
+import javax.management.NotificationEmitter;
+import javax.management.NotificationListener;
+import java.lang.management.GarbageCollectorMXBean;
+import java.lang.management.ManagementFactory;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.List;
+import java.util.concurrent.TimeUnit;
+
 import static com.tngtech.archunit.core.domain.JavaClass.Predicates.resideInAPackage;
 import static com.tngtech.archunit.lang.syntax.ArchRuleDefinition.methods;
 import static org.assertj.core.api.Assertions.assertThat;
@@ -50,7 +49,7 @@ import static org.assertj.core.api.Assertions.within;
 import static org.awaitility.Awaitility.await;
 
 /**
- * Tests for {@link io.micrometer.binder.jvm.JvmGcMetrics}.
+ * Tests for {@link JvmGcMetrics}.
  *
  * @author Johnny Lim
  */
@@ -58,7 +57,7 @@ import static org.awaitility.Awaitility.await;
 class JvmGcMetricsTest {
 
     SimpleMeterRegistry registry = new SimpleMeterRegistry();
-    io.micrometer.binder.jvm.JvmGcMetrics binder;
+    JvmGcMetrics binder;
 
     @BeforeEach
     void beforeEach() {

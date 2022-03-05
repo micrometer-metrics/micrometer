@@ -18,7 +18,8 @@ package io.micrometer.binder.logging;
 import ch.qos.logback.classic.Level;
 import ch.qos.logback.classic.Logger;
 import ch.qos.logback.classic.LoggerContext;
-import io.micrometer.binder.Issue;
+
+import io.micrometer.core.Issue;
 import io.micrometer.core.instrument.Counter;
 import io.micrometer.core.instrument.Meter;
 import io.micrometer.core.instrument.MeterRegistry;
@@ -27,6 +28,7 @@ import io.micrometer.core.instrument.cumulative.CumulativeCounter;
 import io.micrometer.core.instrument.simple.SimpleConfig;
 import io.micrometer.core.instrument.simple.SimpleMeterRegistry;
 import io.micrometer.core.lang.NonNullApi;
+
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -38,11 +40,11 @@ import static org.assertj.core.api.Assertions.assertThat;
 class LogbackMetricsTest {
     private MeterRegistry registry = new SimpleMeterRegistry(SimpleConfig.DEFAULT, new MockClock());
     private Logger logger = (Logger) LoggerFactory.getLogger("foo");
-    io.micrometer.binder.logging.LogbackMetrics logbackMetrics;
+    LogbackMetrics logbackMetrics;
 
     @BeforeEach
     void bindLogbackMetrics() {
-        logbackMetrics = new io.micrometer.binder.logging.LogbackMetrics();
+        logbackMetrics = new LogbackMetrics();
         logbackMetrics.bindTo(registry);
     }
 
@@ -79,7 +81,7 @@ class LogbackMetricsTest {
     @Test
     void ignoringLogMetricsInsideCounters() {
         registry = new LoggingCounterMeterRegistry();
-        try (io.micrometer.binder.logging.LogbackMetrics logbackMetrics = new io.micrometer.binder.logging.LogbackMetrics()) {
+        try (LogbackMetrics logbackMetrics = new LogbackMetrics()) {
             logbackMetrics.bindTo(registry);
             registry.counter("my.counter").increment();
         }
@@ -91,7 +93,7 @@ class LogbackMetricsTest {
     void removeFilterFromLoggerContextOnClose() {
         LoggerContext loggerContext = new LoggerContext();
 
-        io.micrometer.binder.logging.LogbackMetrics logbackMetrics = new io.micrometer.binder.logging.LogbackMetrics(emptyList(), loggerContext);
+        LogbackMetrics logbackMetrics = new LogbackMetrics(emptyList(), loggerContext);
         logbackMetrics.bindTo(registry);
 
         assertThat(loggerContext.getTurboFilterList()).hasSize(1);
@@ -105,7 +107,7 @@ class LogbackMetricsTest {
         LoggerContext loggerContext = new LoggerContext();
         assertThat(loggerContext.getTurboFilterList()).isEmpty();
 
-        io.micrometer.binder.logging.LogbackMetrics logbackMetrics = new io.micrometer.binder.logging.LogbackMetrics(emptyList(), loggerContext);
+        LogbackMetrics logbackMetrics = new LogbackMetrics(emptyList(), loggerContext);
         logbackMetrics.bindTo(registry);
 
         assertThat(loggerContext.getTurboFilterList()).hasSize(1);
@@ -120,7 +122,7 @@ class LogbackMetricsTest {
         logger.info("hi");
         assertThat(infoLogCounter.count()).isEqualTo(1);
         try {
-            io.micrometer.binder.logging.LogbackMetrics.ignoreMetrics(() -> {
+            LogbackMetrics.ignoreMetrics(() -> {
                 throw new RuntimeException();
             });
         } catch (RuntimeException ignore) {

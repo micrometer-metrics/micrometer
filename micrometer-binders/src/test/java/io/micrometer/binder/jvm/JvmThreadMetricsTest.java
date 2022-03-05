@@ -20,7 +20,6 @@ import java.lang.management.ThreadMXBean;
 import java.util.concurrent.TimeUnit;
 
 import io.micrometer.core.instrument.MeterRegistry;
-import io.micrometer.binder.jvm.JvmThreadMetrics;
 import io.micrometer.core.instrument.simple.SimpleMeterRegistry;
 import org.junit.jupiter.api.Test;
 
@@ -29,7 +28,7 @@ import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
 /**
- * Tests for {@link io.micrometer.binder.jvm.JvmThreadMetrics}.
+ * Tests for {@link JvmThreadMetrics}.
  *
  * @author Jon Schneider
  * @author Johnny Lim
@@ -38,7 +37,7 @@ class JvmThreadMetricsTest {
     @Test
     void threadMetrics() {
         MeterRegistry registry = new SimpleMeterRegistry();
-        new io.micrometer.binder.jvm.JvmThreadMetrics().bindTo(registry);
+        new JvmThreadMetrics().bindTo(registry);
 
         assertThat(registry.get("jvm.threads.live").gauge().value()).isGreaterThan(0);
         assertThat(registry.get("jvm.threads.daemon").gauge().value()).isGreaterThan(0);

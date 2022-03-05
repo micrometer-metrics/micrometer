@@ -15,40 +15,29 @@
  */
 package io.micrometer.binder.db;
 
-import java.sql.Connection;
-import java.sql.DriverManager;
-import java.sql.SQLException;
-
 import io.micrometer.core.instrument.MeterRegistry;
 import io.micrometer.core.instrument.Tags;
-import io.micrometer.binder.db.MetricsDSLContext;
 import io.micrometer.core.instrument.simple.SimpleMeterRegistry;
 import io.micrometer.core.lang.NonNull;
-import org.jooq.Configuration;
-import org.jooq.ExecuteListener;
-import org.jooq.ExecuteListenerProvider;
+import org.jooq.*;
 import org.jooq.Record;
-import org.jooq.Record1;
-import org.jooq.Result;
-import org.jooq.SQLDialect;
-import org.jooq.SelectJoinStep;
-import org.jooq.SelectSelectStep;
 import org.jooq.exception.DataAccessException;
 import org.jooq.impl.DSL;
 import org.jooq.impl.DefaultConfiguration;
 import org.junit.jupiter.api.Test;
 
+import java.sql.Connection;
+import java.sql.DriverManager;
+import java.sql.SQLException;
+
 import static io.micrometer.binder.db.MetricsDSLContext.withMetrics;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.failBecauseExceptionWasNotThrown;
-import static org.jooq.impl.DSL.asterisk;
-import static org.jooq.impl.DSL.field;
-import static org.jooq.impl.DSL.table;
-import static org.jooq.impl.DSL.using;
+import static org.jooq.impl.DSL.*;
 import static org.mockito.Mockito.mock;
 
 /**
- * Tests for {@link io.micrometer.binder.db.MetricsDSLContext}.
+ * Tests for {@link MetricsDSLContext}.
  *
  * @author Jon Schneider
  * @author Johnny Lim
@@ -59,7 +48,7 @@ class MetricsDSLContextTest {
     @Test
     void timeFluentSelectStatement() throws SQLException {
         try (Connection conn = DriverManager.getConnection("jdbc:h2:mem:fluentSelect")) {
-            io.micrometer.binder.db.MetricsDSLContext jooq = createDatabase(conn);
+            MetricsDSLContext jooq = createDatabase(conn);
 
             Result<Record> result = jooq.tag("name", "selectAllAuthors").select(asterisk()).from("author").fetch();
             assertThat(result.size()).isEqualTo(1);
@@ -78,7 +67,7 @@ class MetricsDSLContextTest {
     @Test
     void timeParsedSelectStatement() throws SQLException {
         try (Connection conn = DriverManager.getConnection("jdbc:h2:mem:parsedSelect")) {
-            io.micrometer.binder.db.MetricsDSLContext jooq = createDatabase(conn);
+            MetricsDSLContext jooq = createDatabase(conn);
             jooq.tag("name", "selectAllAuthors").fetch("SELECT * FROM author");
 
             // intentionally don't time this operation to demonstrate that the configuration hasn't been globally mutated
@@ -95,7 +84,7 @@ class MetricsDSLContextTest {
     @Test
     void timeFaultySelectStatement() throws SQLException {
         try (Connection conn = DriverManager.getConnection("jdbc:h2:mem:faultySelect")) {
-            io.micrometer.binder.db.MetricsDSLContext jooq = createDatabase(conn);
+            MetricsDSLContext jooq = createDatabase(conn);
             jooq.tag("name", "selectAllAuthors").fetch("SELECT non_existent_field FROM author");
 
             failBecauseExceptionWasNotThrown(DataAccessException.class);
@@ -114,7 +103,7 @@ class MetricsDSLContextTest {
     @Test
     void timeExecute() throws SQLException {
         try (Connection conn = DriverManager.getConnection("jdbc:h2:mem:fluentSelect")) {
-            io.micrometer.binder.db.MetricsDSLContext jooq = createDatabase(conn);
+            MetricsDSLContext jooq = createDatabase(conn);
 
             jooq.tag("name", "selectAllAuthors").execute("SELECT * FROM author");
 
@@ -128,7 +117,7 @@ class MetricsDSLContextTest {
     @Test
     void timeInsert() throws SQLException {
         try (Connection conn = DriverManager.getConnection("jdbc:h2:mem:fluentSelect")) {
-            io.micrometer.binder.db.MetricsDSLContext jooq = createDatabase(conn);
+            MetricsDSLContext jooq = createDatabase(conn);
 
             jooq.tag("name", "insertAuthor").insertInto(table("author")).values("2", "jon", "schneider")
                     .execute();
@@ -143,7 +132,7 @@ class MetricsDSLContextTest {
     @Test
     void timeUpdate() throws SQLException {
         try (Connection conn = DriverManager.getConnection("jdbc:h2:mem:fluentSelect")) {
-            io.micrometer.binder.db.MetricsDSLContext jooq = createDatabase(conn);
+            MetricsDSLContext jooq = createDatabase(conn);
 
             jooq.tag("name", "updateAuthor").update(table("author")).set(field("author.first_name"), "jon")
                     .execute();
@@ -158,7 +147,7 @@ class MetricsDSLContextTest {
     @Test
     void timingBatchQueriesNotSupported() throws SQLException {
         try (Connection conn = DriverManager.getConnection("jdbc:h2:mem:fluentSelect")) {
-            io.micrometer.binder.db.MetricsDSLContext jooq = createDatabase(conn);
+            MetricsDSLContext jooq = createDatabase(conn);
 
             jooq.tag("name", "batch").batch(
                     jooq.insertInto(table("author")).values("3", "jon", "schneider"),
@@ -175,7 +164,7 @@ class MetricsDSLContextTest {
     @Test
     void timeTwoStatementsCreatedBeforeEitherIsExecuted() throws SQLException {
         try (Connection conn = DriverManager.getConnection("jdbc:h2:mem:fluentSelect")) {
-            io.micrometer.binder.db.MetricsDSLContext jooq = createDatabase(conn);
+            MetricsDSLContext jooq = createDatabase(conn);
 
             SelectJoinStep<Record> select1 = jooq.tag("name", "selectAllAuthors").select(asterisk()).from("author");
             SelectJoinStep<Record1<Object>> select2 = jooq.tag("name", "selectAllAuthors2")
@@ -202,22 +191,22 @@ class MetricsDSLContextTest {
         ExecuteListener userExecuteListener = mock(ExecuteListener.class);
         Configuration configuration = new DefaultConfiguration().set(() -> userExecuteListener);
 
-        io.micrometer.binder.db.MetricsDSLContext jooq = withMetrics(using(configuration), meterRegistry, Tags.empty());
+        MetricsDSLContext jooq = withMetrics(using(configuration), meterRegistry, Tags.empty());
 
         ExecuteListenerProvider[] executeListenerProviders = jooq.configuration().executeListenerProviders();
         assertThat(executeListenerProviders).hasSize(2);
         assertThat(executeListenerProviders[0].provide()).isSameAs(userExecuteListener);
-        assertThat(executeListenerProviders[1].provide()).isInstanceOf(io.micrometer.binder.db.JooqExecuteListener.class);
+        assertThat(executeListenerProviders[1].provide()).isInstanceOf(JooqExecuteListener.class);
 
         SelectSelectStep<Record> select = jooq.tag("name", "selectAllAuthors").select(asterisk());
         executeListenerProviders = select.configuration().executeListenerProviders();
         assertThat(executeListenerProviders).hasSize(2);
         assertThat(executeListenerProviders[0].provide()).isSameAs(userExecuteListener);
-        assertThat(executeListenerProviders[1].provide()).isInstanceOf(io.micrometer.binder.db.JooqExecuteListener.class);
+        assertThat(executeListenerProviders[1].provide()).isInstanceOf(JooqExecuteListener.class);
     }
 
     @NonNull
-    private io.micrometer.binder.db.MetricsDSLContext createDatabase(Connection conn) {
+    private MetricsDSLContext createDatabase(Connection conn) {
         Configuration configuration = new DefaultConfiguration()
                 .set(conn)
                 .set(SQLDialect.H2);

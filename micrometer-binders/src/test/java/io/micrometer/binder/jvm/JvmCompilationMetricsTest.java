@@ -15,19 +15,18 @@
  */
 package io.micrometer.binder.jvm;
 
-import java.lang.management.CompilationMXBean;
-import java.lang.management.ManagementFactory;
-
 import io.micrometer.core.instrument.MeterRegistry;
-import io.micrometer.binder.jvm.JvmCompilationMetrics;
 import io.micrometer.core.instrument.simple.SimpleMeterRegistry;
 import org.junit.jupiter.api.Test;
+
+import java.lang.management.CompilationMXBean;
+import java.lang.management.ManagementFactory;
 
 import static org.assertj.core.api.AssertionsForClassTypes.assertThat;
 import static org.junit.jupiter.api.Assumptions.assumeTrue;
 
 /**
- * Tests for {@link io.micrometer.binder.jvm.JvmCompilationMetrics}.
+ * Tests for {@link JvmCompilationMetrics}.
  */
 class JvmCompilationMetricsTest {
 

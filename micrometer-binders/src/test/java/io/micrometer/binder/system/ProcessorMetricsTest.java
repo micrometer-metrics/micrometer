@@ -16,7 +16,6 @@
 package io.micrometer.binder.system;
 
 import io.micrometer.core.instrument.MeterRegistry;
-import io.micrometer.binder.system.ProcessorMetrics;
 import io.micrometer.core.instrument.simple.SimpleMeterRegistry;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -25,7 +24,7 @@ import static org.assertj.core.api.AssertionsForClassTypes.assertThat;
 import static org.junit.jupiter.api.Assumptions.assumeTrue;
 
 /**
- * Tests for {@link io.micrometer.binder.system.ProcessorMetrics}.
+ * Tests for {@link ProcessorMetrics}.
  *
  * @author Jon Schneider
  * @author Michael Weirauch

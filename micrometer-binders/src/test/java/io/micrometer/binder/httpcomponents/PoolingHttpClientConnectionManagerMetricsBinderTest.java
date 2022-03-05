@@ -17,7 +17,6 @@ package io.micrometer.binder.httpcomponents;
 
 import io.micrometer.core.instrument.MeterRegistry;
 import io.micrometer.core.instrument.MockClock;
-import io.micrometer.binder.httpcomponents.PoolingHttpClientConnectionManagerMetricsBinder;
 import io.micrometer.core.instrument.simple.SimpleConfig;
 import io.micrometer.core.instrument.simple.SimpleMeterRegistry;
 import org.apache.http.conn.routing.HttpRoute;
@@ -31,7 +30,7 @@ import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
 /**
- * Unit tests for {@link io.micrometer.binder.httpcomponents.PoolingHttpClientConnectionManagerMetricsBinder}.
+ * Unit tests for {@link PoolingHttpClientConnectionManagerMetricsBinder}.
  *
  * @author Benjamin Hubert (benjamin.hubert@willhaben.at)
  */
@@ -39,7 +38,7 @@ class PoolingHttpClientConnectionManagerMetricsBinderTest {
 
     private MeterRegistry registry = new SimpleMeterRegistry(SimpleConfig.DEFAULT, new MockClock());
     private ConnPoolControl<HttpRoute> connPoolControl;
-    private io.micrometer.binder.httpcomponents.PoolingHttpClientConnectionManagerMetricsBinder binder;
+    private PoolingHttpClientConnectionManagerMetricsBinder binder;
 
     @BeforeEach
     @SuppressWarnings("unchecked")

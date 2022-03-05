@@ -15,12 +15,10 @@
  */
 package io.micrometer.binder.kafka;
 
-import java.util.Properties;
-
 import io.micrometer.core.instrument.MeterRegistry;
 import io.micrometer.core.instrument.Tags;
-import io.micrometer.binder.kafka.KafkaStreamsMetrics;
 import io.micrometer.core.instrument.simple.SimpleMeterRegistry;
+import java.util.Properties;
 import org.apache.kafka.streams.KafkaStreams;
 import org.apache.kafka.streams.StreamsBuilder;
 import org.junit.jupiter.api.AfterEach;
@@ -34,7 +32,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 class KafkaStreamsMetricsTest {
     private static final String BOOTSTRAP_SERVERS = "localhost:9092";
     private Tags tags = Tags.of("app", "myapp", "version", "1");
-    io.micrometer.binder.kafka.KafkaStreamsMetrics metrics;
+    KafkaStreamsMetrics metrics;
 
     @AfterEach
     void afterEach() {
@@ -44,7 +42,7 @@ class KafkaStreamsMetricsTest {
 
     @Test void shouldCreateMeters() {
         try (KafkaStreams kafkaStreams = createStreams()) {
-            metrics = new io.micrometer.binder.kafka.KafkaStreamsMetrics(kafkaStreams);
+            metrics = new KafkaStreamsMetrics(kafkaStreams);
             MeterRegistry registry = new SimpleMeterRegistry();
 
             metrics.bindTo(registry);

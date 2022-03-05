@@ -15,13 +15,12 @@
  */
 package io.micrometer.binder.system;
 
-import java.lang.management.OperatingSystemMXBean;
-
 import io.micrometer.core.instrument.MeterRegistry;
 import io.micrometer.core.instrument.Tags;
-import io.micrometer.binder.system.FileDescriptorMetrics;
 import io.micrometer.core.instrument.simple.SimpleMeterRegistry;
 import org.junit.jupiter.api.Test;
+
+import java.lang.management.OperatingSystemMXBean;
 
 import static org.assertj.core.api.AssertionsForClassTypes.assertThat;
 import static org.junit.jupiter.api.Assumptions.assumeFalse;
@@ -29,7 +28,7 @@ import static org.junit.jupiter.api.Assumptions.assumeTrue;
 import static org.mockito.Mockito.mock;
 
 /**
- * Tests for {@link io.micrometer.binder.system.FileDescriptorMetrics}
+ * Tests for {@link FileDescriptorMetrics}
  *
  * @author Michael Weirauch
  */
@@ -39,7 +38,7 @@ class FileDescriptorMetricsTest {
     @Test
     void fileDescriptorMetricsUnsupportedOsBeanMock() {
         final OperatingSystemMXBean osBean = mock(UnsupportedOperatingSystemMXBean.class);
-        new io.micrometer.binder.system.FileDescriptorMetrics(osBean, Tags.of("some", "tag")).bindTo(registry);
+        new FileDescriptorMetrics(osBean, Tags.of("some", "tag")).bindTo(registry);
 
         assertThat(registry.find("process.files.open").gauge()).isNull();
         assertThat(registry.find("process.files.max").gauge()).isNull();
@@ -49,7 +48,7 @@ class FileDescriptorMetricsTest {
     void unixFileDescriptorMetrics() {
         assumeFalse(System.getProperty("os.name").toLowerCase().contains("win"));
 
-        new io.micrometer.binder.system.FileDescriptorMetrics(Tags.of("some", "tag")).bindTo(registry);
+        new FileDescriptorMetrics(Tags.of("some", "tag")).bindTo(registry);
 
         assertThat(registry.get("process.files.open").tags("some", "tag")
             .gauge().value()).isGreaterThan(0);

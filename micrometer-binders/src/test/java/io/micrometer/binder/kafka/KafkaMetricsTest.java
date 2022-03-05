@@ -15,14 +15,7 @@
  */
 package io.micrometer.binder.kafka;
 
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.LinkedHashMap;
-import java.util.Map;
-import java.util.concurrent.atomic.AtomicReference;
-import java.util.function.Supplier;
-
-import io.micrometer.binder.Issue;
+import io.micrometer.core.Issue;
 import io.micrometer.core.instrument.Measurement;
 import io.micrometer.core.instrument.Meter;
 import io.micrometer.core.instrument.MeterRegistry;
@@ -37,10 +30,17 @@ import org.apache.kafka.common.utils.Time;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Test;
 
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.LinkedHashMap;
+import java.util.Map;
+import java.util.concurrent.atomic.AtomicReference;
+import java.util.function.Supplier;
+
 import static org.assertj.core.api.Assertions.assertThat;
 
 class KafkaMetricsTest {
-    private io.micrometer.binder.kafka.KafkaMetrics kafkaMetrics;
+    private KafkaMetrics kafkaMetrics;
 
     @AfterEach
     void afterEach() {
@@ -56,7 +56,7 @@ class KafkaMetricsTest {
             KafkaMetric metric = new KafkaMetric(this, metricName, new Value(), new MetricConfig(), Time.SYSTEM);
             return Collections.singletonMap(metricName, metric);
         };
-        kafkaMetrics = new io.micrometer.binder.kafka.KafkaMetrics(supplier);
+        kafkaMetrics = new KafkaMetrics(supplier);
         MeterRegistry registry = new SimpleMeterRegistry();
 
         kafkaMetrics.bindTo(registry);
@@ -74,7 +74,7 @@ class KafkaMetricsTest {
             KafkaMetric metric = new KafkaMetric(this, metricName, new Value(), new MetricConfig(), Time.SYSTEM);
             return Collections.singletonMap(metricName, metric);
         };
-        kafkaMetrics = new io.micrometer.binder.kafka.KafkaMetrics(supplier);
+        kafkaMetrics = new KafkaMetrics(supplier);
         MeterRegistry registry = new SimpleMeterRegistry();
 
         kafkaMetrics.bindTo(registry);
@@ -94,7 +94,7 @@ class KafkaMetricsTest {
             map.put(metricName, metric);
             return map;
         });
-        kafkaMetrics = new io.micrometer.binder.kafka.KafkaMetrics(supplier);
+        kafkaMetrics = new KafkaMetrics(supplier);
         MeterRegistry registry = new SimpleMeterRegistry();
 
         kafkaMetrics.bindTo(registry);
@@ -118,14 +118,14 @@ class KafkaMetricsTest {
             KafkaMetric metric = new KafkaMetric(this, metricName, new Value(), new MetricConfig(), Time.SYSTEM);
             metrics.put(metricName, metric);
             MetricName appInfoMetricName =
-                    new MetricName("a1", io.micrometer.binder.kafka.KafkaMetrics.METRIC_GROUP_APP_INFO, "c0",
+                    new MetricName("a1", KafkaMetrics.METRIC_GROUP_APP_INFO, "c0",
                             new LinkedHashMap<>());
             KafkaMetric appInfoMetric =
                     new KafkaMetric(this, appInfoMetricName, new Value(), new MetricConfig(), Time.SYSTEM);
             metrics.put(appInfoMetricName, appInfoMetric);
             return metrics;
         };
-        kafkaMetrics = new io.micrometer.binder.kafka.KafkaMetrics(supplier);
+        kafkaMetrics = new KafkaMetrics(supplier);
         MeterRegistry registry = new SimpleMeterRegistry();
 
         kafkaMetrics.bindTo(registry);
@@ -143,7 +143,7 @@ class KafkaMetricsTest {
             KafkaMetric metric = new KafkaMetric(this, metricName, new Value(), new MetricConfig(), Time.SYSTEM);
             return Collections.singletonMap(metricName, metric);
         };
-        kafkaMetrics = new io.micrometer.binder.kafka.KafkaMetrics(supplier);
+        kafkaMetrics = new KafkaMetrics(supplier);
         MeterRegistry registry = new SimpleMeterRegistry();
 
         kafkaMetrics.bindTo(registry);
@@ -170,7 +170,7 @@ class KafkaMetricsTest {
             metrics.put(secondName, secondMetric);
             return metrics;
         };
-        kafkaMetrics = new io.micrometer.binder.kafka.KafkaMetrics(supplier);
+        kafkaMetrics = new KafkaMetrics(supplier);
         MeterRegistry registry = new SimpleMeterRegistry();
 
         kafkaMetrics.bindTo(registry);
@@ -196,7 +196,7 @@ class KafkaMetricsTest {
             return metrics;
         };
 
-        kafkaMetrics = new io.micrometer.binder.kafka.KafkaMetrics(supplier);
+        kafkaMetrics = new KafkaMetrics(supplier);
         MeterRegistry registry = new SimpleMeterRegistry();
 
         kafkaMetrics.bindTo(registry);
@@ -216,7 +216,7 @@ class KafkaMetricsTest {
             return Collections.singletonMap(firstName, firstMetric);
         };
 
-        kafkaMetrics = new io.micrometer.binder.kafka.KafkaMetrics(supplier);
+        kafkaMetrics = new KafkaMetrics(supplier);
         MeterRegistry registry = new SimpleMeterRegistry();
         registry.counter("kafka.b.a", "client-id", "client1", "key0", "value0", "kafka-version", "unknown");
         //When
@@ -235,7 +235,7 @@ class KafkaMetricsTest {
             return Collections.singletonMap(metricName, metric);
         };
 
-        kafkaMetrics = new io.micrometer.binder.kafka.KafkaMetrics(supplier);
+        kafkaMetrics = new KafkaMetrics(supplier);
         MeterRegistry registry = new SimpleMeterRegistry();
         registry.config().commonTags("common", "value");
 
@@ -270,7 +270,7 @@ class KafkaMetricsTest {
             map.put(secondName, secondMetric);
             return map;
         });
-        kafkaMetrics = new io.micrometer.binder.kafka.KafkaMetrics(supplier);
+        kafkaMetrics = new KafkaMetrics(supplier);
         MeterRegistry registry = new SimpleMeterRegistry();
         // simulate PrometheusMeterRegistry restriction
         registry.config()
@@ -323,7 +323,7 @@ class KafkaMetricsTest {
         Map<MetricName, KafkaMetric> metrics = new HashMap<>();
         metrics.put(metricName, oldMetricInstance);
 
-        kafkaMetrics = new io.micrometer.binder.kafka.KafkaMetrics(() -> metrics);
+        kafkaMetrics = new KafkaMetrics(() -> metrics);
         MeterRegistry registry = new SimpleMeterRegistry();
 
         kafkaMetrics.bindTo(registry);
@@ -358,7 +358,7 @@ class KafkaMetricsTest {
 
         metricsReference.get().put(oldMetricName, oldMetricInstance);
 
-        kafkaMetrics = new io.micrometer.binder.kafka.KafkaMetrics(metricsReference::get);
+        kafkaMetrics = new KafkaMetrics(metricsReference::get);
         MeterRegistry registry = new SimpleMeterRegistry();
 
         kafkaMetrics.bindTo(registry);
@@ -408,7 +408,7 @@ class KafkaMetricsTest {
     void shouldRemoveOldMeters() {
         Map<MetricName, Metric> kafkaMetricMap = new HashMap<>();
         Supplier<Map<MetricName, ? extends Metric>> supplier = () -> kafkaMetricMap;
-        kafkaMetrics = new io.micrometer.binder.kafka.KafkaMetrics(supplier);
+        kafkaMetrics = new KafkaMetrics(supplier);
         MeterRegistry registry = new SimpleMeterRegistry();
         registry.config().commonTags("commonTest", "42");
         kafkaMetrics.bindTo(registry);
@@ -454,7 +454,7 @@ class KafkaMetricsTest {
     void shouldRemoveOldMetersWithTags() {
         Map<MetricName, Metric> kafkaMetricMap = new HashMap<>();
         Supplier<Map<MetricName, ? extends Metric>> supplier = () -> kafkaMetricMap;
-        kafkaMetrics = new io.micrometer.binder.kafka.KafkaMetrics(supplier);
+        kafkaMetrics = new KafkaMetrics(supplier);
         MeterRegistry registry = new SimpleMeterRegistry();
         registry.config().commonTags("commonTest", "42");
         kafkaMetrics.bindTo(registry);
@@ -507,7 +507,7 @@ class KafkaMetricsTest {
     void removeShouldWorkForNonExistingMeters() {
         Map<MetricName, Metric> kafkaMetricMap = new HashMap<>();
         Supplier<Map<MetricName, ? extends Metric>> supplier = () -> kafkaMetricMap;
-        kafkaMetrics = new io.micrometer.binder.kafka.KafkaMetrics(supplier);
+        kafkaMetrics = new KafkaMetrics(supplier);
         MeterRegistry registry = new SimpleMeterRegistry();
         kafkaMetrics.bindTo(registry);
         assertThat(registry.getMeters()).hasSize(0);
@@ -526,7 +526,7 @@ class KafkaMetricsTest {
     @Issue("#2879")
     @Test
     void checkAndBindMetricsShouldNotFail() {
-        kafkaMetrics = new io.micrometer.binder.kafka.KafkaMetrics(() -> { throw new RuntimeException("simulated"); });
+        kafkaMetrics = new KafkaMetrics(() -> { throw new RuntimeException("simulated"); });
         MeterRegistry registry = new SimpleMeterRegistry();
         kafkaMetrics.checkAndBindMetrics(registry);
     }

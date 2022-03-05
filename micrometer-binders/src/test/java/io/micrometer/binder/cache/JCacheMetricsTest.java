@@ -15,8 +15,11 @@
  */
 package io.micrometer.binder.cache;
 
-import java.net.URI;
-import java.util.Random;
+import io.micrometer.core.instrument.Gauge;
+import io.micrometer.core.instrument.MeterRegistry;
+import io.micrometer.core.instrument.Tags;
+import io.micrometer.core.instrument.binder.cache.AbstractCacheMetricsTest;
+import io.micrometer.core.instrument.simple.SimpleMeterRegistry;
 
 import javax.cache.Cache;
 import javax.cache.CacheManager;
@@ -33,11 +36,9 @@ import javax.management.MalformedObjectNameException;
 import javax.management.ObjectName;
 import javax.management.ReflectionException;
 
-import io.micrometer.core.instrument.Gauge;
-import io.micrometer.core.instrument.MeterRegistry;
-import io.micrometer.core.instrument.Tags;
-import io.micrometer.core.instrument.binder.cache.AbstractCacheMetricsTest;
-import io.micrometer.core.instrument.simple.SimpleMeterRegistry;
+import java.net.URI;
+import java.util.Random;
+
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -47,7 +48,7 @@ import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
 /**
- * Tests for {@link io.micrometer.binder.cache.JCacheMetrics}.
+ * Tests for {@link JCacheMetrics}.
  *
  * @author Oleksii Bondar
  */
@@ -58,7 +59,7 @@ class JCacheMetricsTest extends AbstractCacheMetricsTest {
 
     private CacheManager cacheManager = mock(CacheManager.class);
 
-    private io.micrometer.binder.cache.JCacheMetrics<String, String, Cache<String, String>> metrics;
+    private JCacheMetrics<String, String, Cache<String, String>> metrics;
     private MBeanServer mbeanServer;
     private Long expectedAttributeValue = new Random().nextLong();
 
@@ -67,7 +68,7 @@ class JCacheMetricsTest extends AbstractCacheMetricsTest {
         when(cache.getCacheManager()).thenReturn(cacheManager);
         when(cache.getName()).thenReturn("testCache");
         when(cacheManager.getURI()).thenReturn(new URI("http://localhost"));
-        metrics = new io.micrometer.binder.cache.JCacheMetrics<>(cache, expectedTag);
+        metrics = new JCacheMetrics<>(cache, expectedTag);
 
         // emulate MBean server with MBean used for statistic lookup
         mbeanServer = MBeanServerFactory.createMBeanServer();
@@ -98,7 +99,7 @@ class JCacheMetricsTest extends AbstractCacheMetricsTest {
     @Test
     void constructInstanceViaStaticMethodMonitor() {
         MeterRegistry meterRegistry = new SimpleMeterRegistry();
-        io.micrometer.binder.cache.JCacheMetrics.monitor(meterRegistry, cache, expectedTag);
+        JCacheMetrics.monitor(meterRegistry, cache, expectedTag);
 
         meterRegistry.get("cache.removals").tags(expectedTag).gauge();
     }
@@ -106,7 +107,7 @@ class JCacheMetricsTest extends AbstractCacheMetricsTest {
     @Test
     void constructInstanceViaStaticMethodMonitorWithVarArgTags() {
         MeterRegistry meterRegistry = new SimpleMeterRegistry();
-        io.micrometer.binder.cache.JCacheMetrics.monitor(meterRegistry, cache, "version", "1.0");
+        JCacheMetrics.monitor(meterRegistry, cache, "version", "1.0");
 
         meterRegistry.get("cache.removals").tags(Tags.of("version", "1.0")).gauge();
     }
@@ -148,7 +149,7 @@ class JCacheMetricsTest extends AbstractCacheMetricsTest {
     void defaultValueWhenObjectNameNotInitialized() throws MalformedObjectNameException {
         // set cacheManager to null to emulate scenario when objectName not initialized
         when(cache.getCacheManager()).thenReturn(null);
-        metrics = new io.micrometer.binder.cache.JCacheMetrics<>(cache, expectedTag);
+        metrics = new JCacheMetrics<>(cache, expectedTag);
 
         assertThat(metrics.hitCount()).isEqualTo(0L);
     }

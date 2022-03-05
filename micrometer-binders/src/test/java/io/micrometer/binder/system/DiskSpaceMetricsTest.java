@@ -15,18 +15,17 @@
  */
 package io.micrometer.binder.system;
 
-import java.io.File;
-
 import io.micrometer.core.instrument.MeterRegistry;
 import io.micrometer.core.instrument.Tags;
-import io.micrometer.binder.system.DiskSpaceMetrics;
 import io.micrometer.core.instrument.simple.SimpleMeterRegistry;
 import org.junit.jupiter.api.Test;
+
+import java.io.File;
 
 import static org.assertj.core.api.AssertionsForClassTypes.assertThat;
 
 /**
- * Tests for {@link io.micrometer.binder.system.DiskSpaceMetrics}.
+ * Tests for {@link DiskSpaceMetrics}.
  *
  * @author jmcshane
  * @author Johnny Lim
@@ -38,7 +37,7 @@ class DiskSpaceMetricsTest {
 
     @Test
     void diskSpaceMetrics() {
-        new io.micrometer.binder.system.DiskSpaceMetrics(new File(System.getProperty("user.dir"))).bindTo(registry);
+        new DiskSpaceMetrics(new File(System.getProperty("user.dir"))).bindTo(registry);
 
         assertThat(registry.get("disk.free").gauge().value()).isNotNaN().isGreaterThan(0);
         assertThat(registry.get("disk.total").gauge().value()).isNotNaN().isGreaterThan(0);
@@ -46,7 +45,7 @@ class DiskSpaceMetricsTest {
 
     @Test
     void diskSpaceMetricsWithTags() {
-        new io.micrometer.binder.system.DiskSpaceMetrics(new File(System.getProperty("user.dir")), Tags.of("key1", "value1")).bindTo(registry);
+        new DiskSpaceMetrics(new File(System.getProperty("user.dir")), Tags.of("key1", "value1")).bindTo(registry);
 
         assertThat(registry.get("disk.free").tags("key1", "value1").gauge().value()).isNotNaN().isGreaterThan(0);
         assertThat(registry.get("disk.total").tags("key1", "value1").gauge().value()).isNotNaN().isGreaterThan(0);

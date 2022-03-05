@@ -19,12 +19,14 @@ import com.github.benmanes.caffeine.cache.Cache;
 import com.github.benmanes.caffeine.cache.Caffeine;
 import com.github.benmanes.caffeine.cache.LoadingCache;
 import com.github.benmanes.caffeine.cache.stats.CacheStats;
+
 import io.micrometer.core.instrument.FunctionCounter;
 import io.micrometer.core.instrument.MeterRegistry;
 import io.micrometer.core.instrument.Tags;
 import io.micrometer.core.instrument.TimeGauge;
 import io.micrometer.core.instrument.binder.cache.AbstractCacheMetricsTest;
 import io.micrometer.core.instrument.simple.SimpleMeterRegistry;
+
 import org.junit.jupiter.api.Test;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -37,7 +39,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 class CaffeineCacheMetricsTest extends AbstractCacheMetricsTest {
 
     private LoadingCache<String, String> cache = Caffeine.newBuilder().build(key -> "");
-    private CaffeineCacheMetrics<String, String, Cache<String, String>> metrics = new io.micrometer.binder.cache.CaffeineCacheMetrics<>(cache, "testCache", expectedTag);
+    private CaffeineCacheMetrics<String, String, Cache<String, String>> metrics = new CaffeineCacheMetrics<>(cache, "testCache", expectedTag);
 
     @Test
     void reportExpectedGeneralMetrics() {
@@ -73,7 +75,7 @@ class CaffeineCacheMetricsTest extends AbstractCacheMetricsTest {
     void doNotReportMetricsForNonLoadingCache() {
         MeterRegistry meterRegistry = new SimpleMeterRegistry();
         Cache<Object, Object> cache = Caffeine.newBuilder().build();
-        io.micrometer.binder.cache.CaffeineCacheMetrics<Object, Object, Cache<Object, Object>> metrics = new CaffeineCacheMetrics<>(cache, "testCache", expectedTag);
+        CaffeineCacheMetrics<Object, Object, Cache<Object, Object>> metrics = new CaffeineCacheMetrics<>(cache, "testCache", expectedTag);
         metrics.bindTo(meterRegistry);
 
         assertThat(meterRegistry.find("cache.load.duration").timeGauge()).isNull();

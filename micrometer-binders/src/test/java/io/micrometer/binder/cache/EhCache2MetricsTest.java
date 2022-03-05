@@ -15,17 +15,19 @@
  */
 package io.micrometer.binder.cache;
 
-import java.util.Random;
-
 import io.micrometer.core.instrument.FunctionCounter;
 import io.micrometer.core.instrument.Gauge;
 import io.micrometer.core.instrument.MeterRegistry;
 import io.micrometer.core.instrument.Tags;
 import io.micrometer.core.instrument.binder.cache.AbstractCacheMetricsTest;
 import io.micrometer.core.instrument.simple.SimpleMeterRegistry;
+
+import java.util.Random;
+
 import net.sf.ehcache.Cache;
 import net.sf.ehcache.CacheManager;
 import net.sf.ehcache.statistics.StatisticsGateway;
+
 import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
@@ -36,7 +38,7 @@ import static org.mockito.Mockito.spy;
 import static org.mockito.Mockito.when;
 
 /**
- * Tests for {@link io.micrometer.binder.cache.EhCache2Metrics}.
+ * Tests for {@link EhCache2Metrics}.
  *
  * @author Oleksii Bondar
  */
@@ -45,7 +47,7 @@ class EhCache2MetricsTest extends AbstractCacheMetricsTest {
     private static CacheManager cacheManager;
     private static Cache cache;
 
-    private io.micrometer.binder.cache.EhCache2Metrics metrics = new io.micrometer.binder.cache.EhCache2Metrics(cache, expectedTag);
+    private EhCache2Metrics metrics = new EhCache2Metrics(cache, expectedTag);
 
     @Test
     void reportMetrics() {

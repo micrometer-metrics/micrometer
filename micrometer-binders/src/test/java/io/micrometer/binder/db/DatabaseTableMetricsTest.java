@@ -15,16 +15,15 @@
  */
 package io.micrometer.binder.db;
 
-import java.sql.Connection;
-import java.sql.SQLException;
-
 import io.micrometer.core.instrument.MeterRegistry;
-import io.micrometer.binder.db.DatabaseTableMetrics;
 import io.micrometer.core.instrument.simple.SimpleMeterRegistry;
 import org.hsqldb.jdbc.JDBCDataSource;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+
+import java.sql.Connection;
+import java.sql.SQLException;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -57,7 +56,7 @@ class DatabaseTableMetricsTest {
 
     @Test
     void rowCountGauge() {
-        io.micrometer.binder.db.DatabaseTableMetrics.monitor(registry, "foo", "mydb", ds);
+        DatabaseTableMetrics.monitor(registry, "foo", "mydb", ds);
         assertThat(registry.get("db.table.size")
                 .tag("table", "foo")
                 .tag("db", "mydb")

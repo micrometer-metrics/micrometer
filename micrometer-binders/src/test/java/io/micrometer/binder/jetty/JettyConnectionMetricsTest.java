@@ -15,10 +15,7 @@
  */
 package io.micrometer.binder.jetty;
 
-import java.util.concurrent.CountDownLatch;
-
 import io.micrometer.core.instrument.MockClock;
-import io.micrometer.binder.jetty.JettyConnectionMetrics;
 import io.micrometer.core.instrument.simple.SimpleConfig;
 import io.micrometer.core.instrument.simple.SimpleMeterRegistry;
 import org.apache.http.client.methods.CloseableHttpResponse;
@@ -36,6 +33,8 @@ import org.eclipse.jetty.util.component.LifeCycle;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Test;
 
+import java.util.concurrent.CountDownLatch;
+
 import static java.util.concurrent.TimeUnit.SECONDS;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.jupiter.api.Assertions.assertTrue;
@@ -47,7 +46,7 @@ class JettyConnectionMetricsTest {
     private CloseableHttpClient client = HttpClients.createDefault();
 
     void setup() throws Exception {
-        connector.addBean(new io.micrometer.binder.jetty.JettyConnectionMetrics(registry));
+        connector.addBean(new JettyConnectionMetrics(registry));
         server.setConnectors(new Connector[]{connector});
         server.start();
     }
@@ -94,7 +93,7 @@ class JettyConnectionMetricsTest {
         setup();
         HttpClient httpClient = new HttpClient();
         httpClient.setFollowRedirects(false);
-        httpClient.addBean(new io.micrometer.binder.jetty.JettyConnectionMetrics(registry));
+        httpClient.addBean(new JettyConnectionMetrics(registry));
 
         CountDownLatch latch = new CountDownLatch(1);
         httpClient.addLifeCycleListener(new LifeCycle.Listener() {
@@ -120,7 +119,7 @@ class JettyConnectionMetricsTest {
 
     @Test
     void passingConnectorAddsConnectorNameTag() {
-        new io.micrometer.binder.jetty.JettyConnectionMetrics(registry, connector);
+        new JettyConnectionMetrics(registry, connector);
 
         assertThat(registry.get("jetty.connections.messages.in").counter().getId().getTag("connector.name"))
                 .isEqualTo("unnamed");
