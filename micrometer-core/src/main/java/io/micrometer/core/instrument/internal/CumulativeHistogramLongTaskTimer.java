@@ -19,7 +19,6 @@ import io.micrometer.core.instrument.Clock;
 import io.micrometer.core.instrument.distribution.CountAtBucket;
 import io.micrometer.core.instrument.distribution.DistributionStatisticConfig;
 import io.micrometer.core.instrument.distribution.HistogramSnapshot;
-import io.micrometer.core.instrument.internal.DefaultLongTaskTimer;
 import io.micrometer.core.lang.Nullable;
 
 import java.util.Arrays;

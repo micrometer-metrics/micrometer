@@ -1,6 +1,4 @@
-plugins {
-    id 'idea'
-}
+description 'Core module of Micrometer containing instrumentation API and implementation'
 
 dependencies {
     // TODO(anuraaga): HdrHistogram is exposed in the micrometer API but probably shouldn't be
@@ -8,6 +6,9 @@ dependencies {
     implementation('org.latencyutils:LatencyUtils') {
         exclude group: 'org.hdrhistogram', module: 'HdrHistogram'
     }
+
+    // Aspects
+    optionalApi 'org.aspectj:aspectjweaver'
 
     // instrumentation options
     optionalApi 'io.dropwizard.metrics:metrics-core'
@@ -41,9 +42,6 @@ dependencies {
     optionalApi 'io.projectreactor:reactor-core'
     optionalApi 'io.projectreactor.netty:reactor-netty'
 
-    // @Timed AOP
-    optionalApi 'org.aspectj:aspectjweaver'
-
     optionalApi 'com.squareup.okhttp3:okhttp'
 
     optionalApi 'org.mongodb:mongodb-driver-sync'
@@ -55,6 +53,15 @@ dependencies {
 
     testImplementation 'io.projectreactor:reactor-test'
 
+    // dependency injection tests
+    testImplementation 'javax.inject:javax.inject'
+    testImplementation 'org.springframework:spring-context'
+    testImplementation 'com.google.inject:guice'
+
+    // Uncomment these if you are interested in testing injection with dagger in MeterRegistryInjectionTest
+    // testImplementation 'com.google.dagger:dagger'
+    // testAnnotationProcessor 'com.google.dagger:dagger-compiler'
+
     // JUnit 5
     testImplementation 'org.junit.jupiter:junit-jupiter'
     testImplementation 'com.tngtech.archunit:archunit-junit5'
@@ -65,17 +72,7 @@ dependencies {
     testImplementation 'org.mockito:mockito-inline'
 
     testImplementation 'org.hsqldb:hsqldb'
-
-    // dependency injection tests
-    testImplementation 'javax.inject:javax.inject'
-    testImplementation 'org.springframework:spring-context'
-    testImplementation 'com.google.inject:guice'
-
     testImplementation 'com.h2database:h2'
-
-    // Uncomment these if you are interested in testing injection with dagger in MeterRegistryInjectionTest
-//    testImplementation 'com.google.dagger:dagger'
-//    testAnnotationProcessor 'com.google.dagger:dagger-compiler'
 
     testImplementation 'org.assertj:assertj-core'
     testImplementation 'org.awaitility:awaitility'
