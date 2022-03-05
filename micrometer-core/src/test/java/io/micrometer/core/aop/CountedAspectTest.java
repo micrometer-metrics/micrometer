@@ -16,7 +16,6 @@
 package io.micrometer.core.aop;
 
 import io.micrometer.core.annotation.Counted;
-import io.micrometer.core.aop.CountedAspect;
 import io.micrometer.core.instrument.Counter;
 import io.micrometer.core.instrument.MeterRegistry;
 import io.micrometer.core.instrument.search.MeterNotFoundException;

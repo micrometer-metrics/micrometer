@@ -16,7 +16,6 @@
 package io.micrometer.core.aop;
 
 import io.micrometer.core.annotation.Timed;
-import io.micrometer.core.aop.TimedAspect;
 import io.micrometer.core.instrument.LongTaskTimer;
 import io.micrometer.core.instrument.Meter.Id;
 import io.micrometer.core.instrument.MeterRegistry;
