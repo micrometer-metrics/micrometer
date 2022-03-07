@@ -175,7 +175,7 @@ public final class DynatraceExporterV2 extends AbstractDynatraceExporter {
     private Stream<String> toSummaryLine(Meter meter, HistogramSnapshot histogramSnapshot, TimeUnit timeUnit) {
         long count = histogramSnapshot.count();
         if (count < 1) {
-            logger.debug("Summary with 0 count dropped: %s", meter.getId().getName());
+            logger.debug("Summary with 0 count dropped: {}", meter.getId().getName());
             return Stream.empty();
         }
         double total = (timeUnit != null) ? histogramSnapshot.total(timeUnit) : histogramSnapshot.total();
@@ -224,7 +224,7 @@ public final class DynatraceExporterV2 extends AbstractDynatraceExporter {
     Stream<String> toFunctionTimerLine(FunctionTimer meter) {
         long count = (long) meter.count();
         if (count < 1) {
-            logger.debug("Timer with 0 count dropped: %s", meter.getId().getName());
+            logger.debug("Timer with 0 count dropped: {}", meter.getId().getName());
             return Stream.empty();
         }
         double total = meter.totalTime(getBaseTimeUnit());
