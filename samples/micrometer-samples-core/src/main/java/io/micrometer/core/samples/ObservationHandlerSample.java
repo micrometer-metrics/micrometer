@@ -59,7 +59,7 @@ public class ObservationHandlerSample {
         private final UUID uuid = UUID.randomUUID();
     }
 
-    static class CustomTagsProvider implements Observation.TagsProvider<CustomContext> {
+    static class CustomTagsProvider implements Observation.GlobalTagsProvider<CustomContext> {
         @Override
         public Tags getLowCardinalityTags(CustomContext context) {
             return Tags.of("className", context.getClass().getSimpleName());

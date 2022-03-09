@@ -761,6 +761,16 @@ public interface Observation {
     }
 
     /**
+     * A provider of tags that will be set on the {@link ObservationRegistry}.
+     *
+     * @author Marcin Grzejszczak
+     * @since 2.0.0
+     */
+    interface GlobalTagsProvider<T extends Context> extends TagsProvider<T> {
+
+    }
+
+    /**
      * A functional interface like {@link Runnable} but it can throw exceptions.
      */
     @FunctionalInterface
