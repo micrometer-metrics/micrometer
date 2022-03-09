@@ -65,7 +65,7 @@ public interface ObservationRegistry {
 
         private final List<ObservationPredicate> observationPredicates = new CopyOnWriteArrayList<>();
 
-        private final List<Observation.TagsProvider<?>> tagsProviders = new CopyOnWriteArrayList<>();
+        private final List<Observation.GlobalTagsProvider<?>> tagsProviders = new CopyOnWriteArrayList<>();
 
         /**
          * Register a handler for the {@link Observation observations}.
@@ -96,7 +96,7 @@ public interface ObservationRegistry {
          * @param tagsProvider tags provider to add to the current configuration
          * @return This configuration instance
          */
-        public ObservationConfig tagsProvider(Observation.TagsProvider<?> tagsProvider) {
+        public ObservationConfig tagsProvider(Observation.GlobalTagsProvider<?> tagsProvider) {
             this.tagsProviders.add(tagsProvider);
             return this;
         }
@@ -117,7 +117,7 @@ public interface ObservationRegistry {
             return observationHandlers;
         }
 
-        Collection<Observation.TagsProvider<?>> getTagsProviders() {
+        Collection<Observation.GlobalTagsProvider<?>> getTagsProviders() {
             return tagsProviders;
         }
     }

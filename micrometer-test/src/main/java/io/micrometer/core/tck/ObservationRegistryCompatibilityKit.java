@@ -442,7 +442,7 @@ public abstract class ObservationRegistryCompatibilityKit {
         final String uuid = UUID.randomUUID().toString();
     }
 
-    static class TestTagsProvider implements Observation.TagsProvider<TestContext> {
+    static class TestTagsProvider implements Observation.GlobalTagsProvider<TestContext> {
         private final String id;
 
         public TestTagsProvider(String id) {
@@ -469,7 +469,7 @@ public abstract class ObservationRegistryCompatibilityKit {
         }
     }
 
-    static class UnsupportedTagsProvider implements Observation.TagsProvider<Observation.Context> {
+    static class UnsupportedTagsProvider implements Observation.GlobalTagsProvider<Observation.Context> {
         private final String id;
 
         public UnsupportedTagsProvider(String id) {
