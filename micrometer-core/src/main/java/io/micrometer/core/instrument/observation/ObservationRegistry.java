@@ -16,6 +16,7 @@
 package io.micrometer.core.instrument.observation;
 
 import java.util.Collection;
+import java.util.Collections;
 import java.util.List;
 import java.util.concurrent.CopyOnWriteArrayList;
 
@@ -31,6 +32,60 @@ import io.micrometer.core.lang.Nullable;
  * @since 2.0.0
  */
 public interface ObservationRegistry {
+
+    /**
+     * No-op implementation of {@link ObservationRegistry}.
+     */
+    ObservationRegistry NOOP = new ObservationRegistry() {
+
+        private final ObservationConfig observationConfig = new ObservationConfig() {
+            @Override
+            public ObservationConfig observationHandler(ObservationHandler<?> handler) {
+                return this;
+            }
+
+            @Override
+            public ObservationConfig observationPredicate(ObservationPredicate predicate) {
+                return this;
+            }
+
+            @Override
+            public ObservationConfig tagsProvider(Observation.GlobalTagsProvider<?> tagsProvider) {
+                return this;
+            }
+
+            @Override
+            public boolean isObservationEnabled(String name, Observation.Context context) {
+                return false;
+            }
+
+            @Override
+            Collection<ObservationHandler<?>> getObservationHandlers() {
+                return Collections.emptyList();
+            }
+
+            @Override
+            Collection<Observation.GlobalTagsProvider<?>> getTagsProviders() {
+                return Collections.emptyList();
+            }
+        };
+
+        @Override
+        public Observation getCurrentObservation() {
+            return NoopObservation.INSTANCE;
+        }
+
+        @Override
+        public void setCurrentObservation(Observation current) {
+
+        }
+
+        @Override
+        public ObservationConfig observationConfig() {
+            return this.observationConfig;
+        }
+    };
+
     /**
      * When previously set will allow to retrieve the {@link Observation} at any point in time.
      *
