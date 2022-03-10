@@ -13,7 +13,7 @@ More info and the user manual are available on [micrometer.io](https://micromete
 
 Micrometer is the instrumentation library underpinning Spring Boot 2's metrics collection.
 
-Micrometer requires JDK 8 or later to build.
+Micrometer artifacts work with Java 8 or later.
 
 ## Supported versions
 
