@@ -123,7 +123,8 @@ public interface DocumentedObservation {
      * @return observation
      */
     default Observation observation(ObservationRegistry registry, Observation.Context context) {
-        return Observation.createNotStarted(getName(), context, registry);
+        return Observation.createNotStarted(getName(), context, registry)
+                .contextualName(getContextualName());
     }
 
     /**
@@ -144,6 +145,6 @@ public interface DocumentedObservation {
      * @return observation
      */
     default Observation start(ObservationRegistry registry, Observation.Context context) {
-        return Observation.start(getName(), context, registry);
+        return observation(registry, context).start();
     }
 }
