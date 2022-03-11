@@ -15,7 +15,7 @@
  */
 package io.micrometer.dynatrace.v2;
 
-import com.dynatrace.file.util.FileBasedConfigurationTestHelper;
+import com.dynatrace.file.util.DynatraceFileBasedConfigurationProvider;
 import io.micrometer.core.instrument.Timer;
 import io.micrometer.core.instrument.*;
 import io.micrometer.core.ipc.http.HttpSender;
@@ -242,8 +242,7 @@ class DynatraceExporterV2Test {
 
         clock.add(config.step());
         // Before the update to drop zero count lines, this would contain 1 line (with count=0), which is not desired.
-        List<String> zeroCountLines = exporter.toTimerLine(timer).collect(Collectors.toList());
-        assertThat(zeroCountLines).isEmpty();
+        assertThat(exporter.toTimerLine(timer)).isEmpty();
     }
 
     @Test
@@ -357,8 +356,7 @@ class DynatraceExporterV2Test {
 
         clock.add(config.step());
         // Before the update to drop zero count lines, this would contain 1 line (with count=0), which is not desired.
-        List<String> zeroCountLines = exporter.toDistributionSummaryLine(summary).collect(Collectors.toList());
-        assertThat(zeroCountLines).isEmpty();
+        assertThat(exporter.toDistributionSummaryLine(summary)).isEmpty();
     }
 
     @Test
@@ -540,7 +538,7 @@ class DynatraceExporterV2Test {
                 ("DT_METRICS_INGEST_URL = " + firstUri + "\n" +
                         "DT_METRICS_INGEST_API_TOKEN = YOUR.DYNATRACE.TOKEN.FIRST").getBytes());
 
-        FileBasedConfigurationTestHelper.forceOverwriteConfig(tempFile.toString());
+        DynatraceFileBasedConfigurationProvider.getInstance().forceOverwriteConfig(tempFile.toString(), Duration.ofMillis(50));
         await().atMost(1, SECONDS).until(() -> config.uri().equals(firstUri));
         Counter counter = meterRegistry.counter("test.counter");
         counter.increment(10);
@@ -551,7 +549,7 @@ class DynatraceExporterV2Test {
         verify(httpSender, times(1)).send(firstRequestCaptor.capture());
         HttpSender.Request firstRequest = firstRequestCaptor.getValue();
 
-        assertThat(firstRequest.getUrl().toString()).isEqualTo(firstUri);
+        assertThat(firstRequest.getUrl()).hasToString(firstUri);
         assertThat(firstRequest.getRequestHeaders()).containsOnly(
                 entry("Content-Type", "text/plain"),
                 entry("User-Agent", "micrometer"),
@@ -575,7 +573,7 @@ class DynatraceExporterV2Test {
         verify(httpSender, times(2)).send(secondRequestCaptor.capture());
         HttpSender.Request secondRequest = secondRequestCaptor.getValue();
 
-        assertThat(secondRequest.getUrl().toString()).isEqualTo(secondUri);
+        assertThat(secondRequest.getUrl()).hasToString(secondUri);
         assertThat(secondRequest.getRequestHeaders()).containsOnly(
                 entry("Content-Type", "text/plain"),
                 entry("User-Agent", "micrometer"),

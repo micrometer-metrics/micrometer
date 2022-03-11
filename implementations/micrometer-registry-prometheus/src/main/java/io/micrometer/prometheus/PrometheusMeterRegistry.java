@@ -70,6 +70,14 @@ public class PrometheusMeterRegistry extends MeterRegistry {
         this(config, registry, clock, null);
     }
 
+    /**
+     * Create a {@code PrometheusMeterRegistry} instance.
+     * @param config configuration
+     * @param registry collector registry
+     * @param clock clock
+     * @param exemplarSampler exemplar sampler
+     * @since 1.9.0
+     */
     public PrometheusMeterRegistry(PrometheusConfig config, CollectorRegistry registry, Clock clock, @Nullable ExemplarSampler exemplarSampler) {
         super(clock);
 
