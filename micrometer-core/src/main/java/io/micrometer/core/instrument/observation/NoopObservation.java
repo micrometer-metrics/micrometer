@@ -27,7 +27,7 @@ import io.micrometer.core.instrument.Tag;
  * @since 2.0.0
  */
 class NoopObservation implements Observation {
-    public static final NoopObservation INSTANCE = new NoopObservation();
+    static final NoopObservation INSTANCE = new NoopObservation();
 
     private NoopObservation() {
     }

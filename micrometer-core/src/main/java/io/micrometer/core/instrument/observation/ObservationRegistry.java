@@ -111,6 +111,16 @@ public interface ObservationRegistry {
      */
     ObservationConfig observationConfig();
 
+
+    /**
+     * Checks whether this {@link ObservationRegistry} is no-op.
+     *
+     * @return {@code true} when this is a no-op observation registry
+     */
+    default boolean isNoOp() {
+        return this == NOOP;
+    }
+
     /**
      * Access to configuration options for this registry.
      */

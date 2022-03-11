@@ -164,6 +164,15 @@ public interface Observation {
     }
 
     /**
+     * Checks whether this {@link Observation} is no-op.
+     *
+     * @return {@code true} when this is a no-op observation
+     */
+    default boolean isNoOp() {
+        return this == NoopObservation.INSTANCE;
+    }
+
+    /**
      * Adds a tags provider that can be used to attach tags to the observation
      *
      * @param tagsProvider tags provider
