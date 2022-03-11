@@ -26,11 +26,11 @@ import io.micrometer.core.instrument.Tag;
  *
  * @since 2.0.0
  */
-public final class NoopObservation implements Observation {
+final class NoopObservation implements Observation {
     /**
      * Instance of {@link NoopObservation}.
      */
-    public static final NoopObservation INSTANCE = new NoopObservation();
+    static final NoopObservation INSTANCE = new NoopObservation();
 
     private NoopObservation() {
     }
@@ -87,7 +87,7 @@ public final class NoopObservation implements Observation {
     /**
      * Scope that does nothing.
      */
-    public static final class NoOpScope implements Scope {
+    static final class NoOpScope implements Scope {
         /**
          * Instance of {@link NoOpScope}.
          */

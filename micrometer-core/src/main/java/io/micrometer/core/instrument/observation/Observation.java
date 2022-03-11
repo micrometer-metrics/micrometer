@@ -53,6 +53,11 @@ import io.micrometer.core.lang.Nullable;
 public interface Observation {
 
     /**
+     * No-op observation.
+     */
+    Observation NOOP = NoopObservation.INSTANCE;
+
+    /**
      * Creates and starts an {@link Observation}.
      * When no registry is passed or observation is not applicable will return a no-op observation.
      *
@@ -392,6 +397,12 @@ public interface Observation {
      * @since 2.0.0
      */
     interface Scope extends AutoCloseable {
+
+        /**
+         * No-op scope.
+         */
+        Scope NOOP = NoopObservation.NoOpScope.INSTANCE;
+
         /**
          * Current observation available within this scope.
          *
@@ -401,6 +412,15 @@ public interface Observation {
 
         @Override
         void close();
+
+        /**
+         * Checks whether this {@link Scope} is no-op.
+         *
+         * @return {@code true} when this is a no-op scope
+         */
+        default boolean isNoOp() {
+            return this == NoopObservation.NoOpScope.INSTANCE;
+        }
     }
 
     /**
