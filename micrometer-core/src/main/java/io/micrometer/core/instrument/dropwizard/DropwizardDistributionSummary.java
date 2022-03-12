@@ -19,8 +19,6 @@ import io.micrometer.core.instrument.AbstractDistributionSummary;
 import io.micrometer.core.instrument.Clock;
 import io.micrometer.core.instrument.distribution.DistributionStatisticConfig;
 import io.micrometer.core.instrument.distribution.TimeWindowMax;
-import io.micrometer.core.instrument.util.MeterEquivalence;
-import io.micrometer.core.lang.Nullable;
 
 import java.util.concurrent.atomic.DoubleAdder;
 
@@ -61,16 +59,5 @@ public class DropwizardDistributionSummary extends AbstractDistributionSummary {
     @Override
     public double max() {
         return max.poll();
-    }
-
-    @SuppressWarnings("EqualsWhichDoesntCheckParameterClass")
-    @Override
-    public boolean equals(@Nullable Object o) {
-        return MeterEquivalence.equals(this, o);
-    }
-
-    @Override
-    public int hashCode() {
-        return MeterEquivalence.hashCode(this);
     }
 }

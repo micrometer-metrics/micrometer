@@ -18,7 +18,6 @@ package io.micrometer.core.instrument.dropwizard;
 import io.micrometer.core.instrument.AbstractMeter;
 import io.micrometer.core.instrument.Gauge;
 import io.micrometer.core.instrument.Meter;
-import io.micrometer.core.instrument.util.MeterEquivalence;
 
 /**
  * @author Jon Schneider
@@ -35,16 +34,5 @@ public class DropwizardGauge extends AbstractMeter implements Gauge {
     public double value() {
         Double value = impl.getValue();
         return value == null ? Double.NaN : value;
-    }
-
-    @SuppressWarnings("EqualsWhichDoesntCheckParameterClass")
-    @Override
-    public boolean equals(Object o) {
-        return MeterEquivalence.equals(this, o);
-    }
-
-    @Override
-    public int hashCode() {
-        return MeterEquivalence.hashCode(this);
     }
 }

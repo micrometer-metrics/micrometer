@@ -18,7 +18,6 @@ package io.micrometer.core.instrument;
 import io.micrometer.core.instrument.distribution.*;
 import io.micrometer.core.instrument.distribution.pause.ClockDriftPauseDetector;
 import io.micrometer.core.instrument.distribution.pause.PauseDetector;
-import io.micrometer.core.instrument.util.MeterEquivalence;
 import io.micrometer.core.lang.Nullable;
 import org.LatencyUtils.IntervalEstimator;
 import org.LatencyUtils.SimplePauseDetector;
@@ -186,17 +185,6 @@ public abstract class AbstractTimer extends AbstractMeter implements Timer {
     @Override
     public TimeUnit baseTimeUnit() {
         return baseTimeUnit;
-    }
-
-    @SuppressWarnings("EqualsWhichDoesntCheckParameterClass")
-    @Override
-    public boolean equals(@Nullable Object o) {
-        return MeterEquivalence.equals(this, o);
-    }
-
-    @Override
-    public int hashCode() {
-        return MeterEquivalence.hashCode(this);
     }
 
     @Override
