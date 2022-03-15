@@ -302,7 +302,6 @@ subprojects {
 
     repositories {
         mavenCentral()
-        mavenLocal()
     }
 
     def check = tasks.findByName('check')
