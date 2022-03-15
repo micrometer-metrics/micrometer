@@ -539,7 +539,7 @@ class DynatraceExporterV2Test {
                         "DT_METRICS_INGEST_API_TOKEN = YOUR.DYNATRACE.TOKEN.FIRST").getBytes());
 
         DynatraceFileBasedConfigurationProvider.getInstance().forceOverwriteConfig(tempFile.toString(), Duration.ofMillis(50));
-        await().atMost(1, SECONDS).until(() -> config.uri().equals(firstUri));
+        await().atMost(1_000, MILLISECONDS).until(() -> config.uri().equals(firstUri));
         Counter counter = meterRegistry.counter("test.counter");
         counter.increment(10);
         clock.add(config.step());
@@ -566,7 +566,7 @@ class DynatraceExporterV2Test {
                 ("DT_METRICS_INGEST_URL = " + secondUri + "\n" +
                         "DT_METRICS_INGEST_API_TOKEN = YOUR.DYNATRACE.TOKEN.SECOND").getBytes());
 
-        await().atMost(10, SECONDS).until(() -> config.uri().equals(secondUri));
+        await().atMost(1_000, MILLISECONDS).until(() -> config.uri().equals(secondUri));
         exporter.export(Collections.singletonList(counter));
 
         ArgumentCaptor<HttpSender.Request> secondRequestCaptor = ArgumentCaptor.forClass(HttpSender.Request.class);
