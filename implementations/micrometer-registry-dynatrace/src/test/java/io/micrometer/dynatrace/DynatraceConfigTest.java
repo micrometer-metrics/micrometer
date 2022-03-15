@@ -31,7 +31,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 
-import static java.util.concurrent.TimeUnit.SECONDS;
+import static java.util.concurrent.TimeUnit.MILLISECONDS;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.awaitility.Awaitility.await;
 
@@ -302,14 +302,14 @@ class DynatraceConfigTest {
             }
         };
 
-        await().atMost(1, SECONDS).until(() -> config.apiToken().equals("YOUR.DYNATRACE.TOKEN"));
+        await().atMost(1_000, MILLISECONDS).until(() -> config.apiToken().equals("YOUR.DYNATRACE.TOKEN"));
         assertThat(config.uri()).isEqualTo("https://your-dynatrace-ingest-url/api/v2/metrics/ingest");
 
         Files.write(tempFile,
                 ("DT_METRICS_INGEST_URL = https://a-different-url/api/v2/metrics/ingest\n" +
                         "DT_METRICS_INGEST_API_TOKEN = A.DIFFERENT.TOKEN").getBytes());
 
-        await().atMost(10, SECONDS).until(() -> config.apiToken().equals("A.DIFFERENT.TOKEN"));
+        await().atMost(1_000, MILLISECONDS).until(() -> config.apiToken().equals("A.DIFFERENT.TOKEN"));
         assertThat(config.uri()).isEqualTo("https://a-different-url/api/v2/metrics/ingest");
         
         Files.deleteIfExists(tempFile);
