@@ -2,9 +2,9 @@
 # Manual edits can break the build and are not advised.
 # This file is expected to be part of source control.
 antlr:antlr:2.7.7=nohttp
-ch.qos.logback:logback-classic:1.2.10=compileClasspath
+ch.qos.logback:logback-classic:1.2.11=compileClasspath
 ch.qos.logback:logback-classic:1.2.3=checkstyle,nohttp,nohttp-cli
-ch.qos.logback:logback-core:1.2.10=compileClasspath
+ch.qos.logback:logback-core:1.2.11=compileClasspath
 ch.qos.logback:logback-core:1.2.3=checkstyle,nohttp,nohttp-cli
 com.fasterxml.jackson.core:jackson-core:2.11.3=compileClasspath,default,runtimeClasspath,testCompileClasspath,testRuntimeClasspath
 com.github.tomakehurst:wiremock-jre8-standalone:2.32.0=testCompileClasspath,testRuntimeClasspath
