@@ -23,9 +23,20 @@ import com.signalfx.metrics.connection.HttpEventProtobufReceiverFactory;
 import com.signalfx.metrics.errorhandler.OnSendErrorHandler;
 import com.signalfx.metrics.flush.AggregateMetricSender;
 import com.signalfx.metrics.protobuf.SignalFxProtocolBuffers;
-import io.micrometer.core.instrument.*;
+import io.micrometer.core.instrument.Clock;
+import io.micrometer.core.instrument.Counter;
+import io.micrometer.core.instrument.DistributionSummary;
+import io.micrometer.core.instrument.FunctionCounter;
+import io.micrometer.core.instrument.FunctionTimer;
+import io.micrometer.core.instrument.Gauge;
+import io.micrometer.core.instrument.LongTaskTimer;
+import io.micrometer.core.instrument.Meter;
+import io.micrometer.core.instrument.Tag;
+import io.micrometer.core.instrument.TimeGauge;
+import io.micrometer.core.instrument.Timer;
 import io.micrometer.core.instrument.config.NamingConvention;
 import io.micrometer.core.instrument.distribution.DistributionStatisticConfig;
+import io.micrometer.core.instrument.distribution.HistogramGauges;
 import io.micrometer.core.instrument.distribution.pause.PauseDetector;
 import io.micrometer.core.instrument.step.StepMeterRegistry;
 import io.micrometer.core.instrument.util.MeterPartition;
@@ -35,8 +46,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.net.URI;
-import java.time.Duration;
-import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 import java.util.Set;
@@ -77,9 +86,9 @@ public class SignalFxMeterRegistry extends StepMeterRegistry {
         URI apiUri = URI.create(config.uri());
         int port = apiUri.getPort();
         if (port == -1) {
-            if ("http" .equals(apiUri.getScheme())) {
+            if ("http".equals(apiUri.getScheme())) {
                 port = 80;
-            } else if ("https" .equals(apiUri.getScheme())) {
+            } else if ("https".equals(apiUri.getScheme())) {
                 port = 443;
             }
         }
@@ -127,17 +136,16 @@ public class SignalFxMeterRegistry extends StepMeterRegistry {
 
     @Override
     protected Timer newTimer(Meter.Id id, DistributionStatisticConfig distributionStatisticConfig, PauseDetector pauseDetector) {
-        return super.newTimer(id, updateConfig(distributionStatisticConfig), pauseDetector);
+        Timer timer = new SignalfxTimer(id, clock, distributionStatisticConfig, pauseDetector, getBaseTimeUnit(), config.step().toMillis());
+        HistogramGauges.registerWithCommonFormat(timer, this);
+        return timer;
     }
 
     @Override
     protected DistributionSummary newDistributionSummary(Meter.Id id, DistributionStatisticConfig distributionStatisticConfig, double scale) {
-        return super.newDistributionSummary(id, updateConfig(distributionStatisticConfig), scale);
-    }
-
-    @Override
-    protected LongTaskTimer newLongTaskTimer(Meter.Id id, DistributionStatisticConfig distributionStatisticConfig) {
-        return super.newLongTaskTimer(id, updateConfig(distributionStatisticConfig));
+        DistributionSummary summary = new SignalfxDistributionSummary(id, clock, distributionStatisticConfig, scale, config.step().toMillis());
+        HistogramGauges.registerWithCommonFormat(summary, this);
+        return summary;
     }
 
     Stream<SignalFxProtocolBuffers.DataPoint.Builder> addMeter(Meter meter) {
@@ -242,31 +250,5 @@ public class SignalFxMeterRegistry extends StepMeterRegistry {
     @Override
     protected TimeUnit getBaseTimeUnit() {
         return TimeUnit.SECONDS;
-    }
-
-    private DistributionStatisticConfig updateConfig(
-            DistributionStatisticConfig distributionStatisticConfig) {
-        double[] sloBoundaries = distributionStatisticConfig.getServiceLevelObjectiveBoundaries();
-        if (sloBoundaries == null || sloBoundaries.length == 0) {
-            return distributionStatisticConfig;
-        }
-        double[] newSLA = sloBoundaries;
-        // Add the +Inf bucket since the "count" resets every export.
-        if (!isPositiveInf(sloBoundaries[sloBoundaries.length - 1])) {
-            newSLA = Arrays.copyOf(sloBoundaries, sloBoundaries.length + 1);
-            newSLA[newSLA.length - 1] = Double.MAX_VALUE;
-        }
-        return DistributionStatisticConfig.builder()
-                // Set the expiration duration for the histogram counts to be effectively a lifetime.
-                // Without this, the counts are reset every expiry duration.
-                .expiry(Duration.ofNanos(Long.MAX_VALUE)) // effectively a lifetime
-                .bufferLength(1)
-                .serviceLevelObjectives(newSLA)
-                .build()
-                .merge(distributionStatisticConfig);
-    }
-
-    private static boolean isPositiveInf(double bucket) {
-        return bucket == Double.POSITIVE_INFINITY || bucket == Double.MAX_VALUE || (long) bucket == Long.MAX_VALUE;
     }
 }

@@ -16,21 +16,23 @@
 package io.micrometer.signalfx;
 
 import com.signalfx.metrics.protobuf.SignalFxProtocolBuffers;
-
 import io.micrometer.core.instrument.DistributionSummary;
 import io.micrometer.core.instrument.MockClock;
 import io.micrometer.core.instrument.Timer;
+import io.micrometer.core.instrument.distribution.CountAtBucket;
 import io.micrometer.core.instrument.util.DoubleFormat;
+import io.micrometer.core.instrument.util.TimeUtils;
+import org.assertj.core.util.Arrays;
+import org.junit.jupiter.api.Test;
 
 import java.time.Duration;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
-import org.assertj.core.util.Arrays;
-import org.junit.jupiter.api.Test;
 
 import static com.signalfx.metrics.protobuf.SignalFxProtocolBuffers.MetricType.CUMULATIVE_COUNTER;
 import static com.signalfx.metrics.protobuf.SignalFxProtocolBuffers.MetricType.GAUGE;
+import static io.micrometer.core.instrument.util.TimeUtils.millisToUnit;
 import static org.assertj.core.api.Assertions.assertThat;
 
 /**
@@ -128,6 +130,68 @@ class SignalFxMeterRegistryTest {
                 Duration.ofMillis(100),
                 Duration.ofMillis(1000));
         testTimer(buckets, configFixType, CUMULATIVE_COUNTER);
+    }
+
+    @Test
+    void timerShouldConfigureCumulativeHistogram() {
+        MockClock clock = new MockClock();
+        SignalFxMeterRegistry registry = new SignalFxMeterRegistry(config, clock);
+        Timer timer = Timer.builder("testTimer")
+                .serviceLevelObjectives(Duration.ofMillis(10), Duration.ofMillis(100), Duration.ofMillis(1000))
+                .distributionStatisticExpiry(Duration.ofSeconds(10))
+                .distributionStatisticBufferLength(1)
+                .register(registry);
+
+        timer.record(Duration.ofSeconds(10));
+        clock.add(Duration.ofSeconds(3));
+        timer.record(Duration.ofMillis(5));
+        clock.add(Duration.ofSeconds(3));
+        timer.record(Duration.ofMillis(50));
+        clock.add(Duration.ofSeconds(3));
+        timer.record(Duration.ofMillis(500));
+        clock.add(Duration.ofSeconds(3));
+        timer.record(Duration.ofSeconds(5));
+
+        // max moves over the first observed 10s value
+        assertThat(timer.max(TimeUnit.SECONDS)).isEqualTo(5);
+        // histogram counts reflect everything that was observed
+        assertThat(timer.takeSnapshot().histogramCounts())
+                .containsExactly(
+                        new CountAtBucket(millisToUnit(10, TimeUnit.NANOSECONDS), 1),
+                        new CountAtBucket(millisToUnit(100, TimeUnit.NANOSECONDS), 2),
+                        new CountAtBucket(millisToUnit(1000, TimeUnit.NANOSECONDS), 3),
+                        new CountAtBucket(Double.MAX_VALUE, 5));
+    }
+
+    @Test
+    void distributionSummaryShouldConfigureCumulativeHistogram() {
+        MockClock clock = new MockClock();
+        SignalFxMeterRegistry registry = new SignalFxMeterRegistry(config, clock);
+        DistributionSummary summary = DistributionSummary.builder("testSummary")
+                .serviceLevelObjectives(10, 100, 1000)
+                .distributionStatisticExpiry(Duration.ofSeconds(10))
+                .distributionStatisticBufferLength(1)
+                .register(registry);
+
+        summary.record(10_000);
+        clock.add(Duration.ofSeconds(3));
+        summary.record(5);
+        clock.add(Duration.ofSeconds(3));
+        summary.record(50);
+        clock.add(Duration.ofSeconds(3));
+        summary.record(500);
+        clock.add(Duration.ofSeconds(3));
+        summary.record(5_000);
+
+        // max moves over the first observed 10_000 value
+        assertThat(summary.max()).isEqualTo(5_000);
+        // histogram counts reflect everything that was observed
+        assertThat(summary.takeSnapshot().histogramCounts())
+                .containsExactly(
+                        new CountAtBucket(10d, 1),
+                        new CountAtBucket(100d, 2),
+                        new CountAtBucket(1000d, 3),
+                        new CountAtBucket(Double.MAX_VALUE, 5));
     }
 
     void testDistributionSummary(double[] buckets, SignalFxConfig config, SignalFxProtocolBuffers.MetricType bucketCountMetricType) {
@@ -246,15 +310,15 @@ class SignalFxMeterRegistryTest {
 
     private List<SignalFxProtocolBuffers.DataPoint> getPoints(SignalFxMeterRegistry registry, long timestamp) {
         return registry.getMeters().stream().map(meter -> meter.match(
-                registry::addGauge,
-                registry::addCounter,
-                registry::addTimer,
-                registry::addDistributionSummary,
-                registry::addLongTaskTimer,
-                registry::addTimeGauge,
-                registry::addFunctionCounter,
-                registry::addFunctionTimer,
-                registry::addMeter))
+                        registry::addGauge,
+                        registry::addCounter,
+                        registry::addTimer,
+                        registry::addDistributionSummary,
+                        registry::addLongTaskTimer,
+                        registry::addTimeGauge,
+                        registry::addFunctionCounter,
+                        registry::addFunctionTimer,
+                        registry::addMeter))
                 .flatMap(builders -> builders.map(builder -> builder.setTimestamp(timestamp).build())).collect(Collectors.toList());
     }
 }
