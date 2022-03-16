@@ -15,25 +15,6 @@
  */
 package io.micrometer.core.instrument;
 
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
-import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.CopyOnWriteArrayList;
-import java.util.concurrent.TimeUnit;
-import java.util.concurrent.atomic.AtomicBoolean;
-import java.util.function.BiConsumer;
-import java.util.function.BiFunction;
-import java.util.function.Consumer;
-import java.util.function.Function;
-import java.util.function.ToDoubleFunction;
-import java.util.function.ToLongFunction;
-
 import io.micrometer.core.annotation.Incubating;
 import io.micrometer.core.instrument.Meter.Id;
 import io.micrometer.core.instrument.config.MeterFilter;
@@ -56,6 +37,25 @@ import io.micrometer.core.instrument.search.RequiredSearch;
 import io.micrometer.core.instrument.search.Search;
 import io.micrometer.core.instrument.util.TimeUtils;
 import io.micrometer.core.lang.Nullable;
+
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.CopyOnWriteArrayList;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.function.BiConsumer;
+import java.util.function.BiFunction;
+import java.util.function.Consumer;
+import java.util.function.Function;
+import java.util.function.ToDoubleFunction;
+import java.util.function.ToLongFunction;
 
 import static java.lang.String.format;
 import static java.util.Collections.emptyList;
@@ -545,13 +545,13 @@ public abstract class MeterRegistry {
     }
 
     private <M extends Meter> M registerMeterIfNecessary(Class<M> meterClass, Meter.Id id, Function<Meter.Id, M> builder,
-            Function<Meter.Id, M> noopBuilder) {
+                                                         Function<Meter.Id, M> noopBuilder) {
         return registerMeterIfNecessary(meterClass, id, null, (id2, conf) -> builder.apply(id2), noopBuilder);
     }
 
     private <M extends Meter> M registerMeterIfNecessary(Class<M> meterClass, Meter.Id id,
-            @Nullable DistributionStatisticConfig config, BiFunction<Meter.Id, DistributionStatisticConfig, M> builder,
-            Function<Meter.Id, M> noopBuilder) {
+                                                         @Nullable DistributionStatisticConfig config, BiFunction<Meter.Id, DistributionStatisticConfig, M> builder,
+                                                         Function<Meter.Id, M> noopBuilder) {
         Id mappedId = getMappedId(id);
         Meter m = getOrCreateMeter(config, builder, id, mappedId, noopBuilder);
 
@@ -578,8 +578,8 @@ public abstract class MeterRegistry {
     }
 
     private Meter getOrCreateMeter(@Nullable DistributionStatisticConfig config,
-            BiFunction<Id, /*Nullable Generic*/ DistributionStatisticConfig, ? extends Meter> builder,
-            Id originalId, Id mappedId, Function<Meter.Id, ? extends Meter> noopBuilder) {
+                                   BiFunction<Id, /*Nullable Generic*/ DistributionStatisticConfig, ? extends Meter> builder,
+                                   Id originalId, Id mappedId, Function<Meter.Id, ? extends Meter> noopBuilder) {
         Meter m = meterMap.get(mappedId);
 
         if (m == null) {
@@ -629,8 +629,7 @@ public abstract class MeterRegistry {
             MeterFilterReply reply = filter.accept(id);
             if (reply == MeterFilterReply.DENY) {
                 return false;
-            }
-            else if (reply == MeterFilterReply.ACCEPT) {
+            } else if (reply == MeterFilterReply.ACCEPT) {
                 return true;
             }
         }
@@ -928,9 +927,9 @@ public abstract class MeterRegistry {
          * @return A new or existing function timer.
          */
         public <T> FunctionTimer timer(String name, Iterable<Tag> tags, T obj,
-                ToLongFunction<T> countFunction,
-                ToDoubleFunction<T> totalTimeFunction,
-                TimeUnit totalTimeFunctionUnit) {
+                                       ToLongFunction<T> countFunction,
+                                       ToDoubleFunction<T> totalTimeFunction,
+                                       TimeUnit totalTimeFunctionUnit) {
             return FunctionTimer.builder(name, obj, countFunction, totalTimeFunction, totalTimeFunctionUnit)
                     .tags(tags).register(MeterRegistry.this);
         }
@@ -947,9 +946,9 @@ public abstract class MeterRegistry {
          * @return A new or existing function timer.
          */
         <T> FunctionTimer timer(Meter.Id id, T obj,
-                ToLongFunction<T> countFunction,
-                ToDoubleFunction<T> totalTimeFunction,
-                TimeUnit totalTimeFunctionUnit) {
+                                ToLongFunction<T> countFunction,
+                                ToDoubleFunction<T> totalTimeFunction,
+                                TimeUnit totalTimeFunctionUnit) {
             return registerMeterIfNecessary(FunctionTimer.class, id, id2 -> {
                 Meter.Id withUnit = id2.withBaseUnit(getBaseTimeUnitStr());
                 return newFunctionTimer(withUnit, obj, countFunction, totalTimeFunction, totalTimeFunctionUnit);
@@ -968,7 +967,7 @@ public abstract class MeterRegistry {
          * @return A new or existing time gauge.
          */
         public <T> TimeGauge timeGauge(String name, Iterable<Tag> tags, T obj,
-                TimeUnit timeFunctionUnit, ToDoubleFunction<T> timeFunction) {
+                                       TimeUnit timeFunctionUnit, ToDoubleFunction<T> timeFunction) {
             return TimeGauge.builder(name, obj, timeFunctionUnit, timeFunction).tags(tags).register(MeterRegistry.this);
         }
 

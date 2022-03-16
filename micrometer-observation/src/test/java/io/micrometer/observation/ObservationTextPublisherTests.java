@@ -18,8 +18,9 @@ package io.micrometer.observation;
 import java.io.IOException;
 import java.util.function.Consumer;
 
-import org.assertj.core.api.Assertions;
 import org.junit.jupiter.api.Test;
+
+import static org.assertj.core.api.Assertions.assertThat;
 
 /**
  * Tests for {@link ObservationTextPublisher}.
@@ -34,52 +35,52 @@ class ObservationTextPublisherTests {
     @Test
     void onStartShouldPublishStartEvent() {
         publisher.onStart(createTestContext());
-        Assertions.assertThat(consumer.toString()).isEqualTo("START - " + CONTEXT_TOSTRING);
+        assertThat(consumer.toString()).isEqualTo("START - " + CONTEXT_TOSTRING);
     }
 
     @Test
     void onScopeOpenedShouldPublishOpenEvent() {
         publisher.onScopeOpened(createTestContext());
-        Assertions.assertThat(consumer.toString()).isEqualTo("OPEN - " + CONTEXT_TOSTRING);
+        assertThat(consumer.toString()).isEqualTo("OPEN - " + CONTEXT_TOSTRING);
     }
 
     @Test
     void onErrorShouldPublishErrorEvent() {
         publisher.onError(createTestContext());
-        Assertions.assertThat(consumer.toString()).isEqualTo("ERROR - " + CONTEXT_TOSTRING);
+        assertThat(consumer.toString()).isEqualTo("ERROR - " + CONTEXT_TOSTRING);
     }
 
     @Test
     void onScopeClosedShouldPublishCloseEvent() {
         publisher.onScopeClosed(createTestContext());
-        Assertions.assertThat(consumer.toString()).isEqualTo("CLOSE - " + CONTEXT_TOSTRING);
+        assertThat(consumer.toString()).isEqualTo("CLOSE - " + CONTEXT_TOSTRING);
     }
 
     @Test
     void onStopClosedShouldPublishCloseEvent() {
         publisher.onStop(createTestContext());
-        Assertions.assertThat(consumer.toString()).isEqualTo("STOP - " + CONTEXT_TOSTRING);
+        assertThat(consumer.toString()).isEqualTo("STOP - " + CONTEXT_TOSTRING);
     }
 
     @Test
     void shouldSupportAnyContextByDefault() {
-        Assertions.assertThat(publisher.supportsContext(null)).isTrue();
-        Assertions.assertThat(publisher.supportsContext(new Observation.Context())).isTrue();
-        Assertions.assertThat(publisher.supportsContext(createTestContext())).isTrue();
+        assertThat(publisher.supportsContext(null)).isTrue();
+        assertThat(publisher.supportsContext(new Observation.Context())).isTrue();
+        assertThat(publisher.supportsContext(createTestContext())).isTrue();
     }
 
     @Test
     void shouldSupportContextEnabledByThePredicate() {
         ObservationHandler<Observation.Context> publisher = new ObservationTextPublisher(consumer, context -> "testName".equals(context.getName()));
-        Assertions.assertThat(publisher.supportsContext(new Observation.Context())).isFalse();
-        Assertions.assertThat(publisher.supportsContext(createTestContext())).isTrue();
+        assertThat(publisher.supportsContext(new Observation.Context())).isFalse();
+        assertThat(publisher.supportsContext(createTestContext())).isTrue();
     }
 
     @Test
     void shouldConvertContextUsingTheConverter() {
         ObservationHandler<Observation.Context> publisher = new ObservationTextPublisher(consumer, context -> true, context -> "test");
         publisher.onStart(createTestContext());
-        Assertions.assertThat(consumer.toString()).isEqualTo("START - test");
+        assertThat(consumer.toString()).isEqualTo("START - test");
     }
 
     private Observation.Context createTestContext() {

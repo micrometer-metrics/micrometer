@@ -19,6 +19,8 @@ import org.assertj.core.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
+import static org.assertj.core.api.Assertions.assertThat;
+
 /**
  * Tests for {@link Observation.Context}.
  *
@@ -34,19 +36,19 @@ class ObservationContextTest {
 
     @Test
     void shouldBeEmptyByDefault() {
-        Assertions.assertThat(context.containsKey(String.class)).isFalse();
-        Assertions.assertThat((String) context.get(String.class)).isNull();
+        assertThat(context.containsKey(String.class)).isFalse();
+        assertThat((String) context.get(String.class)).isNull();
     }
 
     @Test
     void getShouldReturnWhatWasPutPreviously() {
-        Assertions.assertThat(context.put(String.class, "42")).isSameAs(context);
-        Assertions.assertThat(context.containsKey(String.class)).isTrue();
-        Assertions.assertThat((String) context.get(String.class)).isEqualTo("42");
+        assertThat(context.put(String.class, "42")).isSameAs(context);
+        assertThat(context.containsKey(String.class)).isTrue();
+        assertThat((String) context.get(String.class)).isEqualTo("42");
 
-        Assertions.assertThat(context.put(Integer.class, 123)).isSameAs(context);
-        Assertions.assertThat(context.containsKey(Integer.class)).isTrue();
-        Assertions.assertThat((Integer) context.get(Integer.class)).isEqualTo(123);
+        assertThat(context.put(Integer.class, 123)).isSameAs(context);
+        assertThat(context.containsKey(Integer.class)).isTrue();
+        assertThat((Integer) context.get(Integer.class)).isEqualTo(123);
     }
 
     @Test
@@ -55,21 +57,21 @@ class ObservationContextTest {
                 .put(String.class, "42")
                 .put(Integer.class, 123)
                 .put(String.class, "24");
-        Assertions.assertThat((String) context.get(String.class)).isEqualTo("24");
-        Assertions.assertThat((Integer) context.get(Integer.class)).isEqualTo(123);
+        assertThat((String) context.get(String.class)).isEqualTo("24");
+        assertThat((Integer) context.get(Integer.class)).isEqualTo(123);
     }
 
     @Test
     void getOrDefaultShouldUseFallbackValue() {
         context.put(String.class, "42");
-        Assertions.assertThat(context.getOrDefault(String.class, "abc")).isEqualTo("42");
-        Assertions.assertThat(context.getOrDefault(Integer.class, 123)).isEqualTo(123);
+        assertThat(context.getOrDefault(String.class, "abc")).isEqualTo("42");
+        assertThat(context.getOrDefault(Integer.class, 123)).isEqualTo(123);
     }
 
     @Test
     void getRequiredShouldFailIfThereIsNoValue() {
         context.put(String.class, "42");
-        Assertions.assertThat((String) context.getRequired(String.class)).isEqualTo("42");
+        assertThat((String) context.getRequired(String.class)).isEqualTo("42");
         Assertions.assertThatThrownBy(() -> context.getRequired(Integer.class))
                 .isInstanceOf(IllegalArgumentException.class)
                 .hasMessage("Context does not have an entry for key [class java.lang.Integer]")
@@ -79,11 +81,11 @@ class ObservationContextTest {
     @Test
     void computeIfAbsentShouldUseFallbackValue() {
         context.put(String.class, "42");
-        Assertions.assertThat((String) context.computeIfAbsent(String.class, clazz -> "abc")).isEqualTo("42");
-        Assertions.assertThat((String) context.get(String.class)).isEqualTo("42");
+        assertThat((String) context.computeIfAbsent(String.class, clazz -> "abc")).isEqualTo("42");
+        assertThat((String) context.get(String.class)).isEqualTo("42");
 
-        Assertions.assertThat((Integer) context.computeIfAbsent(Integer.class, clazz -> 123)).isEqualTo(123);
-        Assertions.assertThat((Integer) context.get(Integer.class)).isEqualTo(123);
+        assertThat((Integer) context.computeIfAbsent(Integer.class, clazz -> 123)).isEqualTo(123);
+        assertThat((Integer) context.get(Integer.class)).isEqualTo(123);
     }
 
     @Test
@@ -92,8 +94,8 @@ class ObservationContextTest {
                 .put(String.class, "42")
                 .put(Integer.class, 123)
                 .remove(String.class);
-        Assertions.assertThat((Integer) context.get(Integer.class)).isEqualTo(123);
-        Assertions.assertThat((String) context.get(String.class)).isNull();
+        assertThat((Integer) context.get(Integer.class)).isEqualTo(123);
+        assertThat((String) context.get(String.class)).isNull();
     }
 
     @Test
@@ -107,8 +109,8 @@ class ObservationContextTest {
                 .put(String.class, "42")
                 .put(Integer.class, 123)
                 .clear();
-        Assertions.assertThat((Integer) context.get(Integer.class)).isNull();
-        Assertions.assertThat((String) context.get(String.class)).isNull();
+        assertThat((Integer) context.get(Integer.class)).isNull();
+        assertThat((String) context.get(String.class)).isNull();
     }
 
     @Test

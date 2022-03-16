@@ -30,7 +30,6 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.mockito.InOrder;
-import org.mockito.Mockito;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
@@ -39,6 +38,7 @@ import static org.mockito.ArgumentMatchers.isA;
 import static org.mockito.Mockito.inOrder;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.times;
+import static org.mockito.Mockito.verifyNoMoreInteractions;
 import static org.mockito.Mockito.when;
 
 /**
@@ -78,7 +78,7 @@ public abstract class ObservationRegistryCompatibilityKit {
         inOrder.verify(handler).supportsContext(isA(Observation.Context.class));
         inOrder.verify(handlerThatHandlesNothing).supportsContext(isA(Observation.Context.class));
         inOrder.verify(handler).onStart(isA(Observation.Context.class));
-        Mockito.verifyNoMoreInteractions(handlerThatHandlesNothing);
+        verifyNoMoreInteractions(handlerThatHandlesNothing);
 
         try (Observation.Scope scope = observation.openScope()) {
             inOrder.verify(handler).onScopeOpened(isA(Observation.Context.class));

@@ -39,7 +39,7 @@ import io.micrometer.observation.lang.Nullable;
  * You can wrap an operation within your code in an {@link Observation} so that actions can take place within the lifecycle of
  * that observation via the {@link ObservationHandler}.
  *
- * According to what is configured the actions can be e.g. taking measurements via Timer, creating spans for distributed tracing,
+ * According to what is configured the actions can be e.g. taking measurements via {@code Timer}, creating spans for distributed tracing,
  * correlating logs or just logging out additional information. You instrument your code once with an {@link Observation} but you can get
  * as many benefits out of it as many {@link ObservationHandler} you have.
  *

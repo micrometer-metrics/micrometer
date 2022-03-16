@@ -43,7 +43,6 @@ final class NoopObservationRegistry implements ObservationRegistry {
 
     @Override
     public void setCurrentObservation(Observation current) {
-
     }
 
     @Override

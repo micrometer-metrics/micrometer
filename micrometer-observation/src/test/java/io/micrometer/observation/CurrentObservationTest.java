@@ -17,12 +17,11 @@ package io.micrometer.observation;
 
 import java.util.HashMap;
 import java.util.Map;
-import java.util.concurrent.ExecutionException;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
+import java.util.concurrent.*;
 
-import org.assertj.core.api.Assertions;
 import org.junit.jupiter.api.Test;
+
+import static org.assertj.core.api.Assertions.assertThat;
 
 class CurrentObservationTest {
     private final ObservationRegistry registry = ObservationRegistry.create();
@@ -33,15 +32,15 @@ class CurrentObservationTest {
 
         Observation observation = Observation.createNotStarted("test.observation", registry);
         System.out.println("Outside task: " + observation);
-        Assertions.assertThat(registry.getCurrentObservation()).isNull();
+        assertThat(registry.getCurrentObservation()).isNull();
         try (Observation.Scope scope = observation.openScope()) {
-            Assertions.assertThat(registry.getCurrentObservation()).isSameAs(observation);
+            assertThat(registry.getCurrentObservation()).isSameAs(observation);
             taskRunner.submit(() -> {
                 System.out.println("In task: " + registry.getCurrentObservation());
-                Assertions.assertThat(registry.getCurrentObservation()).isNotEqualTo(observation);
+                assertThat(registry.getCurrentObservation()).isNotEqualTo(observation);
             }).get();
         }
-        Assertions.assertThat(registry.getCurrentObservation()).isNull();
+        assertThat(registry.getCurrentObservation()).isNull();
         observation.stop();
     }
 
@@ -50,15 +49,15 @@ class CurrentObservationTest {
         ExecutorService executor = Executors.newSingleThreadExecutor();
 
         Observation observation = Observation.createNotStarted("test.observation", registry);
-        Assertions.assertThat(registry.getCurrentObservation()).isNull();
+        assertThat(registry.getCurrentObservation()).isNull();
         executor.submit(() -> {
             try (Observation.Scope scope = observation.openScope()) {
-                Assertions.assertThat(registry.getCurrentObservation()).isSameAs(observation);
+                assertThat(registry.getCurrentObservation()).isSameAs(observation);
             }
             observation.stop();
         }).get();
 
-        Assertions.assertThat(registry.getCurrentObservation()).isNull();
+        assertThat(registry.getCurrentObservation()).isNull();
     }
 
     @Test
@@ -70,37 +69,37 @@ class CurrentObservationTest {
 
         executor.submit(() -> {
             Observation observation = Observation.createNotStarted("test.observation", registry);
-            Assertions.assertThat(registry.getCurrentObservation()).isNull();
+            assertThat(registry.getCurrentObservation()).isNull();
             observationMap.put("myObservation", observation);
         }).get();
 
         executor2.submit(() -> {
             Observation myObservation = observationMap.get("myObservation");
             try (Observation.Scope scope = myObservation.openScope()) {
-                Assertions.assertThat(registry.getCurrentObservation()).isSameAs(myObservation);
+                assertThat(registry.getCurrentObservation()).isSameAs(myObservation);
             }
             myObservation.stop();
-            Assertions.assertThat(registry.getCurrentObservation()).isNull();
+            assertThat(registry.getCurrentObservation()).isNull();
         }).get();
 
-        Assertions.assertThat(registry.getCurrentObservation()).isNull();
+        assertThat(registry.getCurrentObservation()).isNull();
     }
 
     @Test
     void nestedSamples_sameThread() {
         Observation observation = Observation.createNotStarted("observation1", registry);
         Observation observation2;
-        Assertions.assertThat(registry.getCurrentObservation()).isNull();
+        assertThat(registry.getCurrentObservation()).isNull();
         try (Observation.Scope scope = observation.openScope()) {
             observation2 = Observation.createNotStarted("observation2", registry);
-            Assertions.assertThat(registry.getCurrentObservation()).isSameAs(observation);
+            assertThat(registry.getCurrentObservation()).isSameAs(observation);
         }
         try (Observation.Scope scope = observation2.openScope()) {
             observation.stop();
-            Assertions.assertThat(registry.getCurrentObservation()).isSameAs(observation2);
+            assertThat(registry.getCurrentObservation()).isSameAs(observation2);
         }
         observation2.stop();
 
-        Assertions.assertThat(registry.getCurrentObservation()).isNull();
+        assertThat(registry.getCurrentObservation()).isNull();
     }
 }

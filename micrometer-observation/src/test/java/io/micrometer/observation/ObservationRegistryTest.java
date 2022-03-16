@@ -15,9 +15,10 @@
  */
 package io.micrometer.observation;
 
-import org.assertj.core.api.Assertions;
 import org.junit.jupiter.api.Test;
-import org.mockito.Mockito;
+
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.mockito.Mockito.mock;
 
 /**
  * Tests for {@link ObservationRegistry}.
@@ -34,24 +35,24 @@ class ObservationRegistryTest {
         Observation sample = Observation.start("test.timer", registry);
         Observation.Scope scope = sample.openScope();
 
-        Assertions.assertThat(registry.getCurrentObservation()).isSameAs(sample);
+        assertThat(registry.getCurrentObservation()).isSameAs(sample);
 
         scope.close();
         sample.stop();
 
-        Assertions.assertThat(registry.getCurrentObservation()).isNull();
+        assertThat(registry.getCurrentObservation()).isNull();
     }
 
     @Test
     void observationHandlersShouldBeAddedToTheRegistry() {
-        ObservationHandler<?> handler1 = Mockito.mock(ObservationHandler.class);
-        ObservationHandler<?> handler2 = Mockito.mock(ObservationHandler.class);
+        ObservationHandler<?> handler1 = mock(ObservationHandler.class);
+        ObservationHandler<?> handler2 = mock(ObservationHandler.class);
 
         registry.observationConfig().observationHandler(handler1);
-        Assertions.assertThat(registry.observationConfig().getObservationHandlers()).containsExactly(handler1);
+        assertThat(registry.observationConfig().getObservationHandlers()).containsExactly(handler1);
 
         registry.observationConfig().observationHandler(handler2);
-        Assertions.assertThat(registry.observationConfig().getObservationHandlers()).containsExactlyInAnyOrder(handler1, handler2);
+        assertThat(registry.observationConfig().getObservationHandlers()).containsExactlyInAnyOrder(handler1, handler2);
     }
 
 
@@ -61,23 +62,23 @@ class ObservationRegistryTest {
 
         Observation sample = Observation.start("test.timer", registry);
 
-        Assertions.assertThat(sample).isSameAs(NoopObservation.INSTANCE);
+        assertThat(sample).isSameAs(NoopObservation.INSTANCE);
     }
 
     @Test
     void observationShouldBeNoOpWhenNullRegistry() {
-        Assertions.assertThat(Observation.start("test.timer", null)).isSameAs(NoopObservation.INSTANCE);
-        Assertions.assertThat(Observation.start("test.timer", new Observation.Context(), null)).isSameAs(NoopObservation.INSTANCE);
-        Assertions.assertThat(Observation.createNotStarted("test.timer", null)).isSameAs(NoopObservation.INSTANCE);
-        Assertions.assertThat(Observation.createNotStarted("test.timer", new Observation.Context(), null)).isSameAs(NoopObservation.INSTANCE);
+        assertThat(Observation.start("test.timer", null)).isSameAs(NoopObservation.INSTANCE);
+        assertThat(Observation.start("test.timer", new Observation.Context(), null)).isSameAs(NoopObservation.INSTANCE);
+        assertThat(Observation.createNotStarted("test.timer", null)).isSameAs(NoopObservation.INSTANCE);
+        assertThat(Observation.createNotStarted("test.timer", new Observation.Context(), null)).isSameAs(NoopObservation.INSTANCE);
     }
 
     @Test
     void observationShouldNotBeNoOpWhenNonNullRegistry() {
         ObservationRegistry registry = ObservationRegistry.create();
-        Assertions.assertThat(Observation.start("test.timer", registry)).isInstanceOf(SimpleObservation.class);
-        Assertions.assertThat(Observation.start("test.timer", new Observation.Context(), registry)).isInstanceOf(SimpleObservation.class);
-        Assertions.assertThat(Observation.createNotStarted("test.timer", registry)).isInstanceOf(SimpleObservation.class);
-        Assertions.assertThat(Observation.createNotStarted("test.timer", new Observation.Context(), registry)).isInstanceOf(SimpleObservation.class);
+        assertThat(Observation.start("test.timer", registry)).isInstanceOf(SimpleObservation.class);
+        assertThat(Observation.start("test.timer", new Observation.Context(), registry)).isInstanceOf(SimpleObservation.class);
+        assertThat(Observation.createNotStarted("test.timer", registry)).isInstanceOf(SimpleObservation.class);
+        assertThat(Observation.createNotStarted("test.timer", new Observation.Context(), registry)).isInstanceOf(SimpleObservation.class);
     }
 }
