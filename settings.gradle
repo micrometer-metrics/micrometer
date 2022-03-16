@@ -23,14 +23,14 @@ gradleEnterprise {
     server = 'https://ge.micrometer.io'
 }
 
-include 'micrometer-core', 'micrometer-binders'
+include 'micrometer-core', 'micrometer-observation', 'micrometer-binders'
 
 ['core', 'boot2', 'boot2-reactive', 'spring-integration', 'hazelcast', 'hazelcast3', 'javalin', 'jersey3'].each { sample ->
     include "micrometer-samples-$sample"
     project(":micrometer-samples-$sample").projectDir = new File(rootProject.projectDir, "samples/micrometer-samples-$sample")
 }
 
-include 'micrometer-test'
+include 'micrometer-test', 'micrometer-observation-test'
 
 ['atlas', 'prometheus', 'datadog', 'elastic', 'ganglia', 'graphite', 'health', 'jmx', 'influx', 'statsd', 'new-relic', 'cloudwatch', 'cloudwatch2', 'signalfx', 'wavefront', 'dynatrace', 'azure-monitor', 'humio', 'appoptics', 'kairos', 'stackdriver', 'opentsdb'].each { sys ->
     include "micrometer-registry-$sys"

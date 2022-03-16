@@ -15,9 +15,9 @@
  */
 package io.micrometer.core.instrument.context;
 
-import io.micrometer.core.instrument.transport.http.HttpServerRequest;
-import io.micrometer.core.instrument.transport.http.HttpServerResponse;
-import io.micrometer.core.instrument.transport.http.context.HttpServerContext;
+import io.micrometer.observation.transport.http.HttpServerRequest;
+import io.micrometer.observation.transport.http.HttpServerResponse;
+import io.micrometer.observation.transport.http.context.HttpServerContext;
 import org.junit.jupiter.api.Test;
 
 import static org.assertj.core.api.Assertions.assertThat;

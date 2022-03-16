@@ -1,0 +1,68 @@
+description 'Module containing Observation related code'
+
+dependencies {
+
+    optionalApi 'io.micrometer:context-propagation-api'
+
+    // HttpServlet TagsProvider
+    optionalApi 'javax.servlet:javax.servlet-api'
+
+    // log monitoring
+    optionalApi 'ch.qos.logback:logback-classic'
+    optionalApi 'org.apache.logging.log4j:log4j-core'
+
+    testImplementation project(':micrometer-observation-test')
+
+    // JUnit 5
+    testImplementation 'org.junit.jupiter:junit-jupiter'
+    testImplementation 'com.tngtech.archunit:archunit-junit5'
+
+    testImplementation 'org.mockito:mockito-inline'
+
+    testImplementation 'org.assertj:assertj-core'
+    testImplementation 'org.awaitility:awaitility'
+}
+
+task shenandoahTest(type: Test) {
+    // set heap size for the test JVM(s)
+    maxHeapSize = "1500m"
+
+    useJUnitPlatform {
+        includeTags 'gc'
+    }
+
+    jvmArgs '-XX:+UseShenandoahGC'
+}
+
+task zgcTest(type: Test) {
+    // set heap size for the test JVM(s)
+    maxHeapSize = "1500m"
+
+    useJUnitPlatform {
+        includeTags 'gc'
+    }
+
+    jvmArgs '-XX:+UseZGC'
+}
+
+task openj9BalancedTest(type: Test) {
+    // set heap size for the test JVM(s)
+    maxHeapSize = "1500m"
+
+    useJUnitPlatform {
+        includeTags 'gc'
+    }
+
+    jvmArgs '-Xgcpolicy:balanced'
+}
+
+task openj9ConcurrentScavengeTest(type: Test) {
+    // set heap size for the test JVM(s)
+    maxHeapSize = "1500m"
+
+    useJUnitPlatform {
+        includeTags 'gc'
+    }
+
+    jvmArgs '-Xgc:concurrentScavenge'
+}

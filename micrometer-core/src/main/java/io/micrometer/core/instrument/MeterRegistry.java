@@ -15,33 +15,6 @@
  */
 package io.micrometer.core.instrument;
 
-import io.micrometer.core.annotation.Incubating;
-import io.micrometer.core.instrument.Meter.Id;
-import io.micrometer.core.instrument.config.MeterFilter;
-import io.micrometer.core.instrument.config.MeterFilterReply;
-import io.micrometer.core.instrument.config.NamingConvention;
-import io.micrometer.core.instrument.distribution.DistributionStatisticConfig;
-import io.micrometer.core.instrument.distribution.pause.NoPauseDetector;
-import io.micrometer.core.instrument.distribution.pause.PauseDetector;
-import io.micrometer.core.instrument.noop.NoopCounter;
-import io.micrometer.core.instrument.noop.NoopDistributionSummary;
-import io.micrometer.core.instrument.noop.NoopFunctionCounter;
-import io.micrometer.core.instrument.noop.NoopFunctionTimer;
-import io.micrometer.core.instrument.noop.NoopGauge;
-import io.micrometer.core.instrument.noop.NoopLongTaskTimer;
-import io.micrometer.core.instrument.noop.NoopMeter;
-import io.micrometer.core.instrument.noop.NoopTimeGauge;
-import io.micrometer.core.instrument.noop.NoopTimer;
-import io.micrometer.core.instrument.observation.Observation;
-import io.micrometer.core.instrument.observation.ObservationRegistry;
-import io.micrometer.core.instrument.observation.ObservationTextPublisher;
-import io.micrometer.core.instrument.observation.TimerObservationHandler;
-import io.micrometer.core.instrument.search.MeterNotFoundException;
-import io.micrometer.core.instrument.search.RequiredSearch;
-import io.micrometer.core.instrument.search.Search;
-import io.micrometer.core.instrument.util.TimeUtils;
-import io.micrometer.core.lang.Nullable;
-
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
@@ -60,6 +33,29 @@ import java.util.function.Consumer;
 import java.util.function.Function;
 import java.util.function.ToDoubleFunction;
 import java.util.function.ToLongFunction;
+
+import io.micrometer.core.annotation.Incubating;
+import io.micrometer.core.instrument.Meter.Id;
+import io.micrometer.core.instrument.config.MeterFilter;
+import io.micrometer.core.instrument.config.MeterFilterReply;
+import io.micrometer.core.instrument.config.NamingConvention;
+import io.micrometer.core.instrument.distribution.DistributionStatisticConfig;
+import io.micrometer.core.instrument.distribution.pause.NoPauseDetector;
+import io.micrometer.core.instrument.distribution.pause.PauseDetector;
+import io.micrometer.core.instrument.noop.NoopCounter;
+import io.micrometer.core.instrument.noop.NoopDistributionSummary;
+import io.micrometer.core.instrument.noop.NoopFunctionCounter;
+import io.micrometer.core.instrument.noop.NoopFunctionTimer;
+import io.micrometer.core.instrument.noop.NoopGauge;
+import io.micrometer.core.instrument.noop.NoopLongTaskTimer;
+import io.micrometer.core.instrument.noop.NoopMeter;
+import io.micrometer.core.instrument.noop.NoopTimeGauge;
+import io.micrometer.core.instrument.noop.NoopTimer;
+import io.micrometer.core.instrument.search.MeterNotFoundException;
+import io.micrometer.core.instrument.search.RequiredSearch;
+import io.micrometer.core.instrument.search.Search;
+import io.micrometer.core.instrument.util.TimeUtils;
+import io.micrometer.core.lang.Nullable;
 
 import static java.lang.String.format;
 import static java.util.Collections.emptyList;
@@ -82,7 +78,7 @@ import static java.util.Objects.requireNonNull;
  * @author Tommy Ludwig
  * @author Marcin Grzejszczak
  */
-public abstract class MeterRegistry implements ObservationRegistry {
+public abstract class MeterRegistry {
     protected final Clock clock;
     private final Object meterMapLock = new Object();
     private volatile MeterFilter[] filters = new MeterFilter[0];
@@ -91,37 +87,6 @@ public abstract class MeterRegistry implements ObservationRegistry {
     private final List<BiConsumer<Meter.Id, String>> meterRegistrationFailedListeners = new CopyOnWriteArrayList<>();
     private final Config config = new Config();
     private final More more = new More();
-
-    private static final ThreadLocal<Observation> localObservation = new ThreadLocal<>();
-
-    private final ObservationConfig observationConfig = new ObservationConfig();
-
-    @Nullable
-    @Override
-    public Observation getCurrentObservation() {
-        return localObservation.get();
-    }
-
-    @Override
-    public void setCurrentObservation(@Nullable Observation current) {
-        localObservation.set(current);
-    }
-
-    @Override
-    public ObservationConfig observationConfig() {
-        return this.observationConfig;
-    }
-
-    //TODO Want this under observationConfig but not sure that's possible
-    public MeterRegistry withTimerObservationHandler() {
-        this.observationConfig.observationHandler(new TimerObservationHandler(this));
-        return this;
-    }
-
-    public MeterRegistry withLoggingObservationHandler() {
-        this.observationConfig.observationHandler(new ObservationTextPublisher());
-        return this;
-    }
 
     // Even though writes are guarded by meterMapLock, iterators across value space are supported
     // Hence, we use CHM to support that iteration without ConcurrentModificationException risk
@@ -580,13 +545,13 @@ public abstract class MeterRegistry implements ObservationRegistry {
     }
 
     private <M extends Meter> M registerMeterIfNecessary(Class<M> meterClass, Meter.Id id, Function<Meter.Id, M> builder,
-                                                         Function<Meter.Id, M> noopBuilder) {
+            Function<Meter.Id, M> noopBuilder) {
         return registerMeterIfNecessary(meterClass, id, null, (id2, conf) -> builder.apply(id2), noopBuilder);
     }
 
     private <M extends Meter> M registerMeterIfNecessary(Class<M> meterClass, Meter.Id id,
-                                                         @Nullable DistributionStatisticConfig config, BiFunction<Meter.Id, DistributionStatisticConfig, M> builder,
-                                                         Function<Meter.Id, M> noopBuilder) {
+            @Nullable DistributionStatisticConfig config, BiFunction<Meter.Id, DistributionStatisticConfig, M> builder,
+            Function<Meter.Id, M> noopBuilder) {
         Id mappedId = getMappedId(id);
         Meter m = getOrCreateMeter(config, builder, id, mappedId, noopBuilder);
 
@@ -613,8 +578,8 @@ public abstract class MeterRegistry implements ObservationRegistry {
     }
 
     private Meter getOrCreateMeter(@Nullable DistributionStatisticConfig config,
-                                   BiFunction<Id, /*Nullable Generic*/ DistributionStatisticConfig, ? extends Meter> builder,
-                                   Id originalId, Id mappedId, Function<Meter.Id, ? extends Meter> noopBuilder) {
+            BiFunction<Id, /*Nullable Generic*/ DistributionStatisticConfig, ? extends Meter> builder,
+            Id originalId, Id mappedId, Function<Meter.Id, ? extends Meter> noopBuilder) {
         Meter m = meterMap.get(mappedId);
 
         if (m == null) {
@@ -664,7 +629,8 @@ public abstract class MeterRegistry implements ObservationRegistry {
             MeterFilterReply reply = filter.accept(id);
             if (reply == MeterFilterReply.DENY) {
                 return false;
-            } else if (reply == MeterFilterReply.ACCEPT) {
+            }
+            else if (reply == MeterFilterReply.ACCEPT) {
                 return true;
             }
         }
@@ -962,9 +928,9 @@ public abstract class MeterRegistry implements ObservationRegistry {
          * @return A new or existing function timer.
          */
         public <T> FunctionTimer timer(String name, Iterable<Tag> tags, T obj,
-                                       ToLongFunction<T> countFunction,
-                                       ToDoubleFunction<T> totalTimeFunction,
-                                       TimeUnit totalTimeFunctionUnit) {
+                ToLongFunction<T> countFunction,
+                ToDoubleFunction<T> totalTimeFunction,
+                TimeUnit totalTimeFunctionUnit) {
             return FunctionTimer.builder(name, obj, countFunction, totalTimeFunction, totalTimeFunctionUnit)
                     .tags(tags).register(MeterRegistry.this);
         }
@@ -981,9 +947,9 @@ public abstract class MeterRegistry implements ObservationRegistry {
          * @return A new or existing function timer.
          */
         <T> FunctionTimer timer(Meter.Id id, T obj,
-                                ToLongFunction<T> countFunction,
-                                ToDoubleFunction<T> totalTimeFunction,
-                                TimeUnit totalTimeFunctionUnit) {
+                ToLongFunction<T> countFunction,
+                ToDoubleFunction<T> totalTimeFunction,
+                TimeUnit totalTimeFunctionUnit) {
             return registerMeterIfNecessary(FunctionTimer.class, id, id2 -> {
                 Meter.Id withUnit = id2.withBaseUnit(getBaseTimeUnitStr());
                 return newFunctionTimer(withUnit, obj, countFunction, totalTimeFunction, totalTimeFunctionUnit);
@@ -1002,7 +968,7 @@ public abstract class MeterRegistry implements ObservationRegistry {
          * @return A new or existing time gauge.
          */
         public <T> TimeGauge timeGauge(String name, Iterable<Tag> tags, T obj,
-                                       TimeUnit timeFunctionUnit, ToDoubleFunction<T> timeFunction) {
+                TimeUnit timeFunctionUnit, ToDoubleFunction<T> timeFunction) {
             return TimeGauge.builder(name, obj, timeFunctionUnit, timeFunction).tags(tags).register(MeterRegistry.this);
         }
 

@@ -1,0 +1,106 @@
+/*
+ * Copyright 2021 VMware, Inc.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ * https://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+package io.micrometer.observation;
+
+import java.util.HashMap;
+import java.util.Map;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+
+import org.assertj.core.api.Assertions;
+import org.junit.jupiter.api.Test;
+
+class CurrentObservationTest {
+    private final ObservationRegistry registry = ObservationRegistry.create();
+
+    @Test
+    void nestedSamples_parentChildThreadsInstrumented() throws ExecutionException, InterruptedException {
+        ExecutorService taskRunner = Executors.newSingleThreadExecutor();
+
+        Observation observation = Observation.createNotStarted("test.observation", registry);
+        System.out.println("Outside task: " + observation);
+        Assertions.assertThat(registry.getCurrentObservation()).isNull();
+        try (Observation.Scope scope = observation.openScope()) {
+            Assertions.assertThat(registry.getCurrentObservation()).isSameAs(observation);
+            taskRunner.submit(() -> {
+                System.out.println("In task: " + registry.getCurrentObservation());
+                Assertions.assertThat(registry.getCurrentObservation()).isNotEqualTo(observation);
+            }).get();
+        }
+        Assertions.assertThat(registry.getCurrentObservation()).isNull();
+        observation.stop();
+    }
+
+    @Test
+    void start_thenStopOnChildThread() throws InterruptedException, ExecutionException {
+        ExecutorService executor = Executors.newSingleThreadExecutor();
+
+        Observation observation = Observation.createNotStarted("test.observation", registry);
+        Assertions.assertThat(registry.getCurrentObservation()).isNull();
+        executor.submit(() -> {
+            try (Observation.Scope scope = observation.openScope()) {
+                Assertions.assertThat(registry.getCurrentObservation()).isSameAs(observation);
+            }
+            observation.stop();
+        }).get();
+
+        Assertions.assertThat(registry.getCurrentObservation()).isNull();
+    }
+
+    @Test
+    void startOnChildThread_thenStopOnSiblingThread() throws InterruptedException, ExecutionException {
+        // 2 thread pools with 1 thread each, so a different thread is used for the 2 tasks
+        ExecutorService executor = Executors.newSingleThreadExecutor();
+        ExecutorService executor2 = Executors.newSingleThreadExecutor();
+        Map<String, Observation> observationMap = new HashMap<>();
+
+        executor.submit(() -> {
+            Observation observation = Observation.createNotStarted("test.observation", registry);
+            Assertions.assertThat(registry.getCurrentObservation()).isNull();
+            observationMap.put("myObservation", observation);
+        }).get();
+
+        executor2.submit(() -> {
+            Observation myObservation = observationMap.get("myObservation");
+            try (Observation.Scope scope = myObservation.openScope()) {
+                Assertions.assertThat(registry.getCurrentObservation()).isSameAs(myObservation);
+            }
+            myObservation.stop();
+            Assertions.assertThat(registry.getCurrentObservation()).isNull();
+        }).get();
+
+        Assertions.assertThat(registry.getCurrentObservation()).isNull();
+    }
+
+    @Test
+    void nestedSamples_sameThread() {
+        Observation observation = Observation.createNotStarted("observation1", registry);
+        Observation observation2;
+        Assertions.assertThat(registry.getCurrentObservation()).isNull();
+        try (Observation.Scope scope = observation.openScope()) {
+            observation2 = Observation.createNotStarted("observation2", registry);
+            Assertions.assertThat(registry.getCurrentObservation()).isSameAs(observation);
+        }
+        try (Observation.Scope scope = observation2.openScope()) {
+            observation.stop();
+            Assertions.assertThat(registry.getCurrentObservation()).isSameAs(observation2);
+        }
+        observation2.stop();
+
+        Assertions.assertThat(registry.getCurrentObservation()).isNull();
+    }
+}

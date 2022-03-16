@@ -18,6 +18,8 @@ package io.micrometer.core.instrument.docs;
 
 import io.micrometer.core.instrument.Meter;
 import io.micrometer.core.lang.Nullable;
+import io.micrometer.observation.docs.DocumentedObservation;
+import io.micrometer.observation.docs.TagKey;
 
 /**
  * In order to describe your metrics via e.g. enums instead of Strings you can use this
