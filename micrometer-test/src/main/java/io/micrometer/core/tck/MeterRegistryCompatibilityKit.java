@@ -44,7 +44,6 @@ import io.micrometer.core.instrument.distribution.DistributionStatisticConfig;
 import io.micrometer.core.instrument.distribution.ValueAtPercentile;
 import io.micrometer.core.instrument.internal.CumulativeHistogramLongTaskTimer;
 import io.micrometer.core.instrument.observation.TimerObservationHandler;
-import io.micrometer.core.instrument.simple.SimpleMeterRegistry;
 import io.micrometer.core.instrument.util.TimeUtils;
 import io.micrometer.observation.Observation;
 import io.micrometer.observation.ObservationRegistry;
@@ -93,7 +92,7 @@ public abstract class MeterRegistryCompatibilityKit {
     @BeforeEach
     void setup() {
         // assigned here rather than at initialization so subclasses can use fields in their registry() implementation
-        registry = new SimpleMeterRegistry();
+        registry = registry();
         observationRegistry.observationConfig().observationHandler(new TimerObservationHandler(registry));
     }
 
