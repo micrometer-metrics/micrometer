@@ -35,7 +35,9 @@ class CompositeDistributionSummary extends AbstractCompositeMeter<DistributionSu
 
     @Override
     public void record(double amount) {
-        forEachChild(ds -> ds.record(amount));
+        for (DistributionSummary ds : getChildren()) {
+            ds.record(amount);
+        }
     }
 
     @Override

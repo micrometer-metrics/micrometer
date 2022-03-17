@@ -17,7 +17,6 @@ package io.micrometer.statsd;
 
 import io.micrometer.core.instrument.AbstractMeter;
 import io.micrometer.core.instrument.Gauge;
-import io.micrometer.core.instrument.util.MeterEquivalence;
 import io.micrometer.core.lang.Nullable;
 import reactor.core.publisher.FluxSink;
 
@@ -55,17 +54,6 @@ public class StatsdGauge<T> extends AbstractMeter implements Gauge, StatsdPollab
         if (Double.isFinite(val) && (alwaysPublish || lastValue.getAndSet(val) != val)) {
             sink.next(lineBuilder.gauge(val));
         }
-    }
-
-    @SuppressWarnings("EqualsWhichDoesntCheckParameterClass")
-    @Override
-    public boolean equals(Object o) {
-        return MeterEquivalence.equals(this, o);
-    }
-
-    @Override
-    public int hashCode() {
-        return MeterEquivalence.hashCode(this);
     }
 
 }
