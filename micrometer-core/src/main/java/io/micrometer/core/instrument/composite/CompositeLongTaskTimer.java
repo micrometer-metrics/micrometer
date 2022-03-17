@@ -38,7 +38,9 @@ class CompositeLongTaskTimer extends AbstractCompositeMeter<LongTaskTimer> imple
     @Override
     public Sample start() {
         List<Sample> samples = new ArrayList<>();
-        forEachChild(ltt -> samples.add(ltt.start()));
+        for (LongTaskTimer ltt : getChildren()) {
+            samples.add(ltt.start());
+        }
         return new CompositeSample(samples);
     }
 
