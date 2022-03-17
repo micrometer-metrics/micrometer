@@ -28,7 +28,9 @@ class CompositeCounter extends AbstractCompositeMeter<Counter> implements Counte
 
     @Override
     public void increment(double amount) {
-        forEachChild(c -> c.increment(amount));
+        for (Counter c : getChildren()) {
+            c.increment(amount);
+        }
     }
 
     @Override

@@ -20,8 +20,6 @@ import com.netflix.spectator.api.Statistic;
 import io.micrometer.core.instrument.AbstractDistributionSummary;
 import io.micrometer.core.instrument.Clock;
 import io.micrometer.core.instrument.distribution.DistributionStatisticConfig;
-import io.micrometer.core.instrument.util.MeterEquivalence;
-import io.micrometer.core.lang.Nullable;
 
 import static java.util.stream.StreamSupport.stream;
 
@@ -67,16 +65,5 @@ public class SpectatorDistributionSummary extends AbstractDistributionSummary {
         }
 
         return Double.NaN;
-    }
-
-    @SuppressWarnings("EqualsWhichDoesntCheckParameterClass")
-    @Override
-    public boolean equals(@Nullable Object o) {
-        return MeterEquivalence.equals(this, o);
-    }
-
-    @Override
-    public int hashCode() {
-        return MeterEquivalence.hashCode(this);
     }
 }

@@ -42,12 +42,16 @@ class CompositeTimer extends AbstractCompositeMeter<Timer> implements Timer {
 
     @Override
     public void record(long amount, TimeUnit unit) {
-        forEachChild(ds -> ds.record(amount, unit));
+        for (Timer ds : getChildren()) {
+            ds.record(amount, unit);
+        }
     }
 
     @Override
     public void record(Duration duration) {
-        forEachChild(ds -> ds.record(duration));
+        for (Timer ds : getChildren()) {
+            ds.record(duration);
+        }
     }
 
     @Override

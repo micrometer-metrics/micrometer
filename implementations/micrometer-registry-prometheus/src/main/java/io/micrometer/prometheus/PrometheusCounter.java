@@ -18,7 +18,6 @@ package io.micrometer.prometheus;
 import io.micrometer.core.instrument.AbstractMeter;
 import io.micrometer.core.instrument.Counter;
 import io.micrometer.core.instrument.Meter;
-import io.micrometer.core.instrument.util.MeterEquivalence;
 import io.micrometer.core.lang.NonNull;
 import io.micrometer.core.lang.Nullable;
 import io.prometheus.client.exemplars.CounterExemplarSampler;
@@ -80,14 +79,4 @@ public class PrometheusCounter extends AbstractMeter implements Counter {
         while (!exemplar.compareAndSet(prev, next));
     }
 
-    @SuppressWarnings("EqualsWhichDoesntCheckParameterClass")
-    @Override
-    public boolean equals(Object o) {
-        return MeterEquivalence.equals(this, o);
-    }
-
-    @Override
-    public int hashCode() {
-        return MeterEquivalence.hashCode(this);
-    }
 }

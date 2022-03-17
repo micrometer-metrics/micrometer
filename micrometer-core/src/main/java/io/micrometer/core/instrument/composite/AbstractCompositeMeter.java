@@ -25,10 +25,9 @@ import java.util.IdentityHashMap;
 import java.util.Iterator;
 import java.util.Map;
 import java.util.concurrent.atomic.AtomicBoolean;
-import java.util.function.Consumer;
 
 abstract class AbstractCompositeMeter<T extends Meter> extends AbstractMeter implements CompositeMeter {
-    private AtomicBoolean childrenGuard = new AtomicBoolean();
+    private final AtomicBoolean childrenGuard = new AtomicBoolean();
     private Map<MeterRegistry, T> children = Collections.emptyMap();
 
     @Nullable
@@ -43,8 +42,8 @@ abstract class AbstractCompositeMeter<T extends Meter> extends AbstractMeter imp
     @Nullable
     abstract T registerNewMeter(MeterRegistry registry);
 
-    final void forEachChild(Consumer<T> task) {
-        children.values().forEach(task);
+    final Iterable<T> getChildren() {
+        return children.values();
     }
 
     T firstChild() {

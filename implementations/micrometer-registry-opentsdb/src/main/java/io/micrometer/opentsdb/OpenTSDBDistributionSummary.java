@@ -18,7 +18,6 @@ package io.micrometer.opentsdb;
 import io.micrometer.core.instrument.AbstractDistributionSummary;
 import io.micrometer.core.instrument.Clock;
 import io.micrometer.core.instrument.distribution.*;
-import io.micrometer.core.instrument.util.MeterEquivalence;
 import io.micrometer.core.lang.Nullable;
 
 import java.time.Duration;
@@ -94,17 +93,6 @@ public class OpenTSDBDistributionSummary extends AbstractDistributionSummary {
     @Override
     public double max() {
         return max.poll();
-    }
-
-    @SuppressWarnings("EqualsWhichDoesntCheckParameterClass")
-    @Override
-    public boolean equals(@Nullable Object o) {
-        return MeterEquivalence.equals(this, o);
-    }
-
-    @Override
-    public int hashCode() {
-        return MeterEquivalence.hashCode(this);
     }
 
     /**
