@@ -15,6 +15,9 @@
  */
 package io.micrometer.core.instrument.observation;
 
+import io.micrometer.observation.Observation;
+import io.micrometer.observation.ObservationHandler;
+
 /**
  * Marker interface for meter handlers.
  *

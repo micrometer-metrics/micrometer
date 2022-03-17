@@ -23,8 +23,10 @@ import io.micrometer.core.instrument.distribution.CountAtBucket;
 import io.micrometer.core.instrument.distribution.DistributionStatisticConfig;
 import io.micrometer.core.instrument.distribution.ValueAtPercentile;
 import io.micrometer.core.instrument.internal.CumulativeHistogramLongTaskTimer;
-import io.micrometer.core.instrument.observation.Observation;
+import io.micrometer.core.instrument.observation.TimerObservationHandler;
 import io.micrometer.core.instrument.util.TimeUtils;
+import io.micrometer.observation.Observation;
+import io.micrometer.observation.ObservationRegistry;
 import org.assertj.core.data.Offset;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
@@ -66,13 +68,16 @@ public abstract class MeterRegistryCompatibilityKit {
 
     protected MeterRegistry registry;
 
+    protected ObservationRegistry observationRegistry = ObservationRegistry.create();
+
     public abstract MeterRegistry registry();
     public abstract Duration step();
 
     @BeforeEach
     void setup() {
         // assigned here rather than at initialization so subclasses can use fields in their registry() implementation
-        registry = registry().withTimerObservationHandler();
+        registry = registry();
+        observationRegistry.observationConfig().observationHandler(new TimerObservationHandler(registry));
     }
 
     @Test
@@ -633,7 +638,7 @@ public abstract class MeterRegistryCompatibilityKit {
         @Test
         @DisplayName("record with stateful Observation instance")
         void recordWithObservation() {
-            Observation observation = Observation.start("myObservation", registry);
+            Observation observation = Observation.start("myObservation", observationRegistry);
             clock(registry).add(10, TimeUnit.NANOSECONDS);
             observation.stop();
             clock(registry).add(step());
@@ -646,7 +651,7 @@ public abstract class MeterRegistryCompatibilityKit {
         @Test
         @DisplayName("record with stateful Observation and Scope instances")
         void recordWithObservationAndScope() {
-            Observation observation = Observation.start("myObservation", registry);
+            Observation observation = Observation.start("myObservation", observationRegistry);
             try (Observation.Scope scope = observation.openScope()) {
                 assertThat(scope.getCurrentObservation()).isSameAs(observation);
                 clock(registry).add(10, TimeUnit.NANOSECONDS);

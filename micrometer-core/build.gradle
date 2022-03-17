@@ -7,8 +7,6 @@ dependencies {
         exclude group: 'org.hdrhistogram', module: 'HdrHistogram'
     }
 
-    optionalApi 'io.micrometer:context-propagation-api'
-
     // Aspects
     optionalApi 'org.aspectj:aspectjweaver'
 
@@ -51,6 +49,8 @@ dependencies {
 
     optionalApi 'org.apache.kafka:kafka-clients'
     optionalApi 'org.apache.kafka:kafka-streams'
+
+    optionalApi project(':micrometer-observation')
 
     testImplementation project(':micrometer-test')
 

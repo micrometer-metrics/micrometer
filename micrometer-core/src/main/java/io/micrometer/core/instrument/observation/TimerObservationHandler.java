@@ -15,8 +15,13 @@
  */
 package io.micrometer.core.instrument.observation;
 
+import java.util.stream.Collectors;
+
 import io.micrometer.core.instrument.MeterRegistry;
+import io.micrometer.core.instrument.Tag;
+import io.micrometer.core.instrument.Tags;
 import io.micrometer.core.instrument.Timer;
+import io.micrometer.observation.Observation;
 
 /**
  * Handler for {@link Timer.Sample}.
@@ -43,7 +48,7 @@ public class TimerObservationHandler implements MeterObservationHandler<Observat
         Timer.Sample sample = context.getRequired(Timer.Sample.class);
         sample.stop(Timer.builder(context.getName())
                 .tag("error", context.getError().map(Throwable::getMessage).orElse("none"))
-                .tags(context.getLowCardinalityTags())
+                .tags(Tags.of(context.getLowCardinalityTags().stream().map(tag -> Tag.of(tag.getKey(), tag.getValue())).collect(Collectors.toList())))
                 .register(this.meterRegistry));
     }
 

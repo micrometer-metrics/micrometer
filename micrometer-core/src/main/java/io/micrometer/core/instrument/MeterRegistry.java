@@ -32,10 +32,6 @@ import io.micrometer.core.instrument.noop.NoopLongTaskTimer;
 import io.micrometer.core.instrument.noop.NoopMeter;
 import io.micrometer.core.instrument.noop.NoopTimeGauge;
 import io.micrometer.core.instrument.noop.NoopTimer;
-import io.micrometer.core.instrument.observation.Observation;
-import io.micrometer.core.instrument.observation.ObservationRegistry;
-import io.micrometer.core.instrument.observation.ObservationTextPublisher;
-import io.micrometer.core.instrument.observation.TimerObservationHandler;
 import io.micrometer.core.instrument.search.MeterNotFoundException;
 import io.micrometer.core.instrument.search.RequiredSearch;
 import io.micrometer.core.instrument.search.Search;
@@ -82,7 +78,7 @@ import static java.util.Objects.requireNonNull;
  * @author Tommy Ludwig
  * @author Marcin Grzejszczak
  */
-public abstract class MeterRegistry implements ObservationRegistry {
+public abstract class MeterRegistry {
     protected final Clock clock;
     private final Object meterMapLock = new Object();
     private volatile MeterFilter[] filters = new MeterFilter[0];
@@ -91,37 +87,6 @@ public abstract class MeterRegistry implements ObservationRegistry {
     private final List<BiConsumer<Meter.Id, String>> meterRegistrationFailedListeners = new CopyOnWriteArrayList<>();
     private final Config config = new Config();
     private final More more = new More();
-
-    private static final ThreadLocal<Observation> localObservation = new ThreadLocal<>();
-
-    private final ObservationConfig observationConfig = new ObservationConfig();
-
-    @Nullable
-    @Override
-    public Observation getCurrentObservation() {
-        return localObservation.get();
-    }
-
-    @Override
-    public void setCurrentObservation(@Nullable Observation current) {
-        localObservation.set(current);
-    }
-
-    @Override
-    public ObservationConfig observationConfig() {
-        return this.observationConfig;
-    }
-
-    //TODO Want this under observationConfig but not sure that's possible
-    public MeterRegistry withTimerObservationHandler() {
-        this.observationConfig.observationHandler(new TimerObservationHandler(this));
-        return this;
-    }
-
-    public MeterRegistry withLoggingObservationHandler() {
-        this.observationConfig.observationHandler(new ObservationTextPublisher());
-        return this;
-    }
 
     // Even though writes are guarded by meterMapLock, iterators across value space are supported
     // Hence, we use CHM to support that iteration without ConcurrentModificationException risk
