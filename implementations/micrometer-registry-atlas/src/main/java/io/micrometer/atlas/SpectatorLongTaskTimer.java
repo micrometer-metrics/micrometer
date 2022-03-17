@@ -20,7 +20,6 @@ import io.micrometer.core.instrument.LongTaskTimer;
 import io.micrometer.core.instrument.Meter;
 import io.micrometer.core.instrument.distribution.DistributionStatisticConfig;
 import io.micrometer.core.instrument.internal.DefaultLongTaskTimer;
-import io.micrometer.core.instrument.util.MeterEquivalence;
 import io.micrometer.core.instrument.util.TimeUtils;
 
 import java.util.concurrent.TimeUnit;
@@ -47,17 +46,6 @@ public class SpectatorLongTaskTimer extends DefaultLongTaskTimer implements Long
     @Override
     public int activeTasks() {
         return timer.activeTasks();
-    }
-
-    @SuppressWarnings("EqualsWhichDoesntCheckParameterClass")
-    @Override
-    public boolean equals(Object o) {
-        return MeterEquivalence.equals(this, o);
-    }
-
-    @Override
-    public int hashCode() {
-        return MeterEquivalence.hashCode(this);
     }
 
     class SpectatorSample extends Sample {

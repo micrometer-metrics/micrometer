@@ -18,7 +18,6 @@ package io.micrometer.core.instrument.dropwizard;
 import com.codahale.metrics.Meter;
 import io.micrometer.core.instrument.AbstractMeter;
 import io.micrometer.core.instrument.Counter;
-import io.micrometer.core.instrument.util.MeterEquivalence;
 
 /**
  * @author Jon Schneider
@@ -39,16 +38,5 @@ public class DropwizardCounter extends AbstractMeter implements Counter {
     @Override
     public double count() {
         return impl.getCount();
-    }
-
-    @SuppressWarnings("EqualsWhichDoesntCheckParameterClass")
-    @Override
-    public boolean equals(Object o) {
-        return MeterEquivalence.equals(this, o);
-    }
-
-    @Override
-    public int hashCode() {
-        return MeterEquivalence.hashCode(this);
     }
 }

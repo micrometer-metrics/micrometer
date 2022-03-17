@@ -16,8 +16,6 @@
 package io.micrometer.core.instrument;
 
 import io.micrometer.core.instrument.distribution.*;
-import io.micrometer.core.instrument.util.MeterEquivalence;
-import io.micrometer.core.lang.Nullable;
 
 public abstract class AbstractDistributionSummary extends AbstractMeter implements DistributionSummary {
     protected final Histogram histogram;
@@ -55,16 +53,5 @@ public abstract class AbstractDistributionSummary extends AbstractMeter implemen
     @Override
     public HistogramSnapshot takeSnapshot() {
         return histogram.takeSnapshot(count(), totalAmount(), max());
-    }
-
-    @SuppressWarnings("EqualsWhichDoesntCheckParameterClass")
-    @Override
-    public boolean equals(@Nullable Object o) {
-        return MeterEquivalence.equals(this, o);
-    }
-
-    @Override
-    public int hashCode() {
-        return MeterEquivalence.hashCode(this);
     }
 }
