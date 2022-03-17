@@ -24,7 +24,11 @@ import java.time.Duration;
 
 import static io.micrometer.core.instrument.config.MeterRegistryConfigValidator.checkAll;
 import static io.micrometer.core.instrument.config.MeterRegistryConfigValidator.checkRequired;
-import static io.micrometer.core.instrument.config.validate.PropertyValidator.*;
+import static io.micrometer.core.instrument.config.validate.PropertyValidator.getBoolean;
+import static io.micrometer.core.instrument.config.validate.PropertyValidator.getDuration;
+import static io.micrometer.core.instrument.config.validate.PropertyValidator.getSecret;
+import static io.micrometer.core.instrument.config.validate.PropertyValidator.getString;
+import static io.micrometer.core.instrument.config.validate.PropertyValidator.getUrlString;
 
 /**
  * Configuration for {@link SignalFxMeterRegistry}.
@@ -43,14 +47,10 @@ public interface SignalFxConfig extends StepRegistryConfig {
     }
 
     /**
-     * Returns {@code true} if the signalfx registry should emit histogram buckets as
-     * CumulativeCounter instead of Gauge (as it is by default).
-     *
-     * @return {@code true} if the signalfx registry should emit histogram buckets as
-     * CumulativeCounter instead of Gauge (as it is by default).
+     * @return {@code true} if the SignalFx registry should emit cumulative histogram buckets.
      */
-    default Boolean fixHistogramBucketsType() {
-        return getBoolean(this, "fixHistogramBucketsType").orElse(false);
+    default boolean publishCumulativeHistogram() {
+        return getBoolean(this, "publishCumulativeHistogram").orElse(false);
     }
 
     /**
