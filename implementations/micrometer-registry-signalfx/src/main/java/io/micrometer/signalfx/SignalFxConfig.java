@@ -43,6 +43,13 @@ public interface SignalFxConfig extends StepRegistryConfig {
     }
 
     /**
+     * @return {@code true} if the SignalFx registry should emit cumulative histogram buckets.
+     */
+    default boolean publishCumulativeHistogram() {
+        return getBoolean(this, "publishCumulativeHistogram").orElse(false);
+    }
+
+    /**
      * @return The URI to ship metrics to. If you need to publish metrics to an internal proxy en route to
      * SignalFx, you can define the location of the proxy with this.
      */
