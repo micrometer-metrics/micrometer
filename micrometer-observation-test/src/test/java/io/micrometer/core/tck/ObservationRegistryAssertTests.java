@@ -22,11 +22,12 @@ import org.junit.jupiter.api.Test;
 import static org.assertj.core.api.Assertions.assertThatCode;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@SuppressWarnings("rawtypes")
 class ObservationRegistryAssertTests {
 
     ObservationRegistry registry = ObservationRegistry.create();
 
-    ObservationRegistryAssert registryAssert = new ObservationRegistryAssert(registry);
+    ObservationRegistryAssert registryAssert = ObservationRegistryAssert.assertThat(registry);
 
     @Test
     void assertionErrorThrownWhenRemainingSampleFound() {

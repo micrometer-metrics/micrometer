@@ -28,16 +28,21 @@ import org.assertj.core.api.AbstractAssert;
  * @author Marcin Grzejszczak
  * @since 2.0.0
  */
-public class ObservationRegistryAssert extends AbstractAssert<ObservationRegistryAssert, ObservationRegistry> {
+@SuppressWarnings("unchecked")
+public class ObservationRegistryAssert<SELF extends ObservationRegistryAssert<SELF, ACTUAL>, ACTUAL extends ObservationRegistry> extends AbstractAssert<SELF, ACTUAL> {
 
-    protected ObservationRegistryAssert(ObservationRegistry actual) {
+    protected ObservationRegistryAssert(ACTUAL actual) {
         super(actual, ObservationRegistryAssert.class);
+    }
+
+    protected ObservationRegistryAssert(ACTUAL actual, Class<SELF> clazz) {
+        super(actual, clazz);
     }
    
     /**
      * Creates the assert object for {@link ObservationRegistry}.
      * 
-     * @param actual meter registry to assert against
+     * @param actual observation registry to assert against
      * @return meter registry assertions
      */
     public static ObservationRegistryAssert assertThat(ObservationRegistry actual) {
@@ -47,7 +52,7 @@ public class ObservationRegistryAssert extends AbstractAssert<ObservationRegistr
     /**
      * Creates the assert object for {@link ObservationRegistry}.
      * 
-     * @param actual meter registry to assert against
+     * @param actual observation registry to assert against
      * @return meter registry assertions
      */
     public static ObservationRegistryAssert then(ObservationRegistry actual) {
@@ -61,13 +66,13 @@ public class ObservationRegistryAssert extends AbstractAssert<ObservationRegistr
      * @return this
      * @throws AssertionError if there is a current sample remaining in the registry
      */
-    public ObservationRegistryAssert doesNotHaveRemainingObservation() {
+    public SELF doesNotHaveRemainingObservation() {
         isNotNull();
         Observation current = actual.getCurrentObservation();
         if (current != null) {
             failWithMessage("Expected no current observation in the registry but found one");
         }
-        return this;
+        return (SELF) this;
     }
 
 }

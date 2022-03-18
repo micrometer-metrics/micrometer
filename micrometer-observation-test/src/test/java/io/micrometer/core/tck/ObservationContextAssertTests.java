@@ -177,8 +177,6 @@ class ObservationContextAssertTests {
 
     @Test
     void should_not_throw_exception_when_high_cardinality_tag_present() {
-        Observation observation = Observation.start("foo", context, registry);
-
         thenNoException().isThrownBy(() -> assertThat(context).doesNotHaveHighCardinalityTag("foo", "bar"));
     }
 
