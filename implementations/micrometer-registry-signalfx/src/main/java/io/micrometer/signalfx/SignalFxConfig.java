@@ -24,11 +24,7 @@ import java.time.Duration;
 
 import static io.micrometer.core.instrument.config.MeterRegistryConfigValidator.checkAll;
 import static io.micrometer.core.instrument.config.MeterRegistryConfigValidator.checkRequired;
-import static io.micrometer.core.instrument.config.validate.PropertyValidator.getBoolean;
-import static io.micrometer.core.instrument.config.validate.PropertyValidator.getDuration;
-import static io.micrometer.core.instrument.config.validate.PropertyValidator.getSecret;
-import static io.micrometer.core.instrument.config.validate.PropertyValidator.getString;
-import static io.micrometer.core.instrument.config.validate.PropertyValidator.getUrlString;
+import static io.micrometer.core.instrument.config.validate.PropertyValidator.*;
 
 /**
  * Configuration for {@link SignalFxMeterRegistry}.

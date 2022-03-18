@@ -1,5 +1,5 @@
 /*
- * Copyright 2017 VMware, Inc.
+ * Copyright 2022 VMware, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,26 +20,32 @@ import io.micrometer.core.instrument.distribution.DistributionStatisticConfig;
 import java.time.Duration;
 import java.util.Arrays;
 
+/**
+ * Adds cumulative histogram capabilities to the {@link DistributionStatisticConfig}.
+ *
+ * @author Bogdan Drutu
+ * @author Mateusz Rzeszutek
+ */
 final class CumulativeHistogramConfigUtil {
 
-    static DistributionStatisticConfig updateConfig(
-            DistributionStatisticConfig distributionStatisticConfig) {
+    static DistributionStatisticConfig updateConfig(DistributionStatisticConfig distributionStatisticConfig) {
         double[] sloBoundaries = distributionStatisticConfig.getServiceLevelObjectiveBoundaries();
         if (sloBoundaries == null || sloBoundaries.length == 0) {
             return distributionStatisticConfig;
         }
-        double[] newSLA = sloBoundaries;
+        double[] newSloBoundaries = sloBoundaries;
         // Add the +Inf bucket since the "count" resets every export.
         if (!isPositiveInf(sloBoundaries[sloBoundaries.length - 1])) {
-            newSLA = Arrays.copyOf(sloBoundaries, sloBoundaries.length + 1);
-            newSLA[newSLA.length - 1] = Double.MAX_VALUE;
+            newSloBoundaries = Arrays.copyOf(sloBoundaries, sloBoundaries.length + 1);
+            newSloBoundaries[newSloBoundaries.length - 1] = Double.MAX_VALUE;
         }
+
         return DistributionStatisticConfig.builder()
-                // Set the expiration duration for the histogram counts to be effectively a lifetime.
+                // Set the expiration duration for the histogram counts to be effectively infinite.
                 // Without this, the counts are reset every expiry duration.
-                .expiry(Duration.ofNanos(Long.MAX_VALUE)) // effectively a lifetime
+                .expiry(Duration.ofNanos(Long.MAX_VALUE)) // effectively infinite
                 .bufferLength(1)
-                .serviceLevelObjectives(newSLA)
+                .serviceLevelObjectives(newSloBoundaries)
                 .build()
                 .merge(distributionStatisticConfig);
     }
