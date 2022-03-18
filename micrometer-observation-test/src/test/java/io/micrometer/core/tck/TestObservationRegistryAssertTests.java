@@ -135,7 +135,7 @@ class TestObservationRegistryAssertTests {
                     .hasLowCardinalityTag("lowTag", "lowTagValue")
                     .isStarted()
                     .isStopped()
-                .backToMockObservationRegistry()
+                .backToTestObservationRegistry()
                     .doesNotHaveRemainingObservation());
     }
 

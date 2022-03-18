@@ -223,7 +223,7 @@ public class TestObservationRegistryAssert extends ObservationRegistryAssert<Tes
          *
          * @return the original assertion for chaining
          */
-        public TestObservationRegistryAssert backToMockObservationRegistry() {
+        public TestObservationRegistryAssert backToTestObservationRegistry() {
             return this.originalAssert;
         }
     }
