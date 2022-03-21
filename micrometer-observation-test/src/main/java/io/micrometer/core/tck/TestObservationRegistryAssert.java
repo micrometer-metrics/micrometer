@@ -62,17 +62,7 @@ public class TestObservationRegistryAssert extends ObservationRegistryAssert<Tes
      * @return this
      * @throws AssertionError if there is none or more than one observation
      */
-    public TestObservationRegistryAssertReturningObservationContextAssert thenOnlyObservation() {
-        return assertThatOnlyObservation();
-    }
-
-    /**
-     * Verifies that there's only one {@link Observation} and continues assertions for it.
-     *
-     * @return this
-     * @throws AssertionError if there is none or more than one observation
-     */
-    public TestObservationRegistryAssertReturningObservationContextAssert assertThatOnlyObservation() {
+    public TestObservationRegistryAssertReturningObservationContextAssert hasSingleObservationThat() {
         List<TestObservationRegistry.TestObservationContext> contexts = actual.getContexts();
         if (contexts.isEmpty()) {
             failForNoObservations();
@@ -92,17 +82,7 @@ public class TestObservationRegistryAssert extends ObservationRegistryAssert<Tes
      * @return this
      * @throws AssertionError if there is no matching observation
      */
-    public TestObservationRegistryAssertReturningObservationContextAssert thenObservationWithNameEqualTo(String name) {
-        return assertThatObservationWithNameEqualTo(name);
-    }
-
-    /**
-     * Verifies that there's only one {@link Observation} with a given name and continues assertions for it.
-     *
-     * @return this
-     * @throws AssertionError if there is no matching observation
-     */
-    public TestObservationRegistryAssertReturningObservationContextAssert assertThatObservationWithNameEqualTo(String name) {
+    public That hasObservationWithNameEqualTo(String name) {
         List<TestObservationRegistry.TestObservationContext> contexts = this.actual.getContexts();
         if (contexts.isEmpty()) {
             failForNoObservations();
@@ -111,7 +91,7 @@ public class TestObservationRegistryAssert extends ObservationRegistryAssert<Tes
             failWithMessage("There are no observations with name equal to <%s>. Available names are <%s>", name, observationNames(contexts));
             return null;
         });
-        return new TestObservationRegistryAssertReturningObservationContextAssert(testObservationContext, this);
+        return new That(testObservationContext, this);
     }
 
     private String observationNames(List<TestObservationRegistry.TestObservationContext> contexts) {
@@ -125,17 +105,7 @@ public class TestObservationRegistryAssert extends ObservationRegistryAssert<Tes
      * @return this
      * @throws AssertionError if there is no matching observation
      */
-    public TestObservationRegistryAssertReturningObservationContextAssert thenObservationWithNameEqualToIgnoringCase(String name) {
-        return assertThatAnObservationWithNameEqualToIgnoringCase(name);
-    }
-
-    /**
-     * Verifies that there's only one {@link Observation} with a given name (ignoring case) and continues assertions for it.
-     *
-     * @return this
-     * @throws AssertionError if there is no matching observation
-     */
-    public TestObservationRegistryAssertReturningObservationContextAssert assertThatAnObservationWithNameEqualToIgnoringCase(String name) {
+    public That hasObservationWithNameEqualToIgnoringCase(String name) {
         List<TestObservationRegistry.TestObservationContext> contexts = this.actual.getContexts();
         if (contexts.isEmpty()) {
             failForNoObservations();
@@ -144,7 +114,31 @@ public class TestObservationRegistryAssert extends ObservationRegistryAssert<Tes
             failWithMessage("There are no observations with name equal to ignoring case <%s>. Available names are <%s>", name, observationNames(contexts));
             return null;
         });
-        return new TestObservationRegistryAssertReturningObservationContextAssert(testObservationContext, this);
+        return new That(testObservationContext, this);
+    }
+
+    /**
+     * Provides assertions for {@link Observation} and allows coming back to {@link TestObservationRegistryAssert}.
+     */
+    public static final class That {
+
+        private final TestObservationRegistryAssert originalAssert;
+
+        private final TestObservationRegistry.TestObservationContext testContext;
+
+        private That(TestObservationRegistry.TestObservationContext testContext, TestObservationRegistryAssert observationContextAssert) {
+            this.testContext = testContext;
+            this.originalAssert = observationContextAssert;
+        }
+
+        /**
+         * Synactic sugar to smoothly go to {@link TestObservationRegistryAssertReturningObservationContextAssert}.
+         *
+         * @return {@link TestObservationRegistryAssertReturningObservationContextAssert} assert object
+         */
+        public TestObservationRegistryAssertReturningObservationContextAssert that() {
+            return new TestObservationRegistryAssertReturningObservationContextAssert(this.testContext, this.originalAssert);
+        }
     }
 
     /**
@@ -168,7 +162,7 @@ public class TestObservationRegistryAssert extends ObservationRegistryAssert<Tes
          * @return this
          * @throws AssertionError if the {@link Observation} is not started
          */
-        public TestObservationRegistryAssertReturningObservationContextAssert isStarted() {
+        public TestObservationRegistryAssertReturningObservationContextAssert hasBeenStarted() {
             isNotNull();
             if (!this.testContext.isObservationStarted()) {
                 failWithMessage("Observation is not started");
@@ -182,7 +176,7 @@ public class TestObservationRegistryAssert extends ObservationRegistryAssert<Tes
          * @return this
          * @throws AssertionError if the {@link Observation} is not stopped
          */
-        public TestObservationRegistryAssertReturningObservationContextAssert isStopped() {
+        public TestObservationRegistryAssertReturningObservationContextAssert hasBeenStopped() {
             isNotNull();
             if (!this.testContext.isObservationStopped()) {
                 failWithMessage("Observation is not stopped");

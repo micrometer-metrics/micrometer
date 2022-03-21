@@ -66,7 +66,7 @@ public class ObservationRegistryAssert<SELF extends ObservationRegistryAssert<SE
      * @return this
      * @throws AssertionError if there is a current sample remaining in the registry
      */
-    public SELF doesNotHaveRemainingObservation() {
+    public SELF doesNotHaveAnyRemainingCurrentObservation() {
         isNotNull();
         Observation current = actual.getCurrentObservation();
         if (current != null) {

@@ -34,7 +34,7 @@ class ObservationRegistryAssertTests {
         Observation sample = Observation.start("hello", registry);
 
         try (Observation.Scope ws = sample.openScope()) {
-            assertThatThrownBy(() -> registryAssert.doesNotHaveRemainingObservation())
+            assertThatThrownBy(() -> registryAssert.doesNotHaveAnyRemainingCurrentObservation())
                     .isInstanceOf(AssertionError.class)
                     .hasMessageContaining("Expected no current observation in the registry but found one");
         }
@@ -42,7 +42,7 @@ class ObservationRegistryAssertTests {
 
     @Test
     void noAssertionErrorThrownWhenNoCurrentSample() {
-        assertThatCode(() -> this.registryAssert.doesNotHaveRemainingObservation())
+        assertThatCode(() -> this.registryAssert.doesNotHaveAnyRemainingCurrentObservation())
                 .doesNotThrowAnyException();
     }
 
