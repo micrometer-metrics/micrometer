@@ -61,7 +61,7 @@ public class PrometheusCounter extends AbstractMeter implements Counter {
         return count.doubleValue();
     }
 
-    Exemplar exemplar() {
+    @Nullable Exemplar exemplar() {
         return exemplar.get();
     }
 

@@ -16,6 +16,7 @@
 package io.micrometer.boot2.samples.components;
 
 import io.micrometer.core.annotation.Timed;
+import io.micrometer.core.instrument.Counter;
 import io.micrometer.core.instrument.MeterRegistry;
 import io.micrometer.core.instrument.Timer;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -39,6 +40,7 @@ public class PersonController {
     @Timed(percentiles = {0.5, 0.95, 0.999}, histogram = true)
     public List<String> allPeople() {
         try {
+            Counter.builder("allPeople").register(registry).increment();
             Thread.sleep(200);
         } catch (InterruptedException e) {
             e.printStackTrace();

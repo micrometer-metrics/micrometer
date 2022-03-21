@@ -16,8 +16,19 @@
 package io.micrometer.boot2.samples;
 
 import io.micrometer.boot2.samples.components.PersonController;
+import io.micrometer.core.instrument.Clock;
+import io.micrometer.prometheus.PrometheusConfig;
+import io.micrometer.prometheus.PrometheusMeterRegistry;
+import io.prometheus.client.CollectorRegistry;
+import io.prometheus.client.exemplars.DefaultExemplarSampler;
+import io.prometheus.client.exemplars.ExemplarSampler;
+import io.prometheus.client.exemplars.tracer.common.SpanContextSupplier;
+
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.boot.builder.SpringApplicationBuilder;
+import org.springframework.cloud.sleuth.Tracer;
+import org.springframework.cloud.sleuth.instrument.prometheus.prometheus.SleuthSpanContextSupplier;
+import org.springframework.context.annotation.Bean;
 import org.springframework.scheduling.annotation.EnableScheduling;
 
 @SpringBootApplication(scanBasePackageClasses = PersonController.class)
@@ -25,5 +36,20 @@ import org.springframework.scheduling.annotation.EnableScheduling;
 public class PrometheusSample {
     public static void main(String[] args) {
         new SpringApplicationBuilder(PrometheusSample.class).profiles("prometheus").run(args);
+    }
+
+    @Bean
+    PrometheusMeterRegistry prometheusMeterRegistry(PrometheusConfig prometheusConfig, CollectorRegistry collectorRegistry, Clock clock, ExemplarSampler exemplarSampler) {
+        return new PrometheusMeterRegistry(prometheusConfig, collectorRegistry, clock, exemplarSampler);
+    }
+
+    @Bean
+    ExemplarSampler exemplarSampler(SpanContextSupplier spanContextSupplier) {
+        return new DefaultExemplarSampler(spanContextSupplier);
+    }
+
+    @Bean
+    SpanContextSupplier spanContextSupplier(Tracer tracer) {
+        return new SleuthSpanContextSupplier(tracer);
     }
 }

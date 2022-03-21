@@ -21,8 +21,9 @@ import io.micrometer.core.instrument.distribution.*;
 import io.micrometer.core.instrument.distribution.pause.PauseDetector;
 import io.micrometer.core.instrument.util.TimeUtils;
 import io.micrometer.core.lang.Nullable;
+import io.prometheus.client.exemplars.Exemplar;
+import io.prometheus.client.exemplars.HistogramExemplarSampler;
 
-import java.time.Duration;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.LongAdder;
 
@@ -34,11 +35,14 @@ public class PrometheusTimer extends AbstractTimer {
     private final TimeWindowMax max;
 
     private final HistogramFlavor histogramFlavor;
-
-    @Nullable
-    private final Histogram histogram;
+    @Nullable private final Histogram histogram;
+    private boolean exemplarsEnabled = false;
 
     PrometheusTimer(Id id, Clock clock, DistributionStatisticConfig distributionStatisticConfig, PauseDetector pauseDetector, HistogramFlavor histogramFlavor) {
+        this(id, clock, distributionStatisticConfig, pauseDetector, histogramFlavor, null);
+    }
+
+    PrometheusTimer(Id id, Clock clock, DistributionStatisticConfig distributionStatisticConfig, PauseDetector pauseDetector, HistogramFlavor histogramFlavor, @Nullable HistogramExemplarSampler exemplarSampler) {
         super(id, clock,
                 DistributionStatisticConfig.builder()
                         .percentilesHistogram(false)
@@ -53,21 +57,20 @@ public class PrometheusTimer extends AbstractTimer {
         if (distributionStatisticConfig.isPublishingHistogram()) {
             switch (histogramFlavor) {
                 case Prometheus:
-                    histogram = new TimeWindowFixedBoundaryHistogram(clock, DistributionStatisticConfig.builder()
-                            .expiry(Duration.ofDays(1825)) // effectively never roll over
-                            .bufferLength(1)
-                            .build()
-                            .merge(distributionStatisticConfig), true);
+                    PrometheusHistogram prometheusHistogram = new PrometheusHistogram(clock, distributionStatisticConfig, exemplarSampler);
+                    this.histogram = prometheusHistogram;
+                    this.exemplarsEnabled = prometheusHistogram.isExemplarsEnabled();
                     break;
                 case VictoriaMetrics:
-                    histogram = new FixedBoundaryVictoriaMetricsHistogram();
+                    this.histogram = new FixedBoundaryVictoriaMetricsHistogram();
                     break;
                 default:
-                    histogram = null;
+                    this.histogram = null;
                     break;
             }
-        } else {
-            histogram = null;
+        }
+        else {
+            this.histogram = null;
         }
     }
 
@@ -78,8 +81,18 @@ public class PrometheusTimer extends AbstractTimer {
         totalTime.add(nanoAmount);
         max.record(nanoAmount, TimeUnit.NANOSECONDS);
 
-        if (histogram != null)
+        if (histogram != null) {
             histogram.recordLong(TimeUnit.NANOSECONDS.convert(amount, unit));
+        }
+    }
+
+    @Nullable Exemplar[] exemplars() {
+        if (exemplarsEnabled) {
+            return ((PrometheusHistogram) histogram).exemplars();
+        }
+        else {
+            return null;
+        }
     }
 
     @Override
