@@ -67,7 +67,7 @@ public class TestObservationRegistryAssert extends ObservationRegistryAssert<Tes
         if (contexts.isEmpty()) {
             failForNoObservations();
         } else if (contexts.size() != 1) {
-            failWithMessage("There must be only a single observation, however there are <%s> registered observations", contexts.size());
+            failWithMessage("There must be only a single observation, however there are <%s> registered observations with names <%s>", contexts.size(), observationNames(contexts));
         }
         return new TestObservationRegistryAssertReturningObservationContextAssert(contexts.get(0), this);
     }

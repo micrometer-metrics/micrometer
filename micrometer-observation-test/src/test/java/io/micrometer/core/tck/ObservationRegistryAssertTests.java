@@ -30,10 +30,10 @@ class ObservationRegistryAssertTests {
     ObservationRegistryAssert registryAssert = ObservationRegistryAssert.assertThat(registry);
 
     @Test
-    void assertionErrorThrownWhenRemainingSampleFound() {
-        Observation sample = Observation.start("hello", registry);
+    void assertionErrorThrownWhenRemainingObservationFound() {
+        Observation observation = Observation.start("hello", registry);
 
-        try (Observation.Scope ws = sample.openScope()) {
+        try (Observation.Scope ws = observation.openScope()) {
             assertThatThrownBy(() -> registryAssert.doesNotHaveAnyRemainingCurrentObservation())
                     .isInstanceOf(AssertionError.class)
                     .hasMessageContaining("Expected no current observation in the registry but found one");
@@ -41,9 +41,64 @@ class ObservationRegistryAssertTests {
     }
 
     @Test
-    void noAssertionErrorThrownWhenNoCurrentSample() {
+    void noAssertionErrorThrownWhenNoCurrentObservation() {
         assertThatCode(() -> this.registryAssert.doesNotHaveAnyRemainingCurrentObservation())
                 .doesNotThrowAnyException();
+    }
+
+    @Test
+    void assertionErrorThrownWhenRemainingObservationNotFound() {
+        assertThatThrownBy(() -> registryAssert.hasRemainingCurrentObservation())
+                .isInstanceOf(AssertionError.class)
+                .hasMessageContaining("Expected an observation in the registry but found none");
+    }
+
+    @Test
+    void noAssertionErrorThrownWhenCurrentObservationPresent() {
+        Observation observation = Observation.start("hello", registry);
+
+        try (Observation.Scope ws = observation.openScope()) {
+            assertThatCode(() -> this.registryAssert.hasRemainingCurrentObservation())
+                    .doesNotThrowAnyException();
+        }
+    }
+
+    @Test
+    void assertionErrorThrownWhenRemainingObservationNotSameAs() {
+        Observation observation = Observation.createNotStarted("foo", this.registry);
+
+        assertThatThrownBy(() -> this.registryAssert.hasRemainingCurrentObservationSameAs(observation))
+                .isInstanceOf(AssertionError.class)
+                .hasMessageContaining("Expected current observation in the registry to be same as <{name=foo");
+    }
+
+    @Test
+    void noAssertionErrorThrownWhenCurrentObservationSameAs() {
+        Observation observation = Observation.start("hello", registry);
+
+        try (Observation.Scope ws = observation.openScope()) {
+            assertThatCode(() -> this.registryAssert.hasRemainingCurrentObservationSameAs(observation))
+                    .doesNotThrowAnyException();
+        }
+    }
+
+    @Test
+    void assertionErrorThrownWhenRemainingObservationSameAs() {
+        Observation observation = Observation.createNotStarted("foo", this.registry);
+
+        try (Observation.Scope ws = observation.openScope()) {
+            assertThatThrownBy(() -> this.registryAssert.doesNotHaveRemainingCurrentObservationSameAs(observation))
+                    .isInstanceOf(AssertionError.class)
+                    .hasMessageContaining("Expected current observation in the registry to be different than");
+        }
+    }
+
+    @Test
+    void noAssertionErrorThrownWhenCurrentObservationNotSameAs() {
+        Observation observation = Observation.start("hello", registry);
+
+        assertThatCode(() -> this.registryAssert.doesNotHaveRemainingCurrentObservationSameAs(observation))
+                     .doesNotThrowAnyException();
     }
 
 }

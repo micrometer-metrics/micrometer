@@ -59,18 +59,63 @@ public class ObservationRegistryAssert<SELF extends ObservationRegistryAssert<SE
         return new ObservationRegistryAssert(actual);
     }
 
-
     /**
      * Verifies that there's no current {@link Observation} left in the {@link ObservationRegistry}.
      *
      * @return this
-     * @throws AssertionError if there is a current sample remaining in the registry
+     * @throws AssertionError if there is a current observation remaining in the registry
      */
     public SELF doesNotHaveAnyRemainingCurrentObservation() {
         isNotNull();
         Observation current = actual.getCurrentObservation();
         if (current != null) {
             failWithMessage("Expected no current observation in the registry but found one");
+        }
+        return (SELF) this;
+    }
+
+    /**
+     * Verifies that there's a current {@link Observation} left in the {@link ObservationRegistry}.
+     *
+     * @return this
+     * @throws AssertionError if there is no current observation remaining in the registry
+     */
+    public SELF hasRemainingCurrentObservation() {
+        isNotNull();
+        Observation current = actual.getCurrentObservation();
+        if (current == null) {
+            failWithMessage("Expected an observation in the registry but found none");
+        }
+        return (SELF) this;
+    }
+    /**
+     * Verifies that there's no current {@link Observation} left in the {@link ObservationRegistry}.
+     *
+     * @param observation to compare against
+     * @return this
+     * @throws AssertionError if there is a current observation remaining in the registry
+     */
+    public SELF doesNotHaveRemainingCurrentObservationSameAs(Observation observation) {
+        isNotNull();
+        Observation current = actual.getCurrentObservation();
+        if (current == observation) {
+            failWithMessage("Expected current observation in the registry to be different than <%s> but was the same", observation);
+        }
+        return (SELF) this;
+    }
+
+    /**
+     * Verifies that there's a current {@link Observation} left in the {@link ObservationRegistry}.
+     *
+     * @param observation to compare against
+     * @return this
+     * @throws AssertionError if there is no current observation remaining in the registry
+     */
+    public SELF hasRemainingCurrentObservationSameAs(Observation observation) {
+        isNotNull();
+        Observation current = actual.getCurrentObservation();
+        if (current != observation) {
+            failWithMessage("Expected current observation in the registry to be same as <%s> but was <%s>", observation, current);
         }
         return (SELF) this;
     }
