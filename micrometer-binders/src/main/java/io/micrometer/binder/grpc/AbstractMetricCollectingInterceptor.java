@@ -52,11 +52,11 @@ public abstract class AbstractMetricCollectingInterceptor {
     /**
      * The metrics tag key that belongs to the type of the called method.
      */
-    private static final String TAG_METHOD_TYPE = "methodType";
+    private static final String TAG_METHOD_TYPE = "method.type";
     /**
      * The metrics tag key that belongs to the result status code.
      */
-    private static final String TAG_STATUS_CODE = "statusCode";
+    private static final String TAG_STATUS_CODE = "status.code";
 
     /**
      * Creates a new counter builder for the given method. By default the base unit will be messages.
