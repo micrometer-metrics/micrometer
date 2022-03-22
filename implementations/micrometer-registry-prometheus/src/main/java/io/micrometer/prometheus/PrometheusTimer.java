@@ -17,6 +17,7 @@ package io.micrometer.prometheus;
 
 import io.micrometer.core.instrument.AbstractTimer;
 import io.micrometer.core.instrument.Clock;
+import io.micrometer.core.instrument.Timer;
 import io.micrometer.core.instrument.distribution.*;
 import io.micrometer.core.instrument.distribution.pause.PauseDetector;
 import io.micrometer.core.instrument.util.TimeUtils;
@@ -27,6 +28,12 @@ import io.prometheus.client.exemplars.HistogramExemplarSampler;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.LongAdder;
 
+/**
+ * {@link Timer} for Prometheus.
+ *
+ * @author Jon Schneider
+ * @author Jonatan Ivanov
+ */
 public class PrometheusTimer extends AbstractTimer {
     private static final CountAtBucket[] EMPTY_HISTOGRAM = new CountAtBucket[0];
 

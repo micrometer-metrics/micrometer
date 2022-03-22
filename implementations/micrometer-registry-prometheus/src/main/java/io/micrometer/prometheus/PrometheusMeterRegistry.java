@@ -56,6 +56,7 @@ import static java.util.stream.StreamSupport.stream;
  *
  * @author Jon Schneider
  * @author Johnny Lim
+ * @author Jonatan Ivanov
  */
 public class PrometheusMeterRegistry extends MeterRegistry {
     private final PrometheusConfig prometheusConfig;

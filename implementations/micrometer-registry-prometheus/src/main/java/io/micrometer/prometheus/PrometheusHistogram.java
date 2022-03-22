@@ -22,11 +22,17 @@ import java.util.concurrent.atomic.AtomicReferenceArray;
 
 import io.micrometer.core.instrument.Clock;
 import io.micrometer.core.instrument.distribution.DistributionStatisticConfig;
+import io.micrometer.core.instrument.distribution.Histogram;
 import io.micrometer.core.instrument.distribution.TimeWindowFixedBoundaryHistogram;
 import io.micrometer.core.lang.Nullable;
 import io.prometheus.client.exemplars.Exemplar;
 import io.prometheus.client.exemplars.HistogramExemplarSampler;
 
+/**
+ * Internal {@link Histogram} implementation for Prometheus that handles {@link Exemplar exemplars}.
+ *
+ * @author Jonatan Ivanov
+ */
 class PrometheusHistogram extends TimeWindowFixedBoundaryHistogram {
     private final double[] buckets;
     private final AtomicReferenceArray<Exemplar> exemplars;

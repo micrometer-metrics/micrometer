@@ -17,6 +17,7 @@ package io.micrometer.prometheus;
 
 import io.micrometer.core.instrument.AbstractDistributionSummary;
 import io.micrometer.core.instrument.Clock;
+import io.micrometer.core.instrument.DistributionSummary;
 import io.micrometer.core.instrument.distribution.*;
 import io.micrometer.core.lang.Nullable;
 import io.prometheus.client.exemplars.Exemplar;
@@ -25,6 +26,12 @@ import io.prometheus.client.exemplars.HistogramExemplarSampler;
 import java.util.concurrent.atomic.DoubleAdder;
 import java.util.concurrent.atomic.LongAdder;
 
+/**
+ * {@link DistributionSummary} for Prometheus.
+ *
+ * @author Jon Schneider
+ * @author Jonatan Ivanov
+ */
 public class PrometheusDistributionSummary extends AbstractDistributionSummary {
     private static final CountAtBucket[] EMPTY_HISTOGRAM = new CountAtBucket[0];
 
