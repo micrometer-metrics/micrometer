@@ -15,8 +15,6 @@
  */
 package io.micrometer.binder.mongodb;
 
-import java.util.Arrays;
-
 import com.mongodb.ServerAddress;
 import com.mongodb.connection.ClusterId;
 import com.mongodb.connection.ConnectionDescription;
@@ -24,11 +22,8 @@ import com.mongodb.connection.ServerId;
 import com.mongodb.event.CommandStartedEvent;
 import com.mongodb.event.CommandSucceededEvent;
 import io.micrometer.core.instrument.Tag;
-import org.bson.BsonBoolean;
 import org.bson.BsonDocument;
-import org.bson.BsonElement;
 import org.bson.BsonString;
-import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -39,6 +34,7 @@ import static org.assertj.core.api.Assertions.assertThat;
  * @author Chris Bono
  */
 class DefaultMongoCommandTagsProviderTest {
+
 
     private final ConnectionDescription connectionDesc = new ConnectionDescription(
             new ServerId(new ClusterId("cluster1"), new ServerAddress("localhost", 5150)));
@@ -51,6 +47,7 @@ class DefaultMongoCommandTagsProviderTest {
         Iterable<Tag> tags = tagsProvider.commandTags(event);
         assertThat(tags).containsExactlyInAnyOrder(
                 Tag.of("command", "find"),
+                Tag.of("database", "unknown"),
                 Tag.of("collection", "unknown"),
                 Tag.of("cluster.id", connectionDesc.getConnectionId().getServerId().getClusterId().getValue()),
                 Tag.of("server.address", "localhost:5150"),
@@ -68,11 +65,11 @@ class DefaultMongoCommandTagsProviderTest {
         // 1001 will not be added to state map and therefore will use 'unknown'
         tagsProvider.commandStarted(commandStartedEvent(1001));
         Iterable<Tag> tags = tagsProvider.commandTags(commandSucceededEvent(1001));
-        assertThat(tags).contains(Tag.of("collection", "unknown"));
+        assertThat(tags).contains(Tag.of("database", "unknown"), Tag.of("collection", "unknown"));
 
         // Complete 1000 - which will remove previously added entry from state map
         tags = tagsProvider.commandTags(commandSucceededEvent(1000));
-        assertThat(tags).contains(Tag.of("collection", "collection-1000"));
+        assertThat(tags).contains(Tag.of("database", "db1"), Tag.of("collection", "collection-1000"));
 
         // 1001 will now be put in state map (since 1000 removed and made room for it)
         tagsProvider.commandStarted(commandStartedEvent(1001));
@@ -81,10 +78,10 @@ class DefaultMongoCommandTagsProviderTest {
         tagsProvider.commandStarted(commandStartedEvent(1002));
 
         tags = tagsProvider.commandTags(commandSucceededEvent(1001));
-        assertThat(tags).contains(Tag.of("collection", "collection-1001"));
+        assertThat(tags).contains(Tag.of("database", "db1"), Tag.of("collection", "collection-1001"));
 
         tags = tagsProvider.commandTags(commandSucceededEvent(1002));
-        assertThat(tags).contains(Tag.of("collection", "unknown"));
+        assertThat(tags).contains(Tag.of("database", "unknown"), Tag.of("collection", "unknown"));
     }
 
     private CommandStartedEvent commandStartedEvent(int requestId) {
@@ -104,57 +101,4 @@ class DefaultMongoCommandTagsProviderTest {
                 new BsonDocument(),
                 1200L);
     }
-
-    @Nested
-    class DetermineCollectionName {
-
-        @Test
-        void withNameInAllowList() {
-            assertThat(tagsProvider.determineCollectionName("find", new BsonDocument("find", new BsonString(" bar ")))).hasValue("bar");
-        }
-
-        @Test
-        void withNameNotInAllowList() {
-            assertThat(tagsProvider.determineCollectionName("cmd", new BsonDocument("cmd", new BsonString(" bar ")))).isEmpty();
-        }
-
-        @Test
-        void withNameNotInCommand() {
-            assertThat(tagsProvider.determineCollectionName("find", new BsonDocument())).isEmpty();
-        }
-
-        @Test
-        void withNonStringCommand() {
-            assertThat(tagsProvider.determineCollectionName("find", new BsonDocument("find", BsonBoolean.TRUE))).isEmpty();
-        }
-
-        @Test
-        void withEmptyStringCommand() {
-            assertThat(tagsProvider.determineCollectionName("find", new BsonDocument("find", new BsonString("  ")))).isEmpty();
-        }
-
-        @Test
-        void withCollectionFieldOnly() {
-            assertThat(tagsProvider.determineCollectionName("find", new BsonDocument("collection", new BsonString(" bar ")))).hasValue("bar");
-        }
-
-        @Test
-        void withCollectionFieldAndAllowListedCommand() {
-            BsonDocument command = new BsonDocument(Arrays.asList(
-                    new BsonElement("collection", new BsonString("coll")),
-                    new BsonElement("find", new BsonString("bar"))
-            ));
-            assertThat(tagsProvider.determineCollectionName("find", command)).hasValue("bar");
-        }
-
-        @Test
-        void withCollectionFieldAndNotAllowListedCommand() {
-            BsonDocument command = new BsonDocument(Arrays.asList(
-                    new BsonElement("collection", new BsonString("coll")),
-                    new BsonElement("cmd", new BsonString("bar"))
-            ));
-            assertThat(tagsProvider.determineCollectionName("find", command)).hasValue("coll");
-        }
-    }
-
 }
