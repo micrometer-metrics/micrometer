@@ -30,7 +30,7 @@ import io.prometheus.client.exemplars.tracer.common.SpanContextSupplier;
 
 import static io.prometheus.client.exporter.common.TextFormat.CONTENT_TYPE_OPENMETRICS_100;
 
-public class ExemplarSample {
+public class PrometheusExemplarsSample {
     private static final PrometheusMeterRegistry registry = new PrometheusMeterRegistry(
             PrometheusConfig.DEFAULT,
             new CollectorRegistry(),
@@ -44,16 +44,19 @@ public class ExemplarSample {
 
         Timer timer = Timer.builder("test.timer")
                 .publishPercentileHistogram()
-                .serviceLevelObjectives(Duration.ofMillis(350))
                 .register(registry);
+        timer.record(Duration.ofNanos(1_000 * 100));
+        timer.record(Duration.ofMillis(2));
         timer.record(Duration.ofMillis(100));
-        timer.record(Duration.ofSeconds(1));
+        timer.record(Duration.ofSeconds(60));
 
         DistributionSummary distributionSummary = DistributionSummary.builder("test.distribution")
                 .publishPercentileHistogram()
                 .register(registry);
-        distributionSummary.record(100);
-        distributionSummary.record(1000);
+        distributionSummary.record(0.15);
+        distributionSummary.record(15);
+        distributionSummary.record(5E18);
+
         System.out.println(registry.scrape(CONTENT_TYPE_OPENMETRICS_100));
     }
 
