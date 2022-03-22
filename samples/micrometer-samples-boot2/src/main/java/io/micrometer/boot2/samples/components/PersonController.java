@@ -40,7 +40,6 @@ public class PersonController {
     @Timed(percentiles = {0.5, 0.95, 0.999}, histogram = true)
     public List<String> allPeople() {
         try {
-            Counter.builder("allPeople").register(registry).increment();
             Thread.sleep(200);
         } catch (InterruptedException e) {
             e.printStackTrace();
@@ -51,6 +50,12 @@ public class PersonController {
     @GetMapping("/api/person/{id}")
     @Timed("person.requests")
     public Person person(@PathVariable String id) {
+        String userType = "0".equals(id) ? "admin" : "regular";
+        Counter.builder("person")
+                .tag("type", userType)
+                .register(registry)
+                .increment();
+
         return new Person(id, "jon", "schneider", "USA", "MO");
     }
 
@@ -87,8 +92,7 @@ public class PersonController {
             result.put("max", t.max(TimeUnit.MILLISECONDS));
             result.put("mean", t.mean(TimeUnit.MILLISECONDS));
         }
+
         return result;
-
-
     }
 }
