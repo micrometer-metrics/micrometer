@@ -51,7 +51,7 @@ public class PersonController {
     @Timed("person.requests")
     public Person person(@PathVariable String id) {
         String userType = "0".equals(id) ? "admin" : "regular";
-        Counter.builder("person")
+        Counter.builder("person.requests")
                 .tag("type", userType)
                 .register(registry)
                 .increment();
