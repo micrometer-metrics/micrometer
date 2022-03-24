@@ -52,7 +52,7 @@
  * WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  *
  */
-package io.micrometer.observation.util.internal.logging;
+package io.micrometer.common.util.internal.logging;
 
 /**
  * NOTE: This file has been copied from {io.netty.util.internal.logging}.

@@ -13,9 +13,9 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package io.micrometer.observation.util;
+package io.micrometer.common.util;
 
-import io.micrometer.observation.lang.Nullable;
+import io.micrometer.common.lang.Nullable;
 
 /**
  * Utilities for {@link String}.

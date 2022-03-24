@@ -25,7 +25,7 @@ import io.micrometer.observation.Observation;
 import io.micrometer.observation.ObservationPredicate;
 import io.micrometer.observation.ObservationRegistry;
 import io.micrometer.observation.ObservationTextPublisher;
-import io.micrometer.observation.Tags;
+import io.micrometer.common.Tags;
 
 public class ObservationHandlerSample {
     private static final SimpleMeterRegistry registry = new SimpleMeterRegistry();

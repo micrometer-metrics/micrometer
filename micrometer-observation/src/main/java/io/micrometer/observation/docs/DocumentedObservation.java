@@ -15,6 +15,7 @@
  */
 package io.micrometer.observation.docs;
 
+import io.micrometer.common.docs.TagKey;
 import io.micrometer.observation.Observation;
 import io.micrometer.observation.ObservationRegistry;
 

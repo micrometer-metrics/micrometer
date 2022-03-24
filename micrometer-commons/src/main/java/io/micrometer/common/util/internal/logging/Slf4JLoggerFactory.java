@@ -28,26 +28,37 @@
  * License for the specific language governing permissions and limitations
  * under the License.
  */
-package io.micrometer.observation.util.internal.logging;
+package io.micrometer.common.util.internal.logging;
 
-import java.util.logging.Logger;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.slf4j.helpers.NOPLoggerFactory;
+import org.slf4j.spi.LocationAwareLogger;
 
 /**
  * NOTE: This file has been copied and slightly modified from {io.netty.util.internal.logging}.
  *
- * Logger factory which creates a
- * <a href="https://docs.oracle.com/javase/8/docs/technotes/guides/logging/">java.util.logging</a>
+ * Logger factory which creates a <a href="https://www.slf4j.org/">SLF4J</a>
  * logger.
  */
-public class JdkLoggerFactory extends InternalLoggerFactory {
+public class Slf4JLoggerFactory extends InternalLoggerFactory {
 
-    public static final InternalLoggerFactory INSTANCE = new JdkLoggerFactory();
+    public static final InternalLoggerFactory INSTANCE = new Slf4JLoggerFactory();
 
-    private JdkLoggerFactory() {
+    private Slf4JLoggerFactory() {
+        if (LoggerFactory.getILoggerFactory() instanceof NOPLoggerFactory) {
+            throw new NoClassDefFoundError("NOPLoggerFactory not supported");
+        }
     }
 
     @Override
     public InternalLogger newInstance(String name) {
-        return new JdkLogger(Logger.getLogger(name));
+        return wrapLogger(LoggerFactory.getLogger(name));
+    }
+
+    // package-private for testing.
+    static InternalLogger wrapLogger(Logger logger) {
+        return logger instanceof LocationAwareLogger ?
+                new LocationAwareSlf4JLogger((LocationAwareLogger) logger) : new Slf4JLogger(logger);
     }
 }

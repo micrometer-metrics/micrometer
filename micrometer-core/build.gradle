@@ -1,6 +1,8 @@
 description 'Core module of Micrometer containing instrumentation API and implementation'
 
 dependencies {
+    api project(":micrometer-commons")
+
     // TODO(anuraaga): HdrHistogram is exposed in the micrometer API but probably shouldn't be
     api 'org.hdrhistogram:HdrHistogram'
     implementation('org.latencyutils:LatencyUtils') {

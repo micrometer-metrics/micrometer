@@ -15,6 +15,8 @@
  */
 package io.micrometer.observation;
 
+import io.micrometer.common.Tag;
+import io.micrometer.common.Tags;
 import org.junit.jupiter.api.Test;
 
 import static org.assertj.core.api.Assertions.assertThat;

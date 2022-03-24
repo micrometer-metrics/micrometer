@@ -16,10 +16,9 @@
 
 package io.micrometer.core.instrument.docs;
 
+import io.micrometer.common.docs.TagKey;
 import io.micrometer.core.instrument.Meter;
 import io.micrometer.core.lang.Nullable;
-import io.micrometer.observation.docs.DocumentedObservation;
-import io.micrometer.observation.docs.TagKey;
 
 /**
  * In order to describe your metrics via e.g. enums instead of Strings you can use this
@@ -100,11 +99,12 @@ public interface DocumentedMeter {
     }
 
     /**
-     * Override this when custom metric should be documented instead of the default one.
+     * Override this when custom metric should be documented instead of the default one. Requires the Observation
+     * module on the classpath.
      *
-     * @return {@link DocumentedObservation} for which you don't want to create a default metric documentation
+     * @return {@link io.micrometer.observation.docs.DocumentedObservation} for which you don't want to create a default metric documentation
      */
-    default DocumentedObservation overridesDefaultMetricFrom() {
+    default Enum<?> overridesDefaultMetricFrom() {
         return null;
     }
 

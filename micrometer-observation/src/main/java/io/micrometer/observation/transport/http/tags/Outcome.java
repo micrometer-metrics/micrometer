@@ -15,7 +15,7 @@
  */
 package io.micrometer.observation.transport.http.tags;
 
-import io.micrometer.observation.Tag;
+import io.micrometer.common.Tag;
 
 /**
  * The outcome of an HTTP request.

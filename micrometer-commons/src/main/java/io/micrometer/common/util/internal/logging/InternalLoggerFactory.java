@@ -29,7 +29,7 @@
  * under the License.
  */
 
-package io.micrometer.observation.util.internal.logging;
+package io.micrometer.common.util.internal.logging;
 
 import static java.util.Objects.requireNonNull;
 

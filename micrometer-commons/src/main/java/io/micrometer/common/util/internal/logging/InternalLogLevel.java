@@ -28,7 +28,7 @@
  * License for the specific language governing permissions and limitations
  * under the License.
  */
-package io.micrometer.observation.util.internal.logging;
+package io.micrometer.common.util.internal.logging;
 
 /**
  * NOTE: This file has been copied from {io.netty.util.internal.logging}.

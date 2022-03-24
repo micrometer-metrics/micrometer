@@ -28,7 +28,7 @@
  * License for the specific language governing permissions and limitations
  * under the License.
  */
-package io.micrometer.observation.util.internal.logging;
+package io.micrometer.common.util.internal.logging;
 
 import org.slf4j.spi.LocationAwareLogger;
 
