@@ -16,16 +16,21 @@
 package io.micrometer.dynatrace;
 
 import io.micrometer.core.instrument.Clock;
+import io.micrometer.core.instrument.DistributionSummary;
 import io.micrometer.core.instrument.Meter;
+import io.micrometer.core.instrument.Timer;
 import io.micrometer.core.instrument.config.MeterFilter;
 import io.micrometer.core.instrument.config.MeterFilterReply;
 import io.micrometer.core.instrument.distribution.DistributionStatisticConfig;
+import io.micrometer.core.instrument.distribution.pause.PauseDetector;
 import io.micrometer.core.instrument.step.StepMeterRegistry;
 import io.micrometer.core.instrument.util.NamedThreadFactory;
 import io.micrometer.core.ipc.http.HttpSender;
 import io.micrometer.core.ipc.http.HttpUrlConnectionSender;
 import io.micrometer.core.util.internal.logging.InternalLogger;
 import io.micrometer.core.util.internal.logging.InternalLoggerFactory;
+import io.micrometer.dynatrace.types.DynatraceDistributionSummary;
+import io.micrometer.dynatrace.types.DynatraceTimer;
 import io.micrometer.dynatrace.v1.DynatraceExporterV1;
 import io.micrometer.dynatrace.v2.DynatraceExporterV2;
 
@@ -52,6 +57,7 @@ import static io.micrometer.core.instrument.config.MeterFilterReply.NEUTRAL;
 public class DynatraceMeterRegistry extends StepMeterRegistry {
     private static final ThreadFactory DEFAULT_THREAD_FACTORY = new NamedThreadFactory("dynatrace-metrics-publisher");
     private static final InternalLogger logger = InternalLoggerFactory.getInstance(DynatraceMeterRegistry.class);
+    private final DynatraceApiVersion apiVersion;
 
     private final AbstractDynatraceExporter exporter;
 
@@ -63,9 +69,12 @@ public class DynatraceMeterRegistry extends StepMeterRegistry {
     private DynatraceMeterRegistry(DynatraceConfig config, Clock clock, ThreadFactory threadFactory, HttpSender httpClient) {
         super(config, clock);
 
-        if (config.apiVersion() == DynatraceApiVersion.V2) {
+        apiVersion = config.apiVersion();
+
+        if (apiVersion == DynatraceApiVersion.V2) {
             logger.info("Exporting to Dynatrace metrics API v2");
             this.exporter = new DynatraceExporterV2(config, clock, httpClient);
+            // Not used for Timer and DistributionSummary in V2 anymore, but still used for the other timer types.
             registerMinPercentile();
         } else {
             logger.info("Exporting to Dynatrace metrics API v1");
@@ -89,6 +98,22 @@ public class DynatraceMeterRegistry extends StepMeterRegistry {
         return this.exporter.getBaseTimeUnit();
     }
 
+    @Override
+    protected DistributionSummary newDistributionSummary(Meter.Id id, DistributionStatisticConfig distributionStatisticConfig, double scale) {
+        if (apiVersion == DynatraceApiVersion.V2) {
+            return new DynatraceDistributionSummary(id);
+        }
+        return super.newDistributionSummary(id, distributionStatisticConfig, scale);
+    }
+
+    @Override
+    protected Timer newTimer(Meter.Id id, DistributionStatisticConfig distributionStatisticConfig, PauseDetector pauseDetector) {
+        if (apiVersion == DynatraceApiVersion.V2) {
+            return new DynatraceTimer(id, clock, exporter.getBaseTimeUnit());
+        }
+        return super.newTimer(id, distributionStatisticConfig, pauseDetector);
+    }
+
     /**
      * As the micrometer summary statistics (DistributionSummary, and a number of timer meter types)
      * do not provide the minimum values that are required by Dynatrace to ingest summary metrics,
@@ -107,7 +132,7 @@ public class DynatraceMeterRegistry extends StepMeterRegistry {
                 double[] percentiles;
 
                 if (config.getPercentiles() == null) {
-                    percentiles = new double[] {0};
+                    percentiles = new double[]{0};
                     metersWithArtificialZeroPercentile.add(id.getName() + ".percentile");
                 } else if (!containsZeroPercentile(config)) {
                     percentiles = new double[config.getPercentiles().length + 1];
