@@ -671,10 +671,10 @@ class PrometheusMeterRegistryTest {
         String scraped = registry.scrape(TextFormat.CONTENT_TYPE_OPENMETRICS_100);
         assertThat(scraped).contains("my_counter_total 1.0 # {span_id=\"1\",trace_id=\"2\"} 1.0");
         assertThat(scraped)
-                .contains("test_timer_seconds_bucket{le=\"0.1\"} 1.0 # {span_id=\"3\",trace_id=\"4\"} 1.5E7")
-                .contains("test_timer_seconds_bucket{le=\"0.2\"} 2.0 # {span_id=\"5\",trace_id=\"6\"} 1.5E8")
+                .contains("test_timer_seconds_bucket{le=\"0.1\"} 1.0 # {span_id=\"3\",trace_id=\"4\"} 0.015")
+                .contains("test_timer_seconds_bucket{le=\"0.2\"} 2.0 # {span_id=\"5\",trace_id=\"6\"} 0.15")
                 .contains("test_timer_seconds_bucket{le=\"0.3\"} 2.0\n")
-                .contains("test_timer_seconds_bucket{le=\"+Inf\"} 3.0 # {span_id=\"7\",trace_id=\"8\"} 1.5E9");
+                .contains("test_timer_seconds_bucket{le=\"+Inf\"} 3.0 # {span_id=\"7\",trace_id=\"8\"} 1.5");
         assertThat(scraped)
                 .contains("test_histogram_bucket{le=\"1.0\"} 1.0 # {span_id=\"9\",trace_id=\"10\"} 0.15")
                 .contains("test_histogram_bucket{le=\"16.0\"} 2.0 # {span_id=\"11\",trace_id=\"12\"} 15.0")

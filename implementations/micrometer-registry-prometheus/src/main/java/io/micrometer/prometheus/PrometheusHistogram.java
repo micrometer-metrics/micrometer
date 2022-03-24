@@ -18,15 +18,20 @@ package io.micrometer.prometheus;
 
 import java.time.Duration;
 import java.util.Arrays;
+import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicReferenceArray;
 
 import io.micrometer.core.instrument.Clock;
 import io.micrometer.core.instrument.distribution.DistributionStatisticConfig;
 import io.micrometer.core.instrument.distribution.Histogram;
 import io.micrometer.core.instrument.distribution.TimeWindowFixedBoundaryHistogram;
+import io.micrometer.core.instrument.util.TimeUtils;
 import io.micrometer.core.lang.Nullable;
 import io.prometheus.client.exemplars.Exemplar;
 import io.prometheus.client.exemplars.HistogramExemplarSampler;
+
+import static java.util.concurrent.TimeUnit.NANOSECONDS;
+import static java.util.concurrent.TimeUnit.SECONDS;
 
 /**
  * Internal {@link Histogram} implementation for Prometheus that handles {@link Exemplar exemplars}.
@@ -75,7 +80,7 @@ class PrometheusHistogram extends TimeWindowFixedBoundaryHistogram {
     public void recordDouble(double value) {
         super.recordDouble(value);
         if (isExemplarsEnabled()) {
-            updateExemplar(value);
+            updateExemplar(value, null, null);
         }
     }
 
@@ -83,17 +88,17 @@ class PrometheusHistogram extends TimeWindowFixedBoundaryHistogram {
     public void recordLong(long value) {
         super.recordLong(value);
         if (isExemplarsEnabled()) {
-            updateExemplar(value);
+            updateExemplar(value, NANOSECONDS, SECONDS);
         }
     }
 
-    private void updateExemplar(double value) {
+    private void updateExemplar(double value, @Nullable TimeUnit sourceUnit, @Nullable TimeUnit destinationUnit) {
         int index = this.leastLessThanOrEqualTo(value);
         index = (index == -1) ? exemplars.length() - 1 : index;
-        updateExemplar(value, index);
+        updateExemplar(value, sourceUnit, destinationUnit, index);
     }
 
-    private void updateExemplar(double value, int index) {
+    private void updateExemplar(double value, @Nullable TimeUnit sourceUnit, @Nullable TimeUnit destinationUnit, int index) {
         double bucketFrom = (index == 0) ? Double.NEGATIVE_INFINITY : buckets[index - 1];
         double bucketTo = buckets[index];
         Exemplar prev;
@@ -101,7 +106,8 @@ class PrometheusHistogram extends TimeWindowFixedBoundaryHistogram {
 
         do {
             prev = exemplars.get(index);
-            next = exemplarSampler.sample(value, bucketFrom, bucketTo, prev);
+            double exemplarValue = (sourceUnit != null && destinationUnit != null) ? TimeUtils.convert(value, sourceUnit, destinationUnit) : value;
+            next = exemplarSampler.sample(exemplarValue, bucketFrom, bucketTo, prev);
             if (next == null || next == prev) {
                 return;
             }
