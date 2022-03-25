@@ -16,6 +16,7 @@
 package io.micrometer.boot2.samples.components;
 
 import io.micrometer.core.annotation.Timed;
+import io.micrometer.core.instrument.Counter;
 import io.micrometer.core.instrument.MeterRegistry;
 import io.micrometer.core.instrument.Timer;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -49,6 +50,12 @@ public class PersonController {
     @GetMapping("/api/person/{id}")
     @Timed("person.requests")
     public Person person(@PathVariable String id) {
+        String userType = "0".equals(id) ? "admin" : "regular";
+        Counter.builder("person.requests")
+                .tag("type", userType)
+                .register(registry)
+                .increment();
+
         return new Person(id, "jon", "schneider", "USA", "MO");
     }
 
@@ -85,8 +92,7 @@ public class PersonController {
             result.put("max", t.max(TimeUnit.MILLISECONDS));
             result.put("mean", t.mean(TimeUnit.MILLISECONDS));
         }
+
         return result;
-
-
     }
 }

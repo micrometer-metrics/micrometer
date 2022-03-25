@@ -43,6 +43,7 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.concurrent.atomic.AtomicLong;
 
 import static io.micrometer.core.instrument.MockClock.clock;
 import static java.util.Collections.emptyList;
@@ -646,23 +647,107 @@ class PrometheusMeterRegistryTest {
         Counter counter = Counter.builder("my.counter").register(registry);
         counter.increment();
 
-        assertThat(registry.scrape(TextFormat.CONTENT_TYPE_OPENMETRICS_100))
-                .startsWith("# TYPE my_counter counter\n")
-                .contains("# HELP my_counter  \n")
-                .contains("my_counter_total 1.0 # {span_id=\"testSpanId\",trace_id=\"testTraceId\"} 1.0")
-                .endsWith("# EOF\n");
+        Timer timer = Timer.builder("test.timer")
+                .serviceLevelObjectives(Duration.ofMillis(100), Duration.ofMillis(200), Duration.ofMillis(300))
+                .register(registry);
+        timer.record(Duration.ofMillis(15));
+        timer.record(Duration.ofMillis(150));
+        timer.record(Duration.ofMillis(1_500));
+
+        DistributionSummary histogram = DistributionSummary.builder("test.histogram")
+                .publishPercentileHistogram()
+                .register(registry);
+        histogram.record(0.15);
+        histogram.record(15);
+        histogram.record(5E18);
+
+        DistributionSummary slos = DistributionSummary.builder("test.slos")
+                .serviceLevelObjectives(100, 200, 300)
+                .register(registry);
+        slos.record(10);
+        slos.record(250);
+        slos.record(1_000);
+
+        String scraped = registry.scrape(TextFormat.CONTENT_TYPE_OPENMETRICS_100);
+        assertThat(scraped).contains("my_counter_total 1.0 # {span_id=\"1\",trace_id=\"2\"} 1.0");
+        assertThat(scraped)
+                .contains("test_timer_seconds_bucket{le=\"0.1\"} 1.0 # {span_id=\"3\",trace_id=\"4\"} 0.015")
+                .contains("test_timer_seconds_bucket{le=\"0.2\"} 2.0 # {span_id=\"5\",trace_id=\"6\"} 0.15")
+                .contains("test_timer_seconds_bucket{le=\"0.3\"} 2.0\n")
+                .contains("test_timer_seconds_bucket{le=\"+Inf\"} 3.0 # {span_id=\"7\",trace_id=\"8\"} 1.5");
+        assertThat(scraped)
+                .contains("test_histogram_bucket{le=\"1.0\"} 1.0 # {span_id=\"9\",trace_id=\"10\"} 0.15")
+                .contains("test_histogram_bucket{le=\"16.0\"} 2.0 # {span_id=\"11\",trace_id=\"12\"} 15.0")
+                .contains("test_histogram_bucket{le=\"+Inf\"} 3.0 # {span_id=\"13\",trace_id=\"14\"} 5.0E18");
+        assertThat(scraped)
+                .contains("test_slos_bucket{le=\"100.0\"} 1.0 # {span_id=\"15\",trace_id=\"16\"} 10.0")
+                .contains("test_slos_bucket{le=\"200.0\"} 1.0\n")
+                .contains("test_slos_bucket{le=\"300.0\"} 2.0 # {span_id=\"17\",trace_id=\"18\"} 250.0")
+                .contains("test_slos_bucket{le=\"+Inf\"} 3.0 # {span_id=\"19\",trace_id=\"20\"} 1000.0");
+        assertThat(scraped).endsWith("# EOF\n");
+    }
+
+    @Test
+    void noExemplarsIfNoSampler() {
+        PrometheusMeterRegistry registry = new PrometheusMeterRegistry(PrometheusConfig.DEFAULT, prometheusRegistry, clock);
+
+        Counter counter = Counter.builder("my.counter").register(registry);
+        counter.increment();
+
+        Timer timer = Timer.builder("test.timer")
+                .serviceLevelObjectives(Duration.ofMillis(100), Duration.ofMillis(200), Duration.ofMillis(300))
+                .register(registry);
+        timer.record(Duration.ofMillis(15));
+        timer.record(Duration.ofMillis(150));
+        timer.record(Duration.ofMillis(1_500));
+
+        DistributionSummary histogram = DistributionSummary.builder("test.histogram")
+                .publishPercentileHistogram()
+                .register(registry);
+        histogram.record(0.15);
+        histogram.record(15);
+        histogram.record(5E18);
+
+        DistributionSummary slos = DistributionSummary.builder("test.slos")
+                .serviceLevelObjectives(100, 200, 300)
+                .register(registry);
+        slos.record(10);
+        slos.record(250);
+        slos.record(1_000);
+
+        String scraped = registry.scrape(TextFormat.CONTENT_TYPE_OPENMETRICS_100);
+        assertThat(scraped).contains("my_counter_total 1.0\n");
+        assertThat(scraped)
+                .contains("test_timer_seconds_bucket{le=\"0.1\"} 1.0\n")
+                .contains("test_timer_seconds_bucket{le=\"0.2\"} 2.0\n")
+                .contains("test_timer_seconds_bucket{le=\"0.3\"} 2.0\n")
+                .contains("test_timer_seconds_bucket{le=\"+Inf\"} 3.0\n");
+        assertThat(scraped)
+                .contains("test_histogram_bucket{le=\"1.0\"} 1.0\n")
+                .contains("test_histogram_bucket{le=\"16.0\"} 2.0\n")
+                .contains("test_histogram_bucket{le=\"+Inf\"} 3.0\n");
+        assertThat(scraped)
+                .contains("test_slos_bucket{le=\"100.0\"} 1.0\n")
+                .contains("test_slos_bucket{le=\"200.0\"} 1.0\n")
+                .contains("test_slos_bucket{le=\"300.0\"} 2.0\n")
+                .contains("test_slos_bucket{le=\"+Inf\"} 3.0\n");
+        assertThat(scraped)
+                .doesNotContain("span_id")
+                .doesNotContain("trace_id");
+        assertThat(scraped).endsWith("# EOF\n");
     }
 
     static class TestSpanContextSupplier implements SpanContextSupplier {
+        private final AtomicLong count = new AtomicLong();
 
         @Override
         public String getTraceId() {
-            return "testTraceId";
+            return String.valueOf(count.incrementAndGet());
         }
 
         @Override
         public String getSpanId() {
-            return "testSpanId";
+            return String.valueOf(count.incrementAndGet());
         }
     }
 }

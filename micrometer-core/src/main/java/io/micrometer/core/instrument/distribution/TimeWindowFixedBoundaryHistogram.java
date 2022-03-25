@@ -109,6 +109,10 @@ public class TimeWindowFixedBoundaryHistogram
         printStream.write('\n');
     }
 
+    protected double[] getBuckets() {
+        return this.buckets;
+    }
+
     class FixedBoundaryHistogram {
         /**
          * For recording efficiency, this is a normal histogram. We turn these values into
