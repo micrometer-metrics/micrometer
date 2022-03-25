@@ -3,7 +3,6 @@ description 'Module containing common code'
 dependencies {
     // log monitoring
     optionalApi 'ch.qos.logback:logback-classic'
-    optionalApi 'org.apache.logging.log4j:log4j-core'
 
     // JUnit 5
     testImplementation 'org.junit.jupiter:junit-jupiter'

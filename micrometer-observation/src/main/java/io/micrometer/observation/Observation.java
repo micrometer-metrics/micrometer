@@ -440,9 +440,9 @@ public interface Observation {
         @Nullable
         private Throwable error;
 
-        private final Set<Tag> lowCardinalityTags = new LinkedHashSet<>();
+        private final Set<Tag<?>> lowCardinalityTags = new LinkedHashSet<>();
 
-        private final Set<Tag> highCardinalityTags = new LinkedHashSet<>();
+        private final Set<Tag<?>> highCardinalityTags = new LinkedHashSet<>();
 
         /**
          * The observation name.
@@ -604,7 +604,7 @@ public interface Observation {
          *
          * @param tag a tag
          */
-        void addLowCardinalityTag(Tag tag) {
+        void addLowCardinalityTag(Tag<?> tag) {
             this.lowCardinalityTags.add(tag);
         }
 
@@ -614,7 +614,7 @@ public interface Observation {
          *
          * @param tag a tag
          */
-        void addHighCardinalityTag(Tag tag) {
+        void addHighCardinalityTag(Tag<?> tag) {
             this.highCardinalityTags.add(tag);
         }
 
@@ -623,7 +623,7 @@ public interface Observation {
          *
          * @param tags collection of tags
          */
-        void addLowCardinalityTags(Tags tags) {
+        void addLowCardinalityTags(Tags<Tag<?>> tags) {
             tags.stream().forEach(this::addLowCardinalityTag);
         }
 
@@ -632,22 +632,22 @@ public interface Observation {
          *
          * @param tags collection of tags
          */
-        void addHighCardinalityTags(Tags tags) {
+        void addHighCardinalityTags(Tags<Tag<?>> tags) {
             tags.stream().forEach(this::addHighCardinalityTag);
         }
 
         @NonNull
-        public Tags getLowCardinalityTags() {
+        public Tags<Tag<?>> getLowCardinalityTags() {
             return Tags.of(this.lowCardinalityTags);
         }
 
         @NonNull
-        public Tags getHighCardinalityTags() {
+        public Tags<Tag<?>> getHighCardinalityTags() {
             return Tags.of(this.highCardinalityTags);
         }
 
         @NonNull
-        public Tags getAllTags() {
+        public Tags<Tag<?>> getAllTags() {
             return this.getLowCardinalityTags().and(this.getHighCardinalityTags());
         }
 
@@ -661,7 +661,7 @@ public interface Observation {
                     ", map=" + toString(map);
         }
 
-        private String toString(Collection<Tag> tags) {
+        private String toString(Collection<Tag<?>> tags) {
             return tags.stream()
                     .map(tag -> String.format("%s='%s'", tag.getKey(), tag.getValue()))
                     .collect(Collectors.joining(", ", "[", "]"));
@@ -697,6 +697,7 @@ public interface Observation {
      * @author Marcin Grzejszczak
      * @since 2.0.0
      */
+    @SuppressWarnings("unchecked")
     interface TagsProvider<T extends Context> {
 
         /**
@@ -709,7 +710,7 @@ public interface Observation {
          *
          * @return tags
          */
-        default Tags getLowCardinalityTags(T context) {
+        default Tags<Tag<?>> getLowCardinalityTags(T context) {
             return Tags.empty();
         }
 
@@ -718,7 +719,7 @@ public interface Observation {
          *
          * @return tags
          */
-        default Tags getHighCardinalityTags(T context) {
+        default Tags<Tag<?>> getHighCardinalityTags(T context) {
             return Tags.empty();
         }
 
@@ -755,7 +756,7 @@ public interface Observation {
             }
 
             @Override
-            public Tags getLowCardinalityTags(Context context) {
+            public Tags<Tag<?>> getLowCardinalityTags(Context context) {
                 return getProvidersForContext(context)
                         .map(tagsProvider -> tagsProvider.getLowCardinalityTags(context))
                         .reduce(Tags::and)
@@ -767,7 +768,7 @@ public interface Observation {
             }
 
             @Override
-            public Tags getHighCardinalityTags(Context context) {
+            public Tags<Tag<?>> getHighCardinalityTags(Context context) {
                 return getProvidersForContext(context)
                         .map(tagsProvider -> tagsProvider.getHighCardinalityTags(context))
                         .reduce(Tags::and)

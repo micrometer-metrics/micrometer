@@ -35,14 +35,19 @@ import static java.util.stream.Collectors.joining;
  * @author Phillip Webb
  * @author Johnny Lim
  */
-public final class Tags implements Iterable<Tag> {
+// TODO: Make final in 3.0.0 and remove bounds
+@SuppressWarnings({"rawtypes", "unchecked"})
+public class Tags<T extends Tag> implements Iterable<T> {
 
     private static final Tags EMPTY = new Tags(new Tag[]{});
 
-    private final Tag[] tags;
-    private int last;
+    // Make this private
+    protected final T[] tags;
+    protected int last;
 
-    private Tags(Tag[] tags) {
+    // TODO: Make private in 3.0.0
+    // DO NOT USE - IT'S FOR INTERNAL USE ONLY
+    public Tags(T[] tags) {
         this.tags = tags;
         Arrays.sort(this.tags);
         dedup();
@@ -75,7 +80,23 @@ public final class Tags implements Iterable<Tag> {
      * @return a new {@code Tags} instance
      */
     public Tags and(String key, String value) {
-        return and(Tag.of(key, value));
+        return and(tagOf(key, value));
+    }
+
+    protected T tagOf(String key, String value) {
+        return (T) Tag.of(key, value);
+    }
+
+    protected Tags<T> tagsOf(String key, String value) {
+        return Tags.of(key, value);
+    }
+
+    protected Tags<T> tagsOf(@Nullable String... keyValues) {
+        return Tags.of(keyValues);
+    }
+
+    protected Tags<T> tagsOf(@Nullable Iterable<? extends T> tags) {
+        return Tags.of(tags);
     }
 
     /**
@@ -88,7 +109,7 @@ public final class Tags implements Iterable<Tag> {
         if (keyValues == null || keyValues.length == 0) {
             return this;
         }
-        return and(Tags.of(keyValues));
+        return and(tagsOf(keyValues));
     }
 
     /**
@@ -97,7 +118,7 @@ public final class Tags implements Iterable<Tag> {
      * @param tags the tags to add
      * @return a new {@code Tags} instance
      */
-    public Tags and(@Nullable Tag... tags) {
+    public Tags and(@Nullable T... tags) {
         if (tags == null || tags.length == 0) {
             return this;
         }
@@ -113,24 +134,24 @@ public final class Tags implements Iterable<Tag> {
      * @param tags the tags to add
      * @return a new {@code Tags} instance
      */
-    public Tags and(@Nullable Iterable<? extends Tag> tags) {
+    public Tags and(@Nullable Iterable<? extends T> tags) {
         if (tags == null || !tags.iterator().hasNext()) {
             return this;
         }
 
         if (this.tags.length == 0) {
-            return Tags.of(tags);
+            return tagsOf(tags);
         }
 
-        return and(Tags.of(tags).tags);
+        return and(tagsOf(tags).tags);
     }
 
     @Override
-    public Iterator<Tag> iterator() {
+    public Iterator<T> iterator() {
         return new ArrayIterator();
     }
 
-    private class ArrayIterator implements Iterator<Tag> {
+    private class ArrayIterator implements Iterator<T> {
         private int currentIndex = 0;
 
         @Override
@@ -139,7 +160,7 @@ public final class Tags implements Iterable<Tag> {
         }
 
         @Override
-        public Tag next() {
+        public T next() {
             return tags[currentIndex++];
         }
 
@@ -154,7 +175,7 @@ public final class Tags implements Iterable<Tag> {
      *
      * @return a tags stream
      */
-    public Stream<Tag> stream() {
+    public Stream<T> stream() {
         return StreamSupport.stream(Spliterators.spliteratorUnknownSize(iterator(),
                 Spliterator.ORDERED | Spliterator.DISTINCT | Spliterator.NONNULL | Spliterator.SORTED), false);
     }
@@ -195,7 +216,7 @@ public final class Tags implements Iterable<Tag> {
      * @param otherTags the second set of tags
      * @return the merged tags
      */
-    public static Tags concat(@Nullable Iterable<? extends Tag> tags, @Nullable Iterable<? extends Tag> otherTags) {
+    public static <T extends Tag> Tags concat(@Nullable Iterable<? extends T> tags, @Nullable Iterable<? extends T> otherTags) {
         return Tags.of(tags).and(otherTags);
     }
 
@@ -206,7 +227,7 @@ public final class Tags implements Iterable<Tag> {
      * @param keyValues the additional key/value pairs to add
      * @return the merged tags
      */
-    public static Tags concat(@Nullable Iterable<? extends Tag> tags, @Nullable String... keyValues) {
+    public static <T extends Tag> Tags concat(@Nullable Iterable<? extends T> tags, @Nullable String... keyValues) {
         return Tags.of(tags).and(keyValues);
     }
 
@@ -216,7 +237,7 @@ public final class Tags implements Iterable<Tag> {
      * @param tags the tags to add
      * @return a new {@code Tags} instance
      */
-    public static Tags of(@Nullable Iterable<? extends Tag> tags) {
+    public static <T extends Tag> Tags of(@Nullable Iterable<? extends T> tags) {
         if (tags == null || !tags.iterator().hasNext()) {
             return Tags.empty();
         } else if (tags instanceof Tags) {
@@ -266,7 +287,7 @@ public final class Tags implements Iterable<Tag> {
      * @param tags the tags to add
      * @return a new {@code Tags} instance
      */
-    public static Tags of(@Nullable Tag... tags) {
+    public static <T extends Tag> Tags of(@Nullable T... tags) {
         return empty().and(tags);
     }
 

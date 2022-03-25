@@ -189,7 +189,7 @@ public class ObservationContextAssert<SELF extends ObservationContextAssert<SELF
     public SELF doesNotHaveLowCardinalityTag(String key, String value) {
         isNotNull();
         doesNotHaveLowCardinalityTagWithKey(key);
-        Optional<Tag> optional = this.actual.getLowCardinalityTags().stream().filter(tag -> tag.getKey().equals(key)).findFirst();
+        Optional<Tag<?>> optional = this.actual.getLowCardinalityTags().stream().filter(tag -> tag.getKey().equals(key)).findFirst();
         if (!optional.isPresent()) {
             return (SELF) this;
         }
@@ -230,7 +230,7 @@ public class ObservationContextAssert<SELF extends ObservationContextAssert<SELF
     public SELF doesNotHaveHighCardinalityTag(String key, String value) {
         isNotNull();
         doesNotHaveHighCardinalityTagWithKey(key);
-        Optional<Tag> optional = this.actual.getHighCardinalityTags().stream().filter(tag -> tag.getKey().equals(key)).findFirst();
+        Optional<Tag<?>> optional = this.actual.getHighCardinalityTags().stream().filter(tag -> tag.getKey().equals(key)).findFirst();
         if (!optional.isPresent()) {
             return (SELF) this;
         }

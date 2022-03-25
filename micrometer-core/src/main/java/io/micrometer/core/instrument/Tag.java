@@ -19,18 +19,17 @@ package io.micrometer.core.instrument;
  * Key/value pair representing a dimension of a meter used to classify and drill into measurements.
  *
  * @author Jon Schneider
+ * @deprecated use {@link io.micrometer.common.Tag}
  */
-public interface Tag extends Comparable<Tag> {
+@Deprecated
+public interface Tag extends io.micrometer.common.Tag<Tag> {
     String getKey();
 
     String getValue();
 
+    @Deprecated
     static Tag of(String key, String value) {
         return new ImmutableTag(key, value);
     }
 
-    @Override
-    default int compareTo(Tag o) {
-        return getKey().compareTo(o.getKey());
-    }
 }

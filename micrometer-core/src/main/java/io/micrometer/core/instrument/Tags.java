@@ -15,11 +15,14 @@
  */
 package io.micrometer.core.instrument;
 
-import io.micrometer.core.lang.Nullable;
-
-import java.util.*;
+import java.util.Collection;
+import java.util.Iterator;
+import java.util.Spliterator;
+import java.util.Spliterators;
 import java.util.stream.Stream;
 import java.util.stream.StreamSupport;
+
+import io.micrometer.core.lang.Nullable;
 
 import static java.util.stream.Collectors.joining;
 
@@ -30,37 +33,15 @@ import static java.util.stream.Collectors.joining;
  * @author Maciej Walkowiak
  * @author Phillip Webb
  * @author Johnny Lim
+ * @deprecated use {@link io.micrometer.common.Tags}
  */
-public final class Tags implements Iterable<Tag> {
+@Deprecated
+public final class Tags extends io.micrometer.common.Tags<Tag> implements Iterable<Tag> {
 
     private static final Tags EMPTY = new Tags(new Tag[]{});
 
-    private final Tag[] tags;
-    private int last;
-
     private Tags(Tag[] tags) {
-        this.tags = tags;
-        Arrays.sort(this.tags);
-        dedup();
-    }
-
-    private void dedup() {
-        int n = tags.length;
-
-        if (n == 0 || n == 1) {
-            last = n;
-            return;
-        }
-
-        // index of next unique element
-        int j = 0;
-
-        for (int i = 0; i < n - 1; i++)
-            if (!tags[i].getKey().equals(tags[i + 1].getKey()))
-                tags[j++] = tags[i];
-
-        tags[j++] = tags[n - 1];
-        last = j;
+        super(tags);
     }
 
     /**
@@ -70,6 +51,7 @@ public final class Tags implements Iterable<Tag> {
      * @param value the tag value to add
      * @return a new {@code Tags} instance
      */
+    @Override
     public Tags and(String key, String value) {
         return and(Tag.of(key, value));
     }
@@ -80,6 +62,7 @@ public final class Tags implements Iterable<Tag> {
      * @param keyValues the key/value pairs to add
      * @return a new {@code Tags} instance
      */
+    @Override
     public Tags and(@Nullable String... keyValues) {
         if (keyValues == null || keyValues.length == 0) {
             return this;
@@ -93,6 +76,7 @@ public final class Tags implements Iterable<Tag> {
      * @param tags the tags to add
      * @return a new {@code Tags} instance
      */
+    @Override
     public Tags and(@Nullable Tag... tags) {
         if (tags == null || tags.length == 0) {
             return this;
@@ -109,6 +93,7 @@ public final class Tags implements Iterable<Tag> {
      * @param tags the tags to add
      * @return a new {@code Tags} instance
      */
+    @Override
     public Tags and(@Nullable Iterable<? extends Tag> tags) {
         if (tags == null || !tags.iterator().hasNext()) {
             return this;
@@ -191,8 +176,9 @@ public final class Tags implements Iterable<Tag> {
      * @param otherTags the second set of tags
      * @return the merged tags
      */
-    public static Tags concat(@Nullable Iterable<? extends Tag> tags, @Nullable Iterable<? extends Tag> otherTags) {
-        return Tags.of(tags).and(otherTags);
+    @SuppressWarnings({ "rawtypes", "unchecked" })
+    public static <T extends io.micrometer.common.Tag> Tags concat(@Nullable Iterable<? extends T> tags, @Nullable Iterable<? extends T> otherTags) {
+        return Tags.of(tags).and((Iterable<? extends Tag>) otherTags);
     }
 
     /**
@@ -202,7 +188,8 @@ public final class Tags implements Iterable<Tag> {
      * @param keyValues the additional key/value pairs to add
      * @return the merged tags
      */
-    public static Tags concat(@Nullable Iterable<? extends Tag> tags, @Nullable String... keyValues) {
+    @SuppressWarnings("rawtypes")
+    public static <T extends io.micrometer.common.Tag> Tags concat(@Nullable Iterable<? extends T> tags, @Nullable String... keyValues) {
         return Tags.of(tags).and(keyValues);
     }
 
@@ -212,7 +199,8 @@ public final class Tags implements Iterable<Tag> {
      * @param tags the tags to add
      * @return a new {@code Tags} instance
      */
-    public static Tags of(@Nullable Iterable<? extends Tag> tags) {
+    @SuppressWarnings({ "rawtypes", "unchecked" })
+    public static <T extends io.micrometer.common.Tag> Tags of(@Nullable Iterable<? extends T> tags) {
         if (tags == null || !tags.iterator().hasNext()) {
             return Tags.empty();
         } else if (tags instanceof Tags) {
@@ -262,8 +250,9 @@ public final class Tags implements Iterable<Tag> {
      * @param tags the tags to add
      * @return a new {@code Tags} instance
      */
-    public static Tags of(@Nullable Tag... tags) {
-        return empty().and(tags);
+    @SuppressWarnings("rawtypes")
+    public static <T extends io.micrometer.common.Tag> Tags of(@Nullable T... tags) {
+        return empty().and((Tag[]) tags);
     }
 
     /**
