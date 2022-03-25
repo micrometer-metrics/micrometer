@@ -37,8 +37,8 @@ import java.util.List;
 import java.util.Optional;
 import java.util.concurrent.ThreadFactory;
 import java.util.concurrent.TimeUnit;
+import java.util.function.BiFunction;
 import java.util.function.Consumer;
-import java.util.function.Function;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -100,11 +100,11 @@ public class ElasticMeterRegistry extends StepMeterRegistry {
             "    \"index\": false\n" +
             "  }\n" +
             "}";
-    private static final Function<String, String> TEMPLATE_BODY_AFTER_VERSION_7 = (indexPrefix) -> "{\n" +
+    private static final BiFunction<String, Boolean, String> TEMPLATE_BODY_AFTER_VERSION_7 = (indexPrefix, enableSource) -> "{\n" +
             "  \"index_patterns\": [\"" + indexPrefix + "*\"],\n" +
             "  \"mappings\": {\n" +
             "    \"_source\": {\n" +
-            "      \"enabled\": false\n" +
+            "      \"enabled\": " + enableSource + "\n" +
             "    },\n" + TEMPLATE_PROPERTIES +
             "  }\n" +
             "}";
@@ -192,7 +192,7 @@ public class ElasticMeterRegistry extends StepMeterRegistry {
     }
 
     private String getTemplateBody() {
-        return TEMPLATE_BODY_AFTER_VERSION_7.apply(config.index() + config.indexDateSeparator());
+        return TEMPLATE_BODY_AFTER_VERSION_7.apply(config.index() + config.indexDateSeparator(), config.enableSource());
     }
 
     private HttpSender.Request.Builder connect(HttpSender.Method method, String uri) {
@@ -211,6 +211,10 @@ public class ElasticMeterRegistry extends StepMeterRegistry {
     @Override
     protected void publish() {
         createIndexTemplateIfNeeded();
+
+        if (config.enableSource()) {
+            logger.warn("'_source' field is enabled. Disable '_source' field to save space and reduce I/O.");
+        }
 
         String uri = config.host() + "/" + indexName() + "/_bulk";
         for (List<Meter> batch : MeterPartition.partition(this, config.batchSize())) {

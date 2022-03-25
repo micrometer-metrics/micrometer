@@ -181,6 +181,17 @@ public interface ElasticConfig extends StepRegistryConfig {
         return getSecret(this, "apiKeyCredentials").orElse(null);
     }
 
+    /**
+     * Enable {@literal _source} in the index template.
+     * Default is: {@code false}
+     *
+     * @return whether {@literal _source} will be enabled in the index template
+     * @since 2.0.0
+     */
+    default boolean enableSource() {
+        return getBoolean(this, "enableSource").orElse(false);
+    }
+
     @Override
     default Validated<?> validate() {
         return checkAll(this,
