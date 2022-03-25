@@ -37,7 +37,6 @@ import java.util.List;
 import java.util.Optional;
 import java.util.concurrent.ThreadFactory;
 import java.util.concurrent.TimeUnit;
-import java.util.function.BiFunction;
 import java.util.function.Consumer;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -98,14 +97,6 @@ public class ElasticMeterRegistry extends StepMeterRegistry {
             "  \"active\": {\n" +
             "    \"type\": \"double\",\n" +
             "    \"index\": false\n" +
-            "  }\n" +
-            "}";
-    private static final BiFunction<String, Boolean, String> TEMPLATE_BODY_AFTER_VERSION_7 = (indexPrefix, enableSource) -> "{\n" +
-            "  \"index_patterns\": [\"" + indexPrefix + "*\"],\n" +
-            "  \"mappings\": {\n" +
-            "    \"_source\": {\n" +
-            "      \"enabled\": " + enableSource + "\n" +
-            "    },\n" + TEMPLATE_PROPERTIES +
             "  }\n" +
             "}";
 
@@ -192,7 +183,15 @@ public class ElasticMeterRegistry extends StepMeterRegistry {
     }
 
     private String getTemplateBody() {
-        return TEMPLATE_BODY_AFTER_VERSION_7.apply(config.index() + config.indexDateSeparator(), config.enableSource());
+        String indexPrefix = config.index() + config.indexDateSeparator();
+        return "{\n" +
+                "  \"index_patterns\": [\"" + indexPrefix + "*\"],\n" +
+                "  \"mappings\": {\n" +
+                "    \"_source\": {\n" +
+                "      \"enabled\": " + config.enableSource() + "\n" +
+                "    },\n" + TEMPLATE_PROPERTIES +
+                "  }\n" +
+                "}";
     }
 
     private HttpSender.Request.Builder connect(HttpSender.Method method, String uri) {
