@@ -111,6 +111,26 @@ public final class Tags extends io.micrometer.common.Tags<Tag> implements Iterab
         return new ArrayIterator();
     }
 
+    @Override
+    protected Tag tagOf(String key, String value) {
+        return Tag.of(key, value);
+    }
+
+    @Override
+    protected io.micrometer.common.Tags<Tag> tagsOf(String key, String value) {
+        return Tags.of(key, value);
+    }
+
+    @Override
+    protected io.micrometer.common.Tags<Tag> tagsOf(String... keyValues) {
+        return Tags.of(keyValues);
+    }
+
+    @Override
+    protected io.micrometer.common.Tags<Tag> tagsOf(Iterable<? extends Tag> tags) {
+        return Tags.of(tags);
+    }
+
     private class ArrayIterator implements Iterator<Tag> {
         private int currentIndex = 0;
 
