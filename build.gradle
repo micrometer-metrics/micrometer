@@ -16,6 +16,8 @@ buildscript {
         classpath 'io.spring.nohttp:nohttp-gradle:0.0.10'
         classpath 'org.gradle:test-retry-gradle-plugin:1.3.1'
         classpath 'io.github.gradle-nexus:publish-plugin:1.1.0'
+        classpath "me.champeau.gradle:japicmp-gradle-plugin:0.4.0"
+        classpath "de.undercouch:gradle-download-task:5.0.2"
 
         constraints {
             classpath('org.ow2.asm:asm:7.3.1') {
@@ -38,6 +40,7 @@ apply from: 'dependencies.gradle'
 allprojects {
     group = 'io.micrometer'
     ext.'release.stage' = releaseStage ?: 'SNAPSHOT'
+    ext.compatibleVersion = "1.8.4"
 
     afterEvaluate { project -> println "I'm configuring $project.name with version $project.version" }
 }
@@ -289,6 +292,47 @@ subprojects {
                     from "$rootDir/LICENSE"
                     from "$rootDir/NOTICE"
                 }
+            }
+
+            // new projects
+            if (["micrometer-commons", "micrometer-binders"].every { it != project.name }) {
+                apply plugin: 'me.champeau.gradle.japicmp'
+                apply plugin: 'de.undercouch.download'
+
+                task downloadBaseline(type: Download) {
+                    onlyIf {
+                        if (project.gradle.startParameter.isOffline()) {
+                            println "Offline: skipping downloading of baseline and JAPICMP"
+                            return false
+                        } else if ("$compatibleVersion" == "SKIP") {
+                            println "SKIP: Instructed to skip the baseline comparison"
+                            return false
+                        } else {
+                            println "Will download and perform baseline comparison with ${compatibleVersion}"
+                            return true
+                        }
+                    }
+
+                    onlyIfNewer true
+                    compress true
+                    src "${repositories.mavenCentral().url}io/micrometer/${project.name}/${compatibleVersion}/${project.name}-${compatibleVersion}.jar"
+                    dest "${buildDir}/baselineLibs/${project.name}-${compatibleVersion}.jar"
+                }
+
+                task japicmp(type: me.champeau.gradle.japicmp.JapicmpTask) {
+                    oldClasspath.from(files("${buildDir}/baselineLibs/${project.name}-${compatibleVersion}.jar"))
+                    newClasspath.from(files(jar.archiveFile, project(":${project.name}").jar))
+                    onlyBinaryIncompatibleModified = true
+                    failOnModification = true
+                    failOnSourceIncompatibility = true
+                    txtOutputFile = file("${project.buildDir}/reports/japi.txt")
+                    ignoreMissingClasses = true
+                    includeSynthetic = true
+                    onlyIf { "${compatibleVersion}" != "SKIP" }
+                }
+
+                tasks.japicmp.dependsOn(downloadBaseline)
+                tasks.check.dependsOn(japicmp)
             }
         }
 

@@ -1,0 +1,15 @@
+description 'Module containing common code'
+
+dependencies {
+    // log monitoring
+    optionalApi 'ch.qos.logback:logback-classic'
+
+    // JUnit 5
+    testImplementation 'org.junit.jupiter:junit-jupiter'
+    testImplementation 'com.tngtech.archunit:archunit-junit5'
+
+    testImplementation 'org.mockito:mockito-inline'
+
+    testImplementation 'org.assertj:assertj-core'
+    testImplementation 'org.awaitility:awaitility'
+}

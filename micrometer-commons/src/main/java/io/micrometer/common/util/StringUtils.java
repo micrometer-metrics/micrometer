@@ -13,29 +13,35 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package io.micrometer.core.instrument.util;
+package io.micrometer.common.util;
 
-import io.micrometer.core.lang.Nullable;
+import io.micrometer.common.lang.Nullable;
 
 /**
  * Utilities for {@link String}.
  *
  * @author Johnny Lim
- * @deprecated use {@link io.micrometer.common.util.StringUtils}
  */
-@Deprecated
 public final class StringUtils {
 
     /**
      * Check if the String is null or has only whitespaces.
      *
-     * Modified from {@link org.apache.commons.lang.StringUtils#isBlank(String)}.
+     * Modified from {@code org.apache.commons.lang.StringUtils#isBlank(String)}.
      *
      * @param string String to check
      * @return {@code true} if the String is null or has only whitespaces
      */
     public static boolean isBlank(@Nullable String string) {
-        return io.micrometer.common.util.StringUtils.isBlank(string);
+        if (isEmpty(string)) {
+            return true;
+        }
+        for (int i = 0; i < string.length(); i++) {
+            if (!Character.isWhitespace(string.charAt(i))) {
+                return false;
+            }
+        }
+        return true;
     }
 
     /**
@@ -55,7 +61,7 @@ public final class StringUtils {
      * @return {@code true} if the String is null or empty
      */
     public static boolean isEmpty(@Nullable String string) {
-        return io.micrometer.common.util.StringUtils.isEmpty(string);
+        return string == null || string.isEmpty();
     }
 
     /**
@@ -77,7 +83,10 @@ public final class StringUtils {
      * @return truncated String
      */
     public static String truncate(String string, int maxLength) {
-        return io.micrometer.common.util.StringUtils.truncate(string, maxLength);
+        if (string.length() > maxLength) {
+            return string.substring(0, maxLength);
+        }
+        return string;
     }
 
     private StringUtils() {

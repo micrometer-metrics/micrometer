@@ -13,11 +13,11 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package io.micrometer.core.instrument;
+package io.micrometer.common;
 
 import java.util.Objects;
 
-import io.micrometer.core.lang.Nullable;
+import io.micrometer.common.lang.Nullable;
 
 import static java.util.Objects.requireNonNull;
 
@@ -25,10 +25,8 @@ import static java.util.Objects.requireNonNull;
  * Immutable {@link Tag}.
  *
  * @author Jon Schneider
- * @deprecated use {@link io.micrometer.common.ImmutableTag}
  */
-@Deprecated
-public class ImmutableTag implements Tag {
+public class ImmutableTag<T extends Tag<T>> implements Tag<T> {
     private final String key;
     private final String value;
 
