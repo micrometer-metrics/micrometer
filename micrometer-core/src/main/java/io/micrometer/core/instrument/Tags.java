@@ -135,6 +135,7 @@ public final class Tags extends io.micrometer.common.Tags<Tag> implements Iterab
      *
      * @return a tags stream
      */
+    @Override
     public Stream<Tag> stream() {
         return StreamSupport.stream(Spliterators.spliteratorUnknownSize(iterator(),
                 Spliterator.ORDERED | Spliterator.DISTINCT | Spliterator.NONNULL | Spliterator.SORTED), false);

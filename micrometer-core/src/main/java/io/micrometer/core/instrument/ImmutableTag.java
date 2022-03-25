@@ -15,9 +15,9 @@
  */
 package io.micrometer.core.instrument;
 
-import io.micrometer.core.lang.Nullable;
-
 import java.util.Objects;
+
+import io.micrometer.core.lang.Nullable;
 
 import static java.util.Objects.requireNonNull;
 
@@ -25,7 +25,9 @@ import static java.util.Objects.requireNonNull;
  * Immutable {@link Tag}.
  *
  * @author Jon Schneider
+ * @deprecated use {@link io.micrometer.common.ImmutableTag}
  */
+@Deprecated
 public class ImmutableTag implements Tag {
     private final String key;
     private final String value;
