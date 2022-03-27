@@ -36,11 +36,11 @@ public class DefaultMongoCommandTagsProvider implements MongoCommandTagsProvider
 
     private static final WarnThenDebugLogger WARN_THEN_DEBUG_LOGGER = new WarnThenDebugLogger(DefaultMongoCommandTagsProvider.class);
 
-    private final ConcurrentMap<Integer, MongoCommandStartedEventTags> inFlightCommandStartedEventTags = new ConcurrentHashMap<>();
+    private final ConcurrentMap<Integer, MongoCommandStartedEventTags> inFlightCommandStartedEventTagsByRequestId = new ConcurrentHashMap<>();
 
     @Override
     public Iterable<Tag> commandTags(CommandEvent event) {
-        Optional<MongoCommandStartedEventTags> mongoCommandStartedEventTags = Optional.ofNullable(inFlightCommandStartedEventTags.remove(event.getRequestId()));
+        Optional<MongoCommandStartedEventTags> mongoCommandStartedEventTags = Optional.ofNullable(inFlightCommandStartedEventTagsByRequestId.remove(event.getRequestId()));
         return Tags.of(
                 Tag.of("command", event.getCommandName()),
                 Tag.of("database", mongoCommandStartedEventTags.map(MongoCommandStartedEventTags::getDatabase).orElse("unknown")),
@@ -53,12 +53,12 @@ public class DefaultMongoCommandTagsProvider implements MongoCommandTagsProvider
     @Override
     public void commandStarted(CommandStartedEvent event) {
         MongoCommandStartedEventTags tags = new MongoCommandStartedEventTags(event);
-        addTagsForStartedCommandEvent(event, tags);
+        addTagsForCommandStartedEvent(event, tags);
     }
 
-    private void addTagsForStartedCommandEvent(CommandEvent event, MongoCommandStartedEventTags tags) {
-        if (inFlightCommandStartedEventTags.size() < 1000) {
-            inFlightCommandStartedEventTags.put(event.getRequestId(), tags);
+    private void addTagsForCommandStartedEvent(CommandEvent event, MongoCommandStartedEventTags tags) {
+        if (inFlightCommandStartedEventTagsByRequestId.size() < 1000) {
+            inFlightCommandStartedEventTagsByRequestId.put(event.getRequestId(), tags);
             return;
         }
         // Cache over capacity
