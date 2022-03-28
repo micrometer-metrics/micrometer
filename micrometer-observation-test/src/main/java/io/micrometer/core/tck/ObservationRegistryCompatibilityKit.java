@@ -1,5 +1,5 @@
 /*
- * Copyright 2017 VMware, Inc.
+ * Copyright 2022 VMware, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -95,12 +95,14 @@ public abstract class ObservationRegistryCompatibilityKit {
 
     @Test
     void runnableShouldBeObserved() {
+        @SuppressWarnings("unchecked")
         ObservationHandler<Observation.Context> handler = mock(ObservationHandler.class);
         when(handler.supportsContext(isA(Observation.Context.class))).thenReturn(true);
         registry.observationConfig().observationHandler(handler);
         Observation observation = Observation.createNotStarted("myObservation", registry);
 
-        observation.observe((Runnable) () -> assertThat(registry.getCurrentObservation()).isSameAs(observation));
+        Runnable runnable = () -> assertThat(registry.getCurrentObservation()).isSameAs(observation);
+        observation.observe(runnable);
         assertThat(registry.getCurrentObservation()).isNull();
 
         InOrder inOrder = inOrder(handler);
@@ -114,17 +116,18 @@ public abstract class ObservationRegistryCompatibilityKit {
 
     @Test
     void runnableThrowingErrorShouldBeObserved() {
+        @SuppressWarnings("unchecked")
         ObservationHandler<Observation.Context> handler = mock(ObservationHandler.class);
         when(handler.supportsContext(isA(Observation.Context.class))).thenReturn(true);
         registry.observationConfig().observationHandler(handler);
         Observation observation = Observation.createNotStarted("myObservation", registry);
 
-        assertThatThrownBy(() ->
-            observation.observe((Runnable) () -> {
-                assertThat(registry.getCurrentObservation()).isSameAs(observation);
-                throw new RuntimeException("simulated");
-            })
-        ).isInstanceOf(RuntimeException.class)
+        Runnable runnable = () -> {
+            assertThat(registry.getCurrentObservation()).isSameAs(observation);
+            throw new RuntimeException("simulated");
+        };
+        assertThatThrownBy(() -> observation.observe(runnable))
+                .isInstanceOf(RuntimeException.class)
                 .hasMessage("simulated")
                 .hasNoCause();
 
@@ -141,12 +144,14 @@ public abstract class ObservationRegistryCompatibilityKit {
 
     @Test
     void checkedRunnableShouldBeObserved() throws Exception {
+        @SuppressWarnings("unchecked")
         ObservationHandler<Observation.Context> handler = mock(ObservationHandler.class);
         when(handler.supportsContext(isA(Observation.Context.class))).thenReturn(true);
         registry.observationConfig().observationHandler(handler);
         Observation observation = Observation.createNotStarted("myObservation", registry);
 
-        observation.observeChecked((Observation.CheckedRunnable) () -> assertThat(registry.getCurrentObservation()).isSameAs(observation));
+        Observation.CheckedRunnable checkedRunnable = () -> assertThat(registry.getCurrentObservation()).isSameAs(observation);
+        observation.observeChecked(checkedRunnable);
         assertThat(registry.getCurrentObservation()).isNull();
 
         InOrder inOrder = inOrder(handler);
@@ -160,17 +165,18 @@ public abstract class ObservationRegistryCompatibilityKit {
 
     @Test
     void checkedRunnableThrowingErrorShouldBeObserved() {
+        @SuppressWarnings("unchecked")
         ObservationHandler<Observation.Context> handler = mock(ObservationHandler.class);
         when(handler.supportsContext(isA(Observation.Context.class))).thenReturn(true);
         registry.observationConfig().observationHandler(handler);
         Observation observation = Observation.createNotStarted("myObservation", registry);
 
-        assertThatThrownBy(() ->
-                observation.observeChecked((Observation.CheckedRunnable) () -> {
-                    assertThat(registry.getCurrentObservation()).isSameAs(observation);
-                    throw new IOException("simulated");
-                })
-        ).isInstanceOf(IOException.class)
+        Observation.CheckedRunnable checkedRunnable = () -> {
+            assertThat(registry.getCurrentObservation()).isSameAs(observation);
+            throw new IOException("simulated");
+        };
+        assertThatThrownBy(() -> observation.observeChecked(checkedRunnable))
+                .isInstanceOf(IOException.class)
                 .hasMessage("simulated")
                 .hasNoCause();
 
@@ -187,15 +193,17 @@ public abstract class ObservationRegistryCompatibilityKit {
 
     @Test
     void supplierShouldBeObserved() {
+        @SuppressWarnings("unchecked")
         ObservationHandler<Observation.Context> handler = mock(ObservationHandler.class);
         when(handler.supportsContext(isA(Observation.Context.class))).thenReturn(true);
         registry.observationConfig().observationHandler(handler);
         Observation observation = Observation.createNotStarted("myObservation", registry);
 
-        String result = observation.observe((Supplier<String>) () -> {
+        Supplier<String> supplier = () -> {
             assertThat(registry.getCurrentObservation()).isSameAs(observation);
             return "test";
-        });
+        };
+        String result = observation.observe(supplier);
         assertThat(result).isEqualTo("test");
         assertThat(registry.getCurrentObservation()).isNull();
 
@@ -210,17 +218,18 @@ public abstract class ObservationRegistryCompatibilityKit {
 
     @Test
     void supplierThrowingErrorShouldBeObserved() {
+        @SuppressWarnings("unchecked")
         ObservationHandler<Observation.Context> handler = mock(ObservationHandler.class);
         when(handler.supportsContext(isA(Observation.Context.class))).thenReturn(true);
         registry.observationConfig().observationHandler(handler);
         Observation observation = Observation.createNotStarted("myObservation", registry);
 
-        assertThatThrownBy(() ->
-                observation.observe((Supplier<String>) () -> {
-                    assertThat(registry.getCurrentObservation()).isSameAs(observation);
-                    throw new RuntimeException("simulated");
-                })
-        ).isInstanceOf(RuntimeException.class)
+        Supplier<String> supplier = () -> {
+            assertThat(registry.getCurrentObservation()).isSameAs(observation);
+            throw new RuntimeException("simulated");
+        };
+        assertThatThrownBy(() -> observation.observe(supplier))
+                .isInstanceOf(RuntimeException.class)
                 .hasMessage("simulated")
                 .hasNoCause();
 
@@ -237,15 +246,17 @@ public abstract class ObservationRegistryCompatibilityKit {
 
     @Test
     void callableShouldBeObserved() throws Exception {
+        @SuppressWarnings("unchecked")
         ObservationHandler<Observation.Context> handler = mock(ObservationHandler.class);
         when(handler.supportsContext(isA(Observation.Context.class))).thenReturn(true);
         registry.observationConfig().observationHandler(handler);
         Observation observation = Observation.createNotStarted("myObservation", registry);
 
-        String result = observation.observeChecked((Callable<String>) () -> {
+        Callable<String> callable = () -> {
             assertThat(registry.getCurrentObservation()).isSameAs(observation);
             return "test";
-        });
+        };
+        String result = observation.observeChecked(callable);
         assertThat(result).isEqualTo("test");
         assertThat(registry.getCurrentObservation()).isNull();
 
@@ -260,17 +271,18 @@ public abstract class ObservationRegistryCompatibilityKit {
 
     @Test
     void callableThrowingErrorShouldBeObserved() {
+        @SuppressWarnings("unchecked")
         ObservationHandler<Observation.Context> handler = mock(ObservationHandler.class);
         when(handler.supportsContext(isA(Observation.Context.class))).thenReturn(true);
         registry.observationConfig().observationHandler(handler);
         Observation observation = Observation.createNotStarted("myObservation", registry);
 
-        assertThatThrownBy(() ->
-                observation.observeChecked((Callable<String>) () -> {
-                    assertThat(registry.getCurrentObservation()).isSameAs(observation);
-                    throw new IOException("simulated");
-                })
-        ).isInstanceOf(IOException.class)
+        Callable<String> callable = () -> {
+            assertThat(registry.getCurrentObservation()).isSameAs(observation);
+            throw new IOException("simulated");
+        };
+        assertThatThrownBy(() -> observation.observeChecked(callable))
+                .isInstanceOf(IOException.class)
                 .hasMessage("simulated")
                 .hasNoCause();
 
@@ -288,9 +300,8 @@ public abstract class ObservationRegistryCompatibilityKit {
     @Test
     void runnableShouldBeScoped() {
         Observation observation = Observation.start("myObservation", registry);
-        observation.scoped((Runnable) () -> {
-            assertThat(registry.getCurrentObservation()).isSameAs(observation);
-        });
+        Runnable runnable = () -> assertThat(registry.getCurrentObservation()).isSameAs(observation);
+        observation.scoped(runnable);
         assertThat(registry.getCurrentObservation()).isNull();
     }
 
@@ -300,7 +311,10 @@ public abstract class ObservationRegistryCompatibilityKit {
         Observation observation = Observation.start("myObservation", context, registry);
         RuntimeException error = new RuntimeException("simulated");
 
-        assertThatThrownBy(() -> observation.scoped((Runnable) () -> { throw error; })).isSameAs(error);
+        Runnable runnable = () -> {
+            throw error;
+        };
+        assertThatThrownBy(() -> observation.scoped(runnable)).isSameAs(error);
         assertThat(context.getError()).containsSame(error);
         assertThat(registry.getCurrentObservation()).isNull();
     }
@@ -308,10 +322,11 @@ public abstract class ObservationRegistryCompatibilityKit {
     @Test
     void supplierShouldBeScoped() {
         Observation observation = Observation.start("myObservation", registry);
-        String result = observation.scoped((Supplier<String>) () -> {
+        Supplier<String> supplier = () -> {
             assertThat(registry.getCurrentObservation()).isSameAs(observation);
             return "test";
-        });
+        };
+        String result = observation.scoped(supplier);
         assertThat(result).isEqualTo("test");
         assertThat(registry.getCurrentObservation()).isNull();
     }
@@ -322,7 +337,10 @@ public abstract class ObservationRegistryCompatibilityKit {
         Observation observation = Observation.start("myObservation", context, registry);
         RuntimeException error = new RuntimeException("simulated");
 
-        assertThatThrownBy(() -> observation.scoped((Supplier<String>) () -> { throw error; })).isSameAs(error);
+        Supplier<String> supplier = () -> {
+            throw error;
+        };
+        assertThatThrownBy(() -> observation.scoped(supplier)).isSameAs(error);
         assertThat(context.getError()).containsSame(error);
         assertThat(registry.getCurrentObservation()).isNull();
     }
@@ -330,45 +348,37 @@ public abstract class ObservationRegistryCompatibilityKit {
     @Test
     void runnableShouldBeParentScoped() {
         Observation parent = Observation.start("myObservation", registry);
-        Observation.tryScoped(
-                parent,
-                (Runnable) () -> {
-                    assertThat(registry.getCurrentObservation()).isSameAs(parent);
-                });
+        Runnable runnable = () -> assertThat(registry.getCurrentObservation()).isSameAs(parent);
+        Observation.tryScoped(parent, runnable);
         assertThat(registry.getCurrentObservation()).isNull();
     }
 
     @Test
     void runnableShouldNotBeParentScopedIfParentIsNull() {
-        Observation.tryScoped(
-                null,
-                (Runnable) () -> {
-                    assertThat(registry.getCurrentObservation()).isNull();
-                });
+        Runnable runnable = () -> assertThat(registry.getCurrentObservation()).isNull();
+        Observation.tryScoped(null, runnable);
         assertThat(registry.getCurrentObservation()).isNull();
     }
 
     @Test
     void supplierShouldBeParentScoped() {
         Observation parent = Observation.start("myObservation", registry);
-        String result = Observation.tryScoped(
-                parent,
-                (Supplier<String>) () -> {
-                    assertThat(registry.getCurrentObservation()).isSameAs(parent);
-                    return "test";
-                });
+        Supplier<String> supplier = () -> {
+            assertThat(registry.getCurrentObservation()).isSameAs(parent);
+            return "test";
+        };
+        String result = Observation.tryScoped(parent, supplier);
         assertThat(result).isEqualTo("test");
         assertThat(registry.getCurrentObservation()).isNull();
     }
 
     @Test
     void supplierShouldNotBeParentScopedIfParentIsNull() {
-        Observation.tryScoped(
-                null,
-                () -> {
-                    assertThat(registry.getCurrentObservation()).isNull();
-                    return "test";
-                });
+        Supplier<String> supplier = () -> {
+            assertThat(registry.getCurrentObservation()).isNull();
+            return "test";
+        };
+        Observation.tryScoped(null, supplier);
         assertThat(registry.getCurrentObservation()).isNull();
     }
 
