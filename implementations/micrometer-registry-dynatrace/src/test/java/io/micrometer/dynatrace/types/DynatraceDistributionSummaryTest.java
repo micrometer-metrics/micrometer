@@ -36,7 +36,7 @@ class DynatraceDistributionSummaryTest {
 
     @Test
     void testHasValues() {
-        DynatraceDistributionSummary ds = new DynatraceDistributionSummary(ID);
+        DynatraceDistributionSummary ds = new DynatraceDistributionSummary(ID, 1);
         assertThat(ds.hasValues()).isFalse();
         ds.record(3.14);
         assertThat(ds.hasValues()).isTrue();
@@ -52,7 +52,7 @@ class DynatraceDistributionSummaryTest {
 
     @Test
     void testDynatraceDistributionSummary() {
-        DynatraceDistributionSummary ds = new DynatraceDistributionSummary(ID);
+        DynatraceDistributionSummary ds = new DynatraceDistributionSummary(ID, 1);
         ds.record(3.14);
         ds.record(4.76);
 
@@ -60,8 +60,18 @@ class DynatraceDistributionSummaryTest {
     }
 
     @Test
+    void testDynatraceDistributionSummaryScaled() {
+        double scale = 1.5;
+        DynatraceDistributionSummary ds = new DynatraceDistributionSummary(ID, scale);
+        ds.record(3.14);
+        ds.record(4.76);
+
+        assertMinMaxSumCount(ds, 3.14 * scale, 4.76 * scale, 7.9 * scale, 2);
+    }
+
+    @Test
     void testRecordNegativeIgnored() {
-        DynatraceDistributionSummary ds = new DynatraceDistributionSummary(ID);
+        DynatraceDistributionSummary ds = new DynatraceDistributionSummary(ID, 1);
         ds.record(3.14);
         ds.record(-1.234);
         ds.record(4.76);
@@ -72,7 +82,7 @@ class DynatraceDistributionSummaryTest {
 
     @Test
     void testMinMaxAreOverwritten() {
-        DynatraceDistributionSummary ds = new DynatraceDistributionSummary(ID);
+        DynatraceDistributionSummary ds = new DynatraceDistributionSummary(ID, 1);
         ds.record(3.14);
         ds.record(4.76);
         ds.record(0.123);
@@ -84,7 +94,7 @@ class DynatraceDistributionSummaryTest {
 
     @Test
     void testGetSnapshotNoReset() {
-        DynatraceDistributionSummary ds = new DynatraceDistributionSummary(ID);
+        DynatraceDistributionSummary ds = new DynatraceDistributionSummary(ID, 1);
         ds.record(3.14);
         ds.record(4.76);
 
@@ -95,7 +105,7 @@ class DynatraceDistributionSummaryTest {
 
     @Test
     void testGetSnapshotNoResetWithTimeUnitIgnored() {
-        DynatraceDistributionSummary ds = new DynatraceDistributionSummary(ID);
+        DynatraceDistributionSummary ds = new DynatraceDistributionSummary(ID, 1);
         ds.record(3.14);
         ds.record(4.76);
 
@@ -107,7 +117,7 @@ class DynatraceDistributionSummaryTest {
 
     @Test
     void testGetSnapshotAndReset() {
-        DynatraceDistributionSummary ds = new DynatraceDistributionSummary(ID);
+        DynatraceDistributionSummary ds = new DynatraceDistributionSummary(ID, 1);
         ds.record(3.14);
         ds.record(4.76);
 
@@ -118,7 +128,7 @@ class DynatraceDistributionSummaryTest {
 
     @Test
     void testGetSnapshotAndResetWithTimeUnitIgnored() {
-        DynatraceDistributionSummary ds = new DynatraceDistributionSummary(ID);
+        DynatraceDistributionSummary ds = new DynatraceDistributionSummary(ID, 1);
         ds.record(3.14);
         ds.record(4.76);
 

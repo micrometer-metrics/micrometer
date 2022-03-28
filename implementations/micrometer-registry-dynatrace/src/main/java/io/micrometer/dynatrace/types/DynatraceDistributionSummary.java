@@ -32,14 +32,16 @@ import java.util.concurrent.TimeUnit;
 public final class DynatraceDistributionSummary extends AbstractMeter implements DistributionSummary, DynatraceSummarySnapshotSupport {
     private final DynatraceSummary summary = new DynatraceSummary();
     private static final Logger LOGGER = LoggerFactory.getLogger(DynatraceDistributionSummary.class.getName());
+    private final double scale;
 
-    public DynatraceDistributionSummary(Id id) {
+    public DynatraceDistributionSummary(Id id, double scale) {
         super(id);
+        this.scale = scale;
     }
 
     @Override
     public void record(double amount) {
-        summary.recordNonNegative(amount);
+        summary.recordNonNegative(amount * scale);
     }
 
     @Override
