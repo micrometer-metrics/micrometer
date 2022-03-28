@@ -117,11 +117,6 @@ public final class Tags extends io.micrometer.common.Tags<Tag> implements Iterab
     }
 
     @Override
-    protected io.micrometer.common.Tags<Tag> tagsOf(String key, String value) {
-        return Tags.of(key, value);
-    }
-
-    @Override
     protected io.micrometer.common.Tags<Tag> tagsOf(String... keyValues) {
         return Tags.of(keyValues);
     }

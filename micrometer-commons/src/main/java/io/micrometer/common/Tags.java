@@ -87,10 +87,6 @@ public class Tags<T extends Tag> implements Iterable<T> {
         return (T) Tag.of(key, value);
     }
 
-    protected Tags<T> tagsOf(String key, String value) {
-        return Tags.of(key, value);
-    }
-
     protected Tags<T> tagsOf(@Nullable String... keyValues) {
         return Tags.of(keyValues);
     }
