@@ -128,6 +128,20 @@ public interface DynatraceConfig extends StepRegistryConfig {
         return getBoolean(this, "enrichWithDynatraceMetadata").orElse(true);
     }
 
+    /**
+     * Return whether to fall back to the built-in micrometer instruments for Timer and DistributionSummary.
+     *
+     * @return {@code true} if the resetting Dynatrace instruments should be used, and false if the registry should
+     * fall back to the built-in Micrometer instruments.
+     * @since 1.9.0
+     */
+    default boolean useDynatraceSummaryInstruments() {
+        if (apiVersion() == V1) {
+            return false;
+        }
+        return getBoolean(this, "useDynatraceSummaryInstruments").orElse(true);
+    }
+
     @Override
     default Validated<?> validate() {
         return checkAll(this,

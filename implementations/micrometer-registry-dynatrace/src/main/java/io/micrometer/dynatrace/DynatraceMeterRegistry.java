@@ -58,8 +58,9 @@ import static io.micrometer.core.instrument.config.MeterFilterReply.NEUTRAL;
 public class DynatraceMeterRegistry extends StepMeterRegistry {
     private static final ThreadFactory DEFAULT_THREAD_FACTORY = new NamedThreadFactory("dynatrace-metrics-publisher");
     private static final InternalLogger logger = InternalLoggerFactory.getInstance(DynatraceMeterRegistry.class);
-    private final DynatraceApiVersion apiVersion;
 
+    private final DynatraceApiVersion apiVersion;
+    private final boolean useDynatraceSummaryInstruments;
     private final AbstractDynatraceExporter exporter;
 
     @SuppressWarnings("deprecation")
@@ -71,6 +72,7 @@ public class DynatraceMeterRegistry extends StepMeterRegistry {
         super(config, clock);
 
         apiVersion = config.apiVersion();
+        useDynatraceSummaryInstruments = config.useDynatraceSummaryInstruments();
 
         if (apiVersion == DynatraceApiVersion.V2) {
             logger.info("Exporting to Dynatrace metrics API v2");
@@ -101,7 +103,7 @@ public class DynatraceMeterRegistry extends StepMeterRegistry {
 
     @Override
     protected DistributionSummary newDistributionSummary(Meter.Id id, DistributionStatisticConfig distributionStatisticConfig, double scale) {
-        if (apiVersion == DynatraceApiVersion.V2) {
+        if (apiVersion == DynatraceApiVersion.V2 && useDynatraceSummaryInstruments) {
             return new DynatraceDistributionSummary(id, clock, distributionStatisticConfig, scale);
         }
         return super.newDistributionSummary(id, distributionStatisticConfig, scale);
@@ -109,7 +111,7 @@ public class DynatraceMeterRegistry extends StepMeterRegistry {
 
     @Override
     protected Timer newTimer(Meter.Id id, DistributionStatisticConfig distributionStatisticConfig, PauseDetector pauseDetector) {
-        if (apiVersion == DynatraceApiVersion.V2) {
+        if (apiVersion == DynatraceApiVersion.V2 && useDynatraceSummaryInstruments) {
             return new DynatraceTimer(id, clock, distributionStatisticConfig, pauseDetector, exporter.getBaseTimeUnit());
         }
         return super.newTimer(id, distributionStatisticConfig, pauseDetector);
