@@ -178,6 +178,16 @@ public interface ElasticConfig extends StepRegistryConfig {
         return getString(this, "documentType").orElse("doc");
     }
 
+    /**
+     * Enable {@literal _source} in the index template. Default is: {@code false}
+     * @return whether {@literal _source} will be enabled in the index template used with
+     * {@link #autoCreateIndex()}
+     * @since 1.14.0
+     */
+    default boolean enableSource() {
+        return getBoolean(this, "enableSource").orElse(false);
+    }
+
     @Override
     default Validated<?> validate() {
         return checkAll(this, c -> StepRegistryConfig.validate(c), checkRequired("host", ElasticConfig::host),

@@ -153,6 +153,9 @@ public class ElasticMeterRegistry extends StepMeterRegistry {
         if (this.checkedForIndexTemplate || !this.config.autoCreateIndex()) {
             return;
         }
+        if (config.enableSource()) {
+            logger.warn("'_source' field is enabled. Disable '_source' field to save space and reduce I/O.");
+        }
         attemptIndexTemplateCreation(new DefaultIndexTemplateCreator(this.httpClient));
         if (!this.checkedForIndexTemplate) {
             logger.debug("Attempt to create index template using legacy /_template/ endpoint");
