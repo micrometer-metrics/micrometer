@@ -1,5 +1,5 @@
 /*
- * Copyright 2021 VMware, Inc.
+ * Copyright 2022 VMware, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -33,22 +33,22 @@ class MongoCommandStartedEventTags {
             "aggregate", "count", "distinct", "mapReduce", "geoSearch", "delete", "find", "findAndModify",
             "insert", "update", "collMod", "compact", "convertToCapped", "create", "createIndexes", "drop",
             "dropIndexes", "killCursors", "listIndexes", "reIndex"));
-    public static final String UNKNOWN = "unknown";
-
-    public MongoCommandStartedEventTags(CommandStartedEvent event) {
-        this.database = event.getDatabaseName();
-        this.collection = this.determineCollectionName(event.getCommandName(), event.getCommand())
-                .orElse(UNKNOWN);
-    }
+    private static final String UNKNOWN = "unknown";
 
     private final String collection;
     private final String database;
 
-    public String getDatabase() {
+    MongoCommandStartedEventTags(CommandStartedEvent event) {
+        this.database = event.getDatabaseName();
+        this.collection = determineCollectionName(event.getCommandName(), event.getCommand())
+                .orElse(UNKNOWN);
+    }
+
+    String getDatabase() {
         return database;
     }
 
-    public String getCollection() {
+    String getCollection() {
         return collection;
     }
 
