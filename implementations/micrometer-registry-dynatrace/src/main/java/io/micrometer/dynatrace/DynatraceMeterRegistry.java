@@ -109,7 +109,7 @@ public class DynatraceMeterRegistry extends StepMeterRegistry {
     @Override
     protected Timer newTimer(Meter.Id id, DistributionStatisticConfig distributionStatisticConfig, PauseDetector pauseDetector) {
         if (apiVersion == DynatraceApiVersion.V2) {
-            return new DynatraceTimer(id, clock, distributionStatisticConfig, exporter.getBaseTimeUnit());
+            return new DynatraceTimer(id, clock, distributionStatisticConfig, pauseDetector, exporter.getBaseTimeUnit());
         }
         return super.newTimer(id, distributionStatisticConfig, pauseDetector);
     }

@@ -15,17 +15,16 @@
  */
 package io.micrometer.dynatrace.types;
 
-import io.micrometer.core.instrument.AbstractMeter;
+import io.micrometer.core.instrument.AbstractTimer;
 import io.micrometer.core.instrument.Clock;
 import io.micrometer.core.instrument.Timer;
 import io.micrometer.core.instrument.distribution.DistributionStatisticConfig;
 import io.micrometer.core.instrument.distribution.HistogramSnapshot;
+import io.micrometer.core.instrument.distribution.pause.PauseDetector;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.util.concurrent.Callable;
 import java.util.concurrent.TimeUnit;
-import java.util.function.Supplier;
 
 /**
  * Resettable {@link Timer} implementation for Dynatrace exporters.
@@ -33,19 +32,21 @@ import java.util.function.Supplier;
  * @author Georg Pirklbauer
  * @since 1.9.0
  */
-public final class DynatraceTimer extends AbstractMeter implements Timer, DynatraceSummarySnapshotSupport {
+public final class DynatraceTimer extends AbstractTimer implements DynatraceSummarySnapshotSupport {
     private static final Logger LOGGER = LoggerFactory.getLogger(DynatraceTimer.class.getName());
     private final DynatraceSummary summary = new DynatraceSummary();
-    private final Clock clock;
-    private final TimeUnit baseTimeUnit;
 
-    public DynatraceTimer(Id id, Clock clock, DistributionStatisticConfig distributionStatisticConfig, TimeUnit baseTimeUnit) {
-        super(id);
+    // Configuration that will set the Histogram in AbstractTimer to a NoopHistogram.
+    private static final DistributionStatisticConfig NOOP_HISTOGRAM_CONFIG =
+            DistributionStatisticConfig.builder().percentilesHistogram(false).percentiles().build();
+
+    public DynatraceTimer(Id id, Clock clock, DistributionStatisticConfig distributionStatisticConfig, PauseDetector pauseDetector, TimeUnit baseTimeUnit) {
+        // make sure the Histogram in AbstractTimer is always a NoopHistogram by disabling the respective config options
+        super(id, clock, NOOP_HISTOGRAM_CONFIG, pauseDetector, baseTimeUnit, false);
+
         if (distributionStatisticConfig != DistributionStatisticConfig.NONE) {
             LOGGER.warn("Distribution statistic config is currently ignored.");
         }
-        this.clock = clock;
-        this.baseTimeUnit = baseTimeUnit;
     }
 
     @Override
@@ -75,44 +76,8 @@ public final class DynatraceTimer extends AbstractMeter implements Timer, Dynatr
         return snapshot;
     }
 
-    // from AbstractTimer
     @Override
-    public <T> T recordCallable(Callable<T> f) throws Exception {
-        final long s = clock.monotonicTime();
-        try {
-            return f.call();
-        } finally {
-            final long e = clock.monotonicTime();
-            record(e - s, TimeUnit.NANOSECONDS);
-        }
-    }
-
-    // from AbstractTimer
-    @Override
-    public <T> T record(Supplier<T> f) {
-        final long s = clock.monotonicTime();
-        try {
-            return f.get();
-        } finally {
-            final long e = clock.monotonicTime();
-            record(e - s, TimeUnit.NANOSECONDS);
-        }
-    }
-
-    // from AbstractTimer
-    @Override
-    public void record(Runnable f) {
-        final long s = clock.monotonicTime();
-        try {
-            f.run();
-        } finally {
-            final long e = clock.monotonicTime();
-            record(e - s, TimeUnit.NANOSECONDS);
-        }
-    }
-
-    @Override
-    public void record(long amount, TimeUnit unit) {
+    protected void recordNonNegative(long amount, TimeUnit unit) {
         // store everything in baseTimeUnit
         long inBaseUnit = baseTimeUnit().convert(amount, unit);
         summary.recordNonNegative(inBaseUnit);
@@ -131,11 +96,6 @@ public final class DynatraceTimer extends AbstractMeter implements Timer, Dynatr
     @Override
     public double max(TimeUnit unit) {
         return unit.convert((long) summary.getMax(), baseTimeUnit());
-    }
-
-    @Override
-    public TimeUnit baseTimeUnit() {
-        return baseTimeUnit;
     }
 
     public double min(TimeUnit unit) {

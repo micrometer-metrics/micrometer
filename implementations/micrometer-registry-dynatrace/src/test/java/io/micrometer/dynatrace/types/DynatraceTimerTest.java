@@ -20,6 +20,8 @@ import io.micrometer.core.instrument.Meter;
 import io.micrometer.core.instrument.MockClock;
 import io.micrometer.core.instrument.Tags;
 import io.micrometer.core.instrument.distribution.DistributionStatisticConfig;
+import io.micrometer.core.instrument.distribution.pause.NoPauseDetector;
+import io.micrometer.core.instrument.distribution.pause.PauseDetector;
 import org.assertj.core.data.Offset;
 import org.junit.jupiter.api.Test;
 
@@ -40,10 +42,11 @@ class DynatraceTimerTest {
     private static final TimeUnit BASE_TIME_UNIT = TimeUnit.MILLISECONDS;
     private static final Meter.Id ID = new Meter.Id("test.id", Tags.empty(), "1", "desc", Meter.Type.TIMER);
     private static final DistributionStatisticConfig DISTRIBUTION_STATISTIC_CONFIG = DistributionStatisticConfig.NONE;
+    private static final PauseDetector PAUSE_DETECTOR = new NoPauseDetector();
 
     @Test
     void testHasValues() {
-        DynatraceTimer timer = new DynatraceTimer(ID, CLOCK, DISTRIBUTION_STATISTIC_CONFIG, BASE_TIME_UNIT);
+        DynatraceTimer timer = new DynatraceTimer(ID, CLOCK, DISTRIBUTION_STATISTIC_CONFIG, PAUSE_DETECTOR, BASE_TIME_UNIT);
         assertThat(timer.hasValues()).isFalse();
         timer.record(Duration.ofMillis(314));
         assertThat(timer.hasValues()).isTrue();
@@ -62,7 +65,7 @@ class DynatraceTimerTest {
 
     @Test
     void testNegativeValuesIgnored() {
-        DynatraceTimer timer = new DynatraceTimer(ID, CLOCK, DISTRIBUTION_STATISTIC_CONFIG, BASE_TIME_UNIT);
+        DynatraceTimer timer = new DynatraceTimer(ID, CLOCK, DISTRIBUTION_STATISTIC_CONFIG, PAUSE_DETECTOR, BASE_TIME_UNIT);
         timer.record(-100, TimeUnit.MILLISECONDS);
         timer.record(Duration.ofMillis(-100));
         assertMinMaxSumCount(timer, 0, 0, 0, 0);
@@ -70,7 +73,7 @@ class DynatraceTimerTest {
 
     @Test
     void testMinMaxAreOverwritten() {
-        DynatraceTimer timer = new DynatraceTimer(ID, CLOCK, DISTRIBUTION_STATISTIC_CONFIG, BASE_TIME_UNIT);
+        DynatraceTimer timer = new DynatraceTimer(ID, CLOCK, DISTRIBUTION_STATISTIC_CONFIG, PAUSE_DETECTOR, BASE_TIME_UNIT);
         timer.record(Duration.ofMillis(314));
         timer.record(Duration.ofMillis(476));
         assertMinMaxSumCount(timer, 314, 476, 790, 2);
@@ -81,7 +84,7 @@ class DynatraceTimerTest {
 
     @Test
     void testGetSnapshotAndReset() {
-        DynatraceTimer timer = new DynatraceTimer(ID, CLOCK, DISTRIBUTION_STATISTIC_CONFIG, BASE_TIME_UNIT);
+        DynatraceTimer timer = new DynatraceTimer(ID, CLOCK, DISTRIBUTION_STATISTIC_CONFIG, PAUSE_DETECTOR, BASE_TIME_UNIT);
         timer.record(Duration.ofMillis(314));
         timer.record(Duration.ofMillis(476));
 
@@ -92,7 +95,7 @@ class DynatraceTimerTest {
 
     @Test
     void testGetSnapshotAndResetWithNoTimeUnit() {
-        DynatraceTimer timer = new DynatraceTimer(ID, CLOCK, DISTRIBUTION_STATISTIC_CONFIG, BASE_TIME_UNIT);
+        DynatraceTimer timer = new DynatraceTimer(ID, CLOCK, DISTRIBUTION_STATISTIC_CONFIG, PAUSE_DETECTOR, BASE_TIME_UNIT);
         // record in a time unit that is not the base time unit
         timer.record(Duration.ofSeconds(1));
         timer.record(Duration.ofSeconds(2));
@@ -105,7 +108,7 @@ class DynatraceTimerTest {
 
     @Test
     void testGetSnapshot() {
-        DynatraceTimer timer = new DynatraceTimer(ID, CLOCK, DISTRIBUTION_STATISTIC_CONFIG, BASE_TIME_UNIT);
+        DynatraceTimer timer = new DynatraceTimer(ID, CLOCK, DISTRIBUTION_STATISTIC_CONFIG, PAUSE_DETECTOR, BASE_TIME_UNIT);
         timer.record(Duration.ofMillis(314));
         timer.record(Duration.ofMillis(476));
 
@@ -116,7 +119,7 @@ class DynatraceTimerTest {
 
     @Test
     void testGetSnapshotWithNoTimeUnit() {
-        DynatraceTimer timer = new DynatraceTimer(ID, CLOCK, DISTRIBUTION_STATISTIC_CONFIG, BASE_TIME_UNIT);
+        DynatraceTimer timer = new DynatraceTimer(ID, CLOCK, DISTRIBUTION_STATISTIC_CONFIG, PAUSE_DETECTOR, BASE_TIME_UNIT);
         // record in a time unit that is not the base time unit
         timer.record(Duration.ofSeconds(1));
         timer.record(Duration.ofSeconds(2));
@@ -130,7 +133,7 @@ class DynatraceTimerTest {
     @Test
     void testDifferentTimeUnits() {
         // set up the timer to record in Nanoseconds
-        DynatraceTimer timer = new DynatraceTimer(ID, CLOCK, DISTRIBUTION_STATISTIC_CONFIG, TimeUnit.NANOSECONDS);
+        DynatraceTimer timer = new DynatraceTimer(ID, CLOCK, DISTRIBUTION_STATISTIC_CONFIG, PAUSE_DETECTOR, TimeUnit.NANOSECONDS);
         Duration oneSecond = Duration.ofSeconds(1);
         timer.record(oneSecond);
         assertThat(timer.totalTime(TimeUnit.NANOSECONDS)).isCloseTo(1_000_000_000, OFFSET);
@@ -142,7 +145,7 @@ class DynatraceTimerTest {
     @Test
     void testUseAllRecordInterfaces() {
         MockClock clock = new MockClock();
-        DynatraceTimer timer = new DynatraceTimer(ID, clock, DISTRIBUTION_STATISTIC_CONFIG, BASE_TIME_UNIT);
+        DynatraceTimer timer = new DynatraceTimer(ID, clock, DISTRIBUTION_STATISTIC_CONFIG, PAUSE_DETECTOR, BASE_TIME_UNIT);
 
         // Runnable
         timer.record(() -> {
