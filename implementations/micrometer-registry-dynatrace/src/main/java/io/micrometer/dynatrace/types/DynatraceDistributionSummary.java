@@ -17,6 +17,7 @@ package io.micrometer.dynatrace.types;
 
 import io.micrometer.core.instrument.AbstractMeter;
 import io.micrometer.core.instrument.DistributionSummary;
+import io.micrometer.core.instrument.distribution.DistributionStatisticConfig;
 import io.micrometer.core.instrument.distribution.HistogramSnapshot;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -34,8 +35,11 @@ public final class DynatraceDistributionSummary extends AbstractMeter implements
     private static final Logger LOGGER = LoggerFactory.getLogger(DynatraceDistributionSummary.class.getName());
     private final double scale;
 
-    public DynatraceDistributionSummary(Id id, double scale) {
+    public DynatraceDistributionSummary(Id id, DistributionStatisticConfig distributionStatisticConfig, double scale) {
         super(id);
+        if (distributionStatisticConfig != DistributionStatisticConfig.NONE) {
+            LOGGER.warn("Distribution statistic config is currently ignored.");
+        }
         this.scale = scale;
     }
 

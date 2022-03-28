@@ -18,7 +18,10 @@ package io.micrometer.dynatrace.types;
 import io.micrometer.core.instrument.AbstractMeter;
 import io.micrometer.core.instrument.Clock;
 import io.micrometer.core.instrument.Timer;
+import io.micrometer.core.instrument.distribution.DistributionStatisticConfig;
 import io.micrometer.core.instrument.distribution.HistogramSnapshot;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.util.concurrent.Callable;
 import java.util.concurrent.TimeUnit;
@@ -31,12 +34,16 @@ import java.util.function.Supplier;
  * @since 1.9.0
  */
 public final class DynatraceTimer extends AbstractMeter implements Timer, DynatraceSummarySnapshotSupport {
+    private static final Logger LOGGER = LoggerFactory.getLogger(DynatraceTimer.class.getName());
     private final DynatraceSummary summary = new DynatraceSummary();
     private final Clock clock;
     private final TimeUnit baseTimeUnit;
 
-    public DynatraceTimer(Id id, Clock clock, TimeUnit baseTimeUnit) {
+    public DynatraceTimer(Id id, Clock clock, DistributionStatisticConfig distributionStatisticConfig, TimeUnit baseTimeUnit) {
         super(id);
+        if (distributionStatisticConfig != DistributionStatisticConfig.NONE) {
+            LOGGER.warn("Distribution statistic config is currently ignored.");
+        }
         this.clock = clock;
         this.baseTimeUnit = baseTimeUnit;
     }
