@@ -35,6 +35,7 @@ import io.micrometer.dynatrace.v1.DynatraceExporterV1;
 import io.micrometer.dynatrace.v2.DynatraceExporterV2;
 
 import java.util.Arrays;
+import java.util.Objects;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ThreadFactory;
@@ -131,16 +132,17 @@ public class DynatraceMeterRegistry extends StepMeterRegistry {
             public DistributionStatisticConfig configure(Meter.Id id, DistributionStatisticConfig config) {
                 double[] percentiles;
 
-                if (config.getPercentiles() == null) {
+                double[] configPercentiles = config.getPercentiles();
+                if (configPercentiles == null) {
                     percentiles = new double[]{0};
                     metersWithArtificialZeroPercentile.add(id.getName() + ".percentile");
                 } else if (!containsZeroPercentile(config)) {
-                    percentiles = new double[config.getPercentiles().length + 1];
-                    System.arraycopy(config.getPercentiles(), 0, percentiles, 0, config.getPercentiles().length);
-                    percentiles[config.getPercentiles().length] = 0; // theoretically this is already zero
+                    percentiles = new double[configPercentiles.length + 1];
+                    System.arraycopy(configPercentiles, 0, percentiles, 0, configPercentiles.length);
+                    percentiles[configPercentiles.length] = 0; // theoretically this is already zero
                     metersWithArtificialZeroPercentile.add(id.getName() + ".percentile");
                 } else {
-                    percentiles = config.getPercentiles();
+                    percentiles = configPercentiles;
                 }
 
                 return DistributionStatisticConfig.builder()
@@ -158,7 +160,7 @@ public class DynatraceMeterRegistry extends StepMeterRegistry {
             }
 
             private boolean containsZeroPercentile(DistributionStatisticConfig config) {
-                return Arrays.stream(config.getPercentiles()).anyMatch(percentile -> percentile == 0);
+                return Arrays.stream(Objects.requireNonNull(config.getPercentiles())).anyMatch(percentile -> percentile == 0);
             }
 
             private boolean hasArtificialZerothPercentile(Meter.Id id) {
