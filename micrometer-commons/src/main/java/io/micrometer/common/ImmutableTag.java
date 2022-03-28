@@ -25,12 +25,13 @@ import static java.util.Objects.requireNonNull;
  * Immutable {@link Tag}.
  *
  * @author Jon Schneider
+ * @since 2.0.0
  */
-public class ImmutableTag implements Tag {
+class ImmutableTag implements Tag {
     private final String key;
     private final String value;
 
-    public ImmutableTag(String key, String value) {
+    ImmutableTag(String key, String value) {
         requireNonNull(key);
         requireNonNull(value);
         this.key = key;
