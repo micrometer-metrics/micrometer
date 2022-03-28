@@ -22,7 +22,7 @@ package io.micrometer.core.instrument;
  * @deprecated use {@link io.micrometer.common.Tag}
  */
 @Deprecated
-public interface Tag extends io.micrometer.common.Tag<Tag> {
+public interface Tag extends io.micrometer.common.Tag {
     String getKey();
 
     String getValue();

@@ -26,7 +26,7 @@ import static java.util.Objects.requireNonNull;
  *
  * @author Jon Schneider
  */
-public class ImmutableTag<T extends Tag<T>> implements Tag<T> {
+public class ImmutableTag implements Tag {
     private final String key;
     private final String value;
 

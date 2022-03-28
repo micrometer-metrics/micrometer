@@ -40,7 +40,6 @@ apply from: 'dependencies.gradle'
 allprojects {
     group = 'io.micrometer'
     ext.'release.stage' = releaseStage ?: 'SNAPSHOT'
-    ext.compatibleVersion = "1.8.4"
 
     afterEvaluate { project -> println "I'm configuring $project.name with version $project.version" }
 }
@@ -323,7 +322,8 @@ subprojects {
                     oldClasspath.from(files("${buildDir}/baselineLibs/${project.name}-${compatibleVersion}.jar"))
                     newClasspath.from(files(jar.archiveFile, project(":${project.name}").jar))
                     onlyBinaryIncompatibleModified = true
-                    failOnModification = true
+                    // TODO: Turn this to true once 1.9.0 is out
+                    failOnModification = false
                     failOnSourceIncompatibility = true
                     txtOutputFile = file("${project.buildDir}/reports/japi.txt")
                     ignoreMissingClasses = true

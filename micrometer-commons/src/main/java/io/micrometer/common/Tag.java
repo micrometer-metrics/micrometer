@@ -20,7 +20,7 @@ package io.micrometer.common;
  *
  * @author Jon Schneider
  */
-public interface Tag<T extends Tag<T>> extends Comparable<T> {
+public interface Tag extends Comparable<Tag> {
     String getKey();
 
     String getValue();
@@ -30,7 +30,7 @@ public interface Tag<T extends Tag<T>> extends Comparable<T> {
     }
 
     @Override
-    default int compareTo(T o) {
+    default int compareTo(Tag o) {
         return getKey().compareTo(o.getKey());
     }
 
