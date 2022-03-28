@@ -15,7 +15,9 @@
  */
 package io.micrometer.dynatrace.types;
 
+import io.micrometer.core.instrument.Clock;
 import io.micrometer.core.instrument.Meter;
+import io.micrometer.core.instrument.MockClock;
 import io.micrometer.core.instrument.Tags;
 import io.micrometer.core.instrument.distribution.DistributionStatisticConfig;
 import org.assertj.core.data.Offset;
@@ -35,10 +37,11 @@ class DynatraceDistributionSummaryTest {
     private static final Offset<Double> OFFSET = Offset.offset(0.0001);
     private static final Meter.Id ID = new Meter.Id("test.id", Tags.empty(), "1", "desc", Meter.Type.DISTRIBUTION_SUMMARY);
     private static final DistributionStatisticConfig DISTRIBUTION_STATISTIC_CONFIG = DistributionStatisticConfig.NONE;
+    private static final Clock CLOCK = new MockClock();
 
     @Test
     void testHasValues() {
-        DynatraceDistributionSummary ds = new DynatraceDistributionSummary(ID, DISTRIBUTION_STATISTIC_CONFIG, 1);
+        DynatraceDistributionSummary ds = new DynatraceDistributionSummary(ID, CLOCK, DISTRIBUTION_STATISTIC_CONFIG, 1);
         assertThat(ds.hasValues()).isFalse();
         ds.record(3.14);
         assertThat(ds.hasValues()).isTrue();
@@ -54,7 +57,7 @@ class DynatraceDistributionSummaryTest {
 
     @Test
     void testDynatraceDistributionSummary() {
-        DynatraceDistributionSummary ds = new DynatraceDistributionSummary(ID, DISTRIBUTION_STATISTIC_CONFIG, 1);
+        DynatraceDistributionSummary ds = new DynatraceDistributionSummary(ID, CLOCK, DISTRIBUTION_STATISTIC_CONFIG, 1);
         ds.record(3.14);
         ds.record(4.76);
 
@@ -64,7 +67,7 @@ class DynatraceDistributionSummaryTest {
     @Test
     void testDynatraceDistributionSummaryScaled() {
         double scale = 1.5;
-        DynatraceDistributionSummary ds = new DynatraceDistributionSummary(ID, DISTRIBUTION_STATISTIC_CONFIG, scale);
+        DynatraceDistributionSummary ds = new DynatraceDistributionSummary(ID, CLOCK, DISTRIBUTION_STATISTIC_CONFIG, scale);
         ds.record(3.14);
         ds.record(4.76);
 
@@ -73,7 +76,7 @@ class DynatraceDistributionSummaryTest {
 
     @Test
     void testRecordNegativeIgnored() {
-        DynatraceDistributionSummary ds = new DynatraceDistributionSummary(ID, DISTRIBUTION_STATISTIC_CONFIG, 1);
+        DynatraceDistributionSummary ds = new DynatraceDistributionSummary(ID, CLOCK, DISTRIBUTION_STATISTIC_CONFIG, 1);
         ds.record(3.14);
         ds.record(-1.234);
         ds.record(4.76);
@@ -84,7 +87,7 @@ class DynatraceDistributionSummaryTest {
 
     @Test
     void testMinMaxAreOverwritten() {
-        DynatraceDistributionSummary ds = new DynatraceDistributionSummary(ID, DISTRIBUTION_STATISTIC_CONFIG, 1);
+        DynatraceDistributionSummary ds = new DynatraceDistributionSummary(ID, CLOCK, DISTRIBUTION_STATISTIC_CONFIG, 1);
         ds.record(3.14);
         ds.record(4.76);
         ds.record(0.123);
@@ -96,7 +99,7 @@ class DynatraceDistributionSummaryTest {
 
     @Test
     void testGetSnapshotNoReset() {
-        DynatraceDistributionSummary ds = new DynatraceDistributionSummary(ID, DISTRIBUTION_STATISTIC_CONFIG, 1);
+        DynatraceDistributionSummary ds = new DynatraceDistributionSummary(ID, CLOCK, DISTRIBUTION_STATISTIC_CONFIG, 1);
         ds.record(3.14);
         ds.record(4.76);
 
@@ -107,7 +110,7 @@ class DynatraceDistributionSummaryTest {
 
     @Test
     void testGetSnapshotNoResetWithTimeUnitIgnored() {
-        DynatraceDistributionSummary ds = new DynatraceDistributionSummary(ID, DISTRIBUTION_STATISTIC_CONFIG, 1);
+        DynatraceDistributionSummary ds = new DynatraceDistributionSummary(ID, CLOCK, DISTRIBUTION_STATISTIC_CONFIG, 1);
         ds.record(3.14);
         ds.record(4.76);
 
@@ -119,7 +122,7 @@ class DynatraceDistributionSummaryTest {
 
     @Test
     void testGetSnapshotAndReset() {
-        DynatraceDistributionSummary ds = new DynatraceDistributionSummary(ID, DISTRIBUTION_STATISTIC_CONFIG, 1);
+        DynatraceDistributionSummary ds = new DynatraceDistributionSummary(ID, CLOCK, DISTRIBUTION_STATISTIC_CONFIG, 1);
         ds.record(3.14);
         ds.record(4.76);
 
@@ -130,7 +133,7 @@ class DynatraceDistributionSummaryTest {
 
     @Test
     void testGetSnapshotAndResetWithTimeUnitIgnored() {
-        DynatraceDistributionSummary ds = new DynatraceDistributionSummary(ID, DISTRIBUTION_STATISTIC_CONFIG, 1);
+        DynatraceDistributionSummary ds = new DynatraceDistributionSummary(ID, CLOCK, DISTRIBUTION_STATISTIC_CONFIG, 1);
         ds.record(3.14);
         ds.record(4.76);
 

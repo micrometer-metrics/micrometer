@@ -15,7 +15,8 @@
  */
 package io.micrometer.dynatrace.types;
 
-import io.micrometer.core.instrument.AbstractMeter;
+import io.micrometer.core.instrument.AbstractDistributionSummary;
+import io.micrometer.core.instrument.Clock;
 import io.micrometer.core.instrument.DistributionSummary;
 import io.micrometer.core.instrument.distribution.DistributionStatisticConfig;
 import io.micrometer.core.instrument.distribution.HistogramSnapshot;
@@ -30,22 +31,25 @@ import java.util.concurrent.TimeUnit;
  * @author Georg Pirklbauer
  * @since 1.9.0
  */
-public final class DynatraceDistributionSummary extends AbstractMeter implements DistributionSummary, DynatraceSummarySnapshotSupport {
+public final class DynatraceDistributionSummary extends AbstractDistributionSummary implements DynatraceSummarySnapshotSupport {
     private final DynatraceSummary summary = new DynatraceSummary();
     private static final Logger LOGGER = LoggerFactory.getLogger(DynatraceDistributionSummary.class.getName());
-    private final double scale;
 
-    public DynatraceDistributionSummary(Id id, DistributionStatisticConfig distributionStatisticConfig, double scale) {
-        super(id);
+    // Configuration that will set the Histogram in AbstractTimer to a NoopHistogram.
+    private static final DistributionStatisticConfig NOOP_HISTOGRAM_CONFIG =
+            DistributionStatisticConfig.builder().percentilesHistogram(false).percentiles().build();
+
+    public DynatraceDistributionSummary(Id id, Clock clock, DistributionStatisticConfig distributionStatisticConfig, double scale) {
+        super(id, clock, NOOP_HISTOGRAM_CONFIG, scale, false);
+
         if (distributionStatisticConfig != DistributionStatisticConfig.NONE) {
             LOGGER.warn("Distribution statistic config is currently ignored.");
         }
-        this.scale = scale;
     }
 
     @Override
-    public void record(double amount) {
-        summary.recordNonNegative(amount * scale);
+    protected void recordNonNegative(double amount) {
+        summary.recordNonNegative(amount);
     }
 
     @Override

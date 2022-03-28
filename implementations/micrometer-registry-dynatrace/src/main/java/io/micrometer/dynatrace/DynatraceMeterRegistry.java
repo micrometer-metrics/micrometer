@@ -101,7 +101,7 @@ public class DynatraceMeterRegistry extends StepMeterRegistry {
     @Override
     protected DistributionSummary newDistributionSummary(Meter.Id id, DistributionStatisticConfig distributionStatisticConfig, double scale) {
         if (apiVersion == DynatraceApiVersion.V2) {
-            return new DynatraceDistributionSummary(id, distributionStatisticConfig, scale);
+            return new DynatraceDistributionSummary(id, clock, distributionStatisticConfig, scale);
         }
         return super.newDistributionSummary(id, distributionStatisticConfig, scale);
     }
