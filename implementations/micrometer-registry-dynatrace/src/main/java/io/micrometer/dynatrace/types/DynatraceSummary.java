@@ -15,6 +15,10 @@
  */
 package io.micrometer.dynatrace.types;
 
+import java.util.concurrent.atomic.AtomicLong;
+import java.util.concurrent.atomic.DoubleAdder;
+import java.util.concurrent.atomic.LongAdder;
+
 /**
  * Internal class for resettable summary statistics
  *
@@ -22,46 +26,51 @@ package io.micrometer.dynatrace.types;
  * @since 1.9.0
  */
 final class DynatraceSummary {
-    private long count = 0;
-    private double total = 0d;
-    private double min = 0d;
-    private double max = 0d;
+    private final LongAdder count = new LongAdder();
+    private final DoubleAdder total = new DoubleAdder();
+    private final AtomicLong min = new AtomicLong(0);
+    private final AtomicLong max = new AtomicLong(0);
 
-    synchronized void recordNonNegative(double amount) {
+    void recordNonNegative(double amount) {
         if (amount < 0) {
             return;
         }
-        if (count == 0) {
-            min = amount;
-            max = amount;
-        } else {
-            min = Math.min(min, amount);
-            max = Math.max(max, amount);
+
+        synchronized (this) {
+            long longBits = Double.doubleToLongBits(amount);
+
+            max.getAndUpdate(prev -> Math.max(prev, longBits));
+            // have to check if a value was already recorded before, otherwise min will always stay 0 (because the default is 0).
+            min.getAndUpdate(prev -> count.longValue() > 0 ? Math.min(prev, longBits) : longBits);
+
+            total.add(amount);
+            count.increment();
         }
-        count++;
-        total += amount;
     }
 
-    public synchronized long getCount() {
-        return count;
+
+    public long getCount() {
+        return count.longValue();
     }
 
-    public synchronized double getTotal() {
-        return total;
+    public double getTotal() {
+        return total.doubleValue();
     }
 
-    public synchronized double getMin() {
-        return min;
+    public double getMin() {
+        return Double.longBitsToDouble(min.longValue());
     }
 
-    public synchronized double getMax() {
-        return max;
+    public double getMax() {
+        return Double.longBitsToDouble(max.longValue());
     }
 
-    synchronized void reset() {
-        min = 0d;
-        max = 0d;
-        total = 0d;
-        count = 0;
+    void reset() {
+        synchronized (this) {
+            min.set(0);
+            max.set(0);
+            total.reset();
+            count.reset();
+        }
     }
 }
