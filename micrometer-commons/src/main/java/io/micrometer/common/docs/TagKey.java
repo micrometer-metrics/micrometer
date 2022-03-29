@@ -13,11 +13,12 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package io.micrometer.observation.docs;
+package io.micrometer.common.docs;
 
 import java.util.Arrays;
 
-import io.micrometer.observation.Tag;
+import io.micrometer.common.Tag;
+
 
 /**
  * Represents a tag key.

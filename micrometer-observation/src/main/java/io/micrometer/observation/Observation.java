@@ -29,6 +29,8 @@ import java.util.function.Supplier;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
+import io.micrometer.common.Tag;
+import io.micrometer.common.Tags;
 import io.micrometer.observation.lang.NonNull;
 import io.micrometer.observation.lang.Nullable;
 

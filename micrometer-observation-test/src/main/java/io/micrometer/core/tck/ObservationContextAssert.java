@@ -21,8 +21,8 @@ import java.util.Optional;
 import java.util.stream.Collectors;
 
 import io.micrometer.observation.Observation;
-import io.micrometer.observation.Tag;
-import io.micrometer.observation.Tags;
+import io.micrometer.common.Tag;
+import io.micrometer.common.Tags;
 import org.assertj.core.api.AbstractAssert;
 import org.assertj.core.api.AbstractThrowableAssert;
 

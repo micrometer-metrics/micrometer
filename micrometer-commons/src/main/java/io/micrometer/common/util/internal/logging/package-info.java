@@ -34,4 +34,4 @@
  *
  * <em>Internal-use-only</em> logging API which is not allowed to be used outside Micrometer.
  */
-package io.micrometer.observation.util.internal.logging;
+package io.micrometer.common.util.internal.logging;

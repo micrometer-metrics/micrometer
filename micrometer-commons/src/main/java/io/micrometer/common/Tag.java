@@ -13,12 +13,13 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package io.micrometer.observation;
+package io.micrometer.common;
 
 /**
  * Key/value pair representing a dimension of a meter used to classify and drill into measurements.
  *
  * @author Jon Schneider
+ * @since 2.0.0
  */
 public interface Tag extends Comparable<Tag> {
     String getKey();

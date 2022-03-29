@@ -18,6 +18,7 @@ package io.micrometer.observation;
 import java.io.IOException;
 import java.util.function.Consumer;
 
+import io.micrometer.common.Tag;
 import org.junit.jupiter.api.Test;
 
 import static org.assertj.core.api.Assertions.assertThat;

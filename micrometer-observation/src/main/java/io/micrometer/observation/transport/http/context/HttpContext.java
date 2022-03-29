@@ -16,7 +16,7 @@
 package io.micrometer.observation.transport.http.context;
 
 import io.micrometer.observation.Observation;
-import io.micrometer.observation.Tags;
+import io.micrometer.common.Tags;
 import io.micrometer.observation.transport.http.HttpRequest;
 import io.micrometer.observation.transport.http.HttpResponse;
 import io.micrometer.observation.transport.http.tags.HttpTagsProvider;

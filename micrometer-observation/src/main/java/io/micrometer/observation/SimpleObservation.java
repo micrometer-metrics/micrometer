@@ -20,7 +20,7 @@ import java.util.Collection;
 import java.util.Deque;
 import java.util.stream.Collectors;
 
-import io.micrometer.observation.Tag;
+import io.micrometer.common.Tag;
 import io.micrometer.observation.lang.Nullable;
 
 /**
