@@ -215,12 +215,15 @@ public interface Observation {
 
     /**
      * Observes the passed {@link Runnable}, this means the followings:
-     *   - Starts the {@code Observation}
-     *   - Opens a {@code Scope}
-     *   - Calls {@link Runnable#run()}
-     *   - Closes the {@code Scope}
-     *   - Signals the error to the {@code Observation} if any
-     *   - Stops the {@code Observation}
+     *
+     * <ul>
+     * <li>Starts the {@code Observation}</li>
+     * <li>Opens a {@code Scope}</li>
+     * <li>Calls {@link Runnable#run()}</li>
+     * <li>Closes the {@code Scope}</li>
+     * <li>Signals the error to the {@code Observation} if any</li>
+     * <li>Stops the {@code Observation}</li>
+     * </ul>
      *
      * @param runnable the {@link Runnable} to run
      */
@@ -241,12 +244,15 @@ public interface Observation {
 
     /**
      * Observes the passed {@link CheckedRunnable}, this means the followings:
-     *   - Starts the {@code Observation}
-     *   - Opens a {@code Scope}
-     *   - Calls {@link CheckedRunnable#run()}
-     *   - Closes the {@code Scope}
-     *   - Signals the error to the {@code Observation} if any
-     *   - Stops the {@code Observation}
+     *
+     * <ul>
+     * <li>Starts the {@code Observation}</li>
+     * <li>Opens a {@code Scope}</li>
+     * <li>Calls {@link CheckedRunnable#run()}</li>
+     * <li>Closes the {@code Scope}</li>
+     * <li>Signals the error to the {@code Observation} if any</li>
+     * <li>Stops the {@code Observation}</li>
+     * </ul>
      *
      * @param checkedRunnable the {@link CheckedRunnable} to run
      */
@@ -267,12 +273,15 @@ public interface Observation {
 
     /**
      * Observes the passed {@link Supplier}, this means the followings:
-     *   - Starts the {@code Observation}
-     *   - Opens a {@code Scope}
-     *   - Calls {@link Supplier#get()}
-     *   - Closes the {@code Scope}
-     *   - Signals the error to the {@code Observation} if any
-     *   - Stops the {@code Observation}
+     *
+     * <ul>
+     * <li>Starts the {@code Observation}</li>
+     * <li>Opens a {@code Scope}</li>
+     * <li>Calls {@link Supplier#get()}</li>
+     * <li>Closes the {@code Scope}</li>
+     * <li>Signals the error to the {@code Observation} if any</li>
+     * <li>Stops the {@code Observation}</li>
+     * </ul>
      *
      * @param supplier the {@link Supplier} to call
      * @param <T> the type parameter of the {@link Supplier}
@@ -295,12 +304,15 @@ public interface Observation {
 
     /**
      * Observes the passed {@link Callable}, this means the followings:
-     *   - Starts the {@code Observation}
-     *   - Opens a {@code Scope}
-     *   - Calls {@link Callable#call()}
-     *   - Closes the {@code Scope}
-     *   - Signals the error to the {@code Observation} if any
-     *   - Stops the {@code Observation}
+     *
+     * <ul>
+     * <li>Starts the {@code Observation}</li>
+     * <li>Opens a {@code Scope}</li>
+     * <li>Calls {@link Callable#call()}</li>
+     * <li>Closes the {@code Scope}</li>
+     * <li>Signals the error to the {@code Observation} if any</li>
+     * <li>Stops the {@code Observation}</li>
+     * </ul>
      *
      * @param callable the {@link Callable} to call
      * @param <T> the type parameter of the {@link Callable}
