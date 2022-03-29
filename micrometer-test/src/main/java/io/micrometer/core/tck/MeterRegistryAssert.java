@@ -19,6 +19,7 @@ import java.util.List;
 import java.util.stream.Collectors;
 
 import io.micrometer.core.instrument.MeterRegistry;
+import io.micrometer.core.instrument.Tag;
 import io.micrometer.core.instrument.Tags;
 import io.micrometer.core.instrument.Timer;
 import org.assertj.core.api.AbstractAssert;
@@ -124,6 +125,24 @@ public class MeterRegistryAssert extends AbstractAssert<MeterRegistryAssert, Met
     }
 
     /**
+     * Verifies that a timer with given name and key-value tags exists in the provided {@link MeterRegistry}.
+     *
+     * @param timerName name of the timer
+     * @param tags key-value pairs of tags
+     * @return this
+     * @throws AssertionError if the actual value is {@code null}.
+     * @throws AssertionError if there is no timer registered under given name with given tags.
+     */
+    public MeterRegistryAssert hasTimerWithNameAndTags(String timerName, io.micrometer.common.Tags tags) {
+        return hasTimerWithNameAndTags(timerName, toMicrometerTags(tags));
+    }
+
+    private Tags toMicrometerTags(io.micrometer.common.Tags tags) {
+        Tag[] array = tags.stream().map(tag -> Tag.of(tag.getKey(), tag.getValue())).toArray(Tag[]::new);
+        return Tags.of(array);
+    }
+
+    /**
      * Verifies that a timer with given name and key-value tags does not exist in the provided {@link MeterRegistry}.
      *
      * @param timerName name of the timer
@@ -138,6 +157,18 @@ public class MeterRegistryAssert extends AbstractAssert<MeterRegistryAssert, Met
             failWithMessage("Expected no timer with name <%s> and tags <%s> but found one", timerName, tags);
         }
         return this;
+    }
+
+    /**
+     * Verifies that a timer with given name and key-value tags does not exist in the provided {@link MeterRegistry}.
+     *
+     * @param timerName name of the timer
+     * @param tags key-value pairs of tags
+     * @return this
+     * @throws AssertionError if there is a timer registered under given name with given tags.
+     */
+    public MeterRegistryAssert doesNotHaveTimerWithNameAndTags(String timerName, io.micrometer.common.Tags tags) {
+        return doesNotHaveTimerWithNameAndTags(timerName, toMicrometerTags(tags));
     }
     
     /**
