@@ -16,6 +16,9 @@
 package io.micrometer.observation.contextpropagation;
 
 import io.micrometer.contextpropagation.ContextContainer;
+import io.micrometer.contextpropagation.Namespace;
+import io.micrometer.contextpropagation.NamespaceAccessor;
+import io.micrometer.contextpropagation.Store;
 import io.micrometer.contextpropagation.ThreadLocalAccessor;
 import io.micrometer.observation.Observation;
 import io.micrometer.observation.ObservationRegistry;
@@ -25,8 +28,14 @@ import io.micrometer.observation.ObservationRegistry;
  */
 public class ObservationThreadLocalAccessor implements ThreadLocalAccessor {
 
-    private static final String KEY = Observation.class.getName();
-    private static final String SCOPE_KEY = Observation.Scope.class.getName();
+    private static final String KEY = "micrometer.observation";
+
+    /**
+     * Namespace for observations.
+     */
+    public static final Namespace OBSERVATION = Namespace.of(KEY);
+
+    private final NamespaceAccessor<ObservationStore> namespaceAccessor = new NamespaceAccessor<>(OBSERVATION);
 
     private static final ObservationRegistry observationRegistry = ObservationRegistry.create();
 
@@ -34,25 +43,51 @@ public class ObservationThreadLocalAccessor implements ThreadLocalAccessor {
     public void captureValues(ContextContainer container) {
         Observation value = observationRegistry.getCurrentObservation();
         if (value != null) {
-            container.put(KEY, value);
+            this.namespaceAccessor.putStore(container, new ObservationStore(value));
         }
     }
 
     @Override
     public void restoreValues(ContextContainer container) {
-        if (container.containsKey(KEY)) {
-            Observation observation = container.get(KEY);
+        if (this.namespaceAccessor.isPresent(container)) {
+            ObservationStore store = this.namespaceAccessor.getStore(container);
+            Observation observation = store.getObservation();
             Observation.Scope scope = observation.openScope();
-            container.put(SCOPE_KEY, scope);
+            store.putScope(scope);
         }
     }
 
     @Override
     public void resetValues(ContextContainer container) {
-        Observation.Scope scope = container.get(SCOPE_KEY);
-        if (scope != null) {
-            scope.close();
-        }
+        this.namespaceAccessor.getRequiredStore(container).close();
     }
 
+    @Override
+    public Namespace getNamespace() {
+        return OBSERVATION;
+    }
+
+    static final class ObservationStore implements Store, AutoCloseable {
+        final Observation observation;
+        Observation.Scope scope;
+
+        ObservationStore(Observation observation) {
+            this.observation = observation;
+        }
+
+        Observation getObservation() {
+            return this.observation;
+        }
+
+        void putScope(Observation.Scope scope) {
+            this.scope = scope;
+        }
+
+        @Override
+        public void close() {
+            if (this.scope != null) {
+                this.scope.close();
+            }
+        }
+    }
 }

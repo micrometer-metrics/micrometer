@@ -303,7 +303,15 @@ subprojects {
     description = 'Application monitoring instrumentation facade'
 
     repositories {
+        mavenLocal()
         mavenCentral()
+        maven {
+            url 'https://repo.spring.io/snapshot/'
+            content {
+                // we only need this repo for the context-propagation-api
+                includeModule 'io.micrometer', 'context-propagation-api'
+            }
+        }
         maven {
             url 'https://repo.spring.io/milestone/'
             content {
