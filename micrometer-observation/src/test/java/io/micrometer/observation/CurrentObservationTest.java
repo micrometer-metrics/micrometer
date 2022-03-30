@@ -19,12 +19,18 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.*;
 
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
 class CurrentObservationTest {
     private final ObservationRegistry registry = ObservationRegistry.create();
+
+    @BeforeEach
+    void setup() {
+        registry.observationConfig().observationHandler(context -> true);
+    }
 
     @Test
     void nestedSamples_parentChildThreadsInstrumented() throws ExecutionException, InterruptedException {

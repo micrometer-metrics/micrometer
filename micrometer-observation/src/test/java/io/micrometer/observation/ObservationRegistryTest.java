@@ -32,6 +32,7 @@ class ObservationRegistryTest {
 
     @Test
     void openingScopeShouldSetSampleAsCurrent() {
+        registry.observationConfig().observationHandler(c -> true);
         Observation sample = Observation.start("test.timer", registry);
         Observation.Scope scope = sample.openScope();
 
@@ -76,6 +77,7 @@ class ObservationRegistryTest {
     @Test
     void observationShouldNotBeNoOpWhenNonNullRegistry() {
         ObservationRegistry registry = ObservationRegistry.create();
+        registry.observationConfig().observationHandler(c -> true);
         assertThat(Observation.start("test.timer", registry)).isInstanceOf(SimpleObservation.class);
         assertThat(Observation.start("test.timer", new Observation.Context(), registry)).isInstanceOf(SimpleObservation.class);
         assertThat(Observation.createNotStarted("test.timer", registry)).isInstanceOf(SimpleObservation.class);
