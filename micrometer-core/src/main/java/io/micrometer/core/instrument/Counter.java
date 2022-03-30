@@ -15,9 +15,9 @@
  */
 package io.micrometer.core.instrument;
 
-import io.micrometer.core.lang.Nullable;
-
 import java.util.Collections;
+
+import io.micrometer.core.lang.Nullable;
 
 /**
  * Counters monitor monotonically increasing values. Counters may never be reset to a lesser value. If you
@@ -83,8 +83,8 @@ public interface Counter extends Meter {
          * @param tags Tags to add to the eventual counter.
          * @return The counter builder with added tags.
          */
-        public Builder tags(Iterable<Tag> tags) {
-            this.tags = this.tags.and(tags);
+        public Builder tags(Iterable<? extends io.micrometer.common.Tag> tags) {
+            this.tags = this.tags.andWithCommonTag(tags);
             return this;
         }
 

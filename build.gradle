@@ -314,7 +314,8 @@ subprojects {
 
                     onlyIfNewer true
                     compress true
-                    src "${repositories.mavenCentral().url}io/micrometer/${project.name}/${compatibleVersion}/${project.name}-${compatibleVersion}.jar"
+                    String rootUrl = (compatibleVersion.contains("-M") || compatibleVersion.contains("-RC")) ? "https://repo.spring.io/milestone/" : repositories.mavenCentral().url
+                    src "${rootUrl}io/micrometer/${project.name}/${compatibleVersion}/${project.name}-${compatibleVersion}.jar"
                     dest "${buildDir}/baselineLibs/${project.name}-${compatibleVersion}.jar"
                 }
 
@@ -331,8 +332,8 @@ subprojects {
                     onlyIf { "${compatibleVersion}" != "SKIP" }
                 }
 
-                tasks.japicmp.dependsOn(downloadBaseline)
-                tasks.check.dependsOn(japicmp)
+//                tasks.japicmp.dependsOn(downloadBaseline)
+//                tasks.check.dependsOn(japicmp)
             }
         }
 

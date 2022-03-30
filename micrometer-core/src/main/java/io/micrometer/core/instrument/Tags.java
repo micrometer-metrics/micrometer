@@ -106,6 +106,20 @@ public final class Tags extends io.micrometer.common.Tags<Tag> implements Iterab
         return and(Tags.of(tags).tags);
     }
 
+    // TODO: Remove me in 2.x or 3.0 when core tag gets removed
+    @Deprecated
+    Tags andWithCommonTag(@Nullable Iterable<? extends io.micrometer.common.Tag> tags) {
+        if (tags == null || !tags.iterator().hasNext()) {
+            return this;
+        }
+
+        if (this.tags.length == 0) {
+            return Tags.of(tags);
+        }
+
+        return and(Tags.of(tags).tags);
+    }
+
     @Override
     public Iterator<Tag> iterator() {
         return new ArrayIterator();

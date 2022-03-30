@@ -32,4 +32,23 @@ public interface Tag extends io.micrometer.common.Tag {
         return new ImmutableTag(key, value);
     }
 
+    /**
+     * This should be used only to migrate from old tags to the new ones.
+     * We reserve the right to remove this method at any time.
+     *
+     * @param tag common tag
+     * @return core tag
+     */
+    @Deprecated
+    static Tag from(io.micrometer.common.Tag tag) {
+        return Tag.of(tag.getKey(), tag.getValue());
+    }
+
+    @Override
+    default int compareTo(Object o) {
+        if (o instanceof Tag) {
+            return getKey().compareTo(((Tag) o).getKey());
+        }
+        return io.micrometer.common.Tag.super.compareTo(o);
+    }
 }

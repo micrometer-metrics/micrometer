@@ -15,6 +15,9 @@
  */
 package io.micrometer.binder.jersey.server;
 
+import java.util.List;
+import java.util.regex.Pattern;
+
 import io.micrometer.core.instrument.Tag;
 import io.micrometer.core.instrument.binder.http.Outcome;
 import io.micrometer.core.instrument.util.StringUtils;
@@ -23,9 +26,6 @@ import org.glassfish.jersey.server.ContainerResponse;
 import org.glassfish.jersey.server.ExtendedUriInfo;
 import org.glassfish.jersey.server.monitoring.RequestEvent;
 import org.glassfish.jersey.uri.UriTemplate;
-
-import java.util.List;
-import java.util.regex.Pattern;
 
 /**
  * Factory methods for {@link Tag Tags} associated with a request-response exchange that
@@ -37,7 +37,7 @@ import java.util.regex.Pattern;
  */
 public final class JerseyTags {
 
-    private static final Tag URI_NOT_FOUND = Tag.of("uri", "NOT_FOUND");
+    private static final io.micrometer.common.Tag URI_NOT_FOUND = io.micrometer.common.Tag.of("uri", "NOT_FOUND");
 
     private static final Tag URI_REDIRECTION = Tag.of("uri", "REDIRECTION");
 
@@ -93,7 +93,7 @@ public final class JerseyTags {
                 return URI_REDIRECTION;
             }
             if (status == 404 && event.getUriInfo().getMatchedResourceMethod() == null) {
-                return URI_NOT_FOUND;
+                return Tag.from(URI_NOT_FOUND);
             }
         }
         String matchingPattern = getMatchingPattern(event);

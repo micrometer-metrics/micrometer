@@ -6,3 +6,5 @@ dependencies {
 
     testImplementation project(':micrometer-test')
 }
+
+tasks.japicmp.enabled(false)
