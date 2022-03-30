@@ -59,7 +59,9 @@ public class ObservationThreadLocalAccessor implements ThreadLocalAccessor {
 
     @Override
     public void resetValues(ContextContainer container) {
-        this.namespaceAccessor.getRequiredStore(container).close();
+        if (this.namespaceAccessor.isPresent(container)) {
+             this.namespaceAccessor.getRequiredStore(container).close();
+         }
     }
 
     @Override
