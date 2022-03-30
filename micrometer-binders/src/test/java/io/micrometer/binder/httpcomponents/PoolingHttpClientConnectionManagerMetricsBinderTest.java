@@ -63,7 +63,7 @@ class PoolingHttpClientConnectionManagerMetricsBinderTest {
         PoolStats poolStats = mock(PoolStats.class);
         when(poolStats.getAvailable()).thenReturn(17);
         when(connPoolControl.getTotalStats()).thenReturn(poolStats);
-        assertThat(registry.get("httpcomponents.httpclient.pool.total.connections")
+        assertThat(registry.get("httpcomponents.httpclient.pool.total.available")
             .tags("httpclient", "test", "state", "available")
             .gauge().value()).isEqualTo(17.0);
     }
@@ -73,7 +73,7 @@ class PoolingHttpClientConnectionManagerMetricsBinderTest {
         PoolStats poolStats = mock(PoolStats.class);
         when(poolStats.getLeased()).thenReturn(23);
         when(connPoolControl.getTotalStats()).thenReturn(poolStats);
-        assertThat(registry.get("httpcomponents.httpclient.pool.total.connections")
+        assertThat(registry.get("httpcomponents.httpclient.pool.total.leased")
             .tags("httpclient", "test", "state", "leased")
             .gauge().value()).isEqualTo(23.0);
     }

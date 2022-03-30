@@ -77,13 +77,13 @@ public class PoolingHttpClientConnectionManagerMetricsBinder implements MeterBin
                 .description("The configured maximum number of allowed persistent connections for all routes.")
                 .tags(tags)
                 .register(registry);
-        Gauge.builder("httpcomponents.httpclient.pool.total.connections",
+        Gauge.builder("httpcomponents.httpclient.pool.total.available",
                 connPoolControl,
                 (connPoolControl) -> connPoolControl.getTotalStats().getAvailable())
                 .description("The number of persistent and available connections for all routes.")
                 .tags(tags).tag("state", "available")
                 .register(registry);
-        Gauge.builder("httpcomponents.httpclient.pool.total.connections",
+        Gauge.builder("httpcomponents.httpclient.pool.total.leased",
                 connPoolControl,
                 (connPoolControl) -> connPoolControl.getTotalStats().getLeased())
                 .description("The number of persistent and leased connections for all routes.")
