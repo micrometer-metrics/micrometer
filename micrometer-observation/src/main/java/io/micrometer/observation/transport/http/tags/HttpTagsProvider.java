@@ -15,7 +15,7 @@
  */
 package io.micrometer.observation.transport.http.tags;
 
-import io.micrometer.common.Tags;
+import io.micrometer.common.KeyValues;
 import io.micrometer.observation.transport.http.HttpRequest;
 import io.micrometer.observation.transport.http.HttpResponse;
 
@@ -42,7 +42,7 @@ public interface HttpTagsProvider {
      * @param exception exception thrown during operation, or null
      * @return set of tags based on the given parameters
      */
-    Tags getLowCardinalityTags(HttpRequest request, HttpResponse response, Throwable exception);
+    KeyValues getLowCardinalityTags(HttpRequest request, HttpResponse response, Throwable exception);
 
     /**
      * Provide tags known to be high-cardinality, which generally are not appropriate for use with metrics.
@@ -53,5 +53,5 @@ public interface HttpTagsProvider {
      * @param exception exception thrown during operation, or null
      * @return set of tags based on the given parameters
      */
-    Tags getHighCardinalityTags(HttpRequest request, HttpResponse response, Throwable exception);
+    KeyValues getHighCardinalityTags(HttpRequest request, HttpResponse response, Throwable exception);
 }

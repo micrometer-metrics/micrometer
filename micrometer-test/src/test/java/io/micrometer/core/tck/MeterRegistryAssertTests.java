@@ -15,6 +15,8 @@
  */
 package io.micrometer.core.tck;
 
+import io.micrometer.common.KeyValue;
+import io.micrometer.common.KeyValues;
 import io.micrometer.core.instrument.Tag;
 import io.micrometer.core.instrument.Tags;
 import io.micrometer.core.instrument.Timer;
@@ -109,7 +111,7 @@ class MeterRegistryAssertTests {
     void assertionErrorThrownWhenTimerPresentWithCommonTagValue() {
         Timer.start(this.simpleMeterRegistry).stop(Timer.builder("matching-metric-name").tag("matching-tag", "matching-value").register(this.simpleMeterRegistry));
 
-        assertThatThrownBy(() -> meterRegistryAssert.doesNotHaveTimerWithNameAndTags("matching-metric-name", io.micrometer.common.Tags.of("matching-tag", "matching-value")))
+        assertThatThrownBy(() -> meterRegistryAssert.doesNotHaveTimerWithNameAndTags("matching-metric-name", KeyValues.of("matching-tag", "matching-value")))
                 .isInstanceOf(AssertionError.class)
                 .hasMessageContaining("Expected no timer with name <matching-metric-name> and tags <[tag(matching-tag=matching-value)]> but found one");
     }
@@ -148,7 +150,7 @@ class MeterRegistryAssertTests {
     void noAssertionErrorThrownWhenTimerWithCommonTagPresent() {
         Timer.start(this.simpleMeterRegistry).stop(Timer.builder("matching-metric-name").tag("matching-tag", "matching-value").register(this.simpleMeterRegistry));
 
-        assertThatCode(() -> meterRegistryAssert.hasTimerWithNameAndTags("matching-metric-name", io.micrometer.common.Tags.of("matching-tag", "matching-value")))
+        assertThatCode(() -> meterRegistryAssert.hasTimerWithNameAndTags("matching-metric-name", KeyValues.of("matching-tag", "matching-value")))
             .doesNotThrowAnyException();
     }
 
@@ -166,7 +168,7 @@ class MeterRegistryAssertTests {
 
     @Test
     void noAssertionErrorThrownWhenTimerWithCommonTagsMissing() {
-        assertThatCode(() -> meterRegistryAssert.doesNotHaveTimerWithNameAndTags("foo", io.micrometer.common.Tags.of(io.micrometer.common.Tag.of("bar", "baz"))))
+        assertThatCode(() -> meterRegistryAssert.doesNotHaveTimerWithNameAndTags("foo", KeyValues.of(KeyValue.of("bar", "baz"))))
                 .doesNotThrowAnyException();
     }
 

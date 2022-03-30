@@ -18,6 +18,7 @@ package io.micrometer.core.tck;
 import java.util.List;
 import java.util.stream.Collectors;
 
+import io.micrometer.common.KeyValues;
 import io.micrometer.core.instrument.Meter;
 import io.micrometer.core.instrument.MeterRegistry;
 import io.micrometer.core.instrument.Tag;
@@ -199,11 +200,11 @@ public class MeterRegistryAssert extends AbstractAssert<MeterRegistryAssert, Met
      * @throws AssertionError if the actual value is {@code null}.
      * @throws AssertionError if there is no timer registered under given name with given tags.
      */
-    public MeterRegistryAssert hasTimerWithNameAndTags(String timerName, io.micrometer.common.Tags tags) {
+    public MeterRegistryAssert hasTimerWithNameAndTags(String timerName, KeyValues tags) {
         return hasTimerWithNameAndTags(timerName, toMicrometerTags(tags));
     }
 
-    private Tags toMicrometerTags(io.micrometer.common.Tags tags) {
+    private Tags toMicrometerTags(KeyValues tags) {
         Tag[] array = tags.stream().map(tag -> Tag.of(tag.getKey(), tag.getValue())).toArray(Tag[]::new);
         return Tags.of(array);
     }
@@ -262,7 +263,7 @@ public class MeterRegistryAssert extends AbstractAssert<MeterRegistryAssert, Met
      * @return this
      * @throws AssertionError if there is a timer registered under given name with given tags.
      */
-    public MeterRegistryAssert doesNotHaveTimerWithNameAndTags(String timerName, io.micrometer.common.Tags tags) {
+    public MeterRegistryAssert doesNotHaveTimerWithNameAndTags(String timerName, KeyValues tags) {
         return doesNotHaveTimerWithNameAndTags(timerName, toMicrometerTags(tags));
     }
 
