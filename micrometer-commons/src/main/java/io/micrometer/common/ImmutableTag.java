@@ -50,7 +50,7 @@ class ImmutableTag implements Tag {
     @Override
     public boolean equals(@Nullable Object o) {
         if (this == o) return true;
-        if (o == null || getClass() != o.getClass()) return false;
+        if (!(o instanceof Tag)) return false;
         Tag that = (Tag) o;
         return Objects.equals(key, that.getKey()) &&
             Objects.equals(value, that.getValue());

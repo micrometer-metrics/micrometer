@@ -15,10 +15,12 @@
  */
 package io.micrometer.core.instrument;
 
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.Iterator;
 import java.util.Spliterator;
 import java.util.Spliterators;
+import java.util.stream.Collectors;
 import java.util.stream.Stream;
 import java.util.stream.StreamSupport;
 
@@ -237,9 +239,9 @@ public final class Tags extends io.micrometer.common.Tags<Tag> {
             return (Tags) tags;
         } else if (tags instanceof Collection) {
             Collection<? extends Tag> tagsCollection = (Collection<? extends Tag>) tags;
-            return new Tags(tagsCollection.toArray(new Tag[0]));
+            return new Tags(fromCommon(tagsCollection));
         } else {
-            return new Tags(StreamSupport.stream(tags.spliterator(), false).toArray(Tag[]::new));
+            return new Tags(fromCommon(StreamSupport.stream(tags.spliterator(), false).collect(Collectors.toList())));
         }
     }
 
@@ -282,7 +284,31 @@ public final class Tags extends io.micrometer.common.Tags<Tag> {
      */
     @SuppressWarnings("rawtypes")
     public static Tags of(@Nullable io.micrometer.common.Tag... tags) {
-        return empty().and((Tag[]) tags);
+        return empty().and(fromCommon(tags));
+    }
+
+    private static Tag[] fromCommon(io.micrometer.common.Tag[] tags) {
+        if (tags == null) {
+            return null;
+        }
+        return Arrays.stream(tags).map(tag -> {
+            if (tag instanceof Tag) {
+                return tag;
+            }
+            return Tag.of(tag.getKey(), tag.getValue());
+        }).collect(Collectors.toList()).toArray(new Tag[0]);
+    }
+
+    private static Tag[] fromCommon(Collection<? extends io.micrometer.common.Tag> tags) {
+        if (tags == null) {
+            return null;
+        }
+        return tags.stream().map(tag -> {
+            if (tag instanceof Tag) {
+                return tag;
+            }
+            return Tag.of(tag.getKey(), tag.getValue());
+        }).collect(Collectors.toList()).toArray(new Tag[0]);
     }
 
     /**
