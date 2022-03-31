@@ -15,14 +15,29 @@
  */
 package io.micrometer.core.instrument.search;
 
-import io.micrometer.core.instrument.*;
-import io.micrometer.core.instrument.Timer;
-import io.micrometer.core.lang.Nullable;
-
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Optional;
+import java.util.Set;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
+
+import io.micrometer.core.instrument.Counter;
+import io.micrometer.core.instrument.DistributionSummary;
+import io.micrometer.core.instrument.FunctionCounter;
+import io.micrometer.core.instrument.FunctionTimer;
+import io.micrometer.core.instrument.Gauge;
+import io.micrometer.core.instrument.LongTaskTimer;
+import io.micrometer.core.instrument.Meter;
+import io.micrometer.core.instrument.MeterRegistry;
+import io.micrometer.core.instrument.Tags;
+import io.micrometer.core.instrument.TimeGauge;
+import io.micrometer.core.instrument.Timer;
+import io.micrometer.core.lang.Nullable;
 
 import static java.util.stream.Collectors.toList;
 
@@ -34,7 +49,7 @@ import static java.util.stream.Collectors.toList;
 public final class RequiredSearch {
     final MeterRegistry registry;
 
-    final List<Tag> requiredTags = new ArrayList<>();
+    final List<io.micrometer.common.Tag> requiredTags = new ArrayList<>();
     final Set<String> requiredTagKeys = new HashSet<>();
 
     @Nullable
@@ -77,7 +92,7 @@ public final class RequiredSearch {
      * @param tags The tags to match.
      * @return This search.
      */
-    public RequiredSearch tags(Iterable<Tag> tags) {
+    public RequiredSearch tags(Iterable<? extends io.micrometer.common.Tag> tags) {
         tags.forEach(this.requiredTags::add);
         return this;
     }

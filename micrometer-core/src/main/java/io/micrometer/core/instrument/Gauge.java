@@ -15,13 +15,13 @@
  */
 package io.micrometer.core.instrument;
 
-import io.micrometer.core.annotation.Incubating;
-import io.micrometer.core.instrument.distribution.HistogramGauges;
-import io.micrometer.core.lang.Nullable;
-
 import java.util.Collections;
 import java.util.function.Supplier;
 import java.util.function.ToDoubleFunction;
+
+import io.micrometer.core.annotation.Incubating;
+import io.micrometer.core.instrument.distribution.HistogramGauges;
+import io.micrometer.core.lang.Nullable;
 
 /**
  * A gauge tracks a value that may go up or down. The value that is published for gauges is
@@ -81,7 +81,7 @@ public interface Gauge extends Meter {
     class Builder<T> {
         private final String name;
         private final ToDoubleFunction<T> f;
-        private Tags tags = Tags.empty();
+        private io.micrometer.common.Tags tags = io.micrometer.common.Tags.empty();
         private boolean strongReference = false;
 
         @Nullable
@@ -114,7 +114,7 @@ public interface Gauge extends Meter {
          * @param tags Tags to add to the eventual gauge.
          * @return The gauge builder with added tags.
          */
-        public Builder<T> tags(Iterable<Tag> tags) {
+        public Builder<T> tags(Iterable<? extends io.micrometer.common.Tag> tags) {
             this.tags = this.tags.and(tags);
             return this;
         }

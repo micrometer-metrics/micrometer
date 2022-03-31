@@ -260,7 +260,7 @@ public class AppOpticsMeterRegistry extends StepMeterRegistry {
             sb.append(",\"").append(statistics[i]).append("\":").append(statistics[i + 1]);
         }
 
-        List<Tag> tags = id.getTags();
+        List<? extends io.micrometer.common.Tag> tags = id.getTags();
 
         sb.append(",\"tags\":{");
         if (type != null) {

@@ -16,7 +16,6 @@
 package io.micrometer.binder.kafka;
 
 import io.micrometer.core.annotation.Incubating;
-import io.micrometer.core.instrument.Tag;
 import io.micrometer.core.lang.NonNullApi;
 import io.micrometer.core.lang.NonNullFields;
 import org.apache.kafka.clients.admin.AdminClient;
@@ -47,7 +46,7 @@ public class KafkaClientMetrics extends KafkaMetrics {
      * @param kafkaProducer producer instance to be instrumented
      * @param tags          additional tags
      */
-    public KafkaClientMetrics(Producer<?, ?> kafkaProducer, Iterable<Tag> tags) {
+    public KafkaClientMetrics(Producer<?, ?> kafkaProducer, Iterable<? extends io.micrometer.common.Tag> tags) {
         super(kafkaProducer::metrics, tags);
     }
 
@@ -66,7 +65,7 @@ public class KafkaClientMetrics extends KafkaMetrics {
      * @param kafkaConsumer consumer instance to be instrumented
      * @param tags          additional tags
      */
-    public KafkaClientMetrics(Consumer<?, ?> kafkaConsumer, Iterable<Tag> tags) {
+    public KafkaClientMetrics(Consumer<?, ?> kafkaConsumer, Iterable<? extends io.micrometer.common.Tag> tags) {
         super(kafkaConsumer::metrics, tags);
     }
 
@@ -85,7 +84,7 @@ public class KafkaClientMetrics extends KafkaMetrics {
      * @param adminClient instance to be instrumented
      * @param tags        additional tags
      */
-    public KafkaClientMetrics(AdminClient adminClient, Iterable<Tag> tags) {
+    public KafkaClientMetrics(AdminClient adminClient, Iterable<? extends io.micrometer.common.Tag> tags) {
         super(adminClient::metrics, tags);
     }
 

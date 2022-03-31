@@ -15,6 +15,14 @@
  */
 package io.micrometer.signalfx;
 
+import java.net.URI;
+import java.util.Collections;
+import java.util.List;
+import java.util.Set;
+import java.util.concurrent.ThreadFactory;
+import java.util.concurrent.TimeUnit;
+import java.util.stream.Stream;
+
 import com.signalfx.endpoint.SignalFxEndpoint;
 import com.signalfx.endpoint.SignalFxReceiverEndpoint;
 import com.signalfx.metrics.auth.StaticAuthToken;
@@ -31,7 +39,6 @@ import io.micrometer.core.instrument.FunctionTimer;
 import io.micrometer.core.instrument.Gauge;
 import io.micrometer.core.instrument.LongTaskTimer;
 import io.micrometer.core.instrument.Meter;
-import io.micrometer.core.instrument.Tag;
 import io.micrometer.core.instrument.TimeGauge;
 import io.micrometer.core.instrument.Timer;
 import io.micrometer.core.instrument.config.NamingConvention;
@@ -44,14 +51,6 @@ import io.micrometer.core.instrument.util.NamedThreadFactory;
 import io.micrometer.core.lang.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-
-import java.net.URI;
-import java.util.Collections;
-import java.util.List;
-import java.util.Set;
-import java.util.concurrent.ThreadFactory;
-import java.util.concurrent.TimeUnit;
-import java.util.stream.Stream;
 
 import static com.signalfx.metrics.protobuf.SignalFxProtocolBuffers.MetricType.COUNTER;
 import static com.signalfx.metrics.protobuf.SignalFxProtocolBuffers.MetricType.CUMULATIVE_COUNTER;
@@ -188,7 +187,7 @@ public class SignalFxMeterRegistry extends StepMeterRegistry {
                 .setMetricType(metricType)
                 .setValue(datum);
 
-        for (Tag tag : getConventionTags(meter.getId())) {
+        for (io.micrometer.common.Tag tag : getConventionTags(meter.getId())) {
             dataPointBuilder.addDimensions(SignalFxProtocolBuffers.Dimension.newBuilder()
                     .setKey(tag.getKey())
                     .setValue(tag.getValue())

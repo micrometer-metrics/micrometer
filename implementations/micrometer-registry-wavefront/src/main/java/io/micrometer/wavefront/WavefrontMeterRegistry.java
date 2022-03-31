@@ -286,7 +286,7 @@ public class WavefrontMeterRegistry extends PushMeterRegistry {
     private Map<String, String> getTagsAsMap(Meter.Id id) {
         return getConventionTags(id)
                 .stream()
-                .collect(Collectors.toMap(Tag::getKey, Tag::getValue, (tag1, tag2) -> tag2));
+                .collect(Collectors.toMap(io.micrometer.common.Tag::getKey, io.micrometer.common.Tag::getValue, (tag1, tag2) -> tag2));
     }
 
     private Meter.Id idWithSuffix(Meter.Id id, String suffix) {

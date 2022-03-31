@@ -15,19 +15,27 @@
  */
 package io.micrometer.binder.hystrix;
 
-import com.netflix.hystrix.*;
-import com.netflix.hystrix.metric.HystrixCommandCompletionStream;
-import com.netflix.hystrix.strategy.metrics.HystrixMetricsPublisherCommand;
-import io.micrometer.core.instrument.*;
-import io.micrometer.core.lang.NonNullApi;
-import io.micrometer.core.lang.NonNullFields;
-import io.micrometer.core.util.internal.logging.InternalLogger;
-import io.micrometer.core.util.internal.logging.InternalLoggerFactory;
-
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.TimeUnit;
+
+import com.netflix.hystrix.HystrixCircuitBreaker;
+import com.netflix.hystrix.HystrixCommandGroupKey;
+import com.netflix.hystrix.HystrixCommandKey;
+import com.netflix.hystrix.HystrixCommandMetrics;
+import com.netflix.hystrix.HystrixEventType;
+import com.netflix.hystrix.metric.HystrixCommandCompletionStream;
+import com.netflix.hystrix.strategy.metrics.HystrixMetricsPublisherCommand;
+import io.micrometer.core.instrument.Counter;
+import io.micrometer.core.instrument.Gauge;
+import io.micrometer.core.instrument.MeterRegistry;
+import io.micrometer.core.instrument.Tags;
+import io.micrometer.core.instrument.Timer;
+import io.micrometer.core.lang.NonNullApi;
+import io.micrometer.core.lang.NonNullFields;
+import io.micrometer.core.util.internal.logging.InternalLogger;
+import io.micrometer.core.util.internal.logging.InternalLoggerFactory;
 
 /**
  * @author Clint Checketts
@@ -51,7 +59,7 @@ public class MicrometerMetricsPublisherCommand implements HystrixMetricsPublishe
     private final MeterRegistry meterRegistry;
     private final HystrixCommandMetrics metrics;
     private final HystrixCircuitBreaker circuitBreaker;
-    private final Iterable<Tag> tags;
+    private final Iterable<? extends io.micrometer.common.Tag> tags;
     private final HystrixCommandKey commandKey;
     private HystrixMetricsPublisherCommand metricsPublisherForCommand;
 

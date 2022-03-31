@@ -15,15 +15,15 @@
  */
 package io.micrometer.core.instrument;
 
-import io.micrometer.core.annotation.Incubating;
-import io.micrometer.core.lang.Nullable;
-
 import java.util.Set;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Supplier;
 import java.util.function.ToDoubleFunction;
 import java.util.stream.Stream;
 import java.util.stream.StreamSupport;
+
+import io.micrometer.core.annotation.Incubating;
+import io.micrometer.core.lang.Nullable;
 
 import static java.util.Collections.emptySet;
 import static java.util.stream.Collectors.toSet;
@@ -120,7 +120,7 @@ public class MultiGauge {
      */
     public static class Builder {
         private final String name;
-        private Tags tags = Tags.empty();
+        private io.micrometer.common.Tags tags = io.micrometer.common.Tags.empty();
 
         @Nullable
         private String description;
@@ -144,7 +144,7 @@ public class MultiGauge {
          * @param tags Tags to add to the eventual gauge.
          * @return The gauge builder with added tags.
          */
-        public Builder tags(Iterable<Tag> tags) {
+        public Builder tags(Iterable<? extends io.micrometer.common.Tag> tags) {
             this.tags = this.tags.and(tags);
             return this;
         }

@@ -17,7 +17,6 @@ package io.micrometer.core.instrument.binder.httpcomponents;
 
 import io.micrometer.core.instrument.Gauge;
 import io.micrometer.core.instrument.MeterRegistry;
-import io.micrometer.core.instrument.Tag;
 import io.micrometer.core.instrument.Tags;
 import io.micrometer.core.instrument.binder.MeterBinder;
 import io.micrometer.core.lang.NonNull;
@@ -38,7 +37,7 @@ import org.apache.http.pool.ConnPoolControl;
 public class PoolingHttpClientConnectionManagerMetricsBinder implements MeterBinder {
 
     private final ConnPoolControl<HttpRoute> connPoolControl;
-    private final Iterable<Tag> tags;
+    private final Iterable<? extends io.micrometer.common.Tag> tags;
 
     /**
      * Creates a metrics binder for the given pooling connection pool control.
@@ -62,7 +61,7 @@ public class PoolingHttpClientConnectionManagerMetricsBinder implements MeterBin
      * @param tags            Tags to apply to all recorded metrics.
      */
     @SuppressWarnings("WeakerAccess")
-    public PoolingHttpClientConnectionManagerMetricsBinder(ConnPoolControl<HttpRoute> connPoolControl, String name, Iterable<Tag> tags) {
+    public PoolingHttpClientConnectionManagerMetricsBinder(ConnPoolControl<HttpRoute> connPoolControl, String name, Iterable<? extends io.micrometer.common.Tag> tags) {
         this.connPoolControl = connPoolControl;
         this.tags = Tags.concat(tags, "httpclient", name);
     }

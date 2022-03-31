@@ -15,11 +15,10 @@
  */
 package io.micrometer.binder.jetty;
 
-import io.micrometer.core.instrument.MeterRegistry;
-import io.micrometer.core.instrument.Tag;
-import org.eclipse.jetty.util.thread.QueuedThreadPool;
-
 import java.util.concurrent.BlockingQueue;
+
+import io.micrometer.core.instrument.MeterRegistry;
+import org.eclipse.jetty.util.thread.QueuedThreadPool;
 
 /**
  * A {@link QueuedThreadPool} that binds metrics about the Jetty server thread pool.
@@ -36,7 +35,7 @@ import java.util.concurrent.BlockingQueue;
 public class InstrumentedQueuedThreadPool extends QueuedThreadPool {
 
     private final MeterRegistry registry;
-    private final Iterable<Tag> tags;
+    private final Iterable<? extends io.micrometer.common.Tag> tags;
 
     /**
      * Default values for the instrumented thread pool.
@@ -44,7 +43,7 @@ public class InstrumentedQueuedThreadPool extends QueuedThreadPool {
      * @param registry where metrics will be bound
      * @param tags     tags to apply to metrics bound from this
      */
-    public InstrumentedQueuedThreadPool(MeterRegistry registry, Iterable<Tag> tags) {
+    public InstrumentedQueuedThreadPool(MeterRegistry registry, Iterable<? extends io.micrometer.common.Tag> tags) {
         this.registry = registry;
         this.tags = tags;
     }
@@ -57,7 +56,7 @@ public class InstrumentedQueuedThreadPool extends QueuedThreadPool {
      * @param maxThreads maximum threads for the thread pool
      * @since 1.5.0
      */
-    public InstrumentedQueuedThreadPool(MeterRegistry registry, Iterable<Tag> tags, int maxThreads) {
+    public InstrumentedQueuedThreadPool(MeterRegistry registry, Iterable<? extends io.micrometer.common.Tag> tags, int maxThreads) {
         super(maxThreads);
         this.registry = registry;
         this.tags = tags;
@@ -72,7 +71,7 @@ public class InstrumentedQueuedThreadPool extends QueuedThreadPool {
      * @param minThreads minimum threads for the thread pool
      * @since 1.5.0
      */
-    public InstrumentedQueuedThreadPool(MeterRegistry registry, Iterable<Tag> tags, int maxThreads, int minThreads) {
+    public InstrumentedQueuedThreadPool(MeterRegistry registry, Iterable<? extends io.micrometer.common.Tag> tags, int maxThreads, int minThreads) {
         super(maxThreads, minThreads);
         this.registry = registry;
         this.tags = tags;
@@ -89,7 +88,7 @@ public class InstrumentedQueuedThreadPool extends QueuedThreadPool {
      * @since 1.5.0
      */
     public InstrumentedQueuedThreadPool(MeterRegistry registry,
-                                        Iterable<Tag> tags,
+                                        Iterable<? extends io.micrometer.common.Tag> tags,
                                         int maxThreads,
                                         int minThreads,
                                         int idleTimeout) {
@@ -110,7 +109,7 @@ public class InstrumentedQueuedThreadPool extends QueuedThreadPool {
      * @since 1.5.0
      */
     public InstrumentedQueuedThreadPool(MeterRegistry registry,
-                                        Iterable<Tag> tags,
+                                        Iterable<? extends io.micrometer.common.Tag> tags,
                                         int maxThreads,
                                         int minThreads,
                                         int idleTimeout,

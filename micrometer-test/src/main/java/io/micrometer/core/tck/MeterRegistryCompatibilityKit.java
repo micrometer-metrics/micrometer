@@ -15,9 +15,28 @@
  */
 package io.micrometer.core.tck;
 
+import java.time.Duration;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicInteger;
+import java.util.concurrent.atomic.AtomicLong;
+import java.util.function.Supplier;
+
 import io.micrometer.core.Issue;
 import io.micrometer.core.annotation.Timed;
-import io.micrometer.core.instrument.*;
+import io.micrometer.core.instrument.Counter;
+import io.micrometer.core.instrument.DistributionSummary;
+import io.micrometer.core.instrument.FunctionTimer;
+import io.micrometer.core.instrument.Gauge;
+import io.micrometer.core.instrument.LongTaskTimer;
+import io.micrometer.core.instrument.Meter;
+import io.micrometer.core.instrument.MeterRegistry;
+import io.micrometer.core.instrument.Statistic;
 import io.micrometer.core.instrument.Timer;
 import io.micrometer.core.instrument.distribution.CountAtBucket;
 import io.micrometer.core.instrument.distribution.DistributionStatisticConfig;
@@ -32,23 +51,19 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.CsvSource;
 
-import java.time.Duration;
-import java.util.*;
-import java.util.concurrent.TimeUnit;
-import java.util.concurrent.atomic.AtomicInteger;
-import java.util.concurrent.atomic.AtomicLong;
-import java.util.function.Supplier;
-
 import static io.micrometer.core.instrument.MockClock.clock;
 import static io.micrometer.core.instrument.Statistic.ACTIVE_TASKS;
 import static io.micrometer.core.instrument.Statistic.DURATION;
 import static io.micrometer.core.instrument.util.TimeUtils.millisToUnit;
 import static java.util.Collections.emptyList;
 import static java.util.Objects.requireNonNull;
-import static org.assertj.core.api.Assertions.*;
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.offset;
 import static org.assertj.core.api.Assertions.within;
-import static org.junit.jupiter.api.Assertions.*;
 import static org.junit.jupiter.api.Assertions.assertAll;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 /**
  * Base class for {@link MeterRegistry} compatibility tests.
@@ -473,7 +488,7 @@ public abstract class MeterRegistryCompatibilityKit {
             LongTaskTimer ltt = LongTaskTimer.builder(timed).register(registry);
             Meter.Id id = ltt.getId();
             assertThat(id.getName()).isEqualTo("my.name");
-            assertThat(id.getTags()).containsExactly(Tag.of("a", "tag"));
+            assertThat(id.getTags()).containsExactly(io.micrometer.common.Tag.of("a", "tag"));
             assertThat(id.getDescription()).isEqualTo("some description");
             if (ltt instanceof CumulativeHistogramLongTaskTimer) {
                 assertThat(ltt.takeSnapshot().histogramCounts()).isNotEmpty();

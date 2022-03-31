@@ -15,13 +15,20 @@
  */
 package io.micrometer.binder.jersey.server.resources;
 
-import io.micrometer.binder.jersey.server.exception.ResourceGoneException;
+import java.net.URI;
 
-import javax.ws.rs.*;
+import javax.ws.rs.GET;
+import javax.ws.rs.NotAuthorizedException;
+import javax.ws.rs.NotFoundException;
+import javax.ws.rs.Path;
+import javax.ws.rs.PathParam;
+import javax.ws.rs.Produces;
+import javax.ws.rs.RedirectionException;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.Response.Status;
-import java.net.URI;
+
+import io.micrometer.binder.jersey.server.exception.ResourceGoneException;
 
 /**
  * @author Michael Weirauch

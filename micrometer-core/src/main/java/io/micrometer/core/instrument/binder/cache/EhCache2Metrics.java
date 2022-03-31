@@ -18,7 +18,10 @@ package io.micrometer.core.instrument.binder.cache;
 import java.util.function.Function;
 import java.util.function.ToLongFunction;
 
-import io.micrometer.core.instrument.*;
+import io.micrometer.core.instrument.FunctionCounter;
+import io.micrometer.core.instrument.Gauge;
+import io.micrometer.core.instrument.MeterRegistry;
+import io.micrometer.core.instrument.Tags;
 import io.micrometer.core.instrument.binder.BaseUnits;
 import io.micrometer.core.lang.NonNullApi;
 import io.micrometer.core.lang.NonNullFields;
@@ -37,7 +40,7 @@ import net.sf.ehcache.statistics.StatisticsGateway;
 @Deprecated
 public class EhCache2Metrics extends CacheMeterBinder<Ehcache> {
 
-    public EhCache2Metrics(Ehcache cache, Iterable<Tag> tags) {
+    public EhCache2Metrics(Ehcache cache, Iterable<? extends io.micrometer.common.Tag> tags) {
         super(cache, cache.getName(), tags);
     }
 
@@ -61,7 +64,7 @@ public class EhCache2Metrics extends CacheMeterBinder<Ehcache> {
      * @param tags     Tags to apply to all recorded metrics.
      * @return The instrumented cache, unchanged. The original cache is not wrapped or proxied in any way.
      */
-    public static Ehcache monitor(MeterRegistry registry, Ehcache cache, Iterable<Tag> tags) {
+    public static Ehcache monitor(MeterRegistry registry, Ehcache cache, Iterable<? extends io.micrometer.common.Tag> tags) {
         new EhCache2Metrics(cache, tags).bindTo(registry);
         return cache;
     }

@@ -15,27 +15,26 @@
  */
 package io.micrometer.binder.db;
 
-import io.micrometer.core.instrument.MeterRegistry;
-import io.micrometer.core.instrument.Tag;
-import io.micrometer.core.instrument.Timer;
-import io.micrometer.core.instrument.util.StringUtils;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.function.Supplier;
+
+import io.micrometer.core.instrument.MeterRegistry;
+import io.micrometer.core.instrument.Timer;
+import io.micrometer.core.instrument.util.StringUtils;
 import org.jooq.ExecuteContext;
 import org.jooq.exception.DataAccessException;
 import org.jooq.impl.DefaultExecuteListener;
 
-import java.util.function.Supplier;
-
 class JooqExecuteListener extends DefaultExecuteListener {
     private final MeterRegistry registry;
-    private final Iterable<Tag> tags;
-    private final Supplier<Iterable<Tag>> queryTagsSupplier;
+    private final Iterable<? extends io.micrometer.common.Tag> tags;
+    private final Supplier<Iterable<? extends io.micrometer.common.Tag>> queryTagsSupplier;
 
     private final Object sampleLock = new Object();
     private final Map<ExecuteContext, Timer.Sample> sampleByExecuteContext = new HashMap<>();
 
-    public JooqExecuteListener(MeterRegistry registry, Iterable<Tag> tags, Supplier<Iterable<Tag>> queryTags) {
+    public JooqExecuteListener(MeterRegistry registry, Iterable<? extends io.micrometer.common.Tag> tags, Supplier<Iterable<? extends io.micrometer.common.Tag>> queryTags) {
         this.registry = registry;
         this.tags = tags;
         this.queryTagsSupplier = queryTags;
@@ -69,7 +68,7 @@ class JooqExecuteListener extends DefaultExecuteListener {
     }
 
     private void stopTimerIfStillRunning(ExecuteContext ctx) {
-        Iterable<Tag> queryTags = queryTagsSupplier.get();
+        Iterable<? extends io.micrometer.common.Tag> queryTags = queryTagsSupplier.get();
         if (queryTags == null) return;
 
         Timer.Sample sample;

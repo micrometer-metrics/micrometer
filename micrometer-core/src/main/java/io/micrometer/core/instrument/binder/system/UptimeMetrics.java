@@ -15,16 +15,15 @@
  */
 package io.micrometer.core.instrument.binder.system;
 
+import java.lang.management.ManagementFactory;
+import java.lang.management.RuntimeMXBean;
+import java.util.concurrent.TimeUnit;
+
 import io.micrometer.core.instrument.MeterRegistry;
-import io.micrometer.core.instrument.Tag;
 import io.micrometer.core.instrument.TimeGauge;
 import io.micrometer.core.instrument.binder.MeterBinder;
 import io.micrometer.core.lang.NonNullApi;
 import io.micrometer.core.lang.NonNullFields;
-
-import java.lang.management.ManagementFactory;
-import java.lang.management.RuntimeMXBean;
-import java.util.concurrent.TimeUnit;
 
 import static java.util.Collections.emptyList;
 
@@ -40,18 +39,18 @@ import static java.util.Collections.emptyList;
 public class UptimeMetrics implements MeterBinder {
 
     private final RuntimeMXBean runtimeMXBean;
-    private final Iterable<Tag> tags;
+    private final Iterable<? extends io.micrometer.common.Tag> tags;
 
     public UptimeMetrics() {
         this(emptyList());
     }
 
-    public UptimeMetrics(Iterable<Tag> tags) {
+    public UptimeMetrics(Iterable<? extends io.micrometer.common.Tag> tags) {
         this(ManagementFactory.getRuntimeMXBean(), tags);
     }
 
     // VisibleForTesting
-    UptimeMetrics(RuntimeMXBean runtimeMXBean, Iterable<Tag> tags) {
+    UptimeMetrics(RuntimeMXBean runtimeMXBean, Iterable<? extends io.micrometer.common.Tag> tags) {
         this.runtimeMXBean = runtimeMXBean;
         this.tags = tags;
     }

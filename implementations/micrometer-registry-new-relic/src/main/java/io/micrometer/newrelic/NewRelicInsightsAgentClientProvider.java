@@ -15,17 +15,26 @@
  */
 package io.micrometer.newrelic;
 
-import com.newrelic.api.agent.Agent;
-import com.newrelic.api.agent.NewRelic;
-import io.micrometer.core.instrument.*;
-import io.micrometer.core.instrument.config.NamingConvention;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.TimeUnit;
+
+import com.newrelic.api.agent.Agent;
+import com.newrelic.api.agent.NewRelic;
+import io.micrometer.core.instrument.Counter;
+import io.micrometer.core.instrument.DistributionSummary;
+import io.micrometer.core.instrument.FunctionCounter;
+import io.micrometer.core.instrument.FunctionTimer;
+import io.micrometer.core.instrument.Gauge;
+import io.micrometer.core.instrument.LongTaskTimer;
+import io.micrometer.core.instrument.Measurement;
+import io.micrometer.core.instrument.Meter;
+import io.micrometer.core.instrument.TimeGauge;
+import io.micrometer.core.instrument.Timer;
+import io.micrometer.core.instrument.config.NamingConvention;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * Publishes metrics to New Relic Insights via Java Agent API.
@@ -213,7 +222,7 @@ public class NewRelicInsightsAgentClientProvider implements NewRelicClientProvid
             attributes.put(METRIC_TYPE, id.getType().toString());
         }
         //process meter tags
-        for (Tag tag : id.getConventionTags(namingConvention)) {
+        for (io.micrometer.common.Tag tag : id.getConventionTags(namingConvention)) {
             attributes.put(tag.getKey(), tag.getValue());
         }
     }

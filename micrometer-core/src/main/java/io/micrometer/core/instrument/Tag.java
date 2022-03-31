@@ -23,9 +23,6 @@ package io.micrometer.core.instrument;
  */
 @Deprecated
 public interface Tag extends io.micrometer.common.Tag {
-    String getKey();
-
-    String getValue();
 
     @Deprecated
     static Tag of(String key, String value) {
@@ -40,8 +37,20 @@ public interface Tag extends io.micrometer.common.Tag {
      * @return core tag
      */
     @Deprecated
-    static Tag from(io.micrometer.common.Tag tag) {
+    static Tag fromCommon(io.micrometer.common.Tag tag) {
         return Tag.of(tag.getKey(), tag.getValue());
+    }
+
+    /**
+     * This should be used only to migrate from old tags to the new ones.
+     * We reserve the right to remove this method at any time.
+     *
+     * @param tag common tag
+     * @return core tag
+     */
+    @Deprecated
+    static io.micrometer.common.Tag toCommon(Tag tag) {
+        return io.micrometer.common.Tag.of(tag.getKey(), tag.getValue());
     }
 
     @Override

@@ -38,7 +38,7 @@ public interface JettyClientTagsProvider {
      * @param result the request result
      * @return tags to associate with metrics recorded for the request
      */
-    default Iterable<Tag> httpRequestTags(Result result) {
+    default Iterable<? extends io.micrometer.common.Tag> httpRequestTags(Result result) {
         return Tags.of(JettyClientTags.method(result.getRequest()),
                 JettyClientTags.host(result.getRequest()),
                 JettyClientTags.uri(result, this::uriPattern),

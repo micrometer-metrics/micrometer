@@ -249,7 +249,7 @@ public final class DynatraceExporterV2 extends AbstractDynatraceExporter {
                 .setTimestamp(Instant.ofEpochMilli(clock.wallTime()));
     }
 
-    private DimensionList fromTags(List<Tag> tags) {
+    private DimensionList fromTags(List<? extends io.micrometer.common.Tag> tags) {
         return DimensionList.fromCollection(tags.stream()
                 .map(tag -> Dimension.create(tag.getKey(), tag.getValue()))
                 .collect(Collectors.toList())

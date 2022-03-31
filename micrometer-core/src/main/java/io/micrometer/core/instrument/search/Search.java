@@ -15,15 +15,31 @@
  */
 package io.micrometer.core.instrument.search;
 
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
+import java.util.function.Predicate;
+import java.util.stream.Stream;
+
+import io.micrometer.core.instrument.Counter;
+import io.micrometer.core.instrument.DistributionSummary;
+import io.micrometer.core.instrument.FunctionCounter;
+import io.micrometer.core.instrument.FunctionTimer;
+import io.micrometer.core.instrument.Gauge;
+import io.micrometer.core.instrument.LongTaskTimer;
+import io.micrometer.core.instrument.Meter;
+import io.micrometer.core.instrument.MeterRegistry;
+import io.micrometer.core.instrument.Tags;
+import io.micrometer.core.instrument.TimeGauge;
 import io.micrometer.core.instrument.Timer;
-import io.micrometer.core.instrument.*;
 import io.micrometer.core.instrument.config.MeterFilter;
 import io.micrometer.core.instrument.config.MeterFilterReply;
 import io.micrometer.core.lang.Nullable;
-
-import java.util.*;
-import java.util.function.Predicate;
-import java.util.stream.Stream;
 
 import static java.util.stream.Collectors.toList;
 
@@ -35,7 +51,7 @@ import static java.util.stream.Collectors.toList;
  */
 public final class Search {
     private final MeterRegistry registry;
-    private final List<Tag> tags = new ArrayList<>();
+    private final List<io.micrometer.common.Tag> tags = new ArrayList<>();
     private Predicate<String> nameMatches = n -> true;
     private final Set<String> requiredTagKeys = new HashSet<>();
     private final Map<String, Collection<Predicate<String>>> tagMatches = new HashMap<>();
@@ -73,7 +89,7 @@ public final class Search {
      * @param tags The tags to match.
      * @return This search.
      */
-    public Search tags(Iterable<Tag> tags) {
+    public Search tags(Iterable<? extends io.micrometer.common.Tag> tags) {
         tags.forEach(this.tags::add);
         return this;
     }

@@ -15,19 +15,18 @@
  */
 package io.micrometer.core.instrument.binder.httpcomponents;
 
+import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.function.Function;
+
 import io.micrometer.core.annotation.Incubating;
 import io.micrometer.core.instrument.MeterRegistry;
-import io.micrometer.core.instrument.Tag;
 import io.micrometer.core.instrument.Tags;
 import io.micrometer.core.instrument.Timer;
 import org.apache.http.HttpRequest;
 import org.apache.http.HttpRequestInterceptor;
 import org.apache.http.HttpResponseInterceptor;
 import org.apache.http.protocol.HttpContext;
-
-import java.util.Map;
-import java.util.concurrent.ConcurrentHashMap;
-import java.util.function.Function;
 
 /**
  * Provides {@link HttpRequestInterceptor} and {@link HttpResponseInterceptor} for
@@ -68,7 +67,7 @@ public class MicrometerHttpClientInterceptor {
      */
     public MicrometerHttpClientInterceptor(MeterRegistry meterRegistry,
                                            Function<HttpRequest, String> uriMapper,
-                                           Iterable<Tag> extraTags,
+                                           Iterable<? extends io.micrometer.common.Tag> extraTags,
                                            boolean exportTagsForRoute) {
         this.requestInterceptor = (request, context) -> timerByHttpContext.put(context, Timer.resource(meterRegistry, METER_NAME)
                 .tags("method", request.getRequestLine().getMethod(), "uri", uriMapper.apply(request)));
@@ -90,7 +89,7 @@ public class MicrometerHttpClientInterceptor {
      * @param exportTagsForRoute whether to export tags for route
      */
     public MicrometerHttpClientInterceptor(MeterRegistry meterRegistry,
-                                           Iterable<Tag> extraTags,
+                                           Iterable<? extends io.micrometer.common.Tag> extraTags,
                                            boolean exportTagsForRoute) {
         this(meterRegistry, new DefaultUriMapper(), extraTags, exportTagsForRoute);
     }

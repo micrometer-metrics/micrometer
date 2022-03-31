@@ -15,13 +15,14 @@
  */
 package io.micrometer.binder.jersey.server.resources;
 
-import io.micrometer.core.annotation.Timed;
+import java.util.concurrent.CountDownLatch;
 
 import javax.ws.rs.GET;
 import javax.ws.rs.Path;
 import javax.ws.rs.Produces;
 import javax.ws.rs.core.MediaType;
-import java.util.concurrent.CountDownLatch;
+
+import io.micrometer.core.annotation.Timed;
 
 import static java.util.Objects.requireNonNull;
 

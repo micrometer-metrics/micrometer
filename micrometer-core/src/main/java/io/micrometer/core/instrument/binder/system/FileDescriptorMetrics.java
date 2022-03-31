@@ -15,21 +15,20 @@
  */
 package io.micrometer.core.instrument.binder.system;
 
-import io.micrometer.core.instrument.Gauge;
-import io.micrometer.core.instrument.MeterRegistry;
-import io.micrometer.core.instrument.Tag;
-import io.micrometer.core.instrument.binder.BaseUnits;
-import io.micrometer.core.instrument.binder.MeterBinder;
-import io.micrometer.core.lang.NonNullApi;
-import io.micrometer.core.lang.NonNullFields;
-import io.micrometer.core.lang.Nullable;
-
 import java.lang.management.ManagementFactory;
 import java.lang.management.OperatingSystemMXBean;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.util.Arrays;
 import java.util.List;
+
+import io.micrometer.core.instrument.Gauge;
+import io.micrometer.core.instrument.MeterRegistry;
+import io.micrometer.core.instrument.binder.BaseUnits;
+import io.micrometer.core.instrument.binder.MeterBinder;
+import io.micrometer.core.lang.NonNullApi;
+import io.micrometer.core.lang.NonNullFields;
+import io.micrometer.core.lang.Nullable;
 
 import static java.util.Collections.emptyList;
 
@@ -60,7 +59,7 @@ public class FileDescriptorMetrics implements MeterBinder {
     );
 
     private final OperatingSystemMXBean osBean;
-    private final Iterable<Tag> tags;
+    private final Iterable<? extends io.micrometer.common.Tag> tags;
 
     @Nullable
     private final Class<?> osBeanClass;
@@ -75,12 +74,12 @@ public class FileDescriptorMetrics implements MeterBinder {
         this(emptyList());
     }
 
-    public FileDescriptorMetrics(Iterable<Tag> tags) {
+    public FileDescriptorMetrics(Iterable<? extends io.micrometer.common.Tag> tags) {
         this(ManagementFactory.getOperatingSystemMXBean(), tags);
     }
 
     // VisibleForTesting
-    FileDescriptorMetrics(OperatingSystemMXBean osBean, Iterable<Tag> tags) {
+    FileDescriptorMetrics(OperatingSystemMXBean osBean, Iterable<? extends io.micrometer.common.Tag> tags) {
         this.osBean = osBean;
         this.tags = tags;
 

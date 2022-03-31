@@ -46,5 +46,5 @@ public interface MongoCommandTagsProvider {
      * @param commandEvent event representing the issued command
      * @return tags to associate with metrics recorded for the command
      */
-    Iterable<Tag> commandTags(CommandEvent commandEvent);
+    <T extends io.micrometer.common.Tag> Iterable<T> commandTags(CommandEvent commandEvent);
 }

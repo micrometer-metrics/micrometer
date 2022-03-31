@@ -15,15 +15,19 @@
  */
 package io.micrometer.binder.mongodb;
 
+import java.util.concurrent.TimeUnit;
+
 import com.mongodb.client.MongoClient;
-import com.mongodb.event.*;
+import com.mongodb.event.CommandEvent;
+import com.mongodb.event.CommandFailedEvent;
+import com.mongodb.event.CommandListener;
+import com.mongodb.event.CommandStartedEvent;
+import com.mongodb.event.CommandSucceededEvent;
 import io.micrometer.core.annotation.Incubating;
 import io.micrometer.core.instrument.MeterRegistry;
 import io.micrometer.core.instrument.Timer;
 import io.micrometer.core.lang.NonNullApi;
 import io.micrometer.core.lang.NonNullFields;
-
-import java.util.concurrent.TimeUnit;
 
 /**
  * {@link CommandListener} for collecting command metrics from {@link MongoClient}.

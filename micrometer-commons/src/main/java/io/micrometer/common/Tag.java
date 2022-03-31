@@ -36,5 +36,4 @@ public interface Tag extends Comparable<Object> {
         }
         return -1;
     }
-
 }

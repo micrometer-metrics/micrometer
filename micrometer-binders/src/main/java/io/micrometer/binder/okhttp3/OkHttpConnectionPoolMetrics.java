@@ -15,18 +15,17 @@
  */
 package io.micrometer.binder.okhttp3;
 
+import java.util.Collections;
+import java.util.Optional;
+import java.util.concurrent.CountDownLatch;
+
 import io.micrometer.core.instrument.Gauge;
 import io.micrometer.core.instrument.MeterRegistry;
-import io.micrometer.core.instrument.Tag;
 import io.micrometer.core.instrument.Tags;
 import io.micrometer.core.instrument.binder.BaseUnits;
 import io.micrometer.core.instrument.binder.MeterBinder;
 import io.micrometer.core.lang.NonNull;
 import okhttp3.ConnectionPool;
-
-import java.util.Collections;
-import java.util.Optional;
-import java.util.concurrent.CountDownLatch;
 
 /**
  * MeterBinder for collecting metrics of a given OkHttp {@link ConnectionPool}.
@@ -47,7 +46,7 @@ public class OkHttpConnectionPoolMetrics implements MeterBinder {
 
     private final ConnectionPool connectionPool;
     private final String namePrefix;
-    private final Iterable<Tag> tags;
+    private final Iterable<? extends io.micrometer.common.Tag> tags;
     private final Double maxIdleConnectionCount;
     private final ThreadLocal<ConnectionPoolConnectionStats> connectionStats = new ThreadLocal<>();
 
@@ -68,7 +67,7 @@ public class OkHttpConnectionPoolMetrics implements MeterBinder {
      * @param connectionPool The connection pool to monitor. Must not be null.
      * @param tags           A list of tags which will be passed for all meters. Must not be null.
      */
-    public OkHttpConnectionPoolMetrics(ConnectionPool connectionPool, Iterable<Tag> tags) {
+    public OkHttpConnectionPoolMetrics(ConnectionPool connectionPool, Iterable<? extends io.micrometer.common.Tag> tags) {
         this(connectionPool, DEFAULT_NAME_PREFIX, tags, null);
     }
 
@@ -79,7 +78,7 @@ public class OkHttpConnectionPoolMetrics implements MeterBinder {
      * @param namePrefix     The desired name prefix for the exposed metrics. Must not be null.
      * @param tags           A list of tags which will be passed for all meters. Must not be null.
      */
-    public OkHttpConnectionPoolMetrics(ConnectionPool connectionPool, String namePrefix, Iterable<Tag> tags) {
+    public OkHttpConnectionPoolMetrics(ConnectionPool connectionPool, String namePrefix, Iterable<? extends io.micrometer.common.Tag> tags) {
         this(connectionPool, namePrefix, tags, null);
     }
 
@@ -94,7 +93,7 @@ public class OkHttpConnectionPoolMetrics implements MeterBinder {
      *                           not exposed by this instance. Therefore this binder allows to pass
      *                           it, to be able to monitor it.
      */
-    public OkHttpConnectionPoolMetrics(ConnectionPool connectionPool, String namePrefix, Iterable<Tag> tags, Integer maxIdleConnections) {
+    public OkHttpConnectionPoolMetrics(ConnectionPool connectionPool, String namePrefix, Iterable<? extends io.micrometer.common.Tag> tags, Integer maxIdleConnections) {
         if (connectionPool == null) {
             throw new IllegalArgumentException("Given ConnectionPool must not be null.");
         }

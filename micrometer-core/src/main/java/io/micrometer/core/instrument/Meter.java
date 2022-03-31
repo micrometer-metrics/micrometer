@@ -15,11 +15,6 @@
  */
 package io.micrometer.core.instrument;
 
-import io.micrometer.core.annotation.Incubating;
-import io.micrometer.core.instrument.config.NamingConvention;
-import io.micrometer.core.instrument.distribution.HistogramGauges;
-import io.micrometer.core.lang.Nullable;
-
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
@@ -28,6 +23,11 @@ import java.util.function.Consumer;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 import java.util.stream.StreamSupport;
+
+import io.micrometer.core.annotation.Incubating;
+import io.micrometer.core.instrument.config.NamingConvention;
+import io.micrometer.core.instrument.distribution.HistogramGauges;
+import io.micrometer.core.lang.Nullable;
 
 import static java.util.Collections.singletonList;
 
@@ -178,7 +178,7 @@ public interface Meter {
      */
     class Id {
         private final String name;
-        private final Tags tags;
+        private final io.micrometer.common.Tags<io.micrometer.common.Tag> tags;
         private final Type type;
 
         @Nullable
@@ -191,7 +191,7 @@ public interface Meter {
         private final String baseUnit;
 
         @Incubating(since = "1.1.0")
-        Id(String name, Tags tags, @Nullable String baseUnit, @Nullable String description, Type type,
+        Id(String name, io.micrometer.common.Tags tags, @Nullable String baseUnit, @Nullable String description, Type type,
            @Nullable Meter.Id syntheticAssociation) {
             this.name = name;
             this.tags = tags;
@@ -201,7 +201,12 @@ public interface Meter {
             this.syntheticAssociation = syntheticAssociation;
         }
 
+        @Deprecated
         public Id(String name, Tags tags, @Nullable String baseUnit, @Nullable String description, Type type) {
+            this(name, tags, baseUnit, description, type, null);
+        }
+
+        public Id(String name, io.micrometer.common.Tags tags, @Nullable String baseUnit, @Nullable String description, Type type) {
             this(name, tags, baseUnit, description, type, null);
         }
 
@@ -234,7 +239,7 @@ public interface Meter {
          * @return A new id with the provided tags added. The source id remains unchanged.
          * @since 1.1.0
          */
-        public Id withTags(Iterable<Tag> tags) {
+        public Id withTags(Iterable<? extends io.micrometer.common.Tag> tags) {
             return new Id(name, Tags.concat(getTags(), tags), baseUnit, description, type);
         }
 
@@ -245,7 +250,7 @@ public interface Meter {
          * @return A new id with the only the provided tags. The source id remains unchanged.
          * @since 1.1.0
          */
-        public Id replaceTags(Iterable<Tag> tags) {
+        public Id replaceTags(Iterable<? extends io.micrometer.common.Tag> tags) {
             return new Id(name, Tags.of(tags), baseUnit, description, type);
         }
 
@@ -280,13 +285,13 @@ public interface Meter {
         /**
          * @return A set of dimensions that allows you to break down the name.
          */
-        public List<Tag> getTags() {
-            List<Tag> tags = new ArrayList<>();
-            this.tags.forEach(tags::add);
+        public <T extends io.micrometer.common.Tag> List<T> getTags() {
+            List<T> tags = new ArrayList<>();
+            this.tags.forEach(tag -> tags.add((T) tag));
             return Collections.unmodifiableList(tags);
         }
 
-        public Iterable<Tag> getTagsAsIterable() {
+        public Iterable<io.micrometer.common.Tag> getTagsAsIterable() {
             return tags;
         }
 
@@ -296,7 +301,7 @@ public interface Meter {
          */
         @Nullable
         public String getTag(String key) {
-            for (Tag tag : tags) {
+            for (io.micrometer.common.Tag tag : tags) {
                 if (tag.getKey().equals(key))
                     return tag.getValue();
             }
@@ -325,7 +330,7 @@ public interface Meter {
          * @param namingConvention The naming convention used to normalize the id's name.
          * @return A list of tags that have been stylized to a particular monitoring system's expectations.
          */
-        public List<Tag> getConventionTags(NamingConvention namingConvention) {
+        public List<? extends io.micrometer.common.Tag> getConventionTags(NamingConvention namingConvention) {
             return StreamSupport.stream(tags.spliterator(), false)
                     .map(t -> Tag.of(namingConvention.tagKey(t.getKey()), namingConvention.tagValue(t.getValue())))
                     .collect(Collectors.toList());
@@ -397,7 +402,7 @@ public interface Meter {
         private final String name;
         private final Type type;
         private final Iterable<Measurement> measurements;
-        private Tags tags = Tags.empty();
+        private io.micrometer.common.Tags tags = io.micrometer.common.Tags.empty();
 
         @Nullable
         private String description;
@@ -423,7 +428,7 @@ public interface Meter {
          * @param tags Tags to add to the eventual meter.
          * @return The custom meter builder with added tags.
          */
-        public Builder tags(Iterable<Tag> tags) {
+        public Builder tags(Iterable<? extends io.micrometer.common.Tag> tags) {
             this.tags = this.tags.and(tags);
             return this;
         }

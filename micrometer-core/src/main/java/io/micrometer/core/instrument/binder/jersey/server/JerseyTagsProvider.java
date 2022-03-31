@@ -35,7 +35,7 @@ public interface JerseyTagsProvider {
      *            the request event
      * @return tags to associate with metrics recorded for the request
      */
-    Iterable<Tag> httpRequestTags(RequestEvent event);
+    Iterable<io.micrometer.common.Tag> httpRequestTags(RequestEvent event);
 
     /**
      * Provides tags to be associated with the
@@ -46,6 +46,6 @@ public interface JerseyTagsProvider {
      *            the request event
      * @return tags to associate with metrics recorded for the request
      */
-    Iterable<Tag> httpLongRequestTags(RequestEvent event);
+    Iterable<io.micrometer.common.Tag> httpLongRequestTags(RequestEvent event);
 
 }

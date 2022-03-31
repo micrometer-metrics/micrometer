@@ -15,21 +15,21 @@
  */
 package io.micrometer.binder.db;
 
-import io.micrometer.core.instrument.Gauge;
-import io.micrometer.core.instrument.MeterRegistry;
-import io.micrometer.core.instrument.Tag;
-import io.micrometer.core.instrument.Tags;
-import io.micrometer.core.instrument.binder.BaseUnits;
-import io.micrometer.core.instrument.binder.MeterBinder;
-import io.micrometer.core.lang.NonNullApi;
-import io.micrometer.core.lang.NonNullFields;
-
-import javax.sql.DataSource;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.function.ToDoubleFunction;
+
+import javax.sql.DataSource;
+
+import io.micrometer.core.instrument.Gauge;
+import io.micrometer.core.instrument.MeterRegistry;
+import io.micrometer.core.instrument.Tags;
+import io.micrometer.core.instrument.binder.BaseUnits;
+import io.micrometer.core.instrument.binder.MeterBinder;
+import io.micrometer.core.lang.NonNullApi;
+import io.micrometer.core.lang.NonNullFields;
 
 /**
  * @author Jon Schneider
@@ -41,7 +41,7 @@ public class DatabaseTableMetrics implements MeterBinder {
     private final String query;
     private final String dataSourceName;
     private final String tableName;
-    private final Iterable<Tag> tags;
+    private final Iterable<? extends io.micrometer.common.Tag> tags;
 
     /**
      * Record the row count for an individual database table.
@@ -51,7 +51,7 @@ public class DatabaseTableMetrics implements MeterBinder {
      * @param tableName      The name of the table to report table size for.
      * @param tags           Tags to apply to all recorded metrics.
      */
-    public DatabaseTableMetrics(DataSource dataSource, String dataSourceName, String tableName, Iterable<Tag> tags) {
+    public DatabaseTableMetrics(DataSource dataSource, String dataSourceName, String tableName, Iterable<? extends io.micrometer.common.Tag> tags) {
         this(dataSource, "SELECT COUNT(1) FROM " + tableName, dataSourceName, tableName, tags);
     }
 
@@ -65,7 +65,7 @@ public class DatabaseTableMetrics implements MeterBinder {
      * @param tableName      The name of the table to report table size for.
      * @param tags           Tags to apply to all recorded metrics.
      */
-    public DatabaseTableMetrics(DataSource dataSource, String query, String dataSourceName, String tableName, Iterable<Tag> tags) {
+    public DatabaseTableMetrics(DataSource dataSource, String query, String dataSourceName, String tableName, Iterable<? extends io.micrometer.common.Tag> tags) {
         this.dataSource = dataSource;
         this.query = query;
         this.dataSourceName = dataSourceName;
@@ -95,7 +95,7 @@ public class DatabaseTableMetrics implements MeterBinder {
      * @param tableName      The name of the table to report table size for.
      * @param tags           Tags to apply to all recorded metrics.
      */
-    public static void monitor(MeterRegistry registry, DataSource dataSource, String dataSourceName, String tableName, Iterable<Tag> tags) {
+    public static void monitor(MeterRegistry registry, DataSource dataSource, String dataSourceName, String tableName, Iterable<? extends io.micrometer.common.Tag> tags) {
         new DatabaseTableMetrics(dataSource, dataSourceName, tableName, tags).bindTo(registry);
     }
 

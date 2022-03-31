@@ -15,9 +15,12 @@
  */
 package io.micrometer.core.instrument.binder.logging;
 
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
+
 import io.micrometer.core.instrument.Counter;
 import io.micrometer.core.instrument.MeterRegistry;
-import io.micrometer.core.instrument.Tag;
 import io.micrometer.core.instrument.binder.BaseUnits;
 import io.micrometer.core.instrument.binder.MeterBinder;
 import io.micrometer.core.lang.NonNullApi;
@@ -31,10 +34,6 @@ import org.apache.logging.log4j.core.config.Configuration;
 import org.apache.logging.log4j.core.config.LoggerConfig;
 import org.apache.logging.log4j.core.filter.AbstractFilter;
 import org.apache.logging.log4j.core.filter.CompositeFilter;
-
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
 
 import static java.util.Collections.emptyList;
 
@@ -53,7 +52,7 @@ public class Log4j2Metrics implements MeterBinder, AutoCloseable {
 
     private static final String METER_NAME = "log4j2.events";
 
-    private final Iterable<Tag> tags;
+    private final Iterable<? extends io.micrometer.common.Tag> tags;
     private final LoggerContext loggerContext;
 
     private List<MetricsFilter> metricsFilters = new ArrayList<>();
@@ -62,11 +61,11 @@ public class Log4j2Metrics implements MeterBinder, AutoCloseable {
         this(emptyList());
     }
 
-    public Log4j2Metrics(Iterable<Tag> tags) {
+    public Log4j2Metrics(Iterable<? extends io.micrometer.common.Tag> tags) {
         this(tags, (LoggerContext) LogManager.getContext(false));
     }
 
-    public Log4j2Metrics(Iterable<Tag> tags, LoggerContext loggerContext) {
+    public Log4j2Metrics(Iterable<? extends io.micrometer.common.Tag> tags, LoggerContext loggerContext) {
         this.tags = tags;
         this.loggerContext = loggerContext;
     }
@@ -139,7 +138,7 @@ public class Log4j2Metrics implements MeterBinder, AutoCloseable {
         private final Counter traceCounter;
         private final boolean isAsyncLogger;
 
-        MetricsFilter(MeterRegistry registry, Iterable<Tag> tags, boolean isAsyncLogger) {
+        MetricsFilter(MeterRegistry registry, Iterable<? extends io.micrometer.common.Tag> tags, boolean isAsyncLogger) {
             this.isAsyncLogger = isAsyncLogger;
             fatalCounter = Counter.builder(METER_NAME)
                     .tags(tags)

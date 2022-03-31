@@ -15,6 +15,20 @@
  */
 package io.micrometer.binder.okhttp3;
 
+import java.io.IOException;
+import java.lang.reflect.Method;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.List;
+import java.util.Optional;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ConcurrentMap;
+import java.util.concurrent.TimeUnit;
+import java.util.function.BiFunction;
+import java.util.function.Function;
+
 import io.micrometer.core.instrument.MeterRegistry;
 import io.micrometer.core.instrument.Tag;
 import io.micrometer.core.instrument.Tags;
@@ -22,17 +36,11 @@ import io.micrometer.core.instrument.Timer;
 import io.micrometer.core.lang.NonNullApi;
 import io.micrometer.core.lang.NonNullFields;
 import io.micrometer.core.lang.Nullable;
-import okhttp3.*;
+import okhttp3.Call;
 import okhttp3.EventListener;
-
-import java.io.IOException;
-import java.lang.reflect.Method;
-import java.util.*;
-import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.ConcurrentMap;
-import java.util.concurrent.TimeUnit;
-import java.util.function.BiFunction;
-import java.util.function.Function;
+import okhttp3.OkHttpClient;
+import okhttp3.Request;
+import okhttp3.Response;
 
 import static java.util.Collections.emptyList;
 import static java.util.stream.Collectors.toList;
@@ -90,22 +98,22 @@ public class OkHttpMetricsEventListener extends EventListener {
     private final MeterRegistry registry;
     private final String requestsMetricName;
     private final Function<Request, String> urlMapper;
-    private final Iterable<Tag> extraTags;
+    private final Iterable<? extends io.micrometer.common.Tag> extraTags;
     private final Iterable<BiFunction<Request, Response, Tag>> contextSpecificTags;
-    private final Iterable<Tag> unknownRequestTags;
+    private final Iterable<? extends io.micrometer.common.Tag> unknownRequestTags;
     private final boolean includeHostTag;
 
     // VisibleForTesting
     final ConcurrentMap<Call, CallState> callState = new ConcurrentHashMap<>();
 
     protected OkHttpMetricsEventListener(MeterRegistry registry, String requestsMetricName, Function<Request, String> urlMapper,
-                                         Iterable<Tag> extraTags,
+                                         Iterable<? extends io.micrometer.common.Tag> extraTags,
                                          Iterable<BiFunction<Request, Response, Tag>> contextSpecificTags) {
         this(registry, requestsMetricName, urlMapper, extraTags, contextSpecificTags, emptyList(), true);
     }
 
     OkHttpMetricsEventListener(MeterRegistry registry, String requestsMetricName, Function<Request, String> urlMapper,
-                               Iterable<Tag> extraTags,
+                               Iterable<? extends io.micrometer.common.Tag> extraTags,
                                Iterable<BiFunction<Request, Response, Tag>> contextSpecificTags,
                                Iterable<String> requestTagKeys,
                                boolean includeHostTag) {
@@ -116,9 +124,9 @@ public class OkHttpMetricsEventListener extends EventListener {
         this.contextSpecificTags = contextSpecificTags;
         this.includeHostTag = includeHostTag;
 
-        List<Tag> unknownRequestTags = new ArrayList<>();
+        List<io.micrometer.common.Tag> unknownRequestTags = new ArrayList<>();
         for (String requestTagKey : requestTagKeys) {
-            unknownRequestTags.add(Tag.of(requestTagKey, "UNKNOWN"));
+            unknownRequestTags.add(io.micrometer.common.Tag.of(requestTagKey, "UNKNOWN"));
         }
         this.unknownRequestTags = unknownRequestTags;
     }
@@ -160,7 +168,7 @@ public class OkHttpMetricsEventListener extends EventListener {
         Request request = state.request;
         boolean requestAvailable = request != null;
 
-        Iterable<Tag> tags = Tags.of(
+        Iterable<? extends io.micrometer.common.Tag> tags = io.micrometer.common.Tags.of(
                         "method", requestAvailable ? request.method() : TAG_VALUE_UNKNOWN,
                         "uri", getUriTag(state, request),
                         "status", getStatusMessage(state.response, state.exception)
@@ -173,7 +181,7 @@ public class OkHttpMetricsEventListener extends EventListener {
                 .and(generateTagsForRoute(request));
 
         if (includeHostTag) {
-            tags = Tags.of(tags).and("host", requestAvailable ? request.url().host() : TAG_VALUE_UNKNOWN);
+            tags = io.micrometer.common.Tags.of(tags).and("host", requestAvailable ? request.url().host() : TAG_VALUE_UNKNOWN);
         }
 
         Timer.builder(this.requestsMetricName)
@@ -202,7 +210,7 @@ public class OkHttpMetricsEventListener extends EventListener {
                     ? "NOT_FOUND" : urlMapper.apply(request);
     }
 
-    private Iterable<Tag> getRequestTags(@Nullable Request request) {
+    private Iterable<? extends io.micrometer.common.Tag> getRequestTags(@Nullable Request request) {
         if (request == null) {
             return unknownRequestTags;
         }
@@ -251,7 +259,7 @@ public class OkHttpMetricsEventListener extends EventListener {
         private final MeterRegistry registry;
         private final String name;
         private Function<Request, String> uriMapper = (request) -> Optional.ofNullable(request.header(URI_PATTERN)).orElse("none");
-        private Tags tags = Tags.empty();
+        private io.micrometer.common.Tags tags = io.micrometer.common.Tags.empty();
         private Collection<BiFunction<Request, Response, Tag>> contextSpecificTags = new ArrayList<>();
         private boolean includeHostTag = true;
         private Iterable<String> requestTagKeys = Collections.emptyList();
@@ -261,7 +269,7 @@ public class OkHttpMetricsEventListener extends EventListener {
             this.name = name;
         }
 
-        public Builder tags(Iterable<Tag> tags) {
+        public Builder tags(Iterable<? extends io.micrometer.common.Tag> tags) {
             this.tags = this.tags.and(tags);
             return this;
         }

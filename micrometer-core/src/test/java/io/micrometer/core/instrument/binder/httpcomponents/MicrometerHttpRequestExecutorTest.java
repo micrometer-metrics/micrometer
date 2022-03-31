@@ -15,10 +15,13 @@
  */
 package io.micrometer.core.instrument.binder.httpcomponents;
 
+import java.io.IOException;
+import java.util.List;
+import java.util.stream.Collectors;
+
 import com.github.tomakehurst.wiremock.WireMockServer;
 import io.micrometer.core.instrument.MeterRegistry;
 import io.micrometer.core.instrument.MockClock;
-import io.micrometer.core.instrument.Tag;
 import io.micrometer.core.instrument.Tags;
 import io.micrometer.core.instrument.search.MeterNotFoundException;
 import io.micrometer.core.instrument.simple.SimpleConfig;
@@ -34,11 +37,10 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import ru.lanwen.wiremock.ext.WiremockResolver;
 
-import java.io.IOException;
-import java.util.List;
-import java.util.stream.Collectors;
-
-import static com.github.tomakehurst.wiremock.client.WireMock.*;
+import static com.github.tomakehurst.wiremock.client.WireMock.aResponse;
+import static com.github.tomakehurst.wiremock.client.WireMock.any;
+import static com.github.tomakehurst.wiremock.client.WireMock.anyUrl;
+import static com.github.tomakehurst.wiremock.client.WireMock.urlEqualTo;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 
@@ -138,7 +140,8 @@ class MicrometerHttpRequestExecutorTest {
         EntityUtils.consume(client.execute(new HttpGet(server.baseUrl())).getEntity());
         List<String> tagKeys = registry.get(EXPECTED_METER_NAME)
                 .timer().getId().getTags().stream()
-                .map(Tag::getKey)
+                // TODO: BREAKING CHANGE
+                .map(io.micrometer.common.Tag::getKey)
                 .collect(Collectors.toList());
         assertThat(tagKeys).doesNotContain("target.scheme", "target.host", "target.port");
         assertThat(tagKeys).contains("status", "method");
@@ -151,7 +154,8 @@ class MicrometerHttpRequestExecutorTest {
         EntityUtils.consume(client.execute(new HttpGet(server.baseUrl())).getEntity());
         List<String> tagKeys = registry.get(EXPECTED_METER_NAME)
                 .timer().getId().getTags().stream()
-                .map(Tag::getKey)
+                // TODO: BREAKING CHANGE
+                .map(io.micrometer.common.Tag::getKey)
                 .collect(Collectors.toList());
         assertThat(tagKeys).contains("target.scheme", "target.host", "target.port");
     }

@@ -15,6 +15,9 @@
  */
 package io.micrometer.core.instrument.binder.jersey.server;
 
+import java.util.List;
+import java.util.regex.Pattern;
+
 import io.micrometer.core.instrument.Tag;
 import io.micrometer.core.instrument.binder.http.Outcome;
 import io.micrometer.core.instrument.util.StringUtils;
@@ -23,9 +26,6 @@ import org.glassfish.jersey.server.ContainerResponse;
 import org.glassfish.jersey.server.ExtendedUriInfo;
 import org.glassfish.jersey.server.monitoring.RequestEvent;
 import org.glassfish.jersey.uri.UriTemplate;
-
-import java.util.List;
-import java.util.regex.Pattern;
 
 /**
  * Factory methods for {@link Tag Tags} associated with a request-response exchange that
@@ -64,7 +64,7 @@ public final class JerseyTags {
      * @param request the container request
      * @return the method tag whose value is a capitalized method (e.g. GET).
      */
-    public static Tag method(ContainerRequest request) {
+    public static io.micrometer.common.Tag method(ContainerRequest request) {
         return (request != null) ? Tag.of("method", request.getMethod()) : METHOD_UNKNOWN;
     }
 
@@ -73,7 +73,7 @@ public final class JerseyTags {
      * @param response the container response
      * @return the status tag derived from the status of the response
      */
-    public static Tag status(ContainerResponse response) {
+    public static io.micrometer.common.Tag status(ContainerResponse response) {
         /* In case there is no response we are dealing with an unmapped exception. */
         return (response != null)
                 ? Tag.of("status", Integer.toString(response.getStatus()))
@@ -87,7 +87,7 @@ public final class JerseyTags {
      * @param event the request event
      * @return the uri tag derived from the request event
      */
-    public static Tag uri(RequestEvent event) {
+    public static io.micrometer.common.Tag uri(RequestEvent event) {
         ContainerResponse response = event.getContainerResponse();
         if (response != null) {
             int status = response.getStatus();
@@ -131,7 +131,7 @@ public final class JerseyTags {
      * @param event the request event
      * @return the exception tag derived from the exception
      */
-    public static Tag exception(RequestEvent event) {
+    public static io.micrometer.common.Tag exception(RequestEvent event) {
         Throwable exception = event.getException();
         if (exception == null) {
             return EXCEPTION_NONE;
@@ -156,7 +156,7 @@ public final class JerseyTags {
      * @param response the container response
      * @return the outcome tag derived from the status of the response
      */
-    public static Tag outcome(ContainerResponse response) {
+    public static io.micrometer.common.Tag outcome(ContainerResponse response) {
         if (response != null) {
             return Outcome.forStatus(response.getStatus()).asTag();
         }

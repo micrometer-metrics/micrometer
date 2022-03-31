@@ -15,6 +15,9 @@
  */
 package io.micrometer.binder.jetty;
 
+import javax.net.ssl.SSLEngine;
+import javax.net.ssl.SSLSession;
+
 import io.micrometer.core.instrument.MockClock;
 import io.micrometer.core.instrument.Tag;
 import io.micrometer.core.instrument.Tags;
@@ -24,9 +27,6 @@ import org.eclipse.jetty.io.ssl.SslHandshakeListener;
 import org.eclipse.jetty.server.Connector;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-
-import javax.net.ssl.SSLEngine;
-import javax.net.ssl.SSLSession;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatCode;

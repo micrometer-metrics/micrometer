@@ -15,20 +15,21 @@
  */
 package io.micrometer.binder.jersey.server;
 
+import java.util.logging.Level;
+import java.util.logging.Logger;
+
+import javax.ws.rs.NotFoundException;
+import javax.ws.rs.core.Application;
+
+import io.micrometer.binder.jersey.server.mapper.ResourceGoneExceptionMapper;
+import io.micrometer.binder.jersey.server.resources.TestResource;
 import io.micrometer.core.instrument.MeterRegistry;
 import io.micrometer.core.instrument.Tag;
 import io.micrometer.core.instrument.Tags;
-import io.micrometer.binder.jersey.server.mapper.ResourceGoneExceptionMapper;
-import io.micrometer.binder.jersey.server.resources.TestResource;
 import io.micrometer.core.instrument.simple.SimpleMeterRegistry;
 import org.glassfish.jersey.server.ResourceConfig;
 import org.glassfish.jersey.test.JerseyTest;
 import org.junit.jupiter.api.Test;
-
-import javax.ws.rs.NotFoundException;
-import javax.ws.rs.core.Application;
-import java.util.logging.Level;
-import java.util.logging.Logger;
 
 import static org.assertj.core.api.Assertions.assertThat;
 

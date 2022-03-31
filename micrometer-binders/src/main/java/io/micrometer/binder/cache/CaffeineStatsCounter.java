@@ -15,7 +15,9 @@
  */
 package io.micrometer.binder.cache;
 
-import static java.util.Objects.requireNonNull;
+import java.util.Arrays;
+import java.util.EnumMap;
+import java.util.concurrent.TimeUnit;
 
 import com.github.benmanes.caffeine.cache.Cache;
 import com.github.benmanes.caffeine.cache.RemovalCause;
@@ -25,15 +27,12 @@ import io.micrometer.core.instrument.Counter;
 import io.micrometer.core.instrument.DistributionSummary;
 import io.micrometer.core.instrument.Gauge;
 import io.micrometer.core.instrument.MeterRegistry;
-import io.micrometer.core.instrument.Tag;
 import io.micrometer.core.instrument.Tags;
 import io.micrometer.core.instrument.Timer;
 import io.micrometer.core.lang.NonNullApi;
 import io.micrometer.core.lang.NonNullFields;
 
-import java.util.Arrays;
-import java.util.EnumMap;
-import java.util.concurrent.TimeUnit;
+import static java.util.Objects.requireNonNull;
 
 /**
  * A {@link StatsCounter} instrumented with Micrometer. This will provide more detailed metrics than using
@@ -87,7 +86,7 @@ public final class CaffeineStatsCounter implements StatsCounter {
      * @param cacheName will be used to tag metrics with "cache".
      * @param extraTags tags to apply to all recorded metrics.
      */
-    public CaffeineStatsCounter(MeterRegistry registry, String cacheName, Iterable<Tag> extraTags) {
+    public CaffeineStatsCounter(MeterRegistry registry, String cacheName, Iterable<? extends io.micrometer.common.Tag> extraTags) {
         requireNonNull(registry);
         requireNonNull(cacheName);
         requireNonNull(extraTags);

@@ -15,16 +15,21 @@
  */
 package io.micrometer.core.instrument.binder.jetty;
 
-import io.micrometer.core.instrument.*;
+import java.util.concurrent.TimeUnit;
+import java.util.function.ToDoubleFunction;
+import java.util.function.ToLongFunction;
+
+import io.micrometer.core.instrument.FunctionCounter;
+import io.micrometer.core.instrument.FunctionTimer;
+import io.micrometer.core.instrument.Gauge;
+import io.micrometer.core.instrument.MeterRegistry;
+import io.micrometer.core.instrument.Tags;
+import io.micrometer.core.instrument.TimeGauge;
 import io.micrometer.core.instrument.binder.BaseUnits;
 import io.micrometer.core.instrument.binder.MeterBinder;
 import io.micrometer.core.lang.NonNullApi;
 import io.micrometer.core.lang.NonNullFields;
 import org.eclipse.jetty.server.handler.StatisticsHandler;
-
-import java.util.concurrent.TimeUnit;
-import java.util.function.ToDoubleFunction;
-import java.util.function.ToLongFunction;
 
 /**
  * @deprecated Since 1.4.0. Use {@code io.micrometer.binder.jetty.TimedHandler} instead.
@@ -35,9 +40,9 @@ import java.util.function.ToLongFunction;
 public class JettyStatisticsMetrics implements MeterBinder {
     private final StatisticsHandler statisticsHandler;
 
-    private Iterable<Tag> tags;
+    private Iterable<? extends io.micrometer.common.Tag> tags;
 
-    public JettyStatisticsMetrics(StatisticsHandler statisticsHandler, Iterable<Tag> tags) {
+    public JettyStatisticsMetrics(StatisticsHandler statisticsHandler, Iterable<? extends io.micrometer.common.Tag> tags) {
         this.tags = tags;
         this.statisticsHandler = statisticsHandler;
     }
@@ -46,7 +51,7 @@ public class JettyStatisticsMetrics implements MeterBinder {
         monitor(meterRegistry, statisticsHandler, Tags.of(tags));
     }
 
-    public static void monitor(MeterRegistry meterRegistry, StatisticsHandler statisticsHandler, Iterable<Tag> tags) {
+    public static void monitor(MeterRegistry meterRegistry, StatisticsHandler statisticsHandler, Iterable<? extends io.micrometer.common.Tag> tags) {
         new JettyStatisticsMetrics(statisticsHandler, tags).bindTo(meterRegistry);
     }
 

@@ -15,18 +15,17 @@
  */
 package io.micrometer.statsd.internal;
 
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ConcurrentMap;
+import java.util.stream.Collectors;
+
 import io.micrometer.core.instrument.Meter;
 import io.micrometer.core.instrument.MeterRegistry;
 import io.micrometer.core.instrument.Statistic;
-import io.micrometer.core.instrument.Tag;
 import io.micrometer.core.instrument.config.NamingConvention;
 import io.micrometer.core.instrument.distribution.DistributionStatisticConfig;
 import io.micrometer.core.instrument.util.DoubleFormat;
 import io.micrometer.core.lang.Nullable;
-
-import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.ConcurrentMap;
-import java.util.stream.Collectors;
 
 import static java.lang.Boolean.TRUE;
 
@@ -120,13 +119,13 @@ public class DatadogStatsdLineBuilder extends FlavorStatsdLineBuilder {
     @Nullable
     private String appendEntityIdTag(@Nullable String tags) {
         if (ddEntityId != null && !ddEntityId.trim().isEmpty()) {
-            String entityIdTag = formatTag(Tag.of(ENTITY_ID_TAG_NAME, ddEntityId));
+            String entityIdTag = formatTag(io.micrometer.common.Tag.of(ENTITY_ID_TAG_NAME, ddEntityId));
             return tags == null ? entityIdTag : tags + "," + entityIdTag;
         }
         return tags;
     }
 
-    private String formatTag(Tag t) {
+    private String formatTag(io.micrometer.common.Tag t) {
         String sanitizedTag = sanitizeName(t.getKey());
         if (!t.getValue().isEmpty()) {
             sanitizedTag += ":" + sanitizeTagValue(t.getValue());

@@ -20,9 +20,9 @@ import java.lang.invoke.MethodHandles;
 import java.lang.invoke.MethodType;
 import java.lang.ref.WeakReference;
 
-import static java.lang.invoke.MethodType.methodType;
-
 import io.micrometer.core.lang.Nullable;
+
+import static java.lang.invoke.MethodType.methodType;
 
 /**
  * Adapter for Hazelcast {@code IMap} class created to provide support for both Hazelcast 3 and Hazelcast 4 at the

@@ -15,18 +15,17 @@
  */
 package io.micrometer.core.instrument.binder.jvm;
 
+import java.lang.management.ManagementFactory;
+import java.lang.management.ThreadMXBean;
+import java.util.Arrays;
+
 import io.micrometer.core.instrument.Gauge;
 import io.micrometer.core.instrument.MeterRegistry;
-import io.micrometer.core.instrument.Tag;
 import io.micrometer.core.instrument.Tags;
 import io.micrometer.core.instrument.binder.BaseUnits;
 import io.micrometer.core.instrument.binder.MeterBinder;
 import io.micrometer.core.lang.NonNullApi;
 import io.micrometer.core.lang.NonNullFields;
-
-import java.lang.management.ManagementFactory;
-import java.lang.management.ThreadMXBean;
-import java.util.Arrays;
 
 import static java.util.Collections.emptyList;
 
@@ -41,13 +40,13 @@ import static java.util.Collections.emptyList;
 @NonNullFields
 @Deprecated
 public class JvmThreadMetrics implements MeterBinder {
-    private final Iterable<Tag> tags;
+    private final Iterable<? extends io.micrometer.common.Tag> tags;
 
     public JvmThreadMetrics() {
         this(emptyList());
     }
 
-    public JvmThreadMetrics(Iterable<Tag> tags) {
+    public JvmThreadMetrics(Iterable<? extends io.micrometer.common.Tag> tags) {
         this.tags = tags;
     }
 

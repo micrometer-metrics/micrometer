@@ -15,15 +15,6 @@
  */
 package io.micrometer.core.instrument.binder.kafka;
 
-import io.micrometer.core.annotation.Incubating;
-import io.micrometer.core.instrument.*;
-import io.micrometer.core.instrument.binder.BaseUnits;
-import io.micrometer.core.instrument.binder.MeterBinder;
-import io.micrometer.core.lang.NonNullApi;
-import io.micrometer.core.lang.NonNullFields;
-import io.micrometer.core.lang.Nullable;
-
-import javax.management.*;
 import java.lang.management.ManagementFactory;
 import java.util.ArrayList;
 import java.util.List;
@@ -34,6 +25,31 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.BiFunction;
 import java.util.function.ToDoubleFunction;
+
+import javax.management.InstanceNotFoundException;
+import javax.management.ListenerNotFoundException;
+import javax.management.MBeanServer;
+import javax.management.MBeanServerDelegate;
+import javax.management.MBeanServerFactory;
+import javax.management.MBeanServerNotification;
+import javax.management.MalformedObjectNameException;
+import javax.management.Notification;
+import javax.management.NotificationFilter;
+import javax.management.NotificationListener;
+import javax.management.ObjectName;
+
+import io.micrometer.core.annotation.Incubating;
+import io.micrometer.core.instrument.FunctionCounter;
+import io.micrometer.core.instrument.Gauge;
+import io.micrometer.core.instrument.Meter;
+import io.micrometer.core.instrument.MeterRegistry;
+import io.micrometer.core.instrument.Tags;
+import io.micrometer.core.instrument.TimeGauge;
+import io.micrometer.core.instrument.binder.BaseUnits;
+import io.micrometer.core.instrument.binder.MeterBinder;
+import io.micrometer.core.lang.NonNullApi;
+import io.micrometer.core.lang.NonNullFields;
+import io.micrometer.core.lang.Nullable;
 
 import static java.util.Collections.emptyList;
 
@@ -61,7 +77,7 @@ public class KafkaConsumerMetrics implements MeterBinder, AutoCloseable {
 
     private final MBeanServer mBeanServer;
 
-    private final Iterable<Tag> tags;
+    private final Iterable<? extends io.micrometer.common.Tag> tags;
 
     @Nullable
     private Integer kafkaMajorVersion;
@@ -72,11 +88,11 @@ public class KafkaConsumerMetrics implements MeterBinder, AutoCloseable {
         this(emptyList());
     }
 
-    public KafkaConsumerMetrics(Iterable<Tag> tags) {
+    public KafkaConsumerMetrics(Iterable<? extends io.micrometer.common.Tag> tags) {
         this(getMBeanServer(), tags);
     }
 
-    public KafkaConsumerMetrics(MBeanServer mBeanServer, Iterable<Tag> tags) {
+    public KafkaConsumerMetrics(MBeanServer mBeanServer, Iterable<? extends io.micrometer.common.Tag> tags) {
         this.mBeanServer = mBeanServer;
         this.tags = tags;
     }
@@ -346,7 +362,7 @@ public class KafkaConsumerMetrics implements MeterBinder, AutoCloseable {
         }
     }
 
-    private Iterable<Tag> nameTag(ObjectName name) {
+    private Iterable<? extends io.micrometer.common.Tag> nameTag(ObjectName name) {
         Tags tags = Tags.empty();
 
         String clientId = name.getKeyProperty("client-id");

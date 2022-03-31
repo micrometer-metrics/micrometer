@@ -15,11 +15,11 @@
  */
 package io.micrometer.core.instrument.binder.http;
 
-import io.micrometer.core.annotation.Incubating;
-import io.micrometer.core.instrument.Tag;
-
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
+
+import io.micrometer.core.annotation.Incubating;
+import io.micrometer.core.instrument.Tag;
 
 /**
  * Provides {@link Tag Tags} for HTTP Servlet request handling.
@@ -37,5 +37,5 @@ public interface HttpServletRequestTagsProvider {
      * @param response the response
      * @return tags to associate with metrics for the request and response exchange
      */
-    Iterable<Tag> getTags(HttpServletRequest request, HttpServletResponse response);
+    Iterable<? extends io.micrometer.common.Tag> getTags(HttpServletRequest request, HttpServletResponse response);
 }

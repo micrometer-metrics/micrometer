@@ -15,7 +15,19 @@
  */
 package io.micrometer.core.instrument.binder.jvm;
 
-import io.micrometer.core.instrument.*;
+import java.lang.reflect.Field;
+import java.util.concurrent.Executor;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.ForkJoinPool;
+import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.ThreadPoolExecutor;
+
+import io.micrometer.core.instrument.FunctionCounter;
+import io.micrometer.core.instrument.Gauge;
+import io.micrometer.core.instrument.MeterRegistry;
+import io.micrometer.core.instrument.Tag;
+import io.micrometer.core.instrument.Tags;
 import io.micrometer.core.instrument.binder.BaseUnits;
 import io.micrometer.core.instrument.binder.MeterBinder;
 import io.micrometer.core.instrument.internal.TimedExecutor;
@@ -27,9 +39,6 @@ import io.micrometer.core.lang.NonNullFields;
 import io.micrometer.core.lang.Nullable;
 import io.micrometer.core.util.internal.logging.InternalLogger;
 import io.micrometer.core.util.internal.logging.InternalLoggerFactory;
-
-import java.lang.reflect.Field;
-import java.util.concurrent.*;
 
 import static java.util.Arrays.asList;
 
@@ -58,10 +67,10 @@ public class ExecutorServiceMetrics implements MeterBinder {
     @Nullable
     private final ExecutorService executorService;
 
-    private final Iterable<Tag> tags;
+    private final Iterable<? extends io.micrometer.common.Tag> tags;
     private final String metricPrefix;
 
-    public ExecutorServiceMetrics(@Nullable ExecutorService executorService, String executorServiceName, Iterable<Tag> tags) {
+    public ExecutorServiceMetrics(@Nullable ExecutorService executorService, String executorServiceName, Iterable<? extends io.micrometer.common.Tag> tags) {
         this(executorService, executorServiceName, DEFAULT_EXECUTOR_METRIC_PREFIX, tags);
     }
 
@@ -75,7 +84,7 @@ public class ExecutorServiceMetrics implements MeterBinder {
      * @since 1.5.0
      */
     public ExecutorServiceMetrics(@Nullable ExecutorService executorService, String executorServiceName,
-                                  String metricPrefix, Iterable<Tag> tags) {
+                                  String metricPrefix, Iterable<? extends io.micrometer.common.Tag> tags) {
         this.executorService = executorService;
         this.tags = Tags.concat(tags, "name", executorServiceName);
         this.metricPrefix = sanitizePrefix(metricPrefix);
@@ -90,7 +99,7 @@ public class ExecutorServiceMetrics implements MeterBinder {
      * @param tags         Tags to apply to all recorded metrics.
      * @return The instrumented executor, proxied.
      */
-    public static Executor monitor(MeterRegistry registry, Executor executor, String executorName, Iterable<Tag> tags) {
+    public static Executor monitor(MeterRegistry registry, Executor executor, String executorName, Iterable<? extends io.micrometer.common.Tag> tags) {
         return monitor(registry, executor, executorName, DEFAULT_EXECUTOR_METRIC_PREFIX, tags);
     }
 
@@ -106,7 +115,7 @@ public class ExecutorServiceMetrics implements MeterBinder {
      * @since 1.5.0
      */
     public static Executor monitor(MeterRegistry registry, Executor executor, String executorName,
-                                   String metricPrefix, Iterable<Tag> tags) {
+                                   String metricPrefix, Iterable<? extends io.micrometer.common.Tag> tags) {
         if (executor instanceof ExecutorService) {
             return monitor(registry, (ExecutorService) executor, executorName, metricPrefix, tags);
         }
@@ -151,7 +160,7 @@ public class ExecutorServiceMetrics implements MeterBinder {
      * @param tags                Tags to apply to all recorded metrics.
      * @return The instrumented executor, proxied.
      */
-    public static ExecutorService monitor(MeterRegistry registry, ExecutorService executor, String executorServiceName, Iterable<Tag> tags) {
+    public static ExecutorService monitor(MeterRegistry registry, ExecutorService executor, String executorServiceName, Iterable<? extends io.micrometer.common.Tag> tags) {
         return monitor(registry, executor, executorServiceName, DEFAULT_EXECUTOR_METRIC_PREFIX, tags);
     }
 
@@ -167,7 +176,7 @@ public class ExecutorServiceMetrics implements MeterBinder {
      * @since 1.5.0
      */
     public static ExecutorService monitor(MeterRegistry registry, ExecutorService executor, String executorServiceName,
-                                          String metricPrefix, Iterable<Tag> tags) {
+                                          String metricPrefix, Iterable<? extends io.micrometer.common.Tag> tags) {
         if (executor instanceof ScheduledExecutorService) {
             return monitor(registry, (ScheduledExecutorService) executor, executorServiceName, metricPrefix, tags);
         }
@@ -214,7 +223,7 @@ public class ExecutorServiceMetrics implements MeterBinder {
      * @return The instrumented scheduled executor, proxied.
      * @since 1.3.0
      */
-    public static ScheduledExecutorService monitor(MeterRegistry registry, ScheduledExecutorService executor, String executorServiceName, Iterable<Tag> tags) {
+    public static ScheduledExecutorService monitor(MeterRegistry registry, ScheduledExecutorService executor, String executorServiceName, Iterable<? extends io.micrometer.common.Tag> tags) {
         return monitor(registry, executor, executorServiceName, DEFAULT_EXECUTOR_METRIC_PREFIX, tags);
     }
 
@@ -230,7 +239,7 @@ public class ExecutorServiceMetrics implements MeterBinder {
      * @since 1.5.0
      */
     public static ScheduledExecutorService monitor(MeterRegistry registry, ScheduledExecutorService executor, String executorServiceName,
-                                                   String metricPrefix, Iterable<Tag> tags) {
+                                                   String metricPrefix, Iterable<? extends io.micrometer.common.Tag> tags) {
         new ExecutorServiceMetrics(executor, executorServiceName, metricPrefix, tags).bindTo(registry);
         return new TimedScheduledExecutorService(registry, executor, executorServiceName, sanitizePrefix(metricPrefix), tags);
     }

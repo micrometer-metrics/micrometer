@@ -15,12 +15,11 @@
  */
 package io.micrometer.core.instrument.internal;
 
+import java.util.concurrent.Executor;
+
 import io.micrometer.core.instrument.MeterRegistry;
-import io.micrometer.core.instrument.Tag;
 import io.micrometer.core.instrument.Tags;
 import io.micrometer.core.instrument.Timer;
-
-import java.util.concurrent.Executor;
 
 /**
  * An {@link Executor} that is timed. This class is for internal use.
@@ -33,7 +32,7 @@ public class TimedExecutor implements Executor {
     private final Timer executionTimer;
     private final Timer idleTimer;
 
-    public TimedExecutor(MeterRegistry registry, Executor delegate, String executorName, String metricPrefix, Iterable<Tag> tags) {
+    public TimedExecutor(MeterRegistry registry, Executor delegate, String executorName, String metricPrefix, Iterable<? extends io.micrometer.common.Tag> tags) {
         this.registry = registry;
         this.delegate = delegate;
         Tags finalTags = Tags.concat(tags, "name", executorName);

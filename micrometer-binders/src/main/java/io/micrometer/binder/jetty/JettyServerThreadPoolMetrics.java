@@ -17,7 +17,6 @@ package io.micrometer.binder.jetty;
 
 import io.micrometer.core.instrument.Gauge;
 import io.micrometer.core.instrument.MeterRegistry;
-import io.micrometer.core.instrument.Tag;
 import io.micrometer.core.instrument.binder.MeterBinder;
 import org.eclipse.jetty.util.thread.QueuedThreadPool;
 import org.eclipse.jetty.util.thread.ThreadPool;
@@ -45,9 +44,9 @@ public class JettyServerThreadPoolMetrics implements MeterBinder {
 
     private final ThreadPool threadPool;
 
-    private final Iterable<Tag> tags;
+    private final Iterable<? extends io.micrometer.common.Tag> tags;
 
-    public JettyServerThreadPoolMetrics(ThreadPool threadPool, Iterable<Tag> tags) {
+    public JettyServerThreadPoolMetrics(ThreadPool threadPool, Iterable<? extends io.micrometer.common.Tag> tags) {
         this.threadPool = threadPool;
         this.tags = tags;
     }

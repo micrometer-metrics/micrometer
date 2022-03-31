@@ -15,6 +15,11 @@
  */
 package io.micrometer.core.aop;
 
+import java.lang.reflect.Method;
+import java.util.concurrent.CompletionStage;
+import java.util.function.Function;
+import java.util.function.Predicate;
+
 import io.micrometer.core.annotation.Counted;
 import io.micrometer.core.instrument.Counter;
 import io.micrometer.core.instrument.MeterRegistry;
@@ -26,11 +31,6 @@ import org.aspectj.lang.ProceedingJoinPoint;
 import org.aspectj.lang.annotation.Around;
 import org.aspectj.lang.annotation.Aspect;
 import org.aspectj.lang.reflect.MethodSignature;
-
-import java.lang.reflect.Method;
-import java.util.concurrent.CompletionStage;
-import java.util.function.Function;
-import java.util.function.Predicate;
 
 /**
  * <p>
@@ -95,7 +95,7 @@ public class CountedAspect {
     /**
      * A function to produce additional tags for any given join point.
      */
-    private final Function<ProceedingJoinPoint, Iterable<Tag>> tagsBasedOnJoinPoint;
+    private final Function<ProceedingJoinPoint, Iterable<? extends io.micrometer.common.Tag>> tagsBasedOnJoinPoint;
 
     /**
      * A predicate that decides if Timer creation should be skipped for the given join point.
@@ -126,7 +126,7 @@ public class CountedAspect {
      * @param registry Where we're going to register metrics.
      * @param tagsBasedOnJoinPoint A function to generate tags given a join point.
      */
-    public CountedAspect(MeterRegistry registry, Function<ProceedingJoinPoint, Iterable<Tag>> tagsBasedOnJoinPoint) {
+    public CountedAspect(MeterRegistry registry, Function<ProceedingJoinPoint, Iterable<? extends io.micrometer.common.Tag>> tagsBasedOnJoinPoint) {
         this(registry, tagsBasedOnJoinPoint, DONT_SKIP_ANYTHING);
     }
 
@@ -154,7 +154,7 @@ public class CountedAspect {
      * @param shouldSkip A predicate to decide if creating the timer should be skipped or not.
      * @since 1.7.0
      */
-    public CountedAspect(MeterRegistry registry, Function<ProceedingJoinPoint, Iterable<Tag>> tagsBasedOnJoinPoint, Predicate<ProceedingJoinPoint> shouldSkip) {
+    public CountedAspect(MeterRegistry registry, Function<ProceedingJoinPoint, Iterable<? extends io.micrometer.common.Tag>> tagsBasedOnJoinPoint, Predicate<ProceedingJoinPoint> shouldSkip) {
         this.registry = registry;
         this.tagsBasedOnJoinPoint = tagsBasedOnJoinPoint;
         this.shouldSkip = shouldSkip;

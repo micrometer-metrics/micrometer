@@ -52,8 +52,10 @@ public class ImmutableTag implements Tag {
     @Override
     public boolean equals(@Nullable Object o) {
         if (this == o) return true;
-        if (o == null || getClass() != o.getClass()) return false;
-        Tag that = (Tag) o;
+        if (!(o instanceof io.micrometer.common.Tag)) {
+            return false;
+        }
+        io.micrometer.common.Tag that = (io.micrometer.common.Tag) o;
         return Objects.equals(key, that.getKey()) &&
             Objects.equals(value, that.getValue());
     }

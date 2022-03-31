@@ -36,7 +36,7 @@ import static java.util.stream.Collectors.joining;
  * @deprecated use {@link io.micrometer.common.Tags}
  */
 @Deprecated
-public final class Tags extends io.micrometer.common.Tags<Tag> implements Iterable<Tag> {
+public final class Tags extends io.micrometer.common.Tags<Tag> {
 
     private static final Tags EMPTY = new Tags(new Tag[]{});
 
@@ -281,7 +281,7 @@ public final class Tags extends io.micrometer.common.Tags<Tag> implements Iterab
      * @return a new {@code Tags} instance
      */
     @SuppressWarnings("rawtypes")
-    public static <T extends io.micrometer.common.Tag> Tags of(@Nullable T... tags) {
+    public static Tags of(@Nullable io.micrometer.common.Tag... tags) {
         return empty().and((Tag[]) tags);
     }
 

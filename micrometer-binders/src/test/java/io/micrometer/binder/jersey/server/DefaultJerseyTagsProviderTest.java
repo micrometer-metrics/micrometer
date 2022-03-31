@@ -15,6 +15,14 @@
  */
 package io.micrometer.binder.jersey.server;
 
+import java.net.URI;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.List;
+import java.util.stream.Collectors;
+
+import javax.ws.rs.NotAcceptableException;
+
 import io.micrometer.core.instrument.Tag;
 import io.micrometer.core.instrument.Tags;
 import org.glassfish.jersey.server.ContainerRequest;
@@ -25,13 +33,6 @@ import org.glassfish.jersey.server.monitoring.RequestEvent;
 import org.glassfish.jersey.server.monitoring.RequestEvent.Type;
 import org.glassfish.jersey.uri.UriTemplate;
 import org.junit.jupiter.api.Test;
-
-import javax.ws.rs.NotAcceptableException;
-import java.net.URI;
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.List;
-import java.util.stream.Collectors;
 
 import static java.util.stream.StreamSupport.stream;
 import static org.assertj.core.api.Assertions.assertThat;

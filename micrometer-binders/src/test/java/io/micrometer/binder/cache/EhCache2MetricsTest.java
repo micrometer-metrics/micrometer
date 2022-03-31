@@ -15,19 +15,17 @@
  */
 package io.micrometer.binder.cache;
 
+import java.util.Random;
+
 import io.micrometer.core.instrument.FunctionCounter;
 import io.micrometer.core.instrument.Gauge;
 import io.micrometer.core.instrument.MeterRegistry;
 import io.micrometer.core.instrument.Tags;
 import io.micrometer.core.instrument.binder.cache.AbstractCacheMetricsTest;
 import io.micrometer.core.instrument.simple.SimpleMeterRegistry;
-
-import java.util.Random;
-
 import net.sf.ehcache.Cache;
 import net.sf.ehcache.CacheManager;
 import net.sf.ehcache.statistics.StatisticsGateway;
-
 import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;

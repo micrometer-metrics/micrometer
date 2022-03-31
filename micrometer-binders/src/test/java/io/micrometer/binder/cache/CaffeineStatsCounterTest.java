@@ -15,7 +15,7 @@
  */
 package io.micrometer.binder.cache;
 
-import static org.assertj.core.api.Assertions.assertThat;
+import java.util.concurrent.TimeUnit;
 
 import com.github.benmanes.caffeine.cache.Cache;
 import com.github.benmanes.caffeine.cache.Caffeine;
@@ -31,7 +31,7 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.EnumSource;
 
-import java.util.concurrent.TimeUnit;
+import static org.assertj.core.api.Assertions.assertThat;
 
 /**
  * Tests for {@link CaffeineStatsCounter}.

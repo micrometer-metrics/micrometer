@@ -33,5 +33,5 @@ public interface MongoConnectionPoolTagsProvider {
      * @param event The Mongo event of when the connection pool is opened
      * @return tags to be associated with metrics recorded for the connection pool
      */
-    Iterable<Tag> connectionPoolTags(ConnectionPoolCreatedEvent event);
+    Iterable<? extends io.micrometer.common.Tag> connectionPoolTags(ConnectionPoolCreatedEvent event);
 }

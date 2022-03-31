@@ -15,20 +15,6 @@
  */
 package io.micrometer.binder.jersey.server;
 
-import io.micrometer.core.Issue;
-import io.micrometer.core.instrument.MeterRegistry;
-import io.micrometer.core.instrument.Tag;
-import io.micrometer.core.instrument.Tags;
-import io.micrometer.binder.jersey.server.resources.TimedOnClassResource;
-import io.micrometer.binder.jersey.server.resources.TimedResource;
-import io.micrometer.core.instrument.simple.SimpleMeterRegistry;
-import org.glassfish.jersey.server.ResourceConfig;
-import org.glassfish.jersey.test.JerseyTest;
-import org.junit.jupiter.api.Test;
-
-import javax.ws.rs.ProcessingException;
-import javax.ws.rs.core.Application;
-import javax.ws.rs.core.Response;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
@@ -36,6 +22,21 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 import java.util.logging.Level;
 import java.util.logging.Logger;
+
+import javax.ws.rs.ProcessingException;
+import javax.ws.rs.core.Application;
+import javax.ws.rs.core.Response;
+
+import io.micrometer.binder.jersey.server.resources.TimedOnClassResource;
+import io.micrometer.binder.jersey.server.resources.TimedResource;
+import io.micrometer.core.Issue;
+import io.micrometer.core.instrument.MeterRegistry;
+import io.micrometer.core.instrument.Tag;
+import io.micrometer.core.instrument.Tags;
+import io.micrometer.core.instrument.simple.SimpleMeterRegistry;
+import org.glassfish.jersey.server.ResourceConfig;
+import org.glassfish.jersey.test.JerseyTest;
+import org.junit.jupiter.api.Test;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatExceptionOfType;

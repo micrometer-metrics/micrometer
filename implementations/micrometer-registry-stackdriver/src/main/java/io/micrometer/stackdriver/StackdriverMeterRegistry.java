@@ -15,6 +15,21 @@
  */
 package io.micrometer.stackdriver;
 
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
+import java.util.concurrent.Callable;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ThreadFactory;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicLong;
+import java.util.concurrent.atomic.AtomicReference;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
+
 import com.google.api.Distribution;
 import com.google.api.Metric;
 import com.google.api.MetricDescriptor;
@@ -22,10 +37,26 @@ import com.google.api.MonitoredResource;
 import com.google.api.gax.rpc.ApiException;
 import com.google.cloud.monitoring.v3.MetricServiceClient;
 import com.google.cloud.monitoring.v3.MetricServiceSettings;
-import com.google.monitoring.v3.*;
+import com.google.monitoring.v3.CreateMetricDescriptorRequest;
+import com.google.monitoring.v3.CreateTimeSeriesRequest;
+import com.google.monitoring.v3.ListMetricDescriptorsRequest;
+import com.google.monitoring.v3.Point;
+import com.google.monitoring.v3.ProjectName;
+import com.google.monitoring.v3.TimeInterval;
+import com.google.monitoring.v3.TimeSeries;
+import com.google.monitoring.v3.TypedValue;
 import com.google.protobuf.Timestamp;
+import io.micrometer.core.instrument.Clock;
+import io.micrometer.core.instrument.Counter;
+import io.micrometer.core.instrument.DistributionSummary;
+import io.micrometer.core.instrument.FunctionCounter;
+import io.micrometer.core.instrument.FunctionTimer;
+import io.micrometer.core.instrument.Gauge;
+import io.micrometer.core.instrument.LongTaskTimer;
+import io.micrometer.core.instrument.Meter;
+import io.micrometer.core.instrument.Tags;
+import io.micrometer.core.instrument.TimeGauge;
 import io.micrometer.core.instrument.Timer;
-import io.micrometer.core.instrument.*;
 import io.micrometer.core.instrument.distribution.CountAtBucket;
 import io.micrometer.core.instrument.distribution.DistributionStatisticConfig;
 import io.micrometer.core.instrument.distribution.HistogramSnapshot;
@@ -39,16 +70,6 @@ import io.micrometer.core.instrument.util.NamedThreadFactory;
 import io.micrometer.core.lang.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-
-import java.util.*;
-import java.util.concurrent.Callable;
-import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.ThreadFactory;
-import java.util.concurrent.TimeUnit;
-import java.util.concurrent.atomic.AtomicLong;
-import java.util.concurrent.atomic.AtomicReference;
-import java.util.stream.Collectors;
-import java.util.stream.Stream;
 
 import static com.google.api.MetricDescriptor.MetricKind.CUMULATIVE;
 import static com.google.api.MetricDescriptor.MetricKind.GAUGE;
@@ -359,7 +380,7 @@ public class StackdriverMeterRegistry extends StepMeterRegistry {
             String metricType = metricType(id, statistic);
 
             Map<String, String> metricLabels = getConventionTags(id).stream()
-                    .collect(Collectors.toMap(Tag::getKey, Tag::getValue));
+                    .collect(Collectors.toMap(io.micrometer.common.Tag::getKey, io.micrometer.common.Tag::getValue));
 
             return TimeSeries.newBuilder()
                     .setMetric(Metric.newBuilder()

@@ -59,7 +59,7 @@ public interface Counter extends Meter {
      */
     class Builder {
         private final String name;
-        private Tags tags = Tags.empty();
+        private io.micrometer.common.Tags tags = io.micrometer.common.Tags.empty();
 
         @Nullable
         private String description;
@@ -84,7 +84,7 @@ public interface Counter extends Meter {
          * @return The counter builder with added tags.
          */
         public Builder tags(Iterable<? extends io.micrometer.common.Tag> tags) {
-            this.tags = this.tags.andWithCommonTag(tags);
+            this.tags = this.tags.and(tags);
             return this;
         }
 

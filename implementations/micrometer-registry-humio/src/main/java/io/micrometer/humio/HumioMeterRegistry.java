@@ -15,7 +15,26 @@
  */
 package io.micrometer.humio;
 
-import io.micrometer.core.instrument.*;
+import java.time.Instant;
+import java.time.format.DateTimeFormatter;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Map;
+import java.util.concurrent.ThreadFactory;
+import java.util.concurrent.TimeUnit;
+
+import io.micrometer.core.instrument.Clock;
+import io.micrometer.core.instrument.Counter;
+import io.micrometer.core.instrument.DistributionSummary;
+import io.micrometer.core.instrument.FunctionCounter;
+import io.micrometer.core.instrument.FunctionTimer;
+import io.micrometer.core.instrument.Gauge;
+import io.micrometer.core.instrument.LongTaskTimer;
+import io.micrometer.core.instrument.Measurement;
+import io.micrometer.core.instrument.Meter;
+import io.micrometer.core.instrument.MeterRegistry;
+import io.micrometer.core.instrument.TimeGauge;
+import io.micrometer.core.instrument.Timer;
 import io.micrometer.core.instrument.distribution.HistogramSnapshot;
 import io.micrometer.core.instrument.step.StepMeterRegistry;
 import io.micrometer.core.instrument.util.DoubleFormat;
@@ -27,14 +46,6 @@ import io.micrometer.core.lang.NonNull;
 import io.micrometer.core.lang.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-
-import java.time.Instant;
-import java.time.format.DateTimeFormatter;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Map;
-import java.util.concurrent.ThreadFactory;
-import java.util.concurrent.TimeUnit;
 
 import static io.micrometer.core.instrument.util.StringEscapeUtils.escapeJson;
 import static java.util.stream.Collectors.joining;
@@ -285,8 +296,8 @@ public class HumioMeterRegistry extends StepMeterRegistry {
                 sb.append(",\"").append(attribute.name).append("\":").append(DoubleFormat.wholeOrDecimal(attribute.value));
             }
 
-            List<Tag> tags = getConventionTags(meter.getId());
-            for (Tag tag : tags) {
+            List<? extends io.micrometer.common.Tag> tags = getConventionTags(meter.getId());
+            for (io.micrometer.common.Tag tag : tags) {
                 String key = tag.getKey();
                 for (Attribute attribute : attributes) {
                     if (attribute.name.equals(key)) {

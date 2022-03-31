@@ -15,18 +15,21 @@
  */
 package io.micrometer.binder.cache;
 
+import java.util.concurrent.TimeUnit;
+import java.util.function.Function;
+import java.util.function.ToLongFunction;
+
 import com.google.common.cache.Cache;
 import com.google.common.cache.CacheBuilder;
 import com.google.common.cache.LoadingCache;
-import io.micrometer.core.instrument.*;
+import io.micrometer.core.instrument.FunctionCounter;
+import io.micrometer.core.instrument.MeterRegistry;
+import io.micrometer.core.instrument.Tags;
+import io.micrometer.core.instrument.TimeGauge;
 import io.micrometer.core.instrument.binder.cache.CacheMeterBinder;
 import io.micrometer.core.lang.NonNullApi;
 import io.micrometer.core.lang.NonNullFields;
 import io.micrometer.core.lang.Nullable;
-
-import java.util.concurrent.TimeUnit;
-import java.util.function.Function;
-import java.util.function.ToLongFunction;
 
 /**
  * @author Jon Schneider
@@ -66,12 +69,12 @@ public class GuavaCacheMetrics<K, V, C extends Cache<K, V>> extends CacheMeterBi
      * @return The instrumented cache, unchanged. The original cache is not wrapped or proxied in any way.
      * @see com.google.common.cache.CacheStats
      */
-    public static <K, V, C extends Cache<K, V>> C monitor(MeterRegistry registry, C cache, String cacheName, Iterable<Tag> tags) {
+    public static <K, V, C extends Cache<K, V>> C monitor(MeterRegistry registry, C cache, String cacheName, Iterable<? extends io.micrometer.common.Tag> tags) {
         new GuavaCacheMetrics<>(cache, cacheName, tags).bindTo(registry);
         return cache;
     }
 
-    public GuavaCacheMetrics(C cache, String cacheName, Iterable<Tag> tags) {
+    public GuavaCacheMetrics(C cache, String cacheName, Iterable<? extends io.micrometer.common.Tag> tags) {
         super(cache, cacheName, tags);
     }
 

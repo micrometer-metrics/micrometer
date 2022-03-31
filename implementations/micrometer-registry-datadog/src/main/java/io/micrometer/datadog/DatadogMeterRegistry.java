@@ -15,16 +15,6 @@
  */
 package io.micrometer.datadog;
 
-import io.micrometer.core.instrument.*;
-import io.micrometer.core.instrument.step.StepMeterRegistry;
-import io.micrometer.core.instrument.util.MeterPartition;
-import io.micrometer.core.instrument.util.NamedThreadFactory;
-import io.micrometer.core.ipc.http.HttpSender;
-import io.micrometer.core.ipc.http.HttpUrlConnectionSender;
-import io.micrometer.core.lang.Nullable;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
 import java.net.URLEncoder;
 import java.util.HashMap;
 import java.util.List;
@@ -34,6 +24,21 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ThreadFactory;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Stream;
+
+import io.micrometer.core.instrument.Clock;
+import io.micrometer.core.instrument.DistributionSummary;
+import io.micrometer.core.instrument.FunctionTimer;
+import io.micrometer.core.instrument.Meter;
+import io.micrometer.core.instrument.Statistic;
+import io.micrometer.core.instrument.Timer;
+import io.micrometer.core.instrument.step.StepMeterRegistry;
+import io.micrometer.core.instrument.util.MeterPartition;
+import io.micrometer.core.instrument.util.NamedThreadFactory;
+import io.micrometer.core.ipc.http.HttpSender;
+import io.micrometer.core.ipc.http.HttpUrlConnectionSender;
+import io.micrometer.core.lang.Nullable;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import static io.micrometer.core.instrument.util.StringEscapeUtils.escapeJson;
 import static java.util.stream.Collectors.joining;
@@ -227,7 +232,7 @@ public class DatadogMeterRegistry extends StepMeterRegistry {
         if (suffix != null)
             fullId = idWithSuffix(id, suffix);
 
-        Iterable<Tag> tags = getConventionTags(fullId);
+        Iterable<? extends io.micrometer.common.Tag> tags = getConventionTags(fullId);
 
         // Create host attribute
         String host = config.hostTag() == null ? "" : stream(tags.spliterator(), false)

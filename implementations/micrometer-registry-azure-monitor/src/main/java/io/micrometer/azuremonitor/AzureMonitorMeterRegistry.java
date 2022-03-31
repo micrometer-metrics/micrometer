@@ -15,22 +15,31 @@
  */
 package io.micrometer.azuremonitor;
 
+import java.util.concurrent.ThreadFactory;
+import java.util.concurrent.TimeUnit;
+import java.util.stream.Stream;
+
 import com.microsoft.applicationinsights.TelemetryClient;
 import com.microsoft.applicationinsights.TelemetryConfiguration;
 import com.microsoft.applicationinsights.telemetry.MetricTelemetry;
 import com.microsoft.applicationinsights.telemetry.SeverityLevel;
 import com.microsoft.applicationinsights.telemetry.TraceTelemetry;
-import io.micrometer.core.instrument.*;
+import io.micrometer.core.instrument.Clock;
+import io.micrometer.core.instrument.Counter;
+import io.micrometer.core.instrument.DistributionSummary;
+import io.micrometer.core.instrument.FunctionCounter;
+import io.micrometer.core.instrument.FunctionTimer;
+import io.micrometer.core.instrument.Gauge;
+import io.micrometer.core.instrument.LongTaskTimer;
+import io.micrometer.core.instrument.Meter;
+import io.micrometer.core.instrument.TimeGauge;
+import io.micrometer.core.instrument.Timer;
 import io.micrometer.core.instrument.step.StepMeterRegistry;
 import io.micrometer.core.instrument.util.NamedThreadFactory;
 import io.micrometer.core.instrument.util.StringUtils;
 import io.micrometer.core.lang.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-
-import java.util.concurrent.ThreadFactory;
-import java.util.concurrent.TimeUnit;
-import java.util.stream.Stream;
 
 import static io.micrometer.core.instrument.config.MeterRegistryConfigValidator.checkRequired;
 import static java.util.stream.StreamSupport.stream;
@@ -193,7 +202,7 @@ public class AzureMonitorMeterRegistry extends StepMeterRegistry {
         mt.setName(config().namingConvention().name(id.getName() + (suffix == null ? "" : "." + suffix),
                 id.getType(), id.getBaseUnit()));
 
-        for (Tag tag : getConventionTags(meter.getId())) {
+        for (io.micrometer.common.Tag tag : getConventionTags(meter.getId())) {
             mt.getContext().getProperties().putIfAbsent(tag.getKey(), tag.getValue());
         }
 

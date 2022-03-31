@@ -15,28 +15,6 @@
  */
 package io.micrometer.opentsdb;
 
-import io.micrometer.core.instrument.*;
-import io.micrometer.core.instrument.cumulative.CumulativeCounter;
-import io.micrometer.core.instrument.cumulative.CumulativeFunctionCounter;
-import io.micrometer.core.instrument.cumulative.CumulativeFunctionTimer;
-import io.micrometer.core.instrument.distribution.CountAtBucket;
-import io.micrometer.core.instrument.distribution.DistributionStatisticConfig;
-import io.micrometer.core.instrument.distribution.HistogramSnapshot;
-import io.micrometer.core.instrument.distribution.ValueAtPercentile;
-import io.micrometer.core.instrument.distribution.pause.PauseDetector;
-import io.micrometer.core.instrument.internal.DefaultGauge;
-import io.micrometer.core.instrument.internal.DefaultMeter;
-import io.micrometer.core.instrument.internal.CumulativeHistogramLongTaskTimer;
-import io.micrometer.core.instrument.push.PushMeterRegistry;
-import io.micrometer.core.instrument.util.DoubleFormat;
-import io.micrometer.core.instrument.util.MeterPartition;
-import io.micrometer.core.instrument.util.NamedThreadFactory;
-import io.micrometer.core.ipc.http.HttpSender;
-import io.micrometer.core.ipc.http.HttpUrlConnectionSender;
-import io.micrometer.core.lang.Nullable;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
 import java.net.InetAddress;
 import java.net.UnknownHostException;
 import java.util.ArrayList;
@@ -48,6 +26,41 @@ import java.util.function.ToLongFunction;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 import java.util.stream.StreamSupport;
+
+import io.micrometer.core.instrument.Clock;
+import io.micrometer.core.instrument.Counter;
+import io.micrometer.core.instrument.DistributionSummary;
+import io.micrometer.core.instrument.FunctionCounter;
+import io.micrometer.core.instrument.FunctionTimer;
+import io.micrometer.core.instrument.Gauge;
+import io.micrometer.core.instrument.ImmutableTag;
+import io.micrometer.core.instrument.LongTaskTimer;
+import io.micrometer.core.instrument.Measurement;
+import io.micrometer.core.instrument.Meter;
+import io.micrometer.core.instrument.Tag;
+import io.micrometer.core.instrument.Tags;
+import io.micrometer.core.instrument.TimeGauge;
+import io.micrometer.core.instrument.Timer;
+import io.micrometer.core.instrument.cumulative.CumulativeCounter;
+import io.micrometer.core.instrument.cumulative.CumulativeFunctionCounter;
+import io.micrometer.core.instrument.cumulative.CumulativeFunctionTimer;
+import io.micrometer.core.instrument.distribution.CountAtBucket;
+import io.micrometer.core.instrument.distribution.DistributionStatisticConfig;
+import io.micrometer.core.instrument.distribution.HistogramSnapshot;
+import io.micrometer.core.instrument.distribution.ValueAtPercentile;
+import io.micrometer.core.instrument.distribution.pause.PauseDetector;
+import io.micrometer.core.instrument.internal.CumulativeHistogramLongTaskTimer;
+import io.micrometer.core.instrument.internal.DefaultGauge;
+import io.micrometer.core.instrument.internal.DefaultMeter;
+import io.micrometer.core.instrument.push.PushMeterRegistry;
+import io.micrometer.core.instrument.util.DoubleFormat;
+import io.micrometer.core.instrument.util.MeterPartition;
+import io.micrometer.core.instrument.util.NamedThreadFactory;
+import io.micrometer.core.ipc.http.HttpSender;
+import io.micrometer.core.ipc.http.HttpUrlConnectionSender;
+import io.micrometer.core.lang.Nullable;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import static io.micrometer.core.instrument.distribution.FixedBoundaryVictoriaMetricsHistogram.getRangeTagValue;
 import static io.micrometer.core.instrument.util.StringEscapeUtils.escapeJson;
@@ -353,7 +366,7 @@ public class OpenTSDBMeterRegistry extends PushMeterRegistry {
     private Stream<String> writeCustomMetric(Meter meter) {
         long wallTime = config().clock().wallTime();
 
-        List<Tag> tags = getConventionTags(meter.getId());
+        List<? extends io.micrometer.common.Tag> tags = getConventionTags(meter.getId());
 
         return StreamSupport.stream(meter.measure().spliterator(), false)
                 .map(ms -> {
@@ -418,7 +431,7 @@ public class OpenTSDBMeterRegistry extends PushMeterRegistry {
             return this;
         }
 
-        OpenTSDBMetricBuilder tags(Iterable<Tag> tags) {
+        OpenTSDBMetricBuilder tags(Iterable<? extends io.micrometer.common.Tag> tags) {
             OpenTSDBMetricBuilder tagBuilder = new OpenTSDBMetricBuilder();
             if (!tags.iterator().hasNext()) {
                 // tags field is required for OpenTSDB, use hostname as a default tag
@@ -428,7 +441,7 @@ public class OpenTSDBMeterRegistry extends PushMeterRegistry {
                     /* ignore */
                 }
             } else {
-                for (Tag tag : tags) {
+                for (io.micrometer.common.Tag tag : tags) {
                     tagBuilder.field(tag.getKey(), tag.getValue());
                 }
             }

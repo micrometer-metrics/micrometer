@@ -15,17 +15,23 @@
  */
 package io.micrometer.binder.cache;
 
-import com.github.benmanes.caffeine.cache.*;
+import java.util.concurrent.TimeUnit;
+import java.util.function.Function;
+import java.util.function.ToLongFunction;
+
+import com.github.benmanes.caffeine.cache.AsyncCache;
+import com.github.benmanes.caffeine.cache.Cache;
+import com.github.benmanes.caffeine.cache.Caffeine;
+import com.github.benmanes.caffeine.cache.LoadingCache;
 import com.github.benmanes.caffeine.cache.stats.CacheStats;
-import io.micrometer.core.instrument.*;
+import io.micrometer.core.instrument.FunctionCounter;
+import io.micrometer.core.instrument.MeterRegistry;
+import io.micrometer.core.instrument.Tags;
+import io.micrometer.core.instrument.TimeGauge;
 import io.micrometer.core.instrument.binder.cache.CacheMeterBinder;
 import io.micrometer.core.lang.NonNullApi;
 import io.micrometer.core.lang.NonNullFields;
 import io.micrometer.core.lang.Nullable;
-
-import java.util.concurrent.TimeUnit;
-import java.util.function.Function;
-import java.util.function.ToLongFunction;
 
 /**
  * Collect metrics from Caffeine's {@link com.github.benmanes.caffeine.cache.Cache}. {@link CaffeineStatsCounter} is an
@@ -52,7 +58,7 @@ public class CaffeineCacheMetrics<K, V, C extends Cache<K, V>> extends CacheMete
      * @param cacheName Will be used to tag metrics with "cache".
      * @param tags      tags to apply to all recorded metrics.
      */
-    public CaffeineCacheMetrics(C cache, String cacheName, Iterable<Tag> tags) {
+    public CaffeineCacheMetrics(C cache, String cacheName, Iterable<? extends io.micrometer.common.Tag> tags) {
         super(cache, cacheName, tags);
     }
 
@@ -87,7 +93,7 @@ public class CaffeineCacheMetrics<K, V, C extends Cache<K, V>> extends CacheMete
      * @return The instrumented cache, unchanged. The original cache is not wrapped or proxied in any way.
      * @see CacheStats
      */
-    public static <K, V, C extends Cache<K, V>> C monitor(MeterRegistry registry, C cache, String cacheName, Iterable<Tag> tags) {
+    public static <K, V, C extends Cache<K, V>> C monitor(MeterRegistry registry, C cache, String cacheName, Iterable<? extends io.micrometer.common.Tag> tags) {
         new CaffeineCacheMetrics<>(cache, cacheName, tags).bindTo(registry);
         return cache;
     }
@@ -123,7 +129,7 @@ public class CaffeineCacheMetrics<K, V, C extends Cache<K, V>> extends CacheMete
      * @return The instrumented cache, unchanged. The original cache is not wrapped or proxied in any way.
      * @see CacheStats
      */
-    public static <K, V, C extends AsyncCache<K, V>> C monitor(MeterRegistry registry, C cache, String cacheName, Iterable<Tag> tags) {
+    public static <K, V, C extends AsyncCache<K, V>> C monitor(MeterRegistry registry, C cache, String cacheName, Iterable<? extends io.micrometer.common.Tag> tags) {
         monitor(registry, cache.synchronous(), cacheName, tags);
         return cache;
     }

@@ -15,24 +15,43 @@
  */
 package io.micrometer.core.instrument.simple;
 
-import io.micrometer.core.annotation.Incubating;
-import io.micrometer.core.instrument.*;
-import io.micrometer.core.instrument.cumulative.*;
-import io.micrometer.core.instrument.distribution.DistributionStatisticConfig;
-import io.micrometer.core.instrument.distribution.HistogramGauges;
-import io.micrometer.core.instrument.distribution.pause.PauseDetector;
-import io.micrometer.core.instrument.internal.DefaultGauge;
-import io.micrometer.core.instrument.internal.DefaultLongTaskTimer;
-import io.micrometer.core.instrument.internal.DefaultMeter;
-import io.micrometer.core.instrument.step.*;
-import io.micrometer.core.lang.Nullable;
-
 import java.util.Comparator;
 import java.util.concurrent.TimeUnit;
 import java.util.function.ToDoubleFunction;
 import java.util.function.ToLongFunction;
 import java.util.stream.Collectors;
 import java.util.stream.StreamSupport;
+
+import io.micrometer.core.annotation.Incubating;
+import io.micrometer.core.instrument.Clock;
+import io.micrometer.core.instrument.Counter;
+import io.micrometer.core.instrument.DistributionSummary;
+import io.micrometer.core.instrument.FunctionCounter;
+import io.micrometer.core.instrument.FunctionTimer;
+import io.micrometer.core.instrument.Gauge;
+import io.micrometer.core.instrument.LongTaskTimer;
+import io.micrometer.core.instrument.Measurement;
+import io.micrometer.core.instrument.Meter;
+import io.micrometer.core.instrument.MeterRegistry;
+import io.micrometer.core.instrument.Statistic;
+import io.micrometer.core.instrument.Timer;
+import io.micrometer.core.instrument.cumulative.CumulativeCounter;
+import io.micrometer.core.instrument.cumulative.CumulativeDistributionSummary;
+import io.micrometer.core.instrument.cumulative.CumulativeFunctionCounter;
+import io.micrometer.core.instrument.cumulative.CumulativeFunctionTimer;
+import io.micrometer.core.instrument.cumulative.CumulativeTimer;
+import io.micrometer.core.instrument.distribution.DistributionStatisticConfig;
+import io.micrometer.core.instrument.distribution.HistogramGauges;
+import io.micrometer.core.instrument.distribution.pause.PauseDetector;
+import io.micrometer.core.instrument.internal.DefaultGauge;
+import io.micrometer.core.instrument.internal.DefaultLongTaskTimer;
+import io.micrometer.core.instrument.internal.DefaultMeter;
+import io.micrometer.core.instrument.step.StepCounter;
+import io.micrometer.core.instrument.step.StepDistributionSummary;
+import io.micrometer.core.instrument.step.StepFunctionCounter;
+import io.micrometer.core.instrument.step.StepFunctionTimer;
+import io.micrometer.core.instrument.step.StepTimer;
+import io.micrometer.core.lang.Nullable;
 
 /**
  * A minimal meter registry implementation primarily used for tests.
@@ -192,7 +211,7 @@ public class SimpleMeterRegistry extends MeterRegistry {
         return String.format("%s(%s)[%s]; %s", id.getName(), id.getType(), tags, measurements);
     }
 
-    private String toString(Tag tag) {
+    private String toString(io.micrometer.common.Tag tag) {
         return String.format("%s='%s'", tag.getKey(), tag.getValue());
     }
 

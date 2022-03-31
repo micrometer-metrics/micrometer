@@ -15,11 +15,8 @@
  */
 package io.micrometer.binder.cache;
 
-import io.micrometer.core.instrument.Gauge;
-import io.micrometer.core.instrument.MeterRegistry;
-import io.micrometer.core.instrument.Tags;
-import io.micrometer.core.instrument.binder.cache.AbstractCacheMetricsTest;
-import io.micrometer.core.instrument.simple.SimpleMeterRegistry;
+import java.net.URI;
+import java.util.Random;
 
 import javax.cache.Cache;
 import javax.cache.CacheManager;
@@ -36,9 +33,11 @@ import javax.management.MalformedObjectNameException;
 import javax.management.ObjectName;
 import javax.management.ReflectionException;
 
-import java.net.URI;
-import java.util.Random;
-
+import io.micrometer.core.instrument.Gauge;
+import io.micrometer.core.instrument.MeterRegistry;
+import io.micrometer.core.instrument.Tags;
+import io.micrometer.core.instrument.binder.cache.AbstractCacheMetricsTest;
+import io.micrometer.core.instrument.simple.SimpleMeterRegistry;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;

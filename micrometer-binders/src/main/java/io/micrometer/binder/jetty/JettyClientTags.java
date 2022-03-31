@@ -15,6 +15,9 @@
  */
 package io.micrometer.binder.jetty;
 
+import java.util.function.Function;
+import java.util.regex.Pattern;
+
 import io.micrometer.core.instrument.Tag;
 import io.micrometer.core.instrument.binder.http.Outcome;
 import io.micrometer.core.instrument.util.StringUtils;
@@ -22,9 +25,6 @@ import org.eclipse.jetty.client.api.Request;
 import org.eclipse.jetty.client.api.Response;
 import org.eclipse.jetty.client.api.Result;
 import org.eclipse.jetty.http.HttpStatus;
-
-import java.util.function.Function;
-import java.util.regex.Pattern;
 
 /**
  * Factory methods for {@link Tag Tags} associated with a request-response exchange that

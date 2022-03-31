@@ -15,6 +15,11 @@
  */
 package io.micrometer.binder.httpcomponents;
 
+import java.io.IOException;
+import java.util.Collections;
+import java.util.Optional;
+import java.util.function.Function;
+
 import io.micrometer.core.annotation.Incubating;
 import io.micrometer.core.instrument.MeterRegistry;
 import io.micrometer.core.instrument.Tag;
@@ -26,11 +31,6 @@ import org.apache.http.HttpRequest;
 import org.apache.http.HttpResponse;
 import org.apache.http.protocol.HttpContext;
 import org.apache.http.protocol.HttpRequestExecutor;
-
-import java.io.IOException;
-import java.util.Collections;
-import java.util.Optional;
-import java.util.function.Function;
 
 /**
  * This HttpRequestExecutor tracks the request duration of every request, that
@@ -68,7 +68,7 @@ public class MicrometerHttpRequestExecutor extends HttpRequestExecutor {
 
     private final MeterRegistry registry;
     private final Function<HttpRequest, String> uriMapper;
-    private final Iterable<Tag> extraTags;
+    private final Iterable<? extends io.micrometer.common.Tag> extraTags;
     private final boolean exportTagsForRoute;
 
     /**
@@ -77,7 +77,7 @@ public class MicrometerHttpRequestExecutor extends HttpRequestExecutor {
     private MicrometerHttpRequestExecutor(int waitForContinue,
                                           MeterRegistry registry,
                                           Function<HttpRequest, String> uriMapper,
-                                          Iterable<Tag> extraTags,
+                                          Iterable<? extends io.micrometer.common.Tag> extraTags,
                                           boolean exportTagsForRoute) {
         super(waitForContinue);
         this.registry = Optional.ofNullable(registry).orElseThrow(() -> new IllegalArgumentException("registry is required but has been initialized with null"));
@@ -115,7 +115,7 @@ public class MicrometerHttpRequestExecutor extends HttpRequestExecutor {
             status = STATUS_IO_ERROR;
             throw e;
         } finally {
-            Iterable<Tag> tags = Tags.of(extraTags)
+            Iterable<? extends io.micrometer.common.Tag> tags = Tags.of(extraTags)
                     .and(routeTags)
                     .and(uri, method, status);
 
@@ -129,7 +129,7 @@ public class MicrometerHttpRequestExecutor extends HttpRequestExecutor {
     public static class Builder {
         private final MeterRegistry registry;
         private int waitForContinue = HttpRequestExecutor.DEFAULT_WAIT_FOR_CONTINUE;
-        private Iterable<Tag> tags = Collections.emptyList();
+        private Iterable<? extends io.micrometer.common.Tag> tags = Collections.emptyList();
         private Function<HttpRequest, String> uriMapper = new DefaultUriMapper();
         private boolean exportTagsForRoute = false;
 
@@ -152,7 +152,7 @@ public class MicrometerHttpRequestExecutor extends HttpRequestExecutor {
          * @param tags Additional tags which should be exposed with every value.
          * @return This builder instance.
          */
-        public Builder tags(Iterable<Tag> tags) {
+        public Builder tags(Iterable<? extends io.micrometer.common.Tag> tags) {
             this.tags = tags;
             return this;
         }

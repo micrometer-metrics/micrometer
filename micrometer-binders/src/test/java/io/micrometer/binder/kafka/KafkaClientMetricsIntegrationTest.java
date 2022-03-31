@@ -15,6 +15,10 @@
  */
 package io.micrometer.binder.kafka;
 
+import java.time.Duration;
+import java.util.Collections;
+import java.util.Properties;
+
 import io.micrometer.core.instrument.simple.SimpleMeterRegistry;
 import org.apache.kafka.clients.consumer.Consumer;
 import org.apache.kafka.clients.consumer.ConsumerConfig;
@@ -31,10 +35,6 @@ import org.testcontainers.containers.KafkaContainer;
 import org.testcontainers.junit.jupiter.Container;
 import org.testcontainers.junit.jupiter.Testcontainers;
 import org.testcontainers.utility.DockerImageName;
-
-import java.time.Duration;
-import java.util.Collections;
-import java.util.Properties;
 
 import static java.lang.System.out;
 import static org.assertj.core.api.Assertions.assertThat;

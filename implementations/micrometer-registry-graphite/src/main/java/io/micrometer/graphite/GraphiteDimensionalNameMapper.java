@@ -16,7 +16,6 @@
 package io.micrometer.graphite;
 
 import io.micrometer.core.instrument.Meter;
-import io.micrometer.core.instrument.Tag;
 import io.micrometer.core.instrument.config.NamingConvention;
 import io.micrometer.core.instrument.util.HierarchicalNameMapper;
 
@@ -37,7 +36,7 @@ public class GraphiteDimensionalNameMapper implements HierarchicalNameMapper {
     public String toHierarchicalName(Meter.Id id, NamingConvention convention) {
         StringBuilder hierarchicalName = new StringBuilder();
         hierarchicalName.append(id.getConventionName(convention));
-        for (Tag tag : id.getTagsAsIterable()) {
+        for (io.micrometer.common.Tag tag : id.getTagsAsIterable()) {
             hierarchicalName.append(';').append(convention.tagKey(tag.getKey()))
                     .append('=').append(convention.tagValue(tag.getValue()));
         }

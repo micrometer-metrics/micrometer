@@ -15,12 +15,12 @@
  */
 package io.micrometer.binder.system;
 
+import java.io.File;
+
 import io.micrometer.core.instrument.MeterRegistry;
 import io.micrometer.core.instrument.Tags;
 import io.micrometer.core.instrument.simple.SimpleMeterRegistry;
 import org.junit.jupiter.api.Test;
-
-import java.io.File;
 
 import static org.assertj.core.api.AssertionsForClassTypes.assertThat;
 

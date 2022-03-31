@@ -15,15 +15,6 @@
  */
 package io.micrometer.newrelic;
 
-import io.micrometer.core.instrument.*;
-import io.micrometer.core.instrument.config.NamingConvention;
-import io.micrometer.core.instrument.util.DoubleFormat;
-import io.micrometer.core.instrument.util.MeterPartition;
-import io.micrometer.core.ipc.http.HttpSender;
-import io.micrometer.core.ipc.http.HttpUrlConnectionSender;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
 import java.net.InetSocketAddress;
 import java.net.Proxy;
 import java.util.Arrays;
@@ -34,6 +25,26 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
+
+import io.micrometer.core.instrument.Counter;
+import io.micrometer.core.instrument.DistributionSummary;
+import io.micrometer.core.instrument.FunctionCounter;
+import io.micrometer.core.instrument.FunctionTimer;
+import io.micrometer.core.instrument.Gauge;
+import io.micrometer.core.instrument.LongTaskTimer;
+import io.micrometer.core.instrument.Measurement;
+import io.micrometer.core.instrument.Meter;
+import io.micrometer.core.instrument.Tag;
+import io.micrometer.core.instrument.Tags;
+import io.micrometer.core.instrument.TimeGauge;
+import io.micrometer.core.instrument.Timer;
+import io.micrometer.core.instrument.config.NamingConvention;
+import io.micrometer.core.instrument.util.DoubleFormat;
+import io.micrometer.core.instrument.util.MeterPartition;
+import io.micrometer.core.ipc.http.HttpSender;
+import io.micrometer.core.ipc.http.HttpUrlConnectionSender;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import static io.micrometer.core.instrument.util.StringEscapeUtils.escapeJson;
 
@@ -238,11 +249,11 @@ public class NewRelicInsightsApiClientProvider implements NewRelicClientProvider
     private String event(Meter.Id id, Iterable<Tag> extraTags, Attribute... attributes) {
         StringBuilder tagsJson = new StringBuilder();
 
-        for (Tag tag : id.getConventionTags(namingConvention)) {
+        for (io.micrometer.common.Tag tag : id.getConventionTags(namingConvention)) {
             tagsJson.append(",\"").append(escapeJson(tag.getKey())).append("\":\"").append(escapeJson(tag.getValue())).append("\"");
         }
 
-        for (Tag tag : extraTags) {
+        for (io.micrometer.common.Tag tag : extraTags) {
             tagsJson.append(",\"").append(escapeJson(namingConvention.tagKey(tag.getKey())))
                     .append("\":\"").append(escapeJson(namingConvention.tagValue(tag.getValue()))).append("\"");
         }

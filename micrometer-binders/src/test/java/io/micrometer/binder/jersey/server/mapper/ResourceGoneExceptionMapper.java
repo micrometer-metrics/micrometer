@@ -16,11 +16,11 @@
 package io.micrometer.binder.jersey.server.mapper;
 
 
-import io.micrometer.binder.jersey.server.exception.ResourceGoneException;
-
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.Response.Status;
 import javax.ws.rs.ext.ExceptionMapper;
+
+import io.micrometer.binder.jersey.server.exception.ResourceGoneException;
 
 public class ResourceGoneExceptionMapper implements ExceptionMapper<ResourceGoneException> {
 

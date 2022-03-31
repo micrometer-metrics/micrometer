@@ -15,21 +15,6 @@
  */
 package io.micrometer.prometheus;
 
-import io.micrometer.core.instrument.*;
-import io.micrometer.core.instrument.cumulative.CumulativeFunctionCounter;
-import io.micrometer.core.instrument.cumulative.CumulativeFunctionTimer;
-import io.micrometer.core.instrument.distribution.*;
-import io.micrometer.core.instrument.distribution.pause.PauseDetector;
-import io.micrometer.core.instrument.internal.CumulativeHistogramLongTaskTimer;
-import io.micrometer.core.instrument.internal.DefaultGauge;
-import io.micrometer.core.instrument.internal.DefaultMeter;
-import io.micrometer.core.lang.Nullable;
-import io.prometheus.client.Collector;
-import io.prometheus.client.CollectorRegistry;
-import io.prometheus.client.exemplars.Exemplar;
-import io.prometheus.client.exemplars.ExemplarSampler;
-import io.prometheus.client.exporter.common.TextFormat;
-
 import java.io.IOException;
 import java.io.StringWriter;
 import java.io.Writer;
@@ -46,6 +31,35 @@ import java.util.function.Supplier;
 import java.util.function.ToDoubleFunction;
 import java.util.function.ToLongFunction;
 import java.util.stream.Stream;
+
+import io.micrometer.core.instrument.Clock;
+import io.micrometer.core.instrument.Counter;
+import io.micrometer.core.instrument.DistributionSummary;
+import io.micrometer.core.instrument.FunctionCounter;
+import io.micrometer.core.instrument.FunctionTimer;
+import io.micrometer.core.instrument.Gauge;
+import io.micrometer.core.instrument.LongTaskTimer;
+import io.micrometer.core.instrument.Measurement;
+import io.micrometer.core.instrument.Meter;
+import io.micrometer.core.instrument.MeterRegistry;
+import io.micrometer.core.instrument.cumulative.CumulativeFunctionCounter;
+import io.micrometer.core.instrument.cumulative.CumulativeFunctionTimer;
+import io.micrometer.core.instrument.distribution.CountAtBucket;
+import io.micrometer.core.instrument.distribution.DistributionStatisticConfig;
+import io.micrometer.core.instrument.distribution.FixedBoundaryVictoriaMetricsHistogram;
+import io.micrometer.core.instrument.distribution.HistogramSnapshot;
+import io.micrometer.core.instrument.distribution.HistogramSupport;
+import io.micrometer.core.instrument.distribution.ValueAtPercentile;
+import io.micrometer.core.instrument.distribution.pause.PauseDetector;
+import io.micrometer.core.instrument.internal.CumulativeHistogramLongTaskTimer;
+import io.micrometer.core.instrument.internal.DefaultGauge;
+import io.micrometer.core.instrument.internal.DefaultMeter;
+import io.micrometer.core.lang.Nullable;
+import io.prometheus.client.Collector;
+import io.prometheus.client.CollectorRegistry;
+import io.prometheus.client.exemplars.Exemplar;
+import io.prometheus.client.exemplars.ExemplarSampler;
+import io.prometheus.client.exporter.common.TextFormat;
 
 import static java.util.stream.Collectors.joining;
 import static java.util.stream.Collectors.toList;
@@ -95,7 +109,7 @@ public class PrometheusMeterRegistry extends MeterRegistry {
     }
 
     private static List<String> tagValues(Meter.Id id) {
-        return stream(id.getTagsAsIterable().spliterator(), false).map(Tag::getValue).collect(toList());
+        return stream(id.getTagsAsIterable().spliterator(), false).map(io.micrometer.common.Tag::getValue).collect(toList());
     }
 
     /**
@@ -519,7 +533,7 @@ public class PrometheusMeterRegistry extends MeterRegistry {
                 return micrometerCollector.register(registry);
             }
 
-            List<String> tagKeys = getConventionTags(id).stream().map(Tag::getKey).collect(toList());
+            List<String> tagKeys = getConventionTags(id).stream().map(io.micrometer.common.Tag::getKey).collect(toList());
             if (existingCollector.getTagKeys().equals(tagKeys)) {
                 consumer.accept(existingCollector);
                 return existingCollector;
@@ -528,7 +542,7 @@ public class PrometheusMeterRegistry extends MeterRegistry {
             meterRegistrationFailed(id, "Prometheus requires that all meters with the same name have the same" +
                     " set of tag keys. There is already an existing meter named '" + id.getName() + "' containing tag keys [" +
                     String.join(", ", collectorMap.get(getConventionName(id)).getTagKeys()) + "]. The meter you are attempting to register" +
-                    " has keys [" + getConventionTags(id).stream().map(Tag::getKey).collect(joining(", ")) + "].");
+                    " has keys [" + getConventionTags(id).stream().map(io.micrometer.common.Tag::getKey).collect(joining(", ")) + "].");
             return existingCollector;
         });
     }
