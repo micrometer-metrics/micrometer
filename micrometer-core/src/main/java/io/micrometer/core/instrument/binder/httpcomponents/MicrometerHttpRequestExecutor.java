@@ -22,8 +22,6 @@ import java.util.function.Function;
 
 import io.micrometer.core.annotation.Incubating;
 import io.micrometer.core.instrument.MeterRegistry;
-import io.micrometer.core.instrument.Tag;
-import io.micrometer.core.instrument.Tags;
 import io.micrometer.core.instrument.Timer;
 import org.apache.http.HttpClientConnection;
 import org.apache.http.HttpException;
@@ -64,9 +62,9 @@ public class MicrometerHttpRequestExecutor extends HttpRequestExecutor {
 
     private static final String METER_NAME = "httpcomponents.httpclient.request";
 
-    private static final Tag STATUS_UNKNOWN = Tag.of("status", "UNKNOWN");
-    private static final Tag STATUS_CLIENT_ERROR = Tag.of("status", "CLIENT_ERROR");
-    private static final Tag STATUS_IO_ERROR = Tag.of("status", "IO_ERROR");
+    private static final io.micrometer.common.Tag STATUS_UNKNOWN = io.micrometer.common.Tag.of("status", "UNKNOWN");
+    private static final io.micrometer.common.Tag STATUS_CLIENT_ERROR = io.micrometer.common.Tag.of("status", "CLIENT_ERROR");
+    private static final io.micrometer.common.Tag STATUS_IO_ERROR = io.micrometer.common.Tag.of("status", "IO_ERROR");
 
     private final MeterRegistry registry;
     private final Function<HttpRequest, String> uriMapper;
@@ -103,21 +101,21 @@ public class MicrometerHttpRequestExecutor extends HttpRequestExecutor {
     public HttpResponse execute(HttpRequest request, HttpClientConnection conn, HttpContext context) throws IOException, HttpException {
         Timer.Sample timerSample = Timer.start(registry);
 
-        Tag method = Tag.of("method", request.getRequestLine().getMethod());
-        Tag uri = Tag.of("uri", uriMapper.apply(request));
-        Tag status = STATUS_UNKNOWN;
+        io.micrometer.common.Tag method = io.micrometer.common.Tag.of("method", request.getRequestLine().getMethod());
+        io.micrometer.common.Tag uri = io.micrometer.common.Tag.of("uri", uriMapper.apply(request));
+        io.micrometer.common.Tag status = STATUS_UNKNOWN;
 
-        Tags routeTags = exportTagsForRoute ? HttpContextUtils.generateTagsForRoute(context) : Tags.empty();
+        io.micrometer.common.Tags routeTags = exportTagsForRoute ? HttpContextUtils.generateTagsForRoute(context) : io.micrometer.common.Tags.empty();
 
         try {
             HttpResponse response = super.execute(request, conn, context);
-            status = response != null ? Tag.of("status", Integer.toString(response.getStatusLine().getStatusCode())) : STATUS_CLIENT_ERROR;
+            status = response != null ? io.micrometer.common.Tag.of("status", Integer.toString(response.getStatusLine().getStatusCode())) : STATUS_CLIENT_ERROR;
             return response;
         } catch (IOException | HttpException | RuntimeException e) {
             status = STATUS_IO_ERROR;
             throw e;
         } finally {
-            Iterable<? extends io.micrometer.common.Tag> tags = Tags.of(extraTags)
+            Iterable<? extends io.micrometer.common.Tag> tags = io.micrometer.common.Tags.of(extraTags)
                     .and(routeTags)
                     .and(uri, method, status);
 

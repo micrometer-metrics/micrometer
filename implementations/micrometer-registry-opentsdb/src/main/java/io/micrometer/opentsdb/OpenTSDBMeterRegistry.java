@@ -37,7 +37,6 @@ import io.micrometer.core.instrument.ImmutableTag;
 import io.micrometer.core.instrument.LongTaskTimer;
 import io.micrometer.core.instrument.Measurement;
 import io.micrometer.core.instrument.Meter;
-import io.micrometer.core.instrument.Tag;
 import io.micrometer.core.instrument.Tags;
 import io.micrometer.core.instrument.TimeGauge;
 import io.micrometer.core.instrument.Timer;
@@ -296,7 +295,7 @@ public class OpenTSDBMeterRegistry extends PushMeterRegistry {
         else if (OpenTSDBFlavor.VictoriaMetrics.equals(config.flavor())) {
             for (CountAtBucket c : histogramCounts) {
                 metrics.add(writeMetricWithSuffix(
-                        meter.getId().withTag(Tag.of("vmrange", getRangeTagValue(timeUnit == null ? c.bucket() : c.bucket(timeUnit)))),
+                        meter.getId().withTag(io.micrometer.common.Tag.of("vmrange", getRangeTagValue(timeUnit == null ? c.bucket() : c.bucket(timeUnit)))),
                         "bucket",
                         wallTime,
                         c.count()

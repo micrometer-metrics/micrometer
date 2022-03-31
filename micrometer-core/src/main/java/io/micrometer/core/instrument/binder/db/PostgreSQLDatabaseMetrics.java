@@ -28,7 +28,6 @@ import javax.sql.DataSource;
 import io.micrometer.core.instrument.FunctionCounter;
 import io.micrometer.core.instrument.Gauge;
 import io.micrometer.core.instrument.MeterRegistry;
-import io.micrometer.core.instrument.Tag;
 import io.micrometer.core.instrument.Tags;
 import io.micrometer.core.instrument.binder.BaseUnits;
 import io.micrometer.core.instrument.binder.MeterBinder;
@@ -82,7 +81,7 @@ public class PostgreSQLDatabaseMetrics implements MeterBinder {
     public PostgreSQLDatabaseMetrics(DataSource postgresDataSource, String database, Iterable<? extends io.micrometer.common.Tag> tags) {
         this.postgresDataSource = postgresDataSource;
         this.database = database;
-        this.tags = Tags.of(tags).and(createDbTag(database));
+        this.tags = io.micrometer.common.Tags.of(tags).and(createDbTag(database));
         this.beforeResetValuesCacheMap = new ConcurrentHashMap<>();
         this.previousValueCacheMap = new ConcurrentHashMap<>();
 
@@ -97,8 +96,8 @@ public class PostgreSQLDatabaseMetrics implements MeterBinder {
         this.queryTransactionCount = getDBStatQuery(database, "xact_commit + xact_rollback");
     }
 
-    private static Tag createDbTag(String database) {
-        return Tag.of("database", database);
+    private static io.micrometer.common.Tag createDbTag(String database) {
+        return io.micrometer.common.Tag.of("database", database);
     }
 
     @Override

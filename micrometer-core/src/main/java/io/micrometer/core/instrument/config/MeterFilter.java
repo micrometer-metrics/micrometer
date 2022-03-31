@@ -26,8 +26,6 @@ import java.util.function.Predicate;
 import io.micrometer.core.instrument.DistributionSummary;
 import io.micrometer.core.instrument.Meter;
 import io.micrometer.core.instrument.MeterRegistry;
-import io.micrometer.core.instrument.Tag;
-import io.micrometer.core.instrument.Tags;
 import io.micrometer.core.instrument.Timer;
 import io.micrometer.core.instrument.distribution.DistributionStatisticConfig;
 import io.micrometer.core.lang.Nullable;
@@ -60,7 +58,7 @@ public interface MeterFilter {
         return new MeterFilter() {
             @Override
             public Meter.Id map(Meter.Id id) {
-                return id.replaceTags(Tags.concat(tags, id.getTagsAsIterable()));
+                return id.replaceTags(io.micrometer.common.Tags.concat(tags, id.getTagsAsIterable()));
             }
         };
     }
@@ -137,7 +135,7 @@ public interface MeterFilter {
                                 if (t.getValue().equals(exception))
                                     return t;
                             }
-                            return Tag.of(tagKey, replacement.apply(t.getValue()));
+                            return io.micrometer.common.Tag.of(tagKey, replacement.apply(t.getValue()));
                         })
                         .collect(toList());
 

@@ -227,7 +227,7 @@ public interface Meter {
          * @param tag The tag to add.
          * @return A new id with the provided tag added. The source id remains unchanged.
          */
-        public Id withTag(Tag tag) {
+        public <T extends io.micrometer.common.Tag> Id withTag(T tag) {
             return withTags(singletonList(tag));
         }
 
@@ -262,7 +262,7 @@ public interface Meter {
          * @return A new id with the provided tag. The source id remains unchanged.
          */
         public Id withTag(Statistic statistic) {
-            return withTag(Tag.of("statistic", statistic.getTagValueRepresentation()));
+            return withTag(io.micrometer.common.Tag.of("statistic", statistic.getTagValueRepresentation()));
         }
 
         /**
@@ -332,7 +332,7 @@ public interface Meter {
          */
         public List<? extends io.micrometer.common.Tag> getConventionTags(NamingConvention namingConvention) {
             return StreamSupport.stream(tags.spliterator(), false)
-                    .map(t -> Tag.of(namingConvention.tagKey(t.getKey()), namingConvention.tagValue(t.getValue())))
+                    .map(t -> io.micrometer.common.Tag.of(namingConvention.tagKey(t.getKey()), namingConvention.tagValue(t.getValue())))
                     .collect(Collectors.toList());
         }
 

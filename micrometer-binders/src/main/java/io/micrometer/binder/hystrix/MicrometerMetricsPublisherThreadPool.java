@@ -22,8 +22,6 @@ import com.netflix.hystrix.strategy.metrics.HystrixMetricsPublisherThreadPool;
 import io.micrometer.core.instrument.FunctionCounter;
 import io.micrometer.core.instrument.Gauge;
 import io.micrometer.core.instrument.MeterRegistry;
-import io.micrometer.core.instrument.Tag;
-import io.micrometer.core.instrument.Tags;
 import io.micrometer.core.lang.NonNullApi;
 import io.micrometer.core.lang.NonNullFields;
 
@@ -41,7 +39,7 @@ public class MicrometerMetricsPublisherThreadPool implements HystrixMetricsPubli
   private final HystrixThreadPoolMetrics metrics;
   private final HystrixThreadPoolProperties properties;
   private final HystrixMetricsPublisherThreadPool metricsPublisherForThreadPool;
-  private final Tags tags;
+  private final io.micrometer.common.Tags tags;
 
   public MicrometerMetricsPublisherThreadPool(
       final MeterRegistry meterRegistry,
@@ -54,7 +52,7 @@ public class MicrometerMetricsPublisherThreadPool implements HystrixMetricsPubli
     this.properties = properties;
     this.metricsPublisherForThreadPool = metricsPublisherForThreadPool;
 
-    this.tags = Tags.of("key", threadPoolKey.name());
+    this.tags = io.micrometer.common.Tags.of("key", threadPoolKey.name());
   }
 
   @Override
@@ -68,12 +66,12 @@ public class MicrometerMetricsPublisherThreadPool implements HystrixMetricsPubli
 
     FunctionCounter.builder(metricName("threads.cumulative.count"), metrics, HystrixThreadPoolMetrics::getCumulativeCountThreadsExecuted)
         .description("Cumulative count of number of threads since the start of the application.")
-        .tags(tags.and(Tag.of("type", "executed")))
+        .tags(tags.and(io.micrometer.common.Tag.of("type", "executed")))
         .register(meterRegistry);
 
     FunctionCounter.builder(metricName("threads.cumulative.count"), metrics, HystrixThreadPoolMetrics::getCumulativeCountThreadsRejected)
         .description("Cumulative count of number of threads since the start of the application.")
-        .tags(tags.and(Tag.of("type", "rejected")))
+        .tags(tags.and(io.micrometer.common.Tag.of("type", "rejected")))
         .register(meterRegistry);
 
     Gauge.builder(metricName("threads.pool.current.size"), metrics::getCurrentPoolSize)
@@ -98,12 +96,12 @@ public class MicrometerMetricsPublisherThreadPool implements HystrixMetricsPubli
 
     FunctionCounter.builder(metricName("tasks.cumulative.count"), metrics, m -> m.getCurrentCompletedTaskCount().longValue())
         .description("The approximate total number of tasks since the start of the application.")
-        .tags(tags.and(Tag.of("type", "completed")))
+        .tags(tags.and(io.micrometer.common.Tag.of("type", "completed")))
         .register(meterRegistry);
 
     FunctionCounter.builder(metricName("tasks.cumulative.count"), metrics, m -> m.getCurrentTaskCount().longValue())
         .description("The approximate total number of tasks since the start of the application.")
-        .tags(tags.and(Tag.of("type", "scheduled")))
+        .tags(tags.and(io.micrometer.common.Tag.of("type", "scheduled")))
         .register(meterRegistry);
 
     Gauge.builder(metricName("queue.current.size"), metrics::getCurrentQueueSize)

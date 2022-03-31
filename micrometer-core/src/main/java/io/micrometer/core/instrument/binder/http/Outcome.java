@@ -55,10 +55,10 @@ public enum Outcome {
      */
     UNKNOWN;
 
-    private final Tag tag;
+    private final io.micrometer.common.Tag tag;
 
     Outcome() {
-        this.tag = Tag.of("outcome", name());
+        this.tag = io.micrometer.common.Tag.of("outcome", name());
     }
 
     /**
@@ -66,7 +66,7 @@ public enum Outcome {
      *
      * @return the {@code outcome} {@code Tag}
      */
-    public Tag asTag() {
+    public io.micrometer.common.Tag asTag() {
         return this.tag;
     }
 

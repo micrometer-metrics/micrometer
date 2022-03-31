@@ -15,9 +15,11 @@
  */
 package io.micrometer.common;
 
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Iterator;
+import java.util.List;
 import java.util.Spliterator;
 import java.util.Spliterators;
 import java.util.stream.Stream;
@@ -236,6 +238,9 @@ public class Tags<T extends Tag> implements Iterable<T> {
     public static <T extends Tag> Tags of(@Nullable Iterable<? extends T> tags) {
         if (tags == null || !tags.iterator().hasNext()) {
             return Tags.empty();
+        } else if (Tags.class.isAssignableFrom(tags.getClass()) && !tags.getClass().equals(Tags.class)) {
+            // is this tags from core?
+            return new Tags(toCommon(tags));
         } else if (tags instanceof Tags) {
             return (Tags) tags;
         } else if (tags instanceof Collection) {
@@ -244,6 +249,18 @@ public class Tags<T extends Tag> implements Iterable<T> {
         } else {
             return new Tags(StreamSupport.stream(tags.spliterator(), false).toArray(Tag[]::new));
         }
+    }
+
+
+    private static <T extends Tag> Tag[] toCommon(Iterable<? extends T> tags) {
+        if (tags == null) {
+            return null;
+        }
+        List<Tag> collect = new ArrayList<>();
+        for (T tag : tags) {
+            collect.add(Tag.of(tag.getKey(), tag.getValue()));
+        }
+        return collect.toArray(new Tag[0]);
     }
 
     /**

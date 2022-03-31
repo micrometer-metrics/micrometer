@@ -15,6 +15,9 @@
  */
 package io.micrometer.core.instrument.binder.jetty;
 
+import java.util.function.Function;
+import java.util.regex.Pattern;
+
 import io.micrometer.core.instrument.Tag;
 import io.micrometer.core.instrument.binder.http.Outcome;
 import io.micrometer.core.instrument.util.StringUtils;
@@ -22,9 +25,6 @@ import org.eclipse.jetty.client.api.Request;
 import org.eclipse.jetty.client.api.Response;
 import org.eclipse.jetty.client.api.Result;
 import org.eclipse.jetty.http.HttpStatus;
-
-import java.util.function.Function;
-import java.util.regex.Pattern;
 
 /**
  * Factory methods for {@link Tag Tags} associated with a request-response exchange that
@@ -37,17 +37,17 @@ import java.util.regex.Pattern;
 @Deprecated
 public final class JettyClientTags {
 
-    private static final Tag URI_NOT_FOUND = Tag.of("uri", "NOT_FOUND");
+    private static final io.micrometer.common.Tag URI_NOT_FOUND = io.micrometer.common.Tag.of("uri", "NOT_FOUND");
 
-    private static final Tag URI_REDIRECTION = Tag.of("uri", "REDIRECTION");
+    private static final io.micrometer.common.Tag URI_REDIRECTION = io.micrometer.common.Tag.of("uri", "REDIRECTION");
 
-    private static final Tag URI_ROOT = Tag.of("uri", "root");
+    private static final io.micrometer.common.Tag URI_ROOT = io.micrometer.common.Tag.of("uri", "root");
 
-    private static final Tag EXCEPTION_NONE = Tag.of("exception", "None");
+    private static final io.micrometer.common.Tag EXCEPTION_NONE = io.micrometer.common.Tag.of("exception", "None");
 
-    private static final Tag METHOD_UNKNOWN = Tag.of("method", "UNKNOWN");
+    private static final io.micrometer.common.Tag METHOD_UNKNOWN = io.micrometer.common.Tag.of("method", "UNKNOWN");
 
-    private static final Tag HOST_UNKNOWN = Tag.of("host", "UNKNOWN");
+    private static final io.micrometer.common.Tag HOST_UNKNOWN = io.micrometer.common.Tag.of("host", "UNKNOWN");
 
     private static final Pattern TRAILING_SLASH_PATTERN = Pattern.compile("/$");
 
@@ -63,8 +63,8 @@ public final class JettyClientTags {
      * @param request the request
      * @return the method tag whose value is a capitalized method (e.g. GET).
      */
-    public static Tag method(Request request) {
-        return (request != null) ? Tag.of("method", request.getMethod()) : METHOD_UNKNOWN;
+    public static io.micrometer.common.Tag method(Request request) {
+        return (request != null) ? io.micrometer.common.Tag.of("method", request.getMethod()) : METHOD_UNKNOWN;
     }
 
     /**
@@ -74,8 +74,8 @@ public final class JettyClientTags {
      * @return the host tag derived from request
      * @since 1.7.0
      */
-    public static Tag host(Request request) {
-        return (request != null) ? Tag.of("host", request.getHost()) : HOST_UNKNOWN;
+    public static io.micrometer.common.Tag host(Request request) {
+        return (request != null) ? io.micrometer.common.Tag.of("host", request.getHost()) : HOST_UNKNOWN;
     }
 
     /**
@@ -84,8 +84,8 @@ public final class JettyClientTags {
      * @param result the request result
      * @return the status tag derived from the status of the response
      */
-    public static Tag status(Result result) {
-        return Tag.of("status", Integer.toString(result.getResponse().getStatus()));
+    public static io.micrometer.common.Tag status(Result result) {
+        return io.micrometer.common.Tag.of("status", Integer.toString(result.getResponse().getStatus()));
     }
 
     /**
@@ -96,7 +96,7 @@ public final class JettyClientTags {
      * @param successfulUriPattern successful URI pattern
      * @return the uri tag derived from the request result
      */
-    public static Tag uri(Result result, Function<Result, String> successfulUriPattern) {
+    public static io.micrometer.common.Tag uri(Result result, Function<Result, String> successfulUriPattern) {
         Response response = result.getResponse();
         if (response != null) {
             int status = response.getStatus();
@@ -114,7 +114,7 @@ public final class JettyClientTags {
             return URI_ROOT;
         }
         matchingPattern = TRAILING_SLASH_PATTERN.matcher(matchingPattern).replaceAll("");
-        return Tag.of("uri", matchingPattern);
+        return io.micrometer.common.Tag.of("uri", matchingPattern);
     }
 
     /**
@@ -124,7 +124,7 @@ public final class JettyClientTags {
      * @param result the request result
      * @return the exception tag derived from the exception
      */
-    public static Tag exception(Result result) {
+    public static io.micrometer.common.Tag exception(Result result) {
         Throwable exception = result.getFailure();
         if (exception == null) {
             return EXCEPTION_NONE;
@@ -139,7 +139,7 @@ public final class JettyClientTags {
             exception = exception.getCause();
         }
         String simpleName = exception.getClass().getSimpleName();
-        return Tag.of("exception", StringUtils.isNotEmpty(simpleName) ? simpleName
+        return io.micrometer.common.Tag.of("exception", StringUtils.isNotEmpty(simpleName) ? simpleName
                 : exception.getClass().getName());
     }
 
@@ -149,7 +149,7 @@ public final class JettyClientTags {
      * @param result the request result
      * @return the outcome tag derived from the status of the response
      */
-    public static Tag outcome(Result result) {
+    public static io.micrometer.common.Tag outcome(Result result) {
         return Outcome.forStatus(result.getResponse().getStatus()).asTag();
     }
 
