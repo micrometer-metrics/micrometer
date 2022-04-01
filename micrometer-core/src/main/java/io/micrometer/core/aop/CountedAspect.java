@@ -24,7 +24,6 @@ import io.micrometer.core.annotation.Counted;
 import io.micrometer.core.instrument.Counter;
 import io.micrometer.core.instrument.MeterRegistry;
 import io.micrometer.core.instrument.Metrics;
-import io.micrometer.core.instrument.Tag;
 import io.micrometer.core.instrument.Tags;
 import io.micrometer.core.lang.NonNullApi;
 import org.aspectj.lang.ProceedingJoinPoint;
@@ -41,7 +40,7 @@ import org.aspectj.lang.reflect.MethodSignature;
  * <p>
  * You might want to add tags programmatically to the {@link Counter}.<br>
  * In this case, the tags provider function (<code>Function&lt;ProceedingJoinPoint, Iterable&lt;Tag&gt;&gt;</code>) can help.
- * It receives a {@link ProceedingJoinPoint} and returns the {@link Tag}s that will be attached to the {@link Counter}.
+ * It receives a {@link ProceedingJoinPoint} and returns the {@link io.micrometer.common.Tag}s that will be attached to the {@link Counter}.
  * </p>
  * <p>
  * You might also want to skip the {@link Counter} creation programmatically.<br>

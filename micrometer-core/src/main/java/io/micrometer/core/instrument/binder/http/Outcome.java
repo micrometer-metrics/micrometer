@@ -15,8 +15,6 @@
  */
 package io.micrometer.core.instrument.binder.http;
 
-import io.micrometer.core.instrument.Tag;
-
 /**
  * The outcome of an HTTP request.
  *
@@ -62,7 +60,7 @@ public enum Outcome {
     }
 
     /**
-     * Returns the {@code Outcome} as a {@link Tag} named {@code outcome}.
+     * Returns the {@code Outcome} as a {@link io.micrometer.common.Tag} named {@code outcome}.
      *
      * @return the {@code outcome} {@code Tag}
      */

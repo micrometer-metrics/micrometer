@@ -16,10 +16,9 @@
 package io.micrometer.binder.mongodb;
 
 import com.mongodb.event.ConnectionPoolCreatedEvent;
-import io.micrometer.core.instrument.Tag;
 
 /**
- * Provides {@link Tag Tags} for Mongo connection pool metrics.
+ * Provides {@link io.micrometer.common.Tag Tags} for Mongo connection pool metrics.
  *
  * @author Gustavo Monarin
  * @since 1.7.0

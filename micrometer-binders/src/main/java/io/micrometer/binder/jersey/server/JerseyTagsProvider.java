@@ -15,11 +15,10 @@
  */
 package io.micrometer.binder.jersey.server;
 
-import io.micrometer.core.instrument.Tag;
 import org.glassfish.jersey.server.monitoring.RequestEvent;
 
 /**
- * Provides {@link Tag Tags} for Jersey request metrics.
+ * Provides {@link io.micrometer.common.Tag Tags} for Jersey request metrics.
  *
  * @author Michael Weirauch
  * @since 1.8.0

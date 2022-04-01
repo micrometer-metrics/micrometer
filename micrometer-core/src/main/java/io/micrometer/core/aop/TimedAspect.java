@@ -26,7 +26,6 @@ import io.micrometer.core.annotation.Timed;
 import io.micrometer.core.instrument.LongTaskTimer;
 import io.micrometer.core.instrument.MeterRegistry;
 import io.micrometer.core.instrument.Metrics;
-import io.micrometer.core.instrument.Tag;
 import io.micrometer.core.instrument.Tags;
 import io.micrometer.core.instrument.Timer;
 import io.micrometer.core.lang.NonNullApi;
@@ -43,7 +42,7 @@ import org.aspectj.lang.reflect.MethodSignature;
  * <p>
  * You might want to add tags programmatically to the {@link Timer}.<br>
  * In this case, the tags provider function (<code>Function&lt;ProceedingJoinPoint, Iterable&lt;Tag&gt;&gt;</code>) can help.
- * It receives a {@link ProceedingJoinPoint} and returns the {@link Tag}s that will be attached to the {@link Timer}.
+ * It receives a {@link ProceedingJoinPoint} and returns the {@link io.micrometer.common.Tag}s that will be attached to the {@link Timer}.
  * </p>
  * <p>
  * You might also want to skip the {@link Timer} creation programmatically.<br>

@@ -15,14 +15,14 @@
  */
 package io.micrometer.javalin.samples;
 
+import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpServletResponse;
+
 import io.javalin.Javalin;
 import io.javalin.core.plugin.Plugin;
 import io.javalin.http.ExceptionHandler;
 import io.javalin.http.HandlerEntry;
 import io.javalin.http.HandlerType;
-import io.micrometer.core.instrument.MeterRegistry;
-import io.micrometer.core.instrument.Tag;
-import io.micrometer.core.instrument.Tags;
 import io.micrometer.binder.jetty.JettyConnectionMetrics;
 import io.micrometer.binder.jetty.JettyServerThreadPoolMetrics;
 import io.micrometer.binder.jetty.TimedHandler;
@@ -31,6 +31,8 @@ import io.micrometer.binder.jvm.JvmHeapPressureMetrics;
 import io.micrometer.binder.jvm.JvmMemoryMetrics;
 import io.micrometer.binder.system.FileDescriptorMetrics;
 import io.micrometer.binder.system.ProcessorMetrics;
+import io.micrometer.core.instrument.MeterRegistry;
+import io.micrometer.core.instrument.Tags;
 import io.micrometer.core.instrument.binder.http.DefaultHttpServletRequestTagsProvider;
 import io.micrometer.core.instrument.util.StringUtils;
 import io.micrometer.core.lang.NonNull;
@@ -38,9 +40,6 @@ import io.micrometer.prometheus.PrometheusConfig;
 import io.micrometer.prometheus.PrometheusMeterRegistry;
 import io.prometheus.client.exporter.common.TextFormat;
 import org.eclipse.jetty.server.Server;
-
-import javax.servlet.http.HttpServletRequest;
-import javax.servlet.http.HttpServletResponse;
 
 import static io.javalin.apibuilder.ApiBuilder.get;
 import static io.javalin.apibuilder.ApiBuilder.path;
@@ -96,7 +95,7 @@ class MicrometerPlugin implements Plugin {
     private static final String EXCEPTION_HEADER = "__micrometer_exception_name";
 
     private final MeterRegistry registry;
-    private final Iterable<Tag> tags;
+    private final Iterable<? extends io.micrometer.common.Tag> tags;
 
     public static ExceptionHandler<Exception> EXCEPTION_HANDLER = (e, ctx) -> {
         String simpleName = e.getClass().getSimpleName();
@@ -105,10 +104,10 @@ class MicrometerPlugin implements Plugin {
     };
 
     public MicrometerPlugin(MeterRegistry registry) {
-        this(registry, Tags.empty());
+        this(registry, io.micrometer.common.Tags.empty());
     }
 
-    public MicrometerPlugin(MeterRegistry registry, Iterable<Tag> tags) {
+    public MicrometerPlugin(MeterRegistry registry, Iterable<? extends io.micrometer.common.Tag> tags) {
         this.registry = registry;
         this.tags = tags;
     }
@@ -121,7 +120,7 @@ class MicrometerPlugin implements Plugin {
 
         server.insertHandler(new TimedHandler(registry, tags, new DefaultHttpServletRequestTagsProvider() {
             @Override
-            public Iterable<Tag> getTags(HttpServletRequest request, HttpServletResponse response) {
+            public Iterable<? extends io.micrometer.common.Tag> getTags(HttpServletRequest request, HttpServletResponse response) {
                 String exceptionName = response.getHeader(EXCEPTION_HEADER);
                 response.setHeader(EXCEPTION_HEADER, null);
 

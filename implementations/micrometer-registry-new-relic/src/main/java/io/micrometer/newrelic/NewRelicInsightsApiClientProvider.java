@@ -34,7 +34,6 @@ import io.micrometer.core.instrument.Gauge;
 import io.micrometer.core.instrument.LongTaskTimer;
 import io.micrometer.core.instrument.Measurement;
 import io.micrometer.core.instrument.Meter;
-import io.micrometer.core.instrument.Tag;
 import io.micrometer.core.instrument.Tags;
 import io.micrometer.core.instrument.TimeGauge;
 import io.micrometer.core.instrument.Timer;
@@ -246,7 +245,7 @@ public class NewRelicInsightsApiClientProvider implements NewRelicClientProvider
         return event(id, Tags.empty(), attributes);
     }
 
-    private String event(Meter.Id id, Iterable<Tag> extraTags, Attribute... attributes) {
+    private String event(Meter.Id id, Iterable<? extends io.micrometer.common.Tag> extraTags, Attribute... attributes) {
         StringBuilder tagsJson = new StringBuilder();
 
         for (io.micrometer.common.Tag tag : id.getConventionTags(namingConvention)) {

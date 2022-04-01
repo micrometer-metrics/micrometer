@@ -18,7 +18,6 @@ package io.micrometer.core.instrument.binder.jersey.server;
 import java.util.List;
 import java.util.regex.Pattern;
 
-import io.micrometer.core.instrument.Tag;
 import io.micrometer.core.instrument.binder.http.Outcome;
 import io.micrometer.core.instrument.util.StringUtils;
 import org.glassfish.jersey.server.ContainerRequest;
@@ -28,7 +27,7 @@ import org.glassfish.jersey.server.monitoring.RequestEvent;
 import org.glassfish.jersey.uri.UriTemplate;
 
 /**
- * Factory methods for {@link Tag Tags} associated with a request-response exchange that
+ * Factory methods for {@link io.micrometer.common.Tag Tags} associated with a request-response exchange that
  * is handled by Jersey server.
  *
  * @deprecated Scheduled for removal in 2.0.0, please use {@code io.micrometer.binder.jersey.server.JerseyTags}

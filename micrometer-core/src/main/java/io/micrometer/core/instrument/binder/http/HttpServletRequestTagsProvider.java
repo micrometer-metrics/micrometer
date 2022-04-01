@@ -19,10 +19,9 @@ import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
 import io.micrometer.core.annotation.Incubating;
-import io.micrometer.core.instrument.Tag;
 
 /**
- * Provides {@link Tag Tags} for HTTP Servlet request handling.
+ * Provides {@link io.micrometer.common.Tag Tags} for HTTP Servlet request handling.
  *
  * @author Jon Schneider
  * @since 1.4.0

@@ -30,7 +30,6 @@ import java.util.function.BiFunction;
 import java.util.function.Function;
 
 import io.micrometer.core.instrument.MeterRegistry;
-import io.micrometer.core.instrument.Tag;
 import io.micrometer.core.instrument.Tags;
 import io.micrometer.core.instrument.Timer;
 import io.micrometer.core.lang.NonNullApi;
@@ -99,7 +98,7 @@ public class OkHttpMetricsEventListener extends EventListener {
     private final String requestsMetricName;
     private final Function<Request, String> urlMapper;
     private final Iterable<? extends io.micrometer.common.Tag> extraTags;
-    private final Iterable<BiFunction<Request, Response, Tag>> contextSpecificTags;
+    private final Iterable<BiFunction<Request, Response, io.micrometer.common.Tag>> contextSpecificTags;
     private final Iterable<? extends io.micrometer.common.Tag> unknownRequestTags;
     private final boolean includeHostTag;
 
@@ -108,13 +107,13 @@ public class OkHttpMetricsEventListener extends EventListener {
 
     protected OkHttpMetricsEventListener(MeterRegistry registry, String requestsMetricName, Function<Request, String> urlMapper,
                                          Iterable<? extends io.micrometer.common.Tag> extraTags,
-                                         Iterable<BiFunction<Request, Response, Tag>> contextSpecificTags) {
+                                         Iterable<BiFunction<Request, Response, io.micrometer.common.Tag>> contextSpecificTags) {
         this(registry, requestsMetricName, urlMapper, extraTags, contextSpecificTags, emptyList(), true);
     }
 
     OkHttpMetricsEventListener(MeterRegistry registry, String requestsMetricName, Function<Request, String> urlMapper,
                                Iterable<? extends io.micrometer.common.Tag> extraTags,
-                               Iterable<BiFunction<Request, Response, Tag>> contextSpecificTags,
+                               Iterable<BiFunction<Request, Response, io.micrometer.common.Tag>> contextSpecificTags,
                                Iterable<String> requestTagKeys,
                                boolean includeHostTag) {
         this.registry = registry;
@@ -260,7 +259,7 @@ public class OkHttpMetricsEventListener extends EventListener {
         private final String name;
         private Function<Request, String> uriMapper = (request) -> Optional.ofNullable(request.header(URI_PATTERN)).orElse("none");
         private io.micrometer.common.Tags tags = io.micrometer.common.Tags.empty();
-        private Collection<BiFunction<Request, Response, Tag>> contextSpecificTags = new ArrayList<>();
+        private Collection<BiFunction<Request, Response, io.micrometer.common.Tag>> contextSpecificTags = new ArrayList<>();
         private boolean includeHostTag = true;
         private Iterable<String> requestTagKeys = Collections.emptyList();
 
@@ -275,13 +274,13 @@ public class OkHttpMetricsEventListener extends EventListener {
         }
 
         /**
-         * Add a {@link Tag} to any already configured tags on this Builder.
+         * Add a {@link io.micrometer.common.Tag} to any already configured tags on this Builder.
          *
          * @param tag tag to add
          * @return this builder
          * @since 1.5.0
          */
-        public Builder tag(Tag tag) {
+        public Builder tag(io.micrometer.common.Tag tag) {
             this.tags = this.tags.and(tag);
             return this;
         }
@@ -293,7 +292,7 @@ public class OkHttpMetricsEventListener extends EventListener {
          * @return this builder
          * @since 1.5.0
          */
-        public Builder tag(BiFunction<Request, Response, Tag> contextSpecificTag) {
+        public Builder tag(BiFunction<Request, Response, io.micrometer.common.Tag> contextSpecificTag) {
             this.contextSpecificTags.add(contextSpecificTag);
             return this;
         }
