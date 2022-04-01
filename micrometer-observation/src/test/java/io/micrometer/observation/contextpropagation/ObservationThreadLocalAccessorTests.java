@@ -18,6 +18,7 @@ package io.micrometer.observation.contextpropagation;
 import io.micrometer.contextpropagation.ContextContainer;
 import io.micrometer.observation.Observation;
 import io.micrometer.observation.ObservationRegistry;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
 import static org.assertj.core.api.BDDAssertions.then;
@@ -25,6 +26,11 @@ import static org.assertj.core.api.BDDAssertions.then;
 class ObservationThreadLocalAccessorTests {
 
     ObservationRegistry observationRegistry = ObservationRegistry.create();
+
+    @BeforeEach
+    void setup() {
+        observationRegistry.observationConfig().observationHandler(context -> true);
+    }
 
     @Test
     void capturedThreadLocalValuesShouldBeCapturedRestoredAndCleared() {

@@ -299,6 +299,7 @@ public abstract class ObservationRegistryCompatibilityKit {
 
     @Test
     void runnableShouldBeScoped() {
+        registry.observationConfig().observationHandler(c -> true);
         Observation observation = Observation.start("myObservation", registry);
         Runnable runnable = () -> assertThat(registry.getCurrentObservation()).isSameAs(observation);
         observation.scoped(runnable);
@@ -307,6 +308,7 @@ public abstract class ObservationRegistryCompatibilityKit {
 
     @Test
     void errorShouldBeReportedOnFailingScopedRunnable() {
+        registry.observationConfig().observationHandler(c -> true);
         Observation.Context context = new Observation.Context();
         Observation observation = Observation.start("myObservation", context, registry);
         RuntimeException error = new RuntimeException("simulated");
@@ -321,6 +323,7 @@ public abstract class ObservationRegistryCompatibilityKit {
 
     @Test
     void supplierShouldBeScoped() {
+        registry.observationConfig().observationHandler(c -> true);
         Observation observation = Observation.start("myObservation", registry);
         Supplier<String> supplier = () -> {
             assertThat(registry.getCurrentObservation()).isSameAs(observation);
@@ -333,6 +336,7 @@ public abstract class ObservationRegistryCompatibilityKit {
 
     @Test
     void errorShouldBeReportedOnFailingScopedSupplier() {
+        registry.observationConfig().observationHandler(c -> true);
         Observation.Context context = new Observation.Context();
         Observation observation = Observation.start("myObservation", context, registry);
         RuntimeException error = new RuntimeException("simulated");
@@ -347,6 +351,7 @@ public abstract class ObservationRegistryCompatibilityKit {
 
     @Test
     void runnableShouldBeParentScoped() {
+        registry.observationConfig().observationHandler(c -> true);
         Observation parent = Observation.start("myObservation", registry);
         Runnable runnable = () -> assertThat(registry.getCurrentObservation()).isSameAs(parent);
         Observation.tryScoped(parent, runnable);
@@ -362,6 +367,7 @@ public abstract class ObservationRegistryCompatibilityKit {
 
     @Test
     void supplierShouldBeParentScoped() {
+        registry.observationConfig().observationHandler(c -> true);
         Observation parent = Observation.start("myObservation", registry);
         Supplier<String> supplier = () -> {
             assertThat(registry.getCurrentObservation()).isSameAs(parent);

@@ -143,6 +143,7 @@ class ObservationContextAssertTests {
 
     @Test
     void should_not_throw_exception_when_low_cardinality_tag_exists() {
+        registry.observationConfig().observationHandler(c -> true);
         Observation observation = Observation.start("foo", context, registry);
         observation.lowCardinalityTag("foo", "bar");
 
@@ -160,6 +161,7 @@ class ObservationContextAssertTests {
 
     @Test
     void should_not_throw_exception_when_high_cardinality_tag_exists() {
+        registry.observationConfig().observationHandler(c -> true);
         Observation observation = Observation.start("foo", context, registry);
         observation.highCardinalityTag("foo", "bar");
 
@@ -182,6 +184,7 @@ class ObservationContextAssertTests {
 
     @Test
     void should_throw_exception_when_high_cardinality_tag_present() {
+        registry.observationConfig().observationHandler(c -> true);
         Observation observation = Observation.start("foo", context, registry);
         observation.highCardinalityTag("foo", "bar");
 
@@ -196,6 +199,7 @@ class ObservationContextAssertTests {
 
     @Test
     void should_throw_exception_when_low_cardinality_tag_present() {
+        registry.observationConfig().observationHandler(c -> true);
         Observation observation = Observation.start("foo", context, registry);
         observation.lowCardinalityTag("foo", "bar");
 
@@ -205,6 +209,7 @@ class ObservationContextAssertTests {
 
     @Test
     void should_not_throw_exception_when_any_tags_exist() {
+        registry.observationConfig().observationHandler(c -> true);
         Observation observation = Observation.start("foo", context, registry);
         observation.highCardinalityTag("foo", "bar");
 
@@ -223,6 +228,7 @@ class ObservationContextAssertTests {
 
     @Test
     void should_throw_exception_when_tags_present() {
+        registry.observationConfig().observationHandler(c -> true);
         Observation observation = Observation.start("foo", context, registry);
         observation.highCardinalityTag("foo", "bar");
 

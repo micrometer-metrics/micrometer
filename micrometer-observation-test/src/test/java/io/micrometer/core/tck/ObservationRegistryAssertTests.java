@@ -31,6 +31,7 @@ class ObservationRegistryAssertTests {
 
     @Test
     void assertionErrorThrownWhenRemainingObservationFound() {
+        registry.observationConfig().observationHandler(c -> true);
         Observation observation = Observation.start("hello", registry);
 
         try (Observation.Scope ws = observation.openScope()) {
@@ -55,6 +56,7 @@ class ObservationRegistryAssertTests {
 
     @Test
     void noAssertionErrorThrownWhenCurrentObservationPresent() {
+        registry.observationConfig().observationHandler(c -> true);
         Observation observation = Observation.start("hello", registry);
 
         try (Observation.Scope ws = observation.openScope()) {
@@ -65,6 +67,7 @@ class ObservationRegistryAssertTests {
 
     @Test
     void assertionErrorThrownWhenRemainingObservationNotSameAs() {
+        registry.observationConfig().observationHandler(c -> true);
         Observation observation = Observation.createNotStarted("foo", this.registry);
 
         assertThatThrownBy(() -> this.registryAssert.hasRemainingCurrentObservationSameAs(observation))
@@ -74,6 +77,7 @@ class ObservationRegistryAssertTests {
 
     @Test
     void noAssertionErrorThrownWhenCurrentObservationSameAs() {
+        registry.observationConfig().observationHandler(c -> true);
         Observation observation = Observation.start("hello", registry);
 
         try (Observation.Scope ws = observation.openScope()) {
@@ -84,6 +88,7 @@ class ObservationRegistryAssertTests {
 
     @Test
     void assertionErrorThrownWhenRemainingObservationSameAs() {
+        registry.observationConfig().observationHandler(c -> true);
         Observation observation = Observation.createNotStarted("foo", this.registry);
 
         try (Observation.Scope ws = observation.openScope()) {

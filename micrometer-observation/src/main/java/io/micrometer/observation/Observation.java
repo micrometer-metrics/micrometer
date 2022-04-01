@@ -106,7 +106,7 @@ public interface Observation {
      * @return created but not started observation
      */
     static Observation createNotStarted(String name, @Nullable Context context, @Nullable ObservationRegistry registry) {
-        if (registry == null || !registry.observationConfig().isObservationEnabled(name, context)) {
+        if (registry == null || !registry.observationConfig().isObservationEnabled(name, context) || registry.observationConfig().getObservationHandlers().isEmpty()) {
             return NoopObservation.INSTANCE;
         }
         return new SimpleObservation(name, registry, context == null ? new Context() : context);
