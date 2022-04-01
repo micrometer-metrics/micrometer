@@ -69,7 +69,7 @@ public class GuavaCacheMetrics<K, V, C extends Cache<K, V>> extends CacheMeterBi
      * @return The instrumented cache, unchanged. The original cache is not wrapped or proxied in any way.
      * @see com.google.common.cache.CacheStats
      */
-        public static <K, V, C extends Cache<K, V>> C monitor(MeterRegistry registry, C cache, String cacheName, Iterable<? extends Tag> tags) {
+    public static <K, V, C extends Cache<K, V>> C monitor(MeterRegistry registry, C cache, String cacheName, Iterable<? extends Tag> tags) {
         new GuavaCacheMetrics<>(cache, cacheName, tags).bindTo(registry);
         return cache;
     }
