@@ -26,7 +26,6 @@ import java.util.concurrent.ThreadPoolExecutor;
 import io.micrometer.core.instrument.FunctionCounter;
 import io.micrometer.core.instrument.Gauge;
 import io.micrometer.core.instrument.MeterRegistry;
-import io.micrometer.core.instrument.Tags;
 import io.micrometer.core.instrument.binder.BaseUnits;
 import io.micrometer.core.instrument.binder.MeterBinder;
 import io.micrometer.core.instrument.internal.TimedExecutor;
@@ -85,7 +84,7 @@ public class ExecutorServiceMetrics implements MeterBinder {
     public ExecutorServiceMetrics(@Nullable ExecutorService executorService, String executorServiceName,
                                   String metricPrefix, Iterable<? extends io.micrometer.common.Tag> tags) {
         this.executorService = executorService;
-        this.tags = Tags.concat(tags, "name", executorServiceName);
+        this.tags = io.micrometer.common.Tags.concat(tags, "name", executorServiceName);
         this.metricPrefix = sanitizePrefix(metricPrefix);
     }
 

@@ -32,7 +32,6 @@ import io.micrometer.binder.jvm.JvmMemoryMetrics;
 import io.micrometer.binder.system.FileDescriptorMetrics;
 import io.micrometer.binder.system.ProcessorMetrics;
 import io.micrometer.core.instrument.MeterRegistry;
-import io.micrometer.core.instrument.Tags;
 import io.micrometer.core.instrument.binder.http.DefaultHttpServletRequestTagsProvider;
 import io.micrometer.core.instrument.util.StringUtils;
 import io.micrometer.core.lang.NonNull;
@@ -134,7 +133,7 @@ class MicrometerPlugin implements Plugin {
                         .map(path -> response.getStatus() == 404 ? "NOT_FOUND" : path)
                         .orElse("unknown");
 
-                return Tags.concat(
+                return io.micrometer.common.Tags.concat(
                         super.getTags(request, response),
                         "uri", uri,
                         "exception", exceptionName == null ? "None" : exceptionName

@@ -105,7 +105,7 @@ public final class Tags extends io.micrometer.common.Tags<Tag> {
             return Tags.of(tags);
         }
 
-        return and(Tags.of(tags).tags);
+        return and(Tags.of(tags).getTags());
     }
 
     // TODO: Remove me in 2.x or 3.0 when core tag gets removed
@@ -115,11 +115,9 @@ public final class Tags extends io.micrometer.common.Tags<Tag> {
             return this;
         }
 
-        if (this.tags.length == 0) {
-            return Tags.of(tags);
-        }
-
-        return and(Tags.of(tags).tags);
+        io.micrometer.common.Tags<?> tags1 = io.micrometer.common.Tags.of(tags);
+        io.micrometer.common.Tag[] tags2 = tags1.getTags();
+        return and((Tag[]) tags2);
     }
 
     @Override
@@ -283,7 +281,7 @@ public final class Tags extends io.micrometer.common.Tags<Tag> {
      * @return a new {@code Tags} instance
      */
     @SuppressWarnings("rawtypes")
-    public static Tags of(@Nullable io.micrometer.common.Tag... tags) {
+    public static <T extends io.micrometer.common.Tag> Tags of(@Nullable T... tags) {
         return empty().and(fromCommon(tags));
     }
 

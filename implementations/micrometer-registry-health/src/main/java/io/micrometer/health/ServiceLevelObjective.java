@@ -214,7 +214,7 @@ public abstract class ServiceLevelObjective {
              * @return This builder.
              */
             public final Builder tags(String... tags) {
-                return tags(Tags.of(tags));
+                return tags(io.micrometer.common.Tags.of(tags));
             }
 
             /**
@@ -648,7 +648,7 @@ public abstract class ServiceLevelObjective {
              * @return This builder.
              */
             public Builder tags(String... tags) {
-                return tags(Tags.of(tags));
+                return tags(io.micrometer.common.Tags.of(tags));
             }
 
             /**
@@ -695,7 +695,7 @@ public abstract class ServiceLevelObjective {
         private final ServiceLevelObjective delegate;
 
         FilteredServiceLevelObjective(Meter.Id id, ServiceLevelObjective delegate) {
-            super(id.getName(), Tags.of(id.getTags()), id.getBaseUnit(), id.getDescription());
+            super(id.getName(), io.micrometer.common.Tags.of(id.getTags()), id.getBaseUnit(), id.getDescription());
             this.delegate = delegate;
         }
 

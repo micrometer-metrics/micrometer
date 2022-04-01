@@ -34,7 +34,6 @@ import io.micrometer.core.instrument.Gauge;
 import io.micrometer.core.instrument.LongTaskTimer;
 import io.micrometer.core.instrument.Meter;
 import io.micrometer.core.instrument.MeterRegistry;
-import io.micrometer.core.instrument.Tags;
 import io.micrometer.core.instrument.TimeGauge;
 import io.micrometer.core.instrument.Timer;
 import io.micrometer.core.instrument.config.MeterFilter;
@@ -101,7 +100,7 @@ public final class Search {
      * @return This search.
      */
     public Search tags(String... tags) {
-        return tags(Tags.of(tags));
+        return tags(io.micrometer.common.Tags.of(tags));
     }
 
     /**
@@ -112,7 +111,7 @@ public final class Search {
      * @return This search.
      */
     public Search tag(String tagKey, String tagValue) {
-        return tags(Tags.of(tagKey, tagValue));
+        return tags(io.micrometer.common.Tags.of(tagKey, tagValue));
     }
 
     /**

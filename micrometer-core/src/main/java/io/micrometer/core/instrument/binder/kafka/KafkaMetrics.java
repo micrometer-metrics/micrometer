@@ -36,7 +36,6 @@ import io.micrometer.core.instrument.FunctionCounter;
 import io.micrometer.core.instrument.Gauge;
 import io.micrometer.core.instrument.Meter;
 import io.micrometer.core.instrument.MeterRegistry;
-import io.micrometer.core.instrument.Tags;
 import io.micrometer.core.instrument.binder.MeterBinder;
 import io.micrometer.core.instrument.util.NamedThreadFactory;
 import io.micrometer.core.lang.NonNullApi;
@@ -296,7 +295,7 @@ class KafkaMetrics implements MeterBinder, AutoCloseable {
     }
 
     private Meter.Id meterIdForComparison(MetricName metricName) {
-        return new Meter.Id(meterName(metricName), Tags.of(meterTags(metricName, true)), null, null, OTHER);
+        return new Meter.Id(meterName(metricName), io.micrometer.common.Tags.of(meterTags(metricName, true)), null, null, OTHER);
     }
 
     @Override

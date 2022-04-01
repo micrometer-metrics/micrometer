@@ -21,7 +21,6 @@ import java.util.Arrays;
 
 import io.micrometer.core.instrument.Gauge;
 import io.micrometer.core.instrument.MeterRegistry;
-import io.micrometer.core.instrument.Tags;
 import io.micrometer.core.instrument.binder.BaseUnits;
 import io.micrometer.core.instrument.binder.MeterBinder;
 import io.micrometer.core.lang.NonNullApi;
@@ -74,7 +73,7 @@ public class JvmThreadMetrics implements MeterBinder {
             threadBean.getAllThreadIds();
             for (Thread.State state : Thread.State.values()) {
                 Gauge.builder("jvm.threads.states", threadBean, (bean) -> getThreadStateCount(bean, state))
-                        .tags(Tags.concat(tags, "state", getStateTagValue(state)))
+                        .tags(io.micrometer.common.Tags.concat(tags, "state", getStateTagValue(state)))
                         .description("The current number of threads having " + state + " state")
                         .baseUnit(BaseUnits.THREADS)
                         .register(registry);

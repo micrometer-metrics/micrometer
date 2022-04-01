@@ -25,7 +25,6 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 
 import io.micrometer.core.instrument.MeterRegistry;
-import io.micrometer.core.instrument.Tags;
 import io.micrometer.core.instrument.Timer;
 
 import static java.util.stream.Collectors.toList;
@@ -46,7 +45,7 @@ public class TimedExecutorService implements ExecutorService {
                                 String metricPrefix, Iterable<? extends io.micrometer.common.Tag> tags) {
         this.registry = registry;
         this.delegate = delegate;
-        Tags finalTags = Tags.concat(tags, "name", executorServiceName);
+        io.micrometer.common.Tags finalTags = io.micrometer.common.Tags.concat(tags, "name", executorServiceName);
         this.executionTimer = registry.timer(metricPrefix + "executor", finalTags);
         this.idleTimer = registry.timer(metricPrefix + "executor.idle", finalTags);
     }

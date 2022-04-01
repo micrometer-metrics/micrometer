@@ -28,7 +28,6 @@ import javax.sql.DataSource;
 import io.micrometer.core.instrument.FunctionCounter;
 import io.micrometer.core.instrument.Gauge;
 import io.micrometer.core.instrument.MeterRegistry;
-import io.micrometer.core.instrument.Tags;
 import io.micrometer.core.instrument.binder.BaseUnits;
 import io.micrometer.core.instrument.binder.MeterBinder;
 import io.micrometer.core.lang.NonNullApi;
@@ -75,7 +74,7 @@ public class PostgreSQLDatabaseMetrics implements MeterBinder {
     private final String queryTransactionCount;
 
     public PostgreSQLDatabaseMetrics(DataSource postgresDataSource, String database) {
-        this(postgresDataSource, database, Tags.empty());
+        this(postgresDataSource, database, io.micrometer.common.Tags.empty());
     }
 
     public PostgreSQLDatabaseMetrics(DataSource postgresDataSource, String database, Iterable<? extends io.micrometer.common.Tag> tags) {

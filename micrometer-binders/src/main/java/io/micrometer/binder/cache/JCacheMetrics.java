@@ -28,9 +28,9 @@ import javax.management.MalformedObjectNameException;
 import javax.management.ObjectName;
 import javax.management.ReflectionException;
 
+import io.micrometer.common.Tags;
 import io.micrometer.core.instrument.Gauge;
 import io.micrometer.core.instrument.MeterRegistry;
-import io.micrometer.core.instrument.Tags;
 import io.micrometer.core.instrument.binder.cache.CacheMeterBinder;
 import io.micrometer.core.instrument.config.InvalidConfigurationException;
 import io.micrometer.core.lang.NonNullApi;
@@ -65,7 +65,8 @@ public class JCacheMetrics<K, V, C extends Cache<K, V>> extends CacheMeterBinder
      * @return The instrumented cache, unchanged. The original cache is not wrapped or proxied in any way.
      */
     public static <K, V, C extends Cache<K, V>> C monitor(MeterRegistry registry, C cache, String... tags) {
-        return monitor(registry, cache, Tags.of(tags));
+        Tags<?> tags1 = Tags.of(tags);
+        return monitor(registry, cache, tags1);
     }
 
     /**

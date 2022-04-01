@@ -23,7 +23,6 @@ import io.micrometer.core.instrument.FunctionCounter;
 import io.micrometer.core.instrument.FunctionTimer;
 import io.micrometer.core.instrument.Gauge;
 import io.micrometer.core.instrument.MeterRegistry;
-import io.micrometer.core.instrument.Tags;
 import io.micrometer.core.instrument.TimeGauge;
 import io.micrometer.core.instrument.binder.BaseUnits;
 import io.micrometer.core.instrument.binder.MeterBinder;
@@ -48,7 +47,7 @@ public class JettyStatisticsMetrics implements MeterBinder {
     }
 
     public static void monitor(MeterRegistry meterRegistry, StatisticsHandler statisticsHandler, String... tags) {
-        monitor(meterRegistry, statisticsHandler, Tags.of(tags));
+        monitor(meterRegistry, statisticsHandler, io.micrometer.common.Tags.of(tags));
     }
 
     public static void monitor(MeterRegistry meterRegistry, StatisticsHandler statisticsHandler, Iterable<? extends io.micrometer.common.Tag> tags) {

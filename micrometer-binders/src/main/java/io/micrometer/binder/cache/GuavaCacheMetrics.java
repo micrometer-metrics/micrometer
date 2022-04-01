@@ -22,9 +22,9 @@ import java.util.function.ToLongFunction;
 import com.google.common.cache.Cache;
 import com.google.common.cache.CacheBuilder;
 import com.google.common.cache.LoadingCache;
+import io.micrometer.common.Tags;
 import io.micrometer.core.instrument.FunctionCounter;
 import io.micrometer.core.instrument.MeterRegistry;
-import io.micrometer.core.instrument.Tags;
 import io.micrometer.core.instrument.TimeGauge;
 import io.micrometer.core.instrument.binder.cache.CacheMeterBinder;
 import io.micrometer.core.lang.NonNullApi;
@@ -52,7 +52,8 @@ public class GuavaCacheMetrics<K, V, C extends Cache<K, V>> extends CacheMeterBi
      * @see com.google.common.cache.CacheStats
      */
     public static <K, V, C extends Cache<K, V>> C monitor(MeterRegistry registry, C cache, String cacheName, String... tags) {
-        return monitor(registry, cache, cacheName, Tags.of(tags));
+        Tags<?> tags1 = Tags.of(tags);
+        return monitor(registry, cache, cacheName, tags1);
     }
 
     /**

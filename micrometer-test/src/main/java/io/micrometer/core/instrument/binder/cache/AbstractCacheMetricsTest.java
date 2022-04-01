@@ -17,8 +17,6 @@ package io.micrometer.core.instrument.binder.cache;
 
 import io.micrometer.core.instrument.MeterRegistry;
 import io.micrometer.core.instrument.Tag;
-import io.micrometer.core.instrument.Tags;
-import io.micrometer.core.instrument.binder.cache.CacheMeterBinder;
 import io.micrometer.core.instrument.search.RequiredSearch;
 
 /**
@@ -28,7 +26,7 @@ import io.micrometer.core.instrument.search.RequiredSearch;
  */
 public abstract class AbstractCacheMetricsTest {
 
-    protected Tags expectedTag = Tags.of("app", "test");
+    protected io.micrometer.common.Tags expectedTag = io.micrometer.common.Tags.of("app", "test");
 
     /**
      * Verifies base metrics presence

@@ -54,7 +54,8 @@ public abstract class AbstractTimerBuilder<B extends AbstractTimerBuilder<B>> {
      * @return This builder.
      */
     public B tags(String... tags) {
-        return tags(Tags.of(tags));
+        io.micrometer.common.Tags<?> tags1 = io.micrometer.common.Tags.of(tags);
+        return tags(tags1);
     }
 
     /**

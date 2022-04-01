@@ -15,14 +15,20 @@
  */
 package io.micrometer.benchmark.core;
 
-import io.micrometer.core.instrument.Tags;
-import org.openjdk.jmh.annotations.*;
+import java.util.concurrent.TimeUnit;
+
+import org.openjdk.jmh.annotations.Benchmark;
+import org.openjdk.jmh.annotations.BenchmarkMode;
+import org.openjdk.jmh.annotations.Fork;
+import org.openjdk.jmh.annotations.Measurement;
+import org.openjdk.jmh.annotations.Mode;
+import org.openjdk.jmh.annotations.OutputTimeUnit;
+import org.openjdk.jmh.annotations.Threads;
+import org.openjdk.jmh.annotations.Warmup;
 import org.openjdk.jmh.runner.Runner;
 import org.openjdk.jmh.runner.RunnerException;
 import org.openjdk.jmh.runner.options.Options;
 import org.openjdk.jmh.runner.options.OptionsBuilder;
-
-import java.util.concurrent.TimeUnit;
 
 @Fork(1)
 @Measurement(iterations = 2)
@@ -33,13 +39,13 @@ public class TagsBenchmark {
     @Threads(16)
     @Benchmark
     public void of() {
-        Tags.of("key", "value", "key2", "value2", "key3", "value3", "key4", "value4", "key5", "value5");
+        io.micrometer.common.Tags.of("key", "value", "key2", "value2", "key3", "value3", "key4", "value4", "key5", "value5");
     }
 
     @Threads(16)
     @Benchmark
     public void dotAnd() {
-        Tags.of("key", "value").and("key2", "value2", "key3", "value3", "key4", "value4", "key5", "value5");
+        io.micrometer.common.Tags.of("key", "value").and("key2", "value2", "key3", "value3", "key4", "value4", "key5", "value5");
     }
 
     public static void main(String[] args) throws RunnerException {

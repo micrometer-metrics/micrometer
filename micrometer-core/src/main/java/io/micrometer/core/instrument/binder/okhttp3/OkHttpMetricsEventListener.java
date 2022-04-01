@@ -81,7 +81,7 @@ public class OkHttpMetricsEventListener extends EventListener {
 
     private static final String TAG_VALUE_UNKNOWN = "UNKNOWN";
 
-    private static final Tags TAGS_TARGET_UNKNOWN = Tags.of(
+    private static final io.micrometer.common.Tags TAGS_TARGET_UNKNOWN = io.micrometer.common.Tags.of(
             TAG_TARGET_SCHEME, TAG_VALUE_UNKNOWN,
             TAG_TARGET_HOST, TAG_VALUE_UNKNOWN,
             TAG_TARGET_PORT, TAG_VALUE_UNKNOWN
@@ -182,7 +182,7 @@ public class OkHttpMetricsEventListener extends EventListener {
                 .and(generateTagsForRoute(request));
 
         if (includeHostTag) {
-            tags = Tags.of(tags).and("host", requestAvailable ? request.url().host() : TAG_VALUE_UNKNOWN);
+            tags = io.micrometer.common.Tags.of(tags).and("host", requestAvailable ? request.url().host() : TAG_VALUE_UNKNOWN);
         }
 
         Timer.builder(this.requestsMetricName)
@@ -192,11 +192,11 @@ public class OkHttpMetricsEventListener extends EventListener {
                 .record(registry.config().clock().monotonicTime() - state.startTime, TimeUnit.NANOSECONDS);
     }
 
-    private Tags generateTagsForRoute(@Nullable Request request) {
+    private io.micrometer.common.Tags generateTagsForRoute(@Nullable Request request) {
         if (request == null) {
             return TAGS_TARGET_UNKNOWN;
         }
-        return Tags.of(
+        return io.micrometer.common.Tags.of(
                 TAG_TARGET_SCHEME, request.url().scheme(),
                 TAG_TARGET_HOST, request.url().host(),
                 TAG_TARGET_PORT, Integer.toString(request.url().port())
@@ -216,7 +216,11 @@ public class OkHttpMetricsEventListener extends EventListener {
             return unknownRequestTags;
         }
         if (REQUEST_TAG_CLASS_EXISTS) {
-            Tags requestTag = request.tag(Tags.class);
+            io.micrometer.common.Tags requestTag = request.tag(Tags.class);
+            if (requestTag != null) {
+                return requestTag;
+            }
+            requestTag = request.tag(io.micrometer.common.Tags.class);
             if (requestTag != null) {
                 return requestTag;
             }
@@ -225,7 +229,7 @@ public class OkHttpMetricsEventListener extends EventListener {
         if (requestTag instanceof Tags) {
             return (Tags) requestTag;
         }
-        return Tags.empty();
+        return io.micrometer.common.Tags.empty();
     }
 
     private String getStatusMessage(@Nullable Response response, @Nullable IOException exception) {

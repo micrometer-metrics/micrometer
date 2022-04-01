@@ -74,6 +74,12 @@ public class Tags<T extends Tag> implements Iterable<T> {
         last = j;
     }
 
+    // TODO: Remove me in 3.0.0
+    // DO NOT USE - IT'S FOR INTERNAL USE ONLY
+    public T[] getTags() {
+        return tags;
+    }
+
     /**
      * Return a new {@code Tags} instance by merging this collection and the specified key/value pair.
      *
@@ -252,7 +258,7 @@ public class Tags<T extends Tag> implements Iterable<T> {
     }
 
 
-    private static <T extends Tag> Tag[] toCommon(Iterable<? extends T> tags) {
+    protected static <T extends Tag> Tag[] toCommon(Iterable<? extends T> tags) {
         if (tags == null) {
             return null;
         }

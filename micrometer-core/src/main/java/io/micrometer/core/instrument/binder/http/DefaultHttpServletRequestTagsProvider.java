@@ -19,7 +19,6 @@ import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
 import io.micrometer.core.annotation.Incubating;
-import io.micrometer.core.instrument.Tags;
 
 /**
  * Default {@link HttpServletRequestTagsProvider}.
@@ -31,6 +30,6 @@ import io.micrometer.core.instrument.Tags;
 public class DefaultHttpServletRequestTagsProvider implements HttpServletRequestTagsProvider {
     @Override
     public Iterable<? extends io.micrometer.common.Tag> getTags(HttpServletRequest request, HttpServletResponse response) {
-        return Tags.of(HttpRequestTags.method(request), HttpRequestTags.status(response), HttpRequestTags.outcome(response));
+        return io.micrometer.common.Tags.of(HttpRequestTags.method(request), HttpRequestTags.status(response), HttpRequestTags.outcome(response));
     }
 }

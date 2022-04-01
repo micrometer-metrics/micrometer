@@ -17,8 +17,8 @@ package io.micrometer.core.instrument.internal;
 
 import java.util.concurrent.Executor;
 
+import io.micrometer.common.Tags;
 import io.micrometer.core.instrument.MeterRegistry;
-import io.micrometer.core.instrument.Tags;
 import io.micrometer.core.instrument.Timer;
 
 /**
@@ -35,7 +35,7 @@ public class TimedExecutor implements Executor {
     public TimedExecutor(MeterRegistry registry, Executor delegate, String executorName, String metricPrefix, Iterable<? extends io.micrometer.common.Tag> tags) {
         this.registry = registry;
         this.delegate = delegate;
-        Tags finalTags = Tags.concat(tags, "name", executorName);
+        Tags finalTags = io.micrometer.common.Tags.concat(tags, "name", executorName);
         this.executionTimer = registry.timer(metricPrefix + "executor.execution", finalTags);
         this.idleTimer = registry.timer(metricPrefix + "executor.idle", finalTags);
     }

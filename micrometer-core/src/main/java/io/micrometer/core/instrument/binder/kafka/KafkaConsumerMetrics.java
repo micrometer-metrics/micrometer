@@ -43,7 +43,6 @@ import io.micrometer.core.instrument.FunctionCounter;
 import io.micrometer.core.instrument.Gauge;
 import io.micrometer.core.instrument.Meter;
 import io.micrometer.core.instrument.MeterRegistry;
-import io.micrometer.core.instrument.Tags;
 import io.micrometer.core.instrument.TimeGauge;
 import io.micrometer.core.instrument.binder.BaseUnits;
 import io.micrometer.core.instrument.binder.MeterBinder;
@@ -178,9 +177,9 @@ public class KafkaConsumerMetrics implements MeterBinder, AutoCloseable {
 
             if (kafkaMajorVersion(tags) >= 2) {
                 meters.add(registerGaugeForObject(registry, o, "successful-authentication-total", "authentication-attempts",
-                        Tags.concat(tags, "result", "successful"), "The number of successful authentication attempts.", null));
+                        io.micrometer.common.Tags.concat(tags, "result", "successful"), "The number of successful authentication attempts.", null));
                 meters.add(registerGaugeForObject(registry, o, "failed-authentication-total", "authentication-attempts",
-                        Tags.concat(tags, "result", "failed"), "The number of failed authentication attempts.", null));
+                        io.micrometer.common.Tags.concat(tags, "result", "failed"), "The number of failed authentication attempts.", null));
 
                 meters.add(registerGaugeForObject(registry, o, "network-io-total", tags, "", BaseUnits.BYTES));
                 meters.add(registerGaugeForObject(registry, o, "outgoing-byte-total", tags, "", BaseUnits.BYTES));
@@ -197,7 +196,7 @@ public class KafkaConsumerMetrics implements MeterBinder, AutoCloseable {
         });
     }
 
-    private Gauge registerGaugeForObject(MeterRegistry registry, ObjectName o, String jmxMetricName, String meterName, Tags allTags, String description, @Nullable String baseUnit) {
+    private Gauge registerGaugeForObject(MeterRegistry registry, ObjectName o, String jmxMetricName, String meterName, io.micrometer.common.Tags allTags, String description, @Nullable String baseUnit) {
         final AtomicReference<Gauge> gaugeReference = new AtomicReference<>();
         Gauge gauge = Gauge
                 .builder(METRIC_NAME_PREFIX + meterName, mBeanServer,
@@ -210,11 +209,11 @@ public class KafkaConsumerMetrics implements MeterBinder, AutoCloseable {
         return gauge;
     }
 
-    private Gauge registerGaugeForObject(MeterRegistry registry, ObjectName o, String jmxMetricName, Tags allTags, String description, @Nullable String baseUnit) {
+    private Gauge registerGaugeForObject(MeterRegistry registry, ObjectName o, String jmxMetricName, io.micrometer.common.Tags<?> allTags, String description, @Nullable String baseUnit) {
         return registerGaugeForObject(registry, o, jmxMetricName, sanitize(jmxMetricName), allTags, description, baseUnit);
     }
 
-    private FunctionCounter registerFunctionCounterForObject(MeterRegistry registry, ObjectName o, String jmxMetricName, Tags allTags, String description, @Nullable String baseUnit) {
+    private FunctionCounter registerFunctionCounterForObject(MeterRegistry registry, ObjectName o, String jmxMetricName, io.micrometer.common.Tags<?> allTags, String description, @Nullable String baseUnit) {
         final AtomicReference<FunctionCounter> counterReference = new AtomicReference<>();
         FunctionCounter counter = FunctionCounter
                 .builder(METRIC_NAME_PREFIX + sanitize(jmxMetricName), mBeanServer,
@@ -228,7 +227,7 @@ public class KafkaConsumerMetrics implements MeterBinder, AutoCloseable {
     }
 
     private TimeGauge registerTimeGaugeForObject(MeterRegistry registry, ObjectName o, String jmxMetricName,
-            String meterName, Tags allTags, String description, TimeUnit timeUnit) {
+            String meterName, io.micrometer.common.Tags<?> allTags, String description, TimeUnit timeUnit) {
         final AtomicReference<TimeGauge> timeGaugeReference = new AtomicReference<>();
         TimeGauge timeGauge = TimeGauge.builder(METRIC_NAME_PREFIX + meterName, mBeanServer, timeUnit,
                 getJmxAttribute(registry, timeGaugeReference, o, jmxMetricName))
@@ -240,7 +239,7 @@ public class KafkaConsumerMetrics implements MeterBinder, AutoCloseable {
     }
 
     private TimeGauge registerTimeGaugeForObject(MeterRegistry registry, ObjectName o, String jmxMetricName,
-            String meterName, Tags allTags, String description) {
+            String meterName, io.micrometer.common.Tags<?> allTags, String description) {
         return registerTimeGaugeForObject(registry, o, jmxMetricName, meterName, allTags, description, TimeUnit.MILLISECONDS);
     }
 
@@ -254,11 +253,11 @@ public class KafkaConsumerMetrics implements MeterBinder, AutoCloseable {
         });
     }
 
-    private TimeGauge registerTimeGaugeForObject(MeterRegistry registry, ObjectName o, String jmxMetricName, Tags allTags, String description) {
+    private TimeGauge registerTimeGaugeForObject(MeterRegistry registry, ObjectName o, String jmxMetricName, io.micrometer.common.Tags<?> allTags, String description) {
         return registerTimeGaugeForObject(registry, o, jmxMetricName, sanitize(jmxMetricName), allTags, description);
     }
 
-    int kafkaMajorVersion(Tags tags) {
+    int kafkaMajorVersion(io.micrometer.common.Tags<?> tags) {
         if (kafkaMajorVersion == null || kafkaMajorVersion == -1) {
             kafkaMajorVersion = tags.stream().filter(t -> "client.id".equals(t.getKey())).findAny()
                     .map(clientId -> {
@@ -276,12 +275,12 @@ public class KafkaConsumerMetrics implements MeterBinder, AutoCloseable {
         return kafkaMajorVersion;
     }
 
-    private void registerMetricsEventually(MeterRegistry registry, String type, BiFunction<ObjectName, Tags, List<Meter>> perObject) {
+    private void registerMetricsEventually(MeterRegistry registry, String type, BiFunction<ObjectName, io.micrometer.common.Tags<?>, List<Meter>> perObject) {
         try {
             Set<ObjectName> objs = mBeanServer.queryNames(new ObjectName(JMX_DOMAIN + ":type=" + type + ",*"), null);
             if (!objs.isEmpty()) {
                 for (ObjectName o : objs) {
-                    List<Meter> meters = perObject.apply(o, Tags.concat(tags, nameTag(o)));
+                    List<Meter> meters = perObject.apply(o, io.micrometer.common.Tags.concat(tags, nameTag(o)));
                     addUnregistrationListener(registry, type, o, meters);
                 }
                 return;
@@ -294,16 +293,16 @@ public class KafkaConsumerMetrics implements MeterBinder, AutoCloseable {
     }
 
     /**
-     * This notification listener should remain indefinitely since new Kafka consumers can be added at any time.
+     * This notification listener should remain indefinitely since new Kafka consumers can be adapply(ded at any time.
      *
      * @param type      The Kafka JMX type to listen for.
      * @param perObject Metric registration handler when a new MBean is created.
      */
-    private void registerNotificationListener(MeterRegistry registry, String type, BiFunction<ObjectName, Tags, List<Meter>> perObject) {
+    private void registerNotificationListener(MeterRegistry registry, String type, BiFunction<ObjectName, io.micrometer.common.Tags<?>, List<Meter>> perObject) {
         NotificationListener registrationListener = (notification, handback) -> {
             MBeanServerNotification mbs = (MBeanServerNotification) notification;
             ObjectName o = mbs.getMBeanName();
-            List<Meter> meters = perObject.apply(o, Tags.concat(tags, nameTag(o)));
+            List<Meter> meters = perObject.apply(o, io.micrometer.common.Tags.concat(tags, nameTag(o)));
             addUnregistrationListener(registry, type, o, meters);
         };
         NotificationFilter registrationFilter = createNotificationFilter(type,
@@ -363,21 +362,21 @@ public class KafkaConsumerMetrics implements MeterBinder, AutoCloseable {
     }
 
     private Iterable<? extends io.micrometer.common.Tag> nameTag(ObjectName name) {
-        Tags tags = Tags.empty();
+        io.micrometer.common.Tags tags = io.micrometer.common.Tags.empty();
 
         String clientId = name.getKeyProperty("client-id");
         if (clientId != null) {
-            tags = Tags.concat(tags, "client.id", clientId);
+            tags = io.micrometer.common.Tags.concat(tags, "client.id", clientId);
         }
 
         String topic = name.getKeyProperty("topic");
         if (topic != null) {
-            tags = Tags.concat(tags, "topic", topic);
+            tags = io.micrometer.common.Tags.concat(tags, "topic", topic);
         }
 
         String partition = name.getKeyProperty("partition");
         if (partition != null) {
-            tags = Tags.concat(tags, "partition", partition);
+            tags = io.micrometer.common.Tags.concat(tags, "partition", partition);
         }
 
         return tags;

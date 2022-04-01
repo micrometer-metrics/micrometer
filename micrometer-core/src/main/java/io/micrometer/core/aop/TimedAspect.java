@@ -26,7 +26,6 @@ import io.micrometer.core.annotation.Timed;
 import io.micrometer.core.instrument.LongTaskTimer;
 import io.micrometer.core.instrument.MeterRegistry;
 import io.micrometer.core.instrument.Metrics;
-import io.micrometer.core.instrument.Tags;
 import io.micrometer.core.instrument.Timer;
 import io.micrometer.core.lang.NonNullApi;
 import org.aspectj.lang.ProceedingJoinPoint;
@@ -129,7 +128,7 @@ public class TimedAspect {
     public TimedAspect(MeterRegistry registry, Predicate<ProceedingJoinPoint> shouldSkip) {
         this(
                 registry,
-                pjp -> Tags.of("class", pjp.getStaticPart().getSignature().getDeclaringTypeName(),
+                pjp -> io.micrometer.common.Tags.of("class", pjp.getStaticPart().getSignature().getDeclaringTypeName(),
                         "method", pjp.getStaticPart().getSignature().getName()),
                 shouldSkip
         );

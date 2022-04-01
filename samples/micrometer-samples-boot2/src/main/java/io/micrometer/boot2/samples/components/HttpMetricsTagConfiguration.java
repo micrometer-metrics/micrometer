@@ -15,10 +15,20 @@
  */
 package io.micrometer.boot2.samples.components;
 
+import java.io.IOException;
+import java.time.Duration;
+import java.util.Map;
+import java.util.Optional;
+
+import javax.servlet.FilterChain;
+import javax.servlet.ServletException;
+import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpServletResponse;
+
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.common.cache.CacheBuilder;
 import io.micrometer.core.instrument.Tag;
-import io.micrometer.core.instrument.Tags;
+
 import org.springframework.boot.actuate.metrics.web.servlet.DefaultWebMvcTagsProvider;
 import org.springframework.boot.actuate.metrics.web.servlet.WebMvcTagsProvider;
 import org.springframework.context.annotation.Bean;
@@ -27,24 +37,15 @@ import org.springframework.web.filter.OncePerRequestFilter;
 import org.springframework.web.servlet.HandlerMapping;
 import org.springframework.web.util.ContentCachingResponseWrapper;
 
-import javax.servlet.FilterChain;
-import javax.servlet.ServletException;
-import javax.servlet.http.HttpServletRequest;
-import javax.servlet.http.HttpServletResponse;
-import java.io.IOException;
-import java.time.Duration;
-import java.util.Map;
-import java.util.Optional;
-
 /**
  * Demonstrates how to add custom tags based on the contents of the response body.
  */
 @Configuration
 public class HttpMetricsTagConfiguration {
-    private final Map<HttpServletResponse, Tags> responseTags = CacheBuilder.newBuilder()
+    private final Map<HttpServletResponse, io.micrometer.common.Tags> responseTags = CacheBuilder.newBuilder()
             .maximumSize(10_000)
             .expireAfterWrite(Duration.ofSeconds(10))
-            .<HttpServletResponse, Tags>build()
+            .<HttpServletResponse, io.micrometer.common.Tags>build()
             .asMap();
 
     @Bean
@@ -63,7 +64,7 @@ public class HttpMetricsTagConfiguration {
                     // Prometheus requires the same tags on all `http.server.requests`. So we'll need to add
                     // a `@Timed("person.requests") to the /api/person/{id} endpoint so it has a different name.
                     Person person = mapper.readValue(cached.getContentAsByteArray(), Person.class);
-                    responseTags.put(response, Tags.of("country", person.getCountry()));
+                    responseTags.put(response, io.micrometer.common.Tags.of("country", person.getCountry()));
                 }
 
                 cached.copyBodyToResponse();
@@ -77,9 +78,9 @@ public class HttpMetricsTagConfiguration {
             @Override
             public Iterable<Tag> getTags(HttpServletRequest request, HttpServletResponse response,
                                          Object handler, Throwable exception) {
-                return Tags.concat(
+                return io.micrometer.common.Tags.concat(
                         super.getTags(request, response, handler, exception),
-                        Optional.ofNullable(responseTags.remove(response)).orElse(Tags.empty())
+                        Optional.ofNullable(responseTags.remove(response)).orElse(io.micrometer.common.Tags.empty())
                 );
             }
         };

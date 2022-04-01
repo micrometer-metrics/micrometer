@@ -89,25 +89,25 @@ public class MultiGauge {
     }
 
     public static class Row<T> {
-        private final Tags uniqueTags;
+        private final io.micrometer.common.Tags uniqueTags;
         private final T obj;
         private final ToDoubleFunction<T> valueFunction;
 
-        private Row(Tags uniqueTags, T obj, ToDoubleFunction<T> valueFunction) {
+        private Row(io.micrometer.common.Tags uniqueTags, T obj, ToDoubleFunction<T> valueFunction) {
             this.uniqueTags = uniqueTags;
             this.obj = obj;
             this.valueFunction = valueFunction;
         }
 
-        public static <T> Row<T> of(Tags uniqueTags, T obj, ToDoubleFunction<T> valueFunction) {
+        public static <T> Row<T> of(io.micrometer.common.Tags uniqueTags, T obj, ToDoubleFunction<T> valueFunction) {
             return new Row<>(uniqueTags, obj, valueFunction);
         }
 
-        public static Row<Number> of(Tags uniqueTags, Number number) {
+        public static Row<Number> of(io.micrometer.common.Tags uniqueTags, Number number) {
             return new Row<>(uniqueTags, number, Number::doubleValue);
         }
 
-        public static Row<Supplier<Number>> of(Tags uniqueTags, Supplier<Number> valueFunction) {
+        public static Row<Supplier<Number>> of(io.micrometer.common.Tags uniqueTags, Supplier<Number> valueFunction) {
             return new Row<>(uniqueTags, valueFunction, f -> {
                 Number value = valueFunction.get();
                 return value == null ? Double.NaN : value.doubleValue();
@@ -137,7 +137,7 @@ public class MultiGauge {
          * @return The gauge builder with added tags.
          */
         public Builder tags(String... tags) {
-            return tags(Tags.of(tags));
+            return tags(io.micrometer.common.Tags.of(tags));
         }
 
         /**

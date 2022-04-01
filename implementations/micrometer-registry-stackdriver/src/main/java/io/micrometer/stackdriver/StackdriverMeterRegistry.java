@@ -54,7 +54,6 @@ import io.micrometer.core.instrument.FunctionTimer;
 import io.micrometer.core.instrument.Gauge;
 import io.micrometer.core.instrument.LongTaskTimer;
 import io.micrometer.core.instrument.Meter;
-import io.micrometer.core.instrument.Tags;
 import io.micrometer.core.instrument.TimeGauge;
 import io.micrometer.core.instrument.Timer;
 import io.micrometer.core.instrument.distribution.CountAtBucket;
@@ -438,7 +437,7 @@ public class StackdriverMeterRegistry extends StepMeterRegistry {
         private void prePopulateVerifiedDescriptors() {
             try {
                 if (client != null) {
-                    final String prefix = metricType(new Meter.Id("", Tags.empty(), null, null, Meter.Type.OTHER), null);
+                    final String prefix = metricType(new Meter.Id("", io.micrometer.common.Tags.empty(), null, null, Meter.Type.OTHER), null);
                     final String filter = String.format("metric.type = starts_with(\"%s\")", prefix);
                     final String projectName = "projects/" + config.projectId();
 

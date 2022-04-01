@@ -20,7 +20,6 @@ import java.util.concurrent.TimeUnit;
 import io.micrometer.core.instrument.FunctionCounter;
 import io.micrometer.core.instrument.FunctionTimer;
 import io.micrometer.core.instrument.MeterRegistry;
-import io.micrometer.core.instrument.Tags;
 import io.micrometer.core.instrument.TimeGauge;
 import io.micrometer.core.instrument.binder.MeterBinder;
 import io.micrometer.core.lang.NonNullApi;
@@ -68,7 +67,7 @@ public class HibernateQueryMetrics implements MeterBinder {
      * @param tags               additional tags
      */
     public static void monitor(MeterRegistry registry, SessionFactory sessionFactory, String sessionFactoryName, String... tags) {
-        monitor(registry, sessionFactory, sessionFactoryName, Tags.of(tags));
+        monitor(registry, sessionFactory, sessionFactoryName, io.micrometer.common.Tags.of(tags));
     }
 
     /**
@@ -91,7 +90,7 @@ public class HibernateQueryMetrics implements MeterBinder {
      * @param tags               additional tags
      */
     public HibernateQueryMetrics(SessionFactory sessionFactory, String sessionFactoryName, Iterable<? extends io.micrometer.common.Tag> tags) {
-        this.tags = Tags.concat(tags, SESSION_FACTORY_TAG_NAME, sessionFactoryName);
+        this.tags = io.micrometer.common.Tags.concat(tags, SESSION_FACTORY_TAG_NAME, sessionFactoryName);
         this.sessionFactory = sessionFactory;
     }
 

@@ -26,7 +26,6 @@ import com.github.benmanes.caffeine.cache.LoadingCache;
 import com.github.benmanes.caffeine.cache.stats.CacheStats;
 import io.micrometer.core.instrument.FunctionCounter;
 import io.micrometer.core.instrument.MeterRegistry;
-import io.micrometer.core.instrument.Tags;
 import io.micrometer.core.instrument.TimeGauge;
 import io.micrometer.core.instrument.binder.cache.CacheMeterBinder;
 import io.micrometer.core.lang.NonNullApi;
@@ -76,7 +75,8 @@ public class CaffeineCacheMetrics<K, V, C extends Cache<K, V>> extends CacheMete
      * @return The instrumented cache, unchanged. The original cache is not wrapped or proxied in any way.
      */
     public static <K, V, C extends Cache<K, V>> C monitor(MeterRegistry registry, C cache, String cacheName, String... tags) {
-        return monitor(registry, cache, cacheName, Tags.of(tags));
+        io.micrometer.common.Tags<?> tags1 = io.micrometer.common.Tags.of(tags);
+        return monitor(registry, cache, cacheName, tags1);
     }
 
     /**
@@ -112,7 +112,8 @@ public class CaffeineCacheMetrics<K, V, C extends Cache<K, V>> extends CacheMete
      * @return The instrumented cache, unchanged. The original cache is not wrapped or proxied in any way.
      */
     public static <K, V, C extends AsyncCache<K, V>> C monitor(MeterRegistry registry, C cache, String cacheName, String... tags) {
-        return monitor(registry, cache, cacheName, Tags.of(tags));
+        io.micrometer.common.Tags<?> tags1 = io.micrometer.common.Tags.of(tags);
+        return monitor(registry, cache, cacheName, tags1);
     }
 
     /**

@@ -35,7 +35,6 @@ import javax.sql.DataSource;
 
 import io.micrometer.core.annotation.Incubating;
 import io.micrometer.core.instrument.MeterRegistry;
-import io.micrometer.core.instrument.Tags;
 import org.jooq.Record;
 import org.jooq.*;
 import org.jooq.conf.Settings;
@@ -131,7 +130,7 @@ public class MetricsDSLContext implements DSLContext {
     }
 
     public DSLContext tag(String key, String name) {
-        return tags(Tags.of(key, name));
+        return tags(io.micrometer.common.Tags.of(key, name));
     }
 
     public DSLContext tag(io.micrometer.common.Tag tag) {

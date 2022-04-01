@@ -240,7 +240,7 @@ public interface Meter {
          * @since 1.1.0
          */
         public Id withTags(Iterable<? extends io.micrometer.common.Tag> tags) {
-            return new Id(name, Tags.concat(getTags(), tags), baseUnit, description, type);
+            return new Id(name, io.micrometer.common.Tags.concat(getTags(), tags), baseUnit, description, type);
         }
 
         /**
@@ -251,7 +251,7 @@ public interface Meter {
          * @since 1.1.0
          */
         public Id replaceTags(Iterable<? extends io.micrometer.common.Tag> tags) {
-            return new Id(name, Tags.of(tags), baseUnit, description, type);
+            return new Id(name, io.micrometer.common.Tags.of(tags), baseUnit, description, type);
         }
 
         /**
@@ -421,7 +421,8 @@ public interface Meter {
          * @return The custom meter builder with added tags.
          */
         public Builder tags(String... tags) {
-            return tags(Tags.of(tags));
+            io.micrometer.common.Tags<?> tags1 = io.micrometer.common.Tags.of(tags);
+            return tags(tags1);
         }
 
         /**

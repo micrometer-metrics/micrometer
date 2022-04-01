@@ -400,7 +400,7 @@ public abstract class MeterRegistry {
      * @return A new or existing counter.
      */
     public Counter counter(String name, String... tags) {
-        return counter(name, Tags.of(tags));
+        return counter(name, io.micrometer.common.Tags.of(tags));
     }
 
     /**
@@ -422,7 +422,7 @@ public abstract class MeterRegistry {
      * @return A new or existing distribution summary.
      */
     public DistributionSummary summary(String name, String... tags) {
-        return summary(name, Tags.of(tags));
+        return summary(name, io.micrometer.common.Tags.of(tags));
     }
 
     /**
@@ -444,7 +444,7 @@ public abstract class MeterRegistry {
      * @return A new or existing timer.
      */
     public Timer timer(String name, String... tags) {
-        return timer(name, Tags.of(tags));
+        return timer(name, io.micrometer.common.Tags.of(tags));
     }
 
     /**
@@ -745,7 +745,7 @@ public abstract class MeterRegistry {
          * @return This configuration instance.
          */
         public Config commonTags(String... tags) {
-            return commonTags(Tags.of(tags));
+            return commonTags(io.micrometer.common.Tags.of(tags));
         }
 
         /**
@@ -858,7 +858,7 @@ public abstract class MeterRegistry {
          * @return A new or existing long task timer.
          */
         public LongTaskTimer longTaskTimer(String name, String... tags) {
-            return longTaskTimer(name, Tags.of(tags));
+            return longTaskTimer(name, io.micrometer.common.Tags.of(tags));
         }
 
         /**

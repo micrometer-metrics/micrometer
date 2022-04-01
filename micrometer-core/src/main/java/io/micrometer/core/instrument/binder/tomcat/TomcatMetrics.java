@@ -40,7 +40,6 @@ import io.micrometer.core.instrument.FunctionCounter;
 import io.micrometer.core.instrument.FunctionTimer;
 import io.micrometer.core.instrument.Gauge;
 import io.micrometer.core.instrument.MeterRegistry;
-import io.micrometer.core.instrument.Tags;
 import io.micrometer.core.instrument.TimeGauge;
 import io.micrometer.core.instrument.binder.BaseUnits;
 import io.micrometer.core.instrument.binder.MeterBinder;
@@ -95,7 +94,7 @@ public class TomcatMetrics implements MeterBinder, AutoCloseable {
     }
 
     public static void monitor(MeterRegistry registry, @Nullable Manager manager, String... tags) {
-        monitor(registry, manager, Tags.of(tags));
+        monitor(registry, manager, io.micrometer.common.Tags.of(tags));
     }
 
     public static void monitor(MeterRegistry registry, @Nullable Manager manager, Iterable<? extends io.micrometer.common.Tag> tags) {
@@ -270,7 +269,7 @@ public class TomcatMetrics implements MeterBinder, AutoCloseable {
             Set<ObjectName> objectNames = this.mBeanServer.queryNames(getNamePattern(namePatternSuffix), null);
             if (!objectNames.isEmpty()) {
                 // MBeans are present, so we can register metrics now.
-                objectNames.forEach(objectName -> perObject.accept(objectName, Tags.concat(tags, nameTag(objectName))));
+                objectNames.forEach(objectName -> perObject.accept(objectName, io.micrometer.common.Tags.concat(tags, nameTag(objectName))));
                 return;
             }
         }
@@ -282,7 +281,7 @@ public class TomcatMetrics implements MeterBinder, AutoCloseable {
             public void handleNotification(Notification notification, Object handback) {
                 MBeanServerNotification mBeanServerNotification = (MBeanServerNotification) notification;
                 ObjectName objectName = mBeanServerNotification.getMBeanName();
-                perObject.accept(objectName, Tags.concat(tags, nameTag(objectName)));
+                perObject.accept(objectName, io.micrometer.common.Tags.concat(tags, nameTag(objectName)));
                 if (getNamePattern(namePatternSuffix).isPattern()) {
                     // patterns can match multiple MBeans so don't remove listener
                     return;
@@ -377,7 +376,7 @@ public class TomcatMetrics implements MeterBinder, AutoCloseable {
     private Iterable<? extends io.micrometer.common.Tag> nameTag(ObjectName name) {
         String nameTagValue = name.getKeyProperty("name");
         if (nameTagValue != null) {
-            return Tags.of("name", nameTagValue.replaceAll("\"", ""));
+            return io.micrometer.common.Tags.of("name", nameTagValue.replaceAll("\"", ""));
         }
         return Collections.emptyList();
     }

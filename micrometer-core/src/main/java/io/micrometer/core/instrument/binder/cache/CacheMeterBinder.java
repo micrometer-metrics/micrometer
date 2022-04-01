@@ -20,7 +20,6 @@ import java.lang.ref.WeakReference;
 import io.micrometer.core.instrument.FunctionCounter;
 import io.micrometer.core.instrument.Gauge;
 import io.micrometer.core.instrument.MeterRegistry;
-import io.micrometer.core.instrument.Tags;
 import io.micrometer.core.instrument.binder.MeterBinder;
 import io.micrometer.core.lang.NonNullApi;
 import io.micrometer.core.lang.NonNullFields;
@@ -43,7 +42,7 @@ public abstract class CacheMeterBinder<C> implements MeterBinder {
     private final Iterable<? extends io.micrometer.common.Tag> tags;
 
     public CacheMeterBinder(C cache, String cacheName, Iterable<? extends io.micrometer.common.Tag> tags) {
-        this.tags = Tags.concat(tags, "cache", cacheName);
+        this.tags = io.micrometer.common.Tags.concat(tags, "cache", cacheName);
         this.cacheRef = new WeakReference<>(cache);
     }
 

@@ -27,7 +27,6 @@ import io.micrometer.core.instrument.Counter;
 import io.micrometer.core.instrument.DistributionSummary;
 import io.micrometer.core.instrument.Gauge;
 import io.micrometer.core.instrument.MeterRegistry;
-import io.micrometer.core.instrument.Tags;
 import io.micrometer.core.instrument.Timer;
 import io.micrometer.core.lang.NonNullApi;
 import io.micrometer.core.lang.NonNullFields;
@@ -61,7 +60,7 @@ import static java.util.Objects.requireNonNull;
 public final class CaffeineStatsCounter implements StatsCounter {
 
     private final MeterRegistry registry;
-    private final Tags tags;
+    private final io.micrometer.common.Tags tags;
 
     private final Counter hitCount;
     private final Counter missCount;
@@ -76,7 +75,7 @@ public final class CaffeineStatsCounter implements StatsCounter {
      * @param cacheName will be used to tag metrics with "cache".
      */
     public CaffeineStatsCounter(MeterRegistry registry, String cacheName) {
-        this(registry, cacheName, Tags.empty());
+        this(registry, cacheName, io.micrometer.common.Tags.empty());
     }
 
     /**
@@ -91,7 +90,7 @@ public final class CaffeineStatsCounter implements StatsCounter {
         requireNonNull(cacheName);
         requireNonNull(extraTags);
         this.registry = registry;
-        this.tags = Tags.concat(extraTags, "cache", cacheName);
+        this.tags = io.micrometer.common.Tags.concat(extraTags, "cache", cacheName);
 
         hitCount = Counter.builder("cache.gets").tag("result", "hit").tags(tags)
                 .description("The number of times cache lookup methods have returned a cached value.")

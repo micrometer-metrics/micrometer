@@ -96,7 +96,7 @@ public interface TimeGauge extends Gauge {
          * @return This time gauge builder.
          */
         public Builder<T> tags(String... tags) {
-            return tags(Tags.of(tags));
+            return tags(io.micrometer.common.Tags.of(tags));
         }
 
         /**

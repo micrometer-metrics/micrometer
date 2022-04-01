@@ -26,7 +26,6 @@ import io.micrometer.core.instrument.Gauge;
 import io.micrometer.core.instrument.LongTaskTimer;
 import io.micrometer.core.instrument.Meter;
 import io.micrometer.core.instrument.MeterRegistry;
-import io.micrometer.core.instrument.Tags;
 import io.micrometer.core.instrument.Timer;
 import io.micrometer.core.instrument.util.DoubleFormat;
 
@@ -55,10 +54,10 @@ public class HistogramGauges {
     private static HistogramGauges getHistogramGauges(HistogramSupport histogramSupport, Meter.Id id, TimeUnit baseTimeUnit, MeterRegistry registry) {
         return HistogramGauges.register(histogramSupport, registry,
                 percentile -> id.getName() + ".percentile",
-                percentile -> Tags.concat(id.getTagsAsIterable(), "phi", DoubleFormat.decimalOrNan(percentile.percentile())),
+                percentile -> io.micrometer.common.Tags.concat(id.getTagsAsIterable(), "phi", DoubleFormat.decimalOrNan(percentile.percentile())),
                 percentile -> percentile.value(baseTimeUnit),
                 bucket -> id.getName() + ".histogram",
-                bucket -> Tags.concat(id.getTagsAsIterable(), "le", bucket.isPositiveInf()
+                bucket -> io.micrometer.common.Tags.concat(id.getTagsAsIterable(), "le", bucket.isPositiveInf()
                         ? "+Inf" : DoubleFormat.wholeOrDecimal(bucket.bucket(baseTimeUnit))));
     }
 
@@ -79,10 +78,10 @@ public class HistogramGauges {
         Meter.Id id = summary.getId();
         return HistogramGauges.register(summary, registry,
                 percentile -> id.getName() + ".percentile",
-                percentile -> Tags.concat(id.getTagsAsIterable(), "phi", DoubleFormat.decimalOrNan(percentile.percentile())),
+                percentile -> io.micrometer.common.Tags.concat(id.getTagsAsIterable(), "phi", DoubleFormat.decimalOrNan(percentile.percentile())),
                 ValueAtPercentile::value,
                 bucket -> id.getName() + ".histogram",
-                bucket -> Tags.concat(id.getTagsAsIterable(), "le", bucket.isPositiveInf()
+                bucket -> io.micrometer.common.Tags.concat(id.getTagsAsIterable(), "le", bucket.isPositiveInf()
                         ? "+Inf" : DoubleFormat.wholeOrDecimal(bucket.bucket())));
     }
 

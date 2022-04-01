@@ -30,7 +30,6 @@ import com.netflix.hystrix.strategy.metrics.HystrixMetricsPublisherCommand;
 import io.micrometer.core.instrument.Counter;
 import io.micrometer.core.instrument.Gauge;
 import io.micrometer.core.instrument.MeterRegistry;
-import io.micrometer.core.instrument.Tags;
 import io.micrometer.core.instrument.Timer;
 import io.micrometer.core.lang.NonNullApi;
 import io.micrometer.core.lang.NonNullFields;
@@ -70,7 +69,7 @@ public class MicrometerMetricsPublisherCommand implements HystrixMetricsPublishe
         this.commandKey = commandKey;
         this.metricsPublisherForCommand = metricsPublisherForCommand;
 
-        tags = Tags.of("group", commandGroupKey.name(), "key", commandKey.name());
+        tags = io.micrometer.common.Tags.of("group", commandGroupKey.name(), "key", commandKey.name());
     }
 
     @Override
@@ -87,7 +86,7 @@ public class MicrometerMetricsPublisherCommand implements HystrixMetricsPublishe
 
         Counter terminalEventCounterTotal = Counter.builder(NAME_HYSTRIX_EXECUTION_TERMINAL_TOTAL)
             .description(DESCRIPTION_HYSTRIX_EXECUTION_TERMINAL_TOTAL)
-            .tags(Tags.concat(tags))
+            .tags(io.micrometer.common.Tags.concat(tags))
             .register(meterRegistry);
 
         final Timer latencyExecution = Timer.builder(NAME_HYSTRIX_LATENCY_EXECUTION).tags(tags).register(meterRegistry);
@@ -144,7 +143,7 @@ public class MicrometerMetricsPublisherCommand implements HystrixMetricsPublishe
     private Counter getCounter(HystrixEventType hystrixEventType) {
         return Counter.builder(NAME_HYSTRIX_EXECUTION)
             .description(DESCRIPTION_HYSTRIX_EXECUTION)
-            .tags(Tags.concat(tags, "event", hystrixEventType.name().toLowerCase(), "terminal", Boolean.toString(hystrixEventType.isTerminal())))
+            .tags(io.micrometer.common.Tags.concat(tags, "event", hystrixEventType.name().toLowerCase(), "terminal", Boolean.toString(hystrixEventType.isTerminal())))
             .register(meterRegistry);
     }
 

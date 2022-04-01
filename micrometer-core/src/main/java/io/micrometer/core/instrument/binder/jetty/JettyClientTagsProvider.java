@@ -16,7 +16,6 @@
 package io.micrometer.core.instrument.binder.jetty;
 
 import io.micrometer.core.annotation.Incubating;
-import io.micrometer.core.instrument.Tags;
 import org.eclipse.jetty.client.api.Result;
 
 /**
@@ -38,7 +37,7 @@ public interface JettyClientTagsProvider {
      * @return tags to associate with metrics recorded for the request
      */
     default Iterable<? extends io.micrometer.common.Tag> httpRequestTags(Result result) {
-        return Tags.of(JettyClientTags.method(result.getRequest()),
+        return io.micrometer.common.Tags.of(JettyClientTags.method(result.getRequest()),
                 JettyClientTags.host(result.getRequest()),
                 JettyClientTags.uri(result, this::uriPattern),
                 JettyClientTags.exception(result), JettyClientTags.status(result),

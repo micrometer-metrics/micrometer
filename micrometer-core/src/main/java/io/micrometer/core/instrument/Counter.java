@@ -76,7 +76,8 @@ public interface Counter extends Meter {
          * @return The counter builder with added tags.
          */
         public Builder tags(String... tags) {
-            return tags(Tags.of(tags));
+            io.micrometer.common.Tags<?> tags1 = io.micrometer.common.Tags.of(tags);
+            return tags(tags1);
         }
 
         /**

@@ -236,7 +236,8 @@ public interface LongTaskTimer extends Meter, HistogramSupport {
          * @return The long task timer builder with added tags.
          */
         public Builder tags(String... tags) {
-            return tags(Tags.of(tags));
+            io.micrometer.common.Tags<?> tags1 = io.micrometer.common.Tags.of(tags);
+            return tags(tags1);
         }
 
         /**

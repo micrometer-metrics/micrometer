@@ -20,7 +20,6 @@ import java.lang.management.ManagementFactory;
 
 import io.micrometer.core.instrument.FunctionCounter;
 import io.micrometer.core.instrument.MeterRegistry;
-import io.micrometer.core.instrument.Tags;
 import io.micrometer.core.instrument.binder.BaseUnits;
 import io.micrometer.core.instrument.binder.MeterBinder;
 import io.micrometer.core.lang.NonNullApi;
@@ -51,7 +50,7 @@ public class JvmCompilationMetrics implements MeterBinder {
         CompilationMXBean compilationBean = ManagementFactory.getCompilationMXBean();
         if (compilationBean != null && compilationBean.isCompilationTimeMonitoringSupported()) {
             FunctionCounter.builder("jvm.compilation.time", compilationBean, CompilationMXBean::getTotalCompilationTime)
-                    .tags(Tags.concat(tags, "compiler", compilationBean.getName()))
+                    .tags(io.micrometer.common.Tags.concat(tags, "compiler", compilationBean.getName()))
                     .description("The approximate accumulated elapsed time spent in compilation")
                     .baseUnit(BaseUnits.MILLISECONDS)
                     .register(registry);

@@ -37,7 +37,6 @@ import io.micrometer.core.instrument.ImmutableTag;
 import io.micrometer.core.instrument.LongTaskTimer;
 import io.micrometer.core.instrument.Measurement;
 import io.micrometer.core.instrument.Meter;
-import io.micrometer.core.instrument.Tags;
 import io.micrometer.core.instrument.TimeGauge;
 import io.micrometer.core.instrument.Timer;
 import io.micrometer.core.instrument.cumulative.CumulativeCounter;
@@ -369,7 +368,7 @@ public class OpenTSDBMeterRegistry extends PushMeterRegistry {
 
         return StreamSupport.stream(meter.measure().spliterator(), false)
                 .map(ms -> {
-                            Tags localTags = Tags.concat(tags, "statistics", ms.getStatistic().toString());
+                    io.micrometer.common.Tags localTags = io.micrometer.common.Tags.concat(tags, "statistics", ms.getStatistic().toString());
                             String name = getConventionName(meter.getId());
 
                             switch (ms.getStatistic()) {

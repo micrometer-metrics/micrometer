@@ -107,7 +107,8 @@ public interface Gauge extends Meter {
          * @return The gauge builder with added tags.
          */
         public Builder<T> tags(String... tags) {
-            return tags(Tags.of(tags));
+            io.micrometer.common.Tags<?> tags1 = io.micrometer.common.Tags.of(tags);
+            return tags(tags1);
         }
 
         /**

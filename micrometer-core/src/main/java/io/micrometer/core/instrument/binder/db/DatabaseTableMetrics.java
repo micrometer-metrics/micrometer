@@ -25,7 +25,6 @@ import javax.sql.DataSource;
 
 import io.micrometer.core.instrument.Gauge;
 import io.micrometer.core.instrument.MeterRegistry;
-import io.micrometer.core.instrument.Tags;
 import io.micrometer.core.instrument.binder.BaseUnits;
 import io.micrometer.core.instrument.binder.MeterBinder;
 import io.micrometer.core.lang.NonNullApi;
@@ -85,7 +84,7 @@ public class DatabaseTableMetrics implements MeterBinder {
      * @param tags           Tags to apply to all recorded metrics. Must be an even number of arguments representing key/value pairs of tags.
      */
     public static void monitor(MeterRegistry registry, String tableName, String dataSourceName, DataSource dataSource, String... tags) {
-        monitor(registry, dataSource, dataSourceName, tableName, Tags.of(tags));
+        monitor(registry, dataSource, dataSourceName, tableName, io.micrometer.common.Tags.of(tags));
     }
 
     /**

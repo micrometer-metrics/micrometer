@@ -23,7 +23,6 @@ import java.lang.management.MemoryUsage;
 
 import io.micrometer.core.instrument.Gauge;
 import io.micrometer.core.instrument.MeterRegistry;
-import io.micrometer.core.instrument.Tags;
 import io.micrometer.core.instrument.binder.BaseUnits;
 import io.micrometer.core.instrument.binder.MeterBinder;
 import io.micrometer.core.lang.NonNullApi;
@@ -58,7 +57,7 @@ public class JvmMemoryMetrics implements MeterBinder {
     @Override
     public void bindTo(MeterRegistry registry) {
         for (BufferPoolMXBean bufferPoolBean : ManagementFactory.getPlatformMXBeans(BufferPoolMXBean.class)) {
-            Iterable<? extends io.micrometer.common.Tag> tagsWithId = Tags.concat(tags, "id", bufferPoolBean.getName());
+            Iterable<? extends io.micrometer.common.Tag> tagsWithId = io.micrometer.common.Tags.concat(tags, "id", bufferPoolBean.getName());
 
             Gauge.builder("jvm.buffer.count", bufferPoolBean, BufferPoolMXBean::getCount)
                     .tags(tagsWithId)
@@ -81,7 +80,7 @@ public class JvmMemoryMetrics implements MeterBinder {
 
         for (MemoryPoolMXBean memoryPoolBean : ManagementFactory.getPlatformMXBeans(MemoryPoolMXBean.class)) {
             String area = MemoryType.HEAP.equals(memoryPoolBean.getType()) ? "heap" : "nonheap";
-            Iterable<? extends io.micrometer.common.Tag> tagsWithId = Tags.concat(tags, "id", memoryPoolBean.getName(), "area", area);
+            Iterable<? extends io.micrometer.common.Tag> tagsWithId = io.micrometer.common.Tags.concat(tags, "id", memoryPoolBean.getName(), "area", area);
 
             Gauge.builder("jvm.memory.used", memoryPoolBean, (mem) -> getUsageValue(mem, MemoryUsage::getUsed))
                 .tags(tagsWithId)

@@ -22,7 +22,6 @@ import io.micrometer.core.instrument.Counter;
 import io.micrometer.core.instrument.DistributionSummary;
 import io.micrometer.core.instrument.Gauge;
 import io.micrometer.core.instrument.MeterRegistry;
-import io.micrometer.core.instrument.Tags;
 import io.micrometer.core.instrument.Timer;
 import io.micrometer.core.instrument.binder.BaseUnits;
 import io.micrometer.core.instrument.distribution.DistributionStatisticConfig;
@@ -68,7 +67,7 @@ public class JettyConnectionMetrics extends AbstractLifeCycle implements Connect
     private final TimeWindowMax maxConnections;
 
     public JettyConnectionMetrics(MeterRegistry registry) {
-        this(registry, Tags.empty());
+        this(registry, io.micrometer.common.Tags.empty());
     }
 
     public JettyConnectionMetrics(MeterRegistry registry, Iterable<? extends io.micrometer.common.Tag> tags) {
@@ -125,7 +124,7 @@ public class JettyConnectionMetrics extends AbstractLifeCycle implements Connect
      * @since 1.8.0
      */
     public JettyConnectionMetrics(MeterRegistry registry, Connector connector) {
-        this(registry, connector, Tags.empty());
+        this(registry, connector, io.micrometer.common.Tags.empty());
     }
 
     /**
@@ -143,7 +142,7 @@ public class JettyConnectionMetrics extends AbstractLifeCycle implements Connect
 
     private static io.micrometer.common.Tags getConnectorNameTag(Connector connector) {
         String name = connector.getName();
-        return Tags.of("connector.name", name != null ? name : "unnamed");
+        return io.micrometer.common.Tags.of("connector.name", name != null ? name : "unnamed");
     }
 
     @Override
@@ -187,6 +186,6 @@ public class JettyConnectionMetrics extends AbstractLifeCycle implements Connect
     }
 
     public static void addToAllConnectors(Server server, MeterRegistry registry) {
-        addToAllConnectors(server, registry, Tags.empty());
+        addToAllConnectors(server, registry, io.micrometer.common.Tags.empty());
     }
 }

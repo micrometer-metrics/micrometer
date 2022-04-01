@@ -24,7 +24,6 @@ import io.micrometer.core.annotation.Counted;
 import io.micrometer.core.instrument.Counter;
 import io.micrometer.core.instrument.MeterRegistry;
 import io.micrometer.core.instrument.Metrics;
-import io.micrometer.core.instrument.Tags;
 import io.micrometer.core.lang.NonNullApi;
 import org.aspectj.lang.ProceedingJoinPoint;
 import org.aspectj.lang.annotation.Around;
@@ -139,7 +138,7 @@ public class CountedAspect {
     public CountedAspect(MeterRegistry registry, Predicate<ProceedingJoinPoint> shouldSkip) {
         this(
                 registry,
-                pjp -> Tags.of("class", pjp.getStaticPart().getSignature().getDeclaringTypeName(),
+                pjp -> io.micrometer.common.Tags.of("class", pjp.getStaticPart().getSignature().getDeclaringTypeName(),
                                 "method", pjp.getStaticPart().getSignature().getName()),
                 shouldSkip
         );

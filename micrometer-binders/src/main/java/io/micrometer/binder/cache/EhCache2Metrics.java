@@ -21,7 +21,6 @@ import java.util.function.ToLongFunction;
 import io.micrometer.core.instrument.FunctionCounter;
 import io.micrometer.core.instrument.Gauge;
 import io.micrometer.core.instrument.MeterRegistry;
-import io.micrometer.core.instrument.Tags;
 import io.micrometer.core.instrument.binder.BaseUnits;
 import io.micrometer.core.instrument.binder.cache.CacheMeterBinder;
 import io.micrometer.core.lang.NonNullApi;
@@ -52,7 +51,7 @@ public class EhCache2Metrics extends CacheMeterBinder<Ehcache> {
      * @return The instrumented cache, unchanged. The original cache is not wrapped or proxied in any way.
      */
     public static Ehcache monitor(MeterRegistry registry, Ehcache cache, String... tags) {
-        return monitor(registry, cache, Tags.of(tags));
+        return monitor(registry, cache, io.micrometer.common.Tags.of(tags));
     }
 
     /**

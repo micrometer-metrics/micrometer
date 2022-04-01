@@ -19,7 +19,6 @@ import javax.net.ssl.SSLSession;
 
 import io.micrometer.core.instrument.Counter;
 import io.micrometer.core.instrument.MeterRegistry;
-import io.micrometer.core.instrument.Tags;
 import io.micrometer.core.instrument.binder.BaseUnits;
 import org.eclipse.jetty.io.ssl.SslHandshakeListener;
 import org.eclipse.jetty.server.Connector;
@@ -60,7 +59,7 @@ public class JettySslHandshakeMetrics implements SslHandshakeListener {
     private final Counter handshakesFailed;
 
     public JettySslHandshakeMetrics(MeterRegistry registry) {
-        this(registry, Tags.empty());
+        this(registry, io.micrometer.common.Tags.empty());
     }
 
     public JettySslHandshakeMetrics(MeterRegistry registry, Iterable<? extends io.micrometer.common.Tag> tags) {
@@ -86,7 +85,7 @@ public class JettySslHandshakeMetrics implements SslHandshakeListener {
      * @since 1.8.0
      */
     public JettySslHandshakeMetrics(MeterRegistry registry, Connector connector) {
-        this(registry, connector, Tags.empty());
+        this(registry, connector, io.micrometer.common.Tags.empty());
     }
 
     /**
@@ -104,7 +103,7 @@ public class JettySslHandshakeMetrics implements SslHandshakeListener {
 
     private static io.micrometer.common.Tags getConnectorNameTag(Connector connector) {
         String name = connector.getName();
-        return Tags.of("connector.name", name != null ? name : "unnamed");
+        return io.micrometer.common.Tags.of("connector.name", name != null ? name : "unnamed");
     }
 
     @Override
@@ -135,6 +134,6 @@ public class JettySslHandshakeMetrics implements SslHandshakeListener {
     }
 
     public static void addToAllConnectors(Server server, MeterRegistry registry) {
-        addToAllConnectors(server, registry, Tags.empty());
+        addToAllConnectors(server, registry, io.micrometer.common.Tags.empty());
     }
 }

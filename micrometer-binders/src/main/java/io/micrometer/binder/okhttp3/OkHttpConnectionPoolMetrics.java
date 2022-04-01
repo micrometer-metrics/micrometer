@@ -21,7 +21,6 @@ import java.util.concurrent.CountDownLatch;
 
 import io.micrometer.core.instrument.Gauge;
 import io.micrometer.core.instrument.MeterRegistry;
-import io.micrometer.core.instrument.Tags;
 import io.micrometer.core.instrument.binder.BaseUnits;
 import io.micrometer.core.instrument.binder.MeterBinder;
 import io.micrometer.core.lang.NonNull;
@@ -124,7 +123,7 @@ public class OkHttpConnectionPoolMetrics implements MeterBinder {
                 })
                 .baseUnit(BaseUnits.CONNECTIONS)
                 .description("The state of connections in the OkHttp connection pool")
-                .tags(Tags.of(tags).and(TAG_STATE, "active"))
+                .tags(io.micrometer.common.Tags.of(tags).and(TAG_STATE, "active"))
                 .register(registry);
 
         Gauge.builder(connectionCountName, connectionStats,
@@ -136,14 +135,14 @@ public class OkHttpConnectionPoolMetrics implements MeterBinder {
                 })
                 .baseUnit(BaseUnits.CONNECTIONS)
                 .description("The state of connections in the OkHttp connection pool")
-                .tags(Tags.of(tags).and(TAG_STATE, "idle"))
+                .tags(io.micrometer.common.Tags.of(tags).and(TAG_STATE, "idle"))
                 .register(registry);
 
         if (this.maxIdleConnectionCount != null) {
             Gauge.builder(namePrefix + ".connection.limit", () -> this.maxIdleConnectionCount)
                     .baseUnit(BaseUnits.CONNECTIONS)
                     .description("The maximum idle connection count in an OkHttp connection pool.")
-                    .tags(Tags.concat(tags))
+                    .tags(io.micrometer.common.Tags.concat(tags))
                     .register(registry);
         }
     }

@@ -19,7 +19,6 @@ import java.io.File;
 
 import io.micrometer.core.instrument.Gauge;
 import io.micrometer.core.instrument.MeterRegistry;
-import io.micrometer.core.instrument.Tags;
 import io.micrometer.core.instrument.binder.BaseUnits;
 import io.micrometer.core.instrument.binder.MeterBinder;
 import io.micrometer.core.lang.NonNullApi;
@@ -53,7 +52,7 @@ public class DiskSpaceMetrics implements MeterBinder {
 
     @Override
     public void bindTo(MeterRegistry registry) {
-        Iterable<? extends io.micrometer.common.Tag> tagsWithPath = Tags.concat(tags, "path", absolutePath);
+        Iterable<? extends io.micrometer.common.Tag> tagsWithPath = io.micrometer.common.Tags.concat(tags, "path", absolutePath);
         Gauge.builder("disk.free", path, File::getUsableSpace)
                 .tags(tagsWithPath)
                 .description("Usable space for path")
