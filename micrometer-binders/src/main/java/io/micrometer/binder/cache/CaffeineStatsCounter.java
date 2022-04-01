@@ -15,14 +15,14 @@
  */
 package io.micrometer.binder.cache;
 
-import java.util.Arrays;
-import java.util.EnumMap;
-import java.util.concurrent.TimeUnit;
+import static java.util.Objects.requireNonNull;
 
 import com.github.benmanes.caffeine.cache.Cache;
 import com.github.benmanes.caffeine.cache.RemovalCause;
 import com.github.benmanes.caffeine.cache.stats.CacheStats;
 import com.github.benmanes.caffeine.cache.stats.StatsCounter;
+import io.micrometer.common.Tag;
+import io.micrometer.common.Tags;
 import io.micrometer.core.instrument.Counter;
 import io.micrometer.core.instrument.DistributionSummary;
 import io.micrometer.core.instrument.Gauge;
@@ -31,7 +31,9 @@ import io.micrometer.core.instrument.Timer;
 import io.micrometer.core.lang.NonNullApi;
 import io.micrometer.core.lang.NonNullFields;
 
-import static java.util.Objects.requireNonNull;
+import java.util.Arrays;
+import java.util.EnumMap;
+import java.util.concurrent.TimeUnit;
 
 /**
  * A {@link StatsCounter} instrumented with Micrometer. This will provide more detailed metrics than using
@@ -60,7 +62,7 @@ import static java.util.Objects.requireNonNull;
 public final class CaffeineStatsCounter implements StatsCounter {
 
     private final MeterRegistry registry;
-    private final io.micrometer.common.Tags tags;
+    private final Tags tags;
 
     private final Counter hitCount;
     private final Counter missCount;
@@ -75,7 +77,7 @@ public final class CaffeineStatsCounter implements StatsCounter {
      * @param cacheName will be used to tag metrics with "cache".
      */
     public CaffeineStatsCounter(MeterRegistry registry, String cacheName) {
-        this(registry, cacheName, io.micrometer.common.Tags.empty());
+        this(registry, cacheName, Tags.empty());
     }
 
     /**
@@ -85,12 +87,12 @@ public final class CaffeineStatsCounter implements StatsCounter {
      * @param cacheName will be used to tag metrics with "cache".
      * @param extraTags tags to apply to all recorded metrics.
      */
-    public CaffeineStatsCounter(MeterRegistry registry, String cacheName, Iterable<? extends io.micrometer.common.Tag> extraTags) {
+    public CaffeineStatsCounter(MeterRegistry registry, String cacheName, Iterable<? extends Tag> extraTags) {
         requireNonNull(registry);
         requireNonNull(cacheName);
         requireNonNull(extraTags);
         this.registry = registry;
-        this.tags = io.micrometer.common.Tags.concat(extraTags, "cache", cacheName);
+        this.tags = Tags.concat(extraTags, "cache", cacheName);
 
         hitCount = Counter.builder("cache.gets").tag("result", "hit").tags(tags)
                 .description("The number of times cache lookup methods have returned a cached value.")
