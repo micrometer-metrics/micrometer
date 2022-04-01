@@ -15,10 +15,21 @@
  */
 package io.micrometer.binder.jvm;
 
-import java.lang.management.GarbageCollectorMXBean;
-import java.lang.management.ManagementFactory;
-import java.lang.management.MemoryPoolMXBean;
-import java.lang.management.MemoryUsage;
+import com.sun.management.GarbageCollectionNotificationInfo;
+import com.sun.management.GcInfo;
+import io.micrometer.common.Tag;
+import io.micrometer.core.instrument.Gauge;
+import io.micrometer.core.instrument.MeterRegistry;
+import io.micrometer.core.instrument.binder.BaseUnits;
+import io.micrometer.core.instrument.binder.MeterBinder;
+import io.micrometer.core.instrument.distribution.TimeWindowSum;
+import io.micrometer.core.lang.NonNull;
+
+import javax.management.ListenerNotFoundException;
+import javax.management.NotificationEmitter;
+import javax.management.NotificationListener;
+import javax.management.openmbean.CompositeData;
+import java.lang.management.*;
 import java.time.Duration;
 import java.util.List;
 import java.util.Map;
@@ -26,20 +37,6 @@ import java.util.Set;
 import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.stream.Collectors;
-
-import javax.management.ListenerNotFoundException;
-import javax.management.NotificationEmitter;
-import javax.management.NotificationListener;
-import javax.management.openmbean.CompositeData;
-
-import com.sun.management.GarbageCollectionNotificationInfo;
-import com.sun.management.GcInfo;
-import io.micrometer.core.instrument.Gauge;
-import io.micrometer.core.instrument.MeterRegistry;
-import io.micrometer.core.instrument.binder.BaseUnits;
-import io.micrometer.core.instrument.binder.MeterBinder;
-import io.micrometer.core.instrument.distribution.TimeWindowSum;
-import io.micrometer.core.lang.NonNull;
 
 import static java.util.Collections.emptyList;
 
@@ -51,7 +48,7 @@ import static java.util.Collections.emptyList;
  * @since 1.4.0
  */
 public class JvmHeapPressureMetrics implements MeterBinder, AutoCloseable {
-    private final Iterable<? extends io.micrometer.common.Tag> tags;
+    private final Iterable<? extends Tag> tags;
 
     private final List<Runnable> notificationListenerCleanUpRunnables = new CopyOnWriteArrayList<>();
 
@@ -66,7 +63,7 @@ public class JvmHeapPressureMetrics implements MeterBinder, AutoCloseable {
         this(emptyList(), Duration.ofMinutes(5), Duration.ofMinutes(1));
     }
 
-    public JvmHeapPressureMetrics(Iterable<? extends io.micrometer.common.Tag> tags, Duration lookback, Duration testEvery) {
+    public JvmHeapPressureMetrics(Iterable<? extends Tag> tags, Duration lookback, Duration testEvery) {
         this.tags = tags;
         this.lookback = lookback;
         this.gcPauseSum = new TimeWindowSum((int) lookback.dividedBy(testEvery.toMillis()).toMillis(), testEvery);

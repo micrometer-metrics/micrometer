@@ -15,16 +15,18 @@
  */
 package io.micrometer.binder.jvm;
 
-import java.lang.management.ManagementFactory;
-import java.lang.management.ThreadMXBean;
-import java.util.Arrays;
-
+import io.micrometer.common.Tag;
+import io.micrometer.common.Tags;
 import io.micrometer.core.instrument.Gauge;
 import io.micrometer.core.instrument.MeterRegistry;
 import io.micrometer.core.instrument.binder.BaseUnits;
 import io.micrometer.core.instrument.binder.MeterBinder;
 import io.micrometer.core.lang.NonNullApi;
 import io.micrometer.core.lang.NonNullFields;
+
+import java.lang.management.ManagementFactory;
+import java.lang.management.ThreadMXBean;
+import java.util.Arrays;
 
 import static java.util.Collections.emptyList;
 
@@ -37,13 +39,13 @@ import static java.util.Collections.emptyList;
 @NonNullApi
 @NonNullFields
 public class JvmThreadMetrics implements MeterBinder {
-    private final Iterable<? extends io.micrometer.common.Tag> tags;
+    private final Iterable<? extends Tag> tags;
 
     public JvmThreadMetrics() {
         this(emptyList());
     }
 
-    public JvmThreadMetrics(Iterable<? extends io.micrometer.common.Tag> tags) {
+    public JvmThreadMetrics(Iterable<? extends Tag> tags) {
         this.tags = tags;
     }
 
@@ -73,7 +75,7 @@ public class JvmThreadMetrics implements MeterBinder {
             threadBean.getAllThreadIds();
             for (Thread.State state : Thread.State.values()) {
                 Gauge.builder("jvm.threads.states", threadBean, (bean) -> getThreadStateCount(bean, state))
-                        .tags(io.micrometer.common.Tags.concat(tags, "state", getStateTagValue(state)))
+                        .tags(Tags.concat(tags, "state", getStateTagValue(state)))
                         .description("The current number of threads having " + state + " state")
                         .baseUnit(BaseUnits.THREADS)
                         .register(registry);

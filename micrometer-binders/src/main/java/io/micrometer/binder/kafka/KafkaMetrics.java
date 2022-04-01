@@ -15,22 +15,8 @@
  */
 package io.micrometer.binder.kafka;
 
-import java.time.Duration;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
-import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.Executors;
-import java.util.concurrent.ScheduledExecutorService;
-import java.util.concurrent.TimeUnit;
-import java.util.concurrent.atomic.AtomicReference;
-import java.util.function.Supplier;
-import java.util.function.ToDoubleFunction;
-import java.util.stream.Collectors;
-
+import io.micrometer.common.Tag;
+import io.micrometer.common.Tags;
 import io.micrometer.core.annotation.Incubating;
 import io.micrometer.core.instrument.FunctionCounter;
 import io.micrometer.core.instrument.Gauge;
@@ -40,6 +26,18 @@ import io.micrometer.core.instrument.binder.MeterBinder;
 import io.micrometer.core.instrument.util.NamedThreadFactory;
 import io.micrometer.core.lang.NonNullApi;
 import io.micrometer.core.lang.NonNullFields;
+
+import java.time.Duration;
+import java.util.*;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.Executors;
+import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicReference;
+import java.util.function.Supplier;
+import java.util.function.ToDoubleFunction;
+import java.util.stream.Collectors;
+
 import io.micrometer.core.lang.Nullable;
 import io.micrometer.core.util.internal.logging.InternalLogger;
 import io.micrometer.core.util.internal.logging.InternalLoggerFactory;
@@ -76,12 +74,12 @@ class KafkaMetrics implements MeterBinder, AutoCloseable {
 
     private final Supplier<Map<MetricName, ? extends Metric>> metricsSupplier;
     private final AtomicReference<Map<MetricName, ? extends Metric>> metrics = new AtomicReference<>();
-    private final Iterable<? extends io.micrometer.common.Tag> extraTags;
+    private final Iterable<? extends Tag> extraTags;
     private final Duration refreshInterval;
     private final ScheduledExecutorService scheduler = Executors.newSingleThreadScheduledExecutor(new NamedThreadFactory("micrometer-kafka-metrics"));
 
     @Nullable
-    private Iterable<? extends io.micrometer.common.Tag> commonTags;
+    private Iterable<? extends Tag> commonTags;
 
     /**
      * Keeps track of current set of metrics.
@@ -99,11 +97,11 @@ class KafkaMetrics implements MeterBinder, AutoCloseable {
         this(metricsSupplier, emptyList());
     }
 
-    KafkaMetrics(Supplier<Map<MetricName, ? extends Metric>> metricsSupplier, Iterable<? extends io.micrometer.common.Tag> extraTags) {
+    KafkaMetrics(Supplier<Map<MetricName, ? extends Metric>> metricsSupplier, Iterable<? extends Tag> extraTags) {
         this(metricsSupplier, extraTags, DEFAULT_REFRESH_INTERVAL);
     }
 
-    KafkaMetrics(Supplier<Map<MetricName, ? extends Metric>> metricsSupplier, Iterable<? extends io.micrometer.common.Tag> extraTags, Duration refreshInterval) {
+    KafkaMetrics(Supplier<Map<MetricName, ? extends Metric>> metricsSupplier, Iterable<? extends Tag> extraTags, Duration refreshInterval) {
         this.metricsSupplier = metricsSupplier;
         this.extraTags = extraTags;
         this.refreshInterval = refreshInterval;
@@ -119,7 +117,7 @@ class KafkaMetrics implements MeterBinder, AutoCloseable {
         scheduler.scheduleAtFixedRate(() -> checkAndBindMetrics(registry), getRefreshIntervalInMillis(), getRefreshIntervalInMillis(), TimeUnit.MILLISECONDS);
     }
 
-    private Iterable<? extends io.micrometer.common.Tag> getCommonTags(MeterRegistry registry) {
+    private Iterable<? extends Tag> getCommonTags(MeterRegistry registry) {
         // FIXME hack until we have proper API to retrieve common tags
         Meter.Id dummyId = Meter.builder("delete.this", OTHER, Collections.emptyList()).register(registry).getId();
         registry.remove(dummyId);
@@ -198,8 +196,8 @@ class KafkaMetrics implements MeterBinder, AutoCloseable {
                     boolean hasLessTags = false;
                     for (Meter other : registryMetersByNames.getOrDefault(meterName, emptyList())) {
                         Meter.Id otherId = other.getId();
-                        List<? extends io.micrometer.common.Tag> tags = otherId.getTags();
-                        List<? extends io.micrometer.common.Tag> meterTagsWithCommonTags = meterTags(name, true);
+                        List<? extends Tag> tags = otherId.getTags();
+                        List<? extends Tag> meterTagsWithCommonTags = meterTags(name, true);
                         if (tags.size() < meterTagsWithCommonTags.size()) {
                             registry.remove(otherId);
                             registeredMeterIds.remove(otherId);
@@ -212,7 +210,7 @@ class KafkaMetrics implements MeterBinder, AutoCloseable {
                     }
                     if (hasLessTags) return;
 
-                    List<? extends io.micrometer.common.Tag> tags = meterTags(name);
+                    List<? extends Tag> tags = meterTags(name);
                     try {
                         Meter meter = bindMeter(registry, metric.metricName(), meterName, tags);
                         List<Meter> meters = registryMetersByNames.computeIfAbsent(meterName, k -> new ArrayList<>());
@@ -236,13 +234,13 @@ class KafkaMetrics implements MeterBinder, AutoCloseable {
         }
     }
 
-    private Meter bindMeter(MeterRegistry registry, MetricName metricName, String meterName, Iterable<? extends io.micrometer.common.Tag> tags) {
+    private Meter bindMeter(MeterRegistry registry, MetricName metricName, String meterName, Iterable<? extends Tag> tags) {
         Meter meter = registerMeter(registry, metricName, meterName, tags);
         registeredMeterIds.add(meter.getId());
         return meter;
     }
 
-    private Meter registerMeter(MeterRegistry registry, MetricName metricName, String meterName, Iterable<? extends io.micrometer.common.Tag> tags) {
+    private Meter registerMeter(MeterRegistry registry, MetricName metricName, String meterName, Iterable<? extends Tag> tags) {
         if (meterName.endsWith("total") || meterName.endsWith("count")) {
             return registerCounter(registry, metricName, meterName, tags);
         } else {
@@ -250,14 +248,14 @@ class KafkaMetrics implements MeterBinder, AutoCloseable {
         }
     }
 
-    private Gauge registerGauge(MeterRegistry registry, MetricName metricName, String meterName, Iterable<? extends io.micrometer.common.Tag> tags) {
+    private Gauge registerGauge(MeterRegistry registry, MetricName metricName, String meterName, Iterable<? extends Tag> tags) {
         return Gauge.builder(meterName, this.metrics, toMetricValue(metricName))
                 .tags(tags)
                 .description(metricName.description())
                 .register(registry);
     }
 
-    private FunctionCounter registerCounter(MeterRegistry registry, MetricName metricName, String meterName, Iterable<? extends io.micrometer.common.Tag> tags) {
+    private FunctionCounter registerCounter(MeterRegistry registry, MetricName metricName, String meterName, Iterable<? extends Tag> tags) {
         return FunctionCounter.builder(meterName, this.metrics, toMetricValue(metricName))
                 .tags(tags)
                 .description(metricName.description())
@@ -272,10 +270,10 @@ class KafkaMetrics implements MeterBinder, AutoCloseable {
         return (metric != null) ? ((Number) metric.metricValue()).doubleValue() : Double.NaN;
     }
 
-    private List<? extends io.micrometer.common.Tag> meterTags(MetricName metricName, boolean includeCommonTags) {
-        List<io.micrometer.common.Tag> tags = new ArrayList<>();
-        metricName.tags().forEach((key, value) -> tags.add(io.micrometer.common.Tag.of(key.replaceAll("-", "."), value)));
-        tags.add(io.micrometer.common.Tag.of(KAFKA_VERSION_TAG_NAME, kafkaVersion));
+    private List<? extends Tag> meterTags(MetricName metricName, boolean includeCommonTags) {
+        List<Tag> tags = new ArrayList<>();
+        metricName.tags().forEach((key, value) -> tags.add(Tag.of(key.replaceAll("-", "."), value)));
+        tags.add(Tag.of(KAFKA_VERSION_TAG_NAME, kafkaVersion));
         extraTags.forEach(tags::add);
         if (includeCommonTags) {
             commonTags.forEach(tags::add);
@@ -283,7 +281,7 @@ class KafkaMetrics implements MeterBinder, AutoCloseable {
         return tags;
     }
 
-    private List<? extends io.micrometer.common.Tag> meterTags(MetricName metricName) {
+    private List<? extends Tag> meterTags(MetricName metricName) {
         return meterTags(metricName, false);
     }
 
@@ -293,7 +291,7 @@ class KafkaMetrics implements MeterBinder, AutoCloseable {
     }
 
     private Meter.Id meterIdForComparison(MetricName metricName) {
-        return new Meter.Id(meterName(metricName), io.micrometer.common.Tags.of(meterTags(metricName, true)), null, null, OTHER);
+        return new Meter.Id(meterName(metricName), Tags.of(meterTags(metricName, true)), null, null, OTHER);
     }
 
     @Override
