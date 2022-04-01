@@ -15,6 +15,24 @@
  */
 package io.micrometer.cloudwatch;
 
+import com.amazonaws.AbortedException;
+import com.amazonaws.handlers.AsyncHandler;
+import com.amazonaws.services.cloudwatch.AmazonCloudWatchAsync;
+import com.amazonaws.services.cloudwatch.model.Dimension;
+import com.amazonaws.services.cloudwatch.model.MetricDatum;
+import com.amazonaws.services.cloudwatch.model.PutMetricDataRequest;
+import com.amazonaws.services.cloudwatch.model.PutMetricDataResult;
+import com.amazonaws.services.cloudwatch.model.StandardUnit;
+import io.micrometer.common.Tag;
+import io.micrometer.core.instrument.*;
+import io.micrometer.core.instrument.step.StepMeterRegistry;
+import io.micrometer.core.instrument.util.NamedThreadFactory;
+import io.micrometer.core.instrument.util.StringUtils;
+import io.micrometer.core.lang.Nullable;
+import io.micrometer.core.util.internal.logging.WarnThenDebugLogger;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import java.util.Collections;
 import java.util.Date;
 import java.util.HashMap;
@@ -25,32 +43,6 @@ import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ThreadFactory;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Stream;
-
-import com.amazonaws.AbortedException;
-import com.amazonaws.handlers.AsyncHandler;
-import com.amazonaws.services.cloudwatch.AmazonCloudWatchAsync;
-import com.amazonaws.services.cloudwatch.model.Dimension;
-import com.amazonaws.services.cloudwatch.model.MetricDatum;
-import com.amazonaws.services.cloudwatch.model.PutMetricDataRequest;
-import com.amazonaws.services.cloudwatch.model.PutMetricDataResult;
-import com.amazonaws.services.cloudwatch.model.StandardUnit;
-import io.micrometer.core.instrument.Clock;
-import io.micrometer.core.instrument.Counter;
-import io.micrometer.core.instrument.DistributionSummary;
-import io.micrometer.core.instrument.FunctionCounter;
-import io.micrometer.core.instrument.FunctionTimer;
-import io.micrometer.core.instrument.Gauge;
-import io.micrometer.core.instrument.LongTaskTimer;
-import io.micrometer.core.instrument.Meter;
-import io.micrometer.core.instrument.TimeGauge;
-import io.micrometer.core.instrument.Timer;
-import io.micrometer.core.instrument.step.StepMeterRegistry;
-import io.micrometer.core.instrument.util.NamedThreadFactory;
-import io.micrometer.core.instrument.util.StringUtils;
-import io.micrometer.core.lang.Nullable;
-import io.micrometer.core.util.internal.logging.WarnThenDebugLogger;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import static java.util.stream.Collectors.toList;
 import static java.util.stream.StreamSupport.stream;
@@ -281,7 +273,7 @@ public class CloudWatchMeterRegistry extends StepMeterRegistry {
                 return null;
             }
 
-            List<? extends io.micrometer.common.Tag> tags = id.getConventionTags(config().namingConvention());
+            List<? extends Tag> tags = id.getConventionTags(config().namingConvention());
             return new MetricDatum()
                     .withMetricName(getMetricName(id, suffix))
                     .withDimensions(toDimensions(tags))
@@ -304,14 +296,14 @@ public class CloudWatchMeterRegistry extends StepMeterRegistry {
             return standardUnit != null ? standardUnit : StandardUnit.None;
         }
 
-        private List<Dimension> toDimensions(List<? extends io.micrometer.common.Tag> tags) {
+        private List<Dimension> toDimensions(List<? extends Tag> tags) {
             return tags.stream()
                     .filter(this::isAcceptableTag)
                     .map(tag -> new Dimension().withName(tag.getKey()).withValue(tag.getValue()))
                     .collect(toList());
         }
 
-        private boolean isAcceptableTag(io.micrometer.common.Tag tag) {
+        private boolean isAcceptableTag(Tag tag) {
             if (StringUtils.isBlank(tag.getValue())) {
                 warnThenDebugLogger.log("Dropping a tag with key '" + tag.getKey() + "' because its value is blank.");
                 return false;

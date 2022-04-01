@@ -15,11 +15,6 @@
  */
 package io.micrometer.atlas;
 
-import java.util.List;
-import java.util.concurrent.TimeUnit;
-import java.util.function.ToDoubleFunction;
-import java.util.function.ToLongFunction;
-
 import com.netflix.spectator.api.BasicTag;
 import com.netflix.spectator.api.Id;
 import com.netflix.spectator.api.Registry;
@@ -28,13 +23,8 @@ import com.netflix.spectator.api.histogram.PercentileTimer;
 import com.netflix.spectator.api.patterns.PolledMeter;
 import com.netflix.spectator.atlas.AtlasConfig;
 import com.netflix.spectator.atlas.AtlasRegistry;
-import io.micrometer.core.instrument.Clock;
-import io.micrometer.core.instrument.FunctionCounter;
-import io.micrometer.core.instrument.FunctionTimer;
-import io.micrometer.core.instrument.LongTaskTimer;
-import io.micrometer.core.instrument.Meter;
-import io.micrometer.core.instrument.MeterRegistry;
-import io.micrometer.core.instrument.Timer;
+import io.micrometer.common.Tags;
+import io.micrometer.core.instrument.*;
 import io.micrometer.core.instrument.distribution.DistributionStatisticConfig;
 import io.micrometer.core.instrument.distribution.HistogramGauges;
 import io.micrometer.core.instrument.distribution.HistogramSupport;
@@ -45,6 +35,11 @@ import io.micrometer.core.instrument.step.StepFunctionCounter;
 import io.micrometer.core.instrument.step.StepFunctionTimer;
 import io.micrometer.core.instrument.util.DoubleFormat;
 import io.micrometer.core.lang.Nullable;
+
+import java.util.List;
+import java.util.concurrent.TimeUnit;
+import java.util.function.ToDoubleFunction;
+import java.util.function.ToLongFunction;
 
 import static java.util.stream.Collectors.toList;
 import static java.util.stream.StreamSupport.stream;
@@ -120,10 +115,10 @@ public class AtlasMeterRegistry extends MeterRegistry {
 
         HistogramGauges.register(summary, this,
                 percentile -> id.getName(),
-                percentile -> io.micrometer.common.Tags.concat(id.getTagsAsIterable(), "percentile", DoubleFormat.decimalOrNan(percentile.percentile())),
+                percentile -> Tags.concat(id.getTagsAsIterable(), "percentile", DoubleFormat.decimalOrNan(percentile.percentile())),
                 ValueAtPercentile::value,
                 bucket -> id.getName(),
-                bucket -> io.micrometer.common.Tags.concat(id.getTagsAsIterable(), "service.level.objective", DoubleFormat.wholeOrDecimal(bucket.bucket())));
+                bucket -> Tags.concat(id.getTagsAsIterable(), "service.level.objective", DoubleFormat.wholeOrDecimal(bucket.bucket())));
 
         return summary;
     }
@@ -148,10 +143,10 @@ public class AtlasMeterRegistry extends MeterRegistry {
     private void registerHistogramGauges(HistogramSupport histogramSupport, Meter.Id id, TimeUnit baseTimeUnit) {
         HistogramGauges.register(histogramSupport, this,
                 percentile -> id.getName(),
-                percentile -> io.micrometer.common.Tags.concat(id.getTagsAsIterable(), "percentile", DoubleFormat.decimalOrNan(percentile.percentile())),
+                percentile -> Tags.concat(id.getTagsAsIterable(), "percentile", DoubleFormat.decimalOrNan(percentile.percentile())),
                 percentile -> percentile.value(baseTimeUnit),
                 bucket -> id.getName(),
-                bucket -> io.micrometer.common.Tags.concat(id.getTagsAsIterable(), "service.level.objective", DoubleFormat.wholeOrDecimal(bucket.bucket(baseTimeUnit))));
+                bucket -> Tags.concat(id.getTagsAsIterable(), "service.level.objective", DoubleFormat.wholeOrDecimal(bucket.bucket(baseTimeUnit))));
     }
 
     private Id spectatorId(Meter.Id id) {

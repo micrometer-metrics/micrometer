@@ -15,20 +15,14 @@
  */
 package io.micrometer.prometheus;
 
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Optional;
-import java.util.concurrent.ConcurrentHashMap;
-import java.util.stream.Stream;
-
+import io.micrometer.common.Tag;
 import io.micrometer.core.instrument.Meter;
 import io.micrometer.core.instrument.config.NamingConvention;
 import io.prometheus.client.Collector;
+
+import java.util.*;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.stream.Stream;
 
 import static java.util.stream.Collectors.toList;
 
@@ -48,7 +42,7 @@ class MicrometerCollector extends Collector implements Collector.Describable {
     public MicrometerCollector(Meter.Id id, NamingConvention convention, PrometheusConfig config) {
         this.id = id;
         this.conventionName = id.getConventionName(convention);
-        this.tagKeys = id.getConventionTags(convention).stream().map(io.micrometer.common.Tag::getKey).collect(toList());
+        this.tagKeys = id.getConventionTags(convention).stream().map(Tag::getKey).collect(toList());
         this.help = config.descriptions() ? Optional.ofNullable(id.getDescription()).orElse(" ") : " ";
     }
 

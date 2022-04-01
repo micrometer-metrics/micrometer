@@ -16,6 +16,7 @@
 package io.micrometer.dynatrace.v2;
 
 import com.dynatrace.metric.util.*;
+import io.micrometer.common.Tag;
 import io.micrometer.core.instrument.Timer;
 import io.micrometer.core.instrument.*;
 import io.micrometer.core.instrument.distribution.HistogramSnapshot;
@@ -249,7 +250,7 @@ public final class DynatraceExporterV2 extends AbstractDynatraceExporter {
                 .setTimestamp(Instant.ofEpochMilli(clock.wallTime()));
     }
 
-    private DimensionList fromTags(List<? extends io.micrometer.common.Tag> tags) {
+    private DimensionList fromTags(List<? extends Tag> tags) {
         return DimensionList.fromCollection(tags.stream()
                 .map(tag -> Dimension.create(tag.getKey(), tag.getValue()))
                 .collect(Collectors.toList())

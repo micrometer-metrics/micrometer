@@ -15,6 +15,7 @@
  */
 package io.micrometer.elastic;
 
+import io.micrometer.common.Tag;
 import io.micrometer.core.instrument.*;
 import io.micrometer.core.instrument.distribution.HistogramSnapshot;
 import io.micrometer.core.instrument.step.StepMeterRegistry;
@@ -412,8 +413,8 @@ public class ElasticMeterRegistry extends StepMeterRegistry {
                 .append(",\"name\":\"").append(escapeJson(name)).append('"')
                 .append(",\"type\":\"").append(type).append('"');
 
-        List<? extends io.micrometer.common.Tag> tags = getConventionTags(meter.getId());
-        for (io.micrometer.common.Tag tag : tags) {
+        List<? extends Tag> tags = getConventionTags(meter.getId());
+        for (Tag tag : tags) {
             sb.append(",\"").append(escapeJson(tag.getKey())).append("\":\"")
                     .append(escapeJson(tag.getValue())).append('"');
         }

@@ -15,27 +15,9 @@
  */
 package io.micrometer.cloudwatch2;
 
-import java.time.Instant;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Objects;
-import java.util.concurrent.CountDownLatch;
-import java.util.concurrent.ThreadFactory;
-import java.util.concurrent.TimeUnit;
-import java.util.stream.Stream;
-
-import io.micrometer.core.instrument.Clock;
-import io.micrometer.core.instrument.Counter;
-import io.micrometer.core.instrument.DistributionSummary;
-import io.micrometer.core.instrument.FunctionCounter;
-import io.micrometer.core.instrument.FunctionTimer;
-import io.micrometer.core.instrument.Gauge;
-import io.micrometer.core.instrument.LongTaskTimer;
-import io.micrometer.core.instrument.Meter;
-import io.micrometer.core.instrument.TimeGauge;
+import io.micrometer.common.Tag;
 import io.micrometer.core.instrument.Timer;
+import io.micrometer.core.instrument.*;
 import io.micrometer.core.instrument.step.StepMeterRegistry;
 import io.micrometer.core.instrument.util.NamedThreadFactory;
 import io.micrometer.core.instrument.util.StringUtils;
@@ -49,6 +31,13 @@ import software.amazon.awssdk.services.cloudwatch.model.Dimension;
 import software.amazon.awssdk.services.cloudwatch.model.MetricDatum;
 import software.amazon.awssdk.services.cloudwatch.model.PutMetricDataRequest;
 import software.amazon.awssdk.services.cloudwatch.model.StandardUnit;
+
+import java.time.Instant;
+import java.util.*;
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.ThreadFactory;
+import java.util.concurrent.TimeUnit;
+import java.util.stream.Stream;
 
 import static java.util.stream.Collectors.toList;
 import static java.util.stream.StreamSupport.stream;
@@ -270,7 +259,7 @@ public class CloudWatchMeterRegistry extends StepMeterRegistry {
                 return null;
             }
 
-            List<? extends io.micrometer.common.Tag> tags = id.getConventionTags(config().namingConvention());
+            List<? extends Tag> tags = id.getConventionTags(config().namingConvention());
             return MetricDatum.builder()
                     .storageResolution(config.highResolution() ? 1 : 60)
                     .metricName(getMetricName(id, suffix))
@@ -296,14 +285,14 @@ public class CloudWatchMeterRegistry extends StepMeterRegistry {
             return standardUnit != null ? standardUnit : StandardUnit.NONE;
         }
 
-        private List<Dimension> toDimensions(List<? extends io.micrometer.common.Tag> tags) {
+        private List<Dimension> toDimensions(List<? extends Tag> tags) {
             return tags.stream()
                     .filter(this::isAcceptableTag)
                     .map(tag -> Dimension.builder().name(tag.getKey()).value(tag.getValue()).build())
                     .collect(toList());
         }
 
-        private boolean isAcceptableTag(io.micrometer.common.Tag tag) {
+        private boolean isAcceptableTag(Tag tag) {
             if (StringUtils.isBlank(tag.getValue())) {
                 warnThenDebugLogger.log("Dropping a tag with key '" + tag.getKey() + "' because its value is blank.");
                 return false;

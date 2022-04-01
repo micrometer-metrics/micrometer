@@ -15,6 +15,7 @@
  */
 package io.micrometer.health;
 
+import io.micrometer.common.Tags;
 import io.micrometer.core.instrument.Timer;
 import io.micrometer.core.instrument.*;
 import io.micrometer.core.instrument.binder.MeterBinder;
@@ -54,7 +55,7 @@ public abstract class ServiceLevelObjective {
     });
 
     private final String name;
-    private final io.micrometer.common.Tags tags;
+    private final Tags tags;
 
     @Nullable
     private final String baseUnit;
@@ -67,7 +68,7 @@ public abstract class ServiceLevelObjective {
 
     private final Meter.Id id;
 
-    protected ServiceLevelObjective(String name, io.micrometer.common.Tags tags, @Nullable String baseUnit, @Nullable String failedMessage) {
+    protected ServiceLevelObjective(String name, Tags tags, @Nullable String baseUnit, @Nullable String failedMessage) {
         this.name = name;
         this.tags = tags;
         this.baseUnit = baseUnit;
@@ -174,7 +175,7 @@ public abstract class ServiceLevelObjective {
 
         public static class Builder {
             private final String name;
-            private io.micrometer.common.Tags tags = io.micrometer.common.Tags.empty();
+            private Tags tags = Tags.empty();
 
             @Nullable
             private String baseUnit;
@@ -214,7 +215,7 @@ public abstract class ServiceLevelObjective {
              * @return This builder.
              */
             public final Builder tags(String... tags) {
-                return tags(io.micrometer.common.Tags.of(tags));
+                return tags(Tags.of(tags));
             }
 
             /**
@@ -335,7 +336,7 @@ public abstract class ServiceLevelObjective {
 
         public abstract static class NumericQuery {
             protected final String name;
-            private final io.micrometer.common.Tags tags;
+            private final Tags tags;
 
             @Nullable
             private final String baseUnit;
@@ -345,7 +346,7 @@ public abstract class ServiceLevelObjective {
 
             private final Collection<MeterBinder> requires;
             
-            NumericQuery(String name, io.micrometer.common.Tags tags, @Nullable String baseUnit,
+            NumericQuery(String name, Tags tags, @Nullable String baseUnit,
                          @Nullable String failedMessage, Collection<MeterBinder> requires) {
                 this.name = name;
                 this.tags = tags;
@@ -478,7 +479,7 @@ public abstract class ServiceLevelObjective {
             private final Function<Search, Search> search;
             private final Function<Search, Double> toValue;
 
-            Instant(String name, io.micrometer.common.Tags tags, @Nullable String baseUnit,
+            Instant(String name, Tags tags, @Nullable String baseUnit,
                     @Nullable String failedMessage, Collection<MeterBinder> requires,
                     Function<Search, Search> search, Function<Search, Double> toValue) {
                 super(name, tags, baseUnit, failedMessage, requires);
@@ -587,7 +588,7 @@ public abstract class ServiceLevelObjective {
         private final ServiceLevelObjective[] objectives;
         private final BinaryOperator<Boolean> combiner;
 
-        MultipleIndicator(String name, io.micrometer.common.Tags tags, @Nullable String failedMessage,
+        MultipleIndicator(String name, Tags tags, @Nullable String failedMessage,
                           ServiceLevelObjective[] objectives,
                           BinaryOperator<Boolean> combiner) {
             super(name, tags, null, failedMessage);
@@ -627,7 +628,7 @@ public abstract class ServiceLevelObjective {
 
         public static class Builder {
             private final String name;
-            private io.micrometer.common.Tags tags = io.micrometer.common.Tags.empty();
+            private Tags tags = Tags.empty();
             private final ServiceLevelObjective[] objectives;
 
             @Nullable
@@ -648,7 +649,7 @@ public abstract class ServiceLevelObjective {
              * @return This builder.
              */
             public Builder tags(String... tags) {
-                return tags(io.micrometer.common.Tags.of(tags));
+                return tags(Tags.of(tags));
             }
 
             /**
@@ -695,7 +696,7 @@ public abstract class ServiceLevelObjective {
         private final ServiceLevelObjective delegate;
 
         FilteredServiceLevelObjective(Meter.Id id, ServiceLevelObjective delegate) {
-            super(id.getName(), io.micrometer.common.Tags.of(id.getTags()), id.getBaseUnit(), id.getDescription());
+            super(id.getName(), Tags.of(id.getTags()), id.getBaseUnit(), id.getDescription());
             this.delegate = delegate;
         }
 

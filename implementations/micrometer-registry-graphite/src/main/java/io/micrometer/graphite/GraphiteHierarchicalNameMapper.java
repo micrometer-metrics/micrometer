@@ -15,12 +15,13 @@
  */
 package io.micrometer.graphite;
 
-import java.util.Arrays;
-import java.util.List;
-
+import io.micrometer.common.Tag;
 import io.micrometer.core.instrument.Meter;
 import io.micrometer.core.instrument.config.NamingConvention;
 import io.micrometer.core.instrument.util.HierarchicalNameMapper;
+
+import java.util.Arrays;
+import java.util.List;
 
 /**
  * {@link HierarchicalNameMapper} for Graphite.
@@ -46,7 +47,7 @@ public class GraphiteHierarchicalNameMapper implements HierarchicalNameMapper {
             }
         }
         hierarchicalName.append(id.getConventionName(convention));
-        for (io.micrometer.common.Tag tag : id.getTagsAsIterable()) {
+        for (Tag tag : id.getTagsAsIterable()) {
             if (!tagsAsPrefix.contains(tag.getKey())) {
                 hierarchicalName.append('.').append(convention.tagKey(tag.getKey()))
                         .append('.').append(convention.tagValue(tag.getValue()));

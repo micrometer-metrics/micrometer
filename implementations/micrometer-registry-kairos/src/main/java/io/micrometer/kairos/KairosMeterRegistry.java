@@ -15,27 +15,8 @@
  */
 package io.micrometer.kairos;
 
-import java.net.InetAddress;
-import java.net.UnknownHostException;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.concurrent.ThreadFactory;
-import java.util.concurrent.TimeUnit;
-import java.util.stream.Collectors;
-import java.util.stream.Stream;
-
-import io.micrometer.core.instrument.Clock;
-import io.micrometer.core.instrument.Counter;
-import io.micrometer.core.instrument.DistributionSummary;
-import io.micrometer.core.instrument.FunctionCounter;
-import io.micrometer.core.instrument.FunctionTimer;
-import io.micrometer.core.instrument.Gauge;
-import io.micrometer.core.instrument.LongTaskTimer;
-import io.micrometer.core.instrument.Measurement;
-import io.micrometer.core.instrument.Meter;
-import io.micrometer.core.instrument.MeterRegistry;
-import io.micrometer.core.instrument.TimeGauge;
-import io.micrometer.core.instrument.Timer;
+import io.micrometer.common.Tag;
+import io.micrometer.core.instrument.*;
 import io.micrometer.core.instrument.step.StepMeterRegistry;
 import io.micrometer.core.instrument.util.DoubleFormat;
 import io.micrometer.core.instrument.util.MeterPartition;
@@ -44,6 +25,15 @@ import io.micrometer.core.ipc.http.HttpSender;
 import io.micrometer.core.ipc.http.HttpUrlConnectionSender;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
+import java.net.InetAddress;
+import java.net.UnknownHostException;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.concurrent.ThreadFactory;
+import java.util.concurrent.TimeUnit;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 import static io.micrometer.core.instrument.util.StringEscapeUtils.escapeJson;
 
@@ -179,7 +169,7 @@ public class KairosMeterRegistry extends StepMeterRegistry {
     // VisibleForTesting
     Stream<String> writeCustomMetric(Meter meter) {
         long wallTime = config().clock().wallTime();
-        List<? extends io.micrometer.common.Tag> tags = getConventionTags(meter.getId());
+        List<? extends Tag> tags = getConventionTags(meter.getId());
         List<String> metrics = new ArrayList<>();
         for (Measurement measurement : meter.measure()) {
             double value = measurement.getValue();
@@ -228,7 +218,7 @@ public class KairosMeterRegistry extends StepMeterRegistry {
             return this;
         }
 
-        KairosMetricBuilder tags(List<? extends io.micrometer.common.Tag> tags) {
+        KairosMetricBuilder tags(List<? extends Tag> tags) {
             KairosMetricBuilder tagBuilder = new KairosMetricBuilder();
             if (tags.isEmpty()) {
                 // tags field is required for KairosDB, use hostname as a default tag
@@ -238,7 +228,7 @@ public class KairosMeterRegistry extends StepMeterRegistry {
                     /* ignore */
                 }
             } else {
-                for (io.micrometer.common.Tag tag : tags) {
+                for (Tag tag : tags) {
                     tagBuilder.field(tag.getKey(), tag.getValue());
                 }
             }

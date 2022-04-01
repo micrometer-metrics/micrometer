@@ -15,22 +15,8 @@
  */
 package io.micrometer.dynatrace.v1;
 
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
-import java.util.concurrent.ConcurrentHashMap;
-import java.util.stream.Collectors;
-import java.util.stream.Stream;
-import java.util.stream.StreamSupport;
-
-import io.micrometer.core.instrument.Clock;
-import io.micrometer.core.instrument.DistributionSummary;
-import io.micrometer.core.instrument.FunctionTimer;
-import io.micrometer.core.instrument.LongTaskTimer;
-import io.micrometer.core.instrument.Measurement;
-import io.micrometer.core.instrument.Meter;
-import io.micrometer.core.instrument.Timer;
+import io.micrometer.common.Tag;
+import io.micrometer.core.instrument.*;
 import io.micrometer.core.instrument.config.NamingConvention;
 import io.micrometer.core.instrument.distribution.HistogramSnapshot;
 import io.micrometer.core.instrument.util.MeterPartition;
@@ -43,6 +29,15 @@ import io.micrometer.dynatrace.AbstractDynatraceExporter;
 import io.micrometer.dynatrace.DynatraceApiVersion;
 import io.micrometer.dynatrace.DynatraceConfig;
 import io.micrometer.dynatrace.DynatraceNamingConvention;
+
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
+import java.util.stream.StreamSupport;
 
 import static io.micrometer.dynatrace.v1.DynatraceMetricDefinition.DynatraceUnit;
 import static java.nio.charset.StandardCharsets.UTF_8;
@@ -173,13 +168,13 @@ public class DynatraceExporterV1 extends AbstractDynatraceExporter {
 
     private DynatraceCustomMetric createCustomMetric(Meter.Id id, long time, Number value, @Nullable DynatraceUnit unit) {
         final String metricId = getConventionName(id);
-        final List<? extends io.micrometer.common.Tag> tags = getConventionTags(id);
+        final List<? extends Tag> tags = getConventionTags(id);
         return new DynatraceCustomMetric(
                 new DynatraceMetricDefinition(metricId, id.getDescription(), unit, extractDimensions(tags), new String[]{config.technologyType()}, config.group()),
                 new DynatraceTimeSeries(metricId, time, value.doubleValue(), extractDimensionValues(tags)));
     }
 
-    private List<? extends io.micrometer.common.Tag> getConventionTags(Meter.Id id) {
+    private List<? extends Tag> getConventionTags(Meter.Id id) {
         return id.getConventionTags(namingConvention);
     }
 
@@ -187,12 +182,12 @@ public class DynatraceExporterV1 extends AbstractDynatraceExporter {
         return id.getConventionName(namingConvention);
     }
 
-    private Set<String> extractDimensions(List<? extends io.micrometer.common.Tag> tags) {
-        return tags.stream().map(io.micrometer.common.Tag::getKey).collect(Collectors.toSet());
+    private Set<String> extractDimensions(List<? extends Tag> tags) {
+        return tags.stream().map(Tag::getKey).collect(Collectors.toSet());
     }
 
-    private Map<String, String> extractDimensionValues(List<? extends io.micrometer.common.Tag> tags) {
-        return tags.stream().collect(Collectors.toMap(io.micrometer.common.Tag::getKey, io.micrometer.common.Tag::getValue));
+    private Map<String, String> extractDimensionValues(List<? extends Tag> tags) {
+        return tags.stream().collect(Collectors.toMap(Tag::getKey, Tag::getValue));
     }
 
     private boolean isCustomMetricNotCreated(final DynatraceMetricDefinition metric) {

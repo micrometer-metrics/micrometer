@@ -15,6 +15,7 @@
  */
 package io.micrometer.appoptics;
 
+import io.micrometer.common.Tag;
 import io.micrometer.core.instrument.*;
 import io.micrometer.core.instrument.config.MeterFilter;
 import io.micrometer.core.instrument.distribution.HistogramSnapshot;
@@ -260,7 +261,7 @@ public class AppOpticsMeterRegistry extends StepMeterRegistry {
             sb.append(",\"").append(statistics[i]).append("\":").append(statistics[i + 1]);
         }
 
-        List<? extends io.micrometer.common.Tag> tags = id.getTags();
+        List<? extends Tag> tags = id.getTags();
 
         sb.append(",\"tags\":{");
         if (type != null) {

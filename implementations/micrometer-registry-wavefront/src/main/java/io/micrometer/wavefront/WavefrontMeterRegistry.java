@@ -19,6 +19,7 @@ import com.wavefront.sdk.common.WavefrontSender;
 import com.wavefront.sdk.common.clients.WavefrontClient;
 import com.wavefront.sdk.entities.histograms.HistogramGranularity;
 import com.wavefront.sdk.entities.histograms.WavefrontHistogramImpl;
+import io.micrometer.common.Tag;
 import io.micrometer.core.instrument.*;
 import io.micrometer.core.instrument.cumulative.CumulativeCounter;
 import io.micrometer.core.instrument.cumulative.CumulativeFunctionCounter;
@@ -286,7 +287,7 @@ public class WavefrontMeterRegistry extends PushMeterRegistry {
     private Map<String, String> getTagsAsMap(Meter.Id id) {
         return getConventionTags(id)
                 .stream()
-                .collect(Collectors.toMap(io.micrometer.common.Tag::getKey, io.micrometer.common.Tag::getValue, (tag1, tag2) -> tag2));
+                .collect(Collectors.toMap(Tag::getKey, Tag::getValue, (tag1, tag2) -> tag2));
     }
 
     private Meter.Id idWithSuffix(Meter.Id id, String suffix) {
