@@ -15,6 +15,8 @@
  */
 package io.micrometer.binder.jersey.server;
 
+import io.micrometer.common.Tag;
+import io.micrometer.common.Tags;
 import org.glassfish.jersey.server.ContainerResponse;
 import org.glassfish.jersey.server.monitoring.RequestEvent;
 
@@ -28,15 +30,15 @@ import org.glassfish.jersey.server.monitoring.RequestEvent;
 public final class DefaultJerseyTagsProvider implements JerseyTagsProvider {
 
     @Override
-    public Iterable<io.micrometer.common.Tag> httpRequestTags(RequestEvent event) {
+    public Iterable<Tag> httpRequestTags(RequestEvent event) {
         ContainerResponse response = event.getContainerResponse();
-        return io.micrometer.common.Tags.of(JerseyTags.method(event.getContainerRequest()), JerseyTags.uri(event),
+        return Tags.of(JerseyTags.method(event.getContainerRequest()), JerseyTags.uri(event),
                 JerseyTags.exception(event), JerseyTags.status(response), JerseyTags.outcome(response));
     }
 
     @Override
-    public Iterable<io.micrometer.common.Tag> httpLongRequestTags(RequestEvent event) {
-        return io.micrometer.common.Tags.of(JerseyTags.method(event.getContainerRequest()), JerseyTags.uri(event));
+    public Iterable<Tag> httpLongRequestTags(RequestEvent event) {
+        return Tags.of(JerseyTags.method(event.getContainerRequest()), JerseyTags.uri(event));
     }
 
 }

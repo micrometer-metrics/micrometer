@@ -15,11 +15,13 @@
  */
 package io.micrometer.binder.jetty;
 
+import io.micrometer.common.Tag;
+import io.micrometer.common.Tags;
 import io.micrometer.core.annotation.Incubating;
 import org.eclipse.jetty.client.api.Result;
 
 /**
- * Provides {@link io.micrometer.common.Tag Tags} for Jetty {@link org.eclipse.jetty.client.HttpClient} request metrics.
+ * Provides {@link Tag Tags} for Jetty {@link org.eclipse.jetty.client.HttpClient} request metrics.
  * Incubating in case there emerges a better way to handle path variable detection.
  *
  * @author Jon Schneider
@@ -34,8 +36,8 @@ public interface JettyClientTagsProvider {
      * @param result the request result
      * @return tags to associate with metrics recorded for the request
      */
-    default Iterable<? extends io.micrometer.common.Tag> httpRequestTags(Result result) {
-        return io.micrometer.common.Tags.of(JettyClientTags.method(result.getRequest()),
+    default Iterable<? extends Tag> httpRequestTags(Result result) {
+        return Tags.of(JettyClientTags.method(result.getRequest()),
                 JettyClientTags.host(result.getRequest()),
                 JettyClientTags.uri(result, this::uriPattern),
                 JettyClientTags.exception(result), JettyClientTags.status(result),

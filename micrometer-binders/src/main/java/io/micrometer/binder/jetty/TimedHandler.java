@@ -25,6 +25,7 @@ import javax.servlet.ServletException;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
+import io.micrometer.common.Tag;
 import io.micrometer.core.instrument.Counter;
 import io.micrometer.core.instrument.Gauge;
 import io.micrometer.core.instrument.LongTaskTimer;
@@ -57,7 +58,7 @@ public class TimedHandler extends HandlerWrapper implements Graceful {
     private static final String SAMPLE_REQUEST_LONG_TASK_TIMER_ATTRIBUTE = "__micrometer_ltt_sample";
 
     private final MeterRegistry registry;
-    private final Iterable<? extends io.micrometer.common.Tag> tags;
+    private final Iterable<? extends Tag> tags;
     private final HttpServletRequestTagsProvider tagsProvider;
 
     private final Shutdown shutdown = new Shutdown() {
@@ -72,11 +73,11 @@ public class TimedHandler extends HandlerWrapper implements Graceful {
     private final Counter asyncExpires;
     private final AtomicInteger asyncWaits = new AtomicInteger();
 
-    public TimedHandler(MeterRegistry registry, Iterable<? extends io.micrometer.common.Tag> tags) {
+    public TimedHandler(MeterRegistry registry, Iterable<? extends Tag> tags) {
         this(registry, tags, new DefaultHttpServletRequestTagsProvider());
     }
 
-    public TimedHandler(MeterRegistry registry, Iterable<? extends io.micrometer.common.Tag> tags, HttpServletRequestTagsProvider tagsProvider) {
+    public TimedHandler(MeterRegistry registry, Iterable<? extends Tag> tags, HttpServletRequestTagsProvider tagsProvider) {
         this.registry = registry;
         this.tags = tags;
         this.tagsProvider = tagsProvider;

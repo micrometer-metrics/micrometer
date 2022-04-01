@@ -15,9 +15,8 @@
  */
 package io.micrometer.binder.jetty;
 
-import java.util.HashMap;
-import java.util.Map;
-
+import io.micrometer.common.Tag;
+import io.micrometer.common.Tags;
 import io.micrometer.core.instrument.Counter;
 import io.micrometer.core.instrument.DistributionSummary;
 import io.micrometer.core.instrument.Gauge;
@@ -26,6 +25,8 @@ import io.micrometer.core.instrument.Timer;
 import io.micrometer.core.instrument.binder.BaseUnits;
 import io.micrometer.core.instrument.distribution.DistributionStatisticConfig;
 import io.micrometer.core.instrument.distribution.TimeWindowMax;
+import java.util.HashMap;
+import java.util.Map;
 import org.eclipse.jetty.io.Connection;
 import org.eclipse.jetty.server.Connector;
 import org.eclipse.jetty.server.HttpConnection;
@@ -52,7 +53,7 @@ import org.eclipse.jetty.util.component.AbstractLifeCycle;
  */
 public class JettyConnectionMetrics extends AbstractLifeCycle implements Connection.Listener {
     private final MeterRegistry registry;
-    private final Iterable<? extends io.micrometer.common.Tag> tags;
+    private final Iterable<? extends Tag> tags;
 
     private final Object connectionSamplesLock = new Object();
     private final Map<Connection, Timer.Sample> connectionSamples = new HashMap<>();
@@ -65,10 +66,10 @@ public class JettyConnectionMetrics extends AbstractLifeCycle implements Connect
     private final TimeWindowMax maxConnections;
 
     public JettyConnectionMetrics(MeterRegistry registry) {
-        this(registry, io.micrometer.common.Tags.empty());
+        this(registry, Tags.empty());
     }
 
-    public JettyConnectionMetrics(MeterRegistry registry, Iterable<? extends io.micrometer.common.Tag> tags) {
+    public JettyConnectionMetrics(MeterRegistry registry, Iterable<? extends Tag> tags) {
         this.registry = registry;
         this.tags = tags;
 
@@ -122,7 +123,7 @@ public class JettyConnectionMetrics extends AbstractLifeCycle implements Connect
      * @since 1.8.0
      */
     public JettyConnectionMetrics(MeterRegistry registry, Connector connector) {
-        this(registry, connector, io.micrometer.common.Tags.empty());
+        this(registry, connector, Tags.empty());
     }
 
     /**
@@ -134,13 +135,13 @@ public class JettyConnectionMetrics extends AbstractLifeCycle implements Connect
      * @param tags tags to add to metrics
      * @since 1.8.0
      */
-    public JettyConnectionMetrics(MeterRegistry registry, Connector connector, Iterable<? extends io.micrometer.common.Tag> tags) {
+    public JettyConnectionMetrics(MeterRegistry registry, Connector connector, Iterable<? extends Tag> tags) {
         this(registry, getConnectorNameTag(connector).and(tags));
     }
 
-    private static io.micrometer.common.Tags getConnectorNameTag(Connector connector) {
+    private static Tags getConnectorNameTag(Connector connector) {
         String name = connector.getName();
-        return io.micrometer.common.Tags.of("connector.name", name != null ? name : "unnamed");
+        return Tags.of("connector.name", name != null ? name : "unnamed");
     }
 
     @Override
@@ -175,7 +176,7 @@ public class JettyConnectionMetrics extends AbstractLifeCycle implements Connect
         bytesOut.record(connection.getBytesOut());
     }
 
-    public static void addToAllConnectors(Server server, MeterRegistry registry, Iterable<? extends io.micrometer.common.Tag> tags) {
+    public static void addToAllConnectors(Server server, MeterRegistry registry, Iterable<? extends Tag> tags) {
         for (Connector connector : server.getConnectors()) {
             if (connector != null) {
                 connector.addBean(new JettyConnectionMetrics(registry, connector, tags));
@@ -184,6 +185,6 @@ public class JettyConnectionMetrics extends AbstractLifeCycle implements Connect
     }
 
     public static void addToAllConnectors(Server server, MeterRegistry registry) {
-        addToAllConnectors(server, registry, io.micrometer.common.Tags.empty());
+        addToAllConnectors(server, registry, Tags.empty());
     }
 }

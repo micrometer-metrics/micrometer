@@ -15,10 +15,11 @@
  */
 package io.micrometer.binder.jersey.server;
 
+import io.micrometer.common.Tag;
 import org.glassfish.jersey.server.monitoring.RequestEvent;
 
 /**
- * Provides {@link io.micrometer.common.Tag Tags} for Jersey request metrics.
+ * Provides {@link Tag Tags} for Jersey request metrics.
  *
  * @author Michael Weirauch
  * @since 1.8.0
@@ -32,7 +33,7 @@ public interface JerseyTagsProvider {
      *            the request event
      * @return tags to associate with metrics recorded for the request
      */
-    Iterable<io.micrometer.common.Tag> httpRequestTags(RequestEvent event);
+    Iterable<Tag> httpRequestTags(RequestEvent event);
 
     /**
      * Provides tags to be associated with the
@@ -43,6 +44,6 @@ public interface JerseyTagsProvider {
      *            the request event
      * @return tags to associate with metrics recorded for the request
      */
-    Iterable<io.micrometer.common.Tag> httpLongRequestTags(RequestEvent event);
+    Iterable<Tag> httpLongRequestTags(RequestEvent event);
 
 }

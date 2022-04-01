@@ -15,14 +15,14 @@
  */
 package io.micrometer.binder.jersey.server;
 
+import io.micrometer.core.annotation.Timed;
+import io.micrometer.core.annotation.TimedSet;
+
 import java.lang.reflect.AnnotatedElement;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.Set;
 import java.util.stream.Collectors;
-
-import io.micrometer.core.annotation.Timed;
-import io.micrometer.core.annotation.TimedSet;
 
 class TimedFinder {
     private final AnnotationFinder annotationFinder;

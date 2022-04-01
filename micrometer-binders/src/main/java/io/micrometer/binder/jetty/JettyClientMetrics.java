@@ -15,8 +15,7 @@
  */
 package io.micrometer.binder.jetty;
 
-import java.util.Optional;
-
+import io.micrometer.common.Tag;
 import io.micrometer.core.annotation.Incubating;
 import io.micrometer.core.instrument.DistributionSummary;
 import io.micrometer.core.instrument.MeterRegistry;
@@ -25,6 +24,8 @@ import io.micrometer.core.instrument.config.MeterFilter;
 import io.micrometer.core.instrument.internal.OnlyOnceLoggingDenyMeterFilter;
 import org.eclipse.jetty.client.api.ContentProvider;
 import org.eclipse.jetty.client.api.Request;
+
+import java.util.Optional;
 
 /**
  * Provides request metrics for Jetty {@link org.eclipse.jetty.client.HttpClient},
@@ -66,7 +67,7 @@ public class JettyClientMetrics implements Request.Listener {
             long requestLength = Optional.ofNullable(result.getRequest().getContent())
                     .map(ContentProvider::getLength)
                     .orElse(0L);
-            Iterable<? extends io.micrometer.common.Tag> httpRequestTags = tagsProvider.httpRequestTags(result);
+            Iterable<? extends Tag> httpRequestTags = tagsProvider.httpRequestTags(result);
             if (requestLength >= 0) {
                 DistributionSummary.builder(contentSizeMetricName)
                         .description("Content sizes for Jetty HTTP client requests")
