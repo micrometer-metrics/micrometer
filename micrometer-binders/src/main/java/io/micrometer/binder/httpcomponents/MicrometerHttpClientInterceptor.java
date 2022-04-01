@@ -15,10 +15,8 @@
  */
 package io.micrometer.binder.httpcomponents;
 
-import java.util.Map;
-import java.util.concurrent.ConcurrentHashMap;
-import java.util.function.Function;
-
+import io.micrometer.common.Tag;
+import io.micrometer.common.Tags;
 import io.micrometer.core.annotation.Incubating;
 import io.micrometer.core.instrument.MeterRegistry;
 import io.micrometer.core.instrument.Timer;
@@ -26,6 +24,10 @@ import org.apache.http.HttpRequest;
 import org.apache.http.HttpRequestInterceptor;
 import org.apache.http.HttpResponseInterceptor;
 import org.apache.http.protocol.HttpContext;
+
+import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.function.Function;
 
 /**
  * Provides {@link HttpRequestInterceptor} and {@link HttpResponseInterceptor} for
@@ -64,7 +66,7 @@ public class MicrometerHttpClientInterceptor {
      */
     public MicrometerHttpClientInterceptor(MeterRegistry meterRegistry,
                                            Function<HttpRequest, String> uriMapper,
-                                           Iterable<? extends io.micrometer.common.Tag> extraTags,
+                                           Iterable<? extends Tag> extraTags,
                                            boolean exportTagsForRoute) {
         this.requestInterceptor = (request, context) -> timerByHttpContext.put(context, Timer.resource(meterRegistry, METER_NAME)
                 .tags("method", request.getRequestLine().getMethod(), "uri", uriMapper.apply(request)));
@@ -72,7 +74,7 @@ public class MicrometerHttpClientInterceptor {
         this.responseInterceptor = (response, context) -> {
             timerByHttpContext.remove(context)
                     .tag("status", Integer.toString(response.getStatusLine().getStatusCode()))
-                    .tags(exportTagsForRoute ? HttpContextUtils.generateTagsForRoute(context) : io.micrometer.common.Tags.empty())
+                    .tags(exportTagsForRoute ? HttpContextUtils.generateTagsForRoute(context) : Tags.empty())
                     .tags(extraTags)
                     .close();
         };
@@ -86,7 +88,7 @@ public class MicrometerHttpClientInterceptor {
      * @param exportTagsForRoute whether to export tags for route
      */
     public MicrometerHttpClientInterceptor(MeterRegistry meterRegistry,
-                                           Iterable<? extends io.micrometer.common.Tag> extraTags,
+                                           Iterable<? extends Tag> extraTags,
                                            boolean exportTagsForRoute) {
         this(meterRegistry, new DefaultUriMapper(), extraTags, exportTagsForRoute);
     }

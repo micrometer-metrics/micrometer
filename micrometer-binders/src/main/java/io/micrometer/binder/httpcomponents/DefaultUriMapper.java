@@ -15,10 +15,10 @@
  */
 package io.micrometer.binder.httpcomponents;
 
-import java.util.function.Function;
-
 import org.apache.http.Header;
 import org.apache.http.HttpRequest;
+
+import java.util.function.Function;
 
 /**
  * Extracts the URI pattern from the predefined request header, {@value DefaultUriMapper#URI_PATTERN_HEADER} if available.
