@@ -15,6 +15,7 @@
  */
 package io.micrometer.health;
 
+import io.micrometer.common.Tag;
 import io.micrometer.common.Tags;
 import io.micrometer.core.instrument.Timer;
 import io.micrometer.core.instrument.*;

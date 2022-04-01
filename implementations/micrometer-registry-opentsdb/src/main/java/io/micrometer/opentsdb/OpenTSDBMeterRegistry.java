@@ -15,6 +15,7 @@
  */
 package io.micrometer.opentsdb;
 
+import io.micrometer.common.ImmutableTag;
 import io.micrometer.common.Tag;
 import io.micrometer.common.Tags;
 import io.micrometer.core.instrument.*;

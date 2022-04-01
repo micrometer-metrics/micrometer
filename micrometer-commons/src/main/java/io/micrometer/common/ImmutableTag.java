@@ -26,7 +26,7 @@ import static java.util.Objects.requireNonNull;
  *
  * @author Jon Schneider
  */
-class ImmutableTag implements Tag {
+public class ImmutableTag implements Tag {
     private final String key;
     private final String value;
 
