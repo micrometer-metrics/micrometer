@@ -15,26 +15,21 @@
  */
 package io.micrometer.core.instrument.binder.hystrix;
 
-import java.util.Arrays;
-import java.util.HashMap;
-import java.util.Map;
-import java.util.concurrent.TimeUnit;
-
-import com.netflix.hystrix.HystrixCircuitBreaker;
-import com.netflix.hystrix.HystrixCommandGroupKey;
-import com.netflix.hystrix.HystrixCommandKey;
-import com.netflix.hystrix.HystrixCommandMetrics;
-import com.netflix.hystrix.HystrixEventType;
+import com.netflix.hystrix.*;
 import com.netflix.hystrix.metric.HystrixCommandCompletionStream;
 import com.netflix.hystrix.strategy.metrics.HystrixMetricsPublisherCommand;
-import io.micrometer.core.instrument.Counter;
-import io.micrometer.core.instrument.Gauge;
-import io.micrometer.core.instrument.MeterRegistry;
-import io.micrometer.core.instrument.Timer;
+import io.micrometer.common.Tag;
+import io.micrometer.common.Tags;
+import io.micrometer.core.instrument.*;
 import io.micrometer.core.lang.NonNullApi;
 import io.micrometer.core.lang.NonNullFields;
 import io.micrometer.core.util.internal.logging.InternalLogger;
 import io.micrometer.core.util.internal.logging.InternalLoggerFactory;
+
+import java.util.Arrays;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.concurrent.TimeUnit;
 
 /**
  * @deprecated Scheduled for removal in 2.0.0, please use {@code io.micrometer.binder.hystrix.MicrometerMetricsPublisherCommand}
@@ -60,7 +55,7 @@ public class MicrometerMetricsPublisherCommand implements HystrixMetricsPublishe
     private final MeterRegistry meterRegistry;
     private final HystrixCommandMetrics metrics;
     private final HystrixCircuitBreaker circuitBreaker;
-    private final Iterable<? extends io.micrometer.common.Tag> tags;
+    private final Iterable<? extends Tag> tags;
     private final HystrixCommandKey commandKey;
     private HystrixMetricsPublisherCommand metricsPublisherForCommand;
 
@@ -71,7 +66,7 @@ public class MicrometerMetricsPublisherCommand implements HystrixMetricsPublishe
         this.commandKey = commandKey;
         this.metricsPublisherForCommand = metricsPublisherForCommand;
 
-        tags = io.micrometer.common.Tags.of("group", commandGroupKey.name(), "key", commandKey.name());
+        tags = Tags.of("group", commandGroupKey.name(), "key", commandKey.name());
     }
 
     @Override
@@ -88,7 +83,7 @@ public class MicrometerMetricsPublisherCommand implements HystrixMetricsPublishe
 
         Counter terminalEventCounterTotal = Counter.builder(NAME_HYSTRIX_EXECUTION_TERMINAL_TOTAL)
             .description(DESCRIPTION_HYSTRIX_EXECUTION_TERMINAL_TOTAL)
-            .tags(io.micrometer.common.Tags.concat(tags))
+            .tags(Tags.concat(tags))
             .register(meterRegistry);
 
         final Timer latencyExecution = Timer.builder(NAME_HYSTRIX_LATENCY_EXECUTION).tags(tags).register(meterRegistry);
@@ -145,7 +140,7 @@ public class MicrometerMetricsPublisherCommand implements HystrixMetricsPublishe
     private Counter getCounter(HystrixEventType hystrixEventType) {
         return Counter.builder(NAME_HYSTRIX_EXECUTION)
             .description(DESCRIPTION_HYSTRIX_EXECUTION)
-            .tags(io.micrometer.common.Tags.concat(tags, "event", hystrixEventType.name().toLowerCase(), "terminal", Boolean.toString(hystrixEventType.isTerminal())))
+            .tags(Tags.concat(tags, "event", hystrixEventType.name().toLowerCase(), "terminal", Boolean.toString(hystrixEventType.isTerminal())))
             .register(meterRegistry);
     }
 

@@ -15,15 +15,15 @@
  */
 package io.micrometer.core.instrument.binder.cache;
 
-import java.lang.ref.WeakReference;
-
-import io.micrometer.core.instrument.FunctionCounter;
-import io.micrometer.core.instrument.Gauge;
-import io.micrometer.core.instrument.MeterRegistry;
+import io.micrometer.common.Tag;
+import io.micrometer.common.Tags;
+import io.micrometer.core.instrument.*;
 import io.micrometer.core.instrument.binder.MeterBinder;
 import io.micrometer.core.lang.NonNullApi;
 import io.micrometer.core.lang.NonNullFields;
 import io.micrometer.core.lang.Nullable;
+
+import java.lang.ref.WeakReference;
 
 /**
  * A common base class for cache metrics that ensures that all caches are instrumented
@@ -39,10 +39,10 @@ import io.micrometer.core.lang.Nullable;
 @NonNullFields
 public abstract class CacheMeterBinder<C> implements MeterBinder {
     private final WeakReference<C> cacheRef;
-    private final Iterable<? extends io.micrometer.common.Tag> tags;
+    private final Iterable<? extends Tag> tags;
 
-    public CacheMeterBinder(C cache, String cacheName, Iterable<? extends io.micrometer.common.Tag> tags) {
-        this.tags = io.micrometer.common.Tags.concat(tags, "cache", cacheName);
+    public CacheMeterBinder(C cache, String cacheName, Iterable<? extends Tag> tags) {
+        this.tags = Tags.concat(tags, "cache", cacheName);
         this.cacheRef = new WeakReference<>(cache);
     }
 
@@ -149,7 +149,7 @@ public abstract class CacheMeterBinder<C> implements MeterBinder {
      */
     protected abstract void bindImplementationSpecificMetrics(MeterRegistry registry);
 
-    protected Iterable<? extends io.micrometer.common.Tag> getTagsWithCacheName() {
+    protected Iterable<? extends Tag> getTagsWithCacheName() {
         return tags;
     }
 }

@@ -15,6 +15,7 @@
  */
 package io.micrometer.core.instrument.binder.httpcomponents;
 
+import io.micrometer.common.Tags;
 import org.apache.http.HttpHost;
 import org.apache.http.conn.routing.HttpRoute;
 import org.apache.http.protocol.HttpContext;
@@ -24,7 +25,7 @@ import org.apache.http.protocol.HttpContext;
  */
 @Deprecated
 class HttpContextUtils {
-    static io.micrometer.common.Tags generateTagsForRoute(HttpContext context) {
+    static Tags generateTagsForRoute(HttpContext context) {
         String targetScheme = "UNKNOWN";
         String targetHost = "UNKNOWN";
         String targetPort = "UNKNOWN";
@@ -35,7 +36,7 @@ class HttpContextUtils {
             targetHost = host.getHostName();
             targetPort = String.valueOf(host.getPort());
         }
-        return io.micrometer.common.Tags.of(
+        return Tags.of(
                 "target.scheme", targetScheme,
                 "target.host", targetHost,
                 "target.port", targetPort

@@ -15,6 +15,21 @@
  */
 package io.micrometer.core.instrument.binder.db;
 
+import io.micrometer.common.Tag;
+import io.micrometer.common.Tags;
+import io.micrometer.core.annotation.Incubating;
+import io.micrometer.core.instrument.MeterRegistry;
+import org.jooq.*;
+import org.jooq.Record;
+import org.jooq.conf.Settings;
+import org.jooq.exception.*;
+import org.jooq.impl.DSL;
+import org.jooq.tools.jdbc.MockCallable;
+import org.jooq.tools.jdbc.MockDataProvider;
+import org.jooq.tools.jdbc.MockRunnable;
+import org.jooq.util.xml.jaxb.InformationSchema;
+
+import javax.sql.DataSource;
 import java.math.BigInteger;
 import java.sql.Connection;
 import java.sql.DatabaseMetaData;
@@ -30,24 +45,6 @@ import java.util.concurrent.Executor;
 import java.util.function.BiFunction;
 import java.util.function.Function;
 import java.util.stream.Stream;
-
-import javax.sql.DataSource;
-
-import io.micrometer.core.annotation.Incubating;
-import io.micrometer.core.instrument.MeterRegistry;
-import org.jooq.Record;
-import org.jooq.*;
-import org.jooq.conf.Settings;
-import org.jooq.exception.ConfigurationException;
-import org.jooq.exception.DataAccessException;
-import org.jooq.exception.InvalidResultException;
-import org.jooq.exception.NoDataFoundException;
-import org.jooq.exception.TooManyRowsException;
-import org.jooq.impl.DSL;
-import org.jooq.tools.jdbc.MockCallable;
-import org.jooq.tools.jdbc.MockDataProvider;
-import org.jooq.tools.jdbc.MockRunnable;
-import org.jooq.util.xml.jaxb.InformationSchema;
 
 /**
  * Time SQL queries passing through jOOQ.
@@ -75,21 +72,21 @@ import org.jooq.util.xml.jaxb.InformationSchema;
 public class MetricsDSLContext implements DSLContext {
     private final DSLContext context;
     private final MeterRegistry registry;
-    private final Iterable<? extends io.micrometer.common.Tag> tags;
-    private final ThreadLocal<Iterable<? extends io.micrometer.common.Tag>> contextTags = new ThreadLocal<>();
+    private final Iterable<? extends Tag> tags;
+    private final ThreadLocal<Iterable<? extends Tag>> contextTags = new ThreadLocal<>();
 
     private final ExecuteListenerProvider defaultExecuteListenerProvider;
 
-    public static MetricsDSLContext withMetrics(DSLContext jooq, MeterRegistry registry, Iterable<? extends io.micrometer.common.Tag> tags) {
+    public static MetricsDSLContext withMetrics(DSLContext jooq, MeterRegistry registry, Iterable<? extends Tag> tags) {
         return new MetricsDSLContext(jooq, registry, tags);
     }
 
-    MetricsDSLContext(DSLContext context, MeterRegistry registry, Iterable<? extends io.micrometer.common.Tag> tags) {
+    MetricsDSLContext(DSLContext context, MeterRegistry registry, Iterable<? extends Tag> tags) {
         this.registry = registry;
         this.tags = tags;
 
         this.defaultExecuteListenerProvider = () -> new JooqExecuteListener(registry, tags, () -> {
-            Iterable<? extends io.micrometer.common.Tag> queryTags = contextTags.get();
+            Iterable<? extends Tag> queryTags = contextTags.get();
             contextTags.remove();
             return queryTags;
         });
@@ -105,7 +102,7 @@ public class MetricsDSLContext implements DSLContext {
     }
 
     public Configuration time(Configuration c) {
-        Iterable<? extends io.micrometer.common.Tag> queryTags = contextTags.get();
+        Iterable<? extends Tag> queryTags = contextTags.get();
         contextTags.remove();
         return derive(c, () -> new JooqExecuteListener(registry, tags, () -> queryTags));
     }
@@ -130,14 +127,14 @@ public class MetricsDSLContext implements DSLContext {
     }
 
     public DSLContext tag(String key, String name) {
-        return tags(io.micrometer.common.Tags.of(key, name));
+        return tags(Tags.of(key, name));
     }
 
-    public DSLContext tag(io.micrometer.common.Tag tag) {
-        return tags(io.micrometer.common.Tags.of(tag));
+    public DSLContext tag(Tag tag) {
+        return tags(Tags.of(tag));
     }
 
-    public DSLContext tags(Iterable<? extends io.micrometer.common.Tag> tags) {
+    public DSLContext tags(Iterable<? extends Tag> tags) {
         contextTags.set(tags);
         return this;
     }

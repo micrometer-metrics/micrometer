@@ -15,19 +15,18 @@
  */
 package io.micrometer.core.instrument.binder.cache;
 
-import java.util.concurrent.TimeUnit;
-import java.util.function.ToDoubleFunction;
-import java.util.function.ToLongFunction;
-
-import io.micrometer.core.instrument.FunctionCounter;
-import io.micrometer.core.instrument.FunctionTimer;
-import io.micrometer.core.instrument.Gauge;
-import io.micrometer.core.instrument.MeterRegistry;
+import io.micrometer.common.Tag;
+import io.micrometer.common.Tags;
+import io.micrometer.core.instrument.*;
 import io.micrometer.core.instrument.binder.BaseUnits;
 import io.micrometer.core.instrument.binder.cache.HazelcastIMapAdapter.LocalMapStats;
 import io.micrometer.core.lang.NonNullApi;
 import io.micrometer.core.lang.NonNullFields;
 import io.micrometer.core.lang.Nullable;
+
+import java.util.concurrent.TimeUnit;
+import java.util.function.ToDoubleFunction;
+import java.util.function.ToLongFunction;
 
 /**
  * Collect metrics on Hazelcast caches, including detailed metrics on storage space, near cache usage, and timings.
@@ -50,7 +49,7 @@ public class HazelcastCacheMetrics extends CacheMeterBinder<Object> {
      * @return The instrumented cache, unchanged. The original cache is not wrapped or proxied in any way.
      */
     public static Object monitor(MeterRegistry registry, Object cache, String... tags) {
-        return monitor(registry, cache, io.micrometer.common.Tags.of(tags));
+        return monitor(registry, cache, Tags.of(tags));
     }
 
     /**
@@ -61,7 +60,7 @@ public class HazelcastCacheMetrics extends CacheMeterBinder<Object> {
      * @param tags     Tags to apply to all recorded metrics.
      * @return The instrumented cache, unchanged. The original cache is not wrapped or proxied in any way.
      */
-    public static Object monitor(MeterRegistry registry, Object cache, Iterable<? extends io.micrometer.common.Tag> tags) {
+    public static Object monitor(MeterRegistry registry, Object cache, Iterable<? extends Tag> tags) {
         new HazelcastCacheMetrics(cache, tags).bindTo(registry);
         return cache;
     }
@@ -72,7 +71,7 @@ public class HazelcastCacheMetrics extends CacheMeterBinder<Object> {
      * @param cache Hazelcast IMap cache to instrument
      * @param tags  Tags to apply to all recorded metrics.
      */
-    public HazelcastCacheMetrics(Object cache, Iterable<? extends io.micrometer.common.Tag> tags) {
+    public HazelcastCacheMetrics(Object cache, Iterable<? extends Tag> tags) {
         super(cache, HazelcastIMapAdapter.nameOf(cache), tags);
         this.cache = new HazelcastIMapAdapter(cache);
     }

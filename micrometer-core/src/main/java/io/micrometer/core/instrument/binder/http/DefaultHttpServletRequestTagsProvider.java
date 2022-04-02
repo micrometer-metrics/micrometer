@@ -15,10 +15,12 @@
  */
 package io.micrometer.core.instrument.binder.http;
 
+import io.micrometer.common.Tag;
+import io.micrometer.common.Tags;
+import io.micrometer.core.annotation.Incubating;
+
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
-
-import io.micrometer.core.annotation.Incubating;
 
 /**
  * Default {@link HttpServletRequestTagsProvider}.
@@ -29,7 +31,7 @@ import io.micrometer.core.annotation.Incubating;
 @Incubating(since = "1.4.0")
 public class DefaultHttpServletRequestTagsProvider implements HttpServletRequestTagsProvider {
     @Override
-    public Iterable<? extends io.micrometer.common.Tag> getTags(HttpServletRequest request, HttpServletResponse response) {
-        return io.micrometer.common.Tags.of(HttpRequestTags.method(request), HttpRequestTags.status(response), HttpRequestTags.outcome(response));
+    public Iterable<? extends Tag> getTags(HttpServletRequest request, HttpServletResponse response) {
+        return Tags.of(HttpRequestTags.method(request), HttpRequestTags.status(response), HttpRequestTags.outcome(response));
     }
 }

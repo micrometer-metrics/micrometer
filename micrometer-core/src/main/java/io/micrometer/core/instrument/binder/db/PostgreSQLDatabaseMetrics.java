@@ -15,6 +15,15 @@
  */
 package io.micrometer.core.instrument.binder.db;
 
+import io.micrometer.common.Tag;
+import io.micrometer.common.Tags;
+import io.micrometer.core.instrument.*;
+import io.micrometer.core.instrument.binder.BaseUnits;
+import io.micrometer.core.instrument.binder.MeterBinder;
+import io.micrometer.core.lang.NonNullApi;
+import io.micrometer.core.lang.NonNullFields;
+
+import javax.sql.DataSource;
 import java.sql.Connection;
 import java.sql.ResultSet;
 import java.sql.SQLException;
@@ -22,16 +31,6 @@ import java.sql.Statement;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.function.DoubleSupplier;
-
-import javax.sql.DataSource;
-
-import io.micrometer.core.instrument.FunctionCounter;
-import io.micrometer.core.instrument.Gauge;
-import io.micrometer.core.instrument.MeterRegistry;
-import io.micrometer.core.instrument.binder.BaseUnits;
-import io.micrometer.core.instrument.binder.MeterBinder;
-import io.micrometer.core.lang.NonNullApi;
-import io.micrometer.core.lang.NonNullFields;
 
 /**
  * {@link MeterBinder} for a PostgreSQL database.
@@ -59,7 +58,7 @@ public class PostgreSQLDatabaseMetrics implements MeterBinder {
 
     private final String database;
     private final DataSource postgresDataSource;
-    private final Iterable<? extends io.micrometer.common.Tag> tags;
+    private final Iterable<? extends Tag> tags;
     private final Map<String, Double> beforeResetValuesCacheMap;
     private final Map<String, Double> previousValueCacheMap;
 
@@ -74,13 +73,13 @@ public class PostgreSQLDatabaseMetrics implements MeterBinder {
     private final String queryTransactionCount;
 
     public PostgreSQLDatabaseMetrics(DataSource postgresDataSource, String database) {
-        this(postgresDataSource, database, io.micrometer.common.Tags.empty());
+        this(postgresDataSource, database, Tags.empty());
     }
 
-    public PostgreSQLDatabaseMetrics(DataSource postgresDataSource, String database, Iterable<? extends io.micrometer.common.Tag> tags) {
+    public PostgreSQLDatabaseMetrics(DataSource postgresDataSource, String database, Iterable<? extends Tag> tags) {
         this.postgresDataSource = postgresDataSource;
         this.database = database;
-        this.tags = io.micrometer.common.Tags.of(tags).and(createDbTag(database));
+        this.tags = Tags.of(tags).and(createDbTag(database));
         this.beforeResetValuesCacheMap = new ConcurrentHashMap<>();
         this.previousValueCacheMap = new ConcurrentHashMap<>();
 
@@ -95,8 +94,8 @@ public class PostgreSQLDatabaseMetrics implements MeterBinder {
         this.queryTransactionCount = getDBStatQuery(database, "xact_commit + xact_rollback");
     }
 
-    private static io.micrometer.common.Tag createDbTag(String database) {
-        return io.micrometer.common.Tag.of("database", database);
+    private static Tag createDbTag(String database) {
+        return Tag.of("database", database);
     }
 
     @Override

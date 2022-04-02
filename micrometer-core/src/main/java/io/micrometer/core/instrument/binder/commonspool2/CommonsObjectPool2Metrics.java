@@ -15,38 +15,9 @@
  */
 package io.micrometer.core.instrument.binder.commonspool2;
 
-import java.lang.management.ManagementFactory;
-import java.util.List;
-import java.util.Objects;
-import java.util.Set;
-import java.util.concurrent.Callable;
-import java.util.concurrent.CopyOnWriteArrayList;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
-import java.util.concurrent.TimeUnit;
-import java.util.concurrent.atomic.AtomicReference;
-import java.util.function.BiConsumer;
-import java.util.function.ToDoubleFunction;
-
-import javax.management.AttributeNotFoundException;
-import javax.management.InstanceNotFoundException;
-import javax.management.ListenerNotFoundException;
-import javax.management.MBeanException;
-import javax.management.MBeanServer;
-import javax.management.MBeanServerDelegate;
-import javax.management.MBeanServerFactory;
-import javax.management.MBeanServerNotification;
-import javax.management.MalformedObjectNameException;
-import javax.management.NotificationFilter;
-import javax.management.NotificationListener;
-import javax.management.ObjectName;
-import javax.management.ReflectionException;
-
-import io.micrometer.core.instrument.FunctionCounter;
-import io.micrometer.core.instrument.Gauge;
-import io.micrometer.core.instrument.Meter;
-import io.micrometer.core.instrument.MeterRegistry;
-import io.micrometer.core.instrument.TimeGauge;
+import io.micrometer.common.Tag;
+import io.micrometer.common.Tags;
+import io.micrometer.core.instrument.*;
 import io.micrometer.core.instrument.binder.BaseUnits;
 import io.micrometer.core.instrument.binder.MeterBinder;
 import io.micrometer.core.instrument.util.NamedThreadFactory;
@@ -54,6 +25,16 @@ import io.micrometer.core.lang.NonNull;
 import io.micrometer.core.lang.Nullable;
 import io.micrometer.core.util.internal.logging.InternalLogger;
 import io.micrometer.core.util.internal.logging.InternalLoggerFactory;
+
+import javax.management.*;
+import java.lang.management.ManagementFactory;
+import java.util.List;
+import java.util.Objects;
+import java.util.Set;
+import java.util.concurrent.*;
+import java.util.concurrent.atomic.AtomicReference;
+import java.util.function.BiConsumer;
+import java.util.function.ToDoubleFunction;
 
 import static java.util.Collections.emptyList;
 
@@ -76,18 +57,18 @@ public class CommonsObjectPool2Metrics implements MeterBinder, AutoCloseable {
     private final ExecutorService executor = Executors.newSingleThreadExecutor(new NamedThreadFactory("commons-pool-metrics-updater"));
 
     private final MBeanServer mBeanServer;
-    private final Iterable<? extends io.micrometer.common.Tag> tags;
+    private final Iterable<? extends Tag> tags;
     private final List<Runnable> notificationListenerCleanUpRunnables = new CopyOnWriteArrayList<>();
 
     public CommonsObjectPool2Metrics() {
         this(emptyList());
     }
 
-    public CommonsObjectPool2Metrics(Iterable<? extends io.micrometer.common.Tag> tags) {
+    public CommonsObjectPool2Metrics(Iterable<? extends Tag> tags) {
         this(getMBeanServer(), tags);
     }
 
-    public CommonsObjectPool2Metrics(MBeanServer mBeanServer, Iterable<? extends io.micrometer.common.Tag> tags) {
+    public CommonsObjectPool2Metrics(MBeanServer mBeanServer, Iterable<? extends Tag> tags) {
         this.mBeanServer = mBeanServer;
         this.tags = tags;
     }
@@ -158,30 +139,30 @@ public class CommonsObjectPool2Metrics implements MeterBinder, AutoCloseable {
         }
     }
 
-    private Iterable<? extends io.micrometer.common.Tag> nameTag(ObjectName name, String type)
+    private Iterable<? extends Tag> nameTag(ObjectName name, String type)
             throws AttributeNotFoundException, MBeanException, ReflectionException,
             InstanceNotFoundException {
-        io.micrometer.common.Tags tags = io.micrometer.common.Tags.of("name", name.getKeyProperty("name"), "type", type);
+        Tags tags = Tags.of("name", name.getKeyProperty("name"), "type", type);
         if (Objects.equals(type, "GenericObjectPool")) {
             // for GenericObjectPool, we want to include the name and factoryType as tags
             String factoryType = mBeanServer.getAttribute(name, "FactoryType").toString();
-            tags = io.micrometer.common.Tags.concat(tags, "factoryType", factoryType);
+            tags = Tags.concat(tags, "factoryType", factoryType);
         }
         return tags;
     }
 
-    private void registerMetricsEventually(String type, BiConsumer<ObjectName, io.micrometer.common.Tags> perObject) {
+    private void registerMetricsEventually(String type, BiConsumer<ObjectName, Tags> perObject) {
         try {
             Set<ObjectName> objs =
                     mBeanServer.queryNames(new ObjectName(JMX_DOMAIN + ":type=" + type + ",*"), null);
             for (ObjectName o : objs) {
-                Iterable<? extends io.micrometer.common.Tag> nameTags = emptyList();
+                Iterable<? extends Tag> nameTags = emptyList();
                 try {
                     nameTags = nameTag(o, type);
                 } catch (Exception e) {
                     log.error("exception in determining name tag", e);
                 }
-                perObject.accept(o, io.micrometer.common.Tags.concat(tags, nameTags));
+                perObject.accept(o, Tags.concat(tags, nameTags));
             }
         } catch (MalformedObjectNameException e) {
             throw new RuntimeException("Error registering commons pool2 based metrics", e);
@@ -197,7 +178,7 @@ public class CommonsObjectPool2Metrics implements MeterBinder, AutoCloseable {
      * @param type      The pool type to listen for.
      * @param perObject Metric registration handler when a new MBean is created.
      */
-    private void registerNotificationListener(String type, BiConsumer<ObjectName, io.micrometer.common.Tags> perObject) {
+    private void registerNotificationListener(String type, BiConsumer<ObjectName, Tags> perObject) {
         NotificationListener notificationListener =
                 // in notification listener, we cannot get attributes for the registered object,
                 // so we do it later time in a separate thread.
@@ -206,7 +187,7 @@ public class CommonsObjectPool2Metrics implements MeterBinder, AutoCloseable {
                             () -> {
                                 MBeanServerNotification mbs = (MBeanServerNotification) notification;
                                 ObjectName o = mbs.getMBeanName();
-                                Iterable<? extends io.micrometer.common.Tag> nameTags = emptyList();
+                                Iterable<? extends Tag> nameTags = emptyList();
                                 int maxTries = 3;
                                 for (int i = 0; i < maxTries; i++) {
                                     try {
@@ -227,7 +208,7 @@ public class CommonsObjectPool2Metrics implements MeterBinder, AutoCloseable {
                                         }
                                     }
                                 }
-                                perObject.accept(o, io.micrometer.common.Tags.concat(tags, nameTags));
+                                perObject.accept(o, Tags.concat(tags, nameTags));
                             });
                 };
 
@@ -267,7 +248,7 @@ public class CommonsObjectPool2Metrics implements MeterBinder, AutoCloseable {
             ObjectName o,
             String jmxMetricName,
             String meterName,
-            io.micrometer.common.Tags allTags,
+            Tags allTags,
             String description,
             @Nullable String baseUnit) {
         final AtomicReference<Gauge> gauge = new AtomicReference<>();
@@ -284,7 +265,7 @@ public class CommonsObjectPool2Metrics implements MeterBinder, AutoCloseable {
         );
     }
 
-    private void registerFunctionCounterForObject(MeterRegistry registry, ObjectName o, String jmxMetricName, String meterName, io.micrometer.common.Tags allTags, String description, @Nullable String baseUnit) {
+    private void registerFunctionCounterForObject(MeterRegistry registry, ObjectName o, String jmxMetricName, String meterName, Tags allTags, String description, @Nullable String baseUnit) {
         final AtomicReference<FunctionCounter> counter = new AtomicReference<>();
         counter.set(FunctionCounter
                 .builder(
@@ -300,7 +281,7 @@ public class CommonsObjectPool2Metrics implements MeterBinder, AutoCloseable {
     }
 
     private void registerTimeGaugeForObject(MeterRegistry registry, ObjectName o, String jmxMetricName,
-                                            String meterName, io.micrometer.common.Tags allTags, String description) {
+                                            String meterName, Tags allTags, String description) {
         final AtomicReference<TimeGauge> timeGauge = new AtomicReference<>();
         timeGauge.set(TimeGauge
                 .builder(

@@ -18,6 +18,7 @@ package io.micrometer.core.instrument.binder.jersey.server;
 import java.util.stream.Collectors;
 
 import io.micrometer.common.Tag;
+import io.micrometer.common.Tags;
 import org.glassfish.jersey.server.ContainerResponse;
 import org.glassfish.jersey.server.monitoring.RequestEvent;
 
@@ -33,9 +34,9 @@ import org.glassfish.jersey.server.monitoring.RequestEvent;
 public final class DefaultJerseyTagsProvider implements JerseyTagsProvider {
 
     @Override
-    public Iterable<io.micrometer.common.Tag> httpRequestTags(RequestEvent event) {
+    public Iterable<Tag> httpRequestTags(RequestEvent event) {
         ContainerResponse response = event.getContainerResponse();
-        return (Iterable<Tag>) io.micrometer.common.Tags.of(JerseyTags.method(event.getContainerRequest()), JerseyTags.uri(event),
+        return (Iterable<Tag>) Tags.of(JerseyTags.method(event.getContainerRequest()), JerseyTags.uri(event),
                 JerseyTags.exception(event), JerseyTags.status(response), JerseyTags.outcome(response))
                 // TODO: Do it without copying?
                 .stream()
@@ -43,8 +44,8 @@ public final class DefaultJerseyTagsProvider implements JerseyTagsProvider {
     }
 
     @Override
-    public Iterable<io.micrometer.common.Tag> httpLongRequestTags(RequestEvent event) {
-        return (Iterable<Tag>) io.micrometer.common.Tags.of(JerseyTags.method(event.getContainerRequest()), JerseyTags.uri(event))
+    public Iterable<Tag> httpLongRequestTags(RequestEvent event) {
+        return (Iterable<Tag>) Tags.of(JerseyTags.method(event.getContainerRequest()), JerseyTags.uri(event))
                 .stream()
                 // TODO: Do it without copying?
                 .collect(Collectors.toList());

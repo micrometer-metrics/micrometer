@@ -15,11 +15,12 @@
  */
 package io.micrometer.core.instrument.binder.http;
 
-import javax.servlet.http.HttpServletRequest;
-import javax.servlet.http.HttpServletResponse;
-
+import io.micrometer.common.Tag;
 import io.micrometer.core.annotation.Incubating;
 import io.micrometer.core.instrument.util.StringUtils;
+
+import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpServletResponse;
 
 /**
  * Tags for HTTP requests.
@@ -29,11 +30,11 @@ import io.micrometer.core.instrument.util.StringUtils;
  */
 @Incubating(since = "1.4.0")
 public class HttpRequestTags {
-    private static final io.micrometer.common.Tag EXCEPTION_NONE = io.micrometer.common.Tag.of("exception", "None");
+    private static final Tag EXCEPTION_NONE = Tag.of("exception", "None");
 
-    private static final io.micrometer.common.Tag STATUS_UNKNOWN = io.micrometer.common.Tag.of("status", "UNKNOWN");
+    private static final Tag STATUS_UNKNOWN = Tag.of("status", "UNKNOWN");
 
-    private static final io.micrometer.common.Tag METHOD_UNKNOWN = io.micrometer.common.Tag.of("method", "UNKNOWN");
+    private static final Tag METHOD_UNKNOWN = Tag.of("method", "UNKNOWN");
 
     private HttpRequestTags() {
     }
@@ -44,8 +45,8 @@ public class HttpRequestTags {
      * @param request the request
      * @return the method tag whose value is a capitalized method (e.g. GET).
      */
-    public static io.micrometer.common.Tag method(HttpServletRequest request) {
-        return (request != null) ? io.micrometer.common.Tag.of("method", request.getMethod()) : METHOD_UNKNOWN;
+    public static Tag method(HttpServletRequest request) {
+        return (request != null) ? Tag.of("method", request.getMethod()) : METHOD_UNKNOWN;
     }
 
     /**
@@ -53,8 +54,8 @@ public class HttpRequestTags {
      * @param response the HTTP response
      * @return the status tag derived from the status of the response
      */
-    public static io.micrometer.common.Tag status(HttpServletResponse response) {
-        return (response != null) ? io.micrometer.common.Tag.of("status", Integer.toString(response.getStatus())) : STATUS_UNKNOWN;
+    public static Tag status(HttpServletResponse response) {
+        return (response != null) ? Tag.of("status", Integer.toString(response.getStatus())) : STATUS_UNKNOWN;
     }
 
     /**
@@ -63,10 +64,10 @@ public class HttpRequestTags {
      * @param exception the exception, may be {@code null}
      * @return the exception tag derived from the exception
      */
-    public static io.micrometer.common.Tag exception(Throwable exception) {
+    public static Tag exception(Throwable exception) {
         if (exception != null) {
             String simpleName = exception.getClass().getSimpleName();
-            return io.micrometer.common.Tag.of("exception", StringUtils.isNotBlank(simpleName) ? simpleName : exception.getClass().getName());
+            return Tag.of("exception", StringUtils.isNotBlank(simpleName) ? simpleName : exception.getClass().getName());
         }
         return EXCEPTION_NONE;
     }
@@ -76,7 +77,7 @@ public class HttpRequestTags {
      * @param response the HTTP response
      * @return the outcome tag derived from the status of the response
      */
-    public static io.micrometer.common.Tag outcome(HttpServletResponse response) {
+    public static Tag outcome(HttpServletResponse response) {
         Outcome outcome = (response != null) ? Outcome.forStatus(response.getStatus()) : Outcome.UNKNOWN;
         return outcome.asTag();
     }

@@ -15,19 +15,7 @@
  */
 package io.micrometer.core.instrument.binder.cache;
 
-import java.util.List;
-
-import javax.cache.Cache;
-import javax.cache.CacheManager;
-import javax.management.AttributeNotFoundException;
-import javax.management.InstanceNotFoundException;
-import javax.management.MBeanException;
-import javax.management.MBeanServer;
-import javax.management.MBeanServerFactory;
-import javax.management.MalformedObjectNameException;
-import javax.management.ObjectName;
-import javax.management.ReflectionException;
-
+import io.micrometer.common.Tag;
 import io.micrometer.common.Tags;
 import io.micrometer.core.instrument.Gauge;
 import io.micrometer.core.instrument.MeterRegistry;
@@ -35,6 +23,11 @@ import io.micrometer.core.instrument.config.InvalidConfigurationException;
 import io.micrometer.core.lang.NonNullApi;
 import io.micrometer.core.lang.NonNullFields;
 import io.micrometer.core.lang.Nullable;
+
+import javax.cache.Cache;
+import javax.cache.CacheManager;
+import javax.management.*;
+import java.util.List;
 
 /**
  * Collect metrics on JSR-107 JCache caches, including detailed metrics on manual puts and removals.
@@ -66,8 +59,8 @@ public class JCacheMetrics<K, V, C extends Cache<K, V>> extends CacheMeterBinder
      * @return The instrumented cache, unchanged. The original cache is not wrapped or proxied in any way.
      */
     public static <K, V, C extends Cache<K, V>> C monitor(MeterRegistry registry, C cache, String... tags) {
-        Tags<?> tags1 = Tags.of(tags);
-        return monitor(registry, cache, tags1);
+        Iterable<Tag> tagIterable = Tags.of(tags);
+        return monitor(registry, cache, tagIterable);
     }
 
     /**
@@ -81,12 +74,12 @@ public class JCacheMetrics<K, V, C extends Cache<K, V>> extends CacheMeterBinder
      * @param <V>      The cache value type.
      * @return The instrumented cache, unchanged. The original cache is not wrapped or proxied in any way.
      */
-    public static <K, V, C extends Cache<K, V>> C monitor(MeterRegistry registry, C cache, Iterable<? extends io.micrometer.common.Tag> tags) {
+    public static <K, V, C extends Cache<K, V>> C monitor(MeterRegistry registry, C cache, Iterable<? extends Tag> tags) {
         new JCacheMetrics<>(cache, tags).bindTo(registry);
         return cache;
     }
 
-    public JCacheMetrics(C cache, Iterable<? extends io.micrometer.common.Tag> tags) {
+    public JCacheMetrics(C cache, Iterable<? extends Tag> tags) {
         super(cache, cache.getName(), tags);
         try {
             CacheManager cacheManager = cache.getCacheManager();

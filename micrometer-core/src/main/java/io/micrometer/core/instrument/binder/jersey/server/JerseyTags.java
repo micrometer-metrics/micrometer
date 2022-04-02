@@ -15,9 +15,7 @@
  */
 package io.micrometer.core.instrument.binder.jersey.server;
 
-import java.util.List;
-import java.util.regex.Pattern;
-
+import io.micrometer.common.Tag;
 import io.micrometer.core.instrument.binder.http.Outcome;
 import io.micrometer.core.instrument.util.StringUtils;
 import org.glassfish.jersey.server.ContainerRequest;
@@ -26,8 +24,11 @@ import org.glassfish.jersey.server.ExtendedUriInfo;
 import org.glassfish.jersey.server.monitoring.RequestEvent;
 import org.glassfish.jersey.uri.UriTemplate;
 
+import java.util.List;
+import java.util.regex.Pattern;
+
 /**
- * Factory methods for {@link io.micrometer.common.Tag Tags} associated with a request-response exchange that
+ * Factory methods for {@link Tag Tags} associated with a request-response exchange that
  * is handled by Jersey server.
  *
  * @deprecated Scheduled for removal in 2.0.0, please use {@code io.micrometer.binder.jersey.server.JerseyTags}
@@ -38,17 +39,17 @@ import org.glassfish.jersey.uri.UriTemplate;
 @Deprecated
 public final class JerseyTags {
 
-    private static final io.micrometer.common.Tag URI_NOT_FOUND = io.micrometer.common.Tag.of("uri", "NOT_FOUND");
+    private static final Tag URI_NOT_FOUND = Tag.of("uri", "NOT_FOUND");
 
-    private static final io.micrometer.common.Tag URI_REDIRECTION = io.micrometer.common.Tag.of("uri", "REDIRECTION");
+    private static final Tag URI_REDIRECTION = Tag.of("uri", "REDIRECTION");
 
-    private static final io.micrometer.common.Tag URI_ROOT = io.micrometer.common.Tag.of("uri", "root");
+    private static final Tag URI_ROOT = Tag.of("uri", "root");
 
-    private static final io.micrometer.common.Tag EXCEPTION_NONE = io.micrometer.common.Tag.of("exception", "None");
+    private static final Tag EXCEPTION_NONE = Tag.of("exception", "None");
 
-    private static final io.micrometer.common.Tag STATUS_SERVER_ERROR = io.micrometer.common.Tag.of("status", "500");
+    private static final Tag STATUS_SERVER_ERROR = Tag.of("status", "500");
 
-    private static final io.micrometer.common.Tag METHOD_UNKNOWN = io.micrometer.common.Tag.of("method", "UNKNOWN");
+    private static final Tag METHOD_UNKNOWN = Tag.of("method", "UNKNOWN");
 
     private static final Pattern TRAILING_SLASH_PATTERN = Pattern.compile("/$");
 
@@ -63,8 +64,8 @@ public final class JerseyTags {
      * @param request the container request
      * @return the method tag whose value is a capitalized method (e.g. GET).
      */
-    public static io.micrometer.common.Tag method(ContainerRequest request) {
-        return (request != null) ? io.micrometer.common.Tag.of("method", request.getMethod()) : METHOD_UNKNOWN;
+    public static Tag method(ContainerRequest request) {
+        return (request != null) ? Tag.of("method", request.getMethod()) : METHOD_UNKNOWN;
     }
 
     /**
@@ -72,10 +73,10 @@ public final class JerseyTags {
      * @param response the container response
      * @return the status tag derived from the status of the response
      */
-    public static io.micrometer.common.Tag status(ContainerResponse response) {
+    public static Tag status(ContainerResponse response) {
         /* In case there is no response we are dealing with an unmapped exception. */
         return (response != null)
-                ? io.micrometer.common.Tag.of("status", Integer.toString(response.getStatus()))
+                ? Tag.of("status", Integer.toString(response.getStatus()))
                 : STATUS_SERVER_ERROR;
     }
 
@@ -86,7 +87,7 @@ public final class JerseyTags {
      * @param event the request event
      * @return the uri tag derived from the request event
      */
-    public static io.micrometer.common.Tag uri(RequestEvent event) {
+    public static Tag uri(RequestEvent event) {
         ContainerResponse response = event.getContainerResponse();
         if (response != null) {
             int status = response.getStatus();
@@ -101,7 +102,7 @@ public final class JerseyTags {
         if (matchingPattern.equals("/")) {
             return URI_ROOT;
         }
-        return io.micrometer.common.Tag.of("uri", matchingPattern);
+        return Tag.of("uri", matchingPattern);
     }
 
     private static boolean isRedirection(int status) {
@@ -130,7 +131,7 @@ public final class JerseyTags {
      * @param event the request event
      * @return the exception tag derived from the exception
      */
-    public static io.micrometer.common.Tag exception(RequestEvent event) {
+    public static Tag exception(RequestEvent event) {
         Throwable exception = event.getException();
         if (exception == null) {
             return EXCEPTION_NONE;
@@ -146,7 +147,7 @@ public final class JerseyTags {
             exception = exception.getCause();
         }
         String simpleName = exception.getClass().getSimpleName();
-        return io.micrometer.common.Tag.of("exception", StringUtils.isNotEmpty(simpleName) ? simpleName
+        return Tag.of("exception", StringUtils.isNotEmpty(simpleName) ? simpleName
                 : exception.getClass().getName());
     }
 
@@ -155,7 +156,7 @@ public final class JerseyTags {
      * @param response the container response
      * @return the outcome tag derived from the status of the response
      */
-    public static io.micrometer.common.Tag outcome(ContainerResponse response) {
+    public static Tag outcome(ContainerResponse response) {
         if (response != null) {
             return Outcome.forStatus(response.getStatus()).asTag();
         }

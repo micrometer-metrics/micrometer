@@ -15,20 +15,19 @@
  */
 package io.micrometer.core.instrument.binder.cache;
 
-import java.util.concurrent.TimeUnit;
-import java.util.function.Function;
-import java.util.function.ToLongFunction;
-
 import com.google.common.cache.Cache;
 import com.google.common.cache.CacheBuilder;
 import com.google.common.cache.LoadingCache;
+import io.micrometer.common.Tag;
 import io.micrometer.common.Tags;
-import io.micrometer.core.instrument.FunctionCounter;
-import io.micrometer.core.instrument.MeterRegistry;
-import io.micrometer.core.instrument.TimeGauge;
+import io.micrometer.core.instrument.*;
 import io.micrometer.core.lang.NonNullApi;
 import io.micrometer.core.lang.NonNullFields;
 import io.micrometer.core.lang.Nullable;
+
+import java.util.concurrent.TimeUnit;
+import java.util.function.Function;
+import java.util.function.ToLongFunction;
 
 /**
  * @deprecated Scheduled for removal in 2.0.0, please use {@code io.micrometer.binder.cache.GuavaCacheMetrics}
@@ -53,8 +52,8 @@ public class GuavaCacheMetrics<K, V, C extends Cache<K, V>> extends CacheMeterBi
      * @see com.google.common.cache.CacheStats
      */
     public static <K, V, C extends Cache<K, V>> C monitor(MeterRegistry registry, C cache, String cacheName, String... tags) {
-        Tags<?> tags1 = Tags.of(tags);
-        return monitor(registry, cache, cacheName, tags1);
+        Iterable<Tag> tagIterable = Tags.of(tags);
+        return monitor(registry, cache, cacheName, tagIterable);
     }
 
     /**
