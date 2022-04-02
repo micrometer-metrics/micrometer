@@ -20,6 +20,7 @@ import com.google.common.cache.CacheBuilder;
 import com.google.common.cache.CacheLoader;
 import com.google.common.cache.CacheStats;
 import com.google.common.cache.LoadingCache;
+
 import io.micrometer.core.instrument.FunctionCounter;
 import io.micrometer.core.instrument.Gauge;
 import io.micrometer.core.instrument.MeterRegistry;
@@ -27,6 +28,7 @@ import io.micrometer.core.instrument.Tags;
 import io.micrometer.core.instrument.TimeGauge;
 import io.micrometer.core.instrument.binder.cache.AbstractCacheMetricsTest;
 import io.micrometer.core.instrument.simple.SimpleMeterRegistry;
+
 import org.junit.jupiter.api.Test;
 
 import static org.assertj.core.api.Assertions.assertThat;

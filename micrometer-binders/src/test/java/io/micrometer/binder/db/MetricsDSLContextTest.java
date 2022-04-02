@@ -15,35 +15,25 @@
  */
 package io.micrometer.binder.db;
 
-import java.sql.Connection;
-import java.sql.DriverManager;
-import java.sql.SQLException;
-
 import io.micrometer.core.instrument.MeterRegistry;
 import io.micrometer.core.instrument.Tags;
 import io.micrometer.core.instrument.simple.SimpleMeterRegistry;
 import io.micrometer.core.lang.NonNull;
-import org.jooq.Configuration;
-import org.jooq.ExecuteListener;
-import org.jooq.ExecuteListenerProvider;
+import org.jooq.*;
 import org.jooq.Record;
-import org.jooq.Record1;
-import org.jooq.Result;
-import org.jooq.SQLDialect;
-import org.jooq.SelectJoinStep;
-import org.jooq.SelectSelectStep;
 import org.jooq.exception.DataAccessException;
 import org.jooq.impl.DSL;
 import org.jooq.impl.DefaultConfiguration;
 import org.junit.jupiter.api.Test;
 
+import java.sql.Connection;
+import java.sql.DriverManager;
+import java.sql.SQLException;
+
 import static io.micrometer.binder.db.MetricsDSLContext.withMetrics;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.failBecauseExceptionWasNotThrown;
-import static org.jooq.impl.DSL.asterisk;
-import static org.jooq.impl.DSL.field;
-import static org.jooq.impl.DSL.table;
-import static org.jooq.impl.DSL.using;
+import static org.jooq.impl.DSL.*;
 import static org.mockito.Mockito.mock;
 
 /**

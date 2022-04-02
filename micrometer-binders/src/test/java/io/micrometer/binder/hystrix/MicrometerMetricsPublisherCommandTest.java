@@ -15,12 +15,7 @@
  */
 package io.micrometer.binder.hystrix;
 
-import com.netflix.hystrix.Hystrix;
-import com.netflix.hystrix.HystrixCommand;
-import com.netflix.hystrix.HystrixCommandGroupKey;
-import com.netflix.hystrix.HystrixCommandKey;
-import com.netflix.hystrix.HystrixCommandProperties;
-import com.netflix.hystrix.HystrixEventType;
+import com.netflix.hystrix.*;
 import com.netflix.hystrix.strategy.HystrixPlugins;
 import com.netflix.hystrix.strategy.metrics.HystrixMetricsPublisher;
 import io.micrometer.core.instrument.MeterRegistry;

@@ -15,14 +15,6 @@
  */
 package io.micrometer.binder.db;
 
-import java.sql.Connection;
-import java.sql.PreparedStatement;
-import java.sql.SQLException;
-import java.util.Arrays;
-import java.util.List;
-
-import javax.sql.DataSource;
-
 import io.micrometer.core.instrument.MeterRegistry;
 import io.micrometer.core.instrument.Tags;
 import io.micrometer.core.instrument.search.RequiredSearch;
@@ -36,24 +28,17 @@ import org.testcontainers.junit.jupiter.Container;
 import org.testcontainers.junit.jupiter.Testcontainers;
 import org.testcontainers.utility.DockerImageName;
 
-import static io.micrometer.binder.db.PostgreSQLDatabaseMetrics.Names.BLOCKS_HITS;
-import static io.micrometer.binder.db.PostgreSQLDatabaseMetrics.Names.BLOCKS_READS;
-import static io.micrometer.binder.db.PostgreSQLDatabaseMetrics.Names.BUFFERS_BACKEND;
-import static io.micrometer.binder.db.PostgreSQLDatabaseMetrics.Names.BUFFERS_CHECKPOINT;
-import static io.micrometer.binder.db.PostgreSQLDatabaseMetrics.Names.BUFFERS_CLEAN;
-import static io.micrometer.binder.db.PostgreSQLDatabaseMetrics.Names.CHECKPOINTS_REQUESTED;
-import static io.micrometer.binder.db.PostgreSQLDatabaseMetrics.Names.CHECKPOINTS_TIMED;
-import static io.micrometer.binder.db.PostgreSQLDatabaseMetrics.Names.CONNECTIONS;
-import static io.micrometer.binder.db.PostgreSQLDatabaseMetrics.Names.LOCKS;
-import static io.micrometer.binder.db.PostgreSQLDatabaseMetrics.Names.ROWS_DEAD;
-import static io.micrometer.binder.db.PostgreSQLDatabaseMetrics.Names.ROWS_DELETED;
-import static io.micrometer.binder.db.PostgreSQLDatabaseMetrics.Names.ROWS_FETCHED;
-import static io.micrometer.binder.db.PostgreSQLDatabaseMetrics.Names.ROWS_INSERTED;
-import static io.micrometer.binder.db.PostgreSQLDatabaseMetrics.Names.ROWS_UPDATED;
-import static io.micrometer.binder.db.PostgreSQLDatabaseMetrics.Names.SIZE;
-import static io.micrometer.binder.db.PostgreSQLDatabaseMetrics.Names.TEMP_WRITES;
-import static io.micrometer.binder.db.PostgreSQLDatabaseMetrics.Names.TRANSACTIONS;
-import static org.assertj.core.api.Assertions.assertThat;
+import javax.sql.DataSource;
+
+import java.sql.Connection;
+import java.sql.PreparedStatement;
+import java.sql.SQLException;
+import java.util.Arrays;
+import java.util.List;
+
+import static org.assertj.core.api.Assertions.*;
+
+import static io.micrometer.binder.db.PostgreSQLDatabaseMetrics.Names.*;
 
 /**
  * @author Markus Dobel

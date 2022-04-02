@@ -15,16 +15,13 @@
  */
 package io.micrometer.binder.cache;
 
-import java.util.HashMap;
-import java.util.Random;
-import java.util.concurrent.TimeUnit;
-
 import com.hazelcast.core.Hazelcast;
-import com.hazelcast.internal.monitor.impl.LocalMapStatsImpl;
-import com.hazelcast.internal.monitor.impl.NearCacheStatsImpl;
 import com.hazelcast.map.IMap;
 import com.hazelcast.map.LocalMapStats;
 import com.hazelcast.nearcache.NearCacheStats;
+import com.hazelcast.internal.monitor.impl.LocalMapStatsImpl;
+import com.hazelcast.internal.monitor.impl.NearCacheStatsImpl;
+
 import io.micrometer.core.instrument.FunctionCounter;
 import io.micrometer.core.instrument.FunctionTimer;
 import io.micrometer.core.instrument.Gauge;
@@ -32,12 +29,16 @@ import io.micrometer.core.instrument.MeterRegistry;
 import io.micrometer.core.instrument.Tags;
 import io.micrometer.core.instrument.binder.cache.AbstractCacheMetricsTest;
 import io.micrometer.core.instrument.simple.SimpleMeterRegistry;
+
+import java.util.HashMap;
+import java.util.Random;
+import java.util.concurrent.TimeUnit;
+
 import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 
-import static org.assertj.core.api.Assertions.assertThat;
-import static org.assertj.core.api.Assertions.assertThatExceptionOfType;
+import static org.assertj.core.api.Assertions.*;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 

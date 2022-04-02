@@ -15,13 +15,6 @@
  */
 package io.micrometer.binder.kafka;
 
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.LinkedHashMap;
-import java.util.Map;
-import java.util.concurrent.atomic.AtomicReference;
-import java.util.function.Supplier;
-
 import io.micrometer.core.Issue;
 import io.micrometer.core.instrument.Measurement;
 import io.micrometer.core.instrument.Meter;
@@ -36,6 +29,13 @@ import org.apache.kafka.common.metrics.stats.Value;
 import org.apache.kafka.common.utils.Time;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Test;
+
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.LinkedHashMap;
+import java.util.Map;
+import java.util.concurrent.atomic.AtomicReference;
+import java.util.function.Supplier;
 
 import static org.assertj.core.api.Assertions.assertThat;
 

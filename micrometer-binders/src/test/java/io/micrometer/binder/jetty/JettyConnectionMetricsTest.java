@@ -15,8 +15,6 @@
  */
 package io.micrometer.binder.jetty;
 
-import java.util.concurrent.CountDownLatch;
-
 import io.micrometer.core.instrument.MockClock;
 import io.micrometer.core.instrument.simple.SimpleConfig;
 import io.micrometer.core.instrument.simple.SimpleMeterRegistry;
@@ -34,6 +32,8 @@ import org.eclipse.jetty.server.ServerConnector;
 import org.eclipse.jetty.util.component.LifeCycle;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Test;
+
+import java.util.concurrent.CountDownLatch;
 
 import static java.util.concurrent.TimeUnit.SECONDS;
 import static org.assertj.core.api.Assertions.assertThat;

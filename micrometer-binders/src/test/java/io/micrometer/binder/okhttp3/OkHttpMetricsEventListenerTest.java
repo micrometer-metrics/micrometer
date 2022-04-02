@@ -15,11 +15,6 @@
  */
 package io.micrometer.binder.okhttp3;
 
-import java.io.IOException;
-import java.nio.file.Path;
-import java.util.concurrent.TimeUnit;
-import java.util.function.Function;
-
 import com.github.tomakehurst.wiremock.WireMockServer;
 import io.micrometer.core.instrument.MeterRegistry;
 import io.micrometer.core.instrument.MockClock;
@@ -36,9 +31,12 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.junit.jupiter.api.io.TempDir;
 import ru.lanwen.wiremock.ext.WiremockResolver;
 
-import static com.github.tomakehurst.wiremock.client.WireMock.aResponse;
-import static com.github.tomakehurst.wiremock.client.WireMock.any;
-import static com.github.tomakehurst.wiremock.client.WireMock.anyUrl;
+import java.io.IOException;
+import java.nio.file.Path;
+import java.util.concurrent.TimeUnit;
+import java.util.function.Function;
+
+import static com.github.tomakehurst.wiremock.client.WireMock.*;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.fail;
 

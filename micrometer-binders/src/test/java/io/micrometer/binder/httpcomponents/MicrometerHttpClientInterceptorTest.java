@@ -15,8 +15,6 @@
  */
 package io.micrometer.binder.httpcomponents;
 
-import java.util.concurrent.Future;
-
 import com.github.tomakehurst.wiremock.WireMockServer;
 import io.micrometer.core.instrument.MeterRegistry;
 import io.micrometer.core.instrument.MockClock;
@@ -31,6 +29,8 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import ru.lanwen.wiremock.ext.WiremockResolver;
+
+import java.util.concurrent.Future;
 
 import static com.github.tomakehurst.wiremock.client.WireMock.any;
 import static com.github.tomakehurst.wiremock.client.WireMock.anyUrl;

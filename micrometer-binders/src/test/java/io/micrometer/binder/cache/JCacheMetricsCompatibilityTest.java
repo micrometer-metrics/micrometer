@@ -15,14 +15,14 @@
  */
 package io.micrometer.binder.cache;
 
+import io.micrometer.core.instrument.binder.cache.CacheMeterBinder;
+import io.micrometer.core.instrument.binder.cache.CacheMeterBinderCompatibilityKit;
+import org.jsr107.ri.spi.RICachingProvider;
+
 import javax.cache.Cache;
 import javax.cache.CacheManager;
 import javax.cache.configuration.MutableConfiguration;
 import javax.cache.expiry.AccessedExpiryPolicy;
-
-import io.micrometer.core.instrument.binder.cache.CacheMeterBinder;
-import io.micrometer.core.instrument.binder.cache.CacheMeterBinderCompatibilityKit;
-import org.jsr107.ri.spi.RICachingProvider;
 
 import static java.util.Collections.emptyList;
 import static javax.cache.expiry.Duration.ONE_HOUR;

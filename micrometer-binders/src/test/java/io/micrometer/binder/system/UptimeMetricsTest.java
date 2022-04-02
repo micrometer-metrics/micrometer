@@ -15,13 +15,13 @@
  */
 package io.micrometer.binder.system;
 
-import java.lang.management.RuntimeMXBean;
-
 import io.micrometer.core.instrument.MeterRegistry;
 import io.micrometer.core.instrument.MockClock;
 import io.micrometer.core.instrument.simple.SimpleConfig;
 import io.micrometer.core.instrument.simple.SimpleMeterRegistry;
 import org.junit.jupiter.api.Test;
+
+import java.lang.management.RuntimeMXBean;
 
 import static java.util.Collections.emptyList;
 import static org.assertj.core.api.AssertionsForClassTypes.assertThat;

@@ -15,11 +15,10 @@
  */
 package io.micrometer.binder.kafka;
 
-import java.util.Properties;
-
 import io.micrometer.core.instrument.MeterRegistry;
 import io.micrometer.core.instrument.Tags;
 import io.micrometer.core.instrument.simple.SimpleMeterRegistry;
+import java.util.Properties;
 import org.apache.kafka.streams.KafkaStreams;
 import org.apache.kafka.streams.StreamsBuilder;
 import org.junit.jupiter.api.AfterEach;
