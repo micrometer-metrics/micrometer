@@ -15,14 +15,16 @@
  */
 package io.micrometer.binder.system;
 
-import java.io.File;
-
+import io.micrometer.common.Tag;
+import io.micrometer.common.Tags;
 import io.micrometer.core.instrument.Gauge;
 import io.micrometer.core.instrument.MeterRegistry;
 import io.micrometer.core.instrument.binder.BaseUnits;
 import io.micrometer.core.instrument.binder.MeterBinder;
 import io.micrometer.core.lang.NonNullApi;
 import io.micrometer.core.lang.NonNullFields;
+
+import java.io.File;
 
 import static java.util.Collections.emptyList;
 
@@ -36,7 +38,7 @@ import static java.util.Collections.emptyList;
 @NonNullApi
 @NonNullFields
 public class DiskSpaceMetrics implements MeterBinder {
-    private final Iterable<? extends io.micrometer.common.Tag> tags;
+    private final Iterable<? extends Tag> tags;
     private final File path;
     private final String absolutePath;
 
@@ -44,7 +46,7 @@ public class DiskSpaceMetrics implements MeterBinder {
         this(path, emptyList());
     }
 
-    public DiskSpaceMetrics(File path, Iterable<? extends io.micrometer.common.Tag> tags) {
+    public DiskSpaceMetrics(File path, Iterable<? extends Tag> tags) {
         this.path = path;
         this.absolutePath = path.getAbsolutePath();
         this.tags = tags;
@@ -52,7 +54,7 @@ public class DiskSpaceMetrics implements MeterBinder {
 
     @Override
     public void bindTo(MeterRegistry registry) {
-        Iterable<? extends io.micrometer.common.Tag> tagsWithPath = io.micrometer.common.Tags.concat(tags, "path", absolutePath);
+        Iterable<? extends Tag> tagsWithPath = Tags.concat(tags, "path", absolutePath);
         Gauge.builder("disk.free", path, File::getUsableSpace)
                 .tags(tagsWithPath)
                 .description("Usable space for path")

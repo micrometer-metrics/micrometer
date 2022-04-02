@@ -17,9 +17,10 @@ package io.micrometer.binder.mongodb;
 
 import com.mongodb.event.CommandEvent;
 import com.mongodb.event.CommandStartedEvent;
+import io.micrometer.common.Tag;
 
 /**
- * Provides {@link io.micrometer.common.Tag Tags} for Mongo command metrics.
+ * Provides {@link Tag Tags} for Mongo command metrics.
  *
  * @author Chris Bono
  * @since 1.7.0
@@ -43,5 +44,5 @@ public interface MongoCommandTagsProvider {
      * @param commandEvent event representing the issued command
      * @return tags to associate with metrics recorded for the command
      */
-    <T extends io.micrometer.common.Tag> Iterable<T> commandTags(CommandEvent commandEvent);
+    <T extends Tag> Iterable<T> commandTags(CommandEvent commandEvent);
 }
