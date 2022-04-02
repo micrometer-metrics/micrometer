@@ -15,6 +15,7 @@
  */
 package io.micrometer.core.instrument.binder.kafka;
 
+import io.micrometer.common.Tag;
 import io.micrometer.core.annotation.Incubating;
 import io.micrometer.core.lang.NonNullApi;
 import io.micrometer.core.lang.NonNullFields;
@@ -46,7 +47,7 @@ public class KafkaStreamsMetrics extends KafkaMetrics {
      * @param kafkaStreams instance to be instrumented
      * @param tags         additional tags
      */
-    public KafkaStreamsMetrics(KafkaStreams kafkaStreams, Iterable<? extends io.micrometer.common.Tag> tags) {
+    public KafkaStreamsMetrics(KafkaStreams kafkaStreams, Iterable<? extends Tag> tags) {
         super(kafkaStreams::metrics, tags);
     }
 

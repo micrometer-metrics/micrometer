@@ -15,9 +15,7 @@
  */
 package io.micrometer.core.instrument.binder.jvm;
 
-import java.lang.management.ClassLoadingMXBean;
-import java.lang.management.ManagementFactory;
-
+import io.micrometer.common.Tag;
 import io.micrometer.core.instrument.FunctionCounter;
 import io.micrometer.core.instrument.Gauge;
 import io.micrometer.core.instrument.MeterRegistry;
@@ -25,6 +23,9 @@ import io.micrometer.core.instrument.binder.BaseUnits;
 import io.micrometer.core.instrument.binder.MeterBinder;
 import io.micrometer.core.lang.NonNullApi;
 import io.micrometer.core.lang.NonNullFields;
+
+import java.lang.management.ClassLoadingMXBean;
+import java.lang.management.ManagementFactory;
 
 import static java.util.Collections.emptyList;
 
@@ -35,13 +36,13 @@ import static java.util.Collections.emptyList;
 @NonNullFields
 @Deprecated
 public class ClassLoaderMetrics implements MeterBinder {
-    private final Iterable<? extends io.micrometer.common.Tag> tags;
+    private final Iterable<? extends Tag> tags;
 
     public ClassLoaderMetrics() {
         this(emptyList());
     }
 
-    public ClassLoaderMetrics(Iterable<? extends io.micrometer.common.Tag> tags) {
+    public ClassLoaderMetrics(Iterable<? extends Tag> tags) {
         this.tags = tags;
     }
 

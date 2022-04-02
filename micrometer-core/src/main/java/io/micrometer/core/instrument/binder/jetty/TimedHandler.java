@@ -15,21 +15,8 @@
  */
 package io.micrometer.core.instrument.binder.jetty;
 
-import java.io.IOException;
-import java.util.concurrent.Future;
-import java.util.concurrent.atomic.AtomicInteger;
-
-import javax.servlet.AsyncEvent;
-import javax.servlet.AsyncListener;
-import javax.servlet.ServletException;
-import javax.servlet.http.HttpServletRequest;
-import javax.servlet.http.HttpServletResponse;
-
-import io.micrometer.core.instrument.Counter;
-import io.micrometer.core.instrument.Gauge;
-import io.micrometer.core.instrument.LongTaskTimer;
-import io.micrometer.core.instrument.MeterRegistry;
-import io.micrometer.core.instrument.Timer;
+import io.micrometer.common.Tag;
+import io.micrometer.core.instrument.*;
 import io.micrometer.core.instrument.binder.BaseUnits;
 import io.micrometer.core.instrument.binder.http.DefaultHttpServletRequestTagsProvider;
 import io.micrometer.core.instrument.binder.http.HttpServletRequestTagsProvider;
@@ -43,6 +30,15 @@ import org.eclipse.jetty.server.Request;
 import org.eclipse.jetty.server.handler.HandlerWrapper;
 import org.eclipse.jetty.util.FutureCallback;
 import org.eclipse.jetty.util.component.Graceful;
+
+import javax.servlet.AsyncEvent;
+import javax.servlet.AsyncListener;
+import javax.servlet.ServletException;
+import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpServletResponse;
+import java.io.IOException;
+import java.util.concurrent.Future;
+import java.util.concurrent.atomic.AtomicInteger;
 
 /**
  * Adapted from Jetty's <a href="https://github.com/eclipse/jetty.project/blob/jetty-9.4.x/jetty-server/src/main/java/org/eclipse/jetty/server/handler/StatisticsHandler.java">StatisticsHandler</a>.
@@ -59,7 +55,7 @@ public class TimedHandler extends HandlerWrapper implements Graceful {
     private static final String SAMPLE_REQUEST_LONG_TASK_TIMER_ATTRIBUTE = "__micrometer_ltt_sample";
 
     private final MeterRegistry registry;
-    private final Iterable<? extends io.micrometer.common.Tag> tags;
+    private final Iterable<? extends Tag> tags;
     private final HttpServletRequestTagsProvider tagsProvider;
 
     private final Shutdown shutdown = new Shutdown() {
@@ -74,11 +70,11 @@ public class TimedHandler extends HandlerWrapper implements Graceful {
     private final Counter asyncExpires;
     private final AtomicInteger asyncWaits = new AtomicInteger();
 
-    public TimedHandler(MeterRegistry registry, Iterable<? extends io.micrometer.common.Tag> tags) {
+    public TimedHandler(MeterRegistry registry, Iterable<? extends Tag> tags) {
         this(registry, tags, new DefaultHttpServletRequestTagsProvider());
     }
 
-    public TimedHandler(MeterRegistry registry, Iterable<? extends io.micrometer.common.Tag> tags, HttpServletRequestTagsProvider tagsProvider) {
+    public TimedHandler(MeterRegistry registry, Iterable<? extends Tag> tags, HttpServletRequestTagsProvider tagsProvider) {
         this.registry = registry;
         this.tags = tags;
         this.tagsProvider = tagsProvider;

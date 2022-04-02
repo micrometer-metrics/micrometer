@@ -15,15 +15,13 @@
  */
 package io.micrometer.core.instrument.binder.logging;
 
-import java.util.HashMap;
-import java.util.Map;
-
 import ch.qos.logback.classic.Level;
 import ch.qos.logback.classic.Logger;
 import ch.qos.logback.classic.LoggerContext;
 import ch.qos.logback.classic.spi.LoggerContextListener;
 import ch.qos.logback.classic.turbo.TurboFilter;
 import ch.qos.logback.core.spi.FilterReply;
+import io.micrometer.common.Tag;
 import io.micrometer.core.instrument.Counter;
 import io.micrometer.core.instrument.MeterRegistry;
 import io.micrometer.core.instrument.binder.BaseUnits;
@@ -32,6 +30,9 @@ import io.micrometer.core.lang.NonNullApi;
 import io.micrometer.core.lang.NonNullFields;
 import org.slf4j.LoggerFactory;
 import org.slf4j.Marker;
+
+import java.util.HashMap;
+import java.util.Map;
 
 import static java.util.Collections.emptyList;
 
@@ -45,7 +46,7 @@ import static java.util.Collections.emptyList;
 public class LogbackMetrics implements MeterBinder, AutoCloseable {
     static ThreadLocal<Boolean> ignoreMetrics = new ThreadLocal<>();
 
-    private final Iterable<? extends io.micrometer.common.Tag> tags;
+    private final Iterable<? extends Tag> tags;
     private final LoggerContext loggerContext;
     private final Map<MeterRegistry, MetricsTurboFilter> metricsTurboFilters = new HashMap<>();
 
@@ -53,11 +54,11 @@ public class LogbackMetrics implements MeterBinder, AutoCloseable {
         this(emptyList());
     }
 
-    public LogbackMetrics(Iterable<? extends io.micrometer.common.Tag> tags) {
+    public LogbackMetrics(Iterable<? extends Tag> tags) {
         this(tags, (LoggerContext) LoggerFactory.getILoggerFactory());
     }
 
-    public LogbackMetrics(Iterable<? extends io.micrometer.common.Tag> tags, LoggerContext context) {
+    public LogbackMetrics(Iterable<? extends Tag> tags, LoggerContext context) {
         this.tags = tags;
         this.loggerContext = context;
 
@@ -138,7 +139,7 @@ class MetricsTurboFilter extends TurboFilter {
     private final Counter debugCounter;
     private final Counter traceCounter;
 
-    MetricsTurboFilter(MeterRegistry registry, Iterable<? extends io.micrometer.common.Tag> tags) {
+    MetricsTurboFilter(MeterRegistry registry, Iterable<? extends Tag> tags) {
         errorCounter = Counter.builder("logback.events")
                 .tags(tags).tags("level", "error")
                 .description("Number of error level events that made it to the logs")

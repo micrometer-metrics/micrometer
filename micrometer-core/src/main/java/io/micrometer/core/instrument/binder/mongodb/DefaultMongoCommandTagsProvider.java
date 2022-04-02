@@ -26,6 +26,7 @@ import com.mongodb.event.CommandEvent;
 import com.mongodb.event.CommandStartedEvent;
 import com.mongodb.event.CommandSucceededEvent;
 import io.micrometer.common.Tag;
+import io.micrometer.common.Tags;
 import io.micrometer.core.instrument.util.StringUtils;
 import io.micrometer.core.util.internal.logging.WarnThenDebugLogger;
 import org.bson.BsonDocument;
@@ -55,12 +56,12 @@ public class DefaultMongoCommandTagsProvider implements MongoCommandTagsProvider
     // TODO: Remove this "feature" in 3.0.0
     @Override
     public <T extends Tag> Iterable<T> commandTags(CommandEvent event) {
-        return io.micrometer.common.Tags.of(
-                io.micrometer.common.Tag.of("command", event.getCommandName()),
-                io.micrometer.common.Tag.of("collection", getAndRemoveCollectionNameForCommand(event)),
-                io.micrometer.common.Tag.of("cluster.id", event.getConnectionDescription().getConnectionId().getServerId().getClusterId().getValue()),
-                io.micrometer.common.Tag.of("server.address", event.getConnectionDescription().getServerAddress().toString()),
-                io.micrometer.common.Tag.of("status", (event instanceof CommandSucceededEvent) ? "SUCCESS" : "FAILED"));
+        return Tags.of(
+                Tag.of("command", event.getCommandName()),
+                Tag.of("collection", getAndRemoveCollectionNameForCommand(event)),
+                Tag.of("cluster.id", event.getConnectionDescription().getConnectionId().getServerId().getClusterId().getValue()),
+                Tag.of("server.address", event.getConnectionDescription().getServerAddress().toString()),
+                Tag.of("status", (event instanceof CommandSucceededEvent) ? "SUCCESS" : "FAILED"));
     }
 
     @Override

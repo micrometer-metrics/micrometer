@@ -16,6 +16,8 @@
 package io.micrometer.core.instrument.binder.mongodb;
 
 import com.mongodb.event.ConnectionPoolCreatedEvent;
+import io.micrometer.common.Tag;
+import io.micrometer.common.Tags;
 
 /**
  * Default implementation for {@link MongoConnectionPoolTagsProvider}.
@@ -28,10 +30,10 @@ import com.mongodb.event.ConnectionPoolCreatedEvent;
 public class DefaultMongoConnectionPoolTagsProvider implements MongoConnectionPoolTagsProvider {
 
     @Override
-    public Iterable<? extends io.micrometer.common.Tag> connectionPoolTags(final ConnectionPoolCreatedEvent event) {
-        return io.micrometer.common.Tags.of(
-                io.micrometer.common.Tag.of("cluster.id", event.getServerId().getClusterId().getValue()),
-                io.micrometer.common.Tag.of("server.address", event.getServerId().getAddress().toString()));
+    public Iterable<? extends Tag> connectionPoolTags(final ConnectionPoolCreatedEvent event) {
+        return Tags.of(
+                Tag.of("cluster.id", event.getServerId().getClusterId().getValue()),
+                Tag.of("server.address", event.getServerId().getAddress().toString()));
     }
 
 }

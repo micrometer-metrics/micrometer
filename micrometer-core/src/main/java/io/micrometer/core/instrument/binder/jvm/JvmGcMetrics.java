@@ -15,30 +15,10 @@
  */
 package io.micrometer.core.instrument.binder.jvm;
 
-import java.lang.management.GarbageCollectorMXBean;
-import java.lang.management.ManagementFactory;
-import java.lang.management.MemoryPoolMXBean;
-import java.lang.management.MemoryUsage;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
-import java.util.concurrent.CopyOnWriteArrayList;
-import java.util.concurrent.TimeUnit;
-import java.util.concurrent.atomic.AtomicLong;
-
-import javax.management.ListenerNotFoundException;
-import javax.management.Notification;
-import javax.management.NotificationEmitter;
-import javax.management.NotificationListener;
-import javax.management.openmbean.CompositeData;
-
 import com.sun.management.GarbageCollectionNotificationInfo;
 import com.sun.management.GcInfo;
-import io.micrometer.core.instrument.Counter;
-import io.micrometer.core.instrument.Gauge;
-import io.micrometer.core.instrument.MeterRegistry;
+import io.micrometer.common.Tag;
+import io.micrometer.core.instrument.*;
 import io.micrometer.core.instrument.Timer;
 import io.micrometer.core.instrument.binder.BaseUnits;
 import io.micrometer.core.instrument.binder.MeterBinder;
@@ -48,11 +28,21 @@ import io.micrometer.core.lang.Nullable;
 import io.micrometer.core.util.internal.logging.InternalLogger;
 import io.micrometer.core.util.internal.logging.InternalLoggerFactory;
 
-import static io.micrometer.core.instrument.binder.jvm.JvmMemory.getLongLivedHeapPools;
-import static io.micrometer.core.instrument.binder.jvm.JvmMemory.getUsageValue;
-import static io.micrometer.core.instrument.binder.jvm.JvmMemory.isAllocationPool;
-import static io.micrometer.core.instrument.binder.jvm.JvmMemory.isConcurrentPhase;
-import static io.micrometer.core.instrument.binder.jvm.JvmMemory.isLongLivedPool;
+import javax.management.ListenerNotFoundException;
+import javax.management.Notification;
+import javax.management.NotificationEmitter;
+import javax.management.NotificationListener;
+import javax.management.openmbean.CompositeData;
+import java.lang.management.GarbageCollectorMXBean;
+import java.lang.management.ManagementFactory;
+import java.lang.management.MemoryPoolMXBean;
+import java.lang.management.MemoryUsage;
+import java.util.*;
+import java.util.concurrent.CopyOnWriteArrayList;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicLong;
+
+import static io.micrometer.core.instrument.binder.jvm.JvmMemory.*;
 import static java.util.Collections.emptyList;
 
 /**
@@ -78,7 +68,7 @@ public class JvmGcMetrics implements MeterBinder, AutoCloseable {
     // VisibleForTesting
     final boolean isGenerationalGc = isGenerationalGcConfigured();
 
-    private final Iterable<? extends io.micrometer.common.Tag> tags;
+    private final Iterable<? extends Tag> tags;
 
     @Nullable
     private String allocationPoolName;
@@ -98,7 +88,7 @@ public class JvmGcMetrics implements MeterBinder, AutoCloseable {
         this(emptyList());
     }
 
-    public JvmGcMetrics(Iterable<? extends io.micrometer.common.Tag> tags) {
+    public JvmGcMetrics(Iterable<? extends Tag> tags) {
         for (MemoryPoolMXBean mbean : ManagementFactory.getMemoryPoolMXBeans()) {
             String name = mbean.getName();
             if (isAllocationPool(name)) {

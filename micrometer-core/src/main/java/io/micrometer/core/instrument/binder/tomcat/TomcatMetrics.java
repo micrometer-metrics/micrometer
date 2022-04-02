@@ -15,6 +15,17 @@
  */
 package io.micrometer.core.instrument.binder.tomcat;
 
+import io.micrometer.common.Tag;
+import io.micrometer.common.Tags;
+import io.micrometer.core.instrument.*;
+import io.micrometer.core.instrument.binder.BaseUnits;
+import io.micrometer.core.instrument.binder.MeterBinder;
+import io.micrometer.core.lang.NonNullApi;
+import io.micrometer.core.lang.NonNullFields;
+import io.micrometer.core.lang.Nullable;
+import org.apache.catalina.Manager;
+
+import javax.management.*;
 import java.lang.management.ManagementFactory;
 import java.util.Collections;
 import java.util.List;
@@ -23,30 +34,6 @@ import java.util.concurrent.Callable;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.TimeUnit;
 import java.util.function.BiConsumer;
-
-import javax.management.InstanceNotFoundException;
-import javax.management.ListenerNotFoundException;
-import javax.management.MBeanServer;
-import javax.management.MBeanServerDelegate;
-import javax.management.MBeanServerFactory;
-import javax.management.MBeanServerNotification;
-import javax.management.MalformedObjectNameException;
-import javax.management.Notification;
-import javax.management.NotificationFilter;
-import javax.management.NotificationListener;
-import javax.management.ObjectName;
-
-import io.micrometer.core.instrument.FunctionCounter;
-import io.micrometer.core.instrument.FunctionTimer;
-import io.micrometer.core.instrument.Gauge;
-import io.micrometer.core.instrument.MeterRegistry;
-import io.micrometer.core.instrument.TimeGauge;
-import io.micrometer.core.instrument.binder.BaseUnits;
-import io.micrometer.core.instrument.binder.MeterBinder;
-import io.micrometer.core.lang.NonNullApi;
-import io.micrometer.core.lang.NonNullFields;
-import io.micrometer.core.lang.Nullable;
-import org.apache.catalina.Manager;
 
 /**
  * {@link MeterBinder} for Tomcat.
@@ -73,17 +60,17 @@ public class TomcatMetrics implements MeterBinder, AutoCloseable {
     private final Manager manager;
 
     private final MBeanServer mBeanServer;
-    private final Iterable<? extends io.micrometer.common.Tag> tags;
+    private final Iterable<? extends Tag> tags;
 
     private final Set<NotificationListener> notificationListeners = ConcurrentHashMap.newKeySet();
 
     private volatile String jmxDomain;
 
-    public TomcatMetrics(@Nullable Manager manager, Iterable<? extends io.micrometer.common.Tag> tags) {
+    public TomcatMetrics(@Nullable Manager manager, Iterable<? extends Tag> tags) {
         this(manager, tags, getMBeanServer());
     }
 
-    public TomcatMetrics(@Nullable Manager manager, Iterable<? extends io.micrometer.common.Tag> tags, MBeanServer mBeanServer) {
+    public TomcatMetrics(@Nullable Manager manager, Iterable<? extends Tag> tags, MBeanServer mBeanServer) {
         this.manager = manager;
         this.tags = tags;
         this.mBeanServer = mBeanServer;
@@ -94,10 +81,10 @@ public class TomcatMetrics implements MeterBinder, AutoCloseable {
     }
 
     public static void monitor(MeterRegistry registry, @Nullable Manager manager, String... tags) {
-        monitor(registry, manager, io.micrometer.common.Tags.of(tags));
+        monitor(registry, manager, Tags.of(tags));
     }
 
-    public static void monitor(MeterRegistry registry, @Nullable Manager manager, Iterable<? extends io.micrometer.common.Tag> tags) {
+    public static void monitor(MeterRegistry registry, @Nullable Manager manager, Iterable<? extends Tag> tags) {
         new TomcatMetrics(manager, tags).bindTo(registry);
     }
 
@@ -264,12 +251,12 @@ public class TomcatMetrics implements MeterBinder, AutoCloseable {
      * If the Tomcat MBeans already exist, register metrics immediately. Otherwise register an MBean registration listener
      * with the MBeanServer and register metrics when/if the MBeans becomes available.
      */
-    private void registerMetricsEventually(String namePatternSuffix, BiConsumer<ObjectName, Iterable<? extends io.micrometer.common.Tag>> perObject) {
+    private void registerMetricsEventually(String namePatternSuffix, BiConsumer<ObjectName, Iterable<? extends Tag>> perObject) {
         if (getJmxDomain() != null) {
             Set<ObjectName> objectNames = this.mBeanServer.queryNames(getNamePattern(namePatternSuffix), null);
             if (!objectNames.isEmpty()) {
                 // MBeans are present, so we can register metrics now.
-                objectNames.forEach(objectName -> perObject.accept(objectName, io.micrometer.common.Tags.concat(tags, nameTag(objectName))));
+                objectNames.forEach(objectName -> perObject.accept(objectName, Tags.concat(tags, nameTag(objectName))));
                 return;
             }
         }
@@ -281,7 +268,7 @@ public class TomcatMetrics implements MeterBinder, AutoCloseable {
             public void handleNotification(Notification notification, Object handback) {
                 MBeanServerNotification mBeanServerNotification = (MBeanServerNotification) notification;
                 ObjectName objectName = mBeanServerNotification.getMBeanName();
-                perObject.accept(objectName, io.micrometer.common.Tags.concat(tags, nameTag(objectName)));
+                perObject.accept(objectName, Tags.concat(tags, nameTag(objectName)));
                 if (getNamePattern(namePatternSuffix).isPattern()) {
                     // patterns can match multiple MBeans so don't remove listener
                     return;
@@ -373,10 +360,10 @@ public class TomcatMetrics implements MeterBinder, AutoCloseable {
         }
     }
 
-    private Iterable<? extends io.micrometer.common.Tag> nameTag(ObjectName name) {
+    private Iterable<? extends Tag> nameTag(ObjectName name) {
         String nameTagValue = name.getKeyProperty("name");
         if (nameTagValue != null) {
-            return io.micrometer.common.Tags.of("name", nameTagValue.replaceAll("\"", ""));
+            return Tags.of("name", nameTagValue.replaceAll("\"", ""));
         }
         return Collections.emptyList();
     }

@@ -15,13 +15,8 @@
  */
 package io.micrometer.core.instrument.binder.jpa;
 
-import java.util.Arrays;
-import java.util.concurrent.TimeUnit;
-import java.util.function.ToDoubleFunction;
-
-import javax.persistence.EntityManagerFactory;
-import javax.persistence.PersistenceException;
-
+import io.micrometer.common.Tag;
+import io.micrometer.common.Tags;
 import io.micrometer.core.instrument.FunctionCounter;
 import io.micrometer.core.instrument.MeterRegistry;
 import io.micrometer.core.instrument.TimeGauge;
@@ -31,6 +26,12 @@ import io.micrometer.core.lang.NonNullFields;
 import io.micrometer.core.lang.Nullable;
 import org.hibernate.SessionFactory;
 import org.hibernate.stat.Statistics;
+
+import javax.persistence.EntityManagerFactory;
+import javax.persistence.PersistenceException;
+import java.util.Arrays;
+import java.util.concurrent.TimeUnit;
+import java.util.function.ToDoubleFunction;
 
 /**
  * A {@link MeterBinder} implementation that provides Hibernate metrics. It exposes the
@@ -51,7 +52,7 @@ public class HibernateMetrics implements MeterBinder {
 
     private static final String SESSION_FACTORY_TAG_NAME = "entityManagerFactory";
 
-    private final Iterable<? extends io.micrometer.common.Tag> tags;
+    private final Iterable<? extends Tag> tags;
 
     @Nullable
     private final Statistics statistics;
@@ -65,7 +66,7 @@ public class HibernateMetrics implements MeterBinder {
      * @param tags additional tags
      */
     public static void monitor(MeterRegistry registry, SessionFactory sessionFactory, String sessionFactoryName, String... tags) {
-        monitor(registry, sessionFactory, sessionFactoryName, io.micrometer.common.Tags.of(tags));
+        monitor(registry, sessionFactory, sessionFactoryName, Tags.of(tags));
     }
 
     /**
@@ -76,7 +77,7 @@ public class HibernateMetrics implements MeterBinder {
      * @param sessionFactoryName session factory name as a tag value
      * @param tags additional tags
      */
-    public static void monitor(MeterRegistry registry, SessionFactory sessionFactory, String sessionFactoryName, Iterable<? extends io.micrometer.common.Tag> tags) {
+    public static void monitor(MeterRegistry registry, SessionFactory sessionFactory, String sessionFactoryName, Iterable<? extends Tag> tags) {
         new HibernateMetrics(sessionFactory, sessionFactoryName, tags).bindTo(registry);
     }
 
@@ -91,7 +92,7 @@ public class HibernateMetrics implements MeterBinder {
      */
     @Deprecated
     public static void monitor(MeterRegistry registry, EntityManagerFactory entityManagerFactory, String entityManagerFactoryName, String... tags) {
-        monitor(registry, entityManagerFactory, entityManagerFactoryName, io.micrometer.common.Tags.of(tags));
+        monitor(registry, entityManagerFactory, entityManagerFactoryName, Tags.of(tags));
     }
 
     /**
@@ -104,7 +105,7 @@ public class HibernateMetrics implements MeterBinder {
      * @deprecated since 1.1.2 in favor of {@link #monitor(MeterRegistry, SessionFactory, String, Iterable)}
      */
     @Deprecated
-    public static void monitor(MeterRegistry registry, EntityManagerFactory entityManagerFactory, String entityManagerFactoryName, Iterable<? extends io.micrometer.common.Tag> tags) {
+    public static void monitor(MeterRegistry registry, EntityManagerFactory entityManagerFactory, String entityManagerFactoryName, Iterable<? extends Tag> tags) {
         new HibernateMetrics(entityManagerFactory, entityManagerFactoryName, tags).bindTo(registry);
     }
 
@@ -114,8 +115,8 @@ public class HibernateMetrics implements MeterBinder {
      * @param sessionFactoryName session factory name as a tag value
      * @param tags additional tags
      */
-    public HibernateMetrics(SessionFactory sessionFactory, String sessionFactoryName, Iterable<? extends io.micrometer.common.Tag> tags) {
-        this.tags = io.micrometer.common.Tags.concat(tags, SESSION_FACTORY_TAG_NAME, sessionFactoryName);
+    public HibernateMetrics(SessionFactory sessionFactory, String sessionFactoryName, Iterable<? extends Tag> tags) {
+        this.tags = Tags.concat(tags, SESSION_FACTORY_TAG_NAME, sessionFactoryName);
         Statistics statistics = sessionFactory.getStatistics();
         this.statistics = statistics.isStatisticsEnabled() ? statistics : null;
     }
@@ -128,8 +129,8 @@ public class HibernateMetrics implements MeterBinder {
      * @deprecated since 1.1.2 in favor of {@link #HibernateMetrics(SessionFactory, String, Iterable)}
      */
     @Deprecated
-    public HibernateMetrics(EntityManagerFactory entityManagerFactory, String entityManagerFactoryName, Iterable<? extends io.micrometer.common.Tag> tags) {
-        this.tags = io.micrometer.common.Tags.concat(tags, SESSION_FACTORY_TAG_NAME, entityManagerFactoryName);
+    public HibernateMetrics(EntityManagerFactory entityManagerFactory, String entityManagerFactoryName, Iterable<? extends Tag> tags) {
+        this.tags = Tags.concat(tags, SESSION_FACTORY_TAG_NAME, entityManagerFactoryName);
         SessionFactory sessionFactory = unwrap(entityManagerFactory);
         if (sessionFactory != null) {
             Statistics statistics = sessionFactory.getStatistics();

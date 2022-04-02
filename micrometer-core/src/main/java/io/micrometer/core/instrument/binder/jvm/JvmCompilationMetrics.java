@@ -15,15 +15,17 @@
  */
 package io.micrometer.core.instrument.binder.jvm;
 
-import java.lang.management.CompilationMXBean;
-import java.lang.management.ManagementFactory;
-
+import io.micrometer.common.Tag;
+import io.micrometer.common.Tags;
 import io.micrometer.core.instrument.FunctionCounter;
 import io.micrometer.core.instrument.MeterRegistry;
 import io.micrometer.core.instrument.binder.BaseUnits;
 import io.micrometer.core.instrument.binder.MeterBinder;
 import io.micrometer.core.lang.NonNullApi;
 import io.micrometer.core.lang.NonNullFields;
+
+import java.lang.management.CompilationMXBean;
+import java.lang.management.ManagementFactory;
 
 import static java.util.Collections.emptyList;
 
@@ -37,13 +39,13 @@ import static java.util.Collections.emptyList;
 @NonNullFields
 @Deprecated
 public class JvmCompilationMetrics implements MeterBinder {
-    private final Iterable<? extends io.micrometer.common.Tag> tags;
+    private final Iterable<? extends Tag> tags;
 
     public JvmCompilationMetrics() {
         this(emptyList());
     }
 
-    public JvmCompilationMetrics(Iterable<? extends io.micrometer.common.Tag> tags) {
+    public JvmCompilationMetrics(Iterable<? extends Tag> tags) {
         this.tags = tags;
     }
 
@@ -52,7 +54,7 @@ public class JvmCompilationMetrics implements MeterBinder {
         CompilationMXBean compilationBean = ManagementFactory.getCompilationMXBean();
         if (compilationBean != null && compilationBean.isCompilationTimeMonitoringSupported()) {
             FunctionCounter.builder("jvm.compilation.time", compilationBean, CompilationMXBean::getTotalCompilationTime)
-                    .tags(io.micrometer.common.Tags.concat(tags, "compiler", compilationBean.getName()))
+                    .tags(Tags.concat(tags, "compiler", compilationBean.getName()))
                     .description("The approximate accumulated elapsed time spent in compilation")
                     .baseUnit(BaseUnits.MILLISECONDS)
                     .register(registry);

@@ -15,12 +15,9 @@
  */
 package io.micrometer.core.instrument.binder.jpa;
 
-import java.util.concurrent.TimeUnit;
-
-import io.micrometer.core.instrument.FunctionCounter;
-import io.micrometer.core.instrument.FunctionTimer;
-import io.micrometer.core.instrument.MeterRegistry;
-import io.micrometer.core.instrument.TimeGauge;
+import io.micrometer.common.Tag;
+import io.micrometer.common.Tags;
+import io.micrometer.core.instrument.*;
 import io.micrometer.core.instrument.binder.MeterBinder;
 import io.micrometer.core.lang.NonNullApi;
 import io.micrometer.core.lang.NonNullFields;
@@ -32,6 +29,8 @@ import org.hibernate.event.spi.PostLoadEvent;
 import org.hibernate.event.spi.PostLoadEventListener;
 import org.hibernate.stat.QueryStatistics;
 import org.hibernate.stat.Statistics;
+
+import java.util.concurrent.TimeUnit;
 
 /**
  * A {@link MeterBinder} implementation that provides Hibernate query metrics. It exposes the
@@ -54,7 +53,7 @@ public class HibernateQueryMetrics implements MeterBinder {
 
     private static final String SESSION_FACTORY_TAG_NAME = "entityManagerFactory";
 
-    private final Iterable<? extends io.micrometer.common.Tag> tags;
+    private final Iterable<? extends Tag> tags;
 
     private final SessionFactory sessionFactory;
 
@@ -67,7 +66,7 @@ public class HibernateQueryMetrics implements MeterBinder {
      * @param tags               additional tags
      */
     public static void monitor(MeterRegistry registry, SessionFactory sessionFactory, String sessionFactoryName, String... tags) {
-        monitor(registry, sessionFactory, sessionFactoryName, io.micrometer.common.Tags.of(tags));
+        monitor(registry, sessionFactory, sessionFactoryName, Tags.of(tags));
     }
 
     /**
@@ -78,7 +77,7 @@ public class HibernateQueryMetrics implements MeterBinder {
      * @param sessionFactoryName session factory name as a tag value
      * @param tags               additional tags
      */
-    public static void monitor(MeterRegistry registry, SessionFactory sessionFactory, String sessionFactoryName, Iterable<? extends io.micrometer.common.Tag> tags) {
+    public static void monitor(MeterRegistry registry, SessionFactory sessionFactory, String sessionFactoryName, Iterable<? extends Tag> tags) {
         new HibernateQueryMetrics(sessionFactory, sessionFactoryName, tags).bindTo(registry);
     }
 
@@ -89,8 +88,8 @@ public class HibernateQueryMetrics implements MeterBinder {
      * @param sessionFactoryName session factory name as a tag value
      * @param tags               additional tags
      */
-    public HibernateQueryMetrics(SessionFactory sessionFactory, String sessionFactoryName, Iterable<? extends io.micrometer.common.Tag> tags) {
-        this.tags = io.micrometer.common.Tags.concat(tags, SESSION_FACTORY_TAG_NAME, sessionFactoryName);
+    public HibernateQueryMetrics(SessionFactory sessionFactory, String sessionFactoryName, Iterable<? extends Tag> tags) {
+        this.tags = Tags.concat(tags, SESSION_FACTORY_TAG_NAME, sessionFactoryName);
         this.sessionFactory = sessionFactory;
     }
 
