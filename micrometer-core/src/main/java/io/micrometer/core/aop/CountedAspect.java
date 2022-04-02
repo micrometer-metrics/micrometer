@@ -15,11 +15,8 @@
  */
 package io.micrometer.core.aop;
 
-import java.lang.reflect.Method;
-import java.util.concurrent.CompletionStage;
-import java.util.function.Function;
-import java.util.function.Predicate;
-
+import io.micrometer.common.Tag;
+import io.micrometer.common.Tags;
 import io.micrometer.core.annotation.Counted;
 import io.micrometer.core.instrument.Counter;
 import io.micrometer.core.instrument.MeterRegistry;
@@ -30,6 +27,11 @@ import org.aspectj.lang.annotation.Around;
 import org.aspectj.lang.annotation.Aspect;
 import org.aspectj.lang.reflect.MethodSignature;
 
+import java.lang.reflect.Method;
+import java.util.concurrent.CompletionStage;
+import java.util.function.Function;
+import java.util.function.Predicate;
+
 /**
  * <p>
  * Aspect responsible for intercepting all methods annotated with the {@link Counted @Counted}
@@ -39,7 +41,7 @@ import org.aspectj.lang.reflect.MethodSignature;
  * <p>
  * You might want to add tags programmatically to the {@link Counter}.<br>
  * In this case, the tags provider function (<code>Function&lt;ProceedingJoinPoint, Iterable&lt;Tag&gt;&gt;</code>) can help.
- * It receives a {@link ProceedingJoinPoint} and returns the {@link io.micrometer.common.Tag}s that will be attached to the {@link Counter}.
+ * It receives a {@link ProceedingJoinPoint} and returns the {@link Tag}s that will be attached to the {@link Counter}.
  * </p>
  * <p>
  * You might also want to skip the {@link Counter} creation programmatically.<br>
@@ -93,7 +95,7 @@ public class CountedAspect {
     /**
      * A function to produce additional tags for any given join point.
      */
-    private final Function<ProceedingJoinPoint, Iterable<? extends io.micrometer.common.Tag>> tagsBasedOnJoinPoint;
+    private final Function<ProceedingJoinPoint, Iterable<? extends Tag>> tagsBasedOnJoinPoint;
 
     /**
      * A predicate that decides if Timer creation should be skipped for the given join point.
@@ -124,7 +126,7 @@ public class CountedAspect {
      * @param registry Where we're going to register metrics.
      * @param tagsBasedOnJoinPoint A function to generate tags given a join point.
      */
-    public CountedAspect(MeterRegistry registry, Function<ProceedingJoinPoint, Iterable<? extends io.micrometer.common.Tag>> tagsBasedOnJoinPoint) {
+    public CountedAspect(MeterRegistry registry, Function<ProceedingJoinPoint, Iterable<? extends Tag>> tagsBasedOnJoinPoint) {
         this(registry, tagsBasedOnJoinPoint, DONT_SKIP_ANYTHING);
     }
 
@@ -138,7 +140,7 @@ public class CountedAspect {
     public CountedAspect(MeterRegistry registry, Predicate<ProceedingJoinPoint> shouldSkip) {
         this(
                 registry,
-                pjp -> io.micrometer.common.Tags.of("class", pjp.getStaticPart().getSignature().getDeclaringTypeName(),
+                pjp -> Tags.of("class", pjp.getStaticPart().getSignature().getDeclaringTypeName(),
                                 "method", pjp.getStaticPart().getSignature().getName()),
                 shouldSkip
         );
@@ -152,7 +154,7 @@ public class CountedAspect {
      * @param shouldSkip A predicate to decide if creating the timer should be skipped or not.
      * @since 1.7.0
      */
-    public CountedAspect(MeterRegistry registry, Function<ProceedingJoinPoint, Iterable<? extends io.micrometer.common.Tag>> tagsBasedOnJoinPoint, Predicate<ProceedingJoinPoint> shouldSkip) {
+    public CountedAspect(MeterRegistry registry, Function<ProceedingJoinPoint, Iterable<? extends Tag>> tagsBasedOnJoinPoint, Predicate<ProceedingJoinPoint> shouldSkip) {
         this.registry = registry;
         this.tagsBasedOnJoinPoint = tagsBasedOnJoinPoint;
         this.shouldSkip = shouldSkip;

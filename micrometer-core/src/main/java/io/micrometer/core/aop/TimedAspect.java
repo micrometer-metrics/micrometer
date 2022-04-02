@@ -15,23 +15,25 @@
  */
 package io.micrometer.core.aop;
 
-import java.lang.reflect.Method;
-import java.util.Optional;
-import java.util.concurrent.CompletionStage;
-import java.util.function.Function;
-import java.util.function.Predicate;
-
+import io.micrometer.common.Tag;
+import io.micrometer.common.Tags;
 import io.micrometer.core.annotation.Incubating;
 import io.micrometer.core.annotation.Timed;
 import io.micrometer.core.instrument.LongTaskTimer;
 import io.micrometer.core.instrument.MeterRegistry;
-import io.micrometer.core.instrument.Metrics;
 import io.micrometer.core.instrument.Timer;
+import io.micrometer.core.instrument.Metrics;
 import io.micrometer.core.lang.NonNullApi;
 import org.aspectj.lang.ProceedingJoinPoint;
 import org.aspectj.lang.annotation.Around;
 import org.aspectj.lang.annotation.Aspect;
 import org.aspectj.lang.reflect.MethodSignature;
+
+import java.lang.reflect.Method;
+import java.util.Optional;
+import java.util.concurrent.CompletionStage;
+import java.util.function.Function;
+import java.util.function.Predicate;
 
 /**
  * <p>
@@ -41,7 +43,7 @@ import org.aspectj.lang.reflect.MethodSignature;
  * <p>
  * You might want to add tags programmatically to the {@link Timer}.<br>
  * In this case, the tags provider function (<code>Function&lt;ProceedingJoinPoint, Iterable&lt;Tag&gt;&gt;</code>) can help.
- * It receives a {@link ProceedingJoinPoint} and returns the {@link io.micrometer.common.Tag}s that will be attached to the {@link Timer}.
+ * It receives a {@link ProceedingJoinPoint} and returns the {@link Tag}s that will be attached to the {@link Timer}.
  * </p>
  * <p>
  * You might also want to skip the {@link Timer} creation programmatically.<br>
@@ -87,7 +89,7 @@ public class TimedAspect {
     public static final String EXCEPTION_TAG = "exception";
 
     private final MeterRegistry registry;
-    private final Function<ProceedingJoinPoint, Iterable<? extends io.micrometer.common.Tag>> tagsBasedOnJoinPoint;
+    private final Function<ProceedingJoinPoint, Iterable<? extends Tag>> tagsBasedOnJoinPoint;
     private final Predicate<ProceedingJoinPoint> shouldSkip;
 
     /**
@@ -114,7 +116,7 @@ public class TimedAspect {
      * @param registry Where we're going to register metrics.
      * @param tagsBasedOnJoinPoint A function to generate tags given a join point.
      */
-    public TimedAspect(MeterRegistry registry, Function<ProceedingJoinPoint, Iterable<? extends io.micrometer.common.Tag>> tagsBasedOnJoinPoint) {
+    public TimedAspect(MeterRegistry registry, Function<ProceedingJoinPoint, Iterable<? extends Tag>> tagsBasedOnJoinPoint) {
         this(registry, tagsBasedOnJoinPoint, DONT_SKIP_ANYTHING);
     }
 
@@ -128,7 +130,7 @@ public class TimedAspect {
     public TimedAspect(MeterRegistry registry, Predicate<ProceedingJoinPoint> shouldSkip) {
         this(
                 registry,
-                pjp -> io.micrometer.common.Tags.of("class", pjp.getStaticPart().getSignature().getDeclaringTypeName(),
+                pjp -> Tags.of("class", pjp.getStaticPart().getSignature().getDeclaringTypeName(),
                         "method", pjp.getStaticPart().getSignature().getName()),
                 shouldSkip
         );
@@ -142,7 +144,7 @@ public class TimedAspect {
      * @param shouldSkip A predicate to decide if creating the timer should be skipped or not.
      * @since 1.7.0
      */
-    public TimedAspect(MeterRegistry registry, Function<ProceedingJoinPoint, Iterable<? extends io.micrometer.common.Tag>> tagsBasedOnJoinPoint, Predicate<ProceedingJoinPoint> shouldSkip) {
+    public TimedAspect(MeterRegistry registry, Function<ProceedingJoinPoint, Iterable<? extends Tag>> tagsBasedOnJoinPoint, Predicate<ProceedingJoinPoint> shouldSkip) {
         this.registry = registry;
         this.tagsBasedOnJoinPoint = tagsBasedOnJoinPoint;
         this.shouldSkip = shouldSkip;
