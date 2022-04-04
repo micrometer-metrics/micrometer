@@ -15,7 +15,7 @@
  */
 package io.micrometer.core.instrument.binder.jetty;
 
-import io.micrometer.common.Tag;
+import io.micrometer.core.instrument.Tag;
 import io.micrometer.core.instrument.binder.http.Outcome;
 import io.micrometer.core.instrument.util.StringUtils;
 import org.eclipse.jetty.client.api.Request;
@@ -150,7 +150,7 @@ public final class JettyClientTags {
      * @return the outcome tag derived from the status of the response
      */
     public static Tag outcome(Result result) {
-        return Outcome.forStatus(result.getResponse().getStatus()).asTag();
+        return Tag.fromCommon(Outcome.forStatus(result.getResponse().getStatus()).asTag());
     }
 
 }

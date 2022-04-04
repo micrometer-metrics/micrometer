@@ -130,8 +130,8 @@ public class MetricsDSLContext implements DSLContext {
         return tags(Tags.of(key, name));
     }
 
-    public DSLContext tag(Tag tag) {
-        return tags(Tags.of(tag));
+    public DSLContext tag(io.micrometer.core.instrument.Tag tag) {
+        return tags(io.micrometer.core.instrument.Tags.of(tag));
     }
 
     public DSLContext tags(Iterable<? extends Tag> tags) {

@@ -332,7 +332,7 @@ subprojects {
                     onlyIf { "${compatibleVersion}" != "SKIP" }
                 }
 
-//                tasks.japicmp.dependsOn(downloadBaseline)
+                tasks.japicmp.dependsOn(downloadBaseline)
 //                tasks.check.dependsOn(japicmp)
             }
         }

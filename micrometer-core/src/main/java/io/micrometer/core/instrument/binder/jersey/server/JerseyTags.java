@@ -15,7 +15,7 @@
  */
 package io.micrometer.core.instrument.binder.jersey.server;
 
-import io.micrometer.common.Tag;
+import io.micrometer.core.instrument.Tag;
 import io.micrometer.core.instrument.binder.http.Outcome;
 import io.micrometer.core.instrument.util.StringUtils;
 import org.glassfish.jersey.server.ContainerRequest;
@@ -158,10 +158,10 @@ public final class JerseyTags {
      */
     public static Tag outcome(ContainerResponse response) {
         if (response != null) {
-            return Outcome.forStatus(response.getStatus()).asTag();
+            return Tag.fromCommon(Outcome.forStatus(response.getStatus()).asTag());
         }
         /* In case there is no response we are dealing with an unmapped exception. */
-        return Outcome.SERVER_ERROR.asTag();
+        return Tag.fromCommon(Outcome.SERVER_ERROR.asTag());
     }
 
 }

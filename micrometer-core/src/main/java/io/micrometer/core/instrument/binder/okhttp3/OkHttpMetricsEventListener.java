@@ -15,9 +15,9 @@
  */
 package io.micrometer.core.instrument.binder.okhttp3;
 
-import io.micrometer.common.Tag;
-import io.micrometer.common.Tags;
 import io.micrometer.core.instrument.MeterRegistry;
+import io.micrometer.core.instrument.Tag;
+import io.micrometer.core.instrument.Tags;
 import io.micrometer.core.instrument.Timer;
 import io.micrometer.core.lang.NonNullApi;
 import io.micrometer.core.lang.NonNullFields;
