@@ -15,10 +15,7 @@
  */
 package io.micrometer.boot2.samples.components;
 
-import java.util.Arrays;
-import java.util.Map;
-import java.util.stream.Collectors;
-
+import io.micrometer.common.Tag;
 import io.micrometer.core.instrument.Meter.Type;
 import io.micrometer.core.instrument.binder.BaseUnits;
 import io.micrometer.core.instrument.config.NamingConvention;
@@ -27,15 +24,14 @@ import io.micrometer.health.HealthMeterRegistry;
 import io.micrometer.health.ServiceLevelObjective;
 import io.micrometer.health.objectives.JvmServiceLevelObjectives;
 import io.micrometer.health.objectives.OperatingSystemServiceLevelObjectives;
-
-import org.springframework.boot.actuate.health.AbstractHealthIndicator;
-import org.springframework.boot.actuate.health.CompositeHealthContributor;
-import org.springframework.boot.actuate.health.Health;
-import org.springframework.boot.actuate.health.HealthContributor;
-import org.springframework.boot.actuate.health.Status;
+import org.springframework.boot.actuate.health.*;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.support.GenericApplicationContext;
+
+import java.util.Arrays;
+import java.util.Map;
+import java.util.stream.Collectors;
 
 /**
  * Delete this when this feature is incorporated into Spring Boot.
@@ -90,7 +86,7 @@ public class ServiceLevelObjectiveConfiguration {
                             .withDetail("value", singleIndicator.getValueAsString(registry))
                             .withDetail("mustBe", singleIndicator.getTestDescription());
 
-                    for (io.micrometer.common.Tag tag : slo.getTags()) {
+                    for (Tag tag : slo.getTags()) {
                         builder.withDetail(camelCasedHealthIndicatorNames.tagKey(tag.getKey()), tag.getValue());
                     }
 
