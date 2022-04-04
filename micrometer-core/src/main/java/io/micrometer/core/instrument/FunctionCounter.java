@@ -15,10 +15,12 @@
  */
 package io.micrometer.core.instrument;
 
+import io.micrometer.common.Tag;
+import io.micrometer.common.Tags;
+import io.micrometer.core.lang.Nullable;
+
 import java.util.Collections;
 import java.util.function.ToDoubleFunction;
-
-import io.micrometer.core.lang.Nullable;
 
 /**
  * A counter that tracks a monotonically increasing function.
@@ -48,7 +50,7 @@ public interface FunctionCounter extends Meter {
     class Builder<T> {
         private final String name;
         private final ToDoubleFunction<T> f;
-        private io.micrometer.common.Tags tags = io.micrometer.common.Tags.empty();
+        private Tags tags = Tags.empty();
 
         @Nullable
         private final T obj;
@@ -70,15 +72,15 @@ public interface FunctionCounter extends Meter {
          * @return The function counter builder with added tags.
          */
         public Builder<T> tags(String... tags) {
-            io.micrometer.common.Tags<?> tags1 = io.micrometer.common.Tags.of(tags);
-            return tags(tags1);
+            Iterable<Tag> tagIterable = Tags.of(tags);
+            return tags(tagIterable);
         }
 
         /**
          * @param tags Tags to add to the eventual function counter.
          * @return The function counter builder with added tags.
          */
-        public Builder<T> tags(Iterable<? extends io.micrometer.common.Tag> tags) {
+        public Builder<T> tags(Iterable<? extends Tag> tags) {
             this.tags = this.tags.and(tags);
             return this;
         }

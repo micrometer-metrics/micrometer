@@ -15,16 +15,12 @@
  */
 package io.micrometer.core.instrument;
 
-import java.util.Arrays;
-import java.util.Collection;
-import java.util.Iterator;
-import java.util.Spliterator;
-import java.util.Spliterators;
+import io.micrometer.core.lang.Nullable;
+
+import java.util.*;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 import java.util.stream.StreamSupport;
-
-import io.micrometer.core.lang.Nullable;
 
 import static java.util.stream.Collectors.joining;
 
@@ -110,14 +106,13 @@ public final class Tags extends io.micrometer.common.Tags<Tag> {
 
     // TODO: Remove me in 2.x or 3.0 when core tag gets removed
     @Deprecated
-    Tags andWithCommonTag(@Nullable Iterable<? extends io.micrometer.common.Tag> tags) {
+    Tags andWithCommonTags(@Nullable Iterable<? extends io.micrometer.common.Tag> tags) {
         if (tags == null || !tags.iterator().hasNext()) {
             return this;
         }
 
-        io.micrometer.common.Tags<?> tags1 = io.micrometer.common.Tags.of(tags);
-        io.micrometer.common.Tag[] tags2 = tags1.getTags();
-        return and((Tag[]) tags2);
+        io.micrometer.common.Tags<?> commonTags = io.micrometer.common.Tags.of(tags);
+        return and((Tag[]) commonTags.getTags());
     }
 
     @Override

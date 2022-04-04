@@ -15,15 +15,17 @@
  */
 package io.micrometer.core.instrument;
 
+import io.micrometer.common.Tag;
+import io.micrometer.common.Tags;
+import io.micrometer.core.annotation.Incubating;
+import io.micrometer.core.lang.Nullable;
+
 import java.util.Set;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Supplier;
 import java.util.function.ToDoubleFunction;
 import java.util.stream.Stream;
 import java.util.stream.StreamSupport;
-
-import io.micrometer.core.annotation.Incubating;
-import io.micrometer.core.lang.Nullable;
 
 import static java.util.Collections.emptySet;
 import static java.util.stream.Collectors.toSet;
@@ -89,25 +91,25 @@ public class MultiGauge {
     }
 
     public static class Row<T> {
-        private final io.micrometer.common.Tags uniqueTags;
+        private final Tags uniqueTags;
         private final T obj;
         private final ToDoubleFunction<T> valueFunction;
 
-        private Row(io.micrometer.common.Tags uniqueTags, T obj, ToDoubleFunction<T> valueFunction) {
+        private Row(Tags uniqueTags, T obj, ToDoubleFunction<T> valueFunction) {
             this.uniqueTags = uniqueTags;
             this.obj = obj;
             this.valueFunction = valueFunction;
         }
 
-        public static <T> Row<T> of(io.micrometer.common.Tags uniqueTags, T obj, ToDoubleFunction<T> valueFunction) {
+        public static <T> Row<T> of(Tags uniqueTags, T obj, ToDoubleFunction<T> valueFunction) {
             return new Row<>(uniqueTags, obj, valueFunction);
         }
 
-        public static Row<Number> of(io.micrometer.common.Tags uniqueTags, Number number) {
+        public static Row<Number> of(Tags uniqueTags, Number number) {
             return new Row<>(uniqueTags, number, Number::doubleValue);
         }
 
-        public static Row<Supplier<Number>> of(io.micrometer.common.Tags uniqueTags, Supplier<Number> valueFunction) {
+        public static Row<Supplier<Number>> of(Tags uniqueTags, Supplier<Number> valueFunction) {
             return new Row<>(uniqueTags, valueFunction, f -> {
                 Number value = valueFunction.get();
                 return value == null ? Double.NaN : value.doubleValue();
@@ -120,7 +122,7 @@ public class MultiGauge {
      */
     public static class Builder {
         private final String name;
-        private io.micrometer.common.Tags tags = io.micrometer.common.Tags.empty();
+        private Tags tags = Tags.empty();
 
         @Nullable
         private String description;
@@ -137,14 +139,14 @@ public class MultiGauge {
          * @return The gauge builder with added tags.
          */
         public Builder tags(String... tags) {
-            return tags(io.micrometer.common.Tags.of(tags));
+            return tags(Tags.of(tags));
         }
 
         /**
          * @param tags Tags to add to the eventual gauge.
          * @return The gauge builder with added tags.
          */
-        public Builder tags(Iterable<? extends io.micrometer.common.Tag> tags) {
+        public Builder tags(Iterable<? extends Tag> tags) {
             this.tags = this.tags.and(tags);
             return this;
         }

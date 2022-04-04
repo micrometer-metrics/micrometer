@@ -15,20 +15,13 @@
  */
 package io.micrometer.core.instrument.search;
 
+import io.micrometer.common.Tag;
+import io.micrometer.core.instrument.*;
+import io.micrometer.core.lang.Nullable;
+
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
-
-import io.micrometer.core.instrument.Counter;
-import io.micrometer.core.instrument.DistributionSummary;
-import io.micrometer.core.instrument.FunctionCounter;
-import io.micrometer.core.instrument.FunctionTimer;
-import io.micrometer.core.instrument.Gauge;
-import io.micrometer.core.instrument.LongTaskTimer;
-import io.micrometer.core.instrument.Meter;
-import io.micrometer.core.instrument.TimeGauge;
-import io.micrometer.core.instrument.Timer;
-import io.micrometer.core.lang.Nullable;
 
 import static java.util.stream.Collectors.joining;
 import static java.util.stream.Collectors.toList;
@@ -119,7 +112,7 @@ public class MeterNotFoundException extends RuntimeException {
                 }
             }
 
-            for (io.micrometer.common.Tag requiredTag : search.requiredTags) {
+            for (Tag requiredTag : search.requiredTags) {
                 Collection<String> matchingRequiredTag = Search.in(search.registry).name(search.nameMatches).tag(requiredTag.getKey(), requiredTag.getValue())
                         .meters()
                         .stream()

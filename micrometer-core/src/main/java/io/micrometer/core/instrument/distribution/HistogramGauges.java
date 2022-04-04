@@ -15,19 +15,16 @@
  */
 package io.micrometer.core.instrument.distribution;
 
+import io.micrometer.common.Tag;
+import io.micrometer.common.Tags;
+import io.micrometer.core.annotation.Incubating;
+import io.micrometer.core.instrument.*;
+import io.micrometer.core.instrument.util.DoubleFormat;
+
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 import java.util.function.Function;
 import java.util.function.ToDoubleFunction;
-
-import io.micrometer.core.annotation.Incubating;
-import io.micrometer.core.instrument.DistributionSummary;
-import io.micrometer.core.instrument.Gauge;
-import io.micrometer.core.instrument.LongTaskTimer;
-import io.micrometer.core.instrument.Meter;
-import io.micrometer.core.instrument.MeterRegistry;
-import io.micrometer.core.instrument.Timer;
-import io.micrometer.core.instrument.util.DoubleFormat;
 
 @Incubating(since = "1.0.3")
 public class HistogramGauges {
@@ -54,10 +51,10 @@ public class HistogramGauges {
     private static HistogramGauges getHistogramGauges(HistogramSupport histogramSupport, Meter.Id id, TimeUnit baseTimeUnit, MeterRegistry registry) {
         return HistogramGauges.register(histogramSupport, registry,
                 percentile -> id.getName() + ".percentile",
-                percentile -> io.micrometer.common.Tags.concat(id.getTagsAsIterable(), "phi", DoubleFormat.decimalOrNan(percentile.percentile())),
+                percentile -> Tags.concat(id.getTagsAsIterable(), "phi", DoubleFormat.decimalOrNan(percentile.percentile())),
                 percentile -> percentile.value(baseTimeUnit),
                 bucket -> id.getName() + ".histogram",
-                bucket -> io.micrometer.common.Tags.concat(id.getTagsAsIterable(), "le", bucket.isPositiveInf()
+                bucket -> Tags.concat(id.getTagsAsIterable(), "le", bucket.isPositiveInf()
                         ? "+Inf" : DoubleFormat.wholeOrDecimal(bucket.bucket(baseTimeUnit))));
     }
 
@@ -78,28 +75,28 @@ public class HistogramGauges {
         Meter.Id id = summary.getId();
         return HistogramGauges.register(summary, registry,
                 percentile -> id.getName() + ".percentile",
-                percentile -> io.micrometer.common.Tags.concat(id.getTagsAsIterable(), "phi", DoubleFormat.decimalOrNan(percentile.percentile())),
+                percentile -> Tags.concat(id.getTagsAsIterable(), "phi", DoubleFormat.decimalOrNan(percentile.percentile())),
                 ValueAtPercentile::value,
                 bucket -> id.getName() + ".histogram",
-                bucket -> io.micrometer.common.Tags.concat(id.getTagsAsIterable(), "le", bucket.isPositiveInf()
+                bucket -> Tags.concat(id.getTagsAsIterable(), "le", bucket.isPositiveInf()
                         ? "+Inf" : DoubleFormat.wholeOrDecimal(bucket.bucket())));
     }
 
     public static HistogramGauges register(HistogramSupport meter, MeterRegistry registry,
                                            Function<ValueAtPercentile, String> percentileName,
-                                           Function<ValueAtPercentile, Iterable<? extends io.micrometer.common.Tag>> percentileTags,
+                                           Function<ValueAtPercentile, Iterable<? extends Tag>> percentileTags,
                                            Function<ValueAtPercentile, Double> percentileValue,
                                            Function<CountAtBucket, String> bucketName,
-                                           Function<CountAtBucket, Iterable<? extends io.micrometer.common.Tag>> bucketTags) {
+                                           Function<CountAtBucket, Iterable<? extends Tag>> bucketTags) {
         return new HistogramGauges(meter, registry, percentileName, percentileTags, percentileValue, bucketName, bucketTags);
     }
 
     private HistogramGauges(HistogramSupport meter, MeterRegistry registry,
                             Function<ValueAtPercentile, String> percentileName,
-                            Function<ValueAtPercentile, Iterable<? extends io.micrometer.common.Tag>> percentileTags,
+                            Function<ValueAtPercentile, Iterable<? extends Tag>> percentileTags,
                             Function<ValueAtPercentile, Double> percentileValue,
                             Function<CountAtBucket, String> bucketName,
-                            Function<CountAtBucket, Iterable<? extends io.micrometer.common.Tag>> bucketTags) {
+                            Function<CountAtBucket, Iterable<? extends Tag>> bucketTags) {
         this.meter = meter;
 
         HistogramSnapshot initialSnapshot = meter.takeSnapshot();

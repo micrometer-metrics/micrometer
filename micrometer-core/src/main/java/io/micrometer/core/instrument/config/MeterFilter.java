@@ -15,6 +15,12 @@
  */
 package io.micrometer.core.instrument.config;
 
+import io.micrometer.common.Tag;
+import io.micrometer.common.Tags;
+import io.micrometer.core.instrument.*;
+import io.micrometer.core.instrument.distribution.DistributionStatisticConfig;
+import io.micrometer.core.lang.Nullable;
+
 import java.time.Duration;
 import java.util.ArrayList;
 import java.util.List;
@@ -22,13 +28,6 @@ import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.function.Function;
 import java.util.function.Predicate;
-
-import io.micrometer.core.instrument.DistributionSummary;
-import io.micrometer.core.instrument.Meter;
-import io.micrometer.core.instrument.MeterRegistry;
-import io.micrometer.core.instrument.Timer;
-import io.micrometer.core.instrument.distribution.DistributionStatisticConfig;
-import io.micrometer.core.lang.Nullable;
 
 import static java.util.stream.Collectors.toList;
 import static java.util.stream.StreamSupport.stream;
@@ -54,11 +53,11 @@ public interface MeterFilter {
      * @param tags Common tags.
      * @return A common tag filter.
      */
-    static MeterFilter commonTags(Iterable<? extends io.micrometer.common.Tag> tags) {
+    static MeterFilter commonTags(Iterable<? extends Tag> tags) {
         return new MeterFilter() {
             @Override
             public Meter.Id map(Meter.Id id) {
-                return id.replaceTags(io.micrometer.common.Tags.concat(tags, id.getTagsAsIterable()));
+                return id.replaceTags(Tags.concat(tags, id.getTagsAsIterable()));
             }
         };
     }
@@ -78,10 +77,10 @@ public interface MeterFilter {
                 if (!id.getName().startsWith(meterNamePrefix))
                     return id;
 
-                List<io.micrometer.common.Tag> tags = new ArrayList<>();
-                for (io.micrometer.common.Tag tag : id.getTagsAsIterable()) {
+                List<Tag> tags = new ArrayList<>();
+                for (Tag tag : id.getTagsAsIterable()) {
                     if (tag.getKey().equals(fromTagKey))
-                        tags.add(io.micrometer.common.Tag.of(toTagKey, tag.getValue()));
+                        tags.add(Tag.of(toTagKey, tag.getValue()));
                     else tags.add(tag);
                 }
 
@@ -100,7 +99,7 @@ public interface MeterFilter {
         return new MeterFilter() {
             @Override
             public Meter.Id map(Meter.Id id) {
-                List<? extends io.micrometer.common.Tag> tags = stream(id.getTagsAsIterable().spliterator(), false)
+                List<? extends Tag> tags = stream(id.getTagsAsIterable().spliterator(), false)
                         .filter(t -> {
                             for (String tagKey : tagKeys) {
                                 if (t.getKey().equals(tagKey))
@@ -127,7 +126,7 @@ public interface MeterFilter {
         return new MeterFilter() {
             @Override
             public Meter.Id map(Meter.Id id) {
-                List<? extends io.micrometer.common.Tag> tags = stream(id.getTagsAsIterable().spliterator(), false)
+                List<? extends Tag> tags = stream(id.getTagsAsIterable().spliterator(), false)
                         .map(t -> {
                             if (!t.getKey().equals(tagKey))
                                 return t;
@@ -135,7 +134,7 @@ public interface MeterFilter {
                                 if (t.getValue().equals(exception))
                                     return t;
                             }
-                            return io.micrometer.common.Tag.of(tagKey, replacement.apply(t.getValue()));
+                            return Tag.of(tagKey, replacement.apply(t.getValue()));
                         })
                         .collect(toList());
 

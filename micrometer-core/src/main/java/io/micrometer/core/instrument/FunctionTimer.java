@@ -15,12 +15,14 @@
  */
 package io.micrometer.core.instrument;
 
+import io.micrometer.common.Tag;
+import io.micrometer.common.Tags;
+import io.micrometer.core.lang.Nullable;
+
 import java.util.Arrays;
 import java.util.concurrent.TimeUnit;
 import java.util.function.ToDoubleFunction;
 import java.util.function.ToLongFunction;
-
-import io.micrometer.core.lang.Nullable;
 
 /**
  * A timer that tracks two monotonically increasing functions: one representing the count of events and one
@@ -80,7 +82,7 @@ public interface FunctionTimer extends Meter {
         private final ToLongFunction<T> countFunction;
         private final ToDoubleFunction<T> totalTimeFunction;
         private final TimeUnit totalTimeFunctionUnit;
-        private io.micrometer.common.Tags tags = io.micrometer.common.Tags.empty();
+        private Tags tags = Tags.empty();
 
         @Nullable
         private final T obj;
@@ -104,15 +106,15 @@ public interface FunctionTimer extends Meter {
          * @return The function timer builder with added tags.
          */
         public Builder<T> tags(String... tags) {
-            io.micrometer.common.Tags<?> tags1 = io.micrometer.common.Tags.of(tags);
-            return tags(tags1);
+            Iterable<Tag> tagIterable = Tags.of(tags);
+            return tags(tagIterable);
         }
 
         /**
          * @param tags Tags to add to the eventual function timer.
          * @return The function timer builder with added tags.
          */
-        public Builder<T> tags(Iterable<? extends io.micrometer.common.Tag> tags) {
+        public Builder<T> tags(Iterable<? extends Tag> tags) {
             this.tags = this.tags.and(tags);
             return this;
         }

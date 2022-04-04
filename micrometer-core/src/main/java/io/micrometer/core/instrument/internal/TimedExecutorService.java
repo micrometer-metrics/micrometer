@@ -15,17 +15,14 @@
  */
 package io.micrometer.core.instrument.internal;
 
-import java.util.Collection;
-import java.util.List;
-import java.util.concurrent.Callable;
-import java.util.concurrent.ExecutionException;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Future;
-import java.util.concurrent.TimeUnit;
-import java.util.concurrent.TimeoutException;
-
+import io.micrometer.common.Tag;
+import io.micrometer.common.Tags;
 import io.micrometer.core.instrument.MeterRegistry;
 import io.micrometer.core.instrument.Timer;
+
+import java.util.Collection;
+import java.util.List;
+import java.util.concurrent.*;
 
 import static java.util.stream.Collectors.toList;
 
@@ -42,10 +39,10 @@ public class TimedExecutorService implements ExecutorService {
     private final Timer idleTimer;
 
     public TimedExecutorService(MeterRegistry registry, ExecutorService delegate, String executorServiceName,
-                                String metricPrefix, Iterable<? extends io.micrometer.common.Tag> tags) {
+                                String metricPrefix, Iterable<? extends Tag> tags) {
         this.registry = registry;
         this.delegate = delegate;
-        io.micrometer.common.Tags finalTags = io.micrometer.common.Tags.concat(tags, "name", executorServiceName);
+        Tags finalTags = Tags.concat(tags, "name", executorServiceName);
         this.executionTimer = registry.timer(metricPrefix + "executor", finalTags);
         this.idleTimer = registry.timer(metricPrefix + "executor.idle", finalTags);
     }

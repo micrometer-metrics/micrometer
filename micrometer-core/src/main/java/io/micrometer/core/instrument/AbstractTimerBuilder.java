@@ -15,12 +15,14 @@
  */
 package io.micrometer.core.instrument;
 
-import java.time.Duration;
-import java.util.Arrays;
-
+import io.micrometer.common.Tag;
+import io.micrometer.common.Tags;
 import io.micrometer.core.instrument.distribution.DistributionStatisticConfig;
 import io.micrometer.core.instrument.distribution.pause.PauseDetector;
 import io.micrometer.core.lang.Nullable;
+
+import java.time.Duration;
+import java.util.Arrays;
 
 /**
  * Base builder for {@link Timer}.
@@ -33,7 +35,7 @@ import io.micrometer.core.lang.Nullable;
 @SuppressWarnings("unchecked")
 public abstract class AbstractTimerBuilder<B extends AbstractTimerBuilder<B>> {
     protected final String name;
-    protected io.micrometer.common.Tags tags = io.micrometer.common.Tags.empty();
+    protected Tags tags = Tags.empty();
     protected final DistributionStatisticConfig.Builder distributionConfigBuilder;
 
     @Nullable
@@ -54,15 +56,15 @@ public abstract class AbstractTimerBuilder<B extends AbstractTimerBuilder<B>> {
      * @return This builder.
      */
     public B tags(String... tags) {
-        io.micrometer.common.Tags<?> tags1 = io.micrometer.common.Tags.of(tags);
-        return tags(tags1);
+        Iterable<Tag> tagIterable = Tags.of(tags);
+        return tags(tagIterable);
     }
 
     /**
      * @param tags Tags to add to the eventual timer.
      * @return The timer builder with added tags.
      */
-    public B tags(Iterable<? extends io.micrometer.common.Tag> tags) {
+    public B tags(Iterable<? extends Tag> tags) {
         this.tags = this.tags.and(tags);
         return (B) this;
     }

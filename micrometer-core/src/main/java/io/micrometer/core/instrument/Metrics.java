@@ -15,14 +15,15 @@
  */
 package io.micrometer.core.instrument;
 
+import io.micrometer.common.Tag;
+import io.micrometer.core.instrument.composite.CompositeMeterRegistry;
+import io.micrometer.core.lang.Nullable;
+
 import java.util.Collection;
 import java.util.Map;
 import java.util.concurrent.TimeUnit;
 import java.util.function.ToDoubleFunction;
 import java.util.function.ToLongFunction;
-
-import io.micrometer.core.instrument.composite.CompositeMeterRegistry;
-import io.micrometer.core.lang.Nullable;
 
 /**
  * Generator of meters bound to a static global composite registry. For use especially
@@ -61,7 +62,7 @@ public class Metrics {
      * @param tags Sequence of dimensions for breaking down the name.
      * @return A new or existing counter.
      */
-    public static Counter counter(String name, Iterable<? extends io.micrometer.common.Tag> tags) {
+    public static Counter counter(String name, Iterable<? extends Tag> tags) {
         return globalRegistry.counter(name, tags);
     }
 
@@ -83,7 +84,7 @@ public class Metrics {
      * @param tags Sequence of dimensions for breaking down the name.
      * @return A new or existing distribution summary.
      */
-    public static DistributionSummary summary(String name, Iterable<? extends io.micrometer.common.Tag> tags) {
+    public static DistributionSummary summary(String name, Iterable<? extends Tag> tags) {
         return globalRegistry.summary(name, tags);
     }
 
@@ -105,7 +106,7 @@ public class Metrics {
      * @param tags Sequence of dimensions for breaking down the name.
      * @return A new or existing timer.
      */
-    public static Timer timer(String name, Iterable<? extends io.micrometer.common.Tag> tags) {
+    public static Timer timer(String name, Iterable<? extends Tag> tags) {
         return globalRegistry.timer(name, tags);
     }
 
@@ -149,7 +150,7 @@ public class Metrics {
      * statement.
      */
     @Nullable
-    public static <T> T gauge(String name, Iterable<? extends io.micrometer.common.Tag> tags, T obj, ToDoubleFunction<T> valueFunction) {
+    public static <T> T gauge(String name, Iterable<? extends Tag> tags, T obj, ToDoubleFunction<T> valueFunction) {
         return globalRegistry.gauge(name, tags, obj, valueFunction);
     }
 
@@ -164,7 +165,7 @@ public class Metrics {
      * statement.
      */
     @Nullable
-    public static <T extends Number> T gauge(String name, Iterable<? extends io.micrometer.common.Tag> tags, T number) {
+    public static <T extends Number> T gauge(String name, Iterable<? extends Tag> tags, T number) {
         return globalRegistry.gauge(name, tags, number);
     }
 
@@ -212,7 +213,7 @@ public class Metrics {
      * statement.
      */
     @Nullable
-    public static <T extends Collection<?>> T gaugeCollectionSize(String name, Iterable<? extends io.micrometer.common.Tag> tags, T collection) {
+    public static <T extends Collection<?>> T gaugeCollectionSize(String name, Iterable<? extends Tag> tags, T collection) {
         return globalRegistry.gaugeCollectionSize(name, tags, collection);
     }
 
@@ -231,7 +232,7 @@ public class Metrics {
      * statement.
      */
     @Nullable
-    public static <T extends Map<?, ?>> T gaugeMapSize(String name, Iterable<? extends io.micrometer.common.Tag> tags, T map) {
+    public static <T extends Map<?, ?>> T gaugeMapSize(String name, Iterable<? extends Tag> tags, T map) {
         return globalRegistry.gaugeMapSize(name, tags, map);
     }
 
@@ -257,7 +258,7 @@ public class Metrics {
          * @param tags Sequence of dimensions for breaking down the name.
          * @return A new or existing long task timer.
          */
-        public LongTaskTimer longTaskTimer(String name, Iterable<? extends io.micrometer.common.Tag> tags) {
+        public LongTaskTimer longTaskTimer(String name, Iterable<? extends Tag> tags) {
             return globalRegistry.more().longTaskTimer(name, tags);
         }
 
@@ -272,7 +273,7 @@ public class Metrics {
          * @param <T>           The type of the state object from which the counter value is extracted.
          * @return A new or existing function counter.
          */
-        public <T> FunctionCounter counter(String name, Iterable<? extends io.micrometer.common.Tag> tags, T obj, ToDoubleFunction<T> countFunction) {
+        public <T> FunctionCounter counter(String name, Iterable<? extends Tag> tags, T obj, ToDoubleFunction<T> countFunction) {
             return globalRegistry.more().counter(name, tags, obj, countFunction);
         }
 
@@ -285,7 +286,7 @@ public class Metrics {
          * @param <T>    The type of the state object from which the counter value is extracted.
          * @return A new or existing function counter.
          */
-        public <T extends Number> FunctionCounter counter(String name, Iterable<? extends io.micrometer.common.Tag> tags, T number) {
+        public <T extends Number> FunctionCounter counter(String name, Iterable<? extends Tag> tags, T number) {
             return globalRegistry.more().counter(name, tags, number);
         }
 
@@ -300,7 +301,7 @@ public class Metrics {
          * @param <T>              The type of the state object from which the gauge value is extracted.
          * @return A new or existing time gauge.
          */
-        public <T> TimeGauge timeGauge(String name, Iterable<? extends io.micrometer.common.Tag> tags, T obj, TimeUnit timeFunctionUnit, ToDoubleFunction<T> timeFunction) {
+        public <T> TimeGauge timeGauge(String name, Iterable<? extends Tag> tags, T obj, TimeUnit timeFunctionUnit, ToDoubleFunction<T> timeFunction) {
             return globalRegistry.more().timeGauge(name, tags, obj, timeFunctionUnit, timeFunction);
         }
 
@@ -316,7 +317,7 @@ public class Metrics {
          * @param <T>                   The type of the state object from which the function values are extracted.
          * @return A new or existing function timer.
          */
-        public <T> FunctionTimer timer(String name, Iterable<? extends io.micrometer.common.Tag> tags, T obj,
+        public <T> FunctionTimer timer(String name, Iterable<? extends Tag> tags, T obj,
                                        ToLongFunction<T> countFunction,
                                        ToDoubleFunction<T> totalTimeFunction,
                                        TimeUnit totalTimeFunctionUnit) {

@@ -15,19 +15,13 @@
  */
 package io.micrometer.core.instrument.internal;
 
+import io.micrometer.common.Tag;
+import io.micrometer.common.Tags;
+import io.micrometer.core.instrument.*;
+
 import java.util.Collection;
 import java.util.List;
-import java.util.concurrent.Callable;
-import java.util.concurrent.ExecutionException;
-import java.util.concurrent.Future;
-import java.util.concurrent.ScheduledExecutorService;
-import java.util.concurrent.ScheduledFuture;
-import java.util.concurrent.TimeUnit;
-import java.util.concurrent.TimeoutException;
-
-import io.micrometer.core.instrument.Counter;
-import io.micrometer.core.instrument.MeterRegistry;
-import io.micrometer.core.instrument.Timer;
+import java.util.concurrent.*;
 
 import static java.util.stream.Collectors.toList;
 
@@ -48,10 +42,10 @@ public class TimedScheduledExecutorService implements ScheduledExecutorService {
 
     public TimedScheduledExecutorService(MeterRegistry registry, ScheduledExecutorService delegate,
                                          String executorServiceName, String metricPrefix,
-                                         Iterable<? extends io.micrometer.common.Tag> tags) {
+                                         Iterable<? extends Tag> tags) {
         this.registry = registry;
         this.delegate = delegate;
-        io.micrometer.common.Tags finalTags = io.micrometer.common.Tags.concat(tags, "name", executorServiceName);
+        Tags finalTags = Tags.concat(tags, "name", executorServiceName);
         this.executionTimer = registry.timer(metricPrefix + "executor", finalTags);
         this.idleTimer = registry.timer(metricPrefix + "executor.idle", finalTags);
         this.scheduledOnce = registry.counter(metricPrefix + "executor.scheduled.once", finalTags);

@@ -15,13 +15,15 @@
  */
 package io.micrometer.core.instrument;
 
-import java.util.concurrent.TimeUnit;
-import java.util.function.Supplier;
-import java.util.function.ToDoubleFunction;
-
+import io.micrometer.common.Tag;
+import io.micrometer.common.Tags;
 import io.micrometer.core.annotation.Incubating;
 import io.micrometer.core.instrument.util.TimeUtils;
 import io.micrometer.core.lang.Nullable;
+
+import java.util.concurrent.TimeUnit;
+import java.util.function.Supplier;
+import java.util.function.ToDoubleFunction;
 
 /**
  * A specialized gauge that tracks a time value, to be scaled to the base unit of time expected by each registry implementation.
@@ -75,7 +77,7 @@ public interface TimeGauge extends Gauge {
         private final String name;
         private final TimeUnit fUnits;
         private final ToDoubleFunction<T> f;
-        private io.micrometer.common.Tags tags = io.micrometer.common.Tags.empty();
+        private Tags tags = Tags.empty();
         private boolean strongReference = false;
 
         @Nullable
@@ -96,14 +98,14 @@ public interface TimeGauge extends Gauge {
          * @return This time gauge builder.
          */
         public Builder<T> tags(String... tags) {
-            return tags(io.micrometer.common.Tags.of(tags));
+            return tags(Tags.of(tags));
         }
 
         /**
          * @param tags Tags to add to the eventual time gauge.
          * @return The time gauge builder with added tags.
          */
-        public Builder<T> tags(Iterable<? extends io.micrometer.common.Tag> tags) {
+        public Builder<T> tags(Iterable<? extends Tag> tags) {
             this.tags = this.tags.and(tags);
             return this;
         }

@@ -15,9 +15,11 @@
  */
 package io.micrometer.core.instrument;
 
-import java.util.Collections;
-
+import io.micrometer.common.Tag;
+import io.micrometer.common.Tags;
 import io.micrometer.core.lang.Nullable;
+
+import java.util.Collections;
 
 /**
  * Counters monitor monotonically increasing values. Counters may never be reset to a lesser value. If you
@@ -59,7 +61,7 @@ public interface Counter extends Meter {
      */
     class Builder {
         private final String name;
-        private io.micrometer.common.Tags tags = io.micrometer.common.Tags.empty();
+        private Tags tags = Tags.empty();
 
         @Nullable
         private String description;
@@ -76,15 +78,15 @@ public interface Counter extends Meter {
          * @return The counter builder with added tags.
          */
         public Builder tags(String... tags) {
-            io.micrometer.common.Tags<?> tags1 = io.micrometer.common.Tags.of(tags);
-            return tags(tags1);
+            Iterable<Tag> tagIterable = Tags.of(tags);
+            return tags(tagIterable);
         }
 
         /**
          * @param tags Tags to add to the eventual counter.
          * @return The counter builder with added tags.
          */
-        public Builder tags(Iterable<? extends io.micrometer.common.Tag> tags) {
+        public Builder tags(Iterable<? extends Tag> tags) {
             this.tags = this.tags.and(tags);
             return this;
         }

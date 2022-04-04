@@ -15,25 +15,8 @@
  */
 package io.micrometer.core.instrument;
 
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
-import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.CopyOnWriteArrayList;
-import java.util.concurrent.TimeUnit;
-import java.util.concurrent.atomic.AtomicBoolean;
-import java.util.function.BiConsumer;
-import java.util.function.BiFunction;
-import java.util.function.Consumer;
-import java.util.function.Function;
-import java.util.function.ToDoubleFunction;
-import java.util.function.ToLongFunction;
-
+import io.micrometer.common.Tag;
+import io.micrometer.common.Tags;
 import io.micrometer.core.annotation.Incubating;
 import io.micrometer.core.instrument.Meter.Id;
 import io.micrometer.core.instrument.config.MeterFilter;
@@ -56,6 +39,25 @@ import io.micrometer.core.instrument.search.RequiredSearch;
 import io.micrometer.core.instrument.search.Search;
 import io.micrometer.core.instrument.util.TimeUtils;
 import io.micrometer.core.lang.Nullable;
+
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.CopyOnWriteArrayList;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.function.BiConsumer;
+import java.util.function.BiFunction;
+import java.util.function.Consumer;
+import java.util.function.Function;
+import java.util.function.ToDoubleFunction;
+import java.util.function.ToLongFunction;
 
 import static java.lang.String.format;
 import static java.util.Collections.emptyList;
@@ -245,7 +247,7 @@ public abstract class MeterRegistry {
      */
     protected abstract <T> FunctionCounter newFunctionCounter(Id id, T obj, ToDoubleFunction<T> countFunction);
 
-    protected List<? extends io.micrometer.common.Tag> getConventionTags(Meter.Id id) {
+    protected List<? extends Tag> getConventionTags(Meter.Id id) {
         return id.getConventionTags(config().namingConvention());
     }
 
@@ -388,7 +390,7 @@ public abstract class MeterRegistry {
      * @param tags Sequence of dimensions for breaking down the name.
      * @return A new or existing counter.
      */
-    public Counter counter(String name, Iterable<? extends io.micrometer.common.Tag> tags) {
+    public Counter counter(String name, Iterable<? extends Tag> tags) {
         return Counter.builder(name).tags(tags).register(this);
     }
 
@@ -400,7 +402,7 @@ public abstract class MeterRegistry {
      * @return A new or existing counter.
      */
     public Counter counter(String name, String... tags) {
-        return counter(name, io.micrometer.common.Tags.of(tags));
+        return counter(name, Tags.of(tags));
     }
 
     /**
@@ -410,7 +412,7 @@ public abstract class MeterRegistry {
      * @param tags Sequence of dimensions for breaking down the name.
      * @return A new or existing distribution summary.
      */
-    public DistributionSummary summary(String name, Iterable<? extends io.micrometer.common.Tag> tags) {
+    public DistributionSummary summary(String name, Iterable<? extends Tag> tags) {
         return DistributionSummary.builder(name).tags(tags).register(this);
     }
 
@@ -422,7 +424,7 @@ public abstract class MeterRegistry {
      * @return A new or existing distribution summary.
      */
     public DistributionSummary summary(String name, String... tags) {
-        return summary(name, io.micrometer.common.Tags.of(tags));
+        return summary(name, Tags.of(tags));
     }
 
     /**
@@ -432,7 +434,7 @@ public abstract class MeterRegistry {
      * @param tags Sequence of dimensions for breaking down the name.
      * @return A new or existing timer.
      */
-    public Timer timer(String name, Iterable<? extends io.micrometer.common.Tag> tags) {
+    public Timer timer(String name, Iterable<? extends Tag> tags) {
         return Timer.builder(name).tags(tags).register(this);
     }
 
@@ -444,7 +446,7 @@ public abstract class MeterRegistry {
      * @return A new or existing timer.
      */
     public Timer timer(String name, String... tags) {
-        return timer(name, io.micrometer.common.Tags.of(tags));
+        return timer(name, Tags.of(tags));
     }
 
     /**
@@ -470,7 +472,7 @@ public abstract class MeterRegistry {
      * statement.
      */
     @Nullable
-    public <T> T gauge(String name, Iterable<? extends io.micrometer.common.Tag> tags, @Nullable T stateObject, ToDoubleFunction<T> valueFunction) {
+    public <T> T gauge(String name, Iterable<? extends Tag> tags, @Nullable T stateObject, ToDoubleFunction<T> valueFunction) {
         Gauge.builder(name, stateObject, valueFunction).tags(tags).register(this);
         return stateObject;
     }
@@ -486,7 +488,7 @@ public abstract class MeterRegistry {
      * statement.
      */
     @Nullable
-    public <T extends Number> T gauge(String name, Iterable<? extends io.micrometer.common.Tag> tags, T number) {
+    public <T extends Number> T gauge(String name, Iterable<? extends Tag> tags, T number) {
         return gauge(name, tags, number, Number::doubleValue);
     }
 
@@ -534,7 +536,7 @@ public abstract class MeterRegistry {
      * statement.
      */
     @Nullable
-    public <T extends Collection<?>> T gaugeCollectionSize(String name, Iterable<? extends io.micrometer.common.Tag> tags, T collection) {
+    public <T extends Collection<?>> T gaugeCollectionSize(String name, Iterable<? extends Tag> tags, T collection) {
         return gauge(name, tags, collection, Collection::size);
     }
 
@@ -553,7 +555,7 @@ public abstract class MeterRegistry {
      * statement.
      */
     @Nullable
-    public <T extends Map<?, ?>> T gaugeMapSize(String name, Iterable<? extends io.micrometer.common.Tag> tags, T map) {
+    public <T extends Map<?, ?>> T gaugeMapSize(String name, Iterable<? extends Tag> tags, T map) {
         return gauge(name, tags, map, Map::size);
     }
 
@@ -733,7 +735,7 @@ public abstract class MeterRegistry {
          * @param tags Tags to add to every metric.
          * @return This configuration instance.
          */
-        public Config commonTags(Iterable<? extends io.micrometer.common.Tag> tags) {
+        public Config commonTags(Iterable<? extends Tag> tags) {
             return meterFilter(MeterFilter.commonTags(tags));
         }
 
@@ -745,7 +747,7 @@ public abstract class MeterRegistry {
          * @return This configuration instance.
          */
         public Config commonTags(String... tags) {
-            return commonTags(io.micrometer.common.Tags.of(tags));
+            return commonTags(Tags.of(tags));
         }
 
         /**
@@ -858,7 +860,7 @@ public abstract class MeterRegistry {
          * @return A new or existing long task timer.
          */
         public LongTaskTimer longTaskTimer(String name, String... tags) {
-            return longTaskTimer(name, io.micrometer.common.Tags.of(tags));
+            return longTaskTimer(name, Tags.of(tags));
         }
 
         /**
@@ -868,7 +870,7 @@ public abstract class MeterRegistry {
          * @param tags Sequence of dimensions for breaking down the name.
          * @return A new or existing long task timer.
          */
-        public LongTaskTimer longTaskTimer(String name, Iterable<? extends io.micrometer.common.Tag> tags) {
+        public LongTaskTimer longTaskTimer(String name, Iterable<? extends Tag> tags) {
             return LongTaskTimer.builder(name).tags(tags).register(MeterRegistry.this);
         }
 
@@ -896,7 +898,7 @@ public abstract class MeterRegistry {
          * @param <T>           The type of the state object from which the counter value is extracted.
          * @return A new or existing function counter.
          */
-        public <T> FunctionCounter counter(String name, Iterable<? extends io.micrometer.common.Tag> tags, T obj, ToDoubleFunction<T> countFunction) {
+        public <T> FunctionCounter counter(String name, Iterable<? extends Tag> tags, T obj, ToDoubleFunction<T> countFunction) {
             return FunctionCounter.builder(name, obj, countFunction).tags(tags).register(MeterRegistry.this);
         }
 
@@ -909,7 +911,7 @@ public abstract class MeterRegistry {
          * @param <T>    The type of the state object from which the counter value is extracted.
          * @return A new or existing function counter.
          */
-        public <T extends Number> FunctionCounter counter(String name, Iterable<? extends io.micrometer.common.Tag> tags, T number) {
+        public <T extends Number> FunctionCounter counter(String name, Iterable<? extends Tag> tags, T number) {
             return FunctionCounter.builder(name, number, Number::doubleValue).tags(tags).register(MeterRegistry.this);
         }
 
@@ -939,7 +941,7 @@ public abstract class MeterRegistry {
          * @param <T>                   The type of the state object from which the function values are extracted.
          * @return A new or existing function timer.
          */
-        public <T> FunctionTimer timer(String name, Iterable<? extends io.micrometer.common.Tag> tags, T obj,
+        public <T> FunctionTimer timer(String name, Iterable<? extends Tag> tags, T obj,
                                        ToLongFunction<T> countFunction,
                                        ToDoubleFunction<T> totalTimeFunction,
                                        TimeUnit totalTimeFunctionUnit) {
@@ -979,7 +981,7 @@ public abstract class MeterRegistry {
          * @param <T>              The type of the state object from which the gauge value is extracted.
          * @return A new or existing time gauge.
          */
-        public <T> TimeGauge timeGauge(String name, Iterable<? extends io.micrometer.common.Tag> tags, T obj,
+        public <T> TimeGauge timeGauge(String name, Iterable<? extends Tag> tags, T obj,
                                        TimeUnit timeFunctionUnit, ToDoubleFunction<T> timeFunction) {
             return TimeGauge.builder(name, obj, timeFunctionUnit, timeFunction).tags(tags).register(MeterRegistry.this);
         }

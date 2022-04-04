@@ -15,15 +15,17 @@
  */
 package io.micrometer.core.instrument;
 
-import java.time.Duration;
-import java.util.Arrays;
-import java.util.concurrent.TimeUnit;
-
+import io.micrometer.common.Tag;
+import io.micrometer.common.Tags;
 import io.micrometer.core.instrument.distribution.CountAtBucket;
 import io.micrometer.core.instrument.distribution.DistributionStatisticConfig;
 import io.micrometer.core.instrument.distribution.HistogramSupport;
 import io.micrometer.core.instrument.distribution.ValueAtPercentile;
 import io.micrometer.core.lang.Nullable;
+
+import java.time.Duration;
+import java.util.Arrays;
+import java.util.concurrent.TimeUnit;
 
 /**
  * Track the sample distribution of events. An example would be the response sizes for requests
@@ -116,7 +118,7 @@ public interface DistributionSummary extends Meter, HistogramSupport {
      */
     class Builder {
         private final String name;
-        private io.micrometer.common.Tags tags = io.micrometer.common.Tags.empty();
+        private Tags tags = Tags.empty();
         private DistributionStatisticConfig.Builder distributionConfigBuilder = DistributionStatisticConfig.builder();
 
         @Nullable
@@ -136,15 +138,15 @@ public interface DistributionSummary extends Meter, HistogramSupport {
          * @return The distribution summmary builder with added tags.
          */
         public Builder tags(String... tags) {
-            io.micrometer.common.Tags<?> tags1 = io.micrometer.common.Tags.of(tags);
-            return tags(tags1);
+            Iterable<Tag> tagIterable = Tags.of(tags);
+            return tags(tagIterable);
         }
 
         /**
          * @param tags Tags to add to the eventual distribution summary.
          * @return The distribution summary builder with added tags.
          */
-        public Builder tags(Iterable<? extends io.micrometer.common.Tag> tags) {
+        public Builder tags(Iterable<? extends Tag> tags) {
             this.tags = this.tags.and(tags);
             return this;
         }
