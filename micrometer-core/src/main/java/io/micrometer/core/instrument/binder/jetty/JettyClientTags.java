@@ -150,7 +150,7 @@ public final class JettyClientTags {
      * @return the outcome tag derived from the status of the response
      */
     public static Tag outcome(Result result) {
-        return Tag.fromCommon(Outcome.forStatus(result.getResponse().getStatus()).asTag());
+        return Tag.of(Outcome.forStatus(result.getResponse().getStatus()).asTag());
     }
 
 }

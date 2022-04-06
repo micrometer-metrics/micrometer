@@ -33,31 +33,15 @@ public interface Tag extends io.micrometer.common.Tag {
      * This should be used only to migrate from old tags to the new ones.
      * We reserve the right to remove this method at any time.
      *
-     * @param tag common tag
-     * @return core tag
+     * @param tag generic type tag (from commons module)
+     * @return tag instance of this type
      */
     @Deprecated
-    static Tag fromCommon(io.micrometer.common.Tag tag) {
+    static Tag of(io.micrometer.common.Tag tag) {
+        if (tag instanceof Tag) {
+            return (Tag) tag;
+        }
         return Tag.of(tag.getKey(), tag.getValue());
     }
 
-    /**
-     * This should be used only to migrate from old tags to the new ones.
-     * We reserve the right to remove this method at any time.
-     *
-     * @param tag common tag
-     * @return core tag
-     */
-    @Deprecated
-    static io.micrometer.common.Tag toCommon(Tag tag) {
-        return io.micrometer.common.Tag.of(tag.getKey(), tag.getValue());
-    }
-
-    @Override
-    default int compareTo(Object o) {
-        if (o instanceof Tag) {
-            return getKey().compareTo(((Tag) o).getKey());
-        }
-        return io.micrometer.common.Tag.super.compareTo(o);
-    }
 }

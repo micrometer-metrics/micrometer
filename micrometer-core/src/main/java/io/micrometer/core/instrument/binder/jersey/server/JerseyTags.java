@@ -158,10 +158,10 @@ public final class JerseyTags {
      */
     public static Tag outcome(ContainerResponse response) {
         if (response != null) {
-            return Tag.fromCommon(Outcome.forStatus(response.getStatus()).asTag());
+            return Tag.of(Outcome.forStatus(response.getStatus()).asTag());
         }
         /* In case there is no response we are dealing with an unmapped exception. */
-        return Tag.fromCommon(Outcome.SERVER_ERROR.asTag());
+        return Tag.of(Outcome.SERVER_ERROR.asTag());
     }
 
 }
