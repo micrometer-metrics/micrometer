@@ -48,8 +48,12 @@ public class Tags<T extends Tag> implements Iterable<T> {
     protected int last;
 
     // TODO: Make private in 3.0.0
-    // DO NOT USE - IT'S FOR INTERNAL USE ONLY
-    public Tags(T[] tags) {
+    /**
+     * This constructor is for internal use and will be made private in a future release.
+     *
+     * @param tags array of tags backing this
+     */
+    protected Tags(T[] tags) {
         this.tags = tags;
         Arrays.sort(this.tags);
         dedup();
