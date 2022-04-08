@@ -32,12 +32,12 @@ import java.util.concurrent.TimeUnit;
  * @since 1.9.0
  */
 public final class DynatraceDistributionSummary extends AbstractDistributionSummary implements DynatraceSummarySnapshotSupport {
-    private final DynatraceSummary summary = new DynatraceSummary();
     private static final Logger LOGGER = LoggerFactory.getLogger(DynatraceDistributionSummary.class.getName());
-
     // Configuration that will set the Histogram in AbstractTimer to a NoopHistogram.
     private static final DistributionStatisticConfig NOOP_HISTOGRAM_CONFIG =
             DistributionStatisticConfig.builder().percentilesHistogram(false).percentiles().build();
+
+    private final DynatraceSummary summary = new DynatraceSummary();
 
     public DynatraceDistributionSummary(Id id, Clock clock, DistributionStatisticConfig distributionStatisticConfig, double scale) {
         super(id, clock, NOOP_HISTOGRAM_CONFIG, scale, false);
