@@ -39,8 +39,8 @@ public class SignalFxNamingConvention implements NamingConvention {
     private static final Pattern START_UNDERSCORE_PATTERN = Pattern.compile("^_");
     private static final Pattern SF_PATTERN = Pattern.compile("^sf_");
     private static final Pattern START_LETTERS_PATTERN = Pattern.compile("^[a-zA-Z].*");
-    private static final Pattern PATTERN_TAG_KEY_BLACKLISTED_CHARS = Pattern.compile("[^\\w_\\-]");
-    private static final Pattern PATTERN_TAG_KEY_BLACKLISTED_PREFIX = Pattern.compile("^(aws|gcp|azure)_.*");
+    private static final Pattern PATTERN_TAG_KEY_DENYLISTED_CHARS = Pattern.compile("[^\\w_\\-]");
+    private static final Pattern PATTERN_TAG_KEY_DENYLISTED_PREFIX = Pattern.compile("^(aws|gcp|azure)_.*");
 
     private static final int NAME_MAX_LENGTH = 256;
     private static final int TAG_VALUE_MAX_LENGTH = 256;
@@ -74,11 +74,11 @@ public class SignalFxNamingConvention implements NamingConvention {
         conventionKey = START_UNDERSCORE_PATTERN.matcher(conventionKey).replaceAll(""); // 2
         conventionKey = SF_PATTERN.matcher(conventionKey).replaceAll(""); // 2
 
-        conventionKey = PATTERN_TAG_KEY_BLACKLISTED_CHARS.matcher(conventionKey).replaceAll("_");
+        conventionKey = PATTERN_TAG_KEY_DENYLISTED_CHARS.matcher(conventionKey).replaceAll("_");
         if (!START_LETTERS_PATTERN.matcher(conventionKey).matches()) { // 3
             conventionKey = "a" + conventionKey;
         }
-        if (PATTERN_TAG_KEY_BLACKLISTED_PREFIX.matcher(conventionKey).matches()) {
+        if (PATTERN_TAG_KEY_DENYLISTED_PREFIX.matcher(conventionKey).matches()) {
             logger.log("'" + conventionKey + "' (original name: '" + key + "') is not a valid tag key. "
                     + "Must not start with any of these prefixes: aws_, gcp_, or azure_. "
                     + "Please rename it to conform to the constraints. "
