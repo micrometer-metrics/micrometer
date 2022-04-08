@@ -37,7 +37,7 @@ class SignalFxNamingConventionTest {
     }
 
     @Test
-    void tagKeyWhenKeyHasBlacklistedCharShouldSanitize() {
+    void tagKeyWhenKeyHasDenylistedCharShouldSanitize() {
         assertThat(convention.tagKey("a.b")).isEqualTo("a_b");
     }
 
