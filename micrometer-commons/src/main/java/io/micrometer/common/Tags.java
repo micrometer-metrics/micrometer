@@ -310,7 +310,7 @@ public class Tags<T extends Tag> implements Iterable<T> {
      * @param tags the tags to add
      * @return a new {@code Tags} instance
      */
-    public static <T extends Tag> Tags of(@Nullable T... tags) {
+    public static Tags of(@Nullable Tag... tags) {
         return empty().and(tags);
     }
 

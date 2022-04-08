@@ -275,9 +275,18 @@ public final class Tags extends io.micrometer.common.Tags<Tag> {
      * @param tags the tags to add
      * @return a new {@code Tags} instance
      */
-    @SuppressWarnings("rawtypes")
-    public static <T extends io.micrometer.common.Tag> Tags of(@Nullable T... tags) {
+    public static Tags of(@Nullable io.micrometer.common.Tag... tags) {
         return empty().and(fromCommon(tags));
+    }
+
+    /**
+     * Return a new {@code Tags} instance containing tags constructed from the specified tags.
+     *
+     * @param tags the tags to add
+     * @return a new {@code Tags} instance
+     */
+    public static Tags of(@Nullable Tag... tags) {
+        return empty().and(tags);
     }
 
     private static Tag[] fromCommon(io.micrometer.common.Tag[] tags) {
