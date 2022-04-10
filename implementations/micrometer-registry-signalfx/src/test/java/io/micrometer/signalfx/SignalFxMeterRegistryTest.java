@@ -31,6 +31,7 @@ import org.junit.jupiter.params.provider.ArgumentsProvider;
 import org.junit.jupiter.params.provider.ArgumentsSource;
 
 import java.time.Duration;
+import java.util.Comparator;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
@@ -122,7 +123,7 @@ class SignalFxMeterRegistryTest {
     }
 
     @Test
-    void shouldConfigureCumulativeHistogram_DistributionSummar() {
+    void shouldConfigureCumulativeHistogram_DistributionSummary() {
         MockClock clock = new MockClock();
         SignalFxMeterRegistry registry = new SignalFxMeterRegistry(cumulativeHistogramConfig, clock);
         DistributionSummary summary = DistributionSummary.builder("testSummary")
@@ -324,14 +325,8 @@ class SignalFxMeterRegistryTest {
                         registry::addFunctionTimer,
                         registry::addMeter))
                 .flatMap(builders -> builders.map(builder -> builder.setTimestamp(timestamp).build()))
-                .sorted((point1, point2) -> {
-                    int cmp = point1.getMetric().compareTo(point2.getMetric());
-                    if (cmp == 0) {
-                        return point1.getDimensions(0).getValue()
-                                .compareTo(point2.getDimensions(0).getValue());
-                    }
-                    return cmp;
-                })
+                .sorted(Comparator.comparing(SignalFxProtocolBuffers.DataPoint::getMetric)
+                        .thenComparing((point) -> point.getDimensions(0).getValue()))
                 .collect(Collectors.toList());
     }
 
