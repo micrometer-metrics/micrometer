@@ -229,7 +229,20 @@ public interface Meter {
          * @param tag The tag to add.
          * @return A new id with the provided tag added. The source id remains unchanged.
          */
-        public <T extends Tag> Id withTag(T tag) {
+        public Id withTag(Tag tag) {
+            return withTags(singletonList(tag));
+        }
+
+        /**
+         * Generate a new id with an additional tag. If the key of the provided tag already exists, this overwrites
+         * the tag value.
+         *
+         * @param tag The tag to add.
+         * @return A new id with the provided tag added. The source id remains unchanged.
+         * @deprecated use {@link #withTag(Tag)} instead
+         */
+        @Deprecated // only here for binary compatibility
+        public Id withTag(io.micrometer.core.instrument.Tag tag) {
             return withTags(singletonList(tag));
         }
 

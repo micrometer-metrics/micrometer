@@ -101,19 +101,34 @@ public class MultiGauge {
             this.valueFunction = valueFunction;
         }
 
-        public static <T> Row<T> of(Tags uniqueTags, T obj, ToDoubleFunction<T> valueFunction) {
+        public static <T> Row<T> of(Tags<? extends Tag> uniqueTags, T obj, ToDoubleFunction<T> valueFunction) {
             return new Row<>(uniqueTags, obj, valueFunction);
         }
 
-        public static Row<Number> of(Tags uniqueTags, Number number) {
+        @Deprecated // only for binary compatibility
+        public static <T> Row<T> of(io.micrometer.core.instrument.Tags uniqueTags, T obj, ToDoubleFunction<T> valueFunction) {
+            return of((Tags<? extends Tag>) uniqueTags, obj, valueFunction);
+        }
+
+        public static Row<Number> of(Tags<? extends Tag> uniqueTags, Number number) {
             return new Row<>(uniqueTags, number, Number::doubleValue);
         }
 
-        public static Row<Supplier<Number>> of(Tags uniqueTags, Supplier<Number> valueFunction) {
+        @Deprecated // only for binary compatibility
+        public static Row<Number> of(io.micrometer.core.instrument.Tags uniqueTags, Number number) {
+            return of((Tags<? extends Tag>) uniqueTags, number);
+        }
+
+        public static Row<Supplier<Number>> of(Tags<? extends Tag> uniqueTags, Supplier<Number> valueFunction) {
             return new Row<>(uniqueTags, valueFunction, f -> {
                 Number value = valueFunction.get();
                 return value == null ? Double.NaN : value.doubleValue();
             });
+        }
+
+        @Deprecated // only for binary compatibility
+        public static Row<Supplier<Number>> of(io.micrometer.core.instrument.Tags uniqueTags, Supplier<Number> valueFunction) {
+            return of((Tags<? extends Tag>) uniqueTags, valueFunction);
         }
     }
 
