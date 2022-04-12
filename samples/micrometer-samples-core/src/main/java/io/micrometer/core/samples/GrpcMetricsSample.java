@@ -28,8 +28,8 @@ import io.grpc.inprocess.InProcessServerBuilder;
 import io.grpc.protobuf.services.HealthStatusManager;
 import io.micrometer.core.instrument.Meter;
 import io.micrometer.core.instrument.MeterRegistry;
-import io.micrometer.binder.grpc.MetricCollectingClientInterceptor;
-import io.micrometer.binder.grpc.MetricCollectingServerInterceptor;
+import io.micrometer.core.instrument.binder.grpc.MetricCollectingClientInterceptor;
+import io.micrometer.core.instrument.binder.grpc.MetricCollectingServerInterceptor;
 import io.micrometer.core.samples.utils.SampleConfig;
 
 /**

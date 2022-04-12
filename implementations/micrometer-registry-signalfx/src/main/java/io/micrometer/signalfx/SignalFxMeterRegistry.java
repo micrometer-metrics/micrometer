@@ -73,7 +73,7 @@ public class SignalFxMeterRegistry extends StepMeterRegistry {
     private final HttpEventProtobufReceiverFactory eventReceiverFactory;
     private final Set<OnSendErrorHandler> onSendErrorHandlerCollection = Collections.singleton(
             metricError -> this.logger.warn("failed to send metrics: {}", metricError.getMessage()));
-    private final boolean publishCumulativeHistograms;
+    private final boolean publishCumulativeHistogram;
 
     public SignalFxMeterRegistry(SignalFxConfig config, Clock clock) {
         this(config, clock, DEFAULT_THREAD_FACTORY);
@@ -96,7 +96,7 @@ public class SignalFxMeterRegistry extends StepMeterRegistry {
         SignalFxReceiverEndpoint signalFxEndpoint = new SignalFxEndpoint(apiUri.getScheme(), apiUri.getHost(), port);
         this.dataPointReceiverFactory = new HttpDataPointProtobufReceiverFactory(signalFxEndpoint);
         this.eventReceiverFactory = new HttpEventProtobufReceiverFactory(signalFxEndpoint);
-        this.publishCumulativeHistograms = config.publishCumulativeHistogram();
+        this.publishCumulativeHistogram = config.publishCumulativeHistogram();
 
         config().namingConvention(new SignalFxNamingConvention());
 
@@ -136,7 +136,7 @@ public class SignalFxMeterRegistry extends StepMeterRegistry {
 
     @Override
     protected Timer newTimer(Meter.Id id, DistributionStatisticConfig distributionStatisticConfig, PauseDetector pauseDetector) {
-        if (!publishCumulativeHistograms) {
+        if (!publishCumulativeHistogram) {
             return super.newTimer(id, distributionStatisticConfig, pauseDetector);
         }
         Timer timer = new SignalfxTimer(id, clock, distributionStatisticConfig, pauseDetector, getBaseTimeUnit(), config.step().toMillis());
@@ -146,7 +146,7 @@ public class SignalFxMeterRegistry extends StepMeterRegistry {
 
     @Override
     protected DistributionSummary newDistributionSummary(Meter.Id id, DistributionStatisticConfig distributionStatisticConfig, double scale) {
-        if (!publishCumulativeHistograms) {
+        if (!publishCumulativeHistogram) {
             return super.newDistributionSummary(id, distributionStatisticConfig, scale);
         }
         DistributionSummary summary = new SignalfxDistributionSummary(id, clock, distributionStatisticConfig, scale, config.step().toMillis());
@@ -211,7 +211,7 @@ public class SignalFxMeterRegistry extends StepMeterRegistry {
     }
 
     Stream<SignalFxProtocolBuffers.DataPoint.Builder> addGauge(Gauge gauge) {
-        if (publishCumulativeHistograms
+        if (publishCumulativeHistogram
                 && gauge.getId().syntheticAssociation() != null
                 && gauge.getId().getName().endsWith(".histogram")) {
             return Stream.of(addDatapoint(gauge, CUMULATIVE_COUNTER, null, gauge.value()));
