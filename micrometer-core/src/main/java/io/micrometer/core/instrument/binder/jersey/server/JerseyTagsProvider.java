@@ -20,12 +20,10 @@ import org.glassfish.jersey.server.monitoring.RequestEvent;
 
 /**
  * Provides {@link Tag Tags} for Jersey request metrics.
- *
- * @deprecated Scheduled for removal in 2.0.0, please use {@code io.micrometer.binder.jersey.server.JerseyTagsProvider}
+ * 
  * @author Michael Weirauch
  * @since 1.8.0
  */
-@Deprecated
 public interface JerseyTagsProvider {
 
     /**

@@ -46,13 +46,11 @@ import java.util.function.Function;
  *         .build();
  * </pre>
  *
- * @deprecated Scheduled for removal in 2.0.0, please use {@code io.micrometer.binder.httpcomponents.MicrometerHttpRequestExecutor}
  * @author Benjamin Hubert (benjamin.hubert@willhaben.at)
  * @author Tommy Ludwig
  * @since 1.2.0
  */
 @Incubating(since = "1.2.0")
-@Deprecated
 public class MicrometerHttpRequestExecutor extends HttpRequestExecutor {
 
     /**

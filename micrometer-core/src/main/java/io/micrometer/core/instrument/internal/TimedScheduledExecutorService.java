@@ -28,7 +28,7 @@ import static java.util.stream.Collectors.toList;
  *
  * @author Sebastian Lövdahl
  * @since 1.3.0
- * @see "io.micrometer.binder.jvm.ExecutorServiceMetrics"
+ * @see io.micrometer.core.instrument.binder.jvm.ExecutorServiceMetrics
  */
 public class TimedScheduledExecutorService implements ScheduledExecutorService {
     private final MeterRegistry registry;

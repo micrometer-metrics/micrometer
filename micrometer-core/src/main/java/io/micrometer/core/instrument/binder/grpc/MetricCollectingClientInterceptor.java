@@ -44,11 +44,9 @@ import io.micrometer.core.instrument.Timer;
  * channel.newCall(method, options);
  * </pre>
  *
- * @deprecated Scheduled for removal in 2.0.0, please use {@code io.micrometer.binder.grpc.MetricCollectingClientInterceptor}
  * @author Daniel Theuke (daniel.theuke@heuboe.de)
  * @since 1.7.0
  */
-@Deprecated
 public class MetricCollectingClientInterceptor extends AbstractMetricCollectingInterceptor
         implements ClientInterceptor {
 

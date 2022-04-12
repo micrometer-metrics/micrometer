@@ -15,9 +15,9 @@
  */
 package io.micrometer.health.objectives;
 
-import io.micrometer.binder.jvm.JvmGcMetrics;
-import io.micrometer.binder.jvm.JvmHeapPressureMetrics;
-import io.micrometer.binder.jvm.JvmMemoryMetrics;
+import io.micrometer.core.instrument.binder.jvm.JvmGcMetrics;
+import io.micrometer.core.instrument.binder.jvm.JvmHeapPressureMetrics;
+import io.micrometer.core.instrument.binder.jvm.JvmMemoryMetrics;
 import io.micrometer.health.ServiceLevelObjective;
 
 import java.time.Duration;

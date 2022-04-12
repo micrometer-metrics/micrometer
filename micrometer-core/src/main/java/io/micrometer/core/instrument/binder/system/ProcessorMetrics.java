@@ -42,7 +42,6 @@ import static java.util.Objects.requireNonNull;
  *     <li>J9</li>
  * </ul>
  *
- * @deprecated Scheduled for removal in 2.0.0, please use {@code io.micrometer.binder.system.ProcessorMetrics}
  * @author Jon Schneider
  * @author Michael Weirauch
  * @author Clint Checketts
@@ -50,7 +49,6 @@ import static java.util.Objects.requireNonNull;
  */
 @NonNullApi
 @NonNullFields
-@Deprecated
 public class ProcessorMetrics implements MeterBinder {
 
     /** List of public, exported interface class names from supported JVM implementations. */

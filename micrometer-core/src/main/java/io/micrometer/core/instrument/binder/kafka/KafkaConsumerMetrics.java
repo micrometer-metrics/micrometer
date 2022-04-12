@@ -49,7 +49,7 @@ import static java.util.Collections.emptyList;
  * @author Johnny Lim
  * @see <a href="https://docs.confluent.io/current/kafka/monitoring.html">Kakfa monitoring documentation</a>
  * @since 1.1.0
- * @deprecated since 1.4.0, use {@code io.micrometer.binder.kafka.KafkaClientMetrics} instead.
+ * @deprecated use {@link KafkaClientMetrics} instead since 1.4.0
  */
 @Incubating(since = "1.1.0")
 @NonNullApi

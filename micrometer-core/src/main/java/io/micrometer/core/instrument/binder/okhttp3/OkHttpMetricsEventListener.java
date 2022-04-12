@@ -46,7 +46,6 @@ import static java.util.stream.StreamSupport.stream;
  * {@literal uri} tag or you can configure a {@link Builder#uriMapper(Function) URI mapper} to provide your own tag
  * values for {@literal uri} tag.
  *
- * @deprecated Scheduled for removal in 2.0.0, please use {@code io.micrometer.binder.okhttp3.OkHttpMetricsEventListener}
  * @author Bjarte S. Karlsen
  * @author Jon Schneider
  * @author Nurettin Yilmaz
@@ -54,7 +53,6 @@ import static java.util.stream.StreamSupport.stream;
  */
 @NonNullApi
 @NonNullFields
-@Deprecated
 public class OkHttpMetricsEventListener extends EventListener {
 
     /**

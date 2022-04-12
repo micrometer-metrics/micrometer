@@ -31,14 +31,12 @@ import static java.util.Collections.emptyList;
 /**
  * Record metrics that report disk space usage.
  *
- * @deprecated Scheduled for removal in 2.0.0, please use {@code io.micrometer.binder.system.DiskSpaceMetrics}
  * @author jmcshane
  * @author Johnny Lim
  * @since 1.8.0
  */
 @NonNullApi
 @NonNullFields
-@Deprecated
 public class DiskSpaceMetrics implements MeterBinder {
     private final Iterable<Tag> tags;
     private final File path;
