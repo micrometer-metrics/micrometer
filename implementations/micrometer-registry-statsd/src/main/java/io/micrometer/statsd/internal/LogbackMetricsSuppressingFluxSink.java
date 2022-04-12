@@ -21,6 +21,7 @@ import io.micrometer.core.instrument.binder.logging.LogbackMetrics;
 import reactor.core.Disposable;
 import reactor.core.publisher.FluxSink;
 import reactor.util.context.Context;
+import reactor.util.context.ContextView;
 
 /**
  * This is an internal class only for use within Micrometer.
@@ -53,6 +54,11 @@ public class LogbackMetricsSuppressingFluxSink implements FluxSink<String> {
     @Override
     public Context currentContext() {
         return delegate.currentContext();
+    }
+
+    @Override
+    public ContextView contextView() {
+        return delegate.contextView();
     }
 
     @Override
