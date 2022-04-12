@@ -63,6 +63,7 @@ def VERSIONS = [
         'org.glassfish.jersey.inject:jersey-hk2:2.+',
         'org.glassfish.jersey.test-framework.providers:jersey-test-framework-provider-inmemory:2.+',
         'org.hdrhistogram:HdrHistogram:latest.release',
+        'org.hibernate:hibernate-entitymanager:5.+',
         'org.hsqldb:hsqldb:2.5.+', // 2.6.0 requires JDK 11.
         'org.jooq:jooq:3.14.+',
         'org.jsr107.ri:cache-ri-impl:1.0.0',
