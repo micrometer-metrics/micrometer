@@ -298,7 +298,7 @@ subprojects {
 
 
             // new projects
-            if (["micrometer-commons", "micrometer-observation"].every { it != project.name }) {
+            if (["micrometer-commons", "micrometer-observation", "micrometer-observation-test"].every { it != project.name }) {
                 apply plugin: 'me.champeau.gradle.japicmp'
                 apply plugin: 'de.undercouch.download'
 
@@ -337,7 +337,7 @@ subprojects {
                 }
 
                 tasks.japicmp.dependsOn(downloadBaseline)
-                tasks.check.dependsOn(japicmp)
+//                tasks.check.dependsOn(japicmp)
             }
 
         }
