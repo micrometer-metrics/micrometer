@@ -18,7 +18,7 @@ package io.micrometer.observation;
 import java.io.IOException;
 import java.util.function.Consumer;
 
-import io.micrometer.common.Tag;
+import io.micrometer.common.KeyValue;
 import org.junit.jupiter.api.Test;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -89,8 +89,8 @@ class ObservationTextPublisherTests {
                 .setName("testName")
                 .setContextualName("testContextualName")
                 .setError(new IOException("simulated"));
-        context.addLowCardinalityTag(Tag.of("lcTag", "foo"));
-        context.addHighCardinalityTag(Tag.of("hcTag", "bar"));
+        context.addLowCardinalityTag(KeyValue.of("lcTag", "foo"));
+        context.addHighCardinalityTag(KeyValue.of("hcTag", "bar"));
         context.put("contextKey", "contextValue");
 
         return context;

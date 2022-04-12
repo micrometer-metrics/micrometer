@@ -27,7 +27,7 @@ import io.micrometer.observation.Observation;
  * Handler for {@link Timer.Sample}.
  *
  * @author Marcin Grzejszczak
- * @since 2.0.0
+ * @since 1.10.0
  */
 public class TimerObservationHandler implements MeterObservationHandler<Observation.Context> {
 

@@ -25,7 +25,7 @@ import io.micrometer.observation.Observation;
 import io.micrometer.observation.ObservationPredicate;
 import io.micrometer.observation.ObservationRegistry;
 import io.micrometer.observation.ObservationTextPublisher;
-import io.micrometer.common.Tags;
+import io.micrometer.common.KeyValues;
 
 public class ObservationHandlerSample {
     private static final SimpleMeterRegistry registry = new SimpleMeterRegistry();
@@ -66,13 +66,13 @@ public class ObservationHandlerSample {
 
     static class CustomTagsProvider implements Observation.GlobalTagsProvider<CustomContext> {
         @Override
-        public Tags getLowCardinalityTags(CustomContext context) {
-            return Tags.of("className", context.getClass().getSimpleName());
+        public KeyValues getLowCardinalityTags(CustomContext context) {
+            return KeyValues.of("className", context.getClass().getSimpleName());
         }
 
         @Override
-        public Tags getHighCardinalityTags(CustomContext context) {
-            return Tags.of("userId", context.uuid.toString());
+        public KeyValues getHighCardinalityTags(CustomContext context) {
+            return KeyValues.of("userId", context.uuid.toString());
         }
 
         @Override
@@ -83,13 +83,13 @@ public class ObservationHandlerSample {
 
     static class CustomLocalTagsProvider implements Observation.TagsProvider<CustomContext> {
         @Override
-        public Tags getLowCardinalityTags(CustomContext context) {
-            return Tags.of("localClassName", context.getClass().getSimpleName());
+        public KeyValues getLowCardinalityTags(CustomContext context) {
+            return KeyValues.of("localClassName", context.getClass().getSimpleName());
         }
 
         @Override
-        public Tags getHighCardinalityTags(CustomContext context) {
-            return Tags.of("localUserId", context.uuid.toString());
+        public KeyValues getHighCardinalityTags(CustomContext context) {
+            return KeyValues.of("localUserId", context.uuid.toString());
         }
 
         @Override

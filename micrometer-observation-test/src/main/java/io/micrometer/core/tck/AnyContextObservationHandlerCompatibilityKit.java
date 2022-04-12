@@ -29,7 +29,7 @@ import static org.assertj.core.api.Assertions.assertThatCode;
  * and implement the abstract methods.
  *
  * @author Marcin Grzejszczak
- * @since 2.0.0
+ * @since 1.10.0
  */
 public abstract class AnyContextObservationHandlerCompatibilityKit extends NullContextObservationHandlerCompatibilityKit {
 

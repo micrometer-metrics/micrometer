@@ -29,8 +29,8 @@ import java.util.function.Supplier;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
-import io.micrometer.common.Tag;
-import io.micrometer.common.Tags;
+import io.micrometer.common.KeyValue;
+import io.micrometer.common.KeyValues;
 import io.micrometer.observation.lang.NonNull;
 import io.micrometer.observation.lang.Nullable;
 
@@ -48,7 +48,7 @@ import io.micrometer.observation.lang.Nullable;
  * @author Jonatan Ivanov
  * @author Tommy Ludwig
  * @author Marcin Grzejszczak
- * @since 2.0.0
+ * @since 1.10.0
  */
 public interface Observation {
 
@@ -130,7 +130,7 @@ public interface Observation {
      * @param tag tag
      * @return this
      */
-    Observation lowCardinalityTag(Tag tag);
+    Observation lowCardinalityTag(KeyValue tag);
 
     /**
      * Sets a low cardinality tag. Low cardinality means that this tag
@@ -142,7 +142,7 @@ public interface Observation {
      * @return this
      */
     default Observation lowCardinalityTag(String key, String value) {
-        return lowCardinalityTag(Tag.of(key, value));
+        return lowCardinalityTag(KeyValue.of(key, value));
     }
 
     /**
@@ -153,7 +153,7 @@ public interface Observation {
      * @param tag tag
      * @return this
      */
-    Observation highCardinalityTag(Tag tag);
+    Observation highCardinalityTag(KeyValue tag);
 
     /**
      * Sets a high cardinality tag. High cardinality means that this tag
@@ -165,7 +165,7 @@ public interface Observation {
      * @return this
      */
     default Observation highCardinalityTag(String key, String value) {
-        return highCardinalityTag(Tag.of(key, value));
+        return highCardinalityTag(KeyValue.of(key, value));
     }
 
     /**
@@ -406,7 +406,7 @@ public interface Observation {
      * (e.g. tracing context) are put in scope (e.g. in a ThreadLocal).
      * When the scope is closed the resources will be removed from the scope.
      *
-     * @since 2.0.0
+     * @since 1.10.0
      */
     interface Scope extends AutoCloseable {
 
@@ -439,7 +439,7 @@ public interface Observation {
      * A mutable holder of data required by a {@link ObservationHandler}. When extended
      * you can provide your own, custom information to be processed by the handlers.
      *
-     * @since 2.0.0
+     * @since 1.10.0
      */
     @SuppressWarnings("unchecked")
     class Context {
@@ -452,9 +452,9 @@ public interface Observation {
         @Nullable
         private Throwable error;
 
-        private final Set<Tag> lowCardinalityTags = new LinkedHashSet<>();
+        private final Set<KeyValue> lowCardinalityTags = new LinkedHashSet<>();
 
-        private final Set<Tag> highCardinalityTags = new LinkedHashSet<>();
+        private final Set<KeyValue> highCardinalityTags = new LinkedHashSet<>();
 
         /**
          * The observation name.
@@ -616,7 +616,7 @@ public interface Observation {
          *
          * @param tag a tag
          */
-        void addLowCardinalityTag(Tag tag) {
+        void addLowCardinalityTag(KeyValue tag) {
             this.lowCardinalityTags.add(tag);
         }
 
@@ -626,7 +626,7 @@ public interface Observation {
          *
          * @param tag a tag
          */
-        void addHighCardinalityTag(Tag tag) {
+        void addHighCardinalityTag(KeyValue tag) {
             this.highCardinalityTags.add(tag);
         }
 
@@ -635,7 +635,7 @@ public interface Observation {
          *
          * @param tags collection of tags
          */
-        void addLowCardinalityTags(Tags tags) {
+        void addLowCardinalityTags(KeyValues tags) {
             tags.stream().forEach(this::addLowCardinalityTag);
         }
 
@@ -644,22 +644,22 @@ public interface Observation {
          *
          * @param tags collection of tags
          */
-        void addHighCardinalityTags(Tags tags) {
+        void addHighCardinalityTags(KeyValues tags) {
             tags.stream().forEach(this::addHighCardinalityTag);
         }
 
         @NonNull
-        public Tags getLowCardinalityTags() {
-            return Tags.of(this.lowCardinalityTags);
+        public KeyValues getLowCardinalityTags() {
+            return KeyValues.of(this.lowCardinalityTags);
         }
 
         @NonNull
-        public Tags getHighCardinalityTags() {
-            return Tags.of(this.highCardinalityTags);
+        public KeyValues getHighCardinalityTags() {
+            return KeyValues.of(this.highCardinalityTags);
         }
 
         @NonNull
-        public Tags getAllTags() {
+        public KeyValues getAllTags() {
             return this.getLowCardinalityTags().and(this.getHighCardinalityTags());
         }
 
@@ -673,7 +673,7 @@ public interface Observation {
                     ", map=" + toString(map);
         }
 
-        private String toString(Collection<Tag> tags) {
+        private String toString(Collection<KeyValue> tags) {
             return tags.stream()
                     .map(tag -> String.format("%s='%s'", tag.getKey(), tag.getValue()))
                     .collect(Collectors.joining(", ", "[", "]"));
@@ -692,7 +692,7 @@ public interface Observation {
      *
      * @param <T> {@link TagsProvider} type
      * @author Marcin Grzejszczak
-     * @since 2.0.0
+     * @since 1.10.0
      */
     interface TagsProviderAware<T extends TagsProvider<?>> {
         /**
@@ -707,7 +707,7 @@ public interface Observation {
      * A provider of tags.
      *
      * @author Marcin Grzejszczak
-     * @since 2.0.0
+     * @since 1.10.0
      */
     interface TagsProvider<T extends Context> {
 
@@ -721,8 +721,8 @@ public interface Observation {
          *
          * @return tags
          */
-        default Tags getLowCardinalityTags(T context) {
-            return Tags.empty();
+        default KeyValues getLowCardinalityTags(T context) {
+            return KeyValues.empty();
         }
 
         /**
@@ -730,8 +730,8 @@ public interface Observation {
          *
          * @return tags
          */
-        default Tags getHighCardinalityTags(T context) {
-            return Tags.empty();
+        default KeyValues getHighCardinalityTags(T context) {
+            return KeyValues.empty();
         }
 
         /**
@@ -767,11 +767,11 @@ public interface Observation {
             }
 
             @Override
-            public Tags getLowCardinalityTags(Context context) {
+            public KeyValues getLowCardinalityTags(Context context) {
                 return getProvidersForContext(context)
                         .map(tagsProvider -> tagsProvider.getLowCardinalityTags(context))
-                        .reduce(Tags::and)
-                        .orElse(Tags.empty());
+                        .reduce(KeyValues::and)
+                        .orElse(KeyValues.empty());
             }
 
             private Stream<TagsProvider> getProvidersForContext(Context context) {
@@ -779,11 +779,11 @@ public interface Observation {
             }
 
             @Override
-            public Tags getHighCardinalityTags(Context context) {
+            public KeyValues getHighCardinalityTags(Context context) {
                 return getProvidersForContext(context)
                         .map(tagsProvider -> tagsProvider.getHighCardinalityTags(context))
-                        .reduce(Tags::and)
-                        .orElse(Tags.empty());
+                        .reduce(KeyValues::and)
+                        .orElse(KeyValues.empty());
             }
 
             @Override
@@ -805,7 +805,7 @@ public interface Observation {
      * A provider of tags that will be set on the {@link ObservationRegistry}.
      *
      * @author Marcin Grzejszczak
-     * @since 2.0.0
+     * @since 1.10.0
      */
     interface GlobalTagsProvider<T extends Context> extends TagsProvider<T> {
 

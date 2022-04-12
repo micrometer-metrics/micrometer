@@ -15,16 +15,19 @@
  */
 package io.micrometer.elastic;
 
+import java.time.format.DateTimeFormatter;
+
 import io.micrometer.core.instrument.config.validate.InvalidReason;
 import io.micrometer.core.instrument.config.validate.Validated;
 import io.micrometer.core.instrument.step.StepRegistryConfig;
 import io.micrometer.core.lang.Nullable;
 
-import java.time.format.DateTimeFormatter;
-
 import static io.micrometer.core.instrument.config.MeterRegistryConfigValidator.checkAll;
 import static io.micrometer.core.instrument.config.MeterRegistryConfigValidator.checkRequired;
-import static io.micrometer.core.instrument.config.validate.PropertyValidator.*;
+import static io.micrometer.core.instrument.config.validate.PropertyValidator.getBoolean;
+import static io.micrometer.core.instrument.config.validate.PropertyValidator.getSecret;
+import static io.micrometer.core.instrument.config.validate.PropertyValidator.getString;
+import static io.micrometer.core.instrument.config.validate.PropertyValidator.getUrlString;
 
 /**
  * Configuration for {@link ElasticMeterRegistry}.
@@ -181,15 +184,19 @@ public interface ElasticConfig extends StepRegistryConfig {
         return getSecret(this, "apiKeyCredentials").orElse(null);
     }
 
+
     /**
-     * Enable {@literal _source} in the index template.
-     * Default is: {@code false}
+     * The type to be used when writing metrics documents to an index.
+     * This configuration is only used with Elasticsearch versions before 7.
+     * Default is: "doc"
      *
-     * @return whether {@literal _source} will be enabled in the index template
-     * @since 2.0.0
+     * @return document type
+     * @since 1.4.0
+     * @deprecated This is no-op due to removal of mapping types since Elasticsearch 7.
      */
-    default boolean enableSource() {
-        return getBoolean(this, "enableSource").orElse(false);
+    @Deprecated
+    default String documentType() {
+        return getString(this, "documentType").orElse("doc");
     }
 
     @Override
@@ -212,7 +219,8 @@ public interface ElasticConfig extends StepRegistryConfig {
                                 return true;
                             }
                         }, "invalid date format", InvalidReason.MALFORMED)),
-                checkRequired("indexDateSeparator", ElasticConfig::indexDateSeparator)
+                checkRequired("indexDateSeparator", ElasticConfig::indexDateSeparator),
+                checkRequired("documentType", ElasticConfig::documentType)
         );
     }
 }

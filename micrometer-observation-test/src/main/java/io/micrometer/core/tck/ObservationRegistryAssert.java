@@ -26,7 +26,7 @@ import org.assertj.core.api.AbstractAssert;
  * or {@link ObservationRegistryAssert#then(ObservationRegistry)}.
  *
  * @author Marcin Grzejszczak
- * @since 2.0.0
+ * @since 1.10.0
  */
 @SuppressWarnings("unchecked")
 public class ObservationRegistryAssert<SELF extends ObservationRegistryAssert<SELF, ACTUAL>, ACTUAL extends ObservationRegistry> extends AbstractAssert<SELF, ACTUAL> {

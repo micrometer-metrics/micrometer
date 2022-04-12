@@ -24,7 +24,7 @@ import io.micrometer.observation.lang.NonNull;
  * {@link Observation.Context Context} for an HTTP server request/response.
  *
  * @author Marcin Grzejszczak
- * @since 2.0.0
+ * @since 1.10.0
  */
 public class HttpServerContext extends HttpContext<HttpServerRequest, HttpServerResponse> {
 

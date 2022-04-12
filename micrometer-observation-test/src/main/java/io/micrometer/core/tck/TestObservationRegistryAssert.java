@@ -28,7 +28,7 @@ import io.micrometer.observation.Observation;
  * or {@link TestObservationRegistryAssert#then(TestObservationRegistry)}.
  *
  * @author Marcin Grzejszczak
- * @since 2.0.0
+ * @since 1.10.0
  */
 public class TestObservationRegistryAssert extends ObservationRegistryAssert<TestObservationRegistryAssert, TestObservationRegistry> {
 

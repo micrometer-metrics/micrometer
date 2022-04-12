@@ -51,11 +51,13 @@ publishing {
         withType(MavenPublication) {
             pom.withXml {
                 asNode()
-                    .dependencies
-                    .dependency
-                    .findAll { ['reactor-core', 'reactor-netty-core'].contains(it.artifactId.text()) }
-                    .each { it.parent().remove(it) }
+                        .dependencies
+                        .dependency
+                        .findAll { ['reactor-core', 'reactor-netty-core'].contains(it.artifactId.text()) }
+                        .each { it.parent().remove(it) }
             }
         }
     }
 }
+
+tasks.japicmp.enabled = false

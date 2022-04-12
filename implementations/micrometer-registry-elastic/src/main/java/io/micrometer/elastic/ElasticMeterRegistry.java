@@ -15,18 +15,6 @@
  */
 package io.micrometer.elastic;
 
-import io.micrometer.core.instrument.*;
-import io.micrometer.core.instrument.distribution.HistogramSnapshot;
-import io.micrometer.core.instrument.step.StepMeterRegistry;
-import io.micrometer.core.instrument.util.MeterPartition;
-import io.micrometer.core.instrument.util.NamedThreadFactory;
-import io.micrometer.core.instrument.util.StringUtils;
-import io.micrometer.core.ipc.http.HttpSender;
-import io.micrometer.core.ipc.http.HttpUrlConnectionSender;
-import io.micrometer.core.lang.NonNull;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
 import java.time.Instant;
 import java.time.ZoneOffset;
 import java.time.ZonedDateTime;
@@ -38,8 +26,33 @@ import java.util.Optional;
 import java.util.concurrent.ThreadFactory;
 import java.util.concurrent.TimeUnit;
 import java.util.function.Consumer;
+import java.util.function.Function;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+
+import io.micrometer.core.instrument.Clock;
+import io.micrometer.core.instrument.Counter;
+import io.micrometer.core.instrument.DistributionSummary;
+import io.micrometer.core.instrument.FunctionCounter;
+import io.micrometer.core.instrument.FunctionTimer;
+import io.micrometer.core.instrument.Gauge;
+import io.micrometer.core.instrument.LongTaskTimer;
+import io.micrometer.core.instrument.Measurement;
+import io.micrometer.core.instrument.Meter;
+import io.micrometer.core.instrument.MeterRegistry;
+import io.micrometer.core.instrument.Tag;
+import io.micrometer.core.instrument.TimeGauge;
+import io.micrometer.core.instrument.Timer;
+import io.micrometer.core.instrument.distribution.HistogramSnapshot;
+import io.micrometer.core.instrument.step.StepMeterRegistry;
+import io.micrometer.core.instrument.util.MeterPartition;
+import io.micrometer.core.instrument.util.NamedThreadFactory;
+import io.micrometer.core.instrument.util.StringUtils;
+import io.micrometer.core.ipc.http.HttpSender;
+import io.micrometer.core.ipc.http.HttpUrlConnectionSender;
+import io.micrometer.core.lang.NonNull;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import static io.micrometer.core.instrument.util.StringEscapeUtils.escapeJson;
 import static java.util.stream.Collectors.joining;
@@ -97,6 +110,14 @@ public class ElasticMeterRegistry extends StepMeterRegistry {
             "  \"active\": {\n" +
             "    \"type\": \"double\",\n" +
             "    \"index\": false\n" +
+            "  }\n" +
+            "}";
+    private static final Function<String, String> TEMPLATE_BODY_AFTER_VERSION_7 = (indexPrefix) -> "{\n" +
+            "  \"index_patterns\": [\"" + indexPrefix + "*\"],\n" +
+            "  \"mappings\": {\n" +
+            "    \"_source\": {\n" +
+            "      \"enabled\": false\n" +
+            "    },\n" + TEMPLATE_PROPERTIES +
             "  }\n" +
             "}";
 
@@ -183,15 +204,7 @@ public class ElasticMeterRegistry extends StepMeterRegistry {
     }
 
     private String getTemplateBody() {
-        String indexPrefix = config.index() + config.indexDateSeparator();
-        return "{\n" +
-                "  \"index_patterns\": [\"" + indexPrefix + "*\"],\n" +
-                "  \"mappings\": {\n" +
-                "    \"_source\": {\n" +
-                "      \"enabled\": " + config.enableSource() + "\n" +
-                "    },\n" + TEMPLATE_PROPERTIES +
-                "  }\n" +
-                "}";
+        return TEMPLATE_BODY_AFTER_VERSION_7.apply(config.index() + config.indexDateSeparator());
     }
 
     private HttpSender.Request.Builder connect(HttpSender.Method method, String uri) {
@@ -210,10 +223,6 @@ public class ElasticMeterRegistry extends StepMeterRegistry {
     @Override
     protected void publish() {
         createIndexTemplateIfNeeded();
-
-        if (config.enableSource()) {
-            logger.warn("'_source' field is enabled. Disable '_source' field to save space and reduce I/O.");
-        }
 
         String uri = config.host() + "/" + indexName() + "/_bulk";
         for (List<Meter> batch : MeterPartition.partition(this, config.batchSize())) {

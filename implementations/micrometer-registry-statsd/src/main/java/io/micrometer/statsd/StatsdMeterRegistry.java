@@ -15,8 +15,38 @@
  */
 package io.micrometer.statsd;
 
+import java.net.InetSocketAddress;
+import java.net.PortUnreachableException;
+import java.net.SocketAddress;
+import java.time.Duration;
+import java.util.Arrays;
+import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.atomic.AtomicReference;
+import java.util.function.BiFunction;
+import java.util.function.Consumer;
+import java.util.function.Function;
+import java.util.function.LongConsumer;
+import java.util.function.Supplier;
+import java.util.function.ToDoubleFunction;
+import java.util.function.ToLongFunction;
+import java.util.stream.DoubleStream;
+
 import io.micrometer.core.annotation.Incubating;
-import io.micrometer.core.instrument.*;
+import io.micrometer.core.instrument.Clock;
+import io.micrometer.core.instrument.Counter;
+import io.micrometer.core.instrument.DistributionSummary;
+import io.micrometer.core.instrument.FunctionCounter;
+import io.micrometer.core.instrument.FunctionTimer;
+import io.micrometer.core.instrument.Gauge;
+import io.micrometer.core.instrument.LongTaskTimer;
+import io.micrometer.core.instrument.Measurement;
+import io.micrometer.core.instrument.Meter;
+import io.micrometer.core.instrument.MeterRegistry;
+import io.micrometer.core.instrument.Statistic;
+import io.micrometer.core.instrument.Timer;
 import io.micrometer.core.instrument.config.NamingConvention;
 import io.micrometer.core.instrument.distribution.DistributionStatisticConfig;
 import io.micrometer.core.instrument.distribution.HistogramGauges;
@@ -25,7 +55,12 @@ import io.micrometer.core.instrument.internal.DefaultMeter;
 import io.micrometer.core.instrument.util.HierarchicalNameMapper;
 import io.micrometer.core.lang.Nullable;
 import io.micrometer.core.util.internal.logging.WarnThenDebugLogger;
-import io.micrometer.statsd.internal.*;
+import io.micrometer.statsd.internal.BufferingFlux;
+import io.micrometer.statsd.internal.DatadogStatsdLineBuilder;
+import io.micrometer.statsd.internal.EtsyStatsdLineBuilder;
+import io.micrometer.statsd.internal.LogbackMetricsSuppressingFluxSink;
+import io.micrometer.statsd.internal.SysdigStatsdLineBuilder;
+import io.micrometer.statsd.internal.TelegrafStatsdLineBuilder;
 import io.netty.channel.unix.DomainSocketAddress;
 import io.netty.util.AttributeKey;
 import org.reactivestreams.Publisher;
@@ -41,20 +76,8 @@ import reactor.netty.Connection;
 import reactor.netty.tcp.TcpClient;
 import reactor.netty.udp.UdpClient;
 import reactor.util.context.Context;
+import reactor.util.context.ContextView;
 import reactor.util.retry.Retry;
-
-import java.net.InetSocketAddress;
-import java.net.PortUnreachableException;
-import java.net.SocketAddress;
-import java.time.Duration;
-import java.util.Arrays;
-import java.util.Map;
-import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.TimeUnit;
-import java.util.concurrent.atomic.AtomicBoolean;
-import java.util.concurrent.atomic.AtomicReference;
-import java.util.function.*;
-import java.util.stream.DoubleStream;
 
 /**
  * {@link MeterRegistry} for StatsD.
@@ -566,6 +589,11 @@ public class StatsdMeterRegistry extends MeterRegistry {
 
         @Override
         public Context currentContext() {
+            return Context.empty();
+        }
+
+        @Override
+        public ContextView contextView() {
             return Context.empty();
         }
 

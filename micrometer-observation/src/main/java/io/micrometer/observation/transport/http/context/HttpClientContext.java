@@ -26,7 +26,7 @@ import io.micrometer.observation.lang.NonNull;
  *
  * @author Jonatan Ivanov
  * @author Marcin Grzejszczak
- * @since 2.0.0
+ * @since 1.10.0
  */
 public class HttpClientContext extends HttpContext<HttpClientRequest, HttpClientResponse> {
 

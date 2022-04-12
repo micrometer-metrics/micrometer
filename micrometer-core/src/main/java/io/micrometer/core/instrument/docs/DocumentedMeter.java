@@ -35,7 +35,7 @@ import io.micrometer.core.lang.Nullable;
  * </ul>
  *
  * @author Marcin Grzejszczak
- * @since 2.0.0
+ * @since 1.10.0
  */
 public interface DocumentedMeter {
     /**
