@@ -16,7 +16,7 @@
 package io.micrometer.observation.transport.http.context;
 
 import io.micrometer.observation.Observation;
-import io.micrometer.common.Tags;
+import io.micrometer.common.KeyValues;
 import io.micrometer.observation.transport.http.HttpRequest;
 import io.micrometer.observation.transport.http.HttpResponse;
 import io.micrometer.observation.transport.http.tags.HttpTagsProvider;
@@ -27,7 +27,7 @@ import io.micrometer.observation.lang.Nullable;
  * {@link Observation.Context} for an HTTP exchange.
  *
  * @author Marcin Grzejszczak
- * @since 2.0.0
+ * @since 1.10.0
  * @param <REQ> request type
  * @param <RES> response type
  */
@@ -79,7 +79,7 @@ public abstract class HttpContext<REQ extends HttpRequest, RES extends HttpRespo
 
     @NonNull
     @Override
-    public Tags getLowCardinalityTags() {
+    public KeyValues getLowCardinalityTags() {
         return this.tagsProvider.getLowCardinalityTags(getRequest(), getResponse(), null);
     }
 }

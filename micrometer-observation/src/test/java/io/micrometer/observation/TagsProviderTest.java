@@ -15,8 +15,8 @@
  */
 package io.micrometer.observation;
 
-import io.micrometer.common.Tag;
-import io.micrometer.common.Tags;
+import io.micrometer.common.KeyValue;
+import io.micrometer.common.KeyValues;
 import org.junit.jupiter.api.Test;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -41,8 +41,8 @@ class TagsProviderTest {
                 new MatchingTestTagsProvider(), new AnotherMatchingTestTagsProvider(), new NotMatchingTestTagsProvider()
         );
 
-        assertThat(tagsProvider.getLowCardinalityTags(new Observation.Context())).containsExactlyInAnyOrder(Tag.of("matching-low-1", ""), Tag.of("matching-low-2", ""));
-        assertThat(tagsProvider.getHighCardinalityTags(new Observation.Context())).containsExactlyInAnyOrder(Tag.of("matching-high-1", ""), Tag.of("matching-high-2", ""));
+        assertThat(tagsProvider.getLowCardinalityTags(new Observation.Context())).containsExactlyInAnyOrder(KeyValue.of("matching-low-1", ""), KeyValue.of("matching-low-2", ""));
+        assertThat(tagsProvider.getHighCardinalityTags(new Observation.Context())).containsExactlyInAnyOrder(KeyValue.of("matching-high-1", ""), KeyValue.of("matching-high-2", ""));
     }
 
     static class TestTagsProvider implements Observation.TagsProvider<Observation.Context> {
@@ -59,13 +59,13 @@ class TagsProviderTest {
         }
 
         @Override
-        public Tags getLowCardinalityTags(Observation.Context context) {
-            return Tags.of(Tag.of("matching-low-1", ""));
+        public KeyValues getLowCardinalityTags(Observation.Context context) {
+            return KeyValues.of(KeyValue.of("matching-low-1", ""));
         }
 
         @Override
-        public Tags getHighCardinalityTags(Observation.Context context) {
-            return Tags.of(Tag.of("matching-high-1", ""));
+        public KeyValues getHighCardinalityTags(Observation.Context context) {
+            return KeyValues.of(KeyValue.of("matching-high-1", ""));
         }
     }
 
@@ -77,13 +77,13 @@ class TagsProviderTest {
         }
 
         @Override
-        public Tags getLowCardinalityTags(Observation.Context context) {
-            return Tags.of(Tag.of("matching-low-2", ""));
+        public KeyValues getLowCardinalityTags(Observation.Context context) {
+            return KeyValues.of(KeyValue.of("matching-low-2", ""));
         }
 
         @Override
-        public Tags getHighCardinalityTags(Observation.Context context) {
-            return Tags.of(Tag.of("matching-high-2", ""));
+        public KeyValues getHighCardinalityTags(Observation.Context context) {
+            return KeyValues.of(KeyValue.of("matching-high-2", ""));
         }
     }
 
@@ -94,13 +94,13 @@ class TagsProviderTest {
         }
 
         @Override
-        public Tags getLowCardinalityTags(Observation.Context context) {
-            return Tags.of(Tag.of("not-matching-low", ""));
+        public KeyValues getLowCardinalityTags(Observation.Context context) {
+            return KeyValues.of(KeyValue.of("not-matching-low", ""));
         }
 
         @Override
-        public Tags getHighCardinalityTags(Observation.Context context) {
-            return Tags.of(Tag.of("not-matching-high", ""));
+        public KeyValues getHighCardinalityTags(Observation.Context context) {
+            return KeyValues.of(KeyValue.of("not-matching-high", ""));
         }
     }
 }

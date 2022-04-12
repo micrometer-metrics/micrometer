@@ -24,7 +24,7 @@ import java.util.function.BiPredicate;
  * @author Jonatan Ivanov
  * @author Tommy Ludwig
  * @author Marcin Grzejszczak
- * @since 2.0.0
+ * @since 1.10.0
  */
 public interface ObservationPredicate extends BiPredicate<String, Observation.Context> {
 

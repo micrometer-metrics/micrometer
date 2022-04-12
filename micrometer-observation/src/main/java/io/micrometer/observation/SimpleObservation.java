@@ -20,7 +20,7 @@ import java.util.Collection;
 import java.util.Deque;
 import java.util.stream.Collectors;
 
-import io.micrometer.common.Tag;
+import io.micrometer.common.KeyValue;
 import io.micrometer.observation.lang.Nullable;
 
 /**
@@ -30,7 +30,7 @@ import io.micrometer.observation.lang.Nullable;
  * @author Tommy Ludwig
  * @author Marcin Grzejszczak
  *
- * @since 2.0.0
+ * @since 1.10.0
  */
 class SimpleObservation implements Observation {
     private final ObservationRegistry registry;
@@ -59,13 +59,13 @@ class SimpleObservation implements Observation {
     }
 
     @Override
-    public Observation lowCardinalityTag(Tag tag) {
+    public Observation lowCardinalityTag(KeyValue tag) {
         this.context.addLowCardinalityTag(tag);
         return this;
     }
 
     @Override
-    public Observation highCardinalityTag(Tag tag) {
+    public Observation highCardinalityTag(KeyValue tag) {
         this.context.addHighCardinalityTag(tag);
         return this;
     }

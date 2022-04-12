@@ -17,14 +17,12 @@ package io.micrometer.common.docs;
 
 import java.util.Arrays;
 
-import io.micrometer.common.Tag;
-
 
 /**
  * Represents a tag key.
  *
  * @author Marcin Grzejszczak
- * @since 2.0.0
+ * @since 1.10.0
  */
 public interface TagKey {
 
@@ -43,14 +41,4 @@ public interface TagKey {
      * @return tag key
      */
     String getKey();
-
-    /**
-     * Returns a tag for this {@code TagKey}.
-     *
-     * @param value value to append to this tag
-     * @return tag
-     */
-    default Tag of(String value) {
-        return Tag.of(getKey(), value);
-    }
 }

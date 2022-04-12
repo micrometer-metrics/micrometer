@@ -29,7 +29,7 @@ import java.util.stream.Stream;
  * @author Jonatan Ivanov
  * @author Tommy Ludwig
  * @author Marcin Grzejszczak
- * @since 2.0.0
+ * @since 1.10.0
  */
 public interface ObservationHandler<T extends Observation.Context> {
     /**

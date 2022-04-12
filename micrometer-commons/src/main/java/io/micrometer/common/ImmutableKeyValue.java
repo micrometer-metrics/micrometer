@@ -22,16 +22,16 @@ import io.micrometer.common.lang.Nullable;
 import static java.util.Objects.requireNonNull;
 
 /**
- * Immutable {@link Tag}.
+ * Immutable {@link KeyValue}.
  *
  * @author Jon Schneider
- * @since 2.0.0
+ * @since 1.10.0
  */
-class ImmutableTag implements Tag {
+class ImmutableKeyValue implements KeyValue {
     private final String key;
     private final String value;
 
-    ImmutableTag(String key, String value) {
+    ImmutableKeyValue(String key, String value) {
         requireNonNull(key);
         requireNonNull(value);
         this.key = key;
@@ -52,7 +52,7 @@ class ImmutableTag implements Tag {
     public boolean equals(@Nullable Object o) {
         if (this == o) return true;
         if (o == null || getClass() != o.getClass()) return false;
-        Tag that = (Tag) o;
+        KeyValue that = (KeyValue) o;
         return Objects.equals(key, that.getKey()) &&
             Objects.equals(value, that.getValue());
     }

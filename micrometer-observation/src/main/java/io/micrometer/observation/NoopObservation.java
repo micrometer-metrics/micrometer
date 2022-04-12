@@ -16,7 +16,7 @@
 package io.micrometer.observation;
 
 
-import io.micrometer.common.Tag;
+import io.micrometer.common.KeyValue;
 
 /**
  * No-op implementation of {@link Observation} so that we can disable the instrumentation logic.
@@ -25,7 +25,7 @@ import io.micrometer.common.Tag;
  * @author Tommy Ludwig
  * @author Marcin Grzejszczak
  *
- * @since 2.0.0
+ * @since 1.10.0
  */
 final class NoopObservation implements Observation {
     /**
@@ -42,7 +42,7 @@ final class NoopObservation implements Observation {
     }
 
     @Override
-    public Observation lowCardinalityTag(Tag tag) {
+    public Observation lowCardinalityTag(KeyValue tag) {
         return this;
     }
 
@@ -52,7 +52,7 @@ final class NoopObservation implements Observation {
     }
 
     @Override
-    public Observation highCardinalityTag(Tag tag) {
+    public Observation highCardinalityTag(KeyValue tag) {
         return this;
     }
 

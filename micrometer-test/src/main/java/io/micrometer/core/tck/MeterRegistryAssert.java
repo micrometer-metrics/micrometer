@@ -18,6 +18,7 @@ package io.micrometer.core.tck;
 import java.util.List;
 import java.util.stream.Collectors;
 
+import io.micrometer.common.KeyValues;
 import io.micrometer.core.instrument.Meter;
 import io.micrometer.core.instrument.MeterRegistry;
 import io.micrometer.core.instrument.Tag;
@@ -32,7 +33,7 @@ import org.assertj.core.api.AbstractAssert;
  * or {@link MeterRegistryAssert#then(MeterRegistry)}.
  *
  * @author Marcin Grzejszczak
- * @since 2.0.0
+ * @since 1.10.0
  */
 public class MeterRegistryAssert extends AbstractAssert<MeterRegistryAssert, MeterRegistry> {
 
@@ -186,7 +187,7 @@ public class MeterRegistryAssert extends AbstractAssert<MeterRegistryAssert, Met
      * @throws AssertionError if the actual value is {@code null}.
      * @throws AssertionError if there is no meter registered under given name with given tags.
      */
-    public MeterRegistryAssert hasMeterWithNameAndTags(String meterName, io.micrometer.common.Tags tags) {
+    public MeterRegistryAssert hasMeterWithNameAndTags(String meterName, KeyValues tags) {
         return hasMeterWithNameAndTags(meterName, toMicrometerTags(tags));
     }
 
@@ -199,11 +200,11 @@ public class MeterRegistryAssert extends AbstractAssert<MeterRegistryAssert, Met
      * @throws AssertionError if the actual value is {@code null}.
      * @throws AssertionError if there is no timer registered under given name with given tags.
      */
-    public MeterRegistryAssert hasTimerWithNameAndTags(String timerName, io.micrometer.common.Tags tags) {
+    public MeterRegistryAssert hasTimerWithNameAndTags(String timerName, KeyValues tags) {
         return hasTimerWithNameAndTags(timerName, toMicrometerTags(tags));
     }
 
-    private Tags toMicrometerTags(io.micrometer.common.Tags tags) {
+    private Tags toMicrometerTags(KeyValues tags) {
         Tag[] array = tags.stream().map(tag -> Tag.of(tag.getKey(), tag.getValue())).toArray(Tag[]::new);
         return Tags.of(array);
     }
@@ -250,7 +251,7 @@ public class MeterRegistryAssert extends AbstractAssert<MeterRegistryAssert, Met
      * @return this
      * @throws AssertionError if there is a meter registered under given name with given tags.
      */
-    public MeterRegistryAssert doesNotHaveMeterWithNameAndTags(String meterName, io.micrometer.common.Tags tags) {
+    public MeterRegistryAssert doesNotHaveMeterWithNameAndTags(String meterName, KeyValues tags) {
         return doesNotHaveMeterWithNameAndTags(meterName, toMicrometerTags(tags));
     }
 
@@ -262,7 +263,7 @@ public class MeterRegistryAssert extends AbstractAssert<MeterRegistryAssert, Met
      * @return this
      * @throws AssertionError if there is a timer registered under given name with given tags.
      */
-    public MeterRegistryAssert doesNotHaveTimerWithNameAndTags(String timerName, io.micrometer.common.Tags tags) {
+    public MeterRegistryAssert doesNotHaveTimerWithNameAndTags(String timerName, KeyValues tags) {
         return doesNotHaveTimerWithNameAndTags(timerName, toMicrometerTags(tags));
     }
 

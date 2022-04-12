@@ -23,7 +23,7 @@ import io.micrometer.observation.ObservationHandler;
  *
  * @author Marcin Grzejszczak
  * @param <T> type of context
- * @since 2.0.0
+ * @since 1.10.0
  */
 public interface MeterObservationHandler<T extends Observation.Context> extends ObservationHandler<T> {
 

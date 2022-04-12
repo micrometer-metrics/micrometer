@@ -15,7 +15,7 @@
  */
 package io.micrometer.observation.transport.http.tags;
 
-import io.micrometer.common.Tag;
+import io.micrometer.common.KeyValue;
 
 /**
  * The outcome of an HTTP request.
@@ -55,18 +55,18 @@ public enum Outcome {
      */
     UNKNOWN;
 
-    private final Tag tag;
+    private final KeyValue tag;
 
     Outcome() {
-        this.tag = Tag.of("outcome", name());
+        this.tag = KeyValue.of("outcome", name());
     }
 
     /**
-     * Returns the {@code Outcome} as a {@link Tag} named {@code outcome}.
+     * Returns the {@code Outcome} as a {@link KeyValue} named {@code outcome}.
      *
      * @return the {@code outcome} {@code Tag}
      */
-    public Tag asTag() {
+    public KeyValue asTag() {
         return this.tag;
     }
 
