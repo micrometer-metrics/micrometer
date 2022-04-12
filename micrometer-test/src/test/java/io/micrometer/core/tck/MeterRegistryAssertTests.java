@@ -248,7 +248,7 @@ class MeterRegistryAssertTests {
     void assertionErrorThrownWhenMeterPresentWithCommonTagValue() {
         Timer.start(this.simpleMeterRegistry).stop(Timer.builder("matching-metric-name").tag("matching-tag", "matching-value").register(this.simpleMeterRegistry));
 
-        assertThatThrownBy(() -> meterRegistryAssert.doesNotHaveMeterWithNameAndTags("matching-metric-name", io.micrometer.common.Tags.of("matching-tag", "matching-value")))
+        assertThatThrownBy(() -> meterRegistryAssert.doesNotHaveMeterWithNameAndTags("matching-metric-name", KeyValues.of("matching-tag", "matching-value")))
                 .isInstanceOf(AssertionError.class)
                 .hasMessageContaining("Expected no meter with name <matching-metric-name> and tags <[tag(matching-tag=matching-value)]> but found one");
     }
@@ -281,7 +281,7 @@ class MeterRegistryAssertTests {
     void noAssertionErrorThrownWhenMeterWithCommonTagPresent() {
         Timer.start(this.simpleMeterRegistry).stop(Timer.builder("matching-metric-name").tag("matching-tag", "matching-value").register(this.simpleMeterRegistry));
 
-        assertThatCode(() -> meterRegistryAssert.hasMeterWithNameAndTags("matching-metric-name", io.micrometer.common.Tags.of("matching-tag", "matching-value")))
+        assertThatCode(() -> meterRegistryAssert.hasMeterWithNameAndTags("matching-metric-name", KeyValues.of("matching-tag", "matching-value")))
                 .doesNotThrowAnyException();
     }
 
@@ -299,7 +299,7 @@ class MeterRegistryAssertTests {
 
     @Test
     void noAssertionErrorThrownWhenMeterWithCommonTagsMissing() {
-        assertThatCode(() -> meterRegistryAssert.doesNotHaveMeterWithNameAndTags("foo", io.micrometer.common.Tags.of(io.micrometer.common.Tag.of("bar", "baz"))))
+        assertThatCode(() -> meterRegistryAssert.doesNotHaveMeterWithNameAndTags("foo", KeyValues.of(KeyValue.of("bar", "baz"))))
                 .doesNotThrowAnyException();
     }
 

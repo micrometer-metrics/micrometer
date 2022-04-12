@@ -187,7 +187,7 @@ public class MeterRegistryAssert extends AbstractAssert<MeterRegistryAssert, Met
      * @throws AssertionError if the actual value is {@code null}.
      * @throws AssertionError if there is no meter registered under given name with given tags.
      */
-    public MeterRegistryAssert hasMeterWithNameAndTags(String meterName, io.micrometer.common.Tags tags) {
+    public MeterRegistryAssert hasMeterWithNameAndTags(String meterName, KeyValues tags) {
         return hasMeterWithNameAndTags(meterName, toMicrometerTags(tags));
     }
 
@@ -251,7 +251,7 @@ public class MeterRegistryAssert extends AbstractAssert<MeterRegistryAssert, Met
      * @return this
      * @throws AssertionError if there is a meter registered under given name with given tags.
      */
-    public MeterRegistryAssert doesNotHaveMeterWithNameAndTags(String meterName, io.micrometer.common.Tags tags) {
+    public MeterRegistryAssert doesNotHaveMeterWithNameAndTags(String meterName, KeyValues tags) {
         return doesNotHaveMeterWithNameAndTags(meterName, toMicrometerTags(tags));
     }
 
