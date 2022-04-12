@@ -54,8 +54,30 @@ public interface GangliaConfig extends StepRegistryConfig {
         return "ganglia";
     }
 
+    /**
+     * Rate units.
+     * @return rate units
+     * @deprecated since 1.5.0
+     */
+    @Deprecated
+    @Nullable
+    default TimeUnit rateUnits() {
+        return null;
+    }
+
     default TimeUnit durationUnits() {
         return getTimeUnit(this, "durationUnits").orElse(TimeUnit.MILLISECONDS);
+    }
+
+    /**
+     * Protocol version.
+     * @return protocol version
+     * @deprecated since 1.5.0
+     */
+    @Deprecated
+    @Nullable
+    default String protocolVersion() {
+        return null;
     }
 
     default GMetric.UDPAddressingMode addressingMode() {
