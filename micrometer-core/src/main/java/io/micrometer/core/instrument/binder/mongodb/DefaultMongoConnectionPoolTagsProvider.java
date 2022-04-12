@@ -22,11 +22,9 @@ import io.micrometer.core.instrument.Tags;
 /**
  * Default implementation for {@link MongoConnectionPoolTagsProvider}.
  *
- * @deprecated Scheduled for removal in 2.0.0, please use {@code io.micrometer.core.instrument.binder.mongodb.DefaultMongoConnectionPoolTagsProvider}
  * @author Gustavo Monarin
  * @since 1.7.0
  */
-@Deprecated
 public class DefaultMongoConnectionPoolTagsProvider implements MongoConnectionPoolTagsProvider {
 
     @Override

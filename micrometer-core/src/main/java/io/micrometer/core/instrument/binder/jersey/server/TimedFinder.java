@@ -24,10 +24,6 @@ import java.util.Collections;
 import java.util.Set;
 import java.util.stream.Collectors;
 
-/**
- * @deprecated Scheduled for removal in 2.0.0, please use {@code io.micrometer.core.instrument.binder.jersey.server.TimedFinder}
- */
-@Deprecated
 class TimedFinder {
     private final AnnotationFinder annotationFinder;
 

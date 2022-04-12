@@ -37,11 +37,9 @@ import java.util.concurrent.CountDownLatch;
  *     new OkHttpConnectionPoolMetrics(connectionPool).bindTo(registry);
  * </pre>
  *
- * @deprecated Scheduled for removal in 2.0.0, please use {@code io.micrometer.core.instrument.binder.okhttp3.OkHttpConnectionPoolMetrics}
  * @author Ben Hubert
  * @since 1.6.0
  */
-@Deprecated
 public class OkHttpConnectionPoolMetrics implements MeterBinder {
 
     private static final String DEFAULT_NAME_PREFIX = "okhttp.pool";

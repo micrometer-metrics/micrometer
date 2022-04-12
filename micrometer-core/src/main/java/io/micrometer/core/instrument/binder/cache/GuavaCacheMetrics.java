@@ -28,12 +28,10 @@ import java.util.function.Function;
 import java.util.function.ToLongFunction;
 
 /**
- * @deprecated Scheduled for removal in 2.0.0, please use {@code io.micrometer.core.instrument.binder.cache.GuavaCacheMetrics}
  * @author Jon Schneider
  */
 @NonNullApi
 @NonNullFields
-@Deprecated
 public class GuavaCacheMetrics<K, V, C extends Cache<K, V>> extends CacheMeterBinder<C> {
     /**
      * Record metrics on a Guava cache. You must call {@link CacheBuilder#recordStats()} prior to building the cache

@@ -62,13 +62,11 @@ import java.util.stream.Stream;
  *
  * This requires jOOQ 3.14.0 or later.
  *
- * @deprecated Scheduled for removal in 2.0.0, please use {@code io.micrometer.core.instrument.binder.db.MetricsDSLContext}
  * @author Jon Schneider
  * @author Johnny Lim
  * @since 1.4.0
  */
 @Incubating(since = "1.4.0")
-@Deprecated
 public class MetricsDSLContext implements DSLContext {
     private final DSLContext context;
     private final MeterRegistry registry;

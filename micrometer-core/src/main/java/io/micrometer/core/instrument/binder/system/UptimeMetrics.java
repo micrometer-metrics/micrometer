@@ -31,12 +31,10 @@ import static java.util.Collections.emptyList;
 /**
  * Uptime metrics.
  *
- * @deprecated Scheduled for removal in 2.0.0, please use {@code io.micrometer.core.instrument.binder.system.UptimeMetrics}
  * @author Michael Weirauch
  */
 @NonNullApi
 @NonNullFields
-@Deprecated
 public class UptimeMetrics implements MeterBinder {
 
     private final RuntimeMXBean runtimeMXBean;

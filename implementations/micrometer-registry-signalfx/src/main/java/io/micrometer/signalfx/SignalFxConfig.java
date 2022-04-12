@@ -44,6 +44,7 @@ public interface SignalFxConfig extends StepRegistryConfig {
 
     /**
      * @return {@code true} if the SignalFx registry should emit cumulative histogram buckets.
+     * @since 1.9.0
      */
     default boolean publishCumulativeHistogram() {
         return getBoolean(this, "publishCumulativeHistogram").orElse(false);

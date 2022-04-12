@@ -23,11 +23,9 @@ import java.util.function.Function;
 /**
  * Extracts the URI pattern from the predefined request header, {@value DefaultUriMapper#URI_PATTERN_HEADER} if available.
  *
- * @deprecated Scheduled for removal in 2.0.0, please use {@code io.micrometer.core.instrument.binder.httpcomponents.DefaultUriMapper}
  * @author Benjamin Hubert
  * @since 1.4.0
  */
-@Deprecated
 public class DefaultUriMapper implements Function<HttpRequest, String> {
 
     /**

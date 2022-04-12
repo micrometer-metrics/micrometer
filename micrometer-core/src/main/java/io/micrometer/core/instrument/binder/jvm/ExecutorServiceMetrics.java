@@ -42,14 +42,12 @@ import static java.util.Arrays.asList;
  * a wrapper type for {@link ExecutorService}, like {@link TimedExecutorService}. Make sure to pass the underlying,
  * unwrapped ExecutorService to this MeterBinder, if it is wrapped in another type.
  *
- * @deprecated Scheduled for removal in 2.0.0, please use {@code io.micrometer.core.instrument.binder.jvm.ExecutorServiceMetrics}
  * @author Jon Schneider
  * @author Clint Checketts
  * @author Johnny Lim
  */
 @NonNullApi
 @NonNullFields
-@Deprecated
 public class ExecutorServiceMetrics implements MeterBinder {
     private static boolean allowIllegalReflectiveAccess = true;
 
@@ -370,25 +368,21 @@ public class ExecutorServiceMetrics implements MeterBinder {
                         "one thread's work queue by another. The reported value " +
                         "underestimates the actual total number of steals when the pool " +
                         "is not quiescent")
-                .baseUnit(BaseUnits.TASKS)
                 .register(registry);
 
         Gauge.builder(metricPrefix + "executor.queued", fj, ForkJoinPool::getQueuedTaskCount)
                 .tags(tags)
                 .description("An estimate of the total number of tasks currently held in queues by worker threads")
-                .baseUnit(BaseUnits.TASKS)
                 .register(registry);
 
         Gauge.builder(metricPrefix + "executor.active", fj, ForkJoinPool::getActiveThreadCount)
                 .tags(tags)
                 .description("An estimate of the number of threads that are currently stealing or executing tasks")
-                .baseUnit(BaseUnits.TASKS)
                 .register(registry);
 
         Gauge.builder(metricPrefix + "executor.running", fj, ForkJoinPool::getRunningThreadCount)
                 .tags(tags)
                 .description("An estimate of the number of worker threads that are not blocked waiting to join tasks or for other managed synchronization threads")
-                .baseUnit(BaseUnits.TASKS)
                 .register(registry);
     }
 

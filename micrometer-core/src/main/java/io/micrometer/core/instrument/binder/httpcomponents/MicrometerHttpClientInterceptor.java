@@ -44,12 +44,10 @@ import java.util.function.Function;
  *             .build();
  * }</pre>
  *
- * @deprecated Scheduled for removal in 2.0.0, please use {@code io.micrometer.core.instrument.binder.httpcomponents.MicrometerHttpClientInterceptor}
  * @author Jon Schneider
  * @since 1.4.0
  */
 @Incubating(since = "1.4.0")
-@Deprecated
 public class MicrometerHttpClientInterceptor {
     private static final String METER_NAME = "httpcomponents.httpclient.request";
 

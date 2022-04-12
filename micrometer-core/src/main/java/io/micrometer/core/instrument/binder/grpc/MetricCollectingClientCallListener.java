@@ -26,11 +26,9 @@ import io.micrometer.core.instrument.Counter;
 /**
  * A simple forwarding client call listener that collects metrics.
  *
- * @deprecated Scheduled for removal in 2.0.0, please use {@code io.micrometer.core.instrument.binder.grpc.MetricCollectingClientCallListener}
  * @param <A> The type of message received one or more times from the server.
  * @author Daniel Theuke (daniel.theuke@heuboe.de)
  */
-@Deprecated
 class MetricCollectingClientCallListener<A> extends SimpleForwardingClientCallListener<A> {
 
     private final Counter responseCounter;

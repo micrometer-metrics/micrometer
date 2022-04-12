@@ -20,5 +20,4 @@
  * {@link io.micrometer.core.instrument.binder.grpc.MetricCollectingServerInterceptor}
  * for usage examples.
  */
-@Deprecated
 package io.micrometer.core.instrument.binder.grpc;

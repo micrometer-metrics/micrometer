@@ -36,7 +36,6 @@ import static java.util.Collections.emptyList;
 /**
  * Record metrics that report utilization of various memory and buffer pools.
  *
- * @deprecated Scheduled for removal in 2.0.0, please use {@code io.micrometer.core.instrument.binder.jvm.JvmMemoryMetrics}
  * @author Jon Schneider
  * @author Johnny Lim
  * @see MemoryPoolMXBean
@@ -44,7 +43,6 @@ import static java.util.Collections.emptyList;
  */
 @NonNullApi
 @NonNullFields
-@Deprecated
 public class JvmMemoryMetrics implements MeterBinder {
     private final Iterable<Tag> tags;
 

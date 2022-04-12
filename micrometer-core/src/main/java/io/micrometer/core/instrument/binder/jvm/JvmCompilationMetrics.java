@@ -32,12 +32,10 @@ import static java.util.Collections.emptyList;
 /**
  * {@link MeterBinder} for JVM compilation metrics.
  *
- * @deprecated Scheduled for removal in 2.0.0, please use {@code io.micrometer.core.instrument.binder.jvm.JvmCompilationMetrics}
  * @since 1.4.0
  */
 @NonNullApi
 @NonNullFields
-@Deprecated
 public class JvmCompilationMetrics implements MeterBinder {
     private final Iterable<Tag> tags;
 

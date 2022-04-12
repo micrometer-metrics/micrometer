@@ -51,14 +51,12 @@ import static java.util.Collections.emptyList;
  * This provides metrics for OpenJDK garbage collectors (serial, parallel, G1, Shenandoah, ZGC)
  * and for OpenJ9 garbage collectors (gencon, balanced, opthruput, optavgpause, metronome).
  *
- * @deprecated Scheduled for removal in 2.0.0, please use {@code io.micrometer.core.instrument.binder.jvm.JvmGcMetrics}
  * @author Jon Schneider
  * @author Tommy Ludwig
  * @see GarbageCollectorMXBean
  */
 @NonNullApi
 @NonNullFields
-@Deprecated
 public class JvmGcMetrics implements MeterBinder, AutoCloseable {
 
     private static final InternalLogger log = InternalLoggerFactory.getInstance(JvmGcMetrics.class);

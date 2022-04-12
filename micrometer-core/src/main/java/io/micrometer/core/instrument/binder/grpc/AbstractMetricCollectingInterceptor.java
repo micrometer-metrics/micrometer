@@ -36,11 +36,9 @@ import io.micrometer.core.instrument.binder.BaseUnits;
 /**
  * An abstract gRPC interceptor that will collect metrics.
  *
- * @deprecated Scheduled for removal in 2.0.0, please use {@code io.micrometer.core.instrument.binder.grpc.AbstractMetricCollectingInterceptor}
  * @author Daniel Theuke (daniel.theuke@heuboe.de)
  * @since 1.7.0
  */
-@Deprecated
 public abstract class AbstractMetricCollectingInterceptor {
 
     /**

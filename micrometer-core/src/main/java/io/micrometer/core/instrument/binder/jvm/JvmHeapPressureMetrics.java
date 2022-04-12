@@ -44,11 +44,9 @@ import static java.util.Collections.emptyList;
  * Provides methods to access measurements of low pool memory and heavy GC overhead as described in
  * <a href="https://www.jetbrains.com/help/teamcity/teamcity-memory-monitor.html">TeamCity's Memory Monitor</a>.
  *
- * @deprecated Scheduled for removal in 2.0.0, please use {@code io.micrometer.core.instrument.binder.jvm.JvmHeapPressureMetrics}
  * @author Jon Schneider
  * @since 1.4.0
  */
-@Deprecated
 public class JvmHeapPressureMetrics implements MeterBinder, AutoCloseable {
     private final Iterable<Tag> tags;
 
