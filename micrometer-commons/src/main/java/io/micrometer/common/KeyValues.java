@@ -34,7 +34,7 @@ import static java.util.stream.Collectors.joining;
  * @author Maciej Walkowiak
  * @author Phillip Webb
  * @author Johnny Lim
- * @since 2.0.0
+ * @since 1.10.0
  */
 public final class KeyValues implements Iterable<KeyValue> {
 

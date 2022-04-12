@@ -19,7 +19,7 @@ package io.micrometer.common;
  * Key/value pair representing a dimension of a meter used to classify and drill into measurements.
  *
  * @author Jon Schneider
- * @since 2.0.0
+ * @since 1.10.0
  */
 public interface KeyValue extends Comparable<KeyValue> {
     String getKey();

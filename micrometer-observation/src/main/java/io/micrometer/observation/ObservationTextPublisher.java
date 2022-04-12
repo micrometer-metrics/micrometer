@@ -25,7 +25,7 @@ import io.micrometer.common.util.internal.logging.InternalLoggerFactory;
  * An {@link ObservationHandler} that converts the context to text and Publishes it to the {@link Consumer} of your choice.
  *
  * @author Jonatan Ivanov
- * @since 2.0.0
+ * @since 1.10.0
  */
 public class ObservationTextPublisher implements ObservationHandler<Observation.Context> {
     private final Consumer<String> consumer;

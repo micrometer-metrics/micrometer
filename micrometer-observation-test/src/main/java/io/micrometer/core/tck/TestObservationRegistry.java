@@ -30,7 +30,7 @@ import io.micrometer.observation.ObservationRegistry;
  * @author Tommy Ludwig
  * @author Marcin Grzejszczak
  *
- * @since 2.0.0
+ * @since 1.10.0
  */
 public final class TestObservationRegistry implements ObservationRegistry {
 

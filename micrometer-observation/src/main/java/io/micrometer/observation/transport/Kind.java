@@ -19,7 +19,7 @@ package io.micrometer.observation.transport;
  * Represents side of communication.
  *
  * @author Marcin Grzejszczak
- * @since 2.0.0
+ * @since 1.10.0
  */
 public enum Kind {
 

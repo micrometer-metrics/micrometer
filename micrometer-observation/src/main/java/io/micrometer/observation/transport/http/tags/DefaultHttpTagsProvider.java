@@ -23,7 +23,7 @@ import io.micrometer.observation.transport.http.HttpResponse;
  * Default implementation of {@link HttpTagsProvider} that can be extended for customization.
  *
  * @author Tommy Ludwig
- * @since 2.0.0
+ * @since 1.10.0
  */
 public class DefaultHttpTagsProvider implements HttpTagsProvider {
     @Override

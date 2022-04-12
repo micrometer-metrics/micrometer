@@ -25,7 +25,7 @@ import io.micrometer.common.util.StringUtils;
  * the {@link HttpRequest} and {@link HttpResponse} abstraction.
  *
  * @author Jon Schneider
- * @since 2.0.0
+ * @since 1.10.0
  */
 public class HttpTags {
     private static final String METHOD = "method";

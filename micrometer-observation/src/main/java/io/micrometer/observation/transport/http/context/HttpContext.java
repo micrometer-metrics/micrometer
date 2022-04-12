@@ -27,7 +27,7 @@ import io.micrometer.observation.lang.Nullable;
  * {@link Observation.Context} for an HTTP exchange.
  *
  * @author Marcin Grzejszczak
- * @since 2.0.0
+ * @since 1.10.0
  * @param <REQ> request type
  * @param <RES> response type
  */

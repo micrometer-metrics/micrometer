@@ -25,7 +25,7 @@ import io.micrometer.common.KeyValue;
  * @author Tommy Ludwig
  * @author Marcin Grzejszczak
  *
- * @since 2.0.0
+ * @since 1.10.0
  */
 final class NoopObservation implements Observation {
     /**

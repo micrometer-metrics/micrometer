@@ -48,7 +48,7 @@ import io.micrometer.observation.lang.Nullable;
  * @author Jonatan Ivanov
  * @author Tommy Ludwig
  * @author Marcin Grzejszczak
- * @since 2.0.0
+ * @since 1.10.0
  */
 public interface Observation {
 
@@ -406,7 +406,7 @@ public interface Observation {
      * (e.g. tracing context) are put in scope (e.g. in a ThreadLocal).
      * When the scope is closed the resources will be removed from the scope.
      *
-     * @since 2.0.0
+     * @since 1.10.0
      */
     interface Scope extends AutoCloseable {
 
@@ -439,7 +439,7 @@ public interface Observation {
      * A mutable holder of data required by a {@link ObservationHandler}. When extended
      * you can provide your own, custom information to be processed by the handlers.
      *
-     * @since 2.0.0
+     * @since 1.10.0
      */
     @SuppressWarnings("unchecked")
     class Context {
@@ -692,7 +692,7 @@ public interface Observation {
      *
      * @param <T> {@link TagsProvider} type
      * @author Marcin Grzejszczak
-     * @since 2.0.0
+     * @since 1.10.0
      */
     interface TagsProviderAware<T extends TagsProvider<?>> {
         /**
@@ -707,7 +707,7 @@ public interface Observation {
      * A provider of tags.
      *
      * @author Marcin Grzejszczak
-     * @since 2.0.0
+     * @since 1.10.0
      */
     interface TagsProvider<T extends Context> {
 
@@ -805,7 +805,7 @@ public interface Observation {
      * A provider of tags that will be set on the {@link ObservationRegistry}.
      *
      * @author Marcin Grzejszczak
-     * @since 2.0.0
+     * @since 1.10.0
      */
     interface GlobalTagsProvider<T extends Context> extends TagsProvider<T> {
 

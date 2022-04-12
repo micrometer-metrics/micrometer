@@ -24,7 +24,7 @@ import io.micrometer.observation.lang.Nullable;
  * @author Tommy Ludwig
  * @author Marcin Grzejszczak
  *
- * @since 2.0.0
+ * @since 1.10.0
  */
 class SimpleObservationRegistry implements ObservationRegistry {
 

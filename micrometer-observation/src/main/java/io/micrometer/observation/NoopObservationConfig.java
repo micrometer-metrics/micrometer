@@ -26,7 +26,7 @@ import java.util.Collections;
  * @author Tommy Ludwig
  * @author Marcin Grzejszczak
  *
- * @since 2.0.0
+ * @since 1.10.0
  */
 final class NoopObservationConfig extends ObservationRegistry.ObservationConfig {
     /**

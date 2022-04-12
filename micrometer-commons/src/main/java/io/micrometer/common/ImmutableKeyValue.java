@@ -25,7 +25,7 @@ import static java.util.Objects.requireNonNull;
  * Immutable {@link KeyValue}.
  *
  * @author Jon Schneider
- * @since 2.0.0
+ * @since 1.10.0
  */
 class ImmutableKeyValue implements KeyValue {
     private final String key;

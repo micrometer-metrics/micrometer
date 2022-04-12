@@ -33,7 +33,7 @@ import org.assertj.core.api.AbstractAssert;
  * or {@link MeterRegistryAssert#then(MeterRegistry)}.
  *
  * @author Marcin Grzejszczak
- * @since 2.0.0
+ * @since 1.10.0
  */
 public class MeterRegistryAssert extends AbstractAssert<MeterRegistryAssert, MeterRegistry> {
 

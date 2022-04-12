@@ -24,7 +24,7 @@ import io.micrometer.observation.transport.http.HttpResponse;
  *
  * @see HttpTags
  * @author Tommy Ludwig
- * @since 2.0.0
+ * @since 1.10.0
  */
 public interface HttpTagsProvider {
 
