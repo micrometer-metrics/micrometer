@@ -22,7 +22,7 @@ import io.micrometer.core.instrument.Tag;
 /**
  * Provides {@link Tag Tags} for Mongo command metrics.
  *
- * @deprecated Scheduled for removal in 2.0.0, please use {@code io.micrometer.binder.mongodb.MongoCommandTagsProvider}
+ * @deprecated Scheduled for removal in 2.0.0, please use {@code io.micrometer.core.instrument.binder.mongodb.MongoCommandTagsProvider}
  * @author Chris Bono
  * @since 1.7.0
  */

@@ -37,7 +37,7 @@ import java.util.Map;
 import static java.util.Collections.emptyList;
 
 /**
- * @deprecated Scheduled for removal in 2.0.0, please use {@code io.micrometer.binder.logging.LogbackMetrics}
+ * @deprecated Scheduled for removal in 2.0.0, please use {@code io.micrometer.core.instrument.binder.logging.LogbackMetrics}
  * @author Jon Schneider
  */
 @NonNullApi

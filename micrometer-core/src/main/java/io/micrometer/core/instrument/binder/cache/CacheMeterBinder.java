@@ -54,10 +54,10 @@ public abstract class CacheMeterBinder<C> implements MeterBinder {
         C cache = getCache();
         if (size() != null) {
             Gauge.builder("cache.size", cache,
-                    c -> {
-                        Long size = size();
-                        return size == null ? 0 : size;
-                    })
+                            c -> {
+                                Long size = size();
+                                return size == null ? 0 : size;
+                            })
                     .tags(tags)
                     .description("The number of entries in this cache. This may be an approximation, depending on the type of cache.")
                     .register(registry);
@@ -65,10 +65,10 @@ public abstract class CacheMeterBinder<C> implements MeterBinder {
 
         if (missCount() != null) {
             FunctionCounter.builder("cache.gets", cache,
-                    c -> {
-                        Long misses = missCount();
-                        return misses == null ? 0 : misses;
-                    })
+                            c -> {
+                                Long misses = missCount();
+                                return misses == null ? 0 : misses;
+                            })
                     .tags(tags).tag("result", "miss")
                     .description("the number of times cache lookup methods have returned an uncached (newly loaded) value, or null")
                     .register(registry);
@@ -86,10 +86,10 @@ public abstract class CacheMeterBinder<C> implements MeterBinder {
 
         if (evictionCount() != null) {
             FunctionCounter.builder("cache.evictions", cache,
-                    c -> {
-                        Long evictions = evictionCount();
-                        return evictions == null ? 0 : evictions;
-                    })
+                            c -> {
+                                Long evictions = evictionCount();
+                                return evictions == null ? 0 : evictions;
+                            })
                     .tags(tags)
                     .description("cache evictions")
                     .register(registry);

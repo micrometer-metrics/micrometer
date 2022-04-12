@@ -41,7 +41,7 @@ import static java.util.Collections.emptyList;
 /**
  * {@link MeterBinder} for Apache Log4j 2.
  *
- * @deprecated Scheduled for removal in 2.0.0, please use {@code io.micrometer.binder.logging.Log4j2Metrics}
+ * @deprecated Scheduled for removal in 2.0.0, please use {@code io.micrometer.core.instrument.binder.logging.Log4j2Metrics}
  * @author Steven Sheehy
  * @author Johnny Lim
  * @since 1.1.0

@@ -15,15 +15,15 @@
  */
 package io.micrometer.samples.hazelcast4;
 
+import java.time.Duration;
+
 import com.hazelcast.core.Hazelcast;
 import com.hazelcast.map.IMap;
 import io.micrometer.core.instrument.Clock;
 import io.micrometer.core.instrument.MeterRegistry;
-import io.micrometer.binder.cache.HazelcastCacheMetrics;
+import io.micrometer.core.instrument.binder.cache.HazelcastCacheMetrics;
 import io.micrometer.core.instrument.logging.LoggingMeterRegistry;
 import io.micrometer.core.instrument.logging.LoggingRegistryConfig;
-
-import java.time.Duration;
 
 public class HazelcastCacheSample {
     public static void main(String[] args) throws Exception {

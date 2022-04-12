@@ -33,7 +33,7 @@ import java.util.function.DoubleSupplier;
 /**
  * {@link MeterBinder} for a PostgreSQL database.
  *
- * @deprecated Scheduled for removal in 2.0.0, please use {@code io.micrometer.binder.db.PostgreSQLDatabaseMetrics}
+ * @deprecated Scheduled for removal in 2.0.0, please use {@code io.micrometer.core.instrument.binder.db.PostgreSQLDatabaseMetrics}
  * @author Kristof Depypere
  * @author Jon Schneider
  * @author Johnny Lim

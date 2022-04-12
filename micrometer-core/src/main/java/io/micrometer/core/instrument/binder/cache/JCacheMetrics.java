@@ -36,7 +36,7 @@ import java.util.List;
  * Note that JSR-107 does not provide any insight into the size or estimated size of the cache, so
  * the size metric of a JCache cache will always report 0.
  *
- * @deprecated Scheduled for removal in 2.0.0, please use {@code io.micrometer.binder.cache.JCacheMetrics}
+ * @deprecated Scheduled for removal in 2.0.0, please use {@code io.micrometer.core.instrument.binder.cache.JCacheMetrics}
  * @author Jon Schneider
  */
 @NonNullApi

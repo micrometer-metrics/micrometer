@@ -31,7 +31,7 @@ import io.micrometer.core.lang.NonNullFields;
 /**
  * Micrometer publisher for Hystrix thread pool metrics.
  *
- * @deprecated Scheduled for removal in 2.0.0, please use {@code io.micrometer.binder.hystrix.MicrometerMetricsPublisherThreadPool}
+ * @deprecated Scheduled for removal in 2.0.0, please use {@code io.micrometer.core.instrument.binder.hystrix.MicrometerMetricsPublisherThreadPool}
  * @since 1.2.0
  */
 @NonNullApi

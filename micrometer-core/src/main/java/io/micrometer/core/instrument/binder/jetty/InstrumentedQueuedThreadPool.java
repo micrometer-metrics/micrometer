@@ -30,7 +30,7 @@ import java.util.concurrent.BlockingQueue;
  *     // ...
  * }</pre>
  *
- * @deprecated Scheduled for removal in 2.0.0, please use {@code io.micrometer.binder.jetty.InstrumentedQueuedThreadPool}
+ * @deprecated Scheduled for removal in 2.0.0, please use {@code io.micrometer.core.instrument.binder.jetty.InstrumentedQueuedThreadPool}
  * @since 1.1.0
  * @see JettyServerThreadPoolMetrics
  */

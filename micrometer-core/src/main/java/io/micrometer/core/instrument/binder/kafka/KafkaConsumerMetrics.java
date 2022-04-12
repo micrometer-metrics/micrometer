@@ -15,13 +15,13 @@
  */
 package io.micrometer.core.instrument.binder.kafka;
 
-import io.micrometer.api.annotation.Incubating;
-import io.micrometer.api.instrument.*;
-import io.micrometer.api.instrument.binder.BaseUnits;
-import io.micrometer.api.instrument.binder.MeterBinder;
-import io.micrometer.api.lang.NonNullApi;
-import io.micrometer.api.lang.NonNullFields;
-import io.micrometer.api.lang.Nullable;
+import io.micrometer.core.annotation.Incubating;
+import io.micrometer.core.instrument.*;
+import io.micrometer.core.instrument.binder.BaseUnits;
+import io.micrometer.core.instrument.binder.MeterBinder;
+import io.micrometer.core.lang.NonNullApi;
+import io.micrometer.core.lang.NonNullFields;
+import io.micrometer.core.lang.Nullable;
 
 import javax.management.*;
 import java.lang.management.ManagementFactory;

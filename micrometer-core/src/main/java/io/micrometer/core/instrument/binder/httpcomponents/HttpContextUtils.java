@@ -21,7 +21,7 @@ import org.apache.http.conn.routing.HttpRoute;
 import org.apache.http.protocol.HttpContext;
 
 /**
- * @deprecated Scheduled for removal in 2.0.0, please use {@code io.micrometer.binder.httpcomponents.HttpContextUtils}
+ * @deprecated Scheduled for removal in 2.0.0, please use {@code io.micrometer.core.instrument.binder.httpcomponents.HttpContextUtils}
  */
 @Deprecated
 class HttpContextUtils {

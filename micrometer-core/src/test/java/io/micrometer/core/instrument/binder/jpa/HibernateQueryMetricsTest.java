@@ -15,10 +15,10 @@
  */
 package io.micrometer.core.instrument.binder.jpa;
 
-import io.micrometer.api.instrument.FunctionTimer;
-import io.micrometer.api.instrument.MeterRegistry;
-import io.micrometer.api.instrument.Tags;
-import io.micrometer.api.instrument.simple.SimpleMeterRegistry;
+import io.micrometer.core.instrument.FunctionTimer;
+import io.micrometer.core.instrument.MeterRegistry;
+import io.micrometer.core.instrument.Tags;
+import io.micrometer.core.instrument.simple.SimpleMeterRegistry;
 import org.hibernate.SessionFactory;
 import org.hibernate.stat.QueryStatistics;
 import org.hibernate.stat.Statistics;

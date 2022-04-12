@@ -41,7 +41,7 @@ import javax.net.ssl.SSLSession;
  *
  * Alternatively, configure on all connectors with {@link JettySslHandshakeMetrics#addToAllConnectors(Server, MeterRegistry, Iterable)}.
  *
- * @deprecated Scheduled for removal in 2.0.0, please use {@code io.micrometer.binder.jetty.JettySslHandshakeMetrics}
+ * @deprecated Scheduled for removal in 2.0.0, please use {@code io.micrometer.core.instrument.binder.jetty.JettySslHandshakeMetrics}
  * @author John Karp
  * @author Johnny Lim
  * @since 1.5.0

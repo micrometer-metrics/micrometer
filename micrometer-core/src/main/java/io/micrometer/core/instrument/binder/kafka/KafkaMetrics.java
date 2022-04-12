@@ -51,7 +51,7 @@ import static java.util.Collections.emptyList;
 /**
  * Kafka metrics binder. This should be closed on application shutdown to clean up resources.
  *
- * @deprecated Scheduled for removal in 2.0.0, please use {@code io.micrometer.binder.kafka.KafkaMetrics}
+ * @deprecated Scheduled for removal in 2.0.0, please use {@code io.micrometer.core.instrument.binder.kafka.KafkaMetrics}
  * @author Jorge Quilcate
  * @see <a href="https://docs.confluent.io/current/kafka/monitoring.html">Kakfa monitoring
  * documentation</a>

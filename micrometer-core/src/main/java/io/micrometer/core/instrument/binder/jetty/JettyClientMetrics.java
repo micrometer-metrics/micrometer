@@ -32,7 +32,7 @@ import java.util.Optional;
  * configured as a {@link org.eclipse.jetty.client.api.Request.Listener Request.Listener}.
  * Incubating in case there emerges a better way to handle path variable detection.
  *
- * @deprecated Scheduled for removal in 2.0.0, please use {@code io.micrometer.binder.jetty.JettyClientMetrics}
+ * @deprecated Scheduled for removal in 2.0.0, please use {@code io.micrometer.core.instrument.binder.jetty.JettyClientMetrics}
  * @author Jon Schneider
  * @since 1.5.0
  */

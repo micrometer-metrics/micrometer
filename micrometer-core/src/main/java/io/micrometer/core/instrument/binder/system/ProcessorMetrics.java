@@ -42,7 +42,7 @@ import static java.util.Objects.requireNonNull;
  *     <li>J9</li>
  * </ul>
  *
- * @deprecated Scheduled for removal in 2.0.0, please use {@code io.micrometer.binder.system.ProcessorMetrics}
+ * @deprecated Scheduled for removal in 2.0.0, please use {@code io.micrometer.core.instrument.binder.system.ProcessorMetrics}
  * @author Jon Schneider
  * @author Michael Weirauch
  * @author Clint Checketts

@@ -34,7 +34,7 @@ import java.util.concurrent.atomic.AtomicInteger;
 /**
  * {@link ConnectionPoolListener} for collecting connection pool metrics from {@link MongoClient}.
  *
- * @deprecated Scheduled for removal in 2.0.0, please use {@code io.micrometer.binder.mongodb.MongoMetricsConnectionPoolListener}
+ * @deprecated Scheduled for removal in 2.0.0, please use {@code io.micrometer.core.instrument.binder.mongodb.MongoMetricsConnectionPoolListener}
  * @author Christophe Bornet
  * @author Jonatan Ivanov
  * @since 1.2.0

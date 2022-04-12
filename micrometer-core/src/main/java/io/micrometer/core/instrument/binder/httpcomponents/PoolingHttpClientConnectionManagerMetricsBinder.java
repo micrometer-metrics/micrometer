@@ -30,7 +30,7 @@ import org.apache.http.pool.ConnPoolControl;
  * <p>
  * It monitors the overall connection pool state.
  *
- * @deprecated Scheduled for removal in 2.0.0, please use {@code io.micrometer.binder.httpcomponents.PoolingHttpClientConnectionManagerMetricsBinder}
+ * @deprecated Scheduled for removal in 2.0.0, please use {@code io.micrometer.core.instrument.binder.httpcomponents.PoolingHttpClientConnectionManagerMetricsBinder}
  * @author Benjamin Hubert (benjamin.hubert@willhaben.at)
  * @since 1.3.0
  */

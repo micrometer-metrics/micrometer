@@ -28,7 +28,7 @@ import java.util.function.Function;
 import java.util.function.ToLongFunction;
 
 /**
- * @deprecated Scheduled for removal in 2.0.0, please use {@code io.micrometer.binder.cache.GuavaCacheMetrics}
+ * @deprecated Scheduled for removal in 2.0.0, please use {@code io.micrometer.core.instrument.binder.cache.GuavaCacheMetrics}
  * @author Jon Schneider
  */
 @NonNullApi

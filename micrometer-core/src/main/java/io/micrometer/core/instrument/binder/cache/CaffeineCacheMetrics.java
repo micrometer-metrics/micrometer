@@ -36,7 +36,7 @@ import java.util.function.ToLongFunction;
  * CaffeineCacheMetrics.monitor(registry, cache, "mycache", "region", "test");
  * }</pre>
  *
- * @deprecated Scheduled for removal in 2.0.0, please use {@code io.micrometer.binder.cache.CaffeineCacheMetrics}
+ * @deprecated Scheduled for removal in 2.0.0, please use {@code io.micrometer.core.instrument.binder.cache.CaffeineCacheMetrics}
  * @author Clint Checketts
  * @see CaffeineStatsCounter
  */

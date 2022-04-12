@@ -29,7 +29,7 @@ import net.sf.ehcache.statistics.StatisticsGateway;
 /**
  * Collect metrics on EhCache caches, including detailed metrics on transactions and storage space.
  *
- * @deprecated Scheduled for removal in 2.0.0, please use {@code io.micrometer.binder.cache.EhCache2Metrics}
+ * @deprecated Scheduled for removal in 2.0.0, please use {@code io.micrometer.core.instrument.binder.cache.EhCache2Metrics}
  * @author Jon Schneider
  */
 @NonNullApi

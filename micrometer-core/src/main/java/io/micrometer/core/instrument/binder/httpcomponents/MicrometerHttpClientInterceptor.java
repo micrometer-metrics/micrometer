@@ -44,7 +44,7 @@ import java.util.function.Function;
  *             .build();
  * }</pre>
  *
- * @deprecated Scheduled for removal in 2.0.0, please use {@code io.micrometer.binder.httpcomponents.MicrometerHttpClientInterceptor}
+ * @deprecated Scheduled for removal in 2.0.0, please use {@code io.micrometer.core.instrument.binder.httpcomponents.MicrometerHttpClientInterceptor}
  * @author Jon Schneider
  * @since 1.4.0
  */

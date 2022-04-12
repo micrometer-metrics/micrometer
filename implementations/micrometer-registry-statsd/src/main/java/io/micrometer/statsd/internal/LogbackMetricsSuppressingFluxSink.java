@@ -17,7 +17,7 @@ package io.micrometer.statsd.internal;
 
 import java.util.function.LongConsumer;
 
-import io.micrometer.binder.logging.LogbackMetrics;
+import io.micrometer.core.instrument.binder.logging.LogbackMetrics;
 import reactor.core.Disposable;
 import reactor.core.publisher.FluxSink;
 import reactor.util.context.Context;

@@ -19,7 +19,7 @@ import java.lang.annotation.Annotation;
 import java.lang.reflect.AnnotatedElement;
 
 /**
- * @deprecated Scheduled for removal in 2.0.0, please use {@code io.micrometer.binder.jersey.server.AnnotationFinder}
+ * @deprecated Scheduled for removal in 2.0.0, please use {@code io.micrometer.core.instrument.binder.jersey.server.AnnotationFinder}
  */
 @Deprecated
 public interface AnnotationFinder {

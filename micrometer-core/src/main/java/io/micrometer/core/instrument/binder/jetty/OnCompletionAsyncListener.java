@@ -23,7 +23,7 @@ import javax.servlet.AsyncListener;
  * uses only object references to work around
  * <a href="https://issues.redhat.com/browse/WFLY-13345">WFLY-13345</a>
  *
- * @deprecated Scheduled for removal in 2.0.0, please use {@code io.micrometer.binder.jetty.OnCompletionAsyncListener}
+ * @deprecated Scheduled for removal in 2.0.0, please use {@code io.micrometer.core.instrument.binder.jetty.OnCompletionAsyncListener}
  */
 @Deprecated
 class OnCompletionAsyncListener implements AsyncListener {
