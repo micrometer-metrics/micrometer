@@ -41,6 +41,7 @@ import reactor.netty.Connection;
 import reactor.netty.tcp.TcpClient;
 import reactor.netty.udp.UdpClient;
 import reactor.util.context.Context;
+import reactor.util.context.ContextView;
 import reactor.util.retry.Retry;
 
 import java.net.InetSocketAddress;
@@ -566,6 +567,11 @@ public class StatsdMeterRegistry extends MeterRegistry {
 
         @Override
         public Context currentContext() {
+            return Context.empty();
+        }
+
+        @Override
+        public ContextView contextView() {
             return Context.empty();
         }
 
