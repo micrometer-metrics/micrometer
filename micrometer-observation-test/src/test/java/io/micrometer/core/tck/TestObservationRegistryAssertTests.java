@@ -131,8 +131,8 @@ class TestObservationRegistryAssertTests {
 
         thenNoException().isThrownBy(() -> assertThat(registry)
                 .hasObservationWithNameEqualTo("foo").that()
-                    .hasHighCardinalityTag("highTag", "highTagValue")
-                    .hasLowCardinalityTag("lowTag", "lowTagValue")
+                    .hasHighCardinalityKeyValue("highTag", "highTagValue")
+                    .hasLowCardinalityKeyValue("lowTag", "lowTagValue")
                     .hasBeenStarted()
                     .hasBeenStopped()
                 .backToTestObservationRegistry()
@@ -149,8 +149,8 @@ class TestObservationRegistryAssertTests {
 
         void run() {
             Observation.createNotStarted("foo", registry)
-                    .lowCardinalityTag("lowTag", "lowTagValue")
-                    .highCardinalityTag("highTag", "highTagValue")
+                    .lowCardinalityKeyValue("lowTag", "lowTagValue")
+                    .highCardinalityKeyValue("highTag", "highTagValue")
                     .observe(() -> System.out.println("Hello"));
         }
     }

@@ -36,7 +36,7 @@ class SimpleObservation implements Observation {
     private final ObservationRegistry registry;
     private final Context context;
     @SuppressWarnings("rawtypes")
-    private final Collection<TagsProvider> tagsProviders;
+    private final Collection<KeyValueProvider> keyValueProviders;
     @SuppressWarnings("rawtypes")
     private final Deque<ObservationHandler> handlers;
 
@@ -44,8 +44,8 @@ class SimpleObservation implements Observation {
     SimpleObservation(String name, ObservationRegistry registry, Context context) {
         this.registry = registry;
         this.context = context.setName(name);
-        this.tagsProviders = registry.observationConfig().getTagsProviders().stream()
-                .filter(tagsProvider -> tagsProvider.supportsContext(this.context))
+        this.keyValueProviders = registry.observationConfig().getKeyValueProviders().stream()
+                .filter(provider -> provider.supportsContext(this.context))
                 .collect(Collectors.toList());
         this.handlers = registry.observationConfig().getObservationHandlers().stream()
                 .filter(handler -> handler.supportsContext(this.context))
@@ -59,21 +59,21 @@ class SimpleObservation implements Observation {
     }
 
     @Override
-    public Observation lowCardinalityTag(KeyValue tag) {
-        this.context.addLowCardinalityTag(tag);
+    public Observation lowCardinalityKeyValue(KeyValue tag) {
+        this.context.addLowCardinalityKeyValue(tag);
         return this;
     }
 
     @Override
-    public Observation highCardinalityTag(KeyValue tag) {
-        this.context.addHighCardinalityTag(tag);
+    public Observation highCardinalityKeyValue(KeyValue tag) {
+        this.context.addHighCardinalityKeyValue(tag);
         return this;
     }
 
     @Override
-    public Observation tagsProvider(TagsProvider<?> tagsProvider) {
-        if (tagsProvider.supportsContext(context)) {
-            this.tagsProviders.add(tagsProvider);
+    public Observation keyValueProvider(KeyValueProvider<?> keyValueProvider) {
+        if (keyValueProvider.supportsContext(context)) {
+            this.keyValueProviders.add(keyValueProvider);
         }
         return this;
     }
@@ -93,9 +93,9 @@ class SimpleObservation implements Observation {
     @SuppressWarnings({"rawtypes", "unchecked"})
     @Override
     public void stop() {
-        for (TagsProvider tagsProvider : tagsProviders) {
-            this.context.addLowCardinalityTags(tagsProvider.getLowCardinalityTags(context));
-            this.context.addHighCardinalityTags(tagsProvider.getHighCardinalityTags(context));
+        for (KeyValueProvider keyValueProvider : keyValueProviders) {
+            this.context.addLowCardinalityKeyValues(keyValueProvider.getLowCardinalityKeyValues(context));
+            this.context.addHighCardinalityKeyValues(keyValueProvider.getHighCardinalityKeyValues(context));
         }
         this.notifyOnObservationStopped();
     }

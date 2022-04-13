@@ -5,7 +5,7 @@ dependencies {
 
     optionalApi 'io.micrometer:context-propagation-api'
 
-    // HttpServlet TagsProvider
+    // HttpServlet KeyValueProvider
     optionalApi 'javax.servlet:javax.servlet-api'
 
     // log monitoring

@@ -78,18 +78,18 @@ public interface DocumentedObservation {
     }
 
     /**
-     * Low cardinality tags.
+     * Low cardinality key values.
      *
-     * @return allowed tag keys for low cardinality tags
+     * @return allowed tag keys for low cardinality key values
      */
     default TagKey[] getLowCardinalityTagKeys() {
         return EMPTY;
     }
 
     /**
-     * High cardinality tags.
+     * High cardinality key values.
      *
-     * @return allowed tag keys for high cardinality tags
+     * @return allowed tag keys for high cardinality key values
      */
     default TagKey[] getHighCardinalityTagKeys() {
         return EMPTY;

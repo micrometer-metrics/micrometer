@@ -16,7 +16,7 @@
 package io.micrometer.observation.transport.http.context;
 
 import io.micrometer.observation.Observation;
-import io.micrometer.observation.transport.http.tags.HttpTagsProvider;
+import io.micrometer.observation.transport.http.tags.HttpKeyValueProvider;
 import io.micrometer.observation.transport.http.HttpClientRequest;
 import io.micrometer.observation.transport.http.HttpClientResponse;
 import io.micrometer.observation.lang.NonNull;
@@ -50,8 +50,8 @@ public class HttpClientContext extends HttpContext<HttpClientRequest, HttpClient
         this.request = request;
     }
 
-    public HttpClientContext(HttpClientRequest request, HttpTagsProvider tagsProvider) {
-        super(tagsProvider);
+    public HttpClientContext(HttpClientRequest request, HttpKeyValueProvider keyValueProvider) {
+        super(keyValueProvider);
         this.request = request;
     }
 

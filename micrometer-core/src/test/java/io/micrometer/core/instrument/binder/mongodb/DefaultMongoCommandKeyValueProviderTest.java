@@ -38,7 +38,7 @@ import static org.assertj.core.api.Assertions.assertThat;
  *
  * @author Chris Bono
  */
-class DefaultMongoCommandTagsProviderTest {
+class DefaultMongoCommandKeyValueProviderTest {
 
     private final ConnectionDescription connectionDesc = new ConnectionDescription(
             new ServerId(new ClusterId("cluster1"), new ServerAddress("localhost", 5150)));

@@ -36,14 +36,14 @@ public class ObservationHandlerSample {
         observationRegistry.observationConfig().observationHandler(new ObservationTextPublisher())
                 .observationHandler(new TimerObservationHandler(registry));
         observationRegistry.observationConfig()
-                    .tagsProvider(new CustomTagsProvider())
+                    .keyValueProvider(new CustomKeyValueProvider())
                     .observationPredicate(new IgnoringObservationPredicate());
 
         Observation observation = Observation.createNotStarted("sample.operation", new CustomContext(), observationRegistry)
                 .contextualName("CALL sampleOperation")
-                .tagsProvider(new CustomLocalTagsProvider())
-                .lowCardinalityTag("a", "1")
-                .highCardinalityTag("time", Instant.now().toString())
+                .keyValueProvider(new CustomLocalKeyValueProvider())
+                .lowCardinalityKeyValue("a", "1")
+                .highCardinalityKeyValue("time", Instant.now().toString())
                 .start();
 
         try (Observation.Scope scope = observation.openScope()) {
@@ -64,14 +64,14 @@ public class ObservationHandlerSample {
         private final UUID uuid = UUID.randomUUID();
     }
 
-    static class CustomTagsProvider implements Observation.GlobalTagsProvider<CustomContext> {
+    static class CustomKeyValueProvider implements Observation.GlobalKeyValueProvider<CustomContext> {
         @Override
-        public KeyValues getLowCardinalityTags(CustomContext context) {
+        public KeyValues getLowCardinalityKeyValues(CustomContext context) {
             return KeyValues.of("className", context.getClass().getSimpleName());
         }
 
         @Override
-        public KeyValues getHighCardinalityTags(CustomContext context) {
+        public KeyValues getHighCardinalityKeyValues(CustomContext context) {
             return KeyValues.of("userId", context.uuid.toString());
         }
 
@@ -81,14 +81,14 @@ public class ObservationHandlerSample {
         }
     }
 
-    static class CustomLocalTagsProvider implements Observation.TagsProvider<CustomContext> {
+    static class CustomLocalKeyValueProvider implements Observation.KeyValueProvider<CustomContext> {
         @Override
-        public KeyValues getLowCardinalityTags(CustomContext context) {
+        public KeyValues getLowCardinalityKeyValues(CustomContext context) {
             return KeyValues.of("localClassName", context.getClass().getSimpleName());
         }
 
         @Override
-        public KeyValues getHighCardinalityTags(CustomContext context) {
+        public KeyValues getHighCardinalityKeyValues(CustomContext context) {
             return KeyValues.of("localUserId", context.uuid.toString());
         }
 

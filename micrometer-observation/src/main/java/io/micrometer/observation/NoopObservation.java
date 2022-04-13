@@ -42,27 +42,27 @@ final class NoopObservation implements Observation {
     }
 
     @Override
-    public Observation lowCardinalityTag(KeyValue tag) {
+    public Observation lowCardinalityKeyValue(KeyValue tag) {
         return this;
     }
 
     @Override
-    public Observation lowCardinalityTag(String key, String value) {
+    public Observation lowCardinalityKeyValue(String key, String value) {
         return this;
     }
 
     @Override
-    public Observation highCardinalityTag(KeyValue tag) {
+    public Observation highCardinalityKeyValue(KeyValue tag) {
         return this;
     }
 
     @Override
-    public Observation highCardinalityTag(String key, String value) {
+    public Observation highCardinalityKeyValue(String key, String value) {
         return this;
     }
 
     @Override
-    public Observation tagsProvider(TagsProvider<?> tagsProvider) {
+    public Observation keyValueProvider(KeyValueProvider<?> keyValueProvider) {
         return this;
     }
 

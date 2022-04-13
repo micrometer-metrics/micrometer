@@ -20,20 +20,20 @@ import io.micrometer.observation.transport.http.HttpRequest;
 import io.micrometer.observation.transport.http.HttpResponse;
 
 /**
- * Default implementation of {@link HttpTagsProvider} that can be extended for customization.
+ * Default implementation of {@link HttpKeyValueProvider} that can be extended for customization.
  *
  * @author Tommy Ludwig
  * @since 1.10.0
  */
-public class DefaultHttpTagsProvider implements HttpTagsProvider {
+public class DefaultHttpKeyValueProvider implements HttpKeyValueProvider {
     @Override
-    public KeyValues getLowCardinalityTags(HttpRequest request, HttpResponse response, Throwable exception) {
-        return KeyValues.of(HttpTags.method(request), HttpTags.uri(request), HttpTags.status(response),
-                HttpTags.outcome(response), HttpTags.exception(exception));
+    public KeyValues getLowCardinalityKeyValues(HttpRequest request, HttpResponse response, Throwable exception) {
+        return KeyValues.of(HttpKeyValues.method(request), HttpKeyValues.uri(request), HttpKeyValues.status(response),
+                HttpKeyValues.outcome(response), HttpKeyValues.exception(exception));
     }
 
     @Override
-    public KeyValues getHighCardinalityTags(HttpRequest request, HttpResponse response, Throwable exception) {
+    public KeyValues getHighCardinalityKeyValues(HttpRequest request, HttpResponse response, Throwable exception) {
         return KeyValues.empty();
     }
 }

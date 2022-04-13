@@ -22,84 +22,84 @@ import org.junit.jupiter.api.Test;
 import static org.assertj.core.api.Assertions.assertThat;
 
 /**
- * Tests for {@link Observation.TagsProvider}.
+ * Tests for {@link Observation.KeyValueProvider}.
  *
  * @author Jonatan Ivanov
  */
-class TagsProviderTest {
+class KeyValueProviderTest {
     @Test
     void tagsShouldBeEmptyByDefault() {
-        Observation.TagsProvider<Observation.Context> tagsProvider = new TestTagsProvider();
+        Observation.KeyValueProvider<Observation.Context> keyValueProvider = new TestKeyValueProvider();
 
-        assertThat(tagsProvider.getLowCardinalityTags(new Observation.Context())).isEmpty();
-        assertThat(tagsProvider.getHighCardinalityTags(new Observation.Context())).isEmpty();
+        assertThat(keyValueProvider.getLowCardinalityKeyValues(new Observation.Context())).isEmpty();
+        assertThat(keyValueProvider.getHighCardinalityKeyValues(new Observation.Context())).isEmpty();
     }
 
     @Test
     void tagsShouldBeMergedIntoCompositeByDefault() {
-        Observation.TagsProvider<Observation.Context> tagsProvider = new Observation.TagsProvider.CompositeTagsProvider(
-                new MatchingTestTagsProvider(), new AnotherMatchingTestTagsProvider(), new NotMatchingTestTagsProvider()
+        Observation.KeyValueProvider<Observation.Context> keyValueProvider = new Observation.KeyValueProvider.CompositeKeyValueProvider(
+                new MatchingTestKeyValueProvider(), new AnotherMatchingTestKeyValueProvider(), new NotMatchingTestKeyValueProvider()
         );
 
-        assertThat(tagsProvider.getLowCardinalityTags(new Observation.Context())).containsExactlyInAnyOrder(KeyValue.of("matching-low-1", ""), KeyValue.of("matching-low-2", ""));
-        assertThat(tagsProvider.getHighCardinalityTags(new Observation.Context())).containsExactlyInAnyOrder(KeyValue.of("matching-high-1", ""), KeyValue.of("matching-high-2", ""));
+        assertThat(keyValueProvider.getLowCardinalityKeyValues(new Observation.Context())).containsExactlyInAnyOrder(KeyValue.of("matching-low-1", ""), KeyValue.of("matching-low-2", ""));
+        assertThat(keyValueProvider.getHighCardinalityKeyValues(new Observation.Context())).containsExactlyInAnyOrder(KeyValue.of("matching-high-1", ""), KeyValue.of("matching-high-2", ""));
     }
 
-    static class TestTagsProvider implements Observation.TagsProvider<Observation.Context> {
+    static class TestKeyValueProvider implements Observation.KeyValueProvider<Observation.Context> {
         @Override
         public boolean supportsContext(Observation.Context context) {
             return true;
         }
     }
 
-    static class MatchingTestTagsProvider implements Observation.TagsProvider<Observation.Context> {
+    static class MatchingTestKeyValueProvider implements Observation.KeyValueProvider<Observation.Context> {
         @Override
         public boolean supportsContext(Observation.Context context) {
             return true;
         }
 
         @Override
-        public KeyValues getLowCardinalityTags(Observation.Context context) {
+        public KeyValues getLowCardinalityKeyValues(Observation.Context context) {
             return KeyValues.of(KeyValue.of("matching-low-1", ""));
         }
 
         @Override
-        public KeyValues getHighCardinalityTags(Observation.Context context) {
+        public KeyValues getHighCardinalityKeyValues(Observation.Context context) {
             return KeyValues.of(KeyValue.of("matching-high-1", ""));
         }
     }
 
 
-    static class AnotherMatchingTestTagsProvider implements Observation.TagsProvider<Observation.Context> {
+    static class AnotherMatchingTestKeyValueProvider implements Observation.KeyValueProvider<Observation.Context> {
         @Override
         public boolean supportsContext(Observation.Context context) {
             return true;
         }
 
         @Override
-        public KeyValues getLowCardinalityTags(Observation.Context context) {
+        public KeyValues getLowCardinalityKeyValues(Observation.Context context) {
             return KeyValues.of(KeyValue.of("matching-low-2", ""));
         }
 
         @Override
-        public KeyValues getHighCardinalityTags(Observation.Context context) {
+        public KeyValues getHighCardinalityKeyValues(Observation.Context context) {
             return KeyValues.of(KeyValue.of("matching-high-2", ""));
         }
     }
 
-    static class NotMatchingTestTagsProvider implements Observation.TagsProvider<Observation.Context> {
+    static class NotMatchingTestKeyValueProvider implements Observation.KeyValueProvider<Observation.Context> {
         @Override
         public boolean supportsContext(Observation.Context context) {
             return false;
         }
 
         @Override
-        public KeyValues getLowCardinalityTags(Observation.Context context) {
+        public KeyValues getLowCardinalityKeyValues(Observation.Context context) {
             return KeyValues.of(KeyValue.of("not-matching-low", ""));
         }
 
         @Override
-        public KeyValues getHighCardinalityTags(Observation.Context context) {
+        public KeyValues getHighCardinalityKeyValues(Observation.Context context) {
             return KeyValues.of(KeyValue.of("not-matching-high", ""));
         }
     }

@@ -27,7 +27,7 @@ import io.micrometer.common.util.StringUtils;
  * @author Jon Schneider
  * @since 1.10.0
  */
-public class HttpTags {
+public class HttpKeyValues {
     private static final String METHOD = "method";
     private static final String STATUS = "status";
     private static final String EXCEPTION = "exception";
@@ -43,7 +43,7 @@ public class HttpTags {
 
     private static final KeyValue URI_UNKNOWN = KeyValue.of(URI, UNKNOWN);
 
-    private HttpTags() {
+    private HttpKeyValues() {
     }
 
     /**
