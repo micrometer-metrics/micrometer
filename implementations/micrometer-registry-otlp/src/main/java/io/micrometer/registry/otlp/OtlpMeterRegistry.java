@@ -15,9 +15,11 @@
  */
 package io.micrometer.registry.otlp;
 
-import io.micrometer.core.instrument.*;
 import io.micrometer.core.instrument.Gauge;
-import io.micrometer.core.instrument.cumulative.*;
+import io.micrometer.core.instrument.*;
+import io.micrometer.core.instrument.cumulative.CumulativeDistributionSummary;
+import io.micrometer.core.instrument.cumulative.CumulativeFunctionTimer;
+import io.micrometer.core.instrument.cumulative.CumulativeTimer;
 import io.micrometer.core.instrument.distribution.*;
 import io.micrometer.core.instrument.distribution.pause.PauseDetector;
 import io.micrometer.core.instrument.internal.CumulativeHistogramLongTaskTimer;
@@ -28,18 +30,19 @@ import io.micrometer.core.instrument.util.MeterPartition;
 import io.micrometer.core.instrument.util.NamedThreadFactory;
 import io.micrometer.core.ipc.http.HttpSender;
 import io.micrometer.core.ipc.http.HttpUrlConnectionSender;
+import io.micrometer.core.util.internal.logging.InternalLogger;
+import io.micrometer.core.util.internal.logging.InternalLoggerFactory;
 import io.opentelemetry.proto.collector.metrics.v1.ExportMetricsServiceRequest;
 import io.opentelemetry.proto.common.v1.AnyValue;
 import io.opentelemetry.proto.common.v1.KeyValue;
-import io.opentelemetry.proto.metrics.v1.*;
 import io.opentelemetry.proto.metrics.v1.Histogram;
+import io.opentelemetry.proto.metrics.v1.*;
 import io.opentelemetry.proto.resource.v1.Resource;
 
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.ThreadFactory;
 import java.util.concurrent.TimeUnit;
-import java.util.function.DoubleFunction;
 import java.util.function.DoubleSupplier;
 import java.util.function.ToDoubleFunction;
 import java.util.function.ToLongFunction;
@@ -53,6 +56,7 @@ import java.util.stream.Collectors;
 public class OtlpMeterRegistry extends PushMeterRegistry {
 
     private static final ThreadFactory DEFAULT_THREAD_FACTORY = new NamedThreadFactory("otlp-metrics-publisher");
+    private final InternalLogger logger = InternalLoggerFactory.getInstance(OtlpMeterRegistry.class);
     private final OtlpConfig config;
     private final HttpSender httpSender;
 
@@ -107,7 +111,7 @@ public class OtlpMeterRegistry extends PushMeterRegistry {
                         .withContent("application/x-protobuf", request.toByteArray())
                         .send();
             } catch (Throwable e) {
-                e.printStackTrace();
+                logger.warn("Failed to publish metrics to OTLP receiver", e);
             }
         }
     }
@@ -166,7 +170,7 @@ public class OtlpMeterRegistry extends PushMeterRegistry {
     }
 
     Metric writeMeter(Meter meter) {
-        // TODO
+        // TODO support writing custom meters
         return getMetricBuilder(meter.getId()).build();
     }
 

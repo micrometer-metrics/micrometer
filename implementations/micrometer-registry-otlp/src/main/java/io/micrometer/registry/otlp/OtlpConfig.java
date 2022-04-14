@@ -17,11 +17,9 @@ package io.micrometer.registry.otlp;
 
 import io.micrometer.core.instrument.config.validate.Validated;
 import io.micrometer.core.instrument.push.PushRegistryConfig;
-import io.micrometer.core.instrument.step.StepRegistryConfig;
 
 import static io.micrometer.core.instrument.config.MeterRegistryConfigValidator.checkAll;
 import static io.micrometer.core.instrument.config.MeterRegistryConfigValidator.checkRequired;
-import static io.micrometer.core.instrument.config.validate.PropertyValidator.getString;
 import static io.micrometer.core.instrument.config.validate.PropertyValidator.getUrlString;
 
 public interface OtlpConfig extends PushRegistryConfig {
