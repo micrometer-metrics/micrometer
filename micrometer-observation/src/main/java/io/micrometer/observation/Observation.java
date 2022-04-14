@@ -454,7 +454,7 @@ public interface Observation {
 
         private final Set<KeyValue> lowCardinalityKeyValues = new LinkedHashSet<>();
 
-        private final Set<KeyValue> highCardinalityTags = new LinkedHashSet<>();
+        private final Set<KeyValue> highCardinalityKeyValues = new LinkedHashSet<>();
 
         /**
          * The observation name.
@@ -627,7 +627,7 @@ public interface Observation {
          * @param tag a tag
          */
         void addHighCardinalityKeyValue(KeyValue tag) {
-            this.highCardinalityTags.add(tag);
+            this.highCardinalityKeyValues.add(tag);
         }
 
         /**
@@ -655,7 +655,7 @@ public interface Observation {
 
         @NonNull
         public KeyValues getHighCardinalityKeyValues() {
-            return KeyValues.of(this.highCardinalityTags);
+            return KeyValues.of(this.highCardinalityKeyValues);
         }
 
         @NonNull
@@ -669,7 +669,7 @@ public interface Observation {
                     ", contextualName='" + contextualName + '\'' +
                     ", error='" + error + '\'' +
                     ", lowCardinalityKeyValues=" + toString(lowCardinalityKeyValues) +
-                    ", highCardinalityKeyValues=" + toString(highCardinalityTags) +
+                    ", highCardinalityKeyValues=" + toString(highCardinalityKeyValues) +
                     ", map=" + toString(map);
         }
 
