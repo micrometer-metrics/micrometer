@@ -180,10 +180,10 @@ public interface Observation {
     /**
      * Adds a key value provider that can be used to attach tags to the observation
      *
-     * @param keyValueProvider key value provider
+     * @param keyValuesProvider key value provider
      * @return this
      */
-    Observation keyValueProvider(KeyValueProvider<?> keyValueProvider);
+    Observation keyValueProvider(KeyValuesProvider<?> keyValuesProvider);
 
     /**
      * Sets an error.
@@ -612,7 +612,7 @@ public interface Observation {
 
         /**
          * Adds a low cardinality tag - those will be appended to those
-         * fetched from the {@link KeyValueProvider#getLowCardinalityKeyValues(Context)} method.
+         * fetched from the {@link KeyValuesProvider#getLowCardinalityKeyValues(Context)} method.
          *
          * @param tag a tag
          */
@@ -622,7 +622,7 @@ public interface Observation {
 
         /**
          * Adds a high cardinality tag - those will be appended to those
-         * fetched from the {@link KeyValueProvider#getHighCardinalityKeyValues(Context)} method.
+         * fetched from the {@link KeyValuesProvider#getHighCardinalityKeyValues(Context)} method.
          *
          * @param tag a tag
          */
@@ -688,19 +688,19 @@ public interface Observation {
 
     /**
      * Interface to be implemented by any object that wishes to be able
-     * to update the default {@link KeyValueProvider}.
+     * to update the default {@link KeyValuesProvider}.
      *
-     * @param <T> {@link KeyValueProvider} type
+     * @param <T> {@link KeyValuesProvider} type
      * @author Marcin Grzejszczak
      * @since 1.10.0
      */
-    interface KeyValueProviderAware<T extends KeyValueProvider<?>> {
+    interface KeyValuesProviderAware<T extends KeyValuesProvider<?>> {
         /**
-         * Overrides the default key value provider.
+         * Overrides the default key values provider.
          *
-         * @param keyValueProvider key value provider
+         * @param keyValuesProvider key values provider
          */
-        void setKeyValueProvider(T keyValueProvider);
+        void setKeyValuesProvider(T keyValuesProvider);
     }
 
     /**
@@ -709,12 +709,12 @@ public interface Observation {
      * @author Marcin Grzejszczak
      * @since 1.10.0
      */
-    interface KeyValueProvider<T extends Context> {
+    interface KeyValuesProvider<T extends Context> {
 
         /**
-         * Empty instance of the key value provider.
+         * Empty instance of the key-values provider.
          */
-        KeyValueProvider<Context> EMPTY = context -> false;
+        KeyValuesProvider<Context> EMPTY = context -> false;
 
         /**
          * Low cardinality key values.
@@ -746,24 +746,24 @@ public interface Observation {
          * Key value provider wrapping other key value providers.
          */
         @SuppressWarnings({"rawtypes", "unchecked"})
-        class CompositeKeyValueProvider implements KeyValueProvider<Context> {
+        class CompositeKeyValuesProvider implements KeyValuesProvider<Context> {
 
-            private final List<KeyValueProvider> keyValueProviders;
+            private final List<KeyValuesProvider> keyValuesProviders;
 
             /**
              * Creates a new instance of {@code CompositeKeyValueProvider}.
-             * @param keyValueProviders the key value providers that are registered under the composite
+             * @param keyValuesProviders the key value providers that are registered under the composite
              */
-            public CompositeKeyValueProvider(KeyValueProvider... keyValueProviders) {
-                this(Arrays.asList(keyValueProviders));
+            public CompositeKeyValuesProvider(KeyValuesProvider... keyValuesProviders) {
+                this(Arrays.asList(keyValuesProviders));
             }
 
             /**
              * Creates a new instance of {@code CompositeKeyValueProvider}.
-             * @param keyValueProviders the key value providers that are registered under the composite
+             * @param keyValuesProviders the key value providers that are registered under the composite
              */
-            public CompositeKeyValueProvider(List<KeyValueProvider> keyValueProviders) {
-                this.keyValueProviders = keyValueProviders;
+            public CompositeKeyValuesProvider(List<KeyValuesProvider> keyValuesProviders) {
+                this.keyValuesProviders = keyValuesProviders;
             }
 
             @Override
@@ -774,8 +774,8 @@ public interface Observation {
                         .orElse(KeyValues.empty());
             }
 
-            private Stream<KeyValueProvider> getProvidersForContext(Context context) {
-                return this.keyValueProviders.stream().filter(provider -> provider.supportsContext(context));
+            private Stream<KeyValuesProvider> getProvidersForContext(Context context) {
+                return this.keyValuesProviders.stream().filter(provider -> provider.supportsContext(context));
             }
 
             @Override
@@ -788,15 +788,15 @@ public interface Observation {
 
             @Override
             public boolean supportsContext(Context context) {
-                return this.keyValueProviders.stream().anyMatch(provider -> provider.supportsContext(context));
+                return this.keyValuesProviders.stream().anyMatch(provider -> provider.supportsContext(context));
             }
 
             /**
              * Returns the key value providers.
              * @return registered key value providers
              */
-            public List<KeyValueProvider> getKeyValueProviders() {
-                return this.keyValueProviders;
+            public List<KeyValuesProvider> getKeyValueProviders() {
+                return this.keyValuesProviders;
             }
         }
     }
@@ -807,7 +807,7 @@ public interface Observation {
      * @author Marcin Grzejszczak
      * @since 1.10.0
      */
-    interface GlobalKeyValueProvider<T extends Context> extends KeyValueProvider<T> {
+    interface GlobalKeyValuesProvider<T extends Context> extends KeyValuesProvider<T> {
 
     }
 

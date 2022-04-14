@@ -36,7 +36,7 @@ class SimpleObservation implements Observation {
     private final ObservationRegistry registry;
     private final Context context;
     @SuppressWarnings("rawtypes")
-    private final Collection<KeyValueProvider> keyValueProviders;
+    private final Collection<KeyValuesProvider> keyValuesProviders;
     @SuppressWarnings("rawtypes")
     private final Deque<ObservationHandler> handlers;
 
@@ -44,7 +44,7 @@ class SimpleObservation implements Observation {
     SimpleObservation(String name, ObservationRegistry registry, Context context) {
         this.registry = registry;
         this.context = context.setName(name);
-        this.keyValueProviders = registry.observationConfig().getKeyValueProviders().stream()
+        this.keyValuesProviders = registry.observationConfig().getKeyValueProviders().stream()
                 .filter(provider -> provider.supportsContext(this.context))
                 .collect(Collectors.toList());
         this.handlers = registry.observationConfig().getObservationHandlers().stream()
@@ -71,9 +71,9 @@ class SimpleObservation implements Observation {
     }
 
     @Override
-    public Observation keyValueProvider(KeyValueProvider<?> keyValueProvider) {
-        if (keyValueProvider.supportsContext(context)) {
-            this.keyValueProviders.add(keyValueProvider);
+    public Observation keyValueProvider(KeyValuesProvider<?> keyValuesProvider) {
+        if (keyValuesProvider.supportsContext(context)) {
+            this.keyValuesProviders.add(keyValuesProvider);
         }
         return this;
     }
@@ -93,9 +93,9 @@ class SimpleObservation implements Observation {
     @SuppressWarnings({"rawtypes", "unchecked"})
     @Override
     public void stop() {
-        for (KeyValueProvider keyValueProvider : keyValueProviders) {
-            this.context.addLowCardinalityKeyValues(keyValueProvider.getLowCardinalityKeyValues(context));
-            this.context.addHighCardinalityKeyValues(keyValueProvider.getHighCardinalityKeyValues(context));
+        for (KeyValuesProvider keyValuesProvider : keyValuesProviders) {
+            this.context.addLowCardinalityKeyValues(keyValuesProvider.getLowCardinalityKeyValues(context));
+            this.context.addHighCardinalityKeyValues(keyValuesProvider.getHighCardinalityKeyValues(context));
         }
         this.notifyOnObservationStopped();
     }

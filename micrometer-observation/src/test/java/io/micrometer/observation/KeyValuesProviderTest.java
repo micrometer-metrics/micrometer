@@ -22,37 +22,37 @@ import org.junit.jupiter.api.Test;
 import static org.assertj.core.api.Assertions.assertThat;
 
 /**
- * Tests for {@link Observation.KeyValueProvider}.
+ * Tests for {@link Observation.KeyValuesProvider}.
  *
  * @author Jonatan Ivanov
  */
-class KeyValueProviderTest {
+class KeyValuesProviderTest {
     @Test
     void tagsShouldBeEmptyByDefault() {
-        Observation.KeyValueProvider<Observation.Context> keyValueProvider = new TestKeyValueProvider();
+        Observation.KeyValuesProvider<Observation.Context> keyValuesProvider = new TestKeyValuesProvider();
 
-        assertThat(keyValueProvider.getLowCardinalityKeyValues(new Observation.Context())).isEmpty();
-        assertThat(keyValueProvider.getHighCardinalityKeyValues(new Observation.Context())).isEmpty();
+        assertThat(keyValuesProvider.getLowCardinalityKeyValues(new Observation.Context())).isEmpty();
+        assertThat(keyValuesProvider.getHighCardinalityKeyValues(new Observation.Context())).isEmpty();
     }
 
     @Test
     void tagsShouldBeMergedIntoCompositeByDefault() {
-        Observation.KeyValueProvider<Observation.Context> keyValueProvider = new Observation.KeyValueProvider.CompositeKeyValueProvider(
-                new MatchingTestKeyValueProvider(), new AnotherMatchingTestKeyValueProvider(), new NotMatchingTestKeyValueProvider()
+        Observation.KeyValuesProvider<Observation.Context> keyValuesProvider = new Observation.KeyValuesProvider.CompositeKeyValuesProvider(
+                new MatchingTestKeyValuesProvider(), new AnotherMatchingTestKeyValuesProvider(), new NotMatchingTestKeyValuesProvider()
         );
 
-        assertThat(keyValueProvider.getLowCardinalityKeyValues(new Observation.Context())).containsExactlyInAnyOrder(KeyValue.of("matching-low-1", ""), KeyValue.of("matching-low-2", ""));
-        assertThat(keyValueProvider.getHighCardinalityKeyValues(new Observation.Context())).containsExactlyInAnyOrder(KeyValue.of("matching-high-1", ""), KeyValue.of("matching-high-2", ""));
+        assertThat(keyValuesProvider.getLowCardinalityKeyValues(new Observation.Context())).containsExactlyInAnyOrder(KeyValue.of("matching-low-1", ""), KeyValue.of("matching-low-2", ""));
+        assertThat(keyValuesProvider.getHighCardinalityKeyValues(new Observation.Context())).containsExactlyInAnyOrder(KeyValue.of("matching-high-1", ""), KeyValue.of("matching-high-2", ""));
     }
 
-    static class TestKeyValueProvider implements Observation.KeyValueProvider<Observation.Context> {
+    static class TestKeyValuesProvider implements Observation.KeyValuesProvider<Observation.Context> {
         @Override
         public boolean supportsContext(Observation.Context context) {
             return true;
         }
     }
 
-    static class MatchingTestKeyValueProvider implements Observation.KeyValueProvider<Observation.Context> {
+    static class MatchingTestKeyValuesProvider implements Observation.KeyValuesProvider<Observation.Context> {
         @Override
         public boolean supportsContext(Observation.Context context) {
             return true;
@@ -70,7 +70,7 @@ class KeyValueProviderTest {
     }
 
 
-    static class AnotherMatchingTestKeyValueProvider implements Observation.KeyValueProvider<Observation.Context> {
+    static class AnotherMatchingTestKeyValuesProvider implements Observation.KeyValuesProvider<Observation.Context> {
         @Override
         public boolean supportsContext(Observation.Context context) {
             return true;
@@ -87,7 +87,7 @@ class KeyValueProviderTest {
         }
     }
 
-    static class NotMatchingTestKeyValueProvider implements Observation.KeyValueProvider<Observation.Context> {
+    static class NotMatchingTestKeyValuesProvider implements Observation.KeyValuesProvider<Observation.Context> {
         @Override
         public boolean supportsContext(Observation.Context context) {
             return false;

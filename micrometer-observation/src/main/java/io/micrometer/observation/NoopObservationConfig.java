@@ -48,7 +48,7 @@ final class NoopObservationConfig extends ObservationRegistry.ObservationConfig 
     }
 
     @Override
-    public ObservationRegistry.ObservationConfig keyValueProvider(Observation.GlobalKeyValueProvider<?> keyValueProvider) {
+    public ObservationRegistry.ObservationConfig keyValueProvider(Observation.GlobalKeyValuesProvider<?> keyValueProvider) {
         return this;
     }
 
@@ -63,7 +63,7 @@ final class NoopObservationConfig extends ObservationRegistry.ObservationConfig 
     }
 
     @Override
-    Collection<Observation.GlobalKeyValueProvider<?>> getKeyValueProviders() {
+    Collection<Observation.GlobalKeyValuesProvider<?>> getKeyValueProviders() {
         return Collections.emptyList();
     }
 }

@@ -36,12 +36,12 @@ public class ObservationHandlerSample {
         observationRegistry.observationConfig().observationHandler(new ObservationTextPublisher())
                 .observationHandler(new TimerObservationHandler(registry));
         observationRegistry.observationConfig()
-                    .keyValueProvider(new CustomKeyValueProvider())
+                    .keyValueProvider(new CustomKeyValuesProvider())
                     .observationPredicate(new IgnoringObservationPredicate());
 
         Observation observation = Observation.createNotStarted("sample.operation", new CustomContext(), observationRegistry)
                 .contextualName("CALL sampleOperation")
-                .keyValueProvider(new CustomLocalKeyValueProvider())
+                .keyValueProvider(new CustomLocalKeyValuesProvider())
                 .lowCardinalityKeyValue("a", "1")
                 .highCardinalityKeyValue("time", Instant.now().toString())
                 .start();
@@ -64,7 +64,7 @@ public class ObservationHandlerSample {
         private final UUID uuid = UUID.randomUUID();
     }
 
-    static class CustomKeyValueProvider implements Observation.GlobalKeyValueProvider<CustomContext> {
+    static class CustomKeyValuesProvider implements Observation.GlobalKeyValuesProvider<CustomContext> {
         @Override
         public KeyValues getLowCardinalityKeyValues(CustomContext context) {
             return KeyValues.of("className", context.getClass().getSimpleName());
@@ -81,7 +81,7 @@ public class ObservationHandlerSample {
         }
     }
 
-    static class CustomLocalKeyValueProvider implements Observation.KeyValueProvider<CustomContext> {
+    static class CustomLocalKeyValuesProvider implements Observation.KeyValuesProvider<CustomContext> {
         @Override
         public KeyValues getLowCardinalityKeyValues(CustomContext context) {
             return KeyValues.of("localClassName", context.getClass().getSimpleName());

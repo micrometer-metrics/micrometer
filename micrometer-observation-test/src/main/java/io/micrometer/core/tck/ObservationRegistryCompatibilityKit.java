@@ -392,8 +392,8 @@ public abstract class ObservationRegistryCompatibilityKit {
     void observationFieldsShouldBeSetOnContext() {
         AssertingHandler assertingHandler = new AssertingHandler();
         registry.observationConfig()
-                .keyValueProvider(new TestKeyValueProvider("global"))
-                .keyValueProvider(new UnsupportedKeyValueProvider("global"))
+                .keyValueProvider(new TestKeyValuesProvider("global"))
+                .keyValueProvider(new UnsupportedKeyValuesProvider("global"))
                 .observationHandler(assertingHandler);
 
         TestContext testContext = new TestContext();
@@ -404,8 +404,8 @@ public abstract class ObservationRegistryCompatibilityKit {
                 .lowCardinalityKeyValue(KeyValue.of("lcTag2", "2"))
                 .highCardinalityKeyValue("hcTag1", "3")
                 .highCardinalityKeyValue(KeyValue.of("hcTag2", "4"))
-                .keyValueProvider(new TestKeyValueProvider("local"))
-                .keyValueProvider(new UnsupportedKeyValueProvider("local"))
+                .keyValueProvider(new TestKeyValuesProvider("local"))
+                .keyValueProvider(new UnsupportedKeyValuesProvider("local"))
                 .contextualName("test.observation.42")
                 .error(exception);
         observation.stop();
@@ -456,10 +456,10 @@ public abstract class ObservationRegistryCompatibilityKit {
         final String uuid = UUID.randomUUID().toString();
     }
 
-    static class TestKeyValueProvider implements Observation.GlobalKeyValueProvider<TestContext> {
+    static class TestKeyValuesProvider implements Observation.GlobalKeyValuesProvider<TestContext> {
         private final String id;
 
-        public TestKeyValueProvider(String id) {
+        public TestKeyValuesProvider(String id) {
             this.id = id;
         }
 
@@ -483,10 +483,10 @@ public abstract class ObservationRegistryCompatibilityKit {
         }
     }
 
-    static class UnsupportedKeyValueProvider implements Observation.GlobalKeyValueProvider<Observation.Context> {
+    static class UnsupportedKeyValuesProvider implements Observation.GlobalKeyValuesProvider<Observation.Context> {
         private final String id;
 
-        public UnsupportedKeyValueProvider(String id) {
+        public UnsupportedKeyValuesProvider(String id) {
             this.id = id;
         }
 
