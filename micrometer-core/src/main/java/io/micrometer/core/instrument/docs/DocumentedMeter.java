@@ -16,7 +16,7 @@
 
 package io.micrometer.core.instrument.docs;
 
-import io.micrometer.common.docs.TagKey;
+import io.micrometer.common.docs.KeyName;
 import io.micrometer.core.instrument.Meter;
 import io.micrometer.core.lang.Nullable;
 
@@ -29,7 +29,7 @@ import io.micrometer.core.lang.Nullable;
  *
  * <ul>
  *     <li>Metrics are grouped within an enum - the enum implements the {@link DocumentedMeter} interface</li>
- *     <li>If the span contains {@link TagKey} then those need to be declared as nested enums</li>
+ *     <li>If the span contains {@link KeyName} then those need to be declared as nested enums</li>
  *     <li>The {@link DocumentedMeter#getTagKeys()} need to call the nested enum's {@code values()} method to retrieve the array of allowed keys / events</li>
  *     <li>Javadocs around enums will be used as description</li>
  * </ul>
@@ -41,7 +41,7 @@ public interface DocumentedMeter {
     /**
      * Empty tag keys.
      */
-    TagKey[] EMPTY_TAGS = new TagKey[0];
+    KeyName[] EMPTY_TAGS = new KeyName[0];
 
     /**
      * Metric name.
@@ -85,7 +85,7 @@ public interface DocumentedMeter {
      *
      * @return allowed tag keys - if set will override any tag keys coming from {@link DocumentedMeter#overridesDefaultMetricFrom()}
      */
-    default TagKey[] getTagKeys() {
+    default KeyName[] getTagKeys() {
         return EMPTY_TAGS;
     }
 
@@ -94,7 +94,7 @@ public interface DocumentedMeter {
      *
      * @return additional tag keys - if set will append any tag keys coming from {@link DocumentedMeter#overridesDefaultMetricFrom()}
      */
-    default TagKey[] getAdditionalTagKeys() {
+    default KeyName[] getAdditionalTagKeys() {
         return EMPTY_TAGS;
     }
 

@@ -15,7 +15,7 @@
  */
 package io.micrometer.observation.docs;
 
-import io.micrometer.common.docs.TagKey;
+import io.micrometer.common.docs.KeyName;
 import io.micrometer.observation.Observation;
 import io.micrometer.observation.ObservationRegistry;
 
@@ -30,11 +30,11 @@ import io.micrometer.observation.ObservationRegistry;
  *
  * <ul>
  *     <li>Observations are grouped within an enum - the enum implements the {@code DocumentedObservation} interface</li>
- *     <li>If the observation contains {@link TagKey} then those need to be declared as nested enums</li>
- *     <li>The {@link DocumentedObservation#getHighCardinalityTagKeys()} need to call the nested enum's {@code values()} method to retrieve the array of allowed keys</li>
- *     <li>The {@link DocumentedObservation#getLowCardinalityTagKeys()} need to call the nested enum's {@code values()} method to retrieve the array of allowed keys</li>
+ *     <li>If the observation contains {@link KeyName} then those need to be declared as nested enums</li>
+ *     <li>The {@link DocumentedObservation#getHighCardinalityKeyNames()} need to call the nested enum's {@code values()} method to retrieve the array of allowed keys</li>
+ *     <li>The {@link DocumentedObservation#getLowCardinalityKeyNames()} need to call the nested enum's {@code values()} method to retrieve the array of allowed keys</li>
  *     <li>Javadocs around enums will be used as description</li>
- *     <li>If you want to merge different {@link TagKey} enum {@code values()} methods you need to call the {@link TagKey#merge(TagKey[]...)} method</li>
+ *     <li>If you want to merge different {@link KeyName} enum {@code values()} methods you need to call the {@link KeyName#merge(KeyName[]...)} method</li>
  * </ul>
  *
  * @author Marcin Grzejszczak
@@ -45,7 +45,7 @@ public interface DocumentedObservation {
     /**
      * Empty tag keys.
      */
-    TagKey[] EMPTY = new TagKey[0];
+    KeyName[] EMPTY = new KeyName[0];
 
     /**
      * Technical name (e.g metric name).
@@ -78,20 +78,20 @@ public interface DocumentedObservation {
     }
 
     /**
-     * Low cardinality key values.
+     * Low cardinality key names.
      *
-     * @return allowed tag keys for low cardinality key values
+     * @return allowed tag keys for low cardinality key-values
      */
-    default TagKey[] getLowCardinalityTagKeys() {
+    default KeyName[] getLowCardinalityKeyNames() {
         return EMPTY;
     }
 
     /**
-     * High cardinality key values.
+     * High cardinality key names.
      *
-     * @return allowed tag keys for high cardinality key values
+     * @return allowed tag keys for high cardinality key-values
      */
-    default TagKey[] getHighCardinalityTagKeys() {
+    default KeyName[] getHighCardinalityKeyNames() {
         return EMPTY;
     }
 
