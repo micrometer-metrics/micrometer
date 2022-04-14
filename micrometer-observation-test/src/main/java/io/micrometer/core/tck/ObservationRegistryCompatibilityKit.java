@@ -392,8 +392,8 @@ public abstract class ObservationRegistryCompatibilityKit {
     void observationFieldsShouldBeSetOnContext() {
         AssertingHandler assertingHandler = new AssertingHandler();
         registry.observationConfig()
-                .keyValueProvider(new TestKeyValuesProvider("global"))
-                .keyValueProvider(new UnsupportedKeyValuesProvider("global"))
+                .keyValuesProvider(new TestKeyValuesProvider("global"))
+                .keyValuesProvider(new UnsupportedKeyValuesProvider("global"))
                 .observationHandler(assertingHandler);
 
         TestContext testContext = new TestContext();

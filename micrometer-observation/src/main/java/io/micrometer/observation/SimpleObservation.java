@@ -44,7 +44,7 @@ class SimpleObservation implements Observation {
     SimpleObservation(String name, ObservationRegistry registry, Context context) {
         this.registry = registry;
         this.context = context.setName(name);
-        this.keyValuesProviders = registry.observationConfig().getKeyValueProviders().stream()
+        this.keyValuesProviders = registry.observationConfig().getKeyValuesProviders().stream()
                 .filter(provider -> provider.supportsContext(this.context))
                 .collect(Collectors.toList());
         this.handlers = registry.observationConfig().getObservationHandlers().stream()

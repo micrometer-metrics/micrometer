@@ -36,7 +36,7 @@ public class ObservationHandlerSample {
         observationRegistry.observationConfig().observationHandler(new ObservationTextPublisher())
                 .observationHandler(new TimerObservationHandler(registry));
         observationRegistry.observationConfig()
-                    .keyValueProvider(new CustomKeyValuesProvider())
+                    .keyValuesProvider(new CustomKeyValuesProvider())
                     .observationPredicate(new IgnoringObservationPredicate());
 
         Observation observation = Observation.createNotStarted("sample.operation", new CustomContext(), observationRegistry)
