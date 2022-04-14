@@ -19,7 +19,7 @@ import io.micrometer.observation.Observation;
 import io.micrometer.common.KeyValues;
 import io.micrometer.observation.transport.http.HttpRequest;
 import io.micrometer.observation.transport.http.HttpResponse;
-import io.micrometer.observation.transport.http.tags.HttpTagsProvider;
+import io.micrometer.observation.transport.http.tags.HttpKeyValueProvider;
 import io.micrometer.observation.lang.NonNull;
 import io.micrometer.observation.lang.Nullable;
 
@@ -33,14 +33,14 @@ import io.micrometer.observation.lang.Nullable;
  */
 public abstract class HttpContext<REQ extends HttpRequest, RES extends HttpResponse> extends Observation.Context {
 
-    private final HttpTagsProvider tagsProvider;
+    private final HttpKeyValueProvider keyValueProvider;
 
     public HttpContext() {
-        this(HttpTagsProvider.DEFAULT);
+        this(HttpKeyValueProvider.DEFAULT);
     }
 
-    public HttpContext(HttpTagsProvider tagsProvider) {
-        this.tagsProvider = tagsProvider;
+    public HttpContext(HttpKeyValueProvider keyValueProvider) {
+        this.keyValueProvider = keyValueProvider;
     }
 
     /**
@@ -79,7 +79,7 @@ public abstract class HttpContext<REQ extends HttpRequest, RES extends HttpRespo
 
     @NonNull
     @Override
-    public KeyValues getLowCardinalityTags() {
-        return this.tagsProvider.getLowCardinalityTags(getRequest(), getResponse(), null);
+    public KeyValues getLowCardinalityKeyValues() {
+        return this.keyValueProvider.getLowCardinalityKeyValues(getRequest(), getResponse(), null);
     }
 }

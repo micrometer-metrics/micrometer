@@ -22,36 +22,36 @@ import io.micrometer.observation.transport.http.HttpResponse;
 /**
  * Provides tags for HTTP-related metrics.
  *
- * @see HttpTags
+ * @see HttpKeyValues
  * @author Tommy Ludwig
  * @since 1.10.0
  */
-public interface HttpTagsProvider {
+public interface HttpKeyValueProvider {
 
     /**
      * Default implementation.
      */
-    HttpTagsProvider DEFAULT = new DefaultHttpTagsProvider();
+    HttpKeyValueProvider DEFAULT = new DefaultHttpKeyValueProvider();
 
     /**
      * Provide tags known to be low-cardinality, generally appropriate for use with metrics.
-     * These tags should not overlap with the tags provided by {@link #getHighCardinalityTags(HttpRequest, HttpResponse, Throwable)}.
+     * These tags should not overlap with the tags provided by {@link #getHighCardinalityKeyValues(HttpRequest, HttpResponse, Throwable)}.
      *
      * @param request http request
      * @param response http response
      * @param exception exception thrown during operation, or null
      * @return set of tags based on the given parameters
      */
-    KeyValues getLowCardinalityTags(HttpRequest request, HttpResponse response, Throwable exception);
+    KeyValues getLowCardinalityKeyValues(HttpRequest request, HttpResponse response, Throwable exception);
 
     /**
      * Provide tags known to be high-cardinality, which generally are not appropriate for use with metrics.
-     * These tags should not overlap with the tags provided by {@link #getLowCardinalityTags(HttpRequest, HttpResponse, Throwable)}.
+     * These tags should not overlap with the tags provided by {@link #getLowCardinalityKeyValues(HttpRequest, HttpResponse, Throwable)}.
      *
      * @param request http request
      * @param response http response
      * @param exception exception thrown during operation, or null
      * @return set of tags based on the given parameters
      */
-    KeyValues getHighCardinalityTags(HttpRequest request, HttpResponse response, Throwable exception);
+    KeyValues getHighCardinalityKeyValues(HttpRequest request, HttpResponse response, Throwable exception);
 }

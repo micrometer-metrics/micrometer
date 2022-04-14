@@ -130,7 +130,7 @@ public interface Observation {
      * @param tag tag
      * @return this
      */
-    Observation lowCardinalityTag(KeyValue tag);
+    Observation lowCardinalityKeyValue(KeyValue tag);
 
     /**
      * Sets a low cardinality tag. Low cardinality means that this tag
@@ -141,8 +141,8 @@ public interface Observation {
      * @param value tag value
      * @return this
      */
-    default Observation lowCardinalityTag(String key, String value) {
-        return lowCardinalityTag(KeyValue.of(key, value));
+    default Observation lowCardinalityKeyValue(String key, String value) {
+        return lowCardinalityKeyValue(KeyValue.of(key, value));
     }
 
     /**
@@ -153,7 +153,7 @@ public interface Observation {
      * @param tag tag
      * @return this
      */
-    Observation highCardinalityTag(KeyValue tag);
+    Observation highCardinalityKeyValue(KeyValue tag);
 
     /**
      * Sets a high cardinality tag. High cardinality means that this tag
@@ -164,8 +164,8 @@ public interface Observation {
      * @param value tag value
      * @return this
      */
-    default Observation highCardinalityTag(String key, String value) {
-        return highCardinalityTag(KeyValue.of(key, value));
+    default Observation highCardinalityKeyValue(String key, String value) {
+        return highCardinalityKeyValue(KeyValue.of(key, value));
     }
 
     /**
@@ -178,12 +178,12 @@ public interface Observation {
     }
 
     /**
-     * Adds a tags provider that can be used to attach tags to the observation
+     * Adds a key value provider that can be used to attach tags to the observation
      *
-     * @param tagsProvider tags provider
+     * @param keyValuesProvider key value provider
      * @return this
      */
-    Observation tagsProvider(TagsProvider<?> tagsProvider);
+    Observation keyValueProvider(KeyValuesProvider<?> keyValuesProvider);
 
     /**
      * Sets an error.
@@ -452,7 +452,7 @@ public interface Observation {
         @Nullable
         private Throwable error;
 
-        private final Set<KeyValue> lowCardinalityTags = new LinkedHashSet<>();
+        private final Set<KeyValue> lowCardinalityKeyValues = new LinkedHashSet<>();
 
         private final Set<KeyValue> highCardinalityTags = new LinkedHashSet<>();
 
@@ -612,55 +612,55 @@ public interface Observation {
 
         /**
          * Adds a low cardinality tag - those will be appended to those
-         * fetched from the {@link TagsProvider#getLowCardinalityTags(Context)} method.
+         * fetched from the {@link KeyValuesProvider#getLowCardinalityKeyValues(Context)} method.
          *
          * @param tag a tag
          */
-        void addLowCardinalityTag(KeyValue tag) {
-            this.lowCardinalityTags.add(tag);
+        void addLowCardinalityKeyValue(KeyValue tag) {
+            this.lowCardinalityKeyValues.add(tag);
         }
 
         /**
          * Adds a high cardinality tag - those will be appended to those
-         * fetched from the {@link TagsProvider#getHighCardinalityTags(Context)} method.
+         * fetched from the {@link KeyValuesProvider#getHighCardinalityKeyValues(Context)} method.
          *
          * @param tag a tag
          */
-        void addHighCardinalityTag(KeyValue tag) {
+        void addHighCardinalityKeyValue(KeyValue tag) {
             this.highCardinalityTags.add(tag);
         }
 
         /**
-         * Adds multiple low cardinality tags at once.
+         * Adds multiple low cardinality key values at once.
          *
          * @param tags collection of tags
          */
-        void addLowCardinalityTags(KeyValues tags) {
-            tags.stream().forEach(this::addLowCardinalityTag);
+        void addLowCardinalityKeyValues(KeyValues tags) {
+            tags.stream().forEach(this::addLowCardinalityKeyValue);
         }
 
         /**
-         * Adds multiple high cardinality tags at once.
+         * Adds multiple high cardinality key values at once.
          *
          * @param tags collection of tags
          */
-        void addHighCardinalityTags(KeyValues tags) {
-            tags.stream().forEach(this::addHighCardinalityTag);
+        void addHighCardinalityKeyValues(KeyValues tags) {
+            tags.stream().forEach(this::addHighCardinalityKeyValue);
         }
 
         @NonNull
-        public KeyValues getLowCardinalityTags() {
-            return KeyValues.of(this.lowCardinalityTags);
+        public KeyValues getLowCardinalityKeyValues() {
+            return KeyValues.of(this.lowCardinalityKeyValues);
         }
 
         @NonNull
-        public KeyValues getHighCardinalityTags() {
+        public KeyValues getHighCardinalityKeyValues() {
             return KeyValues.of(this.highCardinalityTags);
         }
 
         @NonNull
-        public KeyValues getAllTags() {
-            return this.getLowCardinalityTags().and(this.getHighCardinalityTags());
+        public KeyValues getAllKeyValues() {
+            return this.getLowCardinalityKeyValues().and(this.getHighCardinalityKeyValues());
         }
 
         @Override
@@ -668,8 +668,8 @@ public interface Observation {
             return "name='" + name + '\'' +
                     ", contextualName='" + contextualName + '\'' +
                     ", error='" + error + '\'' +
-                    ", lowCardinalityTags=" + toString(lowCardinalityTags) +
-                    ", highCardinalityTags=" + toString(highCardinalityTags) +
+                    ", lowCardinalityKeyValues=" + toString(lowCardinalityKeyValues) +
+                    ", highCardinalityKeyValues=" + toString(highCardinalityTags) +
                     ", map=" + toString(map);
         }
 
@@ -688,19 +688,19 @@ public interface Observation {
 
     /**
      * Interface to be implemented by any object that wishes to be able
-     * to update the default {@link TagsProvider}.
+     * to update the default {@link KeyValuesProvider}.
      *
-     * @param <T> {@link TagsProvider} type
+     * @param <T> {@link KeyValuesProvider} type
      * @author Marcin Grzejszczak
      * @since 1.10.0
      */
-    interface TagsProviderAware<T extends TagsProvider<?>> {
+    interface KeyValuesProviderAware<T extends KeyValuesProvider<?>> {
         /**
-         * Overrides the default tags provider.
+         * Overrides the default key values provider.
          *
-         * @param tagsProvider tags provider
+         * @param keyValuesProvider key values provider
          */
-        void setTagsProvider(T tagsProvider);
+        void setKeyValuesProvider(T keyValuesProvider);
     }
 
     /**
@@ -709,94 +709,94 @@ public interface Observation {
      * @author Marcin Grzejszczak
      * @since 1.10.0
      */
-    interface TagsProvider<T extends Context> {
+    interface KeyValuesProvider<T extends Context> {
 
         /**
-         * Empty instance of the tags provider.
+         * Empty instance of the key-values provider.
          */
-        TagsProvider<Context> EMPTY = context -> false;
+        KeyValuesProvider<Context> EMPTY = context -> false;
 
         /**
-         * Low cardinality tags.
+         * Low cardinality key values.
          *
-         * @return tags
+         * @return key values
          */
-        default KeyValues getLowCardinalityTags(T context) {
+        default KeyValues getLowCardinalityKeyValues(T context) {
             return KeyValues.empty();
         }
 
         /**
-         * High cardinality tags.
+         * High cardinality key values.
          *
-         * @return tags
+         * @return key values
          */
-        default KeyValues getHighCardinalityTags(T context) {
+        default KeyValues getHighCardinalityKeyValues(T context) {
             return KeyValues.empty();
         }
 
         /**
-         * Tells whether this tags provider should be applied for a given {@link Context}.
+         * Tells whether this key value provider should be applied for a given {@link Context}.
          *
          * @param context a {@link Context}
-         * @return {@code true} when this tags provider should be used
+         * @return {@code true} when this key value provider should be used
          */
         boolean supportsContext(Context context);
 
         /**
-         * Tags provider wrapping other tags providers.
+         * Key value provider wrapping other key value providers.
          */
         @SuppressWarnings({"rawtypes", "unchecked"})
-        class CompositeTagsProvider implements TagsProvider<Observation.Context> {
+        class CompositeKeyValuesProvider implements KeyValuesProvider<Context> {
 
-            private final List<TagsProvider> tagsProviders;
+            private final List<KeyValuesProvider> keyValuesProviders;
 
             /**
-             * Creates a new instance of {@code CompositeTagsProvider}.
-             * @param tagsProviders the tags providers that are registered under the composite
+             * Creates a new instance of {@code CompositeKeyValueProvider}.
+             * @param keyValuesProviders the key value providers that are registered under the composite
              */
-            public CompositeTagsProvider(TagsProvider... tagsProviders) {
-                this(Arrays.asList(tagsProviders));
+            public CompositeKeyValuesProvider(KeyValuesProvider... keyValuesProviders) {
+                this(Arrays.asList(keyValuesProviders));
             }
 
             /**
-             * Creates a new instance of {@code CompositeTagsProvider}.
-             * @param tagsProviders the tags providers that are registered under the composite
+             * Creates a new instance of {@code CompositeKeyValueProvider}.
+             * @param keyValuesProviders the key value providers that are registered under the composite
              */
-            public CompositeTagsProvider(List<TagsProvider> tagsProviders) {
-                this.tagsProviders = tagsProviders;
+            public CompositeKeyValuesProvider(List<KeyValuesProvider> keyValuesProviders) {
+                this.keyValuesProviders = keyValuesProviders;
             }
 
             @Override
-            public KeyValues getLowCardinalityTags(Context context) {
+            public KeyValues getLowCardinalityKeyValues(Context context) {
                 return getProvidersForContext(context)
-                        .map(tagsProvider -> tagsProvider.getLowCardinalityTags(context))
+                        .map(provider -> provider.getLowCardinalityKeyValues(context))
                         .reduce(KeyValues::and)
                         .orElse(KeyValues.empty());
             }
 
-            private Stream<TagsProvider> getProvidersForContext(Context context) {
-                return this.tagsProviders.stream().filter(tagsProvider -> tagsProvider.supportsContext(context));
+            private Stream<KeyValuesProvider> getProvidersForContext(Context context) {
+                return this.keyValuesProviders.stream().filter(provider -> provider.supportsContext(context));
             }
 
             @Override
-            public KeyValues getHighCardinalityTags(Context context) {
+            public KeyValues getHighCardinalityKeyValues(Context context) {
                 return getProvidersForContext(context)
-                        .map(tagsProvider -> tagsProvider.getHighCardinalityTags(context))
+                        .map(provider -> provider.getHighCardinalityKeyValues(context))
                         .reduce(KeyValues::and)
                         .orElse(KeyValues.empty());
             }
 
             @Override
             public boolean supportsContext(Context context) {
-                return this.tagsProviders.stream().anyMatch(tagsProvider -> tagsProvider.supportsContext(context));
+                return this.keyValuesProviders.stream().anyMatch(provider -> provider.supportsContext(context));
             }
 
             /**
-             * Returns the tags providers.
-             * @return registered tags providers
+             * Returns the key value providers.
+             * @return registered key value providers
              */
-            public List<TagsProvider> getTagsProviders() {
-                return this.tagsProviders;
+            public List<KeyValuesProvider> getKeyValueProviders() {
+                return this.keyValuesProviders;
             }
         }
     }
@@ -807,7 +807,7 @@ public interface Observation {
      * @author Marcin Grzejszczak
      * @since 1.10.0
      */
-    interface GlobalTagsProvider<T extends Context> extends TagsProvider<T> {
+    interface GlobalKeyValuesProvider<T extends Context> extends KeyValuesProvider<T> {
 
     }
 

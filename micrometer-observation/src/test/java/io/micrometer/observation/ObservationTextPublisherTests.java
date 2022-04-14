@@ -29,7 +29,7 @@ import static org.assertj.core.api.Assertions.assertThat;
  * @author Jonatan Ivanov
  */
 class ObservationTextPublisherTests {
-    private static final String CONTEXT_TOSTRING = "name='testName', contextualName='testContextualName', error='java.io.IOException: simulated', lowCardinalityTags=[lcTag='foo'], highCardinalityTags=[hcTag='bar'], map=[contextKey='contextValue']";
+    private static final String CONTEXT_TOSTRING = "name='testName', contextualName='testContextualName', error='java.io.IOException: simulated', lowCardinalityKeyValues=[lcTag='foo'], highCardinalityKeyValues=[hcTag='bar'], map=[contextKey='contextValue']";
     private final TestConsumer consumer = new TestConsumer();
     private final ObservationHandler<Observation.Context> publisher = new ObservationTextPublisher(consumer);
 
@@ -89,8 +89,8 @@ class ObservationTextPublisherTests {
                 .setName("testName")
                 .setContextualName("testContextualName")
                 .setError(new IOException("simulated"));
-        context.addLowCardinalityTag(KeyValue.of("lcTag", "foo"));
-        context.addHighCardinalityTag(KeyValue.of("hcTag", "bar"));
+        context.addLowCardinalityKeyValue(KeyValue.of("lcTag", "foo"));
+        context.addHighCardinalityKeyValue(KeyValue.of("hcTag", "bar"));
         context.put("contextKey", "contextValue");
 
         return context;

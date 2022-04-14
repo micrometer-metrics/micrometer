@@ -19,26 +19,26 @@ import java.util.Arrays;
 
 
 /**
- * Represents a tag key.
+ * Represents a key name used for documenting instrumentation.
  *
  * @author Marcin Grzejszczak
  * @since 1.10.0
  */
-public interface TagKey {
+public interface KeyName {
 
     /**
      * Merges arrays of tag keys.
-     * @param tagKeys arrays of tag keys
+     * @param keyNames arrays of tag keys
      * @return a merged array of tag keys
      */
-    static TagKey[] merge(TagKey[]... tagKeys) {
-        return Arrays.stream(tagKeys).flatMap(Arrays::stream).toArray(TagKey[]::new);
+    static KeyName[] merge(KeyName[]... keyNames) {
+        return Arrays.stream(keyNames).flatMap(Arrays::stream).toArray(KeyName[]::new);
     }
 
     /**
-     * Returns tag key.
+     * Returns key name.
      *
-     * @return tag key
+     * @return key name
      */
-    String getKey();
+    String getKeyName();
 }

@@ -134,62 +134,62 @@ public class ObservationContextAssert<SELF extends ObservationContextAssert<SELF
         return (SELF) this;
     }
 
-    public SELF hasNoTags() {
+    public SELF hasNoKeyValues() {
         isNotNull();
-        KeyValues tags = this.actual.getAllTags();
+        KeyValues tags = this.actual.getAllKeyValues();
         if (tags.stream().findAny().isPresent()) {
             failWithMessage("Observation should have no tags but has <%s>", tags);
         }
         return (SELF) this;
     }
 
-    public SELF hasAnyTags() {
+    public SELF hasAnyKeyValues() {
         isNotNull();
-        KeyValues tags = this.actual.getAllTags();
+        KeyValues tags = this.actual.getAllKeyValues();
         if (!tags.stream().findAny().isPresent()) {
             failWithMessage("Observation should have any tags but has none");
         }
         return (SELF) this;
     }
 
-    private List<String> lowCardinalityTagKeys() {
-        return this.actual.getLowCardinalityTags().stream().map(KeyValue::getKey).collect(Collectors.toList());
+    private List<String> lowCardinalityKeys() {
+        return this.actual.getLowCardinalityKeyValues().stream().map(KeyValue::getKey).collect(Collectors.toList());
     }
 
-    private List<String> highCardinalityTagKeys() {
-        return this.actual.getHighCardinalityTags().stream().map(KeyValue::getKey).collect(Collectors.toList());
+    private List<String> highCardinalityKeys() {
+        return this.actual.getHighCardinalityKeyValues().stream().map(KeyValue::getKey).collect(Collectors.toList());
     }
 
-    public SELF hasLowCardinalityTagWithKey(String key) {
+    public SELF hasLowCardinalityKeyValueWithKey(String key) {
         isNotNull();
-        if (this.actual.getLowCardinalityTags().stream().noneMatch(tag -> tag.getKey().equals(key))) {
-            failWithMessage("Observation should have a low cardinality tag with key <%s> but it's not there. List of all keys <%s>", key, lowCardinalityTagKeys());
+        if (this.actual.getLowCardinalityKeyValues().stream().noneMatch(tag -> tag.getKey().equals(key))) {
+            failWithMessage("Observation should have a low cardinality tag with key <%s> but it's not there. List of all keys <%s>", key, lowCardinalityKeys());
         }
         return (SELF) this;
     }
 
-    public SELF hasLowCardinalityTag(String key, String value) {
+    public SELF hasLowCardinalityKeyValue(String key, String value) {
         isNotNull();
-        hasLowCardinalityTagWithKey(key);
-        String tagValue = this.actual.getLowCardinalityTags().stream().filter(tag -> tag.getKey().equals(key)).findFirst().get().getValue();
+        hasLowCardinalityKeyValueWithKey(key);
+        String tagValue = this.actual.getLowCardinalityKeyValues().stream().filter(tag -> tag.getKey().equals(key)).findFirst().get().getValue();
         if (!Objects.equals(tagValue, value)) {
             failWithMessage("Observation should have a low cardinality tag with key <%s> and value <%s>. The key is correct but the value is <%s>", key, value, tagValue);
         }
         return (SELF) this;
     }
 
-    public SELF doesNotHaveLowCardinalityTagWithKey(String key) {
+    public SELF doesNotHaveLowCardinalityKeyValueWithKey(String key) {
         isNotNull();
-        if (this.actual.getLowCardinalityTags().stream().anyMatch(tag -> tag.getKey().equals(key))) {
+        if (this.actual.getLowCardinalityKeyValues().stream().anyMatch(tag -> tag.getKey().equals(key))) {
             failWithMessage("Observation should not have a low cardinality tag with key <%s>", key);
         }
         return (SELF) this;
     }
 
-    public SELF doesNotHaveLowCardinalityTag(String key, String value) {
+    public SELF doesNotHaveLowCardinalityKeyValue(String key, String value) {
         isNotNull();
-        doesNotHaveLowCardinalityTagWithKey(key);
-        Optional<KeyValue> optional = this.actual.getLowCardinalityTags().stream().filter(tag -> tag.getKey().equals(key)).findFirst();
+        doesNotHaveLowCardinalityKeyValueWithKey(key);
+        Optional<KeyValue> optional = this.actual.getLowCardinalityKeyValues().stream().filter(tag -> tag.getKey().equals(key)).findFirst();
         if (!optional.isPresent()) {
             return (SELF) this;
         }
@@ -201,36 +201,36 @@ public class ObservationContextAssert<SELF extends ObservationContextAssert<SELF
     }
 
 
-    public SELF hasHighCardinalityTagWithKey(String key) {
+    public SELF hasHighCardinalityKeyValueWithKey(String key) {
         isNotNull();
-        if (this.actual.getHighCardinalityTags().stream().noneMatch(tag -> tag.getKey().equals(key))) {
-            failWithMessage("Observation should have a high cardinality tag with key <%s> but it's not there. List of all keys <%s>", key, highCardinalityTagKeys());
+        if (this.actual.getHighCardinalityKeyValues().stream().noneMatch(tag -> tag.getKey().equals(key))) {
+            failWithMessage("Observation should have a high cardinality tag with key <%s> but it's not there. List of all keys <%s>", key, highCardinalityKeys());
         }
         return (SELF) this;
     }
 
-    public SELF hasHighCardinalityTag(String key, String value) {
+    public SELF hasHighCardinalityKeyValue(String key, String value) {
         isNotNull();
-        hasHighCardinalityTagWithKey(key);
-        String tagValue = this.actual.getHighCardinalityTags().stream().filter(tag -> tag.getKey().equals(key)).findFirst().get().getValue();
+        hasHighCardinalityKeyValueWithKey(key);
+        String tagValue = this.actual.getHighCardinalityKeyValues().stream().filter(tag -> tag.getKey().equals(key)).findFirst().get().getValue();
         if (!Objects.equals(tagValue, value)) {
             failWithMessage("Observation should have a high cardinality tag with key <%s> and value <%s>. The key is correct but the value is <%s>", key, value, tagValue);
         }
         return (SELF) this;
     }
 
-    public SELF doesNotHaveHighCardinalityTagWithKey(String key) {
+    public SELF doesNotHaveHighCardinalityKeyValueWithKey(String key) {
         isNotNull();
-        if (this.actual.getHighCardinalityTags().stream().anyMatch(tag -> tag.getKey().equals(key))) {
+        if (this.actual.getHighCardinalityKeyValues().stream().anyMatch(tag -> tag.getKey().equals(key))) {
             failWithMessage("Observation should not have a high cardinality tag with key <%s>", key);
         }
         return (SELF) this;
     }
 
-    public SELF doesNotHaveHighCardinalityTag(String key, String value) {
+    public SELF doesNotHaveHighCardinalityKeyValue(String key, String value) {
         isNotNull();
-        doesNotHaveHighCardinalityTagWithKey(key);
-        Optional<KeyValue> optional = this.actual.getHighCardinalityTags().stream().filter(tag -> tag.getKey().equals(key)).findFirst();
+        doesNotHaveHighCardinalityKeyValueWithKey(key);
+        Optional<KeyValue> optional = this.actual.getHighCardinalityKeyValues().stream().filter(tag -> tag.getKey().equals(key)).findFirst();
         if (!optional.isPresent()) {
             return (SELF) this;
         }

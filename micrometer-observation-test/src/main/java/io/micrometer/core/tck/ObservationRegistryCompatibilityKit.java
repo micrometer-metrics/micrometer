@@ -392,20 +392,20 @@ public abstract class ObservationRegistryCompatibilityKit {
     void observationFieldsShouldBeSetOnContext() {
         AssertingHandler assertingHandler = new AssertingHandler();
         registry.observationConfig()
-                .tagsProvider(new TestTagsProvider("global"))
-                .tagsProvider(new UnsupportedTagsProvider("global"))
+                .keyValueProvider(new TestKeyValuesProvider("global"))
+                .keyValueProvider(new UnsupportedKeyValuesProvider("global"))
                 .observationHandler(assertingHandler);
 
         TestContext testContext = new TestContext();
         testContext.put("context.field", "42");
         Exception exception = new IOException("simulated");
         Observation observation = Observation.start("test.observation", testContext, registry)
-                .lowCardinalityTag("lcTag1", "1")
-                .lowCardinalityTag(KeyValue.of("lcTag2", "2"))
-                .highCardinalityTag("hcTag1", "3")
-                .highCardinalityTag(KeyValue.of("hcTag2", "4"))
-                .tagsProvider(new TestTagsProvider("local"))
-                .tagsProvider(new UnsupportedTagsProvider("local"))
+                .lowCardinalityKeyValue("lcTag1", "1")
+                .lowCardinalityKeyValue(KeyValue.of("lcTag2", "2"))
+                .highCardinalityKeyValue("hcTag1", "3")
+                .highCardinalityKeyValue(KeyValue.of("hcTag2", "4"))
+                .keyValueProvider(new TestKeyValuesProvider("local"))
+                .keyValueProvider(new UnsupportedKeyValuesProvider("local"))
                 .contextualName("test.observation.42")
                 .error(exception);
         observation.stop();
@@ -413,20 +413,20 @@ public abstract class ObservationRegistryCompatibilityKit {
         assertingHandler.checkAssertions(context -> {
             assertThat(context).isSameAs(testContext);
             assertThat(context.getName()).isEqualTo("test.observation");
-            assertThat(context.getLowCardinalityTags()).containsExactlyInAnyOrder(
+            assertThat(context.getLowCardinalityKeyValues()).containsExactlyInAnyOrder(
                     KeyValue.of("lcTag1", "1"),
                     KeyValue.of("lcTag2", "2"),
                     KeyValue.of("local.context.class", "TestContext"),
                     KeyValue.of("global.context.class", "TestContext")
             );
-            assertThat(context.getHighCardinalityTags()).containsExactlyInAnyOrder(
+            assertThat(context.getHighCardinalityKeyValues()).containsExactlyInAnyOrder(
                     KeyValue.of("hcTag1", "3"),
                     KeyValue.of("hcTag2", "4"),
                     KeyValue.of("local.uuid", testContext.uuid),
                     KeyValue.of("global.uuid", testContext.uuid)
             );
 
-            assertThat(context.getAllTags()).containsExactlyInAnyOrder(
+            assertThat(context.getAllKeyValues()).containsExactlyInAnyOrder(
                     KeyValue.of("lcTag1", "1"),
                     KeyValue.of("lcTag2", "2"),
                     KeyValue.of("local.context.class", "TestContext"),
@@ -446,8 +446,8 @@ public abstract class ObservationRegistryCompatibilityKit {
                     .containsOnlyOnce("name='test.observation'")
                     .containsOnlyOnce("contextualName='test.observation.42'")
                     .containsOnlyOnce("error='java.io.IOException: simulated'")
-                    .containsOnlyOnce("lowCardinalityTags=[lcTag1='1', lcTag2='2', global.context.class='TestContext', local.context.class='TestContext']")
-                    .containsOnlyOnce("highCardinalityTags=[hcTag1='3', hcTag2='4', global.uuid='" + testContext.uuid + "', local.uuid='" + testContext.uuid + "']")
+                    .containsOnlyOnce("lowCardinalityKeyValues=[lcTag1='1', lcTag2='2', global.context.class='TestContext', local.context.class='TestContext']")
+                    .containsOnlyOnce("highCardinalityKeyValues=[hcTag1='3', hcTag2='4', global.uuid='" + testContext.uuid + "', local.uuid='" + testContext.uuid + "']")
                     .containsOnlyOnce("map=[context.field='42']");
         });
     }
@@ -456,20 +456,20 @@ public abstract class ObservationRegistryCompatibilityKit {
         final String uuid = UUID.randomUUID().toString();
     }
 
-    static class TestTagsProvider implements Observation.GlobalTagsProvider<TestContext> {
+    static class TestKeyValuesProvider implements Observation.GlobalKeyValuesProvider<TestContext> {
         private final String id;
 
-        public TestTagsProvider(String id) {
+        public TestKeyValuesProvider(String id) {
             this.id = id;
         }
 
         @Override
-        public KeyValues getLowCardinalityTags(TestContext context) {
+        public KeyValues getLowCardinalityKeyValues(TestContext context) {
             return KeyValues.of(this.id + "." + "context.class", TestContext.class.getSimpleName());
         }
 
         @Override
-        public KeyValues getHighCardinalityTags(TestContext context) {
+        public KeyValues getHighCardinalityKeyValues(TestContext context) {
             return KeyValues.of(this.id + "." + "uuid", context.uuid);
         }
 
@@ -483,20 +483,20 @@ public abstract class ObservationRegistryCompatibilityKit {
         }
     }
 
-    static class UnsupportedTagsProvider implements Observation.GlobalTagsProvider<Observation.Context> {
+    static class UnsupportedKeyValuesProvider implements Observation.GlobalKeyValuesProvider<Observation.Context> {
         private final String id;
 
-        public UnsupportedTagsProvider(String id) {
+        public UnsupportedKeyValuesProvider(String id) {
             this.id = id;
         }
 
         @Override
-        public KeyValues getLowCardinalityTags(Observation.Context context) {
+        public KeyValues getLowCardinalityKeyValues(Observation.Context context) {
             return KeyValues.of(this.id + "." + "unsupported.lc", "unsupported");
         }
 
         @Override
-        public KeyValues getHighCardinalityTags(Observation.Context context) {
+        public KeyValues getHighCardinalityKeyValues(Observation.Context context) {
             return KeyValues.of(this.id + "." + "unsupported.hc", "unsupported");
         }
 

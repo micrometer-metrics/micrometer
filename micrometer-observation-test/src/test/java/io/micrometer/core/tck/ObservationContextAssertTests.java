@@ -145,94 +145,94 @@ class ObservationContextAssertTests {
     void should_not_throw_exception_when_low_cardinality_tag_exists() {
         registry.observationConfig().observationHandler(c -> true);
         Observation observation = Observation.start("foo", context, registry);
-        observation.lowCardinalityTag("foo", "bar");
+        observation.lowCardinalityKeyValue("foo", "bar");
 
-        thenNoException().isThrownBy(() -> assertThat(context).hasLowCardinalityTag("foo", "bar"));
+        thenNoException().isThrownBy(() -> assertThat(context).hasLowCardinalityKeyValue("foo", "bar"));
     }
 
     @Test
     void should_throw_exception_when_low_cardinality_tag_missing() {
         Observation observation = Observation.start("foo", context, registry);
-        observation.lowCardinalityTag("foo", "bar");
+        observation.lowCardinalityKeyValue("foo", "bar");
 
-        thenThrownBy(() -> assertThat(context).hasLowCardinalityTag("foo", "baz")).isInstanceOf(AssertionError.class);
-        thenThrownBy(() -> assertThat(context).hasLowCardinalityTagWithKey("bar")).isInstanceOf(AssertionError.class);
+        thenThrownBy(() -> assertThat(context).hasLowCardinalityKeyValue("foo", "baz")).isInstanceOf(AssertionError.class);
+        thenThrownBy(() -> assertThat(context).hasLowCardinalityKeyValueWithKey("bar")).isInstanceOf(AssertionError.class);
     }
 
     @Test
     void should_not_throw_exception_when_high_cardinality_tag_exists() {
         registry.observationConfig().observationHandler(c -> true);
         Observation observation = Observation.start("foo", context, registry);
-        observation.highCardinalityTag("foo", "bar");
+        observation.highCardinalityKeyValue("foo", "bar");
 
-        thenNoException().isThrownBy(() -> assertThat(context).hasHighCardinalityTag("foo", "bar"));
+        thenNoException().isThrownBy(() -> assertThat(context).hasHighCardinalityKeyValue("foo", "bar"));
     }
 
     @Test
     void should_throw_exception_when_high_cardinality_tag_missing() {
         Observation observation = Observation.start("foo", context, registry);
-        observation.highCardinalityTag("foo", "bar");
+        observation.highCardinalityKeyValue("foo", "bar");
 
-        thenThrownBy(() -> assertThat(context).hasHighCardinalityTag("foo", "baz")).isInstanceOf(AssertionError.class);
-        thenThrownBy(() -> assertThat(context).hasHighCardinalityTagWithKey("bar")).isInstanceOf(AssertionError.class);
+        thenThrownBy(() -> assertThat(context).hasHighCardinalityKeyValue("foo", "baz")).isInstanceOf(AssertionError.class);
+        thenThrownBy(() -> assertThat(context).hasHighCardinalityKeyValueWithKey("bar")).isInstanceOf(AssertionError.class);
     }
 
     @Test
     void should_not_throw_exception_when_high_cardinality_tag_present() {
-        thenNoException().isThrownBy(() -> assertThat(context).doesNotHaveHighCardinalityTag("foo", "bar"));
+        thenNoException().isThrownBy(() -> assertThat(context).doesNotHaveHighCardinalityKeyValue("foo", "bar"));
     }
 
     @Test
     void should_throw_exception_when_high_cardinality_tag_present() {
         registry.observationConfig().observationHandler(c -> true);
         Observation observation = Observation.start("foo", context, registry);
-        observation.highCardinalityTag("foo", "bar");
+        observation.highCardinalityKeyValue("foo", "bar");
 
-        thenThrownBy(() -> assertThat(context).doesNotHaveHighCardinalityTag("foo", "bar")).isInstanceOf(AssertionError.class);
-        thenThrownBy(() -> assertThat(context).doesNotHaveHighCardinalityTagWithKey("foo")).isInstanceOf(AssertionError.class);
+        thenThrownBy(() -> assertThat(context).doesNotHaveHighCardinalityKeyValue("foo", "bar")).isInstanceOf(AssertionError.class);
+        thenThrownBy(() -> assertThat(context).doesNotHaveHighCardinalityKeyValueWithKey("foo")).isInstanceOf(AssertionError.class);
     }
 
     @Test
     void should_not_throw_exception_when_low_cardinality_tag_missing() {
-        thenNoException().isThrownBy(() -> assertThat(context).doesNotHaveLowCardinalityTag("foo", "bar"));
+        thenNoException().isThrownBy(() -> assertThat(context).doesNotHaveLowCardinalityKeyValue("foo", "bar"));
     }
 
     @Test
     void should_throw_exception_when_low_cardinality_tag_present() {
         registry.observationConfig().observationHandler(c -> true);
         Observation observation = Observation.start("foo", context, registry);
-        observation.lowCardinalityTag("foo", "bar");
+        observation.lowCardinalityKeyValue("foo", "bar");
 
-        thenThrownBy(() -> assertThat(context).doesNotHaveLowCardinalityTag("foo", "bar")).isInstanceOf(AssertionError.class);
-        thenThrownBy(() -> assertThat(context).doesNotHaveLowCardinalityTagWithKey("foo")).isInstanceOf(AssertionError.class);
+        thenThrownBy(() -> assertThat(context).doesNotHaveLowCardinalityKeyValue("foo", "bar")).isInstanceOf(AssertionError.class);
+        thenThrownBy(() -> assertThat(context).doesNotHaveLowCardinalityKeyValueWithKey("foo")).isInstanceOf(AssertionError.class);
     }
 
     @Test
     void should_not_throw_exception_when_any_tags_exist() {
         registry.observationConfig().observationHandler(c -> true);
         Observation observation = Observation.start("foo", context, registry);
-        observation.highCardinalityTag("foo", "bar");
+        observation.highCardinalityKeyValue("foo", "bar");
 
-        thenNoException().isThrownBy(() -> assertThat(context).hasAnyTags());
+        thenNoException().isThrownBy(() -> assertThat(context).hasAnyKeyValues());
     }
 
     @Test
     void should_throw_exception_when_no_tags_present() {
-        thenThrownBy(() -> assertThat(context).hasAnyTags()).isInstanceOf(AssertionError.class);
+        thenThrownBy(() -> assertThat(context).hasAnyKeyValues()).isInstanceOf(AssertionError.class);
     }
 
     @Test
     void should_not_throw_exception_when_no_tags_exist() {
-        thenNoException().isThrownBy(() -> assertThat(context).hasNoTags());
+        thenNoException().isThrownBy(() -> assertThat(context).hasNoKeyValues());
     }
 
     @Test
     void should_throw_exception_when_tags_present() {
         registry.observationConfig().observationHandler(c -> true);
         Observation observation = Observation.start("foo", context, registry);
-        observation.highCardinalityTag("foo", "bar");
+        observation.highCardinalityKeyValue("foo", "bar");
 
-        thenThrownBy(() -> assertThat(context).hasNoTags()).isInstanceOf(AssertionError.class);
+        thenThrownBy(() -> assertThat(context).hasNoKeyValues()).isInstanceOf(AssertionError.class);
     }
 
     @Test
