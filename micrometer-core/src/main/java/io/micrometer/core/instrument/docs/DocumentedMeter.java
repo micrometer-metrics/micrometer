@@ -41,7 +41,7 @@ public interface DocumentedMeter {
     /**
      * Empty tag keys.
      */
-    KeyName[] EMPTY_KEY_NAMES = new KeyName[0];
+    KeyName[] EMPTY = new KeyName[0];
 
     /**
      * Metric name.
@@ -86,7 +86,7 @@ public interface DocumentedMeter {
      * @return allowed tag keys - if set will override any tag keys coming from {@link DocumentedMeter#overridesDefaultMetricFrom()}
      */
     default KeyName[] getKeyNames() {
-        return EMPTY_KEY_NAMES;
+        return EMPTY;
     }
 
     /**
@@ -95,7 +95,7 @@ public interface DocumentedMeter {
      * @return additional tag keys - if set will append any tag keys coming from {@link DocumentedMeter#overridesDefaultMetricFrom()}
      */
     default KeyName[] getAdditionalKeyNames() {
-        return EMPTY_KEY_NAMES;
+        return EMPTY;
     }
 
     /**
