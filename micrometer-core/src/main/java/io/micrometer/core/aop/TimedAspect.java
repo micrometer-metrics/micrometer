@@ -24,6 +24,7 @@ import io.micrometer.core.instrument.Tags;
 import io.micrometer.core.instrument.Timer;
 import io.micrometer.core.instrument.Metrics;
 import io.micrometer.core.lang.NonNullApi;
+import io.micrometer.core.lang.Nullable;
 import org.aspectj.lang.ProceedingJoinPoint;
 import org.aspectj.lang.annotation.Around;
 import org.aspectj.lang.annotation.Aspect;
@@ -151,6 +152,7 @@ public class TimedAspect {
     }
 
     @Around("@within(io.micrometer.core.annotation.Timed)")
+    @Nullable
     public Object timedClass(ProceedingJoinPoint pjp) throws Throwable {
         Method method = ((MethodSignature) pjp.getSignature()).getMethod();
         Class<?> declaringClass = method.getDeclaringClass();
@@ -160,6 +162,7 @@ public class TimedAspect {
     }
 
     @Around("execution (@io.micrometer.core.annotation.Timed * *.*(..))")
+    @Nullable
     public Object timedMethod(ProceedingJoinPoint pjp) throws Throwable {
         if (shouldSkip.test(pjp)) {
             return pjp.proceed();

@@ -123,6 +123,7 @@ subprojects {
                 metaInf {
                     [
                         'Build-Date',
+                        'Build-Date-UTC',
                         'Built-By',
                         'Built-OS',
                         'Build-Host',
