@@ -70,7 +70,7 @@ public class OtlpMeterRegistry extends PushMeterRegistry {
         this(config, clock, new HttpUrlConnectionSender());
     }
 
-    public OtlpMeterRegistry(OtlpConfig config, Clock clock, HttpSender httpSender) {
+    private OtlpMeterRegistry(OtlpConfig config, Clock clock, HttpSender httpSender) {
         super(config, clock);
         this.config = config;
         this.httpSender = httpSender;
