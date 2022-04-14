@@ -41,7 +41,7 @@ public class ObservationHandlerSample {
 
         Observation observation = Observation.createNotStarted("sample.operation", new CustomContext(), observationRegistry)
                 .contextualName("CALL sampleOperation")
-                .keyValueProvider(new CustomLocalKeyValuesProvider())
+                .keyValuesProvider(new CustomLocalKeyValuesProvider())
                 .lowCardinalityKeyValue("a", "1")
                 .highCardinalityKeyValue("time", Instant.now().toString())
                 .start();

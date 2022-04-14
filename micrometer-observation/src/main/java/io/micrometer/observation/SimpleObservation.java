@@ -71,7 +71,7 @@ class SimpleObservation implements Observation {
     }
 
     @Override
-    public Observation keyValueProvider(KeyValuesProvider<?> keyValuesProvider) {
+    public Observation keyValuesProvider(KeyValuesProvider<?> keyValuesProvider) {
         if (keyValuesProvider.supportsContext(context)) {
             this.keyValuesProviders.add(keyValuesProvider);
         }

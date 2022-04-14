@@ -183,7 +183,7 @@ public interface Observation {
      * @param keyValuesProvider key value provider
      * @return this
      */
-    Observation keyValueProvider(KeyValuesProvider<?> keyValuesProvider);
+    Observation keyValuesProvider(KeyValuesProvider<?> keyValuesProvider);
 
     /**
      * Sets an error.

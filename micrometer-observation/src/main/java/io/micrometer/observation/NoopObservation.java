@@ -62,7 +62,7 @@ final class NoopObservation implements Observation {
     }
 
     @Override
-    public Observation keyValueProvider(KeyValuesProvider<?> keyValuesProvider) {
+    public Observation keyValuesProvider(KeyValuesProvider<?> keyValuesProvider) {
         return this;
     }
 

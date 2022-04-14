@@ -404,8 +404,8 @@ public abstract class ObservationRegistryCompatibilityKit {
                 .lowCardinalityKeyValue(KeyValue.of("lcTag2", "2"))
                 .highCardinalityKeyValue("hcTag1", "3")
                 .highCardinalityKeyValue(KeyValue.of("hcTag2", "4"))
-                .keyValueProvider(new TestKeyValuesProvider("local"))
-                .keyValueProvider(new UnsupportedKeyValuesProvider("local"))
+                .keyValuesProvider(new TestKeyValuesProvider("local"))
+                .keyValuesProvider(new UnsupportedKeyValuesProvider("local"))
                 .contextualName("test.observation.42")
                 .error(exception);
         observation.stop();
