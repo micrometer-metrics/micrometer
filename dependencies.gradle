@@ -3,7 +3,7 @@ def VERSIONS = [
         'colt:colt:1.2.0',
         'com.amazonaws:aws-java-sdk-cloudwatch:latest.release',
         'com.dynatrace.metric.util:dynatrace-metric-utils-java:latest.release',
-        'com.fasterxml.jackson.core:jackson-databind:2.13.2', // TODO revert back to latest after fix for: https://github.com/FasterXML/jackson-databind/issues/3428
+        'com.fasterxml.jackson.core:jackson-databind:latest.release',
         'com.github.ben-manes.caffeine:caffeine:2.+',
         'com.github.charithe:kafka-junit:latest.release',
         'com.github.tomakehurst:wiremock-jre8-standalone:latest.release',
