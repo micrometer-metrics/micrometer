@@ -30,7 +30,7 @@ class OtlpDistributionSummary extends CumulativeDistributionSummary implements S
     private final long startTimeNanos;
 
     @Nullable
-    private final Histogram histogram;
+    private final Histogram monotonicBucketCountHistogram;
 
     OtlpDistributionSummary(Id id, Clock clock, DistributionStatisticConfig distributionStatisticConfig, double scale, boolean supportsAggregablePercentiles) {
         super(id, clock, DistributionStatisticConfig.builder()
@@ -42,28 +42,28 @@ class OtlpDistributionSummary extends CumulativeDistributionSummary implements S
         // CumulativeDistributionSummary doesn't produce monotonic histogram counts; maybe it should
         // Also, we need to customize the histogram behavior to not return cumulative counts across buckets
         if (distributionStatisticConfig.isPublishingHistogram()) {
-            this.histogram = new TimeWindowFixedBoundaryHistogram(clock, DistributionStatisticConfig.builder()
+            this.monotonicBucketCountHistogram = new TimeWindowFixedBoundaryHistogram(clock, DistributionStatisticConfig.builder()
                     .expiry(Duration.ofDays(1825)) // effectively never roll over
                     .bufferLength(1)
                     .build()
                     .merge(distributionStatisticConfig), true, false);
         } else {
-            this.histogram = null;
+            this.monotonicBucketCountHistogram = null;
         }
     }
 
     @Override
     protected void recordNonNegative(double amount) {
         super.recordNonNegative(amount);
-        if (this.histogram != null) {
-            this.histogram.recordDouble(amount);
+        if (this.monotonicBucketCountHistogram != null) {
+            this.monotonicBucketCountHistogram.recordDouble(amount);
         }
     }
 
     @Override
     public HistogramSnapshot takeSnapshot() {
         HistogramSnapshot snapshot = super.takeSnapshot();
-        if (histogram == null) {
+        if (monotonicBucketCountHistogram == null) {
             return snapshot;
         }
 
@@ -76,7 +76,7 @@ class OtlpDistributionSummary extends CumulativeDistributionSummary implements S
     }
 
     private CountAtBucket[] histogramCounts() {
-        return this.histogram == null ? EMPTY_HISTOGRAM : this.histogram.takeSnapshot(0, 0, 0).histogramCounts();
+        return this.monotonicBucketCountHistogram == null ? EMPTY_HISTOGRAM : this.monotonicBucketCountHistogram.takeSnapshot(0, 0, 0).histogramCounts();
     }
 
     @Override

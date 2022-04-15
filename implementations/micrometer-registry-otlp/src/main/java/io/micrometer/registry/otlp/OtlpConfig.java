@@ -42,9 +42,6 @@ public interface OtlpConfig extends PushRegistryConfig {
         return getUrlString(this, "url").orElse("http://localhost:4318/v1/metrics");
     }
 
-    // TODO config option to control transport/encoding: http json, http protobuf, grpc
-    // for now, http protobuf only
-
     @Override
     default Validated<?> validate() {
         return checkAll(this,

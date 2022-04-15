@@ -32,7 +32,7 @@ class OtlpTimer extends CumulativeTimer implements StartTimeAwareMeter {
     private final long startTimeNanos;
 
     @Nullable
-    private final Histogram histogram;
+    private final Histogram monotonicCountBucketHistogram;
 
     OtlpTimer(Id id, Clock clock, DistributionStatisticConfig distributionStatisticConfig, PauseDetector pauseDetector, TimeUnit baseTimeUnit) {
         super(id, clock, DistributionStatisticConfig.builder()
@@ -44,28 +44,28 @@ class OtlpTimer extends CumulativeTimer implements StartTimeAwareMeter {
         // CumulativeTimer doesn't produce monotonic histogram counts; maybe it should
         // Also, we need to customize the histogram behavior to not return cumulative counts across buckets
         if (distributionStatisticConfig.isPublishingHistogram()) {
-            this.histogram = new TimeWindowFixedBoundaryHistogram(clock, DistributionStatisticConfig.builder()
+            this.monotonicCountBucketHistogram = new TimeWindowFixedBoundaryHistogram(clock, DistributionStatisticConfig.builder()
                     .expiry(Duration.ofDays(1825)) // effectively never roll over
                     .bufferLength(1)
                     .build()
                     .merge(distributionStatisticConfig), true, false);
         } else {
-            this.histogram = null;
+            this.monotonicCountBucketHistogram = null;
         }
     }
 
     @Override
     protected void recordNonNegative(long amount, TimeUnit unit) {
         super.recordNonNegative(amount, unit);
-        if (this.histogram != null) {
-            this.histogram.recordLong((long) TimeUtils.convert(amount, unit, TimeUnit.NANOSECONDS));
+        if (this.monotonicCountBucketHistogram != null) {
+            this.monotonicCountBucketHistogram.recordLong((long) TimeUtils.convert(amount, unit, TimeUnit.NANOSECONDS));
         }
     }
 
     @Override
     public HistogramSnapshot takeSnapshot() {
         HistogramSnapshot snapshot = super.takeSnapshot();
-        if (histogram == null) {
+        if (monotonicCountBucketHistogram == null) {
             return snapshot;
         }
 
@@ -78,7 +78,7 @@ class OtlpTimer extends CumulativeTimer implements StartTimeAwareMeter {
     }
 
     private CountAtBucket[] histogramCounts() {
-        return this.histogram == null ? EMPTY_HISTOGRAM : this.histogram.takeSnapshot(0, 0, 0).histogramCounts();
+        return this.monotonicCountBucketHistogram == null ? EMPTY_HISTOGRAM : this.monotonicCountBucketHistogram.takeSnapshot(0, 0, 0).histogramCounts();
     }
 
     @Override

@@ -1,3 +1,5 @@
+description = 'Publishes Micrometer meters in OTLP format'
+
 dependencies {
     api project(':micrometer-core')
 
