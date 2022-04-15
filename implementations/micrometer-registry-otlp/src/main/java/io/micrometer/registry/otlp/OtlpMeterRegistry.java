@@ -18,10 +18,8 @@ package io.micrometer.registry.otlp;
 import io.micrometer.core.instrument.Gauge;
 import io.micrometer.core.instrument.*;
 import io.micrometer.core.instrument.config.NamingConvention;
-import io.micrometer.core.instrument.cumulative.CumulativeFunctionTimer;
 import io.micrometer.core.instrument.distribution.*;
 import io.micrometer.core.instrument.distribution.pause.PauseDetector;
-import io.micrometer.core.instrument.internal.CumulativeHistogramLongTaskTimer;
 import io.micrometer.core.instrument.internal.DefaultGauge;
 import io.micrometer.core.instrument.internal.DefaultMeter;
 import io.micrometer.core.instrument.push.PushMeterRegistry;
@@ -126,7 +124,7 @@ public class OtlpMeterRegistry extends PushMeterRegistry {
 
     @Override
     protected Counter newCounter(Meter.Id id) {
-        return new StartTimeAwareCumulativeCounter(id, this.clock);
+        return new OtlpCounter(id, this.clock);
     }
 
     @Override
@@ -146,17 +144,17 @@ public class OtlpMeterRegistry extends PushMeterRegistry {
 
     @Override
     protected <T> FunctionTimer newFunctionTimer(Meter.Id id, T obj, ToLongFunction<T> countFunction, ToDoubleFunction<T> totalTimeFunction, TimeUnit totalTimeFunctionUnit) {
-        return new CumulativeFunctionTimer<>(id, obj, countFunction, totalTimeFunction, totalTimeFunctionUnit, getBaseTimeUnit());
+        return new OtlpFunctionTimer<>(id, obj, countFunction, totalTimeFunction, totalTimeFunctionUnit, getBaseTimeUnit(), this.clock);
     }
 
     @Override
     protected <T> FunctionCounter newFunctionCounter(Meter.Id id, T obj, ToDoubleFunction<T> countFunction) {
-        return new StartTimeAwareCumulativeFunctionCounter<>(id, obj, countFunction, this.clock);
+        return new OtlpFunctionCounter<>(id, obj, countFunction, this.clock);
     }
 
     @Override
     protected LongTaskTimer newLongTaskTimer(Meter.Id id, DistributionStatisticConfig distributionStatisticConfig) {
-        return new CumulativeHistogramLongTaskTimer(id, this.clock, getBaseTimeUnit(), distributionStatisticConfig);
+        return new OtlpLongTaskTImer(id, this.clock, getBaseTimeUnit(), distributionStatisticConfig);
     }
 
     @Override
@@ -218,7 +216,7 @@ public class OtlpMeterRegistry extends PushMeterRegistry {
     // VisibleForTesting
     Metric writeHistogramSupport(HistogramSupport histogramSupport) {
         Metric.Builder metricBuilder = getMetricBuilder(histogramSupport.getId());
-        boolean isTimeBased = histogramSupport instanceof Timer;
+        boolean isTimeBased = histogramSupport instanceof Timer || histogramSupport instanceof LongTaskTimer;
         HistogramSnapshot histogramSnapshot = histogramSupport.takeSnapshot();
         long wallTimeNanos = TimeUnit.MILLISECONDS.toNanos(this.clock.wallTime());
 
@@ -246,7 +244,7 @@ public class OtlpMeterRegistry extends PushMeterRegistry {
             SummaryDataPoint.Builder summaryData = SummaryDataPoint.newBuilder()
                     .addAllAttributes(getTagsForId(histogramSupport.getId()))
                     .setTimeUnixNano(wallTimeNanos)
-                    .setSum(histogramSnapshot.total())
+                    .setSum(isTimeBased ? histogramSnapshot.total(getBaseTimeUnit()) : histogramSnapshot.total())
                     .setCount(histogramSnapshot.count());
             for (ValueAtPercentile percentile : histogramSnapshot.percentileValues()) {
                 summaryData.addQuantileValues(SummaryDataPoint.ValueAtQuantile.newBuilder()
@@ -268,7 +266,7 @@ public class OtlpMeterRegistry extends PushMeterRegistry {
                 .setHistogram(Histogram.newBuilder()
                         .addDataPoints(HistogramDataPoint.newBuilder()
                                 .addAllAttributes(getTagsForId(functionTimer.getId()))
-                                // TODO start time
+                                .setStartTimeUnixNano(((StartTimeAwareMeter) functionTimer).getStartTimeNanos())
                                 .setTimeUnixNano(TimeUnit.MILLISECONDS.toNanos(this.clock.wallTime()))
                                 .setSum(functionTimer.totalTime(getBaseTimeUnit()))
                                 .setCount((long) functionTimer.count())))

@@ -60,7 +60,7 @@ class OtlpMeterRegistryTest {
 
     @Test
     void counter() {
-        Counter counter = registry.counter("log.event");
+        Counter counter = registry.counter("log.event", "level", "info");
         counter.increment();
         counter.increment();
         clock.add(OtlpConfig.DEFAULT.step());
@@ -72,6 +72,12 @@ class OtlpMeterRegistryTest {
                         "    start_time_unix_nano: 1000000\n" +
                         "    time_unix_nano: 60001000000\n" +
                         "    as_double: 3.0\n" +
+                        "    attributes {\n" +
+                        "      key: \"level\"\n" +
+                        "      value {\n" +
+                        "        string_value: \"info\"\n" +
+                        "      }\n" +
+                        "    }\n" +
                         "  }\n" +
                         "  aggregation_temporality: AGGREGATION_TEMPORALITY_CUMULATIVE\n" +
                         "  is_monotonic: true\n" +
@@ -100,15 +106,15 @@ class OtlpMeterRegistryTest {
 
     @Test
     void timer() {
-        Timer timer = Timer.builder("http.client.requests").description("timing http client requests").register(registry);
+        Timer timer = Timer.builder("web.requests").description("timing web requests").register(registry);
         timer.record(10, TimeUnit.MILLISECONDS);
         timer.record(77, TimeUnit.MILLISECONDS);
         timer.record(111, TimeUnit.MILLISECONDS);
         clock.add(OtlpConfig.DEFAULT.step());
         timer.record(4, TimeUnit.MILLISECONDS);
         assertThat(registry.writeHistogramSupport(timer).toString())
-                .isEqualTo("name: \"http.client.requests\"\n" +
-                        "description: \"timing http client requests\"\n" +
+                .isEqualTo("name: \"web.requests\"\n" +
+                        "description: \"timing web requests\"\n" +
                         "unit: \"milliseconds\"\n" +
                         "histogram {\n" +
                         "  data_points {\n" +
@@ -282,19 +288,19 @@ class OtlpMeterRegistryTest {
 
     @Test
     void timerWithPercentiles() {
-        Timer timer = Timer.builder("http.client.requests").publishPercentiles(0.5, 0.9, 0.99).register(registry);
+        Timer timer = Timer.builder("service.requests").publishPercentiles(0.5, 0.9, 0.99).register(registry);
         timer.record(10, TimeUnit.MILLISECONDS);
         timer.record(77, TimeUnit.MILLISECONDS);
         timer.record(111, TimeUnit.MILLISECONDS);
 
         assertThat(registry.writeHistogramSupport(timer).toString())
-                .isEqualTo("name: \"http.client.requests\"\n" +
+                .isEqualTo("name: \"service.requests\"\n" +
                         "unit: \"milliseconds\"\n" +
                         "summary {\n" +
                         "  data_points {\n" +
                         "    time_unix_nano: 1000000\n" +
                         "    count: 3\n" +
-                        "    sum: 1.98E8\n" +
+                        "    sum: 198.0\n" +
                         "    quantile_values {\n" +
                         "      quantile: 0.5\n" +
                         "      value: 79.167488\n" +
@@ -320,6 +326,7 @@ class OtlpMeterRegistryTest {
                         "unit: \"milliseconds\"\n" +
                         "histogram {\n" +
                         "  data_points {\n" +
+                        "    start_time_unix_nano: 1000000\n" +
                         "    time_unix_nano: 1000000\n" +
                         "    count: 5\n" +
                         "    sum: 127.0\n" +
@@ -329,7 +336,7 @@ class OtlpMeterRegistryTest {
 
     @Test
     void distributionSummary() {
-        DistributionSummary size = DistributionSummary.builder("http.request.size").baseUnit("bytes").register(registry);
+        DistributionSummary size = DistributionSummary.builder("http.response.size").baseUnit("bytes").register(registry);
         size.record(100);
         size.record(15);
         size.record(2233);
@@ -337,7 +344,7 @@ class OtlpMeterRegistryTest {
         size.record(204);
 
         assertThat(registry.writeHistogramSupport(size).toString())
-                .isEqualTo("name: \"http.request.size\"\n" +
+                .isEqualTo("name: \"http.response.size\"\n" +
                         "unit: \"bytes\"\n" +
                         "histogram {\n" +
                         "  data_points {\n" +
@@ -920,6 +927,44 @@ class OtlpMeterRegistryTest {
                         "    explicit_bounds: 3.8430716820228234E18\n" +
                         "    explicit_bounds: 4.2273788502251054E18\n" +
                         "    explicit_bounds: Infinity\n" +
+                        "  }\n" +
+                        "  aggregation_temporality: AGGREGATION_TEMPORALITY_CUMULATIVE\n" +
+                        "}\n");
+    }
+
+    @Test
+    void longTaskTimer() {
+        LongTaskTimer taskTimer = LongTaskTimer.builder("checkout.batch").register(registry);
+        LongTaskTimer.Sample task1 = taskTimer.start();
+        LongTaskTimer.Sample task2 = taskTimer.start();
+        this.clock.add(OtlpConfig.DEFAULT.step().multipliedBy(3));
+
+        assertThat(registry.writeHistogramSupport(taskTimer).toString())
+                .isEqualTo("name: \"checkout.batch\"\n" +
+                        "unit: \"milliseconds\"\n" +
+                        "histogram {\n" +
+                        "  data_points {\n" +
+                        "    start_time_unix_nano: 1000000\n" +
+                        "    time_unix_nano: 180001000000\n" +
+                        "    count: 2\n" +
+                        "    sum: 360000.0\n" +
+                        "  }\n" +
+                        "  aggregation_temporality: AGGREGATION_TEMPORALITY_CUMULATIVE\n" +
+                        "}\n");
+
+        task1.stop();
+        task2.stop();
+        this.clock.add(OtlpConfig.DEFAULT.step());
+
+        // this is not right that count/sum reset, but it's the same thing we do with prometheus
+        assertThat(registry.writeHistogramSupport(taskTimer).toString())
+                .isEqualTo("name: \"checkout.batch\"\n" +
+                        "unit: \"milliseconds\"\n" +
+                        "histogram {\n" +
+                        "  data_points {\n" +
+                        "    start_time_unix_nano: 1000000\n" +
+                        "    time_unix_nano: 240001000000\n" +
+                        "    sum: 0.0\n" +
                         "  }\n" +
                         "  aggregation_temporality: AGGREGATION_TEMPORALITY_CUMULATIVE\n" +
                         "}\n");
