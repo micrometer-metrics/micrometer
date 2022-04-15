@@ -17,6 +17,8 @@ package io.micrometer.common.docs;
 
 import java.util.Arrays;
 
+import io.micrometer.common.KeyValue;
+
 
 /**
  * Represents a key name used for documenting instrumentation.
@@ -41,4 +43,14 @@ public interface KeyName {
      * @return key name
      */
     String getKeyName();
+
+    /**
+     * Creates a key value for the given key name.
+     *
+     * @param value value for key
+     * @return key value
+     */
+    default KeyValue of(String value) {
+        return KeyValue.of(getKeyName(), value);
+    }
 }
