@@ -72,6 +72,8 @@ public class OtlpMeterRegistry extends PushMeterRegistry {
         this(config, clock, new HttpUrlConnectionSender());
     }
 
+    // not public until we decide what we want to expose in public API
+    // HttpSender may not be a good idea if we will support a non-HTTP transport
     private OtlpMeterRegistry(OtlpConfig config, Clock clock, HttpSender httpSender) {
         super(config, clock);
         this.config = config;
@@ -131,12 +133,12 @@ public class OtlpMeterRegistry extends PushMeterRegistry {
 
     @Override
     protected Timer newTimer(Meter.Id id, DistributionStatisticConfig distributionStatisticConfig, PauseDetector pauseDetector) {
-        return new CumulativeTimer(id, this.clock, distributionStatisticConfig, pauseDetector, getBaseTimeUnit(), true);
+        return new OtlpTimer(id, this.clock, distributionStatisticConfig, pauseDetector, getBaseTimeUnit());
     }
 
     @Override
     protected DistributionSummary newDistributionSummary(Meter.Id id, DistributionStatisticConfig distributionStatisticConfig, double scale) {
-        return new CumulativeDistributionSummary(id, this.clock, distributionStatisticConfig, scale, true);
+        return new OtlpDistributionSummary(id, this.clock, distributionStatisticConfig, scale, true);
     }
 
     @Override
@@ -174,6 +176,7 @@ public class OtlpMeterRegistry extends PushMeterRegistry {
 
     private Metric writeMeter(Meter meter) {
         // TODO support writing custom meters
+        // one gauge per measurement
         return getMetricBuilder(meter.getId()).build();
     }
 
@@ -223,7 +226,7 @@ public class OtlpMeterRegistry extends PushMeterRegistry {
 
         HistogramDataPoint.Builder histogramDataPoint = HistogramDataPoint.newBuilder()
                 .addAllAttributes(getTagsForId(histogramSupport.getId()))
-                // TODO start time
+                .setStartTimeUnixNano(((StartTimeAwareMeter) histogramSupport).getStartTimeNanos())
                 .setTimeUnixNano(wallTimeNanos)
                 .setSum(isTimeBased ? histogramSnapshot.total(getBaseTimeUnit()) : histogramSnapshot.total())
                 .setCount(histogramSnapshot.count());
