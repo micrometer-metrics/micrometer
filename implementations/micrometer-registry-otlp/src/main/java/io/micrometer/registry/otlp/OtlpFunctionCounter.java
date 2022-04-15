@@ -21,11 +21,11 @@ import io.micrometer.core.instrument.cumulative.CumulativeFunctionCounter;
 import java.util.concurrent.TimeUnit;
 import java.util.function.ToDoubleFunction;
 
-public class OtlpFunctionCounter<T> extends CumulativeFunctionCounter<T> implements StartTimeAwareMeter {
+class OtlpFunctionCounter<T> extends CumulativeFunctionCounter<T> implements StartTimeAwareMeter {
 
     final long startTimeNanos;
 
-    public OtlpFunctionCounter(Id id, T obj, ToDoubleFunction<T> f, Clock clock) {
+    OtlpFunctionCounter(Id id, T obj, ToDoubleFunction<T> f, Clock clock) {
         super(id, obj, f);
         this.startTimeNanos = TimeUnit.MILLISECONDS.toNanos(clock.wallTime());
     }

@@ -48,6 +48,7 @@ import java.util.stream.Collectors;
 
 /**
  * Publishes meters in OTLP (OpenTelemetry Protocol) format.
+ * HTTP with Protobuf encoding is the only option currently supported.
  *
  * @since 1.9.0
  */

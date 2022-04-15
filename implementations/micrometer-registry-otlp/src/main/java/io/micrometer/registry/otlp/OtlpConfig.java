@@ -22,6 +22,9 @@ import static io.micrometer.core.instrument.config.MeterRegistryConfigValidator.
 import static io.micrometer.core.instrument.config.MeterRegistryConfigValidator.checkRequired;
 import static io.micrometer.core.instrument.config.validate.PropertyValidator.getUrlString;
 
+/**
+ * Config for {@link OtlpMeterRegistry}.
+ */
 public interface OtlpConfig extends PushRegistryConfig {
 
     /**
