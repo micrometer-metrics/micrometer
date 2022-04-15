@@ -17,6 +17,7 @@ package io.micrometer.registry.otlp;
 
 import io.micrometer.core.instrument.Gauge;
 import io.micrometer.core.instrument.*;
+import io.micrometer.core.instrument.config.NamingConvention;
 import io.micrometer.core.instrument.cumulative.CumulativeDistributionSummary;
 import io.micrometer.core.instrument.cumulative.CumulativeFunctionTimer;
 import io.micrometer.core.instrument.cumulative.CumulativeTimer;
@@ -28,6 +29,7 @@ import io.micrometer.core.instrument.internal.DefaultMeter;
 import io.micrometer.core.instrument.push.PushMeterRegistry;
 import io.micrometer.core.instrument.util.MeterPartition;
 import io.micrometer.core.instrument.util.NamedThreadFactory;
+import io.micrometer.core.instrument.util.TimeUtils;
 import io.micrometer.core.ipc.http.HttpSender;
 import io.micrometer.core.ipc.http.HttpUrlConnectionSender;
 import io.micrometer.core.util.internal.logging.InternalLogger;
@@ -77,6 +79,7 @@ public class OtlpMeterRegistry extends PushMeterRegistry {
         this.resource = Resource.newBuilder()
                 .addAllAttributes(getResourceAttributes())
                 .build();
+        config().namingConvention(NamingConvention.dot);
         start(DEFAULT_THREAD_FACTORY);
     }
 
@@ -169,11 +172,12 @@ public class OtlpMeterRegistry extends PushMeterRegistry {
                 .merge(DistributionStatisticConfig.DEFAULT);
     }
 
-    Metric writeMeter(Meter meter) {
+    private Metric writeMeter(Meter meter) {
         // TODO support writing custom meters
         return getMetricBuilder(meter.getId()).build();
     }
 
+    // VisibleForTesting
     Metric writeGauge(Gauge gauge) {
         return getMetricBuilder(gauge.getId())
                 .setGauge(io.opentelemetry.proto.metrics.v1.Gauge.newBuilder()
@@ -185,11 +189,13 @@ public class OtlpMeterRegistry extends PushMeterRegistry {
                 .build();
     }
 
-    private Metric writeCounter(Counter counter) {
+    // VisibleForTesting
+    Metric writeCounter(Counter counter) {
         return writeSum((StartTimeAwareMeter) counter, counter::count);
     }
 
-    private Metric writeFunctionCounter(FunctionCounter functionCounter) {
+    // VisibleForTesting
+    Metric writeFunctionCounter(FunctionCounter functionCounter) {
         return writeSum((StartTimeAwareMeter) functionCounter, functionCounter::count);
     }
 
@@ -208,7 +214,8 @@ public class OtlpMeterRegistry extends PushMeterRegistry {
                 .build();
     }
 
-    private Metric writeHistogramSupport(HistogramSupport histogramSupport) {
+    // VisibleForTesting
+    Metric writeHistogramSupport(HistogramSupport histogramSupport) {
         Metric.Builder metricBuilder = getMetricBuilder(histogramSupport.getId());
         boolean isTimeBased = histogramSupport instanceof Timer;
         HistogramSnapshot histogramSnapshot = histogramSupport.takeSnapshot();
@@ -242,7 +249,8 @@ public class OtlpMeterRegistry extends PushMeterRegistry {
                     .setCount(histogramSnapshot.count());
             for (ValueAtPercentile percentile : histogramSnapshot.percentileValues()) {
                 summaryData.addQuantileValues(SummaryDataPoint.ValueAtQuantile.newBuilder()
-                        .setQuantile(percentile.percentile()).setValue(percentile.value()));
+                        .setQuantile(percentile.percentile())
+                        .setValue(TimeUtils.convert(percentile.value(), TimeUnit.NANOSECONDS, getBaseTimeUnit())));
             }
             metricBuilder.setSummary(Summary.newBuilder().addDataPoints(summaryData));
             return metricBuilder.build();
@@ -253,7 +261,8 @@ public class OtlpMeterRegistry extends PushMeterRegistry {
                 .addDataPoints(histogramDataPoint)).build();
     }
 
-    private Metric writeFunctionTimer(FunctionTimer functionTimer) {
+    // VisibleForTesting
+    Metric writeFunctionTimer(FunctionTimer functionTimer) {
         return getMetricBuilder(functionTimer.getId())
                 .setHistogram(Histogram.newBuilder()
                         .addDataPoints(HistogramDataPoint.newBuilder()
