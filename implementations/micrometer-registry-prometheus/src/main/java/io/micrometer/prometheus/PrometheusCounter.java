@@ -72,11 +72,8 @@ public class PrometheusCounter extends AbstractMeter implements Counter {
         do {
             prev = exemplar.get();
             next = exemplarSampler.sample(amount, prev);
-            if (next == null || next == prev) {
-                return;
-            }
         }
-        while (!exemplar.compareAndSet(prev, next));
+        while (next != null && next != prev && !exemplar.compareAndSet(prev, next));
     }
 
 }

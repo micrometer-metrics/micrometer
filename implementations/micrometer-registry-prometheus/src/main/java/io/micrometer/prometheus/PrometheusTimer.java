@@ -45,10 +45,6 @@ public class PrometheusTimer extends AbstractTimer {
     @Nullable private final Histogram histogram;
     private boolean exemplarsEnabled = false;
 
-    PrometheusTimer(Id id, Clock clock, DistributionStatisticConfig distributionStatisticConfig, PauseDetector pauseDetector, HistogramFlavor histogramFlavor) {
-        this(id, clock, distributionStatisticConfig, pauseDetector, histogramFlavor, null);
-    }
-
     PrometheusTimer(Id id, Clock clock, DistributionStatisticConfig distributionStatisticConfig, PauseDetector pauseDetector, HistogramFlavor histogramFlavor, @Nullable HistogramExemplarSampler exemplarSampler) {
         super(id, clock,
                 DistributionStatisticConfig.builder()
