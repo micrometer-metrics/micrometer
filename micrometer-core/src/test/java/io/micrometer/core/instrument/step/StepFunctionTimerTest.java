@@ -21,7 +21,7 @@ import io.micrometer.core.instrument.MockClock;
 import org.junit.jupiter.api.Test;
 
 import java.time.Duration;
-import java.util.LinkedList;
+import java.util.ArrayDeque;
 import java.util.Queue;
 import java.util.concurrent.TimeUnit;
 
@@ -53,12 +53,12 @@ class StepFunctionTimerTest {
     @Issue("#1814")
     @Test
     void meanShouldWorkIfTotalNotCalled() {
-        Queue<Long> counts = new LinkedList<>();
+        Queue<Long> counts = new ArrayDeque<>();
         counts.add(2L);
         counts.add(5L);
         counts.add(10L);
 
-        Queue<Double> totalTimes = new LinkedList<>();
+        Queue<Double> totalTimes = new ArrayDeque<>();
         totalTimes.add(150.0);
         totalTimes.add(300.0);
         totalTimes.add(1000.0);
