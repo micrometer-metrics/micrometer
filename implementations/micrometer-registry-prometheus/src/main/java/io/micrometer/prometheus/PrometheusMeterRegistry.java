@@ -210,7 +210,6 @@ public class PrometheusMeterRegistry extends MeterRegistry {
 
                 final ValueAtPercentile[] percentileValues = summary.takeSnapshot().percentileValues();
                 final CountAtBucket[] histogramCounts = summary.histogramCounts();
-                Exemplar[] exemplars = summary.exemplars();
                 double count = summary.count();
 
                 if (percentileValues.length > 0) {
@@ -236,6 +235,8 @@ public class PrometheusMeterRegistry extends MeterRegistry {
                     switch (summary.histogramFlavor()) {
                         case Prometheus:
                             histogramKeys.add("le");
+
+                            Exemplar[] exemplars = summary.exemplars();
 
                             // satisfies https://prometheus.io/docs/concepts/metric_types/#histogram
                             for (int i = 0; i < histogramCounts.length; i++) {
@@ -420,7 +421,6 @@ public class PrometheusMeterRegistry extends MeterRegistry {
             HistogramSnapshot histogramSnapshot = histogramSupport.takeSnapshot();
             ValueAtPercentile[] percentileValues = histogramSnapshot.percentileValues();
             CountAtBucket[] histogramCounts = histogramSnapshot.histogramCounts();
-            Exemplar[] exemplars = exemplarsSupplier.get();
             double count = histogramSnapshot.count();
 
             if (percentileValues.length > 0) {
@@ -447,6 +447,8 @@ public class PrometheusMeterRegistry extends MeterRegistry {
                 switch (prometheusConfig.histogramFlavor()) {
                     case Prometheus:
                         histogramKeys.add("le");
+
+                        Exemplar[] exemplars = exemplarsSupplier.get();
 
                         // satisfies https://prometheus.io/docs/concepts/metric_types/#histogram
                         for (int i = 0; i < histogramCounts.length; i++) {

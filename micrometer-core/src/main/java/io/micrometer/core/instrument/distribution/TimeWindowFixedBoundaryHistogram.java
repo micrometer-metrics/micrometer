@@ -119,6 +119,11 @@ public class TimeWindowFixedBoundaryHistogram
         printStream.write('\n');
     }
 
+    /**
+     * Return buckets.
+     * @return buckets
+     * @since 1.9.0
+     */
     protected double[] getBuckets() {
         return this.buckets;
     }

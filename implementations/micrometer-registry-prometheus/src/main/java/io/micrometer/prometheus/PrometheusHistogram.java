@@ -56,7 +56,7 @@ class PrometheusHistogram extends TimeWindowFixedBoundaryHistogram {
 
         this.exemplarSampler = exemplarSampler;
         if (isExemplarsEnabled()) {
-            double[] originalBuckets = super.getBuckets();
+            double[] originalBuckets = getBuckets();
             if (originalBuckets[originalBuckets.length - 1] != Double.POSITIVE_INFINITY) {
                 this.buckets = Arrays.copyOf(originalBuckets, originalBuckets.length + 1);
                 this.buckets[buckets.length - 1] = Double.POSITIVE_INFINITY;
@@ -93,7 +93,7 @@ class PrometheusHistogram extends TimeWindowFixedBoundaryHistogram {
     }
 
     private void updateExemplar(double value, @Nullable TimeUnit sourceUnit, @Nullable TimeUnit destinationUnit) {
-        int index = this.leastLessThanOrEqualTo(value);
+        int index = leastLessThanOrEqualTo(value);
         index = (index == -1) ? exemplars.length() - 1 : index;
         updateExemplar(value, sourceUnit, destinationUnit, index);
     }
@@ -104,15 +104,12 @@ class PrometheusHistogram extends TimeWindowFixedBoundaryHistogram {
         Exemplar prev;
         Exemplar next;
 
+        double exemplarValue = (sourceUnit != null && destinationUnit != null) ? TimeUtils.convert(value, sourceUnit, destinationUnit) : value;
         do {
             prev = exemplars.get(index);
-            double exemplarValue = (sourceUnit != null && destinationUnit != null) ? TimeUtils.convert(value, sourceUnit, destinationUnit) : value;
             next = exemplarSampler.sample(exemplarValue, bucketFrom, bucketTo, prev);
-            if (next == null || next == prev) {
-                return;
-            }
         }
-        while (!exemplars.compareAndSet(index, prev, next));
+        while (next != null && next != prev && !exemplars.compareAndSet(index, prev, next));
     }
 
     @Nullable Exemplar[] exemplars() {
@@ -133,7 +130,6 @@ class PrometheusHistogram extends TimeWindowFixedBoundaryHistogram {
      * The least bucket that is less than or equal to a sample.
      */
     private int leastLessThanOrEqualTo(double key) {
-        double[] buckets = getBuckets();
         int low = 0;
         int high = buckets.length - 1;
 

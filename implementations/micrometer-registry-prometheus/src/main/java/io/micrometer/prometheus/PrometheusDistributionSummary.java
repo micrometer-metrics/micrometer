@@ -43,10 +43,6 @@ public class PrometheusDistributionSummary extends AbstractDistributionSummary {
     @Nullable private final Histogram histogram;
     private boolean exemplarsEnabled = false;
 
-    PrometheusDistributionSummary(Id id, Clock clock, DistributionStatisticConfig distributionStatisticConfig, double scale, HistogramFlavor histogramFlavor) {
-        this(id, clock, distributionStatisticConfig, scale, histogramFlavor, null);
-    }
-
     PrometheusDistributionSummary(Id id, Clock clock, DistributionStatisticConfig distributionStatisticConfig, double scale, HistogramFlavor histogramFlavor, @Nullable HistogramExemplarSampler exemplarSampler) {
         super(id, clock,
                 DistributionStatisticConfig.builder()
