@@ -41,9 +41,6 @@ allprojects {
     group = 'io.micrometer'
     ext.'release.stage' = releaseStage ?: 'SNAPSHOT'
 
-    // TODO: Change me
-    version = "1.10.0-SNAPSHOT"
-
     afterEvaluate { project -> println "I'm configuring $project.name with version $project.version" }
 }
 
