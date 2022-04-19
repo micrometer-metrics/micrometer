@@ -42,7 +42,7 @@ allprojects {
     ext.'release.stage' = releaseStage ?: 'SNAPSHOT'
 
     // TODO: Change me
-    version = "1.10.0-SNAPSHOT"
+    version = "1.10.0-M1"
 
     afterEvaluate { project -> println "I'm configuring $project.name with version $project.version" }
 }
