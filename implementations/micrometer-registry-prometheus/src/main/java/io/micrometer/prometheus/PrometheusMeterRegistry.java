@@ -33,8 +33,8 @@ import io.prometheus.client.exporter.common.TextFormat;
 import java.io.IOException;
 import java.io.StringWriter;
 import java.io.Writer;
+import java.util.ArrayList;
 import java.util.Enumeration;
-import java.util.LinkedList;
 import java.util.List;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
@@ -213,12 +213,12 @@ public class PrometheusMeterRegistry extends MeterRegistry {
                 double count = summary.count();
 
                 if (percentileValues.length > 0) {
-                    List<String> quantileKeys = new LinkedList<>(tagKeys);
+                    List<String> quantileKeys = new ArrayList<>(tagKeys);
                     quantileKeys.add("quantile");
 
                     // satisfies https://prometheus.io/docs/concepts/metric_types/#summary
                     for (ValueAtPercentile v : percentileValues) {
-                        List<String> quantileValues = new LinkedList<>(tagValues);
+                        List<String> quantileValues = new ArrayList<>(tagValues);
                         quantileValues.add(Collector.doubleToGoString(v.percentile()));
                         samples.add(new Collector.MetricFamilySamples.Sample(
                                 conventionName, quantileKeys, quantileValues, v.value()));
@@ -230,7 +230,7 @@ public class PrometheusMeterRegistry extends MeterRegistry {
                     // Prometheus doesn't balk at a metric being BOTH a histogram and a summary
                     type = Collector.Type.HISTOGRAM;
 
-                    List<String> histogramKeys = new LinkedList<>(tagKeys);
+                    List<String> histogramKeys = new ArrayList<>(tagKeys);
                     String sampleName = conventionName + "_bucket";
                     switch (summary.histogramFlavor()) {
                         case Prometheus:
@@ -241,7 +241,8 @@ public class PrometheusMeterRegistry extends MeterRegistry {
                             // satisfies https://prometheus.io/docs/concepts/metric_types/#histogram
                             for (int i = 0; i < histogramCounts.length; i++) {
                                 CountAtBucket c = histogramCounts[i];
-                                final List<String> histogramValues = new LinkedList<>(tagValues);
+                                final List<String> histogramValues = new ArrayList<>(tagValues);
+
                                 histogramValues.add(Collector.doubleToGoString(c.bucket()));
 
                                 if (exemplars == null) {
@@ -254,7 +255,7 @@ public class PrometheusMeterRegistry extends MeterRegistry {
 
                             if (Double.isFinite(histogramCounts[histogramCounts.length - 1].bucket())) {
                                 // the +Inf bucket should always equal `count`
-                                final List<String> histogramValues = new LinkedList<>(tagValues);
+                                final List<String> histogramValues = new ArrayList<>(tagValues);
                                 histogramValues.add("+Inf");
                                 if (exemplars == null) {
                                     samples.add(new Collector.MetricFamilySamples.Sample(sampleName, histogramKeys, histogramValues, count));
@@ -268,7 +269,7 @@ public class PrometheusMeterRegistry extends MeterRegistry {
                             histogramKeys.add("vmrange");
 
                             for (CountAtBucket c : histogramCounts) {
-                                final List<String> histogramValuesVM = new LinkedList<>(tagValues);
+                                final List<String> histogramValuesVM = new ArrayList<>(tagValues);
                                 histogramValuesVM.add(FixedBoundaryVictoriaMetricsHistogram.getRangeTagValue(c.bucket()));
                                 samples.add(new Collector.MetricFamilySamples.Sample(
                                         sampleName, histogramKeys, histogramValuesVM, c.count()));
@@ -367,13 +368,13 @@ public class PrometheusMeterRegistry extends MeterRegistry {
         applyToCollector(id, (collector) -> {
             List<String> tagValues = tagValues(id);
             collector.add(tagValues, (conventionName, tagKeys) -> {
-                List<String> statKeys = new LinkedList<>(tagKeys);
+                List<String> statKeys = new ArrayList<>(tagKeys);
                 statKeys.add("statistic");
 
                 return Stream.of(new MicrometerCollector.Family(finalPromType, conventionName,
                         stream(measurements.spliterator(), false)
                                 .map(m -> {
-                                    List<String> statValues = new LinkedList<>(tagValues);
+                                    List<String> statValues = new ArrayList<>(tagValues);
                                     statValues.add(m.getStatistic().toString());
 
                                     String name = conventionName;
@@ -424,12 +425,12 @@ public class PrometheusMeterRegistry extends MeterRegistry {
             double count = histogramSnapshot.count();
 
             if (percentileValues.length > 0) {
-                List<String> quantileKeys = new LinkedList<>(tagKeys);
+                List<String> quantileKeys = new ArrayList<>(tagKeys);
                 quantileKeys.add("quantile");
 
                 // satisfies https://prometheus.io/docs/concepts/metric_types/#summary
                 for (ValueAtPercentile v : percentileValues) {
-                    List<String> quantileValues = new LinkedList<>(tagValues);
+                    List<String> quantileValues = new ArrayList<>(tagValues);
                     quantileValues.add(Collector.doubleToGoString(v.percentile()));
                     samples.add(new Collector.MetricFamilySamples.Sample(
                             conventionName, quantileKeys, quantileValues, v.value(TimeUnit.SECONDS)));
@@ -441,7 +442,7 @@ public class PrometheusMeterRegistry extends MeterRegistry {
                 // Prometheus doesn't balk at a metric being BOTH a histogram and a summary
                 type = Collector.Type.HISTOGRAM;
 
-                List<String> histogramKeys = new LinkedList<>(tagKeys);
+                List<String> histogramKeys = new ArrayList<>(tagKeys);
 
                 String sampleName = conventionName + "_bucket";
                 switch (prometheusConfig.histogramFlavor()) {
@@ -453,7 +454,7 @@ public class PrometheusMeterRegistry extends MeterRegistry {
                         // satisfies https://prometheus.io/docs/concepts/metric_types/#histogram
                         for (int i = 0; i < histogramCounts.length; i++) {
                             CountAtBucket c = histogramCounts[i];
-                            final List<String> histogramValues = new LinkedList<>(tagValues);
+                            final List<String> histogramValues = new ArrayList<>(tagValues);
                             histogramValues.add(Collector.doubleToGoString(c.bucket(TimeUnit.SECONDS)));
                             if (exemplars == null) {
                                 samples.add(new Collector.MetricFamilySamples.Sample(sampleName, histogramKeys, histogramValues, c.count()));
@@ -464,7 +465,7 @@ public class PrometheusMeterRegistry extends MeterRegistry {
                         }
 
                         // the +Inf bucket should always equal `count`
-                        final List<String> histogramValues = new LinkedList<>(tagValues);
+                        final List<String> histogramValues = new ArrayList<>(tagValues);
                         histogramValues.add("+Inf");
                         if (exemplars == null) {
                             samples.add(new Collector.MetricFamilySamples.Sample(sampleName, histogramKeys, histogramValues, count));
@@ -477,7 +478,7 @@ public class PrometheusMeterRegistry extends MeterRegistry {
                         histogramKeys.add("vmrange");
 
                         for (CountAtBucket c : histogramCounts) {
-                            final List<String> histogramValuesVM = new LinkedList<>(tagValues);
+                            final List<String> histogramValuesVM = new ArrayList<>(tagValues);
                             histogramValuesVM.add(FixedBoundaryVictoriaMetricsHistogram.getRangeTagValue(c.bucket()));
                             samples.add(new Collector.MetricFamilySamples.Sample(
                                     sampleName, histogramKeys, histogramValuesVM, c.count()));
