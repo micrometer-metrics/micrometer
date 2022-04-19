@@ -10,7 +10,6 @@ com.fasterxml.jackson.core:jackson-databind:2.13.1=compileClasspath,default,prod
 com.fasterxml.jackson.datatype:jackson-datatype-jdk8:2.13.1=compileClasspath,default,productionRuntimeClasspath,runtimeClasspath,testCompileClasspath,testRuntimeClasspath
 com.fasterxml.jackson.datatype:jackson-datatype-jsr310:2.13.1=compileClasspath,default,productionRuntimeClasspath,runtimeClasspath,testCompileClasspath,testRuntimeClasspath
 com.fasterxml.jackson.module:jackson-module-parameter-names:2.13.1=compileClasspath,default,productionRuntimeClasspath,runtimeClasspath,testCompileClasspath,testRuntimeClasspath
-com.fasterxml.jackson:jackson-bom:2.13.1=compileClasspath,default,productionRuntimeClasspath,runtimeClasspath,testCompileClasspath,testRuntimeClasspath
 com.google.code.findbugs:jsr305:3.0.2=checkstyle,compileClasspath,nohttp,productionRuntimeClasspath,runtimeClasspath,testCompileClasspath,testRuntimeClasspath
 com.google.errorprone:error_prone_annotations:2.3.4=nohttp
 com.google.errorprone:error_prone_annotations:2.7.1=checkstyle
