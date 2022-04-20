@@ -34,7 +34,6 @@ import static org.assertj.core.api.AssertionsForClassTypes.assertThat;
  * Tests for {@link DynatraceTimer}.
  *
  * @author Georg Pirklbauer
- * @since 1.9.0
  */
 class DynatraceTimerTest {
     private static final Offset<Double> OFFSET = Offset.offset(0.0001);
@@ -168,7 +167,7 @@ class DynatraceTimerTest {
         assertMinMaxSumCount(timer.takeSummarySnapshot(), 100, 400, 1000, 4);
     }
 
-    private static void assertMinMaxSumCount(DynatraceTimer timer, double expMin, double expMax, double expTotal, long expCount) {
+    private void assertMinMaxSumCount(DynatraceTimer timer, double expMin, double expMax, double expTotal, long expCount) {
         assertThat(timer.min(BASE_TIME_UNIT)).isCloseTo(expMin, OFFSET);
         assertThat(timer.max(BASE_TIME_UNIT)).isCloseTo(expMax, OFFSET);
         assertThat(timer.totalTime(BASE_TIME_UNIT)).isCloseTo(expTotal, OFFSET);

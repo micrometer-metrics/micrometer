@@ -179,7 +179,7 @@ class DynatraceMeterRegistryTest {
         clock.add(config.step());
         meterRegistry.publish();
 
-        // if the line has 0 count, dont send anything
+        // if the line has 0 count, don't send anything
         verify(httpClient, never()).send(any());
 
         // reset for next export interval

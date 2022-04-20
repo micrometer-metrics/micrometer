@@ -25,7 +25,6 @@ import static org.assertj.core.api.AssertionsForInterfaceTypes.assertThat;
  * Tests for {@link DynatraceSummary}.
  *
  * @author Georg Pirklbauer
- * @since 1.9.0
  */
 class DynatraceSummaryTest {
     private static final Offset<Double> OFFSET = Offset.offset(0.0001);
@@ -71,7 +70,6 @@ class DynatraceSummaryTest {
 
         assertMinMaxSumCount(summary, 0.123, 8.93, 16.953, 4);
     }
-
 
     private void assertMinMaxSumCount(DynatraceSummary summary, Double expMin, Double expMax, Double expTotal, long expCount) {
         assertThat(summary.getMin()).isCloseTo(expMin, OFFSET);
