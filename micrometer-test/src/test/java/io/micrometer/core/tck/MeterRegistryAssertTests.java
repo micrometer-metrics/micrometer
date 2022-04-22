@@ -95,7 +95,7 @@ class MeterRegistryAssertTests {
 
         assertThatThrownBy(() -> meterRegistryAssert.doesNotHaveTimerWithNameAndTagKeys("matching-metric-name", "matching-tag"))
                 .isInstanceOf(AssertionError.class)
-                .hasMessageContaining("Expected a timer with name <matching-metric-name> and tag keys <matching-tag> but found one");
+                .hasMessageContaining("Expected no timer with name <matching-metric-name> and tag keys <matching-tag> but found one");
     }
 
     @Test
@@ -232,7 +232,7 @@ class MeterRegistryAssertTests {
 
         assertThatThrownBy(() -> meterRegistryAssert.doesNotHaveMeterWithNameAndTagKeys("matching-metric-name", "matching-tag"))
                 .isInstanceOf(AssertionError.class)
-                .hasMessageContaining("Expected a meter with name <matching-metric-name> and tag keys <matching-tag> but found one");
+                .hasMessageContaining("Expected no meter with name <matching-metric-name> and tag keys <matching-tag> but found one");
     }
 
     @Test
