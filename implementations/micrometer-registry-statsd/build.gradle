@@ -10,6 +10,9 @@ dependencies {
         // We do not use HTTP modules; exclude to avoid false positive CVE reports
         exclude module: 'netty-codec-http'
     }
+	// We need make sure netty dns resolution works on all macs
+	implementation 'io.netty:netty-resolver-dns-native-macos:+:osx-x86_64'
+	implementation 'io.netty:netty-resolver-dns-native-macos:+:osx-aarch_64'
 
     testImplementation project(':micrometer-test')
     testImplementation 'io.projectreactor:reactor-test'
@@ -53,7 +56,7 @@ publishing {
                 asNode()
                     .dependencies
                     .dependency
-                    .findAll { ['reactor-core', 'reactor-netty-core'].contains(it.artifactId.text()) }
+                    .findAll { ['reactor-core', 'reactor-netty-core', 'netty-resolver-dns-native-macos'].contains(it.artifactId.text()) }
                     .each { it.parent().remove(it) }
             }
         }
