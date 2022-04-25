@@ -1,5 +1,5 @@
 /*
- * Copyright 2017 VMware, Inc.
+ * Copyright 2022 VMware, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -55,7 +55,7 @@ class ObservationTests {
     }
 
     @Test
-    void matchingPredicateAndHandlerShouldResultInNoOpObservation() {
+    void matchingPredicateAndHandlerShouldNotResultInNoOpObservation() {
         ObservationRegistry registry = ObservationRegistry.create();
         registry.observationConfig().observationHandler(context -> true);
         registry.observationConfig().observationPredicate((s, context) -> true);
