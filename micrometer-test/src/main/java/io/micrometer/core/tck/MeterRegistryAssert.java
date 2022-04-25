@@ -315,7 +315,7 @@ public class MeterRegistryAssert extends AbstractAssert<MeterRegistryAssert, Met
         isNotNull();
         Meter foundMeter = actual.find(meterName).tagKeys(tagKeys).meter();
         if (foundMeter != null) {
-            failWithMessage("Expected a meter with name <%s> and tag keys <%s> but found one", meterName, String.join(",", tagKeys));
+            failWithMessage("Expected no meter with name <%s> and tag keys <%s> but found one", meterName, String.join(",", tagKeys));
         }
         return this;
     }
@@ -332,7 +332,7 @@ public class MeterRegistryAssert extends AbstractAssert<MeterRegistryAssert, Met
         isNotNull();
         Timer foundTimer = actual.find(timerName).tagKeys(tagKeys).timer();
         if (foundTimer != null) {
-            failWithMessage("Expected a timer with name <%s> and tag keys <%s> but found one", timerName, String.join(",", tagKeys));
+            failWithMessage("Expected no timer with name <%s> and tag keys <%s> but found one", timerName, String.join(",", tagKeys));
         }
         return this;
     }
