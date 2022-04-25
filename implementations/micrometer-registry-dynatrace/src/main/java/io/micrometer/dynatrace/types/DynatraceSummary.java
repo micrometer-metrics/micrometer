@@ -20,25 +20,23 @@ import java.util.concurrent.atomic.DoubleAdder;
 import java.util.concurrent.atomic.LongAdder;
 
 /**
- * Internal class for resettable summary statistics
+ * Internal class for resettable summary statistics.
  *
  * @author Georg Pirklbauer
- * @since 1.9.0
  */
 final class DynatraceSummary {
     private final LongAdder count = new LongAdder();
     private final DoubleAdder total = new DoubleAdder();
-    private final AtomicLong min = new AtomicLong(0);
-    private final AtomicLong max = new AtomicLong(0);
+    private final AtomicLong min = new AtomicLong();
+    private final AtomicLong max = new AtomicLong();
 
     void recordNonNegative(double amount) {
         if (amount < 0) {
             return;
         }
 
+        long longBits = Double.doubleToLongBits(amount);
         synchronized (this) {
-            long longBits = Double.doubleToLongBits(amount);
-
             max.getAndUpdate(prev -> Math.max(prev, longBits));
             // have to check if a value was already recorded before, otherwise min will always stay 0 (because the default is 0).
             min.getAndUpdate(prev -> count.longValue() > 0 ? Math.min(prev, longBits) : longBits);
@@ -49,19 +47,19 @@ final class DynatraceSummary {
     }
 
 
-    public long getCount() {
+    long getCount() {
         return count.longValue();
     }
 
-    public double getTotal() {
+    double getTotal() {
         return total.doubleValue();
     }
 
-    public double getMin() {
+    double getMin() {
         return Double.longBitsToDouble(min.longValue());
     }
 
-    public double getMax() {
+    double getMax() {
         return Double.longBitsToDouble(max.longValue());
     }
 

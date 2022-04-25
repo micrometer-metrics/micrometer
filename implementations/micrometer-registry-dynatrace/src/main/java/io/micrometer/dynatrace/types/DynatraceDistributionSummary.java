@@ -32,8 +32,8 @@ import java.util.concurrent.TimeUnit;
  * @since 1.9.0
  */
 public final class DynatraceDistributionSummary extends AbstractDistributionSummary implements DynatraceSummarySnapshotSupport {
-    private static final Logger LOGGER = LoggerFactory.getLogger(DynatraceDistributionSummary.class.getName());
-    // Configuration that will set the Histogram in AbstractTimer to a NoopHistogram.
+    private static final Logger LOGGER = LoggerFactory.getLogger(DynatraceDistributionSummary.class);
+    // Configuration that will set the Histogram in AbstractDistributionSummary to a NoopHistogram.
     private static final DistributionStatisticConfig NOOP_HISTOGRAM_CONFIG =
             DistributionStatisticConfig.builder().percentilesHistogram(false).percentiles().build();
 
@@ -96,7 +96,7 @@ public final class DynatraceDistributionSummary extends AbstractDistributionSumm
 
     @Override
     public DynatraceSummarySnapshot takeSummarySnapshotAndReset(TimeUnit unit) {
-        LOGGER.debug("Called takeSummarySnapshot with a TimeUnit on a DistributionSummary. Ignoring TimeUnit.");
+        LOGGER.debug("Called takeSummarySnapshotAndReset with a TimeUnit on a DistributionSummary. Ignoring TimeUnit.");
         return takeSummarySnapshotAndReset();
     }
 

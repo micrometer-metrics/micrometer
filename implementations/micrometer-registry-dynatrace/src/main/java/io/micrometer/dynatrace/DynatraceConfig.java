@@ -131,8 +131,8 @@ public interface DynatraceConfig extends StepRegistryConfig {
     /**
      * Return whether to fall back to the built-in micrometer instruments for Timer and DistributionSummary.
      *
-     * @return {@code true} if the resetting Dynatrace instruments should be used, and false if the registry should
-     * fall back to the built-in Micrometer instruments.
+     * @return {@code true} if the resetting Dynatrace instruments should be used, and {@code false} if the registry
+     * should fall back to the built-in Micrometer instruments.
      * @since 1.9.0
      */
     default boolean useDynatraceSummaryInstruments() {

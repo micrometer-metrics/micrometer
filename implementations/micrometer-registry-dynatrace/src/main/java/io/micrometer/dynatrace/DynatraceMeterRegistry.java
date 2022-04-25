@@ -35,7 +35,6 @@ import io.micrometer.dynatrace.v1.DynatraceExporterV1;
 import io.micrometer.dynatrace.v2.DynatraceExporterV2;
 
 import java.util.Arrays;
-import java.util.Objects;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ThreadFactory;
@@ -59,7 +58,6 @@ public class DynatraceMeterRegistry extends StepMeterRegistry {
     private static final ThreadFactory DEFAULT_THREAD_FACTORY = new NamedThreadFactory("dynatrace-metrics-publisher");
     private static final InternalLogger logger = InternalLoggerFactory.getInstance(DynatraceMeterRegistry.class);
 
-    private final DynatraceApiVersion apiVersion;
     private final boolean useDynatraceSummaryInstruments;
     private final AbstractDynatraceExporter exporter;
 
@@ -71,10 +69,9 @@ public class DynatraceMeterRegistry extends StepMeterRegistry {
     private DynatraceMeterRegistry(DynatraceConfig config, Clock clock, ThreadFactory threadFactory, HttpSender httpClient) {
         super(config, clock);
 
-        apiVersion = config.apiVersion();
         useDynatraceSummaryInstruments = config.useDynatraceSummaryInstruments();
 
-        if (apiVersion == DynatraceApiVersion.V2) {
+        if (config.apiVersion() == DynatraceApiVersion.V2) {
             logger.info("Exporting to Dynatrace metrics API v2");
             this.exporter = new DynatraceExporterV2(config, clock, httpClient);
             // Not used for Timer and DistributionSummary in V2 anymore, but still used for the other timer types.
@@ -103,7 +100,7 @@ public class DynatraceMeterRegistry extends StepMeterRegistry {
 
     @Override
     protected DistributionSummary newDistributionSummary(Meter.Id id, DistributionStatisticConfig distributionStatisticConfig, double scale) {
-        if (apiVersion == DynatraceApiVersion.V2 && useDynatraceSummaryInstruments) {
+        if (useDynatraceSummaryInstruments) {
             return new DynatraceDistributionSummary(id, clock, distributionStatisticConfig, scale);
         }
         return super.newDistributionSummary(id, distributionStatisticConfig, scale);
@@ -111,7 +108,7 @@ public class DynatraceMeterRegistry extends StepMeterRegistry {
 
     @Override
     protected Timer newTimer(Meter.Id id, DistributionStatisticConfig distributionStatisticConfig, PauseDetector pauseDetector) {
-        if (apiVersion == DynatraceApiVersion.V2 && useDynatraceSummaryInstruments) {
+        if (useDynatraceSummaryInstruments) {
             return new DynatraceTimer(id, clock, distributionStatisticConfig, pauseDetector, exporter.getBaseTimeUnit());
         }
         return super.newTimer(id, distributionStatisticConfig, pauseDetector);
@@ -162,7 +159,7 @@ public class DynatraceMeterRegistry extends StepMeterRegistry {
             }
 
             private boolean containsZeroPercentile(DistributionStatisticConfig config) {
-                return Arrays.stream(Objects.requireNonNull(config.getPercentiles())).anyMatch(percentile -> percentile == 0);
+                return Arrays.stream(config.getPercentiles()).anyMatch(percentile -> percentile == 0);
             }
 
             private boolean hasArtificialZerothPercentile(Meter.Id id) {

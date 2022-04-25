@@ -31,7 +31,6 @@ import static org.assertj.core.api.AssertionsForClassTypes.assertThat;
  * Tests for {@link DynatraceDistributionSummary}.
  *
  * @author Georg Pirklbauer
- * @since 1.9.0
  */
 class DynatraceDistributionSummaryTest {
     private static final Offset<Double> OFFSET = Offset.offset(0.0001);
@@ -104,7 +103,7 @@ class DynatraceDistributionSummaryTest {
         ds.record(4.76);
 
         assertMinMaxSumCount(ds.takeSummarySnapshot(), 3.14, 4.76, 7.9, 2);
-        // run twice to make sure its not reset in between
+        // run twice to make sure it's not reset in between
         assertMinMaxSumCount(ds.takeSummarySnapshot(), 3.14, 4.76, 7.9, 2);
     }
 
@@ -115,7 +114,7 @@ class DynatraceDistributionSummaryTest {
         ds.record(4.76);
 
         assertMinMaxSumCount(ds.takeSummarySnapshot(TimeUnit.MINUTES), 3.14, 4.76, 7.9, 2);
-        // run twice to make sure its not reset in between
+        // run twice to make sure it's not reset in between
         assertMinMaxSumCount(ds.takeSummarySnapshot(TimeUnit.MINUTES), 3.14, 4.76, 7.9, 2);
     }
 
@@ -127,7 +126,6 @@ class DynatraceDistributionSummaryTest {
         ds.record(4.76);
 
         assertMinMaxSumCount(ds.takeSummarySnapshotAndReset(), 3.14, 4.76, 7.9, 2);
-        // run twice to make sure its not reset in between
         assertMinMaxSumCount(ds.takeSummarySnapshotAndReset(), 0d, 0d, 0d, 0);
     }
 
@@ -138,7 +136,6 @@ class DynatraceDistributionSummaryTest {
         ds.record(4.76);
 
         assertMinMaxSumCount(ds.takeSummarySnapshotAndReset(TimeUnit.MINUTES), 3.14, 4.76, 7.9, 2);
-        // run twice to make sure its not reset in between
         assertMinMaxSumCount(ds.takeSummarySnapshotAndReset(TimeUnit.MINUTES), 0d, 0d, 0d, 0);
     }
 
