@@ -83,27 +83,26 @@ public interface ObservationHandler<T extends Observation.Context> {
     /**
      * Handler wrapping other handlers.
      */
-    @SuppressWarnings("rawtypes")
     interface CompositeObservationHandler extends ObservationHandler<Observation.Context> {
         /**
          * Returns the registered handlers.
          * @return registered handlers
          */
-        List<ObservationHandler> getHandlers();
+        List<ObservationHandler<Observation.Context>> getHandlers();
     }
 
     /**
      * Handler picking the first matching handler from the list.
      */
-    @SuppressWarnings({"unchecked", "rawtypes"})
     class FirstMatchingCompositeObservationHandler implements CompositeObservationHandler {
-        private final List<ObservationHandler> handlers;
+        private final List<ObservationHandler<Observation.Context>> handlers;
 
         /**
          * Creates a new instance of {@code FirstMatchingCompositeObservationHandler}.
          * @param handlers the handlers that are registered under the composite
          */
-        public FirstMatchingCompositeObservationHandler(ObservationHandler... handlers) {
+        @SafeVarargs
+        public FirstMatchingCompositeObservationHandler(ObservationHandler<Observation.Context>... handlers) {
             this(Arrays.asList(handlers));
         }
 
@@ -111,12 +110,12 @@ public interface ObservationHandler<T extends Observation.Context> {
          * Creates a new instance of {@code FirstMatchingCompositeObservationHandler}.
          * @param handlers the handlers that are registered under the composite
          */
-        public FirstMatchingCompositeObservationHandler(List<ObservationHandler> handlers) {
+        public FirstMatchingCompositeObservationHandler(List<ObservationHandler<Observation.Context>> handlers) {
             this.handlers = handlers;
         }
 
         @Override
-        public List<ObservationHandler> getHandlers() {
+        public List<ObservationHandler<Observation.Context>> getHandlers() {
             return this.handlers;
         }
 
@@ -150,7 +149,7 @@ public interface ObservationHandler<T extends Observation.Context> {
             return getFirstApplicableHandler(context).isPresent();
         }
 
-        private Optional<ObservationHandler> getFirstApplicableHandler(Observation.Context context) {
+        private Optional<ObservationHandler<Observation.Context>> getFirstApplicableHandler(Observation.Context context) {
             return this.handlers.stream().filter(handler -> handler.supportsContext(context)).findFirst();
         }
     }
@@ -158,15 +157,15 @@ public interface ObservationHandler<T extends Observation.Context> {
     /**
      * Handler picking all matching handlers from the list.
      */
-    @SuppressWarnings({"unchecked", "rawtypes"})
     class AllMatchingCompositeObservationHandler implements CompositeObservationHandler {
-        private final List<ObservationHandler> handlers;
+        private final List<ObservationHandler<Observation.Context>> handlers;
 
         /**
          * Creates a new instance of {@code AllMatchingCompositeObservationHandler}.
          * @param handlers the handlers that are registered under the composite
          */
-        public AllMatchingCompositeObservationHandler(ObservationHandler... handlers) {
+        @SafeVarargs
+        public AllMatchingCompositeObservationHandler(ObservationHandler<Observation.Context>... handlers) {
             this(Arrays.asList(handlers));
         }
 
@@ -174,12 +173,12 @@ public interface ObservationHandler<T extends Observation.Context> {
          * Creates a new instance of {@code AllMatchingCompositeObservationHandler}.
          * @param handlers the handlers that are registered under the composite
          */
-        public AllMatchingCompositeObservationHandler(List<ObservationHandler> handlers) {
+        public AllMatchingCompositeObservationHandler(List<ObservationHandler<Observation.Context>> handlers) {
             this.handlers = handlers;
         }
 
         @Override
-        public List<ObservationHandler> getHandlers() {
+        public List<ObservationHandler<Observation.Context>> getHandlers() {
             return this.handlers;
         }
 
@@ -213,7 +212,7 @@ public interface ObservationHandler<T extends Observation.Context> {
             return getAllApplicableHandlers(context).findAny().isPresent();
         }
 
-        private Stream<ObservationHandler> getAllApplicableHandlers(Observation.Context context) {
+        private Stream<ObservationHandler<Observation.Context>> getAllApplicableHandlers(Observation.Context context) {
             return this.handlers.stream().filter(handler -> handler.supportsContext(context));
         }
     }

@@ -92,7 +92,7 @@ class AllMatchingCompositeObservationHandlerTests {
 
     @Test
     void should_return_handlers() {
-        List<ObservationHandler> handlers = Arrays.asList(new NotMatchingHandler(), this.matchingHandler, new NotMatchingHandler(), this.matchingHandler2);
+        List<ObservationHandler<Observation.Context>> handlers = Arrays.asList(new NotMatchingHandler(), this.matchingHandler, new NotMatchingHandler(), this.matchingHandler2);
         AllMatchingCompositeObservationHandler allMatchingHandler = new AllMatchingCompositeObservationHandler(handlers);
         Assertions.assertThat(allMatchingHandler.getHandlers()).isSameAs(handlers);
     }
