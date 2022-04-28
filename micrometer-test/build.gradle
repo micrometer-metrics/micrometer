@@ -12,5 +12,14 @@ dependencies {
     api 'com.github.tomakehurst:wiremock-jre8-standalone'
     api 'org.mockito:mockito-core'
 
+    testImplementation 'org.jsr107.ri:cache-ri-impl'
+
+    // We have tests for the many features that are optional dependencies, so add
+    // them here just like a user would need to.
+    testImplementation 'com.google.guava:guava'
+    testImplementation 'com.github.ben-manes.caffeine:caffeine'
+    testImplementation 'net.sf.ehcache:ehcache'
+    testImplementation 'javax.cache:cache-api'
+    testImplementation 'com.hazelcast:hazelcast'
     testImplementation 'com.squareup.okhttp3:okhttp'
 }

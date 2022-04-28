@@ -26,8 +26,6 @@ import io.prometheus.client.exemplars.tracer.common.SpanContextSupplier;
 
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.boot.builder.SpringApplicationBuilder;
-import org.springframework.cloud.sleuth.Tracer;
-import org.springframework.cloud.sleuth.instrument.prometheus.prometheus.SleuthSpanContextSupplier;
 import org.springframework.context.annotation.Bean;
 import org.springframework.scheduling.annotation.EnableScheduling;
 
@@ -46,10 +44,5 @@ public class PrometheusSample {
     @Bean
     ExemplarSampler exemplarSampler(SpanContextSupplier spanContextSupplier) {
         return new DefaultExemplarSampler(spanContextSupplier);
-    }
-
-    @Bean
-    SpanContextSupplier spanContextSupplier(Tracer tracer) {
-        return new SleuthSpanContextSupplier(tracer);
     }
 }

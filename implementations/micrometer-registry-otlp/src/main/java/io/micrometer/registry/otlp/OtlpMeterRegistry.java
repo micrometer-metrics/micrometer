@@ -155,7 +155,7 @@ public class OtlpMeterRegistry extends PushMeterRegistry {
 
     @Override
     protected LongTaskTimer newLongTaskTimer(Meter.Id id, DistributionStatisticConfig distributionStatisticConfig) {
-        return new OtlpLongTaskTImer(id, this.clock, getBaseTimeUnit(), distributionStatisticConfig);
+        return new OtlpLongTaskTimer(id, this.clock, getBaseTimeUnit(), distributionStatisticConfig);
     }
 
     @Override
