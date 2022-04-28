@@ -21,11 +21,11 @@ import io.micrometer.core.instrument.internal.CumulativeHistogramLongTaskTimer;
 
 import java.util.concurrent.TimeUnit;
 
-class OtlpLongTaskTImer extends CumulativeHistogramLongTaskTimer implements StartTimeAwareMeter {
+class OtlpLongTaskTimer extends CumulativeHistogramLongTaskTimer implements StartTimeAwareMeter {
 
     final long startTimeNanos;
 
-    OtlpLongTaskTImer(Id id, Clock clock, TimeUnit baseTimeUnit, DistributionStatisticConfig distributionStatisticConfig) {
+    OtlpLongTaskTimer(Id id, Clock clock, TimeUnit baseTimeUnit, DistributionStatisticConfig distributionStatisticConfig) {
         super(id, clock, baseTimeUnit, distributionStatisticConfig);
         this.startTimeNanos = TimeUnit.MILLISECONDS.toNanos(clock.wallTime());
     }
