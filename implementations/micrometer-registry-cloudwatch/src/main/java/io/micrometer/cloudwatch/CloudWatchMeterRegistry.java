@@ -15,6 +15,23 @@
  */
 package io.micrometer.cloudwatch;
 
+import com.amazonaws.AbortedException;
+import com.amazonaws.handlers.AsyncHandler;
+import com.amazonaws.services.cloudwatch.AmazonCloudWatchAsync;
+import com.amazonaws.services.cloudwatch.model.Dimension;
+import com.amazonaws.services.cloudwatch.model.MetricDatum;
+import com.amazonaws.services.cloudwatch.model.PutMetricDataRequest;
+import com.amazonaws.services.cloudwatch.model.PutMetricDataResult;
+import com.amazonaws.services.cloudwatch.model.StandardUnit;
+import io.micrometer.core.instrument.*;
+import io.micrometer.core.instrument.step.StepMeterRegistry;
+import io.micrometer.core.instrument.util.NamedThreadFactory;
+import io.micrometer.core.instrument.util.StringUtils;
+import io.micrometer.core.lang.Nullable;
+import io.micrometer.core.util.internal.logging.WarnThenDebugLogger;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import java.util.Collections;
 import java.util.Date;
 import java.util.HashMap;
@@ -25,34 +42,6 @@ import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ThreadFactory;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Stream;
-
-import com.amazonaws.AbortedException;
-import com.amazonaws.handlers.AsyncHandler;
-import com.amazonaws.services.cloudwatch.AmazonCloudWatchAsync;
-import com.amazonaws.services.cloudwatch.model.Dimension;
-import com.amazonaws.services.cloudwatch.model.MetricDatum;
-import com.amazonaws.services.cloudwatch.model.PutMetricDataRequest;
-import com.amazonaws.services.cloudwatch.model.PutMetricDataResult;
-import com.amazonaws.services.cloudwatch.model.StandardUnit;
-import io.micrometer.core.instrument.Clock;
-import io.micrometer.core.instrument.Counter;
-import io.micrometer.core.instrument.DistributionSummary;
-import io.micrometer.core.instrument.FunctionCounter;
-import io.micrometer.core.instrument.FunctionTimer;
-import io.micrometer.core.instrument.Gauge;
-import io.micrometer.core.instrument.LongTaskTimer;
-import io.micrometer.core.instrument.Meter;
-import io.micrometer.core.instrument.Tag;
-import io.micrometer.core.instrument.TimeGauge;
-import io.micrometer.core.instrument.Timer;
-import io.micrometer.core.instrument.config.MissingRequiredConfigurationException;
-import io.micrometer.core.instrument.step.StepMeterRegistry;
-import io.micrometer.core.instrument.util.NamedThreadFactory;
-import io.micrometer.core.instrument.util.StringUtils;
-import io.micrometer.core.lang.Nullable;
-import io.micrometer.core.util.internal.logging.WarnThenDebugLogger;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import static java.util.stream.Collectors.toList;
 import static java.util.stream.StreamSupport.stream;
@@ -97,7 +86,8 @@ public class CloudWatchMeterRegistry extends StepMeterRegistry {
         super(config, clock);
 
         if (config.namespace() == null) {
-            throw new MissingRequiredConfigurationException("namespace must be set to report metrics to CloudWatch");
+            throw new io.micrometer.core.instrument.config.MissingRequiredConfigurationException(
+                    "namespace must be set to report metrics to CloudWatch");
         }
 
         this.amazonCloudWatchAsync = amazonCloudWatchAsync;

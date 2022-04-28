@@ -15,12 +15,10 @@
  */
 package io.micrometer.core.instrument.config;
 
-import io.micrometer.core.instrument.config.validate.Validated;
-
 /**
  * Signals that a piece of required configuration has not been provided.
  *
- * @deprecated since 1.5.0 replaced with {@link Validated} API.
+ * @deprecated since 1.5.0 replaced with {@link io.micrometer.core.instrument.config.validate.Validated} API.
  */
 @Deprecated
 public class MissingRequiredConfigurationException extends IllegalStateException {

@@ -15,17 +15,15 @@
  */
 package io.micrometer.core.instrument.push;
 
-import java.time.Duration;
-
 import io.micrometer.core.instrument.config.MeterRegistryConfig;
 import io.micrometer.core.instrument.config.validate.Validated;
 import io.micrometer.core.ipc.http.HttpSender;
 
-import static io.micrometer.core.instrument.config.MeterRegistryConfigValidator.check;
+import java.time.Duration;
+
 import static io.micrometer.core.instrument.config.MeterRegistryConfigValidator.checkAll;
-import static io.micrometer.core.instrument.config.validate.PropertyValidator.getBoolean;
-import static io.micrometer.core.instrument.config.validate.PropertyValidator.getDuration;
-import static io.micrometer.core.instrument.config.validate.PropertyValidator.getInteger;
+import static io.micrometer.core.instrument.config.MeterRegistryConfigValidator.check;
+import static io.micrometer.core.instrument.config.validate.PropertyValidator.*;
 
 /**
  * Common configuration settings for any registry that pushes aggregated metrics on a
