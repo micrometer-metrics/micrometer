@@ -15,19 +15,19 @@
  */
 package io.micrometer.newrelic;
 
+import java.util.concurrent.ThreadFactory;
+import java.util.concurrent.TimeUnit;
+
+import io.micrometer.common.lang.Nullable;
 import io.micrometer.core.instrument.Clock;
 import io.micrometer.core.instrument.config.NamingConvention;
 import io.micrometer.core.instrument.step.StepMeterRegistry;
 import io.micrometer.core.instrument.util.NamedThreadFactory;
 import io.micrometer.core.ipc.http.HttpSender;
-import io.micrometer.core.lang.Nullable;
-
-import java.util.concurrent.ThreadFactory;
-import java.util.concurrent.TimeUnit;
 
 /**
- * Publishes metrics to New Relic Insights based on client provider selected (API or Java
- * Agent). Defaults to the REST API client provider.
+ * Publishes metrics to New Relic Insights based on client provider selected (API or Java Agent).
+ * Defaults to the REST API client provider.
  *
  * @author Jon Schneider
  * @author Johnny Lim
@@ -43,20 +43,17 @@ public class NewRelicMeterRegistry extends StepMeterRegistry {
     private final Config thisConfig;
 
     /**
-     * @param config Configuration options for the registry that are describable as
-     * properties.
-     * @param clock The clock to use for timings.
+     * @param config Configuration options for the registry that are describable as properties.
+     * @param clock  The clock to use for timings.
      */
     public NewRelicMeterRegistry(NewRelicConfig config, Clock clock) {
         this(config, null, clock);
     }
 
     /**
-     * @param config Configuration options for the registry that are describable as
-     * properties.
-     * @param clientProvider Provider of the API or Agent-based client that publishes
-     * metrics to New Relic
-     * @param clock The clock to use for timings.
+     * @param config Configuration options for the registry that are describable as properties.
+     * @param clientProvider Provider of the API or Agent-based client that publishes metrics to New Relic
+     * @param clock  The clock to use for timings.
      * @since 1.4.0
      */
     public NewRelicMeterRegistry(NewRelicConfig config, @Nullable NewRelicClientProvider clientProvider, Clock clock) {
@@ -65,14 +62,14 @@ public class NewRelicMeterRegistry extends StepMeterRegistry {
 
     // VisibleForTesting
     NewRelicMeterRegistry(NewRelicConfig config, @Nullable NewRelicClientProvider clientProvider,
-            NamingConvention namingConvention, Clock clock, ThreadFactory threadFactory) {
+                NamingConvention namingConvention, Clock clock, ThreadFactory threadFactory) {
         super(config, clock);
 
         if (clientProvider == null) {
-            // default to Insight API client provider if not specified in config or
-            // provided
+            //default to Insight API client provider if not specified in config or provided
             clientProvider = (config.clientProviderType() == ClientProviderType.INSIGHTS_AGENT)
-                    ? new NewRelicInsightsAgentClientProvider(config) : new NewRelicInsightsApiClientProvider(config);
+                    ? new NewRelicInsightsAgentClientProvider(config)
+                    : new NewRelicInsightsApiClientProvider(config);
         }
 
         this.clientProvider = clientProvider;
@@ -109,16 +106,13 @@ public class NewRelicMeterRegistry extends StepMeterRegistry {
     }
 
     public static class Builder {
-
         private final NewRelicConfig config;
 
         @Nullable
         private NewRelicClientProvider clientProvider;
 
         private NamingConvention convention = new NewRelicNamingConvention();
-
         private Clock clock = Clock.SYSTEM;
-
         private ThreadFactory threadFactory = DEFAULT_THREAD_FACTORY;
 
         @Nullable
@@ -129,8 +123,7 @@ public class NewRelicMeterRegistry extends StepMeterRegistry {
         }
 
         /**
-         * Use the client provider. This will override
-         * {@link NewRelicConfig#clientProviderType()}.
+         * Use the client provider. This will override {@link NewRelicConfig#clientProviderType()}.
          * @param clientProvider client provider to use
          * @return builder
          * @since 1.4.0
@@ -164,8 +157,7 @@ public class NewRelicMeterRegistry extends StepMeterRegistry {
         /**
          * @param httpClient http client to use for publishing
          * @return builder
-         * @deprecated since 1.4.0 use {@link #clientProvider(NewRelicClientProvider)}
-         * instead.
+         * @deprecated since 1.4.0 use {@link #clientProvider(NewRelicClientProvider)} instead.
          */
         @Deprecated
         public Builder httpClient(HttpSender httpClient) {
@@ -176,14 +168,11 @@ public class NewRelicMeterRegistry extends StepMeterRegistry {
         public NewRelicMeterRegistry build() {
             if (httpClient != null) {
                 if (clientProvider != null) {
-                    throw new IllegalStateException(
-                            "Please remove httpClient() configuration as it has been deprecated in favour of clientProvider().");
+                    throw new IllegalStateException("Please remove httpClient() configuration as it has been deprecated in favour of clientProvider().");
                 }
                 clientProvider = new NewRelicInsightsApiClientProvider(config, httpClient, convention);
             }
             return new NewRelicMeterRegistry(config, clientProvider, convention, clock, threadFactory);
         }
-
     }
-
 }

@@ -15,14 +15,14 @@
  */
 package io.micrometer.core.instrument.binder.jvm;
 
-import io.micrometer.core.lang.Nullable;
-
 import java.lang.management.ManagementFactory;
 import java.lang.management.MemoryPoolMXBean;
 import java.lang.management.MemoryType;
 import java.lang.management.MemoryUsage;
 import java.util.function.ToLongFunction;
 import java.util.stream.Stream;
+
+import io.micrometer.common.lang.Nullable;
 
 class JvmMemory {
 

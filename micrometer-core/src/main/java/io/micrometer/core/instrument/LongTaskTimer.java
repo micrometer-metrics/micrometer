@@ -15,10 +15,10 @@
  */
 package io.micrometer.core.instrument;
 
+import io.micrometer.common.lang.Nullable;
 import io.micrometer.core.annotation.Timed;
 import io.micrometer.core.instrument.distribution.DistributionStatisticConfig;
 import io.micrometer.core.instrument.distribution.HistogramSupport;
-import io.micrometer.core.lang.Nullable;
 
 import java.time.Duration;
 import java.util.Arrays;

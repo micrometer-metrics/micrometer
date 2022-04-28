@@ -15,10 +15,10 @@
  */
 package io.micrometer.influx;
 
-import io.micrometer.core.lang.Nullable;
-
 import java.util.Objects;
 import java.util.stream.Stream;
+
+import io.micrometer.common.lang.Nullable;
 
 /**
  * Builds a create database query for influxdb. It is supposed to be of the following

@@ -15,10 +15,10 @@
  */
 package io.micrometer.core.instrument.internal;
 
+import io.micrometer.common.lang.Nullable;
 import io.micrometer.core.instrument.AbstractMeter;
 import io.micrometer.core.instrument.Gauge;
 import io.micrometer.core.instrument.Meter;
-import io.micrometer.core.lang.Nullable;
 import io.micrometer.core.util.internal.logging.WarnThenDebugLogger;
 
 import java.lang.ref.WeakReference;

@@ -15,10 +15,10 @@
  */
 package io.micrometer.core.instrument.config.validate;
 
+import io.micrometer.common.lang.NonNull;
+import io.micrometer.common.lang.Nullable;
 import io.micrometer.core.annotation.Incubating;
 import io.micrometer.core.instrument.util.StringUtils;
-import io.micrometer.core.lang.NonNull;
-import io.micrometer.core.lang.Nullable;
 
 import java.util.Collections;
 import java.util.Iterator;

@@ -15,9 +15,9 @@
  */
 package io.micrometer.core.instrument.search;
 
-import io.micrometer.core.instrument.Timer;
+import io.micrometer.common.lang.Nullable;
 import io.micrometer.core.instrument.*;
-import io.micrometer.core.lang.Nullable;
+import io.micrometer.core.instrument.Timer;
 
 import java.util.*;
 import java.util.function.Predicate;
@@ -27,17 +27,14 @@ import java.util.stream.Stream;
 import static java.util.stream.Collectors.toList;
 
 /**
- * Search that requires the search terms are satisfiable, or an
- * {@link MeterNotFoundException} is thrown.
+ * Search that requires the search terms are satisfiable, or an {@link MeterNotFoundException} is thrown.
  *
  * @author Jon Schneider
  */
 public final class RequiredSearch {
-
     final MeterRegistry registry;
 
     final List<Tag> requiredTags = new ArrayList<>();
-
     final Set<String> requiredTagKeys = new HashSet<>();
 
     @Nullable
@@ -46,12 +43,14 @@ public final class RequiredSearch {
     @Nullable
     Predicate<String> nameMatches;
 
+
     private RequiredSearch(MeterRegistry registry) {
         this.registry = registry;
     }
 
     /**
      * Meter contains a tag with the exact name.
+     *
      * @param exactName Name to match against.
      * @return This search.
      */
@@ -63,6 +62,7 @@ public final class RequiredSearch {
 
     /**
      * Meter contains a tag matching the name predicate.
+     *
      * @param nameMatches Name matching predicate.
      * @return This search.
      */
@@ -73,6 +73,7 @@ public final class RequiredSearch {
 
     /**
      * Meter contains a tag with the matching tag keys and values.
+     *
      * @param tags The tags to match.
      * @return This search.
      */
@@ -83,8 +84,8 @@ public final class RequiredSearch {
 
     /**
      * Meter contains a tag with the matching tag keys and values.
-     * @param tags Must be an even number of arguments representing key/value pairs of
-     * tags.
+     *
+     * @param tags Must be an even number of arguments representing key/value pairs of tags.
      * @return This search.
      */
     public RequiredSearch tags(String... tags) {
@@ -93,7 +94,8 @@ public final class RequiredSearch {
 
     /**
      * Meter contains a tag with the matching key and value.
-     * @param tagKey The tag key to match.
+     *
+     * @param tagKey   The tag key to match.
      * @param tagValue The tag value to match.
      * @return This search.
      */
@@ -103,6 +105,7 @@ public final class RequiredSearch {
 
     /**
      * Meter contains a tag with the matching keys.
+     *
      * @param tagKeys The tag keys to match.
      * @return This search.
      */
@@ -184,7 +187,10 @@ public final class RequiredSearch {
     }
 
     private <M extends Meter> M findOne(Class<M> clazz) {
-        Optional<M> meter = meterStream().filter(clazz::isInstance).findAny().map(clazz::cast);
+        Optional<M> meter = meterStream()
+                .filter(clazz::isInstance)
+                .findAny()
+                .map(clazz::cast);
 
         if (meter.isPresent()) {
             return meter.get();
@@ -194,7 +200,10 @@ public final class RequiredSearch {
     }
 
     private <M extends Meter> Collection<M> findAll(Class<M> clazz) {
-        List<M> meters = meterStream().filter(clazz::isInstance).map(clazz::cast).collect(toList());
+        List<M> meters = meterStream()
+                .filter(clazz::isInstance)
+                .map(clazz::cast)
+                .collect(toList());
 
         if (meters.isEmpty()) {
             throw MeterNotFoundException.forSearch(this, clazz);
@@ -295,11 +304,11 @@ public final class RequiredSearch {
 
     /**
      * Initiate a new search for meters inside a registry.
+     *
      * @param registry The registry to locate meters in.
      * @return A new search.
      */
     public static RequiredSearch in(MeterRegistry registry) {
         return new RequiredSearch(registry);
     }
-
 }

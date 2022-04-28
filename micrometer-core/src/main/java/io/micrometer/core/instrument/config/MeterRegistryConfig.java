@@ -15,9 +15,9 @@
  */
 package io.micrometer.core.instrument.config;
 
+import io.micrometer.common.lang.Nullable;
 import io.micrometer.core.instrument.config.validate.Validated;
 import io.micrometer.core.instrument.config.validate.ValidationException;
-import io.micrometer.core.lang.Nullable;
 
 public interface MeterRegistryConfig {
 

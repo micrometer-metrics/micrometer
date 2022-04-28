@@ -15,29 +15,35 @@
  */
 package io.micrometer.core.instrument.binder.cache;
 
+import static java.util.Objects.requireNonNull;
+
 import com.github.benmanes.caffeine.cache.Cache;
 import com.github.benmanes.caffeine.cache.RemovalCause;
 import com.github.benmanes.caffeine.cache.stats.CacheStats;
 import com.github.benmanes.caffeine.cache.stats.StatsCounter;
-import io.micrometer.core.instrument.*;
-import io.micrometer.core.lang.NonNullApi;
-import io.micrometer.core.lang.NonNullFields;
+import io.micrometer.common.lang.NonNullApi;
+import io.micrometer.common.lang.NonNullFields;
+import io.micrometer.core.instrument.Counter;
+import io.micrometer.core.instrument.DistributionSummary;
+import io.micrometer.core.instrument.Gauge;
+import io.micrometer.core.instrument.MeterRegistry;
+import io.micrometer.core.instrument.Tag;
+import io.micrometer.core.instrument.Tags;
+import io.micrometer.core.instrument.Timer;
 
 import java.util.Arrays;
 import java.util.EnumMap;
 import java.util.concurrent.TimeUnit;
 
-import static java.util.Objects.requireNonNull;
-
 /**
- * A {@link StatsCounter} instrumented with Micrometer. This will provide more detailed
- * metrics than using {@link CaffeineCacheMetrics}.
+ * A {@link StatsCounter} instrumented with Micrometer. This will provide more detailed metrics than using
+ * {@link CaffeineCacheMetrics}.
  * <p>
- * Note that this doesn't instrument the cache's size by default. Use
- * {@link #registerSizeMetric(Cache)} to do so after the cache has been built.
+ * Note that this doesn't instrument the cache's size by default. Use {@link #registerSizeMetric(Cache)} to do so after
+ * the cache has been built.
  * <p>
- * Use {@link com.github.benmanes.caffeine.cache.Caffeine#recordStats} to supply this
- * class to the cache builder: <pre>{@code
+ * Use {@link com.github.benmanes.caffeine.cache.Caffeine#recordStats} to supply this class to the cache builder:
+ * <pre>{@code
  * MeterRegistry registry = ...;
  * Cache<Key, Graph> graphs = Caffeine.newBuilder()
  *     .maximumSize(10_000)
@@ -56,22 +62,18 @@ import static java.util.Objects.requireNonNull;
 public final class CaffeineStatsCounter implements StatsCounter {
 
     private final MeterRegistry registry;
-
     private final Tags tags;
 
     private final Counter hitCount;
-
     private final Counter missCount;
-
     private final Timer loadSuccesses;
-
     private final Timer loadFailures;
-
     private final EnumMap<RemovalCause, DistributionSummary> evictionMetrics;
 
     /**
      * Constructs an instance for use by a single cache.
-     * @param registry the registry of metric instances
+     *
+     * @param registry  the registry of metric instances
      * @param cacheName will be used to tag metrics with "cache".
      */
     public CaffeineStatsCounter(MeterRegistry registry, String cacheName) {
@@ -80,7 +82,8 @@ public final class CaffeineStatsCounter implements StatsCounter {
 
     /**
      * Constructs an instance for use by a single cache.
-     * @param registry the registry of metric instances
+     *
+     * @param registry  the registry of metric instances
      * @param cacheName will be used to tag metrics with "cache".
      * @param extraTags tags to apply to all recorded metrics.
      */
@@ -103,19 +106,21 @@ public final class CaffeineStatsCounter implements StatsCounter {
                 .description("Failed cache loads.").register(registry);
 
         evictionMetrics = new EnumMap<>(RemovalCause.class);
-        Arrays.stream(RemovalCause.values())
-                .forEach(cause -> evictionMetrics.put(cause,
-                        DistributionSummary.builder("cache.evictions").tag("cause", cause.name()).tags(tags)
-                                .description("Entries evicted from cache.").register(registry)));
+        Arrays.stream(RemovalCause.values()).forEach(cause -> evictionMetrics.put(
+                cause,
+                DistributionSummary.builder("cache.evictions").tag("cause", cause.name()).tags(tags)
+                        .description("Entries evicted from cache.").register(registry)));
     }
 
     /**
      * Register a gauge for the size of the given cache.
+     *
      * @param cache cache to register a gauge for its size
      */
     public void registerSizeMetric(Cache<?, ?> cache) {
         Gauge.builder("cache.size", cache, Cache::estimatedSize).tags(tags)
-                .description("The approximate number of entries in this cache.").register(registry);
+                .description("The approximate number of entries in this cache.")
+                .register(registry);
     }
 
     @Override
@@ -149,17 +154,20 @@ public final class CaffeineStatsCounter implements StatsCounter {
 
     @Override
     public CacheStats snapshot() {
-        return CacheStats.of((long) hitCount.count(), (long) missCount.count(), loadSuccesses.count(),
+        return CacheStats.of(
+                (long) hitCount.count(),
+                (long) missCount.count(),
+                loadSuccesses.count(),
                 loadFailures.count(),
                 (long) loadSuccesses.totalTime(TimeUnit.NANOSECONDS)
                         + (long) loadFailures.totalTime(TimeUnit.NANOSECONDS),
                 evictionMetrics.values().stream().mapToLong(DistributionSummary::count).sum(),
-                (long) evictionMetrics.values().stream().mapToDouble(DistributionSummary::totalAmount).sum());
+                (long) evictionMetrics.values().stream().mapToDouble(DistributionSummary::totalAmount).sum()
+        );
     }
 
     @Override
     public String toString() {
         return snapshot().toString();
     }
-
 }

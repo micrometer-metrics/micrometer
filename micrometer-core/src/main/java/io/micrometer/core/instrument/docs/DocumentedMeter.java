@@ -17,8 +17,8 @@
 package io.micrometer.core.instrument.docs;
 
 import io.micrometer.common.docs.KeyName;
+import io.micrometer.common.lang.Nullable;
 import io.micrometer.core.instrument.Meter;
-import io.micrometer.core.lang.Nullable;
 
 /**
  * In order to describe your metrics via e.g. enums instead of Strings you can use this

@@ -15,9 +15,9 @@
  */
 package io.micrometer.core.instrument;
 
-import io.micrometer.core.lang.Nullable;
-
 import java.util.function.ToDoubleFunction;
+
+import io.micrometer.common.lang.Nullable;
 
 /**
  * @param <T> The type of object from which the gauge's instantaneous value is determined.

@@ -15,9 +15,9 @@
  */
 package io.micrometer.core.instrument;
 
+import io.micrometer.common.lang.Nullable;
 import io.micrometer.core.annotation.Incubating;
 import io.micrometer.core.instrument.distribution.HistogramGauges;
-import io.micrometer.core.lang.Nullable;
 
 import java.util.Collections;
 import java.util.function.Supplier;

@@ -15,9 +15,9 @@
  */
 package io.micrometer.humio;
 
+import io.micrometer.common.lang.Nullable;
 import io.micrometer.core.instrument.Meter;
 import io.micrometer.core.instrument.config.NamingConvention;
-import io.micrometer.core.lang.Nullable;
 
 /**
  * {@link NamingConvention} for Humio.

@@ -15,10 +15,10 @@
  */
 package io.micrometer.core.instrument;
 
-import io.micrometer.core.lang.Nullable;
-
 import java.util.Collections;
 import java.util.function.ToDoubleFunction;
+
+import io.micrometer.common.lang.Nullable;
 
 /**
  * A counter that tracks a monotonically increasing function.

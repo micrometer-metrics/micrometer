@@ -15,9 +15,9 @@
  */
 package io.micrometer.humio;
 
+import io.micrometer.common.lang.Nullable;
 import io.micrometer.core.instrument.config.validate.Validated;
 import io.micrometer.core.instrument.step.StepRegistryConfig;
-import io.micrometer.core.lang.Nullable;
 
 import java.time.Duration;
 import java.util.Map;

@@ -16,10 +16,10 @@
 package io.micrometer.dynatrace.v2;
 
 import com.dynatrace.file.util.DynatraceFileBasedConfigurationProvider;
+import io.micrometer.common.lang.Nullable;
 import io.micrometer.core.instrument.Timer;
 import io.micrometer.core.instrument.*;
 import io.micrometer.core.ipc.http.HttpSender;
-import io.micrometer.core.lang.Nullable;
 import io.micrometer.core.util.internal.logging.LogEvent;
 import io.micrometer.core.util.internal.logging.MockLogger;
 import io.micrometer.core.util.internal.logging.MockLoggerFactory;

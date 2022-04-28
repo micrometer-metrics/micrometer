@@ -15,15 +15,15 @@
  */
 package io.micrometer.core.instrument.binder.okhttp3;
 
+import io.micrometer.common.lang.NonNullApi;
+import io.micrometer.common.lang.NonNullFields;
+import io.micrometer.common.lang.Nullable;
 import io.micrometer.core.instrument.MeterRegistry;
 import io.micrometer.core.instrument.Tag;
 import io.micrometer.core.instrument.Tags;
 import io.micrometer.core.instrument.Timer;
-import io.micrometer.core.lang.NonNullApi;
-import io.micrometer.core.lang.NonNullFields;
-import io.micrometer.core.lang.Nullable;
-import okhttp3.EventListener;
 import okhttp3.*;
+import okhttp3.EventListener;
 
 import java.io.IOException;
 import java.lang.reflect.Method;
@@ -41,11 +41,10 @@ import static java.util.stream.StreamSupport.stream;
 /**
  * {@link EventListener} for collecting metrics from {@link OkHttpClient}.
  * <p>
- * {@literal uri} tag is usually limited to URI patterns to mitigate tag cardinality
- * explosion but {@link OkHttpClient} doesn't provide URI patterns. We provide
- * {@value OkHttpMetricsEventListener#URI_PATTERN} header to support {@literal uri} tag or
- * you can configure a {@link Builder#uriMapper(Function) URI mapper} to provide your own
- * tag values for {@literal uri} tag.
+ * {@literal uri} tag is usually limited to URI patterns to mitigate tag cardinality explosion but {@link OkHttpClient}
+ * doesn't provide URI patterns. We provide {@value OkHttpMetricsEventListener#URI_PATTERN} header to support
+ * {@literal uri} tag or you can configure a {@link Builder#uriMapper(Function) URI mapper} to provide your own tag
+ * values for {@literal uri} tag.
  *
  * @author Bjarte S. Karlsen
  * @author Jon Schneider
@@ -68,52 +67,48 @@ public class OkHttpMetricsEventListener extends EventListener {
     }
 
     private static final String TAG_TARGET_SCHEME = "target.scheme";
-
     private static final String TAG_TARGET_HOST = "target.host";
-
     private static final String TAG_TARGET_PORT = "target.port";
 
     private static final String TAG_VALUE_UNKNOWN = "UNKNOWN";
 
-    private static final Tags TAGS_TARGET_UNKNOWN = Tags.of(TAG_TARGET_SCHEME, TAG_VALUE_UNKNOWN, TAG_TARGET_HOST,
-            TAG_VALUE_UNKNOWN, TAG_TARGET_PORT, TAG_VALUE_UNKNOWN);
+    private static final Tags TAGS_TARGET_UNKNOWN = Tags.of(
+            TAG_TARGET_SCHEME, TAG_VALUE_UNKNOWN,
+            TAG_TARGET_HOST, TAG_VALUE_UNKNOWN,
+            TAG_TARGET_PORT, TAG_VALUE_UNKNOWN
+    );
 
     @Nullable
     private static Method getMethod(Class<?>... parameterTypes) {
         try {
             return Request.class.getMethod("tag", parameterTypes);
-        }
-        catch (NoSuchMethodException e) {
+        } catch (NoSuchMethodException e) {
             return null;
         }
     }
 
     private final MeterRegistry registry;
-
     private final String requestsMetricName;
-
     private final Function<Request, String> urlMapper;
-
     private final Iterable<Tag> extraTags;
-
     private final Iterable<BiFunction<Request, Response, Tag>> contextSpecificTags;
-
     private final Iterable<Tag> unknownRequestTags;
-
     private final boolean includeHostTag;
 
     // VisibleForTesting
     final ConcurrentMap<Call, CallState> callState = new ConcurrentHashMap<>();
 
-    protected OkHttpMetricsEventListener(MeterRegistry registry, String requestsMetricName,
-            Function<Request, String> urlMapper, Iterable<Tag> extraTags,
-            Iterable<BiFunction<Request, Response, Tag>> contextSpecificTags) {
+    protected OkHttpMetricsEventListener(MeterRegistry registry, String requestsMetricName, Function<Request, String> urlMapper,
+                                         Iterable<Tag> extraTags,
+                                         Iterable<BiFunction<Request, Response, Tag>> contextSpecificTags) {
         this(registry, requestsMetricName, urlMapper, extraTags, contextSpecificTags, emptyList(), true);
     }
 
     OkHttpMetricsEventListener(MeterRegistry registry, String requestsMetricName, Function<Request, String> urlMapper,
-            Iterable<Tag> extraTags, Iterable<BiFunction<Request, Response, Tag>> contextSpecificTags,
-            Iterable<String> requestTagKeys, boolean includeHostTag) {
+                               Iterable<Tag> extraTags,
+                               Iterable<BiFunction<Request, Response, Tag>> contextSpecificTags,
+                               Iterable<String> requestTagKeys,
+                               boolean includeHostTag) {
         this.registry = registry;
         this.requestsMetricName = requestsMetricName;
         this.urlMapper = urlMapper;
@@ -165,19 +160,26 @@ public class OkHttpMetricsEventListener extends EventListener {
         Request request = state.request;
         boolean requestAvailable = request != null;
 
-        Iterable<Tag> tags = Tags
-                .of("method", requestAvailable ? request.method() : TAG_VALUE_UNKNOWN, "uri", getUriTag(state, request),
-                        "status", getStatusMessage(state.response, state.exception))
+        Iterable<Tag> tags = Tags.of(
+                        "method", requestAvailable ? request.method() : TAG_VALUE_UNKNOWN,
+                        "uri", getUriTag(state, request),
+                        "status", getStatusMessage(state.response, state.exception)
+                )
                 .and(extraTags)
                 .and(stream(contextSpecificTags.spliterator(), false)
-                        .map(contextTag -> contextTag.apply(request, state.response)).collect(toList()))
-                .and(getRequestTags(request)).and(generateTagsForRoute(request));
+                        .map(contextTag -> contextTag.apply(request, state.response))
+                        .collect(toList()))
+                .and(getRequestTags(request))
+                .and(generateTagsForRoute(request));
 
         if (includeHostTag) {
             tags = Tags.of(tags).and("host", requestAvailable ? request.url().host() : TAG_VALUE_UNKNOWN);
         }
 
-        Timer.builder(this.requestsMetricName).tags(tags).description("Timer of OkHttp operation").register(registry)
+        Timer.builder(this.requestsMetricName)
+                .tags(tags)
+                .description("Timer of OkHttp operation")
+                .register(registry)
                 .record(registry.config().clock().monotonicTime() - state.startTime, TimeUnit.NANOSECONDS);
     }
 
@@ -185,16 +187,19 @@ public class OkHttpMetricsEventListener extends EventListener {
         if (request == null) {
             return TAGS_TARGET_UNKNOWN;
         }
-        return Tags.of(TAG_TARGET_SCHEME, request.url().scheme(), TAG_TARGET_HOST, request.url().host(),
-                TAG_TARGET_PORT, Integer.toString(request.url().port()));
+        return Tags.of(
+                TAG_TARGET_SCHEME, request.url().scheme(),
+                TAG_TARGET_HOST, request.url().host(),
+                TAG_TARGET_PORT, Integer.toString(request.url().port())
+        );
     }
 
     private String getUriTag(CallState state, @Nullable Request request) {
         if (request == null) {
             return TAG_VALUE_UNKNOWN;
         }
-        return state.response != null && (state.response.code() == 404 || state.response.code() == 301) ? "NOT_FOUND"
-                : urlMapper.apply(request);
+        return state.response != null && (state.response.code() == 404 || state.response.code() == 301)
+                    ? "NOT_FOUND" : urlMapper.apply(request);
     }
 
     private Iterable<Tag> getRequestTags(@Nullable Request request) {
@@ -228,15 +233,11 @@ public class OkHttpMetricsEventListener extends EventListener {
 
     // VisibleForTesting
     static class CallState {
-
         final long startTime;
-
         @Nullable
         final Request request;
-
         @Nullable
         Response response;
-
         @Nullable
         IOException exception;
 
@@ -244,24 +245,15 @@ public class OkHttpMetricsEventListener extends EventListener {
             this.startTime = startTime;
             this.request = request;
         }
-
     }
 
     public static class Builder {
-
         private final MeterRegistry registry;
-
         private final String name;
-
-        private Function<Request, String> uriMapper = (request) -> Optional.ofNullable(request.header(URI_PATTERN))
-                .orElse("none");
-
+        private Function<Request, String> uriMapper = (request) -> Optional.ofNullable(request.header(URI_PATTERN)).orElse("none");
         private Tags tags = Tags.empty();
-
         private Collection<BiFunction<Request, Response, Tag>> contextSpecificTags = new ArrayList<>();
-
         private boolean includeHostTag = true;
-
         private Iterable<String> requestTagKeys = Collections.emptyList();
 
         Builder(MeterRegistry registry, String name) {
@@ -276,6 +268,7 @@ public class OkHttpMetricsEventListener extends EventListener {
 
         /**
          * Add a {@link Tag} to any already configured tags on this Builder.
+         *
          * @param tag tag to add
          * @return this builder
          * @since 1.5.0
@@ -287,6 +280,7 @@ public class OkHttpMetricsEventListener extends EventListener {
 
         /**
          * Add a context-specific tag.
+         *
          * @param contextSpecificTag function to create a context-specific tag
          * @return this builder
          * @since 1.5.0
@@ -302,11 +296,11 @@ public class OkHttpMetricsEventListener extends EventListener {
         }
 
         /**
-         * Historically, OkHttp Metrics provided by {@link OkHttpMetricsEventListener}
-         * included a {@code host} tag for the target host being called. To align with
-         * other HTTP client metrics, this was changed to {@code target.host}, but to
-         * maintain backwards compatibility the {@code host} tag can also be included. By
-         * default, {@code includeHostTag} is {@literal true} so both tags are included.
+         * Historically, OkHttp Metrics provided by {@link OkHttpMetricsEventListener} included a
+         * {@code host} tag for the target host being called. To align with other HTTP client metrics,
+         * this was changed to {@code target.host}, but to maintain backwards compatibility the {@code host}
+         * tag can also be included. By default, {@code includeHostTag} is {@literal true} so both tags are included.
+         *
          * @param includeHostTag whether to include the {@code host} tag
          * @return this builder
          * @since 1.5.0
@@ -319,9 +313,9 @@ public class OkHttpMetricsEventListener extends EventListener {
         /**
          * Tag keys for {@link Request#tag()} or {@link Request#tag(Class)}.
          *
-         * These keys will be added with {@literal UNKNOWN} values when {@link Request} is
-         * {@literal null}. Note that this is required only for Prometheus as it requires
-         * tag match for the same metric.
+         * These keys will be added with {@literal UNKNOWN} values when {@link Request} is {@literal null}.
+         * Note that this is required only for Prometheus as it requires tag match for the same metric.
+         *
          * @param requestTagKeys request tag keys
          * @return this builder
          * @since 1.3.9
@@ -333,9 +327,9 @@ public class OkHttpMetricsEventListener extends EventListener {
         /**
          * Tag keys for {@link Request#tag()} or {@link Request#tag(Class)}.
          *
-         * These keys will be added with {@literal UNKNOWN} values when {@link Request} is
-         * {@literal null}. Note that this is required only for Prometheus as it requires
-         * tag match for the same metric.
+         * These keys will be added with {@literal UNKNOWN} values when {@link Request} is {@literal null}.
+         * Note that this is required only for Prometheus as it requires tag match for the same metric.
+         *
          * @param requestTagKeys request tag keys
          * @return this builder
          * @since 1.3.9
@@ -346,10 +340,7 @@ public class OkHttpMetricsEventListener extends EventListener {
         }
 
         public OkHttpMetricsEventListener build() {
-            return new OkHttpMetricsEventListener(registry, name, uriMapper, tags, contextSpecificTags, requestTagKeys,
-                    includeHostTag);
+            return new OkHttpMetricsEventListener(registry, name, uriMapper, tags, contextSpecificTags, requestTagKeys, includeHostTag);
         }
-
     }
-
 }

@@ -16,9 +16,9 @@
 package io.micrometer.ganglia;
 
 import info.ganglia.gmetric4j.gmetric.GMetric;
+import io.micrometer.common.lang.Nullable;
 import io.micrometer.core.instrument.config.validate.Validated;
 import io.micrometer.core.instrument.step.StepRegistryConfig;
-import io.micrometer.core.lang.Nullable;
 
 import java.util.concurrent.TimeUnit;
 

@@ -15,11 +15,11 @@
  */
 package io.micrometer.core.instrument;
 
-import io.micrometer.core.lang.Nullable;
-
 import java.util.*;
 import java.util.stream.Stream;
 import java.util.stream.StreamSupport;
+
+import io.micrometer.common.lang.Nullable;
 
 import static java.util.stream.Collectors.joining;
 

@@ -15,10 +15,10 @@
  */
 package io.micrometer.core.instrument.composite;
 
+import io.micrometer.common.lang.Nullable;
 import io.micrometer.core.instrument.MeterRegistry;
 import io.micrometer.core.instrument.TimeGauge;
 import io.micrometer.core.instrument.noop.NoopTimeGauge;
-import io.micrometer.core.lang.Nullable;
 
 import java.lang.ref.WeakReference;
 import java.util.concurrent.TimeUnit;
