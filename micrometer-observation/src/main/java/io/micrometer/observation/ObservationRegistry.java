@@ -116,9 +116,9 @@ public interface ObservationRegistry {
         }
 
         /**
-         * Register a key value provider for the {@link Observation observations}.
+         * Register a key values provider for the {@link Observation observations}.
          *
-         * @param keyValuesProvider key value provider to add to the current configuration
+         * @param keyValuesProvider key values provider to add to the current configuration
          * @return This configuration instance
          */
         public ObservationConfig keyValuesProvider(Observation.GlobalKeyValuesProvider<?> keyValuesProvider) {

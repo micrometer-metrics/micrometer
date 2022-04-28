@@ -42,7 +42,7 @@ final class NoopObservation implements Observation {
     }
 
     @Override
-    public Observation lowCardinalityKeyValue(KeyValue tag) {
+    public Observation lowCardinalityKeyValue(KeyValue keyValue) {
         return this;
     }
 
@@ -52,7 +52,7 @@ final class NoopObservation implements Observation {
     }
 
     @Override
-    public Observation highCardinalityKeyValue(KeyValue tag) {
+    public Observation highCardinalityKeyValue(KeyValue keyValue) {
         return this;
     }
 

@@ -39,7 +39,7 @@ import io.micrometer.core.lang.Nullable;
  */
 public interface DocumentedMeter {
     /**
-     * Empty tag keys.
+     * Empty key names.
      */
     KeyName[] EMPTY = new KeyName[0];
 
@@ -81,18 +81,18 @@ public interface DocumentedMeter {
     }
 
     /**
-     * Allowed tag keys.
+     * Allowed key names.
      *
-     * @return allowed tag keys - if set will override any tag keys coming from {@link DocumentedMeter#overridesDefaultMetricFrom()}
+     * @return allowed key names - if set will override any key names coming from {@link DocumentedMeter#overridesDefaultMetricFrom()}
      */
     default KeyName[] getKeyNames() {
         return EMPTY;
     }
 
     /**
-     * Additional tag keys.
+     * Additional key names.
      *
-     * @return additional tag keys - if set will append any tag keys coming from {@link DocumentedMeter#overridesDefaultMetricFrom()}
+     * @return additional key names - if set will append any key names coming from {@link DocumentedMeter#overridesDefaultMetricFrom()}
      */
     default KeyName[] getAdditionalKeyNames() {
         return EMPTY;

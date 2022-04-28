@@ -123,22 +123,22 @@ public interface Observation {
     Observation contextualName(String contextualName);
 
     /**
-     * Sets a low cardinality tag. Low cardinality means that this tag
+     * Sets a low cardinality key value. Low cardinality means that this key value
      * will have a bounded number of possible values. A templated HTTP URL is a good example
-     * of such a tag (e.g. /foo/{userId}).
+     * of such a key value (e.g. /foo/{userId}).
      *
-     * @param tag tag
+     * @param keyValue key value
      * @return this
      */
-    Observation lowCardinalityKeyValue(KeyValue tag);
+    Observation lowCardinalityKeyValue(KeyValue keyValue);
 
     /**
-     * Sets a low cardinality tag. Low cardinality means that this tag
+     * Sets a low cardinality key value. Low cardinality means that this key value
      * will have a bounded number of possible values. A templated HTTP URL is a good example
-     * of such a tag (e.g. /foo/{userId}).
+     * of such a key value (e.g. /foo/{userId}).
      *
-     * @param key tag key
-     * @param value tag value
+     * @param key key
+     * @param value value
      * @return this
      */
     default Observation lowCardinalityKeyValue(String key, String value) {
@@ -146,22 +146,22 @@ public interface Observation {
     }
 
     /**
-     * Sets a high cardinality tag. High cardinality means that this tag
+     * Sets a high cardinality key value. High cardinality means that this key value
      * will have possible an unbounded number of possible values. An HTTP URL is a good example
-     * of such a tag (e.g. /foo/bar, /foo/baz etc.).
+     * of such a key value (e.g. /foo/bar, /foo/baz etc.).
      *
-     * @param tag tag
+     * @param keyValue key value
      * @return this
      */
-    Observation highCardinalityKeyValue(KeyValue tag);
+    Observation highCardinalityKeyValue(KeyValue keyValue);
 
     /**
-     * Sets a high cardinality tag. High cardinality means that this tag
+     * Sets a high cardinality key value. High cardinality means that this key value
      * will have possible an unbounded number of possible values. An HTTP URL is a good example
-     * of such a tag (e.g. /foo/bar, /foo/baz etc.).
+     * of such a key value (e.g. /foo/bar, /foo/baz etc.).
      *
-     * @param key tag key
-     * @param value tag value
+     * @param key key
+     * @param value value
      * @return this
      */
     default Observation highCardinalityKeyValue(String key, String value) {
@@ -178,9 +178,9 @@ public interface Observation {
     }
 
     /**
-     * Adds a key value provider that can be used to attach tags to the observation
+     * Adds a key values provider that can be used to attach key values to the observation
      *
-     * @param keyValuesProvider key value provider
+     * @param keyValuesProvider key values provider
      * @return this
      */
     Observation keyValuesProvider(KeyValuesProvider<?> keyValuesProvider);
@@ -611,41 +611,41 @@ public interface Observation {
         }
 
         /**
-         * Adds a low cardinality tag - those will be appended to those
+         * Adds a low cardinality key value - those will be appended to those
          * fetched from the {@link KeyValuesProvider#getLowCardinalityKeyValues(Context)} method.
          *
-         * @param tag a tag
+         * @param keyValue a key value
          */
-        void addLowCardinalityKeyValue(KeyValue tag) {
-            this.lowCardinalityKeyValues.add(tag);
+        void addLowCardinalityKeyValue(KeyValue keyValue) {
+            this.lowCardinalityKeyValues.add(keyValue);
         }
 
         /**
-         * Adds a high cardinality tag - those will be appended to those
+         * Adds a high cardinality key value - those will be appended to those
          * fetched from the {@link KeyValuesProvider#getHighCardinalityKeyValues(Context)} method.
          *
-         * @param tag a tag
+         * @param keyValue a key value
          */
-        void addHighCardinalityKeyValue(KeyValue tag) {
-            this.highCardinalityKeyValues.add(tag);
+        void addHighCardinalityKeyValue(KeyValue keyValue) {
+            this.highCardinalityKeyValues.add(keyValue);
         }
 
         /**
          * Adds multiple low cardinality key values at once.
          *
-         * @param tags collection of tags
+         * @param keyValues collection of key values
          */
-        void addLowCardinalityKeyValues(KeyValues tags) {
-            tags.stream().forEach(this::addLowCardinalityKeyValue);
+        void addLowCardinalityKeyValues(KeyValues keyValues) {
+            keyValues.stream().forEach(this::addLowCardinalityKeyValue);
         }
 
         /**
          * Adds multiple high cardinality key values at once.
          *
-         * @param tags collection of tags
+         * @param keyValues collection of key values
          */
-        void addHighCardinalityKeyValues(KeyValues tags) {
-            tags.stream().forEach(this::addHighCardinalityKeyValue);
+        void addHighCardinalityKeyValues(KeyValues keyValues) {
+            keyValues.stream().forEach(this::addHighCardinalityKeyValue);
         }
 
         @NonNull
@@ -673,9 +673,9 @@ public interface Observation {
                     ", map=" + toString(map);
         }
 
-        private String toString(Collection<KeyValue> tags) {
-            return tags.stream()
-                    .map(tag -> String.format("%s='%s'", tag.getKey(), tag.getValue()))
+        private String toString(Collection<KeyValue> keyValues) {
+            return keyValues.stream()
+                    .map(keyValue -> String.format("%s='%s'", keyValue.getKey(), keyValue.getValue()))
                     .collect(Collectors.joining(", ", "[", "]"));
         }
 
@@ -704,7 +704,7 @@ public interface Observation {
     }
 
     /**
-     * A provider of tags.
+     * A provider of key values.
      *
      * @author Marcin Grzejszczak
      * @since 1.10.0
@@ -735,15 +735,15 @@ public interface Observation {
         }
 
         /**
-         * Tells whether this key value provider should be applied for a given {@link Context}.
+         * Tells whether this key values provider should be applied for a given {@link Context}.
          *
          * @param context a {@link Context}
-         * @return {@code true} when this key value provider should be used
+         * @return {@code true} when this key values provider should be used
          */
         boolean supportsContext(Context context);
 
         /**
-         * Key value provider wrapping other key value providers.
+         * Key values provider wrapping other key values providers.
          */
         @SuppressWarnings({"rawtypes", "unchecked"})
         class CompositeKeyValuesProvider implements KeyValuesProvider<Context> {
@@ -752,7 +752,7 @@ public interface Observation {
 
             /**
              * Creates a new instance of {@code CompositeKeyValueProvider}.
-             * @param keyValuesProviders the key value providers that are registered under the composite
+             * @param keyValuesProviders the key values providers that are registered under the composite
              */
             public CompositeKeyValuesProvider(KeyValuesProvider... keyValuesProviders) {
                 this(Arrays.asList(keyValuesProviders));
@@ -760,7 +760,7 @@ public interface Observation {
 
             /**
              * Creates a new instance of {@code CompositeKeyValueProvider}.
-             * @param keyValuesProviders the key value providers that are registered under the composite
+             * @param keyValuesProviders the key values providers that are registered under the composite
              */
             public CompositeKeyValuesProvider(List<KeyValuesProvider> keyValuesProviders) {
                 this.keyValuesProviders = keyValuesProviders;
@@ -802,7 +802,7 @@ public interface Observation {
     }
 
     /**
-     * A provider of tags that will be set on the {@link ObservationRegistry}.
+     * A provider of key values that will be set on the {@link ObservationRegistry}.
      *
      * @author Marcin Grzejszczak
      * @since 1.10.0

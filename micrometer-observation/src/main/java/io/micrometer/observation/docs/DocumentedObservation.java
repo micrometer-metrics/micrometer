@@ -43,7 +43,7 @@ import io.micrometer.observation.ObservationRegistry;
 public interface DocumentedObservation {
 
     /**
-     * Empty tag keys.
+     * Empty key names.
      */
     KeyName[] EMPTY = new KeyName[0];
 
