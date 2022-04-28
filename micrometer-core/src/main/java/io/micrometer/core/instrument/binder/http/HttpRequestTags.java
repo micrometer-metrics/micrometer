@@ -15,9 +15,9 @@
  */
 package io.micrometer.core.instrument.binder.http;
 
+import io.micrometer.common.util.StringUtils;
 import io.micrometer.core.annotation.Incubating;
 import io.micrometer.core.instrument.Tag;
-import io.micrometer.core.instrument.util.StringUtils;
 
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;

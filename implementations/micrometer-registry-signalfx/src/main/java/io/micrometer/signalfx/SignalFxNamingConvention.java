@@ -18,10 +18,10 @@ package io.micrometer.signalfx;
 import java.util.regex.Pattern;
 
 import io.micrometer.common.lang.Nullable;
+import io.micrometer.common.util.StringUtils;
 import io.micrometer.core.instrument.Meter;
 import io.micrometer.core.instrument.config.NamingConvention;
 import io.micrometer.core.instrument.util.StringEscapeUtils;
-import io.micrometer.core.instrument.util.StringUtils;
 import io.micrometer.core.util.internal.logging.WarnThenDebugLogger;
 
 /**

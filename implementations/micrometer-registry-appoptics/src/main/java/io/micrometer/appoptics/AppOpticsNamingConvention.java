@@ -16,9 +16,9 @@
 package io.micrometer.appoptics;
 
 import io.micrometer.common.lang.Nullable;
+import io.micrometer.common.util.StringUtils;
 import io.micrometer.core.instrument.Meter;
 import io.micrometer.core.instrument.config.NamingConvention;
-import io.micrometer.core.instrument.util.StringUtils;
 
 import java.util.regex.Pattern;
 

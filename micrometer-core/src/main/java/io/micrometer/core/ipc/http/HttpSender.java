@@ -16,7 +16,7 @@
 package io.micrometer.core.ipc.http;
 
 import io.micrometer.common.lang.Nullable;
-import io.micrometer.core.instrument.util.StringUtils;
+import io.micrometer.common.util.StringUtils;
 
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
