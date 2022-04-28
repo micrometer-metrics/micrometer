@@ -1,6 +1,6 @@
 plugins {
     id 'java'
-    id 'org.springframework.boot' version '2.6.2'
+    id 'org.springframework.boot' version '2.6.7'
 }
 
 apply plugin: 'io.spring.dependency-management'
@@ -21,14 +21,8 @@ dependencies {
     }
 
     implementation platform('org.springframework.cloud:spring-cloud-dependencies:latest.release')
-    implementation('org.springframework.cloud:spring-cloud-starter-sleuth') {
-        // Zipkin can use Micrometer to record metrics
-        // TraceMetricsMicrometerConfiguration autoconfigures this
-        // So if Micrometer wants to depend on Sleuth's Tracer, we have a circular dependency
-        // I'm not sure why spring-cloud-starter-sleuth depends on zipkin-reporter-metrics-micrometer and not spring-cloud-sleuth-zipkin
-        exclude group: 'io.zipkin.reporter2', module: 'zipkin-reporter-metrics-micrometer'
-    }
-    implementation('org.springframework.cloud:spring-cloud-sleuth-zipkin')
+    implementation 'org.springframework.cloud:spring-cloud-starter-sleuth'
+    implementation 'org.springframework.cloud:spring-cloud-sleuth-zipkin'
 
 }
 
