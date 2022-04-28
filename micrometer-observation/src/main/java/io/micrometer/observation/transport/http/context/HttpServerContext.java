@@ -15,10 +15,10 @@
  */
 package io.micrometer.observation.transport.http.context;
 
+import io.micrometer.common.lang.NonNull;
 import io.micrometer.observation.Observation;
 import io.micrometer.observation.transport.http.HttpServerRequest;
 import io.micrometer.observation.transport.http.HttpServerResponse;
-import io.micrometer.observation.lang.NonNull;
 
 /**
  * {@link Observation.Context Context} for an HTTP server request/response.

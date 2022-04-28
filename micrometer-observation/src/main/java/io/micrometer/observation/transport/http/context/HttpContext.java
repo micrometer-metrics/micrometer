@@ -15,13 +15,13 @@
  */
 package io.micrometer.observation.transport.http.context;
 
+import io.micrometer.common.lang.NonNull;
+import io.micrometer.common.lang.Nullable;
 import io.micrometer.observation.Observation;
 import io.micrometer.common.KeyValues;
 import io.micrometer.observation.transport.http.HttpRequest;
 import io.micrometer.observation.transport.http.HttpResponse;
 import io.micrometer.observation.transport.http.tags.HttpKeyValueProvider;
-import io.micrometer.observation.lang.NonNull;
-import io.micrometer.observation.lang.Nullable;
 
 /**
  * {@link Observation.Context} for an HTTP exchange.

@@ -17,8 +17,8 @@ package io.micrometer.observation.transport.http;
 
 import java.util.Collection;
 
+import io.micrometer.common.lang.Nullable;
 import io.micrometer.observation.transport.Kind;
-import io.micrometer.observation.lang.Nullable;
 
 /**
  * This API is taken from OpenZipkin Brave.

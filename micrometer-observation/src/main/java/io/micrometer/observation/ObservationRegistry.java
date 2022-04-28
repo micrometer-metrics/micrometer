@@ -19,7 +19,7 @@ import java.util.Collection;
 import java.util.List;
 import java.util.concurrent.CopyOnWriteArrayList;
 
-import io.micrometer.observation.lang.Nullable;
+import io.micrometer.common.lang.Nullable;
 
 /**
  * Implementations of this interface are responsible for managing state of an

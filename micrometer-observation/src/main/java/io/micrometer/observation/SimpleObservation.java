@@ -21,7 +21,7 @@ import java.util.Deque;
 import java.util.stream.Collectors;
 
 import io.micrometer.common.KeyValue;
-import io.micrometer.observation.lang.Nullable;
+import io.micrometer.common.lang.Nullable;
 
 /**
  * Default implementation of {@link Observation}.
