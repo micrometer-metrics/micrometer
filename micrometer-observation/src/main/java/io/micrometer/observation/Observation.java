@@ -34,7 +34,6 @@ import io.micrometer.common.KeyValues;
 import io.micrometer.observation.lang.NonNull;
 import io.micrometer.observation.lang.Nullable;
 
-
 /**
  * An act of viewing or noticing a fact or an occurrence for some scientific or other special purpose (According to dictionary.com).
  *
@@ -259,14 +258,14 @@ public interface Observation {
      * @param checkedRunnable the {@link CheckedRunnable} to run
      */
     @SuppressWarnings("unused")
-    default void observeChecked(CheckedRunnable checkedRunnable) throws Exception {
+    default void observeChecked(CheckedRunnable checkedRunnable) throws Throwable {
         this.start();
         try (Scope scope = openScope()) {
             checkedRunnable.run();
         }
-        catch (Exception exception) {
-            this.error(exception);
-            throw exception;
+        catch (Throwable error) {
+            this.error(error);
+            throw error;
         }
         finally {
             this.stop();
@@ -305,30 +304,30 @@ public interface Observation {
     }
 
     /**
-     * Observes the passed {@link Callable}, this means the followings:
+     * Observes the passed {@link CheckedCallable}, this means the followings:
      *
      * <ul>
      * <li>Starts the {@code Observation}</li>
      * <li>Opens a {@code Scope}</li>
-     * <li>Calls {@link Callable#call()}</li>
+     * <li>Calls {@link CheckedCallable#call()}</li>
      * <li>Closes the {@code Scope}</li>
      * <li>Signals the error to the {@code Observation} if any</li>
      * <li>Stops the {@code Observation}</li>
      * </ul>
      *
-     * @param callable the {@link Callable} to call
-     * @param <T> the type parameter of the {@link Callable}
-     * @return the result from {@link Callable#call()}
+     * @param checkedCallable the {@link CheckedCallable} to call
+     * @param <T> the type parameter of the {@link CheckedCallable}
+     * @return the result from {@link CheckedCallable#call()}
      */
     @SuppressWarnings("unused")
-    default <T> T observeChecked(Callable<T> callable) throws Exception {
+    default <T> T observeChecked(CheckedCallable<T> checkedCallable) throws Throwable {
         this.start();
         try (Scope scope = openScope()) {
-            return callable.call();
+            return checkedCallable.call();
         }
-        catch (Exception exception) {
-            this.error(exception);
-            throw exception;
+        catch (Throwable error) {
+            this.error(error);
+            throw error;
         }
         finally {
             this.stop();
@@ -812,10 +811,18 @@ public interface Observation {
     }
 
     /**
-     * A functional interface like {@link Runnable} but it can throw exceptions.
+     * A functional interface like {@link Runnable} but it can throw a {@link Throwable}.
      */
     @FunctionalInterface
     interface CheckedRunnable {
-        void run() throws Exception;
+        void run() throws Throwable;
+    }
+
+    /**
+     * A functional interface like {@link Callable} but it can throw a {@link Throwable}.
+     */
+    @FunctionalInterface
+    interface CheckedCallable<T> {
+        T call() throws Throwable;
     }
 }

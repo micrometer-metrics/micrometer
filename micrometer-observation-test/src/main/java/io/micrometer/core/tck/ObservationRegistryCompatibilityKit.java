@@ -17,7 +17,6 @@ package io.micrometer.core.tck;
 
 import java.io.IOException;
 import java.util.UUID;
-import java.util.concurrent.Callable;
 import java.util.function.Consumer;
 import java.util.function.Supplier;
 
@@ -143,7 +142,7 @@ public abstract class ObservationRegistryCompatibilityKit {
     }
 
     @Test
-    void checkedRunnableShouldBeObserved() throws Exception {
+    void checkedRunnableShouldBeObserved() throws Throwable {
         @SuppressWarnings("unchecked")
         ObservationHandler<Observation.Context> handler = mock(ObservationHandler.class);
         when(handler.supportsContext(isA(Observation.Context.class))).thenReturn(true);
@@ -245,14 +244,14 @@ public abstract class ObservationRegistryCompatibilityKit {
     }
 
     @Test
-    void callableShouldBeObserved() throws Exception {
+    void callableShouldBeObserved() throws Throwable {
         @SuppressWarnings("unchecked")
         ObservationHandler<Observation.Context> handler = mock(ObservationHandler.class);
         when(handler.supportsContext(isA(Observation.Context.class))).thenReturn(true);
         registry.observationConfig().observationHandler(handler);
         Observation observation = Observation.createNotStarted("myObservation", registry);
 
-        Callable<String> callable = () -> {
+        Observation.CheckedCallable<String> callable = () -> {
             assertThat(registry.getCurrentObservation()).isSameAs(observation);
             return "test";
         };
@@ -277,7 +276,7 @@ public abstract class ObservationRegistryCompatibilityKit {
         registry.observationConfig().observationHandler(handler);
         Observation observation = Observation.createNotStarted("myObservation", registry);
 
-        Callable<String> callable = () -> {
+        Observation.CheckedCallable<String> callable = () -> {
             assertThat(registry.getCurrentObservation()).isSameAs(observation);
             throw new IOException("simulated");
         };
