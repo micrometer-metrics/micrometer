@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package io.micrometer.core.util.internal.logging;
+package io.micrometer.common.util.internal.logging;
 
 import java.util.Objects;
 
