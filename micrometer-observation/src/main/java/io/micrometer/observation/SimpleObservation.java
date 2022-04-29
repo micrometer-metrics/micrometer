@@ -59,14 +59,14 @@ class SimpleObservation implements Observation {
     }
 
     @Override
-    public Observation lowCardinalityKeyValue(KeyValue tag) {
-        this.context.addLowCardinalityKeyValue(tag);
+    public Observation lowCardinalityKeyValue(KeyValue keyValue) {
+        this.context.addLowCardinalityKeyValue(keyValue);
         return this;
     }
 
     @Override
-    public Observation highCardinalityKeyValue(KeyValue tag) {
-        this.context.addHighCardinalityKeyValue(tag);
+    public Observation highCardinalityKeyValue(KeyValue keyValue) {
+        this.context.addHighCardinalityKeyValue(keyValue);
         return this;
     }
 
