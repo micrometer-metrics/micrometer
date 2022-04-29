@@ -28,6 +28,7 @@ class OtlpCounter extends CumulativeCounter implements StartTimeAwareMeter {
         this.startTimeNanos = TimeUnit.MILLISECONDS.toNanos(clock.wallTime());
     }
 
+    @Override
     public long getStartTimeNanos() {
         return this.startTimeNanos;
     }

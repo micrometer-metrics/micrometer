@@ -42,6 +42,15 @@ public class TimeWindowFixedBoundaryHistogram
         this(clock, config, supportsAggregablePercentiles, true);
     }
 
+    /**
+     * Create a {@code TimeWindowFixedBoundaryHistogram} instance.
+     *
+     * @param clock clock
+     * @param config distribution statistic configuration
+     * @param supportsAggregablePercentiles whether it supports aggregable percentiles
+     * @param cumulativeBucketCounts whether it uses cumulative bucket counts
+     * @since 1.9.0
+     */
     public TimeWindowFixedBoundaryHistogram(Clock clock, DistributionStatisticConfig config, boolean supportsAggregablePercentiles,
                                             boolean cumulativeBucketCounts) {
         super(clock, config, FixedBoundaryHistogram.class, supportsAggregablePercentiles);

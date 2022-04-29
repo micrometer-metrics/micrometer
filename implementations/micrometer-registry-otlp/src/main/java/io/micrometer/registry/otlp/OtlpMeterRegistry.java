@@ -50,6 +50,7 @@ import java.util.stream.Collectors;
  * Publishes meters in OTLP (OpenTelemetry Protocol) format.
  * HTTP with Protobuf encoding is the only option currently supported.
  *
+ * @author Tommy Ludwig
  * @since 1.9.0
  */
 public class OtlpMeterRegistry extends PushMeterRegistry {
@@ -219,14 +220,36 @@ public class OtlpMeterRegistry extends PushMeterRegistry {
         Metric.Builder metricBuilder = getMetricBuilder(histogramSupport.getId());
         boolean isTimeBased = histogramSupport instanceof Timer || histogramSupport instanceof LongTaskTimer;
         HistogramSnapshot histogramSnapshot = histogramSupport.takeSnapshot();
+
+        Iterable<? extends KeyValue> tags = getTagsForId(histogramSupport.getId());
+        long startTimeNanos = ((StartTimeAwareMeter) histogramSupport).getStartTimeNanos();
         long wallTimeNanos = TimeUnit.MILLISECONDS.toNanos(this.clock.wallTime());
+        double total = isTimeBased ? histogramSnapshot.total(getBaseTimeUnit()) : histogramSnapshot.total();
+        long count = histogramSnapshot.count();
+
+        // if percentiles configured, use summary
+        if (histogramSnapshot.percentileValues().length != 0) {
+            SummaryDataPoint.Builder summaryData = SummaryDataPoint.newBuilder()
+                    .addAllAttributes(tags)
+                    .setStartTimeUnixNano(startTimeNanos)
+                    .setTimeUnixNano(wallTimeNanos)
+                    .setSum(total)
+                    .setCount(count);
+            for (ValueAtPercentile percentile : histogramSnapshot.percentileValues()) {
+                summaryData.addQuantileValues(SummaryDataPoint.ValueAtQuantile.newBuilder()
+                        .setQuantile(percentile.percentile())
+                        .setValue(TimeUtils.convert(percentile.value(), TimeUnit.NANOSECONDS, getBaseTimeUnit())));
+            }
+            metricBuilder.setSummary(Summary.newBuilder().addDataPoints(summaryData));
+            return metricBuilder.build();
+        }
 
         HistogramDataPoint.Builder histogramDataPoint = HistogramDataPoint.newBuilder()
-                .addAllAttributes(getTagsForId(histogramSupport.getId()))
-                .setStartTimeUnixNano(((StartTimeAwareMeter) histogramSupport).getStartTimeNanos())
+                .addAllAttributes(tags)
+                .setStartTimeUnixNano(startTimeNanos)
                 .setTimeUnixNano(wallTimeNanos)
-                .setSum(isTimeBased ? histogramSnapshot.total(getBaseTimeUnit()) : histogramSnapshot.total())
-                .setCount(histogramSnapshot.count());
+                .setSum(total)
+                .setCount(count);
 
         // if histogram enabled, add histogram buckets
         if (histogramSnapshot.histogramCounts().length != 0) {
@@ -237,22 +260,6 @@ public class OtlpMeterRegistry extends PushMeterRegistry {
             metricBuilder.setHistogram(Histogram.newBuilder()
                     .setAggregationTemporality(AggregationTemporality.AGGREGATION_TEMPORALITY_CUMULATIVE)
                     .addDataPoints(histogramDataPoint));
-            return metricBuilder.build();
-        }
-
-        // if percentiles configured, use summary
-        if (histogramSnapshot.percentileValues().length != 0) {
-            SummaryDataPoint.Builder summaryData = SummaryDataPoint.newBuilder()
-                    .addAllAttributes(getTagsForId(histogramSupport.getId()))
-                    .setTimeUnixNano(wallTimeNanos)
-                    .setSum(isTimeBased ? histogramSnapshot.total(getBaseTimeUnit()) : histogramSnapshot.total())
-                    .setCount(histogramSnapshot.count());
-            for (ValueAtPercentile percentile : histogramSnapshot.percentileValues()) {
-                summaryData.addQuantileValues(SummaryDataPoint.ValueAtQuantile.newBuilder()
-                        .setQuantile(percentile.percentile())
-                        .setValue(TimeUtils.convert(percentile.value(), TimeUnit.NANOSECONDS, getBaseTimeUnit())));
-            }
-            metricBuilder.setSummary(Summary.newBuilder().addDataPoints(summaryData));
             return metricBuilder.build();
         }
 
@@ -288,22 +295,23 @@ public class OtlpMeterRegistry extends PushMeterRegistry {
 
     private Iterable<? extends KeyValue> getTagsForId(Meter.Id id) {
         return id.getTags().stream()
-                .map(tag -> KeyValue.newBuilder()
-                        .setKey(tag.getKey())
-                        .setValue(AnyValue.newBuilder().setStringValue(tag.getValue()).build())
-                        .build())
+                .map(tag -> createKeyValue(tag.getKey(), tag.getValue()))
                 .collect(Collectors.toList());
+    }
+
+    private KeyValue createKeyValue(String key, String value) {
+        return KeyValue.newBuilder().setKey(key).setValue(AnyValue.newBuilder().setStringValue(value)).build();
     }
 
     private Iterable<KeyValue> getResourceAttributes() {
         List<KeyValue> attributes = new ArrayList<>();
         // TODO How to expose configuration of the service.name
-        attributes.add(KeyValue.newBuilder().setKey("service.name").setValue(AnyValue.newBuilder().setStringValue("unknown_service")).build());
-        attributes.add(KeyValue.newBuilder().setKey("telemetry.sdk.name").setValue(AnyValue.newBuilder().setStringValue("io.micrometer")).build());
-        attributes.add(KeyValue.newBuilder().setKey("telemetry.sdk.language").setValue(AnyValue.newBuilder().setStringValue("java")).build());
+        attributes.add(createKeyValue("service.name", "unknown_service"));
+        attributes.add(createKeyValue("telemetry.sdk.name", "io.micrometer"));
+        attributes.add(createKeyValue("telemetry.sdk.language", "java"));
         String micrometerCoreVersion = MeterRegistry.class.getPackage().getImplementationVersion();
         if (micrometerCoreVersion != null) {
-            attributes.add(KeyValue.newBuilder().setKey("telemetry.sdk.version").setValue(AnyValue.newBuilder().setStringValue(MeterRegistry.class.getPackage().getImplementationVersion())).build());
+            attributes.add(createKeyValue("telemetry.sdk.version", micrometerCoreVersion));
         }
         return attributes;
     }
