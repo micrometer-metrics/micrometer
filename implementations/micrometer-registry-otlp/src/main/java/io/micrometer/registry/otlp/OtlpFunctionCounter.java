@@ -30,6 +30,7 @@ class OtlpFunctionCounter<T> extends CumulativeFunctionCounter<T> implements Sta
         this.startTimeNanos = TimeUnit.MILLISECONDS.toNanos(clock.wallTime());
     }
 
+    @Override
     public long getStartTimeNanos() {
         return this.startTimeNanos;
     }

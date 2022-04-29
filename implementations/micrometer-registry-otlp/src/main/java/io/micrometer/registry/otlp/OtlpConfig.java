@@ -24,6 +24,9 @@ import static io.micrometer.core.instrument.config.validate.PropertyValidator.ge
 
 /**
  * Config for {@link OtlpMeterRegistry}.
+ *
+ * @author Tommy Ludwig
+ * @since 1.9.0
  */
 public interface OtlpConfig extends PushRegistryConfig {
 
