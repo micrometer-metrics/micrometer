@@ -317,7 +317,8 @@ public final class DynatraceExporterV2 extends AbstractDynatraceExporter {
                         response.code(),
                         StringUtils.truncate(response.body(), LOG_RESPONSE_BODY_TRUNCATION_LIMIT)));
         } catch (Throwable throwable) {
-            logger.error("Failed metric ingestion: " + throwable.getMessage(), throwable);
+            logger.error("Failed metric ingestion: " + throwable);
+            logger.debug(throwable);
         }
     }
 
