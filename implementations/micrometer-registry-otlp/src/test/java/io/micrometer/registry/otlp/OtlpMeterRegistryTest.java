@@ -298,6 +298,7 @@ class OtlpMeterRegistryTest {
                         "unit: \"milliseconds\"\n" +
                         "summary {\n" +
                         "  data_points {\n" +
+                        "    start_time_unix_nano: 1000000\n" +
                         "    time_unix_nano: 1000000\n" +
                         "    count: 3\n" +
                         "    sum: 198.0\n" +
