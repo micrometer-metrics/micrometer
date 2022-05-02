@@ -25,6 +25,7 @@ import io.micrometer.core.instrument.util.StringUtils;
 import io.micrometer.core.ipc.http.HttpSender;
 import io.micrometer.core.util.internal.logging.InternalLogger;
 import io.micrometer.core.util.internal.logging.InternalLoggerFactory;
+import io.micrometer.core.util.internal.logging.WarnThenDebugLogger;
 import io.micrometer.dynatrace.AbstractDynatraceExporter;
 import io.micrometer.dynatrace.DynatraceConfig;
 import io.micrometer.dynatrace.types.DynatraceSummarySnapshot;
@@ -61,6 +62,7 @@ public final class DynatraceExporterV2 extends AbstractDynatraceExporter {
     private static final String LOG_RESPONSE_BODY_TRUNCATION_INDICATOR = " (truncated)";
 
     private final InternalLogger logger = InternalLoggerFactory.getInstance(DynatraceExporterV2.class);
+    private static final WarnThenDebugLogger warnThenDebugLoggerSend = new WarnThenDebugLogger(DynatraceExporterV2.class);
     private static final Map<String, String> staticDimensions = Collections.singletonMap("dt.metrics.source", "micrometer");
 
     private final MetricBuilderFactory metricBuilderFactory;
@@ -318,8 +320,7 @@ public final class DynatraceExporterV2 extends AbstractDynatraceExporter {
                         response.code(),
                         StringUtils.truncate(response.body(), LOG_RESPONSE_BODY_TRUNCATION_LIMIT, LOG_RESPONSE_BODY_TRUNCATION_INDICATOR)));
         } catch (Throwable throwable) {
-            logger.error("Failed metric ingestion: " + throwable);
-            logger.debug(throwable);
+            warnThenDebugLoggerSend.log("Failed metric ingestion", throwable);
         }
     }
 
