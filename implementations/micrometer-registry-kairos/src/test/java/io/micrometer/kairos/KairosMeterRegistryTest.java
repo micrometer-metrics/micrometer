@@ -40,7 +40,9 @@ import static org.assertj.core.api.Assertions.assertThat;
 class KairosMeterRegistryTest {
 
     private final KairosConfig config = key -> null;
+
     private final MockClock clock = new MockClock();
+
     private final KairosMeterRegistry meterRegistry = new KairosMeterRegistry(config, clock);
 
     @Test
@@ -106,11 +108,13 @@ class KairosMeterRegistryTest {
 
     @Test
     void writeFunctionCounterShouldDropInfiniteValues() {
-        FunctionCounter counter = FunctionCounter.builder("myCounter", Double.POSITIVE_INFINITY, Number::doubleValue).register(meterRegistry);
+        FunctionCounter counter = FunctionCounter.builder("myCounter", Double.POSITIVE_INFINITY, Number::doubleValue)
+                .register(meterRegistry);
         clock.add(config.step());
         assertThat(meterRegistry.writeFunctionCounter(counter)).isEmpty();
 
-        counter = FunctionCounter.builder("myCounter", Double.NEGATIVE_INFINITY, Number::doubleValue).register(meterRegistry);
+        counter = FunctionCounter.builder("myCounter", Double.NEGATIVE_INFINITY, Number::doubleValue)
+                .register(meterRegistry);
         clock.add(config.step());
         assertThat(meterRegistry.writeFunctionCounter(counter)).isEmpty();
     }
@@ -132,7 +136,8 @@ class KairosMeterRegistryTest {
         Measurement measurement3 = new Measurement(() -> Double.NaN, Statistic.VALUE);
         Measurement measurement4 = new Measurement(() -> 1d, Statistic.VALUE);
         Measurement measurement5 = new Measurement(() -> 2d, Statistic.VALUE);
-        List<Measurement> measurements = Arrays.asList(measurement1, measurement2, measurement3, measurement4, measurement5);
+        List<Measurement> measurements = Arrays.asList(measurement1, measurement2, measurement3, measurement4,
+                measurement5);
         Meter meter = Meter.builder("my.meter", Meter.Type.GAUGE, measurements).register(this.meterRegistry);
         assertThat(meterRegistry.writeCustomMetric(meter)).hasSize(2);
     }

@@ -33,6 +33,7 @@ import static io.micrometer.core.instrument.config.validate.PropertyValidator.*;
  * @author Jon Schneider
  */
 public interface GangliaConfig extends StepRegistryConfig {
+
     /**
      * Accept configuration defaults
      */
@@ -40,7 +41,6 @@ public interface GangliaConfig extends StepRegistryConfig {
 
     /**
      * Get the value associated with a key.
-     *
      * @param key Key to lookup in the config.
      * @return Value for the key or null if no key is present.
      */
@@ -106,13 +106,10 @@ public interface GangliaConfig extends StepRegistryConfig {
 
     @Override
     default Validated<?> validate() {
-        return checkAll(this,
-                c -> StepRegistryConfig.validate(c),
-                checkRequired("host", GangliaConfig::host),
-                check("port", GangliaConfig::port),
-                checkRequired("ttl", GangliaConfig::ttl),
+        return checkAll(this, c -> StepRegistryConfig.validate(c), checkRequired("host", GangliaConfig::host),
+                check("port", GangliaConfig::port), checkRequired("ttl", GangliaConfig::ttl),
                 checkRequired("durationUnits", GangliaConfig::durationUnits),
-                checkRequired("addressingMode", GangliaConfig::addressingMode)
-        );
+                checkRequired("addressingMode", GangliaConfig::addressingMode));
     }
+
 }

@@ -33,22 +33,22 @@ import io.micrometer.core.instrument.Counter;
 class MetricCollectingClientCall<Q, A> extends SimpleForwardingClientCall<Q, A> {
 
     private final Counter requestCounter;
+
     private final Counter responseCounter;
+
     private final Consumer<Status.Code> processingDurationTiming;
 
     /**
-     * Creates a new delegating ClientCall that will wrap the given client call to collect metrics.
-     *
+     * Creates a new delegating ClientCall that will wrap the given client call to collect
+     * metrics.
      * @param delegate The original call to wrap.
      * @param requestCounter The counter for outgoing requests.
      * @param responseCounter The counter for incoming responses.
-     * @param processingDurationTiming The consumer used to time the processing duration along with a response status.
+     * @param processingDurationTiming The consumer used to time the processing duration
+     * along with a response status.
      */
-    MetricCollectingClientCall(
-            final ClientCall<Q, A> delegate,
-            final Counter requestCounter,
-            final Counter responseCounter,
-            final Consumer<Status.Code> processingDurationTiming) {
+    MetricCollectingClientCall(final ClientCall<Q, A> delegate, final Counter requestCounter,
+            final Counter responseCounter, final Consumer<Status.Code> processingDurationTiming) {
 
         super(delegate);
         this.requestCounter = requestCounter;
@@ -58,12 +58,8 @@ class MetricCollectingClientCall<Q, A> extends SimpleForwardingClientCall<Q, A> 
 
     @Override
     public void start(final ClientCall.Listener<A> responseListener, final Metadata metadata) {
-        super.start(
-                new MetricCollectingClientCallListener<>(
-                        responseListener,
-                        this.responseCounter,
-                        this.processingDurationTiming),
-                metadata);
+        super.start(new MetricCollectingClientCallListener<>(responseListener, this.responseCounter,
+                this.processingDurationTiming), metadata);
     }
 
     @Override

@@ -31,6 +31,7 @@ import static org.assertj.core.api.Assertions.assertThat;
  * @author Jonatan Ivanov
  */
 class MockLoggerTest {
+
     private static final MockLogger LOGGER = new MockLoggerFactory().getLogger("testLogger");
 
     @AfterEach
@@ -249,4 +250,5 @@ class MockLoggerTest {
         assertThat(LOGGER.getLogEvents().get(5).getMessage()).isNull();
         assertThat(LOGGER.getLogEvents().get(5).getCause()).isSameAs(cause);
     }
+
 }

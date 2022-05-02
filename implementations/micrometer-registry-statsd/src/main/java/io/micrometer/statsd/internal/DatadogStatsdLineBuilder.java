@@ -31,15 +31,21 @@ public class DatadogStatsdLineBuilder extends FlavorStatsdLineBuilder {
     private static final String ENTITY_ID_TAG_NAME = "dd.internal.entity_id";
 
     private final Object conventionTagsLock = new Object();
-    @SuppressWarnings({"NullableProblems", "unused"})
+
+    @SuppressWarnings({ "NullableProblems", "unused" })
     private volatile NamingConvention namingConvention;
+
     @SuppressWarnings("NullableProblems")
     private volatile String name;
+
     @Nullable
     private volatile String conventionTags;
+
     @SuppressWarnings("NullableProblems")
     private volatile String tagsNoStat;
+
     private final ConcurrentMap<Statistic, String> tags = new ConcurrentHashMap<>();
+
     // VisibleForTesting
     @Nullable
     String ddEntityId;
@@ -64,10 +70,8 @@ public class DatadogStatsdLineBuilder extends FlavorStatsdLineBuilder {
                     return;
                 }
                 this.tags.clear();
-                String conventionTags = id.getTagsAsIterable().iterator().hasNext() ?
-                        id.getConventionTags(next).stream()
-                                .map(this::formatTag)
-                                .collect(Collectors.joining(","))
+                String conventionTags = id.getTagsAsIterable().iterator().hasNext()
+                        ? id.getConventionTags(next).stream().map(this::formatTag).collect(Collectors.joining(","))
                         : null;
                 this.conventionTags = appendEntityIdTag(conventionTags);
             }
@@ -117,4 +121,5 @@ public class DatadogStatsdLineBuilder extends FlavorStatsdLineBuilder {
             return this.tags.computeIfAbsent(stat, (key) -> tags(key, conventionTags, ":", "|#"));
         }
     }
+
 }

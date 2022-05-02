@@ -59,18 +59,23 @@ import static io.micrometer.core.instrument.util.StringEscapeUtils.escapeJson;
  * @since 1.4.0
  */
 public class OpenTSDBMeterRegistry extends PushMeterRegistry {
+
     private static final ThreadFactory DEFAULT_THREAD_FACTORY = new NamedThreadFactory("opentsdb-metrics-publisher");
 
     private final OpenTSDBConfig config;
+
     private final HttpSender httpClient;
+
     private final Logger logger = LoggerFactory.getLogger(OpenTSDBMeterRegistry.class);
 
     @SuppressWarnings("deprecation")
     public OpenTSDBMeterRegistry(OpenTSDBConfig config, Clock clock) {
-        this(config, clock, DEFAULT_THREAD_FACTORY, new HttpUrlConnectionSender(config.connectTimeout(), config.readTimeout()));
+        this(config, clock, DEFAULT_THREAD_FACTORY,
+                new HttpUrlConnectionSender(config.connectTimeout(), config.readTimeout()));
     }
 
-    public OpenTSDBMeterRegistry(OpenTSDBConfig config, Clock clock, ThreadFactory threadFactory, HttpSender httpClient) {
+    public OpenTSDBMeterRegistry(OpenTSDBConfig config, Clock clock, ThreadFactory threadFactory,
+            HttpSender httpClient) {
         super(config, clock);
         config().namingConvention(new OpenTSDBNamingConvention());
         this.config = config;
@@ -105,12 +110,14 @@ public class OpenTSDBMeterRegistry extends PushMeterRegistry {
     }
 
     @Override
-    public DistributionSummary newDistributionSummary(Meter.Id id, DistributionStatisticConfig distributionStatisticConfig, double scale) {
+    public DistributionSummary newDistributionSummary(Meter.Id id,
+            DistributionStatisticConfig distributionStatisticConfig, double scale) {
         return new OpenTSDBDistributionSummary(id, clock, distributionStatisticConfig, scale, config.flavor());
     }
 
     @Override
-    protected Timer newTimer(Meter.Id id, DistributionStatisticConfig distributionStatisticConfig, PauseDetector pauseDetector) {
+    protected Timer newTimer(Meter.Id id, DistributionStatisticConfig distributionStatisticConfig,
+            PauseDetector pauseDetector) {
         return new OpenTSDBTimer(id, clock, distributionStatisticConfig, pauseDetector, config.flavor());
     }
 
@@ -125,8 +132,10 @@ public class OpenTSDBMeterRegistry extends PushMeterRegistry {
     }
 
     @Override
-    protected <T> FunctionTimer newFunctionTimer(Meter.Id id, T obj, ToLongFunction<T> countFunction, ToDoubleFunction<T> totalTimeFunction, TimeUnit totalTimeFunctionUnit) {
-        return new CumulativeFunctionTimer<>(id, obj, countFunction, totalTimeFunction, totalTimeFunctionUnit, getBaseTimeUnit());
+    protected <T> FunctionTimer newFunctionTimer(Meter.Id id, T obj, ToLongFunction<T> countFunction,
+            ToDoubleFunction<T> totalTimeFunction, TimeUnit totalTimeFunctionUnit) {
+        return new CumulativeFunctionTimer<>(id, obj, countFunction, totalTimeFunction, totalTimeFunctionUnit,
+                getBaseTimeUnit());
     }
 
     @Override
@@ -146,9 +155,7 @@ public class OpenTSDBMeterRegistry extends PushMeterRegistry {
 
     @Override
     protected DistributionStatisticConfig defaultHistogramConfig() {
-        return DistributionStatisticConfig.builder()
-                .expiry(config.step())
-                .build()
+        return DistributionStatisticConfig.builder().expiry(config.step()).build()
                 .merge(DistributionStatisticConfig.DEFAULT);
     }
 
@@ -156,26 +163,17 @@ public class OpenTSDBMeterRegistry extends PushMeterRegistry {
     protected void publish() {
         for (List<Meter> batch : MeterPartition.partition(this, config.batchSize())) {
             try {
-                httpClient.post(config.uri())
-                        .withBasicAuthentication(config.userName(), config.password())
-                        .withJsonContent(
-                                batch.stream().flatMap(m -> m.match(
-                                        this::writeGauge,
-                                        this::writeCounter,
-                                        this::writeTimer,
-                                        this::writeSummary,
-                                        this::writeLongTaskTimer,
-                                        this::writeTimeGauge,
-                                        this::writeFunctionCounter,
-                                        this::writeFunctionTimer,
-                                        this::writeCustomMetric)
-                                ).collect(Collectors.joining(",", "[", "]"))
-                        )
-                        .compress()
-                        .send()
+                httpClient.post(config.uri()).withBasicAuthentication(config.userName(), config.password())
+                        .withJsonContent(batch.stream()
+                                .flatMap(m -> m.match(this::writeGauge, this::writeCounter, this::writeTimer,
+                                        this::writeSummary, this::writeLongTaskTimer, this::writeTimeGauge,
+                                        this::writeFunctionCounter, this::writeFunctionTimer, this::writeCustomMetric))
+                                .collect(Collectors.joining(",", "[", "]")))
+                        .compress().send()
                         .onSuccess(response -> logger.debug("successfully sent {} metrics to opentsdb.", batch.size()))
                         .onError(response -> logger.error("failed to send metrics to opentsdb: {}", response.body()));
-            } catch (Throwable t) {
+            }
+            catch (Throwable t) {
                 logger.warn("failed to send metrics to opentsdb", t);
             }
         }
@@ -208,12 +206,11 @@ public class OpenTSDBMeterRegistry extends PushMeterRegistry {
     Stream<String> writeFunctionTimer(FunctionTimer timer) {
         long wallTime = config().clock().wallTime();
 
-        return Stream.of(
-                writeMetricWithSuffix(timer.getId(), "count", wallTime, timer.count()),
+        return Stream.of(writeMetricWithSuffix(timer.getId(), "count", wallTime, timer.count()),
                 // not applicable
-                //writeMetricWithSuffix(timer.getId(), "avg", wallTime, timer.mean(getBaseTimeUnit())),
-                writeMetricWithSuffix(timer.getId(), "sum", wallTime, timer.totalTime(getBaseTimeUnit()))
-        );
+                // writeMetricWithSuffix(timer.getId(), "avg", wallTime,
+                // timer.mean(getBaseTimeUnit())),
+                writeMetricWithSuffix(timer.getId(), "sum", wallTime, timer.totalTime(getBaseTimeUnit())));
     }
 
     Stream<String> writeTimer(Timer timer) {
@@ -247,47 +244,41 @@ public class OpenTSDBMeterRegistry extends PushMeterRegistry {
         boolean forTimer = meter instanceof Timer;
         // satisfies https://prometheus.io/docs/concepts/metric_types/#summary
         for (ValueAtPercentile v : percentileValues) {
-            metrics.add(writeMetric(
-                    meter.getId().withTag(new ImmutableTag("quantile", doubleToGoString(v.percentile()))),
-                    wallTime,
-                    (forTimer ? v.value(getBaseTimeUnit()) : v.value())));
+            metrics.add(
+                    writeMetric(meter.getId().withTag(new ImmutableTag("quantile", doubleToGoString(v.percentile()))),
+                            wallTime, (forTimer ? v.value(getBaseTimeUnit()) : v.value())));
         }
 
         return metrics;
     }
 
     private List<String> writeHistogram(long wallTime, Meter meter, CountAtBucket[] histogramCounts, double count,
-                                        @Nullable TimeUnit timeUnit) {
+            @Nullable TimeUnit timeUnit) {
         List<String> metrics = new ArrayList<>(histogramCounts.length);
 
         if (config.flavor() == null) {
-            // satisfies https://prometheus.io/docs/concepts/metric_types/#histogram, which is at least SOME standard
+            // satisfies https://prometheus.io/docs/concepts/metric_types/#histogram,
+            // which is at least SOME standard
             // histogram format to follow
             for (CountAtBucket c : histogramCounts) {
                 metrics.add(writeMetricWithSuffix(
-                        meter.getId().withTag(new ImmutableTag("le", doubleToGoString(timeUnit == null ? c.bucket() : c.bucket(timeUnit)))),
-                        "bucket",
-                        wallTime,
-                        c.count()
-                ));
+                        meter.getId()
+                                .withTag(new ImmutableTag("le",
+                                        doubleToGoString(timeUnit == null ? c.bucket() : c.bucket(timeUnit)))),
+                        "bucket", wallTime, c.count()));
             }
 
             // the +Inf bucket should always equal `count`
-            metrics.add(writeMetricWithSuffix(
-                    meter.getId().withTag(new ImmutableTag("le", "+Inf")),
-                    "bucket",
-                    wallTime,
-                    count
-            ));
+            metrics.add(writeMetricWithSuffix(meter.getId().withTag(new ImmutableTag("le", "+Inf")), "bucket", wallTime,
+                    count));
         }
         else if (OpenTSDBFlavor.VictoriaMetrics.equals(config.flavor())) {
             for (CountAtBucket c : histogramCounts) {
                 metrics.add(writeMetricWithSuffix(
-                        meter.getId().withTag(Tag.of("vmrange", getRangeTagValue(timeUnit == null ? c.bucket() : c.bucket(timeUnit)))),
-                        "bucket",
-                        wallTime,
-                        c.count()
-                ));
+                        meter.getId()
+                                .withTag(Tag.of("vmrange",
+                                        getRangeTagValue(timeUnit == null ? c.bucket() : c.bucket(timeUnit)))),
+                        "bucket", wallTime, c.count()));
             }
         }
 
@@ -355,47 +346,39 @@ public class OpenTSDBMeterRegistry extends PushMeterRegistry {
 
         List<Tag> tags = getConventionTags(meter.getId());
 
-        return StreamSupport.stream(meter.measure().spliterator(), false)
-                .map(ms -> {
-                            Tags localTags = Tags.concat(tags, "statistics", ms.getStatistic().toString());
-                            String name = getConventionName(meter.getId());
+        return StreamSupport.stream(meter.measure().spliterator(), false).map(ms -> {
+            Tags localTags = Tags.concat(tags, "statistics", ms.getStatistic().toString());
+            String name = getConventionName(meter.getId());
 
-                            switch (ms.getStatistic()) {
-                                case TOTAL:
-                                case TOTAL_TIME:
-                                    name += ".sum";
-                                    break;
-                                case MAX:
-                                    name += ".max";
-                                    break;
-                                case ACTIVE_TASKS:
-                                    name += ".active.count";
-                                    break;
-                                case DURATION:
-                                    name += ".duration.sum";
-                                    break;
-                            }
+            switch (ms.getStatistic()) {
+            case TOTAL:
+            case TOTAL_TIME:
+                name += ".sum";
+                break;
+            case MAX:
+                name += ".max";
+                break;
+            case ACTIVE_TASKS:
+                name += ".active.count";
+                break;
+            case DURATION:
+                name += ".duration.sum";
+                break;
+            }
 
-                            return new OpenTSDBMetricBuilder()
-                                    .field("metric", name)
-                                    .datapoints(wallTime, ms.getValue())
-                                    .tags(localTags)
-                                    .build();
-                        }
-                );
+            return new OpenTSDBMetricBuilder().field("metric", name).datapoints(wallTime, ms.getValue()).tags(localTags)
+                    .build();
+        });
     }
 
     String writeMetricWithSuffix(Meter.Id id, String suffix, long wallTime, double value) {
         // usually tagKeys and metricNames naming rules are the same
         // but we can't call getConventionName again after adding suffix
         return new OpenTSDBMetricBuilder()
-                .field("metric", suffix.isEmpty() ?
-                        getConventionName(id) :
-                        config().namingConvention().tagKey(getConventionName(id) + "." + suffix)
-                )
-                .datapoints(wallTime, value)
-                .tags(getConventionTags(id))
-                .build();
+                .field("metric",
+                        suffix.isEmpty() ? getConventionName(id)
+                                : config().namingConvention().tagKey(getConventionName(id) + "." + suffix))
+                .datapoints(wallTime, value).tags(getConventionTags(id)).build();
     }
 
     String writeMetric(Meter.Id id, long wallTime, double value) {
@@ -403,6 +386,7 @@ public class OpenTSDBMeterRegistry extends PushMeterRegistry {
     }
 
     private static class OpenTSDBMetricBuilder {
+
         private final StringBuilder sb = new StringBuilder("{");
 
         OpenTSDBMetricBuilder field(String key, String value) {
@@ -414,7 +398,8 @@ public class OpenTSDBMeterRegistry extends PushMeterRegistry {
         }
 
         OpenTSDBMetricBuilder datapoints(long wallTime, double value) {
-            sb.append(",\"timestamp\":").append(wallTime).append(",\"value\":").append(DoubleFormat.wholeOrDecimal(value));
+            sb.append(",\"timestamp\":").append(wallTime).append(",\"value\":")
+                    .append(DoubleFormat.wholeOrDecimal(value));
             return this;
         }
 
@@ -424,10 +409,12 @@ public class OpenTSDBMeterRegistry extends PushMeterRegistry {
                 // tags field is required for OpenTSDB, use hostname as a default tag
                 try {
                     tagBuilder.field("host", InetAddress.getLocalHost().getHostName());
-                } catch (UnknownHostException ignore) {
+                }
+                catch (UnknownHostException ignore) {
                     /* ignore */
                 }
-            } else {
+            }
+            else {
                 for (Tag tag : tags) {
                     tagBuilder.field(tag.getKey(), tag.getValue());
                 }
@@ -440,13 +427,17 @@ public class OpenTSDBMeterRegistry extends PushMeterRegistry {
         String build() {
             return sb.append('}').toString();
         }
+
     }
 
     public static class Builder {
+
         private final OpenTSDBConfig config;
 
         private Clock clock = Clock.SYSTEM;
+
         private ThreadFactory threadFactory = DEFAULT_THREAD_FACTORY;
+
         private HttpSender httpClient;
 
         @SuppressWarnings("deprecation")
@@ -473,5 +464,7 @@ public class OpenTSDBMeterRegistry extends PushMeterRegistry {
         public OpenTSDBMeterRegistry build() {
             return new OpenTSDBMeterRegistry(config, clock, threadFactory, httpClient);
         }
+
     }
+
 }

@@ -41,4 +41,5 @@ class JvmCompilationMetricsTest {
 
         assertThat(registry.get("jvm.compilation.time").functionCounter().count()).isGreaterThan(0);
     }
+
 }

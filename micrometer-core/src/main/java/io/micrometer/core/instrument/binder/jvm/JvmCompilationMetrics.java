@@ -37,6 +37,7 @@ import static java.util.Collections.emptyList;
 @NonNullApi
 @NonNullFields
 public class JvmCompilationMetrics implements MeterBinder {
+
     private final Iterable<Tag> tags;
 
     public JvmCompilationMetrics() {
@@ -54,8 +55,8 @@ public class JvmCompilationMetrics implements MeterBinder {
             FunctionCounter.builder("jvm.compilation.time", compilationBean, CompilationMXBean::getTotalCompilationTime)
                     .tags(Tags.concat(tags, "compiler", compilationBean.getName()))
                     .description("The approximate accumulated elapsed time spent in compilation")
-                    .baseUnit(BaseUnits.MILLISECONDS)
-                    .register(registry);
+                    .baseUnit(BaseUnits.MILLISECONDS).register(registry);
         }
     }
+
 }

@@ -33,14 +33,17 @@ import java.util.function.Supplier;
 import java.util.zip.GZIPOutputStream;
 
 /**
- * A general-purpose interface for controlling how {@link io.micrometer.core.instrument.MeterRegistry} implementations
- * perform HTTP calls for various purposes. This interface can be used to inject more advanced customization like SSL
- * verification, key loading, etc. without requiring further additions to registry configurations.
+ * A general-purpose interface for controlling how
+ * {@link io.micrometer.core.instrument.MeterRegistry} implementations perform HTTP calls
+ * for various purposes. This interface can be used to inject more advanced customization
+ * like SSL verification, key loading, etc. without requiring further additions to
+ * registry configurations.
  *
  * @author Jon Schneider
  * @since 1.1.0
  */
 public interface HttpSender {
+
     Response send(Request request) throws Throwable;
 
     default Request.Builder post(String uri) {
@@ -72,9 +75,13 @@ public interface HttpSender {
     }
 
     class Request {
+
         private final URL url;
+
         private final byte[] entity;
+
         private final Method method;
+
         private final Map<String, String> requestHeaders;
 
         public Request(URL url, byte[] entity, Method method, Map<String, String> requestHeaders) {
@@ -106,31 +113,38 @@ public interface HttpSender {
 
         @Override
         public String toString() {
-            StringBuilder printed = new StringBuilder(method.toString()).append(' ')
-                    .append(url.toString()).append("\n");
+            StringBuilder printed = new StringBuilder(method.toString()).append(' ').append(url.toString())
+                    .append("\n");
             if (entity.length == 0) {
                 printed.append("<no request body>");
-            } else {
+            }
+            else {
                 printed.append(new String(entity));
             }
             return printed.toString();
         }
 
         public static class Builder {
+
             private static final String APPLICATION_JSON = "application/json";
+
             private static final String TEXT_PLAIN = "text/plain";
 
             private final URL url;
+
             private final HttpSender sender;
 
             private byte[] entity = new byte[0];
+
             private Method method;
+
             private Map<String, String> requestHeaders = new LinkedHashMap<>();
 
             Builder(String uri, HttpSender sender) {
                 try {
                     this.url = URI.create(uri).toURL();
-                } catch (MalformedURLException ex) {
+                }
+                catch (MalformedURLException ex) {
                     throw new UncheckedIOException(ex);
                 }
                 this.sender = sender;
@@ -138,8 +152,7 @@ public interface HttpSender {
 
             /**
              * Add a header to the request.
-             *
-             * @param name  The name of the header.
+             * @param name The name of the header.
              * @param value The value of the header.
              * @return This request builder.
              */
@@ -149,16 +162,17 @@ public interface HttpSender {
             }
 
             /**
-             * If user and password are non-empty, set basic authentication on the request.
-             *
-             * @param user     A user name, if available.
+             * If user and password are non-empty, set basic authentication on the
+             * request.
+             * @param user A user name, if available.
              * @param password A password, if available.
              * @return This request builder.
              */
             public final Builder withBasicAuthentication(@Nullable String user, @Nullable String password) {
                 if (user != null && StringUtils.isNotBlank(user)) {
-                    String encoded = Base64.getEncoder().encodeToString((user.trim() + ":" + (password == null ? "" : password.trim()))
-                            .getBytes(StandardCharsets.UTF_8));
+                    String encoded = Base64.getEncoder()
+                            .encodeToString((user.trim() + ":" + (password == null ? "" : password.trim()))
+                                    .getBytes(StandardCharsets.UTF_8));
                     withHeader("Authorization", "Basic " + encoded);
                 }
                 return this;
@@ -166,7 +180,6 @@ public interface HttpSender {
 
             /**
              * Set the request body as JSON content type.
-             *
              * @param content The request body.
              * @return This request builder.
              */
@@ -176,7 +189,6 @@ public interface HttpSender {
 
             /**
              * Set the request body as plain text content type.
-             *
              * @param content The request body.
              * @return This request builder.
              */
@@ -186,8 +198,7 @@ public interface HttpSender {
 
             /**
              * Set the request body.
-             *
-             * @param type    The value of the "Content-Type" header to add.
+             * @param type The value of the "Content-Type" header to add.
              * @param content The request body.
              * @return This request builder.
              */
@@ -197,8 +208,7 @@ public interface HttpSender {
 
             /**
              * Set the request body.
-             *
-             * @param type    The value of the "Content-Type" header to add.
+             * @param type The value of the "Content-Type" header to add.
              * @param content The request body.
              * @return This request builder.
              */
@@ -210,7 +220,6 @@ public interface HttpSender {
 
             /**
              * Add header to accept {@code application/json} data.
-             *
              * @return This request builder.
              */
             public Builder acceptJson() {
@@ -219,7 +228,6 @@ public interface HttpSender {
 
             /**
              * Add accept header.
-             *
              * @param type The value of the "Accept" header to add.
              * @return This request builder.
              */
@@ -229,7 +237,6 @@ public interface HttpSender {
 
             /**
              * Set the request method.
-             *
              * @param method An HTTP method.
              * @return This request builder.
              */
@@ -240,7 +247,6 @@ public interface HttpSender {
 
             /**
              * Add a "Content-Encoding" header of "gzip" and compress the request body.
-             *
              * @return This request builder.
              * @throws IOException If compression fails.
              */
@@ -251,9 +257,8 @@ public interface HttpSender {
             }
 
             /**
-             * Add a "Content-Encoding" header of "gzip" and compress the request body when the supplied
-             * condition is true.
-             *
+             * Add a "Content-Encoding" header of "gzip" and compress the request body
+             * when the supplied condition is true.
              * @param when Condition that governs when to compress the request body.
              * @return This request builder.
              * @throws IOException If compression fails.
@@ -280,12 +285,17 @@ public interface HttpSender {
             public Response send() throws Throwable {
                 return sender.send(new Request(url, entity, method, requestHeaders));
             }
+
         }
+
     }
 
     class Response {
+
         public static final String NO_RESPONSE_BODY = "<no response body>";
+
         private final int code;
+
         private final String body;
 
         public Response(int code, @Nullable String body) {
@@ -303,34 +313,38 @@ public interface HttpSender {
 
         public Response onSuccess(Consumer<Response> onSuccess) {
             switch (HttpStatusClass.valueOf(code)) {
-                case INFORMATIONAL:
-                case SUCCESS:
-                    onSuccess.accept(this);
+            case INFORMATIONAL:
+            case SUCCESS:
+                onSuccess.accept(this);
             }
             return this;
         }
 
         public Response onError(Consumer<Response> onError) {
             switch (HttpStatusClass.valueOf(code)) {
-                case CLIENT_ERROR:
-                case SERVER_ERROR:
-                    onError.accept(this);
+            case CLIENT_ERROR:
+            case SERVER_ERROR:
+                onError.accept(this);
             }
             return this;
         }
 
         public boolean isSuccessful() {
             switch (HttpStatusClass.valueOf(code)) {
-                case INFORMATIONAL:
-                case SUCCESS:
-                    return true;
-                default:
-                    return false;
+            case INFORMATIONAL:
+            case SUCCESS:
+                return true;
+            default:
+                return false;
             }
         }
+
     }
 
     enum Method {
+
         GET, HEAD, POST, PUT, DELETE, OPTIONS
+
     }
+
 }

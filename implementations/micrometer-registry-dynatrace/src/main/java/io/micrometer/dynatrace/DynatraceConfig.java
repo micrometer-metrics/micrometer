@@ -48,14 +48,11 @@ public interface DynatraceConfig extends StepRegistryConfig {
     }
 
     default String technologyType() {
-        return getSecret(this, "technologyType")
-                .map(v -> StringUtils.isEmpty(v) ? "java" : v)
-                .get();
+        return getSecret(this, "technologyType").map(v -> StringUtils.isEmpty(v) ? "java" : v).get();
     }
 
     /**
      * Return device group name.
-     *
      * @return device group name
      * @since 1.2.0
      */
@@ -66,12 +63,9 @@ public interface DynatraceConfig extends StepRegistryConfig {
 
     @Override
     default Validated<?> validate() {
-        return checkAll(this,
-                c -> StepRegistryConfig.validate(c),
-                checkRequired("apiToken", DynatraceConfig::apiToken),
-                checkRequired("uri", DynatraceConfig::uri),
-                checkRequired("deviceId", DynatraceConfig::deviceId),
-                check("technologyType", DynatraceConfig::technologyType).andThen(Validated::nonBlank)
-        );
+        return checkAll(this, c -> StepRegistryConfig.validate(c), checkRequired("apiToken", DynatraceConfig::apiToken),
+                checkRequired("uri", DynatraceConfig::uri), checkRequired("deviceId", DynatraceConfig::deviceId),
+                check("technologyType", DynatraceConfig::technologyType).andThen(Validated::nonBlank));
     }
+
 }

@@ -23,6 +23,7 @@ import java.util.concurrent.TimeUnit;
 import java.util.function.Supplier;
 
 public class NoopTimer extends NoopMeter implements Timer {
+
     public NoopTimer(Id id) {
         super(id);
     }
@@ -70,4 +71,5 @@ public class NoopTimer extends NoopMeter implements Timer {
     public HistogramSnapshot takeSnapshot() {
         return HistogramSnapshot.empty(0, 0, 0);
     }
+
 }

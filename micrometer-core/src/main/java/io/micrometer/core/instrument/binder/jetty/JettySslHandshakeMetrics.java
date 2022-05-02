@@ -27,7 +27,8 @@ import org.eclipse.jetty.server.Server;
 import javax.net.ssl.SSLSession;
 
 /**
- * Jetty SSL/TLS handshake metrics.<br><br>
+ * Jetty SSL/TLS handshake metrics.<br>
+ * <br>
  * <p>
  * Usage example:
  *
@@ -39,21 +40,29 @@ import javax.net.ssl.SSLSession;
  * server.setConnectors(new Connector[] { connector });
  * }</pre>
  *
- * Alternatively, configure on all connectors with {@link JettySslHandshakeMetrics#addToAllConnectors(Server, MeterRegistry, Iterable)}.
+ * Alternatively, configure on all connectors with
+ * {@link JettySslHandshakeMetrics#addToAllConnectors(Server, MeterRegistry, Iterable)}.
  *
  * @author John Karp
  * @author Johnny Lim
  * @since 1.5.0
  */
 public class JettySslHandshakeMetrics implements SslHandshakeListener {
+
     private static final String METER_NAME = "jetty.ssl.handshakes";
+
     private static final String DESCRIPTION = "SSL/TLS handshakes";
+
     private static final String TAG_RESULT = "result";
+
     private static final String TAG_PROTOCOL = "protocol";
+
     private static final String TAG_CIPHER_SUITE = "ciphersuite";
+
     private static final String TAG_VALUE_UNKNOWN = "unknown";
 
     private final MeterRegistry registry;
+
     private final Iterable<Tag> tags;
 
     private final Counter handshakesFailed;
@@ -66,28 +75,17 @@ public class JettySslHandshakeMetrics implements SslHandshakeListener {
         this.registry = registry;
         this.tags = tags;
 
-        this.handshakesFailed = Counter.builder(METER_NAME)
-                .baseUnit(BaseUnits.EVENTS)
-                .description(DESCRIPTION)
-                .tag(TAG_RESULT, "failed")
-                .tag(TAG_PROTOCOL, TAG_VALUE_UNKNOWN)
-                .tag(TAG_CIPHER_SUITE, TAG_VALUE_UNKNOWN)
-                .tags(tags)
-                .register(registry);
+        this.handshakesFailed = Counter.builder(METER_NAME).baseUnit(BaseUnits.EVENTS).description(DESCRIPTION)
+                .tag(TAG_RESULT, "failed").tag(TAG_PROTOCOL, TAG_VALUE_UNKNOWN).tag(TAG_CIPHER_SUITE, TAG_VALUE_UNKNOWN)
+                .tags(tags).register(registry);
     }
 
     @Override
     public void handshakeSucceeded(Event event) {
         SSLSession session = event.getSSLEngine().getSession();
-        Counter.builder(METER_NAME)
-                .baseUnit(BaseUnits.EVENTS)
-                .description(DESCRIPTION)
-                .tag(TAG_RESULT, "succeeded")
-                .tag(TAG_PROTOCOL, session.getProtocol())
-                .tag(TAG_CIPHER_SUITE, session.getCipherSuite())
-                .tags(tags)
-                .register(registry)
-                .increment();
+        Counter.builder(METER_NAME).baseUnit(BaseUnits.EVENTS).description(DESCRIPTION).tag(TAG_RESULT, "succeeded")
+                .tag(TAG_PROTOCOL, session.getProtocol()).tag(TAG_CIPHER_SUITE, session.getCipherSuite()).tags(tags)
+                .register(registry).increment();
     }
 
     @Override
@@ -106,4 +104,5 @@ public class JettySslHandshakeMetrics implements SslHandshakeListener {
     public static void addToAllConnectors(Server server, MeterRegistry registry) {
         addToAllConnectors(server, registry, Tags.empty());
     }
+
 }

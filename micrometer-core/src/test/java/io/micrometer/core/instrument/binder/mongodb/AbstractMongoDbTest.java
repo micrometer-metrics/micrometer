@@ -47,10 +47,8 @@ abstract class AbstractMongoDbTest {
 
         port = Network.getFreeServerPort();
 
-        MongodConfig mongodConfig = MongodConfig.builder()
-                .version(Version.Main.PRODUCTION)
-                .net(new Net(HOST, port, Network.localhostIsIPv6()))
-                .build();
+        MongodConfig mongodConfig = MongodConfig.builder().version(Version.Main.PRODUCTION)
+                .net(new Net(HOST, port, Network.localhostIsIPv6())).build();
         mongodExecutable = starter.prepare(mongodConfig);
         mongodExecutable.start();
     }

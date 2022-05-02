@@ -20,4 +20,5 @@ public class PrometheusDurationNamingConvention extends PrometheusNamingConventi
     public PrometheusDurationNamingConvention() {
         super("_duration");
     }
+
 }

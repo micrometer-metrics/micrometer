@@ -51,24 +51,33 @@ import static java.nio.charset.StandardCharsets.UTF_8;
  * @since 1.1.0
  */
 public class DynatraceMeterRegistry extends StepMeterRegistry {
+
     private static final ThreadFactory DEFAULT_THREAD_FACTORY = new NamedThreadFactory("dynatrace-metrics-publisher");
-    private static final int MAX_MESSAGE_SIZE = 15360; //max message size in bytes that Dynatrace will accept
+
+    private static final int MAX_MESSAGE_SIZE = 15360; // max message size in bytes that
+                                                       // Dynatrace will accept
+
     private final InternalLogger logger = InternalLoggerFactory.getInstance(DynatraceMeterRegistry.class);
+
     private final DynatraceConfig config;
+
     private final HttpSender httpClient;
 
     /**
      * Metric names for which we have created the custom metric in the API
      */
     private final Set<String> createdCustomMetrics = ConcurrentHashMap.newKeySet();
+
     private final String customMetricEndpointTemplate;
 
     @SuppressWarnings("deprecation")
     public DynatraceMeterRegistry(DynatraceConfig config, Clock clock) {
-        this(config, clock, DEFAULT_THREAD_FACTORY, new HttpUrlConnectionSender(config.connectTimeout(), config.readTimeout()));
+        this(config, clock, DEFAULT_THREAD_FACTORY,
+                new HttpUrlConnectionSender(config.connectTimeout(), config.readTimeout()));
     }
 
-    private DynatraceMeterRegistry(DynatraceConfig config, Clock clock, ThreadFactory threadFactory, HttpSender httpClient) {
+    private DynatraceMeterRegistry(DynatraceConfig config, Clock clock, ThreadFactory threadFactory,
+            HttpSender httpClient) {
         super(config, clock);
 
         this.config = config;
@@ -87,11 +96,12 @@ public class DynatraceMeterRegistry extends StepMeterRegistry {
 
     @Override
     protected void publish() {
-        String customDeviceMetricEndpoint = config.uri() + "/api/v1/entity/infrastructure/custom/" +
-                config.deviceId() + "?api-token=" + config.apiToken();
+        String customDeviceMetricEndpoint = config.uri() + "/api/v1/entity/infrastructure/custom/" + config.deviceId()
+                + "?api-token=" + config.apiToken();
 
         for (List<Meter> batch : MeterPartition.partition(this, config.batchSize())) {
             final List<DynatraceCustomMetric> series = batch.stream()
+            // @formatter:off
                     .flatMap(meter -> meter.match(
                             this::writeMeter,
                             this::writeMeter,
@@ -103,21 +113,16 @@ public class DynatraceMeterRegistry extends StepMeterRegistry {
                             this::writeFunctionTimer,
                             this::writeMeter)
                     )
+                    // @formatter:on
                     .collect(Collectors.toList());
 
             // TODO is there a way to batch submissions of multiple metrics?
-            series.stream()
-                    .map(DynatraceCustomMetric::getMetricDefinition)
-                    .filter(this::isCustomMetricNotCreated)
+            series.stream().map(DynatraceCustomMetric::getMetricDefinition).filter(this::isCustomMetricNotCreated)
                     .forEach(this::putCustomMetric);
 
             if (!createdCustomMetrics.isEmpty() && !series.isEmpty()) {
-                postCustomMetricValues(
-                        config.technologyType(),
-                        config.group(),
-                        series.stream()
-                                .map(DynatraceCustomMetric::getTimeSeries)
-                                .filter(this::isCustomMetricCreated)
+                postCustomMetricValues(config.technologyType(), config.group(),
+                        series.stream().map(DynatraceCustomMetric::getTimeSeries).filter(this::isCustomMetricCreated)
                                 .collect(Collectors.toList()),
                         customDeviceMetricEndpoint);
             }
@@ -127,17 +132,16 @@ public class DynatraceMeterRegistry extends StepMeterRegistry {
     // VisibleForTesting
     Stream<DynatraceCustomMetric> writeMeter(Meter meter) {
         final long wallTime = clock.wallTime();
-        return StreamSupport.stream(meter.measure().spliterator(), false)
-                .map(Measurement::getValue)
-                .filter(Double::isFinite)
-                .map(value -> createCustomMetric(meter.getId(), wallTime, value));
+        return StreamSupport.stream(meter.measure().spliterator(), false).map(Measurement::getValue)
+                .filter(Double::isFinite).map(value -> createCustomMetric(meter.getId(), wallTime, value));
     }
 
     private Stream<DynatraceCustomMetric> writeLongTaskTimer(LongTaskTimer longTaskTimer) {
         final long wallTime = clock.wallTime();
         final Meter.Id id = longTaskTimer.getId();
         return Stream.of(
-                createCustomMetric(idWithSuffix(id, "activeTasks"), wallTime, longTaskTimer.activeTasks(), DynatraceUnit.Count),
+                createCustomMetric(idWithSuffix(id, "activeTasks"), wallTime, longTaskTimer.activeTasks(),
+                        DynatraceUnit.Count),
                 createCustomMetric(idWithSuffix(id, "count"), wallTime, longTaskTimer.duration(getBaseTimeUnit())));
     }
 
@@ -147,8 +151,7 @@ public class DynatraceMeterRegistry extends StepMeterRegistry {
         final Meter.Id id = summary.getId();
         final HistogramSnapshot snapshot = summary.takeSnapshot();
 
-        return Stream.of(
-                createCustomMetric(idWithSuffix(id, "sum"), wallTime, snapshot.total()),
+        return Stream.of(createCustomMetric(idWithSuffix(id, "sum"), wallTime, snapshot.total()),
                 createCustomMetric(idWithSuffix(id, "count"), wallTime, snapshot.count(), DynatraceUnit.Count),
                 createCustomMetric(idWithSuffix(id, "avg"), wallTime, snapshot.mean()),
                 createCustomMetric(idWithSuffix(id, "max"), wallTime, snapshot.max()));
@@ -158,8 +161,7 @@ public class DynatraceMeterRegistry extends StepMeterRegistry {
         final long wallTime = clock.wallTime();
         final Meter.Id id = timer.getId();
 
-        return Stream.of(
-                createCustomMetric(idWithSuffix(id, "count"), wallTime, timer.count(), DynatraceUnit.Count),
+        return Stream.of(createCustomMetric(idWithSuffix(id, "count"), wallTime, timer.count(), DynatraceUnit.Count),
                 createCustomMetric(idWithSuffix(id, "avg"), wallTime, timer.mean(getBaseTimeUnit())),
                 createCustomMetric(idWithSuffix(id, "sum"), wallTime, timer.totalTime(getBaseTimeUnit())));
     }
@@ -169,8 +171,7 @@ public class DynatraceMeterRegistry extends StepMeterRegistry {
         final Meter.Id id = timer.getId();
         final HistogramSnapshot snapshot = timer.takeSnapshot();
 
-        return Stream.of(
-                createCustomMetric(idWithSuffix(id, "sum"), wallTime, snapshot.total(getBaseTimeUnit())),
+        return Stream.of(createCustomMetric(idWithSuffix(id, "sum"), wallTime, snapshot.total(getBaseTimeUnit())),
                 createCustomMetric(idWithSuffix(id, "count"), wallTime, snapshot.count(), DynatraceUnit.Count),
                 createCustomMetric(idWithSuffix(id, "avg"), wallTime, snapshot.mean(getBaseTimeUnit())),
                 createCustomMetric(idWithSuffix(id, "max"), wallTime, snapshot.max(getBaseTimeUnit())));
@@ -180,11 +181,13 @@ public class DynatraceMeterRegistry extends StepMeterRegistry {
         return createCustomMetric(id, time, value, DynatraceUnit.fromPlural(id.getBaseUnit()));
     }
 
-    private DynatraceCustomMetric createCustomMetric(Meter.Id id, long time, Number value, @Nullable DynatraceUnit unit) {
+    private DynatraceCustomMetric createCustomMetric(Meter.Id id, long time, Number value,
+            @Nullable DynatraceUnit unit) {
         final String metricId = getConventionName(id);
         final List<Tag> tags = getConventionTags(id);
         return new DynatraceCustomMetric(
-                new DynatraceMetricDefinition(metricId, id.getDescription(), unit, extractDimensions(tags), new String[]{config.technologyType()}, config.group()),
+                new DynatraceMetricDefinition(metricId, id.getDescription(), unit, extractDimensions(tags),
+                        new String[] { config.technologyType() }, config.group()),
                 new DynatraceTimeSeries(metricId, time, value.doubleValue(), extractDimensionValues(tags)));
     }
 
@@ -207,45 +210,41 @@ public class DynatraceMeterRegistry extends StepMeterRegistry {
     // VisibleForTesting
     void putCustomMetric(final DynatraceMetricDefinition customMetric) {
         try {
-            httpClient.put(customMetricEndpointTemplate + customMetric.getMetricId() + "?api-token=" + config.apiToken())
-                    .withJsonContent(customMetric.asJson())
-                    .send()
-                    .onSuccess(response -> {
+            httpClient
+                    .put(customMetricEndpointTemplate + customMetric.getMetricId() + "?api-token=" + config.apiToken())
+                    .withJsonContent(customMetric.asJson()).send().onSuccess(response -> {
                         logger.debug("created {} as custom metric in Dynatrace", customMetric.getMetricId());
                         createdCustomMetrics.add(customMetric.getMetricId());
                     })
-                    .onError(response ->
-                        logger.error("failed to create custom metric {} in Dynatrace: Error Code={}, Response Body={}",
-                                customMetric.getMetricId(),
-                                response.code(),
-                                response.body()
-                        )
-                    );
-        } catch (Throwable e) {
+                    .onError(response -> logger.error(
+                            "failed to create custom metric {} in Dynatrace: Error Code={}, Response Body={}",
+                            customMetric.getMetricId(), response.code(), response.body()));
+        }
+        catch (Throwable e) {
             if (logger.isErrorEnabled()) {
                 logger.error("failed to create custom metric in Dynatrace: " + customMetric.getMetricId(), e);
             }
         }
     }
 
-    private void postCustomMetricValues(String type, String group, List<DynatraceTimeSeries> timeSeries, String customDeviceMetricEndpoint) {
+    private void postCustomMetricValues(String type, String group, List<DynatraceTimeSeries> timeSeries,
+            String customDeviceMetricEndpoint) {
         try {
             for (DynatraceBatchedPayload postMessage : createPostMessages(type, group, timeSeries)) {
-                httpClient.post(customDeviceMetricEndpoint)
-                        .withJsonContent(postMessage.payload)
-                        .send()
+                httpClient.post(customDeviceMetricEndpoint).withJsonContent(postMessage.payload).send()
                         .onSuccess(response -> {
                             if (logger.isDebugEnabled()) {
                                 logger.debug("successfully sent {} metrics to Dynatrace ({} bytes).",
                                         postMessage.metricCount, postMessage.payload.getBytes(UTF_8).length);
                             }
-                        })
-                        .onError(response -> {
-                            logger.error("failed to send metrics to Dynatrace: Error Code={}, Response Body={}", response.code(), response.body());
+                        }).onError(response -> {
+                            logger.error("failed to send metrics to Dynatrace: Error Code={}, Response Body={}",
+                                    response.code(), response.body());
                             logger.debug("failed metrics payload: {}", postMessage.payload);
                         });
             }
-        } catch (Throwable e) {
+        }
+        catch (Throwable e) {
             logger.error("failed to send metrics to Dynatrace", e);
         }
     }
@@ -253,8 +252,7 @@ public class DynatraceMeterRegistry extends StepMeterRegistry {
     // VisibleForTesting
     List<DynatraceBatchedPayload> createPostMessages(String type, String group, List<DynatraceTimeSeries> timeSeries) {
         final String header = "{\"type\":\"" + type + '\"'
-                + (StringUtils.isNotBlank(group) ? ",\"group\":\"" + group + '\"' : "")
-                + ",\"series\":[";
+                + (StringUtils.isNotBlank(group) ? ",\"group\":\"" + group + '\"' : "") + ",\"series\":[";
         final String footer = "]}";
         final int headerFooterBytes = header.getBytes(UTF_8).length + footer.getBytes(UTF_8).length;
         final int maxMessageSize = MAX_MESSAGE_SIZE - headerFooterBytes;
@@ -274,11 +272,12 @@ public class DynatraceMeterRegistry extends StepMeterRegistry {
             String json = ts.asJson();
             int jsonByteCount = json.getBytes(UTF_8).length;
             if (jsonByteCount > maxSize) {
-                logger.debug("Time series data for metric '{}' is too large ({} bytes) to send to Dynatrace.", ts.getMetricId(), jsonByteCount);
+                logger.debug("Time series data for metric '{}' is too large ({} bytes) to send to Dynatrace.",
+                        ts.getMetricId(), jsonByteCount);
                 continue;
             }
-            if ((payload.length() == 0 && totalByteCount + jsonByteCount > maxSize) ||
-                    (payload.length() > 0 && totalByteCount + jsonByteCount + 1 > maxSize)) {
+            if ((payload.length() == 0 && totalByteCount + jsonByteCount > maxSize)
+                    || (payload.length() > 0 && totalByteCount + jsonByteCount + 1 > maxSize)) {
                 messages.add(new DynatraceBatchedPayload(payload.toString(), metricCount));
                 payload.setLength(0);
                 totalByteCount = 0;
@@ -308,10 +307,13 @@ public class DynatraceMeterRegistry extends StepMeterRegistry {
     }
 
     public static class Builder {
+
         private final DynatraceConfig config;
 
         private Clock clock = Clock.SYSTEM;
+
         private ThreadFactory threadFactory = DEFAULT_THREAD_FACTORY;
+
         private HttpSender httpClient;
 
         @SuppressWarnings("deprecation")
@@ -338,10 +340,13 @@ public class DynatraceMeterRegistry extends StepMeterRegistry {
         public DynatraceMeterRegistry build() {
             return new DynatraceMeterRegistry(config, clock, threadFactory, httpClient);
         }
+
     }
 
     class DynatraceCustomMetric {
+
         private final DynatraceMetricDefinition metricDefinition;
+
         private final DynatraceTimeSeries timeSeries;
 
         DynatraceCustomMetric(final DynatraceMetricDefinition metricDefinition, final DynatraceTimeSeries timeSeries) {
@@ -356,6 +361,7 @@ public class DynatraceMeterRegistry extends StepMeterRegistry {
         DynatraceTimeSeries getTimeSeries() {
             return timeSeries;
         }
-    }
-}
 
+    }
+
+}

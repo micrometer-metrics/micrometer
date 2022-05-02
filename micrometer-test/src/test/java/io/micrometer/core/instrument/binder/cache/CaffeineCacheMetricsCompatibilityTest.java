@@ -26,13 +26,11 @@ import java.util.concurrent.atomic.AtomicReference;
 import static java.util.Collections.emptyList;
 
 class CaffeineCacheMetricsCompatibilityTest extends CacheMeterBinderCompatibilityKit {
+
     private AtomicReference<String> loadValue = new AtomicReference<>();
 
-    private LoadingCache<String, String> cache = Caffeine.newBuilder()
-            .maximumSize(2)
-            .recordStats()
-            .executor(Runnable::run)
-            .build(new CacheLoader<String, String>() {
+    private LoadingCache<String, String> cache = Caffeine.newBuilder().maximumSize(2).recordStats()
+            .executor(Runnable::run).build(new CacheLoader<String, String>() {
                 @CheckForNull
                 @Override
                 public String load(@Nonnull String key) throws Exception {
@@ -60,8 +58,10 @@ class CaffeineCacheMetricsCompatibilityTest extends CacheMeterBinderCompatibilit
     public String get(String key) {
         try {
             return cache.get(key);
-        } catch (Exception ignored) {
+        }
+        catch (Exception ignored) {
             return null;
         }
     }
+
 }

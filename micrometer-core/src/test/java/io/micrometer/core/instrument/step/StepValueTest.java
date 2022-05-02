@@ -65,4 +65,5 @@ class StepValueTest {
         clock.add(Duration.ofMillis(60));
         assertThat(stepValue.poll()).isEqualTo(24L);
     }
+
 }

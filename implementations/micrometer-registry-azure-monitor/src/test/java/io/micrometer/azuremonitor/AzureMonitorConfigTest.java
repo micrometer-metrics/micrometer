@@ -23,7 +23,9 @@ import java.util.Map;
 import static org.assertj.core.api.Assertions.assertThat;
 
 class AzureMonitorConfigTest {
+
     private final Map<String, String> props = new HashMap<>();
+
     private final AzureMonitorConfig config = props::get;
 
     @Test
@@ -32,4 +34,5 @@ class AzureMonitorConfigTest {
 
         assertThat(config.validate().isValid()).isTrue();
     }
+
 }

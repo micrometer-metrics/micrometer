@@ -37,7 +37,8 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.AssertionsForClassTypes.assertThatThrownBy;
 
 /**
- * Unit tests to check compatibility of {@link InfluxMeterRegistry} with InfluxDB v1 and InfluxDB v2.
+ * Unit tests to check compatibility of {@link InfluxMeterRegistry} with InfluxDB v1 and
+ * InfluxDB v2.
  *
  * @author Jakub Bednar
  */
@@ -56,15 +57,13 @@ class InfluxMeterRegistryVersionsTest {
     }
 
     private void stubForV1(WireMockServer server) {
-        server.stubFor(any(urlPathEqualTo("/write"))
-                .willReturn(aResponse().withStatus(204)));
+        server.stubFor(any(urlPathEqualTo("/write")).willReturn(aResponse().withStatus(204)));
     }
 
     @Test
     void writeToV1BasicAuth(@Wiremock WireMockServer server) {
-        server.stubFor(post(urlPathEqualTo("/write"))
-                .withBasicAuth("user", "pass")
-                .willReturn(aResponse().withStatus(204)));
+        server.stubFor(
+                post(urlPathEqualTo("/write")).withBasicAuth("user", "pass").willReturn(aResponse().withStatus(204)));
 
         Map<String, String> props = new HashMap<>();
         InfluxConfig config = props::get;
@@ -109,8 +108,7 @@ class InfluxMeterRegistryVersionsTest {
     }
 
     private void stubForV2(WireMockServer server) {
-        server.stubFor(any(urlPathEqualTo("/api/v2/write"))
-                .willReturn(aResponse().withStatus(204)));
+        server.stubFor(any(urlPathEqualTo("/api/v2/write")).willReturn(aResponse().withStatus(204)));
     }
 
     @Test
@@ -286,8 +284,7 @@ class InfluxMeterRegistryVersionsTest {
         InfluxConfig config = props::get;
         props.put("influx.db", "");
 
-        assertThat(config.validate().failures().stream()
-                .map(Validated.Invalid::getMessage))
+        assertThat(config.validate().failures().stream().map(Validated.Invalid::getMessage))
                 .containsExactly("db or bucket should be specified");
     }
 
@@ -306,8 +303,8 @@ class InfluxMeterRegistryVersionsTest {
 
         publishSimpleStat(config);
 
-        server.verify(postRequestedFor(urlEqualTo("/query?q=CREATE+DATABASE+%22my-db%22"))
-                .withHeader("Authorization", equalTo("Bearer my-token")));
+        server.verify(postRequestedFor(urlEqualTo("/query?q=CREATE+DATABASE+%22my-db%22")).withHeader("Authorization",
+                equalTo("Bearer my-token")));
         server.verify(postRequestedFor(urlEqualTo("/write?consistency=one&precision=ms&db=my-db"))
                 .withRequestBody(equalTo("my_counter,metric_type=counter value=0 1"))
                 .withHeader("Authorization", equalTo("Bearer my-token")));
@@ -388,11 +385,9 @@ class InfluxMeterRegistryVersionsTest {
     private void publishSimpleStat(InfluxConfig config) {
         InfluxMeterRegistry registry = new InfluxMeterRegistry(config, new MockClock());
 
-        Counter.builder("my.counter")
-                .baseUnit(TimeUnit.MICROSECONDS.name().toLowerCase())
-                .description("metric description")
-                .register(registry)
-                .increment(Math.PI);
+        Counter.builder("my.counter").baseUnit(TimeUnit.MICROSECONDS.name().toLowerCase())
+                .description("metric description").register(registry).increment(Math.PI);
         registry.publish();
     }
+
 }

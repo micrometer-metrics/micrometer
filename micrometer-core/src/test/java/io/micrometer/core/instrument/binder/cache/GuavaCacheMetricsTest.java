@@ -43,6 +43,7 @@ class GuavaCacheMetricsTest extends AbstractCacheMetricsTest {
             return "";
         }
     });
+
     private GuavaCacheMetrics metrics = new GuavaCacheMetrics(cache, "testCache", expectedTag);
 
     @Test

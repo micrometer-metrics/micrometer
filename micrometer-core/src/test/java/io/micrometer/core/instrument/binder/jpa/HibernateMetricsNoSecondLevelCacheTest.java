@@ -32,14 +32,15 @@ import org.mockito.stubbing.Answer;
  * Tests for {@link HibernateMetrics}.
  *
  * @author Erin Schnabel
- * @deprecated This implementation is deprecated in favor of the MeterBinder maintained
- *    as part of the Hibernate project as of version 5.4.26. See
- *    https://mvnrepository.com/artifact/org.hibernate/hibernate-micrometer/
+ * @deprecated This implementation is deprecated in favor of the MeterBinder maintained as
+ * part of the Hibernate project as of version 5.4.26. See
+ * https://mvnrepository.com/artifact/org.hibernate/hibernate-micrometer/
  */
 @SuppressWarnings("deprecation")
 class HibernateMetricsNoSecondLevelCacheTest {
 
     private final MeterRegistry registry = new SimpleMeterRegistry(SimpleConfig.DEFAULT, new MockClock());
+
     private final SessionFactory sessionFactory = createMockSessionFactory(true);
 
     private static SessionFactory createMockSessionFactory(boolean statsEnabled) {
@@ -47,9 +48,10 @@ class HibernateMetricsNoSecondLevelCacheTest {
         final Answer<?> defaultAnswer = inv -> 42L;
         Statistics stats = mock(Statistics.class, defaultAnswer);
         doReturn(statsEnabled).when(stats).isStatisticsEnabled();
-        doReturn(new String[]{"region1", "region2"}).when(stats).getSecondLevelCacheRegionNames();
+        doReturn(new String[] { "region1", "region2" }).when(stats).getSecondLevelCacheRegionNames();
         doReturn(null).when(stats).getDomainDataRegionStatistics("region1");
-        doThrow(new IllegalArgumentException("Mocked: Unknown region")).when(stats).getDomainDataRegionStatistics("region2");
+        doThrow(new IllegalArgumentException("Mocked: Unknown region")).when(stats)
+                .getDomainDataRegionStatistics("region2");
         when(sf.getStatistics()).thenReturn(stats);
         return sf;
     }
@@ -67,9 +69,9 @@ class HibernateMetricsNoSecondLevelCacheTest {
         assertThat(registry.get("hibernate.sessions.open").functionCounter().count()).isEqualTo(42.0);
 
         assertThatThrownBy(() -> registry.get("hibernate.second.level.cache.requests").functionCounters())
-            .isInstanceOf(MeterNotFoundException.class);
+                .isInstanceOf(MeterNotFoundException.class);
         assertThatThrownBy(() -> registry.get("hibernate.second.level.cache.puts").functionCounters())
-            .isInstanceOf(MeterNotFoundException.class);
-   }
+                .isInstanceOf(MeterNotFoundException.class);
+    }
 
 }

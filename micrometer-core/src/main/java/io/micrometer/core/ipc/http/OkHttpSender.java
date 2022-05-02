@@ -28,6 +28,7 @@ import java.util.Map;
 public class OkHttpSender implements HttpSender {
 
     private static final MediaType MEDIA_TYPE_APPLICATION_JSON = MediaType.get("application/json; charset=utf-8");
+
     private static final MediaType MEDIA_TYPE_TEXT_PLAIN = MediaType.get("text/plain; charset=utf-8");
 
     private final OkHttpClient client;
@@ -53,16 +54,17 @@ public class OkHttpSender implements HttpSender {
         String methodValue = method.toString();
         if (entity.length > 0) {
             String contentType = request.getRequestHeaders().get("Content-Type");
-            MediaType mediaType = contentType != null
-                    ? MediaType.get(contentType + "; charset=utf-8")
+            MediaType mediaType = contentType != null ? MediaType.get(contentType + "; charset=utf-8")
                     : MEDIA_TYPE_APPLICATION_JSON;
             RequestBody body = RequestBody.create(entity, mediaType);
             requestBuilder.method(methodValue, body);
-        } else {
+        }
+        else {
             if (requiresRequestBody(method)) {
                 RequestBody body = RequestBody.create(entity, MEDIA_TYPE_TEXT_PLAIN);
                 requestBuilder.method(methodValue, body);
-            } else {
+            }
+            else {
                 requestBuilder.method(methodValue, null);
             }
         }
@@ -73,12 +75,13 @@ public class OkHttpSender implements HttpSender {
 
     private static boolean requiresRequestBody(Method method) {
         switch (method) {
-            case POST:
-            case PUT:
-                return true;
+        case POST:
+        case PUT:
+            return true;
 
-            default:
-                return false;
+        default:
+            return false;
         }
     }
+
 }

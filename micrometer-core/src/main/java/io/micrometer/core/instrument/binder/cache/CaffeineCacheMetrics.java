@@ -24,11 +24,11 @@ import io.micrometer.core.lang.NonNullFields;
 import java.util.concurrent.TimeUnit;
 
 /**
- * Collect metrics from Caffeine's {@link com.github.benmanes.caffeine.cache.Cache}. {@link CaffeineStatsCounter} is an
- * alternative that can collect more detailed statistics.
+ * Collect metrics from Caffeine's {@link com.github.benmanes.caffeine.cache.Cache}.
+ * {@link CaffeineStatsCounter} is an alternative that can collect more detailed
+ * statistics.
  * <p>
- * Note that {@code recordStats()} is required to gather non-zero statistics:
- * <pre>{@code
+ * Note that {@code recordStats()} is required to gather non-zero statistics: <pre>{@code
  * Cache<String, String> cache = Caffeine.newBuilder().recordStats().build();
  * CaffeineCacheMetrics.monitor(registry, cache, "mycache", "region", "test");
  * }</pre>
@@ -39,15 +39,16 @@ import java.util.concurrent.TimeUnit;
 @NonNullApi
 @NonNullFields
 public class CaffeineCacheMetrics extends CacheMeterBinder {
+
     private final Cache<?, ?> cache;
 
     /**
      * Creates a new {@link CaffeineCacheMetrics} instance.
-     *
-     * @param cache     The cache to be instrumented. You must call {@link Caffeine#recordStats()} prior to building the cache
-     *                  for metrics to be recorded.
+     * @param cache The cache to be instrumented. You must call
+     * {@link Caffeine#recordStats()} prior to building the cache for metrics to be
+     * recorded.
      * @param cacheName Will be used to tag metrics with "cache".
-     * @param tags      tags to apply to all recorded metrics.
+     * @param tags tags to apply to all recorded metrics.
      */
     public CaffeineCacheMetrics(Cache<?, ?> cache, String cacheName, Iterable<Tag> tags) {
         super(cache, cacheName, tags);
@@ -55,65 +56,70 @@ public class CaffeineCacheMetrics extends CacheMeterBinder {
     }
 
     /**
-     * Record metrics on a Caffeine cache. You must call {@link Caffeine#recordStats()} prior to building the cache
-     * for metrics to be recorded.
-     *
-     * @param registry  The registry to bind metrics to.
-     * @param cache     The cache to instrument.
+     * Record metrics on a Caffeine cache. You must call {@link Caffeine#recordStats()}
+     * prior to building the cache for metrics to be recorded.
+     * @param registry The registry to bind metrics to.
+     * @param cache The cache to instrument.
      * @param cacheName Will be used to tag metrics with "cache".
-     * @param tags      Tags to apply to all recorded metrics. Must be an even number of arguments representing key/value pairs of tags.
-     * @param <C>       The cache type.
-     * @return The instrumented cache, unchanged. The original cache is not wrapped or proxied in any way.
+     * @param tags Tags to apply to all recorded metrics. Must be an even number of
+     * arguments representing key/value pairs of tags.
+     * @param <C> The cache type.
+     * @return The instrumented cache, unchanged. The original cache is not wrapped or
+     * proxied in any way.
      */
     public static <C extends Cache<?, ?>> C monitor(MeterRegistry registry, C cache, String cacheName, String... tags) {
         return monitor(registry, cache, cacheName, Tags.of(tags));
     }
 
     /**
-     * Record metrics on a Caffeine cache. You must call {@link Caffeine#recordStats()} prior to building the cache
-     * for metrics to be recorded.
-     *
-     * @param registry  The registry to bind metrics to.
-     * @param cache     The cache to instrument.
+     * Record metrics on a Caffeine cache. You must call {@link Caffeine#recordStats()}
+     * prior to building the cache for metrics to be recorded.
+     * @param registry The registry to bind metrics to.
+     * @param cache The cache to instrument.
      * @param cacheName Will be used to tag metrics with "cache".
-     * @param tags      Tags to apply to all recorded metrics.
-     * @param <C>       The cache type.
-     * @return The instrumented cache, unchanged. The original cache is not wrapped or proxied in any way.
+     * @param tags Tags to apply to all recorded metrics.
+     * @param <C> The cache type.
+     * @return The instrumented cache, unchanged. The original cache is not wrapped or
+     * proxied in any way.
      * @see CacheStats
      */
-    public static <C extends Cache<?, ?>> C monitor(MeterRegistry registry, C cache, String cacheName, Iterable<Tag> tags) {
+    public static <C extends Cache<?, ?>> C monitor(MeterRegistry registry, C cache, String cacheName,
+            Iterable<Tag> tags) {
         new CaffeineCacheMetrics(cache, cacheName, tags).bindTo(registry);
         return cache;
     }
 
     /**
-     * Record metrics on a Caffeine cache. You must call {@link Caffeine#recordStats()} prior to building the cache
-     * for metrics to be recorded.
-     *
-     * @param registry  The registry to bind metrics to.
-     * @param cache     The cache to instrument.
+     * Record metrics on a Caffeine cache. You must call {@link Caffeine#recordStats()}
+     * prior to building the cache for metrics to be recorded.
+     * @param registry The registry to bind metrics to.
+     * @param cache The cache to instrument.
      * @param cacheName Will be used to tag metrics with "cache".
-     * @param tags      Tags to apply to all recorded metrics. Must be an even number of arguments representing key/value pairs of tags.
-     * @param <C>       The cache type.
-     * @return The instrumented cache, unchanged. The original cache is not wrapped or proxied in any way.
+     * @param tags Tags to apply to all recorded metrics. Must be an even number of
+     * arguments representing key/value pairs of tags.
+     * @param <C> The cache type.
+     * @return The instrumented cache, unchanged. The original cache is not wrapped or
+     * proxied in any way.
      */
-    public static <C extends AsyncCache<?, ?>> C monitor(MeterRegistry registry, C cache, String cacheName, String... tags) {
+    public static <C extends AsyncCache<?, ?>> C monitor(MeterRegistry registry, C cache, String cacheName,
+            String... tags) {
         return monitor(registry, cache, cacheName, Tags.of(tags));
     }
 
     /**
-     * Record metrics on a Caffeine cache. You must call {@link Caffeine#recordStats()} prior to building the cache
-     * for metrics to be recorded.
-     *
-     * @param registry  The registry to bind metrics to.
-     * @param cache     The cache to instrument.
+     * Record metrics on a Caffeine cache. You must call {@link Caffeine#recordStats()}
+     * prior to building the cache for metrics to be recorded.
+     * @param registry The registry to bind metrics to.
+     * @param cache The cache to instrument.
      * @param cacheName Will be used to tag metrics with "cache".
-     * @param tags      Tags to apply to all recorded metrics.
-     * @param <C>       The cache type.
-     * @return The instrumented cache, unchanged. The original cache is not wrapped or proxied in any way.
+     * @param tags Tags to apply to all recorded metrics.
+     * @param <C> The cache type.
+     * @return The instrumented cache, unchanged. The original cache is not wrapped or
+     * proxied in any way.
      * @see CacheStats
      */
-    public static <C extends AsyncCache<?, ?>> C monitor(MeterRegistry registry, C cache, String cacheName, Iterable<Tag> tags) {
+    public static <C extends AsyncCache<?, ?>> C monitor(MeterRegistry registry, C cache, String cacheName,
+            Iterable<Tag> tags) {
         monitor(registry, cache.synchronous(), cacheName, tags);
         return cache;
     }
@@ -153,22 +159,20 @@ public class CaffeineCacheMetrics extends CacheMeterBinder {
         if (cache instanceof LoadingCache) {
             // dividing these gives you a measure of load latency
             TimeGauge.builder("cache.load.duration", cache, TimeUnit.NANOSECONDS, c -> c.stats().totalLoadTime())
-                    .tags(getTagsWithCacheName())
-                    .description("The time the cache has spent loading new values")
+                    .tags(getTagsWithCacheName()).description("The time the cache has spent loading new values")
                     .register(registry);
 
-            FunctionCounter.builder("cache.load", cache, c -> c.stats().loadSuccessCount())
-                    .tags(getTagsWithCacheName())
+            FunctionCounter.builder("cache.load", cache, c -> c.stats().loadSuccessCount()).tags(getTagsWithCacheName())
                     .tags("result", "success")
                     .description("The number of times cache lookup methods have successfully loaded a new value")
                     .register(registry);
 
-            FunctionCounter.builder("cache.load", cache, c -> c.stats().loadFailureCount())
-                    .tags(getTagsWithCacheName())
+            FunctionCounter.builder("cache.load", cache, c -> c.stats().loadFailureCount()).tags(getTagsWithCacheName())
                     .tags("result", "failure")
-                    .description("The number of times {@link Cache} lookup methods failed to load a new value, either " +
-                            "because no value was found or an exception was thrown while loading")
+                    .description("The number of times {@link Cache} lookup methods failed to load a new value, either "
+                            + "because no value was found or an exception was thrown while loading")
                     .register(registry);
         }
     }
+
 }

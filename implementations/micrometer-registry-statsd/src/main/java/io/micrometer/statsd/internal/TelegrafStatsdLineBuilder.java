@@ -26,15 +26,21 @@ import java.util.concurrent.ConcurrentMap;
 import java.util.stream.Collectors;
 
 public class TelegrafStatsdLineBuilder extends FlavorStatsdLineBuilder {
+
     private final Object conventionTagsLock = new Object();
-    @SuppressWarnings({"NullableProblems", "unused"})
+
+    @SuppressWarnings({ "NullableProblems", "unused" })
     private volatile NamingConvention namingConvention;
+
     @SuppressWarnings("NullableProblems")
     private volatile String name;
+
     @Nullable
     private volatile String conventionTags;
+
     @SuppressWarnings("NullableProblems")
     private volatile String tagsNoStat;
+
     private final ConcurrentMap<Statistic, String> tags = new ConcurrentHashMap<>();
 
     public TelegrafStatsdLineBuilder(Meter.Id id, MeterRegistry.Config config) {
@@ -55,11 +61,9 @@ public class TelegrafStatsdLineBuilder extends FlavorStatsdLineBuilder {
                     return;
                 }
                 this.tags.clear();
-                this.conventionTags = id.getTagsAsIterable().iterator().hasNext() ?
-                        id.getConventionTags(next).stream()
-                                .map(t -> telegrafEscape(t.getKey()) + "=" + telegrafEscape(t.getValue()))
-                                .collect(Collectors.joining(","))
-                        : null;
+                this.conventionTags = id.getTagsAsIterable().iterator().hasNext() ? id.getConventionTags(next).stream()
+                        .map(t -> telegrafEscape(t.getKey()) + "=" + telegrafEscape(t.getValue()))
+                        .collect(Collectors.joining(",")) : null;
             }
             this.name = telegrafEscape(next.name(id.getName(), id.getType(), id.getBaseUnit()));
             this.tagsNoStat = tags(null, conventionTags, "=", ",");
@@ -83,13 +87,13 @@ public class TelegrafStatsdLineBuilder extends FlavorStatsdLineBuilder {
     /**
      * Backslash escape '=' works fine.
      * <p>
-     * Trying to escape spaces and commas causes the rest of the name to be dropped by telegraf.
-     * Trying to escape colons doesn't work. All of these must be replaced.
+     * Trying to escape spaces and commas causes the rest of the name to be dropped by
+     * telegraf. Trying to escape colons doesn't work. All of these must be replaced.
      */
     // backslash escape =
     // trying to escape spaces and comma drops everything after that
     private String telegrafEscape(String value) {
-        return value.replaceAll("=", "\\=")
-                .replaceAll("[\\s,:]", "_");
+        return value.replaceAll("=", "\\=").replaceAll("[\\s,:]", "_");
     }
+
 }

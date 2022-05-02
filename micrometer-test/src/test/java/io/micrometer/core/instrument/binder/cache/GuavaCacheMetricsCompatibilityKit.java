@@ -27,11 +27,10 @@ import java.util.concurrent.atomic.AtomicReference;
 import static java.util.Collections.emptyList;
 
 class GuavaCacheMetricsCompatibilityKit extends CacheMeterBinderCompatibilityKit {
+
     private AtomicReference<String> loadValue = new AtomicReference<>();
 
-    private LoadingCache<String, String> cache = CacheBuilder.newBuilder()
-            .maximumSize(2)
-            .recordStats()
+    private LoadingCache<String, String> cache = CacheBuilder.newBuilder().maximumSize(2).recordStats()
             .build(new CacheLoader<String, String>() {
                 @CheckForNull
                 @Override
@@ -54,7 +53,8 @@ class GuavaCacheMetricsCompatibilityKit extends CacheMeterBinderCompatibilityKit
             loadValue.set(value);
             try {
                 cache.get(key);
-            } catch (ExecutionException ignored) {
+            }
+            catch (ExecutionException ignored) {
             }
         }
     }
@@ -63,8 +63,10 @@ class GuavaCacheMetricsCompatibilityKit extends CacheMeterBinderCompatibilityKit
     public String get(String key) {
         try {
             return cache.get(key);
-        } catch (Exception ignored) {
+        }
+        catch (Exception ignored) {
             return null;
         }
     }
+
 }

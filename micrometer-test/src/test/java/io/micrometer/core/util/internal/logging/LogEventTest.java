@@ -32,10 +32,8 @@ class LogEventTest {
     @Test
     void logLevelShouldBeMandatory() {
         assertThatCode(() -> new LogEvent(INFO, null, null)).doesNotThrowAnyException();
-        assertThatThrownBy(() -> new LogEvent(null, null, null))
-                .isInstanceOf(NullPointerException.class)
-                .hasMessage(null)
-                .hasNoCause();
+        assertThatThrownBy(() -> new LogEvent(null, null, null)).isInstanceOf(NullPointerException.class)
+                .hasMessage(null).hasNoCause();
     }
 
     @Test
@@ -48,4 +46,5 @@ class LogEventTest {
         assertThat(event.getMessage()).isSameAs(message);
         assertThat(event.getCause()).isSameAs(cause);
     }
+
 }

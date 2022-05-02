@@ -26,6 +26,7 @@ import io.micrometer.core.instrument.Timer;
  * @since 1.0.3
  */
 public interface Histogram extends AutoCloseable {
+
     void recordLong(long value);
 
     void recordDouble(double value);
@@ -35,4 +36,5 @@ public interface Histogram extends AutoCloseable {
     @Override
     default void close() {
     }
+
 }

@@ -21,6 +21,7 @@ import org.junit.jupiter.api.Test;
 import static org.assertj.core.api.Assertions.assertThat;
 
 class AzureMonitorNamingConventionTest {
+
     private final AzureMonitorNamingConvention namingConvention = new AzureMonitorNamingConvention();
 
     @Test
@@ -32,4 +33,5 @@ class AzureMonitorNamingConventionTest {
     void testTagKeyContainsDesiredCharacters() {
         assertThat(namingConvention.tagKey("Pc.N@me")).isEqualTo("Pc_N_me");
     }
+
 }

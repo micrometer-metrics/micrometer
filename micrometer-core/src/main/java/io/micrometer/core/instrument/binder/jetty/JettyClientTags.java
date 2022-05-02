@@ -55,9 +55,8 @@ public final class JettyClientTags {
     }
 
     /**
-     * Creates a {@code method} tag based on the {@link Request#getMethod()
-     * method} of the given {@code request}.
-     *
+     * Creates a {@code method} tag based on the {@link Request#getMethod() method} of the
+     * given {@code request}.
      * @param request the request
      * @return the method tag whose value is a capitalized method (e.g. GET).
      */
@@ -66,8 +65,8 @@ public final class JettyClientTags {
     }
 
     /**
-     * Creates a {@code host} tag based on the {@link Request#getHost()} of the given {@code request}.
-     *
+     * Creates a {@code host} tag based on the {@link Request#getHost()} of the given
+     * {@code request}.
      * @param request the request
      * @return the host tag derived from request
      * @since 1.7.0
@@ -78,7 +77,6 @@ public final class JettyClientTags {
 
     /**
      * Creates a {@code status} tag based on the status of the given {@code result}.
-     *
      * @param result the request result
      * @return the status tag derived from the status of the response
      */
@@ -89,7 +87,6 @@ public final class JettyClientTags {
     /**
      * Creates a {@code uri} tag based on the URI of the given {@code result}.
      * {@code REDIRECTION} for 3xx responses, {@code NOT_FOUND} for 404 responses.
-     *
      * @param result the request result
      * @param successfulUriPattern successful URI pattern
      * @return the uri tag derived from the request result
@@ -118,7 +115,6 @@ public final class JettyClientTags {
     /**
      * Creates an {@code exception} tag based on the {@link Class#getSimpleName() simple
      * name} of the class of the given {@code exception}.
-     *
      * @param result the request result
      * @return the exception tag derived from the exception
      */
@@ -137,13 +133,11 @@ public final class JettyClientTags {
             exception = exception.getCause();
         }
         String simpleName = exception.getClass().getSimpleName();
-        return Tag.of("exception", StringUtils.isNotEmpty(simpleName) ? simpleName
-                : exception.getClass().getName());
+        return Tag.of("exception", StringUtils.isNotEmpty(simpleName) ? simpleName : exception.getClass().getName());
     }
 
     /**
      * Creates an {@code outcome} tag based on the status of the given {@code result}.
-     *
      * @param result the request result
      * @return the outcome tag derived from the status of the response
      */

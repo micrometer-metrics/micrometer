@@ -31,6 +31,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 class NoopFunctionCounterTest {
 
     private Id id = new Id("test", Tags.of("name", "value"), "entries", "", Type.COUNTER);
+
     private NoopFunctionCounter counter = new NoopFunctionCounter(id);
 
     @Test
@@ -42,4 +43,5 @@ class NoopFunctionCounterTest {
     void returnsCountAsZero() {
         assertThat(counter.count()).isEqualTo(0L);
     }
+
 }

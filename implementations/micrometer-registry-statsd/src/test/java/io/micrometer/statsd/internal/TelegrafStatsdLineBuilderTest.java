@@ -26,6 +26,7 @@ import org.junit.jupiter.api.Test;
 import static org.assertj.core.api.Assertions.assertThat;
 
 class TelegrafStatsdLineBuilderTest {
+
     private final MeterRegistry registry = new SimpleMeterRegistry();
 
     @Issue("#644")
@@ -33,7 +34,8 @@ class TelegrafStatsdLineBuilderTest {
     void escapeCharactersForTelegraf() {
         Counter c = registry.counter("hikari.pools", "pool", "poolname = abc,::hikari");
         TelegrafStatsdLineBuilder lineBuilder = new TelegrafStatsdLineBuilder(c.getId(), registry.config());
-        assertThat(lineBuilder.count(1, Statistic.COUNT)).isEqualTo("hikari_pools,statistic=count,pool=poolname_=_abc___hikari:1|c");
+        assertThat(lineBuilder.count(1, Statistic.COUNT))
+                .isEqualTo("hikari_pools,statistic=count,pool=poolname_=_abc___hikari:1|c");
     }
 
     @Test
@@ -57,4 +59,5 @@ class TelegrafStatsdLineBuilderTest {
         registry.config().namingConvention(NamingConvention.dot);
         assertThat(lb.line("1", Statistic.COUNT, "c")).isEqualTo("my_counter,statistic=count,my_tag=my_value:1|c");
     }
+
 }

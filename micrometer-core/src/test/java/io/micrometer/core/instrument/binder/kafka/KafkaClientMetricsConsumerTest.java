@@ -33,8 +33,11 @@ import static org.apache.kafka.clients.consumer.ConsumerConfig.VALUE_DESERIALIZE
 import static org.assertj.core.api.Assertions.assertThat;
 
 class KafkaClientMetricsConsumerTest {
+
     private static final String BOOTSTRAP_SERVERS = "localhost:9092";
+
     private Tags tags = Tags.of("app", "myapp", "version", "1");
+
     KafkaClientMetrics metrics;
 
     @AfterEach
@@ -43,29 +46,27 @@ class KafkaClientMetricsConsumerTest {
             metrics.close();
     }
 
-    @Test void shouldCreateMeters() {
+    @Test
+    void shouldCreateMeters() {
         try (Consumer<String, String> consumer = createConsumer()) {
             metrics = new KafkaClientMetrics(consumer);
             MeterRegistry registry = new SimpleMeterRegistry();
 
             metrics.bindTo(registry);
-            assertThat(registry.getMeters())
-                    .hasSizeGreaterThan(0)
-                    .extracting(meter -> meter.getId().getName())
+            assertThat(registry.getMeters()).hasSizeGreaterThan(0).extracting(meter -> meter.getId().getName())
                     .allMatch(s -> s.startsWith(METRIC_NAME_PREFIX));
         }
     }
 
-    @Test void shouldCreateMetersWithTags() {
+    @Test
+    void shouldCreateMetersWithTags() {
         try (Consumer<String, String> consumer = createConsumer()) {
             metrics = new KafkaClientMetrics(consumer, tags);
             MeterRegistry registry = new SimpleMeterRegistry();
 
             metrics.bindTo(registry);
 
-            assertThat(registry.getMeters())
-                    .hasSizeGreaterThan(0)
-                    .extracting(meter -> meter.getId().getTag("app"))
+            assertThat(registry.getMeters()).hasSizeGreaterThan(0).extracting(meter -> meter.getId().getTag("app"))
                     .allMatch(s -> s.equals("myapp"));
         }
     }
@@ -78,4 +79,5 @@ class KafkaClientMetricsConsumerTest {
         consumerConfig.put(GROUP_ID_CONFIG, "group");
         return new KafkaConsumer<>(consumerConfig);
     }
+
 }

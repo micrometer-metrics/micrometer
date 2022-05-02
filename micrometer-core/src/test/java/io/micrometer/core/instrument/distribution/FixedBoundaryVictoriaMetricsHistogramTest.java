@@ -20,6 +20,7 @@ import org.junit.jupiter.api.Test;
 import static org.assertj.core.api.Assertions.assertThat;
 
 class FixedBoundaryVictoriaMetricsHistogramTest {
+
     @Test
     void checkUpperBoundLookup() {
         try (FixedBoundaryVictoriaMetricsHistogram histogram = new FixedBoundaryVictoriaMetricsHistogram()) {
@@ -29,4 +30,5 @@ class FixedBoundaryVictoriaMetricsHistogramTest {
             assertThat(histogram.getRangeTagValue(1e18d)).isEqualTo("9.5e17...1.0e18");
         }
     }
+
 }

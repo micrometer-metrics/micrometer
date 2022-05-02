@@ -27,6 +27,7 @@ import java.time.Duration;
 import java.util.concurrent.atomic.AtomicLong;
 
 public class GaugeSample {
+
     public static void main(String[] args) {
         MeterRegistry registry = SampleConfig.myMonitoringSystem();
         AtomicLong n = new AtomicLong();
@@ -36,8 +37,7 @@ public class GaugeSample {
         RandomEngine r = new MersenneTwister64(0);
         Normal dist = new Normal(0, 10, r);
 
-        Flux.interval(Duration.ofSeconds(5))
-                .doOnEach(d -> n.set(Math.abs(dist.nextInt())))
-                .blockLast();
+        Flux.interval(Duration.ofSeconds(5)).doOnEach(d -> n.set(Math.abs(dist.nextInt()))).blockLast();
     }
+
 }

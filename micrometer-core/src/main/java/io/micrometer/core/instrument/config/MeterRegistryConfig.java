@@ -20,11 +20,11 @@ import io.micrometer.core.instrument.config.validate.ValidationException;
 import io.micrometer.core.lang.Nullable;
 
 public interface MeterRegistryConfig {
+
     String prefix();
 
     /**
      * Get the value associated with a key.
-     *
      * @param key Key to lookup in the config.
      * @return Value for the key or null if no key is present.
      */
@@ -33,7 +33,6 @@ public interface MeterRegistryConfig {
 
     /**
      * Validate configuration.
-     *
      * @return validation result
      * @since 1.5.0
      */
@@ -43,11 +42,11 @@ public interface MeterRegistryConfig {
 
     /**
      * Validate configuration and throw {@link ValidationException} if it's not valid.
-     *
      * @throws ValidationException if it's not valid
      * @since 1.5.0
      */
     default void requireValid() throws ValidationException {
         validate().orThrow();
     }
+
 }

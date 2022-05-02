@@ -23,7 +23,7 @@ import io.micrometer.core.instrument.Tag;
 
 /**
  * Default implementation for {@link JerseyTagsProvider}.
- * 
+ *
  * @author Michael Weirauch
  * @author Johnny Lim
  */

@@ -25,12 +25,14 @@ import java.util.function.ToDoubleFunction;
  * {@link io.micrometer.core.instrument.FunctionCounter} for StatsD.
  *
  * @param <T> the type of the state object from which the counter value is extracted
- *
  * @author Jon Schneider
  */
 public class StatsdFunctionCounter<T> extends CumulativeFunctionCounter<T> implements StatsdPollable {
+
     private final StatsdLineBuilder lineBuilder;
+
     private final FluxSink<String> sink;
+
     private final AtomicReference<Long> lastValue = new AtomicReference<>(0L);
 
     StatsdFunctionCounter(Id id, T obj, ToDoubleFunction<T> f, StatsdLineBuilder lineBuilder, FluxSink<String> sink) {
@@ -47,4 +49,5 @@ public class StatsdFunctionCounter<T> extends CumulativeFunctionCounter<T> imple
             return count;
         });
     }
+
 }

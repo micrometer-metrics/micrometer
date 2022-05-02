@@ -38,6 +38,7 @@ import static org.mockito.Mockito.verify;
 class NoopTimerTest {
 
     private Id id = new Id("test", Tags.of("name", "value"), "", "", Type.TIMER);
+
     private NoopTimer timer = new NoopTimer(id);
 
     @Test
@@ -94,4 +95,5 @@ class NoopTimerTest {
         assertThat(snapshot.total()).isEqualTo(expectedHistogram.total());
         assertThat(snapshot.max()).isEqualTo(expectedHistogram.max());
     }
+
 }

@@ -26,25 +26,23 @@ import reactor.core.publisher.Flux;
 import java.time.Duration;
 
 public class CrazyCharactersSample {
+
     public static void main(String[] args) {
         MeterRegistry registry = SampleConfig.myMonitoringSystem();
 
         String badCounterName = "\"\';^*()!~`_./?a{counter}:with123 weirdChars";
         String badTagName = "\"\';^*()!~`_./?a{tag}:with123 weirdChars";
         String badValueName = "\"\';^*()!~`_./?a{value}:with123 weirdChars";
-        Counter counter = registry.counter(badCounterName,
-                badTagName,
-                badValueName);
+        Counter counter = registry.counter(badCounterName, badTagName, badValueName);
 
         RandomEngine r = new MersenneTwister64(0);
         Normal dist = new Normal(0, 1, r);
 
-        Flux.interval(Duration.ofMillis(10))
-                .doOnEach(d -> {
-                    if (dist.nextDouble() + 0.1 > 0) {
-                        counter.increment();
-                    }
-                })
-                .blockLast();
+        Flux.interval(Duration.ofMillis(10)).doOnEach(d -> {
+            if (dist.nextDouble() + 0.1 > 0) {
+                counter.increment();
+            }
+        }).blockLast();
     }
+
 }

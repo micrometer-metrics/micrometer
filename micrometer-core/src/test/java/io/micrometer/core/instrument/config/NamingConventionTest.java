@@ -27,6 +27,7 @@ import static org.assertj.core.api.AssertionsForClassTypes.assertThat;
  * @author Johnny Lim
  */
 class NamingConventionTest {
+
     @Test
     void camelCaseName() {
         String name = NamingConvention.camelCase.name("a.Name.with.Words", Meter.Type.COUNTER);
@@ -62,4 +63,5 @@ class NamingConventionTest {
         String name = NamingConvention.upperCamelCase.tagKey("a.name.with.words");
         assertThat(name).isEqualTo("ANameWithWords");
     }
+
 }

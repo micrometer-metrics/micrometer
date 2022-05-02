@@ -48,7 +48,8 @@ public final class JerseyTags {
 
     private static final Tag EXCEPTION_NONE = Tag.of("exception", "None");
 
-    private static final Tag STATUS_SERVER_ERROR = Tag.of("status", String.valueOf(Status.INTERNAL_SERVER_ERROR.getStatusCode()));
+    private static final Tag STATUS_SERVER_ERROR = Tag.of("status",
+            String.valueOf(Status.INTERNAL_SERVER_ERROR.getStatusCode()));
 
     private static final Tag METHOD_UNKNOWN = Tag.of("method", "UNKNOWN");
 
@@ -76,15 +77,13 @@ public final class JerseyTags {
      */
     public static Tag status(ContainerResponse response) {
         /* In case there is no response we are dealing with an unmapped exception. */
-        return (response != null)
-                ? Tag.of("status", Integer.toString(response.getStatus()))
-                : STATUS_SERVER_ERROR;
+        return (response != null) ? Tag.of("status", Integer.toString(response.getStatus())) : STATUS_SERVER_ERROR;
     }
 
     /**
      * Creates a {@code uri} tag based on the URI of the given {@code event}. Uses the
-     * {@link ExtendedUriInfo#getMatchedTemplates()} if
-     * available. {@code REDIRECTION} for 3xx responses, {@code NOT_FOUND} for 404 responses.
+     * {@link ExtendedUriInfo#getMatchedTemplates()} if available. {@code REDIRECTION} for
+     * 3xx responses, {@code NOT_FOUND} for 404 responses.
      * @param event the request event
      * @return the uri tag derived from the request event
      */
@@ -148,8 +147,7 @@ public final class JerseyTags {
             exception = exception.getCause();
         }
         String simpleName = exception.getClass().getSimpleName();
-        return Tag.of("exception", StringUtils.isNotEmpty(simpleName) ? simpleName
-                : exception.getClass().getName());
+        return Tag.of("exception", StringUtils.isNotEmpty(simpleName) ? simpleName : exception.getClass().getName());
     }
 
     /**

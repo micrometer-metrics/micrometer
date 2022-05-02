@@ -25,9 +25,13 @@ import java.util.concurrent.atomic.DoubleAdder;
  * @author Jon Schneider
  */
 public class StatsdCounter extends AbstractMeter implements Counter {
+
     private final StatsdLineBuilder lineBuilder;
+
     private final FluxSink<String> sink;
+
     private DoubleAdder count = new DoubleAdder();
+
     private volatile boolean shutdown;
 
     StatsdCounter(Id id, StatsdLineBuilder lineBuilder, FluxSink<String> sink) {
@@ -52,4 +56,5 @@ public class StatsdCounter extends AbstractMeter implements Counter {
     void shutdown() {
         this.shutdown = true;
     }
+
 }

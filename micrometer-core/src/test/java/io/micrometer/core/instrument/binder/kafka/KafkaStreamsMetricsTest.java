@@ -30,8 +30,11 @@ import static org.apache.kafka.streams.StreamsConfig.BOOTSTRAP_SERVERS_CONFIG;
 import static org.assertj.core.api.Assertions.assertThat;
 
 class KafkaStreamsMetricsTest {
+
     private static final String BOOTSTRAP_SERVERS = "localhost:9092";
+
     private Tags tags = Tags.of("app", "myapp", "version", "1");
+
     KafkaStreamsMetrics metrics;
 
     @AfterEach
@@ -40,29 +43,27 @@ class KafkaStreamsMetricsTest {
             metrics.close();
     }
 
-    @Test void shouldCreateMeters() {
+    @Test
+    void shouldCreateMeters() {
         try (KafkaStreams kafkaStreams = createStreams()) {
             metrics = new KafkaStreamsMetrics(kafkaStreams);
             MeterRegistry registry = new SimpleMeterRegistry();
 
             metrics.bindTo(registry);
-            assertThat(registry.getMeters())
-                    .hasSizeGreaterThan(0)
-                    .extracting(meter -> meter.getId().getName())
+            assertThat(registry.getMeters()).hasSizeGreaterThan(0).extracting(meter -> meter.getId().getName())
                     .allMatch(s -> s.startsWith(METRIC_NAME_PREFIX));
         }
     }
 
-    @Test void shouldCreateMetersWithTags() {
+    @Test
+    void shouldCreateMetersWithTags() {
         try (KafkaStreams kafkaStreams = createStreams()) {
             metrics = new KafkaStreamsMetrics(kafkaStreams, tags);
             MeterRegistry registry = new SimpleMeterRegistry();
 
             metrics.bindTo(registry);
 
-            assertThat(registry.getMeters())
-                    .hasSizeGreaterThan(0)
-                    .extracting(meter -> meter.getId().getTag("app"))
+            assertThat(registry.getMeters()).hasSizeGreaterThan(0).extracting(meter -> meter.getId().getTag("app"))
                     .allMatch(s -> s.equals("myapp"));
         }
     }
@@ -75,4 +76,5 @@ class KafkaStreamsMetricsTest {
         streamsConfig.put(APPLICATION_ID_CONFIG, "app");
         return new KafkaStreams(builder.build(), streamsConfig);
     }
+
 }

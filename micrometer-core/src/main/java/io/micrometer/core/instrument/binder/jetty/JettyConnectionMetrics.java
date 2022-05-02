@@ -34,7 +34,8 @@ import org.eclipse.jetty.server.Server;
 import org.eclipse.jetty.util.component.AbstractLifeCycle;
 
 /**
- * Jetty connection metrics.<br><br>
+ * Jetty connection metrics.<br>
+ * <br>
  * <p>
  * Usage example:
  *
@@ -46,21 +47,28 @@ import org.eclipse.jetty.util.component.AbstractLifeCycle;
  * server.setConnectors(new Connector[] { connector });
  * }</pre>
  *
- * Alternatively, configure on all connectors with {@link JettyConnectionMetrics#addToAllConnectors(Server, MeterRegistry, Iterable)}.
+ * Alternatively, configure on all connectors with
+ * {@link JettyConnectionMetrics#addToAllConnectors(Server, MeterRegistry, Iterable)}.
  *
  * @author Jon Schneider
  * @since 1.4.0
  */
 public class JettyConnectionMetrics extends AbstractLifeCycle implements Connection.Listener {
+
     private final MeterRegistry registry;
+
     private final Iterable<Tag> tags;
 
     private final Object connectionSamplesLock = new Object();
+
     private final Map<Connection, Timer.Sample> connectionSamples = new HashMap<>();
 
     private final Counter messagesIn;
+
     private final Counter messagesOut;
+
     private final DistributionSummary bytesIn;
+
     private final DistributionSummary bytesOut;
 
     private final TimeWindowMax maxConnections;
@@ -73,44 +81,27 @@ public class JettyConnectionMetrics extends AbstractLifeCycle implements Connect
         this.registry = registry;
         this.tags = tags;
 
-        this.messagesIn = Counter.builder("jetty.connections.messages.in")
-                .baseUnit(BaseUnits.MESSAGES)
-                .description("Messages received by tracked connections")
-                .tags(tags)
-                .register(registry);
+        this.messagesIn = Counter.builder("jetty.connections.messages.in").baseUnit(BaseUnits.MESSAGES)
+                .description("Messages received by tracked connections").tags(tags).register(registry);
 
-        this.messagesOut = Counter.builder("jetty.connections.messages.out")
-                .baseUnit(BaseUnits.MESSAGES)
-                .description("Messages sent by tracked connections")
-                .tags(tags)
-                .register(registry);
+        this.messagesOut = Counter.builder("jetty.connections.messages.out").baseUnit(BaseUnits.MESSAGES)
+                .description("Messages sent by tracked connections").tags(tags).register(registry);
 
-        this.bytesIn = DistributionSummary.builder("jetty.connections.bytes.in")
-                .baseUnit(BaseUnits.BYTES)
-                .description("Bytes received by tracked connections")
-                .tags(tags)
-                .register(registry);
+        this.bytesIn = DistributionSummary.builder("jetty.connections.bytes.in").baseUnit(BaseUnits.BYTES)
+                .description("Bytes received by tracked connections").tags(tags).register(registry);
 
-        this.bytesOut = DistributionSummary.builder("jetty.connections.bytes.out")
-                .baseUnit(BaseUnits.BYTES)
-                .description("Bytes sent by tracked connections")
-                .tags(tags)
-                .register(registry);
+        this.bytesOut = DistributionSummary.builder("jetty.connections.bytes.out").baseUnit(BaseUnits.BYTES)
+                .description("Bytes sent by tracked connections").tags(tags).register(registry);
 
         this.maxConnections = new TimeWindowMax(registry.config().clock(), DistributionStatisticConfig.DEFAULT);
 
-        Gauge.builder("jetty.connections.max", this, jcm -> jcm.maxConnections.poll())
-                .strongReference(true)
+        Gauge.builder("jetty.connections.max", this, jcm -> jcm.maxConnections.poll()).strongReference(true)
                 .baseUnit(BaseUnits.CONNECTIONS)
-                .description("The maximum number of observed connections over a rolling 2-minute interval")
-                .tags(tags)
+                .description("The maximum number of observed connections over a rolling 2-minute interval").tags(tags)
                 .register(registry);
 
-        Gauge.builder("jetty.connections.current", this, jcm -> jcm.connectionSamples.size())
-                .strongReference(true)
-                .baseUnit(BaseUnits.CONNECTIONS)
-                .description("The current number of open Jetty connections")
-                .tags(tags)
+        Gauge.builder("jetty.connections.current", this, jcm -> jcm.connectionSamples.size()).strongReference(true)
+                .baseUnit(BaseUnits.CONNECTIONS).description("The current number of open Jetty connections").tags(tags)
                 .register(registry);
     }
 
@@ -132,11 +123,8 @@ public class JettyConnectionMetrics extends AbstractLifeCycle implements Connect
 
         if (sample != null) {
             String serverOrClient = connection instanceof HttpConnection ? "server" : "client";
-            sample.stop(Timer.builder("jetty.connections.request")
-                    .description("Jetty client or server requests")
-                    .tag("type", serverOrClient)
-                    .tags(tags)
-                    .register(registry));
+            sample.stop(Timer.builder("jetty.connections.request").description("Jetty client or server requests")
+                    .tag("type", serverOrClient).tags(tags).register(registry));
         }
 
         messagesIn.increment(connection.getMessagesIn());
@@ -157,4 +145,5 @@ public class JettyConnectionMetrics extends AbstractLifeCycle implements Connect
     public static void addToAllConnectors(Server server, MeterRegistry registry) {
         addToAllConnectors(server, registry, Tags.empty());
     }
+
 }

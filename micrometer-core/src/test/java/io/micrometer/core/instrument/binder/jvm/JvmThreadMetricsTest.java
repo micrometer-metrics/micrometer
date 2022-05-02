@@ -34,6 +34,7 @@ import static org.mockito.Mockito.when;
  * @author Johnny Lim
  */
 class JvmThreadMetricsTest {
+
     @Test
     void threadMetrics() {
         MeterRegistry registry = new SimpleMeterRegistry();
@@ -55,7 +56,7 @@ class JvmThreadMetricsTest {
     @Test
     void getThreadStateCountWhenThreadInfoIsNullShouldWork() {
         ThreadMXBean threadBean = mock(ThreadMXBean.class);
-        long[] threadIds = {1L, 2L};
+        long[] threadIds = { 1L, 2L };
         when(threadBean.getAllThreadIds()).thenReturn(threadIds);
         ThreadInfo threadInfo = mock(ThreadInfo.class);
         when(threadInfo.getThreadState()).thenReturn(Thread.State.RUNNABLE);

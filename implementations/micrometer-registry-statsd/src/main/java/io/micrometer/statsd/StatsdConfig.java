@@ -31,6 +31,7 @@ import static io.micrometer.core.instrument.config.validate.PropertyValidator.*;
  * @author Jon Schneider
  */
 public interface StatsdConfig extends MeterRegistryConfig {
+
     /**
      * Accept configuration defaults
      */
@@ -46,7 +47,8 @@ public interface StatsdConfig extends MeterRegistryConfig {
      */
     default StatsdFlavor flavor() {
         // Datadog is the default because it is more frequently requested than
-        // vanilla StatsD (Etsy), and Telegraf supports Datadog's format with a configuration
+        // vanilla StatsD (Etsy), and Telegraf supports Datadog's format with a
+        // configuration
         // option.
         return getEnum(this, StatsdFlavor.class, "flavor").orElse(StatsdFlavor.DATADOG);
     }
@@ -81,11 +83,16 @@ public interface StatsdConfig extends MeterRegistryConfig {
     }
 
     /**
-     * Keep the total length of the payload within your network's MTU. There is no single good value to use, but here are some guidelines for common network scenarios:
-     * 1. Fast Ethernet (1432) - This is most likely for Intranets.
-     * 2. Gigabit Ethernet (8932) - Jumbo frames can make use of this feature much more efficient.
-     * 3. Commodity Internet (512) - If you are routing over the internet a value in this range will be reasonable. You might be able to go higher, but you are at the mercy of all the hops in your route.
-     *
+     * Keep the total length of the payload within your network's MTU. There is no single
+     * good value to use, but here are some guidelines for common network scenarios:
+     * <ul>
+     * <li>Fast Ethernet (1432) - This is most likely for Intranets.</li>
+     * <li>Gigabit Ethernet (8932) - Jumbo frames can make use of this feature much more
+     * efficient.</li>
+     * <li>Commodity Internet (512) - If you are routing over the internet a value in this
+     * range will be reasonable. You might be able to go higher, but you are at the mercy
+     * of all the hops in your route.</li>
+     * </ul>
      * @return The max length of the payload.
      */
     default int maxPacketLength() {
@@ -95,9 +102,8 @@ public interface StatsdConfig extends MeterRegistryConfig {
     }
 
     /**
-     * Determines how often gauges will be polled. When a gauge is polled, its value is recalculated. If the value has changed,
-     * it is sent to the StatsD server.
-     *
+     * Determines how often gauges will be polled. When a gauge is polled, its value is
+     * recalculated. If the value has changed, it is sent to the StatsD server.
      * @return The polling frequency.
      */
     default Duration pollingFrequency() {
@@ -105,8 +111,8 @@ public interface StatsdConfig extends MeterRegistryConfig {
     }
 
     /**
-     * Governs the maximum size of the queue of items waiting to be sent to a StatsD agent over UDP.
-     *
+     * Governs the maximum size of the queue of items waiting to be sent to a StatsD agent
+     * over UDP.
      * @return Maximum queue size.
      * @deprecated No longer configurable and unbounded queue will be always used instead.
      */
@@ -116,24 +122,26 @@ public interface StatsdConfig extends MeterRegistryConfig {
     }
 
     /**
-     * @return The step size to use in computing windowed statistics like max. The default is 1 minute.
-     * To get the most out of these statistics, align the step interval to be close to your scrape interval.
+     * @return The step size to use in computing windowed statistics like max. The default
+     * is 1 minute. To get the most out of these statistics, align the step interval to be
+     * close to your scrape interval.
      */
     default Duration step() {
         return getDuration(this, "step").orElse(Duration.ofMinutes(1));
     }
 
     /**
-     * @return {@code true} if unchanged meters should be published to the StatsD server. Default is {@code true}.
+     * @return {@code true} if unchanged meters should be published to the StatsD server.
+     * Default is {@code true}.
      */
     default boolean publishUnchangedMeters() {
         return getBoolean(this, "publishUnchangedMeters").orElse(true);
     }
 
     /**
-     * @return {@code true} if measurements should be buffered before sending to the StatsD server. Default is
-     * {@code true}.  Measurements will be buffered until reaching the max packet length, or until the polling frequency
-     * is reached.
+     * @return {@code true} if measurements should be buffered before sending to the
+     * StatsD server. Default is {@code true}. Measurements will be buffered until
+     * reaching the max packet length, or until the polling frequency is reached.
      */
     default boolean buffered() {
         return getBoolean(this, "buffered").orElse(true);
@@ -141,13 +149,10 @@ public interface StatsdConfig extends MeterRegistryConfig {
 
     @Override
     default Validated<?> validate() {
-        return checkAll(this,
-                checkRequired("flavor", StatsdConfig::flavor),
-                checkRequired("host", StatsdConfig::host),
-                check("port", StatsdConfig::port),
-                checkRequired("protocol", StatsdConfig::protocol),
+        return checkAll(this, checkRequired("flavor", StatsdConfig::flavor), checkRequired("host", StatsdConfig::host),
+                check("port", StatsdConfig::port), checkRequired("protocol", StatsdConfig::protocol),
                 checkRequired("pollingFrequency", StatsdConfig::pollingFrequency),
-                checkRequired("step", StatsdConfig::step)
-        );
+                checkRequired("step", StatsdConfig::step));
     }
+
 }

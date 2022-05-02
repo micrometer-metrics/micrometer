@@ -31,6 +31,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 class NoopGaugeTest {
 
     private Id id = new Id("test", Tags.of("name", "value"), "entries", "", Type.GAUGE);
+
     private NoopGauge gauge = new NoopGauge(id);
 
     @Test
@@ -42,4 +43,5 @@ class NoopGaugeTest {
     void returnsValueAsZero() {
         assertThat(gauge.value()).isEqualTo(0d);
     }
+
 }

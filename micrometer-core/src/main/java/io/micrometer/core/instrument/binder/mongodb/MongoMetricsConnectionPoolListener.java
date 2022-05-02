@@ -32,7 +32,8 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicInteger;
 
 /**
- * {@link ConnectionPoolListener} for collecting connection pool metrics from {@link MongoClient}.
+ * {@link ConnectionPoolListener} for collecting connection pool metrics from
+ * {@link MongoClient}.
  *
  * @author Christophe Bornet
  * @author Jonatan Ivanov
@@ -47,16 +48,19 @@ public class MongoMetricsConnectionPoolListener implements ConnectionPoolListene
     private static final String METRIC_PREFIX = "mongodb.driver.pool.";
 
     private final Map<ServerId, AtomicInteger> poolSizes = new ConcurrentHashMap<>();
+
     private final Map<ServerId, AtomicInteger> checkedOutCounts = new ConcurrentHashMap<>();
+
     private final Map<ServerId, AtomicInteger> waitQueueSizes = new ConcurrentHashMap<>();
+
     private final Map<ServerId, List<Meter>> meters = new ConcurrentHashMap<>();
 
     private final MeterRegistry registry;
+
     private final MongoConnectionPoolTagsProvider tagsProvider;
 
     /**
      * Create a new {@code MongoMetricsConnectionPoolListener}.
-     *
      * @param registry registry to use
      */
     public MongoMetricsConnectionPoolListener(MeterRegistry registry) {
@@ -65,7 +69,6 @@ public class MongoMetricsConnectionPoolListener implements ConnectionPoolListene
 
     /**
      * Create a new {@code MongoMetricsConnectionPoolListener}.
-     *
      * @param registry registry to use
      * @param tagsProvider tags provider to use
      * @since 1.7.0
@@ -152,13 +155,12 @@ public class MongoMetricsConnectionPoolListener implements ConnectionPoolListene
         }
     }
 
-    private Gauge registerGauge(ConnectionPoolCreatedEvent event, String metricName, String description, Map<ServerId, AtomicInteger> metrics) {
+    private Gauge registerGauge(ConnectionPoolCreatedEvent event, String metricName, String description,
+            Map<ServerId, AtomicInteger> metrics) {
         AtomicInteger value = new AtomicInteger();
         metrics.put(event.getServerId(), value);
-        return Gauge.builder(metricName, value, AtomicInteger::doubleValue)
-                .description(description)
-                .tags(tagsProvider.connectionPoolTags(event))
-                .register(registry);
+        return Gauge.builder(metricName, value, AtomicInteger::doubleValue).description(description)
+                .tags(tagsProvider.connectionPoolTags(event)).register(registry);
     }
 
 }

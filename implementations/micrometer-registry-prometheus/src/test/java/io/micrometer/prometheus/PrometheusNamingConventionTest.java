@@ -25,6 +25,7 @@ import static org.assertj.core.api.Assertions.assertThat;
  * @author Jon Schneider
  */
 class PrometheusNamingConventionTest {
+
     private PrometheusNamingConvention convention = new PrometheusNamingConvention();
 
     @Test
@@ -46,19 +47,22 @@ class PrometheusNamingConventionTest {
 
     @Test
     void unitsAreAppendedToDistributionSummaries() {
-        assertThat(convention.name("response.size", Meter.Type.DISTRIBUTION_SUMMARY, BaseUnits.BYTES)).isEqualTo("response_size_bytes");
+        assertThat(convention.name("response.size", Meter.Type.DISTRIBUTION_SUMMARY, BaseUnits.BYTES))
+                .isEqualTo("response_size_bytes");
         assertThat(convention.name("summary", Meter.Type.DISTRIBUTION_SUMMARY)).isEqualTo("summary");
     }
 
     @Test
     void unitsAreAppendedToCounters() {
-        assertThat(convention.name("response.size", Meter.Type.COUNTER, BaseUnits.BYTES)).isEqualTo("response_size_bytes_total");
+        assertThat(convention.name("response.size", Meter.Type.COUNTER, BaseUnits.BYTES))
+                .isEqualTo("response_size_bytes_total");
         assertThat(convention.name("counter", Meter.Type.COUNTER)).isEqualTo("counter_total");
     }
 
     @Test
     void unitsAreAppendedToGauges() {
-        assertThat(convention.name("response.size", Meter.Type.GAUGE, BaseUnits.BYTES)).isEqualTo("response_size_bytes");
+        assertThat(convention.name("response.size", Meter.Type.GAUGE, BaseUnits.BYTES))
+                .isEqualTo("response_size_bytes");
         assertThat(convention.name("gauge", Meter.Type.GAUGE)).isEqualTo("gauge");
     }
 
@@ -66,4 +70,5 @@ class PrometheusNamingConventionTest {
     void dotNotationIsConvertedToSnakeCase() {
         assertThat(convention.name("gauge.size", Meter.Type.GAUGE)).isEqualTo("gauge_size");
     }
+
 }

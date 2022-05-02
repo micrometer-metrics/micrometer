@@ -57,23 +57,30 @@ import java.util.stream.Collectors;
  * @since 1.0.0
  */
 public class WavefrontMeterRegistry extends PushMeterRegistry {
+
     private static final ThreadFactory DEFAULT_THREAD_FACTORY = new NamedThreadFactory("waveferont-metrics-publisher");
+
     private final Logger logger = LoggerFactory.getLogger(WavefrontMeterRegistry.class);
+
     private final WavefrontConfig config;
+
     private final WavefrontSender wavefrontSender;
+
     private final Set<HistogramGranularity> histogramGranularities;
 
     /**
-     * @param config Configuration options for the registry that are describable as properties.
-     * @param clock  The clock to use for timings.
+     * @param config Configuration options for the registry that are describable as
+     * properties.
+     * @param clock The clock to use for timings.
      */
     public WavefrontMeterRegistry(WavefrontConfig config, Clock clock) {
         this(config, clock, DEFAULT_THREAD_FACTORY, getDefaultSenderBuilder(config).build());
     }
 
     /**
-     * @param config        Configuration options for the registry that are describable as properties.
-     * @param clock         The clock to use for timings.
+     * @param config Configuration options for the registry that are describable as
+     * properties.
+     * @param clock The clock to use for timings.
      * @param threadFactory The thread factory to use to create the publishing thread.
      * @deprecated Use {@link #builder(WavefrontConfig)} instead.
      */
@@ -83,7 +90,7 @@ public class WavefrontMeterRegistry extends PushMeterRegistry {
     }
 
     WavefrontMeterRegistry(WavefrontConfig config, Clock clock, ThreadFactory threadFactory,
-                           WavefrontSender wavefrontSender) {
+            WavefrontSender wavefrontSender) {
         super(config, clock);
 
         this.config = config;
@@ -126,8 +133,9 @@ public class WavefrontMeterRegistry extends PushMeterRegistry {
 
     @Override
     protected Timer newTimer(Meter.Id id, DistributionStatisticConfig distributionStatisticConfig,
-                             PauseDetector pauseDetector) {
-        WavefrontTimer timer = new WavefrontTimer(id, clock, distributionStatisticConfig, pauseDetector, getBaseTimeUnit());
+            PauseDetector pauseDetector) {
+        WavefrontTimer timer = new WavefrontTimer(id, clock, distributionStatisticConfig, pauseDetector,
+                getBaseTimeUnit());
         if (!timer.isPublishingHistogram()) {
             HistogramGauges.registerWithCommonFormat(timer, this);
         }
@@ -135,9 +143,10 @@ public class WavefrontMeterRegistry extends PushMeterRegistry {
     }
 
     @Override
-    protected DistributionSummary newDistributionSummary(
-            Meter.Id id, DistributionStatisticConfig distributionStatisticConfig, double scale) {
-        WavefrontDistributionSummary summary = new WavefrontDistributionSummary(id, clock, distributionStatisticConfig, scale);
+    protected DistributionSummary newDistributionSummary(Meter.Id id,
+            DistributionStatisticConfig distributionStatisticConfig, double scale) {
+        WavefrontDistributionSummary summary = new WavefrontDistributionSummary(id, clock, distributionStatisticConfig,
+                scale);
         if (!summary.isPublishingHistogram()) {
             HistogramGauges.registerWithCommonFormat(summary, this);
         }
@@ -145,8 +154,10 @@ public class WavefrontMeterRegistry extends PushMeterRegistry {
     }
 
     @Override
-    protected <T> FunctionTimer newFunctionTimer(Meter.Id id, T obj, ToLongFunction<T> countFunction, ToDoubleFunction<T> totalTimeFunction, TimeUnit totalTimeFunctionUnit) {
-        return new CumulativeFunctionTimer<>(id, obj, countFunction, totalTimeFunction, totalTimeFunctionUnit, getBaseTimeUnit());
+    protected <T> FunctionTimer newFunctionTimer(Meter.Id id, T obj, ToLongFunction<T> countFunction,
+            ToDoubleFunction<T> totalTimeFunction, TimeUnit totalTimeFunctionUnit) {
+        return new CumulativeFunctionTimer<>(id, obj, countFunction, totalTimeFunction, totalTimeFunctionUnit,
+                getBaseTimeUnit());
     }
 
     @Override
@@ -161,16 +172,11 @@ public class WavefrontMeterRegistry extends PushMeterRegistry {
 
     @Override
     protected void publish() {
-        getMeters().forEach(m -> m.use(
-                this::publishMeter,
-                this::publishMeter,
-                this::publishTimer,
-                this::publishSummary,
-                this::publishLongTaskTimer,
-                this::publishMeter,
-                this::publishMeter,
-                this::publishFunctionTimer,
+        // formatter:off
+        getMeters().forEach(m -> m.use(this::publishMeter, this::publishMeter, this::publishTimer, this::publishSummary,
+                this::publishLongTaskTimer, this::publishMeter, this::publishMeter, this::publishFunctionTimer,
                 this::publishMeter));
+        // formatter:on
     }
 
     private void publishFunctionTimer(FunctionTimer timer) {
@@ -178,7 +184,8 @@ public class WavefrontMeterRegistry extends PushMeterRegistry {
 
         Meter.Id id = timer.getId();
 
-        // we can't know anything about max and percentiles originating from a function timer
+        // we can't know anything about max and percentiles originating from a function
+        // timer
         publishMetric(id, "count", wallTime, timer.count());
         publishMetric(id, "avg", wallTime, timer.mean(getBaseTimeUnit()));
         publishMetric(id, "sum", wallTime, timer.totalTime(getBaseTimeUnit()));
@@ -192,7 +199,8 @@ public class WavefrontMeterRegistry extends PushMeterRegistry {
 
         if (wfTimer.isPublishingHistogram()) {
             publishDistribution(id, wfTimer.flushDistributions());
-        } else {
+        }
+        else {
             publishMetric(id, "sum", wallTime, timer.totalTime(getBaseTimeUnit()));
             publishMetric(id, "count", wallTime, timer.count());
             publishMetric(id, "avg", wallTime, timer.mean(getBaseTimeUnit()));
@@ -214,8 +222,10 @@ public class WavefrontMeterRegistry extends PushMeterRegistry {
             publishMetric(id, "max", wallTime, timer.max(getBaseTimeUnit()));
         }
 
-        // these suffixes have equivalents (count and sum) in the Wavefront histogram implementation, but for consistency
-        // with long task timers that don't publish distribution statistics, we always publish timeseries with these names too.
+        // these suffixes have equivalents (count and sum) in the Wavefront histogram
+        // implementation, but for consistency
+        // with long task timers that don't publish distribution statistics, we always
+        // publish timeseries with these names too.
         publishMetric(id, "duration", wallTime, timer.duration(getBaseTimeUnit()));
         publishMetric(id, "active", wallTime, timer.activeTasks());
     }
@@ -228,7 +238,8 @@ public class WavefrontMeterRegistry extends PushMeterRegistry {
 
         if (wfSummary.isPublishingHistogram()) {
             publishDistribution(id, wfSummary.flushDistributions());
-        } else {
+        }
+        else {
             publishMetric(id, "sum", wallTime, summary.totalAmount());
             publishMetric(id, "count", wallTime, summary.count());
             publishMetric(id, "avg", wallTime, summary.mean());
@@ -262,7 +273,8 @@ public class WavefrontMeterRegistry extends PushMeterRegistry {
 
         try {
             wavefrontSender.sendMetric(name, value, wallTime, source, tags);
-        } catch (IOException e) {
+        }
+        catch (IOException e) {
             logger.warn("failed to report metric to Wavefront: " + fullId.getName(), e);
         }
     }
@@ -277,15 +289,15 @@ public class WavefrontMeterRegistry extends PushMeterRegistry {
             try {
                 wavefrontSender.sendDistribution(name, distribution.centroids, histogramGranularities,
                         distribution.timestamp, source, tags);
-            } catch (IOException e) {
+            }
+            catch (IOException e) {
                 logger.warn("failed to send distribution to Wavefront: " + id.getName(), e);
             }
         }
     }
 
     private Map<String, String> getTagsAsMap(Meter.Id id) {
-        return getConventionTags(id)
-                .stream()
+        return getConventionTags(id).stream()
                 .collect(Collectors.toMap(Tag::getKey, Tag::getValue, (tag1, tag2) -> tag2));
     }
 
@@ -300,9 +312,7 @@ public class WavefrontMeterRegistry extends PushMeterRegistry {
 
     @Override
     protected DistributionStatisticConfig defaultHistogramConfig() {
-        return DistributionStatisticConfig.builder()
-                .expiry(config.step())
-                .build()
+        return DistributionStatisticConfig.builder().expiry(config.step()).build()
                 .merge(DistributionStatisticConfig.DEFAULT);
     }
 
@@ -316,17 +326,15 @@ public class WavefrontMeterRegistry extends PushMeterRegistry {
 
     /**
      * Creates a Builder for the default {@link WavefrontSender} to be used with a
-     * {@link WavefrontMeterRegistry} if one is not provided. Generates the builder
-     * based on the given {@link WavefrontConfig}.
-     *
+     * {@link WavefrontMeterRegistry} if one is not provided. Generates the builder based
+     * on the given {@link WavefrontConfig}.
      * @param config config to use
      * @return a builder for a WavefrontSender
      * @since 1.5.0
      */
     public static WavefrontClient.Builder getDefaultSenderBuilder(WavefrontConfig config) {
-        return new WavefrontClient.Builder(getWavefrontReportingUri(config),
-                config.apiToken()).batchSize(config.batchSize())
-                .flushInterval((int) config.step().toMillis(), TimeUnit.MILLISECONDS);
+        return new WavefrontClient.Builder(getWavefrontReportingUri(config), config.apiToken())
+                .batchSize(config.batchSize()).flushInterval((int) config.step().toMillis(), TimeUnit.MILLISECONDS);
     }
 
     public static Builder builder(WavefrontConfig config) {
@@ -334,10 +342,13 @@ public class WavefrontMeterRegistry extends PushMeterRegistry {
     }
 
     public static class Builder {
+
         private final WavefrontConfig config;
 
         private Clock clock = Clock.SYSTEM;
+
         private ThreadFactory threadFactory = DEFAULT_THREAD_FACTORY;
+
         @Nullable
         private WavefrontSender wavefrontSender;
 
@@ -357,11 +368,11 @@ public class WavefrontMeterRegistry extends PushMeterRegistry {
 
         /**
          * Set an HTTP client to use.
-         *
          * @param httpClient HTTP client to use
          * @return builder
-         * @deprecated since 1.5.0 this call no-longer affects the transport used to send metrics to Wavefront. Use
-         * {@link #wavefrontSender(WavefrontSender)} to supply your own transport (whether proxy or direct ingestion).
+         * @deprecated since 1.5.0 this call no-longer affects the transport used to send
+         * metrics to Wavefront. Use {@link #wavefrontSender(WavefrontSender)} to supply
+         * your own transport (whether proxy or direct ingestion).
          */
         @Deprecated
         public Builder httpClient(@SuppressWarnings("unused") HttpSender httpClient) {
@@ -386,5 +397,7 @@ public class WavefrontMeterRegistry extends PushMeterRegistry {
                     : getDefaultSenderBuilder(config).build();
             return new WavefrontMeterRegistry(config, clock, threadFactory, sender);
         }
+
     }
+
 }

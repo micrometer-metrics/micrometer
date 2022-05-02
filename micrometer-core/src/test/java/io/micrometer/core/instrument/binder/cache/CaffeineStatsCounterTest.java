@@ -39,11 +39,15 @@ import java.util.concurrent.TimeUnit;
  * @author John Karp
  */
 class CaffeineStatsCounterTest {
+
     private static final String CACHE_NAME = "foo";
+
     private static final Tags USER_TAGS = Tags.of("k", "v");
+
     private static final Tags TAGS = Tags.concat(USER_TAGS, "cache", CACHE_NAME);
 
     private CaffeineStatsCounter stats;
+
     private MeterRegistry registry;
 
     @BeforeEach
@@ -101,4 +105,5 @@ class CaffeineStatsCounterTest {
     private RequiredSearch fetch(String name, String... tags) {
         return registry.get(name).tags(TAGS).tags(tags);
     }
+
 }

@@ -18,17 +18,19 @@ package io.micrometer.boot2.samples.components;
 import com.fasterxml.jackson.annotation.JsonProperty;
 
 public class Person {
+
     private final String id;
+
     private final String firstName;
+
     private final String lastName;
+
     private final String country;
+
     private final String state;
 
-    public Person(
-            @JsonProperty("id") String id,
-            @JsonProperty("firstName") String firstName,
-            @JsonProperty("lastName") String lastName,
-            @JsonProperty("country") String country,
+    public Person(@JsonProperty("id") String id, @JsonProperty("firstName") String firstName,
+            @JsonProperty("lastName") String lastName, @JsonProperty("country") String country,
             @JsonProperty("state") String state) {
         this.id = id;
         this.firstName = firstName;
@@ -56,4 +58,5 @@ public class Person {
     public String getState() {
         return state;
     }
+
 }

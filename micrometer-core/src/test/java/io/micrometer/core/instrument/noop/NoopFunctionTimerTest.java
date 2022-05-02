@@ -33,6 +33,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 class NoopFunctionTimerTest {
 
     private Id id = new Id("test", Tags.of("name", "value"), "ms", "", Type.TIMER);
+
     private NoopFunctionTimer timer = new NoopFunctionTimer(id);
 
     @Test
@@ -54,4 +55,5 @@ class NoopFunctionTimerTest {
     void returnsNanosAsTimeUnit() {
         assertThat(timer.baseTimeUnit()).isEqualTo(TimeUnit.NANOSECONDS);
     }
+
 }

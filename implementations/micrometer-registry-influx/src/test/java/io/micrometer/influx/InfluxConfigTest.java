@@ -24,7 +24,9 @@ import java.util.Map;
 import static org.assertj.core.api.Assertions.assertThat;
 
 class InfluxConfigTest {
+
     private final Map<String, String> props = new HashMap<>();
+
     private final InfluxConfig config = props::get;
 
     @Test
@@ -40,4 +42,5 @@ class InfluxConfigTest {
     void valid() {
         assertThat(config.validate().isValid()).isTrue();
     }
+
 }

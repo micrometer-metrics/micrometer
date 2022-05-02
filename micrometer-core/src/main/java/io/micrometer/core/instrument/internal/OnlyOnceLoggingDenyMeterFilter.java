@@ -33,7 +33,8 @@ import java.util.function.Supplier;
  */
 public final class OnlyOnceLoggingDenyMeterFilter implements MeterFilter {
 
-    private static final InternalLogger logger = InternalLoggerFactory.getInstance(OnlyOnceLoggingDenyMeterFilter.class);
+    private static final InternalLogger logger = InternalLoggerFactory
+            .getInstance(OnlyOnceLoggingDenyMeterFilter.class);
 
     private final AtomicBoolean alreadyWarned = new AtomicBoolean();
 

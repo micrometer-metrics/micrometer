@@ -41,15 +41,17 @@ import static org.assertj.core.api.Assertions.assertThat;
 abstract class AbstractElasticsearchMeterRegistryIntegrationTest {
 
     private static final String USER = "elastic";
+
     private static final String PASSWORD = "changeme";
 
     @Container
-    private final ElasticsearchContainer elasticsearch = new ElasticsearchContainer(DockerImageName.parse(
-            getDockerImageName(getVersion())));
+    private final ElasticsearchContainer elasticsearch = new ElasticsearchContainer(
+            DockerImageName.parse(getDockerImageName(getVersion())));
 
     private final HttpSender httpSender = new HttpUrlConnectionSender();
 
     private String host;
+
     private ElasticMeterRegistry registry;
 
     protected abstract String getVersion();

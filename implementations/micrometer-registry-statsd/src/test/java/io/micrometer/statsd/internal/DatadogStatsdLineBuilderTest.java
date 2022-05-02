@@ -26,6 +26,7 @@ import org.junit.jupiter.api.Test;
 import static org.assertj.core.api.Assertions.assertThat;
 
 class DatadogStatsdLineBuilderTest {
+
     private final MeterRegistry registry = new SimpleMeterRegistry();
 
     @Test
@@ -67,17 +68,20 @@ class DatadogStatsdLineBuilderTest {
         lb.ddEntityId = "test-entity-id";
 
         registry.config().namingConvention(NamingConvention.dot);
-        assertThat(lb.line("1", Statistic.COUNT, "c")).isEqualTo("my_counter:1|c|#statistic:count,mytag:myvalue,dd.internal.entity_id:test-entity-id");
+        assertThat(lb.line("1", Statistic.COUNT, "c"))
+                .isEqualTo("my_counter:1|c|#statistic:count,mytag:myvalue,dd.internal.entity_id:test-entity-id");
     }
 
     @Issue("#1998")
     @Test
     void allowColonsInTagValues() {
-        Counter c = registry.counter("my:counter", "my:tag", "my:value", "other_tag", "some:value:", "123.another.tag", "123:value");
+        Counter c = registry.counter("my:counter", "my:tag", "my:value", "other_tag", "some:value:", "123.another.tag",
+                "123:value");
         DatadogStatsdLineBuilder lb = new DatadogStatsdLineBuilder(c.getId(), registry.config());
 
         registry.config().namingConvention(NamingConvention.dot);
-        assertThat(lb.line("1", Statistic.COUNT, "c"))
-                .isEqualTo("my_counter:1|c|#statistic:count,m.123.another.tag:123:value,my_tag:my:value,other_tag:some:value_");
+        assertThat(lb.line("1", Statistic.COUNT, "c")).isEqualTo(
+                "my_counter:1|c|#statistic:count,m.123.another.tag:123:value,my_tag:my:value,other_tag:some:value_");
     }
+
 }

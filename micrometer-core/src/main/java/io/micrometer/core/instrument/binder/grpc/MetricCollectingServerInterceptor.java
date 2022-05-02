@@ -34,7 +34,8 @@ import io.micrometer.core.instrument.MeterRegistry;
 import io.micrometer.core.instrument.Timer;
 
 /**
- * A gRPC server interceptor that will collect metrics using the given {@link MeterRegistry}.
+ * A gRPC server interceptor that will collect metrics using the given
+ * {@link MeterRegistry}.
  *
  * <p>
  * <b>Usage:</b>
@@ -58,18 +59,20 @@ public class MetricCollectingServerInterceptor extends AbstractMetricCollectingI
      * The total number of requests received
      */
     private static final String METRIC_NAME_SERVER_REQUESTS_RECEIVED = "grpc.server.requests.received";
+
     /**
      * The total number of responses sent
      */
     private static final String METRIC_NAME_SERVER_RESPONSES_SENT = "grpc.server.responses.sent";
+
     /**
      * The total time taken for the server to complete the call.
      */
     private static final String METRIC_NAME_SERVER_PROCESSING_DURATION = "grpc.server.processing.duration";
 
     /**
-     * Creates a new gRPC server interceptor that will collect metrics into the given {@link MeterRegistry}.
-     *
+     * Creates a new gRPC server interceptor that will collect metrics into the given
+     * {@link MeterRegistry}.
      * @param registry The registry to use.
      */
     public MetricCollectingServerInterceptor(final MeterRegistry registry) {
@@ -77,24 +80,25 @@ public class MetricCollectingServerInterceptor extends AbstractMetricCollectingI
     }
 
     /**
-     * Creates a new gRPC server interceptor that will collect metrics into the given {@link MeterRegistry} and uses the
-     * given customizers to configure the {@link Counter}s and {@link Timer}s.
-     *
+     * Creates a new gRPC server interceptor that will collect metrics into the given
+     * {@link MeterRegistry} and uses the given customizers to configure the
+     * {@link Counter}s and {@link Timer}s.
      * @param registry The registry to use.
-     * @param counterCustomizer The unary function that can be used to customize the created counters.
-     * @param timerCustomizer The unary function that can be used to customize the created timers.
+     * @param counterCustomizer The unary function that can be used to customize the
+     * created counters.
+     * @param timerCustomizer The unary function that can be used to customize the created
+     * timers.
      * @param eagerInitializedCodes The status codes that should be eager initialized.
      */
     public MetricCollectingServerInterceptor(final MeterRegistry registry,
-            final UnaryOperator<Counter.Builder> counterCustomizer,
-            final UnaryOperator<Timer.Builder> timerCustomizer, final Code... eagerInitializedCodes) {
+            final UnaryOperator<Counter.Builder> counterCustomizer, final UnaryOperator<Timer.Builder> timerCustomizer,
+            final Code... eagerInitializedCodes) {
         super(registry, counterCustomizer, timerCustomizer, eagerInitializedCodes);
     }
 
     /**
-     * Pre-registers the all methods provided by the given service. This will initialize all default counters and timers
-     * for those methods.
-     *
+     * Pre-registers the all methods provided by the given service. This will initialize
+     * all default counters and timers for those methods.
      * @param service The service to initialize the meters for.
      * @see #preregisterService(ServerServiceDefinition)
      */
@@ -103,9 +107,8 @@ public class MetricCollectingServerInterceptor extends AbstractMetricCollectingI
     }
 
     /**
-     * Pre-registers the all methods provided by the given service. This will initialize all default counters and timers
-     * for those methods.
-     *
+     * Pre-registers the all methods provided by the given service. This will initialize
+     * all default counters and timers for those methods.
      * @param serviceDefinition The service to initialize the meters for.
      * @see #preregisterService(ServiceDescriptor)
      */
@@ -115,47 +118,35 @@ public class MetricCollectingServerInterceptor extends AbstractMetricCollectingI
 
     @Override
     protected Counter newRequestCounterFor(final MethodDescriptor<?, ?> method) {
-        return this.counterCustomizer.apply(
-                prepareCounterFor(method,
-                        METRIC_NAME_SERVER_REQUESTS_RECEIVED,
-                        "The total number of requests received"))
-                .register(this.registry);
+        return this.counterCustomizer.apply(prepareCounterFor(method, METRIC_NAME_SERVER_REQUESTS_RECEIVED,
+                "The total number of requests received")).register(this.registry);
     }
 
     @Override
     protected Counter newResponseCounterFor(final MethodDescriptor<?, ?> method) {
         return this.counterCustomizer.apply(
-                prepareCounterFor(method,
-                        METRIC_NAME_SERVER_RESPONSES_SENT,
-                        "The total number of responses sent"))
+                prepareCounterFor(method, METRIC_NAME_SERVER_RESPONSES_SENT, "The total number of responses sent"))
                 .register(this.registry);
     }
 
     @Override
     protected Function<Code, Timer> newTimerFunction(final MethodDescriptor<?, ?> method) {
-        return asTimerFunction(() -> this.timerCustomizer.apply(
-                prepareTimerFor(method,
-                        METRIC_NAME_SERVER_PROCESSING_DURATION,
-                        "The total time taken for the server to complete the call")));
+        return asTimerFunction(() -> this.timerCustomizer.apply(prepareTimerFor(method,
+                METRIC_NAME_SERVER_PROCESSING_DURATION, "The total time taken for the server to complete the call")));
     }
 
     @Override
-    public <Q, A> ServerCall.Listener<Q> interceptCall(
-            final ServerCall<Q, A> call,
-            final Metadata requestHeaders,
+    public <Q, A> ServerCall.Listener<Q> interceptCall(final ServerCall<Q, A> call, final Metadata requestHeaders,
             final ServerCallHandler<Q, A> next) {
 
         final MetricSet metrics = metricsFor(call.getMethodDescriptor());
         final Consumer<Status.Code> responseStatusTiming = metrics.newProcessingDurationTiming(this.registry);
 
-        final MetricCollectingServerCall<Q, A> monitoringCall =
-                new MetricCollectingServerCall<>(call, metrics.getResponseCounter());
+        final MetricCollectingServerCall<Q, A> monitoringCall = new MetricCollectingServerCall<>(call,
+                metrics.getResponseCounter());
 
-        return new MetricCollectingServerCallListener<>(
-                next.startCall(monitoringCall, requestHeaders),
-                metrics.getRequestCounter(),
-                monitoringCall::getResponseCode,
-                responseStatusTiming);
+        return new MetricCollectingServerCallListener<>(next.startCall(monitoringCall, requestHeaders),
+                metrics.getRequestCounter(), monitoringCall::getResponseCode, responseStatusTiming);
     }
 
 }

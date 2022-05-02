@@ -33,6 +33,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 class NoopTimeGaugeTest {
 
     private Id id = new Id("test", Tags.of("name", "value"), "", "", Type.GAUGE);
+
     private NoopTimeGauge timeGauge = new NoopTimeGauge(id);
 
     @Test

@@ -59,7 +59,9 @@ class JCacheMetricsTest extends AbstractCacheMetricsTest {
     private CacheManager cacheManager = mock(CacheManager.class);
 
     private JCacheMetrics metrics;
+
     private MBeanServer mbeanServer;
+
     private Long expectedAttributeValue = new Random().nextLong();
 
     @BeforeEach
@@ -173,12 +175,14 @@ class JCacheMetricsTest extends AbstractCacheMetricsTest {
         }
 
         @Override
-        public Object getAttribute(String attribute) throws AttributeNotFoundException, MBeanException, ReflectionException {
+        public Object getAttribute(String attribute)
+                throws AttributeNotFoundException, MBeanException, ReflectionException {
             return expectedAttributeValue;
         }
 
         @Override
-        public void setAttribute(Attribute attribute) throws AttributeNotFoundException, InvalidAttributeValueException, MBeanException, ReflectionException {
+        public void setAttribute(Attribute attribute)
+                throws AttributeNotFoundException, InvalidAttributeValueException, MBeanException, ReflectionException {
         }
 
         @Override
@@ -192,9 +196,8 @@ class JCacheMetricsTest extends AbstractCacheMetricsTest {
         }
 
         @Override
-        public Object invoke(String actionName,
-                             Object[] params,
-                             String[] signature) throws MBeanException, ReflectionException {
+        public Object invoke(String actionName, Object[] params, String[] signature)
+                throws MBeanException, ReflectionException {
             return null;
         }
 

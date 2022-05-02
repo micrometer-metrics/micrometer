@@ -28,6 +28,7 @@ import java.util.regex.Pattern;
  * @since 1.0.0
  */
 public class NewRelicNamingConvention implements NamingConvention {
+
     private final NamingConvention delegate;
 
     private static final Pattern INVALID_CHARACTERS_PATTERN = Pattern.compile("[^\\w:]");
@@ -35,6 +36,7 @@ public class NewRelicNamingConvention implements NamingConvention {
     private static String toValidNewRelicString(String input) {
         return INVALID_CHARACTERS_PATTERN.matcher(input).replaceAll("_");
     }
+
     public NewRelicNamingConvention() {
         this(NamingConvention.camelCase);
     }
@@ -57,4 +59,5 @@ public class NewRelicNamingConvention implements NamingConvention {
     public String tagValue(String value) {
         return StringEscapeUtils.escapeJson(delegate.tagValue(value));
     }
+
 }

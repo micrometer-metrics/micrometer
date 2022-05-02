@@ -49,7 +49,9 @@ import static org.assertj.core.api.Assertions.assertThat;
 class HumioMeterRegistryTest {
 
     private final HumioConfig config = HumioConfig.DEFAULT;
+
     private final MockClock clock = new MockClock();
+
     private final HumioMeterRegistry meterRegistry = new HumioMeterRegistry(config, clock);
 
     @Test
@@ -59,8 +61,8 @@ class HumioMeterRegistryTest {
 
         server.stubFor(any(anyUrl()));
         registry.publish();
-        server.verify(postRequestedFor(urlMatching("/api/v1/ingest/humio-structured"))
-                .withRequestBody(equalTo("[{\"events\": [{\"timestamp\":\"1970-01-01T00:00:00.001Z\",\"attributes\":{\"name\":\"my_timer\",\"count\":0,\"sum\":0,\"avg\":0,\"max\":0,\"status\":\"success\"}}]}]")));
+        server.verify(postRequestedFor(urlMatching("/api/v1/ingest/humio-structured")).withRequestBody(equalTo(
+                "[{\"events\": [{\"timestamp\":\"1970-01-01T00:00:00.001Z\",\"attributes\":{\"name\":\"my_timer\",\"count\":0,\"sum\":0,\"avg\":0,\"max\":0,\"status\":\"success\"}}]}]")));
     }
 
     @Test
@@ -147,14 +149,16 @@ class HumioMeterRegistryTest {
 
     @Test
     void writeFunctionCounterShouldDropPositiveInfiniteValue() {
-        FunctionCounter counter = FunctionCounter.builder("myCounter", Double.POSITIVE_INFINITY, Number::doubleValue).register(meterRegistry);
+        FunctionCounter counter = FunctionCounter.builder("myCounter", Double.POSITIVE_INFINITY, Number::doubleValue)
+                .register(meterRegistry);
         clock.add(config.step());
         assertThat(createBatch().writeFunctionCounter(counter)).isNull();
     }
 
     @Test
     void writeFunctionCounterShouldDropNegativeInfiniteValue() {
-        FunctionCounter counter = FunctionCounter.builder("myCounter", Double.NEGATIVE_INFINITY, Number::doubleValue).register(meterRegistry);
+        FunctionCounter counter = FunctionCounter.builder("myCounter", Double.NEGATIVE_INFINITY, Number::doubleValue)
+                .register(meterRegistry);
         clock.add(config.step());
         assertThat(createBatch().writeFunctionCounter(counter)).isNull();
     }
@@ -176,10 +180,11 @@ class HumioMeterRegistryTest {
         Measurement measurement3 = new Measurement(() -> Double.NaN, Statistic.VALUE);
         Measurement measurement4 = new Measurement(() -> 1d, Statistic.VALUE);
         Measurement measurement5 = new Measurement(() -> 2d, Statistic.VALUE);
-        List<Measurement> measurements = Arrays.asList(measurement1, measurement2, measurement3, measurement4, measurement5);
+        List<Measurement> measurements = Arrays.asList(measurement1, measurement2, measurement3, measurement4,
+                measurement5);
         Meter meter = Meter.builder("my.meter", Meter.Type.GAUGE, measurements).register(this.meterRegistry);
-        assertThat(createBatch().writeMeter(meter))
-                .isEqualTo("{\"timestamp\":\"1970-01-01T00:00:00.001Z\",\"attributes\":{\"name\":\"my_meter\",\"value\":1,\"value\":2}}");
+        assertThat(createBatch().writeMeter(meter)).isEqualTo(
+                "{\"timestamp\":\"1970-01-01T00:00:00.001Z\",\"attributes\":{\"name\":\"my_meter\",\"value\":1,\"value\":2}}");
     }
 
     private HumioMeterRegistry humioMeterRegistry(WireMockServer server, String... tags) {
@@ -204,4 +209,5 @@ class HumioMeterRegistryTest {
             }
         }, clock);
     }
+
 }

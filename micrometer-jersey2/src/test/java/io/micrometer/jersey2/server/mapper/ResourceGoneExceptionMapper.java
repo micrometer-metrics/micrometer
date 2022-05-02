@@ -27,4 +27,5 @@ public class ResourceGoneExceptionMapper implements ExceptionMapper<ResourceGone
     public Response toResponse(ResourceGoneException exception) {
         return Response.status(Status.GONE).build();
     }
+
 }

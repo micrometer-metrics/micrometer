@@ -33,6 +33,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 class NoopLongTaskTimerTest {
 
     private Id id = new Id("test", Tags.of("name", "value"), "ms", "", Type.LONG_TASK_TIMER);
+
     private NoopLongTaskTimer timer = new NoopLongTaskTimer(id);
 
     @Test

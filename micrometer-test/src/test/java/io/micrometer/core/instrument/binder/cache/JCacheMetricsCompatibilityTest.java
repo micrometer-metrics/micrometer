@@ -26,6 +26,7 @@ import static java.util.Collections.emptyList;
 import static javax.cache.expiry.Duration.ONE_HOUR;
 
 class JCacheMetricsCompatibilityTest extends CacheMeterBinderCompatibilityKit {
+
     private Cache<String, String> cache;
 
     JCacheMetricsCompatibilityTest() {
@@ -33,8 +34,7 @@ class JCacheMetricsCompatibilityTest extends CacheMeterBinderCompatibilityKit {
 
         MutableConfiguration<String, String> configuration = new MutableConfiguration<>();
         configuration.setTypes(String.class, String.class)
-                .setExpiryPolicyFactory(AccessedExpiryPolicy.factoryOf(ONE_HOUR))
-                .setStatisticsEnabled(true);
+                .setExpiryPolicyFactory(AccessedExpiryPolicy.factoryOf(ONE_HOUR)).setStatisticsEnabled(true);
 
         this.cache = cacheManager.createCache("mycache", configuration);
     }
@@ -53,4 +53,5 @@ class JCacheMetricsCompatibilityTest extends CacheMeterBinderCompatibilityKit {
     public String get(String key) {
         return cache.get(key);
     }
+
 }

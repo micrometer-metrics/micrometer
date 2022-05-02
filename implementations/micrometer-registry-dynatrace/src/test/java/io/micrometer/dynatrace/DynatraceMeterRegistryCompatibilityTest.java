@@ -59,4 +59,5 @@ class DynatraceMeterRegistryCompatibilityTest extends MeterRegistryCompatibility
     public Duration step() {
         return config.step();
     }
+
 }

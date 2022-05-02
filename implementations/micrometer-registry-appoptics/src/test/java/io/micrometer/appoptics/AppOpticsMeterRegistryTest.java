@@ -76,11 +76,13 @@ class AppOpticsMeterRegistryTest {
     };
 
     private final MockClock clock = new MockClock();
+
     private final ThreadFactory mockThreadFactory = mock(ThreadFactory.class);
+
     private final HttpSender mockSender = mock(HttpSender.class);
 
-    private AppOpticsMeterRegistry meterRegistry = new AppOpticsMeterRegistry(
-            config, clock, mockThreadFactory, mockSender);
+    private AppOpticsMeterRegistry meterRegistry = new AppOpticsMeterRegistry(config, clock, mockThreadFactory,
+            mockSender);
 
     @Test
     void writeGauge() {
@@ -145,11 +147,13 @@ class AppOpticsMeterRegistryTest {
 
     @Test
     void writeFunctionCounterShouldDropInfiniteValues() {
-        FunctionCounter counter = FunctionCounter.builder("myCounter", Double.POSITIVE_INFINITY, Number::doubleValue).register(meterRegistry);
+        FunctionCounter counter = FunctionCounter.builder("myCounter", Double.POSITIVE_INFINITY, Number::doubleValue)
+                .register(meterRegistry);
         clock.add(config.step());
         assertThat(meterRegistry.writeFunctionCounter(counter).isPresent()).isFalse();
 
-        counter = FunctionCounter.builder("myCounter", Double.NEGATIVE_INFINITY, Number::doubleValue).register(meterRegistry);
+        counter = FunctionCounter.builder("myCounter", Double.NEGATIVE_INFINITY, Number::doubleValue)
+                .register(meterRegistry);
         clock.add(config.step());
         assertThat(meterRegistry.writeFunctionCounter(counter).isPresent()).isFalse();
     }
@@ -171,9 +175,11 @@ class AppOpticsMeterRegistryTest {
         Measurement measurement3 = new Measurement(() -> Double.NaN, Statistic.VALUE);
         Measurement measurement4 = new Measurement(() -> 1d, Statistic.VALUE);
         Measurement measurement5 = new Measurement(() -> 2d, Statistic.VALUE);
-        List<Measurement> measurements = Arrays.asList(measurement1, measurement2, measurement3, measurement4, measurement5);
+        List<Measurement> measurements = Arrays.asList(measurement1, measurement2, measurement3, measurement4,
+                measurement5);
         Meter meter = Meter.builder("my.meter", Meter.Type.GAUGE, measurements).register(this.meterRegistry);
-        assertThat(meterRegistry.writeMeter(meter)).hasValue("{\"name\":\"my.meter\",\"period\":60,\"value\":1.0,\"tags\":{\"statistic\":\"value\"}},{\"name\":\"my.meter\",\"period\":60,\"value\":2.0,\"tags\":{\"statistic\":\"value\"}}");
+        assertThat(meterRegistry.writeMeter(meter)).hasValue(
+                "{\"name\":\"my.meter\",\"period\":60,\"value\":1.0,\"tags\":{\"statistic\":\"value\"}},{\"name\":\"my.meter\",\"period\":60,\"value\":2.0,\"tags\":{\"statistic\":\"value\"}}");
     }
 
     @Test
@@ -187,8 +193,8 @@ class AppOpticsMeterRegistryTest {
     void defaultValueDoesNoFlooring() {
         clock.add(Duration.ofSeconds(63));
 
-        assertThat(meterRegistry.getBodyMeasurementsPrefix()).isEqualTo(
-                String.format(AppOpticsMeterRegistry.BODY_MEASUREMENTS_PREFIX, 63));
+        assertThat(meterRegistry.getBodyMeasurementsPrefix())
+                .isEqualTo(String.format(AppOpticsMeterRegistry.BODY_MEASUREMENTS_PREFIX, 63));
     }
 
     @Test
@@ -197,17 +203,18 @@ class AppOpticsMeterRegistryTest {
 
         clock.add(Duration.ofSeconds(63));
 
-        assertThat(meterRegistry.getBodyMeasurementsPrefix()).isEqualTo(
-                String.format(AppOpticsMeterRegistry.BODY_MEASUREMENTS_PREFIX, 60));
+        assertThat(meterRegistry.getBodyMeasurementsPrefix())
+                .isEqualTo(String.format(AppOpticsMeterRegistry.BODY_MEASUREMENTS_PREFIX, 60));
 
         clock.addSeconds(56); // 119
 
-        assertThat(meterRegistry.getBodyMeasurementsPrefix()).isEqualTo(
-                String.format(AppOpticsMeterRegistry.BODY_MEASUREMENTS_PREFIX, 60));
+        assertThat(meterRegistry.getBodyMeasurementsPrefix())
+                .isEqualTo(String.format(AppOpticsMeterRegistry.BODY_MEASUREMENTS_PREFIX, 60));
 
         clock.addSeconds(1); // 120
 
-        assertThat(meterRegistry.getBodyMeasurementsPrefix()).isEqualTo(
-                String.format(AppOpticsMeterRegistry.BODY_MEASUREMENTS_PREFIX, 120));
+        assertThat(meterRegistry.getBodyMeasurementsPrefix())
+                .isEqualTo(String.format(AppOpticsMeterRegistry.BODY_MEASUREMENTS_PREFIX, 120));
     }
+
 }

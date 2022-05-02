@@ -23,6 +23,7 @@ import io.micrometer.core.instrument.Counter;
  * @author Jon Schneider
  */
 public class DropwizardCounter extends AbstractMeter implements Counter {
+
     private final com.codahale.metrics.Meter impl;
 
     DropwizardCounter(io.micrometer.core.instrument.Meter.Id id, Meter impl) {
@@ -39,4 +40,5 @@ public class DropwizardCounter extends AbstractMeter implements Counter {
     public double count() {
         return impl.getCount();
     }
+
 }

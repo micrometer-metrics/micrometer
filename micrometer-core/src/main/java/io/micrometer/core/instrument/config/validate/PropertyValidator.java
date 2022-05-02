@@ -34,6 +34,7 @@ import java.util.stream.Collectors;
  */
 @Incubating(since = "1.5.0")
 public class PropertyValidator {
+
     private PropertyValidator() {
     }
 
@@ -53,12 +54,14 @@ public class PropertyValidator {
 
         try {
             return Validated.valid(prefixedProperty, value == null ? null : Integer.valueOf(value));
-        } catch (NumberFormatException e) {
+        }
+        catch (NumberFormatException e) {
             return Validated.invalid(prefixedProperty, value, "must be an integer", InvalidReason.MALFORMED, e);
         }
     }
 
-    public static <E extends Enum<E>> Validated<E> getEnum(MeterRegistryConfig config, Class<E> enumClass, String property) {
+    public static <E extends Enum<E>> Validated<E> getEnum(MeterRegistryConfig config, Class<E> enumClass,
+            String property) {
         String prefixedProperty = prefixedProperty(config, property);
         String value = config.get(prefixedProperty);
 
@@ -67,18 +70,22 @@ public class PropertyValidator {
         }
 
         try {
-            @SuppressWarnings("unchecked") E[] values = (E[]) enumClass.getDeclaredMethod("values").invoke(enumClass);
+            @SuppressWarnings("unchecked")
+            E[] values = (E[]) enumClass.getDeclaredMethod("values").invoke(enumClass);
             for (E enumValue : values) {
                 if (enumValue.name().equalsIgnoreCase(value)) {
                     return Validated.valid(prefixedProperty, enumValue);
                 }
             }
 
-            return Validated.invalid(prefixedProperty, value, "should be one of " + Arrays.stream(values)
-                .map(v -> '\'' + v.name() + '\'')
-                .collect(Collectors.joining(", ")), InvalidReason.MALFORMED);
-        } catch (NoSuchMethodException | IllegalAccessException | InvocationTargetException e) {
-            // indicates a bug in the meter registry's code, not in the user's configuration
+            return Validated.invalid(prefixedProperty, value,
+                    "should be one of "
+                            + Arrays.stream(values).map(v -> '\'' + v.name() + '\'').collect(Collectors.joining(", ")),
+                    InvalidReason.MALFORMED);
+        }
+        catch (NoSuchMethodException | IllegalAccessException | InvocationTargetException e) {
+            // indicates a bug in the meter registry's code, not in the user's
+            // configuration
             throw new IllegalArgumentException(e);
         }
     }
@@ -104,8 +111,10 @@ public class PropertyValidator {
         String value = config.get(prefixedProperty);
 
         try {
-            return Validated.valid(prefixedProperty, value == null ? null : URI.create(value).toURL()).map(url -> value);
-        } catch (MalformedURLException | IllegalArgumentException ex) {
+            return Validated.valid(prefixedProperty, value == null ? null : URI.create(value).toURL())
+                    .map(url -> value);
+        }
+        catch (MalformedURLException | IllegalArgumentException ex) {
             return Validated.invalid(prefixedProperty, value, "must be a valid URL", InvalidReason.MALFORMED, ex);
         }
     }
@@ -113,4 +122,5 @@ public class PropertyValidator {
     private static String prefixedProperty(MeterRegistryConfig config, String property) {
         return config.prefix() + '.' + property;
     }
+
 }

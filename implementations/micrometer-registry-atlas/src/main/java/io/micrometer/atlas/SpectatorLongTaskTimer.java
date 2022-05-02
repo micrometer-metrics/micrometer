@@ -25,10 +25,11 @@ import io.micrometer.core.instrument.util.TimeUtils;
 import java.util.concurrent.TimeUnit;
 
 public class SpectatorLongTaskTimer extends DefaultLongTaskTimer implements LongTaskTimer {
+
     private final com.netflix.spectator.api.LongTaskTimer timer;
 
     SpectatorLongTaskTimer(Meter.Id id, com.netflix.spectator.api.LongTaskTimer timer, Clock clock,
-                           DistributionStatisticConfig distributionStatisticConfig) {
+            DistributionStatisticConfig distributionStatisticConfig) {
         super(id, clock, TimeUnit.NANOSECONDS, distributionStatisticConfig, true);
         this.timer = timer;
     }
@@ -49,7 +50,9 @@ public class SpectatorLongTaskTimer extends DefaultLongTaskTimer implements Long
     }
 
     class SpectatorSample extends Sample {
+
         private final Sample delegate;
+
         private final long taskId;
 
         public SpectatorSample(Sample delegate, long taskId) {
@@ -67,5 +70,7 @@ public class SpectatorLongTaskTimer extends DefaultLongTaskTimer implements Long
         public double duration(TimeUnit unit) {
             return TimeUtils.nanosToUnit(timer.duration(taskId), unit);
         }
+
     }
+
 }

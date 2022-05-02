@@ -27,7 +27,8 @@ import io.micrometer.core.util.internal.logging.WarnThenDebugLogger;
 /**
  * {@link NamingConvention} for SignalFx.
  *
- * See https://developers.signalfx.com/metrics/data_ingest_overview.html#_criteria_for_metric_and_dimension_names_and_values
+ * See
+ * https://developers.signalfx.com/metrics/data_ingest_overview.html#_criteria_for_metric_and_dimension_names_and_values
  *
  * @author Jon Schneider
  * @author Johnny Lim
@@ -37,13 +38,19 @@ public class SignalFxNamingConvention implements NamingConvention {
     private static final WarnThenDebugLogger logger = new WarnThenDebugLogger(SignalFxNamingConvention.class);
 
     private static final Pattern START_UNDERSCORE_PATTERN = Pattern.compile("^_");
+
     private static final Pattern SF_PATTERN = Pattern.compile("^sf_");
+
     private static final Pattern START_LETTERS_PATTERN = Pattern.compile("^[a-zA-Z].*");
+
     private static final Pattern PATTERN_TAG_KEY_DENYLISTED_CHARS = Pattern.compile("[^\\w_\\-]");
+
     private static final Pattern PATTERN_TAG_KEY_DENYLISTED_PREFIX = Pattern.compile("^(aws|gcp|azure)_.*");
 
     private static final int NAME_MAX_LENGTH = 256;
+
     private static final int TAG_VALUE_MAX_LENGTH = 256;
+
     private static final int KEY_MAX_LENGTH = 128;
 
     private final NamingConvention delegate;
@@ -56,7 +63,8 @@ public class SignalFxNamingConvention implements NamingConvention {
         this.delegate = delegate;
     }
 
-    // Metric (the metric name) can be any non-empty UTF-8 string, with a maximum length <= 256 characters
+    // Metric (the metric name) can be any non-empty UTF-8 string, with a maximum length
+    // <= 256 characters
     @Override
     public String name(String name, Meter.Type type, @Nullable String baseUnit) {
         String formattedName = StringEscapeUtils.escapeJson(delegate.name(name, type, baseUnit));
@@ -65,8 +73,10 @@ public class SignalFxNamingConvention implements NamingConvention {
 
     // 1. Has a maximum length of 128 characters
     // 2. May not start with _ or sf_
-    // 3. Must start with a letter (upper or lower case). The rest of the name can contain letters, numbers, underscores _ and hyphens - . This requirement is expressed in the following regular expression:
-    //     ^[a-zA-Z][a-zA-Z0-9_-]*$
+    // 3. Must start with a letter (upper or lower case). The rest of the name can contain
+    // letters, numbers, underscores _ and hyphens - . This requirement is expressed in
+    // the following regular expression:
+    // ^[a-zA-Z][a-zA-Z0-9_-]*$
     @Override
     public String tagKey(String key) {
         String conventionKey = delegate.tagKey(key);
@@ -87,10 +97,12 @@ public class SignalFxNamingConvention implements NamingConvention {
         return StringUtils.truncate(conventionKey, KEY_MAX_LENGTH); // 1
     }
 
-    // Dimension value can be any non-empty UTF-8 string, with a maximum length <= 256 characters.
+    // Dimension value can be any non-empty UTF-8 string, with a maximum length <= 256
+    // characters.
     @Override
     public String tagValue(String value) {
         String formattedValue = StringEscapeUtils.escapeJson(delegate.tagValue(value));
         return StringUtils.truncate(formattedValue, TAG_VALUE_MAX_LENGTH);
     }
+
 }

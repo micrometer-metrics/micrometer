@@ -24,7 +24,9 @@ import java.util.Map;
 import static org.assertj.core.api.Assertions.assertThat;
 
 class NewRelicConfigTest {
+
     private final Map<String, String> props = new HashMap<>();
+
     private final NewRelicConfig config = props::get;
 
     @Test
@@ -57,4 +59,5 @@ class NewRelicConfigTest {
 
         assertThat(config.validateForInsightsApi().isValid()).isTrue();
     }
+
 }

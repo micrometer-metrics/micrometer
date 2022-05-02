@@ -33,6 +33,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 class NoopMeterTest {
 
     private Id id = new Id("test", Tags.of("name", "value"), "", "", Type.OTHER);
+
     private NoopMeter meter = new NoopMeter(id);
 
     @Test

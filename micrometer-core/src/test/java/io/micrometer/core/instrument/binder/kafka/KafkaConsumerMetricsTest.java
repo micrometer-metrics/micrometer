@@ -42,11 +42,15 @@ import static org.assertj.core.api.Assertions.assertThat;
  */
 @Disabled
 class KafkaConsumerMetricsTest {
+
     private static final String TOPIC = "my-example-topic";
+
     private static final String BOOTSTRAP_SERVERS = "localhost:9092";
+
     private static int consumerCount = 0;
 
     private Tags tags = Tags.of("app", "myapp", "version", "1");
+
     @SuppressWarnings("deprecation")
     private KafkaConsumerMetrics kafkaConsumerMetrics = new KafkaConsumerMetrics(tags);
 
@@ -74,15 +78,15 @@ class KafkaConsumerMetricsTest {
 
     @Test
     void metricsReportedPerMultipleConsumers() {
-        try (Consumer<Long, String> consumer = createConsumer();
-             Consumer<Long, String> consumer2 = createConsumer()) {
+        try (Consumer<Long, String> consumer = createConsumer(); Consumer<Long, String> consumer2 = createConsumer()) {
 
             MeterRegistry registry = new SimpleMeterRegistry();
             kafkaConsumerMetrics.bindTo(registry);
 
             // fetch metrics
             registry.get("kafka.consumer.fetch.total").tag("client.id", "consumer-" + consumerCount).functionCounter();
-            registry.get("kafka.consumer.fetch.total").tag("client.id", "consumer-" + (consumerCount - 1)).functionCounter();
+            registry.get("kafka.consumer.fetch.total").tag("client.id", "consumer-" + (consumerCount - 1))
+                    .functionCounter();
         }
     }
 

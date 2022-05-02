@@ -23,7 +23,7 @@ public final class JsonUtils {
 
     private JsonUtils() {
     }
-    
+
     /**
      * @param unformattedJsonString JSON string that has not been formatted at all.
      * @return the input string unchanged
@@ -33,4 +33,5 @@ public final class JsonUtils {
     public static String prettyPrint(String unformattedJsonString) {
         return unformattedJsonString;
     }
+
 }

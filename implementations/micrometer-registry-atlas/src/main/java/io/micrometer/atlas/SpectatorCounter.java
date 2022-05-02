@@ -20,6 +20,7 @@ import io.micrometer.core.instrument.Counter;
 import io.micrometer.core.instrument.Meter;
 
 public class SpectatorCounter extends AbstractMeter implements Counter {
+
     private com.netflix.spectator.api.Counter counter;
 
     SpectatorCounter(Meter.Id id, com.netflix.spectator.api.Counter counter) {
@@ -36,4 +37,5 @@ public class SpectatorCounter extends AbstractMeter implements Counter {
     public double count() {
         return counter.count();
     }
+
 }

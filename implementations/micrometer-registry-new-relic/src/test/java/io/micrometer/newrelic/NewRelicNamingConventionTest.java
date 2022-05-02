@@ -26,44 +26,47 @@ import org.junit.jupiter.api.Test;
  * @author Mustafa Shabib
  */
 class NewRelicNamingConventionTest {
-  private final NewRelicNamingConvention newRelicNamingConvention = new NewRelicNamingConvention();
 
-  private static final String VALID_NAME = "validName";
-  private static final String INVALID_NAME = "invalid-name";
+    private final NewRelicNamingConvention newRelicNamingConvention = new NewRelicNamingConvention();
 
-  @Test
-  void name() {
-    String validString = newRelicNamingConvention.name(VALID_NAME, Type.COUNTER);
-    assertThat(validString).isEqualTo(VALID_NAME);
-  }
+    private static final String VALID_NAME = "validName";
 
-  @Test
-  void nameShouldStripInvalidCharacters() {
-    String validString = newRelicNamingConvention.name(INVALID_NAME, Type.COUNTER);
-    assertThat(validString).isEqualTo("invalid_name");
-  }
+    private static final String INVALID_NAME = "invalid-name";
 
-  @Test
-  void tagKey() {
-    String validString = newRelicNamingConvention.tagKey(VALID_NAME);
-    assertThat(validString).isEqualTo(VALID_NAME);
-  }
+    @Test
+    void name() {
+        String validString = newRelicNamingConvention.name(VALID_NAME, Type.COUNTER);
+        assertThat(validString).isEqualTo(VALID_NAME);
+    }
 
-  @Test
-  void tagKeyShouldStripInvalidCharacters() {
-    String validString = newRelicNamingConvention.tagKey(INVALID_NAME);
-    assertThat(validString).isEqualTo("invalid_name");
-  }
+    @Test
+    void nameShouldStripInvalidCharacters() {
+        String validString = newRelicNamingConvention.name(INVALID_NAME, Type.COUNTER);
+        assertThat(validString).isEqualTo("invalid_name");
+    }
 
-  @Test
-  void tagValue() {
-    String validString = newRelicNamingConvention.tagValue(VALID_NAME);
-    assertThat(validString).isEqualTo(VALID_NAME);
-  }
+    @Test
+    void tagKey() {
+        String validString = newRelicNamingConvention.tagKey(VALID_NAME);
+        assertThat(validString).isEqualTo(VALID_NAME);
+    }
 
-  @Test
-  void tagValueShouldNotStripInvalidCharacters() {
-    String validString = newRelicNamingConvention.tagValue(INVALID_NAME);
-    assertThat(validString).isEqualTo(INVALID_NAME);
-  }
+    @Test
+    void tagKeyShouldStripInvalidCharacters() {
+        String validString = newRelicNamingConvention.tagKey(INVALID_NAME);
+        assertThat(validString).isEqualTo("invalid_name");
+    }
+
+    @Test
+    void tagValue() {
+        String validString = newRelicNamingConvention.tagValue(VALID_NAME);
+        assertThat(validString).isEqualTo(VALID_NAME);
+    }
+
+    @Test
+    void tagValueShouldNotStripInvalidCharacters() {
+        String validString = newRelicNamingConvention.tagValue(INVALID_NAME);
+        assertThat(validString).isEqualTo(INVALID_NAME);
+    }
+
 }

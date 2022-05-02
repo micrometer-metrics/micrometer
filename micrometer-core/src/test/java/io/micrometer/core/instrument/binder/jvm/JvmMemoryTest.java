@@ -21,6 +21,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 @GcTest
 class JvmMemoryTest {
+
     @Test
     void getLongLivedHeapPool() {
         assertThat(JvmMemory.getLongLivedHeapPools()).isNotEmpty();
@@ -33,4 +34,5 @@ class JvmMemoryTest {
         assertThat(JvmMemory.isLongLivedPool(null)).isFalse();
         assertThat(JvmMemory.isAllocationPool(null)).isFalse();
     }
+
 }

@@ -29,6 +29,7 @@ import java.util.Collections;
  * @author Johnny Lim
  */
 class CloudWatchNamingConventionTest {
+
     private final NamingConvention namingConvention = new CloudWatchNamingConvention();
 
     @Test

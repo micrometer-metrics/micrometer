@@ -28,23 +28,21 @@ class AbstractPartitionTest {
 
     @Test
     void nullNotAllowed() {
-        assertThatThrownBy(() -> new TestPartition(null, 1))
-                .hasMessage("delegate == null");
+        assertThatThrownBy(() -> new TestPartition(null, 1)).hasMessage("delegate == null");
     }
 
     @Test
     void negativeLengthPartitionInvalid() {
-        assertThatThrownBy(() -> new TestPartition(new ArrayList<>(), -1))
-                .hasMessage("partitionSize < 1");
+        assertThatThrownBy(() -> new TestPartition(new ArrayList<>(), -1)).hasMessage("partitionSize < 1");
     }
 
     @Test
     void zeroLengthPartitionInvalid() {
-        assertThatThrownBy(() -> new TestPartition(new ArrayList<>(), 0))
-                .hasMessage("partitionSize < 1");
+        assertThatThrownBy(() -> new TestPartition(new ArrayList<>(), 0)).hasMessage("partitionSize < 1");
     }
 
-    // Factory methods could have avoided even instantiating a wrapper in this case, but since code
+    // Factory methods could have avoided even instantiating a wrapper in this case, but
+    // since code
     // extends this, we test things work sensibly.
     @Test
     void singlePartitionListActsLikeDelegate_empty() {
@@ -80,8 +78,7 @@ class AbstractPartitionTest {
 
     @Test
     void partitionCount_roundsUp() {
-        assertThat(partitionCount(asList("foo", "bar", "baz"), 2))
-                .isEqualTo(2);
+        assertThat(partitionCount(asList("foo", "bar", "baz"), 2)).isEqualTo(2);
     }
 
     @Test
@@ -94,8 +91,11 @@ class AbstractPartitionTest {
     }
 
     static class TestPartition extends AbstractPartition<String> {
+
         TestPartition(List<String> delegate, int partitionSize) {
             super(delegate, partitionSize);
         }
+
     }
+
 }

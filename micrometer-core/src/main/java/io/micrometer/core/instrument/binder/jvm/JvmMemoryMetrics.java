@@ -44,6 +44,7 @@ import static java.util.Collections.emptyList;
 @NonNullApi
 @NonNullFields
 public class JvmMemoryMetrics implements MeterBinder {
+
     private final Iterable<Tag> tags;
 
     public JvmMemoryMetrics() {
@@ -59,23 +60,18 @@ public class JvmMemoryMetrics implements MeterBinder {
         for (BufferPoolMXBean bufferPoolBean : ManagementFactory.getPlatformMXBeans(BufferPoolMXBean.class)) {
             Iterable<Tag> tagsWithId = Tags.concat(tags, "id", bufferPoolBean.getName());
 
-            Gauge.builder("jvm.buffer.count", bufferPoolBean, BufferPoolMXBean::getCount)
-                    .tags(tagsWithId)
-                    .description("An estimate of the number of buffers in the pool")
-                    .baseUnit(BaseUnits.BUFFERS)
+            Gauge.builder("jvm.buffer.count", bufferPoolBean, BufferPoolMXBean::getCount).tags(tagsWithId)
+                    .description("An estimate of the number of buffers in the pool").baseUnit(BaseUnits.BUFFERS)
                     .register(registry);
 
-            Gauge.builder("jvm.buffer.memory.used", bufferPoolBean, BufferPoolMXBean::getMemoryUsed)
-                .tags(tagsWithId)
-                .description("An estimate of the memory that the Java virtual machine is using for this buffer pool")
-                .baseUnit(BaseUnits.BYTES)
-                .register(registry);
+            Gauge.builder("jvm.buffer.memory.used", bufferPoolBean, BufferPoolMXBean::getMemoryUsed).tags(tagsWithId)
+                    .description(
+                            "An estimate of the memory that the Java virtual machine is using for this buffer pool")
+                    .baseUnit(BaseUnits.BYTES).register(registry);
 
             Gauge.builder("jvm.buffer.total.capacity", bufferPoolBean, BufferPoolMXBean::getTotalCapacity)
-                .tags(tagsWithId)
-                .description("An estimate of the total capacity of the buffers in this pool")
-                .baseUnit(BaseUnits.BYTES)
-                .register(registry);
+                    .tags(tagsWithId).description("An estimate of the total capacity of the buffers in this pool")
+                    .baseUnit(BaseUnits.BYTES).register(registry);
         }
 
         for (MemoryPoolMXBean memoryPoolBean : ManagementFactory.getPlatformMXBeans(MemoryPoolMXBean.class)) {
@@ -83,22 +79,18 @@ public class JvmMemoryMetrics implements MeterBinder {
             Iterable<Tag> tagsWithId = Tags.concat(tags, "id", memoryPoolBean.getName(), "area", area);
 
             Gauge.builder("jvm.memory.used", memoryPoolBean, (mem) -> getUsageValue(mem, MemoryUsage::getUsed))
-                .tags(tagsWithId)
-                .description("The amount of used memory")
-                .baseUnit(BaseUnits.BYTES)
-                .register(registry);
+                    .tags(tagsWithId).description("The amount of used memory").baseUnit(BaseUnits.BYTES)
+                    .register(registry);
 
-            Gauge.builder("jvm.memory.committed", memoryPoolBean, (mem) -> getUsageValue(mem, MemoryUsage::getCommitted))
-                .tags(tagsWithId)
-                .description("The amount of memory in bytes that is committed for the Java virtual machine to use")
-                .baseUnit(BaseUnits.BYTES)
-                .register(registry);
+            Gauge.builder("jvm.memory.committed", memoryPoolBean,
+                    (mem) -> getUsageValue(mem, MemoryUsage::getCommitted)).tags(tagsWithId)
+                    .description("The amount of memory in bytes that is committed for the Java virtual machine to use")
+                    .baseUnit(BaseUnits.BYTES).register(registry);
 
             Gauge.builder("jvm.memory.max", memoryPoolBean, (mem) -> getUsageValue(mem, MemoryUsage::getMax))
-                .tags(tagsWithId)
-                .description("The maximum amount of memory in bytes that can be used for memory management")
-                .baseUnit(BaseUnits.BYTES)
-                .register(registry);
+                    .tags(tagsWithId)
+                    .description("The maximum amount of memory in bytes that can be used for memory management")
+                    .baseUnit(BaseUnits.BYTES).register(registry);
         }
     }
 

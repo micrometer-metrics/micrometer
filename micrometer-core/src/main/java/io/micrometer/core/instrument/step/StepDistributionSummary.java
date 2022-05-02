@@ -33,23 +33,26 @@ import java.util.concurrent.atomic.LongAdder;
  * @author Johnny Lim
  */
 public class StepDistributionSummary extends AbstractDistributionSummary {
+
     private final LongAdder count = new LongAdder();
+
     private final DoubleAdder total = new DoubleAdder();
+
     private final StepTuple2<Long, Double> countTotal;
+
     private final TimeWindowMax max;
 
     /**
      * Create a new {@code StepDistributionSummary}.
-     *
-     * @param id                            ID
-     * @param clock                         clock
-     * @param distributionStatisticConfig   distribution static configuration
-     * @param scale                         scale
-     * @param stepMillis                    step in milliseconds
+     * @param id ID
+     * @param clock clock
+     * @param distributionStatisticConfig distribution static configuration
+     * @param scale scale
+     * @param stepMillis step in milliseconds
      * @param supportsAggregablePercentiles whether it supports aggregable percentiles
      */
-    public StepDistributionSummary(Id id, Clock clock, DistributionStatisticConfig distributionStatisticConfig, double scale,
-                                   long stepMillis, boolean supportsAggregablePercentiles) {
+    public StepDistributionSummary(Id id, Clock clock, DistributionStatisticConfig distributionStatisticConfig,
+            double scale, long stepMillis, boolean supportsAggregablePercentiles) {
         super(id, clock, distributionStatisticConfig, scale, supportsAggregablePercentiles);
         this.countTotal = new StepTuple2<>(clock, stepMillis, 0L, 0.0, count::sumThenReset, total::sumThenReset);
         this.max = new TimeWindowMax(clock, distributionStatisticConfig);
@@ -79,10 +82,8 @@ public class StepDistributionSummary extends AbstractDistributionSummary {
 
     @Override
     public Iterable<Measurement> measure() {
-        return Arrays.asList(
-                new Measurement(() -> (double) count(), Statistic.COUNT),
-                new Measurement(this::totalAmount, Statistic.TOTAL),
-                new Measurement(this::max, Statistic.MAX)
-        );
+        return Arrays.asList(new Measurement(() -> (double) count(), Statistic.COUNT),
+                new Measurement(this::totalAmount, Statistic.TOTAL), new Measurement(this::max, Statistic.MAX));
     }
+
 }

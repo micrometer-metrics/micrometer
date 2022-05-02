@@ -38,6 +38,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 class CaffeineCacheMetricsTest extends AbstractCacheMetricsTest {
 
     private LoadingCache<String, String> cache = Caffeine.newBuilder().build(key -> "");
+
     private CaffeineCacheMetrics metrics = new CaffeineCacheMetrics(cache, "testCache", expectedTag);
 
     @Test

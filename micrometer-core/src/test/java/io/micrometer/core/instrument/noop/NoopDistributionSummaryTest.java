@@ -32,6 +32,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 class NoopDistributionSummaryTest {
 
     private Id id = new Id("test", Tags.of("name", "value"), "ms", "", Type.DISTRIBUTION_SUMMARY);
+
     private NoopDistributionSummary distributionSummary = new NoopDistributionSummary(id);
 
     @Test

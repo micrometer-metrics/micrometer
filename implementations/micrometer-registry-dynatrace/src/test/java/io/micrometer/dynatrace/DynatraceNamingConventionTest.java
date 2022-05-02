@@ -66,4 +66,5 @@ class DynatraceNamingConventionTest {
         String expected = String.join("", Collections.nCopies(128, "a"));
         assertThat(convention.tagValue(String.join("", Collections.nCopies(130, "a")))).isEqualTo(expected);
     }
+
 }

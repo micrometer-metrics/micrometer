@@ -21,6 +21,7 @@ import org.junit.jupiter.api.Test;
 import static org.assertj.core.api.Assertions.assertThat;
 
 class WavefrontNamingConventionTest {
+
     private final WavefrontNamingConvention convention = new WavefrontNamingConvention(null);
 
     @Test
@@ -38,4 +39,5 @@ class WavefrontNamingConventionTest {
         assertThat(convention.tagValue("123abc/\"{:id}水\\")).isEqualTo("123abc/\\\"{:id}水_");
         assertThat(convention.tagValue("\\")).isEqualTo("_");
     }
+
 }

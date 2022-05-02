@@ -44,7 +44,9 @@ import static org.mockito.Mockito.*;
  * @author Johnny Lim
  */
 class CloudWatchMeterRegistryTest {
+
     private static final String METER_NAME = "test";
+
     private final CloudWatchConfig config = new CloudWatchConfig() {
         @Override
         public String get(String key) {
@@ -58,7 +60,9 @@ class CloudWatchMeterRegistryTest {
     };
 
     private final MockClock clock = new MockClock();
+
     private final CloudWatchMeterRegistry registry = spy(new CloudWatchMeterRegistry(config, clock, null));
+
     private CloudWatchMeterRegistry.Batch registryBatch = registry.new Batch();
 
     @Test
@@ -100,12 +104,14 @@ class CloudWatchMeterRegistryTest {
 
     @Test
     void batchFunctionCounterDataShouldClampInfiniteValues() {
-        FunctionCounter counter = FunctionCounter.builder("my.positive.infinity", Double.POSITIVE_INFINITY, Number::doubleValue).register(registry);
+        FunctionCounter counter = FunctionCounter
+                .builder("my.positive.infinity", Double.POSITIVE_INFINITY, Number::doubleValue).register(registry);
         clock.add(config.step());
         assertThat(registry.new Batch().functionCounterData(counter).findFirst().get().value())
                 .isEqualTo(1.174271e+108);
 
-        counter = FunctionCounter.builder("my.negative.infinity", Double.NEGATIVE_INFINITY, Number::doubleValue).register(registry);
+        counter = FunctionCounter.builder("my.negative.infinity", Double.NEGATIVE_INFINITY, Number::doubleValue)
+                .register(registry);
         clock.add(config.step());
         assertThat(registry.new Batch().functionCounterData(counter).findFirst().get().value())
                 .isEqualTo(-1.174271e+108);
@@ -132,24 +138,24 @@ class CloudWatchMeterRegistryTest {
     @Test
     void writeShouldDropTagWithBlankValue() {
         registry.gauge("my.gauge", Tags.of("accepted", "foo").and("empty", ""), 1d);
-        assertThat(registry.metricData())
-                .hasSize(1)
-                .allSatisfy(datum -> assertThat(datum.dimensions()).hasSize(1).contains(
-                        Dimension.builder().name("accepted").value("foo").build()));
+        assertThat(registry.metricData()).hasSize(1).allSatisfy(datum -> assertThat(datum.dimensions()).hasSize(1)
+                .contains(Dimension.builder().name("accepted").value("foo").build()));
     }
 
     @Test
     void functionTimerData() {
-        FunctionTimer timer = FunctionTimer.builder("my.function.timer", 1d, Number::longValue, Number::doubleValue,
-                TimeUnit.MILLISECONDS).register(registry);
+        FunctionTimer timer = FunctionTimer
+                .builder("my.function.timer", 1d, Number::longValue, Number::doubleValue, TimeUnit.MILLISECONDS)
+                .register(registry);
         clock.add(config.step());
         assertThat(registry.new Batch().functionTimerData(timer)).hasSize(3);
     }
 
     @Test
     void functionTimerDataWhenSumIsNaNShouldReturnEmptyStream() {
-        FunctionTimer timer = FunctionTimer.builder("my.function.timer", Double.NaN, Number::longValue,
-                Number::doubleValue, TimeUnit.MILLISECONDS).register(registry);
+        FunctionTimer timer = FunctionTimer
+                .builder("my.function.timer", Double.NaN, Number::longValue, Number::doubleValue, TimeUnit.MILLISECONDS)
+                .register(registry);
         clock.add(config.step());
         assertThat(registry.new Batch().functionTimerData(timer)).isEmpty();
     }
@@ -260,4 +266,5 @@ class CloudWatchMeterRegistryTest {
     private Predicate<MetricDatum> hasMaxMetric(Id id) {
         return e -> e.metricName().equals(id.getName().concat(".max"));
     }
+
 }

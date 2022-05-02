@@ -44,6 +44,7 @@ import static org.mockito.Mockito.when;
 class EhCache2MetricsTest extends AbstractCacheMetricsTest {
 
     private static CacheManager cacheManager;
+
     private static Cache cache;
 
     private EhCache2Metrics metrics = new EhCache2Metrics(cache, expectedTag);

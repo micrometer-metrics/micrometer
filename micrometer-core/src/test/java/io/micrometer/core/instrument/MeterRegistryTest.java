@@ -36,6 +36,7 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
  * @author Johnny Lim
  */
 class MeterRegistryTest {
+
     private MeterRegistry registry = new SimpleMeterRegistry();
 
     @Test
@@ -55,7 +56,7 @@ class MeterRegistryTest {
     void overridingAcceptMeterFilter() {
         registry.config().meterFilter(MeterFilter.accept(m -> m.getName().startsWith("jvm.important")));
         registry.config().meterFilter(MeterFilter.deny(m -> m.getName().startsWith("jvm")));
-	
+
         assertThat(registry.counter("jvm.my.counter")).isInstanceOf(NoopCounter.class);
         assertThat(registry.counter("jvm.important.counter")).isNotInstanceOf(NoopCounter.class);
         assertThat(registry.counter("my.counter")).isNotInstanceOf(NoopCounter.class);
@@ -74,7 +75,8 @@ class MeterRegistryTest {
     void histogramConfigTransformingMeterFilter() {
         MeterRegistry registry = new SimpleMeterRegistry() {
             @Override
-            protected Timer newTimer(@Nonnull Meter.Id id, DistributionStatisticConfig histogramConfig, PauseDetector pauseDetector) {
+            protected Timer newTimer(@Nonnull Meter.Id id, DistributionStatisticConfig histogramConfig,
+                    PauseDetector pauseDetector) {
                 assertThat(histogramConfig.isPublishingHistogram()).isTrue();
                 return super.newTimer(id, histogramConfig, pauseDetector);
             }
@@ -83,11 +85,8 @@ class MeterRegistryTest {
         registry.config().meterFilter(new MeterFilter() {
             @Override
             public DistributionStatisticConfig configure(Meter.Id mappedId, DistributionStatisticConfig config) {
-                return DistributionStatisticConfig.builder()
-                    .percentiles(0.95)
-                    .percentilesHistogram(true)
-                    .build()
-                    .merge(config);
+                return DistributionStatisticConfig.builder().percentiles(0.95).percentilesHistogram(true).build()
+                        .merge(config);
             }
         });
 
@@ -149,9 +148,7 @@ class MeterRegistryTest {
 
     @Test
     void removeMetersWithSynthetics() {
-        Timer timer = Timer.builder("my.timer")
-                .publishPercentiles(0.95)
-                .register(registry);
+        Timer timer = Timer.builder("my.timer").publishPercentiles(0.95).register(registry);
 
         assertThat(registry.getMeters()).hasSize(2);
         registry.remove(timer);
@@ -167,9 +164,7 @@ class MeterRegistryTest {
             }
         });
 
-        Timer timer = Timer.builder("my.timer")
-                .publishPercentiles(0.95)
-                .register(registry);
+        Timer timer = Timer.builder("my.timer").publishPercentiles(0.95).register(registry);
 
         assertThat(registry.getMeters()).hasSize(2);
         registry.remove(timer);
@@ -201,9 +196,10 @@ class MeterRegistryTest {
     @Test
     void shouldNotLetRegisteringMetersTwice() {
         registry.counter("my.dupe.meter");
-        assertThatThrownBy(() -> registry.timer("my.dupe.meter"))
-                .isInstanceOf(IllegalArgumentException.class)
-                .hasMessage("There is already a registered meter of a different type (CumulativeCounter vs. Timer) with the same name: my.dupe.meter")
+        assertThatThrownBy(() -> registry.timer("my.dupe.meter")).isInstanceOf(IllegalArgumentException.class)
+                .hasMessage(
+                        "There is already a registered meter of a different type (CumulativeCounter vs. Timer) with the same name: my.dupe.meter")
                 .hasNoCause();
     }
+
 }

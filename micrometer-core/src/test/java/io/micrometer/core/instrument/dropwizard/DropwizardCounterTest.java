@@ -33,6 +33,7 @@ import static org.mockito.Mockito.when;
 class DropwizardCounterTest {
 
     private Meter meter = mock(Meter.class);
+
     private DropwizardCounter counter = new DropwizardCounter(null, meter);
 
     @Test
@@ -48,4 +49,5 @@ class DropwizardCounterTest {
         when(meter.getCount()).thenReturn(20l);
         assertThat(counter.count()).isEqualTo(meter.getCount());
     }
+
 }

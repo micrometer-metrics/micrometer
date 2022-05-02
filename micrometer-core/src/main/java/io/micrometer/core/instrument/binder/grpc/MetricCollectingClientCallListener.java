@@ -32,18 +32,18 @@ import io.micrometer.core.instrument.Counter;
 class MetricCollectingClientCallListener<A> extends SimpleForwardingClientCallListener<A> {
 
     private final Counter responseCounter;
+
     private final Consumer<Status.Code> processingDurationTiming;
 
     /**
-     * Creates a new delegating {@link ClientCall.Listener} that will wrap the given client call listener to collect metrics.
-     *
+     * Creates a new delegating {@link ClientCall.Listener} that will wrap the given
+     * client call listener to collect metrics.
      * @param delegate The original call to wrap.
      * @param responseCounter The counter for incoming responses.
-     * @param processingDurationTiming The consumer used to time the processing duration along with a response status.
+     * @param processingDurationTiming The consumer used to time the processing duration
+     * along with a response status.
      */
-    public MetricCollectingClientCallListener(
-            final ClientCall.Listener<A> delegate,
-            final Counter responseCounter,
+    public MetricCollectingClientCallListener(final ClientCall.Listener<A> delegate, final Counter responseCounter,
             final Consumer<Status.Code> processingDurationTiming) {
 
         super(delegate);

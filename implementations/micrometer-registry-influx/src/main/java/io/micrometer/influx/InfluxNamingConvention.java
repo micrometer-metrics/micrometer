@@ -35,8 +35,8 @@ public class InfluxNamingConvention implements NamingConvention {
     private final NamingConvention delegate;
 
     /**
-     * By default, telegraf's configuration option for {@code metric_separator}
-     * is an underscore, which corresponds to {@link NamingConvention#snakeCase}.
+     * By default, telegraf's configuration option for {@code metric_separator} is an
+     * underscore, which corresponds to {@link NamingConvention#snakeCase}.
      */
     public InfluxNamingConvention() {
         this(NamingConvention.snakeCase);
@@ -68,4 +68,5 @@ public class InfluxNamingConvention implements NamingConvention {
     private String escape(String string) {
         return PATTERN_SPECIAL_CHARACTERS.matcher(string).replaceAll("\\\\$1");
     }
+
 }
