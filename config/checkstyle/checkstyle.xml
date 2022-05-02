@@ -51,6 +51,7 @@
         <module name="com.puppycrawl.tools.checkstyle.checks.whitespace.WhitespaceAfterCheck" />
         <module name="com.puppycrawl.tools.checkstyle.checks.whitespace.WhitespaceAroundCheck" />
 
+        <module name="io.spring.javaformat.checkstyle.SpringChecks" />
         <module name="io.spring.javaformat.checkstyle.check.SpringJUnit5Check" />
 
         <!-- Modifiers -->
