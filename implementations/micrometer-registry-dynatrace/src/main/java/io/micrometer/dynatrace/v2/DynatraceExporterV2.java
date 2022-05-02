@@ -17,11 +17,11 @@ package io.micrometer.dynatrace.v2;
 
 import com.dynatrace.metric.util.*;
 
-import io.micrometer.common.util.StringUtils;
 import io.micrometer.core.instrument.*;
 import io.micrometer.core.instrument.distribution.HistogramSnapshot;
 import io.micrometer.core.instrument.distribution.ValueAtPercentile;
 import io.micrometer.core.instrument.util.AbstractPartition;
+import io.micrometer.core.instrument.util.StringUtils;
 import io.micrometer.core.ipc.http.HttpSender;
 import io.micrometer.core.util.internal.logging.InternalLogger;
 import io.micrometer.core.util.internal.logging.InternalLoggerFactory;
@@ -58,6 +58,7 @@ public final class DynatraceExporterV2 extends AbstractDynatraceExporter {
     private static final Pattern EXTRACT_LINES_INVALID = Pattern.compile("\"linesInvalid\":\\s?(\\d+)");
     private static final Pattern IS_NULL_ERROR_RESPONSE = Pattern.compile("\"error\":\\s?null");
     private static final int LOG_RESPONSE_BODY_TRUNCATION_LIMIT = 1_000;
+    private static final String LOG_RESPONSE_BODY_TRUNCATION_INDICATOR = " (truncated)";
 
     private final InternalLogger logger = InternalLoggerFactory.getInstance(DynatraceExporterV2.class);
     private static final Map<String, String> staticDimensions = Collections.singletonMap("dt.metrics.source", "micrometer");
@@ -315,7 +316,7 @@ public final class DynatraceExporterV2 extends AbstractDynatraceExporter {
                     .onSuccess(response -> handleSuccess(metricLines.size(), response))
                     .onError(response -> logger.error("Failed metric ingestion: Error Code={}, Response Body={}",
                         response.code(),
-                        StringUtils.truncate(response.body(), LOG_RESPONSE_BODY_TRUNCATION_LIMIT)));
+                        StringUtils.truncate(response.body(), LOG_RESPONSE_BODY_TRUNCATION_LIMIT, LOG_RESPONSE_BODY_TRUNCATION_INDICATOR)));
         } catch (Throwable throwable) {
             logger.error("Failed metric ingestion: " + throwable);
             logger.debug(throwable);
@@ -331,16 +332,18 @@ public final class DynatraceExporterV2 extends AbstractDynatraceExporter {
                     logger.debug("Sent {} metric lines, linesOk: {}, linesInvalid: {}.",
                             totalSent, linesOkMatchResult.group(1), linesInvalidMatchResult.group(1));
                 } else {
-                    logger.warn("Unable to parse response: {}", StringUtils.truncate(response.body(), LOG_RESPONSE_BODY_TRUNCATION_LIMIT));
+                    logger.warn("Unable to parse response: {}",
+                        StringUtils.truncate(response.body(), LOG_RESPONSE_BODY_TRUNCATION_LIMIT, LOG_RESPONSE_BODY_TRUNCATION_INDICATOR));
                 }
             } else {
-                logger.warn("Unable to parse response: {}", StringUtils.truncate(response.body(), LOG_RESPONSE_BODY_TRUNCATION_LIMIT));
+                logger.warn("Unable to parse response: {}",
+                    StringUtils.truncate(response.body(), LOG_RESPONSE_BODY_TRUNCATION_LIMIT, LOG_RESPONSE_BODY_TRUNCATION_INDICATOR));
             }
         } else {
             // common pitfall if URI is supplied in V1 format (without endpoint path)
             logger.error("Expected status code 202, got {}.\nResponse Body={}\nDid you specify the ingest path (e.g.: /api/v2/metrics/ingest)?",
                     response.code(),
-                    StringUtils.truncate(response.body(), LOG_RESPONSE_BODY_TRUNCATION_LIMIT)
+                    StringUtils.truncate(response.body(), LOG_RESPONSE_BODY_TRUNCATION_LIMIT, LOG_RESPONSE_BODY_TRUNCATION_INDICATOR)
             );
         }
     }
