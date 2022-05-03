@@ -62,7 +62,7 @@ public final class DynatraceExporterV2 extends AbstractDynatraceExporter {
     private static final String LOG_RESPONSE_BODY_TRUNCATION_INDICATOR = " (truncated)";
 
     private final InternalLogger logger = InternalLoggerFactory.getInstance(DynatraceExporterV2.class);
-    private static final WarnThenDebugLogger warnThenDebugLoggerSend = new WarnThenDebugLogger(DynatraceExporterV2.class);
+    private static final WarnThenDebugLogger warnThenDebugLoggerSendStack = new WarnThenDebugLogger(DynatraceExporterV2.class);
     private static final Map<String, String> staticDimensions = Collections.singletonMap("dt.metrics.source", "micrometer");
 
     private final MetricBuilderFactory metricBuilderFactory;
@@ -320,7 +320,8 @@ public final class DynatraceExporterV2 extends AbstractDynatraceExporter {
                         response.code(),
                         StringUtils.truncate(response.body(), LOG_RESPONSE_BODY_TRUNCATION_LIMIT, LOG_RESPONSE_BODY_TRUNCATION_INDICATOR)));
         } catch (Throwable throwable) {
-            warnThenDebugLoggerSend.log("Failed metric ingestion", throwable);
+            logger.warn("Failed metric ingestion: " + throwable);
+            warnThenDebugLoggerSendStack.log("Stack trace for previous 'Failed metric ingestion' warning log: ", throwable);
         }
     }
 
