@@ -48,6 +48,11 @@ class StringUtilsTest {
     }
 
     @Test
+    void truncateWithIndicatorWhenSameAsMaxLengthShouldReturnItself() {
+        assertThat(StringUtils.truncate("1234567", 7, "...")).isEqualTo("1234567");
+    }
+
+    @Test
     void truncateWithIndicatorWhenLessThanMaxLengthShouldReturnItself() {
         assertThat(StringUtils.truncate("123", 7, "...")).isEqualTo("123");
     }

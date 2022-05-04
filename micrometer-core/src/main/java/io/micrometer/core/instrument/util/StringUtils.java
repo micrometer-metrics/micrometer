@@ -101,8 +101,8 @@ public final class StringUtils {
         if (truncationIndicator.length() >= maxLength) {
             throw new IllegalArgumentException("maxLength must be greater than length of truncationIndicator");
         }
-        final int remainingLength = maxLength - truncationIndicator.length();
-        if (string.length() > remainingLength) {
+        if (string.length() > maxLength) {
+            final int remainingLength = maxLength - truncationIndicator.length();
             return string.substring(0, remainingLength) + truncationIndicator;
         }
         return string;
