@@ -140,6 +140,11 @@ public class DynatraceMeterRegistry extends StepMeterRegistry {
              */
             @Override
             public DistributionStatisticConfig configure(Meter.Id id, DistributionStatisticConfig config) {
+                if (useDynatraceSummaryInstruments && dynatraceInstrumentTypeExists(id)) {
+                    // do not add artificial 0 percentile when using Dynatrace instruments
+                    return config;
+                }
+
                 double[] percentiles;
 
                 double[] configPercentiles = config.getPercentiles();
@@ -177,6 +182,16 @@ public class DynatraceMeterRegistry extends StepMeterRegistry {
                 return metersWithArtificialZeroPercentile.contains(id.getName()) && "0".equals(id.getTag("phi"));
             }
         });
+    }
+
+    private boolean dynatraceInstrumentTypeExists(Meter.Id id) {
+        switch (id.getType()) {
+        case DISTRIBUTION_SUMMARY:
+        case TIMER:
+            return true;
+        default:
+            return false;
+        }
     }
 
     public static class Builder {
