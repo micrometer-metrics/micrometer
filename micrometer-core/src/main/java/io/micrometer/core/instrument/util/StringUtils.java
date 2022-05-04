@@ -102,9 +102,10 @@ public final class StringUtils {
             throw new IllegalArgumentException("maxLength must be greater than length of truncationIndicator");
         }
         if (string.length() > maxLength) {
-            final int remainingLength = maxLength - truncationIndicator.length();
+            int remainingLength = maxLength - truncationIndicator.length();
             return string.substring(0, remainingLength) + truncationIndicator;
         }
+
         return string;
     }
 

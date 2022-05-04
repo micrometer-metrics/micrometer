@@ -89,6 +89,26 @@ public final class StringUtils {
         return string;
     }
 
+    /**
+     * Truncate the String to the max length and append string to indicate if truncation was applied
+     *
+     * @param string String to truncate
+     * @param maxLength max length, which includes the length required for {@code truncationIndicator}
+     * @param truncationIndicator A string that is appended if {@code string} is truncated
+     * @return truncated String
+     */
+    public static String truncate(String string, int maxLength, String truncationIndicator) {
+        if (truncationIndicator.length() >= maxLength) {
+            throw new IllegalArgumentException("maxLength must be greater than length of truncationIndicator");
+        }
+        if (string.length() > maxLength) {
+            int remainingLength = maxLength - truncationIndicator.length();
+            return string.substring(0, remainingLength) + truncationIndicator;
+        }
+
+        return string;
+    }
+
     private StringUtils() {
     }
 
