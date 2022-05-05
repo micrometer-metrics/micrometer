@@ -300,50 +300,50 @@ subprojects {
                 apply plugin: 'me.champeau.gradle.japicmp'
                 apply plugin: 'de.undercouch.download'
 
-                    task downloadBaseline(type: Download) {
-                        onlyIf {
-                            if (project.gradle.startParameter.isOffline()) {
-                                println 'Offline: skipping downloading of baseline and JAPICMP'
-                                return false
-                            } else if (compatibleVersion == 'SKIP') {
-                                println 'SKIP: Instructed to skip the baseline comparison'
-                                return false
-                            } else {
-                                println "Will download and perform baseline comparison with ${compatibleVersion}"
-                                return true
-                            }
-                        }
-
-                        onlyIfNewer true
-                        compress true
-                        String rootUrl
-                        if (compatibleVersion.contains('-M') || compatibleVersion.contains('-RC')) {
-                            rootUrl = 'https://repo.spring.io/milestone/'
-                        } else if (compatibleVersion.contains('-SNAPSHOT') ) {
-                            rootUrl = 'https://repo.spring.io/snapshot/'
+                task downloadBaseline(type: Download) {
+                    onlyIf {
+                        if (project.gradle.startParameter.isOffline()) {
+                            println 'Offline: skipping downloading of baseline and JAPICMP'
+                            return false
+                        } else if (compatibleVersion == 'SKIP') {
+                            println 'SKIP: Instructed to skip the baseline comparison'
+                            return false
                         } else {
-                            rootUrl = repositories.mavenCentral().url
+                            println "Will download and perform baseline comparison with ${compatibleVersion}"
+                            return true
                         }
-
-                        src "${rootUrl}io/micrometer/${project.name}/${compatibleVersion}/${project.name}-${compatibleVersion}.jar"
-                        dest "${buildDir}/baselineLibs/${project.name}-${compatibleVersion}.jar"
                     }
 
-                    task japicmp(type: me.champeau.gradle.japicmp.JapicmpTask) {
-                        oldClasspath.from(files("${buildDir}/baselineLibs/${project.name}-${compatibleVersion}.jar"))
-                        newClasspath.from(files(jar.archiveFile, project(":${project.name}").jar))
-                        onlyBinaryIncompatibleModified = true
-                        // TODO: Turn this to true once 1.9.0 is out
-                        failOnModification = false
-                        failOnSourceIncompatibility = true
-                        txtOutputFile = file("${project.buildDir}/reports/japi.txt")
-                        ignoreMissingClasses = true
-                        includeSynthetic = true
-                        onlyIf { compatibleVersion != 'SKIP' }
+                    onlyIfNewer true
+                    compress true
+                    String rootUrl
+                    if (compatibleVersion.contains('-M') || compatibleVersion.contains('-RC')) {
+                        rootUrl = 'https://repo.spring.io/milestone/'
+                    } else if (compatibleVersion.contains('-SNAPSHOT') ) {
+                        rootUrl = 'https://repo.spring.io/snapshot/'
+                    } else {
+                        rootUrl = repositories.mavenCentral().url
                     }
 
-                    tasks.japicmp.dependsOn(downloadBaseline)
-                    tasks.check.dependsOn(japicmp)
+                    src "${rootUrl}io/micrometer/${project.name}/${compatibleVersion}/${project.name}-${compatibleVersion}.jar"
+                    dest "${buildDir}/baselineLibs/${project.name}-${compatibleVersion}.jar"
+                }
+
+                task japicmp(type: me.champeau.gradle.japicmp.JapicmpTask) {
+                    oldClasspath.from(files("${buildDir}/baselineLibs/${project.name}-${compatibleVersion}.jar"))
+                    newClasspath.from(files(jar.archiveFile, project(":${project.name}").jar))
+                    onlyBinaryIncompatibleModified = true
+                    // TODO: Turn this to true once 1.9.0 is out
+                    failOnModification = false
+                    failOnSourceIncompatibility = true
+                    txtOutputFile = file("${project.buildDir}/reports/japi.txt")
+                    ignoreMissingClasses = true
+                    includeSynthetic = true
+                    onlyIf { compatibleVersion != 'SKIP' }
+                }
+
+                tasks.japicmp.dependsOn(downloadBaseline)
+                tasks.check.dependsOn(japicmp)
             }
         }
 
