@@ -36,5 +36,4 @@
  *
  * @deprecated Please use the {@code io.micrometer.common.util.internal.logging} package instead.
  */
-@Deprecated
 package io.micrometer.core.util.internal.logging;
