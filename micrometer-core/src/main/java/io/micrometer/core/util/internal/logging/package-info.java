@@ -34,7 +34,7 @@
  *
  * <em>Internal-use-only</em> logging API which is not allowed to be used outside Micrometer.
  *
- * @deprecated Please use the {@code io.micrometer.common.util.internal.logging} packageinstead.
+ * @deprecated Please use the {@code io.micrometer.common.util.internal.logging} package instead.
  */
 @Deprecated
 package io.micrometer.core.util.internal.logging;
