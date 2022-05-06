@@ -50,4 +50,5 @@ public class HumioNamingConvention implements NamingConvention {
         }
         return delegate.tagKey(key);
     }
+
 }

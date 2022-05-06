@@ -22,6 +22,7 @@ import org.junit.jupiter.api.Test;
 import static org.assertj.core.api.AssertionsForClassTypes.assertThat;
 
 class ClassLoaderMetricsTest {
+
     @Test
     void classLoadingMetrics() {
         MeterRegistry registry = new SimpleMeterRegistry();
@@ -29,4 +30,5 @@ class ClassLoaderMetricsTest {
 
         assertThat(registry.get("jvm.classes.loaded").gauge().value()).isGreaterThan(0);
     }
+
 }

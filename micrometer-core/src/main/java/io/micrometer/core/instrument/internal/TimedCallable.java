@@ -24,10 +24,15 @@ import java.util.concurrent.Callable;
  * A wrapper for a {@link Callable} with idle and execution timings.
  */
 class TimedCallable<V> implements Callable<V> {
+
     private final MeterRegistry registry;
+
     private final Timer executionTimer;
+
     private final Timer idleTimer;
+
     private final Callable<V> callable;
+
     private final Timer.Sample idleSample;
 
     TimedCallable(MeterRegistry registry, Timer executionTimer, Timer idleTimer, Callable<V> callable) {
@@ -44,8 +49,10 @@ class TimedCallable<V> implements Callable<V> {
         Timer.Sample executionSample = Timer.start(registry);
         try {
             return callable.call();
-        } finally {
+        }
+        finally {
             executionSample.stop(executionTimer);
         }
     }
+
 }

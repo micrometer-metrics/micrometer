@@ -31,6 +31,7 @@ import java.util.List;
  * @since 1.4.0
  */
 public class GraphiteHierarchicalNameMapper implements HierarchicalNameMapper {
+
     private final List<String> tagsAsPrefix;
 
     public GraphiteHierarchicalNameMapper(String... tagsAsPrefix) {
@@ -49,12 +50,11 @@ public class GraphiteHierarchicalNameMapper implements HierarchicalNameMapper {
         hierarchicalName.append(id.getConventionName(convention));
         for (Tag tag : id.getTagsAsIterable()) {
             if (!tagsAsPrefix.contains(tag.getKey())) {
-                hierarchicalName.append('.').append(convention.tagKey(tag.getKey()))
-                        .append('.').append(convention.tagValue(tag.getValue()));
+                hierarchicalName.append('.').append(convention.tagKey(tag.getKey())).append('.')
+                        .append(convention.tagValue(tag.getValue()));
             }
         }
         return hierarchicalName.toString();
     }
 
 }
-

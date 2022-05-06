@@ -22,6 +22,7 @@ import io.micrometer.core.tck.MeterRegistryCompatibilityKit;
 import java.time.Duration;
 
 class OpenTSDBMeterRegistryCompatibilityTest extends MeterRegistryCompatibilityKit {
+
     @Override
     public MeterRegistry registry() {
         return new OpenTSDBMeterRegistry(OpenTSDBConfig.DEFAULT, new MockClock());
@@ -31,4 +32,5 @@ class OpenTSDBMeterRegistryCompatibilityTest extends MeterRegistryCompatibilityK
     public Duration step() {
         return OpenTSDBConfig.DEFAULT.step();
     }
+
 }

@@ -16,14 +16,7 @@
 package io.micrometer.core.instrument.simple;
 
 import io.micrometer.core.Issue;
-import io.micrometer.core.instrument.DistributionSummary;
-import io.micrometer.core.instrument.FunctionCounter;
-import io.micrometer.core.instrument.FunctionTimer;
-import io.micrometer.core.instrument.Gauge;
-import io.micrometer.core.instrument.Meter;
-import io.micrometer.core.instrument.MockClock;
-import io.micrometer.core.instrument.Tags;
-import io.micrometer.core.instrument.Timer;
+import io.micrometer.core.instrument.*;
 import io.micrometer.core.instrument.cumulative.CumulativeFunctionCounter;
 import io.micrometer.core.instrument.cumulative.CumulativeFunctionTimer;
 import io.micrometer.core.instrument.step.StepFunctionCounter;
@@ -42,14 +35,15 @@ import static org.assertj.core.api.Assertions.assertThat;
  * @author Johnny Lim
  */
 class SimpleMeterRegistryTest {
+
     private MockClock clock = new MockClock();
+
     private SimpleMeterRegistry registry = new SimpleMeterRegistry(SimpleConfig.DEFAULT, clock);
 
     @Issue("#370")
     @Test
     void serviceLevelObjectivesOnlyNoPercentileHistogram() {
-        DistributionSummary summary = DistributionSummary.builder("my.summary")
-                .serviceLevelObjectives(1.0, 2)
+        DistributionSummary summary = DistributionSummary.builder("my.summary").serviceLevelObjectives(1.0, 2)
                 .register(registry);
 
         summary.record(1);
@@ -107,17 +101,17 @@ class SimpleMeterRegistryTest {
     private SimpleMeterRegistry createRegistry(CountingMode mode) {
         return new SimpleMeterRegistry(new SimpleConfig() {
 
-                @Override
-                public String get(String key) {
-                    return null;
-                }
+            @Override
+            public String get(String key) {
+                return null;
+            }
 
-                @Override
-                public CountingMode mode() {
-                    return mode;
-                }
+            @Override
+            public CountingMode mode() {
+                return mode;
+            }
 
-            }, clock);
+        }, clock);
     }
 
 }

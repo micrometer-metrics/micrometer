@@ -28,6 +28,7 @@ import java.time.Duration;
  * @author Jon Schneider
  */
 class HumioMeterRegistryCompatibilityTest extends MeterRegistryCompatibilityKit {
+
     private final HumioConfig config = new HumioConfig() {
         @Override
         public String get(String key) {
@@ -49,4 +50,5 @@ class HumioMeterRegistryCompatibilityTest extends MeterRegistryCompatibilityKit 
     public Duration step() {
         return config.step();
     }
+
 }

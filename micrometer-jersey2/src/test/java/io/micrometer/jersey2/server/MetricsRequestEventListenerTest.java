@@ -53,8 +53,8 @@ class MetricsRequestEventListenerTest extends JerseyTest {
     protected Application configure() {
         registry = new SimpleMeterRegistry();
 
-        final MetricsApplicationEventListener listener = new MetricsApplicationEventListener(
-            registry, new DefaultJerseyTagsProvider(), METRIC_NAME, true);
+        final MetricsApplicationEventListener listener = new MetricsApplicationEventListener(registry,
+                new DefaultJerseyTagsProvider(), METRIC_NAME, true);
 
         final ResourceConfig config = new ResourceConfig();
         config.register(listener);
@@ -72,21 +72,17 @@ class MetricsRequestEventListenerTest extends JerseyTest {
         target("hello/peter").request().get();
         target("sub-resource/sub-hello/peter").request().get();
 
-        assertThat(registry.get(METRIC_NAME)
-            .tags(tagsFrom("root", "200", "SUCCESS", null)).timer().count())
-            .isEqualTo(1);
+        assertThat(registry.get(METRIC_NAME).tags(tagsFrom("root", "200", "SUCCESS", null)).timer().count())
+                .isEqualTo(1);
 
-        assertThat(registry.get(METRIC_NAME)
-            .tags(tagsFrom("/hello", "200", "SUCCESS", null)).timer().count())
-            .isEqualTo(2);
+        assertThat(registry.get(METRIC_NAME).tags(tagsFrom("/hello", "200", "SUCCESS", null)).timer().count())
+                .isEqualTo(2);
 
-        assertThat(registry.get(METRIC_NAME)
-            .tags(tagsFrom("/hello/{name}", "200", "SUCCESS", null)).timer().count())
-            .isEqualTo(1);
+        assertThat(registry.get(METRIC_NAME).tags(tagsFrom("/hello/{name}", "200", "SUCCESS", null)).timer().count())
+                .isEqualTo(1);
 
-        assertThat(registry.get(METRIC_NAME)
-            .tags(tagsFrom("/sub-resource/sub-hello/{name}", "200", "SUCCESS", null)).timer().count())
-            .isEqualTo(1);
+        assertThat(registry.get(METRIC_NAME).tags(tagsFrom("/sub-resource/sub-hello/{name}", "200", "SUCCESS", null))
+                .timer().count()).isEqualTo(1);
 
         // assert we are not auto-timing long task @Timed
         assertThat(registry.getMeters()).hasSize(4);
@@ -96,24 +92,24 @@ class MetricsRequestEventListenerTest extends JerseyTest {
     void notFoundIsAccumulatedUnderSameUriIfFromUnmatchedResource() {
         try {
             target("not-found").request().get();
-        } catch (NotFoundException ignored) {
+        }
+        catch (NotFoundException ignored) {
         }
 
-        assertThat(registry.get(METRIC_NAME)
-            .tags(tagsFrom("NOT_FOUND", "404", "CLIENT_ERROR", null)).timer().count())
-            .isEqualTo(1);
+        assertThat(registry.get(METRIC_NAME).tags(tagsFrom("NOT_FOUND", "404", "CLIENT_ERROR", null)).timer().count())
+                .isEqualTo(1);
     }
 
     @Test
     void notFoundIsReportedWithUriOfMatchedResource() {
         try {
             target("throws-not-found-exception").request().get();
-        } catch (NotFoundException ignored) {
+        }
+        catch (NotFoundException ignored) {
         }
 
-        assertThat(registry.get(METRIC_NAME)
-            .tags(tagsFrom("/throws-not-found-exception", "404", "CLIENT_ERROR", null)).timer().count())
-            .isEqualTo(1);
+        assertThat(registry.get(METRIC_NAME).tags(tagsFrom("/throws-not-found-exception", "404", "CLIENT_ERROR", null))
+                .timer().count()).isEqualTo(1);
     }
 
     @Test
@@ -121,48 +117,47 @@ class MetricsRequestEventListenerTest extends JerseyTest {
         target("redirect/302").request().get();
         target("redirect/307").request().get();
 
-        assertThat(registry.get(METRIC_NAME)
-            .tags(tagsFrom("REDIRECTION", "302", "REDIRECTION", null)).timer().count())
-            .isEqualTo(1);
+        assertThat(registry.get(METRIC_NAME).tags(tagsFrom("REDIRECTION", "302", "REDIRECTION", null)).timer().count())
+                .isEqualTo(1);
 
-        assertThat(registry.get(METRIC_NAME)
-            .tags(tagsFrom("REDIRECTION", "307", "REDIRECTION", null)).timer().count())
-            .isEqualTo(1);
+        assertThat(registry.get(METRIC_NAME).tags(tagsFrom("REDIRECTION", "307", "REDIRECTION", null)).timer().count())
+                .isEqualTo(1);
     }
 
     @Test
     void exceptionsAreMappedCorrectly() {
         try {
             target("throws-exception").request().get();
-        } catch (Exception ignored) {
+        }
+        catch (Exception ignored) {
         }
         try {
             target("throws-webapplication-exception").request().get();
-        } catch (Exception ignored) {
+        }
+        catch (Exception ignored) {
         }
         try {
             target("throws-mappable-exception").request().get();
-        } catch (Exception ignored) {
+        }
+        catch (Exception ignored) {
         }
 
         assertThat(registry.get(METRIC_NAME)
-            .tags(tagsFrom("/throws-exception", "500", "SERVER_ERROR", "IllegalArgumentException"))
-            .timer().count())
-            .isEqualTo(1);
+                .tags(tagsFrom("/throws-exception", "500", "SERVER_ERROR", "IllegalArgumentException")).timer().count())
+                        .isEqualTo(1);
 
-        assertThat(registry.get(METRIC_NAME).tags(
-            tagsFrom("/throws-webapplication-exception", "401", "CLIENT_ERROR", "NotAuthorizedException"))
-            .timer().count())
-            .isEqualTo(1);
+        assertThat(registry.get(METRIC_NAME)
+                .tags(tagsFrom("/throws-webapplication-exception", "401", "CLIENT_ERROR", "NotAuthorizedException"))
+                .timer().count()).isEqualTo(1);
 
-        assertThat(registry.get(METRIC_NAME).tags(
-            tagsFrom("/throws-mappable-exception", "410", "CLIENT_ERROR", "ResourceGoneException"))
-            .timer().count())
-            .isEqualTo(1);
+        assertThat(registry.get(METRIC_NAME)
+                .tags(tagsFrom("/throws-mappable-exception", "410", "CLIENT_ERROR", "ResourceGoneException")).timer()
+                .count()).isEqualTo(1);
     }
 
     private static Iterable<Tag> tagsFrom(String uri, String status, String outcome, String exception) {
-        return Tags.of("method", "GET", "uri", uri, "status", status, "outcome", outcome,
-                "exception", exception == null ? "None" : exception);
+        return Tags.of("method", "GET", "uri", uri, "status", status, "outcome", outcome, "exception",
+                exception == null ? "None" : exception);
     }
+
 }

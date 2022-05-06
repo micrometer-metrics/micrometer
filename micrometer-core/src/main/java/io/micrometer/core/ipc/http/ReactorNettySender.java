@@ -25,10 +25,12 @@ import reactor.util.function.Tuple2;
  *
  * @author Jon Schneider
  * @since 1.1.0
- * @deprecated use a different {@link HttpSender} implementation or report your use case for this to the Micrometer project maintainers
+ * @deprecated use a different {@link HttpSender} implementation or report your use case
+ * for this to the Micrometer project maintainers
  */
 @Deprecated
 public class ReactorNettySender implements HttpSender {
+
     private final HttpClient httpClient;
 
     public ReactorNettySender(HttpClient httpClient) {
@@ -41,14 +43,11 @@ public class ReactorNettySender implements HttpSender {
 
     @Override
     public Response send(Request request) {
-        Tuple2<Integer, String> response = httpClient
-                .request(toNettyHttpMethod(request.getMethod()))
-                .uri(request.getUrl().toString())
-                .send((httpClientRequest, nettyOutbound) -> {
+        Tuple2<Integer, String> response = httpClient.request(toNettyHttpMethod(request.getMethod()))
+                .uri(request.getUrl().toString()).send((httpClientRequest, nettyOutbound) -> {
                     request.getRequestHeaders().forEach(httpClientRequest::addHeader);
                     return nettyOutbound.sendByteArray(Mono.just(request.getEntity()));
-                })
-                .responseSingle((r, body) -> Mono.just(r.status().code()).zipWith(body.asString().defaultIfEmpty("")))
+                }).responseSingle((r, body) -> Mono.just(r.status().code()).zipWith(body.asString().defaultIfEmpty("")))
                 .block();
 
         return new Response(response.getT1(), response.getT2());
@@ -56,20 +55,22 @@ public class ReactorNettySender implements HttpSender {
 
     private HttpMethod toNettyHttpMethod(Method method) {
         switch (method) {
-            case PUT:
-                return HttpMethod.PUT;
-            case POST:
-                return HttpMethod.POST;
-            case HEAD:
-                return HttpMethod.HEAD;
-            case GET:
-                return HttpMethod.GET;
-            case DELETE:
-                return HttpMethod.DELETE;
-            case OPTIONS:
-                return HttpMethod.OPTIONS;
-            default:
-                throw new UnsupportedOperationException("http method " + method.toString() + " is not supported by the reactor netty client");
+        case PUT:
+            return HttpMethod.PUT;
+        case POST:
+            return HttpMethod.POST;
+        case HEAD:
+            return HttpMethod.HEAD;
+        case GET:
+            return HttpMethod.GET;
+        case DELETE:
+            return HttpMethod.DELETE;
+        case OPTIONS:
+            return HttpMethod.OPTIONS;
+        default:
+            throw new UnsupportedOperationException(
+                    "http method " + method.toString() + " is not supported by the reactor netty client");
         }
     }
+
 }

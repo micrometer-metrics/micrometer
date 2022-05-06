@@ -38,8 +38,8 @@ import static java.util.Objects.requireNonNull;
  * <p>
  * Supported JVM implementations:
  * <ul>
- *     <li>HotSpot</li>
- *     <li>J9</li>
+ * <li>HotSpot</li>
+ * <li>J9</li>
  * </ul>
  *
  * @author Jon Schneider
@@ -51,10 +51,12 @@ import static java.util.Objects.requireNonNull;
 @NonNullFields
 public class ProcessorMetrics implements MeterBinder {
 
-    /** List of public, exported interface class names from supported JVM implementations. */
+    /**
+     * List of public, exported interface class names from supported JVM implementations.
+     */
     private static final List<String> OPERATING_SYSTEM_BEAN_CLASS_NAMES = Arrays.asList(
-        "com.ibm.lang.management.OperatingSystemMXBean", // J9
-        "com.sun.management.OperatingSystemMXBean" // HotSpot
+            "com.ibm.lang.management.OperatingSystemMXBean", // J9
+            "com.sun.management.OperatingSystemMXBean" // HotSpot
     );
 
     private final Iterable<Tag> tags;
@@ -86,38 +88,35 @@ public class ProcessorMetrics implements MeterBinder {
     @Override
     public void bindTo(MeterRegistry registry) {
         Runtime runtime = Runtime.getRuntime();
-        Gauge.builder("system.cpu.count", runtime, Runtime::availableProcessors)
-            .tags(tags)
-            .description("The number of processors available to the Java virtual machine")
-            .register(registry);
+        Gauge.builder("system.cpu.count", runtime, Runtime::availableProcessors).tags(tags)
+                .description("The number of processors available to the Java virtual machine").register(registry);
 
         if (operatingSystemBean.getSystemLoadAverage() >= 0) {
             Gauge.builder("system.load.average.1m", operatingSystemBean, OperatingSystemMXBean::getSystemLoadAverage)
-                .tags(tags)
-                .description("The sum of the number of runnable entities queued to available processors and the number " +
-                    "of runnable entities running on the available processors averaged over a period of time")
-                .register(registry);
+                    .tags(tags)
+                    .description(
+                            "The sum of the number of runnable entities queued to available processors and the number "
+                                    + "of runnable entities running on the available processors averaged over a period of time")
+                    .register(registry);
         }
 
         if (systemCpuUsage != null) {
-            Gauge.builder("system.cpu.usage", operatingSystemBean, x -> invoke(systemCpuUsage))
-                .tags(tags)
-                .description("The \"recent cpu usage\" of the system the application is running in")
-                .register(registry);
+            Gauge.builder("system.cpu.usage", operatingSystemBean, x -> invoke(systemCpuUsage)).tags(tags)
+                    .description("The \"recent cpu usage\" of the system the application is running in")
+                    .register(registry);
         }
 
         if (processCpuUsage != null) {
-            Gauge.builder("process.cpu.usage", operatingSystemBean, x -> invoke(processCpuUsage))
-                .tags(tags)
-                .description("The \"recent cpu usage\" for the Java Virtual Machine process")
-                .register(registry);
+            Gauge.builder("process.cpu.usage", operatingSystemBean, x -> invoke(processCpuUsage)).tags(tags)
+                    .description("The \"recent cpu usage\" for the Java Virtual Machine process").register(registry);
         }
     }
 
     private double invoke(@Nullable Method method) {
         try {
             return method != null ? (double) method.invoke(operatingSystemBean) : Double.NaN;
-        } catch (IllegalAccessException | IllegalArgumentException | InvocationTargetException e) {
+        }
+        catch (IllegalAccessException | IllegalArgumentException | InvocationTargetException e) {
             return Double.NaN;
         }
     }
@@ -132,7 +131,8 @@ public class ProcessorMetrics implements MeterBinder {
             // ensure the Bean we have is actually an instance of the interface
             operatingSystemBeanClass.cast(operatingSystemBean);
             return operatingSystemBeanClass.getDeclaredMethod(name);
-        } catch (ClassCastException | NoSuchMethodException | SecurityException e) {
+        }
+        catch (ClassCastException | NoSuchMethodException | SecurityException e) {
             return null;
         }
     }
@@ -142,9 +142,11 @@ public class ProcessorMetrics implements MeterBinder {
         for (String className : classNames) {
             try {
                 return Class.forName(className);
-            } catch (ClassNotFoundException ignore) {
+            }
+            catch (ClassNotFoundException ignore) {
             }
         }
         return null;
     }
+
 }

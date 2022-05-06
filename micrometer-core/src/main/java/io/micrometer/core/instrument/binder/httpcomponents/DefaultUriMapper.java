@@ -21,7 +21,8 @@ import org.apache.http.HttpRequest;
 import java.util.function.Function;
 
 /**
- * Extracts the URI pattern from the predefined request header, {@value DefaultUriMapper#URI_PATTERN_HEADER} if available.
+ * Extracts the URI pattern from the predefined request header,
+ * {@value DefaultUriMapper#URI_PATTERN_HEADER} if available.
  *
  * @author Benjamin Hubert
  * @since 1.4.0
@@ -41,4 +42,5 @@ public class DefaultUriMapper implements Function<HttpRequest, String> {
         }
         return "UNKNOWN";
     }
+
 }

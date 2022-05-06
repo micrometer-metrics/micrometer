@@ -28,6 +28,7 @@ import static org.assertj.core.api.Assertions.assertThatExceptionOfType;
 
 @WireMockTest
 class OkHttpSenderTests {
+
     HttpSender httpSender = new OkHttpSender();
 
     @Test
@@ -43,11 +44,10 @@ class OkHttpSenderTests {
     void appendUtf8CharsetContentType(WireMockRuntimeInfo wmInfo) throws Throwable {
         stubFor(any(urlEqualTo("/metrics")));
 
-        this.httpSender.post(wmInfo.getHttpBaseUrl() + "/metrics")
-                .withContent("application/xml", "<xml></xml>")
-                .send();
+        this.httpSender.post(wmInfo.getHttpBaseUrl() + "/metrics").withContent("application/xml", "<xml></xml>").send();
 
-        verify(postRequestedFor(urlEqualTo("/metrics"))
-                .withHeader("Content-Type", equalTo("application/xml; charset=utf-8")));
+        verify(postRequestedFor(urlEqualTo("/metrics")).withHeader("Content-Type",
+                equalTo("application/xml; charset=utf-8")));
     }
+
 }

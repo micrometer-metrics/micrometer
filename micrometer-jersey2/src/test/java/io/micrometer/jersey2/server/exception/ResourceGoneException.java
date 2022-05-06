@@ -28,4 +28,5 @@ public class ResourceGoneException extends RuntimeException {
     public ResourceGoneException(String message, Throwable cause) {
         super(message, cause);
     }
+
 }

@@ -25,44 +25,45 @@ import java.util.concurrent.atomic.DoubleAdder;
 import java.util.concurrent.atomic.LongAdder;
 
 public class PrometheusDistributionSummary extends AbstractDistributionSummary {
+
     private static final CountAtBucket[] EMPTY_HISTOGRAM = new CountAtBucket[0];
+
     @Nullable
     private final Histogram histogram;
+
     private final LongAdder count = new LongAdder();
+
     private final DoubleAdder amount = new DoubleAdder();
+
     private final TimeWindowMax max;
 
     private final HistogramFlavor histogramFlavor;
 
-    PrometheusDistributionSummary(Id id, Clock clock, DistributionStatisticConfig distributionStatisticConfig, double scale, HistogramFlavor histogramFlavor) {
-        super(id, clock,
-                DistributionStatisticConfig.builder()
-                        .percentilesHistogram(false)
-                        .serviceLevelObjectives()
-                        .build()
-                        .merge(distributionStatisticConfig),
-                scale, false);
+    PrometheusDistributionSummary(Id id, Clock clock, DistributionStatisticConfig distributionStatisticConfig,
+            double scale, HistogramFlavor histogramFlavor) {
+        super(id, clock, DistributionStatisticConfig.builder().percentilesHistogram(false).serviceLevelObjectives()
+                .build().merge(distributionStatisticConfig), scale, false);
 
         this.histogramFlavor = histogramFlavor;
         this.max = new TimeWindowMax(clock, distributionStatisticConfig);
 
         if (distributionStatisticConfig.isPublishingHistogram()) {
             switch (histogramFlavor) {
-                case Prometheus:
-                    histogram = new TimeWindowFixedBoundaryHistogram(clock, DistributionStatisticConfig.builder()
-                            .expiry(Duration.ofDays(1825)) // effectively never roll over
-                            .bufferLength(1)
-                            .build()
-                            .merge(distributionStatisticConfig), true);
-                    break;
-                case VictoriaMetrics:
-                    histogram = new FixedBoundaryVictoriaMetricsHistogram();
-                    break;
-                default:
-                    histogram = null;
-                    break;
+            case Prometheus:
+                histogram = new TimeWindowFixedBoundaryHistogram(clock, DistributionStatisticConfig.builder()
+                        // effectively never roll over
+                        .expiry(Duration.ofDays(1825)).bufferLength(1).build().merge(distributionStatisticConfig),
+                        true);
+                break;
+            case VictoriaMetrics:
+                histogram = new FixedBoundaryVictoriaMetricsHistogram();
+                break;
+            default:
+                histogram = null;
+                break;
             }
-        } else {
+        }
+        else {
             histogram = null;
         }
     }
@@ -97,9 +98,9 @@ public class PrometheusDistributionSummary extends AbstractDistributionSummary {
     }
 
     /**
-     * For Prometheus we cannot use the histogram counts from HistogramSnapshot, as it is based on a
-     * rolling histogram. Prometheus requires a histogram that accumulates values over the lifetime of the app.
-     *
+     * For Prometheus we cannot use the histogram counts from HistogramSnapshot, as it is
+     * based on a rolling histogram. Prometheus requires a histogram that accumulates
+     * values over the lifetime of the app.
      * @return Cumulative histogram buckets.
      */
     public CountAtBucket[] histogramCounts() {
@@ -114,11 +115,8 @@ public class PrometheusDistributionSummary extends AbstractDistributionSummary {
             return snapshot;
         }
 
-        return new HistogramSnapshot(snapshot.count(),
-                snapshot.total(),
-                snapshot.max(),
-                snapshot.percentileValues(),
-                histogramCounts(),
-                snapshot::outputSummary);
+        return new HistogramSnapshot(snapshot.count(), snapshot.total(), snapshot.max(), snapshot.percentileValues(),
+                histogramCounts(), snapshot::outputSummary);
     }
+
 }

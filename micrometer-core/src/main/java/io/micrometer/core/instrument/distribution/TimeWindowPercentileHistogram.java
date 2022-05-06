@@ -22,8 +22,8 @@ import org.HdrHistogram.DoubleRecorder;
 import java.io.PrintStream;
 
 /**
- * A histogram implementation that supports the computation of percentiles by Micrometer for
- * publishing to a monitoring system.
+ * A histogram implementation that supports the computation of percentiles by Micrometer
+ * for publishing to a monitoring system.
  *
  * @author Jon Schneider
  * @author Trustin Heuiseung Lee
@@ -33,7 +33,7 @@ public class TimeWindowPercentileHistogram extends AbstractTimeWindowHistogram<D
     private final DoubleHistogram intervalHistogram;
 
     public TimeWindowPercentileHistogram(Clock clock, DistributionStatisticConfig distributionStatisticConfig,
-                                         boolean supportsAggregablePercentiles) {
+            boolean supportsAggregablePercentiles) {
         super(clock, distributionStatisticConfig, DoubleRecorder.class, supportsAggregablePercentiles);
         intervalHistogram = new DoubleHistogram(percentilePrecision(distributionStatisticConfig));
         initRingBuffer();
@@ -93,4 +93,5 @@ public class TimeWindowPercentileHistogram extends AbstractTimeWindowHistogram<D
     void outputSummary(PrintStream out, double bucketScaling) {
         accumulatedHistogram().outputPercentileDistribution(out, bucketScaling);
     }
+
 }

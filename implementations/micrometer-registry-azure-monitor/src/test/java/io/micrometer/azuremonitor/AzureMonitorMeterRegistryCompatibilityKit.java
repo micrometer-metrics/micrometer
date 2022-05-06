@@ -49,4 +49,5 @@ class AzureMonitorMeterRegistryCompatibilityKit extends MeterRegistryCompatibili
     public Duration step() {
         return config.step();
     }
+
 }

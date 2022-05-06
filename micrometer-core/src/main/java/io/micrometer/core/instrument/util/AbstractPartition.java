@@ -21,21 +21,27 @@ import java.util.List;
 /**
  * Base class for a partition.
  *
- * <p>Those extending this should pass control of the input to this type and never mutate it nor
- * call any mutation operations on this type.
+ * <p>
+ * Those extending this should pass control of the input to this type and never mutate it
+ * nor call any mutation operations on this type.
  *
  * @author Jon Schneider
  * @since 1.2.2
  */
 public abstract class AbstractPartition<T> extends AbstractList<List<T>> {
+
     final List<T> delegate;
+
     final int partitionSize;
+
     final int partitionCount;
 
     protected AbstractPartition(List<T> delegate, int partitionSize) {
-        if (delegate == null) throw new NullPointerException("delegate == null");
+        if (delegate == null)
+            throw new NullPointerException("delegate == null");
         this.delegate = delegate;
-        if (partitionSize < 1) throw new IllegalArgumentException("partitionSize < 1");
+        if (partitionSize < 1)
+            throw new IllegalArgumentException("partitionSize < 1");
         this.partitionSize = partitionSize;
         this.partitionCount = partitionCount(delegate, partitionSize);
     }
@@ -62,4 +68,5 @@ public abstract class AbstractPartition<T> extends AbstractList<List<T>> {
         int result = delegate.size() / partitionSize;
         return delegate.size() % partitionSize == 0 ? result : result + 1;
     }
+
 }

@@ -24,7 +24,9 @@ import java.lang.ref.WeakReference;
 import java.util.function.ToDoubleFunction;
 
 public class CompositeFunctionCounter<T> extends AbstractCompositeMeter<FunctionCounter> implements FunctionCounter {
+
     private final WeakReference<T> ref;
+
     private final ToDoubleFunction<T> f;
 
     CompositeFunctionCounter(Meter.Id id, T obj, ToDoubleFunction<T> f) {
@@ -51,10 +53,8 @@ public class CompositeFunctionCounter<T> extends AbstractCompositeMeter<Function
             return null;
         }
 
-        return FunctionCounter.builder(getId().getName(), obj, f)
-            .tags(getId().getTagsAsIterable())
-            .description(getId().getDescription())
-            .baseUnit(getId().getBaseUnit())
-            .register(registry);
+        return FunctionCounter.builder(getId().getName(), obj, f).tags(getId().getTagsAsIterable())
+                .description(getId().getDescription()).baseUnit(getId().getBaseUnit()).register(registry);
     }
+
 }

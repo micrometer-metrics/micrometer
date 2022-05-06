@@ -17,8 +17,9 @@ package io.micrometer.cloudwatch;
 
 /**
  * Utilities for cloudwatch registry
- * @deprecated the micrometer-registry-cloudwatch implementation has been deprecated in favour of
- *             micrometer-registry-cloudwatch2, which uses AWS SDK for Java 2.x
+ *
+ * @deprecated the micrometer-registry-cloudwatch implementation has been deprecated in
+ * favour of micrometer-registry-cloudwatch2, which uses AWS SDK for Java 2.x
  */
 @Deprecated
 final class CloudWatchUtils {
@@ -42,7 +43,6 @@ final class CloudWatchUtils {
     /**
      * Clean up metric to be within the allowable range as specified in
      * {@link com.amazonaws.services.cloudwatch.model.MetricDatum#setValue(Double)}
-     *
      * @param value unsanitized value
      * @return value clamped to allowable range
      */

@@ -26,13 +26,17 @@ import java.util.function.ToDoubleFunction;
 import java.util.function.ToLongFunction;
 
 class CompositeFunctionTimer<T> extends AbstractCompositeMeter<FunctionTimer> implements FunctionTimer {
+
     private final WeakReference<T> ref;
+
     private final ToLongFunction<T> countFunction;
+
     private final ToDoubleFunction<T> totalTimeFunction;
+
     private final TimeUnit totalTimeFunctionUnit;
 
-    CompositeFunctionTimer(Meter.Id id, T obj, ToLongFunction<T> countFunction,
-                           ToDoubleFunction<T> totalTimeFunction, TimeUnit totalTimeFunctionUnit) {
+    CompositeFunctionTimer(Meter.Id id, T obj, ToLongFunction<T> countFunction, ToDoubleFunction<T> totalTimeFunction,
+            TimeUnit totalTimeFunctionUnit) {
         super(id);
         this.ref = new WeakReference<>(obj);
         this.countFunction = countFunction;
@@ -67,10 +71,8 @@ class CompositeFunctionTimer<T> extends AbstractCompositeMeter<FunctionTimer> im
             return null;
         }
 
-        return FunctionTimer.builder(getId().getName(), obj, countFunction,
-            totalTimeFunction, totalTimeFunctionUnit)
-            .tags(getId().getTagsAsIterable())
-            .description(getId().getDescription())
-            .register(registry);
+        return FunctionTimer.builder(getId().getName(), obj, countFunction, totalTimeFunction, totalTimeFunctionUnit)
+                .tags(getId().getTagsAsIterable()).description(getId().getDescription()).register(registry);
     }
+
 }

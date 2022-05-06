@@ -27,9 +27,7 @@ import static java.util.concurrent.TimeUnit.MILLISECONDS;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.entry;
 import static org.mockito.ArgumentMatchers.isA;
-import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.when;
+import static org.mockito.Mockito.*;
 
 /**
  * Tests for {@link DynatraceMeterRegistry}.
@@ -37,30 +35,34 @@ import static org.mockito.Mockito.when;
  * @author Jonatan Ivanov
  */
 class DynatraceMeterRegistryTest {
+
     private DynatraceConfig config;
+
     private MockClock clock;
+
     private HttpSender httpClient;
+
     private DynatraceMeterRegistry meterRegistry;
 
     @BeforeEach
     void setUp() {
         this.config = createDefaultDynatraceConfig();
         this.clock = new MockClock();
-        this.clock.add(System.currentTimeMillis(), MILLISECONDS); // Set the clock to something recent so that the Dynatrace library will not complain.
+        this.clock.add(System.currentTimeMillis(), MILLISECONDS); // Set the clock to
+                                                                  // something recent so
+                                                                  // that the Dynatrace
+                                                                  // library will not
+                                                                  // complain.
         this.httpClient = mock(HttpSender.class);
-        this.meterRegistry = DynatraceMeterRegistry.builder(config)
-                .clock(clock)
-                .httpClient(httpClient)
-                .build();
+        this.meterRegistry = DynatraceMeterRegistry.builder(config).clock(clock).httpClient(httpClient).build();
     }
 
     @Test
     void shouldSendProperRequest() throws Throwable {
         HttpSender.Request.Builder builder = HttpSender.Request.build(config.uri(), httpClient);
         when(httpClient.post(config.uri())).thenReturn(builder);
-        when(httpClient.send(isA(HttpSender.Request.class))).thenReturn(new HttpSender.Response(202,
-                "{ \"linesOk\": 4, \"linesInvalid\": 0, \"error\": null }"
-        ));
+        when(httpClient.send(isA(HttpSender.Request.class)))
+                .thenReturn(new HttpSender.Response(202, "{ \"linesOk\": 4, \"linesInvalid\": 0, \"error\": null }"));
 
         Double gauge = meterRegistry.gauge("my.gauge", 42d);
         Counter counter = meterRegistry.counter("my.counter");
@@ -78,25 +80,20 @@ class DynatraceMeterRegistryTest {
         verify(httpClient).send(argumentCaptor.capture());
         HttpSender.Request request = argumentCaptor.getValue();
 
-        assertThat(request.getRequestHeaders()).containsOnly(
-                entry("Content-Type", "text/plain"),
-                entry("User-Agent", "micrometer"),
-                entry("Authorization", "Api-Token apiToken")
-        );
-        assertThat(request.getEntity()).asString()
-                .hasLineCount(3)
+        assertThat(request.getRequestHeaders()).containsOnly(entry("Content-Type", "text/plain"),
+                entry("User-Agent", "micrometer"), entry("Authorization", "Api-Token apiToken"));
+        assertThat(request.getEntity()).asString().hasLineCount(3)
                 .contains("my.counter,dt.metrics.source=micrometer count,delta=12.0 " + clock.wallTime())
                 .contains("my.gauge,dt.metrics.source=micrometer gauge," + gauge.doubleValue() + " " + clock.wallTime())
-                .contains("my.timer,dt.metrics.source=micrometer gauge,min=0.0,max=42.0,sum=108.0,count=4 " + clock.wallTime());
+                .contains("my.timer,dt.metrics.source=micrometer gauge,min=0.0,max=42.0,sum=108.0,count=4 "
+                        + clock.wallTime());
     }
 
     @Test
     void shouldTrackZerothPercentileButShouldNotPublishIt() throws Throwable {
         HttpSender.Request.Builder builder = HttpSender.Request.build(config.uri(), httpClient);
         when(httpClient.post(config.uri())).thenReturn(builder);
-        Timer timer = Timer.builder("my.timer")
-                .publishPercentiles(0.5)
-                .register(meterRegistry);
+        Timer timer = Timer.builder("my.timer").publishPercentiles(0.5).register(meterRegistry);
         timer.record(22, MILLISECONDS);
         clock.add(config.step());
 
@@ -106,9 +103,9 @@ class DynatraceMeterRegistryTest {
         verify(httpClient).send(argumentCaptor.capture());
         HttpSender.Request request = argumentCaptor.getValue();
 
-        assertThat(request.getEntity()).asString()
-                .hasLineCount(2)
-                .contains("my.timer,dt.metrics.source=micrometer gauge,min=22.0,max=22.0,sum=22.0,count=1 " + clock.wallTime())
+        assertThat(request.getEntity()).asString().hasLineCount(2)
+                .contains("my.timer,dt.metrics.source=micrometer gauge,min=22.0,max=22.0,sum=22.0,count=1 "
+                        + clock.wallTime())
                 .contains("my.timer.percentile,phi=0.5,dt.metrics.source=micrometer gauge,0.0 " + clock.wallTime());
     }
 
@@ -116,9 +113,7 @@ class DynatraceMeterRegistryTest {
     void shouldPublishZerothPercentileIfAlreadyDefined() throws Throwable {
         HttpSender.Request.Builder builder = HttpSender.Request.build(config.uri(), httpClient);
         when(httpClient.post(config.uri())).thenReturn(builder);
-        Timer timer = Timer.builder("my.timer")
-                .publishPercentiles(0.5, 0.0)
-                .register(meterRegistry);
+        Timer timer = Timer.builder("my.timer").publishPercentiles(0.5, 0.0).register(meterRegistry);
         timer.record(22, MILLISECONDS);
         clock.add(config.step());
 
@@ -128,9 +123,9 @@ class DynatraceMeterRegistryTest {
         verify(httpClient).send(argumentCaptor.capture());
         HttpSender.Request request = argumentCaptor.getValue();
 
-        assertThat(request.getEntity()).asString()
-                .hasLineCount(3)
-                .contains("my.timer,dt.metrics.source=micrometer gauge,min=22.0,max=22.0,sum=22.0,count=1 " + clock.wallTime())
+        assertThat(request.getEntity()).asString().hasLineCount(3)
+                .contains("my.timer,dt.metrics.source=micrometer gauge,min=22.0,max=22.0,sum=22.0,count=1 "
+                        + clock.wallTime())
                 .contains("my.timer.percentile,phi=0,dt.metrics.source=micrometer gauge,0.0 " + clock.wallTime())
                 .contains("my.timer.percentile,phi=0.5,dt.metrics.source=micrometer gauge,0.0 " + clock.wallTime());
     }
@@ -139,9 +134,7 @@ class DynatraceMeterRegistryTest {
     void shouldPublishZerothPercentileIfExclusivelyDefined() throws Throwable {
         HttpSender.Request.Builder builder = HttpSender.Request.build(config.uri(), httpClient);
         when(httpClient.post(config.uri())).thenReturn(builder);
-        Timer timer = Timer.builder("my.timer")
-                .publishPercentiles(0.0)
-                .register(meterRegistry);
+        Timer timer = Timer.builder("my.timer").publishPercentiles(0.0).register(meterRegistry);
         timer.record(22, MILLISECONDS);
         clock.add(config.step());
 
@@ -151,9 +144,9 @@ class DynatraceMeterRegistryTest {
         verify(httpClient).send(argumentCaptor.capture());
         HttpSender.Request request = argumentCaptor.getValue();
 
-        assertThat(request.getEntity()).asString()
-                .hasLineCount(2)
-                .contains("my.timer,dt.metrics.source=micrometer gauge,min=22.0,max=22.0,sum=22.0,count=1 " + clock.wallTime())
+        assertThat(request.getEntity()).asString().hasLineCount(2)
+                .contains("my.timer,dt.metrics.source=micrometer gauge,min=22.0,max=22.0,sum=22.0,count=1 "
+                        + clock.wallTime())
                 .contains("my.timer.percentile,phi=0,dt.metrics.source=micrometer gauge,0.0 " + clock.wallTime());
     }
 
@@ -180,4 +173,5 @@ class DynatraceMeterRegistryTest {
             }
         };
     }
+
 }

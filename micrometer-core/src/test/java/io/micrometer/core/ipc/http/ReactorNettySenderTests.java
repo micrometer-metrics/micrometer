@@ -32,17 +32,18 @@ import static org.assertj.core.api.Assertions.assertThatExceptionOfType;
 @SuppressWarnings("deprecation")
 @ExtendWith(WiremockResolver.class)
 class ReactorNettySenderTests {
+
     HttpSender httpSender = new ReactorNettySender();
 
     @Test
     void customReadTimeoutHonored(@WiremockResolver.Wiremock WireMockServer server) {
         this.httpSender = new ReactorNettySender(HttpClient.create()
-                .doOnConnected(connection ->
-                        connection.addHandlerLast(new ReadTimeoutHandler(1, TimeUnit.MILLISECONDS))
-                                .addHandlerLast(new WriteTimeoutHandler(1, TimeUnit.MILLISECONDS))));
+                .doOnConnected(connection -> connection.addHandlerLast(new ReadTimeoutHandler(1, TimeUnit.MILLISECONDS))
+                        .addHandlerLast(new WriteTimeoutHandler(1, TimeUnit.MILLISECONDS))));
         server.stubFor(any(urlEqualTo("/metrics")).willReturn(ok().withFixedDelay(5)));
 
         assertThatExceptionOfType(ReadTimeoutException.class)
                 .isThrownBy(() -> httpSender.post(server.baseUrl() + "/metrics").send());
     }
+
 }

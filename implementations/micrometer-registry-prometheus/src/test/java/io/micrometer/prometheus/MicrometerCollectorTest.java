@@ -30,6 +30,7 @@ import static java.util.Collections.singletonList;
 import static org.assertj.core.api.Assertions.assertThat;
 
 class MicrometerCollectorTest {
+
     @Issue("#769")
     @Test
     void manyTags() {
@@ -40,8 +41,8 @@ class MicrometerCollectorTest {
             Collector.MetricFamilySamples.Sample sample = new Collector.MetricFamilySamples.Sample("my_counter",
                     singletonList("k"), singletonList(i.toString()), 1.0);
 
-            collector.add(Collections.emptyList(), (conventionName, tagKeys) -> Stream.of(new MicrometerCollector.Family(Collector.Type.COUNTER,
-                    "my_counter", sample)));
+            collector.add(Collections.emptyList(), (conventionName, tagKeys) -> Stream
+                    .of(new MicrometerCollector.Family(Collector.Type.COUNTER, "my_counter", sample)));
         }
 
         // Threw StackOverflowException because of too many nested streams originally
@@ -58,11 +59,12 @@ class MicrometerCollectorTest {
         Collector.MetricFamilySamples.Sample sample2 = new Collector.MetricFamilySamples.Sample("my_counter",
                 asList("k", "k2"), asList("v2", "v1"), 1.0);
 
-        collector.add(asList("v1", "v2"), (conventionName, tagKeys) -> Stream.of(new MicrometerCollector.Family(Collector.Type.COUNTER,
-                "my_counter", sample)));
-        collector.add(asList("v2", "v1"), (conventionName, tagKeys) -> Stream.of(new MicrometerCollector.Family(Collector.Type.COUNTER,
-                "my_counter", sample2)));
+        collector.add(asList("v1", "v2"), (conventionName, tagKeys) -> Stream
+                .of(new MicrometerCollector.Family(Collector.Type.COUNTER, "my_counter", sample)));
+        collector.add(asList("v2", "v1"), (conventionName, tagKeys) -> Stream
+                .of(new MicrometerCollector.Family(Collector.Type.COUNTER, "my_counter", sample2)));
 
         assertThat(collector.collect().get(0).samples).hasSize(2);
     }
+
 }

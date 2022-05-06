@@ -24,7 +24,9 @@ import java.util.Map;
 import static org.assertj.core.api.Assertions.assertThat;
 
 class DatadogConfigTest {
+
     private final Map<String, String> props = new HashMap<>();
+
     private final DatadogConfig config = props::get;
 
     @Test
@@ -43,4 +45,5 @@ class DatadogConfigTest {
     void defaultsHostTagWhenMissing() {
         assertThat(config.hostTag()).isEqualTo("instance");
     }
+
 }

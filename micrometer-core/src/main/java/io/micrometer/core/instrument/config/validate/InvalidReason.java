@@ -22,6 +22,7 @@ package io.micrometer.core.instrument.config.validate;
  * @since 1.5.0
  */
 public enum InvalidReason {
-    MALFORMED,
-    MISSING
+
+    MALFORMED, MISSING
+
 }

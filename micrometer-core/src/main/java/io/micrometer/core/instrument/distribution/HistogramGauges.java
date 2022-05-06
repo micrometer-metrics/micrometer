@@ -26,18 +26,20 @@ import java.util.function.ToDoubleFunction;
 
 @Incubating(since = "1.0.3")
 public class HistogramGauges {
+
     // How many gauges have been polled so far on this publish cycle
     volatile CountDownLatch polledGaugesLatch;
 
     private volatile HistogramSnapshot snapshot;
 
     private final HistogramSupport meter;
+
     private final int totalGauges;
 
     /**
-     * Register a set of gauges for percentiles and histogram buckets that follow a common format when
-     * the monitoring system doesn't have an opinion about the structure of this data.
-     *
+     * Register a set of gauges for percentiles and histogram buckets that follow a common
+     * format when the monitoring system doesn't have an opinion about the structure of
+     * this data.
      * @param timer the timer from which to derive gauges
      * @param registry the registry to register the gauges
      * @return registered {@code HistogramGauges}
@@ -46,20 +48,20 @@ public class HistogramGauges {
         return getHistogramGauges(timer, timer.getId(), timer.baseTimeUnit(), registry);
     }
 
-    private static HistogramGauges getHistogramGauges(HistogramSupport histogramSupport, Meter.Id id, TimeUnit baseTimeUnit, MeterRegistry registry) {
-        return HistogramGauges.register(histogramSupport, registry,
-                percentile -> id.getName() + ".percentile",
-                percentile -> Tags.concat(id.getTagsAsIterable(), "phi", DoubleFormat.decimalOrNan(percentile.percentile())),
-                percentile -> percentile.value(baseTimeUnit),
-                bucket -> id.getName() + ".histogram",
-                bucket -> Tags.concat(id.getTagsAsIterable(), "le", bucket.isPositiveInf()
-                        ? "+Inf" : DoubleFormat.wholeOrDecimal(bucket.bucket(baseTimeUnit))));
+    private static HistogramGauges getHistogramGauges(HistogramSupport histogramSupport, Meter.Id id,
+            TimeUnit baseTimeUnit, MeterRegistry registry) {
+        return HistogramGauges.register(histogramSupport, registry, percentile -> id.getName() + ".percentile",
+                percentile -> Tags.concat(id.getTagsAsIterable(), "phi",
+                        DoubleFormat.decimalOrNan(percentile.percentile())),
+                percentile -> percentile.value(baseTimeUnit), bucket -> id.getName() + ".histogram",
+                bucket -> Tags.concat(id.getTagsAsIterable(), "le",
+                        bucket.isPositiveInf() ? "+Inf" : DoubleFormat.wholeOrDecimal(bucket.bucket(baseTimeUnit))));
     }
 
     /**
-     * Register a set of gauges for percentiles and histogram buckets that follow a common format when
-     * the monitoring system doesn't have an opinion about the structure of this data.
-     *
+     * Register a set of gauges for percentiles and histogram buckets that follow a common
+     * format when the monitoring system doesn't have an opinion about the structure of
+     * this data.
      * @param ltt the long task timer from which to derive gauges
      * @param registry the registry to register the gauges
      * @return registered {@code HistogramGauges}
@@ -71,30 +73,28 @@ public class HistogramGauges {
 
     public static HistogramGauges registerWithCommonFormat(DistributionSummary summary, MeterRegistry registry) {
         Meter.Id id = summary.getId();
-        return HistogramGauges.register(summary, registry,
-                percentile -> id.getName() + ".percentile",
-                percentile -> Tags.concat(id.getTagsAsIterable(), "phi", DoubleFormat.decimalOrNan(percentile.percentile())),
-                ValueAtPercentile::value,
-                bucket -> id.getName() + ".histogram",
-                bucket -> Tags.concat(id.getTagsAsIterable(), "le", bucket.isPositiveInf()
-                        ? "+Inf" : DoubleFormat.wholeOrDecimal(bucket.bucket())));
+        return HistogramGauges.register(summary, registry, percentile -> id.getName() + ".percentile",
+                percentile -> Tags.concat(id.getTagsAsIterable(), "phi",
+                        DoubleFormat.decimalOrNan(percentile.percentile())),
+                ValueAtPercentile::value, bucket -> id.getName() + ".histogram",
+                bucket -> Tags.concat(id.getTagsAsIterable(), "le",
+                        bucket.isPositiveInf() ? "+Inf" : DoubleFormat.wholeOrDecimal(bucket.bucket())));
     }
 
     public static HistogramGauges register(HistogramSupport meter, MeterRegistry registry,
-                                           Function<ValueAtPercentile, String> percentileName,
-                                           Function<ValueAtPercentile, Iterable<Tag>> percentileTags,
-                                           Function<ValueAtPercentile, Double> percentileValue,
-                                           Function<CountAtBucket, String> bucketName,
-                                           Function<CountAtBucket, Iterable<Tag>> bucketTags) {
-        return new HistogramGauges(meter, registry, percentileName, percentileTags, percentileValue, bucketName, bucketTags);
+            Function<ValueAtPercentile, String> percentileName,
+            Function<ValueAtPercentile, Iterable<Tag>> percentileTags,
+            Function<ValueAtPercentile, Double> percentileValue, Function<CountAtBucket, String> bucketName,
+            Function<CountAtBucket, Iterable<Tag>> bucketTags) {
+        return new HistogramGauges(meter, registry, percentileName, percentileTags, percentileValue, bucketName,
+                bucketTags);
     }
 
     private HistogramGauges(HistogramSupport meter, MeterRegistry registry,
-                            Function<ValueAtPercentile, String> percentileName,
-                            Function<ValueAtPercentile, Iterable<Tag>> percentileTags,
-                            Function<ValueAtPercentile, Double> percentileValue,
-                            Function<CountAtBucket, String> bucketName,
-                            Function<CountAtBucket, Iterable<Tag>> bucketTags) {
+            Function<ValueAtPercentile, String> percentileName,
+            Function<ValueAtPercentile, Iterable<Tag>> percentileTags,
+            Function<ValueAtPercentile, Double> percentileValue, Function<CountAtBucket, String> bucketName,
+            Function<CountAtBucket, Iterable<Tag>> bucketTags) {
         this.meter = meter;
 
         HistogramSnapshot initialSnapshot = meter.takeSnapshot();
@@ -105,7 +105,8 @@ public class HistogramGauges {
 
         this.totalGauges = valueAtPercentiles.length + countAtBuckets.length;
 
-        // set to zero initially, so the first polling of one of the gauges on each publish cycle results in a
+        // set to zero initially, so the first polling of one of the gauges on each
+        // publish cycle results in a
         // new snapshot
         this.polledGaugesLatch = new CountDownLatch(0);
 
@@ -119,10 +120,8 @@ public class HistogramGauges {
             };
 
             Gauge.builder(percentileName.apply(valueAtPercentiles[i]), meter, percentileValueFunction)
-                    .tags(percentileTags.apply(valueAtPercentiles[i]))
-                    .baseUnit(meter.getId().getBaseUnit())
-                    .synthetic(meter.getId())
-                    .register(registry);
+                    .tags(percentileTags.apply(valueAtPercentiles[i])).baseUnit(meter.getId().getBaseUnit())
+                    .synthetic(meter.getId()).register(registry);
         }
 
         for (int i = 0; i < countAtBuckets.length; i++) {
@@ -135,9 +134,7 @@ public class HistogramGauges {
             };
 
             Gauge.builder(bucketName.apply(countAtBuckets[i]), meter, bucketCountFunction)
-                    .tags(bucketTags.apply(countAtBuckets[i]))
-                    .synthetic(meter.getId())
-                    .register(registry);
+                    .tags(bucketTags.apply(countAtBuckets[i])).synthetic(meter.getId()).register(registry);
         }
     }
 
@@ -147,4 +144,5 @@ public class HistogramGauges {
             polledGaugesLatch = new CountDownLatch(totalGauges);
         }
     }
+
 }

@@ -31,11 +31,13 @@ import static org.assertj.core.api.Assertions.assertThat;
  * @author Sebastian Lövdahl
  */
 class JmxMeterRegistryTest {
+
     private final MockClock clock = new MockClock();
 
     @Issue("#2683")
     @Test
-    void customClockIsUsed() throws MalformedObjectNameException, ReflectionException, InstanceNotFoundException, AttributeNotFoundException, MBeanException {
+    void customClockIsUsed() throws MalformedObjectNameException, ReflectionException, InstanceNotFoundException,
+            AttributeNotFoundException, MBeanException {
         String nameOfTimer = "test";
         JmxMeterRegistry jmxMeterRegistry = new JmxMeterRegistry(JmxConfig.DEFAULT, clock);
         Timer testTimer = jmxMeterRegistry.timer(nameOfTimer);
@@ -46,8 +48,10 @@ class JmxMeterRegistryTest {
         clock.addSeconds(6);
 
         MBeanServer mbs = ManagementFactory.getPlatformMBeanServer();
-        Double oneMinuteRate = (Double) mbs.getAttribute(new ObjectName(JmxConfig.DEFAULT.domain() + ":name=" + nameOfTimer), "OneMinuteRate");
+        Double oneMinuteRate = (Double) mbs
+                .getAttribute(new ObjectName(JmxConfig.DEFAULT.domain() + ":name=" + nameOfTimer), "OneMinuteRate");
 
         assertThat(oneMinuteRate).isGreaterThan(0.0);
     }
+
 }

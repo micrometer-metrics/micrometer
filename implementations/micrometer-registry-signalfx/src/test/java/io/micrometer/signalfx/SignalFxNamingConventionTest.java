@@ -26,6 +26,7 @@ import static org.assertj.core.api.Assertions.assertThat;
  * @author Johnny Lim
  */
 class SignalFxNamingConventionTest {
+
     private SignalFxNamingConvention convention = new SignalFxNamingConvention();
 
     @Test

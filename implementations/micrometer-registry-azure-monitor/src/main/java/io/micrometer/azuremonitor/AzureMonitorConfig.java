@@ -18,7 +18,8 @@ package io.micrometer.azuremonitor;
 import io.micrometer.core.instrument.config.validate.Validated;
 import io.micrometer.core.instrument.step.StepRegistryConfig;
 
-import static io.micrometer.core.instrument.config.MeterRegistryConfigValidator.*;
+import static io.micrometer.core.instrument.config.MeterRegistryConfigValidator.check;
+import static io.micrometer.core.instrument.config.MeterRegistryConfigValidator.checkAll;
 import static io.micrometer.core.instrument.config.validate.PropertyValidator.getSecret;
 
 /**
@@ -36,7 +37,6 @@ public interface AzureMonitorConfig extends StepRegistryConfig {
 
     /**
      * default implementation to get the instrumentation key from the config
-     *
      * @return Instrumentation Key
      */
     default String instrumentationKey() {
@@ -45,9 +45,8 @@ public interface AzureMonitorConfig extends StepRegistryConfig {
 
     @Override
     default Validated<?> validate() {
-        return checkAll(this,
-                c -> StepRegistryConfig.validate(c),
-                check("instrumentationKey", AzureMonitorConfig::instrumentationKey)
-        );
+        return checkAll(this, c -> StepRegistryConfig.validate(c),
+                check("instrumentationKey", AzureMonitorConfig::instrumentationKey));
     }
+
 }

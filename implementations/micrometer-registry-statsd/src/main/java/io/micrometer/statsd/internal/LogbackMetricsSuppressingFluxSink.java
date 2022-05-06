@@ -15,19 +15,19 @@
  */
 package io.micrometer.statsd.internal;
 
-import java.util.function.LongConsumer;
-
 import io.micrometer.core.instrument.binder.logging.LogbackMetrics;
 import reactor.core.Disposable;
 import reactor.core.publisher.FluxSink;
 import reactor.util.context.Context;
 
+import java.util.function.LongConsumer;
+
 /**
- * This is an internal class only for use within Micrometer.
- * This suppresses logback event metrics during Sink operations to avoid
- * infinite loops.
+ * This is an internal class only for use within Micrometer. This suppresses logback event
+ * metrics during Sink operations to avoid infinite loops.
  */
 public class LogbackMetricsSuppressingFluxSink implements FluxSink<String> {
+
     private final FluxSink<String> delegate;
 
     public LogbackMetricsSuppressingFluxSink(FluxSink<String> delegate) {
@@ -82,4 +82,5 @@ public class LogbackMetricsSuppressingFluxSink implements FluxSink<String> {
         LogbackMetrics.ignoreMetrics(() -> delegate.onDispose(d));
         return this;
     }
+
 }

@@ -24,31 +24,34 @@ import java.util.concurrent.TimeUnit;
 import java.util.function.BiConsumer;
 
 public final class HistogramSnapshot {
+
     private static final ValueAtPercentile[] EMPTY_VALUES = new ValueAtPercentile[0];
+
     private static final CountAtBucket[] EMPTY_COUNTS = new CountAtBucket[0];
 
     private final ValueAtPercentile[] percentileValues;
+
     private final CountAtBucket[] histogramCounts;
 
     private final long count;
+
     private final double total;
+
     private final double max;
 
     @Nullable
     private final BiConsumer<PrintStream, Double> summaryOutput;
 
     /**
-     * @param count            Total number of recordings
-     * @param total            In nanos if a unit of time
-     * @param max              In nanos if a unit of time
+     * @param count Total number of recordings
+     * @param total In nanos if a unit of time
+     * @param max In nanos if a unit of time
      * @param percentileValues Pre-computed percentiles.
-     * @param histogramCounts  Bucket counts.
-     * @param summaryOutput    A function defining how to print the histogram.
+     * @param histogramCounts Bucket counts.
+     * @param summaryOutput A function defining how to print the histogram.
      */
-    public HistogramSnapshot(long count, double total, double max,
-                             @Nullable ValueAtPercentile[] percentileValues,
-                             @Nullable CountAtBucket[] histogramCounts,
-                             @Nullable BiConsumer<PrintStream, Double> summaryOutput) {
+    public HistogramSnapshot(long count, double total, double max, @Nullable ValueAtPercentile[] percentileValues,
+            @Nullable CountAtBucket[] histogramCounts, @Nullable BiConsumer<PrintStream, Double> summaryOutput) {
         this.count = count;
         this.total = total;
         this.max = max;
@@ -129,4 +132,5 @@ public final class HistogramSnapshot {
             this.summaryOutput.accept(out, scale);
         }
     }
+
 }

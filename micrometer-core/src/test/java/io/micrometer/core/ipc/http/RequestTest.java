@@ -15,11 +15,11 @@
  */
 package io.micrometer.core.ipc.http;
 
+import org.junit.jupiter.api.Test;
+
 import java.io.IOException;
 import java.lang.reflect.Field;
 import java.util.Map;
-
-import org.junit.jupiter.api.Test;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.Mockito.mock;

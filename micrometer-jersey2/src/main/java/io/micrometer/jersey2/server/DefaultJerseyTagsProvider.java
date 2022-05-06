@@ -15,18 +15,19 @@
  */
 package io.micrometer.jersey2.server;
 
+import io.micrometer.core.instrument.Tag;
 import io.micrometer.core.instrument.Tags;
 import org.glassfish.jersey.server.ContainerResponse;
 import org.glassfish.jersey.server.monitoring.RequestEvent;
 
-import io.micrometer.core.instrument.Tag;
-
 /**
  * Default implementation for {@link JerseyTagsProvider}.
- * 
+ *
  * @author Michael Weirauch
  * @author Johnny Lim
- * @deprecated use {@link io.micrometer.core.instrument.binder.jersey.server.DefaultJerseyTagsProvider} in micrometer-core instead.
+ * @deprecated use
+ * {@link io.micrometer.core.instrument.binder.jersey.server.DefaultJerseyTagsProvider} in
+ * micrometer-core instead.
  */
 @Deprecated
 public final class DefaultJerseyTagsProvider implements JerseyTagsProvider {

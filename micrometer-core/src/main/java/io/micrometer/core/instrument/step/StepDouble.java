@@ -21,12 +21,13 @@ import java.util.concurrent.atomic.DoubleAdder;
 import java.util.function.Supplier;
 
 /**
- * Subtly different from {@code com.netflix.spectator.impl.StepDouble} in that we want to be able
- * to increment BEFORE rolling over the interval.
+ * Subtly different from {@code com.netflix.spectator.impl.StepDouble} in that we want to
+ * be able to increment BEFORE rolling over the interval.
  *
  * @author Jon Schneider
  */
 public class StepDouble extends StepValue<Double> {
+
     private final DoubleAdder current = new DoubleAdder();
 
     public StepDouble(Clock clock, long stepMillis) {
@@ -46,4 +47,5 @@ public class StepDouble extends StepValue<Double> {
     public DoubleAdder getCurrent() {
         return current;
     }
+
 }

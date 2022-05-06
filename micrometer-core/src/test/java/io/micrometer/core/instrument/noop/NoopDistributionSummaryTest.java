@@ -19,7 +19,6 @@ import io.micrometer.core.instrument.Meter.Id;
 import io.micrometer.core.instrument.Meter.Type;
 import io.micrometer.core.instrument.Tags;
 import io.micrometer.core.instrument.distribution.HistogramSnapshot;
-
 import org.junit.jupiter.api.Test;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -32,6 +31,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 class NoopDistributionSummaryTest {
 
     private Id id = new Id("test", Tags.of("name", "value"), "ms", "", Type.DISTRIBUTION_SUMMARY);
+
     private NoopDistributionSummary distributionSummary = new NoopDistributionSummary(id);
 
     @Test

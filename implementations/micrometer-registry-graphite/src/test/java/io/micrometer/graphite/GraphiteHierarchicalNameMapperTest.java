@@ -30,9 +30,11 @@ import static org.assertj.core.api.Assertions.assertThat;
  * @author Johnny Lim
  */
 class GraphiteHierarchicalNameMapperTest {
+
     private final GraphiteHierarchicalNameMapper nameMapper = new GraphiteHierarchicalNameMapper("stack", "app.name");
-    private final Meter.Id id = new SimpleMeterRegistry().counter("my.name",
-            "app.name", "MYAPP", "stack", "PROD", "other.tag", "value").getId();
+
+    private final Meter.Id id = new SimpleMeterRegistry()
+            .counter("my.name", "app.name", "MYAPP", "stack", "PROD", "other.tag", "value").getId();
 
     @Issue("#561")
     @Test
@@ -43,9 +45,10 @@ class GraphiteHierarchicalNameMapperTest {
 
     @Test
     void toHierarchicalNameShouldSanitizeTagValueFromTagsAsPrefix() {
-        Meter.Id id = new SimpleMeterRegistry().counter("my.name",
-                "app.name", "MY APP", "stack", "PROD", "other.tag", "value").getId();
+        Meter.Id id = new SimpleMeterRegistry()
+                .counter("my.name", "app.name", "MY APP", "stack", "PROD", "other.tag", "value").getId();
         assertThat(nameMapper.toHierarchicalName(id, new GraphiteHierarchicalNamingConvention()))
                 .isEqualTo("PROD.MY_APP.myName.otherTag.value");
     }
+
 }

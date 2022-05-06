@@ -23,6 +23,7 @@ import java.util.List;
 import static java.util.Collections.emptyList;
 
 public class NoopMeter extends AbstractMeter {
+
     public NoopMeter(Id id) {
         super(id);
     }
@@ -31,4 +32,5 @@ public class NoopMeter extends AbstractMeter {
     public List<Measurement> measure() {
         return emptyList();
     }
+
 }

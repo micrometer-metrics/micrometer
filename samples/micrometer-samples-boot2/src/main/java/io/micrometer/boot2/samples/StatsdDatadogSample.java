@@ -23,7 +23,9 @@ import org.springframework.scheduling.annotation.EnableScheduling;
 @SpringBootApplication(scanBasePackageClasses = PersonController.class)
 @EnableScheduling
 public class StatsdDatadogSample {
+
     public static void main(String[] args) {
         new SpringApplicationBuilder(StatsdDatadogSample.class).profiles("statsd-datadog").run(args);
     }
+
 }

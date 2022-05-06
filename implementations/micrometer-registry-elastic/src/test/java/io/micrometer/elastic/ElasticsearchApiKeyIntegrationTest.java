@@ -35,13 +35,14 @@ class ElasticsearchApiKeyIntegrationTest extends ElasticsearchMeterRegistryElast
         try {
             HttpSender.Response response = httpSender.post(host + "/_security/api_key")
                     .withBasicAuthentication(USER, PASSWORD)
-                    .withJsonContent("{\"name\": \"my-api-key\",\"expiration\": \"1h\"}")
-                    .send();
+                    .withJsonContent("{\"name\": \"my-api-key\",\"expiration\": \"1h\"}").send();
             String body = response.body();
             String id = JsonPath.parse(body).read("$.id");
             String apiKey = JsonPath.parse(body).read("$.api_key");
-            apiKeyCredentials = Base64.getEncoder().encodeToString((id + ":" + apiKey).getBytes(StandardCharsets.UTF_8));
-        } catch (Throwable e) {
+            apiKeyCredentials = Base64.getEncoder()
+                    .encodeToString((id + ":" + apiKey).getBytes(StandardCharsets.UTF_8));
+        }
+        catch (Throwable e) {
             throw new RuntimeException(e);
         }
         return new ElasticConfig() {
@@ -69,7 +70,7 @@ class ElasticsearchApiKeyIntegrationTest extends ElasticsearchMeterRegistryElast
 
     @Override
     protected ElasticsearchContainer getContainer() {
-        return super.getContainer()
-                .withEnv("xpack.security.authc.api_key.enabled", "true");
+        return super.getContainer().withEnv("xpack.security.authc.api_key.enabled", "true");
     }
+
 }

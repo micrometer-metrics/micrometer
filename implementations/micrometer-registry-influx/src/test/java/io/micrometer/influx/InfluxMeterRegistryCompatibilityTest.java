@@ -23,6 +23,7 @@ import io.micrometer.core.tck.MeterRegistryCompatibilityKit;
 import java.time.Duration;
 
 class InfluxMeterRegistryCompatibilityTest extends MeterRegistryCompatibilityKit {
+
     @Override
     public MeterRegistry registry() {
         return new InfluxMeterRegistry(new InfluxConfig() {
@@ -43,4 +44,5 @@ class InfluxMeterRegistryCompatibilityTest extends MeterRegistryCompatibilityKit
     public Duration step() {
         return InfluxConfig.DEFAULT.step();
     }
+
 }

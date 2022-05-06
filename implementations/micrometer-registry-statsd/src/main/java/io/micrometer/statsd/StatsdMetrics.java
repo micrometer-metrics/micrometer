@@ -23,7 +23,9 @@ import io.micrometer.core.instrument.binder.MeterBinder;
  */
 @Deprecated
 public class StatsdMetrics implements MeterBinder {
+
     @Override
     public void bindTo(MeterRegistry registry) {
     }
+
 }

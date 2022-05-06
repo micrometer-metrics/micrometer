@@ -41,6 +41,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 abstract class AbstractElasticsearchMeterRegistryIntegrationTest {
 
     protected static final String USER = "elastic";
+
     protected static final String PASSWORD = "changeme";
 
     @Container
@@ -49,6 +50,7 @@ abstract class AbstractElasticsearchMeterRegistryIntegrationTest {
     protected final HttpSender httpSender = new HttpUrlConnectionSender();
 
     protected String host;
+
     private ElasticMeterRegistry registry;
 
     protected abstract String getVersion();

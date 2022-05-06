@@ -24,7 +24,9 @@ import java.util.Map;
 import static org.assertj.core.api.Assertions.assertThat;
 
 class GangliaConfigTest {
+
     private final Map<String, String> props = new HashMap<>();
+
     private final GangliaConfig config = props::get;
 
     @Test
@@ -38,13 +40,9 @@ class GangliaConfigTest {
         assertThat(config.validate().isValid()).isFalse();
 
         // can iterate over failures to display messages
-        assertThat(config.validate().failures().stream().map(Validated.Invalid::getMessage))
-                .containsExactlyInAnyOrder(
-                        "must be an integer",
-                        "should be one of 'MULTICAST', 'UNICAST'",
-                        "must be an integer",
-                        "must contain a valid time unit"
-                );
+        assertThat(config.validate().failures().stream().map(Validated.Invalid::getMessage)).containsExactlyInAnyOrder(
+                "must be an integer", "should be one of 'MULTICAST', 'UNICAST'", "must be an integer",
+                "must contain a valid time unit");
     }
 
     @Test
@@ -55,4 +53,5 @@ class GangliaConfigTest {
 
         assertThat(config.validate().isValid()).isTrue();
     }
+
 }

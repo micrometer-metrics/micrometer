@@ -44,14 +44,19 @@ import static io.micrometer.core.instrument.util.StringEscapeUtils.escapeJson;
  * @since 1.1.0
  */
 public class KairosMeterRegistry extends StepMeterRegistry {
+
     private static final ThreadFactory DEFAULT_THREAD_FACTORY = new NamedThreadFactory("kairos-metrics-publisher");
+
     private final Logger logger = LoggerFactory.getLogger(KairosMeterRegistry.class);
+
     private final KairosConfig config;
+
     private final HttpSender httpClient;
 
     @SuppressWarnings("deprecation")
     public KairosMeterRegistry(KairosConfig config, Clock clock) {
-        this(config, clock, DEFAULT_THREAD_FACTORY, new HttpUrlConnectionSender(config.connectTimeout(), config.readTimeout()));
+        this(config, clock, DEFAULT_THREAD_FACTORY,
+                new HttpUrlConnectionSender(config.connectTimeout(), config.readTimeout()));
     }
 
     private KairosMeterRegistry(KairosConfig config, Clock clock, ThreadFactory threadFactory, HttpSender httpClient) {
@@ -73,6 +78,7 @@ public class KairosMeterRegistry extends StepMeterRegistry {
     protected void publish() {
         for (List<Meter> batch : MeterPartition.partition(this, config.batchSize())) {
             try {
+                // @formatter:off
                 httpClient.post(config.uri())
                         .withBasicAuthentication(config.userName(), config.password())
                         .withJsonContent(
@@ -88,10 +94,12 @@ public class KairosMeterRegistry extends StepMeterRegistry {
                                         this::writeCustomMetric)
                                 ).collect(Collectors.joining(",", "[", "]"))
                         )
+                        // @formatter:on
                         .send()
                         .onSuccess(response -> logger.debug("successfully sent {} metrics to kairos.", batch.size()))
                         .onError(response -> logger.error("failed to send metrics to kairos: {}", response.body()));
-            } catch (Throwable t) {
+            }
+            catch (Throwable t) {
                 logger.warn("failed to send metrics to kairos", t);
             }
         }
@@ -99,31 +107,25 @@ public class KairosMeterRegistry extends StepMeterRegistry {
 
     Stream<String> writeSummary(DistributionSummary summary) {
         long wallTime = config().clock().wallTime();
-        return Stream.of(
-                writeMetric(idWithSuffix(summary.getId(), "count"), wallTime, summary.count()),
+        return Stream.of(writeMetric(idWithSuffix(summary.getId(), "count"), wallTime, summary.count()),
                 writeMetric(idWithSuffix(summary.getId(), "avg"), wallTime, summary.mean()),
                 writeMetric(idWithSuffix(summary.getId(), "sum"), wallTime, summary.totalAmount()),
-                writeMetric(idWithSuffix(summary.getId(), "max"), wallTime, summary.max())
-        );
+                writeMetric(idWithSuffix(summary.getId(), "max"), wallTime, summary.max()));
     }
 
     Stream<String> writeFunctionTimer(FunctionTimer timer) {
         long wallTime = config().clock().wallTime();
-        return Stream.of(
-                writeMetric(idWithSuffix(timer.getId(), "count"), wallTime, timer.count()),
+        return Stream.of(writeMetric(idWithSuffix(timer.getId(), "count"), wallTime, timer.count()),
                 writeMetric(idWithSuffix(timer.getId(), "avg"), wallTime, timer.mean(getBaseTimeUnit())),
-                writeMetric(idWithSuffix(timer.getId(), "sum"), wallTime, timer.totalTime(getBaseTimeUnit()))
-        );
+                writeMetric(idWithSuffix(timer.getId(), "sum"), wallTime, timer.totalTime(getBaseTimeUnit())));
     }
 
     Stream<String> writeTimer(Timer timer) {
         long wallTime = config().clock().wallTime();
-        return Stream.of(
-                writeMetric(idWithSuffix(timer.getId(), "count"), wallTime, timer.count()),
+        return Stream.of(writeMetric(idWithSuffix(timer.getId(), "count"), wallTime, timer.count()),
                 writeMetric(idWithSuffix(timer.getId(), "max"), wallTime, timer.max(getBaseTimeUnit())),
                 writeMetric(idWithSuffix(timer.getId(), "avg"), wallTime, timer.mean(getBaseTimeUnit())),
-                writeMetric(idWithSuffix(timer.getId(), "sum"), wallTime, timer.totalTime(getBaseTimeUnit()))
-        );
+                writeMetric(idWithSuffix(timer.getId(), "sum"), wallTime, timer.totalTime(getBaseTimeUnit())));
     }
 
     // VisibleForTesting
@@ -159,10 +161,8 @@ public class KairosMeterRegistry extends StepMeterRegistry {
 
     Stream<String> writeLongTaskTimer(LongTaskTimer timer) {
         long wallTime = config().clock().wallTime();
-        return Stream.of(
-                writeMetric(idWithSuffix(timer.getId(), "activeTasks"), wallTime, timer.activeTasks()),
-                writeMetric(idWithSuffix(timer.getId(), "duration"), wallTime, timer.duration(getBaseTimeUnit()))
-        );
+        return Stream.of(writeMetric(idWithSuffix(timer.getId(), "activeTasks"), wallTime, timer.activeTasks()),
+                writeMetric(idWithSuffix(timer.getId(), "duration"), wallTime, timer.duration(getBaseTimeUnit())));
     }
 
     // VisibleForTesting
@@ -175,21 +175,15 @@ public class KairosMeterRegistry extends StepMeterRegistry {
             if (!Double.isFinite(value)) {
                 continue;
             }
-            metrics.add(new KairosMetricBuilder()
-                    .field("name", measurement.getStatistic().getTagValueRepresentation())
-                    .datapoints(wallTime, value)
-                    .tags(tags)
-                    .build());
+            metrics.add(new KairosMetricBuilder().field("name", measurement.getStatistic().getTagValueRepresentation())
+                    .datapoints(wallTime, value).tags(tags).build());
         }
         return metrics.stream();
     }
 
     String writeMetric(Meter.Id id, long wallTime, double value) {
-        return new KairosMetricBuilder()
-                .field("name", getConventionName(id))
-                .datapoints(wallTime, value)
-                .tags(getConventionTags(id))
-                .build();
+        return new KairosMetricBuilder().field("name", getConventionName(id)).datapoints(wallTime, value)
+                .tags(getConventionTags(id)).build();
     }
 
     private Meter.Id idWithSuffix(Meter.Id id, String suffix) {
@@ -202,6 +196,7 @@ public class KairosMeterRegistry extends StepMeterRegistry {
     }
 
     private static class KairosMetricBuilder {
+
         private final StringBuilder sb = new StringBuilder("{");
 
         KairosMetricBuilder field(String key, String value) {
@@ -213,7 +208,8 @@ public class KairosMeterRegistry extends StepMeterRegistry {
         }
 
         KairosMetricBuilder datapoints(long wallTime, double value) {
-            sb.append(",\"datapoints\":[[").append(wallTime).append(',').append(DoubleFormat.wholeOrDecimal(value)).append("]]");
+            sb.append(",\"datapoints\":[[").append(wallTime).append(',').append(DoubleFormat.wholeOrDecimal(value))
+                    .append("]]");
             return this;
         }
 
@@ -223,10 +219,12 @@ public class KairosMeterRegistry extends StepMeterRegistry {
                 // tags field is required for KairosDB, use hostname as a default tag
                 try {
                     tagBuilder.field("hostname", InetAddress.getLocalHost().getHostName());
-                } catch (UnknownHostException ignore) {
+                }
+                catch (UnknownHostException ignore) {
                     /* ignore */
                 }
-            } else {
+            }
+            else {
                 for (Tag tag : tags) {
                     tagBuilder.field(tag.getKey(), tag.getValue());
                 }
@@ -239,13 +237,17 @@ public class KairosMeterRegistry extends StepMeterRegistry {
         String build() {
             return sb.append('}').toString();
         }
+
     }
 
     public static class Builder {
+
         private final KairosConfig config;
 
         private Clock clock = Clock.SYSTEM;
+
         private ThreadFactory threadFactory = DEFAULT_THREAD_FACTORY;
+
         private HttpSender httpClient;
 
         @SuppressWarnings("deprecation")
@@ -272,5 +274,7 @@ public class KairosMeterRegistry extends StepMeterRegistry {
         public KairosMeterRegistry build() {
             return new KairosMeterRegistry(config, clock, threadFactory, httpClient);
         }
+
     }
+
 }

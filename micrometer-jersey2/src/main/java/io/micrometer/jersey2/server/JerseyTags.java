@@ -15,9 +15,6 @@
  */
 package io.micrometer.jersey2.server;
 
-import java.util.List;
-import java.util.regex.Pattern;
-
 import io.micrometer.core.instrument.Tag;
 import io.micrometer.core.instrument.binder.http.Outcome;
 import io.micrometer.core.instrument.util.StringUtils;
@@ -27,6 +24,9 @@ import org.glassfish.jersey.server.ExtendedUriInfo;
 import org.glassfish.jersey.server.monitoring.RequestEvent;
 import org.glassfish.jersey.uri.UriTemplate;
 
+import java.util.List;
+import java.util.regex.Pattern;
+
 /**
  * Factory methods for {@link Tag Tags} associated with a request-response exchange that
  * is handled by Jersey 2.
@@ -34,7 +34,8 @@ import org.glassfish.jersey.uri.UriTemplate;
  * @author Michael Weirauch
  * @author Johnny Lim
  * @since 1.1.0
- * @deprecated use {@link io.micrometer.core.instrument.binder.jersey.server.JerseyTags} in micrometer-core instead.
+ * @deprecated use {@link io.micrometer.core.instrument.binder.jersey.server.JerseyTags}
+ * in micrometer-core instead.
  */
 @Deprecated
 public final class JerseyTags {
@@ -75,15 +76,13 @@ public final class JerseyTags {
      */
     public static Tag status(ContainerResponse response) {
         /* In case there is no response we are dealing with an unmapped exception. */
-        return (response != null)
-                ? Tag.of("status", Integer.toString(response.getStatus()))
-                : STATUS_SERVER_ERROR;
+        return (response != null) ? Tag.of("status", Integer.toString(response.getStatus())) : STATUS_SERVER_ERROR;
     }
 
     /**
      * Creates a {@code uri} tag based on the URI of the given {@code event}. Uses the
-     * {@link ExtendedUriInfo#getMatchedTemplates()} if
-     * available. {@code REDIRECTION} for 3xx responses, {@code NOT_FOUND} for 404 responses.
+     * {@link ExtendedUriInfo#getMatchedTemplates()} if available. {@code REDIRECTION} for
+     * 3xx responses, {@code NOT_FOUND} for 404 responses.
      * @param event the request event
      * @return the uri tag derived from the request event
      */
@@ -147,8 +146,7 @@ public final class JerseyTags {
             exception = exception.getCause();
         }
         String simpleName = exception.getClass().getSimpleName();
-        return Tag.of("exception", StringUtils.isNotEmpty(simpleName) ? simpleName
-                : exception.getClass().getName());
+        return Tag.of("exception", StringUtils.isNotEmpty(simpleName) ? simpleName : exception.getClass().getName());
     }
 
     /**

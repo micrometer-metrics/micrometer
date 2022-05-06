@@ -23,20 +23,24 @@ import org.junit.jupiter.api.Test;
 
 import javax.sql.DataSource;
 
+import static io.micrometer.core.instrument.binder.db.PostgreSQLDatabaseMetrics.Names.*;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.Mockito.mock;
-
-import static io.micrometer.core.instrument.binder.db.PostgreSQLDatabaseMetrics.Names.*;
 
 /**
  * @author Kristof Depypere
  * @author Markus Dobel
  */
 class PostgreSQLDatabaseMetricsTest {
+
     private static final String DATABASE_NAME = "test";
+
     private static final String FUNCTIONAL_COUNTER_KEY = "key";
+
     private final DataSource dataSource = mock(DataSource.class);
+
     private final MeterRegistry registry = new SimpleMeterRegistry();
+
     private final Tags tags = Tags.of("database", DATABASE_NAME);
 
     @Test
@@ -102,4 +106,5 @@ class PostgreSQLDatabaseMetricsTest {
     private RequiredSearch get(final String name) {
         return registry.get(name).tags(tags);
     }
+
 }

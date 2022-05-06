@@ -33,39 +33,34 @@ import static io.netty.buffer.Unpooled.wrappedBuffer;
  * @author Jon Schneider
  */
 public class CacheSample {
+
     private static final int CACHE_SIZE = 10000;
 
-    private static final Cache<String, Integer> guavaCache = CacheBuilder.newBuilder()
-        .maximumSize(CACHE_SIZE)
-        .recordStats() // required
-        .build();
+    private static final Cache<String, Integer> guavaCache = CacheBuilder.newBuilder().maximumSize(CACHE_SIZE)
+            .recordStats() // required
+            .build();
 
     public static void main(String[] args) {
         MeterRegistry registry = SampleConfig.myMonitoringSystem();
         GuavaCacheMetrics.monitor(registry, guavaCache, "book.guava");
 
         // read all of Frankenstein
-        HttpClient.create()
-            .baseUrl("www.gutenberg.org")
-            .doOnRequest((req, conn) -> conn.addHandler(wordDecoder()))
-            .get()
-            .uri("/files/84/84-0.txt")
-            .responseContent()
-            .asString()
-            .delayElements(Duration.ofMillis(10)) // one word per 10 ms
-            .filter(word -> !word.isEmpty())
-            .doOnNext(word -> {
-                if (guavaCache.getIfPresent(word) == null)
-                    guavaCache.put(word, 1);
-            })
-            .blockLast();
+        HttpClient.create().baseUrl("www.gutenberg.org").doOnRequest((req, conn) -> conn.addHandler(wordDecoder()))
+                .get().uri("/files/84/84-0.txt").responseContent().asString().delayElements(Duration.ofMillis(10)) // one
+                                                                                                                   // word
+                                                                                                                   // per
+                                                                                                                   // 10
+                                                                                                                   // ms
+                .filter(word -> !word.isEmpty()).doOnNext(word -> {
+                    if (guavaCache.getIfPresent(word) == null)
+                        guavaCache.put(word, 1);
+                }).blockLast();
     }
 
     // skip things that aren't words, roughly
     private static DelimiterBasedFrameDecoder wordDecoder() {
-        return new DelimiterBasedFrameDecoder(256,
-            IntStream.of('\r', '\n', ' ', '\t', '.', ',', ';', ':', '-')
-                .mapToObj(delim -> wrappedBuffer(new byte[] { (byte) delim }))
-                .toArray(ByteBuf[]::new));
+        return new DelimiterBasedFrameDecoder(256, IntStream.of('\r', '\n', ' ', '\t', '.', ',', ';', ':', '-')
+                .mapToObj(delim -> wrappedBuffer(new byte[] { (byte) delim })).toArray(ByteBuf[]::new));
     }
+
 }

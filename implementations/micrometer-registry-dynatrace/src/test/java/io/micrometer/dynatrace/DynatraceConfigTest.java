@@ -27,6 +27,7 @@ import java.util.Map;
 import static org.assertj.core.api.Assertions.assertThat;
 
 class DynatraceConfigTest {
+
     @Test
     void invalid() {
         DynatraceConfig config = new DynatraceConfig() {
@@ -46,8 +47,7 @@ class DynatraceConfigTest {
         assertThat(failures.stream().map(Validated::toString)).containsExactlyInAnyOrder(
                 "Invalid{property='dynatrace.apiToken', value='null', message='is required'}",
                 "Invalid{property='dynatrace.uri', value='null', message='is required'}",
-                "Invalid{property='dynatrace.deviceId', value='', message='cannot be blank'}"
-        );
+                "Invalid{property='dynatrace.deviceId', value='', message='cannot be blank'}");
     }
 
     @Test
@@ -74,8 +74,7 @@ class DynatraceConfigTest {
                 "Invalid{property='dynatrace.apiToken', value='null', message='is required'}",
                 "Invalid{property='dynatrace.uri', value='null', message='is required'}",
                 "Invalid{property='dynatrace.deviceId', value='', message='cannot be blank'}",
-                "Invalid{property='dynatrace.technologyType', value='', message='cannot be blank'}"
-        );
+                "Invalid{property='dynatrace.technologyType', value='', message='cannot be blank'}");
     }
 
     @Test
@@ -98,9 +97,8 @@ class DynatraceConfigTest {
         }.validate();
 
         assertThat(validate.failures().size()).isEqualTo(1);
-        assertThat(validate.failures().stream().map(Validated::toString)).containsExactlyInAnyOrder(
-                "Invalid{property='dynatrace.uri', value='null', message='is required'}"
-        );
+        assertThat(validate.failures().stream().map(Validated::toString))
+                .containsExactlyInAnyOrder("Invalid{property='dynatrace.uri', value='null', message='is required'}");
     }
 
     @Test
@@ -245,7 +243,8 @@ class DynatraceConfigTest {
 
     @Test
     void testDeviceIdNotSetAndVersionOverwritten() {
-        // This is a nonsense config, v1 always needs a deviceId, but it shows that it is possible
+        // This is a nonsense config, v1 always needs a deviceId, but it shows that it is
+        // possible
         // to overwrite the version.
         DynatraceConfig config = new DynatraceConfig() {
             @Override
@@ -261,4 +260,5 @@ class DynatraceConfigTest {
 
         assertThat(config.apiVersion()).isEqualTo(DynatraceApiVersion.V1);
     }
+
 }

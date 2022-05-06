@@ -23,13 +23,17 @@ import java.util.Objects;
  * @author Jonatan Ivanov
  */
 public class LogEvent {
+
     private final InternalLogLevel level;
+
     private final String message;
+
     private final Throwable cause;
 
     /**
      * @param level The level of the log event (INFO, WARN, ERROR, etc.) (mandatory).
-     * @param message The message to be logged (textual description about what happened) (optional).
+     * @param message The message to be logged (textual description about what happened)
+     * (optional).
      * @param cause The {@link Throwable} that triggered the log event (optional).
      */
     public LogEvent(InternalLogLevel level, String message, Throwable cause) {
@@ -52,10 +56,13 @@ public class LogEvent {
 
     @Override
     public boolean equals(Object o) {
-        if (this == o) return true;
-        if (o == null || getClass() != o.getClass()) return false;
+        if (this == o)
+            return true;
+        if (o == null || getClass() != o.getClass())
+            return false;
         LogEvent logEvent = (LogEvent) o;
-        return level == logEvent.level && Objects.equals(message, logEvent.message) && Objects.equals(cause, logEvent.cause);
+        return level == logEvent.level && Objects.equals(message, logEvent.message)
+                && Objects.equals(cause, logEvent.cause);
     }
 
     @Override
@@ -65,10 +72,7 @@ public class LogEvent {
 
     @Override
     public String toString() {
-        return "LogEvent{" +
-                "level=" + level +
-                ", message='" + message + '\'' +
-                ", cause=" + cause +
-                '}';
+        return "LogEvent{" + "level=" + level + ", message='" + message + '\'' + ", cause=" + cause + '}';
     }
+
 }

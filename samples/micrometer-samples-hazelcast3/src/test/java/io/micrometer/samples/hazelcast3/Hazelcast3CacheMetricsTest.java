@@ -36,15 +36,21 @@ import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
 /**
- * Copied from micrometer-core test HazelcastCacheMetricsTest here to ensure cache metrics work with Hazelcast 3.
+ * Copied from micrometer-core test HazelcastCacheMetricsTest here to ensure cache metrics
+ * work with Hazelcast 3.
  */
 class Hazelcast3CacheMetricsTest {
 
     HazelcastInstance hazelcastInstance = Hazelcast.newHazelcastInstance();
+
     IMap<String, String> cache = hazelcastInstance.getMap("mycache");
+
     HazelcastCacheMetrics metrics = new HazelcastCacheMetrics(cache, Tags.empty());
+
     LocalMapStats localMapStats = cache.getLocalMapStats();
+
     NearCacheStats nearCacheStats = mock(NearCacheStats.class);
+
     MeterRegistry meterRegistry = new SimpleMeterRegistry();
 
     @BeforeEach
@@ -125,4 +131,5 @@ class Hazelcast3CacheMetricsTest {
     private RequiredSearch fetch(MeterRegistry meterRegistry, String name, Iterable<Tag> tags) {
         return meterRegistry.get(name).tags(tags);
     }
+
 }

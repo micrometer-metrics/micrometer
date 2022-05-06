@@ -21,6 +21,7 @@ import java.util.concurrent.atomic.LongAdder;
 import java.util.function.Supplier;
 
 public class StepLong extends StepValue<Long> {
+
     private final LongAdder current = new LongAdder();
 
     public StepLong(Clock clock, long stepMillis) {
@@ -40,4 +41,5 @@ public class StepLong extends StepValue<Long> {
     public LongAdder getCurrent() {
         return current;
     }
+
 }

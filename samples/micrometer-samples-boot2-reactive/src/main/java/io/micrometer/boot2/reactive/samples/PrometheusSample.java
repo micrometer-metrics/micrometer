@@ -24,6 +24,7 @@ import reactor.core.publisher.Mono;
 @SpringBootApplication
 @RestController
 public class PrometheusSample {
+
     public static void main(String[] args) {
         new SpringApplicationBuilder(PrometheusSample.class).profiles("prometheus").run(args);
     }
@@ -32,4 +33,5 @@ public class PrometheusSample {
     public Mono<String> root() {
         return Mono.just("hi");
     }
+
 }

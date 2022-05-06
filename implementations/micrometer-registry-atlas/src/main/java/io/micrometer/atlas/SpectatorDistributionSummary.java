@@ -24,21 +24,19 @@ import io.micrometer.core.instrument.distribution.DistributionStatisticConfig;
 import static java.util.stream.StreamSupport.stream;
 
 public class SpectatorDistributionSummary extends AbstractDistributionSummary {
+
     private final com.netflix.spectator.api.DistributionSummary summary;
 
-    SpectatorDistributionSummary(Id id,
-                                 com.netflix.spectator.api.DistributionSummary distributionSummary,
-                                 Clock clock,
-                                 DistributionStatisticConfig distributionStatisticConfig,
-                                 double scale) {
+    SpectatorDistributionSummary(Id id, com.netflix.spectator.api.DistributionSummary distributionSummary, Clock clock,
+            DistributionStatisticConfig distributionStatisticConfig, double scale) {
         super(id, clock, distributionStatisticConfig, scale, false);
         this.summary = distributionSummary;
     }
 
     /**
-     * @param amount Amount for an event being measured. For this implementation,
-     *               amount is truncated to a long because the underlying Spectator
-     *               implementation takes a long.
+     * @param amount Amount for an event being measured. For this implementation, amount
+     * is truncated to a long because the underlying Spectator implementation takes a
+     * long.
      */
     @Override
     protected void recordNonNegative(double amount) {
@@ -66,4 +64,5 @@ public class SpectatorDistributionSummary extends AbstractDistributionSummary {
 
         return Double.NaN;
     }
+
 }

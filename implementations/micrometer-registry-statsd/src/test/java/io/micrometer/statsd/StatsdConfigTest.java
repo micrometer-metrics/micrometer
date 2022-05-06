@@ -24,7 +24,9 @@ import java.util.Map;
 import static org.assertj.core.api.Assertions.assertThat;
 
 class StatsdConfigTest {
+
     private final Map<String, String> props = new HashMap<>();
+
     private final StatsdConfig config = props::get;
 
     @Test
@@ -35,11 +37,8 @@ class StatsdConfigTest {
         props.put("statsd.step", "1w");
 
         assertThat(config.validate().failures().stream().map(Validated.Invalid::getMessage))
-                .containsOnly(
-                        "should be one of 'ETSY', 'DATADOG', 'TELEGRAF', 'SYSDIG'",
-                        "should be one of 'UDP', 'UDS_DATAGRAM', 'TCP'",
-                        "must contain a valid time unit"
-                )
+                .containsOnly("should be one of 'ETSY', 'DATADOG', 'TELEGRAF', 'SYSDIG'",
+                        "should be one of 'UDP', 'UDS_DATAGRAM', 'TCP'", "must contain a valid time unit")
                 .hasSize(4);
     }
 
@@ -47,4 +46,5 @@ class StatsdConfigTest {
     void valid() {
         assertThat(config.validate().isValid()).isTrue();
     }
+
 }

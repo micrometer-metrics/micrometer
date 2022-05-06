@@ -26,6 +26,7 @@ import java.util.stream.Collectors;
 
 @Deprecated
 class TimedFinder {
+
     private final AnnotationFinder annotationFinder;
 
     TimedFinder(AnnotationFinder annotationFinder) {
@@ -44,4 +45,5 @@ class TimedFinder {
 
         return Collections.emptySet();
     }
+
 }

@@ -31,6 +31,7 @@ import java.util.regex.Pattern;
 public class WavefrontNamingConvention implements NamingConvention {
 
     private static final Pattern NAME_CLEANUP_PATTERN = Pattern.compile("[^a-zA-Z0-9\\-_\\./,]");
+
     private static final Pattern KEY_CLEANUP_PATTERN = Pattern.compile("[^a-zA-Z0-9\\-_\\.]");
 
     private final NamingConvention delegate;
@@ -48,8 +49,9 @@ public class WavefrontNamingConvention implements NamingConvention {
     }
 
     /**
-     * Valid characters are: a-z, A-Z, 0-9, hyphen ("-"), underscore ("_"), dot ("."). Forward slash ("/") and comma
-     * (",") are allowed if metricName is enclosed in double quotes.
+     * Valid characters are: a-z, A-Z, 0-9, hyphen ("-"), underscore ("_"), dot (".").
+     * Forward slash ("/") and comma (",") are allowed if metricName is enclosed in double
+     * quotes.
      */
     @Override
     public String name(String name, Meter.Type type, @Nullable String baseUnit) {
@@ -71,15 +73,16 @@ public class WavefrontNamingConvention implements NamingConvention {
     }
 
     /**
-     * We recommend enclosing tag values with double quotes (" "). If you surround the value with quotes any character is allowed,
-     * including spaces. To include a double quote, escape it with a backslash. The backslash cannot
-     * be the last character in the tag value.
+     * We recommend enclosing tag values with double quotes (" "). If you surround the
+     * value with quotes any character is allowed, including spaces. To include a double
+     * quote, escape it with a backslash. The backslash cannot be the last character in
+     * the tag value.
      */
     @Override
     public String tagValue(String value) {
         String sanitized = delegate.tagValue(value);
-        return StringEscapeUtils.escapeJson(sanitized.endsWith("\\") ?
-                sanitized.substring(0, sanitized.length() - 1) + "_" :
-                sanitized);
+        return StringEscapeUtils.escapeJson(
+                sanitized.endsWith("\\") ? sanitized.substring(0, sanitized.length() - 1) + "_" : sanitized);
     }
+
 }

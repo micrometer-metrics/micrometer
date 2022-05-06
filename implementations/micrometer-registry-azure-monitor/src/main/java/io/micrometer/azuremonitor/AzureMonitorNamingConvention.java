@@ -28,6 +28,7 @@ import java.util.regex.Pattern;
  * @since 1.1.0
  */
 public class AzureMonitorNamingConvention implements NamingConvention {
+
     private static final Pattern NAME_AND_TAG_KEY_PATTERN = Pattern.compile("[^a-zA-Z0-9\\-]");
 
     private final NamingConvention delegate;
@@ -52,4 +53,5 @@ public class AzureMonitorNamingConvention implements NamingConvention {
     public String tagKey(String key) {
         return NAME_AND_TAG_KEY_PATTERN.matcher(delegate.tagKey(key)).replaceAll("_");
     }
+
 }

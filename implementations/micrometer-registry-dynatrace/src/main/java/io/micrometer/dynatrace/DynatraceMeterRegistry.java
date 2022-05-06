@@ -50,24 +50,29 @@ import static io.micrometer.core.instrument.config.MeterFilterReply.NEUTRAL;
  * @since 1.1.0
  */
 public class DynatraceMeterRegistry extends StepMeterRegistry {
+
     private static final ThreadFactory DEFAULT_THREAD_FACTORY = new NamedThreadFactory("dynatrace-metrics-publisher");
+
     private static final InternalLogger logger = InternalLoggerFactory.getInstance(DynatraceMeterRegistry.class);
 
     private final AbstractDynatraceExporter exporter;
 
     @SuppressWarnings("deprecation")
     public DynatraceMeterRegistry(DynatraceConfig config, Clock clock) {
-        this(config, clock, DEFAULT_THREAD_FACTORY, new HttpUrlConnectionSender(config.connectTimeout(), config.readTimeout()));
+        this(config, clock, DEFAULT_THREAD_FACTORY,
+                new HttpUrlConnectionSender(config.connectTimeout(), config.readTimeout()));
     }
 
-    private DynatraceMeterRegistry(DynatraceConfig config, Clock clock, ThreadFactory threadFactory, HttpSender httpClient) {
+    private DynatraceMeterRegistry(DynatraceConfig config, Clock clock, ThreadFactory threadFactory,
+            HttpSender httpClient) {
         super(config, clock);
 
         if (config.apiVersion() == DynatraceApiVersion.V2) {
             logger.info("Exporting to Dynatrace metrics API v2");
             this.exporter = new DynatraceExporterV2(config, clock, httpClient);
             registerMinPercentile();
-        } else {
+        }
+        else {
             logger.info("Exporting to Dynatrace metrics API v1");
             this.exporter = new DynatraceExporterV1(config, clock, httpClient);
         }
@@ -90,38 +95,39 @@ public class DynatraceMeterRegistry extends StepMeterRegistry {
     }
 
     /**
-     * As the micrometer summary statistics (DistributionSummary, and a number of timer meter types)
-     * do not provide the minimum values that are required by Dynatrace to ingest summary metrics,
-     * we add the 0th percentile to each summary statistic and use that as the minimum value.
+     * As the micrometer summary statistics (DistributionSummary, and a number of timer
+     * meter types) do not provide the minimum values that are required by Dynatrace to
+     * ingest summary metrics, we add the 0th percentile to each summary statistic and use
+     * that as the minimum value.
      */
     private void registerMinPercentile() {
         config().meterFilter(new MeterFilter() {
             private final Set<String> metersWithArtificialZeroPercentile = ConcurrentHashMap.newKeySet();
 
             /**
-             * Adds 0th percentile if the user hasn't already added
-             * and tracks those meter names where the 0th percentile was artificially added.
+             * Adds 0th percentile if the user hasn't already added and tracks those meter
+             * names where the 0th percentile was artificially added.
              */
             @Override
             public DistributionStatisticConfig configure(Meter.Id id, DistributionStatisticConfig config) {
                 double[] percentiles;
 
                 if (config.getPercentiles() == null) {
-                    percentiles = new double[] {0};
+                    percentiles = new double[] { 0 };
                     metersWithArtificialZeroPercentile.add(id.getName() + ".percentile");
-                } else if (!containsZeroPercentile(config)) {
+                }
+                else if (!containsZeroPercentile(config)) {
                     percentiles = new double[config.getPercentiles().length + 1];
                     System.arraycopy(config.getPercentiles(), 0, percentiles, 0, config.getPercentiles().length);
-                    percentiles[config.getPercentiles().length] = 0; // theoretically this is already zero
+                    percentiles[config.getPercentiles().length] = 0; // theoretically this
+                                                                     // is already zero
                     metersWithArtificialZeroPercentile.add(id.getName() + ".percentile");
-                } else {
+                }
+                else {
                     percentiles = config.getPercentiles();
                 }
 
-                return DistributionStatisticConfig.builder()
-                        .percentiles(percentiles)
-                        .build()
-                        .merge(config);
+                return DistributionStatisticConfig.builder().percentiles(percentiles).build().merge(config);
             }
 
             /**
@@ -143,10 +149,13 @@ public class DynatraceMeterRegistry extends StepMeterRegistry {
     }
 
     public static class Builder {
+
         private final DynatraceConfig config;
 
         private Clock clock = Clock.SYSTEM;
+
         private ThreadFactory threadFactory = DEFAULT_THREAD_FACTORY;
+
         private HttpSender httpClient;
 
         @SuppressWarnings("deprecation")
@@ -173,5 +182,7 @@ public class DynatraceMeterRegistry extends StepMeterRegistry {
         public DynatraceMeterRegistry build() {
             return new DynatraceMeterRegistry(config, clock, threadFactory, httpClient);
         }
+
     }
+
 }

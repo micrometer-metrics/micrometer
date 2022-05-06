@@ -23,8 +23,11 @@ import java.lang.ref.WeakReference;
 import java.util.function.ToDoubleFunction;
 
 public class CumulativeFunctionCounter<T> extends AbstractMeter implements FunctionCounter {
+
     private final WeakReference<T> ref;
+
     private final ToDoubleFunction<T> f;
+
     private volatile double last;
 
     public CumulativeFunctionCounter(Meter.Id id, T obj, ToDoubleFunction<T> f) {
@@ -38,4 +41,5 @@ public class CumulativeFunctionCounter<T> extends AbstractMeter implements Funct
         T obj2 = ref.get();
         return obj2 != null ? (last = f.applyAsDouble(obj2)) : last;
     }
+
 }

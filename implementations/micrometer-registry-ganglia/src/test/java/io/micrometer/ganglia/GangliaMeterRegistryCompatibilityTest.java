@@ -23,6 +23,7 @@ import io.micrometer.core.tck.MeterRegistryCompatibilityKit;
 import java.time.Duration;
 
 class GangliaMeterRegistryCompatibilityTest extends MeterRegistryCompatibilityKit {
+
     @Override
     public MeterRegistry registry() {
         return GangliaMeterRegistry.builder(new GangliaConfig() {
@@ -43,4 +44,5 @@ class GangliaMeterRegistryCompatibilityTest extends MeterRegistryCompatibilityKi
     public Duration step() {
         return GangliaConfig.DEFAULT.step();
     }
+
 }
