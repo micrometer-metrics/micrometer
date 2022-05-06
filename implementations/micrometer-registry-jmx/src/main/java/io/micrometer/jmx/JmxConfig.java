@@ -18,6 +18,7 @@ package io.micrometer.jmx;
 import io.micrometer.core.instrument.dropwizard.DropwizardConfig;
 
 public interface JmxConfig extends DropwizardConfig {
+
     /**
      * Accept configuration defaults
      */
@@ -34,4 +35,5 @@ public interface JmxConfig extends DropwizardConfig {
     default String domain() {
         return "metrics";
     }
+
 }

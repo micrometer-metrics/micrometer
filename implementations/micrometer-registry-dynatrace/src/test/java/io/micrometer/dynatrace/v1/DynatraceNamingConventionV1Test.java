@@ -31,6 +31,7 @@ import static org.assertj.core.api.Assertions.assertThat;
  * @author Johnny Lim
  */
 class DynatraceNamingConventionV1Test {
+
     private final DynatraceNamingConventionV1 convention = new DynatraceNamingConventionV1();
 
     @Test
@@ -66,5 +67,5 @@ class DynatraceNamingConventionV1Test {
         String expected = String.join("", Collections.nCopies(128, "a"));
         assertThat(convention.tagValue(String.join("", Collections.nCopies(130, "a")))).isEqualTo(expected);
     }
-}
 
+}

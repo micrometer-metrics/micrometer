@@ -28,7 +28,9 @@ import static java.util.Collections.emptyList;
 import static org.assertj.core.api.Assertions.assertThat;
 
 class HazelcastCacheMetricsCompatibilityTest extends CacheMeterBinderCompatibilityKit<Object> {
+
     private Config config = new Config();
+
     private IMap<String, String> cache;
 
     @BeforeEach
@@ -50,8 +52,10 @@ class HazelcastCacheMetricsCompatibilityTest extends CacheMeterBinderCompatibili
     void multiInstanceMissCount() {
         IMap<String, String> cache2 = Hazelcast.newHazelcastInstance(config).getMap("mycache");
 
-        // Since each member owns 1/N (N being the number of members in the cluster) entries of a distributed map,
-        // we add two entries so we can deterministically say that each cache will "own" one entry.
+        // Since each member owns 1/N (N being the number of members in the cluster)
+        // entries of a distributed map,
+        // we add two entries so we can deterministically say that each cache will "own"
+        // one entry.
         cache.put("k1", "v");
         cache.put("k2", "v");
 
@@ -92,4 +96,5 @@ class HazelcastCacheMetricsCompatibilityTest extends CacheMeterBinderCompatibili
     public String get(String key) {
         return this.cache.get(key);
     }
+
 }

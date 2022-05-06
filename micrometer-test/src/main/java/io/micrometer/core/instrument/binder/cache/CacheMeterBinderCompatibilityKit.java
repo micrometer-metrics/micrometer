@@ -27,8 +27,11 @@ import static org.assertj.core.api.Assertions.assertThat;
  * @author Jon Schneider
  */
 public abstract class CacheMeterBinderCompatibilityKit<C> {
+
     private MeterRegistry registry = new SimpleMeterRegistry();
+
     private CacheMeterBinder<C> binder;
+
     protected C cache;
 
     /**
@@ -68,10 +71,7 @@ public abstract class CacheMeterBinderCompatibilityKit<C> {
         assertThat(binder.size()).isIn(null, 1L);
 
         if (binder.size() != null) {
-            assertThat(registry.get("cache.size")
-                    .tag("cache", "mycache")
-                    .gauge().value())
-                    .isEqualTo(1);
+            assertThat(registry.get("cache.size").tag("cache", "mycache").gauge().value()).isEqualTo(1);
         }
     }
 
@@ -79,9 +79,7 @@ public abstract class CacheMeterBinderCompatibilityKit<C> {
     void puts() {
         put("k", "v");
         assertThat(binder.putCount()).isEqualTo(1);
-        assertThat(registry.get("cache.puts").tag("cache", "mycache")
-                .functionCounter().count())
-                .isEqualTo(1);
+        assertThat(registry.get("cache.puts").tag("cache", "mycache").functionCounter().count()).isEqualTo(1);
     }
 
     @Test
@@ -92,21 +90,17 @@ public abstract class CacheMeterBinderCompatibilityKit<C> {
 
         assertThat(binder.hitCount()).isEqualTo(1);
 
-        assertThat(registry.get("cache.gets")
-                .tag("result", "hit")
-                .tag("cache", "mycache")
-                .functionCounter().count())
+        assertThat(registry.get("cache.gets").tag("result", "hit").tag("cache", "mycache").functionCounter().count())
                 .isEqualTo(1);
 
         if (binder.missCount() != null) {
-            // will be 2 for Guava/Caffeine caches where LoadingCache considers a get against a non-existent key a "miss"
+            // will be 2 for Guava/Caffeine caches where LoadingCache considers a get
+            // against a non-existent key a "miss"
             assertThat(binder.missCount()).isIn(1L, 2L);
 
-            assertThat(registry.get("cache.gets")
-                    .tag("result", "miss")
-                    .tag("cache", "mycache")
-                    .functionCounter().count())
-                    .isIn(1.0, 2.0);
+            assertThat(
+                    registry.get("cache.gets").tag("result", "miss").tag("cache", "mycache").functionCounter().count())
+                            .isIn(1.0, 2.0);
         }
     }
 
@@ -119,4 +113,5 @@ public abstract class CacheMeterBinderCompatibilityKit<C> {
 
         assertThat(binder.getCache()).isNull();
     }
+
 }

@@ -23,9 +23,13 @@ import java.lang.ref.WeakReference;
 import java.util.function.ToDoubleFunction;
 
 public class StepFunctionCounter<T> extends AbstractMeter implements FunctionCounter {
+
     private final WeakReference<T> ref;
+
     private final ToDoubleFunction<T> f;
+
     private volatile double last;
+
     private StepDouble count;
 
     public StepFunctionCounter(Id id, Clock clock, long stepMillis, T obj, ToDoubleFunction<T> f) {
@@ -45,4 +49,5 @@ public class StepFunctionCounter<T> extends AbstractMeter implements FunctionCou
         }
         return count.poll();
     }
+
 }

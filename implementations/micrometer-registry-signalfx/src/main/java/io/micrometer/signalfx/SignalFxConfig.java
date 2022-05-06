@@ -43,7 +43,8 @@ public interface SignalFxConfig extends StepRegistryConfig {
     }
 
     /**
-     * @return {@code true} if the SignalFx registry should emit cumulative histogram buckets.
+     * @return {@code true} if the SignalFx registry should emit cumulative histogram
+     * buckets.
      * @since 1.9.0
      */
     default boolean publishCumulativeHistogram() {
@@ -51,25 +52,27 @@ public interface SignalFxConfig extends StepRegistryConfig {
     }
 
     /**
-     * @return The URI to ship metrics to. If you need to publish metrics to an internal proxy en route to
-     * SignalFx, you can define the location of the proxy with this.
+     * @return The URI to ship metrics to. If you need to publish metrics to an internal
+     * proxy en route to SignalFx, you can define the location of the proxy with this.
      */
     default String uri() {
-        // NOTE: at some point, the property 'apiHost' diverged from the name of the method 'uri', so we accept
+        // NOTE: at some point, the property 'apiHost' diverged from the name of the
+        // method 'uri', so we accept
         // either here for backwards compatibility.
-        return getUrlString(this, "apiHost")
-                .flatMap((uri, valid) -> uri == null ? getUrlString(this, "uri") : valid)
+        return getUrlString(this, "apiHost").flatMap((uri, valid) -> uri == null ? getUrlString(this, "uri") : valid)
                 .orElse("https://ingest.signalfx.com");
     }
 
     /**
-     * @return Unique identifier for the app instance that is publishing metrics to SignalFx. Defaults to the local host name.
+     * @return Unique identifier for the app instance that is publishing metrics to
+     * SignalFx. Defaults to the local host name.
      */
     default String source() {
         return getString(this, "source").orElseGet(() -> {
             try {
                 return InetAddress.getLocalHost().getHostName();
-            } catch (UnknownHostException uhe) {
+            }
+            catch (UnknownHostException uhe) {
                 return "unknown";
             }
         });
@@ -82,11 +85,9 @@ public interface SignalFxConfig extends StepRegistryConfig {
 
     @Override
     default Validated<?> validate() {
-        return checkAll(this,
-                c -> StepRegistryConfig.validate(c),
-                checkRequired("accessToken", SignalFxConfig::accessToken),
-                checkRequired("uri", SignalFxConfig::uri),
-                checkRequired("source", SignalFxConfig::source)
-        );
+        return checkAll(this, c -> StepRegistryConfig.validate(c),
+                checkRequired("accessToken", SignalFxConfig::accessToken), checkRequired("uri", SignalFxConfig::uri),
+                checkRequired("source", SignalFxConfig::source));
     }
+
 }

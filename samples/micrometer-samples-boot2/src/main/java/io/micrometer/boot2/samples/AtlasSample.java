@@ -23,7 +23,9 @@ import org.springframework.scheduling.annotation.EnableScheduling;
 @SpringBootApplication(scanBasePackageClasses = PersonController.class)
 @EnableScheduling
 public class AtlasSample {
+
     public static void main(String[] args) {
         new SpringApplicationBuilder(AtlasSample.class).profiles("atlas").run(args);
     }
+
 }

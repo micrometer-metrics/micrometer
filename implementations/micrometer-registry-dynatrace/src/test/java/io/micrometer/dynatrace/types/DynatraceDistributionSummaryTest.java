@@ -33,9 +33,14 @@ import static org.assertj.core.api.AssertionsForClassTypes.assertThat;
  * @author Georg Pirklbauer
  */
 class DynatraceDistributionSummaryTest {
+
     private static final Offset<Double> OFFSET = Offset.offset(0.0001);
-    private static final Meter.Id ID = new Meter.Id("test.id", Tags.empty(), "1", "desc", Meter.Type.DISTRIBUTION_SUMMARY);
+
+    private static final Meter.Id ID = new Meter.Id("test.id", Tags.empty(), "1", "desc",
+            Meter.Type.DISTRIBUTION_SUMMARY);
+
     private static final DistributionStatisticConfig DISTRIBUTION_STATISTIC_CONFIG = DistributionStatisticConfig.NONE;
+
     private static final Clock CLOCK = new MockClock();
 
     @Test
@@ -66,7 +71,8 @@ class DynatraceDistributionSummaryTest {
     @Test
     void testDynatraceDistributionSummaryScaled() {
         double scale = 1.5;
-        DynatraceDistributionSummary ds = new DynatraceDistributionSummary(ID, CLOCK, DISTRIBUTION_STATISTIC_CONFIG, scale);
+        DynatraceDistributionSummary ds = new DynatraceDistributionSummary(ID, CLOCK, DISTRIBUTION_STATISTIC_CONFIG,
+                scale);
         ds.record(3.14);
         ds.record(4.76);
 
@@ -95,7 +101,6 @@ class DynatraceDistributionSummaryTest {
         assertMinMaxSumCount(ds, 0.123, 8.93, 16.953, 4);
     }
 
-
     @Test
     void testGetSnapshotNoReset() {
         DynatraceDistributionSummary ds = new DynatraceDistributionSummary(ID, CLOCK, DISTRIBUTION_STATISTIC_CONFIG, 1);
@@ -118,7 +123,6 @@ class DynatraceDistributionSummaryTest {
         assertMinMaxSumCount(ds.takeSummarySnapshot(TimeUnit.MINUTES), 3.14, 4.76, 7.9, 2);
     }
 
-
     @Test
     void testGetSnapshotAndReset() {
         DynatraceDistributionSummary ds = new DynatraceDistributionSummary(ID, CLOCK, DISTRIBUTION_STATISTIC_CONFIG, 1);
@@ -139,17 +143,20 @@ class DynatraceDistributionSummaryTest {
         assertMinMaxSumCount(ds.takeSummarySnapshotAndReset(TimeUnit.MINUTES), 0d, 0d, 0d, 0);
     }
 
-    private void assertMinMaxSumCount(DynatraceDistributionSummary ds, double expMin, double expMax, double expTotal, long expCount) {
+    private void assertMinMaxSumCount(DynatraceDistributionSummary ds, double expMin, double expMax, double expTotal,
+            long expCount) {
         assertThat(ds.min()).isCloseTo(expMin, OFFSET);
         assertThat(ds.max()).isCloseTo(expMax, OFFSET);
         assertThat(ds.totalAmount()).isCloseTo(expTotal, OFFSET);
         assertThat(ds.count()).isEqualTo(expCount);
     }
 
-    private void assertMinMaxSumCount(DynatraceSummarySnapshot snapshot, double expMin, double expMax, double expTotal, long expCount) {
+    private void assertMinMaxSumCount(DynatraceSummarySnapshot snapshot, double expMin, double expMax, double expTotal,
+            long expCount) {
         assertThat(snapshot.getMin()).isCloseTo(expMin, OFFSET);
         assertThat(snapshot.getMax()).isCloseTo(expMax, OFFSET);
         assertThat(snapshot.getTotal()).isCloseTo(expTotal, OFFSET);
         assertThat(snapshot.getCount()).isEqualTo(expCount);
     }
+
 }

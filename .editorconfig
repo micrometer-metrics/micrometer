@@ -7,3 +7,6 @@ insert_final_newline = true
 indent_style = space
 indent_size = 4
 continuation_indent_size = 8
+ij_java_imports_layout = *,|,javax.**,java.**,|,$*
+ij_java_class_count_to_use_import_on_demand = 5
+ij_java_names_count_to_use_import_on_demand = 3

@@ -28,15 +28,22 @@ import java.util.concurrent.atomic.DoubleAdder;
 import java.util.concurrent.atomic.LongAdder;
 
 public class StatsdTimer extends AbstractTimer {
+
     private final LongAdder count = new LongAdder();
+
     private final DoubleAdder totalTime = new DoubleAdder();
+
     private final StatsdLineBuilder lineBuilder;
+
     private final FluxSink<String> sink;
+
     private StepDouble max;
+
     private volatile boolean shutdown;
 
     StatsdTimer(Id id, StatsdLineBuilder lineBuilder, FluxSink<String> sink, Clock clock,
-                DistributionStatisticConfig distributionStatisticConfig, PauseDetector pauseDetector, TimeUnit baseTimeUnit, long stepMillis) {
+            DistributionStatisticConfig distributionStatisticConfig, PauseDetector pauseDetector, TimeUnit baseTimeUnit,
+            long stepMillis) {
         super(id, clock, distributionStatisticConfig, pauseDetector, baseTimeUnit, false);
         this.max = new StepDouble(clock, stepMillis);
         this.lineBuilder = lineBuilder;
@@ -69,8 +76,9 @@ public class StatsdTimer extends AbstractTimer {
     }
 
     /**
-     * The StatsD agent will likely compute max with a different window, so the value may not match what you see here.
-     * This value is not exported to the agent, and is only for diagnostic use.
+     * The StatsD agent will likely compute max with a different window, so the value may
+     * not match what you see here. This value is not exported to the agent, and is only
+     * for diagnostic use.
      */
     @Override
     public double max(TimeUnit unit) {
@@ -80,4 +88,5 @@ public class StatsdTimer extends AbstractTimer {
     void shutdown() {
         this.shutdown = true;
     }
+
 }

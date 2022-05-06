@@ -23,6 +23,7 @@ import io.micrometer.core.instrument.Meter;
  * @author Jon Schneider
  */
 public class DropwizardGauge extends AbstractMeter implements Gauge {
+
     private final com.codahale.metrics.Gauge<Double> impl;
 
     DropwizardGauge(Meter.Id id, com.codahale.metrics.Gauge<Double> impl) {
@@ -35,4 +36,5 @@ public class DropwizardGauge extends AbstractMeter implements Gauge {
         Double value = impl.getValue();
         return value == null ? Double.NaN : value;
     }
+
 }

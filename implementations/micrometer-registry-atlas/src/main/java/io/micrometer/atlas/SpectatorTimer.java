@@ -29,9 +29,11 @@ import java.util.concurrent.TimeUnit;
 import static java.util.stream.StreamSupport.stream;
 
 public class SpectatorTimer extends AbstractTimer {
+
     private final com.netflix.spectator.api.Timer timer;
 
-    public SpectatorTimer(Id id, Timer timer, Clock clock, DistributionStatisticConfig statsConf, PauseDetector pauseDetector, TimeUnit baseTimeUnit) {
+    public SpectatorTimer(Id id, Timer timer, Clock clock, DistributionStatisticConfig statsConf,
+            PauseDetector pauseDetector, TimeUnit baseTimeUnit) {
         super(id, clock, statsConf, pauseDetector, baseTimeUnit, false);
         this.timer = timer;
     }
@@ -63,4 +65,5 @@ public class SpectatorTimer extends AbstractTimer {
 
         return Double.NaN;
     }
+
 }

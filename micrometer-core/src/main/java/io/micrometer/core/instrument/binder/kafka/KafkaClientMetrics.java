@@ -25,9 +25,11 @@ import org.apache.kafka.clients.producer.Producer;
 import org.apache.kafka.common.Metric;
 
 /**
- * Kafka Client metrics binder. This should be closed on application shutdown to clean up resources.
+ * Kafka Client metrics binder. This should be closed on application shutdown to clean up
+ * resources.
  * <p>
- * It is based on the Kafka client's {@code metrics()} method returning a {@link Metric} map.
+ * It is based on the Kafka client's {@code metrics()} method returning a {@link Metric}
+ * map.
  * <p>
  * Meter names have the following convention: {@code kafka.(metric_group).(metric_name)}
  *
@@ -43,9 +45,8 @@ public class KafkaClientMetrics extends KafkaMetrics {
 
     /**
      * Kafka {@link Producer} metrics binder
-     *
      * @param kafkaProducer producer instance to be instrumented
-     * @param tags          additional tags
+     * @param tags additional tags
      */
     public KafkaClientMetrics(Producer<?, ?> kafkaProducer, Iterable<Tag> tags) {
         super(kafkaProducer::metrics, tags);
@@ -53,7 +54,6 @@ public class KafkaClientMetrics extends KafkaMetrics {
 
     /**
      * Kafka {@link Producer} metrics binder
-     *
      * @param kafkaProducer producer instance to be instrumented
      */
     public KafkaClientMetrics(Producer<?, ?> kafkaProducer) {
@@ -62,9 +62,8 @@ public class KafkaClientMetrics extends KafkaMetrics {
 
     /**
      * Kafka {@link Consumer} metrics binder
-     *
      * @param kafkaConsumer consumer instance to be instrumented
-     * @param tags          additional tags
+     * @param tags additional tags
      */
     public KafkaClientMetrics(Consumer<?, ?> kafkaConsumer, Iterable<Tag> tags) {
         super(kafkaConsumer::metrics, tags);
@@ -72,7 +71,6 @@ public class KafkaClientMetrics extends KafkaMetrics {
 
     /**
      * Kafka {@link Consumer} metrics binder
-     *
      * @param kafkaConsumer consumer instance to be instrumented
      */
     public KafkaClientMetrics(Consumer<?, ?> kafkaConsumer) {
@@ -81,9 +79,8 @@ public class KafkaClientMetrics extends KafkaMetrics {
 
     /**
      * Kafka {@link AdminClient} metrics binder
-     *
      * @param adminClient instance to be instrumented
-     * @param tags        additional tags
+     * @param tags additional tags
      */
     public KafkaClientMetrics(AdminClient adminClient, Iterable<Tag> tags) {
         super(adminClient::metrics, tags);
@@ -91,10 +88,10 @@ public class KafkaClientMetrics extends KafkaMetrics {
 
     /**
      * Kafka {@link AdminClient} metrics binder
-     *
      * @param adminClient instance to be instrumented
      */
     public KafkaClientMetrics(AdminClient adminClient) {
         super(adminClient::metrics);
     }
+
 }

@@ -33,14 +33,15 @@ import java.util.concurrent.TimeUnit;
  * @author Han Zhang
  */
 class WavefrontTimer extends CumulativeTimer {
+
     @Nullable
     private final WavefrontHistogramImpl delegate;
 
     WavefrontTimer(Id id, Clock clock, DistributionStatisticConfig distributionStatisticConfig,
-                   PauseDetector pauseDetector, TimeUnit baseTimeUnit) {
+            PauseDetector pauseDetector, TimeUnit baseTimeUnit) {
         super(id, clock, distributionStatisticConfig, pauseDetector, baseTimeUnit, false);
-        delegate = distributionStatisticConfig.isPublishingHistogram() ?
-            new WavefrontHistogramImpl(clock::wallTime) : null;
+        delegate = distributionStatisticConfig.isPublishingHistogram() ? new WavefrontHistogramImpl(clock::wallTime)
+                : null;
     }
 
     @Override
@@ -54,7 +55,8 @@ class WavefrontTimer extends CumulativeTimer {
     List<WavefrontHistogramImpl.Distribution> flushDistributions() {
         if (delegate == null) {
             return Collections.emptyList();
-        } else {
+        }
+        else {
             return delegate.flushDistributions();
         }
     }
@@ -62,4 +64,5 @@ class WavefrontTimer extends CumulativeTimer {
     boolean isPublishingHistogram() {
         return delegate != null;
     }
+
 }

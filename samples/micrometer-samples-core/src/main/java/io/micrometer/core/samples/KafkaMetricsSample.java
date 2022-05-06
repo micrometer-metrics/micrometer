@@ -30,6 +30,7 @@ import java.time.Duration;
 import static java.util.Collections.singletonList;
 
 public class KafkaMetricsSample {
+
     private static final String TOPIC = "my-example-topic";
 
     public static void main(String[] args) throws Exception {
@@ -46,13 +47,13 @@ public class KafkaMetricsSample {
 
         consumer.subscribe(singletonList(TOPIC));
 
-        Flux.interval(Duration.ofMillis(10))
-                .doOnEach(n -> producer.send(new ProducerRecord<>(TOPIC, "hello", "world")))
+        Flux.interval(Duration.ofMillis(10)).doOnEach(n -> producer.send(new ProducerRecord<>(TOPIC, "hello", "world")))
                 .subscribe();
 
-        for (; ; ) {
+        for (;;) {
             consumer.poll(Duration.ofMillis(100));
             consumer.commitAsync();
         }
     }
+
 }

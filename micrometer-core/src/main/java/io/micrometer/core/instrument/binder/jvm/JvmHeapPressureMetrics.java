@@ -29,7 +29,10 @@ import javax.management.ListenerNotFoundException;
 import javax.management.NotificationEmitter;
 import javax.management.NotificationListener;
 import javax.management.openmbean.CompositeData;
-import java.lang.management.*;
+import java.lang.management.GarbageCollectorMXBean;
+import java.lang.management.ManagementFactory;
+import java.lang.management.MemoryPoolMXBean;
+import java.lang.management.MemoryUsage;
 import java.time.Duration;
 import java.util.List;
 import java.util.Map;
@@ -41,20 +44,26 @@ import java.util.stream.Collectors;
 import static java.util.Collections.emptyList;
 
 /**
- * Provides methods to access measurements of low pool memory and heavy GC overhead as described in
- * <a href="https://www.jetbrains.com/help/teamcity/teamcity-memory-monitor.html">TeamCity's Memory Monitor</a>.
+ * Provides methods to access measurements of low pool memory and heavy GC overhead as
+ * described in <a href=
+ * "https://www.jetbrains.com/help/teamcity/teamcity-memory-monitor.html">TeamCity's
+ * Memory Monitor</a>.
  *
  * @author Jon Schneider
  * @since 1.4.0
  */
 public class JvmHeapPressureMetrics implements MeterBinder, AutoCloseable {
+
     private final Iterable<Tag> tags;
 
     private final List<Runnable> notificationListenerCleanUpRunnables = new CopyOnWriteArrayList<>();
 
     private final long startOfMonitoring = System.nanoTime();
+
     private final Duration lookback;
+
     private final TimeWindowSum gcPauseSum;
+
     private final AtomicReference<Double> lastLongLivedPoolUsageAfterGc = new AtomicReference<>(0.0);
 
     private final Set<String> longLivedPoolNames;
@@ -68,7 +77,8 @@ public class JvmHeapPressureMetrics implements MeterBinder, AutoCloseable {
         this.lookback = lookback;
         this.gcPauseSum = new TimeWindowSum((int) lookback.dividedBy(testEvery.toMillis()).toMillis(), testEvery);
 
-        longLivedPoolNames = JvmMemory.getLongLivedHeapPools().map(MemoryPoolMXBean::getName).collect(Collectors.toSet());
+        longLivedPoolNames = JvmMemory.getLongLivedHeapPools().map(MemoryPoolMXBean::getName)
+                .collect(Collectors.toSet());
 
         monitor();
     }
@@ -76,24 +86,19 @@ public class JvmHeapPressureMetrics implements MeterBinder, AutoCloseable {
     @Override
     public void bindTo(@NonNull MeterRegistry registry) {
         if (!longLivedPoolNames.isEmpty()) {
-            Gauge.builder("jvm.memory.usage.after.gc", lastLongLivedPoolUsageAfterGc, AtomicReference::get)
-                    .tags(tags)
-                    .tag("area", "heap")
-                    .tag("pool", "long-lived")
-                    .description("The percentage of long-lived heap pool used after the last GC event, in the range [0..1]")
-                    .baseUnit(BaseUnits.PERCENT)
-                    .register(registry);
+            Gauge.builder("jvm.memory.usage.after.gc", lastLongLivedPoolUsageAfterGc, AtomicReference::get).tags(tags)
+                    .tag("area", "heap").tag("pool", "long-lived")
+                    .description(
+                            "The percentage of long-lived heap pool used after the last GC event, in the range [0..1]")
+                    .baseUnit(BaseUnits.PERCENT).register(registry);
         }
 
-        Gauge.builder("jvm.gc.overhead", gcPauseSum,
-                pauseSum -> {
-                    double overIntervalMillis = Math.min(System.nanoTime() - startOfMonitoring, lookback.toNanos()) / 1e6;
-                    return gcPauseSum.poll() / overIntervalMillis;
-                })
-                .tags(tags)
-                .description("An approximation of the percent of CPU time used by GC activities over the last lookback period or since monitoring began, whichever is shorter, in the range [0..1]")
-                .baseUnit(BaseUnits.PERCENT)
-                .register(registry);
+        Gauge.builder("jvm.gc.overhead", gcPauseSum, pauseSum -> {
+            double overIntervalMillis = Math.min(System.nanoTime() - startOfMonitoring, lookback.toNanos()) / 1e6;
+            return gcPauseSum.poll() / overIntervalMillis;
+        }).tags(tags).description(
+                "An approximation of the percent of CPU time used by GC activities over the last lookback period or since monitoring began, whichever is shorter, in the range [0..1]")
+                .baseUnit(BaseUnits.PERCENT).register(registry);
     }
 
     private void monitor() {
@@ -116,19 +121,20 @@ public class JvmHeapPressureMetrics implements MeterBinder, AutoCloseable {
                 Map<String, MemoryUsage> after = gcInfo.getMemoryUsageAfterGc();
 
                 if (!longLivedPoolNames.isEmpty()) {
-                    final long usedAfter = longLivedPoolNames.stream().mapToLong(pool -> after.get(pool).getUsed()).sum();
+                    final long usedAfter = longLivedPoolNames.stream().mapToLong(pool -> after.get(pool).getUsed())
+                            .sum();
                     double maxAfter = longLivedPoolNames.stream().mapToLong(pool -> after.get(pool).getMax()).sum();
                     lastLongLivedPoolUsageAfterGc.set(usedAfter / maxAfter);
                 }
             };
             NotificationEmitter notificationEmitter = (NotificationEmitter) mbean;
-            notificationEmitter.addNotificationListener(notificationListener,
-                    notification -> notification.getType().equals(GarbageCollectionNotificationInfo.GARBAGE_COLLECTION_NOTIFICATION),
-                    null);
+            notificationEmitter.addNotificationListener(notificationListener, notification -> notification.getType()
+                    .equals(GarbageCollectionNotificationInfo.GARBAGE_COLLECTION_NOTIFICATION), null);
             notificationListenerCleanUpRunnables.add(() -> {
                 try {
                     notificationEmitter.removeNotificationListener(notificationListener);
-                } catch (ListenerNotFoundException ignore) {
+                }
+                catch (ListenerNotFoundException ignore) {
                 }
             });
         }
@@ -138,4 +144,5 @@ public class JvmHeapPressureMetrics implements MeterBinder, AutoCloseable {
     public void close() {
         notificationListenerCleanUpRunnables.forEach(Runnable::run);
     }
+
 }

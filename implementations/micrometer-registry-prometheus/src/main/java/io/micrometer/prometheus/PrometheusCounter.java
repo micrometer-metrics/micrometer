@@ -33,9 +33,13 @@ import java.util.concurrent.atomic.DoubleAdder;
  * @author Jonatan Ivanov
  */
 public class PrometheusCounter extends AbstractMeter implements Counter {
+
     private final DoubleAdder count = new DoubleAdder();
+
     private final AtomicReference<Exemplar> exemplar = new AtomicReference<>();
-    @Nullable private final CounterExemplarSampler exemplarSampler;
+
+    @Nullable
+    private final CounterExemplarSampler exemplarSampler;
 
     PrometheusCounter(Meter.Id id) {
         this(id, null);
@@ -61,7 +65,8 @@ public class PrometheusCounter extends AbstractMeter implements Counter {
         return count.doubleValue();
     }
 
-    @Nullable Exemplar exemplar() {
+    @Nullable
+    Exemplar exemplar() {
         return exemplar.get();
     }
 

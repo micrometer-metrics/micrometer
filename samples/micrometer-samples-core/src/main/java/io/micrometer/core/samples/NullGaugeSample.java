@@ -25,6 +25,7 @@ import java.util.concurrent.atomic.AtomicInteger;
  * Demonstrates how monitoring systems deal with NaN values coming out of gauges.
  */
 public class NullGaugeSample {
+
     public static void main(String[] args) {
         MeterRegistry registry = SampleConfig.myMonitoringSystem();
         AtomicInteger n = new AtomicInteger(46875392);
@@ -34,4 +35,5 @@ public class NullGaugeSample {
 
         Flux.never().blockLast();
     }
+
 }

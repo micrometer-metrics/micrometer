@@ -23,6 +23,7 @@ import io.micrometer.core.tck.MeterRegistryCompatibilityKit;
 import java.time.Duration;
 
 class ElasticMeterRegistryCompatibilityTest extends MeterRegistryCompatibilityKit {
+
     @Override
     public MeterRegistry registry() {
         return new ElasticMeterRegistry(new ElasticConfig() {
@@ -43,4 +44,5 @@ class ElasticMeterRegistryCompatibilityTest extends MeterRegistryCompatibilityKi
     public Duration step() {
         return ElasticConfig.DEFAULT.step();
     }
+
 }

@@ -25,8 +25,10 @@ import java.lang.annotation.Target;
  *
  * @author Jon Schneider
  */
-@Target({ElementType.TYPE, ElementType.METHOD})
+@Target({ ElementType.TYPE, ElementType.METHOD })
 @Retention(RetentionPolicy.SOURCE)
 public @interface Issue {
+
     String value();
+
 }

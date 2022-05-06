@@ -31,15 +31,20 @@ import java.util.concurrent.TimeUnit;
  * @author Georg Pirklbauer
  * @since 1.9.0
  */
-public final class DynatraceDistributionSummary extends AbstractDistributionSummary implements DynatraceSummarySnapshotSupport {
+public final class DynatraceDistributionSummary extends AbstractDistributionSummary
+        implements DynatraceSummarySnapshotSupport {
+
     private static final Logger LOGGER = LoggerFactory.getLogger(DynatraceDistributionSummary.class);
-    // Configuration that will set the Histogram in AbstractDistributionSummary to a NoopHistogram.
-    private static final DistributionStatisticConfig NOOP_HISTOGRAM_CONFIG =
-            DistributionStatisticConfig.builder().percentilesHistogram(false).percentiles().build();
+
+    // Configuration that will set the Histogram in AbstractDistributionSummary to a
+    // NoopHistogram.
+    private static final DistributionStatisticConfig NOOP_HISTOGRAM_CONFIG = DistributionStatisticConfig.builder()
+            .percentilesHistogram(false).percentiles().build();
 
     private final DynatraceSummary summary = new DynatraceSummary();
 
-    public DynatraceDistributionSummary(Id id, Clock clock, DistributionStatisticConfig distributionStatisticConfig, double scale) {
+    public DynatraceDistributionSummary(Id id, Clock clock, DistributionStatisticConfig distributionStatisticConfig,
+            double scale) {
         super(id, clock, NOOP_HISTOGRAM_CONFIG, scale, false);
 
         if (distributionStatisticConfig != DistributionStatisticConfig.NONE) {
@@ -106,4 +111,5 @@ public final class DynatraceDistributionSummary extends AbstractDistributionSumm
         DynatraceSummarySnapshot dtSnapshot = takeSummarySnapshot();
         return HistogramSnapshot.empty(dtSnapshot.getCount(), dtSnapshot.getTotal(), dtSnapshot.getMax());
     }
+
 }

@@ -22,15 +22,17 @@ import io.micrometer.core.lang.Nullable;
 import java.util.regex.Pattern;
 
 /**
- * See https://prometheus.io/docs/concepts/data_model/#metric-names-and-labels
- * for a specification of the constraints on metric names and labels
+ * See https://prometheus.io/docs/concepts/data_model/#metric-names-and-labels for a
+ * specification of the constraints on metric names and labels
  *
  * @author Jon Schneider
  */
 public class PrometheusNamingConvention implements NamingConvention {
 
     private static final Pattern nameChars = Pattern.compile("[^a-zA-Z0-9_:]");
+
     private static final Pattern tagKeyChars = Pattern.compile("[^a-zA-Z0-9_]");
+
     private final String timerSuffix;
 
     public PrometheusNamingConvention() {
@@ -44,35 +46,36 @@ public class PrometheusNamingConvention implements NamingConvention {
     /**
      * Names are snake-cased. They contain a base unit suffix when applicable.
      * <p>
-     * Names may contain ASCII letters and digits, as well as underscores and colons. They must match the regex
-     * [a-zA-Z_:][a-zA-Z0-9_:]*
+     * Names may contain ASCII letters and digits, as well as underscores and colons. They
+     * must match the regex [a-zA-Z_:][a-zA-Z0-9_:]*
      */
     @Override
     public String name(String name, Meter.Type type, @Nullable String baseUnit) {
         String conventionName = NamingConvention.snakeCase.name(name, type, baseUnit);
 
         switch (type) {
-            case COUNTER:
-            case DISTRIBUTION_SUMMARY:
-            case GAUGE:
-                if (baseUnit != null && !conventionName.endsWith("_" + baseUnit))
-                    conventionName += "_" + baseUnit;
-                break;
+        case COUNTER:
+        case DISTRIBUTION_SUMMARY:
+        case GAUGE:
+            if (baseUnit != null && !conventionName.endsWith("_" + baseUnit))
+                conventionName += "_" + baseUnit;
+            break;
         }
 
         switch (type) {
-            case COUNTER:
-                if (!conventionName.endsWith("_total"))
-                    conventionName += "_total";
-                break;
-            case TIMER:
-            case LONG_TASK_TIMER:
-                if (!timerSuffix.isEmpty() && conventionName.endsWith(timerSuffix)) {
-                    conventionName += "_seconds";
-                } else if (!conventionName.endsWith("_seconds")) {
-                    conventionName += timerSuffix + "_seconds";
-                }
-                break;
+        case COUNTER:
+            if (!conventionName.endsWith("_total"))
+                conventionName += "_total";
+            break;
+        case TIMER:
+        case LONG_TASK_TIMER:
+            if (!timerSuffix.isEmpty() && conventionName.endsWith(timerSuffix)) {
+                conventionName += "_seconds";
+            }
+            else if (!conventionName.endsWith("_seconds")) {
+                conventionName += timerSuffix + "_seconds";
+            }
+            break;
         }
 
         String sanitized = nameChars.matcher(conventionName).replaceAll("_");
@@ -83,8 +86,9 @@ public class PrometheusNamingConvention implements NamingConvention {
     }
 
     /**
-     * Label names may contain ASCII letters, numbers, as well as underscores. They must match the regex
-     * [a-zA-Z_][a-zA-Z0-9_]*. Label names beginning with __ are reserved for internal use.
+     * Label names may contain ASCII letters, numbers, as well as underscores. They must
+     * match the regex [a-zA-Z_][a-zA-Z0-9_]*. Label names beginning with __ are reserved
+     * for internal use.
      */
     @Override
     public String tagKey(String key) {
@@ -96,4 +100,5 @@ public class PrometheusNamingConvention implements NamingConvention {
         }
         return sanitized;
     }
+
 }

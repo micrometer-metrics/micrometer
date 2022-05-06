@@ -42,10 +42,12 @@ public class HystrixMetricsBinder implements MeterBinder {
         HystrixPlugins.reset();
 
         // Registers existing plugins except the new MicroMeter Strategy plugin.
-        HystrixPlugins.getInstance().registerMetricsPublisher(new MicrometerMetricsPublisher(registry, metricsPublisher));
+        HystrixPlugins.getInstance()
+                .registerMetricsPublisher(new MicrometerMetricsPublisher(registry, metricsPublisher));
         HystrixPlugins.getInstance().registerConcurrencyStrategy(concurrencyStrategy);
         HystrixPlugins.getInstance().registerEventNotifier(eventNotifier);
         HystrixPlugins.getInstance().registerPropertiesStrategy(propertiesStrategy);
         HystrixPlugins.getInstance().registerCommandExecutionHook(commandExecutionHook);
     }
+
 }

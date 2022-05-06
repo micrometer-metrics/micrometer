@@ -22,10 +22,15 @@ import io.micrometer.core.instrument.Timer;
  * A wrapper for a {@link Runnable} with idle and execution timings.
  */
 class TimedRunnable implements Runnable {
+
     private final MeterRegistry registry;
+
     private final Timer executionTimer;
+
     private final Timer idleTimer;
+
     private final Runnable command;
+
     private final Timer.Sample idleSample;
 
     TimedRunnable(MeterRegistry registry, Timer executionTimer, Timer idleTimer, Runnable command) {
@@ -42,8 +47,10 @@ class TimedRunnable implements Runnable {
         Timer.Sample executionSample = Timer.start(registry);
         try {
             command.run();
-        } finally {
+        }
+        finally {
             executionSample.stop(executionTimer);
         }
     }
+
 }

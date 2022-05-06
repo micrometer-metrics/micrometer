@@ -15,9 +15,6 @@
  */
 package io.micrometer.core.samples;
 
-import java.time.Duration;
-import java.util.concurrent.atomic.AtomicLong;
-
 import io.micrometer.core.instrument.Clock;
 import io.micrometer.core.instrument.Counter;
 import io.micrometer.core.instrument.DistributionSummary;
@@ -28,31 +25,28 @@ import io.prometheus.client.CollectorRegistry;
 import io.prometheus.client.exemplars.DefaultExemplarSampler;
 import io.prometheus.client.exemplars.tracer.common.SpanContextSupplier;
 
+import java.time.Duration;
+import java.util.concurrent.atomic.AtomicLong;
+
 import static io.prometheus.client.exporter.common.TextFormat.CONTENT_TYPE_OPENMETRICS_100;
 
 public class PrometheusExemplarsSample {
-    private static final PrometheusMeterRegistry registry = new PrometheusMeterRegistry(
-            PrometheusConfig.DEFAULT,
-            new CollectorRegistry(),
-            Clock.SYSTEM,
-            new DefaultExemplarSampler(new TestSpanContextSupplier())
-    );
+
+    private static final PrometheusMeterRegistry registry = new PrometheusMeterRegistry(PrometheusConfig.DEFAULT,
+            new CollectorRegistry(), Clock.SYSTEM, new DefaultExemplarSampler(new TestSpanContextSupplier()));
 
     public static void main(String[] args) throws InterruptedException {
         Counter counter = registry.counter("test.counter");
         counter.increment();
 
-        Timer timer = Timer.builder("test.timer")
-                .publishPercentileHistogram()
-                .register(registry);
+        Timer timer = Timer.builder("test.timer").publishPercentileHistogram().register(registry);
         timer.record(Duration.ofNanos(1_000 * 100));
         timer.record(Duration.ofMillis(2));
         timer.record(Duration.ofMillis(100));
         timer.record(Duration.ofSeconds(60));
 
         DistributionSummary distributionSummary = DistributionSummary.builder("test.distribution")
-                .publishPercentileHistogram()
-                .register(registry);
+                .publishPercentileHistogram().register(registry);
         distributionSummary.record(0.15);
         distributionSummary.record(15);
         distributionSummary.record(5E18);
@@ -61,6 +55,7 @@ public class PrometheusExemplarsSample {
     }
 
     static class TestSpanContextSupplier implements SpanContextSupplier {
+
         private final AtomicLong count = new AtomicLong();
 
         @Override
@@ -72,5 +67,7 @@ public class PrometheusExemplarsSample {
         public String getSpanId() {
             return String.valueOf(count.incrementAndGet());
         }
+
     }
+
 }

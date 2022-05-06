@@ -30,6 +30,7 @@ import java.util.concurrent.TimeUnit;
 @BenchmarkMode(Mode.AverageTime)
 @OutputTimeUnit(TimeUnit.NANOSECONDS)
 public class TagsBenchmark {
+
     @Threads(16)
     @Benchmark
     public void of() {
@@ -43,9 +44,8 @@ public class TagsBenchmark {
     }
 
     public static void main(String[] args) throws RunnerException {
-        Options opt = new OptionsBuilder()
-                .include(TagsBenchmark.class.getSimpleName())
-                .build();
+        Options opt = new OptionsBuilder().include(TagsBenchmark.class.getSimpleName()).build();
         new Runner(opt).run();
     }
+
 }

@@ -27,6 +27,7 @@ import java.util.concurrent.atomic.AtomicInteger;
 import static org.assertj.core.api.Assertions.assertThat;
 
 class StepFunctionCounterTest {
+
     private MockClock clock = new MockClock();
 
     private StepRegistryConfig config = new StepRegistryConfig() {
@@ -62,4 +63,5 @@ class StepFunctionCounterTest {
         clock.add(config.step());
         assertThat(counter.count()).isEqualTo(1);
     }
+
 }

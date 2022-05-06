@@ -20,13 +20,13 @@ import org.junit.jupiter.api.Test;
 
 import static org.assertj.core.api.AssertionsForInterfaceTypes.assertThat;
 
-
 /**
  * Tests for {@link DynatraceSummary}.
  *
  * @author Georg Pirklbauer
  */
 class DynatraceSummaryTest {
+
     private static final Offset<Double> OFFSET = Offset.offset(0.0001);
 
     @Test
@@ -71,10 +71,12 @@ class DynatraceSummaryTest {
         assertMinMaxSumCount(summary, 0.123, 8.93, 16.953, 4);
     }
 
-    private void assertMinMaxSumCount(DynatraceSummary summary, Double expMin, Double expMax, Double expTotal, long expCount) {
+    private void assertMinMaxSumCount(DynatraceSummary summary, Double expMin, Double expMax, Double expTotal,
+            long expCount) {
         assertThat(summary.getMin()).isCloseTo(expMin, OFFSET);
         assertThat(summary.getMax()).isCloseTo(expMax, OFFSET);
         assertThat(summary.getCount()).isEqualTo(expCount);
         assertThat(summary.getTotal()).isCloseTo(expTotal, OFFSET);
     }
+
 }

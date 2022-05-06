@@ -37,6 +37,7 @@ import static io.micrometer.dynatrace.DynatraceApiVersion.V2;
  * @since 1.1.0
  */
 public interface DynatraceConfig extends StepRegistryConfig {
+
     @Override
     default String prefix() {
         return "dynatrace";
@@ -50,10 +51,8 @@ public interface DynatraceConfig extends StepRegistryConfig {
 
         return secret.orElse(
                 // Local OneAgent does not require a token.
-                uri().equals(DynatraceMetricApiConstants.getDefaultOneAgentEndpoint()) ?
-                        "" :
-                        DynatraceFileBasedConfigurationProvider.getInstance().getMetricIngestToken()
-        );
+                uri().equals(DynatraceMetricApiConstants.getDefaultOneAgentEndpoint()) ? ""
+                        : DynatraceFileBasedConfigurationProvider.getInstance().getMetricIngestToken());
     }
 
     default String uri() {
@@ -75,7 +74,6 @@ public interface DynatraceConfig extends StepRegistryConfig {
 
     /**
      * Return device group name.
-     *
      * @return device group name
      * @since 1.2.0
      */
@@ -86,21 +84,19 @@ public interface DynatraceConfig extends StepRegistryConfig {
 
     /**
      * Return the version of the target Dynatrace API. Defaults to v1 if not provided.
-     *
-     * @return a {@link DynatraceApiVersion} containing the version of the targeted Dynatrace API.
+     * @return a {@link DynatraceApiVersion} containing the version of the targeted
+     * Dynatrace API.
      * @since 1.8.0
      */
     default DynatraceApiVersion apiVersion() {
         // If a device id is specified, use v1 as default. If it is not, use v2.
         // The version can be overwritten explicitly when creating a MM config
         // For Spring Boot, v1 is automatically chosen when the device id is set.
-        return getEnum(this, DynatraceApiVersion.class, "apiVersion")
-                .orElse(deviceId().isEmpty() ? V2 : V1);
+        return getEnum(this, DynatraceApiVersion.class, "apiVersion").orElse(deviceId().isEmpty() ? V2 : V1);
     }
 
     /**
      * Return metric key prefix.
-     *
      * @return metric key prefix
      * @since 1.8.0
      */
@@ -110,7 +106,6 @@ public interface DynatraceConfig extends StepRegistryConfig {
 
     /**
      * Return default dimensions.
-     *
      * @return default dimensions
      * @since 1.8.0
      */
@@ -120,7 +115,6 @@ public interface DynatraceConfig extends StepRegistryConfig {
 
     /**
      * Return whether to enrich with Dynatrace metadata.
-     *
      * @return whether to enrich with Dynatrace metadata
      * @since 1.8.0
      */
@@ -129,10 +123,11 @@ public interface DynatraceConfig extends StepRegistryConfig {
     }
 
     /**
-     * Return whether to fall back to the built-in micrometer instruments for Timer and DistributionSummary.
-     *
-     * @return {@code true} if the resetting Dynatrace instruments should be used, and {@code false} if the registry
-     * should fall back to the built-in Micrometer instruments.
+     * Return whether to fall back to the built-in micrometer instruments for Timer and
+     * DistributionSummary.
+     * @return {@code true} if the resetting Dynatrace instruments should be used, and
+     * {@code false} if the registry should fall back to the built-in Micrometer
+     * instruments.
      * @since 1.9.0
      */
     default boolean useDynatraceSummaryInstruments() {
@@ -144,31 +139,26 @@ public interface DynatraceConfig extends StepRegistryConfig {
 
     @Override
     default Validated<?> validate() {
-        return checkAll(this,
-                config -> StepRegistryConfig.validate(config),
-                checkRequired("apiVersion", DynatraceConfig::apiVersion).andThen(
-                        apiVersionValidation -> {
-                            if (apiVersionValidation.isValid()) {
-                                return checkAll(this,
-                                        config -> {
-                                            if (config.apiVersion() == V1) {
-                                                return checkAll(this,
-                                                        checkRequired("apiToken", DynatraceConfig::apiToken),
-                                                        checkRequired("uri", DynatraceConfig::uri),
-                                                        check("deviceId", DynatraceConfig::deviceId).andThen(Validated::nonBlank),
-                                                        check("technologyType", DynatraceConfig::technologyType).andThen(Validated::nonBlank)
-                                                );
-                                            } else {
-                                                return checkAll(this,
-                                                        checkRequired("uri", DynatraceConfig::uri)
-                                                );
-                                            }
-                                        }
-                                );
-                            } else {
-                                return apiVersionValidation;
+        return checkAll(this, config -> StepRegistryConfig.validate(config),
+                checkRequired("apiVersion", DynatraceConfig::apiVersion).andThen(apiVersionValidation -> {
+                    if (apiVersionValidation.isValid()) {
+                        return checkAll(this, config -> {
+                            if (config.apiVersion() == V1) {
+                                return checkAll(this, checkRequired("apiToken", DynatraceConfig::apiToken),
+                                        checkRequired("uri", DynatraceConfig::uri),
+                                        check("deviceId", DynatraceConfig::deviceId).andThen(Validated::nonBlank),
+                                        check("technologyType", DynatraceConfig::technologyType)
+                                                .andThen(Validated::nonBlank));
                             }
-                        })
-        );
+                            else {
+                                return checkAll(this, checkRequired("uri", DynatraceConfig::uri));
+                            }
+                        });
+                    }
+                    else {
+                        return apiVersionValidation;
+                    }
+                }));
     }
+
 }

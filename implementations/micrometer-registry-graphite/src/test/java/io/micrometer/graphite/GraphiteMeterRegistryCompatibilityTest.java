@@ -24,6 +24,7 @@ import io.micrometer.core.tck.MeterRegistryCompatibilityKit;
 import java.time.Duration;
 
 class GraphiteMeterRegistryCompatibilityTest extends MeterRegistryCompatibilityKit {
+
     @Override
     public MeterRegistry registry() {
         return new GraphiteMeterRegistry(new GraphiteConfig() {
@@ -44,4 +45,5 @@ class GraphiteMeterRegistryCompatibilityTest extends MeterRegistryCompatibilityK
     public Duration step() {
         return GraphiteConfig.DEFAULT.step();
     }
+
 }

@@ -32,12 +32,14 @@ import org.springframework.scheduling.annotation.EnableScheduling;
 @SpringBootApplication(scanBasePackageClasses = PersonController.class)
 @EnableScheduling
 public class PrometheusSample {
+
     public static void main(String[] args) {
         new SpringApplicationBuilder(PrometheusSample.class).profiles("prometheus").run(args);
     }
 
     @Bean
-    PrometheusMeterRegistry prometheusMeterRegistry(PrometheusConfig prometheusConfig, CollectorRegistry collectorRegistry, Clock clock, ExemplarSampler exemplarSampler) {
+    PrometheusMeterRegistry prometheusMeterRegistry(PrometheusConfig prometheusConfig,
+            CollectorRegistry collectorRegistry, Clock clock, ExemplarSampler exemplarSampler) {
         return new PrometheusMeterRegistry(prometheusConfig, collectorRegistry, clock, exemplarSampler);
     }
 
@@ -45,4 +47,5 @@ public class PrometheusSample {
     ExemplarSampler exemplarSampler(SpanContextSupplier spanContextSupplier) {
         return new DefaultExemplarSampler(spanContextSupplier);
     }
+
 }

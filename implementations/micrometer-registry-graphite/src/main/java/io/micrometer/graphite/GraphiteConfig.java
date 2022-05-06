@@ -21,9 +21,7 @@ import io.micrometer.core.lang.Nullable;
 
 import java.util.concurrent.TimeUnit;
 
-import static io.micrometer.core.instrument.config.MeterRegistryConfigValidator.check;
-import static io.micrometer.core.instrument.config.MeterRegistryConfigValidator.checkAll;
-import static io.micrometer.core.instrument.config.MeterRegistryConfigValidator.checkRequired;
+import static io.micrometer.core.instrument.config.MeterRegistryConfigValidator.*;
 import static io.micrometer.core.instrument.config.validate.PropertyValidator.*;
 
 /**
@@ -32,6 +30,7 @@ import static io.micrometer.core.instrument.config.validate.PropertyValidator.*;
  * @author Jon Schneider
  */
 public interface GraphiteConfig extends DropwizardConfig {
+
     /**
      * Accept configuration defaults
      */
@@ -39,7 +38,6 @@ public interface GraphiteConfig extends DropwizardConfig {
 
     /**
      * Get the value associated with a key.
-     *
      * @param key Key to lookup in the config.
      * @return Value for the key or null if no key is present.
      */
@@ -54,19 +52,21 @@ public interface GraphiteConfig extends DropwizardConfig {
     }
 
     /**
-     * @return Whether Graphite tags should be used, as opposed to a hierarchical naming convention.
-     * Defaults to true if no values are present for {@link GraphiteConfig#tagsAsPrefix}.
-     * @see <a href="https://graphite.readthedocs.io/en/latest/tags.html">Graphite Tag Support</a>
+     * @return Whether Graphite tags should be used, as opposed to a hierarchical naming
+     * convention. Defaults to true if no values are present for
+     * {@link GraphiteConfig#tagsAsPrefix}.
+     * @see <a href="https://graphite.readthedocs.io/en/latest/tags.html">Graphite Tag
+     * Support</a>
      * @since 1.4.0
      */
     default boolean graphiteTagsEnabled() {
-        return getBoolean(this, "graphiteTagsEnabled")
-                .orElse(tagsAsPrefix().length == 0);
+        return getBoolean(this, "graphiteTagsEnabled").orElse(tagsAsPrefix().length == 0);
     }
 
     /**
      * @return For the hierarchical naming convention, turn the specified tag keys into
-     * part of the metric prefix. Ignored if {@link GraphiteConfig#graphiteTagsEnabled()} is {@code true}.
+     * part of the metric prefix. Ignored if {@link GraphiteConfig#graphiteTagsEnabled()}
+     * is {@code true}.
      */
     default String[] tagsAsPrefix() {
         return new String[0];
@@ -104,13 +104,10 @@ public interface GraphiteConfig extends DropwizardConfig {
 
     @Override
     default Validated<?> validate() {
-        return checkAll(this,
-                c -> DropwizardConfig.validate(c),
-                checkRequired("rateUnits", GraphiteConfig::rateUnits),
+        return checkAll(this, c -> DropwizardConfig.validate(c), checkRequired("rateUnits", GraphiteConfig::rateUnits),
                 checkRequired("durationUnits", GraphiteConfig::durationUnits),
-                checkRequired("host", GraphiteConfig::host),
-                check("port", GraphiteConfig::port),
-                checkRequired("protocol", GraphiteConfig::protocol)
-        );
+                checkRequired("host", GraphiteConfig::host), check("port", GraphiteConfig::port),
+                checkRequired("protocol", GraphiteConfig::protocol));
     }
+
 }

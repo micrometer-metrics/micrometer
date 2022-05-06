@@ -30,22 +30,26 @@ import java.util.function.ToDoubleFunction;
 import java.util.function.ToLongFunction;
 
 /**
- * The clock of the composite effectively overrides the clocks of the registries it manages without actually
- * replacing the state of the clock in these registries with the exception of long task timers, whose clock cannot
- * be overridden.
+ * The clock of the composite effectively overrides the clocks of the registries it
+ * manages without actually replacing the state of the clock in these registries with the
+ * exception of long task timers, whose clock cannot be overridden.
  *
  * @author Jon Schneider
  * @author Johnny Lim
  */
 public class CompositeMeterRegistry extends MeterRegistry {
+
     private final AtomicBoolean registriesLock = new AtomicBoolean();
+
     private final Set<MeterRegistry> registries = Collections.newSetFromMap(new IdentityHashMap<>());
+
     private final Set<MeterRegistry> unmodifiableRegistries = Collections.unmodifiableSet(registries);
 
     // VisibleForTesting
     volatile Set<MeterRegistry> nonCompositeDescendants = Collections.emptySet();
 
     private final AtomicBoolean parentLock = new AtomicBoolean();
+
     private volatile Set<CompositeMeterRegistry> parents = Collections.newSetFromMap(new IdentityHashMap<>());
 
     public CompositeMeterRegistry() {
@@ -58,29 +62,28 @@ public class CompositeMeterRegistry extends MeterRegistry {
 
     public CompositeMeterRegistry(Clock clock, Iterable<MeterRegistry> registries) {
         super(clock);
-        config()
-                .namingConvention(NamingConvention.identity)
-                .onMeterAdded(m -> {
-                    if (m instanceof CompositeMeter) { // should always be
-                        lock(registriesLock, () -> nonCompositeDescendants.forEach(((CompositeMeter) m)::add));
-                    }
-                })
-                .onMeterRemoved(m -> {
-                    if (m instanceof CompositeMeter) { // should always be
-                        lock(registriesLock, () -> nonCompositeDescendants.forEach(r -> r.removeByPreFilterId(m.getId())));
-                    }
-                });
+        config().namingConvention(NamingConvention.identity).onMeterAdded(m -> {
+            if (m instanceof CompositeMeter) { // should always be
+                lock(registriesLock, () -> nonCompositeDescendants.forEach(((CompositeMeter) m)::add));
+            }
+        }).onMeterRemoved(m -> {
+            if (m instanceof CompositeMeter) { // should always be
+                lock(registriesLock, () -> nonCompositeDescendants.forEach(r -> r.removeByPreFilterId(m.getId())));
+            }
+        });
 
         registries.forEach(this::add);
     }
 
     @Override
-    protected Timer newTimer(Meter.Id id, DistributionStatisticConfig distributionStatisticConfig, PauseDetector pauseDetector) {
+    protected Timer newTimer(Meter.Id id, DistributionStatisticConfig distributionStatisticConfig,
+            PauseDetector pauseDetector) {
         return new CompositeTimer(id, clock, distributionStatisticConfig, pauseDetector);
     }
 
     @Override
-    protected DistributionSummary newDistributionSummary(Meter.Id id, DistributionStatisticConfig distributionStatisticConfig, double scale) {
+    protected DistributionSummary newDistributionSummary(Meter.Id id,
+            DistributionStatisticConfig distributionStatisticConfig, double scale) {
         return new CompositeDistributionSummary(id, distributionStatisticConfig, scale);
     }
 
@@ -100,12 +103,14 @@ public class CompositeMeterRegistry extends MeterRegistry {
     }
 
     @Override
-    protected <T> TimeGauge newTimeGauge(Meter.Id id, @Nullable T obj, TimeUnit valueFunctionUnit, ToDoubleFunction<T> valueFunction) {
+    protected <T> TimeGauge newTimeGauge(Meter.Id id, @Nullable T obj, TimeUnit valueFunctionUnit,
+            ToDoubleFunction<T> valueFunction) {
         return new CompositeTimeGauge<>(id, obj, valueFunctionUnit, valueFunction);
     }
 
     @Override
-    protected <T> FunctionTimer newFunctionTimer(Meter.Id id, T obj, ToLongFunction<T> countFunction, ToDoubleFunction<T> totalTimeFunction, TimeUnit totalTimeFunctionUnit) {
+    protected <T> FunctionTimer newFunctionTimer(Meter.Id id, T obj, ToLongFunction<T> countFunction,
+            ToDoubleFunction<T> totalTimeFunction, TimeUnit totalTimeFunctionUnit) {
         return new CompositeFunctionTimer<>(id, obj, countFunction, totalTimeFunction, totalTimeFunctionUnit);
     }
 
@@ -178,12 +183,13 @@ public class CompositeMeterRegistry extends MeterRegistry {
     }
 
     private void lock(AtomicBoolean lock, Runnable r) {
-        for (; ; ) {
+        for (;;) {
             if (lock.compareAndSet(false, true)) {
                 try {
                     r.run();
                     break;
-                } finally {
+                }
+                finally {
                     lock.set(false);
                 }
             }
@@ -195,7 +201,8 @@ public class CompositeMeterRegistry extends MeterRegistry {
         for (MeterRegistry r : registries) {
             if (r instanceof CompositeMeterRegistry) {
                 descendants.addAll(((CompositeMeterRegistry) r).nonCompositeDescendants);
-            } else {
+            }
+            else {
                 descendants.add(r);
             }
         }

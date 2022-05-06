@@ -32,17 +32,16 @@ import io.micrometer.core.instrument.Counter;
 class MetricCollectingServerCall<Q, A> extends SimpleForwardingServerCall<Q, A> {
 
     private final Counter responseCounter;
+
     private Code responseCode = Code.UNKNOWN;
 
     /**
-     * Creates a new delegating ServerCall that will wrap the given server call to collect metrics.
-     *
+     * Creates a new delegating ServerCall that will wrap the given server call to collect
+     * metrics.
      * @param delegate The original call to wrap.
      * @param responseCounter The counter for outgoing responses.
      */
-    public MetricCollectingServerCall(
-            final ServerCall<Q, A> delegate,
-            final Counter responseCounter) {
+    public MetricCollectingServerCall(final ServerCall<Q, A> delegate, final Counter responseCounter) {
 
         super(delegate);
         this.responseCounter = responseCounter;

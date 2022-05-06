@@ -16,11 +16,14 @@
 package io.micrometer.dynatrace.v1;
 
 class DynatraceBatchedPayload {
+
     final String payload;
+
     final int metricCount;
 
     DynatraceBatchedPayload(String payload, int metricCount) {
         this.payload = payload;
         this.metricCount = metricCount;
     }
+
 }

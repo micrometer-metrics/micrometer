@@ -18,18 +18,22 @@ package io.micrometer.core.instrument.binder.kafka;
 import io.micrometer.core.instrument.MeterRegistry;
 import io.micrometer.core.instrument.Tags;
 import io.micrometer.core.instrument.simple.SimpleMeterRegistry;
-import java.util.Properties;
 import org.apache.kafka.clients.admin.AdminClient;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Test;
+
+import java.util.Properties;
 
 import static io.micrometer.core.instrument.binder.kafka.KafkaClientMetrics.METRIC_NAME_PREFIX;
 import static org.apache.kafka.clients.admin.AdminClientConfig.BOOTSTRAP_SERVERS_CONFIG;
 import static org.assertj.core.api.Assertions.assertThat;
 
 class KafkaClientMetricsAdminTest {
+
     private static final String BOOTSTRAP_SERVERS = "localhost:9092";
+
     private Tags tags = Tags.of("app", "myapp", "version", "1");
+
     KafkaClientMetrics metrics;
 
     @AfterEach
@@ -38,29 +42,27 @@ class KafkaClientMetricsAdminTest {
             metrics.close();
     }
 
-    @Test void shouldCreateMeters() {
+    @Test
+    void shouldCreateMeters() {
         try (AdminClient adminClient = createAdmin()) {
             metrics = new KafkaClientMetrics(adminClient);
             MeterRegistry registry = new SimpleMeterRegistry();
 
             metrics.bindTo(registry);
-            assertThat(registry.getMeters())
-                    .hasSizeGreaterThan(0)
-                    .extracting(meter -> meter.getId().getName())
+            assertThat(registry.getMeters()).hasSizeGreaterThan(0).extracting(meter -> meter.getId().getName())
                     .allMatch(s -> s.startsWith(METRIC_NAME_PREFIX));
         }
     }
 
-    @Test void shouldCreateMetersWithTags() {
+    @Test
+    void shouldCreateMetersWithTags() {
         try (AdminClient adminClient = createAdmin()) {
             metrics = new KafkaClientMetrics(adminClient, tags);
             MeterRegistry registry = new SimpleMeterRegistry();
 
             metrics.bindTo(registry);
 
-            assertThat(registry.getMeters())
-                    .hasSizeGreaterThan(0)
-                    .extracting(meter -> meter.getId().getTag("app"))
+            assertThat(registry.getMeters()).hasSizeGreaterThan(0).extracting(meter -> meter.getId().getTag("app"))
                     .allMatch(s -> s.equals("myapp"));
         }
     }
@@ -70,4 +72,5 @@ class KafkaClientMetricsAdminTest {
         adminConfig.put(BOOTSTRAP_SERVERS_CONFIG, BOOTSTRAP_SERVERS);
         return AdminClient.create(adminConfig);
     }
+
 }

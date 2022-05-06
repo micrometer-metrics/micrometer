@@ -25,7 +25,8 @@ class OtlpLongTaskTimer extends CumulativeHistogramLongTaskTimer implements Star
 
     final long startTimeNanos;
 
-    OtlpLongTaskTimer(Id id, Clock clock, TimeUnit baseTimeUnit, DistributionStatisticConfig distributionStatisticConfig) {
+    OtlpLongTaskTimer(Id id, Clock clock, TimeUnit baseTimeUnit,
+            DistributionStatisticConfig distributionStatisticConfig) {
         super(id, clock, baseTimeUnit, distributionStatisticConfig);
         this.startTimeNanos = TimeUnit.MILLISECONDS.toNanos(clock.wallTime());
     }
@@ -34,4 +35,5 @@ class OtlpLongTaskTimer extends CumulativeHistogramLongTaskTimer implements Star
     public long getStartTimeNanos() {
         return this.startTimeNanos;
     }
+
 }

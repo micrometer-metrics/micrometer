@@ -27,6 +27,7 @@ import static org.assertj.core.api.Assertions.assertThat;
  * @author Johnny Lim
  */
 class GangliaMeterRegistryTest {
+
     private final GangliaMeterRegistry registry = new GangliaMeterRegistry(GangliaConfig.DEFAULT, Clock.SYSTEM);
 
     @Test
@@ -40,4 +41,5 @@ class GangliaMeterRegistryTest {
         Meter.Id id = registry.counter("name").getId();
         assertThat(registry.getMetricName(id, "suffix")).isEqualTo("nameSuffix");
     }
+
 }

@@ -46,9 +46,11 @@ import static io.javalin.apibuilder.ApiBuilder.get;
 import static io.javalin.apibuilder.ApiBuilder.path;
 
 /**
- * See https://github.com/tipsy/javalin/pull/959 which adds improvements to MicrometerPlugin
+ * See https://github.com/tipsy/javalin/pull/959 which adds improvements to
+ * MicrometerPlugin
  */
 public class PrometheusSample {
+
     public static void main(String[] args) {
         PrometheusMeterRegistry meterRegistry = new PrometheusMeterRegistry(PrometheusConfig.DEFAULT);
 
@@ -64,7 +66,8 @@ public class PrometheusSample {
 
         Javalin app = Javalin.create(config -> config.registerPlugin(new MicrometerPlugin(meterRegistry))).start(8080);
 
-        // must manually delegate to Micrometer exception handler for excepton tags to be correct
+        // must manually delegate to Micrometer exception handler for excepton tags to be
+        // correct
         app.exception(IllegalArgumentException.class, (e, ctx) -> {
             MicrometerPlugin.EXCEPTION_HANDLER.handle(e, ctx);
             e.printStackTrace();
@@ -86,16 +89,17 @@ public class PrometheusSample {
             System.out.println("hello");
         });
 
-        app.get("/prometheus", ctx -> ctx
-                .contentType(TextFormat.CONTENT_TYPE_004)
-                .result(meterRegistry.scrape()));
+        app.get("/prometheus", ctx -> ctx.contentType(TextFormat.CONTENT_TYPE_004).result(meterRegistry.scrape()));
     }
+
 }
 
 class MicrometerPlugin implements Plugin {
+
     private static final String EXCEPTION_HEADER = "__micrometer_exception_name";
 
     private final MeterRegistry registry;
+
     private final Iterable<Tag> tags;
 
     public static ExceptionHandler<Exception> EXCEPTION_HANDLER = (e, ctx) -> {
@@ -126,24 +130,19 @@ class MicrometerPlugin implements Plugin {
                 response.setHeader(EXCEPTION_HEADER, null);
 
                 String uri = app.javalinServlet().getMatcher()
-                        .findEntries(HandlerType.valueOf(request.getMethod()), request.getPathInfo())
-                        .stream()
-                        .findAny()
+                        .findEntries(HandlerType.valueOf(request.getMethod()), request.getPathInfo()).stream().findAny()
                         .map(HandlerEntry::getPath)
                         .map(path -> path.equals("/") || StringUtils.isBlank(path) ? "root" : path)
                         .map(path -> response.getStatus() >= 300 && response.getStatus() < 400 ? "REDIRECTION" : path)
-                        .map(path -> response.getStatus() == 404 ? "NOT_FOUND" : path)
-                        .orElse("unknown");
+                        .map(path -> response.getStatus() == 404 ? "NOT_FOUND" : path).orElse("unknown");
 
-                return Tags.concat(
-                        super.getTags(request, response),
-                        "uri", uri,
-                        "exception", exceptionName == null ? "None" : exceptionName
-                );
+                return Tags.concat(super.getTags(request, response), "uri", uri, "exception",
+                        exceptionName == null ? "None" : exceptionName);
             }
         }));
 
         new JettyServerThreadPoolMetrics(server.getThreadPool(), tags).bindTo(registry);
         new JettyConnectionMetrics(registry, tags);
     }
+
 }

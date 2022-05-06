@@ -50,9 +50,7 @@ public interface OtlpConfig extends PushRegistryConfig {
 
     @Override
     default Validated<?> validate() {
-        return checkAll(this,
-                c -> PushRegistryConfig.validate(c),
-                checkRequired("url", OtlpConfig::url)
-        );
+        return checkAll(this, c -> PushRegistryConfig.validate(c), checkRequired("url", OtlpConfig::url));
     }
+
 }

@@ -20,7 +20,9 @@ import io.micrometer.core.instrument.Measurement;
 import io.micrometer.core.instrument.Meter;
 
 public class DefaultMeter extends AbstractMeter {
+
     private final Meter.Type type;
+
     private final Iterable<Measurement> measurements;
 
     public DefaultMeter(Meter.Id id, Meter.Type type, Iterable<Measurement> measurements) {
@@ -37,4 +39,5 @@ public class DefaultMeter extends AbstractMeter {
     public Type getType() {
         return type;
     }
+
 }

@@ -36,10 +36,10 @@ import org.slf4j.helpers.NOPLoggerFactory;
 import org.slf4j.spi.LocationAwareLogger;
 
 /**
- * NOTE: This file has been copied and slightly modified from {io.netty.util.internal.logging}.
+ * NOTE: This file has been copied and slightly modified from
+ * {io.netty.util.internal.logging}.
  *
- * Logger factory which creates a <a href="https://www.slf4j.org/">SLF4J</a>
- * logger.
+ * Logger factory which creates a <a href="https://www.slf4j.org/">SLF4J</a> logger.
  */
 public class Slf4JLoggerFactory extends InternalLoggerFactory {
 
@@ -58,7 +58,8 @@ public class Slf4JLoggerFactory extends InternalLoggerFactory {
 
     // package-private for testing.
     static InternalLogger wrapLogger(Logger logger) {
-        return logger instanceof LocationAwareLogger ?
-                new LocationAwareSlf4JLogger((LocationAwareLogger) logger) : new Slf4JLogger(logger);
+        return logger instanceof LocationAwareLogger ? new LocationAwareSlf4JLogger((LocationAwareLogger) logger)
+                : new Slf4JLogger(logger);
     }
+
 }

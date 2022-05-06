@@ -25,9 +25,13 @@ import java.util.concurrent.atomic.LongAdder;
  * @author Georg Pirklbauer
  */
 final class DynatraceSummary {
+
     private final LongAdder count = new LongAdder();
+
     private final DoubleAdder total = new DoubleAdder();
+
     private final AtomicLong min = new AtomicLong();
+
     private final AtomicLong max = new AtomicLong();
 
     void recordNonNegative(double amount) {
@@ -38,14 +42,14 @@ final class DynatraceSummary {
         long longBits = Double.doubleToLongBits(amount);
         synchronized (this) {
             max.getAndUpdate(prev -> Math.max(prev, longBits));
-            // have to check if a value was already recorded before, otherwise min will always stay 0 (because the default is 0).
+            // have to check if a value was already recorded before, otherwise min will
+            // always stay 0 (because the default is 0).
             min.getAndUpdate(prev -> count.longValue() > 0 ? Math.min(prev, longBits) : longBits);
 
             total.add(amount);
             count.increment();
         }
     }
-
 
     long getCount() {
         return count.longValue();
@@ -71,4 +75,5 @@ final class DynatraceSummary {
             count.reset();
         }
     }
+
 }

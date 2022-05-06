@@ -23,20 +23,17 @@ import java.util.concurrent.atomic.AtomicReference;
 import static java.util.Collections.emptyList;
 
 class CaffeineCacheMetricsCompatibilityTest extends CacheMeterBinderCompatibilityKit<LoadingCache<String, String>> {
+
     private AtomicReference<String> loadValue = new AtomicReference<>();
 
     @Override
     public LoadingCache<String, String> createCache() {
-        return Caffeine.newBuilder()
-                .maximumSize(2)
-                .recordStats()
-                .executor(Runnable::run)
-                .build(key -> {
-                    String val = loadValue.getAndSet(null);
-                    if (val == null)
-                        throw new Exception("don't load this key");
-                    return val;
-                });
+        return Caffeine.newBuilder().maximumSize(2).recordStats().executor(Runnable::run).build(key -> {
+            String val = loadValue.getAndSet(null);
+            if (val == null)
+                throw new Exception("don't load this key");
+            return val;
+        });
     }
 
     @Override
@@ -56,8 +53,10 @@ class CaffeineCacheMetricsCompatibilityTest extends CacheMeterBinderCompatibilit
     public String get(String key) {
         try {
             return cache.get(key);
-        } catch (Exception ignored) {
+        }
+        catch (Exception ignored) {
             return null;
         }
     }
+
 }

@@ -28,15 +28,16 @@ import java.util.concurrent.TimeUnit;
 import static java.util.Collections.emptyList;
 
 public class ExecutorServiceSample {
+
     public static void main(String[] args) {
         MeterRegistry registry = SampleConfig.myMonitoringSystem();
         ScheduledExecutorService es = Executors.newSingleThreadScheduledExecutor();
         new ExecutorServiceMetrics(es, "executor.sample", emptyList()).bindTo(registry);
 
-        es.scheduleWithFixedDelay(() -> Mono.delay(Duration.ofMillis(20)).block(), 0,
-                10, TimeUnit.MILLISECONDS);
+        es.scheduleWithFixedDelay(() -> Mono.delay(Duration.ofMillis(20)).block(), 0, 10, TimeUnit.MILLISECONDS);
 
         while (true) {
         }
     }
+
 }

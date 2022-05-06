@@ -23,7 +23,9 @@ import org.springframework.scheduling.annotation.EnableScheduling;
 @SpringBootApplication(scanBasePackageClasses = PersonController.class)
 @EnableScheduling
 public class JmxSample {
+
     public static void main(String[] args) {
         new SpringApplicationBuilder(JmxSample.class).profiles("jmx").run(args);
     }
+
 }

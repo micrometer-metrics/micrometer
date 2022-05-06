@@ -35,7 +35,9 @@ import static org.assertj.core.api.Assertions.assertThat;
  * @author Manabu Matsuzaki
  */
 class JettyServerThreadPoolMetricsTest {
+
     private SimpleMeterRegistry registry;
+
     private Server server;
 
     @BeforeEach
@@ -64,4 +66,5 @@ class JettyServerThreadPoolMetricsTest {
         assertThat(registry.get("jetty.threads.current").gauge().value()).isNotEqualTo(0.0);
         assertThat(registry.get("jetty.threads.busy").gauge().value()).isGreaterThanOrEqualTo(0.0);
     }
+
 }

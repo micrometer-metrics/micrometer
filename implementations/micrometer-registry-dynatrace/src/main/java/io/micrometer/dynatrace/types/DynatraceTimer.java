@@ -33,16 +33,19 @@ import java.util.concurrent.TimeUnit;
  * @since 1.9.0
  */
 public final class DynatraceTimer extends AbstractTimer implements DynatraceSummarySnapshotSupport {
+
     private static final Logger LOGGER = LoggerFactory.getLogger(DynatraceTimer.class);
 
     // Configuration that will set the Histogram in AbstractTimer to a NoopHistogram.
-    private static final DistributionStatisticConfig NOOP_HISTOGRAM_CONFIG =
-            DistributionStatisticConfig.builder().percentilesHistogram(false).percentiles().build();
+    private static final DistributionStatisticConfig NOOP_HISTOGRAM_CONFIG = DistributionStatisticConfig.builder()
+            .percentilesHistogram(false).percentiles().build();
 
     private final DynatraceSummary summary = new DynatraceSummary();
 
-    public DynatraceTimer(Id id, Clock clock, DistributionStatisticConfig distributionStatisticConfig, PauseDetector pauseDetector, TimeUnit baseTimeUnit) {
-        // make sure the Histogram in AbstractTimer is always a NoopHistogram by disabling the respective config options
+    public DynatraceTimer(Id id, Clock clock, DistributionStatisticConfig distributionStatisticConfig,
+            PauseDetector pauseDetector, TimeUnit baseTimeUnit) {
+        // make sure the Histogram in AbstractTimer is always a NoopHistogram by disabling
+        // the respective config options
         super(id, clock, NOOP_HISTOGRAM_CONFIG, pauseDetector, baseTimeUnit, false);
 
         if (distributionStatisticConfig != DistributionStatisticConfig.NONE) {
@@ -108,4 +111,5 @@ public final class DynatraceTimer extends AbstractTimer implements DynatraceSumm
         DynatraceSummarySnapshot dtSnapshot = takeSummarySnapshot();
         return HistogramSnapshot.empty(dtSnapshot.getCount(), dtSnapshot.getTotal(), dtSnapshot.getMax());
     }
+
 }

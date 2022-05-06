@@ -18,22 +18,28 @@ package io.micrometer.core.instrument;
 import io.micrometer.core.instrument.distribution.*;
 
 public abstract class AbstractDistributionSummary extends AbstractMeter implements DistributionSummary {
+
     protected final Histogram histogram;
+
     private final double scale;
 
-    protected AbstractDistributionSummary(Id id, Clock clock, DistributionStatisticConfig distributionStatisticConfig, double scale,
-                                          boolean supportsAggregablePercentiles) {
+    protected AbstractDistributionSummary(Id id, Clock clock, DistributionStatisticConfig distributionStatisticConfig,
+            double scale, boolean supportsAggregablePercentiles) {
         super(id);
         this.scale = scale;
 
         if (distributionStatisticConfig.isPublishingPercentiles()) {
             // hdr-based histogram
-            this.histogram = new TimeWindowPercentileHistogram(clock, distributionStatisticConfig, supportsAggregablePercentiles);
-        } else if (distributionStatisticConfig.isPublishingHistogram()) {
+            this.histogram = new TimeWindowPercentileHistogram(clock, distributionStatisticConfig,
+                    supportsAggregablePercentiles);
+        }
+        else if (distributionStatisticConfig.isPublishingHistogram()) {
             // fixed boundary histograms, which have a slightly better memory footprint
             // when we don't need Micrometer-computed percentiles
-            this.histogram = new TimeWindowFixedBoundaryHistogram(clock, distributionStatisticConfig, supportsAggregablePercentiles);
-        } else {
+            this.histogram = new TimeWindowFixedBoundaryHistogram(clock, distributionStatisticConfig,
+                    supportsAggregablePercentiles);
+        }
+        else {
             // noop histogram
             this.histogram = NoopHistogram.INSTANCE;
         }
@@ -54,4 +60,5 @@ public abstract class AbstractDistributionSummary extends AbstractMeter implemen
     public HistogramSnapshot takeSnapshot() {
         return histogram.takeSnapshot(count(), totalAmount(), max());
     }
+
 }

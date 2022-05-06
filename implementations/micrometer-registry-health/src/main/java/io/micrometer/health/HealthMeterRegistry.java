@@ -41,29 +41,32 @@ import java.util.stream.Collectors;
  * Configured with a set of queries, provides an overall health indicator given a set of
  * service level objectives.
  * <p>
- * For efficiency, this registry automatically denies all metrics that aren't part of the definition of
- * a service level objective.
+ * For efficiency, this registry automatically denies all metrics that aren't part of the
+ * definition of a service level objective.
  * <p>
- * Service level objectives can specify one or more {@link MeterBinder} that they require to be registered
- * in order to perform their tests. These are automatically bound at construction time.
+ * Service level objectives can specify one or more {@link MeterBinder} that they require
+ * to be registered in order to perform their tests. These are automatically bound at
+ * construction time.
  *
  * @author Jon Schneider
  * @since 1.6.0
  */
 @Incubating(since = "1.6.0")
 public class HealthMeterRegistry extends SimpleMeterRegistry {
+
     private static final ThreadFactory DEFAULT_THREAD_FACTORY = new NamedThreadFactory("health-metrics-ticker");
 
     private final HealthConfig config;
+
     private final Collection<ServiceLevelObjective> serviceLevelObjectives;
+
     private final Collection<MeterFilter> serviceLevelObjectiveFilters;
 
     @Nullable
     private ScheduledExecutorService scheduledExecutorService;
 
     protected HealthMeterRegistry(HealthConfig config, Collection<ServiceLevelObjective> serviceLevelObjectives,
-                                  Collection<MeterFilter> serviceLevelObjectiveFilters,
-                                  Clock clock, ThreadFactory threadFactory) {
+            Collection<MeterFilter> serviceLevelObjectiveFilters, Clock clock, ThreadFactory threadFactory) {
         super(new SimpleConfig() {
             @Override
             public String get(String key) {
@@ -96,7 +99,8 @@ public class HealthMeterRegistry extends SimpleMeterRegistry {
         // deny all metrics that aren't specifically indicators used to measure SLOs
         config().meterFilter(MeterFilter.deny());
 
-        // do this after the deny filter is set, because maybe only a portion of the metrics a binder registers are needed
+        // do this after the deny filter is set, because maybe only a portion of the
+        // metrics a binder registers are needed
         // for the SLOs that require the binder
         for (ServiceLevelObjective slo : serviceLevelObjectives) {
             for (MeterBinder require : slo.getRequires()) {
@@ -117,10 +121,15 @@ public class HealthMeterRegistry extends SimpleMeterRegistry {
     }
 
     public static class Builder {
+
         private final HealthConfig config;
+
         private final Collection<ServiceLevelObjective> serviceLevelObjectives = new ArrayList<>();
+
         private final Collection<MeterFilter> serviceLevelObjectiveFilters = new ArrayList<>();
+
         private Clock clock = Clock.SYSTEM;
+
         private ThreadFactory threadFactory = DEFAULT_THREAD_FACTORY;
 
         Builder(HealthConfig config) {
@@ -148,8 +157,10 @@ public class HealthMeterRegistry extends SimpleMeterRegistry {
         }
 
         public HealthMeterRegistry build() {
-            return new HealthMeterRegistry(config, serviceLevelObjectives, serviceLevelObjectiveFilters, clock, threadFactory);
+            return new HealthMeterRegistry(config, serviceLevelObjectives, serviceLevelObjectiveFilters, clock,
+                    threadFactory);
         }
+
     }
 
     void tick() {
@@ -157,19 +168,11 @@ public class HealthMeterRegistry extends SimpleMeterRegistry {
     }
 
     public Collection<ServiceLevelObjective> getServiceLevelObjectives() {
-        return serviceLevelObjectives.stream()
-                .filter(slo -> accept(slo.getId()))
-                .map(slo ->
-                        serviceLevelObjectiveFilters.stream()
-                                .reduce(
-                                        slo,
-                                        (filtered, filter) -> new ServiceLevelObjective.FilteredServiceLevelObjective(
-                                                filter.map(filtered.getId()),
-                                                filtered
-                                        ),
-                                        (obj1, obj2) -> obj2
-                                )
-                )
+        return serviceLevelObjectives.stream().filter(slo -> accept(slo.getId()))
+                .map(slo -> serviceLevelObjectiveFilters.stream().reduce(slo,
+                        (filtered, filter) -> new ServiceLevelObjective.FilteredServiceLevelObjective(
+                                filter.map(filtered.getId()), filtered),
+                        (obj1, obj2) -> obj2))
                 .collect(Collectors.toList());
     }
 
@@ -178,7 +181,8 @@ public class HealthMeterRegistry extends SimpleMeterRegistry {
             MeterFilterReply reply = filter.accept(id);
             if (reply == MeterFilterReply.DENY) {
                 return false;
-            } else if (reply == MeterFilterReply.ACCEPT) {
+            }
+            else if (reply == MeterFilterReply.ACCEPT) {
                 return true;
             }
         }
@@ -190,8 +194,8 @@ public class HealthMeterRegistry extends SimpleMeterRegistry {
             stop();
 
         scheduledExecutorService = Executors.newSingleThreadScheduledExecutor(threadFactory);
-        scheduledExecutorService.scheduleAtFixedRate(this::tick, config.step()
-                .toMillis(), config.step().toMillis(), TimeUnit.MILLISECONDS);
+        scheduledExecutorService.scheduleAtFixedRate(this::tick, config.step().toMillis(), config.step().toMillis(),
+                TimeUnit.MILLISECONDS);
     }
 
     public void stop() {
@@ -206,4 +210,5 @@ public class HealthMeterRegistry extends SimpleMeterRegistry {
         stop();
         super.close();
     }
+
 }

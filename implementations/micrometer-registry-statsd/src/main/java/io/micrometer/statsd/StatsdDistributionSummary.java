@@ -25,15 +25,21 @@ import java.util.concurrent.atomic.DoubleAdder;
 import java.util.concurrent.atomic.LongAdder;
 
 public class StatsdDistributionSummary extends AbstractDistributionSummary {
+
     private final LongAdder count = new LongAdder();
+
     private final DoubleAdder amount = new DoubleAdder();
+
     private final TimeWindowMax max;
+
     private final StatsdLineBuilder lineBuilder;
+
     private final FluxSink<String> sink;
+
     private volatile boolean shutdown;
 
     StatsdDistributionSummary(Id id, StatsdLineBuilder lineBuilder, FluxSink<String> sink, Clock clock,
-                              DistributionStatisticConfig distributionStatisticConfig, double scale) {
+            DistributionStatisticConfig distributionStatisticConfig, double scale) {
         super(id, clock, distributionStatisticConfig, scale, false);
         this.max = new TimeWindowMax(clock, distributionStatisticConfig);
         this.lineBuilder = lineBuilder;
@@ -61,8 +67,9 @@ public class StatsdDistributionSummary extends AbstractDistributionSummary {
     }
 
     /**
-     * The StatsD agent will likely compute max with a different window, so the value may not match what you see here.
-     * This value is not exported to the agent, and is only for diagnostic use.
+     * The StatsD agent will likely compute max with a different window, so the value may
+     * not match what you see here. This value is not exported to the agent, and is only
+     * for diagnostic use.
      */
     @Override
     public double max() {
@@ -72,4 +79,5 @@ public class StatsdDistributionSummary extends AbstractDistributionSummary {
     void shutdown() {
         this.shutdown = true;
     }
+
 }

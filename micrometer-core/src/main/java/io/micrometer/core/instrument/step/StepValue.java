@@ -15,14 +15,14 @@
  */
 package io.micrometer.core.instrument.step;
 
+import io.micrometer.core.instrument.Clock;
+
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.function.Supplier;
 
-import io.micrometer.core.instrument.Clock;
-
 /**
- * Tracks 'values' for periods (steps) of time.  The previous step's value is
- * obtained by calling {@link #poll}.
+ * Tracks 'values' for periods (steps) of time. The previous step's value is obtained by
+ * calling {@link #poll}.
  *
  * @author Jon Schneider
  * @author Samuel Cox
@@ -31,8 +31,11 @@ import io.micrometer.core.instrument.Clock;
 public abstract class StepValue<V> {
 
     private final Clock clock;
+
     private final long stepMillis;
+
     private AtomicLong lastInitPos;
+
     private volatile V previous = noValue();
 
     public StepValue(final Clock clock, final long stepMillis) {
@@ -44,8 +47,8 @@ public abstract class StepValue<V> {
     protected abstract Supplier<V> valueSupplier();
 
     /**
-     * @return value that should be returned by {@link #poll} if within the first
-     * step period or if the previous step didn't record a value.
+     * @return value that should be returned by {@link #poll} if within the first step
+     * period or if the previous step didn't record a value.
      */
     protected abstract V noValue();
 
@@ -54,9 +57,10 @@ public abstract class StepValue<V> {
         final long lastInit = lastInitPos.get();
         if (lastInit < stepTime && lastInitPos.compareAndSet(lastInit, stepTime)) {
             final V v = valueSupplier().get();
-            // Need to check if there was any activity during the previous step interval. If there was
-            // then the init position will move forward by 1, otherwise it will be older. No activity
-            // means the previous interval should be set to the `init` value.
+            // Need to check if there was any activity during the previous step interval.
+            // If there was then the init position will move forward by 1, otherwise it
+            // will be older.
+            // No activity means the previous interval should be set to the `init` value.
             previous = (lastInit == stepTime - 1) ? v : noValue();
         }
     }
@@ -68,4 +72,5 @@ public abstract class StepValue<V> {
         rollCount(clock.wallTime());
         return previous;
     }
+
 }

@@ -31,41 +31,40 @@ import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicLong;
 
 public class FunctionTimerSample {
-    // For Atlas: http://localhost:7101/api/v1/graph?q=name,ftimer,:eq,:dist-avg,name,timer,:eq,:dist-avg,1,:axis&s=e-5m&l=0
+
+    // For Atlas:
+    // http://localhost:7101/api/v1/graph?q=name,ftimer,:eq,:dist-avg,name,timer,:eq,:dist-avg,1,:axis&s=e-5m&l=0
     public static void main(String[] args) {
         MeterRegistry registry = SampleConfig.myMonitoringSystem();
 
-        Timer timer = Timer.builder("timer")
-            .publishPercentiles(0.5, 0.95)
-            .register(registry);
+        Timer timer = Timer.builder("timer").publishPercentiles(0.5, 0.95).register(registry);
 
         Object placeholder = new Object();
         AtomicLong totalTimeNanos = new AtomicLong();
         AtomicLong totalCount = new AtomicLong();
 
-        FunctionTimer.builder("ftimer", placeholder, p -> totalCount.get(), p -> totalTimeNanos.get(), TimeUnit.NANOSECONDS)
-            .register(registry);
+        FunctionTimer
+                .builder("ftimer", placeholder, p -> totalCount.get(), p -> totalTimeNanos.get(), TimeUnit.NANOSECONDS)
+                .register(registry);
 
         RandomEngine r = new MersenneTwister64(0);
         Normal incomingRequests = new Normal(0, 1, r);
         Normal duration = new Normal(250, 50, r);
 
         AtomicInteger latencyForThisSecond = new AtomicInteger(duration.nextInt());
-        Flux.interval(Duration.ofSeconds(1))
-            .doOnEach(d -> latencyForThisSecond.set(duration.nextInt()))
-            .subscribe();
+        Flux.interval(Duration.ofSeconds(1)).doOnEach(d -> latencyForThisSecond.set(duration.nextInt())).subscribe();
 
         // the potential for an "incoming request" every 10 ms
-        Flux.interval(Duration.ofMillis(10))
-            .doOnEach(d -> {
-                if (incomingRequests.nextDouble() + 0.4 > 0) {
-                    // pretend the request took some amount of time, such that the time is
-                    // distributed normally with a mean of 250ms
-                    timer.record(latencyForThisSecond.get(), TimeUnit.MILLISECONDS);
-                    totalCount.incrementAndGet();
-                    totalTimeNanos.addAndGet((long) TimeUtils.millisToUnit(latencyForThisSecond.get(), TimeUnit.NANOSECONDS));
-                }
-            })
-            .blockLast();
+        Flux.interval(Duration.ofMillis(10)).doOnEach(d -> {
+            if (incomingRequests.nextDouble() + 0.4 > 0) {
+                // pretend the request took some amount of time, such that the time is
+                // distributed normally with a mean of 250ms
+                timer.record(latencyForThisSecond.get(), TimeUnit.MILLISECONDS);
+                totalCount.incrementAndGet();
+                totalTimeNanos
+                        .addAndGet((long) TimeUtils.millisToUnit(latencyForThisSecond.get(), TimeUnit.NANOSECONDS));
+            }
+        }).blockLast();
     }
+
 }

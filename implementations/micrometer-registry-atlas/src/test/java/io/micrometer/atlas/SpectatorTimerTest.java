@@ -27,6 +27,7 @@ import static io.micrometer.core.instrument.MockClock.clock;
 import static org.assertj.core.api.Assertions.assertThat;
 
 class SpectatorTimerTest {
+
     @Test
     void timerMax() {
         AtlasConfig atlasConfig = new AtlasConfig() {
@@ -47,4 +48,5 @@ class SpectatorTimerTest {
         clock(registry).add(atlasConfig.step());
         assertThat(timer.max(TimeUnit.MILLISECONDS)).isEqualTo(1000);
     }
+
 }

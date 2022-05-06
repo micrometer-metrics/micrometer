@@ -17,7 +17,6 @@ package io.micrometer.dynatrace.types;
 
 import javax.annotation.concurrent.Immutable;
 
-
 /**
  * Snapshot of a Dynatrace summary object.
  *
@@ -26,9 +25,13 @@ import javax.annotation.concurrent.Immutable;
  */
 @Immutable
 public final class DynatraceSummarySnapshot {
+
     private final double min;
+
     private final double max;
+
     private final double total;
+
     private final long count;
 
     DynatraceSummarySnapshot(double min, double max, double total, long count) {
@@ -53,5 +56,5 @@ public final class DynatraceSummarySnapshot {
     public long getCount() {
         return count;
     }
-}
 
+}

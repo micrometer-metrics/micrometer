@@ -23,6 +23,7 @@ import io.micrometer.core.tck.MeterRegistryCompatibilityKit;
 import java.time.Duration;
 
 class WavefrontMeterRegistryCompatibilityTest extends MeterRegistryCompatibilityKit {
+
     @Override
     public MeterRegistry registry() {
         return new WavefrontMeterRegistry(new WavefrontConfig() {
@@ -48,4 +49,5 @@ class WavefrontMeterRegistryCompatibilityTest extends MeterRegistryCompatibility
     public Duration step() {
         return WavefrontConfig.DEFAULT_PROXY.step();
     }
+
 }

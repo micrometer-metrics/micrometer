@@ -17,13 +17,10 @@
 package io.micrometer.core.instrument.dropwizard;
 
 import com.codahale.metrics.Meter;
-
 import org.junit.jupiter.api.Test;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.when;
+import static org.mockito.Mockito.*;
 
 /**
  * Tests for {@link DropwizardCounter}
@@ -33,6 +30,7 @@ import static org.mockito.Mockito.when;
 class DropwizardCounterTest {
 
     private Meter meter = mock(Meter.class);
+
     private DropwizardCounter counter = new DropwizardCounter(null, meter);
 
     @Test
@@ -48,4 +46,5 @@ class DropwizardCounterTest {
         when(meter.getCount()).thenReturn(20l);
         assertThat(counter.count()).isEqualTo(meter.getCount());
     }
+
 }

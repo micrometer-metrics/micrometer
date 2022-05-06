@@ -31,18 +31,25 @@ import java.util.function.ToLongFunction;
  * @author Johnny Lim
  */
 public class CumulativeFunctionTimer<T> implements FunctionTimer {
+
     private final Meter.Id id;
+
     private final WeakReference<T> ref;
+
     private final ToLongFunction<T> countFunction;
+
     private final ToDoubleFunction<T> totalTimeFunction;
+
     private final TimeUnit totalTimeFunctionUnit;
+
     private final TimeUnit baseTimeUnit;
 
     private volatile long lastCount;
+
     private volatile double lastTime;
 
     public CumulativeFunctionTimer(Id id, T obj, ToLongFunction<T> countFunction, ToDoubleFunction<T> totalTimeFunction,
-                                   TimeUnit totalTimeFunctionUnit, TimeUnit baseTimeUnit) {
+            TimeUnit totalTimeFunctionUnit, TimeUnit baseTimeUnit) {
         this.id = id;
         this.ref = new WeakReference<>(obj);
         this.countFunction = countFunction;
@@ -65,7 +72,8 @@ public class CumulativeFunctionTimer<T> implements FunctionTimer {
     public double totalTime(TimeUnit unit) {
         T obj2 = ref.get();
         if (obj2 != null) {
-            lastTime = Math.max(TimeUtils.convert(totalTimeFunction.applyAsDouble(obj2), totalTimeFunctionUnit, baseTimeUnit()), 0);
+            lastTime = Math.max(
+                    TimeUtils.convert(totalTimeFunction.applyAsDouble(obj2), totalTimeFunctionUnit, baseTimeUnit()), 0);
         }
         return TimeUtils.convert(lastTime, baseTimeUnit(), unit);
     }
@@ -83,4 +91,5 @@ public class CumulativeFunctionTimer<T> implements FunctionTimer {
     public Type type() {
         return Type.TIMER;
     }
+
 }

@@ -19,8 +19,8 @@ import javax.servlet.AsyncEvent;
 import javax.servlet.AsyncListener;
 
 /**
- * {@link AsyncListener} that calls back to the handler. This class
- * uses only object references to work around
+ * {@link AsyncListener} that calls back to the handler. This class uses only object
+ * references to work around
  * <a href="https://issues.redhat.com/browse/WFLY-13345">WFLY-13345</a>
  */
 class OnCompletionAsyncListener implements AsyncListener {
@@ -49,4 +49,5 @@ class OnCompletionAsyncListener implements AsyncListener {
     public void onComplete(AsyncEvent event) {
         ((TimedHandler) handler).onAsyncComplete(event);
     }
+
 }

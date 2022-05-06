@@ -26,12 +26,15 @@ import java.util.concurrent.atomic.DoubleAdder;
  * @author Jon Schneider
  */
 public class DropwizardDistributionSummary extends AbstractDistributionSummary {
+
     private final com.codahale.metrics.Histogram impl;
+
     private final DoubleAdder totalAmount = new DoubleAdder();
+
     private final TimeWindowMax max;
 
-    DropwizardDistributionSummary(Id id, Clock clock, com.codahale.metrics.Histogram impl, DistributionStatisticConfig distributionStatisticConfig,
-                                  double scale) {
+    DropwizardDistributionSummary(Id id, Clock clock, com.codahale.metrics.Histogram impl,
+            DistributionStatisticConfig distributionStatisticConfig, double scale) {
         super(id, clock, distributionStatisticConfig, scale, false);
         this.impl = impl;
         this.max = new TimeWindowMax(clock, distributionStatisticConfig);
@@ -60,4 +63,5 @@ public class DropwizardDistributionSummary extends AbstractDistributionSummary {
     public double max() {
         return max.poll();
     }
+
 }
