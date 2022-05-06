@@ -30,8 +30,10 @@
  */
 
 /**
- * NOTE: This file has been copied and slightly modified from {io.netty.util.internal.logging}.
+ * NOTE: This file has been copied and slightly modified from
+ * {io.netty.util.internal.logging}.
  *
- * <em>Internal-use-only</em> logging API which is not allowed to be used outside Micrometer.
+ * <em>Internal-use-only</em> logging API which is not allowed to be used outside
+ * Micrometer.
  */
 package io.micrometer.common.util.internal.logging;

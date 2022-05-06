@@ -36,30 +36,34 @@ import static org.mockito.Mockito.*;
  * @author Jonatan Ivanov
  */
 class DynatraceMeterRegistryTest {
+
     private DynatraceConfig config;
+
     private MockClock clock;
+
     private HttpSender httpClient;
+
     private DynatraceMeterRegistry meterRegistry;
 
     @BeforeEach
     void setUp() {
         this.config = createDefaultDynatraceConfig();
         this.clock = new MockClock();
-        this.clock.add(System.currentTimeMillis(), MILLISECONDS); // Set the clock to something recent so that the Dynatrace library will not complain.
+        this.clock.add(System.currentTimeMillis(), MILLISECONDS); // Set the clock to
+                                                                  // something recent so
+                                                                  // that the Dynatrace
+                                                                  // library will not
+                                                                  // complain.
         this.httpClient = mock(HttpSender.class);
-        this.meterRegistry = DynatraceMeterRegistry.builder(config)
-                .clock(clock)
-                .httpClient(httpClient)
-                .build();
+        this.meterRegistry = DynatraceMeterRegistry.builder(config).clock(clock).httpClient(httpClient).build();
     }
 
     @Test
     void shouldSendProperRequest() throws Throwable {
         HttpSender.Request.Builder builder = HttpSender.Request.build(config.uri(), httpClient);
         when(httpClient.post(config.uri())).thenReturn(builder);
-        when(httpClient.send(isA(HttpSender.Request.class))).thenReturn(new HttpSender.Response(202,
-                "{ \"linesOk\": 3, \"linesInvalid\": 0, \"error\": null }"
-        ));
+        when(httpClient.send(isA(HttpSender.Request.class)))
+                .thenReturn(new HttpSender.Response(202, "{ \"linesOk\": 3, \"linesInvalid\": 0, \"error\": null }"));
 
         Double gauge = meterRegistry.gauge("my.gauge", 42d);
         Counter counter = meterRegistry.counter("my.counter");
@@ -77,25 +81,21 @@ class DynatraceMeterRegistryTest {
         verify(httpClient).send(argumentCaptor.capture());
         HttpSender.Request request = argumentCaptor.getValue();
 
-        assertThat(request.getRequestHeaders()).containsOnly(
-                entry("Content-Type", "text/plain"),
-                entry("User-Agent", "micrometer"),
-                entry("Authorization", "Api-Token apiToken")
-        );
-        assertThat(request.getEntity()).asString()
-                .hasLineCount(3)
+        assertThat(request.getRequestHeaders()).containsOnly(entry("Content-Type", "text/plain"),
+                entry("User-Agent", "micrometer"), entry("Authorization", "Api-Token apiToken"));
+        assertThat(request.getEntity()).asString().hasLineCount(3)
                 .contains("my.counter,dt.metrics.source=micrometer count,delta=12.0 " + clock.wallTime())
                 .contains("my.gauge,dt.metrics.source=micrometer gauge," + gauge + " " + clock.wallTime())
-                .contains("my.timer,dt.metrics.source=micrometer gauge,min=12.0,max=42.0,sum=108.0,count=4 " + clock.wallTime());
+                .contains("my.timer,dt.metrics.source=micrometer gauge,min=12.0,max=42.0,sum=108.0,count=4 "
+                        + clock.wallTime());
     }
 
     @Test
     void shouldResetBetweenRequests() throws Throwable {
         HttpSender.Request.Builder builder = HttpSender.Request.build(config.uri(), httpClient);
         when(httpClient.post(config.uri())).thenReturn(builder);
-        when(httpClient.send(isA(HttpSender.Request.class))).thenReturn(new HttpSender.Response(202,
-                "{ \"linesOk\": 1, \"linesInvalid\": 0, \"error\": null }"
-        ));
+        when(httpClient.send(isA(HttpSender.Request.class)))
+                .thenReturn(new HttpSender.Response(202, "{ \"linesOk\": 1, \"linesInvalid\": 0, \"error\": null }"));
 
         Timer timer = Timer.builder("my.timer").register(meterRegistry);
         timer.record(22, MILLISECONDS);
@@ -108,11 +108,11 @@ class DynatraceMeterRegistryTest {
         verify(httpClient).send(argumentCaptor.capture());
         HttpSender.Request request = argumentCaptor.getValue();
 
-        assertThat(request.getEntity()).asString()
-                .hasLineCount(1)
-                .contains("my.timer,dt.metrics.source=micrometer gauge,min=22.0,max=50.0,sum=72.0,count=2 " + clock.wallTime());
+        assertThat(request.getEntity()).asString().hasLineCount(1).contains(
+                "my.timer,dt.metrics.source=micrometer gauge,min=22.0,max=50.0,sum=72.0,count=2 " + clock.wallTime());
 
-        // both are bigger than the previous min and smaller than the previous max. They will only show up if the
+        // both are bigger than the previous min and smaller than the previous max. They
+        // will only show up if the
         // summary was reset in between exports.
         timer.record(33, MILLISECONDS);
         timer.record(44, MILLISECONDS);
@@ -124,19 +124,15 @@ class DynatraceMeterRegistryTest {
         verify(httpClient, times(2)).send(argumentCaptor2.capture());
         HttpSender.Request request2 = argumentCaptor2.getValue();
 
-        assertThat(request2.getEntity()).asString()
-                .hasLineCount(1)
-                .contains("my.timer,dt.metrics.source=micrometer gauge,min=33.0,max=44.0,sum=77.0,count=2 " + clock.wallTime());
+        assertThat(request2.getEntity()).asString().hasLineCount(1).contains(
+                "my.timer,dt.metrics.source=micrometer gauge,min=33.0,max=44.0,sum=77.0,count=2 " + clock.wallTime());
     }
-
 
     @Test
     void shouldNotTrackPercentilesWithDynatraceSummary() throws Throwable {
         HttpSender.Request.Builder builder = HttpSender.Request.build(config.uri(), httpClient);
         when(httpClient.post(config.uri())).thenReturn(builder);
-        Timer timer = Timer.builder("my.timer")
-                .publishPercentiles(0.5, 0.75, 0.9, 0.99)
-                .register(meterRegistry);
+        Timer timer = Timer.builder("my.timer").publishPercentiles(0.5, 0.75, 0.9, 0.99).register(meterRegistry);
         timer.record(22, MILLISECONDS);
         timer.record(55, MILLISECONDS);
 
@@ -147,9 +143,8 @@ class DynatraceMeterRegistryTest {
         verify(httpClient).send(argumentCaptor.capture());
         HttpSender.Request request = argumentCaptor.getValue();
 
-        assertThat(request.getEntity()).asString()
-                .hasLineCount(1)
-                .contains("my.timer,dt.metrics.source=micrometer gauge,min=22.0,max=55.0,sum=77.0,count=2 " + clock.wallTime());
+        assertThat(request.getEntity()).asString().hasLineCount(1).contains(
+                "my.timer,dt.metrics.source=micrometer gauge,min=22.0,max=55.0,sum=77.0,count=2 " + clock.wallTime());
     }
 
     @Test
@@ -167,9 +162,8 @@ class DynatraceMeterRegistryTest {
         verify(httpClient).send(argumentCaptor.capture());
         HttpSender.Request request = argumentCaptor.getValue();
 
-        assertThat(request.getEntity()).asString()
-                .hasLineCount(1)
-                .contains("my.timer,dt.metrics.source=micrometer gauge,min=44.0,max=44.0,sum=44.0,count=1 " + clock.wallTime());
+        assertThat(request.getEntity()).asString().hasLineCount(1).contains(
+                "my.timer,dt.metrics.source=micrometer gauge,min=44.0,max=44.0,sum=44.0,count=1 " + clock.wallTime());
 
         // reset for next export interval
         reset(httpClient);
@@ -195,9 +189,8 @@ class DynatraceMeterRegistryTest {
         verify(httpClient).send(argumentCaptor2.capture());
         HttpSender.Request request2 = argumentCaptor2.getValue();
 
-        assertThat(request2.getEntity()).asString()
-                .hasLineCount(1)
-                .contains("my.timer,dt.metrics.source=micrometer gauge,min=33.0,max=33.0,sum=33.0,count=1 " + clock.wallTime());
+        assertThat(request2.getEntity()).asString().hasLineCount(1).contains(
+                "my.timer,dt.metrics.source=micrometer gauge,min=33.0,max=33.0,sum=33.0,count=1 " + clock.wallTime());
     }
 
     private DynatraceConfig createDefaultDynatraceConfig() {
@@ -223,4 +216,5 @@ class DynatraceMeterRegistryTest {
             }
         };
     }
+
 }

@@ -48,23 +48,22 @@ public class SpringIntegrationApplication {
     @Bean
     public IntegrationFlow convert() {
         return f -> f
-            .transform(payload ->
-                "<FahrenheitToCelsius xmlns=\"https://www.w3schools.com/xml/\">"
-                    + "<Fahrenheit>" + payload + "</Fahrenheit>"
-                    + "</FahrenheitToCelsius>", e -> e.id("toXml"))
-            .enrichHeaders(h -> h
-                .header(WebServiceHeaders.SOAP_ACTION,
-                    "https://www.w3schools.com/xml/FahrenheitToCelsius"))
-            .handle(new SimpleWebServiceOutboundGateway(
-                "https://www.w3schools.com/xml/tempconvert.asmx"), e -> e.id("w3schools"))
-            .transform(new XPathTransformer("/*[local-name()=\"FahrenheitToCelsiusResponse\"]"
-                + "/*[local-name()=\"FahrenheitToCelsiusResult\"]"), e -> e.id("toResponse"));
+                .transform(payload -> "<FahrenheitToCelsius xmlns=\"https://www.w3schools.com/xml/\">" + "<Fahrenheit>"
+                        + payload + "</Fahrenheit>" + "</FahrenheitToCelsius>", e -> e.id("toXml"))
+                .enrichHeaders(h -> h.header(WebServiceHeaders.SOAP_ACTION,
+                        "https://www.w3schools.com/xml/FahrenheitToCelsius"))
+                .handle(new SimpleWebServiceOutboundGateway("https://www.w3schools.com/xml/tempconvert.asmx"),
+                        e -> e.id("w3schools"))
+                .transform(new XPathTransformer("/*[local-name()=\"FahrenheitToCelsiusResponse\"]"
+                        + "/*[local-name()=\"FahrenheitToCelsiusResult\"]"), e -> e.id("toResponse"));
     }
 
     @MessagingGateway
     public interface TempConverter {
+
         @Gateway(requestChannel = "convert.input")
         float fahrenheitToCelcius(float fahren);
+
     }
 
 }

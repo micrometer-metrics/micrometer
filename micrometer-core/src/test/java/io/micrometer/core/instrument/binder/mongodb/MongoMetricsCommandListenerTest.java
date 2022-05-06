@@ -59,47 +59,32 @@ class MongoMetricsCommandListenerTest extends AbstractMongoDbTest {
         registry = new SimpleMeterRegistry();
         clusterId = new AtomicReference<>();
         MongoClientSettings settings = MongoClientSettings.builder()
-                .addCommandListener(new MongoMetricsCommandListener(registry))
-                .applyToClusterSettings(builder -> builder
-                        .hosts(singletonList(new ServerAddress(host, port)))
-                        .addClusterListener(new ClusterListener() {
+                .addCommandListener(new MongoMetricsCommandListener(registry)).applyToClusterSettings(builder -> builder
+                        .hosts(singletonList(new ServerAddress(host, port))).addClusterListener(new ClusterListener() {
                             @Override
                             public void clusterOpening(ClusterOpeningEvent event) {
                                 clusterId.set(event.getClusterId().getValue());
                             }
-                        })).build();
+                        }))
+                .build();
         mongo = MongoClients.create(settings);
     }
 
     @Test
     void shouldCreateSuccessCommandMetric() {
-        mongo.getDatabase("test")
-                .getCollection("testCol")
-                .insertOne(new Document("testDoc", new Date()));
+        mongo.getDatabase("test").getCollection("testCol").insertOne(new Document("testDoc", new Date()));
 
-        Tags tags = Tags.of(
-                "cluster.id", clusterId.get(),
-                "server.address", String.format("%s:%s", host, port),
-                "command", "insert",
-                "collection", "testCol",
-                "status", "SUCCESS"
-        );
+        Tags tags = Tags.of("cluster.id", clusterId.get(), "server.address", String.format("%s:%s", host, port),
+                "command", "insert", "collection", "testCol", "status", "SUCCESS");
         assertThat(registry.get("mongodb.driver.commands").tags(tags).timer().count()).isEqualTo(1);
     }
 
     @Test
     void shouldCreateFailedCommandMetric() {
-        mongo.getDatabase("test")
-                .getCollection("testCol")
-                .dropIndex("nonExistentIndex");
+        mongo.getDatabase("test").getCollection("testCol").dropIndex("nonExistentIndex");
 
-        Tags tags = Tags.of(
-                "cluster.id", clusterId.get(),
-                "server.address", String.format("%s:%s", host, port),
-                "command", "dropIndexes",
-                "collection", "testCol",
-                "status", "FAILED"
-        );
+        Tags tags = Tags.of("cluster.id", clusterId.get(), "server.address", String.format("%s:%s", host, port),
+                "command", "dropIndexes", "collection", "testCol", "status", "FAILED");
         assertThat(registry.get("mongodb.driver.commands").tags(tags).timer().count()).isEqualTo(1);
     }
 
@@ -113,8 +98,7 @@ class MongoMetricsCommandListenerTest extends AbstractMongoDbTest {
         };
         MongoClientSettings settings = MongoClientSettings.builder()
                 .addCommandListener(new MongoMetricsCommandListener(registry, tagsProvider))
-                .applyToClusterSettings(builder -> builder
-                        .hosts(singletonList(new ServerAddress(host, port)))
+                .applyToClusterSettings(builder -> builder.hosts(singletonList(new ServerAddress(host, port)))
                         .addClusterListener(new ClusterListener() {
                             @Override
                             public void clusterOpening(ClusterOpeningEvent event) {
@@ -123,17 +107,9 @@ class MongoMetricsCommandListenerTest extends AbstractMongoDbTest {
                         }))
                 .build();
         try (MongoClient mongo = MongoClients.create(settings)) {
-            mongo.getDatabase("test")
-                    .getCollection("testCol")
-                    .insertOne(new Document("testDoc", new Date()));
-            Tags tags = Tags.of(
-                    "cluster.id", clusterId.get(),
-                    "server.address", String.format("%s:%s", host, port),
-                    "command", "insert",
-                    "collection", "testCol",
-                    "status", "SUCCESS",
-                    "mongoz", "5150"
-            );
+            mongo.getDatabase("test").getCollection("testCol").insertOne(new Document("testDoc", new Date()));
+            Tags tags = Tags.of("cluster.id", clusterId.get(), "server.address", String.format("%s:%s", host, port),
+                    "command", "insert", "collection", "testCol", "status", "SUCCESS", "mongoz", "5150");
             assertThat(registry.get("mongodb.driver.commands").tags(tags).timer().count()).isEqualTo(1);
         }
     }
@@ -148,8 +124,7 @@ class MongoMetricsCommandListenerTest extends AbstractMongoDbTest {
         };
         MongoClientSettings settings = MongoClientSettings.builder()
                 .addCommandListener(new MongoMetricsCommandListener(registry, tagsProvider))
-                .applyToClusterSettings(builder -> builder
-                        .hosts(singletonList(new ServerAddress(host, port)))
+                .applyToClusterSettings(builder -> builder.hosts(singletonList(new ServerAddress(host, port)))
                         .addClusterListener(new ClusterListener() {
                             @Override
                             public void clusterOpening(ClusterOpeningEvent event) {
@@ -158,17 +133,9 @@ class MongoMetricsCommandListenerTest extends AbstractMongoDbTest {
                         }))
                 .build();
         try (MongoClient mongo = MongoClients.create(settings)) {
-            mongo.getDatabase("test")
-                    .getCollection("testCol")
-                    .dropIndex("nonExistentIndex");
-            Tags tags = Tags.of(
-                    "cluster.id", clusterId.get(),
-                    "server.address", String.format("%s:%s", host, port),
-                    "command", "dropIndexes",
-                    "collection", "testCol",
-                    "status", "FAILED",
-                    "mongoz", "5150"
-            );
+            mongo.getDatabase("test").getCollection("testCol").dropIndex("nonExistentIndex");
+            Tags tags = Tags.of("cluster.id", clusterId.get(), "server.address", String.format("%s:%s", host, port),
+                    "command", "dropIndexes", "collection", "testCol", "status", "FAILED", "mongoz", "5150");
             assertThat(registry.get("mongodb.driver.commands").tags(tags).timer().count()).isEqualTo(1);
         }
     }
@@ -178,22 +145,19 @@ class MongoMetricsCommandListenerTest extends AbstractMongoDbTest {
         for (int i = 0; i < 20; i++) {
             Map<String, Thread> commandThreadMap = new HashMap<>();
 
-            commandThreadMap.put("insert", new Thread(() -> mongo.getDatabase("test")
-                    .getCollection("testCol")
+            commandThreadMap.put("insert", new Thread(() -> mongo.getDatabase("test").getCollection("testCol")
                     .insertOne(new Document("testField", new Date()))));
 
-            commandThreadMap.put("update", new Thread(() -> mongo.getDatabase("test")
-                    .getCollection("testCol")
-                    .updateOne(new Document("nonExistentField", "abc"),
+            commandThreadMap.put("update",
+                    new Thread(() -> mongo.getDatabase("test").getCollection("testCol").updateOne(
+                            new Document("nonExistentField", "abc"),
                             new Document("$set", new Document("nonExistentField", "xyz")))));
 
-            commandThreadMap.put("delete", new Thread(() -> mongo.getDatabase("test")
-                    .getCollection("testCol")
+            commandThreadMap.put("delete", new Thread(() -> mongo.getDatabase("test").getCollection("testCol")
                     .deleteOne(new Document("nonExistentField", "abc"))));
 
-            commandThreadMap.put("aggregate", new Thread(() -> mongo.getDatabase("test")
-                    .getCollection("testCol")
-                    .countDocuments()));
+            commandThreadMap.put("aggregate",
+                    new Thread(() -> mongo.getDatabase("test").getCollection("testCol").countDocuments()));
 
             for (Thread thread : commandThreadMap.values()) {
                 thread.start();
@@ -208,17 +172,15 @@ class MongoMetricsCommandListenerTest extends AbstractMongoDbTest {
             for (String command : commandThreadMap.keySet()) {
                 long commandsRecorded;
                 try {
-                    commandsRecorded = registry.get("mongodb.driver.commands")
-                            .tags(Tags.of("command", command))
-                            .timer()
+                    commandsRecorded = registry.get("mongodb.driver.commands").tags(Tags.of("command", command)).timer()
                             .count();
-                } catch (MeterNotFoundException e) {
+                }
+                catch (MeterNotFoundException e) {
                     commandsRecorded = 0L;
                 }
 
-                assertThat(commandsRecorded)
-                        .as("Check how many %s commands were recorded after %d iterations", command, iterationsCompleted)
-                        .isEqualTo(iterationsCompleted);
+                assertThat(commandsRecorded).as("Check how many %s commands were recorded after %d iterations", command,
+                        iterationsCompleted).isEqualTo(iterationsCompleted);
             }
         }
     }

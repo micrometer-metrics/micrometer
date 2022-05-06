@@ -15,13 +15,6 @@
  */
 package io.micrometer.core.instrument.binder.mongodb;
 
-import java.util.Arrays;
-import java.util.HashSet;
-import java.util.Optional;
-import java.util.Set;
-import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.ConcurrentMap;
-
 import com.mongodb.event.CommandEvent;
 import com.mongodb.event.CommandStartedEvent;
 import com.mongodb.event.CommandSucceededEvent;
@@ -33,6 +26,13 @@ import org.bson.BsonDocument;
 import org.bson.BsonString;
 import org.bson.BsonValue;
 
+import java.util.Arrays;
+import java.util.HashSet;
+import java.util.Optional;
+import java.util.Set;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ConcurrentMap;
+
 /**
  * Default implementation for {@link MongoCommandTagsProvider}.
  *
@@ -42,21 +42,22 @@ import org.bson.BsonValue;
 public class DefaultMongoCommandTagsProvider implements MongoCommandTagsProvider {
 
     // See https://docs.mongodb.com/manual/reference/command for the command reference
-    private static final Set<String> COMMANDS_WITH_COLLECTION_NAME = new HashSet<>(Arrays.asList(
-            "aggregate", "count", "distinct", "mapReduce", "geoSearch", "delete", "find", "findAndModify",
-            "insert", "update", "collMod", "compact", "convertToCapped", "create", "createIndexes", "drop",
-            "dropIndexes", "killCursors", "listIndexes", "reIndex"));
+    private static final Set<String> COMMANDS_WITH_COLLECTION_NAME = new HashSet<>(
+            Arrays.asList("aggregate", "count", "distinct", "mapReduce", "geoSearch", "delete", "find", "findAndModify",
+                    "insert", "update", "collMod", "compact", "convertToCapped", "create", "createIndexes", "drop",
+                    "dropIndexes", "killCursors", "listIndexes", "reIndex"));
 
-    private static final WarnThenDebugLogger WARN_THEN_DEBUG_LOGGER = new WarnThenDebugLogger(DefaultMongoCommandTagsProvider.class);
+    private static final WarnThenDebugLogger WARN_THEN_DEBUG_LOGGER = new WarnThenDebugLogger(
+            DefaultMongoCommandTagsProvider.class);
 
     private final ConcurrentMap<Integer, String> inFlightCommandCollectionNames = new ConcurrentHashMap<>();
 
     @Override
     public Iterable<Tag> commandTags(CommandEvent event) {
-        return Tags.of(
-                Tag.of("command", event.getCommandName()),
+        return Tags.of(Tag.of("command", event.getCommandName()),
                 Tag.of("collection", getAndRemoveCollectionNameForCommand(event)),
-                Tag.of("cluster.id", event.getConnectionDescription().getConnectionId().getServerId().getClusterId().getValue()),
+                Tag.of("cluster.id",
+                        event.getConnectionDescription().getConnectionId().getServerId().getClusterId().getValue()),
                 Tag.of("server.address", event.getConnectionDescription().getServerAddress().toString()),
                 Tag.of("status", (event instanceof CommandSucceededEvent) ? "SUCCESS" : "FAILED"));
     }
@@ -84,16 +85,21 @@ public class DefaultMongoCommandTagsProvider implements MongoCommandTagsProvider
     /**
      * Attempts to determine the name of the collection a command is operating on.
      *
-     * <p>Because some commands either do not have collection info or it is problematic to determine the collection info,
-     * there is an allow list of command names {@code COMMANDS_WITH_COLLECTION_NAME} used. If {@code commandName} is
-     * not in the allow list or there is no collection info in {@code command}, it will use the content of the
-     * {@code 'collection'} field on {@code command}, if it exists.
+     * <p>
+     * Because some commands either do not have collection info or it is problematic to
+     * determine the collection info, there is an allow list of command names
+     * {@code COMMANDS_WITH_COLLECTION_NAME} used. If {@code commandName} is not in the
+     * allow list or there is no collection info in {@code command}, it will use the
+     * content of the {@code 'collection'} field on {@code command}, if it exists.
      *
-     * <p>Taken from <a href="https://github.com/openzipkin/brave/blob/master/instrumentation/mongodb/src/main/java/brave/mongodb/TraceMongoCommandListener.java#L115">TraceMongoCommandListener.java in Brave</a>
-     *
+     * <p>
+     * Taken from <a href=
+     * "https://github.com/openzipkin/brave/blob/master/instrumentation/mongodb/src/main/java/brave/mongodb/TraceMongoCommandListener.java#L115">TraceMongoCommandListener.java
+     * in Brave</a>
      * @param commandName name of the mongo command
      * @param command mongo command object
-     * @return optional collection name or empty if could not be determined or not in the allow list of command names
+     * @return optional collection name or empty if could not be determined or not in the
+     * allow list of command names
      */
     protected Optional<String> determineCollectionName(String commandName, BsonDocument command) {
         if (COMMANDS_WITH_COLLECTION_NAME.contains(commandName)) {
@@ -102,19 +108,18 @@ public class DefaultMongoCommandTagsProvider implements MongoCommandTagsProvider
                 return collectionName;
             }
         }
-        // Some other commands, like getMore, have a field like {"collection": collectionName}.
+        // Some other commands, like getMore, have a field like {"collection":
+        // collectionName}.
         return getNonEmptyBsonString(command.get("collection"));
     }
 
     /**
-     * @return trimmed string from {@code bsonValue} in the Optional or empty Optional if value was not a non-empty string
+     * @return trimmed string from {@code bsonValue} in the Optional or empty Optional if
+     * value was not a non-empty string
      */
     private Optional<String> getNonEmptyBsonString(BsonValue bsonValue) {
-        return Optional.ofNullable(bsonValue)
-                .filter(BsonValue::isString)
-                .map(BsonValue::asString)
-                .map(BsonString::getValue)
-                .map(String::trim)
-                .filter(StringUtils::isNotEmpty);
+        return Optional.ofNullable(bsonValue).filter(BsonValue::isString).map(BsonValue::asString)
+                .map(BsonString::getValue).map(String::trim).filter(StringUtils::isNotEmpty);
     }
+
 }

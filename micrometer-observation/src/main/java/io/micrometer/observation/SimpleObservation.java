@@ -29,14 +29,17 @@ import io.micrometer.observation.lang.Nullable;
  * @author Jonatan Ivanov
  * @author Tommy Ludwig
  * @author Marcin Grzejszczak
- *
  * @since 1.10.0
  */
 class SimpleObservation implements Observation {
+
     private final ObservationRegistry registry;
+
     private final Context context;
+
     @SuppressWarnings("rawtypes")
     private final Collection<KeyValuesProvider> keyValuesProviders;
+
     @SuppressWarnings("rawtypes")
     private final Deque<ObservationHandler> handlers;
 
@@ -45,8 +48,7 @@ class SimpleObservation implements Observation {
         this.registry = registry;
         this.context = context.setName(name);
         this.keyValuesProviders = registry.observationConfig().getKeyValuesProviders().stream()
-                .filter(provider -> provider.supportsContext(this.context))
-                .collect(Collectors.toList());
+                .filter(provider -> provider.supportsContext(this.context)).collect(Collectors.toList());
         this.handlers = registry.observationConfig().getObservationHandlers().stream()
                 .filter(handler -> handler.supportsContext(this.context))
                 .collect(Collectors.toCollection(ArrayDeque::new));
@@ -84,13 +86,14 @@ class SimpleObservation implements Observation {
         this.notifyOnError();
         return this;
     }
+
     @Override
     public Observation start() {
         this.notifyOnObservationStarted();
         return this;
     }
 
-    @SuppressWarnings({"rawtypes", "unchecked"})
+    @SuppressWarnings({ "rawtypes", "unchecked" })
     @Override
     public void stop() {
         for (KeyValuesProvider keyValuesProvider : keyValuesProviders) {
@@ -109,11 +112,8 @@ class SimpleObservation implements Observation {
 
     @Override
     public String toString() {
-        return "{"
-                + "name=" + this.context.getName() + "(" + this.context.getContextualName() + ")"
-                + ", error=" + this.context.getError()
-                + ", context=" + this.context
-                + '}';
+        return "{" + "name=" + this.context.getName() + "(" + this.context.getContextualName() + ")" + ", error="
+                + this.context.getError() + ", context=" + this.context + '}';
     }
 
     @SuppressWarnings("unchecked")
@@ -133,20 +133,26 @@ class SimpleObservation implements Observation {
 
     @SuppressWarnings("unchecked")
     private void notifyOnScopeClosed() {
-        // We're closing from end till the beginning - e.g. we opened scope with handlers with ids 1,2,3 and we need to close the scope in order 3,2,1
+        // We're closing from end till the beginning - e.g. we opened scope with handlers
+        // with ids 1,2,3 and we need to close the scope in order 3,2,1
         this.handlers.descendingIterator().forEachRemaining(handler -> handler.onScopeClosed(this.context));
     }
 
     @SuppressWarnings("unchecked")
     private void notifyOnObservationStopped() {
-        // We're closing from end till the beginning - e.g. we started with handlers with ids 1,2,3 and we need to call close on 3,2,1
+        // We're closing from end till the beginning - e.g. we started with handlers with
+        // ids 1,2,3 and we need to call close on 3,2,1
         this.handlers.descendingIterator().forEachRemaining(handler -> handler.onStop(this.context));
     }
 
     static class SimpleScope implements Scope {
+
         private final ObservationRegistry registry;
+
         private final SimpleObservation currentObservation;
-        @Nullable private final Observation previousObservation;
+
+        @Nullable
+        private final Observation previousObservation;
 
         SimpleScope(ObservationRegistry registry, SimpleObservation current) {
             this.registry = registry;
@@ -165,5 +171,7 @@ class SimpleObservation implements Observation {
             this.registry.setCurrentObservation(previousObservation);
             this.currentObservation.notifyOnScopeClosed();
         }
+
     }
+
 }

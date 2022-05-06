@@ -26,8 +26,8 @@ import java.util.Set;
 import java.util.concurrent.atomic.AtomicIntegerFieldUpdater;
 
 /**
- * An abstract base class for histogram implementations who maintain samples in a ring buffer
- * to decay older samples and give greater weight to recent samples.
+ * An abstract base class for histogram implementations who maintain samples in a ring
+ * buffer to decay older samples and give greater weight to recent samples.
  *
  * @param <T> the type of the buckets in a ring buffer
  * @param <U> the type of accumulated histogram
@@ -38,30 +38,34 @@ import java.util.concurrent.atomic.AtomicIntegerFieldUpdater;
 abstract class AbstractTimeWindowHistogram<T, U> implements Histogram {
 
     @SuppressWarnings("rawtypes")
-    private static final AtomicIntegerFieldUpdater<AbstractTimeWindowHistogram> rotatingUpdater =
-            AtomicIntegerFieldUpdater.newUpdater(AbstractTimeWindowHistogram.class, "rotating");
+    private static final AtomicIntegerFieldUpdater<AbstractTimeWindowHistogram> rotatingUpdater = AtomicIntegerFieldUpdater
+            .newUpdater(AbstractTimeWindowHistogram.class, "rotating");
 
     final DistributionStatisticConfig distributionStatisticConfig;
 
     private final Clock clock;
+
     private final boolean supportsAggregablePercentiles;
 
     private final T[] ringBuffer;
+
     private short currentBucket;
+
     private final long durationBetweenRotatesMillis;
+
     private volatile boolean accumulatedHistogramStale;
 
     private volatile long lastRotateTimestampMillis;
 
-    @SuppressWarnings({"unused", "FieldCanBeLocal"})
+    @SuppressWarnings({ "unused", "FieldCanBeLocal" })
     private volatile int rotating; // 0 - not rotating, 1 - rotating
 
     @Nullable
     private U accumulatedHistogram;
 
     @SuppressWarnings("unchecked")
-    AbstractTimeWindowHistogram(Clock clock, DistributionStatisticConfig distributionStatisticConfig, Class<T> bucketType,
-                                boolean supportsAggregablePercentiles) {
+    AbstractTimeWindowHistogram(Clock clock, DistributionStatisticConfig distributionStatisticConfig,
+            Class<T> bucketType, boolean supportsAggregablePercentiles) {
         this.clock = clock;
         this.distributionStatisticConfig = validateDistributionConfig(distributionStatisticConfig);
         this.supportsAggregablePercentiles = supportsAggregablePercentiles;
@@ -75,20 +79,21 @@ abstract class AbstractTimeWindowHistogram<T, U> implements Histogram {
 
         durationBetweenRotatesMillis = distributionStatisticConfig.getExpiry().toMillis() / ageBuckets;
         if (durationBetweenRotatesMillis <= 0) {
-            rejectHistogramConfig("expiry (" + distributionStatisticConfig.getExpiry().toMillis() +
-                    "ms) / bufferLength (" + ageBuckets + ") must be greater than 0.");
+            rejectHistogramConfig("expiry (" + distributionStatisticConfig.getExpiry().toMillis()
+                    + "ms) / bufferLength (" + ageBuckets + ") must be greater than 0.");
         }
 
         currentBucket = 0;
         lastRotateTimestampMillis = clock.wallTime();
     }
 
-    private static DistributionStatisticConfig validateDistributionConfig(DistributionStatisticConfig distributionStatisticConfig) {
+    private static DistributionStatisticConfig validateDistributionConfig(
+            DistributionStatisticConfig distributionStatisticConfig) {
         if (distributionStatisticConfig.getPercentiles() != null) {
             for (double p : distributionStatisticConfig.getPercentiles()) {
                 if (p < 0 || p > 1) {
-                    rejectHistogramConfig("percentiles must contain only the values between 0.0 and 1.0. " +
-                            "Found " + p);
+                    rejectHistogramConfig(
+                            "percentiles must contain only the values between 0.0 and 1.0. " + "Found " + p);
                 }
             }
 
@@ -103,16 +108,16 @@ abstract class AbstractTimeWindowHistogram<T, U> implements Histogram {
             rejectHistogramConfig("minimumExpectedValue (" + minimumExpectedValue + ") must be greater than 0.");
         }
         if (maximumExpectedValue == null || maximumExpectedValue < minimumExpectedValue) {
-            rejectHistogramConfig("maximumExpectedValue (" + maximumExpectedValue +
-                    ") must be equal to or greater than minimumExpectedValue (" +
-                    minimumExpectedValue + ").");
+            rejectHistogramConfig("maximumExpectedValue (" + maximumExpectedValue
+                    + ") must be equal to or greater than minimumExpectedValue (" + minimumExpectedValue + ").");
         }
 
         if (distributionStatisticConfig.getServiceLevelObjectiveBoundaries() != null) {
             for (double slo : distributionStatisticConfig.getServiceLevelObjectiveBoundaries()) {
                 if (slo <= 0) {
-                    rejectHistogramConfig("serviceLevelObjectiveBoundaries must contain only the values greater than 0. " +
-                            "Found " + slo);
+                    rejectHistogramConfig(
+                            "serviceLevelObjectiveBoundaries must contain only the values greater than 0. " + "Found "
+                                    + slo);
                 }
             }
         }
@@ -197,7 +202,8 @@ abstract class AbstractTimeWindowHistogram<T, U> implements Histogram {
             return null;
         }
 
-        final Set<Double> monitoredValues = distributionStatisticConfig.getHistogramBuckets(supportsAggregablePercentiles);
+        final Set<Double> monitoredValues = distributionStatisticConfig
+                .getHistogramBuckets(supportsAggregablePercentiles);
         if (monitoredValues.isEmpty()) {
             return null;
         }
@@ -217,9 +223,12 @@ abstract class AbstractTimeWindowHistogram<T, U> implements Histogram {
             for (T bucket : ringBuffer) {
                 recordLong(bucket, value);
             }
-        } catch (IndexOutOfBoundsException ignored) {
-            // the value is so large (or small) that the dynamic range of the histogram cannot be extended to include it
-        } finally {
+        }
+        catch (IndexOutOfBoundsException ignored) {
+            // the value is so large (or small) that the dynamic range of the histogram
+            // cannot be extended to include it
+        }
+        finally {
             accumulatedHistogramStale = true;
         }
     }
@@ -230,9 +239,12 @@ abstract class AbstractTimeWindowHistogram<T, U> implements Histogram {
             for (T bucket : ringBuffer) {
                 recordDouble(bucket, value);
             }
-        } catch (IndexOutOfBoundsException ignored) {
-            // the value is so large (or small) that the dynamic range of the histogram cannot be extended to include it
-        } finally {
+        }
+        catch (IndexOutOfBoundsException ignored) {
+            // the value is so large (or small) that the dynamic range of the histogram
+            // cannot be extended to include it
+        }
+        finally {
             accumulatedHistogramStale = true;
         }
     }
@@ -259,12 +271,14 @@ abstract class AbstractTimeWindowHistogram<T, U> implements Histogram {
                     }
                     timeSinceLastRotateMillis -= durationBetweenRotatesMillis;
                     lastRotateTimestampMillis += durationBetweenRotatesMillis;
-                } while (timeSinceLastRotateMillis >= durationBetweenRotatesMillis && ++iterations < ringBuffer.length);
+                }
+                while (timeSinceLastRotateMillis >= durationBetweenRotatesMillis && ++iterations < ringBuffer.length);
 
                 resetAccumulatedHistogram();
                 accumulatedHistogramStale = true;
             }
-        } finally {
+        }
+        finally {
             rotating = 0;
         }
     }
@@ -276,4 +290,5 @@ abstract class AbstractTimeWindowHistogram<T, U> implements Histogram {
     protected T currentHistogram() {
         return ringBuffer[currentBucket];
     }
+
 }

@@ -16,8 +16,9 @@
 /**
  * Collect metrics for grpc-java clients and servers.
  *
- * Refer to {@link io.micrometer.core.instrument.binder.grpc.MetricCollectingClientInterceptor} and
- * {@link io.micrometer.core.instrument.binder.grpc.MetricCollectingServerInterceptor}
- * for usage examples.
+ * Refer to
+ * {@link io.micrometer.core.instrument.binder.grpc.MetricCollectingClientInterceptor} and
+ * {@link io.micrometer.core.instrument.binder.grpc.MetricCollectingServerInterceptor} for
+ * usage examples.
  */
 package io.micrometer.core.instrument.binder.grpc;

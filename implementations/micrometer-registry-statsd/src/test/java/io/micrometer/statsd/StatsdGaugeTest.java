@@ -24,17 +24,17 @@ import java.util.concurrent.atomic.AtomicInteger;
 import static org.assertj.core.api.Assertions.assertThat;
 
 class StatsdGaugeTest {
+
     private AtomicInteger value = new AtomicInteger(1);
 
     @Test
     void shouldAlwaysPublishValue() {
         AtomicInteger lines = new AtomicInteger();
         MeterRegistry registry = StatsdMeterRegistry.builder(StatsdConfig.DEFAULT)
-                .lineSink(l -> lines.incrementAndGet())
-                .build();
+                .lineSink(l -> lines.incrementAndGet()).build();
 
-        StatsdGauge<?> alwaysPublishingGauge = (StatsdGauge<?>) Gauge
-                .builder("test", value, AtomicInteger::get).register(registry);
+        StatsdGauge<?> alwaysPublishingGauge = (StatsdGauge<?>) Gauge.builder("test", value, AtomicInteger::get)
+                .register(registry);
 
         alwaysPublishingGauge.poll();
         alwaysPublishingGauge.poll();
@@ -45,33 +45,31 @@ class StatsdGaugeTest {
     @Test
     void shouldOnlyPublishValueWhenValueChanges() {
         AtomicInteger lines = new AtomicInteger();
-        MeterRegistry registry = StatsdMeterRegistry
-                .builder(new StatsdConfig() {
-                    @Override
-                    public String get(String key) {
-                        return null;
-                    }
+        MeterRegistry registry = StatsdMeterRegistry.builder(new StatsdConfig() {
+            @Override
+            public String get(String key) {
+                return null;
+            }
 
-                    @Override
-                    public boolean publishUnchangedMeters() {
-                        return false;
-                    }
-                })
-                .lineSink(l -> lines.incrementAndGet())
-                .build();
+            @Override
+            public boolean publishUnchangedMeters() {
+                return false;
+            }
+        }).lineSink(l -> lines.incrementAndGet()).build();
 
-        StatsdGauge<?> gaugePublishingOnChange = (StatsdGauge<?>) Gauge
-                .builder("test", value, AtomicInteger::get).register(registry);
+        StatsdGauge<?> gaugePublishingOnChange = (StatsdGauge<?>) Gauge.builder("test", value, AtomicInteger::get)
+                .register(registry);
 
         gaugePublishingOnChange.poll();
         gaugePublishingOnChange.poll();
 
         assertThat(lines.get()).isEqualTo(1);
 
-        //update value and expect the publisher to be called again
+        // update value and expect the publisher to be called again
         value.incrementAndGet();
         gaugePublishingOnChange.poll();
 
         assertThat(lines.get()).isEqualTo(2);
     }
+
 }

@@ -22,5 +22,7 @@ package io.micrometer.opentsdb;
  * @since 1.4.0
  */
 public enum OpenTSDBFlavor {
+
     VictoriaMetrics
+
 }

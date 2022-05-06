@@ -33,14 +33,12 @@ public interface Response {
 
     /**
      * Returns the header names.
-     *
      * @return collection of header names
      */
     Collection<String> headerNames();
 
     /**
      * Returns the HTTP request.
-     *
      * @return corresponding request
      */
     @Nullable
@@ -48,7 +46,6 @@ public interface Response {
 
     /**
      * Returns the exception.
-     *
      * @return exception that occurred or {@code null} if there was none.
      */
     @Nullable
@@ -56,14 +53,12 @@ public interface Response {
 
     /**
      * Returns the underlying response object.
-     *
      * @return the underlying response object or {@code null} if there is none.
      */
     Object unwrap();
 
     /**
      * Returns the transport kind.
-     *
      * @return the remote kind describing the direction and type of the response
      */
     Kind kind();

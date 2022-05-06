@@ -15,7 +15,7 @@
  */
 package io.micrometer.core.instrument.step;
 
-import io.micrometer.core.instrument.*;
+import io.micrometer.core.instrument.MockClock;
 import org.junit.jupiter.api.Test;
 
 import java.time.Duration;
@@ -65,4 +65,5 @@ class StepValueTest {
         clock.add(Duration.ofMillis(60));
         assertThat(stepValue.poll()).isEqualTo(24L);
     }
+
 }

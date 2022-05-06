@@ -22,6 +22,7 @@ package io.micrometer.prometheus;
  * @since 1.4.0
  */
 public enum HistogramFlavor {
-    Prometheus,
-    VictoriaMetrics
+
+    Prometheus, VictoriaMetrics
+
 }

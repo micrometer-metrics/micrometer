@@ -45,7 +45,7 @@ class CloudWatchMeterRegistryCompatibilityTest extends MeterRegistryCompatibilit
 
     @Override
     public MeterRegistry registry() {
-        //noinspection ConstantConditions
+        // noinspection ConstantConditions
         return new CloudWatchMeterRegistry(config, new MockClock(), null);
     }
 
@@ -53,4 +53,5 @@ class CloudWatchMeterRegistryCompatibilityTest extends MeterRegistryCompatibilit
     public Duration step() {
         return config.step();
     }
+
 }

@@ -25,6 +25,7 @@ import org.junit.jupiter.api.Test;
 import static org.assertj.core.api.Assertions.assertThat;
 
 class CurrentObservationTest {
+
     private final ObservationRegistry registry = ObservationRegistry.create();
 
     @BeforeEach
@@ -68,7 +69,8 @@ class CurrentObservationTest {
 
     @Test
     void startOnChildThread_thenStopOnSiblingThread() throws InterruptedException, ExecutionException {
-        // 2 thread pools with 1 thread each, so a different thread is used for the 2 tasks
+        // 2 thread pools with 1 thread each, so a different thread is used for the 2
+        // tasks
         ExecutorService executor = Executors.newSingleThreadExecutor();
         ExecutorService executor2 = Executors.newSingleThreadExecutor();
         Map<String, Observation> observationMap = new HashMap<>();
@@ -108,4 +110,5 @@ class CurrentObservationTest {
 
         assertThat(registry.getCurrentObservation()).isNull();
     }
+
 }

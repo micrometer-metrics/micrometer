@@ -29,14 +29,16 @@ import org.assertj.core.api.AbstractThrowableAssert;
 /**
  * Assertion methods for {@code Observation.Context}s.
  * <p>
- * To create a new instance of this class, invoke {@link ObservationContextAssert#assertThat(Observation.Context)}
- * or {@link ObservationContextAssert#then(Observation.Context)}.
+ * To create a new instance of this class, invoke
+ * {@link ObservationContextAssert#assertThat(Observation.Context)} or
+ * {@link ObservationContextAssert#then(Observation.Context)}.
  *
  * @author Marcin Grzejszczak
  * @since 1.0.0
  */
 @SuppressWarnings("unchecked")
-public class ObservationContextAssert<SELF extends ObservationContextAssert<SELF>> extends AbstractAssert<SELF, Observation.Context> {
+public class ObservationContextAssert<SELF extends ObservationContextAssert<SELF>>
+        extends AbstractAssert<SELF, Observation.Context> {
 
     protected ObservationContextAssert(Observation.Context actual) {
         super(actual, ObservationContextAssert.class);
@@ -44,7 +46,6 @@ public class ObservationContextAssert<SELF extends ObservationContextAssert<SELF
 
     /**
      * Creates the assert object for {@link Observation.Context}.
-     *
      * @param actual context to assert against
      * @return Observation assertions
      */
@@ -54,7 +55,6 @@ public class ObservationContextAssert<SELF extends ObservationContextAssert<SELF
 
     /**
      * Creates the assert object for {@link Observation.Context}.
-     *
      * @param actual context to assert against
      * @return Observation assertions
      */
@@ -84,7 +84,8 @@ public class ObservationContextAssert<SELF extends ObservationContextAssert<SELF
         isNotNull();
         String actualName = this.actual.getName();
         if (!name.equalsIgnoreCase(actualName)) {
-            failWithMessage("Observation should have name equal to ignoring case but <%s> but has <%s>", name, actualName);
+            failWithMessage("Observation should have name equal to ignoring case but <%s> but has <%s>", name,
+                    actualName);
         }
         return (SELF) this;
     }
@@ -120,7 +121,8 @@ public class ObservationContextAssert<SELF extends ObservationContextAssert<SELF
         isNotNull();
         String actualName = this.actual.getContextualName();
         if (!name.equalsIgnoreCase(actualName)) {
-            failWithMessage("Observation should have contextual name equal to ignoring case but <%s> but has <%s>", name, actualName);
+            failWithMessage("Observation should have contextual name equal to ignoring case but <%s> but has <%s>",
+                    name, actualName);
         }
         return (SELF) this;
     }
@@ -163,7 +165,9 @@ public class ObservationContextAssert<SELF extends ObservationContextAssert<SELF
     public SELF hasLowCardinalityKeyValueWithKey(String key) {
         isNotNull();
         if (this.actual.getLowCardinalityKeyValues().stream().noneMatch(tag -> tag.getKey().equals(key))) {
-            failWithMessage("Observation should have a low cardinality tag with key <%s> but it's not there. List of all keys <%s>", key, lowCardinalityKeys());
+            failWithMessage(
+                    "Observation should have a low cardinality tag with key <%s> but it's not there. List of all keys <%s>",
+                    key, lowCardinalityKeys());
         }
         return (SELF) this;
     }
@@ -171,9 +175,12 @@ public class ObservationContextAssert<SELF extends ObservationContextAssert<SELF
     public SELF hasLowCardinalityKeyValue(String key, String value) {
         isNotNull();
         hasLowCardinalityKeyValueWithKey(key);
-        String tagValue = this.actual.getLowCardinalityKeyValues().stream().filter(tag -> tag.getKey().equals(key)).findFirst().get().getValue();
+        String tagValue = this.actual.getLowCardinalityKeyValues().stream().filter(tag -> tag.getKey().equals(key))
+                .findFirst().get().getValue();
         if (!Objects.equals(tagValue, value)) {
-            failWithMessage("Observation should have a low cardinality tag with key <%s> and value <%s>. The key is correct but the value is <%s>", key, value, tagValue);
+            failWithMessage(
+                    "Observation should have a low cardinality tag with key <%s> and value <%s>. The key is correct but the value is <%s>",
+                    key, value, tagValue);
         }
         return (SELF) this;
     }
@@ -189,22 +196,25 @@ public class ObservationContextAssert<SELF extends ObservationContextAssert<SELF
     public SELF doesNotHaveLowCardinalityKeyValue(String key, String value) {
         isNotNull();
         doesNotHaveLowCardinalityKeyValueWithKey(key);
-        Optional<KeyValue> optional = this.actual.getLowCardinalityKeyValues().stream().filter(tag -> tag.getKey().equals(key)).findFirst();
+        Optional<KeyValue> optional = this.actual.getLowCardinalityKeyValues().stream()
+                .filter(tag -> tag.getKey().equals(key)).findFirst();
         if (!optional.isPresent()) {
             return (SELF) this;
         }
         String tagValue = optional.get().getValue();
         if (Objects.equals(tagValue, value)) {
-            failWithMessage("Observation should not have a low cardinality tag with key <%s> and value <%s>", key, value);
+            failWithMessage("Observation should not have a low cardinality tag with key <%s> and value <%s>", key,
+                    value);
         }
         return (SELF) this;
     }
 
-
     public SELF hasHighCardinalityKeyValueWithKey(String key) {
         isNotNull();
         if (this.actual.getHighCardinalityKeyValues().stream().noneMatch(tag -> tag.getKey().equals(key))) {
-            failWithMessage("Observation should have a high cardinality tag with key <%s> but it's not there. List of all keys <%s>", key, highCardinalityKeys());
+            failWithMessage(
+                    "Observation should have a high cardinality tag with key <%s> but it's not there. List of all keys <%s>",
+                    key, highCardinalityKeys());
         }
         return (SELF) this;
     }
@@ -212,9 +222,12 @@ public class ObservationContextAssert<SELF extends ObservationContextAssert<SELF
     public SELF hasHighCardinalityKeyValue(String key, String value) {
         isNotNull();
         hasHighCardinalityKeyValueWithKey(key);
-        String tagValue = this.actual.getHighCardinalityKeyValues().stream().filter(tag -> tag.getKey().equals(key)).findFirst().get().getValue();
+        String tagValue = this.actual.getHighCardinalityKeyValues().stream().filter(tag -> tag.getKey().equals(key))
+                .findFirst().get().getValue();
         if (!Objects.equals(tagValue, value)) {
-            failWithMessage("Observation should have a high cardinality tag with key <%s> and value <%s>. The key is correct but the value is <%s>", key, value, tagValue);
+            failWithMessage(
+                    "Observation should have a high cardinality tag with key <%s> and value <%s>. The key is correct but the value is <%s>",
+                    key, value, tagValue);
         }
         return (SELF) this;
     }
@@ -230,13 +243,15 @@ public class ObservationContextAssert<SELF extends ObservationContextAssert<SELF
     public SELF doesNotHaveHighCardinalityKeyValue(String key, String value) {
         isNotNull();
         doesNotHaveHighCardinalityKeyValueWithKey(key);
-        Optional<KeyValue> optional = this.actual.getHighCardinalityKeyValues().stream().filter(tag -> tag.getKey().equals(key)).findFirst();
+        Optional<KeyValue> optional = this.actual.getHighCardinalityKeyValues().stream()
+                .filter(tag -> tag.getKey().equals(key)).findFirst();
         if (!optional.isPresent()) {
             return (SELF) this;
         }
         String tagValue = optional.get().getValue();
         if (tagValue.equals(value)) {
-            failWithMessage("Observation should not have a high cardinality tag with key <%s> and value <%s>", key, value);
+            failWithMessage("Observation should not have a high cardinality tag with key <%s> and value <%s>", key,
+                    value);
         }
         return (SELF) this;
     }
@@ -245,7 +260,8 @@ public class ObservationContextAssert<SELF extends ObservationContextAssert<SELF
         isNotNull();
         Object mapValue = this.actual.get(key);
         if (!Objects.equals(mapValue, value)) {
-            failWithMessage("Observation should have an entry for key <%s> with value <%s>. Value was <%s>", key, value, mapValue);
+            failWithMessage("Observation should have an entry for key <%s> with value <%s>. Value was <%s>", key, value,
+                    mapValue);
         }
         return (SELF) this;
     }
@@ -267,11 +283,13 @@ public class ObservationContextAssert<SELF extends ObservationContextAssert<SELF
         return assertThatThrowable();
     }
 
-    public static class ObservationContextAssertReturningThrowableAssert extends AbstractThrowableAssert<ObservationContextAssertReturningThrowableAssert, Throwable> {
+    public static class ObservationContextAssertReturningThrowableAssert
+            extends AbstractThrowableAssert<ObservationContextAssertReturningThrowableAssert, Throwable> {
 
         private final ObservationContextAssert observationContextAssert;
 
-        public ObservationContextAssertReturningThrowableAssert(Throwable throwable, ObservationContextAssert observationContextAssert) {
+        public ObservationContextAssertReturningThrowableAssert(Throwable throwable,
+                ObservationContextAssert observationContextAssert) {
             super(throwable, ObservationContextAssertReturningThrowableAssert.class);
             this.observationContextAssert = observationContextAssert;
         }
@@ -279,5 +297,7 @@ public class ObservationContextAssert<SELF extends ObservationContextAssert<SELF
         public ObservationContextAssert backToContext() {
             return this.observationContextAssert;
         }
+
     }
+
 }

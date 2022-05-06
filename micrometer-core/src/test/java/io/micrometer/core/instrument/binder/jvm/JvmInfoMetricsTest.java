@@ -22,7 +22,6 @@ import io.micrometer.core.instrument.search.Search;
 import io.micrometer.core.instrument.simple.SimpleMeterRegistry;
 import org.junit.jupiter.api.Test;
 
-
 import java.util.Collection;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -50,4 +49,5 @@ class JvmInfoMetricsTest {
         assertThat(id.getTag("vendor")).isNotNull();
         assertThat(id.getTag("runtime")).isNotNull();
     }
+
 }

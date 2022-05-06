@@ -17,7 +17,6 @@
 package io.micrometer.core.instrument.dropwizard;
 
 import com.codahale.metrics.Gauge;
-
 import org.junit.jupiter.api.Test;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -28,7 +27,7 @@ import static org.assertj.core.api.Assertions.assertThat;
  * @author Oleksii Bondar
  */
 class DropwizardGaugeTest {
-    
+
     @Test
     void returnNonNullValue() {
         double expectedValue = 10d;

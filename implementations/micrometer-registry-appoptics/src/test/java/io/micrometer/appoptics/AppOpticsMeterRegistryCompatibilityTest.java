@@ -22,6 +22,7 @@ import io.micrometer.core.tck.MeterRegistryCompatibilityKit;
 import java.time.Duration;
 
 class AppOpticsMeterRegistryCompatibilityTest extends MeterRegistryCompatibilityKit {
+
     private final AppOpticsConfig config = new AppOpticsConfig() {
         @Override
         public String get(String key) {
@@ -48,4 +49,5 @@ class AppOpticsMeterRegistryCompatibilityTest extends MeterRegistryCompatibility
     public Duration step() {
         return config.step();
     }
+
 }

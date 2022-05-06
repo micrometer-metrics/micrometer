@@ -31,70 +31,59 @@ class TestObservationRegistryAssertTests {
     void should_fail_when_observation_not_started() {
         Observation.createNotStarted("foo", registry).stop();
 
-        thenThrownBy(() -> TestObservationRegistryAssert.assertThat(registry)
-                .hasSingleObservationThat()
-                .hasBeenStarted())
-                .isInstanceOf(AssertionError.class)
-                .hasMessageContaining("You have forgotten to start your observation");
+        thenThrownBy(
+                () -> TestObservationRegistryAssert.assertThat(registry).hasSingleObservationThat().hasBeenStarted())
+                        .isInstanceOf(AssertionError.class)
+                        .hasMessageContaining("You have forgotten to start your observation");
     }
 
     @Test
     void should_not_fail_when_observation_started() {
         Observation.createNotStarted("foo", registry).start().stop();
 
-        thenNoException().isThrownBy(() -> TestObservationRegistryAssert.assertThat(registry)
-                .hasSingleObservationThat()
-                .hasBeenStarted());
+        thenNoException().isThrownBy(
+                () -> TestObservationRegistryAssert.assertThat(registry).hasSingleObservationThat().hasBeenStarted());
     }
 
     @Test
     void should_fail_when_observation_not_stopped() {
         Observation.createNotStarted("foo", registry).start();
 
-        thenThrownBy(() -> TestObservationRegistryAssert.assertThat(registry)
-                .hasSingleObservationThat()
-                .hasBeenStopped())
-                .isInstanceOf(AssertionError.class)
-                .hasMessageContaining("Observation is not stopped");
+        thenThrownBy(
+                () -> TestObservationRegistryAssert.assertThat(registry).hasSingleObservationThat().hasBeenStopped())
+                        .isInstanceOf(AssertionError.class).hasMessageContaining("Observation is not stopped");
     }
 
     @Test
     void should_not_fail_when_observation_stopped() {
         Observation.createNotStarted("foo", registry).start().stop();
 
-        thenNoException().isThrownBy(() -> TestObservationRegistryAssert.assertThat(registry)
-                .hasSingleObservationThat()
-                .hasBeenStopped());
+        thenNoException().isThrownBy(
+                () -> TestObservationRegistryAssert.assertThat(registry).hasSingleObservationThat().hasBeenStopped());
     }
 
     @Test
     void should_fail_when_observation_stopped() {
         Observation.createNotStarted("foo", registry).start().stop();
 
-        thenThrownBy(() -> TestObservationRegistryAssert.assertThat(registry)
-                .hasSingleObservationThat()
-                .isNotStopped())
-                .isInstanceOf(AssertionError.class)
-                .hasMessageContaining("Observation is stopped");
+        thenThrownBy(() -> TestObservationRegistryAssert.assertThat(registry).hasSingleObservationThat().isNotStopped())
+                .isInstanceOf(AssertionError.class).hasMessageContaining("Observation is stopped");
     }
 
     @Test
     void should_not_fail_when_observation_not_stopped() {
         Observation.createNotStarted("foo", registry).start();
 
-        thenNoException().isThrownBy(() -> TestObservationRegistryAssert.assertThat(registry)
-                .hasSingleObservationThat()
-                .isNotStopped());
+        thenNoException().isThrownBy(
+                () -> TestObservationRegistryAssert.assertThat(registry).hasSingleObservationThat().isNotStopped());
     }
 
     @Test
     void should_fail_when_no_observation_with_name_found() {
         Observation.createNotStarted("foo", registry).start().stop();
 
-        thenThrownBy(() -> TestObservationRegistryAssert.assertThat(registry)
-                .hasObservationWithNameEqualTo("bar"))
-                .isInstanceOf(AssertionError.class)
-                .hasMessageContaining("Available names are <foo>");
+        thenThrownBy(() -> TestObservationRegistryAssert.assertThat(registry).hasObservationWithNameEqualTo("bar"))
+                .isInstanceOf(AssertionError.class).hasMessageContaining("Available names are <foo>");
     }
 
     @Test
@@ -102,8 +91,7 @@ class TestObservationRegistryAssertTests {
         Observation.createNotStarted("foo", registry).start().stop();
 
         thenNoException().isThrownBy(() -> TestObservationRegistryAssert.assertThat(registry)
-                .hasObservationWithNameEqualTo("foo").that()
-                .hasBeenStarted());
+                .hasObservationWithNameEqualTo("foo").that().hasBeenStarted());
     }
 
     @Test
@@ -111,9 +99,8 @@ class TestObservationRegistryAssertTests {
         Observation.createNotStarted("foo", registry).start().stop();
 
         thenThrownBy(() -> TestObservationRegistryAssert.assertThat(registry)
-                .hasObservationWithNameEqualToIgnoringCase("bar"))
-                .isInstanceOf(AssertionError.class)
-                .hasMessageContaining("Available names are <foo>");
+                .hasObservationWithNameEqualToIgnoringCase("bar")).isInstanceOf(AssertionError.class)
+                        .hasMessageContaining("Available names are <foo>");
     }
 
     @Test
@@ -121,22 +108,17 @@ class TestObservationRegistryAssertTests {
         Observation.createNotStarted("FOO", registry).start().stop();
 
         thenNoException().isThrownBy(() -> TestObservationRegistryAssert.assertThat(registry)
-                .hasObservationWithNameEqualToIgnoringCase("foo").that()
-                .hasBeenStarted());
+                .hasObservationWithNameEqualToIgnoringCase("foo").that().hasBeenStarted());
     }
 
     @Test
     void should_jump_to_and_back_from_context_assert() {
         new Example(registry).run();
 
-        thenNoException().isThrownBy(() -> assertThat(registry)
-                .hasObservationWithNameEqualTo("foo").that()
-                    .hasHighCardinalityKeyValue("highTag", "highTagValue")
-                    .hasLowCardinalityKeyValue("lowTag", "lowTagValue")
-                    .hasBeenStarted()
-                    .hasBeenStopped()
-                .backToTestObservationRegistry()
-                    .doesNotHaveAnyRemainingCurrentObservation());
+        thenNoException().isThrownBy(() -> assertThat(registry).hasObservationWithNameEqualTo("foo").that()
+                .hasHighCardinalityKeyValue("highTag", "highTagValue")
+                .hasLowCardinalityKeyValue("lowTag", "lowTagValue").hasBeenStarted().hasBeenStopped()
+                .backToTestObservationRegistry().doesNotHaveAnyRemainingCurrentObservation());
     }
 
     static class Example {
@@ -148,10 +130,10 @@ class TestObservationRegistryAssertTests {
         }
 
         void run() {
-            Observation.createNotStarted("foo", registry)
-                    .lowCardinalityKeyValue("lowTag", "lowTagValue")
-                    .highCardinalityKeyValue("highTag", "highTagValue")
-                    .observe(() -> System.out.println("Hello"));
+            Observation.createNotStarted("foo", registry).lowCardinalityKeyValue("lowTag", "lowTagValue")
+                    .highCardinalityKeyValue("highTag", "highTagValue").observe(() -> System.out.println("Hello"));
         }
+
     }
+
 }

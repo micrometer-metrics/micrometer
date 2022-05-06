@@ -23,7 +23,6 @@ import io.micrometer.observation.lang.Nullable;
  * @author Jonatan Ivanov
  * @author Tommy Ludwig
  * @author Marcin Grzejszczak
- *
  * @since 1.10.0
  */
 class SimpleObservationRegistry implements ObservationRegistry {
@@ -52,4 +51,5 @@ class SimpleObservationRegistry implements ObservationRegistry {
     public boolean isNoOp() {
         return ObservationRegistry.super.isNoOp();
     }
+
 }

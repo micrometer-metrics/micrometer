@@ -45,4 +45,5 @@ class NullContextObservationHandlerCompatibilityKitTests extends NullContextObse
             }
         };
     }
+
 }

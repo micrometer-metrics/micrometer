@@ -15,6 +15,18 @@
  */
 package io.micrometer.elastic;
 
+import io.micrometer.core.instrument.*;
+import io.micrometer.core.instrument.distribution.HistogramSnapshot;
+import io.micrometer.core.instrument.step.StepMeterRegistry;
+import io.micrometer.core.instrument.util.MeterPartition;
+import io.micrometer.core.instrument.util.NamedThreadFactory;
+import io.micrometer.core.instrument.util.StringUtils;
+import io.micrometer.core.ipc.http.HttpSender;
+import io.micrometer.core.ipc.http.HttpUrlConnectionSender;
+import io.micrometer.core.lang.NonNull;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import java.time.Instant;
 import java.time.ZoneOffset;
 import java.time.ZonedDateTime;
@@ -30,30 +42,6 @@ import java.util.function.Function;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-import io.micrometer.core.instrument.Clock;
-import io.micrometer.core.instrument.Counter;
-import io.micrometer.core.instrument.DistributionSummary;
-import io.micrometer.core.instrument.FunctionCounter;
-import io.micrometer.core.instrument.FunctionTimer;
-import io.micrometer.core.instrument.Gauge;
-import io.micrometer.core.instrument.LongTaskTimer;
-import io.micrometer.core.instrument.Measurement;
-import io.micrometer.core.instrument.Meter;
-import io.micrometer.core.instrument.MeterRegistry;
-import io.micrometer.core.instrument.Tag;
-import io.micrometer.core.instrument.TimeGauge;
-import io.micrometer.core.instrument.Timer;
-import io.micrometer.core.instrument.distribution.HistogramSnapshot;
-import io.micrometer.core.instrument.step.StepMeterRegistry;
-import io.micrometer.core.instrument.util.MeterPartition;
-import io.micrometer.core.instrument.util.NamedThreadFactory;
-import io.micrometer.core.instrument.util.StringUtils;
-import io.micrometer.core.ipc.http.HttpSender;
-import io.micrometer.core.ipc.http.HttpUrlConnectionSender;
-import io.micrometer.core.lang.NonNull;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
 import static io.micrometer.core.instrument.util.StringEscapeUtils.escapeJson;
 import static java.util.stream.Collectors.joining;
 
@@ -67,68 +55,38 @@ import static java.util.stream.Collectors.joining;
  * @implNote This implementation requires Elasticsearch 7 or above.
  */
 public class ElasticMeterRegistry extends StepMeterRegistry {
+
     private static final ThreadFactory DEFAULT_THREAD_FACTORY = new NamedThreadFactory("elastic-metrics-publisher");
     static final DateTimeFormatter TIMESTAMP_FORMATTER = DateTimeFormatter.ISO_INSTANT;
+
     private static final String ES_METRICS_TEMPLATE = "/_template/metrics_template";
 
-    private static final String TEMPLATE_PROPERTIES = "\"properties\": {\n" +
-            "  \"name\": {\n" +
-            "    \"type\": \"keyword\"\n" +
-            "  },\n" +
-            "  \"count\": {\n" +
-            "    \"type\": \"double\",\n" +
-            "    \"index\": false\n" +
-            "  },\n" +
-            "  \"value\": {\n" +
-            "    \"type\": \"double\",\n" +
-            "    \"index\": false\n" +
-            "  },\n" +
-            "  \"sum\": {\n" +
-            "    \"type\": \"double\",\n" +
-            "    \"index\": false\n" +
-            "  },\n" +
-            "  \"mean\": {\n" +
-            "    \"type\": \"double\",\n" +
-            "    \"index\": false\n" +
-            "  },\n" +
-            "  \"duration\": {\n" +
-            "    \"type\": \"double\",\n" +
-            "    \"index\": false\n" +
-            "  },\n" +
-            "  \"max\": {\n" +
-            "    \"type\": \"double\",\n" +
-            "    \"index\": false\n" +
-            "  },\n" +
-            "  \"total\": {\n" +
-            "    \"type\": \"double\",\n" +
-            "    \"index\": false\n" +
-            "  },\n" +
-            "  \"unknown\": {\n" +
-            "    \"type\": \"double\",\n" +
-            "    \"index\": false\n" +
-            "  },\n" +
-            "  \"active\": {\n" +
-            "    \"type\": \"double\",\n" +
-            "    \"index\": false\n" +
-            "  }\n" +
-            "}";
-    private static final Function<String, String> TEMPLATE_BODY_AFTER_VERSION_7 = (indexPrefix) -> "{\n" +
-            "  \"index_patterns\": [\"" + indexPrefix + "*\"],\n" +
-            "  \"mappings\": {\n" +
-            "    \"_source\": {\n" +
-            "      \"enabled\": false\n" +
-            "    },\n" + TEMPLATE_PROPERTIES +
-            "  }\n" +
-            "}";
+    private static final String TEMPLATE_PROPERTIES = "\"properties\": {\n" + "  \"name\": {\n"
+            + "    \"type\": \"keyword\"\n" + "  },\n" + "  \"count\": {\n" + "    \"type\": \"double\",\n"
+            + "    \"index\": false\n" + "  },\n" + "  \"value\": {\n" + "    \"type\": \"double\",\n"
+            + "    \"index\": false\n" + "  },\n" + "  \"sum\": {\n" + "    \"type\": \"double\",\n"
+            + "    \"index\": false\n" + "  },\n" + "  \"mean\": {\n" + "    \"type\": \"double\",\n"
+            + "    \"index\": false\n" + "  },\n" + "  \"duration\": {\n" + "    \"type\": \"double\",\n"
+            + "    \"index\": false\n" + "  },\n" + "  \"max\": {\n" + "    \"type\": \"double\",\n"
+            + "    \"index\": false\n" + "  },\n" + "  \"total\": {\n" + "    \"type\": \"double\",\n"
+            + "    \"index\": false\n" + "  },\n" + "  \"unknown\": {\n" + "    \"type\": \"double\",\n"
+            + "    \"index\": false\n" + "  },\n" + "  \"active\": {\n" + "    \"type\": \"double\",\n"
+            + "    \"index\": false\n" + "  }\n" + "}";
+
+    private static final Function<String, String> TEMPLATE_BODY_AFTER_VERSION_7 = (indexPrefix) -> "{\n"
+            + "  \"index_patterns\": [\"" + indexPrefix + "*\"],\n" + "  \"mappings\": {\n" + "    \"_source\": {\n"
+            + "      \"enabled\": false\n" + "    },\n" + TEMPLATE_PROPERTIES + "  }\n" + "}";
 
     private static final Pattern MAJOR_VERSION_PATTERN = Pattern.compile("\"number\" *: *\"([\\d]+)");
 
     private static final String ERROR_RESPONSE_BODY_SIGNATURE = "\"errors\":true";
+
     private static final Pattern STATUS_CREATED_PATTERN = Pattern.compile("\"status\":201");
 
     private final Logger logger = LoggerFactory.getLogger(ElasticMeterRegistry.class);
 
     private final ElasticConfig config;
+
     private final HttpSender httpClient;
 
     private final DateTimeFormatter indexDateFormatter;
@@ -145,14 +103,14 @@ public class ElasticMeterRegistry extends StepMeterRegistry {
 
     /**
      * Create a new instance with given parameters.
-     *
      * @param config configuration to use
      * @param clock clock to use
      * @param threadFactory thread factory to use
      * @param httpClient http client to use
      * @since 1.2.1
      */
-    protected ElasticMeterRegistry(ElasticConfig config, Clock clock, ThreadFactory threadFactory, HttpSender httpClient) {
+    protected ElasticMeterRegistry(ElasticConfig config, Clock clock, ThreadFactory threadFactory,
+            HttpSender httpClient) {
         super(config, clock);
         config().namingConvention(new ElasticNamingConvention());
         this.config = config;
@@ -160,7 +118,8 @@ public class ElasticMeterRegistry extends StepMeterRegistry {
         this.httpClient = httpClient;
         if (StringUtils.isNotEmpty(config.pipeline())) {
             actionLine = "{ \"create\" : {\"pipeline\":\"" + config.pipeline() + "\"} }\n";
-        } else {
+        }
+        else {
             actionLine = "{ \"create\" : {} }\n";
         }
 
@@ -178,24 +137,20 @@ public class ElasticMeterRegistry extends StepMeterRegistry {
 
         try {
             String uri = config.host() + ES_METRICS_TEMPLATE;
-            if (connect(HttpSender.Method.HEAD, uri)
-                    .send()
-                    .onError(response -> {
-                        if (response.code() != 404) {
-                            logger.error("could not create index in elastic (HTTP {}): {}", response.code(), response.body());
-                        }
-                    })
-                    .isSuccessful()) {
+            if (connect(HttpSender.Method.HEAD, uri).send().onError(response -> {
+                if (response.code() != 404) {
+                    logger.error("could not create index in elastic (HTTP {}): {}", response.code(), response.body());
+                }
+            }).isSuccessful()) {
                 checkedForIndexTemplate = true;
                 logger.debug("metrics template already exists");
                 return;
             }
 
-            connect(HttpSender.Method.PUT, uri)
-                    .withJsonContent(getTemplateBody())
-                    .send()
-                    .onError(response -> logger.error("failed to add metrics template to elastic: {}", response.body()));
-        } catch (Throwable e) {
+            connect(HttpSender.Method.PUT, uri).withJsonContent(getTemplateBody()).send().onError(
+                    response -> logger.error("failed to add metrics template to elastic: {}", response.body()));
+        }
+        catch (Throwable e) {
             logger.error("could not create index in elastic", e);
             return;
         }
@@ -214,11 +169,11 @@ public class ElasticMeterRegistry extends StepMeterRegistry {
     private HttpSender.Request.Builder authentication(HttpSender.Request.Builder request) {
         if (StringUtils.isNotBlank(config.apiKeyCredentials())) {
             return request.withAuthentication("ApiKey", config.apiKeyCredentials());
-        } else {
+        }
+        else {
             return request.withBasicAuthentication(config.userName(), config.password());
         }
     }
-
 
     @Override
     protected void publish() {
@@ -228,39 +183,28 @@ public class ElasticMeterRegistry extends StepMeterRegistry {
         for (List<Meter> batch : MeterPartition.partition(this, config.batchSize())) {
             try {
                 String requestBody = batch.stream()
-                        .map(m -> m.match(
-                                this::writeGauge,
-                                this::writeCounter,
-                                this::writeTimer,
-                                this::writeSummary,
-                                this::writeLongTaskTimer,
-                                this::writeTimeGauge,
-                                this::writeFunctionCounter,
-                                this::writeFunctionTimer,
-                                this::writeMeter))
-                        .filter(Optional::isPresent)
-                        .map(Optional::get)
-                        .collect(joining("\n", "", "\n"));
-                connect(HttpSender.Method.POST, uri)
-                        .withJsonContent(requestBody)
-                        .send()
-                        .onSuccess(response -> {
-                            int numberOfSentItems = batch.size();
-                            String responseBody = response.body();
-                            if (responseBody.contains(ERROR_RESPONSE_BODY_SIGNATURE)) {
-                                int numberOfCreatedItems = countCreatedItems(responseBody);
-                                logger.debug("failed metrics payload: {}", requestBody);
-                                logger.error("failed to send metrics to elastic (sent {} metrics but created {} metrics): {}",
-                                        numberOfSentItems, numberOfCreatedItems, responseBody);
-                            } else {
-                                logger.debug("successfully sent {} metrics to elastic", numberOfSentItems);
-                            }
-                        })
-                        .onError(response -> {
-                            logger.debug("failed metrics payload: {}", requestBody);
-                            logger.error("failed to send metrics to elastic: {}", response.body());
-                        });
-            } catch (Throwable e) {
+                        .map(m -> m.match(this::writeGauge, this::writeCounter, this::writeTimer, this::writeSummary,
+                                this::writeLongTaskTimer, this::writeTimeGauge, this::writeFunctionCounter,
+                                this::writeFunctionTimer, this::writeMeter))
+                        .filter(Optional::isPresent).map(Optional::get).collect(joining("\n", "", "\n"));
+                connect(HttpSender.Method.POST, uri).withJsonContent(requestBody).send().onSuccess(response -> {
+                    int numberOfSentItems = batch.size();
+                    String responseBody = response.body();
+                    if (responseBody.contains(ERROR_RESPONSE_BODY_SIGNATURE)) {
+                        int numberOfCreatedItems = countCreatedItems(responseBody);
+                        logger.debug("failed metrics payload: {}", requestBody);
+                        logger.error("failed to send metrics to elastic (sent {} metrics but created {} metrics): {}",
+                                numberOfSentItems, numberOfCreatedItems, responseBody);
+                    }
+                    else {
+                        logger.debug("successfully sent {} metrics to elastic", numberOfSentItems);
+                    }
+                }).onError(response -> {
+                    logger.debug("failed metrics payload: {}", requestBody);
+                    logger.error("failed to send metrics to elastic: {}", response.body());
+                });
+            }
+            catch (Throwable e) {
                 logger.error("failed to send metrics to elastic", e);
             }
         }
@@ -287,7 +231,6 @@ public class ElasticMeterRegistry extends StepMeterRegistry {
 
     /**
      * Return index name.
-     *
      * @return index name.
      * @since 1.2.0
      */
@@ -384,7 +327,8 @@ public class ElasticMeterRegistry extends StepMeterRegistry {
     Optional<String> writeMeter(Meter meter) {
         Iterable<Measurement> measurements = meter.measure();
         List<String> names = new ArrayList<>();
-        // Snapshot values should be used throughout this method as there are chances for values to be changed in-between.
+        // Snapshot values should be used throughout this method as there are chances for
+        // values to be changed in-between.
         List<Double> values = new ArrayList<>();
         for (Measurement measurement : measurements) {
             double value = measurement.getValue();
@@ -406,7 +350,6 @@ public class ElasticMeterRegistry extends StepMeterRegistry {
 
     /**
      * Return formatted current timestamp.
-     *
      * @return formatted current timestamp
      * @since 1.2.0
      */
@@ -421,13 +364,13 @@ public class ElasticMeterRegistry extends StepMeterRegistry {
         String name = getConventionName(meter.getId());
         String type = meter.getId().getType().toString().toLowerCase();
         sb.append("{\"").append(config.timestampFieldName()).append("\":\"").append(timestamp).append('"')
-                .append(",\"name\":\"").append(escapeJson(name)).append('"')
-                .append(",\"type\":\"").append(type).append('"');
+                .append(",\"name\":\"").append(escapeJson(name)).append('"').append(",\"type\":\"").append(type)
+                .append('"');
 
         List<Tag> tags = getConventionTags(meter.getId());
         for (Tag tag : tags) {
-            sb.append(",\"").append(escapeJson(tag.getKey())).append("\":\"")
-                    .append(escapeJson(tag.getValue())).append('"');
+            sb.append(",\"").append(escapeJson(tag.getKey())).append("\":\"").append(escapeJson(tag.getValue()))
+                    .append('"');
         }
 
         consumer.accept(sb);
@@ -443,10 +386,13 @@ public class ElasticMeterRegistry extends StepMeterRegistry {
     }
 
     public static class Builder {
+
         private final ElasticConfig config;
 
         private Clock clock = Clock.SYSTEM;
+
         private ThreadFactory threadFactory = DEFAULT_THREAD_FACTORY;
+
         private HttpSender httpClient;
 
         @SuppressWarnings("deprecation")
@@ -473,5 +419,7 @@ public class ElasticMeterRegistry extends StepMeterRegistry {
         public ElasticMeterRegistry build() {
             return new ElasticMeterRegistry(config, clock, threadFactory, httpClient);
         }
+
     }
+
 }

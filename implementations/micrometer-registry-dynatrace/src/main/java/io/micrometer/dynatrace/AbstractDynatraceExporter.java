@@ -29,8 +29,11 @@ import java.util.concurrent.TimeUnit;
  * @since 1.8.0
  */
 public abstract class AbstractDynatraceExporter {
+
     protected final DynatraceConfig config;
+
     protected final Clock clock;
+
     protected final HttpSender httpClient;
 
     public AbstractDynatraceExporter(DynatraceConfig config, Clock clock, HttpSender httpClient) {
@@ -44,4 +47,5 @@ public abstract class AbstractDynatraceExporter {
     }
 
     public abstract void export(List<Meter> meters);
+
 }

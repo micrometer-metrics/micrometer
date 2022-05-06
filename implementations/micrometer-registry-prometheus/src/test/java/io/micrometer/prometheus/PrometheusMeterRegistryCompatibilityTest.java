@@ -23,6 +23,7 @@ import io.prometheus.client.CollectorRegistry;
 import java.time.Duration;
 
 class PrometheusMeterRegistryCompatibilityTest extends MeterRegistryCompatibilityKit {
+
     @Override
     public MeterRegistry registry() {
         return new PrometheusMeterRegistry(PrometheusConfig.DEFAULT, new CollectorRegistry(true), new MockClock());
@@ -32,4 +33,5 @@ class PrometheusMeterRegistryCompatibilityTest extends MeterRegistryCompatibilit
     public Duration step() {
         return PrometheusConfig.DEFAULT.step();
     }
+
 }

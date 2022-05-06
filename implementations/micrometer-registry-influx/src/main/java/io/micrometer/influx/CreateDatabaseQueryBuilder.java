@@ -21,23 +21,30 @@ import java.util.Objects;
 import java.util.stream.Stream;
 
 /**
- * Builds a create database query for influxdb. It is supposed to be of the following structure:
+ * Builds a create database query for influxdb. It is supposed to be of the following
+ * structure:
  * <p>
- * CREATE DATABASE <database_name> [WITH [DURATION <duration>] [REPLICATION <n>] [SHARD DURATION <duration>] [NAME
- * <retention-policy-name>]]
+ * CREATE DATABASE <database_name> [WITH [DURATION <duration>] [REPLICATION <n>] [SHARD
+ * DURATION <duration>] [NAME <retention-policy-name>]]
  *
  * @author Vladyslav Oleniuk (vlad.oleniuk@gmail.com)
  */
 class CreateDatabaseQueryBuilder {
 
     private static final String QUERY_MANDATORY_TEMPLATE = "CREATE DATABASE \"%s\"";
+
     private static final String RETENTION_POLICY_INTRODUCTION = " WITH";
+
     private static final String DURATION_CLAUSE_TEMPLATE = " DURATION %s";
+
     private static final String REPLICATION_FACTOR_CLAUSE_TEMPLATE = " REPLICATION %d";
+
     private static final String SHARD_DURATION_CLAUSE_TEMPLATE = " SHARD DURATION %s";
+
     private static final String NAME_CLAUSE_TEMPLATE = " NAME %s";
 
     private final String databaseName;
+
     private final String[] retentionPolicyClauses = new String[4];
 
     CreateDatabaseQueryBuilder(String databaseName) {
@@ -92,4 +99,5 @@ class CreateDatabaseQueryBuilder {
     private boolean isEmpty(@Nullable String string) {
         return string == null || string.isEmpty();
     }
+
 }

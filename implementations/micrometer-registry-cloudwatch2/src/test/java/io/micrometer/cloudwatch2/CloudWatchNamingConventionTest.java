@@ -29,6 +29,7 @@ import static org.assertj.core.api.Assertions.assertThat;
  * @author Johnny Lim
  */
 class CloudWatchNamingConventionTest {
+
     private final NamingConvention namingConvention = new CloudWatchNamingConvention();
 
     @Test

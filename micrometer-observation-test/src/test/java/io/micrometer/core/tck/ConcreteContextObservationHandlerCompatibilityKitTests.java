@@ -18,7 +18,8 @@ package io.micrometer.core.tck;
 import io.micrometer.observation.Observation;
 import io.micrometer.observation.ObservationHandler;
 
-class ConcreteContextObservationHandlerCompatibilityKitTests extends ConcreteContextObservationHandlerCompatibilityKit<Observation.Context> {
+class ConcreteContextObservationHandlerCompatibilityKitTests
+        extends ConcreteContextObservationHandlerCompatibilityKit<Observation.Context> {
 
     @Override
     public ObservationHandler<Observation.Context> handler() {
@@ -53,5 +54,7 @@ class ConcreteContextObservationHandlerCompatibilityKitTests extends ConcreteCon
     }
 
     static class TestContext extends Observation.Context {
+
     }
+
 }

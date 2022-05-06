@@ -30,8 +30,11 @@ import static org.assertj.core.api.Assertions.assertThat;
  * @author Andrew Fitzgerald
  */
 class GraphiteDimensionalNameMapperTest {
+
     private final GraphiteDimensionalNameMapper nameMapper = new GraphiteDimensionalNameMapper();
+
     private final SimpleMeterRegistry registry = new SimpleMeterRegistry();
+
     private final NamingConvention namingConvention = new GraphiteDimensionalNamingConvention();
 
     @Test
@@ -55,4 +58,5 @@ class GraphiteDimensionalNameMapperTest {
     private String getName(Meter meter) {
         return nameMapper.toHierarchicalName(meter.getId(), namingConvention);
     }
+
 }

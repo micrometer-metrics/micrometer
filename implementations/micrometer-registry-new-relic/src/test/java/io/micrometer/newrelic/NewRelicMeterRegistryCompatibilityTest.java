@@ -56,4 +56,5 @@ class NewRelicMeterRegistryCompatibilityTest extends MeterRegistryCompatibilityK
     public Duration step() {
         return config.step();
     }
+
 }

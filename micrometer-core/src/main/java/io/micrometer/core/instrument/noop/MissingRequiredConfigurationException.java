@@ -24,7 +24,9 @@ import io.micrometer.core.instrument.config.validate.Validated;
  */
 @Deprecated
 public class MissingRequiredConfigurationException extends IllegalStateException {
+
     public MissingRequiredConfigurationException(String s) {
         super(s);
     }
+
 }

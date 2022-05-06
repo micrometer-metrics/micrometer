@@ -16,6 +16,7 @@
 package io.micrometer.core.instrument.distribution;
 
 public class NoopHistogram implements Histogram {
+
     public static final NoopHistogram INSTANCE = new NoopHistogram();
 
     private NoopHistogram() {
@@ -33,4 +34,5 @@ public class NoopHistogram implements Histogram {
     public HistogramSnapshot takeSnapshot(long count, double total, double max) {
         return HistogramSnapshot.empty(count, total, max);
     }
+
 }

@@ -28,6 +28,7 @@ import static org.mockito.Mockito.mock;
  * @author Marcin Grzejszczak
  */
 class ObservationRegistryTest {
+
     private final ObservationRegistry registry = ObservationRegistry.create();
 
     @Test
@@ -56,7 +57,6 @@ class ObservationRegistryTest {
         assertThat(registry.observationConfig().getObservationHandlers()).containsExactlyInAnyOrder(handler1, handler2);
     }
 
-
     @Test
     void observationShouldBeNoOpWhenPredicateApplicable() {
         registry.observationConfig().observationPredicate((name, context) -> !name.equals("test.timer"));
@@ -71,7 +71,8 @@ class ObservationRegistryTest {
         assertThat(Observation.start("test.timer", null)).isSameAs(NoopObservation.INSTANCE);
         assertThat(Observation.start("test.timer", new Observation.Context(), null)).isSameAs(NoopObservation.INSTANCE);
         assertThat(Observation.createNotStarted("test.timer", null)).isSameAs(NoopObservation.INSTANCE);
-        assertThat(Observation.createNotStarted("test.timer", new Observation.Context(), null)).isSameAs(NoopObservation.INSTANCE);
+        assertThat(Observation.createNotStarted("test.timer", new Observation.Context(), null))
+                .isSameAs(NoopObservation.INSTANCE);
     }
 
     @Test
@@ -79,8 +80,11 @@ class ObservationRegistryTest {
         ObservationRegistry registry = ObservationRegistry.create();
         registry.observationConfig().observationHandler(c -> true);
         assertThat(Observation.start("test.timer", registry)).isInstanceOf(SimpleObservation.class);
-        assertThat(Observation.start("test.timer", new Observation.Context(), registry)).isInstanceOf(SimpleObservation.class);
+        assertThat(Observation.start("test.timer", new Observation.Context(), registry))
+                .isInstanceOf(SimpleObservation.class);
         assertThat(Observation.createNotStarted("test.timer", registry)).isInstanceOf(SimpleObservation.class);
-        assertThat(Observation.createNotStarted("test.timer", new Observation.Context(), registry)).isInstanceOf(SimpleObservation.class);
+        assertThat(Observation.createNotStarted("test.timer", new Observation.Context(), registry))
+                .isInstanceOf(SimpleObservation.class);
     }
+
 }

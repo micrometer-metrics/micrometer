@@ -27,6 +27,7 @@ import static org.assertj.core.api.Assertions.assertThat;
  * @author Marcin Grzejszczak
  */
 class ObservationTests {
+
     @Test
     void notHavingAnyHandlersShouldResultInNoOpObservation() {
         ObservationRegistry registry = ObservationRegistry.create();

@@ -32,11 +32,13 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 class GraphiteMeterRegistryTest {
+
     /**
-     * A port that is NOT the default for DogStatsD or Telegraf, so these unit tests
-     * do not fail if one of those agents happens to be running on the same box.
+     * A port that is NOT the default for DogStatsD or Telegraf, so these unit tests do
+     * not fail if one of those agents happens to be running on the same box.
      */
     private static final int PORT = findAvailableUdpPort();
+
     private MockClock mockClock = new MockClock();
 
     private static int findAvailableUdpPort() {
@@ -45,7 +47,8 @@ class GraphiteMeterRegistryTest {
                 DatagramSocket socket = new DatagramSocket(port);
                 socket.close();
                 return port;
-            } catch (Exception ignored) {
+            }
+            catch (Exception ignored) {
             }
         }
         throw new RuntimeException("no available UDP port");
@@ -84,44 +87,35 @@ class GraphiteMeterRegistryTest {
 
             @Override
             public String[] tagsAsPrefix() {
-                return new String[]{"application"};
+                return new String[] { "application" };
             }
         }, mockClock);
 
-        Connection server = UdpServer.create()
-                .option(ChannelOption.SO_REUSEADDR, true)
-                .host("localhost")
-                .port(PORT)
+        Connection server = UdpServer.create().option(ChannelOption.SO_REUSEADDR, true).host("localhost").port(PORT)
                 .handle((in, out) -> {
-                    in.receive()
-                            .asString()
-                            .subscribe(line -> {
-                                assertThat(line).startsWith("APPNAME.myTimer");
-                                receiveLatch.countDown();
-                            });
+                    in.receive().asString().subscribe(line -> {
+                        assertThat(line).startsWith("APPNAME.myTimer");
+                        receiveLatch.countDown();
+                    });
                     return Flux.never();
-                })
-                .bind()
-                .doOnSuccess(v -> {
-                    registry.timer("my.timer", "application", "APPNAME")
-                            .record(1, TimeUnit.MILLISECONDS);
+                }).bind().doOnSuccess(v -> {
+                    registry.timer("my.timer", "application", "APPNAME").record(1, TimeUnit.MILLISECONDS);
                     registry.close();
-                })
-                .block(Duration.ofSeconds(10));
+                }).block(Duration.ofSeconds(10));
 
         assertTrue(receiveLatch.await(10, TimeUnit.SECONDS), "line was received");
         server.dispose();
     }
 
-
     /**
-     * The Dropwizard Graphite Reporter Appends metric attributes to the label (min, max, p95, etc).
-     * This test ensures that they are sent as a separate `metricattribute` tag instead of appending it to an existing tag value
-     * See  https://github.com/micrometer-metrics/micrometer/issues/2069
+     * The Dropwizard Graphite Reporter Appends metric attributes to the label (min, max,
+     * p95, etc). This test ensures that they are sent as a separate `metricattribute` tag
+     * instead of appending it to an existing tag value See
+     * https://github.com/micrometer-metrics/micrometer/issues/2069
      */
     @Test
-        //
-        //We need to make sure that it is included as a separate tag instead of
+    //
+    // We need to make sure that it is included as a separate tag instead of
     void taggedMetrics() throws InterruptedException {
         final CountDownLatch receiveLatch = new CountDownLatch(1);
 
@@ -158,28 +152,20 @@ class GraphiteMeterRegistryTest {
             }
         }, mockClock);
 
-        Connection server = UdpServer.create()
-                .option(ChannelOption.SO_REUSEADDR, true)
-                .host("localhost")
-                .port(PORT)
+        Connection server = UdpServer.create().option(ChannelOption.SO_REUSEADDR, true).host("localhost").port(PORT)
                 .handle((in, out) -> {
-                    in.receive()
-                            .asString()
-                            .subscribe(line -> {
-                                assertThat(line).startsWith("my.timer;key=value;metricattribute=max ");
-                                receiveLatch.countDown();
-                            });
+                    in.receive().asString().subscribe(line -> {
+                        assertThat(line).startsWith("my.timer;key=value;metricattribute=max ");
+                        receiveLatch.countDown();
+                    });
                     return Flux.never();
-                })
-                .bind()
-                .doOnSuccess(v -> {
-                    registry.timer("my.timer", "key", "value")
-                            .record(1, TimeUnit.MILLISECONDS);
+                }).bind().doOnSuccess(v -> {
+                    registry.timer("my.timer", "key", "value").record(1, TimeUnit.MILLISECONDS);
                     registry.close();
-                })
-                .block(Duration.ofSeconds(10));
+                }).block(Duration.ofSeconds(10));
 
         assertTrue(receiveLatch.await(10, TimeUnit.SECONDS), "line was received");
         server.dispose();
     }
+
 }

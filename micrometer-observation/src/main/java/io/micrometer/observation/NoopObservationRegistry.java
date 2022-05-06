@@ -15,17 +15,17 @@
  */
 package io.micrometer.observation;
 
-
 /**
- * No-op implementation of {@link ObservationRegistry} so that we can disable the instrumentation logic.
+ * No-op implementation of {@link ObservationRegistry} so that we can disable the
+ * instrumentation logic.
  *
  * @author Jonatan Ivanov
  * @author Tommy Ludwig
  * @author Marcin Grzejszczak
- *
  * @since 1.10.0
  */
 final class NoopObservationRegistry implements ObservationRegistry {
+
     /**
      * Instance of {@link NoopObservationRegistry}.
      */
@@ -49,4 +49,5 @@ final class NoopObservationRegistry implements ObservationRegistry {
     public ObservationConfig observationConfig() {
         return this.observationConfig;
     }
+
 }

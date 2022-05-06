@@ -30,8 +30,10 @@ import static io.micrometer.core.instrument.config.validate.PropertyValidator.ge
  * @author Jon Schneider
  */
 public interface DropwizardConfig extends MeterRegistryConfig {
+
     /**
-     * @return The step size (reporting frequency, max decaying) to use. The default is 1 minute.
+     * @return The step size (reporting frequency, max decaying) to use. The default is 1
+     * minute.
      */
     default Duration step() {
         return getDuration(this, "step").orElse(Duration.ofMinutes(1));
@@ -44,14 +46,12 @@ public interface DropwizardConfig extends MeterRegistryConfig {
 
     /**
      * Validate a provided configuration.
-     *
      * @param config configuration to validate
      * @return validation result
      * @since 1.5.0
      */
     static Validated<?> validate(DropwizardConfig config) {
-        return checkAll(config,
-                check("step", DropwizardConfig::step)
-        );
+        return checkAll(config, check("step", DropwizardConfig::step));
     }
+
 }

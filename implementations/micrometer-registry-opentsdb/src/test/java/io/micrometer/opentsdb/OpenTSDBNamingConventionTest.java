@@ -21,10 +21,12 @@ import org.junit.jupiter.api.Test;
 import static org.assertj.core.api.Assertions.assertThat;
 
 class OpenTSDBNamingConventionTest {
+
     private OpenTSDBNamingConvention convention = new OpenTSDBNamingConvention();
 
     @Test
     void defaultToSnakeCase() {
         assertThat(convention.name("gauge.size", Meter.Type.GAUGE)).isEqualTo("gauge_size");
     }
+
 }

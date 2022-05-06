@@ -64,8 +64,7 @@ class MicrometerHttpRequestExecutorTest {
         server.stubFor(any(anyUrl()));
         HttpClient client = client(executor(false));
         EntityUtils.consume(client.execute(new HttpGet(server.baseUrl())).getEntity());
-        assertThat(registry.get(EXPECTED_METER_NAME)
-                .timer().count()).isEqualTo(1L);
+        assertThat(registry.get(EXPECTED_METER_NAME).timer().count()).isEqualTo(1L);
     }
 
     @Test
@@ -75,12 +74,8 @@ class MicrometerHttpRequestExecutorTest {
         EntityUtils.consume(client.execute(new HttpGet(server.baseUrl())).getEntity());
         EntityUtils.consume(client.execute(new HttpGet(server.baseUrl())).getEntity());
         EntityUtils.consume(client.execute(new HttpPost(server.baseUrl())).getEntity());
-        assertThat(registry.get(EXPECTED_METER_NAME)
-                .tags("method", "GET")
-                .timer().count()).isEqualTo(2L);
-        assertThat(registry.get(EXPECTED_METER_NAME)
-                .tags("method", "POST")
-                .timer().count()).isEqualTo(1L);
+        assertThat(registry.get(EXPECTED_METER_NAME).tags("method", "GET").timer().count()).isEqualTo(2L);
+        assertThat(registry.get(EXPECTED_METER_NAME).tags("method", "POST").timer().count()).isEqualTo(1L);
     }
 
     @Test
@@ -93,15 +88,12 @@ class MicrometerHttpRequestExecutorTest {
         EntityUtils.consume(client.execute(new HttpGet(server.baseUrl() + "/ok")).getEntity());
         EntityUtils.consume(client.execute(new HttpGet(server.baseUrl() + "/notfound")).getEntity());
         EntityUtils.consume(client.execute(new HttpGet(server.baseUrl() + "/error")).getEntity());
-        assertThat(registry.get(EXPECTED_METER_NAME)
-                .tags("method", "GET", "status", "200")
-                .timer().count()).isEqualTo(2L);
-        assertThat(registry.get(EXPECTED_METER_NAME)
-                .tags("method", "GET", "status", "404")
-                .timer().count()).isEqualTo(1L);
-        assertThat(registry.get(EXPECTED_METER_NAME)
-                .tags("method", "GET", "status", "500")
-                .timer().count()).isEqualTo(1L);
+        assertThat(registry.get(EXPECTED_METER_NAME).tags("method", "GET", "status", "200").timer().count())
+                .isEqualTo(2L);
+        assertThat(registry.get(EXPECTED_METER_NAME).tags("method", "GET", "status", "404").timer().count())
+                .isEqualTo(1L);
+        assertThat(registry.get(EXPECTED_METER_NAME).tags("method", "GET", "status", "500").timer().count())
+                .isEqualTo(1L);
     }
 
     @Test
@@ -111,9 +103,7 @@ class MicrometerHttpRequestExecutorTest {
         EntityUtils.consume(client.execute(new HttpGet(server.baseUrl())).getEntity());
         EntityUtils.consume(client.execute(new HttpGet(server.baseUrl() + "/someuri")).getEntity());
         EntityUtils.consume(client.execute(new HttpGet(server.baseUrl() + "/otheruri")).getEntity());
-        assertThat(registry.get(EXPECTED_METER_NAME)
-                .tags("uri", "UNKNOWN")
-                .timer().count()).isEqualTo(3L);
+        assertThat(registry.get(EXPECTED_METER_NAME).tags("uri", "UNKNOWN").timer().count()).isEqualTo(3L);
     }
 
     @Test
@@ -123,12 +113,9 @@ class MicrometerHttpRequestExecutorTest {
         HttpGet getWithHeader = new HttpGet(server.baseUrl());
         getWithHeader.addHeader(DefaultUriMapper.URI_PATTERN_HEADER, "/some/pattern");
         EntityUtils.consume(client.execute(getWithHeader).getEntity());
-        assertThat(registry.get(EXPECTED_METER_NAME)
-                .tags("uri", "/some/pattern")
-                .timer().count()).isEqualTo(1L);
-        assertThrows(MeterNotFoundException.class, () -> registry.get(EXPECTED_METER_NAME)
-                .tags("uri", "UNKNOWN")
-                .timer());
+        assertThat(registry.get(EXPECTED_METER_NAME).tags("uri", "/some/pattern").timer().count()).isEqualTo(1L);
+        assertThrows(MeterNotFoundException.class,
+                () -> registry.get(EXPECTED_METER_NAME).tags("uri", "UNKNOWN").timer());
     }
 
     @Test
@@ -136,9 +123,7 @@ class MicrometerHttpRequestExecutorTest {
         server.stubFor(any(anyUrl()));
         HttpClient client = client(executor(false));
         EntityUtils.consume(client.execute(new HttpGet(server.baseUrl())).getEntity());
-        List<String> tagKeys = registry.get(EXPECTED_METER_NAME)
-                .timer().getId().getTags().stream()
-                .map(Tag::getKey)
+        List<String> tagKeys = registry.get(EXPECTED_METER_NAME).timer().getId().getTags().stream().map(Tag::getKey)
                 .collect(Collectors.toList());
         assertThat(tagKeys).doesNotContain("target.scheme", "target.host", "target.port");
         assertThat(tagKeys).contains("status", "method");
@@ -149,9 +134,7 @@ class MicrometerHttpRequestExecutorTest {
         server.stubFor(any(anyUrl()));
         HttpClient client = client(executor(true));
         EntityUtils.consume(client.execute(new HttpGet(server.baseUrl())).getEntity());
-        List<String> tagKeys = registry.get(EXPECTED_METER_NAME)
-                .timer().getId().getTags().stream()
-                .map(Tag::getKey)
+        List<String> tagKeys = registry.get(EXPECTED_METER_NAME).timer().getId().getTags().stream().map(Tag::getKey)
                 .collect(Collectors.toList());
         assertThat(tagKeys).contains("target.scheme", "target.host", "target.port");
     }
@@ -159,8 +142,7 @@ class MicrometerHttpRequestExecutorTest {
     @Test
     void waitForContinueGetsPassedToSuper() {
         MicrometerHttpRequestExecutor requestExecutor = MicrometerHttpRequestExecutor.builder(registry)
-                .waitForContinue(1000)
-                .build();
+                .waitForContinue(1000).build();
         assertThat(requestExecutor).hasFieldOrPropertyWithValue("waitForContinue", 1000);
     }
 
@@ -168,75 +150,54 @@ class MicrometerHttpRequestExecutorTest {
     void uriMapperWorksAsExpected(@WiremockResolver.Wiremock WireMockServer server) throws IOException {
         server.stubFor(any(anyUrl()));
         MicrometerHttpRequestExecutor executor = MicrometerHttpRequestExecutor.builder(registry)
-                .uriMapper(request -> request.getRequestLine().getUri())
-                .build();
+                .uriMapper(request -> request.getRequestLine().getUri()).build();
         HttpClient client = client(executor);
         EntityUtils.consume(client.execute(new HttpGet(server.baseUrl())).getEntity());
         EntityUtils.consume(client.execute(new HttpGet(server.baseUrl() + "/foo")).getEntity());
         EntityUtils.consume(client.execute(new HttpGet(server.baseUrl() + "/bar")).getEntity());
         EntityUtils.consume(client.execute(new HttpGet(server.baseUrl() + "/foo")).getEntity());
-        assertThat(registry.get(EXPECTED_METER_NAME)
-                .tags("uri", "/")
-                .timer().count()).isEqualTo(1L);
-        assertThat(registry.get(EXPECTED_METER_NAME)
-                .tags("uri", "/foo")
-                .timer().count()).isEqualTo(2L);
-        assertThat(registry.get(EXPECTED_METER_NAME)
-                .tags("uri", "/bar")
-                .timer().count()).isEqualTo(1L);
+        assertThat(registry.get(EXPECTED_METER_NAME).tags("uri", "/").timer().count()).isEqualTo(1L);
+        assertThat(registry.get(EXPECTED_METER_NAME).tags("uri", "/foo").timer().count()).isEqualTo(2L);
+        assertThat(registry.get(EXPECTED_METER_NAME).tags("uri", "/bar").timer().count()).isEqualTo(1L);
     }
 
     @Test
     void additionalTagsAreExposed(@WiremockResolver.Wiremock WireMockServer server) throws IOException {
         server.stubFor(any(anyUrl()));
         MicrometerHttpRequestExecutor executor = MicrometerHttpRequestExecutor.builder(registry)
-                .tags(Tags.of("foo", "bar", "some.key", "value"))
-                .exportTagsForRoute(true)
-                .build();
+                .tags(Tags.of("foo", "bar", "some.key", "value")).exportTagsForRoute(true).build();
         HttpClient client = client(executor);
         EntityUtils.consume(client.execute(new HttpGet(server.baseUrl())).getEntity());
-        assertThat(registry.get(EXPECTED_METER_NAME)
-                .tags("foo", "bar", "some.key", "value", "target.host", "localhost")
+        assertThat(registry.get(EXPECTED_METER_NAME).tags("foo", "bar", "some.key", "value", "target.host", "localhost")
                 .timer().count()).isEqualTo(1L);
     }
 
     @Test
     void settingNullRegistryThrowsException() {
-        assertThrows(IllegalArgumentException.class, () ->
-                MicrometerHttpRequestExecutor.builder(null)
-                        .build());
+        assertThrows(IllegalArgumentException.class, () -> MicrometerHttpRequestExecutor.builder(null).build());
     }
 
     @Test
     void overridingUriMapperWithNullThrowsException() {
-        assertThrows(IllegalArgumentException.class, () ->
-                MicrometerHttpRequestExecutor.builder(registry)
-                        .uriMapper(null)
-                        .build()
-        );
+        assertThrows(IllegalArgumentException.class,
+                () -> MicrometerHttpRequestExecutor.builder(registry).uriMapper(null).build());
     }
 
     @Test
     void overrideExtraTagsDoesNotThrowAnException(@WiremockResolver.Wiremock WireMockServer server) throws IOException {
         server.stubFor(any(anyUrl()));
-        MicrometerHttpRequestExecutor executor = MicrometerHttpRequestExecutor.builder(registry)
-                .tags(null)
-                .build();
+        MicrometerHttpRequestExecutor executor = MicrometerHttpRequestExecutor.builder(registry).tags(null).build();
         HttpClient client = client(executor);
         EntityUtils.consume(client.execute(new HttpGet(server.baseUrl())).getEntity());
         assertThat(registry.get(EXPECTED_METER_NAME)).isNotNull();
     }
 
     private HttpClient client(HttpRequestExecutor executor) {
-        return HttpClientBuilder.create()
-                .setRequestExecutor(executor)
-                .build();
+        return HttpClientBuilder.create().setRequestExecutor(executor).build();
     }
 
     private HttpRequestExecutor executor(boolean exportRoutes) {
-        return MicrometerHttpRequestExecutor.builder(registry)
-                .exportTagsForRoute(exportRoutes)
-                .build();
+        return MicrometerHttpRequestExecutor.builder(registry).exportTagsForRoute(exportRoutes).build();
     }
 
 }

@@ -197,4 +197,5 @@ final class Slf4JLogger extends AbstractInternalLogger {
     public void error(String msg, Throwable t) {
         logger.error(msg, t);
     }
+
 }

@@ -32,22 +32,30 @@ import static java.util.Arrays.stream;
  * @author Oriol Barcelona
  */
 class DynatraceMetricDefinition {
+
     private static final int MAX_DISPLAY_NAME = 256;
+
     private static final int MAX_GROUP_NAME = 256;
+
     private final String metricId;
+
     @Nullable
     private final String description;
+
     @Nullable
     private final DynatraceUnit unit;
+
     @Nullable
     private final Set<String> dimensions;
+
     // Guaranteed to be non-empty
     private final String[] technologyTypes;
+
     @Nullable
     private final String group;
 
-    DynatraceMetricDefinition(String metricId, @Nullable String description, @Nullable DynatraceUnit unit, @Nullable Set<String> dimensions,
-                              String[] technologyTypes, String group) {
+    DynatraceMetricDefinition(String metricId, @Nullable String description, @Nullable DynatraceUnit unit,
+            @Nullable Set<String> dimensions, String[] technologyTypes, String group) {
         this.metricId = metricId;
         this.description = description;
         this.unit = unit;
@@ -71,13 +79,11 @@ class DynatraceMetricDefinition {
             body += ",\"unit\":\"" + unit + "\"";
 
         if (dimensions != null && !dimensions.isEmpty())
-            body += ",\"dimensions\":[" + dimensions.stream()
-                    .map(d -> "\"" + d + "\"")
-                    .collect(Collectors.joining(",")) + "]";
+            body += ",\"dimensions\":[" + dimensions.stream().map(d -> "\"" + d + "\"").collect(Collectors.joining(","))
+                    + "]";
 
-        body += ",\"types\":[" +
-                stream(technologyTypes).map(type -> "\"" + type + "\"").collect(Collectors.joining(",")) +
-                "]";
+        body += ",\"types\":["
+                + stream(technologyTypes).map(type -> "\"" + type + "\"").collect(Collectors.joining(",")) + "]";
 
         body += "}";
         return body;
@@ -86,9 +92,12 @@ class DynatraceMetricDefinition {
     /**
      * Subset of mappable units of the custom metric API.
      *
-     * @see <a href="https://www.dynatrace.com/support/help/shortlink/api-custom-metrics#put-custom-metric">available units</a>
+     * @see <a href=
+     * "https://www.dynatrace.com/support/help/shortlink/api-custom-metrics#put-custom-metric">available
+     * units</a>
      */
     enum DynatraceUnit {
+
         // Time
         NanoSecond, MicroSecond, MilliSecond, Second,
 
@@ -98,12 +107,15 @@ class DynatraceMetricDefinition {
         // Count
         Count;
 
-        private static Map<String, DynatraceUnit> UNITS_MAPPING = Collections.unmodifiableMap(
-                Stream.of(DynatraceUnit.values()).collect(Collectors.toMap(k -> k.toString().toLowerCase() + "s", Function.identity())));
+        private static Map<String, DynatraceUnit> UNITS_MAPPING = Collections
+                .unmodifiableMap(Stream.of(DynatraceUnit.values())
+                        .collect(Collectors.toMap(k -> k.toString().toLowerCase() + "s", Function.identity())));
 
         @Nullable
         static DynatraceUnit fromPlural(@Nullable String plural) {
             return UNITS_MAPPING.getOrDefault(plural, null);
         }
+
     }
+
 }

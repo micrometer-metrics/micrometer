@@ -34,15 +34,19 @@ import static java.util.Collections.emptyList;
  *
  * @author jmcshane
  * @author Johnny Lim
- * @deprecated use {@link io.micrometer.core.instrument.binder.system.DiskSpaceMetrics} instead.
+ * @deprecated use {@link io.micrometer.core.instrument.binder.system.DiskSpaceMetrics}
+ * instead.
  */
 @Incubating(since = "1.1.0")
 @NonNullApi
 @NonNullFields
 @Deprecated
 public class DiskSpaceMetrics implements MeterBinder {
+
     private final Iterable<Tag> tags;
+
     private final File path;
+
     private final String absolutePath;
 
     public DiskSpaceMetrics(File path) {
@@ -58,17 +62,10 @@ public class DiskSpaceMetrics implements MeterBinder {
     @Override
     public void bindTo(MeterRegistry registry) {
         Iterable<Tag> tagsWithPath = Tags.concat(tags, "path", absolutePath);
-        Gauge.builder("disk.free", path, File::getUsableSpace)
-                .tags(tagsWithPath)
-                .description("Usable space for path")
-                .baseUnit(BaseUnits.BYTES)
-                .strongReference(true)
-                .register(registry);
-        Gauge.builder("disk.total", path, File::getTotalSpace)
-                .tags(tagsWithPath)
-                .description("Total space for path")
-                .baseUnit(BaseUnits.BYTES)
-                .strongReference(true)
-                .register(registry);
+        Gauge.builder("disk.free", path, File::getUsableSpace).tags(tagsWithPath).description("Usable space for path")
+                .baseUnit(BaseUnits.BYTES).strongReference(true).register(registry);
+        Gauge.builder("disk.total", path, File::getTotalSpace).tags(tagsWithPath).description("Total space for path")
+                .baseUnit(BaseUnits.BYTES).strongReference(true).register(registry);
     }
+
 }

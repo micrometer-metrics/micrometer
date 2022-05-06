@@ -63,7 +63,6 @@ public enum Outcome {
 
     /**
      * Returns the {@code Outcome} as a {@link KeyValue} named {@code outcome}.
-     *
      * @return the {@code outcome} {@code Tag}
      */
     public KeyValue asTag() {
@@ -72,20 +71,23 @@ public enum Outcome {
 
     /**
      * Return the {@code Outcome} for the given HTTP {@code status} code.
-     *
      * @param status the HTTP status code
      * @return the matching Outcome
      */
     public static Outcome forStatus(int status) {
         if (status >= 100 && status < 200) {
             return INFORMATIONAL;
-        } else if (status >= 200 && status < 300) {
+        }
+        else if (status >= 200 && status < 300) {
             return SUCCESS;
-        } else if (status >= 300 && status < 400) {
+        }
+        else if (status >= 300 && status < 400) {
             return REDIRECTION;
-        } else if (status >= 400 && status < 500) {
+        }
+        else if (status >= 400 && status < 500) {
             return CLIENT_ERROR;
-        } else if (status >= 500 && status < 600) {
+        }
+        else if (status >= 500 && status < 600) {
             return SERVER_ERROR;
         }
         return UNKNOWN;

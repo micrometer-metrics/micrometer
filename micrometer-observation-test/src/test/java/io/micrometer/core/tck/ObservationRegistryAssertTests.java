@@ -49,8 +49,7 @@ class ObservationRegistryAssertTests {
 
     @Test
     void assertionErrorThrownWhenRemainingObservationNotFound() {
-        assertThatThrownBy(() -> registryAssert.hasRemainingCurrentObservation())
-                .isInstanceOf(AssertionError.class)
+        assertThatThrownBy(() -> registryAssert.hasRemainingCurrentObservation()).isInstanceOf(AssertionError.class)
                 .hasMessageContaining("Expected an observation in the registry but found none");
     }
 
@@ -60,8 +59,7 @@ class ObservationRegistryAssertTests {
         Observation observation = Observation.start("hello", registry);
 
         try (Observation.Scope ws = observation.openScope()) {
-            assertThatCode(() -> this.registryAssert.hasRemainingCurrentObservation())
-                    .doesNotThrowAnyException();
+            assertThatCode(() -> this.registryAssert.hasRemainingCurrentObservation()).doesNotThrowAnyException();
         }
     }
 
@@ -103,7 +101,7 @@ class ObservationRegistryAssertTests {
         Observation observation = Observation.start("hello", registry);
 
         assertThatCode(() -> this.registryAssert.doesNotHaveRemainingCurrentObservationSameAs(observation))
-                     .doesNotThrowAnyException();
+                .doesNotThrowAnyException();
     }
 
 }

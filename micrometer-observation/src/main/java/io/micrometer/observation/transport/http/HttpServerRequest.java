@@ -30,7 +30,6 @@ public interface HttpServerRequest extends HttpRequest {
 
     /**
      * Returns an HTTP attribute.
-     *
      * @param key attribute key
      * @return attribute with the given key or {@code null} if not set
      */
@@ -40,7 +39,6 @@ public interface HttpServerRequest extends HttpRequest {
 
     /**
      * Sets an HTTP attribute.
-     *
      * @param key attribute key
      * @param value attribute value
      */

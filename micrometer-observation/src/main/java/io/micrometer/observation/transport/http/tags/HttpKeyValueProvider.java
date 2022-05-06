@@ -34,9 +34,9 @@ public interface HttpKeyValueProvider {
     HttpKeyValueProvider DEFAULT = new DefaultHttpKeyValueProvider();
 
     /**
-     * Provide tags known to be low-cardinality, generally appropriate for use with metrics.
-     * These tags should not overlap with the tags provided by {@link #getHighCardinalityKeyValues(HttpRequest, HttpResponse, Throwable)}.
-     *
+     * Provide tags known to be low-cardinality, generally appropriate for use with
+     * metrics. These tags should not overlap with the tags provided by
+     * {@link #getHighCardinalityKeyValues(HttpRequest, HttpResponse, Throwable)}.
      * @param request http request
      * @param response http response
      * @param exception exception thrown during operation, or null
@@ -45,13 +45,14 @@ public interface HttpKeyValueProvider {
     KeyValues getLowCardinalityKeyValues(HttpRequest request, HttpResponse response, Throwable exception);
 
     /**
-     * Provide tags known to be high-cardinality, which generally are not appropriate for use with metrics.
-     * These tags should not overlap with the tags provided by {@link #getLowCardinalityKeyValues(HttpRequest, HttpResponse, Throwable)}.
-     *
+     * Provide tags known to be high-cardinality, which generally are not appropriate for
+     * use with metrics. These tags should not overlap with the tags provided by
+     * {@link #getLowCardinalityKeyValues(HttpRequest, HttpResponse, Throwable)}.
      * @param request http request
      * @param response http response
      * @param exception exception thrown during operation, or null
      * @return set of tags based on the given parameters
      */
     KeyValues getHighCardinalityKeyValues(HttpRequest request, HttpResponse response, Throwable exception);
+
 }

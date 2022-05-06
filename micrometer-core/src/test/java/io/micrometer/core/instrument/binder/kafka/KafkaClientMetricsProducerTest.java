@@ -18,22 +18,24 @@ package io.micrometer.core.instrument.binder.kafka;
 import io.micrometer.core.instrument.MeterRegistry;
 import io.micrometer.core.instrument.Tags;
 import io.micrometer.core.instrument.simple.SimpleMeterRegistry;
-import java.util.Properties;
 import org.apache.kafka.clients.producer.KafkaProducer;
 import org.apache.kafka.clients.producer.Producer;
 import org.apache.kafka.common.serialization.StringSerializer;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Test;
 
+import java.util.Properties;
+
 import static io.micrometer.core.instrument.binder.kafka.KafkaClientMetrics.METRIC_NAME_PREFIX;
-import static org.apache.kafka.clients.producer.ProducerConfig.BOOTSTRAP_SERVERS_CONFIG;
-import static org.apache.kafka.clients.producer.ProducerConfig.KEY_SERIALIZER_CLASS_CONFIG;
-import static org.apache.kafka.clients.producer.ProducerConfig.VALUE_SERIALIZER_CLASS_CONFIG;
+import static org.apache.kafka.clients.producer.ProducerConfig.*;
 import static org.assertj.core.api.Assertions.assertThat;
 
 class KafkaClientMetricsProducerTest {
+
     private static final String BOOTSTRAP_SERVERS = "localhost:9092";
+
     private Tags tags = Tags.of("app", "myapp", "version", "1");
+
     KafkaClientMetrics metrics;
 
     @AfterEach
@@ -42,29 +44,27 @@ class KafkaClientMetricsProducerTest {
             metrics.close();
     }
 
-    @Test void shouldCreateMeters() {
+    @Test
+    void shouldCreateMeters() {
         try (Producer<String, String> producer = createProducer()) {
             metrics = new KafkaClientMetrics(producer);
             MeterRegistry registry = new SimpleMeterRegistry();
 
             metrics.bindTo(registry);
-            assertThat(registry.getMeters())
-                    .hasSizeGreaterThan(0)
-                    .extracting(meter -> meter.getId().getName())
+            assertThat(registry.getMeters()).hasSizeGreaterThan(0).extracting(meter -> meter.getId().getName())
                     .allMatch(s -> s.startsWith(METRIC_NAME_PREFIX));
         }
     }
 
-    @Test void shouldCreateMetersWithTags() {
+    @Test
+    void shouldCreateMetersWithTags() {
         try (Producer<String, String> producer = createProducer()) {
             metrics = new KafkaClientMetrics(producer, tags);
             MeterRegistry registry = new SimpleMeterRegistry();
 
             metrics.bindTo(registry);
 
-            assertThat(registry.getMeters())
-                    .hasSizeGreaterThan(0)
-                    .extracting(meter -> meter.getId().getTag("app"))
+            assertThat(registry.getMeters()).hasSizeGreaterThan(0).extracting(meter -> meter.getId().getTag("app"))
                     .allMatch(s -> s.equals("myapp"));
         }
     }
@@ -76,4 +76,5 @@ class KafkaClientMetricsProducerTest {
         producerConfig.put(VALUE_SERIALIZER_CLASS_CONFIG, StringSerializer.class);
         return new KafkaProducer<>(producerConfig);
     }
+
 }

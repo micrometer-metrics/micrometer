@@ -38,10 +38,13 @@ import static org.assertj.core.api.Assertions.assertThat;
  * @author Chao Chang
  */
 class CommonsObjectPool2MetricsTest {
+
     private int genericObjectPoolCount = 0;
 
     private Tags tags = Tags.of("app", "myapp", "version", "1");
+
     private final MeterRegistry registry = new SimpleMeterRegistry();
+
     private final CommonsObjectPool2Metrics commonsObjectPool2Metrics = new CommonsObjectPool2Metrics(tags);
 
     @AfterEach
@@ -58,21 +61,13 @@ class CommonsObjectPool2MetricsTest {
             registry.get("commons.pool2.num.idle").tags(tags).gauge();
             registry.get("commons.pool2.num.waiters").tags(tags).gauge();
 
-            Arrays.asList(
-                    "commons.pool2.created",
-                    "commons.pool2.borrowed",
-                    "commons.pool2.returned",
-                    "commons.pool2.destroyed",
-                    "commons.pool2.destroyed.by.evictor",
-                    "commons.pool2.destroyed.by.borrow.validation"
-            ).forEach(name -> registry.get(name).tags(tags).functionCounter());
+            Arrays.asList("commons.pool2.created", "commons.pool2.borrowed", "commons.pool2.returned",
+                    "commons.pool2.destroyed", "commons.pool2.destroyed.by.evictor",
+                    "commons.pool2.destroyed.by.borrow.validation")
+                    .forEach(name -> registry.get(name).tags(tags).functionCounter());
 
-            Arrays.asList(
-                    "commons.pool2.max.borrow.wait",
-                    "commons.pool2.mean.active",
-                    "commons.pool2.mean.idle",
-                    "commons.pool2.mean.borrow.wait"
-            ).forEach(name -> registry.get(name).tags(tags).timeGauge());
+            Arrays.asList("commons.pool2.max.borrow.wait", "commons.pool2.mean.active", "commons.pool2.mean.idle",
+                    "commons.pool2.mean.borrow.wait").forEach(name -> registry.get(name).tags(tags).timeGauge());
         }
     }
 
@@ -82,26 +77,16 @@ class CommonsObjectPool2MetricsTest {
             Tags tagsToMatch = tags.and("type", "GenericKeyedObjectPool");
             commonsObjectPool2Metrics.bindTo(registry);
 
-            Arrays.asList(
-                    "commons.pool2.num.idle",
-                    "commons.pool2.num.waiters"
-            ).forEach(name -> registry.get(name).tags(tagsToMatch).gauge());
+            Arrays.asList("commons.pool2.num.idle", "commons.pool2.num.waiters")
+                    .forEach(name -> registry.get(name).tags(tagsToMatch).gauge());
 
-            Arrays.asList(
-                    "commons.pool2.created",
-                    "commons.pool2.borrowed",
-                    "commons.pool2.returned",
-                    "commons.pool2.destroyed",
-                    "commons.pool2.destroyed.by.evictor",
-                    "commons.pool2.destroyed.by.borrow.validation"
-            ).forEach(name -> registry.get(name).tags(tagsToMatch).functionCounter());
+            Arrays.asList("commons.pool2.created", "commons.pool2.borrowed", "commons.pool2.returned",
+                    "commons.pool2.destroyed", "commons.pool2.destroyed.by.evictor",
+                    "commons.pool2.destroyed.by.borrow.validation")
+                    .forEach(name -> registry.get(name).tags(tagsToMatch).functionCounter());
 
-            Arrays.asList(
-                    "commons.pool2.max.borrow.wait",
-                    "commons.pool2.mean.active",
-                    "commons.pool2.mean.idle",
-                    "commons.pool2.mean.borrow.wait"
-            ).forEach(name -> registry.get(name).tags(tagsToMatch).timeGauge());
+            Arrays.asList("commons.pool2.max.borrow.wait", "commons.pool2.mean.active", "commons.pool2.mean.idle",
+                    "commons.pool2.mean.borrow.wait").forEach(name -> registry.get(name).tags(tagsToMatch).timeGauge());
         }
     }
 
@@ -131,8 +116,8 @@ class CommonsObjectPool2MetricsTest {
     @Test
     void metricsReportedPerMultiplePools() {
         try (final GenericObjectPool<Object> p1 = createGenericObjectPool();
-            final GenericObjectPool<Object> p2 = createGenericObjectPool();
-            final GenericObjectPool<Object> p3 = createGenericObjectPool()) {
+                final GenericObjectPool<Object> p2 = createGenericObjectPool();
+                final GenericObjectPool<Object> p3 = createGenericObjectPool()) {
 
             MeterRegistry registry = new SimpleMeterRegistry();
             commonsObjectPool2Metrics.bindTo(registry);
@@ -189,4 +174,5 @@ class CommonsObjectPool2MetricsTest {
             }
         });
     }
+
 }

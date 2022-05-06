@@ -18,7 +18,8 @@ package io.micrometer.core.util.internal.logging;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 /**
- * {@link InternalLogger} which logs at warn level at first and then logs at debug level for the rest.
+ * {@link InternalLogger} which logs at warn level at first and then logs at debug level
+ * for the rest.
  *
  * @author Johnny Lim
  * @since 1.1.8
@@ -26,6 +27,7 @@ import java.util.concurrent.atomic.AtomicBoolean;
 public class WarnThenDebugLogger {
 
     private final InternalLogger logger;
+
     private final AtomicBoolean warnLogged = new AtomicBoolean();
 
     public WarnThenDebugLogger(Class<?> clazz) {

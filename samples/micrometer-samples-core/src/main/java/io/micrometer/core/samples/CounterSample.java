@@ -28,6 +28,7 @@ import java.time.Duration;
 import java.util.concurrent.atomic.AtomicInteger;
 
 public class CounterSample {
+
     public static void main(String[] args) {
         MeterRegistry registry = SampleConfig.myMonitoringSystem();
         Counter counter = registry.counter("counter", "method", "actual");
@@ -38,13 +39,12 @@ public class CounterSample {
         RandomEngine r = new MersenneTwister64(0);
         Normal dist = new Normal(0, 1, r);
 
-        Flux.interval(Duration.ofMillis(10))
-                .doOnEach(d -> {
-                    if (dist.nextDouble() + 0.1 > 0) {
-                        counter.increment();
-                        n.incrementAndGet();
-                    }
-                })
-                .blockLast();
+        Flux.interval(Duration.ofMillis(10)).doOnEach(d -> {
+            if (dist.nextDouble() + 0.1 > 0) {
+                counter.increment();
+                n.incrementAndGet();
+            }
+        }).blockLast();
     }
+
 }

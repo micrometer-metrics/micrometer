@@ -26,15 +26,19 @@ import java.util.concurrent.atomic.AtomicLong;
  * @since 1.4.0
  */
 public class TimeWindowSum {
-    private static final AtomicIntegerFieldUpdater<TimeWindowSum> rotatingUpdater =
-            AtomicIntegerFieldUpdater.newUpdater(TimeWindowSum.class, "rotating");
+
+    private static final AtomicIntegerFieldUpdater<TimeWindowSum> rotatingUpdater = AtomicIntegerFieldUpdater
+            .newUpdater(TimeWindowSum.class, "rotating");
 
     private final long durationBetweenRotatesMillis;
+
     private AtomicLong[] ringBuffer;
+
     private int currentBucket;
+
     private volatile long lastRotateTimestampMillis;
 
-    @SuppressWarnings({"unused", "FieldCanBeLocal"})
+    @SuppressWarnings({ "unused", "FieldCanBeLocal" })
     private volatile int rotating; // 0 - not rotating, 1 - rotating
 
     public TimeWindowSum(int bufferLength, Duration expiry) {
@@ -50,7 +54,6 @@ public class TimeWindowSum {
 
     /**
      * For use by timer implementations.
-     *
      * @param sampleMillis The value to record, in milliseconds.
      */
     public void record(long sampleMillis) {
@@ -92,10 +95,13 @@ public class TimeWindowSum {
                     }
                     timeSinceLastRotateMillis -= durationBetweenRotatesMillis;
                     lastRotateTimestampMillis += durationBetweenRotatesMillis;
-                } while (timeSinceLastRotateMillis >= durationBetweenRotatesMillis && ++iterations < ringBuffer.length);
+                }
+                while (timeSinceLastRotateMillis >= durationBetweenRotatesMillis && ++iterations < ringBuffer.length);
             }
-        } finally {
+        }
+        finally {
             rotating = 0;
         }
     }
+
 }

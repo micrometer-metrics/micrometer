@@ -32,21 +32,18 @@ public interface Request {
 
     /**
      * Returns the header names.
-     *
      * @return collection of header names
      */
     Collection<String> headerNames();
 
     /**
      * Returns the transport kind.
-     *
      * @return the remote kind describing the direction and type of the request
      */
     Kind kind();
 
     /**
      * Returns the underlying request object.
-     *
      * @return the underlying request object or {@code null} if there is none
      */
     Object unwrap();

@@ -41,7 +41,6 @@ public class HttpServerContext extends HttpContext<HttpServerRequest, HttpServer
 
     /**
      * Creates a new {@code HttpServerContext}.
-     *
      * @param request http server request
      */
     public HttpServerContext(HttpServerRequest request) {

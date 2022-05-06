@@ -36,6 +36,7 @@ package io.micrometer.common.util.internal.logging;
  * The log level that {@link InternalLogger} can log at.
  */
 public enum InternalLogLevel {
+
     /**
      * 'TRACE' log level.
      */
@@ -56,4 +57,5 @@ public enum InternalLogLevel {
      * 'ERROR' log level.
      */
     ERROR
+
 }

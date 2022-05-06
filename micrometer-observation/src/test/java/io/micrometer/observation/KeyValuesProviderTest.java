@@ -27,6 +27,7 @@ import static org.assertj.core.api.Assertions.assertThat;
  * @author Jonatan Ivanov
  */
 class KeyValuesProviderTest {
+
     @Test
     void tagsShouldBeEmptyByDefault() {
         Observation.KeyValuesProvider<Observation.Context> keyValuesProvider = new TestKeyValuesProvider();
@@ -38,21 +39,26 @@ class KeyValuesProviderTest {
     @Test
     void tagsShouldBeMergedIntoCompositeByDefault() {
         Observation.KeyValuesProvider<Observation.Context> keyValuesProvider = new Observation.KeyValuesProvider.CompositeKeyValuesProvider(
-                new MatchingTestKeyValuesProvider(), new AnotherMatchingTestKeyValuesProvider(), new NotMatchingTestKeyValuesProvider()
-        );
+                new MatchingTestKeyValuesProvider(), new AnotherMatchingTestKeyValuesProvider(),
+                new NotMatchingTestKeyValuesProvider());
 
-        assertThat(keyValuesProvider.getLowCardinalityKeyValues(new Observation.Context())).containsExactlyInAnyOrder(KeyValue.of("matching-low-1", ""), KeyValue.of("matching-low-2", ""));
-        assertThat(keyValuesProvider.getHighCardinalityKeyValues(new Observation.Context())).containsExactlyInAnyOrder(KeyValue.of("matching-high-1", ""), KeyValue.of("matching-high-2", ""));
+        assertThat(keyValuesProvider.getLowCardinalityKeyValues(new Observation.Context()))
+                .containsExactlyInAnyOrder(KeyValue.of("matching-low-1", ""), KeyValue.of("matching-low-2", ""));
+        assertThat(keyValuesProvider.getHighCardinalityKeyValues(new Observation.Context()))
+                .containsExactlyInAnyOrder(KeyValue.of("matching-high-1", ""), KeyValue.of("matching-high-2", ""));
     }
 
     static class TestKeyValuesProvider implements Observation.KeyValuesProvider<Observation.Context> {
+
         @Override
         public boolean supportsContext(Observation.Context context) {
             return true;
         }
+
     }
 
     static class MatchingTestKeyValuesProvider implements Observation.KeyValuesProvider<Observation.Context> {
+
         @Override
         public boolean supportsContext(Observation.Context context) {
             return true;
@@ -67,10 +73,11 @@ class KeyValuesProviderTest {
         public KeyValues getHighCardinalityKeyValues(Observation.Context context) {
             return KeyValues.of(KeyValue.of("matching-high-1", ""));
         }
+
     }
 
-
     static class AnotherMatchingTestKeyValuesProvider implements Observation.KeyValuesProvider<Observation.Context> {
+
         @Override
         public boolean supportsContext(Observation.Context context) {
             return true;
@@ -85,9 +92,11 @@ class KeyValuesProviderTest {
         public KeyValues getHighCardinalityKeyValues(Observation.Context context) {
             return KeyValues.of(KeyValue.of("matching-high-2", ""));
         }
+
     }
 
     static class NotMatchingTestKeyValuesProvider implements Observation.KeyValuesProvider<Observation.Context> {
+
         @Override
         public boolean supportsContext(Observation.Context context) {
             return false;
@@ -102,5 +111,7 @@ class KeyValuesProviderTest {
         public KeyValues getHighCardinalityKeyValues(Observation.Context context) {
             return KeyValues.of(KeyValue.of("not-matching-high", ""));
         }
+
     }
+
 }

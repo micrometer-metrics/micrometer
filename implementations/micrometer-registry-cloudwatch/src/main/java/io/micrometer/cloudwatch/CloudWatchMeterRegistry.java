@@ -63,8 +63,8 @@ import static java.util.stream.StreamSupport.stream;
  * @author Dawid Kublik
  * @author Jon Schneider
  * @author Johnny Lim
- * @deprecated the micrometer-registry-cloudwatch implementation has been deprecated in favour of
- *             micrometer-registry-cloudwatch2, which uses AWS SDK for Java 2.x
+ * @deprecated the micrometer-registry-cloudwatch implementation has been deprecated in
+ * favour of micrometer-registry-cloudwatch2, which uses AWS SDK for Java 2.x
  */
 @Deprecated
 public class CloudWatchMeterRegistry extends StepMeterRegistry {
@@ -80,22 +80,24 @@ public class CloudWatchMeterRegistry extends StepMeterRegistry {
     }
 
     private final CloudWatchConfig config;
-    private final AmazonCloudWatchAsync amazonCloudWatchAsync;
-    private final Logger logger = LoggerFactory.getLogger(CloudWatchMeterRegistry.class);
-    private static final WarnThenDebugLogger warnThenDebugLogger = new WarnThenDebugLogger(CloudWatchMeterRegistry.class);
 
-    public CloudWatchMeterRegistry(CloudWatchConfig config, Clock clock,
-                                   AmazonCloudWatchAsync amazonCloudWatchAsync) {
+    private final AmazonCloudWatchAsync amazonCloudWatchAsync;
+
+    private final Logger logger = LoggerFactory.getLogger(CloudWatchMeterRegistry.class);
+
+    private static final WarnThenDebugLogger warnThenDebugLogger = new WarnThenDebugLogger(
+            CloudWatchMeterRegistry.class);
+
+    public CloudWatchMeterRegistry(CloudWatchConfig config, Clock clock, AmazonCloudWatchAsync amazonCloudWatchAsync) {
         this(config, clock, amazonCloudWatchAsync, new NamedThreadFactory("cloudwatch-metrics-publisher"));
     }
 
-    public CloudWatchMeterRegistry(CloudWatchConfig config, Clock clock,
-                                   AmazonCloudWatchAsync amazonCloudWatchAsync, ThreadFactory threadFactory) {
+    public CloudWatchMeterRegistry(CloudWatchConfig config, Clock clock, AmazonCloudWatchAsync amazonCloudWatchAsync,
+            ThreadFactory threadFactory) {
         super(config, clock);
 
         if (config.namespace() == null) {
-            throw new MissingRequiredConfigurationException(
-                    "namespace must be set to report metrics to CloudWatch");
+            throw new MissingRequiredConfigurationException("namespace must be set to report metrics to CloudWatch");
         }
 
         this.amazonCloudWatchAsync = amazonCloudWatchAsync;
@@ -111,7 +113,8 @@ public class CloudWatchMeterRegistry extends StepMeterRegistry {
             for (List<MetricDatum> batch : MetricDatumPartition.partition(metricData(), config.batchSize())) {
                 try {
                     sendMetricData(batch);
-                } catch (InterruptedException ex) {
+                }
+                catch (InterruptedException ex) {
                     interrupted = true;
                 }
             }
@@ -125,55 +128,52 @@ public class CloudWatchMeterRegistry extends StepMeterRegistry {
 
     // VisibleForTesting
     void sendMetricData(List<MetricDatum> metricData) throws InterruptedException {
-        PutMetricDataRequest putMetricDataRequest = new PutMetricDataRequest()
-                .withNamespace(config.namespace())
+        PutMetricDataRequest putMetricDataRequest = new PutMetricDataRequest().withNamespace(config.namespace())
                 .withMetricData(metricData);
         CountDownLatch latch = new CountDownLatch(1);
-        amazonCloudWatchAsync.putMetricDataAsync(putMetricDataRequest, new AsyncHandler<PutMetricDataRequest, PutMetricDataResult>() {
-            @Override
-            public void onError(Exception exception) {
-                if (exception instanceof AbortedException) {
-                    logger.warn("sending metric data was aborted: {}", exception.getMessage());
-                } else {
-                    logger.error("error sending metric data.", exception);
-                }
-                latch.countDown();
-            }
+        amazonCloudWatchAsync.putMetricDataAsync(putMetricDataRequest,
+                new AsyncHandler<PutMetricDataRequest, PutMetricDataResult>() {
+                    @Override
+                    public void onError(Exception exception) {
+                        if (exception instanceof AbortedException) {
+                            logger.warn("sending metric data was aborted: {}", exception.getMessage());
+                        }
+                        else {
+                            logger.error("error sending metric data.", exception);
+                        }
+                        latch.countDown();
+                    }
 
-            @Override
-            public void onSuccess(PutMetricDataRequest request, PutMetricDataResult result) {
-                logger.debug("published metric with namespace:{}", request.getNamespace());
-                latch.countDown();
-            }
-        });
+                    @Override
+                    public void onSuccess(PutMetricDataRequest request, PutMetricDataResult result) {
+                        logger.debug("published metric with namespace:{}", request.getNamespace());
+                        latch.countDown();
+                    }
+                });
         try {
             @SuppressWarnings("deprecation")
             long readTimeoutMillis = config.readTimeout().toMillis();
             latch.await(readTimeoutMillis, TimeUnit.MILLISECONDS);
-        } catch (InterruptedException e) {
+        }
+        catch (InterruptedException e) {
             logger.warn("metrics push to cloudwatch took longer than expected");
             throw e;
         }
     }
 
-    //VisibleForTesting
+    // VisibleForTesting
     List<MetricDatum> metricData() {
         Batch batch = new Batch();
-        return getMeters().stream().flatMap(m -> m.match(
-                batch::gaugeData,
-                batch::counterData,
-                batch::timerData,
-                batch::summaryData,
-                batch::longTaskTimerData,
-                batch::timeGaugeData,
-                batch::functionCounterData,
-                batch::functionTimerData,
-                batch::metricData)
-        ).collect(toList());
+        return getMeters().stream()
+                .flatMap(m -> m.match(batch::gaugeData, batch::counterData, batch::timerData, batch::summaryData,
+                        batch::longTaskTimerData, batch::timeGaugeData, batch::functionCounterData,
+                        batch::functionTimerData, batch::metricData))
+                .collect(toList());
     }
 
     // VisibleForTesting
     class Batch {
+
         private final Date timestamp = new Date(clock.wallTime());
 
         private Stream<MetricDatum> gaugeData(Gauge gauge) {
@@ -191,7 +191,8 @@ public class CloudWatchMeterRegistry extends StepMeterRegistry {
         // VisibleForTesting
         Stream<MetricDatum> timerData(Timer timer) {
             Stream.Builder<MetricDatum> metrics = Stream.builder();
-            metrics.add(metricDatum(timer.getId(), "sum", getBaseTimeUnit().name(), timer.totalTime(getBaseTimeUnit())));
+            metrics.add(
+                    metricDatum(timer.getId(), "sum", getBaseTimeUnit().name(), timer.totalTime(getBaseTimeUnit())));
             long count = timer.count();
             metrics.add(metricDatum(timer.getId(), "count", StandardUnit.Count, count));
             if (count > 0) {
@@ -216,8 +217,7 @@ public class CloudWatchMeterRegistry extends StepMeterRegistry {
         }
 
         private Stream<MetricDatum> longTaskTimerData(LongTaskTimer longTaskTimer) {
-            return Stream.of(
-                    metricDatum(longTaskTimer.getId(), "activeTasks", longTaskTimer.activeTasks()),
+            return Stream.of(metricDatum(longTaskTimer.getId(), "activeTasks", longTaskTimer.activeTasks()),
                     metricDatum(longTaskTimer.getId(), "duration", longTaskTimer.duration(getBaseTimeUnit())));
         }
 
@@ -240,7 +240,8 @@ public class CloudWatchMeterRegistry extends StepMeterRegistry {
 
         // VisibleForTesting
         Stream<MetricDatum> functionTimerData(FunctionTimer timer) {
-            // we can't know anything about max and percentiles originating from a function timer
+            // we can't know anything about max and percentiles originating from a
+            // function timer
             double sum = timer.totalTime(getBaseTimeUnit());
             if (!Double.isFinite(sum)) {
                 return Stream.empty();
@@ -284,12 +285,8 @@ public class CloudWatchMeterRegistry extends StepMeterRegistry {
             }
 
             List<Tag> tags = id.getConventionTags(config().namingConvention());
-            return new MetricDatum()
-                    .withMetricName(getMetricName(id, suffix))
-                    .withDimensions(toDimensions(tags))
-                    .withTimestamp(timestamp)
-                    .withValue(CloudWatchUtils.clampMetricValue(value))
-                    .withUnit(standardUnit);
+            return new MetricDatum().withMetricName(getMetricName(id, suffix)).withDimensions(toDimensions(tags))
+                    .withTimestamp(timestamp).withValue(CloudWatchUtils.clampMetricValue(value)).withUnit(standardUnit);
         }
 
         // VisibleForTesting
@@ -307,10 +304,8 @@ public class CloudWatchMeterRegistry extends StepMeterRegistry {
         }
 
         private List<Dimension> toDimensions(List<Tag> tags) {
-            return tags.stream()
-                    .filter(this::isAcceptableTag)
-                    .map(tag -> new Dimension().withName(tag.getKey()).withValue(tag.getValue()))
-                    .collect(toList());
+            return tags.stream().filter(this::isAcceptableTag)
+                    .map(tag -> new Dimension().withName(tag.getKey()).withValue(tag.getValue())).collect(toList());
         }
 
         private boolean isAcceptableTag(Tag tag) {
@@ -320,10 +315,12 @@ public class CloudWatchMeterRegistry extends StepMeterRegistry {
             }
             return true;
         }
+
     }
 
     @Override
     protected TimeUnit getBaseTimeUnit() {
         return TimeUnit.MILLISECONDS;
     }
+
 }

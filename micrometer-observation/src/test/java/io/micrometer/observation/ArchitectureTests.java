@@ -25,9 +25,7 @@ import static com.tngtech.archunit.lang.syntax.ArchRuleDefinition.noClasses;
 public class ArchitectureTests {
 
     @ArchTest
-    public static final ArchRule should_not_contain_any_micrometer_core_dependencies = noClasses()
-            .should()
-            .dependOnClassesThat()
-            .resideInAPackage("..io.micrometer.core..");
+    public static final ArchRule should_not_contain_any_micrometer_core_dependencies = noClasses().should()
+            .dependOnClassesThat().resideInAPackage("..io.micrometer.core..");
 
 }

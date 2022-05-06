@@ -28,14 +28,18 @@ import java.util.function.ToDoubleFunction;
  * @author Jon Schneider
  */
 public class DropwizardFunctionCounter<T> extends AbstractMeter implements FunctionCounter {
+
     private final WeakReference<T> ref;
+
     private final ToDoubleFunction<T> f;
+
     private final AtomicLong last = new AtomicLong();
+
     private final DropwizardRate rate;
+
     private final Meter dropwizardMeter;
 
-    DropwizardFunctionCounter(Id id, Clock clock,
-                              T obj, ToDoubleFunction<T> f) {
+    DropwizardFunctionCounter(Id id, Clock clock, T obj, ToDoubleFunction<T> f) {
         super(id);
         this.ref = new WeakReference<>(obj);
         this.f = f;
@@ -82,4 +86,5 @@ public class DropwizardFunctionCounter<T> extends AbstractMeter implements Funct
             return newCount;
         });
     }
+
 }

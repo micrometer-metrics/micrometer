@@ -39,7 +39,6 @@ public interface KairosConfig extends StepRegistryConfig {
 
     /**
      * Property prefix to prepend to configuration names.
-     *
      * @return property prefix
      */
     default String prefix() {
@@ -48,7 +47,6 @@ public interface KairosConfig extends StepRegistryConfig {
 
     /**
      * The URI to send the metrics to.
-     *
      * @return uri
      */
     default String uri() {
@@ -56,8 +54,8 @@ public interface KairosConfig extends StepRegistryConfig {
     }
 
     /**
-     * @return Authenticate requests with this user. By default is {@code null}, and the registry will not
-     * attempt to present credentials to KairosDB.
+     * @return Authenticate requests with this user. By default is {@code null}, and the
+     * registry will not attempt to present credentials to KairosDB.
      */
     @Nullable
     default String userName() {
@@ -65,8 +63,8 @@ public interface KairosConfig extends StepRegistryConfig {
     }
 
     /**
-     * @return Authenticate requests with this password. By default is {@code null}, and the registry will not
-     * attempt to present credentials to KairosDB.
+     * @return Authenticate requests with this password. By default is {@code null}, and
+     * the registry will not attempt to present credentials to KairosDB.
      */
     @Nullable
     default String password() {
@@ -75,9 +73,7 @@ public interface KairosConfig extends StepRegistryConfig {
 
     @Override
     default Validated<?> validate() {
-        return checkAll(this,
-                c -> StepRegistryConfig.validate(c),
-                checkRequired("uri", KairosConfig::uri)
-        );
+        return checkAll(this, c -> StepRegistryConfig.validate(c), checkRequired("uri", KairosConfig::uri));
     }
+
 }

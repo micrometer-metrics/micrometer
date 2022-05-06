@@ -60,8 +60,8 @@ public class ObservationThreadLocalAccessor implements ThreadLocalAccessor {
     @Override
     public void resetValues(ContextContainer container) {
         if (this.namespaceAccessor.isPresent(container)) {
-             this.namespaceAccessor.getRequiredStore(container).close();
-         }
+            this.namespaceAccessor.getRequiredStore(container).close();
+        }
     }
 
     @Override
@@ -70,7 +70,9 @@ public class ObservationThreadLocalAccessor implements ThreadLocalAccessor {
     }
 
     static final class ObservationStore implements Store, AutoCloseable {
+
         final Observation observation;
+
         Observation.Scope scope;
 
         ObservationStore(Observation observation) {
@@ -91,5 +93,7 @@ public class ObservationThreadLocalAccessor implements ThreadLocalAccessor {
                 this.scope.close();
             }
         }
+
     }
+
 }

@@ -24,12 +24,12 @@ import org.junit.jupiter.api.Test;
 import static org.assertj.core.api.Assertions.assertThat;
 
 class DistributionSummaryTest {
+
     @Test
     void histogramsInCumulativeMode() {
         MockClock clock = new MockClock();
         MeterRegistry registry = new SimpleMeterRegistry(SimpleConfig.DEFAULT, clock);
-        DistributionSummary summary = DistributionSummary.builder("my.summary")
-                .serviceLevelObjectives(1.0)
+        DistributionSummary summary = DistributionSummary.builder("my.summary").serviceLevelObjectives(1.0)
                 .register(registry);
 
         summary.record(1);
@@ -55,8 +55,7 @@ class DistributionSummaryTest {
             }
         }, clock);
 
-        DistributionSummary summary = DistributionSummary.builder("my.summary")
-                .serviceLevelObjectives(1.0)
+        DistributionSummary summary = DistributionSummary.builder("my.summary").serviceLevelObjectives(1.0)
                 .register(registry);
 
         summary.record(1);
@@ -65,4 +64,5 @@ class DistributionSummaryTest {
         clock.add(SimpleConfig.DEFAULT.step());
         assertThat(summary.takeSnapshot().histogramCounts()).containsExactly(new CountAtBucket(1.0, 0));
     }
+
 }

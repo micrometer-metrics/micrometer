@@ -40,34 +40,39 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 public class JettyClientMetricsTest {
+
     private SimpleMeterRegistry registry = new SimpleMeterRegistry(SimpleConfig.DEFAULT, new MockClock());
+
     private Server server = new Server(0);
+
     private ServerConnector connector = new ServerConnector(server);
 
     private CountDownLatch singleRequestLatch = new CountDownLatch(1);
+
     private HttpClient httpClient = new HttpClient();
 
     @BeforeEach
     void beforeEach() throws Exception {
         server.insertHandler(new HandlerWrapper() {
             @Override
-            public void handle(String target, org.eclipse.jetty.server.Request baseRequest, HttpServletRequest request, HttpServletResponse response) {
+            public void handle(String target, org.eclipse.jetty.server.Request baseRequest, HttpServletRequest request,
+                    HttpServletResponse response) {
                 switch (request.getPathInfo()) {
-                    case "/errorUnchecked":
-                        throw new RuntimeException("big boom");
-                    case "/error":
-                        response.setStatus(500);
-                    case "/ok":
-                        baseRequest.setHandled(true);
+                case "/errorUnchecked":
+                    throw new RuntimeException("big boom");
+                case "/error":
+                    response.setStatus(500);
+                case "/ok":
+                    baseRequest.setHandled(true);
                 }
             }
         });
-        server.setConnectors(new Connector[]{connector});
+        server.setConnectors(new Connector[] { connector });
         server.start();
 
         httpClient.setFollowRedirects(false);
-        httpClient.getRequestListeners().add(JettyClientMetrics
-                .builder(registry, result -> result.getRequest().getURI().getPath()).build());
+        httpClient.getRequestListeners()
+                .add(JettyClientMetrics.builder(registry, result -> result.getRequest().getURI().getPath()).build());
 
         httpClient.addLifeCycleListener(new LifeCycle.Listener() {
             @Override
@@ -95,12 +100,8 @@ public class JettyClientMetricsTest {
         httpClient.stop();
 
         assertTrue(singleRequestLatch.await(10, SECONDS));
-        assertThat(registry.get("jetty.client.requests")
-                .tag("outcome", "SUCCESS")
-                .tag("status", "200")
-                .tag("uri", "/ok")
-                .tag("host", "localhost")
-                .timer().count()).isEqualTo(1);
+        assertThat(registry.get("jetty.client.requests").tag("outcome", "SUCCESS").tag("status", "200")
+                .tag("uri", "/ok").tag("host", "localhost").timer().count()).isEqualTo(1);
     }
 
     @Test
@@ -109,11 +110,8 @@ public class JettyClientMetricsTest {
         httpClient.stop();
 
         assertTrue(singleRequestLatch.await(10, SECONDS));
-        assertThat(registry.get("jetty.client.requests")
-                .tag("outcome", "SUCCESS")
-                .tag("status", "200")
-                .tag("uri", "/ok")
-                .timer().count()).isEqualTo(1);
+        assertThat(registry.get("jetty.client.requests").tag("outcome", "SUCCESS").tag("status", "200")
+                .tag("uri", "/ok").timer().count()).isEqualTo(1);
         DistributionSummary requestSizeSummary = registry.get("jetty.client.request.size").summary();
         assertThat(requestSizeSummary.count()).isEqualTo(1);
         assertThat(requestSizeSummary.totalAmount()).isEqualTo(0);
@@ -127,12 +125,8 @@ public class JettyClientMetricsTest {
         httpClient.stop();
 
         assertTrue(singleRequestLatch.await(10, SECONDS));
-        assertThat(registry.get("jetty.client.request.size")
-                .tag("outcome", "SUCCESS")
-                .tag("status", "200")
-                .tag("uri", "/ok")
-                .tag("host", "localhost")
-                .summary().totalAmount()).isEqualTo("123456".length());
+        assertThat(registry.get("jetty.client.request.size").tag("outcome", "SUCCESS").tag("status", "200")
+                .tag("uri", "/ok").tag("host", "localhost").summary().totalAmount()).isEqualTo("123456".length());
     }
 
     @Test
@@ -143,12 +137,8 @@ public class JettyClientMetricsTest {
         httpClient.stop();
 
         assertTrue(singleRequestLatch.await(10, SECONDS));
-        assertThat(registry.get("jetty.client.requests")
-                .tag("outcome", "SERVER_ERROR")
-                .tag("status", "500")
-                .tag("uri", "/error")
-                .tag("host", "localhost")
-                .timer().count()).isEqualTo(1);
+        assertThat(registry.get("jetty.client.requests").tag("outcome", "SERVER_ERROR").tag("status", "500")
+                .tag("uri", "/error").tag("host", "localhost").timer().count()).isEqualTo(1);
     }
 
     @Test
@@ -159,12 +149,8 @@ public class JettyClientMetricsTest {
         httpClient.stop();
 
         assertTrue(singleRequestLatch.await(10, SECONDS));
-        assertThat(registry.get("jetty.client.requests")
-                .tag("outcome", "SERVER_ERROR")
-                .tag("status", "500")
-                .tag("uri", "/errorUnchecked")
-                .tag("host", "localhost")
-                .timer().count()).isEqualTo(1);
+        assertThat(registry.get("jetty.client.requests").tag("outcome", "SERVER_ERROR").tag("status", "500")
+                .tag("uri", "/errorUnchecked").tag("host", "localhost").timer().count()).isEqualTo(1);
     }
 
     @Test
@@ -175,11 +161,8 @@ public class JettyClientMetricsTest {
         httpClient.stop();
 
         assertTrue(singleRequestLatch.await(10, SECONDS));
-        assertThat(registry.get("jetty.client.requests")
-                .tag("outcome", "CLIENT_ERROR")
-                .tag("status", "404")
-                .tag("uri", "NOT_FOUND")
-                .tag("host", "localhost")
-                .timer().count()).isEqualTo(1);
+        assertThat(registry.get("jetty.client.requests").tag("outcome", "CLIENT_ERROR").tag("status", "404")
+                .tag("uri", "NOT_FOUND").tag("host", "localhost").timer().count()).isEqualTo(1);
     }
+
 }

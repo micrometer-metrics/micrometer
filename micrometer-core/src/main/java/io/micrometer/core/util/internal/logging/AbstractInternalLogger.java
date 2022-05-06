@@ -36,11 +36,12 @@ import java.io.Serializable;
 import static java.util.Objects.requireNonNull;
 
 /**
- * NOTE: This file has been copied and slightly modified from {io.netty.util.internal.logging}.
+ * NOTE: This file has been copied and slightly modified from
+ * {io.netty.util.internal.logging}.
  *
- * A skeletal implementation of {@link InternalLogger}.  This class implements
- * all methods that have a {@link InternalLogLevel} parameter by default to call
- * specific logger methods such as {@link #info(String)} or {@link #isInfoEnabled()}.
+ * A skeletal implementation of {@link InternalLogger}. This class implements all methods
+ * that have a {@link InternalLogLevel} parameter by default to call specific logger
+ * methods such as {@link #info(String)} or {@link #isInfoEnabled()}.
  */
 public abstract class AbstractInternalLogger implements InternalLogger, Serializable {
 
@@ -52,7 +53,6 @@ public abstract class AbstractInternalLogger implements InternalLogger, Serializ
 
     /**
      * Creates a new instance.
-     *
      * @param name logger name
      */
     protected AbstractInternalLogger(String name) {
@@ -134,23 +134,23 @@ public abstract class AbstractInternalLogger implements InternalLogger, Serializ
     @Override
     public void log(InternalLogLevel level, Throwable cause) {
         switch (level) {
-            case TRACE:
-                trace(cause);
-                break;
-            case DEBUG:
-                debug(cause);
-                break;
-            case INFO:
-                info(cause);
-                break;
-            case WARN:
-                warn(cause);
-                break;
-            case ERROR:
-                error(cause);
-                break;
-            default:
-                throw new Error();
+        case TRACE:
+            trace(cause);
+            break;
+        case DEBUG:
+            debug(cause);
+            break;
+        case INFO:
+            info(cause);
+            break;
+        case WARN:
+            warn(cause);
+            break;
+        case ERROR:
+            error(cause);
+            break;
+        default:
+            throw new Error();
         }
     }
 
@@ -254,4 +254,5 @@ public abstract class AbstractInternalLogger implements InternalLogger, Serializ
     public String toString() {
         return getClass().getSimpleName() + '(' + name() + ')';
     }
+
 }

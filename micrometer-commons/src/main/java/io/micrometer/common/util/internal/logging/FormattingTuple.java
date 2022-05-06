@@ -62,6 +62,7 @@ package io.micrometer.common.util.internal.logging;
 final class FormattingTuple {
 
     private final String message;
+
     private final Throwable throwable;
 
     FormattingTuple(String message, Throwable throwable) {
@@ -76,4 +77,5 @@ final class FormattingTuple {
     public Throwable getThrowable() {
         return throwable;
     }
+
 }

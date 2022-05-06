@@ -21,7 +21,8 @@ import io.micrometer.core.lang.Nullable;
 import io.micrometer.dynatrace.v1.DynatraceNamingConventionV1;
 
 /**
- * {@link NamingConvention} for Dynatrace. Delegates to the API-specific naming convention.
+ * {@link NamingConvention} for Dynatrace. Delegates to the API-specific naming
+ * convention.
  *
  * @author Oriol Barcelona Palau
  * @author Jon Schneider
@@ -30,11 +31,11 @@ import io.micrometer.dynatrace.v1.DynatraceNamingConventionV1;
  * @since 1.1.0
  */
 public class DynatraceNamingConvention implements NamingConvention {
+
     private final NamingConvention versionSpecificNamingConvention;
 
     /**
      * Create a {@code DynatraceNamingConvention} instance.
-     *
      * @param delegate delegate {@link NamingConvention}
      * @param version Dynatrace API version
      * @since 1.8.0
@@ -73,5 +74,5 @@ public class DynatraceNamingConvention implements NamingConvention {
     public String tagValue(String value) {
         return versionSpecificNamingConvention.tagValue(value);
     }
-}
 
+}

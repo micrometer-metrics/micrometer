@@ -24,6 +24,7 @@ import java.util.concurrent.TimeUnit;
  * @since 1.9.0
  */
 public interface DynatraceSummarySnapshotSupport {
+
     boolean hasValues();
 
     DynatraceSummarySnapshot takeSummarySnapshot();
@@ -33,4 +34,5 @@ public interface DynatraceSummarySnapshotSupport {
     DynatraceSummarySnapshot takeSummarySnapshotAndReset();
 
     DynatraceSummarySnapshot takeSummarySnapshotAndReset(TimeUnit unit);
+
 }

@@ -20,7 +20,6 @@ import io.micrometer.core.instrument.MeterRegistry;
 import io.micrometer.core.instrument.MockClock;
 import io.micrometer.core.instrument.simple.SimpleConfig;
 import io.micrometer.core.instrument.simple.SimpleMeterRegistry;
-
 import org.apache.logging.log4j.Level;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -104,7 +103,8 @@ class Log4j2MetricsTest {
     @Issue("#1466")
     @Test
     void filterWhenRootLoggerAdditivityIsFalseShouldWork() throws IOException {
-        ConfigurationSource source = new ConfigurationSource(getClass().getResourceAsStream("/binder/logging/log4j2-root-logger-additivity-false.xml"));
+        ConfigurationSource source = new ConfigurationSource(
+                getClass().getResourceAsStream("/binder/logging/log4j2-root-logger-additivity-false.xml"));
         Configurator.initialize(null, source);
 
         Logger logger = LogManager.getLogger(Log4j2MetricsTest.class);
@@ -164,7 +164,8 @@ class Log4j2MetricsTest {
     @Issue("#2176")
     @Test
     void asyncLogShouldNotBeDuplicated() throws IOException {
-        ConfigurationSource source = new ConfigurationSource(getClass().getResourceAsStream("/binder/logging/log4j2-async-logger.xml"));
+        ConfigurationSource source = new ConfigurationSource(
+                getClass().getResourceAsStream("/binder/logging/log4j2-async-logger.xml"));
         Configurator.initialize(null, source);
 
         Logger logger = LogManager.getLogger(Log4j2MetricsTest.class);

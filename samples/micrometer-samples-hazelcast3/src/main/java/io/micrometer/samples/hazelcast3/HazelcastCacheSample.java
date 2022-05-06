@@ -15,8 +15,6 @@
  */
 package io.micrometer.samples.hazelcast3;
 
-import java.time.Duration;
-
 import com.hazelcast.core.Hazelcast;
 import com.hazelcast.core.IMap;
 import io.micrometer.core.instrument.Clock;
@@ -25,7 +23,10 @@ import io.micrometer.core.instrument.binder.cache.HazelcastCacheMetrics;
 import io.micrometer.core.instrument.logging.LoggingMeterRegistry;
 import io.micrometer.core.instrument.logging.LoggingRegistryConfig;
 
+import java.time.Duration;
+
 public class HazelcastCacheSample {
+
     public static void main(String[] args) throws Exception {
         MeterRegistry registry = loggingMeterRegistry();
         IMap<String, Integer> hazelcastCache = Hazelcast.newHazelcastInstance().getMap("hazelcast.cache");

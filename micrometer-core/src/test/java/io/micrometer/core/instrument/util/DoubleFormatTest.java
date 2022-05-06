@@ -49,4 +49,5 @@ class DoubleFormatTest {
         assertThat(DoubleFormat.wholeOrDecimal(4.6875392E7)).isEqualTo("46875392");
         assertThat(DoubleFormat.decimalOrNan(4.6875392E7)).isEqualTo("46875392");
     }
+
 }

@@ -24,15 +24,19 @@ import io.micrometer.core.tck.MeterRegistryCompatibilityKit;
 import java.time.Duration;
 
 class CompositeMeterRegistryCompatibilityTest extends MeterRegistryCompatibilityKit {
+
     @Override
     public MeterRegistry registry() {
-        return new CompositeMeterRegistry(new MockClock()) {{
-            add(new SimpleMeterRegistry(SimpleConfig.DEFAULT, clock));
-        }};
+        return new CompositeMeterRegistry(new MockClock()) {
+            {
+                add(new SimpleMeterRegistry(SimpleConfig.DEFAULT, clock));
+            }
+        };
     }
 
     @Override
     public Duration step() {
         return SimpleConfig.DEFAULT.step();
     }
+
 }

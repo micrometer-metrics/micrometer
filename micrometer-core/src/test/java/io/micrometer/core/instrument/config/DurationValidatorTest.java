@@ -23,6 +23,7 @@ import static io.micrometer.core.instrument.config.validate.DurationValidator.va
 import static org.assertj.core.api.Assertions.assertThat;
 
 class DurationValidatorTest {
+
     @Test
     void parseHumanReadableUnits() {
         assertThat(validate("dur", "5ns").get()).isEqualByComparingTo(Duration.ofNanos(5));
@@ -48,7 +49,8 @@ class DurationValidatorTest {
         assertThat(validate("dur", "+PT15M").get()).isEqualByComparingTo(Duration.ofMinutes(15));
         assertThat(validate("dur", "PT10H").get()).isEqualByComparingTo(Duration.ofHours(10));
         assertThat(validate("dur", "P2D").get()).isEqualByComparingTo(Duration.ofDays(2));
-        assertThat(validate("dur", "P2DT3H4M").get()).isEqualByComparingTo(Duration.ofDays(2)
-                .plus(Duration.ofHours(3)).plus(Duration.ofMinutes(4)));
+        assertThat(validate("dur", "P2DT3H4M").get())
+                .isEqualByComparingTo(Duration.ofDays(2).plus(Duration.ofHours(3)).plus(Duration.ofMinutes(4)));
     }
+
 }

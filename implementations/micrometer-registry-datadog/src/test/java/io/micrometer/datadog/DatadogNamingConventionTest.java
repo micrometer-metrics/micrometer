@@ -30,6 +30,7 @@ import static org.assertj.core.api.Assertions.assertThat;
  * @author Johnny Lim
  */
 class DatadogNamingConventionTest {
+
     private DatadogNamingConvention convention = new DatadogNamingConvention();
 
     @Test
@@ -77,4 +78,5 @@ class DatadogNamingConventionTest {
         assertThat(convention.tagKey("key\"")).isEqualTo("key\\\"");
         assertThat(convention.tagValue("value\"")).isEqualTo("value\\\"");
     }
+
 }

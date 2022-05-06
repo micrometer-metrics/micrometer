@@ -43,7 +43,6 @@ public class HttpClientContext extends HttpContext<HttpClientRequest, HttpClient
 
     /**
      * Creates a new {@code HttpClientContext}.
-     *
      * @param request http client request
      */
     public HttpClientContext(HttpClientRequest request) {
@@ -77,7 +76,5 @@ public class HttpClientContext extends HttpContext<HttpClientRequest, HttpClient
         this.response = response;
         return this;
     }
-
-
 
 }

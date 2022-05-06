@@ -55,4 +55,5 @@ public abstract class AbstractCacheMetricsTest {
     protected RequiredSearch fetch(MeterRegistry meterRegistry, String name, Iterable<Tag> tags) {
         return meterRegistry.get(name).tags(tags);
     }
+
 }

@@ -32,10 +32,13 @@ import java.util.regex.Pattern;
  * @since 1.8.0
  */
 public class DynatraceNamingConventionV1 implements NamingConvention {
+
     private static final WarnThenDebugLogger logger = new WarnThenDebugLogger(DynatraceNamingConventionV1.class);
 
     private static final Pattern NAME_CLEANUP_PATTERN = Pattern.compile("[^\\w._-]");
+
     private static final Pattern LEADING_NUMERIC_PATTERN = Pattern.compile("[._-]([\\d])+");
+
     private static final Pattern KEY_CLEANUP_PATTERN = Pattern.compile("[^\\w.-]");
 
     private static final int TAG_VALUE_MAX_LENGTH = 128;
@@ -78,4 +81,5 @@ public class DynatraceNamingConventionV1 implements NamingConvention {
     public String tagValue(String value) {
         return StringUtils.truncate(value, TAG_VALUE_MAX_LENGTH);
     }
+
 }

@@ -82,7 +82,8 @@ class ObservationContextAssertTests {
     void should_throw_exception_when_contextual_name_correct() {
         context.setContextualName("foo");
 
-        thenThrownBy(() -> assertThat(context).doesNotHaveContextualNameEqualTo("foo")).isInstanceOf(AssertionError.class);
+        thenThrownBy(() -> assertThat(context).doesNotHaveContextualNameEqualTo("foo"))
+                .isInstanceOf(AssertionError.class);
     }
 
     @Test
@@ -110,7 +111,8 @@ class ObservationContextAssertTests {
     void should_throw_exception_when_name_ignore_case_correct() {
         context.setName("BAR");
 
-        thenThrownBy(() -> assertThat(context).doesNotHaveNameEqualToIgnoringCase("bar")).isInstanceOf(AssertionError.class);
+        thenThrownBy(() -> assertThat(context).doesNotHaveNameEqualToIgnoringCase("bar"))
+                .isInstanceOf(AssertionError.class);
     }
 
     @Test
@@ -124,7 +126,8 @@ class ObservationContextAssertTests {
     void should_throw_exception_when_contextual_name_ignore_case_incorrect() {
         context.setContextualName("foo");
 
-        thenThrownBy(() -> assertThat(context).hasContextualNameEqualToIgnoringCase("bar")).isInstanceOf(AssertionError.class);
+        thenThrownBy(() -> assertThat(context).hasContextualNameEqualToIgnoringCase("bar"))
+                .isInstanceOf(AssertionError.class);
     }
 
     @Test
@@ -138,7 +141,8 @@ class ObservationContextAssertTests {
     void should_throw_exception_when_contextual_name_ignore_case_correct() {
         context.setContextualName("BAR");
 
-        thenThrownBy(() -> assertThat(context).doesNotHaveContextualNameEqualToIgnoringCase("bar")).isInstanceOf(AssertionError.class);
+        thenThrownBy(() -> assertThat(context).doesNotHaveContextualNameEqualToIgnoringCase("bar"))
+                .isInstanceOf(AssertionError.class);
     }
 
     @Test
@@ -155,8 +159,10 @@ class ObservationContextAssertTests {
         Observation observation = Observation.start("foo", context, registry);
         observation.lowCardinalityKeyValue("foo", "bar");
 
-        thenThrownBy(() -> assertThat(context).hasLowCardinalityKeyValue("foo", "baz")).isInstanceOf(AssertionError.class);
-        thenThrownBy(() -> assertThat(context).hasLowCardinalityKeyValueWithKey("bar")).isInstanceOf(AssertionError.class);
+        thenThrownBy(() -> assertThat(context).hasLowCardinalityKeyValue("foo", "baz"))
+                .isInstanceOf(AssertionError.class);
+        thenThrownBy(() -> assertThat(context).hasLowCardinalityKeyValueWithKey("bar"))
+                .isInstanceOf(AssertionError.class);
     }
 
     @Test
@@ -173,8 +179,10 @@ class ObservationContextAssertTests {
         Observation observation = Observation.start("foo", context, registry);
         observation.highCardinalityKeyValue("foo", "bar");
 
-        thenThrownBy(() -> assertThat(context).hasHighCardinalityKeyValue("foo", "baz")).isInstanceOf(AssertionError.class);
-        thenThrownBy(() -> assertThat(context).hasHighCardinalityKeyValueWithKey("bar")).isInstanceOf(AssertionError.class);
+        thenThrownBy(() -> assertThat(context).hasHighCardinalityKeyValue("foo", "baz"))
+                .isInstanceOf(AssertionError.class);
+        thenThrownBy(() -> assertThat(context).hasHighCardinalityKeyValueWithKey("bar"))
+                .isInstanceOf(AssertionError.class);
     }
 
     @Test
@@ -188,8 +196,10 @@ class ObservationContextAssertTests {
         Observation observation = Observation.start("foo", context, registry);
         observation.highCardinalityKeyValue("foo", "bar");
 
-        thenThrownBy(() -> assertThat(context).doesNotHaveHighCardinalityKeyValue("foo", "bar")).isInstanceOf(AssertionError.class);
-        thenThrownBy(() -> assertThat(context).doesNotHaveHighCardinalityKeyValueWithKey("foo")).isInstanceOf(AssertionError.class);
+        thenThrownBy(() -> assertThat(context).doesNotHaveHighCardinalityKeyValue("foo", "bar"))
+                .isInstanceOf(AssertionError.class);
+        thenThrownBy(() -> assertThat(context).doesNotHaveHighCardinalityKeyValueWithKey("foo"))
+                .isInstanceOf(AssertionError.class);
     }
 
     @Test
@@ -203,8 +213,10 @@ class ObservationContextAssertTests {
         Observation observation = Observation.start("foo", context, registry);
         observation.lowCardinalityKeyValue("foo", "bar");
 
-        thenThrownBy(() -> assertThat(context).doesNotHaveLowCardinalityKeyValue("foo", "bar")).isInstanceOf(AssertionError.class);
-        thenThrownBy(() -> assertThat(context).doesNotHaveLowCardinalityKeyValueWithKey("foo")).isInstanceOf(AssertionError.class);
+        thenThrownBy(() -> assertThat(context).doesNotHaveLowCardinalityKeyValue("foo", "bar"))
+                .isInstanceOf(AssertionError.class);
+        thenThrownBy(() -> assertThat(context).doesNotHaveLowCardinalityKeyValueWithKey("foo"))
+                .isInstanceOf(AssertionError.class);
     }
 
     @Test
@@ -265,12 +277,8 @@ class ObservationContextAssertTests {
     void should_jump_to_and_back_from_throwable_assert() {
         context.setName("foo").setError(new RuntimeException("bar"));
 
-        thenNoException().isThrownBy(() -> assertThat(context)
-                .hasNameEqualTo("foo")
-                .thenThrowable()
-                .hasMessage("bar")
-                .backToContext()
-                .hasNameEqualTo("foo"));
+        thenNoException().isThrownBy(() -> assertThat(context).hasNameEqualTo("foo").thenThrowable().hasMessage("bar")
+                .backToContext().hasNameEqualTo("foo"));
     }
 
 }

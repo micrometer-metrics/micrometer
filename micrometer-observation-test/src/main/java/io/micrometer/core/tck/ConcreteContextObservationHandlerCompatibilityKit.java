@@ -26,9 +26,9 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatCode;
 
 /**
- * Base class for {@link ObservationHandler} compatibility tests that support a concrete type of context only.
- * To run a {@link ObservationHandler} implementation against this TCK, make a test class that extends this
- * and implement the abstract methods.
+ * Base class for {@link ObservationHandler} compatibility tests that support a concrete
+ * type of context only. To run a {@link ObservationHandler} implementation against this
+ * TCK, make a test class that extends this and implement the abstract methods.
  *
  * @author Marcin Grzejszczak
  * @since 1.10.0
@@ -47,7 +47,8 @@ public abstract class ConcreteContextObservationHandlerCompatibilityKit<T extend
 
     @BeforeEach
     void setup() {
-        // assigned here rather than at initialization so subclasses can use fields in their registry() implementation
+        // assigned here rather than at initialization so subclasses can use fields in
+        // their registry() implementation
         handler = handler();
     }
 
@@ -66,14 +67,16 @@ public abstract class ConcreteContextObservationHandlerCompatibilityKit<T extend
         assertThat(handler.supportsContext(context())).as("Handler supports only concrete context").isTrue();
 
         assertThatCode(() -> handler.supportsContext(null)).doesNotThrowAnyException();
-        assertThat(handler.supportsContext(null)).as("Handler supports only concrete context - no nulls accepted").isFalse();
+        assertThat(handler.supportsContext(null)).as("Handler supports only concrete context - no nulls accepted")
+                .isFalse();
 
         assertThatCode(() -> handler.supportsContext(new NotMatchingContext())).doesNotThrowAnyException();
-        assertThat(handler.supportsContext(new NotMatchingContext())).as("Handler supports only concrete context").isFalse();
+        assertThat(handler.supportsContext(new NotMatchingContext())).as("Handler supports only concrete context")
+                .isFalse();
     }
 
     static class NotMatchingContext extends Observation.Context {
 
     }
-}
 
+}

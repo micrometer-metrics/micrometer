@@ -38,6 +38,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 @ExtendWith(WiremockResolver.class)
 class AtlasMeterRegistryTest {
+
     @Issue("#484")
     @Test
     void publishOneLastTimeOnClose(@WiremockResolver.Wiremock WireMockServer server) {
@@ -88,10 +89,7 @@ class AtlasMeterRegistryTest {
             AtlasRegistry r = (AtlasRegistry) registry.getSpectatorRegistry();
             PolledMeter.update(r);
             clock.add(Duration.ofMinutes(1));
-            return r.measurements()
-                    .filter(m -> m.id().name().equals("test"))
-                    .findFirst()
-                    .map(Measurement::value)
+            return r.measurements().filter(m -> m.id().name().equals("test")).findFirst().map(Measurement::value)
                     .orElse(Double.NaN);
         };
 
@@ -104,4 +102,5 @@ class AtlasMeterRegistryTest {
         count.addAndGet(90);
         assertThat(valueSupplier.get()).isEqualTo(1.5);
     }
+
 }

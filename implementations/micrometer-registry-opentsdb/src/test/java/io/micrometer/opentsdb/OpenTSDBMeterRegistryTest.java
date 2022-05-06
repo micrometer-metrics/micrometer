@@ -28,7 +28,9 @@ import static org.assertj.core.api.Assertions.assertThat;
 class OpenTSDBMeterRegistryTest {
 
     private final OpenTSDBConfig config = OpenTSDBConfig.DEFAULT;
+
     private final MockClock clock = new MockClock();
+
     private final OpenTSDBMeterRegistry meterRegistry = new OpenTSDBMeterRegistry(config, clock);
 
     @Test
@@ -87,18 +89,21 @@ class OpenTSDBMeterRegistryTest {
 
     @Test
     void writeFunctionCounter() {
-        FunctionCounter counter = FunctionCounter.builder("my.counter", 1d, Number::doubleValue).register(meterRegistry);
+        FunctionCounter counter = FunctionCounter.builder("my.counter", 1d, Number::doubleValue)
+                .register(meterRegistry);
         clock.add(config.step());
         assertThat(meterRegistry.writeFunctionCounter(counter)).hasSize(1);
     }
 
     @Test
     void writeFunctionCounterShouldDropInfiniteValues() {
-        FunctionCounter counter = FunctionCounter.builder("my.counter", Double.POSITIVE_INFINITY, Number::doubleValue).register(meterRegistry);
+        FunctionCounter counter = FunctionCounter.builder("my.counter", Double.POSITIVE_INFINITY, Number::doubleValue)
+                .register(meterRegistry);
         clock.add(config.step());
         assertThat(meterRegistry.writeFunctionCounter(counter)).isEmpty();
 
-        counter = FunctionCounter.builder("my.counter", Double.NEGATIVE_INFINITY, Number::doubleValue).register(meterRegistry);
+        counter = FunctionCounter.builder("my.counter", Double.NEGATIVE_INFINITY, Number::doubleValue)
+                .register(meterRegistry);
         clock.add(config.step());
         assertThat(meterRegistry.writeFunctionCounter(counter)).isEmpty();
     }
@@ -106,17 +111,16 @@ class OpenTSDBMeterRegistryTest {
     @Issue("#2060")
     @Test
     void histogramBucketsHaveCorrectBaseUnit() {
-        Timer timer = Timer.builder("my.timer")
-                .publishPercentileHistogram()
-                .serviceLevelObjectives(Duration.ofMillis(900), Duration.ofSeconds(1))
-                .register(meterRegistry);
+        Timer timer = Timer.builder("my.timer").publishPercentileHistogram()
+                .serviceLevelObjectives(Duration.ofMillis(900), Duration.ofSeconds(1)).register(meterRegistry);
 
         timer.record(1, TimeUnit.SECONDS);
         clock.add(config.step());
 
-        assertThat(meterRegistry.writeTimer(timer))
-                .contains("{\"metric\":\"my_timer_duration_seconds_bucket\",\"timestamp\":60001,\"value\":1,\"tags\":{\"le\":\"1.0\"}}")
-                .contains("{\"metric\":\"my_timer_duration_seconds_bucket\",\"timestamp\":60001,\"value\":0,\"tags\":{\"le\":\"0.9\"}}");
+        assertThat(meterRegistry.writeTimer(timer)).contains(
+                "{\"metric\":\"my_timer_duration_seconds_bucket\",\"timestamp\":60001,\"value\":1,\"tags\":{\"le\":\"1.0\"}}")
+                .contains(
+                        "{\"metric\":\"my_timer_duration_seconds_bucket\",\"timestamp\":60001,\"value\":0,\"tags\":{\"le\":\"0.9\"}}");
     }
 
     @Test
@@ -124,9 +128,12 @@ class OpenTSDBMeterRegistryTest {
         LongTaskTimer timer = LongTaskTimer.builder("my.timer").tag("tag", "value").register(meterRegistry);
         meterRegistry.writeLongTaskTimer(timer).forEach(System.out::println);
 
-        assertThat(meterRegistry.writeLongTaskTimer(timer))
-                .contains("{\"metric\":\"my_timer_duration_seconds_active_count\",\"timestamp\":1,\"value\":0,\"tags\":{\"tag\":\"value\"}}")
-                .contains("{\"metric\":\"my_timer_duration_seconds_duration_sum\",\"timestamp\":1,\"value\":0,\"tags\":{\"tag\":\"value\"}}")
-                .contains("{\"metric\":\"my_timer_duration_seconds_max\",\"timestamp\":1,\"value\":0,\"tags\":{\"tag\":\"value\"}}");
+        assertThat(meterRegistry.writeLongTaskTimer(timer)).contains(
+                "{\"metric\":\"my_timer_duration_seconds_active_count\",\"timestamp\":1,\"value\":0,\"tags\":{\"tag\":\"value\"}}")
+                .contains(
+                        "{\"metric\":\"my_timer_duration_seconds_duration_sum\",\"timestamp\":1,\"value\":0,\"tags\":{\"tag\":\"value\"}}")
+                .contains(
+                        "{\"metric\":\"my_timer_duration_seconds_max\",\"timestamp\":1,\"value\":0,\"tags\":{\"tag\":\"value\"}}");
     }
+
 }

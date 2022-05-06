@@ -41,9 +41,9 @@ import static org.mockito.Mockito.verifyNoMoreInteractions;
 import static org.mockito.Mockito.when;
 
 /**
- * Base class for {@link ObservationRegistry} compatibility tests.
- * To run a {@link ObservationRegistry} implementation against this TCK, make a test class that extends this
- * and implement the abstract methods.
+ * Base class for {@link ObservationRegistry} compatibility tests. To run a
+ * {@link ObservationRegistry} implementation against this TCK, make a test class that
+ * extends this and implement the abstract methods.
  *
  * @author Jonatan Ivanov
  * @author Marcin Grzejszczak
@@ -56,7 +56,8 @@ public abstract class ObservationRegistryCompatibilityKit {
 
     @BeforeEach
     void setup() {
-        // assigned here rather than at initialization so subclasses can use fields in their registry() implementation
+        // assigned here rather than at initialization so subclasses can use fields in
+        // their registry() implementation
         registry = registry();
     }
 
@@ -125,10 +126,8 @@ public abstract class ObservationRegistryCompatibilityKit {
             assertThat(registry.getCurrentObservation()).isSameAs(observation);
             throw new RuntimeException("simulated");
         };
-        assertThatThrownBy(() -> observation.observe(runnable))
-                .isInstanceOf(RuntimeException.class)
-                .hasMessage("simulated")
-                .hasNoCause();
+        assertThatThrownBy(() -> observation.observe(runnable)).isInstanceOf(RuntimeException.class)
+                .hasMessage("simulated").hasNoCause();
 
         assertThat(registry.getCurrentObservation()).isNull();
 
@@ -149,7 +148,8 @@ public abstract class ObservationRegistryCompatibilityKit {
         registry.observationConfig().observationHandler(handler);
         Observation observation = Observation.createNotStarted("myObservation", registry);
 
-        Observation.CheckedRunnable checkedRunnable = () -> assertThat(registry.getCurrentObservation()).isSameAs(observation);
+        Observation.CheckedRunnable checkedRunnable = () -> assertThat(registry.getCurrentObservation())
+                .isSameAs(observation);
         observation.observeChecked(checkedRunnable);
         assertThat(registry.getCurrentObservation()).isNull();
 
@@ -174,10 +174,8 @@ public abstract class ObservationRegistryCompatibilityKit {
             assertThat(registry.getCurrentObservation()).isSameAs(observation);
             throw new IOException("simulated");
         };
-        assertThatThrownBy(() -> observation.observeChecked(checkedRunnable))
-                .isInstanceOf(IOException.class)
-                .hasMessage("simulated")
-                .hasNoCause();
+        assertThatThrownBy(() -> observation.observeChecked(checkedRunnable)).isInstanceOf(IOException.class)
+                .hasMessage("simulated").hasNoCause();
 
         assertThat(registry.getCurrentObservation()).isNull();
 
@@ -227,10 +225,8 @@ public abstract class ObservationRegistryCompatibilityKit {
             assertThat(registry.getCurrentObservation()).isSameAs(observation);
             throw new RuntimeException("simulated");
         };
-        assertThatThrownBy(() -> observation.observe(supplier))
-                .isInstanceOf(RuntimeException.class)
-                .hasMessage("simulated")
-                .hasNoCause();
+        assertThatThrownBy(() -> observation.observe(supplier)).isInstanceOf(RuntimeException.class)
+                .hasMessage("simulated").hasNoCause();
 
         assertThat(registry.getCurrentObservation()).isNull();
 
@@ -280,10 +276,8 @@ public abstract class ObservationRegistryCompatibilityKit {
             assertThat(registry.getCurrentObservation()).isSameAs(observation);
             throw new IOException("simulated");
         };
-        assertThatThrownBy(() -> observation.observeChecked(callable))
-                .isInstanceOf(IOException.class)
-                .hasMessage("simulated")
-                .hasNoCause();
+        assertThatThrownBy(() -> observation.observeChecked(callable)).isInstanceOf(IOException.class)
+                .hasMessage("simulated").hasNoCause();
 
         assertThat(registry.getCurrentObservation()).isNull();
 
@@ -390,72 +384,60 @@ public abstract class ObservationRegistryCompatibilityKit {
     @Test
     void observationFieldsShouldBeSetOnContext() {
         AssertingHandler assertingHandler = new AssertingHandler();
-        registry.observationConfig()
-                .keyValuesProvider(new TestKeyValuesProvider("global"))
-                .keyValuesProvider(new UnsupportedKeyValuesProvider("global"))
-                .observationHandler(assertingHandler);
+        registry.observationConfig().keyValuesProvider(new TestKeyValuesProvider("global"))
+                .keyValuesProvider(new UnsupportedKeyValuesProvider("global")).observationHandler(assertingHandler);
 
         TestContext testContext = new TestContext();
         testContext.put("context.field", "42");
         Exception exception = new IOException("simulated");
         Observation observation = Observation.start("test.observation", testContext, registry)
-                .lowCardinalityKeyValue("lcTag1", "1")
-                .lowCardinalityKeyValue(KeyValue.of("lcTag2", "2"))
-                .highCardinalityKeyValue("hcTag1", "3")
-                .highCardinalityKeyValue(KeyValue.of("hcTag2", "4"))
+                .lowCardinalityKeyValue("lcTag1", "1").lowCardinalityKeyValue(KeyValue.of("lcTag2", "2"))
+                .highCardinalityKeyValue("hcTag1", "3").highCardinalityKeyValue(KeyValue.of("hcTag2", "4"))
                 .keyValuesProvider(new TestKeyValuesProvider("local"))
-                .keyValuesProvider(new UnsupportedKeyValuesProvider("local"))
-                .contextualName("test.observation.42")
+                .keyValuesProvider(new UnsupportedKeyValuesProvider("local")).contextualName("test.observation.42")
                 .error(exception);
         observation.stop();
 
         assertingHandler.checkAssertions(context -> {
             assertThat(context).isSameAs(testContext);
             assertThat(context.getName()).isEqualTo("test.observation");
-            assertThat(context.getLowCardinalityKeyValues()).containsExactlyInAnyOrder(
-                    KeyValue.of("lcTag1", "1"),
-                    KeyValue.of("lcTag2", "2"),
-                    KeyValue.of("local.context.class", "TestContext"),
-                    KeyValue.of("global.context.class", "TestContext")
-            );
-            assertThat(context.getHighCardinalityKeyValues()).containsExactlyInAnyOrder(
-                    KeyValue.of("hcTag1", "3"),
-                    KeyValue.of("hcTag2", "4"),
-                    KeyValue.of("local.uuid", testContext.uuid),
-                    KeyValue.of("global.uuid", testContext.uuid)
-            );
+            assertThat(context.getLowCardinalityKeyValues()).containsExactlyInAnyOrder(KeyValue.of("lcTag1", "1"),
+                    KeyValue.of("lcTag2", "2"), KeyValue.of("local.context.class", "TestContext"),
+                    KeyValue.of("global.context.class", "TestContext"));
+            assertThat(context.getHighCardinalityKeyValues()).containsExactlyInAnyOrder(KeyValue.of("hcTag1", "3"),
+                    KeyValue.of("hcTag2", "4"), KeyValue.of("local.uuid", testContext.uuid),
+                    KeyValue.of("global.uuid", testContext.uuid));
 
-            assertThat(context.getAllKeyValues()).containsExactlyInAnyOrder(
-                    KeyValue.of("lcTag1", "1"),
-                    KeyValue.of("lcTag2", "2"),
-                    KeyValue.of("local.context.class", "TestContext"),
-                    KeyValue.of("global.context.class", "TestContext"),
-                    KeyValue.of("hcTag1", "3"),
-                    KeyValue.of("hcTag2", "4"),
-                    KeyValue.of("local.uuid", testContext.uuid),
-                    KeyValue.of("global.uuid", testContext.uuid)
-            );
+            assertThat(context.getAllKeyValues()).containsExactlyInAnyOrder(KeyValue.of("lcTag1", "1"),
+                    KeyValue.of("lcTag2", "2"), KeyValue.of("local.context.class", "TestContext"),
+                    KeyValue.of("global.context.class", "TestContext"), KeyValue.of("hcTag1", "3"),
+                    KeyValue.of("hcTag2", "4"), KeyValue.of("local.uuid", testContext.uuid),
+                    KeyValue.of("global.uuid", testContext.uuid));
 
             assertThat((String) context.get("context.field")).isEqualTo("42");
 
             assertThat(context.getContextualName()).isEqualTo("test.observation.42");
             assertThat(context.getError()).containsSame(exception);
 
-            assertThat(context.toString())
-                    .containsOnlyOnce("name='test.observation'")
+            assertThat(context.toString()).containsOnlyOnce("name='test.observation'")
                     .containsOnlyOnce("contextualName='test.observation.42'")
                     .containsOnlyOnce("error='java.io.IOException: simulated'")
-                    .containsOnlyOnce("lowCardinalityKeyValues=[lcTag1='1', lcTag2='2', global.context.class='TestContext', local.context.class='TestContext']")
-                    .containsOnlyOnce("highCardinalityKeyValues=[hcTag1='3', hcTag2='4', global.uuid='" + testContext.uuid + "', local.uuid='" + testContext.uuid + "']")
+                    .containsOnlyOnce(
+                            "lowCardinalityKeyValues=[lcTag1='1', lcTag2='2', global.context.class='TestContext', local.context.class='TestContext']")
+                    .containsOnlyOnce("highCardinalityKeyValues=[hcTag1='3', hcTag2='4', global.uuid='"
+                            + testContext.uuid + "', local.uuid='" + testContext.uuid + "']")
                     .containsOnlyOnce("map=[context.field='42']");
         });
     }
 
     static class TestContext extends Observation.Context {
+
         final String uuid = UUID.randomUUID().toString();
+
     }
 
     static class TestKeyValuesProvider implements Observation.GlobalKeyValuesProvider<TestContext> {
+
         private final String id;
 
         public TestKeyValuesProvider(String id) {
@@ -480,9 +462,11 @@ public abstract class ObservationRegistryCompatibilityKit {
         public String getId() {
             return this.id;
         }
+
     }
 
     static class UnsupportedKeyValuesProvider implements Observation.GlobalKeyValuesProvider<Observation.Context> {
+
         private final String id;
 
         public UnsupportedKeyValuesProvider(String id) {
@@ -503,10 +487,13 @@ public abstract class ObservationRegistryCompatibilityKit {
         public boolean supportsContext(Observation.Context context) {
             return false;
         }
+
     }
 
     static class AssertingHandler implements ObservationHandler<Observation.Context> {
+
         private boolean stopped = false;
+
         private Observation.Context context = null;
 
         @Override
@@ -525,6 +512,7 @@ public abstract class ObservationRegistryCompatibilityKit {
             assertThat(this.context).isNotNull();
             checker.accept(this.context);
         }
-    }
-}
 
+    }
+
+}

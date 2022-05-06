@@ -29,8 +29,11 @@ import static org.assertj.core.api.Assertions.assertThat;
  * @author Jonatan Ivanov
  */
 class ObservationTextPublisherTests {
+
     private static final String CONTEXT_TOSTRING = "name='testName', contextualName='testContextualName', error='java.io.IOException: simulated', lowCardinalityKeyValues=[lcTag='foo'], highCardinalityKeyValues=[hcTag='bar'], map=[contextKey='contextValue']";
+
     private final TestConsumer consumer = new TestConsumer();
+
     private final ObservationHandler<Observation.Context> publisher = new ObservationTextPublisher(consumer);
 
     @Test
@@ -72,23 +75,23 @@ class ObservationTextPublisherTests {
 
     @Test
     void shouldSupportContextEnabledByThePredicate() {
-        ObservationHandler<Observation.Context> publisher = new ObservationTextPublisher(consumer, context -> "testName".equals(context.getName()));
+        ObservationHandler<Observation.Context> publisher = new ObservationTextPublisher(consumer,
+                context -> "testName".equals(context.getName()));
         assertThat(publisher.supportsContext(new Observation.Context())).isFalse();
         assertThat(publisher.supportsContext(createTestContext())).isTrue();
     }
 
     @Test
     void shouldConvertContextUsingTheConverter() {
-        ObservationHandler<Observation.Context> publisher = new ObservationTextPublisher(consumer, context -> true, context -> "test");
+        ObservationHandler<Observation.Context> publisher = new ObservationTextPublisher(consumer, context -> true,
+                context -> "test");
         publisher.onStart(createTestContext());
         assertThat(consumer.toString()).isEqualTo("START - test");
     }
 
     private Observation.Context createTestContext() {
-        Observation.Context context = new Observation.Context()
-                .setName("testName")
-                .setContextualName("testContextualName")
-                .setError(new IOException("simulated"));
+        Observation.Context context = new Observation.Context().setName("testName")
+                .setContextualName("testContextualName").setError(new IOException("simulated"));
         context.addLowCardinalityKeyValue(KeyValue.of("lcTag", "foo"));
         context.addHighCardinalityKeyValue(KeyValue.of("hcTag", "bar"));
         context.put("contextKey", "contextValue");
@@ -97,6 +100,7 @@ class ObservationTextPublisherTests {
     }
 
     static class TestConsumer implements Consumer<String> {
+
         private final StringBuilder stringBuilder = new StringBuilder();
 
         @Override
@@ -108,5 +112,7 @@ class ObservationTextPublisherTests {
         public String toString() {
             return stringBuilder.toString().trim();
         }
+
     }
+
 }

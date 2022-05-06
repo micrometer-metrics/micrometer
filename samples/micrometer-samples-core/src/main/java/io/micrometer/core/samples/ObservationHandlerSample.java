@@ -15,19 +15,20 @@
  */
 package io.micrometer.core.samples;
 
-import java.io.IOException;
-import java.time.Instant;
-import java.util.UUID;
-
+import io.micrometer.common.KeyValues;
 import io.micrometer.core.instrument.observation.TimerObservationHandler;
 import io.micrometer.core.instrument.simple.SimpleMeterRegistry;
 import io.micrometer.observation.Observation;
 import io.micrometer.observation.ObservationPredicate;
 import io.micrometer.observation.ObservationRegistry;
 import io.micrometer.observation.ObservationTextPublisher;
-import io.micrometer.common.KeyValues;
+
+import java.io.IOException;
+import java.time.Instant;
+import java.util.UUID;
 
 public class ObservationHandlerSample {
+
     private static final SimpleMeterRegistry registry = new SimpleMeterRegistry();
 
     private static final ObservationRegistry observationRegistry = ObservationRegistry.create();
@@ -35,16 +36,13 @@ public class ObservationHandlerSample {
     public static void main(String[] args) throws InterruptedException {
         observationRegistry.observationConfig().observationHandler(new ObservationTextPublisher())
                 .observationHandler(new TimerObservationHandler(registry));
-        observationRegistry.observationConfig()
-                    .keyValuesProvider(new CustomKeyValuesProvider())
-                    .observationPredicate(new IgnoringObservationPredicate());
+        observationRegistry.observationConfig().keyValuesProvider(new CustomKeyValuesProvider())
+                .observationPredicate(new IgnoringObservationPredicate());
 
-        Observation observation = Observation.createNotStarted("sample.operation", new CustomContext(), observationRegistry)
-                .contextualName("CALL sampleOperation")
-                .keyValuesProvider(new CustomLocalKeyValuesProvider())
-                .lowCardinalityKeyValue("a", "1")
-                .highCardinalityKeyValue("time", Instant.now().toString())
-                .start();
+        Observation observation = Observation
+                .createNotStarted("sample.operation", new CustomContext(), observationRegistry)
+                .contextualName("CALL sampleOperation").keyValuesProvider(new CustomLocalKeyValuesProvider())
+                .lowCardinalityKeyValue("a", "1").highCardinalityKeyValue("time", Instant.now().toString()).start();
 
         try (Observation.Scope scope = observation.openScope()) {
             Thread.sleep(1_000);
@@ -61,10 +59,13 @@ public class ObservationHandlerSample {
     }
 
     static class CustomContext extends Observation.Context {
+
         private final UUID uuid = UUID.randomUUID();
+
     }
 
     static class CustomKeyValuesProvider implements Observation.GlobalKeyValuesProvider<CustomContext> {
+
         @Override
         public KeyValues getLowCardinalityKeyValues(CustomContext context) {
             return KeyValues.of("className", context.getClass().getSimpleName());
@@ -79,9 +80,11 @@ public class ObservationHandlerSample {
         public boolean supportsContext(Observation.Context context) {
             return context instanceof CustomContext;
         }
+
     }
 
     static class CustomLocalKeyValuesProvider implements Observation.KeyValuesProvider<CustomContext> {
+
         @Override
         public KeyValues getLowCardinalityKeyValues(CustomContext context) {
             return KeyValues.of("localClassName", context.getClass().getSimpleName());
@@ -96,16 +99,20 @@ public class ObservationHandlerSample {
         public boolean supportsContext(Observation.Context context) {
             return context instanceof CustomContext;
         }
+
     }
 
     static class UnsupportedContext extends Observation.Context {
+
         @Override
         public String toString() {
             return "sorry";
         }
+
     }
 
     static class IgnoringObservationPredicate implements ObservationPredicate {
+
         @Override
         public boolean test(String name, Observation.Context context) {
             boolean observationIgnored = "sample.ignored".equals(name);
@@ -115,5 +122,7 @@ public class ObservationHandlerSample {
 
             return !observationIgnored;
         }
+
     }
+
 }
