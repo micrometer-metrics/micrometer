@@ -15,14 +15,14 @@
  */
 package io.micrometer.signalfx;
 
-import java.util.regex.Pattern;
-
 import io.micrometer.core.instrument.Meter;
 import io.micrometer.core.instrument.config.NamingConvention;
 import io.micrometer.core.instrument.util.StringEscapeUtils;
 import io.micrometer.core.instrument.util.StringUtils;
 import io.micrometer.core.lang.Nullable;
 import io.micrometer.core.util.internal.logging.WarnThenDebugLogger;
+
+import java.util.regex.Pattern;
 
 /**
  * {@link NamingConvention} for SignalFx.

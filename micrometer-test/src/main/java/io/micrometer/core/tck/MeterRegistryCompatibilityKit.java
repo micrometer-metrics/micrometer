@@ -17,8 +17,8 @@ package io.micrometer.core.tck;
 
 import io.micrometer.core.Issue;
 import io.micrometer.core.annotation.Timed;
-import io.micrometer.core.instrument.*;
 import io.micrometer.core.instrument.Timer;
+import io.micrometer.core.instrument.*;
 import io.micrometer.core.instrument.distribution.CountAtBucket;
 import io.micrometer.core.instrument.distribution.DistributionStatisticConfig;
 import io.micrometer.core.instrument.distribution.ValueAtPercentile;
@@ -46,9 +46,7 @@ import static io.micrometer.core.instrument.util.TimeUtils.millisToUnit;
 import static java.util.Collections.emptyList;
 import static java.util.Objects.requireNonNull;
 import static org.assertj.core.api.Assertions.*;
-import static org.assertj.core.api.Assertions.within;
 import static org.junit.jupiter.api.Assertions.*;
-import static org.junit.jupiter.api.Assertions.assertAll;
 
 /**
  * Base class for {@link MeterRegistry} compatibility tests. To run a

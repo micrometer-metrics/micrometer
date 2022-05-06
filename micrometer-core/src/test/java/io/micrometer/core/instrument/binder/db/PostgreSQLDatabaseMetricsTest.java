@@ -23,10 +23,9 @@ import org.junit.jupiter.api.Test;
 
 import javax.sql.DataSource;
 
+import static io.micrometer.core.instrument.binder.db.PostgreSQLDatabaseMetrics.Names.*;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.Mockito.mock;
-
-import static io.micrometer.core.instrument.binder.db.PostgreSQLDatabaseMetrics.Names.*;
 
 /**
  * @author Kristof Depypere

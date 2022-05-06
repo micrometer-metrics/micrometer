@@ -22,8 +22,8 @@ import io.micrometer.core.instrument.Timer;
 import io.micrometer.core.lang.NonNullApi;
 import io.micrometer.core.lang.NonNullFields;
 import io.micrometer.core.lang.Nullable;
-import okhttp3.*;
 import okhttp3.EventListener;
+import okhttp3.*;
 
 import java.io.IOException;
 import java.lang.reflect.Method;

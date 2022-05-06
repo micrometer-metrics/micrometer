@@ -15,13 +15,13 @@
  */
 package io.micrometer.core.instrument.binder.grpc;
 
-import java.util.function.Consumer;
-
 import io.grpc.ClientCall;
 import io.grpc.ForwardingClientCall.SimpleForwardingClientCall;
 import io.grpc.Metadata;
 import io.grpc.Status;
 import io.micrometer.core.instrument.Counter;
+
+import java.util.function.Consumer;
 
 /**
  * A simple forwarding client call that collects metrics.

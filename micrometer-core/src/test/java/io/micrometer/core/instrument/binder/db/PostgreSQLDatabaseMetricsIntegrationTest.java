@@ -29,16 +29,14 @@ import org.testcontainers.junit.jupiter.Testcontainers;
 import org.testcontainers.utility.DockerImageName;
 
 import javax.sql.DataSource;
-
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.SQLException;
 import java.util.Arrays;
 import java.util.List;
 
-import static org.assertj.core.api.Assertions.*;
-
 import static io.micrometer.core.instrument.binder.db.PostgreSQLDatabaseMetrics.Names.*;
+import static org.assertj.core.api.Assertions.assertThat;
 
 /**
  * @author Markus Dobel

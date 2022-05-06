@@ -24,9 +24,7 @@ import io.micrometer.core.instrument.step.StepRegistryConfig;
 import java.time.Duration;
 import java.util.function.Predicate;
 
-import static io.micrometer.core.instrument.config.MeterRegistryConfigValidator.check;
-import static io.micrometer.core.instrument.config.MeterRegistryConfigValidator.checkAll;
-import static io.micrometer.core.instrument.config.MeterRegistryConfigValidator.checkRequired;
+import static io.micrometer.core.instrument.config.MeterRegistryConfigValidator.*;
 import static io.micrometer.core.instrument.config.validate.PropertyValidator.getInteger;
 import static io.micrometer.core.instrument.config.validate.PropertyValidator.getString;
 

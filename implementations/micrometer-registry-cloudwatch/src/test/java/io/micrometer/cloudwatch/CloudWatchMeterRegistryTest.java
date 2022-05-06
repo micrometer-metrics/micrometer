@@ -30,11 +30,11 @@ import java.util.function.Predicate;
 import java.util.function.Supplier;
 import java.util.stream.Stream;
 
-import static org.assertj.core.api.Assertions.assertThat;
 import static io.micrometer.core.instrument.Meter.Id;
 import static io.micrometer.core.instrument.Meter.Type;
 import static io.micrometer.core.instrument.Meter.Type.DISTRIBUTION_SUMMARY;
 import static io.micrometer.core.instrument.Meter.Type.TIMER;
+import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.Mockito.*;
 
 /**

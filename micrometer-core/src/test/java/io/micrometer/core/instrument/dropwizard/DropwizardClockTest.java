@@ -17,7 +17,6 @@
 package io.micrometer.core.instrument.dropwizard;
 
 import io.micrometer.core.instrument.MockClock;
-
 import org.junit.jupiter.api.Test;
 
 import static org.assertj.core.api.Assertions.assertThat;

@@ -15,6 +15,10 @@
  */
 package io.micrometer.appoptics;
 
+import io.micrometer.core.instrument.*;
+import io.micrometer.core.ipc.http.HttpSender;
+import org.junit.jupiter.api.Test;
+
 import java.time.Duration;
 import java.util.Arrays;
 import java.util.List;
@@ -22,19 +26,9 @@ import java.util.concurrent.ThreadFactory;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicReference;
 
-import io.micrometer.core.instrument.FunctionCounter;
-import io.micrometer.core.instrument.Gauge;
-import io.micrometer.core.instrument.Measurement;
-import io.micrometer.core.instrument.Meter;
-import io.micrometer.core.instrument.MockClock;
-import io.micrometer.core.instrument.Statistic;
-import io.micrometer.core.instrument.Tags;
-import io.micrometer.core.instrument.TimeGauge;
-import io.micrometer.core.ipc.http.HttpSender;
-import org.junit.jupiter.api.Test;
-
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.mockito.Mockito.*;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.verifyNoMoreInteractions;
 
 /**
  * Tests for {@link AppOpticsMeterRegistry}.

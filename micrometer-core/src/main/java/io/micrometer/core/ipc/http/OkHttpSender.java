@@ -15,7 +15,9 @@
  */
 package io.micrometer.core.ipc.http;
 
-import okhttp3.*;
+import okhttp3.MediaType;
+import okhttp3.OkHttpClient;
+import okhttp3.RequestBody;
 
 import java.util.Map;
 

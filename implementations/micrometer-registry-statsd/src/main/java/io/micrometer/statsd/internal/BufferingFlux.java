@@ -15,13 +15,13 @@
  */
 package io.micrometer.statsd.internal;
 
+import reactor.core.publisher.DirectProcessor;
+import reactor.core.publisher.Flux;
+
 import java.time.Duration;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.stream.Collectors;
-
-import reactor.core.publisher.DirectProcessor;
-import reactor.core.publisher.Flux;
 
 public class BufferingFlux {
 

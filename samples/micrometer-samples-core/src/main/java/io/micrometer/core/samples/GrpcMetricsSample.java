@@ -15,8 +15,6 @@
  */
 package io.micrometer.core.samples;
 
-import java.io.IOException;
-
 import io.grpc.ManagedChannel;
 import io.grpc.Server;
 import io.grpc.health.v1.HealthCheckRequest;
@@ -31,6 +29,8 @@ import io.micrometer.core.instrument.MeterRegistry;
 import io.micrometer.core.instrument.binder.grpc.MetricCollectingClientInterceptor;
 import io.micrometer.core.instrument.binder.grpc.MetricCollectingServerInterceptor;
 import io.micrometer.core.samples.utils.SampleConfig;
+
+import java.io.IOException;
 
 /**
  * Demonstrates how to collect metrics for grpc-java clients and servers.

@@ -15,9 +15,9 @@
  */
 package io.micrometer.core.instrument.cumulative;
 
-import java.util.concurrent.TimeUnit;
-
 import org.junit.jupiter.api.Test;
+
+import java.util.concurrent.TimeUnit;
 
 import static org.assertj.core.api.Assertions.assertThat;
 

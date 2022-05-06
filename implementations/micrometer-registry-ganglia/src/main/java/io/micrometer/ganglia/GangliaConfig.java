@@ -22,9 +22,7 @@ import io.micrometer.core.lang.Nullable;
 
 import java.util.concurrent.TimeUnit;
 
-import static io.micrometer.core.instrument.config.MeterRegistryConfigValidator.check;
-import static io.micrometer.core.instrument.config.MeterRegistryConfigValidator.checkAll;
-import static io.micrometer.core.instrument.config.MeterRegistryConfigValidator.checkRequired;
+import static io.micrometer.core.instrument.config.MeterRegistryConfigValidator.*;
 import static io.micrometer.core.instrument.config.validate.PropertyValidator.*;
 
 /**

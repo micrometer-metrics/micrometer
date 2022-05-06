@@ -15,12 +15,12 @@
  */
 package io.micrometer.cloudwatch;
 
-import static org.assertj.core.api.Assertions.assertThat;
-
 import io.micrometer.core.instrument.config.NamingConvention;
 import org.junit.jupiter.api.Test;
 
 import java.util.Collections;
+
+import static org.assertj.core.api.Assertions.assertThat;
 
 /**
  * Tests for {@link CloudWatchNamingConvention}.

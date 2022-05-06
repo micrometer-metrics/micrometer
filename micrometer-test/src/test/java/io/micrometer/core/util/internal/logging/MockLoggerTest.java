@@ -15,16 +15,12 @@
  */
 package io.micrometer.core.util.internal.logging;
 
-import java.io.IOException;
-
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Test;
 
-import static io.micrometer.core.util.internal.logging.InternalLogLevel.DEBUG;
-import static io.micrometer.core.util.internal.logging.InternalLogLevel.ERROR;
-import static io.micrometer.core.util.internal.logging.InternalLogLevel.INFO;
-import static io.micrometer.core.util.internal.logging.InternalLogLevel.TRACE;
-import static io.micrometer.core.util.internal.logging.InternalLogLevel.WARN;
+import java.io.IOException;
+
+import static io.micrometer.core.util.internal.logging.InternalLogLevel.*;
 import static org.assertj.core.api.Assertions.assertThat;
 
 /**

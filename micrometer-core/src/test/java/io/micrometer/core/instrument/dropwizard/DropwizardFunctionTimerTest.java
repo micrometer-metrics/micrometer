@@ -16,10 +16,10 @@
 
 package io.micrometer.core.instrument.dropwizard;
 
-import java.util.concurrent.TimeUnit;
-
 import io.micrometer.core.instrument.MockClock;
 import org.junit.jupiter.api.Test;
+
+import java.util.concurrent.TimeUnit;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
