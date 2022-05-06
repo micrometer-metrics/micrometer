@@ -23,8 +23,11 @@ import java.util.concurrent.atomic.DoubleAdder;
 import java.util.function.Supplier;
 
 class StepMeasurement extends Measurement {
+
     private final StepDouble value;
+
     private final DoubleAdder lastCount = new DoubleAdder();
+
     private final Supplier<Double> f;
 
     public StepMeasurement(Supplier<Double> f, Statistic statistic, Clock clock, long stepMillis) {
@@ -42,4 +45,5 @@ class StepMeasurement extends Measurement {
 
         return value.poll();
     }
+
 }

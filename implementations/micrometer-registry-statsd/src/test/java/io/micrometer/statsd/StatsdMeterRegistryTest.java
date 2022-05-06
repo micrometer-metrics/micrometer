@@ -54,7 +54,9 @@ import static org.assertj.core.api.Assertions.*;
  * @author Johnny Lim
  */
 class StatsdMeterRegistryTest {
+
     private MockClock clock = new MockClock();
+
     private StatsdMeterRegistry registry;
 
     @BeforeAll
@@ -87,32 +89,27 @@ class StatsdMeterRegistryTest {
     void counterLineProtocol(StatsdFlavor flavor) {
         String line = null;
         switch (flavor) {
-            case ETSY:
-                line = "myCounter.myTag.val.statistic.count:2|c";
-                break;
-            case DATADOG:
-                line = "my.counter:2|c|#statistic:count,my.tag:val";
-                break;
-            case TELEGRAF:
-                line = "my_counter,statistic=count,my_tag=val:2|c";
-                break;
-            case SYSDIG:
-                line = "my.counter#statistic=count,my.tag=val:2|c";
-                break;
-            default:
-                fail("Unexpected flavor");
+        case ETSY:
+            line = "myCounter.myTag.val.statistic.count:2|c";
+            break;
+        case DATADOG:
+            line = "my.counter:2|c|#statistic:count,my.tag:val";
+            break;
+        case TELEGRAF:
+            line = "my_counter,statistic=count,my_tag=val:2|c";
+            break;
+        case SYSDIG:
+            line = "my.counter#statistic=count,my.tag=val:2|c";
+            break;
+        default:
+            fail("Unexpected flavor");
         }
 
         final Processor<String, String> lines = lineProcessor();
-        registry = StatsdMeterRegistry.builder(configWithFlavor(flavor))
-                .clock(clock)
-                .lineSink(toSink(lines))
-                .build();
+        registry = StatsdMeterRegistry.builder(configWithFlavor(flavor)).clock(clock).lineSink(toSink(lines)).build();
 
-        StepVerifier.create(lines)
-                .then(() -> registry.counter("my.counter", "my.tag", "val").increment(2.1))
-                .expectNext(line)
-                .verifyComplete();
+        StepVerifier.create(lines).then(() -> registry.counter("my.counter", "my.tag", "val").increment(2.1))
+                .expectNext(line).verifyComplete();
     }
 
     @ParameterizedTest
@@ -123,37 +120,29 @@ class StatsdMeterRegistryTest {
 
         String line = null;
         switch (flavor) {
-            case ETSY:
-                line = "myGauge.myTag.val.statistic.value:2|g";
-                break;
-            case DATADOG:
-                line = "my.gauge:2|g|#statistic:value,my.tag:val";
-                break;
-            case TELEGRAF:
-                line = "my_gauge,statistic=value,my_tag=val:2|g";
-                break;
-            case SYSDIG:
-                line = "my.gauge#statistic=value,my.tag=val:2|g";
-                break;
-            default:
-                fail("Unexpected flavor");
+        case ETSY:
+            line = "myGauge.myTag.val.statistic.value:2|g";
+            break;
+        case DATADOG:
+            line = "my.gauge:2|g|#statistic:value,my.tag:val";
+            break;
+        case TELEGRAF:
+            line = "my_gauge,statistic=value,my_tag=val:2|g";
+            break;
+        case SYSDIG:
+            line = "my.gauge#statistic=value,my.tag=val:2|g";
+            break;
+        default:
+            fail("Unexpected flavor");
         }
 
-        StepVerifier
-                .withVirtualTime(() -> {
-                    final Processor<String, String> lines = lineProcessor();
-                    registry = StatsdMeterRegistry.builder(config)
-                            .clock(clock)
-                            .lineSink(toSink(lines))
-                            .build();
+        StepVerifier.withVirtualTime(() -> {
+            final Processor<String, String> lines = lineProcessor();
+            registry = StatsdMeterRegistry.builder(config).clock(clock).lineSink(toSink(lines)).build();
 
-                    registry.gauge("my.gauge", Tags.of("my.tag", "val"), n);
-                    return lines;
-                })
-                .then(() -> clock.add(config.step()))
-                .thenAwait(config.step())
-                .expectNext(line)
-                .verifyComplete();
+            registry.gauge("my.gauge", Tags.of("my.tag", "val"), n);
+            return lines;
+        }).then(() -> clock.add(config.step())).thenAwait(config.step()).expectNext(line).verifyComplete();
     }
 
     @ParameterizedTest
@@ -161,32 +150,28 @@ class StatsdMeterRegistryTest {
     void timerLineProtocol(StatsdFlavor flavor) {
         String line = null;
         switch (flavor) {
-            case ETSY:
-                line = "myTimer.myTag.val:1|ms";
-                break;
-            case DATADOG:
-                line = "my.timer:1|ms|#my.tag:val";
-                break;
-            case TELEGRAF:
-                line = "my_timer,my_tag=val:1|ms";
-                break;
-            case SYSDIG:
-                line = "my.timer#my.tag=val:1|ms";
-                break;
-            default:
-                fail("Unexpected flavor");
+        case ETSY:
+            line = "myTimer.myTag.val:1|ms";
+            break;
+        case DATADOG:
+            line = "my.timer:1|ms|#my.tag:val";
+            break;
+        case TELEGRAF:
+            line = "my_timer,my_tag=val:1|ms";
+            break;
+        case SYSDIG:
+            line = "my.timer#my.tag=val:1|ms";
+            break;
+        default:
+            fail("Unexpected flavor");
         }
 
         final Processor<String, String> lines = lineProcessor();
-        registry = StatsdMeterRegistry.builder(configWithFlavor(flavor))
-                .clock(clock)
-                .lineSink(toSink(lines))
-                .build();
+        registry = StatsdMeterRegistry.builder(configWithFlavor(flavor)).clock(clock).lineSink(toSink(lines)).build();
 
         StepVerifier.create(lines)
                 .then(() -> registry.timer("my.timer", "my.tag", "val").record(1, TimeUnit.MILLISECONDS))
-                .expectNext(line)
-                .verifyComplete();
+                .expectNext(line).verifyComplete();
     }
 
     @ParameterizedTest
@@ -194,32 +179,27 @@ class StatsdMeterRegistryTest {
     void summaryLineProtocol(StatsdFlavor flavor) {
         String line = null;
         switch (flavor) {
-            case ETSY:
-                line = "mySummary.myTag.val:1|h";
-                break;
-            case DATADOG:
-                line = "my.summary:1|h|#my.tag:val";
-                break;
-            case TELEGRAF:
-                line = "my_summary,my_tag=val:1|h";
-                break;
-            case SYSDIG:
-                line = "my.summary#my.tag=val:1|h";
-                break;
-            default:
-                fail("Unexpected flavor");
+        case ETSY:
+            line = "mySummary.myTag.val:1|h";
+            break;
+        case DATADOG:
+            line = "my.summary:1|h|#my.tag:val";
+            break;
+        case TELEGRAF:
+            line = "my_summary,my_tag=val:1|h";
+            break;
+        case SYSDIG:
+            line = "my.summary#my.tag=val:1|h";
+            break;
+        default:
+            fail("Unexpected flavor");
         }
 
         final Processor<String, String> lines = lineProcessor();
-        registry = StatsdMeterRegistry.builder(configWithFlavor(flavor))
-                .clock(clock)
-                .lineSink(toSink(lines))
-                .build();
+        registry = StatsdMeterRegistry.builder(configWithFlavor(flavor)).clock(clock).lineSink(toSink(lines)).build();
 
-        StepVerifier.create(lines)
-                .then(() -> registry.summary("my.summary", "my.tag", "val").record(1))
-                .expectNext(line)
-                .verifyComplete();
+        StepVerifier.create(lines).then(() -> registry.summary("my.summary", "my.tag", "val").record(1))
+                .expectNext(line).verifyComplete();
     }
 
     @ParameterizedTest
@@ -230,69 +210,48 @@ class StatsdMeterRegistryTest {
 
         String[] expectLines = null;
         switch (flavor) {
-            case ETSY:
-                expectLines = new String[]{
-                        "myLongTask.myTag.val.statistic.active:1|g",
-                        "myLongTask.myTag.val.statistic.duration:" + stepMillis + "|g",
-                };
-                break;
-            case DATADOG:
-                expectLines = new String[]{
-                        "my.long.task:1|g|#statistic:active,my.tag:val",
-                        "my.long.task:" + stepMillis + "|g|#statistic:duration,my.tag:val",
-                };
-                break;
-            case TELEGRAF:
-                expectLines = new String[]{
-                        "my_long_task,statistic=active,my_tag=val:1|g",
-                        "my_long_task,statistic=duration,my_tag=val:" + stepMillis + "|g",
-                };
-                break;
-            case SYSDIG:
-                expectLines = new String[]{
-                        "my.long.task#statistic=active,my.tag=val:1|g",
-                        "my.long.task#statistic=duration,my.tag=val:" + stepMillis + "|g",
-                };
-                break;
-            default:
-                fail("Unexpected flavor");
+        case ETSY:
+            expectLines = new String[] { "myLongTask.myTag.val.statistic.active:1|g",
+                    "myLongTask.myTag.val.statistic.duration:" + stepMillis + "|g", };
+            break;
+        case DATADOG:
+            expectLines = new String[] { "my.long.task:1|g|#statistic:active,my.tag:val",
+                    "my.long.task:" + stepMillis + "|g|#statistic:duration,my.tag:val", };
+            break;
+        case TELEGRAF:
+            expectLines = new String[] { "my_long_task,statistic=active,my_tag=val:1|g",
+                    "my_long_task,statistic=duration,my_tag=val:" + stepMillis + "|g", };
+            break;
+        case SYSDIG:
+            expectLines = new String[] { "my.long.task#statistic=active,my.tag=val:1|g",
+                    "my.long.task#statistic=duration,my.tag=val:" + stepMillis + "|g", };
+            break;
+        default:
+            fail("Unexpected flavor");
         }
 
         AtomicReference<LongTaskTimer> ltt = new AtomicReference<>();
         AtomicReference<LongTaskTimer.Sample> sample = new AtomicReference<>();
 
-        StepVerifier
-                .withVirtualTime(() -> {
-                    final Processor<String, String> lines = lineProcessor();
-                    registry = StatsdMeterRegistry.builder(config)
-                            .clock(clock)
-                            .lineSink(toSink(lines, 2))
-                            .build();
+        StepVerifier.withVirtualTime(() -> {
+            final Processor<String, String> lines = lineProcessor();
+            registry = StatsdMeterRegistry.builder(config).clock(clock).lineSink(toSink(lines, 2)).build();
 
-                    ltt.set(registry.more().longTaskTimer("my.long.task", "my.tag", "val"));
-                    return lines;
-                })
-                .then(() -> sample.set(ltt.get().start()))
-                .then(() -> clock.add(config.step()))
-                .thenAwait(config.step())
-                .expectNext(expectLines[0])
-                .expectNext(expectLines[1])
-                .verifyComplete();
+            ltt.set(registry.more().longTaskTimer("my.long.task", "my.tag", "val"));
+            return lines;
+        }).then(() -> sample.set(ltt.get().start())).then(() -> clock.add(config.step())).thenAwait(config.step())
+                .expectNext(expectLines[0]).expectNext(expectLines[1]).verifyComplete();
     }
 
     @Test
     void customNamingConvention() {
         final Processor<String, String> lines = lineProcessor();
         registry = StatsdMeterRegistry.builder(configWithFlavor(StatsdFlavor.ETSY))
-                .nameMapper((id, convention) -> id.getName().toUpperCase())
-                .clock(clock)
-                .lineSink(toSink(lines))
+                .nameMapper((id, convention) -> id.getName().toUpperCase()).clock(clock).lineSink(toSink(lines))
                 .build();
 
-        StepVerifier.create(lines)
-                .then(() -> registry.counter("my.counter", "my.tag", "val").increment(2.1))
-                .expectNext("MY.COUNTER:2|c")
-                .verifyComplete();
+        StepVerifier.create(lines).then(() -> registry.counter("my.counter", "my.tag", "val").increment(2.1))
+                .expectNext("MY.COUNTER:2|c").verifyComplete();
     }
 
     @Issue("#411")
@@ -301,7 +260,8 @@ class StatsdMeterRegistryTest {
         registry = new StatsdMeterRegistry(configWithFlavor(StatsdFlavor.ETSY), clock);
         new LogbackMetrics().bindTo(registry);
 
-        // Cause the processor to get into a state that would make it perform logging at DEBUG level.
+        // Cause the processor to get into a state that would make it perform logging at
+        // DEBUG level.
         ((Logger) LoggerFactory.getLogger(Operators.class)).setLevel(Level.DEBUG);
         registry.processor.onComplete();
 
@@ -314,7 +274,8 @@ class StatsdMeterRegistryTest {
     void serviceLevelObjectivesOnlyNoPercentileHistogram(StatsdFlavor flavor) {
         StatsdConfig config = configWithFlavor(flavor);
         registry = new StatsdMeterRegistry(config, clock);
-        DistributionSummary summary = DistributionSummary.builder("my.summary").serviceLevelObjectives(1.0, 2).register(registry);
+        DistributionSummary summary = DistributionSummary.builder("my.summary").serviceLevelObjectives(1.0, 2)
+                .register(registry);
         summary.record(1);
 
         Timer timer = Timer.builder("my.timer").serviceLevelObjectives(Duration.ofMillis(1)).register(registry);
@@ -346,16 +307,19 @@ class StatsdMeterRegistryTest {
         registry = new StatsdMeterRegistry(configWithFlavor(StatsdFlavor.ETSY), clock);
         Timer.builder("my.timer").serviceLevelObjectives(Duration.ofMillis(1)).register(registry);
 
-        // A io.micrometer.core.instrument.search.MeterNotFoundException is thrown if the gauge isn't present
+        // A io.micrometer.core.instrument.search.MeterNotFoundException is thrown if the
+        // gauge isn't present
         registry.get("my.timer.histogram").tag("le", "+Inf").gauge();
     }
 
     @Test
     void distributionSummariesWithServiceLevelObjectivesHaveInfBucket() {
         registry = new StatsdMeterRegistry(configWithFlavor(StatsdFlavor.ETSY), clock);
-        DistributionSummary summary = DistributionSummary.builder("my.distribution").serviceLevelObjectives(1.0).register(registry);
+        DistributionSummary summary = DistributionSummary.builder("my.distribution").serviceLevelObjectives(1.0)
+                .register(registry);
 
-        // A io.micrometer.core.instrument.search.MeterNotFoundException is thrown if the gauge isn't present
+        // A io.micrometer.core.instrument.search.MeterNotFoundException is thrown if the
+        // gauge isn't present
         registry.get("my.distribution.histogram").tag("le", "+Inf").gauge();
     }
 
@@ -410,14 +374,15 @@ class StatsdMeterRegistryTest {
         range(0, 100).forEach(n -> registry.counter("my.counter", "k", "v").increment());
 
         switch (flavor) {
-            case DATADOG:
-            case TELEGRAF:
-                assertThat(namingConventionUses.intValue()).isEqualTo(3);
-                break;
-            case ETSY:
-                // because Etsy formatting involves the naming convention being called on the 'statistic' tag as well.
-                assertThat(namingConventionUses.intValue()).isEqualTo(5);
-                break;
+        case DATADOG:
+        case TELEGRAF:
+            assertThat(namingConventionUses.intValue()).isEqualTo(3);
+            break;
+        case ETSY:
+            // because Etsy formatting involves the naming convention being called on the
+            // 'statistic' tag as well.
+            assertThat(namingConventionUses.intValue()).isEqualTo(5);
+            break;
         }
     }
 
@@ -425,12 +390,11 @@ class StatsdMeterRegistryTest {
     @Issue("#778")
     void doNotPublishNanOrInfiniteGaugeValues() {
         AtomicInteger lineCount = new AtomicInteger();
-        registry = StatsdMeterRegistry.builder(StatsdConfig.DEFAULT)
-                .lineSink(l -> lineCount.incrementAndGet())
-                .build();
+        registry = StatsdMeterRegistry.builder(StatsdConfig.DEFAULT).lineSink(l -> lineCount.incrementAndGet()).build();
 
         AtomicReference<Double> value = new AtomicReference<>(1.0);
-        StatsdGauge<?> gauge = (StatsdGauge<?>) Gauge.builder("my.gauge", value, AtomicReference::get).register(registry);
+        StatsdGauge<?> gauge = (StatsdGauge<?>) Gauge.builder("my.gauge", value, AtomicReference::get)
+                .register(registry);
 
         gauge.poll();
         assertThat(lineCount.get()).isEqualTo(1);
@@ -460,9 +424,7 @@ class StatsdMeterRegistryTest {
             public boolean enabled() {
                 return false;
             }
-        })
-                .lineSink(shouldNotBeInvokedConsumer)
-                .build();
+        }).lineSink(shouldNotBeInvokedConsumer).build();
 
         registry.counter("some.metric").increment();
         assertThat(registry.processor.inners().count()).as("processor has no subscribers registered").isZero();
@@ -472,16 +434,14 @@ class StatsdMeterRegistryTest {
     void stopTrackingMetersThatAreRemoved() {
         Map<String, Integer> lines = new HashMap<>();
 
-        registry = StatsdMeterRegistry.builder(configWithFlavor(StatsdFlavor.ETSY))
-                .clock(clock)
-                .lineSink(line -> {
-                    int firstTag = line.indexOf('.');
-                    lines.compute(line.substring(0, firstTag == -1 ? line.indexOf(':') : firstTag),
-                            (l, count) -> count == null ? 1 : count + 1);
-                })
-                .build();
+        registry = StatsdMeterRegistry.builder(configWithFlavor(StatsdFlavor.ETSY)).clock(clock).lineSink(line -> {
+            int firstTag = line.indexOf('.');
+            lines.compute(line.substring(0, firstTag == -1 ? line.indexOf(':') : firstTag),
+                    (l, count) -> count == null ? 1 : count + 1);
+        }).build();
 
-        Meter custom = Meter.builder("custom", Meter.Type.COUNTER, singletonList(new Measurement(() -> 1.0, Statistic.COUNT)))
+        Meter custom = Meter
+                .builder("custom", Meter.Type.COUNTER, singletonList(new Measurement(() -> 1.0, Statistic.COUNT)))
                 .register(registry);
         registry.poll();
         registry.remove(custom);
@@ -489,7 +449,8 @@ class StatsdMeterRegistryTest {
         assertThat(lines.get("custom")).isEqualTo(1);
 
         AtomicInteger tgObj = new AtomicInteger(1);
-        registry.more().timeGauge("timegauge", Tags.empty(), tgObj, TimeUnit.MILLISECONDS, AtomicInteger::incrementAndGet);
+        registry.more().timeGauge("timegauge", Tags.empty(), tgObj, TimeUnit.MILLISECONDS,
+                AtomicInteger::incrementAndGet);
         registry.poll();
         registry.remove(registry.get("timegauge").timeGauge());
         registry.poll();
@@ -525,15 +486,18 @@ class StatsdMeterRegistryTest {
         registry.poll();
         registry.remove(ltt);
         registry.poll();
-        assertThat(lines.get("ltt")).isEqualTo(3); // 3 lines shipped for a LongTaskTimer for each poll
+        assertThat(lines.get("ltt")).isEqualTo(3); // 3 lines shipped for a LongTaskTimer
+                                                   // for each poll
 
         AtomicInteger ftObj = new AtomicInteger(1);
-        registry.more().timer("functiontimer", Tags.empty(), ftObj, AtomicInteger::incrementAndGet,
-                AtomicInteger::get, TimeUnit.MILLISECONDS);
+        registry.more().timer("functiontimer", Tags.empty(), ftObj, AtomicInteger::incrementAndGet, AtomicInteger::get,
+                TimeUnit.MILLISECONDS);
         registry.poll();
         registry.remove(registry.get("functiontimer").functionTimer());
         registry.poll();
-        assertThat(lines.get("functiontimer")).isEqualTo(2); // 2 lines shipped for a FunctionTimer for each poll
+        assertThat(lines.get("functiontimer")).isEqualTo(2); // 2 lines shipped for a
+                                                             // FunctionTimer for each
+                                                             // poll
 
         AtomicInteger fcObj = new AtomicInteger(1);
         registry.more().counter("functioncounter", Tags.empty(), fcObj, AtomicInteger::incrementAndGet);
@@ -559,14 +523,11 @@ class StatsdMeterRegistryTest {
     void publishLongTaskTimerMax() throws InterruptedException {
         CountDownLatch maxCount = new CountDownLatch(1);
 
-        registry = StatsdMeterRegistry.builder(configWithFlavor(StatsdFlavor.ETSY))
-                .clock(clock)
-                .lineSink(line -> {
-                    if (line.contains("max")) {
-                        maxCount.countDown();
-                    }
-                })
-                .build();
+        registry = StatsdMeterRegistry.builder(configWithFlavor(StatsdFlavor.ETSY)).clock(clock).lineSink(line -> {
+            if (line.contains("max")) {
+                maxCount.countDown();
+            }
+        }).build();
 
         LongTaskTimer ltt = registry.more().longTaskTimer("ltt");
         ltt.start();
@@ -592,4 +553,5 @@ class StatsdMeterRegistryTest {
             }
         };
     }
+
 }

@@ -68,6 +68,8 @@ class InfluxMeterRegistryFieldTest {
 
     @Test
     void timeCannotBeAFieldKey() {
-        assertThat(catchThrowable(() -> new InfluxMeterRegistry.Field("time", 1.0))).isInstanceOf(IllegalArgumentException.class);
+        assertThat(catchThrowable(() -> new InfluxMeterRegistry.Field("time", 1.0)))
+                .isInstanceOf(IllegalArgumentException.class);
     }
+
 }

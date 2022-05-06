@@ -22,6 +22,7 @@ import org.junit.jupiter.api.Test;
 import static org.assertj.core.api.Assertions.assertThat;
 
 class AtlasNamingConventionTest {
+
     private final NamingConvention namingConvention = new AtlasNamingConvention();
 
     @Issue("#544")
@@ -34,4 +35,5 @@ class AtlasNamingConventionTest {
     void replaceStatisticTag() {
         assertThat(namingConvention.tagKey("statistic")).isEqualTo("statisticTag");
     }
+
 }

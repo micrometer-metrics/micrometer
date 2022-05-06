@@ -26,10 +26,12 @@ import java.time.Duration;
  * Sample to diagnose issue #243
  */
 public class UptimeMetricsSample {
+
     public static void main(String[] args) {
         MeterRegistry registry = SampleConfig.myMonitoringSystem();
         registry.config().commonTags("instance", "sample-host");
         new UptimeMetrics().bindTo(registry);
         Flux.interval(Duration.ofSeconds(1)).blockLast();
     }
+
 }

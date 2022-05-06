@@ -25,6 +25,7 @@ import static org.assertj.core.api.Assertions.assertThat;
  * @author Jon Schneider
  */
 class DistributionStatisticConfigTest {
+
     @Test
     void merge() {
         DistributionStatisticConfig c1 = DistributionStatisticConfig.builder().percentiles(0.95).build();
@@ -35,4 +36,5 @@ class DistributionStatisticConfigTest {
         assertThat(merged.getPercentiles()).containsExactly(0.90);
         assertThat(merged.getExpiry()).isEqualTo(Duration.ofMinutes(2));
     }
+
 }

@@ -31,7 +31,9 @@ import static org.assertj.core.api.Assertions.assertThat;
  * @author Jon Schneider
  */
 class DatabaseTableMetricsTest {
+
     private MeterRegistry registry;
+
     private JDBCDataSource ds;
 
     @BeforeEach
@@ -57,18 +59,13 @@ class DatabaseTableMetricsTest {
     @Test
     void rowCountGauge() {
         DatabaseTableMetrics.monitor(registry, "foo", "mydb", ds);
-        assertThat(registry.get("db.table.size")
-                .tag("table", "foo")
-                .tag("db", "mydb")
-                .gauge().value()).isEqualTo(1.0);
+        assertThat(registry.get("db.table.size").tag("table", "foo").tag("db", "mydb").gauge().value()).isEqualTo(1.0);
     }
 
     @Test
     void rowCountForNonExistentTable() {
         DatabaseTableMetrics.monitor(registry, "dne", "mydb", ds);
-        assertThat(registry.get("db.table.size")
-                .tag("table", "dne")
-                .tag("db", "mydb")
-                .gauge().value()).isEqualTo(0.0);
+        assertThat(registry.get("db.table.size").tag("table", "dne").tag("db", "mydb").gauge().value()).isEqualTo(0.0);
     }
+
 }

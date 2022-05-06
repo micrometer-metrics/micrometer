@@ -15,13 +15,12 @@
  */
 package io.micrometer.core.instrument.noop;
 
-import io.micrometer.core.instrument.Tags;
 import io.micrometer.core.instrument.Meter.Id;
 import io.micrometer.core.instrument.Meter.Type;
+import io.micrometer.core.instrument.Tags;
+import org.junit.jupiter.api.Test;
 
 import java.util.concurrent.TimeUnit;
-
-import org.junit.jupiter.api.Test;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -33,6 +32,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 class NoopLongTaskTimerTest {
 
     private Id id = new Id("test", Tags.of("name", "value"), "ms", "", Type.LONG_TASK_TIMER);
+
     private NoopLongTaskTimer timer = new NoopLongTaskTimer(id);
 
     @Test

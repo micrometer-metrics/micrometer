@@ -57,6 +57,7 @@ import static org.awaitility.Awaitility.await;
 class JvmGcMetricsTest {
 
     SimpleMeterRegistry registry = new SimpleMeterRegistry();
+
     JvmGcMetrics binder;
 
     @BeforeEach
@@ -67,11 +68,12 @@ class JvmGcMetricsTest {
 
     @Test
     void noJvmImplementationSpecificApiSignatures() {
-        JavaClasses importedClasses = new ClassFileImporter().importPackages("io.micrometer.core.instrument.binder.jvm");
+        JavaClasses importedClasses = new ClassFileImporter()
+                .importPackages("io.micrometer.core.instrument.binder.jvm");
 
-        ArchRule noSunManagementInMethodSignatures = methods()
-                .should().notHaveRawReturnType(resideInAPackage("com.sun.management.."))
-                .andShould().notHaveRawParameterTypes(DescribedPredicate.anyElementThat(resideInAPackage("com.sun.management..")));
+        ArchRule noSunManagementInMethodSignatures = methods().should()
+                .notHaveRawReturnType(resideInAPackage("com.sun.management..")).andShould()
+                .notHaveRawParameterTypes(DescribedPredicate.anyElementThat(resideInAPackage("com.sun.management..")));
 
         noSunManagementInMethodSignatures.check(importedClasses);
     }
@@ -80,8 +82,7 @@ class JvmGcMetricsTest {
     void gcMetricsAvailableAfterGc() {
         System.gc();
         await().timeout(200, TimeUnit.MILLISECONDS).alias("NotificationListener takes time after GC")
-                .untilAsserted(() ->
-                        assertThat(registry.find("jvm.gc.live.data.size").gauge().value()).isPositive());
+                .untilAsserted(() -> assertThat(registry.find("jvm.gc.live.data.size").gauge().value()).isPositive());
         assertThat(registry.find("jvm.gc.memory.allocated").counter().count()).isPositive();
         assertThat(registry.find("jvm.gc.max.data.size").gauge().value()).isPositive();
 
@@ -94,7 +95,8 @@ class JvmGcMetricsTest {
 
     @Test
     @Disabled("Garbage collection can happen before JvmGcMetrics are registered, making our metrics not match overall counts/timings")
-    // available for some platforms and distributions earlier, but broadest availability in an LTS is 17
+    // available for some platforms and distributions earlier, but broadest availability
+    // in an LTS is 17
     @EnabledForJreRange(min = JRE.JAVA_17)
     void gcTimingIsCorrect() {
         System.gc();
@@ -106,11 +108,13 @@ class JvmGcMetricsTest {
             if (mbean.getName().contains("Pauses")) {
                 pausePhaseCount += mbean.getCollectionCount();
                 pauseTimeMs += mbean.getCollectionTime();
-            } else if (mbean.getName().contains("Cycles")) {
+            }
+            else if (mbean.getName().contains("Cycles")) {
                 concurrentPhaseCount += mbean.getCollectionCount();
                 concurrentTimeMs += mbean.getCollectionTime();
             }
-            System.out.println(mbean.getName() + " (" + mbean.getCollectionCount() + ") " + mbean.getCollectionTime() + "ms");
+            System.out.println(
+                    mbean.getName() + " (" + mbean.getCollectionCount() + ") " + mbean.getCollectionTime() + "ms");
         }
         checkPhaseCount(pausePhaseCount, concurrentPhaseCount);
         checkCollectionTime(pauseTimeMs, concurrentTimeMs);
@@ -129,11 +133,13 @@ class JvmGcMetricsTest {
                 continue;
             }
             NotificationEmitter notificationEmitter = (NotificationEmitter) gcBean;
-            notificationEmitter.addNotificationListener(capturingListener, notification -> notification.getType().equals(GarbageCollectionNotificationInfo.GARBAGE_COLLECTION_NOTIFICATION), null);
+            notificationEmitter.addNotificationListener(capturingListener, notification -> notification.getType()
+                    .equals(GarbageCollectionNotificationInfo.GARBAGE_COLLECTION_NOTIFICATION), null);
             notificationListenerCleanUpRunnables.add(() -> {
                 try {
                     notificationEmitter.removeNotificationListener(capturingListener);
-                } catch (ListenerNotFoundException ignore) {
+                }
+                catch (ListenerNotFoundException ignore) {
                 }
             });
         }
@@ -141,9 +147,12 @@ class JvmGcMetricsTest {
         try {
             // capture real gc notifications
             System.gc();
-            // reduce flakiness by sleeping to give time for gc notifications to be sent to listeners.
-            // note: we cannot just wait for any notification because we don't know how many notifications to expect.
-            // this can still be flawed if we didn't wait for all notifications and proceed with assertions on an
+            // reduce flakiness by sleeping to give time for gc notifications to be sent
+            // to listeners.
+            // note: we cannot just wait for any notification because we don't know how
+            // many notifications to expect.
+            // this can still be flawed if we didn't wait for all notifications and
+            // proceed with assertions on an
             // incomplete set of notifications.
             Thread.sleep(100);
             List<Notification> notifications = capturingListener.getNotifications();
@@ -154,7 +163,8 @@ class JvmGcMetricsTest {
                 assertThat(registry.get("jvm.gc.live.data.size").gauge().value()).isPositive();
                 assertThat(registry.get("jvm.gc.max.data.size").gauge().value()).isPositive();
             }
-        } finally {
+        }
+        finally {
             notificationListenerCleanUpRunnables.forEach(Runnable::run);
         }
     }
@@ -171,12 +181,14 @@ class JvmGcMetricsTest {
         public void handleNotification(Notification notification, Object handback) {
             notifications.add(notification);
         }
+
     }
 
     private void checkPhaseCount(long expectedPauseCount, long expectedConcurrentCount) {
         await().atMost(200, TimeUnit.MILLISECONDS).untilAsserted(() -> {
             long observedPauseCount = registry.find("jvm.gc.pause").timers().stream().mapToLong(Timer::count).sum();
-            long observedConcurrentCount = registry.find("jvm.gc.concurrent.phase.time").timers().stream().mapToLong(Timer::count).sum();
+            long observedConcurrentCount = registry.find("jvm.gc.concurrent.phase.time").timers().stream()
+                    .mapToLong(Timer::count).sum();
             assertThat(observedPauseCount).isEqualTo(expectedPauseCount);
             assertThat(observedConcurrentCount).isEqualTo(expectedConcurrentCount);
         });
@@ -184,11 +196,14 @@ class JvmGcMetricsTest {
 
     private void checkCollectionTime(long expectedPauseTimeMs, long expectedConcurrentTimeMs) {
         await().atMost(200, TimeUnit.MILLISECONDS).untilAsserted(() -> {
-            double observedPauseTimeMs = registry.find("jvm.gc.pause").timers().stream().mapToDouble(timer -> timer.totalTime(TimeUnit.MILLISECONDS)).sum();
-            double observedConcurrentTimeMs = registry.find("jvm.gc.concurrent.phase.time").timers().stream().mapToDouble(timer -> timer.totalTime(TimeUnit.MILLISECONDS)).sum();
+            double observedPauseTimeMs = registry.find("jvm.gc.pause").timers().stream()
+                    .mapToDouble(timer -> timer.totalTime(TimeUnit.MILLISECONDS)).sum();
+            double observedConcurrentTimeMs = registry.find("jvm.gc.concurrent.phase.time").timers().stream()
+                    .mapToDouble(timer -> timer.totalTime(TimeUnit.MILLISECONDS)).sum();
             // small difference can happen when less than 1ms timing gets rounded
             assertThat(observedPauseTimeMs).isCloseTo(expectedPauseTimeMs, within(1d));
             assertThat(observedConcurrentTimeMs).isCloseTo(expectedConcurrentTimeMs, within(1d));
         });
     }
+
 }

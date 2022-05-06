@@ -19,13 +19,11 @@ import com.github.benmanes.caffeine.cache.Cache;
 import com.github.benmanes.caffeine.cache.Caffeine;
 import com.github.benmanes.caffeine.cache.LoadingCache;
 import com.github.benmanes.caffeine.cache.stats.CacheStats;
-
 import io.micrometer.core.instrument.FunctionCounter;
 import io.micrometer.core.instrument.MeterRegistry;
 import io.micrometer.core.instrument.Tags;
 import io.micrometer.core.instrument.TimeGauge;
 import io.micrometer.core.instrument.simple.SimpleMeterRegistry;
-
 import org.junit.jupiter.api.Test;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -38,6 +36,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 class CaffeineCacheMetricsTest extends AbstractCacheMetricsTest {
 
     private LoadingCache<String, String> cache = Caffeine.newBuilder().build(key -> "");
+
     private CaffeineCacheMetrics metrics = new CaffeineCacheMetrics(cache, "testCache", expectedTag);
 
     @Test

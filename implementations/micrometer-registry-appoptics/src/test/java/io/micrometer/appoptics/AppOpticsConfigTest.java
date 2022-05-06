@@ -24,7 +24,9 @@ import java.util.Map;
 import static org.assertj.core.api.Assertions.assertThat;
 
 class AppOpticsConfigTest {
+
     private final Map<String, String> props = new HashMap<>();
+
     private final AppOpticsConfig config = props::get;
 
     @Test
@@ -33,10 +35,7 @@ class AppOpticsConfigTest {
         props.put("appoptics.batchSize", Integer.toString(AppOpticsConfig.MAX_BATCH_SIZE * 2));
 
         assertThat(config.validate().failures().stream().map(Validated.Invalid::getMessage))
-                .containsExactlyInAnyOrder(
-                        "must be a valid URL",
-                        "is required"
-                );
+                .containsExactlyInAnyOrder("must be a valid URL", "is required");
     }
 
     @Test
@@ -68,4 +67,5 @@ class AppOpticsConfigTest {
         assertThat(validate.failures().stream().map(Validated.Invalid::getMessage))
                 .containsOnly("cannot be greater than " + AppOpticsConfig.MAX_BATCH_SIZE);
     }
+
 }

@@ -16,5 +16,7 @@
 package io.micrometer.influx;
 
 public enum InfluxConsistency {
+
     ANY, ONE, QUORUM, ALL
+
 }

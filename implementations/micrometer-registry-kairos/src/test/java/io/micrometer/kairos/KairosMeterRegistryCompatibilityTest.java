@@ -26,6 +26,7 @@ import java.time.Duration;
  * @author Anton Ilinchik
  */
 class KairosMeterRegistryCompatibilityTest extends MeterRegistryCompatibilityKit {
+
     @Override
     public MeterRegistry registry() {
         return new KairosMeterRegistry(new KairosConfig() {
@@ -46,4 +47,5 @@ class KairosMeterRegistryCompatibilityTest extends MeterRegistryCompatibilityKit
     public Duration step() {
         return KairosConfig.DEFAULT.step();
     }
+
 }

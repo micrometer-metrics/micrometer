@@ -24,6 +24,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 class RequiredSearchTest {
+
     private MeterRegistry registry = new SimpleMeterRegistry();
 
     @BeforeEach
@@ -43,7 +44,8 @@ class RequiredSearchTest {
     @Test
     void allMetersWithName() {
         assertThat(RequiredSearch.in(registry).name("my.counter").meters()).hasSize(2);
-        assertThat(RequiredSearch.in(registry).name("my.counter").counter()).isNotNull(); // just pick one of the matching ones
+        // just pick one of the matching ones
+        assertThat(RequiredSearch.in(registry).name("my.counter").counter()).isNotNull();
 
         assertThat(RequiredSearch.in(registry).name(n -> n.startsWith("my")).meters()).hasSize(4);
         assertThat(RequiredSearch.in(registry).name(n -> n.startsWith("my")).timer()).isNotNull();
@@ -115,15 +117,15 @@ class RequiredSearchTest {
     @Test
     void multipleNonMatchingRequiredTag() {
         assertThatThrownBy(() -> RequiredSearch.in(registry).name("my.counter").tag("k", "does.not.exist").counter())
-                .isInstanceOf(MeterNotFoundException.class)
-                .hasMessageContaining("No meters have a tag 'k' with value 'does.not.exist'. The only value found was 'v'");
+                .isInstanceOf(MeterNotFoundException.class).hasMessageContaining(
+                        "No meters have a tag 'k' with value 'does.not.exist'. The only value found was 'v'");
     }
 
     @Test
     void multipleNonMatchingRequiredTagWithMultipleOtherValues() {
         assertThatThrownBy(() -> RequiredSearch.in(registry).tag("k2", "does.not.exist").counter())
-                .isInstanceOf(MeterNotFoundException.class)
-                .hasMessageContaining("No meters have a tag 'k2' with value 'does.not.exist'. Tag values found were ['v2', 'v3']");
+                .isInstanceOf(MeterNotFoundException.class).hasMessageContaining(
+                        "No meters have a tag 'k2' with value 'does.not.exist'. Tag values found were ['v2', 'v3']");
     }
 
     @Test
@@ -136,8 +138,8 @@ class RequiredSearchTest {
     @Test
     void multipleMatchingRequiredTag() {
         assertThatThrownBy(() -> RequiredSearch.in(registry).tag("k", "v").tagKeys("does.not.exist").counter())
-                .isInstanceOf(MeterNotFoundException.class)
-                .hasMessageContaining("Meters with names ['my.counter', 'my.other.counter'] have a tag 'k' with value 'v'");
+                .isInstanceOf(MeterNotFoundException.class).hasMessageContaining(
+                        "Meters with names ['my.counter', 'my.other.counter'] have a tag 'k' with value 'v'");
     }
 
     @Test
@@ -151,4 +153,5 @@ class RequiredSearchTest {
     void allMetersWithTagKey() {
         assertThat(RequiredSearch.in(registry).tagKeys("k", "k2").counter()).isNotNull();
     }
+
 }

@@ -37,6 +37,7 @@ import java.util.function.ToLongFunction;
  * @author Johnny Lim
  */
 public class SimpleMeterRegistry extends MeterRegistry {
+
     private final SimpleConfig config;
 
     public SimpleMeterRegistry() {
@@ -52,20 +53,20 @@ public class SimpleMeterRegistry extends MeterRegistry {
     }
 
     @Override
-    protected DistributionSummary newDistributionSummary(Meter.Id id, DistributionStatisticConfig distributionStatisticConfig, double scale) {
-        DistributionStatisticConfig merged = distributionStatisticConfig.merge(DistributionStatisticConfig.builder()
-                .expiry(config.step())
-                .build());
+    protected DistributionSummary newDistributionSummary(Meter.Id id,
+            DistributionStatisticConfig distributionStatisticConfig, double scale) {
+        DistributionStatisticConfig merged = distributionStatisticConfig
+                .merge(DistributionStatisticConfig.builder().expiry(config.step()).build());
 
         DistributionSummary summary;
         switch (config.mode()) {
-            case CUMULATIVE:
-                summary = new CumulativeDistributionSummary(id, clock, merged, scale, false);
-                break;
-            case STEP:
-            default:
-                summary = new StepDistributionSummary(id, clock, merged, scale, config.step().toMillis(), false);
-                break;
+        case CUMULATIVE:
+            summary = new CumulativeDistributionSummary(id, clock, merged, scale, false);
+            break;
+        case STEP:
+        default:
+            summary = new StepDistributionSummary(id, clock, merged, scale, config.step().toMillis(), false);
+            break;
         }
 
         HistogramGauges.registerWithCommonFormat(summary, this);
@@ -79,20 +80,20 @@ public class SimpleMeterRegistry extends MeterRegistry {
     }
 
     @Override
-    protected Timer newTimer(Meter.Id id, DistributionStatisticConfig distributionStatisticConfig, PauseDetector pauseDetector) {
-        DistributionStatisticConfig merged = distributionStatisticConfig.merge(DistributionStatisticConfig.builder()
-                .expiry(config.step())
-                .build());
+    protected Timer newTimer(Meter.Id id, DistributionStatisticConfig distributionStatisticConfig,
+            PauseDetector pauseDetector) {
+        DistributionStatisticConfig merged = distributionStatisticConfig
+                .merge(DistributionStatisticConfig.builder().expiry(config.step()).build());
 
         Timer timer;
         switch (config.mode()) {
-            case CUMULATIVE:
-                timer = new CumulativeTimer(id, clock, merged, pauseDetector, getBaseTimeUnit(), false);
-                break;
-            case STEP:
-            default:
-                timer = new StepTimer(id, clock, merged, pauseDetector, getBaseTimeUnit(), config.step().toMillis(), false);
-                break;
+        case CUMULATIVE:
+            timer = new CumulativeTimer(id, clock, merged, pauseDetector, getBaseTimeUnit(), false);
+            break;
+        case STEP:
+        default:
+            timer = new StepTimer(id, clock, merged, pauseDetector, getBaseTimeUnit(), config.step().toMillis(), false);
+            break;
         }
 
         HistogramGauges.registerWithCommonFormat(timer, this);
@@ -108,42 +109,46 @@ public class SimpleMeterRegistry extends MeterRegistry {
     @Override
     protected Counter newCounter(Meter.Id id) {
         switch (config.mode()) {
-            case CUMULATIVE:
-                return new CumulativeCounter(id);
-            case STEP:
-            default:
-                return new StepCounter(id, clock, config.step().toMillis());
+        case CUMULATIVE:
+            return new CumulativeCounter(id);
+        case STEP:
+        default:
+            return new StepCounter(id, clock, config.step().toMillis());
         }
     }
 
     @Override
     protected LongTaskTimer newLongTaskTimer(Meter.Id id, DistributionStatisticConfig distributionStatisticConfig) {
-        DefaultLongTaskTimer ltt = new DefaultLongTaskTimer(id, clock, getBaseTimeUnit(), distributionStatisticConfig, false);
+        DefaultLongTaskTimer ltt = new DefaultLongTaskTimer(id, clock, getBaseTimeUnit(), distributionStatisticConfig,
+                false);
         HistogramGauges.registerWithCommonFormat(ltt, this);
         return ltt;
     }
 
     @Override
-    protected <T> FunctionTimer newFunctionTimer(Meter.Id id, T obj, ToLongFunction<T> countFunction, ToDoubleFunction<T> totalTimeFunction, TimeUnit totalTimeFunctionUnit) {
+    protected <T> FunctionTimer newFunctionTimer(Meter.Id id, T obj, ToLongFunction<T> countFunction,
+            ToDoubleFunction<T> totalTimeFunction, TimeUnit totalTimeFunctionUnit) {
         switch (config.mode()) {
-            case CUMULATIVE:
-                return new CumulativeFunctionTimer<>(id, obj, countFunction, totalTimeFunction, totalTimeFunctionUnit, getBaseTimeUnit());
+        case CUMULATIVE:
+            return new CumulativeFunctionTimer<>(id, obj, countFunction, totalTimeFunction, totalTimeFunctionUnit,
+                    getBaseTimeUnit());
 
-            case STEP:
-            default:
-                return new StepFunctionTimer<>(id, clock, config.step().toMillis(), obj, countFunction, totalTimeFunction, totalTimeFunctionUnit, getBaseTimeUnit());
+        case STEP:
+        default:
+            return new StepFunctionTimer<>(id, clock, config.step().toMillis(), obj, countFunction, totalTimeFunction,
+                    totalTimeFunctionUnit, getBaseTimeUnit());
         }
     }
 
     @Override
     protected <T> FunctionCounter newFunctionCounter(Meter.Id id, T obj, ToDoubleFunction<T> countFunction) {
         switch (config.mode()) {
-            case CUMULATIVE:
-                return new CumulativeFunctionCounter<>(id, obj, countFunction);
+        case CUMULATIVE:
+            return new CumulativeFunctionCounter<>(id, obj, countFunction);
 
-            case STEP:
-            default:
-                return new StepFunctionCounter<>(id, clock, config.step().toMillis(), obj, countFunction);
+        case STEP:
+        default:
+            return new StepFunctionCounter<>(id, clock, config.step().toMillis(), obj, countFunction);
         }
     }
 
@@ -154,9 +159,8 @@ public class SimpleMeterRegistry extends MeterRegistry {
 
     @Override
     protected DistributionStatisticConfig defaultHistogramConfig() {
-        return DistributionStatisticConfig.builder()
-                .expiry(config.step())
-                .build()
+        return DistributionStatisticConfig.builder().expiry(config.step()).build()
                 .merge(DistributionStatisticConfig.DEFAULT);
     }
+
 }

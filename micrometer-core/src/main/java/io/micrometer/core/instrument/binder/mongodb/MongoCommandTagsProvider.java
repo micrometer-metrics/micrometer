@@ -29,9 +29,9 @@ public interface MongoCommandTagsProvider {
 
     /**
      * Provides tags to be associated with metrics for the given Mongo command.
-     *
      * @param commandEvent the Mongo command
      * @return tags to associate with metrics recorded for the command
      */
     Iterable<Tag> commandTags(CommandEvent commandEvent);
+
 }

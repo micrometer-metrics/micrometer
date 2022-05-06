@@ -27,6 +27,7 @@ import java.util.concurrent.TimeUnit;
 import static org.assertj.core.api.Assertions.assertThat;
 
 class CompositeLongTaskTimerTest {
+
     @Test
     void mapIdsToEachLongTaskTimerInComposite() {
         MockClock clock = new MockClock();
@@ -47,4 +48,5 @@ class CompositeLongTaskTimerTest {
 
         assertThat(sample.stop()).isEqualTo(100);
     }
+
 }

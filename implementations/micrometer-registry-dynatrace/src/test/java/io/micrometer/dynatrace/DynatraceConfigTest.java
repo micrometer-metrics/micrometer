@@ -25,14 +25,15 @@ import java.util.Map;
 import static org.assertj.core.api.Assertions.assertThat;
 
 class DynatraceConfigTest {
+
     private final Map<String, String> props = new HashMap<>();
+
     private final DynatraceConfig config = props::get;
 
     @Test
     void invalid() {
         List<Validated.Invalid<?>> failures = config.validate().failures();
-        assertThat(failures.stream().map(Validated.Invalid::getMessage))
-                .containsOnly("is required");
+        assertThat(failures.stream().map(Validated.Invalid::getMessage)).containsOnly("is required");
         assertThat(failures.size()).isEqualTo(3);
     }
 
@@ -50,8 +51,7 @@ class DynatraceConfigTest {
             }
         }.validate();
 
-        assertThat(validate.failures().stream().map(Validated.Invalid::getMessage))
-                .contains("cannot be blank");
+        assertThat(validate.failures().stream().map(Validated.Invalid::getMessage)).contains("cannot be blank");
     }
 
     @Test
@@ -62,4 +62,5 @@ class DynatraceConfigTest {
 
         assertThat(config.validate().isValid()).isTrue();
     }
+
 }

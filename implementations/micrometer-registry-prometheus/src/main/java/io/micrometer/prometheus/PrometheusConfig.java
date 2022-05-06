@@ -30,6 +30,7 @@ import static io.micrometer.core.instrument.config.validate.PropertyValidator.*;
  * @author Jon Schneider
  */
 public interface PrometheusConfig extends MeterRegistryConfig {
+
     /**
      * Accept configuration defaults
      */
@@ -41,16 +42,17 @@ public interface PrometheusConfig extends MeterRegistryConfig {
     }
 
     /**
-     * @return {@code true} if meter descriptions should be sent to Prometheus.
-     * Turn this off to minimize the amount of data sent on each scrape.
+     * @return {@code true} if meter descriptions should be sent to Prometheus. Turn this
+     * off to minimize the amount of data sent on each scrape.
      */
     default boolean descriptions() {
         return getBoolean(this, "descriptions").orElse(true);
     }
 
     /**
-     * @return The step size to use in computing windowed statistics like max. The default is 1 minute.
-     * To get the most out of these statistics, align the step interval to be close to your scrape interval.
+     * @return The step size to use in computing windowed statistics like max. The default
+     * is 1 minute. To get the most out of these statistics, align the step interval to be
+     * close to your scrape interval.
      */
     default Duration step() {
         return getDuration(this, "step").orElse(Duration.ofMinutes(1));
@@ -58,7 +60,6 @@ public interface PrometheusConfig extends MeterRegistryConfig {
 
     /**
      * Histogram type for backing DistributionSummary and Timer
-     *
      * @return Choose which type of histogram to use
      * @since 1.4.0
      */
@@ -68,9 +69,8 @@ public interface PrometheusConfig extends MeterRegistryConfig {
 
     @Override
     default Validated<?> validate() {
-        return checkAll(this,
-                checkRequired("step", PrometheusConfig::step),
-                checkRequired("histogramFlavor", PrometheusConfig::histogramFlavor)
-        );
+        return checkAll(this, checkRequired("step", PrometheusConfig::step),
+                checkRequired("histogramFlavor", PrometheusConfig::histogramFlavor));
     }
+
 }

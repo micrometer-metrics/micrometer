@@ -29,6 +29,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 class TimeWindowMaxTest {
 
     MockClock clock = new MockClock();
+
     TimeWindowMax timeWindowMax;
 
     @Test
@@ -66,4 +67,5 @@ class TimeWindowMaxTest {
         timeWindowMax.record(100500);
         assertThat(timeWindowMax.poll()).isEqualTo(100500); // 666 | 500 | 100500
     }
+
 }

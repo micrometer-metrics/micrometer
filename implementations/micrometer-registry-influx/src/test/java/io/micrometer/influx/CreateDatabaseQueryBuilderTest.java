@@ -27,12 +27,10 @@ class CreateDatabaseQueryBuilderTest {
     /**
      * Class Parameters:
      * <p>
-     * - database name
-     * - retention clauses
+     * - database name - retention clauses
      * <p>
-     * Class Criteria
-     * - database name is not null		->	true		false
-     * - retention clauses			->	no		one		all
+     * Class Criteria - database name is not null -> true false - retention clauses -> no
+     * one all
      */
     private final CreateDatabaseQueryBuilder createDatabaseQueryBuilder = new CreateDatabaseQueryBuilder(TEST_DB_NAME);
 
@@ -55,12 +53,11 @@ class CreateDatabaseQueryBuilderTest {
 
     @Test
     void allClausesInRetentionPolicy() {
-        String query = createDatabaseQueryBuilder.setRetentionPolicyName("dummy_policy")
-                .setRetentionDuration("2d")
-                .setRetentionReplicationFactor(1)
-                .setRetentionShardDuration("3")
-                .build();
-        assertEquals("CREATE DATABASE \"dummy_database_0\" WITH DURATION 2d REPLICATION 1 SHARD DURATION 3 NAME dummy_policy", query);
+        String query = createDatabaseQueryBuilder.setRetentionPolicyName("dummy_policy").setRetentionDuration("2d")
+                .setRetentionReplicationFactor(1).setRetentionShardDuration("3").build();
+        assertEquals(
+                "CREATE DATABASE \"dummy_database_0\" WITH DURATION 2d REPLICATION 1 SHARD DURATION 3 NAME dummy_policy",
+                query);
     }
 
 }

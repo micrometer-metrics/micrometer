@@ -24,7 +24,9 @@ import java.util.Map;
 import static org.assertj.core.api.Assertions.assertThat;
 
 class StackdriverConfigTest {
+
     private final Map<String, String> props = new HashMap<>();
+
     private final StackdriverConfig config = props::get;
 
     @Test
@@ -41,4 +43,5 @@ class StackdriverConfigTest {
 
         assertThat(config.validate().isValid()).isTrue();
     }
+
 }

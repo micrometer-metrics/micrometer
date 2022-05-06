@@ -24,9 +24,7 @@ import io.micrometer.core.instrument.step.StepRegistryConfig;
 import java.time.Duration;
 import java.util.function.Predicate;
 
-import static io.micrometer.core.instrument.config.MeterRegistryConfigValidator.check;
-import static io.micrometer.core.instrument.config.MeterRegistryConfigValidator.checkAll;
-import static io.micrometer.core.instrument.config.MeterRegistryConfigValidator.checkRequired;
+import static io.micrometer.core.instrument.config.MeterRegistryConfigValidator.*;
 import static io.micrometer.core.instrument.config.validate.PropertyValidator.getInteger;
 import static io.micrometer.core.instrument.config.validate.PropertyValidator.getString;
 
@@ -37,6 +35,7 @@ import static io.micrometer.core.instrument.config.validate.PropertyValidator.ge
  * @since 1.2.0
  */
 public interface CloudWatchConfig extends StepRegistryConfig {
+
     int MAX_BATCH_SIZE = 20;
 
     @Override
@@ -54,15 +53,18 @@ public interface CloudWatchConfig extends StepRegistryConfig {
     }
 
     /**
-     * Whether to ship high-resolution metrics to CloudWatch at a higher cost. By default, if the step interval
-     * is less than one minute, we assume that high-resolution metrics are also desired.
+     * Whether to ship high-resolution metrics to CloudWatch at a higher cost. By default,
+     * if the step interval is less than one minute, we assume that high-resolution
+     * metrics are also desired.
      *
-     * This is incubating because CloudWatch supports making this decision on a per-metric level. It's believed
-     * that deciding on a per-registry level leads to simpler configuration and will be satisfactory in most cases.
-     * To only ship a certain subset of metrics at high resolution, two {@link CloudWatchMeterRegistry} instances can be configured.
-     * One is configured with high-resolution and a {@link MeterFilter#denyUnless(Predicate)} filter. The other is configured with
-     * low-resolution and a {@link MeterFilter#deny(Predicate)} filter. Both use the same predicate.
-     *
+     * This is incubating because CloudWatch supports making this decision on a per-metric
+     * level. It's believed that deciding on a per-registry level leads to simpler
+     * configuration and will be satisfactory in most cases. To only ship a certain subset
+     * of metrics at high resolution, two {@link CloudWatchMeterRegistry} instances can be
+     * configured. One is configured with high-resolution and a
+     * {@link MeterFilter#denyUnless(Predicate)} filter. The other is configured with
+     * low-resolution and a {@link MeterFilter#deny(Predicate)} filter. Both use the same
+     * predicate.
      * @return The decision about whether to accept higher cost high-resolution metrics.
      * @since 1.6.0
      */
@@ -73,12 +75,10 @@ public interface CloudWatchConfig extends StepRegistryConfig {
 
     @Override
     default Validated<?> validate() {
-        return checkAll(this,
-                (CloudWatchConfig c) -> StepRegistryConfig.validate(c),
+        return checkAll(this, (CloudWatchConfig c) -> StepRegistryConfig.validate(c),
                 checkRequired("namespace", CloudWatchConfig::namespace),
-                check("batchSize", CloudWatchConfig::batchSize)
-                        .andThen(v -> v.invalidateWhen(b -> b > MAX_BATCH_SIZE, "cannot be greater than " + MAX_BATCH_SIZE,
-                                InvalidReason.MALFORMED))
-        );
+                check("batchSize", CloudWatchConfig::batchSize).andThen(v -> v.invalidateWhen(b -> b > MAX_BATCH_SIZE,
+                        "cannot be greater than " + MAX_BATCH_SIZE, InvalidReason.MALFORMED)));
     }
+
 }

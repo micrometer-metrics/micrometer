@@ -24,7 +24,9 @@ import java.util.Map;
 import static org.assertj.core.api.Assertions.assertThat;
 
 class GraphiteConfigTest {
+
     private final Map<String, String> props = new HashMap<>();
+
     private final GraphiteConfig config = props::get;
 
     @Test
@@ -40,4 +42,5 @@ class GraphiteConfigTest {
     void valid() {
         assertThat(config.validate().isValid()).isTrue();
     }
+
 }

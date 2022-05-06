@@ -38,6 +38,7 @@ import static java.util.Collections.emptyList;
 public class UptimeMetrics implements MeterBinder {
 
     private final RuntimeMXBean runtimeMXBean;
+
     private final Iterable<Tag> tags;
 
     public UptimeMetrics() {
@@ -56,14 +57,11 @@ public class UptimeMetrics implements MeterBinder {
 
     @Override
     public void bindTo(MeterRegistry registry) {
-        TimeGauge.builder("process.uptime", runtimeMXBean, TimeUnit.MILLISECONDS, RuntimeMXBean::getUptime)
-            .tags(tags)
-            .description("The uptime of the Java virtual machine")
-            .register(registry);
+        TimeGauge.builder("process.uptime", runtimeMXBean, TimeUnit.MILLISECONDS, RuntimeMXBean::getUptime).tags(tags)
+                .description("The uptime of the Java virtual machine").register(registry);
 
         TimeGauge.builder("process.start.time", runtimeMXBean, TimeUnit.MILLISECONDS, RuntimeMXBean::getStartTime)
-            .tags(tags)
-            .description("Start time of the process since unix epoch.")
-            .register(registry);
+                .tags(tags).description("Start time of the process since unix epoch.").register(registry);
     }
+
 }

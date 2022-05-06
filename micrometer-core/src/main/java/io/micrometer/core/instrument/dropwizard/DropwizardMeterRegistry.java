@@ -46,13 +46,17 @@ public abstract class DropwizardMeterRegistry extends MeterRegistry {
     private static final WarnThenDebugLogger logger = new WarnThenDebugLogger(DropwizardMeterRegistry.class);
 
     private final MetricRegistry registry;
+
     private final HierarchicalNameMapper nameMapper;
+
     private final DropwizardClock dropwizardClock;
+
     private final DropwizardConfig dropwizardConfig;
 
     private final AtomicBoolean warnLogged = new AtomicBoolean();
 
-    public DropwizardMeterRegistry(DropwizardConfig config, MetricRegistry registry, HierarchicalNameMapper nameMapper, Clock clock) {
+    public DropwizardMeterRegistry(DropwizardConfig config, MetricRegistry registry, HierarchicalNameMapper nameMapper,
+            Clock clock) {
         super(clock);
 
         config.requireValid();
@@ -62,9 +66,7 @@ public abstract class DropwizardMeterRegistry extends MeterRegistry {
         this.registry = registry;
         this.nameMapper = nameMapper;
 
-        config()
-            .namingConvention(NamingConvention.camelCase)
-            .onMeterRemoved(this::onMeterRemoved);
+        config().namingConvention(NamingConvention.camelCase).onMeterRemoved(this::onMeterRemoved);
     }
 
     private void onMeterRemoved(Meter meter) {
@@ -83,14 +85,16 @@ public abstract class DropwizardMeterRegistry extends MeterRegistry {
     }
 
     @Override
-    protected <T> io.micrometer.core.instrument.Gauge newGauge(Meter.Id id, @Nullable T obj, ToDoubleFunction<T> valueFunction) {
+    protected <T> io.micrometer.core.instrument.Gauge newGauge(Meter.Id id, @Nullable T obj,
+            ToDoubleFunction<T> valueFunction) {
         final WeakReference<T> ref = new WeakReference<>(obj);
         Gauge<Double> gauge = () -> {
             T obj2 = ref.get();
             if (obj2 != null) {
                 try {
                     return valueFunction.applyAsDouble(obj2);
-                } catch (Throwable ex) {
+                }
+                catch (Throwable ex) {
                     logger.log("Failed to apply the value function for the gauge '" + id.getName() + "'.", ex);
                 }
             }
@@ -101,15 +105,21 @@ public abstract class DropwizardMeterRegistry extends MeterRegistry {
     }
 
     @Override
-    protected Timer newTimer(Meter.Id id, DistributionStatisticConfig distributionStatisticConfig, PauseDetector pauseDetector) {
-        DropwizardTimer timer = new DropwizardTimer(id, registry.timer(hierarchicalName(id), () -> new com.codahale.metrics.Timer(new ExponentiallyDecayingReservoir(), dropwizardClock)), clock, distributionStatisticConfig, pauseDetector);
+    protected Timer newTimer(Meter.Id id, DistributionStatisticConfig distributionStatisticConfig,
+            PauseDetector pauseDetector) {
+        DropwizardTimer timer = new DropwizardTimer(id,
+                registry.timer(hierarchicalName(id),
+                        () -> new com.codahale.metrics.Timer(new ExponentiallyDecayingReservoir(), dropwizardClock)),
+                clock, distributionStatisticConfig, pauseDetector);
         HistogramGauges.registerWithCommonFormat(timer, this);
         return timer;
     }
 
     @Override
-    protected DistributionSummary newDistributionSummary(Meter.Id id, DistributionStatisticConfig distributionStatisticConfig, double scale) {
-        DropwizardDistributionSummary summary = new DropwizardDistributionSummary(id, clock, registry.histogram(hierarchicalName(id)), distributionStatisticConfig, scale);
+    protected DistributionSummary newDistributionSummary(Meter.Id id,
+            DistributionStatisticConfig distributionStatisticConfig, double scale) {
+        DropwizardDistributionSummary summary = new DropwizardDistributionSummary(id, clock,
+                registry.histogram(hierarchicalName(id)), distributionStatisticConfig, scale);
         HistogramGauges.registerWithCommonFormat(summary, this);
         return summary;
     }
@@ -118,14 +128,17 @@ public abstract class DropwizardMeterRegistry extends MeterRegistry {
     protected LongTaskTimer newLongTaskTimer(Meter.Id id, DistributionStatisticConfig distributionStatisticConfig) {
         LongTaskTimer ltt = new DefaultLongTaskTimer(id, clock, getBaseTimeUnit(), distributionStatisticConfig, false);
         registry.register(hierarchicalName(id.withTag(Statistic.ACTIVE_TASKS)), (Gauge<Integer>) ltt::activeTasks);
-        registry.register(hierarchicalName(id.withTag(Statistic.DURATION)), (Gauge<Double>) () -> ltt.duration(TimeUnit.NANOSECONDS));
-        registry.register(hierarchicalName(id.withTag(Statistic.MAX)), (Gauge<Double>) () -> ltt.max(TimeUnit.NANOSECONDS));
+        registry.register(hierarchicalName(id.withTag(Statistic.DURATION)),
+                (Gauge<Double>) () -> ltt.duration(TimeUnit.NANOSECONDS));
+        registry.register(hierarchicalName(id.withTag(Statistic.MAX)),
+                (Gauge<Double>) () -> ltt.max(TimeUnit.NANOSECONDS));
         HistogramGauges.registerWithCommonFormat(ltt, this);
         return ltt;
     }
 
     @Override
-    protected <T> FunctionTimer newFunctionTimer(Meter.Id id, T obj, ToLongFunction<T> countFunction, ToDoubleFunction<T> totalTimeFunction, TimeUnit totalTimeFunctionUnit) {
+    protected <T> FunctionTimer newFunctionTimer(Meter.Id id, T obj, ToLongFunction<T> countFunction,
+            ToDoubleFunction<T> totalTimeFunction, TimeUnit totalTimeFunctionUnit) {
         DropwizardFunctionTimer<T> ft = new DropwizardFunctionTimer<>(id, clock, obj, countFunction, totalTimeFunction,
                 totalTimeFunctionUnit, getBaseTimeUnit());
         registry.register(hierarchicalName(id), ft.getDropwizardMeter());
@@ -141,7 +154,8 @@ public abstract class DropwizardMeterRegistry extends MeterRegistry {
 
     @Override
     protected Meter newMeter(Meter.Id id, Meter.Type type, Iterable<Measurement> measurements) {
-        measurements.forEach(ms -> registry.register(hierarchicalName(id.withTag(ms.getStatistic())), (Gauge<Double>) ms::getValue));
+        measurements.forEach(
+                ms -> registry.register(hierarchicalName(id.withTag(ms.getStatistic())), (Gauge<Double>) ms::getValue));
         return new DefaultMeter(id, type, measurements);
     }
 
@@ -156,14 +170,14 @@ public abstract class DropwizardMeterRegistry extends MeterRegistry {
 
     @Override
     protected DistributionStatisticConfig defaultHistogramConfig() {
-        return DistributionStatisticConfig.builder()
-                .expiry(dropwizardConfig.step())
-                .build()
+        return DistributionStatisticConfig.builder().expiry(dropwizardConfig.step()).build()
                 .merge(DistributionStatisticConfig.DEFAULT);
     }
 
     /**
-     * @return Value to report when {@link io.micrometer.core.instrument.Gauge#value()} returns {@code null}.
+     * @return Value to report when {@link io.micrometer.core.instrument.Gauge#value()}
+     * returns {@code null}.
      */
     protected abstract Double nullGaugeValue();
+
 }

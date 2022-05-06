@@ -24,6 +24,7 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 @SuppressWarnings("deprecation")
 class TimeUtilsTest {
+
     @Test
     void simpleParse() {
         assertThat(TimeUtils.simpleParse("5ns")).isEqualByComparingTo(Duration.ofNanos(5));
@@ -42,8 +43,7 @@ class TimeUtilsTest {
 
     @Test
     void cantParseDecimal() {
-        assertThatThrownBy(() -> TimeUtils.simpleParse("1.1s"))
-            .isInstanceOf(NumberFormatException.class);
+        assertThatThrownBy(() -> TimeUtils.simpleParse("1.1s")).isInstanceOf(NumberFormatException.class);
     }
 
     @Test
@@ -53,4 +53,5 @@ class TimeUtilsTest {
         assertThat(TimeUtils.format(Duration.ofMinutes(2))).isEqualTo("2m");
         assertThat(TimeUtils.format(Duration.ofNanos(1001234000000L))).isEqualTo("16m 41.234s");
     }
+
 }

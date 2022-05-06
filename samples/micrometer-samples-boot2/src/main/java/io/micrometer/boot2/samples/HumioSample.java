@@ -23,7 +23,9 @@ import org.springframework.scheduling.annotation.EnableScheduling;
 @SpringBootApplication(scanBasePackageClasses = PersonController.class)
 @EnableScheduling
 public class HumioSample {
+
     public static void main(String[] args) {
         new SpringApplicationBuilder(HumioSample.class).profiles("humio").profiles("prometheus").run(args);
     }
+
 }

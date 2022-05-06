@@ -23,6 +23,7 @@ import reactor.util.context.Context;
 import java.util.function.LongConsumer;
 
 public class LogbackMetricsSuppressingFluxSink implements FluxSink<String> {
+
     private final FluxSink<String> delegate;
 
     public LogbackMetricsSuppressingFluxSink(FluxSink<String> delegate) {
@@ -77,4 +78,5 @@ public class LogbackMetricsSuppressingFluxSink implements FluxSink<String> {
         LogbackMetrics.ignoreMetrics(() -> delegate.onDispose(d));
         return this;
     }
+
 }

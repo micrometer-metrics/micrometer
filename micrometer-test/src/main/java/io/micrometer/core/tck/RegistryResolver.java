@@ -27,23 +27,28 @@ import java.lang.reflect.Method;
 import static org.assertj.core.api.Assertions.fail;
 
 /**
- * This is for internal use by the Micrometer MeterRegistry TCK: {@link MeterRegistryCompatibilityKit}.
- * It allows resolving the {@link MeterRegistry} under test as a parameter to test methods.
- * It relies on reflection and implementation details of the java compiler to resolve and invoke
- * the top-level parent class method {@code registry()}.
+ * This is for internal use by the Micrometer MeterRegistry TCK:
+ * {@link MeterRegistryCompatibilityKit}. It allows resolving the {@link MeterRegistry}
+ * under test as a parameter to test methods. It relies on reflection and implementation
+ * details of the java compiler to resolve and invoke the top-level parent class method
+ * {@code registry()}.
  *
  * @deprecated use {@link MeterRegistryCompatibilityKit#registry} instead.
  */
 @Deprecated
 public class RegistryResolver implements ParameterResolver {
+
     @Override
-    public boolean supportsParameter(ParameterContext parameterContext, ExtensionContext extensionContext) throws ParameterResolutionException {
+    public boolean supportsParameter(ParameterContext parameterContext, ExtensionContext extensionContext)
+            throws ParameterResolutionException {
         return parameterContext.getParameter().getType().equals(MeterRegistry.class);
     }
 
     @Override
-    public Object resolveParameter(ParameterContext parameterContext, ExtensionContext extensionContext) throws ParameterResolutionException {
-        @SuppressWarnings("ConstantConditions") Object o = extensionContext.getTestInstance().get();
+    public Object resolveParameter(ParameterContext parameterContext, ExtensionContext extensionContext)
+            throws ParameterResolutionException {
+        @SuppressWarnings("ConstantConditions")
+        Object o = extensionContext.getTestInstance().get();
         try {
             // support arbitrarily nested tests in the TCK
             Class<?> clazz = o.getClass();
@@ -51,21 +56,27 @@ public class RegistryResolver implements ParameterResolver {
             do {
                 try {
                     Method registry = clazz.getMethod("registry");
-                    registry.setAccessible(true); // because JUnit 5 test classes don't have to be public
+                    registry.setAccessible(true); // because JUnit 5 test classes don't
+                                                  // have to be public
                     return registry.invoke(target);
-                } catch (NoSuchMethodException ignored) {
+                }
+                catch (NoSuchMethodException ignored) {
                 }
 
                 try {
                     target = o.getClass().getDeclaredField("this$0").get(target);
-                } catch (NoSuchFieldException e) {
+                }
+                catch (NoSuchFieldException e) {
                     break;
                 }
-            } while ((clazz = clazz.getEnclosingClass()) != null);
-        } catch (IllegalAccessException | InvocationTargetException e) {
+            }
+            while ((clazz = clazz.getEnclosingClass()) != null);
+        }
+        catch (IllegalAccessException | InvocationTargetException e) {
             e.printStackTrace();
         }
         fail("This should never happen -- an implementation of registry() was not found");
         return null;
     }
+
 }

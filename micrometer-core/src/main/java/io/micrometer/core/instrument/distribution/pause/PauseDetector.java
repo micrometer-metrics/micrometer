@@ -16,4 +16,5 @@
 package io.micrometer.core.instrument.distribution.pause;
 
 public interface PauseDetector {
+
 }

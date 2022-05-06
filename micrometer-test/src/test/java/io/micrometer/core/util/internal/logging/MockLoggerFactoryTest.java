@@ -23,6 +23,7 @@ import static org.assertj.core.api.Assertions.assertThat;
  * @author Jonatan Ivanov
  */
 class MockLoggerFactoryTest {
+
     private static final MockLoggerFactory FACTORY = new MockLoggerFactory();
 
     @Test
@@ -80,10 +81,13 @@ class MockLoggerFactoryTest {
     }
 
     private static class TestComponentWithLogger {
+
         private final InternalLogger logger = InternalLoggerFactory.getInstance(TestComponentWithLogger.class);
 
         private InternalLogger getLogger() {
             return this.logger;
         }
+
     }
+
 }

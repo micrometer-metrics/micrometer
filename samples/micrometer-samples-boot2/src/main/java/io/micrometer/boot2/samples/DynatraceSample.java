@@ -23,7 +23,9 @@ import org.springframework.scheduling.annotation.EnableScheduling;
 @SpringBootApplication(scanBasePackageClasses = PersonController.class)
 @EnableScheduling
 public class DynatraceSample {
+
     public static void main(String[] args) {
         new SpringApplicationBuilder(DynatraceSample.class).profiles("dynatrace").run(args);
     }
+
 }

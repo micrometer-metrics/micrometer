@@ -24,7 +24,9 @@ import java.util.Map;
 import static org.assertj.core.api.Assertions.assertThat;
 
 class PrometheusConfigTest {
+
     private final Map<String, String> props = new HashMap<>();
+
     private final PrometheusConfig config = props::get;
 
     @Test
@@ -32,15 +34,13 @@ class PrometheusConfigTest {
         props.put("prometheus.step", "1w");
         props.put("prometheus.histogramFlavor", "bad");
 
-        assertThat(config.validate().failures().stream().map(Validated.Invalid::getMessage))
-                .containsExactlyInAnyOrder(
-                        "must contain a valid time unit",
-                        "should be one of 'Prometheus', 'VictoriaMetrics'"
-                );
+        assertThat(config.validate().failures().stream().map(Validated.Invalid::getMessage)).containsExactlyInAnyOrder(
+                "must contain a valid time unit", "should be one of 'Prometheus', 'VictoriaMetrics'");
     }
 
     @Test
     void valid() {
         assertThat(config.validate().isValid()).isTrue();
     }
+
 }

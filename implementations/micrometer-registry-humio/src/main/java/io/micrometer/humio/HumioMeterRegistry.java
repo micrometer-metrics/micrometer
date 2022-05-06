@@ -48,15 +48,19 @@ import static java.util.stream.Collectors.joining;
  * @since 1.1.0
  */
 public class HumioMeterRegistry extends StepMeterRegistry {
+
     private static final ThreadFactory DEFAULT_THREAD_FACTORY = new NamedThreadFactory("humio-metrics-publisher");
+
     private final Logger logger = LoggerFactory.getLogger(HumioMeterRegistry.class);
 
     private final HumioConfig config;
+
     private final HttpSender httpClient;
 
     @SuppressWarnings("deprecation")
     public HumioMeterRegistry(HumioConfig config, Clock clock) {
-        this(config, clock, DEFAULT_THREAD_FACTORY, new HttpUrlConnectionSender(config.connectTimeout(), config.readTimeout()));
+        this(config, clock, DEFAULT_THREAD_FACTORY,
+                new HttpUrlConnectionSender(config.connectTimeout(), config.readTimeout()));
     }
 
     private HumioMeterRegistry(HumioConfig config, Clock clock, ThreadFactory threadFactory, HttpSender httpClient) {
@@ -93,11 +97,13 @@ public class HumioMeterRegistry extends StepMeterRegistry {
                 String tags = "";
                 Map<String, String> datasourceTags = config.tags();
                 if (datasourceTags != null && !datasourceTags.isEmpty()) {
-                    tags = datasourceTags.entrySet().stream().map(tag -> "\"" + tag.getKey() + "\": \"" + tag.getValue() + "\"")
+                    tags = datasourceTags.entrySet().stream()
+                            .map(tag -> "\"" + tag.getKey() + "\": \"" + tag.getValue() + "\"")
                             .collect(joining(",", "\"tags\":{", "},"));
                 }
 
                 post.withJsonContent(meters.stream()
+                // @formatter:off
                         .map(m -> m.match(
                                 batch::writeGauge,
                                 batch::writeCounter,
@@ -113,7 +119,9 @@ public class HumioMeterRegistry extends StepMeterRegistry {
                         .send()
                         .onSuccess(response -> logger.debug("successfully sent {} metrics to humio.", meters.size()))
                         .onError(response -> logger.error("failed to send metrics to humio: {}", response.body()));
-            } catch (Throwable e) {
+                // @formatter:on
+            }
+            catch (Throwable e) {
                 logger.warn("failed to send metrics to humio", e);
             }
         }
@@ -126,20 +134,26 @@ public class HumioMeterRegistry extends StepMeterRegistry {
     }
 
     private static class Attribute {
+
         private final String name;
+
         private final double value;
 
         private Attribute(String name, double value) {
             this.name = name;
             this.value = value;
         }
+
     }
 
     public static class Builder {
+
         private final HumioConfig config;
 
         private Clock clock = Clock.SYSTEM;
+
         private ThreadFactory threadFactory = DEFAULT_THREAD_FACTORY;
+
         private HttpSender httpClient;
 
         @SuppressWarnings("deprecation")
@@ -166,10 +180,12 @@ public class HumioMeterRegistry extends StepMeterRegistry {
         public HumioMeterRegistry build() {
             return new HumioMeterRegistry(config, clock, threadFactory, httpClient);
         }
+
     }
 
     // VisibleForTesting
     class Batch {
+
         private final String timestamp;
 
         // VisibleForTesting
@@ -214,42 +230,34 @@ public class HumioMeterRegistry extends StepMeterRegistry {
 
         // VisibleForTesting
         String writeFunctionTimer(FunctionTimer timer) {
-            return writeEvent(timer,
-                    event("count", timer.count()),
-                    event("sum", timer.totalTime(getBaseTimeUnit())),
+            return writeEvent(timer, event("count", timer.count()), event("sum", timer.totalTime(getBaseTimeUnit())),
                     event("avg", timer.mean(getBaseTimeUnit())));
         }
 
         // VisibleForTesting
         String writeLongTaskTimer(LongTaskTimer timer) {
-            return writeEvent(timer,
-                    event(config().namingConvention().tagKey("active.tasks"), timer.activeTasks()),
+            return writeEvent(timer, event(config().namingConvention().tagKey("active.tasks"), timer.activeTasks()),
                     event("duration", timer.duration(getBaseTimeUnit())));
         }
 
         // VisibleForTesting
         String writeTimer(Timer timer) {
             HistogramSnapshot snap = timer.takeSnapshot();
-            return writeEvent(timer,
-                    event("count", snap.count()),
-                    event("sum", snap.total(getBaseTimeUnit())),
-                    event("avg", snap.mean(getBaseTimeUnit())),
-                    event("max", snap.max(getBaseTimeUnit())));
+            return writeEvent(timer, event("count", snap.count()), event("sum", snap.total(getBaseTimeUnit())),
+                    event("avg", snap.mean(getBaseTimeUnit())), event("max", snap.max(getBaseTimeUnit())));
         }
 
         // VisibleForTesting
         String writeSummary(DistributionSummary summary) {
             HistogramSnapshot snap = summary.takeSnapshot();
-            return writeEvent(summary,
-                    event("count", snap.count()),
-                    event("sum", snap.total()),
-                    event("avg", snap.mean()),
-                    event("max", snap.max()));
+            return writeEvent(summary, event("count", snap.count()), event("sum", snap.total()),
+                    event("avg", snap.mean()), event("max", snap.max()));
         }
 
         // VisibleForTesting
         String writeMeter(Meter meter) {
-            // Snapshot values should be used throughout this method as there are chances for values to be changed in-between.
+            // Snapshot values should be used throughout this method as there are chances
+            // for values to be changed in-between.
             List<Attribute> attributes = new ArrayList<>();
             for (Measurement measurement : meter.measure()) {
                 double value = measurement.getValue();
@@ -265,12 +273,8 @@ public class HumioMeterRegistry extends StepMeterRegistry {
         }
 
         /*
-          {
-            "timestamp": "2016-06-06T13:00:02+02:00",
-            "attributes": {
-              "name": "value1"
-            }
-          }
+         * { "timestamp": "2016-06-06T13:00:02+02:00", "attributes": { "name": "value1" }
+         * }
          */
         // VisibleForTesting
         String writeEvent(Meter meter, Attribute... attributes) {
@@ -282,7 +286,8 @@ public class HumioMeterRegistry extends StepMeterRegistry {
                     .append(escapeJson(name)).append('"');
 
             for (Attribute attribute : attributes) {
-                sb.append(",\"").append(attribute.name).append("\":").append(DoubleFormat.wholeOrDecimal(attribute.value));
+                sb.append(",\"").append(attribute.name).append("\":")
+                        .append(DoubleFormat.wholeOrDecimal(attribute.value));
             }
 
             List<Tag> tags = getConventionTags(meter.getId());
@@ -301,5 +306,7 @@ public class HumioMeterRegistry extends StepMeterRegistry {
             sb.append("}}");
             return sb.toString();
         }
+
     }
+
 }

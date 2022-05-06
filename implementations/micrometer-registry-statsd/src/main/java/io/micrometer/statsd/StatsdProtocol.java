@@ -22,6 +22,7 @@ package io.micrometer.statsd;
  * @since 1.2.0
  */
 public enum StatsdProtocol {
-    UDP,
-    TCP
+
+    UDP, TCP
+
 }

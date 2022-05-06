@@ -42,15 +42,19 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 class JettyConnectionMetricsTest {
+
     private SimpleMeterRegistry registry = new SimpleMeterRegistry(SimpleConfig.DEFAULT, new MockClock());
+
     private Server server = new Server(0);
+
     private ServerConnector connector = new ServerConnector(server);
+
     private CloseableHttpClient client = HttpClients.createDefault();
 
     @BeforeEach
     void setup() throws Exception {
         connector.addBean(new JettyConnectionMetrics(registry));
-        server.setConnectors(new Connector[]{connector});
+        server.setConnectors(new Connector[] { connector });
         server.start();
     }
 
@@ -80,13 +84,13 @@ class JettyConnectionMetricsTest {
                 latch.countDown();
             }
         });
-        // Convenient way to get Jetty to flush its connections, which is required to update the sent/received bytes metrics
+        // Convenient way to get Jetty to flush its connections, which is required to
+        // update the sent/received bytes metrics
         server.stop();
 
         assertTrue(latch.await(10, SECONDS));
         assertThat(registry.get("jetty.connections.max").gauge().value()).isEqualTo(2.0);
-        assertThat(registry.get("jetty.connections.request").tag("type", "server").timer().count())
-                .isEqualTo(2);
+        assertThat(registry.get("jetty.connections.request").tag("type", "server").timer().count()).isEqualTo(2);
         assertThat(registry.get("jetty.connections.bytes.in").summary().totalAmount()).isGreaterThan(1);
     }
 
@@ -113,8 +117,8 @@ class JettyConnectionMetricsTest {
 
         assertTrue(latch.await(10, SECONDS));
         assertThat(registry.get("jetty.connections.max").gauge().value()).isEqualTo(1.0);
-        assertThat(registry.get("jetty.connections.request").tag("type", "client").timer().count())
-                .isEqualTo(1);
+        assertThat(registry.get("jetty.connections.request").tag("type", "client").timer().count()).isEqualTo(1);
         assertThat(registry.get("jetty.connections.bytes.out").summary().totalAmount()).isGreaterThan(1);
     }
+
 }

@@ -28,16 +28,21 @@ import java.util.stream.Stream;
 import static java.util.stream.Collectors.toList;
 
 /**
- * Search terms for locating a {@link Meter} or set of meters in a given registry based on any combination of their
- * name, tags, and type.
+ * Search terms for locating a {@link Meter} or set of meters in a given registry based on
+ * any combination of their name, tags, and type.
  *
  * @author Jon Schneider
  */
 public final class Search {
+
     private final MeterRegistry registry;
+
     private final List<Tag> tags = new ArrayList<>();
+
     private Predicate<String> nameMatches = n -> true;
+
     private final Set<String> requiredTagKeys = new HashSet<>();
+
     private final Map<String, Collection<Predicate<String>>> tagMatches = new HashMap<>();
 
     private Search(MeterRegistry registry) {
@@ -46,7 +51,6 @@ public final class Search {
 
     /**
      * Meter contains a tag with the exact name.
-     *
      * @param exactName Name to match against.
      * @return This search.
      */
@@ -56,7 +60,6 @@ public final class Search {
 
     /**
      * Meter contains a tag matching the name predicate.
-     *
      * @param nameMatches Name matching predicate.
      * @return This search.
      */
@@ -69,7 +72,6 @@ public final class Search {
 
     /**
      * Meter contains tags with the matching tag keys and values.
-     *
      * @param tags The tags to match.
      * @return This search.
      */
@@ -80,8 +82,8 @@ public final class Search {
 
     /**
      * Meter contains tags with the matching tag keys and values.
-     *
-     * @param tags Must be an even number of arguments representing key/value pairs of tags.
+     * @param tags Must be an even number of arguments representing key/value pairs of
+     * tags.
      * @return This search.
      */
     public Search tags(String... tags) {
@@ -90,8 +92,7 @@ public final class Search {
 
     /**
      * Meter contains a tag with the matching key and value.
-     *
-     * @param tagKey   The tag key to match.
+     * @param tagKey The tag key to match.
      * @param tagValue The tag value to match.
      * @return This search.
      */
@@ -101,7 +102,6 @@ public final class Search {
 
     /**
      * Meter contains tags with the matching keys.
-     *
      * @param tagKeys The tag keys to match.
      * @return This search.
      */
@@ -111,7 +111,6 @@ public final class Search {
 
     /**
      * Meter contains tags with the matching keys.
-     *
      * @param tagKeys The tag keys to match.
      * @return This search.
      * @since 1.7.0
@@ -122,9 +121,9 @@ public final class Search {
     }
 
     /**
-     * Meter contains a tag with the provided key and a value matching {@code tagValueMatches}.
-     *
-     * @param tagKey          The tag key to match.
+     * Meter contains a tag with the provided key and a value matching
+     * {@code tagValueMatches}.
+     * @param tagKey The tag key to match.
      * @param tagValueMatches The test on the tag value.
      * @return This search.
      * @since 1.6.0
@@ -183,7 +182,8 @@ public final class Search {
     }
 
     /**
-     * @return The first matching {@link DistributionSummary}, or {@code null} if none match.
+     * @return The first matching {@link DistributionSummary}, or {@code null} if none
+     * match.
      */
     @Nullable
     public DistributionSummary summary() {
@@ -208,11 +208,7 @@ public final class Search {
 
     @Nullable
     private <M extends Meter> M findOne(Class<M> clazz) {
-        return meterStream()
-                .filter(clazz::isInstance)
-                .findAny()
-                .map(clazz::cast)
-                .orElse(null);
+        return meterStream().filter(clazz::isInstance).findAny().map(clazz::cast).orElse(null);
     }
 
     /**
@@ -332,19 +328,16 @@ public final class Search {
     }
 
     private <M extends Meter> Collection<M> findAll(Class<M> clazz) {
-        return meterStream()
-                .filter(clazz::isInstance)
-                .map(clazz::cast)
-                .collect(toList());
+        return meterStream().filter(clazz::isInstance).map(clazz::cast).collect(toList());
     }
 
     /**
      * Initiate a new search for meters inside a registry.
-     *
      * @param registry The registry to locate meters in.
      * @return A new search.
      */
     public static Search in(MeterRegistry registry) {
         return new Search(registry);
     }
+
 }

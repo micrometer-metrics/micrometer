@@ -22,6 +22,7 @@ import io.micrometer.core.instrument.Meter;
 import java.util.concurrent.atomic.DoubleAdder;
 
 public class PrometheusCounter extends AbstractMeter implements Counter {
+
     private DoubleAdder count = new DoubleAdder();
 
     PrometheusCounter(Meter.Id id) {
@@ -38,4 +39,5 @@ public class PrometheusCounter extends AbstractMeter implements Counter {
     public double count() {
         return count.doubleValue();
     }
+
 }

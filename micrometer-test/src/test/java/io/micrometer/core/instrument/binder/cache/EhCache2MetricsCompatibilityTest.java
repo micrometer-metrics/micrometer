@@ -28,7 +28,9 @@ import java.util.UUID;
 import static java.util.Collections.emptyList;
 
 class EhCache2MetricsCompatibilityTest extends CacheMeterBinderCompatibilityKit {
+
     private CacheManager cacheManager;
+
     private Cache cache;
 
     EhCache2MetricsCompatibilityTest() {
@@ -61,4 +63,5 @@ class EhCache2MetricsCompatibilityTest extends CacheMeterBinderCompatibilityKit 
         Element element = cache.get(key);
         return element == null ? null : (String) element.getObjectValue();
     }
+
 }

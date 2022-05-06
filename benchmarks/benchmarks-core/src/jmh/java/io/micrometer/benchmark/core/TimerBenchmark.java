@@ -30,22 +30,22 @@ import java.util.concurrent.TimeUnit;
 @State(Scope.Benchmark)
 @OutputTimeUnit(TimeUnit.MICROSECONDS)
 public class TimerBenchmark {
+
     public static void main(String[] args) throws RunnerException {
-        Options opt = new OptionsBuilder()
-                .include(TimerBenchmark.class.getSimpleName())
-                .warmupIterations(5)
-                .measurementIterations(10)
-                .mode(Mode.SampleTime)
-                .forks(1)
-                .build();
+        // formatter:off
+        Options opt = new OptionsBuilder().include(TimerBenchmark.class.getSimpleName()).warmupIterations(5)
+                .measurementIterations(10).mode(Mode.SampleTime).forks(1).build();
+        // @formatter:on
 
         new Runner(opt).run();
     }
 
     private MeterRegistry registry;
+
     private Timer timer;
 
     int x = 923;
+
     int y = 123;
 
     @Setup
@@ -76,4 +76,5 @@ public class TimerBenchmark {
     public int sum() {
         return x + y;
     }
+
 }

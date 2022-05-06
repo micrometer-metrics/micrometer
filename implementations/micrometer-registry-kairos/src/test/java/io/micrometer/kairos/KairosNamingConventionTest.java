@@ -24,10 +24,12 @@ import static org.assertj.core.api.Assertions.assertThat;
  * @author Anton Ilinchik
  */
 class KairosNamingConventionTest {
+
     private KairosNamingConvention convention = new KairosNamingConvention();
 
     @Test
     void defaultToSnakeCase() {
         assertThat(convention.name("gauge.size", Meter.Type.GAUGE)).isEqualTo("gauge_size");
     }
+
 }

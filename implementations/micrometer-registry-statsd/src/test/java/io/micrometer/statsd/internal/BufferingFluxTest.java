@@ -15,7 +15,10 @@
  */
 package io.micrometer.statsd.internal;
 
-import static org.assertj.core.api.Assertions.assertThat;
+import org.junit.jupiter.api.Test;
+import reactor.core.publisher.Flux;
+import reactor.core.publisher.Mono;
+import reactor.test.StepVerifier;
 
 import java.time.Duration;
 import java.util.ArrayList;
@@ -24,11 +27,7 @@ import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.IntStream;
 
-import reactor.core.publisher.Flux;
-import reactor.core.publisher.Mono;
-import reactor.test.StepVerifier;
-
-import org.junit.jupiter.api.Test;
+import static org.assertj.core.api.Assertions.assertThat;
 
 /**
  * Tests for {@link BufferingFlux}.
@@ -40,66 +39,54 @@ class BufferingFluxTest {
 
     @Test
     void bufferSingleStrings() {
-        Flux<String> source = Flux.just(
-                "twelve bytes",
-                "fourteen bytes",
-                "twelve bytes",
-                "fourteen bytes"
-        ).delayElements(Duration.ofMillis(50));
+        Flux<String> source = Flux.just("twelve bytes", "fourteen bytes", "twelve bytes", "fourteen bytes")
+                .delayElements(Duration.ofMillis(50));
 
         Flux<String> buffered = BufferingFlux.create(source, "\n", 14, 200);
 
-        StepVerifier.create(buffered)
-                .expectNext("twelve bytes\n")
-                .expectNext("fourteen bytes\n")
-                .expectNext("twelve bytes\n")
-                .expectNext("fourteen bytes\n")
-                .verifyComplete();
+        StepVerifier.create(buffered).expectNext("twelve bytes\n").expectNext("fourteen bytes\n")
+                .expectNext("twelve bytes\n").expectNext("fourteen bytes\n").verifyComplete();
     }
 
     @Test
     void bufferMultipleStrings() {
-        Flux<String> source = Flux.just(
-                "twelve bytes",
-                "fourteen bytes",
-                "twelve bytes",
-                "fourteen bytes"
-        );
+        Flux<String> source = Flux.just("twelve bytes", "fourteen bytes", "twelve bytes", "fourteen bytes");
 
         Flux<String> buffered = BufferingFlux.create(source, "\n", 27, Long.MAX_VALUE);
 
-        StepVerifier.create(buffered)
-                .expectNext("twelve bytes\nfourteen bytes\n")
-                .expectNext("twelve bytes\nfourteen bytes\n")
-                .verifyComplete();
+        StepVerifier.create(buffered).expectNext("twelve bytes\nfourteen bytes\n")
+                .expectNext("twelve bytes\nfourteen bytes\n").verifyComplete();
     }
 
     @Test
     void bufferUntilTimeout() {
-        Flux<String> source = Flux.concat(
-                Mono.just("twelve bytes"),
-                Mono.just("fourteen bytes"),
-                Mono.just("twelve bytes"),
-                Mono.just("fourteen bytes").delayElement(Duration.ofMillis(65)) // avoid multiples of maxMillisecondsBetweenEmits to avoid race condition
+        Flux<String> source = Flux.concat(Mono.just("twelve bytes"), Mono.just("fourteen bytes"),
+                Mono.just("twelve bytes"), Mono.just("fourteen bytes").delayElement(Duration.ofMillis(65)) // avoid
+                                                                                                           // multiples
+                                                                                                           // of
+                                                                                                           // maxMillisecondsBetweenEmits
+                                                                                                           // to
+                                                                                                           // avoid
+                                                                                                           // race
+                                                                                                           // condition
         );
 
         Flux<String> buffered = BufferingFlux.create(source, "\n", Integer.MAX_VALUE, 50);
 
-        StepVerifier.create(buffered)
-                .expectNext("twelve bytes\nfourteen bytes\ntwelve bytes\n")
-                .expectNext("fourteen bytes\n")
-                .verifyComplete();
+        StepVerifier.create(buffered).expectNext("twelve bytes\nfourteen bytes\ntwelve bytes\n")
+                .expectNext("fourteen bytes\n").verifyComplete();
     }
 
     /**
-     * Covers a situation where events were produced at a faster rate than the maxMillisecondsBetweenEmits, and a bug
-     * caused it to never emit the events until it reached the maxByteArraySize
+     * Covers a situation where events were produced at a faster rate than the
+     * maxMillisecondsBetweenEmits, and a bug caused it to never emit the events until it
+     * reached the maxByteArraySize
      */
     @Test
     void doNotBufferIndefinitely() throws InterruptedException {
-        // Produce a value at a more frequent interval than the maxMillisecondsBetweenEmits
-        Flux<String> source = Flux.interval(Duration.ofMillis(100))
-            .map(Object::toString);
+        // Produce a value at a more frequent interval than the
+        // maxMillisecondsBetweenEmits
+        Flux<String> source = Flux.interval(Duration.ofMillis(100)).map(Object::toString);
 
         Flux<String> buffered = BufferingFlux.create(source, "\n", Integer.MAX_VALUE, 200);
 
@@ -112,9 +99,9 @@ class BufferingFluxTest {
     /**
      * Ensure that we can append buffer messages then split them up without issue.
      *
-     * Originally written because buffer messages did not contain a trailing new line so appending messages
-     * would join the first line of the new message with the last line of the old message into one line,
-     * which is not a valid statsd line.
+     * Originally written because buffer messages did not contain a trailing new line so
+     * appending messages would join the first line of the new message with the last line
+     * of the old message into one line, which is not a valid statsd line.
      */
     @Test
     void bufferMessagesCanBeAppended() throws InterruptedException {
@@ -124,8 +111,7 @@ class BufferingFluxTest {
         IntStream.range(0, numberOfLines).forEachOrdered(i -> stats.add("test.msg.example:" + i + "|c"));
 
         String[] lines = stats.toArray(new String[0]);
-        Flux<String> source = Flux.just(lines)
-                .delayElements(Duration.ofMillis(1));
+        Flux<String> source = Flux.just(lines).delayElements(Duration.ofMillis(1));
         Flux<String> buffered = BufferingFlux.create(source, "\n", 100, 10);
 
         CountDownLatch latch = new CountDownLatch(numberOfLines);
@@ -143,4 +129,5 @@ class BufferingFluxTest {
         String[] resultLines = sb.toString().split("\n");
         assertThat(resultLines).isEqualTo(lines);
     }
+
 }

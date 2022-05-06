@@ -29,17 +29,20 @@ import java.util.concurrent.atomic.AtomicLong;
  * @author Jon Schneider
  */
 public class CumulativeTimer extends AbstractTimer {
+
     private final AtomicLong count;
+
     private final AtomicLong total;
+
     private final TimeWindowMax max;
 
     public CumulativeTimer(Id id, Clock clock, DistributionStatisticConfig distributionStatisticConfig,
-                           PauseDetector pauseDetector, TimeUnit baseTimeUnit) {
+            PauseDetector pauseDetector, TimeUnit baseTimeUnit) {
         this(id, clock, distributionStatisticConfig, pauseDetector, baseTimeUnit, false);
     }
 
     public CumulativeTimer(Id id, Clock clock, DistributionStatisticConfig distributionStatisticConfig,
-                           PauseDetector pauseDetector, TimeUnit baseTimeUnit, boolean supportsAggregablePercentiles) {
+            PauseDetector pauseDetector, TimeUnit baseTimeUnit, boolean supportsAggregablePercentiles) {
         super(id, clock, distributionStatisticConfig, pauseDetector, baseTimeUnit, supportsAggregablePercentiles);
         this.count = new AtomicLong();
         this.total = new AtomicLong();
@@ -68,4 +71,5 @@ public class CumulativeTimer extends AbstractTimer {
     public double max(TimeUnit unit) {
         return max.poll(unit);
     }
+
 }

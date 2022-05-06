@@ -24,14 +24,18 @@ import java.util.function.ToDoubleFunction;
 import java.util.function.ToLongFunction;
 
 public class StatsdFunctionTimer<T> extends CumulativeFunctionTimer<T> implements StatsdPollable {
+
     private final StatsdLineBuilder lineBuilder;
+
     private final FluxSink<String> sink;
+
     private final AtomicReference<Long> lastCount = new AtomicReference<>(0L);
+
     private final AtomicReference<Double> lastTime = new AtomicReference<>(0.0);
 
     StatsdFunctionTimer(Id id, T obj, ToLongFunction<T> countFunction, ToDoubleFunction<T> totalTimeFunction,
-                        TimeUnit totalTimeFunctionUnit, TimeUnit baseTimeUnit,
-                        StatsdLineBuilder lineBuilder, FluxSink<String> sink) {
+            TimeUnit totalTimeFunctionUnit, TimeUnit baseTimeUnit, StatsdLineBuilder lineBuilder,
+            FluxSink<String> sink) {
         super(id, obj, countFunction, totalTimeFunction, totalTimeFunctionUnit, baseTimeUnit);
         this.lineBuilder = lineBuilder;
         this.sink = sink;
@@ -48,8 +52,10 @@ public class StatsdFunctionTimer<T> extends CumulativeFunctionTimer<T> implement
                     double totalTime = totalTime(TimeUnit.MILLISECONDS);
                     double newTimingsSum = totalTime - prevTime;
 
-                    // We can't know what the individual timing samples were, so we approximate each one
-                    // by calculating the average of the sum of all new timings seen by the number of new timing
+                    // We can't know what the individual timing samples were, so we
+                    // approximate each one
+                    // by calculating the average of the sum of all new timings seen by
+                    // the number of new timing
                     // occurrences.
                     double timingAverage = newTimingsSum / newTimingsCount;
                     for (int i = 0; i < newTimingsCount; i++) {
@@ -62,4 +68,5 @@ public class StatsdFunctionTimer<T> extends CumulativeFunctionTimer<T> implement
             return count;
         });
     }
+
 }

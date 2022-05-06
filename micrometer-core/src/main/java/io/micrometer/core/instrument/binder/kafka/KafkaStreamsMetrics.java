@@ -23,9 +23,11 @@ import org.apache.kafka.common.Metric;
 import org.apache.kafka.streams.KafkaStreams;
 
 /**
- * Kafka Streams metrics binder. This should be closed on application shutdown to clean up resources.
+ * Kafka Streams metrics binder. This should be closed on application shutdown to clean up
+ * resources.
  * <p>
- * It is based on the Kafka client's {@code metrics()} method returning a {@link Metric} map.
+ * It is based on the Kafka client's {@code metrics()} method returning a {@link Metric}
+ * map.
  * <p>
  * Meter names have the following convention: {@code kafka.(metric_group).(metric_name)}
  *
@@ -41,9 +43,8 @@ public class KafkaStreamsMetrics extends KafkaMetrics {
 
     /**
      * {@link KafkaStreams} metrics binder
-     *
      * @param kafkaStreams instance to be instrumented
-     * @param tags         additional tags
+     * @param tags additional tags
      */
     public KafkaStreamsMetrics(KafkaStreams kafkaStreams, Iterable<Tag> tags) {
         super(kafkaStreams::metrics, tags);
@@ -51,10 +52,10 @@ public class KafkaStreamsMetrics extends KafkaMetrics {
 
     /**
      * {@link KafkaStreams} metrics binder
-     *
      * @param kafkaStreams instance to be instrumented
      */
     public KafkaStreamsMetrics(KafkaStreams kafkaStreams) {
         super(kafkaStreams::metrics);
     }
+
 }

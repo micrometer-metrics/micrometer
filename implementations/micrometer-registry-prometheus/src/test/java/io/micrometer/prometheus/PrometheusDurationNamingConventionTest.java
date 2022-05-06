@@ -24,6 +24,7 @@ import static org.assertj.core.api.Assertions.assertThat;
  * @author Clint Checketts
  */
 class PrometheusDurationNamingConventionTest {
+
     private PrometheusNamingConvention convention = new PrometheusDurationNamingConvention();
 
     @Test
@@ -31,4 +32,5 @@ class PrometheusDurationNamingConventionTest {
         assertThat(convention.name("timer", Meter.Type.TIMER)).isEqualTo("timer_duration_seconds");
         assertThat(convention.name("timer", Meter.Type.LONG_TASK_TIMER)).isEqualTo("timer_duration_seconds");
     }
+
 }

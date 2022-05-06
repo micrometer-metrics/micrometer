@@ -16,8 +16,10 @@
 package io.micrometer.core.ipc.http;
 
 class ReactorNettySenderTest extends HttpSenderCompatibilityKit {
+
     @Override
     public HttpSender httpClient() {
         return new ReactorNettySender();
     }
+
 }

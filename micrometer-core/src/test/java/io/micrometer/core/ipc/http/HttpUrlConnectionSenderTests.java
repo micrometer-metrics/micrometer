@@ -27,6 +27,7 @@ import static org.assertj.core.api.Assertions.assertThatExceptionOfType;
 
 @WireMockTest
 class HttpUrlConnectionSenderTests {
+
     HttpSender httpSender = new HttpUrlConnectionSender();
 
     @Test
@@ -37,4 +38,5 @@ class HttpUrlConnectionSenderTests {
         assertThatExceptionOfType(SocketTimeoutException.class)
                 .isThrownBy(() -> httpSender.post(wmInfo.getHttpBaseUrl() + "/metrics").send());
     }
+
 }

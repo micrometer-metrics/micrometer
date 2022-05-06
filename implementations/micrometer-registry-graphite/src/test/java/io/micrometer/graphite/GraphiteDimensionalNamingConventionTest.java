@@ -29,6 +29,7 @@ import static org.assertj.core.api.Assertions.assertThat;
  * @author Andrew Fitzgerald
  */
 class GraphiteDimensionalNamingConventionTest {
+
     private GraphiteDimensionalNamingConvention convention = new GraphiteDimensionalNamingConvention();
 
     @Test
@@ -40,7 +41,8 @@ class GraphiteDimensionalNamingConventionTest {
     void respectDelegateNamingConvention() {
         CustomNamingConvention delegateNamingConvention = new CustomNamingConvention();
 
-        GraphiteDimensionalNamingConvention convention = new GraphiteDimensionalNamingConvention(delegateNamingConvention);
+        GraphiteDimensionalNamingConvention convention = new GraphiteDimensionalNamingConvention(
+                delegateNamingConvention);
 
         assertThat(convention.name("my.name", Meter.Type.TIMER)).isEqualTo("name-my.name");
         assertThat(convention.tagKey("my_tag_key")).isEqualTo("key-my_tag_key");
@@ -171,7 +173,6 @@ class GraphiteDimensionalNamingConventionTest {
     void tagValueShouldHaveLengthGreaterThanZero() {
         assertThat(convention.tagValue("")).isEqualTo("unspecified");
     }
-
 
     private static class CustomNamingConvention implements NamingConvention {
 

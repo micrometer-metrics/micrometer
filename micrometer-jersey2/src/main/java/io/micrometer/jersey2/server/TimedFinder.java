@@ -25,6 +25,7 @@ import java.util.Set;
 import java.util.stream.Collectors;
 
 class TimedFinder {
+
     private final AnnotationFinder annotationFinder;
 
     TimedFinder(AnnotationFinder annotationFinder) {
@@ -43,4 +44,5 @@ class TimedFinder {
 
         return Collections.emptySet();
     }
+
 }

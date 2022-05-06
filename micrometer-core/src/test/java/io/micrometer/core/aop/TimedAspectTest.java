@@ -38,6 +38,7 @@ import static java.util.concurrent.CompletableFuture.supplyAsync;
 import static org.assertj.core.api.Assertions.*;
 
 class TimedAspectTest {
+
     @Test
     void timeMethod() {
         MeterRegistry registry = new SimpleMeterRegistry();
@@ -49,11 +50,8 @@ class TimedAspectTest {
 
         service.call();
 
-        assertThat(registry.get("call")
-                .tag("class", this.getClass().getName() + "$TimedService")
-                .tag("method", "call")
-                .tag("extra", "tag")
-                .timer().count()).isEqualTo(1);
+        assertThat(registry.get("call").tag("class", this.getClass().getName() + "$TimedService").tag("method", "call")
+                .tag("extra", "tag").timer().count()).isEqualTo(1);
     }
 
     @Test
@@ -81,30 +79,24 @@ class TimedAspectTest {
 
         service.longCall();
 
-        assertThat(registry.get("longCall")
-                .tag("class", this.getClass().getName() + "$TimedService")
-                .tag("method", "longCall")
-                .tag("extra", "tag")
-                .longTaskTimers().size()).isEqualTo(1);
+        assertThat(registry.get("longCall").tag("class", this.getClass().getName() + "$TimedService")
+                .tag("method", "longCall").tag("extra", "tag").longTaskTimers().size()).isEqualTo(1);
     }
-    
+
     @Test
     void timeMethodFailure() {
         MeterRegistry failingRegistry = new FailingMeterRegistry();
-        
+
         AspectJProxyFactory pf = new AspectJProxyFactory(new TimedService());
         pf.addAspect(new TimedAspect(failingRegistry));
-        
+
         TimedService service = pf.getProxy();
-        
+
         service.call();
-        
+
         assertThatExceptionOfType(MeterNotFoundException.class).isThrownBy(() -> {
-            failingRegistry.get("call")
-                    .tag("class", this.getClass().getName() + "$TimedService")
-                    .tag("method", "call")
-                    .tag("extra", "tag")
-                    .timer();
+            failingRegistry.get("call").tag("class", this.getClass().getName() + "$TimedService").tag("method", "call")
+                    .tag("extra", "tag").timer();
         });
     }
 
@@ -120,11 +112,8 @@ class TimedAspectTest {
         service.longCall();
 
         assertThatExceptionOfType(MeterNotFoundException.class).isThrownBy(() -> {
-            failingRegistry.get("longCall")
-                    .tag("class", this.getClass().getName() + "$TimedService")
-                    .tag("method", "longCall")
-                    .tag("extra", "tag")
-                    .longTaskTimer();
+            failingRegistry.get("longCall").tag("class", this.getClass().getName() + "$TimedService")
+                    .tag("method", "longCall").tag("extra", "tag").longTaskTimer();
         });
     }
 
@@ -140,22 +129,14 @@ class TimedAspectTest {
         GuardedResult guardedResult = new GuardedResult();
         CompletableFuture<?> completableFuture = service.call(guardedResult);
 
-        assertThat(registry.find("call")
-                .tag("class", this.getClass().getName() + "$AsyncTimedService")
-                .tag("method", "call")
-                .tag("extra", "tag")
-                .tag("exception", "none")
-                .timer()).isNull();
+        assertThat(registry.find("call").tag("class", this.getClass().getName() + "$AsyncTimedService")
+                .tag("method", "call").tag("extra", "tag").tag("exception", "none").timer()).isNull();
 
         guardedResult.complete();
         completableFuture.join();
 
-        assertThat(registry.get("call")
-                .tag("class", this.getClass().getName() + "$AsyncTimedService")
-                .tag("method", "call")
-                .tag("extra", "tag")
-                .tag("exception", "none")
-                .timer().count()).isEqualTo(1);
+        assertThat(registry.get("call").tag("class", this.getClass().getName() + "$AsyncTimedService")
+                .tag("method", "call").tag("extra", "tag").tag("exception", "none").timer().count()).isEqualTo(1);
     }
 
     @Test
@@ -170,22 +151,15 @@ class TimedAspectTest {
         GuardedResult guardedResult = new GuardedResult();
         CompletableFuture<?> completableFuture = service.call(guardedResult);
 
-        assertThat(registry.find("call")
-                .tag("class", this.getClass().getName() + "$AsyncTimedService")
-                .tag("method", "call")
-                .tag("extra", "tag")
-                .tag("exception", "NullPointerException")
-                .timer()).isNull();
+        assertThat(registry.find("call").tag("class", this.getClass().getName() + "$AsyncTimedService")
+                .tag("method", "call").tag("extra", "tag").tag("exception", "NullPointerException").timer()).isNull();
 
         guardedResult.complete(new NullPointerException());
         catchThrowableOfType(completableFuture::join, CompletionException.class);
 
-        assertThat(registry.get("call")
-                .tag("class", this.getClass().getName() + "$AsyncTimedService")
-                .tag("method", "call")
-                .tag("extra", "tag")
-                .tag("exception", "NullPointerException")
-                .timer().count()).isEqualTo(1);
+        assertThat(registry.get("call").tag("class", this.getClass().getName() + "$AsyncTimedService")
+                .tag("method", "call").tag("extra", "tag").tag("exception", "NullPointerException").timer().count())
+                        .isEqualTo(1);
     }
 
     @Test
@@ -200,20 +174,14 @@ class TimedAspectTest {
         GuardedResult guardedResult = new GuardedResult();
         CompletableFuture<?> completableFuture = service.longCall(guardedResult);
 
-        assertThat(registry.find("longCall")
-                .tag("class", this.getClass().getName() + "$AsyncTimedService")
-                .tag("method", "longCall")
-                .tag("extra", "tag")
-                .longTaskTimer().activeTasks()).isEqualTo(1);
+        assertThat(registry.find("longCall").tag("class", this.getClass().getName() + "$AsyncTimedService")
+                .tag("method", "longCall").tag("extra", "tag").longTaskTimer().activeTasks()).isEqualTo(1);
 
         guardedResult.complete();
         completableFuture.join();
 
-        assertThat(registry.get("longCall")
-                .tag("class", this.getClass().getName() + "$AsyncTimedService")
-                .tag("method", "longCall")
-                .tag("extra", "tag")
-                .longTaskTimer().activeTasks()).isEqualTo(0);
+        assertThat(registry.get("longCall").tag("class", this.getClass().getName() + "$AsyncTimedService")
+                .tag("method", "longCall").tag("extra", "tag").longTaskTimer().activeTasks()).isEqualTo(0);
     }
 
     @Test
@@ -228,20 +196,14 @@ class TimedAspectTest {
         GuardedResult guardedResult = new GuardedResult();
         CompletableFuture<?> completableFuture = service.longCall(guardedResult);
 
-        assertThat(registry.find("longCall")
-                .tag("class", this.getClass().getName() + "$AsyncTimedService")
-                .tag("method", "longCall")
-                .tag("extra", "tag")
-                .longTaskTimer().activeTasks()).isEqualTo(1);
+        assertThat(registry.find("longCall").tag("class", this.getClass().getName() + "$AsyncTimedService")
+                .tag("method", "longCall").tag("extra", "tag").longTaskTimer().activeTasks()).isEqualTo(1);
 
         guardedResult.complete(new NullPointerException());
         catchThrowableOfType(completableFuture::join, CompletionException.class);
 
-        assertThat(registry.get("longCall")
-                .tag("class", this.getClass().getName() + "$AsyncTimedService")
-                .tag("method", "longCall")
-                .tag("extra", "tag")
-                .longTaskTimer().activeTasks()).isEqualTo(0);
+        assertThat(registry.get("longCall").tag("class", this.getClass().getName() + "$AsyncTimedService")
+                .tag("method", "longCall").tag("extra", "tag").longTaskTimer().activeTasks()).isEqualTo(0);
     }
 
     @Test
@@ -258,12 +220,9 @@ class TimedAspectTest {
         guardedResult.complete();
         completableFuture.join();
 
-        assertThatExceptionOfType(MeterNotFoundException.class).isThrownBy(() -> failingRegistry.get("call")
-                .tag("class", this.getClass().getName() + "$AsyncTimedService")
-                .tag("method", "call")
-                .tag("extra", "tag")
-                .tag("exception", "none")
-                .timer());
+        assertThatExceptionOfType(MeterNotFoundException.class).isThrownBy(
+                () -> failingRegistry.get("call").tag("class", this.getClass().getName() + "$AsyncTimedService")
+                        .tag("method", "call").tag("extra", "tag").tag("exception", "none").timer());
     }
 
     @Test
@@ -281,66 +240,71 @@ class TimedAspectTest {
         completableFuture.join();
 
         assertThatExceptionOfType(MeterNotFoundException.class).isThrownBy(() -> {
-            failingRegistry.get("longCall")
-                    .tag("class", this.getClass().getName() + "$AsyncTimedService")
-                    .tag("method", "longCall")
-                    .tag("extra", "tag")
-                    .longTaskTimer();
+            failingRegistry.get("longCall").tag("class", this.getClass().getName() + "$AsyncTimedService")
+                    .tag("method", "longCall").tag("extra", "tag").longTaskTimer();
         });
     }
 
     private final class FailingMeterRegistry extends SimpleMeterRegistry {
+
         private FailingMeterRegistry() {
             super();
         }
 
         @NonNull
         @Override
-        protected Timer newTimer(@NonNull Id id,
-                                 @NonNull DistributionStatisticConfig distributionStatisticConfig,
-                                 @NonNull PauseDetector pauseDetector) {
+        protected Timer newTimer(@NonNull Id id, @NonNull DistributionStatisticConfig distributionStatisticConfig,
+                @NonNull PauseDetector pauseDetector) {
             throw new RuntimeException();
         }
 
         @NonNull
         @Override
-        protected LongTaskTimer newLongTaskTimer(@Nonnull Id id, @Nonnull DistributionStatisticConfig distributionStatisticConfig) {
+        protected LongTaskTimer newLongTaskTimer(@Nonnull Id id,
+                @Nonnull DistributionStatisticConfig distributionStatisticConfig) {
             throw new RuntimeException();
         }
+
     }
 
     static class TimedService {
-        @Timed(value = "call", extraTags = {"extra", "tag"})
+
+        @Timed(value = "call", extraTags = { "extra", "tag" })
         void call() {
         }
 
-        @Timed(value = "longCall", extraTags = {"extra", "tag"}, longTask = true)
+        @Timed(value = "longCall", extraTags = { "extra", "tag" }, longTask = true)
         void longCall() {
         }
+
     }
 
     static class AsyncTimedService {
-        @Timed(value = "call", extraTags = {"extra", "tag"})
+
+        @Timed(value = "call", extraTags = { "extra", "tag" })
         CompletableFuture<?> call(GuardedResult guardedResult) {
             return supplyAsync(guardedResult::get);
         }
 
-        @Timed(value = "longCall", extraTags = {"extra", "tag"}, longTask = true)
+        @Timed(value = "longCall", extraTags = { "extra", "tag" }, longTask = true)
         CompletableFuture<?> longCall(GuardedResult guardedResult) {
             return supplyAsync(guardedResult::get);
         }
+
     }
 
     static class GuardedResult {
 
         private boolean complete;
+
         private RuntimeException withException;
 
         synchronized Object get() {
             while (!complete) {
                 try {
                     wait();
-                } catch (InterruptedException e) {
+                }
+                catch (InterruptedException e) {
                     // Intentionally empty
                 }
             }
@@ -363,4 +327,5 @@ class TimedAspectTest {
         }
 
     }
+
 }

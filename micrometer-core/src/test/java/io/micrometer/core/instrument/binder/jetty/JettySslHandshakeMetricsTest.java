@@ -15,10 +15,6 @@
  */
 package io.micrometer.core.instrument.binder.jetty;
 
-import static org.assertj.core.api.Assertions.assertThat;
-import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.when;
-
 import io.micrometer.core.instrument.MockClock;
 import io.micrometer.core.instrument.Tag;
 import io.micrometer.core.instrument.Tags;
@@ -31,6 +27,10 @@ import org.junit.jupiter.api.Test;
 import javax.net.ssl.SSLEngine;
 import javax.net.ssl.SSLSession;
 
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.when;
+
 /**
  * Tests for {@link JettySslHandshakeMetrics}.
  *
@@ -38,10 +38,13 @@ import javax.net.ssl.SSLSession;
  * @author Johnny Lim
  */
 class JettySslHandshakeMetricsTest {
+
     private SimpleMeterRegistry registry;
+
     private JettySslHandshakeMetrics sslHandshakeMetrics;
 
     SSLSession session = mock(SSLSession.class);
+
     SSLEngine engine = mock(SSLEngine.class);
 
     @BeforeEach
@@ -59,8 +62,8 @@ class JettySslHandshakeMetricsTest {
         SslHandshakeListener.Event event = new SslHandshakeListener.Event(engine);
         sslHandshakeMetrics.handshakeFailed(event, new javax.net.ssl.SSLHandshakeException(""));
         assertThat(registry.get("jetty.ssl.handshakes")
-                           .tags("id", "0", "protocol", "unknown", "ciphersuite", "unknown", "result", "failed")
-                           .counter().count()).isEqualTo(1.0);
+                .tags("id", "0", "protocol", "unknown", "ciphersuite", "unknown", "result", "failed").counter().count())
+                        .isEqualTo(1.0);
     }
 
     @Test
@@ -70,7 +73,8 @@ class JettySslHandshakeMetricsTest {
         when(session.getCipherSuite()).thenReturn("RSA_XYZZY");
         sslHandshakeMetrics.handshakeSucceeded(event);
         assertThat(registry.get("jetty.ssl.handshakes")
-                           .tags("id", "0", "protocol", "TLSv1.3", "ciphersuite", "RSA_XYZZY", "result", "succeeded")
-                           .counter().count()).isEqualTo(1.0);
+                .tags("id", "0", "protocol", "TLSv1.3", "ciphersuite", "RSA_XYZZY", "result", "succeeded").counter()
+                .count()).isEqualTo(1.0);
     }
+
 }

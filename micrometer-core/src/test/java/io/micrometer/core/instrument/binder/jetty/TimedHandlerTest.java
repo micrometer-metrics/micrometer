@@ -48,14 +48,19 @@ import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 /**
- * Tests ported from https://github.com/eclipse/jetty.project/blob/jetty-9.4.x/jetty-server/src/test/java/org/eclipse/jetty/server/handler/StatisticsHandlerTest.java
+ * Tests ported from
+ * https://github.com/eclipse/jetty.project/blob/jetty-9.4.x/jetty-server/src/test/java/org/eclipse/jetty/server/handler/StatisticsHandlerTest.java
  */
 class TimedHandlerTest {
+
     private SimpleMeterRegistry registry;
+
     private TimedHandler timedHandler;
 
     private Server server;
+
     private LocalConnector connector;
+
     private LatchHandler latchHandler;
 
     @BeforeEach
@@ -81,20 +86,19 @@ class TimedHandlerTest {
 
     @Test
     void testRequest() throws Exception {
-        CyclicBarrier[] barrier = {
-                new CyclicBarrier(3),
-                new CyclicBarrier(3)
-        };
+        CyclicBarrier[] barrier = { new CyclicBarrier(3), new CyclicBarrier(3) };
         latchHandler.reset(2);
 
         timedHandler.setHandler(new AbstractHandler() {
             @Override
-            public void handle(String path, Request request, HttpServletRequest httpRequest, HttpServletResponse httpResponse) throws IOException {
+            public void handle(String path, Request request, HttpServletRequest httpRequest,
+                    HttpServletResponse httpResponse) throws IOException {
                 request.setHandled(true);
                 try {
                     barrier[0].await(5, TimeUnit.SECONDS);
                     barrier[1].await(5, TimeUnit.SECONDS);
-                } catch (Exception x) {
+                }
+                catch (Exception x) {
                     Thread.currentThread().interrupt();
                     throw new IOException(x);
                 }
@@ -102,24 +106,18 @@ class TimedHandlerTest {
         });
         server.start();
 
-        String request = "GET / HTTP/1.1\r\n" +
-                "Host: localhost\r\n" +
-                "\r\n";
+        String request = "GET / HTTP/1.1\r\n" + "Host: localhost\r\n" + "\r\n";
         connector.executeRequest(request);
         connector.executeRequest(request);
 
         barrier[0].await(5, TimeUnit.SECONDS);
-        assertThat(registry.get("jetty.server.dispatches.open").longTaskTimer().activeTasks())
-                .isEqualTo(2);
+        assertThat(registry.get("jetty.server.dispatches.open").longTaskTimer().activeTasks()).isEqualTo(2);
 
         barrier[1].await(5, TimeUnit.SECONDS);
         assertTrue(latchHandler.await());
 
-        assertThat(registry.get("jetty.server.requests")
-                .tag("outcome", Outcome.SUCCESS.name())
-                .tag("method", "GET")
-                .tag("status", "200")
-                .timer().count()).isEqualTo(2);
+        assertThat(registry.get("jetty.server.requests").tag("outcome", Outcome.SUCCESS.name()).tag("method", "GET")
+                .tag("status", "200").timer().count()).isEqualTo(2);
     }
 
     @Test
@@ -127,15 +125,12 @@ class TimedHandlerTest {
         long dispatchTime = 10;
         long requestTime = 50;
         AtomicReference<AsyncContext> asyncHolder = new AtomicReference<>();
-        CyclicBarrier[] barrier = {
-                new CyclicBarrier(2),
-                new CyclicBarrier(2),
-                new CyclicBarrier(2)
-        };
+        CyclicBarrier[] barrier = { new CyclicBarrier(2), new CyclicBarrier(2), new CyclicBarrier(2) };
 
         timedHandler.setHandler(new AbstractHandler() {
             @Override
-            public void handle(String path, Request request, HttpServletRequest httpRequest, HttpServletResponse httpResponse) throws ServletException {
+            public void handle(String path, Request request, HttpServletRequest httpRequest,
+                    HttpServletResponse httpResponse) throws ServletException {
                 request.setHandled(true);
                 try {
                     barrier[0].await(5, TimeUnit.SECONDS);
@@ -145,12 +140,15 @@ class TimedHandlerTest {
                     if (asyncHolder.get() == null) {
                         asyncHolder.set(request.startAsync());
                     }
-                } catch (Exception x) {
+                }
+                catch (Exception x) {
                     throw new ServletException(x);
-                } finally {
+                }
+                finally {
                     try {
                         barrier[1].await(5, TimeUnit.SECONDS);
-                    } catch (Exception ignored) {
+                    }
+                    catch (Exception ignored) {
                     }
                 }
             }
@@ -158,9 +156,7 @@ class TimedHandlerTest {
 
         server.start();
 
-        String request = "GET / HTTP/1.1\r\n" +
-                "Host: localhost\r\n" +
-                "\r\n";
+        String request = "GET / HTTP/1.1\r\n" + "Host: localhost\r\n" + "\r\n";
         connector.executeRequest(request);
 
         barrier[0].await(5, TimeUnit.SECONDS);
@@ -194,7 +190,8 @@ class TimedHandlerTest {
             public void onComplete(AsyncEvent event) {
                 try {
                     barrier[2].await(5, TimeUnit.SECONDS);
-                } catch (Exception ignored) {
+                }
+                catch (Exception ignored) {
                 }
             }
         });
@@ -207,11 +204,8 @@ class TimedHandlerTest {
         assertTrue(latchHandler.await()); // exited timed handler
 
         barrier[2].await(5, TimeUnit.SECONDS); // onComplete called
-        assertThat(registry.get("jetty.server.requests")
-                .tag("outcome", Outcome.SUCCESS.name())
-                .tag("method", "GET")
-                .tag("status", "200")
-                .timer().count()).isEqualTo(1);
+        assertThat(registry.get("jetty.server.requests").tag("outcome", Outcome.SUCCESS.name()).tag("method", "GET")
+                .tag("status", "200").timer().count()).isEqualTo(1);
     }
 
     @Test
@@ -219,15 +213,12 @@ class TimedHandlerTest {
         long dispatchTime = 10;
         long timeout = 100;
         AtomicReference<AsyncContext> asyncHolder = new AtomicReference<>();
-        CyclicBarrier[] barrier = {
-                new CyclicBarrier(2),
-                new CyclicBarrier(2),
-                new CyclicBarrier(2)
-        };
+        CyclicBarrier[] barrier = { new CyclicBarrier(2), new CyclicBarrier(2), new CyclicBarrier(2) };
 
         timedHandler.setHandler(new AbstractHandler() {
             @Override
-            public void handle(String path, Request request, HttpServletRequest httpRequest, HttpServletResponse httpResponse) throws ServletException {
+            public void handle(String path, Request request, HttpServletRequest httpRequest,
+                    HttpServletResponse httpResponse) throws ServletException {
                 request.setHandled(true);
                 try {
                     barrier[0].await(5, TimeUnit.SECONDS);
@@ -239,21 +230,22 @@ class TimedHandlerTest {
                         asyncHolder.set(async);
                         async.setTimeout(timeout);
                     }
-                } catch (Exception x) {
+                }
+                catch (Exception x) {
                     throw new ServletException(x);
-                } finally {
+                }
+                finally {
                     try {
                         barrier[1].await(5, TimeUnit.SECONDS);
-                    } catch (Exception ignored) {
+                    }
+                    catch (Exception ignored) {
                     }
                 }
             }
         });
         server.start();
 
-        String request = "GET / HTTP/1.1\r\n" +
-                "Host: localhost\r\n" +
-                "\r\n";
+        String request = "GET / HTTP/1.1\r\n" + "Host: localhost\r\n" + "\r\n";
         connector.executeRequest(request);
 
         barrier[0].await(5, TimeUnit.SECONDS);
@@ -282,7 +274,8 @@ class TimedHandlerTest {
             public void onComplete(AsyncEvent event) {
                 try {
                     barrier[2].await(5, TimeUnit.SECONDS);
-                } catch (Exception ignored) {
+                }
+                catch (Exception ignored) {
                 }
             }
         });
@@ -297,15 +290,13 @@ class TimedHandlerTest {
     void testSuspendComplete() throws Exception {
         long dispatchTime = 10;
         AtomicReference<AsyncContext> asyncHolder = new AtomicReference<>();
-        CyclicBarrier[] barrier = {
-                new CyclicBarrier(2),
-                new CyclicBarrier(2)
-        };
+        CyclicBarrier[] barrier = { new CyclicBarrier(2), new CyclicBarrier(2) };
         CountDownLatch latch = new CountDownLatch(1);
 
         timedHandler.setHandler(new AbstractHandler() {
             @Override
-            public void handle(String path, Request request, HttpServletRequest httpRequest, HttpServletResponse httpResponse) throws ServletException {
+            public void handle(String path, Request request, HttpServletRequest httpRequest,
+                    HttpServletResponse httpResponse) throws ServletException {
                 request.setHandled(true);
                 try {
                     barrier[0].await(5, TimeUnit.SECONDS);
@@ -316,21 +307,22 @@ class TimedHandlerTest {
                         AsyncContext async = request.startAsync();
                         asyncHolder.set(async);
                     }
-                } catch (Exception x) {
+                }
+                catch (Exception x) {
                     throw new ServletException(x);
-                } finally {
+                }
+                finally {
                     try {
                         barrier[1].await(5, TimeUnit.SECONDS);
-                    } catch (Exception ignored) {
+                    }
+                    catch (Exception ignored) {
                     }
                 }
             }
         });
         server.start();
 
-        String request = "GET / HTTP/1.1\r\n" +
-                "Host: localhost\r\n" +
-                "\r\n";
+        String request = "GET / HTTP/1.1\r\n" + "Host: localhost\r\n" + "\r\n";
         connector.executeRequest(request);
 
         barrier[0].await(5, TimeUnit.SECONDS);
@@ -357,7 +349,8 @@ class TimedHandlerTest {
             public void onComplete(AsyncEvent event) {
                 try {
                     latch.countDown();
-                } catch (Exception ignored) {
+                }
+                catch (Exception ignored) {
                 }
             }
         });
@@ -366,11 +359,8 @@ class TimedHandlerTest {
         asyncHolder.get().complete();
         latch.await(5, TimeUnit.SECONDS);
 
-        assertThat(registry.get("jetty.server.requests")
-                .tag("outcome", Outcome.SUCCESS.name())
-                .tag("method", "GET")
-                .tag("status", "200")
-                .timer().count()).isEqualTo(1);
+        assertThat(registry.get("jetty.server.requests").tag("outcome", Outcome.SUCCESS.name()).tag("method", "GET")
+                .tag("status", "200").timer().count()).isEqualTo(1);
     }
 
     @Test
@@ -379,15 +369,16 @@ class TimedHandlerTest {
         CountDownLatch serverLatch = new CountDownLatch(1);
         timedHandler.setHandler(new AbstractHandler() {
             @Override
-            public void handle(String target, Request baseRequest, HttpServletRequest request, HttpServletResponse response) {
+            public void handle(String target, Request baseRequest, HttpServletRequest request,
+                    HttpServletResponse response) {
                 AsyncContext asyncContext = request.startAsync();
                 asyncContext.setTimeout(0);
-                new Thread(() ->
-                {
+                new Thread(() -> {
                     try {
                         Thread.sleep(delay);
                         asyncContext.complete();
-                    } catch (InterruptedException e) {
+                    }
+                    catch (InterruptedException e) {
                         response.setStatus(HttpStatus.INTERNAL_SERVER_ERROR_500);
                         asyncContext.complete();
                     }
@@ -397,9 +388,7 @@ class TimedHandlerTest {
         });
         server.start();
 
-        String request = "GET / HTTP/1.1\r\n" +
-                "Host: localhost\r\n" +
-                "\r\n";
+        String request = "GET / HTTP/1.1\r\n" + "Host: localhost\r\n" + "\r\n";
         connector.executeRequest(request);
 
         assertTrue(serverLatch.await(5, TimeUnit.SECONDS));
@@ -415,14 +404,16 @@ class TimedHandlerTest {
     }
 
     private static class LatchHandler extends HandlerWrapper {
+
         private volatile CountDownLatch latch = new CountDownLatch(1);
 
         @Override
-        public void handle(String path, Request request, HttpServletRequest httpRequest, HttpServletResponse httpResponse)
-                throws IOException, ServletException {
+        public void handle(String path, Request request, HttpServletRequest httpRequest,
+                HttpServletResponse httpResponse) throws IOException, ServletException {
             try {
                 super.handle(path, request, httpRequest, httpResponse);
-            } finally {
+            }
+            finally {
                 latch.countDown();
             }
         }
@@ -438,5 +429,7 @@ class TimedHandlerTest {
         private boolean await() throws InterruptedException {
             return latch.await(5, TimeUnit.SECONDS);
         }
+
     }
+
 }

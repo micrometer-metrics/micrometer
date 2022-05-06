@@ -17,15 +17,18 @@ package io.micrometer.influx;
 
 import io.micrometer.core.instrument.*;
 import io.micrometer.core.instrument.step.StepMeterRegistry;
-import io.micrometer.core.instrument.util.*;
+import io.micrometer.core.instrument.util.DoubleFormat;
+import io.micrometer.core.instrument.util.MeterPartition;
+import io.micrometer.core.instrument.util.NamedThreadFactory;
+import io.micrometer.core.instrument.util.StringUtils;
 import io.micrometer.core.ipc.http.HttpSender;
 import io.micrometer.core.ipc.http.HttpUrlConnectionSender;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.util.ArrayList;
 import java.net.MalformedURLException;
 import java.net.URLEncoder;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.ThreadFactory;
 import java.util.concurrent.TimeUnit;
@@ -34,17 +37,22 @@ import java.util.stream.Stream;
 import static java.util.stream.Collectors.joining;
 
 /**
- * {@link MeterRegistry} for InfluxDB.
- * Since Micrometer 1.7, this supports InfluxDB v2 and v1.
+ * {@link MeterRegistry} for InfluxDB. Since Micrometer 1.7, this supports InfluxDB v2 and
+ * v1.
  *
  * @author Jon Schneider
  * @author Johnny Lim
  */
 public class InfluxMeterRegistry extends StepMeterRegistry {
+
     private static final ThreadFactory DEFAULT_THREAD_FACTORY = new NamedThreadFactory("influx-metrics-publisher");
+
     private final InfluxConfig config;
+
     private final HttpSender httpClient;
+
     private final Logger logger = LoggerFactory.getLogger(InfluxMeterRegistry.class);
+
     private boolean databaseExists = false;
 
     @SuppressWarnings("deprecation")
@@ -54,8 +62,9 @@ public class InfluxMeterRegistry extends StepMeterRegistry {
     }
 
     /**
-     * @param config        Configuration options for the registry that are describable as properties.
-     * @param clock         The clock to use for timings.
+     * @param config Configuration options for the registry that are describable as
+     * properties.
+     * @param clock The clock to use for timings.
      * @param threadFactory The thread factory to use to create the publishing thread.
      * @deprecated Use {@link #builder(InfluxConfig)} instead.
      */
@@ -89,8 +98,8 @@ public class InfluxMeterRegistry extends StepMeterRegistry {
             return;
 
         try {
-            String createDatabaseQuery = new CreateDatabaseQueryBuilder(config.db()).setRetentionDuration(config.retentionDuration())
-                    .setRetentionPolicyName(config.retentionPolicy())
+            String createDatabaseQuery = new CreateDatabaseQueryBuilder(config.db())
+                    .setRetentionDuration(config.retentionDuration()).setRetentionPolicyName(config.retentionPolicy())
                     .setRetentionReplicationFactor(config.retentionReplicationFactor())
                     .setRetentionShardDuration(config.retentionShardDuration()).build();
 
@@ -99,14 +108,12 @@ public class InfluxMeterRegistry extends StepMeterRegistry {
                     .withBasicAuthentication(config.userName(), config.password());
             config.apiVersion().addHeaderToken(config, requestBuilder);
 
-            requestBuilder
-                    .send()
-                    .onSuccess(response -> {
-                        logger.debug("influx database {} is ready to receive metrics", config.db());
-                        databaseExists = true;
-                    })
-                    .onError(response -> logger.error("unable to create database '{}': {}", config.db(), response.body()));
-        } catch (Throwable e) {
+            requestBuilder.send().onSuccess(response -> {
+                logger.debug("influx database {} is ready to receive metrics", config.db());
+                databaseExists = true;
+            }).onError(response -> logger.error("unable to create database '{}': {}", config.db(), response.body()));
+        }
+        catch (Throwable e) {
             logger.error("unable to create database '{}'", config.db(), e);
         }
     }
@@ -119,10 +126,10 @@ public class InfluxMeterRegistry extends StepMeterRegistry {
             String influxEndpoint = config.apiVersion().writeEndpoint(config);
 
             for (List<Meter> batch : MeterPartition.partition(this, config.batchSize())) {
-                HttpSender.Request.Builder requestBuilder = httpClient
-                        .post(influxEndpoint)
+                HttpSender.Request.Builder requestBuilder = httpClient.post(influxEndpoint)
                         .withBasicAuthentication(config.userName(), config.password());
                 config.apiVersion().addHeaderToken(config, requestBuilder);
+                // @formatter:off
                 requestBuilder
                         .withPlainText(batch.stream()
                                 .flatMap(m -> m.match(
@@ -143,10 +150,14 @@ public class InfluxMeterRegistry extends StepMeterRegistry {
                             databaseExists = true;
                         })
                         .onError(response -> logger.error("failed to send metrics to influx: {}", response.body()));
+                // @formatter:on
             }
-        } catch (MalformedURLException e) {
-            throw new IllegalArgumentException("Malformed InfluxDB publishing endpoint, see '" + config.prefix() + ".uri'", e);
-        } catch (Throwable e) {
+        }
+        catch (MalformedURLException e) {
+            throw new IllegalArgumentException(
+                    "Malformed InfluxDB publishing endpoint, see '" + config.prefix() + ".uri'", e);
+        }
+        catch (Throwable e) {
             logger.error("failed to send metrics to influx", e);
         }
     }
@@ -171,10 +182,8 @@ public class InfluxMeterRegistry extends StepMeterRegistry {
     }
 
     private Stream<String> writeLongTaskTimer(LongTaskTimer timer) {
-        Stream<Field> fields = Stream.of(
-                new Field("active_tasks", timer.activeTasks()),
-                new Field("duration", timer.duration(getBaseTimeUnit()))
-        );
+        Stream<Field> fields = Stream.of(new Field("active_tasks", timer.activeTasks()),
+                new Field("duration", timer.duration(getBaseTimeUnit())));
         return Stream.of(influxLineProtocol(timer.getId(), "long_task_timer", fields));
     }
 
@@ -211,37 +220,27 @@ public class InfluxMeterRegistry extends StepMeterRegistry {
     }
 
     private Stream<String> writeTimer(Timer timer) {
-        final Stream<Field> fields = Stream.of(
-                new Field("sum", timer.totalTime(getBaseTimeUnit())),
-                new Field("count", timer.count()),
-                new Field("mean", timer.mean(getBaseTimeUnit())),
-                new Field("upper", timer.max(getBaseTimeUnit()))
-        );
+        final Stream<Field> fields = Stream.of(new Field("sum", timer.totalTime(getBaseTimeUnit())),
+                new Field("count", timer.count()), new Field("mean", timer.mean(getBaseTimeUnit())),
+                new Field("upper", timer.max(getBaseTimeUnit())));
 
         return Stream.of(influxLineProtocol(timer.getId(), "histogram", fields));
     }
 
     private Stream<String> writeSummary(DistributionSummary summary) {
-        final Stream<Field> fields = Stream.of(
-                new Field("sum", summary.totalAmount()),
-                new Field("count", summary.count()),
-                new Field("mean", summary.mean()),
-                new Field("upper", summary.max())
-        );
+        final Stream<Field> fields = Stream.of(new Field("sum", summary.totalAmount()),
+                new Field("count", summary.count()), new Field("mean", summary.mean()),
+                new Field("upper", summary.max()));
 
         return Stream.of(influxLineProtocol(summary.getId(), "histogram", fields));
     }
 
     private String influxLineProtocol(Meter.Id id, String metricType, Stream<Field> fields) {
-        String tags = getConventionTags(id).stream()
-                .filter(t -> StringUtils.isNotBlank(t.getValue()))
-                .map(t -> "," + t.getKey() + "=" + t.getValue())
-                .collect(joining(""));
+        String tags = getConventionTags(id).stream().filter(t -> StringUtils.isNotBlank(t.getValue()))
+                .map(t -> "," + t.getKey() + "=" + t.getValue()).collect(joining(""));
 
-        return getConventionName(id)
-                + tags + ",metric_type=" + metricType + " "
-                + fields.map(Field::toString).collect(joining(","))
-                + " " + clock.wallTime();
+        return getConventionName(id) + tags + ",metric_type=" + metricType + " "
+                + fields.map(Field::toString).collect(joining(",")) + " " + clock.wallTime();
     }
 
     @Override
@@ -250,10 +249,13 @@ public class InfluxMeterRegistry extends StepMeterRegistry {
     }
 
     public static class Builder {
+
         private final InfluxConfig config;
 
         private Clock clock = Clock.SYSTEM;
+
         private ThreadFactory threadFactory = DEFAULT_THREAD_FACTORY;
+
         private HttpSender httpClient;
 
         @SuppressWarnings("deprecation")
@@ -280,10 +282,13 @@ public class InfluxMeterRegistry extends StepMeterRegistry {
         public InfluxMeterRegistry build() {
             return new InfluxMeterRegistry(config, clock, threadFactory, httpClient);
         }
+
     }
 
     static class Field {
+
         final String key;
+
         final double value;
 
         Field(String key, double value) {
@@ -299,6 +304,7 @@ public class InfluxMeterRegistry extends StepMeterRegistry {
         public String toString() {
             return key + "=" + DoubleFormat.decimalOrNan(value);
         }
+
     }
 
 }

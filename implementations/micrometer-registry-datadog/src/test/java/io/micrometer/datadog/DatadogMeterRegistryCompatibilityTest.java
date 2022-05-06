@@ -51,4 +51,5 @@ class DatadogMeterRegistryCompatibilityTest extends MeterRegistryCompatibilityKi
     public Duration step() {
         return config.step();
     }
+
 }
