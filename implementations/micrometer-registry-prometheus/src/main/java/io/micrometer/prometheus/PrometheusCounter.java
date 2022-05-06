@@ -15,11 +15,11 @@
  */
 package io.micrometer.prometheus;
 
+import io.micrometer.common.lang.NonNull;
+import io.micrometer.common.lang.Nullable;
 import io.micrometer.core.instrument.AbstractMeter;
 import io.micrometer.core.instrument.Counter;
 import io.micrometer.core.instrument.Meter;
-import io.micrometer.core.lang.NonNull;
-import io.micrometer.core.lang.Nullable;
 import io.prometheus.client.exemplars.CounterExemplarSampler;
 import io.prometheus.client.exemplars.Exemplar;
 

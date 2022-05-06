@@ -15,24 +15,17 @@
  */
 package io.micrometer.observation;
 
-import java.util.Arrays;
-import java.util.Collection;
-import java.util.HashMap;
-import java.util.LinkedHashSet;
-import java.util.List;
-import java.util.Map;
-import java.util.Optional;
-import java.util.Set;
+import io.micrometer.common.KeyValue;
+import io.micrometer.common.KeyValues;
+import io.micrometer.common.lang.NonNull;
+import io.micrometer.common.lang.Nullable;
+
+import java.util.*;
 import java.util.concurrent.Callable;
 import java.util.function.Function;
 import java.util.function.Supplier;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
-
-import io.micrometer.common.KeyValue;
-import io.micrometer.common.KeyValues;
-import io.micrometer.observation.lang.NonNull;
-import io.micrometer.observation.lang.Nullable;
 
 /**
  * An act of viewing or noticing a fact or an occurrence for some scientific or other

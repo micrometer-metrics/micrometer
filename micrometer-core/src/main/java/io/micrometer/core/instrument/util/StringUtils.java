@@ -15,19 +15,21 @@
  */
 package io.micrometer.core.instrument.util;
 
-import io.micrometer.core.lang.Nullable;
+import io.micrometer.common.lang.Nullable;
 
 /**
  * Utilities for {@link String}.
  *
  * @author Johnny Lim
+ * @deprecated Please use {@link io.micrometer.common.util.StringUtils} instead.
  */
+@Deprecated
 public final class StringUtils {
 
     /**
      * Check if the String is null or has only whitespaces.
      *
-     * Modified from {@link org.apache.commons.lang.StringUtils#isBlank(String)}.
+     * Modified from {@code org.apache.commons.lang.StringUtils#isBlank(String)}.
      * @param string String to check
      * @return {@code true} if the String is null or has only whitespaces
      */

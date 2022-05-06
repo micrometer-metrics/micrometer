@@ -42,7 +42,11 @@ import static java.util.Objects.requireNonNull;
  * A skeletal implementation of {@link InternalLogger}. This class implements all methods
  * that have a {@link InternalLogLevel} parameter by default to call specific logger
  * methods such as {@link #info(String)} or {@link #isInfoEnabled()}.
+ *
+ * @deprecated Please use
+ * {@link io.micrometer.common.util.internal.logging.AbstractInternalLogger} instead.
  */
+@Deprecated
 public abstract class AbstractInternalLogger implements InternalLogger, Serializable {
 
     private static final long serialVersionUID = -6382972526573193470L;

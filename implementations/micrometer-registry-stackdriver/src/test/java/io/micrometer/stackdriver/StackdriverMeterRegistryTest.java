@@ -16,11 +16,11 @@
 package io.micrometer.stackdriver;
 
 import com.google.api.Distribution;
+import io.micrometer.common.lang.Nullable;
 import io.micrometer.core.Issue;
 import io.micrometer.core.instrument.MockClock;
 import io.micrometer.core.instrument.distribution.CountAtBucket;
 import io.micrometer.core.instrument.distribution.HistogramSnapshot;
-import io.micrometer.core.lang.Nullable;
 import org.junit.jupiter.api.Test;
 
 import java.util.List;

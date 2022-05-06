@@ -39,7 +39,11 @@ import static org.slf4j.spi.LocationAwareLogger.*;
  *
  * <a href="https://www.slf4j.org/">SLF4J</a> logger which is location aware and so will
  * log the correct origin of the logging event by filter out the wrapper itself.
+ *
+ * @deprecated Please use
+ * {@code io.micrometer.common.util.internal.logging.LocationAwareSlf4JLogger} instead.
  */
+@Deprecated
 final class LocationAwareSlf4JLogger extends AbstractInternalLogger {
 
     // IMPORTANT: All our log methods first check if the log level is enabled before call

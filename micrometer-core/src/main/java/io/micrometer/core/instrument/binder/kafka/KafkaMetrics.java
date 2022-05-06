@@ -15,16 +15,16 @@
  */
 package io.micrometer.core.instrument.binder.kafka;
 
+import io.micrometer.common.lang.NonNullApi;
+import io.micrometer.common.lang.NonNullFields;
+import io.micrometer.common.lang.Nullable;
+import io.micrometer.common.util.internal.logging.InternalLogger;
+import io.micrometer.common.util.internal.logging.InternalLoggerFactory;
+import io.micrometer.common.util.internal.logging.WarnThenDebugLogger;
 import io.micrometer.core.annotation.Incubating;
 import io.micrometer.core.instrument.*;
 import io.micrometer.core.instrument.binder.MeterBinder;
 import io.micrometer.core.instrument.util.NamedThreadFactory;
-import io.micrometer.core.lang.NonNullApi;
-import io.micrometer.core.lang.NonNullFields;
-import io.micrometer.core.lang.Nullable;
-import io.micrometer.core.util.internal.logging.InternalLogger;
-import io.micrometer.core.util.internal.logging.InternalLoggerFactory;
-import io.micrometer.core.util.internal.logging.WarnThenDebugLogger;
 import org.apache.kafka.common.Metric;
 import org.apache.kafka.common.MetricName;
 

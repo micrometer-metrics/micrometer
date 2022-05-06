@@ -19,6 +19,7 @@ import com.wavefront.sdk.common.WavefrontSender;
 import com.wavefront.sdk.common.clients.WavefrontClient;
 import com.wavefront.sdk.entities.histograms.HistogramGranularity;
 import com.wavefront.sdk.entities.histograms.WavefrontHistogramImpl;
+import io.micrometer.common.lang.Nullable;
 import io.micrometer.core.instrument.*;
 import io.micrometer.core.instrument.cumulative.CumulativeCounter;
 import io.micrometer.core.instrument.cumulative.CumulativeFunctionCounter;
@@ -31,7 +32,6 @@ import io.micrometer.core.instrument.internal.DefaultMeter;
 import io.micrometer.core.instrument.push.PushMeterRegistry;
 import io.micrometer.core.instrument.util.NamedThreadFactory;
 import io.micrometer.core.ipc.http.HttpSender;
-import io.micrometer.core.lang.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 

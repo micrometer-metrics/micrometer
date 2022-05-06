@@ -29,7 +29,9 @@ import java.util.function.Supplier;
  * previously.
  *
  * @author Jonatan Ivanov
+ * @deprecated Please use {@link MockLoggerFactory} instead.
  */
+@Deprecated
 public class MockLoggerFactory extends InternalLoggerFactory {
 
     private final ConcurrentMap<String, MockLogger> loggers = new ConcurrentHashMap<>();

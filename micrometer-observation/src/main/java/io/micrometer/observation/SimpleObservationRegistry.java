@@ -15,7 +15,7 @@
  */
 package io.micrometer.observation;
 
-import io.micrometer.observation.lang.Nullable;
+import io.micrometer.common.lang.Nullable;
 
 /**
  * Default implementation of {@link ObservationRegistry}.

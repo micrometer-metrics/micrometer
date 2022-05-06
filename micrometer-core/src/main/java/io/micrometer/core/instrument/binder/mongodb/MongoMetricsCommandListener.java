@@ -17,11 +17,11 @@ package io.micrometer.core.instrument.binder.mongodb;
 
 import com.mongodb.client.MongoClient;
 import com.mongodb.event.*;
+import io.micrometer.common.lang.NonNullApi;
+import io.micrometer.common.lang.NonNullFields;
 import io.micrometer.core.annotation.Incubating;
 import io.micrometer.core.instrument.MeterRegistry;
 import io.micrometer.core.instrument.Timer;
-import io.micrometer.core.lang.NonNullApi;
-import io.micrometer.core.lang.NonNullFields;
 
 import java.util.concurrent.TimeUnit;
 

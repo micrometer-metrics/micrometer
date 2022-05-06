@@ -15,11 +15,11 @@
  */
 package io.micrometer.core.tck;
 
+import io.micrometer.observation.Observation;
+
 import java.util.List;
 import java.util.Objects;
 import java.util.stream.Collectors;
-
-import io.micrometer.observation.Observation;
 
 /**
  * Assertion methods for {@code MeterRegistry}s.

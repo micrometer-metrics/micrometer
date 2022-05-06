@@ -21,7 +21,10 @@ import java.util.Objects;
  * Simple POJO that represents a log event for test verification purposes.
  *
  * @author Jonatan Ivanov
+ * @deprecated Please use {@link io.micrometer.common.util.internal.logging.LogEvent}
+ * instead.
  */
+@Deprecated
 public class LogEvent {
 
     private final InternalLogLevel level;

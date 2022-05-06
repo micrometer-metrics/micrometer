@@ -17,15 +17,15 @@ package io.micrometer.core.instrument.binder.jvm;
 
 import com.sun.management.GarbageCollectionNotificationInfo;
 import com.sun.management.GcInfo;
+import io.micrometer.common.lang.NonNullApi;
+import io.micrometer.common.lang.NonNullFields;
+import io.micrometer.common.lang.Nullable;
+import io.micrometer.common.util.internal.logging.InternalLogger;
+import io.micrometer.common.util.internal.logging.InternalLoggerFactory;
 import io.micrometer.core.instrument.Timer;
 import io.micrometer.core.instrument.*;
 import io.micrometer.core.instrument.binder.BaseUnits;
 import io.micrometer.core.instrument.binder.MeterBinder;
-import io.micrometer.core.lang.NonNullApi;
-import io.micrometer.core.lang.NonNullFields;
-import io.micrometer.core.lang.Nullable;
-import io.micrometer.core.util.internal.logging.InternalLogger;
-import io.micrometer.core.util.internal.logging.InternalLoggerFactory;
 
 import javax.management.ListenerNotFoundException;
 import javax.management.Notification;

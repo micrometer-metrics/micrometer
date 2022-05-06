@@ -15,15 +15,11 @@
  */
 package io.micrometer.common;
 
-import java.util.Arrays;
-import java.util.Collection;
-import java.util.Iterator;
-import java.util.Spliterator;
-import java.util.Spliterators;
+import io.micrometer.common.lang.Nullable;
+
+import java.util.*;
 import java.util.stream.Stream;
 import java.util.stream.StreamSupport;
-
-import io.micrometer.common.lang.Nullable;
 
 import static java.util.stream.Collectors.joining;
 

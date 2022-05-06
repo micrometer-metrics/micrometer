@@ -59,7 +59,11 @@ package io.micrometer.core.util.internal.logging;
  *
  * <em>Internal-use-only</em> logger used by Micrometer. <strong>DO NOT</strong> access
  * this class outside of Micrometer.
+ *
+ * @deprecated Please use
+ * {@link io.micrometer.common.util.internal.logging.InternalLogger} instead.
  */
+@Deprecated
 public interface InternalLogger {
 
     /**

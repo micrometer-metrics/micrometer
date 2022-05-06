@@ -15,12 +15,12 @@
  */
 package io.micrometer.newrelic;
 
+import io.micrometer.common.lang.Nullable;
 import io.micrometer.core.instrument.Clock;
 import io.micrometer.core.instrument.config.NamingConvention;
 import io.micrometer.core.instrument.step.StepMeterRegistry;
 import io.micrometer.core.instrument.util.NamedThreadFactory;
 import io.micrometer.core.ipc.http.HttpSender;
-import io.micrometer.core.lang.Nullable;
 
 import java.util.concurrent.ThreadFactory;
 import java.util.concurrent.TimeUnit;

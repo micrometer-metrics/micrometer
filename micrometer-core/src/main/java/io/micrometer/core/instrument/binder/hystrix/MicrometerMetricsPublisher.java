@@ -20,9 +20,9 @@ import com.netflix.hystrix.strategy.metrics.HystrixMetricsPublisher;
 import com.netflix.hystrix.strategy.metrics.HystrixMetricsPublisherCollapser;
 import com.netflix.hystrix.strategy.metrics.HystrixMetricsPublisherCommand;
 import com.netflix.hystrix.strategy.metrics.HystrixMetricsPublisherThreadPool;
+import io.micrometer.common.lang.NonNullApi;
+import io.micrometer.common.lang.NonNullFields;
 import io.micrometer.core.instrument.MeterRegistry;
-import io.micrometer.core.lang.NonNullApi;
-import io.micrometer.core.lang.NonNullFields;
 
 /**
  * @author Clint Checketts

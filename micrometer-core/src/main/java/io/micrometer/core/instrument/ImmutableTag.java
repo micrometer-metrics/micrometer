@@ -15,7 +15,7 @@
  */
 package io.micrometer.core.instrument;
 
-import io.micrometer.core.lang.Nullable;
+import io.micrometer.common.lang.Nullable;
 
 import java.util.Objects;
 

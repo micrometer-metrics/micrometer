@@ -19,9 +19,9 @@ import com.github.benmanes.caffeine.cache.Cache;
 import com.github.benmanes.caffeine.cache.RemovalCause;
 import com.github.benmanes.caffeine.cache.stats.CacheStats;
 import com.github.benmanes.caffeine.cache.stats.StatsCounter;
+import io.micrometer.common.lang.NonNullApi;
+import io.micrometer.common.lang.NonNullFields;
 import io.micrometer.core.instrument.*;
-import io.micrometer.core.lang.NonNullApi;
-import io.micrometer.core.lang.NonNullFields;
 
 import java.util.Arrays;
 import java.util.EnumMap;

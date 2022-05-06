@@ -15,9 +15,9 @@
  */
 package io.micrometer.core.instrument.config;
 
+import io.micrometer.common.lang.Nullable;
 import io.micrometer.core.instrument.*;
 import io.micrometer.core.instrument.distribution.DistributionStatisticConfig;
-import io.micrometer.core.lang.Nullable;
 
 import java.time.Duration;
 import java.util.ArrayList;

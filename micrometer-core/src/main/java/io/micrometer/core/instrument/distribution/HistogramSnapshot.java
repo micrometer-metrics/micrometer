@@ -15,8 +15,8 @@
  */
 package io.micrometer.core.instrument.distribution;
 
+import io.micrometer.common.lang.Nullable;
 import io.micrometer.core.instrument.util.TimeUtils;
-import io.micrometer.core.lang.Nullable;
 
 import java.io.PrintStream;
 import java.util.Arrays;

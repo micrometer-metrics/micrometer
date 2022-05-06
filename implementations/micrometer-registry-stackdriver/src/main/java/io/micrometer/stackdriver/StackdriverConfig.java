@@ -19,10 +19,10 @@ import com.google.api.gax.core.CredentialsProvider;
 import com.google.api.gax.core.FixedCredentialsProvider;
 import com.google.auth.oauth2.GoogleCredentials;
 import com.google.cloud.monitoring.v3.MetricServiceSettings;
+import io.micrometer.common.util.StringUtils;
 import io.micrometer.core.instrument.config.validate.InvalidReason;
 import io.micrometer.core.instrument.config.validate.Validated;
 import io.micrometer.core.instrument.step.StepRegistryConfig;
-import io.micrometer.core.instrument.util.StringUtils;
 
 import java.io.FileInputStream;
 import java.io.IOException;

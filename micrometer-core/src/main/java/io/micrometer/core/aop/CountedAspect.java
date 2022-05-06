@@ -15,9 +15,9 @@
  */
 package io.micrometer.core.aop;
 
+import io.micrometer.common.lang.NonNullApi;
 import io.micrometer.core.annotation.Counted;
 import io.micrometer.core.instrument.*;
-import io.micrometer.core.lang.NonNullApi;
 import org.aspectj.lang.ProceedingJoinPoint;
 import org.aspectj.lang.annotation.Around;
 import org.aspectj.lang.annotation.Aspect;

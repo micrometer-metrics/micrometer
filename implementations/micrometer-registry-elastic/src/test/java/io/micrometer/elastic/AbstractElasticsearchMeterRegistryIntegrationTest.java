@@ -15,8 +15,6 @@
  */
 package io.micrometer.elastic;
 
-import java.time.Duration;
-
 import com.jayway.jsonpath.JsonPath;
 import io.micrometer.core.instrument.Counter;
 import io.micrometer.core.ipc.http.HttpSender;
@@ -28,6 +26,8 @@ import org.testcontainers.elasticsearch.ElasticsearchContainer;
 import org.testcontainers.junit.jupiter.Container;
 import org.testcontainers.junit.jupiter.Testcontainers;
 import org.testcontainers.utility.DockerImageName;
+
+import java.time.Duration;
 
 import static org.assertj.core.api.Assertions.assertThat;
 

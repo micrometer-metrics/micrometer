@@ -15,7 +15,7 @@
  */
 package io.micrometer.influx;
 
-import io.micrometer.core.instrument.util.StringUtils;
+import io.micrometer.common.util.StringUtils;
 import io.micrometer.core.ipc.http.HttpSender;
 
 import java.io.UnsupportedEncodingException;

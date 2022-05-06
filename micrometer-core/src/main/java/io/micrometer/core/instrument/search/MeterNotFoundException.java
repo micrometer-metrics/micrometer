@@ -15,8 +15,8 @@
  */
 package io.micrometer.core.instrument.search;
 
+import io.micrometer.common.lang.Nullable;
 import io.micrometer.core.instrument.*;
-import io.micrometer.core.lang.Nullable;
 
 import java.util.ArrayList;
 import java.util.Collection;

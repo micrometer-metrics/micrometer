@@ -15,13 +15,13 @@
  */
 package io.micrometer.core.tck;
 
-import java.util.LinkedList;
-import java.util.List;
-import java.util.Objects;
-
 import io.micrometer.observation.Observation;
 import io.micrometer.observation.ObservationHandler;
 import io.micrometer.observation.ObservationRegistry;
+
+import java.util.LinkedList;
+import java.util.List;
+import java.util.Objects;
 
 /**
  * Implementation of {@link ObservationRegistry} used for testing.

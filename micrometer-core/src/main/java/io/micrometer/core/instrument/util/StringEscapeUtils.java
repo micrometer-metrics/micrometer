@@ -15,7 +15,7 @@
  */
 package io.micrometer.core.instrument.util;
 
-import io.micrometer.core.lang.Nullable;
+import io.micrometer.common.lang.Nullable;
 
 /**
  * Utilities for JSON escaping {@code String}.

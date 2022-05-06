@@ -31,7 +31,10 @@ import static io.micrometer.core.util.internal.logging.InternalLogLevel.*;
  * {@link InternalLoggerFactory} to get one.
  *
  * @author Jonatan Ivanov
+ * @deprecated Please use {@link io.micrometer.common.util.internal.logging.MockLogger}
+ * instead.
  */
+@Deprecated
 public class MockLogger implements InternalLogger {
 
     private final String name;

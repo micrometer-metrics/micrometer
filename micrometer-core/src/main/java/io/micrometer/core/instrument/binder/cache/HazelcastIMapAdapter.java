@@ -15,7 +15,7 @@
  */
 package io.micrometer.core.instrument.binder.cache;
 
-import io.micrometer.core.lang.Nullable;
+import io.micrometer.common.lang.Nullable;
 
 import java.lang.invoke.MethodHandle;
 import java.lang.invoke.MethodHandles;

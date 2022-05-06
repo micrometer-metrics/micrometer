@@ -15,6 +15,7 @@
  */
 package io.micrometer.core.instrument.simple;
 
+import io.micrometer.common.lang.Nullable;
 import io.micrometer.core.annotation.Incubating;
 import io.micrometer.core.instrument.*;
 import io.micrometer.core.instrument.cumulative.*;
@@ -25,7 +26,6 @@ import io.micrometer.core.instrument.internal.DefaultGauge;
 import io.micrometer.core.instrument.internal.DefaultLongTaskTimer;
 import io.micrometer.core.instrument.internal.DefaultMeter;
 import io.micrometer.core.instrument.step.*;
-import io.micrometer.core.lang.Nullable;
 
 import java.util.Comparator;
 import java.util.concurrent.TimeUnit;

@@ -15,9 +15,9 @@
  */
 package io.micrometer.common.docs;
 
-import java.util.Arrays;
-
 import io.micrometer.common.KeyValue;
+
+import java.util.Arrays;
 
 /**
  * Represents a key name used for documenting instrumentation.

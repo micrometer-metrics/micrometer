@@ -15,11 +15,11 @@
  */
 package io.micrometer.observation;
 
+import io.micrometer.common.util.internal.logging.InternalLoggerFactory;
+
 import java.util.function.Consumer;
 import java.util.function.Function;
 import java.util.function.Predicate;
-
-import io.micrometer.common.util.internal.logging.InternalLoggerFactory;
 
 /**
  * An {@link ObservationHandler} that converts the context to text and Publishes it to the

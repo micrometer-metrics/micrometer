@@ -15,11 +15,11 @@
  */
 package io.micrometer.observation;
 
-import java.io.IOException;
-import java.util.function.Consumer;
-
 import io.micrometer.common.KeyValue;
 import org.junit.jupiter.api.Test;
+
+import java.io.IOException;
+import java.util.function.Consumer;
 
 import static org.assertj.core.api.Assertions.assertThat;
 

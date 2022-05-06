@@ -15,11 +15,7 @@
  */
 package io.micrometer.observation.contextpropagation;
 
-import io.micrometer.contextpropagation.ContextContainer;
-import io.micrometer.contextpropagation.Namespace;
-import io.micrometer.contextpropagation.NamespaceAccessor;
-import io.micrometer.contextpropagation.Store;
-import io.micrometer.contextpropagation.ThreadLocalAccessor;
+import io.micrometer.contextpropagation.*;
 import io.micrometer.observation.Observation;
 import io.micrometer.observation.ObservationRegistry;
 

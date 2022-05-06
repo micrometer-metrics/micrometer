@@ -64,7 +64,11 @@ import java.util.logging.Logger;
  * <a href=
  * "https://docs.oracle.com/javase/8/docs/technotes/guides/logging/index.html">java.util.logging</a>
  * logger.
+ *
+ * @deprecated Please use {@code io.micrometer.common.util.internal.logging.JdkLogger}
+ * instead.
  */
+@Deprecated
 class JdkLogger extends AbstractInternalLogger {
 
     private static final long serialVersionUID = -1767272577989225979L;

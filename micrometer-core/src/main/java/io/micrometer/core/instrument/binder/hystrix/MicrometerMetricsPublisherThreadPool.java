@@ -19,9 +19,9 @@ import com.netflix.hystrix.HystrixThreadPoolKey;
 import com.netflix.hystrix.HystrixThreadPoolMetrics;
 import com.netflix.hystrix.HystrixThreadPoolProperties;
 import com.netflix.hystrix.strategy.metrics.HystrixMetricsPublisherThreadPool;
+import io.micrometer.common.lang.NonNullApi;
+import io.micrometer.common.lang.NonNullFields;
 import io.micrometer.core.instrument.*;
-import io.micrometer.core.lang.NonNullApi;
-import io.micrometer.core.lang.NonNullFields;
 
 /**
  * Micrometer publisher for Hystrix thread pool metrics.

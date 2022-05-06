@@ -46,7 +46,11 @@ import static java.util.Objects.requireNonNull;
  * were loaded after the default factory is changed. Therefore,
  * {@link #setDefaultFactory(InternalLoggerFactory)} should be called as early as possible
  * and shouldn't be called more than once.
+ *
+ * @deprecated Please use
+ * {@link io.micrometer.common.util.internal.logging.InternalLoggerFactory} instead.
  */
+@Deprecated
 public abstract class InternalLoggerFactory {
 
     private static volatile InternalLoggerFactory defaultFactory;

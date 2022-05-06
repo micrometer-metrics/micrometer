@@ -71,10 +71,6 @@ public class HttpMetricsTagConfiguration {
         };
     }
 
-    // TODO move Spring Boot samples outside of this repo
-    // This will fail to compile since published Spring Boot versions are based on
-    // Micrometer 1.x and
-    // we have changed the package for Micrometer API it uses.
     @Bean
     WebMvcTagsProvider webMvcTagsProvider() {
         return new DefaultWebMvcTagsProvider() {

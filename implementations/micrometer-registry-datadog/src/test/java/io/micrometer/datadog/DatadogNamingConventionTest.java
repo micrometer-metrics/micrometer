@@ -15,10 +15,10 @@
  */
 package io.micrometer.datadog;
 
+import io.micrometer.common.lang.Nullable;
 import io.micrometer.core.Issue;
 import io.micrometer.core.instrument.Meter;
 import io.micrometer.core.instrument.config.NamingConvention;
-import io.micrometer.core.lang.Nullable;
 import org.junit.jupiter.api.Test;
 
 import static org.assertj.core.api.Assertions.assertThat;

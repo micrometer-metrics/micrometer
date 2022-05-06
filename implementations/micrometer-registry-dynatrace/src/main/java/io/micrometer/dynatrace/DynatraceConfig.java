@@ -17,9 +17,9 @@ package io.micrometer.dynatrace;
 
 import com.dynatrace.file.util.DynatraceFileBasedConfigurationProvider;
 import com.dynatrace.metric.util.DynatraceMetricApiConstants;
+import io.micrometer.common.lang.Nullable;
 import io.micrometer.core.instrument.config.validate.Validated;
 import io.micrometer.core.instrument.step.StepRegistryConfig;
-import io.micrometer.core.lang.Nullable;
 
 import java.util.Collections;
 import java.util.Map;

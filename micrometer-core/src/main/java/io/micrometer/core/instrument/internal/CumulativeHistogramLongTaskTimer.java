@@ -15,11 +15,11 @@
  */
 package io.micrometer.core.instrument.internal;
 
+import io.micrometer.common.lang.Nullable;
 import io.micrometer.core.instrument.Clock;
 import io.micrometer.core.instrument.distribution.CountAtBucket;
 import io.micrometer.core.instrument.distribution.DistributionStatisticConfig;
 import io.micrometer.core.instrument.distribution.HistogramSnapshot;
-import io.micrometer.core.lang.Nullable;
 
 import java.util.Arrays;
 import java.util.concurrent.TimeUnit;

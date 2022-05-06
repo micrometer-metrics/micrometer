@@ -15,9 +15,9 @@
  */
 package io.micrometer.graphite;
 
+import io.micrometer.common.lang.Nullable;
 import io.micrometer.core.instrument.config.validate.Validated;
 import io.micrometer.core.instrument.dropwizard.DropwizardConfig;
-import io.micrometer.core.lang.Nullable;
 
 import java.util.concurrent.TimeUnit;
 

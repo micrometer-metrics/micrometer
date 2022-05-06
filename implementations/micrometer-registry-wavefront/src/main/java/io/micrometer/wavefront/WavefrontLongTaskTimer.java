@@ -16,10 +16,10 @@
 package io.micrometer.wavefront;
 
 import com.wavefront.sdk.entities.histograms.WavefrontHistogramImpl;
+import io.micrometer.common.lang.Nullable;
 import io.micrometer.core.instrument.Clock;
 import io.micrometer.core.instrument.distribution.DistributionStatisticConfig;
 import io.micrometer.core.instrument.internal.DefaultLongTaskTimer;
-import io.micrometer.core.lang.Nullable;
 
 import java.util.Collections;
 import java.util.List;

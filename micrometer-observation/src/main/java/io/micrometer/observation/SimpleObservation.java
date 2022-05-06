@@ -15,13 +15,13 @@
  */
 package io.micrometer.observation;
 
+import io.micrometer.common.KeyValue;
+import io.micrometer.common.lang.Nullable;
+
 import java.util.ArrayDeque;
 import java.util.Collection;
 import java.util.Deque;
 import java.util.stream.Collectors;
-
-import io.micrometer.common.KeyValue;
-import io.micrometer.observation.lang.Nullable;
 
 /**
  * Default implementation of {@link Observation}.

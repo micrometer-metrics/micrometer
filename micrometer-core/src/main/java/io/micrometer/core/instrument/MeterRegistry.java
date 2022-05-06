@@ -15,6 +15,7 @@
  */
 package io.micrometer.core.instrument;
 
+import io.micrometer.common.lang.Nullable;
 import io.micrometer.core.annotation.Incubating;
 import io.micrometer.core.instrument.Meter.Id;
 import io.micrometer.core.instrument.config.MeterFilter;
@@ -28,7 +29,6 @@ import io.micrometer.core.instrument.search.MeterNotFoundException;
 import io.micrometer.core.instrument.search.RequiredSearch;
 import io.micrometer.core.instrument.search.Search;
 import io.micrometer.core.instrument.util.TimeUtils;
-import io.micrometer.core.lang.Nullable;
 
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;

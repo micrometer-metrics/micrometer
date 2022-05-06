@@ -15,11 +15,11 @@
  */
 package io.micrometer.core.instrument.search;
 
+import io.micrometer.common.lang.Nullable;
 import io.micrometer.core.instrument.Timer;
 import io.micrometer.core.instrument.*;
 import io.micrometer.core.instrument.config.MeterFilter;
 import io.micrometer.core.instrument.config.MeterFilterReply;
-import io.micrometer.core.lang.Nullable;
 
 import java.util.*;
 import java.util.function.Predicate;

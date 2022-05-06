@@ -120,7 +120,11 @@ import java.util.Set;
  * <p/>
  * See also {@link #format(String, Object)}, {@link #format(String, Object, Object)} and
  * {@link #arrayFormat(String, Object[])} methods for more details.
+ *
+ * @deprecated Please use
+ * {@code io.micrometer.common.util.internal.logging.MessageFormatter} instead.
  */
+@Deprecated
 final class MessageFormatter {
 
     private static final String DELIM_STR = "{}";

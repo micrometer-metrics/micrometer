@@ -15,6 +15,7 @@
  */
 package io.micrometer.core.aop;
 
+import io.micrometer.common.lang.NonNull;
 import io.micrometer.core.annotation.Timed;
 import io.micrometer.core.instrument.LongTaskTimer;
 import io.micrometer.core.instrument.Meter.Id;
@@ -24,7 +25,6 @@ import io.micrometer.core.instrument.distribution.DistributionStatisticConfig;
 import io.micrometer.core.instrument.distribution.pause.PauseDetector;
 import io.micrometer.core.instrument.search.MeterNotFoundException;
 import io.micrometer.core.instrument.simple.SimpleMeterRegistry;
-import io.micrometer.core.lang.NonNull;
 import org.aspectj.lang.ProceedingJoinPoint;
 import org.junit.jupiter.api.Test;
 import org.springframework.aop.aspectj.annotation.AspectJProxyFactory;

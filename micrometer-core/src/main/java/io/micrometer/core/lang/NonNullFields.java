@@ -33,15 +33,17 @@ import java.lang.annotation.*;
  * NOTE: This file has been copied from {@code org.springframework.lang}.
  *
  * @author Sebastien Deleuze
- * @see NonNullFields
- * @see Nullable
- * @see NonNull
+ * @see io.micrometer.common.lang.NonNullFields
+ * @see io.micrometer.common.lang.Nullable
+ * @see io.micrometer.common.lang.NonNull
+ * @deprecated Please use {@link io.micrometer.common.lang.NonNullApi} instead.
  */
 @Target({ ElementType.PACKAGE, ElementType.TYPE })
 @Retention(RetentionPolicy.RUNTIME)
 @Documented
 @Nonnull
 @TypeQualifierDefault(ElementType.FIELD)
+@Deprecated
 public @interface NonNullFields {
 
 }

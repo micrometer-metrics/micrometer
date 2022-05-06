@@ -15,9 +15,9 @@
  */
 package io.micrometer.core.instrument.binder.cache;
 
+import io.micrometer.common.lang.Nullable;
 import io.micrometer.core.instrument.MeterRegistry;
 import io.micrometer.core.instrument.simple.SimpleMeterRegistry;
-import io.micrometer.core.lang.Nullable;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 

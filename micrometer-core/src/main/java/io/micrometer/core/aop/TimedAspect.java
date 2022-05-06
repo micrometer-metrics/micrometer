@@ -15,11 +15,11 @@
  */
 package io.micrometer.core.aop;
 
+import io.micrometer.common.lang.NonNullApi;
+import io.micrometer.common.lang.Nullable;
 import io.micrometer.core.annotation.Incubating;
 import io.micrometer.core.annotation.Timed;
 import io.micrometer.core.instrument.*;
-import io.micrometer.core.lang.NonNullApi;
-import io.micrometer.core.lang.Nullable;
 import org.aspectj.lang.ProceedingJoinPoint;
 import org.aspectj.lang.annotation.Around;
 import org.aspectj.lang.annotation.Aspect;

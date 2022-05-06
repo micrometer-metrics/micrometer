@@ -36,15 +36,17 @@ import java.lang.annotation.*;
  *
  * @author Sebastien Deleuze
  * @author Juergen Hoeller
- * @see NonNullApi
- * @see NonNullFields
- * @see NonNull
+ * @see io.micrometer.common.lang.NonNullApi
+ * @see io.micrometer.common.lang.NonNullFields
+ * @see io.micrometer.common.lang.NonNull
+ * @deprecated Please use {@link io.micrometer.common.lang.NonNullApi} instead.
  */
 @Target({ ElementType.METHOD, ElementType.PARAMETER, ElementType.FIELD })
 @Retention(RetentionPolicy.RUNTIME)
 @Documented
 @Nonnull(when = When.MAYBE)
 @TypeQualifierNickname
+@Deprecated
 public @interface Nullable {
 
 }

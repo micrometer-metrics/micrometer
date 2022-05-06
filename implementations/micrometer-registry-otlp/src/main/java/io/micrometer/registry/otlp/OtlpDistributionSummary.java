@@ -15,10 +15,10 @@
  */
 package io.micrometer.registry.otlp;
 
+import io.micrometer.common.lang.Nullable;
 import io.micrometer.core.instrument.Clock;
 import io.micrometer.core.instrument.cumulative.CumulativeDistributionSummary;
 import io.micrometer.core.instrument.distribution.*;
-import io.micrometer.core.lang.Nullable;
 
 import java.time.Duration;
 import java.util.concurrent.TimeUnit;

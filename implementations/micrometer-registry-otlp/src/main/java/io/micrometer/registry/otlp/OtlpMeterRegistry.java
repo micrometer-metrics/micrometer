@@ -15,6 +15,8 @@
  */
 package io.micrometer.registry.otlp;
 
+import io.micrometer.common.util.internal.logging.InternalLogger;
+import io.micrometer.common.util.internal.logging.InternalLoggerFactory;
 import io.micrometer.core.instrument.Gauge;
 import io.micrometer.core.instrument.*;
 import io.micrometer.core.instrument.config.NamingConvention;
@@ -28,8 +30,6 @@ import io.micrometer.core.instrument.util.NamedThreadFactory;
 import io.micrometer.core.instrument.util.TimeUtils;
 import io.micrometer.core.ipc.http.HttpSender;
 import io.micrometer.core.ipc.http.HttpUrlConnectionSender;
-import io.micrometer.core.util.internal.logging.InternalLogger;
-import io.micrometer.core.util.internal.logging.InternalLoggerFactory;
 import io.opentelemetry.proto.collector.metrics.v1.ExportMetricsServiceRequest;
 import io.opentelemetry.proto.common.v1.AnyValue;
 import io.opentelemetry.proto.common.v1.KeyValue;

@@ -15,6 +15,7 @@
  */
 package io.micrometer.prometheus;
 
+import io.micrometer.common.lang.Nullable;
 import io.micrometer.core.instrument.*;
 import io.micrometer.core.instrument.cumulative.CumulativeFunctionCounter;
 import io.micrometer.core.instrument.cumulative.CumulativeFunctionTimer;
@@ -23,7 +24,6 @@ import io.micrometer.core.instrument.distribution.pause.PauseDetector;
 import io.micrometer.core.instrument.internal.CumulativeHistogramLongTaskTimer;
 import io.micrometer.core.instrument.internal.DefaultGauge;
 import io.micrometer.core.instrument.internal.DefaultMeter;
-import io.micrometer.core.lang.Nullable;
 import io.prometheus.client.Collector;
 import io.prometheus.client.CollectorRegistry;
 import io.prometheus.client.exemplars.Exemplar;
@@ -40,11 +40,7 @@ import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.TimeUnit;
-import java.util.function.BiConsumer;
-import java.util.function.Consumer;
-import java.util.function.Supplier;
-import java.util.function.ToDoubleFunction;
-import java.util.function.ToLongFunction;
+import java.util.function.*;
 import java.util.stream.Stream;
 
 import static java.util.stream.Collectors.joining;

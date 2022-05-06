@@ -40,7 +40,11 @@ import org.slf4j.spi.LocationAwareLogger;
  * {io.netty.util.internal.logging}.
  *
  * Logger factory which creates a <a href="https://www.slf4j.org/">SLF4J</a> logger.
+ *
+ * @deprecated Please use
+ * {@link io.micrometer.common.util.internal.logging.Slf4JLoggerFactory} instead.
  */
+@Deprecated
 public class Slf4JLoggerFactory extends InternalLoggerFactory {
 
     public static final InternalLoggerFactory INSTANCE = new Slf4JLoggerFactory();

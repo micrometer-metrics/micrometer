@@ -15,16 +15,16 @@
  */
 package io.micrometer.core.tck;
 
+import io.micrometer.common.KeyValue;
+import io.micrometer.common.KeyValues;
+import io.micrometer.observation.Observation;
+import org.assertj.core.api.AbstractAssert;
+import org.assertj.core.api.AbstractThrowableAssert;
+
 import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.stream.Collectors;
-
-import io.micrometer.observation.Observation;
-import io.micrometer.common.KeyValue;
-import io.micrometer.common.KeyValues;
-import org.assertj.core.api.AbstractAssert;
-import org.assertj.core.api.AbstractThrowableAssert;
 
 /**
  * Assertion methods for {@code Observation.Context}s.

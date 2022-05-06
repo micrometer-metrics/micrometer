@@ -12,9 +12,6 @@ dependencies {
     // Aspects
     optionalApi 'org.aspectj:aspectjweaver'
 
-    // HttpServlet TagsProvider
-    optionalApi 'javax.servlet:javax.servlet-api'
-
     // instrumentation options
     optionalApi 'io.dropwizard.metrics:metrics-core' // TODO move dropwizard out of core module? DropwizardMeterRegistry for e.g. JMX registry
 
@@ -55,22 +52,16 @@ dependencies {
 
     optionalApi project(':micrometer-observation')
 
-    testImplementation project(':micrometer-test')
-
     testImplementation 'io.projectreactor:reactor-test'
 
     // dependency injection tests
     testImplementation 'javax.inject:javax.inject'
-    testImplementation 'javax.annotation:javax.annotation-api'
     testImplementation 'org.springframework:spring-context'
     testImplementation 'com.google.inject:guice'
 
     // Uncomment these if you are interested in testing injection with dagger in MeterRegistryInjectionTest
     // testImplementation 'com.google.dagger:dagger'
     // testAnnotationProcessor 'com.google.dagger:dagger-compiler'
-
-    // for testing HttpSender implementations
-    testImplementation 'com.github.tomakehurst:wiremock-jre8-standalone'
 
     // JUnit 5
     testImplementation 'org.junit.jupiter:junit-jupiter'
@@ -92,9 +83,6 @@ dependencies {
 
     testImplementation 'org.glassfish.jersey.test-framework.providers:jersey-test-framework-provider-inmemory'
     testRuntimeOnly 'org.glassfish.jersey.inject:jersey-hk2'
-
-    // JCache metrics test
-    testImplementation 'org.jsr107.ri:cache-ri-impl'
 
     testImplementation 'ru.lanwen.wiremock:wiremock-junit5'
     testImplementation 'com.github.tomakehurst:wiremock-jre8-standalone'

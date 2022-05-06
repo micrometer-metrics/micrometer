@@ -15,7 +15,7 @@
  */
 package io.micrometer.observation.transport.http;
 
-import io.micrometer.observation.lang.Nullable;
+import io.micrometer.common.lang.Nullable;
 
 /**
  * This API is taken from OpenZipkin Brave.

@@ -15,8 +15,8 @@
  */
 package io.micrometer.core.instrument;
 
+import io.micrometer.common.lang.Nullable;
 import io.micrometer.core.instrument.composite.CompositeMeterRegistry;
-import io.micrometer.core.lang.Nullable;
 
 import java.util.Collection;
 import java.util.Map;

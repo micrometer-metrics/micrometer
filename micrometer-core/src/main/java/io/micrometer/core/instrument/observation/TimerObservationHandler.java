@@ -15,13 +15,13 @@
  */
 package io.micrometer.core.instrument.observation;
 
-import java.util.stream.Collectors;
-
 import io.micrometer.core.instrument.MeterRegistry;
 import io.micrometer.core.instrument.Tag;
 import io.micrometer.core.instrument.Tags;
 import io.micrometer.core.instrument.Timer;
 import io.micrometer.observation.Observation;
+
+import java.util.stream.Collectors;
 
 /**
  * Handler for {@link Timer.Sample}.

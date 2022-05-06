@@ -15,10 +15,10 @@
  */
 package io.micrometer.datadog;
 
+import io.micrometer.common.lang.Nullable;
 import io.micrometer.core.instrument.Meter;
 import io.micrometer.core.instrument.Statistic;
 import io.micrometer.core.instrument.util.StringEscapeUtils;
-import io.micrometer.core.lang.Nullable;
 
 import java.util.*;
 

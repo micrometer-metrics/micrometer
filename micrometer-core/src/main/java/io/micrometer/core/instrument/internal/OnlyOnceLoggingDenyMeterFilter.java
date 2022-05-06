@@ -15,11 +15,11 @@
  */
 package io.micrometer.core.instrument.internal;
 
+import io.micrometer.common.util.internal.logging.InternalLogger;
+import io.micrometer.common.util.internal.logging.InternalLoggerFactory;
 import io.micrometer.core.instrument.Meter.Id;
 import io.micrometer.core.instrument.config.MeterFilter;
 import io.micrometer.core.instrument.config.MeterFilterReply;
-import io.micrometer.core.util.internal.logging.InternalLogger;
-import io.micrometer.core.util.internal.logging.InternalLoggerFactory;
 
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.function.Supplier;

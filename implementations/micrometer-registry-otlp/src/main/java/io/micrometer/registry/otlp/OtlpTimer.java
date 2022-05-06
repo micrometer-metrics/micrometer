@@ -15,12 +15,12 @@
  */
 package io.micrometer.registry.otlp;
 
+import io.micrometer.common.lang.Nullable;
 import io.micrometer.core.instrument.Clock;
 import io.micrometer.core.instrument.cumulative.CumulativeTimer;
 import io.micrometer.core.instrument.distribution.*;
 import io.micrometer.core.instrument.distribution.pause.PauseDetector;
 import io.micrometer.core.instrument.util.TimeUtils;
-import io.micrometer.core.lang.Nullable;
 
 import java.time.Duration;
 import java.util.concurrent.TimeUnit;
