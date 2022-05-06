@@ -117,20 +117,20 @@ public interface Observation {
     Observation contextualName(String contextualName);
 
     /**
-     * Sets a low cardinality tag. Low cardinality means that this tag will have a bounded
-     * number of possible values. A templated HTTP URL is a good example of such a tag
-     * (e.g. /foo/{userId}).
-     * @param tag tag
+     * Sets a low cardinality key value. Low cardinality means that this key value will
+     * have a bounded number of possible values. A templated HTTP URL is a good example of
+     * such a key value (e.g. /foo/{userId}).
+     * @param keyValue key value
      * @return this
      */
-    Observation lowCardinalityKeyValue(KeyValue tag);
+    Observation lowCardinalityKeyValue(KeyValue keyValue);
 
     /**
-     * Sets a low cardinality tag. Low cardinality means that this tag will have a bounded
-     * number of possible values. A templated HTTP URL is a good example of such a tag
-     * (e.g. /foo/{userId}).
-     * @param key tag key
-     * @param value tag value
+     * Sets a low cardinality key value. Low cardinality means that this key value will
+     * have a bounded number of possible values. A templated HTTP URL is a good example of
+     * such a key value (e.g. /foo/{userId}).
+     * @param key key
+     * @param value value
      * @return this
      */
     default Observation lowCardinalityKeyValue(String key, String value) {
@@ -138,20 +138,20 @@ public interface Observation {
     }
 
     /**
-     * Sets a high cardinality tag. High cardinality means that this tag will have
-     * possible an unbounded number of possible values. An HTTP URL is a good example of
-     * such a tag (e.g. /foo/bar, /foo/baz etc.).
-     * @param tag tag
+     * Sets a high cardinality key value. High cardinality means that this key value will
+     * have possible an unbounded number of possible values. An HTTP URL is a good example
+     * of such a key value (e.g. /foo/bar, /foo/baz etc.).
+     * @param keyValue key value
      * @return this
      */
-    Observation highCardinalityKeyValue(KeyValue tag);
+    Observation highCardinalityKeyValue(KeyValue keyValue);
 
     /**
-     * Sets a high cardinality tag. High cardinality means that this tag will have
-     * possible an unbounded number of possible values. An HTTP URL is a good example of
-     * such a tag (e.g. /foo/bar, /foo/baz etc.).
-     * @param key tag key
-     * @param value tag value
+     * Sets a high cardinality key value. High cardinality means that this key value will
+     * have possible an unbounded number of possible values. An HTTP URL is a good example
+     * of such a key value (e.g. /foo/bar, /foo/baz etc.).
+     * @param key key
+     * @param value value
      * @return this
      */
     default Observation highCardinalityKeyValue(String key, String value) {
@@ -167,8 +167,8 @@ public interface Observation {
     }
 
     /**
-     * Adds a key value provider that can be used to attach tags to the observation
-     * @param keyValuesProvider key value provider
+     * Adds a key values provider that can be used to attach key values to the observation
+     * @param keyValuesProvider key values provider
      * @return this
      */
     Observation keyValuesProvider(KeyValuesProvider<?> keyValuesProvider);
@@ -242,14 +242,14 @@ public interface Observation {
      * @param checkedRunnable the {@link CheckedRunnable} to run
      */
     @SuppressWarnings("unused")
-    default void observeChecked(CheckedRunnable checkedRunnable) throws Exception {
+    default void observeChecked(CheckedRunnable checkedRunnable) throws Throwable {
         this.start();
         try (Scope scope = openScope()) {
             checkedRunnable.run();
         }
-        catch (Exception exception) {
-            this.error(exception);
-            throw exception;
+        catch (Throwable error) {
+            this.error(error);
+            throw error;
         }
         finally {
             this.stop();
@@ -287,29 +287,29 @@ public interface Observation {
     }
 
     /**
-     * Observes the passed {@link Callable}, this means the followings:
+     * Observes the passed {@link CheckedCallable}, this means the followings:
      *
      * <ul>
      * <li>Starts the {@code Observation}</li>
      * <li>Opens a {@code Scope}</li>
-     * <li>Calls {@link Callable#call()}</li>
+     * <li>Calls {@link CheckedCallable#call()}</li>
      * <li>Closes the {@code Scope}</li>
      * <li>Signals the error to the {@code Observation} if any</li>
      * <li>Stops the {@code Observation}</li>
      * </ul>
-     * @param callable the {@link Callable} to call
-     * @param <T> the type parameter of the {@link Callable}
-     * @return the result from {@link Callable#call()}
+     * @param checkedCallable the {@link CheckedCallable} to call
+     * @param <T> the type parameter of the {@link CheckedCallable}
+     * @return the result from {@link CheckedCallable#call()}
      */
     @SuppressWarnings("unused")
-    default <T> T observeChecked(Callable<T> callable) throws Exception {
+    default <T> T observeChecked(CheckedCallable<T> checkedCallable) throws Throwable {
         this.start();
         try (Scope scope = openScope()) {
-            return callable.call();
+            return checkedCallable.call();
         }
-        catch (Exception exception) {
-            this.error(exception);
-            throw exception;
+        catch (Throwable error) {
+            this.error(error);
+            throw error;
         }
         finally {
             this.stop();
@@ -574,37 +574,37 @@ public interface Observation {
         }
 
         /**
-         * Adds a low cardinality tag - those will be appended to those fetched from the
-         * {@link KeyValuesProvider#getLowCardinalityKeyValues(Context)} method.
-         * @param tag a tag
+         * Adds a low cardinality key value - those will be appended to those fetched from
+         * the {@link KeyValuesProvider#getLowCardinalityKeyValues(Context)} method.
+         * @param keyValue a key value
          */
-        void addLowCardinalityKeyValue(KeyValue tag) {
-            this.lowCardinalityKeyValues.add(tag);
+        void addLowCardinalityKeyValue(KeyValue keyValue) {
+            this.lowCardinalityKeyValues.add(keyValue);
         }
 
         /**
-         * Adds a high cardinality tag - those will be appended to those fetched from the
-         * {@link KeyValuesProvider#getHighCardinalityKeyValues(Context)} method.
-         * @param tag a tag
+         * Adds a high cardinality key value - those will be appended to those fetched
+         * from the {@link KeyValuesProvider#getHighCardinalityKeyValues(Context)} method.
+         * @param keyValue a key value
          */
-        void addHighCardinalityKeyValue(KeyValue tag) {
-            this.highCardinalityKeyValues.add(tag);
+        void addHighCardinalityKeyValue(KeyValue keyValue) {
+            this.highCardinalityKeyValues.add(keyValue);
         }
 
         /**
          * Adds multiple low cardinality key values at once.
-         * @param tags collection of tags
+         * @param keyValues collection of key values
          */
-        void addLowCardinalityKeyValues(KeyValues tags) {
-            tags.stream().forEach(this::addLowCardinalityKeyValue);
+        void addLowCardinalityKeyValues(KeyValues keyValues) {
+            keyValues.stream().forEach(this::addLowCardinalityKeyValue);
         }
 
         /**
          * Adds multiple high cardinality key values at once.
-         * @param tags collection of tags
+         * @param keyValues collection of key values
          */
-        void addHighCardinalityKeyValues(KeyValues tags) {
-            tags.stream().forEach(this::addHighCardinalityKeyValue);
+        void addHighCardinalityKeyValues(KeyValues keyValues) {
+            keyValues.stream().forEach(this::addHighCardinalityKeyValue);
         }
 
         @NonNull
@@ -629,8 +629,8 @@ public interface Observation {
                     + toString(highCardinalityKeyValues) + ", map=" + toString(map);
         }
 
-        private String toString(Collection<KeyValue> tags) {
-            return tags.stream().map(tag -> String.format("%s='%s'", tag.getKey(), tag.getValue()))
+        private String toString(Collection<KeyValue> keyValues) {
+            return keyValues.stream().map(keyValue -> String.format("%s='%s'", keyValue.getKey(), keyValue.getValue()))
                     .collect(Collectors.joining(", ", "[", "]"));
         }
 
@@ -660,7 +660,7 @@ public interface Observation {
     }
 
     /**
-     * A provider of tags.
+     * A provider of key values.
      *
      * @author Marcin Grzejszczak
      * @since 1.10.0
@@ -689,15 +689,15 @@ public interface Observation {
         }
 
         /**
-         * Tells whether this key value provider should be applied for a given
+         * Tells whether this key values provider should be applied for a given
          * {@link Context}.
          * @param context a {@link Context}
-         * @return {@code true} when this key value provider should be used
+         * @return {@code true} when this key values provider should be used
          */
         boolean supportsContext(Context context);
 
         /**
-         * Key value provider wrapping other key value providers.
+         * Key values provider wrapping other key values providers.
          */
         @SuppressWarnings({ "rawtypes", "unchecked" })
         class CompositeKeyValuesProvider implements KeyValuesProvider<Context> {
@@ -706,8 +706,8 @@ public interface Observation {
 
             /**
              * Creates a new instance of {@code CompositeKeyValueProvider}.
-             * @param keyValuesProviders the key value providers that are registered under
-             * the composite
+             * @param keyValuesProviders the key values providers that are registered
+             * under the composite
              */
             public CompositeKeyValuesProvider(KeyValuesProvider... keyValuesProviders) {
                 this(Arrays.asList(keyValuesProviders));
@@ -715,8 +715,8 @@ public interface Observation {
 
             /**
              * Creates a new instance of {@code CompositeKeyValueProvider}.
-             * @param keyValuesProviders the key value providers that are registered under
-             * the composite
+             * @param keyValuesProviders the key values providers that are registered
+             * under the composite
              */
             public CompositeKeyValuesProvider(List<KeyValuesProvider> keyValuesProviders) {
                 this.keyValuesProviders = keyValuesProviders;
@@ -756,7 +756,7 @@ public interface Observation {
     }
 
     /**
-     * A provider of tags that will be set on the {@link ObservationRegistry}.
+     * A provider of key values that will be set on the {@link ObservationRegistry}.
      *
      * @author Marcin Grzejszczak
      * @since 1.10.0
@@ -766,12 +766,22 @@ public interface Observation {
     }
 
     /**
-     * A functional interface like {@link Runnable} but it can throw exceptions.
+     * A functional interface like {@link Runnable} but it can throw a {@link Throwable}.
      */
     @FunctionalInterface
     interface CheckedRunnable {
 
-        void run() throws Exception;
+        void run() throws Throwable;
+
+    }
+
+    /**
+     * A functional interface like {@link Callable} but it can throw a {@link Throwable}.
+     */
+    @FunctionalInterface
+    interface CheckedCallable<T> {
+
+        T call() throws Throwable;
 
     }
 
