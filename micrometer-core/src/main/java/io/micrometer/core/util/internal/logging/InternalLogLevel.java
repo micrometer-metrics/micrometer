@@ -34,11 +34,12 @@ package io.micrometer.core.util.internal.logging;
  * NOTE: This file has been copied from {io.netty.util.internal.logging}.
  *
  * The log level that {@link InternalLogger} can log at.
- *
- * @deprecated Please use {@link io.micrometer.common.util.internal.logging.InternalLogLevel} instead.
+ * @deprecated Please use
+ * {@link io.micrometer.common.util.internal.logging.InternalLogLevel} instead.
  */
 @Deprecated
 public enum InternalLogLevel {
+
     /**
      * 'TRACE' log level.
      */
@@ -59,4 +60,5 @@ public enum InternalLogLevel {
      * 'ERROR' log level.
      */
     ERROR
+
 }

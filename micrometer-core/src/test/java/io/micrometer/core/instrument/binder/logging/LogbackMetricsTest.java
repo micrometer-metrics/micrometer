@@ -18,7 +18,6 @@ package io.micrometer.core.instrument.binder.logging;
 import ch.qos.logback.classic.Level;
 import ch.qos.logback.classic.Logger;
 import ch.qos.logback.classic.LoggerContext;
-
 import io.micrometer.common.lang.NonNullApi;
 import io.micrometer.core.Issue;
 import io.micrometer.core.instrument.Counter;
@@ -28,7 +27,6 @@ import io.micrometer.core.instrument.MockClock;
 import io.micrometer.core.instrument.cumulative.CumulativeCounter;
 import io.micrometer.core.instrument.simple.SimpleConfig;
 import io.micrometer.core.instrument.simple.SimpleMeterRegistry;
-
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -38,8 +36,11 @@ import static java.util.Collections.emptyList;
 import static org.assertj.core.api.Assertions.assertThat;
 
 class LogbackMetricsTest {
+
     private MeterRegistry registry = new SimpleMeterRegistry(SimpleConfig.DEFAULT, new MockClock());
+
     private Logger logger = (Logger) LoggerFactory.getLogger("foo");
+
     LogbackMetrics logbackMetrics;
 
     @BeforeEach
@@ -125,7 +126,8 @@ class LogbackMetricsTest {
             LogbackMetrics.ignoreMetrics(() -> {
                 throw new RuntimeException();
             });
-        } catch (RuntimeException ignore) {
+        }
+        catch (RuntimeException ignore) {
         }
         logger.info("hi");
         assertThat(infoLogCounter.count()).isEqualTo(2);
@@ -133,13 +135,16 @@ class LogbackMetricsTest {
 
     @NonNullApi
     private static class LoggingCounterMeterRegistry extends SimpleMeterRegistry {
+
         @Override
         protected Counter newCounter(Meter.Id id) {
             return new LoggingCounter(id);
         }
+
     }
 
     private static class LoggingCounter extends CumulativeCounter {
+
         org.slf4j.Logger logger = LoggerFactory.getLogger(LoggingCounter.class);
 
         LoggingCounter(Id id) {
@@ -153,5 +158,7 @@ class LogbackMetricsTest {
                 super.increment();
             });
         }
+
     }
+
 }

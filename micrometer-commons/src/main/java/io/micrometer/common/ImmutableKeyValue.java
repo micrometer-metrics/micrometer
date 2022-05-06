@@ -15,9 +15,9 @@
  */
 package io.micrometer.common;
 
-import java.util.Objects;
-
 import io.micrometer.common.lang.Nullable;
+
+import java.util.Objects;
 
 import static java.util.Objects.requireNonNull;
 

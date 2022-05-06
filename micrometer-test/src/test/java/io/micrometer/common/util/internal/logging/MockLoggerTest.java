@@ -15,22 +15,19 @@
  */
 package io.micrometer.common.util.internal.logging;
 
-import java.io.IOException;
-
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Test;
 
-import static io.micrometer.common.util.internal.logging.InternalLogLevel.DEBUG;
-import static io.micrometer.common.util.internal.logging.InternalLogLevel.ERROR;
-import static io.micrometer.common.util.internal.logging.InternalLogLevel.INFO;
-import static io.micrometer.common.util.internal.logging.InternalLogLevel.TRACE;
-import static io.micrometer.common.util.internal.logging.InternalLogLevel.WARN;
+import java.io.IOException;
+
+import static io.micrometer.common.util.internal.logging.InternalLogLevel.*;
 import static org.assertj.core.api.Assertions.assertThat;
 
 /**
  * @author Jonatan Ivanov
  */
 class MockLoggerTest {
+
     private static final MockLogger LOGGER = new MockLoggerFactory().getLogger("testLogger");
 
     @AfterEach
@@ -249,4 +246,5 @@ class MockLoggerTest {
         assertThat(LOGGER.getLogEvents().get(5).getMessage()).isNull();
         assertThat(LOGGER.getLogEvents().get(5).getCause()).isSameAs(cause);
     }
+
 }

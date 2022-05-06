@@ -15,12 +15,14 @@
  */
 package io.micrometer.observation;
 
-import java.util.HashMap;
-import java.util.Map;
-import java.util.concurrent.*;
-
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+
+import java.util.HashMap;
+import java.util.Map;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 
 import static org.assertj.core.api.Assertions.assertThat;
 

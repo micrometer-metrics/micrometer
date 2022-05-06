@@ -37,7 +37,8 @@ import org.slf4j.Logger;
  *
  * <a href="https://www.slf4j.org/">SLF4J</a> logger.
  *
- * @deprecated Please use {@code io.micrometer.common.util.internal.logging.Slf4JLogger} instead.
+ * @deprecated Please use {@code io.micrometer.common.util.internal.logging.Slf4JLogger}
+ * instead.
  */
 @Deprecated
 final class Slf4JLogger extends AbstractInternalLogger {
@@ -200,4 +201,5 @@ final class Slf4JLogger extends AbstractInternalLogger {
     public void error(String msg, Throwable t) {
         logger.error(msg, t);
     }
+
 }

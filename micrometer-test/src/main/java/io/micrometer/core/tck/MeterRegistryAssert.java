@@ -15,16 +15,12 @@
  */
 package io.micrometer.core.tck;
 
+import io.micrometer.common.KeyValues;
+import io.micrometer.core.instrument.*;
+import org.assertj.core.api.AbstractAssert;
+
 import java.util.List;
 import java.util.stream.Collectors;
-
-import io.micrometer.common.KeyValues;
-import io.micrometer.core.instrument.Meter;
-import io.micrometer.core.instrument.MeterRegistry;
-import io.micrometer.core.instrument.Tag;
-import io.micrometer.core.instrument.Tags;
-import io.micrometer.core.instrument.Timer;
-import org.assertj.core.api.AbstractAssert;
 
 /**
  * Assertion methods for {@code MeterRegistry}s.

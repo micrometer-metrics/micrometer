@@ -16,9 +16,9 @@
 package io.micrometer.observation.transport.http.tags;
 
 import io.micrometer.common.KeyValue;
+import io.micrometer.common.util.StringUtils;
 import io.micrometer.observation.transport.http.HttpRequest;
 import io.micrometer.observation.transport.http.HttpResponse;
-import io.micrometer.common.util.StringUtils;
 
 /**
  * Utility class providing convenience methods to generate tags for HTTP metrics based on

@@ -15,12 +15,12 @@
  */
 package io.micrometer.observation;
 
-import java.util.Arrays;
-import java.util.List;
-
 import io.micrometer.observation.ObservationHandler.AllMatchingCompositeObservationHandler;
 import org.assertj.core.api.Assertions;
 import org.junit.jupiter.api.Test;
+
+import java.util.Arrays;
+import java.util.List;
 
 class AllMatchingCompositeObservationHandlerTests {
 

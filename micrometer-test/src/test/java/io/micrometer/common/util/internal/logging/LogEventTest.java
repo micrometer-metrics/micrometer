@@ -15,14 +15,12 @@
  */
 package io.micrometer.common.util.internal.logging;
 
-import java.io.IOException;
-
 import org.junit.jupiter.api.Test;
 
+import java.io.IOException;
+
 import static io.micrometer.common.util.internal.logging.InternalLogLevel.INFO;
-import static org.assertj.core.api.Assertions.assertThat;
-import static org.assertj.core.api.Assertions.assertThatCode;
-import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import static org.assertj.core.api.Assertions.*;
 
 /**
  * @author Jonatan Ivanov
@@ -32,10 +30,8 @@ class LogEventTest {
     @Test
     void logLevelShouldBeMandatory() {
         assertThatCode(() -> new LogEvent(INFO, null, null)).doesNotThrowAnyException();
-        assertThatThrownBy(() -> new LogEvent(null, null, null))
-                .isInstanceOf(NullPointerException.class)
-                .hasMessage(null)
-                .hasNoCause();
+        assertThatThrownBy(() -> new LogEvent(null, null, null)).isInstanceOf(NullPointerException.class)
+                .hasMessage(null).hasNoCause();
     }
 
     @Test
@@ -48,4 +44,5 @@ class LogEventTest {
         assertThat(event.getMessage()).isSameAs(message);
         assertThat(event.getCause()).isSameAs(cause);
     }
+
 }

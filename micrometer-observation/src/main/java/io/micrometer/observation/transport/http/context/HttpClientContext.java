@@ -17,9 +17,9 @@ package io.micrometer.observation.transport.http.context;
 
 import io.micrometer.common.lang.NonNull;
 import io.micrometer.observation.Observation;
-import io.micrometer.observation.transport.http.tags.HttpKeyValueProvider;
 import io.micrometer.observation.transport.http.HttpClientRequest;
 import io.micrometer.observation.transport.http.HttpClientResponse;
+import io.micrometer.observation.transport.http.tags.HttpKeyValueProvider;
 
 /**
  * {@link Observation.Context Context} for an HTTP client request/response.
