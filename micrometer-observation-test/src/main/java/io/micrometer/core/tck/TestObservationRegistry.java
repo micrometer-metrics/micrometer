@@ -55,8 +55,13 @@ public final class TestObservationRegistry implements ObservationRegistry {
     }
 
     @Override
-    public void setCurrentObservation(Observation current) {
-        this.delegate.setCurrentObservation(current);
+    public Observation.Scope getCurrentObservationScope() {
+        return this.delegate.getCurrentObservationScope();
+    }
+
+    @Override
+    public void setCurrentObservationScope(Observation.Scope current) {
+        this.delegate.setCurrentObservationScope(current);
     }
 
     @Override

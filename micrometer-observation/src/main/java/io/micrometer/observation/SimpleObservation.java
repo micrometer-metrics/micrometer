@@ -152,13 +152,13 @@ class SimpleObservation implements Observation {
         private final SimpleObservation currentObservation;
 
         @Nullable
-        private final Observation previousObservation;
+        private final Observation.Scope previousObservation;
 
         SimpleScope(ObservationRegistry registry, SimpleObservation current) {
             this.registry = registry;
             this.currentObservation = current;
-            this.previousObservation = registry.getCurrentObservation();
-            this.registry.setCurrentObservation(current);
+            this.previousObservation = registry.getCurrentObservationScope();
+            this.registry.setCurrentObservationScope(this);
         }
 
         @Override
@@ -168,7 +168,7 @@ class SimpleObservation implements Observation {
 
         @Override
         public void close() {
-            this.registry.setCurrentObservation(previousObservation);
+            this.registry.setCurrentObservationScope(previousObservation);
             this.currentObservation.notifyOnScopeClosed();
         }
 
