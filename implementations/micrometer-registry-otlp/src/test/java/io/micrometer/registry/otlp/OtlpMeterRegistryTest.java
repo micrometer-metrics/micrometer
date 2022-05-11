@@ -18,11 +18,13 @@ package io.micrometer.registry.otlp;
 import io.micrometer.core.instrument.*;
 import org.junit.jupiter.api.Test;
 
+import java.io.IOException;
 import java.lang.management.CompilationMXBean;
 import java.lang.management.ManagementFactory;
 import java.lang.management.OperatingSystemMXBean;
 import java.util.Collections;
 import java.util.Map;
+import java.util.Properties;
 import java.util.concurrent.TimeUnit;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -468,7 +470,7 @@ class OtlpMeterRegistryTest {
                 + "  }\n" + "  aggregation_temporality: AGGREGATION_TEMPORALITY_CUMULATIVE\n" + "}\n");
     }
 
-    // If the value was not specified, SDKs MUST fallback to 'unknown_service'
+    // If the service.name was not specified, SDKs MUST fallback to 'unknown_service'
     @Test
     void unknownServiceByDefault() {
         assertThat(registry.getResourceAttributes())
@@ -476,7 +478,7 @@ class OtlpMeterRegistryTest {
     }
 
     @Test
-    void setServiceName() {
+    void setServiceNameOverrideMethod() {
         registry = new OtlpMeterRegistry(new OtlpConfig() {
             @Override
             public String get(String key) {
@@ -491,6 +493,16 @@ class OtlpMeterRegistryTest {
 
         assertThat(registry.getResourceAttributes())
                 .contains(OtlpMeterRegistry.createKeyValue("service.name", "myService"));
+    }
+
+    // can't test environment variables easily in an isolated way
+    @Test
+    void setResourceAttributesAsString() throws IOException {
+        Properties propertiesConfig = new Properties();
+        propertiesConfig.load(this.getClass().getResourceAsStream("/otlp-config.properties"));
+        registry = new OtlpMeterRegistry(key -> (String) propertiesConfig.get(key), Clock.SYSTEM);
+        assertThat(registry.getResourceAttributes()).contains(OtlpMeterRegistry.createKeyValue("key1", "value1"),
+                OtlpMeterRegistry.createKeyValue("key2", "value2"));
     }
 
 }

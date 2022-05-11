@@ -18,11 +18,13 @@ package io.micrometer.registry.otlp;
 import io.micrometer.core.instrument.config.validate.Validated;
 import io.micrometer.core.instrument.push.PushRegistryConfig;
 
-import java.util.Collections;
+import java.util.Arrays;
 import java.util.Map;
+import java.util.stream.Collectors;
 
 import static io.micrometer.core.instrument.config.MeterRegistryConfigValidator.checkAll;
 import static io.micrometer.core.instrument.config.MeterRegistryConfigValidator.checkRequired;
+import static io.micrometer.core.instrument.config.validate.PropertyValidator.getString;
 import static io.micrometer.core.instrument.config.validate.PropertyValidator.getUrlString;
 
 /**
@@ -53,14 +55,31 @@ public interface OtlpConfig extends PushRegistryConfig {
 
     /**
      * Attributes to set on the Resource that will be used for all metrics published. This
-     * should include a {@code service.name} attribute that identifies your service.
+     * should include a {@code service.name} attribute that identifies your service. By
+     * default, it will load resource attributes from the {@code OTEL_RESOURCE_ATTRIBUTES}
+     * environment variable and the service name from the {@code OTEL_SERVICE_NAME}
+     * environment variable if they are set.
      * @return map of key value pairs to use as resource attributes
      * @see <a href=
      * "https://opentelemetry.io/docs/reference/specification/resource/semantic_conventions/#service">OpenTelemetry
      * Resource Semantic Conventions</a>
      */
     default Map<String, String> resourceAttributes() {
-        return Collections.emptyMap();
+        String resourceAttributesConfig = getString(this, "resourceAttributes").orElse(null);
+        Map<String, String> env = System.getenv();
+        String resourceAttributesString = resourceAttributesConfig != null ? resourceAttributesConfig
+                : env.get("OTEL_RESOURCE_ATTRIBUTES");
+        String[] splitResourceAttributesString = resourceAttributesString == null ? new String[] {}
+                : resourceAttributesString.split(",");
+
+        Map<String, String> resourceAttributes = Arrays.stream(splitResourceAttributesString)
+                .collect(Collectors.toMap(keyvalue -> keyvalue.split("=")[0], keyvalue -> keyvalue.split("=")[1]));
+
+        if (env.containsKey("OTEL_SERVICE_NAME")) {
+            resourceAttributes.put("service.name", env.get("OTEL_SERVICE_NAME"));
+        }
+
+        return resourceAttributes;
     }
 
     @Override
