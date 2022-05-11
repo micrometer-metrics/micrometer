@@ -4,7 +4,7 @@
 antlr:antlr:2.7.7=nohttp
 ch.qos.logback:logback-classic:1.2.3=checkstyle,nohttp,nohttp-cli
 ch.qos.logback:logback-core:1.2.3=checkstyle,nohttp,nohttp-cli
-com.github.tomakehurst:wiremock-jre8-standalone:2.32.0=testCompileClasspath,testRuntimeClasspath
+com.github.tomakehurst:wiremock-jre8-standalone:2.33.2=testCompileClasspath,testRuntimeClasspath
 com.google.code.findbugs:jsr305:3.0.2=checkstyle,compileClasspath,nohttp,runtimeClasspath,testCompileClasspath,testRuntimeClasspath
 com.google.errorprone:error_prone_annotations:2.3.4=nohttp
 com.google.errorprone:error_prone_annotations:2.7.1=checkstyle
@@ -15,7 +15,7 @@ com.google.guava:listenablefuture:9999.0-empty-to-avoid-conflict-with-guava=chec
 com.google.j2objc:j2objc-annotations:1.3=checkstyle,nohttp
 com.puppycrawl.tools:checkstyle:8.33=nohttp
 com.puppycrawl.tools:checkstyle:9.0.1=checkstyle
-com.signalfx.public:signalfx-java:1.0.14=compileClasspath,default,runtimeClasspath,testCompileClasspath,testRuntimeClasspath
+com.signalfx.public:signalfx-java:1.0.18=compileClasspath,default,runtimeClasspath,testCompileClasspath,testRuntimeClasspath
 commons-beanutils:commons-beanutils:1.9.4=checkstyle,nohttp
 commons-collections:commons-collections:3.2.2=checkstyle,nohttp
 commons-logging:commons-logging:1.2=nohttp
