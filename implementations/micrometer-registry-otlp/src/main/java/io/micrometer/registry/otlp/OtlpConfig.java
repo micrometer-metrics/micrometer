@@ -54,10 +54,11 @@ public interface OtlpConfig extends PushRegistryConfig {
 
     /**
      * Attributes to set on the Resource that will be used for all metrics published. This
-     * should include a {@code service.name} attribute that identifies your service. By
-     * default, resource attributes will load using the {@link #get(String)} method,
+     * should include a {@code service.name} attribute that identifies your service.
+     * <p>
+     * By default, resource attributes will load using the {@link #get(String)} method,
      * extracting key values from a comma-separated list in the format
-     * {@code  key1=value1,key2=value2}. Resource attributes will be loaded from the
+     * {@code key1=value1,key2=value2}. Resource attributes will be loaded from the
      * {@code OTEL_RESOURCE_ATTRIBUTES} environment variable and the service name from the
      * {@code OTEL_SERVICE_NAME} environment variable if they are set and
      * {@link #get(String)} does not return a value.
