@@ -18,6 +18,9 @@ package io.micrometer.registry.otlp;
 import io.micrometer.core.instrument.config.validate.Validated;
 import io.micrometer.core.instrument.push.PushRegistryConfig;
 
+import java.util.Collections;
+import java.util.Map;
+
 import static io.micrometer.core.instrument.config.MeterRegistryConfigValidator.checkAll;
 import static io.micrometer.core.instrument.config.MeterRegistryConfigValidator.checkRequired;
 import static io.micrometer.core.instrument.config.validate.PropertyValidator.getUrlString;
@@ -46,6 +49,18 @@ public interface OtlpConfig extends PushRegistryConfig {
      */
     default String url() {
         return getUrlString(this, "url").orElse("http://localhost:4318/v1/metrics");
+    }
+
+    /**
+     * Attributes to set on the Resource that will be used for all metrics published. This
+     * should include a {@code service.name} attribute that identifies your service.
+     * @return map of key value pairs to use as resource attributes
+     * @see <a href=
+     * "https://opentelemetry.io/docs/reference/specification/resource/semantic_conventions/#service">OpenTelemetry
+     * Resource Semantic Conventions</a>
+     */
+    default Map<String, String> resourceAttributes() {
+        return Collections.emptyMap();
     }
 
     @Override
