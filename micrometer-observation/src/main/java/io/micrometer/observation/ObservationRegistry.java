@@ -57,10 +57,21 @@ public interface ObservationRegistry {
     Observation getCurrentObservation();
 
     /**
-     * Sets the observation as current.
-     * @param current observation
+     * When previously set will allow to retrieve the {@link Observation.Scope} at any
+     * point in time.
+     *
+     * Example: if an {@link Observation} was put in {@link Observation.Scope} then this
+     * method will return the current present {@link Observation.Scope}.
+     * @return current observation scope or {@code null} if it's not present
      */
-    void setCurrentObservation(@Nullable Observation current);
+    @Nullable
+    Observation.Scope getCurrentObservationScope();
+
+    /**
+     * Sets the observation scope as current.
+     * @param current observation scope
+     */
+    void setCurrentObservationScope(@Nullable Observation.Scope current);
 
     /**
      * Configuration options for this registry.
