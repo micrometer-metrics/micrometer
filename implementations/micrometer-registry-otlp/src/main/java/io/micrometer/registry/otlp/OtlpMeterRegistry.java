@@ -40,6 +40,7 @@ import io.opentelemetry.proto.resource.v1.Resource;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 import java.util.concurrent.ThreadFactory;
 import java.util.concurrent.TimeUnit;
 import java.util.function.DoubleSupplier;
@@ -277,19 +278,29 @@ public class OtlpMeterRegistry extends PushMeterRegistry {
                 .collect(Collectors.toList());
     }
 
-    private KeyValue createKeyValue(String key, String value) {
+    // VisibleForTesting
+    static KeyValue createKeyValue(String key, String value) {
         return KeyValue.newBuilder().setKey(key).setValue(AnyValue.newBuilder().setStringValue(value)).build();
     }
 
-    private Iterable<KeyValue> getResourceAttributes() {
+    // VisibleForTesting
+    Iterable<KeyValue> getResourceAttributes() {
+        boolean serviceNameProvided = false;
         List<KeyValue> attributes = new ArrayList<>();
-        // TODO How to expose configuration of the service.name
-        attributes.add(createKeyValue("service.name", "unknown_service"));
         attributes.add(createKeyValue("telemetry.sdk.name", "io.micrometer"));
         attributes.add(createKeyValue("telemetry.sdk.language", "java"));
         String micrometerCoreVersion = MeterRegistry.class.getPackage().getImplementationVersion();
         if (micrometerCoreVersion != null) {
             attributes.add(createKeyValue("telemetry.sdk.version", micrometerCoreVersion));
+        }
+        for (Map.Entry<String, String> keyValue : this.config.resourceAttributes().entrySet()) {
+            if ("service.name".equals(keyValue.getKey())) {
+                serviceNameProvided = true;
+            }
+            attributes.add(createKeyValue(keyValue.getKey(), keyValue.getValue()));
+        }
+        if (!serviceNameProvided) {
+            attributes.add(createKeyValue("service.name", "unknown_service"));
         }
         return attributes;
     }

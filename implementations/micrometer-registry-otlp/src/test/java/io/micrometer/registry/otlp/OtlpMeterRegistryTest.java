@@ -18,9 +18,13 @@ package io.micrometer.registry.otlp;
 import io.micrometer.core.instrument.*;
 import org.junit.jupiter.api.Test;
 
+import java.io.IOException;
 import java.lang.management.CompilationMXBean;
 import java.lang.management.ManagementFactory;
 import java.lang.management.OperatingSystemMXBean;
+import java.util.Collections;
+import java.util.Map;
+import java.util.Properties;
 import java.util.concurrent.TimeUnit;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -464,6 +468,41 @@ class OtlpMeterRegistryTest {
                 + "unit: \"milliseconds\"\n" + "histogram {\n" + "  data_points {\n"
                 + "    start_time_unix_nano: 1000000\n" + "    time_unix_nano: 240001000000\n" + "    sum: 0.0\n"
                 + "  }\n" + "  aggregation_temporality: AGGREGATION_TEMPORALITY_CUMULATIVE\n" + "}\n");
+    }
+
+    // If the service.name was not specified, SDKs MUST fallback to 'unknown_service'
+    @Test
+    void unknownServiceByDefault() {
+        assertThat(registry.getResourceAttributes())
+                .contains(OtlpMeterRegistry.createKeyValue("service.name", "unknown_service"));
+    }
+
+    @Test
+    void setServiceNameOverrideMethod() {
+        registry = new OtlpMeterRegistry(new OtlpConfig() {
+            @Override
+            public String get(String key) {
+                return null;
+            }
+
+            @Override
+            public Map<String, String> resourceAttributes() {
+                return Collections.singletonMap("service.name", "myService");
+            }
+        }, Clock.SYSTEM);
+
+        assertThat(registry.getResourceAttributes())
+                .contains(OtlpMeterRegistry.createKeyValue("service.name", "myService"));
+    }
+
+    // can't test environment variables easily in an isolated way
+    @Test
+    void setResourceAttributesAsString() throws IOException {
+        Properties propertiesConfig = new Properties();
+        propertiesConfig.load(this.getClass().getResourceAsStream("/otlp-config.properties"));
+        registry = new OtlpMeterRegistry(key -> (String) propertiesConfig.get(key), Clock.SYSTEM);
+        assertThat(registry.getResourceAttributes()).contains(OtlpMeterRegistry.createKeyValue("key1", "value1"),
+                OtlpMeterRegistry.createKeyValue("key2", "value2"));
     }
 
 }
