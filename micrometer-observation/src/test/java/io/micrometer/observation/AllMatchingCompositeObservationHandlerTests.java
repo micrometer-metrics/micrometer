@@ -19,7 +19,7 @@ import io.micrometer.observation.ObservationHandler.AllMatchingCompositeObservat
 import org.assertj.core.api.Assertions;
 import org.junit.jupiter.api.Test;
 
-import java.util.Arrays;
+import java.util.ArrayList;
 import java.util.List;
 
 class AllMatchingCompositeObservationHandlerTests {
@@ -91,12 +91,25 @@ class AllMatchingCompositeObservationHandlerTests {
     }
 
     @Test
-    void should_return_handlers() {
-        List<ObservationHandler<Observation.Context>> handlers = Arrays.asList(new NotMatchingHandler(),
-                this.matchingHandler, new NotMatchingHandler(), this.matchingHandler2);
+    void should_return_observation_handlers() {
+        List<ObservationHandler<? extends Observation.Context>> handlers = new ArrayList<>();
+        handlers.add(new NotMatchingHandler());
+        handlers.add(this.matchingHandler);
+        handlers.add(new NotMatchingHandler());
+        handlers.add(this.matchingHandler2);
         AllMatchingCompositeObservationHandler allMatchingHandler = new AllMatchingCompositeObservationHandler(
                 handlers);
-        Assertions.assertThat(allMatchingHandler.getHandlers()).isSameAs(handlers);
+        Assertions.assertThat(allMatchingHandler.getHandlers()).isEqualTo(handlers);
+    }
+
+    @Test
+    void should_return_custom_handlers() {
+        List<NotMatchingHandler> handlers = new ArrayList<>();
+        handlers.add(new NotMatchingHandler());
+        handlers.add(new NotMatchingHandler());
+        AllMatchingCompositeObservationHandler allMatchingHandler = new AllMatchingCompositeObservationHandler(
+                handlers);
+        Assertions.assertThat(allMatchingHandler.getHandlers()).isEqualTo(handlers);
     }
 
     static class MatchingHandler implements ObservationHandler<Observation.Context> {
@@ -143,25 +156,25 @@ class AllMatchingCompositeObservationHandlerTests {
 
     }
 
-    static class NotMatchingHandler implements ObservationHandler<Observation.Context> {
+    static class NotMatchingHandler implements ObservationHandler<CustomContext> {
 
         @Override
-        public void onStart(Observation.Context context) {
+        public void onStart(CustomContext context) {
             throwAssertionError();
         }
 
         @Override
-        public void onError(Observation.Context context) {
+        public void onError(CustomContext context) {
             throwAssertionError();
         }
 
         @Override
-        public void onScopeOpened(Observation.Context context) {
+        public void onScopeOpened(CustomContext context) {
             throwAssertionError();
         }
 
         @Override
-        public void onStop(Observation.Context context) {
+        public void onStop(CustomContext context) {
             throwAssertionError();
         }
 
@@ -173,6 +186,10 @@ class AllMatchingCompositeObservationHandlerTests {
         private void throwAssertionError() {
             throw new AssertionError("Not matching handler must not be called");
         }
+
+    }
+
+    static class CustomContext extends Observation.Context {
 
     }
 
