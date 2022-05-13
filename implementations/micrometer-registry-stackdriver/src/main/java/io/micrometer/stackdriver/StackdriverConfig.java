@@ -84,6 +84,16 @@ public interface StackdriverConfig extends StepRegistryConfig {
     }
 
     /**
+     * Available prefixes defined in
+     * <a href= "https://cloud.google.com/monitoring/custom-metrics#identifier">Google
+     * Cloud documentation</a>
+     * @return a prefix for MetricType
+     */
+    default String metricTypePrefix() {
+        return getString(this, "metricTypePrefix").orElse("custom.googleapis.com/");
+    }
+
+    /**
      * Return {@link CredentialsProvider} to use.
      * @return {@code CredentialsProvider} to use
      * @since 1.4.0
