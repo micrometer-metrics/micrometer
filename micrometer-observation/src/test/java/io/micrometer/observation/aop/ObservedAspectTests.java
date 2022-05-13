@@ -15,11 +15,12 @@
  */
 package io.micrometer.observation.aop;
 
-import io.micrometer.core.tck.TestObservationRegistry;
-import io.micrometer.core.tck.TestObservationRegistryAssert;
 import io.micrometer.observation.ObservationTextPublisher;
 import io.micrometer.observation.annotation.Observed;
+import io.micrometer.observation.tck.TestObservationRegistry;
+import io.micrometer.observation.tck.TestObservationRegistryAssert;
 import org.junit.jupiter.api.Test;
+
 import org.springframework.aop.aspectj.annotation.AspectJProxyFactory;
 
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
