@@ -2,6 +2,7 @@ description 'Core module of Micrometer containing instrumentation API and implem
 
 dependencies {
     api project(":micrometer-commons")
+    api project(":micrometer-observation")
 
     // TODO(anuraaga): HdrHistogram is exposed in the micrometer API but probably shouldn't be
     api 'org.hdrhistogram:HdrHistogram'

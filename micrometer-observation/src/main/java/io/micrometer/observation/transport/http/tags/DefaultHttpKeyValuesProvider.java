@@ -16,8 +16,10 @@
 package io.micrometer.observation.transport.http.tags;
 
 import io.micrometer.common.KeyValues;
+import io.micrometer.observation.Observation;
 import io.micrometer.observation.transport.http.HttpRequest;
 import io.micrometer.observation.transport.http.HttpResponse;
+import io.micrometer.observation.transport.http.context.HttpContext;
 
 /**
  * Default implementation of {@link HttpKeyValueProvider} that can be extended for
@@ -26,17 +28,24 @@ import io.micrometer.observation.transport.http.HttpResponse;
  * @author Tommy Ludwig
  * @since 1.10.0
  */
-public class DefaultHttpKeyValueProvider implements HttpKeyValueProvider {
+public class DefaultHttpKeyValuesProvider implements Observation.GlobalKeyValuesProvider<HttpContext> {
 
     @Override
-    public KeyValues getLowCardinalityKeyValues(HttpRequest request, HttpResponse response, Throwable exception) {
+    public KeyValues getLowCardinalityKeyValues(HttpContext context) {
+        HttpRequest request = context.getRequest();
+        HttpResponse response = context.getResponse();
+        Throwable exception = context.getError().orElse(null);
         return KeyValues.of(HttpKeyValues.method(request), HttpKeyValues.uri(request), HttpKeyValues.status(response),
                 HttpKeyValues.outcome(response), HttpKeyValues.exception(exception));
     }
 
     @Override
-    public KeyValues getHighCardinalityKeyValues(HttpRequest request, HttpResponse response, Throwable exception) {
+    public KeyValues getHighCardinalityKeyValues(HttpContext context) {
         return KeyValues.empty();
     }
 
+    @Override
+    public boolean supportsContext(Observation.Context context) {
+        return context instanceof HttpContext;
+    }
 }

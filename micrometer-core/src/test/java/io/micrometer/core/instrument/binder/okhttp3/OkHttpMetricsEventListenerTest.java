@@ -16,12 +16,17 @@
 package io.micrometer.core.instrument.binder.okhttp3;
 
 import com.github.tomakehurst.wiremock.WireMockServer;
+import io.micrometer.common.KeyValue;
 import io.micrometer.core.instrument.MeterRegistry;
 import io.micrometer.core.instrument.MockClock;
 import io.micrometer.core.instrument.Tag;
 import io.micrometer.core.instrument.Tags;
+import io.micrometer.core.instrument.observation.TimerObservationHandler;
 import io.micrometer.core.instrument.simple.SimpleConfig;
 import io.micrometer.core.instrument.simple.SimpleMeterRegistry;
+import io.micrometer.observation.Observation;
+import io.micrometer.observation.ObservationHandler;
+import io.micrometer.observation.ObservationRegistry;
 import okhttp3.Cache;
 import okhttp3.OkHttpClient;
 import okhttp3.Request;
@@ -33,6 +38,8 @@ import ru.lanwen.wiremock.ext.WiremockResolver;
 
 import java.io.IOException;
 import java.nio.file.Path;
+import java.util.Arrays;
+import java.util.Collections;
 import java.util.concurrent.TimeUnit;
 import java.util.function.Function;
 
@@ -57,8 +64,12 @@ class OkHttpMetricsEventListenerTest {
 
     private MeterRegistry registry = new SimpleMeterRegistry(SimpleConfig.DEFAULT, new MockClock());
 
-    private OkHttpClient client = new OkHttpClient.Builder().eventListener(OkHttpMetricsEventListener
-            .builder(registry, "okhttp.requests").tags(Tags.of("foo", "bar")).uriMapper(URI_MAPPER).build()).build();
+    private OkHttpClient client = new OkHttpClient.Builder().eventListener(defaultListenerBuilder().build()).build();
+
+    private OkHttpMetricsEventListener.Builder defaultListenerBuilder() {
+        return OkHttpMetricsEventListener
+                .builder(registry, "okhttp.requests").tags(Tags.of("foo", "bar")).uriMapper(URI_MAPPER);
+    }
 
     @Test
     void timeSuccessful(@WiremockResolver.Wiremock WireMockServer server) throws IOException {
@@ -71,6 +82,29 @@ class OkHttpMetricsEventListenerTest {
                 .tags("foo", "bar", "status", "200", "uri", URI_EXAMPLE_VALUE, "target.host", "localhost",
                         "target.port", String.valueOf(server.port()), "target.scheme", "http")
                 .timer().count()).isEqualTo(1L);
+    }
+
+    @Test
+    void timeSuccessfulWithObservation(@WiremockResolver.Wiremock WireMockServer server) throws IOException {
+        ObservationRegistry observationRegistry = ObservationRegistry.create();
+        TestHandler testHandler = new TestHandler();
+        observationRegistry.observationConfig().observationHandler(testHandler);
+        observationRegistry.observationConfig().observationHandler(new TimerObservationHandler(registry));
+        client = new OkHttpClient.Builder().eventListener(defaultListenerBuilder()
+                .observationRegistry(observationRegistry)
+                .build()).build();
+        server.stubFor(any(anyUrl()));
+        Request request = new Request.Builder().url(server.baseUrl()).build();
+
+        client.newCall(request).execute().close();
+
+        assertThat(registry.get("okhttp.requests")
+                .tags("foo", "bar", "status", "200", "uri", URI_EXAMPLE_VALUE, "target.host", "localhost",
+                        "target.port", String.valueOf(server.port()), "target.scheme", "http")
+                .timer().count()).isEqualTo(1L);
+        assertThat(testHandler.context).isNotNull();
+        assertThat(testHandler.context.getAllKeyValues())
+                .contains(KeyValue.of("foo", "bar"), KeyValue.of("status", "200"));
     }
 
     @Test
@@ -94,8 +128,7 @@ class OkHttpMetricsEventListenerTest {
         server.stop();
 
         OkHttpClient client = new OkHttpClient.Builder()
-                .connectTimeout(1, TimeUnit.MILLISECONDS).eventListener(OkHttpMetricsEventListener
-                        .builder(registry, "okhttp.requests").tags(Tags.of("foo", "bar")).uriMapper(URI_MAPPER).build())
+                .connectTimeout(1, TimeUnit.MILLISECONDS).eventListener(defaultListenerBuilder().build())
                 .build();
 
         try {
@@ -220,6 +253,7 @@ class OkHttpMetricsEventListenerTest {
         OkHttpMetricsEventListener listener = OkHttpMetricsEventListener.builder(registry, "okhttp.requests").build();
         OkHttpMetricsEventListener.CallState state = new OkHttpMetricsEventListener.CallState(
                 registry.config().clock().monotonicTime(), null);
+        state.setContext(new OkHttpContext(state, request -> "", Collections.emptyList(), Collections.emptyList(), Collections.emptyList(), false));
         listener.time(state);
 
         assertThat(registry.get("okhttp.requests")
@@ -233,6 +267,7 @@ class OkHttpMetricsEventListenerTest {
                 .requestTagKeys("tag1", "tag2").build();
         OkHttpMetricsEventListener.CallState state = new OkHttpMetricsEventListener.CallState(
                 registry.config().clock().monotonicTime(), null);
+        state.setContext(new OkHttpContext(state, request -> "", Collections.emptyList(), Collections.emptyList(), Arrays.asList(Tag.of("tag1", "UNKNOWN"), Tag.of("tag2", "UNKNOWN")), false));
         listener.time(state);
 
         assertThat(registry.get("okhttp.requests").tags("uri", "UNKNOWN", "tag1", "UNKNOWN", "tag2", "UNKNOWN").timer()
@@ -253,6 +288,21 @@ class OkHttpMetricsEventListenerTest {
                         "target.host", "localhost", "target.port", String.valueOf(server.port()), "target.scheme",
                         "http")
                 .timer().count()).isEqualTo(1L);
+    }
+
+    static class TestHandler implements ObservationHandler<Observation.Context> {
+
+        Observation.Context context;
+
+        @Override
+        public void onStart(Observation.Context context) {
+            this.context = context;
+        }
+
+        @Override
+        public boolean supportsContext(Observation.Context context) {
+            return true;
+        }
     }
 
 }

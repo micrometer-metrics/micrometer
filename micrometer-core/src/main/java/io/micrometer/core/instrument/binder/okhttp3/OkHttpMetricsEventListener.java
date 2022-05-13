@@ -15,6 +15,8 @@
  */
 package io.micrometer.core.instrument.binder.okhttp3;
 
+import io.micrometer.common.KeyValue;
+import io.micrometer.common.KeyValues;
 import io.micrometer.common.lang.NonNullApi;
 import io.micrometer.common.lang.NonNullFields;
 import io.micrometer.common.lang.Nullable;
@@ -22,21 +24,24 @@ import io.micrometer.core.instrument.MeterRegistry;
 import io.micrometer.core.instrument.Tag;
 import io.micrometer.core.instrument.Tags;
 import io.micrometer.core.instrument.Timer;
+import io.micrometer.observation.Observation;
+import io.micrometer.observation.ObservationRegistry;
+import io.micrometer.observation.transport.http.HttpClientRequest;
+import io.micrometer.observation.transport.http.HttpClientResponse;
 import okhttp3.EventListener;
 import okhttp3.*;
 
 import java.io.IOException;
-import java.lang.reflect.Method;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.TimeUnit;
 import java.util.function.BiFunction;
 import java.util.function.Function;
+import java.util.stream.Collectors;
+import java.util.stream.StreamSupport;
 
 import static java.util.Collections.emptyList;
-import static java.util.stream.Collectors.toList;
-import static java.util.stream.StreamSupport.stream;
 
 /**
  * {@link EventListener} for collecting metrics from {@link OkHttpClient}.
@@ -61,34 +66,11 @@ public class OkHttpMetricsEventListener extends EventListener {
      */
     public static final String URI_PATTERN = "URI_PATTERN";
 
-    private static final boolean REQUEST_TAG_CLASS_EXISTS;
-
-    static {
-        REQUEST_TAG_CLASS_EXISTS = getMethod(Class.class) != null;
-    }
-
-    private static final String TAG_TARGET_SCHEME = "target.scheme";
-
-    private static final String TAG_TARGET_HOST = "target.host";
-
-    private static final String TAG_TARGET_PORT = "target.port";
-
-    private static final String TAG_VALUE_UNKNOWN = "UNKNOWN";
-
-    private static final Tags TAGS_TARGET_UNKNOWN = Tags.of(TAG_TARGET_SCHEME, TAG_VALUE_UNKNOWN, TAG_TARGET_HOST,
-            TAG_VALUE_UNKNOWN, TAG_TARGET_PORT, TAG_VALUE_UNKNOWN);
-
-    @Nullable
-    private static Method getMethod(Class<?>... parameterTypes) {
-        try {
-            return Request.class.getMethod("tag", parameterTypes);
-        }
-        catch (NoSuchMethodException e) {
-            return null;
-        }
-    }
-
     private final MeterRegistry registry;
+
+    private final ObservationRegistry observationRegistry;
+
+    private final OkHttpKeyValuesProvider keyValuesProvider;
 
     private final String requestsMetricName;
 
@@ -102,19 +84,24 @@ public class OkHttpMetricsEventListener extends EventListener {
 
     private final boolean includeHostTag;
 
+    private final boolean observationRegistryNoOp;
+
     // VisibleForTesting
     final ConcurrentMap<Call, CallState> callState = new ConcurrentHashMap<>();
 
     protected OkHttpMetricsEventListener(MeterRegistry registry, String requestsMetricName,
             Function<Request, String> urlMapper, Iterable<Tag> extraTags,
             Iterable<BiFunction<Request, Response, Tag>> contextSpecificTags) {
-        this(registry, requestsMetricName, urlMapper, extraTags, contextSpecificTags, emptyList(), true);
+        this(registry, ObservationRegistry.NOOP, new DefaultOkHttpKeyValuesProvider(), requestsMetricName, urlMapper, extraTags, contextSpecificTags, emptyList(), true);
     }
 
-    OkHttpMetricsEventListener(MeterRegistry registry, String requestsMetricName, Function<Request, String> urlMapper,
+    OkHttpMetricsEventListener(MeterRegistry registry, ObservationRegistry observationRegistry, OkHttpKeyValuesProvider keyValuesProvider, String requestsMetricName, Function<Request, String> urlMapper,
             Iterable<Tag> extraTags, Iterable<BiFunction<Request, Response, Tag>> contextSpecificTags,
             Iterable<String> requestTagKeys, boolean includeHostTag) {
         this.registry = registry;
+        this.observationRegistry = observationRegistry;
+        this.observationRegistryNoOp = observationRegistry.isNoOp();
+        this.keyValuesProvider = keyValuesProvider;
         this.requestsMetricName = requestsMetricName;
         this.urlMapper = urlMapper;
         this.extraTags = extraTags;
@@ -134,7 +121,57 @@ public class OkHttpMetricsEventListener extends EventListener {
 
     @Override
     public void callStart(Call call) {
-        callState.put(call, new CallState(registry.config().clock().monotonicTime(), call.request()));
+        CallState callState = new CallState(registry.config().clock().monotonicTime(), call.request());
+        OkHttpContext okHttpContext = new OkHttpContext(callState, urlMapper, extraTags, contextSpecificTags, unknownRequestTags, includeHostTag);
+        if (callState.request != null) {
+            okHttpContext.setRequest(new HttpClientRequest() {
+
+                Set<KeyValue> headers = StreamSupport.stream(callState.request.headers().spliterator(), false)
+                        .map(pair -> KeyValue.of(pair.getFirst(), pair.getSecond()))
+                        .collect(Collectors.toCollection(HashSet::new));
+
+                @Override
+                public void header(String name, String value) {
+                    headers.add(KeyValue.of(name, value));
+                }
+
+                @Override
+                public String method() {
+                    return callState.request.method();
+                }
+
+                @Override
+                public String path() {
+                    return callState.request.url().pathSegments().get(0);
+                }
+
+                @Override
+                public String url() {
+                    return callState.request.url().toString();
+                }
+
+                @Override
+                public String header(String name) {
+                    return headers.stream().filter(keyValue -> keyValue.getKey().equals(name)).findFirst().map(KeyValue::getValue).orElse(null);
+                }
+
+                @Override
+                public Collection<String> headerNames() {
+                    return headers.stream().map(KeyValue::getKey).collect(Collectors.toList());
+                }
+
+                @Override
+                public Object unwrap() {
+                    return callState.request;
+                }
+            });
+        }
+        Observation observation = Observation.createNotStarted(this.requestsMetricName, okHttpContext, this.observationRegistry)
+                .keyValuesProvider(this.keyValuesProvider)
+                .start();
+        callState.setContext(okHttpContext);
+        callState.setObservation(observation);
+        this.callState.put(call, callState);
     }
 
     @Override
@@ -162,68 +199,34 @@ public class OkHttpMetricsEventListener extends EventListener {
 
     // VisibleForTesting
     void time(CallState state) {
-        Request request = state.request;
-        boolean requestAvailable = request != null;
+        OkHttpContext okHttpContext = state.context;
+        if (observationRegistry.isNoOp()) {
+            // TODO: We're going first from tags to key values and then back - maybe it doesn't make a lot of sense?
+            KeyValues lowCardinalityKeyValues = keyValuesProvider.getLowCardinalityKeyValues(okHttpContext);
+            Timer.builder(this.requestsMetricName).tags(lowCardinalityKeyValues.stream().map(keyValue -> Tag.of(keyValue.getKey(), keyValue.getValue())).collect(Collectors.toList())).description("Timer of OkHttp operation").register(registry)
+                    .record(registry.config().clock().monotonicTime() - state.startTime, TimeUnit.NANOSECONDS);
+        } else {
+            state.observation.error(state.exception);
+            if (state.response != null) {
+                okHttpContext.setResponse(new HttpClientResponse() {
+                    @Override
+                    public int statusCode() {
+                        return state.response.code();
+                    }
 
-        Iterable<Tag> tags = Tags
-                .of("method", requestAvailable ? request.method() : TAG_VALUE_UNKNOWN, "uri", getUriTag(state, request),
-                        "status", getStatusMessage(state.response, state.exception))
-                .and(extraTags)
-                .and(stream(contextSpecificTags.spliterator(), false)
-                        .map(contextTag -> contextTag.apply(request, state.response)).collect(toList()))
-                .and(getRequestTags(request)).and(generateTagsForRoute(request));
+                    @Override
+                    public Collection<String> headerNames() {
+                        return state.response.headers().names();
+                    }
 
-        if (includeHostTag) {
-            tags = Tags.of(tags).and("host", requestAvailable ? request.url().host() : TAG_VALUE_UNKNOWN);
-        }
-
-        Timer.builder(this.requestsMetricName).tags(tags).description("Timer of OkHttp operation").register(registry)
-                .record(registry.config().clock().monotonicTime() - state.startTime, TimeUnit.NANOSECONDS);
-    }
-
-    private Tags generateTagsForRoute(@Nullable Request request) {
-        if (request == null) {
-            return TAGS_TARGET_UNKNOWN;
-        }
-        return Tags.of(TAG_TARGET_SCHEME, request.url().scheme(), TAG_TARGET_HOST, request.url().host(),
-                TAG_TARGET_PORT, Integer.toString(request.url().port()));
-    }
-
-    private String getUriTag(CallState state, @Nullable Request request) {
-        if (request == null) {
-            return TAG_VALUE_UNKNOWN;
-        }
-        return state.response != null && (state.response.code() == 404 || state.response.code() == 301) ? "NOT_FOUND"
-                : urlMapper.apply(request);
-    }
-
-    private Iterable<Tag> getRequestTags(@Nullable Request request) {
-        if (request == null) {
-            return unknownRequestTags;
-        }
-        if (REQUEST_TAG_CLASS_EXISTS) {
-            Tags requestTag = request.tag(Tags.class);
-            if (requestTag != null) {
-                return requestTag;
+                    @Override
+                    public Object unwrap() {
+                        return state.response;
+                    }
+                });
             }
+            state.observation.stop();
         }
-        Object requestTag = request.tag();
-        if (requestTag instanceof Tags) {
-            return (Tags) requestTag;
-        }
-        return Tags.empty();
-    }
-
-    private String getStatusMessage(@Nullable Response response, @Nullable IOException exception) {
-        if (exception != null) {
-            return "IO_ERROR";
-        }
-
-        if (response == null) {
-            return "CLIENT_ERROR";
-        }
-
-        return Integer.toString(response.code());
     }
 
     // VisibleForTesting
@@ -231,8 +234,12 @@ public class OkHttpMetricsEventListener extends EventListener {
 
         final long startTime;
 
+        Observation observation;
+
         @Nullable
         final Request request;
+
+        OkHttpContext context;
 
         @Nullable
         Response response;
@@ -245,6 +252,13 @@ public class OkHttpMetricsEventListener extends EventListener {
             this.request = request;
         }
 
+        void setContext(OkHttpContext context) {
+            this.context = context;
+        }
+
+        void setObservation(Observation observation) {
+            this.observation = observation;
+        }
     }
 
     public static class Builder {
@@ -252,6 +266,8 @@ public class OkHttpMetricsEventListener extends EventListener {
         private final MeterRegistry registry;
 
         private final String name;
+
+        private ObservationRegistry observationRegistry = ObservationRegistry.NOOP;
 
         private Function<Request, String> uriMapper = (request) -> Optional.ofNullable(request.header(URI_PATTERN))
                 .orElse("none");
@@ -264,6 +280,8 @@ public class OkHttpMetricsEventListener extends EventListener {
 
         private Iterable<String> requestTagKeys = Collections.emptyList();
 
+        private OkHttpKeyValuesProvider keyValuesProvider = new DefaultOkHttpKeyValuesProvider();
+
         Builder(MeterRegistry registry, String name) {
             this.registry = registry;
             this.name = name;
@@ -271,6 +289,16 @@ public class OkHttpMetricsEventListener extends EventListener {
 
         public Builder tags(Iterable<Tag> tags) {
             this.tags = this.tags.and(tags);
+            return this;
+        }
+
+        public Builder observationRegistry(ObservationRegistry observationRegistry) {
+            this.observationRegistry = observationRegistry;
+            return this;
+        }
+
+        public Builder keyValuesProvider(OkHttpKeyValuesProvider keyValuesProvider) {
+            this.keyValuesProvider = keyValuesProvider;
             return this;
         }
 
@@ -346,7 +374,7 @@ public class OkHttpMetricsEventListener extends EventListener {
         }
 
         public OkHttpMetricsEventListener build() {
-            return new OkHttpMetricsEventListener(registry, name, uriMapper, tags, contextSpecificTags, requestTagKeys,
+            return new OkHttpMetricsEventListener(registry, observationRegistry, keyValuesProvider, name, uriMapper, tags, contextSpecificTags, requestTagKeys,
                     includeHostTag);
         }
 
