@@ -13,12 +13,12 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package io.micrometer.core.tck;
+package io.micrometer.observation.tck;
 
 import io.micrometer.observation.Observation;
 import io.micrometer.observation.ObservationHandler;
 
-class NullContextObservationHandlerCompatibilityKitTests extends NullContextObservationHandlerCompatibilityKit {
+class AnyContextObservationHandlerCompatibilityKitTests extends AnyContextObservationHandlerCompatibilityKit {
 
     @Override
     public ObservationHandler<Observation.Context> handler() {
