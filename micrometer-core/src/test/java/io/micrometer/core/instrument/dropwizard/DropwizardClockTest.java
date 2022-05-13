@@ -17,7 +17,6 @@
 package io.micrometer.core.instrument.dropwizard;
 
 import io.micrometer.core.instrument.MockClock;
-
 import org.junit.jupiter.api.Test;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -30,6 +29,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 class DropwizardClockTest {
 
     private MockClock clock = new MockClock();
+
     private DropwizardClock dropwizardClock = new DropwizardClock(clock);
 
     @Test
@@ -41,4 +41,5 @@ class DropwizardClockTest {
     void returnTime() {
         assertThat(dropwizardClock.getTime()).isEqualTo(clock.wallTime());
     }
+
 }

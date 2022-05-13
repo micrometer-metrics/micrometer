@@ -36,17 +36,19 @@ import java.util.concurrent.atomic.DoubleAdder;
 public class CumulativeDistributionSummary extends AbstractDistributionSummary {
 
     private final AtomicLong count;
+
     private final DoubleAdder total;
+
     private final TimeWindowMax max;
 
     @Deprecated
     public CumulativeDistributionSummary(Id id, Clock clock, DistributionStatisticConfig distributionStatisticConfig,
-                                         double scale) {
+            double scale) {
         this(id, clock, distributionStatisticConfig, scale, false);
     }
 
     public CumulativeDistributionSummary(Id id, Clock clock, DistributionStatisticConfig distributionStatisticConfig,
-                                         double scale, boolean supportsAggregablePercentiles) {
+            double scale, boolean supportsAggregablePercentiles) {
         super(id, clock, distributionStatisticConfig, scale, supportsAggregablePercentiles);
         this.count = new AtomicLong();
         this.total = new DoubleAdder();
@@ -77,10 +79,8 @@ public class CumulativeDistributionSummary extends AbstractDistributionSummary {
 
     @Override
     public Iterable<Measurement> measure() {
-        return Arrays.asList(
-            new Measurement(() -> (double) count(), Statistic.COUNT),
-            new Measurement(this::totalAmount, Statistic.TOTAL),
-            new Measurement(this::max, Statistic.MAX)
-        );
+        return Arrays.asList(new Measurement(() -> (double) count(), Statistic.COUNT),
+                new Measurement(this::totalAmount, Statistic.TOTAL), new Measurement(this::max, Statistic.MAX));
     }
+
 }

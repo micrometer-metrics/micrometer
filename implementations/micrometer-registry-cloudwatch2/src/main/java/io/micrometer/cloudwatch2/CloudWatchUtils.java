@@ -23,14 +23,12 @@ import software.amazon.awssdk.services.cloudwatch.model.MetricDatum;
 final class CloudWatchUtils {
 
     /**
-     * Minimum allowed value as specified by
-     * {@link MetricDatum#value()}
+     * Minimum allowed value as specified by {@link MetricDatum#value()}
      */
     private static final double MINIMUM_ALLOWED_VALUE = 8.515920e-109;
 
     /**
-     * Maximum allowed value as specified by
-     * {@link MetricDatum#value()}
+     * Maximum allowed value as specified by {@link MetricDatum#value()}
      */
     private static final double MAXIMUM_ALLOWED_VALUE = 1.174271e+108;
 
@@ -40,7 +38,6 @@ final class CloudWatchUtils {
     /**
      * Clean up metric to be within the allowable range as specified in
      * {@link MetricDatum#value()}
-     *
      * @param value unsanitized value
      * @return value clamped to allowable range
      */

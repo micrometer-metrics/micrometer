@@ -23,13 +23,14 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 /**
  * Tests for {@link HttpStatusClass}
- * 
+ *
  * @author Oleksii Bondar
  */
 class HttpStatusClassTest {
 
     @ParameterizedTest
-    @CsvSource({"100, INFORMATIONAL", "199, INFORMATIONAL", "200, SUCCESS", "204, SUCCESS", "301, REDIRECTION", "404, CLIENT_ERROR", "500, SERVER_ERROR", "777, UNKNOWN"})
+    @CsvSource({ "100, INFORMATIONAL", "199, INFORMATIONAL", "200, SUCCESS", "204, SUCCESS", "301, REDIRECTION",
+            "404, CLIENT_ERROR", "500, SERVER_ERROR", "777, UNKNOWN" })
     void resolveStatus(int code, HttpStatusClass expected) {
         assertThat(HttpStatusClass.valueOf(code)).isEqualTo(expected);
     }
@@ -43,4 +44,5 @@ class HttpStatusClassTest {
     void doesNotContainStatusCode() {
         assertThat(HttpStatusClass.CLIENT_ERROR.contains(200)).isFalse();
     }
+
 }

@@ -28,6 +28,7 @@ import static io.micrometer.core.instrument.config.validate.PropertyValidator.ge
  * @since 1.6.0
  */
 public interface HealthConfig extends MeterRegistryConfig {
+
     HealthConfig DEFAULT = key -> null;
 
     @Override
@@ -41,4 +42,5 @@ public interface HealthConfig extends MeterRegistryConfig {
     default Duration step() {
         return getDuration(this, "step").orElse(Duration.ofSeconds(10));
     }
+
 }

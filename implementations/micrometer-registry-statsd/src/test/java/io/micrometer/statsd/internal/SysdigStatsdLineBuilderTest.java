@@ -26,6 +26,7 @@ import org.junit.jupiter.api.Test;
 import static org.assertj.core.api.Assertions.assertThat;
 
 class SysdigStatsdLineBuilderTest {
+
     private final MeterRegistry registry = new SimpleMeterRegistry();
 
     @Test
@@ -56,9 +57,7 @@ class SysdigStatsdLineBuilderTest {
         String badCounterName = "\"\';^*()!~`_./?a{counter}:with123 weirdChars";
         String badTagName = "\"\';^*()!~`_./?a{tag}:with123 weirdChars";
         String badValueName = "\"\';^*()!~`_./?a{value}:with123 weirdChars";
-        Counter c = registry.counter(badCounterName,
-                badTagName,
-                badValueName);
+        Counter c = registry.counter(badCounterName, badTagName, badValueName);
         SysdigStatsdLineBuilder lb = new SysdigStatsdLineBuilder(c.getId(), registry.config());
 
         registry.config().namingConvention(NamingConvention.dot);
@@ -67,9 +66,7 @@ class SysdigStatsdLineBuilderTest {
                 .append("#statistic=count,___________.__a_tag__with123_weirdChars")
                 .append("=___________.__a_value__with123_weirdChars:1|c");
 
-
-        assertThat(lb.line("1", Statistic.COUNT, "c"))
-                .isEqualTo(expected.toString());
+        assertThat(lb.line("1", Statistic.COUNT, "c")).isEqualTo(expected.toString());
     }
 
 }

@@ -15,14 +15,14 @@
  */
 package io.micrometer.core.instrument.binder.grpc;
 
-import java.util.function.Consumer;
-import java.util.function.Supplier;
-
 import io.grpc.ForwardingServerCallListener.SimpleForwardingServerCallListener;
 import io.grpc.ServerCall;
 import io.grpc.ServerCall.Listener;
 import io.grpc.Status;
 import io.micrometer.core.instrument.Counter;
+
+import java.util.function.Consumer;
+import java.util.function.Supplier;
 
 /**
  * A simple forwarding server call listener that collects metrics.
@@ -33,23 +33,23 @@ import io.micrometer.core.instrument.Counter;
 class MetricCollectingServerCallListener<Q> extends SimpleForwardingServerCallListener<Q> {
 
     private final Counter requestCounter;
+
     private final Supplier<Status.Code> responseCodeSupplier;
+
     private final Consumer<Status.Code> responseStatusTiming;
 
     /**
-     * Creates a new delegating {@link ServerCall.Listener} that will wrap the given server call listener to collect metrics.
-     *
+     * Creates a new delegating {@link ServerCall.Listener} that will wrap the given
+     * server call listener to collect metrics.
      * @param delegate The original listener to wrap.
      * @param requestCounter The counter for incoming requests.
      * @param responseCodeSupplier The supplier of the response code.
-     * @param responseStatusTiming The consumer used to time the processing duration along with a response status.
+     * @param responseStatusTiming The consumer used to time the processing duration along
+     * with a response status.
      */
 
-    public MetricCollectingServerCallListener(
-            final Listener<Q> delegate,
-            final Counter requestCounter,
-            final Supplier<Status.Code> responseCodeSupplier,
-            final Consumer<Status.Code> responseStatusTiming) {
+    public MetricCollectingServerCallListener(final Listener<Q> delegate, final Counter requestCounter,
+            final Supplier<Status.Code> responseCodeSupplier, final Consumer<Status.Code> responseStatusTiming) {
 
         super(delegate);
         this.requestCounter = requestCounter;

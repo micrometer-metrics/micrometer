@@ -22,14 +22,16 @@ import org.assertj.core.api.AbstractAssert;
 /**
  * Assertion methods for {@code MeterRegistry}s.
  * <p>
- * To create a new instance of this class, invoke {@link ObservationRegistryAssert#assertThat(ObservationRegistry)}
- * or {@link ObservationRegistryAssert#then(ObservationRegistry)}.
+ * To create a new instance of this class, invoke
+ * {@link ObservationRegistryAssert#assertThat(ObservationRegistry)} or
+ * {@link ObservationRegistryAssert#then(ObservationRegistry)}.
  *
  * @author Marcin Grzejszczak
  * @since 1.10.0
  */
 @SuppressWarnings("unchecked")
-public class ObservationRegistryAssert<SELF extends ObservationRegistryAssert<SELF, ACTUAL>, ACTUAL extends ObservationRegistry> extends AbstractAssert<SELF, ACTUAL> {
+public class ObservationRegistryAssert<SELF extends ObservationRegistryAssert<SELF, ACTUAL>, ACTUAL extends ObservationRegistry>
+        extends AbstractAssert<SELF, ACTUAL> {
 
     protected ObservationRegistryAssert(ACTUAL actual) {
         super(actual, ObservationRegistryAssert.class);
@@ -38,20 +40,18 @@ public class ObservationRegistryAssert<SELF extends ObservationRegistryAssert<SE
     protected ObservationRegistryAssert(ACTUAL actual, Class<SELF> clazz) {
         super(actual, clazz);
     }
-   
+
     /**
      * Creates the assert object for {@link ObservationRegistry}.
-     * 
      * @param actual observation registry to assert against
      * @return meter registry assertions
      */
     public static ObservationRegistryAssert assertThat(ObservationRegistry actual) {
-      return new ObservationRegistryAssert(actual);
+        return new ObservationRegistryAssert(actual);
     }
-    
+
     /**
      * Creates the assert object for {@link ObservationRegistry}.
-     * 
      * @param actual observation registry to assert against
      * @return meter registry assertions
      */
@@ -60,8 +60,8 @@ public class ObservationRegistryAssert<SELF extends ObservationRegistryAssert<SE
     }
 
     /**
-     * Verifies that there's no current {@link Observation} left in the {@link ObservationRegistry}.
-     *
+     * Verifies that there's no current {@link Observation} left in the
+     * {@link ObservationRegistry}.
      * @return this
      * @throws AssertionError if there is a current observation remaining in the registry
      */
@@ -75,8 +75,8 @@ public class ObservationRegistryAssert<SELF extends ObservationRegistryAssert<SE
     }
 
     /**
-     * Verifies that there's a current {@link Observation} left in the {@link ObservationRegistry}.
-     *
+     * Verifies that there's a current {@link Observation} left in the
+     * {@link ObservationRegistry}.
      * @return this
      * @throws AssertionError if there is no current observation remaining in the registry
      */
@@ -88,9 +88,10 @@ public class ObservationRegistryAssert<SELF extends ObservationRegistryAssert<SE
         }
         return (SELF) this;
     }
+
     /**
-     * Verifies that there's no current {@link Observation} left in the {@link ObservationRegistry}.
-     *
+     * Verifies that there's no current {@link Observation} left in the
+     * {@link ObservationRegistry}.
      * @param observation to compare against
      * @return this
      * @throws AssertionError if there is a current observation remaining in the registry
@@ -99,14 +100,15 @@ public class ObservationRegistryAssert<SELF extends ObservationRegistryAssert<SE
         isNotNull();
         Observation current = actual.getCurrentObservation();
         if (current == observation) {
-            failWithMessage("Expected current observation in the registry to be different than <%s> but was the same", observation);
+            failWithMessage("Expected current observation in the registry to be different than <%s> but was the same",
+                    observation);
         }
         return (SELF) this;
     }
 
     /**
-     * Verifies that there's a current {@link Observation} left in the {@link ObservationRegistry}.
-     *
+     * Verifies that there's a current {@link Observation} left in the
+     * {@link ObservationRegistry}.
      * @param observation to compare against
      * @return this
      * @throws AssertionError if there is no current observation remaining in the registry
@@ -115,7 +117,8 @@ public class ObservationRegistryAssert<SELF extends ObservationRegistryAssert<SE
         isNotNull();
         Observation current = actual.getCurrentObservation();
         if (current != observation) {
-            failWithMessage("Expected current observation in the registry to be same as <%s> but was <%s>", observation, current);
+            failWithMessage("Expected current observation in the registry to be same as <%s> but was <%s>", observation,
+                    current);
         }
         return (SELF) this;
     }

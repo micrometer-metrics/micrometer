@@ -15,12 +15,12 @@
  */
 package io.micrometer.core.instrument;
 
+import io.micrometer.common.lang.Nullable;
 import io.micrometer.core.Issue;
 import io.micrometer.core.instrument.config.MeterFilter;
 import io.micrometer.core.instrument.config.MeterFilterReply;
 import io.micrometer.core.instrument.distribution.DistributionStatisticConfig;
 import io.micrometer.core.instrument.simple.SimpleMeterRegistry;
-import io.micrometer.core.lang.Nullable;
 import org.assertj.core.api.Condition;
 import org.junit.jupiter.api.Test;
 
@@ -38,15 +38,16 @@ import static org.mockito.Mockito.*;
  * @author Johnny Lim
  */
 class MeterFilterTest {
+
     private static Condition<Meter.Id> tag(String tagKey) {
         return tag(tagKey, null);
     }
 
     private static Condition<Meter.Id> tag(String tagKey, @Nullable String tagValue) {
         return new Condition<>(
-            id -> stream(id.getTagsAsIterable().spliterator(), false)
-                .anyMatch(t -> t.getKey().equals(tagKey) && (tagValue == null || t.getValue().equals(tagValue))),
-            "Must have a tag with key '" + tagKey + "'");
+                id -> stream(id.getTagsAsIterable().spliterator(), false).anyMatch(
+                        t -> t.getKey().equals(tagKey) && (tagValue == null || t.getValue().equals(tagValue))),
+                "Must have a tag with key '" + tagKey + "'");
     }
 
     @Test
@@ -96,7 +97,8 @@ class MeterFilterTest {
     @Issue("#329")
     void renameTags() {
         MeterFilter filter = MeterFilter.renameTag("hystrix", "group", "hystrixgroup");
-        Meter.Id id = new Meter.Id("hystrix.something", Tags.of("k", "v", "group", "mygroup"), null, null, Meter.Type.GAUGE);
+        Meter.Id id = new Meter.Id("hystrix.something", Tags.of("k", "v", "group", "mygroup"), null, null,
+                Meter.Type.GAUGE);
         assertThat(filter.map(id)).has(tag("hystrixgroup", "mygroup"));
 
         Meter.Id id2 = new Meter.Id("something.else", Tags.of("group", "mygroup"), null, null, Meter.Type.GAUGE);
@@ -139,7 +141,7 @@ class MeterFilterTest {
         filter.accept(id3);
 
         assertThat(n.get()).isEqualTo(1);
-        
+
         filter.accept(id4);
         assertThat(n.get()).isEqualTo(1);
     }
@@ -263,4 +265,5 @@ class MeterFilterTest {
 
         assertThat(registry.getMeters()).isNotEmpty();
     }
+
 }

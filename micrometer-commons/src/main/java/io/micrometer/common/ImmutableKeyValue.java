@@ -15,9 +15,9 @@
  */
 package io.micrometer.common;
 
-import java.util.Objects;
-
 import io.micrometer.common.lang.Nullable;
+
+import java.util.Objects;
 
 import static java.util.Objects.requireNonNull;
 
@@ -28,7 +28,9 @@ import static java.util.Objects.requireNonNull;
  * @since 1.10.0
  */
 class ImmutableKeyValue implements KeyValue {
+
     private final String key;
+
     private final String value;
 
     ImmutableKeyValue(String key, String value) {
@@ -50,11 +52,12 @@ class ImmutableKeyValue implements KeyValue {
 
     @Override
     public boolean equals(@Nullable Object o) {
-        if (this == o) return true;
-        if (o == null || getClass() != o.getClass()) return false;
+        if (this == o)
+            return true;
+        if (o == null || getClass() != o.getClass())
+            return false;
         KeyValue that = (KeyValue) o;
-        return Objects.equals(key, that.getKey()) &&
-            Objects.equals(value, that.getValue());
+        return Objects.equals(key, that.getKey()) && Objects.equals(value, that.getValue());
     }
 
     @Override
@@ -68,4 +71,5 @@ class ImmutableKeyValue implements KeyValue {
     public String toString() {
         return "tag(" + key + "=" + value + ")";
     }
+
 }

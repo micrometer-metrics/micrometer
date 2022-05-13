@@ -27,7 +27,9 @@ import org.junit.jupiter.api.BeforeEach;
 import static java.util.Collections.emptyList;
 
 class Hazelcast3CacheMetricsCompatibilityTest extends CacheMeterBinderCompatibilityKit<Object> {
+
     private Config config = new Config("hazelcast3-cache-test");
+
     private IMap<String, String> cache;
 
     @BeforeEach
@@ -67,4 +69,5 @@ class Hazelcast3CacheMetricsCompatibilityTest extends CacheMeterBinderCompatibil
     public String get(String key) {
         return this.cache.get(key);
     }
+
 }

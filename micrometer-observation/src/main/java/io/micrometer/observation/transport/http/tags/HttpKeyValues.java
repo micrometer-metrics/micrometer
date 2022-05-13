@@ -16,9 +16,9 @@
 package io.micrometer.observation.transport.http.tags;
 
 import io.micrometer.common.KeyValue;
+import io.micrometer.common.util.StringUtils;
 import io.micrometer.observation.transport.http.HttpRequest;
 import io.micrometer.observation.transport.http.HttpResponse;
-import io.micrometer.common.util.StringUtils;
 
 /**
  * Utility class providing convenience methods to generate tags for HTTP metrics based on
@@ -28,9 +28,13 @@ import io.micrometer.common.util.StringUtils;
  * @since 1.10.0
  */
 public class HttpKeyValues {
+
     private static final String METHOD = "method";
+
     private static final String STATUS = "status";
+
     private static final String EXCEPTION = "exception";
+
     private static final String URI = "uri";
 
     private static final String UNKNOWN = "UNKNOWN";
@@ -47,8 +51,8 @@ public class HttpKeyValues {
     }
 
     /**
-     * Creates a {@code method} tag based on the {@link HttpRequest#method()
-     * method} of the given {@code request}.
+     * Creates a {@code method} tag based on the {@link HttpRequest#method() method} of
+     * the given {@code request}.
      * @param request the request
      * @return the method tag whose value is a capitalized method (e.g. GET).
      */
@@ -74,7 +78,8 @@ public class HttpKeyValues {
     public static KeyValue exception(Throwable exception) {
         if (exception != null) {
             String simpleName = exception.getClass().getSimpleName();
-            return KeyValue.of(EXCEPTION, StringUtils.isNotBlank(simpleName) ? simpleName : exception.getClass().getName());
+            return KeyValue.of(EXCEPTION,
+                    StringUtils.isNotBlank(simpleName) ? simpleName : exception.getClass().getName());
         }
         return EXCEPTION_NONE;
     }
@@ -92,4 +97,5 @@ public class HttpKeyValues {
         String uri = request.route();
         return uri == null ? URI_UNKNOWN : KeyValue.of(URI, uri);
     }
+
 }

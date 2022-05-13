@@ -42,4 +42,5 @@ class OtlpMeterRegistryCompatibilityTest extends MeterRegistryCompatibilityKit {
     public Duration step() {
         return OtlpConfig.DEFAULT.step();
     }
+
 }

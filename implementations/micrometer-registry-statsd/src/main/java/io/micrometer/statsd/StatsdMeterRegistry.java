@@ -15,52 +15,17 @@
  */
 package io.micrometer.statsd;
 
-import java.net.InetSocketAddress;
-import java.net.PortUnreachableException;
-import java.net.SocketAddress;
-import java.time.Duration;
-import java.util.Arrays;
-import java.util.Map;
-import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.TimeUnit;
-import java.util.concurrent.atomic.AtomicBoolean;
-import java.util.concurrent.atomic.AtomicReference;
-import java.util.function.BiFunction;
-import java.util.function.Consumer;
-import java.util.function.Function;
-import java.util.function.LongConsumer;
-import java.util.function.Supplier;
-import java.util.function.ToDoubleFunction;
-import java.util.function.ToLongFunction;
-import java.util.stream.DoubleStream;
-
+import io.micrometer.common.lang.Nullable;
+import io.micrometer.common.util.internal.logging.WarnThenDebugLogger;
 import io.micrometer.core.annotation.Incubating;
-import io.micrometer.core.instrument.Clock;
-import io.micrometer.core.instrument.Counter;
-import io.micrometer.core.instrument.DistributionSummary;
-import io.micrometer.core.instrument.FunctionCounter;
-import io.micrometer.core.instrument.FunctionTimer;
-import io.micrometer.core.instrument.Gauge;
-import io.micrometer.core.instrument.LongTaskTimer;
-import io.micrometer.core.instrument.Measurement;
-import io.micrometer.core.instrument.Meter;
-import io.micrometer.core.instrument.MeterRegistry;
-import io.micrometer.core.instrument.Statistic;
-import io.micrometer.core.instrument.Timer;
+import io.micrometer.core.instrument.*;
 import io.micrometer.core.instrument.config.NamingConvention;
 import io.micrometer.core.instrument.distribution.DistributionStatisticConfig;
 import io.micrometer.core.instrument.distribution.HistogramGauges;
 import io.micrometer.core.instrument.distribution.pause.PauseDetector;
 import io.micrometer.core.instrument.internal.DefaultMeter;
 import io.micrometer.core.instrument.util.HierarchicalNameMapper;
-import io.micrometer.core.lang.Nullable;
-import io.micrometer.core.util.internal.logging.WarnThenDebugLogger;
-import io.micrometer.statsd.internal.BufferingFlux;
-import io.micrometer.statsd.internal.DatadogStatsdLineBuilder;
-import io.micrometer.statsd.internal.EtsyStatsdLineBuilder;
-import io.micrometer.statsd.internal.LogbackMetricsSuppressingFluxSink;
-import io.micrometer.statsd.internal.SysdigStatsdLineBuilder;
-import io.micrometer.statsd.internal.TelegrafStatsdLineBuilder;
+import io.micrometer.statsd.internal.*;
 import io.netty.channel.unix.DomainSocketAddress;
 import io.netty.util.AttributeKey;
 import org.reactivestreams.Publisher;
@@ -79,16 +44,29 @@ import reactor.util.context.Context;
 import reactor.util.context.ContextView;
 import reactor.util.retry.Retry;
 
+import java.net.InetSocketAddress;
+import java.net.PortUnreachableException;
+import java.net.SocketAddress;
+import java.time.Duration;
+import java.util.Arrays;
+import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.atomic.AtomicReference;
+import java.util.function.*;
+import java.util.stream.DoubleStream;
+
 /**
  * {@link MeterRegistry} for StatsD.
  * <p>
  * The following StatsD line protocols are supported:
  *
  * <ul>
- *   <li>Datadog (default)</li>
- *   <li>Etsy</li>
- *   <li>Telegraf</li>
- *   <li>Sysdig</li>
+ * <li>Datadog (default)</li>
+ * <li>Etsy</li>
+ * <li>Telegraf</li>
+ * <li>Sysdig</li>
  * </ul>
  * <p>
  * See {@link StatsdFlavor} for more details.
@@ -99,15 +77,23 @@ import reactor.util.retry.Retry;
  * @since 1.0.0
  */
 public class StatsdMeterRegistry extends MeterRegistry {
+
     private static final WarnThenDebugLogger warnThenDebugLogger = new WarnThenDebugLogger(StatsdMeterRegistry.class);
 
     private final StatsdConfig statsdConfig;
+
     private final HierarchicalNameMapper nameMapper;
+
     private final Map<Meter.Id, StatsdPollable> pollableMeters = new ConcurrentHashMap<>();
+
     private final AtomicBoolean started = new AtomicBoolean();
+
     DirectProcessor<String> processor = DirectProcessor.create();
+
     FluxSink<String> sink = new NoopFluxSink();
+
     Disposable.Swap statsdConnection = Disposables.swap();
+
     private Disposable.Swap meterPoller = Disposables.swap();
 
     @Nullable
@@ -123,23 +109,21 @@ public class StatsdMeterRegistry extends MeterRegistry {
     }
 
     /**
-     * Use this constructor for Etsy-flavored StatsD when you need to influence the way Micrometer's dimensional
-     * {@link io.micrometer.core.instrument.Meter.Id Meter.Id} is written to a flat hierarchical name.
-     *
-     * @param config     The StatsD configuration.
+     * Use this constructor for Etsy-flavored StatsD when you need to influence the way
+     * Micrometer's dimensional {@link io.micrometer.core.instrument.Meter.Id Meter.Id} is
+     * written to a flat hierarchical name.
+     * @param config The StatsD configuration.
      * @param nameMapper A strategy for flattening dimensional IDs.
-     * @param clock      The clock to use for timing and polling certain types of meters.
+     * @param clock The clock to use for timing and polling certain types of meters.
      */
     public StatsdMeterRegistry(StatsdConfig config, HierarchicalNameMapper nameMapper, Clock clock) {
         this(config, nameMapper, namingConventionFromFlavor(config.flavor()), clock, null, null);
     }
 
-    private StatsdMeterRegistry(StatsdConfig config,
-                                HierarchicalNameMapper nameMapper,
-                                NamingConvention namingConvention,
-                                Clock clock,
-                                @Nullable BiFunction<Meter.Id, DistributionStatisticConfig, StatsdLineBuilder> lineBuilderFunction,
-                                @Nullable Consumer<String> lineSink) {
+    private StatsdMeterRegistry(StatsdConfig config, HierarchicalNameMapper nameMapper,
+            NamingConvention namingConvention, Clock clock,
+            @Nullable BiFunction<Meter.Id, DistributionStatisticConfig, StatsdLineBuilder> lineBuilderFunction,
+            @Nullable Consumer<String> lineSink) {
         super(clock);
 
         config.requireValid();
@@ -151,22 +135,14 @@ public class StatsdMeterRegistry extends MeterRegistry {
 
         config().namingConvention(namingConvention);
 
-        config().onMeterRemoved(meter ->
-                meter.use(
-                        this::removePollableMeter,
-                        c -> ((StatsdCounter) c).shutdown(),
-                        t -> ((StatsdTimer) t).shutdown(),
-                        d -> ((StatsdDistributionSummary) d).shutdown(),
-                        this::removePollableMeter,
-                        this::removePollableMeter,
-                        this::removePollableMeter,
-                        this::removePollableMeter,
-                        m -> {
-                            for (Measurement measurement : m.measure()) {
-                                pollableMeters.remove(m.getId().withTag(measurement.getStatistic()));
-                            }
-                        })
-        );
+        config().onMeterRemoved(meter -> meter.use(this::removePollableMeter, c -> ((StatsdCounter) c).shutdown(),
+                t -> ((StatsdTimer) t).shutdown(), d -> ((StatsdDistributionSummary) d).shutdown(),
+                this::removePollableMeter, this::removePollableMeter, this::removePollableMeter,
+                this::removePollableMeter, m -> {
+                    for (Measurement measurement : m.measure()) {
+                        pollableMeters.remove(m.getId().withTag(measurement.getStatistic()));
+                    }
+                }));
 
         if (config.enabled()) {
             this.sink = processor.sink();
@@ -174,7 +150,9 @@ public class StatsdMeterRegistry extends MeterRegistry {
             try {
                 Class.forName("ch.qos.logback.classic.turbo.TurboFilter", false, getClass().getClassLoader());
                 this.sink = new LogbackMetricsSuppressingFluxSink(this.sink);
-            } catch (ClassNotFoundException ignore) { }
+            }
+            catch (ClassNotFoundException ignore) {
+            }
             start();
         }
     }
@@ -185,13 +163,13 @@ public class StatsdMeterRegistry extends MeterRegistry {
 
     private static NamingConvention namingConventionFromFlavor(StatsdFlavor flavor) {
         switch (flavor) {
-            case DATADOG:
-            case SYSDIG:
-                return NamingConvention.dot;
-            case TELEGRAF:
-                return NamingConvention.snakeCase;
-            default:
-                return NamingConvention.camelCase;
+        case DATADOG:
+        case SYSDIG:
+            return NamingConvention.dot;
+        case TELEGRAF:
+            return NamingConvention.snakeCase;
+        default:
+            return NamingConvention.camelCase;
         }
     }
 
@@ -203,7 +181,8 @@ public class StatsdMeterRegistry extends MeterRegistry {
         for (Map.Entry<Meter.Id, StatsdPollable> pollableMeter : pollableMeters.entrySet()) {
             try {
                 pollableMeter.getValue().poll();
-            } catch (RuntimeException e) {
+            }
+            catch (RuntimeException e) {
                 warnThenDebugLogger.log("Failed to poll a meter '" + pollableMeter.getKey().getName() + "'.", e);
             }
         }
@@ -236,19 +215,24 @@ public class StatsdMeterRegistry extends MeterRegistry {
                 });
 
                 startPolling();
-            } else {
+            }
+            else {
                 final Publisher<String> publisher;
                 if (statsdConfig.buffered()) {
-                    publisher = BufferingFlux.create(Flux.from(this.processor), "\n", statsdConfig.maxPacketLength(), statsdConfig.pollingFrequency().toMillis())
-                            .onBackpressureLatest();
-                } else {
+                    publisher = BufferingFlux.create(Flux.from(this.processor), "\n", statsdConfig.maxPacketLength(),
+                            statsdConfig.pollingFrequency().toMillis()).onBackpressureLatest();
+                }
+                else {
                     publisher = this.processor;
                 }
                 if (statsdConfig.protocol() == StatsdProtocol.UDP) {
-                    prepareUdpClient(publisher, () -> InetSocketAddress.createUnresolved(statsdConfig.host(), statsdConfig.port()));
-                } else if (statsdConfig.protocol() == StatsdProtocol.UDS_DATAGRAM) {
+                    prepareUdpClient(publisher,
+                            () -> InetSocketAddress.createUnresolved(statsdConfig.host(), statsdConfig.port()));
+                }
+                else if (statsdConfig.protocol() == StatsdProtocol.UDS_DATAGRAM) {
                     prepareUdpClient(publisher, () -> new DomainSocketAddress(statsdConfig.host()));
-                } else if (statsdConfig.protocol() == StatsdProtocol.TCP) {
+                }
+                else if (statsdConfig.protocol() == StatsdProtocol.TCP) {
                     prepareTcpClient(publisher);
                 }
             }
@@ -257,13 +241,9 @@ public class StatsdMeterRegistry extends MeterRegistry {
 
     private void prepareUdpClient(Publisher<String> publisher, Supplier<SocketAddress> remoteAddress) {
         AtomicReference<UdpClient> udpClientReference = new AtomicReference<>();
-        UdpClient udpClient = UdpClient.create()
-                .remoteAddress(remoteAddress)
-                .handle((in, out) -> out
-                        .sendString(publisher)
-                        .neverComplete()
-                        .retryWhen(Retry.indefinitely().filter(throwable -> throwable instanceof PortUnreachableException))
-                )
+        UdpClient udpClient = UdpClient.create().remoteAddress(remoteAddress)
+                .handle((in, out) -> out.sendString(publisher).neverComplete().retryWhen(
+                        Retry.indefinitely().filter(throwable -> throwable instanceof PortUnreachableException)))
                 .doOnDisconnected(connection -> {
                     Boolean connectionDisposed = connection.channel().attr(CONNECTION_DISPOSED).getAndSet(Boolean.TRUE);
                     if (connectionDisposed == null || !connectionDisposed) {
@@ -276,13 +256,8 @@ public class StatsdMeterRegistry extends MeterRegistry {
 
     private void prepareTcpClient(Publisher<String> publisher) {
         AtomicReference<TcpClient> tcpClientReference = new AtomicReference<>();
-        TcpClient tcpClient = TcpClient.create()
-                .host(statsdConfig.host())
-                .port(statsdConfig.port())
-                .handle((in, out) -> out
-                        .sendString(publisher)
-                        .neverComplete())
-                .doOnDisconnected(connection -> {
+        TcpClient tcpClient = TcpClient.create().host(statsdConfig.host()).port(statsdConfig.port())
+                .handle((in, out) -> out.sendString(publisher).neverComplete()).doOnDisconnected(connection -> {
                     Boolean connectionDisposed = connection.channel().attr(CONNECTION_DISPOSED).getAndSet(Boolean.TRUE);
                     if (connectionDisposed == null || !connectionDisposed) {
                         connectAndSubscribe(tcpClientReference.get());
@@ -311,20 +286,18 @@ public class StatsdMeterRegistry extends MeterRegistry {
     }
 
     private void retryReplaceClient(Mono<? extends Connection> connectMono) {
-        connectMono
-                .retryWhen(Retry.backoff(Long.MAX_VALUE, Duration.ofSeconds(1)).maxBackoff(Duration.ofMinutes(1)))
+        connectMono.retryWhen(Retry.backoff(Long.MAX_VALUE, Duration.ofSeconds(1)).maxBackoff(Duration.ofMinutes(1)))
                 .subscribe(connection -> {
                     this.statsdConnection.replace(connection);
 
-                    // now that we're connected, start polling gauges and other pollable meter types
+                    // now that we're connected, start polling gauges and other pollable
+                    // meter types
                     startPolling();
                 });
     }
 
     private void startPolling() {
-        meterPoller.update(Flux.interval(statsdConfig.pollingFrequency())
-                .doOnEach(n -> poll())
-                .subscribe());
+        meterPoller.update(Flux.interval(statsdConfig.pollingFrequency()).doOnEach(n -> poll()).subscribe());
     }
 
     public void stop() {
@@ -347,7 +320,8 @@ public class StatsdMeterRegistry extends MeterRegistry {
 
     @Override
     protected <T> Gauge newGauge(Meter.Id id, @Nullable T obj, ToDoubleFunction<T> valueFunction) {
-        StatsdGauge<T> gauge = new StatsdGauge<>(id, lineBuilder(id), this.sink, obj, valueFunction, statsdConfig.publishUnchangedMeters());
+        StatsdGauge<T> gauge = new StatsdGauge<>(id, lineBuilder(id), this.sink, obj, valueFunction,
+                statsdConfig.publishUnchangedMeters());
         pollableMeters.put(id, gauge);
         return gauge;
     }
@@ -356,19 +330,20 @@ public class StatsdMeterRegistry extends MeterRegistry {
         return lineBuilder(id, null);
     }
 
-    private StatsdLineBuilder lineBuilder(Meter.Id id, @Nullable DistributionStatisticConfig distributionStatisticConfig) {
+    private StatsdLineBuilder lineBuilder(Meter.Id id,
+            @Nullable DistributionStatisticConfig distributionStatisticConfig) {
         if (lineBuilderFunction == null) {
             lineBuilderFunction = (id2, dsc2) -> {
                 switch (statsdConfig.flavor()) {
-                    case DATADOG:
-                        return new DatadogStatsdLineBuilder(id2, config(), dsc2);
-                    case TELEGRAF:
-                        return new TelegrafStatsdLineBuilder(id2, config());
-                    case SYSDIG:
-                        return new SysdigStatsdLineBuilder(id2, config());
-                    case ETSY:
-                    default:
-                        return new EtsyStatsdLineBuilder(id2, config(), nameMapper);
+                case DATADOG:
+                    return new DatadogStatsdLineBuilder(id2, config(), dsc2);
+                case TELEGRAF:
+                    return new TelegrafStatsdLineBuilder(id2, config());
+                case SYSDIG:
+                    return new SysdigStatsdLineBuilder(id2, config());
+                case ETSY:
+                default:
+                    return new EtsyStatsdLineBuilder(id2, config(), nameMapper);
                 }
             };
         }
@@ -376,11 +351,11 @@ public class StatsdMeterRegistry extends MeterRegistry {
     }
 
     private DistributionStatisticConfig addInfBucket(DistributionStatisticConfig config) {
-        double[] serviceLevelObjectives = config.getServiceLevelObjectiveBoundaries() == null ? new double[]{Double.POSITIVE_INFINITY} :
-                DoubleStream.concat(Arrays.stream(config.getServiceLevelObjectiveBoundaries()), DoubleStream.of(Double.POSITIVE_INFINITY)).toArray();
-        return DistributionStatisticConfig.builder()
-                .serviceLevelObjectives(serviceLevelObjectives)
-                .build()
+        double[] serviceLevelObjectives = config.getServiceLevelObjectiveBoundaries() == null
+                ? new double[] { Double.POSITIVE_INFINITY }
+                : DoubleStream.concat(Arrays.stream(config.getServiceLevelObjectiveBoundaries()),
+                        DoubleStream.of(Double.POSITIVE_INFINITY)).toArray();
+        return DistributionStatisticConfig.builder().serviceLevelObjectives(serviceLevelObjectives).build()
                 .merge(config);
     }
 
@@ -391,38 +366,39 @@ public class StatsdMeterRegistry extends MeterRegistry {
 
     @Override
     protected LongTaskTimer newLongTaskTimer(Meter.Id id, DistributionStatisticConfig distributionStatisticConfig) {
-        StatsdLongTaskTimer ltt = new StatsdLongTaskTimer(id, lineBuilder(id, distributionStatisticConfig), this.sink, clock, statsdConfig.publishUnchangedMeters(),
-                distributionStatisticConfig, getBaseTimeUnit());
+        StatsdLongTaskTimer ltt = new StatsdLongTaskTimer(id, lineBuilder(id, distributionStatisticConfig), this.sink,
+                clock, statsdConfig.publishUnchangedMeters(), distributionStatisticConfig, getBaseTimeUnit());
         HistogramGauges.registerWithCommonFormat(ltt, this);
         pollableMeters.put(id, ltt);
         return ltt;
     }
 
     @Override
-    protected Timer newTimer(Meter.Id id, DistributionStatisticConfig distributionStatisticConfig, PauseDetector
-            pauseDetector) {
+    protected Timer newTimer(Meter.Id id, DistributionStatisticConfig distributionStatisticConfig,
+            PauseDetector pauseDetector) {
 
         // Adds an infinity bucket for SLO violation calculation
         if (distributionStatisticConfig.getServiceLevelObjectiveBoundaries() != null) {
             distributionStatisticConfig = addInfBucket(distributionStatisticConfig);
         }
 
-        Timer timer = new StatsdTimer(id, lineBuilder(id, distributionStatisticConfig), this.sink, clock, distributionStatisticConfig, pauseDetector, getBaseTimeUnit(),
-                statsdConfig.step().toMillis());
+        Timer timer = new StatsdTimer(id, lineBuilder(id, distributionStatisticConfig), this.sink, clock,
+                distributionStatisticConfig, pauseDetector, getBaseTimeUnit(), statsdConfig.step().toMillis());
         HistogramGauges.registerWithCommonFormat(timer, this);
         return timer;
     }
 
     @Override
-    protected DistributionSummary newDistributionSummary(Meter.Id id, DistributionStatisticConfig
-            distributionStatisticConfig, double scale) {
+    protected DistributionSummary newDistributionSummary(Meter.Id id,
+            DistributionStatisticConfig distributionStatisticConfig, double scale) {
 
         // Adds an infinity bucket for SLO violation calculation
         if (distributionStatisticConfig.getServiceLevelObjectiveBoundaries() != null) {
             distributionStatisticConfig = addInfBucket(distributionStatisticConfig);
         }
 
-        DistributionSummary summary = new StatsdDistributionSummary(id, lineBuilder(id, distributionStatisticConfig), this.sink, clock, distributionStatisticConfig, scale);
+        DistributionSummary summary = new StatsdDistributionSummary(id, lineBuilder(id, distributionStatisticConfig),
+                this.sink, clock, distributionStatisticConfig, scale);
         HistogramGauges.registerWithCommonFormat(summary, this);
         return summary;
     }
@@ -435,11 +411,10 @@ public class StatsdMeterRegistry extends MeterRegistry {
     }
 
     @Override
-    protected <T> FunctionTimer newFunctionTimer(Meter.Id id, T
-            obj, ToLongFunction<T> countFunction, ToDoubleFunction<T> totalTimeFunction, TimeUnit
-                                                         totalTimeFunctionUnit) {
-        StatsdFunctionTimer<T> ft = new StatsdFunctionTimer<>(id, obj, countFunction, totalTimeFunction, totalTimeFunctionUnit,
-                getBaseTimeUnit(), lineBuilder(id), this.sink);
+    protected <T> FunctionTimer newFunctionTimer(Meter.Id id, T obj, ToLongFunction<T> countFunction,
+            ToDoubleFunction<T> totalTimeFunction, TimeUnit totalTimeFunctionUnit) {
+        StatsdFunctionTimer<T> ft = new StatsdFunctionTimer<>(id, obj, countFunction, totalTimeFunction,
+                totalTimeFunctionUnit, getBaseTimeUnit(), lineBuilder(id), this.sink);
         pollableMeters.put(id, ft);
         return ft;
     }
@@ -450,17 +425,17 @@ public class StatsdMeterRegistry extends MeterRegistry {
             StatsdLineBuilder line = lineBuilder(id);
             Statistic stat = ms.getStatistic();
             switch (stat) {
-                case COUNT:
-                case TOTAL:
-                case TOTAL_TIME:
-                    pollableMeters.put(id.withTag(stat), () -> this.sink.next(line.count((long) ms.getValue(), stat)));
-                    break;
-                case VALUE:
-                case ACTIVE_TASKS:
-                case DURATION:
-                case UNKNOWN:
-                    pollableMeters.put(id.withTag(stat), () -> this.sink.next(line.gauge(ms.getValue(), stat)));
-                    break;
+            case COUNT:
+            case TOTAL:
+            case TOTAL_TIME:
+                pollableMeters.put(id.withTag(stat), () -> this.sink.next(line.count((long) ms.getValue(), stat)));
+                break;
+            case VALUE:
+            case ACTIVE_TASKS:
+            case DURATION:
+            case UNKNOWN:
+                pollableMeters.put(id.withTag(stat), () -> this.sink.next(line.gauge(ms.getValue(), stat)));
+                break;
             }
         });
         return new DefaultMeter(id, type, measurements);
@@ -473,9 +448,7 @@ public class StatsdMeterRegistry extends MeterRegistry {
 
     @Override
     protected DistributionStatisticConfig defaultHistogramConfig() {
-        return DistributionStatisticConfig.builder()
-                .expiry(statsdConfig.step())
-                .build()
+        return DistributionStatisticConfig.builder().expiry(statsdConfig.step()).build()
                 .merge(DistributionStatisticConfig.DEFAULT);
     }
 
@@ -502,10 +475,13 @@ public class StatsdMeterRegistry extends MeterRegistry {
      */
     @Incubating(since = "1.0.1")
     public static class Builder {
+
         private final StatsdConfig config;
 
         private Clock clock = Clock.SYSTEM;
+
         private NamingConvention namingConvention;
+
         private HierarchicalNameMapper nameMapper = HierarchicalNameMapper.DEFAULT;
 
         @Nullable
@@ -525,28 +501,26 @@ public class StatsdMeterRegistry extends MeterRegistry {
         }
 
         /**
-         * Used for completely customizing the StatsD line format. Intended for use by custom, proprietary
-         * StatsD flavors.
-         *
-         * @param lineBuilderFunction A mapping from a meter ID and a Distribution statistic configuration
-         *                            to a StatsD line generator that knows how to write counts, gauges
-         *                            timers, and histograms in the proprietary format.
+         * Used for completely customizing the StatsD line format. Intended for use by
+         * custom, proprietary StatsD flavors.
+         * @param lineBuilderFunction A mapping from a meter ID and a Distribution
+         * statistic configuration to a StatsD line generator that knows how to write
+         * counts, gauges timers, and histograms in the proprietary format.
          * @return This builder.
          * @since 1.8.0
          */
-        public Builder lineBuilder(BiFunction<Meter.Id, DistributionStatisticConfig, StatsdLineBuilder> lineBuilderFunction) {
+        public Builder lineBuilder(
+                BiFunction<Meter.Id, DistributionStatisticConfig, StatsdLineBuilder> lineBuilderFunction) {
             this.lineBuilderFunction = lineBuilderFunction;
             return this;
         }
 
-
         /**
-         * Used for completely customizing the StatsD line format. Intended for use by custom, proprietary
-         * StatsD flavors.
-         *
-         * @param lineBuilderFunction A mapping from a meter ID to a StatsD line generator that knows how to write counts, gauges
-         *                            timers, and histograms in the proprietary format.
-         *
+         * Used for completely customizing the StatsD line format. Intended for use by
+         * custom, proprietary StatsD flavors.
+         * @param lineBuilderFunction A mapping from a meter ID to a StatsD line generator
+         * that knows how to write counts, gauges timers, and histograms in the
+         * proprietary format.
          * @return This builder.
          * @deprecated Use {@link #lineBuilder(BiFunction)} instead since 1.8.0.
          */
@@ -555,7 +529,6 @@ public class StatsdMeterRegistry extends MeterRegistry {
             this.lineBuilderFunction = (id, dsc) -> lineBuilderFunction.apply(id);
             return this;
         }
-
 
         public Builder nameMapper(HierarchicalNameMapper nameMapper) {
             this.nameMapper = nameMapper;
@@ -570,6 +543,7 @@ public class StatsdMeterRegistry extends MeterRegistry {
         public StatsdMeterRegistry build() {
             return new StatsdMeterRegistry(config, nameMapper, namingConvention, clock, lineBuilderFunction, lineSink);
         }
+
     }
 
     private static final class NoopFluxSink implements FluxSink<String> {
@@ -621,5 +595,7 @@ public class StatsdMeterRegistry extends MeterRegistry {
         public FluxSink<String> onDispose(Disposable d) {
             return this;
         }
+
     }
+
 }

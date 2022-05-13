@@ -19,12 +19,11 @@ import io.micrometer.core.instrument.Meter.Id;
 import io.micrometer.core.instrument.Meter.Type;
 import io.micrometer.core.instrument.Tags;
 import io.micrometer.core.instrument.distribution.HistogramSnapshot;
+import org.junit.jupiter.api.Test;
 
 import java.util.concurrent.Callable;
 import java.util.concurrent.TimeUnit;
 import java.util.function.Supplier;
-
-import org.junit.jupiter.api.Test;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.Mockito.mock;
@@ -38,6 +37,7 @@ import static org.mockito.Mockito.verify;
 class NoopTimerTest {
 
     private Id id = new Id("test", Tags.of("name", "value"), "", "", Type.TIMER);
+
     private NoopTimer timer = new NoopTimer(id);
 
     @Test
@@ -94,4 +94,5 @@ class NoopTimerTest {
         assertThat(snapshot.total()).isEqualTo(expectedHistogram.total());
         assertThat(snapshot.max()).isEqualTo(expectedHistogram.max());
     }
+
 }

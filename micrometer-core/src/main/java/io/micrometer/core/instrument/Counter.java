@@ -15,17 +15,18 @@
  */
 package io.micrometer.core.instrument;
 
-import io.micrometer.core.lang.Nullable;
+import io.micrometer.common.lang.Nullable;
 
 import java.util.Collections;
 
 /**
- * Counters monitor monotonically increasing values. Counters may never be reset to a lesser value. If you
- * need to track a value that goes up and down, use a {@link Gauge}.
+ * Counters monitor monotonically increasing values. Counters may never be reset to a
+ * lesser value. If you need to track a value that goes up and down, use a {@link Gauge}.
  *
  * @author Jon Schneider
  */
 public interface Counter extends Meter {
+
     static Builder builder(String name) {
         return new Builder(name);
     }
@@ -39,7 +40,6 @@ public interface Counter extends Meter {
 
     /**
      * Update the counter by {@code amount}.
-     *
      * @param amount Amount to add to the counter.
      */
     void increment(double amount);
@@ -58,7 +58,9 @@ public interface Counter extends Meter {
      * Fluent builder for counters.
      */
     class Builder {
+
         private final String name;
+
         private Tags tags = Tags.empty();
 
         @Nullable
@@ -72,7 +74,8 @@ public interface Counter extends Meter {
         }
 
         /**
-         * @param tags Must be an even number of arguments representing key/value pairs of tags.
+         * @param tags Must be an even number of arguments representing key/value pairs of
+         * tags.
          * @return The counter builder with added tags.
          */
         public Builder tags(String... tags) {
@@ -89,7 +92,7 @@ public interface Counter extends Meter {
         }
 
         /**
-         * @param key   The tag key.
+         * @param key The tag key.
          * @param value The tag value.
          * @return The counter builder with a single added tag.
          */
@@ -117,15 +120,17 @@ public interface Counter extends Meter {
         }
 
         /**
-         * Add the counter to a single registry, or return an existing counter in that registry. The returned
-         * counter will be unique for each registry, but each registry is guaranteed to only create one counter
-         * for the same combination of name and tags.
-         *
+         * Add the counter to a single registry, or return an existing counter in that
+         * registry. The returned counter will be unique for each registry, but each
+         * registry is guaranteed to only create one counter for the same combination of
+         * name and tags.
          * @param registry A registry to add the counter to, if it doesn't already exist.
          * @return A new or existing counter.
          */
         public Counter register(MeterRegistry registry) {
             return registry.counter(new Meter.Id(name, tags, baseUnit, description, Type.COUNTER));
         }
+
     }
+
 }

@@ -25,13 +25,14 @@ import static org.assertj.core.api.Assertions.assertThatCode;
 
 /**
  * Base class for {@link ObservationHandler} compatibility tests that support any context.
- * To run a {@link ObservationHandler} implementation against this TCK, make a test class that extends this
- * and implement the abstract methods.
+ * To run a {@link ObservationHandler} implementation against this TCK, make a test class
+ * that extends this and implement the abstract methods.
  *
  * @author Marcin Grzejszczak
  * @since 1.10.0
  */
-public abstract class AnyContextObservationHandlerCompatibilityKit extends NullContextObservationHandlerCompatibilityKit {
+public abstract class AnyContextObservationHandlerCompatibilityKit
+        extends NullContextObservationHandlerCompatibilityKit {
 
     @Test
     @DisplayName("compatibility test provides a test context accepting observation handler")
@@ -46,6 +47,7 @@ public abstract class AnyContextObservationHandlerCompatibilityKit extends NullC
     }
 
     static class TestContext extends Observation.Context {
-    }
-}
 
+    }
+
+}

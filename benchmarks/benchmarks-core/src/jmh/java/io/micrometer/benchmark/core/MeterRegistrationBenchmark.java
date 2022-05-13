@@ -28,7 +28,9 @@ import java.util.concurrent.TimeUnit;
 @State(Scope.Benchmark)
 @OutputTimeUnit(TimeUnit.MICROSECONDS)
 public class MeterRegistrationBenchmark {
+
     public static void main(String[] args) throws RunnerException {
+        // @formatter:off
         Options opt = new OptionsBuilder()
                 .include(MeterRegistrationBenchmark.class.getSimpleName())
                 .warmupIterations(2)
@@ -37,11 +39,13 @@ public class MeterRegistrationBenchmark {
                 .timeUnit(TimeUnit.SECONDS)
                 .forks(1)
                 .build();
+        // @formatter:on
 
         new Runner(opt).run();
     }
 
     private int x = 923;
+
     private int y = 123;
 
     @Benchmark
@@ -57,4 +61,5 @@ public class MeterRegistrationBenchmark {
     public int sum() {
         return x + y;
     }
+
 }

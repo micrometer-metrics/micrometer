@@ -24,6 +24,7 @@ import org.junit.jupiter.api.Test;
 import static org.assertj.core.api.Assertions.assertThat;
 
 class CompositeCounterTest {
+
     @Test
     @Issue("#119")
     void increment() {
@@ -35,4 +36,5 @@ class CompositeCounterTest {
 
         assertThat(simple.get("counter").counter().count()).isEqualTo(2.0);
     }
+
 }

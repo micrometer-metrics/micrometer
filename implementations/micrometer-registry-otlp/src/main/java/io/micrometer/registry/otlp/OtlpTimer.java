@@ -15,12 +15,12 @@
  */
 package io.micrometer.registry.otlp;
 
+import io.micrometer.common.lang.Nullable;
 import io.micrometer.core.instrument.Clock;
 import io.micrometer.core.instrument.cumulative.CumulativeTimer;
 import io.micrometer.core.instrument.distribution.*;
 import io.micrometer.core.instrument.distribution.pause.PauseDetector;
 import io.micrometer.core.instrument.util.TimeUtils;
-import io.micrometer.core.lang.Nullable;
 
 import java.time.Duration;
 import java.util.concurrent.TimeUnit;
@@ -34,22 +34,33 @@ class OtlpTimer extends CumulativeTimer implements StartTimeAwareMeter {
     @Nullable
     private final Histogram monotonicCountBucketHistogram;
 
-    OtlpTimer(Id id, Clock clock, DistributionStatisticConfig distributionStatisticConfig, PauseDetector pauseDetector, TimeUnit baseTimeUnit) {
-        super(id, clock, DistributionStatisticConfig.builder()
-                .percentilesHistogram(false) // avoid a histogram for percentiles/SLOs in the super
-                .serviceLevelObjectives() // we will use a different implementation here instead
-                .build()
-                .merge(distributionStatisticConfig), pauseDetector, baseTimeUnit, false);
+    OtlpTimer(Id id, Clock clock, DistributionStatisticConfig distributionStatisticConfig, PauseDetector pauseDetector,
+            TimeUnit baseTimeUnit) {
+        super(id, clock, DistributionStatisticConfig.builder().percentilesHistogram(false) // avoid
+                                                                                           // a
+                                                                                           // histogram
+                                                                                           // for
+                                                                                           // percentiles/SLOs
+                                                                                           // in
+                                                                                           // the
+                                                                                           // super
+                .serviceLevelObjectives() // we will use a different implementation here
+                                          // instead
+                .build().merge(distributionStatisticConfig), pauseDetector, baseTimeUnit, false);
         this.startTimeNanos = TimeUnit.MILLISECONDS.toNanos(clock.wallTime());
         // CumulativeTimer doesn't produce monotonic histogram counts; maybe it should
-        // Also, we need to customize the histogram behavior to not return cumulative counts across buckets
+        // Also, we need to customize the histogram behavior to not return cumulative
+        // counts across buckets
         if (distributionStatisticConfig.isPublishingHistogram()) {
-            this.monotonicCountBucketHistogram = new TimeWindowFixedBoundaryHistogram(clock, DistributionStatisticConfig.builder()
-                    .expiry(Duration.ofDays(1825)) // effectively never roll over
-                    .bufferLength(1)
-                    .build()
-                    .merge(distributionStatisticConfig), true, false);
-        } else {
+            this.monotonicCountBucketHistogram = new TimeWindowFixedBoundaryHistogram(clock,
+                    DistributionStatisticConfig.builder().expiry(Duration.ofDays(1825)) // effectively
+                                                                                        // never
+                                                                                        // roll
+                                                                                        // over
+                            .bufferLength(1).build().merge(distributionStatisticConfig),
+                    true, false);
+        }
+        else {
             this.monotonicCountBucketHistogram = null;
         }
     }
@@ -69,20 +80,18 @@ class OtlpTimer extends CumulativeTimer implements StartTimeAwareMeter {
             return snapshot;
         }
 
-        return new HistogramSnapshot(snapshot.count(),
-                snapshot.total(),
-                snapshot.max(),
-                snapshot.percentileValues(),
-                histogramCounts(),
-                snapshot::outputSummary);
+        return new HistogramSnapshot(snapshot.count(), snapshot.total(), snapshot.max(), snapshot.percentileValues(),
+                histogramCounts(), snapshot::outputSummary);
     }
 
     private CountAtBucket[] histogramCounts() {
-        return this.monotonicCountBucketHistogram == null ? EMPTY_HISTOGRAM : this.monotonicCountBucketHistogram.takeSnapshot(0, 0, 0).histogramCounts();
+        return this.monotonicCountBucketHistogram == null ? EMPTY_HISTOGRAM
+                : this.monotonicCountBucketHistogram.takeSnapshot(0, 0, 0).histogramCounts();
     }
 
     @Override
     public long getStartTimeNanos() {
         return this.startTimeNanos;
     }
+
 }

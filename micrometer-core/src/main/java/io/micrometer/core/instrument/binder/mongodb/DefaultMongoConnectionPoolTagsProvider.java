@@ -29,8 +29,7 @@ public class DefaultMongoConnectionPoolTagsProvider implements MongoConnectionPo
 
     @Override
     public Iterable<Tag> connectionPoolTags(final ConnectionPoolCreatedEvent event) {
-        return Tags.of(
-                Tag.of("cluster.id", event.getServerId().getClusterId().getValue()),
+        return Tags.of(Tag.of("cluster.id", event.getServerId().getClusterId().getValue()),
                 Tag.of("server.address", event.getServerId().getAddress().toString()));
     }
 

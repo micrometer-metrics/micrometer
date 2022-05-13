@@ -15,11 +15,11 @@
  */
 package io.micrometer.datadog;
 
+import io.micrometer.common.lang.Nullable;
+import io.micrometer.common.util.StringUtils;
 import io.micrometer.core.instrument.Meter;
 import io.micrometer.core.instrument.config.NamingConvention;
 import io.micrometer.core.instrument.util.StringEscapeUtils;
-import io.micrometer.core.instrument.util.StringUtils;
-import io.micrometer.core.lang.Nullable;
 
 /**
  * {@link NamingConvention} for Datadog.
@@ -42,17 +42,19 @@ public class DatadogNamingConvention implements NamingConvention {
     }
 
     /**
-     * See: https://help.datadoghq.com/hc/en-us/articles/203764705-What-are-valid-metric-names-
+     * See:
+     * https://help.datadoghq.com/hc/en-us/articles/203764705-What-are-valid-metric-names-
      * <p>
-     * Datadog's publish API will automatically strip Unicode without replacement. It will also replace
-     * all non-alphanumeric characters with '_'.
+     * Datadog's publish API will automatically strip Unicode without replacement. It will
+     * also replace all non-alphanumeric characters with '_'.
      */
     @Override
     public String name(String name, Meter.Type type, @Nullable String baseUnit) {
-        String sanitized = StringEscapeUtils.escapeJson(delegate.name(name, type, baseUnit)
-                .replace('/', '_')); // forward slashes, even URL encoded, blow up the POST metadata API
+        // forward slashes, even URL encoded, blow up the POST metadata API
+        String sanitized = StringEscapeUtils.escapeJson(delegate.name(name, type, baseUnit).replace('/', '_'));
 
-        // Metrics that don't start with a letter get dropped on the floor by the Datadog publish API,
+        // Metrics that don't start with a letter get dropped on the floor by the Datadog
+        // publish API,
         // so we will prepend them with 'm.'.
         if (!Character.isLetter(sanitized.charAt(0))) {
             sanitized = "m." + sanitized;
@@ -61,8 +63,9 @@ public class DatadogNamingConvention implements NamingConvention {
     }
 
     /**
-     * Some set of non-alphanumeric characters will be replaced with '_', but not all (e.g. '/' is OK, but '{' is replaced).
-     * Tag keys that begin with a number show up as an empty string, so we prepend them with 'm.'.
+     * Some set of non-alphanumeric characters will be replaced with '_', but not all
+     * (e.g. '/' is OK, but '{' is replaced). Tag keys that begin with a number show up as
+     * an empty string, so we prepend them with 'm.'.
      */
     @Override
     public String tagKey(String key) {
@@ -74,11 +77,13 @@ public class DatadogNamingConvention implements NamingConvention {
     }
 
     /**
-     * Some set of non-alphanumeric characters will be replaced by Datadog automatically with '_', but not all
-     * (e.g. '/' is OK, but '{' is replaced). It is permissible for a tag value to begin with a digit.
+     * Some set of non-alphanumeric characters will be replaced by Datadog automatically
+     * with '_', but not all (e.g. '/' is OK, but '{' is replaced). It is permissible for
+     * a tag value to begin with a digit.
      */
     @Override
     public String tagValue(String value) {
         return StringEscapeUtils.escapeJson(delegate.tagValue(value));
     }
+
 }

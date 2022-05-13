@@ -71,8 +71,10 @@ public class DefaultLongTaskTimerTest {
         MockClock clock = new MockClock();
         MeterRegistry registry = new SimpleMeterRegistry(SimpleConfig.DEFAULT, clock) {
             @Override
-            protected LongTaskTimer newLongTaskTimer(Meter.Id id, DistributionStatisticConfig distributionStatisticConfig) {
-                // supportsAggregablePercentiles true for using pre-defined histogram buckets
+            protected LongTaskTimer newLongTaskTimer(Meter.Id id,
+                    DistributionStatisticConfig distributionStatisticConfig) {
+                // supportsAggregablePercentiles true for using pre-defined histogram
+                // buckets
                 return new DefaultLongTaskTimer(id, clock, getBaseTimeUnit(), distributionStatisticConfig, true);
             }
         };
@@ -94,4 +96,5 @@ public class DefaultLongTaskTimerTest {
             assertThat(countAtBuckets[index++].count()).isEqualTo(2);
         }
     }
+
 }

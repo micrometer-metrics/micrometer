@@ -16,11 +16,11 @@
 package io.micrometer.dynatrace.v1;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import io.micrometer.common.util.internal.logging.MockLogger;
+import io.micrometer.common.util.internal.logging.MockLoggerFactory;
 import io.micrometer.core.instrument.*;
 import io.micrometer.core.instrument.config.validate.ValidationException;
 import io.micrometer.core.ipc.http.HttpSender;
-import io.micrometer.core.util.internal.logging.MockLogger;
-import io.micrometer.core.util.internal.logging.MockLoggerFactory;
 import io.micrometer.dynatrace.DynatraceApiVersion;
 import io.micrometer.dynatrace.DynatraceConfig;
 import io.micrometer.dynatrace.DynatraceMeterRegistry;
@@ -37,8 +37,8 @@ import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 import java.util.stream.Stream;
 
-import static io.micrometer.core.util.internal.logging.InternalLogLevel.DEBUG;
-import static io.micrometer.core.util.internal.logging.InternalLogLevel.ERROR;
+import static io.micrometer.common.util.internal.logging.InternalLogLevel.DEBUG;
+import static io.micrometer.common.util.internal.logging.InternalLogLevel.ERROR;
 import static java.nio.charset.StandardCharsets.UTF_8;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
@@ -52,20 +52,23 @@ import static org.mockito.Mockito.when;
  * @author Johnny Lim
  */
 class DynatraceExporterV1Test {
+
     private static final MockLoggerFactory FACTORY = new MockLoggerFactory();
+
     private static final MockLogger LOGGER = FACTORY.getLogger(DynatraceExporterV1.class);
+
     private static final Double GAUGE_VALUE = 1.0;
 
     private final DynatraceConfig config = createDynatraceConfig();
+
     private final MockClock clock = new MockClock();
 
     private final HttpSender httpClient = request -> new HttpSender.Response(200, null);
+
     private final DynatraceExporterV1 exporter = FACTORY.injectLogger(() -> createExporter(httpClient));
 
-    private final DynatraceMeterRegistry meterRegistry = DynatraceMeterRegistry.builder(config)
-            .clock(clock)
-            .httpClient(httpClient)
-            .build();
+    private final DynatraceMeterRegistry meterRegistry = DynatraceMeterRegistry.builder(config).clock(clock)
+            .httpClient(httpClient).build();
 
     private final ObjectMapper mapper = new ObjectMapper();
 
@@ -151,14 +154,16 @@ class DynatraceExporterV1Test {
     }
 
     @Test
-    void putCustomMetricOnSuccessShouldAddMetricIdToCreatedCustomMetrics() throws NoSuchFieldException, IllegalAccessException {
+    void putCustomMetricOnSuccessShouldAddMetricIdToCreatedCustomMetrics()
+            throws NoSuchFieldException, IllegalAccessException {
         Field createdCustomMetricsField = DynatraceExporterV1.class.getDeclaredField("createdCustomMetrics");
         createdCustomMetricsField.setAccessible(true);
         @SuppressWarnings("unchecked")
         Set<String> createdCustomMetrics = (Set<String>) createdCustomMetricsField.get(exporter);
         assertThat(createdCustomMetrics).isEmpty();
 
-        DynatraceMetricDefinition customMetric = new DynatraceMetricDefinition("metricId", null, null, null, new String[]{"type"}, null);
+        DynatraceMetricDefinition customMetric = new DynatraceMetricDefinition("metricId", null, null, null,
+                new String[] { "type" }, null);
         exporter.putCustomMetric(customMetric);
         assertThat(createdCustomMetrics).containsExactly("metricId");
     }
@@ -192,7 +197,8 @@ class DynatraceExporterV1Test {
             Map<String, Object> map = mapper.readValue(timeSeries.asJson(), Map.class);
             List<List<Number>> dataPoints = (List<List<Number>>) map.get("dataPoints");
             assertThat(dataPoints.get(0).get(1).doubleValue()).isEqualTo(GAUGE_VALUE);
-        } catch (IOException ex) {
+        }
+        catch (IOException ex) {
             throw new RuntimeException(ex);
         }
     }
@@ -243,8 +249,7 @@ class DynatraceExporterV1Test {
         meterRegistry.gauge("my.gauge", number);
         Gauge gauge = meterRegistry.find("my.gauge").gauge();
         Stream<DynatraceCustomMetric> series = exporter.writeMeter(gauge);
-        List<DynatraceTimeSeries> timeSeries = series
-                .map(DynatraceCustomMetric::getTimeSeries)
+        List<DynatraceTimeSeries> timeSeries = series.map(DynatraceCustomMetric::getTimeSeries)
                 .collect(Collectors.toList());
         List<DynatraceBatchedPayload> entries = exporter.createPostMessages("my.type", null, timeSeries);
         assertThat(entries).hasSize(1);
@@ -254,7 +259,8 @@ class DynatraceExporterV1Test {
 
     @Test
     void whenAllTsTooLargeEmptyMessageListReturned() {
-        List<DynatraceBatchedPayload> messages = exporter.createPostMessages("my.type", null, Collections.singletonList(createTimeSeriesWithDimensions(10_000)));
+        List<DynatraceBatchedPayload> messages = exporter.createPostMessages("my.type", null,
+                Collections.singletonList(createTimeSeriesWithDimensions(10_000)));
         assertThat(messages).isEmpty();
     }
 
@@ -264,7 +270,9 @@ class DynatraceExporterV1Test {
         List<DynatraceBatchedPayload> messages = exporter.createPostMessages("my.type", "my.group",
                 // Max bytes: 15330 (excluding header/footer, 15360 with header/footer)
                 Arrays.asList(createTimeSeriesWithDimensions(750), // 14861 bytes
-                        createTimeSeriesWithDimensions(23, "asdfg"), // 469 bytes (overflows due to comma)
+                        createTimeSeriesWithDimensions(23, "asdfg"), // 469 bytes
+                                                                     // (overflows due to
+                                                                     // comma)
                         createTimeSeriesWithDimensions(750), // 14861 bytes
                         createTimeSeriesWithDimensions(22, "asd") // 468 bytes + comma
                 ));
@@ -282,7 +290,9 @@ class DynatraceExporterV1Test {
                 // Max bytes: 15330 (excluding header/footer, 15360 with header/footer)
                 Arrays.asList(createTimeSeriesWithDimensions(750), // 14861 bytes
                         createTimeSeriesWithDimensions(10, "asdf"), // 234 bytes + comma
-                        createTimeSeriesWithDimensions(10, "asdf") // 234 bytes + comma = 15331 bytes (overflow)
+                        createTimeSeriesWithDimensions(10, "asdf") // 234 bytes + comma =
+                                                                   // 15331 bytes
+                                                                   // (overflow)
                 ));
         assertThat(messages).hasSize(2);
         assertThat(messages.get(0).metricCount).isEqualTo(2);
@@ -307,7 +317,8 @@ class DynatraceExporterV1Test {
         Measurement measurement3 = new Measurement(() -> Double.NaN, Statistic.VALUE);
         Measurement measurement4 = new Measurement(() -> 1d, Statistic.VALUE);
         Measurement measurement5 = new Measurement(() -> 2d, Statistic.VALUE);
-        List<Measurement> measurements = Arrays.asList(measurement1, measurement2, measurement3, measurement4, measurement5);
+        List<Measurement> measurements = Arrays.asList(measurement1, measurement2, measurement3, measurement4,
+                measurement5);
         Meter meter = Meter.builder("my.meter", Meter.Type.GAUGE, measurements).register(this.meterRegistry);
         assertThat(exporter.writeMeter(meter)).hasSize(2);
     }
@@ -322,8 +333,7 @@ class DynatraceExporterV1Test {
 
         clock.add(config.step());
 
-        List<String> metrics = exporter.writeSummary(summary)
-                .map((metric) -> metric.getTimeSeries().asJson())
+        List<String> metrics = exporter.writeSummary(summary).map((metric) -> metric.getTimeSeries().asJson())
                 .collect(Collectors.toList());
 
         assertThat(metrics).containsExactlyInAnyOrder(
@@ -344,7 +354,8 @@ class DynatraceExporterV1Test {
 
         assertThat(LOGGER.getLogEvents()).hasSize(1);
         assertThat(LOGGER.getLogEvents().get(0).getLevel()).isSameAs(ERROR);
-        assertThat(LOGGER.getLogEvents().get(0).getMessage()).isEqualTo("failed to create custom metric custom:my.gauge in Dynatrace: Error Code=500, Response Body=simulated");
+        assertThat(LOGGER.getLogEvents().get(0).getMessage()).isEqualTo(
+                "failed to create custom metric custom:my.gauge in Dynatrace: Error Code=500, Response Body=simulated");
         assertThat(LOGGER.getLogEvents().get(0).getCause()).isNull();
     }
 
@@ -354,10 +365,8 @@ class DynatraceExporterV1Test {
         HttpSender.Request.Builder builder = HttpSender.Request.build("https://test", httpClient);
         when(httpClient.put(isA(String.class))).thenReturn(builder);
         when(httpClient.post(isA(String.class))).thenReturn(builder);
-        when(httpClient.send(isA(HttpSender.Request.class))).thenReturn(
-                new HttpSender.Response(200, null),
-                new HttpSender.Response(500, "simulated")
-        );
+        when(httpClient.send(isA(HttpSender.Request.class))).thenReturn(new HttpSender.Response(200, null),
+                new HttpSender.Response(500, "simulated"));
 
         DynatraceExporterV1 exporter = FACTORY.injectLogger(() -> createExporter(httpClient));
 
@@ -367,11 +376,13 @@ class DynatraceExporterV1Test {
 
         assertThat(LOGGER.getLogEvents()).hasSize(3);
         assertThat(LOGGER.getLogEvents().get(0).getLevel()).isSameAs(DEBUG);
-        assertThat(LOGGER.getLogEvents().get(0).getMessage()).isEqualTo("created custom:my.gauge as custom metric in Dynatrace");
+        assertThat(LOGGER.getLogEvents().get(0).getMessage())
+                .isEqualTo("created custom:my.gauge as custom metric in Dynatrace");
         assertThat(LOGGER.getLogEvents().get(0).getCause()).isNull();
 
         assertThat(LOGGER.getLogEvents().get(1).getLevel()).isSameAs(ERROR);
-        assertThat(LOGGER.getLogEvents().get(1).getMessage()).isEqualTo("failed to send metrics to Dynatrace: Error Code=500, Response Body=simulated");
+        assertThat(LOGGER.getLogEvents().get(1).getMessage())
+                .isEqualTo("failed to send metrics to Dynatrace: Error Code=500, Response Body=simulated");
         assertThat(LOGGER.getLogEvents().get(1).getCause()).isNull();
     }
 
@@ -384,7 +395,8 @@ class DynatraceExporterV1Test {
     }
 
     private DynatraceTimeSeries createTimeSeriesWithDimensions(int numberOfDimensions, String metricId) {
-        return new DynatraceTimeSeries(metricId, System.currentTimeMillis(), 1.23, createDimensionsMap(numberOfDimensions));
+        return new DynatraceTimeSeries(metricId, System.currentTimeMillis(), 1.23,
+                createDimensionsMap(numberOfDimensions));
     }
 
     private Map<String, String> createDimensionsMap(int numberOfDimensions) {
@@ -426,8 +438,10 @@ class DynatraceExporterV1Test {
         try {
             mapper.readTree(json);
             return true;
-        } catch (Exception e) {
+        }
+        catch (Exception e) {
             return false;
         }
     }
+
 }

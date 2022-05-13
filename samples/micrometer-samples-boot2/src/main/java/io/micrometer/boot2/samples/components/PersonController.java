@@ -29,7 +29,9 @@ import java.util.concurrent.TimeUnit;
 
 @RestController
 public class PersonController {
+
     private final List<String> people = Arrays.asList("mike", "suzy");
+
     private final MeterRegistry registry;
 
     public PersonController(MeterRegistry registry) {
@@ -37,11 +39,12 @@ public class PersonController {
     }
 
     @GetMapping("/api/people")
-    @Timed(percentiles = {0.5, 0.95, 0.999}, histogram = true)
+    @Timed(percentiles = { 0.5, 0.95, 0.999 }, histogram = true)
     public List<String> allPeople() {
         try {
             Thread.sleep(200);
-        } catch (InterruptedException e) {
+        }
+        catch (InterruptedException e) {
             e.printStackTrace();
         }
         return people;
@@ -51,10 +54,7 @@ public class PersonController {
     @Timed("person.requests")
     public Person person(@PathVariable String id) {
         String userType = "0".equals(id) ? "admin" : "regular";
-        Counter.builder("person.requests")
-                .tag("type", userType)
-                .register(registry)
-                .increment();
+        Counter.builder("person.requests").tag("type", userType).register(registry).increment();
 
         return new Person(id, "jon", "schneider", "USA", "MO");
     }
@@ -66,7 +66,6 @@ public class PersonController {
 
     /**
      * Fallback for {@link PersonController#allPeople()}
-     *
      * @return people
      */
     @SuppressWarnings("unused")
@@ -95,4 +94,5 @@ public class PersonController {
 
         return result;
     }
+
 }

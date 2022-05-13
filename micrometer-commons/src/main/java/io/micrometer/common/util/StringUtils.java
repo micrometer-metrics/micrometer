@@ -28,7 +28,6 @@ public final class StringUtils {
      * Check if the String is null or has only whitespaces.
      *
      * Modified from {@code org.apache.commons.lang.StringUtils#isBlank(String)}.
-     *
      * @param string String to check
      * @return {@code true} if the String is null or has only whitespaces
      */
@@ -46,7 +45,6 @@ public final class StringUtils {
 
     /**
      * Check if the String has any non-whitespace character.
-     *
      * @param string String to check
      * @return {@code true} if the String has any non-whitespace character
      */
@@ -56,7 +54,6 @@ public final class StringUtils {
 
     /**
      * Check if the String is null or empty.
-     *
      * @param string String to check
      * @return {@code true} if the String is null or empty
      */
@@ -66,7 +63,6 @@ public final class StringUtils {
 
     /**
      * Check if the String has any character.
-     *
      * @param string String to check
      * @return {@code true} if the String has any character
      * @since 1.1.0
@@ -77,7 +73,6 @@ public final class StringUtils {
 
     /**
      * Truncate the String to the max length.
-     *
      * @param string String to truncate
      * @param maxLength max length
      * @return truncated String
@@ -86,6 +81,27 @@ public final class StringUtils {
         if (string.length() > maxLength) {
             return string.substring(0, maxLength);
         }
+        return string;
+    }
+
+    /**
+     * Truncate the String to the max length and append string to indicate if truncation
+     * was applied
+     * @param string String to truncate
+     * @param maxLength max length, which includes the length required for
+     * {@code truncationIndicator}
+     * @param truncationIndicator A string that is appended if {@code string} is truncated
+     * @return truncated String
+     */
+    public static String truncate(String string, int maxLength, String truncationIndicator) {
+        if (truncationIndicator.length() >= maxLength) {
+            throw new IllegalArgumentException("maxLength must be greater than length of truncationIndicator");
+        }
+        if (string.length() > maxLength) {
+            int remainingLength = maxLength - truncationIndicator.length();
+            return string.substring(0, remainingLength) + truncationIndicator;
+        }
+
         return string;
     }
 

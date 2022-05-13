@@ -22,16 +22,20 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicLong;
 
 /**
- * For use in Dropwizard implementations of {@link io.micrometer.core.instrument.FunctionTimer}
- * and {@link io.micrometer.core.instrument.FunctionCounter}.
+ * For use in Dropwizard implementations of
+ * {@link io.micrometer.core.instrument.FunctionTimer} and
+ * {@link io.micrometer.core.instrument.FunctionCounter}.
  */
 class DropwizardRate {
+
     private static final long TICK_INTERVAL = TimeUnit.SECONDS.toNanos(5);
 
     private final AtomicLong lastTime;
 
     private final EWMA m1Rate = EWMA.oneMinuteEWMA();
+
     private final EWMA m5Rate = EWMA.fiveMinuteEWMA();
+
     private final EWMA m15Rate = EWMA.fifteenMinuteEWMA();
 
     private final Clock clock;
@@ -54,7 +58,8 @@ class DropwizardRate {
             if (lastTime.compareAndSet(oldTime, newIntervalStartTick)) {
                 final long requiredTicks = age / TICK_INTERVAL;
 
-                // divide the increment equally over the interval to arrive at a reasonable approximation
+                // divide the increment equally over the interval to arrive at a
+                // reasonable approximation
                 // of rate behavior in many cases (but not all)
                 final long updateAtEachInterval = increment / requiredTicks;
 
@@ -73,7 +78,8 @@ class DropwizardRate {
                 m5Rate.update(updateRemainder);
                 m15Rate.update(updateRemainder);
             }
-        } else {
+        }
+        else {
             m1Rate.update(increment);
             m5Rate.update(increment);
             m15Rate.update(increment);
@@ -81,8 +87,8 @@ class DropwizardRate {
     }
 
     /**
-     * Mimicks what happens inside of {@link com.codahale.metrics.Meter#mark(long)},
-     * but ticks AFTER the increment.
+     * Mimicks what happens inside of {@link com.codahale.metrics.Meter#mark(long)}, but
+     * ticks AFTER the increment.
      */
     public void increment(long n) {
         tickIfNecessary(n);
@@ -102,4 +108,5 @@ class DropwizardRate {
         tickIfNecessary(0);
         return m5Rate.getRate(TimeUnit.SECONDS);
     }
+
 }

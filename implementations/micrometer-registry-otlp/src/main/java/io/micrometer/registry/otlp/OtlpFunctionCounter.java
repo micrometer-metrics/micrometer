@@ -34,4 +34,5 @@ class OtlpFunctionCounter<T> extends CumulativeFunctionCounter<T> implements Sta
     public long getStartTimeNanos() {
         return this.startTimeNanos;
     }
+
 }

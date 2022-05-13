@@ -15,20 +15,20 @@
  */
 package io.micrometer.observation;
 
-
 import java.util.Collection;
 import java.util.Collections;
 
 /**
- * No-op implementation of {@link ObservationRegistry.ObservationConfig} so that we can disable the instrumentation logic.
+ * No-op implementation of {@link ObservationRegistry.ObservationConfig} so that we can
+ * disable the instrumentation logic.
  *
  * @author Jonatan Ivanov
  * @author Tommy Ludwig
  * @author Marcin Grzejszczak
- *
  * @since 1.10.0
  */
 final class NoopObservationConfig extends ObservationRegistry.ObservationConfig {
+
     /**
      * Instance of {@link NoopObservationConfig}.
      */
@@ -48,7 +48,8 @@ final class NoopObservationConfig extends ObservationRegistry.ObservationConfig 
     }
 
     @Override
-    public ObservationRegistry.ObservationConfig keyValuesProvider(Observation.GlobalKeyValuesProvider<?> keyValuesProvider) {
+    public ObservationRegistry.ObservationConfig keyValuesProvider(
+            Observation.GlobalKeyValuesProvider<?> keyValuesProvider) {
         return this;
     }
 
@@ -66,4 +67,5 @@ final class NoopObservationConfig extends ObservationRegistry.ObservationConfig 
     Collection<Observation.GlobalKeyValuesProvider<?>> getKeyValuesProviders() {
         return Collections.emptyList();
     }
+
 }

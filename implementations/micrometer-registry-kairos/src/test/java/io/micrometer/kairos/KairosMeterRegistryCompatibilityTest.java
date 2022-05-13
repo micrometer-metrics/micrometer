@@ -15,9 +15,9 @@
  */
 package io.micrometer.kairos;
 
+import io.micrometer.common.lang.Nullable;
 import io.micrometer.core.instrument.MeterRegistry;
 import io.micrometer.core.instrument.MockClock;
-import io.micrometer.core.lang.Nullable;
 import io.micrometer.core.tck.MeterRegistryCompatibilityKit;
 
 import java.time.Duration;
@@ -26,6 +26,7 @@ import java.time.Duration;
  * @author Anton Ilinchik
  */
 class KairosMeterRegistryCompatibilityTest extends MeterRegistryCompatibilityKit {
+
     @Override
     public MeterRegistry registry() {
         return new KairosMeterRegistry(new KairosConfig() {
@@ -46,4 +47,5 @@ class KairosMeterRegistryCompatibilityTest extends MeterRegistryCompatibilityKit
     public Duration step() {
         return KairosConfig.DEFAULT.step();
     }
+
 }

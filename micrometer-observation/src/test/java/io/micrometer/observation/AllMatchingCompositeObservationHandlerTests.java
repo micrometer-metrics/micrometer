@@ -15,12 +15,12 @@
  */
 package io.micrometer.observation;
 
-import java.util.Arrays;
-import java.util.List;
-
 import io.micrometer.observation.ObservationHandler.AllMatchingCompositeObservationHandler;
 import org.assertj.core.api.Assertions;
 import org.junit.jupiter.api.Test;
+
+import java.util.Arrays;
+import java.util.List;
 
 class AllMatchingCompositeObservationHandlerTests {
 
@@ -92,8 +92,10 @@ class AllMatchingCompositeObservationHandlerTests {
 
     @Test
     void should_return_handlers() {
-        List<ObservationHandler<Observation.Context>> handlers = Arrays.asList(new NotMatchingHandler(), this.matchingHandler, new NotMatchingHandler(), this.matchingHandler2);
-        AllMatchingCompositeObservationHandler allMatchingHandler = new AllMatchingCompositeObservationHandler(handlers);
+        List<ObservationHandler<Observation.Context>> handlers = Arrays.asList(new NotMatchingHandler(),
+                this.matchingHandler, new NotMatchingHandler(), this.matchingHandler2);
+        AllMatchingCompositeObservationHandler allMatchingHandler = new AllMatchingCompositeObservationHandler(
+                handlers);
         Assertions.assertThat(allMatchingHandler.getHandlers()).isSameAs(handlers);
     }
 
@@ -108,7 +110,6 @@ class AllMatchingCompositeObservationHandlerTests {
         boolean scopeOpened;
 
         boolean scopeClosed;
-
 
         @Override
         public void onStart(Observation.Context context) {
@@ -139,6 +140,7 @@ class AllMatchingCompositeObservationHandlerTests {
         public boolean supportsContext(Observation.Context context) {
             return true;
         }
+
     }
 
     static class NotMatchingHandler implements ObservationHandler<Observation.Context> {

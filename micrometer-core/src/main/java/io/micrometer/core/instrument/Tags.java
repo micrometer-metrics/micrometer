@@ -15,7 +15,7 @@
  */
 package io.micrometer.core.instrument;
 
-import io.micrometer.core.lang.Nullable;
+import io.micrometer.common.lang.Nullable;
 
 import java.util.*;
 import java.util.stream.Stream;
@@ -24,7 +24,8 @@ import java.util.stream.StreamSupport;
 import static java.util.stream.Collectors.joining;
 
 /**
- * An immutable collection of {@link Tag Tags} that are guaranteed to be sorted and deduplicated by tag key.
+ * An immutable collection of {@link Tag Tags} that are guaranteed to be sorted and
+ * deduplicated by tag key.
  *
  * @author Jon Schneider
  * @author Maciej Walkowiak
@@ -33,9 +34,10 @@ import static java.util.stream.Collectors.joining;
  */
 public final class Tags implements Iterable<Tag> {
 
-    private static final Tags EMPTY = new Tags(new Tag[]{});
+    private static final Tags EMPTY = new Tags(new Tag[] {});
 
     private final Tag[] tags;
+
     private int last;
 
     private Tags(Tag[] tags) {
@@ -64,9 +66,9 @@ public final class Tags implements Iterable<Tag> {
     }
 
     /**
-     * Return a new {@code Tags} instance by merging this collection and the specified key/value pair.
-     *
-     * @param key   the tag key to add
+     * Return a new {@code Tags} instance by merging this collection and the specified
+     * key/value pair.
+     * @param key the tag key to add
      * @param value the tag value to add
      * @return a new {@code Tags} instance
      */
@@ -75,8 +77,8 @@ public final class Tags implements Iterable<Tag> {
     }
 
     /**
-     * Return a new {@code Tags} instance by merging this collection and the specified key/value pairs.
-     *
+     * Return a new {@code Tags} instance by merging this collection and the specified
+     * key/value pairs.
      * @param keyValues the key/value pairs to add
      * @return a new {@code Tags} instance
      */
@@ -88,8 +90,8 @@ public final class Tags implements Iterable<Tag> {
     }
 
     /**
-     * Return a new {@code Tags} instance by merging this collection and the specified tags.
-     *
+     * Return a new {@code Tags} instance by merging this collection and the specified
+     * tags.
      * @param tags the tags to add
      * @return a new {@code Tags} instance
      */
@@ -104,8 +106,8 @@ public final class Tags implements Iterable<Tag> {
     }
 
     /**
-     * Return a new {@code Tags} instance by merging this collection and the specified tags.
-     *
+     * Return a new {@code Tags} instance by merging this collection and the specified
+     * tags.
      * @param tags the tags to add
      * @return a new {@code Tags} instance
      */
@@ -127,6 +129,7 @@ public final class Tags implements Iterable<Tag> {
     }
 
     private class ArrayIterator implements Iterator<Tag> {
+
         private int currentIndex = 0;
 
         @Override
@@ -143,11 +146,11 @@ public final class Tags implements Iterable<Tag> {
         public void remove() {
             throw new UnsupportedOperationException("cannot remove items from tags");
         }
+
     }
 
     /**
      * Return a stream of the contained tags.
-     *
      * @return a tags stream
      */
     public Stream<Tag> stream() {
@@ -185,9 +188,9 @@ public final class Tags implements Iterable<Tag> {
     }
 
     /**
-     * Return a new {@code Tags} instance by concatenating the specified collections of tags.
-     *
-     * @param tags      the first set of tags
+     * Return a new {@code Tags} instance by concatenating the specified collections of
+     * tags.
+     * @param tags the first set of tags
      * @param otherTags the second set of tags
      * @return the merged tags
      */
@@ -196,9 +199,9 @@ public final class Tags implements Iterable<Tag> {
     }
 
     /**
-     * Return a new {@code Tags} instance by concatenating the specified tags and key/value pairs.
-     *
-     * @param tags      the first set of tags
+     * Return a new {@code Tags} instance by concatenating the specified tags and
+     * key/value pairs.
+     * @param tags the first set of tags
      * @param keyValues the additional key/value pairs to add
      * @return the merged tags
      */
@@ -207,38 +210,41 @@ public final class Tags implements Iterable<Tag> {
     }
 
     /**
-     * Return a new {@code Tags} instance containing tags constructed from the specified source tags.
-     *
+     * Return a new {@code Tags} instance containing tags constructed from the specified
+     * source tags.
      * @param tags the tags to add
      * @return a new {@code Tags} instance
      */
     public static Tags of(@Nullable Iterable<? extends Tag> tags) {
         if (tags == null || !tags.iterator().hasNext()) {
             return Tags.empty();
-        } else if (tags instanceof Tags) {
+        }
+        else if (tags instanceof Tags) {
             return (Tags) tags;
-        } else if (tags instanceof Collection) {
+        }
+        else if (tags instanceof Collection) {
             Collection<? extends Tag> tagsCollection = (Collection<? extends Tag>) tags;
             return new Tags(tagsCollection.toArray(new Tag[0]));
-        } else {
+        }
+        else {
             return new Tags(StreamSupport.stream(tags.spliterator(), false).toArray(Tag[]::new));
         }
     }
 
     /**
-     * Return a new {@code Tags} instance containing tags constructed from the specified key/value pair.
-     *
-     * @param key   the tag key to add
+     * Return a new {@code Tags} instance containing tags constructed from the specified
+     * key/value pair.
+     * @param key the tag key to add
      * @param value the tag value to add
      * @return a new {@code Tags} instance
      */
     public static Tags of(String key, String value) {
-        return new Tags(new Tag[]{Tag.of(key, value)});
+        return new Tags(new Tag[] { Tag.of(key, value) });
     }
 
     /**
-     * Return a new {@code Tags} instance containing tags constructed from the specified key/value pairs.
-     *
+     * Return a new {@code Tags} instance containing tags constructed from the specified
+     * key/value pairs.
      * @param keyValues the key/value pairs to add
      * @return a new {@code Tags} instance
      */
@@ -257,8 +263,8 @@ public final class Tags implements Iterable<Tag> {
     }
 
     /**
-     * Return a new {@code Tags} instance containing tags constructed from the specified tags.
-     *
+     * Return a new {@code Tags} instance containing tags constructed from the specified
+     * tags.
      * @param tags the tags to add
      * @return a new {@code Tags} instance
      */
@@ -268,7 +274,6 @@ public final class Tags implements Iterable<Tag> {
 
     /**
      * Return a {@code Tags} instance that contains no elements.
-     *
      * @return an empty {@code Tags} instance
      */
     public static Tags empty() {
@@ -279,4 +284,5 @@ public final class Tags implements Iterable<Tag> {
     public String toString() {
         return stream().map(Tag::toString).collect(joining(",", "[", "]"));
     }
+
 }

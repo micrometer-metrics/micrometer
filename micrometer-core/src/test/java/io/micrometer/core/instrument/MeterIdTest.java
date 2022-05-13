@@ -26,6 +26,7 @@ import static org.assertj.core.api.Assertions.assertThat;
  * @author Johnny Lim
  */
 class MeterIdTest {
+
     @Test
     void withStatistic() {
         Meter.Id id = new Meter.Id("my.id", Tags.empty(), null, null, Meter.Type.TIMER);
@@ -54,4 +55,5 @@ class MeterIdTest {
         Meter.Id newId = id.replaceTags(Tags.of("k1", "n1", "k", "n"));
         assertThat(newId.getTags()).containsExactlyElementsOf(Tags.of("k1", "n1", "k", "n"));
     }
+
 }

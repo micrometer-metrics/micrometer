@@ -22,7 +22,8 @@ import java.util.HashMap;
 import java.util.Map;
 
 /**
- * Converts known meter names from Micrometer's preferred name to Prometheus' preferred name.
+ * Converts known meter names from Micrometer's preferred name to Prometheus' preferred
+ * name.
  *
  * @author Tommy Ludwig
  */
@@ -40,4 +41,5 @@ public class PrometheusRenameFilter implements MeterFilter {
         String convertedName = MICROMETER_TO_PROMETHEUS_NAMES.get(id.getName());
         return convertedName == null ? id : id.withName(convertedName);
     }
+
 }

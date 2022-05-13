@@ -26,4 +26,5 @@ import java.lang.annotation.Target;
 @Retention(RetentionPolicy.RUNTIME)
 @Tag("gc")
 public @interface GcTest {
+
 }

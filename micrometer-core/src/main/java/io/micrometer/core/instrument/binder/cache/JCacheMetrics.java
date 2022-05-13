@@ -15,14 +15,14 @@
  */
 package io.micrometer.core.instrument.binder.cache;
 
+import io.micrometer.common.lang.NonNullApi;
+import io.micrometer.common.lang.NonNullFields;
+import io.micrometer.common.lang.Nullable;
 import io.micrometer.core.instrument.Gauge;
 import io.micrometer.core.instrument.MeterRegistry;
 import io.micrometer.core.instrument.Tag;
 import io.micrometer.core.instrument.Tags;
 import io.micrometer.core.instrument.config.InvalidConfigurationException;
-import io.micrometer.core.lang.NonNullApi;
-import io.micrometer.core.lang.NonNullFields;
-import io.micrometer.core.lang.Nullable;
 
 import javax.cache.Cache;
 import javax.cache.CacheManager;
@@ -30,31 +30,34 @@ import javax.management.*;
 import java.util.List;
 
 /**
- * Collect metrics on JSR-107 JCache caches, including detailed metrics on manual puts and removals.
- * See https://github.com/jsr107/demo/blob/master/src/test/java/javax/cache/core/StatisticsExample.java
+ * Collect metrics on JSR-107 JCache caches, including detailed metrics on manual puts and
+ * removals. See
+ * https://github.com/jsr107/demo/blob/master/src/test/java/javax/cache/core/StatisticsExample.java
  * <p>
- * Note that JSR-107 does not provide any insight into the size or estimated size of the cache, so
- * the size metric of a JCache cache will always report 0.
+ * Note that JSR-107 does not provide any insight into the size or estimated size of the
+ * cache, so the size metric of a JCache cache will always report 0.
  *
  * @author Jon Schneider
  */
 @NonNullApi
 @NonNullFields
 public class JCacheMetrics<K, V, C extends Cache<K, V>> extends CacheMeterBinder<C> {
+
     // VisibleForTesting
     @Nullable
     ObjectName objectName;
 
     /**
      * Record metrics on a JCache cache.
-     *
      * @param registry The registry to bind metrics to.
-     * @param cache    The cache to instrument.
-     * @param tags     Tags to apply to all recorded metrics. Must be an even number of arguments representing key/value pairs of tags.
-     * @param <C>      The cache type.
-     * @param <K>      The cache key type.
-     * @param <V>      The cache value type.
-     * @return The instrumented cache, unchanged. The original cache is not wrapped or proxied in any way.
+     * @param cache The cache to instrument.
+     * @param tags Tags to apply to all recorded metrics. Must be an even number of
+     * arguments representing key/value pairs of tags.
+     * @param <C> The cache type.
+     * @param <K> The cache key type.
+     * @param <V> The cache value type.
+     * @return The instrumented cache, unchanged. The original cache is not wrapped or
+     * proxied in any way.
      */
     public static <K, V, C extends Cache<K, V>> C monitor(MeterRegistry registry, C cache, String... tags) {
         return monitor(registry, cache, Tags.of(tags));
@@ -62,14 +65,14 @@ public class JCacheMetrics<K, V, C extends Cache<K, V>> extends CacheMeterBinder
 
     /**
      * Record metrics on a JCache cache.
-     *
      * @param registry The registry to bind metrics to.
-     * @param cache    The cache to instrument.
-     * @param tags     Tags to apply to all recorded metrics.
-     * @param <C>      The cache type.
-     * @param <K>      The cache key type.
-     * @param <V>      The cache value type.
-     * @return The instrumented cache, unchanged. The original cache is not wrapped or proxied in any way.
+     * @param cache The cache to instrument.
+     * @param tags Tags to apply to all recorded metrics.
+     * @param <C> The cache type.
+     * @param <K> The cache key type.
+     * @param <V> The cache value type.
+     * @return The instrumented cache, unchanged. The original cache is not wrapped or
+     * proxied in any way.
      */
     public static <K, V, C extends Cache<K, V>> C monitor(MeterRegistry registry, C cache, Iterable<Tag> tags) {
         new JCacheMetrics<>(cache, tags).bindTo(registry);
@@ -81,15 +84,20 @@ public class JCacheMetrics<K, V, C extends Cache<K, V>> extends CacheMeterBinder
         try {
             CacheManager cacheManager = cache.getCacheManager();
             if (cacheManager != null) {
-                String cacheManagerUri = cacheManager.getURI().toString()
-                        .replace(':', '.'); // ehcache's uri is prefixed with 'urn:'
+                String cacheManagerUri = cacheManager.getURI().toString().replace(':', '.'); // ehcache's
+                                                                                             // uri
+                                                                                             // is
+                                                                                             // prefixed
+                                                                                             // with
+                                                                                             // 'urn:'
 
-                this.objectName = new ObjectName("javax.cache:type=CacheStatistics"
-                        + ",CacheManager=" + cacheManagerUri
+                this.objectName = new ObjectName("javax.cache:type=CacheStatistics" + ",CacheManager=" + cacheManagerUri
                         + ",Cache=" + cache.getName());
             }
-        } catch (MalformedObjectNameException ignored) {
-            throw new InvalidConfigurationException("Cache name '" + cache.getName() + "' results in an invalid JMX name");
+        }
+        catch (MalformedObjectNameException ignored) {
+            throw new InvalidConfigurationException(
+                    "Cache name '" + cache.getName() + "' results in an invalid JMX name");
         }
     }
 
@@ -123,9 +131,7 @@ public class JCacheMetrics<K, V, C extends Cache<K, V>> extends CacheMeterBinder
     protected void bindImplementationSpecificMetrics(MeterRegistry registry) {
         if (objectName != null) {
             Gauge.builder("cache.removals", objectName, objectName -> lookupStatistic("CacheRemovals"))
-                    .tags(getTagsWithCacheName())
-                    .description("Cache removals")
-                    .register(registry);
+                    .tags(getTagsWithCacheName()).description("Cache removals").register(registry);
         }
     }
 
@@ -136,11 +142,13 @@ public class JCacheMetrics<K, V, C extends Cache<K, V>> extends CacheMeterBinder
                 for (MBeanServer mBeanServer : mBeanServers) {
                     try {
                         return (Long) mBeanServer.getAttribute(objectName, name);
-                    } catch (AttributeNotFoundException | InstanceNotFoundException ex) {
+                    }
+                    catch (AttributeNotFoundException | InstanceNotFoundException ex) {
                         // did not find MBean, try the next server
                     }
                 }
-            } catch (MBeanException | ReflectionException ex) {
+            }
+            catch (MBeanException | ReflectionException ex) {
                 throw new IllegalStateException(ex);
             }
         }
@@ -148,4 +156,5 @@ public class JCacheMetrics<K, V, C extends Cache<K, V>> extends CacheMeterBinder
         // didn't find the MBean in any servers
         return 0L;
     }
+
 }

@@ -16,11 +16,13 @@
 package io.micrometer.core.instrument;
 
 /**
- * Key/value pair representing a dimension of a meter used to classify and drill into measurements.
+ * Key/value pair representing a dimension of a meter used to classify and drill into
+ * measurements.
  *
  * @author Jon Schneider
  */
 public interface Tag extends Comparable<Tag> {
+
     String getKey();
 
     String getValue();
@@ -33,4 +35,5 @@ public interface Tag extends Comparable<Tag> {
     default int compareTo(Tag o) {
         return getKey().compareTo(o.getKey());
     }
+
 }

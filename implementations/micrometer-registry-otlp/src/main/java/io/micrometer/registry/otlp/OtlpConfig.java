@@ -18,8 +18,12 @@ package io.micrometer.registry.otlp;
 import io.micrometer.core.instrument.config.validate.Validated;
 import io.micrometer.core.instrument.push.PushRegistryConfig;
 
-import static io.micrometer.core.instrument.config.MeterRegistryConfigValidator.checkAll;
-import static io.micrometer.core.instrument.config.MeterRegistryConfigValidator.checkRequired;
+import java.util.Arrays;
+import java.util.Map;
+import java.util.stream.Collectors;
+
+import static io.micrometer.core.instrument.config.MeterRegistryConfigValidator.*;
+import static io.micrometer.core.instrument.config.validate.PropertyValidator.getString;
 import static io.micrometer.core.instrument.config.validate.PropertyValidator.getUrlString;
 
 /**
@@ -48,11 +52,44 @@ public interface OtlpConfig extends PushRegistryConfig {
         return getUrlString(this, "url").orElse("http://localhost:4318/v1/metrics");
     }
 
+    /**
+     * Attributes to set on the Resource that will be used for all metrics published. This
+     * should include a {@code service.name} attribute that identifies your service.
+     * <p>
+     * By default, resource attributes will load using the {@link #get(String)} method,
+     * extracting key values from a comma-separated list in the format
+     * {@code key1=value1,key2=value2}. Resource attributes will be loaded from the
+     * {@code OTEL_RESOURCE_ATTRIBUTES} environment variable and the service name from the
+     * {@code OTEL_SERVICE_NAME} environment variable if they are set and
+     * {@link #get(String)} does not return a value.
+     * @return map of key value pairs to use as resource attributes
+     * @see <a href=
+     * "https://opentelemetry.io/docs/reference/specification/resource/semantic_conventions/#service">OpenTelemetry
+     * Resource Semantic Conventions</a>
+     */
+    default Map<String, String> resourceAttributes() {
+        Map<String, String> env = System.getenv();
+        String resourceAttributesConfig = getString(this, "resourceAttributes")
+                .orElse(env.get("OTEL_RESOURCE_ATTRIBUTES"));
+        String[] splitResourceAttributesString = resourceAttributesConfig == null ? new String[] {}
+                : resourceAttributesConfig.trim().split(",");
+
+        Map<String, String> resourceAttributes = Arrays.stream(splitResourceAttributesString).map(String::trim)
+                .filter(keyvalue -> keyvalue.length() > 2 && keyvalue.indexOf('=') > 0)
+                .collect(Collectors.toMap(keyvalue -> keyvalue.substring(0, keyvalue.indexOf('=')).trim(),
+                        keyvalue -> keyvalue.substring(keyvalue.indexOf('=') + 1).trim()));
+
+        if (env.containsKey("OTEL_SERVICE_NAME") && !resourceAttributes.containsKey("service.name")) {
+            resourceAttributes.put("service.name", env.get("OTEL_SERVICE_NAME"));
+        }
+
+        return resourceAttributes;
+    }
+
     @Override
     default Validated<?> validate() {
-        return checkAll(this,
-                c -> PushRegistryConfig.validate(c),
-                checkRequired("url", OtlpConfig::url)
-        );
+        return checkAll(this, c -> PushRegistryConfig.validate(c), checkRequired("url", OtlpConfig::url),
+                check("resourceAttributes", OtlpConfig::resourceAttributes));
     }
+
 }

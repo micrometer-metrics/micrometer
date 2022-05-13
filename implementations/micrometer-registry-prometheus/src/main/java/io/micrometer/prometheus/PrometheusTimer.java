@@ -15,13 +15,13 @@
  */
 package io.micrometer.prometheus;
 
+import io.micrometer.common.lang.Nullable;
 import io.micrometer.core.instrument.AbstractTimer;
 import io.micrometer.core.instrument.Clock;
 import io.micrometer.core.instrument.Timer;
 import io.micrometer.core.instrument.distribution.*;
 import io.micrometer.core.instrument.distribution.pause.PauseDetector;
 import io.micrometer.core.instrument.util.TimeUtils;
-import io.micrometer.core.lang.Nullable;
 import io.prometheus.client.exemplars.Exemplar;
 import io.prometheus.client.exemplars.HistogramExemplarSampler;
 
@@ -35,41 +35,45 @@ import java.util.concurrent.atomic.LongAdder;
  * @author Jonatan Ivanov
  */
 public class PrometheusTimer extends AbstractTimer {
+
     private static final CountAtBucket[] EMPTY_HISTOGRAM = new CountAtBucket[0];
 
     private final LongAdder count = new LongAdder();
+
     private final LongAdder totalTime = new LongAdder();
+
     private final TimeWindowMax max;
 
     private final HistogramFlavor histogramFlavor;
-    @Nullable private final Histogram histogram;
+
+    @Nullable
+    private final Histogram histogram;
+
     private boolean exemplarsEnabled = false;
 
-    PrometheusTimer(Id id, Clock clock, DistributionStatisticConfig distributionStatisticConfig, PauseDetector pauseDetector, HistogramFlavor histogramFlavor, @Nullable HistogramExemplarSampler exemplarSampler) {
-        super(id, clock,
-                DistributionStatisticConfig.builder()
-                        .percentilesHistogram(false)
-                        .serviceLevelObjectives()
-                        .build()
-                        .merge(distributionStatisticConfig),
-                pauseDetector, TimeUnit.SECONDS, false);
+    PrometheusTimer(Id id, Clock clock, DistributionStatisticConfig distributionStatisticConfig,
+            PauseDetector pauseDetector, HistogramFlavor histogramFlavor,
+            @Nullable HistogramExemplarSampler exemplarSampler) {
+        super(id, clock, DistributionStatisticConfig.builder().percentilesHistogram(false).serviceLevelObjectives()
+                .build().merge(distributionStatisticConfig), pauseDetector, TimeUnit.SECONDS, false);
 
         this.histogramFlavor = histogramFlavor;
         this.max = new TimeWindowMax(clock, distributionStatisticConfig);
 
         if (distributionStatisticConfig.isPublishingHistogram()) {
             switch (histogramFlavor) {
-                case Prometheus:
-                    PrometheusHistogram prometheusHistogram = new PrometheusHistogram(clock, distributionStatisticConfig, exemplarSampler);
-                    this.histogram = prometheusHistogram;
-                    this.exemplarsEnabled = prometheusHistogram.isExemplarsEnabled();
-                    break;
-                case VictoriaMetrics:
-                    this.histogram = new FixedBoundaryVictoriaMetricsHistogram();
-                    break;
-                default:
-                    this.histogram = null;
-                    break;
+            case Prometheus:
+                PrometheusHistogram prometheusHistogram = new PrometheusHistogram(clock, distributionStatisticConfig,
+                        exemplarSampler);
+                this.histogram = prometheusHistogram;
+                this.exemplarsEnabled = prometheusHistogram.isExemplarsEnabled();
+                break;
+            case VictoriaMetrics:
+                this.histogram = new FixedBoundaryVictoriaMetricsHistogram();
+                break;
+            default:
+                this.histogram = null;
+                break;
             }
         }
         else {
@@ -89,7 +93,8 @@ public class PrometheusTimer extends AbstractTimer {
         }
     }
 
-    @Nullable Exemplar[] exemplars() {
+    @Nullable
+    Exemplar[] exemplars() {
         if (exemplarsEnabled) {
             return ((PrometheusHistogram) histogram).exemplars();
         }
@@ -118,9 +123,9 @@ public class PrometheusTimer extends AbstractTimer {
     }
 
     /**
-     * For Prometheus we cannot use the histogram counts from HistogramSnapshot, as it is based on a
-     * rolling histogram. Prometheus requires a histogram that accumulates values over the lifetime of the app.
-     *
+     * For Prometheus we cannot use the histogram counts from HistogramSnapshot, as it is
+     * based on a rolling histogram. Prometheus requires a histogram that accumulates
+     * values over the lifetime of the app.
      * @return Cumulative histogram buckets.
      */
     public CountAtBucket[] histogramCounts() {
@@ -135,11 +140,8 @@ public class PrometheusTimer extends AbstractTimer {
             return snapshot;
         }
 
-        return new HistogramSnapshot(snapshot.count(),
-                snapshot.total(),
-                snapshot.max(),
-                snapshot.percentileValues(),
-                histogramCounts(),
-                snapshot::outputSummary);
+        return new HistogramSnapshot(snapshot.count(), snapshot.total(), snapshot.max(), snapshot.percentileValues(),
+                histogramCounts(), snapshot::outputSummary);
     }
+
 }

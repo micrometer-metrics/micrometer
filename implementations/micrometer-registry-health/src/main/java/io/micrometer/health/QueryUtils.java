@@ -23,10 +23,12 @@ import java.util.function.BinaryOperator;
  * @author Jon Schneider
  */
 class QueryUtils {
+
     static final BinaryOperator<Double> SUM_OR_NAN = (v1, v2) -> {
         if (Double.isNaN(v1)) {
             return v2;
-        } else if (Double.isNaN(v2)) {
+        }
+        else if (Double.isNaN(v2)) {
             return v1;
         }
         return v1 + v2;
@@ -35,7 +37,8 @@ class QueryUtils {
     static final BinaryOperator<Double> MAX_OR_NAN = (v1, v2) -> {
         if (Double.isNaN(v1)) {
             return v2;
-        } else if (Double.isNaN(v2)) {
+        }
+        else if (Double.isNaN(v2)) {
             return v1;
         }
         return Math.max(v1, v2);
@@ -43,4 +46,5 @@ class QueryUtils {
 
     private QueryUtils() {
     }
+
 }

@@ -23,7 +23,9 @@ import org.springframework.scheduling.annotation.EnableScheduling;
 @SpringBootApplication(scanBasePackageClasses = PersonController.class)
 @EnableScheduling
 public class StatsdTelegrafSample {
+
     public static void main(String[] args) {
         new SpringApplicationBuilder(StatsdTelegrafSample.class).profiles("statsd-telegraf").run(args);
     }
+
 }

@@ -15,33 +15,42 @@
  */
 package io.micrometer.stackdriver;
 
-import java.util.regex.Pattern;
-
+import io.micrometer.common.lang.Nullable;
+import io.micrometer.common.util.StringUtils;
 import io.micrometer.core.instrument.Meter;
 import io.micrometer.core.instrument.config.NamingConvention;
-import io.micrometer.core.instrument.util.StringUtils;
-import io.micrometer.core.lang.Nullable;
+
+import java.util.regex.Pattern;
 
 /**
  * {@link NamingConvention} for Stackdriver.
- * 
- * Names are mapped to Stackdriver's metric type names and tag keys are mapped to its metric label names.
  *
+ * Names are mapped to Stackdriver's metric type names and tag keys are mapped to its
+ * metric label names.
  *
- * @see <a href="https://cloud.google.com/monitoring/api/v3/metrics-details">"Naming rules" section on Stackdriver's reference documentation</a>
- * @see <a href="https://cloud.google.com/monitoring/quotas#custom_metrics_quotas">"Custom Metrics" on the Stackdriver's Quotas and limits reference documentation</a>
- * 
+ * @see <a href=
+ * "https://cloud.google.com/monitoring/api/v3/metrics-details">"Naming rules" section on
+ * Stackdriver's reference documentation</a>
+ * @see <a href=
+ * "https://cloud.google.com/monitoring/quotas#custom_metrics_quotas">"Custom Metrics" on
+ * the Stackdriver's Quotas and limits reference documentation</a>
  * @author Jon Schneider
  * @since 1.1.0
  */
 public class StackdriverNamingConvention implements NamingConvention {
 
     private static final int MAX_NAME_LENGTH = 200;
+
     private static final int MAX_TAG_KEY_LENGTH = 100;
+
     private static final int MAX_TAG_VALUE_LENGTH = 1024;
+
     private static final Pattern NAME_BLACKLIST = Pattern.compile("[^\\w./_]");
+
     private static final Pattern TAG_KEY_BLACKLIST = Pattern.compile("[^\\w_]");
+
     private final NamingConvention nameDelegate;
+
     private final NamingConvention tagKeyDelegate;
 
     public StackdriverNamingConvention() {
@@ -71,4 +80,5 @@ public class StackdriverNamingConvention implements NamingConvention {
     public String tagValue(String value) {
         return StringUtils.truncate(value, MAX_TAG_VALUE_LENGTH);
     }
+
 }

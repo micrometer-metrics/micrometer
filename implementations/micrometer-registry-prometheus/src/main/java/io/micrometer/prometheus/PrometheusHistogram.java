@@ -16,43 +16,45 @@
 
 package io.micrometer.prometheus;
 
-import java.time.Duration;
-import java.util.Arrays;
-import java.util.concurrent.TimeUnit;
-import java.util.concurrent.atomic.AtomicReferenceArray;
-
+import io.micrometer.common.lang.Nullable;
 import io.micrometer.core.instrument.Clock;
 import io.micrometer.core.instrument.distribution.DistributionStatisticConfig;
 import io.micrometer.core.instrument.distribution.Histogram;
 import io.micrometer.core.instrument.distribution.TimeWindowFixedBoundaryHistogram;
 import io.micrometer.core.instrument.util.TimeUtils;
-import io.micrometer.core.lang.Nullable;
 import io.prometheus.client.exemplars.Exemplar;
 import io.prometheus.client.exemplars.HistogramExemplarSampler;
+
+import java.time.Duration;
+import java.util.Arrays;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicReferenceArray;
 
 import static java.util.concurrent.TimeUnit.NANOSECONDS;
 import static java.util.concurrent.TimeUnit.SECONDS;
 
 /**
- * Internal {@link Histogram} implementation for Prometheus that handles {@link Exemplar exemplars}.
+ * Internal {@link Histogram} implementation for Prometheus that handles {@link Exemplar
+ * exemplars}.
  *
  * @author Jonatan Ivanov
  */
 class PrometheusHistogram extends TimeWindowFixedBoundaryHistogram {
-    private final double[] buckets;
-    private final AtomicReferenceArray<Exemplar> exemplars;
-    @Nullable private final HistogramExemplarSampler exemplarSampler;
 
-    PrometheusHistogram(Clock clock, DistributionStatisticConfig config, @Nullable HistogramExemplarSampler exemplarSampler) {
-        super(
-                clock,
-                DistributionStatisticConfig.builder()
-                        .expiry(Duration.ofDays(1825)) // effectively never roll over
-                        .bufferLength(1)
-                        .build()
-                        .merge(config),
-                true
-        );
+    private final double[] buckets;
+
+    private final AtomicReferenceArray<Exemplar> exemplars;
+
+    @Nullable
+    private final HistogramExemplarSampler exemplarSampler;
+
+    PrometheusHistogram(Clock clock, DistributionStatisticConfig config,
+            @Nullable HistogramExemplarSampler exemplarSampler) {
+        super(clock, DistributionStatisticConfig.builder().expiry(Duration.ofDays(1825)) // effectively
+                                                                                         // never
+                                                                                         // roll
+                                                                                         // over
+                .bufferLength(1).build().merge(config), true);
 
         this.exemplarSampler = exemplarSampler;
         if (isExemplarsEnabled()) {
@@ -98,13 +100,15 @@ class PrometheusHistogram extends TimeWindowFixedBoundaryHistogram {
         updateExemplar(value, sourceUnit, destinationUnit, index);
     }
 
-    private void updateExemplar(double value, @Nullable TimeUnit sourceUnit, @Nullable TimeUnit destinationUnit, int index) {
+    private void updateExemplar(double value, @Nullable TimeUnit sourceUnit, @Nullable TimeUnit destinationUnit,
+            int index) {
         double bucketFrom = (index == 0) ? Double.NEGATIVE_INFINITY : buckets[index - 1];
         double bucketTo = buckets[index];
         Exemplar prev;
         Exemplar next;
 
-        double exemplarValue = (sourceUnit != null && destinationUnit != null) ? TimeUtils.convert(value, sourceUnit, destinationUnit) : value;
+        double exemplarValue = (sourceUnit != null && destinationUnit != null)
+                ? TimeUtils.convert(value, sourceUnit, destinationUnit) : value;
         do {
             prev = exemplars.get(index);
             next = exemplarSampler.sample(exemplarValue, bucketFrom, bucketTo, prev);
@@ -112,7 +116,8 @@ class PrometheusHistogram extends TimeWindowFixedBoundaryHistogram {
         while (next != null && next != prev && !exemplars.compareAndSet(index, prev, next));
     }
 
-    @Nullable Exemplar[] exemplars() {
+    @Nullable
+    Exemplar[] exemplars() {
         if (isExemplarsEnabled()) {
             Exemplar[] exemplarsArray = new Exemplar[this.exemplars.length()];
             for (int i = 0; i < this.exemplars.length(); i++) {
@@ -145,4 +150,5 @@ class PrometheusHistogram extends TimeWindowFixedBoundaryHistogram {
 
         return low < buckets.length ? low : -1;
     }
+
 }

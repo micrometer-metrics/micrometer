@@ -21,10 +21,10 @@ import com.netflix.hystrix.strategy.eventnotifier.HystrixEventNotifier;
 import com.netflix.hystrix.strategy.executionhook.HystrixCommandExecutionHook;
 import com.netflix.hystrix.strategy.metrics.HystrixMetricsPublisher;
 import com.netflix.hystrix.strategy.properties.HystrixPropertiesStrategy;
+import io.micrometer.common.lang.NonNullApi;
+import io.micrometer.common.lang.NonNullFields;
 import io.micrometer.core.instrument.MeterRegistry;
 import io.micrometer.core.instrument.binder.MeterBinder;
-import io.micrometer.core.lang.NonNullApi;
-import io.micrometer.core.lang.NonNullFields;
 
 @NonNullApi
 @NonNullFields
@@ -42,10 +42,12 @@ public class HystrixMetricsBinder implements MeterBinder {
         HystrixPlugins.reset();
 
         // Registers existing plugins except the new MicroMeter Strategy plugin.
-        HystrixPlugins.getInstance().registerMetricsPublisher(new MicrometerMetricsPublisher(registry, metricsPublisher));
+        HystrixPlugins.getInstance()
+                .registerMetricsPublisher(new MicrometerMetricsPublisher(registry, metricsPublisher));
         HystrixPlugins.getInstance().registerConcurrencyStrategy(concurrencyStrategy);
         HystrixPlugins.getInstance().registerEventNotifier(eventNotifier);
         HystrixPlugins.getInstance().registerPropertiesStrategy(propertiesStrategy);
         HystrixPlugins.getInstance().registerCommandExecutionHook(commandExecutionHook);
     }
+
 }

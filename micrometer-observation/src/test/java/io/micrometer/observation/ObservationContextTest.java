@@ -27,6 +27,7 @@ import static org.assertj.core.api.Assertions.assertThat;
  * @author Jonatan Ivanov
  */
 class ObservationContextTest {
+
     private Observation.Context context;
 
     @BeforeEach
@@ -53,10 +54,7 @@ class ObservationContextTest {
 
     @Test
     void overwrittenValuesShouldBeUpdated() {
-        context
-                .put(String.class, "42")
-                .put(Integer.class, 123)
-                .put(String.class, "24");
+        context.put(String.class, "42").put(Integer.class, 123).put(String.class, "24");
         assertThat((String) context.get(String.class)).isEqualTo("24");
         assertThat((Integer) context.get(Integer.class)).isEqualTo(123);
     }
@@ -74,8 +72,7 @@ class ObservationContextTest {
         assertThat((String) context.getRequired(String.class)).isEqualTo("42");
         Assertions.assertThatThrownBy(() -> context.getRequired(Integer.class))
                 .isInstanceOf(IllegalArgumentException.class)
-                .hasMessage("Context does not have an entry for key [class java.lang.Integer]")
-                .hasNoCause();
+                .hasMessage("Context does not have an entry for key [class java.lang.Integer]").hasNoCause();
     }
 
     @Test
@@ -90,10 +87,7 @@ class ObservationContextTest {
 
     @Test
     void removedItemsShouldNotBePresent() {
-        context
-                .put(String.class, "42")
-                .put(Integer.class, 123)
-                .remove(String.class);
+        context.put(String.class, "42").put(Integer.class, 123).remove(String.class);
         assertThat((Integer) context.get(Integer.class)).isEqualTo(123);
         assertThat((String) context.get(String.class)).isNull();
     }
@@ -105,10 +99,7 @@ class ObservationContextTest {
 
     @Test
     void itemsShouldNotBePresentAfterClear() {
-        context
-                .put(String.class, "42")
-                .put(Integer.class, 123)
-                .clear();
+        context.put(String.class, "42").put(Integer.class, 123).clear();
         assertThat((Integer) context.get(Integer.class)).isNull();
         assertThat((String) context.get(String.class)).isNull();
     }
@@ -117,4 +108,5 @@ class ObservationContextTest {
     void cleanEmptyContextShouldNotFail() {
         context.clear();
     }
+
 }

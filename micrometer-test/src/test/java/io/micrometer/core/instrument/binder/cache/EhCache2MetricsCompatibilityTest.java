@@ -15,7 +15,7 @@
  */
 package io.micrometer.core.instrument.binder.cache;
 
-import io.micrometer.core.lang.Nullable;
+import io.micrometer.common.lang.Nullable;
 import net.sf.ehcache.Cache;
 import net.sf.ehcache.CacheManager;
 import net.sf.ehcache.Ehcache;
@@ -29,6 +29,7 @@ import java.util.UUID;
 import static java.util.Collections.emptyList;
 
 class EhCache2MetricsCompatibilityTest extends CacheMeterBinderCompatibilityKit<Ehcache> {
+
     private CacheManager cacheManager;
 
     @AfterEach
@@ -68,4 +69,5 @@ class EhCache2MetricsCompatibilityTest extends CacheMeterBinderCompatibilityKit<
         Element element = cache.get(key);
         return element == null ? null : (String) element.getObjectValue();
     }
+
 }

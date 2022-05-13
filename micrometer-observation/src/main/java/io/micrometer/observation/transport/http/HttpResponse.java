@@ -15,7 +15,7 @@
  */
 package io.micrometer.observation.transport.http;
 
-import io.micrometer.observation.lang.Nullable;
+import io.micrometer.common.lang.Nullable;
 
 /**
  * This API is taken from OpenZipkin Brave.
@@ -36,7 +36,6 @@ public interface HttpResponse extends Response {
 
     /**
      * Returns an HTTP method.
-     *
      * @return an HTTP method
      */
     @Nullable
@@ -50,7 +49,6 @@ public interface HttpResponse extends Response {
      * endpoint, conventionally associated with the tag key "http.route". If no route
      * matched, "" (empty string) is returned. {@code null} indicates this instrumentation
      * doesn't understand http routes.
-     *
      * @return an HTTP route or {@code null} if not set
      */
     @Nullable
@@ -61,14 +59,12 @@ public interface HttpResponse extends Response {
 
     /**
      * Returns the HTTP status code.
-     *
      * @return an HTTP status code or zero if unreadable
      */
     int statusCode();
 
     /**
      * Returns the header value.
-     *
      * @param header header name
      * @return an HTTP header or {@code null} if not set.
      */

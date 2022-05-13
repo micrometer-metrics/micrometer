@@ -41,11 +41,9 @@ import java.util.Optional;
  */
 @Configuration
 public class HttpMetricsTagConfiguration {
-    private final Map<HttpServletResponse, Tags> responseTags = CacheBuilder.newBuilder()
-            .maximumSize(10_000)
-            .expireAfterWrite(Duration.ofSeconds(10))
-            .<HttpServletResponse, Tags>build()
-            .asMap();
+
+    private final Map<HttpServletResponse, Tags> responseTags = CacheBuilder.newBuilder().maximumSize(10_000)
+            .expireAfterWrite(Duration.ofSeconds(10)).<HttpServletResponse, Tags>build().asMap();
 
     @Bean
     OncePerRequestFilter extractCountry() {
@@ -54,14 +52,16 @@ public class HttpMetricsTagConfiguration {
 
             @Override
             protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response,
-                                            FilterChain filterChain) throws ServletException, IOException {
+                    FilterChain filterChain) throws ServletException, IOException {
                 ContentCachingResponseWrapper cached = new ContentCachingResponseWrapper(response);
                 filterChain.doFilter(request, cached);
 
                 Object path = request.getAttribute(HandlerMapping.BEST_MATCHING_PATTERN_ATTRIBUTE);
                 if (path.equals("/api/person/{id}")) {
-                    // Prometheus requires the same tags on all `http.server.requests`. So we'll need to add
-                    // a `@Timed("person.requests") to the /api/person/{id} endpoint so it has a different name.
+                    // Prometheus requires the same tags on all `http.server.requests`. So
+                    // we'll need to add
+                    // a `@Timed("person.requests") to the /api/person/{id} endpoint so it
+                    // has a different name.
                     Person person = mapper.readValue(cached.getContentAsByteArray(), Person.class);
                     responseTags.put(response, Tags.of("country", person.getCountry()));
                 }
@@ -71,20 +71,16 @@ public class HttpMetricsTagConfiguration {
         };
     }
 
-    // TODO move Spring Boot samples outside of this repo
-    // This will fail to compile since published Spring Boot versions are based on Micrometer 1.x and
-    // we have changed the package for Micrometer API it uses.
     @Bean
     WebMvcTagsProvider webMvcTagsProvider() {
         return new DefaultWebMvcTagsProvider() {
             @Override
-            public Iterable<Tag> getTags(HttpServletRequest request, HttpServletResponse response,
-                                         Object handler, Throwable exception) {
-                return Tags.concat(
-                        super.getTags(request, response, handler, exception),
-                        Optional.ofNullable(responseTags.remove(response)).orElse(Tags.empty())
-                );
+            public Iterable<Tag> getTags(HttpServletRequest request, HttpServletResponse response, Object handler,
+                    Throwable exception) {
+                return Tags.concat(super.getTags(request, response, handler, exception),
+                        Optional.ofNullable(responseTags.remove(response)).orElse(Tags.empty()));
             }
         };
     }
+
 }

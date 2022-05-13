@@ -15,8 +15,8 @@
  */
 package io.micrometer.core.instrument;
 
+import io.micrometer.common.lang.Nullable;
 import io.micrometer.core.instrument.util.MeterEquivalence;
-import io.micrometer.core.lang.Nullable;
 
 /**
  * Base class for {@link Meter} implementations.
@@ -25,6 +25,7 @@ import io.micrometer.core.lang.Nullable;
  * @author Johnny Lim
  */
 public abstract class AbstractMeter implements Meter {
+
     private final Meter.Id id;
 
     public AbstractMeter(Id id) {
@@ -46,4 +47,5 @@ public abstract class AbstractMeter implements Meter {
     public int hashCode() {
         return MeterEquivalence.hashCode(this);
     }
+
 }

@@ -24,7 +24,9 @@ import java.util.Map;
 import static org.assertj.core.api.Assertions.assertThat;
 
 class HumioConfigTest {
+
     private final Map<String, String> props = new HashMap<>();
+
     private final HumioConfig config = props::get;
 
     @Test
@@ -39,4 +41,5 @@ class HumioConfigTest {
     void valid() {
         assertThat(config.validate().isValid()).isTrue();
     }
+
 }

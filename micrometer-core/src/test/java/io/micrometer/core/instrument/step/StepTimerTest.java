@@ -29,20 +29,15 @@ import static org.assertj.core.api.AssertionsForClassTypes.assertThat;
 import static org.mockito.Mockito.mock;
 
 class StepTimerTest {
+
     @Issue("#1814")
     @Test
     void meanShouldWorkIfTotalTimeNotCalled() {
         Duration stepDuration = Duration.ofMillis(10);
         MockClock clock = new MockClock();
-        StepTimer timer = new StepTimer(
-                mock(Meter.Id.class),
-                clock,
+        StepTimer timer = new StepTimer(mock(Meter.Id.class), clock,
                 DistributionStatisticConfig.builder().expiry(stepDuration).bufferLength(2).build(),
-                mock(PauseDetector.class),
-                TimeUnit.MILLISECONDS,
-                stepDuration.toMillis(),
-                false
-        );
+                mock(PauseDetector.class), TimeUnit.MILLISECONDS, stepDuration.toMillis(), false);
 
         clock.add(stepDuration);
         assertThat(timer.mean(TimeUnit.MILLISECONDS)).isEqualTo(0.0);
@@ -54,4 +49,5 @@ class StepTimerTest {
         clock.add(stepDuration);
         assertThat(timer.mean(TimeUnit.MILLISECONDS)).isEqualTo(75.0);
     }
+
 }

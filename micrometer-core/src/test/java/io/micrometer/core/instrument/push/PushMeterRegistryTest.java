@@ -36,6 +36,7 @@ import static org.assertj.core.api.Assertions.assertThatCode;
 class PushMeterRegistryTest {
 
     static ThreadFactory threadFactory = new NamedThreadFactory("PushMeterRegistryTest");
+
     StepRegistryConfig config = new StepRegistryConfig() {
         @Override
         public Duration step() {
@@ -52,7 +53,9 @@ class PushMeterRegistryTest {
             return null;
         }
     };
+
     CountDownLatch latch = new CountDownLatch(2);
+
     PushMeterRegistry pushMeterRegistry = new ThrowingPushMeterRegistry(config, latch);
 
     @AfterEach
@@ -64,8 +67,7 @@ class PushMeterRegistryTest {
     void whenUncaughtExceptionInPublish_taskStillScheduled() throws InterruptedException {
         pushMeterRegistry.start(threadFactory);
         assertThat(latch.await(500, TimeUnit.MILLISECONDS))
-                .as("publish should continue to be scheduled even if an uncaught exception is thrown")
-                .isTrue();
+                .as("publish should continue to be scheduled even if an uncaught exception is thrown").isTrue();
     }
 
     @Test
@@ -92,5 +94,7 @@ class PushMeterRegistryTest {
         protected TimeUnit getBaseTimeUnit() {
             return TimeUnit.MICROSECONDS;
         }
+
     }
+
 }

@@ -15,17 +15,19 @@
  */
 package io.micrometer.core.instrument.composite;
 
+import io.micrometer.common.lang.Nullable;
 import io.micrometer.core.instrument.Gauge;
 import io.micrometer.core.instrument.Meter;
 import io.micrometer.core.instrument.MeterRegistry;
 import io.micrometer.core.instrument.noop.NoopGauge;
-import io.micrometer.core.lang.Nullable;
 
 import java.lang.ref.WeakReference;
 import java.util.function.ToDoubleFunction;
 
 class CompositeGauge<T> extends AbstractCompositeMeter<Gauge> implements Gauge {
+
     private final WeakReference<T> ref;
+
     private final ToDoubleFunction<T> f;
 
     CompositeGauge(Meter.Id id, @Nullable T obj, ToDoubleFunction<T> f) {
@@ -51,10 +53,8 @@ class CompositeGauge<T> extends AbstractCompositeMeter<Gauge> implements Gauge {
             return null;
         }
 
-        return Gauge.builder(getId().getName(), obj, f)
-            .tags(getId().getTagsAsIterable())
-            .description(getId().getDescription())
-            .baseUnit(getId().getBaseUnit())
-            .register(registry);
+        return Gauge.builder(getId().getName(), obj, f).tags(getId().getTagsAsIterable())
+                .description(getId().getDescription()).baseUnit(getId().getBaseUnit()).register(registry);
     }
+
 }

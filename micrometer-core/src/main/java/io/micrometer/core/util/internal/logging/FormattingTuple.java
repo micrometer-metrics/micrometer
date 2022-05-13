@@ -58,10 +58,15 @@ package io.micrometer.core.util.internal.logging;
  * NOTE: This file has been copied from {io.netty.util.internal.logging}.
  *
  * Holds the results of formatting done by {@link MessageFormatter}.
+ *
+ * @deprecated Please use
+ * {@code io.micrometer.common.util.internal.logging.FormattingTuple} instead
  */
+@Deprecated
 final class FormattingTuple {
 
     private final String message;
+
     private final Throwable throwable;
 
     FormattingTuple(String message, Throwable throwable) {
@@ -76,4 +81,5 @@ final class FormattingTuple {
     public Throwable getThrowable() {
         return throwable;
     }
+
 }

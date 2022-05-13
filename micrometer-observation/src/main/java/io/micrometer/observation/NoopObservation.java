@@ -15,19 +15,19 @@
  */
 package io.micrometer.observation;
 
-
 import io.micrometer.common.KeyValue;
 
 /**
- * No-op implementation of {@link Observation} so that we can disable the instrumentation logic.
+ * No-op implementation of {@link Observation} so that we can disable the instrumentation
+ * logic.
  *
  * @author Jonatan Ivanov
  * @author Tommy Ludwig
  * @author Marcin Grzejszczak
- *
  * @since 1.10.0
  */
 final class NoopObservation implements Observation {
+
     /**
      * Instance of {@link NoopObservation}.
      */
@@ -89,6 +89,7 @@ final class NoopObservation implements Observation {
      * Scope that does nothing.
      */
     static final class NoOpScope implements Scope {
+
         /**
          * Instance of {@link NoOpScope}.
          */
@@ -106,5 +107,7 @@ final class NoopObservation implements Observation {
         @Override
         public void close() {
         }
+
     }
+
 }

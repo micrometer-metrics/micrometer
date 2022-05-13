@@ -15,7 +15,7 @@
  */
 package io.micrometer.core.instrument.util;
 
-import io.micrometer.core.lang.Nullable;
+import io.micrometer.common.lang.Nullable;
 
 import java.io.*;
 import java.nio.charset.Charset;
@@ -33,9 +33,8 @@ public final class IOUtils {
 
     /**
      * Create a {@code String} from {@link InputStream} with {@link Charset}.
-     *
      * @param inputStream source {@link InputStream}
-     * @param charset     source {@link Charset}
+     * @param charset source {@link Charset}
      * @return created {@code String}
      */
     public static String toString(@Nullable InputStream inputStream, Charset charset) {
@@ -43,22 +42,22 @@ public final class IOUtils {
             return "";
 
         try (StringWriter writer = new StringWriter();
-             InputStreamReader reader = new InputStreamReader(inputStream, charset);
-             BufferedReader bufferedReader = new BufferedReader(reader)) {
+                InputStreamReader reader = new InputStreamReader(inputStream, charset);
+                BufferedReader bufferedReader = new BufferedReader(reader)) {
             char[] chars = new char[DEFAULT_BUFFER_SIZE];
             int readChars;
             while ((readChars = bufferedReader.read(chars)) != EOF) {
                 writer.write(chars, 0, readChars);
             }
             return writer.toString();
-        } catch (IOException ex) {
+        }
+        catch (IOException ex) {
             throw new UncheckedIOException(ex);
         }
     }
 
     /**
      * Create a {@code String} from {@link InputStream} with default {@link Charset}.
-     *
      * @param inputStream source {@link InputStream}
      * @return created {@code String}
      */

@@ -23,7 +23,9 @@ import org.springframework.scheduling.annotation.EnableScheduling;
 @SpringBootApplication(scanBasePackageClasses = PersonController.class)
 @EnableScheduling
 public class GangliaSample {
+
     public static void main(String[] args) {
         new SpringApplicationBuilder(GangliaSample.class).profiles("ganglia").run(args);
     }
+
 }

@@ -15,10 +15,10 @@
  */
 package io.micrometer.kairos;
 
+import io.micrometer.common.lang.Nullable;
 import io.micrometer.core.instrument.Meter;
 import io.micrometer.core.instrument.config.NamingConvention;
 import io.micrometer.core.instrument.util.StringEscapeUtils;
-import io.micrometer.core.lang.Nullable;
 
 import java.util.regex.Pattern;
 
@@ -29,6 +29,7 @@ import java.util.regex.Pattern;
  * @since 1.1.0
  */
 public class KairosNamingConvention implements NamingConvention {
+
     private static final Pattern BLACKLISTED_CHARS = Pattern.compile("[{}():,=\\[\\]]");
 
     private final NamingConvention delegate;
@@ -60,4 +61,5 @@ public class KairosNamingConvention implements NamingConvention {
     public String tagValue(String value) {
         return format(delegate.tagValue(value));
     }
+
 }

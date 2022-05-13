@@ -36,9 +36,9 @@ public enum Kind {
     CLIENT,
 
     /**
-     * Indicates that the operation describes producer sending a message to a broker. Unlike
-     * client and server, there is no direct critical path latency relationship between
-     * producer and consumer operations.
+     * Indicates that the operation describes producer sending a message to a broker.
+     * Unlike client and server, there is no direct critical path latency relationship
+     * between producer and consumer operations.
      */
     PRODUCER,
 

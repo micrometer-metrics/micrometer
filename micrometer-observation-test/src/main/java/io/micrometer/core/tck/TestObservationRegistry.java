@@ -15,13 +15,13 @@
  */
 package io.micrometer.core.tck;
 
-import java.util.LinkedList;
-import java.util.List;
-import java.util.Objects;
-
 import io.micrometer.observation.Observation;
 import io.micrometer.observation.ObservationHandler;
 import io.micrometer.observation.ObservationRegistry;
+
+import java.util.LinkedList;
+import java.util.List;
+import java.util.Objects;
 
 /**
  * Implementation of {@link ObservationRegistry} used for testing.
@@ -29,7 +29,6 @@ import io.micrometer.observation.ObservationRegistry;
  * @author Jonatan Ivanov
  * @author Tommy Ludwig
  * @author Marcin Grzejszczak
- *
  * @since 1.10.0
  */
 public final class TestObservationRegistry implements ObservationRegistry {
@@ -44,7 +43,6 @@ public final class TestObservationRegistry implements ObservationRegistry {
 
     /**
      * Crates a new instance of mock observation registry.
-     *
      * @return mock instance of observation registry
      */
     public static TestObservationRegistry create() {
@@ -57,8 +55,13 @@ public final class TestObservationRegistry implements ObservationRegistry {
     }
 
     @Override
-    public void setCurrentObservation(Observation current) {
-        this.delegate.setCurrentObservation(current);
+    public Observation.Scope getCurrentObservationScope() {
+        return this.delegate.getCurrentObservationScope();
+    }
+
+    @Override
+    public void setCurrentObservationScope(Observation.Scope current) {
+        this.delegate.setCurrentObservationScope(current);
     }
 
     @Override
@@ -81,13 +84,15 @@ public final class TestObservationRegistry implements ObservationRegistry {
 
         @Override
         public void onStop(Observation.Context context) {
-            this.contexts.stream().filter(testContext -> testContext.getContext() == context).findFirst().ifPresent(testContext -> testContext.setObservationStopped(true));
+            this.contexts.stream().filter(testContext -> testContext.getContext() == context).findFirst()
+                    .ifPresent(testContext -> testContext.setObservationStopped(true));
         }
 
         @Override
         public boolean supportsContext(Observation.Context context) {
             return true;
         }
+
     }
 
     static class TestObservationContext {
@@ -131,7 +136,6 @@ public final class TestObservationRegistry implements ObservationRegistry {
 
         /**
          * Was {@link Observation} started?
-         *
          * @return {@code true} if observation was started
          */
         boolean isObservationStarted() {
@@ -140,7 +144,6 @@ public final class TestObservationRegistry implements ObservationRegistry {
 
         /**
          * Was {@link Observation} stopped?
-         *
          * @return {@code true} if observation was stopped
          */
         boolean isObservationStopped() {
@@ -150,5 +153,7 @@ public final class TestObservationRegistry implements ObservationRegistry {
         Observation.Context getContext() {
             return this.context;
         }
+
     }
+
 }

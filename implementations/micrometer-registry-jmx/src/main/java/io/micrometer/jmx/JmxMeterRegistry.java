@@ -25,6 +25,7 @@ import io.micrometer.core.instrument.util.HierarchicalNameMapper;
  * @author Jon Schneider
  */
 public class JmxMeterRegistry extends DropwizardMeterRegistry {
+
     private final JmxReporter reporter;
 
     public JmxMeterRegistry(JmxConfig config, Clock clock) {
@@ -35,21 +36,20 @@ public class JmxMeterRegistry extends DropwizardMeterRegistry {
         this(config, clock, nameMapper, new MetricRegistry());
     }
 
-    public JmxMeterRegistry(JmxConfig config, Clock clock, HierarchicalNameMapper nameMapper, MetricRegistry metricRegistry) {
+    public JmxMeterRegistry(JmxConfig config, Clock clock, HierarchicalNameMapper nameMapper,
+            MetricRegistry metricRegistry) {
         this(config, clock, nameMapper, metricRegistry, defaultJmxReporter(config, metricRegistry));
     }
 
-    public JmxMeterRegistry(JmxConfig config, Clock clock, HierarchicalNameMapper nameMapper, MetricRegistry metricRegistry,
-                            JmxReporter jmxReporter) {
+    public JmxMeterRegistry(JmxConfig config, Clock clock, HierarchicalNameMapper nameMapper,
+            MetricRegistry metricRegistry, JmxReporter jmxReporter) {
         super(config, metricRegistry, nameMapper, clock);
         this.reporter = jmxReporter;
         this.reporter.start();
     }
 
     private static JmxReporter defaultJmxReporter(JmxConfig config, MetricRegistry metricRegistry) {
-        return JmxReporter.forRegistry(metricRegistry)
-                .inDomain(config.domain())
-                .build();
+        return JmxReporter.forRegistry(metricRegistry).inDomain(config.domain()).build();
     }
 
     public void stop() {
@@ -70,4 +70,5 @@ public class JmxMeterRegistry extends DropwizardMeterRegistry {
     protected Double nullGaugeValue() {
         return Double.NaN;
     }
+
 }

@@ -20,6 +20,7 @@ import org.junit.jupiter.api.Test;
 import static org.assertj.core.api.Assertions.assertThat;
 
 class NamedThreadFactoryTest {
+
     @Test
     void nameThreads() {
         NamedThreadFactory threadFactory = new NamedThreadFactory("name");
@@ -29,4 +30,5 @@ class NamedThreadFactoryTest {
         assertThat(threadFactory.newThread(body).getName()).isEqualTo("name");
         assertThat(threadFactory.newThread(body).getName()).isEqualTo("name-2");
     }
+
 }

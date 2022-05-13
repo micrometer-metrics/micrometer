@@ -23,7 +23,9 @@ import org.springframework.scheduling.annotation.EnableScheduling;
 @SpringBootApplication(scanBasePackageClasses = PersonController.class)
 @EnableScheduling
 public class AppOpticsSample {
+
     public static void main(String[] args) {
         new SpringApplicationBuilder(AppOpticsSample.class).profiles("appoptics").run(args);
     }
+
 }

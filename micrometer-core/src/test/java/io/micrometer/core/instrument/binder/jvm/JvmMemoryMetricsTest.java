@@ -57,8 +57,7 @@ class JvmMemoryMetricsTest {
     }
 
     private void assertJvmBufferMetrics(MeterRegistry registry, String bufferId) {
-        assertThat(registry.get("jvm.buffer.count").tags("id", bufferId)
-            .gauge().value()).isGreaterThanOrEqualTo(0);
+        assertThat(registry.get("jvm.buffer.count").tags("id", bufferId).gauge().value()).isGreaterThanOrEqualTo(0);
 
         Gauge memoryUsedDirect = registry.get("jvm.buffer.memory.used").tags("id", bufferId).gauge();
         assertThat(memoryUsedDirect.value()).isNotNull();

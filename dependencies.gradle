@@ -37,9 +37,6 @@ def VERSIONS = [
         'info.ganglia.gmetric4j:gmetric4j:latest.release',
         'io.prometheus:simpleclient_common:latest.release',
         'io.prometheus:simpleclient_pushgateway:latest.release',
-        // TODO support HttpTagsProvider variants based on Jakarta APIs?
-//        'jakarta.servlet:jakarta.servlet-api:latest.release',
-        'javax.annotation:javax.annotation-api:latest.release',
         'javax.cache:cache-api:latest.release',
         'javax.inject:javax.inject:1',
         'javax.servlet:javax.servlet-api:latest.release',

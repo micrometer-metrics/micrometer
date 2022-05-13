@@ -33,19 +33,22 @@ import static java.util.Objects.requireNonNull;
 public class MetricsApplicationEventListener implements ApplicationEventListener {
 
     private final MeterRegistry meterRegistry;
+
     private final JerseyTagsProvider tagsProvider;
+
     private final String metricName;
+
     private final AnnotationFinder annotationFinder;
+
     private final boolean autoTimeRequests;
 
     public MetricsApplicationEventListener(MeterRegistry registry, JerseyTagsProvider tagsProvider, String metricName,
-                                           boolean autoTimeRequests) {
+            boolean autoTimeRequests) {
         this(registry, tagsProvider, metricName, autoTimeRequests, AnnotationFinder.DEFAULT);
     }
 
-    public MetricsApplicationEventListener(MeterRegistry registry, JerseyTagsProvider tagsProvider,
-                                           String metricName, boolean autoTimeRequests,
-                                           AnnotationFinder annotationFinder) {
+    public MetricsApplicationEventListener(MeterRegistry registry, JerseyTagsProvider tagsProvider, String metricName,
+            boolean autoTimeRequests, AnnotationFinder annotationFinder) {
         this.meterRegistry = requireNonNull(registry);
         this.tagsProvider = requireNonNull(tagsProvider);
         this.metricName = requireNonNull(metricName);
@@ -59,6 +62,8 @@ public class MetricsApplicationEventListener implements ApplicationEventListener
 
     @Override
     public RequestEventListener onRequest(RequestEvent requestEvent) {
-        return new MetricsRequestEventListener(meterRegistry, tagsProvider, metricName, autoTimeRequests, annotationFinder);
+        return new MetricsRequestEventListener(meterRegistry, tagsProvider, metricName, autoTimeRequests,
+                annotationFinder);
     }
+
 }

@@ -22,7 +22,7 @@ import org.glassfish.jersey.server.monitoring.RequestEvent;
 
 /**
  * Default implementation for {@link JerseyTagsProvider}.
- * 
+ *
  * @author Michael Weirauch
  * @author Johnny Lim
  * @since 1.8.0

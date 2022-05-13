@@ -36,12 +36,15 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.awaitility.Awaitility.await;
 
 class DynatraceConfigTest {
+
     private static final String nonExistentConfigFileName = UUID.randomUUID().toString();
-    
+
     @BeforeEach
     void setUp() {
-        // Make sure that all tests use the default configuration, even if there's an `endpoint.properties` file in place
-        DynatraceFileBasedConfigurationProvider.getInstance().forceOverwriteConfig(nonExistentConfigFileName, Duration.ofMillis(50));
+        // Make sure that all tests use the default configuration, even if there's an
+        // `endpoint.properties` file in place
+        DynatraceFileBasedConfigurationProvider.getInstance().forceOverwriteConfig(nonExistentConfigFileName,
+                Duration.ofMillis(50));
     }
 
     @Test
@@ -63,8 +66,7 @@ class DynatraceConfigTest {
         assertThat(failures.stream().map(Validated::toString)).containsExactlyInAnyOrder(
                 "Invalid{property='dynatrace.apiToken', value='null', message='is required'}",
                 "Invalid{property='dynatrace.uri', value='null', message='is required'}",
-                "Invalid{property='dynatrace.deviceId', value='', message='cannot be blank'}"
-        );
+                "Invalid{property='dynatrace.deviceId', value='', message='cannot be blank'}");
     }
 
     @Test
@@ -91,8 +93,7 @@ class DynatraceConfigTest {
                 "Invalid{property='dynatrace.apiToken', value='null', message='is required'}",
                 "Invalid{property='dynatrace.uri', value='null', message='is required'}",
                 "Invalid{property='dynatrace.deviceId', value='', message='cannot be blank'}",
-                "Invalid{property='dynatrace.technologyType', value='', message='cannot be blank'}"
-        );
+                "Invalid{property='dynatrace.technologyType', value='', message='cannot be blank'}");
     }
 
     @Test
@@ -115,9 +116,8 @@ class DynatraceConfigTest {
         }.validate();
 
         assertThat(validate.failures()).hasSize(1);
-        assertThat(validate.failures().stream().map(Validated::toString)).containsExactlyInAnyOrder(
-                "Invalid{property='dynatrace.uri', value='null', message='is required'}"
-        );
+        assertThat(validate.failures().stream().map(Validated::toString))
+                .containsExactlyInAnyOrder("Invalid{property='dynatrace.uri', value='null', message='is required'}");
     }
 
     @Test
@@ -262,7 +262,8 @@ class DynatraceConfigTest {
 
     @Test
     void testDeviceIdNotSetAndVersionOverwritten() {
-        // This is a nonsense config, v1 always needs a deviceId, but it shows that it is possible
+        // This is a nonsense config, v1 always needs a deviceId, but it shows that it is
+        // possible
         // to overwrite the version.
         DynatraceConfig config = new DynatraceConfig() {
             @Override
@@ -284,11 +285,11 @@ class DynatraceConfigTest {
         String uuid = UUID.randomUUID().toString();
         final Path tempFile = Files.createTempFile(uuid, ".properties");
 
-        Files.write(tempFile,
-                ("DT_METRICS_INGEST_URL = https://your-dynatrace-ingest-url/api/v2/metrics/ingest\n" +
-                        "DT_METRICS_INGEST_API_TOKEN = YOUR.DYNATRACE.TOKEN").getBytes());
+        Files.write(tempFile, ("DT_METRICS_INGEST_URL = https://your-dynatrace-ingest-url/api/v2/metrics/ingest\n"
+                + "DT_METRICS_INGEST_API_TOKEN = YOUR.DYNATRACE.TOKEN").getBytes());
 
-        DynatraceFileBasedConfigurationProvider.getInstance().forceOverwriteConfig(tempFile.toString(), Duration.ofMillis(50));
+        DynatraceFileBasedConfigurationProvider.getInstance().forceOverwriteConfig(tempFile.toString(),
+                Duration.ofMillis(50));
 
         DynatraceConfig config = new DynatraceConfig() {
             @Override
@@ -305,13 +306,13 @@ class DynatraceConfigTest {
         await().atMost(1_000, MILLISECONDS).until(() -> config.apiToken().equals("YOUR.DYNATRACE.TOKEN"));
         assertThat(config.uri()).isEqualTo("https://your-dynatrace-ingest-url/api/v2/metrics/ingest");
 
-        Files.write(tempFile,
-                ("DT_METRICS_INGEST_URL = https://a-different-url/api/v2/metrics/ingest\n" +
-                        "DT_METRICS_INGEST_API_TOKEN = A.DIFFERENT.TOKEN").getBytes());
+        Files.write(tempFile, ("DT_METRICS_INGEST_URL = https://a-different-url/api/v2/metrics/ingest\n"
+                + "DT_METRICS_INGEST_API_TOKEN = A.DIFFERENT.TOKEN").getBytes());
 
         await().atMost(1_000, MILLISECONDS).until(() -> config.apiToken().equals("A.DIFFERENT.TOKEN"));
         assertThat(config.uri()).isEqualTo("https://a-different-url/api/v2/metrics/ingest");
-        
+
         Files.deleteIfExists(tempFile);
     }
+
 }

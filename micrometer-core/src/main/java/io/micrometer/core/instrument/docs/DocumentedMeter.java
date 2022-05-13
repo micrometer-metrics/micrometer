@@ -17,27 +17,31 @@
 package io.micrometer.core.instrument.docs;
 
 import io.micrometer.common.docs.KeyName;
+import io.micrometer.common.lang.Nullable;
 import io.micrometer.core.instrument.Meter;
-import io.micrometer.core.lang.Nullable;
 
 /**
  * In order to describe your metrics via e.g. enums instead of Strings you can use this
  * interface that returns all the characteristics of a metric.
  *
- * We can generate documentation for all created metrics but certain requirements need to be
- * met
+ * We can generate documentation for all created metrics but certain requirements need to
+ * be met
  *
  * <ul>
- *     <li>Metrics are grouped within an enum - the enum implements the {@link DocumentedMeter} interface</li>
- *     <li>If the span contains {@link KeyName} then those need to be declared as nested enums</li>
- *     <li>The {@link DocumentedMeter#getKeyNames()} need to call the nested enum's {@code values()} method to retrieve the array of allowed keys / events</li>
- *     <li>Javadocs around enums will be used as description</li>
+ * <li>Metrics are grouped within an enum - the enum implements the
+ * {@link DocumentedMeter} interface</li>
+ * <li>If the span contains {@link KeyName} then those need to be declared as nested
+ * enums</li>
+ * <li>The {@link DocumentedMeter#getKeyNames()} need to call the nested enum's
+ * {@code values()} method to retrieve the array of allowed keys / events</li>
+ * <li>Javadocs around enums will be used as description</li>
  * </ul>
  *
  * @author Marcin Grzejszczak
  * @since 1.10.0
  */
 public interface DocumentedMeter {
+
     /**
      * Empty key names.
      */
@@ -45,14 +49,12 @@ public interface DocumentedMeter {
 
     /**
      * Metric name.
-     *
      * @return metric name
      */
     String getName();
 
     /**
      * Base unit.
-     *
      * @return base unit
      */
     @Nullable
@@ -62,14 +64,13 @@ public interface DocumentedMeter {
 
     /**
      * Type of this metric.
-     *
      * @return meter type
      */
     Meter.Type getType();
 
     /**
-     * Builds a name from provided vars. Follows the {@link String#format(String, Object...)} patterns.
-     *
+     * Builds a name from provided vars. Follows the
+     * {@link String#format(String, Object...)} patterns.
      * @param vars variables to pass to {@link String#format(String, Object...)}
      * @return constructed name
      */
@@ -82,8 +83,8 @@ public interface DocumentedMeter {
 
     /**
      * Allowed key names.
-     *
-     * @return allowed key names - if set will override any key names coming from {@link DocumentedMeter#overridesDefaultMetricFrom()}
+     * @return allowed key names - if set will override any key names coming from
+     * {@link DocumentedMeter#overridesDefaultMetricFrom()}
      */
     default KeyName[] getKeyNames() {
         return EMPTY;
@@ -91,18 +92,18 @@ public interface DocumentedMeter {
 
     /**
      * Additional key names.
-     *
-     * @return additional key names - if set will append any key names coming from {@link DocumentedMeter#overridesDefaultMetricFrom()}
+     * @return additional key names - if set will append any key names coming from
+     * {@link DocumentedMeter#overridesDefaultMetricFrom()}
      */
     default KeyName[] getAdditionalKeyNames() {
         return EMPTY;
     }
 
     /**
-     * Override this when custom metric should be documented instead of the default one. Requires the Observation
-     * module on the classpath.
-     *
-     * @return {@link io.micrometer.observation.docs.DocumentedObservation} for which you don't want to create a default metric documentation
+     * Override this when custom metric should be documented instead of the default one.
+     * Requires the Observation module on the classpath.
+     * @return {@link io.micrometer.observation.docs.DocumentedObservation} for which you
+     * don't want to create a default metric documentation
      */
     default Enum<?> overridesDefaultMetricFrom() {
         return null;
@@ -110,9 +111,7 @@ public interface DocumentedMeter {
 
     /**
      * Returns required prefix to be there for tags. For example, {@code foo.} would
-     * require the tags to have a {@code foo.} prefix like this:
-     * {@code foo.bar=true}.
-     *
+     * require the tags to have a {@code foo.} prefix like this: {@code foo.bar=true}.
      * @return required prefix
      */
     default String getPrefix() {

@@ -20,12 +20,14 @@ import io.micrometer.observation.transport.http.HttpRequest;
 import io.micrometer.observation.transport.http.HttpResponse;
 
 /**
- * Default implementation of {@link HttpKeyValueProvider} that can be extended for customization.
+ * Default implementation of {@link HttpKeyValueProvider} that can be extended for
+ * customization.
  *
  * @author Tommy Ludwig
  * @since 1.10.0
  */
 public class DefaultHttpKeyValueProvider implements HttpKeyValueProvider {
+
     @Override
     public KeyValues getLowCardinalityKeyValues(HttpRequest request, HttpResponse response, Throwable exception) {
         return KeyValues.of(HttpKeyValues.method(request), HttpKeyValues.uri(request), HttpKeyValues.status(response),
@@ -36,4 +38,5 @@ public class DefaultHttpKeyValueProvider implements HttpKeyValueProvider {
     public KeyValues getHighCardinalityKeyValues(HttpRequest request, HttpResponse response, Throwable exception) {
         return KeyValues.empty();
     }
+
 }

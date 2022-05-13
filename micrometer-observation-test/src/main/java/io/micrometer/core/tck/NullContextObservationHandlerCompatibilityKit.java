@@ -26,9 +26,9 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatCode;
 
 /**
- * Base class for {@link ObservationHandler} compatibility tests that support {@code null} contexts only.
- * To run a {@link ObservationHandler} implementation against this TCK, make a test class that extends this
- * and implement the abstract methods.
+ * Base class for {@link ObservationHandler} compatibility tests that support {@code null}
+ * contexts only. To run a {@link ObservationHandler} implementation against this TCK,
+ * make a test class that extends this and implement the abstract methods.
  *
  * @author Marcin Grzejszczak
  * @since 1.10.0
@@ -45,7 +45,8 @@ public abstract class NullContextObservationHandlerCompatibilityKit {
 
     @BeforeEach
     void setup() {
-        // assigned here rather than at initialization so subclasses can use fields in their registry() implementation
+        // assigned here rather than at initialization so subclasses can use fields in
+        // their registry() implementation
         handler = handler();
     }
 
@@ -59,5 +60,5 @@ public abstract class NullContextObservationHandlerCompatibilityKit {
         assertThatCode(() -> handler.supportsContext(null)).doesNotThrowAnyException();
         assertThat(handler.supportsContext(null)).as("Handler supports null context").isTrue();
     }
-}
 
+}

@@ -25,16 +25,15 @@ import java.util.stream.Stream;
  * Example of handler implementations can create metrics, spans or logs.
  *
  * @param <T> type of context
- *
  * @author Jonatan Ivanov
  * @author Tommy Ludwig
  * @author Marcin Grzejszczak
  * @since 1.10.0
  */
 public interface ObservationHandler<T extends Observation.Context> {
+
     /**
      * Reacts to starting of an {@link Observation}.
-     *
      * @param context a {@link Observation.Context}
      */
     default void onStart(T context) {
@@ -42,7 +41,6 @@ public interface ObservationHandler<T extends Observation.Context> {
 
     /**
      * Reacts to an error during an {@link Observation}.
-     *
      * @param context a {@link Observation.Context}
      */
     default void onError(T context) {
@@ -50,7 +48,6 @@ public interface ObservationHandler<T extends Observation.Context> {
 
     /**
      * Reacts to opening of a {@link Observation.Scope}.
-     *
      * @param context a {@link Observation.Context}
      */
     default void onScopeOpened(T context) {
@@ -58,7 +55,6 @@ public interface ObservationHandler<T extends Observation.Context> {
 
     /**
      * Reacts to closing of a {@link Observation.Scope}.
-     *
      * @param context a {@link Observation.Context}
      */
     default void onScopeClosed(T context) {
@@ -66,15 +62,14 @@ public interface ObservationHandler<T extends Observation.Context> {
 
     /**
      * Reacts to stopping of an {@link Observation}.
-     *
      * @param context a {@link Observation.Context}
      */
     default void onStop(T context) {
     }
 
     /**
-     * Tells the registry whether this handler should be applied for a given {@link Observation.Context}.
-     *
+     * Tells the registry whether this handler should be applied for a given
+     * {@link Observation.Context}.
      * @param context a {@link Observation.Context}
      * @return {@code true} when this handler should be used
      */
@@ -84,17 +79,20 @@ public interface ObservationHandler<T extends Observation.Context> {
      * Handler wrapping other handlers.
      */
     interface CompositeObservationHandler extends ObservationHandler<Observation.Context> {
+
         /**
          * Returns the registered handlers.
          * @return registered handlers
          */
         List<ObservationHandler<Observation.Context>> getHandlers();
+
     }
 
     /**
      * Handler picking the first matching handler from the list.
      */
     class FirstMatchingCompositeObservationHandler implements CompositeObservationHandler {
+
         private final List<ObservationHandler<Observation.Context>> handlers;
 
         /**
@@ -149,15 +147,18 @@ public interface ObservationHandler<T extends Observation.Context> {
             return getFirstApplicableHandler(context).isPresent();
         }
 
-        private Optional<ObservationHandler<Observation.Context>> getFirstApplicableHandler(Observation.Context context) {
+        private Optional<ObservationHandler<Observation.Context>> getFirstApplicableHandler(
+                Observation.Context context) {
             return this.handlers.stream().filter(handler -> handler.supportsContext(context)).findFirst();
         }
+
     }
 
     /**
      * Handler picking all matching handlers from the list.
      */
     class AllMatchingCompositeObservationHandler implements CompositeObservationHandler {
+
         private final List<ObservationHandler<Observation.Context>> handlers;
 
         /**
@@ -215,5 +216,7 @@ public interface ObservationHandler<T extends Observation.Context> {
         private Stream<ObservationHandler<Observation.Context>> getAllApplicableHandlers(Observation.Context context) {
             return this.handlers.stream().filter(handler -> handler.supportsContext(context));
         }
+
     }
+
 }

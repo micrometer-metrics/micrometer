@@ -15,26 +15,25 @@
  */
 package io.micrometer.observation;
 
+import io.micrometer.common.lang.Nullable;
+
 import java.util.Collection;
 import java.util.List;
 import java.util.concurrent.CopyOnWriteArrayList;
 
-import io.micrometer.observation.lang.Nullable;
-
 /**
- * Implementations of this interface are responsible for managing state of an {@link Observation}.
+ * Implementations of this interface are responsible for managing state of an
+ * {@link Observation}.
  *
  * @author Jonatan Ivanov
  * @author Tommy Ludwig
  * @author Marcin Grzejszczak
- *
  * @since 1.10.0
  */
 public interface ObservationRegistry {
 
     /**
      * Creates an instance of {@link ObservationRegistry}.
-     *
      * @return {@link ObservationRegistry} instance
      */
     static ObservationRegistry create() {
@@ -47,34 +46,41 @@ public interface ObservationRegistry {
     ObservationRegistry NOOP = NoopObservationRegistry.INSTANCE;
 
     /**
-     * When previously set will allow to retrieve the {@link Observation} at any point in time.
+     * When previously set will allow to retrieve the {@link Observation} at any point in
+     * time.
      *
      * Example: if an {@link Observation} was put in {@link Observation.Scope} then this
      * method will return the current present {@link Observation} within the scope.
-     *
      * @return current observation or {@code null} if it's not present
      */
     @Nullable
     Observation getCurrentObservation();
 
     /**
-     * Sets the observation as current.
+     * When previously set will allow to retrieve the {@link Observation.Scope} at any
+     * point in time.
      *
-     * @param current observation
+     * Example: if an {@link Observation} was put in {@link Observation.Scope} then this
+     * method will return the current present {@link Observation.Scope}.
+     * @return current observation scope or {@code null} if it's not present
      */
-    void setCurrentObservation(@Nullable Observation current);
+    @Nullable
+    Observation.Scope getCurrentObservationScope();
+
+    /**
+     * Sets the observation scope as current.
+     * @param current observation scope
+     */
+    void setCurrentObservationScope(@Nullable Observation.Scope current);
 
     /**
      * Configuration options for this registry.
-     *
      * @return observation configuration
      */
     ObservationConfig observationConfig();
 
-
     /**
      * Checks whether this {@link ObservationRegistry} is no-op.
-     *
      * @return {@code true} when this is a no-op observation registry
      */
     default boolean isNoOp() {
@@ -94,7 +100,6 @@ public interface ObservationRegistry {
 
         /**
          * Register a handler for the {@link Observation observations}.
-         *
          * @param handler handler to add to the current configuration
          * @return This configuration instance
          */
@@ -104,9 +109,8 @@ public interface ObservationRegistry {
         }
 
         /**
-         * Register a predicate to define whether {@link Observation observation} should be created or a
-         * {@link NoopObservation} instead.
-         *
+         * Register a predicate to define whether {@link Observation observation} should
+         * be created or a {@link NoopObservation} instead.
          * @param predicate predicate
          * @return This configuration instance
          */
@@ -117,8 +121,8 @@ public interface ObservationRegistry {
 
         /**
          * Register a key values provider for the {@link Observation observations}.
-         *
-         * @param keyValuesProvider key values provider to add to the current configuration
+         * @param keyValuesProvider key values provider to add to the current
+         * configuration
          * @return This configuration instance
          */
         public ObservationConfig keyValuesProvider(Observation.GlobalKeyValuesProvider<?> keyValuesProvider) {
@@ -127,8 +131,8 @@ public interface ObservationRegistry {
         }
 
         /**
-         * Check to assert whether {@link Observation} should be created or {@link NoopObservation} instead.
-         *
+         * Check to assert whether {@link Observation} should be created or
+         * {@link NoopObservation} instead.
          * @param name observation technical name
          * @param context context
          * @return {@code true} when observation is enabled
@@ -145,5 +149,7 @@ public interface ObservationRegistry {
         Collection<Observation.GlobalKeyValuesProvider<?>> getKeyValuesProviders() {
             return keyValuesProviders;
         }
+
     }
+
 }

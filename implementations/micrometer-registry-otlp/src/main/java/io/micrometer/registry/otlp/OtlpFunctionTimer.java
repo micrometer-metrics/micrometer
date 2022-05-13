@@ -26,7 +26,8 @@ class OtlpFunctionTimer<T> extends CumulativeFunctionTimer<T> implements StartTi
 
     final long startTimeNanos;
 
-    OtlpFunctionTimer(Id id, T obj, ToLongFunction<T> countFunction, ToDoubleFunction<T> totalTimeFunction, TimeUnit totalTimeFunctionUnit, TimeUnit baseTimeUnit, Clock clock) {
+    OtlpFunctionTimer(Id id, T obj, ToLongFunction<T> countFunction, ToDoubleFunction<T> totalTimeFunction,
+            TimeUnit totalTimeFunctionUnit, TimeUnit baseTimeUnit, Clock clock) {
         super(id, obj, countFunction, totalTimeFunction, totalTimeFunctionUnit, baseTimeUnit);
         this.startTimeNanos = TimeUnit.MILLISECONDS.toNanos(clock.wallTime());
     }
@@ -35,4 +36,5 @@ class OtlpFunctionTimer<T> extends CumulativeFunctionTimer<T> implements StartTi
     public long getStartTimeNanos() {
         return this.startTimeNanos;
     }
+
 }

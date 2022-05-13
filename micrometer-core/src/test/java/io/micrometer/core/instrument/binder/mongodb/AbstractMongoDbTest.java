@@ -36,6 +36,7 @@ abstract class AbstractMongoDbTest {
     private final MongoDBContainer mongoDBContainer = new MongoDBContainer(DockerImageName.parse("mongo:4.0.10"));
 
     String host;
+
     int port;
 
     @BeforeEach

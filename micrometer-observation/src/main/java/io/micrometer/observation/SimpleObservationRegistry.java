@@ -15,7 +15,7 @@
  */
 package io.micrometer.observation;
 
-import io.micrometer.observation.lang.Nullable;
+import io.micrometer.common.lang.Nullable;
 
 /**
  * Default implementation of {@link ObservationRegistry}.
@@ -23,23 +23,31 @@ import io.micrometer.observation.lang.Nullable;
  * @author Jonatan Ivanov
  * @author Tommy Ludwig
  * @author Marcin Grzejszczak
- *
  * @since 1.10.0
  */
 class SimpleObservationRegistry implements ObservationRegistry {
 
-    private static final ThreadLocal<Observation> localObservation = new ThreadLocal<>();
+    private static final ThreadLocal<Observation.Scope> localObservation = new ThreadLocal<>();
 
     private final ObservationConfig observationConfig = new ObservationConfig();
 
     @Nullable
     @Override
     public Observation getCurrentObservation() {
+        Observation.Scope scope = localObservation.get();
+        if (scope != null) {
+            return scope.getCurrentObservation();
+        }
+        return null;
+    }
+
+    @Override
+    public Observation.Scope getCurrentObservationScope() {
         return localObservation.get();
     }
 
     @Override
-    public void setCurrentObservation(@Nullable Observation current) {
+    public void setCurrentObservationScope(Observation.Scope current) {
         localObservation.set(current);
     }
 
@@ -52,4 +60,5 @@ class SimpleObservationRegistry implements ObservationRegistry {
     public boolean isNoOp() {
         return ObservationRegistry.super.isNoOp();
     }
+
 }

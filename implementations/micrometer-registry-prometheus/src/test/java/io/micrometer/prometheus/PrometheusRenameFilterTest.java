@@ -31,6 +31,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 class PrometheusRenameFilterTest {
 
     private final PrometheusRenameFilter filter = new PrometheusRenameFilter();
+
     private final MeterRegistry registry = new SimpleMeterRegistry();
 
     @Test

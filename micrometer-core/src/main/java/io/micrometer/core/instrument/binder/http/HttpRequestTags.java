@@ -15,9 +15,9 @@
  */
 package io.micrometer.core.instrument.binder.http;
 
+import io.micrometer.common.util.StringUtils;
 import io.micrometer.core.annotation.Incubating;
 import io.micrometer.core.instrument.Tag;
-import io.micrometer.core.instrument.util.StringUtils;
 
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
@@ -30,6 +30,7 @@ import javax.servlet.http.HttpServletResponse;
  */
 @Incubating(since = "1.4.0")
 public class HttpRequestTags {
+
     private static final Tag EXCEPTION_NONE = Tag.of("exception", "None");
 
     private static final Tag STATUS_UNKNOWN = Tag.of("status", "UNKNOWN");
@@ -67,7 +68,8 @@ public class HttpRequestTags {
     public static Tag exception(Throwable exception) {
         if (exception != null) {
             String simpleName = exception.getClass().getSimpleName();
-            return Tag.of("exception", StringUtils.isNotBlank(simpleName) ? simpleName : exception.getClass().getName());
+            return Tag.of("exception",
+                    StringUtils.isNotBlank(simpleName) ? simpleName : exception.getClass().getName());
         }
         return EXCEPTION_NONE;
     }
@@ -81,4 +83,5 @@ public class HttpRequestTags {
         Outcome outcome = (response != null) ? Outcome.forStatus(response.getStatus()) : Outcome.UNKNOWN;
         return outcome.asTag();
     }
+
 }

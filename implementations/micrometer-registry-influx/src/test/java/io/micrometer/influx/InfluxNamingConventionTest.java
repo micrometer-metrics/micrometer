@@ -30,6 +30,7 @@ import static org.assertj.core.api.Assertions.catchThrowable;
  * @author Johnny Lim
  */
 class InfluxNamingConventionTest {
+
     private InfluxNamingConvention convention = new InfluxNamingConvention(NamingConvention.snakeCase);
 
     @Issue("#693")

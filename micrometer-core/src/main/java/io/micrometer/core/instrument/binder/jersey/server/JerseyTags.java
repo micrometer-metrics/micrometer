@@ -15,9 +15,9 @@
  */
 package io.micrometer.core.instrument.binder.jersey.server;
 
+import io.micrometer.common.util.StringUtils;
 import io.micrometer.core.instrument.Tag;
 import io.micrometer.core.instrument.binder.http.Outcome;
-import io.micrometer.core.instrument.util.StringUtils;
 import org.glassfish.jersey.server.ContainerRequest;
 import org.glassfish.jersey.server.ContainerResponse;
 import org.glassfish.jersey.server.ExtendedUriInfo;
@@ -73,15 +73,13 @@ public final class JerseyTags {
      */
     public static Tag status(ContainerResponse response) {
         /* In case there is no response we are dealing with an unmapped exception. */
-        return (response != null)
-                ? Tag.of("status", Integer.toString(response.getStatus()))
-                : STATUS_SERVER_ERROR;
+        return (response != null) ? Tag.of("status", Integer.toString(response.getStatus())) : STATUS_SERVER_ERROR;
     }
 
     /**
      * Creates a {@code uri} tag based on the URI of the given {@code event}. Uses the
-     * {@link ExtendedUriInfo#getMatchedTemplates()} if
-     * available. {@code REDIRECTION} for 3xx responses, {@code NOT_FOUND} for 404 responses.
+     * {@link ExtendedUriInfo#getMatchedTemplates()} if available. {@code REDIRECTION} for
+     * 3xx responses, {@code NOT_FOUND} for 404 responses.
      * @param event the request event
      * @return the uri tag derived from the request event
      */
@@ -145,8 +143,7 @@ public final class JerseyTags {
             exception = exception.getCause();
         }
         String simpleName = exception.getClass().getSimpleName();
-        return Tag.of("exception", StringUtils.isNotEmpty(simpleName) ? simpleName
-                : exception.getClass().getName());
+        return Tag.of("exception", StringUtils.isNotEmpty(simpleName) ? simpleName : exception.getClass().getName());
     }
 
     /**

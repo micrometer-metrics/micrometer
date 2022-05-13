@@ -41,13 +41,11 @@ final class CumulativeHistogramConfigUtil {
         }
 
         return DistributionStatisticConfig.builder()
-                // Set the expiration duration for the histogram counts to be effectively infinite.
+                // Set the expiration duration for the histogram counts to be effectively
+                // infinite.
                 // Without this, the counts are reset every expiry duration.
                 .expiry(Duration.ofNanos(Long.MAX_VALUE)) // effectively infinite
-                .bufferLength(1)
-                .serviceLevelObjectives(newSloBoundaries)
-                .build()
-                .merge(distributionStatisticConfig);
+                .bufferLength(1).serviceLevelObjectives(newSloBoundaries).build().merge(distributionStatisticConfig);
     }
 
     private static boolean isPositiveInf(double bucket) {
@@ -56,4 +54,5 @@ final class CumulativeHistogramConfigUtil {
 
     private CumulativeHistogramConfigUtil() {
     }
+
 }

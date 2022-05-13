@@ -15,10 +15,10 @@
  */
 package io.micrometer.cloudwatch2;
 
+import io.micrometer.common.lang.Nullable;
+import io.micrometer.common.util.StringUtils;
 import io.micrometer.core.instrument.Meter;
 import io.micrometer.core.instrument.config.NamingConvention;
-import io.micrometer.core.instrument.util.StringUtils;
-import io.micrometer.core.lang.Nullable;
 
 /**
  * {@link NamingConvention} for CloudWatch.
@@ -30,6 +30,7 @@ public class CloudWatchNamingConvention implements NamingConvention {
 
     // https://docs.aws.amazon.com/AmazonCloudWatch/latest/APIReference/API_Dimension.html
     private static final int MAX_TAG_KEY_LENGTH = 255;
+
     private static final int MAX_TAG_VALUE_LENGTH = 255;
 
     private final NamingConvention delegate;
@@ -56,4 +57,5 @@ public class CloudWatchNamingConvention implements NamingConvention {
     public String tagValue(String value) {
         return StringUtils.truncate(delegate.tagValue(value), MAX_TAG_VALUE_LENGTH);
     }
+
 }

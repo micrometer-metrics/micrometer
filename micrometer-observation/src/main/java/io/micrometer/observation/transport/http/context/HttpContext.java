@@ -15,13 +15,13 @@
  */
 package io.micrometer.observation.transport.http.context;
 
-import io.micrometer.observation.Observation;
 import io.micrometer.common.KeyValues;
+import io.micrometer.common.lang.NonNull;
+import io.micrometer.common.lang.Nullable;
+import io.micrometer.observation.Observation;
 import io.micrometer.observation.transport.http.HttpRequest;
 import io.micrometer.observation.transport.http.HttpResponse;
 import io.micrometer.observation.transport.http.tags.HttpKeyValueProvider;
-import io.micrometer.observation.lang.NonNull;
-import io.micrometer.observation.lang.Nullable;
 
 /**
  * {@link Observation.Context} for an HTTP exchange.
@@ -45,7 +45,6 @@ public abstract class HttpContext<REQ extends HttpRequest, RES extends HttpRespo
 
     /**
      * Returns the HTTP request.
-     *
      * @return request
      */
     @NonNull
@@ -53,7 +52,6 @@ public abstract class HttpContext<REQ extends HttpRequest, RES extends HttpRespo
 
     /**
      * Returns the HTTP response.
-     *
      * @return response
      */
     @Nullable
@@ -62,7 +60,6 @@ public abstract class HttpContext<REQ extends HttpRequest, RES extends HttpRespo
     /**
      * Sets the given HTTP request for this context. Might be {@code null} when an
      * exception occurred and there is no request.
-     *
      * @param request HTTP response
      * @return this
      */
@@ -71,7 +68,6 @@ public abstract class HttpContext<REQ extends HttpRequest, RES extends HttpRespo
     /**
      * Sets the given HTTP response for this context. Might be {@code null} when an
      * exception occurred and there is no response.
-     *
      * @param response HTTP response
      * @return this
      */
@@ -82,4 +78,5 @@ public abstract class HttpContext<REQ extends HttpRequest, RES extends HttpRespo
     public KeyValues getLowCardinalityKeyValues() {
         return this.keyValueProvider.getLowCardinalityKeyValues(getRequest(), getResponse(), null);
     }
+
 }

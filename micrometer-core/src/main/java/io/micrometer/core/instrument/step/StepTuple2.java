@@ -21,31 +21,34 @@ import java.util.concurrent.atomic.AtomicLong;
 import java.util.function.Supplier;
 
 /**
- * Tracks multiple 'values' for periods (steps) of time.  The previous step's values are
+ * Tracks multiple 'values' for periods (steps) of time. The previous step's values are
  * obtained by calling {@link #poll1()} or {@link #poll2()}.
  *
  * @author Jon Schneider
  * @since 1.5.1
  */
 public class StepTuple2<T1, T2> {
+
     private final Clock clock;
+
     private final long stepMillis;
+
     private AtomicLong lastInitPos;
 
     private final T1 t1NoValue;
+
     private final T2 t2NoValue;
 
     private final Supplier<T1> t1Supplier;
+
     private final Supplier<T2> t2Supplier;
 
     private volatile T1 t1Previous;
+
     private volatile T2 t2Previous;
 
-    public StepTuple2(Clock clock, long stepMillis,
-                     T1 t1NoValue,
-                     T2 t2NoValue,
-                     Supplier<T1> t1Supplier,
-                     Supplier<T2> t2Supplier) {
+    public StepTuple2(Clock clock, long stepMillis, T1 t1NoValue, T2 t2NoValue, Supplier<T1> t1Supplier,
+            Supplier<T2> t2Supplier) {
         this.clock = clock;
         this.stepMillis = stepMillis;
         this.t1NoValue = t1NoValue;
@@ -61,9 +64,10 @@ public class StepTuple2<T1, T2> {
         long stepTime = now / stepMillis;
         long lastInit = lastInitPos.get();
         if (lastInit < stepTime && lastInitPos.compareAndSet(lastInit, stepTime)) {
-            // Need to check if there was any activity during the previous step interval. If there was
-            // then the init position will move forward by 1, otherwise it will be older. No activity
-            // means the previous interval should be set to the `init` value.
+            // Need to check if there was any activity during the previous step interval.
+            // If there was then the init position will move forward by 1, otherwise it
+            // will be older.
+            // No activity means the previous interval should be set to the `init` value.
             t1Previous = (lastInit == stepTime - 1) ? t1Supplier.get() : t1NoValue;
             t2Previous = (lastInit == stepTime - 1) ? t2Supplier.get() : t2NoValue;
         }
@@ -84,4 +88,5 @@ public class StepTuple2<T1, T2> {
         rollCount(clock.wallTime());
         return t2Previous;
     }
+
 }

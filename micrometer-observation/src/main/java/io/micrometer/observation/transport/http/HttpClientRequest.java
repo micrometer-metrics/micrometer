@@ -30,7 +30,6 @@ public interface HttpClientRequest extends HttpRequest {
 
     /**
      * Adds a new header.
-     *
      * @param name header name
      * @param value header value
      */

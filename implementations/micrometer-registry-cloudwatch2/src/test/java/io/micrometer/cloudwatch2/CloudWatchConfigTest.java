@@ -25,7 +25,9 @@ import java.util.Map;
 import static org.assertj.core.api.Assertions.assertThat;
 
 class CloudWatchConfigTest {
+
     private final Map<String, String> props = new HashMap<>();
+
     private final CloudWatchConfig config = props::get;
 
     @Issue("#2088")
@@ -87,8 +89,7 @@ class CloudWatchConfigTest {
         };
         Validated<?> validate = config.validate();
 
-        assertThat(validate.failures().stream().map(Validated.Invalid::getMessage))
-                .containsExactly("is required");
+        assertThat(validate.failures().stream().map(Validated.Invalid::getMessage)).containsExactly("is required");
     }
 
     @Test
@@ -97,4 +98,5 @@ class CloudWatchConfigTest {
 
         assertThat(config.validate().isValid()).isTrue();
     }
+
 }

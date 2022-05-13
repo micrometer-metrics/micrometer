@@ -15,11 +15,11 @@
  */
 package io.micrometer.core.instrument.internal;
 
+import io.micrometer.common.lang.Nullable;
+import io.micrometer.common.util.internal.logging.WarnThenDebugLogger;
 import io.micrometer.core.instrument.AbstractMeter;
 import io.micrometer.core.instrument.Gauge;
 import io.micrometer.core.instrument.Meter;
-import io.micrometer.core.lang.Nullable;
-import io.micrometer.core.util.internal.logging.WarnThenDebugLogger;
 
 import java.lang.ref.WeakReference;
 import java.util.function.ToDoubleFunction;
@@ -28,7 +28,6 @@ import java.util.function.ToDoubleFunction;
  * Default implementation for {@link Gauge}.
  *
  * @param <T> reference type
- *
  * @author Jon Schneider
  * @author Johnny Lim
  */
@@ -37,6 +36,7 @@ public class DefaultGauge<T> extends AbstractMeter implements Gauge {
     private static final WarnThenDebugLogger logger = new WarnThenDebugLogger(DefaultGauge.class);
 
     private final WeakReference<T> ref;
+
     private final ToDoubleFunction<T> value;
 
     public DefaultGauge(Meter.Id id, @Nullable T obj, ToDoubleFunction<T> value) {
@@ -58,4 +58,5 @@ public class DefaultGauge<T> extends AbstractMeter implements Gauge {
         }
         return Double.NaN;
     }
+
 }

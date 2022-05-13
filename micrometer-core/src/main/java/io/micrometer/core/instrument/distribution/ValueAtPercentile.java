@@ -27,6 +27,7 @@ import java.util.concurrent.TimeUnit;
 public final class ValueAtPercentile {
 
     private final double percentile;
+
     private final double value;
 
     public ValueAtPercentile(double percentile, double value) {
@@ -53,8 +54,10 @@ public final class ValueAtPercentile {
 
     @Override
     public boolean equals(Object o) {
-        if (this == o) return true;
-        if (o == null || getClass() != o.getClass()) return false;
+        if (this == o)
+            return true;
+        if (o == null || getClass() != o.getClass())
+            return false;
 
         ValueAtPercentile that = (ValueAtPercentile) o;
 
@@ -71,4 +74,5 @@ public final class ValueAtPercentile {
         result = 31 * result + (int) (temp ^ (temp >>> 32));
         return result;
     }
+
 }

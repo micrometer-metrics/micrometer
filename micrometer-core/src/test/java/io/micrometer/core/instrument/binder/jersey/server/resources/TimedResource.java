@@ -36,8 +36,7 @@ public class TimedResource {
 
     private final CountDownLatch longTaskRequestReleaseLatch;
 
-    public TimedResource(CountDownLatch longTaskRequestStartedLatch,
-            CountDownLatch longTaskRequestReleaseLatch) {
+    public TimedResource(CountDownLatch longTaskRequestStartedLatch, CountDownLatch longTaskRequestReleaseLatch) {
         this.longTaskRequestStartedLatch = requireNonNull(longTaskRequestStartedLatch);
         this.longTaskRequestReleaseLatch = requireNonNull(longTaskRequestReleaseLatch);
     }
@@ -64,8 +63,8 @@ public class TimedResource {
     }
 
     /*
-     * Async server side processing (AsyncResponse) is not supported in the
-     * in-memory test container.
+     * Async server side processing (AsyncResponse) is not supported in the in-memory test
+     * container.
      */
     @GET
     @Path("long-timed")
@@ -75,7 +74,8 @@ public class TimedResource {
         longTaskRequestStartedLatch.countDown();
         try {
             longTaskRequestReleaseLatch.await();
-        } catch (InterruptedException e) {
+        }
+        catch (InterruptedException e) {
             throw new RuntimeException(e);
         }
         return "long-timed";
@@ -88,7 +88,8 @@ public class TimedResource {
         longTaskRequestStartedLatch.countDown();
         try {
             longTaskRequestReleaseLatch.await();
-        } catch (InterruptedException e) {
+        }
+        catch (InterruptedException e) {
             throw new RuntimeException(e);
         }
         return "long-timed";
@@ -101,4 +102,5 @@ public class TimedResource {
     public String longTimedUnnamed() {
         return "long-timed-unnamed";
     }
+
 }

@@ -15,20 +15,17 @@
  */
 package io.micrometer.common;
 
-import java.util.Arrays;
-import java.util.Collection;
-import java.util.Iterator;
-import java.util.Spliterator;
-import java.util.Spliterators;
+import io.micrometer.common.lang.Nullable;
+
+import java.util.*;
 import java.util.stream.Stream;
 import java.util.stream.StreamSupport;
-
-import io.micrometer.common.lang.Nullable;
 
 import static java.util.stream.Collectors.joining;
 
 /**
- * An immutable collection of {@link KeyValue Tags} that are guaranteed to be sorted and deduplicated by tag key.
+ * An immutable collection of {@link KeyValue Tags} that are guaranteed to be sorted and
+ * deduplicated by tag key.
  *
  * @author Jon Schneider
  * @author Maciej Walkowiak
@@ -38,9 +35,10 @@ import static java.util.stream.Collectors.joining;
  */
 public final class KeyValues implements Iterable<KeyValue> {
 
-    private static final KeyValues EMPTY = new KeyValues(new KeyValue[]{});
+    private static final KeyValues EMPTY = new KeyValues(new KeyValue[] {});
 
     private final KeyValue[] tags;
+
     private int last;
 
     private KeyValues(KeyValue[] tags) {
@@ -69,9 +67,9 @@ public final class KeyValues implements Iterable<KeyValue> {
     }
 
     /**
-     * Return a new {@code Tags} instance by merging this collection and the specified key/value pair.
-     *
-     * @param key   the tag key to add
+     * Return a new {@code Tags} instance by merging this collection and the specified
+     * key/value pair.
+     * @param key the tag key to add
      * @param value the tag value to add
      * @return a new {@code Tags} instance
      */
@@ -80,8 +78,8 @@ public final class KeyValues implements Iterable<KeyValue> {
     }
 
     /**
-     * Return a new {@code Tags} instance by merging this collection and the specified key/value pairs.
-     *
+     * Return a new {@code Tags} instance by merging this collection and the specified
+     * key/value pairs.
      * @param keyValues the key/value pairs to add
      * @return a new {@code Tags} instance
      */
@@ -93,8 +91,8 @@ public final class KeyValues implements Iterable<KeyValue> {
     }
 
     /**
-     * Return a new {@code Tags} instance by merging this collection and the specified tags.
-     *
+     * Return a new {@code Tags} instance by merging this collection and the specified
+     * tags.
      * @param tags the tags to add
      * @return a new {@code Tags} instance
      */
@@ -109,8 +107,8 @@ public final class KeyValues implements Iterable<KeyValue> {
     }
 
     /**
-     * Return a new {@code Tags} instance by merging this collection and the specified tags.
-     *
+     * Return a new {@code Tags} instance by merging this collection and the specified
+     * tags.
      * @param tags the tags to add
      * @return a new {@code Tags} instance
      */
@@ -132,6 +130,7 @@ public final class KeyValues implements Iterable<KeyValue> {
     }
 
     private class ArrayIterator implements Iterator<KeyValue> {
+
         private int currentIndex = 0;
 
         @Override
@@ -148,11 +147,11 @@ public final class KeyValues implements Iterable<KeyValue> {
         public void remove() {
             throw new UnsupportedOperationException("cannot remove items from tags");
         }
+
     }
 
     /**
      * Return a stream of the contained tags.
-     *
      * @return a tags stream
      */
     public Stream<KeyValue> stream() {
@@ -190,20 +189,21 @@ public final class KeyValues implements Iterable<KeyValue> {
     }
 
     /**
-     * Return a new {@code Tags} instance by concatenating the specified collections of tags.
-     *
-     * @param tags      the first set of tags
+     * Return a new {@code Tags} instance by concatenating the specified collections of
+     * tags.
+     * @param tags the first set of tags
      * @param otherTags the second set of tags
      * @return the merged tags
      */
-    public static KeyValues concat(@Nullable Iterable<? extends KeyValue> tags, @Nullable Iterable<? extends KeyValue> otherTags) {
+    public static KeyValues concat(@Nullable Iterable<? extends KeyValue> tags,
+            @Nullable Iterable<? extends KeyValue> otherTags) {
         return KeyValues.of(tags).and(otherTags);
     }
 
     /**
-     * Return a new {@code Tags} instance by concatenating the specified tags and key/value pairs.
-     *
-     * @param tags      the first set of tags
+     * Return a new {@code Tags} instance by concatenating the specified tags and
+     * key/value pairs.
+     * @param tags the first set of tags
      * @param keyValues the additional key/value pairs to add
      * @return the merged tags
      */
@@ -212,38 +212,41 @@ public final class KeyValues implements Iterable<KeyValue> {
     }
 
     /**
-     * Return a new {@code Tags} instance containing tags constructed from the specified source tags.
-     *
+     * Return a new {@code Tags} instance containing tags constructed from the specified
+     * source tags.
      * @param tags the tags to add
      * @return a new {@code Tags} instance
      */
     public static KeyValues of(@Nullable Iterable<? extends KeyValue> tags) {
         if (tags == null || !tags.iterator().hasNext()) {
             return KeyValues.empty();
-        } else if (tags instanceof KeyValues) {
+        }
+        else if (tags instanceof KeyValues) {
             return (KeyValues) tags;
-        } else if (tags instanceof Collection) {
+        }
+        else if (tags instanceof Collection) {
             Collection<? extends KeyValue> tagsCollection = (Collection<? extends KeyValue>) tags;
             return new KeyValues(tagsCollection.toArray(new KeyValue[0]));
-        } else {
+        }
+        else {
             return new KeyValues(StreamSupport.stream(tags.spliterator(), false).toArray(KeyValue[]::new));
         }
     }
 
     /**
-     * Return a new {@code Tags} instance containing tags constructed from the specified key/value pair.
-     *
-     * @param key   the tag key to add
+     * Return a new {@code Tags} instance containing tags constructed from the specified
+     * key/value pair.
+     * @param key the tag key to add
      * @param value the tag value to add
      * @return a new {@code Tags} instance
      */
     public static KeyValues of(String key, String value) {
-        return new KeyValues(new KeyValue[]{KeyValue.of(key, value)});
+        return new KeyValues(new KeyValue[] { KeyValue.of(key, value) });
     }
 
     /**
-     * Return a new {@code Tags} instance containing tags constructed from the specified key/value pairs.
-     *
+     * Return a new {@code Tags} instance containing tags constructed from the specified
+     * key/value pairs.
      * @param keyValues the key/value pairs to add
      * @return a new {@code Tags} instance
      */
@@ -262,8 +265,8 @@ public final class KeyValues implements Iterable<KeyValue> {
     }
 
     /**
-     * Return a new {@code Tags} instance containing tags constructed from the specified tags.
-     *
+     * Return a new {@code Tags} instance containing tags constructed from the specified
+     * tags.
      * @param tags the tags to add
      * @return a new {@code Tags} instance
      */
@@ -273,7 +276,6 @@ public final class KeyValues implements Iterable<KeyValue> {
 
     /**
      * Return a {@code Tags} instance that contains no elements.
-     *
      * @return an empty {@code Tags} instance
      */
     public static KeyValues empty() {
@@ -284,4 +286,5 @@ public final class KeyValues implements Iterable<KeyValue> {
     public String toString() {
         return stream().map(KeyValue::toString).collect(joining(",", "[", "]"));
     }
+
 }

@@ -15,10 +15,10 @@
  */
 package io.micrometer.opentsdb;
 
+import io.micrometer.common.lang.Nullable;
 import io.micrometer.core.instrument.AbstractDistributionSummary;
 import io.micrometer.core.instrument.Clock;
 import io.micrometer.core.instrument.distribution.*;
-import io.micrometer.core.lang.Nullable;
 
 import java.time.Duration;
 import java.util.concurrent.atomic.DoubleAdder;
@@ -32,40 +32,43 @@ import java.util.concurrent.atomic.LongAdder;
  * @since 1.4.0
  */
 public class OpenTSDBDistributionSummary extends AbstractDistributionSummary {
+
     private static final CountAtBucket[] EMPTY_HISTOGRAM = new CountAtBucket[0];
+
     private final LongAdder count = new LongAdder();
+
     private final DoubleAdder amount = new DoubleAdder();
+
     private final TimeWindowMax max;
 
     @Nullable
     private final Histogram histogram;
 
-    OpenTSDBDistributionSummary(Id id, Clock clock, DistributionStatisticConfig distributionStatisticConfig, double scale,
-                                @Nullable OpenTSDBFlavor flavor) {
-        super(id, clock,
-                DistributionStatisticConfig.builder()
-                        .percentilesHistogram(false)
-                        .serviceLevelObjectives()
-                        .build()
-                        .merge(distributionStatisticConfig),
-                scale, false);
+    OpenTSDBDistributionSummary(Id id, Clock clock, DistributionStatisticConfig distributionStatisticConfig,
+            double scale, @Nullable OpenTSDBFlavor flavor) {
+        super(id, clock, DistributionStatisticConfig.builder().percentilesHistogram(false).serviceLevelObjectives()
+                .build().merge(distributionStatisticConfig), scale, false);
 
         this.max = new TimeWindowMax(clock, distributionStatisticConfig);
 
         if (distributionStatisticConfig.isPublishingHistogram()) {
             if (flavor == null) {
-                histogram = new TimeWindowFixedBoundaryHistogram(clock, DistributionStatisticConfig.builder()
-                        .expiry(Duration.ofDays(1825)) // effectively never roll over
-                        .bufferLength(1)
-                        .build()
-                        .merge(distributionStatisticConfig), true);
+                histogram = new TimeWindowFixedBoundaryHistogram(clock,
+                        DistributionStatisticConfig.builder().expiry(Duration.ofDays(1825)) // effectively
+                                                                                            // never
+                                                                                            // roll
+                                                                                            // over
+                                .bufferLength(1).build().merge(distributionStatisticConfig),
+                        true);
             }
             else if (OpenTSDBFlavor.VictoriaMetrics.equals(flavor)) {
                 histogram = new FixedBoundaryVictoriaMetricsHistogram();
-            } else {
+            }
+            else {
                 histogram = null;
             }
-        } else {
+        }
+        else {
             histogram = null;
         }
     }
@@ -96,9 +99,9 @@ public class OpenTSDBDistributionSummary extends AbstractDistributionSummary {
     }
 
     /**
-     * For Prometheus we cannot use the histogram counts from HistogramSnapshot, as it is based on a
-     * rolling histogram. Prometheus requires a histogram that accumulates values over the lifetime of the app.
-     *
+     * For Prometheus we cannot use the histogram counts from HistogramSnapshot, as it is
+     * based on a rolling histogram. Prometheus requires a histogram that accumulates
+     * values over the lifetime of the app.
      * @return Cumulative histogram buckets.
      */
     public CountAtBucket[] histogramCounts() {
@@ -113,11 +116,8 @@ public class OpenTSDBDistributionSummary extends AbstractDistributionSummary {
             return snapshot;
         }
 
-        return new HistogramSnapshot(snapshot.count(),
-                snapshot.total(),
-                snapshot.max(),
-                snapshot.percentileValues(),
-                histogramCounts(),
-                snapshot::outputSummary);
+        return new HistogramSnapshot(snapshot.count(), snapshot.total(), snapshot.max(), snapshot.percentileValues(),
+                histogramCounts(), snapshot::outputSummary);
     }
+
 }

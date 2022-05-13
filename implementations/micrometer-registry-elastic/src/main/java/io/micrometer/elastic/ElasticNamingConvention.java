@@ -15,9 +15,9 @@
  */
 package io.micrometer.elastic;
 
+import io.micrometer.common.lang.Nullable;
 import io.micrometer.core.instrument.Meter;
 import io.micrometer.core.instrument.config.NamingConvention;
-import io.micrometer.core.lang.Nullable;
 
 import java.util.regex.Pattern;
 
@@ -50,13 +50,17 @@ public class ElasticNamingConvention implements NamingConvention {
     public String tagKey(String key) {
         if (key.equals("name")) {
             key = "name.tag";
-        } else if (key.equals("type")) {
+        }
+        else if (key.equals("type")) {
             key = "type.tag";
-        } else if (key.startsWith("_")) {
-            // Fields that start with _ are considered reserved and ignored by Kibana. See https://github.com/elastic/kibana/issues/2551
+        }
+        else if (key.startsWith("_")) {
+            // Fields that start with _ are considered reserved and ignored by Kibana. See
+            // https://github.com/elastic/kibana/issues/2551
             key = FIRST_UNDERSCORE_PATTERN.matcher(key).replaceFirst("");
         }
 
         return delegate.tagKey(key);
     }
+
 }

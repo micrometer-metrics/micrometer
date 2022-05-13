@@ -26,10 +26,12 @@ import java.io.File;
  * Demonstrates how to provide a file property to the disk space metrics monitor.
  */
 public class DiskMetricsSample {
+
     public static void main(String[] args) {
         MeterRegistry registry = SampleConfig.myMonitoringSystem();
         new DiskSpaceMetrics(new File(System.getProperty("user.dir"))).bindTo(registry);
 
         Flux.never().blockLast();
     }
+
 }

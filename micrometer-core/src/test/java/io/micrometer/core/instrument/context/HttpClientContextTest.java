@@ -42,4 +42,5 @@ class HttpClientContextTest {
         assertThat(context.setResponse(response)).isSameAs(context);
         assertThat(context.getResponse()).isSameAs(response);
     }
+
 }

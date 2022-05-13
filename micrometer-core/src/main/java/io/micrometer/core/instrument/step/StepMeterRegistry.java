@@ -15,6 +15,7 @@
  */
 package io.micrometer.core.instrument.step;
 
+import io.micrometer.common.lang.Nullable;
 import io.micrometer.core.instrument.*;
 import io.micrometer.core.instrument.distribution.DistributionStatisticConfig;
 import io.micrometer.core.instrument.distribution.HistogramGauges;
@@ -23,18 +24,19 @@ import io.micrometer.core.instrument.internal.DefaultGauge;
 import io.micrometer.core.instrument.internal.DefaultLongTaskTimer;
 import io.micrometer.core.instrument.internal.DefaultMeter;
 import io.micrometer.core.instrument.push.PushMeterRegistry;
-import io.micrometer.core.lang.Nullable;
 
 import java.util.concurrent.TimeUnit;
 import java.util.function.ToDoubleFunction;
 import java.util.function.ToLongFunction;
 
 /**
- * Registry that step-normalizes counts and sums to a rate/second over the publishing interval.
+ * Registry that step-normalizes counts and sums to a rate/second over the publishing
+ * interval.
  *
  * @author Jon Schneider
  */
 public abstract class StepMeterRegistry extends PushMeterRegistry {
+
     private final StepRegistryConfig config;
 
     public StepMeterRegistry(StepRegistryConfig config, Clock clock) {
@@ -60,24 +62,28 @@ public abstract class StepMeterRegistry extends PushMeterRegistry {
     }
 
     @Override
-    protected Timer newTimer(Meter.Id id, DistributionStatisticConfig distributionStatisticConfig, PauseDetector pauseDetector) {
+    protected Timer newTimer(Meter.Id id, DistributionStatisticConfig distributionStatisticConfig,
+            PauseDetector pauseDetector) {
         Timer timer = new StepTimer(id, clock, distributionStatisticConfig, pauseDetector, getBaseTimeUnit(),
-            this.config.step().toMillis(), false);
+                this.config.step().toMillis(), false);
         HistogramGauges.registerWithCommonFormat(timer, this);
         return timer;
     }
 
     @Override
-    protected DistributionSummary newDistributionSummary(Meter.Id id, DistributionStatisticConfig distributionStatisticConfig, double scale) {
+    protected DistributionSummary newDistributionSummary(Meter.Id id,
+            DistributionStatisticConfig distributionStatisticConfig, double scale) {
         DistributionSummary summary = new StepDistributionSummary(id, clock, distributionStatisticConfig, scale,
-            config.step().toMillis(), false);
+                config.step().toMillis(), false);
         HistogramGauges.registerWithCommonFormat(summary, this);
         return summary;
     }
 
     @Override
-    protected <T> FunctionTimer newFunctionTimer(Meter.Id id, T obj, ToLongFunction<T> countFunction, ToDoubleFunction<T> totalTimeFunction, TimeUnit totalTimeFunctionUnit) {
-        return new StepFunctionTimer<>(id, clock, config.step().toMillis(), obj, countFunction, totalTimeFunction, totalTimeFunctionUnit, getBaseTimeUnit());
+    protected <T> FunctionTimer newFunctionTimer(Meter.Id id, T obj, ToLongFunction<T> countFunction,
+            ToDoubleFunction<T> totalTimeFunction, TimeUnit totalTimeFunctionUnit) {
+        return new StepFunctionTimer<>(id, clock, config.step().toMillis(), obj, countFunction, totalTimeFunction,
+                totalTimeFunctionUnit, getBaseTimeUnit());
     }
 
     @Override
@@ -92,9 +98,8 @@ public abstract class StepMeterRegistry extends PushMeterRegistry {
 
     @Override
     protected DistributionStatisticConfig defaultHistogramConfig() {
-        return DistributionStatisticConfig.builder()
-                .expiry(config.step())
-                .build()
+        return DistributionStatisticConfig.builder().expiry(config.step()).build()
                 .merge(DistributionStatisticConfig.DEFAULT);
     }
+
 }

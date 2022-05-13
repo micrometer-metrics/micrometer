@@ -24,7 +24,9 @@ import java.util.Map;
 import static org.assertj.core.api.Assertions.assertThat;
 
 class SignalFxConfigTest {
+
     private final Map<String, String> props = new HashMap<>();
+
     private final SignalFxConfig config = props::get;
 
     @Test
@@ -41,4 +43,5 @@ class SignalFxConfigTest {
 
         assertThat(config.validate().isValid()).isTrue();
     }
+
 }

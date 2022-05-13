@@ -15,11 +15,11 @@
  */
 package io.micrometer.statsd.internal;
 
+import io.micrometer.common.lang.Nullable;
 import io.micrometer.core.instrument.Meter;
 import io.micrometer.core.instrument.MeterRegistry;
 import io.micrometer.core.instrument.Statistic;
 import io.micrometer.core.instrument.util.DoubleFormat;
-import io.micrometer.core.lang.Nullable;
 import io.micrometer.statsd.StatsdLineBuilder;
 
 import java.util.Objects;
@@ -28,12 +28,17 @@ import java.util.stream.Collectors;
 import static java.util.stream.Stream.of;
 
 public abstract class FlavorStatsdLineBuilder implements StatsdLineBuilder {
+
     private static final String TYPE_COUNT = "c";
+
     private static final String TYPE_GAUGE = "g";
+
     private static final String TYPE_HISTOGRAM = "h";
+
     private static final String TYPE_TIMING = "ms";
 
     protected final Meter.Id id;
+
     protected final MeterRegistry.Config config;
 
     protected FlavorStatsdLineBuilder(Meter.Id id, MeterRegistry.Config config) {
@@ -63,13 +68,14 @@ public abstract class FlavorStatsdLineBuilder implements StatsdLineBuilder {
 
     abstract String line(String amount, @Nullable Statistic stat, String type);
 
-    protected String tags(@Nullable Statistic stat, @Nullable String otherTags, String keyValueSeparator, String preamble) {
-        String tags = of(stat == null ? null : "statistic" + keyValueSeparator + stat.getTagValueRepresentation(), otherTags)
-                .filter(Objects::nonNull)
-                .collect(Collectors.joining(","));
+    protected String tags(@Nullable Statistic stat, @Nullable String otherTags, String keyValueSeparator,
+            String preamble) {
+        String tags = of(stat == null ? null : "statistic" + keyValueSeparator + stat.getTagValueRepresentation(),
+                otherTags).filter(Objects::nonNull).collect(Collectors.joining(","));
 
         if (!tags.isEmpty())
             tags = preamble + tags;
         return tags;
     }
+
 }

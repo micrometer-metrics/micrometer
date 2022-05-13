@@ -23,7 +23,9 @@ import java.time.Duration;
  * @author Jon Schneider
  */
 public class ClockDriftPauseDetector implements PauseDetector {
+
     private final Duration sleepInterval;
+
     private final Duration pauseThreshold;
 
     public ClockDriftPauseDetector(Duration sleepInterval, Duration pauseThreshold) {
@@ -38,4 +40,5 @@ public class ClockDriftPauseDetector implements PauseDetector {
     public Duration getPauseThreshold() {
         return pauseThreshold;
     }
+
 }

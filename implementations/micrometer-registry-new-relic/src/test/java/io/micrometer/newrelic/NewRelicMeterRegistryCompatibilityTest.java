@@ -15,9 +15,9 @@
  */
 package io.micrometer.newrelic;
 
+import io.micrometer.common.lang.Nullable;
 import io.micrometer.core.instrument.MeterRegistry;
 import io.micrometer.core.instrument.MockClock;
-import io.micrometer.core.lang.Nullable;
 import io.micrometer.core.tck.MeterRegistryCompatibilityKit;
 
 import java.time.Duration;
@@ -56,4 +56,5 @@ class NewRelicMeterRegistryCompatibilityTest extends MeterRegistryCompatibilityK
     public Duration step() {
         return config.step();
     }
+
 }

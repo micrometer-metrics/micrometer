@@ -29,29 +29,38 @@ import java.util.concurrent.atomic.DoubleAdder;
 
 /**
  * A histogram implementation for non-negative values with automatically created buckets.
- * It does not support precomputed percentiles but supports aggregable percentile histograms.
- * It's suitable only with VictoriaMetrics storage.
+ * It does not support precomputed percentiles but supports aggregable percentile
+ * histograms. It's suitable only with VictoriaMetrics storage.
  *
- * <a href="https://github.com/VictoriaMetrics/metrics/blob/master/histogram.go">Reference implementation</a> written
- * in Go originally by Aliaksandr Valialkin.
+ * <a href="https://github.com/VictoriaMetrics/metrics/blob/master/histogram.go">Reference
+ * implementation</a> written in Go originally by Aliaksandr Valialkin.
  *
  * @author Aliaksandr Valialkin
  * @author Nikolay Ustinov
  * @since 1.4.0
  */
 public class FixedBoundaryVictoriaMetricsHistogram implements Histogram {
+
     private static final IdxOffset UPPER = new IdxOffset(-1, 2);
+
     private static final IdxOffset LOWER = new IdxOffset(-1, 1);
+
     private static final IdxOffset ZERO = new IdxOffset(-1, 0);
 
     private static final int E10MIN = -9;
+
     private static final int E10MAX = 18;
+
     private static final int DECIMAL_MULTIPLIER = 2;
+
     private static final int BUCKET_SIZE = 9 * DECIMAL_MULTIPLIER;
+
     private static final int BUCKETS_COUNT = E10MAX - E10MIN;
+
     private static final double DECIMAL_PRECISION = 0.01 / DECIMAL_MULTIPLIER;
 
     private static final String[] VMRANGES;
+
     private static final double[] UPPER_BOUNDS;
 
     static {
@@ -79,8 +88,8 @@ public class FixedBoundaryVictoriaMetricsHistogram implements Histogram {
                 String end = String.format("%.1fe%d", m, e10);
                 VMRANGES[idx] = start + "..." + end;
 
-                UPPER_BOUNDS[idx] = BigDecimal.valueOf(m).setScale(1, RoundingMode.HALF_UP).multiply(
-                        BigDecimal.TEN.pow(e10, MathContext.DECIMAL128)).doubleValue();
+                UPPER_BOUNDS[idx] = BigDecimal.valueOf(m).setScale(1, RoundingMode.HALF_UP)
+                        .multiply(BigDecimal.TEN.pow(e10, MathContext.DECIMAL128)).doubleValue();
 
                 idx++;
                 start = end;
@@ -89,9 +98,13 @@ public class FixedBoundaryVictoriaMetricsHistogram implements Histogram {
     }
 
     final AtomicReferenceArray<AtomicLongArray> values;
+
     final AtomicLong zeros;
+
     final AtomicLong lower;
+
     final AtomicLong upper;
+
     final DoubleAdder sum;
 
     public FixedBoundaryVictoriaMetricsHistogram() {
@@ -110,13 +123,17 @@ public class FixedBoundaryVictoriaMetricsHistogram implements Histogram {
 
     @Override
     public void recordDouble(double value) {
-        if (Double.isNaN(value) || value < 0) return;
+        if (Double.isNaN(value) || value < 0)
+            return;
         IdxOffset inxs = getBucketIdxAndOffset(value);
         sum.add(value);
         if (inxs.bucketIdx < 0) {
-            if (inxs.offset == 0) zeros.incrementAndGet();
-            else if (inxs.offset == 1) lower.incrementAndGet();
-            else upper.incrementAndGet();
+            if (inxs.offset == 0)
+                zeros.incrementAndGet();
+            else if (inxs.offset == 1)
+                lower.incrementAndGet();
+            else
+                upper.incrementAndGet();
             return;
         }
         AtomicLongArray hb = values.get(inxs.bucketIdx);
@@ -145,7 +162,8 @@ public class FixedBoundaryVictoriaMetricsHistogram implements Histogram {
         double pow = Math.pow(10, e10);
         if (bucketIdx >= BUCKETS_COUNT) {
             if ((bucketIdx == BUCKETS_COUNT) && (Math.abs(pow - value) < DECIMAL_PRECISION)) {
-                // Adjust m to be on par with Prometheus 'le' buckets (aka 'less or equal')
+                // Adjust m to be on par with Prometheus 'le' buckets (aka 'less or
+                // equal')
                 return new IdxOffset(BUCKETS_COUNT - 1, BUCKET_SIZE - 1);
             }
             return UPPER;
@@ -159,7 +177,8 @@ public class FixedBoundaryVictoriaMetricsHistogram implements Histogram {
             offset = BUCKET_SIZE - 1;
 
         if (Math.abs((double) offset - m) < DECIMAL_PRECISION) {
-            // Adjust offset to be on par with Prometheus 'le' buckets (aka 'less or equal')
+            // Adjust offset to be on par with Prometheus 'le' buckets (aka 'less or
+            // equal')
             offset--;
             if (offset < 0) {
                 bucketIdx--;
@@ -175,7 +194,8 @@ public class FixedBoundaryVictoriaMetricsHistogram implements Histogram {
     private static int getRangeIndex(int index, int offset) {
         if (index < 0) {
             if (offset > 2)
-                throw new RuntimeException(String.format("BUG: offset must be in range [0...2] for negative bucketIdx; got %d", offset));
+                throw new RuntimeException(
+                        String.format("BUG: offset must be in range [0...2] for negative bucketIdx; got %d", offset));
             return offset;
         }
         return 3 + index * BUCKET_SIZE + offset;
@@ -221,29 +241,31 @@ public class FixedBoundaryVictoriaMetricsHistogram implements Histogram {
 
     @Override
     public HistogramSnapshot takeSnapshot(long count, double total, double max) {
-        return new HistogramSnapshot(count, total, max, null,
-                nonZeroBuckets().toArray(new CountAtBucket[0]), this::outputSummary);
+        return new HistogramSnapshot(count, total, max, null, nonZeroBuckets().toArray(new CountAtBucket[0]),
+                this::outputSummary);
     }
 
     private void outputSummary(PrintStream printStream, double bucketScaling) {
         printStream.format("%14s %10s\n\n", "Bucket", "TotalCount");
 
         for (CountAtBucket bucket : nonZeroBuckets()) {
-            printStream.format(Locale.US, "%14.1f %10d\n",
-                    bucket.bucket() / bucketScaling,
-                    bucket.count());
+            printStream.format(Locale.US, "%14.1f %10d\n", bucket.bucket() / bucketScaling, bucket.count());
         }
 
         printStream.write('\n');
     }
 
     private static class IdxOffset {
+
         final int bucketIdx;
+
         final int offset;
 
         IdxOffset(int bucketIdx, int offset) {
             this.bucketIdx = bucketIdx;
             this.offset = offset;
         }
+
     }
+
 }

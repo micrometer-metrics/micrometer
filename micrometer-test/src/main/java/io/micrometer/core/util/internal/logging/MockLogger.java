@@ -20,22 +20,25 @@ import java.util.List;
 import java.util.Queue;
 import java.util.concurrent.ConcurrentLinkedQueue;
 
-import static io.micrometer.core.util.internal.logging.InternalLogLevel.DEBUG;
-import static io.micrometer.core.util.internal.logging.InternalLogLevel.ERROR;
-import static io.micrometer.core.util.internal.logging.InternalLogLevel.INFO;
-import static io.micrometer.core.util.internal.logging.InternalLogLevel.TRACE;
-import static io.micrometer.core.util.internal.logging.InternalLogLevel.WARN;
+import static io.micrometer.core.util.internal.logging.InternalLogLevel.*;
 
 /**
- * Simple implementation of {@link InternalLogger} that does not produce any output or delegate the work to another logger,
- * instead it stores every log event in memory so that the recorded log events can be fetched and verified by tests.
+ * Simple implementation of {@link InternalLogger} that does not produce any output or
+ * delegate the work to another logger, instead it stores every log event in memory so
+ * that the recorded log events can be fetched and verified by tests.
  *
- * You should not create instances of this class directly, instead you can use the {@link InternalLoggerFactory} to get one.
+ * You should not create instances of this class directly, instead you can use the
+ * {@link InternalLoggerFactory} to get one.
  *
  * @author Jonatan Ivanov
+ * @deprecated Please use {@link io.micrometer.common.util.internal.logging.MockLogger}
+ * instead.
  */
+@Deprecated
 public class MockLogger implements InternalLogger {
+
     private final String name;
+
     private final Queue<LogEvent> logEvents = new ConcurrentLinkedQueue<>();
 
     MockLogger(String name) {
@@ -43,7 +46,8 @@ public class MockLogger implements InternalLogger {
     }
 
     /**
-     * @return The recorded {@link LogEvent} instances, in descending order by age (the oldest is the first one).
+     * @return The recorded {@link LogEvent} instances, in descending order by age (the
+     * oldest is the first one).
      */
     public List<LogEvent> getLogEvents() {
         return new ArrayList<>(logEvents);
@@ -274,4 +278,5 @@ public class MockLogger implements InternalLogger {
     public void log(InternalLogLevel level, Throwable t) {
         log(level, null, t);
     }
+
 }

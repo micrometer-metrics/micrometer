@@ -24,6 +24,7 @@ import io.micrometer.core.instrument.step.StepRegistryConfig;
  * @since 1.1.0
  */
 public interface LoggingRegistryConfig extends StepRegistryConfig {
+
     LoggingRegistryConfig DEFAULT = k -> null;
 
     @Override
@@ -32,11 +33,12 @@ public interface LoggingRegistryConfig extends StepRegistryConfig {
     }
 
     /**
-     * @return Whether counters and timers that have no activity in an
-     * interval are still logged.
+     * @return Whether counters and timers that have no activity in an interval are still
+     * logged.
      */
     default boolean logInactive() {
         String v = get(prefix() + ".logInactive");
         return Boolean.parseBoolean(v);
     }
+
 }

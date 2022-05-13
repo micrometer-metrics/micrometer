@@ -30,7 +30,9 @@ import java.util.concurrent.TimeUnit;
 @State(Scope.Benchmark)
 @OutputTimeUnit(TimeUnit.MICROSECONDS)
 public class CounterBenchmark {
+
     public static void main(String[] args) throws RunnerException {
+        // @formatter:off
         Options opt = new OptionsBuilder()
                 .include(CounterBenchmark.class.getSimpleName())
                 .warmupIterations(5)
@@ -38,14 +40,17 @@ public class CounterBenchmark {
                 .mode(Mode.SampleTime)
                 .forks(1)
                 .build();
+        // @formatter:on
 
         new Runner(opt).run();
     }
 
     private int x = 923;
+
     private int y = 123;
 
     private MeterRegistry registry;
+
     private Counter counter;
 
     @Setup
@@ -70,4 +75,5 @@ public class CounterBenchmark {
     public int sum() {
         return x + y;
     }
+
 }

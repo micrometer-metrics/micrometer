@@ -37,15 +37,18 @@ import static org.slf4j.spi.LocationAwareLogger.*;
 /**
  * NOTE: This file has been copied from {io.netty.util.internal.logging}.
  *
- * <a href="https://www.slf4j.org/">SLF4J</a> logger which is location aware and so will log the correct origin of the
- * logging event by filter out the wrapper itself.
+ * <a href="https://www.slf4j.org/">SLF4J</a> logger which is location aware and so will
+ * log the correct origin of the logging event by filter out the wrapper itself.
  */
 final class LocationAwareSlf4JLogger extends AbstractInternalLogger {
 
-    // IMPORTANT: All our log methods first check if the log level is enabled before call the wrapped
-    // LocationAwareLogger.log(...) method. This is done to reduce GC creation that is caused by varargs.
+    // IMPORTANT: All our log methods first check if the log level is enabled before call
+    // the wrapped
+    // LocationAwareLogger.log(...) method. This is done to reduce GC creation that is
+    // caused by varargs.
 
     static final String FQCN = LocationAwareSlf4JLogger.class.getName();
+
     private static final long serialVersionUID = -8292030083201538180L;
 
     private final transient LocationAwareLogger logger;
@@ -266,4 +269,5 @@ final class LocationAwareSlf4JLogger extends AbstractInternalLogger {
             log(ERROR_INT, msg, t);
         }
     }
+
 }

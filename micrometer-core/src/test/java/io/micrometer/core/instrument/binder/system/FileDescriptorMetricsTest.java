@@ -33,6 +33,7 @@ import static org.mockito.Mockito.mock;
  * @author Michael Weirauch
  */
 class FileDescriptorMetricsTest {
+
     private MeterRegistry registry = new SimpleMeterRegistry();
 
     @Test
@@ -50,10 +51,8 @@ class FileDescriptorMetricsTest {
 
         new FileDescriptorMetrics(Tags.of("some", "tag")).bindTo(registry);
 
-        assertThat(registry.get("process.files.open").tags("some", "tag")
-            .gauge().value()).isGreaterThan(0);
-        assertThat(registry.get("process.files.max").tags("some", "tag")
-            .gauge().value()).isGreaterThan(0);
+        assertThat(registry.get("process.files.open").tags("some", "tag").gauge().value()).isGreaterThan(0);
+        assertThat(registry.get("process.files.max").tags("some", "tag").gauge().value()).isGreaterThan(0);
     }
 
     @Test
@@ -68,7 +67,11 @@ class FileDescriptorMetricsTest {
 
     /** Represents a JVM implementation we do not currently support. */
     private interface UnsupportedOperatingSystemMXBean extends OperatingSystemMXBean {
+
         long getOpenFileDescriptorCount();
+
         long getMaxFileDescriptorCount();
+
     }
+
 }

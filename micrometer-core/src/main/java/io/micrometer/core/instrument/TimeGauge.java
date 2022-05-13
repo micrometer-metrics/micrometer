@@ -15,31 +15,32 @@
  */
 package io.micrometer.core.instrument;
 
+import io.micrometer.common.lang.Nullable;
 import io.micrometer.core.annotation.Incubating;
 import io.micrometer.core.instrument.util.TimeUtils;
-import io.micrometer.core.lang.Nullable;
 
 import java.util.concurrent.TimeUnit;
 import java.util.function.Supplier;
 import java.util.function.ToDoubleFunction;
 
 /**
- * A specialized gauge that tracks a time value, to be scaled to the base unit of time expected by each registry implementation.
+ * A specialized gauge that tracks a time value, to be scaled to the base unit of time
+ * expected by each registry implementation.
  *
  * @author Jon Schneider
  * @author Johnny Lim
  */
 public interface TimeGauge extends Gauge {
+
     static <T> Builder<T> builder(String name, @Nullable T obj, TimeUnit fUnits, ToDoubleFunction<T> f) {
         return new Builder<>(name, obj, fUnits, f);
     }
 
     /**
-     * A convenience method for building a time gauge from a supplying function, holding a strong
-     * reference to this function.
-     *
+     * A convenience method for building a time gauge from a supplying function, holding a
+     * strong reference to this function.
      * @param name The time gauge's name.
-     * @param f    A function that yields a double value for the time gauge.
+     * @param f A function that yields a double value for the time gauge.
      * @param fUnits time unit
      * @return A new time gauge builder.
      * @since 1.7.0
@@ -53,14 +54,14 @@ public interface TimeGauge extends Gauge {
     }
 
     /**
-     * @return The base time unit of the timer to which all published metrics will be scaled
+     * @return The base time unit of the timer to which all published metrics will be
+     * scaled
      */
     TimeUnit baseTimeUnit();
 
     /**
-     * The act of observing the value by calling this method triggers sampling
-     * of the underlying number or user-defined function that defines the value for the gauge.
-     *
+     * The act of observing the value by calling this method triggers sampling of the
+     * underlying number or user-defined function that defines the value for the gauge.
      * @param unit The base unit of time to scale the value to.
      * @return The current value, scaled to the appropriate base unit.
      */
@@ -72,10 +73,15 @@ public interface TimeGauge extends Gauge {
      * Fluent builder for time gauges.
      */
     class Builder<T> {
+
         private final String name;
+
         private final TimeUnit fUnits;
+
         private final ToDoubleFunction<T> f;
+
         private Tags tags = Tags.empty();
+
         private boolean strongReference = false;
 
         @Nullable
@@ -92,7 +98,8 @@ public interface TimeGauge extends Gauge {
         }
 
         /**
-         * @param tags Must be an even number of arguments representing key/value pairs of tags.
+         * @param tags Must be an even number of arguments representing key/value pairs of
+         * tags.
          * @return This time gauge builder.
          */
         public Builder<T> tags(String... tags) {
@@ -109,7 +116,7 @@ public interface TimeGauge extends Gauge {
         }
 
         /**
-         * @param key   The tag key.
+         * @param key The tag key.
          * @param value The tag value.
          * @return The time gauge builder with a single added tag.
          */
@@ -128,10 +135,10 @@ public interface TimeGauge extends Gauge {
         }
 
         /**
-         * Indicates that the time gauge should maintain a strong reference on the object upon which
-         * its instantaneous value is determined.
-         *
-         * @param strong Whether or not to maintain a strong reference on the time gauged object.
+         * Indicates that the time gauge should maintain a strong reference on the object
+         * upon which its instantaneous value is determined.
+         * @param strong Whether or not to maintain a strong reference on the time gauged
+         * object.
          * @return The time gauge builder with altered strong reference semantics.
          * @since 1.7.0
          */
@@ -142,16 +149,19 @@ public interface TimeGauge extends Gauge {
         }
 
         /**
-         * Add the time gauge to a single registry, or return an existing time gauge in that registry. The returned
-         * time gauge will be unique for each registry, but each registry is guaranteed to only create one time gauge
-         * for the same combination of name and tags.
-         *
-         * @param registry A registry to add the time gauge to, if it doesn't already exist.
+         * Add the time gauge to a single registry, or return an existing time gauge in
+         * that registry. The returned time gauge will be unique for each registry, but
+         * each registry is guaranteed to only create one time gauge for the same
+         * combination of name and tags.
+         * @param registry A registry to add the time gauge to, if it doesn't already
+         * exist.
          * @return A new or existing time gauge.
          */
         public TimeGauge register(MeterRegistry registry) {
-            return registry.more().timeGauge(new Meter.Id(name, tags, null, description, Type.GAUGE),
-                    obj, fUnits, strongReference ? new StrongReferenceGaugeFunction<>(obj, f) : f);
+            return registry.more().timeGauge(new Meter.Id(name, tags, null, description, Type.GAUGE), obj, fUnits,
+                    strongReference ? new StrongReferenceGaugeFunction<>(obj, f) : f);
         }
+
     }
+
 }

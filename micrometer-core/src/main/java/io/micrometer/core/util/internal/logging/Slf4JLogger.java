@@ -36,7 +36,11 @@ import org.slf4j.Logger;
  * NOTE: This file has been copied from {io.netty.util.internal.logging}.
  *
  * <a href="https://www.slf4j.org/">SLF4J</a> logger.
+ *
+ * @deprecated Please use {@code io.micrometer.common.util.internal.logging.Slf4JLogger}
+ * instead.
  */
+@Deprecated
 final class Slf4JLogger extends AbstractInternalLogger {
 
     private static final long serialVersionUID = 108038972685130825L;
@@ -197,4 +201,5 @@ final class Slf4JLogger extends AbstractInternalLogger {
     public void error(String msg, Throwable t) {
         logger.error(msg, t);
     }
+
 }

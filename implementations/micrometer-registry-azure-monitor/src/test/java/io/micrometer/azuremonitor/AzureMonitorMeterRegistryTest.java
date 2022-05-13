@@ -15,9 +15,6 @@
  */
 package io.micrometer.azuremonitor;
 
-import java.time.Duration;
-import java.util.concurrent.TimeUnit;
-
 import com.microsoft.applicationinsights.TelemetryConfiguration;
 import io.micrometer.core.instrument.DistributionSummary;
 import io.micrometer.core.instrument.FunctionTimer;
@@ -25,6 +22,9 @@ import io.micrometer.core.instrument.MockClock;
 import io.micrometer.core.instrument.Timer;
 import io.micrometer.core.instrument.config.validate.ValidationException;
 import org.junit.jupiter.api.Test;
+
+import java.time.Duration;
+import java.util.concurrent.TimeUnit;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatExceptionOfType;
@@ -36,6 +36,7 @@ import static org.assertj.core.api.Assertions.assertThatExceptionOfType;
  * @author Johnny Lim
  */
 class AzureMonitorMeterRegistryTest {
+
     private final AzureMonitorConfig config = new AzureMonitorConfig() {
         @Override
         public String get(String key) {
@@ -63,9 +64,8 @@ class AzureMonitorMeterRegistryTest {
     @Test
     void failWhenTelemetryConfigInstrumentationKeyIsUnsetAndConfigInstrumentationKeyIsNull() {
         TelemetryConfiguration telemetryConfiguration = TelemetryConfiguration.createDefault();
-        assertThatExceptionOfType(ValidationException.class)
-                .isThrownBy(() -> AzureMonitorMeterRegistry.builder(key -> null)
-                        .telemetryConfiguration(telemetryConfiguration).build());
+        assertThatExceptionOfType(ValidationException.class).isThrownBy(() -> AzureMonitorMeterRegistry
+                .builder(key -> null).telemetryConfiguration(telemetryConfiguration).build());
     }
 
     @Test
@@ -85,21 +85,26 @@ class AzureMonitorMeterRegistryTest {
 
     @Test
     void trackFunctionTimer() {
-        FunctionTimer functionTimer = FunctionTimer.builder("my.function.timer", 1d, Number::longValue, Number::doubleValue, TimeUnit.MILLISECONDS).register(registry);
+        FunctionTimer functionTimer = FunctionTimer
+                .builder("my.function.timer", 1d, Number::longValue, Number::doubleValue, TimeUnit.MILLISECONDS)
+                .register(registry);
         clock.add(config.step());
         assertThat(registry.trackFunctionTimer(functionTimer)).hasSize(1);
     }
 
     @Test
     void trackFunctionTimerWhenCountIsZeroShouldReturnEmpty() {
-        FunctionTimer functionTimer = FunctionTimer.builder("my.function.timer", 0d, Number::longValue, Number::doubleValue, TimeUnit.MILLISECONDS).register(registry);
+        FunctionTimer functionTimer = FunctionTimer
+                .builder("my.function.timer", 0d, Number::longValue, Number::doubleValue, TimeUnit.MILLISECONDS)
+                .register(registry);
         clock.add(config.step());
         assertThat(registry.trackFunctionTimer(functionTimer)).isEmpty();
     }
 
     @Test
     void trackDistributionSummary() {
-        DistributionSummary distributionSummary = DistributionSummary.builder("my.distribution.summary").register(registry);
+        DistributionSummary distributionSummary = DistributionSummary.builder("my.distribution.summary")
+                .register(registry);
         distributionSummary.record(1d);
         clock.add(config.step());
         assertThat(registry.trackDistributionSummary(distributionSummary)).hasSize(1);
@@ -107,8 +112,10 @@ class AzureMonitorMeterRegistryTest {
 
     @Test
     void trackDistributionSummaryWhenCountIsZeroShouldReturnEmpty() {
-        DistributionSummary distributionSummary = DistributionSummary.builder("my.distribution.summary").register(registry);
+        DistributionSummary distributionSummary = DistributionSummary.builder("my.distribution.summary")
+                .register(registry);
         clock.add(config.step());
         assertThat(registry.trackDistributionSummary(distributionSummary)).isEmpty();
     }
+
 }

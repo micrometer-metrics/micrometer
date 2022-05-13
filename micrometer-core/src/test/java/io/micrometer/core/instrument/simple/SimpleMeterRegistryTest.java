@@ -16,19 +16,7 @@
 package io.micrometer.core.instrument.simple;
 
 import io.micrometer.core.Issue;
-import io.micrometer.core.instrument.Counter;
-import io.micrometer.core.instrument.DistributionSummary;
-import io.micrometer.core.instrument.FunctionCounter;
-import io.micrometer.core.instrument.FunctionTimer;
-import io.micrometer.core.instrument.Gauge;
-import io.micrometer.core.instrument.LongTaskTimer;
-import io.micrometer.core.instrument.Measurement;
-import io.micrometer.core.instrument.Meter;
-import io.micrometer.core.instrument.MockClock;
-import io.micrometer.core.instrument.Statistic;
-import io.micrometer.core.instrument.Tags;
-import io.micrometer.core.instrument.TimeGauge;
-import io.micrometer.core.instrument.Timer;
+import io.micrometer.core.instrument.*;
 import io.micrometer.core.instrument.cumulative.CumulativeFunctionCounter;
 import io.micrometer.core.instrument.cumulative.CumulativeFunctionTimer;
 import io.micrometer.core.instrument.step.StepFunctionCounter;
@@ -51,14 +39,15 @@ import static org.assertj.core.api.Assertions.assertThat;
  * @author Johnny Lim
  */
 class SimpleMeterRegistryTest {
+
     private MockClock clock = new MockClock();
+
     private SimpleMeterRegistry registry = new SimpleMeterRegistry(SimpleConfig.DEFAULT, clock);
 
     @Issue("#370")
     @Test
     void serviceLevelObjectivesOnlyNoPercentileHistogram() {
-        DistributionSummary summary = DistributionSummary.builder("my.summary")
-                .serviceLevelObjectives(1.0, 2)
+        DistributionSummary summary = DistributionSummary.builder("my.summary").serviceLevelObjectives(1.0, 2)
                 .register(registry);
 
         summary.record(1);
@@ -119,29 +108,19 @@ class SimpleMeterRegistryTest {
         SimpleMeterRegistry registry = new SimpleMeterRegistry(SimpleConfig.DEFAULT, clock);
 
         AtomicInteger temperature = new AtomicInteger(24);
-        Gauge.builder("temperature", () -> temperature)
-                .baseUnit("celsius")
-                .register(registry);
+        Gauge.builder("temperature", () -> temperature).baseUnit("celsius").register(registry);
 
-        Counter correctAnswers = Counter.builder("answers")
-                .tag("correct", "true")
-                .register(registry);
+        Counter correctAnswers = Counter.builder("answers").tag("correct", "true").register(registry);
         correctAnswers.increment();
         correctAnswers.increment();
 
-        Counter incorrectAnswers = Counter.builder("answers")
-                .tag("correct", "false")
-                .register(registry);
+        Counter incorrectAnswers = Counter.builder("answers").tag("correct", "false").register(registry);
         incorrectAnswers.increment();
 
-        Timer latency = Timer.builder("latency")
-                .tag("service", "test")
-                .tag("method", "GET")
-                .tag("uri", "/api/people")
+        Timer latency = Timer.builder("latency").tag("service", "test").tag("method", "GET").tag("uri", "/api/people")
                 .register(registry);
 
-        DistributionSummary requestSize = DistributionSummary.builder("request.size")
-                .baseUnit("bytes")
+        DistributionSummary requestSize = DistributionSummary.builder("request.size").baseUnit("bytes")
                 .register(registry);
 
         for (int i = 0; i < 10; i++) {
@@ -160,44 +139,38 @@ class SimpleMeterRegistryTest {
         FunctionCounter.builder("cache.miss", cacheMisses, AtomicInteger::doubleValue).register(registry);
 
         AtomicLong cacheLatency = new AtomicLong(100);
-        FunctionTimer.builder("cache.latency", cacheLatency, obj -> 5, AtomicLong::doubleValue, MILLISECONDS).register(registry);
+        FunctionTimer.builder("cache.latency", cacheLatency, obj -> 5, AtomicLong::doubleValue, MILLISECONDS)
+                .register(registry);
 
-        Meter.builder(
-                "custom.meter",
-                Meter.Type.OTHER,
-                Arrays.asList(
-                        new Measurement(() -> 42d, Statistic.VALUE),
-                        new Measurement(() -> 21d, Statistic.UNKNOWN)
-                )
-        ).register(registry);
+        Meter.builder("custom.meter", Meter.Type.OTHER, Arrays.asList(new Measurement(() -> 42d, Statistic.VALUE),
+                new Measurement(() -> 21d, Statistic.UNKNOWN))).register(registry);
 
-        assertThat(registry.getMetersAsString()).isEqualTo("answers(COUNTER)[correct='true']; count=2.0\n" +
-                "answers(COUNTER)[correct='false']; count=1.0\n" +
-                "cache.latency(TIMER)[]; count=5.0, total_time=0.1 seconds\n" +
-                "cache.miss(COUNTER)[]; count=42.0\n" +
-                "custom.meter(OTHER)[]; value=42.0, unknown=21.0\n" +
-                "handler(LONG_TASK_TIMER)[]; active_tasks=1.0, duration=3.0 seconds\n" +
-                "latency(TIMER)[method='GET', service='test', uri='/api/people']; count=10.0, total_time=0.29 seconds, max=0.038 seconds\n" +
-                "processing.time(GAUGE)[]; value=0.3 seconds\n" +
-                "request.size(DISTRIBUTION_SUMMARY)[]; count=10.0, total=1450.0 bytes, max=190.0 bytes\n" +
-                "temperature(GAUGE)[]; value=24.0 celsius");
+        assertThat(registry.getMetersAsString()).isEqualTo("answers(COUNTER)[correct='true']; count=2.0\n"
+                + "answers(COUNTER)[correct='false']; count=1.0\n"
+                + "cache.latency(TIMER)[]; count=5.0, total_time=0.1 seconds\n" + "cache.miss(COUNTER)[]; count=42.0\n"
+                + "custom.meter(OTHER)[]; value=42.0, unknown=21.0\n"
+                + "handler(LONG_TASK_TIMER)[]; active_tasks=1.0, duration=3.0 seconds\n"
+                + "latency(TIMER)[method='GET', service='test', uri='/api/people']; count=10.0, total_time=0.29 seconds, max=0.038 seconds\n"
+                + "processing.time(GAUGE)[]; value=0.3 seconds\n"
+                + "request.size(DISTRIBUTION_SUMMARY)[]; count=10.0, total=1450.0 bytes, max=190.0 bytes\n"
+                + "temperature(GAUGE)[]; value=24.0 celsius");
         sample.stop();
     }
 
     private SimpleMeterRegistry createRegistry(CountingMode mode) {
         return new SimpleMeterRegistry(new SimpleConfig() {
 
-                @Override
-                public String get(String key) {
-                    return null;
-                }
+            @Override
+            public String get(String key) {
+                return null;
+            }
 
-                @Override
-                public CountingMode mode() {
-                    return mode;
-                }
+            @Override
+            public CountingMode mode() {
+                return mode;
+            }
 
-            }, clock);
+        }, clock);
     }
 
 }
