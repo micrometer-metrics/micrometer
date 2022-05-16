@@ -426,7 +426,7 @@ public class StackdriverMeterRegistry extends StepMeterRegistry {
         }
 
         private String metricType(Meter.Id id, @Nullable String statistic) {
-            StringBuilder metricType = new StringBuilder("custom.googleapis.com/").append(getConventionName(id));
+            StringBuilder metricType = new StringBuilder(config.metricTypePrefix()).append(getConventionName(id));
             if (statistic != null) {
                 metricType.append('/').append(statistic);
             }
