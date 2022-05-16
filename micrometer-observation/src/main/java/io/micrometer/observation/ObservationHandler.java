@@ -18,6 +18,7 @@ package io.micrometer.observation;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Optional;
+import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 /**
@@ -100,7 +101,7 @@ public interface ObservationHandler<T extends Observation.Context> {
          * @param handlers the handlers that are registered under the composite
          */
         @SafeVarargs
-        public FirstMatchingCompositeObservationHandler(ObservationHandler<Observation.Context>... handlers) {
+        public FirstMatchingCompositeObservationHandler(ObservationHandler<? extends Observation.Context>... handlers) {
             this(Arrays.asList(handlers));
         }
 
@@ -108,8 +109,11 @@ public interface ObservationHandler<T extends Observation.Context> {
          * Creates a new instance of {@code FirstMatchingCompositeObservationHandler}.
          * @param handlers the handlers that are registered under the composite
          */
-        public FirstMatchingCompositeObservationHandler(List<ObservationHandler<Observation.Context>> handlers) {
-            this.handlers = handlers;
+        @SuppressWarnings("unchecked")
+        public FirstMatchingCompositeObservationHandler(
+                List<? extends ObservationHandler<? extends Observation.Context>> handlers) {
+            this.handlers = handlers.stream().map(handler -> (ObservationHandler<Observation.Context>) handler)
+                    .collect(Collectors.toList());
         }
 
         @Override
@@ -166,7 +170,7 @@ public interface ObservationHandler<T extends Observation.Context> {
          * @param handlers the handlers that are registered under the composite
          */
         @SafeVarargs
-        public AllMatchingCompositeObservationHandler(ObservationHandler<Observation.Context>... handlers) {
+        public AllMatchingCompositeObservationHandler(ObservationHandler<? extends Observation.Context>... handlers) {
             this(Arrays.asList(handlers));
         }
 
@@ -174,8 +178,11 @@ public interface ObservationHandler<T extends Observation.Context> {
          * Creates a new instance of {@code AllMatchingCompositeObservationHandler}.
          * @param handlers the handlers that are registered under the composite
          */
-        public AllMatchingCompositeObservationHandler(List<ObservationHandler<Observation.Context>> handlers) {
-            this.handlers = handlers;
+        @SuppressWarnings("unchecked")
+        public AllMatchingCompositeObservationHandler(
+                List<? extends ObservationHandler<? extends Observation.Context>> handlers) {
+            this.handlers = handlers.stream().map(handler -> (ObservationHandler<Observation.Context>) handler)
+                    .collect(Collectors.toList());
         }
 
         @Override
