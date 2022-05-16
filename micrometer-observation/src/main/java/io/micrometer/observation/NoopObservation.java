@@ -82,20 +82,20 @@ final class NoopObservation implements Observation {
 
     @Override
     public Scope openScope() {
-        return NoOpScope.INSTANCE;
+        return NoopScope.INSTANCE;
     }
 
     /**
      * Scope that does nothing.
      */
-    static final class NoOpScope implements Scope {
+    static final class NoopScope implements Scope {
 
         /**
-         * Instance of {@link NoOpScope}.
+         * Instance of {@link NoopScope}.
          */
-        public static final Scope INSTANCE = new NoOpScope();
+        public static final Scope INSTANCE = new NoopScope();
 
-        private NoOpScope() {
+        private NoopScope() {
 
         }
 

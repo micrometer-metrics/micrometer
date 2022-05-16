@@ -162,7 +162,7 @@ public interface Observation {
      * Checks whether this {@link Observation} is no-op.
      * @return {@code true} when this is a no-op observation
      */
-    default boolean isNoOp() {
+    default boolean isNoop() {
         return this == NoopObservation.INSTANCE;
     }
 
@@ -388,7 +388,7 @@ public interface Observation {
         /**
          * No-op scope.
          */
-        Scope NOOP = NoopObservation.NoOpScope.INSTANCE;
+        Scope NOOP = NoopObservation.NoopScope.INSTANCE;
 
         /**
          * Current observation available within this scope.
@@ -403,8 +403,8 @@ public interface Observation {
          * Checks whether this {@link Scope} is no-op.
          * @return {@code true} when this is a no-op scope
          */
-        default boolean isNoOp() {
-            return this == NoopObservation.NoOpScope.INSTANCE;
+        default boolean isNoop() {
+            return this == NoopObservation.NoopScope.INSTANCE;
         }
 
     }

@@ -57,8 +57,8 @@ class SimpleObservationRegistry implements ObservationRegistry {
     }
 
     @Override
-    public boolean isNoOp() {
-        return ObservationRegistry.super.isNoOp();
+    public boolean isNoop() {
+        return ObservationRegistry.super.isNoop();
     }
 
 }
