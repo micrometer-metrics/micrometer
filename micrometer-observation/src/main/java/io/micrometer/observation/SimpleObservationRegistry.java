@@ -27,14 +27,14 @@ import io.micrometer.common.lang.Nullable;
  */
 class SimpleObservationRegistry implements ObservationRegistry {
 
-    private static final ThreadLocal<Observation.Scope> localObservation = new ThreadLocal<>();
+    private static final ThreadLocal<Observation.Scope> localObservationScope = new ThreadLocal<>();
 
     private final ObservationConfig observationConfig = new ObservationConfig();
 
     @Nullable
     @Override
     public Observation getCurrentObservation() {
-        Observation.Scope scope = localObservation.get();
+        Observation.Scope scope = localObservationScope.get();
         if (scope != null) {
             return scope.getCurrentObservation();
         }
@@ -43,12 +43,12 @@ class SimpleObservationRegistry implements ObservationRegistry {
 
     @Override
     public Observation.Scope getCurrentObservationScope() {
-        return localObservation.get();
+        return localObservationScope.get();
     }
 
     @Override
     public void setCurrentObservationScope(Observation.Scope current) {
-        localObservation.set(current);
+        localObservationScope.set(current);
     }
 
     @Override

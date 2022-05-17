@@ -22,7 +22,7 @@ import java.util.function.Function;
 import java.util.function.Predicate;
 
 /**
- * An {@link ObservationHandler} that converts the context to text and Publishes it to the
+ * An {@link ObservationHandler} that converts the context to text and publishes it to the
  * {@link Consumer} of your choice.
  *
  * @author Jonatan Ivanov
