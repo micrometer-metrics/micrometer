@@ -25,7 +25,7 @@ import io.micrometer.common.lang.Nullable;
  * @author Marcin Grzejszczak
  * @since 1.10.0
  */
-public class SimpleObservationRegistry implements ObservationRegistry {
+class SimpleObservationRegistry implements ObservationRegistry {
 
     private static final ThreadLocal<Observation.Scope> localObservation = new ThreadLocal<>();
 

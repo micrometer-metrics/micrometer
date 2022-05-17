@@ -11,7 +11,6 @@ import io.micrometer.core.instrument.observation.TimerObservationHandler;
 import io.micrometer.observation.Observation;
 import io.micrometer.observation.ObservationHandler;
 import io.micrometer.observation.ObservationRegistry;
-import io.micrometer.observation.SimpleObservationRegistry;
 import io.micrometer.observation.transport.http.context.HttpClientContext;
 import io.micrometer.observation.transport.http.context.HttpServerContext;
 import io.micrometer.tracing.Tracer;
@@ -43,7 +42,7 @@ public class ObservationSample {
 
     @Bean
     ObservationRegistry observationRegistry(List<ObservationHandler<? extends Observation.Context>> observationHandlers) {
-        ObservationRegistry observationRegistry = new SimpleObservationRegistry();
+        ObservationRegistry observationRegistry = ObservationRegistry.create();
         ObservationRegistry.ObservationConfig observationConfig = observationRegistry.observationConfig();
         observationHandlers.forEach(observationConfig::observationHandler);
 
