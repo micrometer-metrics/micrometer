@@ -20,8 +20,6 @@ import java.util.List;
 import java.util.Queue;
 import java.util.concurrent.ConcurrentLinkedQueue;
 
-import static io.micrometer.core.util.internal.logging.InternalLogLevel.*;
-
 /**
  * Simple implementation of {@link InternalLogger} that does not produce any output or
  * delegate the work to another logger, instead it stores every log event in memory so
@@ -72,32 +70,32 @@ public class MockLogger implements InternalLogger {
 
     @Override
     public void trace(String msg) {
-        log(TRACE, msg);
+        log(io.micrometer.core.util.internal.logging.InternalLogLevel.TRACE, msg);
     }
 
     @Override
     public void trace(String format, Object arg) {
-        log(TRACE, format, arg);
+        log(io.micrometer.core.util.internal.logging.InternalLogLevel.TRACE, format, arg);
     }
 
     @Override
     public void trace(String format, Object argA, Object argB) {
-        log(TRACE, format, argA, argB);
+        log(io.micrometer.core.util.internal.logging.InternalLogLevel.TRACE, format, argA, argB);
     }
 
     @Override
     public void trace(String format, Object... arguments) {
-        log(TRACE, format, arguments);
+        log(io.micrometer.core.util.internal.logging.InternalLogLevel.TRACE, format, arguments);
     }
 
     @Override
     public void trace(String msg, Throwable t) {
-        log(TRACE, msg, t);
+        log(io.micrometer.core.util.internal.logging.InternalLogLevel.TRACE, msg, t);
     }
 
     @Override
     public void trace(Throwable t) {
-        log(TRACE, t);
+        log(io.micrometer.core.util.internal.logging.InternalLogLevel.TRACE, t);
     }
 
     @Override
@@ -107,32 +105,32 @@ public class MockLogger implements InternalLogger {
 
     @Override
     public void debug(String msg) {
-        log(DEBUG, msg);
+        log(io.micrometer.core.util.internal.logging.InternalLogLevel.DEBUG, msg);
     }
 
     @Override
     public void debug(String format, Object arg) {
-        log(DEBUG, format, arg);
+        log(io.micrometer.core.util.internal.logging.InternalLogLevel.DEBUG, format, arg);
     }
 
     @Override
     public void debug(String format, Object argA, Object argB) {
-        log(DEBUG, format, argA, argB);
+        log(io.micrometer.core.util.internal.logging.InternalLogLevel.DEBUG, format, argA, argB);
     }
 
     @Override
     public void debug(String format, Object... arguments) {
-        log(DEBUG, format, arguments);
+        log(io.micrometer.core.util.internal.logging.InternalLogLevel.DEBUG, format, arguments);
     }
 
     @Override
     public void debug(String msg, Throwable t) {
-        log(DEBUG, msg, t);
+        log(io.micrometer.core.util.internal.logging.InternalLogLevel.DEBUG, msg, t);
     }
 
     @Override
     public void debug(Throwable t) {
-        log(DEBUG, t);
+        log(io.micrometer.core.util.internal.logging.InternalLogLevel.DEBUG, t);
     }
 
     @Override
@@ -142,32 +140,32 @@ public class MockLogger implements InternalLogger {
 
     @Override
     public void info(String msg) {
-        log(INFO, msg);
+        log(io.micrometer.core.util.internal.logging.InternalLogLevel.INFO, msg);
     }
 
     @Override
     public void info(String format, Object arg) {
-        log(INFO, format, arg);
+        log(io.micrometer.core.util.internal.logging.InternalLogLevel.INFO, format, arg);
     }
 
     @Override
     public void info(String format, Object argA, Object argB) {
-        log(INFO, format, argA, argB);
+        log(io.micrometer.core.util.internal.logging.InternalLogLevel.INFO, format, argA, argB);
     }
 
     @Override
     public void info(String format, Object... arguments) {
-        log(INFO, format, arguments);
+        log(io.micrometer.core.util.internal.logging.InternalLogLevel.INFO, format, arguments);
     }
 
     @Override
     public void info(String msg, Throwable t) {
-        log(INFO, msg, t);
+        log(io.micrometer.core.util.internal.logging.InternalLogLevel.INFO, msg, t);
     }
 
     @Override
     public void info(Throwable t) {
-        log(INFO, t);
+        log(io.micrometer.core.util.internal.logging.InternalLogLevel.INFO, t);
     }
 
     @Override
@@ -177,32 +175,32 @@ public class MockLogger implements InternalLogger {
 
     @Override
     public void warn(String msg) {
-        log(WARN, msg);
+        log(io.micrometer.core.util.internal.logging.InternalLogLevel.WARN, msg);
     }
 
     @Override
     public void warn(String format, Object arg) {
-        log(WARN, format, arg);
+        log(io.micrometer.core.util.internal.logging.InternalLogLevel.WARN, format, arg);
     }
 
     @Override
     public void warn(String format, Object... arguments) {
-        log(WARN, format, arguments);
+        log(io.micrometer.core.util.internal.logging.InternalLogLevel.WARN, format, arguments);
     }
 
     @Override
     public void warn(String format, Object argA, Object argB) {
-        log(WARN, format, argA, argB);
+        log(io.micrometer.core.util.internal.logging.InternalLogLevel.WARN, format, argA, argB);
     }
 
     @Override
     public void warn(String msg, Throwable t) {
-        log(WARN, msg, t);
+        log(io.micrometer.core.util.internal.logging.InternalLogLevel.WARN, msg, t);
     }
 
     @Override
     public void warn(Throwable t) {
-        log(WARN, t);
+        log(io.micrometer.core.util.internal.logging.InternalLogLevel.WARN, t);
     }
 
     @Override
@@ -212,32 +210,32 @@ public class MockLogger implements InternalLogger {
 
     @Override
     public void error(String msg) {
-        log(ERROR, msg);
+        log(io.micrometer.core.util.internal.logging.InternalLogLevel.ERROR, msg);
     }
 
     @Override
     public void error(String format, Object arg) {
-        log(ERROR, format, arg);
+        log(io.micrometer.core.util.internal.logging.InternalLogLevel.ERROR, format, arg);
     }
 
     @Override
     public void error(String format, Object argA, Object argB) {
-        log(ERROR, format, argA, argB);
+        log(io.micrometer.core.util.internal.logging.InternalLogLevel.ERROR, format, argA, argB);
     }
 
     @Override
     public void error(String format, Object... arguments) {
-        log(ERROR, format, arguments);
+        log(io.micrometer.core.util.internal.logging.InternalLogLevel.ERROR, format, arguments);
     }
 
     @Override
     public void error(String msg, Throwable t) {
-        log(ERROR, msg, t);
+        log(io.micrometer.core.util.internal.logging.InternalLogLevel.ERROR, msg, t);
     }
 
     @Override
     public void error(Throwable t) {
-        log(ERROR, t);
+        log(io.micrometer.core.util.internal.logging.InternalLogLevel.ERROR, t);
     }
 
     @Override
