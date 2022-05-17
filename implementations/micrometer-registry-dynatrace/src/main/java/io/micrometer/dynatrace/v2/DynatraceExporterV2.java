@@ -62,12 +62,13 @@ public final class DynatraceExporterV2 extends AbstractDynatraceExporter {
 
     private static final Pattern IS_NULL_ERROR_RESPONSE = Pattern.compile("\"error\":\\s?null");
 
-    private static final InternalLogger logger = InternalLoggerFactory.getInstance(DynatraceExporterV2.class);
-
     private static final WarnThenDebugLogger warnThenDebugLogger = new WarnThenDebugLogger(DynatraceExporterV2.class);
 
     private static final Map<String, String> staticDimensions = Collections.singletonMap("dt.metrics.source",
             "micrometer");
+
+    // This should be non-static for MockLoggerFactory.injectLogger() in tests.
+    private final InternalLogger logger = InternalLoggerFactory.getInstance(DynatraceExporterV2.class);
 
     private final MetricBuilderFactory metricBuilderFactory;
 
