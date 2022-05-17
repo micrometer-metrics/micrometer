@@ -19,6 +19,8 @@ import io.micrometer.core.annotation.Timed;
 import io.micrometer.core.instrument.Counter;
 import io.micrometer.core.instrument.MeterRegistry;
 import io.micrometer.core.instrument.Timer;
+import io.micrometer.observation.Observation;
+import io.micrometer.observation.ObservationRegistry;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RestController;
@@ -32,31 +34,37 @@ public class PersonController {
 
     private final List<String> people = Arrays.asList("mike", "suzy");
 
-    private final MeterRegistry registry;
+    private final MeterRegistry meterRegistry;
+    private final ObservationRegistry observationRegistry;
 
-    public PersonController(MeterRegistry registry) {
-        this.registry = registry;
+    public PersonController(MeterRegistry meterRegistry, ObservationRegistry observationRegistry) {
+        this.meterRegistry = meterRegistry;
+        this.observationRegistry = observationRegistry;
     }
 
     @GetMapping("/api/people")
     @Timed(percentiles = { 0.5, 0.95, 0.999 }, histogram = true)
     public List<String> allPeople() {
-        try {
-            Thread.sleep(200);
-        }
-        catch (InterruptedException e) {
-            e.printStackTrace();
-        }
-        return people;
+        return Observation.createNotStarted("people", observationRegistry).observe(() -> {
+            try {
+                Thread.sleep(200);
+            }
+            catch (InterruptedException e) {
+                e.printStackTrace();
+            }
+
+            return people;
+        });
     }
 
     @GetMapping("/api/person/{id}")
     @Timed("person.requests")
     public Person person(@PathVariable String id) {
         String userType = "0".equals(id) ? "admin" : "regular";
-        Counter.builder("person.requests").tag("type", userType).register(registry).increment();
-
-        return new Person(id, "jon", "schneider", "USA", "MO");
+        return Observation.createNotStarted("person", observationRegistry).lowCardinalityKeyValue("type", userType).observe(() -> {
+            Counter.builder("person.requests").tag("type", userType).register(meterRegistry).increment();
+            return new Person(id, "jon", "schneider", "USA", "MO");
+        });
     }
 
     @GetMapping("/api/peopleAsync")
@@ -80,7 +88,7 @@ public class PersonController {
 
     @GetMapping("/api/stats")
     public Map<String, Number> stats() {
-        Timer t = registry.find("http.server.requests").tags("uri", "/api/people").timer();
+        Timer t = meterRegistry.find("http.server.requests").tags("uri", "/api/people").timer();
 
         Map<String, Number> result = null;
 

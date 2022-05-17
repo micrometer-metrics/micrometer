@@ -7,10 +7,18 @@ apply plugin: 'io.spring.dependency-management'
 
 repositories {
     mavenCentral()
+    maven { url 'https://repo.spring.io/snapshot/' }
 }
 
 dependencies {
     implementation project(":micrometer-core")
+    implementation project(":micrometer-observation")
+
+    implementation platform('io.micrometer:micrometer-tracing-bom:1.0.0-SNAPSHOT')
+    implementation 'io.micrometer:micrometer-tracing-api'
+    implementation 'io.micrometer:micrometer-tracing-bridge-brave'
+    implementation 'io.zipkin.reporter2:zipkin-sender-urlconnection'
+
     ['atlas', 'azure-monitor', 'prometheus', 'datadog', 'elastic', 'ganglia', 'graphite', 'health', 'jmx', 'influx', 'statsd', 'new-relic', 'cloudwatch', 'cloudwatch2', 'signalfx', 'wavefront', 'elastic', 'dynatrace', 'humio', 'appoptics', 'stackdriver'].each { sys ->
         implementation project(":micrometer-registry-$sys")
     }
@@ -19,11 +27,6 @@ dependencies {
     implementation('org.springframework.boot:spring-boot-starter-actuator') {
         exclude group: 'io.micrometer', module: 'micrometer-core'
     }
-
-    implementation platform('org.springframework.cloud:spring-cloud-dependencies:latest.release')
-    implementation 'org.springframework.cloud:spring-cloud-starter-sleuth'
-    implementation 'org.springframework.cloud:spring-cloud-sleuth-zipkin'
-
 }
 
 bootJar {

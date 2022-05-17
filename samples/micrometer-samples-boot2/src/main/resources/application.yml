@@ -14,6 +14,7 @@
 # limitations under the License.
 #
 
+spring.application.name: test-app
 server.port: 8080
 
 # see https://stackoverflow.com/questions/44474160/spring-integration-display-warning-that-header-is-ignored-for-population-because
