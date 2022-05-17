@@ -22,6 +22,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 /**
  * @author Jonatan Ivanov
  */
+@Deprecated
 class MockLoggerFactoryTest {
 
     private static final MockLoggerFactory FACTORY = new MockLoggerFactory();
