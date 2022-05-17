@@ -57,10 +57,14 @@ public class MockLoggerFactory extends InternalLoggerFactory {
     }
 
     /**
-     * A factory method that returns the result of the given {@code Supplier} and it also
+     * A factory method that returns the result of the given {@code Supplier} and also
      * injects the default factory. So if the logger is created this way:
      * <code>InternalLogger logger = InternalLoggerFactory.getInstance(MyClass.class);</code>,
      * the resulted logger will be a {@link MockLogger}.
+     * <p>
+     * NOTE: This doesn't work when a target logger is a static field and has been
+     * initialized already. Use a non-static field for a target logger to make this work
+     * consistently.
      * @param supplier The logic that creates the object you need to inject the logger
      * into.
      * @param <T> The type of an object that will be created by the {@code Supplier}.
