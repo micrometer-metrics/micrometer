@@ -35,6 +35,7 @@ public class PersonController {
     private final List<String> people = Arrays.asList("mike", "suzy");
 
     private final MeterRegistry meterRegistry;
+
     private final ObservationRegistry observationRegistry;
 
     public PersonController(MeterRegistry meterRegistry, ObservationRegistry observationRegistry) {
@@ -61,10 +62,11 @@ public class PersonController {
     @Timed("person.requests")
     public Person person(@PathVariable String id) {
         String userType = "0".equals(id) ? "admin" : "regular";
-        return Observation.createNotStarted("person", observationRegistry).lowCardinalityKeyValue("type", userType).observe(() -> {
-            Counter.builder("person.requests").tag("type", userType).register(meterRegistry).increment();
-            return new Person(id, "jon", "schneider", "USA", "MO");
-        });
+        return Observation.createNotStarted("person", observationRegistry).lowCardinalityKeyValue("type", userType)
+                .observe(() -> {
+                    Counter.builder("person.requests").tag("type", userType).register(meterRegistry).increment();
+                    return new Person(id, "jon", "schneider", "USA", "MO");
+                });
     }
 
     @GetMapping("/api/peopleAsync")
