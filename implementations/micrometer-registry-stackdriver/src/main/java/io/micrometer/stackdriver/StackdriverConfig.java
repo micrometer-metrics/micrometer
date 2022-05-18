@@ -84,10 +84,13 @@ public interface StackdriverConfig extends StepRegistryConfig {
     }
 
     /**
+     * Return metric type prefix.
+     * <p>
      * Available prefixes defined in
      * <a href= "https://cloud.google.com/monitoring/custom-metrics#identifier">Google
-     * Cloud documentation</a>
+     * Cloud documentation</a>.
      * @return a prefix for MetricType
+     * @since 1.10.0
      */
     default String metricTypePrefix() {
         return getString(this, "metricTypePrefix").orElse("custom.googleapis.com/");
