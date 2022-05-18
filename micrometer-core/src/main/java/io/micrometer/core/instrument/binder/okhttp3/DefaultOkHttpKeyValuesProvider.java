@@ -68,6 +68,7 @@ public class DefaultOkHttpKeyValuesProvider implements OkHttpKeyValuesProvider {
     private static final KeyValues TAGS_TARGET_UNKNOWN = KeyValues.of(TAG_TARGET_SCHEME, TAG_VALUE_UNKNOWN, TAG_TARGET_HOST,
             TAG_VALUE_UNKNOWN, TAG_TARGET_PORT, TAG_VALUE_UNKNOWN);
 
+
     @Override
     public KeyValues getLowCardinalityKeyValues(OkHttpContext context) {
         OkHttpMetricsEventListener.CallState state = context.getState();
@@ -78,7 +79,6 @@ public class DefaultOkHttpKeyValuesProvider implements OkHttpKeyValuesProvider {
         Iterable<BiFunction<Request, Response, Tag>> contextSpecificTags = context.getContextSpecificTags();
         Iterable<Tag> unknownRequestTags = context.getUnknownRequestTags();
         boolean includeHostTag = context.isIncludeHostTag();
-
         KeyValues keyValues = KeyValues.of("method", requestAvailable ? request.method() : TAG_VALUE_UNKNOWN, "uri", getUriTag(urlMapper, state, request),
                         "status", getStatusMessage(state.response, state.exception))
                 .and(tagsToKeyValues(stream(extraTags.spliterator(), false)))
@@ -88,11 +88,9 @@ public class DefaultOkHttpKeyValuesProvider implements OkHttpKeyValuesProvider {
                         .collect(toList()))
                 .and(getRequestTags(request, tagsToKeyValues(stream(unknownRequestTags.spliterator(), false))))
                 .and(generateTagsForRoute(request));
-
         if (includeHostTag) {
             keyValues = KeyValues.of(keyValues).and("host", requestAvailable ? request.url().host() : TAG_VALUE_UNKNOWN);
         }
-
         return keyValues;
     }
 

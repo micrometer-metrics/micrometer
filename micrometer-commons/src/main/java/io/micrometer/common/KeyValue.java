@@ -15,6 +15,8 @@
  */
 package io.micrometer.common;
 
+import java.util.function.Predicate;
+
 /**
  * Key/value pair representing a dimension of a meter used to classify and drill into
  * measurements.
@@ -30,6 +32,14 @@ public interface KeyValue extends Comparable<KeyValue> {
 
     static KeyValue of(String key, String value) {
         return new ImmutableKeyValue(key, value);
+    }
+
+    static KeyValue of(String key, Object value, Predicate<Object> validator) {
+        return new ValidatedKeyValue<>(key, value, validator);
+    }
+
+    static KeyValue ofUnknownValue(String key) {
+        return KeyValue.of(key, "UNKNOWN");
     }
 
     @Override

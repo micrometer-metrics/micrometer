@@ -43,6 +43,7 @@ def VERSIONS = [
         'javax.xml.bind:jaxb-api:2.3.+',
         // TODO: Consider where this should live
         'io.micrometer:context-propagation-api:1.0.0-M2',
+        'io.opentelemetry:opentelemetry-semconv:1.14.0-alpha',
         'net.sf.ehcache:ehcache:latest.release',
         'org.apache.httpcomponents:httpasyncclient:latest.release',
         'org.apache.httpcomponents:httpclient:latest.release',

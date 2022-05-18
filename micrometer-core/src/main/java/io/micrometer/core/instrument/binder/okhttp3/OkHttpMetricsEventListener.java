@@ -28,6 +28,7 @@ import io.micrometer.observation.Observation;
 import io.micrometer.observation.ObservationRegistry;
 import io.micrometer.observation.transport.http.HttpClientRequest;
 import io.micrometer.observation.transport.http.HttpClientResponse;
+import io.micrometer.observation.transport.http.tags.HttpClientKeyValuesConvention;
 import okhttp3.EventListener;
 import okhttp3.*;
 
@@ -70,7 +71,7 @@ public class OkHttpMetricsEventListener extends EventListener {
 
     private final ObservationRegistry observationRegistry;
 
-    private final OkHttpKeyValuesProvider keyValuesProvider;
+    private final Observation.KeyValuesProvider<OkHttpContext> keyValuesProvider;
 
     private final String requestsMetricName;
 
@@ -95,7 +96,7 @@ public class OkHttpMetricsEventListener extends EventListener {
         this(registry, ObservationRegistry.NOOP, new DefaultOkHttpKeyValuesProvider(), requestsMetricName, urlMapper, extraTags, contextSpecificTags, emptyList(), true);
     }
 
-    OkHttpMetricsEventListener(MeterRegistry registry, ObservationRegistry observationRegistry, OkHttpKeyValuesProvider keyValuesProvider, String requestsMetricName, Function<Request, String> urlMapper,
+    OkHttpMetricsEventListener(MeterRegistry registry, ObservationRegistry observationRegistry, Observation.KeyValuesProvider<OkHttpContext> keyValuesProvider, String requestsMetricName, Function<Request, String> urlMapper,
             Iterable<Tag> extraTags, Iterable<BiFunction<Request, Response, Tag>> contextSpecificTags,
             Iterable<String> requestTagKeys, boolean includeHostTag) {
         this.registry = registry;
@@ -280,7 +281,7 @@ public class OkHttpMetricsEventListener extends EventListener {
 
         private Iterable<String> requestTagKeys = Collections.emptyList();
 
-        private OkHttpKeyValuesProvider keyValuesProvider = new DefaultOkHttpKeyValuesProvider();
+        private OkHttpKeyValuesProvider keyValuesProvider;
 
         Builder(MeterRegistry registry, String name) {
             this.registry = registry;
@@ -373,8 +374,24 @@ public class OkHttpMetricsEventListener extends EventListener {
             return this;
         }
 
+        @SuppressWarnings("unchecked")
         public OkHttpMetricsEventListener build() {
-            return new OkHttpMetricsEventListener(registry, observationRegistry, keyValuesProvider, name, uriMapper, tags, contextSpecificTags, requestTagKeys,
+            Observation.KeyValuesProvider provider = null;
+            if (this.keyValuesProvider != null) {
+                provider = this.keyValuesProvider;
+            }
+            else if (observationRegistry.isNoOp() || observationRegistry.observationConfig().getKeyValuesConfiguration() == ObservationRegistry.KeyValuesConfiguration.LEGACY) {
+                provider = new DefaultOkHttpKeyValuesProvider();
+            }
+            else if (observationRegistry.observationConfig().getKeyValuesConfiguration() == ObservationRegistry.KeyValuesConfiguration.STANDARDIZED) {
+                // TODO: Isn't this too much - maybe we should just require the user to set this manually?
+                provider = new StandardizedOkHttpKeyValuesProvider(observationRegistry.observationConfig().getKeyValuesConvention(HttpClientKeyValuesConvention.class));
+            }
+            else {
+                provider = new Observation.KeyValuesProvider.CompositeKeyValuesProvider(new DefaultOkHttpKeyValuesProvider(), new StandardizedOkHttpKeyValuesProvider(observationRegistry.observationConfig().getKeyValuesConvention(HttpClientKeyValuesConvention.class)));
+            }
+
+            return new OkHttpMetricsEventListener(registry, observationRegistry, provider, name, uriMapper, tags, contextSpecificTags, requestTagKeys,
                     includeHostTag);
         }
 

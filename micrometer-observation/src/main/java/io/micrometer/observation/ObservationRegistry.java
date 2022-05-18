@@ -17,8 +17,11 @@ package io.micrometer.observation;
 
 import io.micrometer.common.lang.Nullable;
 
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.List;
+import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.CopyOnWriteArrayList;
 
 /**
@@ -98,6 +101,11 @@ public interface ObservationRegistry {
 
         private final List<Observation.GlobalKeyValuesProvider<?>> keyValuesProviders = new CopyOnWriteArrayList<>();
 
+        private final Map<Class<? extends Observation.KeyValuesConvention>, Observation.KeyValuesConvention> keyValuesConventions = new ConcurrentHashMap<>();
+
+        // TODO: To maintain backward compatibility
+        private KeyValuesConfiguration keyValuesConfiguration = KeyValuesConfiguration.LEGACY;
+
         /**
          * Register a handler for the {@link Observation observations}.
          * @param handler handler to add to the current configuration
@@ -131,6 +139,32 @@ public interface ObservationRegistry {
         }
 
         /**
+         * Register a key values provider for the {@link Observation observations}.
+         * @param keyValuesConvention concrete key value convention
+         * @return This configuration instance
+         */
+        @SuppressWarnings("unchecked")
+        public ObservationConfig keyValuesConvention(Observation.KeyValuesConvention keyValuesConvention) {
+            Class<?>[] interfaces = keyValuesConvention.getClass().getInterfaces();
+            if (Arrays.stream(interfaces).noneMatch(Observation.KeyValuesConvention.class::isAssignableFrom)) {
+                throw new IllegalArgumentException("The class [" + keyValuesConvention.getClass() + "] does not implement any interface that extends from [" + Observation.KeyValuesConvention.class + "]");
+            }
+            Class<?> keyValuesConventionInterface = interfaces[0];
+            this.keyValuesConventions.put((Class<? extends Observation.KeyValuesConvention>) keyValuesConventionInterface, keyValuesConvention);
+            return this;
+        }
+
+        /**
+         * Define how key values should be set.
+         * @param keyValuesConvention setup for key values setting
+         * @return This configuration instance
+         */
+        public ObservationConfig keyValuesConfiguration(KeyValuesConfiguration keyValuesConvention) {
+            this.keyValuesConfiguration = keyValuesConvention;
+            return this;
+        }
+
+        /**
          * Check to assert whether {@link Observation} should be created or
          * {@link NoopObservation} instead.
          * @param name observation technical name
@@ -139,6 +173,28 @@ public interface ObservationRegistry {
          */
         public boolean isObservationEnabled(String name, @Nullable Observation.Context context) {
             return this.observationPredicates.stream().allMatch(predicate -> predicate.test(name, context));
+        }
+
+        /**
+         * Returns a registered key values convention for the given class.
+         *
+         * @param clazz {@link Observation.KeyValuesConvention} class
+         * @param <T> type of convention
+         * @return registered convention or {@code null} if none is registered
+         */
+        @Nullable
+        @SuppressWarnings("unchecked")
+        public <T extends Observation.KeyValuesConvention> T getKeyValuesConvention(Class<T> clazz) {
+            return (T) this.keyValuesConventions.get(clazz);
+        }
+
+        /**
+         * Returns the registered {@link KeyValuesConfiguration}.
+         *
+         * @return key values configuration
+         */
+        public KeyValuesConfiguration getKeyValuesConfiguration() {
+            return this.keyValuesConfiguration;
         }
 
         // package-private for minimal visibility
@@ -150,6 +206,26 @@ public interface ObservationRegistry {
             return keyValuesProviders;
         }
 
+    }
+
+    /**
+     * Defines how tagging should take place.
+     */
+    enum KeyValuesConfiguration {
+        /**
+         * Leaves the current behaviour of tagging - will set the same tags as until now. Backward-compatible approach.
+         */
+        LEGACY,
+
+        /**
+         * Sets both the legacy tags together with the new standardized tags. Backward-compatible approach.
+         */
+        LEGACY_WITH_STANDARDIZED,
+
+        /**
+         * Sets only the standardized tags. Backward-incompatible approach.
+         */
+        STANDARDIZED
     }
 
 }

@@ -101,6 +101,8 @@ dependencies {
     testImplementation 'org.postgresql:postgresql'
 
     testImplementation 'org.testcontainers:mongodb'
+
+    testImplementation 'io.opentelemetry:opentelemetry-semconv'
 }
 
 task shenandoahTest(type: Test) {

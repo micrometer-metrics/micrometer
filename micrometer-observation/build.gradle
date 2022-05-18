@@ -5,6 +5,8 @@ dependencies {
 
     optionalApi 'io.micrometer:context-propagation-api'
 
+    optionalApi 'io.opentelemetry:opentelemetry-semconv'
+
     // HttpServlet KeyValueProvider
     optionalApi 'javax.servlet:javax.servlet-api'
 

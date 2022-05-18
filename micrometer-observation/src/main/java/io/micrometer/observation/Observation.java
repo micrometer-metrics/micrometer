@@ -660,6 +660,16 @@ public interface Observation {
     }
 
     /**
+     * A marker interface for conventions of {@link KeyValues} naming.
+     *
+     * @author Marcin Grzejszczak
+     * @since 1.10.0
+     */
+    interface KeyValuesConvention {
+
+    }
+
+    /**
      * A provider of key values.
      *
      * @author Marcin Grzejszczak
