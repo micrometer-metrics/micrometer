@@ -61,7 +61,7 @@ class ObservationTextPublisherTests {
     }
 
     @Test
-    void onStopClosedShouldPublishCloseEvent() {
+    void onStopClosedShouldPublishStopEvent() {
         publisher.onStop(createTestContext());
         assertThat(consumer.toString()).isEqualTo("STOP - " + CONTEXT_TOSTRING);
     }
