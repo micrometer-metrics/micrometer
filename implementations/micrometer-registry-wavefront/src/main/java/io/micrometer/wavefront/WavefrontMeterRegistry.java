@@ -172,11 +172,18 @@ public class WavefrontMeterRegistry extends PushMeterRegistry {
 
     @Override
     protected void publish() {
-        // formatter:off
-        getMeters().forEach(m -> m.use(this::publishMeter, this::publishMeter, this::publishTimer, this::publishSummary,
-                this::publishLongTaskTimer, this::publishMeter, this::publishMeter, this::publishFunctionTimer,
+        // @formatter:off
+        getMeters().forEach(m -> m.use(
+                this::publishMeter,
+                this::publishMeter,
+                this::publishTimer,
+                this::publishSummary,
+                this::publishLongTaskTimer,
+                this::publishMeter,
+                this::publishMeter,
+                this::publishFunctionTimer,
                 this::publishMeter));
-        // formatter:on
+        // @formatter:on
     }
 
     private void publishFunctionTimer(FunctionTimer timer) {
