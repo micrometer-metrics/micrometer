@@ -71,11 +71,14 @@ public abstract class AbstractMetricCollectingInterceptor {
      */
     protected static Counter.Builder prepareCounterFor(final MethodDescriptor<?, ?> method, final String name,
             final String description) {
-        // formatter:off
-        return Counter.builder(name).description(description).baseUnit(BaseUnits.MESSAGES)
-                .tag(TAG_SERVICE_NAME, method.getServiceName()).tag(TAG_METHOD_NAME, method.getBareMethodName())
+        // @formatter:off
+        return Counter.builder(name)
+                .description(description)
+                .baseUnit(BaseUnits.MESSAGES)
+                .tag(TAG_SERVICE_NAME, method.getServiceName())
+                .tag(TAG_METHOD_NAME, method.getBareMethodName())
                 .tag(TAG_METHOD_TYPE, method.getType().name());
-        // formatter:on
+        // @formatter:on
     }
 
     /**
@@ -87,10 +90,13 @@ public abstract class AbstractMetricCollectingInterceptor {
      */
     protected static Timer.Builder prepareTimerFor(final MethodDescriptor<?, ?> method, final String name,
             final String description) {
-        // formatter:off
-        return Timer.builder(name).description(description).tag(TAG_SERVICE_NAME, method.getServiceName())
-                .tag(TAG_METHOD_NAME, method.getBareMethodName()).tag(TAG_METHOD_TYPE, method.getType().name());
-        // formatter:on
+        // @formatter:off
+        return Timer.builder(name)
+                .description(description)
+                .tag(TAG_SERVICE_NAME, method.getServiceName())
+                .tag(TAG_METHOD_NAME, method.getBareMethodName())
+                .tag(TAG_METHOD_TYPE, method.getType().name());
+        // @formatter:on
     }
 
     private final Map<MethodDescriptor<?, ?>, MetricSet> metricsForMethods = new ConcurrentHashMap<>();

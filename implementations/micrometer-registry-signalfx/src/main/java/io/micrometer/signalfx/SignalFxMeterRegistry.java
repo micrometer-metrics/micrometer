@@ -23,17 +23,7 @@ import com.signalfx.metrics.connection.HttpEventProtobufReceiverFactory;
 import com.signalfx.metrics.errorhandler.OnSendErrorHandler;
 import com.signalfx.metrics.flush.AggregateMetricSender;
 import com.signalfx.metrics.protobuf.SignalFxProtocolBuffers;
-import io.micrometer.core.instrument.Clock;
-import io.micrometer.core.instrument.Counter;
-import io.micrometer.core.instrument.DistributionSummary;
-import io.micrometer.core.instrument.FunctionCounter;
-import io.micrometer.core.instrument.FunctionTimer;
-import io.micrometer.core.instrument.Gauge;
-import io.micrometer.core.instrument.LongTaskTimer;
-import io.micrometer.core.instrument.Meter;
-import io.micrometer.core.instrument.Tag;
-import io.micrometer.core.instrument.TimeGauge;
-import io.micrometer.core.instrument.Timer;
+import io.micrometer.core.instrument.*;
 import io.micrometer.core.instrument.config.NamingConvention;
 import io.micrometer.core.instrument.distribution.DistributionStatisticConfig;
 import io.micrometer.core.instrument.distribution.HistogramGauges;
@@ -53,9 +43,7 @@ import java.util.concurrent.ThreadFactory;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Stream;
 
-import static com.signalfx.metrics.protobuf.SignalFxProtocolBuffers.MetricType.COUNTER;
-import static com.signalfx.metrics.protobuf.SignalFxProtocolBuffers.MetricType.CUMULATIVE_COUNTER;
-import static com.signalfx.metrics.protobuf.SignalFxProtocolBuffers.MetricType.GAUGE;
+import static com.signalfx.metrics.protobuf.SignalFxProtocolBuffers.MetricType.*;
 import static java.util.stream.StreamSupport.stream;
 
 /**
@@ -121,12 +109,21 @@ public class SignalFxMeterRegistry extends StepMeterRegistry {
 
         for (List<Meter> batch : MeterPartition.partition(this, config.batchSize())) {
             try (AggregateMetricSender.Session session = metricSender.createSession()) {
+                // @formatter:off
                 batch.stream()
-                        .map(meter -> meter.match(this::addGauge, this::addCounter, this::addTimer,
-                                this::addDistributionSummary, this::addLongTaskTimer, this::addTimeGauge,
-                                this::addFunctionCounter, this::addFunctionTimer, this::addMeter))
+                        .map(meter -> meter.match(
+                                this::addGauge,
+                                this::addCounter,
+                                this::addTimer,
+                                this::addDistributionSummary,
+                                this::addLongTaskTimer,
+                                this::addTimeGauge,
+                                this::addFunctionCounter,
+                                this::addFunctionTimer,
+                                this::addMeter))
                         .flatMap(builders -> builders.map(builder -> builder.setTimestamp(timestamp).build()))
                         .forEach(session::setDatapoint);
+                // @formatter:on
 
                 logger.debug("successfully sent {} metrics to SignalFx.", batch.size());
             }
