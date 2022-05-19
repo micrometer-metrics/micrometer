@@ -101,6 +101,8 @@ public interface ObservationRegistry {
 
         private final List<Observation.GlobalKeyValuesProvider<?>> keyValuesProviders = new CopyOnWriteArrayList<>();
 
+        private final List<ObservationFilter> observationFilters = new CopyOnWriteArrayList<>();
+
         private final Map<Class<? extends Observation.KeyValuesConvention>, Observation.KeyValuesConvention> keyValuesConventions = new ConcurrentHashMap<>();
 
         // TODO: To maintain backward compatibility
@@ -135,6 +137,17 @@ public interface ObservationRegistry {
          */
         public ObservationConfig keyValuesProvider(Observation.GlobalKeyValuesProvider<?> keyValuesProvider) {
             this.keyValuesProviders.add(keyValuesProvider);
+            return this;
+        }
+
+        /**
+         * Register an observation filter for the {@link Observation observations}.
+         * @param observationFilter an observation filter to add to the current
+         * configuration
+         * @return This configuration instance
+         */
+        public ObservationConfig observationFilter(ObservationFilter observationFilter) {
+            this.observationFilters.add(observationFilter);
             return this;
         }
 
@@ -206,6 +219,10 @@ public interface ObservationRegistry {
 
         Collection<Observation.GlobalKeyValuesProvider<?>> getKeyValuesProviders() {
             return keyValuesProviders;
+        }
+
+        Collection<ObservationFilter> getObservationFilters() {
+            return observationFilters;
         }
 
     }
