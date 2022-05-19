@@ -24,14 +24,22 @@ import java.util.function.BiFunction;
 import java.util.function.Function;
 
 public class OkHttpContext extends HttpClientContext {
+
     private final OkHttpMetricsEventListener.CallState state;
+
     private final Function<Request, String> urlMapper;
+
     private final Iterable<Tag> extraTags;
+
     private final Iterable<BiFunction<Request, Response, Tag>> contextSpecificTags;
+
     private final Iterable<Tag> unknownRequestTags;
+
     private final boolean includeHostTag;
 
-    public OkHttpContext(OkHttpMetricsEventListener.CallState state, Function<Request, String> urlMapper, Iterable<Tag> extraTags, Iterable<BiFunction<Request, Response, Tag>> contextSpecificTags, Iterable<Tag> unknownRequestTags, boolean includeHostTag) {
+    public OkHttpContext(OkHttpMetricsEventListener.CallState state, Function<Request, String> urlMapper,
+            Iterable<Tag> extraTags, Iterable<BiFunction<Request, Response, Tag>> contextSpecificTags,
+            Iterable<Tag> unknownRequestTags, boolean includeHostTag) {
         this.state = state;
         this.urlMapper = urlMapper;
         this.extraTags = extraTags;
@@ -63,4 +71,5 @@ public class OkHttpContext extends HttpClientContext {
     public boolean isIncludeHostTag() {
         return includeHostTag;
     }
+
 }

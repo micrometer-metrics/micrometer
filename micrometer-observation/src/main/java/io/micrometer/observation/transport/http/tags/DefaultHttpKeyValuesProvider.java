@@ -48,4 +48,5 @@ public class DefaultHttpKeyValuesProvider implements Observation.GlobalKeyValues
     public boolean supportsContext(Observation.Context context) {
         return context instanceof HttpContext;
     }
+
 }

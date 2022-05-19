@@ -68,8 +68,8 @@ class OkHttpMetricsEventListenerTest {
     private OkHttpClient client = new OkHttpClient.Builder().eventListener(defaultListenerBuilder().build()).build();
 
     private OkHttpMetricsEventListener.Builder defaultListenerBuilder() {
-        return OkHttpMetricsEventListener
-                .builder(registry, "okhttp.requests").tags(Tags.of("foo", "bar")).uriMapper(URI_MAPPER);
+        return OkHttpMetricsEventListener.builder(registry, "okhttp.requests").tags(Tags.of("foo", "bar"))
+                .uriMapper(URI_MAPPER);
     }
 
     @Test
@@ -89,13 +89,13 @@ class OkHttpMetricsEventListenerTest {
     void timeSuccessfulWithObservation(@WiremockResolver.Wiremock WireMockServer server) throws IOException {
         ObservationRegistry observationRegistry = ObservationRegistry.create();
         TestHandler testHandler = new TestHandler();
-        observationRegistry.observationConfig().keyValuesConfiguration(ObservationRegistry.KeyValuesConfiguration.LEGACY_WITH_STANDARDIZED);
+        observationRegistry.observationConfig()
+                .keyValuesConfiguration(ObservationRegistry.KeyValuesConfiguration.LEGACY_WITH_STANDARDIZED);
         observationRegistry.observationConfig().keyValuesConvention(new OpenTelemetryHttpClientKeyValuesConvention());
         observationRegistry.observationConfig().observationHandler(testHandler);
         observationRegistry.observationConfig().observationHandler(new TimerObservationHandler(registry));
-        client = new OkHttpClient.Builder().eventListener(defaultListenerBuilder()
-                .observationRegistry(observationRegistry)
-                .build()).build();
+        client = new OkHttpClient.Builder()
+                .eventListener(defaultListenerBuilder().observationRegistry(observationRegistry).build()).build();
         server.stubFor(any(anyUrl()));
         Request request = new Request.Builder().url(server.baseUrl()).build();
 
@@ -106,8 +106,8 @@ class OkHttpMetricsEventListenerTest {
                         "target.port", String.valueOf(server.port()), "target.scheme", "http")
                 .timer().count()).isEqualTo(1L);
         assertThat(testHandler.context).isNotNull();
-        assertThat(testHandler.context.getAllKeyValues())
-                .contains(KeyValue.of("foo", "bar"), KeyValue.of("status", "200"));
+        assertThat(testHandler.context.getAllKeyValues()).contains(KeyValue.of("foo", "bar"),
+                KeyValue.of("status", "200"));
     }
 
     @Test
@@ -130,9 +130,8 @@ class OkHttpMetricsEventListenerTest {
 
         server.stop();
 
-        OkHttpClient client = new OkHttpClient.Builder()
-                .connectTimeout(1, TimeUnit.MILLISECONDS).eventListener(defaultListenerBuilder().build())
-                .build();
+        OkHttpClient client = new OkHttpClient.Builder().connectTimeout(1, TimeUnit.MILLISECONDS)
+                .eventListener(defaultListenerBuilder().build()).build();
 
         try {
             client.newCall(request).execute().close();
@@ -256,7 +255,8 @@ class OkHttpMetricsEventListenerTest {
         OkHttpMetricsEventListener listener = OkHttpMetricsEventListener.builder(registry, "okhttp.requests").build();
         OkHttpMetricsEventListener.CallState state = new OkHttpMetricsEventListener.CallState(
                 registry.config().clock().monotonicTime(), null);
-        state.setContext(new OkHttpContext(state, request -> "", Collections.emptyList(), Collections.emptyList(), Collections.emptyList(), false));
+        state.setContext(new OkHttpContext(state, request -> "", Collections.emptyList(), Collections.emptyList(),
+                Collections.emptyList(), false));
         listener.time(state);
 
         assertThat(registry.get("okhttp.requests")
@@ -270,7 +270,8 @@ class OkHttpMetricsEventListenerTest {
                 .requestTagKeys("tag1", "tag2").build();
         OkHttpMetricsEventListener.CallState state = new OkHttpMetricsEventListener.CallState(
                 registry.config().clock().monotonicTime(), null);
-        state.setContext(new OkHttpContext(state, request -> "", Collections.emptyList(), Collections.emptyList(), Arrays.asList(Tag.of("tag1", "UNKNOWN"), Tag.of("tag2", "UNKNOWN")), false));
+        state.setContext(new OkHttpContext(state, request -> "", Collections.emptyList(), Collections.emptyList(),
+                Arrays.asList(Tag.of("tag1", "UNKNOWN"), Tag.of("tag2", "UNKNOWN")), false));
         listener.time(state);
 
         assertThat(registry.get("okhttp.requests").tags("uri", "UNKNOWN", "tag1", "UNKNOWN", "tag2", "UNKNOWN").timer()
@@ -306,6 +307,7 @@ class OkHttpMetricsEventListenerTest {
         public boolean supportsContext(Observation.Context context) {
             return true;
         }
+
     }
 
 }

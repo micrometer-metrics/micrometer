@@ -29,11 +29,11 @@ import io.micrometer.observation.transport.http.HttpResponse;
 public interface HttpServerKeyValuesConvention extends HttpKeyValuesConvention {
 
     /**
-     * The primary server name of the matched virtual host. This should be obtained via configuration. If no such configuration can be obtained, this attribute MUST NOT be set ( net.host.name should be used instead).
+     * The primary server name of the matched virtual host. This should be obtained via
+     * configuration. If no such configuration can be obtained, this attribute MUST NOT be
+     * set ( net.host.name should be used instead).
      *
-     * Examples:
-     * example.com
-     *
+     * Examples: example.com
      * @param request
      * @return
      */
@@ -43,9 +43,7 @@ public interface HttpServerKeyValuesConvention extends HttpKeyValuesConvention {
     /**
      * The matched route.
      *
-     * Examples:
-     * /users/5
-     *
+     * Examples: /users/5
      * @param request
      * @return
      */
@@ -55,20 +53,17 @@ public interface HttpServerKeyValuesConvention extends HttpKeyValuesConvention {
     /**
      * The matched route (path template).
      *
-     * Examples:
-     * /users/:userID?
-     *
+     * Examples: /users/:userID?
      * @param request
      * @return
      */
     KeyValue templatedRoute(HttpRequest request);
 
     /**
-     * The IP address of the original client behind all proxies, if known (e.g. from X-Forwarded-For).
+     * The IP address of the original client behind all proxies, if known (e.g. from
+     * X-Forwarded-For).
      *
-     * Examples:
-     * 83.164.160.102
-     *
+     * Examples: 83.164.160.102
      * @param request
      * @return
      */
@@ -76,6 +71,8 @@ public interface HttpServerKeyValuesConvention extends HttpKeyValuesConvention {
 
     @Override
     default KeyValues all(HttpRequest request, HttpResponse response) {
-        return HttpKeyValuesConvention.super.all(request, response).and(serverName(request), route(request), templatedRoute(request), clientIp(request));
+        return HttpKeyValuesConvention.super.all(request, response).and(serverName(request), route(request),
+                templatedRoute(request), clientIp(request));
     }
+
 }

@@ -19,8 +19,10 @@ import io.micrometer.observation.Observation;
 import io.micrometer.observation.transport.http.tags.HttpKeyValueProvider;
 
 public interface OkHttpKeyValuesProvider extends HttpKeyValueProvider<OkHttpContext> {
+
     @Override
     default boolean supportsContext(Observation.Context context) {
         return context instanceof OkHttpContext;
     }
+
 }

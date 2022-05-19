@@ -16,10 +16,9 @@
 package io.micrometer.observation.transport.http.tags;
 
 import io.micrometer.common.KeyValue;
+import io.micrometer.conventions.common.AttributeType;
 import io.micrometer.observation.transport.http.HttpRequest;
 import io.micrometer.observation.transport.http.HttpResponse;
-import io.opentelemetry.api.common.AttributeType;
-import io.opentelemetry.semconv.trace.attributes.SemanticAttributes;
 
 import java.util.function.Predicate;
 import java.util.stream.Stream;
@@ -34,68 +33,72 @@ import java.util.stream.Stream;
 abstract class OpenTelemetryHttpKeyValuesConvention implements HttpKeyValuesConvention {
 
     // TODO: This is just an example
-    private static final Predicate<Object> METHOD_PREDICATE = s ->
-            isTypeCorrect(SemanticAttributes.HTTP_METHOD.getType(), s) && Stream.of("GET", "POST", "PATCH", "HEAD", "DELETE", "PUT")
+    private static final Predicate<Object> METHOD_PREDICATE = s -> isTypeCorrect(
+            io.micrometer.conventions.semantic.SemanticAttributes.HTTP_METHOD.getType(), s)
+            && Stream.of("GET", "POST", "PATCH", "HEAD", "DELETE", "PUT")
                     .anyMatch(method -> method.equalsIgnoreCase(((String) s)));
 
     @Override
     public KeyValue method(HttpRequest request) {
-        return KeyValue.of(SemanticAttributes.HTTP_METHOD.getKey(), request.method(), METHOD_PREDICATE);
+        return KeyValue.of(io.micrometer.conventions.semantic.SemanticAttributes.HTTP_METHOD.getKey(), request.method(),
+                METHOD_PREDICATE);
     }
 
     @Override
     public KeyValue url(HttpRequest request) {
-        return KeyValue.ofUnknownValue(SemanticAttributes.HTTP_URL.getKey());
+        return KeyValue.ofUnknownValue(io.micrometer.conventions.semantic.SemanticAttributes.HTTP_URL.getKey());
     }
 
     @Override
     public KeyValue target(HttpRequest request) {
-        return KeyValue.ofUnknownValue(SemanticAttributes.HTTP_TARGET.getKey());
+        return KeyValue.ofUnknownValue(io.micrometer.conventions.semantic.SemanticAttributes.HTTP_TARGET.getKey());
     }
 
     @Override
     public KeyValue host(HttpRequest request) {
-        return KeyValue.ofUnknownValue(SemanticAttributes.HTTP_HOST.getKey());
+        return KeyValue.ofUnknownValue(io.micrometer.conventions.semantic.SemanticAttributes.HTTP_HOST.getKey());
     }
 
     @Override
     public KeyValue scheme(HttpRequest request) {
-        return KeyValue.ofUnknownValue(SemanticAttributes.HTTP_SCHEME.getKey());
+        return KeyValue.ofUnknownValue(io.micrometer.conventions.semantic.SemanticAttributes.HTTP_SCHEME.getKey());
     }
 
     @Override
     public KeyValue statusCode(HttpResponse response) {
-        return KeyValue.ofUnknownValue(SemanticAttributes.HTTP_STATUS_CODE.getKey());
+        return KeyValue.ofUnknownValue(io.micrometer.conventions.semantic.SemanticAttributes.HTTP_STATUS_CODE.getKey());
     }
 
     @Override
     public KeyValue flavor(HttpRequest request) {
-        return KeyValue.ofUnknownValue(SemanticAttributes.HTTP_FLAVOR.getKey());
+        return KeyValue.ofUnknownValue(io.micrometer.conventions.semantic.SemanticAttributes.HTTP_FLAVOR.getKey());
     }
 
     @Override
     public KeyValue userAgent(HttpRequest request) {
-        return KeyValue.ofUnknownValue(SemanticAttributes.HTTP_USER_AGENT.getKey());
+        return KeyValue.ofUnknownValue(io.micrometer.conventions.semantic.SemanticAttributes.HTTP_USER_AGENT.getKey());
     }
 
     @Override
     public KeyValue requestContentLength(HttpRequest request) {
-        return KeyValue.ofUnknownValue(SemanticAttributes.HTTP_REQUEST_CONTENT_LENGTH.getKey());
+        return KeyValue.ofUnknownValue(
+                io.micrometer.conventions.semantic.SemanticAttributes.HTTP_REQUEST_CONTENT_LENGTH.getKey());
     }
 
     @Override
     public KeyValue responseContentLength(HttpResponse response) {
-        return KeyValue.ofUnknownValue(SemanticAttributes.HTTP_RESPONSE_CONTENT_LENGTH.getKey());
+        return KeyValue.ofUnknownValue(
+                io.micrometer.conventions.semantic.SemanticAttributes.HTTP_RESPONSE_CONTENT_LENGTH.getKey());
     }
 
     @Override
     public KeyValue ip(HttpRequest request) {
-        return KeyValue.ofUnknownValue(SemanticAttributes.NET_PEER_IP.getKey());
+        return KeyValue.ofUnknownValue(io.micrometer.conventions.semantic.SemanticAttributes.NET_PEER_IP.getKey());
     }
 
     @Override
     public KeyValue port(HttpRequest request) {
-        return KeyValue.ofUnknownValue(SemanticAttributes.NET_PEER_PORT.getKey());
+        return KeyValue.ofUnknownValue(io.micrometer.conventions.semantic.SemanticAttributes.NET_PEER_PORT.getKey());
     }
 
     static boolean isTypeCorrect(AttributeType type, Object value) {
@@ -116,4 +119,5 @@ abstract class OpenTelemetryHttpKeyValuesConvention implements HttpKeyValuesConv
             throw new UnsupportedOperationException("TODO");
         }
     }
+
 }

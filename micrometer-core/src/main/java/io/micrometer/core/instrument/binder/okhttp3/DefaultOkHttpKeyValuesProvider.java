@@ -24,7 +24,6 @@ import io.micrometer.core.instrument.Tag;
 import io.micrometer.core.instrument.Tags;
 import okhttp3.Request;
 import okhttp3.Response;
-import org.jetbrains.annotations.NotNull;
 
 import java.io.IOException;
 import java.lang.reflect.Method;
@@ -65,9 +64,8 @@ public class DefaultOkHttpKeyValuesProvider implements OkHttpKeyValuesProvider {
 
     private static final String TAG_VALUE_UNKNOWN = "UNKNOWN";
 
-    private static final KeyValues TAGS_TARGET_UNKNOWN = KeyValues.of(TAG_TARGET_SCHEME, TAG_VALUE_UNKNOWN, TAG_TARGET_HOST,
-            TAG_VALUE_UNKNOWN, TAG_TARGET_PORT, TAG_VALUE_UNKNOWN);
-
+    private static final KeyValues TAGS_TARGET_UNKNOWN = KeyValues.of(TAG_TARGET_SCHEME, TAG_VALUE_UNKNOWN,
+            TAG_TARGET_HOST, TAG_VALUE_UNKNOWN, TAG_TARGET_PORT, TAG_VALUE_UNKNOWN);
 
     @Override
     public KeyValues getLowCardinalityKeyValues(OkHttpContext context) {
@@ -79,22 +77,23 @@ public class DefaultOkHttpKeyValuesProvider implements OkHttpKeyValuesProvider {
         Iterable<BiFunction<Request, Response, Tag>> contextSpecificTags = context.getContextSpecificTags();
         Iterable<Tag> unknownRequestTags = context.getUnknownRequestTags();
         boolean includeHostTag = context.isIncludeHostTag();
-        KeyValues keyValues = KeyValues.of("method", requestAvailable ? request.method() : TAG_VALUE_UNKNOWN, "uri", getUriTag(urlMapper, state, request),
-                        "status", getStatusMessage(state.response, state.exception))
+        KeyValues keyValues = KeyValues.of("method", requestAvailable ? request.method() : TAG_VALUE_UNKNOWN, "uri",
+                getUriTag(urlMapper, state, request), "status", getStatusMessage(state.response, state.exception))
                 .and(tagsToKeyValues(stream(extraTags.spliterator(), false)))
                 .and(stream(contextSpecificTags.spliterator(), false)
                         .map(contextTag -> contextTag.apply(request, state.response))
-                        .map(tag -> KeyValue.of(tag.getKey(), tag.getValue()))
-                        .collect(toList()))
+                        .map(tag -> KeyValue.of(tag.getKey(), tag.getValue())).collect(toList()))
                 .and(getRequestTags(request, tagsToKeyValues(stream(unknownRequestTags.spliterator(), false))))
                 .and(generateTagsForRoute(request));
         if (includeHostTag) {
-            keyValues = KeyValues.of(keyValues).and("host", requestAvailable ? request.url().host() : TAG_VALUE_UNKNOWN);
+            keyValues = KeyValues.of(keyValues).and("host",
+                    requestAvailable ? request.url().host() : TAG_VALUE_UNKNOWN);
         }
         return keyValues;
     }
 
-    private String getUriTag(Function<Request, String> urlMapper, OkHttpMetricsEventListener.CallState state, @Nullable Request request) {
+    private String getUriTag(Function<Request, String> urlMapper, OkHttpMetricsEventListener.CallState state,
+            @Nullable Request request) {
         if (request == null) {
             return TAG_VALUE_UNKNOWN;
         }
@@ -131,7 +130,6 @@ public class DefaultOkHttpKeyValuesProvider implements OkHttpKeyValuesProvider {
         return KeyValues.empty();
     }
 
-    @NotNull
     private List<KeyValue> tagsToKeyValues(Stream<Tag> requestTag) {
         return requestTag.map(tag -> KeyValue.of(tag.getKey(), tag.getValue())).collect(Collectors.toList());
     }
@@ -143,4 +141,5 @@ public class DefaultOkHttpKeyValuesProvider implements OkHttpKeyValuesProvider {
         return KeyValues.of(TAG_TARGET_SCHEME, request.url().scheme(), TAG_TARGET_HOST, request.url().host(),
                 TAG_TARGET_PORT, Integer.toString(request.url().port()));
     }
+
 }

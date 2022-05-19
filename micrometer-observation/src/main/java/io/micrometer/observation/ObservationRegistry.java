@@ -147,10 +147,14 @@ public interface ObservationRegistry {
         public ObservationConfig keyValuesConvention(Observation.KeyValuesConvention keyValuesConvention) {
             Class<?>[] interfaces = keyValuesConvention.getClass().getInterfaces();
             if (Arrays.stream(interfaces).noneMatch(Observation.KeyValuesConvention.class::isAssignableFrom)) {
-                throw new IllegalArgumentException("The class [" + keyValuesConvention.getClass() + "] does not implement any interface that extends from [" + Observation.KeyValuesConvention.class + "]");
+                throw new IllegalArgumentException("The class [" + keyValuesConvention.getClass()
+                        + "] does not implement any interface that extends from ["
+                        + Observation.KeyValuesConvention.class + "]");
             }
             Class<?> keyValuesConventionInterface = interfaces[0];
-            this.keyValuesConventions.put((Class<? extends Observation.KeyValuesConvention>) keyValuesConventionInterface, keyValuesConvention);
+            this.keyValuesConventions.put(
+                    (Class<? extends Observation.KeyValuesConvention>) keyValuesConventionInterface,
+                    keyValuesConvention);
             return this;
         }
 
@@ -177,7 +181,6 @@ public interface ObservationRegistry {
 
         /**
          * Returns a registered key values convention for the given class.
-         *
          * @param clazz {@link Observation.KeyValuesConvention} class
          * @param <T> type of convention
          * @return registered convention or {@code null} if none is registered
@@ -190,7 +193,6 @@ public interface ObservationRegistry {
 
         /**
          * Returns the registered {@link KeyValuesConfiguration}.
-         *
          * @return key values configuration
          */
         public KeyValuesConfiguration getKeyValuesConfiguration() {
@@ -208,17 +210,21 @@ public interface ObservationRegistry {
 
     }
 
+    // TODO: Which option should be the default?
     /**
      * Defines how tagging should take place.
      */
     enum KeyValuesConfiguration {
+
         /**
-         * Leaves the current behaviour of tagging - will set the same tags as until now. Backward-compatible approach.
+         * Leaves the current behaviour of tagging - will set the same tags as until now.
+         * Backward-compatible approach.
          */
         LEGACY,
 
         /**
-         * Sets both the legacy tags together with the new standardized tags. Backward-compatible approach.
+         * Sets both the legacy tags together with the new standardized tags.
+         * Backward-compatible approach.
          */
         LEGACY_WITH_STANDARDIZED,
 
@@ -226,6 +232,7 @@ public interface ObservationRegistry {
          * Sets only the standardized tags. Backward-incompatible approach.
          */
         STANDARDIZED
+
     }
 
 }

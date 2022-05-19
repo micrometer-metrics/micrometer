@@ -16,8 +16,8 @@
 package io.micrometer.observation.transport.http.tags;
 
 import io.micrometer.common.KeyValue;
+import io.micrometer.conventions.semantic.SemanticAttributes;
 import io.micrometer.observation.transport.http.HttpRequest;
-import io.opentelemetry.semconv.trace.attributes.SemanticAttributes;
 
 /**
  * Conventions for HTTP key values implemented with OpenTelemetry.
@@ -26,7 +26,8 @@ import io.opentelemetry.semconv.trace.attributes.SemanticAttributes;
  * @since 1.10.0
  */
 // TODO: What to do if request is not set? UNKNOWN?
-public class OpenTelemetryHttpClientKeyValuesConvention extends OpenTelemetryHttpKeyValuesConvention implements HttpClientKeyValuesConvention {
+public class OpenTelemetryHttpClientKeyValuesConvention extends OpenTelemetryHttpKeyValuesConvention
+        implements HttpClientKeyValuesConvention {
 
     @Override
     public KeyValue peerName(HttpRequest request) {

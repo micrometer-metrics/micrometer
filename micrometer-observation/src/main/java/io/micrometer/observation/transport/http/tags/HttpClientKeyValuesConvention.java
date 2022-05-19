@@ -31,11 +31,9 @@ public interface HttpClientKeyValuesConvention extends HttpKeyValuesConvention {
     /**
      * Remote hostname or similar, see note below.
      *
-     * Examples:
-     * example.com
+     * Examples: example.com
      *
      * SHOULD NOT be set if capturing it would require an extra DNS lookup.
-     *
      * @param request
      * @return
      */
@@ -45,4 +43,5 @@ public interface HttpClientKeyValuesConvention extends HttpKeyValuesConvention {
     default KeyValues all(HttpRequest request, HttpResponse response) {
         return HttpKeyValuesConvention.super.all(request, response).and(peerName(request));
     }
+
 }

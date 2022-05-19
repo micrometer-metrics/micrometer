@@ -48,8 +48,7 @@ public class StandardizedOkHttpKeyValuesProvider implements OkHttpKeyValuesProvi
         return KeyValues.of(keyValuesConvention.all(context.getRequest(), context.getResponse()))
                 .and(stream(contextSpecificTags.spliterator(), false)
                         .map(contextTag -> contextTag.apply(request, state.response))
-                        .map(tag -> KeyValue.of(tag.getKey(), tag.getValue()))
-                        .collect(toList()));
+                        .map(tag -> KeyValue.of(tag.getKey(), tag.getValue())).collect(toList()));
     }
 
 }

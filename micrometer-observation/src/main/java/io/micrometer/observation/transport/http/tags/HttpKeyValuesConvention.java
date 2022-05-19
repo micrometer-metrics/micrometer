@@ -33,20 +33,18 @@ public interface HttpKeyValuesConvention extends Observation.KeyValuesConvention
     /**
      * HTTP request method.
      *
-     * Examples:
-     * GET; POST; HEAD
-     *
+     * Examples: GET; POST; HEAD
      * @param request
      * @return
      */
     KeyValue method(HttpRequest request);
 
     /**
-     * Full HTTP request URL in the form scheme://host[:port]/path?query[#fragment]. Usually the fragment is not transmitted over HTTP, but if it is known, it should be included nevertheless.
+     * Full HTTP request URL in the form scheme://host[:port]/path?query[#fragment].
+     * Usually the fragment is not transmitted over HTTP, but if it is known, it should be
+     * included nevertheless.
      *
-     * Examples:
-     * https://www.foo.bar/search?q=OpenTelemetry#SemConv
-     *
+     * Examples: https://www.foo.bar/search?q=OpenTelemetry#SemConv
      * @param request
      * @return
      */
@@ -55,20 +53,17 @@ public interface HttpKeyValuesConvention extends Observation.KeyValuesConvention
     /**
      * The full request target as passed in a HTTP request line or equivalent.
      *
-     * Examples:
-     * /path/12314/?q=ddds#123
-     *
+     * Examples: /path/12314/?q=ddds#123
      * @param request
      * @return
      */
     KeyValue target(HttpRequest request);
 
     /**
-     * The value of the HTTP host header. An empty Host header should also be reported, see note.
+     * The value of the HTTP host header. An empty Host header should also be reported,
+     * see note.
      *
-     * Examples:
-     * www.example.org
-     *
+     * Examples: www.example.org
      * @param request
      * @return
      */
@@ -77,9 +72,7 @@ public interface HttpKeyValuesConvention extends Observation.KeyValuesConvention
     /**
      * The URI scheme identifying the used protocol.
      *
-     * Examples:
-     * http; https
-     *
+     * Examples: http; https
      * @param request
      * @return
      */
@@ -88,9 +81,7 @@ public interface HttpKeyValuesConvention extends Observation.KeyValuesConvention
     /**
      * HTTP response status code.
      *
-     * Examples:
-     * 200
-     *
+     * Examples: 200
      * @param response
      * @return
      */
@@ -99,9 +90,7 @@ public interface HttpKeyValuesConvention extends Observation.KeyValuesConvention
     /**
      * Kind of HTTP protocol used.
      *
-     * Examples:
-     * 1.0
-     *
+     * Examples: 1.0
      * @param request
      * @return
      */
@@ -110,31 +99,31 @@ public interface HttpKeyValuesConvention extends Observation.KeyValuesConvention
     /**
      * Value of the HTTP User-Agent header sent by the client.
      *
-     * Examples:
-     * CERN-LineMode/2.15 libwww/2.17b3
-     *
+     * Examples: CERN-LineMode/2.15 libwww/2.17b3
      * @param request
      * @return
      */
     KeyValue userAgent(HttpRequest request);
 
     /**
-     * The size of the request payload body in bytes. This is the number of bytes transferred excluding headers and is often, but not always, present as the Content-Length header. For requests using transport encoding, this should be the compressed size.
+     * The size of the request payload body in bytes. This is the number of bytes
+     * transferred excluding headers and is often, but not always, present as the
+     * Content-Length header. For requests using transport encoding, this should be the
+     * compressed size.
      *
-     * Examples:
-     * 3495
-     *
+     * Examples: 3495
      * @param request
      * @return
      */
     KeyValue requestContentLength(HttpRequest request);
 
     /**
-     * The size of the response payload body in bytes. This is the number of bytes transferred excluding headers and is often, but not always, present as the Content-Length header. For requests using transport encoding, this should be the compressed size.
+     * The size of the response payload body in bytes. This is the number of bytes
+     * transferred excluding headers and is often, but not always, present as the
+     * Content-Length header. For requests using transport encoding, this should be the
+     * compressed size.
      *
-     * Examples:
-     * 3495
-     *
+     * Examples: 3495
      * @param response
      * @return
      */
@@ -143,9 +132,7 @@ public interface HttpKeyValuesConvention extends Observation.KeyValuesConvention
     /**
      * Remote address of the peer (dotted decimal for IPv4 or RFC5952 for IPv6)
      *
-     * Examples:
-     * 127.0.0.1
-     *
+     * Examples: 127.0.0.1
      * @param request
      * @return
      */
@@ -154,9 +141,7 @@ public interface HttpKeyValuesConvention extends Observation.KeyValuesConvention
     /**
      * Remote port number.
      *
-     * Examples:
-     * 80; 8080; 443
-     *
+     * Examples: 80; 8080; 443
      * @param request
      * @return
      */
@@ -164,12 +149,14 @@ public interface HttpKeyValuesConvention extends Observation.KeyValuesConvention
 
     /**
      * Sets all key values.
-     *
      * @param request
      * @param response
      * @return
      */
     default KeyValues all(HttpRequest request, HttpResponse response) {
-        return KeyValues.of(method(request), url(request), target(request), host(request), scheme(request), statusCode(response), flavor(request), userAgent(request), requestContentLength(request), responseContentLength(response), ip(request), port(request));
+        return KeyValues.of(method(request), url(request), target(request), host(request), scheme(request),
+                statusCode(response), flavor(request), userAgent(request), requestContentLength(request),
+                responseContentLength(response), ip(request), port(request));
     }
+
 }

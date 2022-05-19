@@ -1,0 +1,5 @@
+= Micrometer-Observation-Conventions
+
+This module is an implementation of OpenTelemetry Semantic Conventions. We have copied over the necessary code from https://github.com/open-telemetry/opentelemetry-java/ and reused the OpenTelemetry Java semantic convention attributes and resources code generating scripts.
+
+The code has been adopted a bit but its main authors are the OpenTelemetry authors.

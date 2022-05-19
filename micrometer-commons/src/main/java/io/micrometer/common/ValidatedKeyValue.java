@@ -47,8 +47,10 @@ class ValidatedKeyValue<T> implements KeyValue {
 
     private T assertValue(Predicate<Object> validator, T value) {
         if (!validator.test(value)) {
-            throw new IllegalArgumentException("Argument [" + this.value + "] does not follow required format for key [" + this.key + "]");
+            throw new IllegalArgumentException(
+                    "Argument [" + this.value + "] does not follow required format for key [" + this.key + "]");
         }
         return value;
     }
+
 }
