@@ -854,7 +854,7 @@ public abstract class MeterRegistry {
          * Creates and starts a new {@link HighCardinalityTagsDetector} for this registry.
          * @return This configuration instance.
          */
-        public Config withDefaultHighCardinalityTagsDetector() {
+        public Config withHighCardinalityTagsDetector() {
             highCardinalityTagsDetector = new HighCardinalityTagsDetector(MeterRegistry.this);
             highCardinalityTagsDetector.start();
             return this;

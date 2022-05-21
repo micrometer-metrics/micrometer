@@ -109,6 +109,11 @@ public class HighCardinalityTagsDetector implements AutoCloseable {
         this.scheduledExecutorService.shutdown();
     }
 
+    @Override
+    public void close() {
+        this.shutdown();
+    }
+
     private void detectHighCardinalityTags() {
         try {
             findFirst().ifPresent(this.meterNameConsumer);
@@ -146,11 +151,6 @@ public class HighCardinalityTagsDetector implements AutoCloseable {
 
     private static void logWarning(String name) {
         LOGGER.warn(String.format("It seems %s has high cardinality tags.", name));
-    }
-
-    @Override
-    public void close() {
-        this.scheduledExecutorService.shutdown();
     }
 
 }
