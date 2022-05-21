@@ -34,7 +34,7 @@ import io.micrometer.common.util.internal.logging.InternalLoggerFactory;
  * start which will start a scheduled job that will do this check for you
  *
  * @author Jonatan Ivanov
- * @since 1.9.0
+ * @since 1.10.0
  */
 public class HighCardinalityTagsDetector implements AutoCloseable {
 
