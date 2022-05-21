@@ -60,7 +60,7 @@ public class HighCardinalityTagsDetector implements AutoCloseable {
      * @param registry The registry to use to check the Meters in it
      */
     public HighCardinalityTagsDetector(MeterRegistry registry) {
-        this(registry, DEFAULT_THRESHOLD);
+        this(registry, DEFAULT_THRESHOLD, DEFAULT_DELAY);
     }
 
     /**
@@ -68,9 +68,11 @@ public class HighCardinalityTagsDetector implements AutoCloseable {
      * @param threshold The threshold to use to detect high cardinality tags (if the
      * number of Meters with the same name are higher than this value, that's a high
      * cardinality tag)
+     * @param delay The delay between the termination of one check and the commencement of
+     * the next
      */
-    public HighCardinalityTagsDetector(MeterRegistry registry, int threshold) {
-        this(registry, threshold, DEFAULT_DELAY, DEFAULT_CONSUMER);
+    public HighCardinalityTagsDetector(MeterRegistry registry, int threshold, Duration delay) {
+        this(registry, threshold, delay, DEFAULT_CONSUMER);
     }
 
     /**
