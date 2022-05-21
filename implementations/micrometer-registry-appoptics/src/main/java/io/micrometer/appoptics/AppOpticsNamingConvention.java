@@ -15,10 +15,10 @@
  */
 package io.micrometer.appoptics;
 
+import io.micrometer.common.lang.Nullable;
+import io.micrometer.common.util.StringUtils;
 import io.micrometer.core.instrument.Meter;
 import io.micrometer.core.instrument.config.NamingConvention;
-import io.micrometer.core.instrument.util.StringUtils;
-import io.micrometer.core.lang.Nullable;
 
 import java.util.regex.Pattern;
 
@@ -29,12 +29,19 @@ import java.util.regex.Pattern;
  * @since 1.1.0
  */
 public class AppOpticsNamingConvention implements NamingConvention {
+
     private static final int MAX_NAME_LENGTH = 255;
+
     private static final int MAX_TAG_KEY_LENGTH = 64;
+
     private static final int MAX_TAG_VALUE_LENGTH = 255;
+
     private static final Pattern NAME_BLACKLIST = Pattern.compile("[^-.:\\w]");
+
     private static final Pattern TAG_KEY_BLACKLIST = Pattern.compile("[^-.:\\w]");
+
     private static final Pattern TAG_VALUE_BLACKLIST = Pattern.compile("[^-.:\\w?\\\\/ ]");
+
     private final NamingConvention delegate;
 
     public AppOpticsNamingConvention() {
@@ -62,4 +69,5 @@ public class AppOpticsNamingConvention implements NamingConvention {
         String sanitized = TAG_VALUE_BLACKLIST.matcher(delegate.tagValue(value)).replaceAll("_");
         return StringUtils.truncate(sanitized, MAX_TAG_VALUE_LENGTH);
     }
+
 }

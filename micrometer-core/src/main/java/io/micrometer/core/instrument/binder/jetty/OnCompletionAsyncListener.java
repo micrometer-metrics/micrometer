@@ -19,13 +19,10 @@ import javax.servlet.AsyncEvent;
 import javax.servlet.AsyncListener;
 
 /**
- * {@link AsyncListener} that calls back to the handler. This class
- * uses only object references to work around
+ * {@link AsyncListener} that calls back to the handler. This class uses only object
+ * references to work around
  * <a href="https://issues.redhat.com/browse/WFLY-13345">WFLY-13345</a>
- *
- * @deprecated Scheduled for removal in 2.0.0, please use {@code io.micrometer.binder.jetty.OnCompletionAsyncListener}
  */
-@Deprecated
 class OnCompletionAsyncListener implements AsyncListener {
 
     private final Object handler;
@@ -52,4 +49,5 @@ class OnCompletionAsyncListener implements AsyncListener {
     public void onComplete(AsyncEvent event) {
         ((TimedHandler) handler).onAsyncComplete(event);
     }
+
 }

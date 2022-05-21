@@ -25,16 +25,19 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicReference;
 
 public class StatsdLongTaskTimer extends DefaultLongTaskTimer implements StatsdPollable {
+
     private final StatsdLineBuilder lineBuilder;
+
     private final FluxSink<String> sink;
 
     private final AtomicReference<Long> lastActive = new AtomicReference<>(Long.MIN_VALUE);
+
     private final AtomicReference<Double> lastDuration = new AtomicReference<>(Double.NEGATIVE_INFINITY);
 
     private final boolean alwaysPublish;
 
     StatsdLongTaskTimer(Id id, StatsdLineBuilder lineBuilder, FluxSink<String> sink, Clock clock, boolean alwaysPublish,
-                        DistributionStatisticConfig distributionStatisticConfig, TimeUnit baseTimeUnit) {
+            DistributionStatisticConfig distributionStatisticConfig, TimeUnit baseTimeUnit) {
         super(id, clock, baseTimeUnit, distributionStatisticConfig, false);
         this.lineBuilder = lineBuilder;
         this.sink = sink;
@@ -58,4 +61,5 @@ public class StatsdLongTaskTimer extends DefaultLongTaskTimer implements StatsdP
             sink.next(lineBuilder.gauge(max, Statistic.MAX));
         }
     }
+
 }

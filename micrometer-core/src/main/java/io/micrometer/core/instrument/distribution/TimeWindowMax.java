@@ -25,21 +25,27 @@ import java.util.function.DoubleSupplier;
 import java.util.function.LongSupplier;
 
 /**
- * An implementation of a decaying maximum for a distribution based on a configurable ring buffer.
+ * An implementation of a decaying maximum for a distribution based on a configurable ring
+ * buffer.
  *
  * @author Jon Schneider
  */
 public class TimeWindowMax {
-    private static final AtomicIntegerFieldUpdater<TimeWindowMax> rotatingUpdater =
-            AtomicIntegerFieldUpdater.newUpdater(TimeWindowMax.class, "rotating");
+
+    private static final AtomicIntegerFieldUpdater<TimeWindowMax> rotatingUpdater = AtomicIntegerFieldUpdater
+            .newUpdater(TimeWindowMax.class, "rotating");
 
     private final Clock clock;
+
     private final long durationBetweenRotatesMillis;
+
     private AtomicLong[] ringBuffer;
+
     private int currentBucket;
+
     private volatile long lastRotateTimestampMillis;
 
-    @SuppressWarnings({"unused", "FieldCanBeLocal"})
+    @SuppressWarnings({ "unused", "FieldCanBeLocal" })
     private volatile int rotating; // 0 - not rotating, 1 - rotating
 
     @SuppressWarnings("ConstantConditions")
@@ -61,8 +67,7 @@ public class TimeWindowMax {
 
     /**
      * For use by timer implementations.
-     *
-     * @param sample   The value to record.
+     * @param sample The value to record.
      * @param timeUnit The unit of time of the incoming sample.
      */
     public void record(double sample, TimeUnit timeUnit) {
@@ -101,7 +106,6 @@ public class TimeWindowMax {
 
     /**
      * For use by distribution summary implementations.
-     *
      * @param sample The value to record.
      */
     public void record(double sample) {
@@ -112,7 +116,8 @@ public class TimeWindowMax {
         long curMax;
         do {
             curMax = max.get();
-        } while (curMax < sample && !max.compareAndSet(curMax, sample));
+        }
+        while (curMax < sample && !max.compareAndSet(curMax, sample));
     }
 
     private void rotate() {
@@ -132,7 +137,7 @@ public class TimeWindowMax {
             synchronized (this) {
                 if (timeSinceLastRotateMillis >= durationBetweenRotatesMillis * ringBuffer.length) {
                     // time since last rotation is enough to clear whole ring buffer
-                    for (AtomicLong bufferItem: ringBuffer) {
+                    for (AtomicLong bufferItem : ringBuffer) {
                         bufferItem.set(0);
                     }
                     currentBucket = 0;
@@ -148,10 +153,13 @@ public class TimeWindowMax {
                     }
                     timeSinceLastRotateMillis -= durationBetweenRotatesMillis;
                     lastRotateTimestampMillis += durationBetweenRotatesMillis;
-                } while (timeSinceLastRotateMillis >= durationBetweenRotatesMillis && ++iterations < ringBuffer.length);
+                }
+                while (timeSinceLastRotateMillis >= durationBetweenRotatesMillis && ++iterations < ringBuffer.length);
             }
-        } finally {
+        }
+        finally {
             rotating = 0;
         }
     }
+
 }

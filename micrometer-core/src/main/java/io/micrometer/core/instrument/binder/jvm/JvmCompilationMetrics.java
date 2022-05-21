@@ -15,14 +15,14 @@
  */
 package io.micrometer.core.instrument.binder.jvm;
 
+import io.micrometer.common.lang.NonNullApi;
+import io.micrometer.common.lang.NonNullFields;
 import io.micrometer.core.instrument.FunctionCounter;
 import io.micrometer.core.instrument.MeterRegistry;
 import io.micrometer.core.instrument.Tag;
 import io.micrometer.core.instrument.Tags;
 import io.micrometer.core.instrument.binder.BaseUnits;
 import io.micrometer.core.instrument.binder.MeterBinder;
-import io.micrometer.core.lang.NonNullApi;
-import io.micrometer.core.lang.NonNullFields;
 
 import java.lang.management.CompilationMXBean;
 import java.lang.management.ManagementFactory;
@@ -32,13 +32,12 @@ import static java.util.Collections.emptyList;
 /**
  * {@link MeterBinder} for JVM compilation metrics.
  *
- * @deprecated Scheduled for removal in 2.0.0, please use {@code io.micrometer.binder.jvm.JvmCompilationMetrics}
  * @since 1.4.0
  */
 @NonNullApi
 @NonNullFields
-@Deprecated
 public class JvmCompilationMetrics implements MeterBinder {
+
     private final Iterable<Tag> tags;
 
     public JvmCompilationMetrics() {
@@ -56,8 +55,8 @@ public class JvmCompilationMetrics implements MeterBinder {
             FunctionCounter.builder("jvm.compilation.time", compilationBean, CompilationMXBean::getTotalCompilationTime)
                     .tags(Tags.concat(tags, "compiler", compilationBean.getName()))
                     .description("The approximate accumulated elapsed time spent in compilation")
-                    .baseUnit(BaseUnits.MILLISECONDS)
-                    .register(registry);
+                    .baseUnit(BaseUnits.MILLISECONDS).register(registry);
         }
     }
+
 }

@@ -40,10 +40,12 @@ import static org.assertj.core.api.Assertions.assertThat;
 @Tag("docker")
 abstract class AbstractElasticsearchMeterRegistryIntegrationTest {
 
-    protected static final String VERSION_7 = "7.17.0";
-    protected static final String VERSION_8 = "8.0.0";
+    protected static final String VERSION_7 = "7.17.3";
+
+    protected static final String VERSION_8 = "8.1.3";
 
     protected static final String USER = "elastic";
+
     protected static final String PASSWORD = "changeme";
 
     @Container
@@ -52,6 +54,7 @@ abstract class AbstractElasticsearchMeterRegistryIntegrationTest {
     protected final HttpSender httpSender = new HttpUrlConnectionSender();
 
     protected String host;
+
     private ElasticMeterRegistry registry;
 
     protected abstract String getVersion();

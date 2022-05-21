@@ -46,6 +46,7 @@ import static org.mockito.Mockito.*;
  * @author Stephane Nicoll
  */
 class WavefrontMeterRegistryTest {
+
     private final WavefrontConfig config = new WavefrontConfig() {
         @Override
         public String get(String key) {
@@ -69,11 +70,11 @@ class WavefrontMeterRegistryTest {
     };
 
     private final MockClock clock = new MockClock();
+
     private final WavefrontSender wavefrontSender = spy(WavefrontSender.class);
-    private final WavefrontMeterRegistry registry = WavefrontMeterRegistry.builder(config)
-            .clock(clock)
-            .wavefrontSender(wavefrontSender)
-            .build();
+
+    private final WavefrontMeterRegistry registry = WavefrontMeterRegistry.builder(config).clock(clock)
+            .wavefrontSender(wavefrontSender).build();
 
     @Test
     void publishMetric() throws IOException {
@@ -110,11 +111,14 @@ class WavefrontMeterRegistryTest {
         Measurement measurement3 = new Measurement(() -> Double.NaN, Statistic.VALUE);
         Measurement measurement4 = new Measurement(() -> 1d, Statistic.VALUE);
         Measurement measurement5 = new Measurement(() -> 2d, Statistic.VALUE);
-        List<Measurement> measurements = Arrays.asList(measurement1, measurement2, measurement3, measurement4, measurement5);
+        List<Measurement> measurements = Arrays.asList(measurement1, measurement2, measurement3, measurement4,
+                measurement5);
         Meter meter = Meter.builder("my.meter", Meter.Type.GAUGE, measurements).register(this.registry);
         registry.publishMeter(meter);
-        verify(wavefrontSender, times(1)).sendMetric("my.meter", 1d, clock.wallTime(), "host", Collections.singletonMap("statistic", "value"));
-        verify(wavefrontSender, times(1)).sendMetric("my.meter", 2d, clock.wallTime(), "host", Collections.singletonMap("statistic", "value"));
+        verify(wavefrontSender, times(1)).sendMetric("my.meter", 1d, clock.wallTime(), "host",
+                Collections.singletonMap("statistic", "value"));
+        verify(wavefrontSender, times(1)).sendMetric("my.meter", 2d, clock.wallTime(), "host",
+                Collections.singletonMap("statistic", "value"));
         verifyNoMoreInteractions(wavefrontSender);
     }
 
@@ -123,9 +127,8 @@ class WavefrontMeterRegistryTest {
         Meter.Id id = registry.summary("name").getId();
         long time = System.currentTimeMillis();
         List<Pair<Double, Integer>> centroids = Arrays.asList(new Pair<>(1d, 1));
-        List<WavefrontHistogramImpl.Distribution> distributions = Arrays.asList(
-                new WavefrontHistogramImpl.Distribution(time, centroids)
-        );
+        List<WavefrontHistogramImpl.Distribution> distributions = Arrays
+                .asList(new WavefrontHistogramImpl.Distribution(time, centroids));
         registry.publishDistribution(id, distributions);
         verify(wavefrontSender, times(1)).sendDistribution("name", centroids,
                 Collections.singleton(HistogramGranularity.MINUTE), time, "host", Collections.emptyMap());
@@ -219,8 +222,7 @@ class WavefrontMeterRegistryTest {
         };
 
         assertThatCode(() -> WavefrontMeterRegistry.builder(missingUriConfig)
-                .wavefrontSender(mock(WavefrontSender.class)).build())
-                .doesNotThrowAnyException();
+                .wavefrontSender(mock(WavefrontSender.class)).build()).doesNotThrowAnyException();
     }
 
     @Test
@@ -228,8 +230,7 @@ class WavefrontMeterRegistryTest {
         WavefrontConfig missingApiTokenDirectConfig = WavefrontConfig.DEFAULT_DIRECT;
 
         assertThatCode(() -> WavefrontMeterRegistry.builder(missingApiTokenDirectConfig)
-                .wavefrontSender(mock(WavefrontSender.class)).build())
-                .doesNotThrowAnyException();
+                .wavefrontSender(mock(WavefrontSender.class)).build()).doesNotThrowAnyException();
     }
 
     @Test
@@ -242,11 +243,14 @@ class WavefrontMeterRegistryTest {
 
     @Test
     void proxyUriConvertedToHttp() {
-        assertThat(WavefrontMeterRegistry.getWavefrontReportingUri(WavefrontConfig.DEFAULT_PROXY)).startsWith("http://");
+        assertThat(WavefrontMeterRegistry.getWavefrontReportingUri(WavefrontConfig.DEFAULT_PROXY))
+                .startsWith("http://");
     }
 
     @Test
     void directApiUriUnchanged() {
-        assertThat(WavefrontMeterRegistry.getWavefrontReportingUri(WavefrontConfig.DEFAULT_DIRECT)).isEqualTo(WavefrontConfig.DEFAULT_DIRECT.uri());
+        assertThat(WavefrontMeterRegistry.getWavefrontReportingUri(WavefrontConfig.DEFAULT_DIRECT))
+                .isEqualTo(WavefrontConfig.DEFAULT_DIRECT.uri());
     }
+
 }

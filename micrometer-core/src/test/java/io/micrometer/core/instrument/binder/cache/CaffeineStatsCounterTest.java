@@ -15,8 +15,6 @@
  */
 package io.micrometer.core.instrument.binder.cache;
 
-import static org.assertj.core.api.Assertions.assertThat;
-
 import com.github.benmanes.caffeine.cache.Cache;
 import com.github.benmanes.caffeine.cache.Caffeine;
 import com.github.benmanes.caffeine.cache.RemovalCause;
@@ -33,17 +31,23 @@ import org.junit.jupiter.params.provider.EnumSource;
 
 import java.util.concurrent.TimeUnit;
 
+import static org.assertj.core.api.Assertions.assertThat;
+
 /**
  * Tests for {@link CaffeineStatsCounter}.
  *
  * @author John Karp
  */
 class CaffeineStatsCounterTest {
+
     private static final String CACHE_NAME = "foo";
+
     private static final Tags USER_TAGS = Tags.of("k", "v");
+
     private static final Tags TAGS = Tags.concat(USER_TAGS, "cache", CACHE_NAME);
 
     private CaffeineStatsCounter stats;
+
     private MeterRegistry registry;
 
     @BeforeEach
@@ -101,4 +105,5 @@ class CaffeineStatsCounterTest {
     private RequiredSearch fetch(String name, String... tags) {
         return registry.get(name).tags(TAGS).tags(tags);
     }
+
 }

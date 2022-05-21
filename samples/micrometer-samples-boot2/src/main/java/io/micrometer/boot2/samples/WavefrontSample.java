@@ -23,7 +23,9 @@ import org.springframework.scheduling.annotation.EnableScheduling;
 @SpringBootApplication(scanBasePackageClasses = PersonController.class)
 @EnableScheduling
 public class WavefrontSample {
+
     public static void main(String[] args) {
         new SpringApplicationBuilder(WavefrontSample.class).profiles("wavefront").run(args);
     }
+
 }

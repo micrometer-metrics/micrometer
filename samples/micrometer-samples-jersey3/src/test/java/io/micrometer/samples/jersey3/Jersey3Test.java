@@ -17,8 +17,8 @@ package io.micrometer.samples.jersey3;
 
 import io.micrometer.core.instrument.MeterRegistry;
 import io.micrometer.core.instrument.Timer;
-import io.micrometer.binder.jersey.server.DefaultJerseyTagsProvider;
-import io.micrometer.binder.jersey.server.MetricsApplicationEventListener;
+import io.micrometer.core.instrument.binder.jersey.server.DefaultJerseyTagsProvider;
+import io.micrometer.core.instrument.binder.jersey.server.MetricsApplicationEventListener;
 import io.micrometer.core.instrument.simple.SimpleMeterRegistry;
 import jakarta.ws.rs.core.Application;
 import org.glassfish.jersey.server.ResourceConfig;
@@ -32,24 +32,25 @@ import static org.assertj.core.api.Assertions.assertThat;
 class Jersey3Test extends JerseyTest {
 
     static final String TIMER_METRIC_NAME = "http.server.requests";
+
     MeterRegistry registry;
 
     @Override
     protected Application configure() {
         registry = new SimpleMeterRegistry();
-        MetricsApplicationEventListener metricsListener = new MetricsApplicationEventListener(registry, new DefaultJerseyTagsProvider(), TIMER_METRIC_NAME, true);
-        return new ResourceConfig(HelloWorldResource.class)
-                .register(metricsListener);
+        MetricsApplicationEventListener metricsListener = new MetricsApplicationEventListener(registry,
+                new DefaultJerseyTagsProvider(), TIMER_METRIC_NAME, true);
+        return new ResourceConfig(HelloWorldResource.class).register(metricsListener);
     }
 
     @Test
     void helloResourceIsTimed() {
         String response = target("hello/Jersey").request().get(String.class);
         assertThat(response).isEqualTo("Hello, Jersey");
-        Timer timer = registry.get(TIMER_METRIC_NAME)
-                .tags("method", "GET", "uri", "/hello/{name}", "status", "200", "exception", "None", "outcome", "SUCCESS")
-                .timer();
+        Timer timer = registry.get(TIMER_METRIC_NAME).tags("method", "GET", "uri", "/hello/{name}", "status", "200",
+                "exception", "None", "outcome", "SUCCESS").timer();
         assertThat(timer.count()).isEqualTo(1);
         assertThat(timer.totalTime(TimeUnit.NANOSECONDS)).isPositive();
     }
+
 }

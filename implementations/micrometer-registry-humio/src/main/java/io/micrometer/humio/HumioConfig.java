@@ -15,9 +15,9 @@
  */
 package io.micrometer.humio;
 
+import io.micrometer.common.lang.Nullable;
 import io.micrometer.core.instrument.config.validate.Validated;
 import io.micrometer.core.instrument.step.StepRegistryConfig;
-import io.micrometer.core.lang.Nullable;
 
 import java.time.Duration;
 import java.util.Map;
@@ -42,18 +42,18 @@ public interface HumioConfig extends StepRegistryConfig {
     }
 
     /**
-     * @return The URI to ship metrics to. If you need to publish metrics to an internal proxy en route to
-     * Humio, you can define the location of the proxy with this.
+     * @return The URI to ship metrics to. If you need to publish metrics to an internal
+     * proxy en route to Humio, you can define the location of the proxy with this.
      */
     default String uri() {
         return getUrlString(this, "uri").orElse("https://cloud.humio.com");
     }
 
     /**
-     * Humio uses a concept called "tags" to decide which datasource to store metrics in. This concept
-     * is distinct from Micrometer's notion of tags, which divides a metric along dimensional boundaries.
-     * All metrics from this registry will be stored under a datasource defined by these tags.
-     *
+     * Humio uses a concept called "tags" to decide which datasource to store metrics in.
+     * This concept is distinct from Micrometer's notion of tags, which divides a metric
+     * along dimensional boundaries. All metrics from this registry will be stored under a
+     * datasource defined by these tags.
      * @return Tags which uniquely determine the datasource to store metrics in.
      */
     @Nullable
@@ -74,9 +74,7 @@ public interface HumioConfig extends StepRegistryConfig {
 
     @Override
     default Validated<?> validate() {
-        return checkAll(this,
-                c -> StepRegistryConfig.validate(c),
-                checkRequired("uri", HumioConfig::uri)
-        );
+        return checkAll(this, c -> StepRegistryConfig.validate(c), checkRequired("uri", HumioConfig::uri));
     }
+
 }

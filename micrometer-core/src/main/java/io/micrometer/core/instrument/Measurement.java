@@ -24,7 +24,9 @@ import java.util.function.Supplier;
  * @author Jon Schneider
  */
 public class Measurement {
+
     private final Supplier<Double> f;
+
     private final Statistic statistic;
 
     public Measurement(Supplier<Double> valueFunction, Statistic statistic) {
@@ -45,9 +47,7 @@ public class Measurement {
 
     @Override
     public String toString() {
-        return "Measurement{" +
-                "statistic='" + statistic + '\'' +
-                ", value=" + getValue() +
-                '}';
+        return "Measurement{" + "statistic='" + statistic + '\'' + ", value=" + getValue() + '}';
     }
+
 }

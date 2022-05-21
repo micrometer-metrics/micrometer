@@ -29,6 +29,7 @@ import java.time.Duration;
 @SpringBootApplication(scanBasePackageClasses = PersonController.class)
 @EnableScheduling
 public class LoggingRegistrySample {
+
     public static void main(String[] args) {
         new SpringApplicationBuilder(LoggingRegistrySample.class).profiles("logging").run(args);
     }
@@ -47,4 +48,5 @@ public class LoggingRegistrySample {
             }
         }, Clock.SYSTEM);
     }
+
 }

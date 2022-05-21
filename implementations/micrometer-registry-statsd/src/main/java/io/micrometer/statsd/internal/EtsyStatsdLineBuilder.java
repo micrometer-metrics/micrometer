@@ -15,22 +15,26 @@
  */
 package io.micrometer.statsd.internal;
 
+import io.micrometer.common.lang.Nullable;
 import io.micrometer.core.instrument.Meter;
 import io.micrometer.core.instrument.MeterRegistry;
 import io.micrometer.core.instrument.Statistic;
 import io.micrometer.core.instrument.config.NamingConvention;
 import io.micrometer.core.instrument.util.HierarchicalNameMapper;
-import io.micrometer.core.lang.Nullable;
 
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 
 public class EtsyStatsdLineBuilder extends FlavorStatsdLineBuilder {
+
     private final HierarchicalNameMapper nameMapper;
-    @SuppressWarnings({"NullableProblems", "unused"})
+
+    @SuppressWarnings({ "NullableProblems", "unused" })
     private volatile NamingConvention namingConvention;
+
     @Nullable
     private volatile String nameNoStat;
+
     private final ConcurrentMap<Statistic, String> names = new ConcurrentHashMap<>();
 
     public EtsyStatsdLineBuilder(Meter.Id id, MeterRegistry.Config config, HierarchicalNameMapper nameMapper) {
@@ -58,7 +62,7 @@ public class EtsyStatsdLineBuilder extends FlavorStatsdLineBuilder {
             if (this.nameNoStat == null) {
                 this.nameNoStat = etsyName(null);
             }
-            //noinspection ConstantConditions
+            // noinspection ConstantConditions
             return nameNoStat;
         }
         return names.computeIfAbsent(stat, this::etsyName);
@@ -68,4 +72,5 @@ public class EtsyStatsdLineBuilder extends FlavorStatsdLineBuilder {
         return nameMapper.toHierarchicalName(stat != null ? id.withTag(stat) : id, config.namingConvention())
                 .replace(':', '_');
     }
+
 }

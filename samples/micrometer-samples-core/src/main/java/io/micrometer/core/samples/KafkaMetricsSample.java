@@ -18,7 +18,7 @@ package io.micrometer.core.samples;
 import com.github.charithe.kafka.EphemeralKafkaBroker;
 import com.github.charithe.kafka.KafkaHelper;
 import io.micrometer.core.instrument.MeterRegistry;
-import io.micrometer.binder.kafka.KafkaClientMetrics;
+import io.micrometer.core.instrument.binder.kafka.KafkaClientMetrics;
 import io.micrometer.core.samples.utils.SampleConfig;
 import org.apache.kafka.clients.consumer.KafkaConsumer;
 import org.apache.kafka.clients.producer.KafkaProducer;
@@ -30,6 +30,7 @@ import java.time.Duration;
 import static java.util.Collections.singletonList;
 
 public class KafkaMetricsSample {
+
     private static final String TOPIC = "my-example-topic";
 
     public static void main(String[] args) throws Exception {
@@ -46,13 +47,13 @@ public class KafkaMetricsSample {
 
         consumer.subscribe(singletonList(TOPIC));
 
-        Flux.interval(Duration.ofMillis(10))
-                .doOnEach(n -> producer.send(new ProducerRecord<>(TOPIC, "hello", "world")))
+        Flux.interval(Duration.ofMillis(10)).doOnEach(n -> producer.send(new ProducerRecord<>(TOPIC, "hello", "world")))
                 .subscribe();
 
-        for (; ; ) {
+        for (;;) {
             consumer.poll(Duration.ofMillis(100));
             consumer.commitAsync();
         }
     }
+
 }

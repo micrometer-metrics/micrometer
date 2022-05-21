@@ -15,12 +15,12 @@
  */
 package io.micrometer.core.instrument.push;
 
+import io.micrometer.common.lang.Nullable;
+import io.micrometer.common.util.internal.logging.InternalLogger;
+import io.micrometer.common.util.internal.logging.InternalLoggerFactory;
 import io.micrometer.core.instrument.Clock;
 import io.micrometer.core.instrument.MeterRegistry;
 import io.micrometer.core.instrument.util.TimeUtils;
-import io.micrometer.core.lang.Nullable;
-import io.micrometer.core.util.internal.logging.InternalLogger;
-import io.micrometer.core.util.internal.logging.InternalLoggerFactory;
 
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
@@ -28,7 +28,9 @@ import java.util.concurrent.ThreadFactory;
 import java.util.concurrent.TimeUnit;
 
 public abstract class PushMeterRegistry extends MeterRegistry {
+
     private static final InternalLogger logger = InternalLoggerFactory.getInstance(PushMeterRegistry.class);
+
     private final PushRegistryConfig config;
 
     @Nullable
@@ -50,8 +52,10 @@ public abstract class PushMeterRegistry extends MeterRegistry {
     private void publishSafely() {
         try {
             publish();
-        } catch (Throwable e) {
-            logger.warn("Unexpected exception thrown while publishing metrics for " + this.getClass().getSimpleName(), e);
+        }
+        catch (Throwable e) {
+            logger.warn("Unexpected exception thrown while publishing metrics for " + this.getClass().getSimpleName(),
+                    e);
         }
     }
 
@@ -68,14 +72,15 @@ public abstract class PushMeterRegistry extends MeterRegistry {
             stop();
 
         if (config.enabled()) {
-            logger.info("publishing metrics for " + this.getClass().getSimpleName() + " every " + TimeUtils.format(config.step()));
+            logger.info("publishing metrics for " + this.getClass().getSimpleName() + " every "
+                    + TimeUtils.format(config.step()));
 
             scheduledExecutorService = Executors.newSingleThreadScheduledExecutor(threadFactory);
             // time publication to happen just after StepValue finishes the step
             long stepMillis = config.step().toMillis();
             long initialDelayMillis = stepMillis - (clock.wallTime() % stepMillis) + 1;
-            scheduledExecutorService.scheduleAtFixedRate(this::publishSafely,
-                                                         initialDelayMillis, stepMillis, TimeUnit.MILLISECONDS);
+            scheduledExecutorService.scheduleAtFixedRate(this::publishSafely, initialDelayMillis, stepMillis,
+                    TimeUnit.MILLISECONDS);
         }
     }
 
@@ -94,4 +99,5 @@ public abstract class PushMeterRegistry extends MeterRegistry {
         stop();
         super.close();
     }
+
 }

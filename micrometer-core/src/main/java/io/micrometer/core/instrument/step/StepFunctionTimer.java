@@ -33,25 +33,35 @@ import java.util.function.ToLongFunction;
  * @author Johnny Lim
  */
 public class StepFunctionTimer<T> implements FunctionTimer {
+
     private final Id id;
+
     private final WeakReference<T> ref;
+
     private final ToLongFunction<T> countFunction;
+
     private final ToDoubleFunction<T> totalTimeFunction;
+
     private final TimeUnit totalTimeFunctionUnit;
+
     private final TimeUnit baseTimeUnit;
 
     private final Clock clock;
+
     private volatile long lastUpdateTime = (long) (-2e6);
 
     private volatile long lastCount;
+
     private volatile double lastTime;
 
     private final LongAdder count = new LongAdder();
+
     private final DoubleAdder total = new DoubleAdder();
+
     private final StepTuple2<Long, Double> countTotal;
 
     public StepFunctionTimer(Id id, Clock clock, long stepMillis, T obj, ToLongFunction<T> countFunction,
-                             ToDoubleFunction<T> totalTimeFunction, TimeUnit totalTimeFunctionUnit, TimeUnit baseTimeUnit) {
+            ToDoubleFunction<T> totalTimeFunction, TimeUnit totalTimeFunctionUnit, TimeUnit baseTimeUnit) {
         this.id = id;
         this.clock = clock;
         this.ref = new WeakReference<>(obj);
@@ -59,8 +69,7 @@ public class StepFunctionTimer<T> implements FunctionTimer {
         this.totalTimeFunction = totalTimeFunction;
         this.totalTimeFunctionUnit = totalTimeFunctionUnit;
         this.baseTimeUnit = baseTimeUnit;
-        this.countTotal = new StepTuple2<>(clock, stepMillis, 0L, 0.0,
-                count::sumThenReset, total::sumThenReset);
+        this.countTotal = new StepTuple2<>(clock, stepMillis, 0L, 0.0, count::sumThenReset, total::sumThenReset);
     }
 
     /**
@@ -87,7 +96,8 @@ public class StepFunctionTimer<T> implements FunctionTimer {
             count.add(lastCount - prevLastCount);
 
             double prevLastTime = lastTime;
-            lastTime = Math.max(TimeUtils.convert(totalTimeFunction.applyAsDouble(obj2), totalTimeFunctionUnit, baseTimeUnit()), 0);
+            lastTime = Math.max(
+                    TimeUtils.convert(totalTimeFunction.applyAsDouble(obj2), totalTimeFunctionUnit, baseTimeUnit()), 0);
             total.add(lastTime - prevLastTime);
 
             lastUpdateTime = clock.monotonicTime();
@@ -107,4 +117,5 @@ public class StepFunctionTimer<T> implements FunctionTimer {
     public Type type() {
         return Type.TIMER;
     }
+
 }

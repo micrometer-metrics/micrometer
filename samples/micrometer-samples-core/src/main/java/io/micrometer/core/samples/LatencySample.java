@@ -25,24 +25,21 @@ import java.util.Random;
 import java.util.concurrent.TimeUnit;
 
 public class LatencySample {
+
     public static void main(String[] args) {
         new LatencySample().run();
     }
 
     private MeterRegistry registry = SampleConfig.myMonitoringSystem();
+
     private Random r = new Random();
-    private Timer timer = Timer.builder("request")
-        .publishPercentileHistogram()
-        .register(registry);
+
+    private Timer timer = Timer.builder("request").publishPercentileHistogram().register(registry);
 
     void run() {
-        Flux.interval(Duration.ofMillis(1))
-            .doOnEach(n -> recordGaussian(10))
-            .subscribe();
+        Flux.interval(Duration.ofMillis(1)).doOnEach(n -> recordGaussian(10)).subscribe();
 
-        Flux.interval(Duration.ofSeconds(1))
-            .doOnEach(n -> recordGaussian(300))
-            .blockLast();
+        Flux.interval(Duration.ofSeconds(1)).doOnEach(n -> recordGaussian(300)).blockLast();
     }
 
     private void recordGaussian(long center) {
@@ -52,4 +49,5 @@ public class LatencySample {
     private long simulatedLatency(long center) {
         return (long) (r.nextGaussian() * 10) + center;
     }
+
 }

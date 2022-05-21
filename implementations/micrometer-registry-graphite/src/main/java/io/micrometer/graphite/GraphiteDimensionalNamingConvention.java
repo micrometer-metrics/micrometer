@@ -15,37 +15,46 @@
  */
 package io.micrometer.graphite;
 
+import io.micrometer.common.lang.Nullable;
 import io.micrometer.core.instrument.Meter;
 import io.micrometer.core.instrument.config.NamingConvention;
-import io.micrometer.core.lang.Nullable;
 
 import java.text.Normalizer;
 import java.util.regex.Pattern;
 
 /**
  * Dimensional {@link NamingConvention} for Graphite based on Graphite's Tag support
- * @see <a href="https://graphite.readthedocs.io/en/latest/tags.html">Graphite Tag Support</a>
  *
+ * @see <a href="https://graphite.readthedocs.io/en/latest/tags.html">Graphite Tag
+ * Support</a>
  * @author Jon Schneider
  * @author Johnny Lim
  * @author Andrew Fitzgerald
  * @since 1.4.0
  */
 public class GraphiteDimensionalNamingConvention implements NamingConvention {
+
     /**
-     * A list that probably is blacklisted: https://github.com/graphite-project/graphite-web/blob/master/webapp/graphite/render/grammar.py#L48-L55.
+     * A list that probably is blacklisted:
+     * https://github.com/graphite-project/graphite-web/blob/master/webapp/graphite/render/grammar.py#L48-L55.
      * Empirically, we have found others.
      */
     private static final Pattern PATTERN_NAME_BLACKLISTED_CHARS = Pattern.compile("[{}(),=\\[\\]/ ?:;]");
+
     /**
-     * The list of invalid tag key and value characters can be found here: https://graphite.readthedocs.io/en/latest/tags.html#carbon
+     * The list of invalid tag key and value characters can be found here:
+     * https://graphite.readthedocs.io/en/latest/tags.html#carbon
      */
     private static final Pattern PATTERN_TAG_KEY_BLACKLISTED_CHARS = Pattern.compile("[;!^=]");
+
     private static final Pattern PATTERN_TAG_VALUE_BLACKLISTED_CHARS = Pattern.compile("[;~]");
+
     /**
-     * Graphite tag keys and values must have a length >= 1 https://graphite.readthedocs.io/en/latest/tags.html#carbon
+     * Graphite tag keys and values must have a length >= 1
+     * https://graphite.readthedocs.io/en/latest/tags.html#carbon
      */
     private static final String UNSPECIFIED = "unspecified";
+
     private final NamingConvention delegate;
 
     public GraphiteDimensionalNamingConvention() {
@@ -78,8 +87,8 @@ public class GraphiteDimensionalNamingConvention implements NamingConvention {
     }
 
     /**
-     * Github Issue: https://github.com/graphite-project/graphite-web/issues/243
-     * Unicode is not OK. Some special chars are not OK.
+     * Github Issue: https://github.com/graphite-project/graphite-web/issues/243 Unicode
+     * is not OK. Some special chars are not OK.
      */
     private String normalize(String name) {
         return Normalizer.normalize(name, Normalizer.Form.NFKD);

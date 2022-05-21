@@ -15,10 +15,10 @@
  */
 package io.micrometer.elastic;
 
+import io.micrometer.common.lang.Nullable;
 import io.micrometer.core.instrument.config.validate.InvalidReason;
 import io.micrometer.core.instrument.config.validate.Validated;
 import io.micrometer.core.instrument.step.StepRegistryConfig;
-import io.micrometer.core.lang.Nullable;
 
 import java.time.format.DateTimeFormatter;
 
@@ -41,7 +41,6 @@ public interface ElasticConfig extends StepRegistryConfig {
 
     /**
      * Get the value associated with a key.
-     *
      * @param key Key to look up in the config.
      * @return Value for the key or null if no key is present.
      */
@@ -50,7 +49,6 @@ public interface ElasticConfig extends StepRegistryConfig {
 
     /**
      * Property prefix to prepend to configuration names.
-     *
      * @return property prefix
      */
     default String prefix() {
@@ -59,7 +57,6 @@ public interface ElasticConfig extends StepRegistryConfig {
 
     /**
      * The host to send metrics to.
-     *
      * @return host
      */
     default String host() {
@@ -67,9 +64,7 @@ public interface ElasticConfig extends StepRegistryConfig {
     }
 
     /**
-     * The index name to write metrics to.
-     * Default is: "micrometer-metrics"
-     *
+     * The index name to write metrics to. Default is: "micrometer-metrics"
      * @return index name
      */
     default String index() {
@@ -77,33 +72,28 @@ public interface ElasticConfig extends StepRegistryConfig {
     }
 
     /**
-     * The index date format used for rolling indices.
-     * This is appended to the index name, separated by the {@link #indexDateSeparator()}.
-     * Default is: "yyyy-MM"
-     *
+     * The index date format used for rolling indices. This is appended to the index name,
+     * separated by the {@link #indexDateSeparator()}. Default is: "yyyy-MM"
      * @return date format for index
      */
     default String indexDateFormat() {
-        return getString(this, "indexDateFormat")
-                .invalidateWhen(format -> {
-                    if (format == null) {
-                        return false;
-                    }
+        return getString(this, "indexDateFormat").invalidateWhen(format -> {
+            if (format == null) {
+                return false;
+            }
 
-                    try {
-                        DateTimeFormatter.ofPattern(format);
-                        return false;
-                    } catch (IllegalArgumentException ignored) {
-                        return true;
-                    }
-                }, "invalid date format", InvalidReason.MALFORMED)
-                .orElse("yyyy-MM");
+            try {
+                DateTimeFormatter.ofPattern(format);
+                return false;
+            }
+            catch (IllegalArgumentException ignored) {
+                return true;
+            }
+        }, "invalid date format", InvalidReason.MALFORMED).orElse("yyyy-MM");
     }
 
     /**
-     * The name of the timestamp field.
-     * Default is: "@timestamp"
-     *
+     * The name of the timestamp field. Default is: "@timestamp"
      * @return field name for timestamp
      */
     default String timestampFieldName() {
@@ -111,9 +101,8 @@ public interface ElasticConfig extends StepRegistryConfig {
     }
 
     /**
-     * Whether to create the index automatically if it doesn't exist.
-     * Default is: {@code true}
-     *
+     * Whether to create the index automatically if it doesn't exist. Default is:
+     * {@code true}
      * @return whether to create the index automatically
      */
     default boolean autoCreateIndex() {
@@ -123,7 +112,6 @@ public interface ElasticConfig extends StepRegistryConfig {
     /**
      * The Basic Authentication username. If {@link #apiKeyCredentials()} is configured,
      * it will be used for authentication instead of this.
-     *
      * @return username for Basic Authentication
      */
     @Nullable
@@ -134,7 +122,6 @@ public interface ElasticConfig extends StepRegistryConfig {
     /**
      * The Basic Authentication password. If {@link #apiKeyCredentials()} is configured,
      * it will be used for authentication instead of this.
-     *
      * @return password for Basic Authentication
      */
     @Nullable
@@ -144,7 +131,6 @@ public interface ElasticConfig extends StepRegistryConfig {
 
     /**
      * The ingest pipeline name.
-     *
      * @return ingest pipeline name
      * @since 1.2.0
      */
@@ -154,9 +140,7 @@ public interface ElasticConfig extends StepRegistryConfig {
     }
 
     /**
-     * The separator between the index name and the date part.
-     * Default is: "-"
-     *
+     * The separator between the index name and the date part. Default is: "-"
      * @return index name separator
      * @since 1.2.0
      */
@@ -165,15 +149,16 @@ public interface ElasticConfig extends StepRegistryConfig {
     }
 
     /**
-     * Base64-encoded credentials string. From a generated API key, concatenate in UTF-8 format
-     * the unique {@code id}, a colon ({@code :}), and the {@code api_key} in the following format:
-     * <pre>{@code <id>:<api_key>}</pre>
-     * The above should be the input for Base64 encoding, and the output is the credentials
-     * returned by this method.
-     * If configured, ApiKey type authentication is used instead of username/password authentication.
-     *
+     * Base64-encoded credentials string. From a generated API key, concatenate in UTF-8
+     * format the unique {@code id}, a colon ({@code :}), and the {@code api_key} in the
+     * following format: <pre>{@code <id>:<api_key>}</pre> The above should be the input
+     * for Base64 encoding, and the output is the credentials returned by this method. If
+     * configured, ApiKey type authentication is used instead of username/password
+     * authentication.
      * @return base64-encoded ApiKey authentication credentials
-     * @see <a href="https://www.elastic.co/guide/en/elasticsearch/reference/current/security-api-create-api-key.html">Elasticsearch Guide - Create API key</a>
+     * @see <a href=
+     * "https://www.elastic.co/guide/en/elasticsearch/reference/current/security-api-create-api-key.html">Elasticsearch
+     * Guide - Create API key</a>
      * @since 1.8.0
      */
     @Nullable
@@ -181,12 +166,9 @@ public interface ElasticConfig extends StepRegistryConfig {
         return getSecret(this, "apiKeyCredentials").orElse(null);
     }
 
-
     /**
-     * The type to be used when writing metrics documents to an index.
-     * This configuration is only used with Elasticsearch versions before 7.
-     * Default is: "doc"
-     *
+     * The type to be used when writing metrics documents to an index. This configuration
+     * is only used with Elasticsearch versions before 7. Default is: "doc"
      * @return document type
      * @since 1.4.0
      * @deprecated This is no-op due to removal of mapping types since Elasticsearch 7.
@@ -198,9 +180,7 @@ public interface ElasticConfig extends StepRegistryConfig {
 
     @Override
     default Validated<?> validate() {
-        return checkAll(this,
-                c -> StepRegistryConfig.validate(c),
-                checkRequired("host", ElasticConfig::host),
+        return checkAll(this, c -> StepRegistryConfig.validate(c), checkRequired("host", ElasticConfig::host),
                 checkRequired("index", ElasticConfig::index),
                 checkRequired("timestampFieldName", ElasticConfig::timestampFieldName),
                 checkRequired("indexDateFormat", ElasticConfig::indexDateFormat)
@@ -212,12 +192,13 @@ public interface ElasticConfig extends StepRegistryConfig {
                             try {
                                 DateTimeFormatter.ofPattern(format);
                                 return false;
-                            } catch (IllegalArgumentException ignored) {
+                            }
+                            catch (IllegalArgumentException ignored) {
                                 return true;
                             }
                         }, "invalid date format", InvalidReason.MALFORMED)),
                 checkRequired("indexDateSeparator", ElasticConfig::indexDateSeparator),
-                checkRequired("documentType", ElasticConfig::documentType)
-        );
+                checkRequired("documentType", ElasticConfig::documentType));
     }
+
 }

@@ -28,19 +28,24 @@ import static java.util.stream.Collectors.toList;
  *
  * @author Sebastian Lövdahl
  * @since 1.3.0
- * @see "io.micrometer.binder.jvm.ExecutorServiceMetrics"
+ * @see io.micrometer.core.instrument.binder.jvm.ExecutorServiceMetrics
  */
 public class TimedScheduledExecutorService implements ScheduledExecutorService {
+
     private final MeterRegistry registry;
+
     private final ScheduledExecutorService delegate;
+
     private final Timer executionTimer;
+
     private final Timer idleTimer;
+
     private final Counter scheduledOnce;
+
     private final Counter scheduledRepetitively;
 
     public TimedScheduledExecutorService(MeterRegistry registry, ScheduledExecutorService delegate,
-                                         String executorServiceName, String metricPrefix,
-                                         Iterable<Tag> tags) {
+            String executorServiceName, String metricPrefix, Iterable<Tag> tags) {
         this.registry = registry;
         this.delegate = delegate;
         Tags finalTags = Tags.concat(tags, "name", executorServiceName);
@@ -96,7 +101,8 @@ public class TimedScheduledExecutorService implements ScheduledExecutorService {
     }
 
     @Override
-    public <T> List<Future<T>> invokeAll(Collection<? extends Callable<T>> tasks, long timeout, TimeUnit unit) throws InterruptedException {
+    public <T> List<Future<T>> invokeAll(Collection<? extends Callable<T>> tasks, long timeout, TimeUnit unit)
+            throws InterruptedException {
         return delegate.invokeAll(wrapAll(tasks), timeout, unit);
     }
 
@@ -106,7 +112,8 @@ public class TimedScheduledExecutorService implements ScheduledExecutorService {
     }
 
     @Override
-    public <T> T invokeAny(Collection<? extends Callable<T>> tasks, long timeout, TimeUnit unit) throws InterruptedException, ExecutionException, TimeoutException {
+    public <T> T invokeAny(Collection<? extends Callable<T>> tasks, long timeout, TimeUnit unit)
+            throws InterruptedException, ExecutionException, TimeoutException {
         return delegate.invokeAny(wrapAll(tasks), timeout, unit);
     }
 
@@ -150,4 +157,5 @@ public class TimedScheduledExecutorService implements ScheduledExecutorService {
     private <T> Collection<? extends Callable<T>> wrapAll(Collection<? extends Callable<T>> tasks) {
         return tasks.stream().map(this::wrap).collect(toList());
     }
+
 }

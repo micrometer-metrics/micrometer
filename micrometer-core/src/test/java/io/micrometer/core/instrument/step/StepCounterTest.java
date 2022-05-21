@@ -15,17 +15,17 @@
  */
 package io.micrometer.core.instrument.step;
 
-import static org.assertj.core.api.Assertions.assertThat;
-
-import java.util.concurrent.TimeUnit;
-
-import org.junit.jupiter.api.Test;
-
 import io.micrometer.core.instrument.Counter;
 import io.micrometer.core.instrument.MeterRegistry;
 import io.micrometer.core.instrument.MockClock;
+import org.junit.jupiter.api.Test;
+
+import java.util.concurrent.TimeUnit;
+
+import static org.assertj.core.api.Assertions.assertThat;
 
 class StepCounterTest {
+
     private MockClock clock = new MockClock();
 
     private StepRegistryConfig config = new StepRegistryConfig() {
@@ -67,4 +67,5 @@ class StepCounterTest {
         clock.add(config.step());
         assertThat(counter.count()).isEqualTo(0);
     }
+
 }

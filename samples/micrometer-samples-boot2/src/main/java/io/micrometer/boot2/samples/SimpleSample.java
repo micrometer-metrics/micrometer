@@ -23,7 +23,9 @@ import org.springframework.scheduling.annotation.EnableScheduling;
 @SpringBootApplication(scanBasePackageClasses = PersonController.class)
 @EnableScheduling
 public class SimpleSample {
+
     public static void main(String[] args) {
         new SpringApplicationBuilder(SimpleSample.class).profiles("simple").run(args);
     }
+
 }

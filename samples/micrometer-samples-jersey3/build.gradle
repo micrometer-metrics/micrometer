@@ -4,11 +4,10 @@ plugins {
 
 dependencies {
     implementation project(":micrometer-core")
-    implementation project(":micrometer-binders")
 
-    implementation 'org.glassfish.jersey.containers:jersey-container-jdk-http:3.+'
-    runtimeOnly 'org.glassfish.jersey.inject:jersey-hk2:3.+'
+    implementation 'org.glassfish.jersey.containers:jersey-container-jdk-http:3.0.+'
+    runtimeOnly 'org.glassfish.jersey.inject:jersey-hk2:3.0.+'
 
     testImplementation project(':micrometer-test')
-    testImplementation 'org.glassfish.jersey.test-framework.providers:jersey-test-framework-provider-jdk-http:3.+'
+    testImplementation 'org.glassfish.jersey.test-framework.providers:jersey-test-framework-provider-jdk-http:3.0.+'
 }

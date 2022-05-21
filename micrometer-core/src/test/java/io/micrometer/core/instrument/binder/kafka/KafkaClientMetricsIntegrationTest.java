@@ -42,6 +42,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 @Testcontainers
 @Tag("docker")
 class KafkaClientMetricsIntegrationTest {
+
     @Container
     private KafkaContainer kafkaContainer = new KafkaContainer(DockerImageName.parse("confluentinc/cp-kafka:5.5.1"));
 
@@ -52,45 +53,39 @@ class KafkaClientMetricsIntegrationTest {
         assertThat(registry.getMeters()).hasSize(0);
 
         Properties producerConfigs = new Properties();
-        producerConfigs.put(ProducerConfig.BOOTSTRAP_SERVERS_CONFIG,
-                kafkaContainer.getBootstrapServers());
-        Producer<String, String> producer = new KafkaProducer<>(
-                producerConfigs, new StringSerializer(), new StringSerializer());
+        producerConfigs.put(ProducerConfig.BOOTSTRAP_SERVERS_CONFIG, kafkaContainer.getBootstrapServers());
+        Producer<String, String> producer = new KafkaProducer<>(producerConfigs, new StringSerializer(),
+                new StringSerializer());
 
         KafkaClientMetrics producerKafkaMetrics = new KafkaClientMetrics(producer);
         producerKafkaMetrics.bindTo(registry);
 
         int producerMetrics = registry.getMeters().size();
         assertThat(registry.getMeters()).hasSizeGreaterThan(0);
-        assertThat(registry.getMeters())
-                .extracting(m -> m.getId().getTag("kafka.version"))
-                .allMatch(v -> !v.isEmpty());
+        assertThat(registry.getMeters()).extracting(m -> m.getId().getTag("kafka.version")).allMatch(v -> !v.isEmpty());
 
         Properties consumerConfigs = new Properties();
-        consumerConfigs.put(ConsumerConfig.BOOTSTRAP_SERVERS_CONFIG,
-                kafkaContainer.getBootstrapServers());
+        consumerConfigs.put(ConsumerConfig.BOOTSTRAP_SERVERS_CONFIG, kafkaContainer.getBootstrapServers());
         consumerConfigs.put(ConsumerConfig.GROUP_ID_CONFIG, "test");
-        Consumer<String, String> consumer = new KafkaConsumer<>(
-                consumerConfigs, new StringDeserializer(), new StringDeserializer());
+        Consumer<String, String> consumer = new KafkaConsumer<>(consumerConfigs, new StringDeserializer(),
+                new StringDeserializer());
 
         KafkaClientMetrics consumerKafkaMetrics = new KafkaClientMetrics(consumer);
         consumerKafkaMetrics.bindTo(registry);
 
-        //Printing out for discovery purposes
+        // Printing out for discovery purposes
         out.println("Meters from producer before sending:");
         printMeters(registry);
 
         int producerAndConsumerMetrics = registry.getMeters().size();
         assertThat(registry.getMeters()).hasSizeGreaterThan(producerMetrics);
-        assertThat(registry.getMeters())
-                .extracting(m -> m.getId().getTag("kafka.version"))
-                .allMatch(v -> !v.isEmpty());
+        assertThat(registry.getMeters()).extracting(m -> m.getId().getTag("kafka.version")).allMatch(v -> !v.isEmpty());
 
         String topic = "test";
         producer.send(new ProducerRecord<>(topic, "key", "value"));
         producer.flush();
 
-        //Printing out for discovery purposes
+        // Printing out for discovery purposes
         out.println("Meters from producer after sending and consumer before poll:");
         printMeters(registry);
 
@@ -98,26 +93,22 @@ class KafkaClientMetricsIntegrationTest {
 
         int producerAndConsumerMetricsAfterSend = registry.getMeters().size();
         assertThat(registry.getMeters()).hasSizeGreaterThan(producerAndConsumerMetrics);
-        assertThat(registry.getMeters())
-                .extracting(m -> m.getId().getTag("kafka.version"))
-                .allMatch(v -> !v.isEmpty());
+        assertThat(registry.getMeters()).extracting(m -> m.getId().getTag("kafka.version")).allMatch(v -> !v.isEmpty());
 
         consumer.subscribe(Collections.singletonList(topic));
 
         consumer.poll(Duration.ofMillis(100));
 
-        //Printing out for discovery purposes
+        // Printing out for discovery purposes
         out.println("Meters from producer and consumer after polling:");
         printMeters(registry);
 
         consumerKafkaMetrics.checkAndBindMetrics(registry);
 
         assertThat(registry.getMeters()).hasSizeGreaterThan(producerAndConsumerMetricsAfterSend);
-        assertThat(registry.getMeters())
-                .extracting(m -> m.getId().getTag("kafka.version"))
-                .allMatch(v -> !v.isEmpty());
+        assertThat(registry.getMeters()).extracting(m -> m.getId().getTag("kafka.version")).allMatch(v -> !v.isEmpty());
 
-        //Printing out for discovery purposes
+        // Printing out for discovery purposes
         out.println("All meters from producer and consumer:");
         printMeters(registry);
 
@@ -125,17 +116,17 @@ class KafkaClientMetricsIntegrationTest {
         consumerKafkaMetrics.close();
     }
 
-    @Test void shouldRegisterMetricsFromDifferentClients() {
+    @Test
+    void shouldRegisterMetricsFromDifferentClients() {
         SimpleMeterRegistry registry = new SimpleMeterRegistry();
 
         assertThat(registry.getMeters()).hasSize(0);
 
         Properties producer1Configs = new Properties();
-        producer1Configs.put(ProducerConfig.BOOTSTRAP_SERVERS_CONFIG,
-                kafkaContainer.getBootstrapServers());
+        producer1Configs.put(ProducerConfig.BOOTSTRAP_SERVERS_CONFIG, kafkaContainer.getBootstrapServers());
         producer1Configs.put(ProducerConfig.CLIENT_ID_CONFIG, "producer1");
-        Producer<String, String> producer1 = new KafkaProducer<>(
-                producer1Configs, new StringSerializer(), new StringSerializer());
+        Producer<String, String> producer1 = new KafkaProducer<>(producer1Configs, new StringSerializer(),
+                new StringSerializer());
 
         KafkaClientMetrics producer1KafkaMetrics = new KafkaClientMetrics(producer1);
         producer1KafkaMetrics.bindTo(registry);
@@ -152,11 +143,10 @@ class KafkaClientMetricsIntegrationTest {
         assertThat(producer1MetricsAfterSend).isGreaterThan(producer1Metrics);
 
         Properties producer2Configs = new Properties();
-        producer2Configs.put(ProducerConfig.BOOTSTRAP_SERVERS_CONFIG,
-                kafkaContainer.getBootstrapServers());
+        producer2Configs.put(ProducerConfig.BOOTSTRAP_SERVERS_CONFIG, kafkaContainer.getBootstrapServers());
         producer2Configs.put(ProducerConfig.CLIENT_ID_CONFIG, "producer2");
-        Producer<String, String> producer2 = new KafkaProducer<>(
-                producer2Configs, new StringSerializer(), new StringSerializer());
+        Producer<String, String> producer2 = new KafkaProducer<>(producer2Configs, new StringSerializer(),
+                new StringSerializer());
 
         KafkaClientMetrics producer2KafkaMetrics = new KafkaClientMetrics(producer2);
         producer2KafkaMetrics.bindTo(registry);
@@ -173,4 +163,5 @@ class KafkaClientMetricsIntegrationTest {
     void printMeters(SimpleMeterRegistry registry) {
         registry.getMeters().forEach(meter -> out.println(meter.getId() + " => " + meter.measure()));
     }
+
 }

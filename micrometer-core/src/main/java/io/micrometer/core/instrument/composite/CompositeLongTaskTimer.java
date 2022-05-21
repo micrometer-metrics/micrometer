@@ -28,6 +28,7 @@ import java.util.List;
 import java.util.concurrent.TimeUnit;
 
 class CompositeLongTaskTimer extends AbstractCompositeMeter<LongTaskTimer> implements LongTaskTimer {
+
     private final DistributionStatisticConfig distributionStatisticConfig;
 
     CompositeLongTaskTimer(Meter.Id id, DistributionStatisticConfig distributionStatisticConfig) {
@@ -38,7 +39,9 @@ class CompositeLongTaskTimer extends AbstractCompositeMeter<LongTaskTimer> imple
     @Override
     public Sample start() {
         List<Sample> samples = new ArrayList<>();
-        forEachChild(ltt -> samples.add(ltt.start()));
+        for (LongTaskTimer ltt : getChildren()) {
+            samples.add(ltt.start());
+        }
         return new CompositeSample(samples);
     }
 
@@ -75,11 +78,12 @@ class CompositeLongTaskTimer extends AbstractCompositeMeter<LongTaskTimer> imple
     @SuppressWarnings("ConstantConditions")
     @Override
     LongTaskTimer registerNewMeter(MeterRegistry registry) {
-        LongTaskTimer.Builder builder = LongTaskTimer.builder(getId().getName())
-                .tags(getId().getTagsAsIterable())
+        LongTaskTimer.Builder builder = LongTaskTimer.builder(getId().getName()).tags(getId().getTagsAsIterable())
                 .description(getId().getDescription())
-                .maximumExpectedValue(Duration.ofNanos(distributionStatisticConfig.getMaximumExpectedValueAsDouble().longValue()))
-                .minimumExpectedValue(Duration.ofNanos(distributionStatisticConfig.getMinimumExpectedValueAsDouble().longValue()))
+                .maximumExpectedValue(
+                        Duration.ofNanos(distributionStatisticConfig.getMaximumExpectedValueAsDouble().longValue()))
+                .minimumExpectedValue(
+                        Duration.ofNanos(distributionStatisticConfig.getMinimumExpectedValueAsDouble().longValue()))
                 .publishPercentiles(distributionStatisticConfig.getPercentiles())
                 .publishPercentileHistogram(distributionStatisticConfig.isPercentileHistogram())
                 .distributionStatisticBufferLength(distributionStatisticConfig.getBufferLength())
@@ -99,6 +103,7 @@ class CompositeLongTaskTimer extends AbstractCompositeMeter<LongTaskTimer> imple
     }
 
     static class CompositeSample extends Sample {
+
         private final List<Sample> samples;
 
         private CompositeSample(List<Sample> samples) {
@@ -107,19 +112,14 @@ class CompositeLongTaskTimer extends AbstractCompositeMeter<LongTaskTimer> imple
 
         @Override
         public long stop() {
-            return samples.stream()
-                    .reduce(
-                            0L,
-                            (stopped, sample) -> sample.stop(),
-                            (s1, s2) -> s1
-                    );
+            return samples.stream().reduce(0L, (stopped, sample) -> sample.stop(), (s1, s2) -> s1);
         }
 
         @Override
         public double duration(TimeUnit unit) {
-            return samples.stream().findAny()
-                    .map(s -> s.duration(unit))
-                    .orElse(0.0);
+            return samples.stream().findAny().map(s -> s.duration(unit)).orElse(0.0);
         }
+
     }
+
 }

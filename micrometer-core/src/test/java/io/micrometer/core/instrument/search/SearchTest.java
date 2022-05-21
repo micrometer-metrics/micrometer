@@ -24,6 +24,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 class SearchTest {
+
     private MeterRegistry registry = new SimpleMeterRegistry();
 
     @BeforeEach
@@ -41,7 +42,8 @@ class SearchTest {
     @Test
     void allMetersWithName() {
         assertThat(Search.in(registry).name("my.counter").meters()).hasSize(2);
-        assertThat(Search.in(registry).name("my.counter").counter()).isNotNull(); // just pick one of the matching ones
+        // just pick one of the matching ones
+        assertThat(Search.in(registry).name("my.counter").counter()).isNotNull();
 
         assertThat(Search.in(registry).name(n -> n.startsWith("my")).meters()).hasSize(3);
         assertThat(Search.in(registry).name(n -> n.startsWith("my")).timer()).isNotNull();
@@ -70,4 +72,5 @@ class SearchTest {
     void allMetersWithTagKey() {
         assertThat(Search.in(registry).tagKeys("k", "k2").counter()).isNotNull();
     }
+
 }

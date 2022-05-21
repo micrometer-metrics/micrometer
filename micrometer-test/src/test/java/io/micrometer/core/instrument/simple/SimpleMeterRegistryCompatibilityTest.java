@@ -15,13 +15,14 @@
  */
 package io.micrometer.core.instrument.simple;
 
-import io.micrometer.core.instrument.MockClock;
 import io.micrometer.core.instrument.MeterRegistry;
+import io.micrometer.core.instrument.MockClock;
 import io.micrometer.core.tck.MeterRegistryCompatibilityKit;
 
 import java.time.Duration;
 
 class SimpleMeterRegistryCompatibilityTest extends MeterRegistryCompatibilityKit {
+
     @Override
     public MeterRegistry registry() {
         return new SimpleMeterRegistry(SimpleConfig.DEFAULT, new MockClock());
@@ -31,4 +32,5 @@ class SimpleMeterRegistryCompatibilityTest extends MeterRegistryCompatibilityKit
     public Duration step() {
         return SimpleConfig.DEFAULT.step();
     }
+
 }

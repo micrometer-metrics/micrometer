@@ -27,19 +27,15 @@ import static org.assertj.core.api.AssertionsForClassTypes.assertThat;
 import static org.mockito.Mockito.mock;
 
 class StepDistributionSummaryTest {
+
     @Issue("#1814")
     @Test
     void meanShouldWorkIfTotalNotCalled() {
         Duration stepDuration = Duration.ofMillis(10);
         MockClock clock = new MockClock();
-        StepDistributionSummary summary = new StepDistributionSummary(
-                mock(Meter.Id.class),
-                clock,
-                DistributionStatisticConfig.builder().expiry(stepDuration).bufferLength(2).build(),
-                1.0,
-                stepDuration.toMillis(),
-                false
-        );
+        StepDistributionSummary summary = new StepDistributionSummary(mock(Meter.Id.class), clock,
+                DistributionStatisticConfig.builder().expiry(stepDuration).bufferLength(2).build(), 1.0,
+                stepDuration.toMillis(), false);
 
         clock.add(stepDuration);
         assertThat(summary.mean()).isEqualTo(0.0);
@@ -51,4 +47,5 @@ class StepDistributionSummaryTest {
         clock.add(stepDuration);
         assertThat(summary.mean()).isEqualTo(75.0);
     }
+
 }

@@ -15,8 +15,6 @@
  */
 package io.micrometer.core.samples;
 
-import java.io.IOException;
-
 import io.grpc.ManagedChannel;
 import io.grpc.Server;
 import io.grpc.health.v1.HealthCheckRequest;
@@ -28,9 +26,11 @@ import io.grpc.inprocess.InProcessServerBuilder;
 import io.grpc.protobuf.services.HealthStatusManager;
 import io.micrometer.core.instrument.Meter;
 import io.micrometer.core.instrument.MeterRegistry;
-import io.micrometer.binder.grpc.MetricCollectingClientInterceptor;
-import io.micrometer.binder.grpc.MetricCollectingServerInterceptor;
+import io.micrometer.core.instrument.binder.grpc.MetricCollectingClientInterceptor;
+import io.micrometer.core.instrument.binder.grpc.MetricCollectingServerInterceptor;
 import io.micrometer.core.samples.utils.SampleConfig;
+
+import java.io.IOException;
 
 /**
  * Demonstrates how to collect metrics for grpc-java clients and servers.
@@ -44,18 +44,21 @@ public class GrpcMetricsSample {
 
         final HealthStatusManager service = new HealthStatusManager();
 
-        final Server server = InProcessServerBuilder.forName("sample")
-                .addService(service.getHealthService()) // Or any other service(s)
-                .intercept(new MetricCollectingServerInterceptor(registry))
-                .build();
+        final Server server = InProcessServerBuilder.forName("sample").addService(service.getHealthService()) // Or
+                                                                                                              // any
+                                                                                                              // other
+                                                                                                              // service(s)
+                .intercept(new MetricCollectingServerInterceptor(registry)).build();
 
         server.start();
 
         final ManagedChannel channel = InProcessChannelBuilder.forName("sample")
-                .intercept(new MetricCollectingClientInterceptor(registry))
-                .build();
+                .intercept(new MetricCollectingClientInterceptor(registry)).build();
 
-        final HealthBlockingStub healthClient = HealthGrpc.newBlockingStub(channel); // Or any other stub(s)
+        final HealthBlockingStub healthClient = HealthGrpc.newBlockingStub(channel); // Or
+                                                                                     // any
+                                                                                     // other
+                                                                                     // stub(s)
 
         final HealthCheckRequest request = HealthCheckRequest.getDefaultInstance();
         final HealthCheckResponse response = healthClient.check(request);

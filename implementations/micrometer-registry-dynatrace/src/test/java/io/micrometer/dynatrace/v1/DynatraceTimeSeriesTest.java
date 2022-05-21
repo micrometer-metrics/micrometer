@@ -30,7 +30,8 @@ class DynatraceTimeSeriesTest {
         dimensions.put("first", "one");
         dimensions.put("second", "two");
         final DynatraceTimeSeries timeSeries = new DynatraceTimeSeries("custom:test.metric", 12345, 1, dimensions);
-        assertThat(timeSeries.asJson()).isEqualTo("{\"timeseriesId\":\"custom:test.metric\",\"dataPoints\":[[12345,1]],\"dimensions\":{\"first\":\"one\",\"second\":\"two\"}}");
+        assertThat(timeSeries.asJson()).isEqualTo(
+                "{\"timeseriesId\":\"custom:test.metric\",\"dataPoints\":[[12345,1]],\"dimensions\":{\"first\":\"one\",\"second\":\"two\"}}");
     }
 
     @Test
@@ -39,6 +40,8 @@ class DynatraceTimeSeriesTest {
         dimensions.put("path", "C:\\MyPath");
         dimensions.put("second", "two");
         DynatraceTimeSeries timeSeries = new DynatraceTimeSeries("custom:test.metric", 12345, 1, dimensions);
-        assertThat(timeSeries.asJson()).isEqualTo("{\"timeseriesId\":\"custom:test.metric\",\"dataPoints\":[[12345,1]],\"dimensions\":{\"path\":\"C:\\\\MyPath\",\"second\":\"two\"}}");
+        assertThat(timeSeries.asJson()).isEqualTo(
+                "{\"timeseriesId\":\"custom:test.metric\",\"dataPoints\":[[12345,1]],\"dimensions\":{\"path\":\"C:\\\\MyPath\",\"second\":\"two\"}}");
     }
+
 }

@@ -26,26 +26,27 @@ import static org.assertj.core.api.Assertions.assertThat;
  * @author Jon Schneider
  */
 class HierarchicalNameMapperTest {
+
     private HierarchicalNameMapper mapper = HierarchicalNameMapper.DEFAULT;
+
     private SimpleMeterRegistry registry = new SimpleMeterRegistry();
 
     @Test
     void buildHierarchicalNameFromDimensionalId() {
         String name = mapper.toHierarchicalName(
-            id("http.requests", "method", "GET", "other", "With Spaces", "status", "200"),
-            NamingConvention.camelCase
-        );
+                id("http.requests", "method", "GET", "other", "With Spaces", "status", "200"),
+                NamingConvention.camelCase);
         assertThat(name).isEqualTo("httpRequests.method.GET.other.With_Spaces.status.200");
     }
 
     @Test
     void noTags() {
-        assertThat(mapper.toHierarchicalName(
-            id("http.requests"), NamingConvention.camelCase))
-            .isEqualTo("httpRequests");
+        assertThat(mapper.toHierarchicalName(id("http.requests"), NamingConvention.camelCase))
+                .isEqualTo("httpRequests");
     }
 
     private Meter.Id id(String name, String... tags) {
         return registry.counter(name, tags).getId();
     }
+
 }

@@ -26,20 +26,41 @@ import java.util.concurrent.atomic.AtomicLongArray;
 
 /**
  * A histogram implementation that does not support precomputed percentiles but supports
- * aggregable percentile histograms and SLA boundaries. There is no need for a high dynamic range
- * histogram and its more expensive memory footprint if all we are interested in is fixed histogram counts.
+ * aggregable percentile histograms and SLA boundaries. There is no need for a high
+ * dynamic range histogram and its more expensive memory footprint if all we are
+ * interested in is fixed histogram counts.
  *
  * @author Jon Schneider
  * @since 1.0.3
  */
 public class TimeWindowFixedBoundaryHistogram
         extends AbstractTimeWindowHistogram<TimeWindowFixedBoundaryHistogram.FixedBoundaryHistogram, Void> {
+
     private final double[] buckets;
 
-    public TimeWindowFixedBoundaryHistogram(Clock clock, DistributionStatisticConfig config, boolean supportsAggregablePercentiles) {
+    private final boolean cumulativeBucketCounts;
+
+    public TimeWindowFixedBoundaryHistogram(Clock clock, DistributionStatisticConfig config,
+            boolean supportsAggregablePercentiles) {
+        this(clock, config, supportsAggregablePercentiles, true);
+    }
+
+    /**
+     * Create a {@code TimeWindowFixedBoundaryHistogram} instance.
+     * @param clock clock
+     * @param config distribution statistic configuration
+     * @param supportsAggregablePercentiles whether it supports aggregable percentiles
+     * @param cumulativeBucketCounts whether it uses cumulative bucket counts
+     * @since 1.9.0
+     */
+    public TimeWindowFixedBoundaryHistogram(Clock clock, DistributionStatisticConfig config,
+            boolean supportsAggregablePercentiles, boolean cumulativeBucketCounts) {
         super(clock, config, FixedBoundaryHistogram.class, supportsAggregablePercentiles);
 
-        NavigableSet<Double> histogramBuckets = distributionStatisticConfig.getHistogramBuckets(supportsAggregablePercentiles);
+        this.cumulativeBucketCounts = cumulativeBucketCounts;
+
+        NavigableSet<Double> histogramBuckets = distributionStatisticConfig
+                .getHistogramBuckets(supportsAggregablePercentiles);
 
         Boolean percentileHistogram = distributionStatisticConfig.isPercentileHistogram();
         if (percentileHistogram != null && percentileHistogram) {
@@ -91,7 +112,8 @@ public class TimeWindowFixedBoundaryHistogram
 
     @Override
     double countAtValue(double value) {
-        return currentHistogram().countAtValue(value);
+        return this.cumulativeBucketCounts ? currentHistogram().countAtValueCumulative(value)
+                : currentHistogram().countAtValue(value);
     }
 
     @Override
@@ -101,18 +123,27 @@ public class TimeWindowFixedBoundaryHistogram
         String bucketFormatString = "%14.1f %10d\n";
 
         for (int i = 0; i < buckets.length; i++) {
-            printStream.format(Locale.US, bucketFormatString,
-                    buckets[i] / bucketScaling,
+            printStream.format(Locale.US, bucketFormatString, buckets[i] / bucketScaling,
                     currentHistogram().values.get(i));
         }
 
         printStream.write('\n');
     }
 
+    /**
+     * Return buckets.
+     * @return buckets
+     * @since 1.9.0
+     */
+    protected double[] getBuckets() {
+        return this.buckets;
+    }
+
     class FixedBoundaryHistogram {
+
         /**
          * For recording efficiency, this is a normal histogram. We turn these values into
-         * cumulative counts only on calls to {@link #countAtValue(double)}.
+         * cumulative counts only on calls to {@link #countAtValueCumulative(double)}.
          */
         final AtomicLongArray values;
 
@@ -120,7 +151,7 @@ public class TimeWindowFixedBoundaryHistogram
             this.values = new AtomicLongArray(buckets.length);
         }
 
-        long countAtValue(double value) {
+        long countAtValueCumulative(double value) {
             int index = Arrays.binarySearch(buckets, value);
             if (index < 0)
                 return 0;
@@ -130,9 +161,16 @@ public class TimeWindowFixedBoundaryHistogram
             return count;
         }
 
+        long countAtValue(double value) {
+            int index = Arrays.binarySearch(buckets, value);
+            if (index < 0)
+                return 0;
+            return values.get(index);
+        }
+
         void reset() {
             for (int i = 0; i < values.length(); i++) {
-               values.set(i, 0);
+                values.set(i, 0);
 
             }
         }
@@ -162,5 +200,7 @@ public class TimeWindowFixedBoundaryHistogram
 
             return low < buckets.length ? low : -1;
         }
+
     }
+
 }

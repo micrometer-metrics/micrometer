@@ -22,8 +22,8 @@ import io.micrometer.core.instrument.step.StepRegistryConfig;
  * Configuration for CloudWatch exporting.
  *
  * @author Dawid Kublik
- * @deprecated the micrometer-registry-cloudwatch implementation has been deprecated in favour of
- *             micrometer-registry-cloudwatch2, which uses AWS SDK for Java 2.x
+ * @deprecated the micrometer-registry-cloudwatch implementation has been deprecated in
+ * favour of micrometer-registry-cloudwatch2, which uses AWS SDK for Java 2.x
  */
 @Deprecated
 public interface CloudWatchConfig extends StepRegistryConfig {
@@ -38,7 +38,8 @@ public interface CloudWatchConfig extends StepRegistryConfig {
     default String namespace() {
         String v = get(prefix() + ".namespace");
         if (v == null)
-            throw new io.micrometer.core.instrument.config.MissingRequiredConfigurationException("namespace must be set to report metrics to CloudWatch");
+            throw new io.micrometer.core.instrument.config.MissingRequiredConfigurationException(
+                    "namespace must be set to report metrics to CloudWatch");
         return v;
     }
 

@@ -1,0 +1,25 @@
+description 'Module containing Observation related code'
+
+dependencies {
+    api project(":micrometer-commons")
+
+    optionalApi 'io.micrometer:context-propagation-api'
+
+    // HttpServlet KeyValueProvider
+    optionalApi 'javax.servlet:javax.servlet-api'
+
+    // log monitoring
+    testImplementation 'ch.qos.logback:logback-classic'
+    testImplementation 'org.apache.logging.log4j:log4j-core'
+
+    testImplementation project(':micrometer-observation-test')
+
+    // JUnit 5
+    testImplementation 'org.junit.jupiter:junit-jupiter'
+    testImplementation 'com.tngtech.archunit:archunit-junit5'
+
+    testImplementation 'org.mockito:mockito-inline'
+
+    testImplementation 'org.assertj:assertj-core'
+    testImplementation 'org.awaitility:awaitility'
+}

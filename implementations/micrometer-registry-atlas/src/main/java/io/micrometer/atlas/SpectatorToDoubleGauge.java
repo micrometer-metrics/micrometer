@@ -16,14 +16,15 @@
 package io.micrometer.atlas;
 
 import com.netflix.spectator.api.*;
-import io.micrometer.core.lang.Nullable;
+import io.micrometer.common.lang.Nullable;
 
 import java.util.Collections;
 import java.util.function.ToDoubleFunction;
 
 /**
- * Gauge that is defined by executing a {@link ToDoubleFunction} on an object.
- * This is identical to com.netflix.spectator.api.ObjectGauge which is not accessible in Spectator.
+ * Gauge that is defined by executing a {@link ToDoubleFunction} on an object. This is
+ * identical to com.netflix.spectator.api.ObjectGauge which is not accessible in
+ * Spectator.
  */
 class SpectatorToDoubleGauge<T> extends AbstractMeter<T> implements Gauge {
 
@@ -44,4 +45,5 @@ class SpectatorToDoubleGauge<T> extends AbstractMeter<T> implements Gauge {
         final T obj = ref.get();
         return (obj == null) ? Double.NaN : f.applyAsDouble(obj);
     }
+
 }

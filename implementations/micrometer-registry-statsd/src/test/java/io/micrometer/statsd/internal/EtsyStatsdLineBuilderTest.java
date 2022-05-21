@@ -27,12 +27,14 @@ import org.junit.jupiter.api.Test;
 import static org.assertj.core.api.Assertions.assertThat;
 
 class EtsyStatsdLineBuilderTest {
+
     private final MeterRegistry registry = new SimpleMeterRegistry();
 
     @Test
     void changingNamingConvention() {
         Counter c = registry.counter("my.counter", "my.tag", "value");
-        EtsyStatsdLineBuilder lb = new EtsyStatsdLineBuilder(c.getId(), registry.config(), HierarchicalNameMapper.DEFAULT);
+        EtsyStatsdLineBuilder lb = new EtsyStatsdLineBuilder(c.getId(), registry.config(),
+                HierarchicalNameMapper.DEFAULT);
 
         registry.config().namingConvention(NamingConvention.dot);
         assertThat(lb.line("1", Statistic.COUNT, "c")).isEqualTo("my.counter.my.tag.value.statistic.count:1|c");
@@ -45,9 +47,11 @@ class EtsyStatsdLineBuilderTest {
     @Test
     void sanitizeColons() {
         Counter c = registry.counter("my:counter", "my:tag", "my:value");
-        EtsyStatsdLineBuilder lb = new EtsyStatsdLineBuilder(c.getId(), registry.config(), HierarchicalNameMapper.DEFAULT);
+        EtsyStatsdLineBuilder lb = new EtsyStatsdLineBuilder(c.getId(), registry.config(),
+                HierarchicalNameMapper.DEFAULT);
 
         registry.config().namingConvention(NamingConvention.dot);
         assertThat(lb.line("1", Statistic.COUNT, "c")).isEqualTo("my_counter.my_tag.my_value.statistic.count:1|c");
     }
+
 }

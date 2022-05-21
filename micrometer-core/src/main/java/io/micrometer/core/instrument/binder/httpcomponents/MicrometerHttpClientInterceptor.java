@@ -44,54 +44,49 @@ import java.util.function.Function;
  *             .build();
  * }</pre>
  *
- * @deprecated Scheduled for removal in 2.0.0, please use {@code io.micrometer.binder.httpcomponents.MicrometerHttpClientInterceptor}
  * @author Jon Schneider
  * @since 1.4.0
  */
 @Incubating(since = "1.4.0")
-@Deprecated
 public class MicrometerHttpClientInterceptor {
+
     private static final String METER_NAME = "httpcomponents.httpclient.request";
 
     private final Map<HttpContext, Timer.ResourceSample> timerByHttpContext = new ConcurrentHashMap<>();
 
     private final HttpRequestInterceptor requestInterceptor;
+
     private final HttpResponseInterceptor responseInterceptor;
 
     /**
      * Create a {@code MicrometerHttpClientInterceptor} instance.
-     *
-     * @param meterRegistry      meter registry to bind
-     * @param uriMapper          URI mapper to create {@code uri} tag
-     * @param extraTags          extra tags
+     * @param meterRegistry meter registry to bind
+     * @param uriMapper URI mapper to create {@code uri} tag
+     * @param extraTags extra tags
      * @param exportTagsForRoute whether to export tags for route
      */
-    public MicrometerHttpClientInterceptor(MeterRegistry meterRegistry,
-                                           Function<HttpRequest, String> uriMapper,
-                                           Iterable<Tag> extraTags,
-                                           boolean exportTagsForRoute) {
-        this.requestInterceptor = (request, context) -> timerByHttpContext.put(context, Timer.resource(meterRegistry, METER_NAME)
-                .tags("method", request.getRequestLine().getMethod(), "uri", uriMapper.apply(request)));
+    public MicrometerHttpClientInterceptor(MeterRegistry meterRegistry, Function<HttpRequest, String> uriMapper,
+            Iterable<Tag> extraTags, boolean exportTagsForRoute) {
+        this.requestInterceptor = (request, context) -> timerByHttpContext.put(context,
+                Timer.resource(meterRegistry, METER_NAME).tags("method", request.getRequestLine().getMethod(), "uri",
+                        uriMapper.apply(request)));
 
         this.responseInterceptor = (response, context) -> {
-            timerByHttpContext.remove(context)
-                    .tag("status", Integer.toString(response.getStatusLine().getStatusCode()))
+            timerByHttpContext.remove(context).tag("status", Integer.toString(response.getStatusLine().getStatusCode()))
                     .tags(exportTagsForRoute ? HttpContextUtils.generateTagsForRoute(context) : Tags.empty())
-                    .tags(extraTags)
-                    .close();
+                    .tags(extraTags).close();
         };
     }
 
     /**
-     * Create a {@code MicrometerHttpClientInterceptor} instance with {@link DefaultUriMapper}.
-     *
-     * @param meterRegistry      meter registry to bind
-     * @param extraTags          extra tags
+     * Create a {@code MicrometerHttpClientInterceptor} instance with
+     * {@link DefaultUriMapper}.
+     * @param meterRegistry meter registry to bind
+     * @param extraTags extra tags
      * @param exportTagsForRoute whether to export tags for route
      */
-    public MicrometerHttpClientInterceptor(MeterRegistry meterRegistry,
-                                           Iterable<Tag> extraTags,
-                                           boolean exportTagsForRoute) {
+    public MicrometerHttpClientInterceptor(MeterRegistry meterRegistry, Iterable<Tag> extraTags,
+            boolean exportTagsForRoute) {
         this(meterRegistry, new DefaultUriMapper(), extraTags, exportTagsForRoute);
     }
 
@@ -102,4 +97,5 @@ public class MicrometerHttpClientInterceptor {
     public HttpResponseInterceptor getResponseInterceptor() {
         return responseInterceptor;
     }
+
 }

@@ -15,9 +15,9 @@
  */
 package io.micrometer.core.instrument.binder.jetty;
 
+import io.micrometer.common.util.StringUtils;
 import io.micrometer.core.instrument.Tag;
 import io.micrometer.core.instrument.binder.http.Outcome;
-import io.micrometer.core.instrument.util.StringUtils;
 import org.eclipse.jetty.client.api.Request;
 import org.eclipse.jetty.client.api.Response;
 import org.eclipse.jetty.client.api.Result;
@@ -30,11 +30,9 @@ import java.util.regex.Pattern;
  * Factory methods for {@link Tag Tags} associated with a request-response exchange that
  * is handled by Jetty {@link org.eclipse.jetty.client.HttpClient}.
  *
- * @deprecated Scheduled for removal in 2.0.0, please use {@code io.micrometer.binder.jetty.JettyClientTags}
  * @author Jon Schneider
  * @since 1.5.0
  */
-@Deprecated
 public final class JettyClientTags {
 
     private static final Tag URI_NOT_FOUND = Tag.of("uri", "NOT_FOUND");
@@ -57,9 +55,8 @@ public final class JettyClientTags {
     }
 
     /**
-     * Creates a {@code method} tag based on the {@link Request#getMethod()
-     * method} of the given {@code request}.
-     *
+     * Creates a {@code method} tag based on the {@link Request#getMethod() method} of the
+     * given {@code request}.
      * @param request the request
      * @return the method tag whose value is a capitalized method (e.g. GET).
      */
@@ -68,8 +65,8 @@ public final class JettyClientTags {
     }
 
     /**
-     * Creates a {@code host} tag based on the {@link Request#getHost()} of the given {@code request}.
-     *
+     * Creates a {@code host} tag based on the {@link Request#getHost()} of the given
+     * {@code request}.
      * @param request the request
      * @return the host tag derived from request
      * @since 1.7.0
@@ -80,7 +77,6 @@ public final class JettyClientTags {
 
     /**
      * Creates a {@code status} tag based on the status of the given {@code result}.
-     *
      * @param result the request result
      * @return the status tag derived from the status of the response
      */
@@ -91,7 +87,6 @@ public final class JettyClientTags {
     /**
      * Creates a {@code uri} tag based on the URI of the given {@code result}.
      * {@code REDIRECTION} for 3xx responses, {@code NOT_FOUND} for 404 responses.
-     *
      * @param result the request result
      * @param successfulUriPattern successful URI pattern
      * @return the uri tag derived from the request result
@@ -120,7 +115,6 @@ public final class JettyClientTags {
     /**
      * Creates an {@code exception} tag based on the {@link Class#getSimpleName() simple
      * name} of the class of the given {@code exception}.
-     *
      * @param result the request result
      * @return the exception tag derived from the exception
      */
@@ -139,13 +133,11 @@ public final class JettyClientTags {
             exception = exception.getCause();
         }
         String simpleName = exception.getClass().getSimpleName();
-        return Tag.of("exception", StringUtils.isNotEmpty(simpleName) ? simpleName
-                : exception.getClass().getName());
+        return Tag.of("exception", StringUtils.isNotEmpty(simpleName) ? simpleName : exception.getClass().getName());
     }
 
     /**
      * Creates an {@code outcome} tag based on the status of the given {@code result}.
-     *
      * @param result the request result
      * @return the outcome tag derived from the status of the response
      */

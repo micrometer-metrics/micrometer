@@ -45,9 +45,9 @@ class ProcessorMetricsTest {
     void cpuMetrics() {
         assertThat(registry.get("system.cpu.count").gauge().value()).isGreaterThan(0);
         if (System.getProperty("os.name").toLowerCase().contains("win")) {
-            assertThat(registry.find("system.load.average.1m").gauge())
-                .describedAs("Not present on windows").isNull();
-        } else {
+            assertThat(registry.find("system.load.average.1m").gauge()).describedAs("Not present on windows").isNull();
+        }
+        else {
             assertThat(registry.get("system.load.average.1m").gauge().value()).isGreaterThanOrEqualTo(0);
         }
     }
@@ -65,11 +65,11 @@ class ProcessorMetricsTest {
         assumeTrue(isOpenJ9());
 
         /*
-         * These methods are documented to return "-1" on the first call
-         * and a positive value - if supported - on subsequent calls.
-         * This holds true for "system.cpu.usage" but not for "process.cpu.usage". The latter
-         * needs some milliseconds of sleep before it actually returns a positive value
-         * on a supported system. Thread.sleep() is flaky, though.
+         * These methods are documented to return "-1" on the first call and a positive
+         * value - if supported - on subsequent calls. This holds true for
+         * "system.cpu.usage" but not for "process.cpu.usage". The latter needs some
+         * milliseconds of sleep before it actually returns a positive value on a
+         * supported system. Thread.sleep() is flaky, though.
          */
         assertThat(registry.get("system.cpu.usage").gauge().value()).isGreaterThanOrEqualTo(-1);
         assertThat(registry.get("process.cpu.usage").gauge().value()).isGreaterThanOrEqualTo(-1);
@@ -83,8 +83,10 @@ class ProcessorMetricsTest {
         try {
             Class.forName(className);
             return true;
-        } catch (ClassNotFoundException e) {
+        }
+        catch (ClassNotFoundException e) {
             return false;
         }
     }
+
 }

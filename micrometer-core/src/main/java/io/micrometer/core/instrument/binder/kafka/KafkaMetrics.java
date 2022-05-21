@@ -15,17 +15,18 @@
  */
 package io.micrometer.core.instrument.binder.kafka;
 
+import io.micrometer.common.lang.NonNullApi;
+import io.micrometer.common.lang.NonNullFields;
+import io.micrometer.common.lang.Nullable;
+import io.micrometer.common.util.internal.logging.InternalLogger;
+import io.micrometer.common.util.internal.logging.InternalLoggerFactory;
+import io.micrometer.common.util.internal.logging.WarnThenDebugLogger;
 import io.micrometer.core.annotation.Incubating;
-import io.micrometer.core.instrument.FunctionCounter;
-import io.micrometer.core.instrument.Gauge;
-import io.micrometer.core.instrument.Meter;
-import io.micrometer.core.instrument.MeterRegistry;
-import io.micrometer.core.instrument.Tag;
-import io.micrometer.core.instrument.Tags;
+import io.micrometer.core.instrument.*;
 import io.micrometer.core.instrument.binder.MeterBinder;
 import io.micrometer.core.instrument.util.NamedThreadFactory;
-import io.micrometer.core.lang.NonNullApi;
-import io.micrometer.core.lang.NonNullFields;
+import org.apache.kafka.common.Metric;
+import org.apache.kafka.common.MetricName;
 
 import java.time.Duration;
 import java.util.*;
@@ -38,20 +39,13 @@ import java.util.function.Supplier;
 import java.util.function.ToDoubleFunction;
 import java.util.stream.Collectors;
 
-import io.micrometer.core.lang.Nullable;
-import io.micrometer.core.util.internal.logging.InternalLogger;
-import io.micrometer.core.util.internal.logging.InternalLoggerFactory;
-import io.micrometer.core.util.internal.logging.WarnThenDebugLogger;
-import org.apache.kafka.common.Metric;
-import org.apache.kafka.common.MetricName;
-
 import static io.micrometer.core.instrument.Meter.Type.OTHER;
 import static java.util.Collections.emptyList;
 
 /**
- * Kafka metrics binder. This should be closed on application shutdown to clean up resources.
+ * Kafka metrics binder. This should be closed on application shutdown to clean up
+ * resources.
  *
- * @deprecated Scheduled for removal in 2.0.0, please use {@code io.micrometer.binder.kafka.KafkaMetrics}
  * @author Jorge Quilcate
  * @see <a href="https://docs.confluent.io/current/kafka/monitoring.html">Kakfa monitoring
  * documentation</a>
@@ -60,9 +54,10 @@ import static java.util.Collections.emptyList;
 @Incubating(since = "1.4.0")
 @NonNullApi
 @NonNullFields
-@Deprecated
 class KafkaMetrics implements MeterBinder, AutoCloseable {
+
     private static final InternalLogger log = InternalLoggerFactory.getInstance(KafkaMetrics.class);
+
     private static final WarnThenDebugLogger warnThenDebugLogger = new WarnThenDebugLogger(KafkaMetrics.class);
 
     static final String METRIC_NAME_PREFIX = "kafka.";
@@ -75,10 +70,15 @@ class KafkaMetrics implements MeterBinder, AutoCloseable {
     static final String DEFAULT_VALUE = "unknown";
 
     private final Supplier<Map<MetricName, ? extends Metric>> metricsSupplier;
+
     private final AtomicReference<Map<MetricName, ? extends Metric>> metrics = new AtomicReference<>();
+
     private final Iterable<Tag> extraTags;
+
     private final Duration refreshInterval;
-    private final ScheduledExecutorService scheduler = Executors.newSingleThreadScheduledExecutor(new NamedThreadFactory("micrometer-kafka-metrics"));
+
+    private final ScheduledExecutorService scheduler = Executors
+            .newSingleThreadScheduledExecutor(new NamedThreadFactory("micrometer-kafka-metrics"));
 
     @Nullable
     private Iterable<Tag> commonTags;
@@ -103,7 +103,8 @@ class KafkaMetrics implements MeterBinder, AutoCloseable {
         this(metricsSupplier, extraTags, DEFAULT_REFRESH_INTERVAL);
     }
 
-    KafkaMetrics(Supplier<Map<MetricName, ? extends Metric>> metricsSupplier, Iterable<Tag> extraTags, Duration refreshInterval) {
+    KafkaMetrics(Supplier<Map<MetricName, ? extends Metric>> metricsSupplier, Iterable<Tag> extraTags,
+            Duration refreshInterval) {
         this.metricsSupplier = metricsSupplier;
         this.extraTags = extraTags;
         this.refreshInterval = refreshInterval;
@@ -116,7 +117,8 @@ class KafkaMetrics implements MeterBinder, AutoCloseable {
         commonTags = getCommonTags(registry);
         prepareToBindMetrics(registry);
         checkAndBindMetrics(registry);
-        scheduler.scheduleAtFixedRate(() -> checkAndBindMetrics(registry), getRefreshIntervalInMillis(), getRefreshIntervalInMillis(), TimeUnit.MILLISECONDS);
+        scheduler.scheduleAtFixedRate(() -> checkAndBindMetrics(registry), getRefreshIntervalInMillis(),
+                getRefreshIntervalInMillis(), TimeUnit.MILLISECONDS);
     }
 
     private Iterable<Tag> getCommonTags(MeterRegistry registry) {
@@ -140,7 +142,8 @@ class KafkaMetrics implements MeterBinder, AutoCloseable {
             if (METRIC_GROUP_APP_INFO.equals(name.group()))
                 if (VERSION_METRIC_NAME.equals(name.name())) {
                     kafkaVersion = (String) entry.getValue().metricValue();
-                } else if (START_TIME_METRIC_NAME.equals(name.name())) {
+                }
+                else if (START_TIME_METRIC_NAME.equals(name.name())) {
                     startTime = entry.getKey();
                 }
         }
@@ -157,9 +160,9 @@ class KafkaMetrics implements MeterBinder, AutoCloseable {
     /**
      * Gather metrics from Kafka metrics API and register Meters.
      * <p>
-     * As this is a one-off execution when binding a Kafka client, Meters include a call to this
-     * validation to double-check new metrics when returning values. This should only add the cost of
-     * comparing meters last returned from the Kafka client.
+     * As this is a one-off execution when binding a Kafka client, Meters include a call
+     * to this validation to double-check new metrics when returning values. This should
+     * only add the cost of comparing meters last returned from the Kafka client.
      */
     void checkAndBindMetrics(MeterRegistry registry) {
         try {
@@ -168,8 +171,7 @@ class KafkaMetrics implements MeterBinder, AutoCloseable {
 
             if (!currentMeters.equals(currentMetrics.keySet())) {
                 Set<MetricName> metricsToRemove = currentMeters.stream()
-                        .filter(metricName -> !currentMetrics.containsKey(metricName))
-                        .collect(Collectors.toSet());
+                        .filter(metricName -> !currentMetrics.containsKey(metricName)).collect(Collectors.toSet());
 
                 for (MetricName metricName : metricsToRemove) {
                     Meter.Id id = meterIdForComparison(metricName);
@@ -185,15 +187,15 @@ class KafkaMetrics implements MeterBinder, AutoCloseable {
                 currentMetrics.forEach((name, metric) -> {
                     // Filter out non-numeric values
                     // Filter out metrics from groups that include metadata
-                    if (!(metric.metricValue() instanceof Number) ||
-                            METRIC_GROUP_APP_INFO.equals(name.group()) ||
-                            METRIC_GROUP_METRICS_COUNT.equals(name.group())) {
+                    if (!(metric.metricValue() instanceof Number) || METRIC_GROUP_APP_INFO.equals(name.group())
+                            || METRIC_GROUP_METRICS_COUNT.equals(name.group())) {
                         return;
                     }
 
                     String meterName = meterName(name);
 
-                    // Kafka has metrics with lower number of tags (e.g. with/without topic or partition tag)
+                    // Kafka has metrics with lower number of tags (e.g. with/without
+                    // topic or partition tag)
                     // Remove meters with lower number of tags
                     boolean hasLessTags = false;
                     for (Meter other : registryMetersByNames.getOrDefault(meterName, emptyList())) {
@@ -206,11 +208,15 @@ class KafkaMetrics implements MeterBinder, AutoCloseable {
                         }
                         // Check if already exists
                         else if (tags.size() == meterTagsWithCommonTags.size())
-                            if (tags.containsAll(meterTagsWithCommonTags)) return;
-                            else break;
-                        else hasLessTags = true;
+                            if (tags.containsAll(meterTagsWithCommonTags))
+                                return;
+                            else
+                                break;
+                        else
+                            hasLessTags = true;
                     }
-                    if (hasLessTags) return;
+                    if (hasLessTags)
+                        return;
 
                     List<Tag> tags = meterTags(name);
                     try {
@@ -245,23 +251,21 @@ class KafkaMetrics implements MeterBinder, AutoCloseable {
     private Meter registerMeter(MeterRegistry registry, MetricName metricName, String meterName, Iterable<Tag> tags) {
         if (meterName.endsWith("total") || meterName.endsWith("count")) {
             return registerCounter(registry, metricName, meterName, tags);
-        } else {
+        }
+        else {
             return registerGauge(registry, metricName, meterName, tags);
         }
     }
 
     private Gauge registerGauge(MeterRegistry registry, MetricName metricName, String meterName, Iterable<Tag> tags) {
-        return Gauge.builder(meterName, this.metrics, toMetricValue(metricName))
-                .tags(tags)
-                .description(metricName.description())
-                .register(registry);
+        return Gauge.builder(meterName, this.metrics, toMetricValue(metricName)).tags(tags)
+                .description(metricName.description()).register(registry);
     }
 
-    private FunctionCounter registerCounter(MeterRegistry registry, MetricName metricName, String meterName, Iterable<Tag> tags) {
-        return FunctionCounter.builder(meterName, this.metrics, toMetricValue(metricName))
-                .tags(tags)
-                .description(metricName.description())
-                .register(registry);
+    private FunctionCounter registerCounter(MeterRegistry registry, MetricName metricName, String meterName,
+            Iterable<Tag> tags) {
+        return FunctionCounter.builder(meterName, this.metrics, toMetricValue(metricName)).tags(tags)
+                .description(metricName.description()).register(registry);
     }
 
     private ToDoubleFunction<AtomicReference<Map<MetricName, ? extends Metric>>> toMetricValue(MetricName metricName) {
@@ -304,4 +308,5 @@ class KafkaMetrics implements MeterBinder, AutoCloseable {
             registry.remove(id);
         }
     }
+
 }

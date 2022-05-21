@@ -22,6 +22,7 @@ import org.junit.jupiter.api.Test;
 import static org.assertj.core.api.Assertions.assertThat;
 
 class ElasticNamingConventionTest {
+
     private final NamingConvention namingConvention = new ElasticNamingConvention();
 
     @Issue("#506")
@@ -39,4 +40,5 @@ class ElasticNamingConventionTest {
     void replaceLeadingUnderscores() {
         assertThat(namingConvention.tagKey("__tag")).isEqualTo("tag");
     }
+
 }

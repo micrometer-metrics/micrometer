@@ -21,6 +21,7 @@ import io.micrometer.core.instrument.distribution.HistogramSnapshot;
 import java.util.concurrent.TimeUnit;
 
 public class NoopLongTaskTimer extends NoopMeter implements LongTaskTimer {
+
     public NoopLongTaskTimer(Id id) {
         super(id);
     }
@@ -56,6 +57,7 @@ public class NoopLongTaskTimer extends NoopMeter implements LongTaskTimer {
     }
 
     static class NoopSample extends Sample {
+
         @Override
         public long stop() {
             return 0;
@@ -65,5 +67,7 @@ public class NoopLongTaskTimer extends NoopMeter implements LongTaskTimer {
         public double duration(TimeUnit unit) {
             return 0;
         }
+
     }
+
 }

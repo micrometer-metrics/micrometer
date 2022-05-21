@@ -15,15 +15,16 @@
  */
 package io.micrometer.graphite;
 
+import io.micrometer.common.lang.Nullable;
 import io.micrometer.core.instrument.MeterRegistry;
 import io.micrometer.core.instrument.MockClock;
 import io.micrometer.core.instrument.util.HierarchicalNameMapper;
-import io.micrometer.core.lang.Nullable;
 import io.micrometer.core.tck.MeterRegistryCompatibilityKit;
 
 import java.time.Duration;
 
 class GraphiteMeterRegistryCompatibilityTest extends MeterRegistryCompatibilityKit {
+
     @Override
     public MeterRegistry registry() {
         return new GraphiteMeterRegistry(new GraphiteConfig() {
@@ -44,4 +45,5 @@ class GraphiteMeterRegistryCompatibilityTest extends MeterRegistryCompatibilityK
     public Duration step() {
         return GraphiteConfig.DEFAULT.step();
     }
+
 }

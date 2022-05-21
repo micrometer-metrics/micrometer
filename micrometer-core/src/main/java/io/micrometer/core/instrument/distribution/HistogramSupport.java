@@ -18,19 +18,21 @@ package io.micrometer.core.instrument.distribution;
 import io.micrometer.core.instrument.Meter;
 
 public interface HistogramSupport extends Meter {
+
     /**
-     * Summary statistics should be published off of a single snapshot instance so that, for example, there isn't
-     * disagreement between the distribution's bucket counts because more events continue to stream in.
-     *
+     * Summary statistics should be published off of a single snapshot instance so that,
+     * for example, there isn't disagreement between the distribution's bucket counts
+     * because more events continue to stream in.
      * @return A snapshot of all distribution statistics at a point in time.
      */
     HistogramSnapshot takeSnapshot();
 
     /**
-     * Summary statistics should be published off of a single snapshot instance so that, for example, there isn't
-     * disagreement between the distribution's bucket counts because more events continue to stream in.
-     *
-     * @param supportsAggregablePercentiles Ignored. The determination of aggregable percentile support is now made up front.
+     * Summary statistics should be published off of a single snapshot instance so that,
+     * for example, there isn't disagreement between the distribution's bucket counts
+     * because more events continue to stream in.
+     * @param supportsAggregablePercentiles Ignored. The determination of aggregable
+     * percentile support is now made up front.
      * @return A snapshot of all distribution statistics at a point in time.
      * @deprecated Use {@link #takeSnapshot()}.
      */
@@ -38,4 +40,5 @@ public interface HistogramSupport extends Meter {
     default HistogramSnapshot takeSnapshot(boolean supportsAggregablePercentiles) {
         return takeSnapshot();
     }
+
 }

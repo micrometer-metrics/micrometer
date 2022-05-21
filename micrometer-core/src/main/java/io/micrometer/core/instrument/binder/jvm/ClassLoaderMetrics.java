@@ -15,27 +15,24 @@
  */
 package io.micrometer.core.instrument.binder.jvm;
 
+import io.micrometer.common.lang.NonNullApi;
+import io.micrometer.common.lang.NonNullFields;
 import io.micrometer.core.instrument.FunctionCounter;
 import io.micrometer.core.instrument.Gauge;
 import io.micrometer.core.instrument.MeterRegistry;
 import io.micrometer.core.instrument.Tag;
 import io.micrometer.core.instrument.binder.BaseUnits;
 import io.micrometer.core.instrument.binder.MeterBinder;
-import io.micrometer.core.lang.NonNullApi;
-import io.micrometer.core.lang.NonNullFields;
 
 import java.lang.management.ClassLoadingMXBean;
 import java.lang.management.ManagementFactory;
 
 import static java.util.Collections.emptyList;
 
-/**
- * @deprecated Scheduled for removal in 2.0.0, please use {@code io.micrometer.binder.jvm.ClassLoaderMetrics}
- */
 @NonNullApi
 @NonNullFields
-@Deprecated
 public class ClassLoaderMetrics implements MeterBinder {
+
     private final Iterable<Tag> tags;
 
     public ClassLoaderMetrics() {
@@ -50,16 +47,15 @@ public class ClassLoaderMetrics implements MeterBinder {
     public void bindTo(MeterRegistry registry) {
         ClassLoadingMXBean classLoadingBean = ManagementFactory.getClassLoadingMXBean();
 
-        Gauge.builder("jvm.classes.loaded", classLoadingBean, ClassLoadingMXBean::getLoadedClassCount)
-                .tags(tags)
+        Gauge.builder("jvm.classes.loaded", classLoadingBean, ClassLoadingMXBean::getLoadedClassCount).tags(tags)
                 .description("The number of classes that are currently loaded in the Java virtual machine")
-                .baseUnit(BaseUnits.CLASSES)
-                .register(registry);
+                .baseUnit(BaseUnits.CLASSES).register(registry);
 
         FunctionCounter.builder("jvm.classes.unloaded", classLoadingBean, ClassLoadingMXBean::getUnloadedClassCount)
                 .tags(tags)
-                .description("The total number of classes unloaded since the Java virtual machine has started execution")
-                .baseUnit(BaseUnits.CLASSES)
-                .register(registry);
+                .description(
+                        "The total number of classes unloaded since the Java virtual machine has started execution")
+                .baseUnit(BaseUnits.CLASSES).register(registry);
     }
+
 }

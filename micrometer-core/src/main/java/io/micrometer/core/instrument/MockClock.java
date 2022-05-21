@@ -21,7 +21,9 @@ import java.time.Duration;
 import java.util.concurrent.TimeUnit;
 
 public class MockClock implements Clock {
-    // has to be non-zero to prevent divide-by-zeroes and other weird math results based on the clock
+
+    // has to be non-zero to prevent divide-by-zeroes and other weird math results based
+    // on the clock
     private long timeNanos = (long) TimeUtils.millisToUnit(1, TimeUnit.NANOSECONDS);
 
     @Override
@@ -50,4 +52,5 @@ public class MockClock implements Clock {
     public static MockClock clock(MeterRegistry registry) {
         return (MockClock) registry.config().clock();
     }
+
 }

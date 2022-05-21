@@ -15,11 +15,11 @@
  */
 package io.micrometer.influx;
 
+import io.micrometer.common.util.StringUtils;
+import io.micrometer.core.ipc.http.HttpSender;
+
 import java.io.UnsupportedEncodingException;
 import java.net.URLEncoder;
-
-import io.micrometer.core.instrument.util.StringUtils;
-import io.micrometer.core.ipc.http.HttpSender;
 
 /**
  * Enum for the version of the InfluxDB API.
@@ -28,10 +28,12 @@ import io.micrometer.core.ipc.http.HttpSender;
  * @since 1.7.0
  */
 public enum InfluxApiVersion {
+
     V1 {
         @Override
         String writeEndpoint(final InfluxConfig config) {
-            String influxEndpoint = config.uri() + "/write?consistency=" + config.consistency().name().toLowerCase() + "&precision=ms&db=" + config.db();
+            String influxEndpoint = config.uri() + "/write?consistency=" + config.consistency().name().toLowerCase()
+                    + "&precision=ms&db=" + config.db();
             if (StringUtils.isNotBlank(config.retentionPolicy())) {
                 influxEndpoint += "&rp=" + config.retentionPolicy();
             }
@@ -45,7 +47,7 @@ public enum InfluxApiVersion {
             }
         }
     },
-    
+
     V2 {
         @Override
         String writeEndpoint(final InfluxConfig config) throws UnsupportedEncodingException {
@@ -65,4 +67,5 @@ public enum InfluxApiVersion {
     abstract String writeEndpoint(final InfluxConfig config) throws UnsupportedEncodingException;
 
     abstract void addHeaderToken(final InfluxConfig config, final HttpSender.Request.Builder requestBuilder);
+
 }

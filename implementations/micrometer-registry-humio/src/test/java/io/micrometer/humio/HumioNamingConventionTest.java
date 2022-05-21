@@ -27,10 +27,12 @@ import static org.assertj.core.api.Assertions.assertThat;
  * @author Jon Schneider
  */
 class HumioNamingConventionTest {
+
     private final NamingConvention namingConvention = new HumioNamingConvention();
 
     @Test
     void replaceNameTag() {
         assertThat(namingConvention.tagKey("name")).isEqualTo("name_tag");
     }
+
 }

@@ -18,12 +18,14 @@ package io.micrometer.core.instrument.util;
 import org.junit.jupiter.api.Test;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 
 /**
  * Tests for {@link StringUtils}.
  *
  * @author Johnny Lim
  */
+@Deprecated
 class StringUtilsTest {
 
     @Test
@@ -34,6 +36,36 @@ class StringUtilsTest {
     @Test
     void truncateWhenLessThanMaxLengthShouldReturnItself() {
         assertThat(StringUtils.truncate("123", 5)).isEqualTo("123");
+    }
+
+    @Test
+    void truncateWithIndicatorWhenGreaterThanMaxLengthShouldTruncate() {
+        assertThat(StringUtils.truncate("1234567890", 7, "...")).isEqualTo("1234...");
+    }
+
+    @Test
+    void truncateWithEmptyIndicatorWhenGreaterThanMaxLengthShouldTruncate() {
+        assertThat(StringUtils.truncate("1234567890", 7, "")).isEqualTo("1234567");
+    }
+
+    @Test
+    void truncateWithIndicatorWhenSameAsMaxLengthShouldReturnItself() {
+        assertThat(StringUtils.truncate("1234567", 7, "...")).isEqualTo("1234567");
+    }
+
+    @Test
+    void truncateWithIndicatorWhenLessThanMaxLengthShouldReturnItself() {
+        assertThat(StringUtils.truncate("123", 7, "...")).isEqualTo("123");
+    }
+
+    @Test
+    void truncateWithIndicatorThrowsOnInvalidLengthWhenOriginalStringIsShort() {
+        assertThrows(IllegalArgumentException.class, () -> StringUtils.truncate("12345", 7, "[abbreviated]"));
+    }
+
+    @Test
+    void truncateWithIndicatorThrowsOnInvalidLengthWhenOriginalStringIsLongEnough() {
+        assertThrows(IllegalArgumentException.class, () -> StringUtils.truncate("1234567890", 7, "[abbreviated]"));
     }
 
     @Test

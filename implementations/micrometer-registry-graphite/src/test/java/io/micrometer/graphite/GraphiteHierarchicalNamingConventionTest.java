@@ -28,6 +28,7 @@ import static org.assertj.core.api.Assertions.assertThat;
  * @author Johnny Lim
  */
 class GraphiteHierarchicalNamingConventionTest {
+
     private GraphiteHierarchicalNamingConvention convention = new GraphiteHierarchicalNamingConvention();
 
     @Test
@@ -44,7 +45,8 @@ class GraphiteHierarchicalNamingConventionTest {
     void respectDelegateNamingConvention() {
         CustomNamingConvention delegateNamingConvention = new CustomNamingConvention();
 
-        GraphiteHierarchicalNamingConvention convention = new GraphiteHierarchicalNamingConvention(delegateNamingConvention);
+        GraphiteHierarchicalNamingConvention convention = new GraphiteHierarchicalNamingConvention(
+                delegateNamingConvention);
 
         assertThat(convention.name("my.name", Meter.Type.TIMER)).isEqualTo("name-my.name");
         assertThat(convention.tagKey("my_tag_key")).isEqualTo("key-my_tag_key");
@@ -53,7 +55,8 @@ class GraphiteHierarchicalNamingConventionTest {
 
     @Test
     void nameShouldPreserveDot() {
-        GraphiteHierarchicalNamingConvention convention = new GraphiteHierarchicalNamingConvention(NamingConvention.identity);
+        GraphiteHierarchicalNamingConvention convention = new GraphiteHierarchicalNamingConvention(
+                NamingConvention.identity);
         assertThat(convention.name("my.counter", Meter.Type.COUNTER)).isEqualTo("my.counter");
     }
 
@@ -74,7 +77,8 @@ class GraphiteHierarchicalNamingConventionTest {
 
     @Test
     void tagKeyShouldSanitizeDot() {
-        GraphiteHierarchicalNamingConvention convention = new GraphiteHierarchicalNamingConvention(NamingConvention.identity);
+        GraphiteHierarchicalNamingConvention convention = new GraphiteHierarchicalNamingConvention(
+                NamingConvention.identity);
         assertThat(convention.tagKey("my.tag")).isEqualTo("my_tag");
     }
 

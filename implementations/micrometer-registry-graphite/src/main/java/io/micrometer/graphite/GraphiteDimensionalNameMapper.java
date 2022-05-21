@@ -21,11 +21,12 @@ import io.micrometer.core.instrument.config.NamingConvention;
 import io.micrometer.core.instrument.util.HierarchicalNameMapper;
 
 /**
- * Tag based {@link HierarchicalNameMapper} for Graphite.
- * This is a bit confusing, as this is actually used for dimensional metrics via Graphite's tagging support,
- * as opposed to the {@link GraphiteHierarchicalNameMapper}
- * @see <a href="https://graphite.readthedocs.io/en/latest/tags.html">Graphite Tag Support</a>
+ * Tag based {@link HierarchicalNameMapper} for Graphite. This is a bit confusing, as this
+ * is actually used for dimensional metrics via Graphite's tagging support, as opposed to
+ * the {@link GraphiteHierarchicalNameMapper}
  *
+ * @see <a href="https://graphite.readthedocs.io/en/latest/tags.html">Graphite Tag
+ * Support</a>
  * @author Jon Schneider
  * @author Johnny Lim
  * @author Andrew Fitzgerald
@@ -38,11 +39,10 @@ public class GraphiteDimensionalNameMapper implements HierarchicalNameMapper {
         StringBuilder hierarchicalName = new StringBuilder();
         hierarchicalName.append(id.getConventionName(convention));
         for (Tag tag : id.getTagsAsIterable()) {
-            hierarchicalName.append(';').append(convention.tagKey(tag.getKey()))
-                    .append('=').append(convention.tagValue(tag.getValue()));
+            hierarchicalName.append(';').append(convention.tagKey(tag.getKey())).append('=')
+                    .append(convention.tagValue(tag.getValue()));
         }
         return hierarchicalName.toString();
     }
 
 }
-

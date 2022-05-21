@@ -23,6 +23,7 @@ import io.micrometer.core.tck.MeterRegistryCompatibilityKit;
 import java.time.Duration;
 
 class AtlasMeterRegistryCompatibilityTest extends MeterRegistryCompatibilityKit {
+
     @Override
     public MeterRegistry registry() {
         return new AtlasMeterRegistry(new AtlasConfig() {
@@ -53,4 +54,5 @@ class AtlasMeterRegistryCompatibilityTest extends MeterRegistryCompatibilityKit 
     public Duration step() {
         return Duration.ofMinutes(1);
     }
+
 }

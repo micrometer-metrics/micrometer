@@ -18,12 +18,12 @@ package io.micrometer.core.instrument.dropwizard;
 import io.micrometer.core.instrument.AbstractMeter;
 import io.micrometer.core.instrument.Gauge;
 import io.micrometer.core.instrument.Meter;
-import io.micrometer.core.instrument.util.MeterEquivalence;
 
 /**
  * @author Jon Schneider
  */
 public class DropwizardGauge extends AbstractMeter implements Gauge {
+
     private final com.codahale.metrics.Gauge<Double> impl;
 
     DropwizardGauge(Meter.Id id, com.codahale.metrics.Gauge<Double> impl) {
@@ -37,14 +37,4 @@ public class DropwizardGauge extends AbstractMeter implements Gauge {
         return value == null ? Double.NaN : value;
     }
 
-    @SuppressWarnings("EqualsWhichDoesntCheckParameterClass")
-    @Override
-    public boolean equals(Object o) {
-        return MeterEquivalence.equals(this, o);
-    }
-
-    @Override
-    public int hashCode() {
-        return MeterEquivalence.hashCode(this);
-    }
 }

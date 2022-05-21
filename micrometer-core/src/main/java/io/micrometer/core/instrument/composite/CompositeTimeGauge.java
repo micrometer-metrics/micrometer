@@ -15,10 +15,10 @@
  */
 package io.micrometer.core.instrument.composite;
 
+import io.micrometer.common.lang.Nullable;
 import io.micrometer.core.instrument.MeterRegistry;
 import io.micrometer.core.instrument.TimeGauge;
 import io.micrometer.core.instrument.noop.NoopTimeGauge;
-import io.micrometer.core.lang.Nullable;
 
 import java.lang.ref.WeakReference;
 import java.util.concurrent.TimeUnit;
@@ -27,7 +27,9 @@ import java.util.function.ToDoubleFunction;
 class CompositeTimeGauge<T> extends AbstractCompositeMeter<TimeGauge> implements TimeGauge {
 
     private final WeakReference<T> ref;
+
     private final ToDoubleFunction<T> f;
+
     private final TimeUnit fUnit;
 
     CompositeTimeGauge(Id id, @Nullable T obj, TimeUnit fUnit, ToDoubleFunction<T> f) {
@@ -59,9 +61,8 @@ class CompositeTimeGauge<T> extends AbstractCompositeMeter<TimeGauge> implements
             return null;
         }
 
-        return TimeGauge.builder(getId().getName(), obj, fUnit, f)
-            .tags(getId().getTagsAsIterable())
-            .description(getId().getDescription())
-            .register(registry);
+        return TimeGauge.builder(getId().getName(), obj, fUnit, f).tags(getId().getTagsAsIterable())
+                .description(getId().getDescription()).register(registry);
     }
+
 }

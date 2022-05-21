@@ -22,11 +22,12 @@ package io.micrometer.statsd;
  * @since 1.2.0
  */
 public enum StatsdProtocol {
+
     UDP,
     /**
      * Unix domain socket datagram.
      * @since 1.8.0
      */
-    UDS_DATAGRAM,
-    TCP
+    UDS_DATAGRAM, TCP
+
 }

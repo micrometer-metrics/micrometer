@@ -15,12 +15,11 @@
  */
 package io.micrometer.prometheus;
 
+import io.micrometer.common.lang.NonNull;
+import io.micrometer.common.lang.Nullable;
 import io.micrometer.core.instrument.AbstractMeter;
 import io.micrometer.core.instrument.Counter;
 import io.micrometer.core.instrument.Meter;
-import io.micrometer.core.instrument.util.MeterEquivalence;
-import io.micrometer.core.lang.NonNull;
-import io.micrometer.core.lang.Nullable;
 import io.prometheus.client.exemplars.CounterExemplarSampler;
 import io.prometheus.client.exemplars.Exemplar;
 
@@ -34,9 +33,13 @@ import java.util.concurrent.atomic.DoubleAdder;
  * @author Jonatan Ivanov
  */
 public class PrometheusCounter extends AbstractMeter implements Counter {
+
     private final DoubleAdder count = new DoubleAdder();
+
     private final AtomicReference<Exemplar> exemplar = new AtomicReference<>();
-    @Nullable private final CounterExemplarSampler exemplarSampler;
+
+    @Nullable
+    private final CounterExemplarSampler exemplarSampler;
 
     PrometheusCounter(Meter.Id id) {
         this(id, null);
@@ -62,6 +65,7 @@ public class PrometheusCounter extends AbstractMeter implements Counter {
         return count.doubleValue();
     }
 
+    @Nullable
     Exemplar exemplar() {
         return exemplar.get();
     }
@@ -73,21 +77,8 @@ public class PrometheusCounter extends AbstractMeter implements Counter {
         do {
             prev = exemplar.get();
             next = exemplarSampler.sample(amount, prev);
-            if (next == null || next == prev) {
-                return;
-            }
         }
-        while (!exemplar.compareAndSet(prev, next));
+        while (next != null && next != prev && !exemplar.compareAndSet(prev, next));
     }
 
-    @SuppressWarnings("EqualsWhichDoesntCheckParameterClass")
-    @Override
-    public boolean equals(Object o) {
-        return MeterEquivalence.equals(this, o);
-    }
-
-    @Override
-    public int hashCode() {
-        return MeterEquivalence.hashCode(this);
-    }
 }

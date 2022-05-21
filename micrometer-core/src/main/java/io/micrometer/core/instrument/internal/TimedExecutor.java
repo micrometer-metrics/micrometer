@@ -25,15 +25,20 @@ import java.util.concurrent.Executor;
 /**
  * An {@link Executor} that is timed. This class is for internal use.
  *
- * @see "io.micrometer.binder.jvm.ExecutorServiceMetrics"
+ * @see io.micrometer.core.instrument.binder.jvm.ExecutorServiceMetrics
  */
 public class TimedExecutor implements Executor {
+
     private final MeterRegistry registry;
+
     private final Executor delegate;
+
     private final Timer executionTimer;
+
     private final Timer idleTimer;
 
-    public TimedExecutor(MeterRegistry registry, Executor delegate, String executorName, String metricPrefix, Iterable<Tag> tags) {
+    public TimedExecutor(MeterRegistry registry, Executor delegate, String executorName, String metricPrefix,
+            Iterable<Tag> tags) {
         this.registry = registry;
         this.delegate = delegate;
         Tags finalTags = Tags.concat(tags, "name", executorName);
@@ -45,4 +50,5 @@ public class TimedExecutor implements Executor {
     public void execute(Runnable command) {
         delegate.execute(new TimedRunnable(registry, executionTimer, idleTimer, command));
     }
+
 }

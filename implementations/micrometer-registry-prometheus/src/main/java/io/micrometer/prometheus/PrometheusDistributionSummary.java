@@ -15,56 +15,66 @@
  */
 package io.micrometer.prometheus;
 
+import io.micrometer.common.lang.Nullable;
 import io.micrometer.core.instrument.AbstractDistributionSummary;
 import io.micrometer.core.instrument.Clock;
+import io.micrometer.core.instrument.DistributionSummary;
 import io.micrometer.core.instrument.distribution.*;
-import io.micrometer.core.instrument.util.MeterEquivalence;
-import io.micrometer.core.lang.Nullable;
+import io.prometheus.client.exemplars.Exemplar;
+import io.prometheus.client.exemplars.HistogramExemplarSampler;
 
-import java.time.Duration;
 import java.util.concurrent.atomic.DoubleAdder;
 import java.util.concurrent.atomic.LongAdder;
 
+/**
+ * {@link DistributionSummary} for Prometheus.
+ *
+ * @author Jon Schneider
+ * @author Jonatan Ivanov
+ */
 public class PrometheusDistributionSummary extends AbstractDistributionSummary {
+
     private static final CountAtBucket[] EMPTY_HISTOGRAM = new CountAtBucket[0];
-    @Nullable
-    private final Histogram histogram;
+
     private final LongAdder count = new LongAdder();
+
     private final DoubleAdder amount = new DoubleAdder();
+
     private final TimeWindowMax max;
 
     private final HistogramFlavor histogramFlavor;
 
-    PrometheusDistributionSummary(Id id, Clock clock, DistributionStatisticConfig distributionStatisticConfig, double scale, HistogramFlavor histogramFlavor) {
-        super(id, clock,
-                DistributionStatisticConfig.builder()
-                        .percentilesHistogram(false)
-                        .serviceLevelObjectives()
-                        .build()
-                        .merge(distributionStatisticConfig),
-                scale, false);
+    @Nullable
+    private final Histogram histogram;
+
+    private boolean exemplarsEnabled = false;
+
+    PrometheusDistributionSummary(Id id, Clock clock, DistributionStatisticConfig distributionStatisticConfig,
+            double scale, HistogramFlavor histogramFlavor, @Nullable HistogramExemplarSampler exemplarSampler) {
+        super(id, clock, DistributionStatisticConfig.builder().percentilesHistogram(false).serviceLevelObjectives()
+                .build().merge(distributionStatisticConfig), scale, false);
 
         this.histogramFlavor = histogramFlavor;
         this.max = new TimeWindowMax(clock, distributionStatisticConfig);
 
         if (distributionStatisticConfig.isPublishingHistogram()) {
             switch (histogramFlavor) {
-                case Prometheus:
-                    histogram = new TimeWindowFixedBoundaryHistogram(clock, DistributionStatisticConfig.builder()
-                            .expiry(Duration.ofDays(1825)) // effectively never roll over
-                            .bufferLength(1)
-                            .build()
-                            .merge(distributionStatisticConfig), true);
-                    break;
-                case VictoriaMetrics:
-                    histogram = new FixedBoundaryVictoriaMetricsHistogram();
-                    break;
-                default:
-                    histogram = null;
-                    break;
+            case Prometheus:
+                PrometheusHistogram prometheusHistogram = new PrometheusHistogram(clock, distributionStatisticConfig,
+                        exemplarSampler);
+                this.histogram = prometheusHistogram;
+                this.exemplarsEnabled = prometheusHistogram.isExemplarsEnabled();
+                break;
+            case VictoriaMetrics:
+                this.histogram = new FixedBoundaryVictoriaMetricsHistogram();
+                break;
+            default:
+                this.histogram = null;
+                break;
             }
-        } else {
-            histogram = null;
+        }
+        else {
+            this.histogram = null;
         }
     }
 
@@ -76,6 +86,16 @@ public class PrometheusDistributionSummary extends AbstractDistributionSummary {
 
         if (histogram != null)
             histogram.recordDouble(amount);
+    }
+
+    @Nullable
+    Exemplar[] exemplars() {
+        if (exemplarsEnabled) {
+            return ((PrometheusHistogram) histogram).exemplars();
+        }
+        else {
+            return null;
+        }
     }
 
     @Override
@@ -97,21 +117,10 @@ public class PrometheusDistributionSummary extends AbstractDistributionSummary {
         return histogramFlavor;
     }
 
-    @SuppressWarnings("EqualsWhichDoesntCheckParameterClass")
-    @Override
-    public boolean equals(@Nullable Object o) {
-        return MeterEquivalence.equals(this, o);
-    }
-
-    @Override
-    public int hashCode() {
-        return MeterEquivalence.hashCode(this);
-    }
-
     /**
-     * For Prometheus we cannot use the histogram counts from HistogramSnapshot, as it is based on a
-     * rolling histogram. Prometheus requires a histogram that accumulates values over the lifetime of the app.
-     *
+     * For Prometheus we cannot use the histogram counts from HistogramSnapshot, as it is
+     * based on a rolling histogram. Prometheus requires a histogram that accumulates
+     * values over the lifetime of the app.
      * @return Cumulative histogram buckets.
      */
     public CountAtBucket[] histogramCounts() {
@@ -126,11 +135,8 @@ public class PrometheusDistributionSummary extends AbstractDistributionSummary {
             return snapshot;
         }
 
-        return new HistogramSnapshot(snapshot.count(),
-                snapshot.total(),
-                snapshot.max(),
-                snapshot.percentileValues(),
-                histogramCounts(),
-                snapshot::outputSummary);
+        return new HistogramSnapshot(snapshot.count(), snapshot.total(), snapshot.max(), snapshot.percentileValues(),
+                histogramCounts(), snapshot::outputSummary);
     }
+
 }

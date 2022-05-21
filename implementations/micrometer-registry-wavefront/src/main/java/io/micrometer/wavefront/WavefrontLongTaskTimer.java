@@ -16,10 +16,10 @@
 package io.micrometer.wavefront;
 
 import com.wavefront.sdk.entities.histograms.WavefrontHistogramImpl;
+import io.micrometer.common.lang.Nullable;
 import io.micrometer.core.instrument.Clock;
 import io.micrometer.core.instrument.distribution.DistributionStatisticConfig;
 import io.micrometer.core.instrument.internal.DefaultLongTaskTimer;
-import io.micrometer.core.lang.Nullable;
 
 import java.util.Collections;
 import java.util.List;
@@ -31,20 +31,22 @@ import java.util.concurrent.TimeUnit;
  * @author Jon Schneider
  */
 class WavefrontLongTaskTimer extends DefaultLongTaskTimer {
+
     @Nullable
     private final WavefrontHistogramImpl histogram;
 
     WavefrontLongTaskTimer(Id id, Clock clock, DistributionStatisticConfig distributionStatisticConfig,
-                           TimeUnit baseTimeUnit) {
+            TimeUnit baseTimeUnit) {
         super(id, clock, baseTimeUnit, distributionStatisticConfig, false);
-        histogram = distributionStatisticConfig.isPublishingHistogram() ?
-            new WavefrontHistogramImpl(clock::wallTime) : null;
+        histogram = distributionStatisticConfig.isPublishingHistogram() ? new WavefrontHistogramImpl(clock::wallTime)
+                : null;
     }
 
     List<WavefrontHistogramImpl.Distribution> flushDistributions() {
         if (histogram == null) {
             return Collections.emptyList();
-        } else {
+        }
+        else {
             forEachActive(s -> histogram.update(s.duration(baseTimeUnit())));
             return histogram.flushDistributions();
         }
@@ -53,4 +55,5 @@ class WavefrontLongTaskTimer extends DefaultLongTaskTimer {
     boolean isPublishingHistogram() {
         return histogram != null;
     }
+
 }

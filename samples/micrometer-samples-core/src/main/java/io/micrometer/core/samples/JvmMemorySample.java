@@ -16,14 +16,16 @@
 package io.micrometer.core.samples;
 
 import io.micrometer.core.instrument.MeterRegistry;
-import io.micrometer.binder.jvm.JvmMemoryMetrics;
+import io.micrometer.core.instrument.binder.jvm.JvmMemoryMetrics;
 import io.micrometer.core.samples.utils.SampleConfig;
 import reactor.core.publisher.Flux;
 
 public class JvmMemorySample {
+
     public static void main(String[] args) {
         MeterRegistry registry = SampleConfig.myMonitoringSystem();
         new JvmMemoryMetrics().bindTo(registry);
         Flux.never().blockLast();
     }
+
 }

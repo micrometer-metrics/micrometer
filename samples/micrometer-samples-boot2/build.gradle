@@ -1,6 +1,6 @@
 plugins {
     id 'java'
-    id 'org.springframework.boot' version '2.6.2'
+    id 'org.springframework.boot' version '2.6.7'
 }
 
 apply plugin: 'io.spring.dependency-management'
@@ -19,6 +19,11 @@ dependencies {
     implementation('org.springframework.boot:spring-boot-starter-actuator') {
         exclude group: 'io.micrometer', module: 'micrometer-core'
     }
+
+    implementation platform('org.springframework.cloud:spring-cloud-dependencies:latest.release')
+    implementation 'org.springframework.cloud:spring-cloud-starter-sleuth'
+    implementation 'org.springframework.cloud:spring-cloud-sleuth-zipkin'
+
 }
 
 bootJar {

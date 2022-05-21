@@ -20,30 +20,27 @@ import io.micrometer.core.annotation.Incubating;
 import java.util.stream.Collectors;
 
 /**
- * Turns a set of {@link Validated.Invalid} into a throwable exception, which is used to throw an unchecked exception
- * at runtime when one or more properties are invalid.
+ * Turns a set of {@link Validated.Invalid} into a throwable exception, which is used to
+ * throw an unchecked exception at runtime when one or more properties are invalid.
  *
  * @author Jon Schneider
  * @since 1.5.0
  */
 @Incubating(since = "1.5.0")
 public class ValidationException extends IllegalStateException {
+
     private final Validated<?> validation;
 
     public ValidationException(Validated<?> validation) {
-        super(validation.failures().stream()
-                .map(invalid -> invalid.getProperty() + " was '" +
-                        (invalid.getValue() == null ? "null" : invalid.getValue()) +
-                        "' but it " + invalid.getMessage())
-                .collect(Collectors.joining(
-                        "\n",
-                        validation.failures().size() > 1 ? "Multiple validation failures:\n" : "",
-                        ""
-                )));
+        super(validation.failures().stream().map(invalid -> invalid.getProperty() + " was '"
+                + (invalid.getValue() == null ? "null" : invalid.getValue()) + "' but it " + invalid.getMessage())
+                .collect(Collectors.joining("\n",
+                        validation.failures().size() > 1 ? "Multiple validation failures:\n" : "", "")));
         this.validation = validation;
     }
 
     public Validated<?> getValidation() {
         return validation;
     }
+
 }

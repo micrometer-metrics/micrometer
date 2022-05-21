@@ -18,16 +18,18 @@ package io.micrometer.samples.hazelcast3;
 import com.hazelcast.config.Config;
 import com.hazelcast.core.Hazelcast;
 import com.hazelcast.core.IMap;
-import io.micrometer.binder.cache.CacheMeterBinder;
-import io.micrometer.binder.cache.CacheMeterBinderCompatibilityKit;
-import io.micrometer.binder.cache.HazelcastCacheMetrics;
+import io.micrometer.core.instrument.binder.cache.CacheMeterBinder;
+import io.micrometer.core.instrument.binder.cache.CacheMeterBinderCompatibilityKit;
+import io.micrometer.core.instrument.binder.cache.HazelcastCacheMetrics;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 
 import static java.util.Collections.emptyList;
 
 class Hazelcast3CacheMetricsCompatibilityTest extends CacheMeterBinderCompatibilityKit<Object> {
+
     private Config config = new Config("hazelcast3-cache-test");
+
     private IMap<String, String> cache;
 
     @BeforeEach
@@ -67,4 +69,5 @@ class Hazelcast3CacheMetricsCompatibilityTest extends CacheMeterBinderCompatibil
     public String get(String key) {
         return this.cache.get(key);
     }
+
 }

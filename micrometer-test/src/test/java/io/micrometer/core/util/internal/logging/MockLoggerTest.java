@@ -15,22 +15,19 @@
  */
 package io.micrometer.core.util.internal.logging;
 
-import java.io.IOException;
-
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Test;
 
-import static io.micrometer.core.util.internal.logging.InternalLogLevel.DEBUG;
-import static io.micrometer.core.util.internal.logging.InternalLogLevel.ERROR;
-import static io.micrometer.core.util.internal.logging.InternalLogLevel.INFO;
-import static io.micrometer.core.util.internal.logging.InternalLogLevel.TRACE;
-import static io.micrometer.core.util.internal.logging.InternalLogLevel.WARN;
+import java.io.IOException;
+
 import static org.assertj.core.api.Assertions.assertThat;
 
 /**
  * @author Jonatan Ivanov
  */
+@Deprecated
 class MockLoggerTest {
+
     private static final MockLogger LOGGER = new MockLoggerFactory().getLogger("testLogger");
 
     @AfterEach
@@ -65,11 +62,11 @@ class MockLoggerTest {
         assertThat(LOGGER.isWarnEnabled()).isTrue();
         assertThat(LOGGER.isErrorEnabled()).isTrue();
 
-        assertThat(LOGGER.isEnabled(TRACE)).isTrue();
-        assertThat(LOGGER.isEnabled(DEBUG)).isTrue();
-        assertThat(LOGGER.isEnabled(INFO)).isTrue();
-        assertThat(LOGGER.isEnabled(WARN)).isTrue();
-        assertThat(LOGGER.isEnabled(ERROR)).isTrue();
+        assertThat(LOGGER.isEnabled(io.micrometer.core.util.internal.logging.InternalLogLevel.TRACE)).isTrue();
+        assertThat(LOGGER.isEnabled(io.micrometer.core.util.internal.logging.InternalLogLevel.DEBUG)).isTrue();
+        assertThat(LOGGER.isEnabled(io.micrometer.core.util.internal.logging.InternalLogLevel.INFO)).isTrue();
+        assertThat(LOGGER.isEnabled(io.micrometer.core.util.internal.logging.InternalLogLevel.WARN)).isTrue();
+        assertThat(LOGGER.isEnabled(io.micrometer.core.util.internal.logging.InternalLogLevel.ERROR)).isTrue();
     }
 
     @Test
@@ -94,7 +91,7 @@ class MockLoggerTest {
         LOGGER.trace(cause);
         assertThat(LOGGER.getLogEvents()).hasSize(6);
 
-        verifyStandardEvents(TRACE, cause);
+        verifyStandardEvents(io.micrometer.core.util.internal.logging.InternalLogLevel.TRACE, cause);
     }
 
     @Test
@@ -119,7 +116,7 @@ class MockLoggerTest {
         LOGGER.debug(cause);
         assertThat(LOGGER.getLogEvents()).hasSize(6);
 
-        verifyStandardEvents(DEBUG, cause);
+        verifyStandardEvents(io.micrometer.core.util.internal.logging.InternalLogLevel.DEBUG, cause);
     }
 
     @Test
@@ -144,7 +141,7 @@ class MockLoggerTest {
         LOGGER.info(cause);
         assertThat(LOGGER.getLogEvents()).hasSize(6);
 
-        verifyStandardEvents(INFO, cause);
+        verifyStandardEvents(io.micrometer.core.util.internal.logging.InternalLogLevel.INFO, cause);
     }
 
     @Test
@@ -169,7 +166,7 @@ class MockLoggerTest {
         LOGGER.warn(cause);
         assertThat(LOGGER.getLogEvents()).hasSize(6);
 
-        verifyStandardEvents(WARN, cause);
+        verifyStandardEvents(io.micrometer.core.util.internal.logging.InternalLogLevel.WARN, cause);
     }
 
     @Test
@@ -194,32 +191,33 @@ class MockLoggerTest {
         LOGGER.error(cause);
         assertThat(LOGGER.getLogEvents()).hasSize(6);
 
-        verifyStandardEvents(ERROR, cause);
+        verifyStandardEvents(io.micrometer.core.util.internal.logging.InternalLogLevel.ERROR, cause);
     }
 
     @Test
     void shouldContainTheRightEvents() {
         Throwable cause = new IOException("simulated");
 
-        LOGGER.log(INFO, "test event 01");
+        LOGGER.log(io.micrometer.core.util.internal.logging.InternalLogLevel.INFO, "test event 01");
         assertThat(LOGGER.getLogEvents()).hasSize(1);
 
-        LOGGER.log(INFO, "test event {}", "02");
+        LOGGER.log(io.micrometer.core.util.internal.logging.InternalLogLevel.INFO, "test event {}", "02");
         assertThat(LOGGER.getLogEvents()).hasSize(2);
 
-        LOGGER.log(INFO, "test {} {}", "event", "03");
+        LOGGER.log(io.micrometer.core.util.internal.logging.InternalLogLevel.INFO, "test {} {}", "event", "03");
         assertThat(LOGGER.getLogEvents()).hasSize(3);
 
-        LOGGER.log(INFO, "test {} {} {}", "event", "04", "with varargs");
+        LOGGER.log(io.micrometer.core.util.internal.logging.InternalLogLevel.INFO, "test {} {} {}", "event", "04",
+                "with varargs");
         assertThat(LOGGER.getLogEvents()).hasSize(4);
 
-        LOGGER.log(INFO, "test event 05", cause);
+        LOGGER.log(io.micrometer.core.util.internal.logging.InternalLogLevel.INFO, "test event 05", cause);
         assertThat(LOGGER.getLogEvents()).hasSize(5);
 
-        LOGGER.log(INFO, cause);
+        LOGGER.log(io.micrometer.core.util.internal.logging.InternalLogLevel.INFO, cause);
         assertThat(LOGGER.getLogEvents()).hasSize(6);
 
-        verifyStandardEvents(INFO, cause);
+        verifyStandardEvents(io.micrometer.core.util.internal.logging.InternalLogLevel.INFO, cause);
     }
 
     private void verifyStandardEvents(InternalLogLevel level, Throwable cause) {
@@ -249,4 +247,5 @@ class MockLoggerTest {
         assertThat(LOGGER.getLogEvents().get(5).getMessage()).isNull();
         assertThat(LOGGER.getLogEvents().get(5).getCause()).isSameAs(cause);
     }
+
 }

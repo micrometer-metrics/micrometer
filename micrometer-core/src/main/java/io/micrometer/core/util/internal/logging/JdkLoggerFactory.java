@@ -33,12 +33,17 @@ package io.micrometer.core.util.internal.logging;
 import java.util.logging.Logger;
 
 /**
- * NOTE: This file has been copied and slightly modified from {io.netty.util.internal.logging}.
+ * NOTE: This file has been copied and slightly modified from
+ * {io.netty.util.internal.logging}.
  *
- * Logger factory which creates a
- * <a href="https://docs.oracle.com/javase/8/docs/technotes/guides/logging/">java.util.logging</a>
+ * Logger factory which creates a <a href=
+ * "https://docs.oracle.com/javase/8/docs/technotes/guides/logging/">java.util.logging</a>
  * logger.
+ *
+ * @deprecated Please use {@code io.micrometer.common.util.internal.logging.JdkLogger}
+ * instead.
  */
+@Deprecated
 public class JdkLoggerFactory extends InternalLoggerFactory {
 
     public static final InternalLoggerFactory INSTANCE = new JdkLoggerFactory();
@@ -50,4 +55,5 @@ public class JdkLoggerFactory extends InternalLoggerFactory {
     public InternalLogger newInstance(String name) {
         return new JdkLogger(Logger.getLogger(name));
     }
+
 }

@@ -25,11 +25,11 @@ import io.micrometer.appoptics.AppOpticsMeterRegistry;
 import io.micrometer.atlas.AtlasMeterRegistry;
 import io.micrometer.azuremonitor.AzureMonitorConfig;
 import io.micrometer.azuremonitor.AzureMonitorMeterRegistry;
+import io.micrometer.common.lang.Nullable;
 import io.micrometer.core.instrument.Clock;
 import io.micrometer.core.instrument.MeterRegistry;
 import io.micrometer.core.instrument.logging.LoggingMeterRegistry;
 import io.micrometer.core.instrument.logging.LoggingRegistryConfig;
-import io.micrometer.core.lang.Nullable;
 import io.micrometer.datadog.DatadogConfig;
 import io.micrometer.datadog.DatadogMeterRegistry;
 import io.micrometer.dynatrace.DynatraceConfig;
@@ -67,8 +67,10 @@ import java.net.InetSocketAddress;
 import java.time.Duration;
 
 public class SampleRegistries {
+
     public static MeterRegistry pickOne() {
-        throw new RuntimeException("Pick some other method on SampleRegistries to ship sample metrics to the system of your choice");
+        throw new RuntimeException(
+                "Pick some other method on SampleRegistries to ship sample metrics to the system of your choice");
     }
 
     public static AppOpticsMeterRegistry appOptics(String apiToken) {
@@ -92,9 +94,8 @@ public class SampleRegistries {
     }
 
     /**
-     * To use pushgateway instead:
-     * new PushGateway("localhost:9091").pushAdd(registry.getPrometheusRegistry(), "samples");
-     *
+     * To use pushgateway instead: new
+     * PushGateway("localhost:9091").pushAdd(registry.getPrometheusRegistry(), "samples");
      * @return A prometheus registry.
      */
     public static PrometheusMeterRegistry prometheus() {
@@ -122,7 +123,8 @@ public class SampleRegistries {
             });
 
             new Thread(server::start).run();
-        } catch (IOException e) {
+        }
+        catch (IOException e) {
             throw new RuntimeException(e);
         }
 
@@ -492,36 +494,38 @@ public class SampleRegistries {
     }
 
     /**
-     * @param serviceAccountJson The fully qualified path on the local file system to a service account's JSON.
-     * @param projectId          The Google Cloud project id found on the dropdown at the top of the Google Cloud console.
-     * @see <a href="https://cloud.google.com/monitoring/docs/reference/libraries#setting_up_authentication">Google Cloud authentication</a>
+     * @param serviceAccountJson The fully qualified path on the local file system to a
+     * service account's JSON.
+     * @param projectId The Google Cloud project id found on the dropdown at the top of
+     * the Google Cloud console.
+     * @see <a href=
+     * "https://cloud.google.com/monitoring/docs/reference/libraries#setting_up_authentication">Google
+     * Cloud authentication</a>
      * @return A Stackdriver registry.
      */
     public static StackdriverMeterRegistry stackdriver(String serviceAccountJson, String projectId) {
         try (InputStream credentials = new FileInputStream(new File(serviceAccountJson))) {
-            return StackdriverMeterRegistry
-                    .builder(new StackdriverConfig() {
-                        @Override
-                        public String projectId() {
-                            return projectId;
-                        }
+            return StackdriverMeterRegistry.builder(new StackdriverConfig() {
+                @Override
+                public String projectId() {
+                    return projectId;
+                }
 
-                        @Override
-                        public String get(String key) {
-                            return null;
-                        }
+                @Override
+                public String get(String key) {
+                    return null;
+                }
 
-                        @Override
-                        public Duration step() {
-                            return Duration.ofSeconds(10);
-                        }
-                    })
-                    .metricServiceSettings(() -> MetricServiceSettings.newBuilder()
-                            .setCredentialsProvider(FixedCredentialsProvider.create(ServiceAccountCredentials.fromStream(credentials)))
-                            .build()
-                    )
-                    .build();
-        } catch (IOException e) {
+                @Override
+                public Duration step() {
+                    return Duration.ofSeconds(10);
+                }
+            }).metricServiceSettings(() -> MetricServiceSettings.newBuilder()
+                    .setCredentialsProvider(
+                            FixedCredentialsProvider.create(ServiceAccountCredentials.fromStream(credentials)))
+                    .build()).build();
+        }
+        catch (IOException e) {
             throw new UncheckedIOException(e);
         }
     }
@@ -539,4 +543,5 @@ public class SampleRegistries {
             }
         }, Clock.SYSTEM);
     }
+
 }

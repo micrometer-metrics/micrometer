@@ -15,13 +15,13 @@
  */
 package io.micrometer.core.instrument.binder.logging;
 
+import io.micrometer.common.lang.NonNullApi;
+import io.micrometer.common.lang.NonNullFields;
 import io.micrometer.core.instrument.Counter;
 import io.micrometer.core.instrument.MeterRegistry;
 import io.micrometer.core.instrument.Tag;
 import io.micrometer.core.instrument.binder.BaseUnits;
 import io.micrometer.core.instrument.binder.MeterBinder;
-import io.micrometer.core.lang.NonNullApi;
-import io.micrometer.core.lang.NonNullFields;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.core.Filter;
 import org.apache.logging.log4j.core.LogEvent;
@@ -41,19 +41,18 @@ import static java.util.Collections.emptyList;
 /**
  * {@link MeterBinder} for Apache Log4j 2.
  *
- * @deprecated Scheduled for removal in 2.0.0, please use {@code io.micrometer.binder.logging.Log4j2Metrics}
  * @author Steven Sheehy
  * @author Johnny Lim
  * @since 1.1.0
  */
 @NonNullApi
 @NonNullFields
-@Deprecated
 public class Log4j2Metrics implements MeterBinder, AutoCloseable {
 
     private static final String METER_NAME = "log4j2.events";
 
     private final Iterable<Tag> tags;
+
     private final LoggerContext loggerContext;
 
     private List<MetricsFilter> metricsFilters = new ArrayList<>();
@@ -79,23 +78,23 @@ public class Log4j2Metrics implements MeterBinder, AutoCloseable {
         rootLoggerConfig.addFilter(createMetricsFilterAndStart(registry, rootLoggerConfig));
 
         loggerContext.getConfiguration().getLoggers().values().stream()
-            .filter(loggerConfig -> !loggerConfig.isAdditive())
-            .forEach(loggerConfig -> {
-                if (loggerConfig == rootLoggerConfig) {
-                    return;
-                }
-                Filter logFilter = loggerConfig.getFilter();
+                .filter(loggerConfig -> !loggerConfig.isAdditive()).forEach(loggerConfig -> {
+                    if (loggerConfig == rootLoggerConfig) {
+                        return;
+                    }
+                    Filter logFilter = loggerConfig.getFilter();
 
-                if ((logFilter instanceof CompositeFilter && Arrays.stream(((CompositeFilter) logFilter).getFiltersArray())
-                        .anyMatch(innerFilter -> innerFilter instanceof MetricsFilter))) {
-                    return;
-                }
+                    if ((logFilter instanceof CompositeFilter
+                            && Arrays.stream(((CompositeFilter) logFilter).getFiltersArray())
+                                    .anyMatch(innerFilter -> innerFilter instanceof MetricsFilter))) {
+                        return;
+                    }
 
-                if (logFilter instanceof MetricsFilter) {
-                    return;
-                }
-                loggerConfig.addFilter(createMetricsFilterAndStart(registry, loggerConfig));
-            });
+                    if (logFilter instanceof MetricsFilter) {
+                        return;
+                    }
+                    loggerConfig.addFilter(createMetricsFilterAndStart(registry, loggerConfig));
+                });
 
         loggerContext.updateLoggers(configuration);
     }
@@ -115,12 +114,11 @@ public class Log4j2Metrics implements MeterBinder, AutoCloseable {
             metricsFilters.forEach(rootLoggerConfig::removeFilter);
 
             loggerContext.getConfiguration().getLoggers().values().stream()
-                .filter(loggerConfig -> !loggerConfig.isAdditive())
-                .forEach(loggerConfig -> {
-                    if (loggerConfig != rootLoggerConfig) {
-                        metricsFilters.forEach(loggerConfig::removeFilter);
-                    }
-                });
+                    .filter(loggerConfig -> !loggerConfig.isAdditive()).forEach(loggerConfig -> {
+                        if (loggerConfig != rootLoggerConfig) {
+                            metricsFilters.forEach(loggerConfig::removeFilter);
+                        }
+                    });
 
             loggerContext.updateLoggers(configuration);
             metricsFilters.forEach(MetricsFilter::stop);
@@ -132,56 +130,38 @@ public class Log4j2Metrics implements MeterBinder, AutoCloseable {
     class MetricsFilter extends AbstractFilter {
 
         private final Counter fatalCounter;
+
         private final Counter errorCounter;
+
         private final Counter warnCounter;
+
         private final Counter infoCounter;
+
         private final Counter debugCounter;
+
         private final Counter traceCounter;
+
         private final boolean isAsyncLogger;
 
         MetricsFilter(MeterRegistry registry, Iterable<Tag> tags, boolean isAsyncLogger) {
             this.isAsyncLogger = isAsyncLogger;
-            fatalCounter = Counter.builder(METER_NAME)
-                    .tags(tags)
-                    .tags("level", "fatal")
-                    .description("Number of fatal level log events")
-                    .baseUnit(BaseUnits.EVENTS)
-                    .register(registry);
+            fatalCounter = Counter.builder(METER_NAME).tags(tags).tags("level", "fatal")
+                    .description("Number of fatal level log events").baseUnit(BaseUnits.EVENTS).register(registry);
 
-            errorCounter = Counter.builder(METER_NAME)
-                    .tags(tags)
-                    .tags("level", "error")
-                    .description("Number of error level log events")
-                    .baseUnit(BaseUnits.EVENTS)
-                    .register(registry);
+            errorCounter = Counter.builder(METER_NAME).tags(tags).tags("level", "error")
+                    .description("Number of error level log events").baseUnit(BaseUnits.EVENTS).register(registry);
 
-            warnCounter = Counter.builder(METER_NAME)
-                    .tags(tags)
-                    .tags("level", "warn")
-                    .description("Number of warn level log events")
-                    .baseUnit(BaseUnits.EVENTS)
-                    .register(registry);
+            warnCounter = Counter.builder(METER_NAME).tags(tags).tags("level", "warn")
+                    .description("Number of warn level log events").baseUnit(BaseUnits.EVENTS).register(registry);
 
-            infoCounter = Counter.builder(METER_NAME)
-                    .tags(tags)
-                    .tags("level", "info")
-                    .description("Number of info level log events")
-                    .baseUnit(BaseUnits.EVENTS)
-                    .register(registry);
+            infoCounter = Counter.builder(METER_NAME).tags(tags).tags("level", "info")
+                    .description("Number of info level log events").baseUnit(BaseUnits.EVENTS).register(registry);
 
-            debugCounter = Counter.builder(METER_NAME)
-                    .tags(tags)
-                    .tags("level", "debug")
-                    .description("Number of debug level log events")
-                    .baseUnit(BaseUnits.EVENTS)
-                    .register(registry);
+            debugCounter = Counter.builder(METER_NAME).tags(tags).tags("level", "debug")
+                    .description("Number of debug level log events").baseUnit(BaseUnits.EVENTS).register(registry);
 
-            traceCounter = Counter.builder(METER_NAME)
-                    .tags(tags)
-                    .tags("level", "trace")
-                    .description("Number of trace level log events")
-                    .baseUnit(BaseUnits.EVENTS)
-                    .register(registry);
+            traceCounter = Counter.builder(METER_NAME).tags(tags).tags("level", "trace")
+                    .description("Number of trace level log events").baseUnit(BaseUnits.EVENTS).register(registry);
         }
 
         @Override
@@ -194,35 +174,35 @@ public class Log4j2Metrics implements MeterBinder, AutoCloseable {
             return Result.NEUTRAL;
         }
 
-
         private boolean isAsyncLoggerAndEndOfBatch(LogEvent event) {
             return isAsyncLogger && event.isEndOfBatch();
         }
 
         private void incrementCounter(LogEvent event) {
             switch (event.getLevel().getStandardLevel()) {
-                case FATAL:
-                    fatalCounter.increment();
-                    break;
-                case ERROR:
-                    errorCounter.increment();
-                    break;
-                case WARN:
-                    warnCounter.increment();
-                    break;
-                case INFO:
-                    infoCounter.increment();
-                    break;
-                case DEBUG:
-                    debugCounter.increment();
-                    break;
-                case TRACE:
-                    traceCounter.increment();
-                    break;
-                default:
-                    break;
+            case FATAL:
+                fatalCounter.increment();
+                break;
+            case ERROR:
+                errorCounter.increment();
+                break;
+            case WARN:
+                warnCounter.increment();
+                break;
+            case INFO:
+                infoCounter.increment();
+                break;
+            case DEBUG:
+                debugCounter.increment();
+                break;
+            case TRACE:
+                traceCounter.increment();
+                break;
+            default:
+                break;
             }
         }
-    }
-}
 
+    }
+
+}

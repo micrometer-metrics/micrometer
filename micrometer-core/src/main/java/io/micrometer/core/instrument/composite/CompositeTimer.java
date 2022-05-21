@@ -29,11 +29,15 @@ import java.util.concurrent.TimeUnit;
 import java.util.function.Supplier;
 
 class CompositeTimer extends AbstractCompositeMeter<Timer> implements Timer {
+
     private final Clock clock;
+
     private final DistributionStatisticConfig distributionStatisticConfig;
+
     private final PauseDetector pauseDetector;
 
-    CompositeTimer(Id id, Clock clock, DistributionStatisticConfig distributionStatisticConfig, PauseDetector pauseDetector) {
+    CompositeTimer(Id id, Clock clock, DistributionStatisticConfig distributionStatisticConfig,
+            PauseDetector pauseDetector) {
         super(id);
         this.clock = clock;
         this.distributionStatisticConfig = distributionStatisticConfig;
@@ -42,12 +46,16 @@ class CompositeTimer extends AbstractCompositeMeter<Timer> implements Timer {
 
     @Override
     public void record(long amount, TimeUnit unit) {
-        forEachChild(ds -> ds.record(amount, unit));
+        for (Timer ds : getChildren()) {
+            ds.record(amount, unit);
+        }
     }
 
     @Override
     public void record(Duration duration) {
-        forEachChild(ds -> ds.record(duration));
+        for (Timer ds : getChildren()) {
+            ds.record(duration);
+        }
     }
 
     @Override
@@ -55,7 +63,8 @@ class CompositeTimer extends AbstractCompositeMeter<Timer> implements Timer {
         final long s = clock.monotonicTime();
         try {
             return f.get();
-        } finally {
+        }
+        finally {
             final long e = clock.monotonicTime();
             record(e - s, TimeUnit.NANOSECONDS);
         }
@@ -66,7 +75,8 @@ class CompositeTimer extends AbstractCompositeMeter<Timer> implements Timer {
         final long s = clock.monotonicTime();
         try {
             return f.call();
-        } finally {
+        }
+        finally {
             final long e = clock.monotonicTime();
             record(e - s, TimeUnit.NANOSECONDS);
         }
@@ -77,7 +87,8 @@ class CompositeTimer extends AbstractCompositeMeter<Timer> implements Timer {
         final long s = clock.monotonicTime();
         try {
             f.run();
-        } finally {
+        }
+        finally {
             final long e = clock.monotonicTime();
             record(e - s, TimeUnit.NANOSECONDS);
         }
@@ -116,17 +127,17 @@ class CompositeTimer extends AbstractCompositeMeter<Timer> implements Timer {
     @SuppressWarnings("ConstantConditions")
     @Override
     Timer registerNewMeter(MeterRegistry registry) {
-        Timer.Builder builder = Timer.builder(getId().getName())
-                .tags(getId().getTagsAsIterable())
+        Timer.Builder builder = Timer.builder(getId().getName()).tags(getId().getTagsAsIterable())
                 .description(getId().getDescription())
-                .maximumExpectedValue(Duration.ofNanos(distributionStatisticConfig.getMaximumExpectedValueAsDouble().longValue()))
-                .minimumExpectedValue(Duration.ofNanos(distributionStatisticConfig.getMinimumExpectedValueAsDouble().longValue()))
+                .maximumExpectedValue(
+                        Duration.ofNanos(distributionStatisticConfig.getMaximumExpectedValueAsDouble().longValue()))
+                .minimumExpectedValue(
+                        Duration.ofNanos(distributionStatisticConfig.getMinimumExpectedValueAsDouble().longValue()))
                 .publishPercentiles(distributionStatisticConfig.getPercentiles())
                 .publishPercentileHistogram(distributionStatisticConfig.isPercentileHistogram())
                 .distributionStatisticBufferLength(distributionStatisticConfig.getBufferLength())
                 .distributionStatisticExpiry(distributionStatisticConfig.getExpiry())
-                .percentilePrecision(distributionStatisticConfig.getPercentilePrecision())
-                .pauseDetector(pauseDetector);
+                .percentilePrecision(distributionStatisticConfig.getPercentilePrecision()).pauseDetector(pauseDetector);
 
         final double[] sloNanos = distributionStatisticConfig.getServiceLevelObjectiveBoundaries();
         if (sloNanos != null) {
@@ -139,4 +150,5 @@ class CompositeTimer extends AbstractCompositeMeter<Timer> implements Timer {
 
         return builder.register(registry);
     }
+
 }

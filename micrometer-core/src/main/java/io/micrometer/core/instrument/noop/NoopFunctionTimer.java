@@ -20,6 +20,7 @@ import io.micrometer.core.instrument.FunctionTimer;
 import java.util.concurrent.TimeUnit;
 
 public class NoopFunctionTimer extends NoopMeter implements FunctionTimer {
+
     public NoopFunctionTimer(Id id) {
         super(id);
     }
@@ -38,4 +39,5 @@ public class NoopFunctionTimer extends NoopMeter implements FunctionTimer {
     public TimeUnit baseTimeUnit() {
         return TimeUnit.NANOSECONDS;
     }
+
 }

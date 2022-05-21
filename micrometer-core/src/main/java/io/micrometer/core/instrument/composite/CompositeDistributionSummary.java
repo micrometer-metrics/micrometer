@@ -25,6 +25,7 @@ import io.micrometer.core.instrument.noop.NoopDistributionSummary;
 class CompositeDistributionSummary extends AbstractCompositeMeter<DistributionSummary> implements DistributionSummary {
 
     private final DistributionStatisticConfig distributionStatisticConfig;
+
     private final double scale;
 
     CompositeDistributionSummary(Meter.Id id, DistributionStatisticConfig distributionStatisticConfig, double scale) {
@@ -35,7 +36,9 @@ class CompositeDistributionSummary extends AbstractCompositeMeter<DistributionSu
 
     @Override
     public void record(double amount) {
-        forEachChild(ds -> ds.record(amount));
+        for (DistributionSummary ds : getChildren()) {
+            ds.record(amount);
+        }
     }
 
     @Override
@@ -66,10 +69,8 @@ class CompositeDistributionSummary extends AbstractCompositeMeter<DistributionSu
     @SuppressWarnings("ConstantConditions")
     @Override
     DistributionSummary registerNewMeter(MeterRegistry registry) {
-        return DistributionSummary.builder(getId().getName())
-                .tags(getId().getTagsAsIterable())
-                .description(getId().getDescription())
-                .baseUnit(getId().getBaseUnit())
+        return DistributionSummary.builder(getId().getName()).tags(getId().getTagsAsIterable())
+                .description(getId().getDescription()).baseUnit(getId().getBaseUnit())
                 .publishPercentiles(distributionStatisticConfig.getPercentiles())
                 .publishPercentileHistogram(distributionStatisticConfig.isPercentileHistogram())
                 .maximumExpectedValue(distributionStatisticConfig.getMaximumExpectedValueAsDouble())
@@ -77,8 +78,8 @@ class CompositeDistributionSummary extends AbstractCompositeMeter<DistributionSu
                 .distributionStatisticBufferLength(distributionStatisticConfig.getBufferLength())
                 .distributionStatisticExpiry(distributionStatisticConfig.getExpiry())
                 .percentilePrecision(distributionStatisticConfig.getPercentilePrecision())
-                .serviceLevelObjectives(distributionStatisticConfig.getServiceLevelObjectiveBoundaries())
-                .scale(scale)
+                .serviceLevelObjectives(distributionStatisticConfig.getServiceLevelObjectiveBoundaries()).scale(scale)
                 .register(registry);
     }
+
 }

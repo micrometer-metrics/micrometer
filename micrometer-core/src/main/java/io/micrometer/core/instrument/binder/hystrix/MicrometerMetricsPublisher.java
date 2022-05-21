@@ -20,19 +20,19 @@ import com.netflix.hystrix.strategy.metrics.HystrixMetricsPublisher;
 import com.netflix.hystrix.strategy.metrics.HystrixMetricsPublisherCollapser;
 import com.netflix.hystrix.strategy.metrics.HystrixMetricsPublisherCommand;
 import com.netflix.hystrix.strategy.metrics.HystrixMetricsPublisherThreadPool;
+import io.micrometer.common.lang.NonNullApi;
+import io.micrometer.common.lang.NonNullFields;
 import io.micrometer.core.instrument.MeterRegistry;
-import io.micrometer.core.lang.NonNullApi;
-import io.micrometer.core.lang.NonNullFields;
 
 /**
- * @deprecated Scheduled for removal in 2.0.0, please use {@code io.micrometer.binder.hystrix.MicrometerMetricsPublisher}
  * @author Clint Checketts
  */
 @NonNullApi
 @NonNullFields
-@Deprecated
 public class MicrometerMetricsPublisher extends HystrixMetricsPublisher {
+
     private final MeterRegistry registry;
+
     private HystrixMetricsPublisher metricsPublisher;
 
     public MicrometerMetricsPublisher(MeterRegistry registry, HystrixMetricsPublisher metricsPublisher) {
@@ -41,25 +41,28 @@ public class MicrometerMetricsPublisher extends HystrixMetricsPublisher {
     }
 
     @Override
-    public HystrixMetricsPublisherThreadPool getMetricsPublisherForThreadPool(HystrixThreadPoolKey threadPoolKey, HystrixThreadPoolMetrics metrics, HystrixThreadPoolProperties properties) {
-        final HystrixMetricsPublisherThreadPool metricsPublisherForThreadPool =
-            metricsPublisher.getMetricsPublisherForThreadPool(threadPoolKey, metrics, properties);
-        return new MicrometerMetricsPublisherThreadPool(registry, threadPoolKey, metrics, properties, metricsPublisherForThreadPool);
+    public HystrixMetricsPublisherThreadPool getMetricsPublisherForThreadPool(HystrixThreadPoolKey threadPoolKey,
+            HystrixThreadPoolMetrics metrics, HystrixThreadPoolProperties properties) {
+        final HystrixMetricsPublisherThreadPool metricsPublisherForThreadPool = metricsPublisher
+                .getMetricsPublisherForThreadPool(threadPoolKey, metrics, properties);
+        return new MicrometerMetricsPublisherThreadPool(registry, threadPoolKey, metrics, properties,
+                metricsPublisherForThreadPool);
     }
 
     @Override
-    public HystrixMetricsPublisherCollapser getMetricsPublisherForCollapser(HystrixCollapserKey collapserKey, HystrixCollapserMetrics metrics, HystrixCollapserProperties properties) {
+    public HystrixMetricsPublisherCollapser getMetricsPublisherForCollapser(HystrixCollapserKey collapserKey,
+            HystrixCollapserMetrics metrics, HystrixCollapserProperties properties) {
         return metricsPublisher.getMetricsPublisherForCollapser(collapserKey, metrics, properties);
     }
 
     @Override
     public HystrixMetricsPublisherCommand getMetricsPublisherForCommand(HystrixCommandKey commandKey,
-                                                                        HystrixCommandGroupKey commandGroupKey,
-                                                                        HystrixCommandMetrics metrics,
-                                                                        HystrixCircuitBreaker circuitBreaker,
-                                                                        HystrixCommandProperties properties) {
-        HystrixMetricsPublisherCommand metricsPublisherForCommand =
-            metricsPublisher.getMetricsPublisherForCommand(commandKey, commandGroupKey, metrics, circuitBreaker, properties);
-        return new MicrometerMetricsPublisherCommand(registry, commandKey, commandGroupKey, metrics, circuitBreaker, metricsPublisherForCommand);
+            HystrixCommandGroupKey commandGroupKey, HystrixCommandMetrics metrics, HystrixCircuitBreaker circuitBreaker,
+            HystrixCommandProperties properties) {
+        HystrixMetricsPublisherCommand metricsPublisherForCommand = metricsPublisher
+                .getMetricsPublisherForCommand(commandKey, commandGroupKey, metrics, circuitBreaker, properties);
+        return new MicrometerMetricsPublisherCommand(registry, commandKey, commandGroupKey, metrics, circuitBreaker,
+                metricsPublisherForCommand);
     }
+
 }

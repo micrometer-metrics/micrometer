@@ -16,29 +16,30 @@
 package io.micrometer.wavefront;
 
 import com.wavefront.sdk.entities.histograms.WavefrontHistogramImpl;
+import io.micrometer.common.lang.Nullable;
 import io.micrometer.core.instrument.Clock;
 import io.micrometer.core.instrument.cumulative.CumulativeDistributionSummary;
 import io.micrometer.core.instrument.distribution.DistributionStatisticConfig;
-import io.micrometer.core.lang.Nullable;
 
 import java.util.Collections;
 import java.util.List;
 
 /**
- * DistributionSummary that sends histogram distributions to Wavefront using WavefrontHistogramImpl.
+ * DistributionSummary that sends histogram distributions to Wavefront using
+ * WavefrontHistogramImpl.
  *
  * @author Han Zhang
  */
 class WavefrontDistributionSummary extends CumulativeDistributionSummary {
+
     @Nullable
     private final WavefrontHistogramImpl delegate;
 
-    WavefrontDistributionSummary(Id id, Clock clock,
-                                 DistributionStatisticConfig distributionStatisticConfig,
-                                 double scale) {
+    WavefrontDistributionSummary(Id id, Clock clock, DistributionStatisticConfig distributionStatisticConfig,
+            double scale) {
         super(id, clock, distributionStatisticConfig, scale, false);
-        delegate = distributionStatisticConfig.isPublishingHistogram() ?
-            new WavefrontHistogramImpl(clock::wallTime) : null;
+        delegate = distributionStatisticConfig.isPublishingHistogram() ? new WavefrontHistogramImpl(clock::wallTime)
+                : null;
     }
 
     @Override
@@ -52,7 +53,8 @@ class WavefrontDistributionSummary extends CumulativeDistributionSummary {
     List<WavefrontHistogramImpl.Distribution> flushDistributions() {
         if (delegate == null) {
             return Collections.emptyList();
-        } else {
+        }
+        else {
             return delegate.flushDistributions();
         }
     }
@@ -60,4 +62,5 @@ class WavefrontDistributionSummary extends CumulativeDistributionSummary {
     boolean isPublishingHistogram() {
         return delegate != null;
     }
+
 }

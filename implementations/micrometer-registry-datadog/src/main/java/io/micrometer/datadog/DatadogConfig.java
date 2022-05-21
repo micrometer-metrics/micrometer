@@ -15,11 +15,12 @@
  */
 package io.micrometer.datadog;
 
+import io.micrometer.common.lang.Nullable;
 import io.micrometer.core.instrument.config.validate.Validated;
 import io.micrometer.core.instrument.step.StepRegistryConfig;
-import io.micrometer.core.lang.Nullable;
 
-import static io.micrometer.core.instrument.config.MeterRegistryConfigValidator.*;
+import static io.micrometer.core.instrument.config.MeterRegistryConfigValidator.checkAll;
+import static io.micrometer.core.instrument.config.MeterRegistryConfigValidator.checkRequired;
 import static io.micrometer.core.instrument.config.validate.PropertyValidator.*;
 
 /**
@@ -39,8 +40,8 @@ public interface DatadogConfig extends StepRegistryConfig {
     }
 
     /**
-     * @return The Datadog application key. This is only required if you care for metadata like base units, description,
-     * and meter type to be published to Datadog.
+     * @return The Datadog application key. This is only required if you care for metadata
+     * like base units, description, and meter type to be published to Datadog.
      */
     @Nullable
     default String applicationKey() {
@@ -56,16 +57,16 @@ public interface DatadogConfig extends StepRegistryConfig {
     }
 
     /**
-     * @return The URI to ship metrics to. If you need to publish metrics to an internal proxy en route to
-     * datadoghq, you can define the location of the proxy with this.
+     * @return The URI to ship metrics to. If you need to publish metrics to an internal
+     * proxy en route to datadoghq, you can define the location of the proxy with this.
      */
     default String uri() {
         return getUrlString(this, "uri").orElse("https://api.datadoghq.com");
     }
 
     /**
-     * @return {@code true} if meter descriptions should be sent to Datadog.
-     * Turn this off to minimize the amount of data sent on each scrape.
+     * @return {@code true} if meter descriptions should be sent to Datadog. Turn this off
+     * to minimize the amount of data sent on each scrape.
      */
     default boolean descriptions() {
         return getBoolean(this, "descriptions").orElse(true);
@@ -73,10 +74,8 @@ public interface DatadogConfig extends StepRegistryConfig {
 
     @Override
     default Validated<?> validate() {
-        return checkAll(this,
-                c -> StepRegistryConfig.validate(c),
-                checkRequired("apiKey", DatadogConfig::apiKey),
-                checkRequired("uri", DatadogConfig::uri)
-        );
+        return checkAll(this, c -> StepRegistryConfig.validate(c), checkRequired("apiKey", DatadogConfig::apiKey),
+                checkRequired("uri", DatadogConfig::uri));
     }
+
 }

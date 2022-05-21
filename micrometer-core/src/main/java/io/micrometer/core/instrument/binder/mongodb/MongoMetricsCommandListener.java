@@ -17,18 +17,17 @@ package io.micrometer.core.instrument.binder.mongodb;
 
 import com.mongodb.client.MongoClient;
 import com.mongodb.event.*;
+import io.micrometer.common.lang.NonNullApi;
+import io.micrometer.common.lang.NonNullFields;
 import io.micrometer.core.annotation.Incubating;
 import io.micrometer.core.instrument.MeterRegistry;
 import io.micrometer.core.instrument.Timer;
-import io.micrometer.core.lang.NonNullApi;
-import io.micrometer.core.lang.NonNullFields;
 
 import java.util.concurrent.TimeUnit;
 
 /**
  * {@link CommandListener} for collecting command metrics from {@link MongoClient}.
  *
- * @deprecated Scheduled for removal in 2.0.0, please use {@code io.micrometer.binder.mongodb.MongoMetricsCommandListener}
  * @author Christophe Bornet
  * @author Chris Bono
  * @since 1.2.0
@@ -36,7 +35,6 @@ import java.util.concurrent.TimeUnit;
 @NonNullApi
 @NonNullFields
 @Incubating(since = "1.2.0")
-@Deprecated
 public class MongoMetricsCommandListener implements CommandListener {
 
     private final MeterRegistry registry;
@@ -45,7 +43,6 @@ public class MongoMetricsCommandListener implements CommandListener {
 
     /**
      * Constructs a command listener that uses the default tags provider.
-     *
      * @param registry meter registry
      */
     public MongoMetricsCommandListener(MeterRegistry registry) {
@@ -54,9 +51,9 @@ public class MongoMetricsCommandListener implements CommandListener {
 
     /**
      * Constructs a command listener with a custom tags provider.
-     *
      * @param registry meter registry
-     * @param tagsProvider provides tags to be associated with metrics for the given Mongo command
+     * @param tagsProvider provides tags to be associated with metrics for the given Mongo
+     * command
      * @since 1.7.0
      */
     public MongoMetricsCommandListener(MeterRegistry registry, MongoCommandTagsProvider tagsProvider) {
@@ -80,10 +77,8 @@ public class MongoMetricsCommandListener implements CommandListener {
     }
 
     private void timeCommand(CommandEvent event, long elapsedTimeInNanoseconds) {
-        Timer.builder("mongodb.driver.commands")
-                .description("Timer of mongodb commands")
-                .tags(tagsProvider.commandTags(event))
-                .register(registry)
+        Timer.builder("mongodb.driver.commands").description("Timer of mongodb commands")
+                .tags(tagsProvider.commandTags(event)).register(registry)
                 .record(elapsedTimeInNanoseconds, TimeUnit.NANOSECONDS);
     }
 

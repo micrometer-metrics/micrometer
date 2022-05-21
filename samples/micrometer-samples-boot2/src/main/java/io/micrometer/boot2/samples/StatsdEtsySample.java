@@ -21,12 +21,15 @@ import org.springframework.boot.builder.SpringApplicationBuilder;
 import org.springframework.scheduling.annotation.EnableScheduling;
 
 /**
- * Can be used as a quick test of statsd functionality, with e.g. the NPM module statsd-logger.
+ * Can be used as a quick test of statsd functionality, with e.g. the NPM module
+ * statsd-logger.
  */
 @SpringBootApplication(scanBasePackageClasses = PersonController.class)
 @EnableScheduling
 public class StatsdEtsySample {
+
     public static void main(String[] args) {
         new SpringApplicationBuilder(StatsdEtsySample.class).profiles("statsd-etsy").run(args);
     }
+
 }

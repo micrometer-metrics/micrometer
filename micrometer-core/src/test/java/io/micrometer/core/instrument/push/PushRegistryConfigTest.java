@@ -27,6 +27,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 class PushRegistryConfigTest {
+
     private final Map<String, String> props = new HashMap<>();
 
     private final PushRegistryConfig config = new PushRegistryConfig() {
@@ -43,7 +44,8 @@ class PushRegistryConfigTest {
 
     @Test
     void invalid() {
-        props.put("push.enabled", "nope"); // anything but "true" results in false but is still valid
+        props.put("push.enabled", "nope"); // anything but "true" results in false but is
+                                           // still valid
         props.put("push.numThreads", "1.1");
         props.put("push.connectTimeout", "1w");
         props.put("push.readTimeout", "1w");
@@ -57,12 +59,8 @@ class PushRegistryConfigTest {
         List<Validated.Invalid<?>> failures = config.validate().failures();
 
         assertThat(failures.size()).isEqualTo(5);
-        assertThat(failures.stream().map(Validated.Invalid::getMessage))
-                .containsOnly(
-                        "must be a valid duration",
-                        "must contain a valid time unit",
-                        "must be an integer"
-                );
+        assertThat(failures.stream().map(Validated.Invalid::getMessage)).containsOnly("must be a valid duration",
+                "must contain a valid time unit", "must be an integer");
 
         assertThatThrownBy(config::batchSize).isInstanceOf(ValidationException.class);
     }
@@ -77,4 +75,5 @@ class PushRegistryConfigTest {
 
         assertThat(config.validate().isValid()).isTrue();
     }
+
 }

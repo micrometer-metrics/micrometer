@@ -26,6 +26,7 @@ import static org.assertj.core.api.Assertions.assertThat;
  * @author Johnny Lim
  */
 class SignalFxNamingConventionTest {
+
     private SignalFxNamingConvention convention = new SignalFxNamingConvention();
 
     @Test
@@ -37,7 +38,7 @@ class SignalFxNamingConventionTest {
     }
 
     @Test
-    void tagKeyWhenKeyHasBlacklistedCharShouldSanitize() {
+    void tagKeyWhenKeyHasDenylistedCharShouldSanitize() {
         assertThat(convention.tagKey("a.b")).isEqualTo("a_b");
     }
 

@@ -15,6 +15,8 @@
  */
 package io.micrometer.core.instrument.binder.jvm;
 
+import io.micrometer.common.lang.NonNullApi;
+import io.micrometer.common.lang.NonNullFields;
 import io.micrometer.core.annotation.Incubating;
 import io.micrometer.core.instrument.Gauge;
 import io.micrometer.core.instrument.MeterRegistry;
@@ -22,8 +24,6 @@ import io.micrometer.core.instrument.Tag;
 import io.micrometer.core.instrument.Tags;
 import io.micrometer.core.instrument.binder.BaseUnits;
 import io.micrometer.core.instrument.binder.MeterBinder;
-import io.micrometer.core.lang.NonNullApi;
-import io.micrometer.core.lang.NonNullFields;
 
 import java.io.File;
 
@@ -34,15 +34,19 @@ import static java.util.Collections.emptyList;
  *
  * @author jmcshane
  * @author Johnny Lim
- * @deprecated use {@code io.micrometer.binder.system.DiskSpaceMetrics} instead.
+ * @deprecated use {@link io.micrometer.core.instrument.binder.system.DiskSpaceMetrics}
+ * instead.
  */
 @Incubating(since = "1.1.0")
 @NonNullApi
 @NonNullFields
 @Deprecated
 public class DiskSpaceMetrics implements MeterBinder {
+
     private final Iterable<Tag> tags;
+
     private final File path;
+
     private final String absolutePath;
 
     public DiskSpaceMetrics(File path) {
@@ -58,17 +62,10 @@ public class DiskSpaceMetrics implements MeterBinder {
     @Override
     public void bindTo(MeterRegistry registry) {
         Iterable<Tag> tagsWithPath = Tags.concat(tags, "path", absolutePath);
-        Gauge.builder("disk.free", path, File::getUsableSpace)
-                .tags(tagsWithPath)
-                .description("Usable space for path")
-                .baseUnit(BaseUnits.BYTES)
-                .strongReference(true)
-                .register(registry);
-        Gauge.builder("disk.total", path, File::getTotalSpace)
-                .tags(tagsWithPath)
-                .description("Total space for path")
-                .baseUnit(BaseUnits.BYTES)
-                .strongReference(true)
-                .register(registry);
+        Gauge.builder("disk.free", path, File::getUsableSpace).tags(tagsWithPath).description("Usable space for path")
+                .baseUnit(BaseUnits.BYTES).strongReference(true).register(registry);
+        Gauge.builder("disk.total", path, File::getTotalSpace).tags(tagsWithPath).description("Total space for path")
+                .baseUnit(BaseUnits.BYTES).strongReference(true).register(registry);
     }
+
 }

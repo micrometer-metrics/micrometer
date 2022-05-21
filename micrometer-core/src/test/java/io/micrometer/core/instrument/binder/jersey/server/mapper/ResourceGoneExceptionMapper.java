@@ -15,7 +15,6 @@
  */
 package io.micrometer.core.instrument.binder.jersey.server.mapper;
 
-
 import io.micrometer.core.instrument.binder.jersey.server.exception.ResourceGoneException;
 
 import javax.ws.rs.core.Response;
@@ -28,4 +27,5 @@ public class ResourceGoneExceptionMapper implements ExceptionMapper<ResourceGone
     public Response toResponse(ResourceGoneException exception) {
         return Response.status(Status.GONE).build();
     }
+
 }

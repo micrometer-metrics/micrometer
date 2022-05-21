@@ -24,7 +24,9 @@ import java.util.Map;
 import static org.assertj.core.api.Assertions.assertThat;
 
 class ElasticConfigTest {
+
     private final Map<String, String> props = new HashMap<>();
+
     private final ElasticConfig config = props::get;
 
     @Test
@@ -33,10 +35,7 @@ class ElasticConfigTest {
         props.put("elastic.indexDateFormat", "invalid");
 
         assertThat(config.validate().failures().stream().map(Validated.Invalid::getMessage))
-                .containsExactlyInAnyOrder(
-                        "must be a valid URL",
-                        "invalid date format"
-                );
+                .containsExactlyInAnyOrder("must be a valid URL", "invalid date format");
     }
 
     @Test
@@ -61,4 +60,5 @@ class ElasticConfigTest {
     void valid() {
         assertThat(config.validate().isValid()).isTrue();
     }
+
 }

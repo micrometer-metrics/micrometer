@@ -33,8 +33,7 @@ class JCacheMetricsCompatibilityTest extends CacheMeterBinderCompatibilityKit<Ca
 
         MutableConfiguration<String, String> configuration = new MutableConfiguration<>();
         configuration.setTypes(String.class, String.class)
-                .setExpiryPolicyFactory(AccessedExpiryPolicy.factoryOf(ONE_HOUR))
-                .setStatisticsEnabled(true);
+                .setExpiryPolicyFactory(AccessedExpiryPolicy.factoryOf(ONE_HOUR)).setStatisticsEnabled(true);
 
         return cacheManager.createCache("mycache", configuration);
     }
@@ -53,4 +52,5 @@ class JCacheMetricsCompatibilityTest extends CacheMeterBinderCompatibilityKit<Ca
     public String get(String key) {
         return cache.get(key);
     }
+
 }

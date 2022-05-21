@@ -19,8 +19,8 @@ import com.sun.net.httpserver.HttpHandler;
 import com.sun.net.httpserver.HttpServer;
 import io.micrometer.core.instrument.Clock;
 import io.micrometer.core.instrument.MeterRegistry;
-import io.micrometer.binder.jersey.server.DefaultJerseyTagsProvider;
-import io.micrometer.binder.jersey.server.MetricsApplicationEventListener;
+import io.micrometer.core.instrument.binder.jersey.server.DefaultJerseyTagsProvider;
+import io.micrometer.core.instrument.binder.jersey.server.MetricsApplicationEventListener;
 import io.micrometer.core.instrument.logging.LoggingMeterRegistry;
 import io.micrometer.core.instrument.logging.LoggingRegistryConfig;
 import jakarta.ws.rs.core.Application;
@@ -47,9 +47,12 @@ public class Jersey3Main {
         }, Clock.SYSTEM);
         HttpServer server = HttpServer.create(new InetSocketAddress(8080), 0);
         Runtime.getRuntime().addShutdownHook(new Thread(() -> server.stop(0)));
-        Application application = new ResourceConfig(HelloWorldResource.class).register(new MetricsApplicationEventListener(registry, new DefaultJerseyTagsProvider(), "http.server.requests", true));
+        Application application = new ResourceConfig(HelloWorldResource.class)
+                .register(new MetricsApplicationEventListener(registry, new DefaultJerseyTagsProvider(),
+                        "http.server.requests", true));
         server.createContext("/", RuntimeDelegate.getInstance().createEndpoint(application, HttpHandler.class));
 
         server.start();
     }
+
 }

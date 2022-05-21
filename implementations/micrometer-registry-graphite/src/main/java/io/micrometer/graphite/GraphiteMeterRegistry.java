@@ -17,21 +17,23 @@ package io.micrometer.graphite;
 
 import com.codahale.metrics.MetricRegistry;
 import com.codahale.metrics.graphite.*;
+import io.micrometer.common.lang.Nullable;
 import io.micrometer.core.instrument.Clock;
 import io.micrometer.core.instrument.dropwizard.DropwizardClock;
 import io.micrometer.core.instrument.dropwizard.DropwizardMeterRegistry;
 import io.micrometer.core.instrument.util.HierarchicalNameMapper;
-import io.micrometer.core.lang.Nullable;
 
 import java.util.concurrent.TimeUnit;
 
 public class GraphiteMeterRegistry extends DropwizardMeterRegistry {
 
     private final GraphiteConfig config;
+
     private final GraphiteReporter reporter;
 
     public GraphiteMeterRegistry(GraphiteConfig config, Clock clock) {
-        this(config, clock, config.graphiteTagsEnabled() ? new GraphiteDimensionalNameMapper() : new GraphiteHierarchicalNameMapper(config.tagsAsPrefix()));
+        this(config, clock, config.graphiteTagsEnabled() ? new GraphiteDimensionalNameMapper()
+                : new GraphiteHierarchicalNameMapper(config.tagsAsPrefix()));
     }
 
     public GraphiteMeterRegistry(GraphiteConfig config, Clock clock, HierarchicalNameMapper nameMapper) {
@@ -39,39 +41,38 @@ public class GraphiteMeterRegistry extends DropwizardMeterRegistry {
     }
 
     public GraphiteMeterRegistry(GraphiteConfig config, Clock clock, HierarchicalNameMapper nameMapper,
-                                 MetricRegistry metricRegistry) {
+            MetricRegistry metricRegistry) {
         this(config, clock, nameMapper, metricRegistry, defaultGraphiteReporter(config, clock, metricRegistry));
     }
 
     public GraphiteMeterRegistry(GraphiteConfig config, Clock clock, HierarchicalNameMapper nameMapper,
-                                 MetricRegistry metricRegistry, GraphiteReporter reporter) {
+            MetricRegistry metricRegistry, GraphiteReporter reporter) {
         super(config, metricRegistry, nameMapper, clock);
 
         this.config = config;
-        config().namingConvention(config.graphiteTagsEnabled() ? new GraphiteDimensionalNamingConvention() : new GraphiteHierarchicalNamingConvention());
+        config().namingConvention(config.graphiteTagsEnabled() ? new GraphiteDimensionalNamingConvention()
+                : new GraphiteHierarchicalNamingConvention());
         this.reporter = reporter;
 
         start();
     }
 
-    private static GraphiteReporter defaultGraphiteReporter(GraphiteConfig config, Clock clock, MetricRegistry metricRegistry) {
-        return GraphiteReporter.forRegistry(metricRegistry)
-                .withClock(new DropwizardClock(clock))
-                .convertRatesTo(config.rateUnits())
-                .convertDurationsTo(config.durationUnits())
-                .addMetricAttributesAsTags(config.graphiteTagsEnabled())
-                .build(getGraphiteSender(config));
+    private static GraphiteReporter defaultGraphiteReporter(GraphiteConfig config, Clock clock,
+            MetricRegistry metricRegistry) {
+        return GraphiteReporter.forRegistry(metricRegistry).withClock(new DropwizardClock(clock))
+                .convertRatesTo(config.rateUnits()).convertDurationsTo(config.durationUnits())
+                .addMetricAttributesAsTags(config.graphiteTagsEnabled()).build(getGraphiteSender(config));
     }
 
     private static GraphiteSender getGraphiteSender(GraphiteConfig config) {
         switch (config.protocol()) {
-            case PLAINTEXT:
-                return new Graphite(config.host(), config.port());
-            case UDP:
-                return new GraphiteUDP(config.host(), config.port());
-            case PICKLED:
-            default:
-                return new PickledGraphite(config.host(), config.port());
+        case PLAINTEXT:
+            return new Graphite(config.host(), config.port());
+        case UDP:
+            return new GraphiteUDP(config.host(), config.port());
+        case PICKLED:
+        default:
+            return new PickledGraphite(config.host(), config.port());
         }
     }
 
@@ -100,4 +101,5 @@ public class GraphiteMeterRegistry extends DropwizardMeterRegistry {
     protected Double nullGaugeValue() {
         return null;
     }
+
 }

@@ -22,6 +22,7 @@ package io.micrometer.dynatrace;
  * @since 1.8.0
  */
 public enum DynatraceApiVersion {
-    V1,
-    V2
+
+    V1, V2
+
 }

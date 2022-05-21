@@ -20,11 +20,11 @@ import com.microsoft.applicationinsights.TelemetryConfiguration;
 import com.microsoft.applicationinsights.telemetry.MetricTelemetry;
 import com.microsoft.applicationinsights.telemetry.SeverityLevel;
 import com.microsoft.applicationinsights.telemetry.TraceTelemetry;
+import io.micrometer.common.lang.Nullable;
+import io.micrometer.common.util.StringUtils;
 import io.micrometer.core.instrument.*;
 import io.micrometer.core.instrument.step.StepMeterRegistry;
 import io.micrometer.core.instrument.util.NamedThreadFactory;
-import io.micrometer.core.instrument.util.StringUtils;
-import io.micrometer.core.lang.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -43,11 +43,15 @@ import static java.util.stream.StreamSupport.stream;
  * @since 1.1.0
  */
 public class AzureMonitorMeterRegistry extends StepMeterRegistry {
+
     private static final ThreadFactory DEFAULT_THREAD_FACTORY = new NamedThreadFactory("azure-metrics-publisher");
+
     private static final String SDK_TELEMETRY_SYNTHETIC_SOURCE_NAME = "SDKTelemetry";
+
     private static final String SDK_VERSION = "java:micrometer";
 
     private final Logger logger = LoggerFactory.getLogger(AzureMonitorMeterRegistry.class);
+
     private final TelemetryClient client;
 
     public AzureMonitorMeterRegistry(AzureMonitorConfig config, Clock clock) {
@@ -55,8 +59,7 @@ public class AzureMonitorMeterRegistry extends StepMeterRegistry {
     }
 
     private AzureMonitorMeterRegistry(AzureMonitorConfig config, Clock clock,
-                                      TelemetryConfiguration telemetryConfiguration,
-                                      ThreadFactory threadFactory) {
+            TelemetryConfiguration telemetryConfiguration, ThreadFactory threadFactory) {
         super(config, clock);
 
         config().namingConvention(new AzureMonitorNamingConvention());
@@ -78,6 +81,7 @@ public class AzureMonitorMeterRegistry extends StepMeterRegistry {
     @Override
     protected void publish() {
         for (Meter meter : getMeters()) {
+            // @formatter:off
             meter.match(
                     this::trackGauge,
                     this::trackCounter,
@@ -99,17 +103,17 @@ public class AzureMonitorMeterRegistry extends StepMeterRegistry {
                     client.trackTrace(traceTelemetry);
                     client.flush();
                 }
+                // @formatter:on
             });
         }
     }
 
     private Stream<MetricTelemetry> trackMeter(Meter meter) {
-        return stream(meter.measure().spliterator(), false)
-                .map(ms -> {
-                    MetricTelemetry mt = createMetricTelemetry(meter, ms.getStatistic().toString().toLowerCase());
-                    mt.setValue(ms.getValue());
-                    return mt;
-                });
+        return stream(meter.measure().spliterator(), false).map(ms -> {
+            MetricTelemetry mt = createMetricTelemetry(meter, ms.getStatistic().toString().toLowerCase());
+            mt.setValue(ms.getValue());
+            return mt;
+        });
     }
 
     private Stream<MetricTelemetry> trackLongTaskTimer(LongTaskTimer timer) {
@@ -190,8 +194,8 @@ public class AzureMonitorMeterRegistry extends StepMeterRegistry {
         MetricTelemetry mt = new MetricTelemetry();
 
         Meter.Id id = meter.getId();
-        mt.setName(config().namingConvention().name(id.getName() + (suffix == null ? "" : "." + suffix),
-                id.getType(), id.getBaseUnit()));
+        mt.setName(config().namingConvention().name(id.getName() + (suffix == null ? "" : "." + suffix), id.getType(),
+                id.getBaseUnit()));
 
         for (Tag tag : getConventionTags(meter.getId())) {
             mt.getContext().getProperties().putIfAbsent(tag.getKey(), tag.getValue());
@@ -220,9 +224,11 @@ public class AzureMonitorMeterRegistry extends StepMeterRegistry {
     }
 
     public static class Builder {
+
         private final AzureMonitorConfig config;
 
         private Clock clock = Clock.SYSTEM;
+
         private ThreadFactory threadFactory = DEFAULT_THREAD_FACTORY;
 
         @Nullable
@@ -249,7 +255,10 @@ public class AzureMonitorMeterRegistry extends StepMeterRegistry {
 
         public AzureMonitorMeterRegistry build() {
             return new AzureMonitorMeterRegistry(config, clock,
-                    telemetryConfiguration == null ? TelemetryConfiguration.getActive() : telemetryConfiguration, threadFactory);
+                    telemetryConfiguration == null ? TelemetryConfiguration.getActive() : telemetryConfiguration,
+                    threadFactory);
         }
+
     }
+
 }

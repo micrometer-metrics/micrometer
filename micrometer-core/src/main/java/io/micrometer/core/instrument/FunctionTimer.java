@@ -15,7 +15,7 @@
  */
 package io.micrometer.core.instrument;
 
-import io.micrometer.core.lang.Nullable;
+import io.micrometer.common.lang.Nullable;
 
 import java.util.Arrays;
 import java.util.concurrent.TimeUnit;
@@ -23,15 +23,15 @@ import java.util.function.ToDoubleFunction;
 import java.util.function.ToLongFunction;
 
 /**
- * A timer that tracks two monotonically increasing functions: one representing the count of events and one
- * representing the total time spent in every event.
+ * A timer that tracks two monotonically increasing functions: one representing the count
+ * of events and one representing the total time spent in every event.
  *
  * @author Jon Schneider
  */
 public interface FunctionTimer extends Meter {
+
     static <T> Builder<T> builder(String name, T obj, ToLongFunction<T> countFunction,
-                                  ToDoubleFunction<T> totalTimeFunction,
-                                  TimeUnit totalTimeFunctionUnit) {
+            ToDoubleFunction<T> totalTimeFunction, TimeUnit totalTimeFunctionUnit) {
         return new Builder<>(name, obj, countFunction, totalTimeFunction, totalTimeFunctionUnit);
     }
 
@@ -42,7 +42,6 @@ public interface FunctionTimer extends Meter {
 
     /**
      * The total time of all occurrences of the timed event.
-     *
      * @param unit The base unit of time to scale the total to.
      * @return The total time of all occurrences of the timed event.
      */
@@ -58,16 +57,15 @@ public interface FunctionTimer extends Meter {
     }
 
     /**
-     * @return The base time unit of the timer to which all published metrics will be scaled
+     * @return The base time unit of the timer to which all published metrics will be
+     * scaled
      */
     TimeUnit baseTimeUnit();
 
     @Override
     default Iterable<Measurement> measure() {
-        return Arrays.asList(
-                new Measurement(this::count, Statistic.COUNT),
-                new Measurement(() -> totalTime(baseTimeUnit()), Statistic.TOTAL_TIME)
-        );
+        return Arrays.asList(new Measurement(this::count, Statistic.COUNT),
+                new Measurement(() -> totalTime(baseTimeUnit()), Statistic.TOTAL_TIME));
     }
 
     /**
@@ -76,10 +74,15 @@ public interface FunctionTimer extends Meter {
      * @param <T> The type of the state object from which the timer values are extracted.
      */
     class Builder<T> {
+
         private final String name;
+
         private final ToLongFunction<T> countFunction;
+
         private final ToDoubleFunction<T> totalTimeFunction;
+
         private final TimeUnit totalTimeFunctionUnit;
+
         private Tags tags = Tags.empty();
 
         @Nullable
@@ -88,10 +91,8 @@ public interface FunctionTimer extends Meter {
         @Nullable
         private String description;
 
-        private Builder(String name, @Nullable T obj,
-                        ToLongFunction<T> countFunction,
-                        ToDoubleFunction<T> totalTimeFunction,
-                        TimeUnit totalTimeFunctionUnit) {
+        private Builder(String name, @Nullable T obj, ToLongFunction<T> countFunction,
+                ToDoubleFunction<T> totalTimeFunction, TimeUnit totalTimeFunctionUnit) {
             this.name = name;
             this.obj = obj;
             this.countFunction = countFunction;
@@ -100,7 +101,8 @@ public interface FunctionTimer extends Meter {
         }
 
         /**
-         * @param tags Must be an even number of arguments representing key/value pairs of tags.
+         * @param tags Must be an even number of arguments representing key/value pairs of
+         * tags.
          * @return The function timer builder with added tags.
          */
         public Builder<T> tags(String... tags) {
@@ -117,7 +119,7 @@ public interface FunctionTimer extends Meter {
         }
 
         /**
-         * @param key   The tag key.
+         * @param key The tag key.
          * @param value The tag value.
          * @return The function timer builder with a single added tag.
          */
@@ -136,16 +138,19 @@ public interface FunctionTimer extends Meter {
         }
 
         /**
-         * Add the function timer to a single registry, or return an existing function timer in that registry. The returned
-         * function timer will be unique for each registry, but each registry is guaranteed to only create one function timer
-         * for the same combination of name and tags.
-         *
-         * @param registry A registry to add the function timer to, if it doesn't already exist.
+         * Add the function timer to a single registry, or return an existing function
+         * timer in that registry. The returned function timer will be unique for each
+         * registry, but each registry is guaranteed to only create one function timer for
+         * the same combination of name and tags.
+         * @param registry A registry to add the function timer to, if it doesn't already
+         * exist.
          * @return A new or existing function timer.
          */
         public FunctionTimer register(MeterRegistry registry) {
-            return registry.more().timer(new Meter.Id(name, tags, null, description, Type.TIMER), obj, countFunction, totalTimeFunction,
-                    totalTimeFunctionUnit);
+            return registry.more().timer(new Meter.Id(name, tags, null, description, Type.TIMER), obj, countFunction,
+                    totalTimeFunction, totalTimeFunctionUnit);
         }
+
     }
+
 }

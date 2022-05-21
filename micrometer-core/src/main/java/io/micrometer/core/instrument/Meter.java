@@ -15,10 +15,10 @@
  */
 package io.micrometer.core.instrument;
 
+import io.micrometer.common.lang.Nullable;
 import io.micrometer.core.annotation.Incubating;
 import io.micrometer.core.instrument.config.NamingConvention;
 import io.micrometer.core.instrument.distribution.HistogramGauges;
-import io.micrometer.core.lang.Nullable;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -37,6 +37,7 @@ import static java.util.Collections.singletonList;
  * @author Jon Schneider
  */
 public interface Meter {
+
     static Builder builder(String name, Type type, Iterable<Measurement> measurements) {
         return new Builder(name, type, measurements);
     }
@@ -47,128 +48,130 @@ public interface Meter {
     Id getId();
 
     /**
-     * Get a set of measurements. Should always return the same number of measurements and in
-     * the same order, regardless of the level of activity or the lack thereof.
-     *
-     * @return The set of measurements that represents the instantaneous value of this meter.
+     * Get a set of measurements. Should always return the same number of measurements and
+     * in the same order, regardless of the level of activity or the lack thereof.
+     * @return The set of measurements that represents the instantaneous value of this
+     * meter.
      */
     Iterable<Measurement> measure();
 
     /**
-     * Custom meters may emit metrics like one of these types without implementing
-     * the corresponding interface. For example, a heisen-counter like structure
-     * will emit the same metric as a {@link Counter} but does not have the same
-     * increment-driven API.
+     * Custom meters may emit metrics like one of these types without implementing the
+     * corresponding interface. For example, a heisen-counter like structure will emit the
+     * same metric as a {@link Counter} but does not have the same increment-driven API.
      */
     enum Type {
-        COUNTER,
-        GAUGE,
-        LONG_TASK_TIMER,
-        TIMER,
-        DISTRIBUTION_SUMMARY,
-        OTHER;
+
+        COUNTER, GAUGE, LONG_TASK_TIMER, TIMER, DISTRIBUTION_SUMMARY, OTHER;
+
     }
 
     /**
-     * Match a {@link Meter} by type with series of dedicated functions for specific {@link Meter}s and
-     * return a result from the matched function.
+     * Match a {@link Meter} by type with series of dedicated functions for specific
+     * {@link Meter}s and return a result from the matched function.
      * <p>
-     * NOTE: This method contract will change in minor releases if ever a new {@link Meter} type is created.
-     * In this case only, this is considered a feature. By using this method, you are declaring that
-     * you want to be sure to handle all types of meters. A breaking API change during the introduction of
-     * a new {@link Meter} indicates that there is a new meter type for you to consider and the compiler will
+     * NOTE: This method contract will change in minor releases if ever a new
+     * {@link Meter} type is created. In this case only, this is considered a feature. By
+     * using this method, you are declaring that you want to be sure to handle all types
+     * of meters. A breaking API change during the introduction of a new {@link Meter}
+     * indicates that there is a new meter type for you to consider and the compiler will
      * effectively require you to consider it.
-     *
-     * @param visitGauge           function to apply for {@link Gauge}
-     * @param visitCounter         function to apply for {@link Counter}
-     * @param visitTimer           function to apply for {@link Timer}
-     * @param visitSummary         function to apply for {@link DistributionSummary}
-     * @param visitLongTaskTimer   function to apply for {@link LongTaskTimer}
-     * @param visitTimeGauge       function to apply for {@link TimeGauge}
+     * @param visitGauge function to apply for {@link Gauge}
+     * @param visitCounter function to apply for {@link Counter}
+     * @param visitTimer function to apply for {@link Timer}
+     * @param visitSummary function to apply for {@link DistributionSummary}
+     * @param visitLongTaskTimer function to apply for {@link LongTaskTimer}
+     * @param visitTimeGauge function to apply for {@link TimeGauge}
      * @param visitFunctionCounter function to apply for {@link FunctionCounter}
-     * @param visitFunctionTimer   function to apply for {@link FunctionTimer}
-     * @param visitMeter           function to apply as a fallback
-     * @param <T>                  return type of function to apply
+     * @param visitFunctionTimer function to apply for {@link FunctionTimer}
+     * @param visitMeter function to apply as a fallback
+     * @param <T> return type of function to apply
      * @return return value from the applied function
      * @since 1.1.0
      */
-    default <T> T match(Function<Gauge, T> visitGauge,
-                        Function<Counter, T> visitCounter,
-                        Function<Timer, T> visitTimer,
-                        Function<DistributionSummary, T> visitSummary,
-                        Function<LongTaskTimer, T> visitLongTaskTimer,
-                        Function<TimeGauge, T> visitTimeGauge,
-                        Function<FunctionCounter, T> visitFunctionCounter,
-                        Function<FunctionTimer, T> visitFunctionTimer,
-                        Function<Meter, T> visitMeter) {
+    default <T> T match(Function<Gauge, T> visitGauge, Function<Counter, T> visitCounter, Function<Timer, T> visitTimer,
+            Function<DistributionSummary, T> visitSummary, Function<LongTaskTimer, T> visitLongTaskTimer,
+            Function<TimeGauge, T> visitTimeGauge, Function<FunctionCounter, T> visitFunctionCounter,
+            Function<FunctionTimer, T> visitFunctionTimer, Function<Meter, T> visitMeter) {
         if (this instanceof TimeGauge) {
             return visitTimeGauge.apply((TimeGauge) this);
-        } else if (this instanceof Gauge) {
+        }
+        else if (this instanceof Gauge) {
             return visitGauge.apply((Gauge) this);
-        } else if (this instanceof Counter) {
+        }
+        else if (this instanceof Counter) {
             return visitCounter.apply((Counter) this);
-        } else if (this instanceof Timer) {
+        }
+        else if (this instanceof Timer) {
             return visitTimer.apply((Timer) this);
-        } else if (this instanceof DistributionSummary) {
+        }
+        else if (this instanceof DistributionSummary) {
             return visitSummary.apply((DistributionSummary) this);
-        } else if (this instanceof LongTaskTimer) {
+        }
+        else if (this instanceof LongTaskTimer) {
             return visitLongTaskTimer.apply((LongTaskTimer) this);
-        } else if (this instanceof FunctionCounter) {
+        }
+        else if (this instanceof FunctionCounter) {
             return visitFunctionCounter.apply((FunctionCounter) this);
-        } else if (this instanceof FunctionTimer) {
+        }
+        else if (this instanceof FunctionTimer) {
             return visitFunctionTimer.apply((FunctionTimer) this);
-        } else {
+        }
+        else {
             return visitMeter.apply(this);
         }
     }
 
     /**
-     * Match a {@link Meter} with a series of dedicated functions for specific {@link Meter}s and call the matching
-     * consumer.
+     * Match a {@link Meter} with a series of dedicated functions for specific
+     * {@link Meter}s and call the matching consumer.
      * <p>
-     * NOTE: This method contract will change in minor releases if ever a new {@link Meter} type is created.
-     * In this case only, this is considered a feature. By using this method, you are declaring that
-     * you want to be sure to handle all types of meters. A breaking API change during the introduction of
-     * a new {@link Meter} indicates that there is a new meter type for you to consider and the compiler will
+     * NOTE: This method contract will change in minor releases if ever a new
+     * {@link Meter} type is created. In this case only, this is considered a feature. By
+     * using this method, you are declaring that you want to be sure to handle all types
+     * of meters. A breaking API change during the introduction of a new {@link Meter}
+     * indicates that there is a new meter type for you to consider and the compiler will
      * effectively require you to consider it.
-     *
-     * @param visitGauge           function to apply for {@link Gauge}
-     * @param visitCounter         function to apply for {@link Counter}
-     * @param visitTimer           function to apply for {@link Timer}
-     * @param visitSummary         function to apply for {@link DistributionSummary}
-     * @param visitLongTaskTimer   function to apply for {@link LongTaskTimer}
-     * @param visitTimeGauge       function to apply for {@link TimeGauge}
+     * @param visitGauge function to apply for {@link Gauge}
+     * @param visitCounter function to apply for {@link Counter}
+     * @param visitTimer function to apply for {@link Timer}
+     * @param visitSummary function to apply for {@link DistributionSummary}
+     * @param visitLongTaskTimer function to apply for {@link LongTaskTimer}
+     * @param visitTimeGauge function to apply for {@link TimeGauge}
      * @param visitFunctionCounter function to apply for {@link FunctionCounter}
-     * @param visitFunctionTimer   function to apply for {@link FunctionTimer}
-     * @param visitMeter           function to apply as a fallback
+     * @param visitFunctionTimer function to apply for {@link FunctionTimer}
+     * @param visitMeter function to apply as a fallback
      * @since 1.1.0
      */
-    default void use(Consumer<Gauge> visitGauge,
-                     Consumer<Counter> visitCounter,
-                     Consumer<Timer> visitTimer,
-                     Consumer<DistributionSummary> visitSummary,
-                     Consumer<LongTaskTimer> visitLongTaskTimer,
-                     Consumer<TimeGauge> visitTimeGauge,
-                     Consumer<FunctionCounter> visitFunctionCounter,
-                     Consumer<FunctionTimer> visitFunctionTimer,
-                     Consumer<Meter> visitMeter) {
+    default void use(Consumer<Gauge> visitGauge, Consumer<Counter> visitCounter, Consumer<Timer> visitTimer,
+            Consumer<DistributionSummary> visitSummary, Consumer<LongTaskTimer> visitLongTaskTimer,
+            Consumer<TimeGauge> visitTimeGauge, Consumer<FunctionCounter> visitFunctionCounter,
+            Consumer<FunctionTimer> visitFunctionTimer, Consumer<Meter> visitMeter) {
         if (this instanceof TimeGauge) {
             visitTimeGauge.accept((TimeGauge) this);
-        } else if (this instanceof Gauge) {
+        }
+        else if (this instanceof Gauge) {
             visitGauge.accept((Gauge) this);
-        } else if (this instanceof Counter) {
+        }
+        else if (this instanceof Counter) {
             visitCounter.accept((Counter) this);
-        } else if (this instanceof Timer) {
+        }
+        else if (this instanceof Timer) {
             visitTimer.accept((Timer) this);
-        } else if (this instanceof DistributionSummary) {
+        }
+        else if (this instanceof DistributionSummary) {
             visitSummary.accept((DistributionSummary) this);
-        } else if (this instanceof LongTaskTimer) {
+        }
+        else if (this instanceof LongTaskTimer) {
             visitLongTaskTimer.accept((LongTaskTimer) this);
-        } else if (this instanceof FunctionCounter) {
+        }
+        else if (this instanceof FunctionCounter) {
             visitFunctionCounter.accept((FunctionCounter) this);
-        } else if (this instanceof FunctionTimer) {
+        }
+        else if (this instanceof FunctionTimer) {
             visitFunctionTimer.accept((FunctionTimer) this);
-        } else {
+        }
+        else {
             visitMeter.accept(this);
         }
     }
@@ -177,8 +180,11 @@ public interface Meter {
      * A meter is uniquely identified by its combination of name and tags.
      */
     class Id {
+
         private final String name;
+
         private final Tags tags;
+
         private final Type type;
 
         @Nullable
@@ -192,7 +198,7 @@ public interface Meter {
 
         @Incubating(since = "1.1.0")
         Id(String name, Tags tags, @Nullable String baseUnit, @Nullable String description, Type type,
-           @Nullable Meter.Id syntheticAssociation) {
+                @Nullable Meter.Id syntheticAssociation) {
             this.name = name;
             this.tags = tags;
             this.baseUnit = baseUnit;
@@ -207,7 +213,6 @@ public interface Meter {
 
         /**
          * Generate a new id with a different name.
-         *
          * @param newName The new name.
          * @return A new id with the provided name. The source id remains unchanged.
          */
@@ -216,9 +221,8 @@ public interface Meter {
         }
 
         /**
-         * Generate a new id with an additional tag. If the key of the provided tag already exists, this overwrites
-         * the tag value.
-         *
+         * Generate a new id with an additional tag. If the key of the provided tag
+         * already exists, this overwrites the tag value.
          * @param tag The tag to add.
          * @return A new id with the provided tag added. The source id remains unchanged.
          */
@@ -227,9 +231,8 @@ public interface Meter {
         }
 
         /**
-         * Generate a new id with additional tags. If the key of the provided tag already exists, this overwrites
-         * the tag value.
-         *
+         * Generate a new id with additional tags. If the key of the provided tag already
+         * exists, this overwrites the tag value.
          * @param tags The tags to add.
          * @return A new id with the provided tags added. The source id remains unchanged.
          * @since 1.1.0
@@ -240,9 +243,9 @@ public interface Meter {
 
         /**
          * Generate a new id replacing all tags with new ones.
-         *
          * @param tags The tags to add.
-         * @return A new id with the only the provided tags. The source id remains unchanged.
+         * @return A new id with the only the provided tags. The source id remains
+         * unchanged.
          * @since 1.1.0
          */
         public Id replaceTags(Iterable<Tag> tags) {
@@ -250,9 +253,8 @@ public interface Meter {
         }
 
         /**
-         * Generate a new id with an additional tag with a tag key of "statistic". If the "statistic" tag already exists,
-         * this overwrites the tag value.
-         *
+         * Generate a new id with an additional tag with a tag key of "statistic". If the
+         * "statistic" tag already exists, this overwrites the tag value.
          * @param statistic The statistic tag to add.
          * @return A new id with the provided tag. The source id remains unchanged.
          */
@@ -262,7 +264,6 @@ public interface Meter {
 
         /**
          * Generate a new id with a different base unit.
-         *
          * @param newBaseUnit The base unit of the new id.
          * @return A new id with the provided base unit.
          */
@@ -292,7 +293,8 @@ public interface Meter {
 
         /**
          * @param key The tag key to attempt to match.
-         * @return A matching tag value, or {@code null} if no tag with the provided key exists on this id.
+         * @return A matching tag value, or {@code null} if no tag with the provided key
+         * exists on this id.
          */
         @Nullable
         public String getTag(String key) {
@@ -313,7 +315,8 @@ public interface Meter {
 
         /**
          * @param namingConvention The naming convention used to normalize the id's name.
-         * @return A name that has been stylized to a particular monitoring system's expectations.
+         * @return A name that has been stylized to a particular monitoring system's
+         * expectations.
          */
         public String getConventionName(NamingConvention namingConvention) {
             return namingConvention.name(name, type, baseUnit);
@@ -321,9 +324,9 @@ public interface Meter {
 
         /**
          * Tags that are sorted by key and formatted
-         *
          * @param namingConvention The naming convention used to normalize the id's name.
-         * @return A list of tags that have been stylized to a particular monitoring system's expectations.
+         * @return A list of tags that have been stylized to a particular monitoring
+         * system's expectations.
          */
         public List<Tag> getConventionTags(NamingConvention namingConvention) {
             return StreamSupport.stream(tags.spliterator(), false)
@@ -332,8 +335,8 @@ public interface Meter {
         }
 
         /**
-         * @return A description of the meter's purpose. This description text is published to monitoring systems
-         * that support description text.
+         * @return A description of the meter's purpose. This description text is
+         * published to monitoring systems that support description text.
          */
         @Nullable
         public String getDescription() {
@@ -342,16 +345,15 @@ public interface Meter {
 
         @Override
         public String toString() {
-            return "MeterId{" +
-                    "name='" + name + '\'' +
-                    ", tags=" + tags +
-                    '}';
+            return "MeterId{" + "name='" + name + '\'' + ", tags=" + tags + '}';
         }
 
         @Override
         public boolean equals(@Nullable Object o) {
-            if (this == o) return true;
-            if (o == null || getClass() != o.getClass()) return false;
+            if (this == o)
+                return true;
+            if (o == null || getClass() != o.getClass())
+                return false;
             Meter.Id meterId = (Meter.Id) o;
             return Objects.equals(name, meterId.name) && Objects.equals(tags, meterId.tags);
         }
@@ -364,9 +366,8 @@ public interface Meter {
         }
 
         /**
-         * The type is used by different registry implementations to structure the exposition
-         * of metrics to different backends.
-         *
+         * The type is used by different registry implementations to structure the
+         * exposition of metrics to different backends.
          * @return The meter's type.
          */
         public Type getType() {
@@ -374,29 +375,36 @@ public interface Meter {
         }
 
         /**
-         * For internal use. Indicates that this Id is tied to a meter that is a derivative of another metric.
-         * For example, percentiles and histogram gauges generated by {@link HistogramGauges} are derivatives
-         * of a {@link Timer} or {@link DistributionSummary}.
+         * For internal use. Indicates that this Id is tied to a meter that is a
+         * derivative of another metric. For example, percentiles and histogram gauges
+         * generated by {@link HistogramGauges} are derivatives of a {@link Timer} or
+         * {@link DistributionSummary}.
          * <p>
-         * This method may be removed in future minor or major releases if we find a way to mark derivatives in a
-         * private way that does not have other API compatibility consequences.
-         *
-         * @return The meter id of a meter for which this metric is a synthetic derivative.
+         * This method may be removed in future minor or major releases if we find a way
+         * to mark derivatives in a private way that does not have other API compatibility
+         * consequences.
+         * @return The meter id of a meter for which this metric is a synthetic
+         * derivative.
          */
         @Incubating(since = "1.1.0")
         @Nullable
         public Meter.Id syntheticAssociation() {
             return syntheticAssociation;
         }
+
     }
 
     /**
      * Fluent builder for custom meters.
      */
     class Builder {
+
         private final String name;
+
         private final Type type;
+
         private final Iterable<Measurement> measurements;
+
         private Tags tags = Tags.empty();
 
         @Nullable
@@ -412,7 +420,8 @@ public interface Meter {
         }
 
         /**
-         * @param tags Must be an even number of arguments representing key/value pairs of tags.
+         * @param tags Must be an even number of arguments representing key/value pairs of
+         * tags.
          * @return The custom meter builder with added tags.
          */
         public Builder tags(String... tags) {
@@ -429,7 +438,7 @@ public interface Meter {
         }
 
         /**
-         * @param key   The tag key.
+         * @param key The tag key.
          * @param value The tag value.
          * @return The custom meter builder with a single added tag.
          */
@@ -457,18 +466,21 @@ public interface Meter {
         }
 
         /**
-         * Add the meter to a single registry, or return an existing meter in that registry. The returned
-         * meter will be unique for each registry, but each registry is guaranteed to only create one meter
-         * for the same combination of name and tags.
-         *
-         * @param registry A registry to add the custom meter to, if it doesn't already exist.
+         * Add the meter to a single registry, or return an existing meter in that
+         * registry. The returned meter will be unique for each registry, but each
+         * registry is guaranteed to only create one meter for the same combination of
+         * name and tags.
+         * @param registry A registry to add the custom meter to, if it doesn't already
+         * exist.
          * @return A new or existing custom meter.
          */
         public Meter register(MeterRegistry registry) {
             return registry.register(new Meter.Id(name, tags, baseUnit, description, type), type, measurements);
         }
+
     }
 
     default void close() {
     }
+
 }

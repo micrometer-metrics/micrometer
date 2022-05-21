@@ -17,7 +17,6 @@ package io.micrometer.statsd;
 
 import io.micrometer.core.instrument.AbstractMeter;
 import io.micrometer.core.instrument.Counter;
-import io.micrometer.core.instrument.util.MeterEquivalence;
 import reactor.core.publisher.FluxSink;
 
 import java.util.concurrent.atomic.DoubleAdder;
@@ -26,9 +25,13 @@ import java.util.concurrent.atomic.DoubleAdder;
  * @author Jon Schneider
  */
 public class StatsdCounter extends AbstractMeter implements Counter {
+
     private final StatsdLineBuilder lineBuilder;
+
     private final FluxSink<String> sink;
+
     private DoubleAdder count = new DoubleAdder();
+
     private volatile boolean shutdown;
 
     StatsdCounter(Id id, StatsdLineBuilder lineBuilder, FluxSink<String> sink) {
@@ -50,18 +53,8 @@ public class StatsdCounter extends AbstractMeter implements Counter {
         return count.doubleValue();
     }
 
-    @SuppressWarnings("EqualsWhichDoesntCheckParameterClass")
-    @Override
-    public boolean equals(Object o) {
-        return MeterEquivalence.equals(this, o);
-    }
-
-    @Override
-    public int hashCode() {
-        return MeterEquivalence.hashCode(this);
-    }
-
     void shutdown() {
         this.shutdown = true;
     }
+
 }

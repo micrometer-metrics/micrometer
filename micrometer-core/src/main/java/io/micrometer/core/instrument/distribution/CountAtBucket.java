@@ -27,11 +27,11 @@ import java.util.concurrent.TimeUnit;
 public final class CountAtBucket {
 
     private final double bucket;
+
     private final double count;
 
     /**
      * Create a {@code CountAtBucket} instance.
-     *
      * @param bucket bucket
      * @param count count
      * @deprecated Use {@link #CountAtBucket(double, double)} instead since 1.4.0.
@@ -43,7 +43,6 @@ public final class CountAtBucket {
 
     /**
      * Create a {@code CountAtBucket} instance.
-     *
      * @param bucket bucket
      * @param count count
      * @since 1.4.0
@@ -67,9 +66,7 @@ public final class CountAtBucket {
 
     boolean isPositiveInf() {
         // check for Long.MAX_VALUE to maintain backwards compatibility
-        return bucket == Double.POSITIVE_INFINITY ||
-                bucket == Double.MAX_VALUE ||
-                (long) bucket == Long.MAX_VALUE;
+        return bucket == Double.POSITIVE_INFINITY || bucket == Double.MAX_VALUE || (long) bucket == Long.MAX_VALUE;
     }
 
     @Override
@@ -79,8 +76,10 @@ public final class CountAtBucket {
 
     @Override
     public boolean equals(Object o) {
-        if (this == o) return true;
-        if (o == null || getClass() != o.getClass()) return false;
+        if (this == o)
+            return true;
+        if (o == null || getClass() != o.getClass())
+            return false;
 
         CountAtBucket that = (CountAtBucket) o;
 
@@ -95,4 +94,5 @@ public final class CountAtBucket {
         result = 31 * result + (int) (tempCount ^ (tempCount >>> 32));
         return result;
     }
+
 }

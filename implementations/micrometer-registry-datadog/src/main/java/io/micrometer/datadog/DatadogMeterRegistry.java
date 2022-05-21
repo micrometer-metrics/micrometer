@@ -15,13 +15,13 @@
  */
 package io.micrometer.datadog;
 
+import io.micrometer.common.lang.Nullable;
 import io.micrometer.core.instrument.*;
 import io.micrometer.core.instrument.step.StepMeterRegistry;
 import io.micrometer.core.instrument.util.MeterPartition;
 import io.micrometer.core.instrument.util.NamedThreadFactory;
 import io.micrometer.core.ipc.http.HttpSender;
 import io.micrometer.core.ipc.http.HttpUrlConnectionSender;
-import io.micrometer.core.lang.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -44,9 +44,13 @@ import static java.util.stream.StreamSupport.stream;
  * @author Gregory Zussa
  */
 public class DatadogMeterRegistry extends StepMeterRegistry {
+
     private static final ThreadFactory DEFAULT_THREAD_FACTORY = new NamedThreadFactory("datadog-metrics-publisher");
+
     private final Logger logger = LoggerFactory.getLogger(DatadogMeterRegistry.class);
+
     private final DatadogConfig config;
+
     private final HttpSender httpClient;
 
     /**
@@ -55,8 +59,9 @@ public class DatadogMeterRegistry extends StepMeterRegistry {
     private final Set<String> verifiedMetadata = ConcurrentHashMap.newKeySet();
 
     /**
-     * @param config Configuration options for the registry that are describable as properties.
-     * @param clock  The clock to use for timings.
+     * @param config Configuration options for the registry that are describable as
+     * properties.
+     * @param clock The clock to use for timings.
      */
     @SuppressWarnings("deprecation")
     public DatadogMeterRegistry(DatadogConfig config, Clock clock) {
@@ -65,8 +70,9 @@ public class DatadogMeterRegistry extends StepMeterRegistry {
     }
 
     /**
-     * @param config        Configuration options for the registry that are describable as properties.
-     * @param clock         The clock to use for timings.
+     * @param config Configuration options for the registry that are describable as
+     * properties.
+     * @param clock The clock to use for timings.
      * @param threadFactory The thread factory to use to create the publishing thread.
      * @deprecated Use {@link #builder(DatadogConfig)} instead.
      */
@@ -75,7 +81,8 @@ public class DatadogMeterRegistry extends StepMeterRegistry {
         this(config, clock, threadFactory, new HttpUrlConnectionSender(config.connectTimeout(), config.readTimeout()));
     }
 
-    private DatadogMeterRegistry(DatadogConfig config, Clock clock, ThreadFactory threadFactory, HttpSender httpClient) {
+    private DatadogMeterRegistry(DatadogConfig config, Clock clock, ThreadFactory threadFactory,
+            HttpSender httpClient) {
         super(config, clock);
 
         config().namingConvention(new DatadogNamingConvention());
@@ -90,7 +97,8 @@ public class DatadogMeterRegistry extends StepMeterRegistry {
     public void start(ThreadFactory threadFactory) {
         if (config.enabled()) {
             if (config.applicationKey() == null) {
-                logger.info("An application key must be configured in order for unit information to be sent to Datadog.");
+                logger.info(
+                        "An application key must be configured in order for unit information to be sent to Datadog.");
             }
         }
         super.start(threadFactory);
@@ -104,6 +112,7 @@ public class DatadogMeterRegistry extends StepMeterRegistry {
 
         try {
             for (List<Meter> batch : MeterPartition.partition(this, config.batchSize())) {
+                // @formatter:off
                 /*
                 Example post body from Datadog API docs. Host and tags are optional.
                 "{ \"series\" :
@@ -127,17 +136,16 @@ public class DatadogMeterRegistry extends StepMeterRegistry {
                         timer -> writeTimer(timer, metadataToSend), // visitFunctionTimer
                         m -> writeMeter(m, metadataToSend)) // visitMeter
                 ).collect(joining(",", "{\"series\":[", "]}"));
+                // @formatter:on
 
                 logger.trace("sending metrics batch to datadog:{}{}", System.lineSeparator(), body);
 
-                httpClient.post(datadogEndpoint)
-                        .withJsonContent(
-                                body)
-                        .send()
+                httpClient.post(datadogEndpoint).withJsonContent(body).send()
                         .onSuccess(response -> logger.debug("successfully sent {} metrics to datadog", batch.size()))
                         .onError(response -> logger.error("failed to send metrics to datadog: {}", response.body()));
             }
-        } catch (Throwable e) {
+        }
+        catch (Throwable e) {
             logger.warn("failed to send metrics to datadog", e);
         }
 
@@ -153,9 +161,9 @@ public class DatadogMeterRegistry extends StepMeterRegistry {
         addToMetadataList(metadata, id, "avg", Statistic.VALUE, null);
         addToMetadataList(metadata, id, "sum", Statistic.TOTAL_TIME, null);
 
-        // we can't know anything about max and percentiles originating from a function timer
-        return Stream.of(
-                writeMetric(id, "count", wallTime, timer.count(), Statistic.COUNT, "occurrence"),
+        // we can't know anything about max and percentiles originating from a function
+        // timer
+        return Stream.of(writeMetric(id, "count", wallTime, timer.count(), Statistic.COUNT, "occurrence"),
                 writeMetric(id, "avg", wallTime, timer.mean(getBaseTimeUnit()), Statistic.VALUE, null),
                 writeMetric(id, "sum", wallTime, timer.totalTime(getBaseTimeUnit()), Statistic.TOTAL_TIME, null));
     }
@@ -198,16 +206,15 @@ public class DatadogMeterRegistry extends StepMeterRegistry {
 
     private Stream<String> writeMeter(Meter m, Map<String, DatadogMetricMetadata> metadata) {
         long wallTime = clock.wallTime();
-        return stream(m.measure().spliterator(), false)
-                .map(ms -> {
-                    Meter.Id id = m.getId().withTag(ms.getStatistic());
-                    addToMetadataList(metadata, id, null, ms.getStatistic(), null);
-                    return writeMetric(id, null, wallTime, ms.getValue(), ms.getStatistic(), null);
-                });
+        return stream(m.measure().spliterator(), false).map(ms -> {
+            Meter.Id id = m.getId().withTag(ms.getStatistic());
+            addToMetadataList(metadata, id, null, ms.getStatistic(), null);
+            return writeMetric(id, null, wallTime, ms.getValue(), ms.getStatistic(), null);
+        });
     }
 
     private void addToMetadataList(Map<String, DatadogMetricMetadata> metadata, Meter.Id id, @Nullable String suffix,
-                                   Statistic stat, @Nullable String overrideBaseUnit) {
+            Statistic stat, @Nullable String overrideBaseUnit) {
         if (config.applicationKey() == null)
             return; // we can't set metadata correctly without the application key
 
@@ -221,8 +228,9 @@ public class DatadogMeterRegistry extends StepMeterRegistry {
         }
     }
 
-    //VisibleForTesting
-    String writeMetric(Meter.Id id, @Nullable String suffix, long wallTime, double value, Statistic statistic, @Nullable String overrideBaseUnit) {
+    // VisibleForTesting
+    String writeMetric(Meter.Id id, @Nullable String suffix, long wallTime, double value, Statistic statistic,
+            @Nullable String overrideBaseUnit) {
         Meter.Id fullId = id;
         if (suffix != null)
             fullId = idWithSuffix(id, suffix);
@@ -230,25 +238,21 @@ public class DatadogMeterRegistry extends StepMeterRegistry {
         Iterable<Tag> tags = getConventionTags(fullId);
 
         // Create host attribute
-        String host = config.hostTag() == null ? "" : stream(tags.spliterator(), false)
-                .filter(t -> config.hostTag().equals(t.getKey()))
-                .findAny()
-                .map(t -> ",\"host\":\"" + escapeJson(t.getValue()) + "\"")
-                .orElse("");
+        String host = config.hostTag() == null ? ""
+                : stream(tags.spliterator(), false).filter(t -> config.hostTag().equals(t.getKey())).findAny()
+                        .map(t -> ",\"host\":\"" + escapeJson(t.getValue()) + "\"").orElse("");
         // Create type attribute
         String type = ",\"type\":\"" + DatadogMetricMetadata.sanitizeType(statistic) + "\"";
         // Create unit attribute
         String baseUnit = DatadogMetricMetadata.sanitizeBaseUnit(id.getBaseUnit(), overrideBaseUnit);
         String unit = baseUnit != null ? ",\"unit\":\"" + baseUnit + "\"" : "";
         // Create tags attribute
-        String tagsArray = tags.iterator().hasNext()
-                ? stream(tags.spliterator(), false)
+        String tagsArray = tags.iterator().hasNext() ? stream(tags.spliterator(), false)
                 .map(t -> "\"" + escapeJson(t.getKey()) + ":" + escapeJson(t.getValue()) + "\"")
-                .collect(joining(",", ",\"tags\":[", "]"))
-                : "";
+                .collect(joining(",", ",\"tags\":[", "]")) : "";
 
-        return "{\"metric\":\"" + escapeJson(getConventionName(fullId)) + "\"," +
-                "\"points\":[[" + (wallTime / 1000) + ", " + value + "]]" + host + type + unit + tagsArray + "}";
+        return "{\"metric\":\"" + escapeJson(getConventionName(fullId)) + "\"," + "\"points\":[[" + (wallTime / 1000)
+                + ", " + value + "]]" + host + type + unit + tagsArray + "}";
     }
 
     /**
@@ -263,25 +267,27 @@ public class DatadogMeterRegistry extends StepMeterRegistry {
 
         try {
             httpClient
-                    .put(config.uri() + "/api/v1/metrics/" + URLEncoder.encode(metricName, "UTF-8")
-                            + "?api_key=" + config.apiKey() + "&application_key=" + config.applicationKey())
-                    .withJsonContent(metadata.editMetadataBody())
-                    .send()
-                    .onSuccess(response -> verifiedMetadata.add(metricName))
-                    .onError(response -> {
+                    .put(config.uri() + "/api/v1/metrics/" + URLEncoder.encode(metricName, "UTF-8") + "?api_key="
+                            + config.apiKey() + "&application_key=" + config.applicationKey())
+                    .withJsonContent(metadata.editMetadataBody()).send()
+                    .onSuccess(response -> verifiedMetadata.add(metricName)).onError(response -> {
                         if (logger.isErrorEnabled()) {
                             String msg = response.body();
 
-                            // Ignore when the response content contains "metric_name not found".
-                            // Metrics that are newly created in Datadog are not immediately available
-                            // for metadata modification. We will keep trying this request on subsequent publishes,
+                            // Ignore when the response content contains "metric_name not
+                            // found".
+                            // Metrics that are newly created in Datadog are not
+                            // immediately available
+                            // for metadata modification. We will keep trying this request
+                            // on subsequent publishes,
                             // where it will eventually succeed.
                             if (!msg.contains("metric_name not found")) {
                                 logger.error("failed to send metric metadata to datadog: {}", msg);
                             }
                         }
                     });
-        } catch (Throwable e) {
+        }
+        catch (Throwable e) {
             logger.warn("failed to send metric metadata to datadog", e);
         }
     }
@@ -300,10 +306,13 @@ public class DatadogMeterRegistry extends StepMeterRegistry {
     }
 
     public static class Builder {
+
         private final DatadogConfig config;
 
         private Clock clock = Clock.SYSTEM;
+
         private ThreadFactory threadFactory = DEFAULT_THREAD_FACTORY;
+
         private HttpSender httpClient;
 
         @SuppressWarnings("deprecation")
@@ -330,5 +339,7 @@ public class DatadogMeterRegistry extends StepMeterRegistry {
         public DatadogMeterRegistry build() {
             return new DatadogMeterRegistry(config, clock, threadFactory, httpClient);
         }
+
     }
+
 }

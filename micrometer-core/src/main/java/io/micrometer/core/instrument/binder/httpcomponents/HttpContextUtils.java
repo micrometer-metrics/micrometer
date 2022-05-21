@@ -20,11 +20,8 @@ import org.apache.http.HttpHost;
 import org.apache.http.conn.routing.HttpRoute;
 import org.apache.http.protocol.HttpContext;
 
-/**
- * @deprecated Scheduled for removal in 2.0.0, please use {@code io.micrometer.binder.httpcomponents.HttpContextUtils}
- */
-@Deprecated
 class HttpContextUtils {
+
     static Tags generateTagsForRoute(HttpContext context) {
         String targetScheme = "UNKNOWN";
         String targetHost = "UNKNOWN";
@@ -36,10 +33,7 @@ class HttpContextUtils {
             targetHost = host.getHostName();
             targetPort = String.valueOf(host.getPort());
         }
-        return Tags.of(
-                "target.scheme", targetScheme,
-                "target.host", targetHost,
-                "target.port", targetPort
-        );
+        return Tags.of("target.scheme", targetScheme, "target.host", targetHost, "target.port", targetPort);
     }
+
 }

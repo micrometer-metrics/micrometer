@@ -37,22 +37,27 @@ import java.util.function.ToLongFunction;
  * @author Johnny Lim
  */
 public class DropwizardFunctionTimer<T> extends AbstractMeter implements FunctionTimer {
+
     private final WeakReference<T> ref;
+
     private final ToLongFunction<T> countFunction;
+
     private final ToDoubleFunction<T> totalTimeFunction;
+
     private final TimeUnit totalTimeFunctionUnit;
 
     private final AtomicLong lastCount = new AtomicLong();
+
     private final DropwizardRate rate;
+
     private final Timer dropwizardMeter;
+
     private final TimeUnit registryBaseTimeUnit;
+
     private volatile double lastTime;
 
-    DropwizardFunctionTimer(Meter.Id id, Clock clock,
-                            T obj, ToLongFunction<T> countFunction,
-                            ToDoubleFunction<T> totalTimeFunction,
-                            TimeUnit totalTimeFunctionUnit,
-                            TimeUnit registryBaseTimeUnit) {
+    DropwizardFunctionTimer(Meter.Id id, Clock clock, T obj, ToLongFunction<T> countFunction,
+            ToDoubleFunction<T> totalTimeFunction, TimeUnit totalTimeFunctionUnit, TimeUnit registryBaseTimeUnit) {
         super(id);
         this.ref = new WeakReference<>(obj);
         this.countFunction = countFunction;
@@ -110,7 +115,8 @@ public class DropwizardFunctionTimer<T> extends AbstractMeter implements Functio
                     @Override
                     public double getMean() {
                         double count = count();
-                        // This return value is expected to be in nanoseconds, for example in JmxReporter.JmxTimer.
+                        // This return value is expected to be in nanoseconds, for example
+                        // in JmxReporter.JmxTimer.
                         return count == 0 ? 0 : totalTime(TimeUnit.NANOSECONDS) / count;
                     }
 
@@ -162,4 +168,5 @@ public class DropwizardFunctionTimer<T> extends AbstractMeter implements Functio
     public TimeUnit baseTimeUnit() {
         return registryBaseTimeUnit;
     }
+
 }

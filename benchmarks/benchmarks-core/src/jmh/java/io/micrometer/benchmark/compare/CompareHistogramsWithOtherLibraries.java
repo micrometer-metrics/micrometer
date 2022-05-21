@@ -63,30 +63,30 @@ public class CompareHistogramsWithOtherLibraries {
         @Setup(Level.Iteration)
         public void setup() {
             final Random r = new Random(1234567891L);
-            dataIterator = Iterators.cycle(
-                    Stream.generate(() -> Math.round(Math.exp(2.0 + r.nextGaussian()))).limit(1048576)
-                            .collect(Collectors.toList()));
+            dataIterator = Iterators.cycle(Stream.generate(() -> Math.round(Math.exp(2.0 + r.nextGaussian())))
+                    .limit(1048576).collect(Collectors.toList()));
         }
+
     }
 
     @State(Scope.Benchmark)
     public static class DropwizardState {
 
         MetricRegistry registry;
+
         Histogram histogram;
+
         Histogram histogramSlidingTimeWindow;
+
         Histogram histogramUniform;
 
         @Setup(Level.Iteration)
         public void setup() {
             registry = new MetricRegistry();
             histogram = registry.histogram("histogram");
-            histogramSlidingTimeWindow =
-                    registry.register("slidingTimeWindowHistogram",
-                            new Histogram(new SlidingTimeWindowReservoir(10, TimeUnit.SECONDS)));
-            histogramUniform =
-                    registry.register("uniformHistogram",
-                            new Histogram(new UniformReservoir()));
+            histogramSlidingTimeWindow = registry.register("slidingTimeWindowHistogram",
+                    new Histogram(new SlidingTimeWindowReservoir(10, TimeUnit.SECONDS)));
+            histogramUniform = registry.register("uniformHistogram", new Histogram(new UniformReservoir()));
         }
 
         @TearDown(Level.Iteration)
@@ -95,33 +95,34 @@ public class CompareHistogramsWithOtherLibraries {
             hole.consume(histogramSlidingTimeWindow.getSnapshot().getMedian());
             hole.consume(histogramUniform.getSnapshot().getMedian());
         }
+
     }
 
     @State(Scope.Benchmark)
     public static class MicrometerState {
 
         io.micrometer.core.instrument.MeterRegistry registry;
+
         io.micrometer.core.instrument.DistributionSummary summary;
 
         @Setup(Level.Iteration)
         public void setup() {
-            registry = new PrometheusMeterRegistry(PrometheusConfig.DEFAULT, new CollectorRegistry(),
-                    Clock.SYSTEM);
-            summary = DistributionSummary.builder("summary")
-                    .publishPercentileHistogram()
-                    .register(registry);
+            registry = new PrometheusMeterRegistry(PrometheusConfig.DEFAULT, new CollectorRegistry(), Clock.SYSTEM);
+            summary = DistributionSummary.builder("summary").publishPercentileHistogram().register(registry);
         }
 
         @TearDown(Level.Iteration)
         public void tearDown(Blackhole hole) {
             hole.consume(summary.takeSnapshot().count());
         }
+
     }
 
     @State(Scope.Benchmark)
     public static class MicrometerPlainSummaryState {
 
         io.micrometer.core.instrument.MeterRegistry registry;
+
         io.micrometer.core.instrument.DistributionSummary summary;
 
         @Setup(Level.Iteration)
@@ -134,6 +135,7 @@ public class CompareHistogramsWithOtherLibraries {
         public void tearDown(Blackhole hole) {
             hole.consume(summary.takeSnapshot().count());
         }
+
     }
 
     @State(Scope.Benchmark)
@@ -143,18 +145,18 @@ public class CompareHistogramsWithOtherLibraries {
 
         @Setup(Level.Trial)
         public void setup() {
-            double[] micrometerBuckets =
-                    Doubles.toArray(PercentileHistogramBuckets.buckets(
-                            DistributionStatisticConfig.builder().minimumExpectedValue(0.0).maximumExpectedValue(Double.POSITIVE_INFINITY)
-                                    .percentilesHistogram(true).build()));
-            histogram = io.prometheus.client.Histogram.build("histogram", "A histogram")
-                    .buckets(micrometerBuckets).create();
+            double[] micrometerBuckets = Doubles.toArray(
+                    PercentileHistogramBuckets.buckets(DistributionStatisticConfig.builder().minimumExpectedValue(0.0)
+                            .maximumExpectedValue(Double.POSITIVE_INFINITY).percentilesHistogram(true).build()));
+            histogram = io.prometheus.client.Histogram.build("histogram", "A histogram").buckets(micrometerBuckets)
+                    .create();
         }
 
         @TearDown(Level.Iteration)
         public void tearDown(Blackhole hole) {
             hole.consume(histogram.collect());
         }
+
     }
 
     @Benchmark
@@ -162,36 +164,35 @@ public class CompareHistogramsWithOtherLibraries {
         state.summary.record(1);
     }
 
-    //    @Benchmark
+    // @Benchmark
     public void micrometerHistogram(MicrometerState state, Data data) {
         state.summary.record(data.dataIterator.next());
     }
 
-    //    @Benchmark
+    // @Benchmark
     public void dropwizardHistogram(DropwizardState state, Data data) {
         state.histogram.update(data.dataIterator.next());
     }
 
     // This benchmark is likely broken, results vary wildly between runs.
-//    @Benchmark
+    // @Benchmark
     public void dropwizardHistogramSlidingTimeWindow(DropwizardState state, Data data) {
         state.histogramSlidingTimeWindow.update(data.dataIterator.next());
     }
 
-    //    @Benchmark
+    // @Benchmark
     public void dropwizardHistogramUniform(DropwizardState state, Data data) {
         state.histogramUniform.update(data.dataIterator.next());
     }
 
-    //    @Benchmark
+    // @Benchmark
     public void prometheusHistogram(PrometheusState state, Data data) {
         state.histogram.observe(data.dataIterator.next());
     }
 
     public static void main(String[] args) throws RunnerException {
-        Options opt = new OptionsBuilder()
-                .include(CompareHistogramsWithOtherLibraries.class.getSimpleName())
-                .build();
+        Options opt = new OptionsBuilder().include(CompareHistogramsWithOtherLibraries.class.getSimpleName()).build();
         new Runner(opt).run();
     }
+
 }

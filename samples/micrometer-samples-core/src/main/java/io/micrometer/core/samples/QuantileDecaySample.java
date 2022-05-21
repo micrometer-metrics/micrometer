@@ -23,16 +23,16 @@ import reactor.core.publisher.Flux;
 import static java.util.stream.IntStream.range;
 
 public class QuantileDecaySample {
+
     public static void main(String[] args) {
         MeterRegistry registry = SampleConfig.myMonitoringSystem();
 
-        DistributionSummary summary = DistributionSummary
-                .builder("my.summary")
-                .publishPercentiles(0.9)
+        DistributionSummary summary = DistributionSummary.builder("my.summary").publishPercentiles(0.9)
                 .register(registry);
 
         range(1, 10).forEach(summary::record);
 
         Flux.never().blockLast();
     }
+
 }

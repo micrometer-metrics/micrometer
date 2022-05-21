@@ -22,6 +22,7 @@ import org.junit.jupiter.api.Test;
 import static org.assertj.core.api.Assertions.assertThat;
 
 class MetricsTest {
+
     @Test
     void staticMetricsAreInitiallyNoop() {
         // doesn't blow up
@@ -40,4 +41,5 @@ class MetricsTest {
 
         assertThat(Metrics.globalRegistry.get("counter").counter().count()).isEqualTo(1.0);
     }
+
 }
