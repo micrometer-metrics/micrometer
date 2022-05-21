@@ -41,7 +41,7 @@ class HighCardinalityTagsDetectorTests {
     void setUp() {
         this.testMeterNameConsumer = new TestMeterNameConsumer();
         this.registry = new SimpleMeterRegistry();
-        this.highCardinalityTagsDetector = new HighCardinalityTagsDetector(registry, 3, testMeterNameConsumer);
+        this.highCardinalityTagsDetector = new HighCardinalityTagsDetector(registry, 3, Duration.ofMinutes(1), testMeterNameConsumer);
     }
 
     @AfterEach

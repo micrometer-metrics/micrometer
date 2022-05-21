@@ -40,6 +40,11 @@ import io.micrometer.common.util.internal.logging.InternalLoggerFactory;
 public class HighCardinalityTagsDetector implements AutoCloseable {
     private static final InternalLogger LOGGER = InternalLoggerFactory.getInstance(HighCardinalityTagsDetector.class);
 
+    private static final int DEFAULT_THRESHOLD = 1_000_000;
+    private static final Duration DEFAULT_DELAY = Duration.ofMinutes(5);
+
+    public static final Consumer<String> DEFAULT_CONSUMER = HighCardinalityTagsDetector::logWarning;
+
     private final MeterRegistry registry;
     private final int threshold;
     private final Consumer<String> meterNameConsumer;
@@ -50,7 +55,7 @@ public class HighCardinalityTagsDetector implements AutoCloseable {
      * @param registry The registry to use to check the Meters in it
      */
     public HighCardinalityTagsDetector(MeterRegistry registry) {
-        this(registry, 1_000_000);
+        this(registry, DEFAULT_THRESHOLD);
     }
 
     /**
@@ -59,21 +64,22 @@ public class HighCardinalityTagsDetector implements AutoCloseable {
      *                  (if the number of Meters with the same name are higher than this value, that's a high cardinality tag)
      */
     public HighCardinalityTagsDetector(MeterRegistry registry, int threshold) {
-        this(registry, threshold, HighCardinalityTagsDetector::logWarning);
+        this(registry, threshold, DEFAULT_DELAY, DEFAULT_CONSUMER);
     }
 
     /**
      * @param registry The registry to use to check the Meters in it
      * @param threshold The threshold to use to detect high cardinality tags
      *                  (if the number of Meters with the same name are higher than this value, that's a high cardinality tag)
+     * @param delay The delay between the termination of one check and the commencement of the next
      * @param meterNameConsumer The action to execute if the first high cardinality tag is found
      */
-    public HighCardinalityTagsDetector(MeterRegistry registry, int threshold, Consumer<String> meterNameConsumer) {
+    public HighCardinalityTagsDetector(MeterRegistry registry, int threshold, Duration delay, Consumer<String> meterNameConsumer) {
         this.registry = registry;
         this.threshold = threshold;
+        this.delay = delay;
         this.meterNameConsumer = meterNameConsumer;
         this.scheduledExecutorService = Executors.newSingleThreadScheduledExecutor();
-        this.delay = Duration.ofMinutes(5);
     }
 
     /**
