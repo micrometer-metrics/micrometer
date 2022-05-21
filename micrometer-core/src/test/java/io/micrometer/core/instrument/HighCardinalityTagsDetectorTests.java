@@ -30,18 +30,23 @@ import static org.junit.jupiter.api.Assertions.*;
 
 /**
  * Tests for {@link HighCardinalityTagsDetector}
+ *
  * @author Jonatan Ivanov
  */
 class HighCardinalityTagsDetectorTests {
+
     private TestMeterNameConsumer testMeterNameConsumer;
+
     private SimpleMeterRegistry registry;
+
     private HighCardinalityTagsDetector highCardinalityTagsDetector;
 
     @BeforeEach
     void setUp() {
         this.testMeterNameConsumer = new TestMeterNameConsumer();
         this.registry = new SimpleMeterRegistry();
-        this.highCardinalityTagsDetector = new HighCardinalityTagsDetector(registry, 3, Duration.ofMinutes(1), testMeterNameConsumer);
+        this.highCardinalityTagsDetector = new HighCardinalityTagsDetector(registry, 3, Duration.ofMinutes(1),
+                testMeterNameConsumer);
     }
 
     @AfterEach
@@ -52,10 +57,7 @@ class HighCardinalityTagsDetectorTests {
     @Test
     void shouldDetectTagsAboveTheThreshold() {
         for (int i = 0; i < 4; i++) {
-            Counter.builder("test.counter")
-                    .tag("index", String.valueOf(i))
-                    .register(registry)
-                    .increment();
+            Counter.builder("test.counter").tag("index", String.valueOf(i)).register(registry).increment();
         }
         highCardinalityTagsDetector.start();
 
@@ -65,10 +67,7 @@ class HighCardinalityTagsDetectorTests {
     @Test
     void shouldNotDetectTagsOnTheThreshold() {
         for (int i = 0; i < 3; i++) {
-            Counter.builder("test.counter")
-                    .tag("index", String.valueOf(i))
-                    .register(registry)
-                    .increment();
+            Counter.builder("test.counter").tag("index", String.valueOf(i)).register(registry).increment();
         }
 
         assertThat(highCardinalityTagsDetector.findFirst()).isEmpty();
@@ -77,10 +76,7 @@ class HighCardinalityTagsDetectorTests {
     @Test
     void shouldNotDetectLowCardinalityTags() {
         for (int i = 0; i < 5; i++) {
-            Counter.builder("test.counter")
-                    .tag("index", "0")
-                    .register(registry)
-                    .increment();
+            Counter.builder("test.counter").tag("index", "0").register(registry).increment();
         }
 
         assertThat(highCardinalityTagsDetector.findFirst()).isEmpty();
@@ -89,16 +85,16 @@ class HighCardinalityTagsDetectorTests {
     @Test
     void shouldNotDetectNoTags() {
         for (int i = 0; i < 5; i++) {
-            Counter.builder("test.counter")
-                    .register(registry)
-                    .increment();
+            Counter.builder("test.counter").register(registry).increment();
         }
 
         assertThat(highCardinalityTagsDetector.findFirst()).isEmpty();
     }
 
     private static class TestMeterNameConsumer implements Consumer<String> {
-        @Nullable private String name;
+
+        @Nullable
+        private String name;
 
         @Override
         public void accept(String name) {
@@ -109,5 +105,7 @@ class HighCardinalityTagsDetectorTests {
         public String getName() {
             return this.name;
         }
+
     }
+
 }

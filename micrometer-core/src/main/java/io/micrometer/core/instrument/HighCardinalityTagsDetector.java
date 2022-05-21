@@ -27,28 +27,33 @@ import java.util.function.Consumer;
 import io.micrometer.common.util.internal.logging.InternalLogger;
 import io.micrometer.common.util.internal.logging.InternalLoggerFactory;
 
-
 /**
- * Tries to detect high cardinality tags by checking if the amount of Meters with the same name is above a threshold.
- * You can use this class in two ways:
- *   1. Call findFirst and check if you get any results, if so you probably have high cardinality tags
- *   2. Call start which will start a scheduled job that will do this check for you
+ * Tries to detect high cardinality tags by checking if the amount of Meters with the same
+ * name is above a threshold. You can use this class in two ways: 1. Call findFirst and
+ * check if you get any results, if so you probably have high cardinality tags 2. Call
+ * start which will start a scheduled job that will do this check for you
  *
  * @author Jonatan Ivanov
  * @since 1.9.0
  */
 public class HighCardinalityTagsDetector implements AutoCloseable {
+
     private static final InternalLogger LOGGER = InternalLoggerFactory.getInstance(HighCardinalityTagsDetector.class);
 
     private static final int DEFAULT_THRESHOLD = 1_000_000;
+
     private static final Duration DEFAULT_DELAY = Duration.ofMinutes(5);
 
     public static final Consumer<String> DEFAULT_CONSUMER = HighCardinalityTagsDetector::logWarning;
 
     private final MeterRegistry registry;
+
     private final int threshold;
+
     private final Consumer<String> meterNameConsumer;
+
     private final ScheduledExecutorService scheduledExecutorService;
+
     private final Duration delay;
 
     /**
@@ -60,8 +65,9 @@ public class HighCardinalityTagsDetector implements AutoCloseable {
 
     /**
      * @param registry The registry to use to check the Meters in it
-     * @param threshold The threshold to use to detect high cardinality tags
-     *                  (if the number of Meters with the same name are higher than this value, that's a high cardinality tag)
+     * @param threshold The threshold to use to detect high cardinality tags (if the
+     * number of Meters with the same name are higher than this value, that's a high
+     * cardinality tag)
      */
     public HighCardinalityTagsDetector(MeterRegistry registry, int threshold) {
         this(registry, threshold, DEFAULT_DELAY, DEFAULT_CONSUMER);
@@ -69,12 +75,16 @@ public class HighCardinalityTagsDetector implements AutoCloseable {
 
     /**
      * @param registry The registry to use to check the Meters in it
-     * @param threshold The threshold to use to detect high cardinality tags
-     *                  (if the number of Meters with the same name are higher than this value, that's a high cardinality tag)
-     * @param delay The delay between the termination of one check and the commencement of the next
-     * @param meterNameConsumer The action to execute if the first high cardinality tag is found
+     * @param threshold The threshold to use to detect high cardinality tags (if the
+     * number of Meters with the same name are higher than this value, that's a high
+     * cardinality tag)
+     * @param delay The delay between the termination of one check and the commencement of
+     * the next
+     * @param meterNameConsumer The action to execute if the first high cardinality tag is
+     * found
      */
-    public HighCardinalityTagsDetector(MeterRegistry registry, int threshold, Duration delay, Consumer<String> meterNameConsumer) {
+    public HighCardinalityTagsDetector(MeterRegistry registry, int threshold, Duration delay,
+            Consumer<String> meterNameConsumer) {
         this.registry = registry;
         this.threshold = threshold;
         this.delay = delay;
@@ -86,12 +96,8 @@ public class HighCardinalityTagsDetector implements AutoCloseable {
      * Starts a scheduled job that checks if you have high cardinality tags.
      */
     public void start() {
-        this.scheduledExecutorService.scheduleWithFixedDelay(
-                this::detectHighCardinalityTags,
-                0,
-                this.delay.toMillis(),
-                TimeUnit.MILLISECONDS
-        );
+        this.scheduledExecutorService.scheduleWithFixedDelay(this::detectHighCardinalityTags, 0, this.delay.toMillis(),
+                TimeUnit.MILLISECONDS);
     }
 
     /**
@@ -112,8 +118,8 @@ public class HighCardinalityTagsDetector implements AutoCloseable {
 
     /**
      * Finds the name of the first Meter that potentially has high cardinality tags.
-     *
-     * @return the name of the first Meter that potentially has high cardinality tags, an empty Optional if none found.
+     * @return the name of the first Meter that potentially has high cardinality tags, an
+     * empty Optional if none found.
      */
     public Optional<String> findFirst() {
         Map<String, Integer> meterNameFrequencies = new HashMap<>();
@@ -144,4 +150,5 @@ public class HighCardinalityTagsDetector implements AutoCloseable {
     public void close() {
         this.scheduledExecutorService.shutdown();
     }
+
 }
