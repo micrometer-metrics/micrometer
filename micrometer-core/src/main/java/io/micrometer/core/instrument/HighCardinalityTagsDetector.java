@@ -37,7 +37,7 @@ import io.micrometer.common.util.internal.logging.InternalLoggerFactory;
  * @author Jonatan Ivanov
  * @since 1.9.0
  */
-public class HighCardinalityTagsDetector {
+public class HighCardinalityTagsDetector implements AutoCloseable {
     private static final InternalLogger LOGGER = InternalLoggerFactory.getInstance(HighCardinalityTagsDetector.class);
 
     private final MeterRegistry registry;
@@ -132,5 +132,10 @@ public class HighCardinalityTagsDetector {
 
     private static void logWarning(String name) {
         LOGGER.warn(String.format("It seems %s has high cardinality tags.", name));
+    }
+
+    @Override
+    public void close() {
+        this.scheduledExecutorService.shutdown();
     }
 }
