@@ -261,6 +261,20 @@ class TimedAspectTest {
     }
 
     @Test
+    void timeClassWithSkipPredicate() {
+        MeterRegistry registry = new SimpleMeterRegistry();
+
+        AspectJProxyFactory pf = new AspectJProxyFactory(new TimedClass());
+        pf.addAspect(new TimedAspect(registry, (Predicate<ProceedingJoinPoint>) pjp -> true));
+
+        TimedClass service = pf.getProxy();
+
+        service.call();
+
+        assertThat(registry.find("call").timer()).isNull();
+    }
+
+    @Test
     void timeClassFailure() {
         MeterRegistry failingRegistry = new FailingMeterRegistry();
 

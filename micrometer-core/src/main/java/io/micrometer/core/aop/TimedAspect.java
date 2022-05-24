@@ -157,6 +157,10 @@ public class TimedAspect {
     @Around("@within(io.micrometer.core.annotation.Timed)")
     @Nullable
     public Object timedClass(ProceedingJoinPoint pjp) throws Throwable {
+        if (shouldSkip.test(pjp)) {
+            return pjp.proceed();
+        }
+
         Method method = ((MethodSignature) pjp.getSignature()).getMethod();
         Class<?> declaringClass = method.getDeclaringClass();
         Timed timed = declaringClass.getAnnotation(Timed.class);
