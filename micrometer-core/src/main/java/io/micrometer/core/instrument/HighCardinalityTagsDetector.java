@@ -24,6 +24,7 @@ import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
 import java.util.function.Consumer;
 
+import io.micrometer.common.lang.Nullable;
 import io.micrometer.common.util.internal.logging.InternalLogger;
 import io.micrometer.common.util.internal.logging.InternalLoggerFactory;
 import io.micrometer.common.util.internal.logging.WarnThenDebugLogger;
@@ -48,8 +49,6 @@ public class HighCardinalityTagsDetector implements AutoCloseable {
     private static final int DEFAULT_THRESHOLD = 1_000_000;
 
     private static final Duration DEFAULT_DELAY = Duration.ofMinutes(5);
-
-    public static final Consumer<String> DEFAULT_CONSUMER = HighCardinalityTagsDetector::logWarning;
 
     private final MeterRegistry registry;
 
@@ -77,7 +76,7 @@ public class HighCardinalityTagsDetector implements AutoCloseable {
      * the next
      */
     public HighCardinalityTagsDetector(MeterRegistry registry, int threshold, Duration delay) {
-        this(registry, threshold, delay, DEFAULT_CONSUMER);
+        this(registry, threshold, delay, null);
     }
 
     /**
@@ -91,11 +90,11 @@ public class HighCardinalityTagsDetector implements AutoCloseable {
      * found
      */
     public HighCardinalityTagsDetector(MeterRegistry registry, int threshold, Duration delay,
-            Consumer<String> meterNameConsumer) {
+            @Nullable Consumer<String> meterNameConsumer) {
         this.registry = registry;
         this.threshold = threshold;
         this.delay = delay;
-        this.meterNameConsumer = meterNameConsumer;
+        this.meterNameConsumer = meterNameConsumer != null ? meterNameConsumer : this::logWarning;
         this.scheduledExecutorService = Executors
                 .newSingleThreadScheduledExecutor(new NamedThreadFactory("high-cardinality-tags-detector"));
     }
@@ -155,8 +154,11 @@ public class HighCardinalityTagsDetector implements AutoCloseable {
         return Optional.empty();
     }
 
-    private static void logWarning(String name) {
-        WARN_THEN_DEBUG_LOGGER.log(String.format("It seems %s has high cardinality tags.", name));
+    private void logWarning(String name) {
+        WARN_THEN_DEBUG_LOGGER.log(String.format("It seems %s has high cardinality tags (threshold: %d meters).\n"
+                + "Check your configuration for the instrumentation of %s to find and fix the cause of the high cardinality (see: https://micrometer.io/docs/concepts#_tag_values).\n"
+                + "If the cardinality is expected and acceptable, raise the threshold for this %s.", name,
+                this.threshold, name, this.getClass().getSimpleName()));
     }
 
 }

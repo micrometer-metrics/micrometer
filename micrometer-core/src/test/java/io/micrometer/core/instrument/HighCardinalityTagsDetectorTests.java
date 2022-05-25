@@ -18,8 +18,8 @@ package io.micrometer.core.instrument;
 import java.time.Duration;
 import java.util.function.Consumer;
 
+import io.micrometer.common.lang.Nullable;
 import io.micrometer.core.instrument.simple.SimpleMeterRegistry;
-import io.micrometer.core.lang.Nullable;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
