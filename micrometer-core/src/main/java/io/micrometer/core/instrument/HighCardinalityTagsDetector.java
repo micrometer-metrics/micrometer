@@ -28,13 +28,19 @@ import io.micrometer.common.lang.Nullable;
 import io.micrometer.common.util.internal.logging.InternalLogger;
 import io.micrometer.common.util.internal.logging.InternalLoggerFactory;
 import io.micrometer.common.util.internal.logging.WarnThenDebugLogger;
+import io.micrometer.core.instrument.config.MeterFilter;
 import io.micrometer.core.instrument.util.NamedThreadFactory;
 
 /**
  * Tries to detect high cardinality tags by checking if the amount of Meters with the same
  * name is above a threshold. You can use this class in two ways: 1. Call findFirst and
  * check if you get any results, if so you probably have high cardinality tags 2. Call
- * start which will start a scheduled job that will do this check for you
+ * start which will start a scheduled job that will do this check for you.
+ *
+ * You can also utilize
+ * {@link MeterFilter#maximumAllowableTags(String, String, int, MeterFilter)} and
+ * {@link MeterFilter#maximumAllowableMetrics(int)} to set an upper bound on the number of
+ * tags/metrics.
  *
  * @author Jonatan Ivanov
  * @since 1.10.0
