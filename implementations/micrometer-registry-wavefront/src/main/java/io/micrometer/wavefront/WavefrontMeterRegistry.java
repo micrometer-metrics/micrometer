@@ -323,6 +323,17 @@ public class WavefrontMeterRegistry extends PushMeterRegistry {
                 .merge(DistributionStatisticConfig.DEFAULT);
     }
 
+    @Override
+    public void close() {
+        super.close();
+        try {
+            this.wavefrontSender.close();
+        }
+        catch (IOException exception) {
+            logger.warn("Unable to close Wavefront client", exception);
+        }
+    }
+
     static String getWavefrontReportingUri(WavefrontConfig wavefrontConfig) {
         // proxy reporting is now http reporting on newer wavefront proxies.
         if (!isDirectToApi(wavefrontConfig)) {
