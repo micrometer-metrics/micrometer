@@ -26,6 +26,7 @@ import java.util.function.Consumer;
 
 import io.micrometer.common.util.internal.logging.InternalLogger;
 import io.micrometer.common.util.internal.logging.InternalLoggerFactory;
+import io.micrometer.core.instrument.util.NamedThreadFactory;
 
 /**
  * Tries to detect high cardinality tags by checking if the amount of Meters with the same
@@ -91,7 +92,8 @@ public class HighCardinalityTagsDetector implements AutoCloseable {
         this.threshold = threshold;
         this.delay = delay;
         this.meterNameConsumer = meterNameConsumer;
-        this.scheduledExecutorService = Executors.newSingleThreadScheduledExecutor();
+        this.scheduledExecutorService = Executors
+                .newSingleThreadScheduledExecutor(new NamedThreadFactory("high-cardinality-tags-detector"));
     }
 
     /**
