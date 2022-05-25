@@ -26,6 +26,7 @@ import java.util.function.Consumer;
 
 import io.micrometer.common.util.internal.logging.InternalLogger;
 import io.micrometer.common.util.internal.logging.InternalLoggerFactory;
+import io.micrometer.common.util.internal.logging.WarnThenDebugLogger;
 import io.micrometer.core.instrument.util.NamedThreadFactory;
 
 /**
@@ -40,6 +41,9 @@ import io.micrometer.core.instrument.util.NamedThreadFactory;
 public class HighCardinalityTagsDetector implements AutoCloseable {
 
     private static final InternalLogger LOGGER = InternalLoggerFactory.getInstance(HighCardinalityTagsDetector.class);
+
+    private static final WarnThenDebugLogger WARN_THEN_DEBUG_LOGGER = new WarnThenDebugLogger(
+            HighCardinalityTagsDetector.class);
 
     private static final int DEFAULT_THRESHOLD = 1_000_000;
 
@@ -152,7 +156,7 @@ public class HighCardinalityTagsDetector implements AutoCloseable {
     }
 
     private static void logWarning(String name) {
-        LOGGER.warn(String.format("It seems %s has high cardinality tags.", name));
+        WARN_THEN_DEBUG_LOGGER.log(String.format("It seems %s has high cardinality tags.", name));
     }
 
 }
