@@ -16,7 +16,7 @@ buildscript {
         classpath 'io.spring.nohttp:nohttp-gradle:0.0.10'
         classpath 'org.gradle:test-retry-gradle-plugin:1.4.0'
         classpath 'io.github.gradle-nexus:publish-plugin:1.1.0'
-        classpath 'io.spring.javaformat:spring-javaformat-gradle-plugin:0.0.31'
+        classpath 'io.spring.javaformat:spring-javaformat-gradle-plugin:0.0.32'
 
         constraints {
             classpath('org.ow2.asm:asm:7.3.1') {
