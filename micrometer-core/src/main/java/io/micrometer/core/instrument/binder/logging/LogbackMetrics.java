@@ -149,24 +149,19 @@ class MetricsTurboFilter extends TurboFilter {
 
     MetricsTurboFilter(MeterRegistry registry, Iterable<Tag> tags) {
         errorCounter = Counter.builder("logback.events").tags(tags).tags("level", "error")
-                .description("Number of events that made it to the logs").baseUnit(BaseUnits.EVENTS)
-                .register(registry);
+                .description("Number of events that made it to the logs").baseUnit(BaseUnits.EVENTS).register(registry);
 
         warnCounter = Counter.builder("logback.events").tags(tags).tags("level", "warn")
-                .description("Number of events that made it to the logs").baseUnit(BaseUnits.EVENTS)
-                .register(registry);
+                .description("Number of events that made it to the logs").baseUnit(BaseUnits.EVENTS).register(registry);
 
         infoCounter = Counter.builder("logback.events").tags(tags).tags("level", "info")
-                .description("Number of events that made it to the logs").baseUnit(BaseUnits.EVENTS)
-                .register(registry);
+                .description("Number of events that made it to the logs").baseUnit(BaseUnits.EVENTS).register(registry);
 
         debugCounter = Counter.builder("logback.events").tags(tags).tags("level", "debug")
-                .description("Number of events that made it to the logs").baseUnit(BaseUnits.EVENTS)
-                .register(registry);
+                .description("Number of events that made it to the logs").baseUnit(BaseUnits.EVENTS).register(registry);
 
         traceCounter = Counter.builder("logback.events").tags(tags).tags("level", "trace")
-                .description("Number of events that made it to the logs").baseUnit(BaseUnits.EVENTS)
-                .register(registry);
+                .description("Number of events that made it to the logs").baseUnit(BaseUnits.EVENTS).register(registry);
     }
 
     @Override
