@@ -8,6 +8,8 @@
         <property name="lineSeparator" value="lf"/>
     </module>
 
+    <module name="com.puppycrawl.tools.checkstyle.checks.javadoc.JavadocPackageCheck"/>
+
     <!-- TreeWalker Checks -->
     <module name="TreeWalker">
 
