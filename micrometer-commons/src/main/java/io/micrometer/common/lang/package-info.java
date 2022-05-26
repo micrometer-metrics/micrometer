@@ -13,4 +13,6 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package io.micrometer.observation.transport.http.tags;
+@NonNullApi
+@NonNullFields
+package io.micrometer.common.lang;
