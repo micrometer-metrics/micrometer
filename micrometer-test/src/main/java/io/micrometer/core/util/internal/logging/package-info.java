@@ -1,5 +1,5 @@
 /*
- * Copyright 2017 VMware, Inc.
+ * Copyright 2022 VMware, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,11 +15,6 @@
  */
 
 /**
- * Meter binders.
+ * Support for testing internal logging.
  */
-@NonNullApi
-@NonNullFields
-package io.micrometer.core.instrument.binder;
-
-import io.micrometer.common.lang.NonNullApi;
-import io.micrometer.common.lang.NonNullFields;
+package io.micrometer.core.util.internal.logging;
