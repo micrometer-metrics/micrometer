@@ -71,7 +71,7 @@ public class JvmThreadMetrics implements MeterBinder {
             for (Thread.State state : Thread.State.values()) {
                 Gauge.builder("jvm.threads.states", threadBean, (bean) -> getThreadStateCount(bean, state))
                         .tags(Tags.concat(tags, "state", getStateTagValue(state)))
-                        .description("The current number of threads having " + state + " state")
+                        .description("The current number of threads")
                         .baseUnit(BaseUnits.THREADS).register(registry);
             }
         }
