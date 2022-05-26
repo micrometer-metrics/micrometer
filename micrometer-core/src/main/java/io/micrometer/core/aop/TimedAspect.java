@@ -163,6 +163,9 @@ public class TimedAspect {
 
         Method method = ((MethodSignature) pjp.getSignature()).getMethod();
         Class<?> declaringClass = method.getDeclaringClass();
+        if (!declaringClass.isAnnotationPresent(Timed.class)) {
+            declaringClass = pjp.getTarget().getClass();
+        }
         Timed timed = declaringClass.getAnnotation(Timed.class);
 
         return perform(pjp, timed, method);
