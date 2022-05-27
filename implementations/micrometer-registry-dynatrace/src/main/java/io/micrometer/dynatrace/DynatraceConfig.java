@@ -38,6 +38,12 @@ import static io.micrometer.dynatrace.DynatraceApiVersion.V2;
  */
 public interface DynatraceConfig extends StepRegistryConfig {
 
+    /**
+     * Accept configuration defaults.
+     * @since 1.10.0
+     */
+    DynatraceConfig DEFAULT = k -> null;
+
     @Override
     default String prefix() {
         return "dynatrace";
