@@ -13,4 +13,8 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package io.micrometer.observation.transport.http.tags;
+
+/**
+ * Support for Dynatrace v2 metrics API export.
+ */
+package io.micrometer.dynatrace.v2;

@@ -261,6 +261,35 @@ class TimedAspectTest {
     }
 
     @Test
+    void timeClassWithSkipPredicate() {
+        MeterRegistry registry = new SimpleMeterRegistry();
+
+        AspectJProxyFactory pf = new AspectJProxyFactory(new TimedClass());
+        pf.addAspect(new TimedAspect(registry, (Predicate<ProceedingJoinPoint>) pjp -> true));
+
+        TimedClass service = pf.getProxy();
+
+        service.call();
+
+        assertThat(registry.find("call").timer()).isNull();
+    }
+
+    @Test
+    void timeClassImplementingInterface() {
+        MeterRegistry registry = new SimpleMeterRegistry();
+
+        AspectJProxyFactory pf = new AspectJProxyFactory(new TimedImpl());
+        pf.addAspect(new TimedAspect(registry));
+
+        TimedInterface service = pf.getProxy();
+
+        service.call();
+
+        assertThat(registry.get("call").tag("class", "io.micrometer.core.aop.TimedAspectTest$TimedInterface")
+                .tag("method", "call").tag("extra", "tag").timer().count()).isEqualTo(1);
+    }
+
+    @Test
     void timeClassFailure() {
         MeterRegistry failingRegistry = new FailingMeterRegistry();
 
@@ -364,6 +393,21 @@ class TimedAspectTest {
     static class TimedClass {
 
         void call() {
+        }
+
+    }
+
+    interface TimedInterface {
+
+        void call();
+
+    }
+
+    @Timed(value = "call", extraTags = { "extra", "tag" })
+    static class TimedImpl implements TimedInterface {
+
+        @Override
+        public void call() {
         }
 
     }

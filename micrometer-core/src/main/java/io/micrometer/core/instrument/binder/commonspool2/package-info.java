@@ -13,4 +13,8 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package io.micrometer.observation.transport.http.tags;
+
+/**
+ * Meter binders for Apache Commons Pool 2.x.
+ */
+package io.micrometer.core.instrument.binder.commonspool2;

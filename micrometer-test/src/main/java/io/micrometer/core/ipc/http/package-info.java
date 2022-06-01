@@ -13,4 +13,8 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package io.micrometer.observation.transport.http.tags;
+
+/**
+ * Support for testing {@link io.micrometer.core.ipc.http.HttpSender HttpSender classes}.
+ */
+package io.micrometer.core.ipc.http;

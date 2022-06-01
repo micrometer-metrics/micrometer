@@ -13,4 +13,8 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package io.micrometer.observation.transport.http.tags;
+
+/**
+ * TCK for {@link io.micrometer.core.instrument.MeterRegistry MeterRegistry classes}.
+ */
+package io.micrometer.core.tck;
