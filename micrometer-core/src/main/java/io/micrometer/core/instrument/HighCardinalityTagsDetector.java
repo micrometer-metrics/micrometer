@@ -52,13 +52,11 @@ public class HighCardinalityTagsDetector implements AutoCloseable {
     private static final WarnThenDebugLogger WARN_THEN_DEBUG_LOGGER = new WarnThenDebugLogger(
             HighCardinalityTagsDetector.class);
 
-    private static final int DEFAULT_THRESHOLD = 1_000_000;
-
     private static final Duration DEFAULT_DELAY = Duration.ofMinutes(5);
 
     private final MeterRegistry registry;
 
-    private final int threshold;
+    private final long threshold;
 
     private final Consumer<String> meterNameConsumer;
 
@@ -70,7 +68,7 @@ public class HighCardinalityTagsDetector implements AutoCloseable {
      * @param registry The registry to use to check the Meters in it
      */
     public HighCardinalityTagsDetector(MeterRegistry registry) {
-        this(registry, DEFAULT_THRESHOLD, DEFAULT_DELAY);
+        this(registry, calculateThreshold(), DEFAULT_DELAY);
     }
 
     /**
@@ -81,7 +79,7 @@ public class HighCardinalityTagsDetector implements AutoCloseable {
      * @param delay The delay between the termination of one check and the commencement of
      * the next
      */
-    public HighCardinalityTagsDetector(MeterRegistry registry, int threshold, Duration delay) {
+    public HighCardinalityTagsDetector(MeterRegistry registry, long threshold, Duration delay) {
         this(registry, threshold, delay, null);
     }
 
@@ -95,7 +93,7 @@ public class HighCardinalityTagsDetector implements AutoCloseable {
      * @param meterNameConsumer The action to execute if the first high cardinality tag is
      * found
      */
-    public HighCardinalityTagsDetector(MeterRegistry registry, int threshold, Duration delay,
+    public HighCardinalityTagsDetector(MeterRegistry registry, long threshold, Duration delay,
             @Nullable Consumer<String> meterNameConsumer) {
         this.registry = registry;
         this.threshold = threshold;
@@ -109,6 +107,8 @@ public class HighCardinalityTagsDetector implements AutoCloseable {
      * Starts a scheduled job that checks if you have high cardinality tags.
      */
     public void start() {
+        LOGGER.info(String.format("Starting %s with threshold: %d and delay: %s", this.getClass().getSimpleName(),
+                this.threshold, this.delay));
         this.scheduledExecutorService.scheduleWithFixedDelay(this::detectHighCardinalityTags, 0, this.delay.toMillis(),
                 TimeUnit.MILLISECONDS);
     }
@@ -117,6 +117,7 @@ public class HighCardinalityTagsDetector implements AutoCloseable {
      * Shuts down the scheduled job that checks if you have high cardinality tags.
      */
     public void shutdown() {
+        LOGGER.info("Stopping " + this.getClass().getSimpleName());
         this.scheduledExecutorService.shutdown();
     }
 
@@ -140,14 +141,14 @@ public class HighCardinalityTagsDetector implements AutoCloseable {
      * empty Optional if none found.
      */
     public Optional<String> findFirst() {
-        Map<String, Integer> meterNameFrequencies = new HashMap<>();
+        Map<String, Long> meterNameFrequencies = new HashMap<>();
         for (Meter meter : this.registry.getMeters()) {
             String name = meter.getId().getName();
             if (!meterNameFrequencies.containsKey(name)) {
-                meterNameFrequencies.put(name, 1);
+                meterNameFrequencies.put(name, 1L);
             }
             else {
-                Integer frequency = meterNameFrequencies.get(name);
+                Long frequency = meterNameFrequencies.get(name);
                 if (frequency < this.threshold) {
                     meterNameFrequencies.put(name, frequency + 1);
                 }
@@ -165,6 +166,14 @@ public class HighCardinalityTagsDetector implements AutoCloseable {
                 + "Check your configuration for the instrumentation of %s to find and fix the cause of the high cardinality (see: https://micrometer.io/docs/concepts#_tag_values).\n"
                 + "If the cardinality is expected and acceptable, raise the threshold for this %s.", name,
                 this.threshold, name, this.getClass().getSimpleName()));
+    }
+
+    private static long calculateThreshold() {
+        // half of the heap in MiB
+        long allowance = Runtime.getRuntime().maxMemory() / 1024 / 1024 / 2;
+
+        // 2k Meters can take ~1MiB, 2M Meters can take ~1GiB
+        return Math.min(allowance * 2_000, 2_000_000);
     }
 
 }
