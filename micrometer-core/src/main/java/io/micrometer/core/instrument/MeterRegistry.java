@@ -869,7 +869,7 @@ public abstract class MeterRegistry {
          * commencement of the next.
          * @return This configuration instance.
          */
-        public Config withHighCardinalityTagsDetector(int threshold, Duration delay) {
+        public Config withHighCardinalityTagsDetector(long threshold, Duration delay) {
             highCardinalityTagsDetector = new HighCardinalityTagsDetector(MeterRegistry.this, threshold, delay);
             highCardinalityTagsDetector.start();
             return this;
