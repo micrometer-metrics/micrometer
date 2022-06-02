@@ -36,15 +36,4 @@ public class PrometheusSample {
         new SpringApplicationBuilder(PrometheusSample.class).profiles("prometheus").run(args);
     }
 
-    @Bean
-    PrometheusMeterRegistry prometheusMeterRegistry(PrometheusConfig prometheusConfig,
-            CollectorRegistry collectorRegistry, Clock clock, ExemplarSampler exemplarSampler) {
-        return new PrometheusMeterRegistry(prometheusConfig, collectorRegistry, clock, exemplarSampler);
-    }
-
-    @Bean
-    ExemplarSampler exemplarSampler(SpanContextSupplier spanContextSupplier) {
-        return new DefaultExemplarSampler(spanContextSupplier);
-    }
-
 }
