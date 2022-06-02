@@ -16,16 +16,8 @@
 package io.micrometer.boot2.samples;
 
 import io.micrometer.boot2.samples.components.PersonController;
-import io.micrometer.core.instrument.Clock;
-import io.micrometer.prometheus.PrometheusConfig;
-import io.micrometer.prometheus.PrometheusMeterRegistry;
-import io.prometheus.client.CollectorRegistry;
-import io.prometheus.client.exemplars.DefaultExemplarSampler;
-import io.prometheus.client.exemplars.ExemplarSampler;
-import io.prometheus.client.exemplars.tracer.common.SpanContextSupplier;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.boot.builder.SpringApplicationBuilder;
-import org.springframework.context.annotation.Bean;
 import org.springframework.scheduling.annotation.EnableScheduling;
 
 @SpringBootApplication(scanBasePackageClasses = PersonController.class)
