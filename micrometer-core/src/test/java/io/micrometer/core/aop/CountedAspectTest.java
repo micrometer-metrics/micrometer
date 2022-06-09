@@ -56,8 +56,8 @@ class CountedAspectTest {
         countedService.succeedWithMetrics();
 
         Counter counter = meterRegistry.get("metric.success").tag("method", "succeedWithMetrics")
-                .tag("class", this.getClass().getName() + "$CountedService").tag("extra", "tag")
-                .tag("result", "success").counter();
+                .tag("class", getClass().getName() + "$CountedService").tag("extra", "tag").tag("result", "success")
+                .counter();
 
         assertThat(counter.count()).isOne();
         assertThat(counter.getId().getDescription()).isNull();
@@ -82,7 +82,7 @@ class CountedAspectTest {
         }
 
         Counter counter = meterRegistry.get("metric.failing").tag("method", "fail")
-                .tag("class", this.getClass().getName() + "$CountedService").tag("exception", "RuntimeException")
+                .tag("class", getClass().getName() + "$CountedService").tag("exception", "RuntimeException")
                 .tag("result", "failure").counter();
 
         assertThat(counter.count()).isOne();
@@ -119,14 +119,14 @@ class CountedAspectTest {
         CompletableFuture<?> completableFuture = asyncCountedService.succeedWithMetrics(guardedResult);
 
         assertThat(meterRegistry.find("metric.success").tag("method", "succeedWithMetrics")
-                .tag("class", this.getClass().getName() + "$AsyncCountedService").tag("extra", "tag")
+                .tag("class", getClass().getName() + "$AsyncCountedService").tag("extra", "tag")
                 .tag("exception", "none").tag("result", "success").counter()).isNull();
 
         guardedResult.complete();
         completableFuture.join();
 
         Counter counterAfterCompletion = meterRegistry.get("metric.success").tag("method", "succeedWithMetrics")
-                .tag("class", this.getClass().getName() + "$AsyncCountedService").tag("extra", "tag")
+                .tag("class", getClass().getName() + "$AsyncCountedService").tag("extra", "tag")
                 .tag("exception", "none").tag("result", "success").counter();
 
         assertThat(counterAfterCompletion.count()).isOne();
@@ -139,14 +139,14 @@ class CountedAspectTest {
         CompletableFuture<?> completableFuture = asyncCountedService.fail(guardedResult);
 
         assertThat(meterRegistry.find("metric.failing").tag("method", "fail")
-                .tag("class", this.getClass().getName() + "$AsyncCountedService").tag("exception", "RuntimeException")
+                .tag("class", getClass().getName() + "$AsyncCountedService").tag("exception", "RuntimeException")
                 .tag("result", "failure").counter()).isNull();
 
         guardedResult.complete(new RuntimeException());
         assertThatThrownBy(completableFuture::join).isInstanceOf(RuntimeException.class);
 
         Counter counter = meterRegistry.get("metric.failing").tag("method", "fail")
-                .tag("class", this.getClass().getName() + "$AsyncCountedService").tag("exception", "RuntimeException")
+                .tag("class", getClass().getName() + "$AsyncCountedService").tag("exception", "RuntimeException")
                 .tag("result", "failure").counter();
 
         assertThat(counter.count()).isOne();

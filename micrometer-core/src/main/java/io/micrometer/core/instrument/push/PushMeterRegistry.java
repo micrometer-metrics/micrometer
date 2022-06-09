@@ -54,8 +54,7 @@ public abstract class PushMeterRegistry extends MeterRegistry {
             publish();
         }
         catch (Throwable e) {
-            logger.warn("Unexpected exception thrown while publishing metrics for " + this.getClass().getSimpleName(),
-                    e);
+            logger.warn("Unexpected exception thrown while publishing metrics for " + getClass().getSimpleName(), e);
         }
     }
 
@@ -72,7 +71,7 @@ public abstract class PushMeterRegistry extends MeterRegistry {
             stop();
 
         if (config.enabled()) {
-            logger.info("publishing metrics for " + this.getClass().getSimpleName() + " every "
+            logger.info("publishing metrics for " + getClass().getSimpleName() + " every "
                     + TimeUtils.format(config.step()));
 
             scheduledExecutorService = Executors.newSingleThreadScheduledExecutor(threadFactory);
