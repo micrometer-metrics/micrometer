@@ -10,17 +10,17 @@ dependencies {
         // We do not use HTTP modules; exclude to avoid false positive CVE reports
         exclude module: 'netty-codec-http'
     }
-	// We need make sure netty dns resolution works on all macs
-	implementation 'io.netty:netty-resolver-dns-native-macos:+:osx-x86_64'
-	implementation 'io.netty:netty-resolver-dns-native-macos:+:osx-aarch_64'
+    // We need make sure netty dns resolution works on all macs
+    implementation(group: 'io.netty', name: 'netty-resolver-dns-native-macos', classifier: 'osx-x86_64')
+    implementation(group: 'io.netty', name: 'netty-resolver-dns-native-macos', classifier: 'osx-aarch_64')
 
     testImplementation project(':micrometer-test')
     testImplementation 'io.projectreactor:reactor-test'
     testImplementation 'ch.qos.logback:logback-classic'
     testImplementation 'org.awaitility:awaitility'
     // for running tests with UDS on OSX
-    testImplementation 'io.netty:netty-transport-native-kqueue:+:osx-x86_64'
-    testImplementation 'io.netty:netty-transport-native-kqueue:+:osx-aarch_64'
+    testImplementation(group: 'io.netty', name: 'netty-transport-native-kqueue', classifier: 'osx-x86_64')
+    testImplementation(group: 'io.netty', name: 'netty-transport-native-kqueue', classifier: 'osx-aarch_64')
 }
 
 nebulaPublishVerification {
