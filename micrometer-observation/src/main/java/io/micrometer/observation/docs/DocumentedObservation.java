@@ -16,6 +16,7 @@
 package io.micrometer.observation.docs;
 
 import io.micrometer.common.docs.KeyName;
+import io.micrometer.common.docs.SemanticName;
 import io.micrometer.observation.Observation;
 import io.micrometer.observation.ObservationRegistry;
 
@@ -55,7 +56,7 @@ public interface DocumentedObservation {
      * Technical name (e.g metric name).
      * @return name
      */
-    String getName();
+    SemanticName getName();
 
     /**
      * More human readable name available within the given context (e.g. span name).
@@ -63,19 +64,6 @@ public interface DocumentedObservation {
      */
     default String getContextualName() {
         return null;
-    }
-
-    /**
-     * Builds a name from provided vars. Follows the
-     * {@link String#format(String, Object...)} patterns.
-     * @param vars variables to pass to {@link String#format(String, Object...)}
-     * @return constructed name
-     */
-    default String getName(String... vars) {
-        if (getName().contains("%s")) {
-            return String.format(getName(), (Object[]) vars);
-        }
-        return getName();
     }
 
     /**
@@ -119,7 +107,7 @@ public interface DocumentedObservation {
      * @return observation
      */
     default Observation observation(ObservationRegistry registry, Observation.Context context) {
-        return Observation.createNotStarted(getName(), context, registry).contextualName(getContextualName());
+        return Observation.createNotStarted(getName().getName(), context, registry).contextualName(getContextualName());
     }
 
     /**

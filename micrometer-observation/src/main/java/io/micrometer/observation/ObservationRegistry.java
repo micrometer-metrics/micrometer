@@ -15,6 +15,7 @@
  */
 package io.micrometer.observation;
 
+import io.micrometer.common.lang.NonNull;
 import io.micrometer.common.lang.Nullable;
 
 import java.util.Arrays;
@@ -106,7 +107,7 @@ public interface ObservationRegistry {
         private final Map<Class<? extends Observation.KeyValuesConvention>, Observation.KeyValuesConvention> keyValuesConventions = new ConcurrentHashMap<>();
 
         // TODO: To maintain backward compatibility
-        private KeyValuesConfiguration keyValuesConfiguration = KeyValuesConfiguration.LEGACY;
+        private ObservationNamingConfiguration observationNamingConfiguration = ObservationNamingConfiguration.LEGACY;
 
         /**
          * Register a handler for the {@link Observation observations}.
@@ -176,8 +177,8 @@ public interface ObservationRegistry {
          * @param keyValuesConvention setup for key values setting
          * @return This configuration instance
          */
-        public ObservationConfig keyValuesConfiguration(KeyValuesConfiguration keyValuesConvention) {
-            this.keyValuesConfiguration = keyValuesConvention;
+        public ObservationConfig keyValuesConfiguration(ObservationNamingConfiguration keyValuesConvention) {
+            this.observationNamingConfiguration = keyValuesConvention;
             return this;
         }
 
@@ -196,20 +197,25 @@ public interface ObservationRegistry {
          * Returns a registered key values convention for the given class.
          * @param clazz {@link Observation.KeyValuesConvention} class
          * @param <T> type of convention
-         * @return registered convention or {@code null} if none is registered
+         * @return registered convention
+         * @throws {@link IllegalStateException} when no {@link Observation.KeyValuesConvention} found
          */
-        @Nullable
+        @NonNull
         @SuppressWarnings("unchecked")
         public <T extends Observation.KeyValuesConvention> T getKeyValuesConvention(Class<T> clazz) {
-            return (T) this.keyValuesConventions.get(clazz);
+            T t = (T) this.keyValuesConventions.get(clazz);
+            if (t == null) {
+                throw new IllegalStateException("No KeyValuesConvention found for class [" + clazz + "]");
+            }
+            return t;
         }
 
         /**
-         * Returns the registered {@link KeyValuesConfiguration}.
+         * Returns the registered {@link ObservationNamingConfiguration}.
          * @return key values configuration
          */
-        public KeyValuesConfiguration getKeyValuesConfiguration() {
-            return this.keyValuesConfiguration;
+        public ObservationNamingConfiguration getObservationNamingConfiguration() {
+            return this.observationNamingConfiguration;
         }
 
         // package-private for minimal visibility
@@ -231,22 +237,22 @@ public interface ObservationRegistry {
     /**
      * Defines how tagging should take place.
      */
-    enum KeyValuesConfiguration {
+    enum ObservationNamingConfiguration {
 
         /**
-         * Leaves the current behaviour of tagging - will set the same tags as until now.
+         * Leaves the current behaviour of naming & tagging - will set the same tags as until now.
          * Backward-compatible approach.
          */
         LEGACY,
 
         /**
-         * Sets both the legacy tags together with the new standardized tags.
-         * Backward-compatible approach.
+         * Creates two sets of observations - both the legacy together with the new standardized ones.
+         * Backward-compatible approach useful for gradual.
          */
         LEGACY_WITH_STANDARDIZED,
 
         /**
-         * Sets only the standardized tags. Backward-incompatible approach.
+         * Sets only the standardized names & tags. Backward-incompatible approach.
          */
         STANDARDIZED
 

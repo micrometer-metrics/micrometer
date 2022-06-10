@@ -28,7 +28,6 @@ import io.micrometer.observation.Observation;
 import io.micrometer.observation.ObservationRegistry;
 import io.micrometer.observation.transport.http.HttpClientRequest;
 import io.micrometer.observation.transport.http.HttpClientResponse;
-import io.micrometer.observation.transport.http.tags.HttpClientKeyValuesConvention;
 import okhttp3.EventListener;
 import okhttp3.*;
 
@@ -104,7 +103,7 @@ public class OkHttpMetricsEventListener extends EventListener {
             boolean includeHostTag) {
         this.registry = registry;
         this.observationRegistry = observationRegistry;
-        this.observationRegistryNoOp = observationRegistry.isNoOp();
+        this.observationRegistryNoOp = observationRegistry.isNoop();
         this.keyValuesProvider = keyValuesProvider;
         this.requestsMetricName = requestsMetricName;
         this.urlMapper = urlMapper;
@@ -172,9 +171,8 @@ public class OkHttpMetricsEventListener extends EventListener {
                 }
             });
         }
-        Observation observation = Observation
-                .createNotStarted(this.requestsMetricName, okHttpContext, this.observationRegistry)
-                .keyValuesProvider(this.keyValuesProvider).start();
+        Observation observation =
+                OkHttpDocumentedObservation.of(this.observationRegistry, okHttpContext, this.keyValuesProvider).start();
         callState.setContext(okHttpContext);
         callState.setObservation(observation);
         this.callState.put(call, callState);
@@ -206,7 +204,7 @@ public class OkHttpMetricsEventListener extends EventListener {
     // VisibleForTesting
     void time(CallState state) {
         OkHttpContext okHttpContext = state.context;
-        if (observationRegistry.isNoOp()) {
+        if (observationRegistryNoOp || observationRegistry.observationConfig().getObservationNamingConfiguration() == ObservationRegistry.ObservationNamingConfiguration.LEGACY_WITH_STANDARDIZED) {
             // TODO: We're going first from tags to key values and then back - maybe it
             // doesn't make a lot of sense?
             KeyValues lowCardinalityKeyValues = keyValuesProvider.getLowCardinalityKeyValues(okHttpContext);
@@ -217,7 +215,8 @@ public class OkHttpMetricsEventListener extends EventListener {
                     .description("Timer of OkHttp operation").register(registry)
                     .record(registry.config().clock().monotonicTime() - state.startTime, TimeUnit.NANOSECONDS);
         }
-        else {
+
+        if (!observationRegistryNoOp && observationRegistry.observationConfig().getObservationNamingConfiguration() != ObservationRegistry.ObservationNamingConfiguration.LEGACY) {
             state.observation.error(state.exception);
             if (state.response != null) {
                 okHttpContext.setResponse(new HttpClientResponse() {
@@ -396,29 +395,7 @@ public class OkHttpMetricsEventListener extends EventListener {
 
         @SuppressWarnings("unchecked")
         public OkHttpMetricsEventListener build() {
-            Observation.KeyValuesProvider provider = null;
-            if (this.keyValuesProvider != null) {
-                provider = this.keyValuesProvider;
-            }
-            else if (observationRegistry.isNoOp() || observationRegistry.observationConfig()
-                    .getKeyValuesConfiguration() == ObservationRegistry.KeyValuesConfiguration.LEGACY) {
-                provider = new DefaultOkHttpKeyValuesProvider();
-            }
-            else if (observationRegistry.observationConfig()
-                    .getKeyValuesConfiguration() == ObservationRegistry.KeyValuesConfiguration.STANDARDIZED) {
-                // TODO: Isn't this too much - maybe we should just require the user to
-                // set this manually?
-                provider = new StandardizedOkHttpKeyValuesProvider(observationRegistry.observationConfig()
-                        .getKeyValuesConvention(HttpClientKeyValuesConvention.class));
-            }
-            else {
-                provider = new Observation.KeyValuesProvider.CompositeKeyValuesProvider(
-                        new DefaultOkHttpKeyValuesProvider(),
-                        new StandardizedOkHttpKeyValuesProvider(observationRegistry.observationConfig()
-                                .getKeyValuesConvention(HttpClientKeyValuesConvention.class)));
-            }
-
-            return new OkHttpMetricsEventListener(registry, observationRegistry, provider, name, uriMapper, tags,
+            return new OkHttpMetricsEventListener(registry, observationRegistry, this.keyValuesProvider, name, uriMapper, tags,
                     contextSpecificTags, requestTagKeys, includeHostTag);
         }
 

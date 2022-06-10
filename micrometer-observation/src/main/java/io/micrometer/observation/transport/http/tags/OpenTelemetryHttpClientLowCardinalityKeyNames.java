@@ -15,22 +15,29 @@
  */
 package io.micrometer.observation.transport.http.tags;
 
-import io.micrometer.common.KeyValue;
-import io.micrometer.observation.transport.http.HttpRequest;
+import io.micrometer.common.docs.KeyName;
+import io.micrometer.conventions.semantic.SemanticAttributes;
 
 /**
- * Conventions for HTTP key values implemented with OpenTelemetry.
+ * Conventions for HTTP client key names implemented with OpenTelemetry.
  *
  * @author Marcin Grzejszczak
  * @since 1.10.0
  */
-// TODO: What to do if request is not set? UNKNOWN?
-public class OpenTelemetryHttpClientKeyValuesConvention extends OpenTelemetryHttpKeyValuesConvention
-        implements HttpClientKeyValuesConvention {
-
-    @Override
-    public KeyValue peerName(HttpRequest request) {
-        return OpenTelemetryHttpClientLowCardinalityKeyNames.PEER_NAME.of("UNKNOWN");
+public enum OpenTelemetryHttpClientLowCardinalityKeyNames implements KeyName {
+    /**
+     * Remote hostname or similar, see note below.
+     *
+     * Examples: example.com
+     *
+     * SHOULD NOT be set if capturing it would require an extra DNS lookup.
+     * @param request
+     * @return
+     */
+    PEER_NAME {
+        @Override
+        public String getKeyName() {
+            return SemanticAttributes.NET_PEER_NAME.getKey();
+        }
     }
-
 }

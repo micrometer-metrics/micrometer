@@ -16,7 +16,6 @@
 package io.micrometer.observation.transport.http.tags;
 
 import io.micrometer.common.KeyValue;
-import io.micrometer.conventions.semantic.SemanticAttributes;
 import io.micrometer.observation.transport.http.HttpRequest;
 
 /**
@@ -31,22 +30,22 @@ public class OpenTelemetryHttpServerKeyValuesConvention extends OpenTelemetryHtt
 
     @Override
     public KeyValue serverName(HttpRequest request) {
-        return KeyValue.ofUnknownValue(SemanticAttributes.HTTP_SERVER_NAME.getKey());
+        return OpenTelemetryHttpServerLowCardinalityKeyNames.SERVER_NAME.of("UNKNOWN");
     }
 
     @Override
     public KeyValue route(HttpRequest request) {
-        return KeyValue.ofUnknownValue(SemanticAttributes.HTTP_ROUTE.getKey());
+        return OpenTelemetryHttpServerLowCardinalityKeyNames.ROUTE.of("UNKNOWN");
     }
 
     @Override
     public KeyValue templatedRoute(HttpRequest request) {
-        return KeyValue.ofUnknownValue("http.route.templated");
+        return OpenTelemetryHttpServerLowCardinalityKeyNames.TEMPLATED_ROUTE.of("UNKNOWN");
     }
 
     @Override
     public KeyValue clientIp(HttpRequest request) {
-        return KeyValue.ofUnknownValue(SemanticAttributes.HTTP_CLIENT_IP.getKey());
+        return OpenTelemetryHttpServerLowCardinalityKeyNames.CLIENT_IP.of("UNKNOWN");
     }
 
 }

@@ -90,7 +90,7 @@ class OkHttpMetricsEventListenerTest {
         ObservationRegistry observationRegistry = ObservationRegistry.create();
         TestHandler testHandler = new TestHandler();
         observationRegistry.observationConfig()
-                .keyValuesConfiguration(ObservationRegistry.KeyValuesConfiguration.LEGACY_WITH_STANDARDIZED);
+                .keyValuesConfiguration(ObservationRegistry.ObservationNamingConfiguration.LEGACY_WITH_STANDARDIZED);
         observationRegistry.observationConfig().keyValuesConvention(new OpenTelemetryHttpClientKeyValuesConvention());
         observationRegistry.observationConfig().observationHandler(testHandler);
         observationRegistry.observationConfig().observationHandler(new TimerObservationHandler(registry));
