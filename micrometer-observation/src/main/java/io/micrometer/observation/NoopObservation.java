@@ -42,6 +42,11 @@ final class NoopObservation implements Observation {
     }
 
     @Override
+    public Observation longTask() {
+        return this;
+    }
+
+    @Override
     public Observation lowCardinalityKeyValue(KeyValue keyValue) {
         return this;
     }

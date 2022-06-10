@@ -117,6 +117,13 @@ public interface Observation {
     Observation contextualName(String contextualName);
 
     /**
+     * Marks the observation as a potentially taking a long time so the handlers can act
+     * accordingly. E.g.: tracing the active tasks while they are active.
+     * @return this
+     */
+    Observation longTask();
+
+    /**
      * Sets a low cardinality key value. Low cardinality means that this key value will
      * have a bounded number of possible values. A templated HTTP URL is a good example of
      * such a key value (e.g. /foo/{userId}).
@@ -424,6 +431,8 @@ public interface Observation {
 
         private String contextualName;
 
+        private boolean longTask = false;
+
         @Nullable
         private Throwable error;
 
@@ -465,6 +474,25 @@ public interface Observation {
          */
         public Context setContextualName(String contextualName) {
             this.contextualName = contextualName;
+            return this;
+        }
+
+        /**
+         * Returns if this observation can potentially take a long time or not.
+         * @return long task flag
+         */
+        public boolean isLongTask() {
+            return this.longTask;
+        }
+
+        /**
+         * Sets the long task flag that signals if this observation can potentially take a
+         * long time or not.
+         * @param longTask shows if the Observation can take a long time or not
+         * @return this for chaining
+         */
+        public Context setLongTask(boolean longTask) {
+            this.longTask = longTask;
             return this;
         }
 

@@ -645,6 +645,25 @@ public abstract class MeterRegistryCompatibilityKit {
         }
 
         @Test
+        @DisplayName("record a long task with stateful Observation instance")
+        void recordLongTaskWithObservation() {
+            Observation observation = Observation.createNotStarted("myObservation", observationRegistry).longTask()
+                    .lowCardinalityKeyValue("abc", "42").start();
+
+            clock(registry).add(60, TimeUnit.SECONDS);
+            LongTaskTimer longTaskTimer = registry.more().longTaskTimer("myObservation.active", "abc", "42");
+            assertThat(longTaskTimer.activeTasks()).isEqualTo(1);
+
+            observation.stop();
+            clock(registry).add(step());
+            assertThat(longTaskTimer.activeTasks()).isEqualTo(0);
+
+            Timer timer = registry.timer("myObservation", "error", "none", "abc", "42");
+            assertAll(() -> assertEquals(1L, timer.count()),
+                    () -> assertEquals(60, timer.totalTime(TimeUnit.SECONDS), 1.0e-12));
+        }
+
+        @Test
         @DisplayName("record with stateful Observation and Scope instances")
         void recordWithObservationAndScope() {
             Observation observation = Observation.start("myObservation", observationRegistry);

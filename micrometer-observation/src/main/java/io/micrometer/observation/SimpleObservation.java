@@ -61,6 +61,12 @@ class SimpleObservation implements Observation {
     }
 
     @Override
+    public Observation longTask() {
+        this.context.setLongTask(true);
+        return this;
+    }
+
+    @Override
     public Observation lowCardinalityKeyValue(KeyValue keyValue) {
         this.context.addLowCardinalityKeyValue(keyValue);
         return this;

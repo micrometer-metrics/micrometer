@@ -42,12 +42,17 @@ public class ObservationHandlerSample {
         Observation observation = Observation
                 .createNotStarted("sample.operation", new CustomContext(), observationRegistry)
                 .contextualName("CALL sampleOperation").keyValuesProvider(new CustomLocalKeyValuesProvider())
-                .lowCardinalityKeyValue("a", "1").highCardinalityKeyValue("time", Instant.now().toString()).start();
+                .lowCardinalityKeyValue("a", "1").highCardinalityKeyValue("time", Instant.now().toString()).longTask()
+                .start();
 
         try (Observation.Scope scope = observation.openScope()) {
             Thread.sleep(1_000);
             observation.error(new IOException("simulated"));
         }
+
+        System.out.println("---");
+        System.out.println(registry.getMetersAsString());
+
         observation.stop();
 
         Observation.start("sample.no-context", observationRegistry).stop();
