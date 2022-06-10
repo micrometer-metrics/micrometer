@@ -13,6 +13,10 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
+/**
+ * Meter binders.
+ */
 @NonNullApi
 @NonNullFields
 package io.micrometer.core.instrument.binder;

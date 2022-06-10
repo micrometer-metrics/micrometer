@@ -14,11 +14,11 @@ buildscript {
         classpath 'com.netflix.nebula:nebula-publishing-plugin:18.4.0'
         classpath 'com.netflix.nebula:nebula-project-plugin:9.4.0'
         classpath 'io.spring.nohttp:nohttp-gradle:0.0.10'
-        classpath 'org.gradle:test-retry-gradle-plugin:1.3.1'
+        classpath 'org.gradle:test-retry-gradle-plugin:1.4.0'
         classpath 'io.github.gradle-nexus:publish-plugin:1.1.0'
         classpath 'me.champeau.gradle:japicmp-gradle-plugin:0.4.0'
         classpath 'de.undercouch:gradle-download-task:5.0.2'
-        classpath 'io.spring.javaformat:spring-javaformat-gradle-plugin:0.0.31'
+        classpath 'io.spring.javaformat:spring-javaformat-gradle-plugin:0.0.33'
 
         constraints {
             classpath('org.ow2.asm:asm:7.3.1') {
@@ -339,6 +339,8 @@ subprojects {
                     txtOutputFile = file("${project.buildDir}/reports/japi.txt")
                     ignoreMissingClasses = true
                     includeSynthetic = true
+                    // TODO remove methodExcludes when gh-3181 is resolved
+                    methodExcludes = ['io.micrometer.stackdriver.StackdriverConfig#metricTypePrefix()']
                     onlyIf { compatibleVersion != 'SKIP' }
                 }
 

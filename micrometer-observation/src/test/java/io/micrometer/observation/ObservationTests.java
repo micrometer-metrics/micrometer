@@ -29,7 +29,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 class ObservationTests {
 
     @Test
-    void notHavingAnyHandlersShouldResultInNoOpObservation() {
+    void notHavingAnyHandlersShouldResultInNoopObservation() {
         ObservationRegistry registry = ObservationRegistry.create();
 
         Observation observation = Observation.createNotStarted("foo", registry);
@@ -38,14 +38,14 @@ class ObservationTests {
     }
 
     @Test
-    void notHavingARegistryShouldResultInNoOpObservation() {
+    void notHavingARegistryShouldResultInNoopObservation() {
         Observation observation = Observation.createNotStarted("foo", null);
 
         assertThat(observation).isSameAs(Observation.NOOP);
     }
 
     @Test
-    void notMatchingObservationPredicateShouldResultInNoOpObservation() {
+    void notMatchingObservationPredicateShouldResultInNoopObservation() {
         ObservationRegistry registry = ObservationRegistry.create();
         registry.observationConfig().observationHandler(context -> true);
         registry.observationConfig().observationPredicate((s, context) -> false);
@@ -56,7 +56,7 @@ class ObservationTests {
     }
 
     @Test
-    void matchingPredicateAndHandlerShouldNotResultInNoOpObservation() {
+    void matchingPredicateAndHandlerShouldNotResultInNoopObservation() {
         ObservationRegistry registry = ObservationRegistry.create();
         registry.observationConfig().observationHandler(context -> true);
         registry.observationConfig().observationPredicate((s, context) -> true);

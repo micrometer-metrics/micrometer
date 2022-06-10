@@ -172,11 +172,18 @@ public class WavefrontMeterRegistry extends PushMeterRegistry {
 
     @Override
     protected void publish() {
-        // formatter:off
-        getMeters().forEach(m -> m.use(this::publishMeter, this::publishMeter, this::publishTimer, this::publishSummary,
-                this::publishLongTaskTimer, this::publishMeter, this::publishMeter, this::publishFunctionTimer,
+        // @formatter:off
+        getMeters().forEach(m -> m.use(
+                this::publishMeter,
+                this::publishMeter,
+                this::publishTimer,
+                this::publishSummary,
+                this::publishLongTaskTimer,
+                this::publishMeter,
+                this::publishMeter,
+                this::publishFunctionTimer,
                 this::publishMeter));
-        // formatter:on
+        // @formatter:on
     }
 
     private void publishFunctionTimer(FunctionTimer timer) {
@@ -314,6 +321,17 @@ public class WavefrontMeterRegistry extends PushMeterRegistry {
     protected DistributionStatisticConfig defaultHistogramConfig() {
         return DistributionStatisticConfig.builder().expiry(config.step()).build()
                 .merge(DistributionStatisticConfig.DEFAULT);
+    }
+
+    @Override
+    public void close() {
+        super.close();
+        try {
+            this.wavefrontSender.close();
+        }
+        catch (IOException exception) {
+            logger.warn("Unable to close Wavefront client", exception);
+        }
     }
 
     static String getWavefrontReportingUri(WavefrontConfig wavefrontConfig) {

@@ -58,7 +58,7 @@ class ObservationRegistryTest {
     }
 
     @Test
-    void observationShouldBeNoOpWhenPredicateApplicable() {
+    void observationShouldBeNoopWhenPredicateApplicable() {
         registry.observationConfig().observationPredicate((name, context) -> !name.equals("test.timer"));
 
         Observation sample = Observation.start("test.timer", registry);
@@ -67,7 +67,7 @@ class ObservationRegistryTest {
     }
 
     @Test
-    void observationShouldBeNoOpWhenNullRegistry() {
+    void observationShouldBeNoopWhenNullRegistry() {
         assertThat(Observation.start("test.timer", null)).isSameAs(NoopObservation.INSTANCE);
         assertThat(Observation.start("test.timer", new Observation.Context(), null)).isSameAs(NoopObservation.INSTANCE);
         assertThat(Observation.createNotStarted("test.timer", null)).isSameAs(NoopObservation.INSTANCE);
@@ -76,7 +76,7 @@ class ObservationRegistryTest {
     }
 
     @Test
-    void observationShouldNotBeNoOpWhenNonNullRegistry() {
+    void observationShouldNotBeNoopWhenNonNullRegistry() {
         ObservationRegistry registry = ObservationRegistry.create();
         registry.observationConfig().observationHandler(c -> true);
         assertThat(Observation.start("test.timer", registry)).isInstanceOf(SimpleObservation.class);

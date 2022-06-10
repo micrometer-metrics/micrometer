@@ -16,11 +16,12 @@
 package io.micrometer.observation;
 
 import io.micrometer.observation.ObservationHandler.AllMatchingCompositeObservationHandler;
-import org.assertj.core.api.Assertions;
 import org.junit.jupiter.api.Test;
 
-import java.util.Arrays;
+import java.util.ArrayList;
 import java.util.List;
+
+import static org.assertj.core.api.Assertions.assertThat;
 
 class AllMatchingCompositeObservationHandlerTests {
 
@@ -35,8 +36,8 @@ class AllMatchingCompositeObservationHandlerTests {
 
         allMatchingHandler.onStart(null);
 
-        Assertions.assertThat(this.matchingHandler.started).isTrue();
-        Assertions.assertThat(this.matchingHandler2.started).isTrue();
+        assertThat(this.matchingHandler.started).isTrue();
+        assertThat(this.matchingHandler2.started).isTrue();
     }
 
     @Test
@@ -46,8 +47,8 @@ class AllMatchingCompositeObservationHandlerTests {
 
         allMatchingHandler.onStop(null);
 
-        Assertions.assertThat(this.matchingHandler.stopped).isTrue();
-        Assertions.assertThat(this.matchingHandler2.stopped).isTrue();
+        assertThat(this.matchingHandler.stopped).isTrue();
+        assertThat(this.matchingHandler2.stopped).isTrue();
     }
 
     @Test
@@ -57,8 +58,8 @@ class AllMatchingCompositeObservationHandlerTests {
 
         allMatchingHandler.onError(null);
 
-        Assertions.assertThat(this.matchingHandler.errored).isTrue();
-        Assertions.assertThat(this.matchingHandler2.errored).isTrue();
+        assertThat(this.matchingHandler.errored).isTrue();
+        assertThat(this.matchingHandler2.errored).isTrue();
     }
 
     @Test
@@ -68,8 +69,8 @@ class AllMatchingCompositeObservationHandlerTests {
 
         allMatchingHandler.onScopeOpened(null);
 
-        Assertions.assertThat(this.matchingHandler.scopeOpened).isTrue();
-        Assertions.assertThat(this.matchingHandler2.scopeOpened).isTrue();
+        assertThat(this.matchingHandler.scopeOpened).isTrue();
+        assertThat(this.matchingHandler2.scopeOpened).isTrue();
     }
 
     @Test
@@ -79,24 +80,37 @@ class AllMatchingCompositeObservationHandlerTests {
 
         allMatchingHandler.onScopeClosed(null);
 
-        Assertions.assertThat(this.matchingHandler.scopeClosed).isTrue();
-        Assertions.assertThat(this.matchingHandler2.scopeClosed).isTrue();
+        assertThat(this.matchingHandler.scopeClosed).isTrue();
+        assertThat(this.matchingHandler2.scopeClosed).isTrue();
     }
 
     @Test
     void should_support_the_context_if_any_handler_supports_it() {
         AllMatchingCompositeObservationHandler allMatchingHandler = new AllMatchingCompositeObservationHandler(
                 new NotMatchingHandler(), this.matchingHandler, new NotMatchingHandler(), this.matchingHandler2);
-        Assertions.assertThat(allMatchingHandler.supportsContext(new Observation.Context())).isTrue();
+        assertThat(allMatchingHandler.supportsContext(new Observation.Context())).isTrue();
     }
 
     @Test
-    void should_return_handlers() {
-        List<ObservationHandler<Observation.Context>> handlers = Arrays.asList(new NotMatchingHandler(),
-                this.matchingHandler, new NotMatchingHandler(), this.matchingHandler2);
+    void should_return_observation_handlers() {
+        List<ObservationHandler<? extends Observation.Context>> handlers = new ArrayList<>();
+        handlers.add(new NotMatchingHandler());
+        handlers.add(this.matchingHandler);
+        handlers.add(new NotMatchingHandler());
+        handlers.add(this.matchingHandler2);
         AllMatchingCompositeObservationHandler allMatchingHandler = new AllMatchingCompositeObservationHandler(
                 handlers);
-        Assertions.assertThat(allMatchingHandler.getHandlers()).isSameAs(handlers);
+        assertThat(allMatchingHandler.getHandlers()).isEqualTo(handlers);
+    }
+
+    @Test
+    void should_return_custom_handlers() {
+        List<NotMatchingHandler> handlers = new ArrayList<>();
+        handlers.add(new NotMatchingHandler());
+        handlers.add(new NotMatchingHandler());
+        AllMatchingCompositeObservationHandler allMatchingHandler = new AllMatchingCompositeObservationHandler(
+                handlers);
+        assertThat(allMatchingHandler.getHandlers()).isEqualTo(handlers);
     }
 
     static class MatchingHandler implements ObservationHandler<Observation.Context> {
@@ -143,25 +157,25 @@ class AllMatchingCompositeObservationHandlerTests {
 
     }
 
-    static class NotMatchingHandler implements ObservationHandler<Observation.Context> {
+    static class NotMatchingHandler implements ObservationHandler<CustomContext> {
 
         @Override
-        public void onStart(Observation.Context context) {
+        public void onStart(CustomContext context) {
             throwAssertionError();
         }
 
         @Override
-        public void onError(Observation.Context context) {
+        public void onError(CustomContext context) {
             throwAssertionError();
         }
 
         @Override
-        public void onScopeOpened(Observation.Context context) {
+        public void onScopeOpened(CustomContext context) {
             throwAssertionError();
         }
 
         @Override
-        public void onStop(Observation.Context context) {
+        public void onStop(CustomContext context) {
             throwAssertionError();
         }
 
@@ -173,6 +187,10 @@ class AllMatchingCompositeObservationHandlerTests {
         private void throwAssertionError() {
             throw new AssertionError("Not matching handler must not be called");
         }
+
+    }
+
+    static class CustomContext extends Observation.Context {
 
     }
 

@@ -253,4 +253,11 @@ class WavefrontMeterRegistryTest {
                 .isEqualTo(WavefrontConfig.DEFAULT_DIRECT.uri());
     }
 
+    @Test
+    @Issue("#3196")
+    void wavefrontClientShouldBeClosedOnRegistryClose() throws IOException {
+        registry.close();
+        verify(wavefrontSender).close();
+    }
+
 }

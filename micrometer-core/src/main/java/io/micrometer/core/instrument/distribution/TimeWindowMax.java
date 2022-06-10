@@ -22,7 +22,6 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicIntegerFieldUpdater;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.function.DoubleSupplier;
-import java.util.function.LongSupplier;
 
 /**
  * An implementation of a decaying maximum for a distribution based on a configurable ring
@@ -39,7 +38,7 @@ public class TimeWindowMax {
 
     private final long durationBetweenRotatesMillis;
 
-    private AtomicLong[] ringBuffer;
+    private final AtomicLong[] ringBuffer;
 
     private int currentBucket;
 
@@ -71,12 +70,11 @@ public class TimeWindowMax {
      * @param timeUnit The unit of time of the incoming sample.
      */
     public void record(double sample, TimeUnit timeUnit) {
-        record(() -> (long) TimeUtils.convert(sample, timeUnit, TimeUnit.NANOSECONDS));
+        record((long) TimeUtils.convert(sample, timeUnit, TimeUnit.NANOSECONDS));
     }
 
-    private void record(LongSupplier sampleSupplier) {
+    private void record(long sample) {
         rotate();
-        long sample = sampleSupplier.getAsLong();
         for (AtomicLong max : ringBuffer) {
             updateMax(max, sample);
         }
@@ -109,7 +107,7 @@ public class TimeWindowMax {
      * @param sample The value to record.
      */
     public void record(double sample) {
-        record(() -> Double.doubleToLongBits(sample));
+        record(Double.doubleToLongBits(sample));
     }
 
     private void updateMax(AtomicLong max, long sample) {
