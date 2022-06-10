@@ -38,7 +38,7 @@ public class TimeWindowMax {
 
     private final long durationBetweenRotatesMillis;
 
-    private AtomicLong[] ringBuffer;
+    private final AtomicLong[] ringBuffer;
 
     private int currentBucket;
 
