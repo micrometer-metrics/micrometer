@@ -459,12 +459,11 @@ class DynatraceExporterV2Test {
     @Test
     void linesExceedingLengthLimitDiscardedGracefully() {
         List<Tag> tagList = new ArrayList<>();
-        for (int i = 0; i < 250; i++) {
+        for (int i = 0; i < 3300; i++) {
             tagList.add(Tag.of(String.format("key%d", i), String.format("val%d", i)));
         }
-        Tags tags = Tags.concat(tagList);
 
-        meterRegistry.gauge("serialized.as.too.long.line", tags, 1.23);
+        meterRegistry.gauge("serialized.as.too.long.line", tagList, 1.23);
         Gauge gauge = meterRegistry.find("serialized.as.too.long.line").gauge();
         assertThat(gauge).isNotNull();
 
