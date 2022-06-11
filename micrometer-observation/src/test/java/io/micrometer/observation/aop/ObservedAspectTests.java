@@ -15,10 +15,16 @@
  */
 package io.micrometer.observation.aop;
 
+import java.util.function.Predicate;
+
+import io.micrometer.common.KeyValues;
+import io.micrometer.common.lang.NonNull;
+import io.micrometer.observation.Observation;
 import io.micrometer.observation.ObservationTextPublisher;
 import io.micrometer.observation.annotation.Observed;
 import io.micrometer.observation.tck.TestObservationRegistry;
 import io.micrometer.observation.tck.TestObservationRegistryAssert;
+import org.aspectj.lang.ProceedingJoinPoint;
 import org.junit.jupiter.api.Test;
 
 import org.springframework.aop.aspectj.annotation.AspectJProxyFactory;
@@ -64,6 +70,35 @@ class ObservedAspectTests {
                 .hasLowCardinalityKeyValue("method", "error");
     }
 
+    @Test
+    void customKeyValuesProviderShouldBeUsed() {
+        TestObservationRegistry registry = TestObservationRegistry.create();
+        registry.observationConfig().observationHandler(new ObservationTextPublisher());
+
+        AspectJProxyFactory pf = new AspectJProxyFactory(new ObservedService());
+        pf.addAspect(new ObservedAspect(registry, new CustomKeyValuesProvider()));
+
+        ObservedService service = pf.getProxy();
+        service.call();
+        TestObservationRegistryAssert.assertThat(registry).hasSingleObservationThat().hasBeenStopped()
+                .hasNameEqualTo("test.call").hasContextualNameEqualTo("ObservedService#call")
+                .hasLowCardinalityKeyValue("test", "42").doesNotHaveLowCardinalityKeyValueWithKey("class")
+                .doesNotHaveLowCardinalityKeyValueWithKey("method");
+    }
+
+    @Test
+    void shouldSkipPredicateShouldTakeEffect() {
+        TestObservationRegistry registry = TestObservationRegistry.create();
+        registry.observationConfig().observationHandler(new ObservationTextPublisher());
+
+        AspectJProxyFactory pf = new AspectJProxyFactory(new ObservedService());
+        pf.addAspect(new ObservedAspect(registry, (Predicate<ProceedingJoinPoint>) pjp -> true));
+
+        ObservedService service = pf.getProxy();
+        service.call();
+        TestObservationRegistryAssert.assertThat(registry).doesNotHaveAnyObservation();
+    }
+
     static class ObservedService {
 
         @Observed("test.call")
@@ -75,6 +110,22 @@ class ObservedAspectTests {
         void error() {
             System.out.println("error");
             throw new RuntimeException("simulated");
+        }
+
+    }
+
+    static class CustomKeyValuesProvider
+            implements Observation.KeyValuesProvider<ObservedAspect.ObservedAspectContext> {
+
+        @Override
+        @NonNull
+        public KeyValues getLowCardinalityKeyValues(@NonNull ObservedAspect.ObservedAspectContext context) {
+            return KeyValues.of("test", "42");
+        }
+
+        @Override
+        public boolean supportsContext(@NonNull Observation.Context context) {
+            return context instanceof ObservedAspect.ObservedAspectContext;
         }
 
     }
