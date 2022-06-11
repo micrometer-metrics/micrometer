@@ -20,7 +20,7 @@ import io.micrometer.core.instrument.Measurement;
 import io.micrometer.core.instrument.Statistic;
 
 import java.util.concurrent.atomic.DoubleAdder;
-import java.util.function.Supplier;
+import java.util.function.DoubleSupplier;
 
 class StepMeasurement extends Measurement {
 
@@ -28,17 +28,14 @@ class StepMeasurement extends Measurement {
 
     private final DoubleAdder lastCount = new DoubleAdder();
 
-    private final Supplier<Double> f;
-
-    public StepMeasurement(Supplier<Double> f, Statistic statistic, Clock clock, long stepMillis) {
+    StepMeasurement(DoubleSupplier f, Statistic statistic, Clock clock, long stepMillis) {
         super(f, statistic);
-        this.f = f;
         this.value = new StepDouble(clock, stepMillis);
     }
 
     @Override
     public double getValue() {
-        double absoluteCount = f.get();
+        double absoluteCount = super.getValue();
         double inc = Math.max(0, absoluteCount - lastCount.sum());
         lastCount.add(inc);
         value.getCurrent().add(inc);
