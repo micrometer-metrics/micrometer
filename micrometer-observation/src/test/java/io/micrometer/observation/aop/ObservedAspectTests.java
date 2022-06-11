@@ -82,8 +82,9 @@ class ObservedAspectTests {
         service.call();
         TestObservationRegistryAssert.assertThat(registry).hasSingleObservationThat().hasBeenStopped()
                 .hasNameEqualTo("test.call").hasContextualNameEqualTo("ObservedService#call")
-                .hasLowCardinalityKeyValue("test", "42").doesNotHaveLowCardinalityKeyValueWithKey("class")
-                .doesNotHaveLowCardinalityKeyValueWithKey("method");
+                .hasLowCardinalityKeyValue("test", "42")
+                .hasLowCardinalityKeyValue("class", ObservedService.class.getName())
+                .hasLowCardinalityKeyValue("method", "call");
     }
 
     @Test

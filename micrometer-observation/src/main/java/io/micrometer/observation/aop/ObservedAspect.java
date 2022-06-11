@@ -15,8 +15,6 @@
  */
 package io.micrometer.observation.aop;
 
-import io.micrometer.common.KeyValues;
-import io.micrometer.common.lang.NonNull;
 import io.micrometer.common.lang.NonNullApi;
 import io.micrometer.common.lang.Nullable;
 import io.micrometer.observation.Observation;
@@ -41,27 +39,30 @@ public class ObservedAspect {
 
     private static final String DEFAULT_OBSERVATION_NAME = "method.observed";
 
+    private static final Predicate<ProceedingJoinPoint> DONT_SKIP_ANYTHING = pjp -> false;
+
     private final ObservationRegistry registry;
 
+    @Nullable
     private final Observation.KeyValuesProvider<ObservedAspectContext> keyValuesProvider;
 
     private final Predicate<ProceedingJoinPoint> shouldSkip;
 
     public ObservedAspect(ObservationRegistry registry) {
-        this(registry, new DefaultKeyValuesProvider());
+        this(registry, null, DONT_SKIP_ANYTHING);
     }
 
     public ObservedAspect(ObservationRegistry registry,
             Observation.KeyValuesProvider<ObservedAspectContext> keyValuesProvider) {
-        this(registry, keyValuesProvider, pjp -> false);
+        this(registry, keyValuesProvider, DONT_SKIP_ANYTHING);
     }
 
     public ObservedAspect(ObservationRegistry registry, Predicate<ProceedingJoinPoint> shouldSkip) {
-        this(registry, new DefaultKeyValuesProvider(), shouldSkip);
+        this(registry, null, shouldSkip);
     }
 
     public ObservedAspect(ObservationRegistry registry,
-            Observation.KeyValuesProvider<ObservedAspectContext> keyValuesProvider,
+            @Nullable Observation.KeyValuesProvider<ObservedAspectContext> keyValuesProvider,
             Predicate<ProceedingJoinPoint> shouldSkip) {
         this.registry = registry;
         this.keyValuesProvider = keyValuesProvider;
@@ -80,48 +81,39 @@ public class ObservedAspect {
         String observationName = observed.value().isEmpty() ? DEFAULT_OBSERVATION_NAME : observed.value();
         Signature signature = pjp.getStaticPart().getSignature();
 
-        return Observation.createNotStarted(observationName, new ObservedAspectContext(pjp), registry)
+        Observation observation = Observation
+                .createNotStarted(observationName, new ObservedAspectContext(pjp), registry)
                 .contextualName(signature.getDeclaringType().getSimpleName() + "#" + signature.getName())
                 // .longTask(observed.longTask()) // TODO: after the longTask PR is merged
-                .keyValuesProvider(this.keyValuesProvider).observeChecked(() -> pjp.proceed());
+                .lowCardinalityKeyValue("class", signature.getDeclaringTypeName())
+                .lowCardinalityKeyValue("method", signature.getName());
+
+        if (this.keyValuesProvider != null) {
+            observation.keyValuesProvider(this.keyValuesProvider);
+        }
+
+        return observation.observeChecked(() -> pjp.proceed());
     }
 
     private Method getMethod(ProceedingJoinPoint pjp) throws NoSuchMethodException {
         Method method = ((MethodSignature) pjp.getSignature()).getMethod();
-        Observed observed = method.getAnnotation(Observed.class);
-
-        if (observed == null) {
+        if (method.getAnnotation(Observed.class) == null) {
             return pjp.getTarget().getClass().getMethod(method.getName(), method.getParameterTypes());
         }
 
         return method;
     }
 
-    static class ObservedAspectContext extends Observation.Context {
+    public static class ObservedAspectContext extends Observation.Context {
 
         private final ProceedingJoinPoint proceedingJoinPoint;
 
-        ObservedAspectContext(ProceedingJoinPoint proceedingJoinPoint) {
+        public ObservedAspectContext(ProceedingJoinPoint proceedingJoinPoint) {
             this.proceedingJoinPoint = proceedingJoinPoint;
         }
 
-        ProceedingJoinPoint getProceedingJoinPoint() {
+        public ProceedingJoinPoint getProceedingJoinPoint() {
             return proceedingJoinPoint;
-        }
-
-    }
-
-    static class DefaultKeyValuesProvider implements Observation.KeyValuesProvider<ObservedAspectContext> {
-
-        @Override
-        public KeyValues getLowCardinalityKeyValues(@NonNull ObservedAspectContext context) {
-            Signature signature = context.getProceedingJoinPoint().getStaticPart().getSignature();
-            return KeyValues.of("class", signature.getDeclaringTypeName(), "method", signature.getName());
-        }
-
-        @Override
-        public boolean supportsContext(@NonNull Observation.Context context) {
-            return context instanceof ObservedAspectContext;
         }
 
     }
