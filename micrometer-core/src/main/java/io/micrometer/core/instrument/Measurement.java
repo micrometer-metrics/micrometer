@@ -15,6 +15,7 @@
  */
 package io.micrometer.core.instrument;
 
+import java.util.function.DoubleSupplier;
 import java.util.function.Supplier;
 
 /**
@@ -22,15 +23,21 @@ import java.util.function.Supplier;
  *
  * @author Clint Checketts
  * @author Jon Schneider
+ * @author Philippe Marschall
  */
 public class Measurement {
 
-    private final Supplier<Double> f;
+    private final DoubleSupplier f;
 
     private final Statistic statistic;
 
-    public Measurement(Supplier<Double> valueFunction, Statistic statistic) {
+    public Measurement(DoubleSupplier valueFunction, Statistic statistic) {
         this.f = valueFunction;
+        this.statistic = statistic;
+    }
+
+    public Measurement(Supplier<Double> valueFunction, Statistic statistic) {
+        this.f = valueFunction::get;
         this.statistic = statistic;
     }
 
@@ -38,7 +45,7 @@ public class Measurement {
      * @return Value for the measurement.
      */
     public double getValue() {
-        return f.get();
+        return f.getAsDouble();
     }
 
     public Statistic getStatistic() {
