@@ -42,8 +42,7 @@ public class ObservationHandlerSample {
         Observation observation = Observation
                 .createNotStarted("sample.operation", new CustomContext(), observationRegistry)
                 .contextualName("CALL sampleOperation").keyValuesProvider(new CustomLocalKeyValuesProvider())
-                .lowCardinalityKeyValue("a", "1").highCardinalityKeyValue("time", Instant.now().toString()).longTask()
-                .start();
+                .lowCardinalityKeyValue("a", "1").highCardinalityKeyValue("time", Instant.now().toString()).start();
 
         try (Observation.Scope scope = observation.openScope()) {
             Thread.sleep(1_000);

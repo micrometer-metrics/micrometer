@@ -36,11 +36,9 @@ public class TimerObservationHandler implements MeterObservationHandler<Observat
 
     @Override
     public void onStart(Observation.Context context) {
-        if (context.isLongTask()) {
-            LongTaskTimer.Sample longTaskSample = LongTaskTimer.builder(context.getName() + ".active")
-                    .tags(createTags(context)).register(meterRegistry).start();
-            context.put(LongTaskTimer.Sample.class, longTaskSample);
-        }
+        LongTaskTimer.Sample longTaskSample = LongTaskTimer.builder(context.getName() + ".active")
+                .tags(createTags(context)).register(meterRegistry).start();
+        context.put(LongTaskTimer.Sample.class, longTaskSample);
 
         Timer.Sample sample = Timer.start(meterRegistry);
         context.put(Timer.Sample.class, sample);
@@ -52,10 +50,8 @@ public class TimerObservationHandler implements MeterObservationHandler<Observat
         sample.stop(Timer.builder(context.getName()).tags(createErrorTags(context)).tags(createTags(context))
                 .register(this.meterRegistry));
 
-        if (context.isLongTask()) {
-            LongTaskTimer.Sample longTaskSample = context.getRequired(LongTaskTimer.Sample.class);
-            longTaskSample.stop();
-        }
+        LongTaskTimer.Sample longTaskSample = context.getRequired(LongTaskTimer.Sample.class);
+        longTaskSample.stop();
     }
 
     @Override

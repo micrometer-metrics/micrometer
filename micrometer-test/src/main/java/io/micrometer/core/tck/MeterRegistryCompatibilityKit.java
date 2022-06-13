@@ -634,33 +634,23 @@ public abstract class MeterRegistryCompatibilityKit {
         @Test
         @DisplayName("record with stateful Observation instance")
         void recordWithObservation() {
-            Observation observation = Observation.start("myObservation", observationRegistry);
-            clock(registry).add(10, TimeUnit.NANOSECONDS);
-            observation.stop();
-            clock(registry).add(step());
+            Observation observation = Observation.createNotStarted("myObservation", observationRegistry)
+                    .lowCardinalityKeyValue("staticTag", "42").start();
 
-            Timer timer = registry.timer("myObservation", "error", "none");
-            assertAll(() -> assertEquals(1L, timer.count()),
-                    () -> assertEquals(10, timer.totalTime(TimeUnit.NANOSECONDS), 1.0e-12));
-        }
+            // created after start, LongTaskTimer won't have it
+            observation.lowCardinalityKeyValue("dynamicTag", "24");
 
-        @Test
-        @DisplayName("record a long task with stateful Observation instance")
-        void recordLongTaskWithObservation() {
-            Observation observation = Observation.createNotStarted("myObservation", observationRegistry).longTask()
-                    .lowCardinalityKeyValue("abc", "42").start();
-
-            clock(registry).add(60, TimeUnit.SECONDS);
-            LongTaskTimer longTaskTimer = registry.more().longTaskTimer("myObservation.active", "abc", "42");
+            clock(registry).add(1, TimeUnit.SECONDS);
+            LongTaskTimer longTaskTimer = registry.more().longTaskTimer("myObservation.active", "staticTag", "42");
             assertThat(longTaskTimer.activeTasks()).isEqualTo(1);
-
             observation.stop();
             clock(registry).add(step());
+
             assertThat(longTaskTimer.activeTasks()).isEqualTo(0);
 
-            Timer timer = registry.timer("myObservation", "error", "none", "abc", "42");
+            Timer timer = registry.timer("myObservation", "error", "none", "staticTag", "42", "dynamicTag", "24");
             assertAll(() -> assertEquals(1L, timer.count()),
-                    () -> assertEquals(60, timer.totalTime(TimeUnit.SECONDS), 1.0e-12));
+                    () -> assertEquals(1, timer.totalTime(TimeUnit.SECONDS), 1.0e-12));
         }
 
         @Test
