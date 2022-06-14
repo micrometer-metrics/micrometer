@@ -70,6 +70,18 @@ public class ObservedAspect {
         this.shouldSkip = shouldSkip;
     }
 
+    @Around("@within(io.micrometer.observation.annotation.Observed)")
+    @Nullable
+    public Object observeClass(ProceedingJoinPoint pjp) throws Throwable {
+        if (shouldSkip.test(pjp)) {
+            return pjp.proceed();
+        }
+
+        Method method = getMethod(pjp);
+        Observed observed = getDeclaringClass(pjp).getAnnotation(Observed.class);
+        return observe(pjp, method, observed);
+    }
+
     @Around("execution (@io.micrometer.observation.annotation.Observed * *.*(..))")
     @Nullable
     public Object observeMethod(ProceedingJoinPoint pjp) throws Throwable {
@@ -78,7 +90,10 @@ public class ObservedAspect {
         }
 
         Method method = getMethod(pjp);
-        Observed observed = method.getAnnotation(Observed.class);
+        return observe(pjp, method, method.getAnnotation(Observed.class));
+    }
+
+    private Object observe(ProceedingJoinPoint pjp, Method method, Observed observed) throws Throwable {
         String observationName = observed.value().isEmpty() ? DEFAULT_OBSERVATION_NAME : observed.value();
         Signature signature = pjp.getStaticPart().getSignature();
 
@@ -107,6 +122,16 @@ public class ObservedAspect {
         else {
             return observation.observeChecked(() -> pjp.proceed());
         }
+    }
+
+    private Class<?> getDeclaringClass(ProceedingJoinPoint pjp) {
+        Method method = ((MethodSignature) pjp.getSignature()).getMethod();
+        Class<?> declaringClass = method.getDeclaringClass();
+        if (!declaringClass.isAnnotationPresent(Observed.class)) {
+            return pjp.getTarget().getClass();
+        }
+
+        return declaringClass;
     }
 
     private Method getMethod(ProceedingJoinPoint pjp) throws NoSuchMethodException {
