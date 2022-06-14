@@ -13,24 +13,25 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package io.micrometer.observation.transport.http.tags;
+package io.micrometer.observation.transport.http.tags.convention;
 
-import io.micrometer.common.docs.SemanticName;
+import io.micrometer.common.KeyValue;
+import io.micrometer.observation.transport.http.HttpRequest;
+import io.micrometer.observation.transport.http.tags.HttpClientKeyValuesConvention;
 
 /**
- * Conventions for HTTP client observation names implemented with OpenTelemetry.
+ * Conventions for HTTP key values implemented with OpenTelemetry.
  *
  * @author Marcin Grzejszczak
  * @since 1.10.0
  */
-public enum OpenTelemetryHttpClientSemanticName implements SemanticName {
-    /**
-     * Semantic name for an HTTP Client call.
-     */
-    DEFAULT {
-        @Override
-        public String getName() {
-            return "http.client.duration";
-        }
+// TODO: What to do if request is not set? UNKNOWN?
+public class OpenTelemetryHttpClientKeyValuesConvention extends OpenTelemetryHttpKeyValuesConvention
+        implements HttpClientKeyValuesConvention {
+
+    @Override
+    public KeyValue peerName(HttpRequest request) {
+        return OpenTelemetryHttpClientLowCardinalityKeyNames.PEER_NAME.of("UNKNOWN");
     }
+
 }

@@ -13,24 +13,31 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package io.micrometer.observation.transport.http.tags;
+package io.micrometer.observation.transport.http.tags.convention;
 
-import io.micrometer.common.docs.SemanticName;
+import io.micrometer.common.docs.KeyName;
+import io.micrometer.conventions.semantic.SemanticAttributes;
 
 /**
- * Conventions for HTTP server observation names implemented with OpenTelemetry.
+ * Conventions for HTTP client key names implemented with OpenTelemetry.
  *
  * @author Marcin Grzejszczak
  * @since 1.10.0
  */
-public enum OpenTelemetryHttpServerSemanticName implements SemanticName {
+public enum OpenTelemetryHttpClientLowCardinalityKeyNames implements KeyName {
     /**
-     * Semantic name for an HTTP Server processing.
+     * Remote hostname or similar, see note below.
+     *
+     * Examples: example.com
+     *
+     * SHOULD NOT be set if capturing it would require an extra DNS lookup.
+     * @param request
+     * @return
      */
-    DEFAULT {
+    PEER_NAME {
         @Override
-        public String getName() {
-            return "http.server.duration";
+        public String getKeyName() {
+            return SemanticAttributes.NET_PEER_NAME.getKey();
         }
     }
 }

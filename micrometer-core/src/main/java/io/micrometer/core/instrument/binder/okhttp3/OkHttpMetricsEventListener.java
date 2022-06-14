@@ -16,14 +16,12 @@
 package io.micrometer.core.instrument.binder.okhttp3;
 
 import io.micrometer.common.KeyValue;
-import io.micrometer.common.KeyValues;
 import io.micrometer.common.lang.NonNullApi;
 import io.micrometer.common.lang.NonNullFields;
 import io.micrometer.common.lang.Nullable;
 import io.micrometer.core.instrument.MeterRegistry;
 import io.micrometer.core.instrument.Tag;
 import io.micrometer.core.instrument.Tags;
-import io.micrometer.core.instrument.Timer;
 import io.micrometer.observation.Observation;
 import io.micrometer.observation.ObservationRegistry;
 import io.micrometer.observation.transport.http.HttpClientRequest;
@@ -35,7 +33,6 @@ import java.io.IOException;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
-import java.util.concurrent.TimeUnit;
 import java.util.function.BiFunction;
 import java.util.function.Function;
 import java.util.stream.Collectors;
@@ -89,6 +86,8 @@ public class OkHttpMetricsEventListener extends EventListener {
     // VisibleForTesting
     final ConcurrentMap<Call, CallState> callState = new ConcurrentHashMap<>();
 
+    private final LegacyOkHttpMetricsEventListener legacyListener;
+
     protected OkHttpMetricsEventListener(MeterRegistry registry, String requestsMetricName,
             Function<Request, String> urlMapper, Iterable<Tag> extraTags,
             Iterable<BiFunction<Request, Response, Tag>> contextSpecificTags) {
@@ -116,6 +115,7 @@ public class OkHttpMetricsEventListener extends EventListener {
             unknownRequestTags.add(Tag.of(requestTagKey, "UNKNOWN"));
         }
         this.unknownRequestTags = unknownRequestTags;
+        this.legacyListener = new LegacyOkHttpMetricsEventListener(registry, requestsMetricName, urlMapper, extraTags, contextSpecificTags, unknownRequestTags, includeHostTag);
     }
 
     public static Builder builder(MeterRegistry registry, String name) {
@@ -204,19 +204,9 @@ public class OkHttpMetricsEventListener extends EventListener {
     // VisibleForTesting
     void time(CallState state) {
         OkHttpContext okHttpContext = state.context;
-        if (observationRegistryNoOp || observationRegistry.observationConfig().getObservationNamingConfiguration() == ObservationRegistry.ObservationNamingConfiguration.LEGACY_WITH_STANDARDIZED) {
-            // TODO: We're going first from tags to key values and then back - maybe it
-            // doesn't make a lot of sense?
-            KeyValues lowCardinalityKeyValues = keyValuesProvider.getLowCardinalityKeyValues(okHttpContext);
-            Timer.builder(this.requestsMetricName)
-                    .tags(lowCardinalityKeyValues.stream()
-                            .map(keyValue -> Tag.of(keyValue.getKey(), keyValue.getValue()))
-                            .collect(Collectors.toList()))
-                    .description("Timer of OkHttp operation").register(registry)
-                    .record(registry.config().clock().monotonicTime() - state.startTime, TimeUnit.NANOSECONDS);
-        }
-
-        if (!observationRegistryNoOp && observationRegistry.observationConfig().getObservationNamingConfiguration() != ObservationRegistry.ObservationNamingConfiguration.LEGACY) {
+        if (observationRegistryNoOp) {
+            this.legacyListener.time(state);
+        } else {
             state.observation.error(state.exception);
             if (state.response != null) {
                 okHttpContext.setResponse(new HttpClientResponse() {
@@ -395,7 +385,7 @@ public class OkHttpMetricsEventListener extends EventListener {
 
         @SuppressWarnings("unchecked")
         public OkHttpMetricsEventListener build() {
-            return new OkHttpMetricsEventListener(registry, observationRegistry, this.keyValuesProvider, name, uriMapper, tags,
+            return new OkHttpMetricsEventListener(registry, observationRegistry, keyValuesProvider, name, uriMapper, tags,
                     contextSpecificTags, requestTagKeys, includeHostTag);
         }
 

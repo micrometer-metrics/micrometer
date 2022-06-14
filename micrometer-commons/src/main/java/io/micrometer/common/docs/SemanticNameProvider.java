@@ -16,16 +16,24 @@
 package io.micrometer.common.docs;
 
 /**
- * Represents a name basing on semantic conventions.
+ * Renames the metric / trace / observation depending on standards.
  *
  * @author Marcin Grzejszczak
  * @since 1.10.0
  */
-public interface SemanticName {
+public interface SemanticNameProvider<T> {
     /**
-     * Given a semantic conventions will return an appropriate name.
+     * Will return a standardized name.
      *
      * @return name
      */
     String getName();
+
+    /**
+     * Returns {@code true} when this {@link SemanticNameProvider} should be applied and a new name should be set.
+     *
+     * @param object object against which we determine whether this provider is applicable or not
+     * @return {@code true} when new name should be applied
+     */
+    boolean isApplicable(T object);
 }

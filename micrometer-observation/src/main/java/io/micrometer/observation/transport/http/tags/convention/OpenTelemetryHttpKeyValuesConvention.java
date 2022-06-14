@@ -13,12 +13,13 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package io.micrometer.observation.transport.http.tags;
+package io.micrometer.observation.transport.http.tags.convention;
 
 import io.micrometer.common.KeyValue;
 import io.micrometer.conventions.common.AttributeType;
 import io.micrometer.observation.transport.http.HttpRequest;
 import io.micrometer.observation.transport.http.HttpResponse;
+import io.micrometer.observation.transport.http.tags.HttpKeyValuesConvention;
 
 import java.util.function.Predicate;
 import java.util.stream.Stream;

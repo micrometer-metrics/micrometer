@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package io.micrometer.observation.transport.http.tags;
+package io.micrometer.observation.transport.http.tags.convention;
 
 import io.micrometer.common.docs.KeyName;
 import io.micrometer.conventions.semantic.SemanticAttributes;

@@ -15,6 +15,7 @@
  */
 package io.micrometer.observation;
 
+import io.micrometer.common.docs.SemanticNameProvider;
 import io.micrometer.common.lang.NonNull;
 import io.micrometer.common.lang.Nullable;
 
@@ -107,7 +108,7 @@ public interface ObservationRegistry {
         private final Map<Class<? extends Observation.KeyValuesConvention>, Observation.KeyValuesConvention> keyValuesConventions = new ConcurrentHashMap<>();
 
         // TODO: To maintain backward compatibility
-        private ObservationNamingConfiguration observationNamingConfiguration = ObservationNamingConfiguration.LEGACY;
+        private ObservationNamingConfiguration observationNamingConfiguration = ObservationNamingConfiguration.DEFAULT;
 
         /**
          * Register a handler for the {@link Observation observations}.
@@ -149,6 +150,22 @@ public interface ObservationRegistry {
          */
         public ObservationConfig observationFilter(ObservationFilter observationFilter) {
             this.observationFilters.add(observationFilter);
+            return this;
+        }
+
+        /**
+         * Register a {@link SemanticNameProvider} that mutates the name of the observation.
+         *
+         * @param nameProvider a name provider that is context aware
+         * @return This configuration instance
+         */
+        public ObservationConfig semanticNameProvider(Observation.ContextAwareSemanticNameProvider nameProvider) {
+            this.observationFilters.add(context -> {
+                if (nameProvider.isApplicable(context)) {
+                    return context.setName(nameProvider.getName());
+                }
+                return context;
+            });
             return this;
         }
 
@@ -243,13 +260,7 @@ public interface ObservationRegistry {
          * Leaves the current behaviour of naming & tagging - will set the same tags as until now.
          * Backward-compatible approach.
          */
-        LEGACY,
-
-        /**
-         * Creates two sets of observations - both the legacy together with the new standardized ones.
-         * Backward-compatible approach useful for gradual.
-         */
-        LEGACY_WITH_STANDARDIZED,
+        DEFAULT,
 
         /**
          * Sets only the standardized names & tags. Backward-incompatible approach.

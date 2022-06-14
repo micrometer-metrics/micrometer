@@ -13,10 +13,11 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package io.micrometer.observation.transport.http.tags;
+package io.micrometer.observation.transport.http.tags.convention;
 
 import io.micrometer.common.KeyValue;
 import io.micrometer.observation.transport.http.HttpRequest;
+import io.micrometer.observation.transport.http.tags.HttpServerKeyValuesConvention;
 
 /**
  * Conventions for HTTP key values implemented with OpenTelemetry.
