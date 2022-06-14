@@ -27,6 +27,7 @@ import org.aspectj.lang.annotation.Aspect;
 import org.aspectj.lang.reflect.MethodSignature;
 
 import java.lang.reflect.Method;
+import java.util.concurrent.CompletionStage;
 import java.util.function.Predicate;
 
 /**
@@ -84,7 +85,6 @@ public class ObservedAspect {
         Observation observation = Observation
                 .createNotStarted(observationName, new ObservedAspectContext(pjp), registry)
                 .contextualName(signature.getDeclaringType().getSimpleName() + "#" + signature.getName())
-                // .longTask(observed.longTask()) // TODO: after the longTask PR is merged
                 .lowCardinalityKeyValue("class", signature.getDeclaringTypeName())
                 .lowCardinalityKeyValue("method", signature.getName());
 
@@ -92,7 +92,21 @@ public class ObservedAspect {
             observation.keyValuesProvider(this.keyValuesProvider);
         }
 
-        return observation.observeChecked(() -> pjp.proceed());
+        if (CompletionStage.class.isAssignableFrom(method.getReturnType())) {
+            observation.start();
+            Observation.Scope scope = observation.openScope();
+            try {
+                return ((CompletionStage<?>) pjp.proceed())
+                        .whenComplete((result, error) -> stopObservation(observation, scope, error));
+            }
+            catch (Throwable error) {
+                stopObservation(observation, scope, error);
+                throw error;
+            }
+        }
+        else {
+            return observation.observeChecked(() -> pjp.proceed());
+        }
     }
 
     private Method getMethod(ProceedingJoinPoint pjp) throws NoSuchMethodException {
@@ -104,6 +118,14 @@ public class ObservedAspect {
         return method;
     }
 
+    private void stopObservation(Observation observation, Observation.Scope scope, @Nullable Throwable error) {
+        if (error != null) {
+            observation.error(error);
+        }
+        scope.close();
+        observation.stop();
+    }
+
     public static class ObservedAspectContext extends Observation.Context {
 
         private final ProceedingJoinPoint proceedingJoinPoint;
@@ -113,7 +135,7 @@ public class ObservedAspect {
         }
 
         public ProceedingJoinPoint getProceedingJoinPoint() {
-            return proceedingJoinPoint;
+            return this.proceedingJoinPoint;
         }
 
     }
