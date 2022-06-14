@@ -66,7 +66,7 @@ public class ObservationContextAssert<SELF extends ObservationContextAssert<SELF
         isNotNull();
         String actualName = this.actual.getName();
         if (!Objects.equals(name, actualName)) {
-            failWithMessage("Observation should have name equal to but <%s> but has <%s>", name, actualName);
+            failWithMessage("Observation should have name equal to <%s> but has <%s>", name, actualName);
         }
         return (SELF) this;
     }
@@ -84,8 +84,7 @@ public class ObservationContextAssert<SELF extends ObservationContextAssert<SELF
         isNotNull();
         String actualName = this.actual.getName();
         if (!name.equalsIgnoreCase(actualName)) {
-            failWithMessage("Observation should have name equal to ignoring case but <%s> but has <%s>", name,
-                    actualName);
+            failWithMessage("Observation should have name equal to ignoring case <%s> but has <%s>", name, actualName);
         }
         return (SELF) this;
     }
@@ -103,7 +102,7 @@ public class ObservationContextAssert<SELF extends ObservationContextAssert<SELF
         isNotNull();
         String actualName = this.actual.getContextualName();
         if (!Objects.equals(name, actualName)) {
-            failWithMessage("Observation should have contextual name equal to but <%s> but has <%s>", name, actualName);
+            failWithMessage("Observation should have contextual name equal to <%s> but has <%s>", name, actualName);
         }
         return (SELF) this;
     }
@@ -121,8 +120,8 @@ public class ObservationContextAssert<SELF extends ObservationContextAssert<SELF
         isNotNull();
         String actualName = this.actual.getContextualName();
         if (!name.equalsIgnoreCase(actualName)) {
-            failWithMessage("Observation should have contextual name equal to ignoring case but <%s> but has <%s>",
-                    name, actualName);
+            failWithMessage("Observation should have contextual name equal to ignoring case <%s> but has <%s>", name,
+                    actualName);
         }
         return (SELF) this;
     }
