@@ -58,6 +58,7 @@ import static org.junit.jupiter.api.Assertions.*;
  *
  * @author Jon Schneider
  * @author Johnny Lim
+ * @author Jonatan Ivanov
  */
 public abstract class MeterRegistryCompatibilityKit {
 
@@ -634,14 +635,23 @@ public abstract class MeterRegistryCompatibilityKit {
         @Test
         @DisplayName("record with stateful Observation instance")
         void recordWithObservation() {
-            Observation observation = Observation.start("myObservation", observationRegistry);
-            clock(registry).add(10, TimeUnit.NANOSECONDS);
+            Observation observation = Observation.createNotStarted("myObservation", observationRegistry)
+                    .lowCardinalityKeyValue("staticTag", "42").start();
+
+            // created after start, LongTaskTimer won't have it
+            observation.lowCardinalityKeyValue("dynamicTag", "24");
+
+            clock(registry).add(1, TimeUnit.SECONDS);
+            LongTaskTimer longTaskTimer = registry.more().longTaskTimer("myObservation.active", "staticTag", "42");
+            assertThat(longTaskTimer.activeTasks()).isEqualTo(1);
             observation.stop();
             clock(registry).add(step());
 
-            Timer timer = registry.timer("myObservation", "error", "none");
+            assertThat(longTaskTimer.activeTasks()).isEqualTo(0);
+
+            Timer timer = registry.timer("myObservation", "error", "none", "staticTag", "42", "dynamicTag", "24");
             assertAll(() -> assertEquals(1L, timer.count()),
-                    () -> assertEquals(10, timer.totalTime(TimeUnit.NANOSECONDS), 1.0e-12));
+                    () -> assertEquals(1, timer.totalTime(TimeUnit.SECONDS), 1.0e-12));
         }
 
         @Test
