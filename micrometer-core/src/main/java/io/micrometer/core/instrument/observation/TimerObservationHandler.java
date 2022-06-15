@@ -23,7 +23,17 @@ import java.util.stream.Collectors;
 /**
  * Handler for {@link Timer.Sample}.
  *
+ * WARNING: Since the {@link LongTaskTimer} needs to be created in the {@code onStart}
+ * method, it can only contain tags that are available by that time. This means that if
+ * you add a {@code lowCardinalityKeyValue} after calling {@code start} on the
+ * {@link Observation}, that {@code KeyValue} will not be translated as a {@link Tag} on
+ * the {@link LongTaskTimer}. Likewise, since the {@code KeyValuesProvider} is evaluated
+ * in the {@code stop} method of the {@link Observation} (after start), those
+ * {@code KeyValue} instances will not be used for the {@link LongTaskTimer}.
+ *
  * @author Marcin Grzejszczak
+ * @author Tommy Ludwig
+ * @author Jonatan Ivanov
  * @since 1.10.0
  */
 public class TimerObservationHandler implements MeterObservationHandler<Observation.Context> {

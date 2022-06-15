@@ -58,6 +58,7 @@ import static org.junit.jupiter.api.Assertions.*;
  *
  * @author Jon Schneider
  * @author Johnny Lim
+ * @author Jonatan Ivanov
  */
 public abstract class MeterRegistryCompatibilityKit {
 
