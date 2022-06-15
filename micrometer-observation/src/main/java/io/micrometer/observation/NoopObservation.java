@@ -52,12 +52,22 @@ final class NoopObservation implements Observation {
     }
 
     @Override
+    public Observation lowCardinalityKeyValues(Iterable<KeyValue> keyValues) {
+        return this;
+    }
+
+    @Override
     public Observation highCardinalityKeyValue(KeyValue keyValue) {
         return this;
     }
 
     @Override
     public Observation highCardinalityKeyValue(String key, String value) {
+        return this;
+    }
+
+    @Override
+    public Observation highCardinalityKeyValue(Iterable<KeyValue> keyValues) {
         return this;
     }
 

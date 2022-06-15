@@ -36,8 +36,18 @@ public @interface Observed {
      * Name of the {@link Observation}.
      * @return name of the {@link Observation}
      */
-    String value() default "";
+    String name() default "";
 
-    boolean longTask() default false;
+    /**
+     * Contextual name of the {@link Observation}.
+     * @return contextual name of the {@link Observation}
+     */
+    String contextualName() default "";
+
+    /**
+     * Low cardinality key values.
+     * @return an array of low cardinality key values.
+     */
+    String[] lowCardinalityKeyValues() default {};
 
 }

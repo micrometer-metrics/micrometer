@@ -67,8 +67,20 @@ class SimpleObservation implements Observation {
     }
 
     @Override
+    public Observation lowCardinalityKeyValues(Iterable<KeyValue> keyValues) {
+        this.context.addLowCardinalityKeyValues(keyValues);
+        return this;
+    }
+
+    @Override
     public Observation highCardinalityKeyValue(KeyValue keyValue) {
         this.context.addHighCardinalityKeyValue(keyValue);
+        return this;
+    }
+
+    @Override
+    public Observation highCardinalityKeyValue(Iterable<KeyValue> keyValues) {
+        this.context.addHighCardinalityKeyValues(keyValues);
         return this;
     }
 

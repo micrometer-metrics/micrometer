@@ -26,6 +26,7 @@ import java.util.function.Function;
 import java.util.function.Supplier;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
+import java.util.stream.StreamSupport;
 
 /**
  * An act of viewing or noticing a fact or an occurrence for some scientific or other
@@ -117,7 +118,7 @@ public interface Observation {
     Observation contextualName(String contextualName);
 
     /**
-     * Sets a low cardinality key value. Low cardinality means that this key value will
+     * Adds a low cardinality key value. Low cardinality means that this key value will
      * have a bounded number of possible values. A templated HTTP URL is a good example of
      * such a key value (e.g. /foo/{userId}).
      * @param keyValue key value
@@ -126,7 +127,7 @@ public interface Observation {
     Observation lowCardinalityKeyValue(KeyValue keyValue);
 
     /**
-     * Sets a low cardinality key value. Low cardinality means that this key value will
+     * Adds a low cardinality key value. Low cardinality means that this key value will
      * have a bounded number of possible values. A templated HTTP URL is a good example of
      * such a key value (e.g. /foo/{userId}).
      * @param key key
@@ -138,7 +139,16 @@ public interface Observation {
     }
 
     /**
-     * Sets a high cardinality key value. High cardinality means that this key value will
+     * Adds multiple low cardinality key value instances. Low cardinality means that the
+     * key value will have a bounded number of possible values. A templated HTTP URL is a
+     * good example of such a key value (e.g. /foo/{userId}).
+     * @param keyValues key value instances
+     * @return this
+     */
+    Observation lowCardinalityKeyValues(Iterable<KeyValue> keyValues);
+
+    /**
+     * Adds a high cardinality key value. High cardinality means that this key value will
      * have possible an unbounded number of possible values. An HTTP URL is a good example
      * of such a key value (e.g. /foo/bar, /foo/baz etc.).
      * @param keyValue key value
@@ -147,7 +157,7 @@ public interface Observation {
     Observation highCardinalityKeyValue(KeyValue keyValue);
 
     /**
-     * Sets a high cardinality key value. High cardinality means that this key value will
+     * Adds a high cardinality key value. High cardinality means that this key value will
      * have possible an unbounded number of possible values. An HTTP URL is a good example
      * of such a key value (e.g. /foo/bar, /foo/baz etc.).
      * @param key key
@@ -157,6 +167,15 @@ public interface Observation {
     default Observation highCardinalityKeyValue(String key, String value) {
         return highCardinalityKeyValue(KeyValue.of(key, value));
     }
+
+    /**
+     * Adds multiple high cardinality key value instances. High cardinality means that the
+     * key value will have possible an unbounded number of possible values. An HTTP URL is
+     * a good example of such a key value (e.g. /foo/bar, /foo/baz etc.).
+     * @param keyValues key value instances
+     * @return this
+     */
+    Observation highCardinalityKeyValue(Iterable<KeyValue> keyValues);
 
     /**
      * Checks whether this {@link Observation} is no-op.
@@ -595,16 +614,23 @@ public interface Observation {
          * Adds multiple low cardinality key values at once.
          * @param keyValues collection of key values
          */
-        void addLowCardinalityKeyValues(KeyValues keyValues) {
-            keyValues.stream().forEach(this::addLowCardinalityKeyValue);
+        void addLowCardinalityKeyValues(Iterable<KeyValue> keyValues) {
+            toStream(keyValues).forEach(this::addLowCardinalityKeyValue);
         }
 
         /**
          * Adds multiple high cardinality key values at once.
          * @param keyValues collection of key values
          */
-        void addHighCardinalityKeyValues(KeyValues keyValues) {
-            keyValues.stream().forEach(this::addHighCardinalityKeyValue);
+        void addHighCardinalityKeyValues(Iterable<KeyValue> keyValues) {
+            toStream(keyValues).forEach(this::addHighCardinalityKeyValue);
+        }
+
+        private Stream<KeyValue> toStream(Iterable<KeyValue> keyValues) {
+            return StreamSupport.stream(
+                    Spliterators.spliteratorUnknownSize(keyValues.iterator(),
+                            Spliterator.ORDERED | Spliterator.DISTINCT | Spliterator.NONNULL | Spliterator.SORTED),
+                    false);
         }
 
         @NonNull

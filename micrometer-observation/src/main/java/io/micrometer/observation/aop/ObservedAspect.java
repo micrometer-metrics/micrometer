@@ -15,6 +15,7 @@
  */
 package io.micrometer.observation.aop;
 
+import io.micrometer.common.KeyValues;
 import io.micrometer.common.lang.NonNullApi;
 import io.micrometer.common.lang.Nullable;
 import io.micrometer.observation.Observation;
@@ -77,7 +78,7 @@ public class ObservedAspect {
             return pjp.proceed();
         }
 
-        Method method = getMethod(pjp);
+        Method method = ((MethodSignature) pjp.getSignature()).getMethod();
         Observed observed = getDeclaringClass(pjp).getAnnotation(Observed.class);
         return observe(pjp, method, observed);
     }
@@ -90,18 +91,20 @@ public class ObservedAspect {
         }
 
         Method method = getMethod(pjp);
-        return observe(pjp, method, method.getAnnotation(Observed.class));
+        Observed observed = method.getAnnotation(Observed.class);
+        return observe(pjp, method, observed);
     }
 
     private Object observe(ProceedingJoinPoint pjp, Method method, Observed observed) throws Throwable {
-        String observationName = observed.value().isEmpty() ? DEFAULT_OBSERVATION_NAME : observed.value();
+        String name = observed.name().isEmpty() ? DEFAULT_OBSERVATION_NAME : observed.name();
         Signature signature = pjp.getStaticPart().getSignature();
+        String contextualName = observed.contextualName().isEmpty() ? getContextualName(signature)
+                : observed.contextualName();
 
-        Observation observation = Observation
-                .createNotStarted(observationName, new ObservedAspectContext(pjp), registry)
-                .contextualName(signature.getDeclaringType().getSimpleName() + "#" + signature.getName())
-                .lowCardinalityKeyValue("class", signature.getDeclaringTypeName())
-                .lowCardinalityKeyValue("method", signature.getName());
+        Observation observation = Observation.createNotStarted(name, new ObservedAspectContext(pjp), registry)
+                .contextualName(contextualName).lowCardinalityKeyValue("class", signature.getDeclaringTypeName())
+                .lowCardinalityKeyValue("method", signature.getName())
+                .lowCardinalityKeyValues(KeyValues.of(observed.lowCardinalityKeyValues()));
 
         if (this.keyValuesProvider != null) {
             observation.keyValuesProvider(this.keyValuesProvider);
@@ -141,6 +144,10 @@ public class ObservedAspect {
         }
 
         return method;
+    }
+
+    private String getContextualName(Signature signature) {
+        return signature.getDeclaringType().getSimpleName() + "#" + signature.getName();
     }
 
     private void stopObservation(Observation observation, Observation.Scope scope, @Nullable Throwable error) {

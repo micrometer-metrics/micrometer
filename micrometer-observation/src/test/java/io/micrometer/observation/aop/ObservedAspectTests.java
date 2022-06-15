@@ -57,7 +57,8 @@ class ObservedAspectTests {
         service.call();
 
         TestObservationRegistryAssert.assertThat(registry).hasSingleObservationThat().hasBeenStopped()
-                .hasNameEqualTo("test.call").hasContextualNameEqualTo("ObservedService#call")
+                .hasNameEqualTo("test.call").hasContextualNameEqualTo("test#call")
+                .hasLowCardinalityKeyValue("abc", "123").hasLowCardinalityKeyValue("test", "42")
                 .hasLowCardinalityKeyValue("class", ObservedService.class.getName())
                 .hasLowCardinalityKeyValue("method", "call").thenThrowable().doesNotThrowAnyException();
     }
@@ -140,14 +141,14 @@ class ObservedAspectTests {
         ObservedService service = pf.getProxy();
         service.call();
         TestObservationRegistryAssert.assertThat(registry).hasSingleObservationThat().hasBeenStopped()
-                .hasNameEqualTo("test.call").hasContextualNameEqualTo("ObservedService#call")
-                .hasLowCardinalityKeyValue("test", "42")
+                .hasNameEqualTo("test.call").hasContextualNameEqualTo("test#call")
+                .hasLowCardinalityKeyValue("abc", "123").hasLowCardinalityKeyValue("test", "24")
                 .hasLowCardinalityKeyValue("class", ObservedService.class.getName())
                 .hasLowCardinalityKeyValue("method", "call");
     }
 
     @Test
-    void shouldSkipPredicateShouldTakeEffect() {
+    void skipPredicateShouldTakeEffect() {
         TestObservationRegistry registry = TestObservationRegistry.create();
         registry.observationConfig().observationHandler(new ObservationTextPublisher());
 
@@ -159,20 +160,159 @@ class ObservedAspectTests {
         TestObservationRegistryAssert.assertThat(registry).doesNotHaveAnyObservation();
     }
 
+    @Test
+    void annotatedClassShouldBeObserved() {
+        TestObservationRegistry registry = TestObservationRegistry.create();
+        registry.observationConfig().observationHandler(new ObservationTextPublisher());
+
+        AspectJProxyFactory pf = new AspectJProxyFactory(new ObservedClassLevelAnnotatedService());
+        pf.addAspect(new ObservedAspect(registry));
+
+        ObservedClassLevelAnnotatedService service = pf.getProxy();
+        service.call();
+
+        TestObservationRegistryAssert.assertThat(registry).hasSingleObservationThat().hasBeenStopped()
+                .hasNameEqualTo("test.class").hasContextualNameEqualTo("test.class#call")
+                .hasLowCardinalityKeyValue("abc", "123").hasLowCardinalityKeyValue("test", "42")
+                .hasLowCardinalityKeyValue("class", ObservedClassLevelAnnotatedService.class.getName())
+                .hasLowCardinalityKeyValue("method", "call").thenThrowable().doesNotThrowAnyException();
+    }
+
+    @Test
+    void annotatedClassShouldBeObservedAndErrorRecorded() {
+        TestObservationRegistry registry = TestObservationRegistry.create();
+        registry.observationConfig().observationHandler(new ObservationTextPublisher());
+
+        AspectJProxyFactory pf = new AspectJProxyFactory(new ObservedClassLevelAnnotatedService());
+        pf.addAspect(new ObservedAspect(registry));
+
+        ObservedClassLevelAnnotatedService service = pf.getProxy();
+        assertThatThrownBy(service::error);
+
+        TestObservationRegistryAssert.assertThat(registry).hasSingleObservationThat().hasBeenStopped()
+                .hasNameEqualTo("test.class").hasContextualNameEqualTo("test.class#call")
+                .hasLowCardinalityKeyValue("abc", "123").hasLowCardinalityKeyValue("test", "42")
+                .hasLowCardinalityKeyValue("class", ObservedClassLevelAnnotatedService.class.getName())
+                .hasLowCardinalityKeyValue("method", "error").thenThrowable().isInstanceOf(RuntimeException.class)
+                .hasMessage("simulated").hasNoCause();
+    }
+
+    @Test
+    void annotatedAsyncClassCallShouldBeObserved() throws ExecutionException, InterruptedException {
+        TestObservationRegistry registry = TestObservationRegistry.create();
+        registry.observationConfig().observationHandler(new ObservationTextPublisher());
+
+        AspectJProxyFactory pf = new AspectJProxyFactory(new ObservedClassLevelAnnotatedService());
+        pf.addAspect(new ObservedAspect(registry));
+
+        ObservedClassLevelAnnotatedService service = pf.getProxy();
+        FakeAsyncTask fakeAsyncTask = new FakeAsyncTask("test-result");
+        CompletableFuture<String> asyncResult = service.async(fakeAsyncTask);
+        fakeAsyncTask.proceed();
+        fakeAsyncTask.get();
+
+        assertThat(asyncResult.get()).isEqualTo("test-result");
+        await().atMost(Duration.ofMillis(200)).untilAsserted(
+                () -> TestObservationRegistryAssert.assertThat(registry).hasSingleObservationThat().hasBeenStopped());
+
+        TestObservationRegistryAssert.assertThat(registry).hasSingleObservationThat().hasBeenStopped()
+                .hasNameEqualTo("test.class").hasContextualNameEqualTo("test.class#call")
+                .hasLowCardinalityKeyValue("abc", "123").hasLowCardinalityKeyValue("test", "42")
+                .hasLowCardinalityKeyValue("class", ObservedClassLevelAnnotatedService.class.getName())
+                .hasLowCardinalityKeyValue("method", "async").thenThrowable().doesNotThrowAnyException();
+    }
+
+    @Test
+    void annotatedAsyncClassCallShouldBeObservedAndErrorRecorded() {
+        TestObservationRegistry registry = TestObservationRegistry.create();
+        registry.observationConfig().observationHandler(new ObservationTextPublisher());
+
+        AspectJProxyFactory pf = new AspectJProxyFactory(new ObservedClassLevelAnnotatedService());
+        pf.addAspect(new ObservedAspect(registry));
+
+        ObservedClassLevelAnnotatedService service = pf.getProxy();
+        RuntimeException simulatedException = new RuntimeException("simulated");
+        FakeAsyncTask fakeAsyncTask = new FakeAsyncTask(simulatedException);
+        service.async(fakeAsyncTask);
+        fakeAsyncTask.proceed();
+
+        assertThatThrownBy(fakeAsyncTask::get).isEqualTo(simulatedException);
+        await().atMost(Duration.ofMillis(200)).untilAsserted(
+                () -> TestObservationRegistryAssert.assertThat(registry).hasSingleObservationThat().hasBeenStopped());
+
+        TestObservationRegistryAssert.assertThat(registry).hasSingleObservationThat().hasBeenStopped()
+                .hasNameEqualTo("test.class").hasContextualNameEqualTo("test.class#call")
+                .hasLowCardinalityKeyValue("abc", "123").hasLowCardinalityKeyValue("test", "42")
+                .hasLowCardinalityKeyValue("class", ObservedClassLevelAnnotatedService.class.getName())
+                .hasLowCardinalityKeyValue("method", "async").thenThrowable().isInstanceOf(CompletionException.class)
+                .rootCause().isEqualTo(simulatedException);
+    }
+
+    @Test
+    void customKeyValuesProviderShouldBeUsedForClass() {
+        TestObservationRegistry registry = TestObservationRegistry.create();
+        registry.observationConfig().observationHandler(new ObservationTextPublisher());
+
+        AspectJProxyFactory pf = new AspectJProxyFactory(new ObservedClassLevelAnnotatedService());
+        pf.addAspect(new ObservedAspect(registry, new CustomKeyValuesProvider()));
+
+        ObservedClassLevelAnnotatedService service = pf.getProxy();
+        service.call();
+        TestObservationRegistryAssert.assertThat(registry).hasSingleObservationThat().hasBeenStopped()
+                .hasNameEqualTo("test.class").hasContextualNameEqualTo("test.class#call")
+                .hasLowCardinalityKeyValue("abc", "123").hasLowCardinalityKeyValue("test", "24")
+                .hasLowCardinalityKeyValue("class", ObservedClassLevelAnnotatedService.class.getName())
+                .hasLowCardinalityKeyValue("method", "call");
+    }
+
+    @Test
+    void skipPredicateShouldTakeEffectForClass() {
+        TestObservationRegistry registry = TestObservationRegistry.create();
+        registry.observationConfig().observationHandler(new ObservationTextPublisher());
+
+        AspectJProxyFactory pf = new AspectJProxyFactory(new ObservedClassLevelAnnotatedService());
+        pf.addAspect(new ObservedAspect(registry, (Predicate<ProceedingJoinPoint>) pjp -> true));
+
+        ObservedClassLevelAnnotatedService service = pf.getProxy();
+        service.call();
+        TestObservationRegistryAssert.assertThat(registry).doesNotHaveAnyObservation();
+    }
+
     static class ObservedService {
 
-        @Observed("test.call")
+        @Observed(name = "test.call", contextualName = "test#call",
+                lowCardinalityKeyValues = { "abc", "123", "test", "42" })
         void call() {
             System.out.println("call");
         }
 
-        @Observed("test.error")
+        @Observed(name = "test.error")
         void error() {
             System.out.println("error");
             throw new RuntimeException("simulated");
         }
 
-        @Observed("test.async")
+        @Observed(name = "test.async")
+        CompletableFuture<String> async(FakeAsyncTask fakeAsyncTask) {
+            System.out.println("async");
+            return CompletableFuture.supplyAsync(fakeAsyncTask);
+        }
+
+    }
+
+    @Observed(name = "test.class", contextualName = "test.class#call",
+            lowCardinalityKeyValues = { "abc", "123", "test", "42" })
+    static class ObservedClassLevelAnnotatedService {
+
+        void call() {
+            System.out.println("call");
+        }
+
+        void error() {
+            System.out.println("error");
+            throw new RuntimeException("simulated");
+        }
+
         CompletableFuture<String> async(FakeAsyncTask fakeAsyncTask) {
             System.out.println("async");
             return CompletableFuture.supplyAsync(fakeAsyncTask);
@@ -234,7 +374,7 @@ class ObservedAspectTests {
         @Override
         @NonNull
         public KeyValues getLowCardinalityKeyValues(@NonNull ObservedAspect.ObservedAspectContext context) {
-            return KeyValues.of("test", "42");
+            return KeyValues.of("test", "24");
         }
 
         @Override
