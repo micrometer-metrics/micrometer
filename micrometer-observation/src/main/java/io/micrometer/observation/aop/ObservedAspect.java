@@ -32,6 +32,42 @@ import java.util.concurrent.CompletionStage;
 import java.util.function.Predicate;
 
 /**
+ * <p>
+ * AspectJ aspect for intercepting types or methods annotated with
+ * {@link Observed @Observed}.<br>
+ * The aspect supports programmatic customizations through constructor-injectable custom
+ * logic.
+ * </p>
+ * <p>
+ * You might want to add {@link io.micrometer.common.KeyValue}s programmatically to the
+ * {@link Observation}.<br>
+ * In this case, the {@link Observation.KeyValuesProvider} can help. It receives a
+ * {@link ObservedAspectContext} that also contains the {@link ProceedingJoinPoint} and
+ * returns the {@link io.micrometer.common.KeyValue}s that will be attached to the
+ * {@link Observation}.
+ * </p>
+ * <p>
+ * You might also want to skip the {@link Observation} creation programmatically.<br>
+ * One use-case can be having another component in your application that already processes
+ * the {@link Observed @Observed} annotation in some cases so that {@code ObservedAspect}
+ * should not intercept these methods. E.g.: Spring Boot does this for its controllers. By
+ * using the skip predicate (<code>Predicate&lt;ProceedingJoinPoint&gt;</code>) you can
+ * tell the {@code ObservedAspect} when not to create a {@link Observation}.
+ *
+ * Here's an example to disable {@link Observation} creation for Spring controllers:
+ * </p>
+ * <pre>
+ * &#064;Bean
+ * public ObservedAspect observedAspect(ObservationRegistry observationRegistry) {
+ *     return new ObservedAspect(observationRegistry, this::skipControllers);
+ * }
+ *
+ * private boolean skipControllers(ProceedingJoinPoint pjp) {
+ *     Class&lt;?&gt; targetClass = pjp.getTarget().getClass();
+ *     return targetClass.isAnnotationPresent(RestController.class) || targetClass.isAnnotationPresent(Controller.class);
+ * }
+ * </pre>
+ *
  * @author Jonatan Ivanov
  * @since 1.10.0
  */

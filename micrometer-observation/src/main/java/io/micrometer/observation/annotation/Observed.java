@@ -24,6 +24,8 @@ import java.lang.annotation.Target;
 import io.micrometer.observation.Observation;
 
 /**
+ * Annotation to mark classes and methods that you want to observe.
+ *
  * @author Jonatan Ivanov
  * @since 1.10.0
  */
