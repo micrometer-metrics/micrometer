@@ -18,7 +18,7 @@ public enum OkHttpDocumentedObservation implements DocumentedObservation {
     DEFAULT {
         @Override
         public String getName() {
-            return "okhttp.requests";
+            return "%s";
         }
 
         @Override
@@ -31,10 +31,11 @@ public enum OkHttpDocumentedObservation implements DocumentedObservation {
      * Creates a {@link OkHttpDocumentedObservation} depending on the configuration.
      *
      * @param registry observation registry
+     * @param requestsMetricName
      * @param keyValuesProvider key values provider
      * @return a new {@link OkHttpDocumentedObservation}
      */
-    static Observation of(ObservationRegistry registry, OkHttpContext okHttpContext, @Nullable Observation.KeyValuesProvider<OkHttpContext> keyValuesProvider) {
+    static Observation of(ObservationRegistry registry, OkHttpContext okHttpContext, String requestsMetricName, @Nullable Observation.KeyValuesProvider<OkHttpContext> keyValuesProvider) {
         ObservationRegistry.ObservationNamingConfiguration configuration = registry.observationConfig().getObservationNamingConfiguration();
         Observation.KeyValuesProvider<?> provider = null;
         if (keyValuesProvider != null) {
@@ -49,7 +50,8 @@ public enum OkHttpDocumentedObservation implements DocumentedObservation {
             provider = new StandardizedOkHttpKeyValuesProvider(registry.observationConfig()
                     .getKeyValuesConvention(HttpClientKeyValuesConvention.class));
         }
-        return DEFAULT.observation(registry, okHttpContext).keyValuesProvider(provider);
+        return Observation.createNotStarted(requestsMetricName, okHttpContext, registry)
+                .keyValuesProvider(provider);
     }
 
     enum OkHttpLegacyLowCardinalityTags implements KeyName {

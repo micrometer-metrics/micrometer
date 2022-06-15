@@ -194,7 +194,7 @@ public interface ObservationRegistry {
          * @param keyValuesConvention setup for key values setting
          * @return This configuration instance
          */
-        public ObservationConfig keyValuesConfiguration(ObservationNamingConfiguration keyValuesConvention) {
+        public ObservationConfig namingConfiguration(ObservationNamingConfiguration keyValuesConvention) {
             this.observationNamingConfiguration = keyValuesConvention;
             return this;
         }

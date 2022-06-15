@@ -91,7 +91,7 @@ class OkHttpMetricsEventListenerTest {
         ObservationRegistry observationRegistry = ObservationRegistry.create();
         TestHandler testHandler = new TestHandler();
         observationRegistry.observationConfig()
-                .keyValuesConfiguration(ObservationRegistry.ObservationNamingConfiguration.DEFAULT);
+                .namingConfiguration(ObservationRegistry.ObservationNamingConfiguration.DEFAULT);
         observationRegistry.observationConfig().keyValuesConvention(new OpenTelemetryHttpClientKeyValuesConvention());
         observationRegistry.observationConfig().observationHandler(testHandler);
         observationRegistry.observationConfig().observationHandler(new TimerObservationHandler(registry));
@@ -115,8 +115,7 @@ class OkHttpMetricsEventListenerTest {
     void timeSuccessfulWithStandardizedObservation(@WiremockResolver.Wiremock WireMockServer server) throws IOException {
         ObservationRegistry observationRegistry = ObservationRegistry.create();
         ObservationRegistry.ObservationNamingConfiguration configuration = ObservationRegistry.ObservationNamingConfiguration.STANDARDIZED;
-        observationRegistry.observationConfig()
-                .keyValuesConfiguration(configuration);
+        observationRegistry.observationConfig().namingConfiguration(configuration);
         observationRegistry.observationConfig().keyValuesConvention(new OpenTelemetryHttpClientKeyValuesConvention());
         observationRegistry.observationConfig().semanticNameProvider(new OpenTelemetryHttpClientSemanticNameProvider(configuration));
         observationRegistry.observationConfig().observationHandler(new TimerObservationHandler(registry));

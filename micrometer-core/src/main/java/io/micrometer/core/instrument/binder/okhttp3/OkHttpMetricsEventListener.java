@@ -172,7 +172,7 @@ public class OkHttpMetricsEventListener extends EventListener {
             });
         }
         Observation observation =
-                OkHttpDocumentedObservation.of(this.observationRegistry, okHttpContext, this.keyValuesProvider).start();
+                OkHttpDocumentedObservation.of(this.observationRegistry, okHttpContext, requestsMetricName, this.keyValuesProvider).start();
         callState.setContext(okHttpContext);
         callState.setObservation(observation);
         this.callState.put(call, callState);

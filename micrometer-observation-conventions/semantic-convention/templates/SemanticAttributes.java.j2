@@ -55,7 +55,7 @@ import static io.micrometer.conventions.common.AttributeKey.stringArrayKey;
 import io.micrometer.conventions.common.AttributeKey;
 import java.util.List;
 
-// DO NOT EDIT, this is an Auto-generated file from buildscripts/semantic-convention{{template}}
+// DO NOT EDIT, this is an Auto-generated file from micrometer-observation-conventions/semantic-convention{{template}}
 public final class {{class}} {
   /**
    * The URL of the OpenTelemetry schema for these keys and values.
@@ -96,35 +96,6 @@ public final class {{class}} {
 
   {% endif %}
   {%- endfor %}
-
-  {%- if class == "SemanticAttributes" %}
-  // Manually defined and not YET in the YAML
-  /**
-   * The name of an event describing an exception.
-   *
-   * <p>Typically an event with that name should not be manually created. Instead {@link
-   * io.opentelemetry.api.trace.Span#recordException(Throwable)} should be used.
-   */
-  public static final String EXCEPTION_EVENT_NAME = "exception";
-
-  /**
-   * The name of the keyspace being accessed.
-   *
-   * @deprecated this item has been removed as of 1.8.0 of the semantic conventions. Please use {@link SemanticAttributes#DB_NAME} instead.
-   */
-  @Deprecated
-  public static final AttributeKey<String> DB_CASSANDRA_KEYSPACE =
-      stringKey("db.cassandra.keyspace");
-
-  /**
-   * The <a href="https://hbase.apache.org/book.html#_namespace">HBase namespace</a> being accessed.
-   *
-   * @deprecated this item has been removed as of 1.8.0 of the semantic conventions. Please use {@link SemanticAttributes#DB_NAME} instead.
-   */
-  @Deprecated
-  public static final AttributeKey<String> DB_HBASE_NAMESPACE = stringKey("db.hbase.namespace");
-
-  {% endif %}
 
   private {{class}}() {}
 }
