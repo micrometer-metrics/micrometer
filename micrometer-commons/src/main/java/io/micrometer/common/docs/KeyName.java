@@ -18,6 +18,7 @@ package io.micrometer.common.docs;
 import io.micrometer.common.KeyValue;
 
 import java.util.Arrays;
+import java.util.function.Predicate;
 
 /**
  * Represents a key name used for documenting instrumentation.
@@ -49,6 +50,16 @@ public interface KeyName {
      */
     default KeyValue of(String value) {
         return KeyValue.of(getKeyName(), value);
+    }
+
+    /**
+     * Creates a key value for the given key name.
+     * @param value value for key
+     * @param validator value validator
+     * @return key value
+     */
+    default KeyValue of(String value, Predicate<Object> validator) {
+        return KeyValue.of(getKeyName(), value, validator);
     }
 
 }

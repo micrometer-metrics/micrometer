@@ -19,7 +19,6 @@ import io.micrometer.common.lang.NonNull;
 import io.micrometer.observation.Observation;
 import io.micrometer.observation.transport.http.HttpClientRequest;
 import io.micrometer.observation.transport.http.HttpClientResponse;
-import io.micrometer.observation.transport.http.tags.HttpKeyValueProvider;
 
 /**
  * {@link Observation.Context Context} for an HTTP client request/response.
@@ -46,11 +45,6 @@ public class HttpClientContext extends HttpContext<HttpClientRequest, HttpClient
      * @param request http client request
      */
     public HttpClientContext(HttpClientRequest request) {
-        this.request = request;
-    }
-
-    public HttpClientContext(HttpClientRequest request, HttpKeyValueProvider keyValueProvider) {
-        super(keyValueProvider);
         this.request = request;
     }
 
