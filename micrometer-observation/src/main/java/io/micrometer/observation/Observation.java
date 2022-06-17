@@ -17,6 +17,7 @@ package io.micrometer.observation;
 
 import io.micrometer.common.KeyValue;
 import io.micrometer.common.KeyValues;
+import io.micrometer.common.docs.SemanticNameProvider;
 import io.micrometer.common.lang.NonNull;
 import io.micrometer.common.lang.Nullable;
 
@@ -656,6 +657,26 @@ public interface Observation {
          * @param keyValuesProvider key values provider
          */
         void setKeyValuesProvider(T keyValuesProvider);
+
+    }
+
+    /**
+     * A {@link Context} aware {@link SemanticNameProvider}.
+     *
+     * @author Marcin Grzejszczak
+     * @since 1.10.0
+     */
+    interface ContextAwareSemanticNameProvider extends SemanticNameProvider<Observation.Context> {
+
+    }
+
+    /**
+     * A marker interface for conventions of {@link KeyValues} naming.
+     *
+     * @author Marcin Grzejszczak
+     * @since 1.10.0
+     */
+    interface KeyValuesConvention {
 
     }
 
