@@ -20,8 +20,6 @@ import io.micrometer.common.lang.Nullable;
 
 import java.util.Collection;
 import java.util.List;
-import java.util.Map;
-import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.CopyOnWriteArrayList;
 
 /**
@@ -103,9 +101,6 @@ public interface ObservationRegistry {
 
         private final List<ObservationFilter> observationFilters = new CopyOnWriteArrayList<>();
 
-        private final Map<Class<? extends Observation.KeyValuesConvention>, Observation.KeyValuesConvention> keyValuesConventions = new ConcurrentHashMap<>();
-
-        // TODO: To maintain backward compatibility
         private ObservationNamingConfiguration observationNamingConfiguration = ObservationNamingConfiguration.DEFAULT;
 
         /**

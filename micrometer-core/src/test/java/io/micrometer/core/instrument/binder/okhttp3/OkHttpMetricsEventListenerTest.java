@@ -17,6 +17,7 @@ package io.micrometer.core.instrument.binder.okhttp3;
 
 import com.github.tomakehurst.wiremock.WireMockServer;
 import io.micrometer.common.KeyValue;
+import io.micrometer.common.KeyValues;
 import io.micrometer.core.instrument.MeterRegistry;
 import io.micrometer.core.instrument.MockClock;
 import io.micrometer.core.instrument.Tag;
@@ -27,6 +28,9 @@ import io.micrometer.core.instrument.simple.SimpleMeterRegistry;
 import io.micrometer.observation.Observation;
 import io.micrometer.observation.ObservationHandler;
 import io.micrometer.observation.ObservationRegistry;
+import io.micrometer.observation.transport.http.HttpRequest;
+import io.micrometer.observation.transport.http.HttpResponse;
+import io.micrometer.observation.transport.http.tags.HttpClientKeyValuesConvention;
 import okhttp3.Cache;
 import okhttp3.OkHttpClient;
 import okhttp3.Request;
@@ -44,8 +48,7 @@ import java.util.concurrent.TimeUnit;
 import java.util.function.Function;
 
 import static com.github.tomakehurst.wiremock.client.WireMock.*;
-import static org.assertj.core.api.Assertions.assertThat;
-import static org.assertj.core.api.Assertions.fail;
+import static org.assertj.core.api.Assertions.*;
 
 /**
  * Tests for {@link OkHttpMetricsEventListener}.
@@ -85,11 +88,9 @@ class OkHttpMetricsEventListenerTest {
     }
 
     @Test
-    void timeSuccessfulWithLegacyObservation(@WiremockResolver.Wiremock WireMockServer server) throws IOException {
+    void timeSuccessfulWithDefaultObservation(@WiremockResolver.Wiremock WireMockServer server) throws IOException {
         ObservationRegistry observationRegistry = ObservationRegistry.create();
         TestHandler testHandler = new TestHandler();
-        observationRegistry.observationConfig()
-                .namingConfiguration(ObservationRegistry.ObservationNamingConfiguration.DEFAULT);
         observationRegistry.observationConfig().observationHandler(testHandler);
         observationRegistry.observationConfig().observationHandler(new TimerObservationHandler(registry));
         client = new OkHttpClient.Builder()
@@ -106,6 +107,72 @@ class OkHttpMetricsEventListenerTest {
         assertThat(testHandler.context).isNotNull();
         assertThat(testHandler.context.getAllKeyValues()).contains(KeyValue.of("foo", "bar"),
                 KeyValue.of("status", "200"));
+    }
+
+    @Test
+    void timeSuccessfulWithKeyValuesProvider(@WiremockResolver.Wiremock WireMockServer server) throws IOException {
+        ObservationRegistry observationRegistry = ObservationRegistry.create();
+        TestHandler testHandler = new TestHandler();
+        observationRegistry.observationConfig().observationHandler(testHandler);
+        observationRegistry.observationConfig().observationHandler(new TimerObservationHandler(registry));
+        client = new OkHttpClient.Builder()
+                .eventListener(defaultListenerBuilder().observationRegistry(observationRegistry)
+                        // Example of a custom key values provider
+                        .keyValuesProvider(new OkHttpKeyValuesProvider() {
+                            @Override
+                            public KeyValues getLowCardinalityKeyValues(OkHttpContext context) {
+                                return KeyValues.of("baz", "baz2");
+                            }
+                        }).build())
+                .build();
+        server.stubFor(any(anyUrl()));
+        Request request = new Request.Builder().url(server.baseUrl()).build();
+
+        client.newCall(request).execute().close();
+
+        assertThat(registry.get("okhttp.requests").tags("baz", "baz2").timer().count()).isEqualTo(1L);
+    }
+
+    @Test
+    void timeSuccessfulWithKeyValueConvention(@WiremockResolver.Wiremock WireMockServer server) throws IOException {
+        ObservationRegistry observationRegistry = ObservationRegistry.create();
+        TestHandler testHandler = new TestHandler();
+        MyConvention myConvention = new MyConvention();
+        observationRegistry.observationConfig()
+                .namingConfiguration(ObservationRegistry.ObservationNamingConfiguration.STANDARDIZED);
+        observationRegistry.observationConfig().observationHandler(testHandler);
+        observationRegistry.observationConfig().observationHandler(new TimerObservationHandler(registry));
+        client = new OkHttpClient.Builder()
+                .eventListener(defaultListenerBuilder().observationRegistry(observationRegistry)
+                        // Example of a custom key values provider that uses the
+                        // conventions mechanism
+                        .keyValuesProvider(new StandardizedOkHttpKeyValuesProvider(myConvention)).build())
+                .build();
+        server.stubFor(any(anyUrl()));
+        Request request = new Request.Builder().url(server.baseUrl()).build();
+
+        client.newCall(request).execute().close();
+
+        assertThat(registry.get("okhttp.requests").tags("peer", "name").timer().count()).isEqualTo(1L);
+    }
+
+    @Test
+    void timeIllegalStateExceptionWhenStandardOptionOnAndNoKeyValuesProviderSet(
+            @WiremockResolver.Wiremock WireMockServer server) {
+        ObservationRegistry observationRegistry = ObservationRegistry.create();
+        // We're explicitly turning on the standard mode
+        observationRegistry.observationConfig()
+                .namingConfiguration(ObservationRegistry.ObservationNamingConfiguration.STANDARDIZED);
+        observationRegistry.observationConfig().observationHandler(new TimerObservationHandler(registry));
+        client = new OkHttpClient.Builder()
+                // We're NOT setting the key values provider
+                .eventListener(defaultListenerBuilder().observationRegistry(observationRegistry).build()).build();
+        server.stubFor(any(anyUrl()));
+        Request request = new Request.Builder().url(server.baseUrl()).build();
+
+        assertThatThrownBy(() -> client.newCall(request).execute().close()).isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining(
+                        "You've provided a STANDARDIZED naming configuration but haven't provided a key values provider");
     }
 
     @Test
@@ -304,6 +371,90 @@ class OkHttpMetricsEventListenerTest {
         @Override
         public boolean supportsContext(Observation.Context context) {
             return true;
+        }
+
+    }
+
+    static class StandardizedOkHttpKeyValuesProvider implements OkHttpKeyValuesProvider {
+
+        private final HttpClientKeyValuesConvention convention;
+
+        StandardizedOkHttpKeyValuesProvider(HttpClientKeyValuesConvention convention) {
+            this.convention = convention;
+        }
+
+        @Override
+        public KeyValues getLowCardinalityKeyValues(OkHttpContext context) {
+            return KeyValues.of(convention.peerName(null));
+        }
+
+    }
+
+    static class MyConvention implements HttpClientKeyValuesConvention {
+
+        @Override
+        public KeyValue peerName(HttpRequest request) {
+            return KeyValue.of("peer", "name");
+        }
+
+        @Override
+        public KeyValue method(HttpRequest request) {
+            return null;
+        }
+
+        @Override
+        public KeyValue url(HttpRequest request) {
+            return null;
+        }
+
+        @Override
+        public KeyValue target(HttpRequest request) {
+            return null;
+        }
+
+        @Override
+        public KeyValue host(HttpRequest request) {
+            return null;
+        }
+
+        @Override
+        public KeyValue scheme(HttpRequest request) {
+            return null;
+        }
+
+        @Override
+        public KeyValue statusCode(HttpResponse response) {
+            return null;
+        }
+
+        @Override
+        public KeyValue flavor(HttpRequest request) {
+            return null;
+        }
+
+        @Override
+        public KeyValue userAgent(HttpRequest request) {
+            return null;
+        }
+
+        @Override
+        public KeyValue requestContentLength(HttpRequest request) {
+            return null;
+        }
+
+        @Override
+        public KeyValue responseContentLength(HttpResponse response) {
+            return null;
+        }
+
+        @Override
+        public KeyValue ip(HttpRequest request) {
+            return null;
+        }
+
+        @Override
+        public KeyValue port(HttpRequest request) {
+            return null;
         }
 
     }

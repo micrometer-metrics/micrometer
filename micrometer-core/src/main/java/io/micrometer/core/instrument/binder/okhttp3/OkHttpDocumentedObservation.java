@@ -21,9 +21,6 @@ import io.micrometer.common.lang.Nullable;
 import io.micrometer.observation.Observation;
 import io.micrometer.observation.ObservationRegistry;
 import io.micrometer.observation.docs.DocumentedObservation;
-import io.micrometer.observation.transport.http.tags.HttpClientKeyValuesConvention;
-
-import java.util.Objects;
 
 /**
  * A {@link DocumentedObservation} for OkHttp3 metrics.
@@ -54,28 +51,27 @@ public enum OkHttpDocumentedObservation implements DocumentedObservation {
      * @param registry observation registry
      * @param okHttpContext the ok http context
      * @param requestsMetricName name of the observation
-     * @param keyValuesProvider key values provider. If {@code null} then
-     * {@code convention} param must be not {@code null}
-     * @param convention http client key values convention when using the
-     * {@link ObservationRegistry.ObservationNamingConfiguration#STANDARDIZED} naming
-     * convention. Must be not {@code null} when {@code keyValuesProvider} is {@code null}
+     * @param keyValuesProvider key values provider. If {@code null} then the default
+     * provider will be used
      * @return a new {@link OkHttpDocumentedObservation}
      */
     static Observation of(@NonNull ObservationRegistry registry, @NonNull OkHttpContext okHttpContext,
             @NonNull String requestsMetricName,
-            @Nullable Observation.KeyValuesProvider<OkHttpContext> keyValuesProvider,
-            @Nullable HttpClientKeyValuesConvention convention) {
-        ObservationRegistry.ObservationNamingConfiguration configuration = registry.observationConfig()
-                .getObservationNamingConfiguration();
+            @Nullable Observation.KeyValuesProvider<OkHttpContext> keyValuesProvider) {
         Observation.KeyValuesProvider<?> provider = null;
-        if (keyValuesProvider != null) {
+        if (registry.isNoop()) {
+            provider = Observation.KeyValuesProvider.EMPTY;
+        }
+        else if (keyValuesProvider != null) {
             provider = keyValuesProvider;
         }
-        else if (registry.isNoop() || configuration == ObservationRegistry.ObservationNamingConfiguration.DEFAULT) {
+        else if (registry.observationConfig()
+                .getObservationNamingConfiguration() == ObservationRegistry.ObservationNamingConfiguration.DEFAULT) {
             provider = new DefaultOkHttpKeyValuesProvider();
         }
         else {
-            provider = new StandardizedOkHttpKeyValuesProvider(Objects.requireNonNull(convention));
+            throw new IllegalStateException(
+                    "You've provided a STANDARDIZED naming configuration but haven't provided a key values provider");
         }
         return Observation.createNotStarted(requestsMetricName, okHttpContext, registry).keyValuesProvider(provider);
     }

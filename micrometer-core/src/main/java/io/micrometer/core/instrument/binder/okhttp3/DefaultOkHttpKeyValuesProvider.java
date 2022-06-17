@@ -77,6 +77,7 @@ public class DefaultOkHttpKeyValuesProvider implements OkHttpKeyValuesProvider {
         Iterable<BiFunction<Request, Response, Tag>> contextSpecificTags = context.getContextSpecificTags();
         Iterable<Tag> unknownRequestTags = context.getUnknownRequestTags();
         boolean includeHostTag = context.isIncludeHostTag();
+        // TODO: Tags to key values and back - maybe we can improve this?
         KeyValues keyValues = KeyValues.of("method", requestAvailable ? request.method() : TAG_VALUE_UNKNOWN, "uri",
                 getUriTag(urlMapper, state, request), "status", getStatusMessage(state.response, state.exception))
                 .and(tagsToKeyValues(stream(extraTags.spliterator(), false)))

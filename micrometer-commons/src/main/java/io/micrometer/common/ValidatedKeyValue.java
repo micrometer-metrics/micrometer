@@ -20,7 +20,7 @@ import java.util.function.Predicate;
 /**
  * {@link KeyValue} with value validation.
  *
- * @param <T>
+ * @param <T> value type
  * @author Marcin Grzejszczak
  * @since 1.10.0
  */

@@ -26,7 +26,6 @@ import io.micrometer.observation.Observation;
 import io.micrometer.observation.ObservationRegistry;
 import io.micrometer.observation.transport.http.HttpClientRequest;
 import io.micrometer.observation.transport.http.HttpClientResponse;
-import io.micrometer.observation.transport.http.tags.HttpClientKeyValuesConvention;
 import okhttp3.EventListener;
 import okhttp3.*;
 
@@ -89,20 +88,18 @@ public class OkHttpMetricsEventListener extends EventListener {
 
     private final LegacyOkHttpMetricsEventListener legacyListener;
 
-    private final HttpClientKeyValuesConvention httpClientKeyValuesConvention;
-
     protected OkHttpMetricsEventListener(MeterRegistry registry, String requestsMetricName,
             Function<Request, String> urlMapper, Iterable<Tag> extraTags,
             Iterable<BiFunction<Request, Response, Tag>> contextSpecificTags) {
         this(registry, ObservationRegistry.NOOP, new DefaultOkHttpKeyValuesProvider(), requestsMetricName, urlMapper,
-                extraTags, contextSpecificTags, emptyList(), true, HttpClientKeyValuesConvention.NOOP);
+                extraTags, contextSpecificTags, emptyList(), true);
     }
 
     OkHttpMetricsEventListener(MeterRegistry registry, ObservationRegistry observationRegistry,
             Observation.KeyValuesProvider<OkHttpContext> keyValuesProvider, String requestsMetricName,
             Function<Request, String> urlMapper, Iterable<Tag> extraTags,
             Iterable<BiFunction<Request, Response, Tag>> contextSpecificTags, Iterable<String> requestTagKeys,
-            boolean includeHostTag, HttpClientKeyValuesConvention httpClientKeyValuesConvention) {
+            boolean includeHostTag) {
         this.registry = registry;
         this.observationRegistry = observationRegistry;
         this.observationRegistryNoOp = observationRegistry.isNoop();
@@ -120,7 +117,6 @@ public class OkHttpMetricsEventListener extends EventListener {
         this.unknownRequestTags = unknownRequestTags;
         this.legacyListener = new LegacyOkHttpMetricsEventListener(registry, requestsMetricName, urlMapper, extraTags,
                 contextSpecificTags, unknownRequestTags, includeHostTag);
-        this.httpClientKeyValuesConvention = httpClientKeyValuesConvention;
     }
 
     public static Builder builder(MeterRegistry registry, String name) {
@@ -176,8 +172,8 @@ public class OkHttpMetricsEventListener extends EventListener {
                 }
             });
         }
-        Observation observation = OkHttpDocumentedObservation.of(this.observationRegistry, okHttpContext,
-                requestsMetricName, this.keyValuesProvider, this.httpClientKeyValuesConvention).start();
+        Observation observation = OkHttpDocumentedObservation
+                .of(this.observationRegistry, okHttpContext, requestsMetricName, this.keyValuesProvider).start();
         callState.setContext(okHttpContext);
         callState.setObservation(observation);
         this.callState.put(call, callState);
@@ -290,8 +286,6 @@ public class OkHttpMetricsEventListener extends EventListener {
 
         private OkHttpKeyValuesProvider keyValuesProvider;
 
-        private HttpClientKeyValuesConvention httpClientKeyValuesConvention;
-
         Builder(MeterRegistry registry, String name) {
             this.registry = registry;
             this.name = name;
@@ -309,11 +303,6 @@ public class OkHttpMetricsEventListener extends EventListener {
 
         public Builder keyValuesProvider(OkHttpKeyValuesProvider keyValuesProvider) {
             this.keyValuesProvider = keyValuesProvider;
-            return this;
-        }
-
-        public Builder httpClientKeyValuesConvention(HttpClientKeyValuesConvention httpClientKeyValuesConvention) {
-            this.httpClientKeyValuesConvention = httpClientKeyValuesConvention;
             return this;
         }
 
@@ -391,7 +380,7 @@ public class OkHttpMetricsEventListener extends EventListener {
         @SuppressWarnings("unchecked")
         public OkHttpMetricsEventListener build() {
             return new OkHttpMetricsEventListener(registry, observationRegistry, keyValuesProvider, name, uriMapper,
-                    tags, contextSpecificTags, requestTagKeys, includeHostTag, httpClientKeyValuesConvention);
+                    tags, contextSpecificTags, requestTagKeys, includeHostTag);
         }
 
     }
