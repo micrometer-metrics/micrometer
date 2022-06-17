@@ -2,7 +2,6 @@ description 'Module containing Observation related code'
 
 dependencies {
     api project(":micrometer-commons")
-    api project(":micrometer-observation-conventions")
 
     optionalApi 'io.micrometer:context-propagation-api'
 

@@ -53,4 +53,9 @@ class ValidatedKeyValue<T> implements KeyValue {
         return value;
     }
 
+    @Override
+    public String toString() {
+        return "tag(" + key + "=" + value + ")";
+    }
+
 }

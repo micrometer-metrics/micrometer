@@ -27,7 +27,6 @@ import io.micrometer.core.instrument.simple.SimpleMeterRegistry;
 import io.micrometer.observation.Observation;
 import io.micrometer.observation.ObservationHandler;
 import io.micrometer.observation.ObservationRegistry;
-import io.micrometer.observation.transport.http.tags.OpenTelemetryHttpClientKeyValuesConvention;
 import okhttp3.Cache;
 import okhttp3.OkHttpClient;
 import okhttp3.Request;
@@ -86,12 +85,11 @@ class OkHttpMetricsEventListenerTest {
     }
 
     @Test
-    void timeSuccessfulWithObservation(@WiremockResolver.Wiremock WireMockServer server) throws IOException {
+    void timeSuccessfulWithLegacyObservation(@WiremockResolver.Wiremock WireMockServer server) throws IOException {
         ObservationRegistry observationRegistry = ObservationRegistry.create();
         TestHandler testHandler = new TestHandler();
         observationRegistry.observationConfig()
-                .keyValuesConfiguration(ObservationRegistry.KeyValuesConfiguration.LEGACY_WITH_STANDARDIZED);
-        observationRegistry.observationConfig().keyValuesConvention(new OpenTelemetryHttpClientKeyValuesConvention());
+                .namingConfiguration(ObservationRegistry.ObservationNamingConfiguration.DEFAULT);
         observationRegistry.observationConfig().observationHandler(testHandler);
         observationRegistry.observationConfig().observationHandler(new TimerObservationHandler(registry));
         client = new OkHttpClient.Builder()

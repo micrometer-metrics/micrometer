@@ -38,10 +38,6 @@ public interface KeyValue extends Comparable<KeyValue> {
         return new ValidatedKeyValue<>(key, value, validator);
     }
 
-    static KeyValue ofUnknownValue(String key) {
-        return KeyValue.of(key, "UNKNOWN");
-    }
-
     @Override
     default int compareTo(KeyValue o) {
         return getKey().compareTo(o.getKey());
