@@ -29,6 +29,12 @@ import java.util.function.BiFunction;
 import static java.util.stream.Collectors.toList;
 import static java.util.stream.StreamSupport.stream;
 
+/**
+ * A {@link OkHttpKeyValuesProvider} that uses the configured standard.
+ *
+ * @author Marcin Grzejszczak
+ * @since 1.10.0
+ */
 @NonNullApi
 @NonNullFields
 public class StandardizedOkHttpKeyValuesProvider implements OkHttpKeyValuesProvider {

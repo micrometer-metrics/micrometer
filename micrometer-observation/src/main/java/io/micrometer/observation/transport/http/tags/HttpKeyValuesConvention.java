@@ -27,15 +27,14 @@ import io.micrometer.observation.transport.http.HttpResponse;
  * @author Marcin Grzejszczak
  * @since 1.10.0
  */
-// TODO: Shouldn't we have a default implementation?
 public interface HttpKeyValuesConvention extends Observation.KeyValuesConvention {
 
     /**
      * HTTP request method.
      *
      * Examples: GET; POST; HEAD
-     * @param request
-     * @return
+     * @param request HTTP request
+     * @return key value
      */
     KeyValue method(HttpRequest request);
 
@@ -45,8 +44,8 @@ public interface HttpKeyValuesConvention extends Observation.KeyValuesConvention
      * included nevertheless.
      *
      * Examples: https://www.foo.bar/search?q=OpenTelemetry#SemConv
-     * @param request
-     * @return
+     * @param request HTTP request
+     * @return key value
      */
     KeyValue url(HttpRequest request);
 
@@ -54,8 +53,8 @@ public interface HttpKeyValuesConvention extends Observation.KeyValuesConvention
      * The full request target as passed in a HTTP request line or equivalent.
      *
      * Examples: /path/12314/?q=ddds#123
-     * @param request
-     * @return
+     * @param request HTTP request
+     * @return key value
      */
     KeyValue target(HttpRequest request);
 
@@ -64,8 +63,8 @@ public interface HttpKeyValuesConvention extends Observation.KeyValuesConvention
      * see note.
      *
      * Examples: www.example.org
-     * @param request
-     * @return
+     * @param request HTTP request
+     * @return key value
      */
     KeyValue host(HttpRequest request);
 
@@ -73,8 +72,8 @@ public interface HttpKeyValuesConvention extends Observation.KeyValuesConvention
      * The URI scheme identifying the used protocol.
      *
      * Examples: http; https
-     * @param request
-     * @return
+     * @param request HTTP request
+     * @return key value
      */
     KeyValue scheme(HttpRequest request);
 
@@ -82,8 +81,8 @@ public interface HttpKeyValuesConvention extends Observation.KeyValuesConvention
      * HTTP response status code.
      *
      * Examples: 200
-     * @param response
-     * @return
+     * @param response HTTP response
+     * @return key value
      */
     KeyValue statusCode(HttpResponse response);
 
@@ -91,8 +90,8 @@ public interface HttpKeyValuesConvention extends Observation.KeyValuesConvention
      * Kind of HTTP protocol used.
      *
      * Examples: 1.0
-     * @param request
-     * @return
+     * @param request HTTP request
+     * @return key value
      */
     KeyValue flavor(HttpRequest request);
 
@@ -100,8 +99,8 @@ public interface HttpKeyValuesConvention extends Observation.KeyValuesConvention
      * Value of the HTTP User-Agent header sent by the client.
      *
      * Examples: CERN-LineMode/2.15 libwww/2.17b3
-     * @param request
-     * @return
+     * @param request HTTP request
+     * @return key value
      */
     KeyValue userAgent(HttpRequest request);
 
@@ -112,8 +111,8 @@ public interface HttpKeyValuesConvention extends Observation.KeyValuesConvention
      * compressed size.
      *
      * Examples: 3495
-     * @param request
-     * @return
+     * @param request HTTP request
+     * @return key value
      */
     KeyValue requestContentLength(HttpRequest request);
 
@@ -124,8 +123,8 @@ public interface HttpKeyValuesConvention extends Observation.KeyValuesConvention
      * compressed size.
      *
      * Examples: 3495
-     * @param response
-     * @return
+     * @param response HTTP response
+     * @return key value
      */
     KeyValue responseContentLength(HttpResponse response);
 
@@ -133,8 +132,8 @@ public interface HttpKeyValuesConvention extends Observation.KeyValuesConvention
      * Remote address of the peer (dotted decimal for IPv4 or RFC5952 for IPv6)
      *
      * Examples: 127.0.0.1
-     * @param request
-     * @return
+     * @param request HTTP request
+     * @return key value
      */
     KeyValue ip(HttpRequest request);
 
@@ -142,16 +141,16 @@ public interface HttpKeyValuesConvention extends Observation.KeyValuesConvention
      * Remote port number.
      *
      * Examples: 80; 8080; 443
-     * @param request
-     * @return
+     * @param request HTTP request
+     * @return key value
      */
     KeyValue port(HttpRequest request);
 
     /**
      * Sets all key values.
-     * @param request
-     * @param response
-     * @return
+     * @param request HTTP request
+     * @param response HTTP response
+     * @return all key values
      */
     default KeyValues all(HttpRequest request, HttpResponse response) {
         return KeyValues.of(method(request), url(request), target(request), host(request), scheme(request),

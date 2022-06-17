@@ -29,23 +29,108 @@ import io.micrometer.observation.transport.http.HttpResponse;
 public interface HttpServerKeyValuesConvention extends HttpKeyValuesConvention {
 
     /**
+     * A no-op instance.
+     */
+    HttpServerKeyValuesConvention NOOP = new HttpServerKeyValuesConvention() {
+        @Override
+        public KeyValue serverName(HttpRequest request) {
+            return null;
+        }
+
+        @Override
+        public KeyValue route(HttpRequest request) {
+            return null;
+        }
+
+        @Override
+        public KeyValue templatedRoute(HttpRequest request) {
+            return null;
+        }
+
+        @Override
+        public KeyValue clientIp(HttpRequest request) {
+            return null;
+        }
+
+        @Override
+        public KeyValue method(HttpRequest request) {
+            return null;
+        }
+
+        @Override
+        public KeyValue url(HttpRequest request) {
+            return null;
+        }
+
+        @Override
+        public KeyValue target(HttpRequest request) {
+            return null;
+        }
+
+        @Override
+        public KeyValue host(HttpRequest request) {
+            return null;
+        }
+
+        @Override
+        public KeyValue scheme(HttpRequest request) {
+            return null;
+        }
+
+        @Override
+        public KeyValue statusCode(HttpResponse response) {
+            return null;
+        }
+
+        @Override
+        public KeyValue flavor(HttpRequest request) {
+            return null;
+        }
+
+        @Override
+        public KeyValue userAgent(HttpRequest request) {
+            return null;
+        }
+
+        @Override
+        public KeyValue requestContentLength(HttpRequest request) {
+            return null;
+        }
+
+        @Override
+        public KeyValue responseContentLength(HttpResponse response) {
+            return null;
+        }
+
+        @Override
+        public KeyValue ip(HttpRequest request) {
+            return null;
+        }
+
+        @Override
+        public KeyValue port(HttpRequest request) {
+            return null;
+        }
+    };
+
+    /**
      * The primary server name of the matched virtual host. This should be obtained via
      * configuration. If no such configuration can be obtained, this attribute MUST NOT be
      * set ( net.host.name should be used instead).
      *
      * Examples: example.com
-     * @param request
-     * @return
+     * @param request HTTP request
+     * @return key value
      */
     KeyValue serverName(HttpRequest request);
 
-    // TODO: In OTEL - we will set not templated version
+    // TODO: In OTel - we will set not templated version
     /**
      * The matched route.
      *
      * Examples: /users/5
-     * @param request
-     * @return
+     * @param request HTTP request
+     * @return key value
      */
     KeyValue route(HttpRequest request);
 
@@ -54,8 +139,8 @@ public interface HttpServerKeyValuesConvention extends HttpKeyValuesConvention {
      * The matched route (path template).
      *
      * Examples: /users/:userID?
-     * @param request
-     * @return
+     * @param request HTTP request
+     * @return key value
      */
     KeyValue templatedRoute(HttpRequest request);
 
@@ -64,8 +149,8 @@ public interface HttpServerKeyValuesConvention extends HttpKeyValuesConvention {
      * X-Forwarded-For).
      *
      * Examples: 83.164.160.102
-     * @param request
-     * @return
+     * @param request HTTP request
+     * @return key value
      */
     KeyValue clientIp(HttpRequest request);
 

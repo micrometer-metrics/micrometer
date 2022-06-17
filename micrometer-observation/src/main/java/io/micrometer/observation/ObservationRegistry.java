@@ -16,10 +16,8 @@
 package io.micrometer.observation;
 
 import io.micrometer.common.docs.SemanticNameProvider;
-import io.micrometer.common.lang.NonNull;
 import io.micrometer.common.lang.Nullable;
 
-import java.util.Arrays;
 import java.util.Collection;
 import java.util.List;
 import java.util.Map;
@@ -170,32 +168,13 @@ public interface ObservationRegistry {
         }
 
         /**
-         * Register a key values provider for the {@link Observation observations}.
-         * @param keyValuesConvention concrete key value convention
-         * @return This configuration instance
-         */
-        @SuppressWarnings("unchecked")
-        public ObservationConfig keyValuesConvention(Observation.KeyValuesConvention keyValuesConvention) {
-            Class<?>[] interfaces = keyValuesConvention.getClass().getInterfaces();
-            if (Arrays.stream(interfaces).noneMatch(Observation.KeyValuesConvention.class::isAssignableFrom)) {
-                throw new IllegalArgumentException("The class [" + keyValuesConvention.getClass()
-                        + "] does not implement any interface that extends from ["
-                        + Observation.KeyValuesConvention.class + "]");
-            }
-            Class<?> keyValuesConventionInterface = interfaces[0];
-            this.keyValuesConventions.put(
-                    (Class<? extends Observation.KeyValuesConvention>) keyValuesConventionInterface,
-                    keyValuesConvention);
-            return this;
-        }
-
-        /**
          * Define how key values should be set.
-         * @param keyValuesConvention setup for key values setting
+         * @param namingConvention setup for naming convention of observation names and
+         * key values
          * @return This configuration instance
          */
-        public ObservationConfig namingConfiguration(ObservationNamingConfiguration keyValuesConvention) {
-            this.observationNamingConfiguration = keyValuesConvention;
+        public ObservationConfig namingConfiguration(ObservationNamingConfiguration namingConvention) {
+            this.observationNamingConfiguration = namingConvention;
             return this;
         }
 
@@ -208,24 +187,6 @@ public interface ObservationRegistry {
          */
         public boolean isObservationEnabled(String name, @Nullable Observation.Context context) {
             return this.observationPredicates.stream().allMatch(predicate -> predicate.test(name, context));
-        }
-
-        /**
-         * Returns a registered key values convention for the given class.
-         * @param clazz {@link Observation.KeyValuesConvention} class
-         * @param <T> type of convention
-         * @return registered convention
-         * @throws {@link IllegalStateException} when no
-         * {@link Observation.KeyValuesConvention} found
-         */
-        @NonNull
-        @SuppressWarnings("unchecked")
-        public <T extends Observation.KeyValuesConvention> T getKeyValuesConvention(Class<T> clazz) {
-            T t = (T) this.keyValuesConventions.get(clazz);
-            if (t == null) {
-                throw new IllegalStateException("No KeyValuesConvention found for class [" + clazz + "]");
-            }
-            return t;
         }
 
         /**
@@ -258,13 +219,13 @@ public interface ObservationRegistry {
     enum ObservationNamingConfiguration {
 
         /**
-         * Leaves the current behaviour of naming & tagging - will set the same tags as
+         * Leaves the current behaviour of naming and tagging - will set the same tags as
          * until now. Backward-compatible approach.
          */
         DEFAULT,
 
         /**
-         * Sets only the standardized names & tags. Backward-incompatible approach.
+         * Sets only the standardized names and tags. Backward-incompatible approach.
          */
         STANDARDIZED
 

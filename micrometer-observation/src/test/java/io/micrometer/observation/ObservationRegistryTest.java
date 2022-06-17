@@ -15,9 +15,12 @@
  */
 package io.micrometer.observation;
 
+import io.micrometer.common.KeyValue;
+import io.micrometer.common.KeyValues;
 import org.junit.jupiter.api.Test;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.BDDAssertions.then;
 import static org.mockito.Mockito.mock;
 
 /**
@@ -85,6 +88,98 @@ class ObservationRegistryTest {
         assertThat(Observation.createNotStarted("test.timer", registry)).isInstanceOf(SimpleObservation.class);
         assertThat(Observation.createNotStarted("test.timer", new Observation.Context(), registry))
                 .isInstanceOf(SimpleObservation.class);
+    }
+
+    @Test
+    void observationShouldWorkWithNamingConventions() {
+        ObservationRegistry registry = ObservationRegistry.create();
+        registry.observationConfig().observationHandler(c -> true);
+        // Define a convention
+        MessagingConvention messagingConvention = new OurCompanyStandardMessagingConvention();
+        ObservationRegistry.ObservationNamingConfiguration config = ObservationRegistry.ObservationNamingConfiguration.STANDARDIZED;
+        // Register a semantic name provider
+        registry.observationConfig().semanticNameProvider(new OurCompanyStandardMessagingSemanticNameProvider(config));
+        // Set the naming configuration
+        registry.observationConfig().namingConfiguration(config);
+
+        Observation.Context myContext = new MessagingContext().put("foo", "hello");
+        // KeyValues provider wants to use a MessagingConvention
+        MessagingKeyValuesProvider messagingKeyValuesProvider = new MessagingKeyValuesProvider(messagingConvention);
+
+        Observation.start("observation", myContext, registry).keyValuesProvider(messagingKeyValuesProvider).stop();
+
+        then(myContext.getLowCardinalityKeyValues().stream().filter(keyValue -> keyValue.getKey().equals("baz"))
+                .findFirst().orElseThrow(() -> new AssertionError("No <baz> key value found")).getValue())
+                        .isEqualTo("hello bar");
+        then(myContext.getName()).isEqualTo("new name");
+    }
+
+    static class MessagingContext extends Observation.Context {
+
+    }
+
+    static class MessagingKeyValuesProvider implements Observation.KeyValuesProvider<MessagingContext> {
+
+        private final MessagingConvention messagingConvention;
+
+        MessagingKeyValuesProvider(MessagingConvention messagingConvention) {
+            this.messagingConvention = messagingConvention;
+        }
+
+        @Override
+        public KeyValues getLowCardinalityKeyValues(MessagingContext context) {
+            return KeyValues.of(this.messagingConvention.queueName(context.get("foo")));
+        }
+
+        @Override
+        public boolean supportsContext(Observation.Context context) {
+            return context instanceof MessagingContext;
+        }
+
+    }
+
+    interface MessagingConvention extends Observation.KeyValuesConvention {
+
+        KeyValue queueName(String foo);
+
+    }
+
+    static class OurCompanyStandardMessagingConvention implements MessagingConvention {
+
+        // In our standard the queue name should be registered under "baz" tag key
+        @Override
+        public KeyValue queueName(String messagePayload) {
+            return KeyValue.of("baz", messagePayload + " bar");
+        }
+
+    }
+
+    static class OurCompanyStandardMessagingSemanticNameProvider
+            implements Observation.ContextAwareSemanticNameProvider {
+
+        private final ObservationRegistry.ObservationNamingConfiguration namingConfiguration;
+
+        OurCompanyStandardMessagingSemanticNameProvider(
+                ObservationRegistry.ObservationNamingConfiguration namingConfiguration) {
+            this.namingConfiguration = namingConfiguration;
+        }
+
+        // Here we override the default "observation" name
+        @Override
+        public String getName() {
+            return "new name";
+        }
+
+        // This semantic name provider is only applicable when we're using a standard...
+        @Override
+        public boolean isApplicable(Observation.Context object) {
+            if (this.namingConfiguration != ObservationRegistry.ObservationNamingConfiguration.STANDARDIZED) {
+                return false;
+            }
+            // ...and we're working with a specific context
+            return object instanceof MessagingContext;
+        }
+
     }
 
 }

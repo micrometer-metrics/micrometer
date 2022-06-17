@@ -16,11 +16,14 @@
 package io.micrometer.core.instrument.binder.okhttp3;
 
 import io.micrometer.common.docs.KeyName;
+import io.micrometer.common.lang.NonNull;
 import io.micrometer.common.lang.Nullable;
 import io.micrometer.observation.Observation;
 import io.micrometer.observation.ObservationRegistry;
 import io.micrometer.observation.docs.DocumentedObservation;
 import io.micrometer.observation.transport.http.tags.HttpClientKeyValuesConvention;
+
+import java.util.Objects;
 
 /**
  * A {@link DocumentedObservation} for OkHttp3 metrics.
@@ -30,6 +33,9 @@ import io.micrometer.observation.transport.http.tags.HttpClientKeyValuesConventi
  */
 public enum OkHttpDocumentedObservation implements DocumentedObservation {
 
+    /**
+     * Observation when using {@link ObservationRegistry.ObservationNamingConfiguration#DEFAULT} mode.
+     */
     DEFAULT {
         @Override
         public String getName() {
@@ -45,12 +51,19 @@ public enum OkHttpDocumentedObservation implements DocumentedObservation {
     /**
      * Creates a {@link OkHttpDocumentedObservation} depending on the configuration.
      * @param registry observation registry
-     * @param requestsMetricName
-     * @param keyValuesProvider key values provider
+     * @param okHttpContext the ok http context
+     * @param requestsMetricName name of the observation
+     * @param keyValuesProvider key values provider. If {@code null} then
+     * {@code convention} param must be not {@code null}
+     * @param convention http client key values convention when using the
+     * {@link ObservationRegistry.ObservationNamingConfiguration#STANDARDIZED} naming
+     * convention. Must be not {@code null} when {@code keyValuesProvider} is {@code null}
      * @return a new {@link OkHttpDocumentedObservation}
      */
-    static Observation of(ObservationRegistry registry, OkHttpContext okHttpContext, String requestsMetricName,
-            @Nullable Observation.KeyValuesProvider<OkHttpContext> keyValuesProvider) {
+    static Observation of(@NonNull ObservationRegistry registry, @NonNull OkHttpContext okHttpContext,
+            @NonNull String requestsMetricName,
+            @Nullable Observation.KeyValuesProvider<OkHttpContext> keyValuesProvider,
+            @Nullable HttpClientKeyValuesConvention convention) {
         ObservationRegistry.ObservationNamingConfiguration configuration = registry.observationConfig()
                 .getObservationNamingConfiguration();
         Observation.KeyValuesProvider<?> provider = null;
@@ -61,10 +74,7 @@ public enum OkHttpDocumentedObservation implements DocumentedObservation {
             provider = new DefaultOkHttpKeyValuesProvider();
         }
         else {
-            // TODO: Isn't this too much - maybe we should just require the user to
-            // set this manually?
-            provider = new StandardizedOkHttpKeyValuesProvider(
-                    registry.observationConfig().getKeyValuesConvention(HttpClientKeyValuesConvention.class));
+            provider = new StandardizedOkHttpKeyValuesProvider(Objects.requireNonNull(convention));
         }
         return Observation.createNotStarted(requestsMetricName, okHttpContext, registry).keyValuesProvider(provider);
     }

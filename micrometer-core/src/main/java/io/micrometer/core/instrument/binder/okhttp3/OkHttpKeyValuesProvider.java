@@ -18,6 +18,12 @@ package io.micrometer.core.instrument.binder.okhttp3;
 import io.micrometer.observation.Observation;
 import io.micrometer.observation.transport.http.tags.HttpKeyValueProvider;
 
+/**
+ * A {@link HttpKeyValueProvider} for OkHttp3.
+ *
+ * @author Marcin Grzejszczak
+ * @since 1.10.0
+ */
 public interface OkHttpKeyValuesProvider extends HttpKeyValueProvider<OkHttpContext> {
 
     @Override

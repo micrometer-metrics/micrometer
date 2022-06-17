@@ -23,6 +23,12 @@ import okhttp3.Response;
 import java.util.function.BiFunction;
 import java.util.function.Function;
 
+/**
+ * A {@link HttpClientContext} for OkHttp3.
+ *
+ * @author Marcin Grzejszczak
+ * @since 1.10.0
+ */
 public class OkHttpContext extends HttpClientContext {
 
     private final OkHttpMetricsEventListener.CallState state;
