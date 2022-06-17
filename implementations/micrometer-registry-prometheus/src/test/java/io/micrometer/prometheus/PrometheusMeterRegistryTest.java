@@ -672,6 +672,11 @@ class PrometheusMeterRegistryTest {
             return String.valueOf(count.incrementAndGet());
         }
 
+        @Override
+        public boolean isSampled() {
+            return true;
+        }
+
     }
 
 }

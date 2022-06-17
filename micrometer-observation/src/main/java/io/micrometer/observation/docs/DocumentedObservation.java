@@ -52,7 +52,9 @@ public interface DocumentedObservation {
     KeyName[] EMPTY = new KeyName[0];
 
     /**
-     * Technical name (e.g metric name).
+     * Default technical name (e.g metric name). Can be overridden by a registered
+     * {@link io.micrometer.common.docs.SemanticNameProvider} via
+     * {@link ObservationRegistry.ObservationConfig}.
      * @return name
      */
     String getName();
@@ -63,19 +65,6 @@ public interface DocumentedObservation {
      */
     default String getContextualName() {
         return null;
-    }
-
-    /**
-     * Builds a name from provided vars. Follows the
-     * {@link String#format(String, Object...)} patterns.
-     * @param vars variables to pass to {@link String#format(String, Object...)}
-     * @return constructed name
-     */
-    default String getName(String... vars) {
-        if (getName().contains("%s")) {
-            return String.format(getName(), (Object[]) vars);
-        }
-        return getName();
     }
 
     /**

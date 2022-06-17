@@ -43,6 +43,8 @@ class SimpleObservation implements Observation {
     @SuppressWarnings("rawtypes")
     private final Deque<ObservationHandler> handlers;
 
+    private final Collection<ObservationFilter> filters;
+
     // package private so only instantiated by us
     SimpleObservation(String name, ObservationRegistry registry, Context context) {
         this.registry = registry;
@@ -52,6 +54,7 @@ class SimpleObservation implements Observation {
         this.handlers = registry.observationConfig().getObservationHandlers().stream()
                 .filter(handler -> handler.supportsContext(this.context))
                 .collect(Collectors.toCollection(ArrayDeque::new));
+        this.filters = registry.observationConfig().getObservationFilters();
     }
 
     @Override
@@ -112,7 +115,11 @@ class SimpleObservation implements Observation {
             this.context.addLowCardinalityKeyValues(keyValuesProvider.getLowCardinalityKeyValues(context));
             this.context.addHighCardinalityKeyValues(keyValuesProvider.getHighCardinalityKeyValues(context));
         }
-        this.notifyOnObservationStopped();
+        Observation.Context modifiedContext = this.context;
+        for (ObservationFilter filter : this.filters) {
+            modifiedContext = filter.map(modifiedContext);
+        }
+        this.notifyOnObservationStopped(modifiedContext);
     }
 
     @Override
@@ -151,10 +158,10 @@ class SimpleObservation implements Observation {
     }
 
     @SuppressWarnings("unchecked")
-    private void notifyOnObservationStopped() {
+    private void notifyOnObservationStopped(Observation.Context context) {
         // We're closing from end till the beginning - e.g. we started with handlers with
         // ids 1,2,3 and we need to call close on 3,2,1
-        this.handlers.descendingIterator().forEachRemaining(handler -> handler.onStop(this.context));
+        this.handlers.descendingIterator().forEachRemaining(handler -> handler.onStop(context));
     }
 
     static class SimpleScope implements Scope {

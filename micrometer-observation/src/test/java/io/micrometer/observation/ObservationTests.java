@@ -66,4 +66,16 @@ class ObservationTests {
         assertThat(observation).isNotSameAs(Observation.NOOP);
     }
 
+    @Test
+    void havingAnObservationFilterWillMutateTheContext() {
+        ObservationRegistry registry = ObservationRegistry.create();
+        registry.observationConfig().observationHandler(context -> true);
+        registry.observationConfig().observationFilter(context -> context.put("foo", "bar"));
+        Observation.Context context = new Observation.Context();
+
+        Observation.start("foo", context, registry).stop();
+
+        assertThat((String) context.get("foo")).isEqualTo("bar");
+    }
+
 }

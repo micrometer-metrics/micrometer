@@ -296,7 +296,7 @@ subprojects {
                 }
             }
 
-            if (!(project.name in ['micrometer-commons', 'micrometer-observation', 'micrometer-observation-test'])) {
+            if (!(project.name in ['micrometer-commons', 'micrometer-observation', 'micrometer-observation-conventions', 'micrometer-observation-test'])) {
                 apply plugin: 'me.champeau.gradle.japicmp'
                 apply plugin: 'de.undercouch.download'
 

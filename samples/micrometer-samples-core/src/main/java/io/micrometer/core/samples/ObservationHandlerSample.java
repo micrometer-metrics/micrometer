@@ -48,13 +48,18 @@ public class ObservationHandlerSample {
             Thread.sleep(1_000);
             observation.error(new IOException("simulated"));
         }
+
+        System.out.println("--- Meters before stop:");
+        System.out.println(registry.getMetersAsString());
+        System.out.println("---");
+
         observation.stop();
 
         Observation.start("sample.no-context", observationRegistry).stop();
         Observation.start("sample.unsupported", new UnsupportedContext(), observationRegistry).stop();
         Observation.start("sample.ignored", new CustomContext(), observationRegistry).stop();
 
-        System.out.println("---");
+        System.out.println("--- Meters:");
         System.out.println(registry.getMetersAsString());
     }
 

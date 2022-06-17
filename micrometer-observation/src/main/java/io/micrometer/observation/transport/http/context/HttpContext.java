@@ -15,13 +15,11 @@
  */
 package io.micrometer.observation.transport.http.context;
 
-import io.micrometer.common.KeyValues;
 import io.micrometer.common.lang.NonNull;
 import io.micrometer.common.lang.Nullable;
 import io.micrometer.observation.Observation;
 import io.micrometer.observation.transport.http.HttpRequest;
 import io.micrometer.observation.transport.http.HttpResponse;
-import io.micrometer.observation.transport.http.tags.HttpKeyValueProvider;
 
 /**
  * {@link Observation.Context} for an HTTP exchange.
@@ -33,29 +31,19 @@ import io.micrometer.observation.transport.http.tags.HttpKeyValueProvider;
  */
 public abstract class HttpContext<REQ extends HttpRequest, RES extends HttpResponse> extends Observation.Context {
 
-    private final HttpKeyValueProvider keyValueProvider;
-
-    public HttpContext() {
-        this(HttpKeyValueProvider.DEFAULT);
-    }
-
-    public HttpContext(HttpKeyValueProvider keyValueProvider) {
-        this.keyValueProvider = keyValueProvider;
-    }
-
     /**
      * Returns the HTTP request.
      * @return request
      */
     @NonNull
-    abstract REQ getRequest();
+    public abstract REQ getRequest();
 
     /**
      * Returns the HTTP response.
      * @return response
      */
     @Nullable
-    abstract RES getResponse();
+    public abstract RES getResponse();
 
     /**
      * Sets the given HTTP request for this context. Might be {@code null} when an
@@ -72,11 +60,5 @@ public abstract class HttpContext<REQ extends HttpRequest, RES extends HttpRespo
      * @return this
      */
     abstract HttpContext<REQ, RES> setResponse(@Nullable RES response);
-
-    @NonNull
-    @Override
-    public KeyValues getLowCardinalityKeyValues() {
-        return this.keyValueProvider.getLowCardinalityKeyValues(getRequest(), getResponse(), null);
-    }
 
 }

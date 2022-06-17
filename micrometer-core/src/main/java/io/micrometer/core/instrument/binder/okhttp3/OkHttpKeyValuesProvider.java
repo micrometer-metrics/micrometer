@@ -13,34 +13,22 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package io.micrometer.common;
+package io.micrometer.core.instrument.binder.okhttp3;
 
-import java.util.function.Predicate;
+import io.micrometer.observation.Observation;
+import io.micrometer.observation.transport.http.tags.HttpKeyValueProvider;
 
 /**
- * Key/value pair representing a dimension of a meter used to classify and drill into
- * measurements.
+ * A {@link HttpKeyValueProvider} for OkHttp3.
  *
- * @author Jon Schneider
+ * @author Marcin Grzejszczak
  * @since 1.10.0
  */
-public interface KeyValue extends Comparable<KeyValue> {
-
-    String getKey();
-
-    String getValue();
-
-    static KeyValue of(String key, String value) {
-        return new ImmutableKeyValue(key, value);
-    }
-
-    static KeyValue of(String key, Object value, Predicate<Object> validator) {
-        return new ValidatedKeyValue<>(key, value, validator);
-    }
+public interface OkHttpKeyValuesProvider extends HttpKeyValueProvider<OkHttpContext> {
 
     @Override
-    default int compareTo(KeyValue o) {
-        return getKey().compareTo(o.getKey());
+    default boolean supportsContext(Observation.Context context) {
+        return context instanceof OkHttpContext;
     }
 
 }

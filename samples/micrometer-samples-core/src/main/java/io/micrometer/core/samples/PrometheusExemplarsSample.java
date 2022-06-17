@@ -68,6 +68,11 @@ public class PrometheusExemplarsSample {
             return String.valueOf(count.incrementAndGet());
         }
 
+        @Override
+        public boolean isSampled() {
+            return true;
+        }
+
     }
 
 }
