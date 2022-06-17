@@ -27,8 +27,6 @@ import io.micrometer.core.instrument.simple.SimpleMeterRegistry;
 import io.micrometer.observation.Observation;
 import io.micrometer.observation.ObservationHandler;
 import io.micrometer.observation.ObservationRegistry;
-import io.micrometer.observation.transport.http.convention.OpenTelemetryHttpClientSemanticNameProvider;
-import io.micrometer.observation.transport.http.tags.convention.OpenTelemetryHttpClientKeyValuesConvention;
 import okhttp3.Cache;
 import okhttp3.OkHttpClient;
 import okhttp3.Request;
@@ -92,7 +90,6 @@ class OkHttpMetricsEventListenerTest {
         TestHandler testHandler = new TestHandler();
         observationRegistry.observationConfig()
                 .namingConfiguration(ObservationRegistry.ObservationNamingConfiguration.DEFAULT);
-        observationRegistry.observationConfig().keyValuesConvention(new OpenTelemetryHttpClientKeyValuesConvention());
         observationRegistry.observationConfig().observationHandler(testHandler);
         observationRegistry.observationConfig().observationHandler(new TimerObservationHandler(registry));
         client = new OkHttpClient.Builder()
@@ -109,27 +106,6 @@ class OkHttpMetricsEventListenerTest {
         assertThat(testHandler.context).isNotNull();
         assertThat(testHandler.context.getAllKeyValues()).contains(KeyValue.of("foo", "bar"),
                 KeyValue.of("status", "200"));
-    }
-    
-    @Test
-    void timeSuccessfulWithStandardizedObservation(@WiremockResolver.Wiremock WireMockServer server) throws IOException {
-        ObservationRegistry observationRegistry = ObservationRegistry.create();
-        ObservationRegistry.ObservationNamingConfiguration configuration = ObservationRegistry.ObservationNamingConfiguration.STANDARDIZED;
-        observationRegistry.observationConfig().namingConfiguration(configuration);
-        observationRegistry.observationConfig().keyValuesConvention(new OpenTelemetryHttpClientKeyValuesConvention());
-        observationRegistry.observationConfig().semanticNameProvider(new OpenTelemetryHttpClientSemanticNameProvider(configuration));
-        observationRegistry.observationConfig().observationHandler(new TimerObservationHandler(registry));
-        client = new OkHttpClient.Builder()
-                .eventListener(defaultListenerBuilder().observationRegistry(observationRegistry).build()).build();
-        server.stubFor(any(anyUrl()));
-        Request request = new Request.Builder().url(server.baseUrl()).build();
-
-        client.newCall(request).execute().close();
-
-        // TODO: Obviously all of these can't be low cardinality keys
-        assertThat(registry.get("http.client.duration")
-                .tagKeys("http.flavor", "http.host", "http.method", "http.request_content_length", "http.response_content_length", "http.scheme", "http.status_code", "http.target", "http.url", "http.user_agent", "net.peer.ip", "net.peer.name", "net.peer.port")
-                .timer().count()).isEqualTo(1L);
     }
 
     @Test

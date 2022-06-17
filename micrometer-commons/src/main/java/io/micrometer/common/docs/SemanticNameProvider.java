@@ -22,18 +22,20 @@ package io.micrometer.common.docs;
  * @since 1.10.0
  */
 public interface SemanticNameProvider<T> {
+
     /**
      * Will return a standardized name.
-     *
      * @return name
      */
     String getName();
 
     /**
-     * Returns {@code true} when this {@link SemanticNameProvider} should be applied and a new name should be set.
-     *
-     * @param object object against which we determine whether this provider is applicable or not
+     * Returns {@code true} when this {@link SemanticNameProvider} should be applied and a
+     * new name should be set.
+     * @param object object against which we determine whether this provider is applicable
+     * or not
      * @return {@code true} when new name should be applied
      */
     boolean isApplicable(T object);
+
 }

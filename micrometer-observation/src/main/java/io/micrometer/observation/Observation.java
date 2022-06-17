@@ -668,7 +668,6 @@ public interface Observation {
      */
     interface ContextAwareSemanticNameProvider extends SemanticNameProvider<Observation.Context> {
 
-
     }
 
     /**

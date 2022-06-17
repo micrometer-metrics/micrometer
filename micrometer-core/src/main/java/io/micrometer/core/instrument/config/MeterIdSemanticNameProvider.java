@@ -11,5 +11,4 @@ import io.micrometer.core.instrument.Meter;
  */
 public interface MeterIdSemanticNameProvider extends SemanticNameProvider<Meter.Id> {
 
-
 }

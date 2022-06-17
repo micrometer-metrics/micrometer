@@ -52,9 +52,9 @@ public interface DocumentedObservation {
     KeyName[] EMPTY = new KeyName[0];
 
     /**
-     * Default technical name (e.g metric name).
-     * Can be overridden by a registered {@link io.micrometer.common.docs.SemanticNameProvider} via {@link ObservationRegistry.ObservationConfig}.
-     *
+     * Default technical name (e.g metric name). Can be overridden by a registered
+     * {@link io.micrometer.common.docs.SemanticNameProvider} via
+     * {@link ObservationRegistry.ObservationConfig}.
      * @return name
      */
     String getName();

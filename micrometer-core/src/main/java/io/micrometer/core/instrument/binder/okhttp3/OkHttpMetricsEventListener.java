@@ -115,7 +115,8 @@ public class OkHttpMetricsEventListener extends EventListener {
             unknownRequestTags.add(Tag.of(requestTagKey, "UNKNOWN"));
         }
         this.unknownRequestTags = unknownRequestTags;
-        this.legacyListener = new LegacyOkHttpMetricsEventListener(registry, requestsMetricName, urlMapper, extraTags, contextSpecificTags, unknownRequestTags, includeHostTag);
+        this.legacyListener = new LegacyOkHttpMetricsEventListener(registry, requestsMetricName, urlMapper, extraTags,
+                contextSpecificTags, unknownRequestTags, includeHostTag);
     }
 
     public static Builder builder(MeterRegistry registry, String name) {
@@ -171,8 +172,8 @@ public class OkHttpMetricsEventListener extends EventListener {
                 }
             });
         }
-        Observation observation =
-                OkHttpDocumentedObservation.of(this.observationRegistry, okHttpContext, requestsMetricName, this.keyValuesProvider).start();
+        Observation observation = OkHttpDocumentedObservation
+                .of(this.observationRegistry, okHttpContext, requestsMetricName, this.keyValuesProvider).start();
         callState.setContext(okHttpContext);
         callState.setObservation(observation);
         this.callState.put(call, callState);
@@ -206,7 +207,8 @@ public class OkHttpMetricsEventListener extends EventListener {
         OkHttpContext okHttpContext = state.context;
         if (observationRegistryNoOp) {
             this.legacyListener.time(state);
-        } else {
+        }
+        else {
             state.observation.error(state.exception);
             if (state.response != null) {
                 okHttpContext.setResponse(new HttpClientResponse() {
@@ -385,8 +387,8 @@ public class OkHttpMetricsEventListener extends EventListener {
 
         @SuppressWarnings("unchecked")
         public OkHttpMetricsEventListener build() {
-            return new OkHttpMetricsEventListener(registry, observationRegistry, keyValuesProvider, name, uriMapper, tags,
-                    contextSpecificTags, requestTagKeys, includeHostTag);
+            return new OkHttpMetricsEventListener(registry, observationRegistry, keyValuesProvider, name, uriMapper,
+                    tags, contextSpecificTags, requestTagKeys, includeHostTag);
         }
 
     }

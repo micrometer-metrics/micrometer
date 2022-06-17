@@ -45,8 +45,8 @@ import static java.util.stream.StreamSupport.stream;
 public interface MeterFilter {
 
     /**
-     * Applies {@link MeterIdSemanticNameProvider} to potentially change the name of a metric to be in agreement with a standard.
-     *
+     * Applies {@link MeterIdSemanticNameProvider} to potentially change the name of a
+     * metric to be in agreement with a standard.
      * @param provider meter id semantic name provider
      * @return A name changing meter filter.
      */

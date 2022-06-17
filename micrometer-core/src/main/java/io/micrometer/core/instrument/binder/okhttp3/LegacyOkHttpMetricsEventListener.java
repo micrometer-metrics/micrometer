@@ -58,7 +58,10 @@ class LegacyOkHttpMetricsEventListener {
 
     private final MeterRegistry registry;
 
-    LegacyOkHttpMetricsEventListener(MeterRegistry registry, String requestsMetricName, Function<Request, String> urlMapper, Iterable<Tag> extraTags, Iterable<BiFunction<Request, Response, Tag>> contextSpecificTags, Iterable<Tag> unknownRequestTags, boolean includeHostTag) {
+    LegacyOkHttpMetricsEventListener(MeterRegistry registry, String requestsMetricName,
+            Function<Request, String> urlMapper, Iterable<Tag> extraTags,
+            Iterable<BiFunction<Request, Response, Tag>> contextSpecificTags, Iterable<Tag> unknownRequestTags,
+            boolean includeHostTag) {
         this.registry = registry;
         this.requestsMetricName = requestsMetricName;
         this.urlMapper = urlMapper;

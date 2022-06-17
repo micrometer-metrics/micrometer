@@ -154,8 +154,8 @@ public interface ObservationRegistry {
         }
 
         /**
-         * Register a {@link SemanticNameProvider} that mutates the name of the observation.
-         *
+         * Register a {@link SemanticNameProvider} that mutates the name of the
+         * observation.
          * @param nameProvider a name provider that is context aware
          * @return This configuration instance
          */
@@ -215,7 +215,8 @@ public interface ObservationRegistry {
          * @param clazz {@link Observation.KeyValuesConvention} class
          * @param <T> type of convention
          * @return registered convention
-         * @throws {@link IllegalStateException} when no {@link Observation.KeyValuesConvention} found
+         * @throws {@link IllegalStateException} when no
+         * {@link Observation.KeyValuesConvention} found
          */
         @NonNull
         @SuppressWarnings("unchecked")
@@ -257,8 +258,8 @@ public interface ObservationRegistry {
     enum ObservationNamingConfiguration {
 
         /**
-         * Leaves the current behaviour of naming & tagging - will set the same tags as until now.
-         * Backward-compatible approach.
+         * Leaves the current behaviour of naming & tagging - will set the same tags as
+         * until now. Backward-compatible approach.
          */
         DEFAULT,
 

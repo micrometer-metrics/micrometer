@@ -29,14 +29,15 @@ public enum OkHttpDocumentedObservation implements DocumentedObservation {
 
     /**
      * Creates a {@link OkHttpDocumentedObservation} depending on the configuration.
-     *
      * @param registry observation registry
      * @param requestsMetricName
      * @param keyValuesProvider key values provider
      * @return a new {@link OkHttpDocumentedObservation}
      */
-    static Observation of(ObservationRegistry registry, OkHttpContext okHttpContext, String requestsMetricName, @Nullable Observation.KeyValuesProvider<OkHttpContext> keyValuesProvider) {
-        ObservationRegistry.ObservationNamingConfiguration configuration = registry.observationConfig().getObservationNamingConfiguration();
+    static Observation of(ObservationRegistry registry, OkHttpContext okHttpContext, String requestsMetricName,
+            @Nullable Observation.KeyValuesProvider<OkHttpContext> keyValuesProvider) {
+        ObservationRegistry.ObservationNamingConfiguration configuration = registry.observationConfig()
+                .getObservationNamingConfiguration();
         Observation.KeyValuesProvider<?> provider = null;
         if (keyValuesProvider != null) {
             provider = keyValuesProvider;
@@ -47,14 +48,14 @@ public enum OkHttpDocumentedObservation implements DocumentedObservation {
         else {
             // TODO: Isn't this too much - maybe we should just require the user to
             // set this manually?
-            provider = new StandardizedOkHttpKeyValuesProvider(registry.observationConfig()
-                    .getKeyValuesConvention(HttpClientKeyValuesConvention.class));
+            provider = new StandardizedOkHttpKeyValuesProvider(
+                    registry.observationConfig().getKeyValuesConvention(HttpClientKeyValuesConvention.class));
         }
-        return Observation.createNotStarted(requestsMetricName, okHttpContext, registry)
-                .keyValuesProvider(provider);
+        return Observation.createNotStarted(requestsMetricName, okHttpContext, registry).keyValuesProvider(provider);
     }
 
     enum OkHttpLegacyLowCardinalityTags implements KeyName {
+
         TARGET_SCHEME {
             @Override
             public String getKeyName() {
@@ -105,10 +106,5 @@ public enum OkHttpDocumentedObservation implements DocumentedObservation {
         };
 
     }
+
 }
-
-
-
-
-
-
