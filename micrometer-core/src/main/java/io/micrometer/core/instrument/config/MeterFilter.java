@@ -45,29 +45,6 @@ import static java.util.stream.StreamSupport.stream;
 public interface MeterFilter {
 
     /**
-     * Applies {@link MeterIdSemanticNameProvider} to potentially change the name of a
-     * metric to be in agreement with a standard.
-     * @param provider meter id semantic name provider
-     * @return A name changing meter filter.
-     */
-    static MeterFilter semanticName(MeterIdSemanticNameProvider provider) {
-        return new MeterFilter() {
-            @Override
-            public MeterFilterReply accept(Meter.Id id) {
-                if (provider.isApplicable(id)) {
-                    return MeterFilterReply.ACCEPT;
-                }
-                return MeterFilter.super.accept(id);
-            }
-
-            @Override
-            public Meter.Id map(Meter.Id id) {
-                return id.withName(provider.getName());
-            }
-        };
-    }
-
-    /**
      * Add common tags that are applied to every meter created afterward.
      *
      * The common tags will not override tag values from a meter ID. They will also not
