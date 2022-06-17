@@ -33,9 +33,12 @@ import io.micrometer.core.instrument.util.NamedThreadFactory;
 
 /**
  * Tries to detect high cardinality tags by checking if the amount of Meters with the same
- * name is above a threshold. You can use this class in two ways: 1. Call findFirst and
- * check if you get any results, if so you probably have high cardinality tags 2. Call
- * start which will start a scheduled job that will do this check for you.
+ * name is above a threshold. This mechanism will not detect if you have other
+ * memory-usage-related issues, like appending random values to the name of the Meters,
+ * the only purpose of this class is detecting the potential presence of high cardinality
+ * tags. You can use this class in two ways: 1. Call findFirst and check if you get any
+ * results, if so you probably have high cardinality tags 2. Call start which will start a
+ * scheduled job that will do this check for you.
  *
  * You can also utilize
  * {@link MeterFilter#maximumAllowableTags(String, String, int, MeterFilter)} and
@@ -169,11 +172,11 @@ public class HighCardinalityTagsDetector implements AutoCloseable {
     }
 
     private static long calculateThreshold() {
-        // half of the heap in MiB
-        long allowance = Runtime.getRuntime().maxMemory() / 1024 / 1024 / 2;
+        // 10% of the heap in MiB
+        long allowance = Runtime.getRuntime().maxMemory() / 1024 / 1024 / 10;
 
         // 2k Meters can take ~1MiB, 2M Meters can take ~1GiB
-        return Math.min(allowance * 2_000, 2_000_000);
+        return Math.max(1_000, Math.min(allowance * 2_000, 2_000_000));
     }
 
 }
