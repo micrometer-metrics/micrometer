@@ -340,10 +340,7 @@ subprojects {
                     ignoreMissingClasses = true
                     includeSynthetic = true
                     // TODO remove methodExcludes when gh-3181 is resolved
-                    methodExcludes = [
-                            'io.micrometer.stackdriver.StackdriverConfig#metricTypePrefix()'.
-                            'io.'
-                    ]
+                    methodExcludes = ['io.micrometer.stackdriver.StackdriverConfig#metricTypePrefix()']
                     onlyIf { compatibleVersion != 'SKIP' }
                 }
 
