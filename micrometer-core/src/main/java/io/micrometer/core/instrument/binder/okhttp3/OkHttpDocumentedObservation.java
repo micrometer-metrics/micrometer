@@ -34,7 +34,8 @@ import java.util.Objects;
 public enum OkHttpDocumentedObservation implements DocumentedObservation {
 
     /**
-     * Observation when using {@link ObservationRegistry.ObservationNamingConfiguration#DEFAULT} mode.
+     * Observation when using
+     * {@link ObservationRegistry.ObservationNamingConfiguration#DEFAULT} mode.
      */
     DEFAULT {
         @Override
