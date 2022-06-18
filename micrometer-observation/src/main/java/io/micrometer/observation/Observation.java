@@ -176,7 +176,7 @@ public interface Observation {
      * @param keyValues key value instances
      * @return this
      */
-    Observation highCardinalityKeyValue(Iterable<KeyValue> keyValues);
+    Observation highCardinalityKeyValues(Iterable<KeyValue> keyValues);
 
     /**
      * Checks whether this {@link Observation} is no-op.

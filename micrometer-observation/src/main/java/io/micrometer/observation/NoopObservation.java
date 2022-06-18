@@ -67,7 +67,7 @@ final class NoopObservation implements Observation {
     }
 
     @Override
-    public Observation highCardinalityKeyValue(Iterable<KeyValue> keyValues) {
+    public Observation highCardinalityKeyValues(Iterable<KeyValue> keyValues) {
         return this;
     }
 
