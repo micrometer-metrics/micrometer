@@ -855,9 +855,7 @@ public abstract class MeterRegistry {
          * @return This configuration instance.
          */
         public Config withHighCardinalityTagsDetector() {
-            highCardinalityTagsDetector = new HighCardinalityTagsDetector(MeterRegistry.this);
-            highCardinalityTagsDetector.start();
-            return this;
+            return this.withHighCardinalityTagsDetector(new HighCardinalityTagsDetector(MeterRegistry.this));
         }
 
         /**
@@ -870,8 +868,18 @@ public abstract class MeterRegistry {
          * @return This configuration instance.
          */
         public Config withHighCardinalityTagsDetector(long threshold, Duration delay) {
-            highCardinalityTagsDetector = new HighCardinalityTagsDetector(MeterRegistry.this, threshold, delay);
+            return this.withHighCardinalityTagsDetector(
+                    new HighCardinalityTagsDetector(MeterRegistry.this, threshold, delay));
+        }
+
+        private Config withHighCardinalityTagsDetector(HighCardinalityTagsDetector newHighCardinalityTagsDetector) {
+            if (highCardinalityTagsDetector != null) {
+                highCardinalityTagsDetector.close();
+            }
+
+            highCardinalityTagsDetector = newHighCardinalityTagsDetector;
             highCardinalityTagsDetector.start();
+
             return this;
         }
 
