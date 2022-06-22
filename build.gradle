@@ -360,6 +360,7 @@ subprojects {
     description = 'Application monitoring instrumentation facade'
 
     repositories {
+        mavenLocal()
         mavenCentral()
         maven {
             url 'https://repo.spring.io/snapshot/' // we only need this repo for the context-propagation-api

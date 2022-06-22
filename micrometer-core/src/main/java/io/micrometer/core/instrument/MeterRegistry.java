@@ -30,6 +30,7 @@ import io.micrometer.core.instrument.search.RequiredSearch;
 import io.micrometer.core.instrument.search.Search;
 import io.micrometer.core.instrument.util.TimeUtils;
 
+import java.time.Duration;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.CopyOnWriteArrayList;
@@ -95,6 +96,9 @@ public abstract class MeterRegistry {
     private final AtomicBoolean closed = new AtomicBoolean();
 
     private PauseDetector pauseDetector = new NoPauseDetector();
+
+    @Nullable
+    private HighCardinalityTagsDetector highCardinalityTagsDetector = null;
 
     /**
      * We'll use snake case as a general-purpose default for registries because it is the
@@ -846,6 +850,50 @@ public abstract class MeterRegistry {
             return pauseDetector;
         }
 
+        /**
+         * Creates and starts a new {@link HighCardinalityTagsDetector} for this registry.
+         * @return This configuration instance.
+         */
+        public Config withHighCardinalityTagsDetector() {
+            return this.withHighCardinalityTagsDetector(new HighCardinalityTagsDetector(MeterRegistry.this));
+        }
+
+        /**
+         * Creates and starts a new {@link HighCardinalityTagsDetector} for this registry.
+         * @param threshold The threshold to use to detect high cardinality tags (if the
+         * number of Meters with the same name are higher than this value, that's a high
+         * cardinality tag).
+         * @param delay The delay between the termination of one check and the
+         * commencement of the next.
+         * @return This configuration instance.
+         */
+        public Config withHighCardinalityTagsDetector(long threshold, Duration delay) {
+            return this.withHighCardinalityTagsDetector(
+                    new HighCardinalityTagsDetector(MeterRegistry.this, threshold, delay));
+        }
+
+        private Config withHighCardinalityTagsDetector(HighCardinalityTagsDetector newHighCardinalityTagsDetector) {
+            if (highCardinalityTagsDetector != null) {
+                highCardinalityTagsDetector.close();
+            }
+
+            highCardinalityTagsDetector = newHighCardinalityTagsDetector;
+            highCardinalityTagsDetector.start();
+
+            return this;
+        }
+
+        /**
+         * Returns the current {@link HighCardinalityTagsDetector}. You can "deregister"
+         * it by calling {@link HighCardinalityTagsDetector#close()} or register a new one
+         * by closing the previous one and creating a new one.
+         * @return The {@link HighCardinalityTagsDetector} that is currently in effect.
+         */
+        @Nullable
+        public HighCardinalityTagsDetector highCardinalityTagsDetector() {
+            return highCardinalityTagsDetector;
+        }
+
     }
 
     /**
@@ -1025,6 +1073,10 @@ public abstract class MeterRegistry {
                     meter.close();
                 }
             }
+        }
+
+        if (highCardinalityTagsDetector != null) {
+            highCardinalityTagsDetector.close();
         }
     }
 

@@ -36,7 +36,7 @@ import java.util.stream.Collectors;
  * @author Marcin Grzejszczak
  * @since 1.0.0
  */
-@SuppressWarnings("unchecked")
+@SuppressWarnings({ "unchecked", "rawtypes", "UnusedReturnValue" })
 public class ObservationContextAssert<SELF extends ObservationContextAssert<SELF>>
         extends AbstractAssert<SELF, Observation.Context> {
 

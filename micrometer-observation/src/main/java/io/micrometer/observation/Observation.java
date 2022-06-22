@@ -146,7 +146,10 @@ public interface Observation {
      * @param keyValues key value instances
      * @return this
      */
-    Observation lowCardinalityKeyValues(Iterable<KeyValue> keyValues);
+    default Observation lowCardinalityKeyValues(KeyValues keyValues) {
+        keyValues.stream().forEach(this::lowCardinalityKeyValue);
+        return this;
+    }
 
     /**
      * Adds a high cardinality key value. High cardinality means that this key value will
@@ -176,7 +179,10 @@ public interface Observation {
      * @param keyValues key value instances
      * @return this
      */
-    Observation highCardinalityKeyValues(Iterable<KeyValue> keyValues);
+    default Observation highCardinalityKeyValues(KeyValues keyValues) {
+        keyValues.stream().forEach(this::highCardinalityKeyValue);
+        return this;
+    }
 
     /**
      * Checks whether this {@link Observation} is no-op.
