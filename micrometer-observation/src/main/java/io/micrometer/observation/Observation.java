@@ -139,6 +139,18 @@ public interface Observation {
     }
 
     /**
+     * Sets multiple low cardinality key values. Low cardinality means that this key value
+     * will have a bounded number of possible values. A templated HTTP URL is a good
+     * example of such a key value (e.g. /foo/{userId}).
+     * @param keyValues multiple key value instances
+     * @return this
+     */
+    default Observation lowCardinalityKeyValues(KeyValues keyValues) {
+        keyValues.stream().forEach(this::lowCardinalityKeyValue);
+        return this;
+    }
+
+    /**
      * Sets a high cardinality key value. High cardinality means that this key value will
      * have possible an unbounded number of possible values. An HTTP URL is a good example
      * of such a key value (e.g. /foo/bar, /foo/baz etc.).
@@ -157,6 +169,18 @@ public interface Observation {
      */
     default Observation highCardinalityKeyValue(String key, String value) {
         return highCardinalityKeyValue(KeyValue.of(key, value));
+    }
+
+    /**
+     * Sets multiple high cardinality key values. High cardinality means that this key
+     * value will have possible an unbounded number of possible values. An HTTP URL is a
+     * good example of such a key value (e.g. /foo/bar, /foo/baz etc.).
+     * @param keyValues multiple key value instances
+     * @return this
+     */
+    default Observation highCardinalityKeyValues(KeyValues keyValues) {
+        keyValues.stream().forEach(this::highCardinalityKeyValue);
+        return this;
     }
 
     /**

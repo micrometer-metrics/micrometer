@@ -387,8 +387,8 @@ public abstract class ObservationRegistryCompatibilityKit {
         testContext.put("context.field", "42");
         Exception exception = new IOException("simulated");
         Observation observation = Observation.start("test.observation", testContext, registry)
-                .lowCardinalityKeyValue("lcTag1", "1").lowCardinalityKeyValue(KeyValue.of("lcTag2", "2"))
-                .highCardinalityKeyValue("hcTag1", "3").highCardinalityKeyValue(KeyValue.of("hcTag2", "4"))
+                .lowCardinalityKeyValue("lcTag1", "1").lowCardinalityKeyValues(KeyValues.of("lcTag2", "2"))
+                .highCardinalityKeyValue("hcTag1", "3").highCardinalityKeyValues(KeyValues.of("hcTag2", "4"))
                 .keyValuesProvider(new TestKeyValuesProvider("local"))
                 .keyValuesProvider(new UnsupportedKeyValuesProvider("local")).contextualName("test.observation.42")
                 .error(exception);
