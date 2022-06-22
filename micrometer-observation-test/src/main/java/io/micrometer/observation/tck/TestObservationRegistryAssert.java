@@ -125,6 +125,14 @@ public class TestObservationRegistryAssert
         return new That(testObservationContext, this);
     }
 
+    public void doesNotHaveAnyObservation() {
+        List<TestObservationRegistry.TestObservationContext> contexts = this.actual.getContexts();
+        if (!contexts.isEmpty()) {
+            failWithMessage("There were <%d> observation(s) registered in the registry, expected <0>.",
+                    contexts.size());
+        }
+    }
+
     /**
      * Provides assertions for {@link Observation} and allows coming back to
      * {@link TestObservationRegistryAssert}.
