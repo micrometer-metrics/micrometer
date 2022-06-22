@@ -118,7 +118,7 @@ public interface Observation {
     Observation contextualName(String contextualName);
 
     /**
-     * Sets a low cardinality key value. Low cardinality means that this key value will
+     * Adds a low cardinality key value. Low cardinality means that this key value will
      * have a bounded number of possible values. A templated HTTP URL is a good example of
      * such a key value (e.g. /foo/{userId}).
      * @param keyValue key value
@@ -127,7 +127,7 @@ public interface Observation {
     Observation lowCardinalityKeyValue(KeyValue keyValue);
 
     /**
-     * Sets a low cardinality key value. Low cardinality means that this key value will
+     * Adds a low cardinality key value. Low cardinality means that this key value will
      * have a bounded number of possible values. A templated HTTP URL is a good example of
      * such a key value (e.g. /foo/{userId}).
      * @param key key
@@ -139,10 +139,10 @@ public interface Observation {
     }
 
     /**
-     * Sets multiple low cardinality key values. Low cardinality means that this key value
-     * will have a bounded number of possible values. A templated HTTP URL is a good
-     * example of such a key value (e.g. /foo/{userId}).
-     * @param keyValues multiple key value instances
+     * Adds multiple low cardinality key value instances. Low cardinality means that the
+     * key value will have a bounded number of possible values. A templated HTTP URL is a
+     * good example of such a key value (e.g. /foo/{userId}).
+     * @param keyValues key value instances
      * @return this
      */
     default Observation lowCardinalityKeyValues(KeyValues keyValues) {
@@ -151,7 +151,7 @@ public interface Observation {
     }
 
     /**
-     * Sets a high cardinality key value. High cardinality means that this key value will
+     * Adds a high cardinality key value. High cardinality means that this key value will
      * have possible an unbounded number of possible values. An HTTP URL is a good example
      * of such a key value (e.g. /foo/bar, /foo/baz etc.).
      * @param keyValue key value
@@ -160,7 +160,7 @@ public interface Observation {
     Observation highCardinalityKeyValue(KeyValue keyValue);
 
     /**
-     * Sets a high cardinality key value. High cardinality means that this key value will
+     * Adds a high cardinality key value. High cardinality means that this key value will
      * have possible an unbounded number of possible values. An HTTP URL is a good example
      * of such a key value (e.g. /foo/bar, /foo/baz etc.).
      * @param key key
@@ -172,10 +172,10 @@ public interface Observation {
     }
 
     /**
-     * Sets multiple high cardinality key values. High cardinality means that this key
-     * value will have possible an unbounded number of possible values. An HTTP URL is a
-     * good example of such a key value (e.g. /foo/bar, /foo/baz etc.).
-     * @param keyValues multiple key value instances
+     * Adds multiple high cardinality key value instances. High cardinality means that the
+     * key value will have possible an unbounded number of possible values. An HTTP URL is
+     * a good example of such a key value (e.g. /foo/bar, /foo/baz etc.).
+     * @param keyValues key value instances
      * @return this
      */
     default Observation highCardinalityKeyValues(KeyValues keyValues) {
