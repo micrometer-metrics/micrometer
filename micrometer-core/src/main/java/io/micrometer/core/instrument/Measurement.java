@@ -31,6 +31,12 @@ public class Measurement {
 
     private final Statistic statistic;
 
+    /**
+     * Create a {@code Measurement} instance.
+     * @param valueFunction value function
+     * @param statistic statistic type
+     * @since 1.10.0
+     */
     public Measurement(DoubleSupplier valueFunction, Statistic statistic) {
         this.f = valueFunction;
         this.statistic = statistic;
