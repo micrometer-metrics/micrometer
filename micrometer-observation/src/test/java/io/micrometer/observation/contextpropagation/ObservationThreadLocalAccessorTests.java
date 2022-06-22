@@ -28,14 +28,12 @@ class ObservationThreadLocalAccessorTests {
 
     ObservationRegistry observationRegistry = ObservationRegistry.create();
 
-    ContextSnapshot.Builder snapshotBuilder;
+    ContextRegistry registry = new ContextRegistry();
 
     @BeforeEach
     void setup() {
         observationRegistry.observationConfig().observationHandler(context -> true);
-        ContextRegistry registry = new ContextRegistry();
         registry.registerThreadLocalAccessor(new ObservationThreadLocalAccessor());
-        this.snapshotBuilder = ContextSnapshot.builder(registry);
     }
 
     @Test
@@ -46,7 +44,7 @@ class ObservationThreadLocalAccessorTests {
         ContextSnapshot container = null;
         try (Observation.Scope scope = observation.openScope()) {
             then(observationRegistry.getCurrentObservation()).isSameAs(observation);
-            container = snapshotBuilder.build();
+            container = ContextSnapshot.capture(registry, key -> true);
         }
 
         then(observationRegistry.getCurrentObservation()).isNull();
