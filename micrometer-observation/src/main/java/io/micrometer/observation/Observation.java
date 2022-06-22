@@ -27,7 +27,6 @@ import java.util.function.Function;
 import java.util.function.Supplier;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
-import java.util.stream.StreamSupport;
 
 /**
  * An act of viewing or noticing a fact or an occurrence for some scientific or other
@@ -621,23 +620,16 @@ public interface Observation {
          * Adds multiple low cardinality key values at once.
          * @param keyValues collection of key values
          */
-        void addLowCardinalityKeyValues(Iterable<KeyValue> keyValues) {
-            toStream(keyValues).forEach(this::addLowCardinalityKeyValue);
+        void addLowCardinalityKeyValues(KeyValues keyValues) {
+            keyValues.stream().forEach(this::addLowCardinalityKeyValue);
         }
 
         /**
          * Adds multiple high cardinality key values at once.
          * @param keyValues collection of key values
          */
-        void addHighCardinalityKeyValues(Iterable<KeyValue> keyValues) {
-            toStream(keyValues).forEach(this::addHighCardinalityKeyValue);
-        }
-
-        private Stream<KeyValue> toStream(Iterable<KeyValue> keyValues) {
-            return StreamSupport.stream(
-                    Spliterators.spliteratorUnknownSize(keyValues.iterator(),
-                            Spliterator.ORDERED | Spliterator.DISTINCT | Spliterator.NONNULL | Spliterator.SORTED),
-                    false);
+        void addHighCardinalityKeyValues(KeyValues keyValues) {
+            keyValues.stream().forEach(this::addHighCardinalityKeyValue);
         }
 
         @NonNull
