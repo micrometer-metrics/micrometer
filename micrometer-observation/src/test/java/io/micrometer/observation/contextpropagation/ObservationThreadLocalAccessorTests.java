@@ -15,7 +15,8 @@
  */
 package io.micrometer.observation.contextpropagation;
 
-import io.micrometer.contextpropagation.ContextContainer;
+import io.micrometer.context.ContextRegistry;
+import io.micrometer.context.ContextSnapshot;
 import io.micrometer.observation.Observation;
 import io.micrometer.observation.ObservationRegistry;
 import org.junit.jupiter.api.BeforeEach;
@@ -27,27 +28,31 @@ class ObservationThreadLocalAccessorTests {
 
     ObservationRegistry observationRegistry = ObservationRegistry.create();
 
+    ContextSnapshot.Builder snapshotBuilder;
+
     @BeforeEach
     void setup() {
         observationRegistry.observationConfig().observationHandler(context -> true);
+        ContextRegistry registry = new ContextRegistry();
+        registry.registerThreadLocalAccessor(new ObservationThreadLocalAccessor());
+        this.snapshotBuilder = ContextSnapshot.builder(registry);
     }
 
     @Test
     void capturedThreadLocalValuesShouldBeCapturedRestoredAndCleared() {
-        ContextContainer container = ContextContainer.create();
         Observation observation = Observation.start("foo", observationRegistry);
         then(observationRegistry.getCurrentObservation()).isNull();
 
+        ContextSnapshot container = null;
         try (Observation.Scope scope = observation.openScope()) {
             then(observationRegistry.getCurrentObservation()).isSameAs(observation);
-            // when captured
-            container.captureThreadLocalValues();
+            container = snapshotBuilder.build();
         }
 
         then(observationRegistry.getCurrentObservation()).isNull();
 
         // when restored
-        try (ContextContainer.Scope scope = container.restoreThreadLocalValues()) {
+        try (ContextSnapshot.Scope scope = container.setThreadLocalValues()) {
             then(observationRegistry.getCurrentObservation()).isSameAs(observation);
         }
 
