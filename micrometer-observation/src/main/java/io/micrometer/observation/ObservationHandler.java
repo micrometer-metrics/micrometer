@@ -48,6 +48,14 @@ public interface ObservationHandler<T extends Observation.Context> {
     }
 
     /**
+     * Reacts to arbitrary {@link Observation.Event}.
+     * @param event the {@link Observation.Event} that was signaled
+     * @param context a {@link Observation.Context}
+     */
+    default void onEvent(Observation.Event event, T context) {
+    }
+
+    /**
      * Reacts to opening of a {@link Observation.Scope}.
      * @param context a {@link Observation.Context}
      */
@@ -132,6 +140,11 @@ public interface ObservationHandler<T extends Observation.Context> {
         }
 
         @Override
+        public void onEvent(Observation.Event event, Observation.Context context) {
+            getFirstApplicableHandler(context).ifPresent(handler -> handler.onEvent(event, context));
+        }
+
+        @Override
         public void onScopeOpened(Observation.Context context) {
             getFirstApplicableHandler(context).ifPresent(handler -> handler.onScopeOpened(context));
         }
@@ -198,6 +211,11 @@ public interface ObservationHandler<T extends Observation.Context> {
         @Override
         public void onError(Observation.Context context) {
             getAllApplicableHandlers(context).forEach(handler -> handler.onError(context));
+        }
+
+        @Override
+        public void onEvent(Observation.Event event, Observation.Context context) {
+            getAllApplicableHandlers(context).forEach(handler -> handler.onEvent(event, context));
         }
 
         @Override

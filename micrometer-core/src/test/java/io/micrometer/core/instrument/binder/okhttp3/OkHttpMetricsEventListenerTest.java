@@ -22,7 +22,7 @@ import io.micrometer.core.instrument.MeterRegistry;
 import io.micrometer.core.instrument.MockClock;
 import io.micrometer.core.instrument.Tag;
 import io.micrometer.core.instrument.Tags;
-import io.micrometer.core.instrument.observation.TimerObservationHandler;
+import io.micrometer.core.instrument.observation.DefaultMeterObservationHandler;
 import io.micrometer.core.instrument.simple.SimpleConfig;
 import io.micrometer.core.instrument.simple.SimpleMeterRegistry;
 import io.micrometer.observation.Observation;
@@ -92,7 +92,7 @@ class OkHttpMetricsEventListenerTest {
         ObservationRegistry observationRegistry = ObservationRegistry.create();
         TestHandler testHandler = new TestHandler();
         observationRegistry.observationConfig().observationHandler(testHandler);
-        observationRegistry.observationConfig().observationHandler(new TimerObservationHandler(registry));
+        observationRegistry.observationConfig().observationHandler(new DefaultMeterObservationHandler(registry));
         client = new OkHttpClient.Builder()
                 .eventListener(defaultListenerBuilder().observationRegistry(observationRegistry).build()).build();
         server.stubFor(any(anyUrl()));
@@ -114,7 +114,7 @@ class OkHttpMetricsEventListenerTest {
         ObservationRegistry observationRegistry = ObservationRegistry.create();
         TestHandler testHandler = new TestHandler();
         observationRegistry.observationConfig().observationHandler(testHandler);
-        observationRegistry.observationConfig().observationHandler(new TimerObservationHandler(registry));
+        observationRegistry.observationConfig().observationHandler(new DefaultMeterObservationHandler(registry));
         client = new OkHttpClient.Builder()
                 .eventListener(defaultListenerBuilder().observationRegistry(observationRegistry)
                         // Example of a custom key values provider
@@ -141,7 +141,7 @@ class OkHttpMetricsEventListenerTest {
         observationRegistry.observationConfig()
                 .namingConfiguration(ObservationRegistry.ObservationNamingConfiguration.STANDARDIZED);
         observationRegistry.observationConfig().observationHandler(testHandler);
-        observationRegistry.observationConfig().observationHandler(new TimerObservationHandler(registry));
+        observationRegistry.observationConfig().observationHandler(new DefaultMeterObservationHandler(registry));
         client = new OkHttpClient.Builder()
                 .eventListener(defaultListenerBuilder().observationRegistry(observationRegistry)
                         // Example of a custom key values provider that uses the
@@ -163,7 +163,7 @@ class OkHttpMetricsEventListenerTest {
         // We're explicitly turning on the standard mode
         observationRegistry.observationConfig()
                 .namingConfiguration(ObservationRegistry.ObservationNamingConfiguration.STANDARDIZED);
-        observationRegistry.observationConfig().observationHandler(new TimerObservationHandler(registry));
+        observationRegistry.observationConfig().observationHandler(new DefaultMeterObservationHandler(registry));
         client = new OkHttpClient.Builder()
                 // We're NOT setting the key values provider
                 .eventListener(defaultListenerBuilder().observationRegistry(observationRegistry).build()).build();

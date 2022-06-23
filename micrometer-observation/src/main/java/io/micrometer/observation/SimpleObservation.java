@@ -91,6 +91,12 @@ class SimpleObservation implements Observation {
     }
 
     @Override
+    public Observation event(Event event) {
+        this.notifyOnEvent(event);
+        return this;
+    }
+
+    @Override
     public Observation start() {
         this.notifyOnObservationStarted();
         return this;
@@ -131,6 +137,11 @@ class SimpleObservation implements Observation {
     @SuppressWarnings("unchecked")
     private void notifyOnError() {
         this.handlers.forEach(handler -> handler.onError(this.context));
+    }
+
+    @SuppressWarnings("unchecked")
+    private void notifyOnEvent(Event event) {
+        this.handlers.forEach(handler -> handler.onEvent(event, this.context));
     }
 
     @SuppressWarnings("unchecked")

@@ -199,11 +199,18 @@ public interface Observation {
     Observation keyValuesProvider(KeyValuesProvider<?> keyValuesProvider);
 
     /**
-     * Sets an error.
+     * Signals an error.
      * @param error error
      * @return this
      */
     Observation error(Throwable error);
+
+    /**
+     * Signals an arbitrary {@link Event}.
+     * @param event event
+     * @return this
+     */
+    Observation event(Event event);
 
     /**
      * Starts the observation. Remember to call this method, otherwise timing calculations
@@ -662,6 +669,32 @@ public interface Observation {
         private String toString(Map<Object, Object> map) {
             return map.entrySet().stream().map(entry -> String.format("%s='%s'", entry.getKey(), entry.getValue()))
                     .collect(Collectors.joining(", ", "[", "]"));
+        }
+
+    }
+
+    class Event {
+
+        private final String name;
+
+        private final String contextualName;
+
+        public Event(String name, String contextualName) {
+            this.name = name;
+            this.contextualName = contextualName;
+        }
+
+        public String getName() {
+            return this.name;
+        }
+
+        public String getContextualName() {
+            return this.contextualName;
+        }
+
+        @Override
+        public String toString() {
+            return "event.name='" + this.name + "', event.contextualName='" + this.contextualName + '\'';
         }
 
     }
