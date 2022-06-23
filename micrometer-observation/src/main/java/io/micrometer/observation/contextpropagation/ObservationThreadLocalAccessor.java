@@ -15,6 +15,8 @@
  */
 package io.micrometer.observation.contextpropagation;
 
+import io.micrometer.common.util.internal.logging.InternalLogger;
+import io.micrometer.common.util.internal.logging.InternalLoggerFactory;
 import io.micrometer.context.ThreadLocalAccessor;
 import io.micrometer.observation.Observation;
 import io.micrometer.observation.ObservationRegistry;
@@ -25,7 +27,9 @@ import io.micrometer.observation.ObservationRegistry;
  * @author Marcin Grzejszczak
  * @since 1.10.0
  */
-public class ObservationThreadLocalAccessor implements ThreadLocalAccessor<Observation.Scope> {
+public class ObservationThreadLocalAccessor implements ThreadLocalAccessor<Observation> {
+
+    private static final InternalLogger LOG = InternalLoggerFactory.getInstance(ObservationThreadLocalAccessor.class);
 
     /**
      * Key under which Micrometer Observation is being registered.
@@ -34,26 +38,40 @@ public class ObservationThreadLocalAccessor implements ThreadLocalAccessor<Obser
 
     private static final ObservationRegistry observationRegistry = ObservationRegistry.create();
 
+    private static final ThreadLocal<Observation.Scope> scopes = new ThreadLocal<>();
+
     @Override
     public Object key() {
         return KEY;
     }
 
     @Override
-    public Observation.Scope getValue() {
-        return observationRegistry.getCurrentObservationScope();
+    public Observation getValue() {
+        return observationRegistry.getCurrentObservation();
     }
 
     @Override
-    public void setValue(Observation.Scope value) {
-        observationRegistry.setCurrentObservationScope(value);
+    public void setValue(Observation value) {
+        Observation.Scope scope = value.openScope();
+        scopes.set(scope);
     }
 
     @Override
     public void reset() {
-        Observation.Scope scope = observationRegistry.getCurrentObservationScope();
+        Observation.Scope scope = scopes.get();
+        Observation.Scope scopeFromObservationRegistry = observationRegistry.getCurrentObservationScope();
+        if (scopeFromObservationRegistry != scope) {
+            // TODO: Maybe we should throw an ISE
+            LOG.warn("Scope from ObservationThreadLocalAccessor [" + scope
+                    + "] is not the same as the one from ObservationRegistry [" + scopeFromObservationRegistry
+                    + "]. You must have created additional scopes and forgotten to close them. Will close both of them");
+            if (scopeFromObservationRegistry != null) {
+                scopeFromObservationRegistry.close();
+            }
+        }
         if (scope != null) {
             scope.close();
+            scopes.remove();
         }
     }
 
