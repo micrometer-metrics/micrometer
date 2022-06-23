@@ -215,7 +215,9 @@ public class OtlpMeterRegistry extends PushMeterRegistry {
         Iterable<? extends KeyValue> tags = getTagsForId(histogramSupport.getId());
         long startTimeNanos = ((StartTimeAwareMeter) histogramSupport).getStartTimeNanos();
         long wallTimeNanos = TimeUnit.MILLISECONDS.toNanos(this.clock.wallTime());
-        double total = isTimeBased ? histogramSnapshot.total(getBaseTimeUnit()) : histogramSnapshot.total();
+        TimeUnit baseTimeUnit = getBaseTimeUnit();
+        double total = isTimeBased ? histogramSnapshot.total(baseTimeUnit) : histogramSnapshot.total();
+        double max = isTimeBased ? histogramSnapshot.max(baseTimeUnit) : histogramSnapshot.max();
         long count = histogramSnapshot.count();
 
         // if percentiles configured, use summary
@@ -224,21 +226,22 @@ public class OtlpMeterRegistry extends PushMeterRegistry {
                     .setStartTimeUnixNano(startTimeNanos).setTimeUnixNano(wallTimeNanos).setSum(total).setCount(count);
             for (ValueAtPercentile percentile : histogramSnapshot.percentileValues()) {
                 summaryData.addQuantileValues(
-                        SummaryDataPoint.ValueAtQuantile.newBuilder().setQuantile(percentile.percentile()).setValue(
-                                TimeUtils.convert(percentile.value(), TimeUnit.NANOSECONDS, getBaseTimeUnit())));
+                        SummaryDataPoint.ValueAtQuantile.newBuilder().setQuantile(percentile.percentile())
+                                .setValue(TimeUtils.convert(percentile.value(), TimeUnit.NANOSECONDS, baseTimeUnit)));
             }
             metricBuilder.setSummary(Summary.newBuilder().addDataPoints(summaryData));
             return metricBuilder.build();
         }
 
         HistogramDataPoint.Builder histogramDataPoint = HistogramDataPoint.newBuilder().addAllAttributes(tags)
-                .setStartTimeUnixNano(startTimeNanos).setTimeUnixNano(wallTimeNanos).setSum(total).setCount(count);
+                .setStartTimeUnixNano(startTimeNanos).setTimeUnixNano(wallTimeNanos).setSum(total).setCount(count)
+                .setMax(max);
 
         // if histogram enabled, add histogram buckets
         if (histogramSnapshot.histogramCounts().length != 0) {
             for (CountAtBucket countAtBucket : histogramSnapshot.histogramCounts()) {
-                histogramDataPoint.addExplicitBounds(
-                        isTimeBased ? countAtBucket.bucket(getBaseTimeUnit()) : countAtBucket.bucket());
+                histogramDataPoint
+                        .addExplicitBounds(isTimeBased ? countAtBucket.bucket(baseTimeUnit) : countAtBucket.bucket());
                 histogramDataPoint.addBucketCounts((long) countAtBucket.count());
             }
             metricBuilder.setHistogram(Histogram.newBuilder()

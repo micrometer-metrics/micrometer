@@ -88,11 +88,11 @@ class OtlpMeterRegistryTest {
         timer.record(111, TimeUnit.MILLISECONDS);
         clock.add(OtlpConfig.DEFAULT.step());
         timer.record(4, TimeUnit.MILLISECONDS);
-        assertThat(registry.writeHistogramSupport(timer).toString()).isEqualTo(
-                "name: \"web.requests\"\n" + "description: \"timing web requests\"\n" + "unit: \"milliseconds\"\n"
-                        + "histogram {\n" + "  data_points {\n" + "    start_time_unix_nano: 1000000\n"
-                        + "    time_unix_nano: 60001000000\n" + "    count: 4\n" + "    sum: 202.0\n" + "  }\n"
-                        + "  aggregation_temporality: AGGREGATION_TEMPORALITY_CUMULATIVE\n" + "}\n");
+        assertThat(registry.writeHistogramSupport(timer).toString()).isEqualTo("name: \"web.requests\"\n"
+                + "description: \"timing web requests\"\n" + "unit: \"milliseconds\"\n" + "histogram {\n"
+                + "  data_points {\n" + "    start_time_unix_nano: 1000000\n" + "    time_unix_nano: 60001000000\n"
+                + "    count: 4\n" + "    sum: 202.0\n" + "    max: 111.0\n" + "  }\n"
+                + "  aggregation_temporality: AGGREGATION_TEMPORALITY_CUMULATIVE\n" + "}\n");
     }
 
     @Test
@@ -163,8 +163,8 @@ class OtlpMeterRegistryTest {
                         + "    explicit_bounds: 11453.246121\n" + "    explicit_bounds: 12884.901886\n"
                         + "    explicit_bounds: 14316.557651\n" + "    explicit_bounds: 15748.213416\n"
                         + "    explicit_bounds: 17179.869184\n" + "    explicit_bounds: 22906.492245\n"
-                        + "    explicit_bounds: 28633.115306\n" + "    explicit_bounds: 30000.0\n" + "  }\n"
-                        + "  aggregation_temporality: AGGREGATION_TEMPORALITY_CUMULATIVE\n" + "}\n");
+                        + "    explicit_bounds: 28633.115306\n" + "    explicit_bounds: 30000.0\n" + "    max: 111.0\n"
+                        + "  }\n" + "  aggregation_temporality: AGGREGATION_TEMPORALITY_CUMULATIVE\n" + "}\n");
     }
 
     @Test
@@ -206,8 +206,8 @@ class OtlpMeterRegistryTest {
 
         assertThat(registry.writeHistogramSupport(size).toString()).isEqualTo("name: \"http.response.size\"\n"
                 + "unit: \"bytes\"\n" + "histogram {\n" + "  data_points {\n" + "    start_time_unix_nano: 1000000\n"
-                + "    time_unix_nano: 60001000000\n" + "    count: 4\n" + "    sum: 2552.0\n" + "  }\n"
-                + "  aggregation_temporality: AGGREGATION_TEMPORALITY_CUMULATIVE\n" + "}\n");
+                + "    time_unix_nano: 60001000000\n" + "    count: 4\n" + "    sum: 2552.0\n" + "    max: 2233.0\n"
+                + "  }\n" + "  aggregation_temporality: AGGREGATION_TEMPORALITY_CUMULATIVE\n" + "}\n");
     }
 
     @Test
@@ -441,7 +441,7 @@ class OtlpMeterRegistryTest {
                 + "    explicit_bounds: 2.305843009213694E18\n" + "    explicit_bounds: 2.6901501774159764E18\n"
                 + "    explicit_bounds: 3.0744573456182584E18\n" + "    explicit_bounds: 3.4587645138205409E18\n"
                 + "    explicit_bounds: 3.8430716820228234E18\n" + "    explicit_bounds: 4.2273788502251054E18\n"
-                + "    explicit_bounds: Infinity\n" + "  }\n"
+                + "    explicit_bounds: Infinity\n" + "    max: 2233.0\n" + "  }\n"
                 + "  aggregation_temporality: AGGREGATION_TEMPORALITY_CUMULATIVE\n" + "}\n");
     }
 
@@ -452,10 +452,10 @@ class OtlpMeterRegistryTest {
         LongTaskTimer.Sample task2 = taskTimer.start();
         this.clock.add(OtlpConfig.DEFAULT.step().multipliedBy(3));
 
-        assertThat(registry.writeHistogramSupport(taskTimer).toString())
-                .isEqualTo("name: \"checkout.batch\"\n" + "unit: \"milliseconds\"\n" + "histogram {\n"
-                        + "  data_points {\n" + "    start_time_unix_nano: 1000000\n"
-                        + "    time_unix_nano: 180001000000\n" + "    count: 2\n" + "    sum: 360000.0\n" + "  }\n"
+        assertThat(registry.writeHistogramSupport(taskTimer).toString()).isEqualTo(
+                "name: \"checkout.batch\"\n" + "unit: \"milliseconds\"\n" + "histogram {\n" + "  data_points {\n"
+                        + "    start_time_unix_nano: 1000000\n" + "    time_unix_nano: 180001000000\n"
+                        + "    count: 2\n" + "    sum: 360000.0\n" + "    max: 180000.0\n" + "  }\n"
                         + "  aggregation_temporality: AGGREGATION_TEMPORALITY_CUMULATIVE\n" + "}\n");
 
         task1.stop();
@@ -464,10 +464,11 @@ class OtlpMeterRegistryTest {
 
         // this is not right that count/sum reset, but it's the same thing we do with
         // prometheus
-        assertThat(registry.writeHistogramSupport(taskTimer).toString()).isEqualTo("name: \"checkout.batch\"\n"
-                + "unit: \"milliseconds\"\n" + "histogram {\n" + "  data_points {\n"
-                + "    start_time_unix_nano: 1000000\n" + "    time_unix_nano: 240001000000\n" + "    sum: 0.0\n"
-                + "  }\n" + "  aggregation_temporality: AGGREGATION_TEMPORALITY_CUMULATIVE\n" + "}\n");
+        assertThat(registry.writeHistogramSupport(taskTimer).toString())
+                .isEqualTo("name: \"checkout.batch\"\n" + "unit: \"milliseconds\"\n" + "histogram {\n"
+                        + "  data_points {\n" + "    start_time_unix_nano: 1000000\n"
+                        + "    time_unix_nano: 240001000000\n" + "    sum: 0.0\n" + "    max: 0.0\n" + "  }\n"
+                        + "  aggregation_temporality: AGGREGATION_TEMPORALITY_CUMULATIVE\n" + "}\n");
     }
 
     // If the service.name was not specified, SDKs MUST fallback to 'unknown_service'
