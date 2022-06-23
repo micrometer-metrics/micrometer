@@ -22,6 +22,7 @@ import org.junit.jupiter.api.Test;
 import java.time.Duration;
 import java.util.Arrays;
 import java.util.List;
+import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 
@@ -44,6 +45,11 @@ class StepMeterRegistryTest {
     private MockClock clock = new MockClock();
 
     private StepRegistryConfig config = new StepRegistryConfig() {
+        @Override
+        public Duration step() {
+            return Duration.ofSeconds(1);
+        }
+
         @Override
         public String prefix() {
             return "test";
@@ -101,6 +107,47 @@ class StepMeterRegistryTest {
         assertThat(publishes.get()).isEqualTo(1);
     }
 
+    @Issue("#1882")
+    @Test
+    void shouldPublishCompleteMetricsOnClose() {
+        // given
+        final String timerName = "my.timer";
+        final MutableQuadruple<Long, Double, Double, Double> timerValues =
+                new MutableQuadruple<>(0L, 0.0, 0.0, 0.0);
+        final StepMeterRegistry localRegistry = new StepMeterRegistry(config, Clock.SYSTEM) {
+            @Override
+            protected void publish() {
+                publishes.incrementAndGet();
+                final Timer timer = timer(timerName);
+                timerValues.one = timer.count();
+                timerValues.two = timer.totalTime(getBaseTimeUnit());
+                timerValues.three = timer.mean(getBaseTimeUnit());
+                timerValues.four = timer.max(getBaseTimeUnit());
+            }
+
+            @Override
+            protected TimeUnit getBaseTimeUnit() {
+                return MILLISECONDS;
+            }
+        };
+        localRegistry.start(Executors.defaultThreadFactory());
+        final Timer timer = Timer.builder(timerName).register(localRegistry);
+        timer.record(ofMillis(100));
+        timer.record(ofMillis(200));
+
+        // when
+        localRegistry.close();
+
+        // then
+        assertSoftly(softly -> {
+            softly.assertThat(publishes.get()).isEqualTo(1);
+            softly.assertThat(timerValues.one).isEqualTo(2);
+            softly.assertThat(timerValues.two).isEqualTo(300.0);
+            softly.assertThat(timerValues.three).isEqualTo(150.0);
+            softly.assertThat(timerValues.four).isEqualTo(200.0);
+        });
+    }
+
     @Issue("#1993")
     @Test
     void timerMaxValueDecays() {
@@ -123,7 +170,7 @@ class StepMeterRegistryTest {
             softly.assertThat(timerStep1Length6.max(MILLISECONDS)).isEqualTo(15L);
         });
 
-        clock.add(config.step().plus(Duration.ofMillis(1)));
+        clock.add(config.step().plus(ofMillis(1)));
         clock.add(config.step());
         timers.forEach(t -> t.record(ofMillis(10)));
 
@@ -157,4 +204,17 @@ class StepMeterRegistryTest {
         });
     }
 
+    private static class MutableQuadruple<T1, T2, T3, T4> {
+        T1 one;
+        T2 two;
+        T3 three;
+        T4 four;
+
+        public MutableQuadruple(T1 one, T2 two, T3 three, T4 four) {
+            this.one = one;
+            this.two = two;
+            this.three = three;
+            this.four = four;
+        }
+    }
 }
