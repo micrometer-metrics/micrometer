@@ -60,7 +60,7 @@ public interface Observation {
      * @param registry observation registry
      * @return started observation
      */
-    static Observation start(String name, @Nullable ObservationRegistry registry) {
+    static Observation start(String name, ObservationRegistry registry) {
         return start(name, null, registry);
     }
 
@@ -454,6 +454,7 @@ public interface Observation {
 
         private String name;
 
+        @Nullable
         private String contextualName;
 
         @Nullable
@@ -486,6 +487,7 @@ public interface Observation {
          * context (e.g. name derived from HTTP request).
          * @return contextual name
          */
+        @Nullable
         public String getContextualName() {
             return this.contextualName;
         }
@@ -677,9 +679,14 @@ public interface Observation {
 
         private final String name;
 
+        @Nullable
         private final String contextualName;
 
-        public Event(String name, String contextualName) {
+        public Event(String name) {
+            this(name, null);
+        }
+
+        public Event(String name, @Nullable String contextualName) {
             this.name = name;
             this.contextualName = contextualName;
         }
@@ -688,6 +695,7 @@ public interface Observation {
             return this.name;
         }
 
+        @Nullable
         public String getContextualName() {
             return this.contextualName;
         }
