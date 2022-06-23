@@ -102,4 +102,15 @@ public abstract class StepMeterRegistry extends PushMeterRegistry {
                 .merge(DistributionStatisticConfig.DEFAULT);
     }
 
+    @Override
+    public void close() {
+        stop();
+        try {
+            Thread.sleep(config.step().toMillis());
+        } catch (final InterruptedException e) {
+            // ignore
+        } finally {
+            super.close();
+        }
+    }
 }
