@@ -1,0 +1,95 @@
+/*
+ * Copyright 2022 VMware, Inc.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ * https://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+package io.micrometer.observation.aop;
+
+import io.micrometer.common.KeyValues;
+import io.micrometer.common.docs.KeyName;
+import io.micrometer.common.lang.Nullable;
+import io.micrometer.observation.Observation;
+import io.micrometer.observation.ObservationRegistry;
+import io.micrometer.observation.annotation.Observed;
+import io.micrometer.observation.docs.DocumentedObservation;
+import org.aspectj.lang.ProceedingJoinPoint;
+import org.aspectj.lang.Signature;
+
+import static io.micrometer.observation.aop.ObservedAspectObservation.ObservedAspectLowCardinalityKeyName.CLASS_NAME;
+import static io.micrometer.observation.aop.ObservedAspectObservation.ObservedAspectLowCardinalityKeyName.METHOD_NAME;
+
+/**
+ * A {@link DocumentedObservation} for {@link ObservedAspect}.
+ *
+ * @author Jonatan Ivanov
+ * @since 1.10.0
+ */
+enum ObservedAspectObservation implements DocumentedObservation {
+
+    DEFAULT;
+
+    static Observation of(ProceedingJoinPoint pjp, Observed observed, ObservationRegistry registry,
+            @Nullable Observation.KeyValuesProvider<ObservedAspect.ObservedAspectContext> keyValuesProvider) {
+        String name = observed.name().isEmpty() ? "method.observed" : observed.name();
+        Signature signature = pjp.getStaticPart().getSignature();
+        String contextualName = observed.contextualName().isEmpty()
+                ? signature.getDeclaringType().getSimpleName() + "#" + signature.getName() : observed.contextualName();
+
+        Observation observation = Observation
+                .createNotStarted(name, new ObservedAspect.ObservedAspectContext(pjp), registry)
+                .contextualName(contextualName)
+                .lowCardinalityKeyValue(CLASS_NAME.getKeyName(), signature.getDeclaringTypeName())
+                .lowCardinalityKeyValue(METHOD_NAME.getKeyName(), signature.getName())
+                .lowCardinalityKeyValues(KeyValues.of(observed.lowCardinalityKeyValues()));
+
+        if (keyValuesProvider != null) {
+            observation.keyValuesProvider(keyValuesProvider);
+        }
+
+        return observation;
+    }
+
+    @Override
+    public String getName() {
+        return "%s";
+    }
+
+    @Override
+    public String getContextualName() {
+        return "%s";
+    }
+
+    @Override
+    public KeyName[] getLowCardinalityKeyNames() {
+        return ObservedAspectLowCardinalityKeyName.values();
+    }
+
+    enum ObservedAspectLowCardinalityKeyName implements KeyName {
+
+        CLASS_NAME {
+            @Override
+            public String getKeyName() {
+                return "class";
+            }
+        },
+
+        METHOD_NAME {
+            @Override
+            public String getKeyName() {
+                return "method";
+            }
+        }
+
+    }
+
+}

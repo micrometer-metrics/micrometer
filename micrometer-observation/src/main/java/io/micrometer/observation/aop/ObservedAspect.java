@@ -15,16 +15,12 @@
  */
 package io.micrometer.observation.aop;
 
-import io.micrometer.common.KeyValues;
-import io.micrometer.common.docs.KeyName;
 import io.micrometer.common.lang.NonNullApi;
 import io.micrometer.common.lang.Nullable;
 import io.micrometer.observation.Observation;
 import io.micrometer.observation.ObservationRegistry;
 import io.micrometer.observation.annotation.Observed;
-import io.micrometer.observation.docs.DocumentedObservation;
 import org.aspectj.lang.ProceedingJoinPoint;
-import org.aspectj.lang.Signature;
 import org.aspectj.lang.annotation.Around;
 import org.aspectj.lang.annotation.Aspect;
 import org.aspectj.lang.reflect.MethodSignature;
@@ -32,9 +28,6 @@ import org.aspectj.lang.reflect.MethodSignature;
 import java.lang.reflect.Method;
 import java.util.concurrent.CompletionStage;
 import java.util.function.Predicate;
-
-import static io.micrometer.observation.aop.ObservedAspect.ObservedAspectObservation.ObservedAspectLowCardinalityKeyName.CLASS_NAME;
-import static io.micrometer.observation.aop.ObservedAspect.ObservedAspectObservation.ObservedAspectLowCardinalityKeyName.METHOD_NAME;
 
 /**
  * <p>
@@ -79,8 +72,6 @@ import static io.micrometer.observation.aop.ObservedAspect.ObservedAspectObserva
 @Aspect
 @NonNullApi
 public class ObservedAspect {
-
-    private static final String DEFAULT_OBSERVATION_NAME = "method.observed";
 
     private static final Predicate<ProceedingJoinPoint> DONT_SKIP_ANYTHING = pjp -> false;
 
@@ -137,8 +128,7 @@ public class ObservedAspect {
     }
 
     private Object observe(ProceedingJoinPoint pjp, Method method, Observed observed) throws Throwable {
-        Observation observation = ObservedAspectObservation.of(pjp, method, observed, this.registry,
-                this.keyValuesProvider);
+        Observation observation = ObservedAspectObservation.of(pjp, observed, this.registry, this.keyValuesProvider);
         if (CompletionStage.class.isAssignableFrom(method.getReturnType())) {
             observation.start();
             Observation.Scope scope = observation.openScope();
@@ -181,66 +171,6 @@ public class ObservedAspect {
         }
         scope.close();
         observation.stop();
-    }
-
-    public enum ObservedAspectObservation implements DocumentedObservation {
-
-        DEFAULT;
-
-        static Observation of(ProceedingJoinPoint pjp, Method method, Observed observed, ObservationRegistry registry,
-                @Nullable Observation.KeyValuesProvider<ObservedAspectContext> keyValuesProvider) {
-            String name = observed.name().isEmpty() ? DEFAULT_OBSERVATION_NAME : observed.name();
-            Signature signature = pjp.getStaticPart().getSignature();
-            String contextualName = observed.contextualName().isEmpty()
-                    ? signature.getDeclaringType().getSimpleName() + "#" + signature.getName()
-                    : observed.contextualName();
-
-            Observation observation = Observation.createNotStarted(name, new ObservedAspectContext(pjp), registry)
-                    .contextualName(contextualName)
-                    .lowCardinalityKeyValue(CLASS_NAME.getKeyName(), signature.getDeclaringTypeName())
-                    .lowCardinalityKeyValue(METHOD_NAME.getKeyName(), signature.getName())
-                    .lowCardinalityKeyValues(KeyValues.of(observed.lowCardinalityKeyValues()));
-
-            if (keyValuesProvider != null) {
-                observation.keyValuesProvider(keyValuesProvider);
-            }
-
-            return observation;
-        }
-
-        @Override
-        public String getName() {
-            return "%s";
-        }
-
-        @Override
-        public String getContextualName() {
-            return "%s";
-        }
-
-        @Override
-        public KeyName[] getLowCardinalityKeyNames() {
-            return ObservedAspectLowCardinalityKeyName.values();
-        }
-
-        public enum ObservedAspectLowCardinalityKeyName implements KeyName {
-
-            CLASS_NAME {
-                @Override
-                public String getKeyName() {
-                    return "class";
-                }
-            },
-
-            METHOD_NAME {
-                @Override
-                public String getKeyName() {
-                    return "method";
-                }
-            }
-
-        }
-
     }
 
     public static class ObservedAspectContext extends Observation.Context {
