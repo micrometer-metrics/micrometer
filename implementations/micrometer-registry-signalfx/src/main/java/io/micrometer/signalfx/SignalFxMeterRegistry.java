@@ -161,16 +161,16 @@ public class SignalFxMeterRegistry extends StepMeterRegistry {
         return stream(meter.measure().spliterator(), false).flatMap(measurement -> {
             String statSuffix = NamingConvention.camelCase.tagKey(measurement.getStatistic().toString());
             switch (measurement.getStatistic()) {
-            case TOTAL:
-            case TOTAL_TIME:
-            case COUNT:
-            case DURATION:
-                return Stream.of(addDatapoint(meter, COUNTER, statSuffix, measurement.getValue()));
-            case MAX:
-            case VALUE:
-            case UNKNOWN:
-            case ACTIVE_TASKS:
-                return Stream.of(addDatapoint(meter, GAUGE, statSuffix, measurement.getValue()));
+                case TOTAL:
+                case TOTAL_TIME:
+                case COUNT:
+                case DURATION:
+                    return Stream.of(addDatapoint(meter, COUNTER, statSuffix, measurement.getValue()));
+                case MAX:
+                case VALUE:
+                case UNKNOWN:
+                case ACTIVE_TASKS:
+                    return Stream.of(addDatapoint(meter, GAUGE, statSuffix, measurement.getValue()));
             }
             return Stream.empty();
         });

@@ -58,12 +58,12 @@ public class JettyClientMetricsTest {
             public void handle(String target, org.eclipse.jetty.server.Request baseRequest, HttpServletRequest request,
                     HttpServletResponse response) {
                 switch (request.getPathInfo()) {
-                case "/errorUnchecked":
-                    throw new RuntimeException("big boom");
-                case "/error":
-                    response.setStatus(500);
-                case "/ok":
-                    baseRequest.setHandled(true);
+                    case "/errorUnchecked":
+                        throw new RuntimeException("big boom");
+                    case "/error":
+                        response.setStatus(500);
+                    case "/ok":
+                        baseRequest.setHandled(true);
                 }
             }
         });

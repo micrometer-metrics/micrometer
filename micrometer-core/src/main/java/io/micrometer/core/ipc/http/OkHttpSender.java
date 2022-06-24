@@ -77,12 +77,12 @@ public class OkHttpSender implements HttpSender {
 
     private static boolean requiresRequestBody(Method method) {
         switch (method) {
-        case POST:
-        case PUT:
-            return true;
+            case POST:
+            case PUT:
+                return true;
 
-        default:
-            return false;
+            default:
+                return false;
         }
     }
 

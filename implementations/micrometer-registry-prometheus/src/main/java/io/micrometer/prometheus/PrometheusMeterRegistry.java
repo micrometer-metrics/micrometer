@@ -245,55 +245,56 @@ public class PrometheusMeterRegistry extends MeterRegistry {
                     List<String> histogramKeys = new ArrayList<>(tagKeys);
                     String sampleName = conventionName + "_bucket";
                     switch (summary.histogramFlavor()) {
-                    case Prometheus:
-                        histogramKeys.add("le");
+                        case Prometheus:
+                            histogramKeys.add("le");
 
-                        Exemplar[] exemplars = summary.exemplars();
+                            Exemplar[] exemplars = summary.exemplars();
 
-                        // satisfies
-                        // https://prometheus.io/docs/concepts/metric_types/#histogram
-                        for (int i = 0; i < histogramCounts.length; i++) {
-                            CountAtBucket c = histogramCounts[i];
-                            final List<String> histogramValues = new ArrayList<>(tagValues);
+                            // satisfies
+                            // https://prometheus.io/docs/concepts/metric_types/#histogram
+                            for (int i = 0; i < histogramCounts.length; i++) {
+                                CountAtBucket c = histogramCounts[i];
+                                final List<String> histogramValues = new ArrayList<>(tagValues);
 
-                            histogramValues.add(Collector.doubleToGoString(c.bucket()));
+                                histogramValues.add(Collector.doubleToGoString(c.bucket()));
 
-                            if (exemplars == null) {
-                                samples.add(new Collector.MetricFamilySamples.Sample(sampleName, histogramKeys,
-                                        histogramValues, c.count()));
+                                if (exemplars == null) {
+                                    samples.add(new Collector.MetricFamilySamples.Sample(sampleName, histogramKeys,
+                                            histogramValues, c.count()));
+                                }
+                                else {
+                                    samples.add(new Collector.MetricFamilySamples.Sample(sampleName, histogramKeys,
+                                            histogramValues, c.count(), exemplars[i]));
+                                }
                             }
-                            else {
-                                samples.add(new Collector.MetricFamilySamples.Sample(sampleName, histogramKeys,
-                                        histogramValues, c.count(), exemplars[i]));
-                            }
-                        }
 
-                        if (Double.isFinite(histogramCounts[histogramCounts.length - 1].bucket())) {
-                            // the +Inf bucket should always equal `count`
-                            final List<String> histogramValues = new ArrayList<>(tagValues);
-                            histogramValues.add("+Inf");
-                            if (exemplars == null) {
-                                samples.add(new Collector.MetricFamilySamples.Sample(sampleName, histogramKeys,
-                                        histogramValues, count));
+                            if (Double.isFinite(histogramCounts[histogramCounts.length - 1].bucket())) {
+                                // the +Inf bucket should always equal `count`
+                                final List<String> histogramValues = new ArrayList<>(tagValues);
+                                histogramValues.add("+Inf");
+                                if (exemplars == null) {
+                                    samples.add(new Collector.MetricFamilySamples.Sample(sampleName, histogramKeys,
+                                            histogramValues, count));
+                                }
+                                else {
+                                    samples.add(new Collector.MetricFamilySamples.Sample(sampleName, histogramKeys,
+                                            histogramValues, count, exemplars[exemplars.length - 1]));
+                                }
                             }
-                            else {
-                                samples.add(new Collector.MetricFamilySamples.Sample(sampleName, histogramKeys,
-                                        histogramValues, count, exemplars[exemplars.length - 1]));
-                            }
-                        }
-                        break;
-                    case VictoriaMetrics:
-                        histogramKeys.add("vmrange");
+                            break;
+                        case VictoriaMetrics:
+                            histogramKeys.add("vmrange");
 
-                        for (CountAtBucket c : histogramCounts) {
-                            final List<String> histogramValuesVM = new ArrayList<>(tagValues);
-                            histogramValuesVM.add(FixedBoundaryVictoriaMetricsHistogram.getRangeTagValue(c.bucket()));
-                            samples.add(new Collector.MetricFamilySamples.Sample(sampleName, histogramKeys,
-                                    histogramValuesVM, c.count()));
-                        }
-                        break;
-                    default:
-                        break;
+                            for (CountAtBucket c : histogramCounts) {
+                                final List<String> histogramValuesVM = new ArrayList<>(tagValues);
+                                histogramValuesVM
+                                        .add(FixedBoundaryVictoriaMetricsHistogram.getRangeTagValue(c.bucket()));
+                                samples.add(new Collector.MetricFamilySamples.Sample(sampleName, histogramKeys,
+                                        histogramValuesVM, c.count()));
+                            }
+                            break;
+                        default:
+                            break;
                     }
 
                 }
@@ -380,16 +381,16 @@ public class PrometheusMeterRegistry extends MeterRegistry {
     protected Meter newMeter(Meter.Id id, Meter.Type type, Iterable<Measurement> measurements) {
         Collector.Type promType = Collector.Type.UNKNOWN;
         switch (type) {
-        case COUNTER:
-            promType = Collector.Type.COUNTER;
-            break;
-        case GAUGE:
-            promType = Collector.Type.GAUGE;
-            break;
-        case DISTRIBUTION_SUMMARY:
-        case TIMER:
-            promType = Collector.Type.SUMMARY;
-            break;
+            case COUNTER:
+                promType = Collector.Type.COUNTER;
+                break;
+            case GAUGE:
+                promType = Collector.Type.GAUGE;
+                break;
+            case DISTRIBUTION_SUMMARY:
+            case TIMER:
+                promType = Collector.Type.SUMMARY;
+                break;
         }
 
         final Collector.Type finalPromType = promType;
@@ -407,19 +408,19 @@ public class PrometheusMeterRegistry extends MeterRegistry {
 
                             String name = conventionName;
                             switch (m.getStatistic()) {
-                            case TOTAL:
-                            case TOTAL_TIME:
-                                name += "_sum";
-                                break;
-                            case MAX:
-                                name += "_max";
-                                break;
-                            case ACTIVE_TASKS:
-                                name += "_active_count";
-                                break;
-                            case DURATION:
-                                name += "_duration_sum";
-                                break;
+                                case TOTAL:
+                                case TOTAL_TIME:
+                                    name += "_sum";
+                                    break;
+                                case MAX:
+                                    name += "_max";
+                                    break;
+                                case ACTIVE_TASKS:
+                                    name += "_active_count";
+                                    break;
+                                case DURATION:
+                                    name += "_duration_sum";
+                                    break;
                             }
 
                             return new Collector.MetricFamilySamples.Sample(name, statKeys, statValues, m.getValue());
@@ -477,51 +478,51 @@ public class PrometheusMeterRegistry extends MeterRegistry {
 
                 String sampleName = conventionName + "_bucket";
                 switch (prometheusConfig.histogramFlavor()) {
-                case Prometheus:
-                    histogramKeys.add("le");
+                    case Prometheus:
+                        histogramKeys.add("le");
 
-                    Exemplar[] exemplars = exemplarsSupplier.get();
+                        Exemplar[] exemplars = exemplarsSupplier.get();
 
-                    // satisfies
-                    // https://prometheus.io/docs/concepts/metric_types/#histogram
-                    for (int i = 0; i < histogramCounts.length; i++) {
-                        CountAtBucket c = histogramCounts[i];
+                        // satisfies
+                        // https://prometheus.io/docs/concepts/metric_types/#histogram
+                        for (int i = 0; i < histogramCounts.length; i++) {
+                            CountAtBucket c = histogramCounts[i];
+                            final List<String> histogramValues = new ArrayList<>(tagValues);
+                            histogramValues.add(Collector.doubleToGoString(c.bucket(TimeUnit.SECONDS)));
+                            if (exemplars == null) {
+                                samples.add(new Collector.MetricFamilySamples.Sample(sampleName, histogramKeys,
+                                        histogramValues, c.count()));
+                            }
+                            else {
+                                samples.add(new Collector.MetricFamilySamples.Sample(sampleName, histogramKeys,
+                                        histogramValues, c.count(), exemplars[i]));
+                            }
+                        }
+
+                        // the +Inf bucket should always equal `count`
                         final List<String> histogramValues = new ArrayList<>(tagValues);
-                        histogramValues.add(Collector.doubleToGoString(c.bucket(TimeUnit.SECONDS)));
+                        histogramValues.add("+Inf");
                         if (exemplars == null) {
                             samples.add(new Collector.MetricFamilySamples.Sample(sampleName, histogramKeys,
-                                    histogramValues, c.count()));
+                                    histogramValues, count));
                         }
                         else {
                             samples.add(new Collector.MetricFamilySamples.Sample(sampleName, histogramKeys,
-                                    histogramValues, c.count(), exemplars[i]));
+                                    histogramValues, count, exemplars[exemplars.length - 1]));
                         }
-                    }
+                        break;
+                    case VictoriaMetrics:
+                        histogramKeys.add("vmrange");
 
-                    // the +Inf bucket should always equal `count`
-                    final List<String> histogramValues = new ArrayList<>(tagValues);
-                    histogramValues.add("+Inf");
-                    if (exemplars == null) {
-                        samples.add(new Collector.MetricFamilySamples.Sample(sampleName, histogramKeys, histogramValues,
-                                count));
-                    }
-                    else {
-                        samples.add(new Collector.MetricFamilySamples.Sample(sampleName, histogramKeys, histogramValues,
-                                count, exemplars[exemplars.length - 1]));
-                    }
-                    break;
-                case VictoriaMetrics:
-                    histogramKeys.add("vmrange");
-
-                    for (CountAtBucket c : histogramCounts) {
-                        final List<String> histogramValuesVM = new ArrayList<>(tagValues);
-                        histogramValuesVM.add(FixedBoundaryVictoriaMetricsHistogram.getRangeTagValue(c.bucket()));
-                        samples.add(new Collector.MetricFamilySamples.Sample(sampleName, histogramKeys,
-                                histogramValuesVM, c.count()));
-                    }
-                    break;
-                default:
-                    break;
+                        for (CountAtBucket c : histogramCounts) {
+                            final List<String> histogramValuesVM = new ArrayList<>(tagValues);
+                            histogramValuesVM.add(FixedBoundaryVictoriaMetricsHistogram.getRangeTagValue(c.bucket()));
+                            samples.add(new Collector.MetricFamilySamples.Sample(sampleName, histogramKeys,
+                                    histogramValuesVM, c.count()));
+                        }
+                        break;
+                    default:
+                        break;
                 }
 
             }

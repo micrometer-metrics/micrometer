@@ -146,17 +146,17 @@ public class LoggingMeterRegistry extends StepMeterRegistry {
         return StreamSupport.stream(meter.measure().spliterator(), false).map(ms -> {
             String msLine = ms.getStatistic().getTagValueRepresentation() + "=";
             switch (ms.getStatistic()) {
-            case TOTAL:
-            case MAX:
-            case VALUE:
-                return msLine + print.value(ms.getValue());
-            case TOTAL_TIME:
-            case DURATION:
-                return msLine + print.time(ms.getValue());
-            case COUNT:
-                return "throughput=" + print.rate(ms.getValue());
-            default:
-                return msLine + decimalOrNan(ms.getValue());
+                case TOTAL:
+                case MAX:
+                case VALUE:
+                    return msLine + print.value(ms.getValue());
+                case TOTAL_TIME:
+                case DURATION:
+                    return msLine + print.time(ms.getValue());
+                case COUNT:
+                    return "throughput=" + print.rate(ms.getValue());
+                default:
+                    return msLine + decimalOrNan(ms.getValue());
             }
         }).collect(joining(", ", print.id() + " ", ""));
     }
