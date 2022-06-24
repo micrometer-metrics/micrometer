@@ -60,13 +60,13 @@ public class SimpleMeterRegistry extends MeterRegistry {
 
         DistributionSummary summary;
         switch (config.mode()) {
-        case CUMULATIVE:
-            summary = new CumulativeDistributionSummary(id, clock, merged, scale, false);
-            break;
-        case STEP:
-        default:
-            summary = new StepDistributionSummary(id, clock, merged, scale, config.step().toMillis(), false);
-            break;
+            case CUMULATIVE:
+                summary = new CumulativeDistributionSummary(id, clock, merged, scale, false);
+                break;
+            case STEP:
+            default:
+                summary = new StepDistributionSummary(id, clock, merged, scale, config.step().toMillis(), false);
+                break;
         }
 
         HistogramGauges.registerWithCommonFormat(summary, this);
@@ -87,13 +87,14 @@ public class SimpleMeterRegistry extends MeterRegistry {
 
         Timer timer;
         switch (config.mode()) {
-        case CUMULATIVE:
-            timer = new CumulativeTimer(id, clock, merged, pauseDetector, getBaseTimeUnit(), false);
-            break;
-        case STEP:
-        default:
-            timer = new StepTimer(id, clock, merged, pauseDetector, getBaseTimeUnit(), config.step().toMillis(), false);
-            break;
+            case CUMULATIVE:
+                timer = new CumulativeTimer(id, clock, merged, pauseDetector, getBaseTimeUnit(), false);
+                break;
+            case STEP:
+            default:
+                timer = new StepTimer(id, clock, merged, pauseDetector, getBaseTimeUnit(), config.step().toMillis(),
+                        false);
+                break;
         }
 
         HistogramGauges.registerWithCommonFormat(timer, this);
@@ -109,11 +110,11 @@ public class SimpleMeterRegistry extends MeterRegistry {
     @Override
     protected Counter newCounter(Meter.Id id) {
         switch (config.mode()) {
-        case CUMULATIVE:
-            return new CumulativeCounter(id);
-        case STEP:
-        default:
-            return new StepCounter(id, clock, config.step().toMillis());
+            case CUMULATIVE:
+                return new CumulativeCounter(id);
+            case STEP:
+            default:
+                return new StepCounter(id, clock, config.step().toMillis());
         }
     }
 
@@ -129,26 +130,26 @@ public class SimpleMeterRegistry extends MeterRegistry {
     protected <T> FunctionTimer newFunctionTimer(Meter.Id id, T obj, ToLongFunction<T> countFunction,
             ToDoubleFunction<T> totalTimeFunction, TimeUnit totalTimeFunctionUnit) {
         switch (config.mode()) {
-        case CUMULATIVE:
-            return new CumulativeFunctionTimer<>(id, obj, countFunction, totalTimeFunction, totalTimeFunctionUnit,
-                    getBaseTimeUnit());
+            case CUMULATIVE:
+                return new CumulativeFunctionTimer<>(id, obj, countFunction, totalTimeFunction, totalTimeFunctionUnit,
+                        getBaseTimeUnit());
 
-        case STEP:
-        default:
-            return new StepFunctionTimer<>(id, clock, config.step().toMillis(), obj, countFunction, totalTimeFunction,
-                    totalTimeFunctionUnit, getBaseTimeUnit());
+            case STEP:
+            default:
+                return new StepFunctionTimer<>(id, clock, config.step().toMillis(), obj, countFunction,
+                        totalTimeFunction, totalTimeFunctionUnit, getBaseTimeUnit());
         }
     }
 
     @Override
     protected <T> FunctionCounter newFunctionCounter(Meter.Id id, T obj, ToDoubleFunction<T> countFunction) {
         switch (config.mode()) {
-        case CUMULATIVE:
-            return new CumulativeFunctionCounter<>(id, obj, countFunction);
+            case CUMULATIVE:
+                return new CumulativeFunctionCounter<>(id, obj, countFunction);
 
-        case STEP:
-        default:
-            return new StepFunctionCounter<>(id, clock, config.step().toMillis(), obj, countFunction);
+            case STEP:
+            default:
+                return new StepFunctionCounter<>(id, clock, config.step().toMillis(), obj, countFunction);
         }
     }
 

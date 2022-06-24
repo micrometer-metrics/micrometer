@@ -55,21 +55,21 @@ public class ReactorNettySender implements HttpSender {
 
     private HttpMethod toNettyHttpMethod(Method method) {
         switch (method) {
-        case PUT:
-            return HttpMethod.PUT;
-        case POST:
-            return HttpMethod.POST;
-        case HEAD:
-            return HttpMethod.HEAD;
-        case GET:
-            return HttpMethod.GET;
-        case DELETE:
-            return HttpMethod.DELETE;
-        case OPTIONS:
-            return HttpMethod.OPTIONS;
-        default:
-            throw new UnsupportedOperationException(
-                    "http method " + method.toString() + " is not supported by the reactor netty client");
+            case PUT:
+                return HttpMethod.PUT;
+            case POST:
+                return HttpMethod.POST;
+            case HEAD:
+                return HttpMethod.HEAD;
+            case GET:
+                return HttpMethod.GET;
+            case DELETE:
+                return HttpMethod.DELETE;
+            case OPTIONS:
+                return HttpMethod.OPTIONS;
+            default:
+                throw new UnsupportedOperationException(
+                        "http method " + method.toString() + " is not supported by the reactor netty client");
         }
     }
 

@@ -51,18 +51,18 @@ public class PrometheusTimer extends AbstractTimer {
 
         if (distributionStatisticConfig.isPublishingHistogram()) {
             switch (histogramFlavor) {
-            case Prometheus:
-                histogram = new TimeWindowFixedBoundaryHistogram(clock, DistributionStatisticConfig.builder()
-                        // effectively never roll over
-                        .expiry(Duration.ofDays(1825)).bufferLength(1).build().merge(distributionStatisticConfig),
-                        true);
-                break;
-            case VictoriaMetrics:
-                histogram = new FixedBoundaryVictoriaMetricsHistogram();
-                break;
-            default:
-                histogram = null;
-                break;
+                case Prometheus:
+                    histogram = new TimeWindowFixedBoundaryHistogram(clock, DistributionStatisticConfig.builder()
+                            // effectively never roll over
+                            .expiry(Duration.ofDays(1825)).bufferLength(1).build().merge(distributionStatisticConfig),
+                            true);
+                    break;
+                case VictoriaMetrics:
+                    histogram = new FixedBoundaryVictoriaMetricsHistogram();
+                    break;
+                default:
+                    histogram = null;
+                    break;
             }
         }
         else {
