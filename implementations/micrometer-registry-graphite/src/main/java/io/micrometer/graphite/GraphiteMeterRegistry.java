@@ -66,13 +66,13 @@ public class GraphiteMeterRegistry extends DropwizardMeterRegistry {
 
     private static GraphiteSender getGraphiteSender(GraphiteConfig config) {
         switch (config.protocol()) {
-        case PLAINTEXT:
-            return new Graphite(config.host(), config.port());
-        case UDP:
-            return new GraphiteUDP(config.host(), config.port());
-        case PICKLED:
-        default:
-            return new PickledGraphite(config.host(), config.port());
+            case PLAINTEXT:
+                return new Graphite(config.host(), config.port());
+            case UDP:
+                return new GraphiteUDP(config.host(), config.port());
+            case PICKLED:
+            default:
+                return new PickledGraphite(config.host(), config.port());
         }
     }
 

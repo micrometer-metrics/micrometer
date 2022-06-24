@@ -144,43 +144,43 @@ public enum DurationValidator {
         }
 
         switch (unit.toLowerCase()) {
-        case "ns":
-        case "nanoseconds":
-        case "nanosecond":
-        case "nanos":
-            return Validated.valid(property, ChronoUnit.NANOS);
-        case "us":
-        case "microseconds":
-        case "microsecond":
-        case "micros":
-            return Validated.valid(property, ChronoUnit.MICROS);
-        case "ms":
-        case "milliseconds":
-        case "millisecond":
-        case "millis":
-            return Validated.valid(property, ChronoUnit.MILLIS);
-        case "s":
-        case "seconds":
-        case "second":
-        case "secs":
-        case "sec":
-            return Validated.valid(property, ChronoUnit.SECONDS);
-        case "m":
-        case "minutes":
-        case "minute":
-        case "mins":
-        case "min":
-            return Validated.valid(property, ChronoUnit.MINUTES);
-        case "h":
-        case "hours":
-        case "hour":
-            return Validated.valid(property, ChronoUnit.HOURS);
-        case "d":
-        case "days":
-        case "day":
-            return Validated.valid(property, ChronoUnit.DAYS);
-        default:
-            return Validated.invalid(property, value, "must contain a valid time unit", InvalidReason.MALFORMED);
+            case "ns":
+            case "nanoseconds":
+            case "nanosecond":
+            case "nanos":
+                return Validated.valid(property, ChronoUnit.NANOS);
+            case "us":
+            case "microseconds":
+            case "microsecond":
+            case "micros":
+                return Validated.valid(property, ChronoUnit.MICROS);
+            case "ms":
+            case "milliseconds":
+            case "millisecond":
+            case "millis":
+                return Validated.valid(property, ChronoUnit.MILLIS);
+            case "s":
+            case "seconds":
+            case "second":
+            case "secs":
+            case "sec":
+                return Validated.valid(property, ChronoUnit.SECONDS);
+            case "m":
+            case "minutes":
+            case "minute":
+            case "mins":
+            case "min":
+                return Validated.valid(property, ChronoUnit.MINUTES);
+            case "h":
+            case "hours":
+            case "hour":
+                return Validated.valid(property, ChronoUnit.HOURS);
+            case "d":
+            case "days":
+            case "day":
+                return Validated.valid(property, ChronoUnit.DAYS);
+            default:
+                return Validated.invalid(property, value, "must contain a valid time unit", InvalidReason.MALFORMED);
         }
     }
 
@@ -190,23 +190,23 @@ public enum DurationValidator {
         }
 
         switch (chronoUnit) {
-        case NANOS:
-            return Validated.valid(property, TimeUnit.NANOSECONDS);
-        case MICROS:
-            return Validated.valid(property, TimeUnit.MICROSECONDS);
-        case MILLIS:
-            return Validated.valid(property, TimeUnit.MILLISECONDS);
-        case SECONDS:
-            return Validated.valid(property, TimeUnit.SECONDS);
-        case MINUTES:
-            return Validated.valid(property, TimeUnit.MINUTES);
-        case HOURS:
-            return Validated.valid(property, TimeUnit.HOURS);
-        case DAYS:
-            return Validated.valid(property, TimeUnit.DAYS);
-        default:
-            return Validated.invalid(property, chronoUnit.toString(), "must be a valid time unit",
-                    InvalidReason.MALFORMED);
+            case NANOS:
+                return Validated.valid(property, TimeUnit.NANOSECONDS);
+            case MICROS:
+                return Validated.valid(property, TimeUnit.MICROSECONDS);
+            case MILLIS:
+                return Validated.valid(property, TimeUnit.MILLISECONDS);
+            case SECONDS:
+                return Validated.valid(property, TimeUnit.SECONDS);
+            case MINUTES:
+                return Validated.valid(property, TimeUnit.MINUTES);
+            case HOURS:
+                return Validated.valid(property, TimeUnit.HOURS);
+            case DAYS:
+                return Validated.valid(property, TimeUnit.DAYS);
+            default:
+                return Validated.invalid(property, chronoUnit.toString(), "must be a valid time unit",
+                        InvalidReason.MALFORMED);
         }
     }
 
