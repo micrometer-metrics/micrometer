@@ -72,39 +72,39 @@ public class MetricsRequestEventListener implements RequestEventListener {
         Set<Timed> timedAnnotations;
 
         switch (event.getType()) {
-        case ON_EXCEPTION:
-            if (!isNotFoundException(event)) {
+            case ON_EXCEPTION:
+                if (!isNotFoundException(event)) {
+                    break;
+                }
+            case REQUEST_MATCHED:
+                timedAnnotations = annotations(event);
+
+                timedAnnotationsOnRequest.put(containerRequest, timedAnnotations);
+                shortTaskSample.put(containerRequest, Timer.start(registry));
+
+                List<LongTaskTimer.Sample> longTaskSamples = longTaskTimers(timedAnnotations, event).stream()
+                        .map(LongTaskTimer::start).collect(Collectors.toList());
+                if (!longTaskSamples.isEmpty()) {
+                    this.longTaskSamples.put(containerRequest, longTaskSamples);
+                }
                 break;
-            }
-        case REQUEST_MATCHED:
-            timedAnnotations = annotations(event);
+            case FINISHED:
+                timedAnnotations = timedAnnotationsOnRequest.remove(containerRequest);
+                Timer.Sample shortSample = shortTaskSample.remove(containerRequest);
 
-            timedAnnotationsOnRequest.put(containerRequest, timedAnnotations);
-            shortTaskSample.put(containerRequest, Timer.start(registry));
-
-            List<LongTaskTimer.Sample> longTaskSamples = longTaskTimers(timedAnnotations, event).stream()
-                    .map(LongTaskTimer::start).collect(Collectors.toList());
-            if (!longTaskSamples.isEmpty()) {
-                this.longTaskSamples.put(containerRequest, longTaskSamples);
-            }
-            break;
-        case FINISHED:
-            timedAnnotations = timedAnnotationsOnRequest.remove(containerRequest);
-            Timer.Sample shortSample = shortTaskSample.remove(containerRequest);
-
-            if (shortSample != null) {
-                for (Timer timer : shortTimers(timedAnnotations, event)) {
-                    shortSample.stop(timer);
+                if (shortSample != null) {
+                    for (Timer timer : shortTimers(timedAnnotations, event)) {
+                        shortSample.stop(timer);
+                    }
                 }
-            }
 
-            Collection<LongTaskTimer.Sample> longSamples = this.longTaskSamples.remove(containerRequest);
-            if (longSamples != null) {
-                for (LongTaskTimer.Sample longSample : longSamples) {
-                    longSample.stop();
+                Collection<LongTaskTimer.Sample> longSamples = this.longTaskSamples.remove(containerRequest);
+                if (longSamples != null) {
+                    for (LongTaskTimer.Sample longSample : longSamples) {
+                        longSample.stop();
+                    }
                 }
-            }
-            break;
+                break;
         }
     }
 

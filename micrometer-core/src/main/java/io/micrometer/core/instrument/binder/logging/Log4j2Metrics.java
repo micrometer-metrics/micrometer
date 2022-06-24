@@ -180,26 +180,26 @@ public class Log4j2Metrics implements MeterBinder, AutoCloseable {
 
         private void incrementCounter(LogEvent event) {
             switch (event.getLevel().getStandardLevel()) {
-            case FATAL:
-                fatalCounter.increment();
-                break;
-            case ERROR:
-                errorCounter.increment();
-                break;
-            case WARN:
-                warnCounter.increment();
-                break;
-            case INFO:
-                infoCounter.increment();
-                break;
-            case DEBUG:
-                debugCounter.increment();
-                break;
-            case TRACE:
-                traceCounter.increment();
-                break;
-            default:
-                break;
+                case FATAL:
+                    fatalCounter.increment();
+                    break;
+                case ERROR:
+                    errorCounter.increment();
+                    break;
+                case WARN:
+                    warnCounter.increment();
+                    break;
+                case INFO:
+                    infoCounter.increment();
+                    break;
+                case DEBUG:
+                    debugCounter.increment();
+                    break;
+                case TRACE:
+                    traceCounter.increment();
+                    break;
+                default:
+                    break;
             }
         }
 

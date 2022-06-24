@@ -62,18 +62,18 @@ public class PrometheusTimer extends AbstractTimer {
 
         if (distributionStatisticConfig.isPublishingHistogram()) {
             switch (histogramFlavor) {
-            case Prometheus:
-                PrometheusHistogram prometheusHistogram = new PrometheusHistogram(clock, distributionStatisticConfig,
-                        exemplarSampler);
-                this.histogram = prometheusHistogram;
-                this.exemplarsEnabled = prometheusHistogram.isExemplarsEnabled();
-                break;
-            case VictoriaMetrics:
-                this.histogram = new FixedBoundaryVictoriaMetricsHistogram();
-                break;
-            default:
-                this.histogram = null;
-                break;
+                case Prometheus:
+                    PrometheusHistogram prometheusHistogram = new PrometheusHistogram(clock,
+                            distributionStatisticConfig, exemplarSampler);
+                    this.histogram = prometheusHistogram;
+                    this.exemplarsEnabled = prometheusHistogram.isExemplarsEnabled();
+                    break;
+                case VictoriaMetrics:
+                    this.histogram = new FixedBoundaryVictoriaMetricsHistogram();
+                    break;
+                default:
+                    this.histogram = null;
+                    break;
             }
         }
         else {

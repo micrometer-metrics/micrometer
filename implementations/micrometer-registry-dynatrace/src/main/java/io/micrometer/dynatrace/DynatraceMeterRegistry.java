@@ -186,11 +186,11 @@ public class DynatraceMeterRegistry extends StepMeterRegistry {
 
     private boolean dynatraceInstrumentTypeExists(Meter.Id id) {
         switch (id.getType()) {
-        case DISTRIBUTION_SUMMARY:
-        case TIMER:
-            return true;
-        default:
-            return false;
+            case DISTRIBUTION_SUMMARY:
+            case TIMER:
+                return true;
+            default:
+                return false;
         }
     }
 

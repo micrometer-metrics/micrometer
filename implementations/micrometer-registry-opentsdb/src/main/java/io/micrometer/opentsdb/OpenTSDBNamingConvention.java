@@ -57,27 +57,27 @@ public class OpenTSDBNamingConvention implements NamingConvention {
         String conventionName = NamingConvention.snakeCase.name(name, type, baseUnit);
 
         switch (type) {
-        case COUNTER:
-        case DISTRIBUTION_SUMMARY:
-        case GAUGE:
-            if (baseUnit != null && !conventionName.endsWith("_" + baseUnit))
-                conventionName += "_" + baseUnit;
-            break;
+            case COUNTER:
+            case DISTRIBUTION_SUMMARY:
+            case GAUGE:
+                if (baseUnit != null && !conventionName.endsWith("_" + baseUnit))
+                    conventionName += "_" + baseUnit;
+                break;
         }
 
         switch (type) {
-        case COUNTER:
-            if (!conventionName.endsWith("_total"))
-                conventionName += "_total";
-            break;
-        case TIMER:
-        case LONG_TASK_TIMER:
-            if (conventionName.endsWith(timerSuffix)) {
-                conventionName += "_seconds";
-            }
-            else if (!conventionName.endsWith("_seconds"))
-                conventionName += timerSuffix + "_seconds";
-            break;
+            case COUNTER:
+                if (!conventionName.endsWith("_total"))
+                    conventionName += "_total";
+                break;
+            case TIMER:
+            case LONG_TASK_TIMER:
+                if (conventionName.endsWith(timerSuffix)) {
+                    conventionName += "_seconds";
+                }
+                else if (!conventionName.endsWith("_seconds"))
+                    conventionName += timerSuffix + "_seconds";
+                break;
         }
 
         String sanitized = nameChars.matcher(conventionName).replaceAll(SEPARATOR);
