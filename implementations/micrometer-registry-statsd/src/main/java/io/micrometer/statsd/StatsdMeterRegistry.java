@@ -162,13 +162,13 @@ public class StatsdMeterRegistry extends MeterRegistry {
 
     private static NamingConvention namingConventionFromFlavor(StatsdFlavor flavor) {
         switch (flavor) {
-        case DATADOG:
-        case SYSDIG:
-            return NamingConvention.dot;
-        case TELEGRAF:
-            return NamingConvention.snakeCase;
-        default:
-            return NamingConvention.camelCase;
+            case DATADOG:
+            case SYSDIG:
+                return NamingConvention.dot;
+            case TELEGRAF:
+                return NamingConvention.snakeCase;
+            default:
+                return NamingConvention.camelCase;
         }
     }
 
@@ -334,15 +334,15 @@ public class StatsdMeterRegistry extends MeterRegistry {
         if (lineBuilderFunction == null) {
             lineBuilderFunction = (id2, dsc2) -> {
                 switch (statsdConfig.flavor()) {
-                case DATADOG:
-                    return new DatadogStatsdLineBuilder(id2, config(), dsc2);
-                case TELEGRAF:
-                    return new TelegrafStatsdLineBuilder(id2, config());
-                case SYSDIG:
-                    return new SysdigStatsdLineBuilder(id2, config());
-                case ETSY:
-                default:
-                    return new EtsyStatsdLineBuilder(id2, config(), nameMapper);
+                    case DATADOG:
+                        return new DatadogStatsdLineBuilder(id2, config(), dsc2);
+                    case TELEGRAF:
+                        return new TelegrafStatsdLineBuilder(id2, config());
+                    case SYSDIG:
+                        return new SysdigStatsdLineBuilder(id2, config());
+                    case ETSY:
+                    default:
+                        return new EtsyStatsdLineBuilder(id2, config(), nameMapper);
                 }
             };
         }
@@ -424,17 +424,17 @@ public class StatsdMeterRegistry extends MeterRegistry {
             StatsdLineBuilder line = lineBuilder(id);
             Statistic stat = ms.getStatistic();
             switch (stat) {
-            case COUNT:
-            case TOTAL:
-            case TOTAL_TIME:
-                pollableMeters.put(id.withTag(stat), () -> this.sink.next(line.count((long) ms.getValue(), stat)));
-                break;
-            case VALUE:
-            case ACTIVE_TASKS:
-            case DURATION:
-            case UNKNOWN:
-                pollableMeters.put(id.withTag(stat), () -> this.sink.next(line.gauge(ms.getValue(), stat)));
-                break;
+                case COUNT:
+                case TOTAL:
+                case TOTAL_TIME:
+                    pollableMeters.put(id.withTag(stat), () -> this.sink.next(line.count((long) ms.getValue(), stat)));
+                    break;
+                case VALUE:
+                case ACTIVE_TASKS:
+                case DURATION:
+                case UNKNOWN:
+                    pollableMeters.put(id.withTag(stat), () -> this.sink.next(line.gauge(ms.getValue(), stat)));
+                    break;
             }
         });
         return new DefaultMeter(id, type, measurements);

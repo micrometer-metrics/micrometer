@@ -100,12 +100,12 @@ class DatadogMetricMetadata {
 
     static String sanitizeType(Statistic statistic) {
         switch (statistic) {
-        case COUNT:
-        case TOTAL:
-        case TOTAL_TIME:
-            return "count";
-        default:
-            return "gauge";
+            case COUNT:
+            case TOTAL:
+            case TOTAL_TIME:
+                return "count";
+            default:
+                return "gauge";
         }
     }
 

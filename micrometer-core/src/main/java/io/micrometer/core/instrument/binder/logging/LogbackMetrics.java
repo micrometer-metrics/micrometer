@@ -189,21 +189,21 @@ class MetricsTurboFilter extends TurboFilter {
         // by calling this filter again!
         if (level.isGreaterOrEqual(logger.getEffectiveLevel())) {
             switch (level.toInt()) {
-            case Level.ERROR_INT:
-                errorCounter.increment();
-                break;
-            case Level.WARN_INT:
-                warnCounter.increment();
-                break;
-            case Level.INFO_INT:
-                infoCounter.increment();
-                break;
-            case Level.DEBUG_INT:
-                debugCounter.increment();
-                break;
-            case Level.TRACE_INT:
-                traceCounter.increment();
-                break;
+                case Level.ERROR_INT:
+                    errorCounter.increment();
+                    break;
+                case Level.WARN_INT:
+                    warnCounter.increment();
+                    break;
+                case Level.INFO_INT:
+                    infoCounter.increment();
+                    break;
+                case Level.DEBUG_INT:
+                    debugCounter.increment();
+                    break;
+                case Level.TRACE_INT:
+                    traceCounter.increment();
+                    break;
             }
         }
 

@@ -332,29 +332,29 @@ public interface HttpSender {
 
         public Response onSuccess(Consumer<Response> onSuccess) {
             switch (HttpStatusClass.valueOf(code)) {
-            case INFORMATIONAL:
-            case SUCCESS:
-                onSuccess.accept(this);
+                case INFORMATIONAL:
+                case SUCCESS:
+                    onSuccess.accept(this);
             }
             return this;
         }
 
         public Response onError(Consumer<Response> onError) {
             switch (HttpStatusClass.valueOf(code)) {
-            case CLIENT_ERROR:
-            case SERVER_ERROR:
-                onError.accept(this);
+                case CLIENT_ERROR:
+                case SERVER_ERROR:
+                    onError.accept(this);
             }
             return this;
         }
 
         public boolean isSuccessful() {
             switch (HttpStatusClass.valueOf(code)) {
-            case INFORMATIONAL:
-            case SUCCESS:
-                return true;
-            default:
-                return false;
+                case INFORMATIONAL:
+                case SUCCESS:
+                    return true;
+                default:
+                    return false;
             }
         }
 

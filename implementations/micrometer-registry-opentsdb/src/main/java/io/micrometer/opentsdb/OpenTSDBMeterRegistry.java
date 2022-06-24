@@ -351,19 +351,19 @@ public class OpenTSDBMeterRegistry extends PushMeterRegistry {
             String name = getConventionName(meter.getId());
 
             switch (ms.getStatistic()) {
-            case TOTAL:
-            case TOTAL_TIME:
-                name += ".sum";
-                break;
-            case MAX:
-                name += ".max";
-                break;
-            case ACTIVE_TASKS:
-                name += ".active.count";
-                break;
-            case DURATION:
-                name += ".duration.sum";
-                break;
+                case TOTAL:
+                case TOTAL_TIME:
+                    name += ".sum";
+                    break;
+                case MAX:
+                    name += ".max";
+                    break;
+                case ACTIVE_TASKS:
+                    name += ".active.count";
+                    break;
+                case DURATION:
+                    name += ".duration.sum";
+                    break;
             }
 
             return new OpenTSDBMetricBuilder().field("metric", name).datapoints(wallTime, ms.getValue()).tags(localTags)

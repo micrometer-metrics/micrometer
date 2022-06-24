@@ -89,20 +89,20 @@ class StatsdMeterRegistryTest {
     void counterLineProtocol(StatsdFlavor flavor) {
         String line = null;
         switch (flavor) {
-        case ETSY:
-            line = "myCounter.myTag.val.statistic.count:2|c";
-            break;
-        case DATADOG:
-            line = "my.counter:2|c|#statistic:count,my.tag:val";
-            break;
-        case TELEGRAF:
-            line = "my_counter,statistic=count,my_tag=val:2|c";
-            break;
-        case SYSDIG:
-            line = "my.counter#statistic=count,my.tag=val:2|c";
-            break;
-        default:
-            fail("Unexpected flavor");
+            case ETSY:
+                line = "myCounter.myTag.val.statistic.count:2|c";
+                break;
+            case DATADOG:
+                line = "my.counter:2|c|#statistic:count,my.tag:val";
+                break;
+            case TELEGRAF:
+                line = "my_counter,statistic=count,my_tag=val:2|c";
+                break;
+            case SYSDIG:
+                line = "my.counter#statistic=count,my.tag=val:2|c";
+                break;
+            default:
+                fail("Unexpected flavor");
         }
 
         final Processor<String, String> lines = lineProcessor();
@@ -121,20 +121,20 @@ class StatsdMeterRegistryTest {
 
         String line = null;
         switch (flavor) {
-        case ETSY:
-            line = "myGauge.myTag.val.statistic.value:2|g";
-            break;
-        case DATADOG:
-            line = "my.gauge:2|g|#statistic:value,my.tag:val";
-            break;
-        case TELEGRAF:
-            line = "my_gauge,statistic=value,my_tag=val:2|g";
-            break;
-        case SYSDIG:
-            line = "my.gauge#statistic=value,my.tag=val:2|g";
-            break;
-        default:
-            fail("Unexpected flavor");
+            case ETSY:
+                line = "myGauge.myTag.val.statistic.value:2|g";
+                break;
+            case DATADOG:
+                line = "my.gauge:2|g|#statistic:value,my.tag:val";
+                break;
+            case TELEGRAF:
+                line = "my_gauge,statistic=value,my_tag=val:2|g";
+                break;
+            case SYSDIG:
+                line = "my.gauge#statistic=value,my.tag=val:2|g";
+                break;
+            default:
+                fail("Unexpected flavor");
         }
 
         StepVerifier.withVirtualTime(() -> {
@@ -151,20 +151,20 @@ class StatsdMeterRegistryTest {
     void timerLineProtocol(StatsdFlavor flavor) {
         String line = null;
         switch (flavor) {
-        case ETSY:
-            line = "myTimer.myTag.val:1|ms";
-            break;
-        case DATADOG:
-            line = "my.timer:1|ms|#my.tag:val";
-            break;
-        case TELEGRAF:
-            line = "my_timer,my_tag=val:1|ms";
-            break;
-        case SYSDIG:
-            line = "my.timer#my.tag=val:1|ms";
-            break;
-        default:
-            fail("Unexpected flavor");
+            case ETSY:
+                line = "myTimer.myTag.val:1|ms";
+                break;
+            case DATADOG:
+                line = "my.timer:1|ms|#my.tag:val";
+                break;
+            case TELEGRAF:
+                line = "my_timer,my_tag=val:1|ms";
+                break;
+            case SYSDIG:
+                line = "my.timer#my.tag=val:1|ms";
+                break;
+            default:
+                fail("Unexpected flavor");
         }
 
         final Processor<String, String> lines = lineProcessor();
@@ -181,20 +181,20 @@ class StatsdMeterRegistryTest {
     void summaryLineProtocol(StatsdFlavor flavor) {
         String line = null;
         switch (flavor) {
-        case ETSY:
-            line = "mySummary.myTag.val:1|h";
-            break;
-        case DATADOG:
-            line = "my.summary:1|h|#my.tag:val";
-            break;
-        case TELEGRAF:
-            line = "my_summary,my_tag=val:1|h";
-            break;
-        case SYSDIG:
-            line = "my.summary#my.tag=val:1|h";
-            break;
-        default:
-            fail("Unexpected flavor");
+            case ETSY:
+                line = "mySummary.myTag.val:1|h";
+                break;
+            case DATADOG:
+                line = "my.summary:1|h|#my.tag:val";
+                break;
+            case TELEGRAF:
+                line = "my_summary,my_tag=val:1|h";
+                break;
+            case SYSDIG:
+                line = "my.summary#my.tag=val:1|h";
+                break;
+            default:
+                fail("Unexpected flavor");
         }
 
         final Processor<String, String> lines = lineProcessor();
@@ -213,24 +213,24 @@ class StatsdMeterRegistryTest {
 
         String[] expectLines = null;
         switch (flavor) {
-        case ETSY:
-            expectLines = new String[] { "myLongTask.myTag.val.statistic.active:1|g",
-                    "myLongTask.myTag.val.statistic.duration:" + stepMillis + "|g", };
-            break;
-        case DATADOG:
-            expectLines = new String[] { "my.long.task:1|g|#statistic:active,my.tag:val",
-                    "my.long.task:" + stepMillis + "|g|#statistic:duration,my.tag:val", };
-            break;
-        case TELEGRAF:
-            expectLines = new String[] { "my_long_task,statistic=active,my_tag=val:1|g",
-                    "my_long_task,statistic=duration,my_tag=val:" + stepMillis + "|g", };
-            break;
-        case SYSDIG:
-            expectLines = new String[] { "my.long.task#statistic=active,my.tag=val:1|g",
-                    "my.long.task#statistic=duration,my.tag=val:" + stepMillis + "|g", };
-            break;
-        default:
-            fail("Unexpected flavor");
+            case ETSY:
+                expectLines = new String[] { "myLongTask.myTag.val.statistic.active:1|g",
+                        "myLongTask.myTag.val.statistic.duration:" + stepMillis + "|g", };
+                break;
+            case DATADOG:
+                expectLines = new String[] { "my.long.task:1|g|#statistic:active,my.tag:val",
+                        "my.long.task:" + stepMillis + "|g|#statistic:duration,my.tag:val", };
+                break;
+            case TELEGRAF:
+                expectLines = new String[] { "my_long_task,statistic=active,my_tag=val:1|g",
+                        "my_long_task,statistic=duration,my_tag=val:" + stepMillis + "|g", };
+                break;
+            case SYSDIG:
+                expectLines = new String[] { "my.long.task#statistic=active,my.tag=val:1|g",
+                        "my.long.task#statistic=duration,my.tag=val:" + stepMillis + "|g", };
+                break;
+            default:
+                fail("Unexpected flavor");
         }
 
         AtomicReference<LongTaskTimer> ltt = new AtomicReference<>();
@@ -402,15 +402,16 @@ class StatsdMeterRegistryTest {
         range(0, 100).forEach(n -> registry.counter("my.counter", "k", "v").increment());
 
         switch (flavor) {
-        case DATADOG:
-        case TELEGRAF:
-            assertThat(namingConventionUses.intValue()).isEqualTo(3);
-            break;
-        case ETSY:
-            // because Etsy formatting involves the naming convention being called on the
-            // 'statistic' tag as well.
-            assertThat(namingConventionUses.intValue()).isEqualTo(5);
-            break;
+            case DATADOG:
+            case TELEGRAF:
+                assertThat(namingConventionUses.intValue()).isEqualTo(3);
+                break;
+            case ETSY:
+                // because Etsy formatting involves the naming convention being called on
+                // the
+                // 'statistic' tag as well.
+                assertThat(namingConventionUses.intValue()).isEqualTo(5);
+                break;
         }
     }
 
