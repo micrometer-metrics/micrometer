@@ -10,7 +10,7 @@ dependencies {
         // We do not use HTTP modules; exclude to avoid false positive CVE reports
         exclude module: 'netty-codec-http'
     }
-    // We need make sure netty dns resolution works on all macs
+    // We need to make sure netty dns resolution works on all macs
     implementation(group: 'io.netty', name: 'netty-resolver-dns-native-macos', classifier: 'osx-x86_64')
     implementation(group: 'io.netty', name: 'netty-resolver-dns-native-macos', classifier: 'osx-aarch_64')
 

@@ -435,7 +435,7 @@ public interface Observation {
     }
 
     /**
-     * A mutable holder of data required by a {@link ObservationHandler}. When extended
+     * A mutable holder of data required by an {@link ObservationHandler}. When extended
      * you can provide your own, custom information to be processed by the handlers.
      *
      * @since 1.10.0

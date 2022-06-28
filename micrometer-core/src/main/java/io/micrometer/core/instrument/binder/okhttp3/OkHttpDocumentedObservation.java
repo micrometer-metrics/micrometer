@@ -47,7 +47,7 @@ public enum OkHttpDocumentedObservation implements DocumentedObservation {
     };
 
     /**
-     * Creates a {@link OkHttpDocumentedObservation} depending on the configuration.
+     * Creates an {@link OkHttpDocumentedObservation} depending on the configuration.
      * @param registry observation registry
      * @param okHttpContext the ok http context
      * @param requestsMetricName name of the observation

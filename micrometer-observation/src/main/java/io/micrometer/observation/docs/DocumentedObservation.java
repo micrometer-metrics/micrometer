@@ -93,7 +93,7 @@ public interface DocumentedObservation {
     }
 
     /**
-     * Creates a {@link Observation}. You need to manually start it.
+     * Creates an {@link Observation}. You need to manually start it.
      * @param registry observation registry
      * @return observation
      */
@@ -102,7 +102,7 @@ public interface DocumentedObservation {
     }
 
     /**
-     * Creates a {@link Observation}. You need to manually start it.
+     * Creates an {@link Observation}. You need to manually start it.
      * @param registry observation registry
      * @param context observation context
      * @return observation
