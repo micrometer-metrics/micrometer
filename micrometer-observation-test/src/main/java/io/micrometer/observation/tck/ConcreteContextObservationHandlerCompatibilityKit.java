@@ -27,7 +27,7 @@ import static org.assertj.core.api.Assertions.assertThatCode;
 
 /**
  * Base class for {@link ObservationHandler} compatibility tests that support a concrete
- * type of context only. To run a {@link ObservationHandler} implementation against this
+ * type of context only. To run an {@link ObservationHandler} implementation against this
  * TCK, make a test class that extends this and implement the abstract methods.
  *
  * @author Marcin Grzejszczak

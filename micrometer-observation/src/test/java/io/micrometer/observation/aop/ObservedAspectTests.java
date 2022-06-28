@@ -99,8 +99,8 @@ class ObservedAspectTests {
         await().atMost(Duration.ofMillis(200)).untilAsserted(
                 () -> TestObservationRegistryAssert.assertThat(registry).hasSingleObservationThat().hasBeenStopped());
 
-        TestObservationRegistryAssert.assertThat(registry).hasSingleObservationThat().hasBeenStopped()
-                .hasNameEqualTo("test.async").hasContextualNameEqualTo("ObservedService#async")
+        TestObservationRegistryAssert.assertThat(registry).hasSingleObservationThat().hasNameEqualTo("test.async")
+                .hasContextualNameEqualTo("ObservedService#async")
                 .hasLowCardinalityKeyValue("class", ObservedService.class.getName())
                 .hasLowCardinalityKeyValue("method", "async").thenThrowable().doesNotThrowAnyException();
     }
@@ -123,8 +123,8 @@ class ObservedAspectTests {
         await().atMost(Duration.ofMillis(200)).untilAsserted(
                 () -> TestObservationRegistryAssert.assertThat(registry).hasSingleObservationThat().hasBeenStopped());
 
-        TestObservationRegistryAssert.assertThat(registry).hasSingleObservationThat().hasBeenStopped()
-                .hasNameEqualTo("test.async").hasContextualNameEqualTo("ObservedService#async")
+        TestObservationRegistryAssert.assertThat(registry).hasSingleObservationThat().hasNameEqualTo("test.async")
+                .hasContextualNameEqualTo("ObservedService#async")
                 .hasLowCardinalityKeyValue("class", ObservedService.class.getName())
                 .hasLowCardinalityKeyValue("method", "async").thenThrowable().isInstanceOf(CompletionException.class)
                 .rootCause().isEqualTo(simulatedException);
@@ -215,9 +215,9 @@ class ObservedAspectTests {
         await().atMost(Duration.ofMillis(200)).untilAsserted(
                 () -> TestObservationRegistryAssert.assertThat(registry).hasSingleObservationThat().hasBeenStopped());
 
-        TestObservationRegistryAssert.assertThat(registry).hasSingleObservationThat().hasBeenStopped()
-                .hasNameEqualTo("test.class").hasContextualNameEqualTo("test.class#call")
-                .hasLowCardinalityKeyValue("abc", "123").hasLowCardinalityKeyValue("test", "42")
+        TestObservationRegistryAssert.assertThat(registry).hasSingleObservationThat().hasNameEqualTo("test.class")
+                .hasContextualNameEqualTo("test.class#call").hasLowCardinalityKeyValue("abc", "123")
+                .hasLowCardinalityKeyValue("test", "42")
                 .hasLowCardinalityKeyValue("class", ObservedClassLevelAnnotatedService.class.getName())
                 .hasLowCardinalityKeyValue("method", "async").thenThrowable().doesNotThrowAnyException();
     }
@@ -240,9 +240,9 @@ class ObservedAspectTests {
         await().atMost(Duration.ofMillis(200)).untilAsserted(
                 () -> TestObservationRegistryAssert.assertThat(registry).hasSingleObservationThat().hasBeenStopped());
 
-        TestObservationRegistryAssert.assertThat(registry).hasSingleObservationThat().hasBeenStopped()
-                .hasNameEqualTo("test.class").hasContextualNameEqualTo("test.class#call")
-                .hasLowCardinalityKeyValue("abc", "123").hasLowCardinalityKeyValue("test", "42")
+        TestObservationRegistryAssert.assertThat(registry).hasSingleObservationThat().hasNameEqualTo("test.class")
+                .hasContextualNameEqualTo("test.class#call").hasLowCardinalityKeyValue("abc", "123")
+                .hasLowCardinalityKeyValue("test", "42")
                 .hasLowCardinalityKeyValue("class", ObservedClassLevelAnnotatedService.class.getName())
                 .hasLowCardinalityKeyValue("method", "async").thenThrowable().isInstanceOf(CompletionException.class)
                 .rootCause().isEqualTo(simulatedException);
