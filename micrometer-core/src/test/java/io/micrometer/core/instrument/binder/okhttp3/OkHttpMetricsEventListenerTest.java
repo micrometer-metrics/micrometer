@@ -110,69 +110,22 @@ class OkHttpMetricsEventListenerTest {
     }
 
     @Test
-    void timeSuccessfulWithKeyValuesProvider(@WiremockResolver.Wiremock WireMockServer server) throws IOException {
-        ObservationRegistry observationRegistry = ObservationRegistry.create();
-        TestHandler testHandler = new TestHandler();
-        observationRegistry.observationConfig().observationHandler(testHandler);
-        observationRegistry.observationConfig().observationHandler(new TimerObservationHandler(registry));
-        client = new OkHttpClient.Builder()
-                .eventListener(defaultListenerBuilder().observationRegistry(observationRegistry)
-                        // Example of a custom key values provider
-                        .keyValuesProvider(new OkHttpKeyValuesProvider() {
-                            @Override
-                            public KeyValues getLowCardinalityKeyValues(OkHttpContext context) {
-                                return KeyValues.of("baz", "baz2");
-                            }
-                        }).build())
-                .build();
-        server.stubFor(any(anyUrl()));
-        Request request = new Request.Builder().url(server.baseUrl()).build();
-
-        client.newCall(request).execute().close();
-
-        assertThat(registry.get("okhttp.requests").tags("baz", "baz2").timer().count()).isEqualTo(1L);
-    }
-
-    @Test
-    void timeSuccessfulWithKeyValueConvention(@WiremockResolver.Wiremock WireMockServer server) throws IOException {
+    void timeSuccessfulWithObservationConvention(@WiremockResolver.Wiremock WireMockServer server) throws IOException {
         ObservationRegistry observationRegistry = ObservationRegistry.create();
         TestHandler testHandler = new TestHandler();
         MyConvention myConvention = new MyConvention();
-        observationRegistry.observationConfig()
-                .namingConfiguration(ObservationRegistry.ObservationNamingConfiguration.STANDARDIZED);
         observationRegistry.observationConfig().observationHandler(testHandler);
         observationRegistry.observationConfig().observationHandler(new TimerObservationHandler(registry));
         client = new OkHttpClient.Builder()
                 .eventListener(defaultListenerBuilder().observationRegistry(observationRegistry)
-                        // Example of a custom key values provider that uses the
-                        // conventions mechanism
-                        .keyValuesProvider(new StandardizedOkHttpKeyValuesProvider(myConvention)).build())
+                        .observationConvention(new StandardizedOkHttpObservationConvention(myConvention)).build())
                 .build();
         server.stubFor(any(anyUrl()));
         Request request = new Request.Builder().url(server.baseUrl()).build();
 
         client.newCall(request).execute().close();
 
-        assertThat(registry.get("okhttp.requests").tags("peer", "name").timer().count()).isEqualTo(1L);
-    }
-
-    @Test
-    void timeIllegalStateExceptionWhenStandardOptionOnAndNoKeyValuesProviderSet(
-            @WiremockResolver.Wiremock WireMockServer server) {
-        ObservationRegistry observationRegistry = ObservationRegistry.create();
-        // We're explicitly turning on the standard mode
-        observationRegistry.observationConfig()
-                .namingConfiguration(ObservationRegistry.ObservationNamingConfiguration.STANDARDIZED);
-        observationRegistry.observationConfig().observationHandler(new TimerObservationHandler(registry));
-        client = new OkHttpClient.Builder()
-                // We're NOT setting the key values provider
-                .eventListener(defaultListenerBuilder().observationRegistry(observationRegistry).build()).build();
-        server.stubFor(any(anyUrl()));
-        Request request = new Request.Builder().url(server.baseUrl()).build();
-
-        assertThatThrownBy(() -> client.newCall(request).execute().close()).isInstanceOf(IllegalStateException.class)
-                .hasMessageContaining(
-                        "You've provided a STANDARDIZED naming configuration but haven't provided a key values provider");
+        assertThat(registry.get("new.name").tags("peer", "name").timer().count()).isEqualTo(1L);
     }
 
     @Test
@@ -375,17 +328,22 @@ class OkHttpMetricsEventListenerTest {
 
     }
 
-    static class StandardizedOkHttpKeyValuesProvider implements OkHttpKeyValuesProvider {
+    static class StandardizedOkHttpObservationConvention implements OkHttpObservationConvention {
 
         private final HttpClientKeyValuesConvention convention;
 
-        StandardizedOkHttpKeyValuesProvider(HttpClientKeyValuesConvention convention) {
+        StandardizedOkHttpObservationConvention(HttpClientKeyValuesConvention convention) {
             this.convention = convention;
         }
 
         @Override
         public KeyValues getLowCardinalityKeyValues(OkHttpContext context) {
             return KeyValues.of(convention.peerName(null));
+        }
+
+        @Override
+        public String getName() {
+            return "new.name";
         }
 
     }

@@ -31,8 +31,7 @@ import io.micrometer.observation.docs.DocumentedObservation;
 public enum OkHttpDocumentedObservation implements DocumentedObservation {
 
     /**
-     * Observation when using
-     * {@link ObservationRegistry.ObservationNamingConfiguration#DEFAULT} mode.
+     * Default observation for OK HTTP.
      */
     DEFAULT {
         @Override
@@ -51,29 +50,26 @@ public enum OkHttpDocumentedObservation implements DocumentedObservation {
      * @param registry observation registry
      * @param okHttpContext the ok http context
      * @param requestsMetricName name of the observation
-     * @param keyValuesProvider key values provider. If {@code null} then the default
-     * provider will be used
+     * @param customConvention custom convention. If {@code null}, the
+     * {@link DefaultOkHttpObservationConvention} will be used.
      * @return a new {@link OkHttpDocumentedObservation}
      */
+    @SuppressWarnings("unchecked")
     static Observation of(@NonNull ObservationRegistry registry, @NonNull OkHttpContext okHttpContext,
             @NonNull String requestsMetricName,
-            @Nullable Observation.KeyValuesProvider<OkHttpContext> keyValuesProvider) {
-        Observation.KeyValuesProvider<?> provider = null;
+            @Nullable Observation.ObservationConvention<OkHttpContext> customConvention) {
+        Observation.ObservationConvention<OkHttpContext> convention = null;
         if (registry.isNoop()) {
-            provider = Observation.KeyValuesProvider.EMPTY;
+            convention = Observation.ObservationConvention.noOp();
         }
-        else if (keyValuesProvider != null) {
-            provider = keyValuesProvider;
-        }
-        else if (registry.observationConfig()
-                .getObservationNamingConfiguration() == ObservationRegistry.ObservationNamingConfiguration.DEFAULT) {
-            provider = new DefaultOkHttpKeyValuesProvider();
+        else if (customConvention != null) {
+            convention = customConvention;
         }
         else {
-            throw new IllegalStateException(
-                    "You've provided a STANDARDIZED naming configuration but haven't provided a key values provider");
+            convention = registry.observationConfig().getObservationConvention(okHttpContext,
+                    new DefaultOkHttpObservationConvention(requestsMetricName));
         }
-        return Observation.createNotStarted(requestsMetricName, okHttpContext, registry).keyValuesProvider(provider);
+        return Observation.createNotStarted(convention, okHttpContext, registry);
     }
 
     enum OkHttpLegacyLowCardinalityTags implements KeyName {

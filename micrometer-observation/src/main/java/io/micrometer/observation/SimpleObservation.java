@@ -21,6 +21,7 @@ import io.micrometer.common.lang.Nullable;
 import java.util.ArrayDeque;
 import java.util.Collection;
 import java.util.Deque;
+import java.util.List;
 import java.util.stream.Collectors;
 
 /**
@@ -45,7 +46,6 @@ class SimpleObservation implements Observation {
 
     private final Collection<ObservationFilter> filters;
 
-    // package private so only instantiated by us
     SimpleObservation(String name, ObservationRegistry registry, Context context) {
         this.registry = registry;
         this.context = context.setName(name);
@@ -55,6 +55,32 @@ class SimpleObservation implements Observation {
                 .filter(handler -> handler.supportsContext(this.context))
                 .collect(Collectors.toCollection(ArrayDeque::new));
         this.filters = registry.observationConfig().getObservationFilters();
+        List<ObservationConvention<?>> observationConventions = registry.observationConfig().getObservationConventions()
+                .stream().filter(observationConvention -> observationConvention.supportsContext(this.context))
+                .collect(Collectors.toList());
+        if (!observationConventions.isEmpty()) {
+            this.keyValuesProviders.addAll(observationConventions);
+            this.context.setName(observationConventions.get(0).getName());
+        }
+    }
+
+    SimpleObservation(ObservationConvention<?> convention, ObservationRegistry registry, Context context) {
+        this.context = context.setName(name(convention, context));
+        this.registry = registry;
+        this.keyValuesProviders = registry.observationConfig().getKeyValuesProviders().stream()
+                .filter(provider -> provider.supportsContext(this.context)).collect(Collectors.toList());
+        this.handlers = registry.observationConfig().getObservationHandlers().stream()
+                .filter(handler -> handler.supportsContext(this.context))
+                .collect(Collectors.toCollection(ArrayDeque::new));
+        this.filters = registry.observationConfig().getObservationFilters();
+        this.keyValuesProviders.add(convention);
+    }
+
+    private static String name(ObservationConvention<?> convention, Context context) {
+        if (!convention.supportsContext(context)) {
+            throw new IllegalStateException("Convention [" + convention + "] can't support context [" + context + "]");
+        }
+        return convention.getName();
     }
 
     @Override

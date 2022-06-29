@@ -38,7 +38,7 @@ import static java.util.stream.StreamSupport.stream;
 
 @NonNullApi
 @NonNullFields
-public class DefaultOkHttpKeyValuesProvider implements OkHttpKeyValuesProvider {
+public class DefaultOkHttpObservationConvention implements OkHttpObservationConvention {
 
     static final boolean REQUEST_TAG_CLASS_EXISTS;
 
@@ -66,6 +66,12 @@ public class DefaultOkHttpKeyValuesProvider implements OkHttpKeyValuesProvider {
 
     private static final KeyValues TAGS_TARGET_UNKNOWN = KeyValues.of(TAG_TARGET_SCHEME, TAG_VALUE_UNKNOWN,
             TAG_TARGET_HOST, TAG_VALUE_UNKNOWN, TAG_TARGET_PORT, TAG_VALUE_UNKNOWN);
+
+    private final String metricName;
+
+    public DefaultOkHttpObservationConvention(String metricName) {
+        this.metricName = metricName;
+    }
 
     @Override
     public KeyValues getLowCardinalityKeyValues(OkHttpContext context) {
@@ -141,6 +147,11 @@ public class DefaultOkHttpKeyValuesProvider implements OkHttpKeyValuesProvider {
         }
         return KeyValues.of(TAG_TARGET_SCHEME, request.url().scheme(), TAG_TARGET_HOST, request.url().host(),
                 TAG_TARGET_PORT, Integer.toString(request.url().port()));
+    }
+
+    @Override
+    public String getName() {
+        return this.metricName;
     }
 
 }
