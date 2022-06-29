@@ -36,9 +36,13 @@ import io.micrometer.core.instrument.util.NamedThreadFactory;
  * name is above a threshold. This mechanism will not detect if you have other
  * memory-usage-related issues, like appending random values to the name of the Meters,
  * the only purpose of this class is detecting the potential presence of high cardinality
- * tags. You can use this class in two ways: 1. Call findFirst and check if you get any
- * results, if so you probably have high cardinality tags 2. Call start which will start a
- * scheduled job that will do this check for you.
+ * tags. You can use this class in two ways:
+ *
+ * <ul>
+ * <li>Call findFirst and check if you get any results, if so you probably have high
+ * cardinality tags</li>
+ * <li>Call start which will start a scheduled job that will do this check for you.</li>
+ * </ul>
  *
  * You can also utilize
  * {@link MeterFilter#maximumAllowableTags(String, String, int, MeterFilter)} and
@@ -77,7 +81,7 @@ public class HighCardinalityTagsDetector implements AutoCloseable {
     /**
      * @param registry The registry to use to check the Meters in it
      * @param threshold The threshold to use to detect high cardinality tags (if the
-     * number of Meters with the same name are higher than this value, that's a high
+     * number of Meters with the same name is higher than this value, that's a high
      * cardinality tag)
      * @param delay The delay between the termination of one check and the commencement of
      * the next
@@ -89,7 +93,7 @@ public class HighCardinalityTagsDetector implements AutoCloseable {
     /**
      * @param registry The registry to use to check the Meters in it
      * @param threshold The threshold to use to detect high cardinality tags (if the
-     * number of Meters with the same name are higher than this value, that's a high
+     * number of Meters with the same name is higher than this value, that's a high
      * cardinality tag)
      * @param delay The delay between the termination of one check and the commencement of
      * the next
@@ -110,7 +114,7 @@ public class HighCardinalityTagsDetector implements AutoCloseable {
      * Starts a scheduled job that checks if you have high cardinality tags.
      */
     public void start() {
-        LOGGER.info(String.format("Starting %s with threshold: %d and delay: %s", this.getClass().getSimpleName(),
+        LOGGER.info(String.format("Starting %s with threshold: %d and delay: %s", getClass().getSimpleName(),
                 this.threshold, this.delay));
         this.scheduledExecutorService.scheduleWithFixedDelay(this::detectHighCardinalityTags, 0, this.delay.toMillis(),
                 TimeUnit.MILLISECONDS);
@@ -120,7 +124,7 @@ public class HighCardinalityTagsDetector implements AutoCloseable {
      * Shuts down the scheduled job that checks if you have high cardinality tags.
      */
     public void shutdown() {
-        LOGGER.info("Stopping " + this.getClass().getSimpleName());
+        LOGGER.info("Stopping " + getClass().getSimpleName());
         this.scheduledExecutorService.shutdown();
     }
 
@@ -168,7 +172,7 @@ public class HighCardinalityTagsDetector implements AutoCloseable {
         WARN_THEN_DEBUG_LOGGER.log(String.format("It seems %s has high cardinality tags (threshold: %d meters).\n"
                 + "Check your configuration for the instrumentation of %s to find and fix the cause of the high cardinality (see: https://micrometer.io/docs/concepts#_tag_values).\n"
                 + "If the cardinality is expected and acceptable, raise the threshold for this %s.", name,
-                this.threshold, name, this.getClass().getSimpleName()));
+                this.threshold, name, getClass().getSimpleName()));
     }
 
     private static long calculateThreshold() {
