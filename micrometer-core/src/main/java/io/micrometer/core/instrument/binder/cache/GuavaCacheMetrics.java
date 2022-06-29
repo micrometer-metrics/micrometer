@@ -127,6 +127,10 @@ public class GuavaCacheMetrics<K, V, C extends Cache<K, V>> extends CacheMeterBi
                 .description(DESCRIPTION_CACHE_LOAD)
                 .register(registry);
         }
+        Gauge.builder("cache.hit_rate", cache, c -> c.stats().hitRate())
+            .tags(getTagsWithCacheName())
+            .description("Hit ratio, defined as hitCount / requestCount, or 1.0 when requestCount is 0")
+            .register(registry);
     }
 
     @Nullable

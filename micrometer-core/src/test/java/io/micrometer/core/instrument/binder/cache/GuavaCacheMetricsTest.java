@@ -70,6 +70,9 @@ class GuavaCacheMetricsTest extends AbstractCacheMetricsTest {
 
         FunctionCounter failedLoad = fetch(registry, "cache.load", Tags.of("result", "failure")).functionCounter();
         assertThat(failedLoad.count()).isEqualTo(stats.loadExceptionCount());
+
+        Gauge hitRate = fetch(registry, "cache.hit_rate").gauge();
+        assertThat(hitRate.value()).isEqualTo(stats.hitRate());
     }
 
     @Test
