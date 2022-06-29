@@ -1,3 +1,7 @@
+plugins {
+    id "org.jetbrains.kotlin.jvm" version "1.7.0"
+}
+
 description 'Core module of Micrometer containing instrumentation API and implementation'
 
 dependencies {
@@ -52,6 +56,12 @@ dependencies {
     optionalApi 'org.apache.kafka:kafka-streams'
 
     optionalApi project(':micrometer-observation')
+    optionalApi 'io.micrometer:context-propagation-api'
+
+    // kotlin
+    optionalApi 'org.jetbrains.kotlin:kotlin-reflect'
+    optionalApi 'org.jetbrains.kotlin:kotlin-stdlib-jdk8'
+    optionalApi 'org.jetbrains.kotlinx:kotlinx-coroutines-core'
 
     testImplementation 'io.projectreactor:reactor-test'
 
@@ -102,6 +112,9 @@ dependencies {
 
     testImplementation 'org.testcontainers:mongodb'
 }
+
+
+sourceSets.main.java.srcDirs += 'src/main/kotlin'
 
 task shenandoahTest(type: Test) {
     // set heap size for the test JVM(s)
