@@ -100,7 +100,7 @@ public interface Observation {
      */
     static Observation createNotStarted(String name, @Nullable Context context,
             @Nullable ObservationRegistry registry) {
-        if (registry == null || !registry.observationConfig().isObservationEnabled(name, context)
+        if (registry == null || registry.isNoop() || !registry.observationConfig().isObservationEnabled(name, context)
                 || registry.observationConfig().getObservationHandlers().isEmpty()) {
             return NoopObservation.INSTANCE;
         }
@@ -157,7 +157,7 @@ public interface Observation {
      */
     static Observation createNotStarted(ObservationConvention<?> observationConvention, @Nullable Context context,
             @Nullable ObservationRegistry registry) {
-        if (registry == null
+        if (registry == null || registry.isNoop()
                 || !registry.observationConfig().isObservationEnabled(observationConvention.getName(), context)
                 || registry.observationConfig().getObservationHandlers().isEmpty()
                 || observationConvention == NoopObservationConvention.INSTANCE) {
