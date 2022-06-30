@@ -113,9 +113,6 @@ dependencies {
     testImplementation 'org.testcontainers:mongodb'
 }
 
-
-sourceSets.main.java.srcDirs += 'src/main/kotlin'
-
 task shenandoahTest(type: Test) {
     // set heap size for the test JVM(s)
     maxHeapSize = "1500m"

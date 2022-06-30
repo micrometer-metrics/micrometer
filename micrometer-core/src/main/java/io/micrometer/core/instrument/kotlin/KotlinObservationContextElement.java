@@ -16,6 +16,7 @@
 
 package io.micrometer.core.instrument.kotlin;
 
+import io.micrometer.common.lang.Nullable;
 import io.micrometer.context.ContextRegistry;
 import io.micrometer.context.ContextSnapshot;
 import io.micrometer.observation.Observation;
@@ -24,11 +25,10 @@ import io.micrometer.observation.contextpropagation.ObservationThreadLocalAccess
 import kotlin.coroutines.CoroutineContext;
 import kotlin.jvm.functions.Function2;
 import kotlinx.coroutines.ThreadContextElement;
-import org.jetbrains.annotations.Nullable;
 
 /**
- * {@link ThreadContextElement} for synchronizing a {@link ContextSnapshot} across coroutine
- * suspension and resumption.
+ * {@link ThreadContextElement} for synchronizing a {@link ContextSnapshot} across
+ * coroutine suspension and resumption.
  *
  * @since 1.10.0
  */
