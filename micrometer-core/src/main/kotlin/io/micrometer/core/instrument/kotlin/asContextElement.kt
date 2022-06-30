@@ -22,8 +22,7 @@ import io.micrometer.observation.ObservationRegistry
 import kotlin.coroutines.CoroutineContext
 
 /**
- * Returns a [CoroutineContext] which will make this [Context] current when resuming a coroutine
- * and restores the previous [Context] on suspension.
+ * Returns a [CoroutineContext] which will contain the current [Observation]
  *
  * Inspired by OpenTelemetry's asContextElement.
  * @since 1.10.0

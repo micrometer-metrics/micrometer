@@ -27,7 +27,7 @@ import kotlin.jvm.functions.Function2;
 import kotlinx.coroutines.ThreadContextElement;
 
 /**
- * {@link ThreadContextElement} for synchronizing a {@link ContextSnapshot} across
+ * {@link ThreadContextElement} for synchronizing a {@link ContextSnapshot.Scope} across
  * coroutine suspension and resumption.
  *
  * @since 1.10.0
@@ -58,7 +58,7 @@ class KotlinObservationContextElement implements ThreadContextElement<ContextSna
     @Override
     @SuppressWarnings("MustBeClosedChecker")
     public ContextSnapshot.Scope updateThreadContext(CoroutineContext coroutineContext) {
-        return this.contextSnapshot.setThreadLocalValues();
+        return this.contextSnapshot.setThreadLocalValues(ObservationThreadLocalAccessor.KEY::equals);
     }
 
     @Override
