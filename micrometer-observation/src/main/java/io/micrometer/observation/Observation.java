@@ -763,17 +763,6 @@ public interface Observation {
             extends Observation.KeyValuesProvider<T>, KeyValuesConvention {
 
         /**
-         * Convenience method for creating no-op implementations that are of proper types.
-         * That way you don't have to do casting on your side.
-         * @return observation convention
-         * @param <T> context type
-         */
-        @SuppressWarnings("unchecked")
-        static <T extends Observation.Context> ObservationConvention<T> noOp() {
-            return (ObservationConvention<T>) NoopObservationConvention.INSTANCE;
-        }
-
-        /**
          * Allows to override the name for an observation.
          * @return the new name for the observation
          */

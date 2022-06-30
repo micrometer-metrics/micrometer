@@ -67,7 +67,7 @@ public class OkHttpMetricsEventListener extends EventListener {
 
     private final ObservationRegistry observationRegistry;
 
-    private final Observation.ObservationConvention<OkHttpContext> keyValuesProvider;
+    private final Observation.ObservationConvention<OkHttpContext> observationConvention;
 
     private final String requestsMetricName;
 
@@ -96,14 +96,14 @@ public class OkHttpMetricsEventListener extends EventListener {
     }
 
     OkHttpMetricsEventListener(MeterRegistry registry, ObservationRegistry observationRegistry,
-            Observation.ObservationConvention<OkHttpContext> keyValuesProvider, String requestsMetricName,
+            Observation.ObservationConvention<OkHttpContext> observationConvention, String requestsMetricName,
             Function<Request, String> urlMapper, Iterable<Tag> extraTags,
             Iterable<BiFunction<Request, Response, Tag>> contextSpecificTags, Iterable<String> requestTagKeys,
             boolean includeHostTag) {
         this.registry = registry;
         this.observationRegistry = observationRegistry;
         this.observationRegistryNoOp = observationRegistry.isNoop();
-        this.keyValuesProvider = keyValuesProvider;
+        this.observationConvention = observationConvention;
         this.requestsMetricName = requestsMetricName;
         this.urlMapper = urlMapper;
         this.extraTags = extraTags;
@@ -173,7 +173,7 @@ public class OkHttpMetricsEventListener extends EventListener {
             });
         }
         Observation observation = OkHttpDocumentedObservation
-                .of(this.observationRegistry, okHttpContext, requestsMetricName, this.keyValuesProvider).start();
+                .of(this.observationRegistry, okHttpContext, requestsMetricName, this.observationConvention).start();
         callState.setContext(okHttpContext);
         callState.setObservation(observation);
         this.callState.put(call, callState);

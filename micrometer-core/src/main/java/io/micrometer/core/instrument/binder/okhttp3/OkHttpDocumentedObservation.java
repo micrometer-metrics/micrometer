@@ -60,7 +60,7 @@ public enum OkHttpDocumentedObservation implements DocumentedObservation {
             @Nullable Observation.ObservationConvention<OkHttpContext> customConvention) {
         Observation.ObservationConvention<OkHttpContext> convention = null;
         if (registry.isNoop()) {
-            convention = Observation.ObservationConvention.noOp();
+            return Observation.NOOP;
         }
         else if (customConvention != null) {
             convention = customConvention;
