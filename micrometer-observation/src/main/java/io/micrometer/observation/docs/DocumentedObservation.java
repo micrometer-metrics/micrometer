@@ -53,8 +53,7 @@ public interface DocumentedObservation {
 
     /**
      * Default technical name (e.g metric name). Can be overridden by a registered
-     * {@link io.micrometer.common.docs.SemanticNameProvider} via
-     * {@link ObservationRegistry.ObservationConfig}.
+     * {@link Observation.ObservationConvention}.
      * @return name
      */
     String getName();

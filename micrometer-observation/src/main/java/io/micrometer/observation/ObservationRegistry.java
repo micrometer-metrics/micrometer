@@ -15,11 +15,12 @@
  */
 package io.micrometer.observation;
 
-import io.micrometer.common.docs.SemanticNameProvider;
 import io.micrometer.common.lang.Nullable;
 
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.List;
+import java.util.Objects;
 import java.util.concurrent.CopyOnWriteArrayList;
 
 /**
@@ -99,9 +100,9 @@ public interface ObservationRegistry {
 
         private final List<Observation.GlobalKeyValuesProvider<?>> keyValuesProviders = new CopyOnWriteArrayList<>();
 
-        private final List<ObservationFilter> observationFilters = new CopyOnWriteArrayList<>();
+        private final List<Observation.ObservationConvention<?>> observationConventions = new CopyOnWriteArrayList<>();
 
-        private ObservationNamingConfiguration observationNamingConfiguration = ObservationNamingConfiguration.DEFAULT;
+        private final List<ObservationFilter> observationFilters = new CopyOnWriteArrayList<>();
 
         /**
          * Register a handler for the {@link Observation observations}.
@@ -147,30 +148,40 @@ public interface ObservationRegistry {
         }
 
         /**
-         * Register a {@link SemanticNameProvider} that mutates the name of the
-         * observation.
-         * @param nameProvider a name provider that is context aware
+         * Register a {@link Observation.ObservationConvention}.
+         * @param observationConvention observation convention
          * @return This configuration instance
          */
-        public ObservationConfig semanticNameProvider(Observation.ContextAwareSemanticNameProvider nameProvider) {
-            this.observationFilters.add(context -> {
-                if (nameProvider.isApplicable(context)) {
-                    return context.setName(nameProvider.getName());
-                }
-                return context;
-            });
+        public ObservationConfig observationConvention(Observation.ObservationConvention<?>... observationConvention) {
+            this.observationConventions.addAll(Arrays.asList(observationConvention));
             return this;
         }
 
         /**
-         * Define how key values should be set.
-         * @param namingConvention setup for naming convention of observation names and
-         * key values
+         * Register a collection of {@link Observation.ObservationConvention}.
+         * @param observationConventions observation conventions
          * @return This configuration instance
          */
-        public ObservationConfig namingConfiguration(ObservationNamingConfiguration namingConvention) {
-            this.observationNamingConfiguration = namingConvention;
+        public ObservationConfig observationConvention(
+                Collection<Observation.ObservationConvention<?>> observationConventions) {
+            this.observationConventions.addAll(observationConventions);
             return this;
+        }
+
+        /**
+         * Finds a {@link Observation.ObservationConvention} for the given
+         * {@link Observation.Context}.
+         * @param context context
+         * @param defaultConvention default convention if none found
+         * @return matching {@link Observation.ObservationConvention} or default when no
+         * matching found
+         */
+        @SuppressWarnings("unchecked")
+        public <T extends Observation.Context> Observation.ObservationConvention<T> getObservationConvention(T context,
+                Observation.ObservationConvention<T> defaultConvention) {
+            return (Observation.ObservationConvention<T>) this.observationConventions.stream()
+                    .filter(convention -> convention.supportsContext(context)).findFirst().orElse(Objects
+                            .requireNonNull(defaultConvention, "Default ObservationConvention must not be null"));
         }
 
         /**
@@ -182,14 +193,6 @@ public interface ObservationRegistry {
          */
         public boolean isObservationEnabled(String name, @Nullable Observation.Context context) {
             return this.observationPredicates.stream().allMatch(predicate -> predicate.test(name, context));
-        }
-
-        /**
-         * Returns the registered {@link ObservationNamingConfiguration}.
-         * @return key values configuration
-         */
-        public ObservationNamingConfiguration getObservationNamingConfiguration() {
-            return this.observationNamingConfiguration;
         }
 
         // package-private for minimal visibility
@@ -205,24 +208,9 @@ public interface ObservationRegistry {
             return observationFilters;
         }
 
-    }
-
-    // TODO: Which option should be the default?
-    /**
-     * Defines how tagging should take place.
-     */
-    enum ObservationNamingConfiguration {
-
-        /**
-         * Leaves the current behaviour of naming and tagging - will set the same tags as
-         * until now. Backward-compatible approach.
-         */
-        DEFAULT,
-
-        /**
-         * Sets only the standardized names and tags. Backward-incompatible approach.
-         */
-        STANDARDIZED
+        Collection<Observation.ObservationConvention<?>> getObservationConventions() {
+            return observationConventions;
+        }
 
     }
 
