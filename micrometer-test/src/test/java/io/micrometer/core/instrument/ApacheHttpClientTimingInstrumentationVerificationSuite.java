@@ -15,18 +15,20 @@
  */
 package io.micrometer.core.instrument;
 
-import com.github.tomakehurst.wiremock.junit5.WireMockRuntimeInfo;
 import io.micrometer.core.instrument.binder.httpcomponents.MicrometerHttpRequestExecutor;
 import org.apache.http.client.HttpClient;
 import org.apache.http.client.methods.HttpGet;
+import org.apache.http.client.methods.HttpPost;
+import org.apache.http.client.methods.HttpUriRequest;
 import org.apache.http.impl.client.HttpClientBuilder;
 import org.apache.http.util.EntityUtils;
 
 import java.io.IOException;
+import java.net.URI;
 
 class ApacheHttpClientTimingInstrumentationVerificationSuite extends HttpClientTimingInstrumentationVerificationSuite {
 
-    private HttpClient httpClient = HttpClientBuilder.create()
+    private final HttpClient httpClient = HttpClientBuilder.create()
             .setRequestExecutor(MicrometerHttpRequestExecutor.builder(getRegistry()).build()).build();
 
     @Override
@@ -35,13 +37,27 @@ class ApacheHttpClientTimingInstrumentationVerificationSuite extends HttpClientT
     }
 
     @Override
-    void sendGetRequest(WireMockRuntimeInfo wmRuntimeInfo, String path) {
+    void sendHttpRequest(HttpMethod method, URI baseUri, String templatedPath, String... pathVariables) {
         try {
             EntityUtils
-                    .consume(httpClient.execute(new HttpGet(wmRuntimeInfo.getHttpBaseUrl() + "/" + path)).getEntity());
+                    .consume(
+                            httpClient
+                                    .execute(makeRequest(method,
+                                            URI.create(
+                                                    baseUri + substitutePathVariables(templatedPath, pathVariables))))
+                                    .getEntity());
         }
         catch (IOException e) {
             throw new RuntimeException(e);
+        }
+    }
+
+    private HttpUriRequest makeRequest(HttpMethod method, URI uri) {
+        switch (method) {
+            case POST:
+                return new HttpPost(uri);
+            default:
+                return new HttpGet(uri);
         }
     }
 

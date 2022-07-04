@@ -15,13 +15,13 @@
  */
 package io.micrometer.core.instrument;
 
-import com.github.tomakehurst.wiremock.junit5.WireMockRuntimeInfo;
 import io.micrometer.core.instrument.binder.okhttp3.OkHttpMetricsEventListener;
 import okhttp3.OkHttpClient;
 import okhttp3.Request;
 import okhttp3.Response;
 
 import java.io.IOException;
+import java.net.URI;
 
 class OkHttpClientTimingInstrumentationVerificationSuite extends HttpClientTimingInstrumentationVerificationSuite {
 
@@ -29,9 +29,10 @@ class OkHttpClientTimingInstrumentationVerificationSuite extends HttpClientTimin
             .eventListener(OkHttpMetricsEventListener.builder(getRegistry(), timerName()).build()).build();
 
     @Override
-    void sendGetRequest(WireMockRuntimeInfo wmRuntimeInfo, String path) {
-        Request request = new Request.Builder().url(wmRuntimeInfo.getHttpBaseUrl() + "/" + path).build();
-        try (Response response = httpClient.newCall(request).execute()) {
+    void sendHttpRequest(HttpMethod method, URI baseUri, String templatedPath, String... pathVariables) {
+        Request request = new Request.Builder().method(method.name(), null)
+                .url(baseUri + substitutePathVariables(templatedPath, pathVariables)).build();
+        try (Response ignored = httpClient.newCall(request).execute()) {
         }
         catch (IOException e) {
             throw new RuntimeException(e);

@@ -15,10 +15,11 @@
  */
 package io.micrometer.core.instrument;
 
-import com.github.tomakehurst.wiremock.junit5.WireMockRuntimeInfo;
 import io.micrometer.core.instrument.binder.jetty.JettyClientMetrics;
 import org.eclipse.jetty.client.HttpClient;
 import org.junit.jupiter.api.BeforeEach;
+
+import java.net.URI;
 
 class JettyClientTimingInstrumentationVerificationSuite extends HttpClientTimingInstrumentationVerificationSuite {
 
@@ -37,9 +38,16 @@ class JettyClientTimingInstrumentationVerificationSuite extends HttpClientTiming
     }
 
     @Override
-    void sendGetRequest(WireMockRuntimeInfo wmRuntimeInfo, String path) {
+    void sendHttpRequest(HttpMethod method, URI baseUri, String templatedPath, String... pathVariables) {
         try {
-            httpClient.GET(wmRuntimeInfo.getHttpBaseUrl() + "/" + path);
+            switch (method) {
+                case GET:
+                    httpClient.GET(baseUri + substitutePathVariables(templatedPath, pathVariables));
+                    break;
+                case POST:
+                    httpClient.POST(baseUri + substitutePathVariables(templatedPath, pathVariables));
+                    break;
+            }
             httpClient.stop();
         }
         catch (Exception e) {

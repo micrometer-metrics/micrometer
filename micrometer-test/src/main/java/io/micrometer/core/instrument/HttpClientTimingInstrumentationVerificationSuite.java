@@ -19,6 +19,7 @@ import com.github.tomakehurst.wiremock.junit5.WireMockRuntimeInfo;
 import com.github.tomakehurst.wiremock.junit5.WireMockTest;
 import org.junit.jupiter.api.Test;
 
+import java.net.URI;
 import java.util.concurrent.TimeUnit;
 
 import static com.github.tomakehurst.wiremock.client.WireMock.*;
@@ -33,6 +34,12 @@ import static org.assertj.core.api.Assertions.assertThat;
 @WireMockTest
 public abstract class HttpClientTimingInstrumentationVerificationSuite extends InstrumentationVerificationSuite {
 
+    enum HttpMethod {
+
+        GET, POST;
+
+    }
+
     /**
      * A default is provided that should be preferred by new instrumentations, but
      * existing instrumentations that use a different value to maintain backwards
@@ -44,18 +51,48 @@ public abstract class HttpClientTimingInstrumentationVerificationSuite extends I
     }
 
     /**
-     * Send a GET request using the instrumented HTTP client to the given path on the
-     * locally running WireMock server.
-     * @param wmRuntimeInfo used to get the address/port info of where to send the request
-     * @param path the path portion of the URL after the host name and a forward slash
+     * Send an HTTP request using the instrumented HTTP client to the given base URL and
+     * path on the locally running WireMock server. The templated path should contain path
+     * variables surrounded by curly brackets to be substituted. For example, for the full
+     * templated URL {@literal http://localhost:8080/cart/{cartId}} the baseUrl would be
+     * {@literal http://localhost:8080}, the templatedPath would be
+     * {@literal /cart/{cartId}}. One string pathVariables argument is expected for
+     * substituting the cartId path variable. The number of pathVariables arguments SHOULD
+     * exactly match the number of path variables in the templatedPath.
+     * @param method http method to use to send the request
+     * @param baseUrl portion of the URL before the path where to send the request
+     * @param templatedPath the path portion of the URL after the baseUrl, starting with a
+     * forward slash, and optionally containing path variable placeholders
+     * @param pathVariables optional variables to substitute into the templatedPath
      */
-    abstract void sendGetRequest(WireMockRuntimeInfo wmRuntimeInfo, String path);
+    abstract void sendHttpRequest(HttpMethod method, URI baseUrl, String templatedPath, String... pathVariables);
+
+    /**
+     * Convenience method provided to substitute the template placeholders for the
+     * provided path variables. The number of pathVariables argument SHOULD match the
+     * number of placeholders in the templatedPath.
+     * @param templatedPath a URL path optionally containing placeholders in curly
+     * brackets
+     * @param pathVariables path variable values for which placeholders should be
+     * substituted
+     * @return path string with substitutions, if any, performed
+     */
+    protected String substitutePathVariables(String templatedPath, String... pathVariables) {
+        if (pathVariables.length == 0) {
+            return templatedPath;
+        }
+        String substituted = templatedPath;
+        for (String substitution : pathVariables) {
+            substituted = substituted.replaceFirst("\\{.*?}", substitution);
+        }
+        return substituted;
+    }
 
     @Test
     void successful(WireMockRuntimeInfo wmRuntimeInfo) {
         stubFor(get(anyUrl()).willReturn(ok()));
 
-        sendGetRequest(wmRuntimeInfo, "");
+        sendHttpRequest(HttpMethod.GET, URI.create(wmRuntimeInfo.getHttpBaseUrl()), "");
 
         Timer timer = getRegistry().get(timerName()).tags("method", "GET", "status", "200").timer();
         assertThat(timer.count()).isEqualTo(1);
@@ -66,7 +103,7 @@ public abstract class HttpClientTimingInstrumentationVerificationSuite extends I
     void notFoundResponse(WireMockRuntimeInfo wmRuntimeInfo) {
         stubFor(get(anyUrl()).willReturn(notFound()));
 
-        sendGetRequest(wmRuntimeInfo, "notFound");
+        sendHttpRequest(HttpMethod.GET, URI.create(wmRuntimeInfo.getHttpBaseUrl()), "/notFound");
 
         Timer timer = getRegistry().get(timerName()).tags("method", "GET", "status", "404").timer();
         assertThat(timer.count()).isEqualTo(1);
@@ -77,7 +114,7 @@ public abstract class HttpClientTimingInstrumentationVerificationSuite extends I
     void badRequestResponse(WireMockRuntimeInfo wmRuntimeInfo) {
         stubFor(get(anyUrl()).willReturn(badRequest()));
 
-        sendGetRequest(wmRuntimeInfo, "");
+        sendHttpRequest(HttpMethod.GET, URI.create(wmRuntimeInfo.getHttpBaseUrl()), "");
 
         Timer timer = getRegistry().get(timerName()).tags("method", "GET", "status", "400").timer();
         assertThat(timer.count()).isEqualTo(1);
