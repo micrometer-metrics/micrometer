@@ -28,8 +28,8 @@ import static org.assertj.core.api.Assertions.assertThat;
 /**
  * Test suite for HTTP client timing instrumentation that verifies the expected metrics
  * are registered and recorded after different scenarios. Use this suite to ensure that
- * your instrumentation has the expected naming and tags. WireMock is used as an HTTP
- * server to receive real requests from an instrumented HTTP client.
+ * your instrumentation has the expected naming and tags. A locally running server is used
+ * to receive real requests from an instrumented HTTP client.
  */
 @WireMockTest
 public abstract class HttpClientTimingInstrumentationVerificationSuite extends InstrumentationVerificationSuite {
@@ -41,9 +41,9 @@ public abstract class HttpClientTimingInstrumentationVerificationSuite extends I
     }
 
     /**
-     * A default is provided that should be preferred by new instrumentations, but
-     * existing instrumentations that use a different value to maintain backwards
-     * compatibility may override this method to run tests with a different name.
+     * A default is provided that should be preferred by new instrumentations. Existing
+     * instrumentations that use a different value to maintain backwards compatibility may
+     * override this method to run tests with a different name used in assertions.
      * @return name of the meter timing http client requests
      */
     protected String timerName() {
@@ -52,7 +52,7 @@ public abstract class HttpClientTimingInstrumentationVerificationSuite extends I
 
     /**
      * Send an HTTP request using the instrumented HTTP client to the given base URL and
-     * path on the locally running WireMock server. The templated path should contain path
+     * path on the locally running server. The templated path should contain path
      * variables surrounded by curly brackets to be substituted. For example, for the full
      * templated URL {@literal http://localhost:8080/cart/{cartId}} the baseUrl would be
      * {@literal http://localhost:8080}, the templatedPath would be
