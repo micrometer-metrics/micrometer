@@ -111,17 +111,21 @@ public interface Observation {
      * Creates but <b>does not start</b> an {@link Observation}. Remember to call
      * {@link Observation#start()} when you want the measurements to start. When no
      * registry is passed or observation is not applicable will return a no-op
-     * observation. Allows to set a custom {@link ObservationConvention} and requires
-     * to provide a default one if a neither a custom nor a pre-configured one (via {@link ObservationRegistry.ObservationConfig#getObservationConvention(Context, ObservationConvention)}) was found.
+     * observation. Allows to set a custom {@link ObservationConvention} and requires to
+     * provide a default one if a neither a custom nor a pre-configured one (via
+     * {@link ObservationRegistry.ObservationConfig#getObservationConvention(Context, ObservationConvention)})
+     * was found.
      * @param <T> type of context
      * @param registry observation registry
      * @param context the observation context
-     * @param customConvention custom convention. If {@code null}, the default one will be picked
-     * @param defaultConvention default convention when no custom convention was passed, nor a configured one was found
+     * @param customConvention custom convention. If {@code null}, the default one will be
+     * picked
+     * @param defaultConvention default convention when no custom convention was passed,
+     * nor a configured one was found
      * @return created but not started observation
      */
-    static <T extends Observation.Context> Observation createNotStarted(@NonNull ObservationRegistry registry, @NonNull T context,
-            @Nullable Observation.ObservationConvention<T> customConvention,
+    static <T extends Observation.Context> Observation createNotStarted(@NonNull ObservationRegistry registry,
+            @NonNull T context, @Nullable Observation.ObservationConvention<T> customConvention,
             @NonNull Observation.ObservationConvention<T> defaultConvention) {
         Observation.ObservationConvention<T> convention;
         if (customConvention != null) {
@@ -158,21 +162,25 @@ public interface Observation {
     }
 
     /**
-     * Creates and starts an {@link Observation}. When no
-     * registry is passed or observation is not applicable will return a no-op
-     * observation. Allows to set a custom {@link ObservationConvention} and requires
-     * to provide a default one if a neither a custom nor a pre-configured one (via {@link ObservationRegistry.ObservationConfig#getObservationConvention(Context, ObservationConvention)}) was found.
+     * Creates and starts an {@link Observation}. When no registry is passed or
+     * observation is not applicable will return a no-op observation. Allows to set a
+     * custom {@link ObservationConvention} and requires to provide a default one if a
+     * neither a custom nor a pre-configured one (via
+     * {@link ObservationRegistry.ObservationConfig#getObservationConvention(Context, ObservationConvention)})
+     * was found.
      * @param <T> type of context
      * @param registry observation registry
      * @param context the observation context
-     * @param customConvention custom convention. If {@code null}, the default one will be picked
-     * @param defaultConvention default convention when no custom convention was passed, nor a configured one was found
+     * @param customConvention custom convention. If {@code null}, the default one will be
+     * picked
+     * @param defaultConvention default convention when no custom convention was passed,
+     * nor a configured one was found
      * @return started observation
      */
     static <T extends Observation.Context> Observation start(@NonNull ObservationRegistry registry, @NonNull T context,
             @Nullable Observation.ObservationConvention<T> customConvention,
             @NonNull Observation.ObservationConvention<T> defaultConvention) {
-       return createNotStarted(registry, context, customConvention, defaultConvention).start();
+        return createNotStarted(registry, context, customConvention, defaultConvention).start();
     }
 
     /**

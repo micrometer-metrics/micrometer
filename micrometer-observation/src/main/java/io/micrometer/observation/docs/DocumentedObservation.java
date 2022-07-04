@@ -56,8 +56,8 @@ public interface DocumentedObservation {
     KeyName[] EMPTY = new KeyName[0];
 
     /**
-     * Default technical name (e.g metric name). You can set the name either by this method or
-     * {@link #getDefaultConvention()}. You can't use both.
+     * Default technical name (e.g metric name). You can set the name either by this
+     * method or {@link #getDefaultConvention()}. You can't use both.
      * @return name
      */
     default String getName() {
@@ -65,8 +65,8 @@ public interface DocumentedObservation {
     }
 
     /**
-     *  Default naming convention (sets a technical name and key values). You can set the name either by this method or
-     * {@link #getName()} ()}. You can't use both.
+     * Default naming convention (sets a technical name and key values). You can set the
+     * name either by this method or {@link #getName()} ()}. You can't use both.
      * @return default naming convention
      */
     default Class<? extends Observation.ObservationConvention<? extends Observation.Context>> getDefaultConvention() {
@@ -126,21 +126,35 @@ public interface DocumentedObservation {
     }
 
     /**
-     * Creates an {@link Observation} for the given {@link Observation.ObservationConvention}. You need to manually start it.
+     * Creates an {@link Observation} for the given
+     * {@link Observation.ObservationConvention}. You need to manually start it.
      * @param registry observation registry
      * @param context observation context
-     * @param customConvention convention that (if not {@code null}) will override any pre-configured conventions
-     * @param defaultConvention default convention that will be picked if there was neither custom convention nor a pre-configured one via {@link ObservationRegistry.ObservationConfig#observationConvention(Observation.ObservationConvention[])}
+     * @param customConvention convention that (if not {@code null}) will override any
+     * pre-configured conventions
+     * @param defaultConvention default convention that will be picked if there was
+     * neither custom convention nor a pre-configured one via
+     * {@link ObservationRegistry.ObservationConfig#observationConvention(Observation.ObservationConvention[])}
      * @return observation
      */
-    default <T extends Observation.Context> Observation observation(ObservationRegistry registry, T context, @Nullable Observation.ObservationConvention<T> customConvention, @NonNull Observation.ObservationConvention<T> defaultConvention) {
+    default <T extends Observation.Context> Observation observation(ObservationRegistry registry, T context,
+            @Nullable Observation.ObservationConvention<T> customConvention,
+            @NonNull Observation.ObservationConvention<T> defaultConvention) {
         if (getDefaultConvention() == null) {
-            throw new IllegalStateException("You've decided to use convention based naming yet this observation [" + getClass() + "] has not defined any default convention");
+            throw new IllegalStateException("You've decided to use convention based naming yet this observation ["
+                    + getClass() + "] has not defined any default convention");
         }
-        else if (!getDefaultConvention().isAssignableFrom(Objects.requireNonNull(defaultConvention, "You have not provided a default convention in the Observation factory method").getClass())) {
-            throw new IllegalArgumentException("Observation [" + getClass() + "] defined default convention to be of type [" + getDefaultConvention() + "] but you have provided an incompatible one of type [" + defaultConvention.getClass() + "]");
+        else if (!getDefaultConvention()
+                .isAssignableFrom(Objects
+                        .requireNonNull(defaultConvention,
+                                "You have not provided a default convention in the Observation factory method")
+                        .getClass())) {
+            throw new IllegalArgumentException("Observation [" + getClass()
+                    + "] defined default convention to be of type [" + getDefaultConvention()
+                    + "] but you have provided an incompatible one of type [" + defaultConvention.getClass() + "]");
         }
-        return Observation.createNotStarted(registry, context, customConvention, defaultConvention).contextualName(getContextualName());
+        return Observation.createNotStarted(registry, context, customConvention, defaultConvention)
+                .contextualName(getContextualName());
     }
 
     /**
@@ -160,6 +174,23 @@ public interface DocumentedObservation {
      */
     default Observation start(ObservationRegistry registry, Observation.Context context) {
         return observation(registry, context).start();
+    }
+
+    /**
+     * Creates and starts an {@link Observation}.
+     * @param registry observation registry
+     * @param context observation context
+     * @param customConvention convention that (if not {@code null}) will override any
+     * pre-configured conventions
+     * @param defaultConvention default convention that will be picked if there was
+     * neither custom convention nor a pre-configured one via
+     * {@link ObservationRegistry.ObservationConfig#observationConvention(Observation.ObservationConvention[])}
+     * @return observation
+     */
+    default <T extends Observation.Context> Observation start(ObservationRegistry registry, T context,
+            @Nullable Observation.ObservationConvention<T> customConvention,
+            @NonNull Observation.ObservationConvention<T> defaultConvention) {
+        return observation(registry, context, customConvention, defaultConvention).start();
     }
 
 }

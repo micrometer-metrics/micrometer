@@ -29,27 +29,28 @@ class DocumentedObservationTests {
     void iseShouldBeThrownWhenDocumentedObservationHasNotOverriddenDefaultConvention() {
         ObservationRegistry registry = observationRegistry();
 
-        thenThrownBy(() -> TestConventionObservation.NOT_OVERRIDDEN_METHODS.observation(registry, new Observation.Context(), null, null))
-                .isInstanceOf(IllegalStateException.class)
-                .hasMessageContaining("You've decided to use convention based naming yet this observation");
+        thenThrownBy(() -> TestConventionObservation.NOT_OVERRIDDEN_METHODS.observation(registry,
+                new Observation.Context(), null, null)).isInstanceOf(IllegalStateException.class)
+                        .hasMessageContaining("You've decided to use convention based naming yet this observation");
     }
 
     @Test
     void npeShouldBeThrownWhenDocumentedObservationHasOverriddenDefaultConventionButDefaultConventionWasNotPassedToTheFactoryMethod() {
         ObservationRegistry registry = observationRegistry();
 
-        thenThrownBy(() -> TestConventionObservation.OVERRIDDEN.observation(registry, new Observation.Context(), null, null))
-                .isInstanceOf(NullPointerException.class)
-                .hasMessageContaining("You have not provided a default convention in the Observation factory method");
+        thenThrownBy(
+                () -> TestConventionObservation.OVERRIDDEN.observation(registry, new Observation.Context(), null, null))
+                        .isInstanceOf(NullPointerException.class).hasMessageContaining(
+                                "You have not provided a default convention in the Observation factory method");
     }
 
     @Test
     void iaeShouldBeThrownWhenDocumentedObservationHasOverriddenDefaultConventionButDefaultConventionIsNotOfProperType() {
         ObservationRegistry registry = observationRegistry();
 
-        thenThrownBy(() -> TestConventionObservation.OVERRIDDEN.observation(registry, new Observation.Context(), null, new SecondObservationConvention()))
-                .isInstanceOf(IllegalArgumentException.class)
-                .hasMessageContaining("but you have provided an incompatible one of type");
+        thenThrownBy(() -> TestConventionObservation.OVERRIDDEN.observation(registry, new Observation.Context(), null,
+                new SecondObservationConvention())).isInstanceOf(IllegalArgumentException.class)
+                        .hasMessageContaining("but you have provided an incompatible one of type");
     }
 
     @Test
@@ -57,7 +58,8 @@ class DocumentedObservationTests {
         ObservationRegistry registry = observationRegistry();
         Observation.Context context = new Observation.Context();
 
-        TestConventionObservation.OVERRIDDEN.observation(registry, context, null, new ThirdObservationConvention()).start().stop();
+        TestConventionObservation.OVERRIDDEN.observation(registry, context, null, new ThirdObservationConvention())
+                .start().stop();
 
         then(context.getName()).isEqualTo("three");
         then(context.getContextualName()).isEqualTo("contextual");
@@ -72,6 +74,7 @@ class DocumentedObservationTests {
     }
 
     enum TestConventionObservation implements DocumentedObservation {
+
         NOT_OVERRIDDEN_METHODS {
 
         },
@@ -87,6 +90,7 @@ class DocumentedObservationTests {
                 return FirstObservationConvention.class;
             }
         }
+
     }
 
     static class FirstObservationConvention implements Observation.ObservationConvention<Observation.Context> {
@@ -100,6 +104,7 @@ class DocumentedObservationTests {
         public boolean supportsContext(Observation.Context context) {
             return true;
         }
+
     }
 
     static class SecondObservationConvention implements Observation.ObservationConvention<Observation.Context> {
@@ -113,6 +118,7 @@ class DocumentedObservationTests {
         public boolean supportsContext(Observation.Context context) {
             return true;
         }
+
     }
 
     static class ThirdObservationConvention extends FirstObservationConvention {
@@ -136,5 +142,7 @@ class DocumentedObservationTests {
         public boolean supportsContext(Observation.Context context) {
             return true;
         }
+
     }
+
 }
