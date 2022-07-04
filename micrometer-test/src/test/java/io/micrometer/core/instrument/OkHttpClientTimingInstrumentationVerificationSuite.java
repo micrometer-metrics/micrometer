@@ -31,7 +31,8 @@ class OkHttpClientTimingInstrumentationVerificationSuite extends HttpClientTimin
     @Override
     void sendHttpRequest(HttpMethod method, URI baseUri, String templatedPath, String... pathVariables) {
         Request request = new Request.Builder().method(method.name(), null)
-                .url(baseUri + substitutePathVariables(templatedPath, pathVariables)).build();
+                .url(baseUri + substitutePathVariables(templatedPath, pathVariables))
+                .header(OkHttpMetricsEventListener.URI_PATTERN, templatedPath).build();
         try (Response ignored = httpClient.newCall(request).execute()) {
         }
         catch (IOException e) {

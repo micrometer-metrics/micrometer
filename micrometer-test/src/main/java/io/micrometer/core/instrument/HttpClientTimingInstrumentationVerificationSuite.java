@@ -89,34 +89,41 @@ public abstract class HttpClientTimingInstrumentationVerificationSuite extends I
     }
 
     @Test
-    void successful(WireMockRuntimeInfo wmRuntimeInfo) {
+    void getTemplatedPath(WireMockRuntimeInfo wmRuntimeInfo) {
         stubFor(get(anyUrl()).willReturn(ok()));
 
-        sendHttpRequest(HttpMethod.GET, URI.create(wmRuntimeInfo.getHttpBaseUrl()), "");
+        String templatedPath = "/customers/{customerId}/carts/{cartId}";
+        sendHttpRequest(HttpMethod.GET, URI.create(wmRuntimeInfo.getHttpBaseUrl()), templatedPath, "112", "5");
 
-        Timer timer = getRegistry().get(timerName()).tags("method", "GET", "status", "200").timer();
+        Timer timer = getRegistry().get(timerName()).tags("method", "GET", "status", "200", "uri", templatedPath)
+                .timer();
         assertThat(timer.count()).isEqualTo(1);
         assertThat(timer.totalTime(TimeUnit.NANOSECONDS)).isPositive();
     }
 
     @Test
-    void notFoundResponse(WireMockRuntimeInfo wmRuntimeInfo) {
+    void unmappedUrisAreCardinalityLimited(WireMockRuntimeInfo wmRuntimeInfo) {
         stubFor(get(anyUrl()).willReturn(notFound()));
 
-        sendHttpRequest(HttpMethod.GET, URI.create(wmRuntimeInfo.getHttpBaseUrl()), "/notFound");
+        String templatedPath = "/notFound404";
+        sendHttpRequest(HttpMethod.GET, URI.create(wmRuntimeInfo.getHttpBaseUrl()), templatedPath);
 
         Timer timer = getRegistry().get(timerName()).tags("method", "GET", "status", "404").timer();
+        // we should standardize on a value e.g. NOT_FOUND, but for backwards
+        // compatibility, assert is more lenient
+        assertThat(timer.getId().getTag("uri")).isNotEqualTo(templatedPath);
+
         assertThat(timer.count()).isEqualTo(1);
         assertThat(timer.totalTime(TimeUnit.NANOSECONDS)).isPositive();
     }
 
     @Test
-    void badRequestResponse(WireMockRuntimeInfo wmRuntimeInfo) {
-        stubFor(get(anyUrl()).willReturn(badRequest()));
+    void serverException(WireMockRuntimeInfo wmRuntimeInfo) {
+        stubFor(get(anyUrl()).willReturn(serverError()));
 
-        sendHttpRequest(HttpMethod.GET, URI.create(wmRuntimeInfo.getHttpBaseUrl()), "");
+        sendHttpRequest(HttpMethod.GET, URI.create(wmRuntimeInfo.getHttpBaseUrl()), "/socks");
 
-        Timer timer = getRegistry().get(timerName()).tags("method", "GET", "status", "400").timer();
+        Timer timer = getRegistry().get(timerName()).tags("method", "GET", "status", "500").timer();
         assertThat(timer.count()).isEqualTo(1);
         assertThat(timer.totalTime(TimeUnit.NANOSECONDS)).isPositive();
     }

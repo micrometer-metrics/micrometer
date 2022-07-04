@@ -32,22 +32,16 @@ class JettyClientTimingInstrumentationVerificationSuite extends HttpClientTiming
 
     @BeforeEach
     void setup() throws Exception {
-        httpClient.getRequestListeners().add(
-                JettyClientMetrics.builder(getRegistry(), result -> result.getRequest().getURI().getPath()).build());
+        httpClient.getRequestListeners().add(JettyClientMetrics
+                .builder(getRegistry(), result -> result.getRequest().getHeaders().get("URI_PATTERN")).build());
         httpClient.start();
     }
 
     @Override
     void sendHttpRequest(HttpMethod method, URI baseUri, String templatedPath, String... pathVariables) {
         try {
-            switch (method) {
-                case GET:
-                    httpClient.GET(baseUri + substitutePathVariables(templatedPath, pathVariables));
-                    break;
-                case POST:
-                    httpClient.POST(baseUri + substitutePathVariables(templatedPath, pathVariables));
-                    break;
-            }
+            httpClient.newRequest(baseUri + substitutePathVariables(templatedPath, pathVariables)).method(method.name())
+                    .header("URI_PATTERN", templatedPath).send();
             httpClient.stop();
         }
         catch (Exception e) {
