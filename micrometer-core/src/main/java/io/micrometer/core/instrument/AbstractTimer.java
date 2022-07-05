@@ -17,6 +17,7 @@ package io.micrometer.core.instrument;
 
 import io.micrometer.core.instrument.distribution.*;
 import io.micrometer.core.instrument.distribution.pause.ClockDriftPauseDetector;
+import io.micrometer.core.instrument.distribution.pause.NoPauseDetector;
 import io.micrometer.core.instrument.distribution.pause.PauseDetector;
 import io.micrometer.core.lang.Nullable;
 import org.LatencyUtils.IntervalEstimator;
@@ -101,6 +102,9 @@ public abstract class AbstractTimer extends AbstractMeter implements Timer {
     }
 
     private void initPauseDetector(PauseDetector pauseDetectorType) {
+        if (pauseDetectorType instanceof NoPauseDetector) {
+            return;
+        }
         pauseDetector = pauseDetectorCache.computeIfAbsent(pauseDetectorType, detector -> {
             if (detector instanceof ClockDriftPauseDetector) {
                 ClockDriftPauseDetector clockDriftPauseDetector = (ClockDriftPauseDetector) detector;
