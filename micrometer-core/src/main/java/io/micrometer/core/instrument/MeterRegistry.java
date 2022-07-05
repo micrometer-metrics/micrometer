@@ -25,10 +25,14 @@ import io.micrometer.core.instrument.distribution.DistributionStatisticConfig;
 import io.micrometer.core.instrument.distribution.pause.NoPauseDetector;
 import io.micrometer.core.instrument.distribution.pause.PauseDetector;
 import io.micrometer.core.instrument.noop.*;
+import io.micrometer.core.instrument.observation.TimerObservationHandler;
 import io.micrometer.core.instrument.search.MeterNotFoundException;
 import io.micrometer.core.instrument.search.RequiredSearch;
 import io.micrometer.core.instrument.search.Search;
 import io.micrometer.core.instrument.util.TimeUtils;
+import io.micrometer.observation.Observation;
+import io.micrometer.observation.ObservationHandler;
+import io.micrometer.observation.ObservationRegistry;
 
 import java.time.Duration;
 import java.util.*;
@@ -61,7 +65,7 @@ import static java.util.Objects.requireNonNull;
  * @author Tommy Ludwig
  * @author Marcin Grzejszczak
  */
-public abstract class MeterRegistry {
+public abstract class MeterRegistry implements ObservationRegistry {
 
     protected final Clock clock;
 
@@ -95,6 +99,8 @@ public abstract class MeterRegistry {
 
     private final AtomicBoolean closed = new AtomicBoolean();
 
+    private final ObservationRegistry observationRegistry;
+
     private PauseDetector pauseDetector = new NoPauseDetector();
 
     @Nullable
@@ -111,8 +117,48 @@ public abstract class MeterRegistry {
     private NamingConvention namingConvention = NamingConvention.snakeCase;
 
     protected MeterRegistry(Clock clock) {
+        this(clock, ObservationRegistry.create());
+    }
+
+    protected MeterRegistry(Clock clock, ObservationRegistry observationRegistry) {
         requireNonNull(clock);
+        requireNonNull(observationRegistry);
         this.clock = clock;
+        this.observationRegistry = observationRegistry;
+    }
+
+    /**
+     * Adds a {@link TimerObservationHandler} to the list of {@link ObservationHandler}.
+     * @return this
+     */
+    public MeterRegistry withTimerObservationHandler() {
+        this.observationRegistry.observationConfig().observationHandler(new TimerObservationHandler(this));
+        return this;
+    }
+
+    @Override
+    public Observation getCurrentObservation() {
+        return this.observationRegistry.getCurrentObservation();
+    }
+
+    @Override
+    public Observation.Scope getCurrentObservationScope() {
+        return this.observationRegistry.getCurrentObservationScope();
+    }
+
+    @Override
+    public void setCurrentObservationScope(Observation.Scope current) {
+        this.observationRegistry.setCurrentObservationScope(current);
+    }
+
+    @Override
+    public ObservationConfig observationConfig() {
+        return this.observationRegistry.observationConfig();
+    }
+
+    @Override
+    public boolean isNoop() {
+        return this.observationRegistry.isNoop();
     }
 
     /**
