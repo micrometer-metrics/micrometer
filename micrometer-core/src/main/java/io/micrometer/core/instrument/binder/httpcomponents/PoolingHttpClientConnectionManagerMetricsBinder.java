@@ -31,7 +31,11 @@ import org.apache.http.pool.ConnPoolControl;
  * {@link org.apache.http.impl.nio.conn.PoolingNHttpClientConnectionManager} for
  * asynchronous HTTP clients.
  * <p>
- * It monitors the overall connection pool state.
+ * It monitors the overall connection pool state. Usage example: <pre>{@code
+ *      PoolingHttpClientConnectionManager connectionManager = new PoolingHttpClientConnectionManager();
+ *      HttpClient httpClient = HttpClientBuilder.create().setConnectionManager(connectionManager).build();
+ *      new PoolingHttpClientConnectionManagerMetricsBinder(connectionManager, "my-pool").bindTo(registry);
+ * }</pre>
  *
  * @author Benjamin Hubert (benjamin.hubert@willhaben.at)
  * @since 1.3.0
