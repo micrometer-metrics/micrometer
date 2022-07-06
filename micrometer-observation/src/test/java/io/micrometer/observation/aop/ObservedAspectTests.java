@@ -15,14 +15,6 @@
  */
 package io.micrometer.observation.aop;
 
-import java.time.Duration;
-import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.CompletionException;
-import java.util.concurrent.CountDownLatch;
-import java.util.concurrent.ExecutionException;
-import java.util.function.Predicate;
-import java.util.function.Supplier;
-
 import io.micrometer.common.KeyValues;
 import io.micrometer.common.lang.NonNull;
 import io.micrometer.common.lang.Nullable;
@@ -33,8 +25,15 @@ import io.micrometer.observation.tck.TestObservationRegistry;
 import io.micrometer.observation.tck.TestObservationRegistryAssert;
 import org.aspectj.lang.ProceedingJoinPoint;
 import org.junit.jupiter.api.Test;
-
 import org.springframework.aop.aspectj.annotation.AspectJProxyFactory;
+
+import java.time.Duration;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.CompletionException;
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.ExecutionException;
+import java.util.function.Predicate;
+import java.util.function.Supplier;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
@@ -60,7 +59,7 @@ class ObservedAspectTests {
                 .hasNameEqualTo("test.call").hasContextualNameEqualTo("test#call")
                 .hasLowCardinalityKeyValue("abc", "123").hasLowCardinalityKeyValue("test", "42")
                 .hasLowCardinalityKeyValue("class", ObservedService.class.getName())
-                .hasLowCardinalityKeyValue("method", "call").thenThrowable().doesNotThrowAnyException();
+                .hasLowCardinalityKeyValue("method", "call").doesNotHaveError();
     }
 
     @Test
@@ -77,7 +76,7 @@ class ObservedAspectTests {
         TestObservationRegistryAssert.assertThat(registry).hasSingleObservationThat().hasBeenStopped()
                 .hasNameEqualTo("test.error").hasContextualNameEqualTo("ObservedService#error")
                 .hasLowCardinalityKeyValue("class", ObservedService.class.getName())
-                .hasLowCardinalityKeyValue("method", "error").thenThrowable().isInstanceOf(RuntimeException.class)
+                .hasLowCardinalityKeyValue("method", "error").thenError().isInstanceOf(RuntimeException.class)
                 .hasMessage("simulated").hasNoCause();
     }
 
@@ -102,7 +101,7 @@ class ObservedAspectTests {
         TestObservationRegistryAssert.assertThat(registry).hasSingleObservationThat().hasNameEqualTo("test.async")
                 .hasContextualNameEqualTo("ObservedService#async")
                 .hasLowCardinalityKeyValue("class", ObservedService.class.getName())
-                .hasLowCardinalityKeyValue("method", "async").thenThrowable().doesNotThrowAnyException();
+                .hasLowCardinalityKeyValue("method", "async").doesNotHaveError();
     }
 
     @Test
@@ -126,7 +125,7 @@ class ObservedAspectTests {
         TestObservationRegistryAssert.assertThat(registry).hasSingleObservationThat().hasNameEqualTo("test.async")
                 .hasContextualNameEqualTo("ObservedService#async")
                 .hasLowCardinalityKeyValue("class", ObservedService.class.getName())
-                .hasLowCardinalityKeyValue("method", "async").thenThrowable().isInstanceOf(CompletionException.class)
+                .hasLowCardinalityKeyValue("method", "async").thenError().isInstanceOf(CompletionException.class)
                 .rootCause().isEqualTo(simulatedException);
     }
 
@@ -175,7 +174,7 @@ class ObservedAspectTests {
                 .hasNameEqualTo("test.class").hasContextualNameEqualTo("test.class#call")
                 .hasLowCardinalityKeyValue("abc", "123").hasLowCardinalityKeyValue("test", "42")
                 .hasLowCardinalityKeyValue("class", ObservedClassLevelAnnotatedService.class.getName())
-                .hasLowCardinalityKeyValue("method", "call").thenThrowable().doesNotThrowAnyException();
+                .hasLowCardinalityKeyValue("method", "call").doesNotHaveError();
     }
 
     @Test
@@ -193,7 +192,7 @@ class ObservedAspectTests {
                 .hasNameEqualTo("test.class").hasContextualNameEqualTo("test.class#call")
                 .hasLowCardinalityKeyValue("abc", "123").hasLowCardinalityKeyValue("test", "42")
                 .hasLowCardinalityKeyValue("class", ObservedClassLevelAnnotatedService.class.getName())
-                .hasLowCardinalityKeyValue("method", "error").thenThrowable().isInstanceOf(RuntimeException.class)
+                .hasLowCardinalityKeyValue("method", "error").thenError().isInstanceOf(RuntimeException.class)
                 .hasMessage("simulated").hasNoCause();
     }
 
@@ -219,7 +218,7 @@ class ObservedAspectTests {
                 .hasContextualNameEqualTo("test.class#call").hasLowCardinalityKeyValue("abc", "123")
                 .hasLowCardinalityKeyValue("test", "42")
                 .hasLowCardinalityKeyValue("class", ObservedClassLevelAnnotatedService.class.getName())
-                .hasLowCardinalityKeyValue("method", "async").thenThrowable().doesNotThrowAnyException();
+                .hasLowCardinalityKeyValue("method", "async").doesNotHaveError();
     }
 
     @Test
@@ -244,7 +243,7 @@ class ObservedAspectTests {
                 .hasContextualNameEqualTo("test.class#call").hasLowCardinalityKeyValue("abc", "123")
                 .hasLowCardinalityKeyValue("test", "42")
                 .hasLowCardinalityKeyValue("class", ObservedClassLevelAnnotatedService.class.getName())
-                .hasLowCardinalityKeyValue("method", "async").thenThrowable().isInstanceOf(CompletionException.class)
+                .hasLowCardinalityKeyValue("method", "async").thenError().isInstanceOf(CompletionException.class)
                 .rootCause().isEqualTo(simulatedException);
     }
 
