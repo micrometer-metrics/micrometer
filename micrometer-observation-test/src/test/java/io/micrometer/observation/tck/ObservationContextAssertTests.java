@@ -286,8 +286,8 @@ class ObservationContextAssertTests {
         Observation observation = Observation.start("foo", context, registry);
         observation.error(expected);
 
-        thenThrownBy(() -> assertThat(context).doesNotHaveError())
-                .hasMessage("Observation should not have an error, found <java.lang.IllegalStateException: test>");
+        thenThrownBy(() -> assertThat(context).doesNotHaveError()).hasMessageContaining(
+                "Observation should not have an error, found <java.lang.IllegalStateException: test>");
     }
 
     @Test
@@ -304,7 +304,7 @@ class ObservationContextAssertTests {
     @Test
     void should_throw_when_has_error_missing() {
         thenThrownBy(() -> assertThat(context).hasError())
-                .hasMessage("Observation should have an error, but none was found");
+                .hasMessageContaining("Observation should have an error, but none was found");
     }
 
     @Test
@@ -323,7 +323,7 @@ class ObservationContextAssertTests {
         Throwable expected = new IllegalStateException("test");
 
         thenThrownBy(() -> assertThat(context).hasError(expected))
-                .hasMessage("Observation should have an error, but none was found");
+                .hasMessageContaining("Observation should have an error, but none was found");
     }
 
     @Test
@@ -335,8 +335,8 @@ class ObservationContextAssertTests {
         Observation observation = Observation.start("foo", context, registry);
         observation.error(actual);
 
-        thenThrownBy(() -> assertThat(context).hasError(expected))
-                .hasMessage("Observation expected to have error <java.lang.IllegalStateException: test expected>,"
+        thenThrownBy(() -> assertThat(context).hasError(expected)).hasMessageContaining(
+                "Observation expected to have error <java.lang.IllegalStateException: test expected>,"
                         + " but has <java.lang.IllegalArgumentException: test actual>");
     }
 
