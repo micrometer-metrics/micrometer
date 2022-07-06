@@ -275,19 +275,19 @@ public class ObservationContextAssert<SELF extends ObservationContextAssert<SELF
     }
 
     public SELF doesNotHaveError() {
-        thenError().as("Observation should not have an error, found <%s>", this.actual.getError().orElse(null))
-                .isNull();
+        thenError().withFailMessage("Observation should not have an error, found <%s>",
+                this.actual.getError().orElse(null)).isNull();
         return (SELF) this;
     }
 
     public SELF hasError() {
-        thenError().as("Observation should have an error, but none was found").isNotNull();
+        thenError().withFailMessage("Observation should have an error, but none was found").isNotNull();
         return (SELF) this;
     }
 
     public SELF hasError(Throwable expectedError) {
         hasError();
-        thenError().as("Observation expected to have error <%s>, but has <%s>", expectedError,
+        thenError().withFailMessage("Observation expected to have error <%s>, but has <%s>", expectedError,
                 this.actual.getError().orElse(null)).isEqualTo(expectedError);
         return (SELF) this;
     }
