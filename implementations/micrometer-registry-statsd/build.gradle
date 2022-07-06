@@ -45,6 +45,7 @@ shadowJar {
         from "$rootDir/LICENSE"
         from "$rootDir/NOTICE"
     }
+    mergeServiceFiles()
 }
 
 // The Nebula Publishing plugin automatically configures the publication of the shadow jar but
