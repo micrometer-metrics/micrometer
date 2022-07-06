@@ -88,6 +88,8 @@ public class OkHttpMetricsEventListener extends EventListener {
 
     private final LegacyOkHttpMetricsEventListener legacyListener;
 
+    private final DefaultOkHttpObservationConvention defaultConvention;
+
     protected OkHttpMetricsEventListener(MeterRegistry registry, String requestsMetricName,
             Function<Request, String> urlMapper, Iterable<Tag> extraTags,
             Iterable<BiFunction<Request, Response, Tag>> contextSpecificTags) {
@@ -117,6 +119,7 @@ public class OkHttpMetricsEventListener extends EventListener {
         this.unknownRequestTags = unknownRequestTags;
         this.legacyListener = new LegacyOkHttpMetricsEventListener(registry, requestsMetricName, urlMapper, extraTags,
                 contextSpecificTags, unknownRequestTags, includeHostTag);
+        this.defaultConvention = new DefaultOkHttpObservationConvention(requestsMetricName);
     }
 
     public static Builder builder(MeterRegistry registry, String name) {
@@ -173,7 +176,7 @@ public class OkHttpMetricsEventListener extends EventListener {
             });
         }
         Observation observation = OkHttpDocumentedObservation.DEFAULT.start(this.observationRegistry, okHttpContext,
-                this.observationConvention, new DefaultOkHttpObservationConvention(requestsMetricName));
+                this.observationConvention, this.defaultConvention);
         callState.setContext(okHttpContext);
         callState.setObservation(observation);
         this.callState.put(call, callState);
