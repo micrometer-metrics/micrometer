@@ -300,12 +300,12 @@ public class ObservationContextAssert<SELF extends ObservationContextAssert<SELF
         return (SELF) this;
     }
 
-    public ObservationContextAssertReturningThrowableAssert assertThatThrowable() {
+    public ObservationContextAssertReturningThrowableAssert assertThatError() {
         return new ObservationContextAssertReturningThrowableAssert(actual.getError().orElse(null), this);
     }
 
-    public ObservationContextAssertReturningThrowableAssert thenThrowable() {
-        return assertThatThrowable();
+    public ObservationContextAssertReturningThrowableAssert thenError() {
+        return assertThatError();
     }
 
     public static class ObservationContextAssertReturningThrowableAssert
