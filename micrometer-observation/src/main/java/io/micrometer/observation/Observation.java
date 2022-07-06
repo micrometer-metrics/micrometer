@@ -100,11 +100,42 @@ public interface Observation {
      */
     static Observation createNotStarted(String name, @Nullable Context context,
             @Nullable ObservationRegistry registry) {
-        if (registry == null || registry.isNoop() || !registry.observationConfig().isObservationEnabled(name, context)
-                || registry.observationConfig().getObservationHandlers().isEmpty()) {
+        if (registry == null || registry.isNoop()
+                || !registry.observationConfig().isObservationEnabled(name, context)) {
             return NoopObservation.INSTANCE;
         }
         return new SimpleObservation(name, registry, context == null ? new Context() : context);
+    }
+
+    /**
+     * Creates but <b>does not start</b> an {@link Observation}. Remember to call
+     * {@link Observation#start()} when you want the measurements to start. When no
+     * registry is passed or observation is not applicable will return a no-op
+     * observation. Allows to set a custom {@link ObservationConvention} and requires to
+     * provide a default one if a neither a custom nor a pre-configured one (via
+     * {@link ObservationRegistry.ObservationConfig#getObservationConvention(Context, ObservationConvention)})
+     * was found.
+     * @param <T> type of context
+     * @param customConvention custom convention. If {@code null}, the default one will be
+     * picked
+     * @param defaultConvention default convention when no custom convention was passed,
+     * nor a configured one was found
+     * @param context the observation context
+     * @param registry observation registry
+     * @return created but not started observation
+     */
+    static <T extends Observation.Context> Observation createNotStarted(
+            @Nullable Observation.ObservationConvention<T> customConvention,
+            @NonNull Observation.ObservationConvention<T> defaultConvention, @NonNull T context,
+            @NonNull ObservationRegistry registry) {
+        Observation.ObservationConvention<T> convention;
+        if (customConvention != null) {
+            convention = customConvention;
+        }
+        else {
+            convention = registry.observationConfig().getObservationConvention(context, defaultConvention);
+        }
+        return Observation.createNotStarted(convention, context, registry);
     }
 
     /**
@@ -129,6 +160,29 @@ public interface Observation {
     static Observation start(ObservationConvention<?> observationConvention, @Nullable Context context,
             @Nullable ObservationRegistry registry) {
         return createNotStarted(observationConvention, context, registry).start();
+    }
+
+    /**
+     * Creates and starts an {@link Observation}. When no registry is passed or
+     * observation is not applicable will return a no-op observation. Allows to set a
+     * custom {@link ObservationConvention} and requires to provide a default one if a
+     * neither a custom nor a pre-configured one (via
+     * {@link ObservationRegistry.ObservationConfig#getObservationConvention(Context, ObservationConvention)})
+     * was found.
+     * @param <T> type of context
+     * @param registry observation registry
+     * @param context the observation context
+     * @param customConvention custom convention. If {@code null}, the default one will be
+     * picked
+     * @param defaultConvention default convention when no custom convention was passed,
+     * nor a configured one was found
+     * @return started observation
+     */
+    static <T extends Observation.Context> Observation start(
+            @Nullable Observation.ObservationConvention<T> customConvention,
+            @NonNull Observation.ObservationConvention<T> defaultConvention, @NonNull T context,
+            @NonNull ObservationRegistry registry) {
+        return createNotStarted(customConvention, defaultConvention, context, registry).start();
     }
 
     /**
@@ -159,7 +213,6 @@ public interface Observation {
             @Nullable ObservationRegistry registry) {
         if (registry == null || registry.isNoop()
                 || !registry.observationConfig().isObservationEnabled(observationConvention.getName(), context)
-                || registry.observationConfig().getObservationHandlers().isEmpty()
                 || observationConvention == NoopObservationConvention.INSTANCE) {
             return NoopObservation.INSTANCE;
         }

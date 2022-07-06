@@ -148,8 +148,8 @@ public interface ObservationRegistry {
         }
 
         /**
-         * Register a {@link Observation.ObservationConvention}.
-         * @param observationConvention observation convention
+         * Register {@link Observation.ObservationConvention observation conventions}.
+         * @param observationConvention observation conventions
          * @return This configuration instance
          */
         public ObservationConfig observationConvention(Observation.ObservationConvention<?>... observationConvention) {

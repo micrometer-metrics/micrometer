@@ -16,10 +16,7 @@
 package io.micrometer.core.instrument.binder.okhttp3;
 
 import io.micrometer.common.docs.KeyName;
-import io.micrometer.common.lang.NonNull;
-import io.micrometer.common.lang.Nullable;
 import io.micrometer.observation.Observation;
-import io.micrometer.observation.ObservationRegistry;
 import io.micrometer.observation.docs.DocumentedObservation;
 
 /**
@@ -35,8 +32,8 @@ public enum OkHttpDocumentedObservation implements DocumentedObservation {
      */
     DEFAULT {
         @Override
-        public String getName() {
-            return "%s";
+        public Class<? extends Observation.ObservationConvention<? extends Observation.Context>> getDefaultConvention() {
+            return DefaultOkHttpObservationConvention.class;
         }
 
         @Override
@@ -44,33 +41,6 @@ public enum OkHttpDocumentedObservation implements DocumentedObservation {
             return OkHttpLegacyLowCardinalityTags.values();
         }
     };
-
-    /**
-     * Creates an {@link OkHttpDocumentedObservation} depending on the configuration.
-     * @param registry observation registry
-     * @param okHttpContext the ok http context
-     * @param requestsMetricName name of the observation
-     * @param customConvention custom convention. If {@code null}, the
-     * {@link DefaultOkHttpObservationConvention} will be used.
-     * @return a new {@link OkHttpDocumentedObservation}
-     */
-    @SuppressWarnings("unchecked")
-    static Observation of(@NonNull ObservationRegistry registry, @NonNull OkHttpContext okHttpContext,
-            @NonNull String requestsMetricName,
-            @Nullable Observation.ObservationConvention<OkHttpContext> customConvention) {
-        Observation.ObservationConvention<OkHttpContext> convention = null;
-        if (registry.isNoop()) {
-            return Observation.NOOP;
-        }
-        else if (customConvention != null) {
-            convention = customConvention;
-        }
-        else {
-            convention = registry.observationConfig().getObservationConvention(okHttpContext,
-                    new DefaultOkHttpObservationConvention(requestsMetricName));
-        }
-        return Observation.createNotStarted(convention, okHttpContext, registry);
-    }
 
     enum OkHttpLegacyLowCardinalityTags implements KeyName {
 
