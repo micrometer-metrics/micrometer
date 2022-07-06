@@ -274,6 +274,73 @@ class ObservationContextAssertTests {
     }
 
     @Test
+    void should_not_throw_when_does_not_have_error() {
+        thenNoException().isThrownBy(() -> assertThat(context).doesNotHaveError());
+    }
+
+    @Test
+    void should_throw_when_unexpected_error() {
+        Throwable expected = new IllegalStateException("test");
+
+        registry.observationConfig().observationHandler(c -> true);
+        Observation observation = Observation.start("foo", context, registry);
+        observation.error(expected);
+
+        thenThrownBy(() -> assertThat(context).doesNotHaveError())
+                .hasMessage("Observation should not have an error, found <java.lang.IllegalStateException: test>");
+    }
+
+    @Test
+    void should_not_throw_when_has_error() {
+        Throwable expected = new IllegalStateException("test");
+
+        registry.observationConfig().observationHandler(c -> true);
+        Observation observation = Observation.start("foo", context, registry);
+        observation.error(expected);
+
+        thenNoException().isThrownBy(() -> assertThat(context).hasError());
+    }
+
+    @Test
+    void should_throw_when_has_error_missing() {
+        thenThrownBy(() -> assertThat(context).hasError())
+                .hasMessage("Observation should have an error, but none was found");
+    }
+
+    @Test
+    void should_not_throw_when_has_specific_error() {
+        Throwable expected = new IllegalStateException("test");
+
+        registry.observationConfig().observationHandler(c -> true);
+        Observation observation = Observation.start("foo", context, registry);
+        observation.error(expected);
+
+        thenNoException().isThrownBy(() -> assertThat(context).hasError(expected));
+    }
+
+    @Test
+    void should_throw_when_has_specific_error_missing() {
+        Throwable expected = new IllegalStateException("test");
+
+        thenThrownBy(() -> assertThat(context).hasError(expected))
+                .hasMessage("Observation should have an error, but none was found");
+    }
+
+    @Test
+    void should_throw_when_has_specific_error_does_not_match() {
+        Throwable expected = new IllegalStateException("test expected");
+        Throwable actual = new IllegalArgumentException("test actual");
+
+        registry.observationConfig().observationHandler(c -> true);
+        Observation observation = Observation.start("foo", context, registry);
+        observation.error(actual);
+
+        thenThrownBy(() -> assertThat(context).hasError(expected))
+                .hasMessage("Observation expected to have error <java.lang.IllegalStateException: test expected>,"
+                        + " but has <java.lang.IllegalArgumentException: test actual>");
+    }
+
+    @Test
     void should_jump_to_and_back_from_throwable_assert() {
         context.setName("foo").setError(new RuntimeException("bar"));
 
