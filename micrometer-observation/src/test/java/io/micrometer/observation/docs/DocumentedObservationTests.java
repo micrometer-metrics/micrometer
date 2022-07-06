@@ -29,8 +29,8 @@ class DocumentedObservationTests {
     void iseShouldBeThrownWhenDocumentedObservationHasNotOverriddenDefaultConvention() {
         ObservationRegistry registry = observationRegistry();
 
-        thenThrownBy(() -> TestConventionObservation.NOT_OVERRIDDEN_METHODS.observation(registry,
-                new Observation.Context(), null, null)).isInstanceOf(IllegalStateException.class)
+        thenThrownBy(() -> TestConventionObservation.NOT_OVERRIDDEN_METHODS.observation(null, null,
+                new Observation.Context(), registry)).isInstanceOf(IllegalStateException.class)
                         .hasMessageContaining("You've decided to use convention based naming yet this observation");
     }
 
@@ -39,7 +39,7 @@ class DocumentedObservationTests {
         ObservationRegistry registry = observationRegistry();
 
         thenThrownBy(
-                () -> TestConventionObservation.OVERRIDDEN.observation(registry, new Observation.Context(), null, null))
+                () -> TestConventionObservation.OVERRIDDEN.observation(null, null, new Observation.Context(), registry))
                         .isInstanceOf(NullPointerException.class).hasMessageContaining(
                                 "You have not provided a default convention in the Observation factory method");
     }
@@ -48,8 +48,8 @@ class DocumentedObservationTests {
     void iaeShouldBeThrownWhenDocumentedObservationHasOverriddenDefaultConventionButDefaultConventionIsNotOfProperType() {
         ObservationRegistry registry = observationRegistry();
 
-        thenThrownBy(() -> TestConventionObservation.OVERRIDDEN.observation(registry, new Observation.Context(), null,
-                new SecondObservationConvention())).isInstanceOf(IllegalArgumentException.class)
+        thenThrownBy(() -> TestConventionObservation.OVERRIDDEN.observation(null, new SecondObservationConvention(),
+                new Observation.Context(), registry)).isInstanceOf(IllegalArgumentException.class)
                         .hasMessageContaining("but you have provided an incompatible one of type");
     }
 
@@ -58,7 +58,7 @@ class DocumentedObservationTests {
         ObservationRegistry registry = observationRegistry();
         Observation.Context context = new Observation.Context();
 
-        TestConventionObservation.OVERRIDDEN.observation(registry, context, null, new ThirdObservationConvention())
+        TestConventionObservation.OVERRIDDEN.observation(null, new ThirdObservationConvention(), context, registry)
                 .start().stop();
 
         then(context.getName()).isEqualTo("three");

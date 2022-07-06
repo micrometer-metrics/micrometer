@@ -128,18 +128,19 @@ public interface DocumentedObservation {
     /**
      * Creates an {@link Observation} for the given
      * {@link Observation.ObservationConvention}. You need to manually start it.
-     * @param registry observation registry
-     * @param context observation context
      * @param customConvention convention that (if not {@code null}) will override any
      * pre-configured conventions
      * @param defaultConvention default convention that will be picked if there was
      * neither custom convention nor a pre-configured one via
      * {@link ObservationRegistry.ObservationConfig#observationConvention(Observation.ObservationConvention[])}
+     * @param context observation context
+     * @param registry observation registry
      * @return observation
      */
-    default <T extends Observation.Context> Observation observation(ObservationRegistry registry, T context,
+    default <T extends Observation.Context> Observation observation(
             @Nullable Observation.ObservationConvention<T> customConvention,
-            @NonNull Observation.ObservationConvention<T> defaultConvention) {
+            @NonNull Observation.ObservationConvention<T> defaultConvention, @NonNull T context,
+            @NonNull ObservationRegistry registry) {
         if (getDefaultConvention() == null) {
             throw new IllegalStateException("You've decided to use convention based naming yet this observation ["
                     + getClass() + "] has not defined any default convention");
@@ -178,19 +179,20 @@ public interface DocumentedObservation {
 
     /**
      * Creates and starts an {@link Observation}.
-     * @param registry observation registry
-     * @param context observation context
      * @param customConvention convention that (if not {@code null}) will override any
      * pre-configured conventions
      * @param defaultConvention default convention that will be picked if there was
      * neither custom convention nor a pre-configured one via
      * {@link ObservationRegistry.ObservationConfig#observationConvention(Observation.ObservationConvention[])}
+     * @param context observation context
+     * @param registry observation registry
      * @return observation
      */
-    default <T extends Observation.Context> Observation start(ObservationRegistry registry, T context,
+    default <T extends Observation.Context> Observation start(
             @Nullable Observation.ObservationConvention<T> customConvention,
-            @NonNull Observation.ObservationConvention<T> defaultConvention) {
-        return observation(registry, context, customConvention, defaultConvention).start();
+            @NonNull Observation.ObservationConvention<T> defaultConvention, @NonNull T context,
+            @NonNull ObservationRegistry registry) {
+        return observation(customConvention, defaultConvention, context, registry).start();
     }
 
 }

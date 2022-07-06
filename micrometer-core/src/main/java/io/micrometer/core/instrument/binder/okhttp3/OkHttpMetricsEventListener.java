@@ -175,8 +175,8 @@ public class OkHttpMetricsEventListener extends EventListener {
                 }
             });
         }
-        Observation observation = OkHttpDocumentedObservation.DEFAULT.start(this.observationRegistry, okHttpContext,
-                this.observationConvention, this.defaultConvention);
+        Observation observation = OkHttpDocumentedObservation.DEFAULT.start(this.observationConvention,
+                this.defaultConvention, okHttpContext, this.observationRegistry);
         callState.setContext(okHttpContext);
         callState.setObservation(observation);
         this.callState.put(call, callState);
@@ -353,7 +353,7 @@ public class OkHttpMetricsEventListener extends EventListener {
 
         /**
          * Tag keys for {@link Request#tag()} or {@link Request#tag(Class)}.
-         *
+         * <p>
          * These keys will be added with {@literal UNKNOWN} values when {@link Request} is
          * {@literal null}. Note that this is required only for Prometheus as it requires
          * tag match for the same metric.
@@ -367,7 +367,7 @@ public class OkHttpMetricsEventListener extends EventListener {
 
         /**
          * Tag keys for {@link Request#tag()} or {@link Request#tag(Class)}.
-         *
+         * <p>
          * These keys will be added with {@literal UNKNOWN} values when {@link Request} is
          * {@literal null}. Note that this is required only for Prometheus as it requires
          * tag match for the same metric.
