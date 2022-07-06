@@ -1,5 +1,5 @@
 /*
- * Copyright 2013-2021 the original author or authors.
+ * Copyright 2013-2022 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,12 +18,8 @@ package io.micrometer.core.instrument.kotlin
 
 import io.micrometer.context.ContextRegistry
 import io.micrometer.observation.Observation
-import io.micrometer.observation.ObservationHandler
 import io.micrometer.observation.ObservationRegistry
-import kotlinx.coroutines.GlobalScope
-import kotlinx.coroutines.async
-import kotlinx.coroutines.launch
-import kotlinx.coroutines.runBlocking
+import kotlinx.coroutines.*
 import org.assertj.core.api.BDDAssertions.then
 import org.junit.jupiter.api.Test
 
@@ -39,9 +35,11 @@ internal class AsContextElementKtTests {
 		var observationInGlobalScopeAsync: Observation? = null
 		val asContextElement = observationRegistry.asContextElement()
 
+		@OptIn(DelicateCoroutinesApi::class)
 		GlobalScope.launch(asContextElement) {
 			observationInGlobalScopeLaunch = coroutineContext.currentObservation()
 		}
+		@OptIn(DelicateCoroutinesApi::class)
 		GlobalScope.async(asContextElement) {
 			observationInGlobalScopeAsync = coroutineContext.currentObservation()
 		}.await()
@@ -63,6 +61,5 @@ internal class AsContextElementKtTests {
 		then(element.currentObservation()).isSameAs(nextObservation)
 		inScope.close()
 	}
-
 
 }
