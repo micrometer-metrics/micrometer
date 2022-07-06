@@ -28,7 +28,7 @@ import kotlin.coroutines.CoroutineContext
  * @since 1.10.0
  */
 fun ObservationRegistry.asContextElement(): CoroutineContext {
-	return KotlinObservationContextElement(this, ContextRegistry.getInstance())
+    return KotlinObservationContextElement(this, ContextRegistry.getInstance())
 }
 
 /**
@@ -38,9 +38,9 @@ fun ObservationRegistry.asContextElement(): CoroutineContext {
  * @since 1.10.0
  */
 fun CoroutineContext.currentObservation(): Observation? {
-	val element = get(KotlinObservationContextElement.KEY)
-	if (element is KotlinObservationContextElement) {
-		return element.currentObservation
-	}
-	return null
+    val element = get(KotlinObservationContextElement.KEY)
+    if (element is KotlinObservationContextElement) {
+        return element.currentObservation
+    }
+    return null
 }

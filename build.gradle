@@ -19,6 +19,7 @@ buildscript {
         classpath 'me.champeau.gradle:japicmp-gradle-plugin:0.4.0'
         classpath 'de.undercouch:gradle-download-task:5.0.2'
         classpath 'io.spring.javaformat:spring-javaformat-gradle-plugin:0.0.34'
+        classpath 'com.diffplug.spotless:spotless-plugin-gradle:6.8.0'
 
         constraints {
             classpath('org.ow2.asm:asm:7.3.1') {
@@ -48,6 +49,7 @@ allprojects {
 subprojects {
     apply plugin: 'signing'
     apply plugin: 'io.spring.javaformat'
+    apply plugin: 'com.diffplug.spotless'
 
     if (project.name != 'micrometer-bom') {
         if (project.name.contains('samples') || project.name.contains('benchmarks')) {
@@ -182,6 +184,12 @@ subprojects {
             ext.year = Calendar.getInstance().get(Calendar.YEAR)
             skipExistingHeaders = true
             exclude '**/*.json' // comments not supported
+        }
+
+        spotless {
+            kotlin {
+                ktlint().editorConfigOverride([disabled_rules: "no-wildcard-imports"])
+            }
         }
 
         // Publish resolved versions.
