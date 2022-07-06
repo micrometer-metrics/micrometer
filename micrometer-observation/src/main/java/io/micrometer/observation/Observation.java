@@ -100,7 +100,8 @@ public interface Observation {
      */
     static Observation createNotStarted(String name, @Nullable Context context,
             @Nullable ObservationRegistry registry) {
-        if (registry == null || registry.isNoop() || !registry.observationConfig().isObservationEnabled(name, context)) {
+        if (registry == null || registry.isNoop()
+                || !registry.observationConfig().isObservationEnabled(name, context)) {
             return NoopObservation.INSTANCE;
         }
         return new SimpleObservation(name, registry, context == null ? new Context() : context);
@@ -115,14 +116,18 @@ public interface Observation {
      * {@link ObservationRegistry.ObservationConfig#getObservationConvention(Context, ObservationConvention)})
      * was found.
      * @param <T> type of context
-     * @param customConvention custom convention. If {@code null}, the default one will be picked
-     * @param defaultConvention default convention when no custom convention was passed, nor a configured one was found
+     * @param customConvention custom convention. If {@code null}, the default one will be
+     * picked
+     * @param defaultConvention default convention when no custom convention was passed,
+     * nor a configured one was found
      * @param context the observation context
      * @param registry observation registry
      * @return created but not started observation
      */
-    static <T extends Observation.Context> Observation createNotStarted(@Nullable Observation.ObservationConvention<T> customConvention,
-            @NonNull Observation.ObservationConvention<T> defaultConvention, @NonNull T context, @NonNull ObservationRegistry registry) {
+    static <T extends Observation.Context> Observation createNotStarted(
+            @Nullable Observation.ObservationConvention<T> customConvention,
+            @NonNull Observation.ObservationConvention<T> defaultConvention, @NonNull T context,
+            @NonNull ObservationRegistry registry) {
         Observation.ObservationConvention<T> convention;
         if (customConvention != null) {
             convention = customConvention;
@@ -173,8 +178,10 @@ public interface Observation {
      * nor a configured one was found
      * @return started observation
      */
-    static <T extends Observation.Context> Observation start(@Nullable Observation.ObservationConvention<T> customConvention,
-            @NonNull Observation.ObservationConvention<T> defaultConvention, @NonNull T context, @NonNull ObservationRegistry registry) {
+    static <T extends Observation.Context> Observation start(
+            @Nullable Observation.ObservationConvention<T> customConvention,
+            @NonNull Observation.ObservationConvention<T> defaultConvention, @NonNull T context,
+            @NonNull ObservationRegistry registry) {
         return createNotStarted(customConvention, defaultConvention, context, registry).start();
     }
 
