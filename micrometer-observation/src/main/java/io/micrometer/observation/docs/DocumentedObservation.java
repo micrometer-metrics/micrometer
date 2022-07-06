@@ -153,7 +153,7 @@ public interface DocumentedObservation {
                     + "] defined default convention to be of type [" + getDefaultConvention()
                     + "] but you have provided an incompatible one of type [" + defaultConvention.getClass() + "]");
         }
-        return Observation.createNotStarted(registry, context, customConvention, defaultConvention)
+        return Observation.createNotStarted(customConvention, defaultConvention, context, registry)
                 .contextualName(getContextualName());
     }
 
