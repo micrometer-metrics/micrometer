@@ -59,7 +59,7 @@ class ObservedAspectTests {
                 .hasNameEqualTo("test.call").hasContextualNameEqualTo("test#call")
                 .hasLowCardinalityKeyValue("abc", "123").hasLowCardinalityKeyValue("test", "42")
                 .hasLowCardinalityKeyValue("class", ObservedService.class.getName())
-                .hasLowCardinalityKeyValue("method", "call").thenError().doesNotThrowAnyException();
+                .hasLowCardinalityKeyValue("method", "call").doesNotHaveError();
     }
 
     @Test
@@ -101,7 +101,7 @@ class ObservedAspectTests {
         TestObservationRegistryAssert.assertThat(registry).hasSingleObservationThat().hasNameEqualTo("test.async")
                 .hasContextualNameEqualTo("ObservedService#async")
                 .hasLowCardinalityKeyValue("class", ObservedService.class.getName())
-                .hasLowCardinalityKeyValue("method", "async").thenError().doesNotThrowAnyException();
+                .hasLowCardinalityKeyValue("method", "async").doesNotHaveError();
     }
 
     @Test
@@ -174,7 +174,7 @@ class ObservedAspectTests {
                 .hasNameEqualTo("test.class").hasContextualNameEqualTo("test.class#call")
                 .hasLowCardinalityKeyValue("abc", "123").hasLowCardinalityKeyValue("test", "42")
                 .hasLowCardinalityKeyValue("class", ObservedClassLevelAnnotatedService.class.getName())
-                .hasLowCardinalityKeyValue("method", "call").thenError().doesNotThrowAnyException();
+                .hasLowCardinalityKeyValue("method", "call").doesNotHaveError();
     }
 
     @Test
@@ -218,7 +218,7 @@ class ObservedAspectTests {
                 .hasContextualNameEqualTo("test.class#call").hasLowCardinalityKeyValue("abc", "123")
                 .hasLowCardinalityKeyValue("test", "42")
                 .hasLowCardinalityKeyValue("class", ObservedClassLevelAnnotatedService.class.getName())
-                .hasLowCardinalityKeyValue("method", "async").thenError().doesNotThrowAnyException();
+                .hasLowCardinalityKeyValue("method", "async").doesNotHaveError();
     }
 
     @Test
