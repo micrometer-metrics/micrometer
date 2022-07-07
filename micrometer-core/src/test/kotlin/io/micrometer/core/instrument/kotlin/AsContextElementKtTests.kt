@@ -25,41 +25,40 @@ import org.junit.jupiter.api.Test
 
 internal class AsContextElementKtTests {
 
-	@Test
-	fun `should return current observation from context`(): Unit = runBlocking {
-		val observationRegistry = ObservationRegistry.create()
-		observationRegistry.observationConfig().observationHandler { true }
-		val nextObservation = Observation.start("name", observationRegistry)
-		val inScope = nextObservation.openScope()
-		var observationInGlobalScopeLaunch: Observation? = null
-		var observationInGlobalScopeAsync: Observation? = null
-		val asContextElement = observationRegistry.asContextElement()
+    @Test
+    fun `should return current observation from context`(): Unit = runBlocking {
+        val observationRegistry = ObservationRegistry.create()
+        observationRegistry.observationConfig().observationHandler { true }
+        val nextObservation = Observation.start("name", observationRegistry)
+        val inScope = nextObservation.openScope()
+        var observationInGlobalScopeLaunch: Observation? = null
+        var observationInGlobalScopeAsync: Observation? = null
+        val asContextElement = observationRegistry.asContextElement()
 
-		@OptIn(DelicateCoroutinesApi::class)
-		GlobalScope.launch(asContextElement) {
-			observationInGlobalScopeLaunch = coroutineContext.currentObservation()
-		}
-		@OptIn(DelicateCoroutinesApi::class)
-		GlobalScope.async(asContextElement) {
-			observationInGlobalScopeAsync = coroutineContext.currentObservation()
-		}.await()
+        @OptIn(DelicateCoroutinesApi::class)
+        GlobalScope.launch(asContextElement) {
+            observationInGlobalScopeLaunch = coroutineContext.currentObservation()
+        }
+        @OptIn(DelicateCoroutinesApi::class)
+        GlobalScope.async(asContextElement) {
+            observationInGlobalScopeAsync = coroutineContext.currentObservation()
+        }.await()
 
-		inScope.close();
+        inScope.close()
 
-		then(observationInGlobalScopeLaunch).isSameAs(nextObservation)
-		then(observationInGlobalScopeAsync).isSameAs(nextObservation)
-	}
+        then(observationInGlobalScopeLaunch).isSameAs(nextObservation)
+        then(observationInGlobalScopeAsync).isSameAs(nextObservation)
+    }
 
-	@Test
-	fun `should return observation from coroutine context when KotlinContextElement present`(): Unit = runBlocking {
-		val observationRegistry = ObservationRegistry.create()
-		observationRegistry.observationConfig().observationHandler { true }
-		val nextObservation = Observation.start("name", observationRegistry)
-		val inScope = nextObservation.openScope()
-		val element = KotlinObservationContextElement(observationRegistry, ContextRegistry.getInstance())
+    @Test
+    fun `should return observation from coroutine context when KotlinContextElement present`(): Unit = runBlocking {
+        val observationRegistry = ObservationRegistry.create()
+        observationRegistry.observationConfig().observationHandler { true }
+        val nextObservation = Observation.start("name", observationRegistry)
+        val inScope = nextObservation.openScope()
+        val element = KotlinObservationContextElement(observationRegistry, ContextRegistry.getInstance())
 
-		then(element.currentObservation()).isSameAs(nextObservation)
-		inScope.close()
-	}
-
+        then(element.currentObservation()).isSameAs(nextObservation)
+        inScope.close()
+    }
 }
