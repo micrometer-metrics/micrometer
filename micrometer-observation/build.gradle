@@ -3,7 +3,7 @@ description 'Module containing Observation related code'
 dependencies {
     api project(":micrometer-commons")
 
-    optionalApi 'io.micrometer:context-propagation-api'
+    optionalApi 'io.micrometer:context-propagation'
 
     // HttpServlet KeyValueProvider
     optionalApi 'javax.servlet:javax.servlet-api'
