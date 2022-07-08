@@ -796,6 +796,24 @@ public interface Observation {
     }
 
     /**
+     * Interface to be implemented by any object that wishes to be able to update the
+     * default {@link ObservationConvention}.
+     *
+     * @param <T> {@link ObservationConvention} type
+     * @author Marcin Grzejszczak
+     * @since 1.10.0
+     */
+    interface ObservationConventionAware<T extends ObservationConvention<?>> {
+
+        /**
+         * Overrides the default key values provider.
+         * @param keyValuesProvider key values provider
+         */
+        void setObservationConvention(T keyValuesProvider);
+
+    }
+
+    /**
      * A marker interface for conventions of {@link KeyValues} naming.
      *
      * @author Marcin Grzejszczak
