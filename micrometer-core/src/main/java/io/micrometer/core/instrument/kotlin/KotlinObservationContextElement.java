@@ -41,7 +41,8 @@ class KotlinObservationContextElement implements ThreadContextElement<ContextSna
 
     KotlinObservationContextElement(ObservationRegistry observationRegistry, ContextRegistry contextRegistry) {
         this.observationRegistry = observationRegistry;
-        this.contextSnapshot = ContextSnapshot.capture(contextRegistry, ObservationThreadLocalAccessor.KEY::equals);
+        this.contextSnapshot = ContextSnapshot.captureUsing(contextRegistry,
+                ObservationThreadLocalAccessor.KEY::equals);
     }
 
     @Override
