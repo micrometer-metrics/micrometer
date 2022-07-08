@@ -19,10 +19,8 @@ import io.micrometer.core.Issue;
 import io.micrometer.core.instrument.*;
 import io.micrometer.core.instrument.cumulative.CumulativeFunctionCounter;
 import io.micrometer.core.instrument.cumulative.CumulativeFunctionTimer;
-import io.micrometer.core.instrument.search.Search;
 import io.micrometer.core.instrument.step.StepFunctionCounter;
 import io.micrometer.core.instrument.step.StepFunctionTimer;
-import io.micrometer.observation.Observation;
 import org.junit.jupiter.api.Test;
 
 import java.time.Duration;
@@ -157,15 +155,6 @@ class SimpleMeterRegistryTest {
                 + "request.size(DISTRIBUTION_SUMMARY)[]; count=10.0, total=1450.0 bytes, max=190.0 bytes\n"
                 + "temperature(GAUGE)[]; value=24.0 celsius");
         sample.stop();
-    }
-
-    @Test
-    void meterRegistryShouldRegisterTimerObservationHandler() {
-        MeterRegistry meterRegistry = new SimpleMeterRegistry().withTimerObservationHandler();
-
-        Observation.start("foo", meterRegistry).stop();
-
-        assertThat(Search.in(meterRegistry).name("foo").timer().count()).isEqualTo(1);
     }
 
     private SimpleMeterRegistry createRegistry(CountingMode mode) {
