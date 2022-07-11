@@ -17,6 +17,7 @@ package io.micrometer.core.instrument;
 
 import com.github.tomakehurst.wiremock.junit5.WireMockRuntimeInfo;
 import com.github.tomakehurst.wiremock.junit5.WireMockTest;
+import io.micrometer.core.annotation.Incubating;
 import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 
@@ -35,6 +36,7 @@ import static org.assertj.core.api.Assertions.assertThat;
  * to receive real requests from an instrumented HTTP client.
  */
 @WireMockTest
+@Incubating(since = "1.9.2")
 public abstract class HttpClientTimingInstrumentationVerificationTests extends InstrumentationVerificationTests {
 
     enum HttpMethod {
@@ -132,6 +134,17 @@ public abstract class HttpClientTimingInstrumentationVerificationTests extends I
         sendHttpRequest(HttpMethod.GET, URI.create(wmRuntimeInfo.getHttpBaseUrl()), "/socks");
 
         Timer timer = getRegistry().get(timerName()).tags("method", "GET", "status", "500").timer();
+        assertThat(timer.count()).isEqualTo(1);
+        assertThat(timer.totalTime(TimeUnit.NANOSECONDS)).isPositive();
+    }
+
+    @Test
+    void clientException(WireMockRuntimeInfo wmRuntimeInfo) {
+        stubFor(get(anyUrl()).willReturn(badRequest()));
+
+        sendHttpRequest(HttpMethod.GET, URI.create(wmRuntimeInfo.getHttpBaseUrl()), "/socks");
+
+        Timer timer = getRegistry().get(timerName()).tags("method", "GET", "status", "400").timer();
         assertThat(timer.count()).isEqualTo(1);
         assertThat(timer.totalTime(TimeUnit.NANOSECONDS)).isPositive();
     }
