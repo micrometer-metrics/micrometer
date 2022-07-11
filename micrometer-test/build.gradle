@@ -22,4 +22,6 @@ dependencies {
     testImplementation 'com.hazelcast:hazelcast'
     testImplementation 'com.squareup.okhttp3:okhttp'
     testImplementation 'io.projectreactor.netty:reactor-netty-http'
+    testImplementation 'org.apache.httpcomponents:httpclient'
+    testImplementation 'org.eclipse.jetty:jetty-client'
 }
