@@ -21,4 +21,6 @@ dependencies {
     testImplementation 'javax.cache:cache-api'
     testImplementation 'com.hazelcast:hazelcast'
     testImplementation 'com.squareup.okhttp3:okhttp'
+    testImplementation 'org.apache.httpcomponents:httpclient'
+    testImplementation 'org.eclipse.jetty:jetty-client'
 }
