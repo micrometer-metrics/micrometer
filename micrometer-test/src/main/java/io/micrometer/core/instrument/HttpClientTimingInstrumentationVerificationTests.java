@@ -55,10 +55,11 @@ public abstract class HttpClientTimingInstrumentationVerificationTests extends I
 
     /**
      * Send an HTTP request using the instrumented HTTP client to the given base URL and
-     * path on the locally running server. The HTTP client instrumentation must be configured to tag the templated path to pass this test suite. The templated path will contain path
-     * variables surrounded by curly brackets to be substituted. For example, for the full
-     * templated URL {@literal http://localhost:8080/cart/{cartId}} the baseUrl would be
-     * {@literal http://localhost:8080}, the templatedPath would be
+     * path on the locally running server. The HTTP client instrumentation must be
+     * configured to tag the templated path to pass this test suite. The templated path
+     * will contain path variables surrounded by curly brackets to be substituted. For
+     * example, for the full templated URL {@literal http://localhost:8080/cart/{cartId}}
+     * the baseUrl would be {@literal http://localhost:8080}, the templatedPath would be
      * {@literal /cart/{cartId}}. One string pathVariables argument is expected for
      * substituting the cartId path variable. The number of pathVariables arguments SHOULD
      * exactly match the number of path variables in the templatedPath.
@@ -114,7 +115,9 @@ public abstract class HttpClientTimingInstrumentationVerificationTests extends I
 
         try {
             sendHttpRequest(HttpMethod.GET, URI.create("http://localhost:" + unusedPort), "/anything");
-        } catch (Throwable ignore) {}
+        }
+        catch (Throwable ignore) {
+        }
 
         Timer timer = getRegistry().get(timerName()).tags("method", "GET").timer();
 
