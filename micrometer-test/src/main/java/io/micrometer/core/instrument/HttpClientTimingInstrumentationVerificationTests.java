@@ -17,8 +17,11 @@ package io.micrometer.core.instrument;
 
 import com.github.tomakehurst.wiremock.junit5.WireMockRuntimeInfo;
 import com.github.tomakehurst.wiremock.junit5.WireMockTest;
+import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 
+import java.io.IOException;
+import java.net.ServerSocket;
 import java.net.URI;
 import java.util.concurrent.TimeUnit;
 
@@ -32,7 +35,7 @@ import static org.assertj.core.api.Assertions.assertThat;
  * to receive real requests from an instrumented HTTP client.
  */
 @WireMockTest
-public abstract class HttpClientTimingInstrumentationVerificationSuite extends InstrumentationVerificationSuite {
+public abstract class HttpClientTimingInstrumentationVerificationTests extends InstrumentationVerificationTests {
 
     enum HttpMethod {
 
@@ -52,7 +55,7 @@ public abstract class HttpClientTimingInstrumentationVerificationSuite extends I
 
     /**
      * Send an HTTP request using the instrumented HTTP client to the given base URL and
-     * path on the locally running server. The templated path should contain path
+     * path on the locally running server. The HTTP client instrumentation must be configured to tag the templated path to pass this test suite. The templated path will contain path
      * variables surrounded by curly brackets to be substituted. For example, for the full
      * templated URL {@literal http://localhost:8080/cart/{cartId}} the baseUrl would be
      * {@literal http://localhost:8080}, the templatedPath would be
@@ -70,7 +73,7 @@ public abstract class HttpClientTimingInstrumentationVerificationSuite extends I
     /**
      * Convenience method provided to substitute the template placeholders for the
      * provided path variables. The number of pathVariables argument SHOULD match the
-     * number of placeholders in the templatedPath.
+     * number of placeholders in the templatedPath. Substitutions will be made in order.
      * @param templatedPath a URL path optionally containing placeholders in curly
      * brackets
      * @param pathVariables path variable values for which placeholders should be
@@ -89,7 +92,7 @@ public abstract class HttpClientTimingInstrumentationVerificationSuite extends I
     }
 
     @Test
-    void getTemplatedPath(WireMockRuntimeInfo wmRuntimeInfo) {
+    void getTemplatedPathForUri(WireMockRuntimeInfo wmRuntimeInfo) {
         stubFor(get(anyUrl()).willReturn(ok()));
 
         String templatedPath = "/customers/{customerId}/carts/{cartId}";
@@ -102,16 +105,18 @@ public abstract class HttpClientTimingInstrumentationVerificationSuite extends I
     }
 
     @Test
-    void unmappedUrisAreCardinalityLimited(WireMockRuntimeInfo wmRuntimeInfo) {
-        stubFor(get(anyUrl()).willReturn(notFound()));
+    @Disabled("apache/jetty http client instrumentation currently fails this test")
+    void timedWhenServerIsMissing() throws IOException {
+        int unusedPort = 0;
+        try (ServerSocket server = new ServerSocket(0)) {
+            unusedPort = server.getLocalPort();
+        }
 
-        String templatedPath = "/notFound404";
-        sendHttpRequest(HttpMethod.GET, URI.create(wmRuntimeInfo.getHttpBaseUrl()), templatedPath);
+        try {
+            sendHttpRequest(HttpMethod.GET, URI.create("http://localhost:" + unusedPort), "/anything");
+        } catch (Throwable ignore) {}
 
-        Timer timer = getRegistry().get(timerName()).tags("method", "GET", "status", "404").timer();
-        // we should standardize on a value e.g. NOT_FOUND, but for backwards
-        // compatibility, assert is more lenient
-        assertThat(timer.getId().getTag("uri")).isNotEqualTo(templatedPath);
+        Timer timer = getRegistry().get(timerName()).tags("method", "GET").timer();
 
         assertThat(timer.count()).isEqualTo(1);
         assertThat(timer.totalTime(TimeUnit.NANOSECONDS)).isPositive();

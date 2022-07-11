@@ -21,7 +21,7 @@ import org.junit.jupiter.api.BeforeEach;
 
 import java.net.URI;
 
-class JettyClientTimingInstrumentationVerificationSuite extends HttpClientTimingInstrumentationVerificationSuite {
+class JettyClientTimingInstrumentationVerificationTests extends HttpClientTimingInstrumentationVerificationTests {
 
     private HttpClient httpClient = new HttpClient();
 

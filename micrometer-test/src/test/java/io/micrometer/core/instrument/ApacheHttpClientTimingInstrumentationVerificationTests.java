@@ -26,7 +26,7 @@ import org.apache.http.util.EntityUtils;
 import java.io.IOException;
 import java.net.URI;
 
-class ApacheHttpClientTimingInstrumentationVerificationSuite extends HttpClientTimingInstrumentationVerificationSuite {
+class ApacheHttpClientTimingInstrumentationVerificationTests extends HttpClientTimingInstrumentationVerificationTests {
 
     private final HttpClient httpClient = HttpClientBuilder.create()
             .setRequestExecutor(MicrometerHttpRequestExecutor.builder(getRegistry()).build()).build();

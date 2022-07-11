@@ -23,7 +23,7 @@ import okhttp3.Response;
 import java.io.IOException;
 import java.net.URI;
 
-class OkHttpClientTimingInstrumentationVerificationSuite extends HttpClientTimingInstrumentationVerificationSuite {
+class OkHttpClientTimingInstrumentationVerificationTests extends HttpClientTimingInstrumentationVerificationTests {
 
     OkHttpClient httpClient = new OkHttpClient.Builder()
             .eventListener(OkHttpMetricsEventListener.builder(getRegistry(), timerName()).build()).build();

@@ -17,7 +17,7 @@ package io.micrometer.core.instrument;
 
 import io.micrometer.core.instrument.simple.SimpleMeterRegistry;
 
-public abstract class InstrumentationVerificationSuite {
+abstract class InstrumentationVerificationTests {
 
     private final MeterRegistry registry = new SimpleMeterRegistry();
 
