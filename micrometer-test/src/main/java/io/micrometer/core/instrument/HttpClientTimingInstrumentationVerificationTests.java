@@ -18,6 +18,7 @@ package io.micrometer.core.instrument;
 import com.github.tomakehurst.wiremock.junit5.WireMockRuntimeInfo;
 import com.github.tomakehurst.wiremock.junit5.WireMockTest;
 import io.micrometer.core.annotation.Incubating;
+import io.micrometer.core.lang.Nullable;
 import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 
@@ -71,7 +72,8 @@ public abstract class HttpClientTimingInstrumentationVerificationTests extends I
      * forward slash, and optionally containing path variable placeholders
      * @param pathVariables optional variables to substitute into the templatedPath
      */
-    abstract void sendHttpRequest(HttpMethod method, URI baseUrl, String templatedPath, String... pathVariables);
+    abstract void sendHttpRequest(HttpMethod method, @Nullable byte[] body, URI baseUrl, String templatedPath,
+            String... pathVariables);
 
     /**
      * Convenience method provided to substitute the template placeholders for the
@@ -99,7 +101,7 @@ public abstract class HttpClientTimingInstrumentationVerificationTests extends I
         stubFor(get(anyUrl()).willReturn(ok()));
 
         String templatedPath = "/customers/{customerId}/carts/{cartId}";
-        sendHttpRequest(HttpMethod.GET, URI.create(wmRuntimeInfo.getHttpBaseUrl()), templatedPath, "112", "5");
+        sendHttpRequest(HttpMethod.GET, null, URI.create(wmRuntimeInfo.getHttpBaseUrl()), templatedPath, "112", "5");
 
         Timer timer = getRegistry().get(timerName()).tags("method", "GET", "status", "200", "uri", templatedPath)
                 .timer();
@@ -116,7 +118,7 @@ public abstract class HttpClientTimingInstrumentationVerificationTests extends I
         }
 
         try {
-            sendHttpRequest(HttpMethod.GET, URI.create("http://localhost:" + unusedPort), "/anything");
+            sendHttpRequest(HttpMethod.GET, null, URI.create("http://localhost:" + unusedPort), "/anything");
         }
         catch (Throwable ignore) {
         }
@@ -131,7 +133,7 @@ public abstract class HttpClientTimingInstrumentationVerificationTests extends I
     void serverException(WireMockRuntimeInfo wmRuntimeInfo) {
         stubFor(get(anyUrl()).willReturn(serverError()));
 
-        sendHttpRequest(HttpMethod.GET, URI.create(wmRuntimeInfo.getHttpBaseUrl()), "/socks");
+        sendHttpRequest(HttpMethod.GET, null, URI.create(wmRuntimeInfo.getHttpBaseUrl()), "/socks");
 
         Timer timer = getRegistry().get(timerName()).tags("method", "GET", "status", "500").timer();
         assertThat(timer.count()).isEqualTo(1);
@@ -140,11 +142,11 @@ public abstract class HttpClientTimingInstrumentationVerificationTests extends I
 
     @Test
     void clientException(WireMockRuntimeInfo wmRuntimeInfo) {
-        stubFor(get(anyUrl()).willReturn(badRequest()));
+        stubFor(post(anyUrl()).willReturn(badRequest()));
 
-        sendHttpRequest(HttpMethod.GET, URI.create(wmRuntimeInfo.getHttpBaseUrl()), "/socks");
+        sendHttpRequest(HttpMethod.POST, new byte[0], URI.create(wmRuntimeInfo.getHttpBaseUrl()), "/socks");
 
-        Timer timer = getRegistry().get(timerName()).tags("method", "GET", "status", "400").timer();
+        Timer timer = getRegistry().get(timerName()).tags("method", "POST", "status", "400").timer();
         assertThat(timer.count()).isEqualTo(1);
         assertThat(timer.totalTime(TimeUnit.NANOSECONDS)).isPositive();
     }

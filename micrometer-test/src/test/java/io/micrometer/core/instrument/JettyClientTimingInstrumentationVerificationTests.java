@@ -16,14 +16,17 @@
 package io.micrometer.core.instrument;
 
 import io.micrometer.core.instrument.binder.jetty.JettyClientMetrics;
+import io.micrometer.core.lang.Nullable;
 import org.eclipse.jetty.client.HttpClient;
+import org.eclipse.jetty.client.api.Request;
+import org.eclipse.jetty.client.util.BytesContentProvider;
 import org.junit.jupiter.api.BeforeEach;
 
 import java.net.URI;
 
 class JettyClientTimingInstrumentationVerificationTests extends HttpClientTimingInstrumentationVerificationTests {
 
-    private HttpClient httpClient = new HttpClient();
+    private final HttpClient httpClient = new HttpClient();
 
     @Override
     protected String timerName() {
@@ -38,10 +41,15 @@ class JettyClientTimingInstrumentationVerificationTests extends HttpClientTiming
     }
 
     @Override
-    void sendHttpRequest(HttpMethod method, URI baseUri, String templatedPath, String... pathVariables) {
+    void sendHttpRequest(HttpMethod method, @Nullable byte[] body, URI baseUri, String templatedPath,
+            String... pathVariables) {
         try {
-            httpClient.newRequest(baseUri + substitutePathVariables(templatedPath, pathVariables)).method(method.name())
-                    .header("URI_PATTERN", templatedPath).send();
+            Request request = httpClient.newRequest(baseUri + substitutePathVariables(templatedPath, pathVariables))
+                    .method(method.name()).header("URI_PATTERN", templatedPath);
+            if (body != null) {
+                request.content(new BytesContentProvider(body));
+            }
+            request.send();
             httpClient.stop();
         }
         catch (Exception e) {

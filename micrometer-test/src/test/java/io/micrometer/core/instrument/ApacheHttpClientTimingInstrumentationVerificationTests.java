@@ -17,12 +17,15 @@ package io.micrometer.core.instrument;
 
 import io.micrometer.core.instrument.binder.httpcomponents.DefaultUriMapper;
 import io.micrometer.core.instrument.binder.httpcomponents.MicrometerHttpRequestExecutor;
+import io.micrometer.core.lang.Nullable;
 import org.apache.http.client.HttpClient;
 import org.apache.http.client.methods.HttpEntityEnclosingRequestBase;
 import org.apache.http.client.methods.HttpUriRequest;
+import org.apache.http.entity.BasicHttpEntity;
 import org.apache.http.impl.client.HttpClientBuilder;
 import org.apache.http.util.EntityUtils;
 
+import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.net.URI;
 
@@ -37,23 +40,30 @@ class ApacheHttpClientTimingInstrumentationVerificationTests extends HttpClientT
     }
 
     @Override
-    void sendHttpRequest(HttpMethod method, URI baseUri, String templatedPath, String... pathVariables) {
+    void sendHttpRequest(HttpMethod method, @Nullable byte[] body, URI baseUri, String templatedPath,
+            String... pathVariables) {
         try {
             EntityUtils.consume(
-                    httpClient.execute(makeRequest(method, baseUri, templatedPath, pathVariables)).getEntity());
+                    httpClient.execute(makeRequest(method, body, baseUri, templatedPath, pathVariables)).getEntity());
         }
         catch (IOException e) {
             throw new RuntimeException(e);
         }
     }
 
-    private HttpUriRequest makeRequest(HttpMethod method, URI baseUri, String templatedPath, String... pathVariables) {
+    private HttpUriRequest makeRequest(HttpMethod method, @Nullable byte[] body, URI baseUri, String templatedPath,
+            String... pathVariables) {
         HttpEntityEnclosingRequestBase request = new HttpEntityEnclosingRequestBase() {
             @Override
             public String getMethod() {
                 return method.name();
             }
         };
+        if (body != null) {
+            BasicHttpEntity entity = new BasicHttpEntity();
+            entity.setContent(new ByteArrayInputStream(body));
+            request.setEntity(entity);
+        }
         request.setURI(URI.create(baseUri + substitutePathVariables(templatedPath, pathVariables)));
         request.setHeader(DefaultUriMapper.URI_PATTERN_HEADER, templatedPath);
         return request;

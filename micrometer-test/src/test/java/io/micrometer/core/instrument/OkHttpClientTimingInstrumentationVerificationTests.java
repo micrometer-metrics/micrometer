@@ -16,8 +16,10 @@
 package io.micrometer.core.instrument;
 
 import io.micrometer.core.instrument.binder.okhttp3.OkHttpMetricsEventListener;
+import io.micrometer.core.lang.Nullable;
 import okhttp3.OkHttpClient;
 import okhttp3.Request;
+import okhttp3.RequestBody;
 import okhttp3.Response;
 
 import java.io.IOException;
@@ -29,8 +31,9 @@ class OkHttpClientTimingInstrumentationVerificationTests extends HttpClientTimin
             .eventListener(OkHttpMetricsEventListener.builder(getRegistry(), timerName()).build()).build();
 
     @Override
-    void sendHttpRequest(HttpMethod method, URI baseUri, String templatedPath, String... pathVariables) {
-        Request request = new Request.Builder().method(method.name(), null)
+    void sendHttpRequest(HttpMethod method, @Nullable byte[] body, URI baseUri, String templatedPath,
+            String... pathVariables) {
+        Request request = new Request.Builder().method(method.name(), body == null ? null : RequestBody.create(body))
                 .url(baseUri + substitutePathVariables(templatedPath, pathVariables))
                 .header(OkHttpMetricsEventListener.URI_PATTERN, templatedPath).build();
         try (Response ignored = httpClient.newCall(request).execute()) {
