@@ -371,10 +371,6 @@ subprojects {
         mavenLocal()
         mavenCentral()
         maven {
-            url 'https://repo.spring.io/snapshot/' // we only need this repo for the context-propagation
-            content { includeModule 'io.micrometer', 'context-propagation' }
-        }
-        maven {
             url 'https://repo.spring.io/milestone/' // we only need this repo for the context-propagation
             content { includeModule 'io.micrometer', 'context-propagation' }
         }
