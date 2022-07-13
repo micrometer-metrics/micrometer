@@ -348,7 +348,16 @@ subprojects {
                     ignoreMissingClasses = true
                     includeSynthetic = true
                     // TODO remove methodExcludes when gh-3181 is resolved
-                    methodExcludes = ['io.micrometer.stackdriver.StackdriverConfig#metricTypePrefix()']
+                    methodExcludes = ['io.micrometer.stackdriver.StackdriverConfig#metricTypePrefix()',
+                            'io.micrometer.core.instrument.Timer#record(java.util.function.BooleanSupplier)',
+                            'io.micrometer.core.instrument.Timer#record(java.util.function.IntSupplier)',
+                            'io.micrometer.core.instrument.Timer#record(java.util.function.LongSupplier)',
+                            'io.micrometer.core.instrument.Timer#record(java.util.function.DoubleSupplier)',
+                            'io.micrometer.core.instrument.LongTaskTimer#record(java.util.function.BooleanSupplier)',
+                            'io.micrometer.core.instrument.LongTaskTimer#record(java.util.function.IntSupplier)',
+                            'io.micrometer.core.instrument.LongTaskTimer#record(java.util.function.LongSupplier)',
+                            'io.micrometer.core.instrument.LongTaskTimer#record(java.util.function.DoubleSupplier)'
+                    ]
                     onlyIf { compatibleVersion != 'SKIP' }
                 }
 
