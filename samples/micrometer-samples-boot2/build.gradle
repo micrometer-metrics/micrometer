@@ -9,12 +9,15 @@ repositories {
     mavenCentral()
 }
 
-dependencies {
-    implementation(project(":micrometer-core")) {
-        // see gh-1599; pause detection and percentiles are not configured so these dependencies can be excluded
+configurations {
+    implementation {
+        // see gh-1599; pause detection is not configured so this dependency can be excluded
         exclude module: 'LatencyUtils'
-        exclude module: 'HdrHistogram'
     }
+}
+
+dependencies {
+    implementation project(":micrometer-core")
     ['atlas', 'azure-monitor', 'prometheus', 'datadog', 'elastic', 'ganglia', 'graphite', 'health', 'jmx', 'influx', 'statsd', 'new-relic', 'cloudwatch', 'cloudwatch2', 'signalfx', 'wavefront', 'elastic', 'dynatrace', 'humio', 'appoptics', 'stackdriver'].each { sys ->
         implementation project(":micrometer-registry-$sys")
     }
