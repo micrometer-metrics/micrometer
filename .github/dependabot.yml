@@ -8,6 +8,7 @@ registries:
 updates:
   - package-ecosystem: "gradle"
     directory: "/"
+    target-branch: "1.8.x" # oldest OSS supported branch
     allow:
       - dependency-name: "com.gradle*"
     registries:
