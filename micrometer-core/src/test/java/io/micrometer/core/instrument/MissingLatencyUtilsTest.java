@@ -17,6 +17,7 @@ package io.micrometer.core.instrument;
 
 import io.micrometer.core.instrument.simple.SimpleMeterRegistry;
 import io.micrometer.core.testsupport.classpath.ClassPathExclusions;
+import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
@@ -30,6 +31,7 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 @ClassPathExclusions("LatencyUtils-*.jar")
 class MissingLatencyUtilsTest {
 
+    @Disabled("See https://github.com/micrometer-metrics/micrometer/issues/3287")
     @Test
     void test() {
         SimpleMeterRegistry registry = new SimpleMeterRegistry();
