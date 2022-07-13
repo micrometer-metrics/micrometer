@@ -157,7 +157,6 @@ org.codehaus.mojo:animal-sniffer-annotations:1.21=default,productionRuntimeClass
 org.conscrypt:conscrypt-openjdk-uber:2.5.1=default,productionRuntimeClasspath,runtimeClasspath,testRuntimeClasspath
 org.hdrhistogram:HdrHistogram:2.1.12=compileClasspath,default,productionRuntimeClasspath,runtimeClasspath,testCompileClasspath,testRuntimeClasspath
 org.javassist:javassist:3.26.0-GA=checkstyle
-org.latencyutils:LatencyUtils:2.0.3=default,productionRuntimeClasspath,runtimeClasspath,testRuntimeClasspath
 org.reactivestreams:reactive-streams:1.0.3=compileClasspath,default,productionRuntimeClasspath,runtimeClasspath,testCompileClasspath,testRuntimeClasspath
 org.reflections:reflections:0.9.12=checkstyle
 org.slf4j:jul-to-slf4j:1.7.36=compileClasspath,default,productionRuntimeClasspath,runtimeClasspath,testCompileClasspath,testRuntimeClasspath
