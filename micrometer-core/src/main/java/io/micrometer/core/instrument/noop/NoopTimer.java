@@ -20,6 +20,10 @@ import io.micrometer.core.instrument.distribution.HistogramSnapshot;
 
 import java.util.concurrent.Callable;
 import java.util.concurrent.TimeUnit;
+import java.util.function.BooleanSupplier;
+import java.util.function.DoubleSupplier;
+import java.util.function.IntSupplier;
+import java.util.function.LongSupplier;
 import java.util.function.Supplier;
 
 public class NoopTimer extends NoopMeter implements Timer {
@@ -35,6 +39,26 @@ public class NoopTimer extends NoopMeter implements Timer {
     @Override
     public <T> T record(Supplier<T> f) {
         return f.get();
+    }
+
+    @Override
+    public boolean record(BooleanSupplier f) {
+        return f.getAsBoolean();
+    }
+
+    @Override
+    public int record(IntSupplier f) {
+        return f.getAsInt();
+    }
+
+    @Override
+    public long record(LongSupplier f) {
+        return f.getAsLong();
+    }
+
+    @Override
+    public double record(DoubleSupplier f) {
+        return f.getAsDouble();
     }
 
     @Override

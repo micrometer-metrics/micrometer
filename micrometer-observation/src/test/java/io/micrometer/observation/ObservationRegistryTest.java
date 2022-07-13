@@ -96,11 +96,8 @@ class ObservationRegistryTest {
         registry.observationConfig().observationHandler(c -> true);
         // Define a convention
         MessagingConvention messagingConvention = new OurCompanyStandardMessagingConvention();
-        ObservationRegistry.ObservationNamingConfiguration config = ObservationRegistry.ObservationNamingConfiguration.STANDARDIZED;
         // Register a semantic name provider
-        registry.observationConfig().semanticNameProvider(new OurCompanyStandardMessagingSemanticNameProvider(config));
-        // Set the naming configuration
-        registry.observationConfig().namingConfiguration(config);
+        registry.observationConfig().observationConvention(new OurCompanyObservationConvention());
 
         Observation.Context myContext = new MessagingContext().put("foo", "hello");
         // KeyValues provider wants to use a MessagingConvention
@@ -154,15 +151,7 @@ class ObservationRegistryTest {
 
     }
 
-    static class OurCompanyStandardMessagingSemanticNameProvider
-            implements Observation.ContextAwareSemanticNameProvider {
-
-        private final ObservationRegistry.ObservationNamingConfiguration namingConfiguration;
-
-        OurCompanyStandardMessagingSemanticNameProvider(
-                ObservationRegistry.ObservationNamingConfiguration namingConfiguration) {
-            this.namingConfiguration = namingConfiguration;
-        }
+    static class OurCompanyObservationConvention implements Observation.ObservationConvention<Observation.Context> {
 
         // Here we override the default "observation" name
         @Override
@@ -170,14 +159,12 @@ class ObservationRegistryTest {
             return "new name";
         }
 
-        // This semantic name provider is only applicable when we're using a standard...
+        // This semantic name provider is only applicable when we're using a messaging
+        // context
+
         @Override
-        public boolean isApplicable(Observation.Context object) {
-            if (this.namingConfiguration != ObservationRegistry.ObservationNamingConfiguration.STANDARDIZED) {
-                return false;
-            }
-            // ...and we're working with a specific context
-            return object instanceof MessagingContext;
+        public boolean supportsContext(Observation.Context context) {
+            return context instanceof MessagingContext;
         }
 
     }

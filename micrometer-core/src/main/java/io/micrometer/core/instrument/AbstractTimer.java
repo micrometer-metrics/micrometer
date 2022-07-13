@@ -18,6 +18,7 @@ package io.micrometer.core.instrument;
 import io.micrometer.common.lang.Nullable;
 import io.micrometer.core.instrument.distribution.*;
 import io.micrometer.core.instrument.distribution.pause.ClockDriftPauseDetector;
+import io.micrometer.core.instrument.distribution.pause.NoPauseDetector;
 import io.micrometer.core.instrument.distribution.pause.PauseDetector;
 import org.LatencyUtils.IntervalEstimator;
 import org.LatencyUtils.SimplePauseDetector;
@@ -27,6 +28,10 @@ import java.util.Map;
 import java.util.concurrent.Callable;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.TimeUnit;
+import java.util.function.BooleanSupplier;
+import java.util.function.DoubleSupplier;
+import java.util.function.IntSupplier;
+import java.util.function.LongSupplier;
 import java.util.function.Supplier;
 
 public abstract class AbstractTimer extends AbstractMeter implements Timer {
@@ -101,6 +106,9 @@ public abstract class AbstractTimer extends AbstractMeter implements Timer {
     }
 
     private void initPauseDetector(PauseDetector pauseDetectorType) {
+        if (pauseDetectorType instanceof NoPauseDetector) {
+            return;
+        }
         pauseDetector = pauseDetectorCache.computeIfAbsent(pauseDetectorType, detector -> {
             if (detector instanceof ClockDriftPauseDetector) {
                 ClockDriftPauseDetector clockDriftPauseDetector = (ClockDriftPauseDetector) detector;
@@ -152,6 +160,54 @@ public abstract class AbstractTimer extends AbstractMeter implements Timer {
         final long s = clock.monotonicTime();
         try {
             return f.get();
+        }
+        finally {
+            final long e = clock.monotonicTime();
+            record(e - s, TimeUnit.NANOSECONDS);
+        }
+    }
+
+    @Override
+    public boolean record(BooleanSupplier f) {
+        final long s = clock.monotonicTime();
+        try {
+            return f.getAsBoolean();
+        }
+        finally {
+            final long e = clock.monotonicTime();
+            record(e - s, TimeUnit.NANOSECONDS);
+        }
+    }
+
+    @Override
+    public int record(IntSupplier f) {
+        final long s = clock.monotonicTime();
+        try {
+            return f.getAsInt();
+        }
+        finally {
+            final long e = clock.monotonicTime();
+            record(e - s, TimeUnit.NANOSECONDS);
+        }
+    }
+
+    @Override
+    public long record(LongSupplier f) {
+        final long s = clock.monotonicTime();
+        try {
+            return f.getAsLong();
+        }
+        finally {
+            final long e = clock.monotonicTime();
+            record(e - s, TimeUnit.NANOSECONDS);
+        }
+    }
+
+    @Override
+    public double record(DoubleSupplier f) {
+        final long s = clock.monotonicTime();
+        try {
+            return f.getAsDouble();
         }
         finally {
             final long e = clock.monotonicTime();

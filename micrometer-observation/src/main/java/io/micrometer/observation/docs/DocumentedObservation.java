@@ -16,8 +16,12 @@
 package io.micrometer.observation.docs;
 
 import io.micrometer.common.docs.KeyName;
+import io.micrometer.common.lang.NonNull;
+import io.micrometer.common.lang.Nullable;
 import io.micrometer.observation.Observation;
 import io.micrometer.observation.ObservationRegistry;
+
+import java.util.Objects;
 
 /**
  * In order to describe your samples via e.g. enums instead of Strings you can use this
@@ -52,12 +56,22 @@ public interface DocumentedObservation {
     KeyName[] EMPTY = new KeyName[0];
 
     /**
-     * Default technical name (e.g metric name). Can be overridden by a registered
-     * {@link io.micrometer.common.docs.SemanticNameProvider} via
-     * {@link ObservationRegistry.ObservationConfig}.
+     * Default technical name (e.g metric name). You can set the name either by this
+     * method or {@link #getDefaultConvention()}. You can't use both.
      * @return name
      */
-    String getName();
+    default String getName() {
+        return null;
+    }
+
+    /**
+     * Default naming convention (sets a technical name and key values). You can set the
+     * name either by this method or {@link #getName()} ()}. You can't use both.
+     * @return default naming convention
+     */
+    default Class<? extends Observation.ObservationConvention<? extends Observation.Context>> getDefaultConvention() {
+        return null;
+    }
 
     /**
      * More human readable name available within the given context (e.g. span name).
@@ -93,7 +107,7 @@ public interface DocumentedObservation {
     }
 
     /**
-     * Creates a {@link Observation}. You need to manually start it.
+     * Creates an {@link Observation}. You need to manually start it.
      * @param registry observation registry
      * @return observation
      */
@@ -102,13 +116,46 @@ public interface DocumentedObservation {
     }
 
     /**
-     * Creates a {@link Observation}. You need to manually start it.
+     * Creates an {@link Observation}. You need to manually start it.
      * @param registry observation registry
      * @param context observation context
      * @return observation
      */
     default Observation observation(ObservationRegistry registry, Observation.Context context) {
         return Observation.createNotStarted(getName(), context, registry).contextualName(getContextualName());
+    }
+
+    /**
+     * Creates an {@link Observation} for the given
+     * {@link Observation.ObservationConvention}. You need to manually start it.
+     * @param customConvention convention that (if not {@code null}) will override any
+     * pre-configured conventions
+     * @param defaultConvention default convention that will be picked if there was
+     * neither custom convention nor a pre-configured one via
+     * {@link ObservationRegistry.ObservationConfig#observationConvention(Observation.ObservationConvention[])}
+     * @param context observation context
+     * @param registry observation registry
+     * @return observation
+     */
+    default <T extends Observation.Context> Observation observation(
+            @Nullable Observation.ObservationConvention<T> customConvention,
+            @NonNull Observation.ObservationConvention<T> defaultConvention, @NonNull T context,
+            @NonNull ObservationRegistry registry) {
+        if (getDefaultConvention() == null) {
+            throw new IllegalStateException("You've decided to use convention based naming yet this observation ["
+                    + getClass() + "] has not defined any default convention");
+        }
+        else if (!getDefaultConvention()
+                .isAssignableFrom(Objects
+                        .requireNonNull(defaultConvention,
+                                "You have not provided a default convention in the Observation factory method")
+                        .getClass())) {
+            throw new IllegalArgumentException("Observation [" + getClass()
+                    + "] defined default convention to be of type [" + getDefaultConvention()
+                    + "] but you have provided an incompatible one of type [" + defaultConvention.getClass() + "]");
+        }
+        return Observation.createNotStarted(customConvention, defaultConvention, context, registry)
+                .contextualName(getContextualName());
     }
 
     /**
@@ -128,6 +175,24 @@ public interface DocumentedObservation {
      */
     default Observation start(ObservationRegistry registry, Observation.Context context) {
         return observation(registry, context).start();
+    }
+
+    /**
+     * Creates and starts an {@link Observation}.
+     * @param customConvention convention that (if not {@code null}) will override any
+     * pre-configured conventions
+     * @param defaultConvention default convention that will be picked if there was
+     * neither custom convention nor a pre-configured one via
+     * {@link ObservationRegistry.ObservationConfig#observationConvention(Observation.ObservationConvention[])}
+     * @param context observation context
+     * @param registry observation registry
+     * @return observation
+     */
+    default <T extends Observation.Context> Observation start(
+            @Nullable Observation.ObservationConvention<T> customConvention,
+            @NonNull Observation.ObservationConvention<T> defaultConvention, @NonNull T context,
+            @NonNull ObservationRegistry registry) {
+        return observation(customConvention, defaultConvention, context, registry).start();
     }
 
 }

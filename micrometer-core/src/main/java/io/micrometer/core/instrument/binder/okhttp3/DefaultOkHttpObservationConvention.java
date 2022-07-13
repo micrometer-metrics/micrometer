@@ -38,7 +38,7 @@ import static java.util.stream.StreamSupport.stream;
 
 @NonNullApi
 @NonNullFields
-public class DefaultOkHttpKeyValuesProvider implements OkHttpKeyValuesProvider {
+public class DefaultOkHttpObservationConvention implements OkHttpObservationConvention {
 
     static final boolean REQUEST_TAG_CLASS_EXISTS;
 
@@ -67,6 +67,12 @@ public class DefaultOkHttpKeyValuesProvider implements OkHttpKeyValuesProvider {
     private static final KeyValues TAGS_TARGET_UNKNOWN = KeyValues.of(TAG_TARGET_SCHEME, TAG_VALUE_UNKNOWN,
             TAG_TARGET_HOST, TAG_VALUE_UNKNOWN, TAG_TARGET_PORT, TAG_VALUE_UNKNOWN);
 
+    private final String metricName;
+
+    public DefaultOkHttpObservationConvention(String metricName) {
+        this.metricName = metricName;
+    }
+
     @Override
     public KeyValues getLowCardinalityKeyValues(OkHttpContext context) {
         OkHttpMetricsEventListener.CallState state = context.getState();
@@ -78,8 +84,12 @@ public class DefaultOkHttpKeyValuesProvider implements OkHttpKeyValuesProvider {
         Iterable<Tag> unknownRequestTags = context.getUnknownRequestTags();
         boolean includeHostTag = context.isIncludeHostTag();
         // TODO: Tags to key values and back - maybe we can improve this?
-        KeyValues keyValues = KeyValues.of("method", requestAvailable ? request.method() : TAG_VALUE_UNKNOWN, "uri",
-                getUriTag(urlMapper, state, request), "status", getStatusMessage(state.response, state.exception))
+        KeyValues keyValues = KeyValues.of(
+                OkHttpDocumentedObservation.OkHttpLegacyLowCardinalityTags.METHOD
+                        .of(requestAvailable ? request.method() : TAG_VALUE_UNKNOWN),
+                OkHttpDocumentedObservation.OkHttpLegacyLowCardinalityTags.URI.of(getUriTag(urlMapper, state, request)),
+                OkHttpDocumentedObservation.OkHttpLegacyLowCardinalityTags.STATUS
+                        .of(getStatusMessage(state.response, state.exception)))
                 .and(tagsToKeyValues(stream(extraTags.spliterator(), false)))
                 .and(stream(contextSpecificTags.spliterator(), false)
                         .map(contextTag -> contextTag.apply(request, state.response))
@@ -87,8 +97,8 @@ public class DefaultOkHttpKeyValuesProvider implements OkHttpKeyValuesProvider {
                 .and(getRequestTags(request, tagsToKeyValues(stream(unknownRequestTags.spliterator(), false))))
                 .and(generateTagsForRoute(request));
         if (includeHostTag) {
-            keyValues = KeyValues.of(keyValues).and("host",
-                    requestAvailable ? request.url().host() : TAG_VALUE_UNKNOWN);
+            keyValues = KeyValues.of(keyValues).and(OkHttpDocumentedObservation.OkHttpLegacyLowCardinalityTags.HOST
+                    .of(requestAvailable ? request.url().host() : TAG_VALUE_UNKNOWN));
         }
         return keyValues;
     }
@@ -141,6 +151,11 @@ public class DefaultOkHttpKeyValuesProvider implements OkHttpKeyValuesProvider {
         }
         return KeyValues.of(TAG_TARGET_SCHEME, request.url().scheme(), TAG_TARGET_HOST, request.url().host(),
                 TAG_TARGET_PORT, Integer.toString(request.url().port()));
+    }
+
+    @Override
+    public String getName() {
+        return this.metricName;
     }
 
 }

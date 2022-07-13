@@ -17,6 +17,7 @@ package io.micrometer.observation.tck;
 
 import io.micrometer.observation.Observation;
 import io.micrometer.observation.ObservationRegistry;
+import org.assertj.core.api.Assertions;
 import org.junit.jupiter.api.Test;
 
 import static io.micrometer.observation.tck.TestObservationRegistryAssert.assertThat;
@@ -109,6 +110,23 @@ class TestObservationRegistryAssertTests {
 
         thenNoException().isThrownBy(() -> TestObservationRegistryAssert.assertThat(registry)
                 .hasObservationWithNameEqualToIgnoringCase("foo").that().hasBeenStarted());
+    }
+
+    @Test
+    void should_fail_when_no_contexts_satisfy_the_assertion() {
+        Observation.createNotStarted("foo", registry).start().stop();
+
+        thenThrownBy(() -> TestObservationRegistryAssert.assertThat(registry)
+                .hasHandledContextsThatSatisfy(contexts -> Assertions.assertThat(contexts).hasSize(2)))
+                        .isInstanceOf(AssertionError.class);
+    }
+
+    @Test
+    void should_not_fail_when_contexts_satisfy_the_assertions() {
+        Observation.createNotStarted("FOO", registry).start().stop();
+
+        thenNoException().isThrownBy(() -> TestObservationRegistryAssert.assertThat(registry)
+                .hasHandledContextsThatSatisfy(contexts -> Assertions.assertThat(contexts).hasSize(1)));
     }
 
     @Test

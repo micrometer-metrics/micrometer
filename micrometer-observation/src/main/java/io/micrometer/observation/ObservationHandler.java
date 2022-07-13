@@ -35,14 +35,14 @@ public interface ObservationHandler<T extends Observation.Context> {
 
     /**
      * Reacts to starting of an {@link Observation}.
-     * @param context a {@link Observation.Context}
+     * @param context an {@link Observation.Context}
      */
     default void onStart(T context) {
     }
 
     /**
      * Reacts to an error during an {@link Observation}.
-     * @param context a {@link Observation.Context}
+     * @param context an {@link Observation.Context}
      */
     default void onError(T context) {
     }
@@ -56,22 +56,22 @@ public interface ObservationHandler<T extends Observation.Context> {
     }
 
     /**
-     * Reacts to opening of a {@link Observation.Scope}.
-     * @param context a {@link Observation.Context}
+     * Reacts to opening of an {@link Observation.Scope}.
+     * @param context an {@link Observation.Context}
      */
     default void onScopeOpened(T context) {
     }
 
     /**
-     * Reacts to closing of a {@link Observation.Scope}.
-     * @param context a {@link Observation.Context}
+     * Reacts to closing of an {@link Observation.Scope}.
+     * @param context an {@link Observation.Context}
      */
     default void onScopeClosed(T context) {
     }
 
     /**
      * Reacts to stopping of an {@link Observation}.
-     * @param context a {@link Observation.Context}
+     * @param context an {@link Observation.Context}
      */
     default void onStop(T context) {
     }
@@ -79,7 +79,7 @@ public interface ObservationHandler<T extends Observation.Context> {
     /**
      * Tells the registry whether this handler should be applied for a given
      * {@link Observation.Context}.
-     * @param context a {@link Observation.Context}
+     * @param context an {@link Observation.Context}
      * @return {@code true} when this handler should be used
      */
     boolean supportsContext(Observation.Context context);

@@ -24,7 +24,11 @@ import java.time.Duration;
 import java.util.Arrays;
 import java.util.concurrent.Callable;
 import java.util.concurrent.TimeUnit;
+import java.util.function.BooleanSupplier;
 import java.util.function.Consumer;
+import java.util.function.DoubleSupplier;
+import java.util.function.IntSupplier;
+import java.util.function.LongSupplier;
 import java.util.function.Supplier;
 
 /**
@@ -66,6 +70,7 @@ public interface LongTaskTimer extends Meter, HistogramSupport {
      * @return The return value of {@code f}.
      * @throws Exception Any exception bubbling up from the callable.
      */
+    @Nullable
     default <T> T recordCallable(Callable<T> f) throws Exception {
         Sample sample = start();
         try {
@@ -77,15 +82,76 @@ public interface LongTaskTimer extends Meter, HistogramSupport {
     }
 
     /**
-     * Executes the callable {@code f} and records the time taken.
+     * Executes the supplier {@code f} and records the time taken.
      * @param f Function to execute and measure the execution time.
      * @param <T> The return type of the {@link Supplier}.
      * @return The return value of {@code f}.
      */
+    @Nullable
     default <T> T record(Supplier<T> f) {
         Sample sample = start();
         try {
             return f.get();
+        }
+        finally {
+            sample.stop();
+        }
+    }
+
+    /**
+     * Executes the supplier {@code f} and records the time taken.
+     * @param f Function to execute and measure the execution time.
+     * @return The return value of {@code f}.
+     */
+    default boolean record(BooleanSupplier f) {
+        Sample sample = start();
+        try {
+            return f.getAsBoolean();
+        }
+        finally {
+            sample.stop();
+        }
+    }
+
+    /**
+     * Executes the supplier {@code f} and records the time taken.
+     * @param f Function to execute and measure the execution time.
+     * @return The return value of {@code f}.
+     */
+    default int record(IntSupplier f) {
+        Sample sample = start();
+        try {
+            return f.getAsInt();
+        }
+        finally {
+            sample.stop();
+        }
+    }
+
+    /**
+     * Executes the supplier {@code f} and records the time taken.
+     * @param f Function to execute and measure the execution time.
+     * @return The return value of {@code f}.
+     */
+    default long record(LongSupplier f) {
+        Sample sample = start();
+        try {
+            return f.getAsLong();
+        }
+        finally {
+            sample.stop();
+        }
+    }
+
+    /**
+     * Executes the supplier {@code f} and records the time taken.
+     * @param f Function to execute and measure the execution time.
+     * @return The return value of {@code f}.
+     */
+    default double record(DoubleSupplier f) {
+        Sample sample = start();
+        try {
+            return f.getAsDouble();
         }
         finally {
             sample.stop();

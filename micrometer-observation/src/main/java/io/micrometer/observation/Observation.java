@@ -17,7 +17,6 @@ package io.micrometer.observation;
 
 import io.micrometer.common.KeyValue;
 import io.micrometer.common.KeyValues;
-import io.micrometer.common.docs.SemanticNameProvider;
 import io.micrometer.common.lang.NonNull;
 import io.micrometer.common.lang.Nullable;
 
@@ -72,7 +71,7 @@ public interface Observation {
      * @param registry observation registry
      * @return started observation
      */
-    static Observation start(String name, @Nullable Context context, ObservationRegistry registry) {
+    static Observation start(String name, @Nullable Context context, @Nullable ObservationRegistry registry) {
         return createNotStarted(name, context, registry).start();
     }
 
@@ -101,11 +100,123 @@ public interface Observation {
      */
     static Observation createNotStarted(String name, @Nullable Context context,
             @Nullable ObservationRegistry registry) {
-        if (registry == null || !registry.observationConfig().isObservationEnabled(name, context)
-                || registry.observationConfig().getObservationHandlers().isEmpty()) {
+        if (registry == null || registry.isNoop()
+                || !registry.observationConfig().isObservationEnabled(name, context)) {
             return NoopObservation.INSTANCE;
         }
         return new SimpleObservation(name, registry, context == null ? new Context() : context);
+    }
+
+    /**
+     * Creates but <b>does not start</b> an {@link Observation}. Remember to call
+     * {@link Observation#start()} when you want the measurements to start. When no
+     * registry is passed or observation is not applicable will return a no-op
+     * observation. Allows to set a custom {@link ObservationConvention} and requires to
+     * provide a default one if a neither a custom nor a pre-configured one (via
+     * {@link ObservationRegistry.ObservationConfig#getObservationConvention(Context, ObservationConvention)})
+     * was found.
+     * @param <T> type of context
+     * @param customConvention custom convention. If {@code null}, the default one will be
+     * picked
+     * @param defaultConvention default convention when no custom convention was passed,
+     * nor a configured one was found
+     * @param context the observation context
+     * @param registry observation registry
+     * @return created but not started observation
+     */
+    static <T extends Observation.Context> Observation createNotStarted(
+            @Nullable Observation.ObservationConvention<T> customConvention,
+            @NonNull Observation.ObservationConvention<T> defaultConvention, @NonNull T context,
+            @NonNull ObservationRegistry registry) {
+        Observation.ObservationConvention<T> convention;
+        if (customConvention != null) {
+            convention = customConvention;
+        }
+        else {
+            convention = registry.observationConfig().getObservationConvention(context, defaultConvention);
+        }
+        return Observation.createNotStarted(convention, context, registry);
+    }
+
+    /**
+     * Creates and starts an {@link Observation}. When no registry is passed or
+     * observation is not applicable will return a no-op observation.
+     * @param observationConvention observation convention
+     * @param registry observation registry
+     * @return started observation
+     */
+    static Observation start(ObservationConvention<?> observationConvention, @Nullable ObservationRegistry registry) {
+        return start(observationConvention, null, registry);
+    }
+
+    /**
+     * Creates and starts an {@link Observation}. When no registry is passed or
+     * observation is not applicable will return a no-op observation.
+     * @param observationConvention observation convention
+     * @param context mutable context
+     * @param registry observation registry
+     * @return started observation
+     */
+    static Observation start(ObservationConvention<?> observationConvention, @Nullable Context context,
+            @Nullable ObservationRegistry registry) {
+        return createNotStarted(observationConvention, context, registry).start();
+    }
+
+    /**
+     * Creates and starts an {@link Observation}. When no registry is passed or
+     * observation is not applicable will return a no-op observation. Allows to set a
+     * custom {@link ObservationConvention} and requires to provide a default one if a
+     * neither a custom nor a pre-configured one (via
+     * {@link ObservationRegistry.ObservationConfig#getObservationConvention(Context, ObservationConvention)})
+     * was found.
+     * @param <T> type of context
+     * @param registry observation registry
+     * @param context the observation context
+     * @param customConvention custom convention. If {@code null}, the default one will be
+     * picked
+     * @param defaultConvention default convention when no custom convention was passed,
+     * nor a configured one was found
+     * @return started observation
+     */
+    static <T extends Observation.Context> Observation start(
+            @Nullable Observation.ObservationConvention<T> customConvention,
+            @NonNull Observation.ObservationConvention<T> defaultConvention, @NonNull T context,
+            @NonNull ObservationRegistry registry) {
+        return createNotStarted(customConvention, defaultConvention, context, registry).start();
+    }
+
+    /**
+     * Creates but <b>does not start</b> an {@link Observation}. Remember to call
+     * {@link Observation#start()} when you want the measurements to start. When no
+     * registry is passed or observation is not applicable will return a no-op
+     * observation.
+     * @param observationConvention observation convention
+     * @param registry observation registry
+     * @return created but not started observation
+     */
+    static Observation createNotStarted(ObservationConvention<?> observationConvention,
+            @Nullable ObservationRegistry registry) {
+        return createNotStarted(observationConvention, null, registry);
+    }
+
+    /**
+     * Creates but <b>does not start</b> an {@link Observation}. Remember to call
+     * {@link Observation#start()} when you want the measurements to start. When no
+     * registry is passed or observation is not applicable will return a no-op
+     * observation.
+     * @param observationConvention observation convention
+     * @param context mutable context
+     * @param registry observation registry
+     * @return created but not started observation
+     */
+    static Observation createNotStarted(ObservationConvention<?> observationConvention, @Nullable Context context,
+            @Nullable ObservationRegistry registry) {
+        if (registry == null || registry.isNoop()
+                || !registry.observationConfig().isObservationEnabled(observationConvention.getName(), context)
+                || observationConvention == NoopObservationConvention.INSTANCE) {
+            return NoopObservation.INSTANCE;
+        }
+        return new SimpleObservation(observationConvention, registry, context == null ? new Context() : context);
     }
 
     /**
@@ -442,7 +553,7 @@ public interface Observation {
     }
 
     /**
-     * A mutable holder of data required by a {@link ObservationHandler}. When extended
+     * A mutable holder of data required by an {@link ObservationHandler}. When extended
      * you can provide your own, custom information to be processed by the handlers.
      *
      * @since 1.10.0
@@ -726,12 +837,20 @@ public interface Observation {
     }
 
     /**
-     * A {@link Context} aware {@link SemanticNameProvider}.
+     * Interface to be implemented by any object that wishes to be able to update the
+     * default {@link ObservationConvention}.
      *
+     * @param <T> {@link ObservationConvention} type
      * @author Marcin Grzejszczak
      * @since 1.10.0
      */
-    interface ContextAwareSemanticNameProvider extends SemanticNameProvider<Observation.Context> {
+    interface ObservationConventionAware<T extends ObservationConvention<?>> {
+
+        /**
+         * Overrides the default key values provider.
+         * @param keyValuesProvider key values provider
+         */
+        void setObservationConvention(T keyValuesProvider);
 
     }
 
@@ -742,6 +861,24 @@ public interface Observation {
      * @since 1.10.0
      */
     interface KeyValuesConvention {
+
+    }
+
+    /**
+     * Contains conventions for naming and {@link KeyValues} providing.
+     *
+     * @param <T> type of context
+     * @author Marcin Grzejszczak
+     * @since 1.10.0
+     */
+    interface ObservationConvention<T extends Observation.Context>
+            extends Observation.KeyValuesProvider<T>, KeyValuesConvention {
+
+        /**
+         * Allows to override the name for an observation.
+         * @return the new name for the observation
+         */
+        String getName();
 
     }
 

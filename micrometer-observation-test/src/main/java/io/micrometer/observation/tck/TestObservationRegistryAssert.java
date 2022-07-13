@@ -16,6 +16,7 @@
 package io.micrometer.observation.tck;
 
 import io.micrometer.observation.Observation;
+import org.assertj.core.api.ThrowingConsumer;
 
 import java.util.List;
 import java.util.Objects;
@@ -104,8 +105,8 @@ public class TestObservationRegistryAssert
     }
 
     /**
-     * Verifies that there's only one {@link Observation} with a given name (ignoring
-     * case) and continues assertions for it.
+     * Verifies that there's at least one {@link Observation} with a given name (ignoring
+     * case) and continues assertions for the first found one.
      * @return this
      * @throws AssertionError if there is no matching observation
      */
@@ -125,12 +126,30 @@ public class TestObservationRegistryAssert
         return new That(testObservationContext, this);
     }
 
+    /**
+     * Verifies that there are no observations registered.
+     * @return this
+     * @throws AssertionError if there are any registered observations
+     */
     public void doesNotHaveAnyObservation() {
         List<TestObservationRegistry.TestObservationContext> contexts = this.actual.getContexts();
         if (!contexts.isEmpty()) {
             failWithMessage("There were <%d> observation(s) registered in the registry, expected <0>.",
                     contexts.size());
         }
+    }
+
+    /**
+     * Verifies that all handled contexts satisfy the provided lambda.
+     * @param contextConsumer lambda to assert all handled contexts
+     * @return this
+     */
+    public TestObservationRegistryAssert hasHandledContextsThatSatisfy(
+            ThrowingConsumer<List<Observation.Context>> contextConsumer) {
+        isNotNull();
+        contextConsumer.accept(actual.getContexts().stream()
+                .map(TestObservationRegistry.TestObservationContext::getContext).collect(Collectors.toList()));
+        return this;
     }
 
     /**

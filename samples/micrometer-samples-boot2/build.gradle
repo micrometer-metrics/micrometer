@@ -1,12 +1,19 @@
 plugins {
     id 'java'
-    id 'org.springframework.boot' version '2.7.0'
+    id 'org.springframework.boot' version '2.7.1'
 }
 
 apply plugin: 'io.spring.dependency-management'
 
 repositories {
     mavenCentral()
+}
+
+configurations {
+    implementation {
+        // see gh-1599; pause detection is not configured so this dependency can be excluded
+        exclude module: 'LatencyUtils'
+    }
 }
 
 dependencies {

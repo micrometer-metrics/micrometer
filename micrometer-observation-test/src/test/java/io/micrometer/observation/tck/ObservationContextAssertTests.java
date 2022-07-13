@@ -146,6 +146,75 @@ class ObservationContextAssertTests {
     }
 
     @Test
+    void should_not_throw_exception_when_key_count_matches() {
+        registry.observationConfig().observationHandler(c -> true);
+        Observation observation = Observation.start("foo", context, registry);
+        observation.lowCardinalityKeyValue("low", "foo");
+        observation.highCardinalityKeyValue("high", "bar");
+
+        thenNoException().isThrownBy(() -> assertThat(context).hasKeyValuesCount(2));
+    }
+
+    @Test
+    void should_throw_exception_when_key_count_differs() {
+        registry.observationConfig().observationHandler(c -> true);
+        Observation observation = Observation.start("foo", context, registry);
+        observation.lowCardinalityKeyValue("low", "foo");
+        observation.highCardinalityKeyValue("high", "bar");
+
+        thenThrownBy(() -> assertThat(context).hasKeyValuesCount(1)).isInstanceOf(AssertionError.class)
+                .hasMessage("Observation expected to have <1> keys but has <2>.");
+
+        thenThrownBy(() -> assertThat(context).hasKeyValuesCount(3)).isInstanceOf(AssertionError.class)
+                .hasMessage("Observation expected to have <3> keys but has <2>.");
+    }
+
+    @Test
+    void should_not_throw_exception_when_keys_match() {
+        registry.observationConfig().observationHandler(c -> true);
+        Observation observation = Observation.start("foo", context, registry);
+        observation.lowCardinalityKeyValue("low", "foo");
+        observation.highCardinalityKeyValue("high", "bar");
+
+        thenNoException().isThrownBy(() -> ObservationContextAssert.assertThat(context).hasOnlyKeys("low", "high"));
+    }
+
+    @Test
+    void should_throw_exception_when_keys_missing() {
+        registry.observationConfig().observationHandler(c -> true);
+        Observation observation = Observation.start("foo", context, registry);
+        observation.lowCardinalityKeyValue("found", "foo");
+
+        thenThrownBy(() -> ObservationContextAssert.assertThat(context).hasOnlyKeys("found", "low", "high"))
+                .isInstanceOf(AssertionError.class).hasMessage("Observation is missing expected keys [low, high].");
+    }
+
+    @Test
+    void should_throw_exception_when_keys_extras() {
+        registry.observationConfig().observationHandler(c -> true);
+        Observation observation = Observation.start("foo", context, registry);
+        observation.lowCardinalityKeyValue("found", "foo");
+        observation.lowCardinalityKeyValue("low", "foo");
+        observation.highCardinalityKeyValue("high", "foo");
+
+        thenThrownBy(() -> ObservationContextAssert.assertThat(context).hasOnlyKeys("found"))
+                .isInstanceOf(AssertionError.class).hasMessage("Observation has unexpected keys [low, high].");
+    }
+
+    @Test
+    void should_throw_exception_when_keys_both_missing_and_extras() {
+        registry.observationConfig().observationHandler(c -> true);
+        Observation observation = Observation.start("foo", context, registry);
+        observation.lowCardinalityKeyValue("found", "foo");
+        observation.lowCardinalityKeyValue("low", "foo");
+        observation.highCardinalityKeyValue("high", "foo");
+
+        thenThrownBy(() -> ObservationContextAssert.assertThat(context).hasOnlyKeys("notfound", "found"))
+                .isInstanceOf(AssertionError.class)
+                .hasMessage("Observation has unexpected keys [low, high] and misses expected keys [notfound].");
+    }
+
+    @Test
     void should_not_throw_exception_when_low_cardinality_tag_exists() {
         registry.observationConfig().observationHandler(c -> true);
         Observation observation = Observation.start("foo", context, registry);
@@ -203,8 +272,32 @@ class ObservationContextAssertTests {
     }
 
     @Test
+    void should_not_throw_exception_when_high_cardinality_tag_present_with_other_value() {
+        registry.observationConfig().observationHandler(c -> true);
+        Observation observation = Observation.start("foo", context, registry);
+        observation.highCardinalityKeyValue("foo", "other");
+
+        thenNoException().isThrownBy(() -> assertThat(context).doesNotHaveHighCardinalityKeyValue("foo", "bar"));
+
+        thenThrownBy(() -> assertThat(context).doesNotHaveHighCardinalityKeyValueWithKey("foo"))
+                .isInstanceOf(AssertionError.class);
+    }
+
+    @Test
     void should_not_throw_exception_when_low_cardinality_tag_missing() {
         thenNoException().isThrownBy(() -> assertThat(context).doesNotHaveLowCardinalityKeyValue("foo", "bar"));
+    }
+
+    @Test
+    void should_not_throw_exception_when_low_cardinality_tag_present_with_other_value() {
+        registry.observationConfig().observationHandler(c -> true);
+        Observation observation = Observation.start("foo", context, registry);
+        observation.lowCardinalityKeyValue("foo", "other");
+
+        thenNoException().isThrownBy(() -> assertThat(context).doesNotHaveLowCardinalityKeyValue("foo", "bar"));
+
+        thenThrownBy(() -> assertThat(context).doesNotHaveLowCardinalityKeyValueWithKey("foo"))
+                .isInstanceOf(AssertionError.class);
     }
 
     @Test
@@ -274,10 +367,77 @@ class ObservationContextAssertTests {
     }
 
     @Test
+    void should_not_throw_when_does_not_have_error() {
+        thenNoException().isThrownBy(() -> assertThat(context).doesNotHaveError());
+    }
+
+    @Test
+    void should_throw_when_unexpected_error() {
+        Throwable expected = new IllegalStateException("test");
+
+        registry.observationConfig().observationHandler(c -> true);
+        Observation observation = Observation.start("foo", context, registry);
+        observation.error(expected);
+
+        thenThrownBy(() -> assertThat(context).doesNotHaveError()).hasMessageContaining(
+                "Observation should not have an error, found <java.lang.IllegalStateException: test>");
+    }
+
+    @Test
+    void should_not_throw_when_has_error() {
+        Throwable expected = new IllegalStateException("test");
+
+        registry.observationConfig().observationHandler(c -> true);
+        Observation observation = Observation.start("foo", context, registry);
+        observation.error(expected);
+
+        thenNoException().isThrownBy(() -> assertThat(context).hasError());
+    }
+
+    @Test
+    void should_throw_when_has_error_missing() {
+        thenThrownBy(() -> assertThat(context).hasError())
+                .hasMessageContaining("Observation should have an error, but none was found");
+    }
+
+    @Test
+    void should_not_throw_when_has_specific_error() {
+        Throwable expected = new IllegalStateException("test");
+
+        registry.observationConfig().observationHandler(c -> true);
+        Observation observation = Observation.start("foo", context, registry);
+        observation.error(expected);
+
+        thenNoException().isThrownBy(() -> assertThat(context).hasError(expected));
+    }
+
+    @Test
+    void should_throw_when_has_specific_error_missing() {
+        Throwable expected = new IllegalStateException("test");
+
+        thenThrownBy(() -> assertThat(context).hasError(expected))
+                .hasMessageContaining("Observation should have an error, but none was found");
+    }
+
+    @Test
+    void should_throw_when_has_specific_error_does_not_match() {
+        Throwable expected = new IllegalStateException("test expected");
+        Throwable actual = new IllegalArgumentException("test actual");
+
+        registry.observationConfig().observationHandler(c -> true);
+        Observation observation = Observation.start("foo", context, registry);
+        observation.error(actual);
+
+        thenThrownBy(() -> assertThat(context).hasError(expected)).hasMessageContaining(
+                "Observation expected to have error <java.lang.IllegalStateException: test expected>,"
+                        + " but has <java.lang.IllegalArgumentException: test actual>");
+    }
+
+    @Test
     void should_jump_to_and_back_from_throwable_assert() {
         context.setName("foo").setError(new RuntimeException("bar"));
 
-        thenNoException().isThrownBy(() -> assertThat(context).hasNameEqualTo("foo").thenThrowable().hasMessage("bar")
+        thenNoException().isThrownBy(() -> assertThat(context).hasNameEqualTo("foo").thenError().hasMessage("bar")
                 .backToContext().hasNameEqualTo("foo"));
     }
 

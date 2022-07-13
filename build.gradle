@@ -19,6 +19,7 @@ buildscript {
         classpath 'me.champeau.gradle:japicmp-gradle-plugin:0.4.0'
         classpath 'de.undercouch:gradle-download-task:5.0.2'
         classpath 'io.spring.javaformat:spring-javaformat-gradle-plugin:0.0.34'
+        classpath 'com.diffplug.spotless:spotless-plugin-gradle:6.8.0'
 
         constraints {
             classpath('org.ow2.asm:asm:7.3.1') {
@@ -48,6 +49,7 @@ allprojects {
 subprojects {
     apply plugin: 'signing'
     apply plugin: 'io.spring.javaformat'
+    apply plugin: 'com.diffplug.spotless'
 
     if (project.name != 'micrometer-bom') {
         if (project.name.contains('samples') || project.name.contains('benchmarks')) {
@@ -182,6 +184,12 @@ subprojects {
             ext.year = Calendar.getInstance().get(Calendar.YEAR)
             skipExistingHeaders = true
             exclude '**/*.json' // comments not supported
+        }
+
+        spotless {
+            kotlin {
+                ktlint().editorConfigOverride([disabled_rules: "no-wildcard-imports"])
+            }
         }
 
         // Publish resolved versions.
@@ -340,7 +348,16 @@ subprojects {
                     ignoreMissingClasses = true
                     includeSynthetic = true
                     // TODO remove methodExcludes when gh-3181 is resolved
-                    methodExcludes = ['io.micrometer.stackdriver.StackdriverConfig#metricTypePrefix()']
+                    methodExcludes = ['io.micrometer.stackdriver.StackdriverConfig#metricTypePrefix()',
+                            'io.micrometer.core.instrument.Timer#record(java.util.function.BooleanSupplier)',
+                            'io.micrometer.core.instrument.Timer#record(java.util.function.IntSupplier)',
+                            'io.micrometer.core.instrument.Timer#record(java.util.function.LongSupplier)',
+                            'io.micrometer.core.instrument.Timer#record(java.util.function.DoubleSupplier)',
+                            'io.micrometer.core.instrument.LongTaskTimer#record(java.util.function.BooleanSupplier)',
+                            'io.micrometer.core.instrument.LongTaskTimer#record(java.util.function.IntSupplier)',
+                            'io.micrometer.core.instrument.LongTaskTimer#record(java.util.function.LongSupplier)',
+                            'io.micrometer.core.instrument.LongTaskTimer#record(java.util.function.DoubleSupplier)'
+                    ]
                     onlyIf { compatibleVersion != 'SKIP' }
                 }
 
@@ -363,12 +380,8 @@ subprojects {
         mavenLocal()
         mavenCentral()
         maven {
-            url 'https://repo.spring.io/snapshot/' // we only need this repo for the context-propagation-api
-            content { includeModule 'io.micrometer', 'context-propagation-api' }
-        }
-        maven {
-            url 'https://repo.spring.io/milestone/' // we only need this repo for the context-propagation-api
-            content { includeModule 'io.micrometer', 'context-propagation-api' }
+            url 'https://repo.spring.io/milestone/' // we only need this repo for the context-propagation
+            content { includeModule 'io.micrometer', 'context-propagation' }
         }
     }
 

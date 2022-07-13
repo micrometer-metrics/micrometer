@@ -1,5 +1,5 @@
 /*
- * Copyright 2017 VMware, Inc.
+ * Copyright 2022 VMware, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,22 +13,9 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package io.micrometer.core.instrument.binder.okhttp3;
+@NonNullApi
+@NonNullFields
+package io.micrometer.core.instrument.kotlin;
 
-import io.micrometer.observation.Observation;
-import io.micrometer.observation.transport.http.tags.HttpKeyValueProvider;
-
-/**
- * A {@link HttpKeyValueProvider} for OkHttp3.
- *
- * @author Marcin Grzejszczak
- * @since 1.10.0
- */
-public interface OkHttpKeyValuesProvider extends HttpKeyValueProvider<OkHttpContext> {
-
-    @Override
-    default boolean supportsContext(Observation.Context context) {
-        return context instanceof OkHttpContext;
-    }
-
-}
+import io.micrometer.common.lang.NonNullApi;
+import io.micrometer.common.lang.NonNullFields;

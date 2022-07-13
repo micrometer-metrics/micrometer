@@ -21,9 +21,7 @@ import io.micrometer.observation.Observation;
 import org.assertj.core.api.AbstractAssert;
 import org.assertj.core.api.AbstractThrowableAssert;
 
-import java.util.List;
-import java.util.Objects;
-import java.util.Optional;
+import java.util.*;
 import java.util.stream.Collectors;
 
 /**
@@ -153,6 +151,48 @@ public class ObservationContextAssert<SELF extends ObservationContextAssert<SELF
         return (SELF) this;
     }
 
+    public SELF hasKeyValuesCount(int size) {
+        isNotNull();
+        long actualSize = this.actual.getAllKeyValues().stream().count();
+        if (actualSize != size) {
+            failWithMessage("Observation expected to have <%s> keys but has <%s>.", size, actualSize);
+        }
+        return (SELF) this;
+    }
+
+    private List<String> allKeys() {
+        List<String> result = lowCardinalityKeys();
+        result.addAll(highCardinalityKeys());
+        return result;
+    }
+
+    public SELF hasOnlyKeys(String... keys) {
+        isNotNull();
+        Set<String> actualKeys = new LinkedHashSet<>(allKeys());
+        List<String> expectedKeys = Arrays.asList(keys);
+        boolean sameContent = actualKeys.containsAll(expectedKeys) && actualKeys.size() == expectedKeys.size();
+
+        if (!sameContent) {
+            Set<String> extraKeys = new LinkedHashSet<>(actualKeys);
+            extraKeys.removeAll(expectedKeys);
+
+            Set<String> missingKeys = new LinkedHashSet<>(expectedKeys);
+            missingKeys.removeAll(actualKeys);
+
+            if (!extraKeys.isEmpty() && !missingKeys.isEmpty()) {
+                failWithMessage("Observation has unexpected keys %s and misses expected keys %s.", extraKeys,
+                        missingKeys);
+            }
+            else if (!extraKeys.isEmpty()) {
+                failWithMessage("Observation has unexpected keys %s.", extraKeys);
+            }
+            else {
+                failWithMessage("Observation is missing expected keys %s.", missingKeys);
+            }
+        }
+        return (SELF) this;
+    }
+
     private List<String> lowCardinalityKeys() {
         return this.actual.getLowCardinalityKeyValues().stream().map(KeyValue::getKey).collect(Collectors.toList());
     }
@@ -194,7 +234,6 @@ public class ObservationContextAssert<SELF extends ObservationContextAssert<SELF
 
     public SELF doesNotHaveLowCardinalityKeyValue(String key, String value) {
         isNotNull();
-        doesNotHaveLowCardinalityKeyValueWithKey(key);
         Optional<KeyValue> optional = this.actual.getLowCardinalityKeyValues().stream()
                 .filter(tag -> tag.getKey().equals(key)).findFirst();
         if (!optional.isPresent()) {
@@ -241,7 +280,6 @@ public class ObservationContextAssert<SELF extends ObservationContextAssert<SELF
 
     public SELF doesNotHaveHighCardinalityKeyValue(String key, String value) {
         isNotNull();
-        doesNotHaveHighCardinalityKeyValueWithKey(key);
         Optional<KeyValue> optional = this.actual.getHighCardinalityKeyValues().stream()
                 .filter(tag -> tag.getKey().equals(key)).findFirst();
         if (!optional.isPresent()) {
@@ -274,12 +312,30 @@ public class ObservationContextAssert<SELF extends ObservationContextAssert<SELF
         return (SELF) this;
     }
 
-    public ObservationContextAssertReturningThrowableAssert assertThatThrowable() {
+    public SELF doesNotHaveError() {
+        thenError().withFailMessage("Observation should not have an error, found <%s>",
+                this.actual.getError().orElse(null)).isNull();
+        return (SELF) this;
+    }
+
+    public SELF hasError() {
+        thenError().withFailMessage("Observation should have an error, but none was found").isNotNull();
+        return (SELF) this;
+    }
+
+    public SELF hasError(Throwable expectedError) {
+        hasError();
+        thenError().withFailMessage("Observation expected to have error <%s>, but has <%s>", expectedError,
+                this.actual.getError().orElse(null)).isEqualTo(expectedError);
+        return (SELF) this;
+    }
+
+    public ObservationContextAssertReturningThrowableAssert assertThatError() {
         return new ObservationContextAssertReturningThrowableAssert(actual.getError().orElse(null), this);
     }
 
-    public ObservationContextAssertReturningThrowableAssert thenThrowable() {
-        return assertThatThrowable();
+    public ObservationContextAssertReturningThrowableAssert thenError() {
+        return assertThatError();
     }
 
     public static class ObservationContextAssertReturningThrowableAssert

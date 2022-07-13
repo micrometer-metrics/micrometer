@@ -67,7 +67,7 @@ public class OkHttpMetricsEventListener extends EventListener {
 
     private final ObservationRegistry observationRegistry;
 
-    private final Observation.KeyValuesProvider<OkHttpContext> keyValuesProvider;
+    private final Observation.ObservationConvention<OkHttpContext> observationConvention;
 
     private final String requestsMetricName;
 
@@ -88,22 +88,24 @@ public class OkHttpMetricsEventListener extends EventListener {
 
     private final LegacyOkHttpMetricsEventListener legacyListener;
 
+    private final DefaultOkHttpObservationConvention defaultConvention;
+
     protected OkHttpMetricsEventListener(MeterRegistry registry, String requestsMetricName,
             Function<Request, String> urlMapper, Iterable<Tag> extraTags,
             Iterable<BiFunction<Request, Response, Tag>> contextSpecificTags) {
-        this(registry, ObservationRegistry.NOOP, new DefaultOkHttpKeyValuesProvider(), requestsMetricName, urlMapper,
-                extraTags, contextSpecificTags, emptyList(), true);
+        this(registry, ObservationRegistry.NOOP, new DefaultOkHttpObservationConvention(requestsMetricName),
+                requestsMetricName, urlMapper, extraTags, contextSpecificTags, emptyList(), true);
     }
 
     OkHttpMetricsEventListener(MeterRegistry registry, ObservationRegistry observationRegistry,
-            Observation.KeyValuesProvider<OkHttpContext> keyValuesProvider, String requestsMetricName,
+            Observation.ObservationConvention<OkHttpContext> observationConvention, String requestsMetricName,
             Function<Request, String> urlMapper, Iterable<Tag> extraTags,
             Iterable<BiFunction<Request, Response, Tag>> contextSpecificTags, Iterable<String> requestTagKeys,
             boolean includeHostTag) {
         this.registry = registry;
         this.observationRegistry = observationRegistry;
         this.observationRegistryNoOp = observationRegistry.isNoop();
-        this.keyValuesProvider = keyValuesProvider;
+        this.observationConvention = observationConvention;
         this.requestsMetricName = requestsMetricName;
         this.urlMapper = urlMapper;
         this.extraTags = extraTags;
@@ -117,6 +119,7 @@ public class OkHttpMetricsEventListener extends EventListener {
         this.unknownRequestTags = unknownRequestTags;
         this.legacyListener = new LegacyOkHttpMetricsEventListener(registry, requestsMetricName, urlMapper, extraTags,
                 contextSpecificTags, unknownRequestTags, includeHostTag);
+        this.defaultConvention = new DefaultOkHttpObservationConvention(requestsMetricName);
     }
 
     public static Builder builder(MeterRegistry registry, String name) {
@@ -172,8 +175,8 @@ public class OkHttpMetricsEventListener extends EventListener {
                 }
             });
         }
-        Observation observation = OkHttpDocumentedObservation
-                .of(this.observationRegistry, okHttpContext, requestsMetricName, this.keyValuesProvider).start();
+        Observation observation = OkHttpDocumentedObservation.DEFAULT.start(this.observationConvention,
+                this.defaultConvention, okHttpContext, this.observationRegistry);
         callState.setContext(okHttpContext);
         callState.setObservation(observation);
         this.callState.put(call, callState);
@@ -284,7 +287,7 @@ public class OkHttpMetricsEventListener extends EventListener {
 
         private Iterable<String> requestTagKeys = Collections.emptyList();
 
-        private OkHttpKeyValuesProvider keyValuesProvider;
+        private OkHttpObservationConvention observationConvention;
 
         Builder(MeterRegistry registry, String name) {
             this.registry = registry;
@@ -301,8 +304,8 @@ public class OkHttpMetricsEventListener extends EventListener {
             return this;
         }
 
-        public Builder keyValuesProvider(OkHttpKeyValuesProvider keyValuesProvider) {
-            this.keyValuesProvider = keyValuesProvider;
+        public Builder observationConvention(OkHttpObservationConvention observationConvention) {
+            this.observationConvention = observationConvention;
             return this;
         }
 
@@ -350,7 +353,7 @@ public class OkHttpMetricsEventListener extends EventListener {
 
         /**
          * Tag keys for {@link Request#tag()} or {@link Request#tag(Class)}.
-         *
+         * <p>
          * These keys will be added with {@literal UNKNOWN} values when {@link Request} is
          * {@literal null}. Note that this is required only for Prometheus as it requires
          * tag match for the same metric.
@@ -364,7 +367,7 @@ public class OkHttpMetricsEventListener extends EventListener {
 
         /**
          * Tag keys for {@link Request#tag()} or {@link Request#tag(Class)}.
-         *
+         * <p>
          * These keys will be added with {@literal UNKNOWN} values when {@link Request} is
          * {@literal null}. Note that this is required only for Prometheus as it requires
          * tag match for the same metric.
@@ -379,7 +382,7 @@ public class OkHttpMetricsEventListener extends EventListener {
 
         @SuppressWarnings("unchecked")
         public OkHttpMetricsEventListener build() {
-            return new OkHttpMetricsEventListener(registry, observationRegistry, keyValuesProvider, name, uriMapper,
+            return new OkHttpMetricsEventListener(registry, observationRegistry, observationConvention, name, uriMapper,
                     tags, contextSpecificTags, requestTagKeys, includeHostTag);
         }
 
