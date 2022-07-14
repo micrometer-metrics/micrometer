@@ -113,8 +113,8 @@ dependencies {
     testImplementation 'org.testcontainers:mongodb'
 
     // Dependencies for @ClassPathExclusions
-    testCompileOnly("org.junit.platform:junit-platform-engine")
-    testCompileOnly("org.junit.platform:junit-platform-launcher")
+    testImplementation("org.junit.platform:junit-platform-engine")
+    testImplementation("org.junit.platform:junit-platform-launcher")
     testImplementation("org.apache.maven.resolver:maven-resolver-connector-basic:latest.release")
     testImplementation("org.apache.maven:maven-resolver-provider:latest.release") {
         exclude(group: "javax.inject", module: "javax.inject")

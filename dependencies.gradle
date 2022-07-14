@@ -64,8 +64,6 @@ def VERSIONS = [
         'org.hsqldb:hsqldb:2.5.+', // 2.6.0 requires JDK 11.
         'org.jooq:jooq:3.14.+',
         'org.jsr107.ri:cache-ri-impl:1.0.0',
-        'org.junit.jupiter:junit-jupiter:5.8.+', // Not using latest.release to avoid using a milestone version.
-        'org.junit.platform:junit-platform-launcher:1.8.+',
         'org.latencyutils:LatencyUtils:latest.release',
         'org.mockito:mockito-core:latest.release',
         'org.mockito:mockito-inline:latest.release',
@@ -82,6 +80,12 @@ def VERSIONS = [
         'software.amazon.awssdk:cloudwatch:latest.release'
 ]
 
+def PLATFORM_BOMS = [
+        'io.projectreactor:reactor-bom:2020.0.+',
+        'io.netty:netty-bom:4.1.+',
+        'org.junit:junit-bom:5.8.+' // Not using latest.release to avoid using a milestone version.
+]
+
 subprojects {
   plugins.withId('java-library') {
     dependencies {
@@ -95,8 +99,11 @@ subprojects {
           runtimeOnly version
         }
       }
-      implementation platform('io.projectreactor:reactor-bom:2020.0.+')
-      implementation platform('io.netty:netty-bom:4.1.+')
+      PLATFORM_BOMS.each {bom ->
+        api platform(bom)
+        compileOnly platform(bom)
+        runtimeOnly platform(bom)
+      }
     }
   }
 }
