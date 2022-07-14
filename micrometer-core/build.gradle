@@ -99,6 +99,19 @@ dependencies {
     testImplementation 'org.postgresql:postgresql'
 
     testImplementation 'org.testcontainers:mongodb'
+
+    // Dependencies for @ClassPathExclusions
+    testCompileOnly("org.junit.platform:junit-platform-engine")
+    testCompileOnly("org.junit.platform:junit-platform-launcher")
+    testImplementation("org.apache.maven.resolver:maven-resolver-connector-basic:latest.release")
+    testImplementation("org.apache.maven:maven-resolver-provider:latest.release") {
+        exclude(group: "javax.inject", module: "javax.inject")
+    }
+    testImplementation("org.apache.maven.resolver:maven-resolver-transport-http:latest.release") {
+        exclude group: "org.slf4j", module: "jcl-over-slf4j"
+    }
+    testImplementation("org.apache.maven.resolver:maven-resolver-connector-basic:latest.release")
+    testImplementation("org.springframework:spring-core:latest.release")
 }
 
 task shenandoahTest(type: Test) {
