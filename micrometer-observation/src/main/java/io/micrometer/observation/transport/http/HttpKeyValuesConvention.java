@@ -13,13 +13,11 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package io.micrometer.observation.transport.http.tags;
+package io.micrometer.observation.transport.http;
 
 import io.micrometer.common.KeyValue;
 import io.micrometer.common.KeyValues;
 import io.micrometer.observation.Observation;
-import io.micrometer.observation.transport.http.HttpRequest;
-import io.micrometer.observation.transport.http.HttpResponse;
 
 /**
  * Conventions for HTTP key values.
@@ -27,7 +25,7 @@ import io.micrometer.observation.transport.http.HttpResponse;
  * @author Marcin Grzejszczak
  * @since 1.10.0
  */
-public interface HttpKeyValuesConvention extends Observation.KeyValuesConvention {
+public interface HttpKeyValuesConvention<REQ, RES> extends Observation.KeyValuesConvention {
 
     /**
      * HTTP request method.
@@ -36,7 +34,7 @@ public interface HttpKeyValuesConvention extends Observation.KeyValuesConvention
      * @param request HTTP request
      * @return key value
      */
-    KeyValue method(HttpRequest request);
+    KeyValue method(REQ request);
 
     /**
      * Full HTTP request URL in the form scheme://host[:port]/path?query[#fragment].
@@ -47,7 +45,7 @@ public interface HttpKeyValuesConvention extends Observation.KeyValuesConvention
      * @param request HTTP request
      * @return key value
      */
-    KeyValue url(HttpRequest request);
+    KeyValue url(REQ request);
 
     /**
      * The full request target as passed in a HTTP request line or equivalent.
@@ -56,7 +54,7 @@ public interface HttpKeyValuesConvention extends Observation.KeyValuesConvention
      * @param request HTTP request
      * @return key value
      */
-    KeyValue target(HttpRequest request);
+    KeyValue target(REQ request);
 
     /**
      * The value of the HTTP host header. An empty Host header should also be reported,
@@ -66,7 +64,7 @@ public interface HttpKeyValuesConvention extends Observation.KeyValuesConvention
      * @param request HTTP request
      * @return key value
      */
-    KeyValue host(HttpRequest request);
+    KeyValue host(REQ request);
 
     /**
      * The URI scheme identifying the used protocol.
@@ -75,7 +73,7 @@ public interface HttpKeyValuesConvention extends Observation.KeyValuesConvention
      * @param request HTTP request
      * @return key value
      */
-    KeyValue scheme(HttpRequest request);
+    KeyValue scheme(REQ request);
 
     /**
      * HTTP response status code.
@@ -84,7 +82,7 @@ public interface HttpKeyValuesConvention extends Observation.KeyValuesConvention
      * @param response HTTP response
      * @return key value
      */
-    KeyValue statusCode(HttpResponse response);
+    KeyValue statusCode(RES response);
 
     /**
      * Kind of HTTP protocol used.
@@ -93,7 +91,7 @@ public interface HttpKeyValuesConvention extends Observation.KeyValuesConvention
      * @param request HTTP request
      * @return key value
      */
-    KeyValue flavor(HttpRequest request);
+    KeyValue flavor(REQ request);
 
     /**
      * Value of the HTTP User-Agent header sent by the client.
@@ -102,7 +100,7 @@ public interface HttpKeyValuesConvention extends Observation.KeyValuesConvention
      * @param request HTTP request
      * @return key value
      */
-    KeyValue userAgent(HttpRequest request);
+    KeyValue userAgent(REQ request);
 
     /**
      * The size of the request payload body in bytes. This is the number of bytes
@@ -114,7 +112,7 @@ public interface HttpKeyValuesConvention extends Observation.KeyValuesConvention
      * @param request HTTP request
      * @return key value
      */
-    KeyValue requestContentLength(HttpRequest request);
+    KeyValue requestContentLength(REQ request);
 
     /**
      * The size of the response payload body in bytes. This is the number of bytes
@@ -126,7 +124,7 @@ public interface HttpKeyValuesConvention extends Observation.KeyValuesConvention
      * @param response HTTP response
      * @return key value
      */
-    KeyValue responseContentLength(HttpResponse response);
+    KeyValue responseContentLength(RES response);
 
     /**
      * Remote address of the peer (dotted decimal for IPv4 or RFC5952 for IPv6)
@@ -135,7 +133,7 @@ public interface HttpKeyValuesConvention extends Observation.KeyValuesConvention
      * @param request HTTP request
      * @return key value
      */
-    KeyValue ip(HttpRequest request);
+    KeyValue ip(REQ request);
 
     /**
      * Remote port number.
@@ -144,7 +142,7 @@ public interface HttpKeyValuesConvention extends Observation.KeyValuesConvention
      * @param request HTTP request
      * @return key value
      */
-    KeyValue port(HttpRequest request);
+    KeyValue port(REQ request);
 
     /**
      * Sets all key values.
@@ -152,7 +150,7 @@ public interface HttpKeyValuesConvention extends Observation.KeyValuesConvention
      * @param response HTTP response
      * @return all key values
      */
-    default KeyValues all(HttpRequest request, HttpResponse response) {
+    default KeyValues all(REQ request, RES response) {
         return KeyValues.of(method(request), url(request), target(request), host(request), scheme(request),
                 statusCode(response), flavor(request), userAgent(request), requestContentLength(request),
                 responseContentLength(response), ip(request), port(request));

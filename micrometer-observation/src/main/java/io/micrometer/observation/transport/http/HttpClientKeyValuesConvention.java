@@ -1,12 +1,12 @@
-/*
- * Copyright 2021 VMware, Inc.
- *
+/**
+ * Copyright 2022 VMware, Inc.
+ * <p>
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- *
+ * <p>
  * https://www.apache.org/licenses/LICENSE-2.0
- *
+ * <p>
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -15,29 +15,31 @@
  */
 package io.micrometer.observation.transport.http;
 
-import io.micrometer.observation.transport.Kind;
+import io.micrometer.common.KeyValue;
+import io.micrometer.common.KeyValues;
 
 /**
- * This API is taken from OpenZipkin Brave.
+ * Conventions for HTTP client key values.
  *
- * Abstract request type used for parsing and sampling. Represents an HTTP Client request.
- *
- * @author OpenZipkin Brave Authors
  * @author Marcin Grzejszczak
  * @since 1.10.0
  */
-public interface HttpClientRequest extends HttpRequest {
+public interface HttpClientKeyValuesConvention<REQ, RES> extends HttpKeyValuesConvention<REQ, RES> {
 
     /**
-     * Adds a new header.
-     * @param name header name
-     * @param value header value
+     * Remote hostname or similar, see note below.
+     *
+     * Examples: example.com
+     *
+     * SHOULD NOT be set if capturing it would require an extra DNS lookup.
+     * @param request HTTP request
+     * @return key value
      */
-    void header(String name, String value);
+    KeyValue peerName(REQ request);
 
     @Override
-    default Kind kind() {
-        return Kind.CLIENT;
+    default KeyValues all(REQ request, RES response) {
+        return HttpKeyValuesConvention.super.all(request, response).and(peerName(request));
     }
 
 }

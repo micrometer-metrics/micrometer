@@ -75,13 +75,13 @@ public class DefaultOkHttpObservationConvention implements OkHttpObservationConv
 
     @Override
     public KeyValues getLowCardinalityKeyValues(OkHttpContext context) {
-        OkHttpMetricsEventListener.CallState state = context.getState();
+        OkHttpObservationInterceptor.CallState state = context.getState();
         Request request = state.request;
         boolean requestAvailable = request != null;
         Function<Request, String> urlMapper = context.getUrlMapper();
-        Iterable<Tag> extraTags = context.getExtraTags();
-        Iterable<BiFunction<Request, Response, Tag>> contextSpecificTags = context.getContextSpecificTags();
-        Iterable<Tag> unknownRequestTags = context.getUnknownRequestTags();
+        Iterable<KeyValue> extraTags = context.getExtraTags();
+        Iterable<BiFunction<Request, Response, KeyValue>> contextSpecificTags = context.getContextSpecificTags();
+        Iterable<KeyValue> unknownRequestTags = context.getUnknownRequestTags();
         boolean includeHostTag = context.isIncludeHostTag();
         // TODO: Tags to key values and back - maybe we can improve this?
         KeyValues keyValues = KeyValues.of(
@@ -90,12 +90,11 @@ public class DefaultOkHttpObservationConvention implements OkHttpObservationConv
                 OkHttpDocumentedObservation.OkHttpLegacyLowCardinalityTags.URI.of(getUriTag(urlMapper, state, request)),
                 OkHttpDocumentedObservation.OkHttpLegacyLowCardinalityTags.STATUS
                         .of(getStatusMessage(state.response, state.exception)))
-                .and(tagsToKeyValues(stream(extraTags.spliterator(), false)))
+                .and(extraTags)
                 .and(stream(contextSpecificTags.spliterator(), false)
                         .map(contextTag -> contextTag.apply(request, state.response))
                         .map(tag -> KeyValue.of(tag.getKey(), tag.getValue())).collect(toList()))
-                .and(getRequestTags(request, tagsToKeyValues(stream(unknownRequestTags.spliterator(), false))))
-                .and(generateTagsForRoute(request));
+                .and(getRequestTags(request, unknownRequestTags)).and(generateTagsForRoute(request));
         if (includeHostTag) {
             keyValues = KeyValues.of(keyValues).and(OkHttpDocumentedObservation.OkHttpLegacyLowCardinalityTags.HOST
                     .of(requestAvailable ? request.url().host() : TAG_VALUE_UNKNOWN));
@@ -103,7 +102,7 @@ public class DefaultOkHttpObservationConvention implements OkHttpObservationConv
         return keyValues;
     }
 
-    private String getUriTag(Function<Request, String> urlMapper, OkHttpMetricsEventListener.CallState state,
+    private String getUriTag(Function<Request, String> urlMapper, OkHttpObservationInterceptor.CallState state,
             @Nullable Request request) {
         if (request == null) {
             return TAG_VALUE_UNKNOWN;
@@ -133,10 +132,17 @@ public class DefaultOkHttpObservationConvention implements OkHttpObservationConv
             if (requestTag != null) {
                 return tagsToKeyValues(requestTag.stream());
             }
+            KeyValues keyValues = request.tag(KeyValues.class);
+            if (keyValues != null) {
+                return keyValues;
+            }
         }
         Object requestTag = request.tag();
         if (requestTag instanceof Tags) {
             return tagsToKeyValues(((Tags) requestTag).stream());
+        }
+        else if (requestTag instanceof KeyValues) {
+            return (Iterable<KeyValue>) requestTag;
         }
         return KeyValues.empty();
     }

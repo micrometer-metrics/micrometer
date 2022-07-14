@@ -13,12 +13,10 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package io.micrometer.observation.transport.http.tags;
+package io.micrometer.observation.transport.http;
 
 import io.micrometer.common.KeyValue;
 import io.micrometer.common.KeyValues;
-import io.micrometer.observation.transport.http.HttpRequest;
-import io.micrometer.observation.transport.http.HttpResponse;
 
 /**
  * Conventions for HTTP server key values.
@@ -26,51 +24,53 @@ import io.micrometer.observation.transport.http.HttpResponse;
  * @author Marcin Grzejszczak
  * @since 1.10.0
  */
-public interface HttpServerKeyValuesConvention extends HttpKeyValuesConvention {
+public interface HttpServerKeyValuesConvention<REQ, RES> extends HttpKeyValuesConvention<REQ, RES> {
 
     /**
      * The primary server name of the matched virtual host. This should be obtained via
      * configuration. If no such configuration can be obtained, this attribute MUST NOT be
      * set ( net.host.name should be used instead).
-     *
+     * <p>
      * Examples: example.com
      * @param request HTTP request
      * @return key value
      */
-    KeyValue serverName(HttpRequest request);
+    KeyValue serverName(REQ request);
 
     // TODO: In OTel - we will set not templated version
+
     /**
      * The matched route.
-     *
+     * <p>
      * Examples: /users/5
      * @param request HTTP request
      * @return key value
      */
-    KeyValue route(HttpRequest request);
+    KeyValue route(REQ request);
 
     // TODO: Not in OTEL
+
     /**
      * The matched route (path template).
-     *
+     * <p>
      * Examples: /users/:userID?
      * @param request HTTP request
      * @return key value
      */
-    KeyValue templatedRoute(HttpRequest request);
+    KeyValue templatedRoute(REQ request);
 
     /**
      * The IP address of the original client behind all proxies, if known (e.g. from
      * X-Forwarded-For).
-     *
+     * <p>
      * Examples: 83.164.160.102
      * @param request HTTP request
      * @return key value
      */
-    KeyValue clientIp(HttpRequest request);
+    KeyValue clientIp(REQ request);
 
     @Override
-    default KeyValues all(HttpRequest request, HttpResponse response) {
+    default KeyValues all(REQ request, RES response) {
         return HttpKeyValuesConvention.super.all(request, response).and(serverName(request), route(request),
                 templatedRoute(request), clientIp(request));
     }
