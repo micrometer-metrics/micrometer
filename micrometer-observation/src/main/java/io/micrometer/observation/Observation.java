@@ -948,6 +948,16 @@ public interface Observation {
     }
 
     /**
+     * An observation convention that will be set on the {@link ObservationRegistry}.
+     *
+     * @author Marcin Grzejszczak
+     * @since 1.10.0
+     */
+    interface GlobalObservationConvention<T extends Context> extends ObservationConvention<T> {
+
+    }
+
+    /**
      * A functional interface like {@link Runnable} but it can throw a {@link Throwable}.
      */
     @FunctionalInterface

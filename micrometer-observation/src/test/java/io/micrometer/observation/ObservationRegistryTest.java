@@ -151,7 +151,8 @@ class ObservationRegistryTest {
 
     }
 
-    static class OurCompanyObservationConvention implements Observation.ObservationConvention<Observation.Context> {
+    static class OurCompanyObservationConvention
+            implements Observation.GlobalObservationConvention<Observation.Context> {
 
         // Here we override the default "observation" name
         @Override
