@@ -16,6 +16,7 @@
 package io.micrometer.observation.transport;
 
 import io.micrometer.common.lang.NonNull;
+import io.micrometer.common.lang.Nullable;
 import io.micrometer.observation.Observation;
 
 import java.util.Objects;
@@ -26,19 +27,26 @@ import java.util.Objects;
  * @author Marcin Grzejszczak
  * @since 1.0.0
  */
-public class FireAndForgetSenderContext<C> extends Observation.Context {
+public class SenderContext<C> extends Observation.Context {
 
     private final Propagator.Setter<C> setter;
 
     private final Kind kind;
 
+    @Nullable
     private C carrier;
 
-    public FireAndForgetSenderContext(@NonNull Propagator.Setter<C> setter, @NonNull Kind kind) {
+    /**
+     * Creates a new instance of {@link SenderContext}.
+     * @param setter propagator setter
+     * @param kind kind
+     */
+    public SenderContext(@NonNull Propagator.Setter<C> setter, @NonNull Kind kind) {
         this.setter = Objects.requireNonNull(setter, "Setter must be set");
         this.kind = Objects.requireNonNull(kind, "Kind must be set");
     }
 
+    @Nullable
     public C getCarrier() {
         return carrier;
     }

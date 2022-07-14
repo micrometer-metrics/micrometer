@@ -16,7 +16,7 @@
 package io.micrometer.core.instrument.binder.okhttp3;
 
 import io.micrometer.common.KeyValue;
-import io.micrometer.observation.transport.FireAndForgetSenderContext;
+import io.micrometer.observation.transport.SenderContext;
 import io.micrometer.observation.transport.Kind;
 import io.micrometer.observation.transport.RequestReplySenderContext;
 import okhttp3.Request;
@@ -26,7 +26,7 @@ import java.util.function.BiFunction;
 import java.util.function.Function;
 
 /**
- * A {@link FireAndForgetSenderContext} for OkHttp3.
+ * A {@link SenderContext} for OkHttp3.
  *
  * @author Marcin Grzejszczak
  * @since 1.10.0

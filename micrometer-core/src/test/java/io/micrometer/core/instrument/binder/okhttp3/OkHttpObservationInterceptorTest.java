@@ -29,7 +29,6 @@ import io.micrometer.observation.ObservationHandler;
 import io.micrometer.observation.tck.TestObservationRegistry;
 import io.micrometer.observation.transport.Propagator;
 import io.micrometer.observation.transport.RequestReplySenderContext;
-import io.micrometer.observation.transport.http.HttpClientKeyValuesConvention;
 import okhttp3.OkHttpClient;
 import okhttp3.Request;
 import okhttp3.Response;

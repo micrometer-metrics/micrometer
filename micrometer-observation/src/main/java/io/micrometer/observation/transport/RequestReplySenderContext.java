@@ -16,9 +16,7 @@
 package io.micrometer.observation.transport;
 
 import io.micrometer.common.lang.NonNull;
-import io.micrometer.observation.Observation;
-
-import java.util.Objects;
+import io.micrometer.common.lang.Nullable;
 
 /**
  * Context used when sending data over the wire with the idea that you'll wait for some
@@ -27,43 +25,27 @@ import java.util.Objects;
  * @author Marcin Grzejszczak
  * @since 1.0.0
  */
-public class RequestReplySenderContext<C, RES> extends Observation.Context {
+public class RequestReplySenderContext<C, RES> extends SenderContext<C> {
 
-    private final Propagator.Setter<C> setter;
-
-    private final Kind kind;
-
-    private C carrier;
-
+    @Nullable
     private RES response;
 
+    /**
+     * Creates a new instance of {@link RequestReplySenderContext}.
+     * @param setter propagator setter
+     * @param kind kind
+     */
     public RequestReplySenderContext(@NonNull Propagator.Setter<C> setter, @NonNull Kind kind) {
-        this.setter = Objects.requireNonNull(setter, "Setter must be set");
-        this.kind = Objects.requireNonNull(kind, "Kind must be set");
+        super(setter, kind);
     }
 
-    public C getCarrier() {
-        return carrier;
-    }
-
-    public void setCarrier(C carrier) {
-        this.carrier = carrier;
-    }
-
+    @Nullable
     public RES getResponse() {
         return response;
     }
 
     public void setResponse(RES response) {
         this.response = response;
-    }
-
-    public Propagator.Setter<C> getSetter() {
-        return setter;
-    }
-
-    public Kind getKind() {
-        return kind;
     }
 
 }

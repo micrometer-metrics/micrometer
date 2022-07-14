@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package io.micrometer.observation.transport.http;
+package io.micrometer.core.instrument.binder.okhttp3;
 
 import io.micrometer.common.KeyValue;
 import io.micrometer.common.KeyValues;
