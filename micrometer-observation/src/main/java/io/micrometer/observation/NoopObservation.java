@@ -33,11 +33,18 @@ final class NoopObservation implements Observation {
      */
     static final NoopObservation INSTANCE = new NoopObservation();
 
+    private static final ContextView CONTEXT = new Context();
+
     private NoopObservation() {
     }
 
     @Override
     public Observation contextualName(String contextualName) {
+        return this;
+    }
+
+    @Override
+    public Observation parentObservation(Observation parentObservation) {
         return this;
     }
 
@@ -74,6 +81,11 @@ final class NoopObservation implements Observation {
     @Override
     public Observation start() {
         return this;
+    }
+
+    @Override
+    public ContextView getContext() {
+        return CONTEXT;
     }
 
     @Override

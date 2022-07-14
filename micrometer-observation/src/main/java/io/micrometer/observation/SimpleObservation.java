@@ -16,12 +16,16 @@
 package io.micrometer.observation;
 
 import io.micrometer.common.KeyValue;
+import io.micrometer.common.KeyValues;
+import io.micrometer.common.lang.NonNull;
 import io.micrometer.common.lang.Nullable;
 import io.micrometer.common.util.StringUtils;
 
 import java.util.ArrayDeque;
 import java.util.Collection;
 import java.util.Deque;
+import java.util.Optional;
+import java.util.function.Function;
 import java.util.stream.Collectors;
 
 /**
@@ -97,6 +101,12 @@ class SimpleObservation implements Observation {
     }
 
     @Override
+    public Observation parentObservation(Observation parentObservation) {
+        this.context.setParentObservation(parentObservation);
+        return this;
+    }
+
+    @Override
     public Observation lowCardinalityKeyValue(KeyValue keyValue) {
         this.context.addLowCardinalityKeyValue(keyValue);
         return this;
@@ -127,6 +137,11 @@ class SimpleObservation implements Observation {
     public Observation start() {
         this.notifyOnObservationStarted();
         return this;
+    }
+
+    @Override
+    public ContextView getContext() {
+        return this.context;
     }
 
     @SuppressWarnings({ "rawtypes", "unchecked" })
@@ -194,10 +209,17 @@ class SimpleObservation implements Observation {
         @Nullable
         private final Observation.Scope previousObservationScope;
 
+        @Nullable
+        private final Observation previousParentObservation;
+
         SimpleScope(ObservationRegistry registry, SimpleObservation current) {
             this.registry = registry;
             this.currentObservation = current;
             this.previousObservationScope = registry.getCurrentObservationScope();
+            this.previousParentObservation = current.context.getParentObservation();
+            if (this.previousObservationScope != null) {
+                current.context.setParentObservation(this.previousObservationScope.getCurrentObservation());
+            }
             this.registry.setCurrentObservationScope(this);
         }
 
@@ -210,6 +232,145 @@ class SimpleObservation implements Observation {
         public void close() {
             this.registry.setCurrentObservationScope(previousObservationScope);
             this.currentObservation.notifyOnScopeClosed();
+            if (this.previousParentObservation != null) {
+                this.currentObservation.context.setParentObservation(this.previousParentObservation);
+            }
+        }
+
+    }
+
+    static class ImmutableContext extends Context {
+
+        private final Context delegate;
+
+        ImmutableContext(Context delegate) {
+            this.delegate = delegate;
+        }
+
+        @Override
+        public String getName() {
+            return delegate.getName();
+        }
+
+        @Override
+        public Context setName(String name) {
+            throw new UnsupportedOperationException("Context is immutable");
+        }
+
+        @Override
+        public String getContextualName() {
+            return delegate.getContextualName();
+        }
+
+        @Override
+        public Context setContextualName(String contextualName) {
+            throw new UnsupportedOperationException("Context is immutable");
+        }
+
+        @Override
+        @Nullable
+        public Observation getParentObservation() {
+            return delegate.getParentObservation();
+        }
+
+        @Override
+        public void setParentObservation(Observation parentObservation) {
+            throw new UnsupportedOperationException("Context is immutable");
+        }
+
+        @Override
+        public Optional<Throwable> getError() {
+            return delegate.getError();
+        }
+
+        @Override
+        public Context setError(Throwable error) {
+            throw new UnsupportedOperationException("Context is immutable");
+        }
+
+        @Override
+        public <T> Context put(Object key, T object) {
+            throw new UnsupportedOperationException("Context is immutable");
+        }
+
+        @Override
+        @Nullable
+        public <T> T get(Object key) {
+            return delegate.get(key);
+        }
+
+        @Override
+        public Object remove(Object key) {
+            throw new UnsupportedOperationException("Context is immutable");
+        }
+
+        @Override
+        @NonNull
+        public <T> T getRequired(Object key) {
+            return delegate.getRequired(key);
+        }
+
+        @Override
+        public boolean containsKey(Object key) {
+            return delegate.containsKey(key);
+        }
+
+        @Override
+        public <T> T getOrDefault(Object key, T defaultObject) {
+            return delegate.getOrDefault(key, defaultObject);
+        }
+
+        @Override
+        public <T> T computeIfAbsent(Object key, Function<Object, ? extends T> mappingFunction) {
+            throw new UnsupportedOperationException("Context is immutable");
+        }
+
+        @Override
+        public void clear() {
+            throw new UnsupportedOperationException("Context is immutable");
+        }
+
+        @Override
+        public void addLowCardinalityKeyValue(KeyValue keyValue) {
+            throw new UnsupportedOperationException("Context is immutable");
+        }
+
+        @Override
+        public void addHighCardinalityKeyValue(KeyValue keyValue) {
+            throw new UnsupportedOperationException("Context is immutable");
+        }
+
+        @Override
+        public void addLowCardinalityKeyValues(KeyValues keyValues) {
+            throw new UnsupportedOperationException("Context is immutable");
+        }
+
+        @Override
+        public void addHighCardinalityKeyValues(KeyValues keyValues) {
+            throw new UnsupportedOperationException("Context is immutable");
+        }
+
+        @Override
+        @NonNull
+        public KeyValues getLowCardinalityKeyValues() {
+            return delegate.getLowCardinalityKeyValues();
+        }
+
+        @Override
+        @NonNull
+        public KeyValues getHighCardinalityKeyValues() {
+            return delegate.getHighCardinalityKeyValues();
+        }
+
+        @Override
+        @NonNull
+        public KeyValues getAllKeyValues() {
+            return delegate.getAllKeyValues();
+        }
+
+        @Override
+        public String toString() {
+            return delegate.toString();
         }
 
     }
