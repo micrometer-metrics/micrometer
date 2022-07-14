@@ -17,25 +17,31 @@ package io.micrometer.core.instrument;
 
 import io.micrometer.core.instrument.simple.SimpleMeterRegistry;
 import io.micrometer.core.testsupport.classpath.ClassPathExclusions;
-import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 
 import static org.assertj.core.api.Assertions.assertThatCode;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 /**
- * Tests for demonstrating that a timer works without LatencyUtils dependency when using
- * the default pause detector.
+ * Tests for demonstrating that a timer works without HdrHistogram dependency if
+ * percentiles are not used.
  *
  * @author Johnny Lim
  */
-@ClassPathExclusions("LatencyUtils-*.jar")
-class MissingLatencyUtilsTest {
+@ClassPathExclusions("HdrHistogram-*.jar")
+class MissingHdrHistogramTest {
 
-    @Disabled("See https://github.com/micrometer-metrics/micrometer/issues/3287")
+    private final SimpleMeterRegistry registry = new SimpleMeterRegistry();
+
     @Test
-    void test() {
-        SimpleMeterRegistry registry = new SimpleMeterRegistry();
+    void doesNotThrowAnyExceptionWhenPercentilesAreNotUsed() {
         assertThatCode(() -> Timer.builder("my.timer").register(registry)).doesNotThrowAnyException();
+    }
+
+    @Test
+    void throwsClassNotFoundExceptionWhenPercentilesAreUsed() {
+        assertThatThrownBy(() -> Timer.builder("my.timer").publishPercentiles(0.5d, 0.9d).register(registry))
+                .hasCauseExactlyInstanceOf(ClassNotFoundException.class);
     }
 
 }
