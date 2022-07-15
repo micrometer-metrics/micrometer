@@ -19,8 +19,8 @@ import io.micrometer.common.lang.NonNull;
 import io.micrometer.common.lang.Nullable;
 
 /**
- * Context used when receiving data over the wire with confirmation to be
- * sent to sender of the data.
+ * Context used when receiving data over the wire with confirmation to be sent to sender
+ * of the data.
  *
  * @author Marcin Grzejszczak
  * @since 1.0.0
