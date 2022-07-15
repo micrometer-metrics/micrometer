@@ -229,7 +229,12 @@ public interface Observation {
     Observation contextualName(String contextualName);
 
     /**
-     * Sets the parent {@link Observation}.
+     * If you have access to a previously created {@link Observation} you can manually set
+     * the parent {@link Observation} using this method - that way you won't need to open
+     * scopes just to create a child observation.
+     *
+     * If you're using the {@link #openScope()} method then the parent observation will be
+     * automatically set, and you don't have to call this method.
      * @param parentObservation parent observation to set
      * @return this
      */
