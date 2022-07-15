@@ -35,9 +35,22 @@ public class ReceiverContext<C> extends Observation.Context {
 
     private C carrier;
 
+    /**
+     * Creates a new instance of {@link ReceiverContext}.
+     * @param getter propagator getter
+     * @param kind kind
+     */
     public ReceiverContext(@NonNull Propagator.Getter<C> getter, @NonNull Kind kind) {
         this.getter = Objects.requireNonNull(getter, "Getter must be set");
         this.kind = Objects.requireNonNull(kind, "Kind must be set");
+    }
+
+    /**
+     * Creates a new instance of a {@link Kind#CONSUMER} {@link ReceiverContext}.
+     * @param getter propagator getter
+     */
+    public ReceiverContext(@NonNull Propagator.Getter<C> getter) {
+        this(getter, Kind.CONSUMER);
     }
 
     public C getCarrier() {

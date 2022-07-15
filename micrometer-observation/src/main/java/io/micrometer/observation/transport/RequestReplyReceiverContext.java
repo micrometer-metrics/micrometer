@@ -19,32 +19,32 @@ import io.micrometer.common.lang.NonNull;
 import io.micrometer.common.lang.Nullable;
 
 /**
- * Context used when sending data over the wire with the idea that you'll wait for some
- * response from the recipient.
+ * Context used when receiving data over the wire with confirmation to be
+ * sent to sender of the data.
  *
  * @author Marcin Grzejszczak
  * @since 1.0.0
  */
-public class RequestReplySenderContext<C, RES> extends SenderContext<C> {
+public class RequestReplyReceiverContext<C, RES> extends ReceiverContext<C> {
 
     @Nullable
     private RES response;
 
     /**
-     * Creates a new instance of {@link RequestReplySenderContext}.
-     * @param setter propagator setter
+     * Creates a new instance of {@link RequestReplyReceiverContext}.
+     * @param getter propagator getter
      * @param kind kind
      */
-    public RequestReplySenderContext(@NonNull Propagator.Setter<C> setter, @NonNull Kind kind) {
-        super(setter, kind);
+    public RequestReplyReceiverContext(@NonNull Propagator.Getter<C> getter, @NonNull Kind kind) {
+        super(getter, kind);
     }
 
     /**
-     * Creates a new instance of a {@link Kind#CLIENT} {@link RequestReplySenderContext}.
-     * @param setter propagator setter
+     * Creates a new instance of {@link Kind#SERVER} {@link RequestReplyReceiverContext}.
+     * @param getter propagator getter
      */
-    public RequestReplySenderContext(@NonNull Propagator.Setter<C> setter) {
-        this(setter, Kind.CLIENT);
+    public RequestReplyReceiverContext(@NonNull Propagator.Getter<C> getter) {
+        this(getter, Kind.SERVER);
     }
 
     @Nullable
