@@ -97,6 +97,12 @@ class SimpleObservation implements Observation {
     }
 
     @Override
+    public Observation parentObservation(Observation parentObservation) {
+        this.context.setParentObservation(parentObservation);
+        return this;
+    }
+
+    @Override
     public Observation lowCardinalityKeyValue(KeyValue keyValue) {
         this.context.addLowCardinalityKeyValue(keyValue);
         return this;
@@ -127,6 +133,11 @@ class SimpleObservation implements Observation {
     public Observation start() {
         this.notifyOnObservationStarted();
         return this;
+    }
+
+    @Override
+    public ContextView getContext() {
+        return this.context;
     }
 
     @SuppressWarnings({ "rawtypes", "unchecked" })
@@ -194,10 +205,17 @@ class SimpleObservation implements Observation {
         @Nullable
         private final Observation.Scope previousObservationScope;
 
+        @Nullable
+        private final Observation previousParentObservation;
+
         SimpleScope(ObservationRegistry registry, SimpleObservation current) {
             this.registry = registry;
             this.currentObservation = current;
             this.previousObservationScope = registry.getCurrentObservationScope();
+            this.previousParentObservation = current.context.getParentObservation();
+            if (this.previousObservationScope != null) {
+                current.context.setParentObservation(this.previousObservationScope.getCurrentObservation());
+            }
             this.registry.setCurrentObservationScope(this);
         }
 
@@ -210,6 +228,7 @@ class SimpleObservation implements Observation {
         public void close() {
             this.registry.setCurrentObservationScope(previousObservationScope);
             this.currentObservation.notifyOnScopeClosed();
+            this.currentObservation.context.setParentObservation(this.previousParentObservation);
         }
 
     }

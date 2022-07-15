@@ -128,7 +128,6 @@ public class TestObservationRegistryAssert
 
     /**
      * Verifies that there are no observations registered.
-     * @return this
      * @throws AssertionError if there are any registered observations
      */
     public void doesNotHaveAnyObservation() {
