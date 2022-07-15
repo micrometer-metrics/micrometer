@@ -140,6 +140,9 @@ public class ObservedAspect {
                 stopObservation(observation, scope, error);
                 throw error;
             }
+            finally {
+                scope.close();
+            }
         }
         else {
             return observation.observeChecked(() -> pjp.proceed());

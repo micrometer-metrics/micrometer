@@ -18,6 +18,7 @@ package io.micrometer.observation.aop;
 import io.micrometer.common.KeyValues;
 import io.micrometer.common.lang.NonNull;
 import io.micrometer.common.lang.Nullable;
+import io.micrometer.context.ContextSnapshot;
 import io.micrometer.observation.Observation;
 import io.micrometer.observation.ObservationTextPublisher;
 import io.micrometer.observation.annotation.Observed;
@@ -28,10 +29,7 @@ import org.junit.jupiter.api.Test;
 import org.springframework.aop.aspectj.annotation.AspectJProxyFactory;
 
 import java.time.Duration;
-import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.CompletionException;
-import java.util.concurrent.CountDownLatch;
-import java.util.concurrent.ExecutionException;
+import java.util.concurrent.*;
 import java.util.function.Predicate;
 import java.util.function.Supplier;
 
@@ -55,9 +53,10 @@ class ObservedAspectTests {
         ObservedService service = pf.getProxy();
         service.call();
 
-        TestObservationRegistryAssert.assertThat(registry).hasSingleObservationThat().hasBeenStopped()
-                .hasNameEqualTo("test.call").hasContextualNameEqualTo("test#call")
-                .hasLowCardinalityKeyValue("abc", "123").hasLowCardinalityKeyValue("test", "42")
+        TestObservationRegistryAssert.assertThat(registry).doesNotHaveAnyRemainingCurrentObservation()
+                .hasSingleObservationThat().hasBeenStopped().hasNameEqualTo("test.call")
+                .hasContextualNameEqualTo("test#call").hasLowCardinalityKeyValue("abc", "123")
+                .hasLowCardinalityKeyValue("test", "42")
                 .hasLowCardinalityKeyValue("class", ObservedService.class.getName())
                 .hasLowCardinalityKeyValue("method", "call").doesNotHaveError();
     }
@@ -73,8 +72,9 @@ class ObservedAspectTests {
         ObservedService service = pf.getProxy();
         assertThatThrownBy(service::error);
 
-        TestObservationRegistryAssert.assertThat(registry).hasSingleObservationThat().hasBeenStopped()
-                .hasNameEqualTo("test.error").hasContextualNameEqualTo("ObservedService#error")
+        TestObservationRegistryAssert.assertThat(registry).doesNotHaveAnyRemainingCurrentObservation()
+                .hasSingleObservationThat().hasBeenStopped().hasNameEqualTo("test.error")
+                .hasContextualNameEqualTo("ObservedService#error")
                 .hasLowCardinalityKeyValue("class", ObservedService.class.getName())
                 .hasLowCardinalityKeyValue("method", "error").thenError().isInstanceOf(RuntimeException.class)
                 .hasMessage("simulated").hasNoCause();
@@ -98,7 +98,8 @@ class ObservedAspectTests {
         await().atMost(Duration.ofMillis(200)).untilAsserted(
                 () -> TestObservationRegistryAssert.assertThat(registry).hasSingleObservationThat().hasBeenStopped());
 
-        TestObservationRegistryAssert.assertThat(registry).hasSingleObservationThat().hasNameEqualTo("test.async")
+        TestObservationRegistryAssert.assertThat(registry).doesNotHaveAnyRemainingCurrentObservation()
+                .hasSingleObservationThat().hasNameEqualTo("test.async")
                 .hasContextualNameEqualTo("ObservedService#async")
                 .hasLowCardinalityKeyValue("class", ObservedService.class.getName())
                 .hasLowCardinalityKeyValue("method", "async").doesNotHaveError();
@@ -122,7 +123,8 @@ class ObservedAspectTests {
         await().atMost(Duration.ofMillis(200)).untilAsserted(
                 () -> TestObservationRegistryAssert.assertThat(registry).hasSingleObservationThat().hasBeenStopped());
 
-        TestObservationRegistryAssert.assertThat(registry).hasSingleObservationThat().hasNameEqualTo("test.async")
+        TestObservationRegistryAssert.assertThat(registry).doesNotHaveAnyRemainingCurrentObservation()
+                .hasSingleObservationThat().hasNameEqualTo("test.async")
                 .hasContextualNameEqualTo("ObservedService#async")
                 .hasLowCardinalityKeyValue("class", ObservedService.class.getName())
                 .hasLowCardinalityKeyValue("method", "async").thenError().isInstanceOf(CompletionException.class)
@@ -139,9 +141,10 @@ class ObservedAspectTests {
 
         ObservedService service = pf.getProxy();
         service.call();
-        TestObservationRegistryAssert.assertThat(registry).hasSingleObservationThat().hasBeenStopped()
-                .hasNameEqualTo("test.call").hasContextualNameEqualTo("test#call")
-                .hasLowCardinalityKeyValue("abc", "123").hasLowCardinalityKeyValue("test", "24")
+        TestObservationRegistryAssert.assertThat(registry).doesNotHaveAnyRemainingCurrentObservation()
+                .hasSingleObservationThat().hasBeenStopped().hasNameEqualTo("test.call")
+                .hasContextualNameEqualTo("test#call").hasLowCardinalityKeyValue("abc", "123")
+                .hasLowCardinalityKeyValue("test", "24")
                 .hasLowCardinalityKeyValue("class", ObservedService.class.getName())
                 .hasLowCardinalityKeyValue("method", "call");
     }
@@ -170,9 +173,10 @@ class ObservedAspectTests {
         ObservedClassLevelAnnotatedService service = pf.getProxy();
         service.call();
 
-        TestObservationRegistryAssert.assertThat(registry).hasSingleObservationThat().hasBeenStopped()
-                .hasNameEqualTo("test.class").hasContextualNameEqualTo("test.class#call")
-                .hasLowCardinalityKeyValue("abc", "123").hasLowCardinalityKeyValue("test", "42")
+        TestObservationRegistryAssert.assertThat(registry).doesNotHaveAnyRemainingCurrentObservation()
+                .hasSingleObservationThat().hasBeenStopped().hasNameEqualTo("test.class")
+                .hasContextualNameEqualTo("test.class#call").hasLowCardinalityKeyValue("abc", "123")
+                .hasLowCardinalityKeyValue("test", "42")
                 .hasLowCardinalityKeyValue("class", ObservedClassLevelAnnotatedService.class.getName())
                 .hasLowCardinalityKeyValue("method", "call").doesNotHaveError();
     }
@@ -188,9 +192,10 @@ class ObservedAspectTests {
         ObservedClassLevelAnnotatedService service = pf.getProxy();
         assertThatThrownBy(service::error);
 
-        TestObservationRegistryAssert.assertThat(registry).hasSingleObservationThat().hasBeenStopped()
-                .hasNameEqualTo("test.class").hasContextualNameEqualTo("test.class#call")
-                .hasLowCardinalityKeyValue("abc", "123").hasLowCardinalityKeyValue("test", "42")
+        TestObservationRegistryAssert.assertThat(registry).doesNotHaveAnyRemainingCurrentObservation()
+                .hasSingleObservationThat().hasBeenStopped().hasNameEqualTo("test.class")
+                .hasContextualNameEqualTo("test.class#call").hasLowCardinalityKeyValue("abc", "123")
+                .hasLowCardinalityKeyValue("test", "42")
                 .hasLowCardinalityKeyValue("class", ObservedClassLevelAnnotatedService.class.getName())
                 .hasLowCardinalityKeyValue("method", "error").thenError().isInstanceOf(RuntimeException.class)
                 .hasMessage("simulated").hasNoCause();
@@ -214,9 +219,9 @@ class ObservedAspectTests {
         await().atMost(Duration.ofMillis(200)).untilAsserted(
                 () -> TestObservationRegistryAssert.assertThat(registry).hasSingleObservationThat().hasBeenStopped());
 
-        TestObservationRegistryAssert.assertThat(registry).hasSingleObservationThat().hasNameEqualTo("test.class")
-                .hasContextualNameEqualTo("test.class#call").hasLowCardinalityKeyValue("abc", "123")
-                .hasLowCardinalityKeyValue("test", "42")
+        TestObservationRegistryAssert.assertThat(registry).doesNotHaveAnyRemainingCurrentObservation()
+                .hasSingleObservationThat().hasNameEqualTo("test.class").hasContextualNameEqualTo("test.class#call")
+                .hasLowCardinalityKeyValue("abc", "123").hasLowCardinalityKeyValue("test", "42")
                 .hasLowCardinalityKeyValue("class", ObservedClassLevelAnnotatedService.class.getName())
                 .hasLowCardinalityKeyValue("method", "async").doesNotHaveError();
     }
@@ -239,9 +244,9 @@ class ObservedAspectTests {
         await().atMost(Duration.ofMillis(200)).untilAsserted(
                 () -> TestObservationRegistryAssert.assertThat(registry).hasSingleObservationThat().hasBeenStopped());
 
-        TestObservationRegistryAssert.assertThat(registry).hasSingleObservationThat().hasNameEqualTo("test.class")
-                .hasContextualNameEqualTo("test.class#call").hasLowCardinalityKeyValue("abc", "123")
-                .hasLowCardinalityKeyValue("test", "42")
+        TestObservationRegistryAssert.assertThat(registry).doesNotHaveAnyRemainingCurrentObservation()
+                .hasSingleObservationThat().hasNameEqualTo("test.class").hasContextualNameEqualTo("test.class#call")
+                .hasLowCardinalityKeyValue("abc", "123").hasLowCardinalityKeyValue("test", "42")
                 .hasLowCardinalityKeyValue("class", ObservedClassLevelAnnotatedService.class.getName())
                 .hasLowCardinalityKeyValue("method", "async").thenError().isInstanceOf(CompletionException.class)
                 .rootCause().isEqualTo(simulatedException);
@@ -257,9 +262,10 @@ class ObservedAspectTests {
 
         ObservedClassLevelAnnotatedService service = pf.getProxy();
         service.call();
-        TestObservationRegistryAssert.assertThat(registry).hasSingleObservationThat().hasBeenStopped()
-                .hasNameEqualTo("test.class").hasContextualNameEqualTo("test.class#call")
-                .hasLowCardinalityKeyValue("abc", "123").hasLowCardinalityKeyValue("test", "24")
+        TestObservationRegistryAssert.assertThat(registry).doesNotHaveAnyRemainingCurrentObservation()
+                .hasSingleObservationThat().hasBeenStopped().hasNameEqualTo("test.class")
+                .hasContextualNameEqualTo("test.class#call").hasLowCardinalityKeyValue("abc", "123")
+                .hasLowCardinalityKeyValue("test", "24")
                 .hasLowCardinalityKeyValue("class", ObservedClassLevelAnnotatedService.class.getName())
                 .hasLowCardinalityKeyValue("method", "call");
     }
@@ -294,7 +300,9 @@ class ObservedAspectTests {
         @Observed(name = "test.async")
         CompletableFuture<String> async(FakeAsyncTask fakeAsyncTask) {
             System.out.println("async");
-            return CompletableFuture.supplyAsync(fakeAsyncTask);
+            ContextSnapshot contextSnapshot = ContextSnapshot.captureUsing(o -> true);
+            return CompletableFuture.supplyAsync(fakeAsyncTask,
+                    contextSnapshot.wrapExecutor(Executors.newSingleThreadExecutor()));
         }
 
     }
@@ -314,7 +322,9 @@ class ObservedAspectTests {
 
         CompletableFuture<String> async(FakeAsyncTask fakeAsyncTask) {
             System.out.println("async");
-            return CompletableFuture.supplyAsync(fakeAsyncTask);
+            ContextSnapshot contextSnapshot = ContextSnapshot.captureUsing(o -> true);
+            return CompletableFuture.supplyAsync(fakeAsyncTask,
+                    contextSnapshot.wrapExecutor(Executors.newSingleThreadExecutor()));
         }
 
     }
