@@ -228,9 +228,7 @@ class SimpleObservation implements Observation {
         public void close() {
             this.registry.setCurrentObservationScope(previousObservationScope);
             this.currentObservation.notifyOnScopeClosed();
-            if (this.previousParentObservation != null) {
-                this.currentObservation.context.setParentObservation(this.previousParentObservation);
-            }
+            this.currentObservation.context.setParentObservation(this.previousParentObservation);
         }
 
     }
