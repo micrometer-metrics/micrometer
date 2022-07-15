@@ -20,9 +20,11 @@ import io.micrometer.core.instrument.MeterRegistry;
 import io.micrometer.core.instrument.MockClock;
 import io.micrometer.core.instrument.Tag;
 import io.micrometer.core.instrument.Tags;
+import io.micrometer.core.instrument.observation.DefaultMeterObservationHandler;
 import io.micrometer.core.instrument.search.MeterNotFoundException;
 import io.micrometer.core.instrument.simple.SimpleConfig;
 import io.micrometer.core.instrument.simple.SimpleMeterRegistry;
+import io.micrometer.observation.ObservationRegistry;
 import org.apache.http.client.HttpClient;
 import org.apache.http.client.methods.HttpGet;
 import org.apache.http.client.methods.HttpPost;
@@ -197,7 +199,10 @@ class MicrometerHttpRequestExecutorTest {
     }
 
     private HttpRequestExecutor executor(boolean exportRoutes) {
-        return MicrometerHttpRequestExecutor.builder(registry).exportTagsForRoute(exportRoutes).build();
+        ObservationRegistry observationRegistry = ObservationRegistry.create();
+        observationRegistry.observationConfig().observationHandler(new DefaultMeterObservationHandler(registry));
+        return MicrometerHttpRequestExecutor.builder(registry).observationRegistry(observationRegistry)
+                .exportTagsForRoute(exportRoutes).build();
     }
 
 }

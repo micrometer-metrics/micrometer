@@ -15,11 +15,15 @@
  */
 package io.micrometer.core.instrument.binder.httpcomponents;
 
+import io.micrometer.common.lang.Nullable;
 import io.micrometer.core.annotation.Incubating;
 import io.micrometer.core.instrument.MeterRegistry;
 import io.micrometer.core.instrument.Tag;
 import io.micrometer.core.instrument.Tags;
 import io.micrometer.core.instrument.Timer;
+import io.micrometer.observation.Observation;
+import io.micrometer.observation.ObservationRegistry;
+import io.micrometer.observation.transport.RequestReplySenderContext;
 import org.apache.http.HttpClientConnection;
 import org.apache.http.HttpException;
 import org.apache.http.HttpRequest;
@@ -31,6 +35,7 @@ import java.io.IOException;
 import java.util.Collections;
 import java.util.Optional;
 import java.util.function.Function;
+import java.util.function.Supplier;
 
 /**
  * This HttpRequestExecutor tracks the request duration of every request, that goes
@@ -59,7 +64,7 @@ public class MicrometerHttpRequestExecutor extends HttpRequestExecutor {
     @Deprecated
     public static final String DEFAULT_URI_PATTERN_HEADER = DefaultUriMapper.URI_PATTERN_HEADER;
 
-    private static final String METER_NAME = "httpcomponents.httpclient.request";
+    static final String METER_NAME = "httpcomponents.httpclient.request";
 
     private static final Tag STATUS_UNKNOWN = Tag.of("status", "UNKNOWN");
 
@@ -68,6 +73,10 @@ public class MicrometerHttpRequestExecutor extends HttpRequestExecutor {
     private static final Tag STATUS_IO_ERROR = Tag.of("status", "IO_ERROR");
 
     private final MeterRegistry registry;
+
+    private final ObservationRegistry observationRegistry;
+
+    private final ApacheHttpClientObservationConvention convention;
 
     private final Function<HttpRequest, String> uriMapper;
 
@@ -79,7 +88,8 @@ public class MicrometerHttpRequestExecutor extends HttpRequestExecutor {
      * Use {@link #builder(MeterRegistry)} to create an instance of this class.
      */
     private MicrometerHttpRequestExecutor(int waitForContinue, MeterRegistry registry,
-            Function<HttpRequest, String> uriMapper, Iterable<Tag> extraTags, boolean exportTagsForRoute) {
+            Function<HttpRequest, String> uriMapper, Iterable<Tag> extraTags, boolean exportTagsForRoute,
+            ObservationRegistry observationRegistry, ApacheHttpClientObservationConvention convention) {
         super(waitForContinue);
         this.registry = Optional.ofNullable(registry).orElseThrow(
                 () -> new IllegalArgumentException("registry is required but has been initialized with null"));
@@ -87,6 +97,8 @@ public class MicrometerHttpRequestExecutor extends HttpRequestExecutor {
                 () -> new IllegalArgumentException("uriMapper is required but has been initialized with null"));
         this.extraTags = Optional.ofNullable(extraTags).orElse(Collections.emptyList());
         this.exportTagsForRoute = exportTagsForRoute;
+        this.observationRegistry = observationRegistry;
+        this.convention = convention;
     }
 
     /**
@@ -102,16 +114,13 @@ public class MicrometerHttpRequestExecutor extends HttpRequestExecutor {
     @Override
     public HttpResponse execute(HttpRequest request, HttpClientConnection conn, HttpContext context)
             throws IOException, HttpException {
-        Timer.Sample timerSample = Timer.start(registry);
-
-        Tag method = Tag.of("method", request.getRequestLine().getMethod());
-        Tag uri = Tag.of("uri", uriMapper.apply(request));
+        ObservationOrTimer<ApacheHttpClientContext> sample = ObservationOrTimer.start(registry, observationRegistry,
+                () -> new ApacheHttpClientContext(request), convention);
         Tag status = STATUS_UNKNOWN;
-
-        Tags routeTags = exportTagsForRoute ? HttpContextUtils.generateTagsForRoute(context) : Tags.empty();
 
         try {
             HttpResponse response = super.execute(request, conn, context);
+            sample.setResponse(response);
             status = response != null ? Tag.of("status", Integer.toString(response.getStatusLine().getStatusCode()))
                     : STATUS_CLIENT_ERROR;
             return response;
@@ -121,24 +130,96 @@ public class MicrometerHttpRequestExecutor extends HttpRequestExecutor {
             throw e;
         }
         finally {
-            Iterable<Tag> tags = Tags.of(extraTags).and(routeTags).and(uri, method, status);
+            // TODO extraTags not applied
+            Tags routeTags = exportTagsForRoute ? HttpContextUtils.generateTagsForRoute(context) : Tags.empty();
+            Tags otherTags = Tags.of("method", request.getRequestLine().getMethod(), "uri", uriMapper.apply(request),
+                    "status", status.getValue());
 
-            timerSample.stop(Timer.builder(METER_NAME).description("Duration of Apache HttpClient request execution")
-                    .tags(tags).register(registry));
+            sample.stop(otherTags.and(routeTags));
         }
+    }
+
+    static class ObservationOrTimer<T extends Observation.Context> {
+
+        private final MeterRegistry meterRegistry;
+
+        private final ObservationRegistry observationRegistry;
+
+        private final Observation.ObservationConvention<T> convention;
+
+        @Nullable
+        private Timer.Sample sample;
+
+        @Nullable
+        private Observation observation;
+
+        @Nullable
+        private T context;
+
+        static <T extends Observation.Context> ObservationOrTimer<T> start(MeterRegistry meterRegistry,
+                ObservationRegistry observationRegistry, Supplier<T> context,
+                Observation.ObservationConvention<T> convention) {
+            return new ObservationOrTimer<T>(meterRegistry, observationRegistry, context, convention);
+        }
+
+        private ObservationOrTimer(MeterRegistry meterRegistry, ObservationRegistry observationRegistry,
+                Supplier<T> context, Observation.ObservationConvention<T> convention) {
+            this.meterRegistry = meterRegistry;
+            this.observationRegistry = observationRegistry;
+            this.convention = convention;
+            start(context);
+        }
+
+        public void start(Supplier<T> contextSupplier) {
+            if (observationRegistry.isNoop()) {
+                sample = Timer.start(meterRegistry);
+            }
+            else {
+                this.context = contextSupplier.get();
+                observation = Observation.start(convention, context, observationRegistry);
+            }
+        }
+
+        public void setResponse(Object response) {
+            if (observationRegistry.isNoop() || !(context instanceof RequestReplySenderContext)) {
+                return;
+            }
+            RequestReplySenderContext requestReplySenderContext = (RequestReplySenderContext) context;
+            requestReplySenderContext.setResponse(response);
+        }
+
+        /**
+         * Stop the timing.
+         * @param tags tags to apply if using the Timer API
+         */
+        public void stop(Iterable<Tag> tags) {
+            if (observationRegistry.isNoop()) {
+                sample.stop(Timer.builder(METER_NAME).description("Duration of Apache HttpClient request execution")
+                        .tags(tags).register(meterRegistry));
+            }
+            else {
+                observation.stop();
+            }
+        }
+
     }
 
     public static class Builder {
 
         private final MeterRegistry registry;
 
+        private ObservationRegistry observationRegistry = ObservationRegistry.NOOP;
+
         private int waitForContinue = HttpRequestExecutor.DEFAULT_WAIT_FOR_CONTINUE;
 
-        private Iterable<Tag> tags = Collections.emptyList();
+        private Iterable<Tag> extraTags = Collections.emptyList();
 
         private Function<HttpRequest, String> uriMapper = new DefaultUriMapper();
 
         private boolean exportTagsForRoute = false;
+
+        @Nullable
+        private ApacheHttpClientObservationConvention observationConvention;
 
         Builder(MeterRegistry registry) {
             this.registry = registry;
@@ -155,11 +236,18 @@ public class MicrometerHttpRequestExecutor extends HttpRequestExecutor {
         }
 
         /**
+         * These tags will not be applied when instrumentation is performed with the
+         * {@link Observation} API. Configure an
+         * {@link ApacheHttpClientObservationConvention} instead with the extra key
+         * values.
          * @param tags Additional tags which should be exposed with every value.
          * @return This builder instance.
+         * @see #observationConvention(ApacheHttpClientObservationConvention)
+         * @see #observationRegistry(ObservationRegistry)
+         * @see DefaultApacheHttpClientObservationConvention
          */
         public Builder tags(Iterable<Tag> tags) {
-            this.tags = tags;
+            this.extraTags = tags;
             return this;
         }
 
@@ -196,11 +284,39 @@ public class MicrometerHttpRequestExecutor extends HttpRequestExecutor {
         }
 
         /**
+         * Configure an observation registry to instrument using the {@link Observation}
+         * API instead of directly with a {@link Timer}.
+         * @param observationRegistry registry with which to instrument
+         * @return This builder instance.
+         */
+        public Builder observationRegistry(ObservationRegistry observationRegistry) {
+            this.observationRegistry = observationRegistry;
+            return this;
+        }
+
+        /**
+         * Provide a custom convention to override the default convention used when
+         * instrumenting with the {@link Observation} API. This only takes effect when a
+         * {@link #observationConvention(ApacheHttpClientObservationConvention)} is
+         * configured.
+         * @param convention semantic convention to use
+         * @return This builder instance.
+         */
+        public Builder observationConvention(ApacheHttpClientObservationConvention convention) {
+            this.observationConvention = convention;
+            return this;
+        }
+
+        /**
          * @return Creates an instance of {@link MicrometerHttpRequestExecutor} with all
          * the configured properties.
          */
         public MicrometerHttpRequestExecutor build() {
-            return new MicrometerHttpRequestExecutor(waitForContinue, registry, uriMapper, tags, exportTagsForRoute);
+            if (observationConvention == null) {
+                observationConvention = new DefaultApacheHttpClientObservationConvention(uriMapper, exportTagsForRoute);
+            }
+            return new MicrometerHttpRequestExecutor(waitForContinue, registry, uriMapper, extraTags,
+                    exportTagsForRoute, observationRegistry, observationConvention);
         }
 
     }

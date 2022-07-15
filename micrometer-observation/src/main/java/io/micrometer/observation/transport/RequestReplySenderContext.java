@@ -22,6 +22,8 @@ import io.micrometer.common.lang.Nullable;
  * Context used when sending data over the wire with the idea that you'll wait for some
  * response from the recipient.
  *
+ * @param <C> carrier type on which the context will be set
+ * @param <RES> response object type
  * @author Marcin Grzejszczak
  * @since 1.10.0
  * @param <C> type of the carrier object

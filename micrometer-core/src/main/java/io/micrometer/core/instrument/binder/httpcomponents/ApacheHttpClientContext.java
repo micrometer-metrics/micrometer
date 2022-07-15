@@ -13,13 +13,21 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
-/**
- * Meter binders for Apache HttpComponents.
- */
-@NonNullFields
-@NonNullApi
 package io.micrometer.core.instrument.binder.httpcomponents;
 
-import io.micrometer.common.lang.NonNullApi;
-import io.micrometer.common.lang.NonNullFields;
+import io.micrometer.observation.transport.RequestReplySenderContext;
+import org.apache.http.HttpRequest;
+import org.apache.http.HttpResponse;
+
+public class ApacheHttpClientContext extends RequestReplySenderContext<HttpRequest, HttpResponse> {
+
+    public ApacheHttpClientContext(HttpRequest request) {
+        super((httpRequest, key, value) -> {
+            if (httpRequest != null) {
+                httpRequest.addHeader(key, value);
+            }
+        });
+        setCarrier(request);
+    }
+
+}

@@ -23,6 +23,10 @@ import org.apache.http.protocol.HttpContext;
 class HttpContextUtils {
 
     static Tags generateTagsForRoute(HttpContext context) {
+        return Tags.of(generateTagStringsForRoute(context));
+    }
+
+    static String[] generateTagStringsForRoute(HttpContext context) {
         String targetScheme = "UNKNOWN";
         String targetHost = "UNKNOWN";
         String targetPort = "UNKNOWN";
@@ -33,7 +37,7 @@ class HttpContextUtils {
             targetHost = host.getHostName();
             targetPort = String.valueOf(host.getPort());
         }
-        return Tags.of("target.scheme", targetScheme, "target.host", targetHost, "target.port", targetPort);
+        return new String[] { "target.scheme", targetScheme, "target.host", targetHost, "target.port", targetPort };
     }
 
 }

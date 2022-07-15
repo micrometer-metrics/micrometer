@@ -18,12 +18,15 @@ package io.micrometer.core.instrument;
 import io.micrometer.common.lang.Nullable;
 import io.micrometer.core.instrument.binder.httpcomponents.DefaultUriMapper;
 import io.micrometer.core.instrument.binder.httpcomponents.MicrometerHttpRequestExecutor;
+import io.micrometer.core.instrument.observation.DefaultMeterObservationHandler;
+import io.micrometer.observation.ObservationRegistry;
 import org.apache.http.client.HttpClient;
 import org.apache.http.client.methods.HttpEntityEnclosingRequestBase;
 import org.apache.http.client.methods.HttpUriRequest;
 import org.apache.http.entity.BasicHttpEntity;
 import org.apache.http.impl.client.HttpClientBuilder;
 import org.apache.http.util.EntityUtils;
+import org.junit.jupiter.api.BeforeEach;
 
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
@@ -31,8 +34,17 @@ import java.net.URI;
 
 class ApacheHttpClientTimingInstrumentationVerificationTests extends HttpClientTimingInstrumentationVerificationTests {
 
-    private final HttpClient httpClient = HttpClientBuilder.create()
-            .setRequestExecutor(MicrometerHttpRequestExecutor.builder(getRegistry()).build()).build();
+    private final ObservationRegistry observationRegistry = ObservationRegistry.create();
+
+    private HttpClient httpClient;
+
+    @BeforeEach
+    void setup() {
+        observationRegistry.observationConfig().observationHandler(new DefaultMeterObservationHandler(getRegistry()));
+        httpClient = HttpClientBuilder.create().setRequestExecutor(
+                MicrometerHttpRequestExecutor.builder(getRegistry()).observationRegistry(observationRegistry).build())
+                .build();
+    }
 
     @Override
     protected String timerName() {
