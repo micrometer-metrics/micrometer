@@ -642,8 +642,11 @@ public abstract class MeterRegistryCompatibilityKit {
             observation.lowCardinalityKeyValue("dynamicTag", "24");
 
             clock(registry).add(1, TimeUnit.SECONDS);
+            observation.event(new Observation.Event("testEvent", "event for testing"));
+
             LongTaskTimer longTaskTimer = registry.more().longTaskTimer("myObservation.active", "staticTag", "42");
             assertThat(longTaskTimer.activeTasks()).isEqualTo(1);
+
             observation.stop();
             clock(registry).add(step());
 
@@ -652,6 +655,9 @@ public abstract class MeterRegistryCompatibilityKit {
             Timer timer = registry.timer("myObservation", "error", "none", "staticTag", "42", "dynamicTag", "24");
             assertAll(() -> assertEquals(1L, timer.count()),
                     () -> assertEquals(1, timer.totalTime(TimeUnit.SECONDS), 1.0e-12));
+
+            Counter counter = registry.counter("testEvent", "staticTag", "42", "dynamicTag", "24");
+            assertThat(counter.count()).isEqualTo(1.0);
         }
 
         @Test
@@ -661,6 +667,7 @@ public abstract class MeterRegistryCompatibilityKit {
             try (Observation.Scope scope = observation.openScope()) {
                 assertThat(scope.getCurrentObservation()).isSameAs(observation);
                 clock(registry).add(10, TimeUnit.NANOSECONDS);
+                observation.event(new Observation.Event("testEvent", "event for testing"));
             }
             observation.stop();
             clock(registry).add(step());
@@ -668,6 +675,9 @@ public abstract class MeterRegistryCompatibilityKit {
             Timer timer = registry.timer("myObservation", "error", "none");
             assertAll(() -> assertEquals(1L, timer.count()),
                     () -> assertEquals(10, timer.totalTime(TimeUnit.NANOSECONDS), 1.0e-12));
+
+            Counter counter = registry.counter("testEvent");
+            assertThat(counter.count()).isEqualTo(1.0);
         }
 
         @Test

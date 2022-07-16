@@ -58,6 +58,16 @@ class FirstMatchingCompositeObservationHandlerTests {
     }
 
     @Test
+    void should_run_on_event_only_for_first_matching_handler() {
+        FirstMatchingCompositeObservationHandler firstMatchingHandler = new FirstMatchingCompositeObservationHandler(
+                new NotMatchingHandler(), this.matchingHandler, new NotMatchingHandler());
+
+        firstMatchingHandler.onEvent(new Observation.Event("testEvent"), null);
+
+        assertThat(this.matchingHandler.eventDetected).isTrue();
+    }
+
+    @Test
     void should_run_on_scope_opened_only_for_first_matching_handler() {
         FirstMatchingCompositeObservationHandler firstMatchingHandler = new FirstMatchingCompositeObservationHandler(
                 new NotMatchingHandler(), this.matchingHandler, new NotMatchingHandler());
@@ -113,6 +123,8 @@ class FirstMatchingCompositeObservationHandlerTests {
 
         boolean errored;
 
+        boolean eventDetected;
+
         boolean scopeOpened;
 
         boolean scopeClosed;
@@ -125,6 +137,11 @@ class FirstMatchingCompositeObservationHandlerTests {
         @Override
         public void onError(Observation.Context context) {
             this.errored = true;
+        }
+
+        @Override
+        public void onEvent(Observation.Event event, Observation.Context context) {
+            this.eventDetected = true;
         }
 
         @Override
