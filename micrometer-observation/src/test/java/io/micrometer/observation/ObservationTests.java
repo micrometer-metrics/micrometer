@@ -78,4 +78,41 @@ class ObservationTests {
         assertThat((String) context.get("foo")).isEqualTo("bar");
     }
 
+    @Test
+    void settingParentObservationMakesAReferenceOnParentContext() {
+        ObservationRegistry registry = ObservationRegistry.create();
+        registry.observationConfig().observationHandler(context -> true);
+
+        Observation.Context parentContext = new Observation.Context();
+        Observation parent = Observation.start("parent", parentContext, registry);
+
+        Observation.Context childContext = new Observation.Context();
+        Observation child = Observation.createNotStarted("child", childContext, registry).parentObservation(parent)
+                .start();
+
+        parent.stop();
+        child.stop();
+
+        assertThat(childContext.getParentObservation().getContext()).isSameAs(parentContext);
+    }
+
+    @Test
+    void settingScopeMakesAReferenceOnParentContext() {
+        ObservationRegistry registry = ObservationRegistry.create();
+        registry.observationConfig().observationHandler(context -> true);
+
+        Observation.Context parentContext = new Observation.Context();
+        Observation parent = Observation.start("parent", parentContext, registry);
+        Observation.Context childContext = new Observation.Context();
+        parent.scoped(() -> {
+            assertThat(childContext.getParentObservation()).isNull();
+            Observation.createNotStarted("child", childContext, registry).observe(() -> {
+                assertThat(childContext.getParentObservation().getContext()).isSameAs(parentContext);
+            });
+            assertThat(childContext.getParentObservation()).isNull();
+        });
+        parent.stop();
+        assertThat(childContext.getParentObservation()).isNull();
+    }
+
 }

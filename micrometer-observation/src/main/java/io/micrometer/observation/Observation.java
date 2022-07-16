@@ -229,6 +229,18 @@ public interface Observation {
     Observation contextualName(String contextualName);
 
     /**
+     * If you have access to a previously created {@link Observation} you can manually set
+     * the parent {@link Observation} using this method - that way you won't need to open
+     * scopes just to create a child observation.
+     *
+     * If you're using the {@link #openScope()} method then the parent observation will be
+     * automatically set, and you don't have to call this method.
+     * @param parentObservation parent observation to set
+     * @return this
+     */
+    Observation parentObservation(Observation parentObservation);
+
+    /**
      * Adds a low cardinality key value. Low cardinality means that this key value will
      * have a bounded number of possible values. A templated HTTP URL is a good example of
      * such a key value (e.g. /foo/{userId}).
@@ -329,6 +341,12 @@ public interface Observation {
      * @return this
      */
     Observation start();
+
+    /**
+     * Returns the context attached to this observation.
+     * @return corresponding context
+     */
+    ContextView getContext();
 
     /**
      * Stop the observation. Remember to call this method, otherwise timing calculations
@@ -559,7 +577,7 @@ public interface Observation {
      * @since 1.10.0
      */
     @SuppressWarnings("unchecked")
-    class Context {
+    class Context implements ContextView {
 
         private final Map<Object, Object> map = new HashMap<>();
 
@@ -571,6 +589,9 @@ public interface Observation {
         @Nullable
         private Throwable error;
 
+        @Nullable
+        private Observation parentObservation;
+
         private final Set<KeyValue> lowCardinalityKeyValues = new LinkedHashSet<>();
 
         private final Set<KeyValue> highCardinalityKeyValues = new LinkedHashSet<>();
@@ -579,6 +600,7 @@ public interface Observation {
          * The observation name.
          * @return name
          */
+        @Override
         public String getName() {
             return this.name;
         }
@@ -598,7 +620,7 @@ public interface Observation {
          * context (e.g. name derived from HTTP request).
          * @return contextual name
          */
-        @Nullable
+        @Override
         public String getContextualName() {
             return this.contextualName;
         }
@@ -614,9 +636,28 @@ public interface Observation {
         }
 
         /**
+         * Returns the parent {@link Observation}.
+         * @return parent observation or {@code null} if there was no parent
+         */
+        @Override
+        @Nullable
+        public Observation getParentObservation() {
+            return parentObservation;
+        }
+
+        /**
+         * Sets the parent {@link Observation}.
+         * @param parentObservation parent observation to set
+         */
+        public void setParentObservation(@Nullable Observation parentObservation) {
+            this.parentObservation = parentObservation;
+        }
+
+        /**
          * Optional error that occurred while processing the {@link Observation}.
          * @return optional error
          */
+        @Override
         public Optional<Throwable> getError() {
             return Optional.ofNullable(this.error);
         }
@@ -649,6 +690,7 @@ public interface Observation {
          * @param <T> value type
          * @return entry or {@code null} if not present
          */
+        @Override
         @Nullable
         public <T> T get(Object key) {
             return (T) this.map.get(key);
@@ -670,6 +712,7 @@ public interface Observation {
          * @param <T> value type
          * @return entry ot exception if not present
          */
+        @Override
         @NonNull
         public <T> T getRequired(Object key) {
             T object = (T) this.map.get(key);
@@ -684,6 +727,7 @@ public interface Observation {
          * @param key key
          * @return {@code true} when the context contains the entry with the given key
          */
+        @Override
         public boolean containsKey(Object key) {
             return this.map.containsKey(key);
         }
@@ -695,6 +739,7 @@ public interface Observation {
          * @param <T> value type
          * @return object or default if not present
          */
+        @Override
         public <T> T getOrDefault(Object key, T defaultObject) {
             return (T) this.map.getOrDefault(key, defaultObject);
         }
@@ -753,16 +798,19 @@ public interface Observation {
         }
 
         @NonNull
+        @Override
         public KeyValues getLowCardinalityKeyValues() {
             return KeyValues.of(this.lowCardinalityKeyValues);
         }
 
         @NonNull
+        @Override
         public KeyValues getHighCardinalityKeyValues() {
             return KeyValues.of(this.highCardinalityKeyValues);
         }
 
         @NonNull
+        @Override
         public KeyValues getAllKeyValues() {
             return this.getLowCardinalityKeyValues().and(this.getHighCardinalityKeyValues());
         }
@@ -815,6 +863,94 @@ public interface Observation {
         public String toString() {
             return "event.name='" + this.name + "', event.contextualName='" + this.contextualName + '\'';
         }
+
+    }
+
+    /**
+     * Read only view on the {@link Context}.
+     */
+    interface ContextView {
+
+        /**
+         * The observation name.
+         * @return name
+         */
+        String getName();
+
+        /**
+         * Returns the contextual name. The name that makes sense within the current
+         * context (e.g. name derived from HTTP request).
+         * @return contextual name
+         */
+        @Nullable
+        String getContextualName();
+
+        /**
+         * Returns the parent {@link Observation}.
+         * @return parent observation or {@code null} if there was no parent
+         */
+        @Nullable
+        Observation getParentObservation();
+
+        /**
+         * Optional error that occurred while processing the {@link Observation}.
+         * @return optional error
+         */
+        Optional<Throwable> getError();
+
+        /**
+         * Gets an entry from the context. Returns {@code null} when entry is not present.
+         * @param key key
+         * @param <T> value type
+         * @return entry or {@code null} if not present
+         */
+        @Nullable
+        <T> T get(Object key);
+
+        /**
+         * Gets an entry from the context. Throws exception when entry is not present.
+         * @param key key
+         * @param <T> value type
+         * @return entry ot exception if not present
+         */
+        @NonNull
+        <T> T getRequired(Object key);
+
+        /**
+         * Checks if context contains a key.
+         * @param key key
+         * @return {@code true} when the context contains the entry with the given key
+         */
+        boolean containsKey(Object key);
+
+        /**
+         * Returns an element or default if not present.
+         * @param key key
+         * @param defaultObject default object to return
+         * @param <T> value type
+         * @return object or default if not present
+         */
+        <T> T getOrDefault(Object key, T defaultObject);
+
+        /**
+         * Returns low cardinality key values
+         * @return low cardinality key values
+         */
+        KeyValues getLowCardinalityKeyValues();
+
+        /**
+         * Returns high cardinality key values
+         * @return high cardinality key values
+         */
+        @NonNull
+        KeyValues getHighCardinalityKeyValues();
+
+        /**
+         * Returns all key values
+         * @return all key values
+         */
+        @NonNull
+        KeyValues getAllKeyValues();
 
     }
 
@@ -985,6 +1121,16 @@ public interface Observation {
      * @since 1.10.0
      */
     interface GlobalKeyValuesProvider<T extends Context> extends KeyValuesProvider<T> {
+
+    }
+
+    /**
+     * An observation convention that will be set on the {@link ObservationRegistry}.
+     *
+     * @author Marcin Grzejszczak
+     * @since 1.10.0
+     */
+    interface GlobalObservationConvention<T extends Context> extends ObservationConvention<T> {
 
     }
 

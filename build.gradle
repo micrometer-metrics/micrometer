@@ -377,7 +377,6 @@ subprojects {
     description = 'Application monitoring instrumentation facade'
 
     repositories {
-        mavenLocal()
         mavenCentral()
         maven {
             url 'https://repo.spring.io/milestone/' // we only need this repo for the context-propagation
@@ -401,7 +400,7 @@ nexusPublishing {
 }
 
 wrapper {
-    gradleVersion = '7.4.2'
+    gradleVersion = '7.5'
 }
 
 defaultTasks 'build'
