@@ -15,8 +15,10 @@
  */
 package io.micrometer.core.instrument.binder.okhttp3;
 
-import io.micrometer.core.instrument.Tag;
-import io.micrometer.observation.transport.http.context.HttpClientContext;
+import io.micrometer.common.KeyValue;
+import io.micrometer.observation.transport.SenderContext;
+import io.micrometer.observation.transport.Kind;
+import io.micrometer.observation.transport.RequestReplySenderContext;
 import okhttp3.Request;
 import okhttp3.Response;
 
@@ -24,29 +26,33 @@ import java.util.function.BiFunction;
 import java.util.function.Function;
 
 /**
- * A {@link HttpClientContext} for OkHttp3.
+ * A {@link SenderContext} for OkHttp3.
  *
  * @author Marcin Grzejszczak
  * @since 1.10.0
  */
-public class OkHttpContext extends HttpClientContext {
-
-    private final OkHttpMetricsEventListener.CallState state;
+public class OkHttpContext extends RequestReplySenderContext<Request.Builder, Response> {
 
     private final Function<Request, String> urlMapper;
 
-    private final Iterable<Tag> extraTags;
+    private final Iterable<KeyValue> extraTags;
 
-    private final Iterable<BiFunction<Request, Response, Tag>> contextSpecificTags;
+    private final Iterable<BiFunction<Request, Response, KeyValue>> contextSpecificTags;
 
-    private final Iterable<Tag> unknownRequestTags;
+    private final Iterable<KeyValue> unknownRequestTags;
 
     private final boolean includeHostTag;
 
-    public OkHttpContext(OkHttpMetricsEventListener.CallState state, Function<Request, String> urlMapper,
-            Iterable<Tag> extraTags, Iterable<BiFunction<Request, Response, Tag>> contextSpecificTags,
-            Iterable<Tag> unknownRequestTags, boolean includeHostTag) {
-        this.state = state;
+    private OkHttpObservationInterceptor.CallState state;
+
+    public OkHttpContext(Function<Request, String> urlMapper, Iterable<KeyValue> extraTags,
+            Iterable<BiFunction<Request, Response, KeyValue>> contextSpecificTags,
+            Iterable<KeyValue> unknownRequestTags, boolean includeHostTag) {
+        super((carrier, key, value) -> {
+            if (carrier != null) {
+                carrier.header(key, value);
+            }
+        }, Kind.CLIENT);
         this.urlMapper = urlMapper;
         this.extraTags = extraTags;
         this.contextSpecificTags = contextSpecificTags;
@@ -54,7 +60,11 @@ public class OkHttpContext extends HttpClientContext {
         this.includeHostTag = includeHostTag;
     }
 
-    public OkHttpMetricsEventListener.CallState getState() {
+    public void setState(OkHttpObservationInterceptor.CallState state) {
+        this.state = state;
+    }
+
+    public OkHttpObservationInterceptor.CallState getState() {
         return state;
     }
 
@@ -62,15 +72,15 @@ public class OkHttpContext extends HttpClientContext {
         return urlMapper;
     }
 
-    public Iterable<Tag> getExtraTags() {
+    public Iterable<KeyValue> getExtraTags() {
         return extraTags;
     }
 
-    public Iterable<BiFunction<Request, Response, Tag>> getContextSpecificTags() {
+    public Iterable<BiFunction<Request, Response, KeyValue>> getContextSpecificTags() {
         return contextSpecificTags;
     }
 
-    public Iterable<Tag> getUnknownRequestTags() {
+    public Iterable<KeyValue> getUnknownRequestTags() {
         return unknownRequestTags;
     }
 
