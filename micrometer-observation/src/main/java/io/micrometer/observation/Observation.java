@@ -834,27 +834,45 @@ public interface Observation {
 
     }
 
+    /**
+     * An arbitrary event that you can extend and signal during an {@link Observation}.
+     * This helps you to tell to the {@link ObservationHandler} that something happened.
+     * If you want to signal an exception/error, please use
+     * {@link Observation#error(Throwable)} instead.
+     */
     class Event {
 
         private final String name;
 
-        @Nullable
         private final String contextualName;
 
+        /**
+         * @param name The name of the event.
+         */
         public Event(String name) {
-            this(name, null);
+            this(name, name);
         }
 
-        public Event(String name, @Nullable String contextualName) {
+        /**
+         * @param name The name of the event (should have low cardinality).
+         * @param contextualName The contextual name of the event (can have high
+         * cardinality).
+         */
+        public Event(String name, String contextualName) {
             this.name = name;
             this.contextualName = contextualName;
         }
 
+        /**
+         * @return the name of the event.
+         */
         public String getName() {
             return this.name;
         }
 
-        @Nullable
+        /**
+         * @return the contextual name of the event.
+         */
         public String getContextualName() {
             return this.contextualName;
         }
