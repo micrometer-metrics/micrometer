@@ -16,21 +16,12 @@
 package io.micrometer.core.instrument.binder.okhttp3;
 
 import com.github.tomakehurst.wiremock.WireMockServer;
-import io.micrometer.common.KeyValue;
-import io.micrometer.common.KeyValues;
 import io.micrometer.core.instrument.MeterRegistry;
 import io.micrometer.core.instrument.MockClock;
 import io.micrometer.core.instrument.Tag;
 import io.micrometer.core.instrument.Tags;
-import io.micrometer.core.instrument.observation.DefaultMeterObservationHandler;
 import io.micrometer.core.instrument.simple.SimpleConfig;
 import io.micrometer.core.instrument.simple.SimpleMeterRegistry;
-import io.micrometer.observation.Observation;
-import io.micrometer.observation.ObservationHandler;
-import io.micrometer.observation.ObservationRegistry;
-import io.micrometer.observation.transport.http.HttpRequest;
-import io.micrometer.observation.transport.http.HttpResponse;
-import io.micrometer.observation.transport.http.tags.HttpClientKeyValuesConvention;
 import okhttp3.Cache;
 import okhttp3.OkHttpClient;
 import okhttp3.Request;
@@ -42,13 +33,12 @@ import ru.lanwen.wiremock.ext.WiremockResolver;
 
 import java.io.IOException;
 import java.nio.file.Path;
-import java.util.Arrays;
-import java.util.Collections;
 import java.util.concurrent.TimeUnit;
 import java.util.function.Function;
 
 import static com.github.tomakehurst.wiremock.client.WireMock.*;
-import static org.assertj.core.api.Assertions.*;
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.fail;
 
 /**
  * Tests for {@link OkHttpMetricsEventListener}.
@@ -67,12 +57,8 @@ class OkHttpMetricsEventListenerTest {
 
     private MeterRegistry registry = new SimpleMeterRegistry(SimpleConfig.DEFAULT, new MockClock());
 
-    private OkHttpClient client = new OkHttpClient.Builder().eventListener(defaultListenerBuilder().build()).build();
-
-    private OkHttpMetricsEventListener.Builder defaultListenerBuilder() {
-        return OkHttpMetricsEventListener.builder(registry, "okhttp.requests").tags(Tags.of("foo", "bar"))
-                .uriMapper(URI_MAPPER);
-    }
+    private OkHttpClient client = new OkHttpClient.Builder().eventListener(OkHttpMetricsEventListener
+            .builder(registry, "okhttp.requests").tags(Tags.of("foo", "bar")).uriMapper(URI_MAPPER).build()).build();
 
     @Test
     void timeSuccessful(@WiremockResolver.Wiremock WireMockServer server) throws IOException {
@@ -85,47 +71,6 @@ class OkHttpMetricsEventListenerTest {
                 .tags("foo", "bar", "status", "200", "uri", URI_EXAMPLE_VALUE, "target.host", "localhost",
                         "target.port", String.valueOf(server.port()), "target.scheme", "http")
                 .timer().count()).isEqualTo(1L);
-    }
-
-    @Test
-    void timeSuccessfulWithDefaultObservation(@WiremockResolver.Wiremock WireMockServer server) throws IOException {
-        ObservationRegistry observationRegistry = ObservationRegistry.create();
-        TestHandler testHandler = new TestHandler();
-        observationRegistry.observationConfig().observationHandler(testHandler);
-        observationRegistry.observationConfig().observationHandler(new DefaultMeterObservationHandler(registry));
-        client = new OkHttpClient.Builder()
-                .eventListener(defaultListenerBuilder().observationRegistry(observationRegistry).build()).build();
-        server.stubFor(any(anyUrl()));
-        Request request = new Request.Builder().url(server.baseUrl()).build();
-
-        client.newCall(request).execute().close();
-
-        assertThat(registry.get("okhttp.requests")
-                .tags("foo", "bar", "status", "200", "uri", URI_EXAMPLE_VALUE, "target.host", "localhost",
-                        "target.port", String.valueOf(server.port()), "target.scheme", "http")
-                .timer().count()).isEqualTo(1L);
-        assertThat(testHandler.context).isNotNull();
-        assertThat(testHandler.context.getAllKeyValues()).contains(KeyValue.of("foo", "bar"),
-                KeyValue.of("status", "200"));
-    }
-
-    @Test
-    void timeSuccessfulWithObservationConvention(@WiremockResolver.Wiremock WireMockServer server) throws IOException {
-        ObservationRegistry observationRegistry = ObservationRegistry.create();
-        TestHandler testHandler = new TestHandler();
-        MyConvention myConvention = new MyConvention();
-        observationRegistry.observationConfig().observationHandler(testHandler);
-        observationRegistry.observationConfig().observationHandler(new DefaultMeterObservationHandler(registry));
-        client = new OkHttpClient.Builder()
-                .eventListener(defaultListenerBuilder().observationRegistry(observationRegistry)
-                        .observationConvention(new StandardizedOkHttpObservationConvention(myConvention)).build())
-                .build();
-        server.stubFor(any(anyUrl()));
-        Request request = new Request.Builder().url(server.baseUrl()).build();
-
-        client.newCall(request).execute().close();
-
-        assertThat(registry.get("new.name").tags("peer", "name").timer().count()).isEqualTo(1L);
     }
 
     @Test
@@ -148,8 +93,10 @@ class OkHttpMetricsEventListenerTest {
 
         server.stop();
 
-        OkHttpClient client = new OkHttpClient.Builder().connectTimeout(1, TimeUnit.MILLISECONDS)
-                .eventListener(defaultListenerBuilder().build()).build();
+        OkHttpClient client = new OkHttpClient.Builder()
+                .connectTimeout(1, TimeUnit.MILLISECONDS).eventListener(OkHttpMetricsEventListener
+                        .builder(registry, "okhttp.requests").tags(Tags.of("foo", "bar")).uriMapper(URI_MAPPER).build())
+                .build();
 
         try {
             client.newCall(request).execute().close();
@@ -273,8 +220,6 @@ class OkHttpMetricsEventListenerTest {
         OkHttpMetricsEventListener listener = OkHttpMetricsEventListener.builder(registry, "okhttp.requests").build();
         OkHttpMetricsEventListener.CallState state = new OkHttpMetricsEventListener.CallState(
                 registry.config().clock().monotonicTime(), null);
-        state.setContext(new OkHttpContext(state, request -> "", Collections.emptyList(), Collections.emptyList(),
-                Collections.emptyList(), false));
         listener.time(state);
 
         assertThat(registry.get("okhttp.requests")
@@ -288,8 +233,6 @@ class OkHttpMetricsEventListenerTest {
                 .requestTagKeys("tag1", "tag2").build();
         OkHttpMetricsEventListener.CallState state = new OkHttpMetricsEventListener.CallState(
                 registry.config().clock().monotonicTime(), null);
-        state.setContext(new OkHttpContext(state, request -> "", Collections.emptyList(), Collections.emptyList(),
-                Arrays.asList(Tag.of("tag1", "UNKNOWN"), Tag.of("tag2", "UNKNOWN")), false));
         listener.time(state);
 
         assertThat(registry.get("okhttp.requests").tags("uri", "UNKNOWN", "tag1", "UNKNOWN", "tag2", "UNKNOWN").timer()
@@ -310,111 +253,6 @@ class OkHttpMetricsEventListenerTest {
                         "target.host", "localhost", "target.port", String.valueOf(server.port()), "target.scheme",
                         "http")
                 .timer().count()).isEqualTo(1L);
-    }
-
-    static class TestHandler implements ObservationHandler<Observation.Context> {
-
-        Observation.Context context;
-
-        @Override
-        public void onStart(Observation.Context context) {
-            this.context = context;
-        }
-
-        @Override
-        public boolean supportsContext(Observation.Context context) {
-            return true;
-        }
-
-    }
-
-    static class StandardizedOkHttpObservationConvention implements OkHttpObservationConvention {
-
-        private final HttpClientKeyValuesConvention convention;
-
-        StandardizedOkHttpObservationConvention(HttpClientKeyValuesConvention convention) {
-            this.convention = convention;
-        }
-
-        @Override
-        public KeyValues getLowCardinalityKeyValues(OkHttpContext context) {
-            return KeyValues.of(convention.peerName(null));
-        }
-
-        @Override
-        public String getName() {
-            return "new.name";
-        }
-
-    }
-
-    static class MyConvention implements HttpClientKeyValuesConvention {
-
-        @Override
-        public KeyValue peerName(HttpRequest request) {
-            return KeyValue.of("peer", "name");
-        }
-
-        @Override
-        public KeyValue method(HttpRequest request) {
-            return null;
-        }
-
-        @Override
-        public KeyValue url(HttpRequest request) {
-            return null;
-        }
-
-        @Override
-        public KeyValue target(HttpRequest request) {
-            return null;
-        }
-
-        @Override
-        public KeyValue host(HttpRequest request) {
-            return null;
-        }
-
-        @Override
-        public KeyValue scheme(HttpRequest request) {
-            return null;
-        }
-
-        @Override
-        public KeyValue statusCode(HttpResponse response) {
-            return null;
-        }
-
-        @Override
-        public KeyValue flavor(HttpRequest request) {
-            return null;
-        }
-
-        @Override
-        public KeyValue userAgent(HttpRequest request) {
-            return null;
-        }
-
-        @Override
-        public KeyValue requestContentLength(HttpRequest request) {
-            return null;
-        }
-
-        @Override
-        public KeyValue responseContentLength(HttpResponse response) {
-            return null;
-        }
-
-        @Override
-        public KeyValue ip(HttpRequest request) {
-            return null;
-        }
-
-        @Override
-        public KeyValue port(HttpRequest request) {
-            return null;
-        }
-
     }
 
 }

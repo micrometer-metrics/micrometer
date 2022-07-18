@@ -64,6 +64,7 @@ dependencies {
     optionalApi 'org.jetbrains.kotlinx:kotlinx-coroutines-core'
 
     testImplementation 'io.projectreactor:reactor-test'
+    testImplementation project(":micrometer-observation-test")
 
     // dependency injection tests
     testImplementation 'javax.inject:javax.inject'

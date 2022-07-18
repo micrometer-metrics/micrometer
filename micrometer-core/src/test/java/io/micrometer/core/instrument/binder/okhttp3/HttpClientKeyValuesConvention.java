@@ -13,12 +13,10 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package io.micrometer.observation.transport.http.tags;
+package io.micrometer.core.instrument.binder.okhttp3;
 
 import io.micrometer.common.KeyValue;
 import io.micrometer.common.KeyValues;
-import io.micrometer.observation.transport.http.HttpRequest;
-import io.micrometer.observation.transport.http.HttpResponse;
 
 /**
  * Conventions for HTTP client key values.
@@ -26,7 +24,7 @@ import io.micrometer.observation.transport.http.HttpResponse;
  * @author Marcin Grzejszczak
  * @since 1.10.0
  */
-public interface HttpClientKeyValuesConvention extends HttpKeyValuesConvention {
+public interface HttpClientKeyValuesConvention<REQ, RES> extends HttpKeyValuesConvention<REQ, RES> {
 
     /**
      * Remote hostname or similar, see note below.
@@ -37,10 +35,10 @@ public interface HttpClientKeyValuesConvention extends HttpKeyValuesConvention {
      * @param request HTTP request
      * @return key value
      */
-    KeyValue peerName(HttpRequest request);
+    KeyValue peerName(REQ request);
 
     @Override
-    default KeyValues all(HttpRequest request, HttpResponse response) {
+    default KeyValues all(REQ request, RES response) {
         return HttpKeyValuesConvention.super.all(request, response).and(peerName(request));
     }
 
