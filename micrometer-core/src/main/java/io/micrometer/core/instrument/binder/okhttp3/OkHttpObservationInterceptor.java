@@ -175,7 +175,6 @@ public class OkHttpObservationInterceptor implements Interceptor {
 
         /**
          * Add a {@link KeyValue} to any already configured tags on this Builder.
-         *
          * @param tag tag to add
          * @return this builder
          * @since 1.5.0
@@ -187,7 +186,6 @@ public class OkHttpObservationInterceptor implements Interceptor {
 
         /**
          * Add a context-specific tag.
-         *
          * @param contextSpecificTag function to create a context-specific tag
          * @return this builder
          * @since 1.5.0
@@ -208,7 +206,6 @@ public class OkHttpObservationInterceptor implements Interceptor {
          * other HTTP client metrics, this was changed to {@code target.host}, but to
          * maintain backwards compatibility the {@code host} tag can also be included. By
          * default, {@code includeHostTag} is {@literal true} so both tags are included.
-         *
          * @param includeHostTag whether to include the {@code host} tag
          * @return this builder
          * @since 1.5.0
@@ -224,7 +221,6 @@ public class OkHttpObservationInterceptor implements Interceptor {
          * These keys will be added with {@literal UNKNOWN} values when {@link Request} is
          * {@literal null}. Note that this is required only for Prometheus as it requires
          * tag match for the same metric.
-         *
          * @param requestTagKeys request tag keys
          * @return this builder
          * @since 1.3.9
@@ -239,7 +235,6 @@ public class OkHttpObservationInterceptor implements Interceptor {
          * These keys will be added with {@literal UNKNOWN} values when {@link Request} is
          * {@literal null}. Note that this is required only for Prometheus as it requires
          * tag match for the same metric.
-         *
          * @param requestTagKeys request tag keys
          * @return this builder
          * @since 1.3.9
