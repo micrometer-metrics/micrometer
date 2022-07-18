@@ -36,8 +36,7 @@ import java.util.function.Function;
  * @author Marcin Grzejszczak
  * @since 1.10.0
  */
-public class OkHttpObservationInterceptor
-        implements Interceptor, Observation.ObservationConventionAware<OkHttpObservationConvention> {
+public class OkHttpObservationInterceptor implements Interceptor {
 
     private final ObservationRegistry registry;
 
@@ -90,7 +89,7 @@ public class OkHttpObservationInterceptor
                 .observation(this.observationConvention, new DefaultOkHttpObservationConvention(requestMetricName),
                         okHttpContext, this.registry)
                 .contextualName(request.method()) // TODO: This would have to be set
-                                                  // either here or in a tracing handler
+                // either here or in a tracing handler
                 .start();
         Request newRequest = newRequestBuilder.build();
         OkHttpObservationInterceptor.CallState callState = new CallState(newRequest);
@@ -112,7 +111,6 @@ public class OkHttpObservationInterceptor
         }
     }
 
-    @Override
     public void setObservationConvention(OkHttpObservationConvention observationConvention) {
         this.observationConvention = observationConvention;
     }
@@ -177,6 +175,7 @@ public class OkHttpObservationInterceptor
 
         /**
          * Add a {@link KeyValue} to any already configured tags on this Builder.
+         *
          * @param tag tag to add
          * @return this builder
          * @since 1.5.0
@@ -188,6 +187,7 @@ public class OkHttpObservationInterceptor
 
         /**
          * Add a context-specific tag.
+         *
          * @param contextSpecificTag function to create a context-specific tag
          * @return this builder
          * @since 1.5.0
@@ -208,6 +208,7 @@ public class OkHttpObservationInterceptor
          * other HTTP client metrics, this was changed to {@code target.host}, but to
          * maintain backwards compatibility the {@code host} tag can also be included. By
          * default, {@code includeHostTag} is {@literal true} so both tags are included.
+         *
          * @param includeHostTag whether to include the {@code host} tag
          * @return this builder
          * @since 1.5.0
@@ -223,6 +224,7 @@ public class OkHttpObservationInterceptor
          * These keys will be added with {@literal UNKNOWN} values when {@link Request} is
          * {@literal null}. Note that this is required only for Prometheus as it requires
          * tag match for the same metric.
+         *
          * @param requestTagKeys request tag keys
          * @return this builder
          * @since 1.3.9
@@ -237,6 +239,7 @@ public class OkHttpObservationInterceptor
          * These keys will be added with {@literal UNKNOWN} values when {@link Request} is
          * {@literal null}. Note that this is required only for Prometheus as it requires
          * tag match for the same metric.
+         *
          * @param requestTagKeys request tag keys
          * @return this builder
          * @since 1.3.9

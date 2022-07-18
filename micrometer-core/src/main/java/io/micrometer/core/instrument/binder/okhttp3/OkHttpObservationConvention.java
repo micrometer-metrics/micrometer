@@ -18,7 +18,7 @@ package io.micrometer.core.instrument.binder.okhttp3;
 import io.micrometer.observation.Observation;
 
 /**
- * A {@link HttpKeyValueProvider} for OkHttp3.
+ * A {@link Observation.ObservationConvention} for OkHttp3.
  *
  * @author Marcin Grzejszczak
  * @since 1.10.0
