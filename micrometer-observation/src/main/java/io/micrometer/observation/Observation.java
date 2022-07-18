@@ -864,6 +864,7 @@ public interface Observation {
         }
 
         /**
+         * Returns the name of the event.
          * @return the name of the event.
          */
         public String getName() {
@@ -871,6 +872,7 @@ public interface Observation {
         }
 
         /**
+         * Returns the contextual name of the event.
          * @return the contextual name of the event.
          */
         public String getContextualName() {
