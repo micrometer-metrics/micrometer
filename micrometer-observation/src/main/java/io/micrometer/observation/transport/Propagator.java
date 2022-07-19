@@ -28,7 +28,7 @@ import io.micrometer.common.lang.Nullable;
  * @author OpenZipkin Brave Authors
  * @author OpenTelemetry Authors
  * @author Marcin Grzejszczak
- * @since 1.0.0
+ * @since 1.10.0
  */
 public interface Propagator {
 
@@ -40,7 +40,7 @@ public interface Propagator {
      * allocations.
      *
      * @param <C> carrier of propagation fields, such as an http request
-     * @since 1.0.0
+     * @since 1.10.0
      */
     interface Setter<C> {
 
@@ -69,7 +69,7 @@ public interface Propagator {
      * allocations.
      *
      * @param <C> carrier of propagation fields, such as an http request.
-     * @since 1.0.0
+     * @since 1.10.0
      */
     interface Getter<C> {
 
