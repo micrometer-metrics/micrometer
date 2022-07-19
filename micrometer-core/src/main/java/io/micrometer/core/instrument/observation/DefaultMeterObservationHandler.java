@@ -21,7 +21,7 @@ import io.micrometer.observation.Observation;
 import java.util.stream.Collectors;
 
 /**
- * Handler for {@link Timer.Sample}.
+ * Handler for {@link Timer.Sample} and {@link Counter}
  *
  * WARNING: Since the {@link LongTaskTimer} needs to be created in the {@code onStart}
  * method, it can only contain tags that are available by that time. This means that if
@@ -36,11 +36,11 @@ import java.util.stream.Collectors;
  * @author Jonatan Ivanov
  * @since 1.10.0
  */
-public class TimerObservationHandler implements MeterObservationHandler<Observation.Context> {
+public class DefaultMeterObservationHandler implements MeterObservationHandler<Observation.Context> {
 
     private final MeterRegistry meterRegistry;
 
-    public TimerObservationHandler(MeterRegistry meterRegistry) {
+    public DefaultMeterObservationHandler(MeterRegistry meterRegistry) {
         this.meterRegistry = meterRegistry;
     }
 
@@ -65,8 +65,9 @@ public class TimerObservationHandler implements MeterObservationHandler<Observat
     }
 
     @Override
-    public boolean supportsContext(Observation.Context context) {
-        return true;
+    public void onEvent(Observation.Event event, Observation.Context context) {
+        Counter.builder(context.getName() + "." + event.getName()).tags(createTags(context)).register(meterRegistry)
+                .increment();
     }
 
     private Tags createErrorTags(Observation.Context context) {

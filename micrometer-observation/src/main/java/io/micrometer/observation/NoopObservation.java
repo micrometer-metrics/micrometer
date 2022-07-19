@@ -79,6 +79,11 @@ final class NoopObservation implements Observation {
     }
 
     @Override
+    public Observation event(Event event) {
+        return this;
+    }
+
+    @Override
     public Observation start() {
         return this;
     }

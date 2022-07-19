@@ -32,6 +32,10 @@ class NullContextObservationHandlerCompatibilityKitTests extends NullContextObse
             }
 
             @Override
+            public void onEvent(Observation.Event event, Observation.Context context) {
+            }
+
+            @Override
             public void onScopeOpened(Observation.Context context) {
             }
 

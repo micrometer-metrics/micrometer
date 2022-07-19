@@ -17,6 +17,7 @@ package io.micrometer.observation.tck;
 
 import io.micrometer.common.KeyValue;
 import io.micrometer.common.KeyValues;
+import io.micrometer.common.lang.Nullable;
 import io.micrometer.observation.Observation;
 import io.micrometer.observation.ObservationHandler;
 import io.micrometer.observation.ObservationRegistry;
@@ -79,6 +80,10 @@ public abstract class ObservationRegistryCompatibilityKit {
         try (Observation.Scope scope = observation.openScope()) {
             inOrder.verify(handler).onScopeOpened(isA(Observation.Context.class));
             assertThat(scope.getCurrentObservation()).isSameAs(observation);
+
+            Observation.Event event = new Observation.Event("testEvent", "event for testing");
+            observation.event(event);
+            inOrder.verify(handler).onEvent(same(event), isA(Observation.Context.class));
 
             Throwable exception = new IOException("simulated");
             observation.error(exception);
@@ -455,10 +460,6 @@ public abstract class ObservationRegistryCompatibilityKit {
             return context instanceof TestContext;
         }
 
-        public String getId() {
-            return this.id;
-        }
-
     }
 
     static class UnsupportedKeyValuesProvider implements Observation.GlobalKeyValuesProvider<Observation.Context> {
@@ -490,6 +491,7 @@ public abstract class ObservationRegistryCompatibilityKit {
 
         private boolean stopped = false;
 
+        @Nullable
         private Observation.Context context = null;
 
         @Override

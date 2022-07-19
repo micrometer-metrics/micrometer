@@ -89,6 +89,11 @@ public class ObservationTextPublisher implements ObservationHandler<Observation.
     }
 
     @Override
+    public void onEvent(Observation.Event event, Observation.Context context) {
+        publishUnformatted(String.format("%5s - %s, %s", "EVENT", event, converter.apply(context)));
+    }
+
+    @Override
     public void onScopeOpened(Observation.Context context) {
         publish("OPEN", context);
     }
@@ -109,7 +114,11 @@ public class ObservationTextPublisher implements ObservationHandler<Observation.
     }
 
     private void publish(String event, Observation.Context context) {
-        this.consumer.accept(String.format("%5s - %s", event, converter.apply(context)));
+        publishUnformatted(String.format("%5s - %s", event, converter.apply(context)));
+    }
+
+    private void publishUnformatted(String event) {
+        this.consumer.accept(event);
     }
 
 }

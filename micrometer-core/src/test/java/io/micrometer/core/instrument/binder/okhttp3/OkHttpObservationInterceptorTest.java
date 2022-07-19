@@ -21,7 +21,7 @@ import io.micrometer.common.KeyValue;
 import io.micrometer.common.KeyValues;
 import io.micrometer.core.instrument.MeterRegistry;
 import io.micrometer.core.instrument.MockClock;
-import io.micrometer.core.instrument.observation.TimerObservationHandler;
+import io.micrometer.core.instrument.observation.DefaultMeterObservationHandler;
 import io.micrometer.core.instrument.simple.SimpleConfig;
 import io.micrometer.core.instrument.simple.SimpleMeterRegistry;
 import io.micrometer.observation.Observation;
@@ -76,7 +76,7 @@ class OkHttpObservationInterceptorTest {
     @BeforeEach
     void setup() {
         observationRegistry.observationConfig().observationHandler(testHandler);
-        observationRegistry.observationConfig().observationHandler(new TimerObservationHandler(registry));
+        observationRegistry.observationConfig().observationHandler(new DefaultMeterObservationHandler(registry));
         observationRegistry.observationConfig().observationHandler(new PropagatingHandler());
     }
 

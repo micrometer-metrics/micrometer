@@ -59,7 +59,7 @@ public interface Observation {
      * @param registry observation registry
      * @return started observation
      */
-    static Observation start(String name, @Nullable ObservationRegistry registry) {
+    static Observation start(String name, ObservationRegistry registry) {
         return start(name, null, registry);
     }
 
@@ -322,11 +322,18 @@ public interface Observation {
     Observation keyValuesProvider(KeyValuesProvider<?> keyValuesProvider);
 
     /**
-     * Sets an error.
+     * Signals an error.
      * @param error error
      * @return this
      */
     Observation error(Throwable error);
+
+    /**
+     * Signals an arbitrary {@link Event}.
+     * @param event event
+     * @return this
+     */
+    Observation event(Event event);
 
     /**
      * Starts the observation. Remember to call this method, otherwise timing calculations
@@ -576,6 +583,7 @@ public interface Observation {
 
         private String name;
 
+        @Nullable
         private String contextualName;
 
         @Nullable
@@ -827,6 +835,58 @@ public interface Observation {
     }
 
     /**
+     * An arbitrary event that you can extend and signal during an {@link Observation}.
+     * This helps you to tell to the {@link ObservationHandler} that something happened.
+     * If you want to signal an exception/error, please use
+     * {@link Observation#error(Throwable)} instead.
+     */
+    class Event {
+
+        private final String name;
+
+        private final String contextualName;
+
+        /**
+         * @param name The name of the event.
+         */
+        public Event(String name) {
+            this(name, name);
+        }
+
+        /**
+         * @param name The name of the event (should have low cardinality).
+         * @param contextualName The contextual name of the event (can have high
+         * cardinality).
+         */
+        public Event(String name, String contextualName) {
+            this.name = name;
+            this.contextualName = contextualName;
+        }
+
+        /**
+         * Returns the name of the event.
+         * @return the name of the event.
+         */
+        public String getName() {
+            return this.name;
+        }
+
+        /**
+         * Returns the contextual name of the event.
+         * @return the contextual name of the event.
+         */
+        public String getContextualName() {
+            return this.contextualName;
+        }
+
+        @Override
+        public String toString() {
+            return "event.name='" + this.name + "', event.contextualName='" + this.contextualName + '\'';
+        }
+
+    }
+
+    /**
      * Read only view on the {@link Context}.
      */
     interface ContextView {
@@ -842,6 +902,7 @@ public interface Observation {
          * context (e.g. name derived from HTTP request).
          * @return contextual name
          */
+        @Nullable
         String getContextualName();
 
         /**

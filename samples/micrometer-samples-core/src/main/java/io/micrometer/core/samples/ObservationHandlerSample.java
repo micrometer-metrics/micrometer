@@ -16,7 +16,7 @@
 package io.micrometer.core.samples;
 
 import io.micrometer.common.KeyValues;
-import io.micrometer.core.instrument.observation.TimerObservationHandler;
+import io.micrometer.core.instrument.observation.DefaultMeterObservationHandler;
 import io.micrometer.core.instrument.simple.SimpleMeterRegistry;
 import io.micrometer.observation.Observation;
 import io.micrometer.observation.ObservationPredicate;
@@ -35,17 +35,19 @@ public class ObservationHandlerSample {
 
     public static void main(String[] args) throws InterruptedException {
         observationRegistry.observationConfig().observationHandler(new ObservationTextPublisher())
-                .observationHandler(new TimerObservationHandler(registry));
+                .observationHandler(new DefaultMeterObservationHandler(registry));
         observationRegistry.observationConfig().keyValuesProvider(new CustomKeyValuesProvider())
                 .observationPredicate(new IgnoringObservationPredicate());
 
         Observation observation = Observation
                 .createNotStarted("sample.operation", new CustomContext(), observationRegistry)
-                .contextualName("CALL sampleOperation").keyValuesProvider(new CustomLocalKeyValuesProvider())
-                .lowCardinalityKeyValue("a", "1").highCardinalityKeyValue("time", Instant.now().toString()).start();
+                .contextualName("CALL sampleOperation").lowCardinalityKeyValue("a", "1")
+                .highCardinalityKeyValue("time", Instant.now().toString())
+                .keyValuesProvider(new CustomLocalKeyValuesProvider()).start();
 
         try (Observation.Scope scope = observation.openScope()) {
             Thread.sleep(1_000);
+            observation.event(new Observation.Event("custom.event", "Custom " + UUID.randomUUID()));
             observation.error(new IOException("simulated"));
         }
 
