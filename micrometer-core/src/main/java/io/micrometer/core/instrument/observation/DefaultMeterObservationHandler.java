@@ -66,7 +66,8 @@ public class DefaultMeterObservationHandler implements MeterObservationHandler<O
 
     @Override
     public void onEvent(Observation.Event event, Observation.Context context) {
-        Counter.builder(event.getName()).tags(createTags(context)).register(meterRegistry).increment();
+        Counter.builder(context.getName() + "." + event.getName()).tags(createTags(context)).register(meterRegistry)
+                .increment();
     }
 
     private Tags createErrorTags(Observation.Context context) {

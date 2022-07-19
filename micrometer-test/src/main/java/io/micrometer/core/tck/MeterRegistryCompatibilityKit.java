@@ -656,7 +656,7 @@ public abstract class MeterRegistryCompatibilityKit {
             assertAll(() -> assertEquals(1L, timer.count()),
                     () -> assertEquals(1, timer.totalTime(TimeUnit.SECONDS), 1.0e-12));
 
-            Counter counter = registry.counter("testEvent", "staticTag", "42", "dynamicTag", "24");
+            Counter counter = registry.counter("myObservation.testEvent", "staticTag", "42", "dynamicTag", "24");
             assertThat(counter.count()).isEqualTo(1.0);
         }
 
@@ -676,7 +676,7 @@ public abstract class MeterRegistryCompatibilityKit {
             assertAll(() -> assertEquals(1L, timer.count()),
                     () -> assertEquals(10, timer.totalTime(TimeUnit.NANOSECONDS), 1.0e-12));
 
-            Counter counter = registry.counter("testEvent");
+            Counter counter = registry.counter("myObservation.testEvent");
             assertThat(counter.count()).isEqualTo(1.0);
         }
 
