@@ -65,8 +65,9 @@ public interface DocumentedObservation {
     }
 
     /**
-     * Default naming convention (sets a technical name and key values). You can set the
-     * name either by this method or {@link #getName()} ()}. You can't use both.
+     * Default naming convention (sets a technical and contextual names, and key values).
+     * You can set the names either by this method or {@link #getName()} and
+     * {@link #getContextualName()}.
      * @return default naming convention
      */
     default Class<? extends Observation.ObservationConvention<? extends Observation.Context>> getDefaultConvention() {
@@ -74,7 +75,9 @@ public interface DocumentedObservation {
     }
 
     /**
-     * More human readable name available within the given context (e.g. span name).
+     * More human readable name available within the given context (e.g. span name). You
+     * can set the name either by this method or {@link #getDefaultConvention()}. This
+     * method will override what {@link #getDefaultConvention()} has set.
      * @return contextual name
      */
     default String getContextualName() {
@@ -154,8 +157,11 @@ public interface DocumentedObservation {
                     + "] defined default convention to be of type [" + getDefaultConvention()
                     + "] but you have provided an incompatible one of type [" + defaultConvention.getClass() + "]");
         }
-        return Observation.createNotStarted(customConvention, defaultConvention, context, registry)
-                .contextualName(getContextualName());
+        Observation observation = Observation.createNotStarted(customConvention, defaultConvention, context, registry);
+        if (getContextualName() != null) {
+            observation.contextualName(getContextualName());
+        }
+        return observation;
     }
 
     /**
