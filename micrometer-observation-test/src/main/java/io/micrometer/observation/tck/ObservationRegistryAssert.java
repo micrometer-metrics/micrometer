@@ -123,4 +123,78 @@ public class ObservationRegistryAssert<SELF extends ObservationRegistryAssert<SE
         return (SELF) this;
     }
 
+    /**
+     * Verifies that there's no current {@link Observation.Scope} left in the
+     * {@link ObservationRegistry}.
+     * @return this
+     * @throws AssertionError if there is a current scope remaining in the registry
+     */
+    public SELF doesNotHaveAnyRemainingCurrentScope() {
+        isNotNull();
+        Observation.Scope current = actual.getCurrentObservationScope();
+        if (current != null) {
+            failWithMessage("Expected no current Scope in the registry but found one tied to observation named <%s>",
+                    current.getCurrentObservation().getContext().getName());
+        }
+        return (SELF) this;
+    }
+
+    /**
+     * Verifies that there's a current {@link Observation.Scope} left in the
+     * {@link ObservationRegistry}.
+     * @return this
+     * @throws AssertionError if there is no current scope remaining in the registry
+     */
+    public SELF hasRemainingCurrentScope() {
+        isNotNull();
+        Observation.Scope current = actual.getCurrentObservationScope();
+        if (current == null) {
+            failWithMessage("Expected a current Scope in the registry but found none");
+        }
+        return (SELF) this;
+    }
+
+    /**
+     * Verifies that the current {@link Observation.Scope} in the
+     * {@link ObservationRegistry} is not the same as the provided scope. This assertion
+     * also passes if there is no current scope in the registry.
+     * @return this
+     * @throws AssertionError if there is a current scope remaining in the registry and it
+     * is the same as the provided scope
+     */
+    public SELF doesNotHaveRemainingCurrentScopeSameAs(Observation.Scope scope) {
+        isNotNull();
+        Observation.Scope current = actual.getCurrentObservationScope();
+        if (current == scope) {
+            failWithMessage(
+                    "Expected current Scope in the registry to be different from a provided Scope tied to observation named <%s> but was the same",
+                    scope.getCurrentObservation().getContext().getName());
+        }
+        return (SELF) this;
+    }
+
+    /**
+     * Verifies that the current {@link Observation.Scope} in the
+     * {@link ObservationRegistry} is the same instance as the provided scope.
+     * @return this
+     * @throws AssertionError if the provided scope is not the current scope remaining in
+     * the registry
+     */
+    public SELF hasRemainingCurrentScopeSameAs(Observation.Scope scope) {
+        isNotNull();
+        Observation.Scope current = actual.getCurrentObservationScope();
+        if (current == null) {
+            failWithMessage(
+                    "Expected current Scope in the registry to be same as a provided Scope tied to observation named <%s> but there was no current scope",
+                    scope.getCurrentObservation().getContext().getName());
+        }
+        if (current != scope) {
+            failWithMessage(
+                    "Expected current Scope in the registry to be same as a provided Scope tied to observation named <%s> but was a different one (tied to observation named <%s>)",
+                    scope.getCurrentObservation().getContext().getName(),
+                    current.getCurrentObservation().getContext().getName());
+        }
+        return (SELF) this;
+    }
+
 }
