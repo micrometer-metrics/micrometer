@@ -27,7 +27,8 @@ import java.util.function.Predicate;
 import java.util.stream.Collectors;
 
 /**
- * Assertion methods for {@code Observation.Context}s and {@link Observation.ContextView}s.
+ * Assertion methods for {@code Observation.Context}s and
+ * {@link Observation.ContextView}s.
  * <p>
  * To create a new instance of this class, invoke
  * {@link ObservationContextAssert#assertThat(Observation.ContextView)} or
@@ -343,7 +344,6 @@ public class ObservationContextAssert<SELF extends ObservationContextAssert<SELF
     /**
      * Verify that the Observation {@link Observation.ContextView} has a
      * {@link Observation.ContextView#getParentObservation() parent Observation}.
-     *
      * @return the instance for further fluent assertion
      */
     public SELF hasParentObservation() {
@@ -365,9 +365,8 @@ public class ObservationContextAssert<SELF extends ObservationContextAssert<SELF
 
     /**
      * Verify that the Observation {@link Observation.ContextView} has a
-     * {@link Observation.ContextView#getParentObservation() parent Observation}
-     * equal to the provided {@link Observation}.
-     *
+     * {@link Observation.ContextView#getParentObservation() parent Observation} equal to
+     * the provided {@link Observation}.
      * @return the instance for further fluent assertion
      */
     public SELF hasParentObservationEqualTo(Observation expectedParent) {
@@ -385,7 +384,6 @@ public class ObservationContextAssert<SELF extends ObservationContextAssert<SELF
     /**
      * Verify that the Observation {@link Observation.ContextView} does not have a
      * {@link Observation.ContextView#getParentObservation() parent Observation}.
-     *
      * @return the instance for further fluent assertion
      */
     public SELF doesNotHaveParentObservation() {
@@ -399,11 +397,12 @@ public class ObservationContextAssert<SELF extends ObservationContextAssert<SELF
     /**
      * Verify that the Observation {@link Observation.ContextView} has a
      * {@link Observation.ContextView#getParentObservation() parent Observation} and that
-     * it satisfies assertions performed in the provided {@link java.util.function.Consumer}.
-     *
+     * it satisfies assertions performed in the provided
+     * {@link java.util.function.Consumer}.
      * @return the instance for further fluent assertion
      */
-    public SELF hasParentObservationContextSatisfying(ThrowingConsumer<Observation.ContextView> parentContextViewAssertion) {
+    public SELF hasParentObservationContextSatisfying(
+            ThrowingConsumer<Observation.ContextView> parentContextViewAssertion) {
         Observation p = checkedParentObservation();
         try {
             parentContextViewAssertion.accept(p.getContext());
@@ -422,7 +421,8 @@ public class ObservationContextAssert<SELF extends ObservationContextAssert<SELF
      * @see #hasParentObservationContextMatching(Predicate, String)
      * @return the instance for further fluent assertion
      */
-    public SELF hasParentObservationContextMatching(Predicate<? super Observation.ContextView> parentContextViewPredicate) {
+    public SELF hasParentObservationContextMatching(
+            Predicate<? super Observation.ContextView> parentContextViewPredicate) {
         Observation p = checkedParentObservation();
         if (!parentContextViewPredicate.test(p.getContext())) {
             failWithMessage("Observation should have parent that matches given predicate but <%s> didn't", p);
@@ -434,13 +434,14 @@ public class ObservationContextAssert<SELF extends ObservationContextAssert<SELF
      * Verify that the Observation {@link Observation.ContextView} has a
      * {@link Observation.ContextView#getParentObservation() parent Observation} and that
      * it matches the provided named predicate.
-     *
      * @return the instance for further fluent assertion
      */
-    public SELF hasParentObservationContextMatching(Predicate<? super Observation.ContextView> parentContextViewPredicate, String description) {
+    public SELF hasParentObservationContextMatching(
+            Predicate<? super Observation.ContextView> parentContextViewPredicate, String description) {
         Observation p = checkedParentObservation();
         if (!parentContextViewPredicate.test(p.getContext())) {
-            failWithMessage("Observation should have parent that matches '%s' predicate but <%s> didn't", description, p);
+            failWithMessage("Observation should have parent that matches '%s' predicate but <%s> didn't", description,
+                    p);
         }
         return (SELF) this;
     }

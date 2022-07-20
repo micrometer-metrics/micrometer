@@ -31,7 +31,6 @@ class ObservationContextAssertTests {
 
     Observation.Context context;
 
-
     @BeforeEach
     void beforeEach() {
         registry = ObservationRegistry.create();
@@ -457,8 +456,7 @@ class ObservationContextAssertTests {
 
     @Test
     void should_throw_when_no_parent_observation() {
-        thenThrownBy(() -> assertThat(context).hasParentObservation())
-                .hasMessage("Observation should have a parent");
+        thenThrownBy(() -> assertThat(context).hasParentObservation()).hasMessage("Observation should have a parent");
     }
 
     @Test
@@ -507,7 +505,8 @@ class ObservationContextAssertTests {
         parent.contextualName("expected");
         context.setParentObservation(parent);
 
-        thenNoException().isThrownBy(() -> assertThat(context).hasParentObservationContextMatching(c -> "expected".equals(c.getContextualName())));
+        thenNoException().isThrownBy(() -> assertThat(context)
+                .hasParentObservationContextMatching(c -> "expected".equals(c.getContextualName())));
     }
 
     @Test
@@ -516,8 +515,9 @@ class ObservationContextAssertTests {
         parent.contextualName("expected");
         context.setParentObservation(parent);
 
-        thenThrownBy(() -> assertThat(context).hasParentObservationContextMatching(c -> "notExpected".equals(c.getContextualName())))
-                .hasMessage("Observation should have parent that matches given predicate but <PARENT_OBSERVATION> didn't");
+        thenThrownBy(() -> assertThat(context)
+                .hasParentObservationContextMatching(c -> "notExpected".equals(c.getContextualName()))).hasMessage(
+                        "Observation should have parent that matches given predicate but <PARENT_OBSERVATION> didn't");
     }
 
     @Test
@@ -536,8 +536,9 @@ class ObservationContextAssertTests {
         parent.contextualName("expected");
         context.setParentObservation(parent);
 
-        thenThrownBy(() -> assertThat(context).hasParentObservationContextMatching(c -> "notExpected".equals(c.getContextualName()), "withDescription"))
-                .hasMessage("Observation should have parent that matches 'withDescription' predicate but <PARENT_OBSERVATION> didn't");
+        thenThrownBy(() -> assertThat(context).hasParentObservationContextMatching(
+                c -> "notExpected".equals(c.getContextualName()), "withDescription")).hasMessage(
+                        "Observation should have parent that matches 'withDescription' predicate but <PARENT_OBSERVATION> didn't");
     }
 
     @Test
@@ -546,8 +547,7 @@ class ObservationContextAssertTests {
         context.setParentObservation(parent);
 
         thenNoException().isThrownBy(() -> assertThat(context)
-                .hasParentObservationContextSatisfying(c ->
-                        assertThat(c).hasContextualNameEqualTo("expected")));
+                .hasParentObservationContextSatisfying(c -> assertThat(c).hasContextualNameEqualTo("expected")));
     }
 
     @Test
@@ -556,13 +556,13 @@ class ObservationContextAssertTests {
         parent.contextualName("expected");
         context.setParentObservation(parent);
 
-        thenThrownBy(() -> assertThat(context).hasParentObservationContextSatisfying(c ->
-                assertThat(c).hasContextualNameEqualTo("notExpected")))
-                .hasMessage("Parent observation does not satisfy given assertion: Observation should have contextual name equal to <notExpected> but has <expected>");
+        thenThrownBy(() -> assertThat(context).hasParentObservationContextSatisfying(
+                c -> assertThat(c).hasContextualNameEqualTo("notExpected"))).hasMessage(
+                        "Parent observation does not satisfy given assertion: Observation should have contextual name equal to <notExpected> but has <expected>");
 
-        thenThrownBy(() -> assertThat(context).hasParentObservationContextSatisfying(c ->
-                assertThat(c).hasError()))
-                .hasMessage("Parent observation does not satisfy given assertion: Observation should have an error, but none was found");
+        thenThrownBy(() -> assertThat(context).hasParentObservationContextSatisfying(c -> assertThat(c).hasError()))
+                .hasMessage(
+                        "Parent observation does not satisfy given assertion: Observation should have an error, but none was found");
     }
 
 }
