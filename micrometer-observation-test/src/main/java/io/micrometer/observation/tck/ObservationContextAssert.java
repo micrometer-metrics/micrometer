@@ -340,6 +340,12 @@ public class ObservationContextAssert<SELF extends ObservationContextAssert<SELF
         return assertThatError();
     }
 
+    /**
+     * Verify that the Observation {@link Observation.ContextView} has a
+     * {@link Observation.ContextView#getParentObservation() parent Observation}.
+     *
+     * @return the instance for further fluent assertion
+     */
     public SELF hasParentObservation() {
         isNotNull();
         if (this.actual.getParentObservation() == null) {
@@ -357,6 +363,13 @@ public class ObservationContextAssert<SELF extends ObservationContextAssert<SELF
         return p;
     }
 
+    /**
+     * Verify that the Observation {@link Observation.ContextView} has a
+     * {@link Observation.ContextView#getParentObservation() parent Observation}
+     * equal to the provided {@link Observation}.
+     *
+     * @return the instance for further fluent assertion
+     */
     public SELF hasParentObservationEqualTo(Observation expectedParent) {
         isNotNull();
         Observation realParent = this.actual.getParentObservation();
@@ -369,6 +382,12 @@ public class ObservationContextAssert<SELF extends ObservationContextAssert<SELF
         return (SELF) this;
     }
 
+    /**
+     * Verify that the Observation {@link Observation.ContextView} does not have a
+     * {@link Observation.ContextView#getParentObservation() parent Observation}.
+     *
+     * @return the instance for further fluent assertion
+     */
     public SELF doesNotHaveParentObservation() {
         isNotNull();
         if (this.actual.getParentObservation() != null) {
@@ -377,6 +396,13 @@ public class ObservationContextAssert<SELF extends ObservationContextAssert<SELF
         return (SELF) this;
     }
 
+    /**
+     * Verify that the Observation {@link Observation.ContextView} has a
+     * {@link Observation.ContextView#getParentObservation() parent Observation} and that
+     * it satisfies assertions performed in the provided {@link java.util.function.Consumer}.
+     *
+     * @return the instance for further fluent assertion
+     */
     public SELF hasParentObservationContextSatisfying(ThrowingConsumer<Observation.ContextView> parentContextViewAssertion) {
         Observation p = checkedParentObservation();
         try {
@@ -388,6 +414,14 @@ public class ObservationContextAssert<SELF extends ObservationContextAssert<SELF
         return (SELF) this;
     }
 
+    /**
+     * Verify that the Observation {@link Observation.ContextView} has a
+     * {@link Observation.ContextView#getParentObservation() parent Observation} and that
+     * it matches the provided unnamed predicate.
+     *
+     * @see #hasParentObservationContextMatching(Predicate, String)
+     * @return the instance for further fluent assertion
+     */
     public SELF hasParentObservationContextMatching(Predicate<? super Observation.ContextView> parentContextViewPredicate) {
         Observation p = checkedParentObservation();
         if (!parentContextViewPredicate.test(p.getContext())) {
@@ -396,6 +430,13 @@ public class ObservationContextAssert<SELF extends ObservationContextAssert<SELF
         return (SELF) this;
     }
 
+    /**
+     * Verify that the Observation {@link Observation.ContextView} has a
+     * {@link Observation.ContextView#getParentObservation() parent Observation} and that
+     * it matches the provided named predicate.
+     *
+     * @return the instance for further fluent assertion
+     */
     public SELF hasParentObservationContextMatching(Predicate<? super Observation.ContextView> parentContextViewPredicate, String description) {
         Observation p = checkedParentObservation();
         if (!parentContextViewPredicate.test(p.getContext())) {
