@@ -49,8 +49,8 @@ public class ObservationContextAssert<SELF extends ObservationContextAssert<SELF
      * @param actual context to assert against
      * @return Observation assertions
      */
-    public static ObservationContextAssert assertThat(Observation.ContextView actual) {
-        return new ObservationContextAssert(actual);
+    public static ObservationContextAssert<?> assertThat(Observation.ContextView actual) {
+        return new ObservationContextAssert<>(actual);
     }
 
     /**
@@ -58,8 +58,8 @@ public class ObservationContextAssert<SELF extends ObservationContextAssert<SELF
      * @param actual context to assert against
      * @return Observation assertions
      */
-    public static ObservationContextAssert then(Observation.ContextView actual) {
-        return new ObservationContextAssert(actual);
+    public static ObservationContextAssert<?> then(Observation.ContextView actual) {
+        return new ObservationContextAssert<>(actual);
     }
 
     public SELF hasNameEqualTo(String name) {
@@ -348,14 +348,23 @@ public class ObservationContextAssert<SELF extends ObservationContextAssert<SELF
         return (SELF) this;
     }
 
+    private Observation checkedParentObservation() {
+        isNotNull();
+        Observation p = this.actual.getParentObservation();
+        if (p == null) {
+            failWithMessage("Observation should have a parent");
+        }
+        return p;
+    }
+
     public SELF hasParentObservationEqualTo(Observation expectedParent) {
         isNotNull();
         Observation realParent = this.actual.getParentObservation();
         if (realParent == null) {
-            failWithMessage("Observation should have parent <%s>, has none", expectedParent);
+            failWithMessage("Observation should have parent <%s> but has none", expectedParent);
         }
         if (!realParent.equals(expectedParent)) {
-            failWithMessage("Observation should have parent <%s>, has <%s>", expectedParent, realParent);
+            failWithMessage("Observation should have parent <%s> but has <%s>", expectedParent, realParent);
         }
         return (SELF) this;
     }
@@ -363,29 +372,35 @@ public class ObservationContextAssert<SELF extends ObservationContextAssert<SELF
     public SELF doesNotHaveParentObservation() {
         isNotNull();
         if (this.actual.getParentObservation() != null) {
-            failWithMessage("Observation should not have a parent, has <%s>", this.actual.getParentObservation());
+            failWithMessage("Observation should not have a parent but has <%s>", this.actual.getParentObservation());
         }
         return (SELF) this;
     }
 
-    public SELF hasParentObservationContextSatisfying(ThrowingConsumer<? super Observation.ContextView> parentContextViewAssertion) {
-        hasParentObservation();
-        assertThat(this.actual.getParentObservation().getContext())
-                .satisfies(parentContextViewAssertion);
+    public SELF hasParentObservationContextSatisfying(ThrowingConsumer<Observation.ContextView> parentContextViewAssertion) {
+        Observation p = checkedParentObservation();
+        try {
+            parentContextViewAssertion.accept(p.getContext());
+        }
+        catch (Throwable e) {
+            failWithMessage("Parent observation does not satisfy given assertion: " + e.getMessage());
+        }
         return (SELF) this;
     }
 
     public SELF hasParentObservationContextMatching(Predicate<? super Observation.ContextView> parentContextViewPredicate) {
-        hasParentObservation();
-        assertThat(this.actual.getParentObservation().getContext())
-                .matches(parentContextViewPredicate);
+        Observation p = checkedParentObservation();
+        if (!parentContextViewPredicate.test(p.getContext())) {
+            failWithMessage("Observation should have parent that matches given predicate but <%s> didn't", p);
+        }
         return (SELF) this;
     }
 
     public SELF hasParentObservationContextMatching(Predicate<? super Observation.ContextView> parentContextViewPredicate, String description) {
-        hasParentObservation();
-        ObservationContextAssert.assertThat(this.actual.getParentObservation().getContext())
-                .matches(parentContextViewPredicate, description);
+        Observation p = checkedParentObservation();
+        if (!parentContextViewPredicate.test(p.getContext())) {
+            failWithMessage("Observation should have parent that matches '%s' predicate but <%s> didn't", description, p);
+        }
         return (SELF) this;
     }
 
