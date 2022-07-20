@@ -242,7 +242,7 @@ public interface Observation {
      * @param contextualName contextual name
      * @return this
      */
-    Observation contextualName(String contextualName);
+    Observation contextualName(@Nullable String contextualName);
 
     /**
      * If you have access to a previously created {@link Observation} you can manually set
@@ -646,7 +646,7 @@ public interface Observation {
          * @param contextualName name
          * @return this for chaining
          */
-        public Context setContextualName(String contextualName) {
+        public Context setContextualName(@Nullable String contextualName) {
             this.contextualName = contextualName;
             return this;
         }
@@ -1022,8 +1022,9 @@ public interface Observation {
          * @param context context
          * @return the new, contextual name for the observation
          */
+        @Nullable
         default String getContextualName(T context) {
-            return this.getName();
+            return null;
         }
 
     }

@@ -80,6 +80,7 @@ public interface DocumentedObservation {
      * method will override what {@link #getDefaultConvention()} has set.
      * @return contextual name
      */
+    @Nullable
     default String getContextualName() {
         return null;
     }
@@ -124,7 +125,7 @@ public interface DocumentedObservation {
      * @param context observation context
      * @return observation
      */
-    default Observation observation(ObservationRegistry registry, Observation.Context context) {
+    default Observation observation(ObservationRegistry registry, @Nullable Observation.Context context) {
         return Observation.createNotStarted(getName(), context, registry).contextualName(getContextualName());
     }
 
@@ -179,7 +180,7 @@ public interface DocumentedObservation {
      * @param context observation context
      * @return observation
      */
-    default Observation start(ObservationRegistry registry, Observation.Context context) {
+    default Observation start(ObservationRegistry registry, @Nullable Observation.Context context) {
         return observation(registry, context).start();
     }
 

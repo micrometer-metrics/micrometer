@@ -92,7 +92,7 @@ class SimpleObservation implements Observation {
     }
 
     @Override
-    public Observation contextualName(String contextualName) {
+    public Observation contextualName(@Nullable String contextualName) {
         this.context.setContextualName(contextualName);
         return this;
     }
