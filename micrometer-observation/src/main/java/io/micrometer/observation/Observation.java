@@ -146,7 +146,8 @@ public interface Observation {
      * @param registry observation registry
      * @return started observation
      */
-    static Observation start(ObservationConvention<?> observationConvention, @Nullable ObservationRegistry registry) {
+    static Observation start(ObservationConvention<? extends Context> observationConvention,
+            @Nullable ObservationRegistry registry) {
         return start(observationConvention, null, registry);
     }
 
@@ -195,7 +196,7 @@ public interface Observation {
      * @param registry observation registry
      * @return created but not started observation
      */
-    static Observation createNotStarted(ObservationConvention<?> observationConvention,
+    static Observation createNotStarted(ObservationConvention<? extends Context> observationConvention,
             @Nullable ObservationRegistry registry) {
         return createNotStarted(observationConvention, null, registry);
     }
