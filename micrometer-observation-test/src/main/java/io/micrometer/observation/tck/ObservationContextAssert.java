@@ -20,43 +20,45 @@ import io.micrometer.common.KeyValues;
 import io.micrometer.observation.Observation;
 import org.assertj.core.api.AbstractAssert;
 import org.assertj.core.api.AbstractThrowableAssert;
+import org.assertj.core.api.ThrowingConsumer;
 
 import java.util.*;
+import java.util.function.Predicate;
 import java.util.stream.Collectors;
 
 /**
- * Assertion methods for {@code Observation.Context}s.
+ * Assertion methods for {@code Observation.Context}s and {@link Observation.ContextView}s.
  * <p>
  * To create a new instance of this class, invoke
- * {@link ObservationContextAssert#assertThat(Observation.Context)} or
- * {@link ObservationContextAssert#then(Observation.Context)}.
+ * {@link ObservationContextAssert#assertThat(Observation.ContextView)} or
+ * {@link ObservationContextAssert#then(Observation.ContextView)}.
  *
  * @author Marcin Grzejszczak
  * @since 1.0.0
  */
 @SuppressWarnings({ "unchecked", "rawtypes", "UnusedReturnValue" })
 public class ObservationContextAssert<SELF extends ObservationContextAssert<SELF>>
-        extends AbstractAssert<SELF, Observation.Context> {
+        extends AbstractAssert<SELF, Observation.ContextView> {
 
-    protected ObservationContextAssert(Observation.Context actual) {
+    protected ObservationContextAssert(Observation.ContextView actual) {
         super(actual, ObservationContextAssert.class);
     }
 
     /**
-     * Creates the assert object for {@link Observation.Context}.
+     * Creates the assert object for {@link Observation.ContextView}.
      * @param actual context to assert against
      * @return Observation assertions
      */
-    public static ObservationContextAssert assertThat(Observation.Context actual) {
+    public static ObservationContextAssert assertThat(Observation.ContextView actual) {
         return new ObservationContextAssert(actual);
     }
 
     /**
-     * Creates the assert object for {@link Observation.Context}.
+     * Creates the assert object for {@link Observation.ContextView}.
      * @param actual context to assert against
      * @return Observation assertions
      */
-    public static ObservationContextAssert then(Observation.Context actual) {
+    public static ObservationContextAssert then(Observation.ContextView actual) {
         return new ObservationContextAssert(actual);
     }
 
@@ -336,6 +338,55 @@ public class ObservationContextAssert<SELF extends ObservationContextAssert<SELF
 
     public ObservationContextAssertReturningThrowableAssert thenError() {
         return assertThatError();
+    }
+
+    public SELF hasParentObservation() {
+        isNotNull();
+        if (this.actual.getParentObservation() == null) {
+            failWithMessage("Observation should have a parent");
+        }
+        return (SELF) this;
+    }
+
+    public SELF hasParentObservationEqualTo(Observation expectedParent) {
+        isNotNull();
+        Observation realParent = this.actual.getParentObservation();
+        if (realParent == null) {
+            failWithMessage("Observation should have parent <%s>, has none", expectedParent);
+        }
+        if (!realParent.equals(expectedParent)) {
+            failWithMessage("Observation should have parent <%s>, has <%s>", expectedParent, realParent);
+        }
+        return (SELF) this;
+    }
+
+    public SELF doesNotHaveParentObservation() {
+        isNotNull();
+        if (this.actual.getParentObservation() != null) {
+            failWithMessage("Observation should not have a parent, has <%s>", this.actual.getParentObservation());
+        }
+        return (SELF) this;
+    }
+
+    public SELF hasParentObservationContextSatisfying(ThrowingConsumer<? super Observation.ContextView> parentContextViewAssertion) {
+        hasParentObservation();
+        assertThat(this.actual.getParentObservation().getContext())
+                .satisfies(parentContextViewAssertion);
+        return (SELF) this;
+    }
+
+    public SELF hasParentObservationContextMatching(Predicate<? super Observation.ContextView> parentContextViewPredicate) {
+        hasParentObservation();
+        assertThat(this.actual.getParentObservation().getContext())
+                .matches(parentContextViewPredicate);
+        return (SELF) this;
+    }
+
+    public SELF hasParentObservationContextMatching(Predicate<? super Observation.ContextView> parentContextViewPredicate, String description) {
+        hasParentObservation();
+        ObservationContextAssert.assertThat(this.actual.getParentObservation().getContext())
+                .matches(parentContextViewPredicate, description);
+        return (SELF) this;
     }
 
     public static class ObservationContextAssertReturningThrowableAssert
