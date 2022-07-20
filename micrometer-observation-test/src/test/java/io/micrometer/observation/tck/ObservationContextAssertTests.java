@@ -17,6 +17,7 @@ package io.micrometer.observation.tck;
 
 import io.micrometer.observation.Observation;
 import io.micrometer.observation.ObservationRegistry;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
 import static io.micrometer.observation.tck.ObservationContextAssert.assertThat;
@@ -25,9 +26,17 @@ import static org.assertj.core.api.BDDAssertions.thenThrownBy;
 
 class ObservationContextAssertTests {
 
-    ObservationRegistry registry = ObservationRegistry.create();
+    ObservationRegistry registry;
 
-    Observation.Context context = new Observation.Context();
+    Observation.Context context;
+
+
+    @BeforeEach
+    void beforeEach() {
+        registry = ObservationRegistry.create();
+        registry.observationConfig().observationHandler(c -> true);
+        context = new Observation.Context();
+    }
 
     @Test
     void should_not_throw_exception_when_name_correct() {
@@ -147,7 +156,6 @@ class ObservationContextAssertTests {
 
     @Test
     void should_not_throw_exception_when_key_count_matches() {
-        registry.observationConfig().observationHandler(c -> true);
         Observation observation = Observation.start("foo", context, registry);
         observation.lowCardinalityKeyValue("low", "foo");
         observation.highCardinalityKeyValue("high", "bar");
@@ -157,7 +165,6 @@ class ObservationContextAssertTests {
 
     @Test
     void should_throw_exception_when_key_count_differs() {
-        registry.observationConfig().observationHandler(c -> true);
         Observation observation = Observation.start("foo", context, registry);
         observation.lowCardinalityKeyValue("low", "foo");
         observation.highCardinalityKeyValue("high", "bar");
@@ -171,7 +178,6 @@ class ObservationContextAssertTests {
 
     @Test
     void should_not_throw_exception_when_keys_match() {
-        registry.observationConfig().observationHandler(c -> true);
         Observation observation = Observation.start("foo", context, registry);
         observation.lowCardinalityKeyValue("low", "foo");
         observation.highCardinalityKeyValue("high", "bar");
@@ -181,7 +187,6 @@ class ObservationContextAssertTests {
 
     @Test
     void should_throw_exception_when_keys_missing() {
-        registry.observationConfig().observationHandler(c -> true);
         Observation observation = Observation.start("foo", context, registry);
         observation.lowCardinalityKeyValue("found", "foo");
 
@@ -191,7 +196,6 @@ class ObservationContextAssertTests {
 
     @Test
     void should_throw_exception_when_keys_extras() {
-        registry.observationConfig().observationHandler(c -> true);
         Observation observation = Observation.start("foo", context, registry);
         observation.lowCardinalityKeyValue("found", "foo");
         observation.lowCardinalityKeyValue("low", "foo");
@@ -203,7 +207,6 @@ class ObservationContextAssertTests {
 
     @Test
     void should_throw_exception_when_keys_both_missing_and_extras() {
-        registry.observationConfig().observationHandler(c -> true);
         Observation observation = Observation.start("foo", context, registry);
         observation.lowCardinalityKeyValue("found", "foo");
         observation.lowCardinalityKeyValue("low", "foo");
@@ -216,7 +219,6 @@ class ObservationContextAssertTests {
 
     @Test
     void should_not_throw_exception_when_low_cardinality_tag_exists() {
-        registry.observationConfig().observationHandler(c -> true);
         Observation observation = Observation.start("foo", context, registry);
         observation.lowCardinalityKeyValue("foo", "bar");
 
@@ -236,7 +238,6 @@ class ObservationContextAssertTests {
 
     @Test
     void should_not_throw_exception_when_high_cardinality_tag_exists() {
-        registry.observationConfig().observationHandler(c -> true);
         Observation observation = Observation.start("foo", context, registry);
         observation.highCardinalityKeyValue("foo", "bar");
 
@@ -261,7 +262,6 @@ class ObservationContextAssertTests {
 
     @Test
     void should_throw_exception_when_high_cardinality_tag_present() {
-        registry.observationConfig().observationHandler(c -> true);
         Observation observation = Observation.start("foo", context, registry);
         observation.highCardinalityKeyValue("foo", "bar");
 
@@ -273,7 +273,6 @@ class ObservationContextAssertTests {
 
     @Test
     void should_not_throw_exception_when_high_cardinality_tag_present_with_other_value() {
-        registry.observationConfig().observationHandler(c -> true);
         Observation observation = Observation.start("foo", context, registry);
         observation.highCardinalityKeyValue("foo", "other");
 
@@ -290,7 +289,6 @@ class ObservationContextAssertTests {
 
     @Test
     void should_not_throw_exception_when_low_cardinality_tag_present_with_other_value() {
-        registry.observationConfig().observationHandler(c -> true);
         Observation observation = Observation.start("foo", context, registry);
         observation.lowCardinalityKeyValue("foo", "other");
 
@@ -302,7 +300,6 @@ class ObservationContextAssertTests {
 
     @Test
     void should_throw_exception_when_low_cardinality_tag_present() {
-        registry.observationConfig().observationHandler(c -> true);
         Observation observation = Observation.start("foo", context, registry);
         observation.lowCardinalityKeyValue("foo", "bar");
 
@@ -314,7 +311,6 @@ class ObservationContextAssertTests {
 
     @Test
     void should_not_throw_exception_when_any_tags_exist() {
-        registry.observationConfig().observationHandler(c -> true);
         Observation observation = Observation.start("foo", context, registry);
         observation.highCardinalityKeyValue("foo", "bar");
 
@@ -333,7 +329,6 @@ class ObservationContextAssertTests {
 
     @Test
     void should_throw_exception_when_tags_present() {
-        registry.observationConfig().observationHandler(c -> true);
         Observation observation = Observation.start("foo", context, registry);
         observation.highCardinalityKeyValue("foo", "bar");
 
@@ -375,7 +370,6 @@ class ObservationContextAssertTests {
     void should_throw_when_unexpected_error() {
         Throwable expected = new IllegalStateException("test");
 
-        registry.observationConfig().observationHandler(c -> true);
         Observation observation = Observation.start("foo", context, registry);
         observation.error(expected);
 
@@ -387,7 +381,6 @@ class ObservationContextAssertTests {
     void should_not_throw_when_has_error() {
         Throwable expected = new IllegalStateException("test");
 
-        registry.observationConfig().observationHandler(c -> true);
         Observation observation = Observation.start("foo", context, registry);
         observation.error(expected);
 
@@ -404,7 +397,6 @@ class ObservationContextAssertTests {
     void should_not_throw_when_has_specific_error() {
         Throwable expected = new IllegalStateException("test");
 
-        registry.observationConfig().observationHandler(c -> true);
         Observation observation = Observation.start("foo", context, registry);
         observation.error(expected);
 
@@ -424,7 +416,6 @@ class ObservationContextAssertTests {
         Throwable expected = new IllegalStateException("test expected");
         Throwable actual = new IllegalArgumentException("test actual");
 
-        registry.observationConfig().observationHandler(c -> true);
         Observation observation = Observation.start("foo", context, registry);
         observation.error(actual);
 
