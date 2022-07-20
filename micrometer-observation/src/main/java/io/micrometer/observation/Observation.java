@@ -114,7 +114,8 @@ public interface Observation {
      * observation. Allows to set a custom {@link ObservationConvention} and requires to
      * provide a default one if a neither a custom nor a pre-configured one (via
      * {@link ObservationRegistry.ObservationConfig#getObservationConvention(Context, ObservationConvention)})
-     * was found.
+     * was found. The {@link ObservationConvention} implementation can override
+     * {@link Observation} names (i.e. name and contextual name) and key values.
      * @param <T> type of context
      * @param customConvention custom convention. If {@code null}, the default one will be
      * picked
@@ -152,12 +153,13 @@ public interface Observation {
     /**
      * Creates and starts an {@link Observation}. When no registry is passed or
      * observation is not applicable will return a no-op observation.
+     * @param <T> type of context
      * @param observationConvention observation convention
      * @param context mutable context
      * @param registry observation registry
      * @return started observation
      */
-    static Observation start(ObservationConvention<?> observationConvention, @Nullable Context context,
+    static <T extends Context> Observation start(ObservationConvention<T> observationConvention, @Nullable T context,
             @Nullable ObservationRegistry registry) {
         return createNotStarted(observationConvention, context, registry).start();
     }
@@ -204,19 +206,34 @@ public interface Observation {
      * {@link Observation#start()} when you want the measurements to start. When no
      * registry is passed or observation is not applicable will return a no-op
      * observation.
+     * <p>
+     * <b>Important!</b> If you're using the
+     * {@link ObservationConvention#getContextualName(Context)} method to override the
+     * contextual name <b>you MUST use a non {@code null} context</b> (i.e. the
+     * {@code context} parameter of this method MUST NOT be {@code null}. The
+     * {@link ObservationConvention#getContextualName(Context)} requires a concrete type
+     * of {@link Observation.Context} to be passed and if you're not providing one we
+     * won't be able to initialize it ourselves.
+     * </p>
+     * @param <T> type of context
      * @param observationConvention observation convention
      * @param context mutable context
      * @param registry observation registry
      * @return created but not started observation
      */
-    static Observation createNotStarted(ObservationConvention<?> observationConvention, @Nullable Context context,
-            @Nullable ObservationRegistry registry) {
+    static <T extends Observation.Context> Observation createNotStarted(ObservationConvention<T> observationConvention,
+            @Nullable T context, @Nullable ObservationRegistry registry) {
         if (registry == null || registry.isNoop()
                 || !registry.observationConfig().isObservationEnabled(observationConvention.getName(), context)
                 || observationConvention == NoopObservationConvention.INSTANCE) {
             return NoopObservation.INSTANCE;
         }
-        return new SimpleObservation(observationConvention, registry, context == null ? new Context() : context);
+        Context c = context == null ? new Context() : context;
+        SimpleObservation simpleObservation = new SimpleObservation(observationConvention, registry, c);
+        if (context != null) {
+            simpleObservation.contextualName(observationConvention.getContextualName(context));
+        }
+        return simpleObservation;
     }
 
     /**
@@ -999,6 +1016,17 @@ public interface Observation {
          * @return the new name for the observation
          */
         String getName();
+
+        /**
+         * Allows to override the contextual name for an {@link Observation}. The
+         * {@link Observation} will be renamed only when an explicit context was passed -
+         * if an implicit context is used this method won't be called.
+         * @param context context
+         * @return the new, contextual name for the observation
+         */
+        default String getContextualName(T context) {
+            return null;
+        }
 
     }
 

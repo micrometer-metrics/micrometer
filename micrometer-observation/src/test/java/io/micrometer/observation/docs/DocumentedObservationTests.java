@@ -67,6 +67,18 @@ class DocumentedObservationTests {
         then(context.getHighCardinalityKeyValues()).isEqualTo(KeyValues.of("high key", "high value"));
     }
 
+    @Test
+    void contextualNameShouldBeOverridden() {
+        ObservationRegistry registry = observationRegistry();
+        Observation.Context context = new Observation.Context();
+
+        TestConventionObservation.CONTEXTUAL_NAME.observation(null, new ContextualObservation(), context, registry)
+                .start().stop();
+
+        then(context.getName()).isEqualTo("technical name");
+        then(context.getContextualName()).isEqualTo("contextual name");
+    }
+
     private ObservationRegistry observationRegistry() {
         ObservationRegistry registry = ObservationRegistry.create();
         registry.observationConfig().observationHandler(context -> true);
@@ -84,6 +96,14 @@ class DocumentedObservationTests {
             public String getContextualName() {
                 return "contextual";
             }
+
+            @Override
+            public Class<? extends Observation.ObservationConvention<? extends Observation.Context>> getDefaultConvention() {
+                return FirstObservationConvention.class;
+            }
+        },
+
+        CONTEXTUAL_NAME {
 
             @Override
             public Class<? extends Observation.ObservationConvention<? extends Observation.Context>> getDefaultConvention() {
@@ -126,6 +146,35 @@ class DocumentedObservationTests {
         @Override
         public String getName() {
             return "three";
+        }
+
+        @Override
+        public KeyValues getLowCardinalityKeyValues(Observation.Context context) {
+            return KeyValues.of("low key", "low value");
+        }
+
+        @Override
+        public KeyValues getHighCardinalityKeyValues(Observation.Context context) {
+            return KeyValues.of("high key", "high value");
+        }
+
+        @Override
+        public boolean supportsContext(Observation.Context context) {
+            return true;
+        }
+
+    }
+
+    static class ContextualObservation extends FirstObservationConvention {
+
+        @Override
+        public String getName() {
+            return "technical name";
+        }
+
+        @Override
+        public String getContextualName(Observation.Context context) {
+            return "contextual name";
         }
 
         @Override
