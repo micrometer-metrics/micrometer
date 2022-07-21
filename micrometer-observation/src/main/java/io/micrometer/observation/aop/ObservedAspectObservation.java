@@ -39,7 +39,7 @@ enum ObservedAspectObservation implements DocumentedObservation {
     DEFAULT;
 
     static Observation of(ProceedingJoinPoint pjp, Observed observed, ObservationRegistry registry,
-            @Nullable Observation.KeyValuesProvider<ObservedAspect.ObservedAspectContext> keyValuesProvider) {
+            @Nullable Observation.ObservationConvention<ObservedAspect.ObservedAspectContext> observationConvention) {
         String name = observed.name().isEmpty() ? "method.observed" : observed.name();
         Signature signature = pjp.getStaticPart().getSignature();
         String contextualName = observed.contextualName().isEmpty()
@@ -52,8 +52,8 @@ enum ObservedAspectObservation implements DocumentedObservation {
                 .lowCardinalityKeyValue(METHOD_NAME.getKeyName(), signature.getName())
                 .lowCardinalityKeyValues(KeyValues.of(observed.lowCardinalityKeyValues()));
 
-        if (keyValuesProvider != null) {
-            observation.keyValuesProvider(keyValuesProvider);
+        if (observationConvention != null) {
+            observation.observationConvention(observationConvention);
         }
 
         return observation;

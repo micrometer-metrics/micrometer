@@ -101,9 +101,11 @@ class ObservationRegistryTest {
 
         Observation.Context myContext = new MessagingContext().put("foo", "hello");
         // KeyValues provider wants to use a MessagingConvention
-        MessagingKeyValuesProvider messagingKeyValuesProvider = new MessagingKeyValuesProvider(messagingConvention);
+        MessagingObservationConvention messagingObservationConvention = new MessagingObservationConvention(
+                messagingConvention);
 
-        Observation.start("observation", myContext, registry).keyValuesProvider(messagingKeyValuesProvider).stop();
+        Observation.start("observation", myContext, registry).observationConvention(messagingObservationConvention)
+                .stop();
 
         then(myContext.getLowCardinalityKeyValues().stream().filter(keyValue -> keyValue.getKey().equals("baz"))
                 .findFirst().orElseThrow(() -> new AssertionError("No <baz> key value found")).getValue())
@@ -115,11 +117,11 @@ class ObservationRegistryTest {
 
     }
 
-    static class MessagingKeyValuesProvider implements Observation.KeyValuesProvider<MessagingContext> {
+    static class MessagingObservationConvention implements Observation.ObservationConvention<MessagingContext> {
 
         private final MessagingConvention messagingConvention;
 
-        MessagingKeyValuesProvider(MessagingConvention messagingConvention) {
+        MessagingObservationConvention(MessagingConvention messagingConvention) {
             this.messagingConvention = messagingConvention;
         }
 

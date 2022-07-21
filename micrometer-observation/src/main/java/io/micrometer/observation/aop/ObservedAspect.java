@@ -78,7 +78,7 @@ public class ObservedAspect {
     private final ObservationRegistry registry;
 
     @Nullable
-    private final Observation.KeyValuesProvider<ObservedAspectContext> keyValuesProvider;
+    private final Observation.ObservationConvention<ObservedAspectContext> observationConvention;
 
     private final Predicate<ProceedingJoinPoint> shouldSkip;
 
@@ -87,8 +87,8 @@ public class ObservedAspect {
     }
 
     public ObservedAspect(ObservationRegistry registry,
-            Observation.KeyValuesProvider<ObservedAspectContext> keyValuesProvider) {
-        this(registry, keyValuesProvider, DONT_SKIP_ANYTHING);
+            Observation.ObservationConvention<ObservedAspectContext> observationConvention) {
+        this(registry, observationConvention, DONT_SKIP_ANYTHING);
     }
 
     public ObservedAspect(ObservationRegistry registry, Predicate<ProceedingJoinPoint> shouldSkip) {
@@ -96,10 +96,10 @@ public class ObservedAspect {
     }
 
     public ObservedAspect(ObservationRegistry registry,
-            @Nullable Observation.KeyValuesProvider<ObservedAspectContext> keyValuesProvider,
+            @Nullable Observation.ObservationConvention<ObservedAspectContext> observationConvention,
             Predicate<ProceedingJoinPoint> shouldSkip) {
         this.registry = registry;
-        this.keyValuesProvider = keyValuesProvider;
+        this.observationConvention = observationConvention;
         this.shouldSkip = shouldSkip;
     }
 
@@ -128,7 +128,8 @@ public class ObservedAspect {
     }
 
     private Object observe(ProceedingJoinPoint pjp, Method method, Observed observed) throws Throwable {
-        Observation observation = ObservedAspectObservation.of(pjp, observed, this.registry, this.keyValuesProvider);
+        Observation observation = ObservedAspectObservation.of(pjp, observed, this.registry,
+                this.observationConvention);
         if (CompletionStage.class.isAssignableFrom(method.getReturnType())) {
             observation.start();
             Observation.Scope scope = observation.openScope();

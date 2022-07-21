@@ -48,17 +48,17 @@ final class NoopObservationConvention implements Observation.ObservationConventi
 
     @Override
     public boolean supportsContext(Observation.Context context) {
-        return Observation.KeyValuesProvider.EMPTY.supportsContext(context);
+        return Observation.ObservationConvention.EMPTY.supportsContext(context);
     }
 
     @Override
     public KeyValues getLowCardinalityKeyValues(Observation.Context context) {
-        return Observation.KeyValuesProvider.EMPTY.getLowCardinalityKeyValues(context);
+        return Observation.ObservationConvention.EMPTY.getLowCardinalityKeyValues(context);
     }
 
     @Override
     public KeyValues getHighCardinalityKeyValues(Observation.Context context) {
-        return Observation.KeyValuesProvider.EMPTY.getHighCardinalityKeyValues(context);
+        return Observation.ObservationConvention.EMPTY.getHighCardinalityKeyValues(context);
     }
 
 }
