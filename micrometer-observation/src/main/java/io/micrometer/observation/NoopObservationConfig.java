@@ -48,23 +48,12 @@ final class NoopObservationConfig extends ObservationRegistry.ObservationConfig 
     }
 
     @Override
-    public ObservationRegistry.ObservationConfig keyValuesProvider(
-            Observation.GlobalKeyValuesProvider<?> keyValuesProvider) {
-        return this;
-    }
-
-    @Override
     public boolean isObservationEnabled(String name, Observation.Context context) {
         return false;
     }
 
     @Override
     Collection<ObservationHandler<?>> getObservationHandlers() {
-        return Collections.emptyList();
-    }
-
-    @Override
-    Collection<Observation.GlobalKeyValuesProvider<?>> getKeyValuesProviders() {
         return Collections.emptyList();
     }
 

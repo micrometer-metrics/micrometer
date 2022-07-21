@@ -36,14 +36,14 @@ public class ObservationHandlerSample {
     public static void main(String[] args) throws InterruptedException {
         observationRegistry.observationConfig().observationHandler(new ObservationTextPublisher())
                 .observationHandler(new DefaultMeterObservationHandler(registry));
-        observationRegistry.observationConfig().keyValuesProvider(new CustomKeyValuesProvider())
+        observationRegistry.observationConfig().observationConvention(new CustomObservationConvention())
                 .observationPredicate(new IgnoringObservationPredicate());
 
         Observation observation = Observation
                 .createNotStarted("sample.operation", new CustomContext(), observationRegistry)
                 .contextualName("CALL sampleOperation").lowCardinalityKeyValue("a", "1")
                 .highCardinalityKeyValue("time", Instant.now().toString())
-                .keyValuesProvider(new CustomLocalKeyValuesProvider()).start();
+                .observationConvention(new CustomLocalObservationConvention()).start();
 
         try (Observation.Scope scope = observation.openScope()) {
             Thread.sleep(1_000);
@@ -71,7 +71,7 @@ public class ObservationHandlerSample {
 
     }
 
-    static class CustomKeyValuesProvider implements Observation.GlobalKeyValuesProvider<CustomContext> {
+    static class CustomObservationConvention implements Observation.GlobalObservationConvention<CustomContext> {
 
         @Override
         public KeyValues getLowCardinalityKeyValues(CustomContext context) {
@@ -90,7 +90,7 @@ public class ObservationHandlerSample {
 
     }
 
-    static class CustomLocalKeyValuesProvider implements Observation.KeyValuesProvider<CustomContext> {
+    static class CustomLocalObservationConvention implements Observation.ObservationConvention<CustomContext> {
 
         @Override
         public KeyValues getLowCardinalityKeyValues(CustomContext context) {

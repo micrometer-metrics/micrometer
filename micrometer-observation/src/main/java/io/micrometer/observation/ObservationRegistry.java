@@ -98,8 +98,6 @@ public interface ObservationRegistry {
 
         private final List<ObservationPredicate> observationPredicates = new CopyOnWriteArrayList<>();
 
-        private final List<Observation.GlobalKeyValuesProvider<?>> keyValuesProviders = new CopyOnWriteArrayList<>();
-
         private final List<Observation.ObservationConvention<?>> observationConventions = new CopyOnWriteArrayList<>();
 
         private final List<ObservationFilter> observationFilters = new CopyOnWriteArrayList<>();
@@ -122,17 +120,6 @@ public interface ObservationRegistry {
          */
         public ObservationConfig observationPredicate(ObservationPredicate predicate) {
             this.observationPredicates.add(predicate);
-            return this;
-        }
-
-        /**
-         * Register a key values provider for the {@link Observation observations}.
-         * @param keyValuesProvider key values provider to add to the current
-         * configuration
-         * @return This configuration instance
-         */
-        public ObservationConfig keyValuesProvider(Observation.GlobalKeyValuesProvider<?> keyValuesProvider) {
-            this.keyValuesProviders.add(keyValuesProvider);
             return this;
         }
 
@@ -199,10 +186,6 @@ public interface ObservationRegistry {
         // package-private for minimal visibility
         Collection<ObservationHandler<?>> getObservationHandlers() {
             return observationHandlers;
-        }
-
-        Collection<Observation.GlobalKeyValuesProvider<?>> getKeyValuesProviders() {
-            return keyValuesProviders;
         }
 
         Collection<ObservationFilter> getObservationFilters() {

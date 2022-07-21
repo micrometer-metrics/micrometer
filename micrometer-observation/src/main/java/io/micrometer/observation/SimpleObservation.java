@@ -39,7 +39,7 @@ class SimpleObservation implements Observation {
     private final Context context;
 
     @SuppressWarnings("rawtypes")
-    private final Collection<KeyValuesProvider> keyValuesProviders;
+    private final Collection<ObservationConvention> observationConventions;
 
     @SuppressWarnings("rawtypes")
     private final Deque<ObservationHandler> handlers;
@@ -49,34 +49,27 @@ class SimpleObservation implements Observation {
     SimpleObservation(String name, ObservationRegistry registry, Context context) {
         this.registry = registry;
         this.context = context.setName(name);
-        this.keyValuesProviders = registry.observationConfig().getKeyValuesProviders().stream()
-                .filter(provider -> provider.supportsContext(this.context)).collect(Collectors.toList());
+        this.observationConventions = registry.observationConfig().getObservationConventions().stream()
+                .filter(observationConvention -> observationConvention.supportsContext(this.context))
+                .collect(Collectors.toList());
         this.handlers = registry.observationConfig().getObservationHandlers().stream()
                 .filter(handler -> handler.supportsContext(this.context))
                 .collect(Collectors.toCollection(ArrayDeque::new));
         this.filters = registry.observationConfig().getObservationFilters();
-        registry.observationConfig().getObservationConventions().stream()
-                .filter(observationConvention -> observationConvention.supportsContext(this.context)).findFirst()
-                .ifPresent(convention -> {
-                    this.keyValuesProviders.add(convention);
-                    String newName = convention.getName();
-                    if (StringUtils.isNotBlank(newName)) {
-                        this.context.setName(newName);
-                    }
-                });
     }
 
     SimpleObservation(ObservationConvention<? extends Context> convention, ObservationRegistry registry,
             Context context) {
         this.context = context.setName(name(convention, context));
         this.registry = registry;
-        this.keyValuesProviders = registry.observationConfig().getKeyValuesProviders().stream()
-                .filter(provider -> provider.supportsContext(this.context)).collect(Collectors.toList());
+        this.observationConventions = registry.observationConfig().getObservationConventions().stream()
+                .filter(observationConvention -> observationConvention.supportsContext(this.context))
+                .collect(Collectors.toList());
         this.handlers = registry.observationConfig().getObservationHandlers().stream()
                 .filter(handler -> handler.supportsContext(this.context))
                 .collect(Collectors.toCollection(ArrayDeque::new));
         this.filters = registry.observationConfig().getObservationFilters();
-        this.keyValuesProviders.add(convention);
+        this.observationConventions.add(convention);
     }
 
     private static String name(ObservationConvention<? extends Context> convention, Context context) {
@@ -116,9 +109,9 @@ class SimpleObservation implements Observation {
     }
 
     @Override
-    public Observation keyValuesProvider(KeyValuesProvider<?> keyValuesProvider) {
-        if (keyValuesProvider.supportsContext(context)) {
-            this.keyValuesProviders.add(keyValuesProvider);
+    public Observation observationConvention(ObservationConvention<?> observationConvention) {
+        if (observationConvention.supportsContext(context)) {
+            this.observationConventions.add(observationConvention);
         }
         return this;
     }
@@ -150,9 +143,22 @@ class SimpleObservation implements Observation {
     @SuppressWarnings({ "rawtypes", "unchecked" })
     @Override
     public void stop() {
-        for (KeyValuesProvider keyValuesProvider : keyValuesProviders) {
-            this.context.addLowCardinalityKeyValues(keyValuesProvider.getLowCardinalityKeyValues(context));
-            this.context.addHighCardinalityKeyValues(keyValuesProvider.getHighCardinalityKeyValues(context));
+        // We want to rename with the first matching observationconvention
+        boolean nameChanged = false;
+        boolean contextualNameChanged = false;
+        for (ObservationConvention observationConvention : observationConventions) {
+            this.context.addLowCardinalityKeyValues(observationConvention.getLowCardinalityKeyValues(context));
+            this.context.addHighCardinalityKeyValues(observationConvention.getHighCardinalityKeyValues(context));
+            String contextualName = observationConvention.getContextualName(context);
+            String newName = observationConvention.getName();
+            if (StringUtils.isNotBlank(newName) && !nameChanged) {
+                this.context.setName(newName);
+                nameChanged = true;
+            }
+            if (StringUtils.isNotBlank(contextualName) && !contextualNameChanged) {
+                contextualName(contextualName);
+                contextualNameChanged = true;
+            }
         }
         Observation.Context modifiedContext = this.context;
         for (ObservationFilter filter : this.filters) {

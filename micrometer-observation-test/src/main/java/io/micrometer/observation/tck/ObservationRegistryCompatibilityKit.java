@@ -385,8 +385,9 @@ public abstract class ObservationRegistryCompatibilityKit {
     @Test
     void observationFieldsShouldBeSetOnContext() {
         AssertingHandler assertingHandler = new AssertingHandler();
-        registry.observationConfig().keyValuesProvider(new TestKeyValuesProvider("global"))
-                .keyValuesProvider(new UnsupportedKeyValuesProvider("global")).observationHandler(assertingHandler);
+        registry.observationConfig().observationConvention(new TestObservationConvention("global"))
+                .observationConvention(new UnsupportedObservationConvention("global"))
+                .observationHandler(assertingHandler);
 
         TestContext testContext = new TestContext();
         testContext.put("context.field", "42");
@@ -394,9 +395,9 @@ public abstract class ObservationRegistryCompatibilityKit {
         Observation observation = Observation.start("test.observation", testContext, registry)
                 .lowCardinalityKeyValue("lcTag1", "1").lowCardinalityKeyValues(KeyValues.of("lcTag2", "2"))
                 .highCardinalityKeyValue("hcTag1", "3").highCardinalityKeyValues(KeyValues.of("hcTag2", "4"))
-                .keyValuesProvider(new TestKeyValuesProvider("local"))
-                .keyValuesProvider(new UnsupportedKeyValuesProvider("local")).contextualName("test.observation.42")
-                .error(exception);
+                .observationConvention(new TestObservationConvention("local"))
+                .observationConvention(new UnsupportedObservationConvention("local"))
+                .contextualName("test.observation.42").error(exception);
         observation.stop();
 
         assertingHandler.checkAssertions(context -> {
@@ -437,11 +438,11 @@ public abstract class ObservationRegistryCompatibilityKit {
 
     }
 
-    static class TestKeyValuesProvider implements Observation.GlobalKeyValuesProvider<TestContext> {
+    static class TestObservationConvention implements Observation.GlobalObservationConvention<TestContext> {
 
         private final String id;
 
-        public TestKeyValuesProvider(String id) {
+        public TestObservationConvention(String id) {
             this.id = id;
         }
 
@@ -462,11 +463,12 @@ public abstract class ObservationRegistryCompatibilityKit {
 
     }
 
-    static class UnsupportedKeyValuesProvider implements Observation.GlobalKeyValuesProvider<Observation.Context> {
+    static class UnsupportedObservationConvention
+            implements Observation.GlobalObservationConvention<Observation.Context> {
 
         private final String id;
 
-        public UnsupportedKeyValuesProvider(String id) {
+        public UnsupportedObservationConvention(String id) {
             this.id = id;
         }
 

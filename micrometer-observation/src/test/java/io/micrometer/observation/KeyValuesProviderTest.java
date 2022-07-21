@@ -22,33 +22,21 @@ import org.junit.jupiter.api.Test;
 import static org.assertj.core.api.Assertions.assertThat;
 
 /**
- * Tests for {@link Observation.KeyValuesProvider}.
+ * Tests for {@link Observation.ObservationConvention}.
  *
  * @author Jonatan Ivanov
  */
-class KeyValuesProviderTest {
+class ObservationConventionTest {
 
     @Test
     void tagsShouldBeEmptyByDefault() {
-        Observation.KeyValuesProvider<Observation.Context> keyValuesProvider = new TestKeyValuesProvider();
+        Observation.ObservationConvention<Observation.Context> ObservationConvention = new TestObservationConvention();
 
-        assertThat(keyValuesProvider.getLowCardinalityKeyValues(new Observation.Context())).isEmpty();
-        assertThat(keyValuesProvider.getHighCardinalityKeyValues(new Observation.Context())).isEmpty();
+        assertThat(ObservationConvention.getLowCardinalityKeyValues(new Observation.Context())).isEmpty();
+        assertThat(ObservationConvention.getHighCardinalityKeyValues(new Observation.Context())).isEmpty();
     }
 
-    @Test
-    void tagsShouldBeMergedIntoCompositeByDefault() {
-        Observation.KeyValuesProvider<Observation.Context> keyValuesProvider = new Observation.KeyValuesProvider.CompositeKeyValuesProvider(
-                new MatchingTestKeyValuesProvider(), new AnotherMatchingTestKeyValuesProvider(),
-                new NotMatchingTestKeyValuesProvider());
-
-        assertThat(keyValuesProvider.getLowCardinalityKeyValues(new Observation.Context()))
-                .containsExactlyInAnyOrder(KeyValue.of("matching-low-1", ""), KeyValue.of("matching-low-2", ""));
-        assertThat(keyValuesProvider.getHighCardinalityKeyValues(new Observation.Context()))
-                .containsExactlyInAnyOrder(KeyValue.of("matching-high-1", ""), KeyValue.of("matching-high-2", ""));
-    }
-
-    static class TestKeyValuesProvider implements Observation.KeyValuesProvider<Observation.Context> {
+    static class TestObservationConvention implements Observation.ObservationConvention<Observation.Context> {
 
         @Override
         public boolean supportsContext(Observation.Context context) {
@@ -57,7 +45,7 @@ class KeyValuesProviderTest {
 
     }
 
-    static class MatchingTestKeyValuesProvider implements Observation.KeyValuesProvider<Observation.Context> {
+    static class MatchingTestObservationConvention implements Observation.ObservationConvention<Observation.Context> {
 
         @Override
         public boolean supportsContext(Observation.Context context) {
@@ -76,7 +64,8 @@ class KeyValuesProviderTest {
 
     }
 
-    static class AnotherMatchingTestKeyValuesProvider implements Observation.KeyValuesProvider<Observation.Context> {
+    static class AnotherMatchingTestObservationConvention
+            implements Observation.ObservationConvention<Observation.Context> {
 
         @Override
         public boolean supportsContext(Observation.Context context) {
@@ -95,7 +84,8 @@ class KeyValuesProviderTest {
 
     }
 
-    static class NotMatchingTestKeyValuesProvider implements Observation.KeyValuesProvider<Observation.Context> {
+    static class NotMatchingTestObservationConvention
+            implements Observation.ObservationConvention<Observation.Context> {
 
         @Override
         public boolean supportsContext(Observation.Context context) {

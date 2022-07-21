@@ -25,7 +25,6 @@ import java.util.concurrent.Callable;
 import java.util.function.Function;
 import java.util.function.Supplier;
 import java.util.stream.Collectors;
-import java.util.stream.Stream;
 
 /**
  * An act of viewing or noticing a fact or an occurrence for some scientific or other
@@ -332,11 +331,12 @@ public interface Observation {
     }
 
     /**
-     * Adds a key values provider that can be used to attach key values to the observation
-     * @param keyValuesProvider key values provider
+     * Adds an observation convention that can be used to attach key values to the
+     * observation.
+     * @param observationConvention key values provider
      * @return this
      */
-    Observation keyValuesProvider(KeyValuesProvider<?> keyValuesProvider);
+    Observation observationConvention(ObservationConvention<?> observationConvention);
 
     /**
      * Signals an error.
@@ -782,7 +782,7 @@ public interface Observation {
 
         /**
          * Adds a low cardinality key value - those will be appended to those fetched from
-         * the {@link KeyValuesProvider#getLowCardinalityKeyValues(Context)} method.
+         * the {@link ObservationConvention#getLowCardinalityKeyValues(Context)} method.
          * @param keyValue a key value
          */
         void addLowCardinalityKeyValue(KeyValue keyValue) {
@@ -791,7 +791,8 @@ public interface Observation {
 
         /**
          * Adds a high cardinality key value - those will be appended to those fetched
-         * from the {@link KeyValuesProvider#getHighCardinalityKeyValues(Context)} method.
+         * from the {@link ObservationConvention#getHighCardinalityKeyValues(Context)}
+         * method.
          * @param keyValue a key value
          */
         void addHighCardinalityKeyValue(KeyValue keyValue) {
@@ -1008,40 +1009,17 @@ public interface Observation {
      * @author Marcin Grzejszczak
      * @since 1.10.0
      */
-    interface ObservationConvention<T extends Context> extends Observation.KeyValuesProvider<T>, KeyValuesConvention {
-
-        /**
-         * Allows to override the name for an observation.
-         * @return the new name for the observation
-         */
-        String getName();
-
-        /**
-         * Allows to override the contextual name for an {@link Observation}. The
-         * {@link Observation} will be renamed only when an explicit context was passed -
-         * if an implicit context is used this method won't be called.
-         * @param context context
-         * @return the new, contextual name for the observation
-         */
-        @Nullable
-        default String getContextualName(T context) {
-            return null;
-        }
-
-    }
-
-    /**
-     * A provider of key values.
-     *
-     * @author Marcin Grzejszczak
-     * @since 1.10.0
-     */
-    interface KeyValuesProvider<T extends Context> {
+    interface ObservationConvention<T extends Context> extends KeyValuesConvention {
 
         /**
          * Empty instance of the key-values provider.
          */
-        KeyValuesProvider<Context> EMPTY = context -> false;
+        ObservationConvention<Context> EMPTY = new ObservationConvention<Context>() {
+            @Override
+            public boolean supportsContext(Context context) {
+                return false;
+            }
+        };
 
         /**
          * Low cardinality key values.
@@ -1068,71 +1046,25 @@ public interface Observation {
         boolean supportsContext(Context context);
 
         /**
-         * Key values provider wrapping other key values providers.
+         * Allows to override the name for an observation.
+         * @return the new name for the observation
          */
-        @SuppressWarnings({ "rawtypes", "unchecked" })
-        class CompositeKeyValuesProvider implements KeyValuesProvider<Context> {
-
-            private final List<KeyValuesProvider> keyValuesProviders;
-
-            /**
-             * Creates a new instance of {@code CompositeKeyValueProvider}.
-             * @param keyValuesProviders the key values providers that are registered
-             * under the composite
-             */
-            public CompositeKeyValuesProvider(KeyValuesProvider... keyValuesProviders) {
-                this(Arrays.asList(keyValuesProviders));
-            }
-
-            /**
-             * Creates a new instance of {@code CompositeKeyValueProvider}.
-             * @param keyValuesProviders the key values providers that are registered
-             * under the composite
-             */
-            public CompositeKeyValuesProvider(List<KeyValuesProvider> keyValuesProviders) {
-                this.keyValuesProviders = keyValuesProviders;
-            }
-
-            @Override
-            public KeyValues getLowCardinalityKeyValues(Context context) {
-                return getProvidersForContext(context).map(provider -> provider.getLowCardinalityKeyValues(context))
-                        .reduce(KeyValues::and).orElse(KeyValues.empty());
-            }
-
-            private Stream<KeyValuesProvider> getProvidersForContext(Context context) {
-                return this.keyValuesProviders.stream().filter(provider -> provider.supportsContext(context));
-            }
-
-            @Override
-            public KeyValues getHighCardinalityKeyValues(Context context) {
-                return getProvidersForContext(context).map(provider -> provider.getHighCardinalityKeyValues(context))
-                        .reduce(KeyValues::and).orElse(KeyValues.empty());
-            }
-
-            @Override
-            public boolean supportsContext(Context context) {
-                return this.keyValuesProviders.stream().anyMatch(provider -> provider.supportsContext(context));
-            }
-
-            /**
-             * Returns the key value providers.
-             * @return registered key value providers
-             */
-            public List<KeyValuesProvider> getKeyValueProviders() {
-                return this.keyValuesProviders;
-            }
-
+        @Nullable
+        default String getName() {
+            return null;
         }
 
-    }
-
-    /**
-     * A provider of key values that will be set on the {@link ObservationRegistry}.
-     *
-     * @author Marcin Grzejszczak
-     * @since 1.10.0
-     */
-    interface GlobalKeyValuesProvider<T extends Context> extends KeyValuesProvider<T> {
+        /**
+         * Allows to override the contextual name for an {@link Observation}. The
+         * {@link Observation} will be renamed only when an explicit context was passed -
+         * if an implicit context is used this method won't be called.
+         * @param context context
+         * @return the new, contextual name for the observation
+         */
+        @Nullable
+        default String getContextualName(T context) {
+            return null;
+        }
 
     }
 

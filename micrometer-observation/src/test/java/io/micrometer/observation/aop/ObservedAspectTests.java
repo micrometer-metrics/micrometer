@@ -132,12 +132,12 @@ class ObservedAspectTests {
     }
 
     @Test
-    void customKeyValuesProviderShouldBeUsed() {
+    void customObservationConventionShouldBeUsed() {
         TestObservationRegistry registry = TestObservationRegistry.create();
         registry.observationConfig().observationHandler(new ObservationTextPublisher());
 
         AspectJProxyFactory pf = new AspectJProxyFactory(new ObservedService());
-        pf.addAspect(new ObservedAspect(registry, new CustomKeyValuesProvider()));
+        pf.addAspect(new ObservedAspect(registry, new CustomObservationConvention()));
 
         ObservedService service = pf.getProxy();
         service.call();
@@ -253,12 +253,12 @@ class ObservedAspectTests {
     }
 
     @Test
-    void customKeyValuesProviderShouldBeUsedForClass() {
+    void customObservationConventionShouldBeUsedForClass() {
         TestObservationRegistry registry = TestObservationRegistry.create();
         registry.observationConfig().observationHandler(new ObservationTextPublisher());
 
         AspectJProxyFactory pf = new AspectJProxyFactory(new ObservedClassLevelAnnotatedService());
-        pf.addAspect(new ObservedAspect(registry, new CustomKeyValuesProvider()));
+        pf.addAspect(new ObservedAspect(registry, new CustomObservationConvention()));
 
         ObservedClassLevelAnnotatedService service = pf.getProxy();
         service.call();
@@ -377,8 +377,8 @@ class ObservedAspectTests {
 
     }
 
-    static class CustomKeyValuesProvider
-            implements Observation.KeyValuesProvider<ObservedAspect.ObservedAspectContext> {
+    static class CustomObservationConvention
+            implements Observation.ObservationConvention<ObservedAspect.ObservedAspectContext> {
 
         @Override
         @NonNull
