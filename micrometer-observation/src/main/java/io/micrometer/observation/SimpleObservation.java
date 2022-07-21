@@ -66,7 +66,8 @@ class SimpleObservation implements Observation {
                 });
     }
 
-    SimpleObservation(ObservationConvention<?> convention, ObservationRegistry registry, Context context) {
+    SimpleObservation(ObservationConvention<? extends Context> convention, ObservationRegistry registry,
+            Context context) {
         this.context = context.setName(name(convention, context));
         this.registry = registry;
         this.keyValuesProviders = registry.observationConfig().getKeyValuesProviders().stream()
@@ -78,7 +79,7 @@ class SimpleObservation implements Observation {
         this.keyValuesProviders.add(convention);
     }
 
-    private static String name(ObservationConvention<?> convention, Context context) {
+    private static String name(ObservationConvention<? extends Context> convention, Context context) {
         if (!convention.supportsContext(context)) {
             throw new IllegalStateException(
                     "Convention [" + convention + "] doesn't support context [" + context + "]");
@@ -91,7 +92,7 @@ class SimpleObservation implements Observation {
     }
 
     @Override
-    public Observation contextualName(String contextualName) {
+    public Observation contextualName(@Nullable String contextualName) {
         this.context.setContextualName(contextualName);
         return this;
     }

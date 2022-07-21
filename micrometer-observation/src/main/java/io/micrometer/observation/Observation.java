@@ -125,7 +125,7 @@ public interface Observation {
      * @param registry observation registry
      * @return created but not started observation
      */
-    static <T extends Observation.Context> Observation createNotStarted(
+    static <T extends Context> Observation createNotStarted(
             @Nullable Observation.ObservationConvention<T> customConvention,
             @NonNull Observation.ObservationConvention<T> defaultConvention, @NonNull T context,
             @NonNull ObservationRegistry registry) {
@@ -146,7 +146,8 @@ public interface Observation {
      * @param registry observation registry
      * @return started observation
      */
-    static Observation start(ObservationConvention<?> observationConvention, @Nullable ObservationRegistry registry) {
+    static Observation start(ObservationConvention<? extends Context> observationConvention,
+            @Nullable ObservationRegistry registry) {
         return start(observationConvention, null, registry);
     }
 
@@ -180,8 +181,7 @@ public interface Observation {
      * nor a configured one was found
      * @return started observation
      */
-    static <T extends Observation.Context> Observation start(
-            @Nullable Observation.ObservationConvention<T> customConvention,
+    static <T extends Context> Observation start(@Nullable Observation.ObservationConvention<T> customConvention,
             @NonNull Observation.ObservationConvention<T> defaultConvention, @NonNull T context,
             @NonNull ObservationRegistry registry) {
         return createNotStarted(customConvention, defaultConvention, context, registry).start();
@@ -196,7 +196,7 @@ public interface Observation {
      * @param registry observation registry
      * @return created but not started observation
      */
-    static Observation createNotStarted(ObservationConvention<?> observationConvention,
+    static Observation createNotStarted(ObservationConvention<? extends Context> observationConvention,
             @Nullable ObservationRegistry registry) {
         return createNotStarted(observationConvention, null, registry);
     }
@@ -212,8 +212,8 @@ public interface Observation {
      * contextual name <b>you MUST use a non {@code null} context</b> (i.e. the
      * {@code context} parameter of this method MUST NOT be {@code null}. The
      * {@link ObservationConvention#getContextualName(Context)} requires a concrete type
-     * of {@link Observation.Context} to be passed and if you're not providing one we
-     * won't be able to initialize it ourselves.
+     * of {@link Context} to be passed and if you're not providing one we won't be able to
+     * initialize it ourselves.
      * </p>
      * @param <T> type of context
      * @param observationConvention observation convention
@@ -221,15 +221,15 @@ public interface Observation {
      * @param registry observation registry
      * @return created but not started observation
      */
-    static <T extends Observation.Context> Observation createNotStarted(ObservationConvention<T> observationConvention,
+    static <T extends Context> Observation createNotStarted(ObservationConvention<T> observationConvention,
             @Nullable T context, @Nullable ObservationRegistry registry) {
         if (registry == null || registry.isNoop()
                 || !registry.observationConfig().isObservationEnabled(observationConvention.getName(), context)
                 || observationConvention == NoopObservationConvention.INSTANCE) {
             return NoopObservation.INSTANCE;
         }
-        Context c = context == null ? new Context() : context;
-        SimpleObservation simpleObservation = new SimpleObservation(observationConvention, registry, c);
+        Context contextToUse = context == null ? new Context() : context;
+        SimpleObservation simpleObservation = new SimpleObservation(observationConvention, registry, contextToUse);
         if (context != null) {
             simpleObservation.contextualName(observationConvention.getContextualName(context));
         }
@@ -243,7 +243,7 @@ public interface Observation {
      * @param contextualName contextual name
      * @return this
      */
-    Observation contextualName(String contextualName);
+    Observation contextualName(@Nullable String contextualName);
 
     /**
      * If you have access to a previously created {@link Observation} you can manually set
@@ -647,7 +647,7 @@ public interface Observation {
          * @param contextualName name
          * @return this for chaining
          */
-        public Context setContextualName(String contextualName) {
+        public Context setContextualName(@Nullable String contextualName) {
             this.contextualName = contextualName;
             return this;
         }
@@ -1008,8 +1008,7 @@ public interface Observation {
      * @author Marcin Grzejszczak
      * @since 1.10.0
      */
-    interface ObservationConvention<T extends Observation.Context>
-            extends Observation.KeyValuesProvider<T>, KeyValuesConvention {
+    interface ObservationConvention<T extends Context> extends Observation.KeyValuesProvider<T>, KeyValuesConvention {
 
         /**
          * Allows to override the name for an observation.
@@ -1024,6 +1023,7 @@ public interface Observation {
          * @param context context
          * @return the new, contextual name for the observation
          */
+        @Nullable
         default String getContextualName(T context) {
             return null;
         }

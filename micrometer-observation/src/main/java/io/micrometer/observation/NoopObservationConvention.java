@@ -42,6 +42,11 @@ final class NoopObservationConvention implements Observation.ObservationConventi
     }
 
     @Override
+    public String getContextualName(Observation.Context context) {
+        return "";
+    }
+
+    @Override
     public boolean supportsContext(Observation.Context context) {
         return Observation.KeyValuesProvider.EMPTY.supportsContext(context);
     }
