@@ -56,7 +56,7 @@ public interface DocumentedObservation {
     KeyName[] EMPTY = new KeyName[0];
 
     /**
-     * Default technical name (e.g metric name). You can set the name either by this
+     * Default technical name (e.g.: metric name). You can set the name either by this
      * method or {@link #getDefaultConvention()}. You can't use both.
      * @return name
      */
@@ -75,7 +75,7 @@ public interface DocumentedObservation {
     }
 
     /**
-     * More human readable name available within the given context (e.g. span name). You
+     * More human-readable name available within the given context (e.g.: span name). You
      * can set the name either by this method or {@link #getDefaultConvention()}. This
      * method will override what {@link #getDefaultConvention()} has set.
      * @return contextual name

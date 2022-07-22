@@ -16,6 +16,7 @@
 package io.micrometer.core.instrument.binder.okhttp3;
 
 import io.micrometer.common.docs.KeyName;
+import io.micrometer.common.lang.NonNullApi;
 import io.micrometer.observation.Observation;
 import io.micrometer.observation.docs.DocumentedObservation;
 
@@ -25,6 +26,7 @@ import io.micrometer.observation.docs.DocumentedObservation;
  * @author Marcin Grzejszczak
  * @since 1.10.0
  */
+@NonNullApi
 public enum OkHttpDocumentedObservation implements DocumentedObservation {
 
     /**
@@ -42,56 +44,57 @@ public enum OkHttpDocumentedObservation implements DocumentedObservation {
         }
     };
 
+    @NonNullApi
     enum OkHttpLegacyLowCardinalityTags implements KeyName {
 
         TARGET_SCHEME {
             @Override
-            public String getKeyName() {
+            public String asString() {
                 return "target.scheme";
             }
         },
 
         TARGET_HOST {
             @Override
-            public String getKeyName() {
+            public String asString() {
                 return "target.host";
             }
         },
 
         TARGET_PORT {
             @Override
-            public String getKeyName() {
+            public String asString() {
                 return "target.port";
             }
         },
 
         HOST {
             @Override
-            public String getKeyName() {
+            public String asString() {
                 return "host";
             }
         },
 
         METHOD {
             @Override
-            public String getKeyName() {
+            public String asString() {
                 return "method";
             }
         },
 
         URI {
             @Override
-            public String getKeyName() {
+            public String asString() {
                 return "uri";
             }
         },
 
         STATUS {
             @Override
-            public String getKeyName() {
+            public String asString() {
                 return "status";
             }
-        };
+        }
 
     }
 
