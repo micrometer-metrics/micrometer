@@ -582,7 +582,7 @@ public interface Observation {
          * @return {@code true} when this is a no-op scope
          */
         default boolean isNoop() {
-            return this == NoopObservation.NoopScope.INSTANCE;
+            return this == NOOP;
         }
 
     }
@@ -625,11 +625,9 @@ public interface Observation {
         /**
          * Sets the observation name.
          * @param name observation name
-         * @return this for chaining
          */
-        public Context setName(String name) {
+        public void setName(String name) {
             this.name = name;
-            return this;
         }
 
         /**
@@ -647,9 +645,8 @@ public interface Observation {
          * @param contextualName name
          * @return this for chaining
          */
-        public Context setContextualName(@Nullable String contextualName) {
+        public void setContextualName(@Nullable String contextualName) {
             this.contextualName = contextualName;
-            return this;
         }
 
         /**
@@ -684,9 +681,8 @@ public interface Observation {
          * @param error error
          * @return this for chaining
          */
-        public Context setError(Throwable error) {
+        public void setError(Throwable error) {
             this.error = error;
-            return this;
         }
 
         /**
@@ -1012,14 +1008,9 @@ public interface Observation {
     interface ObservationConvention<T extends Context> extends KeyValuesConvention {
 
         /**
-         * Empty instance of the key-values provider.
+         * Empty instance of the convention.
          */
-        ObservationConvention<Context> EMPTY = new ObservationConvention<Context>() {
-            @Override
-            public boolean supportsContext(Context context) {
-                return false;
-            }
-        };
+        ObservationConvention<Context> EMPTY = context -> false;
 
         /**
          * Low cardinality key values.

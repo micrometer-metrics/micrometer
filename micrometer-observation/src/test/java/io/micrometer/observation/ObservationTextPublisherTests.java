@@ -90,8 +90,10 @@ class ObservationTextPublisherTests {
     }
 
     private Observation.Context createTestContext() {
-        Observation.Context context = new Observation.Context().setName("testName")
-                .setContextualName("testContextualName").setError(new IOException("simulated"));
+        Observation.Context context = new Observation.Context();
+        context.setName("testName");
+        context.setContextualName("testContextualName");
+        context.setError(new IOException("simulated"));
         context.addLowCardinalityKeyValue(KeyValue.of("lcTag", "foo"));
         context.addHighCardinalityKeyValue(KeyValue.of("hcTag", "bar"));
         context.put("contextKey", "contextValue");

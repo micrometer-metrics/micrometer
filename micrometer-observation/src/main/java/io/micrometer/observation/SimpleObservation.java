@@ -39,7 +39,7 @@ class SimpleObservation implements Observation {
     private final Context context;
 
     @SuppressWarnings("rawtypes")
-    private final Collection<ObservationConvention> observationConventions;
+    private final Collection<ObservationConvention> conventions;
 
     @SuppressWarnings("rawtypes")
     private final Deque<ObservationHandler> handlers;
@@ -48,31 +48,20 @@ class SimpleObservation implements Observation {
 
     SimpleObservation(String name, ObservationRegistry registry, Context context) {
         this.registry = registry;
-        this.context = context.setName(name);
-        this.observationConventions = registry.observationConfig().getObservationConventions().stream()
-                .filter(observationConvention -> observationConvention.supportsContext(this.context))
-                .collect(Collectors.toList());
-        this.handlers = registry.observationConfig().getObservationHandlers().stream()
-                .filter(handler -> handler.supportsContext(this.context))
-                .collect(Collectors.toCollection(ArrayDeque::new));
+        this.context = context;
+        this.context.setName(name);
+        this.conventions = getConventionsFromConfig(registry, context);
+        this.handlers = getHandlersFromConfig(registry, context);
         this.filters = registry.observationConfig().getObservationFilters();
     }
 
     SimpleObservation(ObservationConvention<? extends Context> convention, ObservationRegistry registry,
             Context context) {
-        this.context = context.setName(name(convention, context));
-        this.registry = registry;
-        this.observationConventions = registry.observationConfig().getObservationConventions().stream()
-                .filter(observationConvention -> observationConvention.supportsContext(this.context))
-                .collect(Collectors.toList());
-        this.handlers = registry.observationConfig().getObservationHandlers().stream()
-                .filter(handler -> handler.supportsContext(this.context))
-                .collect(Collectors.toCollection(ArrayDeque::new));
-        this.filters = registry.observationConfig().getObservationFilters();
-        this.observationConventions.add(convention);
+        this(getObservationName(convention, context), registry, context);
+        this.conventions.add(convention);
     }
 
-    private static String name(ObservationConvention<? extends Context> convention, Context context) {
+    private static String getObservationName(ObservationConvention<? extends Context> convention, Context context) {
         if (!convention.supportsContext(context)) {
             throw new IllegalStateException(
                     "Convention [" + convention + "] doesn't support context [" + context + "]");
@@ -82,6 +71,17 @@ class SimpleObservation implements Observation {
             return name;
         }
         return context.getName();
+    }
+
+    private static Collection<ObservationConvention> getConventionsFromConfig(ObservationRegistry registry,
+            Context context) {
+        return registry.observationConfig().getObservationConventions().stream()
+                .filter(convention -> convention.supportsContext(context)).collect(Collectors.toList());
+    }
+
+    private static Deque<ObservationHandler> getHandlersFromConfig(ObservationRegistry registry, Context context) {
+        return registry.observationConfig().getObservationHandlers().stream()
+                .filter(handler -> handler.supportsContext(context)).collect(Collectors.toCollection(ArrayDeque::new));
     }
 
     @Override
@@ -109,9 +109,9 @@ class SimpleObservation implements Observation {
     }
 
     @Override
-    public Observation observationConvention(ObservationConvention<?> observationConvention) {
-        if (observationConvention.supportsContext(context)) {
-            this.observationConventions.add(observationConvention);
+    public Observation observationConvention(ObservationConvention<?> convention) {
+        if (convention.supportsContext(context)) {
+            this.conventions.add(convention);
         }
         return this;
     }
@@ -146,11 +146,11 @@ class SimpleObservation implements Observation {
         // We want to rename with the first matching observationconvention
         boolean nameChanged = false;
         boolean contextualNameChanged = false;
-        for (ObservationConvention observationConvention : observationConventions) {
-            this.context.addLowCardinalityKeyValues(observationConvention.getLowCardinalityKeyValues(context));
-            this.context.addHighCardinalityKeyValues(observationConvention.getHighCardinalityKeyValues(context));
-            String contextualName = observationConvention.getContextualName(context);
-            String newName = observationConvention.getName();
+        for (ObservationConvention convention : this.conventions) {
+            this.context.addLowCardinalityKeyValues(convention.getLowCardinalityKeyValues(context));
+            this.context.addHighCardinalityKeyValues(convention.getHighCardinalityKeyValues(context));
+            String contextualName = convention.getContextualName(context);
+            String newName = convention.getName();
             if (StringUtils.isNotBlank(newName) && !nameChanged) {
                 this.context.setName(newName);
                 nameChanged = true;

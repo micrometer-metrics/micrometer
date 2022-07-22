@@ -426,7 +426,8 @@ class ObservationContextAssertTests {
 
     @Test
     void should_jump_to_and_back_from_throwable_assert() {
-        context.setName("foo").setError(new RuntimeException("bar"));
+        context.setName("foo");
+        context.setError(new RuntimeException("bar"));
 
         thenNoException().isThrownBy(() -> assertThat(context).hasNameEqualTo("foo").thenError().hasMessage("bar")
                 .backToContext().hasNameEqualTo("foo"));

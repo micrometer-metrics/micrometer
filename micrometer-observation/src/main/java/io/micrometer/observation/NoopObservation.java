@@ -110,7 +110,7 @@ final class NoopObservation implements Observation {
         /**
          * Instance of {@link NoopScope}.
          */
-        public static final Scope INSTANCE = new NoopScope();
+        static final Scope INSTANCE = new NoopScope();
 
         private NoopScope() {
 
