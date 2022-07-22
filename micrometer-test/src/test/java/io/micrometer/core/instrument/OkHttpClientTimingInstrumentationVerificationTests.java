@@ -31,7 +31,7 @@ class OkHttpClientTimingInstrumentationVerificationTests extends HttpClientTimin
             .eventListener(OkHttpMetricsEventListener.builder(getRegistry(), timerName()).build()).build();
 
     @Override
-    void sendHttpRequest(HttpMethod method, @Nullable byte[] body, URI baseUri, String templatedPath,
+    protected void sendHttpRequest(HttpMethod method, @Nullable byte[] body, URI baseUri, String templatedPath,
             String... pathVariables) {
         Request request = new Request.Builder().method(method.name(), body == null ? null : RequestBody.create(body))
                 .url(baseUri + substitutePathVariables(templatedPath, pathVariables))

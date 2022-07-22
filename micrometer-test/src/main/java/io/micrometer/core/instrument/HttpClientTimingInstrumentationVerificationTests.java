@@ -75,7 +75,7 @@ public abstract class HttpClientTimingInstrumentationVerificationTests extends I
      * forward slash, and optionally containing path variable placeholders
      * @param pathVariables optional variables to substitute into the templatedPath
      */
-    abstract void sendHttpRequest(HttpMethod method, @Nullable byte[] body, URI baseUrl, String templatedPath,
+    protected abstract void sendHttpRequest(HttpMethod method, @Nullable byte[] body, URI baseUrl, String templatedPath,
             String... pathVariables);
 
     /**
