@@ -17,8 +17,8 @@ package io.micrometer.core.instrument;
 
 import com.github.tomakehurst.wiremock.junit5.WireMockRuntimeInfo;
 import com.github.tomakehurst.wiremock.junit5.WireMockTest;
+import io.micrometer.common.lang.Nullable;
 import io.micrometer.core.annotation.Incubating;
-import io.micrometer.core.lang.Nullable;
 import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 
@@ -40,7 +40,10 @@ import static org.assertj.core.api.Assertions.assertThat;
 @Incubating(since = "1.9.2")
 public abstract class HttpClientTimingInstrumentationVerificationTests extends InstrumentationVerificationTests {
 
-    enum HttpMethod {
+    /**
+     * HTTP Method to verify.
+     */
+    public enum HttpMethod {
 
         GET, POST;
 
