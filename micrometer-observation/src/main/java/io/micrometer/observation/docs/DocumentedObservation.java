@@ -126,7 +126,11 @@ public interface DocumentedObservation {
      * @return observation
      */
     default Observation observation(ObservationRegistry registry, @Nullable Observation.Context context) {
-        return Observation.createNotStarted(getName(), context, registry).contextualName(getContextualName());
+        Observation observation = Observation.createNotStarted(getName(), context, registry);
+        if (getContextualName() != null) {
+            observation.contextualName(getContextualName());
+        }
+        return observation;
     }
 
     /**
