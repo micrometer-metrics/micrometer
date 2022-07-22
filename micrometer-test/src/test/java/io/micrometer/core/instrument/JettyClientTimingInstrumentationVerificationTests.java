@@ -15,8 +15,8 @@
  */
 package io.micrometer.core.instrument;
 
+import io.micrometer.common.lang.Nullable;
 import io.micrometer.core.instrument.binder.jetty.JettyClientMetrics;
-import io.micrometer.core.lang.Nullable;
 import org.eclipse.jetty.client.HttpClient;
 import org.eclipse.jetty.client.api.Request;
 import org.eclipse.jetty.client.util.BytesContentProvider;

@@ -15,9 +15,9 @@
  */
 package io.micrometer.core.instrument;
 
+import io.micrometer.common.lang.Nullable;
 import io.micrometer.core.instrument.binder.httpcomponents.DefaultUriMapper;
 import io.micrometer.core.instrument.binder.httpcomponents.MicrometerHttpRequestExecutor;
-import io.micrometer.core.lang.Nullable;
 import org.apache.http.client.HttpClient;
 import org.apache.http.client.methods.HttpEntityEnclosingRequestBase;
 import org.apache.http.client.methods.HttpUriRequest;

@@ -15,8 +15,8 @@
  */
 package io.micrometer.core.instrument;
 
+import io.micrometer.common.lang.Nullable;
 import io.micrometer.core.instrument.binder.okhttp3.OkHttpMetricsEventListener;
-import io.micrometer.core.lang.Nullable;
 import okhttp3.OkHttpClient;
 import okhttp3.Request;
 import okhttp3.RequestBody;
