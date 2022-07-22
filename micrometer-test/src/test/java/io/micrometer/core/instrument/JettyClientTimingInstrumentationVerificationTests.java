@@ -41,7 +41,7 @@ class JettyClientTimingInstrumentationVerificationTests extends HttpClientTiming
     }
 
     @Override
-    void sendHttpRequest(HttpMethod method, @Nullable byte[] body, URI baseUri, String templatedPath,
+    protected void sendHttpRequest(HttpMethod method, @Nullable byte[] body, URI baseUri, String templatedPath,
             String... pathVariables) {
         try {
             Request request = httpClient.newRequest(baseUri + substitutePathVariables(templatedPath, pathVariables))
