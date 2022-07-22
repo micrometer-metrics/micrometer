@@ -91,7 +91,7 @@ class ObservationRegistryTest {
     }
 
     @Test
-    void observationShouldWorkWithNamingConventions() {
+    void observationShouldWorkWithConventions() {
         ObservationRegistry registry = ObservationRegistry.create();
         registry.observationConfig().observationHandler(c -> true);
         // Define a convention
@@ -104,8 +104,8 @@ class ObservationRegistryTest {
         MessagingObservationConvention messagingObservationConvention = new MessagingObservationConvention(
                 messagingConvention);
 
-        Observation.start("observation", myContext, registry).observationConvention(messagingObservationConvention)
-                .stop();
+        Observation.createNotStarted("observation", myContext, registry)
+                .observationConvention(messagingObservationConvention).start().stop();
 
         then(myContext.getLowCardinalityKeyValues().stream().filter(keyValue -> keyValue.getKey().equals("baz"))
                 .findFirst().orElseThrow(() -> new AssertionError("No <baz> key value found")).getValue())

@@ -332,7 +332,8 @@ public interface Observation {
 
     /**
      * Adds an observation convention that can be used to attach key values to the
-     * observation.
+     * observation. WARNING: You must add ObservationConvention instances to the
+     * Observation before it is started.
      * @param observationConvention key values provider
      * @return this
      */

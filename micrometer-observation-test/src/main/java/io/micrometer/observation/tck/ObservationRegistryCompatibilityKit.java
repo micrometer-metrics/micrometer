@@ -392,12 +392,12 @@ public abstract class ObservationRegistryCompatibilityKit {
         TestContext testContext = new TestContext();
         testContext.put("context.field", "42");
         Exception exception = new IOException("simulated");
-        Observation observation = Observation.start("test.observation", testContext, registry)
+        Observation observation = Observation.createNotStarted("test.observation", testContext, registry)
                 .lowCardinalityKeyValue("lcTag1", "1").lowCardinalityKeyValues(KeyValues.of("lcTag2", "2"))
                 .highCardinalityKeyValue("hcTag1", "3").highCardinalityKeyValues(KeyValues.of("hcTag2", "4"))
                 .observationConvention(new TestObservationConvention("local"))
                 .observationConvention(new UnsupportedObservationConvention("local"))
-                .contextualName("test.observation.42").error(exception);
+                .contextualName("test.observation.42").error(exception).start();
         observation.stop();
 
         assertingHandler.checkAssertions(context -> {
