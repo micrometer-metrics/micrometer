@@ -130,12 +130,11 @@ public class MicrometerHttpRequestExecutor extends HttpRequestExecutor {
             throw e;
         }
         finally {
-            // TODO extraTags not applied
             Tags routeTags = exportTagsForRoute ? HttpContextUtils.generateTagsForRoute(context) : Tags.empty();
             Tags otherTags = Tags.of("method", request.getRequestLine().getMethod(), "uri", uriMapper.apply(request),
                     "status", status.getValue());
 
-            sample.stop(otherTags.and(routeTags));
+            sample.stop(otherTags.and(routeTags).and(extraTags));
         }
     }
 

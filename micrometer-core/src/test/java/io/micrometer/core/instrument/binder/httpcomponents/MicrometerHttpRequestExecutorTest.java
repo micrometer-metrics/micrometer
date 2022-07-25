@@ -17,12 +17,10 @@ package io.micrometer.core.instrument.binder.httpcomponents;
 
 import com.github.tomakehurst.wiremock.WireMockServer;
 import io.micrometer.core.instrument.MeterRegistry;
-import io.micrometer.core.instrument.MockClock;
 import io.micrometer.core.instrument.Tag;
 import io.micrometer.core.instrument.Tags;
 import io.micrometer.core.instrument.observation.DefaultMeterObservationHandler;
 import io.micrometer.core.instrument.search.MeterNotFoundException;
-import io.micrometer.core.instrument.simple.SimpleConfig;
 import io.micrometer.core.instrument.simple.SimpleMeterRegistry;
 import io.micrometer.observation.ObservationRegistry;
 import org.apache.http.client.HttpClient;
@@ -31,9 +29,10 @@ import org.apache.http.client.methods.HttpPost;
 import org.apache.http.impl.client.HttpClientBuilder;
 import org.apache.http.protocol.HttpRequestExecutor;
 import org.apache.http.util.EntityUtils;
-import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.ValueSource;
 import ru.lanwen.wiremock.ext.WiremockResolver;
 
 import java.io.IOException;
@@ -54,23 +53,22 @@ class MicrometerHttpRequestExecutorTest {
 
     private static final String EXPECTED_METER_NAME = "httpcomponents.httpclient.request";
 
-    private MeterRegistry registry;
+    private final MeterRegistry registry = new SimpleMeterRegistry();
 
-    @BeforeEach
-    void setup() {
-        registry = new SimpleMeterRegistry(SimpleConfig.DEFAULT, new MockClock());
-    }
-
-    @Test
-    void timeSuccessful(@WiremockResolver.Wiremock WireMockServer server) throws IOException {
+    @ParameterizedTest
+    @ValueSource(booleans = { false, true })
+    void timeSuccessful(boolean configureObservationRegistry, @WiremockResolver.Wiremock WireMockServer server)
+            throws IOException {
         server.stubFor(any(anyUrl()));
-        HttpClient client = client(executor(false));
+        HttpClient client = client(executor(false, configureObservationRegistry));
         EntityUtils.consume(client.execute(new HttpGet(server.baseUrl())).getEntity());
         assertThat(registry.get(EXPECTED_METER_NAME).timer().count()).isEqualTo(1L);
     }
 
-    @Test
-    void httpMethodIsTagged(@WiremockResolver.Wiremock WireMockServer server) throws IOException {
+    @ParameterizedTest
+    @ValueSource(booleans = { false, true })
+    void httpMethodIsTagged(boolean configureObservationRegistry, @WiremockResolver.Wiremock WireMockServer server)
+            throws IOException {
         server.stubFor(any(anyUrl()));
         HttpClient client = client(executor(false));
         EntityUtils.consume(client.execute(new HttpGet(server.baseUrl())).getEntity());
@@ -80,8 +78,10 @@ class MicrometerHttpRequestExecutorTest {
         assertThat(registry.get(EXPECTED_METER_NAME).tags("method", "POST").timer().count()).isEqualTo(1L);
     }
 
-    @Test
-    void httpStatusCodeIsTagged(@WiremockResolver.Wiremock WireMockServer server) throws IOException {
+    @ParameterizedTest
+    @ValueSource(booleans = { false, true })
+    void httpStatusCodeIsTagged(boolean configureObservationRegistry, @WiremockResolver.Wiremock WireMockServer server)
+            throws IOException {
         server.stubFor(any(urlEqualTo("/ok")).willReturn(aResponse().withStatus(200)));
         server.stubFor(any(urlEqualTo("/notfound")).willReturn(aResponse().withStatus(404)));
         server.stubFor(any(urlEqualTo("/error")).willReturn(aResponse().withStatus(500)));
@@ -98,8 +98,10 @@ class MicrometerHttpRequestExecutorTest {
                 .isEqualTo(1L);
     }
 
-    @Test
-    void uriIsUnknownByDefault(@WiremockResolver.Wiremock WireMockServer server) throws IOException {
+    @ParameterizedTest
+    @ValueSource(booleans = { false, true })
+    void uriIsUnknownByDefault(boolean configureObservationRegistry, @WiremockResolver.Wiremock WireMockServer server)
+            throws IOException {
         server.stubFor(any(anyUrl()));
         HttpClient client = client(executor(false));
         EntityUtils.consume(client.execute(new HttpGet(server.baseUrl())).getEntity());
@@ -108,8 +110,10 @@ class MicrometerHttpRequestExecutorTest {
         assertThat(registry.get(EXPECTED_METER_NAME).tags("uri", "UNKNOWN").timer().count()).isEqualTo(3L);
     }
 
-    @Test
-    void uriIsReadFromHttpHeader(@WiremockResolver.Wiremock WireMockServer server) throws IOException {
+    @ParameterizedTest
+    @ValueSource(booleans = { false, true })
+    void uriIsReadFromHttpHeader(boolean configureObservationRegistry, @WiremockResolver.Wiremock WireMockServer server)
+            throws IOException {
         server.stubFor(any(anyUrl()));
         HttpClient client = client(executor(false));
         HttpGet getWithHeader = new HttpGet(server.baseUrl());
@@ -120,8 +124,10 @@ class MicrometerHttpRequestExecutorTest {
                 () -> registry.get(EXPECTED_METER_NAME).tags("uri", "UNKNOWN").timer());
     }
 
-    @Test
-    void routeNotTaggedByDefault(@WiremockResolver.Wiremock WireMockServer server) throws IOException {
+    @ParameterizedTest
+    @ValueSource(booleans = { false, true })
+    void routeNotTaggedByDefault(boolean configureObservationRegistry, @WiremockResolver.Wiremock WireMockServer server)
+            throws IOException {
         server.stubFor(any(anyUrl()));
         HttpClient client = client(executor(false));
         EntityUtils.consume(client.execute(new HttpGet(server.baseUrl())).getEntity());
@@ -131,8 +137,10 @@ class MicrometerHttpRequestExecutorTest {
         assertThat(tagKeys).contains("status", "method");
     }
 
-    @Test
-    void routeTaggedIfEnabled(@WiremockResolver.Wiremock WireMockServer server) throws IOException {
+    @ParameterizedTest
+    @ValueSource(booleans = { false, true })
+    void routeTaggedIfEnabled(boolean configureObservationRegistry, @WiremockResolver.Wiremock WireMockServer server)
+            throws IOException {
         server.stubFor(any(anyUrl()));
         HttpClient client = client(executor(true));
         EntityUtils.consume(client.execute(new HttpGet(server.baseUrl())).getEntity());
@@ -148,8 +156,10 @@ class MicrometerHttpRequestExecutorTest {
         assertThat(requestExecutor).hasFieldOrPropertyWithValue("waitForContinue", 1000);
     }
 
-    @Test
-    void uriMapperWorksAsExpected(@WiremockResolver.Wiremock WireMockServer server) throws IOException {
+    @ParameterizedTest
+    @ValueSource(booleans = { false, true })
+    void uriMapperWorksAsExpected(boolean configureObservationRegistry,
+            @WiremockResolver.Wiremock WireMockServer server) throws IOException {
         server.stubFor(any(anyUrl()));
         MicrometerHttpRequestExecutor executor = MicrometerHttpRequestExecutor.builder(registry)
                 .uriMapper(request -> request.getRequestLine().getUri()).build();
@@ -199,10 +209,17 @@ class MicrometerHttpRequestExecutorTest {
     }
 
     private HttpRequestExecutor executor(boolean exportRoutes) {
-        ObservationRegistry observationRegistry = ObservationRegistry.create();
-        observationRegistry.observationConfig().observationHandler(new DefaultMeterObservationHandler(registry));
-        return MicrometerHttpRequestExecutor.builder(registry).observationRegistry(observationRegistry)
-                .exportTagsForRoute(exportRoutes).build();
+        return executor(exportRoutes, false);
+    }
+
+    private HttpRequestExecutor executor(boolean exportRoutes, boolean configureObservationRegistry) {
+        MicrometerHttpRequestExecutor.Builder builder = MicrometerHttpRequestExecutor.builder(registry);
+        if (configureObservationRegistry) {
+            ObservationRegistry observationRegistry = ObservationRegistry.create();
+            observationRegistry.observationConfig().observationHandler(new DefaultMeterObservationHandler(registry));
+            builder.observationRegistry(observationRegistry);
+        }
+        return builder.exportTagsForRoute(exportRoutes).build();
     }
 
 }

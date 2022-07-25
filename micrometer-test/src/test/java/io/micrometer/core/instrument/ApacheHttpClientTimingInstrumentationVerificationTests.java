@@ -34,16 +34,12 @@ import java.net.URI;
 
 class ApacheHttpClientTimingInstrumentationVerificationTests extends HttpClientTimingInstrumentationVerificationTests {
 
-    private final ObservationRegistry observationRegistry = ObservationRegistry.create();
-
-    private HttpClient httpClient;
+    protected HttpClient httpClient;
 
     @BeforeEach
-    void setup() {
-        observationRegistry.observationConfig().observationHandler(new DefaultMeterObservationHandler(getRegistry()));
-        httpClient = HttpClientBuilder.create().setRequestExecutor(
-                MicrometerHttpRequestExecutor.builder(getRegistry()).observationRegistry(observationRegistry).build())
-                .build();
+    protected void setup() {
+        httpClient = HttpClientBuilder.create()
+                .setRequestExecutor(MicrometerHttpRequestExecutor.builder(getRegistry()).build()).build();
     }
 
     @Override
@@ -79,6 +75,21 @@ class ApacheHttpClientTimingInstrumentationVerificationTests extends HttpClientT
         request.setURI(URI.create(baseUri + substitutePathVariables(templatedPath, pathVariables)));
         request.setHeader(DefaultUriMapper.URI_PATTERN_HEADER, templatedPath);
         return request;
+    }
+
+    static class ApacheHttpClientWithObservationRegistryTests
+            extends ApacheHttpClientTimingInstrumentationVerificationTests {
+
+        @BeforeEach
+        @Override
+        protected void setup() {
+            ObservationRegistry observationRegistry = ObservationRegistry.create();
+            observationRegistry.observationConfig()
+                    .observationHandler(new DefaultMeterObservationHandler(getRegistry()));
+            this.httpClient = HttpClientBuilder.create().setRequestExecutor(MicrometerHttpRequestExecutor
+                    .builder(getRegistry()).observationRegistry(observationRegistry).build()).build();
+        }
+
     }
 
 }
