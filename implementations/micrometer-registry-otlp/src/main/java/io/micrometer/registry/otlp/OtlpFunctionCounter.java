@@ -23,7 +23,7 @@ import java.util.function.ToDoubleFunction;
 
 class OtlpFunctionCounter<T> extends CumulativeFunctionCounter<T> implements StartTimeAwareMeter {
 
-    final long startTimeNanos;
+    private final long startTimeNanos;
 
     OtlpFunctionCounter(Id id, T obj, ToDoubleFunction<T> f, Clock clock) {
         super(id, obj, f);

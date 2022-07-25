@@ -23,7 +23,7 @@ import java.util.concurrent.TimeUnit;
 
 class OtlpLongTaskTimer extends CumulativeHistogramLongTaskTimer implements StartTimeAwareMeter {
 
-    final long startTimeNanos;
+    private final long startTimeNanos;
 
     OtlpLongTaskTimer(Id id, Clock clock, TimeUnit baseTimeUnit,
             DistributionStatisticConfig distributionStatisticConfig) {
