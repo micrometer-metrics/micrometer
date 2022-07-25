@@ -115,7 +115,7 @@ public class MicrometerHttpRequestExecutor extends HttpRequestExecutor {
     public HttpResponse execute(HttpRequest request, HttpClientConnection conn, HttpContext context)
             throws IOException, HttpException {
         ObservationOrTimer<ApacheHttpClientContext> sample = ObservationOrTimer.start(registry, observationRegistry,
-                () -> new ApacheHttpClientContext(request), convention);
+                () -> new ApacheHttpClientContext(request, context), convention);
         Tag status = STATUS_UNKNOWN;
 
         try {
@@ -192,11 +192,11 @@ public class MicrometerHttpRequestExecutor extends HttpRequestExecutor {
          * @param tags tags to apply if using the Timer API
          */
         public void stop(Iterable<Tag> tags) {
-            if (observationRegistry.isNoop()) {
+            if (observationRegistry.isNoop() && sample != null) {
                 sample.stop(Timer.builder(METER_NAME).description("Duration of Apache HttpClient request execution")
                         .tags(tags).register(meterRegistry));
             }
-            else {
+            else if (observation != null) {
                 observation.stop();
             }
         }

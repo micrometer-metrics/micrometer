@@ -70,7 +70,7 @@ class MicrometerHttpRequestExecutorTest {
     void httpMethodIsTagged(boolean configureObservationRegistry, @WiremockResolver.Wiremock WireMockServer server)
             throws IOException {
         server.stubFor(any(anyUrl()));
-        HttpClient client = client(executor(false));
+        HttpClient client = client(executor(false, configureObservationRegistry));
         EntityUtils.consume(client.execute(new HttpGet(server.baseUrl())).getEntity());
         EntityUtils.consume(client.execute(new HttpGet(server.baseUrl())).getEntity());
         EntityUtils.consume(client.execute(new HttpPost(server.baseUrl())).getEntity());
@@ -85,7 +85,7 @@ class MicrometerHttpRequestExecutorTest {
         server.stubFor(any(urlEqualTo("/ok")).willReturn(aResponse().withStatus(200)));
         server.stubFor(any(urlEqualTo("/notfound")).willReturn(aResponse().withStatus(404)));
         server.stubFor(any(urlEqualTo("/error")).willReturn(aResponse().withStatus(500)));
-        HttpClient client = client(executor(false));
+        HttpClient client = client(executor(false, configureObservationRegistry));
         EntityUtils.consume(client.execute(new HttpGet(server.baseUrl() + "/ok")).getEntity());
         EntityUtils.consume(client.execute(new HttpGet(server.baseUrl() + "/ok")).getEntity());
         EntityUtils.consume(client.execute(new HttpGet(server.baseUrl() + "/notfound")).getEntity());
@@ -103,7 +103,7 @@ class MicrometerHttpRequestExecutorTest {
     void uriIsUnknownByDefault(boolean configureObservationRegistry, @WiremockResolver.Wiremock WireMockServer server)
             throws IOException {
         server.stubFor(any(anyUrl()));
-        HttpClient client = client(executor(false));
+        HttpClient client = client(executor(false, configureObservationRegistry));
         EntityUtils.consume(client.execute(new HttpGet(server.baseUrl())).getEntity());
         EntityUtils.consume(client.execute(new HttpGet(server.baseUrl() + "/someuri")).getEntity());
         EntityUtils.consume(client.execute(new HttpGet(server.baseUrl() + "/otheruri")).getEntity());
@@ -115,7 +115,7 @@ class MicrometerHttpRequestExecutorTest {
     void uriIsReadFromHttpHeader(boolean configureObservationRegistry, @WiremockResolver.Wiremock WireMockServer server)
             throws IOException {
         server.stubFor(any(anyUrl()));
-        HttpClient client = client(executor(false));
+        HttpClient client = client(executor(false, configureObservationRegistry));
         HttpGet getWithHeader = new HttpGet(server.baseUrl());
         getWithHeader.addHeader(DefaultUriMapper.URI_PATTERN_HEADER, "/some/pattern");
         EntityUtils.consume(client.execute(getWithHeader).getEntity());
@@ -129,7 +129,7 @@ class MicrometerHttpRequestExecutorTest {
     void routeNotTaggedByDefault(boolean configureObservationRegistry, @WiremockResolver.Wiremock WireMockServer server)
             throws IOException {
         server.stubFor(any(anyUrl()));
-        HttpClient client = client(executor(false));
+        HttpClient client = client(executor(false, configureObservationRegistry));
         EntityUtils.consume(client.execute(new HttpGet(server.baseUrl())).getEntity());
         List<String> tagKeys = registry.get(EXPECTED_METER_NAME).timer().getId().getTags().stream().map(Tag::getKey)
                 .collect(Collectors.toList());
@@ -142,7 +142,7 @@ class MicrometerHttpRequestExecutorTest {
     void routeTaggedIfEnabled(boolean configureObservationRegistry, @WiremockResolver.Wiremock WireMockServer server)
             throws IOException {
         server.stubFor(any(anyUrl()));
-        HttpClient client = client(executor(true));
+        HttpClient client = client(executor(true, configureObservationRegistry));
         EntityUtils.consume(client.execute(new HttpGet(server.baseUrl())).getEntity());
         List<String> tagKeys = registry.get(EXPECTED_METER_NAME).timer().getId().getTags().stream().map(Tag::getKey)
                 .collect(Collectors.toList());
@@ -161,8 +161,12 @@ class MicrometerHttpRequestExecutorTest {
     void uriMapperWorksAsExpected(boolean configureObservationRegistry,
             @WiremockResolver.Wiremock WireMockServer server) throws IOException {
         server.stubFor(any(anyUrl()));
-        MicrometerHttpRequestExecutor executor = MicrometerHttpRequestExecutor.builder(registry)
-                .uriMapper(request -> request.getRequestLine().getUri()).build();
+        MicrometerHttpRequestExecutor.Builder executorBuilder = MicrometerHttpRequestExecutor.builder(registry)
+                .uriMapper(request -> request.getRequestLine().getUri());
+        if (configureObservationRegistry) {
+            executorBuilder.observationRegistry(createObservationRegistry());
+        }
+        MicrometerHttpRequestExecutor executor = executorBuilder.build();
         HttpClient client = client(executor);
         EntityUtils.consume(client.execute(new HttpGet(server.baseUrl())).getEntity());
         EntityUtils.consume(client.execute(new HttpGet(server.baseUrl() + "/foo")).getEntity());
@@ -215,11 +219,15 @@ class MicrometerHttpRequestExecutorTest {
     private HttpRequestExecutor executor(boolean exportRoutes, boolean configureObservationRegistry) {
         MicrometerHttpRequestExecutor.Builder builder = MicrometerHttpRequestExecutor.builder(registry);
         if (configureObservationRegistry) {
-            ObservationRegistry observationRegistry = ObservationRegistry.create();
-            observationRegistry.observationConfig().observationHandler(new DefaultMeterObservationHandler(registry));
-            builder.observationRegistry(observationRegistry);
+            builder.observationRegistry(createObservationRegistry());
         }
         return builder.exportTagsForRoute(exportRoutes).build();
+    }
+
+    private ObservationRegistry createObservationRegistry() {
+        ObservationRegistry observationRegistry = ObservationRegistry.create();
+        observationRegistry.observationConfig().observationHandler(new DefaultMeterObservationHandler(registry));
+        return observationRegistry;
     }
 
 }

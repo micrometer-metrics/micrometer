@@ -18,16 +18,24 @@ package io.micrometer.core.instrument.binder.httpcomponents;
 import io.micrometer.observation.transport.RequestReplySenderContext;
 import org.apache.http.HttpRequest;
 import org.apache.http.HttpResponse;
+import org.apache.http.protocol.HttpContext;
 
 public class ApacheHttpClientContext extends RequestReplySenderContext<HttpRequest, HttpResponse> {
 
-    public ApacheHttpClientContext(HttpRequest request) {
+    private final HttpContext apacheHttpContext;
+
+    public ApacheHttpClientContext(HttpRequest request, HttpContext apacheHttpContext) {
         super((httpRequest, key, value) -> {
             if (httpRequest != null) {
                 httpRequest.addHeader(key, value);
             }
         });
         setCarrier(request);
+        this.apacheHttpContext = apacheHttpContext;
+    }
+
+    public HttpContext getApacheHttpContext() {
+        return apacheHttpContext;
     }
 
 }
