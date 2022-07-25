@@ -296,10 +296,10 @@ public class MicrometerHttpRequestExecutor extends HttpRequestExecutor {
         /**
          * Provide a custom convention to override the default convention used when
          * instrumenting with the {@link Observation} API. This only takes effect when a
-         * {@link #observationConvention(ApacheHttpClientObservationConvention)} is
-         * configured.
+         * {@link #observationRegistry(ObservationRegistry)} is configured.
          * @param convention semantic convention to use
          * @return This builder instance.
+         * @see #observationRegistry(ObservationRegistry)
          */
         public Builder observationConvention(ApacheHttpClientObservationConvention convention) {
             this.observationConvention = convention;
