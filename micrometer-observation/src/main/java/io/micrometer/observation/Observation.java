@@ -833,11 +833,12 @@ public interface Observation {
         @Override
         public String toString() {
             return "name='" + name + '\'' + ", contextualName='" + contextualName + '\'' + ", error='" + error + '\''
-                    + ", lowCardinalityKeyValues=" + toString(lowCardinalityKeyValues) + ", highCardinalityKeyValues="
-                    + toString(highCardinalityKeyValues) + ", map=" + toString(map);
+                    + ", lowCardinalityKeyValues=" + toString(this.getLowCardinalityKeyValues())
+                    + ", highCardinalityKeyValues=" + toString(this.getHighCardinalityKeyValues()) + ", map="
+                    + toString(map);
         }
 
-        private String toString(Collection<KeyValue> keyValues) {
+        private String toString(KeyValues keyValues) {
             return keyValues.stream().map(keyValue -> String.format("%s='%s'", keyValue.getKey(), keyValue.getValue()))
                     .collect(Collectors.joining(", ", "[", "]"));
         }
