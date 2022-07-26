@@ -15,12 +15,13 @@
  */
 package io.micrometer.core.instrument;
 
+import com.sun.management.ThreadMXBean;
+import io.micrometer.core.Issue;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.condition.DisabledIfSystemProperty;
 
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.Iterator;
+import java.lang.management.ManagementFactory;
+import java.util.*;
 import java.util.stream.Stream;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -35,6 +36,9 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
  * @author Johnny Lim
  */
 class TagsTest {
+
+    // Should match "Eclipse OpenJ9 VM" and "IBM J9 VM"
+    private static final String JAVA_VM_NAME_J9_REGEX = ".*J9 VM$";
 
     @Test
     void dedup() {
@@ -283,6 +287,41 @@ class TagsTest {
     @Test
     void emptyShouldNotContainTags() {
         assertThat(Tags.empty().iterator()).isExhausted();
+    }
+
+    @Test
+    @Issue("#3313")
+    @DisabledIfSystemProperty(named = "java.vm.name", matches = JAVA_VM_NAME_J9_REGEX,
+            disabledReason = "Sun ThreadMXBean with allocation counter not available")
+    void andEmptyDoesNotAllocate() {
+        ThreadMXBean threadMXBean = (ThreadMXBean) ManagementFactory.getThreadMXBean();
+        long currentThreadId = Thread.currentThread().getId();
+        Tags tags = Tags.of("a", "b");
+        Tags extraTags = Tags.empty();
+
+        long allocatedBytesBefore = threadMXBean.getThreadAllocatedBytes(currentThreadId);
+        Tags combined = tags.and(extraTags);
+        long allocatedBytes = threadMXBean.getThreadAllocatedBytes(currentThreadId) - allocatedBytesBefore;
+
+        assertThat(combined).isEqualTo(tags);
+        assertThat(allocatedBytes).isZero();
+    }
+
+    @Test
+    @Issue("#3313")
+    @DisabledIfSystemProperty(named = "java.vm.name", matches = JAVA_VM_NAME_J9_REGEX,
+            disabledReason = "Sun ThreadMXBean with allocation counter not available")
+    void ofEmptyDoesNotAllocate() {
+        ThreadMXBean threadMXBean = (ThreadMXBean) ManagementFactory.getThreadMXBean();
+        long currentThreadId = Thread.currentThread().getId();
+        Tags extraTags = Tags.empty();
+
+        long allocatedBytesBefore = threadMXBean.getThreadAllocatedBytes(currentThreadId);
+        Tags of = Tags.of(extraTags);
+        long allocatedBytes = threadMXBean.getThreadAllocatedBytes(currentThreadId) - allocatedBytesBefore;
+
+        assertThat(of).isEqualTo(Tags.empty());
+        assertThat(allocatedBytes).isZero();
     }
 
     private void assertTags(Tags tags, String... keyValues) {
