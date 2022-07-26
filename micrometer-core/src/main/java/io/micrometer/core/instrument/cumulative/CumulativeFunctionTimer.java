@@ -15,8 +15,8 @@
  */
 package io.micrometer.core.instrument.cumulative;
 
+import io.micrometer.core.instrument.AbstractMeter;
 import io.micrometer.core.instrument.FunctionTimer;
-import io.micrometer.core.instrument.Meter;
 import io.micrometer.core.instrument.util.TimeUtils;
 
 import java.lang.ref.WeakReference;
@@ -30,9 +30,7 @@ import java.util.function.ToLongFunction;
  * @author Jon Schneider
  * @author Johnny Lim
  */
-public class CumulativeFunctionTimer<T> implements FunctionTimer {
-
-    private final Meter.Id id;
+public class CumulativeFunctionTimer<T> extends AbstractMeter implements FunctionTimer {
 
     private final WeakReference<T> ref;
 
@@ -50,7 +48,7 @@ public class CumulativeFunctionTimer<T> implements FunctionTimer {
 
     public CumulativeFunctionTimer(Id id, T obj, ToLongFunction<T> countFunction, ToDoubleFunction<T> totalTimeFunction,
             TimeUnit totalTimeFunctionUnit, TimeUnit baseTimeUnit) {
-        this.id = id;
+        super(id);
         this.ref = new WeakReference<>(obj);
         this.countFunction = countFunction;
         this.totalTimeFunction = totalTimeFunction;
@@ -76,11 +74,6 @@ public class CumulativeFunctionTimer<T> implements FunctionTimer {
                     TimeUtils.convert(totalTimeFunction.applyAsDouble(obj2), totalTimeFunctionUnit, baseTimeUnit()), 0);
         }
         return TimeUtils.convert(lastTime, baseTimeUnit(), unit);
-    }
-
-    @Override
-    public Id getId() {
-        return id;
     }
 
     @Override
