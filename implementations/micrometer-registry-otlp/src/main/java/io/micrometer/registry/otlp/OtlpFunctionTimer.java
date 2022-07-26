@@ -24,7 +24,7 @@ import java.util.function.ToLongFunction;
 
 class OtlpFunctionTimer<T> extends CumulativeFunctionTimer<T> implements StartTimeAwareMeter {
 
-    final long startTimeNanos;
+    private final long startTimeNanos;
 
     OtlpFunctionTimer(Id id, T obj, ToLongFunction<T> countFunction, ToDoubleFunction<T> totalTimeFunction,
             TimeUnit totalTimeFunctionUnit, TimeUnit baseTimeUnit, Clock clock) {
