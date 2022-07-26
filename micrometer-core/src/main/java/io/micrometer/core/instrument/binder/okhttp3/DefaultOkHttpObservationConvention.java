@@ -33,6 +33,7 @@ import java.util.function.Function;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
+import static io.micrometer.core.instrument.binder.okhttp3.OkHttpDocumentedObservation.OkHttpLegacyLowCardinalityTags.*;
 import static java.util.stream.Collectors.toList;
 import static java.util.stream.StreamSupport.stream;
 
@@ -84,20 +85,18 @@ public class DefaultOkHttpObservationConvention implements OkHttpObservationConv
         Iterable<KeyValue> unknownRequestTags = context.getUnknownRequestTags();
         boolean includeHostTag = context.isIncludeHostTag();
         // TODO: Tags to key values and back - maybe we can improve this?
-        KeyValues keyValues = KeyValues.of(
-                OkHttpDocumentedObservation.OkHttpLegacyLowCardinalityTags.METHOD
-                        .of(requestAvailable ? request.method() : TAG_VALUE_UNKNOWN),
-                OkHttpDocumentedObservation.OkHttpLegacyLowCardinalityTags.URI.of(getUriTag(urlMapper, state, request)),
-                OkHttpDocumentedObservation.OkHttpLegacyLowCardinalityTags.STATUS
-                        .of(getStatusMessage(state.response, state.exception)))
+        KeyValues keyValues = KeyValues
+                .of(METHOD.withValue(requestAvailable ? request.method() : TAG_VALUE_UNKNOWN),
+                        URI.withValue(getUriTag(urlMapper, state, request)),
+                        STATUS.withValue(getStatusMessage(state.response, state.exception)))
                 .and(extraTags)
                 .and(stream(contextSpecificTags.spliterator(), false)
                         .map(contextTag -> contextTag.apply(request, state.response))
                         .map(tag -> KeyValue.of(tag.getKey(), tag.getValue())).collect(toList()))
                 .and(getRequestTags(request, unknownRequestTags)).and(generateTagsForRoute(request));
         if (includeHostTag) {
-            keyValues = KeyValues.of(keyValues).and(OkHttpDocumentedObservation.OkHttpLegacyLowCardinalityTags.HOST
-                    .of(requestAvailable ? request.url().host() : TAG_VALUE_UNKNOWN));
+            keyValues = KeyValues.of(keyValues)
+                    .and(HOST.withValue(requestAvailable ? request.url().host() : TAG_VALUE_UNKNOWN));
         }
         return keyValues;
     }

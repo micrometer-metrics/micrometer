@@ -28,11 +28,11 @@ class ValidatedKeyValue<T> implements KeyValue {
 
     private final String key;
 
-    private final T value;
+    private final String value;
 
-    ValidatedKeyValue(String key, T value, Predicate<Object> validator) {
+    ValidatedKeyValue(String key, T value, Predicate<? super T> validator) {
         this.key = key;
-        this.value = assertValue(validator, value);
+        this.value = String.valueOf(assertValue(value, validator));
     }
 
     @Override
@@ -42,20 +42,21 @@ class ValidatedKeyValue<T> implements KeyValue {
 
     @Override
     public String getValue() {
-        return String.valueOf(this.value);
+        return this.value;
     }
 
-    private T assertValue(Predicate<Object> validator, T value) {
+    private T assertValue(T value, Predicate<? super T> validator) {
         if (!validator.test(value)) {
             throw new IllegalArgumentException(
-                    "Argument [" + this.value + "] does not follow required format for key [" + this.key + "]");
+                    "Argument [" + value + "] does not follow required format for key [" + this.key + "]");
         }
+
         return value;
     }
 
     @Override
     public String toString() {
-        return "tag(" + key + "=" + value + ")";
+        return "keyValue(" + this.key + "=" + this.value + ")";
     }
 
 }

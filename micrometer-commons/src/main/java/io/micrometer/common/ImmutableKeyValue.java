@@ -69,7 +69,7 @@ class ImmutableKeyValue implements KeyValue {
 
     @Override
     public String toString() {
-        return "tag(" + key + "=" + value + ")";
+        return "keyValue(" + key + "=" + value + ")";
     }
 
 }

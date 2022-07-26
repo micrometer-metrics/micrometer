@@ -48,8 +48,8 @@ enum ObservedAspectObservation implements DocumentedObservation {
         Observation observation = Observation
                 .createNotStarted(name, new ObservedAspect.ObservedAspectContext(pjp), registry)
                 .contextualName(contextualName)
-                .lowCardinalityKeyValue(CLASS_NAME.getKeyName(), signature.getDeclaringTypeName())
-                .lowCardinalityKeyValue(METHOD_NAME.getKeyName(), signature.getName())
+                .lowCardinalityKeyValue(CLASS_NAME.asString(), signature.getDeclaringTypeName())
+                .lowCardinalityKeyValue(METHOD_NAME.asString(), signature.getName())
                 .lowCardinalityKeyValues(KeyValues.of(observed.lowCardinalityKeyValues()));
 
         if (observationConvention != null) {
@@ -78,14 +78,14 @@ enum ObservedAspectObservation implements DocumentedObservation {
 
         CLASS_NAME {
             @Override
-            public String getKeyName() {
+            public String asString() {
                 return "class";
             }
         },
 
         METHOD_NAME {
             @Override
-            public String getKeyName() {
+            public String asString() {
                 return "method";
             }
         }
