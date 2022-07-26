@@ -27,8 +27,6 @@ import java.util.concurrent.TimeUnit;
 
 class OtlpTimer extends CumulativeTimer implements StartTimeAwareMeter {
 
-    private static final CountAtBucket[] EMPTY_HISTOGRAM = new CountAtBucket[0];
-
     private final long startTimeNanos;
 
     @Nullable
@@ -80,13 +78,9 @@ class OtlpTimer extends CumulativeTimer implements StartTimeAwareMeter {
             return snapshot;
         }
 
+        CountAtBucket[] histogramCounts = this.monotonicCountBucketHistogram.takeSnapshot(0, 0, 0).histogramCounts();
         return new HistogramSnapshot(snapshot.count(), snapshot.total(), snapshot.max(), snapshot.percentileValues(),
-                histogramCounts(), snapshot::outputSummary);
-    }
-
-    private CountAtBucket[] histogramCounts() {
-        return this.monotonicCountBucketHistogram == null ? EMPTY_HISTOGRAM
-                : this.monotonicCountBucketHistogram.takeSnapshot(0, 0, 0).histogramCounts();
+                histogramCounts, snapshot::outputSummary);
     }
 
     @Override

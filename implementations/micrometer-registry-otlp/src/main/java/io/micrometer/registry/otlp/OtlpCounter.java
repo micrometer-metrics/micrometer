@@ -22,7 +22,7 @@ import java.util.concurrent.TimeUnit;
 
 class OtlpCounter extends CumulativeCounter implements StartTimeAwareMeter {
 
-    final long startTimeNanos;
+    private final long startTimeNanos;
 
     OtlpCounter(Id id, Clock clock) {
         super(id);
