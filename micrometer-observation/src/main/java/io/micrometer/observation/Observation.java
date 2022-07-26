@@ -227,12 +227,8 @@ public interface Observation {
                 || observationConvention == NoopObservationConvention.INSTANCE) {
             return NoopObservation.INSTANCE;
         }
-        Context contextToUse = context == null ? new Context() : context;
-        SimpleObservation simpleObservation = new SimpleObservation(observationConvention, registry, contextToUse);
-        if (context != null) {
-            simpleObservation.contextualName(observationConvention.getContextualName(context));
-        }
-        return simpleObservation;
+
+        return new SimpleObservation(observationConvention, registry, context == null ? new Context() : context);
     }
 
     /**
