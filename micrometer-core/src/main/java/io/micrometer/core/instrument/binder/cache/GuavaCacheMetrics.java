@@ -118,11 +118,11 @@ public class GuavaCacheMetrics<K, V, C extends Cache<K, V>> extends CacheMeterBi
                     .tags(getTagsWithCacheName()).tags("result", "failure")
                     .description("The number of times cache lookup methods threw an exception while loading a new value")
                     .register(registry);
-            Gauge.builder("cache.hit_rate", cache, c -> c.stats().hitRate())
-                    .tags(getTagsWithCacheName())
-                    .description("Hit ratio, defined as hitCount / requestCount, or 1.0 when requestCount is 0")
-                    .register(registry);
         }
+        Gauge.builder("cache.hit_rate", cache, c -> c.stats().hitRate())
+                .tags(getTagsWithCacheName())
+                .description("Hit ratio, defined as hitCount / requestCount, or 1.0 when requestCount is 0")
+                .register(registry);
     }
 
     @Nullable
