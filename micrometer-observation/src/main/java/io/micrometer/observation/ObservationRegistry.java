@@ -136,12 +136,12 @@ public interface ObservationRegistry {
 
         /**
          * Register {@link Observation.ObservationConvention observation conventions}.
-         * @param observationConvention observation conventions
+         * @param observationConventions observation conventions
          * @return This configuration instance
          */
         public ObservationConfig observationConvention(
-                Observation.GlobalObservationConvention<?>... observationConvention) {
-            this.observationConventions.addAll(Arrays.asList(observationConvention));
+                Observation.GlobalObservationConvention<?>... observationConventions) {
+            this.observationConventions.addAll(Arrays.asList(observationConventions));
             return this;
         }
 

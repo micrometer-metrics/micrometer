@@ -65,7 +65,7 @@ public interface DocumentedObservation {
     }
 
     /**
-     * Default naming convention (sets a technical and contextual names, and key values).
+     * Default naming convention (sets technical and contextual names, and key values).
      * You can set the names either by this method or {@link #getName()} and
      * {@link #getContextualName()}.
      * @return default naming convention
@@ -153,7 +153,7 @@ public interface DocumentedObservation {
             throw new IllegalStateException("You've decided to use convention based naming yet this observation ["
                     + getClass() + "] has not defined any default convention");
         }
-        else if (!getDefaultConvention()
+        if (!getDefaultConvention()
                 .isAssignableFrom(Objects
                         .requireNonNull(defaultConvention,
                                 "You have not provided a default convention in the Observation factory method")

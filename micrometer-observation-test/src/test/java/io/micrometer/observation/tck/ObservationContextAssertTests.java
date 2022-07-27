@@ -218,7 +218,7 @@ class ObservationContextAssertTests {
     }
 
     @Test
-    void should_not_throw_exception_when_low_cardinality_tag_exists() {
+    void should_not_throw_exception_when_low_cardinality_key_value_exists() {
         Observation observation = Observation.start("foo", context, registry);
         observation.lowCardinalityKeyValue("foo", "bar");
 
@@ -226,7 +226,7 @@ class ObservationContextAssertTests {
     }
 
     @Test
-    void should_throw_exception_when_low_cardinality_tag_missing() {
+    void should_throw_exception_when_low_cardinality_key_value_missing() {
         Observation observation = Observation.start("foo", context, registry);
         observation.lowCardinalityKeyValue("foo", "bar");
 
@@ -237,7 +237,7 @@ class ObservationContextAssertTests {
     }
 
     @Test
-    void should_not_throw_exception_when_high_cardinality_tag_exists() {
+    void should_not_throw_exception_when_high_cardinality_key_value_exists() {
         Observation observation = Observation.start("foo", context, registry);
         observation.highCardinalityKeyValue("foo", "bar");
 
@@ -245,7 +245,7 @@ class ObservationContextAssertTests {
     }
 
     @Test
-    void should_throw_exception_when_high_cardinality_tag_missing() {
+    void should_throw_exception_when_high_cardinality_key_value_missing() {
         Observation observation = Observation.start("foo", context, registry);
         observation.highCardinalityKeyValue("foo", "bar");
 
@@ -256,12 +256,12 @@ class ObservationContextAssertTests {
     }
 
     @Test
-    void should_not_throw_exception_when_high_cardinality_tag_present() {
+    void should_not_throw_exception_when_high_cardinality_key_value_present() {
         thenNoException().isThrownBy(() -> assertThat(context).doesNotHaveHighCardinalityKeyValue("foo", "bar"));
     }
 
     @Test
-    void should_throw_exception_when_high_cardinality_tag_present() {
+    void should_throw_exception_when_high_cardinality_key_value_present() {
         Observation observation = Observation.start("foo", context, registry);
         observation.highCardinalityKeyValue("foo", "bar");
 
@@ -272,7 +272,7 @@ class ObservationContextAssertTests {
     }
 
     @Test
-    void should_not_throw_exception_when_high_cardinality_tag_present_with_other_value() {
+    void should_not_throw_exception_when_high_cardinality_key_value_present_with_other_value() {
         Observation observation = Observation.start("foo", context, registry);
         observation.highCardinalityKeyValue("foo", "other");
 
@@ -283,12 +283,12 @@ class ObservationContextAssertTests {
     }
 
     @Test
-    void should_not_throw_exception_when_low_cardinality_tag_missing() {
+    void should_not_throw_exception_when_low_cardinality_key_value_missing() {
         thenNoException().isThrownBy(() -> assertThat(context).doesNotHaveLowCardinalityKeyValue("foo", "bar"));
     }
 
     @Test
-    void should_not_throw_exception_when_low_cardinality_tag_present_with_other_value() {
+    void should_not_throw_exception_when_low_cardinality_key_value_present_with_other_value() {
         Observation observation = Observation.start("foo", context, registry);
         observation.lowCardinalityKeyValue("foo", "other");
 
@@ -299,7 +299,7 @@ class ObservationContextAssertTests {
     }
 
     @Test
-    void should_throw_exception_when_low_cardinality_tag_present() {
+    void should_throw_exception_when_low_cardinality_key_value_present() {
         Observation observation = Observation.start("foo", context, registry);
         observation.lowCardinalityKeyValue("foo", "bar");
 
@@ -374,7 +374,7 @@ class ObservationContextAssertTests {
         observation.error(expected);
 
         thenThrownBy(() -> assertThat(context).doesNotHaveError()).hasMessageContaining(
-                "Observation should not have an error, found <java.lang.IllegalStateException: test>");
+                "Observation should not have an error, but found <java.lang.IllegalStateException: test>");
     }
 
     @Test

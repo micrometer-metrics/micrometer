@@ -316,7 +316,7 @@ public class ObservationContextAssert<SELF extends ObservationContextAssert<SELF
     }
 
     public SELF doesNotHaveError() {
-        thenError().withFailMessage("Observation should not have an error, found <%s>",
+        thenError().withFailMessage("Observation should not have an error, but found <%s>",
                 this.actual.getError().orElse(null)).isNull();
         return (SELF) this;
     }
