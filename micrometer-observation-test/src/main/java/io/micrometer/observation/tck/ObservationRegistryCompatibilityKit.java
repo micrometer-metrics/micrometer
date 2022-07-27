@@ -432,6 +432,48 @@ public abstract class ObservationRegistryCompatibilityKit {
         });
     }
 
+    @Test
+    void globallyOverridenNameAndContextualNameShouldBeSetOnContext() {
+        AssertingHandler assertingHandler = new AssertingHandler();
+        registry.observationConfig().observationConvention(new TestObservationConventionWithNameOverrides())
+                .observationHandler(assertingHandler);
+
+        TestContext testContext = new TestContext();
+        Observation observation = Observation.createNotStarted("test.observation", testContext, registry)
+                .contextualName("test.observation.42").start();
+        observation.stop();
+
+        assertingHandler.checkAssertions(context -> {
+            assertThat(context.getName()).isEqualTo("conventionOverriddenName");
+            assertThat(context.getContextualName()).isEqualTo("getConventionOverriddenContextualName");
+            assertThat(context.toString()).containsOnlyOnce("name='conventionOverriddenName'")
+                    .containsOnlyOnce("contextualName='getConventionOverriddenContextualName'")
+                    .containsOnlyOnce("error='null'").containsOnlyOnce("lowCardinalityKeyValues=[]")
+                    .containsOnlyOnce("highCardinalityKeyValues=[]").containsOnlyOnce("map=[]");
+        });
+    }
+
+    @Test
+    void locallyOverridenNameAndContextualNameShouldBeSetOnContext() {
+        AssertingHandler assertingHandler = new AssertingHandler();
+        registry.observationConfig().observationHandler(assertingHandler);
+
+        TestContext testContext = new TestContext();
+        Observation observation = Observation.createNotStarted("test.observation", testContext, registry)
+                .contextualName("test.observation.42")
+                .observationConvention(new TestObservationConventionWithNameOverrides()).start();
+        observation.stop();
+
+        assertingHandler.checkAssertions(context -> {
+            assertThat(context.getName()).isEqualTo("conventionOverriddenName");
+            assertThat(context.getContextualName()).isEqualTo("getConventionOverriddenContextualName");
+            assertThat(context.toString()).containsOnlyOnce("name='conventionOverriddenName'")
+                    .containsOnlyOnce("contextualName='getConventionOverriddenContextualName'")
+                    .containsOnlyOnce("error='null'").containsOnlyOnce("lowCardinalityKeyValues=[]")
+                    .containsOnlyOnce("highCardinalityKeyValues=[]").containsOnlyOnce("map=[]");
+        });
+    }
+
     static class TestContext extends Observation.Context {
 
         final String uuid = UUID.randomUUID().toString();
@@ -454,6 +496,28 @@ public abstract class ObservationRegistryCompatibilityKit {
         @Override
         public KeyValues getHighCardinalityKeyValues(TestContext context) {
             return KeyValues.of(this.id + "." + "uuid", context.uuid);
+        }
+
+        @Override
+        public boolean supportsContext(Observation.Context context) {
+            return context instanceof TestContext;
+        }
+
+    }
+
+    static class TestObservationConventionWithNameOverrides
+            implements Observation.GlobalObservationConvention<TestContext> {
+
+        @Nullable
+        @Override
+        public String getName() {
+            return "conventionOverriddenName";
+        }
+
+        @Nullable
+        @Override
+        public String getContextualName(TestContext context) {
+            return "getConventionOverriddenContextualName";
         }
 
         @Override

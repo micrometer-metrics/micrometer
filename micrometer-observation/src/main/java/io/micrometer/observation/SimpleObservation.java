@@ -57,20 +57,14 @@ class SimpleObservation implements Observation {
 
     SimpleObservation(ObservationConvention<? extends Context> convention, ObservationRegistry registry,
             Context context) {
-        this(getObservationName(convention, context), registry, context);
-        this.conventions.add(convention);
-    }
-
-    private static String getObservationName(ObservationConvention<? extends Context> convention, Context context) {
-        if (!convention.supportsContext(context)) {
+        this((String) null, registry, context); // name is set later in start()
+        if (convention.supportsContext(context)) {
+            this.conventions.add(convention);
+        }
+        else {
             throw new IllegalStateException(
                     "Convention [" + convention + "] doesn't support context [" + context + "]");
         }
-        String name = convention.getName();
-        if (StringUtils.isNotBlank(name)) {
-            return name;
-        }
-        return context.getName();
     }
 
     private static Collection<ObservationConvention> getConventionsFromConfig(ObservationRegistry registry,
@@ -131,6 +125,21 @@ class SimpleObservation implements Observation {
 
     @Override
     public Observation start() {
+        // We want to rename with the first matching convention
+        boolean nameChanged = false;
+        for (ObservationConvention convention : this.conventions) {
+            this.context.addLowCardinalityKeyValues(convention.getLowCardinalityKeyValues(context));
+            this.context.addHighCardinalityKeyValues(convention.getHighCardinalityKeyValues(context));
+
+            if (!nameChanged) {
+                String newName = convention.getName();
+                if (StringUtils.isNotBlank(newName)) {
+                    this.context.setName(newName);
+                    nameChanged = true;
+                }
+            }
+        }
+
         this.notifyOnObservationStarted();
         return this;
     }
@@ -143,27 +152,26 @@ class SimpleObservation implements Observation {
     @SuppressWarnings({ "rawtypes", "unchecked" })
     @Override
     public void stop() {
-        // We want to rename with the first matching observationconvention
-        boolean nameChanged = false;
+        // We want to rename with the first matching convention
         boolean contextualNameChanged = false;
         for (ObservationConvention convention : this.conventions) {
             this.context.addLowCardinalityKeyValues(convention.getLowCardinalityKeyValues(context));
             this.context.addHighCardinalityKeyValues(convention.getHighCardinalityKeyValues(context));
-            String contextualName = convention.getContextualName(context);
-            String newName = convention.getName();
-            if (StringUtils.isNotBlank(newName) && !nameChanged) {
-                this.context.setName(newName);
-                nameChanged = true;
-            }
-            if (StringUtils.isNotBlank(contextualName) && !contextualNameChanged) {
-                contextualName(contextualName);
-                contextualNameChanged = true;
+
+            if (!contextualNameChanged) {
+                String newContextualName = convention.getContextualName(context);
+                if (StringUtils.isNotBlank(newContextualName)) {
+                    this.context.setContextualName(newContextualName);
+                    contextualNameChanged = true;
+                }
             }
         }
+
         Observation.Context modifiedContext = this.context;
         for (ObservationFilter filter : this.filters) {
             modifiedContext = filter.map(modifiedContext);
         }
+
         this.notifyOnObservationStopped(modifiedContext);
     }
 

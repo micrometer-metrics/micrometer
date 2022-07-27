@@ -85,6 +85,7 @@ public class OkHttpObservationInterceptor implements Interceptor {
         OkHttpContext okHttpContext = new OkHttpContext(this.urlMapper, this.extraTags, this.contextSpecificTags,
                 this.unknownRequestTags, this.includeHostTag);
         okHttpContext.setCarrier(newRequestBuilder);
+        okHttpContext.setState(new CallState(newRequestBuilder.build()));
         Observation observation = OkHttpDocumentedObservation.DEFAULT
                 .observation(this.observationConvention, new DefaultOkHttpObservationConvention(requestMetricName),
                         okHttpContext, this.registry)

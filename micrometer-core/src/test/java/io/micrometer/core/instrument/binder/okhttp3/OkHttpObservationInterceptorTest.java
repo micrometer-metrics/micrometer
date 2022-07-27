@@ -45,7 +45,7 @@ import static com.github.tomakehurst.wiremock.client.WireMock.anyUrl;
 import static org.assertj.core.api.Assertions.assertThat;
 
 /**
- * Tests for {@link OkHttpMetricsEventListener}.
+ * Tests for {@link OkHttpObservationInterceptor}.
  *
  * @author Bjarte S. Karlsen
  * @author Jon Schneider
