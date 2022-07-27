@@ -393,7 +393,11 @@ public abstract class ObservationRegistryCompatibilityKit {
         testContext.put("context.field", "42");
         Exception exception = new IOException("simulated");
         Observation observation = Observation.createNotStarted("test.observation", testContext, registry)
+                .lowCardinalityKeyValue("lcTag1", "0")
+                // should override the previous line
                 .lowCardinalityKeyValue("lcTag1", "1").lowCardinalityKeyValues(KeyValues.of("lcTag2", "2"))
+                .highCardinalityKeyValue("hcTag1", "0")
+                // should override the previous line
                 .highCardinalityKeyValue("hcTag1", "3").highCardinalityKeyValues(KeyValues.of("hcTag2", "4"))
                 .observationConvention(new TestObservationConvention("local"))
                 .observationConvention(new UnsupportedObservationConvention("local"))
@@ -425,9 +429,9 @@ public abstract class ObservationRegistryCompatibilityKit {
                     .containsOnlyOnce("contextualName='test.observation.42'")
                     .containsOnlyOnce("error='java.io.IOException: simulated'")
                     .containsOnlyOnce(
-                            "lowCardinalityKeyValues=[lcTag1='1', lcTag2='2', global.context.class='TestContext', local.context.class='TestContext']")
-                    .containsOnlyOnce("highCardinalityKeyValues=[hcTag1='3', hcTag2='4', global.uuid='"
-                            + testContext.uuid + "', local.uuid='" + testContext.uuid + "']")
+                            "lowCardinalityKeyValues=[global.context.class='TestContext', lcTag1='1', lcTag2='2', local.context.class='TestContext']")
+                    .containsOnlyOnce("highCardinalityKeyValues=[global.uuid='" + testContext.uuid
+                            + "', hcTag1='3', hcTag2='4', local.uuid='" + testContext.uuid + "']")
                     .containsOnlyOnce("map=[context.field='42']");
         });
     }
