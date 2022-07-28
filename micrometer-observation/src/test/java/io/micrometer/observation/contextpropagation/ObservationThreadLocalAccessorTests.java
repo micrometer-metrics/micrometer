@@ -41,7 +41,7 @@ class ObservationThreadLocalAccessorTests {
         Observation observation = Observation.start("foo", observationRegistry);
         then(observationRegistry.getCurrentObservation()).isNull();
 
-        ContextSnapshot container = null;
+        ContextSnapshot container;
         try (Observation.Scope scope = observation.openScope()) {
             then(observationRegistry.getCurrentObservation()).isSameAs(observation);
             container = ContextSnapshot.captureUsing(registry, key -> true);

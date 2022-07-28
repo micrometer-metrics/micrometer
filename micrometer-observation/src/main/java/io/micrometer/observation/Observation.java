@@ -111,13 +111,13 @@ public interface Observation {
      * {@link Observation#start()} when you want the measurements to start. When no
      * registry is passed or observation is not applicable will return a no-op
      * observation. Allows to set a custom {@link ObservationConvention} and requires to
-     * provide a default one if a neither a custom nor a pre-configured one (via
+     * provide a default one if neither a custom nor a pre-configured one (via
      * {@link ObservationRegistry.ObservationConfig#getObservationConvention(Context, ObservationConvention)})
      * was found. The {@link ObservationConvention} implementation can override
      * {@link Observation} names (i.e. name and contextual name) and key values.
      * @param <T> type of context
      * @param customConvention custom convention. If {@code null}, the default one will be
-     * picked
+     * picked.
      * @param defaultConvention default convention when no custom convention was passed,
      * nor a configured one was found
      * @param context the observation context
@@ -167,7 +167,7 @@ public interface Observation {
     /**
      * Creates and starts an {@link Observation}. When no registry is passed or
      * observation is not applicable will return a no-op observation. Allows to set a
-     * custom {@link ObservationConvention} and requires to provide a default one if a
+     * custom {@link ObservationConvention} and requires to provide a default one if
      * neither a custom nor a pre-configured one (via
      * {@link ObservationRegistry.ObservationConfig#getObservationConvention(Context, ObservationConvention)})
      * was found.
@@ -175,7 +175,7 @@ public interface Observation {
      * @param registry observation registry
      * @param context the observation context
      * @param customConvention custom convention. If {@code null}, the default one will be
-     * picked
+     * picked.
      * @param defaultConvention default convention when no custom convention was passed,
      * nor a configured one was found
      * @return started observation
@@ -287,8 +287,8 @@ public interface Observation {
 
     /**
      * Adds a high cardinality key value. High cardinality means that this key value will
-     * have possible an unbounded number of possible values. An HTTP URL is a good example
-     * of such a key value (e.g. /foo/bar, /foo/baz etc.).
+     * have an unbounded number of possible values. An HTTP URL is a good example of such
+     * a key value (e.g. /foo/bar, /foo/baz etc.).
      * @param keyValue key value
      * @return this
      */
@@ -296,8 +296,8 @@ public interface Observation {
 
     /**
      * Adds a high cardinality key value. High cardinality means that this key value will
-     * have possible an unbounded number of possible values. An HTTP URL is a good example
-     * of such a key value (e.g. /foo/bar, /foo/baz etc.).
+     * have an unbounded number of possible values. An HTTP URL is a good example of such
+     * a key value (e.g. /foo/bar, /foo/baz etc.).
      * @param key key
      * @param value value
      * @return this
@@ -308,8 +308,8 @@ public interface Observation {
 
     /**
      * Adds multiple high cardinality key value instances. High cardinality means that the
-     * key value will have possible an unbounded number of possible values. An HTTP URL is
-     * a good example of such a key value (e.g. /foo/bar, /foo/baz etc.).
+     * key value will have an unbounded number of possible values. An HTTP URL is a good
+     * example of such a key value (e.g. /foo/bar, /foo/baz etc.).
      * @param keyValues key value instances
      * @return this
      */
