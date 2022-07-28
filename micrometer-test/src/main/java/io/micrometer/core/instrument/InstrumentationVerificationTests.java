@@ -21,7 +21,7 @@ abstract class InstrumentationVerificationTests {
 
     private final MeterRegistry registry = new SimpleMeterRegistry();
 
-    MeterRegistry getRegistry() {
+    protected MeterRegistry getRegistry() {
         return registry;
     }
 
