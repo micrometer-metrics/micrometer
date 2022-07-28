@@ -36,7 +36,7 @@ import java.util.function.Supplier;
 
 public abstract class AbstractTimer extends AbstractMeter implements Timer {
 
-    private static Map<PauseDetector, org.LatencyUtils.PauseDetector> pauseDetectorCache = new ConcurrentHashMap<>();
+    private static Map<PauseDetector, Object> pauseDetectorCache = new ConcurrentHashMap<>();
 
     protected final Clock clock;
 
@@ -46,7 +46,7 @@ public abstract class AbstractTimer extends AbstractMeter implements Timer {
 
     // Only used when pause detection is enabled
     @Nullable
-    private IntervalEstimator intervalEstimator = null;
+    private Object intervalEstimator;
 
     @Nullable
     private org.LatencyUtils.PauseDetector pauseDetector;
@@ -109,21 +109,22 @@ public abstract class AbstractTimer extends AbstractMeter implements Timer {
         if (pauseDetectorType instanceof NoPauseDetector) {
             return;
         }
-        pauseDetector = pauseDetectorCache.computeIfAbsent(pauseDetectorType, detector -> {
-            if (detector instanceof ClockDriftPauseDetector) {
-                ClockDriftPauseDetector clockDriftPauseDetector = (ClockDriftPauseDetector) detector;
-                return new SimplePauseDetector(clockDriftPauseDetector.getSleepInterval().toNanos(),
-                        clockDriftPauseDetector.getPauseThreshold().toNanos(), 1, false);
-            }
-            return null;
-        });
+        pauseDetector = (org.LatencyUtils.PauseDetector) pauseDetectorCache.computeIfAbsent(pauseDetectorType,
+                detector -> {
+                    if (detector instanceof ClockDriftPauseDetector) {
+                        ClockDriftPauseDetector clockDriftPauseDetector = (ClockDriftPauseDetector) detector;
+                        return new SimplePauseDetector(clockDriftPauseDetector.getSleepInterval().toNanos(),
+                                clockDriftPauseDetector.getPauseThreshold().toNanos(), 1, false);
+                    }
+                    return null;
+                });
 
         if (pauseDetector instanceof SimplePauseDetector) {
             this.intervalEstimator = new TimeCappedMovingAverageIntervalEstimator(128, 10000000000L, pauseDetector);
 
             pauseDetector.addListener((pauseLength, pauseEndTime) -> {
                 if (intervalEstimator != null) {
-                    long estimatedInterval = intervalEstimator.getEstimatedInterval(pauseEndTime);
+                    long estimatedInterval = ((IntervalEstimator) intervalEstimator).getEstimatedInterval(pauseEndTime);
                     long observedLatencyMinbar = pauseLength - estimatedInterval;
                     if (observedLatencyMinbar >= estimatedInterval) {
                         recordValueWithExpectedInterval(observedLatencyMinbar, estimatedInterval);
@@ -234,7 +235,7 @@ public abstract class AbstractTimer extends AbstractMeter implements Timer {
             recordNonNegative(amount, unit);
 
             if (intervalEstimator != null) {
-                intervalEstimator.recordInterval(clock.monotonicTime());
+                ((IntervalEstimator) intervalEstimator).recordInterval(clock.monotonicTime());
             }
         }
     }
