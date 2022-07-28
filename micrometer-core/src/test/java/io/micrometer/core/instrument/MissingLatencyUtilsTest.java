@@ -15,10 +15,12 @@
  */
 package io.micrometer.core.instrument;
 
+import io.micrometer.core.Issue;
 import io.micrometer.core.instrument.simple.SimpleMeterRegistry;
 import io.micrometer.core.testsupport.classpath.ClassPathExclusions;
-import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
+
+import java.util.concurrent.TimeUnit;
 
 import static org.assertj.core.api.Assertions.assertThatCode;
 
@@ -31,11 +33,16 @@ import static org.assertj.core.api.Assertions.assertThatCode;
 @ClassPathExclusions("LatencyUtils-*.jar")
 class MissingLatencyUtilsTest {
 
-    @Disabled("See https://github.com/micrometer-metrics/micrometer/issues/3287")
+    private final SimpleMeterRegistry registry = new SimpleMeterRegistry();
+
     @Test
-    void test() {
-        SimpleMeterRegistry registry = new SimpleMeterRegistry();
-        assertThatCode(() -> Timer.builder("my.timer").register(registry)).doesNotThrowAnyException();
+    @Issue("3287")
+    void createRecordCloseTimerWithoutPauseDetector() {
+        assertThatCode(() -> {
+            Timer timer = Timer.builder("my.timer").register(registry);
+            timer.record(1, TimeUnit.MILLISECONDS);
+            timer.close();
+        }).doesNotThrowAnyException();
     }
 
 }
