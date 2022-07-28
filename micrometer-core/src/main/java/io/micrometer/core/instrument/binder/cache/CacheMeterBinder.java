@@ -69,12 +69,12 @@ public abstract class CacheMeterBinder<C> implements MeterBinder {
                 Long misses = missCount();
                 return misses == null ? 0 : misses;
             }).tags(tags).tag("result", "miss").description(
-                    "the number of times cache lookup methods have returned an uncached (newly loaded) value, or null")
+                    "The number of times cache lookup methods have returned a cached (hit) or uncached (newly loaded or null) value (miss).")
                     .register(registry);
         }
 
-        FunctionCounter.builder("cache.gets", cache, c -> hitCount()).tags(tags).tag("result", "hit")
-                .description("The number of times cache lookup methods have returned a cached value.")
+        FunctionCounter.builder("cache.gets", cache, c -> hitCount()).tags(tags).tag("result", "hit").description(
+                "The number of times cache lookup methods have returned a cached (hit) or uncached (newly loaded or null) value (miss).")
                 .register(registry);
 
         FunctionCounter.builder("cache.puts", cache, c -> putCount()).tags(tags)
@@ -84,7 +84,7 @@ public abstract class CacheMeterBinder<C> implements MeterBinder {
             FunctionCounter.builder("cache.evictions", cache, c -> {
                 Long evictions = evictionCount();
                 return evictions == null ? 0 : evictions;
-            }).tags(tags).description("cache evictions").register(registry);
+            }).tags(tags).description("The number of times the cache was evicted.").register(registry);
         }
 
         bindImplementationSpecificMetrics(registry);
@@ -127,9 +127,7 @@ public abstract class CacheMeterBinder<C> implements MeterBinder {
     /**
      * The put mechanism is unimportant - this count applies to entries added to the cache
      * according to a pre-defined load function such as exists in Guava/Caffeine caches as
-     * well as manual puts.
-     *
-     * Note that Guava/Caffeine caches don't count manual puts.
+     * well as manual puts. Note that Guava/Caffeine caches don't count manual puts.
      * @return Total number of entries added to the cache. Monotonically increasing count.
      */
     protected abstract long putCount();

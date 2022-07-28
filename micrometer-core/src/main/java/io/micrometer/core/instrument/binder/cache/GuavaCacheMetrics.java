@@ -114,13 +114,14 @@ public class GuavaCacheMetrics<K, V, C extends Cache<K, V>> extends CacheMeterBi
 
             FunctionCounter.builder("cache.load", cache, c -> c.stats().loadSuccessCount()).tags(getTagsWithCacheName())
                     .tags("result", "success")
-                    .description("The number of times cache lookup methods have successfully loaded a new value")
+                    .description(
+                            "The number of times cache lookup methods have successfully loaded a new value or failed to load a new value because an exception was thrown while loading")
                     .register(registry);
 
             FunctionCounter.builder("cache.load", cache, c -> c.stats().loadExceptionCount())
                     .tags(getTagsWithCacheName()).tags("result", "failure")
                     .description(
-                            "The number of times cache lookup methods threw an exception while loading a new value")
+                            "The number of times cache lookup methods have successfully loaded a new value or failed to load a new value because an exception was thrown while loading")
                     .register(registry);
         }
     }

@@ -91,22 +91,24 @@ public final class CaffeineStatsCounter implements StatsCounter {
         this.registry = registry;
         this.tags = Tags.concat(extraTags, "cache", cacheName);
 
-        hitCount = Counter.builder("cache.gets").tag("result", "hit").tags(tags)
-                .description("The number of times cache lookup methods have returned a cached value.")
+        hitCount = Counter.builder("cache.gets").tag("result", "hit").tags(tags).description(
+                "The number of times cache lookup methods have returned a cached (hit) or uncached (newly loaded) value (miss).")
                 .register(registry);
-        missCount = Counter.builder("cache.gets").tag("result", "miss").tags(tags)
-                .description("The number of times cache lookup methods have returned an uncached (newly loaded) value.")
+        missCount = Counter.builder("cache.gets").tag("result", "miss").tags(tags).description(
+                "The number of times cache lookup methods have returned a cached (hit) or uncached (newly loaded) value (miss).")
                 .register(registry);
-        loadSuccesses = Timer.builder("cache.loads").tag("result", "success").tags(tags)
-                .description("Successful cache loads.").register(registry);
-        loadFailures = Timer.builder("cache.loads").tag("result", "failure").tags(tags)
-                .description("Failed cache loads.").register(registry);
+        loadSuccesses = Timer.builder("cache.loads").tag("result", "success").tags(tags).description(
+                "The number of times cache lookup methods have successfully loaded a new value or failed to load a new value, either because no value was found or an exception was thrown while loading")
+                .register(registry);
+        loadFailures = Timer.builder("cache.loads").tag("result", "failure").tags(tags).description(
+                "The number of times cache lookup methods have successfully loaded a new value or failed to load a new value, either because no value was found or an exception was thrown while loading")
+                .register(registry);
 
         evictionMetrics = new EnumMap<>(RemovalCause.class);
         Arrays.stream(RemovalCause.values())
                 .forEach(cause -> evictionMetrics.put(cause,
                         DistributionSummary.builder("cache.evictions").tag("cause", cause.name()).tags(tags)
-                                .description("Entries evicted from cache.").register(registry)));
+                                .description("The number of times the cache was evicted.").register(registry)));
     }
 
     /**
