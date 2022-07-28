@@ -130,24 +130,22 @@ public class HazelcastCacheMetrics extends CacheMeterBinder<Object> {
         Gauge.builder("cache.entries", cache,
                 cache -> getDouble(cache.getLocalMapStats(), LocalMapStats::getBackupEntryCount))
                 .tags(getTagsWithCacheName()).tag("ownership", "backup")
-                .description("The number of backup entries held by this member").register(registry);
+                .description("The number of entries held by this member").register(registry);
 
         Gauge.builder("cache.entries", cache,
                 cache -> getDouble(cache.getLocalMapStats(), LocalMapStats::getOwnedEntryCount))
                 .tags(getTagsWithCacheName()).tag("ownership", "owned")
-                .description("The number of owned entries held by this member").register(registry);
+                .description("The number of entries held by this member").register(registry);
 
         Gauge.builder("cache.entry.memory", cache,
                 cache -> getDouble(cache.getLocalMapStats(), LocalMapStats::getBackupEntryMemoryCost))
                 .tags(getTagsWithCacheName()).tag("ownership", "backup")
-                .description("Memory cost of backup entries held by this member").baseUnit(BaseUnits.BYTES)
-                .register(registry);
+                .description("Memory cost of entries held by this member").baseUnit(BaseUnits.BYTES).register(registry);
 
         Gauge.builder("cache.entry.memory", cache,
                 cache -> getDouble(cache.getLocalMapStats(), LocalMapStats::getOwnedEntryMemoryCost))
                 .tags(getTagsWithCacheName()).tag("ownership", "owned")
-                .description("Memory cost of owned entries held by this member").baseUnit(BaseUnits.BYTES)
-                .register(registry);
+                .description("Memory cost of entries held by this member").baseUnit(BaseUnits.BYTES).register(registry);
 
         FunctionCounter
                 .builder("cache.partition.gets", cache,
@@ -169,13 +167,13 @@ public class HazelcastCacheMetrics extends CacheMeterBinder<Object> {
             Gauge.builder("cache.near.requests", cache,
                     cache -> getDouble(cache.getLocalMapStats(), (stats) -> stats.getNearCacheStats().getHits()))
                     .tags(getTagsWithCacheName()).tag("result", "hit")
-                    .description("The number of hits (reads) of near cache entries owned by this member")
+                    .description("The number of requests (hits or misses) of near cache entries owned by this member")
                     .register(registry);
 
             Gauge.builder("cache.near.requests", cache,
                     cache -> getDouble(cache.getLocalMapStats(), (stats) -> stats.getNearCacheStats().getMisses()))
                     .tags(getTagsWithCacheName()).tag("result", "miss")
-                    .description("The number of hits (reads) of near cache entries owned by this member")
+                    .description("The number of requests (hits or misses) of near cache entries owned by this member")
                     .register(registry);
 
             Gauge.builder("cache.near.evictions", cache,
@@ -188,7 +186,7 @@ public class HazelcastCacheMetrics extends CacheMeterBinder<Object> {
                     cache -> getDouble(cache.getLocalMapStats(),
                             (stats) -> stats.getNearCacheStats().getPersistenceCount()))
                     .tags(getTagsWithCacheName())
-                    .description("The number of Near Cache key persistences (when the pre-load feature is enabled)")
+                    .description("The number of near cache key persistences (when the pre-load feature is enabled)")
                     .register(registry);
         }
     }
