@@ -492,13 +492,13 @@ public interface Observation {
     }
 
     /**
-     * Wraps the given action in scope.
-     * @param action action to run
+     * Wraps the given action in a scope and signals an error.
+     * @param runnable the {@link Runnable} to run
      */
     @SuppressWarnings("unused")
-    default void scoped(Runnable action) {
+    default void scoped(Runnable runnable) {
         try (Scope scope = openScope()) {
-            action.run();
+            runnable.run();
         }
         catch (Exception exception) {
             error(exception);
@@ -507,18 +507,51 @@ public interface Observation {
     }
 
     /**
-     * Wraps the given action in scope.
-     * @param action action to run
-     * @return result of the action
+     * Wraps the given action in a scope and signals an error.
+     * @param checkedRunnable the {@link CheckedRunnable} to run
      */
     @SuppressWarnings("unused")
-    default <T> T scoped(Supplier<T> action) {
+    default void scopedChecked(CheckedRunnable checkedRunnable) throws Throwable {
         try (Scope scope = openScope()) {
-            return action.get();
+            checkedRunnable.run();
+        }
+        catch (Throwable throwable) {
+            error(throwable);
+            throw throwable;
+        }
+    }
+
+    /**
+     * Wraps the given action in a scope and signals an error.
+     * @param supplier the {@link Supplier} to call
+     * @param <T> the type parameter of the {@link Supplier}
+     * @return the result from {@link Supplier#get()}
+     */
+    @SuppressWarnings("unused")
+    default <T> T scoped(Supplier<T> supplier) {
+        try (Scope scope = openScope()) {
+            return supplier.get();
         }
         catch (Exception exception) {
             error(exception);
             throw exception;
+        }
+    }
+
+    /**
+     * Wraps the given action in a scope and signals an error.
+     * @param checkedCallable the {@link CheckedCallable} to call
+     * @param <T> the type parameter of the {@link CheckedCallable}
+     * @return the result from {@link CheckedCallable#call()}
+     */
+    @SuppressWarnings("unused")
+    default <T> T scopedChecked(CheckedCallable<T> checkedCallable) throws Throwable {
+        try (Scope scope = openScope()) {
+            return checkedCallable.call();
+        }
+        catch (Throwable error) {
+            error(error);
+            throw error;
         }
     }
 
@@ -541,6 +574,21 @@ public interface Observation {
      * Tries to run the action against an Observation. If the Observation is null, we just
      * run the action, otherwise we run the action in scope.
      * @param parent observation, potentially {@code null}
+     * @param checkedRunnable the {@link CheckedRunnable} to run
+     */
+    static void tryScopedChecked(@Nullable Observation parent, CheckedRunnable checkedRunnable) throws Throwable {
+        if (parent != null) {
+            parent.scopedChecked(checkedRunnable);
+        }
+        else {
+            checkedRunnable.run();
+        }
+    }
+
+    /**
+     * Tries to run the action against an Observation. If the Observation is null, we just
+     * run the action, otherwise we run the action in scope.
+     * @param parent observation, potentially {@code null}
      * @param action action to run
      * @return result of the action
      */
@@ -549,6 +597,21 @@ public interface Observation {
             return parent.scoped(action);
         }
         return action.get();
+    }
+
+    /**
+     * Tries to run the action against an Observation. If the Observation is null, we just
+     * run the action, otherwise we run the action in scope.
+     * @param parent observation, potentially {@code null}
+     * @param checkedCallable the {@link CheckedCallable} to call
+     * @param <T> the type parameter of the {@link CheckedCallable}
+     * @return the result from {@link CheckedCallable#call()}
+     */
+    static <T> T tryScopedChecked(@Nullable Observation parent, CheckedCallable<T> checkedCallable) throws Throwable {
+        if (parent != null) {
+            return parent.scopedChecked(checkedCallable);
+        }
+        return checkedCallable.call();
     }
 
     /**
