@@ -24,6 +24,8 @@ import io.micrometer.core.instrument.search.MeterNotFoundException;
 import io.micrometer.core.instrument.simple.SimpleMeterRegistry;
 import io.micrometer.observation.Observation;
 import io.micrometer.observation.ObservationRegistry;
+import io.micrometer.observation.tck.TestObservationRegistry;
+import io.micrometer.observation.tck.TestObservationRegistryAssert;
 import org.apache.http.client.HttpClient;
 import org.apache.http.client.methods.HttpGet;
 import org.apache.http.client.methods.HttpPost;
@@ -229,8 +231,7 @@ class MicrometerHttpRequestExecutorTest {
         ObservationRegistry observationRegistry = createObservationRegistry();
         observationRegistry.observationConfig().observationConvention(new CustomGlobalApacheHttpConvention());
         MicrometerHttpRequestExecutor micrometerHttpRequestExecutor = MicrometerHttpRequestExecutor.builder(registry)
-                .observationRegistry(observationRegistry)
-                .observationConvention(new CustomGlobalApacheHttpConvention() {
+                .observationRegistry(observationRegistry).observationConvention(new CustomGlobalApacheHttpConvention() {
                     @Override
                     public String getName() {
                         return "local." + super.getName();
@@ -251,6 +252,28 @@ class MicrometerHttpRequestExecutorTest {
         HttpClient client = client(micrometerHttpRequestExecutor);
         EntityUtils.consume(client.execute(new HttpGet(server.baseUrl())).getEntity());
         assertThat(registry.get("custom.apache.http.client.requests")).isNotNull();
+    }
+
+    @ParameterizedTest
+    @ValueSource(strings = { "get", "post" })
+    void contextualNameContainsRequestMethod(String method, @WiremockResolver.Wiremock WireMockServer server)
+            throws IOException {
+        server.stubFor(any(anyUrl()));
+        TestObservationRegistry observationRegistry = TestObservationRegistry.create();
+        MicrometerHttpRequestExecutor micrometerHttpRequestExecutor = MicrometerHttpRequestExecutor.builder(registry)
+                .observationRegistry(observationRegistry).build();
+        HttpClient client = client(micrometerHttpRequestExecutor);
+        if ("get".contentEquals(method)) {
+            EntityUtils.consume(client.execute(new HttpGet(server.baseUrl())).getEntity());
+        }
+        else if ("post".contentEquals(method)) {
+            EntityUtils.consume(client.execute(new HttpPost(server.baseUrl())).getEntity());
+        }
+        else {
+            throw new IllegalArgumentException("Unexpected HTTP method argument: " + method);
+        }
+        TestObservationRegistryAssert.assertThat(observationRegistry).hasSingleObservationThat()
+                .hasContextualNameEqualToIgnoringCase("http " + method);
     }
 
     static class CustomGlobalApacheHttpConvention extends DefaultApacheHttpClientObservationConvention

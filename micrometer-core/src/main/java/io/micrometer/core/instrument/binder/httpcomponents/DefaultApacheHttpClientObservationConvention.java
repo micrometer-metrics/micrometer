@@ -27,12 +27,20 @@ public class DefaultApacheHttpClientObservationConvention implements ApacheHttpC
      */
     public static final DefaultApacheHttpClientObservationConvention INSTANCE = new DefaultApacheHttpClientObservationConvention();
 
+    // There is no need to instantiate this class multiple times, but it may be extended,
+    // hence protected visibility.
     protected DefaultApacheHttpClientObservationConvention() {
     }
 
     @Override
     public String getName() {
         return MicrometerHttpRequestExecutor.METER_NAME;
+    }
+
+    @Override
+    public String getContextualName(ApacheHttpClientContext context) {
+        // TODO what if method isn't available?
+        return "HTTP " + context.getCarrier().getRequestLine().getMethod();
     }
 
     @Override
