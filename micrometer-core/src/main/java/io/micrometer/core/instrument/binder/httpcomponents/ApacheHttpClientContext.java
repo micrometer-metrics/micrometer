@@ -20,22 +20,39 @@ import org.apache.http.HttpRequest;
 import org.apache.http.HttpResponse;
 import org.apache.http.protocol.HttpContext;
 
+import java.util.function.Function;
+
 public class ApacheHttpClientContext extends RequestReplySenderContext<HttpRequest, HttpResponse> {
 
     private final HttpContext apacheHttpContext;
 
-    public ApacheHttpClientContext(HttpRequest request, HttpContext apacheHttpContext) {
+    private final Function<HttpRequest, String> uriMapper;
+
+    private final boolean exportTagsForRoute;
+
+    public ApacheHttpClientContext(HttpRequest request, HttpContext apacheHttpContext,
+            Function<HttpRequest, String> uriMapper, boolean exportTagsForRoute) {
         super((httpRequest, key, value) -> {
             if (httpRequest != null) {
                 httpRequest.addHeader(key, value);
             }
         });
+        this.uriMapper = uriMapper;
+        this.exportTagsForRoute = exportTagsForRoute;
         setCarrier(request);
         this.apacheHttpContext = apacheHttpContext;
     }
 
     public HttpContext getApacheHttpContext() {
         return apacheHttpContext;
+    }
+
+    public Function<HttpRequest, String> getUriMapper() {
+        return uriMapper;
+    }
+
+    public boolean exportTagsForRoute() {
+        return exportTagsForRoute;
     }
 
 }

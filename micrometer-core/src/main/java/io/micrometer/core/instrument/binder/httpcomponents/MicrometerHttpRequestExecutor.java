@@ -76,6 +76,7 @@ public class MicrometerHttpRequestExecutor extends HttpRequestExecutor {
 
     private final ObservationRegistry observationRegistry;
 
+    @Nullable
     private final ApacheHttpClientObservationConvention convention;
 
     private final Function<HttpRequest, String> uriMapper;
@@ -89,7 +90,7 @@ public class MicrometerHttpRequestExecutor extends HttpRequestExecutor {
      */
     private MicrometerHttpRequestExecutor(int waitForContinue, MeterRegistry registry,
             Function<HttpRequest, String> uriMapper, Iterable<Tag> extraTags, boolean exportTagsForRoute,
-            ObservationRegistry observationRegistry, ApacheHttpClientObservationConvention convention) {
+            ObservationRegistry observationRegistry, @Nullable ApacheHttpClientObservationConvention convention) {
         super(waitForContinue);
         this.registry = Optional.ofNullable(registry).orElseThrow(
                 () -> new IllegalArgumentException("registry is required but has been initialized with null"));
@@ -115,7 +116,8 @@ public class MicrometerHttpRequestExecutor extends HttpRequestExecutor {
     public HttpResponse execute(HttpRequest request, HttpClientConnection conn, HttpContext context)
             throws IOException, HttpException {
         ObservationOrTimer<ApacheHttpClientContext> sample = ObservationOrTimer.start(registry, observationRegistry,
-                () -> new ApacheHttpClientContext(request, context), convention);
+                () -> new ApacheHttpClientContext(request, context, uriMapper, exportTagsForRoute), convention,
+                DefaultApacheHttpClientObservationConvention.INSTANCE);
         Tag status = STATUS_UNKNOWN;
 
         try {
@@ -144,7 +146,10 @@ public class MicrometerHttpRequestExecutor extends HttpRequestExecutor {
 
         private final ObservationRegistry observationRegistry;
 
+        @Nullable
         private final Observation.ObservationConvention<T> convention;
+
+        private final Observation.ObservationConvention<T> defaultConvention;
 
         @Nullable
         private Timer.Sample sample;
@@ -157,15 +162,18 @@ public class MicrometerHttpRequestExecutor extends HttpRequestExecutor {
 
         static <T extends Observation.Context> ObservationOrTimer<T> start(MeterRegistry meterRegistry,
                 ObservationRegistry observationRegistry, Supplier<T> context,
-                Observation.ObservationConvention<T> convention) {
-            return new ObservationOrTimer<T>(meterRegistry, observationRegistry, context, convention);
+                @Nullable Observation.ObservationConvention<T> convention,
+                Observation.ObservationConvention<T> defaultConvention) {
+            return new ObservationOrTimer<>(meterRegistry, observationRegistry, context, convention, defaultConvention);
         }
 
         private ObservationOrTimer(MeterRegistry meterRegistry, ObservationRegistry observationRegistry,
-                Supplier<T> context, Observation.ObservationConvention<T> convention) {
+                Supplier<T> context, @Nullable Observation.ObservationConvention<T> convention,
+                Observation.ObservationConvention<T> defaultConvention) {
             this.meterRegistry = meterRegistry;
             this.observationRegistry = observationRegistry;
             this.convention = convention;
+            this.defaultConvention = defaultConvention;
             start(context);
         }
 
@@ -175,7 +183,7 @@ public class MicrometerHttpRequestExecutor extends HttpRequestExecutor {
             }
             else {
                 this.context = contextSupplier.get();
-                observation = Observation.start(convention, context, observationRegistry);
+                observation = Observation.start(convention, defaultConvention, context, observationRegistry);
             }
         }
 
@@ -311,9 +319,6 @@ public class MicrometerHttpRequestExecutor extends HttpRequestExecutor {
          * the configured properties.
          */
         public MicrometerHttpRequestExecutor build() {
-            if (observationConvention == null) {
-                observationConvention = new DefaultApacheHttpClientObservationConvention(uriMapper, exportTagsForRoute);
-            }
             return new MicrometerHttpRequestExecutor(waitForContinue, registry, uriMapper, extraTags,
                     exportTagsForRoute, observationRegistry, observationConvention);
         }

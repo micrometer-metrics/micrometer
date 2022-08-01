@@ -41,37 +41,37 @@ public enum ApacheHttpClientDocumentedObservation implements DocumentedObservati
 
         STATUS {
             @Override
-            public String getKeyName() {
+            public String asString() {
                 return "status";
             }
         },
         METHOD {
             @Override
-            public String getKeyName() {
+            public String asString() {
                 return "method";
             }
         },
         URI {
             @Override
-            public String getKeyName() {
+            public String asString() {
                 return "uri";
             }
         },
         TARGET_SCHEME {
             @Override
-            public String getKeyName() {
+            public String asString() {
                 return "target.scheme";
             }
         },
         TARGET_HOST {
             @Override
-            public String getKeyName() {
+            public String asString() {
                 return "target.host";
             }
         },
         TARGET_PORT {
             @Override
-            public String getKeyName() {
+            public String asString() {
                 return "target.port";
             }
         }

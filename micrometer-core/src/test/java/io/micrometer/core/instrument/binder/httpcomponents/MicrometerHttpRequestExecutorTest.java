@@ -22,6 +22,7 @@ import io.micrometer.core.instrument.Tags;
 import io.micrometer.core.instrument.observation.DefaultMeterObservationHandler;
 import io.micrometer.core.instrument.search.MeterNotFoundException;
 import io.micrometer.core.instrument.simple.SimpleMeterRegistry;
+import io.micrometer.observation.Observation;
 import io.micrometer.observation.ObservationRegistry;
 import org.apache.http.client.HttpClient;
 import org.apache.http.client.methods.HttpGet;
@@ -206,6 +207,60 @@ class MicrometerHttpRequestExecutorTest {
         HttpClient client = client(executor);
         EntityUtils.consume(client.execute(new HttpGet(server.baseUrl())).getEntity());
         assertThat(registry.get(EXPECTED_METER_NAME)).isNotNull();
+    }
+
+    @Test
+    void globalConventionUsedWhenCustomConventionNotConfigured(@WiremockResolver.Wiremock WireMockServer server)
+            throws IOException {
+        server.stubFor(any(anyUrl()));
+        ObservationRegistry observationRegistry = createObservationRegistry();
+        observationRegistry.observationConfig().observationConvention(new CustomGlobalApacheHttpConvention());
+        MicrometerHttpRequestExecutor micrometerHttpRequestExecutor = MicrometerHttpRequestExecutor.builder(registry)
+                .observationRegistry(observationRegistry).build();
+        HttpClient client = client(micrometerHttpRequestExecutor);
+        EntityUtils.consume(client.execute(new HttpGet(server.baseUrl())).getEntity());
+        assertThat(registry.get("custom.apache.http.client.requests")).isNotNull();
+    }
+
+    @Test
+    void localConventionTakesPrecedentOverGlobalConvention(@WiremockResolver.Wiremock WireMockServer server)
+            throws IOException {
+        server.stubFor(any(anyUrl()));
+        ObservationRegistry observationRegistry = createObservationRegistry();
+        observationRegistry.observationConfig().observationConvention(new CustomGlobalApacheHttpConvention());
+        MicrometerHttpRequestExecutor micrometerHttpRequestExecutor = MicrometerHttpRequestExecutor.builder(registry)
+                .observationRegistry(observationRegistry)
+                .observationConvention(new CustomGlobalApacheHttpConvention() {
+                    @Override
+                    public String getName() {
+                        return "local." + super.getName();
+                    }
+                }).build();
+        HttpClient client = client(micrometerHttpRequestExecutor);
+        EntityUtils.consume(client.execute(new HttpGet(server.baseUrl())).getEntity());
+        assertThat(registry.get("local.custom.apache.http.client.requests")).isNotNull();
+    }
+
+    @Test
+    void localConventionConfigured(@WiremockResolver.Wiremock WireMockServer server) throws IOException {
+        server.stubFor(any(anyUrl()));
+        ObservationRegistry observationRegistry = createObservationRegistry();
+        MicrometerHttpRequestExecutor micrometerHttpRequestExecutor = MicrometerHttpRequestExecutor.builder(registry)
+                .observationRegistry(observationRegistry).observationConvention(new CustomGlobalApacheHttpConvention())
+                .build();
+        HttpClient client = client(micrometerHttpRequestExecutor);
+        EntityUtils.consume(client.execute(new HttpGet(server.baseUrl())).getEntity());
+        assertThat(registry.get("custom.apache.http.client.requests")).isNotNull();
+    }
+
+    static class CustomGlobalApacheHttpConvention extends DefaultApacheHttpClientObservationConvention
+            implements Observation.GlobalObservationConvention<ApacheHttpClientContext> {
+
+        @Override
+        public String getName() {
+            return "custom.apache.http.client.requests";
+        }
+
     }
 
     private HttpClient client(HttpRequestExecutor executor) {

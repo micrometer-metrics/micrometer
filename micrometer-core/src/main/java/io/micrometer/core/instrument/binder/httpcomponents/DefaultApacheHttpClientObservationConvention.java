@@ -16,20 +16,18 @@
 package io.micrometer.core.instrument.binder.httpcomponents;
 
 import io.micrometer.common.KeyValues;
-import org.apache.http.HttpRequest;
 
-import java.util.function.Function;
-
+/**
+ * Default implementation of {@link ApacheHttpClientObservationConvention}
+ */
 public class DefaultApacheHttpClientObservationConvention implements ApacheHttpClientObservationConvention {
 
-    private final Function<HttpRequest, String> uriMapper;
+    /**
+     * Singleton instance of this convention.
+     */
+    public static final DefaultApacheHttpClientObservationConvention INSTANCE = new DefaultApacheHttpClientObservationConvention();
 
-    private final boolean exportTagsForRoute;
-
-    public DefaultApacheHttpClientObservationConvention(Function<HttpRequest, String> uriMapper,
-            boolean exportTagsForRoute) {
-        this.uriMapper = uriMapper;
-        this.exportTagsForRoute = exportTagsForRoute;
+    protected DefaultApacheHttpClientObservationConvention() {
     }
 
     @Override
@@ -41,11 +39,11 @@ public class DefaultApacheHttpClientObservationConvention implements ApacheHttpC
     public KeyValues getLowCardinalityKeyValues(ApacheHttpClientContext context) {
         KeyValues keyValues = KeyValues.of(
                 ApacheHttpClientDocumentedObservation.ApacheHttpClientTags.METHOD
-                        .of(context.getCarrier().getRequestLine().getMethod()),
+                        .withValue(context.getCarrier().getRequestLine().getMethod()),
                 ApacheHttpClientDocumentedObservation.ApacheHttpClientTags.URI
-                        .of(uriMapper.apply(context.getCarrier())),
-                ApacheHttpClientDocumentedObservation.ApacheHttpClientTags.STATUS.of(getStatusValue(context)));
-        if (exportTagsForRoute) {
+                        .withValue(context.getUriMapper().apply(context.getCarrier())),
+                ApacheHttpClientDocumentedObservation.ApacheHttpClientTags.STATUS.withValue(getStatusValue(context)));
+        if (context.exportTagsForRoute()) {
             keyValues = keyValues.and(HttpContextUtils.generateTagStringsForRoute(context.getApacheHttpContext()));
         }
         return keyValues;
