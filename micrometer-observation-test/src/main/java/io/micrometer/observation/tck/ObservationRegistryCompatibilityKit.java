@@ -293,17 +293,27 @@ public abstract class ObservationRegistryCompatibilityKit {
 
     @Test
     void runnableShouldBeScoped() {
-        registry.observationConfig().observationHandler(c -> true);
+        ObservationHandler<Observation.Context> handler = mock(ObservationHandler.class);
+        when(handler.supportsContext(isA(Observation.Context.class))).thenReturn(true);
+        registry.observationConfig().observationHandler(handler);
         Observation observation = Observation.start("myObservation", registry);
         Runnable runnable = () -> assertThat(registry.getCurrentObservation()).isSameAs(observation);
         observation.scoped(runnable);
         assertThat(registry.getCurrentObservation()).isNull();
         assertThat(observation.getContext().getError()).isEmpty();
+
+        InOrder inOrder = inOrder(handler);
+        inOrder.verify(handler).onScopeOpened(isA(Observation.Context.class));
+        inOrder.verify(handler).onScopeClosed(isA(Observation.Context.class));
+        inOrder.verify(handler, times(0)).onError(isA(Observation.Context.class));
+        inOrder.verify(handler, times(0)).onStop(isA(Observation.Context.class));
     }
 
     @Test
     void errorShouldBeReportedOnFailingScopedRunnable() {
-        registry.observationConfig().observationHandler(c -> true);
+        ObservationHandler<Observation.Context> handler = mock(ObservationHandler.class);
+        when(handler.supportsContext(isA(Observation.Context.class))).thenReturn(true);
+        registry.observationConfig().observationHandler(handler);
         Observation observation = Observation.start("myObservation", registry);
         RuntimeException error = new RuntimeException("simulated");
 
@@ -314,21 +324,37 @@ public abstract class ObservationRegistryCompatibilityKit {
         assertThatThrownBy(() -> observation.scoped(runnable)).isSameAs(error);
         assertThat(registry.getCurrentObservation()).isNull();
         assertThat(observation.getContext().getError()).containsSame(error);
+
+        InOrder inOrder = inOrder(handler);
+        inOrder.verify(handler).onScopeOpened(isA(Observation.Context.class));
+        inOrder.verify(handler).onScopeClosed(isA(Observation.Context.class));
+        inOrder.verify(handler).onError(isA(Observation.Context.class));
+        inOrder.verify(handler, times(0)).onStop(isA(Observation.Context.class));
     }
 
     @Test
     void checkedRunnableShouldBeScoped() throws Throwable {
-        registry.observationConfig().observationHandler(c -> true);
+        ObservationHandler<Observation.Context> handler = mock(ObservationHandler.class);
+        when(handler.supportsContext(isA(Observation.Context.class))).thenReturn(true);
+        registry.observationConfig().observationHandler(handler);
         Observation observation = Observation.start("myObservation", registry);
         Observation.CheckedRunnable runnable = () -> assertThat(registry.getCurrentObservation()).isSameAs(observation);
         observation.scopedChecked(runnable);
         assertThat(registry.getCurrentObservation()).isNull();
         assertThat(observation.getContext().getError()).isEmpty();
+
+        InOrder inOrder = inOrder(handler);
+        inOrder.verify(handler).onScopeOpened(isA(Observation.Context.class));
+        inOrder.verify(handler).onScopeClosed(isA(Observation.Context.class));
+        inOrder.verify(handler, times(0)).onError(isA(Observation.Context.class));
+        inOrder.verify(handler, times(0)).onStop(isA(Observation.Context.class));
     }
 
     @Test
     void errorShouldBeReportedOnFailingScopedCheckedRunnable() {
-        registry.observationConfig().observationHandler(c -> true);
+        ObservationHandler<Observation.Context> handler = mock(ObservationHandler.class);
+        when(handler.supportsContext(isA(Observation.Context.class))).thenReturn(true);
+        registry.observationConfig().observationHandler(handler);
         Observation observation = Observation.start("myObservation", registry);
         RuntimeException error = new RuntimeException("simulated");
 
@@ -339,11 +365,19 @@ public abstract class ObservationRegistryCompatibilityKit {
         assertThatThrownBy(() -> observation.scopedChecked(runnable)).isSameAs(error);
         assertThat(registry.getCurrentObservation()).isNull();
         assertThat(observation.getContext().getError()).containsSame(error);
+
+        InOrder inOrder = inOrder(handler);
+        inOrder.verify(handler).onScopeOpened(isA(Observation.Context.class));
+        inOrder.verify(handler).onScopeClosed(isA(Observation.Context.class));
+        inOrder.verify(handler).onError(isA(Observation.Context.class));
+        inOrder.verify(handler, times(0)).onStop(isA(Observation.Context.class));
     }
 
     @Test
     void supplierShouldBeScoped() {
-        registry.observationConfig().observationHandler(c -> true);
+        ObservationHandler<Observation.Context> handler = mock(ObservationHandler.class);
+        when(handler.supportsContext(isA(Observation.Context.class))).thenReturn(true);
+        registry.observationConfig().observationHandler(handler);
         Observation observation = Observation.start("myObservation", registry);
         Supplier<String> supplier = () -> {
             assertThat(registry.getCurrentObservation()).isSameAs(observation);
@@ -352,11 +386,19 @@ public abstract class ObservationRegistryCompatibilityKit {
         String result = observation.scoped(supplier);
         assertThat(registry.getCurrentObservation()).isNull();
         assertThat(result).isEqualTo("test");
+
+        InOrder inOrder = inOrder(handler);
+        inOrder.verify(handler).onScopeOpened(isA(Observation.Context.class));
+        inOrder.verify(handler).onScopeClosed(isA(Observation.Context.class));
+        inOrder.verify(handler, times(0)).onError(isA(Observation.Context.class));
+        inOrder.verify(handler, times(0)).onStop(isA(Observation.Context.class));
     }
 
     @Test
     void errorShouldBeReportedOnFailingScopedSupplier() {
-        registry.observationConfig().observationHandler(c -> true);
+        ObservationHandler<Observation.Context> handler = mock(ObservationHandler.class);
+        when(handler.supportsContext(isA(Observation.Context.class))).thenReturn(true);
+        registry.observationConfig().observationHandler(handler);
         Observation observation = Observation.start("myObservation", registry);
         RuntimeException error = new RuntimeException("simulated");
 
@@ -367,11 +409,19 @@ public abstract class ObservationRegistryCompatibilityKit {
         assertThatThrownBy(() -> observation.scoped(supplier)).isSameAs(error);
         assertThat(registry.getCurrentObservation()).isNull();
         assertThat(observation.getContext().getError()).containsSame(error);
+
+        InOrder inOrder = inOrder(handler);
+        inOrder.verify(handler).onScopeOpened(isA(Observation.Context.class));
+        inOrder.verify(handler).onScopeClosed(isA(Observation.Context.class));
+        inOrder.verify(handler).onError(isA(Observation.Context.class));
+        inOrder.verify(handler, times(0)).onStop(isA(Observation.Context.class));
     }
 
     @Test
     void checkedCallableShouldBeScoped() throws Throwable {
-        registry.observationConfig().observationHandler(c -> true);
+        ObservationHandler<Observation.Context> handler = mock(ObservationHandler.class);
+        when(handler.supportsContext(isA(Observation.Context.class))).thenReturn(true);
+        registry.observationConfig().observationHandler(handler);
         Observation observation = Observation.start("myObservation", registry);
         Observation.CheckedCallable<String> callable = () -> {
             assertThat(registry.getCurrentObservation()).isSameAs(observation);
@@ -380,11 +430,19 @@ public abstract class ObservationRegistryCompatibilityKit {
         String result = observation.scopedChecked(callable);
         assertThat(registry.getCurrentObservation()).isNull();
         assertThat(result).isEqualTo("test");
+
+        InOrder inOrder = inOrder(handler);
+        inOrder.verify(handler).onScopeOpened(isA(Observation.Context.class));
+        inOrder.verify(handler).onScopeClosed(isA(Observation.Context.class));
+        inOrder.verify(handler, times(0)).onError(isA(Observation.Context.class));
+        inOrder.verify(handler, times(0)).onStop(isA(Observation.Context.class));
     }
 
     @Test
     void errorShouldBeReportedOnFailingScopedCheckedCallable() {
-        registry.observationConfig().observationHandler(c -> true);
+        ObservationHandler<Observation.Context> handler = mock(ObservationHandler.class);
+        when(handler.supportsContext(isA(Observation.Context.class))).thenReturn(true);
+        registry.observationConfig().observationHandler(handler);
         Observation observation = Observation.start("myObservation", registry);
         RuntimeException error = new RuntimeException("simulated");
 
@@ -395,6 +453,12 @@ public abstract class ObservationRegistryCompatibilityKit {
         assertThatThrownBy(() -> observation.scopedChecked(callable)).isSameAs(error);
         assertThat(registry.getCurrentObservation()).isNull();
         assertThat(observation.getContext().getError()).containsSame(error);
+
+        InOrder inOrder = inOrder(handler);
+        inOrder.verify(handler).onScopeOpened(isA(Observation.Context.class));
+        inOrder.verify(handler).onScopeClosed(isA(Observation.Context.class));
+        inOrder.verify(handler).onError(isA(Observation.Context.class));
+        inOrder.verify(handler, times(0)).onStop(isA(Observation.Context.class));
     }
 
     @Test
