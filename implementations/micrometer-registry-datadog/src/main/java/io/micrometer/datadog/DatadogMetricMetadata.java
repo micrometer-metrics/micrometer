@@ -109,4 +109,18 @@ class DatadogMetricMetadata {
         }
     }
 
+    static String sanitizeStatsdType(Statistic statistic) {
+        switch (statistic) {
+            case COUNT:
+            case TOTAL:
+            case TOTAL_TIME:
+                return "count";
+            case MAX:
+            case DURATION:
+                return "timer";
+            default:
+                return "gauge";
+        }
+    }
+
 }

@@ -36,8 +36,35 @@ class DatadogConfigTest {
     }
 
     @Test
-    void valid() {
+    void validApiKey() {
         props.put("datadog.apiKey", "secret");
+        assertThat(config.validate().isValid()).isTrue();
+    }
+
+    @Test
+    void validNamedPipe() {
+        props.put("datadog.uri", "unix:///var/run/datadog.sock");
+        assertThat(config.validate().isValid()).isTrue();
+    }
+
+    @Test
+    void validStatsdTCP() {
+        props.put("datadog.uri", "tcp://localhost:8125");
+        assertThat(config.validate().isValid()).isTrue();
+        props.clear();
+        props.put("datadog.uri", "tcp://localhost");
+        assertThat(config.validate().isValid()).isTrue();
+    }
+
+    @Test
+    void validStatsdUDP() {
+        props.put("datadog.uri", "udp://localhost");
+        assertThat(config.validate().isValid()).isTrue();
+    }
+
+    @Test
+    void validStatsdDiscovery() {
+        props.put("datadog.uri", "discovery:///");
         assertThat(config.validate().isValid()).isTrue();
     }
 

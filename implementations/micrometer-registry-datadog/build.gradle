@@ -2,6 +2,7 @@ dependencies {
     api project(':micrometer-core')
 
     implementation 'org.slf4j:slf4j-api'
+    implementation 'com.datadoghq:java-dogstatsd-client'
 
     testImplementation project(':micrometer-test')
 }

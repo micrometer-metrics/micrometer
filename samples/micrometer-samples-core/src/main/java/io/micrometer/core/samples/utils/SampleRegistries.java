@@ -169,6 +169,21 @@ public class SampleRegistries {
             public String get(String k) {
                 return null;
             }
+
+            @Override
+            public boolean enableAggregation() {
+                return false;
+            }
+
+            @Override
+            public int aggregationFlushInterval() {
+                return 300;
+            }
+
+            @Override
+            public int aggregationShards() {
+                return 4;
+            }
         };
 
         return new DatadogMeterRegistry(config, Clock.SYSTEM);

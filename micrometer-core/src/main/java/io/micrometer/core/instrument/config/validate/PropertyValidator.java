@@ -119,6 +119,19 @@ public class PropertyValidator {
         }
     }
 
+    public static Validated<String> getUriString(MeterRegistryConfig config, String property) {
+        String prefixedProperty = prefixedProperty(config, property);
+        String value = config.get(prefixedProperty);
+
+        try {
+            return Validated.valid(prefixedProperty, value == null ? null : URI.create(value).toString())
+                    .map(url -> value);
+        }
+        catch (IllegalArgumentException ex) {
+            return Validated.invalid(prefixedProperty, value, "must be a valid URI", InvalidReason.MALFORMED, ex);
+        }
+    }
+
     private static String prefixedProperty(MeterRegistryConfig config, String property) {
         return config.prefix() + '.' + property;
     }

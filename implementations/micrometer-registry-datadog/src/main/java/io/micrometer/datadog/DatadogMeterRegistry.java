@@ -15,7 +15,10 @@
  */
 package io.micrometer.datadog;
 
+import com.timgroup.statsd.NonBlockingStatsDClientBuilder;
+import com.timgroup.statsd.StatsDClient;
 import io.micrometer.common.lang.Nullable;
+import io.micrometer.core.instrument.Timer;
 import io.micrometer.core.instrument.*;
 import io.micrometer.core.instrument.step.StepMeterRegistry;
 import io.micrometer.core.instrument.util.MeterPartition;
@@ -25,18 +28,16 @@ import io.micrometer.core.ipc.http.HttpUrlConnectionSender;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.net.URI;
 import java.net.URLEncoder;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ThreadFactory;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Stream;
 
 import static io.micrometer.core.instrument.util.StringEscapeUtils.escapeJson;
-import static java.util.stream.Collectors.joining;
+import static java.util.stream.Collectors.*;
 import static java.util.stream.StreamSupport.stream;
 
 /**
@@ -53,6 +54,9 @@ public class DatadogMeterRegistry extends StepMeterRegistry {
 
     private final HttpSender httpClient;
 
+    @Nullable
+    private final StatsDClient statsdClient;
+
     /**
      * Metric names for which we have posted metadata concerning type and base unit
      */
@@ -66,7 +70,7 @@ public class DatadogMeterRegistry extends StepMeterRegistry {
     @SuppressWarnings("deprecation")
     public DatadogMeterRegistry(DatadogConfig config, Clock clock) {
         this(config, clock, DEFAULT_THREAD_FACTORY,
-                new HttpUrlConnectionSender(config.connectTimeout(), config.readTimeout()));
+                new HttpUrlConnectionSender(config.connectTimeout(), config.readTimeout()), null);
     }
 
     /**
@@ -78,17 +82,62 @@ public class DatadogMeterRegistry extends StepMeterRegistry {
      */
     @Deprecated
     public DatadogMeterRegistry(DatadogConfig config, Clock clock, ThreadFactory threadFactory) {
-        this(config, clock, threadFactory, new HttpUrlConnectionSender(config.connectTimeout(), config.readTimeout()));
+        this(config, clock, threadFactory, new HttpUrlConnectionSender(config.connectTimeout(), config.readTimeout()),
+                null);
     }
 
-    private DatadogMeterRegistry(DatadogConfig config, Clock clock, ThreadFactory threadFactory,
-            HttpSender httpClient) {
+    /**
+     * @param config Configuration options for the registry that are describable as
+     * properties.
+     * @param clock The clock to use for timings.
+     * @param threadFactory The thread factory to use to create the publishing thread.
+     * @deprecated Use {@link #builder(DatadogConfig)} instead.
+     */
+    @Deprecated
+    public DatadogMeterRegistry(DatadogConfig config, Clock clock, ThreadFactory threadFactory,
+            @Nullable StatsDClient customClient) {
+        this(config, clock, threadFactory, new HttpUrlConnectionSender(config.connectTimeout(), config.readTimeout()),
+                customClient);
+    }
+
+    /**
+     * Truthy if the uri is defined for a dogstatsd reporting configuration.
+     * @return Returns true if this is a non https scheme target, to indicate to talk via
+     * dogstatsd.
+     */
+    static boolean isStatsd(String uri) {
+        String scheme = URI.create(uri).getScheme();
+        return !(scheme.equalsIgnoreCase("https") || scheme.equalsIgnoreCase("http"));
+    }
+
+    private DatadogMeterRegistry(DatadogConfig config, Clock clock, ThreadFactory threadFactory, HttpSender httpClient,
+            @Nullable StatsDClient statsdClient) {
         super(config, clock);
 
         config().namingConvention(new DatadogNamingConvention());
 
+        if (statsdClient == null && isStatsd(config.uri())) {
+            NonBlockingStatsDClientBuilder builder = new NonBlockingStatsDClientBuilder();
+            URI statsdURI = URI.create(config.uri());
+            if (statsdURI.getScheme().equalsIgnoreCase("tcp") || statsdURI.getScheme().equalsIgnoreCase("udp")) {
+                if (!statsdURI.getHost().equalsIgnoreCase("")) {
+                    builder = builder.hostname(statsdURI.getHost());
+                }
+                if (statsdURI.getPort() != -1) {
+                    builder = builder.port(statsdURI.getPort());
+                }
+            }
+            else if (!statsdURI.getScheme().equalsIgnoreCase("discovery")) {
+                // file socket
+                builder = builder.namedPipe(config.uri());
+            }
+
+            statsdClient = builder.build();
+        }
+
         this.config = config;
         this.httpClient = httpClient;
+        this.statsdClient = statsdClient;
 
         start(threadFactory);
     }
@@ -106,6 +155,30 @@ public class DatadogMeterRegistry extends StepMeterRegistry {
 
     @Override
     protected void publish() {
+        if (isStatsd(config.uri())) {
+            publishViaStatsd();
+        }
+        else {
+            publishViaAPI();
+        }
+    }
+
+    protected void publishViaStatsd() {
+        for (Meter meter : getMeters()) {
+            meter.match(this::writeMeterViaStatsd, // visitGauge
+                    this::writeMeterViaStatsd, // visitCounter
+                    this::writeTimerViaStatsd, // visitTimer
+                    this::writeSummaryViaStatsd, // visitSummary
+                    this::writeMeterViaStatsd, // visitLongTaskTimer
+                    this::writeMeterViaStatsd, // visitTimeGauge
+                    this::writeMeterViaStatsd, // visitFunctionCounter
+                    this::writeTimerViaStatsd, // visitFunctionTimer
+                    this::writeMeterViaStatsd // visitMeter
+            );
+        }
+    }
+
+    protected void publishViaAPI() {
         Map<String, DatadogMetricMetadata> metadataToSend = new HashMap<>();
 
         String datadogEndpoint = config.uri() + "/api/v1/series?api_key=" + config.apiKey();
@@ -168,6 +241,17 @@ public class DatadogMeterRegistry extends StepMeterRegistry {
                 writeMetric(id, "sum", wallTime, timer.totalTime(getBaseTimeUnit()), Statistic.TOTAL_TIME, null));
     }
 
+    private Integer writeTimerViaStatsd(FunctionTimer timer) {
+        Meter.Id id = timer.getId();
+
+        // we can't know anything about max and percentiles originating from a function
+        // timer
+        writeMetricViaStatsd(id, "count", timer.count(), Statistic.COUNT, "occurrence");
+        writeMetricViaStatsd(id, "avg", timer.mean(getBaseTimeUnit()), Statistic.VALUE, null);
+        writeMetricViaStatsd(id, "sum", timer.totalTime(getBaseTimeUnit()), Statistic.TOTAL_TIME, null);
+        return 3;
+    }
+
     private Stream<String> writeTimer(Timer timer, Map<String, DatadogMetricMetadata> metadata) {
         final long wallTime = clock.wallTime();
         final Stream.Builder<String> metrics = Stream.builder();
@@ -186,6 +270,26 @@ public class DatadogMeterRegistry extends StepMeterRegistry {
         return metrics.build();
     }
 
+    private Integer writeTimerViaStatsd(Timer timer) {
+        Meter.Id id = timer.getId();
+
+        // we can't know anything about max and percentiles originating from a function
+        // timer
+        writeMetricViaStatsd(id, "count", (double) timer.count(), Statistic.COUNT, "occurrence");
+        writeMetricViaStatsd(id, "avg", timer.mean(getBaseTimeUnit()), Statistic.VALUE, null);
+        writeMetricViaStatsd(id, "sum", timer.totalTime(getBaseTimeUnit()), Statistic.TOTAL_TIME, null);
+        return 3;
+    }
+
+    private Integer writeSummaryViaStatsd(DistributionSummary summary) {
+        Meter.Id id = summary.getId();
+        writeMetricViaStatsd(id, "sum", summary.totalAmount(), Statistic.TOTAL, null);
+        writeMetricViaStatsd(id, "count", (double) summary.count(), Statistic.COUNT, "occurrence");
+        writeMetricViaStatsd(id, "avg", summary.mean(), Statistic.VALUE, null);
+        writeMetricViaStatsd(id, "max", summary.max(), Statistic.MAX, null);
+        return 4;
+    }
+
     private Stream<String> writeSummary(DistributionSummary summary, Map<String, DatadogMetricMetadata> metadata) {
         final long wallTime = clock.wallTime();
         final Stream.Builder<String> metrics = Stream.builder();
@@ -202,6 +306,15 @@ public class DatadogMeterRegistry extends StepMeterRegistry {
         addToMetadataList(metadata, id, "max", Statistic.MAX, null);
 
         return metrics.build();
+    }
+
+    private Integer writeMeterViaStatsd(Meter m) {
+        long count = stream(m.measure().spliterator(), false).map(ms -> {
+            Meter.Id id = m.getId().withTag(ms.getStatistic());
+            writeMetricViaStatsd(id, null, ms.getValue(), ms.getStatistic(), null);
+            return 1;
+        }).count();
+        return (int) count;
     }
 
     private Stream<String> writeMeter(Meter m, Map<String, DatadogMetricMetadata> metadata) {
@@ -225,6 +338,50 @@ public class DatadogMeterRegistry extends StepMeterRegistry {
         String metricName = getConventionName(fullId);
         if (!verifiedMetadata.contains(metricName)) {
             metadata.put(metricName, new DatadogMetricMetadata(fullId, stat, config.descriptions(), overrideBaseUnit));
+        }
+    }
+
+    // VisibleForTesting
+    void writeMetricViaStatsd(Meter.Id id, @Nullable String suffix, double value, Statistic statistic,
+            @Nullable String overrideBaseUnit) {
+        if (statsdClient == null) {
+            return;
+        }
+
+        Meter.Id fullId = id;
+        if (suffix != null)
+            fullId = idWithSuffix(id, suffix);
+
+        Iterable<Tag> tags = getConventionTags(fullId);
+
+        List<String> tagsList = tags.iterator().hasNext() ? stream(tags.spliterator(), false)
+                .map(t -> "\"" + escapeJson(t.getKey()) + ":" + escapeJson(t.getValue()) + "\"").collect(toList())
+                : new ArrayList<String>();
+        if (config.hostTag() != null && !"".equals(config.hostTag())) {
+            tagsList.add("host:" + config.hostTag());
+        }
+        String[] tagsArray = new String[tagsList.size()];
+        tagsList.toArray(tagsArray);
+
+        String metricName = getConventionName(fullId);
+
+        // Create type attribute
+        switch (fullId.getType()) {
+            case COUNTER:
+                statsdClient.count(metricName, value, 1.0, tagsArray);
+                break;
+            case GAUGE:
+                statsdClient.gauge(metricName, value, 1.0, tagsArray);
+                break;
+            case LONG_TASK_TIMER:
+                // fall through
+            case TIMER:
+                // fall through
+            case DISTRIBUTION_SUMMARY:
+                statsdClient.distribution(metricName, value, 1.0, tagsArray);
+                break;
+            default:
+                statsdClient.gauge(metricName, value, 1.0, tagsArray);
         }
     }
 
@@ -315,6 +472,8 @@ public class DatadogMeterRegistry extends StepMeterRegistry {
 
         private HttpSender httpClient;
 
+        private StatsDClient statsDClient;
+
         @SuppressWarnings("deprecation")
         Builder(DatadogConfig config) {
             this.config = config;
@@ -336,8 +495,13 @@ public class DatadogMeterRegistry extends StepMeterRegistry {
             return this;
         }
 
+        public Builder statsDClient(StatsDClient statsDClient) {
+            this.statsDClient = statsDClient;
+            return this;
+        }
+
         public DatadogMeterRegistry build() {
-            return new DatadogMeterRegistry(config, clock, threadFactory, httpClient);
+            return new DatadogMeterRegistry(config, clock, threadFactory, httpClient, statsDClient);
         }
 
     }

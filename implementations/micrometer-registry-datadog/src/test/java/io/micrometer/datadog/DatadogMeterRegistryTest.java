@@ -16,6 +16,7 @@
 package io.micrometer.datadog;
 
 import com.github.tomakehurst.wiremock.WireMockServer;
+import com.github.tomakehurst.wiremock.matching.RequestPatternBuilder;
 import io.micrometer.core.Issue;
 import io.micrometer.core.instrument.*;
 import io.micrometer.core.ipc.http.HttpSender;
@@ -31,6 +32,92 @@ import static org.mockito.Mockito.verifyNoInteractions;
 
 @ExtendWith(WiremockResolver.class)
 class DatadogMeterRegistryTest {
+
+    @Test
+    void testTCPStatsdConfiguration(@WiremockResolver.Wiremock WireMockServer server) {
+        Clock clock = new MockClock();
+        DatadogMeterRegistry registry = new DatadogMeterRegistry(new DatadogConfig() {
+            @Override
+            public String get(String key) {
+                return null;
+            }
+
+            @Override
+            public String applicationKey() {
+                return "fake";
+            }
+
+            @Override
+            public boolean descriptions() {
+                return false;
+            }
+
+            @Override
+            public boolean enabled() {
+                return false;
+            }
+
+            @Override
+            public String uri() {
+                return "tcp://localhost:8125";
+            }
+        }, clock);
+
+        server.stubFor(any(anyUrl()));
+
+        Counter.builder("my.counter#abc").baseUnit(TimeUnit.MICROSECONDS.toString().toLowerCase())
+                .description("metric description").register(registry).increment(Math.PI);
+        registry.publish();
+
+        // statsd will be fine under this test scenario, just verify we're not sending out
+        // to the API.
+        server.verify(0, RequestPatternBuilder.allRequests());
+
+        registry.close();
+    }
+
+    @Test
+    void testUDPStatsdConfiguration(@WiremockResolver.Wiremock WireMockServer server) {
+        Clock clock = new MockClock();
+        DatadogMeterRegistry registry = new DatadogMeterRegistry(new DatadogConfig() {
+            @Override
+            public String get(String key) {
+                return null;
+            }
+
+            @Override
+            public String applicationKey() {
+                return "fake";
+            }
+
+            @Override
+            public boolean descriptions() {
+                return false;
+            }
+
+            @Override
+            public boolean enabled() {
+                return false;
+            }
+
+            @Override
+            public String uri() {
+                return "udp://localhost:8125";
+            }
+        }, clock);
+
+        server.stubFor(any(anyUrl()));
+
+        Counter.builder("my.counter#abc").baseUnit(TimeUnit.MICROSECONDS.toString().toLowerCase())
+                .description("metric description").register(registry).increment(Math.PI);
+        registry.publish();
+
+        // statsd will be fine under this test scenario, just verify we're not sending out
+        // to the API.
+        server.verify(0, RequestPatternBuilder.allRequests());
+
+        registry.close();
+    }
 
     @Issue("#463")
     @Test

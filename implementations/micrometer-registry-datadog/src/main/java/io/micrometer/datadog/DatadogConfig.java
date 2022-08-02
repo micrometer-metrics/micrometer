@@ -59,9 +59,17 @@ public interface DatadogConfig extends StepRegistryConfig {
     /**
      * @return The URI to ship metrics to. If you need to publish metrics to an internal
      * proxy en route to datadoghq, you can define the location of the proxy with this.
+     * Using a statsdURL will be preferred here over api endpoints and will report via the
+     * agent. Use tcp/udp/unix URI schemes to indicate this.
+     *
+     * Via TCP: tcp://localhost:8125/ Via UDP: udp://localhost:8125/ Via Unix Socket:
+     * unix:///var/run/datadog.sock Via Auto Environment Variable Discovery: discovery:///
+     *
+     * Not Recommended Default API method (backwards compatible for this micrometer
+     * plugin) Via HTTPS: https://api.datadoghq.com
      */
     default String uri() {
-        return getUrlString(this, "uri").orElse("https://api.datadoghq.com");
+        return getUriString(this, "uri").orElse("https://api.datadoghq.com");
     }
 
     /**
@@ -74,8 +82,25 @@ public interface DatadogConfig extends StepRegistryConfig {
 
     @Override
     default Validated<?> validate() {
-        return checkAll(this, c -> StepRegistryConfig.validate(c), checkRequired("apiKey", DatadogConfig::apiKey),
-                checkRequired("uri", DatadogConfig::uri));
+        return checkAll(this, c -> StepRegistryConfig.validate(c),
+                checkRequired("uri", DatadogConfig::uri).andThen(uriValidation -> {
+                    if (uriValidation.isValid()) {
+                        return checkAll(this, config -> {
+                            // only check apiKey if using https method, dogstatsd talks to
+                            // the local agent instead.
+                            if (!DatadogMeterRegistry.isStatsd(config.uri())) {
+                                return checkAll(this, checkRequired("uri", DatadogConfig::uri),
+                                        checkRequired("apiKey", DatadogConfig::apiKey));
+                            }
+                            else {
+                                return checkAll(this, checkRequired("uri", DatadogConfig::uri));
+                            }
+                        });
+                    }
+                    else {
+                        return uriValidation;
+                    }
+                }));
     }
 
 }
