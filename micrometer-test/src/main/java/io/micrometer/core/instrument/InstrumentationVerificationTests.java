@@ -21,6 +21,10 @@ abstract class InstrumentationVerificationTests {
 
     private final MeterRegistry registry = new SimpleMeterRegistry();
 
+    /**
+     * {@link MeterRegistry} to use for instrumentation verification tests.
+     * @return registry to use
+     */
     protected MeterRegistry getRegistry() {
         return registry;
     }
