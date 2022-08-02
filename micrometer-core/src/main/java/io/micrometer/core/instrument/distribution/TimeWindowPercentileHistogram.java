@@ -22,6 +22,10 @@ import org.HdrHistogram.DoubleRecorder;
 import java.io.PrintStream;
 
 /**
+ * <b>NOTE: This class is intended for internal use as an implementation detail. You
+ * should not compile against its API. Please contact the project maintainers if you need
+ * this as public API.</b>
+ * <p>
  * A histogram implementation that supports the computation of percentiles by Micrometer
  * for publishing to a monitoring system.
  *

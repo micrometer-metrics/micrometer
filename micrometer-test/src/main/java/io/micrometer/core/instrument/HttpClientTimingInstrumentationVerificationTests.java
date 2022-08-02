@@ -37,7 +37,7 @@ import static org.assertj.core.api.Assertions.assertThat;
  * to receive real requests from an instrumented HTTP client.
  */
 @WireMockTest
-@Incubating(since = "1.9.2")
+@Incubating(since = "1.8.8")
 public abstract class HttpClientTimingInstrumentationVerificationTests extends InstrumentationVerificationTests {
 
     /**
