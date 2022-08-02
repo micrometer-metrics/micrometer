@@ -17,6 +17,9 @@ package io.micrometer.observation;
 
 import org.junit.jupiter.api.Test;
 
+import java.io.IOException;
+import java.util.Random;
+
 import static org.assertj.core.api.Assertions.assertThat;
 
 /**
@@ -28,10 +31,10 @@ import static org.assertj.core.api.Assertions.assertThat;
  */
 class ObservationTests {
 
+    private final ObservationRegistry registry = ObservationRegistry.create();
+
     @Test
     void notHavingAnyHandlersShouldResultInNoopObservation() {
-        ObservationRegistry registry = ObservationRegistry.create();
-
         Observation observation = Observation.createNotStarted("foo", registry);
 
         assertThat(observation).isSameAs(Observation.NOOP);
@@ -46,7 +49,6 @@ class ObservationTests {
 
     @Test
     void notMatchingObservationPredicateShouldResultInNoopObservation() {
-        ObservationRegistry registry = ObservationRegistry.create();
         registry.observationConfig().observationHandler(context -> true);
         registry.observationConfig().observationPredicate((s, context) -> false);
 
@@ -57,7 +59,6 @@ class ObservationTests {
 
     @Test
     void matchingPredicateAndHandlerShouldNotResultInNoopObservation() {
-        ObservationRegistry registry = ObservationRegistry.create();
         registry.observationConfig().observationHandler(context -> true);
         registry.observationConfig().observationPredicate((s, context) -> true);
 
@@ -68,7 +69,6 @@ class ObservationTests {
 
     @Test
     void havingAnObservationFilterWillMutateTheContext() {
-        ObservationRegistry registry = ObservationRegistry.create();
         registry.observationConfig().observationHandler(context -> true);
         registry.observationConfig().observationFilter(context -> context.put("foo", "bar"));
         Observation.Context context = new Observation.Context();
@@ -80,7 +80,6 @@ class ObservationTests {
 
     @Test
     void settingParentObservationMakesAReferenceOnParentContext() {
-        ObservationRegistry registry = ObservationRegistry.create();
         registry.observationConfig().observationHandler(context -> true);
 
         Observation.Context parentContext = new Observation.Context();
@@ -98,7 +97,6 @@ class ObservationTests {
 
     @Test
     void settingScopeMakesAReferenceOnParentContext() {
-        ObservationRegistry registry = ObservationRegistry.create();
         registry.observationConfig().observationHandler(context -> true);
 
         Observation.Context parentContext = new Observation.Context();
@@ -113,6 +111,35 @@ class ObservationTests {
         });
         parent.stop();
         assertThat(childContext.getParentObservation()).isNull();
+    }
+
+    @Test
+    void scopedCheckedSpecificException() {
+        Service service = new Service();
+        Observation observation = Observation.start("service", registry);
+        try {
+            String s = observation.scopedChecked(service::executeCallable);
+            observation.scopedChecked(service::executeRunnable);
+        }
+        catch (IOException ignore) {
+        }
+    }
+
+    static class Service {
+
+        String executeCallable() throws IOException {
+            if (new Random().nextBoolean()) {
+                throw new IOException();
+            }
+            return "";
+        }
+
+        void executeRunnable() throws IOException {
+            if (new Random().nextBoolean()) {
+                throw new IOException();
+            }
+        }
+
     }
 
 }

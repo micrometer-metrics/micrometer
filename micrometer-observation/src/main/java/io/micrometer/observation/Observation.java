@@ -415,9 +415,10 @@ public interface Observation {
      * <li>Stops the {@code Observation}</li>
      * </ul>
      * @param checkedRunnable the {@link CheckedRunnable} to run
+     * @param <E> type of exception thrown
      */
     @SuppressWarnings("unused")
-    default void observeChecked(CheckedRunnable checkedRunnable) throws Throwable {
+    default <E extends Throwable> void observeChecked(CheckedRunnable<E> checkedRunnable) throws E {
         this.start();
         try (Scope scope = openScope()) {
             checkedRunnable.run();
@@ -473,11 +474,12 @@ public interface Observation {
      * <li>Stops the {@code Observation}</li>
      * </ul>
      * @param checkedCallable the {@link CheckedCallable} to call
-     * @param <T> the type parameter of the {@link CheckedCallable}
+     * @param <T> the return type of the {@link CheckedCallable}
+     * @param <E> type of exception checkedCallable throws
      * @return the result from {@link CheckedCallable#call()}
      */
     @SuppressWarnings("unused")
-    default <T> T observeChecked(CheckedCallable<T> checkedCallable) throws Throwable {
+    default <T, E extends Throwable> T observeChecked(CheckedCallable<T, E> checkedCallable) throws E {
         this.start();
         try (Scope scope = openScope()) {
             return checkedCallable.call();
@@ -509,9 +511,10 @@ public interface Observation {
     /**
      * Wraps the given action in a scope and signals an error.
      * @param checkedRunnable the {@link CheckedRunnable} to run
+     * @param <E> type of exception thrown
      */
     @SuppressWarnings("unused")
-    default void scopedChecked(CheckedRunnable checkedRunnable) throws Throwable {
+    default <E extends Throwable> void scopedChecked(CheckedRunnable<E> checkedRunnable) throws E {
         try (Scope scope = openScope()) {
             checkedRunnable.run();
         }
@@ -524,7 +527,7 @@ public interface Observation {
     /**
      * Wraps the given action in a scope and signals an error.
      * @param supplier the {@link Supplier} to call
-     * @param <T> the type parameter of the {@link Supplier}
+     * @param <T> the return type of the {@link Supplier}
      * @return the result from {@link Supplier#get()}
      */
     @SuppressWarnings("unused")
@@ -541,11 +544,12 @@ public interface Observation {
     /**
      * Wraps the given action in a scope and signals an error.
      * @param checkedCallable the {@link CheckedCallable} to call
-     * @param <T> the type parameter of the {@link CheckedCallable}
+     * @param <T> the return type of the {@link CheckedCallable}
+     * @param <E> type of exception checkedCallable throws
      * @return the result from {@link CheckedCallable#call()}
      */
     @SuppressWarnings("unused")
-    default <T> T scopedChecked(CheckedCallable<T> checkedCallable) throws Throwable {
+    default <T, E extends Throwable> T scopedChecked(CheckedCallable<T, E> checkedCallable) throws E {
         try (Scope scope = openScope()) {
             return checkedCallable.call();
         }
@@ -575,8 +579,10 @@ public interface Observation {
      * run the action, otherwise we run the action in scope.
      * @param parent observation, potentially {@code null}
      * @param checkedRunnable the {@link CheckedRunnable} to run
+     * @param <E> type of exception checkedRunnable throws
      */
-    static void tryScopedChecked(@Nullable Observation parent, CheckedRunnable checkedRunnable) throws Throwable {
+    static <E extends Throwable> void tryScopedChecked(@Nullable Observation parent, CheckedRunnable<E> checkedRunnable)
+            throws E {
         if (parent != null) {
             parent.scopedChecked(checkedRunnable);
         }
@@ -604,10 +610,12 @@ public interface Observation {
      * run the action, otherwise we run the action in scope.
      * @param parent observation, potentially {@code null}
      * @param checkedCallable the {@link CheckedCallable} to call
-     * @param <T> the type parameter of the {@link CheckedCallable}
+     * @param <T> the return type of the {@link CheckedCallable}
+     * @param <E> type of exception checkedCallable throws
      * @return the result from {@link CheckedCallable#call()}
      */
-    static <T> T tryScopedChecked(@Nullable Observation parent, CheckedCallable<T> checkedCallable) throws Throwable {
+    static <T, E extends Throwable> T tryScopedChecked(@Nullable Observation parent,
+            CheckedCallable<T, E> checkedCallable) throws E {
         if (parent != null) {
             return parent.scopedChecked(checkedCallable);
         }
@@ -1134,9 +1142,9 @@ public interface Observation {
      * A functional interface like {@link Runnable} but it can throw a {@link Throwable}.
      */
     @FunctionalInterface
-    interface CheckedRunnable {
+    interface CheckedRunnable<E extends Throwable> {
 
-        void run() throws Throwable;
+        void run() throws E;
 
     }
 
@@ -1144,9 +1152,9 @@ public interface Observation {
      * A functional interface like {@link Callable} but it can throw a {@link Throwable}.
      */
     @FunctionalInterface
-    interface CheckedCallable<T> {
+    interface CheckedCallable<T, E extends Throwable> {
 
-        T call() throws Throwable;
+        T call() throws E;
 
     }
 
