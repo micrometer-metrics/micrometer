@@ -77,7 +77,7 @@ class KafkaMetrics implements MeterBinder, AutoCloseable {
 
     private final Duration refreshInterval;
 
-    private final ScheduledExecutorService scheduler = Executors
+    private static final ScheduledExecutorService scheduler = Executors
             .newSingleThreadScheduledExecutor(new NamedThreadFactory("micrometer-kafka-metrics"));
 
     @Nullable
