@@ -8,8 +8,7 @@ dependencies {
     api project(":micrometer-commons")
     api project(":micrometer-observation")
 
-    // TODO(anuraaga): HdrHistogram is exposed in the micrometer API but probably shouldn't be
-    api 'org.hdrhistogram:HdrHistogram'
+    implementation 'org.hdrhistogram:HdrHistogram'
     implementation('org.latencyutils:LatencyUtils') {
         exclude group: 'org.hdrhistogram', module: 'HdrHistogram'
     }
