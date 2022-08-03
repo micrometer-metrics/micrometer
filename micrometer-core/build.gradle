@@ -8,7 +8,9 @@ dependencies {
     api project(":micrometer-commons")
     api project(":micrometer-observation")
 
+    // HdrHistogram is needed at runtime when client-side percentiles are configured
     implementation 'org.hdrhistogram:HdrHistogram'
+    // LatencyUtils is needed at runtime when pause detection is enabled
     implementation('org.latencyutils:LatencyUtils') {
         exclude group: 'org.hdrhistogram', module: 'HdrHistogram'
     }
