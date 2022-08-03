@@ -149,7 +149,8 @@ public abstract class ObservationRegistryCompatibilityKit {
         registry.observationConfig().observationHandler(handler);
         Observation observation = Observation.createNotStarted("myObservation", registry);
 
-        observation.observeChecked(() -> assertThat(registry.getCurrentObservation()).isSameAs(observation));
+        Observation.CheckedRunnable<Throwable> checkedRunnable = () -> assertThat(registry.getCurrentObservation()).isSameAs(observation);
+        observation.observeChecked(checkedRunnable);
         assertThat(registry.getCurrentObservation()).isNull();
 
         InOrder inOrder = inOrder(handler);
@@ -169,10 +170,11 @@ public abstract class ObservationRegistryCompatibilityKit {
         registry.observationConfig().observationHandler(handler);
         Observation observation = Observation.createNotStarted("myObservation", registry);
 
-        assertThatThrownBy(() -> observation.observeChecked(() -> {
+        Observation.CheckedRunnable<IOException> checkedRunnable = () -> {
             assertThat(registry.getCurrentObservation()).isSameAs(observation);
             throw new IOException("simulated");
-        })).isInstanceOf(IOException.class).hasMessage("simulated").hasNoCause();
+        };
+        assertThatThrownBy(() -> observation.observeChecked(checkedRunnable)).isInstanceOf(IOException.class).hasMessage("simulated").hasNoCause();
 
         assertThat(registry.getCurrentObservation()).isNull();
 
@@ -329,12 +331,13 @@ public abstract class ObservationRegistryCompatibilityKit {
     }
 
     @Test
-    void checkedRunnableShouldBeScoped() {
+    void checkedRunnableShouldBeScoped() throws Throwable {
         ObservationHandler<Observation.Context> handler = mock(ObservationHandler.class);
         when(handler.supportsContext(isA(Observation.Context.class))).thenReturn(true);
         registry.observationConfig().observationHandler(handler);
         Observation observation = Observation.start("myObservation", registry);
-        observation.scopedChecked(() -> assertThat(registry.getCurrentObservation()).isSameAs(observation));
+        Observation.CheckedRunnable<Throwable> checkedRunnable = () -> assertThat(registry.getCurrentObservation()).isSameAs(observation);
+        observation.scopedChecked(checkedRunnable);
         assertThat(registry.getCurrentObservation()).isNull();
         assertThat(observation.getContext().getError()).isEmpty();
 
@@ -353,10 +356,11 @@ public abstract class ObservationRegistryCompatibilityKit {
         Observation observation = Observation.start("myObservation", registry);
         RuntimeException error = new RuntimeException("simulated");
 
-        assertThatThrownBy(() -> observation.scopedChecked(() -> {
+        Observation.CheckedRunnable<Throwable> checkedRunnable = () -> {
             assertThat(registry.getCurrentObservation()).isSameAs(observation);
             throw error;
-        })).isSameAs(error);
+        };
+        assertThatThrownBy(() -> observation.scopedChecked(checkedRunnable)).isSameAs(error);
         assertThat(registry.getCurrentObservation()).isNull();
         assertThat(observation.getContext().getError()).containsSame(error);
 
@@ -475,13 +479,15 @@ public abstract class ObservationRegistryCompatibilityKit {
     void checkedRunnableShouldBeParentScoped() throws Throwable {
         registry.observationConfig().observationHandler(c -> true);
         Observation parent = Observation.start("myObservation", registry);
-        Observation.tryScopedChecked(parent, () -> assertThat(registry.getCurrentObservation()).isSameAs(parent));
+        Observation.CheckedRunnable<Throwable> checkedRunnable = () -> assertThat(registry.getCurrentObservation()).isSameAs(parent);
+        Observation.tryScopedChecked(parent, checkedRunnable);
         assertThat(registry.getCurrentObservation()).isNull();
     }
 
     @Test
     void checkedRunnableShouldNotBeParentScopedIfParentIsNull() throws Throwable {
-        Observation.tryScopedChecked(null, () -> assertThat(registry.getCurrentObservation()).isNull());
+        Observation.CheckedRunnable<Throwable> checkedRunnable = () -> assertThat(registry.getCurrentObservation()).isNull();
+        Observation.tryScopedChecked(null, checkedRunnable);
         assertThat(registry.getCurrentObservation()).isNull();
     }
 
