@@ -112,7 +112,7 @@ class MetricsRequestEventListenerTest extends JerseyTest {
     }
 
     @Test
-    void redirectsAreReportedWithUriofMatchedResource() {
+    void redirectsAreReportedWithUriOfMatchedResource() {
         target("redirect/302").request().get();
         target("redirect/307").request().get();
 
