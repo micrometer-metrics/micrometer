@@ -52,6 +52,11 @@ public interface OtlpConfig extends PushRegistryConfig {
         return getUrlString(this, "url").orElse("http://localhost:4318/v1/metrics");
     }
 
+    @Override
+    default boolean stepAlignment() {
+        return false;
+    }
+
     /**
      * Attributes to set on the Resource that will be used for all metrics published. This
      * should include a {@code service.name} attribute that identifies your service.

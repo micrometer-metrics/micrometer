@@ -48,6 +48,13 @@ public interface PushRegistryConfig extends MeterRegistryConfig {
     }
 
     /**
+     * @return {@code true} if step alignment is enabled. Default is {@code true}.
+     */
+    default boolean stepAlignment() {
+        return getBoolean(this, "stepAlignment").orElse(true);
+    }
+
+    /**
      * Return the number of threads to use with the scheduler.
      * <p>
      * Note that this configuration is NOT supported.
