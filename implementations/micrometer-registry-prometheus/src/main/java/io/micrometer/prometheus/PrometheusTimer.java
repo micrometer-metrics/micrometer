@@ -36,8 +36,6 @@ import java.util.concurrent.atomic.LongAdder;
  */
 public class PrometheusTimer extends AbstractTimer {
 
-    private static final CountAtBucket[] EMPTY_HISTOGRAM = new CountAtBucket[0];
-
     private final LongAdder count = new LongAdder();
 
     private final LongAdder totalTime = new LongAdder();
@@ -46,39 +44,36 @@ public class PrometheusTimer extends AbstractTimer {
 
     private final HistogramFlavor histogramFlavor;
 
-    @Nullable
-    private final Histogram histogram;
-
-    private boolean exemplarsEnabled = false;
+    private final boolean exemplarsEnabled;
 
     PrometheusTimer(Id id, Clock clock, DistributionStatisticConfig distributionStatisticConfig,
             PauseDetector pauseDetector, HistogramFlavor histogramFlavor,
             @Nullable HistogramExemplarSampler exemplarSampler) {
-        super(id, clock, DistributionStatisticConfig.builder().percentilesHistogram(false).serviceLevelObjectives()
-                .build().merge(distributionStatisticConfig), pauseDetector, TimeUnit.SECONDS, false);
+        super(id, clock, pauseDetector, TimeUnit.SECONDS,
+                newHistogram(clock, distributionStatisticConfig, histogramFlavor, exemplarSampler));
 
         this.histogramFlavor = histogramFlavor;
+        this.exemplarsEnabled = histogram instanceof PrometheusHistogram
+                && ((PrometheusHistogram) histogram).isExemplarsEnabled();
         this.max = new TimeWindowMax(clock, distributionStatisticConfig);
+    }
+
+    private static Histogram newHistogram(Clock clock, DistributionStatisticConfig distributionStatisticConfig,
+            HistogramFlavor histogramFlavor, @Nullable HistogramExemplarSampler exemplarSampler) {
+        if (distributionStatisticConfig.isPublishingPercentiles()) {
+            return new TimeWindowPercentileHistogram(clock, distributionStatisticConfig, false);
+        }
 
         if (distributionStatisticConfig.isPublishingHistogram()) {
             switch (histogramFlavor) {
                 case Prometheus:
-                    PrometheusHistogram prometheusHistogram = new PrometheusHistogram(clock,
-                            distributionStatisticConfig, exemplarSampler);
-                    this.histogram = prometheusHistogram;
-                    this.exemplarsEnabled = prometheusHistogram.isExemplarsEnabled();
-                    break;
+                    return new PrometheusHistogram(clock, distributionStatisticConfig, exemplarSampler);
                 case VictoriaMetrics:
-                    this.histogram = new FixedBoundaryVictoriaMetricsHistogram();
-                    break;
-                default:
-                    this.histogram = null;
-                    break;
+                    return new FixedBoundaryVictoriaMetricsHistogram();
             }
         }
-        else {
-            this.histogram = null;
-        }
+
+        return NoopHistogram.INSTANCE;
     }
 
     @Override
@@ -87,10 +82,6 @@ public class PrometheusTimer extends AbstractTimer {
         long nanoAmount = TimeUnit.NANOSECONDS.convert(amount, unit);
         totalTime.add(nanoAmount);
         max.record(nanoAmount, TimeUnit.NANOSECONDS);
-
-        if (histogram != null) {
-            histogram.recordLong(TimeUnit.NANOSECONDS.convert(amount, unit));
-        }
     }
 
     @Nullable
@@ -129,19 +120,12 @@ public class PrometheusTimer extends AbstractTimer {
      * @return Cumulative histogram buckets.
      */
     public CountAtBucket[] histogramCounts() {
-        return histogram == null ? EMPTY_HISTOGRAM : histogram.takeSnapshot(0, 0, 0).histogramCounts();
+        return histogram.takeSnapshot(0, 0, 0).histogramCounts();
     }
 
     @Override
     public HistogramSnapshot takeSnapshot() {
-        HistogramSnapshot snapshot = super.takeSnapshot();
-
-        if (histogram == null) {
-            return snapshot;
-        }
-
-        return new HistogramSnapshot(snapshot.count(), snapshot.total(), snapshot.max(), snapshot.percentileValues(),
-                histogramCounts(), snapshot::outputSummary);
+        return super.takeSnapshot();
     }
 
 }
