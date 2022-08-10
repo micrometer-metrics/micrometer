@@ -6,13 +6,13 @@ executors:
     environment:
       GRADLE_OPTS: '-Dorg.gradle.jvmargs="-Xmx2048m -XX:+HeapDumpOnOutOfMemoryError"'
     docker:
-      - image: cimg/openjdk:18.0.1
+      - image: cimg/openjdk:18.0.2
   circle-jdk17-executor:
     working_directory: ~/micrometer
     environment:
       GRADLE_OPTS: '-Dorg.gradle.jvmargs="-Xmx2048m -XX:+HeapDumpOnOutOfMemoryError"'
     docker:
-      - image: cimg/openjdk:17.0.3
+      - image: cimg/openjdk:17.0.4
   circle-jdk8-executor:
     working_directory: ~/micrometer
     environment:
@@ -28,7 +28,7 @@ executors:
   machine-executor:
     working_directory: ~/micrometer
     machine:
-      image: ubuntu-2004:202111-01
+      image: ubuntu-2004:2022.07.1
 
 commands:
   gradlew-build:
