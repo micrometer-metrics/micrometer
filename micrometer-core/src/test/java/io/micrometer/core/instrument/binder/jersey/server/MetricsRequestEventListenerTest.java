@@ -112,15 +112,15 @@ class MetricsRequestEventListenerTest extends JerseyTest {
     }
 
     @Test
-    void redirectsAreAccumulatedUnderSameUri() {
+    void redirectsAreReportedWithUriOfMatchedResource() {
         target("redirect/302").request().get();
         target("redirect/307").request().get();
 
-        assertThat(registry.get(METRIC_NAME).tags(tagsFrom("REDIRECTION", "302", "REDIRECTION", null)).timer().count())
-                .isEqualTo(1);
+        assertThat(registry.get(METRIC_NAME).tags(tagsFrom("/redirect/{status}", "302", "REDIRECTION", null)).timer()
+                .count()).isEqualTo(1);
 
-        assertThat(registry.get(METRIC_NAME).tags(tagsFrom("REDIRECTION", "307", "REDIRECTION", null)).timer().count())
-                .isEqualTo(1);
+        assertThat(registry.get(METRIC_NAME).tags(tagsFrom("/redirect/{status}", "307", "REDIRECTION", null)).timer()
+                .count()).isEqualTo(1);
     }
 
     @Test

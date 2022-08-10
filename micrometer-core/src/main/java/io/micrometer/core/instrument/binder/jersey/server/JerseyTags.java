@@ -87,7 +87,7 @@ public final class JerseyTags {
         ContainerResponse response = event.getContainerResponse();
         if (response != null) {
             int status = response.getStatus();
-            if (isRedirection(status)) {
+            if (isRedirection(status) && event.getUriInfo().getMatchedResourceMethod() == null) {
                 return URI_REDIRECTION;
             }
             if (status == 404 && event.getUriInfo().getMatchedResourceMethod() == null) {
