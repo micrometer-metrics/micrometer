@@ -102,6 +102,7 @@ public interface LongTaskTimer extends Meter, HistogramSupport {
      * Executes the supplier {@code f} and records the time taken.
      * @param f Function to execute and measure the execution time.
      * @return The return value of {@code f}.
+     * @since 1.10.0
      */
     default boolean record(BooleanSupplier f) {
         Sample sample = start();
@@ -117,6 +118,7 @@ public interface LongTaskTimer extends Meter, HistogramSupport {
      * Executes the supplier {@code f} and records the time taken.
      * @param f Function to execute and measure the execution time.
      * @return The return value of {@code f}.
+     * @since 1.10.0
      */
     default int record(IntSupplier f) {
         Sample sample = start();
@@ -132,6 +134,7 @@ public interface LongTaskTimer extends Meter, HistogramSupport {
      * Executes the supplier {@code f} and records the time taken.
      * @param f Function to execute and measure the execution time.
      * @return The return value of {@code f}.
+     * @since 1.10.0
      */
     default long record(LongSupplier f) {
         Sample sample = start();
@@ -147,6 +150,7 @@ public interface LongTaskTimer extends Meter, HistogramSupport {
      * Executes the supplier {@code f} and records the time taken.
      * @param f Function to execute and measure the execution time.
      * @return The return value of {@code f}.
+     * @since 1.10.0
      */
     default double record(DoubleSupplier f) {
         Sample sample = start();

@@ -135,6 +135,7 @@ public interface Timer extends Meter, HistogramSupport {
      * Executes the Supplier {@code f} and records the time taken.
      * @param f Function to execute and measure the execution time.
      * @return The return value of {@code f}.
+     * @since 1.10.0
      */
     default boolean record(BooleanSupplier f) {
         return record((Supplier<Boolean>) f::getAsBoolean);
@@ -144,6 +145,7 @@ public interface Timer extends Meter, HistogramSupport {
      * Executes the Supplier {@code f} and records the time taken.
      * @param f Function to execute and measure the execution time.
      * @return The return value of {@code f}.
+     * @since 1.10.0
      */
     default int record(IntSupplier f) {
         return record((Supplier<Integer>) f::getAsInt);
@@ -153,6 +155,7 @@ public interface Timer extends Meter, HistogramSupport {
      * Executes the Supplier {@code f} and records the time taken.
      * @param f Function to execute and measure the execution time.
      * @return The return value of {@code f}.
+     * @since 1.10.0
      */
     default long record(LongSupplier f) {
         return record((Supplier<Long>) f::getAsLong);
@@ -162,6 +165,7 @@ public interface Timer extends Meter, HistogramSupport {
      * Executes the Supplier {@code f} and records the time taken.
      * @param f Function to execute and measure the execution time.
      * @return The return value of {@code f}.
+     * @since 1.10.0
      */
     default double record(DoubleSupplier f) {
         return record((Supplier<Double>) f::getAsDouble);
