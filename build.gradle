@@ -356,7 +356,8 @@ subprojects {
                             'io.micrometer.core.instrument.LongTaskTimer#record(java.util.function.BooleanSupplier)',
                             'io.micrometer.core.instrument.LongTaskTimer#record(java.util.function.IntSupplier)',
                             'io.micrometer.core.instrument.LongTaskTimer#record(java.util.function.LongSupplier)',
-                            'io.micrometer.core.instrument.LongTaskTimer#record(java.util.function.DoubleSupplier)'
+                            'io.micrometer.core.instrument.LongTaskTimer#record(java.util.function.DoubleSupplier)',
+                            'io.micrometer.signalfx.SignalFxConfig#publishDeltaHistogram()'
                     ]
                     onlyIf { compatibleVersion != 'SKIP' }
                 }
