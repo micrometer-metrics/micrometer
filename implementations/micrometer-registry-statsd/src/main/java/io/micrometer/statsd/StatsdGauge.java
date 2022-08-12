@@ -18,7 +18,8 @@ package io.micrometer.statsd;
 import io.micrometer.common.lang.Nullable;
 import io.micrometer.core.instrument.AbstractMeter;
 import io.micrometer.core.instrument.Gauge;
-import reactor.core.publisher.FluxSink;
+
+import java.util.function.Consumer;
 
 import java.lang.ref.WeakReference;
 import java.util.concurrent.atomic.AtomicReference;
@@ -28,7 +29,7 @@ public class StatsdGauge<T> extends AbstractMeter implements Gauge, StatsdPollab
 
     private final StatsdLineBuilder lineBuilder;
 
-    private final FluxSink<String> sink;
+    private final Consumer<String> sink;
 
     private final WeakReference<T> ref;
 
@@ -38,7 +39,7 @@ public class StatsdGauge<T> extends AbstractMeter implements Gauge, StatsdPollab
 
     private final boolean alwaysPublish;
 
-    StatsdGauge(Id id, StatsdLineBuilder lineBuilder, FluxSink<String> sink, @Nullable T obj, ToDoubleFunction<T> value,
+    StatsdGauge(Id id, StatsdLineBuilder lineBuilder, Consumer<String> sink, @Nullable T obj, ToDoubleFunction<T> value,
             boolean alwaysPublish) {
         super(id);
         this.lineBuilder = lineBuilder;
@@ -58,7 +59,7 @@ public class StatsdGauge<T> extends AbstractMeter implements Gauge, StatsdPollab
     public void poll() {
         double val = value();
         if (Double.isFinite(val) && (alwaysPublish || lastValue.getAndSet(val) != val)) {
-            sink.next(lineBuilder.gauge(val));
+            sink.accept(lineBuilder.gauge(val));
         }
     }
 

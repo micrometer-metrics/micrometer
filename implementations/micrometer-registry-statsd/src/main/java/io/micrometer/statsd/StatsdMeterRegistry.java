@@ -320,8 +320,8 @@ public class StatsdMeterRegistry extends MeterRegistry {
 
     @Override
     protected <T> Gauge newGauge(Meter.Id id, @Nullable T obj, ToDoubleFunction<T> valueFunction) {
-        StatsdGauge<T> gauge = new StatsdGauge<>(id, lineBuilder(id), this.sink, obj, valueFunction,
-                statsdConfig.publishUnchangedMeters());
+        StatsdGauge<T> gauge = new StatsdGauge<>(id, lineBuilder(id), (line) -> this.sink.next(line), obj,
+                valueFunction, statsdConfig.publishUnchangedMeters());
         pollableMeters.put(id, gauge);
         return gauge;
     }
@@ -361,13 +361,14 @@ public class StatsdMeterRegistry extends MeterRegistry {
 
     @Override
     protected Counter newCounter(Meter.Id id) {
-        return new StatsdCounter(id, lineBuilder(id), this.sink);
+        return new StatsdCounter(id, lineBuilder(id), (line) -> this.sink.next(line));
     }
 
     @Override
     protected LongTaskTimer newLongTaskTimer(Meter.Id id, DistributionStatisticConfig distributionStatisticConfig) {
-        StatsdLongTaskTimer ltt = new StatsdLongTaskTimer(id, lineBuilder(id, distributionStatisticConfig), this.sink,
-                clock, statsdConfig.publishUnchangedMeters(), distributionStatisticConfig, getBaseTimeUnit());
+        StatsdLongTaskTimer ltt = new StatsdLongTaskTimer(id, lineBuilder(id, distributionStatisticConfig),
+                (line) -> this.sink.next(line), clock, statsdConfig.publishUnchangedMeters(),
+                distributionStatisticConfig, getBaseTimeUnit());
         HistogramGauges.registerWithCommonFormat(ltt, this);
         pollableMeters.put(id, ltt);
         return ltt;
@@ -382,8 +383,8 @@ public class StatsdMeterRegistry extends MeterRegistry {
             distributionStatisticConfig = addInfBucket(distributionStatisticConfig);
         }
 
-        Timer timer = new StatsdTimer(id, lineBuilder(id, distributionStatisticConfig), this.sink, clock,
-                distributionStatisticConfig, pauseDetector, getBaseTimeUnit(), statsdConfig.step().toMillis());
+        Timer timer = new StatsdTimer(id, lineBuilder(id, distributionStatisticConfig), (line) -> this.sink.next(line),
+                clock, distributionStatisticConfig, pauseDetector, getBaseTimeUnit(), statsdConfig.step().toMillis());
         HistogramGauges.registerWithCommonFormat(timer, this);
         return timer;
     }
@@ -398,14 +399,15 @@ public class StatsdMeterRegistry extends MeterRegistry {
         }
 
         DistributionSummary summary = new StatsdDistributionSummary(id, lineBuilder(id, distributionStatisticConfig),
-                this.sink, clock, distributionStatisticConfig, scale);
+                (line) -> this.sink.next(line), clock, distributionStatisticConfig, scale);
         HistogramGauges.registerWithCommonFormat(summary, this);
         return summary;
     }
 
     @Override
     protected <T> FunctionCounter newFunctionCounter(Meter.Id id, T obj, ToDoubleFunction<T> countFunction) {
-        StatsdFunctionCounter<T> fc = new StatsdFunctionCounter<>(id, obj, countFunction, lineBuilder(id), this.sink);
+        StatsdFunctionCounter<T> fc = new StatsdFunctionCounter<>(id, obj, countFunction, lineBuilder(id),
+                (line) -> this.sink.next(line));
         pollableMeters.put(id, fc);
         return fc;
     }
@@ -414,7 +416,7 @@ public class StatsdMeterRegistry extends MeterRegistry {
     protected <T> FunctionTimer newFunctionTimer(Meter.Id id, T obj, ToLongFunction<T> countFunction,
             ToDoubleFunction<T> totalTimeFunction, TimeUnit totalTimeFunctionUnit) {
         StatsdFunctionTimer<T> ft = new StatsdFunctionTimer<>(id, obj, countFunction, totalTimeFunction,
-                totalTimeFunctionUnit, getBaseTimeUnit(), lineBuilder(id), this.sink);
+                totalTimeFunctionUnit, getBaseTimeUnit(), lineBuilder(id), (line) -> this.sink.next(line));
         pollableMeters.put(id, ft);
         return ft;
     }

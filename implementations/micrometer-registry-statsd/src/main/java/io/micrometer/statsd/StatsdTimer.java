@@ -21,7 +21,8 @@ import io.micrometer.core.instrument.distribution.DistributionStatisticConfig;
 import io.micrometer.core.instrument.distribution.pause.PauseDetector;
 import io.micrometer.core.instrument.step.StepDouble;
 import io.micrometer.core.instrument.util.TimeUtils;
-import reactor.core.publisher.FluxSink;
+
+import java.util.function.Consumer;
 
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.DoubleAdder;
@@ -35,13 +36,13 @@ public class StatsdTimer extends AbstractTimer {
 
     private final StatsdLineBuilder lineBuilder;
 
-    private final FluxSink<String> sink;
+    private final Consumer<String> sink;
 
     private StepDouble max;
 
     private volatile boolean shutdown;
 
-    StatsdTimer(Id id, StatsdLineBuilder lineBuilder, FluxSink<String> sink, Clock clock,
+    StatsdTimer(Id id, StatsdLineBuilder lineBuilder, Consumer<String> sink, Clock clock,
             DistributionStatisticConfig distributionStatisticConfig, PauseDetector pauseDetector, TimeUnit baseTimeUnit,
             long stepMillis) {
         super(id, clock, distributionStatisticConfig, pauseDetector, baseTimeUnit, false);
@@ -61,7 +62,7 @@ public class StatsdTimer extends AbstractTimer {
             // not necessary to ship max, as most StatsD agents calculate this themselves
             max.getCurrent().add(Math.max(msAmount - max.getCurrent().doubleValue(), 0));
 
-            sink.next(lineBuilder.timing(msAmount));
+            sink.accept(lineBuilder.timing(msAmount));
         }
     }
 

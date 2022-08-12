@@ -16,7 +16,8 @@
 package io.micrometer.statsd;
 
 import io.micrometer.core.instrument.cumulative.CumulativeFunctionTimer;
-import reactor.core.publisher.FluxSink;
+
+import java.util.function.Consumer;
 
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicReference;
@@ -27,7 +28,7 @@ public class StatsdFunctionTimer<T> extends CumulativeFunctionTimer<T> implement
 
     private final StatsdLineBuilder lineBuilder;
 
-    private final FluxSink<String> sink;
+    private final Consumer<String> sink;
 
     private final AtomicReference<Long> lastCount = new AtomicReference<>(0L);
 
@@ -35,7 +36,7 @@ public class StatsdFunctionTimer<T> extends CumulativeFunctionTimer<T> implement
 
     StatsdFunctionTimer(Id id, T obj, ToLongFunction<T> countFunction, ToDoubleFunction<T> totalTimeFunction,
             TimeUnit totalTimeFunctionUnit, TimeUnit baseTimeUnit, StatsdLineBuilder lineBuilder,
-            FluxSink<String> sink) {
+            Consumer<String> sink) {
         super(id, obj, countFunction, totalTimeFunction, totalTimeFunctionUnit, baseTimeUnit);
         this.lineBuilder = lineBuilder;
         this.sink = sink;
@@ -59,7 +60,7 @@ public class StatsdFunctionTimer<T> extends CumulativeFunctionTimer<T> implement
                     // occurrences.
                     double timingAverage = newTimingsSum / newTimingsCount;
                     for (int i = 0; i < newTimingsCount; i++) {
-                        sink.next(lineBuilder.timing(timingAverage));
+                        sink.accept(lineBuilder.timing(timingAverage));
                     }
 
                     return totalTime;
