@@ -18,6 +18,7 @@ package io.micrometer.statsd;
 import io.micrometer.core.Issue;
 import io.micrometer.core.instrument.Clock;
 import io.micrometer.core.instrument.Counter;
+import io.micrometer.statsd.internal.flux.FluxMeterProcessor;
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.channel.ChannelOutboundHandlerAdapter;
 import io.netty.channel.ChannelPromise;
@@ -107,14 +108,17 @@ class StatsdMeterRegistryPublishTest {
 
         final int port = getPort(protocol);
 
-        meterRegistry = new StatsdMeterRegistry(getUnbufferedConfig(protocol, port), Clock.SYSTEM);
+        StatsdConfig config = getUnbufferedConfig(protocol, port);
+        FluxMeterProcessor processor = new FluxMeterProcessor(config);
+        meterRegistry = StatsdMeterRegistry.builder(config).processor(processor).clock(Clock.SYSTEM).build();
+
         startRegistryAndWaitForClient();
         trackWritesForUdpClient(protocol, writeCount);
         Counter counter = Counter.builder("my.counter").register(meterRegistry);
         counter.increment(1);
         assertThat(serverLatch.await(5, TimeUnit.SECONDS)).isTrue();
 
-        Disposable firstClient = meterRegistry.statsdConnection.get();
+        Disposable firstClient = processor.getConnection();
 
         server.disposeNow();
         serverLatch = new CountDownLatch(3);
@@ -129,13 +133,14 @@ class StatsdMeterRegistryPublishTest {
         await().until(() -> bound);
 
         // Note that this guarantees this test to be passed.
-        // For TCP, this will help trigger replacing client. If this triggered replacing,
+        // For TCP, this will help trigger replacing client. If this triggered
+        // replacing,
         // this change will be lost.
         // For UDP, the first change seems to be lost frequently somehow.
         Counter.builder("another.counter").register(meterRegistry).increment();
 
         if (protocol == StatsdProtocol.TCP || protocol == StatsdProtocol.UDS_DATAGRAM) {
-            await().until(() -> meterRegistry.statsdConnection.get() != firstClient);
+            await().until(() -> processor.getConnection() != firstClient);
         }
 
         counter.increment(5);
@@ -197,7 +202,9 @@ class StatsdMeterRegistryPublishTest {
         server = startServer(protocol, 0);
         final int port = getPort(protocol);
         server.disposeNow();
-        meterRegistry = new StatsdMeterRegistry(getUnbufferedConfig(protocol, port), Clock.SYSTEM);
+        StatsdConfig config = getUnbufferedConfig(protocol, port);
+        FluxMeterProcessor processor = new FluxMeterProcessor(config);
+        meterRegistry = StatsdMeterRegistry.builder(config).processor(processor).clock(Clock.SYSTEM).build();
         meterRegistry.start();
         trackWritesForUdpClient(protocol, writeCount);
         Counter counter = Counter.builder("my.counter").register(meterRegistry);
@@ -208,7 +215,7 @@ class StatsdMeterRegistryPublishTest {
         server = startServer(protocol, port);
         if (protocol == StatsdProtocol.TCP || protocol == StatsdProtocol.UDS_DATAGRAM) {
             // client is null until connection established
-            await().until(() -> meterRegistry.statsdConnection.get() != null);
+            await().until(() -> processor.getConnection() != null);
             // client may take some time to reconnect to the server
             await().until(() -> !clientIsDisposed());
         }
@@ -253,22 +260,23 @@ class StatsdMeterRegistryPublishTest {
         serverLatch = new CountDownLatch(3);
         server = startServer(protocol, 0);
         final int port = getPort(protocol);
-        meterRegistry = new StatsdMeterRegistry(getUnbufferedConfig(protocol, port), Clock.SYSTEM);
+        StatsdConfig config = getUnbufferedConfig(protocol, port);
+        FluxMeterProcessor processor = new FluxMeterProcessor(config);
+        meterRegistry = StatsdMeterRegistry.builder(config).processor(processor).clock(Clock.SYSTEM).build();
         startRegistryAndWaitForClient();
-        ((Connection) meterRegistry.statsdConnection.get()).addHandler("writeFailure",
-                new ChannelOutboundHandlerAdapter() {
-                    @Override
-                    public void write(ChannelHandlerContext ctx, Object msg, ChannelPromise promise) throws Exception {
-                        throw new RuntimeException("write error for testing purposes");
-                    }
-                });
+        ((Connection) processor.getConnection()).addHandler("writeFailure", new ChannelOutboundHandlerAdapter() {
+            @Override
+            public void write(ChannelHandlerContext ctx, Object msg, ChannelPromise promise) throws Exception {
+                throw new RuntimeException("write error for testing purposes");
+            }
+        });
         Counter counter = Counter.builder("my.counter").register(meterRegistry);
         // write will cause error
         counter.increment();
         // wait for reconnect
         await().until(() -> !clientIsDisposed());
         // remove write exception handler
-        ((Connection) meterRegistry.statsdConnection.get()).removeHandler("writeFailure");
+        ((Connection) processor.getConnection()).removeHandler("writeFailure");
         IntStream.range(1, 4).forEach(counter::increment);
         assertThat(serverLatch.await(3, TimeUnit.SECONDS)).isTrue();
         await().pollDelay(Duration.ofSeconds(1)).atMost(Duration.ofSeconds(3))
@@ -308,8 +316,8 @@ class StatsdMeterRegistryPublishTest {
 
     private void trackWritesForUdpClient(StatsdProtocol protocol, AtomicInteger writeCount) {
         if (protocol == StatsdProtocol.UDP) {
-            await().until(() -> meterRegistry.statsdConnection.get() != null);
-            ((Connection) meterRegistry.statsdConnection.get())
+            await().until(() -> ((FluxMeterProcessor) meterRegistry.processor).getConnection() != null);
+            ((Connection) ((FluxMeterProcessor) meterRegistry.processor).getConnection())
                     .addHandler(new LoggingHandler("testudpclient", LogLevel.INFO))
                     .addHandler(new ChannelOutboundHandlerAdapter() {
                         @Override
@@ -328,7 +336,7 @@ class StatsdMeterRegistryPublishTest {
     }
 
     private boolean clientIsDisposed() {
-        return meterRegistry.statsdConnection.get().isDisposed();
+        return ((FluxMeterProcessor) meterRegistry.processor).getConnection().isDisposed();
     }
 
     private DisposableChannel startServer(StatsdProtocol protocol, int port) {

@@ -22,6 +22,7 @@ import io.micrometer.core.Issue;
 import io.micrometer.core.instrument.*;
 import io.micrometer.core.instrument.binder.logging.LogbackMetrics;
 import io.micrometer.core.instrument.config.NamingConvention;
+import io.micrometer.statsd.internal.flux.FluxMeterProcessor;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
@@ -29,8 +30,10 @@ import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.EnumSource;
 import org.reactivestreams.Processor;
 import org.slf4j.LoggerFactory;
+import reactor.core.publisher.FluxProcessor;
 import reactor.core.publisher.Operators;
 import reactor.core.publisher.UnicastProcessor;
+import reactor.core.publisher.DirectProcessor;
 import reactor.test.StepVerifier;
 import reactor.util.concurrent.Queues;
 
@@ -260,13 +263,16 @@ class StatsdMeterRegistryTest {
     @Issue("#411")
     @Test
     void counterIncrementDoesNotCauseStackOverflow() {
+
+        final FluxProcessor<String, String> direct = DirectProcessor.create();
+        final FluxMeterProcessor processor = new FluxMeterProcessor(configWithFlavor(StatsdFlavor.ETSY), null, direct);
         registry = new StatsdMeterRegistry(configWithFlavor(StatsdFlavor.ETSY), clock);
         new LogbackMetrics().bindTo(registry);
 
         // Cause the processor to get into a state that would make it perform logging at
         // DEBUG level.
         ((Logger) LoggerFactory.getLogger(Operators.class)).setLevel(Level.DEBUG);
-        registry.processor.onComplete();
+        direct.onComplete();
 
         registry.counter("my.counter").increment();
     }
@@ -310,7 +316,8 @@ class StatsdMeterRegistryTest {
         registry = new StatsdMeterRegistry(configWithFlavor(StatsdFlavor.ETSY), clock);
         Timer.builder("my.timer").serviceLevelObjectives(Duration.ofMillis(1)).register(registry);
 
-        // A io.micrometer.core.instrument.search.MeterNotFoundException is thrown if the
+        // A io.micrometer.core.instrument.search.MeterNotFoundException is thrown if
+        // the
         // gauge isn't present
         registry.get("my.timer.histogram").tag("le", "+Inf").gauge();
     }
@@ -321,7 +328,8 @@ class StatsdMeterRegistryTest {
         DistributionSummary summary = DistributionSummary.builder("my.distribution").serviceLevelObjectives(1.0)
                 .register(registry);
 
-        // A io.micrometer.core.instrument.search.MeterNotFoundException is thrown if the
+        // A io.micrometer.core.instrument.search.MeterNotFoundException is thrown if
+        // the
         // gauge isn't present
         registry.get("my.distribution.histogram").tag("le", "+Inf").gauge();
     }
@@ -440,9 +448,14 @@ class StatsdMeterRegistryTest {
     @Test
     @Issue("#1260")
     void lineSinkDoesNotConsumeWhenRegistryDisabled() {
+
         Consumer<String> shouldNotBeInvokedConsumer = line -> {
             throw new RuntimeException("line sink should not be called");
         };
+        final FluxProcessor<String, String> direct = DirectProcessor.create();
+        final FluxMeterProcessor processor = new FluxMeterProcessor(configWithFlavor(StatsdFlavor.ETSY),
+                shouldNotBeInvokedConsumer, direct);
+
         registry = StatsdMeterRegistry.builder(new StatsdConfig() {
             @Override
             public String get(String key) {
@@ -453,10 +466,10 @@ class StatsdMeterRegistryTest {
             public boolean enabled() {
                 return false;
             }
-        }).lineSink(shouldNotBeInvokedConsumer).build();
+        }).processor(processor).build();
 
         registry.counter("some.metric").increment();
-        assertThat(registry.processor.inners().count()).as("processor has no subscribers registered").isZero();
+        assertThat(direct.inners().count()).as("processor has no subscribers registered").isZero();
     }
 
     @Test

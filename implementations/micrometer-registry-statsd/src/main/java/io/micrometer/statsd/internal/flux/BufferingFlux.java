@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package io.micrometer.statsd.internal;
+package io.micrometer.statsd.internal.flux;
 
 import reactor.core.publisher.DirectProcessor;
 import reactor.core.publisher.Flux;
