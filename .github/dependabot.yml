@@ -16,3 +16,8 @@ updates:
     schedule:
       interval: "weekly"
     open-pull-requests-limit: 10
+  - package-ecosystem: "github-actions"
+    directory: "/"
+    target-branch: "1.8.x" # oldest OSS supported branch
+    schedule:
+      interval: "weekly"
