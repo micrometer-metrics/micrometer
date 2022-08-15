@@ -70,6 +70,8 @@ public class SignalFxMeterRegistry extends StepMeterRegistry {
 
     private final boolean publishCumulativeHistogram;
 
+    private final boolean publishDeltaHistogram;
+
     public SignalFxMeterRegistry(SignalFxConfig config, Clock clock) {
         this(config, clock, DEFAULT_THREAD_FACTORY);
     }
@@ -93,6 +95,7 @@ public class SignalFxMeterRegistry extends StepMeterRegistry {
         this.dataPointReceiverFactory = new HttpDataPointProtobufReceiverFactory(signalFxEndpoint);
         this.eventReceiverFactory = new HttpEventProtobufReceiverFactory(signalFxEndpoint);
         this.publishCumulativeHistogram = config.publishCumulativeHistogram();
+        this.publishDeltaHistogram = config.publishDeltaHistogram();
 
         config().namingConvention(new SignalFxNamingConvention());
 
@@ -136,11 +139,11 @@ public class SignalFxMeterRegistry extends StepMeterRegistry {
     @Override
     protected Timer newTimer(Meter.Id id, DistributionStatisticConfig distributionStatisticConfig,
             PauseDetector pauseDetector) {
-        if (!publishCumulativeHistogram) {
+        if (!publishCumulativeHistogram && !publishDeltaHistogram) {
             return super.newTimer(id, distributionStatisticConfig, pauseDetector);
         }
         Timer timer = new SignalfxTimer(id, clock, distributionStatisticConfig, pauseDetector, getBaseTimeUnit(),
-                config.step().toMillis());
+                config.step().toMillis(), publishDeltaHistogram);
         HistogramGauges.registerWithCommonFormat(timer, this);
         return timer;
     }
@@ -148,11 +151,11 @@ public class SignalFxMeterRegistry extends StepMeterRegistry {
     @Override
     protected DistributionSummary newDistributionSummary(Meter.Id id,
             DistributionStatisticConfig distributionStatisticConfig, double scale) {
-        if (!publishCumulativeHistogram) {
+        if (!publishCumulativeHistogram && !publishDeltaHistogram) {
             return super.newDistributionSummary(id, distributionStatisticConfig, scale);
         }
         DistributionSummary summary = new SignalfxDistributionSummary(id, clock, distributionStatisticConfig, scale,
-                config.step().toMillis());
+                config.step().toMillis(), publishDeltaHistogram);
         HistogramGauges.registerWithCommonFormat(summary, this);
         return summary;
     }
@@ -208,6 +211,10 @@ public class SignalFxMeterRegistry extends StepMeterRegistry {
     }
 
     Stream<SignalFxProtocolBuffers.DataPoint.Builder> addGauge(Gauge gauge) {
+        if (publishDeltaHistogram && gauge.getId().syntheticAssociation() != null
+                && gauge.getId().getName().endsWith(".histogram")) {
+            return Stream.of(addDatapoint(gauge, COUNTER, null, gauge.value()));
+        }
         if (publishCumulativeHistogram && gauge.getId().syntheticAssociation() != null
                 && gauge.getId().getName().endsWith(".histogram")) {
             return Stream.of(addDatapoint(gauge, CUMULATIVE_COUNTER, null, gauge.value()));

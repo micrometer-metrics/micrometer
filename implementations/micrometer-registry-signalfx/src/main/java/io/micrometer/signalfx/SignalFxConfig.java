@@ -43,12 +43,24 @@ public interface SignalFxConfig extends StepRegistryConfig {
     }
 
     /**
+     * If both "publishCumulativeHistogram" and "publishDeltaHistogram" are set, then
+     * delta will be used.
      * @return {@code true} if the SignalFx registry should emit cumulative histogram
      * buckets.
      * @since 1.9.0
      */
     default boolean publishCumulativeHistogram() {
         return getBoolean(this, "publishCumulativeHistogram").orElse(false);
+    }
+
+    /**
+     * If both "publishCumulativeHistogram" and "publishDeltaHistogram" are set, then
+     * delta will be used.
+     * @return {@code true} if the SignalFx registry should emit delta histogram buckets.
+     * @since 1.10.0
+     */
+    default boolean publishDeltaHistogram() {
+        return getBoolean(this, "publishDeltaHistogram").orElse(false);
     }
 
     /**

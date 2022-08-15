@@ -15,9 +15,11 @@
  */
 package io.micrometer.signalfx;
 
+import io.micrometer.common.lang.Nullable;
 import io.micrometer.core.instrument.AbstractDistributionSummary;
 import io.micrometer.core.instrument.Clock;
 import io.micrometer.core.instrument.distribution.DistributionStatisticConfig;
+import io.micrometer.core.instrument.distribution.HistogramSnapshot;
 import io.micrometer.core.instrument.distribution.TimeWindowMax;
 import io.micrometer.core.instrument.step.StepTuple2;
 
@@ -44,11 +46,20 @@ final class SignalfxDistributionSummary extends AbstractDistributionSummary {
 
     private final TimeWindowMax max;
 
+    @Nullable
+    private final DeltaHistogramCounts deltaHistogramCounts;
+
     SignalfxDistributionSummary(Id id, Clock clock, DistributionStatisticConfig distributionStatisticConfig,
-            double scale, long stepMillis) {
+            double scale, long stepMillis, boolean isDelta) {
         super(id, clock, CumulativeHistogramConfigUtil.updateConfig(distributionStatisticConfig), scale, false);
         this.countTotal = new StepTuple2<>(clock, stepMillis, 0L, 0.0, count::sumThenReset, total::sumThenReset);
         max = new TimeWindowMax(clock, distributionStatisticConfig);
+        if (isDelta) {
+            deltaHistogramCounts = new DeltaHistogramCounts();
+        }
+        else {
+            deltaHistogramCounts = null;
+        }
     }
 
     @Override
@@ -71,6 +82,22 @@ final class SignalfxDistributionSummary extends AbstractDistributionSummary {
     @Override
     public double max() {
         return max.poll();
+    }
+
+    @Override
+    public HistogramSnapshot takeSnapshot() {
+        HistogramSnapshot currentSnapshot = super.takeSnapshot();
+        if (deltaHistogramCounts == null) {
+            return currentSnapshot;
+        }
+        return new HistogramSnapshot(currentSnapshot.count(), // Already delta in sfx
+                                                              // implementation.
+                currentSnapshot.total(), // Already delta in sfx implementation.
+                currentSnapshot.max(), // Max cannot be calculated as delta, keep the
+                                       // current.
+                currentSnapshot.percentileValues(), // No changes to the percentile
+                                                    // values.
+                deltaHistogramCounts.calculate(currentSnapshot.histogramCounts()), currentSnapshot::outputSummary);
     }
 
 }
