@@ -72,6 +72,7 @@ class ProcessorMetricsTest {
          * supported system. Thread.sleep() is flaky, though.
          */
         assertThat(registry.get("system.cpu.usage").gauge().value()).isGreaterThanOrEqualTo(-1);
+        assertThat(registry.get("system.cpu.usage").gauge().value()).isGreaterThan(0);
         assertThat(registry.get("process.cpu.usage").gauge().value()).isGreaterThanOrEqualTo(-1);
     }
 

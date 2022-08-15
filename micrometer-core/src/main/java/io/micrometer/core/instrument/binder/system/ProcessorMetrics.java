@@ -130,7 +130,7 @@ public class ProcessorMetrics implements MeterBinder {
         try {
             // ensure the Bean we have is actually an instance of the interface
             operatingSystemBeanClass.cast(operatingSystemBean);
-            return operatingSystemBeanClass.getDeclaredMethod(name);
+            return operatingSystemBeanClass.getMethod(name);
         }
         catch (ClassCastException | NoSuchMethodException | SecurityException e) {
             return null;
