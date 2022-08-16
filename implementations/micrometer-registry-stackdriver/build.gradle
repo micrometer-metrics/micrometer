@@ -2,6 +2,7 @@ dependencies {
     api project(':micrometer-core')
 
     api 'com.google.cloud:google-cloud-monitoring'
+    api 'com.google.auth:google-auth-library-oauth2-http'
     implementation 'org.slf4j:slf4j-api'
     compileOnly 'ch.qos.logback:logback-classic'
 
