@@ -21,9 +21,9 @@ import io.micrometer.core.instrument.MeterRegistry;
 import io.micrometer.core.instrument.Tag;
 import io.micrometer.core.instrument.Tags;
 import io.micrometer.core.instrument.Timer;
+import io.micrometer.core.instrument.observation.ObservationOrTimer;
 import io.micrometer.observation.Observation;
 import io.micrometer.observation.ObservationRegistry;
-import io.micrometer.observation.transport.RequestReplySenderContext;
 import org.apache.http.HttpClientConnection;
 import org.apache.http.HttpException;
 import org.apache.http.HttpRequest;
@@ -35,7 +35,6 @@ import java.io.IOException;
 import java.util.Collections;
 import java.util.Optional;
 import java.util.function.Function;
-import java.util.function.Supplier;
 
 /**
  * This HttpRequestExecutor tracks the request duration of every request, that goes
@@ -65,12 +64,6 @@ public class MicrometerHttpRequestExecutor extends HttpRequestExecutor {
     public static final String DEFAULT_URI_PATTERN_HEADER = DefaultUriMapper.URI_PATTERN_HEADER;
 
     static final String METER_NAME = "httpcomponents.httpclient.request";
-
-    private static final Tag STATUS_UNKNOWN = Tag.of("status", "UNKNOWN");
-
-    private static final Tag STATUS_CLIENT_ERROR = Tag.of("status", "CLIENT_ERROR");
-
-    private static final Tag STATUS_IO_ERROR = Tag.of("status", "IO_ERROR");
 
     private final MeterRegistry registry;
 
@@ -118,97 +111,28 @@ public class MicrometerHttpRequestExecutor extends HttpRequestExecutor {
         ObservationOrTimer<ApacheHttpClientContext> sample = ObservationOrTimer.start(registry, observationRegistry,
                 () -> new ApacheHttpClientContext(request, context, uriMapper, exportTagsForRoute), convention,
                 DefaultApacheHttpClientObservationConvention.INSTANCE);
-        Tag status = STATUS_UNKNOWN;
+        String statusCodeOrError = "UNKNOWN";
 
         try {
             HttpResponse response = super.execute(request, conn, context);
             sample.setResponse(response);
-            status = response != null ? Tag.of("status", Integer.toString(response.getStatusLine().getStatusCode()))
-                    : STATUS_CLIENT_ERROR;
+            statusCodeOrError = response != null ? Integer.toString(response.getStatusLine().getStatusCode())
+                    : "CLIENT_ERROR";
             return response;
         }
         catch (IOException | HttpException | RuntimeException e) {
-            status = STATUS_IO_ERROR;
+            statusCodeOrError = "IO_ERROR";
             throw e;
         }
         finally {
-            Tags routeTags = exportTagsForRoute ? HttpContextUtils.generateTagsForRoute(context) : Tags.empty();
-            Tags otherTags = Tags.of("method", request.getRequestLine().getMethod(), "uri", uriMapper.apply(request),
-                    "status", status.getValue());
-
-            sample.stop(otherTags.and(routeTags).and(extraTags));
+            String status = statusCodeOrError;
+            sample.stop(METER_NAME, "Duration of Apache HttpClient request execution",
+                    () -> Tags
+                            .of("method", request.getRequestLine().getMethod(), "uri", uriMapper.apply(request),
+                                    "status", status)
+                            .and(exportTagsForRoute ? HttpContextUtils.generateTagsForRoute(context) : Tags.empty())
+                            .and(extraTags));
         }
-    }
-
-    static class ObservationOrTimer<T extends Observation.Context> {
-
-        private final MeterRegistry meterRegistry;
-
-        private final ObservationRegistry observationRegistry;
-
-        @Nullable
-        private final Observation.ObservationConvention<T> convention;
-
-        private final Observation.ObservationConvention<T> defaultConvention;
-
-        @Nullable
-        private Timer.Sample sample;
-
-        @Nullable
-        private Observation observation;
-
-        @Nullable
-        private T context;
-
-        static <T extends Observation.Context> ObservationOrTimer<T> start(MeterRegistry meterRegistry,
-                ObservationRegistry observationRegistry, Supplier<T> context,
-                @Nullable Observation.ObservationConvention<T> convention,
-                Observation.ObservationConvention<T> defaultConvention) {
-            return new ObservationOrTimer<>(meterRegistry, observationRegistry, context, convention, defaultConvention);
-        }
-
-        private ObservationOrTimer(MeterRegistry meterRegistry, ObservationRegistry observationRegistry,
-                Supplier<T> context, @Nullable Observation.ObservationConvention<T> convention,
-                Observation.ObservationConvention<T> defaultConvention) {
-            this.meterRegistry = meterRegistry;
-            this.observationRegistry = observationRegistry;
-            this.convention = convention;
-            this.defaultConvention = defaultConvention;
-            start(context);
-        }
-
-        public void start(Supplier<T> contextSupplier) {
-            if (observationRegistry.isNoop()) {
-                sample = Timer.start(meterRegistry);
-            }
-            else {
-                this.context = contextSupplier.get();
-                observation = Observation.start(convention, defaultConvention, context, observationRegistry);
-            }
-        }
-
-        public void setResponse(Object response) {
-            if (observationRegistry.isNoop() || !(context instanceof RequestReplySenderContext)) {
-                return;
-            }
-            RequestReplySenderContext requestReplySenderContext = (RequestReplySenderContext) context;
-            requestReplySenderContext.setResponse(response);
-        }
-
-        /**
-         * Stop the timing.
-         * @param tags tags to apply if using the Timer API
-         */
-        public void stop(Iterable<Tag> tags) {
-            if (observationRegistry.isNoop() && sample != null) {
-                sample.stop(Timer.builder(METER_NAME).description("Duration of Apache HttpClient request execution")
-                        .tags(tags).register(meterRegistry));
-            }
-            else if (observation != null) {
-                observation.stop();
-            }
-        }
-
     }
 
     public static class Builder {

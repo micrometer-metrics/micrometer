@@ -276,6 +276,8 @@ class MicrometerHttpRequestExecutorTest {
                 .hasContextualNameEqualToIgnoringCase("http " + method);
     }
 
+    // TODO add test for status = IO_ERROR case.
+
     static class CustomGlobalApacheHttpConvention extends DefaultApacheHttpClientObservationConvention
             implements Observation.GlobalObservationConvention<ApacheHttpClientContext> {
 
