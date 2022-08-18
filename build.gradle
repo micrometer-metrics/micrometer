@@ -72,6 +72,10 @@ subprojects {
             registerFeature('optional') {
                 usingSourceSet(sourceSets.main)
             }
+
+            toolchain {
+                languageVersion = JavaLanguageVersion.of(8)
+            }
         }
 
         // All projects use optional annotations, but since we don't expose them downstream we would
@@ -86,20 +90,10 @@ subprojects {
             compileJava {
                 options.encoding = 'UTF-8'
                 options.compilerArgs << '-Xlint:unchecked' << '-Xlint:deprecation'
-
-                sourceCompatibility = JavaVersion.VERSION_1_8
-                targetCompatibility = JavaVersion.VERSION_1_8
-
-                // ensure Java 8 baseline is enforced for main source
-                if (JavaVersion.current().isJava9Compatible()) {
-                    options.release = 8
-                }
             }
             compileTestJava {
                 options.encoding = 'UTF-8'
                 options.compilerArgs << '-Xlint:unchecked' << '-Xlint:deprecation'
-                sourceCompatibility = JavaVersion.VERSION_1_8
-                targetCompatibility = JavaVersion.VERSION_1_8
             }
 
             javadoc {
@@ -194,8 +188,6 @@ subprojects {
 
         // Publish resolved versions.
         plugins.withId('maven-publish') {
-            sourceCompatibility = JavaVersion.VERSION_1_8
-            targetCompatibility = JavaVersion.VERSION_1_8
 
             publishing {
                 publications {
