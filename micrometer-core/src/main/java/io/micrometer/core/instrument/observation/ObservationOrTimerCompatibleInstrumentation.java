@@ -40,6 +40,7 @@ import java.util.function.Supplier;
  * {@link Timer} will be used.
  *
  * @param <T> context type if Observation used for instrumentation
+ * @since 1.10.0
  */
 public class ObservationOrTimerCompatibleInstrumentation<T extends Observation.Context> {
 
@@ -53,7 +54,7 @@ public class ObservationOrTimerCompatibleInstrumentation<T extends Observation.C
     private final Observation.ObservationConvention<T> defaultConvention;
 
     @Nullable
-    private Timer.Sample sample;
+    private Timer.Sample timerSample;
 
     @Nullable
     private Observation observation;
@@ -96,10 +97,10 @@ public class ObservationOrTimerCompatibleInstrumentation<T extends Observation.C
 
     private void start(Supplier<T> contextSupplier) {
         if (observationRegistry.isNoop()) {
-            sample = Timer.start(meterRegistry);
+            timerSample = Timer.start(meterRegistry);
         }
         else {
-            this.context = contextSupplier.get();
+            context = contextSupplier.get();
             observation = Observation.start(convention, defaultConvention, context, observationRegistry);
         }
     }
@@ -129,8 +130,8 @@ public class ObservationOrTimerCompatibleInstrumentation<T extends Observation.C
      * @param tagsSupplier tags supplier to apply if using the Timer API
      */
     public void stop(String timerName, @Nullable String timerDescription, Supplier<Iterable<Tag>> tagsSupplier) {
-        if (observationRegistry.isNoop() && sample != null) {
-            sample.stop(Timer.builder(timerName).description(timerDescription).tags(tagsSupplier.get())
+        if (observationRegistry.isNoop() && timerSample != null) {
+            timerSample.stop(Timer.builder(timerName).description(timerDescription).tags(tagsSupplier.get())
                     .register(meterRegistry));
         }
         else if (observation != null) {
