@@ -791,7 +791,8 @@ public interface Observation {
          * Gets an entry from the context. Throws exception when entry is not present.
          * @param key key
          * @param <T> value type
-         * @return entry ot exception if not present
+         * @throws IllegalArgumentException if not present
+         * @return entry
          */
         @Override
         @NonNull
@@ -1014,7 +1015,8 @@ public interface Observation {
          * Gets an entry from the context. Throws exception when entry is not present.
          * @param key key
          * @param <T> value type
-         * @return entry ot exception if not present
+         * @throws IllegalArgumentException if not present
+         * @return entry
          */
         @NonNull
         <T> T getRequired(Object key);
@@ -1036,20 +1038,20 @@ public interface Observation {
         <T> T getOrDefault(Object key, T defaultObject);
 
         /**
-         * Returns low cardinality key values
+         * Returns low cardinality key values.
          * @return low cardinality key values
          */
         KeyValues getLowCardinalityKeyValues();
 
         /**
-         * Returns high cardinality key values
+         * Returns high cardinality key values.
          * @return high cardinality key values
          */
         @NonNull
         KeyValues getHighCardinalityKeyValues();
 
         /**
-         * Returns all key values
+         * Returns all key values.
          * @return all key values
          */
         @NonNull

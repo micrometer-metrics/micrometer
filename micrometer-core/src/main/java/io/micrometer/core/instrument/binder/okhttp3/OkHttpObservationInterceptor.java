@@ -178,7 +178,6 @@ public class OkHttpObservationInterceptor implements Interceptor {
          * Add a {@link KeyValue} to any already configured tags on this Builder.
          * @param tag tag to add
          * @return this builder
-         * @since 1.5.0
          */
         public OkHttpObservationInterceptor.Builder tag(KeyValue tag) {
             this.tags = this.tags.and(tag);
@@ -189,7 +188,6 @@ public class OkHttpObservationInterceptor implements Interceptor {
          * Add a context-specific tag.
          * @param contextSpecificTag function to create a context-specific tag
          * @return this builder
-         * @since 1.5.0
          */
         public OkHttpObservationInterceptor.Builder tag(BiFunction<Request, Response, KeyValue> contextSpecificTag) {
             this.contextSpecificTags.add(contextSpecificTag);
@@ -209,7 +207,6 @@ public class OkHttpObservationInterceptor implements Interceptor {
          * default, {@code includeHostTag} is {@literal true} so both tags are included.
          * @param includeHostTag whether to include the {@code host} tag
          * @return this builder
-         * @since 1.5.0
          */
         public OkHttpObservationInterceptor.Builder includeHostTag(boolean includeHostTag) {
             this.includeHostTag = includeHostTag;
@@ -224,7 +221,6 @@ public class OkHttpObservationInterceptor implements Interceptor {
          * tag match for the same metric.
          * @param requestTagKeys request tag keys
          * @return this builder
-         * @since 1.3.9
          */
         public OkHttpObservationInterceptor.Builder requestTagKeys(String... requestTagKeys) {
             return requestTagKeys(Arrays.asList(requestTagKeys));
@@ -238,7 +234,6 @@ public class OkHttpObservationInterceptor implements Interceptor {
          * tag match for the same metric.
          * @param requestTagKeys request tag keys
          * @return this builder
-         * @since 1.3.9
          */
         public OkHttpObservationInterceptor.Builder requestTagKeys(Iterable<String> requestTagKeys) {
             this.requestTagKeys = requestTagKeys;

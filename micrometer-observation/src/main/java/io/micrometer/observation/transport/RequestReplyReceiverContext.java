@@ -23,7 +23,7 @@ import io.micrometer.common.lang.Nullable;
  * of the data.
  *
  * @author Marcin Grzejszczak
- * @since 1.0.0
+ * @since 1.10.0
  */
 public class RequestReplyReceiverContext<C, RES> extends ReceiverContext<C> {
 

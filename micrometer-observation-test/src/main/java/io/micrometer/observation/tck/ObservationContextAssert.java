@@ -35,7 +35,7 @@ import java.util.stream.Collectors;
  * {@link ObservationContextAssert#then(Observation.ContextView)}.
  *
  * @author Marcin Grzejszczak
- * @since 1.0.0
+ * @since 1.10.0
  */
 @SuppressWarnings({ "unchecked", "rawtypes", "UnusedReturnValue" })
 public class ObservationContextAssert<SELF extends ObservationContextAssert<SELF>>
