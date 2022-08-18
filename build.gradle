@@ -74,7 +74,7 @@ subprojects {
             }
 
             toolchain {
-                languageVersion = JavaLanguageVersion.of(8)
+                languageVersion = JavaLanguageVersion.of(17)
             }
         }
 
@@ -90,11 +90,18 @@ subprojects {
             compileJava {
                 options.encoding = 'UTF-8'
                 options.compilerArgs << '-Xlint:unchecked' << '-Xlint:deprecation'
+
+                sourceCompatibility = JavaVersion.VERSION_1_8
+                targetCompatibility = JavaVersion.VERSION_1_8
+
+                // ensure Java 8 baseline is enforced for main source
+                options.release = 8
             }
             compileTestJava {
                 options.encoding = 'UTF-8'
                 options.compilerArgs << '-Xlint:unchecked' << '-Xlint:deprecation'
             }
+
 
             javadoc {
                 if (project.name.contains('samples')) {
@@ -214,6 +221,7 @@ subprojects {
     }
 
     plugins.withId('maven-publish') {
+
         publishing {
             publications {
                 nebula(MavenPublication) {
