@@ -1,0 +1,74 @@
+/*
+ * Copyright 2022 VMware, Inc.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ * https://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+package io.micrometer.benchmark.core;
+
+import java.util.concurrent.TimeUnit;
+
+import io.micrometer.core.instrument.LongTaskTimer;
+import io.micrometer.core.instrument.Timer;
+import io.micrometer.core.instrument.observation.DefaultMeterObservationHandler;
+import io.micrometer.core.instrument.simple.SimpleMeterRegistry;
+import io.micrometer.observation.Observation;
+import io.micrometer.observation.ObservationRegistry;
+import org.openjdk.jmh.annotations.*;
+import org.openjdk.jmh.runner.Runner;
+import org.openjdk.jmh.runner.RunnerException;
+import org.openjdk.jmh.runner.options.OptionsBuilder;
+
+@Fork(1)
+@State(Scope.Benchmark)
+@BenchmarkMode(Mode.Throughput)
+@OutputTimeUnit(TimeUnit.MICROSECONDS)
+public class ObservationBenchmark {
+
+    SimpleMeterRegistry meterRegistry;
+
+    ObservationRegistry observationRegistry;
+
+    @Setup
+    public void setup() {
+        meterRegistry = new SimpleMeterRegistry();
+        observationRegistry = ObservationRegistry.create();
+        observationRegistry.observationConfig().observationHandler(new DefaultMeterObservationHandler(meterRegistry));
+    }
+
+    @Benchmark
+    public long timerBenchmark() {
+        LongTaskTimer.Sample longTaskSample = LongTaskTimer.builder("test.timer.active").tag("abc", "123")
+                .tag("def", "321").register(meterRegistry).start();
+        Timer.Sample sample = Timer.start(meterRegistry);
+
+        long latencyWithTimer = sample
+                .stop(Timer.builder("test.timer").tag("abc", "123").tag("def", "321").register(meterRegistry));
+        long latencyWithLongTaskTimer = longTaskSample.stop();
+
+        return latencyWithTimer + latencyWithLongTaskTimer;
+    }
+
+    @Benchmark
+    public Observation observationBenchmark() {
+        Observation observation = Observation.createNotStarted("test.obs", observationRegistry)
+                .lowCardinalityKeyValue("abc", "123").lowCardinalityKeyValue("def", "321").start();
+        observation.stop();
+
+        return observation;
+    }
+
+    public static void main(String[] args) throws RunnerException {
+        new Runner(new OptionsBuilder().include(ObservationBenchmark.class.getSimpleName()).build()).run();
+    }
+
+}
