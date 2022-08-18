@@ -25,7 +25,7 @@ import java.util.Objects;
  * sent to sender of the data.
  *
  * @author Marcin Grzejszczak
- * @since 1.0.0
+ * @since 1.10.0
  */
 public class ReceiverContext<C> extends Observation.Context {
 

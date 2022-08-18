@@ -25,7 +25,7 @@ import java.util.Objects;
  * Context used when sending data over the wire in a fire and forget fashion.
  *
  * @author Marcin Grzejszczak
- * @since 1.0.0
+ * @since 1.10.0
  */
 public class SenderContext<C> extends Observation.Context {
 
