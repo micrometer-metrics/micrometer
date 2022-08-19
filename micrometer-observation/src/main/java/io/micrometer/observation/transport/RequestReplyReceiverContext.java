@@ -23,9 +23,11 @@ import io.micrometer.common.lang.Nullable;
  * of the data.
  *
  * @author Marcin Grzejszczak
- * @since 1.0.0
+ * @since 1.10.0
+ * @param <C> type of the carrier object
+ * @param <RES> type of the response object
  */
-public class RequestReplyReceiverContext<C, RES> extends ReceiverContext<C> {
+public class RequestReplyReceiverContext<C, RES> extends ReceiverContext<C> implements ResponseContext<RES> {
 
     @Nullable
     private RES response;
@@ -47,11 +49,13 @@ public class RequestReplyReceiverContext<C, RES> extends ReceiverContext<C> {
         this(getter, Kind.SERVER);
     }
 
+    @Override
     @Nullable
     public RES getResponse() {
         return response;
     }
 
+    @Override
     public void setResponse(RES response) {
         this.response = response;
     }
