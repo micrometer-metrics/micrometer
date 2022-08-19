@@ -54,7 +54,7 @@ final class SignalfxDistributionSummary extends AbstractDistributionSummary {
         super(id, clock, CumulativeHistogramConfigUtil.updateConfig(distributionStatisticConfig), scale, false);
         this.countTotal = new StepTuple2<>(clock, stepMillis, 0L, 0.0, count::sumThenReset, total::sumThenReset);
         max = new TimeWindowMax(clock, distributionStatisticConfig);
-        if (isDelta) {
+        if (distributionStatisticConfig.isPublishingHistogram() && isDelta) {
             deltaHistogramCounts = new DeltaHistogramCounts();
         }
         else {
