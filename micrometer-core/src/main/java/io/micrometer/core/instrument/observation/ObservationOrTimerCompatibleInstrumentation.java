@@ -22,6 +22,7 @@ import io.micrometer.core.instrument.Timer;
 import io.micrometer.observation.Observation;
 import io.micrometer.observation.ObservationRegistry;
 import io.micrometer.observation.transport.RequestReplySenderContext;
+import io.micrometer.observation.transport.ResponseContext;
 
 import java.util.function.Supplier;
 
@@ -113,12 +114,11 @@ public class ObservationOrTimerCompatibleInstrumentation<T extends Observation.C
      * @param <RES> type of the response
      */
     public <RES> void setResponse(RES response) {
-        if (observationRegistry.isNoop() || !(context instanceof RequestReplySenderContext)) {
+        if (observationRegistry.isNoop() || !(context instanceof ResponseContext)) {
             return;
         }
-        // TODO Support RequestReplyReceiverContext
-        RequestReplySenderContext<?, ? super RES> requestReplySenderContext = (RequestReplySenderContext<?, ? super RES>) context;
-        requestReplySenderContext.setResponse(response);
+        ResponseContext<? super RES> responseContext = (ResponseContext<? super RES>) context;
+        responseContext.setResponse(response);
     }
 
     /**

@@ -27,7 +27,7 @@ import io.micrometer.common.lang.Nullable;
  * @param <C> type of the carrier object
  * @param <RES> type of the response object
  */
-public class RequestReplySenderContext<C, RES> extends SenderContext<C> {
+public class RequestReplySenderContext<C, RES> extends SenderContext<C> implements ResponseContext<RES> {
 
     @Nullable
     private RES response;
@@ -49,11 +49,13 @@ public class RequestReplySenderContext<C, RES> extends SenderContext<C> {
         this(setter, Kind.CLIENT);
     }
 
+    @Override
     @Nullable
     public RES getResponse() {
         return response;
     }
 
+    @Override
     public void setResponse(RES response) {
         this.response = response;
     }
