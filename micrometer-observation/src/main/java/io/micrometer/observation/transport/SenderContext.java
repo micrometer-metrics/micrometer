@@ -26,6 +26,7 @@ import java.util.Objects;
  *
  * @author Marcin Grzejszczak
  * @since 1.10.0
+ * @param <C> type of the carrier object
  */
 public class SenderContext<C> extends Observation.Context {
 

@@ -24,6 +24,8 @@ import io.micrometer.common.lang.Nullable;
  *
  * @author Marcin Grzejszczak
  * @since 1.10.0
+ * @param <C> type of the carrier object
+ * @param <RES> type of the response object
  */
 public class RequestReplyReceiverContext<C, RES> extends ReceiverContext<C> {
 
