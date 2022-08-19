@@ -116,6 +116,7 @@ public class ObservationOrTimerCompatibleInstrumentation<T extends Observation.C
         if (observationRegistry.isNoop() || !(context instanceof RequestReplySenderContext)) {
             return;
         }
+        // TODO Support RequestReplyReceiverContext
         RequestReplySenderContext<?, ? super RES> requestReplySenderContext = (RequestReplySenderContext<?, ? super RES>) context;
         requestReplySenderContext.setResponse(response);
     }
