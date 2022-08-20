@@ -18,19 +18,23 @@ package io.micrometer.benchmark.core;
 import java.util.concurrent.TimeUnit;
 
 import io.micrometer.core.instrument.LongTaskTimer;
+import io.micrometer.core.instrument.Tags;
 import io.micrometer.core.instrument.Timer;
 import io.micrometer.core.instrument.observation.DefaultMeterObservationHandler;
+import io.micrometer.core.instrument.observation.ObservationOrTimerCompatibleInstrumentation;
 import io.micrometer.core.instrument.simple.SimpleMeterRegistry;
 import io.micrometer.observation.Observation;
 import io.micrometer.observation.ObservationRegistry;
 import org.openjdk.jmh.annotations.*;
+import org.openjdk.jmh.profile.GCProfiler;
 import org.openjdk.jmh.runner.Runner;
 import org.openjdk.jmh.runner.RunnerException;
 import org.openjdk.jmh.runner.options.OptionsBuilder;
 
 @Fork(1)
+@Threads(4)
 @State(Scope.Benchmark)
-@BenchmarkMode(Mode.Throughput)
+@BenchmarkMode(Mode.SampleTime)
 @OutputTimeUnit(TimeUnit.MICROSECONDS)
 public class ObservationBenchmark {
 
@@ -67,8 +71,18 @@ public class ObservationBenchmark {
         return observation;
     }
 
+    @Benchmark
+    public ObservationOrTimerCompatibleInstrumentation<Observation.Context> observationOrTimerCompatibleInstrumentationBenchmark() {
+        ObservationOrTimerCompatibleInstrumentation<Observation.Context> instrumentation = ObservationOrTimerCompatibleInstrumentation
+                .start(meterRegistry, null, null, null, null);
+        instrumentation.stop("test.obs-or-timer", null, () -> Tags.of("abc", "123", "def", "321"));
+
+        return instrumentation;
+    }
+
     public static void main(String[] args) throws RunnerException {
-        new Runner(new OptionsBuilder().include(ObservationBenchmark.class.getSimpleName()).build()).run();
+        new Runner(new OptionsBuilder().include(ObservationBenchmark.class.getSimpleName())
+                .addProfiler(GCProfiler.class).build()).run();
     }
 
 }
