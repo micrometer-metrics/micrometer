@@ -130,7 +130,7 @@ public class HighCardinalityTagsDetector implements AutoCloseable {
 
     @Override
     public void close() {
-        this.shutdown();
+        shutdown();
     }
 
     private void detectHighCardinalityTags() {

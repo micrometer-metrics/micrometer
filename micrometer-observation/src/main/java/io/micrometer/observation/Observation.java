@@ -390,16 +390,16 @@ public interface Observation {
      */
     @SuppressWarnings("unused")
     default void observe(Runnable runnable) {
-        this.start();
+        start();
         try (Scope scope = openScope()) {
             runnable.run();
         }
         catch (Exception exception) {
-            this.error(exception);
+            error(exception);
             throw exception;
         }
         finally {
-            this.stop();
+            stop();
         }
     }
 
@@ -419,16 +419,16 @@ public interface Observation {
      */
     @SuppressWarnings("unused")
     default <E extends Throwable> void observeChecked(CheckedRunnable<E> checkedRunnable) throws E {
-        this.start();
+        start();
         try (Scope scope = openScope()) {
             checkedRunnable.run();
         }
         catch (Throwable error) {
-            this.error(error);
+            error(error);
             throw error;
         }
         finally {
-            this.stop();
+            stop();
         }
     }
 
@@ -449,16 +449,16 @@ public interface Observation {
      */
     @SuppressWarnings("unused")
     default <T> T observe(Supplier<T> supplier) {
-        this.start();
+        start();
         try (Scope scope = openScope()) {
             return supplier.get();
         }
         catch (Exception exception) {
-            this.error(exception);
+            error(exception);
             throw exception;
         }
         finally {
-            this.stop();
+            stop();
         }
     }
 
@@ -480,16 +480,16 @@ public interface Observation {
      */
     @SuppressWarnings("unused")
     default <T, E extends Throwable> T observeChecked(CheckedCallable<T, E> checkedCallable) throws E {
-        this.start();
+        start();
         try (Scope scope = openScope()) {
             return checkedCallable.call();
         }
         catch (Throwable error) {
-            this.error(error);
+            error(error);
             throw error;
         }
         finally {
-            this.stop();
+            stop();
         }
     }
 
@@ -895,14 +895,14 @@ public interface Observation {
         @NonNull
         @Override
         public KeyValues getAllKeyValues() {
-            return this.getLowCardinalityKeyValues().and(this.getHighCardinalityKeyValues());
+            return getLowCardinalityKeyValues().and(getHighCardinalityKeyValues());
         }
 
         @Override
         public String toString() {
             return "name='" + name + '\'' + ", contextualName='" + contextualName + '\'' + ", error='" + error + '\''
-                    + ", lowCardinalityKeyValues=" + toString(this.getLowCardinalityKeyValues())
-                    + ", highCardinalityKeyValues=" + toString(this.getHighCardinalityKeyValues()) + ", map="
+                    + ", lowCardinalityKeyValues=" + toString(getLowCardinalityKeyValues())
+                    + ", highCardinalityKeyValues=" + toString(getHighCardinalityKeyValues()) + ", map="
                     + toString(map);
         }
 

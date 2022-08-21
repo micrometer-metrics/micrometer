@@ -21,7 +21,7 @@ import io.micrometer.observation.Observation;
 import java.util.stream.Collectors;
 
 /**
- * Handler for {@link Timer.Sample} and {@link Counter}
+ * Handler for {@link Timer.Sample} and {@link Counter}.
  *
  * WARNING: Since the {@link LongTaskTimer} needs to be created in the {@code onStart}
  * method, it can only contain tags that are available by that time. This means that if
