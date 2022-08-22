@@ -157,7 +157,7 @@ public interface ObservationRegistry {
         }
 
         /**
-         * Finds a {@link Observation.ObservationConvention} for the given
+         * Finds an {@link Observation.ObservationConvention} for the given
          * {@link Observation.Context}.
          * @param context context
          * @param defaultConvention default convention if none found
