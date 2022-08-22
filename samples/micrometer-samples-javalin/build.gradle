@@ -6,6 +6,7 @@ dependencies {
     implementation project(":micrometer-core")
     implementation project(":micrometer-registry-prometheus")
 
-    implementation 'io.javalin:javalin:latest.release'
+    // pin to 4.x; 5.x requires changes for Jakarta EE switch
+    implementation 'io.javalin:javalin:4.+'
     implementation 'ch.qos.logback:logback-classic'
 }
