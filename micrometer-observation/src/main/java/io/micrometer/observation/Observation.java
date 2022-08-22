@@ -209,7 +209,7 @@ public interface Observation {
      * <b>Important!</b> If you're using the
      * {@link ObservationConvention#getContextualName(Context)} method to override the
      * contextual name <b>you MUST use a non {@code null} context</b> (i.e. the
-     * {@code context} parameter of this method MUST NOT be {@code null}. The
+     * {@code context} parameter of this method MUST NOT be {@code null}). The
      * {@link ObservationConvention#getContextualName(Context)} requires a concrete type
      * of {@link Context} to be passed and if you're not providing one we won't be able to
      * initialize it ourselves.
@@ -711,7 +711,6 @@ public interface Observation {
         /**
          * Sets the contextual name.
          * @param contextualName name
-         * @return this for chaining
          */
         public void setContextualName(@Nullable String contextualName) {
             this.contextualName = contextualName;
@@ -747,7 +746,6 @@ public interface Observation {
         /**
          * Sets an error that occurred while processing the {@link Observation}.
          * @param error error
-         * @return this for chaining
          */
         public void setError(Throwable error) {
             this.error = error;
