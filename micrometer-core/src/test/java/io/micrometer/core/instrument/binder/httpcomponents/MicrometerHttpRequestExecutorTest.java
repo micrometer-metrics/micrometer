@@ -292,6 +292,7 @@ class MicrometerHttpRequestExecutorTest {
         public String getMethod() {
             return method;
         }
+
     }
 
     // TODO add test for status = IO_ERROR case.

@@ -51,10 +51,12 @@ public class DefaultApacheHttpClientObservationConvention implements ApacheHttpC
     @Override
     public KeyValues getLowCardinalityKeyValues(ApacheHttpClientContext context) {
         KeyValues keyValues = KeyValues.of(
-                ApacheHttpClientDocumentedObservation.ApacheHttpClientTags.METHOD.withValue(getMethodString(context.getCarrier())),
+                ApacheHttpClientDocumentedObservation.ApacheHttpClientTags.METHOD
+                        .withValue(getMethodString(context.getCarrier())),
                 ApacheHttpClientDocumentedObservation.ApacheHttpClientTags.URI
                         .withValue(context.getUriMapper().apply(context.getCarrier())),
-                ApacheHttpClientDocumentedObservation.ApacheHttpClientTags.STATUS.withValue(getStatusValue(context.getResponse())));
+                ApacheHttpClientDocumentedObservation.ApacheHttpClientTags.STATUS
+                        .withValue(getStatusValue(context.getResponse())));
         if (context.exportTagsForRoute()) {
             keyValues = keyValues.and(HttpContextUtils.generateTagStringsForRoute(context.getApacheHttpContext()));
         }
@@ -62,13 +64,12 @@ public class DefaultApacheHttpClientObservationConvention implements ApacheHttpC
     }
 
     String getStatusValue(@Nullable HttpResponse response) {
-        return response != null ? Integer.toString(response.getStatusLine().getStatusCode())
-                : "CLIENT_ERROR";
+        return response != null ? Integer.toString(response.getStatusLine().getStatusCode()) : "CLIENT_ERROR";
     }
 
     String getMethodString(@Nullable HttpRequest request) {
-        return request != null && request.getRequestLine().getMethod() != null
-                ? request.getRequestLine().getMethod() : "UNKNOWN";
+        return request != null && request.getRequestLine().getMethod() != null ? request.getRequestLine().getMethod()
+                : "UNKNOWN";
     }
 
 }

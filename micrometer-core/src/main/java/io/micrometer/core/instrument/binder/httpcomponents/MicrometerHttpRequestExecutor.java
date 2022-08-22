@@ -126,12 +126,11 @@ public class MicrometerHttpRequestExecutor extends HttpRequestExecutor {
         }
         finally {
             String status = statusCodeOrError;
-            sample.stop(METER_NAME, "Duration of Apache HttpClient request execution",
-                    () -> Tags
-                            .of("method", DefaultApacheHttpClientObservationConvention.INSTANCE.getMethodString(request), "uri", uriMapper.apply(request),
-                                    "status", status)
-                            .and(exportTagsForRoute ? HttpContextUtils.generateTagsForRoute(context) : Tags.empty())
-                            .and(extraTags));
+            sample.stop(METER_NAME, "Duration of Apache HttpClient request execution", () -> Tags
+                    .of("method", DefaultApacheHttpClientObservationConvention.INSTANCE.getMethodString(request), "uri",
+                            uriMapper.apply(request), "status", status)
+                    .and(exportTagsForRoute ? HttpContextUtils.generateTagsForRoute(context) : Tags.empty())
+                    .and(extraTags));
         }
     }
 
