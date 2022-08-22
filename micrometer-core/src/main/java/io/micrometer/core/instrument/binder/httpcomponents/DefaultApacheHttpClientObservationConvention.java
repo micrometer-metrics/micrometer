@@ -42,15 +42,13 @@ public class DefaultApacheHttpClientObservationConvention implements ApacheHttpC
 
     @Override
     public String getContextualName(ApacheHttpClientContext context) {
-        // TODO what if method isn't available?
-        return "HTTP " + context.getCarrier().getRequestLine().getMethod();
+        return "HTTP " + getMethodString(context);
     }
 
     @Override
     public KeyValues getLowCardinalityKeyValues(ApacheHttpClientContext context) {
         KeyValues keyValues = KeyValues.of(
-                ApacheHttpClientDocumentedObservation.ApacheHttpClientTags.METHOD
-                        .withValue(context.getCarrier().getRequestLine().getMethod()),
+                ApacheHttpClientDocumentedObservation.ApacheHttpClientTags.METHOD.withValue(getMethodString(context)),
                 ApacheHttpClientDocumentedObservation.ApacheHttpClientTags.URI
                         .withValue(context.getUriMapper().apply(context.getCarrier())),
                 ApacheHttpClientDocumentedObservation.ApacheHttpClientTags.STATUS.withValue(getStatusValue(context)));
@@ -63,6 +61,11 @@ public class DefaultApacheHttpClientObservationConvention implements ApacheHttpC
     private String getStatusValue(ApacheHttpClientContext context) {
         return context.getResponse() != null ? Integer.toString(context.getResponse().getStatusLine().getStatusCode())
                 : "CLIENT_ERROR";
+    }
+
+    private String getMethodString(ApacheHttpClientContext context) {
+        return context.getCarrier() != null && context.getCarrier().getRequestLine().getMethod() != null
+                ? context.getCarrier().getRequestLine().getMethod() : "UNKNOWN";
     }
 
 }
