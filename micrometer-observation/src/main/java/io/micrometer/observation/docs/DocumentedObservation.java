@@ -15,6 +15,7 @@
  */
 package io.micrometer.observation.docs;
 
+import io.micrometer.common.Event;
 import io.micrometer.common.docs.KeyName;
 import io.micrometer.common.lang.NonNull;
 import io.micrometer.common.lang.Nullable;
@@ -56,10 +57,16 @@ public interface DocumentedObservation {
     KeyName[] EMPTY = new KeyName[0];
 
     /**
+     * Empty event names.
+     */
+    Event[] EMPTY_EVENT_NAMES = new Event[0];
+
+    /**
      * Default technical name (e.g.: metric name). You can set the name either by this
      * method or {@link #getDefaultConvention()}. You can't use both.
      * @return name
      */
+    @Nullable
     default String getName() {
         return null;
     }
@@ -99,6 +106,14 @@ public interface DocumentedObservation {
      */
     default KeyName[] getHighCardinalityKeyNames() {
         return EMPTY;
+    }
+
+    /**
+     * Event values.
+     * @return allowed event values
+     */
+    default Event[] getEventNames() {
+        return EMPTY_EVENT_NAMES;
     }
 
     /**
@@ -163,6 +178,9 @@ public interface DocumentedObservation {
                     + "] but you have provided an incompatible one of type [" + defaultConvention.getClass() + "]");
         }
         Observation observation = Observation.createNotStarted(customConvention, defaultConvention, context, registry);
+        if (getName() != null) {
+            context.setName(getName());
+        }
         if (getContextualName() != null) {
             observation.contextualName(getContextualName());
         }

@@ -17,6 +17,7 @@ package io.micrometer.observation;
 
 import io.micrometer.common.KeyValue;
 import io.micrometer.common.KeyValues;
+import io.micrometer.common.Event;
 import io.micrometer.common.lang.NonNull;
 import io.micrometer.common.lang.Nullable;
 
@@ -912,58 +913,6 @@ public interface Observation {
         private String toString(Map<Object, Object> map) {
             return map.entrySet().stream().map(entry -> String.format("%s='%s'", entry.getKey(), entry.getValue()))
                     .collect(Collectors.joining(", ", "[", "]"));
-        }
-
-    }
-
-    /**
-     * An arbitrary event that you can extend and signal during an {@link Observation}.
-     * This helps you to tell to the {@link ObservationHandler} that something happened.
-     * If you want to signal an exception/error, please use
-     * {@link Observation#error(Throwable)} instead.
-     */
-    class Event {
-
-        private final String name;
-
-        private final String contextualName;
-
-        /**
-         * @param name The name of the event.
-         */
-        public Event(String name) {
-            this(name, name);
-        }
-
-        /**
-         * @param name The name of the event (should have low cardinality).
-         * @param contextualName The contextual name of the event (can have high
-         * cardinality).
-         */
-        public Event(String name, String contextualName) {
-            this.name = name;
-            this.contextualName = contextualName;
-        }
-
-        /**
-         * Returns the name of the event.
-         * @return the name of the event.
-         */
-        public String getName() {
-            return this.name;
-        }
-
-        /**
-         * Returns the contextual name of the event.
-         * @return the contextual name of the event.
-         */
-        public String getContextualName() {
-            return this.contextualName;
-        }
-
-        @Override
-        public String toString() {
-            return "event.name='" + this.name + "', event.contextualName='" + this.contextualName + '\'';
         }
 
     }

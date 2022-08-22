@@ -15,6 +15,7 @@
  */
 package io.micrometer.observation;
 
+import io.micrometer.common.Event;
 import io.micrometer.common.util.internal.logging.InternalLoggerFactory;
 
 import java.util.function.Consumer;
@@ -89,7 +90,7 @@ public class ObservationTextPublisher implements ObservationHandler<Observation.
     }
 
     @Override
-    public void onEvent(Observation.Event event, Observation.Context context) {
+    public void onEvent(Event event, Observation.Context context) {
         publishUnformatted(String.format("%5s - %s, %s", "EVENT", event, converter.apply(context)));
     }
 

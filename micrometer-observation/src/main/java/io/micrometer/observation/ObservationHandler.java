@@ -15,6 +15,8 @@
  */
 package io.micrometer.observation;
 
+import io.micrometer.common.Event;
+
 import java.util.Arrays;
 import java.util.List;
 import java.util.Optional;
@@ -48,11 +50,11 @@ public interface ObservationHandler<T extends Observation.Context> {
     }
 
     /**
-     * Reacts to arbitrary {@link Observation.Event}.
-     * @param event the {@link Observation.Event} that was signaled
+     * Reacts to arbitrary {@link Event}.
+     * @param event the {@link Event} that was signaled
      * @param context an {@link Observation.Context}
      */
-    default void onEvent(Observation.Event event, T context) {
+    default void onEvent(Event event, T context) {
     }
 
     /**
@@ -140,7 +142,7 @@ public interface ObservationHandler<T extends Observation.Context> {
         }
 
         @Override
-        public void onEvent(Observation.Event event, Observation.Context context) {
+        public void onEvent(Event event, Observation.Context context) {
             getFirstApplicableHandler(context).ifPresent(handler -> handler.onEvent(event, context));
         }
 
@@ -214,7 +216,7 @@ public interface ObservationHandler<T extends Observation.Context> {
         }
 
         @Override
-        public void onEvent(Observation.Event event, Observation.Context context) {
+        public void onEvent(Event event, Observation.Context context) {
             getAllApplicableHandlers(context).forEach(handler -> handler.onEvent(event, context));
         }
 

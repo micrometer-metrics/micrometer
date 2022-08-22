@@ -16,6 +16,7 @@
 package io.micrometer.observation;
 
 import io.micrometer.common.KeyValue;
+import io.micrometer.common.Event;
 
 /**
  * No-op implementation of {@link Observation} so that we can disable the instrumentation

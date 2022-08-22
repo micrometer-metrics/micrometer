@@ -15,6 +15,7 @@
  */
 package io.micrometer.observation.tck;
 
+import io.micrometer.common.Event;
 import io.micrometer.observation.Observation;
 import io.micrometer.observation.ObservationHandler;
 import org.junit.jupiter.api.DisplayName;
@@ -41,7 +42,7 @@ public abstract class AnyContextObservationHandlerCompatibilityKit
         assertThatCode(() -> handler.onStart(testContext)).doesNotThrowAnyException();
         assertThatCode(() -> handler.onStop(testContext)).doesNotThrowAnyException();
         assertThatCode(() -> handler.onError(testContext)).doesNotThrowAnyException();
-        assertThatCode(() -> handler.onEvent(new Observation.Event("testEvent"), testContext))
+        assertThatCode(() -> handler.onEvent(Event.of("testEvent"), testContext))
                 .doesNotThrowAnyException();
         assertThatCode(() -> handler.onScopeOpened(testContext)).doesNotThrowAnyException();
         assertThatCode(() -> handler.supportsContext(testContext)).doesNotThrowAnyException();
