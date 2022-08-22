@@ -20,8 +20,9 @@ import io.micrometer.observation.Observation;
 import io.micrometer.observation.docs.DocumentedObservation;
 
 /**
- * {@link DocumentedObservation} for {@link MicrometerHttpRequestExecutor}.
+ * {@link DocumentedObservation} for Apache HTTP client instrumentation.
  * @since 1.10.0
+ * @see MicrometerHttpRequestExecutor
  */
 public enum ApacheHttpClientDocumentedObservation implements DocumentedObservation {
 

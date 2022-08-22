@@ -22,6 +22,12 @@ import org.apache.http.protocol.HttpContext;
 
 import java.util.function.Function;
 
+/**
+ * {@link io.micrometer.observation.Observation.Context} for use with Apache HTTP client
+ * {@link io.micrometer.observation.Observation} instrumentation.
+ *
+ * @since 1.10.0
+ */
 public class ApacheHttpClientContext extends RequestReplySenderContext<HttpRequest, HttpResponse> {
 
     private final HttpContext apacheHttpContext;

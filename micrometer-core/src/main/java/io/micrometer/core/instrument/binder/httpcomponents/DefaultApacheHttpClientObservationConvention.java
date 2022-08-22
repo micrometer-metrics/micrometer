@@ -18,7 +18,10 @@ package io.micrometer.core.instrument.binder.httpcomponents;
 import io.micrometer.common.KeyValues;
 
 /**
- * Default implementation of {@link ApacheHttpClientObservationConvention}
+ * Default implementation of {@link ApacheHttpClientObservationConvention}.
+ *
+ * @since 1.10.0
+ * @see ApacheHttpClientDocumentedObservation
  */
 public class DefaultApacheHttpClientObservationConvention implements ApacheHttpClientObservationConvention {
 
