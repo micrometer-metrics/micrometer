@@ -21,7 +21,7 @@ import io.micrometer.core.instrument.MeterRegistry;
 import io.micrometer.core.instrument.Tag;
 import io.micrometer.core.instrument.Tags;
 import io.micrometer.core.instrument.Timer;
-import io.micrometer.core.instrument.observation.ObservationOrTimer;
+import io.micrometer.core.instrument.observation.ObservationOrTimerCompatibleInstrumentation;
 import io.micrometer.observation.Observation;
 import io.micrometer.observation.ObservationRegistry;
 import org.apache.http.HttpClientConnection;
@@ -108,9 +108,10 @@ public class MicrometerHttpRequestExecutor extends HttpRequestExecutor {
     @Override
     public HttpResponse execute(HttpRequest request, HttpClientConnection conn, HttpContext context)
             throws IOException, HttpException {
-        ObservationOrTimer<ApacheHttpClientContext> sample = ObservationOrTimer.start(registry, observationRegistry,
-                () -> new ApacheHttpClientContext(request, context, uriMapper, exportTagsForRoute), convention,
-                DefaultApacheHttpClientObservationConvention.INSTANCE);
+        ObservationOrTimerCompatibleInstrumentation<ApacheHttpClientContext> sample = ObservationOrTimerCompatibleInstrumentation
+                .start(registry, observationRegistry,
+                        () -> new ApacheHttpClientContext(request, context, uriMapper, exportTagsForRoute), convention,
+                        DefaultApacheHttpClientObservationConvention.INSTANCE);
         String statusCodeOrError = "UNKNOWN";
 
         try {
