@@ -16,6 +16,9 @@
 package io.micrometer.core.instrument.binder.httpcomponents;
 
 import io.micrometer.common.KeyValues;
+import io.micrometer.common.lang.Nullable;
+import org.apache.http.HttpRequest;
+import org.apache.http.HttpResponse;
 
 /**
  * Default implementation of {@link ApacheHttpClientObservationConvention}.
@@ -42,30 +45,30 @@ public class DefaultApacheHttpClientObservationConvention implements ApacheHttpC
 
     @Override
     public String getContextualName(ApacheHttpClientContext context) {
-        return "HTTP " + getMethodString(context);
+        return "HTTP " + getMethodString(context.getCarrier());
     }
 
     @Override
     public KeyValues getLowCardinalityKeyValues(ApacheHttpClientContext context) {
         KeyValues keyValues = KeyValues.of(
-                ApacheHttpClientDocumentedObservation.ApacheHttpClientTags.METHOD.withValue(getMethodString(context)),
+                ApacheHttpClientDocumentedObservation.ApacheHttpClientTags.METHOD.withValue(getMethodString(context.getCarrier())),
                 ApacheHttpClientDocumentedObservation.ApacheHttpClientTags.URI
                         .withValue(context.getUriMapper().apply(context.getCarrier())),
-                ApacheHttpClientDocumentedObservation.ApacheHttpClientTags.STATUS.withValue(getStatusValue(context)));
+                ApacheHttpClientDocumentedObservation.ApacheHttpClientTags.STATUS.withValue(getStatusValue(context.getResponse())));
         if (context.exportTagsForRoute()) {
             keyValues = keyValues.and(HttpContextUtils.generateTagStringsForRoute(context.getApacheHttpContext()));
         }
         return keyValues;
     }
 
-    private String getStatusValue(ApacheHttpClientContext context) {
-        return context.getResponse() != null ? Integer.toString(context.getResponse().getStatusLine().getStatusCode())
+    String getStatusValue(@Nullable HttpResponse response) {
+        return response != null ? Integer.toString(response.getStatusLine().getStatusCode())
                 : "CLIENT_ERROR";
     }
 
-    private String getMethodString(ApacheHttpClientContext context) {
-        return context.getCarrier() != null && context.getCarrier().getRequestLine().getMethod() != null
-                ? context.getCarrier().getRequestLine().getMethod() : "UNKNOWN";
+    String getMethodString(@Nullable HttpRequest request) {
+        return request != null && request.getRequestLine().getMethod() != null
+                ? request.getRequestLine().getMethod() : "UNKNOWN";
     }
 
 }

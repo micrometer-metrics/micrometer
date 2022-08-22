@@ -27,6 +27,7 @@ import io.micrometer.observation.ObservationRegistry;
 import io.micrometer.observation.tck.TestObservationRegistry;
 import io.micrometer.observation.tck.TestObservationRegistryAssert;
 import org.apache.http.client.HttpClient;
+import org.apache.http.client.methods.HttpEntityEnclosingRequestBase;
 import org.apache.http.client.methods.HttpGet;
 import org.apache.http.client.methods.HttpPost;
 import org.apache.http.impl.client.HttpClientBuilder;
@@ -39,6 +40,7 @@ import org.junit.jupiter.params.provider.ValueSource;
 import ru.lanwen.wiremock.ext.WiremockResolver;
 
 import java.io.IOException;
+import java.net.URI;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -255,7 +257,7 @@ class MicrometerHttpRequestExecutorTest {
     }
 
     @ParameterizedTest
-    @ValueSource(strings = { "get", "post" })
+    @ValueSource(strings = { "get", "post", "custom" })
     void contextualNameContainsRequestMethod(String method, @WiremockResolver.Wiremock WireMockServer server)
             throws IOException {
         server.stubFor(any(anyUrl()));
@@ -270,10 +272,26 @@ class MicrometerHttpRequestExecutorTest {
             EntityUtils.consume(client.execute(new HttpPost(server.baseUrl())).getEntity());
         }
         else {
-            throw new IllegalArgumentException("Unexpected HTTP method argument: " + method);
+            EntityUtils.consume(client.execute(new HttpCustomMethod(method, server.baseUrl())).getEntity());
         }
         TestObservationRegistryAssert.assertThat(observationRegistry).hasSingleObservationThat()
                 .hasContextualNameEqualToIgnoringCase("http " + method);
+    }
+
+    private static class HttpCustomMethod extends HttpEntityEnclosingRequestBase {
+
+        private final String method;
+
+        private HttpCustomMethod(String method, String uri) {
+            super();
+            setURI(URI.create(uri));
+            this.method = method;
+        }
+
+        @Override
+        public String getMethod() {
+            return method;
+        }
     }
 
     // TODO add test for status = IO_ERROR case.

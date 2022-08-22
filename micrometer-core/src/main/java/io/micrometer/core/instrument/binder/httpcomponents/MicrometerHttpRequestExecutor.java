@@ -117,8 +117,7 @@ public class MicrometerHttpRequestExecutor extends HttpRequestExecutor {
         try {
             HttpResponse response = super.execute(request, conn, context);
             sample.setResponse(response);
-            statusCodeOrError = response != null ? Integer.toString(response.getStatusLine().getStatusCode())
-                    : "CLIENT_ERROR";
+            statusCodeOrError = DefaultApacheHttpClientObservationConvention.INSTANCE.getStatusValue(response);
             return response;
         }
         catch (IOException | HttpException | RuntimeException e) {
@@ -129,7 +128,7 @@ public class MicrometerHttpRequestExecutor extends HttpRequestExecutor {
             String status = statusCodeOrError;
             sample.stop(METER_NAME, "Duration of Apache HttpClient request execution",
                     () -> Tags
-                            .of("method", request.getRequestLine().getMethod(), "uri", uriMapper.apply(request),
+                            .of("method", DefaultApacheHttpClientObservationConvention.INSTANCE.getMethodString(request), "uri", uriMapper.apply(request),
                                     "status", status)
                             .and(exportTagsForRoute ? HttpContextUtils.generateTagsForRoute(context) : Tags.empty())
                             .and(extraTags));
