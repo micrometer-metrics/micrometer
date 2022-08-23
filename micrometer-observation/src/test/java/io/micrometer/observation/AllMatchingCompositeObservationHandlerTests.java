@@ -15,6 +15,7 @@
  */
 package io.micrometer.observation;
 
+import io.micrometer.common.Event;
 import io.micrometer.observation.ObservationHandler.AllMatchingCompositeObservationHandler;
 import org.junit.jupiter.api.Test;
 
@@ -67,7 +68,7 @@ class AllMatchingCompositeObservationHandlerTests {
         AllMatchingCompositeObservationHandler allMatchingHandler = new AllMatchingCompositeObservationHandler(
                 new NotMatchingHandler(), this.matchingHandler, new NotMatchingHandler(), this.matchingHandler2);
 
-        allMatchingHandler.onEvent(new Observation.Event("testEvent"), null);
+        allMatchingHandler.onEvent(Event.of("testEvent"), null);
 
         assertThat(this.matchingHandler.eventDetected).isTrue();
         assertThat(this.matchingHandler2.eventDetected).isTrue();
@@ -149,7 +150,7 @@ class AllMatchingCompositeObservationHandlerTests {
         }
 
         @Override
-        public void onEvent(Observation.Event event, Observation.Context context) {
+        public void onEvent(Event event, Observation.Context context) {
             this.eventDetected = true;
         }
 

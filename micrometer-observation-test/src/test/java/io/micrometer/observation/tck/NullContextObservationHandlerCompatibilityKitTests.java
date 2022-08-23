@@ -15,6 +15,7 @@
  */
 package io.micrometer.observation.tck;
 
+import io.micrometer.common.Event;
 import io.micrometer.observation.Observation;
 import io.micrometer.observation.ObservationHandler;
 
@@ -32,7 +33,7 @@ class NullContextObservationHandlerCompatibilityKitTests extends NullContextObse
             }
 
             @Override
-            public void onEvent(Observation.Event event, Observation.Context context) {
+            public void onEvent(Event event, Observation.Context context) {
             }
 
             @Override
