@@ -330,7 +330,7 @@ public interface Observation {
      * Adds an observation convention that can be used to attach key values to the
      * observation. WARNING: You must add ObservationConvention instances to the
      * Observation before it is started.
-     * @param observationConvention key values provider
+     * @param observationConvention observation convention
      * @return this
      */
     Observation observationConvention(ObservationConvention<?> observationConvention);
@@ -1098,10 +1098,10 @@ public interface Observation {
         }
 
         /**
-         * Tells whether this key values provider should be applied for a given
+         * Tells whether this observation convention should be applied for a given
          * {@link Context}.
          * @param context a {@link Context}
-         * @return {@code true} when this key values provider should be used
+         * @return {@code true} when this observation convention should be used
          */
         boolean supportsContext(Context context);
 

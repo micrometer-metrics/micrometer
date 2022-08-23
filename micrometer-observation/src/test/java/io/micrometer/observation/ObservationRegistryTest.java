@@ -100,7 +100,7 @@ class ObservationRegistryTest {
         registry.observationConfig().observationConvention(new OurCompanyObservationConvention());
 
         Observation.Context myContext = new MessagingContext().put("foo", "hello");
-        // KeyValues provider wants to use a MessagingConvention
+        // Observation convention wants to use a MessagingConvention
         MessagingObservationConvention messagingObservationConvention = new MessagingObservationConvention(
                 messagingConvention);
 
