@@ -1,3 +1,8 @@
+import java.nio.file.Files
+import java.util.zip.ZipEntry
+import java.util.zip.ZipFile
+import java.util.zip.ZipOutputStream
+
 plugins {
     id "org.jetbrains.kotlin.jvm" version "1.7.10"
     id 'me.champeau.mrjar' version "0.1"
@@ -146,6 +151,37 @@ dependencies {
     }
     testImplementation("org.apache.maven.resolver:maven-resolver-connector-basic:latest.release")
     testImplementation("org.springframework:spring-core:latest.release")
+}
+
+task updateTheManifest {
+    dependsOn("jar")
+    mustRunAfter("jar")
+    doLast {
+        updateZipEntry(new File(project.buildDir, "libs/${project.name}-${project.version}.jar"), "META-INF/MANIFEST.MF", string -> {
+            return string.replace("X-Compile-Target-JDK: 17", "X-Compile-Target-JDK: 8").replace("X-Compile-Source-JDK: 17", "X-Compile-Source-JDK: 8")
+        })
+    }
+}
+
+build.dependsOn("updateTheManifest")
+publish.dependsOn("updateTheManifest")
+
+static void updateZipEntry(File zipFile, String zipEntry, Closure<String> contentParser){
+    def zin = new ZipFile(zipFile)
+    def tmp = File.createTempFile("temp_${System.nanoTime()}", '.zip')
+    tmp.withOutputStream { os ->
+        def zos = new ZipOutputStream(os)
+        zin.entries().each { entry ->
+            def isReplaced = entry.name == zipEntry
+            zos.putNextEntry(isReplaced ? new ZipEntry(zipEntry) : entry)
+            zos << (isReplaced ? contentParser.call(new String(zin.getInputStream(entry).bytes)) : zin.getInputStream(entry).bytes )
+            zos.closeEntry()
+        }
+        zos.close()
+    }
+    zin.close()
+    assert zipFile.delete()
+    Files.copy(tmp.toPath(), zipFile.toPath())
 }
 
 task shenandoahTest(type: Test) {
