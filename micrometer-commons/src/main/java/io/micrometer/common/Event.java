@@ -22,16 +22,17 @@ package io.micrometer.common;
  * @since 1.10.0
  */
 public interface Event {
+
     /**
-     * Returns event name. Use can use {@code %s} to represent dynamic entries that
-     * should be resolved at runtime via {@link String#format(String, Object...)}.
+     * Returns event name. Use can use {@code %s} to represent dynamic entries that should
+     * be resolved at runtime via {@link String#format(String, Object...)}.
      * @return event name
      */
     String getName();
 
     /**
-     * Returns event contextual name. Use can use {@code %s} to represent dynamic entries that
-     * should be resolved at runtime via {@link String#format(String, Object...)}.
+     * Returns event contextual name. Use can use {@code %s} to represent dynamic entries
+     * that should be resolved at runtime via {@link String#format(String, Object...)}.
      * @return event contextual name
      */
     default String getContextualName() {
@@ -69,7 +70,8 @@ public interface Event {
 
     /**
      * Creates an event for the given key name.
-     * @param dynamicEntriesForContextualName variables to be resolved in {@link Event#getContextualName()} via {@link String#format(String, Object...)}
+     * @param dynamicEntriesForContextualName variables to be resolved in
+     * {@link Event#getContextualName()} via {@link String#format(String, Object...)}
      * @return event
      */
     default Event format(Object... dynamicEntriesForContextualName) {
@@ -87,4 +89,5 @@ public interface Event {
             }
         };
     }
+
 }

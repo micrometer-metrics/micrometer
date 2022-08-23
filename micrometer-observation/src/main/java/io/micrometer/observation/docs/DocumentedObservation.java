@@ -112,7 +112,7 @@ public interface DocumentedObservation {
      * Event values.
      * @return allowed event values
      */
-    default Event[] getEventNames() {
+    default Event[] getEvents() {
         return EMPTY_EVENT_NAMES;
     }
 
