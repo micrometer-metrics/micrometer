@@ -15,8 +15,6 @@
  */
 package io.micrometer.observation;
 
-import io.micrometer.common.KeyValue;
-import io.micrometer.common.KeyValues;
 import org.junit.jupiter.api.Test;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -29,7 +27,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 class ObservationConventionTest {
 
     @Test
-    void tagsShouldBeEmptyByDefault() {
+    void keyValuesShouldBeEmptyByDefault() {
         Observation.ObservationConvention<Observation.Context> ObservationConvention = new TestObservationConvention();
 
         assertThat(ObservationConvention.getLowCardinalityKeyValues(new Observation.Context())).isEmpty();
@@ -41,65 +39,6 @@ class ObservationConventionTest {
         @Override
         public boolean supportsContext(Observation.Context context) {
             return true;
-        }
-
-    }
-
-    static class MatchingTestObservationConvention implements Observation.ObservationConvention<Observation.Context> {
-
-        @Override
-        public boolean supportsContext(Observation.Context context) {
-            return true;
-        }
-
-        @Override
-        public KeyValues getLowCardinalityKeyValues(Observation.Context context) {
-            return KeyValues.of(KeyValue.of("matching-low-1", ""));
-        }
-
-        @Override
-        public KeyValues getHighCardinalityKeyValues(Observation.Context context) {
-            return KeyValues.of(KeyValue.of("matching-high-1", ""));
-        }
-
-    }
-
-    static class AnotherMatchingTestObservationConvention
-            implements Observation.ObservationConvention<Observation.Context> {
-
-        @Override
-        public boolean supportsContext(Observation.Context context) {
-            return true;
-        }
-
-        @Override
-        public KeyValues getLowCardinalityKeyValues(Observation.Context context) {
-            return KeyValues.of(KeyValue.of("matching-low-2", ""));
-        }
-
-        @Override
-        public KeyValues getHighCardinalityKeyValues(Observation.Context context) {
-            return KeyValues.of(KeyValue.of("matching-high-2", ""));
-        }
-
-    }
-
-    static class NotMatchingTestObservationConvention
-            implements Observation.ObservationConvention<Observation.Context> {
-
-        @Override
-        public boolean supportsContext(Observation.Context context) {
-            return false;
-        }
-
-        @Override
-        public KeyValues getLowCardinalityKeyValues(Observation.Context context) {
-            return KeyValues.of(KeyValue.of("not-matching-low", ""));
-        }
-
-        @Override
-        public KeyValues getHighCardinalityKeyValues(Observation.Context context) {
-            return KeyValues.of(KeyValue.of("not-matching-high", ""));
         }
 
     }
