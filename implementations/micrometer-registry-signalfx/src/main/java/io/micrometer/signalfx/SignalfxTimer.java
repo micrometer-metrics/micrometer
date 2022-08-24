@@ -98,7 +98,8 @@ final class SignalfxTimer extends AbstractTimer {
                 currentSnapshot.total(), // Already delta in sfx implementation
                 currentSnapshot.max(), // Max cannot be calculated as delta, keep the
                                        // current.
-                null, // No percentile values
+                currentSnapshot.percentileValues(), // No changes to the percentile
+                                                    // values.
                 deltaHistogramCounts.calculate(currentSnapshot.histogramCounts()), currentSnapshot::outputSummary);
     }
 
