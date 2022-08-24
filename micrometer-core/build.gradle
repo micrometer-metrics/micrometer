@@ -1,8 +1,3 @@
-import java.nio.file.Files
-import java.util.zip.ZipEntry
-import java.util.zip.ZipFile
-import java.util.zip.ZipOutputStream
-
 plugins {
     id "org.jetbrains.kotlin.jvm" version "1.7.10"
     id 'me.champeau.mrjar' version "0.1"
@@ -204,7 +199,9 @@ java11Test {
         excludeTags 'docker'
     }
 
-    include 'io/micrometer/core/instrument/binder/jdk/**'
+    include {
+        it.getFile().getAbsolutePath().contains("java11Test")
+    }
 
     retry {
         maxFailures = 5

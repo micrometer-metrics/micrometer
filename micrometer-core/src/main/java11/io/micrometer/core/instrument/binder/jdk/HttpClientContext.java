@@ -21,6 +21,7 @@ import java.net.http.HttpClient;
 import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
 import java.util.Objects;
+import java.util.function.Function;
 
 /**
  * A {@link RequestReplySenderContext} for an {@link HttpClient}.
@@ -30,8 +31,15 @@ import java.util.Objects;
  */
 public class HttpClientContext extends RequestReplySenderContext<HttpRequest.Builder, HttpResponse<?>> {
 
-    public HttpClientContext() {
+    private final Function<HttpRequest, String> uriMapper;
+
+    public HttpClientContext(Function<HttpRequest, String> uriMapper) {
         super((carrier, key, value) -> Objects.requireNonNull(carrier).header(key, value));
+        this.uriMapper = uriMapper;
+    }
+
+    public Function<HttpRequest, String> getUriMapper() {
+        return uriMapper;
     }
 
 }

@@ -17,9 +17,14 @@ package io.micrometer.core.instrument.binder.jdk;
 
 import com.github.tomakehurst.wiremock.junit5.WireMockRuntimeInfo;
 import com.github.tomakehurst.wiremock.junit5.WireMockTest;
+import io.micrometer.core.instrument.MeterRegistry;
+import io.micrometer.core.instrument.observation.DefaultMeterObservationHandler;
+import io.micrometer.core.instrument.simple.SimpleMeterRegistry;
 import io.micrometer.observation.Observation;
 import io.micrometer.observation.ObservationHandler;
+import io.micrometer.observation.ObservationRegistry;
 import io.micrometer.observation.tck.TestObservationRegistry;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
 import java.io.IOException;
@@ -31,25 +36,53 @@ import java.time.Duration;
 import java.time.temporal.ChronoUnit;
 
 import static com.github.tomakehurst.wiremock.client.WireMock.*;
+import static org.assertj.core.api.BDDAssertions.then;
 
 @WireMockTest
-public class ObservedHttpClientTests {
+public class MicrometerHttpClientTests {
+
+    MeterRegistry meterRegistry = new SimpleMeterRegistry();
+
+    HttpClient httpClient = HttpClient.newBuilder().connectTimeout(Duration.of(100, ChronoUnit.MILLIS)).build();
+
+    @BeforeEach
+    void setup() {
+        stubFor(any(urlEqualTo("/metrics")).willReturn(ok().withBody("body")));
+    }
 
     @Test
-    void shouldInstrumentHttpClient(WireMockRuntimeInfo wmInfo) throws IOException, InterruptedException {
-        TestObservationRegistry observationRegistry = TestObservationRegistry.create();
-        observationRegistry.observationConfig().observationHandler(headerSettingHandler());
-        HttpClient httpClient = HttpClient.newBuilder().connectTimeout(Duration.of(100, ChronoUnit.MILLIS)).build();
-
-        stubFor(any(urlEqualTo("/metrics")).willReturn(ok().withBody("body")));
-
-        HttpClient observedClient = new ObservedHttpClient(observationRegistry, httpClient);
+    void shouldInstrumentHttpClientWithObservation(WireMockRuntimeInfo wmInfo)
+            throws IOException, InterruptedException {
+        ObservationRegistry observationRegistry = TestObservationRegistry.create();
+        observationRegistry.observationConfig().observationHandler(
+                new ObservationHandler.AllMatchingCompositeObservationHandler(headerSettingHandler(),
+                        new DefaultMeterObservationHandler(meterRegistry)));
 
         HttpRequest request = HttpRequest.newBuilder().GET().uri(URI.create(wmInfo.getHttpBaseUrl() + "/metrics"))
                 .build();
+
+        HttpClient observedClient = MicrometerHttpClient.instrumentationBuilder(httpClient, meterRegistry)
+                .observationRegistry(observationRegistry).build();
         observedClient.send(request, HttpResponse.BodyHandlers.ofString());
 
         verify(anyRequestedFor(urlEqualTo("/metrics")).withHeader("foo", equalTo("bar")));
+        thenMeterRegistryContainsHttpClientTags();
+    }
+
+    @Test
+    void shouldInstrumentHttpClientWithTimer(WireMockRuntimeInfo wmInfo) throws IOException, InterruptedException {
+        HttpRequest request = HttpRequest.newBuilder().GET().uri(URI.create(wmInfo.getHttpBaseUrl() + "/metrics"))
+                .build();
+
+        HttpClient observedClient = MicrometerHttpClient.instrumentationBuilder(httpClient, meterRegistry).build();
+        observedClient.send(request, HttpResponse.BodyHandlers.ofString());
+
+        thenMeterRegistryContainsHttpClientTags();
+    }
+
+    private void thenMeterRegistryContainsHttpClientTags() {
+        then(meterRegistry.find("http.client.requests").tag("error", "none").tag("method", "GET").tag("status", "200")
+                .timer()).isNotNull();
     }
 
     private ObservationHandler<HttpClientContext> headerSettingHandler() {

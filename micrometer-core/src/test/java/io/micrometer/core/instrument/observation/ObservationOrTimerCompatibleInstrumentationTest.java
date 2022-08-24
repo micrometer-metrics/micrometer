@@ -42,7 +42,7 @@ class ObservationOrTimerCompatibleInstrumentationTest {
         Timer timer = meterRegistry.get("my.timer").timer();
         assertThat(timer).isNotNull();
         assertThat(timer.getId().getDescription()).isEqualTo("timer description");
-        assertThat(timer.getId().getTags()).containsOnly(Tag.of("a", "b"));
+        assertThat(timer.getId().getTags()).containsOnly(Tag.of("a", "b"), Tag.of("error", "none"));
     }
 
     @Test

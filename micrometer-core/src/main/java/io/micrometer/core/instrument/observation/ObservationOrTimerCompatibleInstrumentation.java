@@ -63,6 +63,9 @@ public class ObservationOrTimerCompatibleInstrumentation<T extends Observation.C
     @Nullable
     private T context;
 
+    @Nullable
+    private Throwable throwable;
+
     /**
      * Start timing based on Observation and the convention for it if
      * {@link ObservationRegistry} is not null and not the no-op registry. Otherwise,
@@ -122,6 +125,15 @@ public class ObservationOrTimerCompatibleInstrumentation<T extends Observation.C
     }
 
     /**
+     * If using an Observation will set the error on Observation. For metrics it will set
+     * a tag {@code error}.
+     * @param throwable error that got recorded
+     */
+    public void setThrowable(Throwable throwable) {
+        this.throwable = throwable;
+    }
+
+    /**
      * Stop the timing. The tags that should be applied to the timer need to be passed
      * here. These parameters will only be used if instrumentation is Timer-based.
      * Observation-based instrumentation will use tags and the name from the applicable
@@ -132,10 +144,15 @@ public class ObservationOrTimerCompatibleInstrumentation<T extends Observation.C
      */
     public void stop(String timerName, @Nullable String timerDescription, Supplier<Iterable<Tag>> tagsSupplier) {
         if (observationRegistry.isNoop() && timerSample != null) {
-            timerSample.stop(Timer.builder(timerName).description(timerDescription).tags(tagsSupplier.get())
-                    .register(meterRegistry));
+            Timer.Builder builder = Timer.builder(timerName).description(timerDescription).tags();
+            builder.tag("error", throwable != null ? throwable.getClass().getSimpleName() : "none")
+                    .tags(tagsSupplier.get());
+            timerSample.stop(builder.register(meterRegistry));
         }
         else if (observation != null) {
+            if (throwable != null) {
+                observation.error(throwable);
+            }
             observation.stop();
         }
     }

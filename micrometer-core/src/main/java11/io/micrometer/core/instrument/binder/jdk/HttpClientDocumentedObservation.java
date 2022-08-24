@@ -35,6 +35,7 @@ enum HttpClientDocumentedObservation implements DocumentedObservation {
         public KeyName[] getLowCardinalityKeyNames() {
             return LowCardinalityKeys.values();
         }
+
     };
 
     @NonNullApi

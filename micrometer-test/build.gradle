@@ -1,8 +1,26 @@
+plugins {
+    id 'me.champeau.mrjar' version "0.1"
+}
+
 description 'Test compatibility kit for extensions of Micrometer'
+
+multiRelease {
+    targetVersions 8, 11
+}
+
+// Otherwise java11 tests will not see java11 code
+sourceSets {
+    java11Test {
+        compileClasspath += sourceSets.java11.output
+        runtimeClasspath += sourceSets.java11.output
+    }
+}
 
 dependencies {
     api project(':micrometer-core')
     api project(':micrometer-observation')
+
+    java11TestImplementation project(":micrometer-core").sourceSets.java11.output
 
     api 'org.assertj:assertj-core'
 
@@ -10,6 +28,8 @@ dependencies {
 
     api 'ru.lanwen.wiremock:wiremock-junit5'
     api 'com.github.tomakehurst:wiremock-jre8-standalone'
+    java11TestImplementation 'com.github.tomakehurst:wiremock-jre8-standalone'
+
     api 'org.mockito:mockito-core'
 
     testImplementation project(':micrometer-observation-test')
@@ -26,4 +46,22 @@ dependencies {
     testImplementation 'com.squareup.okhttp3:okhttp'
     testImplementation 'org.apache.httpcomponents:httpclient'
     testImplementation 'org.eclipse.jetty:jetty-client'
+}
+
+java11Test {
+    // set heap size for the test JVM(s)
+    maxHeapSize = "1500m"
+
+    useJUnitPlatform {
+        excludeTags 'docker'
+    }
+
+    include {
+        it.getFile().getAbsolutePath().contains("java11Test")
+    }
+
+    retry {
+        maxFailures = 5
+        maxRetries = 3
+    }
 }

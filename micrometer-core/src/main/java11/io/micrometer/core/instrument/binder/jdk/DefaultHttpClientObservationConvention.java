@@ -16,9 +16,12 @@
 package io.micrometer.core.instrument.binder.jdk;
 
 import io.micrometer.common.KeyValues;
+import io.micrometer.common.lang.NonNull;
 import io.micrometer.common.lang.Nullable;
 
 import java.net.http.HttpRequest;
+import java.net.http.HttpResponse;
+import java.util.function.Function;
 
 /**
  * Default implementation of {@link HttpClientObservationConvention}.
@@ -28,6 +31,11 @@ import java.net.http.HttpRequest;
  */
 public class DefaultHttpClientObservationConvention implements HttpClientObservationConvention {
 
+    /**
+     * Instance of this {@link DefaultHttpClientObservationConvention}.
+     */
+    public static DefaultHttpClientObservationConvention INSTANCE = new DefaultHttpClientObservationConvention();
+
     @Override
     public KeyValues getLowCardinalityKeyValues(HttpClientContext context) {
         if (context.getCarrier() == null) {
@@ -36,7 +44,8 @@ public class DefaultHttpClientObservationConvention implements HttpClientObserva
         HttpRequest httpRequest = context.getCarrier().build();
         KeyValues keyValues = KeyValues.of(
                 HttpClientDocumentedObservation.LowCardinalityKeys.METHOD.withValue(httpRequest.method()),
-                HttpClientDocumentedObservation.LowCardinalityKeys.URI.withValue(httpRequest.uri().toString()));
+                HttpClientDocumentedObservation.LowCardinalityKeys.URI
+                        .withValue(getUriTag(httpRequest, context.getResponse(), context.getUriMapper())));
         if (context.getResponse() != null) {
             keyValues = keyValues.and(HttpClientDocumentedObservation.LowCardinalityKeys.STATUS
                     .withValue(String.valueOf(context.getResponse().statusCode())));
@@ -44,7 +53,17 @@ public class DefaultHttpClientObservationConvention implements HttpClientObserva
         return keyValues;
     }
 
+    String getUriTag(@Nullable HttpRequest request, @Nullable HttpResponse httpResponse,
+            Function<HttpRequest, String> uriMapper) {
+        if (request == null) {
+            return null;
+        }
+        return httpResponse != null && (httpResponse.statusCode() == 404 || httpResponse.statusCode() == 301)
+                ? "NOT_FOUND" : uriMapper.apply(request);
+    }
+
     @Override
+    @NonNull
     public String getName() {
         return "http.client.requests";
     }
