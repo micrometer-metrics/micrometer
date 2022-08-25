@@ -18,12 +18,15 @@ package io.micrometer.core.instrument;
 import io.micrometer.common.lang.Nullable;
 import io.micrometer.core.instrument.binder.httpcomponents.DefaultUriMapper;
 import io.micrometer.core.instrument.binder.httpcomponents.MicrometerHttpRequestExecutor;
+import io.micrometer.core.instrument.observation.DefaultMeterObservationHandler;
+import io.micrometer.observation.ObservationRegistry;
 import org.apache.http.client.HttpClient;
 import org.apache.http.client.methods.HttpEntityEnclosingRequestBase;
 import org.apache.http.client.methods.HttpUriRequest;
 import org.apache.http.entity.BasicHttpEntity;
 import org.apache.http.impl.client.HttpClientBuilder;
 import org.apache.http.util.EntityUtils;
+import org.junit.jupiter.api.BeforeEach;
 
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
@@ -31,8 +34,13 @@ import java.net.URI;
 
 class ApacheHttpClientTimingInstrumentationVerificationTests extends HttpClientTimingInstrumentationVerificationTests {
 
-    private final HttpClient httpClient = HttpClientBuilder.create()
-            .setRequestExecutor(MicrometerHttpRequestExecutor.builder(getRegistry()).build()).build();
+    protected HttpClient httpClient;
+
+    @BeforeEach
+    protected void setup() {
+        httpClient = HttpClientBuilder.create()
+                .setRequestExecutor(MicrometerHttpRequestExecutor.builder(getRegistry()).build()).build();
+    }
 
     @Override
     protected String timerName() {
@@ -67,6 +75,21 @@ class ApacheHttpClientTimingInstrumentationVerificationTests extends HttpClientT
         request.setURI(URI.create(baseUri + substitutePathVariables(templatedPath, pathVariables)));
         request.setHeader(DefaultUriMapper.URI_PATTERN_HEADER, templatedPath);
         return request;
+    }
+
+    static class ApacheHttpClientWithObservationRegistryTests
+            extends ApacheHttpClientTimingInstrumentationVerificationTests {
+
+        @BeforeEach
+        @Override
+        protected void setup() {
+            ObservationRegistry observationRegistry = ObservationRegistry.create();
+            observationRegistry.observationConfig()
+                    .observationHandler(new DefaultMeterObservationHandler(getRegistry()));
+            this.httpClient = HttpClientBuilder.create().setRequestExecutor(MicrometerHttpRequestExecutor
+                    .builder(getRegistry()).observationRegistry(observationRegistry).build()).build();
+        }
+
     }
 
 }

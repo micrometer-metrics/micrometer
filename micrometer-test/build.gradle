@@ -12,6 +12,8 @@ dependencies {
     api 'com.github.tomakehurst:wiremock-jre8-standalone'
     api 'org.mockito:mockito-core'
 
+    testImplementation project(':micrometer-observation-test')
+
     testImplementation 'org.jsr107.ri:cache-ri-impl'
 
     // We have tests for the many features that are optional dependencies, so add
