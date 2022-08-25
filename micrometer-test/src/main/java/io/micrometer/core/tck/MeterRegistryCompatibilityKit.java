@@ -15,7 +15,6 @@
  */
 package io.micrometer.core.tck;
 
-import io.micrometer.common.Event;
 import io.micrometer.core.Issue;
 import io.micrometer.core.annotation.Timed;
 import io.micrometer.core.instrument.Timer;
@@ -643,7 +642,7 @@ public abstract class MeterRegistryCompatibilityKit {
             observation.lowCardinalityKeyValue("dynamicTag", "24");
 
             clock(registry).add(1, TimeUnit.SECONDS);
-            observation.event(Event.of("testEvent", "event for testing"));
+            observation.event(Observation.Event.of("testEvent", "event for testing"));
 
             LongTaskTimer longTaskTimer = registry.more().longTaskTimer("myObservation.active", "staticTag", "42");
             assertThat(longTaskTimer.activeTasks()).isEqualTo(1);
@@ -668,7 +667,7 @@ public abstract class MeterRegistryCompatibilityKit {
             try (Observation.Scope scope = observation.openScope()) {
                 assertThat(scope.getCurrentObservation()).isSameAs(observation);
                 clock(registry).add(10, TimeUnit.NANOSECONDS);
-                observation.event(Event.of("testEvent", "event for testing"));
+                observation.event(Observation.Event.of("testEvent", "event for testing"));
             }
             observation.stop();
             clock(registry).add(step());

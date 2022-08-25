@@ -15,7 +15,6 @@
  */
 package io.micrometer.core.samples;
 
-import io.micrometer.common.Event;
 import io.micrometer.common.KeyValues;
 import io.micrometer.core.instrument.observation.DefaultMeterObservationHandler;
 import io.micrometer.core.instrument.simple.SimpleMeterRegistry;
@@ -48,7 +47,7 @@ public class ObservationHandlerSample {
 
         try (Observation.Scope scope = observation.openScope()) {
             Thread.sleep(1_000);
-            observation.event(Event.of("custom.event", "Custom " + UUID.randomUUID()));
+            observation.event(Observation.Event.of("custom.event", "Custom " + UUID.randomUUID()));
             observation.error(new IOException("simulated"));
         }
 

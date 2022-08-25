@@ -15,7 +15,6 @@
  */
 package io.micrometer.observation.tck;
 
-import io.micrometer.common.Event;
 import io.micrometer.observation.Observation;
 import io.micrometer.observation.ObservationHandler;
 import io.micrometer.observation.ObservationRegistry;
@@ -59,7 +58,7 @@ public abstract class ConcreteContextObservationHandlerCompatibilityKit<T extend
         assertThatCode(() -> handler.onStart(context())).doesNotThrowAnyException();
         assertThatCode(() -> handler.onStop(context())).doesNotThrowAnyException();
         assertThatCode(() -> handler.onError(context())).doesNotThrowAnyException();
-        assertThatCode(() -> handler.onEvent(Event.of("testEvent"), context())).doesNotThrowAnyException();
+        assertThatCode(() -> handler.onEvent(Observation.Event.of("testEvent"), context())).doesNotThrowAnyException();
         assertThatCode(() -> handler.onScopeOpened(context())).doesNotThrowAnyException();
     }
 

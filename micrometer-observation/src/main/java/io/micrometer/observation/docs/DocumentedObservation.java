@@ -15,7 +15,6 @@
  */
 package io.micrometer.observation.docs;
 
-import io.micrometer.common.Event;
 import io.micrometer.common.docs.KeyName;
 import io.micrometer.common.lang.NonNull;
 import io.micrometer.common.lang.Nullable;
@@ -59,7 +58,7 @@ public interface DocumentedObservation {
     /**
      * Empty event names.
      */
-    Event[] EMPTY_EVENT_NAMES = new Event[0];
+    Observation.Event[] EMPTY_EVENT_NAMES = new Observation.Event[0];
 
     /**
      * Default technical name (e.g.: metric name). You can set the name either by this
@@ -112,7 +111,7 @@ public interface DocumentedObservation {
      * Event values.
      * @return allowed event values
      */
-    default Event[] getEvents() {
+    default Observation.Event[] getEvents() {
         return EMPTY_EVENT_NAMES;
     }
 

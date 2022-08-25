@@ -17,7 +17,6 @@ package io.micrometer.observation;
 
 import io.micrometer.common.KeyValue;
 import io.micrometer.common.KeyValues;
-import io.micrometer.common.Event;
 import io.micrometer.common.lang.NonNull;
 import io.micrometer.common.lang.Nullable;
 
@@ -1104,6 +1103,83 @@ public interface Observation {
     interface CheckedCallable<T, E extends Throwable> {
 
         T call() throws E;
+
+    }
+
+    /**
+     * Represents an event used for documenting instrumentation.
+     *
+     * @author Marcin Grzejszczak
+     * @since 1.10.0
+     */
+    interface Event {
+
+        /**
+         * Returns event name.
+         * @return event name
+         */
+        String getName();
+
+        /**
+         * Returns event contextual name. You can use {@code %s} to represent dynamic
+         * entries that should be resolved at runtime via
+         * {@link String#format(String, Object...)}.
+         * @return event contextual name
+         */
+        default String getContextualName() {
+            return getName();
+        }
+
+        /**
+         * Creates a {@link Event} for the given names.
+         * @param name event name
+         * @param contextualName event contextual name
+         * @return event
+         */
+        static Event of(String name, String contextualName) {
+            return new Event() {
+                @Override
+                public String getName() {
+                    return name;
+                }
+
+                @Override
+                public String getContextualName() {
+                    return contextualName;
+                }
+            };
+        }
+
+        /**
+         * Creates a {@link Event} for the given name.
+         * @param name event name
+         * @return event
+         */
+        static Event of(String name) {
+            return of(name, name);
+        }
+
+        /**
+         * Creates an event for the given key name.
+         * @param dynamicEntriesForContextualName variables to be resolved in
+         * {@link Event#getContextualName()} via {@link String#format(String, Object...)}
+         * @return event
+         */
+        default Event format(Object... dynamicEntriesForContextualName) {
+            Event parent = this;
+            return new Event() {
+
+                @Override
+                public String getName() {
+                    return parent.getName();
+                }
+
+                @Override
+                public String getContextualName() {
+                    return String.format(parent.getContextualName(), dynamicEntriesForContextualName);
+                }
+            };
+        }
 
     }
 

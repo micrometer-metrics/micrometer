@@ -15,7 +15,6 @@
  */
 package io.micrometer.core.instrument.observation;
 
-import io.micrometer.common.Event;
 import io.micrometer.core.instrument.*;
 import io.micrometer.observation.Observation;
 
@@ -66,7 +65,7 @@ public class DefaultMeterObservationHandler implements MeterObservationHandler<O
     }
 
     @Override
-    public void onEvent(Event event, Observation.Context context) {
+    public void onEvent(Observation.Event event, Observation.Context context) {
         Counter.builder(context.getName() + "." + event.getName()).tags(createTags(context)).register(meterRegistry)
                 .increment();
     }

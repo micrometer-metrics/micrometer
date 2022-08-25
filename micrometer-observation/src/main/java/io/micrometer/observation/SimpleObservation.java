@@ -16,7 +16,6 @@
 package io.micrometer.observation;
 
 import io.micrometer.common.KeyValue;
-import io.micrometer.common.Event;
 import io.micrometer.common.lang.Nullable;
 import io.micrometer.common.util.StringUtils;
 
