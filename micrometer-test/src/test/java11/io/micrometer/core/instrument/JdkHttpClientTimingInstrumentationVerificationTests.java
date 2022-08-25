@@ -18,7 +18,6 @@ package io.micrometer.core.instrument;
 import io.micrometer.common.lang.Nullable;
 import io.micrometer.core.instrument.binder.httpcomponents.DefaultUriMapper;
 import io.micrometer.core.instrument.binder.jdk.MicrometerHttpClient;
-import org.junit.jupiter.api.Tag;
 
 import java.net.URI;
 import java.net.http.HttpClient;
@@ -27,7 +26,6 @@ import java.net.http.HttpResponse;
 import java.time.Duration;
 import java.time.temporal.ChronoUnit;
 
-@Tag("jdk11")
 class JdkHttpClientTimingInstrumentationVerificationTests extends HttpClientTimingInstrumentationVerificationTests {
 
     private final HttpClient httpClient = MicrometerHttpClient.instrumentationBuilder(
