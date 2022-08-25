@@ -917,6 +917,76 @@ public interface Observation {
     }
 
     /**
+     * An arbitrary event that you can extend and signal during an {@link Observation}.
+     * This helps you to tell to the {@link ObservationHandler} that something happened.
+     * If you want to signal an exception/error, please use
+     * {@link Observation#error(Throwable)} instead.
+     */
+    interface Event {
+
+        /**
+         * Creates a {@link Event} for the given names.
+         * @param name The name of the event (should have low cardinality).
+         * @param contextualName The contextual name of the event (can have high
+         * cardinality).
+         * @return event
+         */
+        static Event of(String name, String contextualName) {
+            return new Event() {
+                @Override
+                public String getName() {
+                    return name;
+                }
+
+                @Override
+                public String getContextualName() {
+                    return contextualName;
+                }
+
+                @Override
+                public String toString() {
+                    return "event.name='" + this.getName() + "', event.contextualName='" + this.getContextualName()
+                            + '\'';
+                }
+            };
+        }
+
+        /**
+         * Creates a {@link Event} for the given name.
+         * @param name The name of the event (should have low cardinality).
+         * @return event
+         */
+        static Event of(String name) {
+            return of(name, name);
+        }
+
+        /**
+         * Returns the name of the event.
+         * @return the name of the event.
+         */
+        String getName();
+
+        /**
+         * Returns the contextual name of the event. You can use {@code %s} to represent
+         * dynamic entries that should be resolved at runtime via
+         * {@link String#format(String, Object...)}.
+         * @return the contextual name of the event.
+         */
+        String getContextualName();
+
+        /**
+         * Creates an event for the given key name.
+         * @param dynamicEntriesForContextualName variables to be resolved in
+         * {@link Event#getContextualName()} via {@link String#format(String, Object...)}.
+         * @return event
+         */
+        default Event format(Object... dynamicEntriesForContextualName) {
+            return Event.of(this.getName(), String.format(this.getContextualName(), dynamicEntriesForContextualName));
+        }
+
+    }
+
+    /**
      * Read only view on the {@link Context}.
      */
     interface ContextView {
@@ -1103,83 +1173,6 @@ public interface Observation {
     interface CheckedCallable<T, E extends Throwable> {
 
         T call() throws E;
-
-    }
-
-    /**
-     * Represents an event used for documenting instrumentation.
-     *
-     * @author Marcin Grzejszczak
-     * @since 1.10.0
-     */
-    interface Event {
-
-        /**
-         * Returns event name.
-         * @return event name
-         */
-        String getName();
-
-        /**
-         * Returns event contextual name. You can use {@code %s} to represent dynamic
-         * entries that should be resolved at runtime via
-         * {@link String#format(String, Object...)}.
-         * @return event contextual name
-         */
-        default String getContextualName() {
-            return getName();
-        }
-
-        /**
-         * Creates a {@link Event} for the given names.
-         * @param name event name
-         * @param contextualName event contextual name
-         * @return event
-         */
-        static Event of(String name, String contextualName) {
-            return new Event() {
-                @Override
-                public String getName() {
-                    return name;
-                }
-
-                @Override
-                public String getContextualName() {
-                    return contextualName;
-                }
-            };
-        }
-
-        /**
-         * Creates a {@link Event} for the given name.
-         * @param name event name
-         * @return event
-         */
-        static Event of(String name) {
-            return of(name, name);
-        }
-
-        /**
-         * Creates an event for the given key name.
-         * @param dynamicEntriesForContextualName variables to be resolved in
-         * {@link Event#getContextualName()} via {@link String#format(String, Object...)}
-         * @return event
-         */
-        default Event format(Object... dynamicEntriesForContextualName) {
-            Event parent = this;
-            return new Event() {
-
-                @Override
-                public String getName() {
-                    return parent.getName();
-                }
-
-                @Override
-                public String getContextualName() {
-                    return String.format(parent.getContextualName(), dynamicEntriesForContextualName);
-                }
-            };
-        }
 
     }
 
