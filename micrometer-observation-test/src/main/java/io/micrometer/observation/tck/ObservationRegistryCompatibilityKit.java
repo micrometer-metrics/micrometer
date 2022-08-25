@@ -81,7 +81,7 @@ public abstract class ObservationRegistryCompatibilityKit {
             inOrder.verify(handler).onScopeOpened(isA(Observation.Context.class));
             assertThat(scope.getCurrentObservation()).isSameAs(observation);
 
-            Observation.Event event = new Observation.Event("testEvent", "event for testing");
+            Observation.Event event = Observation.Event.of("testEvent", "event for testing");
             observation.event(event);
             inOrder.verify(handler).onEvent(same(event), isA(Observation.Context.class));
 

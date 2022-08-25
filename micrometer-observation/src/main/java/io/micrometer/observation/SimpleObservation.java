@@ -46,7 +46,7 @@ class SimpleObservation implements Observation {
 
     private final Collection<ObservationFilter> filters;
 
-    SimpleObservation(String name, ObservationRegistry registry, Context context) {
+    SimpleObservation(@Nullable String name, ObservationRegistry registry, Context context) {
         this.registry = registry;
         this.context = context;
         this.context.setName(name);
