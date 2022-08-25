@@ -57,7 +57,7 @@ public class ApacheHttpClientContext extends RequestReplySenderContext<HttpReque
         return uriMapper;
     }
 
-    public boolean exportTagsForRoute() {
+    public boolean shouldExportTagsForRoute() {
         return exportTagsForRoute;
     }
 

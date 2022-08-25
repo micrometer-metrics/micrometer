@@ -57,7 +57,7 @@ public class DefaultApacheHttpClientObservationConvention implements ApacheHttpC
                         .withValue(context.getUriMapper().apply(context.getCarrier())),
                 ApacheHttpClientDocumentedObservation.ApacheHttpClientTags.STATUS
                         .withValue(getStatusValue(context.getResponse())));
-        if (context.exportTagsForRoute()) {
+        if (context.shouldExportTagsForRoute()) {
             keyValues = keyValues.and(HttpContextUtils.generateTagStringsForRoute(context.getApacheHttpContext()));
         }
         return keyValues;
