@@ -64,17 +64,32 @@ public enum ApacheHttpClientObservationDocumentation implements ObservationDocum
             public String asString() {
                 return "target.scheme";
             }
+
+            @Override
+            public boolean isRequired() {
+                return false;
+            }
         },
         TARGET_HOST {
             @Override
             public String asString() {
                 return "target.host";
             }
+
+            @Override
+            public boolean isRequired() {
+                return false;
+            }
         },
         TARGET_PORT {
             @Override
             public String asString() {
                 return "target.port";
+            }
+
+            @Override
+            public boolean isRequired() {
+                return false;
             }
         }
 

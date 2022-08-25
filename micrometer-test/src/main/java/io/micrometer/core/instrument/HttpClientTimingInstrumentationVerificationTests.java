@@ -17,11 +17,14 @@ package io.micrometer.core.instrument;
 
 import com.github.tomakehurst.wiremock.junit5.WireMockRuntimeInfo;
 import com.github.tomakehurst.wiremock.junit5.WireMockTest;
+import io.micrometer.common.docs.KeyName;
 import io.micrometer.common.lang.Nullable;
 import io.micrometer.core.annotation.Incubating;
 import io.micrometer.observation.Observation;
 import io.micrometer.observation.ObservationRegistry;
 import org.junit.jupiter.api.Assumptions;
+import io.micrometer.observation.docs.ObservationDocumentation;
+import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.EnumSource;
@@ -29,6 +32,7 @@ import org.junit.jupiter.params.provider.EnumSource;
 import java.io.IOException;
 import java.net.ServerSocket;
 import java.net.URI;
+import java.util.Arrays;
 import java.util.concurrent.TimeUnit;
 
 import static com.github.tomakehurst.wiremock.client.WireMock.*;
@@ -103,6 +107,17 @@ public abstract class HttpClientTimingInstrumentationVerificationTests<CLIENT>
      */
     protected String timerName() {
         return "http.client.requests";
+    }
+
+    /**
+     * If a {@link ObservationDocumentation} is provided the tests run will check that the
+     * produced instrumentation matches the given {@link ObservationDocumentation}.
+     * @return the documented observation to compare results against, or null to do
+     * nothing
+     */
+    @Nullable
+    protected ObservationDocumentation observationDocumentation() {
+        return null;
     }
 
     /**
@@ -209,6 +224,7 @@ public abstract class HttpClientTimingInstrumentationVerificationTests<CLIENT>
 
         stubFor(post(anyUrl()).willReturn(badRequest()));
 
+        // Some HTTP clients fail POST requests with a null body
         sendHttpRequest(instrumentedClient(), HttpMethod.POST, new byte[0], URI.create(wmRuntimeInfo.getHttpBaseUrl()),
                 "/socks");
 
@@ -223,6 +239,31 @@ public abstract class HttpClientTimingInstrumentationVerificationTests<CLIENT>
                     "You must implement the <clientInstrumentedWithObservations> method to test your instrumentation against an ObservationRegistry");
         }
         this.testType = testType;
+    }
+
+    @AfterEach
+    void verifyObservationDocumentation() {
+        ObservationDocumentation ObservationDocumentation = observationDocumentation();
+        if (ObservationDocumentation == null) {
+            return;
+        }
+        Timer timer = getRegistry().get(timerName()).timer();
+        // must have all required tag keys
+        assertThat(timer.getId().getTags()).extracting(Tag::getKey)
+                .contains(getRequiredLowCardinalityKeyNames(ObservationDocumentation));
+        // must not contain tag keys that aren't documented
+        assertThat(timer.getId().getTags()).extracting(Tag::getKey)
+                .isSubsetOf(getLowCardinalityKeyNames(ObservationDocumentation));
+    }
+
+    private String[] getRequiredLowCardinalityKeyNames(ObservationDocumentation ObservationDocumentation) {
+        return Arrays.stream(ObservationDocumentation.getLowCardinalityKeyNames()).filter(KeyName::isRequired)
+                .map(KeyName::asString).toArray(String[]::new);
+    }
+
+    private String[] getLowCardinalityKeyNames(ObservationDocumentation ObservationDocumentation) {
+        return Arrays.stream(ObservationDocumentation.getLowCardinalityKeyNames()).map(KeyName::asString)
+                .toArray(String[]::new);
     }
 
 }
