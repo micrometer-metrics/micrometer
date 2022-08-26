@@ -125,7 +125,8 @@ public class ObservationOrTimerCompatibleInstrumentation<T extends Observation.C
     }
 
     /**
-     * If using an Observation will set the error on Observation. For metrics it will do nothing.
+     * If using an Observation will set the error on Observation. For metrics it will do
+     * nothing.
      * @param throwable error that got recorded
      */
     public void setThrowable(Throwable throwable) {
