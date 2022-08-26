@@ -11,9 +11,9 @@ vendor neutral interface and decide on the monitoring backend at the last minute
 
 More info and the user manual are available on [micrometer.io](https://micrometer.io).
 
-Micrometer is the instrumentation library underpinning Spring Boot 2's metrics collection.
+Micrometer is the instrumentation library underpinning Spring Boot 2's or later metrics collection.
 
-Micrometer artifacts work with Java 8 or later.
+Micrometer artifacts work with Java 8 or later. We're releasing a [multi-release JAR](https://docs.oracle.com/javase/9/docs/specs/jar/jar.html#multi-release-jar-files) with support for JDK-version specific features (e.g. JDK's 11 `HttpClient` instrumentation).
 
 ## Supported versions
 
