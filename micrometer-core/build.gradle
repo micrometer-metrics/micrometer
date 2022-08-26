@@ -17,6 +17,18 @@ sourceSets {
     }
 }
 
+tasks.withType(org.jetbrains.kotlin.gradle.tasks.KotlinCompile).all {
+    kotlinOptions {
+        jvmTarget = javaTargetVersion
+    }
+}
+
+tasks.withType(org.jetbrains.kotlin.gradle.tasks.KotlinTest).all {
+    kotlinOptions {
+        jvmTarget = JavaVersion.toVersion(javaLanguageVersion)
+    }
+}
+
 dependencies {
     api project(":micrometer-commons")
     api project(":micrometer-observation")
