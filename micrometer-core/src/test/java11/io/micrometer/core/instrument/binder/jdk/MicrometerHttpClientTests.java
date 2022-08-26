@@ -43,7 +43,7 @@ public class MicrometerHttpClientTests {
 
     MeterRegistry meterRegistry = new SimpleMeterRegistry();
 
-    HttpClient httpClient = HttpClient.newBuilder().connectTimeout(Duration.of(100, ChronoUnit.MILLIS)).build();
+    HttpClient httpClient = HttpClient.newBuilder().connectTimeout(Duration.of(2, ChronoUnit.SECONDS)).build();
 
     @BeforeEach
     void setup() {
@@ -81,7 +81,7 @@ public class MicrometerHttpClientTests {
     }
 
     private void thenMeterRegistryContainsHttpClientTags() {
-        then(meterRegistry.find("http.client.requests").tag("error", "none").tag("method", "GET").tag("status", "200")
+        then(meterRegistry.find("http.client.requests").tag("method", "GET").tag("status", "200").tag("uri", "none")
                 .timer()).isNotNull();
     }
 
