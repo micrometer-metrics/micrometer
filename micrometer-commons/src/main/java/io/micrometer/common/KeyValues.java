@@ -170,7 +170,7 @@ public final class KeyValues implements Iterable<KeyValue> {
 
     @Override
     public boolean equals(@Nullable Object obj) {
-        return this == obj || obj != null && getClass() == obj.getClass() && keyValuesEqual((KeyValues) obj);
+        return this == obj || (obj != null && getClass() == obj.getClass() && keyValuesEqual((KeyValues) obj));
     }
 
     private boolean keyValuesEqual(KeyValues obj) {
