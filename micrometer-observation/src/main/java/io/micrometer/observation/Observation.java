@@ -972,7 +972,9 @@ public interface Observation {
          * {@link String#format(String, Object...)}.
          * @return the contextual name of the event.
          */
-        String getContextualName();
+        default String getContextualName() {
+            return getName();
+        }
 
         /**
          * Creates an event for the given key name.
