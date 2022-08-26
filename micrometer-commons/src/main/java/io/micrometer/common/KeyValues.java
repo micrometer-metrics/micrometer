@@ -24,8 +24,8 @@ import java.util.stream.StreamSupport;
 import static java.util.stream.Collectors.joining;
 
 /**
- * An immutable collection of {@link KeyValue Tags} that are guaranteed to be sorted and
- * deduplicated by tag key.
+ * An immutable collection of {@link KeyValue KeyValues} that are guaranteed to be sorted
+ * and deduplicated by key.
  *
  * @author Jon Schneider
  * @author Maciej Walkowiak
@@ -37,18 +37,18 @@ public final class KeyValues implements Iterable<KeyValue> {
 
     private static final KeyValues EMPTY = new KeyValues(new KeyValue[] {});
 
-    private final KeyValue[] tags;
+    private final KeyValue[] keyValues;
 
     private int last;
 
-    private KeyValues(KeyValue[] tags) {
-        this.tags = tags;
-        Arrays.sort(this.tags);
+    private KeyValues(KeyValue[] keyValues) {
+        this.keyValues = keyValues;
+        Arrays.sort(this.keyValues);
         dedup();
     }
 
     private void dedup() {
-        int n = tags.length;
+        int n = keyValues.length;
 
         if (n == 0 || n == 1) {
             last = n;
@@ -59,29 +59,29 @@ public final class KeyValues implements Iterable<KeyValue> {
         int j = 0;
 
         for (int i = 0; i < n - 1; i++)
-            if (!tags[i].getKey().equals(tags[i + 1].getKey()))
-                tags[j++] = tags[i];
+            if (!keyValues[i].getKey().equals(keyValues[i + 1].getKey()))
+                keyValues[j++] = keyValues[i];
 
-        tags[j++] = tags[n - 1];
+        keyValues[j++] = keyValues[n - 1];
         last = j;
     }
 
     /**
-     * Return a new {@code Tags} instance by merging this collection and the specified
-     * key/value pair.
-     * @param key the tag key to add
-     * @param value the tag value to add
-     * @return a new {@code Tags} instance
+     * Return a new {@code KeyValues} instance by merging this collection and the
+     * specified key/value pair.
+     * @param key the key to add
+     * @param value the value to add
+     * @return a new {@code KeyValues} instance
      */
     public KeyValues and(String key, String value) {
         return and(KeyValue.of(key, value));
     }
 
     /**
-     * Return a new {@code Tags} instance by merging this collection and the specified
-     * key/value pairs.
+     * Return a new {@code KeyValues} instance by merging this collection and the
+     * specified key/value pairs.
      * @param keyValues the key/value pairs to add
-     * @return a new {@code Tags} instance
+     * @return a new {@code KeyValues} instance
      */
     public KeyValues and(@Nullable String... keyValues) {
         if (keyValues == null || keyValues.length == 0) {
@@ -91,37 +91,37 @@ public final class KeyValues implements Iterable<KeyValue> {
     }
 
     /**
-     * Return a new {@code Tags} instance by merging this collection and the specified
-     * tags.
-     * @param tags the tags to add
-     * @return a new {@code Tags} instance
+     * Return a new {@code KeyValues} instance by merging this collection and the
+     * specified key values.
+     * @param keyValues the key values to add
+     * @return a new {@code KeyValues} instance
      */
-    public KeyValues and(@Nullable KeyValue... tags) {
-        if (tags == null || tags.length == 0) {
+    public KeyValues and(@Nullable KeyValue... keyValues) {
+        if (keyValues == null || keyValues.length == 0) {
             return this;
         }
-        KeyValue[] newTags = new KeyValue[last + tags.length];
-        System.arraycopy(this.tags, 0, newTags, 0, last);
-        System.arraycopy(tags, 0, newTags, last, tags.length);
-        return new KeyValues(newTags);
+        KeyValue[] newKeyValues = new KeyValue[last + keyValues.length];
+        System.arraycopy(this.keyValues, 0, newKeyValues, 0, last);
+        System.arraycopy(keyValues, 0, newKeyValues, last, keyValues.length);
+        return new KeyValues(newKeyValues);
     }
 
     /**
-     * Return a new {@code Tags} instance by merging this collection and the specified
-     * tags.
-     * @param tags the tags to add
-     * @return a new {@code Tags} instance
+     * Return a new {@code KeyValues} instance by merging this collection and the
+     * specified key values.
+     * @param keyValues the key values to add
+     * @return a new {@code KeyValues} instance
      */
-    public KeyValues and(@Nullable Iterable<? extends KeyValue> tags) {
-        if (tags == null || !tags.iterator().hasNext()) {
+    public KeyValues and(@Nullable Iterable<? extends KeyValue> keyValues) {
+        if (keyValues == null || !keyValues.iterator().hasNext()) {
             return this;
         }
 
-        if (this.tags.length == 0) {
-            return KeyValues.of(tags);
+        if (this.keyValues.length == 0) {
+            return KeyValues.of(keyValues);
         }
 
-        return and(KeyValues.of(tags).tags);
+        return and(KeyValues.of(keyValues).keyValues);
     }
 
     @Override
@@ -140,19 +140,19 @@ public final class KeyValues implements Iterable<KeyValue> {
 
         @Override
         public KeyValue next() {
-            return tags[currentIndex++];
+            return keyValues[currentIndex++];
         }
 
         @Override
         public void remove() {
-            throw new UnsupportedOperationException("cannot remove items from tags");
+            throw new UnsupportedOperationException("cannot remove items from key values");
         }
 
     }
 
     /**
-     * Return a stream of the contained tags.
-     * @return a tags stream
+     * Return a stream of the contained key values.
+     * @return a key value stream
      */
     public Stream<KeyValue> stream() {
         return StreamSupport.stream(Spliterators.spliteratorUnknownSize(iterator(),
@@ -163,25 +163,25 @@ public final class KeyValues implements Iterable<KeyValue> {
     public int hashCode() {
         int result = 1;
         for (int i = 0; i < last; i++) {
-            result = 31 * result + tags[i].hashCode();
+            result = 31 * result + keyValues[i].hashCode();
         }
         return result;
     }
 
     @Override
     public boolean equals(@Nullable Object obj) {
-        return this == obj || obj != null && getClass() == obj.getClass() && tagsEqual((KeyValues) obj);
+        return this == obj || obj != null && getClass() == obj.getClass() && keyValuesEqual((KeyValues) obj);
     }
 
-    private boolean tagsEqual(KeyValues obj) {
-        if (tags == obj.tags)
+    private boolean keyValuesEqual(KeyValues obj) {
+        if (keyValues == obj.keyValues)
             return true;
 
         if (last != obj.last)
             return false;
 
         for (int i = 0; i < last; i++) {
-            if (!tags[i].equals(obj.tags[i]))
+            if (!keyValues[i].equals(obj.keyValues[i]))
                 return false;
         }
 
@@ -189,66 +189,67 @@ public final class KeyValues implements Iterable<KeyValue> {
     }
 
     /**
-     * Return a new {@code Tags} instance by concatenating the specified collections of
-     * tags.
-     * @param tags the first set of tags
-     * @param otherTags the second set of tags
-     * @return the merged tags
+     * Return a new {@code KeyValues} instance by concatenating the specified collections
+     * of key values.
+     * @param keyValues the first set of key values
+     * @param otherKeyValues the second set of key values
+     * @return the merged key values
      */
-    public static KeyValues concat(@Nullable Iterable<? extends KeyValue> tags,
-            @Nullable Iterable<? extends KeyValue> otherTags) {
-        return KeyValues.of(tags).and(otherTags);
+    public static KeyValues concat(@Nullable Iterable<? extends KeyValue> keyValues,
+            @Nullable Iterable<? extends KeyValue> otherKeyValues) {
+        return KeyValues.of(keyValues).and(otherKeyValues);
     }
 
     /**
-     * Return a new {@code Tags} instance by concatenating the specified tags and
-     * key/value pairs.
-     * @param tags the first set of tags
-     * @param keyValues the additional key/value pairs to add
-     * @return the merged tags
+     * Return a new {@code KeyValues} instance by concatenating the specified key values
+     * and key/value pairs.
+     * @param keyValues the first set of key values
+     * @param otherKeyValues the additional key/value pairs to add
+     * @return the merged key values
      */
-    public static KeyValues concat(@Nullable Iterable<? extends KeyValue> tags, @Nullable String... keyValues) {
-        return KeyValues.of(tags).and(keyValues);
+    public static KeyValues concat(@Nullable Iterable<? extends KeyValue> keyValues,
+            @Nullable String... otherKeyValues) {
+        return KeyValues.of(keyValues).and(otherKeyValues);
     }
 
     /**
-     * Return a new {@code Tags} instance containing tags constructed from the specified
-     * source tags.
-     * @param tags the tags to add
-     * @return a new {@code Tags} instance
+     * Return a new {@code KeyValues} instance containing key values constructed from the
+     * specified source key values.
+     * @param keyValues the key values to add
+     * @return a new {@code KeyValues} instance
      */
-    public static KeyValues of(@Nullable Iterable<? extends KeyValue> tags) {
-        if (tags == null || !tags.iterator().hasNext()) {
+    public static KeyValues of(@Nullable Iterable<? extends KeyValue> keyValues) {
+        if (keyValues == null || !keyValues.iterator().hasNext()) {
             return KeyValues.empty();
         }
-        else if (tags instanceof KeyValues) {
-            return (KeyValues) tags;
+        else if (keyValues instanceof KeyValues) {
+            return (KeyValues) keyValues;
         }
-        else if (tags instanceof Collection) {
-            Collection<? extends KeyValue> tagsCollection = (Collection<? extends KeyValue>) tags;
-            return new KeyValues(tagsCollection.toArray(new KeyValue[0]));
+        else if (keyValues instanceof Collection) {
+            Collection<? extends KeyValue> keyValuesCollection = (Collection<? extends KeyValue>) keyValues;
+            return new KeyValues(keyValuesCollection.toArray(new KeyValue[0]));
         }
         else {
-            return new KeyValues(StreamSupport.stream(tags.spliterator(), false).toArray(KeyValue[]::new));
+            return new KeyValues(StreamSupport.stream(keyValues.spliterator(), false).toArray(KeyValue[]::new));
         }
     }
 
     /**
-     * Return a new {@code Tags} instance containing tags constructed from the specified
-     * key/value pair.
-     * @param key the tag key to add
-     * @param value the tag value to add
-     * @return a new {@code Tags} instance
+     * Return a new {@code KeyValues} instance containing key value constructed from the
+     * specified key/value pair.
+     * @param key the key to add
+     * @param value the value to add
+     * @return a new {@code KeyValues} instance
      */
     public static KeyValues of(String key, String value) {
         return new KeyValues(new KeyValue[] { KeyValue.of(key, value) });
     }
 
     /**
-     * Return a new {@code Tags} instance containing tags constructed from the specified
-     * key/value pairs.
+     * Return a new {@code KeyValues} instance containing key values constructed from the
+     * specified key/value pairs.
      * @param keyValues the key/value pairs to add
-     * @return a new {@code Tags} instance
+     * @return a new {@code KeyValues} instance
      */
     public static KeyValues of(@Nullable String... keyValues) {
         if (keyValues == null || keyValues.length == 0) {
@@ -257,26 +258,26 @@ public final class KeyValues implements Iterable<KeyValue> {
         if (keyValues.length % 2 == 1) {
             throw new IllegalArgumentException("size must be even, it is a set of key=value pairs");
         }
-        KeyValue[] tags = new KeyValue[keyValues.length / 2];
+        KeyValue[] keyValueArray = new KeyValue[keyValues.length / 2];
         for (int i = 0; i < keyValues.length; i += 2) {
-            tags[i / 2] = KeyValue.of(keyValues[i], keyValues[i + 1]);
+            keyValueArray[i / 2] = KeyValue.of(keyValues[i], keyValues[i + 1]);
         }
-        return new KeyValues(tags);
+        return new KeyValues(keyValueArray);
     }
 
     /**
-     * Return a new {@code Tags} instance containing tags constructed from the specified
-     * tags.
-     * @param tags the tags to add
-     * @return a new {@code Tags} instance
+     * Return a new {@code KeyValues} instance containing key values constructed from the
+     * specified key values.
+     * @param keyValues the key values to add
+     * @return a new {@code KeyValues} instance
      */
-    public static KeyValues of(@Nullable KeyValue... tags) {
-        return empty().and(tags);
+    public static KeyValues of(@Nullable KeyValue... keyValues) {
+        return empty().and(keyValues);
     }
 
     /**
-     * Return a {@code Tags} instance that contains no elements.
-     * @return an empty {@code Tags} instance
+     * Return a {@code KeyValues} instance that contains no elements.
+     * @return an empty {@code KeyValues} instance
      */
     public static KeyValues empty() {
         return EMPTY;
