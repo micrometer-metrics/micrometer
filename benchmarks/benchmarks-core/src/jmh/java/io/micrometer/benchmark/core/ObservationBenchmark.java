@@ -42,28 +42,64 @@ public class ObservationBenchmark {
 
     ObservationRegistry observationRegistry;
 
+    Timer timer;
+
     @Setup
     public void setup() {
-        meterRegistry = new SimpleMeterRegistry();
-        observationRegistry = ObservationRegistry.create();
-        observationRegistry.observationConfig().observationHandler(new DefaultMeterObservationHandler(meterRegistry));
+        this.meterRegistry = new SimpleMeterRegistry();
+        this.timer = Timer.builder("cached.timer").tag("abc", "123").tag("def", "321").register(meterRegistry);
+        this.observationRegistry = ObservationRegistry.create();
+        this.observationRegistry.observationConfig()
+                .observationHandler(new DefaultMeterObservationHandler(meterRegistry));
+    }
+
+    @TearDown
+    public void tearDown() {
+        System.out.println("Meters:");
+        System.out.println(meterRegistry.getMetersAsString());
     }
 
     @Benchmark
-    public long timerBenchmark() {
-        LongTaskTimer.Sample longTaskSample = LongTaskTimer.builder("test.timer.active").tag("abc", "123")
+    public void baseline() {
+        // this method was intentionally left blank.
+    }
+
+    @Benchmark
+    public long cachedTimerWithLong() {
+        long start = System.nanoTime();
+        long duration = System.nanoTime() - start;
+        timer.record(duration, TimeUnit.NANOSECONDS);
+
+        return duration;
+    }
+
+    @Benchmark
+    public long cachedTimerWithSample() {
+        Timer.Sample sample = Timer.start(meterRegistry);
+        return sample.stop(timer);
+    }
+
+    @Benchmark
+    public long builtTimerWithSample() {
+        Timer.Sample sample = Timer.start(meterRegistry);
+        return sample.stop(Timer.builder("built.timer").tag("abc", "123").tag("def", "321").register(meterRegistry));
+    }
+
+    @Benchmark
+    public long builtTimerAndLongTaskTimer() {
+        LongTaskTimer.Sample longTaskSample = LongTaskTimer.builder("built.timer.active").tag("abc", "123")
                 .tag("def", "321").register(meterRegistry).start();
         Timer.Sample sample = Timer.start(meterRegistry);
 
         long latencyWithTimer = sample
-                .stop(Timer.builder("test.timer").tag("abc", "123").tag("def", "321").register(meterRegistry));
+                .stop(Timer.builder("built.timer").tag("abc", "123").tag("def", "321").register(meterRegistry));
         long latencyWithLongTaskTimer = longTaskSample.stop();
 
         return latencyWithTimer + latencyWithLongTaskTimer;
     }
 
     @Benchmark
-    public Observation observationBenchmark() {
+    public Observation observation() {
         Observation observation = Observation.createNotStarted("test.obs", observationRegistry)
                 .lowCardinalityKeyValue("abc", "123").lowCardinalityKeyValue("def", "321").start();
         observation.stop();
