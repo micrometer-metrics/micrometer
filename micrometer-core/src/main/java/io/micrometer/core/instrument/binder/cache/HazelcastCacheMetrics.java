@@ -36,6 +36,12 @@ import java.util.function.ToLongFunction;
 @NonNullFields
 public class HazelcastCacheMetrics extends CacheMeterBinder<Object> {
 
+    private static final String DESCRIPTION_CACHE_ENTRIES = "The number of entries held by this member";
+
+    private static final String DESCRIPTION_CACHE_ENTRY_MEMORY = "Memory cost of entries held by this member";
+
+    private static final String DESCRIPTION_CACHE_NEAR_REQUESTS = "The number of requests (hits or misses) of near cache entries owned by this member";
+
     private final HazelcastIMapAdapter cache;
 
     /**
@@ -129,23 +135,23 @@ public class HazelcastCacheMetrics extends CacheMeterBinder<Object> {
     protected void bindImplementationSpecificMetrics(MeterRegistry registry) {
         Gauge.builder("cache.entries", cache,
                 cache -> getDouble(cache.getLocalMapStats(), LocalMapStats::getBackupEntryCount))
-                .tags(getTagsWithCacheName()).tag("ownership", "backup")
-                .description("The number of entries held by this member").register(registry);
+                .tags(getTagsWithCacheName()).tag("ownership", "backup").description(DESCRIPTION_CACHE_ENTRIES)
+                .register(registry);
 
         Gauge.builder("cache.entries", cache,
                 cache -> getDouble(cache.getLocalMapStats(), LocalMapStats::getOwnedEntryCount))
-                .tags(getTagsWithCacheName()).tag("ownership", "owned")
-                .description("The number of entries held by this member").register(registry);
+                .tags(getTagsWithCacheName()).tag("ownership", "owned").description(DESCRIPTION_CACHE_ENTRIES)
+                .register(registry);
 
         Gauge.builder("cache.entry.memory", cache,
                 cache -> getDouble(cache.getLocalMapStats(), LocalMapStats::getBackupEntryMemoryCost))
-                .tags(getTagsWithCacheName()).tag("ownership", "backup")
-                .description("Memory cost of entries held by this member").baseUnit(BaseUnits.BYTES).register(registry);
+                .tags(getTagsWithCacheName()).tag("ownership", "backup").description(DESCRIPTION_CACHE_ENTRY_MEMORY)
+                .baseUnit(BaseUnits.BYTES).register(registry);
 
         Gauge.builder("cache.entry.memory", cache,
                 cache -> getDouble(cache.getLocalMapStats(), LocalMapStats::getOwnedEntryMemoryCost))
-                .tags(getTagsWithCacheName()).tag("ownership", "owned")
-                .description("Memory cost of entries held by this member").baseUnit(BaseUnits.BYTES).register(registry);
+                .tags(getTagsWithCacheName()).tag("ownership", "owned").description(DESCRIPTION_CACHE_ENTRY_MEMORY)
+                .baseUnit(BaseUnits.BYTES).register(registry);
 
         FunctionCounter
                 .builder("cache.partition.gets", cache,
@@ -166,14 +172,12 @@ public class HazelcastCacheMetrics extends CacheMeterBinder<Object> {
         if (localMapStats != null && localMapStats.getNearCacheStats() != null) {
             Gauge.builder("cache.near.requests", cache,
                     cache -> getDouble(cache.getLocalMapStats(), (stats) -> stats.getNearCacheStats().getHits()))
-                    .tags(getTagsWithCacheName()).tag("result", "hit")
-                    .description("The number of requests (hits or misses) of near cache entries owned by this member")
+                    .tags(getTagsWithCacheName()).tag("result", "hit").description(DESCRIPTION_CACHE_NEAR_REQUESTS)
                     .register(registry);
 
             Gauge.builder("cache.near.requests", cache,
                     cache -> getDouble(cache.getLocalMapStats(), (stats) -> stats.getNearCacheStats().getMisses()))
-                    .tags(getTagsWithCacheName()).tag("result", "miss")
-                    .description("The number of requests (hits or misses) of near cache entries owned by this member")
+                    .tags(getTagsWithCacheName()).tag("result", "miss").description(DESCRIPTION_CACHE_NEAR_REQUESTS)
                     .register(registry);
 
             Gauge.builder("cache.near.evictions", cache,

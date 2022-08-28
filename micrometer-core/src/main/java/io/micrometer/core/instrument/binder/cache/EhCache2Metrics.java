@@ -36,6 +36,16 @@ import java.util.function.ToLongFunction;
 @NonNullFields
 public class EhCache2Metrics extends CacheMeterBinder<Ehcache> {
 
+    private static final String DESCRIPTION_CACHE_PUTS_ADDED = "Cache puts (added or updated)";
+
+    private static final String DESCRIPTION_CACHE_MISSES = "The number of times cache lookup methods have not returned a value, due to expiry or because the key was not found";
+
+    private static final String DESCRIPTION_CACHE_XA_COMMITS = "The number of transaction commits";
+
+    private static final String DESCRIPTION_CACHE_XA_ROLLBACKS = "The number of transaction rollbacks";
+
+    private static final String DESCRIPTION_CACHE_XA_RECOVERIES = "The number of transaction recoveries";
+
     public EhCache2Metrics(Ehcache cache, Iterable<Tag> tags) {
         super(cache, cache.getName(), tags);
     }
@@ -101,11 +111,11 @@ public class EhCache2Metrics extends CacheMeterBinder<Ehcache> {
                 .tags(getTagsWithCacheName()).description("Cache removals").register(registry);
 
         FunctionCounter.builder("cache.puts.added", stats, StatisticsGateway::cachePutAddedCount)
-                .tags(getTagsWithCacheName()).tags("result", "added").description("Cache puts (added or updated)")
+                .tags(getTagsWithCacheName()).tags("result", "added").description(DESCRIPTION_CACHE_PUTS_ADDED)
                 .register(registry);
 
         FunctionCounter.builder("cache.puts.added", stats, StatisticsGateway::cachePutUpdatedCount)
-                .tags(getTagsWithCacheName()).tags("result", "updated").description("Cache puts (added or updated)")
+                .tags(getTagsWithCacheName()).tags("result", "updated").description(DESCRIPTION_CACHE_PUTS_ADDED)
                 .register(registry);
 
         missMetrics(registry);
@@ -135,53 +145,49 @@ public class EhCache2Metrics extends CacheMeterBinder<Ehcache> {
     private void missMetrics(MeterRegistry registry) {
         StatisticsGateway stats = getStats();
         FunctionCounter.builder("cache.misses", stats, StatisticsGateway::cacheMissExpiredCount)
-                .tags(getTagsWithCacheName()).tags("reason", "expired")
-                .description(
-                        "The number of times cache lookup methods have not returned a value, due to expiry or because the key was not found")
+                .tags(getTagsWithCacheName()).tags("reason", "expired").description(DESCRIPTION_CACHE_MISSES)
                 .register(registry);
 
         FunctionCounter.builder("cache.misses", stats, StatisticsGateway::cacheMissNotFoundCount)
-                .tags(getTagsWithCacheName()).tags("reason", "notFound")
-                .description(
-                        "The number of times cache lookup methods have not returned a value, due to expiry or because the key was not found")
+                .tags(getTagsWithCacheName()).tags("reason", "notFound").description(DESCRIPTION_CACHE_MISSES)
                 .register(registry);
     }
 
     private void commitTransactionMetrics(MeterRegistry registry) {
         StatisticsGateway stats = getStats();
         FunctionCounter.builder("cache.xa.commits", stats, StatisticsGateway::xaCommitReadOnlyCount)
-                .tags(getTagsWithCacheName()).tags("result", "readOnly")
-                .description("The number of transaction commits").register(registry);
+                .tags(getTagsWithCacheName()).tags("result", "readOnly").description(DESCRIPTION_CACHE_XA_COMMITS)
+                .register(registry);
 
         FunctionCounter.builder("cache.xa.commits", stats, StatisticsGateway::xaCommitExceptionCount)
-                .tags(getTagsWithCacheName()).tags("result", "exception")
-                .description("The number of transaction commits").register(registry);
+                .tags(getTagsWithCacheName()).tags("result", "exception").description(DESCRIPTION_CACHE_XA_COMMITS)
+                .register(registry);
 
         FunctionCounter.builder("cache.xa.commits", stats, StatisticsGateway::xaCommitCommittedCount)
-                .tags(getTagsWithCacheName()).tags("result", "committed")
-                .description("The number of transaction commits").register(registry);
+                .tags(getTagsWithCacheName()).tags("result", "committed").description(DESCRIPTION_CACHE_XA_COMMITS)
+                .register(registry);
     }
 
     private void rollbackTransactionMetrics(MeterRegistry registry) {
         StatisticsGateway stats = getStats();
         FunctionCounter.builder("cache.xa.rollbacks", stats, StatisticsGateway::xaRollbackExceptionCount)
-                .tags(getTagsWithCacheName()).tags("result", "exception")
-                .description("The number of transaction rollbacks").register(registry);
+                .tags(getTagsWithCacheName()).tags("result", "exception").description(DESCRIPTION_CACHE_XA_ROLLBACKS)
+                .register(registry);
 
         FunctionCounter.builder("cache.xa.rollbacks", stats, StatisticsGateway::xaRollbackSuccessCount)
-                .tags(getTagsWithCacheName()).tags("result", "success")
-                .description("The number of transaction rollbacks").register(registry);
+                .tags(getTagsWithCacheName()).tags("result", "success").description(DESCRIPTION_CACHE_XA_ROLLBACKS)
+                .register(registry);
     }
 
     private void recoveryTransactionMetrics(MeterRegistry registry) {
         StatisticsGateway stats = getStats();
         FunctionCounter.builder("cache.xa.recoveries", stats, StatisticsGateway::xaRecoveryNothingCount)
-                .tags(getTagsWithCacheName()).tags("result", "nothing")
-                .description("The number of transaction recoveries").register(registry);
+                .tags(getTagsWithCacheName()).tags("result", "nothing").description(DESCRIPTION_CACHE_XA_RECOVERIES)
+                .register(registry);
 
         FunctionCounter.builder("cache.xa.recoveries", stats, StatisticsGateway::xaRecoveryRecoveredCount)
-                .tags(getTagsWithCacheName()).tags("result", "success")
-                .description("The number of transaction recoveries").register(registry);
+                .tags(getTagsWithCacheName()).tags("result", "success").description(DESCRIPTION_CACHE_XA_RECOVERIES)
+                .register(registry);
     }
 
     @Nullable

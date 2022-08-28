@@ -78,7 +78,7 @@ public interface LongTaskTimer extends Meter, HistogramSupport {
     }
 
     /**
-     * Executes the callable {@code f} and records the time taken.
+     * Executes the supplier {@code f} and records the time taken.
      * @param f Function to execute and measure the execution time.
      * @param <T> The return type of the {@link Supplier}.
      * @return The return value of {@code f}.
