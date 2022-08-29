@@ -97,7 +97,7 @@ public class MicrometerHttpClient extends HttpClient {
         private HttpClientObservationConvention customObservationConvention;
 
         private Function<HttpRequest, String> uriMapper = request -> request.headers()
-                .firstValue(DefaultUriMapper.URI_PATTERN_HEADER).orElse("none");
+                .firstValue(DefaultUriMapper.URI_PATTERN_HEADER).orElse("UNKNOWN");
 
         /**
          * Creates new instance of {@link InstrumentationBuilder}.

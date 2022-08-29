@@ -81,7 +81,7 @@ public class MicrometerHttpClientTests {
     }
 
     private void thenMeterRegistryContainsHttpClientTags() {
-        then(meterRegistry.find("http.client.requests").tag("method", "GET").tag("status", "200").tag("uri", "none")
+        then(meterRegistry.find("http.client.requests").tag("method", "GET").tag("status", "200").tag("uri", "UNKNOWN")
                 .timer()).isNotNull();
     }
 
