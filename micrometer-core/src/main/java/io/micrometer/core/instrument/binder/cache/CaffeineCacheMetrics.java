@@ -46,6 +46,8 @@ import java.util.function.ToLongFunction;
 @NonNullFields
 public class CaffeineCacheMetrics<K, V, C extends Cache<K, V>> extends CacheMeterBinder<C> {
 
+    private static final String DESCRIPTION_CACHE_LOAD = "The number of times cache lookup methods have successfully loaded a new value or failed to load a new value, either because no value was found or an exception was thrown while loading";
+
     /**
      * Creates a new {@link CaffeineCacheMetrics} instance.
      * @param cache The cache to be instrumented. You must call
@@ -176,16 +178,10 @@ public class CaffeineCacheMetrics<K, V, C extends Cache<K, V>> extends CacheMete
                     .register(registry);
 
             FunctionCounter.builder("cache.load", cache, c -> c.stats().loadSuccessCount()).tags(getTagsWithCacheName())
-                    .tags("result", "success")
-                    .description(
-                            "The number of times cache lookup methods have successfully loaded a new value or failed to load a new value, either because no value was found or an exception was thrown while loading")
-                    .register(registry);
+                    .tags("result", "success").description(DESCRIPTION_CACHE_LOAD).register(registry);
 
             FunctionCounter.builder("cache.load", cache, c -> c.stats().loadFailureCount()).tags(getTagsWithCacheName())
-                    .tags("result", "failure")
-                    .description(
-                            "The number of times cache lookup methods have successfully loaded a new value or failed to load a new value, either because no value was found or an exception was thrown while loading")
-                    .register(registry);
+                    .tags("result", "failure").description(DESCRIPTION_CACHE_LOAD).register(registry);
         }
     }
 
