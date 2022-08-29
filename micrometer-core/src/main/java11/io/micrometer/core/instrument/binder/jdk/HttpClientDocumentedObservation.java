@@ -16,7 +16,6 @@
 package io.micrometer.core.instrument.binder.jdk;
 
 import io.micrometer.common.docs.KeyName;
-import io.micrometer.common.lang.NonNullApi;
 import io.micrometer.observation.Observation;
 import io.micrometer.observation.docs.DocumentedObservation;
 
@@ -38,7 +37,6 @@ enum HttpClientDocumentedObservation implements DocumentedObservation {
 
     };
 
-    @NonNullApi
     enum LowCardinalityKeys implements KeyName {
 
         /**

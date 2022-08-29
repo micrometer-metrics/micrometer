@@ -16,7 +16,6 @@
 package io.micrometer.core.instrument.binder.jdk;
 
 import io.micrometer.common.KeyValues;
-import io.micrometer.common.lang.NonNull;
 import io.micrometer.common.lang.Nullable;
 
 import java.net.http.HttpRequest;
@@ -53,7 +52,7 @@ public class DefaultHttpClientObservationConvention implements HttpClientObserva
         return keyValues;
     }
 
-    String getUriTag(@Nullable HttpRequest request, @Nullable HttpResponse httpResponse,
+    String getUriTag(@Nullable HttpRequest request, @Nullable HttpResponse<?> httpResponse,
             Function<HttpRequest, String> uriMapper) {
         if (request == null) {
             return null;
@@ -63,7 +62,6 @@ public class DefaultHttpClientObservationConvention implements HttpClientObserva
     }
 
     @Override
-    @NonNull
     public String getName() {
         return "http.client.requests";
     }

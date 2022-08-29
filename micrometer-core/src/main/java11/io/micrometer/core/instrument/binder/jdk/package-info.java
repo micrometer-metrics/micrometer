@@ -15,6 +15,11 @@
  */
 
 /**
- * Core annotations.
+ * Instrumentation of JDK classes.
  */
+@NonNullApi
+@NonNullFields
 package io.micrometer.core.instrument.binder.jdk;
+
+import io.micrometer.common.lang.NonNullApi;
+import io.micrometer.common.lang.NonNullFields;
