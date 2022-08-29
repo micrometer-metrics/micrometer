@@ -55,6 +55,10 @@ import static java.util.Objects.requireNonNull;
 @NonNullFields
 public final class CaffeineStatsCounter implements StatsCounter {
 
+    private static final String DESCRIPTION_CACHE_GETS = "The number of times cache lookup methods have returned a cached (hit) or uncached (newly loaded) value (miss).";
+
+    private static final String DESCRIPTION_CACHE_LOADS = "The number of times cache lookup methods have successfully loaded a new value or failed to load a new value, either because no value was found or an exception was thrown while loading";
+
     private final MeterRegistry registry;
 
     private final Tags tags;
@@ -91,18 +95,14 @@ public final class CaffeineStatsCounter implements StatsCounter {
         this.registry = registry;
         this.tags = Tags.concat(extraTags, "cache", cacheName);
 
-        hitCount = Counter.builder("cache.gets").tag("result", "hit").tags(tags).description(
-                "The number of times cache lookup methods have returned a cached (hit) or uncached (newly loaded) value (miss).")
+        hitCount = Counter.builder("cache.gets").tag("result", "hit").tags(tags).description(DESCRIPTION_CACHE_GETS)
                 .register(registry);
-        missCount = Counter.builder("cache.gets").tag("result", "miss").tags(tags).description(
-                "The number of times cache lookup methods have returned a cached (hit) or uncached (newly loaded) value (miss).")
+        missCount = Counter.builder("cache.gets").tag("result", "miss").tags(tags).description(DESCRIPTION_CACHE_GETS)
                 .register(registry);
-        loadSuccesses = Timer.builder("cache.loads").tag("result", "success").tags(tags).description(
-                "The number of times cache lookup methods have successfully loaded a new value or failed to load a new value, either because no value was found or an exception was thrown while loading")
-                .register(registry);
-        loadFailures = Timer.builder("cache.loads").tag("result", "failure").tags(tags).description(
-                "The number of times cache lookup methods have successfully loaded a new value or failed to load a new value, either because no value was found or an exception was thrown while loading")
-                .register(registry);
+        loadSuccesses = Timer.builder("cache.loads").tag("result", "success").tags(tags)
+                .description(DESCRIPTION_CACHE_LOADS).register(registry);
+        loadFailures = Timer.builder("cache.loads").tag("result", "failure").tags(tags)
+                .description(DESCRIPTION_CACHE_LOADS).register(registry);
 
         evictionMetrics = new EnumMap<>(RemovalCause.class);
         Arrays.stream(RemovalCause.values())
