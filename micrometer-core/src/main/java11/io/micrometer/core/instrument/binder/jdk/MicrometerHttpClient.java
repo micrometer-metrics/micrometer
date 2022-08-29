@@ -40,7 +40,10 @@ import java.util.concurrent.Executor;
 import java.util.function.Function;
 
 /**
- * Observed version of a {@link HttpClient}.
+ * Delegates to an {@link HttpClient} while instrumenting with Micrometer any HTTP calls
+ * made. Example setup: <pre>{@code
+ * HttpClient observedClient = MicrometerHttpClient.instrumentationBuilder(HttpClient.newHttpClient(), meterRegistry).build();
+ * }</pre>
  *
  * Inspired by <a href=
  * "https://github.com/raphw/interceptable-http-client">interceptable-http-client</a> .
@@ -54,8 +57,10 @@ public class MicrometerHttpClient extends HttpClient {
 
     private final HttpClient client;
 
+    @Nullable
     private final ObservationRegistry observationRegistry;
 
+    @Nullable
     private final HttpClientObservationConvention customObservationConvention;
 
     private final Function<HttpRequest, String> uriMapper;
@@ -221,7 +226,7 @@ public class MicrometerHttpClient extends HttpClient {
 
     private <T> void stopObservationOrTimer(
             ObservationOrTimerCompatibleInstrumentation<HttpClientContext> instrumentation, HttpRequest request,
-            HttpResponse<T> res) {
+            @Nullable HttpResponse<T> res) {
         instrumentation.stop(DefaultHttpClientObservationConvention.INSTANCE.getName(), "Timer for JDK's HttpClient",
                 () -> {
                     Tags tags = Tags.of(HttpClientDocumentedObservation.LowCardinalityKeys.METHOD.asString(),
@@ -236,7 +241,7 @@ public class MicrometerHttpClient extends HttpClient {
     }
 
     private ObservationOrTimerCompatibleInstrumentation<HttpClientContext> observationOrTimer(
-            HttpRequest.Builder httpRequestBuilder) {
+            @Nullable HttpRequest.Builder httpRequestBuilder) {
         return ObservationOrTimerCompatibleInstrumentation.start(this.meterRegistry, this.observationRegistry, () -> {
             HttpClientContext context = new HttpClientContext(this.uriMapper);
             context.setCarrier(httpRequestBuilder);
@@ -252,7 +257,7 @@ public class MicrometerHttpClient extends HttpClient {
 
     @Override
     public <T> CompletableFuture<HttpResponse<T>> sendAsync(HttpRequest httpRequest,
-            HttpResponse.BodyHandler<T> bodyHandler, HttpResponse.PushPromiseHandler<T> pushPromiseHandler) {
+            HttpResponse.BodyHandler<T> bodyHandler, @Nullable HttpResponse.PushPromiseHandler<T> pushPromiseHandler) {
         HttpRequest.Builder httpRequestBuilder = decorate(httpRequest);
         ObservationOrTimerCompatibleInstrumentation<HttpClientContext> instrumentation = observationOrTimer(
                 httpRequestBuilder);
