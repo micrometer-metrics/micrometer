@@ -38,6 +38,8 @@ import java.lang.ref.WeakReference;
 @NonNullFields
 public abstract class CacheMeterBinder<C> implements MeterBinder {
 
+    private static final String DESCRIPTION_CACHE_GETS = "The number of times cache lookup methods have returned a cached (hit) or uncached (newly loaded or null) value (miss).";
+
     private final WeakReference<C> cacheRef;
 
     private final Iterable<Tag> tags;
@@ -68,14 +70,11 @@ public abstract class CacheMeterBinder<C> implements MeterBinder {
             FunctionCounter.builder("cache.gets", cache, c -> {
                 Long misses = missCount();
                 return misses == null ? 0 : misses;
-            }).tags(tags).tag("result", "miss").description(
-                    "The number of times cache lookup methods have returned a cached (hit) or uncached (newly loaded or null) value (miss).")
-                    .register(registry);
+            }).tags(tags).tag("result", "miss").description(DESCRIPTION_CACHE_GETS).register(registry);
         }
 
-        FunctionCounter.builder("cache.gets", cache, c -> hitCount()).tags(tags).tag("result", "hit").description(
-                "The number of times cache lookup methods have returned a cached (hit) or uncached (newly loaded or null) value (miss).")
-                .register(registry);
+        FunctionCounter.builder("cache.gets", cache, c -> hitCount()).tags(tags).tag("result", "hit")
+                .description(DESCRIPTION_CACHE_GETS).register(registry);
 
         FunctionCounter.builder("cache.puts", cache, c -> putCount()).tags(tags)
                 .description("The number of entries added to the cache").register(registry);
