@@ -1,5 +1,5 @@
 buildscript {
-    ext.javaLanguageVersion = JavaLanguageVersion.of(project.findProperty("jdkVersion") ?: 17)
+    ext.javaLanguageVersion = JavaLanguageVersion.of(JavaVersion.current().isJava11Compatible() ? JavaVersion.current().getMajorVersion() : 17)
     ext.javaTargetVersion = JavaVersion.VERSION_1_8
     dependencyLocking {
         lockAllConfigurations()
@@ -98,6 +98,10 @@ subprojects {
 
                 // ensure Java 8 baseline is enforced for main source
                 options.release = 8
+
+                doLast {
+                    task -> logger.info("Compiling with " + task.javaCompiler.get().executablePath)
+                }
             }
             compileTestJava {
                 options.encoding = 'UTF-8'

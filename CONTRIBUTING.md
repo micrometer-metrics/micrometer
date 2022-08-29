@@ -33,6 +33,7 @@ You can use a Git client to clone the source code to your local machine.
 ## Building
 
 Micrometer targets Java 8 but requires JDK 11 or later to build.
+If you are not running Gradle with JDK 11 or later and Gradle cannot detect an existing JDK 17 installation, it will download one.
 
 The Gradle wrapper is provided and should be used for building with a consistent version of Gradle.
 
