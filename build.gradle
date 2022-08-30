@@ -300,13 +300,6 @@ subprojects {
         apply plugin: 'nebula.project'
 
         if (project.name != 'micrometer-bom') {
-            project.afterEvaluate {
-                plugins.withType(nebula.plugin.info.InfoBrokerPlugin) {
-                    manifestEntries.find { it.name == 'X-Compile-Target-JDK' }.value = javaTargetVersion;
-                    manifestEntries.find { it.name == 'X-Compile-Source-JDK' }.value = javaTargetVersion;
-                }
-            }
-
             jar {
                 manifest.attributes.put('Automatic-Module-Name', project.name.replace('-', '.'))
                 metaInf {
