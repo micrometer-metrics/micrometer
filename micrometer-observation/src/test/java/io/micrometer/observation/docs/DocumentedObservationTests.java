@@ -72,8 +72,8 @@ class DocumentedObservationTests {
         ObservationRegistry registry = observationRegistry();
         Observation.Context context = new Observation.Context();
 
-        TestConventionObservation.CONTEXTUAL_NAME.observation(null, new ContextualObservation(), context, registry)
-                .start().stop();
+        TestConventionObservation.CONTEXTUAL_NAME
+                .observation(null, new ContextualObservationConvention(), context, registry).start().stop();
 
         then(context.getName()).isEqualTo("technical name");
         then(context.getContextualName()).isEqualTo("contextual name");
@@ -165,7 +165,7 @@ class DocumentedObservationTests {
 
     }
 
-    static class ContextualObservation extends FirstObservationConvention {
+    static class ContextualObservationConvention extends FirstObservationConvention {
 
         @Override
         public String getName() {

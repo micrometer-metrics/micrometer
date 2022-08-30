@@ -50,7 +50,7 @@ public interface ObservationHandler<T extends Observation.Context> {
     /**
      * Reacts to arbitrary {@link Observation.Event}.
      * @param event the {@link Observation.Event} that was signaled
-     * @param context a {@link Observation.Context}
+     * @param context an {@link Observation.Context}
      */
     default void onEvent(Observation.Event event, T context) {
     }

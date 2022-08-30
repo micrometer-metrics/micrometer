@@ -1,5 +1,5 @@
 /*
- * Copyright 2021 VMware, Inc.
+ * Copyright 2022 VMware, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,11 +19,12 @@ import io.micrometer.observation.Observation;
 import io.micrometer.observation.ObservationRegistry;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import org.mockito.Mockito;
 
 import static io.micrometer.observation.tck.ObservationContextAssert.assertThat;
 import static org.assertj.core.api.BDDAssertions.thenNoException;
 import static org.assertj.core.api.BDDAssertions.thenThrownBy;
+import static org.mockito.Mockito.spy;
+import static org.mockito.Mockito.when;
 
 class ObservationContextAssertTests {
 
@@ -434,16 +435,16 @@ class ObservationContextAssertTests {
     }
 
     private Observation mockParent() {
-        Observation parent = Mockito.spy(Observation.createNotStarted("parent", registry));
+        Observation parent = spy(Observation.createNotStarted("parent", registry));
         parent.contextualName("expected");
-        Mockito.when(parent.toString()).thenReturn("PARENT_OBSERVATION");
+        when(parent.toString()).thenReturn("PARENT_OBSERVATION");
         return parent;
     }
 
     private Observation mockNotParent() {
-        Observation parent = Mockito.spy(Observation.createNotStarted("notParent", registry));
+        Observation parent = spy(Observation.createNotStarted("notParent", registry));
         parent.contextualName("notExpected");
-        Mockito.when(parent.toString()).thenReturn("NOT_PARENT_OBSERVATION");
+        when(parent.toString()).thenReturn("NOT_PARENT_OBSERVATION");
         return parent;
     }
 
@@ -513,7 +514,6 @@ class ObservationContextAssertTests {
     @Test
     void should_throw_when_parent_observation_not_matches() {
         Observation parent = mockParent();
-        parent.contextualName("expected");
         context.setParentObservation(parent);
 
         thenThrownBy(() -> assertThat(context)
@@ -534,7 +534,6 @@ class ObservationContextAssertTests {
     @Test
     void should_throw_when_parent_observation_not_matches_with_description() {
         Observation parent = mockParent();
-        parent.contextualName("expected");
         context.setParentObservation(parent);
 
         thenThrownBy(() -> assertThat(context).hasParentObservationContextMatching(
@@ -554,7 +553,6 @@ class ObservationContextAssertTests {
     @Test
     void should_throw_when_parent_observation_not_satisfies() {
         Observation parent = mockParent();
-        parent.contextualName("expected");
         context.setParentObservation(parent);
 
         thenThrownBy(() -> assertThat(context).hasParentObservationContextSatisfying(

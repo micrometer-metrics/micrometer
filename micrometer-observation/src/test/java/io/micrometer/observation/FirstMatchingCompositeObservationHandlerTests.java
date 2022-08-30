@@ -62,7 +62,7 @@ class FirstMatchingCompositeObservationHandlerTests {
         FirstMatchingCompositeObservationHandler firstMatchingHandler = new FirstMatchingCompositeObservationHandler(
                 new NotMatchingHandler(), this.matchingHandler, new NotMatchingHandler());
 
-        firstMatchingHandler.onEvent(new Observation.Event("testEvent"), null);
+        firstMatchingHandler.onEvent(Observation.Event.of("testEvent"), null);
 
         assertThat(this.matchingHandler.eventDetected).isTrue();
     }

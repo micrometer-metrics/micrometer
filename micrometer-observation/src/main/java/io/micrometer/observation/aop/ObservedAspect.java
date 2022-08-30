@@ -39,7 +39,7 @@ import java.util.function.Predicate;
  * <p>
  * You might want to add {@link io.micrometer.common.KeyValue}s programmatically to the
  * {@link Observation}.<br>
- * In this case, the {@link Observation.KeyValuesProvider} can help. It receives an
+ * In this case, the {@link Observation.KeyValuesConvention} can help. It receives an
  * {@link ObservedAspectContext} that also contains the {@link ProceedingJoinPoint} and
  * returns the {@link io.micrometer.common.KeyValue}s that will be attached to the
  * {@link Observation}.

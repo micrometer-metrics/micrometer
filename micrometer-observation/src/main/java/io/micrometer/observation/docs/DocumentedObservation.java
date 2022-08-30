@@ -56,10 +56,16 @@ public interface DocumentedObservation {
     KeyName[] EMPTY = new KeyName[0];
 
     /**
+     * Empty event names.
+     */
+    Observation.Event[] EMPTY_EVENT_NAMES = new Observation.Event[0];
+
+    /**
      * Default technical name (e.g.: metric name). You can set the name either by this
      * method or {@link #getDefaultConvention()}. You can't use both.
      * @return name
      */
+    @Nullable
     default String getName() {
         return null;
     }
@@ -99,6 +105,14 @@ public interface DocumentedObservation {
      */
     default KeyName[] getHighCardinalityKeyNames() {
         return EMPTY;
+    }
+
+    /**
+     * Event values.
+     * @return allowed event values
+     */
+    default Observation.Event[] getEvents() {
+        return EMPTY_EVENT_NAMES;
     }
 
     /**
@@ -163,6 +177,9 @@ public interface DocumentedObservation {
                     + "] but you have provided an incompatible one of type [" + defaultConvention.getClass() + "]");
         }
         Observation observation = Observation.createNotStarted(customConvention, defaultConvention, context, registry);
+        if (getName() != null) {
+            context.setName(getName());
+        }
         if (getContextualName() != null) {
             observation.contextualName(getContextualName());
         }

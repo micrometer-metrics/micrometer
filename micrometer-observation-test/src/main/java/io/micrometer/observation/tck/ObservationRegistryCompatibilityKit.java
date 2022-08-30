@@ -81,7 +81,7 @@ public abstract class ObservationRegistryCompatibilityKit {
             inOrder.verify(handler).onScopeOpened(isA(Observation.Context.class));
             assertThat(scope.getCurrentObservation()).isSameAs(observation);
 
-            Observation.Event event = new Observation.Event("testEvent", "event for testing");
+            Observation.Event event = Observation.Event.of("testEvent", "event for testing");
             observation.event(event);
             inOrder.verify(handler).onEvent(same(event), isA(Observation.Context.class));
 
@@ -609,9 +609,9 @@ public abstract class ObservationRegistryCompatibilityKit {
 
         assertingHandler.checkAssertions(context -> {
             assertThat(context.getName()).isEqualTo("conventionOverriddenName");
-            assertThat(context.getContextualName()).isEqualTo("getConventionOverriddenContextualName");
+            assertThat(context.getContextualName()).isEqualTo("conventionOverriddenContextualName");
             assertThat(context.toString()).containsOnlyOnce("name='conventionOverriddenName'")
-                    .containsOnlyOnce("contextualName='getConventionOverriddenContextualName'")
+                    .containsOnlyOnce("contextualName='conventionOverriddenContextualName'")
                     .containsOnlyOnce("error='null'").containsOnlyOnce("lowCardinalityKeyValues=[]")
                     .containsOnlyOnce("highCardinalityKeyValues=[]").containsOnlyOnce("map=[]");
         });
@@ -630,9 +630,9 @@ public abstract class ObservationRegistryCompatibilityKit {
 
         assertingHandler.checkAssertions(context -> {
             assertThat(context.getName()).isEqualTo("conventionOverriddenName");
-            assertThat(context.getContextualName()).isEqualTo("getConventionOverriddenContextualName");
+            assertThat(context.getContextualName()).isEqualTo("conventionOverriddenContextualName");
             assertThat(context.toString()).containsOnlyOnce("name='conventionOverriddenName'")
-                    .containsOnlyOnce("contextualName='getConventionOverriddenContextualName'")
+                    .containsOnlyOnce("contextualName='conventionOverriddenContextualName'")
                     .containsOnlyOnce("error='null'").containsOnlyOnce("lowCardinalityKeyValues=[]")
                     .containsOnlyOnce("highCardinalityKeyValues=[]").containsOnlyOnce("map=[]");
         });
@@ -681,7 +681,7 @@ public abstract class ObservationRegistryCompatibilityKit {
         @Nullable
         @Override
         public String getContextualName(TestContext context) {
-            return "getConventionOverriddenContextualName";
+            return "conventionOverriddenContextualName";
         }
 
         @Override

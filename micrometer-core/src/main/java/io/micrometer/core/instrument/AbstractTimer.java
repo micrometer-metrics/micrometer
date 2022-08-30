@@ -36,7 +36,7 @@ import java.util.function.Supplier;
 
 public abstract class AbstractTimer extends AbstractMeter implements Timer {
 
-    private static Map<PauseDetector, Object> pauseDetectorCache = new ConcurrentHashMap<>();
+    private static final Map<PauseDetector, Object> pauseDetectorCache = new ConcurrentHashMap<>();
 
     protected final Clock clock;
 

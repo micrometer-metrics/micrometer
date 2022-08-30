@@ -46,7 +46,7 @@ class SimpleObservation implements Observation {
 
     private final Collection<ObservationFilter> filters;
 
-    SimpleObservation(String name, ObservationRegistry registry, Context context) {
+    SimpleObservation(@Nullable String name, ObservationRegistry registry, Context context) {
         this.registry = registry;
         this.context = context;
         this.context.setName(name);
@@ -113,13 +113,13 @@ class SimpleObservation implements Observation {
     @Override
     public Observation error(Throwable error) {
         this.context.setError(error);
-        this.notifyOnError();
+        notifyOnError();
         return this;
     }
 
     @Override
     public Observation event(Event event) {
-        this.notifyOnEvent(event);
+        notifyOnEvent(event);
         return this;
     }
 
@@ -140,7 +140,7 @@ class SimpleObservation implements Observation {
             }
         }
 
-        this.notifyOnObservationStarted();
+        notifyOnObservationStarted();
         return this;
     }
 
@@ -172,13 +172,13 @@ class SimpleObservation implements Observation {
             modifiedContext = filter.map(modifiedContext);
         }
 
-        this.notifyOnObservationStopped(modifiedContext);
+        notifyOnObservationStopped(modifiedContext);
     }
 
     @Override
     public Scope openScope() {
         Scope scope = new SimpleScope(this.registry, this);
-        this.notifyOnScopeOpened();
+        notifyOnScopeOpened();
         return scope;
     }
 

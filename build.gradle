@@ -1,4 +1,6 @@
 buildscript {
+    ext.javaLanguageVersion = JavaLanguageVersion.of(JavaVersion.current().isJava11Compatible() ? JavaVersion.current().getMajorVersion() : 17)
+    ext.javaTargetVersion = JavaVersion.VERSION_1_8
     dependencyLocking {
         lockAllConfigurations()
     }
@@ -72,6 +74,10 @@ subprojects {
             registerFeature('optional') {
                 usingSourceSet(sourceSets.main)
             }
+
+            toolchain {
+                languageVersion = javaLanguageVersion
+            }
         }
 
         // All projects use optional annotations, but since we don't expose them downstream we would
@@ -87,20 +93,21 @@ subprojects {
                 options.encoding = 'UTF-8'
                 options.compilerArgs << '-Xlint:unchecked' << '-Xlint:deprecation'
 
-                sourceCompatibility = JavaVersion.VERSION_1_8
-                targetCompatibility = JavaVersion.VERSION_1_8
+                sourceCompatibility = javaTargetVersion
+                targetCompatibility = javaTargetVersion
 
                 // ensure Java 8 baseline is enforced for main source
-                if (JavaVersion.current().isJava9Compatible()) {
-                    options.release = 8
+                options.release = 8
+
+                doLast {
+                    task -> logger.info("Compiling with " + task.javaCompiler.get().executablePath)
                 }
             }
             compileTestJava {
                 options.encoding = 'UTF-8'
                 options.compilerArgs << '-Xlint:unchecked' << '-Xlint:deprecation'
-                sourceCompatibility = JavaVersion.VERSION_1_8
-                targetCompatibility = JavaVersion.VERSION_1_8
             }
+
 
             javadoc {
                 if (project.name.contains('samples')) {
@@ -194,9 +201,6 @@ subprojects {
 
         // Publish resolved versions.
         plugins.withId('maven-publish') {
-            sourceCompatibility = JavaVersion.VERSION_1_8
-            targetCompatibility = JavaVersion.VERSION_1_8
-
             publishing {
                 publications {
                     nebula(MavenPublication) {
@@ -296,6 +300,13 @@ subprojects {
         apply plugin: 'nebula.project'
 
         if (project.name != 'micrometer-bom') {
+            project.afterEvaluate {
+                plugins.withType(nebula.plugin.info.InfoBrokerPlugin) {
+                    manifestEntries.find { it.name == 'X-Compile-Target-JDK' }.value = javaTargetVersion;
+                    manifestEntries.find { it.name == 'X-Compile-Source-JDK' }.value = javaTargetVersion;
+                }
+            }
+
             jar {
                 manifest.attributes.put('Automatic-Module-Name', project.name.replace('-', '.'))
                 metaInf {

@@ -209,7 +209,7 @@ public interface Observation {
      * <b>Important!</b> If you're using the
      * {@link ObservationConvention#getContextualName(Context)} method to override the
      * contextual name <b>you MUST use a non {@code null} context</b> (i.e. the
-     * {@code context} parameter of this method MUST NOT be {@code null}. The
+     * {@code context} parameter of this method MUST NOT be {@code null}). The
      * {@link ObservationConvention#getContextualName(Context)} requires a concrete type
      * of {@link Context} to be passed and if you're not providing one we won't be able to
      * initialize it ourselves.
@@ -330,7 +330,7 @@ public interface Observation {
      * Adds an observation convention that can be used to attach key values to the
      * observation. WARNING: You must add ObservationConvention instances to the
      * Observation before it is started.
-     * @param observationConvention key values provider
+     * @param observationConvention observation convention
      * @return this
      */
     Observation observationConvention(ObservationConvention<?> observationConvention);
@@ -390,16 +390,16 @@ public interface Observation {
      */
     @SuppressWarnings("unused")
     default void observe(Runnable runnable) {
-        this.start();
+        start();
         try (Scope scope = openScope()) {
             runnable.run();
         }
         catch (Exception exception) {
-            this.error(exception);
+            error(exception);
             throw exception;
         }
         finally {
-            this.stop();
+            stop();
         }
     }
 
@@ -419,16 +419,16 @@ public interface Observation {
      */
     @SuppressWarnings("unused")
     default <E extends Throwable> void observeChecked(CheckedRunnable<E> checkedRunnable) throws E {
-        this.start();
+        start();
         try (Scope scope = openScope()) {
             checkedRunnable.run();
         }
         catch (Throwable error) {
-            this.error(error);
+            error(error);
             throw error;
         }
         finally {
-            this.stop();
+            stop();
         }
     }
 
@@ -449,16 +449,16 @@ public interface Observation {
      */
     @SuppressWarnings("unused")
     default <T> T observe(Supplier<T> supplier) {
-        this.start();
+        start();
         try (Scope scope = openScope()) {
             return supplier.get();
         }
         catch (Exception exception) {
-            this.error(exception);
+            error(exception);
             throw exception;
         }
         finally {
-            this.stop();
+            stop();
         }
     }
 
@@ -480,16 +480,16 @@ public interface Observation {
      */
     @SuppressWarnings("unused")
     default <T, E extends Throwable> T observeChecked(CheckedCallable<T, E> checkedCallable) throws E {
-        this.start();
+        start();
         try (Scope scope = openScope()) {
             return checkedCallable.call();
         }
         catch (Throwable error) {
-            this.error(error);
+            error(error);
             throw error;
         }
         finally {
-            this.stop();
+            stop();
         }
     }
 
@@ -711,7 +711,6 @@ public interface Observation {
         /**
          * Sets the contextual name.
          * @param contextualName name
-         * @return this for chaining
          */
         public void setContextualName(@Nullable String contextualName) {
             this.contextualName = contextualName;
@@ -747,7 +746,6 @@ public interface Observation {
         /**
          * Sets an error that occurred while processing the {@link Observation}.
          * @param error error
-         * @return this for chaining
          */
         public void setError(Throwable error) {
             this.error = error;
@@ -895,14 +893,14 @@ public interface Observation {
         @NonNull
         @Override
         public KeyValues getAllKeyValues() {
-            return this.getLowCardinalityKeyValues().and(this.getHighCardinalityKeyValues());
+            return getLowCardinalityKeyValues().and(getHighCardinalityKeyValues());
         }
 
         @Override
         public String toString() {
             return "name='" + name + '\'' + ", contextualName='" + contextualName + '\'' + ", error='" + error + '\''
-                    + ", lowCardinalityKeyValues=" + toString(this.getLowCardinalityKeyValues())
-                    + ", highCardinalityKeyValues=" + toString(this.getHighCardinalityKeyValues()) + ", map="
+                    + ", lowCardinalityKeyValues=" + toString(getLowCardinalityKeyValues())
+                    + ", highCardinalityKeyValues=" + toString(getHighCardinalityKeyValues()) + ", map="
                     + toString(map);
         }
 
@@ -924,48 +922,68 @@ public interface Observation {
      * If you want to signal an exception/error, please use
      * {@link Observation#error(Throwable)} instead.
      */
-    class Event {
-
-        private final String name;
-
-        private final String contextualName;
+    interface Event {
 
         /**
-         * @param name The name of the event.
-         */
-        public Event(String name) {
-            this(name, name);
-        }
-
-        /**
+         * Creates a {@link Event} for the given names.
          * @param name The name of the event (should have low cardinality).
          * @param contextualName The contextual name of the event (can have high
          * cardinality).
+         * @return event
          */
-        public Event(String name, String contextualName) {
-            this.name = name;
-            this.contextualName = contextualName;
+        static Event of(String name, String contextualName) {
+            return new Event() {
+                @Override
+                public String getName() {
+                    return name;
+                }
+
+                @Override
+                public String getContextualName() {
+                    return contextualName;
+                }
+
+                @Override
+                public String toString() {
+                    return "event.name='" + this.getName() + "', event.contextualName='" + this.getContextualName()
+                            + '\'';
+                }
+            };
+        }
+
+        /**
+         * Creates a {@link Event} for the given name.
+         * @param name The name of the event (should have low cardinality).
+         * @return event
+         */
+        static Event of(String name) {
+            return of(name, name);
         }
 
         /**
          * Returns the name of the event.
          * @return the name of the event.
          */
-        public String getName() {
-            return this.name;
+        String getName();
+
+        /**
+         * Returns the contextual name of the event. You can use {@code %s} to represent
+         * dynamic entries that should be resolved at runtime via
+         * {@link String#format(String, Object...)}.
+         * @return the contextual name of the event.
+         */
+        default String getContextualName() {
+            return getName();
         }
 
         /**
-         * Returns the contextual name of the event.
-         * @return the contextual name of the event.
+         * Creates an event for the given key name.
+         * @param dynamicEntriesForContextualName variables to be resolved in
+         * {@link Event#getContextualName()} via {@link String#format(String, Object...)}.
+         * @return event
          */
-        public String getContextualName() {
-            return this.contextualName;
-        }
-
-        @Override
-        public String toString() {
-            return "event.name='" + this.name + "', event.contextualName='" + this.contextualName + '\'';
+        default Event format(Object... dynamicEntriesForContextualName) {
+            return Event.of(this.getName(), String.format(this.getContextualName(), dynamicEntriesForContextualName));
         }
 
     }
@@ -1100,10 +1118,10 @@ public interface Observation {
         }
 
         /**
-         * Tells whether this key values provider should be applied for a given
+         * Tells whether this observation convention should be applied for a given
          * {@link Context}.
          * @param context a {@link Context}
-         * @return {@code true} when this key values provider should be used
+         * @return {@code true} when this observation convention should be used
          */
         boolean supportsContext(Context context);
 

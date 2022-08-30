@@ -47,7 +47,7 @@ public class ObservationHandlerSample {
 
         try (Observation.Scope scope = observation.openScope()) {
             Thread.sleep(1_000);
-            observation.event(new Observation.Event("custom.event", "Custom " + UUID.randomUUID()));
+            observation.event(Observation.Event.of("custom.event", "Custom " + UUID.randomUUID()));
             observation.error(new IOException("simulated"));
         }
 

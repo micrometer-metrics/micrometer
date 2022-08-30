@@ -65,7 +65,8 @@ public interface KeyValue extends Comparable<KeyValue> {
     }
 
     /**
-     * Creates a {@link KeyValue} for the given {@link KeyName} and value.
+     * Creates a {@link KeyValue} for the given {@link KeyName} and value and additionally
+     * validates it with the {@link Predicate}.
      * @param keyName name of the key of the KeyValue
      * @param value value for key
      * @param validator the {@link Predicate} used for validating the value
