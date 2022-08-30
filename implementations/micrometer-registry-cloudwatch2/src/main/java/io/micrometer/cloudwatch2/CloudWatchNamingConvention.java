@@ -31,7 +31,7 @@ public class CloudWatchNamingConvention implements NamingConvention {
     // https://docs.aws.amazon.com/AmazonCloudWatch/latest/APIReference/API_Dimension.html
     private static final int MAX_TAG_KEY_LENGTH = 255;
 
-    private static final int MAX_TAG_VALUE_LENGTH = 255;
+    private static final int MAX_TAG_VALUE_LENGTH = 1024;
 
     private final NamingConvention delegate;
 
