@@ -39,7 +39,7 @@ class CloudWatchNamingConventionTest {
 
     @Test
     void truncateTagValue() {
-        assertThat(namingConvention.tagValue(repeat("x", 256))).hasSize(255);
+        assertThat(namingConvention.tagValue(repeat("x", 1025))).hasSize(1024);
     }
 
     private String repeat(String s, int repeat) {
