@@ -44,10 +44,33 @@ public class ObservationBenchmark {
 
     Timer timer;
 
+    @State(Scope.Thread)
+    public static class InvocationState {
+
+        private String[] tags;
+
+        private int index;
+
+        @Setup
+        public void setup() {
+            this.tags = new String[] { "1", "2", "3", "4", "5" };
+            this.index = 0;
+        }
+
+        String getNextTagValue() {
+            if (index == tags.length) {
+                index = 0;
+            }
+
+            return tags[index++];
+        }
+
+    }
+
     @Setup
     public void setup() {
         this.meterRegistry = new SimpleMeterRegistry();
-        this.timer = Timer.builder("cached.timer").tag("abc", "123").tag("def", "321").register(meterRegistry);
+        this.timer = Timer.builder("cached.timer").tag("abc", "123").tag("index", "0").register(meterRegistry);
         this.observationRegistry = ObservationRegistry.create();
         this.observationRegistry.observationConfig()
                 .observationHandler(new DefaultMeterObservationHandler(meterRegistry));
@@ -65,7 +88,7 @@ public class ObservationBenchmark {
     }
 
     @Benchmark
-    public long cachedTimerWithLong() {
+    public long cachedTimerWithLong() { // Dynamic tags don't work (see index tag)
         long start = System.nanoTime();
         long duration = System.nanoTime() - start;
         timer.record(duration, TimeUnit.NANOSECONDS);
@@ -74,46 +97,59 @@ public class ObservationBenchmark {
     }
 
     @Benchmark
-    public long cachedTimerWithSample() {
+    public long cachedTimerWithSample() { // Dynamic tags don't work (see index tag)
         Timer.Sample sample = Timer.start(meterRegistry);
         return sample.stop(timer);
     }
 
     @Benchmark
-    public long builtTimerWithSample() {
+    public long builtTimerWithSample(InvocationState invocationState) {
         Timer.Sample sample = Timer.start(meterRegistry);
-        return sample.stop(Timer.builder("built.timer").tag("abc", "123").tag("def", "321").register(meterRegistry));
+        return sample.stop(Timer.builder("built.timer").tag("abc", "123")
+                .tag("index", invocationState.getNextTagValue()).register(meterRegistry));
     }
 
     @Benchmark
-    public long builtTimerAndLongTaskTimer() {
+    public long builtTimerAndLongTaskTimer(InvocationState invocationState) {
         LongTaskTimer.Sample longTaskSample = LongTaskTimer.builder("built.timer.active").tag("abc", "123")
-                .tag("def", "321").register(meterRegistry).start();
+                .tag("index", invocationState.getNextTagValue()).register(meterRegistry).start();
         Timer.Sample sample = Timer.start(meterRegistry);
 
-        long latencyWithTimer = sample
-                .stop(Timer.builder("built.timer").tag("abc", "123").tag("def", "321").register(meterRegistry));
+        long latencyWithTimer = sample.stop(Timer.builder("built.timer").tag("abc", "123")
+                .tag("index", invocationState.getNextTagValue()).register(meterRegistry));
         long latencyWithLongTaskTimer = longTaskSample.stop();
 
         return latencyWithTimer + latencyWithLongTaskTimer;
     }
 
     @Benchmark
-    public Observation observation() {
+    public Observation observation(InvocationState invocationState) {
         Observation observation = Observation.createNotStarted("test.obs", observationRegistry)
-                .lowCardinalityKeyValue("abc", "123").lowCardinalityKeyValue("def", "321").start();
+                .lowCardinalityKeyValue("abc", "123").lowCardinalityKeyValue("index", invocationState.getNextTagValue())
+                .start();
         observation.stop();
 
         return observation;
     }
 
     @Benchmark
-    public ObservationOrTimerCompatibleInstrumentation<Observation.Context> observationOrTimerCompatibleInstrumentationBenchmark() {
+    public ObservationOrTimerCompatibleInstrumentation<Observation.Context> observationOrTimerCompatibleInstrumentationBenchmark(
+            InvocationState invocationState) {
         ObservationOrTimerCompatibleInstrumentation<Observation.Context> instrumentation = ObservationOrTimerCompatibleInstrumentation
                 .start(meterRegistry, null, null, null, null);
-        instrumentation.stop("test.obs-or-timer", null, () -> Tags.of("abc", "123", "def", "321"));
+        instrumentation.stop("test.obs-or-timer", null,
+                () -> Tags.of("abc", "123", "index", invocationState.getNextTagValue()));
 
         return instrumentation;
+    }
+
+    @Benchmark
+    public Observation noopObservation(InvocationState invocationState) {
+        Observation observation = Observation.createNotStarted("test.obs", null).lowCardinalityKeyValue("abc", "123")
+                .lowCardinalityKeyValue("index", invocationState.getNextTagValue()).start();
+        observation.stop();
+
+        return observation;
     }
 
     public static void main(String[] args) throws RunnerException {
