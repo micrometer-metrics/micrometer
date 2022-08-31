@@ -100,6 +100,16 @@ public class ObservationBenchmark {
         return latencyWithTimer + latencyWithLongTaskTimer;
     }
 
+    @Threads(1)
+    @Benchmark
+    public Observation observationWithoutThreadContention() {
+        Observation observation = Observation.createNotStarted("test.obs", observationRegistry)
+                .lowCardinalityKeyValue("abc", "123").start();
+        observation.stop();
+
+        return observation;
+    }
+
     @Benchmark
     public Observation observation() {
         Observation observation = Observation.createNotStarted("test.obs", observationRegistry)
