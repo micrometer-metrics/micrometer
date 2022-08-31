@@ -110,7 +110,7 @@ public class ObservationBenchmark {
     }
 
     @Benchmark
-    public ObservationOrTimerCompatibleInstrumentation<Observation.Context> observationOrTimerCompatibleInstrumentationBenchmark() {
+    public ObservationOrTimerCompatibleInstrumentation<Observation.Context> observationOrTimer() {
         ObservationOrTimerCompatibleInstrumentation<Observation.Context> instrumentation = ObservationOrTimerCompatibleInstrumentation
                 .start(meterRegistry, noopRegistry, null, null, null);
         instrumentation.stop("test.obs-or-timer", null, () -> Tags.of("abc", "123"));
