@@ -36,7 +36,8 @@ import static io.micrometer.core.instrument.config.validate.PropertyValidator.ge
  */
 public interface CloudWatchConfig extends StepRegistryConfig {
 
-    int MAX_BATCH_SIZE = 20;
+    // https://docs.aws.amazon.com/AmazonCloudWatch/latest/APIReference/API_PutMetricData.html
+    int MAX_BATCH_SIZE = 1000;
 
     @Override
     default String prefix() {

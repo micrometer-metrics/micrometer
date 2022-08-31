@@ -16,7 +16,7 @@ buildscript {
         classpath 'com.netflix.nebula:nebula-publishing-plugin:18.4.0'
         classpath 'com.netflix.nebula:nebula-project-plugin:9.4.0'
         classpath 'io.spring.nohttp:nohttp-gradle:0.0.10'
-        classpath 'org.gradle:test-retry-gradle-plugin:1.4.0'
+        classpath 'org.gradle:test-retry-gradle-plugin:1.4.1'
         classpath 'io.github.gradle-nexus:publish-plugin:1.1.0'
         classpath 'me.champeau.gradle:japicmp-gradle-plugin:0.4.0'
         classpath 'de.undercouch:gradle-download-task:5.0.2'
@@ -300,13 +300,6 @@ subprojects {
         apply plugin: 'nebula.project'
 
         if (project.name != 'micrometer-bom') {
-            project.afterEvaluate {
-                plugins.withType(nebula.plugin.info.InfoBrokerPlugin) {
-                    manifestEntries.find { it.name == 'X-Compile-Target-JDK' }.value = javaTargetVersion;
-                    manifestEntries.find { it.name == 'X-Compile-Source-JDK' }.value = javaTargetVersion;
-                }
-            }
-
             jar {
                 manifest.attributes.put('Automatic-Module-Name', project.name.replace('-', '.'))
                 metaInf {

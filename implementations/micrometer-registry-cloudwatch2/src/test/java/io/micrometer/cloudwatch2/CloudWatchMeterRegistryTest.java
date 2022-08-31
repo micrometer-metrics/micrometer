@@ -239,7 +239,7 @@ class CloudWatchMeterRegistryTest {
     @Test
     void batchSizeShouldWorkOnMetricDatum() throws InterruptedException {
         List<Meter> meters = new ArrayList<>();
-        for (int i = 0; i < 20; i++) {
+        for (int i = 0; i < CloudWatchConfig.MAX_BATCH_SIZE; i++) {
             Timer timer = Timer.builder("timer." + i).register(this.registry);
             meters.add(timer);
         }
@@ -250,8 +250,8 @@ class CloudWatchMeterRegistryTest {
         ArgumentCaptor<List<MetricDatum>> argumentCaptor = ArgumentCaptor.forClass(List.class);
         verify(this.registry, times(2)).sendMetricData(argumentCaptor.capture());
         List<List<MetricDatum>> allValues = argumentCaptor.getAllValues();
-        assertThat(allValues.get(0)).hasSize(20);
-        assertThat(allValues.get(1)).hasSize(20);
+        assertThat(allValues.get(0)).hasSize(CloudWatchConfig.MAX_BATCH_SIZE);
+        assertThat(allValues.get(1)).hasSize(CloudWatchConfig.MAX_BATCH_SIZE);
     }
 
     @Test
