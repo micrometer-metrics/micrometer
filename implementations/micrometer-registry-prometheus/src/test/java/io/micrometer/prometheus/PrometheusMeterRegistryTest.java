@@ -20,6 +20,7 @@ import io.micrometer.core.instrument.Timer;
 import io.micrometer.core.instrument.*;
 import io.micrometer.core.instrument.binder.BaseUnits;
 import io.micrometer.core.instrument.composite.CompositeMeterRegistry;
+import io.micrometer.core.instrument.distribution.CountAtBucket;
 import io.micrometer.core.instrument.distribution.DistributionStatisticConfig;
 import io.micrometer.core.instrument.distribution.HistogramSnapshot;
 import io.prometheus.client.Collector;
@@ -677,6 +678,50 @@ class PrometheusMeterRegistryTest {
             return true;
         }
 
+    }
+
+    @Issue("#2394")
+    @Test
+    void testDistributionSummaryConcurrency() {
+        int numIterations = 1000;
+
+        Thread emitterThread = new Thread(() -> {
+            DistributionSummary summary = DistributionSummary.builder("test").publishPercentileHistogram()
+                    .register(registry);
+            for (int n = 0; n < numIterations; n++) {
+                summary.record(0.5);
+            }
+        });
+
+        List<String> incorrectBucketMessages = new ArrayList<String>();
+        Thread verifierThread = new Thread(() -> {
+            PrometheusDistributionSummary summary = (PrometheusDistributionSummary) DistributionSummary.builder("test")
+                    .publishPercentileHistogram().register(registry);
+            for (int n = 0; n < numIterations; n++) {
+                CountAtBucket[] counts = summary.histogramCounts();
+                for (int i = 1; i < counts.length - 1; i++) {
+                    if (counts[i].count() - counts[i - 1].count() > 0.5) {
+                        incorrectBucketMessages.add(String.format("%s %s", counts[i - 1], counts[i]));
+                    }
+                }
+            }
+        });
+
+        emitterThread.start();
+        verifierThread.start();
+        try {
+            emitterThread.join();
+        }
+        catch (InterruptedException e) {
+        }
+        try {
+            verifierThread.join();
+        }
+        catch (InterruptedException e) {
+        }
+        if (incorrectBucketMessages.size() > 0) {
+            fail("Incorrect buckets:\n%s", String.join("\n", incorrectBucketMessages));
+        }
     }
 
 }
