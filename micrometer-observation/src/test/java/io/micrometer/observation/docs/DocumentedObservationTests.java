@@ -109,7 +109,8 @@ class DocumentedObservationTests {
 
         then(context.getName()).isEqualTo("global name");
         then(context.getContextualName()).isEqualTo("global contextual name");
-        assertThat(context.getLowCardinalityKeyValues()).containsOnly(KeyValue.of("always added", "tag"), KeyValue.of("global", "low cardinality"));
+        assertThat(context.getLowCardinalityKeyValues()).containsOnly(KeyValue.of("always added", "tag"),
+                KeyValue.of("global", "low cardinality"));
         assertThat(context.getHighCardinalityKeyValues()).containsOnly(KeyValue.of("global", "high cardinality"));
     }
 
@@ -263,6 +264,7 @@ class DocumentedObservationTests {
         public Observation.Context map(Observation.Context context) {
             return context.addLowCardinalityKeyValue(KeyValue.of("always added", "tag"));
         }
+
     }
 
 }
