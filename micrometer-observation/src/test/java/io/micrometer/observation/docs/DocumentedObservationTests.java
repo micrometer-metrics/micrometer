@@ -15,11 +15,14 @@
  */
 package io.micrometer.observation.docs;
 
+import io.micrometer.common.KeyValue;
 import io.micrometer.common.KeyValues;
 import io.micrometer.observation.Observation;
+import io.micrometer.observation.ObservationFilter;
 import io.micrometer.observation.ObservationRegistry;
 import org.junit.jupiter.api.Test;
 
+import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.BDDAssertions.then;
 import static org.assertj.core.api.BDDAssertions.thenThrownBy;
 
@@ -77,6 +80,37 @@ class DocumentedObservationTests {
 
         then(context.getName()).isEqualTo("technical name");
         then(context.getContextualName()).isEqualTo("contextual name");
+    }
+
+    @Test
+    void globalConventionShouldBePickedIfItIsMatching() {
+        ObservationRegistry registry = observationRegistry();
+        registry.observationConfig().observationConvention(new GlobalConvention());
+        Observation.Context context = new Observation.Context();
+
+        TestConventionObservation.CONTEXTUAL_NAME.observation(null, new FirstObservationConvention(), context, registry)
+                .start().stop();
+
+        then(context.getName()).isEqualTo("global name");
+        then(context.getContextualName()).isEqualTo("global contextual name");
+        assertThat(context.getLowCardinalityKeyValues()).containsOnly(KeyValue.of("global", "low cardinality"));
+        assertThat(context.getHighCardinalityKeyValues()).containsOnly(KeyValue.of("global", "high cardinality"));
+    }
+
+    @Test
+    void keyValuesShouldBeAlwaysAdded() {
+        ObservationRegistry registry = observationRegistry();
+        registry.observationConfig().observationConvention(new GlobalConvention());
+        registry.observationConfig().observationFilter(new KeyValueAddingObservationFilter());
+        Observation.Context context = new Observation.Context();
+
+        TestConventionObservation.CONTEXTUAL_NAME.observation(null, new FirstObservationConvention(), context, registry)
+                .start().stop();
+
+        then(context.getName()).isEqualTo("global name");
+        then(context.getContextualName()).isEqualTo("global contextual name");
+        assertThat(context.getLowCardinalityKeyValues()).containsOnly(KeyValue.of("always added", "tag"), KeyValue.of("global", "low cardinality"));
+        assertThat(context.getHighCardinalityKeyValues()).containsOnly(KeyValue.of("global", "high cardinality"));
     }
 
     private ObservationRegistry observationRegistry() {
@@ -192,6 +226,43 @@ class DocumentedObservationTests {
             return true;
         }
 
+    }
+
+    static class GlobalConvention implements Observation.GlobalObservationConvention<Observation.Context> {
+
+        @Override
+        public KeyValues getLowCardinalityKeyValues(Observation.Context context) {
+            return KeyValues.of("global", "low cardinality");
+        }
+
+        @Override
+        public KeyValues getHighCardinalityKeyValues(Observation.Context context) {
+            return KeyValues.of("global", "high cardinality");
+        }
+
+        @Override
+        public boolean supportsContext(Observation.Context context) {
+            return true;
+        }
+
+        @Override
+        public String getName() {
+            return "global name";
+        }
+
+        @Override
+        public String getContextualName(Observation.Context context) {
+            return "global contextual name";
+        }
+
+    }
+
+    static class KeyValueAddingObservationFilter implements ObservationFilter {
+
+        @Override
+        public Observation.Context map(Observation.Context context) {
+            return context.addLowCardinalityKeyValue(KeyValue.of("always added", "tag"));
+        }
     }
 
 }
