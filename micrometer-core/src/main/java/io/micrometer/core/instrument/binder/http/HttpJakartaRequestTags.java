@@ -21,7 +21,6 @@ import io.micrometer.core.instrument.Tag;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 
-
 /**
  * Tags for HTTP requests.
  *

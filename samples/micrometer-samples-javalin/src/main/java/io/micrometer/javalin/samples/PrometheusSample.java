@@ -63,7 +63,8 @@ public class PrometheusSample {
         new ProcessorMetrics().bindTo(meterRegistry);
         new FileDescriptorMetrics().bindTo(meterRegistry);
 
-        Javalin app = Javalin.create(config -> config.plugins.register(new MicrometerPlugin(meterRegistry))).start(8080);
+        Javalin app = Javalin.create(config -> config.plugins.register(new MicrometerPlugin(meterRegistry)))
+                .start(8080);
 
         // must manually delegate to Micrometer exception handler for excepton tags to be
         // correct

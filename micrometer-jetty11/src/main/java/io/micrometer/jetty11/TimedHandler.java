@@ -32,7 +32,6 @@ import org.eclipse.jetty.server.Request;
 import org.eclipse.jetty.server.handler.HandlerWrapper;
 import org.eclipse.jetty.util.component.Graceful;
 
-
 import java.io.IOException;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -75,7 +74,8 @@ public class TimedHandler extends HandlerWrapper implements Graceful {
         this(registry, tags, new DefaultHttpJakartaServletRequestTagsProvider());
     }
 
-    public TimedHandler(MeterRegistry registry, Iterable<Tag> tags, HttpJakartaServletRequestTagsProvider tagsProvider) {
+    public TimedHandler(MeterRegistry registry, Iterable<Tag> tags,
+            HttpJakartaServletRequestTagsProvider tagsProvider) {
         this.registry = registry;
         this.tags = tags;
         this.tagsProvider = tagsProvider;
@@ -156,7 +156,8 @@ public class TimedHandler extends HandlerWrapper implements Graceful {
             HttpChannelState state = ((AsyncContextEvent) event).getHttpChannelState();
             Request request = state.getBaseRequest();
 
-            LongTaskTimer.Sample lttSample = (LongTaskTimer.Sample) request.getAttribute(SAMPLE_REQUEST_LONG_TASK_TIMER_ATTRIBUTE);
+            LongTaskTimer.Sample lttSample = (LongTaskTimer.Sample) request
+                    .getAttribute(SAMPLE_REQUEST_LONG_TASK_TIMER_ATTRIBUTE);
             lttSample.stop();
         }
 
@@ -175,14 +176,12 @@ public class TimedHandler extends HandlerWrapper implements Graceful {
 
             Request request = state.getBaseRequest();
             Timer.Sample sample = (Timer.Sample) request.getAttribute(SAMPLE_REQUEST_TIMER_ATTRIBUTE);
-            LongTaskTimer.Sample lttSample = (LongTaskTimer.Sample) request.getAttribute(SAMPLE_REQUEST_LONG_TASK_TIMER_ATTRIBUTE);
+            LongTaskTimer.Sample lttSample = (LongTaskTimer.Sample) request
+                    .getAttribute(SAMPLE_REQUEST_LONG_TASK_TIMER_ATTRIBUTE);
 
             if (sample != null) {
-                sample.stop(Timer.builder("jetty.server.requests")
-                        .description("HTTP requests to the Jetty server")
-                        .tags(tagsProvider.getTags(request, request.getResponse()))
-                        .tags(tags)
-                        .register(registry));
+                sample.stop(Timer.builder("jetty.server.requests").description("HTTP requests to the Jetty server")
+                        .tags(tagsProvider.getTags(request, request.getResponse())).tags(tags).register(registry));
 
                 lttSample.stop();
             }
