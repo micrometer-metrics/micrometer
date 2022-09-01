@@ -15,7 +15,11 @@
  */
 package io.micrometer.observation;
 
+import io.micrometer.common.KeyValues;
 import io.micrometer.common.lang.Nullable;
+import io.micrometer.observation.Observation.Context;
+import io.micrometer.observation.Observation.GlobalObservationConvention;
+import io.micrometer.observation.Observation.ObservationConvention;
 
 import java.util.Arrays;
 import java.util.Collection;
@@ -98,7 +102,7 @@ public interface ObservationRegistry {
 
         private final List<ObservationPredicate> observationPredicates = new CopyOnWriteArrayList<>();
 
-        private final List<Observation.ObservationConvention<?>> observationConventions = new CopyOnWriteArrayList<>();
+        private final List<Observation.ObservationConvention<?>> globalObservationConventions = new CopyOnWriteArrayList<>();
 
         private final List<ObservationFilter> observationFilters = new CopyOnWriteArrayList<>();
 
@@ -136,29 +140,35 @@ public interface ObservationRegistry {
 
         /**
          * Register {@link Observation.ObservationConvention observation conventions}.
-         * @param observationConventions observation conventions
+         * @param globalObservationConventions global observation conventions
          * @return This configuration instance
          */
         public ObservationConfig observationConvention(
-                Observation.GlobalObservationConvention<?>... observationConventions) {
-            this.observationConventions.addAll(Arrays.asList(observationConventions));
+                Observation.GlobalObservationConvention<?>... globalObservationConventions) {
+            this.globalObservationConventions.addAll(Arrays.asList(globalObservationConventions));
             return this;
         }
 
         /**
          * Register a collection of {@link Observation.ObservationConvention}.
-         * @param observationConventions observation conventions
+         * @param globalObservationConventions global observation conventions
          * @return This configuration instance
          */
         public ObservationConfig observationConvention(
-                Collection<Observation.GlobalObservationConvention<?>> observationConventions) {
-            this.observationConventions.addAll(observationConventions);
+                Collection<Observation.GlobalObservationConvention<?>> globalObservationConventions) {
+            this.globalObservationConventions.addAll(globalObservationConventions);
             return this;
         }
 
         /**
          * Finds an {@link Observation.ObservationConvention} for the given
          * {@link Observation.Context}.
+         * <p>
+         * When a {@link Observation.GlobalObservationConvention} is registered to the
+         * given {@link Observation.Context}, this method returns a composite
+         * {@link Observation.ObservationConvention} using the matched
+         * {@link Observation.GlobalObservationConvention} and given
+         * {@link Observation.ObservationConvention<T> defaultConvention}.
          * @param context context
          * @param defaultConvention default convention if none found
          * @return matching {@link Observation.ObservationConvention} or default when no
@@ -167,9 +177,12 @@ public interface ObservationRegistry {
         @SuppressWarnings("unchecked")
         public <T extends Observation.Context> Observation.ObservationConvention<T> getObservationConvention(T context,
                 Observation.ObservationConvention<T> defaultConvention) {
-            return (Observation.ObservationConvention<T>) this.observationConventions.stream()
-                    .filter(convention -> convention.supportsContext(context)).findFirst().orElse(Objects
-                            .requireNonNull(defaultConvention, "Default ObservationConvention must not be null"));
+            return this.globalObservationConventions.stream().filter(convention -> convention.supportsContext(context))
+                    .findFirst()
+                    .map(observationConvention -> (ObservationConvention<T>) new OverridingObservationConvention<>(
+                            (GlobalObservationConvention<T>) observationConvention, defaultConvention))
+                    .orElse(Objects.requireNonNull(defaultConvention,
+                            "Default ObservationConvention must not be null"));
         }
 
         /**
@@ -193,7 +206,104 @@ public interface ObservationRegistry {
         }
 
         Collection<Observation.ObservationConvention<?>> getObservationConventions() {
-            return observationConventions;
+            return globalObservationConventions;
+        }
+
+    }
+
+    /**
+     * Composition of the multiple {@link Observation.ObservationConvention}.
+     * <p>
+     * This class takes a {@link Observation.GlobalObservationConvention} as a base and
+     * add/override values with given {@link Observation.ObservationConvention
+     * ObservationConventions}.
+     *
+     * @param <T> type of context
+     */
+    class OverridingObservationConvention<T extends Context> implements Observation.ObservationConvention<T> {
+
+        private final GlobalObservationConvention<T> base;
+
+        private final List<Observation.ObservationConvention<T>> conventions;
+
+        /**
+         * Create a composite {@link Observation.ObservationConvention}. This requires a
+         * one base {@link Observation.GlobalObservationConvention}.
+         * @param base base {@link Observation.GlobalObservationConvention convention}
+         * @param conventions adding {@link Observation.ObservationConvention conventions}
+         */
+        @SafeVarargs
+        public OverridingObservationConvention(GlobalObservationConvention<T> base,
+                Observation.ObservationConvention<T>... conventions) {
+            this.base = base;
+            this.conventions = Arrays.asList(conventions);
+        }
+
+        /**
+         * Combined low cardinality {@link KeyValues}.
+         * @param context a context
+         * @return low cardinality key values
+         */
+        @Override
+        public KeyValues getLowCardinalityKeyValues(T context) {
+            KeyValues keyValues = this.base.getLowCardinalityKeyValues(context);
+            for (ObservationConvention<T> convention : this.conventions) {
+                keyValues = KeyValues.concat(keyValues, convention.getLowCardinalityKeyValues(context));
+            }
+            return keyValues;
+        }
+
+        /**
+         * Combined high cardinality {@link KeyValues}.
+         * @param context a context
+         * @return high cardinality key values
+         */
+        @Override
+        public KeyValues getHighCardinalityKeyValues(T context) {
+            KeyValues keyValues = this.base.getHighCardinalityKeyValues(context);
+            for (ObservationConvention<T> convention : this.conventions) {
+                keyValues = KeyValues.concat(keyValues, convention.getHighCardinalityKeyValues(context));
+            }
+            return keyValues;
+        }
+
+        /**
+         * Returns {@code true} when all {@link Observation.ObservationConvention} returns
+         * {@code true}.
+         * @param context a {@link Context}
+         * @return true when all conventions support the context
+         */
+        @Override
+        public boolean supportsContext(Context context) {
+            return this.base.supportsContext(context)
+                    && this.conventions.stream().allMatch((convention) -> convention.supportsContext(context));
+        }
+
+        /**
+         * The last {@link Observation.ObservationConvention} name.
+         * @return name of the last convention
+         */
+        @Override
+        public String getName() {
+            if (this.conventions.isEmpty()) {
+                return this.base.getName();
+            }
+            // use the last one
+            return this.conventions.get(this.conventions.size() - 1).getName();
+        }
+
+        /**
+         * The last {@link Observation.ObservationConvention} contextual name.
+         * @param context context
+         * @return contextual name of the last convention
+         */
+        @Override
+        public String getContextualName(T context) {
+            if (this.conventions.isEmpty()) {
+                return this.base.getContextualName(context);
+            }
+            // use the last one
+            return this.conventions.get(this.conventions.size() - 1).getContextualName(context);
         }
 
     }
