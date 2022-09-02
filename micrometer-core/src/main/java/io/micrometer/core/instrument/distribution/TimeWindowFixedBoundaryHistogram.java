@@ -26,7 +26,7 @@ import java.util.concurrent.atomic.AtomicLongArray;
 
 /**
  * A histogram implementation that does not support precomputed percentiles but supports
- * aggregable percentile histograms and SLA boundaries. There is no need for a high
+ * aggregable percentile histograms and SLO boundaries. There is no need for a high
  * dynamic range histogram and its more expensive memory footprint if all we are
  * interested in is fixed histogram counts.
  *
