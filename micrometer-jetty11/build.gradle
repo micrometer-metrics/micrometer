@@ -8,6 +8,12 @@ dependencies {
     testImplementation 'org.assertj:assertj-core'
 }
 
-// TODO new module in 1.10; enable after 1.10 is released
+compileJava {
+    sourceCompatibility = JavaVersion.VERSION_11
+    targetCompatibility = JavaVersion.VERSION_11
+    options.release = 11
+}
+
+// TODO this is a new module in 1.10; enable after 1.10 is released
 japicmp.enabled = false
 downloadBaseline.enabled = false
