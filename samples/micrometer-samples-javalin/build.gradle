@@ -11,3 +11,9 @@ dependencies {
     implementation 'io.javalin:javalin:latest.release'
     implementation 'ch.qos.logback:logback-classic'
 }
+
+compileJava {
+    sourceCompatibility = JavaVersion.VERSION_11
+    targetCompatibility = JavaVersion.VERSION_11
+    options.release = 11
+}

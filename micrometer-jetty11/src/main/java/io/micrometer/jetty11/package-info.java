@@ -15,7 +15,7 @@
  */
 
 /**
- * Meter binders for Jetty 11.
+ * Instrumentation for Jetty 11.
  */
 @NonNullApi
 @NonNullFields
