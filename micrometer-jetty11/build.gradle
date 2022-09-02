@@ -3,8 +3,11 @@ description 'Micrometer instrumentation for Jetty 11'
 dependencies {
     api project(":micrometer-core")
     api 'org.eclipse.jetty:jetty-server:11.+'
-    api 'org.eclipse.jetty:jetty-client:11.+'
 
     testImplementation 'org.junit.jupiter:junit-jupiter'
     testImplementation 'org.assertj:assertj-core'
 }
+
+// TODO new module in 1.10; enable after 1.10 is released
+japicmp.enabled = false
+downloadBaseline.enabled = false
