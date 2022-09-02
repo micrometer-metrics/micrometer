@@ -32,8 +32,8 @@ public class DefaultHttpJakartaServletRequestTagsProvider implements HttpJakarta
 
     @Override
     public Iterable<Tag> getTags(HttpServletRequest request, HttpServletResponse response) {
-        return Tags.of(HttpJakartaRequestTags.method(request), HttpJakartaRequestTags.status(response),
-                HttpJakartaRequestTags.outcome(response));
+        return Tags.of(HttpRequestTags.method(request), HttpRequestTags.status(response),
+                HttpRequestTags.outcome(response));
     }
 
 }
