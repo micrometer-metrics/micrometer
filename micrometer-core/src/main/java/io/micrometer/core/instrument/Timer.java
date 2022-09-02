@@ -20,7 +20,6 @@ import io.micrometer.core.annotation.Timed;
 import io.micrometer.core.instrument.distribution.CountAtBucket;
 import io.micrometer.core.instrument.distribution.HistogramSupport;
 import io.micrometer.core.instrument.distribution.ValueAtPercentile;
-import io.micrometer.core.instrument.distribution.pause.PauseDetector;
 import io.micrometer.core.lang.Nullable;
 
 import java.time.Duration;
@@ -307,82 +306,6 @@ public interface Timer extends Meter, HistogramSupport {
 
         Builder(String name) {
             super(name);
-        }
-
-        @Override
-        public Builder tags(String... tags) {
-            return super.tags(tags);
-        }
-
-        @Override
-        public Builder tags(Iterable<Tag> tags) {
-            return super.tags(tags);
-        }
-
-        @Override
-        public Builder tag(String key, String value) {
-            return super.tag(key, value);
-        }
-
-        @Override
-        public Builder publishPercentiles(double... percentiles) {
-            return super.publishPercentiles(percentiles);
-        }
-
-        @Override
-        public Builder percentilePrecision(Integer digitsOfPrecision) {
-            return super.percentilePrecision(digitsOfPrecision);
-        }
-
-        @Override
-        public Builder publishPercentileHistogram() {
-            return super.publishPercentileHistogram();
-        }
-
-        @Override
-        public Builder publishPercentileHistogram(Boolean enabled) {
-            return super.publishPercentileHistogram(enabled);
-        }
-
-        @SuppressWarnings("deprecation")
-        @Override
-        public Builder sla(Duration... sla) {
-            return super.sla(sla);
-        }
-
-        @Override
-        public Builder serviceLevelObjectives(Duration... slos) {
-            return super.serviceLevelObjectives(slos);
-        }
-
-        @Override
-        public Builder minimumExpectedValue(Duration min) {
-            return super.minimumExpectedValue(min);
-        }
-
-        @Override
-        public Builder maximumExpectedValue(Duration max) {
-            return super.maximumExpectedValue(max);
-        }
-
-        @Override
-        public Builder distributionStatisticExpiry(Duration expiry) {
-            return super.distributionStatisticExpiry(expiry);
-        }
-
-        @Override
-        public Builder distributionStatisticBufferLength(Integer bufferLength) {
-            return super.distributionStatisticBufferLength(bufferLength);
-        }
-
-        @Override
-        public Builder pauseDetector(PauseDetector pauseDetector) {
-            return super.pauseDetector(pauseDetector);
-        }
-
-        @Override
-        public Builder description(String description) {
-            return super.description(description);
         }
 
         /**
