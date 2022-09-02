@@ -17,6 +17,9 @@ package io.micrometer.observation;
 
 import io.micrometer.common.KeyValue;
 import io.micrometer.common.KeyValues;
+import io.micrometer.observation.convention.GlobalObservationConvention;
+import io.micrometer.observation.convention.KeyValuesConvention;
+import io.micrometer.observation.convention.ObservationConvention;
 import org.junit.jupiter.api.Test;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -117,7 +120,7 @@ class ObservationRegistryTest {
 
     }
 
-    static class MessagingObservationConvention implements Observation.ObservationConvention<MessagingContext> {
+    static class MessagingObservationConvention implements ObservationConvention<MessagingContext> {
 
         private final MessagingConvention messagingConvention;
 
@@ -137,7 +140,7 @@ class ObservationRegistryTest {
 
     }
 
-    interface MessagingConvention extends Observation.KeyValuesConvention {
+    interface MessagingConvention extends KeyValuesConvention {
 
         KeyValue queueName(String foo);
 
@@ -153,8 +156,7 @@ class ObservationRegistryTest {
 
     }
 
-    static class OurCompanyObservationConvention
-            implements Observation.GlobalObservationConvention<Observation.Context> {
+    static class OurCompanyObservationConvention implements GlobalObservationConvention<Observation.Context> {
 
         // Here we override the default "observation" name
         @Override

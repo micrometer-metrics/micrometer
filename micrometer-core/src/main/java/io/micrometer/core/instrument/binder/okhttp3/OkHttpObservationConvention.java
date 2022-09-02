@@ -16,14 +16,15 @@
 package io.micrometer.core.instrument.binder.okhttp3;
 
 import io.micrometer.observation.Observation;
+import io.micrometer.observation.convention.ObservationConvention;
 
 /**
- * An {@link Observation.ObservationConvention} for OkHttp3.
+ * An {@link ObservationConvention} for OkHttp3.
  *
  * @author Marcin Grzejszczak
  * @since 1.10.0
  */
-public interface OkHttpObservationConvention extends Observation.ObservationConvention<OkHttpContext> {
+public interface OkHttpObservationConvention extends ObservationConvention<OkHttpContext> {
 
     @Override
     default boolean supportsContext(Observation.Context context) {

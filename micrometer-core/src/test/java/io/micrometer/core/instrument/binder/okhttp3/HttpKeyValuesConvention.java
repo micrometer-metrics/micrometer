@@ -17,7 +17,7 @@ package io.micrometer.core.instrument.binder.okhttp3;
 
 import io.micrometer.common.KeyValue;
 import io.micrometer.common.KeyValues;
-import io.micrometer.observation.Observation;
+import io.micrometer.observation.convention.KeyValuesConvention;
 
 /**
  * Conventions for HTTP key values.
@@ -25,7 +25,7 @@ import io.micrometer.observation.Observation;
  * @author Marcin Grzejszczak
  * @since 1.10.0
  */
-public interface HttpKeyValuesConvention<REQ, RES> extends Observation.KeyValuesConvention {
+public interface HttpKeyValuesConvention<REQ, RES> extends KeyValuesConvention {
 
     /**
      * HTTP request method.

@@ -18,6 +18,7 @@ package io.micrometer.core.instrument.binder.okhttp3;
 import io.micrometer.common.docs.KeyName;
 import io.micrometer.common.lang.NonNullApi;
 import io.micrometer.observation.Observation;
+import io.micrometer.observation.convention.ObservationConvention;
 import io.micrometer.observation.docs.DocumentedObservation;
 
 /**
@@ -34,7 +35,7 @@ public enum OkHttpDocumentedObservation implements DocumentedObservation {
      */
     DEFAULT {
         @Override
-        public Class<? extends Observation.ObservationConvention<? extends Observation.Context>> getDefaultConvention() {
+        public Class<? extends ObservationConvention<? extends Observation.Context>> getDefaultConvention() {
             return DefaultOkHttpObservationConvention.class;
         }
 

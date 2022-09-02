@@ -15,12 +15,13 @@
  */
 package io.micrometer.observation;
 
+import io.micrometer.observation.convention.ObservationConvention;
 import org.junit.jupiter.api.Test;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
 /**
- * Tests for {@link Observation.ObservationConvention}.
+ * Tests for {@link ObservationConvention}.
  *
  * @author Jonatan Ivanov
  */
@@ -28,13 +29,13 @@ class ObservationConventionTest {
 
     @Test
     void keyValuesShouldBeEmptyByDefault() {
-        Observation.ObservationConvention<Observation.Context> ObservationConvention = new TestObservationConvention();
+        ObservationConvention<Observation.Context> observationConvention = new TestObservationConvention();
 
-        assertThat(ObservationConvention.getLowCardinalityKeyValues(new Observation.Context())).isEmpty();
-        assertThat(ObservationConvention.getHighCardinalityKeyValues(new Observation.Context())).isEmpty();
+        assertThat(observationConvention.getLowCardinalityKeyValues(new Observation.Context())).isEmpty();
+        assertThat(observationConvention.getHighCardinalityKeyValues(new Observation.Context())).isEmpty();
     }
 
-    static class TestObservationConvention implements Observation.ObservationConvention<Observation.Context> {
+    static class TestObservationConvention implements ObservationConvention<Observation.Context> {
 
         @Override
         public boolean supportsContext(Observation.Context context) {

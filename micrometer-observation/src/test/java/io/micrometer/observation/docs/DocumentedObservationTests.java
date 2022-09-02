@@ -18,6 +18,7 @@ package io.micrometer.observation.docs;
 import io.micrometer.common.KeyValues;
 import io.micrometer.observation.Observation;
 import io.micrometer.observation.ObservationRegistry;
+import io.micrometer.observation.convention.ObservationConvention;
 import org.junit.jupiter.api.Test;
 
 import static org.assertj.core.api.BDDAssertions.then;
@@ -98,7 +99,7 @@ class DocumentedObservationTests {
             }
 
             @Override
-            public Class<? extends Observation.ObservationConvention<? extends Observation.Context>> getDefaultConvention() {
+            public Class<? extends ObservationConvention<? extends Observation.Context>> getDefaultConvention() {
                 return FirstObservationConvention.class;
             }
         },
@@ -106,14 +107,14 @@ class DocumentedObservationTests {
         CONTEXTUAL_NAME {
 
             @Override
-            public Class<? extends Observation.ObservationConvention<? extends Observation.Context>> getDefaultConvention() {
+            public Class<? extends ObservationConvention<? extends Observation.Context>> getDefaultConvention() {
                 return FirstObservationConvention.class;
             }
         }
 
     }
 
-    static class FirstObservationConvention implements Observation.ObservationConvention<Observation.Context> {
+    static class FirstObservationConvention implements ObservationConvention<Observation.Context> {
 
         @Override
         public String getName() {
@@ -127,7 +128,7 @@ class DocumentedObservationTests {
 
     }
 
-    static class SecondObservationConvention implements Observation.ObservationConvention<Observation.Context> {
+    static class SecondObservationConvention implements ObservationConvention<Observation.Context> {
 
         @Override
         public String getName() {
