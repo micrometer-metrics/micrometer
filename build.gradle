@@ -16,6 +16,8 @@ buildscript {
         classpath 'io.spring.nohttp:nohttp-gradle:0.0.10'
         classpath 'org.gradle:test-retry-gradle-plugin:1.4.1'
         classpath 'io.github.gradle-nexus:publish-plugin:1.1.0'
+        classpath 'me.champeau.gradle:japicmp-gradle-plugin:0.4.0'
+        classpath 'de.undercouch:gradle-download-task:5.0.2'
         classpath 'io.spring.javaformat:spring-javaformat-gradle-plugin:0.0.34'
 
         constraints {
@@ -293,6 +295,80 @@ subprojects {
                     from "$rootDir/NOTICE"
                 }
             }
+
+            apply plugin: 'me.champeau.gradle.japicmp'
+            apply plugin: 'de.undercouch.download'
+
+            task downloadBaseline(type: Download) {
+                onlyIf {
+                    if (project.gradle.startParameter.isOffline()) {
+                        println 'Offline: skipping downloading of baseline and JAPICMP'
+                        return false
+                    } else if (compatibleVersion == 'SKIP') {
+                        println 'SKIP: Instructed to skip the baseline comparison'
+                        return false
+                    } else {
+                        println "Will download and perform baseline comparison with ${compatibleVersion}"
+                        return true
+                    }
+                }
+
+                onlyIfNewer true
+                compress true
+                String rootUrl
+                if (compatibleVersion.contains('-M') || compatibleVersion.contains('-RC')) {
+                    rootUrl = 'https://repo.spring.io/milestone/'
+                } else if (compatibleVersion.contains('-SNAPSHOT') ) {
+                    rootUrl = 'https://repo.spring.io/snapshot/'
+                } else {
+                    rootUrl = repositories.mavenCentral().url
+                }
+
+                src "${rootUrl}io/micrometer/${project.name}/${compatibleVersion}/${project.name}-${compatibleVersion}.jar"
+                dest "${buildDir}/baselineLibs/${project.name}-${compatibleVersion}.jar"
+            }
+
+            task japicmp(type: me.champeau.gradle.japicmp.JapicmpTask) {
+                oldClasspath.from(files("${buildDir}/baselineLibs/${project.name}-${compatibleVersion}.jar"))
+                newClasspath.from(files(jar.archiveFile, project(":${project.name}").jar))
+                onlyBinaryIncompatibleModified = true
+                failOnModification = true
+                failOnSourceIncompatibility = true
+                txtOutputFile = file("${project.buildDir}/reports/japi.txt")
+                ignoreMissingClasses = true
+                includeSynthetic = true
+
+                packageExcludes = ['io.micrometer.shaded.*', 'io.micrometer.statsd.internal']
+
+                // For 1.8.x branch only.
+                classExcludes = ['io.micrometer.core.instrument.util.JsonUtils']
+
+                // TODO remove methodExcludes when gh-3181 is resolved
+                methodExcludes = ['io.micrometer.stackdriver.StackdriverConfig#metricTypePrefix()',
+                                  'io.micrometer.core.instrument.Timer#record(java.util.function.BooleanSupplier)',
+                                  'io.micrometer.core.instrument.Timer#record(java.util.function.IntSupplier)',
+                                  'io.micrometer.core.instrument.Timer#record(java.util.function.LongSupplier)',
+                                  'io.micrometer.core.instrument.Timer#record(java.util.function.DoubleSupplier)',
+                                  'io.micrometer.core.instrument.LongTaskTimer#record(java.util.function.BooleanSupplier)',
+                                  'io.micrometer.core.instrument.LongTaskTimer#record(java.util.function.IntSupplier)',
+                                  'io.micrometer.core.instrument.LongTaskTimer#record(java.util.function.LongSupplier)',
+                                  'io.micrometer.core.instrument.LongTaskTimer#record(java.util.function.DoubleSupplier)',
+                                  'io.micrometer.signalfx.SignalFxConfig#publishDeltaHistogram()',
+
+                                  // For 1.8.x branch only.
+                                  'io.micrometer.core.instrument.binder.mongodb.MongoCommandTagsProvider#commandStarted(com.mongodb.event.CommandStartedEvent)',
+                                  'io.micrometer.dynatrace.DynatraceConfig#apiVersion()',
+                                  'io.micrometer.dynatrace.DynatraceConfig#defaultDimensions()',
+                                  'io.micrometer.dynatrace.DynatraceConfig#enrichWithDynatraceMetadata()',
+                                  'io.micrometer.dynatrace.DynatraceConfig#metricKeyPrefix()',
+                                  'io.micrometer.elastic.ElasticConfig#apiKeyCredentials()',
+                                  'io.micrometer.stackdriver.StackdriverConfig#useSemanticMetricTypes()'
+                ]
+                onlyIf { compatibleVersion != 'SKIP' }
+            }
+
+            tasks.japicmp.dependsOn(downloadBaseline)
+            tasks.check.dependsOn(japicmp)
         }
 
         contacts {
