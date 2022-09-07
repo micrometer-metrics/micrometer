@@ -20,7 +20,10 @@ import io.micrometer.core.instrument.simple.SimpleMeterRegistry;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
+import java.time.Duration;
+
 import static org.assertj.core.api.AssertionsForClassTypes.assertThat;
+import static org.awaitility.Awaitility.await;
 import static org.junit.jupiter.api.Assumptions.assumeTrue;
 
 /**
@@ -43,12 +46,12 @@ class ProcessorMetricsTest {
 
     @Test
     void cpuMetrics() {
-        assertThat(registry.get("system.cpu.count").gauge().value()).isGreaterThan(0);
+        assertThat(registry.get("system.cpu.count").gauge().value()).isPositive();
         if (System.getProperty("os.name").toLowerCase().contains("win")) {
             assertThat(registry.find("system.load.average.1m").gauge()).describedAs("Not present on windows").isNull();
         }
         else {
-            assertThat(registry.get("system.load.average.1m").gauge().value()).isGreaterThanOrEqualTo(0);
+            assertThat(registry.get("system.load.average.1m").gauge().value()).isNotNegative();
         }
     }
 
@@ -56,8 +59,8 @@ class ProcessorMetricsTest {
     void hotspotCpuMetrics() {
         assumeTrue(!isOpenJ9());
 
-        assertThat(registry.get("system.cpu.usage").gauge().value()).isGreaterThanOrEqualTo(0);
-        assertThat(registry.get("process.cpu.usage").gauge().value()).isGreaterThanOrEqualTo(0);
+        assertThat(registry.get("system.cpu.usage").gauge().value()).isNotNegative();
+        assertThat(registry.get("process.cpu.usage").gauge().value()).isNotNegative();
     }
 
     @Test
@@ -69,11 +72,13 @@ class ProcessorMetricsTest {
          * value - if supported - on subsequent calls. This holds true for
          * "system.cpu.usage" but not for "process.cpu.usage". The latter needs some
          * milliseconds of sleep before it actually returns a positive value on a
-         * supported system. Thread.sleep() is flaky, though.
+         * supported system.
          */
         assertThat(registry.get("system.cpu.usage").gauge().value()).isGreaterThanOrEqualTo(-1);
-        assertThat(registry.get("system.cpu.usage").gauge().value()).isGreaterThan(0);
+        assertThat(registry.get("system.cpu.usage").gauge().value()).isPositive();
         assertThat(registry.get("process.cpu.usage").gauge().value()).isGreaterThanOrEqualTo(-1);
+        await().atMost(Duration.ofMillis(200))
+                .untilAsserted(() -> assertThat(registry.get("process.cpu.usage").gauge().value()).isPositive());
     }
 
     private boolean isOpenJ9() {
