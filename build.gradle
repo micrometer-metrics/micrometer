@@ -103,13 +103,12 @@ subprojects {
             javadoc {
                 if (project.name.contains('samples')) {
                     enabled = false
-                }
-                else {
+                } else {
                     configure(options) {
                         tags(
-                            'apiNote:a:API Note:',
-                            'implSpec:a:Implementation Requirements:',
-                            'implNote:a:Implementation Note:'
+                                'apiNote:a:API Note:',
+                                'implSpec:a:Implementation Requirements:',
+                                'implNote:a:Implementation Note:'
                         )
                         options.addBooleanOption('Xdoclint:all,-missing', true)
                     }
@@ -121,20 +120,20 @@ subprojects {
             runtimeClasspath {
                 metaInf {
                     [
-                        'Build-Date',
-                        'Build-Date-UTC',
-                        'Built-By',
-                        'Built-OS',
-                        'Build-Host',
-                        'Build-Job',
-                        'Build-Number',
-                        'Build-Id',
-                        'Change',
-                        'Full-Change',
-                        'Branch',
-                        'Module-Origin',
-                        'Created-By',
-                        'Build-Java-Version'
+                            'Build-Date',
+                            'Build-Date-UTC',
+                            'Built-By',
+                            'Built-OS',
+                            'Build-Host',
+                            'Build-Job',
+                            'Build-Number',
+                            'Build-Id',
+                            'Change',
+                            'Full-Change',
+                            'Branch',
+                            'Module-Origin',
+                            'Created-By',
+                            'Build-Java-Version'
                     ].each {
                         ignoreAttribute it
                         ignoreProperty it
@@ -261,7 +260,7 @@ subprojects {
         description = 'Resolves dependencies of all configurations and writes them into the lock file.'
         outputs.upToDateWhen { false }
         doFirst {
-            assert gradle.startParameter.writeDependencyLocks || gradle.startParameter.lockedDependenciesToUpdate : 'Execute resolveAndLockAll --write-locks or --update-locks <dependencies>'
+            assert gradle.startParameter.writeDependencyLocks || gradle.startParameter.lockedDependenciesToUpdate: 'Execute resolveAndLockAll --write-locks or --update-locks <dependencies>'
         }
         doLast {
             project.configurations.findAll { it.canBeResolved }*.resolve()
@@ -275,7 +274,7 @@ subprojects {
         }
     }
 
-    if(!['samples', 'benchmarks'].find{project.name.contains(it)}) {
+    if (!['samples', 'benchmarks'].find { project.name.contains(it) }) {
         apply plugin: 'nebula.maven-publish'
         apply plugin: 'nebula.maven-manifest'
         apply plugin: 'nebula.maven-developer'
@@ -318,7 +317,7 @@ subprojects {
                 String rootUrl
                 if (compatibleVersion.contains('-M') || compatibleVersion.contains('-RC')) {
                     rootUrl = 'https://repo.spring.io/milestone/'
-                } else if (compatibleVersion.contains('-SNAPSHOT') ) {
+                } else if (compatibleVersion.contains('-SNAPSHOT')) {
                     rootUrl = 'https://repo.spring.io/snapshot/'
                 } else {
                     rootUrl = repositories.mavenCentral().url
@@ -340,8 +339,9 @@ subprojects {
 
                 packageExcludes = ['io.micrometer.shaded.*', 'io.micrometer.statsd.internal']
 
-                // For 1.8.x branch only.
-                classExcludes = ['io.micrometer.core.instrument.util.JsonUtils']
+                // For 1.9.x branch only.
+                classExcludes = ['io.micrometer.core.ipc.http.ReactorNettySender',
+                                 'io.micrometer.core.tck.RegistryResolver']
 
                 // TODO remove methodExcludes when gh-3181 is resolved
                 methodExcludes = ['io.micrometer.stackdriver.StackdriverConfig#metricTypePrefix()',
@@ -355,14 +355,9 @@ subprojects {
                                   'io.micrometer.core.instrument.LongTaskTimer#record(java.util.function.DoubleSupplier)',
                                   'io.micrometer.signalfx.SignalFxConfig#publishDeltaHistogram()',
 
-                                  // For 1.8.x branch only.
-                                  'io.micrometer.core.instrument.binder.mongodb.MongoCommandTagsProvider#commandStarted(com.mongodb.event.CommandStartedEvent)',
-                                  'io.micrometer.dynatrace.DynatraceConfig#apiVersion()',
-                                  'io.micrometer.dynatrace.DynatraceConfig#defaultDimensions()',
-                                  'io.micrometer.dynatrace.DynatraceConfig#enrichWithDynatraceMetadata()',
-                                  'io.micrometer.dynatrace.DynatraceConfig#metricKeyPrefix()',
-                                  'io.micrometer.elastic.ElasticConfig#apiKeyCredentials()',
-                                  'io.micrometer.stackdriver.StackdriverConfig#useSemanticMetricTypes()'
+                                  // For 1.9.x branch only.
+                                  'io.micrometer.dynatrace.DynatraceConfig#useDynatraceSummaryInstruments()',
+                                  'io.micrometer.signalfx.SignalFxConfig#publishCumulativeHistogram()'
                 ]
                 onlyIf { compatibleVersion != 'SKIP' }
             }
@@ -400,7 +395,7 @@ nexusPublishing {
     }
 }
 
-task deleteLockFiles (type: Delete) {
+task deleteLockFiles(type: Delete) {
     delete fileTree(dir: '.', include: '**/*.lockfile')
 }
 

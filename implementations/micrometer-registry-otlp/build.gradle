@@ -8,3 +8,9 @@ dependencies {
 
     testImplementation project(':micrometer-test')
 }
+
+// new module in 1.9. This can be removed in later branches.
+if ("$project.version".startsWith("1.9.")) {
+    japicmp.enabled = false
+    downloadBaseline.enabled = false
+}
