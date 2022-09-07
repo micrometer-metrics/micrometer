@@ -2,7 +2,7 @@
 name: Bug report
 about: Report a bug in Micrometer
 title: ''
-labels: ''
+labels: 'waiting-for-triage'
 assignees: ''
 
 ---
