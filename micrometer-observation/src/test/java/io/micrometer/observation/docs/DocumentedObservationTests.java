@@ -20,8 +20,8 @@ import io.micrometer.common.KeyValues;
 import io.micrometer.observation.Observation;
 import io.micrometer.observation.ObservationFilter;
 import io.micrometer.observation.ObservationRegistry;
-import io.micrometer.observation.convention.GlobalObservationConvention;
-import io.micrometer.observation.convention.ObservationConvention;
+import io.micrometer.observation.GlobalObservationConvention;
+import io.micrometer.observation.ObservationConvention;
 import org.junit.jupiter.api.Test;
 
 import static org.assertj.core.api.Assertions.assertThat;

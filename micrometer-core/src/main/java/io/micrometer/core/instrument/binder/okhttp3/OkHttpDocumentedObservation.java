@@ -18,7 +18,7 @@ package io.micrometer.core.instrument.binder.okhttp3;
 import io.micrometer.common.docs.KeyName;
 import io.micrometer.common.lang.NonNullApi;
 import io.micrometer.observation.Observation;
-import io.micrometer.observation.convention.ObservationConvention;
+import io.micrometer.observation.ObservationConvention;
 import io.micrometer.observation.docs.DocumentedObservation;
 
 /**

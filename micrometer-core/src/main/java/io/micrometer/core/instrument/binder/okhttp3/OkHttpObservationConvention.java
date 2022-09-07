@@ -16,7 +16,7 @@
 package io.micrometer.core.instrument.binder.okhttp3;
 
 import io.micrometer.observation.Observation;
-import io.micrometer.observation.convention.ObservationConvention;
+import io.micrometer.observation.ObservationConvention;
 
 /**
  * An {@link ObservationConvention} for OkHttp3.

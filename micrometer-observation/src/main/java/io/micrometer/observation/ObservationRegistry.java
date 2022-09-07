@@ -16,8 +16,6 @@
 package io.micrometer.observation;
 
 import io.micrometer.common.lang.Nullable;
-import io.micrometer.observation.convention.GlobalObservationConvention;
-import io.micrometer.observation.convention.ObservationConvention;
 
 import java.util.Arrays;
 import java.util.Collection;

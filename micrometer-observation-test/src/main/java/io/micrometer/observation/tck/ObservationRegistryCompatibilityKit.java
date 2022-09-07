@@ -21,7 +21,7 @@ import io.micrometer.common.lang.Nullable;
 import io.micrometer.observation.Observation;
 import io.micrometer.observation.ObservationHandler;
 import io.micrometer.observation.ObservationRegistry;
-import io.micrometer.observation.convention.GlobalObservationConvention;
+import io.micrometer.observation.GlobalObservationConvention;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;

@@ -21,7 +21,7 @@ import io.micrometer.core.instrument.Tag;
 import io.micrometer.core.instrument.Timer;
 import io.micrometer.observation.Observation;
 import io.micrometer.observation.ObservationRegistry;
-import io.micrometer.observation.convention.ObservationConvention;
+import io.micrometer.observation.ObservationConvention;
 import io.micrometer.observation.transport.RequestReplySenderContext;
 import io.micrometer.observation.transport.ResponseContext;
 

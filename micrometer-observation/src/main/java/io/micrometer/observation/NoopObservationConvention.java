@@ -16,7 +16,6 @@
 package io.micrometer.observation;
 
 import io.micrometer.common.KeyValues;
-import io.micrometer.observation.convention.ObservationConvention;
 
 /**
  * No-op implementation of {@link ObservationConvention} so that we can disable the

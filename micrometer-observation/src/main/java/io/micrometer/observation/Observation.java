@@ -19,7 +19,6 @@ import io.micrometer.common.KeyValue;
 import io.micrometer.common.KeyValues;
 import io.micrometer.common.lang.NonNull;
 import io.micrometer.common.lang.Nullable;
-import io.micrometer.observation.convention.ObservationConvention;
 
 import java.util.*;
 import java.util.concurrent.Callable;

@@ -16,7 +16,7 @@
 package io.micrometer.core.instrument.binder.jdk;
 
 import io.micrometer.observation.Observation;
-import io.micrometer.observation.convention.ObservationConvention;
+import io.micrometer.observation.ObservationConvention;
 
 import java.net.http.HttpClient;
 

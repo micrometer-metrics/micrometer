@@ -13,17 +13,16 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package io.micrometer.observation.convention;
+package io.micrometer.observation;
 
-import io.micrometer.observation.Observation;
-import io.micrometer.observation.ObservationRegistry;
+import io.micrometer.common.KeyValues;
 
 /**
- * An observation convention that will be set on the {@link ObservationRegistry}.
+ * A marker interface for conventions of {@link KeyValues} naming.
  *
  * @author Marcin Grzejszczak
  * @since 1.10.0
  */
-public interface GlobalObservationConvention<T extends Observation.Context> extends ObservationConvention<T> {
+public interface KeyValuesConvention {
 
 }

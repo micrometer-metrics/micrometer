@@ -22,8 +22,8 @@ import io.micrometer.observation.Observation;
 import io.micrometer.observation.ObservationPredicate;
 import io.micrometer.observation.ObservationRegistry;
 import io.micrometer.observation.ObservationTextPublisher;
-import io.micrometer.observation.convention.GlobalObservationConvention;
-import io.micrometer.observation.convention.ObservationConvention;
+import io.micrometer.observation.GlobalObservationConvention;
+import io.micrometer.observation.ObservationConvention;
 
 import java.io.IOException;
 import java.time.Instant;

@@ -17,7 +17,7 @@ package io.micrometer.core.instrument.binder.okhttp3;
 
 import io.micrometer.common.KeyValue;
 import io.micrometer.common.KeyValues;
-import io.micrometer.observation.convention.KeyValuesConvention;
+import io.micrometer.observation.KeyValuesConvention;
 
 /**
  * Conventions for HTTP key values.

@@ -20,8 +20,8 @@ import io.micrometer.common.lang.NonNull;
 import io.micrometer.common.lang.Nullable;
 import io.micrometer.observation.Observation;
 import io.micrometer.observation.ObservationRegistry;
-import io.micrometer.observation.convention.GlobalObservationConvention;
-import io.micrometer.observation.convention.ObservationConvention;
+import io.micrometer.observation.GlobalObservationConvention;
+import io.micrometer.observation.ObservationConvention;
 
 import java.util.Objects;
 

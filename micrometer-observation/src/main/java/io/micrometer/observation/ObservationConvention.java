@@ -13,11 +13,10 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package io.micrometer.observation.convention;
+package io.micrometer.observation;
 
 import io.micrometer.common.KeyValues;
 import io.micrometer.common.lang.Nullable;
-import io.micrometer.observation.Observation;
 
 /**
  * Contains conventions for naming and {@link KeyValues} providing.

@@ -15,7 +15,6 @@
  */
 package io.micrometer.observation;
 
-import io.micrometer.observation.convention.ObservationConvention;
 import org.junit.jupiter.api.Test;
 
 import static org.assertj.core.api.Assertions.assertThat;

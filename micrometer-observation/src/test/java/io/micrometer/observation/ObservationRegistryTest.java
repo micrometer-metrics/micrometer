@@ -17,9 +17,6 @@ package io.micrometer.observation;
 
 import io.micrometer.common.KeyValue;
 import io.micrometer.common.KeyValues;
-import io.micrometer.observation.convention.GlobalObservationConvention;
-import io.micrometer.observation.convention.KeyValuesConvention;
-import io.micrometer.observation.convention.ObservationConvention;
 import org.junit.jupiter.api.Test;
 
 import static io.micrometer.observation.Observation.NOOP;
