@@ -14,6 +14,8 @@ compileJava {
     options.release = 11
 }
 
-// TODO this is a new module in 1.10; enable after 1.10 is released
-japicmp.enabled = false
-downloadBaseline.enabled = false
+// this module was introduced in 1.10; the following can be removed in later branches
+if ("$project.version".startsWith("1.10.")) {
+    japicmp.enabled = false
+    downloadBaseline.enabled = false
+}
