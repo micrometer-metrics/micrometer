@@ -101,7 +101,7 @@ public interface Observation {
             @Nullable ObservationRegistry registry) {
         if (registry == null || registry.isNoop()
                 || !registry.observationConfig().isObservationEnabled(name, context)) {
-            return NoopObservation.INSTANCE;
+            return NOOP;
         }
         return new SimpleObservation(name, registry, context == null ? new Context() : context);
     }
@@ -225,7 +225,7 @@ public interface Observation {
         if (registry == null || registry.isNoop()
                 || !registry.observationConfig().isObservationEnabled(observationConvention.getName(), context)
                 || observationConvention == NoopObservationConvention.INSTANCE) {
-            return NoopObservation.INSTANCE;
+            return NOOP;
         }
 
         return new SimpleObservation(observationConvention, registry, context == null ? new Context() : context);
@@ -323,7 +323,7 @@ public interface Observation {
      * @return {@code true} when this is a no-op observation
      */
     default boolean isNoop() {
-        return this == NoopObservation.INSTANCE;
+        return this == NOOP;
     }
 
     /**
