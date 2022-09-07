@@ -102,7 +102,7 @@ public interface Observation {
             @Nullable ObservationRegistry registry) {
         if (registry == null || registry.isNoop()
                 || !registry.observationConfig().isObservationEnabled(name, context)) {
-            return NoopObservation.INSTANCE;
+            return NOOP;
         }
         return new SimpleObservation(name, registry, context == null ? new Context() : context);
     }
@@ -225,7 +225,7 @@ public interface Observation {
         if (registry == null || registry.isNoop()
                 || !registry.observationConfig().isObservationEnabled(observationConvention.getName(), context)
                 || observationConvention == NoopObservationConvention.INSTANCE) {
-            return NoopObservation.INSTANCE;
+            return NOOP;
         }
 
         return new SimpleObservation(observationConvention, registry, context == null ? new Context() : context);
@@ -323,7 +323,7 @@ public interface Observation {
      * @return {@code true} when this is a no-op observation
      */
     default boolean isNoop() {
-        return this == NoopObservation.INSTANCE;
+        return this == NOOP;
     }
 
     /**
@@ -848,8 +848,9 @@ public interface Observation {
          * the {@link ObservationConvention#getLowCardinalityKeyValues(Context)} method.
          * @param keyValue a key value
          */
-        void addLowCardinalityKeyValue(KeyValue keyValue) {
+        public Context addLowCardinalityKeyValue(KeyValue keyValue) {
             this.lowCardinalityKeyValues.add(keyValue);
+            return this;
         }
 
         /**
@@ -858,24 +859,27 @@ public interface Observation {
          * method.
          * @param keyValue a key value
          */
-        void addHighCardinalityKeyValue(KeyValue keyValue) {
+        public Context addHighCardinalityKeyValue(KeyValue keyValue) {
             this.highCardinalityKeyValues.add(keyValue);
+            return this;
         }
 
         /**
          * Adds multiple low cardinality key values at once.
          * @param keyValues collection of key values
          */
-        void addLowCardinalityKeyValues(KeyValues keyValues) {
+        public Context addLowCardinalityKeyValues(KeyValues keyValues) {
             keyValues.stream().forEach(this::addLowCardinalityKeyValue);
+            return this;
         }
 
         /**
          * Adds multiple high cardinality key values at once.
          * @param keyValues collection of key values
          */
-        void addHighCardinalityKeyValues(KeyValues keyValues) {
+        public Context addHighCardinalityKeyValues(KeyValues keyValues) {
             keyValues.stream().forEach(this::addHighCardinalityKeyValue);
+            return this;
         }
 
         @NonNull
