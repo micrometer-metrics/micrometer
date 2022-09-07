@@ -20,6 +20,7 @@ import io.micrometer.common.KeyValues;
 import io.micrometer.observation.Observation;
 import io.micrometer.observation.ObservationFilter;
 import io.micrometer.observation.ObservationRegistry;
+import io.micrometer.observation.convention.GlobalObservationConvention;
 import io.micrometer.observation.convention.ObservationConvention;
 import org.junit.jupiter.api.Test;
 
@@ -230,7 +231,7 @@ class DocumentedObservationTests {
 
     }
 
-    static class GlobalConvention implements Observation.GlobalObservationConvention<Observation.Context> {
+    static class GlobalConvention implements GlobalObservationConvention<Observation.Context> {
 
         @Override
         public KeyValues getLowCardinalityKeyValues(Observation.Context context) {
