@@ -1,0 +1,15 @@
+plugins {
+    id "io.github.reyerizo.gradle.jcstress" version "0.8.14"
+}
+
+dependencies {
+    implementation project(":micrometer-core")
+}
+
+jcstress {
+    jcstressDependency 'org.openjdk.jcstress:jcstress-core:latest.release'
+}
+
+test {
+    useJUnitPlatform()
+}
