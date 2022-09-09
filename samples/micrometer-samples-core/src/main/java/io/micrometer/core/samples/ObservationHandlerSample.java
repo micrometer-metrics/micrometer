@@ -22,8 +22,6 @@ import io.micrometer.observation.Observation;
 import io.micrometer.observation.ObservationPredicate;
 import io.micrometer.observation.ObservationRegistry;
 import io.micrometer.observation.ObservationTextPublisher;
-import io.micrometer.observation.GlobalObservationConvention;
-import io.micrometer.observation.ObservationConvention;
 
 import java.io.IOException;
 import java.time.Instant;
@@ -73,7 +71,7 @@ public class ObservationHandlerSample {
 
     }
 
-    static class CustomObservationConvention implements GlobalObservationConvention<CustomContext> {
+    static class CustomObservationConvention implements Observation.GlobalObservationConvention<CustomContext> {
 
         @Override
         public KeyValues getLowCardinalityKeyValues(CustomContext context) {
@@ -92,7 +90,7 @@ public class ObservationHandlerSample {
 
     }
 
-    static class CustomLocalObservationConvention implements ObservationConvention<CustomContext> {
+    static class CustomLocalObservationConvention implements Observation.ObservationConvention<CustomContext> {
 
         @Override
         public KeyValues getLowCardinalityKeyValues(CustomContext context) {

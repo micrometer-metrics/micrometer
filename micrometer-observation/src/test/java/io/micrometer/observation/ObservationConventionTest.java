@@ -20,7 +20,7 @@ import org.junit.jupiter.api.Test;
 import static org.assertj.core.api.Assertions.assertThat;
 
 /**
- * Tests for {@link ObservationConvention}.
+ * Tests for {@link Observation.ObservationConvention}.
  *
  * @author Jonatan Ivanov
  */
@@ -28,13 +28,13 @@ class ObservationConventionTest {
 
     @Test
     void keyValuesShouldBeEmptyByDefault() {
-        ObservationConvention<Observation.Context> observationConvention = new TestObservationConvention();
+        Observation.ObservationConvention<Observation.Context> ObservationConvention = new TestObservationConvention();
 
-        assertThat(observationConvention.getLowCardinalityKeyValues(new Observation.Context())).isEmpty();
-        assertThat(observationConvention.getHighCardinalityKeyValues(new Observation.Context())).isEmpty();
+        assertThat(ObservationConvention.getLowCardinalityKeyValues(new Observation.Context())).isEmpty();
+        assertThat(ObservationConvention.getHighCardinalityKeyValues(new Observation.Context())).isEmpty();
     }
 
-    static class TestObservationConvention implements ObservationConvention<Observation.Context> {
+    static class TestObservationConvention implements Observation.ObservationConvention<Observation.Context> {
 
         @Override
         public boolean supportsContext(Observation.Context context) {

@@ -22,8 +22,8 @@ import io.micrometer.core.instrument.Tags;
 import io.micrometer.core.instrument.observation.DefaultMeterObservationHandler;
 import io.micrometer.core.instrument.search.MeterNotFoundException;
 import io.micrometer.core.instrument.simple.SimpleMeterRegistry;
+import io.micrometer.observation.Observation;
 import io.micrometer.observation.ObservationRegistry;
-import io.micrometer.observation.GlobalObservationConvention;
 import io.micrometer.observation.tck.TestObservationRegistry;
 import io.micrometer.observation.tck.TestObservationRegistryAssert;
 import org.apache.http.client.HttpClient;
@@ -298,7 +298,7 @@ class MicrometerHttpRequestExecutorTest {
     // TODO add test for status = IO_ERROR case.
 
     static class CustomGlobalApacheHttpConvention extends DefaultApacheHttpClientObservationConvention
-            implements GlobalObservationConvention<ApacheHttpClientContext> {
+            implements Observation.GlobalObservationConvention<ApacheHttpClientContext> {
 
         @Override
         public String getName() {

@@ -16,7 +16,7 @@
 package io.micrometer.core.instrument.binder.httpcomponents;
 
 import io.micrometer.observation.Observation;
-import io.micrometer.observation.ObservationConvention;
+import io.micrometer.observation.Observation.ObservationConvention;
 
 /**
  * {@link ObservationConvention} for Apache HTTP client instrumentation.

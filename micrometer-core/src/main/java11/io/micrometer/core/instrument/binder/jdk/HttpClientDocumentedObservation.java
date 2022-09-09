@@ -17,7 +17,6 @@ package io.micrometer.core.instrument.binder.jdk;
 
 import io.micrometer.common.docs.KeyName;
 import io.micrometer.observation.Observation;
-import io.micrometer.observation.ObservationConvention;
 import io.micrometer.observation.docs.DocumentedObservation;
 
 enum HttpClientDocumentedObservation implements DocumentedObservation {
@@ -27,7 +26,7 @@ enum HttpClientDocumentedObservation implements DocumentedObservation {
      */
     HTTP_CALL {
         @Override
-        public Class<? extends ObservationConvention<? extends Observation.Context>> getDefaultConvention() {
+        public Class<? extends Observation.ObservationConvention<? extends Observation.Context>> getDefaultConvention() {
             return DefaultHttpClientObservationConvention.class;
         }
 

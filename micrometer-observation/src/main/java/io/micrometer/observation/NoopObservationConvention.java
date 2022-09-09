@@ -18,15 +18,15 @@ package io.micrometer.observation;
 import io.micrometer.common.KeyValues;
 
 /**
- * No-op implementation of {@link ObservationConvention} so that we can disable the
- * instrumentation logic.
+ * No-op implementation of {@link Observation.ObservationConvention} so that we can
+ * disable the instrumentation logic.
  *
  * @author Jonatan Ivanov
  * @author Tommy Ludwig
  * @author Marcin Grzejszczak
  * @since 1.10.0
  */
-final class NoopObservationConvention implements ObservationConvention<Observation.Context> {
+final class NoopObservationConvention implements Observation.ObservationConvention<Observation.Context> {
 
     /**
      * Instance of {@link NoopObservationConvention}.
@@ -48,17 +48,17 @@ final class NoopObservationConvention implements ObservationConvention<Observati
 
     @Override
     public boolean supportsContext(Observation.Context context) {
-        return ObservationConvention.EMPTY.supportsContext(context);
+        return Observation.ObservationConvention.EMPTY.supportsContext(context);
     }
 
     @Override
     public KeyValues getLowCardinalityKeyValues(Observation.Context context) {
-        return ObservationConvention.EMPTY.getLowCardinalityKeyValues(context);
+        return Observation.ObservationConvention.EMPTY.getLowCardinalityKeyValues(context);
     }
 
     @Override
     public KeyValues getHighCardinalityKeyValues(Observation.Context context) {
-        return ObservationConvention.EMPTY.getHighCardinalityKeyValues(context);
+        return Observation.ObservationConvention.EMPTY.getHighCardinalityKeyValues(context);
     }
 
 }

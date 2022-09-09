@@ -124,10 +124,11 @@ public interface Observation {
      * @param registry observation registry
      * @return created but not started observation
      */
-    static <T extends Context> Observation createNotStarted(@Nullable ObservationConvention<T> customConvention,
-            @NonNull ObservationConvention<T> defaultConvention, @NonNull T context,
+    static <T extends Context> Observation createNotStarted(
+            @Nullable Observation.ObservationConvention<T> customConvention,
+            @NonNull Observation.ObservationConvention<T> defaultConvention, @NonNull T context,
             @NonNull ObservationRegistry registry) {
-        ObservationConvention<T> convention;
+        Observation.ObservationConvention<T> convention;
         if (customConvention != null) {
             convention = customConvention;
         }
@@ -179,8 +180,8 @@ public interface Observation {
      * nor a configured one was found
      * @return started observation
      */
-    static <T extends Context> Observation start(@Nullable ObservationConvention<T> customConvention,
-            @NonNull ObservationConvention<T> defaultConvention, @NonNull T context,
+    static <T extends Context> Observation start(@Nullable Observation.ObservationConvention<T> customConvention,
+            @NonNull Observation.ObservationConvention<T> defaultConvention, @NonNull T context,
             @NonNull ObservationRegistry registry) {
         return createNotStarted(customConvention, defaultConvention, context, registry).start();
     }
@@ -1077,6 +1078,87 @@ public interface Observation {
          */
         @NonNull
         KeyValues getAllKeyValues();
+
+    }
+
+    /**
+     * A marker interface for conventions of {@link KeyValues} naming.
+     *
+     * @author Marcin Grzejszczak
+     * @since 1.10.0
+     */
+    interface KeyValuesConvention {
+
+    }
+
+    /**
+     * Contains conventions for naming and {@link KeyValues} providing.
+     *
+     * @param <T> type of context
+     * @author Marcin Grzejszczak
+     * @since 1.10.0
+     */
+    interface ObservationConvention<T extends Context> extends KeyValuesConvention {
+
+        /**
+         * Empty instance of the convention.
+         */
+        ObservationConvention<Context> EMPTY = context -> false;
+
+        /**
+         * Low cardinality key values.
+         * @return key values
+         */
+        default KeyValues getLowCardinalityKeyValues(T context) {
+            return KeyValues.empty();
+        }
+
+        /**
+         * High cardinality key values.
+         * @return key values
+         */
+        default KeyValues getHighCardinalityKeyValues(T context) {
+            return KeyValues.empty();
+        }
+
+        /**
+         * Tells whether this observation convention should be applied for a given
+         * {@link Context}.
+         * @param context a {@link Context}
+         * @return {@code true} when this observation convention should be used
+         */
+        boolean supportsContext(Context context);
+
+        /**
+         * Allows to override the name for an observation.
+         * @return the new name for the observation
+         */
+        @Nullable
+        default String getName() {
+            return null;
+        }
+
+        /**
+         * Allows to override the contextual name for an {@link Observation}. The
+         * {@link Observation} will be renamed only when an explicit context was passed -
+         * if an implicit context is used this method won't be called.
+         * @param context context
+         * @return the new, contextual name for the observation
+         */
+        @Nullable
+        default String getContextualName(T context) {
+            return null;
+        }
+
+    }
+
+    /**
+     * An observation convention that will be set on the {@link ObservationRegistry}.
+     *
+     * @author Marcin Grzejszczak
+     * @since 1.10.0
+     */
+    interface GlobalObservationConvention<T extends Context> extends ObservationConvention<T> {
 
     }
 
