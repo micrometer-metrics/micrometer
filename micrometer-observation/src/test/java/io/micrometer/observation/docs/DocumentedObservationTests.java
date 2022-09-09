@@ -20,6 +20,8 @@ import io.micrometer.common.KeyValues;
 import io.micrometer.observation.Observation;
 import io.micrometer.observation.ObservationFilter;
 import io.micrometer.observation.ObservationRegistry;
+import io.micrometer.observation.GlobalObservationConvention;
+import io.micrometer.observation.ObservationConvention;
 import org.junit.jupiter.api.Test;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -133,7 +135,7 @@ class DocumentedObservationTests {
             }
 
             @Override
-            public Class<? extends Observation.ObservationConvention<? extends Observation.Context>> getDefaultConvention() {
+            public Class<? extends ObservationConvention<? extends Observation.Context>> getDefaultConvention() {
                 return FirstObservationConvention.class;
             }
         },
@@ -141,14 +143,14 @@ class DocumentedObservationTests {
         CONTEXTUAL_NAME {
 
             @Override
-            public Class<? extends Observation.ObservationConvention<? extends Observation.Context>> getDefaultConvention() {
+            public Class<? extends ObservationConvention<? extends Observation.Context>> getDefaultConvention() {
                 return FirstObservationConvention.class;
             }
         }
 
     }
 
-    static class FirstObservationConvention implements Observation.ObservationConvention<Observation.Context> {
+    static class FirstObservationConvention implements ObservationConvention<Observation.Context> {
 
         @Override
         public String getName() {
@@ -162,7 +164,7 @@ class DocumentedObservationTests {
 
     }
 
-    static class SecondObservationConvention implements Observation.ObservationConvention<Observation.Context> {
+    static class SecondObservationConvention implements ObservationConvention<Observation.Context> {
 
         @Override
         public String getName() {
@@ -229,7 +231,7 @@ class DocumentedObservationTests {
 
     }
 
-    static class GlobalConvention implements Observation.GlobalObservationConvention<Observation.Context> {
+    static class GlobalConvention implements GlobalObservationConvention<Observation.Context> {
 
         @Override
         public KeyValues getLowCardinalityKeyValues(Observation.Context context) {

@@ -20,6 +20,8 @@ import io.micrometer.common.lang.NonNull;
 import io.micrometer.common.lang.Nullable;
 import io.micrometer.observation.Observation;
 import io.micrometer.observation.ObservationRegistry;
+import io.micrometer.observation.GlobalObservationConvention;
+import io.micrometer.observation.ObservationConvention;
 
 import java.util.Objects;
 
@@ -76,7 +78,7 @@ public interface DocumentedObservation {
      * {@link #getContextualName()}.
      * @return default naming convention
      */
-    default Class<? extends Observation.ObservationConvention<? extends Observation.Context>> getDefaultConvention() {
+    default Class<? extends ObservationConvention<? extends Observation.Context>> getDefaultConvention() {
         return null;
     }
 
@@ -148,20 +150,19 @@ public interface DocumentedObservation {
     }
 
     /**
-     * Creates an {@link Observation} for the given
-     * {@link Observation.ObservationConvention}. You need to manually start it.
+     * Creates an {@link Observation} for the given {@link ObservationConvention}. You
+     * need to manually start it.
      * @param customConvention convention that (if not {@code null}) will override any
      * pre-configured conventions
      * @param defaultConvention default convention that will be picked if there was
      * neither custom convention nor a pre-configured one via
-     * {@link ObservationRegistry.ObservationConfig#observationConvention(Observation.GlobalObservationConvention[])}
+     * {@link ObservationRegistry.ObservationConfig#observationConvention(GlobalObservationConvention[])}
      * @param context observation context
      * @param registry observation registry
      * @return observation
      */
-    default <T extends Observation.Context> Observation observation(
-            @Nullable Observation.ObservationConvention<T> customConvention,
-            @NonNull Observation.ObservationConvention<T> defaultConvention, @NonNull T context,
+    default <T extends Observation.Context> Observation observation(@Nullable ObservationConvention<T> customConvention,
+            @NonNull ObservationConvention<T> defaultConvention, @NonNull T context,
             @NonNull ObservationRegistry registry) {
         if (getDefaultConvention() == null) {
             throw new IllegalStateException("You've decided to use convention based naming yet this observation ["
@@ -211,14 +212,13 @@ public interface DocumentedObservation {
      * pre-configured conventions
      * @param defaultConvention default convention that will be picked if there was
      * neither custom convention nor a pre-configured one via
-     * {@link ObservationRegistry.ObservationConfig#observationConvention(Observation.GlobalObservationConvention[])}
+     * {@link ObservationRegistry.ObservationConfig#observationConvention(GlobalObservationConvention[])}
      * @param context observation context
      * @param registry observation registry
      * @return observation
      */
-    default <T extends Observation.Context> Observation start(
-            @Nullable Observation.ObservationConvention<T> customConvention,
-            @NonNull Observation.ObservationConvention<T> defaultConvention, @NonNull T context,
+    default <T extends Observation.Context> Observation start(@Nullable ObservationConvention<T> customConvention,
+            @NonNull ObservationConvention<T> defaultConvention, @NonNull T context,
             @NonNull ObservationRegistry registry) {
         return observation(customConvention, defaultConvention, context, registry).start();
     }
