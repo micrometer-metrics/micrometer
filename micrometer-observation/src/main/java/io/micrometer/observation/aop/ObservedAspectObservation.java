@@ -21,7 +21,6 @@ import io.micrometer.common.lang.Nullable;
 import io.micrometer.observation.Observation;
 import io.micrometer.observation.ObservationRegistry;
 import io.micrometer.observation.annotation.Observed;
-import io.micrometer.observation.ObservationConvention;
 import io.micrometer.observation.docs.DocumentedObservation;
 import org.aspectj.lang.ProceedingJoinPoint;
 import org.aspectj.lang.Signature;
@@ -40,7 +39,7 @@ enum ObservedAspectObservation implements DocumentedObservation {
     DEFAULT;
 
     static Observation of(ProceedingJoinPoint pjp, Observed observed, ObservationRegistry registry,
-            @Nullable ObservationConvention<ObservedAspect.ObservedAspectContext> observationConvention) {
+            @Nullable Observation.ObservationConvention<ObservedAspect.ObservedAspectContext> observationConvention) {
         String name = observed.name().isEmpty() ? "method.observed" : observed.name();
         Signature signature = pjp.getStaticPart().getSignature();
         String contextualName = observed.contextualName().isEmpty()

@@ -17,7 +17,6 @@ package io.micrometer.core.instrument.binder.httpcomponents;
 
 import io.micrometer.common.docs.KeyName;
 import io.micrometer.observation.Observation;
-import io.micrometer.observation.ObservationConvention;
 import io.micrometer.observation.docs.DocumentedObservation;
 
 /**
@@ -29,7 +28,7 @@ public enum ApacheHttpClientDocumentedObservation implements DocumentedObservati
 
     DEFAULT {
         @Override
-        public Class<? extends ObservationConvention<? extends Observation.Context>> getDefaultConvention() {
+        public Class<? extends Observation.ObservationConvention<? extends Observation.Context>> getDefaultConvention() {
             return DefaultApacheHttpClientObservationConvention.class;
         }
 
