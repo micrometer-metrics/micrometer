@@ -20,6 +20,7 @@ import io.micrometer.common.lang.Nullable;
 import io.micrometer.observation.Observation;
 import io.micrometer.observation.ObservationRegistry;
 import io.micrometer.observation.annotation.Observed;
+import io.micrometer.observation.ObservationConvention;
 import org.aspectj.lang.ProceedingJoinPoint;
 import org.aspectj.lang.annotation.Around;
 import org.aspectj.lang.annotation.Aspect;
@@ -39,7 +40,7 @@ import java.util.function.Predicate;
  * <p>
  * You might want to add {@link io.micrometer.common.KeyValue}s programmatically to the
  * {@link Observation}.<br>
- * In this case, the {@link Observation.KeyValuesConvention} can help. It receives an
+ * In this case, the {@link ObservationConvention} can help. It receives an
  * {@link ObservedAspectContext} that also contains the {@link ProceedingJoinPoint} and
  * returns the {@link io.micrometer.common.KeyValue}s that will be attached to the
  * {@link Observation}.
@@ -78,7 +79,7 @@ public class ObservedAspect {
     private final ObservationRegistry registry;
 
     @Nullable
-    private final Observation.ObservationConvention<ObservedAspectContext> observationConvention;
+    private final ObservationConvention<ObservedAspectContext> observationConvention;
 
     private final Predicate<ProceedingJoinPoint> shouldSkip;
 
@@ -87,7 +88,7 @@ public class ObservedAspect {
     }
 
     public ObservedAspect(ObservationRegistry registry,
-            Observation.ObservationConvention<ObservedAspectContext> observationConvention) {
+            ObservationConvention<ObservedAspectContext> observationConvention) {
         this(registry, observationConvention, DONT_SKIP_ANYTHING);
     }
 
@@ -96,7 +97,7 @@ public class ObservedAspect {
     }
 
     public ObservedAspect(ObservationRegistry registry,
-            @Nullable Observation.ObservationConvention<ObservedAspectContext> observationConvention,
+            @Nullable ObservationConvention<ObservedAspectContext> observationConvention,
             Predicate<ProceedingJoinPoint> shouldSkip) {
         this.registry = registry;
         this.observationConvention = observationConvention;

@@ -22,6 +22,7 @@ import io.micrometer.context.ContextSnapshot;
 import io.micrometer.observation.Observation;
 import io.micrometer.observation.ObservationTextPublisher;
 import io.micrometer.observation.annotation.Observed;
+import io.micrometer.observation.ObservationConvention;
 import io.micrometer.observation.tck.TestObservationRegistry;
 import io.micrometer.observation.tck.TestObservationRegistryAssert;
 import org.aspectj.lang.ProceedingJoinPoint;
@@ -377,8 +378,7 @@ class ObservedAspectTests {
 
     }
 
-    static class CustomObservationConvention
-            implements Observation.ObservationConvention<ObservedAspect.ObservedAspectContext> {
+    static class CustomObservationConvention implements ObservationConvention<ObservedAspect.ObservedAspectContext> {
 
         @Override
         @NonNull

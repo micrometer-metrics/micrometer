@@ -21,6 +21,7 @@ import io.micrometer.common.lang.Nullable;
 import io.micrometer.observation.Observation;
 import io.micrometer.observation.ObservationHandler;
 import io.micrometer.observation.ObservationRegistry;
+import io.micrometer.observation.GlobalObservationConvention;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -644,7 +645,7 @@ public abstract class ObservationRegistryCompatibilityKit {
 
     }
 
-    static class TestObservationConvention implements Observation.GlobalObservationConvention<TestContext> {
+    static class TestObservationConvention implements GlobalObservationConvention<TestContext> {
 
         private final String id;
 
@@ -669,8 +670,7 @@ public abstract class ObservationRegistryCompatibilityKit {
 
     }
 
-    static class TestObservationConventionWithNameOverrides
-            implements Observation.GlobalObservationConvention<TestContext> {
+    static class TestObservationConventionWithNameOverrides implements GlobalObservationConvention<TestContext> {
 
         @Nullable
         @Override
@@ -691,8 +691,7 @@ public abstract class ObservationRegistryCompatibilityKit {
 
     }
 
-    static class UnsupportedObservationConvention
-            implements Observation.GlobalObservationConvention<Observation.Context> {
+    static class UnsupportedObservationConvention implements GlobalObservationConvention<Observation.Context> {
 
         private final String id;
 

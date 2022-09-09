@@ -98,7 +98,7 @@ public interface ObservationRegistry {
 
         private final List<ObservationPredicate> observationPredicates = new CopyOnWriteArrayList<>();
 
-        private final List<Observation.ObservationConvention<?>> observationConventions = new CopyOnWriteArrayList<>();
+        private final List<ObservationConvention<?>> observationConventions = new CopyOnWriteArrayList<>();
 
         private final List<ObservationFilter> observationFilters = new CopyOnWriteArrayList<>();
 
@@ -135,39 +135,38 @@ public interface ObservationRegistry {
         }
 
         /**
-         * Register {@link Observation.ObservationConvention observation conventions}.
+         * Register {@link ObservationConvention observation conventions}.
          * @param observationConventions observation conventions
          * @return This configuration instance
          */
-        public ObservationConfig observationConvention(
-                Observation.GlobalObservationConvention<?>... observationConventions) {
+        public ObservationConfig observationConvention(GlobalObservationConvention<?>... observationConventions) {
             this.observationConventions.addAll(Arrays.asList(observationConventions));
             return this;
         }
 
         /**
-         * Register a collection of {@link Observation.ObservationConvention}.
+         * Register a collection of {@link ObservationConvention}.
          * @param observationConventions observation conventions
          * @return This configuration instance
          */
         public ObservationConfig observationConvention(
-                Collection<Observation.GlobalObservationConvention<?>> observationConventions) {
+                Collection<GlobalObservationConvention<?>> observationConventions) {
             this.observationConventions.addAll(observationConventions);
             return this;
         }
 
         /**
-         * Finds an {@link Observation.ObservationConvention} for the given
+         * Finds an {@link ObservationConvention} for the given
          * {@link Observation.Context}.
          * @param context context
          * @param defaultConvention default convention if none found
-         * @return matching {@link Observation.ObservationConvention} or default when no
-         * matching found
+         * @return matching {@link ObservationConvention} or default when no matching
+         * found
          */
         @SuppressWarnings("unchecked")
-        public <T extends Observation.Context> Observation.ObservationConvention<T> getObservationConvention(T context,
-                Observation.ObservationConvention<T> defaultConvention) {
-            return (Observation.ObservationConvention<T>) this.observationConventions.stream()
+        public <T extends Observation.Context> ObservationConvention<T> getObservationConvention(T context,
+                ObservationConvention<T> defaultConvention) {
+            return (ObservationConvention<T>) this.observationConventions.stream()
                     .filter(convention -> convention.supportsContext(context)).findFirst().orElse(Objects
                             .requireNonNull(defaultConvention, "Default ObservationConvention must not be null"));
         }
@@ -192,7 +191,7 @@ public interface ObservationRegistry {
             return observationFilters;
         }
 
-        Collection<Observation.ObservationConvention<?>> getObservationConventions() {
+        Collection<ObservationConvention<?>> getObservationConventions() {
             return observationConventions;
         }
 
