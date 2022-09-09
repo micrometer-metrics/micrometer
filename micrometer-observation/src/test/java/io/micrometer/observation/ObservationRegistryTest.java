@@ -117,7 +117,7 @@ class ObservationRegistryTest {
 
     }
 
-    static class MessagingObservationConvention implements Observation.ObservationConvention<MessagingContext> {
+    static class MessagingObservationConvention implements ObservationConvention<MessagingContext> {
 
         private final MessagingConvention messagingConvention;
 
@@ -137,7 +137,7 @@ class ObservationRegistryTest {
 
     }
 
-    interface MessagingConvention extends Observation.KeyValuesConvention {
+    interface MessagingConvention extends KeyValuesConvention {
 
         KeyValue queueName(String foo);
 
@@ -153,8 +153,7 @@ class ObservationRegistryTest {
 
     }
 
-    static class OurCompanyObservationConvention
-            implements Observation.GlobalObservationConvention<Observation.Context> {
+    static class OurCompanyObservationConvention implements GlobalObservationConvention<Observation.Context> {
 
         // Here we override the default "observation" name
         @Override

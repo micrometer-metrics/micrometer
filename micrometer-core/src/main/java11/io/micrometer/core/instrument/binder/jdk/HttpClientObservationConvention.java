@@ -16,16 +16,17 @@
 package io.micrometer.core.instrument.binder.jdk;
 
 import io.micrometer.observation.Observation;
+import io.micrometer.observation.ObservationConvention;
 
 import java.net.http.HttpClient;
 
 /**
- * A {@link Observation.ObservationConvention} for an {@link HttpClient}.
+ * A {@link ObservationConvention} for an {@link HttpClient}.
  *
  * @author Marcin Grzejszczak
  * @since 1.10.0
  */
-public interface HttpClientObservationConvention extends Observation.ObservationConvention<HttpClientContext> {
+public interface HttpClientObservationConvention extends ObservationConvention<HttpClientContext> {
 
     @Override
     default boolean supportsContext(Observation.Context context) {
