@@ -22,7 +22,6 @@ import io.micrometer.core.instrument.Timer;
 import io.micrometer.observation.Observation;
 import io.micrometer.observation.ObservationRegistry;
 import io.micrometer.observation.ObservationConvention;
-import io.micrometer.observation.transport.RequestReplySenderContext;
 import io.micrometer.observation.transport.ResponseContext;
 
 import java.util.function.Supplier;
@@ -110,8 +109,7 @@ public class ObservationOrTimerCompatibleInstrumentation<T extends Observation.C
 
     /**
      * If using an Observation for instrumentation and the context is a
-     * {@link RequestReplySenderContext}, set the response object on it. Otherwise, do
-     * nothing.
+     * {@link ResponseContext}, set the response object on it. Otherwise, do nothing.
      * @param response response for the RequestReplySenderContext
      * @param <RES> type of the response
      */
