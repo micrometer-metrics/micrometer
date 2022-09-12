@@ -8,7 +8,3 @@ dependencies {
 
     testImplementation project(':micrometer-test')
 }
-
-// new module in 1.9. This should be removed in later branches.
-japicmp.enabled = false
-downloadBaseline.enabled = false
