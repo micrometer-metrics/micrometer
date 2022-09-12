@@ -61,24 +61,25 @@ class JerseyServerTimingInstrumentationVerificationTests extends HttpServerTimin
     public static class TestResource {
 
         @GET
+        @Path(InstrumentedRoutes.ROOT)
         public String root() {
             return "hello";
         }
 
         @GET
-        @Path("hello/{name}")
+        @Path(InstrumentedRoutes.TEMPLATED_ROUTE)
         public String hello(@PathParam("name") String name) {
             return "hello " + name;
         }
 
         @GET
-        @Path("foundRedirect")
+        @Path(InstrumentedRoutes.REDIRECT)
         public Response redirect() {
             return Response.status(302).location(URI.create("/")).build();
         }
 
         @POST
-        @Path("error")
+        @Path(InstrumentedRoutes.ERROR)
         public Response error() {
             return Response.serverError().build();
         }

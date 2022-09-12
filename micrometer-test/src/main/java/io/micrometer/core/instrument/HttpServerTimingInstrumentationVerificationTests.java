@@ -54,20 +54,15 @@ public abstract class HttpServerTimingInstrumentationVerificationTests extends I
     /**
      * Start the instrumented HTTP server to be tested. No request body or query
      * parameters will be sent, and any response body will be ignored. The server MUST
-     * serve the following routes:
-     * <ul>
-     * <li>{@code GET /}</li>
-     * <li>{@code GET /hello/{name}} (templated path parameter)</li>
-     * <li>{@code GET /foundRedirect} (redirects to the root {@code /} with status code
-     * 302)</li>
-     * <li>{@code POST /error} (500 error response)</li>
-     * </ul>
-     * The server MUST NOT have a route for the following:
+     * serve the routes described by {@link InstrumentedRoutes}. Constants are available
+     * in that class for the routes that will have requests sent to them as part of the
+     * TCK. The server MUST NOT have a route for the following:
      * <ul>
      * <li>{@code GET /notFound} (returns 404 response)</li>
      * </ul>
      * @return base URI where the instrumented server is receiving requests. Must end with
      * a slash (/).
+     * @see InstrumentedRoutes
      */
     protected abstract URI startInstrumentedServer() throws Exception;
 
@@ -96,25 +91,67 @@ public abstract class HttpServerTimingInstrumentationVerificationTests extends I
     @Test
     void uriTemplateIsTagged() throws Throwable {
         sender.get(baseUri + "hello/world").send();
-        checkTimer(rs -> rs.tags("uri", "/hello/{name}", "status", "200", "method", "GET").timer().count() == 1);
+        checkTimer(rs -> rs.tags("uri", InstrumentedRoutes.TEMPLATED_ROUTE, "status", "200", "method", "GET").timer()
+                .count() == 1);
     }
 
     @Test
     void redirect() throws Throwable {
         sender.get(baseUri + "foundRedirect").send();
-        checkTimer(rs -> rs.tags("uri", "/foundRedirect", "status", "302", "method", "GET").timer().count() == 1);
+        checkTimer(rs -> rs.tags("uri", InstrumentedRoutes.REDIRECT, "status", "302", "method", "GET").timer()
+                .count() == 1);
     }
 
     @Test
     void errorResponse() throws Throwable {
         sender.post(baseUri + "error").send();
-        checkTimer(rs -> rs.tags("uri", "/error", "status", "500", "method", "POST").timer().count() == 1);
+        checkTimer(
+                rs -> rs.tags("uri", InstrumentedRoutes.ERROR, "status", "500", "method", "POST").timer().count() == 1);
     }
 
     private void checkTimer(Function<RequiredSearch, Boolean> timerCheck) {
         // jersey instrumentation finishes after response is sent, creating a race
         await().atLeast(Duration.ofMillis(25)).atMost(Duration.ofMillis(150))
                 .until(() -> timerCheck.apply(getRegistry().get(timerName())));
+    }
+
+    /**
+     * Class containing constants that can be used for implementing the HTTP routes that
+     * the instrumented server needs to serve to pass the
+     * {@link HttpServerTimingInstrumentationVerificationTests}. The HTTP server MUST
+     * serve the following:
+     * <ul>
+     * <li>{@link #ROOT}: {@code GET /}</li>
+     * <li>{@link #TEMPLATED_ROUTE}: {@code GET /hello/{name}}</li>
+     * <li>{@link #REDIRECT}: {@code GET /foundRedirect}</li>
+     * <li>{@link #ERROR}: {@code POST /error}</li>
+     * </ul>
+     */
+    public static class InstrumentedRoutes {
+
+        /**
+         * Path for the route with a path variable. The templated route is expected to be
+         * used in the URI tag.
+         */
+        public static final String TEMPLATED_ROUTE = "/hello/{name}";
+
+        /**
+         * Path for the root route.
+         */
+        public static final String ROOT = "/";
+
+        /**
+         * Path for the route that will respond with a 500 server error to a POST method
+         * request.
+         */
+        public static final String ERROR = "/error";
+
+        /**
+         * Path for the route that will redirect with status code 302 to the {@link #ROOT}
+         * route.
+         */
+        public static final String REDIRECT = "/foundRedirect";
+
     }
 
 }
