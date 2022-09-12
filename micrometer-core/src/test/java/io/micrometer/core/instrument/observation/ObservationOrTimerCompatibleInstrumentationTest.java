@@ -58,7 +58,7 @@ class ObservationOrTimerCompatibleInstrumentationTest {
 
     private static class TestDefaultConvention implements ObservationConvention<Observation.Context> {
 
-        public static TestDefaultConvention INSTANCE = new TestDefaultConvention();
+        private static final TestDefaultConvention INSTANCE = new TestDefaultConvention();
 
         private TestDefaultConvention() {
         }

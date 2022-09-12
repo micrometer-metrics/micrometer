@@ -75,14 +75,18 @@ public class SenderContext<C> extends Observation.Context {
         return kind;
     }
 
+    /**
+     * Return optional name for the service that will be called.
+     * @return optional name for the service that will be called
+     */
     @Nullable
     public String getRemoteServiceName() {
         return remoteServiceName;
     }
 
     /**
-     * Optional name for the service that will be called.
-     * @param remoteServiceName - name of the service that will be called
+     * Set optional name for the service that will be called.
+     * @param remoteServiceName name of the service that will be called
      */
     public void setRemoteServiceName(@Nullable String remoteServiceName) {
         this.remoteServiceName = remoteServiceName;

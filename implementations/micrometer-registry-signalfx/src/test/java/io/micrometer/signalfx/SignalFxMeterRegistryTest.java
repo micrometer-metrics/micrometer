@@ -213,8 +213,7 @@ class SignalFxMeterRegistryTest {
         mockClock.add(config.step());
 
         dataPoints = getDataPoints(registry, mockClock.wallTime());
-        assertThat(dataPoints).hasSize(9 + percentiles.length);
-        assertThat(dataPoints).has(gaugePoint("my.timer.avg", 0.55), atIndex(0))
+        assertThat(dataPoints).hasSize(9 + percentiles.length).has(gaugePoint("my.timer.avg", 0.55), atIndex(0))
                 .has(counterPoint("my.timer.count", 4), atIndex(1))
                 .has(allOf(cumulativeCounterPoint("my.timer.histogram", 8), bucket("+Inf")), atIndex(2))
                 .has(allOf(cumulativeCounterPoint("my.timer.histogram", 0), bucket(buckets[0])), atIndex(3))
