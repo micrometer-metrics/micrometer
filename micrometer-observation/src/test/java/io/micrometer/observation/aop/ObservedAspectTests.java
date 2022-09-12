@@ -18,6 +18,7 @@ package io.micrometer.observation.aop;
 import io.micrometer.common.KeyValues;
 import io.micrometer.common.lang.NonNull;
 import io.micrometer.common.lang.Nullable;
+import io.micrometer.context.ContextRegistry;
 import io.micrometer.context.ContextSnapshot;
 import io.micrometer.observation.Observation;
 import io.micrometer.observation.ObservationTextPublisher;
@@ -301,7 +302,7 @@ class ObservedAspectTests {
         @Observed(name = "test.async")
         CompletableFuture<String> async(FakeAsyncTask fakeAsyncTask) {
             System.out.println("async");
-            ContextSnapshot contextSnapshot = ContextSnapshot.captureUsing(o -> true);
+            ContextSnapshot contextSnapshot = ContextSnapshot.captureAllUsing(o -> true, ContextRegistry.getInstance());
             return CompletableFuture.supplyAsync(fakeAsyncTask,
                     contextSnapshot.wrapExecutor(Executors.newSingleThreadExecutor()));
         }
@@ -323,7 +324,7 @@ class ObservedAspectTests {
 
         CompletableFuture<String> async(FakeAsyncTask fakeAsyncTask) {
             System.out.println("async");
-            ContextSnapshot contextSnapshot = ContextSnapshot.captureUsing(o -> true);
+            ContextSnapshot contextSnapshot = ContextSnapshot.captureAllUsing(o -> true, ContextRegistry.getInstance());
             return CompletableFuture.supplyAsync(fakeAsyncTask,
                     contextSnapshot.wrapExecutor(Executors.newSingleThreadExecutor()));
         }
