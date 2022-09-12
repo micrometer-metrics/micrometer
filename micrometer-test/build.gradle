@@ -31,6 +31,7 @@ dependencies {
     java11TestImplementation 'com.github.tomakehurst:wiremock-jre8-standalone'
 
     api 'org.mockito:mockito-core'
+    implementation 'org.awaitility:awaitility'
 
     testImplementation project(':micrometer-observation-test')
 
@@ -46,6 +47,12 @@ dependencies {
     testImplementation 'com.squareup.okhttp3:okhttp'
     testImplementation 'org.apache.httpcomponents:httpclient'
     testImplementation 'org.eclipse.jetty:jetty-client'
+    testImplementation 'org.eclipse.jetty:jetty-server'
+    testImplementation 'org.eclipse.jetty:jetty-servlet'
+    testImplementation 'org.glassfish.jersey.core:jersey-server'
+    testImplementation 'org.glassfish.jersey.test-framework.providers:jersey-test-framework-provider-jdk-http:2.+'
+    // necessary for Jersey test framework
+    testRuntimeOnly 'org.glassfish.jersey.inject:jersey-hk2'
 }
 
 java11Test {

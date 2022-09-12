@@ -9,6 +9,7 @@
 	<suppress checks="IllegalImport" files="samples[\\/].+" />
 	<suppress checks="IllegalImport" files="test[\\/]java[\\/]io[\\/]micrometer[\\/]core[\\/]instrument[\\/]binder[\\/]jersey[\\/]server.+" />
 	<suppress checks="IllegalImport" files="test[\\/]java[\\/]io[\\/]micrometer[\\/]jersey.+" />
+	<suppress checks="IllegalImport" files="test[\\/]java[\\/]io[\\/]micrometer[\\/]core[\\/]instrument.+Tests.java" />
 
 	<suppress checks="JavadocPackageCheck" files="benchmarks[\\/].+" />
 	<suppress checks="JavadocPackageCheck" files="samples[\\/].+" />

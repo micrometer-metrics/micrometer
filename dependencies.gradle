@@ -56,6 +56,7 @@ def VERSIONS = [
         'org.awaitility:awaitility:latest.release',
         'org.eclipse.jetty:jetty-client:9.+',
         'org.eclipse.jetty:jetty-server:9.+',
+        'org.eclipse.jetty:jetty-servlet:9.+',
         'org.ehcache:ehcache:latest.release',
         'org.glassfish.jersey.core:jersey-server:2.+',
         'org.glassfish.jersey.inject:jersey-hk2:2.+',
