@@ -15,9 +15,13 @@
  */
 package io.micrometer.observation.docs;
 
+import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.function.Supplier;
+
 import io.micrometer.common.KeyValue;
 import io.micrometer.common.KeyValues;
 import io.micrometer.observation.Observation;
+import io.micrometer.observation.Observation.Context;
 import io.micrometer.observation.ObservationFilter;
 import io.micrometer.observation.ObservationRegistry;
 import io.micrometer.observation.GlobalObservationConvention;
@@ -114,6 +118,22 @@ class DocumentedObservationTests {
         assertThat(context.getLowCardinalityKeyValues()).containsOnly(KeyValue.of("always added", "tag"),
                 KeyValue.of("global", "low cardinality"));
         assertThat(context.getHighCardinalityKeyValues()).containsOnly(KeyValue.of("global", "high cardinality"));
+    }
+
+    @Test
+    void createNotStartedShouldNotCreateContextWithNoopRegistry() {
+        ObservationRegistry registry = ObservationRegistry.NOOP;
+
+        AtomicBoolean isCalled = new AtomicBoolean();
+        Supplier<Context> supplier = () -> {
+            isCalled.set(true);
+            return new Observation.Context();
+        };
+
+        Observation observation = TestConventionObservation.CONTEXTUAL_NAME.createNotStarted(null,
+                new FirstObservationConvention(), supplier, registry);
+        assertThat(observation.isNoop()).isTrue();
+        assertThat(isCalled).isFalse();
     }
 
     private ObservationRegistry observationRegistry() {
