@@ -149,13 +149,18 @@ public final class Tags implements Iterable<Tag> {
 
     }
 
+    @Override
+    public Spliterator<Tag> spliterator() {
+        return Spliterators.spliterator(tags, 0, last, Spliterator.IMMUTABLE | Spliterator.ORDERED
+                | Spliterator.DISTINCT | Spliterator.NONNULL | Spliterator.SORTED);
+    }
+
     /**
      * Return a stream of the contained tags.
      * @return a tags stream
      */
     public Stream<Tag> stream() {
-        return StreamSupport.stream(Spliterators.spliteratorUnknownSize(iterator(),
-                Spliterator.ORDERED | Spliterator.DISTINCT | Spliterator.NONNULL | Spliterator.SORTED), false);
+        return StreamSupport.stream(spliterator(), false);
     }
 
     @Override

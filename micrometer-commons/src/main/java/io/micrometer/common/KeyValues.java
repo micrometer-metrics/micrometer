@@ -150,13 +150,18 @@ public final class KeyValues implements Iterable<KeyValue> {
 
     }
 
+    @Override
+    public Spliterator<KeyValue> spliterator() {
+        return Spliterators.spliterator(keyValues, 0, last, Spliterator.IMMUTABLE | Spliterator.ORDERED
+                | Spliterator.DISTINCT | Spliterator.NONNULL | Spliterator.SORTED);
+    }
+
     /**
      * Return a stream of the contained key values.
      * @return a key value stream
      */
     public Stream<KeyValue> stream() {
-        return StreamSupport.stream(Spliterators.spliteratorUnknownSize(iterator(),
-                Spliterator.ORDERED | Spliterator.DISTINCT | Spliterator.NONNULL | Spliterator.SORTED), false);
+        return StreamSupport.stream(spliterator(), false);
     }
 
     @Override
