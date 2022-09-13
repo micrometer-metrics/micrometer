@@ -15,11 +15,16 @@
  */
 package io.micrometer.core.instrument;
 
+import io.micrometer.core.instrument.observation.DefaultMeterObservationHandler;
 import io.micrometer.core.instrument.simple.SimpleMeterRegistry;
+import io.micrometer.observation.ObservationRegistry;
+import io.micrometer.observation.tck.TestObservationRegistry;
 
 abstract class InstrumentationVerificationTests {
 
     private final MeterRegistry registry = new SimpleMeterRegistry();
+
+    private final TestObservationRegistry testObservationRegistry = createObservationRegistryWithMetrics();
 
     /**
      * {@link MeterRegistry} to use for instrumentation verification tests.
@@ -27,6 +32,22 @@ abstract class InstrumentationVerificationTests {
      */
     protected MeterRegistry getRegistry() {
         return registry;
+    }
+
+    /**
+     * Helper method for creating a {@link TestObservationRegistry} to run the tests also
+     * using the Observation API.
+     * @return a {@link TestObservationRegistry} with a
+     * {@link DefaultMeterObservationHandler} registered
+     */
+    protected TestObservationRegistry createObservationRegistryWithMetrics() {
+        TestObservationRegistry observationRegistry = TestObservationRegistry.create();
+        observationRegistry.observationConfig().observationHandler(new DefaultMeterObservationHandler(getRegistry()));
+        return observationRegistry;
+    }
+
+    protected ObservationRegistry getObservationRegistry() {
+        return this.testObservationRegistry;
     }
 
 }

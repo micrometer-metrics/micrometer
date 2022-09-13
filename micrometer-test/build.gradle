@@ -19,6 +19,7 @@ sourceSets {
 dependencies {
     api project(':micrometer-core')
     api project(':micrometer-observation')
+    api project(':micrometer-observation-test')
 
     java11TestImplementation project(":micrometer-core").sourceSets.java11.output
 

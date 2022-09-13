@@ -17,6 +17,7 @@ package io.micrometer.core.instrument;
 
 import io.micrometer.common.lang.Nullable;
 import io.micrometer.core.instrument.binder.okhttp3.OkHttpMetricsEventListener;
+import io.micrometer.core.instrument.binder.okhttp3.OkHttpObservationInterceptor;
 import okhttp3.OkHttpClient;
 import okhttp3.Request;
 import okhttp3.RequestBody;
@@ -25,10 +26,8 @@ import okhttp3.Response;
 import java.io.IOException;
 import java.net.URI;
 
-class OkHttpClientTimingInstrumentationVerificationTests extends HttpClientTimingInstrumentationVerificationTests {
-
-    OkHttpClient httpClient = new OkHttpClient.Builder()
-            .eventListener(OkHttpMetricsEventListener.builder(getRegistry(), timerName()).build()).build();
+class OkHttpClientTimingInstrumentationVerificationTests
+        extends HttpClientTimingInstrumentationVerificationTests<OkHttpClient> {
 
     @Override
     protected void sendHttpRequest(HttpMethod method, @Nullable byte[] body, URI baseUri, String templatedPath,
@@ -36,11 +35,24 @@ class OkHttpClientTimingInstrumentationVerificationTests extends HttpClientTimin
         Request request = new Request.Builder().method(method.name(), body == null ? null : RequestBody.create(body))
                 .url(baseUri + substitutePathVariables(templatedPath, pathVariables))
                 .header(OkHttpMetricsEventListener.URI_PATTERN, templatedPath).build();
-        try (Response ignored = httpClient.newCall(request).execute()) {
+        try (Response ignored = instrumentedClient().newCall(request).execute()) {
         }
         catch (IOException e) {
             throw new RuntimeException(e);
         }
+    }
+
+    @Override
+    protected OkHttpClient clientInstrumentedWithMetrics() {
+        return new OkHttpClient.Builder()
+                .eventListener(OkHttpMetricsEventListener.builder(getRegistry(), timerName()).build()).build();
+    }
+
+    @Override
+    protected OkHttpClient clientInstrumentedWithObservations() {
+        return new OkHttpClient.Builder()
+                .addInterceptor(OkHttpObservationInterceptor.builder(getObservationRegistry(), timerName()).build())
+                .build();
     }
 
 }
