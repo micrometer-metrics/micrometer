@@ -6,3 +6,8 @@ dependencies {
 
     testImplementation project(':micrometer-test')
 }
+
+jar {
+    // gh-3412 override our default name because 'new' is a reserved word
+    manifest.attributes.put('Automatic-Module-Name', 'micrometer.registry.newrelic')
+}
