@@ -43,13 +43,11 @@ public class OkHttpContext extends RequestReplySenderContext<Request.Builder, Re
 
     private final boolean includeHostTag;
 
-    private final Request originalRequest;
-
     private OkHttpObservationInterceptor.CallState state;
 
     public OkHttpContext(Function<Request, String> urlMapper, Iterable<KeyValue> extraTags,
             Iterable<BiFunction<Request, Response, KeyValue>> contextSpecificTags,
-            Iterable<KeyValue> unknownRequestTags, boolean includeHostTag, Request originalRequest) {
+            Iterable<KeyValue> unknownRequestTags, boolean includeHostTag) {
         super((carrier, key, value) -> {
             if (carrier != null) {
                 carrier.header(key, value);
@@ -60,7 +58,6 @@ public class OkHttpContext extends RequestReplySenderContext<Request.Builder, Re
         this.contextSpecificTags = contextSpecificTags;
         this.unknownRequestTags = unknownRequestTags;
         this.includeHostTag = includeHostTag;
-        this.originalRequest = originalRequest;
     }
 
     public void setState(OkHttpObservationInterceptor.CallState state) {
@@ -89,10 +86,6 @@ public class OkHttpContext extends RequestReplySenderContext<Request.Builder, Re
 
     public boolean isIncludeHostTag() {
         return includeHostTag;
-    }
-
-    public Request getOriginalRequest() {
-        return originalRequest;
     }
 
 }
