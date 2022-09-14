@@ -15,6 +15,7 @@
  */
 package io.micrometer.core.instrument;
 
+import io.micrometer.common.lang.Nullable;
 import io.micrometer.core.instrument.binder.jetty.TimedHandler;
 import org.eclipse.jetty.server.Server;
 import org.eclipse.jetty.servlet.ServletContextHandler;
@@ -39,7 +40,7 @@ class JettyServerTimingInstrumentationVerificationTests extends HttpServerTiming
     }
 
     @Override
-    protected URI startInstrumentedServer() throws Exception {
+    protected URI startInstrumentedWithMetricsServer() throws Exception {
         server = new Server(0);
         TimedHandler timedHandler = new TimedHandler(getRegistry(), Tags.empty());
         ServletContextHandler servletContextHandler = new ServletContextHandler();
@@ -50,6 +51,12 @@ class JettyServerTimingInstrumentationVerificationTests extends HttpServerTiming
         server.insertHandler(timedHandler);
         server.start();
         return server.getURI();
+    }
+
+    @Nullable
+    @Override
+    protected URI startInstrumentedWithObservationsServer() throws Exception {
+        return null;
     }
 
     @Override

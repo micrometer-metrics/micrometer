@@ -220,26 +220,9 @@ public abstract class HttpClientTimingInstrumentationVerificationTests<CLIENT>
     private void checkAndSetupTestForTestType(TestType testType) {
         if (testType == TestType.METRICS_VIA_OBSERVATIONS_WITH_METRICS_HANDLER) {
             Assumptions.assumeTrue(clientInstrumentedWithObservations() != null,
-                    "ObservationRegistry must be set for testing observations");
+                    "You must implement the <clientInstrumentedWithObservations> method to test your instrumentation against an ObservationRegistry");
         }
         this.testType = testType;
-    }
-
-    /**
-     * Enum that represents types of tests we can run.
-     */
-    enum TestType {
-
-        /**
-         * Runs the tests by just using the {@link MeterRegistry}.
-         */
-        METRICS_VIA_METER_REGISTRY,
-
-        /**
-         * Runs the tests by using the Observation API.
-         */
-        METRICS_VIA_OBSERVATIONS_WITH_METRICS_HANDLER
-
     }
 
 }
