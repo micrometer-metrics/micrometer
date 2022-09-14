@@ -50,10 +50,10 @@ class JdkHttpClientTimingInstrumentationVerificationTests
     }
 
     @Override
-    protected void sendHttpRequest(HttpMethod method, @Nullable byte[] body, URI baseUri, String templatedPath,
-            String... pathVariables) {
+    protected void sendHttpRequest(HttpClient instrumentedClient, HttpMethod method, @Nullable byte[] body, URI baseUri,
+            String templatedPath, String... pathVariables) {
         try {
-            instrumentedClient().send(makeRequest(method, body, baseUri, templatedPath, pathVariables),
+            instrumentedClient.send(makeRequest(method, body, baseUri, templatedPath, pathVariables),
                     HttpResponse.BodyHandlers.ofString());
         }
         catch (Exception e) {

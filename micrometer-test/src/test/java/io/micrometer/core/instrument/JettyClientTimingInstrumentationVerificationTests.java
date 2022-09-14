@@ -55,17 +55,17 @@ class JettyClientTimingInstrumentationVerificationTests
     }
 
     @Override
-    protected void sendHttpRequest(HttpMethod method, @Nullable byte[] body, URI baseUri, String templatedPath,
-            String... pathVariables) {
+    protected void sendHttpRequest(HttpClient instrumentedClient, HttpMethod method, @Nullable byte[] body, URI baseUri,
+            String templatedPath, String... pathVariables) {
         try {
-            Request request = instrumentedClient()
+            Request request = instrumentedClient
                     .newRequest(baseUri + substitutePathVariables(templatedPath, pathVariables)).method(method.name())
                     .header(HEADER_URI_PATTERN, templatedPath);
             if (body != null) {
                 request.content(new BytesContentProvider(body));
             }
             request.send();
-            instrumentedClient().stop();
+            instrumentedClient.stop();
         }
         catch (Exception e) {
             throw new RuntimeException(e);

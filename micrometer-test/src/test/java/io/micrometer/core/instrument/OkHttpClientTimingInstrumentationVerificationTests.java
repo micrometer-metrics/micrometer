@@ -30,12 +30,12 @@ class OkHttpClientTimingInstrumentationVerificationTests
         extends HttpClientTimingInstrumentationVerificationTests<OkHttpClient> {
 
     @Override
-    protected void sendHttpRequest(HttpMethod method, @Nullable byte[] body, URI baseUri, String templatedPath,
-            String... pathVariables) {
+    protected void sendHttpRequest(OkHttpClient instrumentedClient, HttpMethod method, @Nullable byte[] body,
+            URI baseUri, String templatedPath, String... pathVariables) {
         Request request = new Request.Builder().method(method.name(), body == null ? null : RequestBody.create(body))
                 .url(baseUri + substitutePathVariables(templatedPath, pathVariables))
                 .header(OkHttpMetricsEventListener.URI_PATTERN, templatedPath).build();
-        try (Response ignored = instrumentedClient().newCall(request).execute()) {
+        try (Response ignored = instrumentedClient.newCall(request).execute()) {
         }
         catch (IOException e) {
             throw new RuntimeException(e);

@@ -82,7 +82,7 @@ public abstract class HttpClientTimingInstrumentationVerificationTests<CLIENT>
      * @return instrumented client with either {@link MeterRegistry} or
      * {@link ObservationRegistry}
      */
-    protected CLIENT instrumentedClient() {
+    private CLIENT instrumentedClient() {
         if (this.createdClient != null) {
             return this.createdClient;
         }
@@ -115,14 +115,15 @@ public abstract class HttpClientTimingInstrumentationVerificationTests<CLIENT>
      * {@literal /cart/{cartId}}. One string pathVariables argument is expected for
      * substituting the cartId path variable. The number of pathVariables arguments SHOULD
      * exactly match the number of path variables in the templatedPath.
+     * @param instrumentedClient instrumented client
      * @param method http method to use to send the request
      * @param baseUrl portion of the URL before the path where to send the request
      * @param templatedPath the path portion of the URL after the baseUrl, starting with a
      * forward slash, and optionally containing path variable placeholders
      * @param pathVariables optional variables to substitute into the templatedPath
      */
-    protected abstract void sendHttpRequest(HttpMethod method, @Nullable byte[] body, URI baseUrl, String templatedPath,
-            String... pathVariables);
+    protected abstract void sendHttpRequest(CLIENT instrumentedClient, HttpMethod method, @Nullable byte[] body,
+            URI baseUrl, String templatedPath, String... pathVariables);
 
     /**
      * Convenience method provided to substitute the template placeholders for the
@@ -153,7 +154,8 @@ public abstract class HttpClientTimingInstrumentationVerificationTests<CLIENT>
         stubFor(get(anyUrl()).willReturn(ok()));
 
         String templatedPath = "/customers/{customerId}/carts/{cartId}";
-        sendHttpRequest(HttpMethod.GET, null, URI.create(wmRuntimeInfo.getHttpBaseUrl()), templatedPath, "112", "5");
+        sendHttpRequest(instrumentedClient(), HttpMethod.GET, null, URI.create(wmRuntimeInfo.getHttpBaseUrl()),
+                templatedPath, "112", "5");
 
         Timer timer = getRegistry().get(timerName()).tags("method", "GET", "status", "200", "uri", templatedPath)
                 .timer();
@@ -173,7 +175,8 @@ public abstract class HttpClientTimingInstrumentationVerificationTests<CLIENT>
         }
 
         try {
-            sendHttpRequest(HttpMethod.GET, null, URI.create("http://localhost:" + unusedPort), "/anything");
+            sendHttpRequest(instrumentedClient(), HttpMethod.GET, null, URI.create("http://localhost:" + unusedPort),
+                    "/anything");
         }
         catch (Throwable ignore) {
         }
@@ -191,7 +194,8 @@ public abstract class HttpClientTimingInstrumentationVerificationTests<CLIENT>
 
         stubFor(get(anyUrl()).willReturn(serverError()));
 
-        sendHttpRequest(HttpMethod.GET, null, URI.create(wmRuntimeInfo.getHttpBaseUrl()), "/socks");
+        sendHttpRequest(instrumentedClient(), HttpMethod.GET, null, URI.create(wmRuntimeInfo.getHttpBaseUrl()),
+                "/socks");
 
         Timer timer = getRegistry().get(timerName()).tags("method", "GET", "status", "500").timer();
         assertThat(timer.count()).isEqualTo(1);
@@ -205,7 +209,8 @@ public abstract class HttpClientTimingInstrumentationVerificationTests<CLIENT>
 
         stubFor(post(anyUrl()).willReturn(badRequest()));
 
-        sendHttpRequest(HttpMethod.POST, new byte[0], URI.create(wmRuntimeInfo.getHttpBaseUrl()), "/socks");
+        sendHttpRequest(instrumentedClient(), HttpMethod.POST, new byte[0], URI.create(wmRuntimeInfo.getHttpBaseUrl()),
+                "/socks");
 
         Timer timer = getRegistry().get(timerName()).tags("method", "POST", "status", "400").timer();
         assertThat(timer.count()).isEqualTo(1);

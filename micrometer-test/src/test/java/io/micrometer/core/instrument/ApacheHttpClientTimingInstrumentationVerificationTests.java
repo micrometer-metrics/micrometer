@@ -51,10 +51,10 @@ class ApacheHttpClientTimingInstrumentationVerificationTests
     }
 
     @Override
-    protected void sendHttpRequest(HttpMethod method, @Nullable byte[] body, URI baseUri, String templatedPath,
-            String... pathVariables) {
+    protected void sendHttpRequest(HttpClient instrumentedClient, HttpMethod method, @Nullable byte[] body, URI baseUri,
+            String templatedPath, String... pathVariables) {
         try {
-            EntityUtils.consume(instrumentedClient()
+            EntityUtils.consume(instrumentedClient
                     .execute(makeRequest(method, body, baseUri, templatedPath, pathVariables)).getEntity());
         }
         catch (IOException e) {
