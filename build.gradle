@@ -307,6 +307,22 @@ subprojects {
                 }
             }
 
+            task testModules(type: Exec) {
+                dependsOn jar
+                String executablePath = javaToolchains.launcherFor { languageVersion = javaLanguageVersion }.get().executablePath
+                commandLine "$executablePath", '-p', "$jar.archivePath", '--list-modules'
+                standardOutput = new ByteArrayOutputStream()
+                ignoreExitValue = true
+
+                doLast {
+                    if (executionResult.get().getExitValue() != 0) {
+                        throw new GradleException("Command finished with non-zero exit value ${executionResult.get().getExitValue()}:\n$standardOutput")
+                    }
+                }
+            }
+
+            check.dependsOn("testModules")
+
             if (!(project.name in ['micrometer-commons', 'micrometer-observation', 'micrometer-observation-conventions', 'micrometer-observation-test'])) {
                 apply plugin: 'me.champeau.gradle.japicmp'
                 apply plugin: 'de.undercouch.download'
