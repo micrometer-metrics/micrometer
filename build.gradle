@@ -286,14 +286,6 @@ subprojects {
         }
     }
 
-    task testModules(type: Exec) {
-        dependsOn "jar"
-
-        commandLine "java", "-p", "${project.buildDir.absolutePath}${File.separator}libs${File.separator}/${project.name}-${project.version}.jar", "--list-modules"
-        
-        standardOutput = new ByteArrayOutputStream()
-    }
-
     if (!['samples', 'benchmarks'].find { project.name.contains(it) }) {
         apply plugin: 'nebula.maven-publish'
         apply plugin: 'nebula.maven-manifest'
@@ -314,6 +306,22 @@ subprojects {
                     from "$rootDir/NOTICE"
                 }
             }
+
+            task testModules(type: Exec) {
+                dependsOn jar
+                String executablePath = javaToolchains.launcherFor { languageVersion = javaLanguageVersion }.get().executablePath
+                commandLine "$executablePath", '-p', "$jar.archivePath", '--list-modules'
+                standardOutput = new ByteArrayOutputStream()
+                ignoreExitValue = true
+
+                doLast {
+                    if (executionResult.get().getExitValue() != 0) {
+                        throw new GradleException("Command finished with non-zero exit value ${executionResult.get().getExitValue()}:\n$standardOutput")
+                    }
+                }
+            }
+
+            check.dependsOn("testModules")
 
             if (!(project.name in ['micrometer-commons', 'micrometer-observation', 'micrometer-observation-conventions', 'micrometer-observation-test'])) {
                 apply plugin: 'me.champeau.gradle.japicmp'
