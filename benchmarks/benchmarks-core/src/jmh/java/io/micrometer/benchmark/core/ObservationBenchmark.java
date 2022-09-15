@@ -49,7 +49,7 @@ public class ObservationBenchmark {
     @Setup
     public void setup() {
         this.meterRegistry = new SimpleMeterRegistry();
-        this.timer = Timer.builder("cached.timer").tag("abc", "123").tag("index", "0").register(meterRegistry);
+        this.timer = Timer.builder("cached.timer").tag("abc", "123").register(meterRegistry);
         this.observationRegistry = ObservationRegistry.create();
         this.observationRegistry.observationConfig()
                 .observationHandler(new DefaultMeterObservationHandler(meterRegistry));
