@@ -19,6 +19,7 @@
 
 	<suppress id="sysout" files="ClearCustomMetricDescriptors.java"/>
 	<suppress id="sysout" files="HttpSender.java"/>
+	<suppress id="sysout" files="benchmarks[\\/].+" />
 	<suppress id="sysout" files="[\\/]samples[\\/].*"/>
 	<suppress id="sysout" files="[\\/]src[\\/]test[\\/].*"/>
 </suppressions>
