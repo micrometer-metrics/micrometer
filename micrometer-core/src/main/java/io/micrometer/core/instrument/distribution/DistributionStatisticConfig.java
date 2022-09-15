@@ -28,7 +28,7 @@ import java.util.stream.LongStream;
  * {@link io.micrometer.core.instrument.Timer} and
  * {@link io.micrometer.core.instrument.DistributionSummary}.
  * <p>
- * These statistics include max, percentiles, percentile histograms, and SLA violations.
+ * These statistics include max, percentiles, percentile histograms, and SLO violations.
  * <p>
  * Many distribution statistics are decayed to give greater weight to recent samples.
  *
@@ -110,8 +110,8 @@ public class DistributionStatisticConfig implements Mergeable<DistributionStatis
         }
 
         if (serviceLevelObjectives != null) {
-            for (double slaBoundary : serviceLevelObjectives) {
-                buckets.add(slaBoundary);
+            for (double sloBoundary : serviceLevelObjectives) {
+                buckets.add(sloBoundary);
             }
         }
 

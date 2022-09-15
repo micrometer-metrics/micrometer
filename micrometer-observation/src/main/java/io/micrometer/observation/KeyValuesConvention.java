@@ -13,22 +13,16 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package io.micrometer.core.instrument.binder.httpcomponents;
+package io.micrometer.observation;
 
-import io.micrometer.observation.Observation;
-import io.micrometer.observation.ObservationConvention;
+import io.micrometer.common.KeyValues;
 
 /**
- * {@link ObservationConvention} for Apache HTTP client instrumentation.
+ * A marker interface for conventions of {@link KeyValues} naming.
  *
+ * @author Marcin Grzejszczak
  * @since 1.10.0
- * @see DefaultApacheHttpClientObservationConvention
  */
-public interface ApacheHttpClientObservationConvention extends ObservationConvention<ApacheHttpClientContext> {
-
-    @Override
-    default boolean supportsContext(Observation.Context context) {
-        return context instanceof ApacheHttpClientContext;
-    }
+public interface KeyValuesConvention {
 
 }

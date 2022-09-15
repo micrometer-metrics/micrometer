@@ -19,6 +19,7 @@ import io.micrometer.common.KeyValue;
 import io.micrometer.common.KeyValues;
 import org.junit.jupiter.api.Test;
 
+import static io.micrometer.observation.Observation.NOOP;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.BDDAssertions.then;
 import static org.mockito.Mockito.mock;
@@ -66,16 +67,15 @@ class ObservationRegistryTest {
 
         Observation sample = Observation.start("test.timer", registry);
 
-        assertThat(sample).isSameAs(NoopObservation.INSTANCE);
+        assertThat(sample).isSameAs(NOOP);
     }
 
     @Test
     void observationShouldBeNoopWhenNullRegistry() {
-        assertThat(Observation.start("test.timer", null)).isSameAs(NoopObservation.INSTANCE);
-        assertThat(Observation.start("test.timer", new Observation.Context(), null)).isSameAs(NoopObservation.INSTANCE);
-        assertThat(Observation.createNotStarted("test.timer", null)).isSameAs(NoopObservation.INSTANCE);
-        assertThat(Observation.createNotStarted("test.timer", new Observation.Context(), null))
-                .isSameAs(NoopObservation.INSTANCE);
+        assertThat(Observation.start("test.timer", null)).isSameAs(NOOP);
+        assertThat(Observation.start("test.timer", new Observation.Context(), null)).isSameAs(NOOP);
+        assertThat(Observation.createNotStarted("test.timer", null)).isSameAs(NOOP);
+        assertThat(Observation.createNotStarted("test.timer", new Observation.Context(), null)).isSameAs(NOOP);
     }
 
     @Test
@@ -117,7 +117,7 @@ class ObservationRegistryTest {
 
     }
 
-    static class MessagingObservationConvention implements Observation.ObservationConvention<MessagingContext> {
+    static class MessagingObservationConvention implements ObservationConvention<MessagingContext> {
 
         private final MessagingConvention messagingConvention;
 
@@ -137,7 +137,7 @@ class ObservationRegistryTest {
 
     }
 
-    interface MessagingConvention extends Observation.KeyValuesConvention {
+    interface MessagingConvention extends KeyValuesConvention {
 
         KeyValue queueName(String foo);
 
@@ -153,8 +153,7 @@ class ObservationRegistryTest {
 
     }
 
-    static class OurCompanyObservationConvention
-            implements Observation.GlobalObservationConvention<Observation.Context> {
+    static class OurCompanyObservationConvention implements GlobalObservationConvention<Observation.Context> {
 
         // Here we override the default "observation" name
         @Override

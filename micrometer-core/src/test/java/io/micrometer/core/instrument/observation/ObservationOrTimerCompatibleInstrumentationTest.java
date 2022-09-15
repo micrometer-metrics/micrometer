@@ -22,6 +22,7 @@ import io.micrometer.core.instrument.Tags;
 import io.micrometer.core.instrument.Timer;
 import io.micrometer.core.instrument.simple.SimpleMeterRegistry;
 import io.micrometer.observation.Observation;
+import io.micrometer.observation.ObservationConvention;
 import io.micrometer.observation.tck.TestObservationRegistry;
 import org.junit.jupiter.api.Test;
 
@@ -55,9 +56,9 @@ class ObservationOrTimerCompatibleInstrumentationTest {
                 .hasLowCardinalityKeyValue("low", "value").hasHighCardinalityKeyValue("high", "value");
     }
 
-    private static class TestDefaultConvention implements Observation.ObservationConvention<Observation.Context> {
+    private static class TestDefaultConvention implements ObservationConvention<Observation.Context> {
 
-        public static TestDefaultConvention INSTANCE = new TestDefaultConvention();
+        private static final TestDefaultConvention INSTANCE = new TestDefaultConvention();
 
         private TestDefaultConvention() {
         }

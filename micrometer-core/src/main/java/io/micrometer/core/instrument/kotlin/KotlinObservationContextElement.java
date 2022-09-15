@@ -41,8 +41,8 @@ class KotlinObservationContextElement implements ThreadContextElement<ContextSna
 
     KotlinObservationContextElement(ObservationRegistry observationRegistry, ContextRegistry contextRegistry) {
         this.observationRegistry = observationRegistry;
-        this.contextSnapshot = ContextSnapshot.captureUsing(contextRegistry,
-                ObservationThreadLocalAccessor.KEY::equals);
+        this.contextSnapshot = ContextSnapshot.captureAllUsing(ObservationThreadLocalAccessor.KEY::equals,
+                contextRegistry);
     }
 
     @Override
@@ -57,7 +57,7 @@ class KotlinObservationContextElement implements ThreadContextElement<ContextSna
     @Override
     @SuppressWarnings("MustBeClosedChecker")
     public ContextSnapshot.Scope updateThreadContext(CoroutineContext coroutineContext) {
-        return this.contextSnapshot.setThreadLocalValues(ObservationThreadLocalAccessor.KEY::equals);
+        return this.contextSnapshot.setThreadLocals(ObservationThreadLocalAccessor.KEY::equals);
     }
 
     @Override

@@ -163,4 +163,14 @@ public class DefaultOkHttpObservationConvention implements OkHttpObservationConv
         return this.metricName;
     }
 
+    @Nullable
+    @Override
+    public String getContextualName(OkHttpContext context) {
+        Request request = context.getOriginalRequest();
+        if (request == null) {
+            return null;
+        }
+        return request.method();
+    }
+
 }

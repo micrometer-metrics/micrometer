@@ -21,7 +21,7 @@ import io.micrometer.core.instrument.Tag;
 import io.micrometer.core.instrument.Timer;
 import io.micrometer.observation.Observation;
 import io.micrometer.observation.ObservationRegistry;
-import io.micrometer.observation.transport.RequestReplySenderContext;
+import io.micrometer.observation.ObservationConvention;
 import io.micrometer.observation.transport.ResponseContext;
 
 import java.util.function.Supplier;
@@ -50,9 +50,9 @@ public class ObservationOrTimerCompatibleInstrumentation<T extends Observation.C
     private final ObservationRegistry observationRegistry;
 
     @Nullable
-    private final Observation.ObservationConvention<T> convention;
+    private final ObservationConvention<T> convention;
 
-    private final Observation.ObservationConvention<T> defaultConvention;
+    private final ObservationConvention<T> defaultConvention;
 
     @Nullable
     private Timer.Sample timerSample;
@@ -81,8 +81,7 @@ public class ObservationOrTimerCompatibleInstrumentation<T extends Observation.C
      */
     public static <T extends Observation.Context> ObservationOrTimerCompatibleInstrumentation<T> start(
             MeterRegistry meterRegistry, @Nullable ObservationRegistry observationRegistry, Supplier<T> context,
-            @Nullable Observation.ObservationConvention<T> convention,
-            Observation.ObservationConvention<T> defaultConvention) {
+            @Nullable ObservationConvention<T> convention, ObservationConvention<T> defaultConvention) {
         ObservationOrTimerCompatibleInstrumentation<T> observationOrTimer = new ObservationOrTimerCompatibleInstrumentation<>(
                 meterRegistry, observationRegistry, convention, defaultConvention);
         observationOrTimer.start(context);
@@ -90,9 +89,8 @@ public class ObservationOrTimerCompatibleInstrumentation<T extends Observation.C
     }
 
     private ObservationOrTimerCompatibleInstrumentation(MeterRegistry meterRegistry,
-            @Nullable ObservationRegistry observationRegistry,
-            @Nullable Observation.ObservationConvention<T> convention,
-            Observation.ObservationConvention<T> defaultConvention) {
+            @Nullable ObservationRegistry observationRegistry, @Nullable ObservationConvention<T> convention,
+            ObservationConvention<T> defaultConvention) {
         this.meterRegistry = meterRegistry;
         this.observationRegistry = observationRegistry == null ? ObservationRegistry.NOOP : observationRegistry;
         this.convention = convention;
@@ -111,8 +109,7 @@ public class ObservationOrTimerCompatibleInstrumentation<T extends Observation.C
 
     /**
      * If using an Observation for instrumentation and the context is a
-     * {@link RequestReplySenderContext}, set the response object on it. Otherwise, do
-     * nothing.
+     * {@link ResponseContext}, set the response object on it. Otherwise, do nothing.
      * @param response response for the RequestReplySenderContext
      * @param <RES> type of the response
      */
@@ -125,7 +122,7 @@ public class ObservationOrTimerCompatibleInstrumentation<T extends Observation.C
     }
 
     /**
-     * If using an Observation will set the error on Observation. For metrics it will do
+     * If using an Observation will set the error on Observation. For metrics, it will do
      * nothing.
      * @param throwable error that got recorded
      */

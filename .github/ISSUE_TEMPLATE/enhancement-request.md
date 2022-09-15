@@ -2,7 +2,7 @@
 name: Enhancement request
 about: Request an enhancement for Micrometer
 title: ''
-labels: ''
+labels: 'waiting-for-triage'
 assignees: ''
 
 ---

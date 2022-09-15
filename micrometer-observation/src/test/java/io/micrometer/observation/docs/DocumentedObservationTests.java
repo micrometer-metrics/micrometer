@@ -15,11 +15,20 @@
  */
 package io.micrometer.observation.docs;
 
+import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.function.Supplier;
+
+import io.micrometer.common.KeyValue;
 import io.micrometer.common.KeyValues;
 import io.micrometer.observation.Observation;
+import io.micrometer.observation.Observation.Context;
+import io.micrometer.observation.ObservationFilter;
 import io.micrometer.observation.ObservationRegistry;
+import io.micrometer.observation.GlobalObservationConvention;
+import io.micrometer.observation.ObservationConvention;
 import org.junit.jupiter.api.Test;
 
+import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.BDDAssertions.then;
 import static org.assertj.core.api.BDDAssertions.thenThrownBy;
 
@@ -79,6 +88,54 @@ class DocumentedObservationTests {
         then(context.getContextualName()).isEqualTo("contextual name");
     }
 
+    @Test
+    void globalConventionShouldBePickedIfItIsMatching() {
+        ObservationRegistry registry = observationRegistry();
+        registry.observationConfig().observationConvention(new GlobalConvention());
+        Observation.Context context = new Observation.Context();
+
+        TestConventionObservation.CONTEXTUAL_NAME.observation(null, new FirstObservationConvention(), context, registry)
+                .start().stop();
+
+        then(context.getName()).isEqualTo("global name");
+        then(context.getContextualName()).isEqualTo("global contextual name");
+        assertThat(context.getLowCardinalityKeyValues()).containsOnly(KeyValue.of("global", "low cardinality"));
+        assertThat(context.getHighCardinalityKeyValues()).containsOnly(KeyValue.of("global", "high cardinality"));
+    }
+
+    @Test
+    void keyValuesShouldBeAlwaysAdded() {
+        ObservationRegistry registry = observationRegistry();
+        registry.observationConfig().observationConvention(new GlobalConvention());
+        registry.observationConfig().observationFilter(new KeyValueAddingObservationFilter());
+        Observation.Context context = new Observation.Context();
+
+        TestConventionObservation.CONTEXTUAL_NAME.observation(null, new FirstObservationConvention(), context, registry)
+                .start().stop();
+
+        then(context.getName()).isEqualTo("global name");
+        then(context.getContextualName()).isEqualTo("global contextual name");
+        assertThat(context.getLowCardinalityKeyValues()).containsOnly(KeyValue.of("always added", "tag"),
+                KeyValue.of("global", "low cardinality"));
+        assertThat(context.getHighCardinalityKeyValues()).containsOnly(KeyValue.of("global", "high cardinality"));
+    }
+
+    @Test
+    void createNotStartedShouldNotCreateContextWithNoopRegistry() {
+        ObservationRegistry registry = ObservationRegistry.NOOP;
+
+        AtomicBoolean isCalled = new AtomicBoolean();
+        Supplier<Context> supplier = () -> {
+            isCalled.set(true);
+            return new Observation.Context();
+        };
+
+        Observation observation = TestConventionObservation.CONTEXTUAL_NAME.createNotStarted(null,
+                new FirstObservationConvention(), supplier, registry);
+        assertThat(observation.isNoop()).isTrue();
+        assertThat(isCalled).isFalse();
+    }
+
     private ObservationRegistry observationRegistry() {
         ObservationRegistry registry = ObservationRegistry.create();
         registry.observationConfig().observationHandler(context -> true);
@@ -98,7 +155,7 @@ class DocumentedObservationTests {
             }
 
             @Override
-            public Class<? extends Observation.ObservationConvention<? extends Observation.Context>> getDefaultConvention() {
+            public Class<? extends ObservationConvention<? extends Observation.Context>> getDefaultConvention() {
                 return FirstObservationConvention.class;
             }
         },
@@ -106,14 +163,14 @@ class DocumentedObservationTests {
         CONTEXTUAL_NAME {
 
             @Override
-            public Class<? extends Observation.ObservationConvention<? extends Observation.Context>> getDefaultConvention() {
+            public Class<? extends ObservationConvention<? extends Observation.Context>> getDefaultConvention() {
                 return FirstObservationConvention.class;
             }
         }
 
     }
 
-    static class FirstObservationConvention implements Observation.ObservationConvention<Observation.Context> {
+    static class FirstObservationConvention implements ObservationConvention<Observation.Context> {
 
         @Override
         public String getName() {
@@ -127,7 +184,7 @@ class DocumentedObservationTests {
 
     }
 
-    static class SecondObservationConvention implements Observation.ObservationConvention<Observation.Context> {
+    static class SecondObservationConvention implements ObservationConvention<Observation.Context> {
 
         @Override
         public String getName() {
@@ -190,6 +247,44 @@ class DocumentedObservationTests {
         @Override
         public boolean supportsContext(Observation.Context context) {
             return true;
+        }
+
+    }
+
+    static class GlobalConvention implements GlobalObservationConvention<Observation.Context> {
+
+        @Override
+        public KeyValues getLowCardinalityKeyValues(Observation.Context context) {
+            return KeyValues.of("global", "low cardinality");
+        }
+
+        @Override
+        public KeyValues getHighCardinalityKeyValues(Observation.Context context) {
+            return KeyValues.of("global", "high cardinality");
+        }
+
+        @Override
+        public boolean supportsContext(Observation.Context context) {
+            return true;
+        }
+
+        @Override
+        public String getName() {
+            return "global name";
+        }
+
+        @Override
+        public String getContextualName(Observation.Context context) {
+            return "global contextual name";
+        }
+
+    }
+
+    static class KeyValueAddingObservationFilter implements ObservationFilter {
+
+        @Override
+        public Observation.Context map(Observation.Context context) {
+            return context.addLowCardinalityKeyValue(KeyValue.of("always added", "tag"));
         }
 
     }

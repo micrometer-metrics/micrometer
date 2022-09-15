@@ -44,13 +44,13 @@ class ObservationThreadLocalAccessorTests {
         ContextSnapshot container;
         try (Observation.Scope scope = observation.openScope()) {
             then(observationRegistry.getCurrentObservation()).isSameAs(observation);
-            container = ContextSnapshot.captureUsing(registry, key -> true);
+            container = ContextSnapshot.captureAllUsing(key -> true, registry);
         }
 
         then(observationRegistry.getCurrentObservation()).isNull();
 
         // when restored
-        try (ContextSnapshot.Scope scope = container.setThreadLocalValues()) {
+        try (ContextSnapshot.Scope scope = container.setThreadLocals()) {
             then(observationRegistry.getCurrentObservation()).isSameAs(observation);
         }
 

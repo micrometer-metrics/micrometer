@@ -21,7 +21,7 @@ buildscript {
         classpath 'me.champeau.gradle:japicmp-gradle-plugin:0.4.0'
         classpath 'de.undercouch:gradle-download-task:5.0.2'
         classpath 'io.spring.javaformat:spring-javaformat-gradle-plugin:0.0.34'
-        classpath 'com.diffplug.spotless:spotless-plugin-gradle:6.8.0'
+        classpath 'com.diffplug.spotless:spotless-plugin-gradle:6.10.0'
 
         constraints {
             classpath('org.ow2.asm:asm:7.3.1') {
@@ -112,13 +112,12 @@ subprojects {
             javadoc {
                 if (project.name.contains('samples')) {
                     enabled = false
-                }
-                else {
+                } else {
                     configure(options) {
                         tags(
-                            'apiNote:a:API Note:',
-                            'implSpec:a:Implementation Requirements:',
-                            'implNote:a:Implementation Note:'
+                                'apiNote:a:API Note:',
+                                'implSpec:a:Implementation Requirements:',
+                                'implNote:a:Implementation Note:'
                         )
                         options.addBooleanOption('Xdoclint:all,-missing', true)
                     }
@@ -130,20 +129,20 @@ subprojects {
             runtimeClasspath {
                 metaInf {
                     [
-                        'Build-Date',
-                        'Build-Date-UTC',
-                        'Built-By',
-                        'Built-OS',
-                        'Build-Host',
-                        'Build-Job',
-                        'Build-Number',
-                        'Build-Id',
-                        'Change',
-                        'Full-Change',
-                        'Branch',
-                        'Module-Origin',
-                        'Created-By',
-                        'Build-Java-Version'
+                            'Build-Date',
+                            'Build-Date-UTC',
+                            'Built-By',
+                            'Built-OS',
+                            'Build-Host',
+                            'Build-Job',
+                            'Build-Number',
+                            'Build-Id',
+                            'Change',
+                            'Full-Change',
+                            'Branch',
+                            'Module-Origin',
+                            'Created-By',
+                            'Build-Java-Version'
                     ].each {
                         ignoreAttribute it
                         ignoreProperty it
@@ -273,7 +272,7 @@ subprojects {
         description = 'Resolves dependencies of all configurations and writes them into the lock file.'
         outputs.upToDateWhen { false }
         doFirst {
-            assert gradle.startParameter.writeDependencyLocks || gradle.startParameter.lockedDependenciesToUpdate : 'Execute resolveAndLockAll --write-locks or --update-locks <dependencies>'
+            assert gradle.startParameter.writeDependencyLocks || gradle.startParameter.lockedDependenciesToUpdate: 'Execute resolveAndLockAll --write-locks or --update-locks <dependencies>'
         }
         doLast {
             project.configurations.findAll { it.canBeResolved }*.resolve()
@@ -287,7 +286,7 @@ subprojects {
         }
     }
 
-    if(!['samples', 'benchmarks'].find{project.name.contains(it)}) {
+    if (!['samples', 'benchmarks'].find { project.name.contains(it) }) {
         apply plugin: 'nebula.maven-publish'
         apply plugin: 'nebula.maven-manifest'
         apply plugin: 'nebula.maven-developer'
@@ -307,6 +306,22 @@ subprojects {
                     from "$rootDir/NOTICE"
                 }
             }
+
+            task testModules(type: Exec) {
+                dependsOn jar
+                String executablePath = javaToolchains.launcherFor { languageVersion = javaLanguageVersion }.get().executablePath
+                commandLine "$executablePath", '-p', "$jar.archivePath", '--list-modules'
+                standardOutput = new ByteArrayOutputStream()
+                ignoreExitValue = true
+
+                doLast {
+                    if (executionResult.get().getExitValue() != 0) {
+                        throw new GradleException("Command finished with non-zero exit value ${executionResult.get().getExitValue()}:\n$standardOutput")
+                    }
+                }
+            }
+
+            check.dependsOn("testModules")
 
             if (!(project.name in ['micrometer-commons', 'micrometer-observation', 'micrometer-observation-conventions', 'micrometer-observation-test'])) {
                 apply plugin: 'me.champeau.gradle.japicmp'
@@ -345,12 +360,14 @@ subprojects {
                     oldClasspath.from(files("${buildDir}/baselineLibs/${project.name}-${compatibleVersion}.jar"))
                     newClasspath.from(files(jar.archiveFile, project(":${project.name}").jar))
                     onlyBinaryIncompatibleModified = true
-                    // TODO: Turn this to true once 1.9.0 is out
-                    failOnModification = false
+                    failOnModification = true
                     failOnSourceIncompatibility = true
                     txtOutputFile = file("${project.buildDir}/reports/japi.txt")
                     ignoreMissingClasses = true
                     includeSynthetic = true
+
+                    packageExcludes = ['io.micrometer.shaded.*', 'io.micrometer.statsd.internal']
+
                     // TODO remove methodExcludes when gh-3181 is resolved
                     methodExcludes = ['io.micrometer.stackdriver.StackdriverConfig#metricTypePrefix()',
                             'io.micrometer.core.instrument.Timer#record(java.util.function.BooleanSupplier)',
@@ -404,7 +421,7 @@ nexusPublishing {
     }
 }
 
-task deleteLockFiles (type: Delete) {
+task deleteLockFiles(type: Delete) {
     delete fileTree(dir: '.', include: '**/*.lockfile')
 }
 
