@@ -23,7 +23,6 @@ import io.micrometer.core.instrument.*;
 import io.micrometer.core.instrument.binder.logging.LogbackMetrics;
 import io.micrometer.core.instrument.config.NamingConvention;
 import org.junit.jupiter.api.AfterEach;
-import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.EnumSource;
@@ -58,11 +57,6 @@ class StatsdMeterRegistryTest {
     private MockClock clock = new MockClock();
 
     private StatsdMeterRegistry registry;
-
-    @BeforeAll
-    static void before() {
-        ((Logger) LoggerFactory.getLogger(Logger.ROOT_LOGGER_NAME)).setLevel(Level.INFO);
-    }
 
     @AfterEach
     void cleanUp() {
