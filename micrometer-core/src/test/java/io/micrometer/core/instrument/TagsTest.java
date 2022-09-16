@@ -55,6 +55,15 @@ class TagsTest {
     }
 
     @Test
+    void spliterator() {
+        Tags tags = Tags.of("k1", "v1", "k2", "v2", "k3", "v4");
+        Spliterator<Tag> spliterator = tags.spliterator();
+        assertThat(spliterator).hasCharacteristics(Spliterator.IMMUTABLE, Spliterator.ORDERED, Spliterator.SORTED,
+                Spliterator.DISTINCT);
+        assertThat(spliterator.getExactSizeIfKnown()).isEqualTo(3);
+    }
+
+    @Test
     void tagsHashCode() {
         Tags tags = Tags.of(Tag.of("k1", "v1"), Tag.of("k1", "v1"), Tag.of("k2", "v2"));
         Tags tags2 = Tags.of(Tag.of("k1", "v1"), Tag.of("k2", "v2"));
