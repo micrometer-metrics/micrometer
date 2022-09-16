@@ -15,6 +15,7 @@
  */
 package io.micrometer.core.instrument.binder.jetty;
 
+import io.micrometer.common.lang.Nullable;
 import io.micrometer.core.annotation.Incubating;
 import io.micrometer.core.instrument.DistributionSummary;
 import io.micrometer.core.instrument.MeterRegistry;
@@ -22,6 +23,9 @@ import io.micrometer.core.instrument.Tag;
 import io.micrometer.core.instrument.Timer;
 import io.micrometer.core.instrument.config.MeterFilter;
 import io.micrometer.core.instrument.internal.OnlyOnceLoggingDenyMeterFilter;
+import io.micrometer.core.instrument.observation.ObservationOrTimerCompatibleInstrumentation;
+import io.micrometer.observation.Observation;
+import io.micrometer.observation.ObservationRegistry;
 import org.eclipse.jetty.client.api.ContentProvider;
 import org.eclipse.jetty.client.api.Request;
 
@@ -46,12 +50,32 @@ public class JettyClientMetrics implements Request.Listener {
 
     private final String contentSizeMetricName;
 
+    private final ObservationRegistry observationRegistry;
+
+    @Nullable
+    private final JettyClientObservationConvention convention;
+
+    /**
+     * @deprecated use
+     * {@link JettyClientMetrics#JettyClientMetrics(MeterRegistry, ObservationRegistry, JettyClientObservationConvention, JettyClientTagsProvider, String, String, int)}
+     * instead.
+     */
+    @Deprecated
     protected JettyClientMetrics(MeterRegistry registry, JettyClientTagsProvider tagsProvider, String timingMetricName,
             String contentSizeMetricName, int maxUriTags) {
+        this(registry, ObservationRegistry.NOOP, null, tagsProvider, timingMetricName, contentSizeMetricName,
+                maxUriTags);
+    }
+
+    private JettyClientMetrics(MeterRegistry registry, ObservationRegistry observationRegistry,
+            @Nullable JettyClientObservationConvention convention, JettyClientTagsProvider tagsProvider,
+            String timingMetricName, String contentSizeMetricName, int maxUriTags) {
         this.registry = registry;
         this.tagsProvider = tagsProvider;
         this.timingMetricName = timingMetricName;
         this.contentSizeMetricName = contentSizeMetricName;
+        this.observationRegistry = observationRegistry;
+        this.convention = convention;
 
         MeterFilter timingMetricDenyFilter = new OnlyOnceLoggingDenyMeterFilter(
                 () -> String.format("Reached the maximum number of URI tags for '%s'.", timingMetricName));
@@ -66,9 +90,12 @@ public class JettyClientMetrics implements Request.Listener {
 
     @Override
     public void onQueued(Request request) {
-        Timer.Sample sample = Timer.start(registry);
+        ObservationOrTimerCompatibleInstrumentation<JettyClientContext> sample = ObservationOrTimerCompatibleInstrumentation
+                .start(registry, observationRegistry, () -> new JettyClientContext(request, tagsProvider::uriPattern), convention,
+                        DefaultJettyClientObservationConvention.INSTANCE);
 
         request.onComplete(result -> {
+            sample.setResponse(result);
             long requestLength = Optional.ofNullable(result.getRequest().getContent()).map(ContentProvider::getLength)
                     .orElse(0L);
             Iterable<Tag> httpRequestTags = tagsProvider.httpRequestTags(result);
@@ -78,8 +105,7 @@ public class JettyClientMetrics implements Request.Listener {
                         .register(registry).record(requestLength);
             }
 
-            sample.stop(Timer.builder(timingMetricName).description("Jetty HTTP client request timing")
-                    .tags(httpRequestTags).register(registry));
+            sample.stop(timingMetricName, "Jetty HTTP client request timing", () -> httpRequestTags);
         });
     }
 
@@ -89,7 +115,9 @@ public class JettyClientMetrics implements Request.Listener {
 
     public static class Builder {
 
-        private final MeterRegistry registry;
+        private final MeterRegistry meterRegistry;
+
+        private ObservationRegistry observationRegistry = ObservationRegistry.NOOP;
 
         private final JettyClientTagsProvider tagsProvider;
 
@@ -99,8 +127,13 @@ public class JettyClientMetrics implements Request.Listener {
 
         private int maxUriTags = 1000;
 
-        Builder(MeterRegistry registry, JettyClientTagsProvider tagsProvider) {
-            this.registry = registry;
+        @Nullable
+        private JettyClientObservationConvention observationConvention;
+
+        private
+
+        Builder(MeterRegistry meterRegistry, JettyClientTagsProvider tagsProvider) {
+            this.meterRegistry = meterRegistry;
             this.tagsProvider = tagsProvider;
         }
 
@@ -119,8 +152,34 @@ public class JettyClientMetrics implements Request.Listener {
             return this;
         }
 
+        /**
+         * Configure an observation registry to instrument using the {@link Observation}
+         * API instead of directly with a {@link Timer}.
+         * @param observationRegistry registry with which to instrument
+         * @return this builder
+         * @since 1.10.0
+         */
+        public Builder observationRegistry(ObservationRegistry observationRegistry) {
+            this.observationRegistry = observationRegistry;
+            return this;
+        }
+
+        /**
+         * Provide a custom convention to override the default convention used when
+         * instrumenting with the {@link Observation} API. This only takes effect when a
+         * {@link #observationRegistry(ObservationRegistry)} is configured.
+         * @param convention semantic convention to use
+         * @return This builder instance.
+         * @see #observationRegistry(ObservationRegistry)
+         */
+        public Builder observationConvention(JettyClientObservationConvention convention) {
+            this.observationConvention = convention;
+            return this;
+        }
+
         public JettyClientMetrics build() {
-            return new JettyClientMetrics(registry, tagsProvider, timingMetricName, contentSizeMetricName, maxUriTags);
+            return new JettyClientMetrics(meterRegistry, observationRegistry, observationConvention, tagsProvider,
+                    timingMetricName, contentSizeMetricName, maxUriTags);
         }
 
     }
