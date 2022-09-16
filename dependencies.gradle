@@ -6,7 +6,8 @@ def VERSIONS = [
         'com.fasterxml.jackson.core:jackson-databind:latest.release',
         'com.github.ben-manes.caffeine:caffeine:2.+',
         'com.github.charithe:kafka-junit:latest.release',
-        'com.github.tomakehurst:wiremock-jre8-standalone:latest.release',
+        // pinned to avoid issues with shaded slf4j version - see gh-3414
+        'com.github.tomakehurst:wiremock-jre8-standalone:2.33.+',
         'com.google.auth:google-auth-library-oauth2-http:latest.release',
         'com.google.cloud:google-cloud-monitoring:latest.release',
         'com.google.dagger:dagger:2.11',
