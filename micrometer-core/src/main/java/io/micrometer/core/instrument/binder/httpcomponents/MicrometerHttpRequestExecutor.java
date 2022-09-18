@@ -117,11 +117,12 @@ public class MicrometerHttpRequestExecutor extends HttpRequestExecutor {
         try {
             HttpResponse response = super.execute(request, conn, context);
             sample.setResponse(response);
-            statusCodeOrError = DefaultApacheHttpClientObservationConvention.INSTANCE.getStatusValue(response);
+            statusCodeOrError = DefaultApacheHttpClientObservationConvention.INSTANCE.getStatusValue(response, null);
             return response;
         }
         catch (IOException | HttpException | RuntimeException e) {
             statusCodeOrError = "IO_ERROR";
+            sample.setThrowable(e);
             throw e;
         }
         finally {
