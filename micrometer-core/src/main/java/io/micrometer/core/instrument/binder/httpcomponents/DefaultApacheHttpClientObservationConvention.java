@@ -51,11 +51,11 @@ public class DefaultApacheHttpClientObservationConvention implements ApacheHttpC
     @Override
     public KeyValues getLowCardinalityKeyValues(ApacheHttpClientContext context) {
         KeyValues keyValues = KeyValues.of(
-                ApacheHttpClientDocumentedObservation.ApacheHttpClientTags.METHOD
+                ApacheHttpClientDocumentedObservation.ApacheHttpClientKeyNames.METHOD
                         .withValue(getMethodString(context.getCarrier())),
-                ApacheHttpClientDocumentedObservation.ApacheHttpClientTags.URI
+                ApacheHttpClientDocumentedObservation.ApacheHttpClientKeyNames.URI
                         .withValue(context.getUriMapper().apply(context.getCarrier())),
-                ApacheHttpClientDocumentedObservation.ApacheHttpClientTags.STATUS
+                ApacheHttpClientDocumentedObservation.ApacheHttpClientKeyNames.STATUS
                         .withValue(getStatusValue(context.getResponse())));
         if (context.shouldExportTagsForRoute()) {
             keyValues = keyValues.and(HttpContextUtils.generateTagStringsForRoute(context.getApacheHttpContext()));

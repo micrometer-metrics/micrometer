@@ -1,5 +1,5 @@
 /*
- * Copyright 2017 VMware, Inc.
+ * Copyright 2022 VMware, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -35,11 +35,11 @@ public enum ApacheHttpClientDocumentedObservation implements DocumentedObservati
 
         @Override
         public KeyName[] getLowCardinalityKeyNames() {
-            return ApacheHttpClientTags.values();
+            return ApacheHttpClientKeyNames.values();
         }
     };
 
-    enum ApacheHttpClientTags implements KeyName {
+    enum ApacheHttpClientKeyNames implements KeyName {
 
         STATUS {
             @Override
