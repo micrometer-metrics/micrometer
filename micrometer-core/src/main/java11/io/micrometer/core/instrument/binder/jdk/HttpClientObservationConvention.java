@@ -21,7 +21,7 @@ import io.micrometer.observation.ObservationConvention;
 import java.net.http.HttpClient;
 
 /**
- * A {@link ObservationConvention} for an {@link HttpClient}.
+ * An {@link ObservationConvention} for an {@link HttpClient}.
  *
  * @author Marcin Grzejszczak
  * @since 1.10.0
