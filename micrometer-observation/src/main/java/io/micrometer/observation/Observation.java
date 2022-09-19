@@ -356,10 +356,12 @@ public interface Observation {
     Observation start();
 
     /**
-     * Returns the context attached to this observation.
+     * Returns the context attached to this observation. This returns a mutable
+     * {@link Context} for this observation. However, it is strongly discouraged to modify
+     * the {@link Context} in the <em>parent observation</em>.
      * @return corresponding context
      */
-    ContextView getContext();
+    Context getContext();
 
     /**
      * Stop the observation. Remember to call this method, otherwise timing calculations

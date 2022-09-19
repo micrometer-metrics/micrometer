@@ -145,7 +145,7 @@ class SimpleObservation implements Observation {
     }
 
     @Override
-    public ContextView getContext() {
+    public Context getContext() {
         return this.context;
     }
 
