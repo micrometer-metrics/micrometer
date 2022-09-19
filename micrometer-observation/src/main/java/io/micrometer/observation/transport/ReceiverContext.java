@@ -16,6 +16,7 @@
 package io.micrometer.observation.transport;
 
 import io.micrometer.common.lang.NonNull;
+import io.micrometer.common.lang.Nullable;
 import io.micrometer.observation.Observation;
 
 import java.util.Objects;
@@ -35,6 +36,9 @@ public class ReceiverContext<C> extends Observation.Context {
     private final Kind kind;
 
     private C carrier;
+
+    @Nullable
+    private String remoteServiceName;
 
     /**
      * Creates a new instance of {@link ReceiverContext}.
@@ -68,6 +72,23 @@ public class ReceiverContext<C> extends Observation.Context {
 
     public Kind getKind() {
         return kind;
+    }
+
+    /**
+     * Return optional name for the service from which the message is polled.
+     * @return optional name for the service from which the message is polled
+     */
+    @Nullable
+    public String getRemoteServiceName() {
+        return remoteServiceName;
+    }
+
+    /**
+     * Set optional name for the service from which the message is polled.
+     * @param remoteServiceName name of the service from which the message is polled
+     */
+    public void setRemoteServiceName(@Nullable String remoteServiceName) {
+        this.remoteServiceName = remoteServiceName;
     }
 
 }
