@@ -1,5 +1,5 @@
 plugins {
-    id 'me.champeau.mrjar' version "0.1"
+    id 'me.champeau.mrjar' version "0.1.1"
 }
 
 description 'Test compatibility kit for extensions of Micrometer'
