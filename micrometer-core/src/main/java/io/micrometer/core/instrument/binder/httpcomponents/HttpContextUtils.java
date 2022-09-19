@@ -37,9 +37,9 @@ class HttpContextUtils {
             targetHost = host.getHostName();
             targetPort = String.valueOf(host.getPort());
         }
-        return new String[] { ApacheHttpClientDocumentedObservation.ApacheHttpClientTags.TARGET_SCHEME.asString(),
-                targetScheme, ApacheHttpClientDocumentedObservation.ApacheHttpClientTags.TARGET_HOST.asString(),
-                targetHost, ApacheHttpClientDocumentedObservation.ApacheHttpClientTags.TARGET_PORT.asString(),
+        return new String[] { ApacheHttpClientDocumentedObservation.ApacheHttpClientKeyNames.TARGET_SCHEME.asString(),
+                targetScheme, ApacheHttpClientDocumentedObservation.ApacheHttpClientKeyNames.TARGET_HOST.asString(),
+                targetHost, ApacheHttpClientDocumentedObservation.ApacheHttpClientKeyNames.TARGET_PORT.asString(),
                 targetPort };
     }
 

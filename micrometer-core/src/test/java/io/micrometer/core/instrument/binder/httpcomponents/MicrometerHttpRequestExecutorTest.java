@@ -265,14 +265,18 @@ class MicrometerHttpRequestExecutorTest {
         MicrometerHttpRequestExecutor micrometerHttpRequestExecutor = MicrometerHttpRequestExecutor.builder(registry)
                 .observationRegistry(observationRegistry).build();
         HttpClient client = client(micrometerHttpRequestExecutor);
-        if ("get".contentEquals(method)) {
-            EntityUtils.consume(client.execute(new HttpGet(server.baseUrl())).getEntity());
-        }
-        else if ("post".contentEquals(method)) {
-            EntityUtils.consume(client.execute(new HttpPost(server.baseUrl())).getEntity());
-        }
-        else {
-            EntityUtils.consume(client.execute(new HttpCustomMethod(method, server.baseUrl())).getEntity());
+        switch (method) {
+            case "get":
+                EntityUtils.consume(client.execute(new HttpGet(server.baseUrl())).getEntity());
+                break;
+
+            case "post":
+                EntityUtils.consume(client.execute(new HttpPost(server.baseUrl())).getEntity());
+                break;
+
+            default:
+                EntityUtils.consume(client.execute(new HttpCustomMethod(method, server.baseUrl())).getEntity());
+                break;
         }
         TestObservationRegistryAssert.assertThat(observationRegistry).hasSingleObservationThat()
                 .hasContextualNameEqualToIgnoringCase("http " + method);
@@ -283,7 +287,6 @@ class MicrometerHttpRequestExecutorTest {
         private final String method;
 
         private HttpCustomMethod(String method, String uri) {
-            super();
             setURI(URI.create(uri));
             this.method = method;
         }
@@ -309,10 +312,6 @@ class MicrometerHttpRequestExecutorTest {
 
     private HttpClient client(HttpRequestExecutor executor) {
         return HttpClientBuilder.create().setRequestExecutor(executor).build();
-    }
-
-    private HttpRequestExecutor executor(boolean exportRoutes) {
-        return executor(exportRoutes, false);
     }
 
     private HttpRequestExecutor executor(boolean exportRoutes, boolean configureObservationRegistry) {
