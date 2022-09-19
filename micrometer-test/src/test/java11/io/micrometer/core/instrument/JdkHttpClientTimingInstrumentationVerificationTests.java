@@ -16,7 +16,6 @@
 package io.micrometer.core.instrument;
 
 import io.micrometer.common.lang.Nullable;
-import io.micrometer.core.instrument.binder.httpcomponents.DefaultUriMapper;
 import io.micrometer.core.instrument.binder.jdk.MicrometerHttpClient;
 
 import java.net.URI;
@@ -24,7 +23,6 @@ import java.net.http.HttpClient;
 import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
 import java.time.Duration;
-import java.time.temporal.ChronoUnit;
 
 class JdkHttpClientTimingInstrumentationVerificationTests
         extends HttpClientTimingInstrumentationVerificationTests<HttpClient> {
@@ -32,21 +30,16 @@ class JdkHttpClientTimingInstrumentationVerificationTests
     @Override
     protected HttpClient clientInstrumentedWithMetrics() {
         return MicrometerHttpClient.instrumentationBuilder(
-                HttpClient.newBuilder().connectTimeout(Duration.of(100, ChronoUnit.MILLIS)).build(), getRegistry())
-                .build();
+                HttpClient.newBuilder().connectTimeout(Duration.ofMillis(100)).build(), getRegistry()).build();
     }
 
     @Nullable
     @Override
     protected HttpClient clientInstrumentedWithObservations() {
-        return MicrometerHttpClient.instrumentationBuilder(
-                HttpClient.newBuilder().connectTimeout(Duration.of(100, ChronoUnit.MILLIS)).build(), getRegistry())
+        return MicrometerHttpClient
+                .instrumentationBuilder(HttpClient.newBuilder().connectTimeout(Duration.ofMillis(100)).build(),
+                        getRegistry())
                 .observationRegistry(getObservationRegistry()).build();
-    }
-
-    @Override
-    protected String timerName() {
-        return "http.client.requests";
     }
 
     @Override
@@ -63,11 +56,12 @@ class JdkHttpClientTimingInstrumentationVerificationTests
 
     private HttpRequest makeRequest(HttpMethod method, @Nullable byte[] body, URI baseUri, String templatedPath,
             String... pathVariables) {
-        HttpRequest.Builder builder = HttpRequest.newBuilder().method(method.name(),
-                body != null ? HttpRequest.BodyPublishers.ofByteArray(body) : HttpRequest.BodyPublishers.noBody());
-        builder.uri(URI.create(baseUri + substitutePathVariables(templatedPath, pathVariables)));
-        builder.setHeader(DefaultUriMapper.URI_PATTERN_HEADER, templatedPath);
-        return builder.build();
+        return HttpRequest.newBuilder()
+                .method(method.name(),
+                        body != null ? HttpRequest.BodyPublishers.ofByteArray(body)
+                                : HttpRequest.BodyPublishers.noBody())
+                .uri(URI.create(baseUri + substitutePathVariables(templatedPath, pathVariables)))
+                .setHeader(MicrometerHttpClient.URI_PATTERN_HEADER, templatedPath).build();
     }
 
 }
