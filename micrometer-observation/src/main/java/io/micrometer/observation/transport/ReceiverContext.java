@@ -16,6 +16,7 @@
 package io.micrometer.observation.transport;
 
 import io.micrometer.common.lang.NonNull;
+import io.micrometer.common.lang.Nullable;
 import io.micrometer.observation.Observation;
 
 import java.util.Objects;
