@@ -1,6 +1,6 @@
 plugins {
     id "org.jetbrains.kotlin.jvm" version "1.7.10"
-    id 'me.champeau.mrjar' version "0.1"
+    id 'me.champeau.mrjar' version "0.1.1"
 }
 
 description 'Core module of Micrometer containing instrumentation API and implementation'
