@@ -26,10 +26,23 @@ import java.net.http.HttpResponse;
 import java.time.Duration;
 import java.time.temporal.ChronoUnit;
 
-class JdkHttpClientTimingInstrumentationVerificationTests extends HttpClientTimingInstrumentationVerificationTests {
+class JdkHttpClientTimingInstrumentationVerificationTests
+        extends HttpClientTimingInstrumentationVerificationTests<HttpClient> {
 
-    private final HttpClient httpClient = MicrometerHttpClient.instrumentationBuilder(
-            HttpClient.newBuilder().connectTimeout(Duration.of(100, ChronoUnit.MILLIS)).build(), getRegistry()).build();
+    @Override
+    protected HttpClient clientInstrumentedWithMetrics() {
+        return MicrometerHttpClient.instrumentationBuilder(
+                HttpClient.newBuilder().connectTimeout(Duration.of(100, ChronoUnit.MILLIS)).build(), getRegistry())
+                .build();
+    }
+
+    @Nullable
+    @Override
+    protected HttpClient clientInstrumentedWithObservations() {
+        return MicrometerHttpClient.instrumentationBuilder(
+                HttpClient.newBuilder().connectTimeout(Duration.of(100, ChronoUnit.MILLIS)).build(), getRegistry())
+                .observationRegistry(getObservationRegistry()).build();
+    }
 
     @Override
     protected String timerName() {
@@ -37,10 +50,10 @@ class JdkHttpClientTimingInstrumentationVerificationTests extends HttpClientTimi
     }
 
     @Override
-    protected void sendHttpRequest(HttpMethod method, @Nullable byte[] body, URI baseUri, String templatedPath,
-            String... pathVariables) {
+    protected void sendHttpRequest(HttpClient instrumentedClient, HttpMethod method, @Nullable byte[] body, URI baseUri,
+            String templatedPath, String... pathVariables) {
         try {
-            httpClient.send(makeRequest(method, body, baseUri, templatedPath, pathVariables),
+            instrumentedClient.send(makeRequest(method, body, baseUri, templatedPath, pathVariables),
                     HttpResponse.BodyHandlers.ofString());
         }
         catch (Exception e) {

@@ -19,8 +19,12 @@ import com.github.tomakehurst.wiremock.junit5.WireMockRuntimeInfo;
 import com.github.tomakehurst.wiremock.junit5.WireMockTest;
 import io.micrometer.common.lang.Nullable;
 import io.micrometer.core.annotation.Incubating;
+import io.micrometer.observation.Observation;
+import io.micrometer.observation.ObservationRegistry;
+import org.junit.jupiter.api.Assumptions;
 import org.junit.jupiter.api.Disabled;
-import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.EnumSource;
 
 import java.io.IOException;
 import java.net.ServerSocket;
@@ -35,10 +39,19 @@ import static org.assertj.core.api.Assertions.assertThat;
  * are registered and recorded after different scenarios. Use this suite to ensure that
  * your instrumentation has the expected naming and tags. A locally running server is used
  * to receive real requests from an instrumented HTTP client.
+ *
+ * In order to make an actual HTTP call use the
+ * {@link HttpClientTimingInstrumentationVerificationTests#instrumentedClient()} method
+ * that will cache the instrumented instance for a test.
  */
 @WireMockTest
 @Incubating(since = "1.8.8")
-public abstract class HttpClientTimingInstrumentationVerificationTests extends InstrumentationVerificationTests {
+public abstract class HttpClientTimingInstrumentationVerificationTests<CLIENT>
+        extends InstrumentationVerificationTests {
+
+    private TestType testType;
+
+    private CLIENT createdClient;
 
     /**
      * HTTP Method to verify.
@@ -47,6 +60,39 @@ public abstract class HttpClientTimingInstrumentationVerificationTests extends I
 
         GET, POST;
 
+    }
+
+    /**
+     * Provide your client with instrumentation required for registering metrics.
+     * @return instrumented client
+     */
+    protected abstract CLIENT clientInstrumentedWithMetrics();
+
+    /**
+     * Provide your client with instrumentation required for registering metrics via
+     * {@link ObservationRegistry}.
+     * @return instrumented client or {@code null} if instrumentation with
+     * {@link Observation} is not supported
+     */
+    @Nullable
+    protected abstract CLIENT clientInstrumentedWithObservations();
+
+    /**
+     * Returns the instrumented client depending on the {@link TestType}.
+     * @return instrumented client with either {@link MeterRegistry} or
+     * {@link ObservationRegistry}
+     */
+    private CLIENT instrumentedClient() {
+        if (this.createdClient != null) {
+            return this.createdClient;
+        }
+        if (this.testType == TestType.METRICS_VIA_METER_REGISTRY) {
+            this.createdClient = clientInstrumentedWithMetrics();
+        }
+        else {
+            this.createdClient = clientInstrumentedWithObservations();
+        }
+        return this.createdClient;
     }
 
     /**
@@ -69,14 +115,15 @@ public abstract class HttpClientTimingInstrumentationVerificationTests extends I
      * {@literal /cart/{cartId}}. One string pathVariables argument is expected for
      * substituting the cartId path variable. The number of pathVariables arguments SHOULD
      * exactly match the number of path variables in the templatedPath.
+     * @param instrumentedClient instrumented client
      * @param method http method to use to send the request
      * @param baseUrl portion of the URL before the path where to send the request
      * @param templatedPath the path portion of the URL after the baseUrl, starting with a
      * forward slash, and optionally containing path variable placeholders
      * @param pathVariables optional variables to substitute into the templatedPath
      */
-    protected abstract void sendHttpRequest(HttpMethod method, @Nullable byte[] body, URI baseUrl, String templatedPath,
-            String... pathVariables);
+    protected abstract void sendHttpRequest(CLIENT instrumentedClient, HttpMethod method, @Nullable byte[] body,
+            URI baseUrl, String templatedPath, String... pathVariables);
 
     /**
      * Convenience method provided to substitute the template placeholders for the
@@ -99,12 +146,16 @@ public abstract class HttpClientTimingInstrumentationVerificationTests extends I
         return substituted;
     }
 
-    @Test
-    void getTemplatedPathForUri(WireMockRuntimeInfo wmRuntimeInfo) {
+    @ParameterizedTest
+    @EnumSource(TestType.class)
+    void getTemplatedPathForUri(TestType testType, WireMockRuntimeInfo wmRuntimeInfo) {
+        checkAndSetupTestForTestType(testType);
+
         stubFor(get(anyUrl()).willReturn(ok()));
 
         String templatedPath = "/customers/{customerId}/carts/{cartId}";
-        sendHttpRequest(HttpMethod.GET, null, URI.create(wmRuntimeInfo.getHttpBaseUrl()), templatedPath, "112", "5");
+        sendHttpRequest(instrumentedClient(), HttpMethod.GET, null, URI.create(wmRuntimeInfo.getHttpBaseUrl()),
+                templatedPath, "112", "5");
 
         Timer timer = getRegistry().get(timerName()).tags("method", "GET", "status", "200", "uri", templatedPath)
                 .timer();
@@ -112,16 +163,20 @@ public abstract class HttpClientTimingInstrumentationVerificationTests extends I
         assertThat(timer.totalTime(TimeUnit.NANOSECONDS)).isPositive();
     }
 
-    @Test
+    @ParameterizedTest
+    @EnumSource(TestType.class)
     @Disabled("apache/jetty http client instrumentation currently fails this test")
-    void timedWhenServerIsMissing() throws IOException {
+    void timedWhenServerIsMissing(TestType testType) throws IOException {
+        checkAndSetupTestForTestType(testType);
+
         int unusedPort = 0;
         try (ServerSocket server = new ServerSocket(0)) {
             unusedPort = server.getLocalPort();
         }
 
         try {
-            sendHttpRequest(HttpMethod.GET, null, URI.create("http://localhost:" + unusedPort), "/anything");
+            sendHttpRequest(instrumentedClient(), HttpMethod.GET, null, URI.create("http://localhost:" + unusedPort),
+                    "/anything");
         }
         catch (Throwable ignore) {
         }
@@ -132,26 +187,42 @@ public abstract class HttpClientTimingInstrumentationVerificationTests extends I
         assertThat(timer.totalTime(TimeUnit.NANOSECONDS)).isPositive();
     }
 
-    @Test
-    void serverException(WireMockRuntimeInfo wmRuntimeInfo) {
+    @ParameterizedTest
+    @EnumSource(TestType.class)
+    void serverException(TestType testType, WireMockRuntimeInfo wmRuntimeInfo) {
+        checkAndSetupTestForTestType(testType);
+
         stubFor(get(anyUrl()).willReturn(serverError()));
 
-        sendHttpRequest(HttpMethod.GET, null, URI.create(wmRuntimeInfo.getHttpBaseUrl()), "/socks");
+        sendHttpRequest(instrumentedClient(), HttpMethod.GET, null, URI.create(wmRuntimeInfo.getHttpBaseUrl()),
+                "/socks");
 
         Timer timer = getRegistry().get(timerName()).tags("method", "GET", "status", "500").timer();
         assertThat(timer.count()).isEqualTo(1);
         assertThat(timer.totalTime(TimeUnit.NANOSECONDS)).isPositive();
     }
 
-    @Test
-    void clientException(WireMockRuntimeInfo wmRuntimeInfo) {
+    @ParameterizedTest
+    @EnumSource(TestType.class)
+    void clientException(TestType testType, WireMockRuntimeInfo wmRuntimeInfo) {
+        checkAndSetupTestForTestType(testType);
+
         stubFor(post(anyUrl()).willReturn(badRequest()));
 
-        sendHttpRequest(HttpMethod.POST, new byte[0], URI.create(wmRuntimeInfo.getHttpBaseUrl()), "/socks");
+        sendHttpRequest(instrumentedClient(), HttpMethod.POST, new byte[0], URI.create(wmRuntimeInfo.getHttpBaseUrl()),
+                "/socks");
 
         Timer timer = getRegistry().get(timerName()).tags("method", "POST", "status", "400").timer();
         assertThat(timer.count()).isEqualTo(1);
         assertThat(timer.totalTime(TimeUnit.NANOSECONDS)).isPositive();
+    }
+
+    private void checkAndSetupTestForTestType(TestType testType) {
+        if (testType == TestType.METRICS_VIA_OBSERVATIONS_WITH_METRICS_HANDLER) {
+            Assumptions.assumeTrue(clientInstrumentedWithObservations() != null,
+                    "You must implement the <clientInstrumentedWithObservations> method to test your instrumentation against an ObservationRegistry");
+        }
+        this.testType = testType;
     }
 
 }

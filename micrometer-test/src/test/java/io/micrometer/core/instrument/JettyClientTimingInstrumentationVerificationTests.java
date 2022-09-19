@@ -24,7 +24,8 @@ import org.junit.jupiter.api.BeforeEach;
 
 import java.net.URI;
 
-class JettyClientTimingInstrumentationVerificationTests extends HttpClientTimingInstrumentationVerificationTests {
+class JettyClientTimingInstrumentationVerificationTests
+        extends HttpClientTimingInstrumentationVerificationTests<HttpClient> {
 
     private static final String HEADER_URI_PATTERN = "URI_PATTERN";
 
@@ -37,22 +38,34 @@ class JettyClientTimingInstrumentationVerificationTests extends HttpClientTiming
 
     @BeforeEach
     void setup() throws Exception {
-        httpClient.getRequestListeners().add(JettyClientMetrics
-                .builder(getRegistry(), result -> result.getRequest().getHeaders().get(HEADER_URI_PATTERN)).build());
         httpClient.start();
     }
 
     @Override
-    protected void sendHttpRequest(HttpMethod method, @Nullable byte[] body, URI baseUri, String templatedPath,
-            String... pathVariables) {
+    protected HttpClient clientInstrumentedWithMetrics() {
+        httpClient.getRequestListeners().add(JettyClientMetrics
+                .builder(getRegistry(), result -> result.getRequest().getHeaders().get(HEADER_URI_PATTERN)).build());
+        return httpClient;
+    }
+
+    @Nullable
+    @Override
+    protected HttpClient clientInstrumentedWithObservations() {
+        return null;
+    }
+
+    @Override
+    protected void sendHttpRequest(HttpClient instrumentedClient, HttpMethod method, @Nullable byte[] body, URI baseUri,
+            String templatedPath, String... pathVariables) {
         try {
-            Request request = httpClient.newRequest(baseUri + substitutePathVariables(templatedPath, pathVariables))
-                    .method(method.name()).header(HEADER_URI_PATTERN, templatedPath);
+            Request request = instrumentedClient
+                    .newRequest(baseUri + substitutePathVariables(templatedPath, pathVariables)).method(method.name())
+                    .header(HEADER_URI_PATTERN, templatedPath);
             if (body != null) {
                 request.content(new BytesContentProvider(body));
             }
             request.send();
-            httpClient.stop();
+            instrumentedClient.stop();
         }
         catch (Exception e) {
             throw new RuntimeException(e);
