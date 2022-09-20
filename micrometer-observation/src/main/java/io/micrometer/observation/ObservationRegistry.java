@@ -139,7 +139,7 @@ public interface ObservationRegistry {
          * @param observationConventions observation conventions
          * @return This configuration instance
          */
-        public ObservationConfig observationConvention(GlobalObservationConvention<?>... observationConventions) {
+        public ObservationConfig observationConventions(GlobalObservationConvention<?>... observationConventions) {
             this.observationConventions.addAll(Arrays.asList(observationConventions));
             return this;
         }
@@ -149,7 +149,7 @@ public interface ObservationRegistry {
          * @param observationConventions observation conventions
          * @return This configuration instance
          */
-        public ObservationConfig observationConvention(
+        public ObservationConfig observationConventions(
                 Collection<GlobalObservationConvention<?>> observationConventions) {
             this.observationConventions.addAll(observationConventions);
             return this;

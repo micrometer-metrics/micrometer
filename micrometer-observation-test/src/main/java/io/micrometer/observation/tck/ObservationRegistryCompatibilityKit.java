@@ -546,8 +546,8 @@ public abstract class ObservationRegistryCompatibilityKit {
     @Test
     void observationFieldsShouldBeSetOnContext() {
         AssertingHandler assertingHandler = new AssertingHandler();
-        registry.observationConfig().observationConvention(new TestObservationConvention("global"))
-                .observationConvention(new UnsupportedObservationConvention("global"))
+        registry.observationConfig().observationConventions(new TestObservationConvention("global"))
+                .observationConventions(new UnsupportedObservationConvention("global"))
                 .observationHandler(assertingHandler);
 
         TestContext testContext = new TestContext();
@@ -600,7 +600,7 @@ public abstract class ObservationRegistryCompatibilityKit {
     @Test
     void globallyOverridenNameAndContextualNameShouldBeSetOnContext() {
         AssertingHandler assertingHandler = new AssertingHandler();
-        registry.observationConfig().observationConvention(new TestObservationConventionWithNameOverrides())
+        registry.observationConfig().observationConventions(new TestObservationConventionWithNameOverrides())
                 .observationHandler(assertingHandler);
 
         TestContext testContext = new TestContext();
