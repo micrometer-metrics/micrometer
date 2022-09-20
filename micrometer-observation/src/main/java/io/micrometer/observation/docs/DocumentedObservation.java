@@ -206,9 +206,9 @@ public interface DocumentedObservation {
      * @param registry observation registry
      * @return observation
      */
-    default <T extends Observation.Context> Observation createNotStarted(
-            @Nullable ObservationConvention<T> customConvention, @NonNull ObservationConvention<T> defaultConvention,
-            @NonNull Supplier<T> contextSupplier, @NonNull ObservationRegistry registry) {
+    default <T extends Observation.Context> Observation observation(@Nullable ObservationConvention<T> customConvention,
+            @NonNull ObservationConvention<T> defaultConvention, @NonNull Supplier<T> contextSupplier,
+            @NonNull ObservationRegistry registry) {
         if (registry.isNoop()) {
             return Observation.NOOP;
         }

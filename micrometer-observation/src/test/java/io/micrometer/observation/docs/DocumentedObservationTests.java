@@ -130,7 +130,7 @@ class DocumentedObservationTests {
             return new Observation.Context();
         };
 
-        Observation observation = TestConventionObservation.CONTEXTUAL_NAME.createNotStarted(null,
+        Observation observation = TestConventionObservation.CONTEXTUAL_NAME.observation(null,
                 new FirstObservationConvention(), supplier, registry);
         assertThat(observation.isNoop()).isTrue();
         assertThat(isCalled).isFalse();
