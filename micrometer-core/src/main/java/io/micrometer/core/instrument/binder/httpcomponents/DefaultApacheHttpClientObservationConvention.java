@@ -17,8 +17,11 @@ package io.micrometer.core.instrument.binder.httpcomponents;
 
 import io.micrometer.common.KeyValues;
 import io.micrometer.common.lang.Nullable;
+import org.apache.http.HttpException;
 import org.apache.http.HttpRequest;
 import org.apache.http.HttpResponse;
+
+import java.io.IOException;
 
 /**
  * Default implementation of {@link ApacheHttpClientObservationConvention}.
@@ -56,14 +59,18 @@ public class DefaultApacheHttpClientObservationConvention implements ApacheHttpC
                 ApacheHttpClientDocumentedObservation.ApacheHttpClientKeyNames.URI
                         .withValue(context.getUriMapper().apply(context.getCarrier())),
                 ApacheHttpClientDocumentedObservation.ApacheHttpClientKeyNames.STATUS
-                        .withValue(getStatusValue(context.getResponse())));
+                        .withValue(getStatusValue(context.getResponse(), context.getError().orElse(null))));
         if (context.shouldExportTagsForRoute()) {
             keyValues = keyValues.and(HttpContextUtils.generateTagStringsForRoute(context.getApacheHttpContext()));
         }
         return keyValues;
     }
 
-    String getStatusValue(@Nullable HttpResponse response) {
+    String getStatusValue(@Nullable HttpResponse response, Throwable error) {
+        if (error instanceof IOException || error instanceof HttpException || error instanceof RuntimeException) {
+            return "IO_ERROR";
+        }
+
         return response != null ? Integer.toString(response.getStatusLine().getStatusCode()) : "CLIENT_ERROR";
     }
 

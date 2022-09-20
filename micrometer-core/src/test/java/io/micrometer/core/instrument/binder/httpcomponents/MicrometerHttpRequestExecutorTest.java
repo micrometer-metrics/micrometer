@@ -26,6 +26,7 @@ import io.micrometer.observation.ObservationRegistry;
 import io.micrometer.observation.GlobalObservationConvention;
 import io.micrometer.observation.tck.TestObservationRegistry;
 import io.micrometer.observation.tck.TestObservationRegistryAssert;
+import org.apache.http.client.ClientProtocolException;
 import org.apache.http.client.HttpClient;
 import org.apache.http.client.methods.HttpEntityEnclosingRequestBase;
 import org.apache.http.client.methods.HttpGet;
@@ -45,7 +46,7 @@ import java.util.List;
 import java.util.stream.Collectors;
 
 import static com.github.tomakehurst.wiremock.client.WireMock.*;
-import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.*;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 
 /**
@@ -298,7 +299,18 @@ class MicrometerHttpRequestExecutorTest {
 
     }
 
-    // TODO add test for status = IO_ERROR case.
+    @ParameterizedTest
+    @ValueSource(booleans = { false, true })
+    void httpStatusCodeIsTaggedWithIoError(boolean configureObservationRegistry,
+            @WiremockResolver.Wiremock WireMockServer server) {
+        server.stubFor(any(urlEqualTo("/error")).willReturn(aResponse().withStatus(1)));
+        HttpClient client = client(executor(false, configureObservationRegistry));
+        assertThatThrownBy(
+                () -> EntityUtils.consume(client.execute(new HttpGet(server.baseUrl() + "/error")).getEntity()))
+                        .isInstanceOf(ClientProtocolException.class);
+        assertThat(registry.get(EXPECTED_METER_NAME).tags("method", "GET", "status", "IO_ERROR").timer().count())
+                .isEqualTo(1L);
+    }
 
     static class CustomGlobalApacheHttpConvention extends DefaultApacheHttpClientObservationConvention
             implements GlobalObservationConvention<ApacheHttpClientContext> {
