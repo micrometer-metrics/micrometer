@@ -92,7 +92,10 @@ class ObservationTests {
         parent.stop();
         child.stop();
 
-        assertThat(childContext.getParentObservation().getContext()).isSameAs(parentContext);
+        assertThat(child.getContextView()).isSameAs(childContext);
+        assertThat(parent.getContextView()).isSameAs(parentContext);
+
+        assertThat(childContext.getParentObservation().getContextView()).isSameAs(parentContext);
     }
 
     @Test
@@ -105,7 +108,7 @@ class ObservationTests {
         parent.scoped(() -> {
             assertThat(childContext.getParentObservation()).isNull();
             Observation.createNotStarted("child", childContext, registry).observe(() -> {
-                assertThat(childContext.getParentObservation().getContext()).isSameAs(parentContext);
+                assertThat(childContext.getParentObservation().getContextView()).isSameAs(parentContext);
             });
             assertThat(childContext.getParentObservation()).isNull();
         });

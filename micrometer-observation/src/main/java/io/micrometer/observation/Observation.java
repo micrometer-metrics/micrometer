@@ -44,7 +44,7 @@ import java.util.stream.Collectors;
  * @author Marcin Grzejszczak
  * @since 1.10.0
  */
-public interface Observation {
+public interface Observation extends ObservationView {
 
     /**
      * No-op observation.
@@ -359,7 +359,16 @@ public interface Observation {
      * Returns the context attached to this observation.
      * @return corresponding context
      */
-    ContextView getContext();
+    Context getContext();
+
+    /**
+     * Returns the context attached to this observation as a read only view.
+     * @return corresponding context
+     */
+    @Override
+    default ContextView getContextView() {
+        return this.getContext();
+    }
 
     /**
      * Stop the observation. Remember to call this method, otherwise timing calculations
@@ -674,7 +683,7 @@ public interface Observation {
         private Throwable error;
 
         @Nullable
-        private Observation parentObservation;
+        private ObservationView parentObservation;
 
         private final Set<KeyValue> lowCardinalityKeyValues = new LinkedHashSet<>();
 
@@ -716,12 +725,11 @@ public interface Observation {
         }
 
         /**
-         * Returns the parent {@link Observation}.
+         * Returns the parent {@link ObservationView}.
          * @return parent observation or {@code null} if there was no parent
          */
-        @Override
         @Nullable
-        public Observation getParentObservation() {
+        public ObservationView getParentObservation() {
             return parentObservation;
         }
 
@@ -729,7 +737,7 @@ public interface Observation {
          * Sets the parent {@link Observation}.
          * @param parentObservation parent observation to set
          */
-        public void setParentObservation(@Nullable Observation parentObservation) {
+        public void setParentObservation(@Nullable ObservationView parentObservation) {
             this.parentObservation = parentObservation;
         }
 
@@ -1011,11 +1019,11 @@ public interface Observation {
         String getContextualName();
 
         /**
-         * Returns the parent {@link Observation}.
+         * Returns the parent {@link ObservationView}.
          * @return parent observation or {@code null} if there was no parent
          */
         @Nullable
-        Observation getParentObservation();
+        ObservationView getParentObservation();
 
         /**
          * Optional error that occurred while processing the {@link Observation}.
