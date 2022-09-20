@@ -72,7 +72,7 @@ public class DefaultMeterObservationHandler implements MeterObservationHandler<O
 
     private Tags createErrorTags(Observation.Context context) {
         return Tags.of("error",
-                context.getError().map(throwable -> throwable.getClass().getSimpleName()).orElse("none"));
+                context.getErrorOptional().map(throwable -> throwable.getClass().getSimpleName()).orElse("none"));
     }
 
     private Tags createTags(Observation.Context context) {
