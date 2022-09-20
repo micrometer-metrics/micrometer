@@ -182,7 +182,7 @@ public class StatsdMeterRegistry extends MeterRegistry {
                 pollableMeter.getValue().poll();
             }
             catch (RuntimeException e) {
-                warnThenDebugLogger.log("Failed to poll a meter '" + pollableMeter.getKey().getName() + "'.", e);
+                warnThenDebugLogger.log(() -> "Failed to poll a meter '" + pollableMeter.getKey().getName() + "'.", e);
             }
         }
     }

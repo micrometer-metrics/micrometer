@@ -295,7 +295,8 @@ public class CloudWatchMeterRegistry extends StepMeterRegistry {
 
         private boolean isAcceptableTag(Tag tag) {
             if (StringUtils.isBlank(tag.getValue())) {
-                warnThenDebugLogger.log("Dropping a tag with key '" + tag.getKey() + "' because its value is blank.");
+                warnThenDebugLogger
+                        .log(() -> "Dropping a tag with key '" + tag.getKey() + "' because its value is blank.");
                 return false;
             }
             return true;

@@ -53,7 +53,7 @@ public class DefaultGauge<T> extends AbstractMeter implements Gauge {
                 return value.applyAsDouble(obj);
             }
             catch (Throwable ex) {
-                logger.log("Failed to apply the value function for the gauge '" + getId().getName() + "'.", ex);
+                logger.log(() -> "Failed to apply the value function for the gauge '" + getId().getName() + "'.", ex);
             }
         }
         return Double.NaN;

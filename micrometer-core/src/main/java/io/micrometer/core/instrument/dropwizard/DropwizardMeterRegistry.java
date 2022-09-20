@@ -95,7 +95,7 @@ public abstract class DropwizardMeterRegistry extends MeterRegistry {
                     return valueFunction.applyAsDouble(obj2);
                 }
                 catch (Throwable ex) {
-                    logger.log("Failed to apply the value function for the gauge '" + id.getName() + "'.", ex);
+                    logger.log(() -> "Failed to apply the value function for the gauge '" + id.getName() + "'.", ex);
                 }
             }
             return nullGaugeValue();
