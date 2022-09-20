@@ -164,7 +164,7 @@ public interface ObservationRegistry {
          * found
          */
         @SuppressWarnings("unchecked")
-        public <T extends Observation.Context> ObservationConvention<T> getObservationConvention(T context,
+        <T extends Observation.Context> ObservationConvention<T> getObservationConvention(T context,
                 ObservationConvention<T> defaultConvention) {
             return (ObservationConvention<T>) this.observationConventions.stream()
                     .filter(convention -> convention.supportsContext(context)).findFirst().orElse(Objects
@@ -178,7 +178,7 @@ public interface ObservationRegistry {
          * @param context context
          * @return {@code true} when observation is enabled
          */
-        public boolean isObservationEnabled(String name, @Nullable Observation.Context context) {
+        boolean isObservationEnabled(String name, @Nullable Observation.Context context) {
             return this.observationPredicates.stream().allMatch(predicate -> predicate.test(name, context));
         }
 
