@@ -38,4 +38,9 @@ public class DefaultJettyClientObservationConvention extends JettyClientObservat
                 JettyClientKeyValues.outcome(result));
     }
 
+    @Override
+    public String getName() {
+        return JettyClientMetrics.DEFAULT_JETTY_CLIENT_REQUESTS_TIMER_NAME;
+    }
+
 }

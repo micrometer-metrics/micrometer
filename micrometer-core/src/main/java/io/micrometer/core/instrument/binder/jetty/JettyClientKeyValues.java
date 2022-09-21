@@ -16,6 +16,7 @@
 package io.micrometer.core.instrument.binder.jetty;
 
 import io.micrometer.common.KeyValue;
+import io.micrometer.common.lang.Nullable;
 import io.micrometer.common.util.StringUtils;
 import io.micrometer.core.instrument.binder.http.Outcome;
 import org.eclipse.jetty.client.api.Request;
@@ -41,15 +42,23 @@ public final class JettyClientKeyValues {
 
     private static final KeyValue URI_ROOT = KeyValue.of("uri", "root");
 
+    private static final KeyValue URI_UNKNOWN = KeyValue.of("uri", "UNKNOWN");
+
     private static final KeyValue EXCEPTION_NONE = KeyValue.of("exception", "None");
+
+    private static final KeyValue EXCEPTION_UNKNOWN = KeyValue.of("exception", "UNKNOWN");
 
     private static final KeyValue METHOD_UNKNOWN = KeyValue.of("method", "UNKNOWN");
 
     private static final KeyValue HOST_UNKNOWN = KeyValue.of("host", "UNKNOWN");
 
+    public static final KeyValue STATUS_UNKNOWN = KeyValue.of("status", "UNKNOWN");
+
     private static final Pattern TRAILING_SLASH_PATTERN = Pattern.compile("/$");
 
     private static final Pattern MULTIPLE_SLASH_PATTERN = Pattern.compile("//+");
+
+    private static final KeyValue OUTCOME_UNKNOWN = KeyValue.of("outcome", "UNKNOWN");
 
     private JettyClientKeyValues() {
     }
@@ -80,8 +89,9 @@ public final class JettyClientKeyValues {
      * @param result the request result
      * @return the status KeyValue derived from the status of the response
      */
-    public static KeyValue status(Result result) {
-        return KeyValue.of("status", Integer.toString(result.getResponse().getStatus()));
+    public static KeyValue status(@Nullable Result result) {
+        return result != null ? KeyValue.of("status", Integer.toString(result.getResponse().getStatus()))
+                : STATUS_UNKNOWN;
     }
 
     /**
@@ -91,7 +101,10 @@ public final class JettyClientKeyValues {
      * @param successfulUriPattern successful URI pattern
      * @return the uri KeyValue derived from the request result
      */
-    public static KeyValue uri(Result result, Function<Result, String> successfulUriPattern) {
+    public static KeyValue uri(@Nullable Result result, Function<Result, String> successfulUriPattern) {
+        if (result == null) {
+            return URI_UNKNOWN;
+        }
         Response response = result.getResponse();
         if (response != null) {
             int status = response.getStatus();
@@ -118,7 +131,10 @@ public final class JettyClientKeyValues {
      * @param result the request result
      * @return the exception KeyValue derived from the exception
      */
-    public static KeyValue exception(Result result) {
+    public static KeyValue exception(@Nullable Result result) {
+        if (result == null) {
+            return EXCEPTION_UNKNOWN;
+        }
         Throwable exception = result.getFailure();
         if (exception == null) {
             return EXCEPTION_NONE;
@@ -143,7 +159,10 @@ public final class JettyClientKeyValues {
      * @param result the request result
      * @return the outcome KeyValue derived from the status of the response
      */
-    public static KeyValue outcome(Result result) {
+    public static KeyValue outcome(@Nullable Result result) {
+        if (result == null) {
+            return OUTCOME_UNKNOWN;
+        }
         return Outcome.forStatus(result.getResponse().getStatus()).asKeyValue();
     }
 

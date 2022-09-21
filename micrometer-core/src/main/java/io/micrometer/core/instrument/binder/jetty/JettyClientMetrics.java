@@ -42,6 +42,8 @@ import java.util.Optional;
 @Incubating(since = "1.5.0")
 public class JettyClientMetrics implements Request.Listener {
 
+    static final String DEFAULT_JETTY_CLIENT_REQUESTS_TIMER_NAME = "jetty.client.requests";
+
     private final MeterRegistry registry;
 
     private final JettyClientTagsProvider tagsProvider;
@@ -121,7 +123,7 @@ public class JettyClientMetrics implements Request.Listener {
 
         private final JettyClientTagsProvider tagsProvider;
 
-        private String timingMetricName = "jetty.client.requests";
+        private String timingMetricName = DEFAULT_JETTY_CLIENT_REQUESTS_TIMER_NAME;
 
         private String contentSizeMetricName = "jetty.client.request.size";
 

@@ -20,7 +20,6 @@ import io.micrometer.core.instrument.binder.jetty.JettyClientMetrics;
 import org.eclipse.jetty.client.HttpClient;
 import org.eclipse.jetty.client.api.Request;
 import org.eclipse.jetty.client.util.BytesContentProvider;
-import org.junit.jupiter.api.BeforeEach;
 
 import java.net.URI;
 
@@ -29,29 +28,40 @@ class JettyClientTimingInstrumentationVerificationTests
 
     private static final String HEADER_URI_PATTERN = "URI_PATTERN";
 
-    private final HttpClient httpClient = new HttpClient();
-
     @Override
     protected String timerName() {
         return "jetty.client.requests";
     }
 
-    @BeforeEach
-    void setup() throws Exception {
-        httpClient.start();
-    }
-
     @Override
     protected HttpClient clientInstrumentedWithMetrics() {
+        HttpClient httpClient = new HttpClient();
         httpClient.getRequestListeners().add(JettyClientMetrics
                 .builder(getRegistry(), result -> result.getRequest().getHeaders().get(HEADER_URI_PATTERN)).build());
+        try {
+            httpClient.start();
+        }
+        catch (Exception e) {
+            throw new RuntimeException(e);
+        }
         return httpClient;
     }
 
     @Nullable
     @Override
     protected HttpClient clientInstrumentedWithObservations() {
-        return null;
+        HttpClient httpClient = new HttpClient();
+        httpClient.getRequestListeners()
+                .add(JettyClientMetrics
+                        .builder(getRegistry(), result -> result.getRequest().getHeaders().get(HEADER_URI_PATTERN))
+                        .observationRegistry(getObservationRegistry()).build());
+        try {
+            httpClient.start();
+        }
+        catch (Exception e) {
+            throw new RuntimeException(e);
+        }
+        return httpClient;
     }
 
     @Override
