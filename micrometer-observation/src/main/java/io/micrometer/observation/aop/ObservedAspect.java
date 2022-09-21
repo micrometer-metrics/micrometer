@@ -178,7 +178,7 @@ public class ObservedAspect {
         observation.stop();
     }
 
-    static class ObservedAspectContext extends Observation.Context {
+    public static class ObservedAspectContext extends Observation.Context {
 
         private final ProceedingJoinPoint proceedingJoinPoint;
 
