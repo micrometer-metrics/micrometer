@@ -91,8 +91,8 @@ public class JettyClientMetrics implements Request.Listener {
     @Override
     public void onQueued(Request request) {
         ObservationOrTimerCompatibleInstrumentation<JettyClientContext> sample = ObservationOrTimerCompatibleInstrumentation
-                .start(registry, observationRegistry, () -> new JettyClientContext(request, tagsProvider::uriPattern), convention,
-                        DefaultJettyClientObservationConvention.INSTANCE);
+                .start(registry, observationRegistry, () -> new JettyClientContext(request, tagsProvider::uriPattern),
+                        convention, DefaultJettyClientObservationConvention.INSTANCE);
 
         request.onComplete(result -> {
             sample.setResponse(result);

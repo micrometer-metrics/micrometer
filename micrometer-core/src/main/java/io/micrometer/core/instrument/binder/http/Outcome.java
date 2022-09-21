@@ -57,6 +57,7 @@ public enum Outcome {
     UNKNOWN;
 
     private final Tag tag;
+
     private final KeyValue keyValue;
 
     Outcome() {
