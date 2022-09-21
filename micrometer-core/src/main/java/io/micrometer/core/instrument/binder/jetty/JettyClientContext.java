@@ -20,7 +20,7 @@ import org.eclipse.jetty.client.api.Request;
 import org.eclipse.jetty.client.api.Result;
 
 import java.util.Objects;
-import java.util.function.Function;
+import java.util.function.BiFunction;
 
 /**
  * Context to use when instrumenting Jetty client metrics with the Observation API.
@@ -30,15 +30,15 @@ import java.util.function.Function;
  */
 public class JettyClientContext extends RequestReplySenderContext<Request, Result> {
 
-    private final Function<Result, String> uriPatternFunction;
+    private final BiFunction<Request, Result, String> uriPatternFunction;
 
-    public JettyClientContext(Request request, Function<Result, String> uriPatternFunction) {
+    public JettyClientContext(Request request, BiFunction<Request, Result, String> uriPatternFunction) {
         super((carrier, key, value) -> Objects.requireNonNull(carrier).header(key, value));
         this.uriPatternFunction = uriPatternFunction;
         setCarrier(request);
     }
 
-    public Function<Result, String> getUriPatternFunction() {
+    public BiFunction<Request, Result, String> getUriPatternFunction() {
         return uriPatternFunction;
     }
 

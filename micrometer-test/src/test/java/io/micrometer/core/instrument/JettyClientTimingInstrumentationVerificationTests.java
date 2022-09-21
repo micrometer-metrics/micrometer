@@ -35,33 +35,13 @@ class JettyClientTimingInstrumentationVerificationTests
 
     @Override
     protected HttpClient clientInstrumentedWithMetrics() {
-        HttpClient httpClient = new HttpClient();
-        httpClient.getRequestListeners().add(JettyClientMetrics
-                .builder(getRegistry(), result -> result.getRequest().getHeaders().get(HEADER_URI_PATTERN)).build());
-        try {
-            httpClient.start();
-        }
-        catch (Exception e) {
-            throw new RuntimeException(e);
-        }
-        return httpClient;
+        return createHttpClient(false);
     }
 
     @Nullable
     @Override
     protected HttpClient clientInstrumentedWithObservations() {
-        HttpClient httpClient = new HttpClient();
-        httpClient.getRequestListeners()
-                .add(JettyClientMetrics
-                        .builder(getRegistry(), result -> result.getRequest().getHeaders().get(HEADER_URI_PATTERN))
-                        .observationRegistry(getObservationRegistry()).build());
-        try {
-            httpClient.start();
-        }
-        catch (Exception e) {
-            throw new RuntimeException(e);
-        }
-        return httpClient;
+        return createHttpClient(true);
     }
 
     @Override
@@ -80,6 +60,23 @@ class JettyClientTimingInstrumentationVerificationTests
         catch (Exception e) {
             throw new RuntimeException(e);
         }
+    }
+
+    private HttpClient createHttpClient(boolean withObservationRegistry) {
+        HttpClient httpClient = new HttpClient();
+        JettyClientMetrics.Builder builder = JettyClientMetrics.builder(getRegistry(),
+                (request, result) -> request.getHeaders().get(HEADER_URI_PATTERN));
+        if (withObservationRegistry) {
+            builder.observationRegistry(getObservationRegistry());
+        }
+        httpClient.getRequestListeners().add(builder.build());
+        try {
+            httpClient.start();
+        }
+        catch (Exception e) {
+            throw new RuntimeException(e);
+        }
+        return httpClient;
     }
 
 }

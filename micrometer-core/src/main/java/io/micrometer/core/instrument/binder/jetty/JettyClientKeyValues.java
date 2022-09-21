@@ -20,11 +20,10 @@ import io.micrometer.common.lang.Nullable;
 import io.micrometer.common.util.StringUtils;
 import io.micrometer.core.instrument.binder.http.Outcome;
 import org.eclipse.jetty.client.api.Request;
-import org.eclipse.jetty.client.api.Response;
 import org.eclipse.jetty.client.api.Result;
 import org.eclipse.jetty.http.HttpStatus;
 
-import java.util.function.Function;
+import java.util.function.BiFunction;
 import java.util.regex.Pattern;
 
 /**
@@ -41,8 +40,6 @@ public final class JettyClientKeyValues {
     private static final KeyValue URI_REDIRECTION = KeyValue.of("uri", "REDIRECTION");
 
     private static final KeyValue URI_ROOT = KeyValue.of("uri", "root");
-
-    private static final KeyValue URI_UNKNOWN = KeyValue.of("uri", "UNKNOWN");
 
     private static final KeyValue EXCEPTION_NONE = KeyValue.of("exception", "None");
 
@@ -101,13 +98,10 @@ public final class JettyClientKeyValues {
      * @param successfulUriPattern successful URI pattern
      * @return the uri KeyValue derived from the request result
      */
-    public static KeyValue uri(@Nullable Result result, Function<Result, String> successfulUriPattern) {
-        if (result == null) {
-            return URI_UNKNOWN;
-        }
-        Response response = result.getResponse();
-        if (response != null) {
-            int status = response.getStatus();
+    public static KeyValue uri(Request request, @Nullable Result result,
+            BiFunction<Request, Result, String> successfulUriPattern) {
+        if (result != null && result.getResponse() != null) {
+            int status = result.getResponse().getStatus();
             if (HttpStatus.isRedirection(status)) {
                 return URI_REDIRECTION;
             }
@@ -116,7 +110,7 @@ public final class JettyClientKeyValues {
             }
         }
 
-        String matchingPattern = successfulUriPattern.apply(result);
+        String matchingPattern = successfulUriPattern.apply(request, result);
         matchingPattern = MULTIPLE_SLASH_PATTERN.matcher(matchingPattern).replaceAll("/");
         if (matchingPattern.equals("/")) {
             return URI_ROOT;

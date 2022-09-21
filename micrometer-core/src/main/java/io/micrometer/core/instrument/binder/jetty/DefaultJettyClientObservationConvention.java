@@ -33,7 +33,7 @@ public class DefaultJettyClientObservationConvention extends JettyClientObservat
         Request request = context.getCarrier();
         Result result = context.getResponse();
         return KeyValues.of(JettyClientKeyValues.method(request), JettyClientKeyValues.host(request),
-                JettyClientKeyValues.uri(result, context.getUriPatternFunction()),
+                JettyClientKeyValues.uri(request, result, context.getUriPatternFunction()),
                 JettyClientKeyValues.exception(result), JettyClientKeyValues.status(result),
                 JettyClientKeyValues.outcome(result));
     }

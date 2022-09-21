@@ -28,8 +28,10 @@ import io.micrometer.observation.Observation;
 import io.micrometer.observation.ObservationRegistry;
 import org.eclipse.jetty.client.api.ContentProvider;
 import org.eclipse.jetty.client.api.Request;
+import org.eclipse.jetty.client.api.Result;
 
 import java.util.Optional;
+import java.util.function.BiFunction;
 
 /**
  * Provides request metrics for Jetty {@link org.eclipse.jetty.client.HttpClient},
@@ -57,27 +59,30 @@ public class JettyClientMetrics implements Request.Listener {
     @Nullable
     private final JettyClientObservationConvention convention;
 
+    private final BiFunction<Request, Result, String> uriPatternFunction;
+
     /**
-     * @deprecated use
-     * {@link JettyClientMetrics#JettyClientMetrics(MeterRegistry, ObservationRegistry, JettyClientObservationConvention, JettyClientTagsProvider, String, String, int)}
+     * @deprecated use {@link JettyClientMetrics#builder(MeterRegistry, BiFunction)}
      * instead.
      */
     @Deprecated
     protected JettyClientMetrics(MeterRegistry registry, JettyClientTagsProvider tagsProvider, String timingMetricName,
             String contentSizeMetricName, int maxUriTags) {
         this(registry, ObservationRegistry.NOOP, null, tagsProvider, timingMetricName, contentSizeMetricName,
-                maxUriTags);
+                maxUriTags, (request, result) -> tagsProvider.uriPattern(result));
     }
 
     private JettyClientMetrics(MeterRegistry registry, ObservationRegistry observationRegistry,
             @Nullable JettyClientObservationConvention convention, JettyClientTagsProvider tagsProvider,
-            String timingMetricName, String contentSizeMetricName, int maxUriTags) {
+            String timingMetricName, String contentSizeMetricName, int maxUriTags,
+            BiFunction<Request, Result, String> uriPatternFunction) {
         this.registry = registry;
         this.tagsProvider = tagsProvider;
         this.timingMetricName = timingMetricName;
         this.contentSizeMetricName = contentSizeMetricName;
         this.observationRegistry = observationRegistry;
         this.convention = convention;
+        this.uriPatternFunction = uriPatternFunction;
 
         MeterFilter timingMetricDenyFilter = new OnlyOnceLoggingDenyMeterFilter(
                 () -> String.format("Reached the maximum number of URI tags for '%s'.", timingMetricName));
@@ -93,7 +98,7 @@ public class JettyClientMetrics implements Request.Listener {
     @Override
     public void onQueued(Request request) {
         ObservationOrTimerCompatibleInstrumentation<JettyClientContext> sample = ObservationOrTimerCompatibleInstrumentation
-                .start(registry, observationRegistry, () -> new JettyClientContext(request, tagsProvider::uriPattern),
+                .start(registry, observationRegistry, () -> new JettyClientContext(request, uriPatternFunction),
                         convention, DefaultJettyClientObservationConvention.INSTANCE);
 
         request.onComplete(result -> {
@@ -111,17 +116,40 @@ public class JettyClientMetrics implements Request.Listener {
         });
     }
 
+    /**
+     * Create a builder for {@link JettyClientMetrics}.
+     * @param registry meter registry to use
+     * @param tagsProvider tags provider for customizing tagging
+     * @return builder
+     * @deprecated use {@link #builder(MeterRegistry, BiFunction)} instead;
+     * {@link Builder#tagsProvider(JettyClientTagsProvider)} can be used to provide a
+     * custom tags provider
+     */
+    @Deprecated
     public static Builder builder(MeterRegistry registry, JettyClientTagsProvider tagsProvider) {
-        return new Builder(registry, tagsProvider);
+        return new Builder(registry, (request, result) -> tagsProvider.uriPattern(result));
+    }
+
+    /**
+     * Create a builder for {@link JettyClientMetrics}.
+     * @param registry meter registry to use
+     * @param uriPatternFunction how to extract the URI pattern for tagging
+     * @return builder
+     * @since 1.10.0
+     */
+    public static Builder builder(MeterRegistry registry, BiFunction<Request, Result, String> uriPatternFunction) {
+        return new Builder(registry, uriPatternFunction);
     }
 
     public static class Builder {
 
         private final MeterRegistry meterRegistry;
 
+        private final BiFunction<Request, Result, String> uriPatternFunction;
+
         private ObservationRegistry observationRegistry = ObservationRegistry.NOOP;
 
-        private final JettyClientTagsProvider tagsProvider;
+        private JettyClientTagsProvider tagsProvider;
 
         private String timingMetricName = DEFAULT_JETTY_CLIENT_REQUESTS_TIMER_NAME;
 
@@ -132,11 +160,10 @@ public class JettyClientMetrics implements Request.Listener {
         @Nullable
         private JettyClientObservationConvention observationConvention;
 
-        private
-
-        Builder(MeterRegistry meterRegistry, JettyClientTagsProvider tagsProvider) {
-            this.meterRegistry = meterRegistry;
-            this.tagsProvider = tagsProvider;
+        private Builder(MeterRegistry registry, BiFunction<Request, Result, String> uriPatternFunction) {
+            this.meterRegistry = registry;
+            this.uriPatternFunction = uriPatternFunction;
+            this.tagsProvider = result -> uriPatternFunction.apply(result.getRequest(), result);
         }
 
         public Builder timingMetricName(String metricName) {
@@ -151,6 +178,19 @@ public class JettyClientMetrics implements Request.Listener {
 
         public Builder maxUriTags(int maxUriTags) {
             this.maxUriTags = maxUriTags;
+            return this;
+        }
+
+        /**
+         * Note that the {@link JettyClientTagsProvider} will not be used with
+         * {@link Observation} instrumentation when
+         * {@link #observationRegistry(ObservationRegistry)} is configured.
+         * @param tagsProvider tags provider to use with metrics instrumentation
+         * @return this builder
+         * @since 1.10.0
+         */
+        public Builder tagsProvider(JettyClientTagsProvider tagsProvider) {
+            this.tagsProvider = tagsProvider;
             return this;
         }
 
@@ -181,7 +221,7 @@ public class JettyClientMetrics implements Request.Listener {
 
         public JettyClientMetrics build() {
             return new JettyClientMetrics(meterRegistry, observationRegistry, observationConvention, tagsProvider,
-                    timingMetricName, contentSizeMetricName, maxUriTags);
+                    timingMetricName, contentSizeMetricName, maxUriTags, uriPatternFunction);
         }
 
     }
