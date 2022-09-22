@@ -64,7 +64,7 @@ public class DynatraceNamingConventionV1 implements NamingConvention {
         }
         String sanitized = NAME_CLEANUP_PATTERN.matcher(name).replaceAll("_");
         if (LEADING_NUMERIC_PATTERN.matcher(sanitized).find()) {
-            logger.log("'" + sanitized + "' (original name: '" + name + "') is not a valid meter name. "
+            logger.log(() -> "'" + sanitized + "' (original name: '" + name + "') is not a valid meter name. "
                     + "Dynatrace doesn't allow leading numeric characters after non-alphabets. "
                     + "Please rename it to conform to the constraints. "
                     + "If it comes from a third party, please use MeterFilter to rename it.");
