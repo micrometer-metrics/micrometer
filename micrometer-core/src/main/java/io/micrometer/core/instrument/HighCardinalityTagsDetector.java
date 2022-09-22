@@ -169,7 +169,7 @@ public class HighCardinalityTagsDetector implements AutoCloseable {
     }
 
     private void logWarning(String name) {
-        WARN_THEN_DEBUG_LOGGER.log(String.format("It seems %s has high cardinality tags (threshold: %d meters).\n"
+        WARN_THEN_DEBUG_LOGGER.log(() -> String.format("It seems %s has high cardinality tags (threshold: %d meters).\n"
                 + "Check your configuration for the instrumentation of %s to find and fix the cause of the high cardinality (see: https://micrometer.io/docs/concepts#_tag_values).\n"
                 + "If the cardinality is expected and acceptable, raise the threshold for this %s.", name,
                 this.threshold, name, getClass().getSimpleName()));
