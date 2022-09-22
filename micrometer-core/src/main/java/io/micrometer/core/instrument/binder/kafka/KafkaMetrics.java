@@ -227,7 +227,7 @@ class KafkaMetrics implements MeterBinder, AutoCloseable {
                     catch (Exception ex) {
                         String message = ex.getMessage();
                         if (message != null && message.contains("Prometheus requires")) {
-                            warnThenDebugLogger.log("Failed to bind meter: " + meterName + " " + tags
+                            warnThenDebugLogger.log(() -> "Failed to bind meter: " + meterName + " " + tags
                                     + ". However, this could happen and might be restored in the next refresh.");
                         }
                         else {
