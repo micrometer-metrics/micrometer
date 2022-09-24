@@ -51,7 +51,7 @@ public interface ObservationConvention<T extends Observation.Context> extends Ke
     /**
      * Tells whether this observation convention should be applied for a given
      * {@link Observation.Context}.
-     * @param context a {@link Observation.Context}
+     * @param context an {@link Observation.Context}
      * @return {@code true} when this observation convention should be used
      */
     boolean supportsContext(Observation.Context context);
