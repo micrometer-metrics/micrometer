@@ -21,6 +21,8 @@ import io.micrometer.core.instrument.binder.BaseUnits;
 import io.micrometer.core.instrument.simple.SimpleMeterRegistry;
 import org.junit.jupiter.api.Test;
 
+import java.util.Collection;
+
 import static org.assertj.core.api.AssertionsForClassTypes.assertThat;
 
 /**
@@ -44,7 +46,8 @@ class JvmMemoryMetricsTest {
 
     private void assertJvmMemoryMetrics(MeterRegistry registry, String area) {
         Gauge memUsed = registry.get("jvm.memory.used").tags("area", area).gauge();
-        assertThat(memUsed.value()).isGreaterThanOrEqualTo(0);
+        var memUsedValue = memUsed.value();
+        assertThat(memUsedValue).isGreaterThanOrEqualTo(0);
         assertThat(memUsed.getId().getBaseUnit()).isEqualTo(BaseUnits.BYTES);
 
         Gauge memCommitted = registry.get("jvm.memory.committed").tags("area", area).gauge();
@@ -54,6 +57,19 @@ class JvmMemoryMetricsTest {
         Gauge memMax = registry.get("jvm.memory.max").tags("area", area).gauge();
         assertThat(memMax.value()).isNotNull();
         assertThat(memMax.getId().getBaseUnit()).isEqualTo(BaseUnits.BYTES);
+
+        Gauge memUsedTotal = registry.get("jvm.memory.used.total").tag("area", area).gauge();
+        Collection<Gauge> memUsedAll = registry.get("jvm.memory.used").tag("area", area).gauges();
+        assertThat(memUsedTotal.value()).isEqualTo(memUsedAll.stream().map(Gauge::value).reduce(0.0, Double::sum));
+
+        Gauge memCommittedTotal = registry.get("jvm.memory.committed.total").tag("area", area).gauge();
+        Collection<Gauge> memCommittedAll = registry.get("jvm.memory.committed").tag("area", area).gauges();
+        assertThat(memCommittedTotal.value())
+                .isEqualTo(memCommittedAll.stream().map(Gauge::value).reduce(0.0, Double::sum));
+
+        Gauge memMaxTotal = registry.get("jvm.memory.max.total").tag("area", area).gauge();
+        Collection<Gauge> memMaxAll = registry.get("jvm.memory.max").tag("area", area).gauges();
+        assertThat(memMaxTotal.value()).isEqualTo(memMaxAll.stream().map(Gauge::value).reduce(0.0, Double::sum));
     }
 
     private void assertJvmBufferMetrics(MeterRegistry registry, String bufferId) {

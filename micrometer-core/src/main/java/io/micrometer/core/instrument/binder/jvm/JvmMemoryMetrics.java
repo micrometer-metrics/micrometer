@@ -25,6 +25,8 @@ import io.micrometer.core.instrument.binder.BaseUnits;
 import io.micrometer.core.instrument.binder.MeterBinder;
 
 import java.lang.management.*;
+import java.util.*;
+import java.util.function.ToLongFunction;
 
 import static io.micrometer.core.instrument.binder.jvm.JvmMemory.getUsageValue;
 import static java.util.Collections.emptyList;
@@ -70,12 +72,16 @@ public class JvmMemoryMetrics implements MeterBinder {
                     .baseUnit(BaseUnits.BYTES).register(registry);
         }
 
+        Map<String, List<MemoryPoolMXBean>> areaToMemoryBeans = new HashMap<>();
+
         for (MemoryPoolMXBean memoryPoolBean : ManagementFactory.getPlatformMXBeans(MemoryPoolMXBean.class)) {
             String area = MemoryType.HEAP.equals(memoryPoolBean.getType()) ? "heap" : "nonheap";
+            areaToMemoryBeans.computeIfAbsent(area, a -> new ArrayList<>()).add(memoryPoolBean);
+
             Iterable<Tag> tagsWithId = Tags.concat(tags, "id", memoryPoolBean.getName(), "area", area);
 
             Gauge.builder("jvm.memory.used", memoryPoolBean, (mem) -> getUsageValue(mem, MemoryUsage::getUsed))
-                    .tags(tagsWithId).description("The amount of used memory").baseUnit(BaseUnits.BYTES)
+                    .tags(tagsWithId).description("The amount of used memory in bytes").baseUnit(BaseUnits.BYTES)
                     .register(registry);
 
             Gauge.builder("jvm.memory.committed", memoryPoolBean,
@@ -88,6 +94,29 @@ public class JvmMemoryMetrics implements MeterBinder {
                     .description("The maximum amount of memory in bytes that can be used for memory management")
                     .baseUnit(BaseUnits.BYTES).register(registry);
         }
+
+        areaToMemoryBeans.forEach((area, memoryBeans) -> {
+            Iterable<Tag> tagsWithId = Tags.concat(tags, "area", area);
+
+            Gauge.builder("jvm.memory.used.total", memoryBeans, mem -> sum(mem, MemoryUsage::getUsed)).tags(tagsWithId)
+                    .description("The total amount of used memory in bytes grouped by area").baseUnit(BaseUnits.BYTES)
+                    .register(registry);
+
+            Gauge.builder("jvm.memory.committed.total", memoryBeans, mem -> sum(mem, MemoryUsage::getCommitted))
+                    .tags(tagsWithId)
+                    .description(
+                            "The total amount of memory in bytes that is committed for the Java virtual machine to use grouped by area")
+                    .baseUnit(BaseUnits.BYTES).register(registry);
+
+            Gauge.builder("jvm.memory.max.total", memoryBeans, mem -> sum(mem, MemoryUsage::getMax)).tags(tagsWithId)
+                    .description(
+                            "The total maximum amount of memory in bytes that can be used for memory management grouped by area")
+                    .baseUnit(BaseUnits.BYTES).register(registry);
+        });
+    }
+
+    private double sum(List<MemoryPoolMXBean> memoryBeans, ToLongFunction<MemoryUsage> extractor) {
+        return memoryBeans.stream().map(mem -> getUsageValue(mem, extractor)).reduce(0.0, Double::sum);
     }
 
 }
