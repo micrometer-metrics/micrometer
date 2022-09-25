@@ -367,7 +367,7 @@ public interface Observation extends ObservationView {
      */
     @Override
     default ContextView getContextView() {
-        return this.getContext();
+        return getContext();
     }
 
     /**
@@ -854,6 +854,7 @@ public interface Observation extends ObservationView {
          * Adds a low cardinality key value - those will be appended to those fetched from
          * the {@link ObservationConvention#getLowCardinalityKeyValues(Context)} method.
          * @param keyValue a key value
+         * @return this context
          */
         public Context addLowCardinalityKeyValue(KeyValue keyValue) {
             this.lowCardinalityKeyValues.add(keyValue);
@@ -865,6 +866,7 @@ public interface Observation extends ObservationView {
          * from the {@link ObservationConvention#getHighCardinalityKeyValues(Context)}
          * method.
          * @param keyValue a key value
+         * @return this context
          */
         public Context addHighCardinalityKeyValue(KeyValue keyValue) {
             this.highCardinalityKeyValues.add(keyValue);
@@ -874,6 +876,7 @@ public interface Observation extends ObservationView {
         /**
          * Adds multiple low cardinality key values at once.
          * @param keyValues collection of key values
+         * @return this context
          */
         public Context addLowCardinalityKeyValues(KeyValues keyValues) {
             keyValues.stream().forEach(this::addLowCardinalityKeyValue);
@@ -883,6 +886,7 @@ public interface Observation extends ObservationView {
         /**
          * Adds multiple high cardinality key values at once.
          * @param keyValues collection of key values
+         * @return this context
          */
         public Context addHighCardinalityKeyValues(KeyValues keyValues) {
             keyValues.stream().forEach(this::addHighCardinalityKeyValue);
@@ -936,7 +940,7 @@ public interface Observation extends ObservationView {
     interface Event {
 
         /**
-         * Creates a {@link Event} for the given names.
+         * Creates an {@link Event} for the given names.
          * @param name The name of the event (should have low cardinality).
          * @param contextualName The contextual name of the event (can have high
          * cardinality).
@@ -956,14 +960,13 @@ public interface Observation extends ObservationView {
 
                 @Override
                 public String toString() {
-                    return "event.name='" + this.getName() + "', event.contextualName='" + this.getContextualName()
-                            + '\'';
+                    return "event.name='" + getName() + "', event.contextualName='" + getContextualName() + '\'';
                 }
             };
         }
 
         /**
-         * Creates a {@link Event} for the given name.
+         * Creates an {@link Event} for the given name.
          * @param name The name of the event (should have low cardinality).
          * @return event
          */
@@ -988,13 +991,13 @@ public interface Observation extends ObservationView {
         }
 
         /**
-         * Creates an event for the given key name.
+         * Creates a new event with the given dynamic entries for the contextual name.
          * @param dynamicEntriesForContextualName variables to be resolved in
          * {@link Event#getContextualName()} via {@link String#format(String, Object...)}.
          * @return event
          */
         default Event format(Object... dynamicEntriesForContextualName) {
-            return Event.of(this.getName(), String.format(this.getContextualName(), dynamicEntriesForContextualName));
+            return Event.of(getName(), String.format(getContextualName(), dynamicEntriesForContextualName));
         }
 
     }
