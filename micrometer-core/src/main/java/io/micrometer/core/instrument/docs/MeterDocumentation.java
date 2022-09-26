@@ -29,10 +29,10 @@ import io.micrometer.core.instrument.Meter;
  *
  * <ul>
  * <li>Metrics are grouped within an enum - the enum implements the
- * {@link DocumentedMeter} interface</li>
+ * {@link MeterDocumentation} interface</li>
  * <li>If the span contains {@link KeyName} then those need to be declared as nested
  * enums</li>
- * <li>The {@link DocumentedMeter#getKeyNames()} need to call the nested enum's
+ * <li>The {@link MeterDocumentation#getKeyNames()} need to call the nested enum's
  * {@code values()} method to retrieve the array of allowed keys / events</li>
  * <li>Javadocs around enums will be used as description</li>
  * </ul>
@@ -40,7 +40,7 @@ import io.micrometer.core.instrument.Meter;
  * @author Marcin Grzejszczak
  * @since 1.10.0
  */
-public interface DocumentedMeter {
+public interface MeterDocumentation {
 
     /**
      * Empty key names.
@@ -84,7 +84,7 @@ public interface DocumentedMeter {
     /**
      * Allowed key names.
      * @return allowed key names - if set will override any key names coming from
-     * {@link DocumentedMeter#overridesDefaultMetricFrom()}
+     * {@link MeterDocumentation#overridesDefaultMetricFrom()}
      */
     default KeyName[] getKeyNames() {
         return EMPTY;
@@ -93,7 +93,7 @@ public interface DocumentedMeter {
     /**
      * Additional key names.
      * @return additional key names - if set will append any key names coming from
-     * {@link DocumentedMeter#overridesDefaultMetricFrom()}
+     * {@link MeterDocumentation#overridesDefaultMetricFrom()}
      */
     default KeyName[] getAdditionalKeyNames() {
         return EMPTY;
@@ -102,8 +102,8 @@ public interface DocumentedMeter {
     /**
      * Override this when custom metric should be documented instead of the default one.
      * Requires the Observation module on the classpath.
-     * @return {@link io.micrometer.observation.docs.DocumentedObservation} for which you
-     * don't want to create a default metric documentation
+     * @return {@link MeterDocumentation} for which you don't want to create a default
+     * metric documentation
      */
     default Enum<?> overridesDefaultMetricFrom() {
         return null;
