@@ -97,7 +97,7 @@ class ObservationRegistryTest {
         // Define a convention
         MessagingConvention messagingConvention = new OurCompanyStandardMessagingConvention();
         // Register a semantic name provider
-        registry.observationConfig().observationConventions(new OurCompanyObservationConvention());
+        registry.observationConfig().observationConvention(new OurCompanyObservationConvention());
 
         Observation.Context myContext = new MessagingContext().put("foo", "hello");
         // Observation convention wants to use a MessagingConvention

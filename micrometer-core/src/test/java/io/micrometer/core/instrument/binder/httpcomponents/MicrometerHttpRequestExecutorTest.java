@@ -219,7 +219,7 @@ class MicrometerHttpRequestExecutorTest {
             throws IOException {
         server.stubFor(any(anyUrl()));
         ObservationRegistry observationRegistry = createObservationRegistry();
-        observationRegistry.observationConfig().observationConventions(new CustomGlobalApacheHttpConvention());
+        observationRegistry.observationConfig().observationConvention(new CustomGlobalApacheHttpConvention());
         MicrometerHttpRequestExecutor micrometerHttpRequestExecutor = MicrometerHttpRequestExecutor.builder(registry)
                 .observationRegistry(observationRegistry).build();
         HttpClient client = client(micrometerHttpRequestExecutor);
@@ -232,7 +232,7 @@ class MicrometerHttpRequestExecutorTest {
             throws IOException {
         server.stubFor(any(anyUrl()));
         ObservationRegistry observationRegistry = createObservationRegistry();
-        observationRegistry.observationConfig().observationConventions(new CustomGlobalApacheHttpConvention());
+        observationRegistry.observationConfig().observationConvention(new CustomGlobalApacheHttpConvention());
         MicrometerHttpRequestExecutor micrometerHttpRequestExecutor = MicrometerHttpRequestExecutor.builder(registry)
                 .observationRegistry(observationRegistry).observationConvention(new CustomGlobalApacheHttpConvention() {
                     @Override

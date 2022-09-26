@@ -17,7 +17,6 @@ package io.micrometer.observation;
 
 import io.micrometer.common.lang.Nullable;
 
-import java.util.Arrays;
 import java.util.Collection;
 import java.util.List;
 import java.util.Objects;
@@ -135,23 +134,12 @@ public interface ObservationRegistry {
         }
 
         /**
-         * Register {@link ObservationConvention observation conventions}.
-         * @param observationConventions observation conventions
+         * Register {@link ObservationConvention}.
+         * @param observationConvention observation convention
          * @return This configuration instance
          */
-        public ObservationConfig observationConventions(GlobalObservationConvention<?>... observationConventions) {
-            this.observationConventions.addAll(Arrays.asList(observationConventions));
-            return this;
-        }
-
-        /**
-         * Register a collection of {@link ObservationConvention}.
-         * @param observationConventions observation conventions
-         * @return This configuration instance
-         */
-        public ObservationConfig observationConventions(
-                Collection<GlobalObservationConvention<?>> observationConventions) {
-            this.observationConventions.addAll(observationConventions);
+        public ObservationConfig observationConvention(GlobalObservationConvention<?> observationConvention) {
+            this.observationConventions.add(observationConvention);
             return this;
         }
 

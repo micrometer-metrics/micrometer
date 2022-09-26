@@ -91,7 +91,7 @@ class DocumentedObservationTests {
     @Test
     void globalConventionShouldBePickedIfItIsMatching() {
         ObservationRegistry registry = observationRegistry();
-        registry.observationConfig().observationConventions(new GlobalConvention());
+        registry.observationConfig().observationConvention(new GlobalConvention());
         Observation.Context context = new Observation.Context();
 
         TestConventionObservation.CONTEXTUAL_NAME.observation(null, new FirstObservationConvention(), context, registry)
@@ -106,7 +106,7 @@ class DocumentedObservationTests {
     @Test
     void keyValuesShouldBeAlwaysAdded() {
         ObservationRegistry registry = observationRegistry();
-        registry.observationConfig().observationConventions(new GlobalConvention());
+        registry.observationConfig().observationConvention(new GlobalConvention());
         registry.observationConfig().observationFilter(new KeyValueAddingObservationFilter());
         Observation.Context context = new Observation.Context();
 

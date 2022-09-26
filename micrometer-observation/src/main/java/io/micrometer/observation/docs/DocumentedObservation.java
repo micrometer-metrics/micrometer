@@ -158,7 +158,7 @@ public interface DocumentedObservation {
      * pre-configured conventions
      * @param defaultConvention default convention that will be picked if there was
      * neither custom convention nor a pre-configured one via
-     * {@link ObservationRegistry.ObservationConfig#observationConventions(GlobalObservationConvention[])}
+     * {@link ObservationRegistry.ObservationConfig#observationConvention(GlobalObservationConvention)}
      * @param context observation context
      * @param registry observation registry
      * @return observation
@@ -201,7 +201,7 @@ public interface DocumentedObservation {
      * pre-configured conventions
      * @param defaultConvention default convention that will be picked if there was
      * neither custom convention nor a pre-configured one via
-     * {@link ObservationRegistry.ObservationConfig#observationConventions(GlobalObservationConvention[])}
+     * {@link ObservationRegistry.ObservationConfig#observationConvention(GlobalObservationConvention)}
      * @param contextSupplier observation context supplier
      * @param registry observation registry
      * @return observation
@@ -240,7 +240,7 @@ public interface DocumentedObservation {
      * pre-configured conventions
      * @param defaultConvention default convention that will be picked if there was
      * neither custom convention nor a pre-configured one via
-     * {@link ObservationRegistry.ObservationConfig#observationConventions(GlobalObservationConvention[])}
+     * {@link ObservationRegistry.ObservationConfig#observationConvention(GlobalObservationConvention)}
      * @param context observation context
      * @param registry observation registry
      * @return observation
