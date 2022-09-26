@@ -584,7 +584,7 @@ public abstract class ObservationRegistryCompatibilityKit {
             assertThat((String) context.get("context.field")).isEqualTo("42");
 
             assertThat(context.getContextualName()).isEqualTo("test.observation.42");
-            assertThat(observation.getContext().getError()).isSameAs(exception);
+            assertThat(context.getError()).isSameAs(exception);
 
             assertThat(context.toString()).containsOnlyOnce("name='test.observation'")
                     .containsOnlyOnce("contextualName='test.observation.42'")

@@ -134,7 +134,7 @@ public interface ObservationRegistry {
         }
 
         /**
-         * Register {@link ObservationConvention}.
+         * Register an {@link ObservationConvention}.
          * @param observationConvention observation convention
          * @return This configuration instance
          */
