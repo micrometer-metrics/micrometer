@@ -301,7 +301,6 @@ public abstract class ObservationRegistryCompatibilityKit {
         Runnable runnable = () -> assertThat(registry.getCurrentObservation()).isSameAs(observation);
         observation.scoped(runnable);
         assertThat(registry.getCurrentObservation()).isNull();
-        assertThat(observation.getContext().getErrorOptional()).isEmpty();
         assertThat(observation.getContext().getError()).isNull();
 
         InOrder inOrder = inOrder(handler);
@@ -325,7 +324,6 @@ public abstract class ObservationRegistryCompatibilityKit {
         };
         assertThatThrownBy(() -> observation.scoped(runnable)).isSameAs(error);
         assertThat(registry.getCurrentObservation()).isNull();
-        assertThat(observation.getContext().getErrorOptional()).containsSame(error);
         assertThat(observation.getContext().getError()).isSameAs(error);
 
         InOrder inOrder = inOrder(handler);
@@ -345,7 +343,6 @@ public abstract class ObservationRegistryCompatibilityKit {
                 .isSameAs(observation);
         observation.scopedChecked(checkedRunnable);
         assertThat(registry.getCurrentObservation()).isNull();
-        assertThat(observation.getContext().getErrorOptional()).isEmpty();
         assertThat(observation.getContext().getError()).isNull();
 
         InOrder inOrder = inOrder(handler);
@@ -369,7 +366,6 @@ public abstract class ObservationRegistryCompatibilityKit {
         };
         assertThatThrownBy(() -> observation.scopedChecked(checkedRunnable)).isSameAs(error);
         assertThat(registry.getCurrentObservation()).isNull();
-        assertThat(observation.getContext().getErrorOptional()).containsSame(error);
         assertThat(observation.getContext().getError()).isSameAs(error);
 
         InOrder inOrder = inOrder(handler);
@@ -414,7 +410,6 @@ public abstract class ObservationRegistryCompatibilityKit {
         };
         assertThatThrownBy(() -> observation.scoped(supplier)).isSameAs(error);
         assertThat(registry.getCurrentObservation()).isNull();
-        assertThat(observation.getContext().getErrorOptional()).containsSame(error);
         assertThat(observation.getContext().getError()).isSameAs(error);
 
         InOrder inOrder = inOrder(handler);
@@ -459,7 +454,6 @@ public abstract class ObservationRegistryCompatibilityKit {
         };
         assertThatThrownBy(() -> observation.scopedChecked(callable)).isSameAs(error);
         assertThat(registry.getCurrentObservation()).isNull();
-        assertThat(observation.getContext().getErrorOptional()).containsSame(error);
         assertThat(observation.getContext().getError()).isSameAs(error);
 
         InOrder inOrder = inOrder(handler);
@@ -590,7 +584,6 @@ public abstract class ObservationRegistryCompatibilityKit {
             assertThat((String) context.get("context.field")).isEqualTo("42");
 
             assertThat(context.getContextualName()).isEqualTo("test.observation.42");
-            assertThat(context.getErrorOptional()).containsSame(exception);
             assertThat(observation.getContext().getError()).isSameAs(exception);
 
             assertThat(context.toString()).containsOnlyOnce("name='test.observation'")

@@ -185,7 +185,7 @@ class SimpleObservation implements Observation {
     @Override
     public String toString() {
         return "{" + "name=" + this.context.getName() + "(" + this.context.getContextualName() + ")" + ", error="
-                + this.context.getErrorOptional() + ", context=" + this.context + '}';
+                + this.context.getError() + ", context=" + this.context + '}';
     }
 
     @SuppressWarnings("unchecked")

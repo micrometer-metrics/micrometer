@@ -742,15 +742,6 @@ public interface Observation extends ObservationView {
         }
 
         /**
-         * Optional of an error that occurred while processing the {@link Observation}.
-         * @return optional error
-         */
-        @Override
-        public Optional<Throwable> getErrorOptional() {
-            return Optional.ofNullable(this.getError());
-        }
-
-        /**
          * Error that occurred while processing the {@link Observation}.
          * @return error (null if there wasn't any)
          */
@@ -1036,12 +1027,6 @@ public interface Observation extends ObservationView {
          */
         @Nullable
         ObservationView getParentObservation();
-
-        /**
-         * Optional of an error that occurred while processing the {@link Observation}.
-         * @return optional error
-         */
-        Optional<Throwable> getErrorOptional();
 
         /**
          * Error that occurred while processing the {@link Observation}.
