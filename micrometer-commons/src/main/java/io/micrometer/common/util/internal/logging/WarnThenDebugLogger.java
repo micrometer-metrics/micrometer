@@ -16,6 +16,7 @@
 package io.micrometer.common.util.internal.logging;
 
 import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.function.Supplier;
 
 /**
  * {@link InternalLogger} which logs at warn level at first and then logs at debug level
@@ -35,16 +36,19 @@ public class WarnThenDebugLogger {
     }
 
     public void log(String message, Throwable ex) {
-        InternalLogLevel level;
-        String finalMessage;
         if (this.warnLogged.compareAndSet(false, true)) {
-            level = InternalLogLevel.WARN;
-            finalMessage = message + " Note that subsequent logs will be logged at debug level.";
+            log(InternalLogLevel.WARN, getWarnMessage(message), ex);
         }
         else {
-            level = InternalLogLevel.DEBUG;
-            finalMessage = message;
+            log(InternalLogLevel.DEBUG, message, ex);
         }
+    }
+
+    private String getWarnMessage(String message) {
+        return message + " Note that subsequent logs will be logged at debug level.";
+    }
+
+    private void log(InternalLogLevel level, String finalMessage, Throwable ex) {
         if (ex != null) {
             this.logger.log(level, finalMessage, ex);
         }
@@ -55,6 +59,21 @@ public class WarnThenDebugLogger {
 
     public void log(String message) {
         log(message, null);
+    }
+
+    public void log(Supplier<String> messageSupplier, Throwable ex) {
+        if (this.warnLogged.compareAndSet(false, true)) {
+            log(InternalLogLevel.WARN, getWarnMessage(messageSupplier.get()), ex);
+        }
+        else {
+            if (this.logger.isDebugEnabled()) {
+                log(InternalLogLevel.DEBUG, messageSupplier.get(), ex);
+            }
+        }
+    }
+
+    public void log(Supplier<String> messageSupplier) {
+        log(messageSupplier, null);
     }
 
 }

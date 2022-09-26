@@ -275,7 +275,7 @@ public class CloudWatchMeterRegistry extends StepMeterRegistry {
 
             List<Tag> tags = id.getConventionTags(config().namingConvention());
             if (tags.size() > MAX_DIMENSIONS_SIZE) {
-                tooManyTagsLogger.log("Meter " + id.getName() + " has more tags (" + tags.size()
+                tooManyTagsLogger.log(() -> "Meter " + id.getName() + " has more tags (" + tags.size()
                         + ") than the max supported by CloudWatch (" + MAX_DIMENSIONS_SIZE
                         + "). Some tags will be dropped.");
             }
@@ -306,7 +306,8 @@ public class CloudWatchMeterRegistry extends StepMeterRegistry {
 
         private boolean isAcceptableTag(Tag tag) {
             if (StringUtils.isBlank(tag.getValue())) {
-                blankTagValueLogger.log("Dropping a tag with key '" + tag.getKey() + "' because its value is blank.");
+                blankTagValueLogger
+                        .log(() -> "Dropping a tag with key '" + tag.getKey() + "' because its value is blank.");
                 return false;
             }
             return true;
