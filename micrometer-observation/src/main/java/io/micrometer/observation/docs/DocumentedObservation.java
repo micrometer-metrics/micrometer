@@ -158,7 +158,7 @@ public interface DocumentedObservation {
      * pre-configured conventions
      * @param defaultConvention default convention that will be picked if there was
      * neither custom convention nor a pre-configured one via
-     * {@link ObservationRegistry.ObservationConfig#observationConvention(GlobalObservationConvention[])}
+     * {@link ObservationRegistry.ObservationConfig#observationConvention(GlobalObservationConvention)}
      * @param context observation context
      * @param registry observation registry
      * @return observation
@@ -201,14 +201,14 @@ public interface DocumentedObservation {
      * pre-configured conventions
      * @param defaultConvention default convention that will be picked if there was
      * neither custom convention nor a pre-configured one via
-     * {@link ObservationRegistry.ObservationConfig#observationConvention(GlobalObservationConvention[])}
+     * {@link ObservationRegistry.ObservationConfig#observationConvention(GlobalObservationConvention)}
      * @param contextSupplier observation context supplier
      * @param registry observation registry
      * @return observation
      */
-    default <T extends Observation.Context> Observation createNotStarted(
-            @Nullable ObservationConvention<T> customConvention, @NonNull ObservationConvention<T> defaultConvention,
-            @NonNull Supplier<T> contextSupplier, @NonNull ObservationRegistry registry) {
+    default <T extends Observation.Context> Observation observation(@Nullable ObservationConvention<T> customConvention,
+            @NonNull ObservationConvention<T> defaultConvention, @NonNull Supplier<T> contextSupplier,
+            @NonNull ObservationRegistry registry) {
         if (registry.isNoop()) {
             return Observation.NOOP;
         }
@@ -240,7 +240,7 @@ public interface DocumentedObservation {
      * pre-configured conventions
      * @param defaultConvention default convention that will be picked if there was
      * neither custom convention nor a pre-configured one via
-     * {@link ObservationRegistry.ObservationConfig#observationConvention(GlobalObservationConvention[])}
+     * {@link ObservationRegistry.ObservationConfig#observationConvention(GlobalObservationConvention)}
      * @param context observation context
      * @param registry observation registry
      * @return observation
