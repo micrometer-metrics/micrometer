@@ -33,7 +33,7 @@ import java.util.function.Function;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
-import static io.micrometer.core.instrument.binder.okhttp3.OkHttpDocumentedObservation.OkHttpLegacyLowCardinalityTags.*;
+import static io.micrometer.core.instrument.binder.okhttp3.OkHttpObservationDocumentation.OkHttpLegacyLowCardinalityTags.*;
 import static java.util.stream.Collectors.toList;
 import static java.util.stream.StreamSupport.stream;
 

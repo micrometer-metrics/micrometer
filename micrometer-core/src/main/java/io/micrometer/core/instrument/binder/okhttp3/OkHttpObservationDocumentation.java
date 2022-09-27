@@ -19,16 +19,16 @@ import io.micrometer.common.docs.KeyName;
 import io.micrometer.common.lang.NonNullApi;
 import io.micrometer.observation.Observation;
 import io.micrometer.observation.ObservationConvention;
-import io.micrometer.observation.docs.DocumentedObservation;
+import io.micrometer.observation.docs.ObservationDocumentation;
 
 /**
- * A {@link DocumentedObservation} for OkHttp3 metrics.
+ * A {@link ObservationDocumentation} for OkHttp3 metrics.
  *
  * @author Marcin Grzejszczak
  * @since 1.10.0
  */
 @NonNullApi
-public enum OkHttpDocumentedObservation implements DocumentedObservation {
+public enum OkHttpObservationDocumentation implements ObservationDocumentation {
 
     /**
      * Default observation for OK HTTP.

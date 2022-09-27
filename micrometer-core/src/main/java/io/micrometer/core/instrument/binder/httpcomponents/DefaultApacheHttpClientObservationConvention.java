@@ -27,7 +27,7 @@ import java.io.IOException;
  * Default implementation of {@link ApacheHttpClientObservationConvention}.
  *
  * @since 1.10.0
- * @see ApacheHttpClientDocumentedObservation
+ * @see ApacheHttpClientObservationDocumentation
  */
 public class DefaultApacheHttpClientObservationConvention implements ApacheHttpClientObservationConvention {
 
@@ -54,11 +54,11 @@ public class DefaultApacheHttpClientObservationConvention implements ApacheHttpC
     @Override
     public KeyValues getLowCardinalityKeyValues(ApacheHttpClientContext context) {
         KeyValues keyValues = KeyValues.of(
-                ApacheHttpClientDocumentedObservation.ApacheHttpClientKeyNames.METHOD
+                ApacheHttpClientObservationDocumentation.ApacheHttpClientKeyNames.METHOD
                         .withValue(getMethodString(context.getCarrier())),
-                ApacheHttpClientDocumentedObservation.ApacheHttpClientKeyNames.URI
+                ApacheHttpClientObservationDocumentation.ApacheHttpClientKeyNames.URI
                         .withValue(context.getUriMapper().apply(context.getCarrier())),
-                ApacheHttpClientDocumentedObservation.ApacheHttpClientKeyNames.STATUS
+                ApacheHttpClientObservationDocumentation.ApacheHttpClientKeyNames.STATUS
                         .withValue(getStatusValue(context.getResponse(), context.getError())));
         if (context.shouldExportTagsForRoute()) {
             keyValues = keyValues.and(HttpContextUtils.generateTagStringsForRoute(context.getApacheHttpContext()));

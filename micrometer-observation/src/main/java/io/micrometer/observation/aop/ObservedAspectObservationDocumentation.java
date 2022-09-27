@@ -22,20 +22,20 @@ import io.micrometer.observation.Observation;
 import io.micrometer.observation.ObservationRegistry;
 import io.micrometer.observation.annotation.Observed;
 import io.micrometer.observation.ObservationConvention;
-import io.micrometer.observation.docs.DocumentedObservation;
+import io.micrometer.observation.docs.ObservationDocumentation;
 import org.aspectj.lang.ProceedingJoinPoint;
 import org.aspectj.lang.Signature;
 
-import static io.micrometer.observation.aop.ObservedAspectObservation.ObservedAspectLowCardinalityKeyName.CLASS_NAME;
-import static io.micrometer.observation.aop.ObservedAspectObservation.ObservedAspectLowCardinalityKeyName.METHOD_NAME;
+import static io.micrometer.observation.aop.ObservedAspectObservationDocumentation.ObservedAspectLowCardinalityKeyName.CLASS_NAME;
+import static io.micrometer.observation.aop.ObservedAspectObservationDocumentation.ObservedAspectLowCardinalityKeyName.METHOD_NAME;
 
 /**
- * A {@link DocumentedObservation} for {@link ObservedAspect}.
+ * A {@link ObservationDocumentation} for {@link ObservedAspect}.
  *
  * @author Jonatan Ivanov
  * @since 1.10.0
  */
-enum ObservedAspectObservation implements DocumentedObservation {
+enum ObservedAspectObservationDocumentation implements ObservationDocumentation {
 
     DEFAULT;
 

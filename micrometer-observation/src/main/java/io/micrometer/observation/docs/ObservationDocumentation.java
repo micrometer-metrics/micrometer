@@ -37,12 +37,12 @@ import java.util.function.Supplier;
  *
  * <ul>
  * <li>Observations are grouped within an enum - the enum implements the
- * {@code DocumentedObservation} interface</li>
+ * {@code ObservationDocumentation} interface</li>
  * <li>If the observation contains {@link KeyName} then those need to be declared as
  * nested enums</li>
- * <li>The {@link DocumentedObservation#getHighCardinalityKeyNames()} need to call the
+ * <li>The {@link ObservationDocumentation#getHighCardinalityKeyNames()} need to call the
  * nested enum's {@code values()} method to retrieve the array of allowed keys</li>
- * <li>The {@link DocumentedObservation#getLowCardinalityKeyNames()} need to call the
+ * <li>The {@link ObservationDocumentation#getLowCardinalityKeyNames()} need to call the
  * nested enum's {@code values()} method to retrieve the array of allowed keys</li>
  * <li>Javadocs around enums will be used as description</li>
  * <li>If you want to merge different {@link KeyName} enum {@code values()} methods you
@@ -52,7 +52,7 @@ import java.util.function.Supplier;
  * @author Marcin Grzejszczak
  * @since 1.10.0
  */
-public interface DocumentedObservation {
+public interface ObservationDocumentation {
 
     /**
      * Empty key names.

@@ -32,7 +32,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.BDDAssertions.then;
 import static org.assertj.core.api.BDDAssertions.thenThrownBy;
 
-class DocumentedObservationTests {
+class ObservationDocumentationTests {
 
     @Test
     void iseShouldBeThrownWhenDocumentedObservationHasNotOverriddenDefaultConvention() {
@@ -142,7 +142,7 @@ class DocumentedObservationTests {
         return registry;
     }
 
-    enum TestConventionObservation implements DocumentedObservation {
+    enum TestConventionObservation implements ObservationDocumentation {
 
         NOT_OVERRIDDEN_METHODS {
 

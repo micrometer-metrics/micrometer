@@ -129,7 +129,7 @@ public class ObservedAspect {
     }
 
     private Object observe(ProceedingJoinPoint pjp, Method method, Observed observed) throws Throwable {
-        Observation observation = ObservedAspectObservation.of(pjp, observed, this.registry,
+        Observation observation = ObservedAspectObservationDocumentation.of(pjp, observed, this.registry,
                 this.observationConvention);
         if (CompletionStage.class.isAssignableFrom(method.getReturnType())) {
             observation.start();
