@@ -452,9 +452,8 @@ class OtlpMeterRegistryTest {
 
             // Comparing with double values, not with their String representation is
             // required since Java 19 as it has changed String representation for double
-            // slightly.
-            // See "Double.toString(double) and Float.toString(float) may Return Slightly
-            // Different Results" item in https://jdk.java.net/19/release-notes
+            // slightly in some cases.
+            // See https://jdk.java.net/19/release-notes#JDK-4511638
             if (actualLine.contains("explicit_bounds") && !actualLine.contains("Infinity")) {
                 double actualValue = extractValue(actualLine);
                 double expectedValue = extractValue(expectedLine);
