@@ -233,11 +233,11 @@ public class MicrometerHttpClient extends HttpClient {
             @Nullable HttpResponse<T> res) {
         instrumentation.stop(DefaultHttpClientObservationConvention.INSTANCE.getName(), "Timer for JDK's HttpClient",
                 () -> {
-                    Tags tags = Tags.of(HttpClientDocumentedObservation.LowCardinalityKeys.METHOD.asString(),
-                            request.method(), HttpClientDocumentedObservation.LowCardinalityKeys.URI.asString(),
+                    Tags tags = Tags.of(HttpClientObservationDocumentation.LowCardinalityKeys.METHOD.asString(),
+                            request.method(), HttpClientObservationDocumentation.LowCardinalityKeys.URI.asString(),
                             DefaultHttpClientObservationConvention.INSTANCE.getUriTag(request, res, uriMapper));
                     if (res != null) {
-                        tags = tags.and(Tag.of(HttpClientDocumentedObservation.LowCardinalityKeys.STATUS.asString(),
+                        tags = tags.and(Tag.of(HttpClientObservationDocumentation.LowCardinalityKeys.STATUS.asString(),
                                 String.valueOf(res.statusCode())));
                     }
                     return tags;

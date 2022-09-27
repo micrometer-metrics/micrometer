@@ -67,7 +67,7 @@ public class ObservationRequestEventListener implements RequestEventListener {
                 }
             case REQUEST_MATCHED:
                 JerseyContext jerseyContext = new JerseyContext(event);
-                Observation observation = JerseyDocumentedObservation.DEFAULT.start(this.jerseyObservationConvention,
+                Observation observation = JerseyObservationDocumentation.DEFAULT.start(this.jerseyObservationConvention,
                         new DefaultJerseyObservationConvention(this.metricName), jerseyContext, this.registry);
                 Observation.Scope scope = observation.openScope();
                 observations.put(event.getContainerRequest(), new ObservationScopeAndContext(scope, jerseyContext));

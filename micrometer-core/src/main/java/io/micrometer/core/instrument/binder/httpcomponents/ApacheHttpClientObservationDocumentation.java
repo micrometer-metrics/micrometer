@@ -13,73 +13,68 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package io.micrometer.core.instrument.binder.jersey.server;
+package io.micrometer.core.instrument.binder.httpcomponents;
 
 import io.micrometer.common.docs.KeyName;
-import io.micrometer.common.lang.NonNullApi;
 import io.micrometer.observation.Observation;
 import io.micrometer.observation.ObservationConvention;
-import io.micrometer.observation.docs.DocumentedObservation;
+import io.micrometer.observation.docs.ObservationDocumentation;
 
 /**
- * A {@link DocumentedObservation} for Jersey.
- *
- * @author Marcin Grzejszczak
+ * {@link ObservationDocumentation} for Apache HTTP client instrumentation.
  * @since 1.10.0
+ * @see MicrometerHttpRequestExecutor
  */
-@NonNullApi
-public enum JerseyDocumentedObservation implements DocumentedObservation {
+public enum ApacheHttpClientObservationDocumentation implements ObservationDocumentation {
 
-    /**
-     * Default observation for Jersey.
-     */
     DEFAULT {
         @Override
         public Class<? extends ObservationConvention<? extends Observation.Context>> getDefaultConvention() {
-            return DefaultJerseyObservationConvention.class;
+            return DefaultApacheHttpClientObservationConvention.class;
         }
 
         @Override
         public KeyName[] getLowCardinalityKeyNames() {
-            return JerseyLegacyLowCardinalityTags.values();
+            return ApacheHttpClientKeyNames.values();
         }
     };
 
-    @NonNullApi
-    enum JerseyLegacyLowCardinalityTags implements KeyName {
+    enum ApacheHttpClientKeyNames implements KeyName {
 
-        OUTCOME {
+        STATUS {
             @Override
             public String asString() {
-                return "outcome";
+                return "status";
             }
         },
-
         METHOD {
             @Override
             public String asString() {
                 return "method";
             }
         },
-
         URI {
             @Override
             public String asString() {
                 return "uri";
             }
         },
-
-        EXCEPTION {
+        TARGET_SCHEME {
             @Override
             public String asString() {
-                return "exception";
+                return "target.scheme";
             }
         },
-
-        STATUS {
+        TARGET_HOST {
             @Override
             public String asString() {
-                return "status";
+                return "target.host";
+            }
+        },
+        TARGET_PORT {
+            @Override
+            public String asString() {
+                return "target.port";
             }
         }
 

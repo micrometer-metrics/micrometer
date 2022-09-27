@@ -29,22 +29,22 @@ import org.glassfish.jersey.server.monitoring.RequestEvent;
  */
 class JerseyKeyValues {
 
-    private static final KeyValue URI_NOT_FOUND = JerseyDocumentedObservation.JerseyLegacyLowCardinalityTags.URI
+    private static final KeyValue URI_NOT_FOUND = JerseyObservationDocumentation.JerseyLegacyLowCardinalityTags.URI
             .withValue("NOT_FOUND");
 
-    private static final KeyValue URI_REDIRECTION = JerseyDocumentedObservation.JerseyLegacyLowCardinalityTags.URI
+    private static final KeyValue URI_REDIRECTION = JerseyObservationDocumentation.JerseyLegacyLowCardinalityTags.URI
             .withValue("REDIRECTION");
 
-    private static final KeyValue URI_ROOT = JerseyDocumentedObservation.JerseyLegacyLowCardinalityTags.URI
+    private static final KeyValue URI_ROOT = JerseyObservationDocumentation.JerseyLegacyLowCardinalityTags.URI
             .withValue("root");
 
-    private static final KeyValue EXCEPTION_NONE = JerseyDocumentedObservation.JerseyLegacyLowCardinalityTags.EXCEPTION
+    private static final KeyValue EXCEPTION_NONE = JerseyObservationDocumentation.JerseyLegacyLowCardinalityTags.EXCEPTION
             .withValue("None");
 
-    private static final KeyValue STATUS_SERVER_ERROR = JerseyDocumentedObservation.JerseyLegacyLowCardinalityTags.STATUS
+    private static final KeyValue STATUS_SERVER_ERROR = JerseyObservationDocumentation.JerseyLegacyLowCardinalityTags.STATUS
             .withValue("500");
 
-    private static final KeyValue METHOD_UNKNOWN = JerseyDocumentedObservation.JerseyLegacyLowCardinalityTags.METHOD
+    private static final KeyValue METHOD_UNKNOWN = JerseyObservationDocumentation.JerseyLegacyLowCardinalityTags.METHOD
             .withValue("UNKNOWN");
 
     private JerseyKeyValues() {
@@ -58,7 +58,7 @@ class JerseyKeyValues {
      */
     static KeyValue method(ContainerRequest request) {
         return (request != null)
-                ? JerseyDocumentedObservation.JerseyLegacyLowCardinalityTags.METHOD.withValue(request.getMethod())
+                ? JerseyObservationDocumentation.JerseyLegacyLowCardinalityTags.METHOD.withValue(request.getMethod())
                 : METHOD_UNKNOWN;
     }
 
@@ -70,7 +70,7 @@ class JerseyKeyValues {
      */
     static KeyValue status(ContainerResponse response) {
         /* In case there is no response we are dealing with an unmapped exception. */
-        return (response != null) ? JerseyDocumentedObservation.JerseyLegacyLowCardinalityTags.STATUS
+        return (response != null) ? JerseyObservationDocumentation.JerseyLegacyLowCardinalityTags.STATUS
                 .withValue(Integer.toString(response.getStatus())) : STATUS_SERVER_ERROR;
     }
 
@@ -96,7 +96,7 @@ class JerseyKeyValues {
         if (matchingPattern.equals("/")) {
             return URI_ROOT;
         }
-        return JerseyDocumentedObservation.JerseyLegacyLowCardinalityTags.URI.withValue(matchingPattern);
+        return JerseyObservationDocumentation.JerseyLegacyLowCardinalityTags.URI.withValue(matchingPattern);
     }
 
     /**
@@ -134,10 +134,10 @@ class JerseyKeyValues {
     static KeyValue outcome(ContainerResponse response) {
         if (response != null) {
             Outcome outcome = Outcome.forStatus(response.getStatus());
-            return JerseyDocumentedObservation.JerseyLegacyLowCardinalityTags.OUTCOME.withValue(outcome.name());
+            return JerseyObservationDocumentation.JerseyLegacyLowCardinalityTags.OUTCOME.withValue(outcome.name());
         }
         /* In case there is no response we are dealing with an unmapped exception. */
-        return JerseyDocumentedObservation.JerseyLegacyLowCardinalityTags.OUTCOME
+        return JerseyObservationDocumentation.JerseyLegacyLowCardinalityTags.OUTCOME
                 .withValue(Outcome.SERVER_ERROR.name());
     }
 

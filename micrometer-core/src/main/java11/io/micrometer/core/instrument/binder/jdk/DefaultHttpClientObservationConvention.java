@@ -43,11 +43,11 @@ public class DefaultHttpClientObservationConvention implements HttpClientObserva
         }
         HttpRequest httpRequest = context.getCarrier().build();
         KeyValues keyValues = KeyValues.of(
-                HttpClientDocumentedObservation.LowCardinalityKeys.METHOD.withValue(httpRequest.method()),
-                HttpClientDocumentedObservation.LowCardinalityKeys.URI
+                HttpClientObservationDocumentation.LowCardinalityKeys.METHOD.withValue(httpRequest.method()),
+                HttpClientObservationDocumentation.LowCardinalityKeys.URI
                         .withValue(getUriTag(httpRequest, context.getResponse(), context.getUriMapper())));
         if (context.getResponse() != null) {
-            keyValues = keyValues.and(HttpClientDocumentedObservation.LowCardinalityKeys.STATUS
+            keyValues = keyValues.and(HttpClientObservationDocumentation.LowCardinalityKeys.STATUS
                     .withValue(String.valueOf(context.getResponse().statusCode())));
         }
         return keyValues;
