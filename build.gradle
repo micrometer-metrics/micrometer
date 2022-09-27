@@ -16,7 +16,7 @@ buildscript {
         classpath 'io.spring.nohttp:nohttp-gradle:0.0.10'
         classpath 'org.gradle:test-retry-gradle-plugin:1.4.1'
         classpath 'io.github.gradle-nexus:publish-plugin:1.1.0'
-        classpath 'me.champeau.gradle:japicmp-gradle-plugin:0.4.0'
+        classpath 'me.champeau.gradle:japicmp-gradle-plugin:0.4.1'
         classpath 'de.undercouch:gradle-download-task:5.0.2'
         classpath 'io.spring.javaformat:spring-javaformat-gradle-plugin:0.0.34'
 
@@ -337,28 +337,14 @@ subprojects {
                 ignoreMissingClasses = true
                 includeSynthetic = true
 
+                compatibilityChangeExcludes = [ "METHOD_NEW_DEFAULT" ]
+
                 packageExcludes = ['io.micrometer.shaded.*', 'io.micrometer.statsd.internal']
 
                 // For 1.9.x branch only.
                 classExcludes = ['io.micrometer.core.ipc.http.ReactorNettySender',
                                  'io.micrometer.core.tck.RegistryResolver']
 
-                // TODO remove methodExcludes when gh-3181 is resolved
-                methodExcludes = ['io.micrometer.stackdriver.StackdriverConfig#metricTypePrefix()',
-                                  'io.micrometer.core.instrument.Timer#record(java.util.function.BooleanSupplier)',
-                                  'io.micrometer.core.instrument.Timer#record(java.util.function.IntSupplier)',
-                                  'io.micrometer.core.instrument.Timer#record(java.util.function.LongSupplier)',
-                                  'io.micrometer.core.instrument.Timer#record(java.util.function.DoubleSupplier)',
-                                  'io.micrometer.core.instrument.LongTaskTimer#record(java.util.function.BooleanSupplier)',
-                                  'io.micrometer.core.instrument.LongTaskTimer#record(java.util.function.IntSupplier)',
-                                  'io.micrometer.core.instrument.LongTaskTimer#record(java.util.function.LongSupplier)',
-                                  'io.micrometer.core.instrument.LongTaskTimer#record(java.util.function.DoubleSupplier)',
-                                  'io.micrometer.signalfx.SignalFxConfig#publishDeltaHistogram()',
-
-                                  // For 1.9.x branch only.
-                                  'io.micrometer.dynatrace.DynatraceConfig#useDynatraceSummaryInstruments()',
-                                  'io.micrometer.signalfx.SignalFxConfig#publishCumulativeHistogram()'
-                ]
                 onlyIf { compatibleVersion != 'SKIP' }
             }
 
