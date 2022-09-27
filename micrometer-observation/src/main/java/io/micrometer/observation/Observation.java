@@ -411,6 +411,10 @@ public interface Observation extends ObservationView {
         }
     }
 
+    default Runnable wrap(Runnable runnable) {
+        return () -> observe(runnable);
+    }
+
     /**
      * Observes the passed {@link CheckedRunnable}, this means the followings:
      *
@@ -438,6 +442,10 @@ public interface Observation extends ObservationView {
         finally {
             stop();
         }
+    }
+
+    default <E extends Throwable> CheckedRunnable<E> wrapChecked(CheckedRunnable<E> checkedRunnable) throws E {
+        return () -> observeChecked(checkedRunnable);
     }
 
     /**
@@ -470,6 +478,10 @@ public interface Observation extends ObservationView {
         }
     }
 
+    default <T> Supplier<T> wrap(Supplier<T> supplier) {
+        return () -> observe(supplier);
+    }
+
     /**
      * Observes the passed {@link CheckedCallable}, this means the followings:
      *
@@ -499,6 +511,10 @@ public interface Observation extends ObservationView {
         finally {
             stop();
         }
+    }
+
+    default <T, E extends Throwable> CheckedCallable<T, E> wrapChecked(CheckedCallable<T, E> checkedCallable) throws E {
+        return () -> observeChecked(checkedCallable);
     }
 
     /**
