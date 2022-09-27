@@ -53,7 +53,7 @@ public abstract class HttpServerTimingInstrumentationVerificationTests extends I
      * A default is provided that should be preferred by new instrumentations. Existing
      * instrumentations that use a different value to maintain backwards compatibility may
      * override this method to run tests with a different name used in assertions.
-     * @return name of the meter timing http client requests
+     * @return name of the meter timing http server requests
      */
     protected String timerName() {
         return "http.server.requests";
