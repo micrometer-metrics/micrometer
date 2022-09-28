@@ -141,7 +141,7 @@ public class DefaultOkHttpObservationConvention implements OkHttpObservationConv
             return tagsToKeyValues(((Tags) requestTag).stream());
         }
         else if (requestTag instanceof KeyValues) {
-            return (Iterable<KeyValue>) requestTag;
+            return (KeyValues) requestTag;
         }
         return KeyValues.empty();
     }

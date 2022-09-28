@@ -117,6 +117,7 @@ public class ObservationOrTimerCompatibleInstrumentation<T extends Observation.C
         if (observationRegistry.isNoop() || !(context instanceof ResponseContext)) {
             return;
         }
+        @SuppressWarnings("unchecked")
         ResponseContext<? super RES> responseContext = (ResponseContext<? super RES>) context;
         responseContext.setResponse(response);
     }
