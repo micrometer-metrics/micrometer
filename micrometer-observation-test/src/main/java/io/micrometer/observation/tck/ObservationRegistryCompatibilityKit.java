@@ -491,6 +491,7 @@ public abstract class ObservationRegistryCompatibilityKit {
 
     @Test
     void runnableShouldBeScoped() {
+        @SuppressWarnings("unchecked")
         ObservationHandler<Observation.Context> handler = mock(ObservationHandler.class);
         when(handler.supportsContext(isA(Observation.Context.class))).thenReturn(true);
         registry.observationConfig().observationHandler(handler);
@@ -509,6 +510,7 @@ public abstract class ObservationRegistryCompatibilityKit {
 
     @Test
     void errorShouldBeReportedOnFailingScopedRunnable() {
+        @SuppressWarnings("unchecked")
         ObservationHandler<Observation.Context> handler = mock(ObservationHandler.class);
         when(handler.supportsContext(isA(Observation.Context.class))).thenReturn(true);
         registry.observationConfig().observationHandler(handler);
@@ -532,6 +534,7 @@ public abstract class ObservationRegistryCompatibilityKit {
 
     @Test
     void checkedRunnableShouldBeScoped() throws Throwable {
+        @SuppressWarnings("unchecked")
         ObservationHandler<Observation.Context> handler = mock(ObservationHandler.class);
         when(handler.supportsContext(isA(Observation.Context.class))).thenReturn(true);
         registry.observationConfig().observationHandler(handler);
@@ -551,6 +554,7 @@ public abstract class ObservationRegistryCompatibilityKit {
 
     @Test
     void errorShouldBeReportedOnFailingScopedCheckedRunnable() {
+        @SuppressWarnings("unchecked")
         ObservationHandler<Observation.Context> handler = mock(ObservationHandler.class);
         when(handler.supportsContext(isA(Observation.Context.class))).thenReturn(true);
         registry.observationConfig().observationHandler(handler);
@@ -574,6 +578,7 @@ public abstract class ObservationRegistryCompatibilityKit {
 
     @Test
     void supplierShouldBeScoped() {
+        @SuppressWarnings("unchecked")
         ObservationHandler<Observation.Context> handler = mock(ObservationHandler.class);
         when(handler.supportsContext(isA(Observation.Context.class))).thenReturn(true);
         registry.observationConfig().observationHandler(handler);
@@ -595,6 +600,7 @@ public abstract class ObservationRegistryCompatibilityKit {
 
     @Test
     void errorShouldBeReportedOnFailingScopedSupplier() {
+        @SuppressWarnings("unchecked")
         ObservationHandler<Observation.Context> handler = mock(ObservationHandler.class);
         when(handler.supportsContext(isA(Observation.Context.class))).thenReturn(true);
         registry.observationConfig().observationHandler(handler);
@@ -618,6 +624,7 @@ public abstract class ObservationRegistryCompatibilityKit {
 
     @Test
     void checkedCallableShouldBeScoped() throws IOException {
+        @SuppressWarnings("unchecked")
         ObservationHandler<Observation.Context> handler = mock(ObservationHandler.class);
         when(handler.supportsContext(isA(Observation.Context.class))).thenReturn(true);
         registry.observationConfig().observationHandler(handler);
@@ -639,6 +646,7 @@ public abstract class ObservationRegistryCompatibilityKit {
 
     @Test
     void errorShouldBeReportedOnFailingScopedCheckedCallable() {
+        @SuppressWarnings("unchecked")
         ObservationHandler<Observation.Context> handler = mock(ObservationHandler.class);
         when(handler.supportsContext(isA(Observation.Context.class))).thenReturn(true);
         registry.observationConfig().observationHandler(handler);
