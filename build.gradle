@@ -10,6 +10,7 @@ buildscript {
 
     dependencies {
         classpath 'gradle.plugin.com.hierynomus.gradle.plugins:license-gradle-plugin:0.16.1'
+        classpath 'com.netflix.nebula:gradle-info-plugin:11.4.1'
         classpath 'com.netflix.nebula:nebula-release-plugin:16.0.0'
         classpath 'com.netflix.nebula:nebula-publishing-plugin:18.4.0'
         classpath 'com.netflix.nebula:nebula-project-plugin:9.4.0'
