@@ -21,6 +21,7 @@ import io.micrometer.core.instrument.Clock;
 import io.micrometer.core.instrument.MeterRegistry;
 import io.micrometer.core.instrument.binder.jersey.server.DefaultJerseyTagsProvider;
 import io.micrometer.core.instrument.binder.jersey.server.MetricsApplicationEventListener;
+import io.micrometer.core.instrument.binder.logging.LogbackMetrics;
 import io.micrometer.core.instrument.logging.LoggingMeterRegistry;
 import io.micrometer.core.instrument.logging.LoggingRegistryConfig;
 import jakarta.ws.rs.core.Application;
@@ -45,6 +46,9 @@ public class Jersey3Main {
                 return Duration.ofSeconds(10);
             }
         }, Clock.SYSTEM);
+        LogbackMetrics logbackMetrics = new LogbackMetrics();
+        Runtime.getRuntime().addShutdownHook(new Thread(logbackMetrics::close));
+        logbackMetrics.bindTo(registry);
         HttpServer server = HttpServer.create(new InetSocketAddress(8080), 0);
         Runtime.getRuntime().addShutdownHook(new Thread(() -> server.stop(0)));
         Application application = new ResourceConfig(HelloWorldResource.class)

@@ -15,10 +15,13 @@
  */
 package io.micrometer.samples.jersey3;
 
+import io.micrometer.common.util.internal.logging.InternalLogger;
+import io.micrometer.common.util.internal.logging.InternalLoggerFactory;
 import io.micrometer.core.instrument.MeterRegistry;
 import io.micrometer.core.instrument.Timer;
 import io.micrometer.core.instrument.binder.jersey.server.DefaultJerseyTagsProvider;
 import io.micrometer.core.instrument.binder.jersey.server.MetricsApplicationEventListener;
+import io.micrometer.core.instrument.binder.logging.LogbackMetrics;
 import io.micrometer.core.instrument.simple.SimpleMeterRegistry;
 import jakarta.ws.rs.core.Application;
 import org.glassfish.jersey.server.ResourceConfig;
@@ -44,13 +47,25 @@ class Jersey3Test extends JerseyTest {
     }
 
     @Test
-    void helloResourceIsTimed() {
+    void helloResourceIsTimed() throws InterruptedException {
         String response = target("hello/Jersey").request().get(String.class);
         assertThat(response).isEqualTo("Hello, Jersey");
+        // Jersey metrics are recorded asynchronously to the request completing
+        Thread.sleep(10);
         Timer timer = registry.get(TIMER_METRIC_NAME).tags("method", "GET", "uri", "/hello/{name}", "status", "200",
                 "exception", "None", "outcome", "SUCCESS").timer();
         assertThat(timer.count()).isEqualTo(1);
         assertThat(timer.totalTime(TimeUnit.NANOSECONDS)).isPositive();
+    }
+
+    @Test
+    void loggingMetricsAreCounted() {
+        try (LogbackMetrics logbackMetrics = new LogbackMetrics()) {
+            logbackMetrics.bindTo(registry);
+            InternalLogger logger = InternalLoggerFactory.getInstance(Jersey3Test.class);
+            logger.info("test");
+            assertThat(registry.get("logback.events").tags("level", "info").counter().count()).isPositive();
+        }
     }
 
 }
