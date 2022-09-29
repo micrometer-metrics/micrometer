@@ -20,6 +20,8 @@ import io.micrometer.observation.ObservationRegistry;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
+import java.util.function.Supplier;
+
 import static io.micrometer.observation.tck.ObservationContextAssert.assertThat;
 import static org.assertj.core.api.BDDAssertions.thenNoException;
 import static org.assertj.core.api.BDDAssertions.thenThrownBy;
@@ -30,13 +32,22 @@ class ObservationContextAssertTests {
 
     ObservationRegistry registry;
 
-    Observation.Context context;
+    TestContext context;
+
+    static class TestContext extends Observation.Context implements Supplier<TestContext> {
+
+        @Override
+        public TestContext get() {
+            return this;
+        }
+
+    }
 
     @BeforeEach
     void beforeEach() {
         registry = ObservationRegistry.create();
         registry.observationConfig().observationHandler(c -> true);
-        context = new Observation.Context();
+        context = new TestContext();
     }
 
     @Test
