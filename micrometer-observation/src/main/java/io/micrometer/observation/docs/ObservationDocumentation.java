@@ -138,11 +138,11 @@ public interface ObservationDocumentation {
     /**
      * Creates an {@link Observation}. You need to manually start it.
      * @param registry observation registry
-     * @param context observation context
+     * @param contextSupplier observation context supplier
      * @return observation
      */
-    default Observation observation(ObservationRegistry registry, @Nullable Supplier<Observation.Context> context) {
-        Observation observation = Observation.createNotStarted(getName(), context, registry);
+    default Observation observation(ObservationRegistry registry, Supplier<Observation.Context> contextSupplier) {
+        Observation observation = Observation.createNotStarted(getName(), contextSupplier, registry);
         if (getContextualName() != null) {
             observation.contextualName(getContextualName());
         }
@@ -193,13 +193,13 @@ public interface ObservationDocumentation {
      * @return observation
      */
     default Observation start(ObservationRegistry registry) {
-        return start(registry, null);
+        return start(registry, Observation.Context::new);
     }
 
     /**
      * Creates and starts an {@link Observation}.
      * @param registry observation registry
-     * @param contextSupplier observation context
+     * @param contextSupplier observation context supplier
      * @return observation
      */
     default Observation start(ObservationRegistry registry, Supplier<Observation.Context> contextSupplier) {
@@ -213,7 +213,7 @@ public interface ObservationDocumentation {
      * @param defaultConvention default convention that will be picked if there was
      * neither custom convention nor a pre-configured one via
      * {@link ObservationRegistry.ObservationConfig#observationConvention(GlobalObservationConvention)}
-     * @param contextSupplier observation context
+     * @param contextSupplier observation context supplier
      * @param registry observation registry
      * @return observation
      */
