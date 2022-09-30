@@ -73,9 +73,9 @@ class ObservationRegistryTest {
     @Test
     void observationShouldBeNoopWhenNullRegistry() {
         assertThat(Observation.start("test.timer", null)).isSameAs(NOOP);
-        assertThat(Observation.start("test.timer", new Observation.Context(), null)).isSameAs(NOOP);
+        assertThat(Observation.start("test.timer", Observation.Context::new, null)).isSameAs(NOOP);
         assertThat(Observation.createNotStarted("test.timer", null)).isSameAs(NOOP);
-        assertThat(Observation.createNotStarted("test.timer", new Observation.Context(), null)).isSameAs(NOOP);
+        assertThat(Observation.createNotStarted("test.timer", Observation.Context::new, null)).isSameAs(NOOP);
     }
 
     @Test
@@ -83,10 +83,10 @@ class ObservationRegistryTest {
         ObservationRegistry registry = ObservationRegistry.create();
         registry.observationConfig().observationHandler(c -> true);
         assertThat(Observation.start("test.timer", registry)).isInstanceOf(SimpleObservation.class);
-        assertThat(Observation.start("test.timer", new Observation.Context(), registry))
+        assertThat(Observation.start("test.timer", Observation.Context::new, registry))
                 .isInstanceOf(SimpleObservation.class);
         assertThat(Observation.createNotStarted("test.timer", registry)).isInstanceOf(SimpleObservation.class);
-        assertThat(Observation.createNotStarted("test.timer", new Observation.Context(), registry))
+        assertThat(Observation.createNotStarted("test.timer", Observation.Context::new, registry))
                 .isInstanceOf(SimpleObservation.class);
     }
 
@@ -104,7 +104,7 @@ class ObservationRegistryTest {
         MessagingObservationConvention messagingObservationConvention = new MessagingObservationConvention(
                 messagingConvention);
 
-        Observation.createNotStarted("observation", myContext, registry)
+        Observation.createNotStarted("observation", () -> myContext, registry)
                 .observationConvention(messagingObservationConvention).start().stop();
 
         then(myContext.getLowCardinalityKeyValues().stream().filter(keyValue -> keyValue.getKey().equals("baz"))

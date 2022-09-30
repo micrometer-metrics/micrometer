@@ -24,6 +24,7 @@ import okhttp3.Response;
 
 import java.util.function.BiFunction;
 import java.util.function.Function;
+import java.util.function.Supplier;
 
 /**
  * A {@link SenderContext} for OkHttp3.
@@ -31,7 +32,9 @@ import java.util.function.Function;
  * @author Marcin Grzejszczak
  * @since 1.10.0
  */
-public class OkHttpContext extends RequestReplySenderContext<Request.Builder, Response> {
+@SuppressWarnings("jol")
+public class OkHttpContext extends RequestReplySenderContext<Request.Builder, Response>
+        implements Supplier<OkHttpContext> {
 
     private final Function<Request, String> urlMapper;
 
@@ -93,6 +96,11 @@ public class OkHttpContext extends RequestReplySenderContext<Request.Builder, Re
 
     public Request getOriginalRequest() {
         return originalRequest;
+    }
+
+    @Override
+    public OkHttpContext get() {
+        return this;
     }
 
 }

@@ -758,7 +758,7 @@ public abstract class ObservationRegistryCompatibilityKit {
         TestContext testContext = new TestContext();
         testContext.put("context.field", "42");
         Exception exception = new IOException("simulated");
-        Observation observation = Observation.createNotStarted("test.observation", testContext, registry)
+        Observation observation = Observation.createNotStarted("test.observation", () -> testContext, registry)
                 .lowCardinalityKeyValue("lcTag1", "0")
                 // should override the previous line
                 .lowCardinalityKeyValue("lcTag1", "1").lowCardinalityKeyValues(KeyValues.of("lcTag2", "2"))
@@ -809,7 +809,7 @@ public abstract class ObservationRegistryCompatibilityKit {
                 .observationHandler(assertingHandler);
 
         TestContext testContext = new TestContext();
-        Observation observation = Observation.createNotStarted("test.observation", testContext, registry)
+        Observation observation = Observation.createNotStarted("test.observation", () -> testContext, registry)
                 .contextualName("test.observation.42").start();
         observation.stop();
 
@@ -829,7 +829,7 @@ public abstract class ObservationRegistryCompatibilityKit {
         registry.observationConfig().observationHandler(assertingHandler);
 
         TestContext testContext = new TestContext();
-        Observation observation = Observation.createNotStarted("test.observation", testContext, registry)
+        Observation observation = Observation.createNotStarted("test.observation", () -> testContext, registry)
                 .contextualName("test.observation.42")
                 .observationConvention(new TestObservationConventionWithNameOverrides()).start();
         observation.stop();
