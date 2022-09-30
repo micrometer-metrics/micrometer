@@ -63,8 +63,15 @@ public interface Observation extends ObservationView {
     }
 
     /**
-     * Creates and starts an {@link Observation}. When no registry is passed or
-     * observation is not applicable will return a no-op observation.
+     * Creates and starts an {@link Observation}. When the {@link ObservationRegistry} is
+     * null or the no-op registry, this fast returns a no-op {@link Observation} and skips
+     * the creation of the {@link Observation.Context}. This check avoids unnecessary
+     * {@link Observation.Context} creation, which is why it takes a {@link Supplier} for
+     * the context rather than the context directly. If the observation is not enabled
+     * (see
+     * {@link ObservationRegistry.ObservationConfig#observationPredicate(ObservationPredicate)
+     * ObservationConfig#observationPredicate}), a no-op observation will also be
+     * returned.
      * @param name name of the observation
      * @param contextSupplier mutable context supplier
      * @param registry observation registry
@@ -90,9 +97,16 @@ public interface Observation extends ObservationView {
 
     /**
      * Creates but <b>does not start</b> an {@link Observation}. Remember to call
-     * {@link Observation#start()} when you want the measurements to start. When no
-     * registry is passed or observation is not applicable will return a no-op
-     * observation.
+     * {@link Observation#start()} when you want the measurements to start. When the
+     * {@link ObservationRegistry} is null or the no-op registry, this fast returns a
+     * no-op {@link Observation} and skips the creation of the
+     * {@link Observation.Context}. This check avoids unnecessary
+     * {@link Observation.Context} creation, which is why it takes a {@link Supplier} for
+     * the context rather than the context directly. If the observation is not enabled
+     * (see
+     * {@link ObservationRegistry.ObservationConfig#observationPredicate(ObservationPredicate)
+     * ObservationConfig#observationPredicate}), a no-op observation will also be
+     * returned.
      * @param name name of the observation
      * @param contextSupplier supplier for mutable context
      * @param registry observation registry
@@ -112,9 +126,16 @@ public interface Observation extends ObservationView {
 
     /**
      * Creates but <b>does not start</b> an {@link Observation}. Remember to call
-     * {@link Observation#start()} when you want the measurements to start. When no
-     * registry is passed or observation is not applicable will return a no-op
-     * observation. Allows to set a custom {@link ObservationConvention} and requires to
+     * {@link Observation#start()} when you want the measurements to start. When the
+     * {@link ObservationRegistry} is null or the no-op registry, this fast returns a
+     * no-op {@link Observation} and skips the creation of the
+     * {@link Observation.Context}. This check avoids unnecessary
+     * {@link Observation.Context} creation, which is why it takes a {@link Supplier} for
+     * the context rather than the context directly. If the observation is not enabled
+     * (see
+     * {@link ObservationRegistry.ObservationConfig#observationPredicate(ObservationPredicate)
+     * ObservationConfig#observationPredicate}), a no-op observation will also be
+     * returned. Allows to set a custom {@link ObservationConvention} and requires to
      * provide a default one if neither a custom nor a pre-configured one (via
      * {@link ObservationRegistry.ObservationConfig#getObservationConvention(Context, ObservationConvention)})
      * was found. The {@link ObservationConvention} implementation can override
@@ -160,8 +181,15 @@ public interface Observation extends ObservationView {
     }
 
     /**
-     * Creates and starts an {@link Observation}. When no registry is passed or
-     * observation is not applicable will return a no-op observation.
+     * Creates and starts an {@link Observation}. When the {@link ObservationRegistry} is
+     * null or the no-op registry, this fast returns a no-op {@link Observation} and skips
+     * the creation of the {@link Observation.Context}. This check avoids unnecessary
+     * {@link Observation.Context} creation, which is why it takes a {@link Supplier} for
+     * the context rather than the context directly. If the observation is not enabled
+     * (see
+     * {@link ObservationRegistry.ObservationConfig#observationPredicate(ObservationPredicate)
+     * ObservationConfig#observationPredicate}), a no-op observation will also be
+     * returned.
      * @param <T> type of context
      * @param observationConvention observation convention
      * @param contextSupplier mutable context
@@ -174,10 +202,16 @@ public interface Observation extends ObservationView {
     }
 
     /**
-     * Creates and starts an {@link Observation}. When no registry is passed or
-     * observation is not applicable will return a no-op observation. Allows to set a
-     * custom {@link ObservationConvention} and requires to provide a default one if
-     * neither a custom nor a pre-configured one (via
+     * Creates and starts an {@link Observation}. When the {@link ObservationRegistry} is
+     * null or the no-op registry, this fast returns a no-op {@link Observation} and skips
+     * the creation of the {@link Observation.Context}. This check avoids unnecessary
+     * {@link Observation.Context} creation, which is why it takes a {@link Supplier} for
+     * the context rather than the context directly. If the observation is not enabled
+     * (see
+     * {@link ObservationRegistry.ObservationConfig#observationPredicate(ObservationPredicate)
+     * ObservationConfig#observationPredicate}), a no-op observation will also be
+     * returned. Allows to set a custom {@link ObservationConvention} and requires to
+     * provide a default one if neither a custom nor a pre-configured one (via
      * {@link ObservationRegistry.ObservationConfig#getObservationConvention(Context, ObservationConvention)})
      * was found.
      * @param <T> type of context
@@ -210,9 +244,15 @@ public interface Observation extends ObservationView {
 
     /**
      * Creates but <b>does not start</b> an {@link Observation}. Remember to call
-     * {@link Observation#start()} when you want the measurements to start. When no
-     * registry is passed or observation is not applicable will return a no-op
-     * observation.
+     * {@link Observation#start()} when you want the measurements to start. When the
+     * {@link ObservationRegistry} is null or the no-op registry, this fast returns a
+     * no-op {@link Observation} and skips the creation of the
+     * {@link Observation.Context}. This check avoids unnecessary
+     * {@link Observation.Context} creation, which is why it takes a {@link Supplier} for
+     * the context rather than the context directly. If the observation is not enabled(see
+     * {@link ObservationRegistry.ObservationConfig#observationPredicate(ObservationPredicate)
+     * ObservationConfig#observationPredicate}), a no-op observation will also be
+     * returned.
      * <p>
      * <b>Important!</b> If you're using the
      * {@link ObservationConvention#getContextualName(Context)} method to override the

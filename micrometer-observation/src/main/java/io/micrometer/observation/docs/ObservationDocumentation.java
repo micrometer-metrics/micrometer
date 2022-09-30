@@ -17,10 +17,7 @@ package io.micrometer.observation.docs;
 
 import io.micrometer.common.docs.KeyName;
 import io.micrometer.common.lang.Nullable;
-import io.micrometer.observation.Observation;
-import io.micrometer.observation.ObservationRegistry;
-import io.micrometer.observation.GlobalObservationConvention;
-import io.micrometer.observation.ObservationConvention;
+import io.micrometer.observation.*;
 
 import java.util.Objects;
 import java.util.function.Supplier;
@@ -136,7 +133,13 @@ public interface ObservationDocumentation {
     }
 
     /**
-     * Creates an {@link Observation}. You need to manually start it.
+     * Creates an {@link Observation}. You need to manually start it. When the
+     * {@link ObservationRegistry} is null or the no-op registry, this fast returns a
+     * no-op {@link Observation} and skips the creation of the
+     * {@link Observation.Context}. This check avoids unnecessary
+     * {@link Observation.Context} creation, which is why it takes a {@link Supplier} for
+     * the context rather than the context directly. If the observation is not enabled by
+     * an {@link ObservationPredicate}, a no-op observation will also be returned.
      * @param registry observation registry
      * @param contextSupplier observation context supplier
      * @return observation
@@ -151,7 +154,12 @@ public interface ObservationDocumentation {
 
     /**
      * Creates an {@link Observation} for the given {@link ObservationConvention}. You
-     * need to manually start it.
+     * need to manually start it. When the {@link ObservationRegistry} is null or the
+     * no-op registry, this fast returns a no-op {@link Observation} and skips the
+     * creation of the {@link Observation.Context}. This check avoids unnecessary
+     * {@link Observation.Context} creation, which is why it takes a {@link Supplier} for
+     * the context rather than the context directly. If the observation is not enabled by
+     * an {@link ObservationPredicate}, a no-op observation will also be returned.
      * @param customConvention convention that (if not {@code null}) will override any
      * pre-configured conventions
      * @param defaultConvention default convention that will be picked if there was
@@ -197,7 +205,12 @@ public interface ObservationDocumentation {
     }
 
     /**
-     * Creates and starts an {@link Observation}.
+     * Creates and starts an {@link Observation}. When the {@link ObservationRegistry} is
+     * null or the no-op registry, this fast returns a no-op {@link Observation} and skips
+     * the creation of the {@link Observation.Context}. This check avoids unnecessary
+     * {@link Observation.Context} creation, which is why it takes a {@link Supplier} for
+     * the context rather than the context directly. If the observation is not enabled by
+     * an {@link ObservationPredicate}, a no-op observation will also be returned.
      * @param registry observation registry
      * @param contextSupplier observation context supplier
      * @return observation
@@ -207,7 +220,12 @@ public interface ObservationDocumentation {
     }
 
     /**
-     * Creates and starts an {@link Observation}.
+     * Creates and starts an {@link Observation}. When the {@link ObservationRegistry} is
+     * null or the no-op registry, this fast returns a no-op {@link Observation} and skips
+     * the creation of the {@link Observation.Context}. This check avoids unnecessary
+     * {@link Observation.Context} creation, which is why it takes a {@link Supplier} for
+     * the context rather than the context directly. If the observation is not enabled by
+     * an {@link ObservationPredicate}, a no-op observation will also be returned.
      * @param customConvention convention that (if not {@code null}) will override any
      * pre-configured conventions
      * @param defaultConvention default convention that will be picked if there was
