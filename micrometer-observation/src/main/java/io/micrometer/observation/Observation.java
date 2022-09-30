@@ -134,14 +134,17 @@ public interface Observation extends ObservationView {
             return Observation.NOOP;
         }
         ObservationConvention<T> convention;
+        T context = contextSupplier.get();
         if (customConvention != null) {
             convention = customConvention;
         }
         else {
-            convention = registry.observationConfig().getObservationConvention(contextSupplier.get(),
-                    defaultConvention);
+            convention = registry.observationConfig().getObservationConvention(context, defaultConvention);
         }
-        return Observation.createNotStarted(convention, contextSupplier, registry);
+        if (!registry.observationConfig().isObservationEnabled(convention.getName(), context)) {
+            return NOOP;
+        }
+        return new SimpleObservation(convention, registry, context == null ? new Context() : context);
     }
 
     /**
