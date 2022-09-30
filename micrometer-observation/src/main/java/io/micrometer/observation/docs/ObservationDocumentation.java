@@ -132,7 +132,7 @@ public interface ObservationDocumentation {
      * @return observation
      */
     default Observation observation(ObservationRegistry registry) {
-        return observation(registry, null);
+        return observation(registry, Observation.Context::new);
     }
 
     /**

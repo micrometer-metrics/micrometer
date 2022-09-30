@@ -66,7 +66,7 @@ public interface Observation extends ObservationView {
      * Creates and starts an {@link Observation}. When no registry is passed or
      * observation is not applicable will return a no-op observation.
      * @param name name of the observation
-     * @param contextSupplier mutable context
+     * @param contextSupplier mutable context supplier
      * @param registry observation registry
      * @return started observation
      */
