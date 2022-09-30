@@ -59,7 +59,7 @@ public interface Observation extends ObservationView {
      * @return started observation
      */
     static Observation start(String name, ObservationRegistry registry) {
-        return start(name, () -> null, registry);
+        return start(name, Context::new, registry);
     }
 
     /**
@@ -85,7 +85,7 @@ public interface Observation extends ObservationView {
      * @return created but not started observation
      */
     static Observation createNotStarted(String name, @Nullable ObservationRegistry registry) {
-        return createNotStarted(name, () -> null, registry);
+        return createNotStarted(name, Context::new, registry);
     }
 
     /**
