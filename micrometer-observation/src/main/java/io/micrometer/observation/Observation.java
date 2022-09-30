@@ -154,9 +154,9 @@ public interface Observation extends ObservationView {
      * @param registry observation registry
      * @return started observation
      */
-    static Observation start(ObservationConvention<? extends Context> observationConvention,
+    static Observation start(ObservationConvention<Context> observationConvention,
             @Nullable ObservationRegistry registry) {
-        return start(observationConvention, () -> null, registry);
+        return start(observationConvention, Context::new, registry);
     }
 
     /**
@@ -203,9 +203,9 @@ public interface Observation extends ObservationView {
      * @param registry observation registry
      * @return created but not started observation
      */
-    static Observation createNotStarted(ObservationConvention<? extends Context> observationConvention,
+    static Observation createNotStarted(ObservationConvention<Context> observationConvention,
             @Nullable ObservationRegistry registry) {
-        return createNotStarted(observationConvention, () -> null, registry);
+        return createNotStarted(observationConvention, Context::new, registry);
     }
 
     /**
