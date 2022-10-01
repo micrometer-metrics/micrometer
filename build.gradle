@@ -413,7 +413,7 @@ nexusPublishing {
 }
 
 task deleteLockFiles(type: Delete) {
-    delete fileTree(dir: '.', include: '**/*.lockfile')
+    delete fileTree(dir: '.', include: '**/gradle.lockfile')
 }
 
 wrapper {
