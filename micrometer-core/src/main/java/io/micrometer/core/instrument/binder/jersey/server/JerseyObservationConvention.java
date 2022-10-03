@@ -15,12 +15,12 @@
  */
 package io.micrometer.core.instrument.binder.jersey.server;
 
-import io.micrometer.core.instrument.Tag;
 import io.micrometer.observation.Observation;
 import io.micrometer.observation.ObservationConvention;
 
 /**
- * Provides {@link Tag Tags} for Jersey request metrics.
+ * Provides names and {@link io.micrometer.common.KeyValues} for Jersey request
+ * observations.
  *
  * @author Marcin Grzejszczak
  * @since 1.10.0

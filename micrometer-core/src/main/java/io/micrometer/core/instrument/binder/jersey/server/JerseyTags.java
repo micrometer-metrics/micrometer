@@ -122,7 +122,7 @@ public final class JerseyTags {
     }
 
     /**
-     * Creates a {@code exception} tag based on the {@link Class#getSimpleName() simple
+     * Creates an {@code exception} tag based on the {@link Class#getSimpleName() simple
      * name} of the class of the given {@code exception}.
      * @param event the request event
      * @return the exception tag derived from the exception
