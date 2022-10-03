@@ -36,6 +36,7 @@ def VERSIONS = [
         'io.grpc:grpc-services:latest.release',
         'io.grpc:grpc-stubs:latest.release',
         'io.grpc:grpc-alts:latest.release',
+        'io.grpc:grpc-testing-proto:latest.release',
         'info.ganglia.gmetric4j:gmetric4j:latest.release',
         'io.prometheus:simpleclient_common:latest.release',
         'io.prometheus:simpleclient_pushgateway:latest.release',
