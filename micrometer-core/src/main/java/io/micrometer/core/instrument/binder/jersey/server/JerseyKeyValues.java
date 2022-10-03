@@ -1,5 +1,5 @@
 /*
- * Copyright 2017 VMware, Inc.
+ * Copyright 2022 VMware, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -100,7 +100,7 @@ class JerseyKeyValues {
     }
 
     /**
-     * Creates a {@code exception} KeyValue based on the {@link Class#getSimpleName()
+     * Creates an {@code exception} KeyValue based on the {@link Class#getSimpleName()
      * simple name} of the class of the given {@code exception}.
      * @param event the request event
      * @return the exception KeyValue derived from the exception
@@ -121,8 +121,8 @@ class JerseyKeyValues {
             exception = exception.getCause();
         }
         String simpleName = exception.getClass().getSimpleName();
-        return KeyValue.of("exception",
-                StringUtils.isNotEmpty(simpleName) ? simpleName : exception.getClass().getName());
+        return JerseyObservationDocumentation.JerseyLegacyLowCardinalityTags.EXCEPTION
+                .withValue(StringUtils.isNotEmpty(simpleName) ? simpleName : exception.getClass().getName());
     }
 
     /**

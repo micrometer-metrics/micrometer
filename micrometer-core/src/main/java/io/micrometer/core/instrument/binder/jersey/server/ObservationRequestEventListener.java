@@ -41,19 +41,22 @@ public class ObservationRequestEventListener implements RequestEventListener {
 
     private final ObservationRegistry registry;
 
-    private final JerseyObservationConvention jerseyObservationConvention;
+    private final JerseyObservationConvention customConvention;
 
     private final String metricName;
+
+    private final JerseyObservationConvention defaultConvention;
 
     public ObservationRequestEventListener(ObservationRegistry registry, String metricName) {
         this(registry, metricName, null);
     }
 
     public ObservationRequestEventListener(ObservationRegistry registry, String metricName,
-            JerseyObservationConvention jerseyObservationConvention) {
+            JerseyObservationConvention customConvention) {
         this.registry = requireNonNull(registry);
         this.metricName = requireNonNull(metricName);
-        this.jerseyObservationConvention = jerseyObservationConvention;
+        this.customConvention = customConvention;
+        this.defaultConvention = new DefaultJerseyObservationConvention(this.metricName);
     }
 
     @Override
@@ -67,8 +70,8 @@ public class ObservationRequestEventListener implements RequestEventListener {
                 }
             case REQUEST_MATCHED:
                 JerseyContext jerseyContext = new JerseyContext(event);
-                Observation observation = JerseyObservationDocumentation.DEFAULT.start(this.jerseyObservationConvention,
-                        new DefaultJerseyObservationConvention(this.metricName), () -> jerseyContext, this.registry);
+                Observation observation = JerseyObservationDocumentation.DEFAULT.start(this.customConvention,
+                        this.defaultConvention, () -> jerseyContext, this.registry);
                 Observation.Scope scope = observation.openScope();
                 observations.put(event.getContainerRequest(), new ObservationScopeAndContext(scope, jerseyContext));
                 break;
@@ -81,7 +84,6 @@ public class ObservationRequestEventListener implements RequestEventListener {
                 break;
             case FINISHED:
                 ObservationScopeAndContext finishedObservation = observations.remove(containerRequest);
-
                 if (finishedObservation != null) {
                     finishedObservation.jerseyContext.setRequestEvent(event);
                     Observation.Scope observationScope = finishedObservation.observationScope;
@@ -90,6 +92,7 @@ public class ObservationRequestEventListener implements RequestEventListener {
                 }
                 break;
             default:
+                break;
         }
     }
 
