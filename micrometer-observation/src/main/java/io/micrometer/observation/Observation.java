@@ -78,7 +78,7 @@ public interface Observation extends ObservationView {
      * @return started observation
      */
     static <T extends Context> Observation start(String name, Supplier<T> contextSupplier,
-            @Nullable ObservationRegistry registry) {
+            ObservationRegistry registry) {
         return createNotStarted(name, contextSupplier, registry).start();
     }
 
@@ -91,7 +91,7 @@ public interface Observation extends ObservationView {
      * @param registry observation registry
      * @return created but not started observation
      */
-    static Observation createNotStarted(String name, @Nullable ObservationRegistry registry) {
+    static Observation createNotStarted(String name, ObservationRegistry registry) {
         return createNotStarted(name, Context::new, registry);
     }
 
@@ -113,7 +113,7 @@ public interface Observation extends ObservationView {
      * @return created but not started observation
      */
     static <T extends Context> Observation createNotStarted(String name, Supplier<T> contextSupplier,
-            @Nullable ObservationRegistry registry) {
+            ObservationRegistry registry) {
         if (registry == null || registry.isNoop()) {
             return NOOP;
         }
@@ -175,8 +175,7 @@ public interface Observation extends ObservationView {
      * @param registry observation registry
      * @return started observation
      */
-    static Observation start(ObservationConvention<Context> observationConvention,
-            @Nullable ObservationRegistry registry) {
+    static Observation start(ObservationConvention<Context> observationConvention, ObservationRegistry registry) {
         return start(observationConvention, Context::new, registry);
     }
 
@@ -197,7 +196,7 @@ public interface Observation extends ObservationView {
      * @return started observation
      */
     static <T extends Context> Observation start(ObservationConvention<T> observationConvention,
-            Supplier<T> contextSupplier, @Nullable ObservationRegistry registry) {
+            Supplier<T> contextSupplier, ObservationRegistry registry) {
         return createNotStarted(observationConvention, contextSupplier, registry).start();
     }
 
@@ -238,7 +237,7 @@ public interface Observation extends ObservationView {
      * @return created but not started observation
      */
     static Observation createNotStarted(ObservationConvention<Context> observationConvention,
-            @Nullable ObservationRegistry registry) {
+            ObservationRegistry registry) {
         return createNotStarted(observationConvention, Context::new, registry);
     }
 
@@ -269,7 +268,7 @@ public interface Observation extends ObservationView {
      * @return created but not started observation
      */
     static <T extends Context> Observation createNotStarted(ObservationConvention<T> observationConvention,
-            Supplier<T> contextSupplier, @Nullable ObservationRegistry registry) {
+            Supplier<T> contextSupplier, ObservationRegistry registry) {
         if (registry == null || registry.isNoop() || observationConvention == NoopObservationConvention.INSTANCE) {
             return NOOP;
         }
