@@ -34,6 +34,10 @@ class MetricCollectingServerCallListener<Q> extends SimpleForwardingServerCallLi
 
     private final Counter requestCounter;
 
+    private final boolean batchCounter;
+
+    private int requestBatchCounter;
+
     private final Supplier<Status.Code> responseCodeSupplier;
 
     private final Consumer<Status.Code> responseStatusTiming;
@@ -46,31 +50,47 @@ class MetricCollectingServerCallListener<Q> extends SimpleForwardingServerCallLi
      * @param responseCodeSupplier The supplier of the response code.
      * @param responseStatusTiming The consumer used to time the processing duration along
      * with a response status.
+     * @param batchCounter
      */
 
     public MetricCollectingServerCallListener(final Listener<Q> delegate, final Counter requestCounter,
-            final Supplier<Status.Code> responseCodeSupplier, final Consumer<Status.Code> responseStatusTiming) {
+            final Supplier<Status.Code> responseCodeSupplier, final Consumer<Status.Code> responseStatusTiming,
+            boolean batchCounter) {
 
         super(delegate);
         this.requestCounter = requestCounter;
         this.responseCodeSupplier = responseCodeSupplier;
         this.responseStatusTiming = responseStatusTiming;
+        this.batchCounter = batchCounter;
     }
 
     @Override
     public void onMessage(final Q requestMessage) {
-        this.requestCounter.increment();
+        if (batchCounter) {
+            requestBatchCounter++;
+        }
+        else {
+            this.requestCounter.increment();
+        }
         super.onMessage(requestMessage);
     }
 
     @Override
     public void onComplete() {
+        if (batchCounter) {
+            this.requestCounter.increment(requestBatchCounter);
+            requestBatchCounter = 0;
+        }
         report(this.responseCodeSupplier.get());
         super.onComplete();
     }
 
     @Override
     public void onCancel() {
+        if (batchCounter) {
+            this.requestCounter.increment(requestBatchCounter);
+            requestBatchCounter = 0;
+        }
         report(Status.Code.CANCELLED);
         super.onCancel();
     }

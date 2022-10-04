@@ -33,6 +33,10 @@ class MetricCollectingServerCall<Q, A> extends SimpleForwardingServerCall<Q, A> 
 
     private final Counter responseCounter;
 
+    private int responseBatchCounter;
+
+    private final boolean batchCounter;
+
     private Code responseCode = Code.UNKNOWN;
 
     /**
@@ -40,11 +44,14 @@ class MetricCollectingServerCall<Q, A> extends SimpleForwardingServerCall<Q, A> 
      * metrics.
      * @param delegate The original call to wrap.
      * @param responseCounter The counter for outgoing responses.
+     * @param batchCounter
      */
-    public MetricCollectingServerCall(final ServerCall<Q, A> delegate, final Counter responseCounter) {
+    public MetricCollectingServerCall(final ServerCall<Q, A> delegate, final Counter responseCounter,
+            boolean batchCounter) {
 
         super(delegate);
         this.responseCounter = responseCounter;
+        this.batchCounter = batchCounter;
     }
 
     public Code getResponseCode() {
@@ -53,13 +60,21 @@ class MetricCollectingServerCall<Q, A> extends SimpleForwardingServerCall<Q, A> 
 
     @Override
     public void close(final Status status, final Metadata responseHeaders) {
+        if (this.batchCounter) {
+            this.responseCounter.increment(responseBatchCounter);
+        }
         this.responseCode = status.getCode();
         super.close(status, responseHeaders);
     }
 
     @Override
     public void sendMessage(final A responseMessage) {
-        this.responseCounter.increment();
+        if (this.batchCounter) {
+            responseBatchCounter++;
+        }
+        else {
+            this.responseCounter.increment();
+        }
         super.sendMessage(responseMessage);
     }
 

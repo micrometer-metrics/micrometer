@@ -32,6 +32,10 @@ import java.util.function.Consumer;
  */
 class MetricCollectingClientCall<Q, A> extends SimpleForwardingClientCall<Q, A> {
 
+    private final boolean batchCounter;
+
+    private int requestBatchCounter;
+
     private final Counter requestCounter;
 
     private final Counter responseCounter;
@@ -46,26 +50,51 @@ class MetricCollectingClientCall<Q, A> extends SimpleForwardingClientCall<Q, A> 
      * @param responseCounter The counter for incoming responses.
      * @param processingDurationTiming The consumer used to time the processing duration
      * along with a response status.
+     * @param batchCounter
      */
     MetricCollectingClientCall(final ClientCall<Q, A> delegate, final Counter requestCounter,
-            final Counter responseCounter, final Consumer<Status.Code> processingDurationTiming) {
+            final Counter responseCounter, final Consumer<Status.Code> processingDurationTiming, boolean batchCounter) {
 
         super(delegate);
         this.requestCounter = requestCounter;
         this.responseCounter = responseCounter;
         this.processingDurationTiming = processingDurationTiming;
+        this.batchCounter = batchCounter;
     }
 
     @Override
     public void start(final ClientCall.Listener<A> responseListener, final Metadata metadata) {
         super.start(new MetricCollectingClientCallListener<>(responseListener, this.responseCounter,
-                this.processingDurationTiming), metadata);
+                this.processingDurationTiming, this.batchCounter), metadata);
     }
 
     @Override
     public void sendMessage(final Q requestMessage) {
-        this.requestCounter.increment();
+        if (batchCounter) {
+            requestBatchCounter++;
+        }
+        else {
+            this.requestCounter.increment();
+        }
         super.sendMessage(requestMessage);
+    }
+
+    @Override
+    public void cancel(String message, Throwable cause) {
+        if (batchCounter) {
+            this.requestCounter.increment(this.requestBatchCounter);
+            this.requestBatchCounter = 0;
+        }
+        super.cancel(message, cause);
+    }
+
+    @Override
+    public void halfClose() {
+        if (batchCounter) {
+            this.requestCounter.increment(this.requestBatchCounter);
+            this.requestBatchCounter = 0;
+        }
+        super.halfClose();
     }
 
 }

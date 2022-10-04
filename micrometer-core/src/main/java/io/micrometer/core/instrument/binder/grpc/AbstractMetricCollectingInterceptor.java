@@ -103,6 +103,8 @@ public abstract class AbstractMetricCollectingInterceptor {
 
     protected final MeterRegistry registry;
 
+    protected final boolean batchCounter;
+
     protected final UnaryOperator<Counter.Builder> counterCustomizer;
 
     protected final UnaryOperator<Timer.Builder> timerCustomizer;
@@ -114,9 +116,10 @@ public abstract class AbstractMetricCollectingInterceptor {
      * {@link MeterRegistry}. This method won't use any customizers and will only
      * initialize the {@link Code#OK OK} status.
      * @param registry The registry to use.
+     * @param batchCounter Batch request/response counters till the end
      */
-    protected AbstractMetricCollectingInterceptor(final MeterRegistry registry) {
-        this(registry, UnaryOperator.identity(), UnaryOperator.identity(), Code.OK);
+    protected AbstractMetricCollectingInterceptor(final MeterRegistry registry, boolean batchCounter) {
+        this(registry, batchCounter, UnaryOperator.identity(), UnaryOperator.identity(), Code.OK);
     }
 
     /**
@@ -124,16 +127,18 @@ public abstract class AbstractMetricCollectingInterceptor {
      * {@link MeterRegistry} and uses the given customizers to configure the
      * {@link Counter}s and {@link Timer}s.
      * @param registry The registry to use.
+     * @param batchCounter Batch request/response counters till the end
      * @param counterCustomizer The unary function that can be used to customize the
      * created counters.
      * @param timerCustomizer The unary function that can be used to customize the created
      * timers.
      * @param eagerInitializedCodes The status codes that should be eager initialized.
      */
-    protected AbstractMetricCollectingInterceptor(final MeterRegistry registry,
+    protected AbstractMetricCollectingInterceptor(final MeterRegistry registry, boolean batchCounter,
             final UnaryOperator<Counter.Builder> counterCustomizer, final UnaryOperator<Timer.Builder> timerCustomizer,
             final Status.Code... eagerInitializedCodes) {
         this.registry = registry;
+        this.batchCounter = batchCounter;
         this.counterCustomizer = counterCustomizer;
         this.timerCustomizer = timerCustomizer;
         this.eagerInitializedCodes = eagerInitializedCodes;

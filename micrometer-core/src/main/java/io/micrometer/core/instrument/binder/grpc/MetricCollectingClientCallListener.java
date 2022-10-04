@@ -31,6 +31,10 @@ import java.util.function.Consumer;
  */
 class MetricCollectingClientCallListener<A> extends SimpleForwardingClientCallListener<A> {
 
+    private final boolean batchCounter;
+
+    private int responseBatchCounter;
+
     private final Counter responseCounter;
 
     private final Consumer<Status.Code> processingDurationTiming;
@@ -42,24 +46,35 @@ class MetricCollectingClientCallListener<A> extends SimpleForwardingClientCallLi
      * @param responseCounter The counter for incoming responses.
      * @param processingDurationTiming The consumer used to time the processing duration
      * along with a response status.
+     * @param batchCounter
      */
     public MetricCollectingClientCallListener(final ClientCall.Listener<A> delegate, final Counter responseCounter,
-            final Consumer<Status.Code> processingDurationTiming) {
+            final Consumer<Status.Code> processingDurationTiming, boolean batchCounter) {
 
         super(delegate);
         this.responseCounter = responseCounter;
         this.processingDurationTiming = processingDurationTiming;
+        this.batchCounter = batchCounter;
     }
 
     @Override
     public void onClose(final Status status, final Metadata metadata) {
+        if (this.batchCounter) {
+            this.responseCounter.increment(this.responseBatchCounter);
+            this.responseBatchCounter = 0;
+        }
         this.processingDurationTiming.accept(status.getCode());
         super.onClose(status, metadata);
     }
 
     @Override
     public void onMessage(final A responseMessage) {
-        this.responseCounter.increment();
+        if (this.batchCounter) {
+            this.responseBatchCounter++;
+        }
+        else {
+            this.responseCounter.increment();
+        }
         super.onMessage(responseMessage);
     }
 

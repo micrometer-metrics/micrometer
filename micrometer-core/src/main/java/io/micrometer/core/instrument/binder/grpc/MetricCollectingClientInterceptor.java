@@ -68,7 +68,17 @@ public class MetricCollectingClientInterceptor extends AbstractMetricCollectingI
      * @param registry The registry to use.
      */
     public MetricCollectingClientInterceptor(final MeterRegistry registry) {
-        super(registry);
+        super(registry, false);
+    }
+
+    /**
+     * Creates a new gRPC client interceptor that will collect metrics into the given
+     * {@link MeterRegistry}.
+     * @param registry The registry to use.
+     * @param batchCounter Batch request/response counters till the end
+     */
+    public MetricCollectingClientInterceptor(final MeterRegistry registry, boolean batchCounter) {
+        super(registry, batchCounter);
     }
 
     /**
@@ -85,7 +95,25 @@ public class MetricCollectingClientInterceptor extends AbstractMetricCollectingI
     public MetricCollectingClientInterceptor(final MeterRegistry registry,
             final UnaryOperator<Counter.Builder> counterCustomizer, final UnaryOperator<Timer.Builder> timerCustomizer,
             final Code... eagerInitializedCodes) {
-        super(registry, counterCustomizer, timerCustomizer, eagerInitializedCodes);
+        this(registry, false, counterCustomizer, timerCustomizer, eagerInitializedCodes);
+    }
+
+    /**
+     * Creates a new gRPC client interceptor that will collect metrics into the given
+     * {@link MeterRegistry} and uses the given customizers to configure the
+     * {@link Counter}s and {@link Timer}s.
+     * @param registry The registry to use.
+     * @param batchCounter Batch request/response counters till the end
+     * @param counterCustomizer The unary function that can be used to customize the
+     * created counters.
+     * @param timerCustomizer The unary function that can be used to customize the created
+     * timers.
+     * @param eagerInitializedCodes The status codes that should be eager initialized.
+     */
+    public MetricCollectingClientInterceptor(final MeterRegistry registry, boolean batchCounter,
+            final UnaryOperator<Counter.Builder> counterCustomizer, final UnaryOperator<Timer.Builder> timerCustomizer,
+            final Code... eagerInitializedCodes) {
+        super(registry, batchCounter, counterCustomizer, timerCustomizer, eagerInitializedCodes);
     }
 
     @Override
@@ -116,7 +144,7 @@ public class MetricCollectingClientInterceptor extends AbstractMetricCollectingI
         final Consumer<Code> processingDurationTiming = metrics.newProcessingDurationTiming(this.registry);
 
         return new MetricCollectingClientCall<>(channel.newCall(methodDescriptor, callOptions),
-                metrics.getRequestCounter(), metrics.getResponseCounter(), processingDurationTiming);
+                metrics.getRequestCounter(), metrics.getResponseCounter(), processingDurationTiming, batchCounter);
     }
 
 }
