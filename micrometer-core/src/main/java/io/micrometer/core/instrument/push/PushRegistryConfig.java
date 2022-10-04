@@ -90,6 +90,14 @@ public interface PushRegistryConfig extends MeterRegistryConfig {
         return getInteger(this, "batchSize").orElse(10000);
     }
 
+    /**
+     * @return true if publishing needs to be relative to registry start time. Default is
+     * {@code false}.
+     */
+    default boolean publishAtStep() {
+        return getBoolean(this, "publishAtStep").orElse(true);
+    }
+
     @Override
     default Validated<?> validate() {
         return validate(this);
@@ -105,7 +113,8 @@ public interface PushRegistryConfig extends MeterRegistryConfig {
         return checkAll(config, check("step", PushRegistryConfig::step),
                 check("connectTimeout", PushRegistryConfig::connectTimeout),
                 check("readTimeout", PushRegistryConfig::readTimeout),
-                check("batchSize", PushRegistryConfig::batchSize), check("numThreads", PushRegistryConfig::numThreads));
+                check("batchSize", PushRegistryConfig::batchSize), check("numThreads", PushRegistryConfig::numThreads),
+                check("publishAtStep", PushRegistryConfig::publishAtStep));
     }
 
 }

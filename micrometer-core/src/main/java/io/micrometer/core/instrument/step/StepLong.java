@@ -25,7 +25,11 @@ public class StepLong extends StepValue<Long> {
     private final LongAdder current = new LongAdder();
 
     public StepLong(Clock clock, long stepMillis) {
-        super(clock, stepMillis);
+        this(clock, stepMillis, 0);
+    }
+
+    public StepLong(Clock clock, long stepMillis, long registryStartMillis) {
+        super(clock, stepMillis, registryStartMillis);
     }
 
     @Override

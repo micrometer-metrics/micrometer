@@ -33,6 +33,8 @@ public abstract class PushMeterRegistry extends MeterRegistry {
 
     private final PushRegistryConfig config;
 
+    private final long registryStartMillis;
+
     @Nullable
     private ScheduledExecutorService scheduledExecutorService;
 
@@ -42,6 +44,7 @@ public abstract class PushMeterRegistry extends MeterRegistry {
         config.requireValid();
 
         this.config = config;
+        this.registryStartMillis = clock.wallTime() % this.config.step().toMillis();
     }
 
     protected abstract void publish();
@@ -77,10 +80,16 @@ public abstract class PushMeterRegistry extends MeterRegistry {
             scheduledExecutorService = Executors.newSingleThreadScheduledExecutor(threadFactory);
             // time publication to happen just after StepValue finishes the step
             long stepMillis = config.step().toMillis();
-            long initialDelayMillis = stepMillis - (clock.wallTime() % stepMillis) + 1;
+            long initialDelayMillis = (config.publishAtStep()) ? stepMillis - (clock.wallTime() % stepMillis) + 1
+                    : (stepMillis - registryStartMillis) + 1;
+
             scheduledExecutorService.scheduleAtFixedRate(this::publishSafely, initialDelayMillis, stepMillis,
                     TimeUnit.MILLISECONDS);
         }
+    }
+
+    protected long getRegistryStartMillis() {
+        return this.registryStartMillis;
     }
 
     public void stop() {

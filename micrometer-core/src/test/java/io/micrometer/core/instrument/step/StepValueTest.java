@@ -28,10 +28,11 @@ class StepValueTest {
 
     private final MockClock clock = new MockClock();
 
+    private final long stepTime = 60;
+
     @Test
     void poll() {
         final AtomicLong aLong = new AtomicLong(42);
-        final long stepTime = 60;
 
         final StepValue<Long> stepValue = new StepValue<Long>(clock, stepTime) {
             @Override
@@ -64,6 +65,44 @@ class StepValueTest {
 
         clock.add(Duration.ofMillis(60));
         assertThat(stepValue.poll()).isEqualTo(24L);
+    }
+
+    @Test
+    void testWithRegistryStart() {
+        final MockClock mockClock = new MockClock();
+        mockClock.add(Duration.ofMillis(30));
+
+        final long registryStartTime = 18;
+        final AtomicLong aLong = new AtomicLong(12);
+        final StepValue<Long> stepValue = new StepValue<Long>(mockClock, 60, registryStartTime) {
+            @Override
+            protected Supplier<Long> valueSupplier() {
+                return () -> aLong.getAndSet(0);
+            }
+
+            @Override
+            protected Long noValue() {
+                return 0L;
+            }
+        };
+
+        assertThat(stepValue.poll()).isEqualTo(0L);
+
+        mockClock.add(Duration.ofMillis(30));
+        assertThat(stepValue.poll()).isEqualTo(0L);
+
+        mockClock.add(Duration.ofMillis(18));
+        assertThat(stepValue.poll()).isEqualTo(12L);
+
+        mockClock.add(Duration.ofMillis(42));
+        assertThat(stepValue.poll()).isEqualTo(12L);
+
+        mockClock.add(Duration.ofMillis(18));
+        assertThat(stepValue.poll()).isEqualTo(0L);
+
+        aLong.set(25);
+        mockClock.add(Duration.ofMillis(60));
+        assertThat(stepValue.poll()).isEqualTo(25L);
     }
 
 }

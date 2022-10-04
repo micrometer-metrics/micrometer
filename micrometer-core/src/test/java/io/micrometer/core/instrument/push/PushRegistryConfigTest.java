@@ -51,6 +51,7 @@ class PushRegistryConfigTest {
         props.put("push.readTimeout", "1w");
         props.put("push.batchSize", "Z");
         props.put("push.step", "up");
+        props.put("push.publishAtStep", "oops");
 
         // overall not valid
         assertThat(config.validate().isValid()).isFalse();

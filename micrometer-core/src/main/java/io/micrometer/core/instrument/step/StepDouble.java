@@ -31,7 +31,11 @@ public class StepDouble extends StepValue<Double> {
     private final DoubleAdder current = new DoubleAdder();
 
     public StepDouble(Clock clock, long stepMillis) {
-        super(clock, stepMillis);
+        this(clock, stepMillis, 0);
+    }
+
+    public StepDouble(Clock clock, long stepMillis, long registryStartMillis) {
+        super(clock, stepMillis, registryStartMillis);
     }
 
     @Override

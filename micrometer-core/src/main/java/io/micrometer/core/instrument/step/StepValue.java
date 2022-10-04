@@ -34,14 +34,21 @@ public abstract class StepValue<V> {
 
     private final long stepMillis;
 
+    private final long registryStartMillis;
+
     private AtomicLong lastInitPos;
 
     private volatile V previous = noValue();
 
     public StepValue(final Clock clock, final long stepMillis) {
+        this(clock, stepMillis, 0);
+    }
+
+    public StepValue(final Clock clock, final long stepMillis, final long registryStartMillis) {
         this.clock = clock;
         this.stepMillis = stepMillis;
-        lastInitPos = new AtomicLong(clock.wallTime() / stepMillis);
+        this.registryStartMillis = registryStartMillis;
+        lastInitPos = new AtomicLong((clock.wallTime() - registryStartMillis) / stepMillis);
     }
 
     protected abstract Supplier<V> valueSupplier();
@@ -53,7 +60,7 @@ public abstract class StepValue<V> {
     protected abstract V noValue();
 
     private void rollCount(long now) {
-        final long stepTime = now / stepMillis;
+        final long stepTime = (now - registryStartMillis) / stepMillis;
         final long lastInit = lastInitPos.get();
         if (lastInit < stepTime && lastInitPos.compareAndSet(lastInit, stepTime)) {
             final V v = valueSupplier().get();

@@ -50,10 +50,18 @@ public class StepTimer extends AbstractTimer {
      */
     public StepTimer(final Id id, final Clock clock, final DistributionStatisticConfig distributionStatisticConfig,
             final PauseDetector pauseDetector, final TimeUnit baseTimeUnit, final long stepDurationMillis,
-            final boolean supportsAggregablePercentiles) {
+            final long registryStartMillis, final boolean supportsAggregablePercentiles) {
         super(id, clock, distributionStatisticConfig, pauseDetector, baseTimeUnit, supportsAggregablePercentiles);
-        countTotal = new StepTuple2<>(clock, stepDurationMillis, 0L, 0L, count::sumThenReset, total::sumThenReset);
+        countTotal = new StepTuple2<>(clock, stepDurationMillis, registryStartMillis, 0L, 0L, count::sumThenReset,
+                total::sumThenReset);
         max = new TimeWindowMax(clock, distributionStatisticConfig);
+    }
+
+    public StepTimer(final Id id, final Clock clock, final DistributionStatisticConfig distributionStatisticConfig,
+            final PauseDetector pauseDetector, final TimeUnit baseTimeUnit, final long stepDurationMillis,
+            final boolean supportsAggregablePercentiles) {
+        this(id, clock, distributionStatisticConfig, pauseDetector, baseTimeUnit, stepDurationMillis, 0,
+                supportsAggregablePercentiles);
     }
 
     @Override
