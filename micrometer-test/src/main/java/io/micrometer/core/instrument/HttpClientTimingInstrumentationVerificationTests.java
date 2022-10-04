@@ -243,17 +243,17 @@ public abstract class HttpClientTimingInstrumentationVerificationTests<CLIENT>
 
     @AfterEach
     void verifyObservationDocumentation() {
-        ObservationDocumentation ObservationDocumentation = observationDocumentation();
-        if (ObservationDocumentation == null) {
+        ObservationDocumentation observationDocumentation = observationDocumentation();
+        if (observationDocumentation == null) {
             return;
         }
         Timer timer = getRegistry().get(timerName()).timer();
         // must have all required tag keys
         assertThat(timer.getId().getTags()).extracting(Tag::getKey)
-                .contains(getRequiredLowCardinalityKeyNames(ObservationDocumentation));
+                .contains(getRequiredLowCardinalityKeyNames(observationDocumentation));
         // must not contain tag keys that aren't documented
         assertThat(timer.getId().getTags()).extracting(Tag::getKey)
-                .isSubsetOf(getLowCardinalityKeyNames(ObservationDocumentation));
+                .isSubsetOf(getLowCardinalityKeyNames(observationDocumentation));
     }
 
     private String[] getRequiredLowCardinalityKeyNames(ObservationDocumentation ObservationDocumentation) {
