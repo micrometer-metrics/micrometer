@@ -103,4 +103,9 @@ public abstract class StepMeterRegistry extends PushMeterRegistry {
                 .merge(DistributionStatisticConfig.DEFAULT);
     }
 
+    @Override
+    protected long getRegistryStartMillis() {
+        return config.publishAtStep() ? 0 : super.getRegistryStartMillis();
+    }
+
 }

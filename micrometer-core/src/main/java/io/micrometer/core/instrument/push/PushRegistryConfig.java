@@ -91,8 +91,10 @@ public interface PushRegistryConfig extends MeterRegistryConfig {
     }
 
     /**
-     * @return true if publishing needs to be relative to registry start time. Default is
-     * {@code false}.
+     * This controls when the call to {@link PushMeterRegistry#publish()} needs to be
+     * triggered. By default, publish() is called at the beginning of the step.
+     * @return false if publishing needs to be relative to registry start time. Default is
+     * {@code true}.
      */
     default boolean publishAtStep() {
         return getBoolean(this, "publishAtStep").orElse(true);
