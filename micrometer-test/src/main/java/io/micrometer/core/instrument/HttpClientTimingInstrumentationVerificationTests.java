@@ -22,6 +22,9 @@ import io.micrometer.common.lang.Nullable;
 import io.micrometer.core.annotation.Incubating;
 import io.micrometer.observation.Observation;
 import io.micrometer.observation.ObservationRegistry;
+import io.micrometer.observation.tck.TestObservationRegistry;
+import io.micrometer.observation.tck.TestObservationRegistryAssert;
+import org.assertj.core.api.Assertions;
 import org.junit.jupiter.api.Assumptions;
 import io.micrometer.observation.docs.ObservationDocumentation;
 import org.junit.jupiter.api.AfterEach;
@@ -33,7 +36,10 @@ import java.io.IOException;
 import java.net.ServerSocket;
 import java.net.URI;
 import java.util.Arrays;
+import java.util.HashSet;
+import java.util.Set;
 import java.util.concurrent.TimeUnit;
+import java.util.stream.Collectors;
 
 import static com.github.tomakehurst.wiremock.client.WireMock.*;
 import static org.assertj.core.api.Assertions.assertThat;
@@ -248,22 +254,41 @@ public abstract class HttpClientTimingInstrumentationVerificationTests<CLIENT>
             return;
         }
         Timer timer = getRegistry().get(timerName()).timer();
+        Set<String> requiredDocumentedLowCardinalityKeys = getRequiredLowCardinalityKeyNames(observationDocumentation);
+        Set<String> requiredTagKeys = new HashSet<>(requiredDocumentedLowCardinalityKeys);
+        if (testType == TestType.METRICS_VIA_OBSERVATIONS_WITH_METRICS_HANDLER) {
+            requiredTagKeys.add("error");
+        }
+        Set<String> allDocumentedLowCardinalityKeys = getLowCardinalityKeyNames(observationDocumentation);
+        Set<String> allPossibleTagKeys = new HashSet<>(allDocumentedLowCardinalityKeys);
+        if (testType == TestType.METRICS_VIA_OBSERVATIONS_WITH_METRICS_HANDLER) {
+            allPossibleTagKeys.add("error");
+        }
+
         // must have all required tag keys
         assertThat(timer.getId().getTags()).extracting(Tag::getKey)
-                .contains(getRequiredLowCardinalityKeyNames(observationDocumentation));
+                .containsAll(requiredTagKeys);
         // must not contain tag keys that aren't documented
         assertThat(timer.getId().getTags()).extracting(Tag::getKey)
-                .isSubsetOf(getLowCardinalityKeyNames(observationDocumentation));
+                .isSubsetOf(allPossibleTagKeys);
+
+        if (testType == TestType.METRICS_VIA_OBSERVATIONS_WITH_METRICS_HANDLER) {
+            if (observationDocumentation.getDefaultConvention() == null) {
+                TestObservationRegistryAssert.assertThat(getObservationRegistry()).hasSingleObservationThat()
+                        .hasContextualNameEqualTo(observationDocumentation.getContextualName());
+            }
+
+        }
     }
 
-    private String[] getRequiredLowCardinalityKeyNames(ObservationDocumentation ObservationDocumentation) {
+    private Set<String> getRequiredLowCardinalityKeyNames(ObservationDocumentation ObservationDocumentation) {
         return Arrays.stream(ObservationDocumentation.getLowCardinalityKeyNames()).filter(KeyName::isRequired)
-                .map(KeyName::asString).toArray(String[]::new);
+                .map(KeyName::asString).collect(Collectors.toSet());
     }
 
-    private String[] getLowCardinalityKeyNames(ObservationDocumentation ObservationDocumentation) {
+    private Set<String> getLowCardinalityKeyNames(ObservationDocumentation ObservationDocumentation) {
         return Arrays.stream(ObservationDocumentation.getLowCardinalityKeyNames()).map(KeyName::asString)
-                .toArray(String[]::new);
+                .collect(Collectors.toSet());
     }
 
 }

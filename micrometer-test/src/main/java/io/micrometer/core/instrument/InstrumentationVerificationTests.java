@@ -61,7 +61,7 @@ abstract class InstrumentationVerificationTests {
         return observationRegistry;
     }
 
-    protected ObservationRegistry getObservationRegistry() {
+    protected TestObservationRegistry getObservationRegistry() {
         return this.testObservationRegistry;
     }
 
