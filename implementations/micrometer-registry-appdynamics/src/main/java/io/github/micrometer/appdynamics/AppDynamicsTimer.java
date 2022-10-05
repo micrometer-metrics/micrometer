@@ -20,8 +20,7 @@ public class AppDynamicsTimer extends AbstractTimer implements MetricSnapshotPro
 
     private final MetricAggregator aggregator = new MetricAggregator();
 
-    public AppDynamicsTimer(Id id, Clock clock,
-                            PauseDetector pauseDetector, TimeUnit baseTimeUnit, long stepMillis) {
+    public AppDynamicsTimer(Id id, Clock clock, PauseDetector pauseDetector, TimeUnit baseTimeUnit, long stepMillis) {
         super(id, clock, DistributionStatisticConfig.NONE, pauseDetector, baseTimeUnit, false);
     }
 

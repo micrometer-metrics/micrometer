@@ -48,12 +48,14 @@ public class AppDynamicsRegistry extends StepMeterRegistry {
     }
 
     @Override
-    protected Timer newTimer(Meter.Id id, DistributionStatisticConfig distributionStatisticConfig, PauseDetector pauseDetector) {
+    protected Timer newTimer(Meter.Id id, DistributionStatisticConfig distributionStatisticConfig,
+            PauseDetector pauseDetector) {
         return new AppDynamicsTimer(id, clock, pauseDetector, getBaseTimeUnit(), this.config.step().toMillis());
     }
 
     @Override
-    protected DistributionSummary newDistributionSummary(Meter.Id id, DistributionStatisticConfig distributionStatisticConfig, double scale) {
+    protected DistributionSummary newDistributionSummary(Meter.Id id,
+            DistributionStatisticConfig distributionStatisticConfig, double scale) {
         return new AppDynamicsDistributionSummary(id, clock, scale);
     }
 
@@ -62,6 +64,7 @@ public class AppDynamicsRegistry extends StepMeterRegistry {
         logger.info("publishing to appdynamics");
 
         getMeters().forEach(meter ->
+                // @formatter:off
                 meter.use(
                         gauge -> publishObservation(meter.getId(), (long) gauge.value()),
                         counter -> publishSumValue(meter.getId(), (long) counter.count()),
@@ -72,9 +75,11 @@ public class AppDynamicsRegistry extends StepMeterRegistry {
                         functionCounter -> publishSumValue(meter.getId(), (long) functionCounter.count()),
                         this::publishFunctionTimer,
                         this::noOpPublish));
+                // @formatter:on
     }
 
-    private void noOpPublish(Meter meter) {}
+    private void noOpPublish(Meter meter) {
+    }
 
     private void publishFunctionTimer(FunctionTimer meter) {
         long total = (long) meter.totalTime(getBaseTimeUnit());
@@ -95,22 +100,20 @@ public class AppDynamicsRegistry extends StepMeterRegistry {
 
     private void publishSumValue(Meter.Id id, long value) {
         logger.debug("publishing sum {}", id.getName());
-        publisher.reportMetric(getConventionName(id),
-            value, "SUM", "SUM", "COLLECTIVE");
+        publisher.reportMetric(getConventionName(id), value, "SUM", "SUM", "COLLECTIVE");
     }
 
     private void publishObservation(Meter.Id id, long value) {
         logger.debug("publishing observation {}", id.getName());
-        publisher.reportMetric(getConventionName(id),
-            value, "OBSERVATION", "CURRENT", "COLLECTIVE");
+        publisher.reportMetric(getConventionName(id), value, "OBSERVATION", "CURRENT", "COLLECTIVE");
     }
 
     private void publishAggregation(Meter.Id id, long count, long value, long min, long max) {
         if (count > 0) {
             logger.debug("publishing aggregation {}", id.getName());
-            publisher.reportMetric(getConventionName(id),
-                value, count, min, max, "AVERAGE", "AVERAGE", "INDIVIDUAL");
-        } else {
+            publisher.reportMetric(getConventionName(id), value, count, min, max, "AVERAGE", "AVERAGE", "INDIVIDUAL");
+        }
+        else {
             logger.debug("ignore aggregation with no observation {}", id.getName());
         }
     }

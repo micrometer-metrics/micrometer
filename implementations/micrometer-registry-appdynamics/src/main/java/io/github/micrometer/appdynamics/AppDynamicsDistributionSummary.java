@@ -16,7 +16,7 @@ public class AppDynamicsDistributionSummary extends AbstractDistributionSummary 
 
     private final MetricAggregator aggregator = new MetricAggregator();
 
-    protected AppDynamicsDistributionSummary(Id id, Clock clock,double scale) {
+    protected AppDynamicsDistributionSummary(Id id, Clock clock, double scale) {
         super(id, clock, DistributionStatisticConfig.NONE, scale, false);
     }
 
