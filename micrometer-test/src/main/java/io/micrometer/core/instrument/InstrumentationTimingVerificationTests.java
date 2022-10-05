@@ -20,6 +20,7 @@ import io.micrometer.common.lang.Nullable;
 import io.micrometer.observation.docs.ObservationDocumentation;
 import io.micrometer.observation.tck.TestObservationRegistryAssert;
 import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.extension.ExtendWith;
 
 import java.util.Arrays;
 import java.util.HashSet;
@@ -29,13 +30,8 @@ import java.util.stream.Stream;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+@ExtendWith(InstrumentationVerificationTests.AfterBeforeParameterResolver.class)
 abstract class InstrumentationTimingVerificationTests extends InstrumentationVerificationTests {
-
-    /**
-     * Distinguish how the instrumentation is set up - with just MeterRegistry or with
-     * ObservationRegistry.
-     */
-    protected TestType testType;
 
     /**
      * A default is provided that should be preferred by new instrumentations. Existing
@@ -57,7 +53,7 @@ abstract class InstrumentationTimingVerificationTests extends InstrumentationVer
     }
 
     @AfterEach
-    protected void verifyObservationDocumentation() {
+    void verifyObservationDocumentation(TestType testType) {
         ObservationDocumentation observationDocumentation = observationDocumentation();
         if (observationDocumentation == null) {
             return;
@@ -82,11 +78,12 @@ abstract class InstrumentationTimingVerificationTests extends InstrumentationVer
 
         if (testType == TestType.METRICS_VIA_OBSERVATIONS_WITH_METRICS_HANDLER) {
             if (observationDocumentation.getDefaultConvention() == null) {
-                TestObservationRegistryAssert.assertThat(getObservationRegistry()).hasSingleObservationThat()
-                        .hasContextualNameEqualTo(observationDocumentation.getContextualName())
-                        .hasNameEqualTo(observationDocumentation.getName());
+                TestObservationRegistryAssert.assertThat(getObservationRegistry())
+                        .hasObservationWithNameEqualTo(observationDocumentation.getName()).that()
+                        .hasContextualNameEqualTo(observationDocumentation.getContextualName());
             }
-            TestObservationRegistryAssert.assertThat(getObservationRegistry()).hasSingleObservationThat()
+            TestObservationRegistryAssert.assertThat(getObservationRegistry())
+                    .hasObservationWithNameEqualTo(timerName()).that()
                     .hasSubsetOfKeys(getAllKeyNames(observationDocumentation));
         }
     }

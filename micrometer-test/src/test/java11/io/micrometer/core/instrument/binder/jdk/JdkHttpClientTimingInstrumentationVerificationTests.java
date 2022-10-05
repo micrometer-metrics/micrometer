@@ -13,10 +13,11 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package io.micrometer.core.instrument;
+package io.micrometer.core.instrument.binder.jdk;
 
 import io.micrometer.common.lang.Nullable;
-import io.micrometer.core.instrument.binder.jdk.MicrometerHttpClient;
+import io.micrometer.core.instrument.HttpClientTimingInstrumentationVerificationTests;
+import io.micrometer.observation.docs.ObservationDocumentation;
 
 import java.net.URI;
 import java.net.http.HttpClient;
@@ -52,6 +53,11 @@ class JdkHttpClientTimingInstrumentationVerificationTests
         catch (Exception e) {
             throw new RuntimeException(e);
         }
+    }
+
+    @Override
+    protected ObservationDocumentation observationDocumentation() {
+        return HttpClientObservationDocumentation.HTTP_CALL;
     }
 
     private HttpRequest makeRequest(HttpMethod method, @Nullable byte[] body, URI baseUri, String templatedPath,
