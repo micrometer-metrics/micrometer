@@ -17,15 +17,11 @@ package io.micrometer.core.instrument;
 
 import com.github.tomakehurst.wiremock.junit5.WireMockRuntimeInfo;
 import com.github.tomakehurst.wiremock.junit5.WireMockTest;
-import io.micrometer.common.docs.KeyName;
 import io.micrometer.common.lang.Nullable;
 import io.micrometer.core.annotation.Incubating;
 import io.micrometer.observation.Observation;
 import io.micrometer.observation.ObservationRegistry;
-import io.micrometer.observation.tck.TestObservationRegistryAssert;
 import org.junit.jupiter.api.Assumptions;
-import io.micrometer.observation.docs.ObservationDocumentation;
-import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.EnumSource;
@@ -33,12 +29,7 @@ import org.junit.jupiter.params.provider.EnumSource;
 import java.io.IOException;
 import java.net.ServerSocket;
 import java.net.URI;
-import java.util.Arrays;
-import java.util.HashSet;
-import java.util.Set;
 import java.util.concurrent.TimeUnit;
-import java.util.stream.Collectors;
-import java.util.stream.Stream;
 
 import static com.github.tomakehurst.wiremock.client.WireMock.*;
 import static org.assertj.core.api.Assertions.assertThat;
@@ -56,10 +47,9 @@ import static org.assertj.core.api.Assertions.assertThat;
 @WireMockTest
 @Incubating(since = "1.8.8")
 public abstract class HttpClientTimingInstrumentationVerificationTests<CLIENT>
-        extends InstrumentationVerificationTests {
+        extends InstrumentationTimingVerificationTests {
 
-    private TestType testType;
-
+    @Nullable
     private CLIENT createdClient;
 
     /**
@@ -104,25 +94,9 @@ public abstract class HttpClientTimingInstrumentationVerificationTests<CLIENT>
         return this.createdClient;
     }
 
-    /**
-     * A default is provided that should be preferred by new instrumentations. Existing
-     * instrumentations that use a different value to maintain backwards compatibility may
-     * override this method to run tests with a different name used in assertions.
-     * @return name of the meter timing http client requests
-     */
+    @Override
     protected String timerName() {
         return "http.client.requests";
-    }
-
-    /**
-     * If a {@link ObservationDocumentation} is provided the tests run will check that the
-     * produced instrumentation matches the given {@link ObservationDocumentation}.
-     * @return the documented observation to compare results against, or null to do
-     * nothing
-     */
-    @Nullable
-    protected ObservationDocumentation observationDocumentation() {
-        return null;
     }
 
     /**
@@ -244,57 +218,6 @@ public abstract class HttpClientTimingInstrumentationVerificationTests<CLIENT>
                     "You must implement the <clientInstrumentedWithObservations> method to test your instrumentation against an ObservationRegistry");
         }
         this.testType = testType;
-    }
-
-    @AfterEach
-    void verifyObservationDocumentation() {
-        ObservationDocumentation observationDocumentation = observationDocumentation();
-        if (observationDocumentation == null) {
-            return;
-        }
-        Timer timer = getRegistry().get(timerName()).timer();
-        Set<String> requiredDocumentedLowCardinalityKeys = getRequiredLowCardinalityKeyNames(observationDocumentation);
-        Set<String> requiredTagKeys = new HashSet<>(requiredDocumentedLowCardinalityKeys);
-        if (testType == TestType.METRICS_VIA_OBSERVATIONS_WITH_METRICS_HANDLER) {
-            requiredTagKeys.add("error");
-        }
-        Set<String> allDocumentedLowCardinalityKeys = getLowCardinalityKeyNames(observationDocumentation);
-        Set<String> allPossibleTagKeys = new HashSet<>(allDocumentedLowCardinalityKeys);
-        if (testType == TestType.METRICS_VIA_OBSERVATIONS_WITH_METRICS_HANDLER) {
-            allPossibleTagKeys.add("error");
-        }
-
-        // must have all required tag keys
-        assertThat(timer.getId().getTags()).extracting(Tag::getKey).containsAll(requiredTagKeys);
-        // must not contain tag keys that aren't documented
-        assertThat(timer.getId().getTags()).extracting(Tag::getKey).isSubsetOf(allPossibleTagKeys);
-
-        if (testType == TestType.METRICS_VIA_OBSERVATIONS_WITH_METRICS_HANDLER) {
-            if (observationDocumentation.getDefaultConvention() == null) {
-                TestObservationRegistryAssert.assertThat(getObservationRegistry()).hasSingleObservationThat()
-                        .hasContextualNameEqualTo(observationDocumentation.getContextualName())
-                        .hasNameEqualTo(observationDocumentation.getName());
-            }
-            TestObservationRegistryAssert.assertThat(getObservationRegistry()).hasSingleObservationThat()
-                    .hasSubsetOfKeys(getAllKeyNames(observationDocumentation));
-        }
-    }
-
-    private Set<String> getRequiredLowCardinalityKeyNames(ObservationDocumentation observationDocumentation) {
-        return Arrays.stream(observationDocumentation.getLowCardinalityKeyNames()).filter(KeyName::isRequired)
-                .map(KeyName::asString).collect(Collectors.toSet());
-    }
-
-    private Set<String> getLowCardinalityKeyNames(ObservationDocumentation observationDocumentation) {
-        return Arrays.stream(observationDocumentation.getLowCardinalityKeyNames()).map(KeyName::asString)
-                .collect(Collectors.toSet());
-    }
-
-    private String[] getAllKeyNames(ObservationDocumentation observationDocumentation) {
-        return Stream
-                .concat(Arrays.stream(observationDocumentation.getLowCardinalityKeyNames()),
-                        Arrays.stream(observationDocumentation.getHighCardinalityKeyNames()))
-                .map(KeyName::asString).toArray(String[]::new);
     }
 
 }

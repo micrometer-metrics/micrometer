@@ -41,7 +41,7 @@ import static org.awaitility.Awaitility.await;
  */
 @Incubating(since = "1.8.9")
 @ExtendWith(InstrumentationVerificationTests.AfterBeforeParameterResolver.class)
-public abstract class HttpServerTimingInstrumentationVerificationTests extends InstrumentationVerificationTests {
+public abstract class HttpServerTimingInstrumentationVerificationTests extends InstrumentationTimingVerificationTests {
 
     private final HttpSender sender = new HttpUrlConnectionSender();
 
@@ -49,12 +49,7 @@ public abstract class HttpServerTimingInstrumentationVerificationTests extends I
 
     private boolean assumptionSucceeded = true;
 
-    /**
-     * A default is provided that should be preferred by new instrumentations. Existing
-     * instrumentations that use a different value to maintain backwards compatibility may
-     * override this method to run tests with a different name used in assertions.
-     * @return name of the meter timing http server requests
-     */
+    @Override
     protected String timerName() {
         return "http.server.requests";
     }
