@@ -5,18 +5,21 @@ executors:
     working_directory: ~/micrometer
     environment:
       GRADLE_OPTS: '-Dorg.gradle.jvmargs="-Xmx2048m -XX:+HeapDumpOnOutOfMemoryError"'
+    resource_class: medium+
     docker:
       - image: cimg/openjdk:18.0.2
   circle-jdk17-executor:
     working_directory: ~/micrometer
     environment:
       GRADLE_OPTS: '-Dorg.gradle.jvmargs="-Xmx2048m -XX:+HeapDumpOnOutOfMemoryError"'
+    resource_class: medium+
     docker:
       - image: cimg/openjdk:17.0.4
   circle-jdk11-executor:
     working_directory: ~/micrometer
     environment:
       GRADLE_OPTS: '-Dorg.gradle.jvmargs="-Xmx2048m -XX:+HeapDumpOnOutOfMemoryError"'
+    resource_class: medium+
     docker:
       - image: cimg/openjdk:11.0.13
   machine-executor:
