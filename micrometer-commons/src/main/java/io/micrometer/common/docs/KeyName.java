@@ -62,4 +62,13 @@ public interface KeyName {
      */
     String asString();
 
+    /**
+     * Whether this key is required to be present in the instrumentation. This can be
+     * checked in a test of the instrumentation.
+     * @return whether this key is required
+     */
+    default boolean isRequired() {
+        return true;
+    }
+
 }

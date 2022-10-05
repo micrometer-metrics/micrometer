@@ -356,6 +356,19 @@ class TestObservationRegistryAssertTests {
             public String asString() {
                 return "foo";
             }
+        },
+
+        MAYBE_SOMETHING {
+
+            @Override
+            public String asString() {
+                return "maybe.something";
+            }
+
+            @Override
+            public boolean isRequired() {
+                return false;
+            }
         }
 
     }
