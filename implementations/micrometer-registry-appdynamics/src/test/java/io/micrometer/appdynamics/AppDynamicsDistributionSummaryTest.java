@@ -1,6 +1,6 @@
-package io.github.micrometer.appdynamics;
+package io.micrometer.appdynamics;
 
-import io.github.micrometer.appdynamics.aggregation.MetricSnapshot;
+import io.micrometer.appdynamics.aggregation.MetricSnapshot;
 import io.micrometer.core.instrument.Meter;
 import io.micrometer.core.instrument.MockClock;
 import io.micrometer.core.instrument.Tags;

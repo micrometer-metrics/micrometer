@@ -1,8 +1,8 @@
-package io.github.micrometer.appdynamics;
+package io.micrometer.appdynamics;
 
-import io.github.micrometer.appdynamics.aggregation.MetricAggregator;
-import io.github.micrometer.appdynamics.aggregation.MetricSnapshot;
-import io.github.micrometer.appdynamics.aggregation.MetricSnapshotProvider;
+import io.micrometer.appdynamics.aggregation.MetricAggregator;
+import io.micrometer.appdynamics.aggregation.MetricSnapshot;
+import io.micrometer.appdynamics.aggregation.MetricSnapshotProvider;
 import io.micrometer.core.instrument.AbstractTimer;
 import io.micrometer.core.instrument.Clock;
 import io.micrometer.core.instrument.distribution.DistributionStatisticConfig;

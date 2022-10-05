@@ -1,4 +1,4 @@
-package io.github.micrometer.appdynamics;
+package io.micrometer.appdynamics;
 
 import com.appdynamics.agent.api.MetricPublisher;
 import io.micrometer.core.instrument.MockClock;

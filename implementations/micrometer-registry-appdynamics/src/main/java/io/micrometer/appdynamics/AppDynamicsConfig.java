@@ -1,4 +1,4 @@
-package io.github.micrometer.appdynamics;
+package io.micrometer.appdynamics;
 
 import io.micrometer.core.instrument.step.StepRegistryConfig;
 

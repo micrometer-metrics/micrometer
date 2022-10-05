@@ -1,9 +1,9 @@
-package io.github.micrometer.appdynamics;
+package io.micrometer.appdynamics;
 
 import com.appdynamics.agent.api.AppdynamicsAgent;
 import com.appdynamics.agent.api.MetricPublisher;
-import io.github.micrometer.appdynamics.aggregation.MetricSnapshot;
-import io.github.micrometer.appdynamics.aggregation.MetricSnapshotProvider;
+import io.micrometer.appdynamics.aggregation.MetricSnapshot;
+import io.micrometer.appdynamics.aggregation.MetricSnapshotProvider;
 import io.micrometer.core.instrument.*;
 import io.micrometer.core.instrument.distribution.DistributionStatisticConfig;
 import io.micrometer.core.instrument.distribution.pause.PauseDetector;
@@ -64,7 +64,7 @@ public class AppDynamicsRegistry extends StepMeterRegistry {
         logger.info("publishing to appdynamics");
 
         getMeters().forEach(meter ->
-                // @formatter:off
+        // @formatter:off
                 meter.use(
                         gauge -> publishObservation(meter.getId(), (long) gauge.value()),
                         counter -> publishSumValue(meter.getId(), (long) counter.count()),
@@ -75,7 +75,7 @@ public class AppDynamicsRegistry extends StepMeterRegistry {
                         functionCounter -> publishSumValue(meter.getId(), (long) functionCounter.count()),
                         this::publishFunctionTimer,
                         this::noOpPublish));
-                // @formatter:on
+        // @formatter:on
     }
 
     private void noOpPublish(Meter meter) {
@@ -100,21 +100,18 @@ public class AppDynamicsRegistry extends StepMeterRegistry {
 
     private void publishSumValue(Meter.Id id, long value) {
         logger.debug("publishing sum {}", id.getName());
-        publisher.reportMetric(getConventionName(id),
-            value, "SUM", "SUM", "COLLECTIVE");
+        publisher.reportMetric(getConventionName(id), value, "SUM", "SUM", "COLLECTIVE");
     }
 
     private void publishObservation(Meter.Id id, long value) {
         logger.debug("publishing observation {}", id.getName());
-        publisher.reportMetric(getConventionName(id),
-            value, "OBSERVATION", "CURRENT", "COLLECTIVE");
+        publisher.reportMetric(getConventionName(id), value, "OBSERVATION", "CURRENT", "COLLECTIVE");
     }
 
     private void publishAggregation(Meter.Id id, long count, long value, long min, long max) {
         if (count > 0) {
             logger.debug("publishing aggregation {}", id.getName());
-            publisher.reportMetric(getConventionName(id),
-                value, count, min, max, "AVERAGE", "AVERAGE", "INDIVIDUAL");
+            publisher.reportMetric(getConventionName(id), value, count, min, max, "AVERAGE", "AVERAGE", "INDIVIDUAL");
         } else {
             logger.debug("ignore aggregation with no observation {}", id.getName());
         }
@@ -124,4 +121,5 @@ public class AppDynamicsRegistry extends StepMeterRegistry {
     protected TimeUnit getBaseTimeUnit() {
         return config.getBaseTimeUnit();
     }
+
 }

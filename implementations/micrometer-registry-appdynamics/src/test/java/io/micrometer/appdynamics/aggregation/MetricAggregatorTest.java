@@ -1,4 +1,4 @@
-package io.github.micrometer.appdynamics.aggregation;
+package io.micrometer.appdynamics.aggregation;
 
 import org.junit.jupiter.api.Test;
 
