@@ -75,6 +75,7 @@ public interface ObservationDocumentation {
      * {@link #getContextualName()}.
      * @return default naming convention
      */
+    @Nullable
     default Class<? extends ObservationConvention<? extends Observation.Context>> getDefaultConvention() {
         return null;
     }
