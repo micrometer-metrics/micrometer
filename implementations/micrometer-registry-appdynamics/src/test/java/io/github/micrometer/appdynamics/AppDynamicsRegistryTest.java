@@ -17,8 +17,11 @@ import static org.mockito.Mockito.*;
 public class AppDynamicsRegistryTest {
 
     private MockClock clock;
+
     private MetricPublisher publisher;
+
     private AppDynamicsConfig config;
+
     private AppDynamicsRegistry registry;
 
     @BeforeEach

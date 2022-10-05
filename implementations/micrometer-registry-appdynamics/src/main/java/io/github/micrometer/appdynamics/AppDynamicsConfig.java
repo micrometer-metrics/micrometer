@@ -19,4 +19,5 @@ public interface AppDynamicsConfig extends StepRegistryConfig {
     default TimeUnit getBaseTimeUnit() {
         return TimeUnit.MILLISECONDS;
     }
+
 }

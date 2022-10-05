@@ -57,4 +57,5 @@ public class AppDynamicsTimerTest {
         assertEquals(max, snapshot.max());
         assertEquals(total, snapshot.total());
     }
+
 }

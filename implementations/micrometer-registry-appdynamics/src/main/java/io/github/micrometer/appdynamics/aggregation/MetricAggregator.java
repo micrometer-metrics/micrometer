@@ -10,16 +10,19 @@ import java.util.concurrent.atomic.LongAdder;
 public class MetricAggregator {
 
     private final LongAdder count = new LongAdder();
+
     private final LongAdder total = new LongAdder();
+
     private final AtomicLong min = new AtomicLong();
+
     private final AtomicLong max = new AtomicLong();
+
     // private final TimeWindowMax max;
 
     // AppDynamicsSummary(Clock clock, DistributionStatisticConfig
     // distributionStatisticConfig) {
     // max = new TimeWindowMax(clock, distributionStatisticConfig);
     // }
-
 
     public long count() {
         return count.longValue();

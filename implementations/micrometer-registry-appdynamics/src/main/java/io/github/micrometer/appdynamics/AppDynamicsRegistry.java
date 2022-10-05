@@ -100,20 +100,22 @@ public class AppDynamicsRegistry extends StepMeterRegistry {
 
     private void publishSumValue(Meter.Id id, long value) {
         logger.debug("publishing sum {}", id.getName());
-        publisher.reportMetric(getConventionName(id), value, "SUM", "SUM", "COLLECTIVE");
+        publisher.reportMetric(getConventionName(id),
+            value, "SUM", "SUM", "COLLECTIVE");
     }
 
     private void publishObservation(Meter.Id id, long value) {
         logger.debug("publishing observation {}", id.getName());
-        publisher.reportMetric(getConventionName(id), value, "OBSERVATION", "CURRENT", "COLLECTIVE");
+        publisher.reportMetric(getConventionName(id),
+            value, "OBSERVATION", "CURRENT", "COLLECTIVE");
     }
 
     private void publishAggregation(Meter.Id id, long count, long value, long min, long max) {
         if (count > 0) {
             logger.debug("publishing aggregation {}", id.getName());
-            publisher.reportMetric(getConventionName(id), value, count, min, max, "AVERAGE", "AVERAGE", "INDIVIDUAL");
-        }
-        else {
+            publisher.reportMetric(getConventionName(id),
+                value, count, min, max, "AVERAGE", "AVERAGE", "INDIVIDUAL");
+        } else {
             logger.debug("ignore aggregation with no observation {}", id.getName());
         }
     }

@@ -43,4 +43,5 @@ public class MetricAggregatorTest {
         assertEquals(max, aggregator.max());
         assertEquals(total, aggregator.total());
     }
+
 }
