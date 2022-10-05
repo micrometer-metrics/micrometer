@@ -21,6 +21,44 @@ tasks.withType(org.jetbrains.kotlin.gradle.tasks.KotlinTest).all {
     }
 }
 
+jar {
+    bundle {
+
+        bnd '''\
+Import-Package: \
+    org.aspectj.*;resolution:=dynamic,\
+    com.github.benmanes.caffeine.*;resolution:=dynamic;version="${@}",\
+    net.sf.ehcache.*;resolution:=dynamic;version="${@}",\
+    javax.cache.*;resolution:=dynamic;version="${@}",\
+    org.hibernate.*;resolution:=dynamic;version="${@}",\
+    org.eclipse.jetty.*;resolution:=dynamic;version="${@}",\
+    org.glassfish.jersey.*;resolution:=dynamic;version="${@}",\
+    io.grpc.*;resolution:=dynamic,\
+    org.apache.http.*;resolution:=dynamic,\
+    com.netflix.hystrix.*;resolution:=dynamic;version="${@}",\
+    ch.qos.logback.*;resolution:=dynamic;version="${@}",\
+    org.apache.logging.log4j.*;resolution:=dynamic;version="${@}",\
+    okhttp3.*;resolution:=dynamic;version="${@}",\
+    com.mongodb.*;resolution:=dynamic;version="${@}",\
+    org.jooq.*;resolution:=dynamic;version="${@}",\
+    org.apache.kafka.*;resolution:=dynamic,\
+    com.codahale.metrics.*;resolution:=dynamic;version="${@}",\
+    com.google.common.cache.*;resolution:=dynamic;version="${@}",\
+    javax.servlet.*;resolution:=dynamic;version="${@}",\
+    io.micrometer.context.*;resolution:=dynamic,\
+    io.micrometer.observation.*;resolution:=dynamic;version="${@}",\
+    kotlinx.coroutines.*;resolution:=dynamic,\
+    org.LatencyUtils.*;resolution:=dynamic,\
+    org.HdrHistogram.*;resolution:=dynamic;version="${@}",\
+    org.apache.catalina.*;resolution:=dynamic,\
+    org.bson.*;resolution:=dynamic;version="${@}",\
+    rx.*;resolution:=dynamic;version="${@}",\
+    javax.persistence.*;resolution:=dynamic;version="${@}",\
+    *
+'''
+    }
+}
+
 dependencies {
     api project(":micrometer-commons")
     api project(":micrometer-observation")
