@@ -27,6 +27,9 @@ import java.util.*;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
 
+import static java.util.stream.Collectors.toList;
+import static org.assertj.core.util.Streams.stream;
+
 /**
  * Assertion methods for {@code Observation.Context}s and
  * {@link Observation.ContextView}s.
@@ -194,6 +197,24 @@ public class ObservationContextAssert<SELF extends ObservationContextAssert<SELF
                 failWithMessage("Observation is missing expected keys %s.", missingKeys);
             }
         }
+        return (SELF) this;
+    }
+
+    /**
+     * Verifies that the Observation key-value keys are a subset of the given set of keys.
+     */
+    public SELF hasSubsetOfKeys(String... keys) {
+        isNotNull();
+        Set<String> actualKeys = new LinkedHashSet<>(allKeys());
+        Set<String> expectedKeys = new LinkedHashSet<>(Arrays.asList(keys));
+
+        List<String> extra = stream(actualKeys).filter(actualElement -> !expectedKeys.contains(actualElement))
+                .collect(toList());
+
+        if (extra.size() > 0) {
+            failWithMessage("Observation keys are not a subset of %s. Found extra keys: %s", keys, extra);
+        }
+
         return (SELF) this;
     }
 

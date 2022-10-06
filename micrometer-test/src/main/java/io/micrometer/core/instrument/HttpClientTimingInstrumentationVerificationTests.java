@@ -47,10 +47,9 @@ import static org.assertj.core.api.Assertions.assertThat;
 @WireMockTest
 @Incubating(since = "1.8.8")
 public abstract class HttpClientTimingInstrumentationVerificationTests<CLIENT>
-        extends InstrumentationVerificationTests {
+        extends InstrumentationTimingVerificationTests {
 
-    private TestType testType;
-
+    @Nullable
     private CLIENT createdClient;
 
     /**
@@ -82,11 +81,11 @@ public abstract class HttpClientTimingInstrumentationVerificationTests<CLIENT>
      * @return instrumented client with either {@link MeterRegistry} or
      * {@link ObservationRegistry}
      */
-    private CLIENT instrumentedClient() {
+    private CLIENT instrumentedClient(TestType testType) {
         if (this.createdClient != null) {
             return this.createdClient;
         }
-        if (this.testType == TestType.METRICS_VIA_METER_REGISTRY) {
+        if (testType == TestType.METRICS_VIA_METER_REGISTRY) {
             this.createdClient = clientInstrumentedWithMetrics();
         }
         else {
@@ -95,12 +94,7 @@ public abstract class HttpClientTimingInstrumentationVerificationTests<CLIENT>
         return this.createdClient;
     }
 
-    /**
-     * A default is provided that should be preferred by new instrumentations. Existing
-     * instrumentations that use a different value to maintain backwards compatibility may
-     * override this method to run tests with a different name used in assertions.
-     * @return name of the meter timing http client requests
-     */
+    @Override
     protected String timerName() {
         return "http.client.requests";
     }
@@ -154,7 +148,7 @@ public abstract class HttpClientTimingInstrumentationVerificationTests<CLIENT>
         stubFor(get(anyUrl()).willReturn(ok()));
 
         String templatedPath = "/customers/{customerId}/carts/{cartId}";
-        sendHttpRequest(instrumentedClient(), HttpMethod.GET, null, URI.create(wmRuntimeInfo.getHttpBaseUrl()),
+        sendHttpRequest(instrumentedClient(testType), HttpMethod.GET, null, URI.create(wmRuntimeInfo.getHttpBaseUrl()),
                 templatedPath, "112", "5");
 
         Timer timer = getRegistry().get(timerName()).tags("method", "GET", "status", "200", "uri", templatedPath)
@@ -175,8 +169,8 @@ public abstract class HttpClientTimingInstrumentationVerificationTests<CLIENT>
         }
 
         try {
-            sendHttpRequest(instrumentedClient(), HttpMethod.GET, null, URI.create("http://localhost:" + unusedPort),
-                    "/anything");
+            sendHttpRequest(instrumentedClient(testType), HttpMethod.GET, null,
+                    URI.create("http://localhost:" + unusedPort), "/anything");
         }
         catch (Throwable ignore) {
         }
@@ -194,7 +188,7 @@ public abstract class HttpClientTimingInstrumentationVerificationTests<CLIENT>
 
         stubFor(get(anyUrl()).willReturn(serverError()));
 
-        sendHttpRequest(instrumentedClient(), HttpMethod.GET, null, URI.create(wmRuntimeInfo.getHttpBaseUrl()),
+        sendHttpRequest(instrumentedClient(testType), HttpMethod.GET, null, URI.create(wmRuntimeInfo.getHttpBaseUrl()),
                 "/socks");
 
         Timer timer = getRegistry().get(timerName()).tags("method", "GET", "status", "500").timer();
@@ -209,8 +203,9 @@ public abstract class HttpClientTimingInstrumentationVerificationTests<CLIENT>
 
         stubFor(post(anyUrl()).willReturn(badRequest()));
 
-        sendHttpRequest(instrumentedClient(), HttpMethod.POST, new byte[0], URI.create(wmRuntimeInfo.getHttpBaseUrl()),
-                "/socks");
+        // Some HTTP clients fail POST requests with a null body
+        sendHttpRequest(instrumentedClient(testType), HttpMethod.POST, new byte[0],
+                URI.create(wmRuntimeInfo.getHttpBaseUrl()), "/socks");
 
         Timer timer = getRegistry().get(timerName()).tags("method", "POST", "status", "400").timer();
         assertThat(timer.count()).isEqualTo(1);
@@ -222,7 +217,6 @@ public abstract class HttpClientTimingInstrumentationVerificationTests<CLIENT>
             Assumptions.assumeTrue(clientInstrumentedWithObservations() != null,
                     "You must implement the <clientInstrumentedWithObservations> method to test your instrumentation against an ObservationRegistry");
         }
-        this.testType = testType;
     }
 
 }

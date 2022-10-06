@@ -17,7 +17,9 @@ package io.micrometer.core.instrument;
 
 import io.micrometer.common.lang.Nullable;
 import io.micrometer.core.instrument.binder.okhttp3.OkHttpMetricsEventListener;
+import io.micrometer.core.instrument.binder.okhttp3.OkHttpObservationDocumentation;
 import io.micrometer.core.instrument.binder.okhttp3.OkHttpObservationInterceptor;
+import io.micrometer.observation.docs.ObservationDocumentation;
 import okhttp3.OkHttpClient;
 import okhttp3.Request;
 import okhttp3.RequestBody;
@@ -53,6 +55,11 @@ class OkHttpClientTimingInstrumentationVerificationTests
         return new OkHttpClient.Builder()
                 .addInterceptor(OkHttpObservationInterceptor.builder(getObservationRegistry(), timerName()).build())
                 .build();
+    }
+
+    @Override
+    protected ObservationDocumentation observationDocumentation() {
+        return OkHttpObservationDocumentation.DEFAULT;
     }
 
 }

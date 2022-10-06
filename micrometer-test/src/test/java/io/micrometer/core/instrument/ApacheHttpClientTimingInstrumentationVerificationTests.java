@@ -16,8 +16,10 @@
 package io.micrometer.core.instrument;
 
 import io.micrometer.common.lang.Nullable;
+import io.micrometer.core.instrument.binder.httpcomponents.ApacheHttpClientObservationDocumentation;
 import io.micrometer.core.instrument.binder.httpcomponents.DefaultUriMapper;
 import io.micrometer.core.instrument.binder.httpcomponents.MicrometerHttpRequestExecutor;
+import io.micrometer.observation.docs.ObservationDocumentation;
 import org.apache.http.client.HttpClient;
 import org.apache.http.client.methods.HttpEntityEnclosingRequestBase;
 import org.apache.http.client.methods.HttpUriRequest;
@@ -48,6 +50,11 @@ class ApacheHttpClientTimingInstrumentationVerificationTests
     @Override
     protected String timerName() {
         return "httpcomponents.httpclient.request";
+    }
+
+    @Override
+    protected ObservationDocumentation observationDocumentation() {
+        return ApacheHttpClientObservationDocumentation.DEFAULT;
     }
 
     @Override

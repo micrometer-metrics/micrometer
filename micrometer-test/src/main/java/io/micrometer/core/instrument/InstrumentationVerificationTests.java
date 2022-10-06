@@ -17,7 +17,6 @@ package io.micrometer.core.instrument;
 
 import io.micrometer.core.instrument.observation.DefaultMeterObservationHandler;
 import io.micrometer.core.instrument.simple.SimpleMeterRegistry;
-import io.micrometer.observation.ObservationRegistry;
 import io.micrometer.observation.tck.TestObservationRegistry;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
@@ -31,9 +30,7 @@ import org.junit.platform.commons.util.AnnotationUtils;
 
 import java.lang.annotation.Annotation;
 import java.lang.reflect.Parameter;
-import java.util.Arrays;
-import java.util.List;
-import java.util.Optional;
+import java.util.*;
 
 abstract class InstrumentationVerificationTests {
 
@@ -61,7 +58,7 @@ abstract class InstrumentationVerificationTests {
         return observationRegistry;
     }
 
-    protected ObservationRegistry getObservationRegistry() {
+    protected TestObservationRegistry getObservationRegistry() {
         return this.testObservationRegistry;
     }
 
@@ -76,7 +73,7 @@ abstract class InstrumentationVerificationTests {
         METRICS_VIA_METER_REGISTRY,
 
         /**
-         * Runs the tests by using the Observation API.
+         * Runs the tests by using the Observation API and a MeterObservationHandler.
          */
         METRICS_VIA_OBSERVATIONS_WITH_METRICS_HANDLER
 
