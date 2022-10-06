@@ -31,7 +31,7 @@ public interface KeyValue extends Comparable<KeyValue> {
     /**
      * Use this if you want to indicate that the value is missing.
      */
-    public static final String NONE = "none";
+    String NONE_VALUE = "none";
 
     String getKey();
 
