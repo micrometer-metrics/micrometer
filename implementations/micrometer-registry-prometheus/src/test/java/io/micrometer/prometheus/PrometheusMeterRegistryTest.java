@@ -604,14 +604,20 @@ class PrometheusMeterRegistryTest {
         assertThat(scraped).contains("test_timer_seconds_bucket{le=\"0.1\"} 1.0 # {span_id=\"3\",trace_id=\"4\"} 0.015")
                 .contains("test_timer_seconds_bucket{le=\"0.2\"} 2.0 # {span_id=\"5\",trace_id=\"6\"} 0.15")
                 .contains("test_timer_seconds_bucket{le=\"0.3\"} 2.0\n")
-                .contains("test_timer_seconds_bucket{le=\"+Inf\"} 3.0 # {span_id=\"7\",trace_id=\"8\"} 1.5");
+                .contains("test_timer_seconds_bucket{le=\"+Inf\"} 3.0 # {span_id=\"7\",trace_id=\"8\"} 1.5")
+                .contains("test_timer_seconds_count 3.0 # {span_id=\"7\",trace_id=\"8\"} 1.5")
+                .contains("test_timer_seconds_sum 1.665 # {span_id=\"7\",trace_id=\"8\"} 1.5");
         assertThat(scraped).contains("test_histogram_bucket{le=\"1.0\"} 1.0 # {span_id=\"9\",trace_id=\"10\"} 0.15")
                 .contains("test_histogram_bucket{le=\"16.0\"} 2.0 # {span_id=\"11\",trace_id=\"12\"} 15.0")
-                .contains("test_histogram_bucket{le=\"+Inf\"} 3.0 # {span_id=\"13\",trace_id=\"14\"} 5.0E18");
+                .contains("test_histogram_bucket{le=\"+Inf\"} 3.0 # {span_id=\"13\",trace_id=\"14\"} 5.0E18")
+                .contains("test_histogram_count 3.0 # {span_id=\"13\",trace_id=\"14\"} 5.0E18")
+                .contains("test_histogram_sum 5.0E18 # {span_id=\"13\",trace_id=\"14\"} 5.0E18");
         assertThat(scraped).contains("test_slos_bucket{le=\"100.0\"} 1.0 # {span_id=\"15\",trace_id=\"16\"} 10.0")
                 .contains("test_slos_bucket{le=\"200.0\"} 1.0\n")
                 .contains("test_slos_bucket{le=\"300.0\"} 2.0 # {span_id=\"17\",trace_id=\"18\"} 250.0")
-                .contains("test_slos_bucket{le=\"+Inf\"} 3.0 # {span_id=\"19\",trace_id=\"20\"} 1000.0");
+                .contains("test_slos_bucket{le=\"+Inf\"} 3.0 # {span_id=\"19\",trace_id=\"20\"} 1000.0")
+                .contains("test_slos_count 3.0 # {span_id=\"19\",trace_id=\"20\"} 1000.0")
+                .contains("test_slos_sum 1260.0 # {span_id=\"19\",trace_id=\"20\"} 1000.0");
         assertThat(scraped).endsWith("# EOF\n");
     }
 

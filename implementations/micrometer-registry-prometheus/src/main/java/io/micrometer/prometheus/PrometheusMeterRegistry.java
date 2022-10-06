@@ -218,6 +218,7 @@ public class PrometheusMeterRegistry extends MeterRegistry {
                 final ValueAtPercentile[] percentileValues = summary.takeSnapshot().percentileValues();
                 final CountAtBucket[] histogramCounts = summary.histogramCounts();
                 double count = summary.count();
+                Exemplar aggregateExemplar = null;
 
                 if (percentileValues.length > 0) {
                     List<String> quantileKeys = new ArrayList<>(tagKeys);
@@ -259,8 +260,12 @@ public class PrometheusMeterRegistry extends MeterRegistry {
                                             histogramValues, c.count()));
                                 }
                                 else {
+                                    Exemplar exemplar = exemplars[i];
+                                    if (exemplar != null) {
+                                        aggregateExemplar = exemplar;
+                                    }
                                     samples.add(new Collector.MetricFamilySamples.Sample(sampleName, histogramKeys,
-                                            histogramValues, c.count(), exemplars[i]));
+                                            histogramValues, c.count(), exemplar));
                                 }
                             }
 
@@ -273,8 +278,12 @@ public class PrometheusMeterRegistry extends MeterRegistry {
                                             histogramValues, count));
                                 }
                                 else {
+                                    Exemplar exemplar = exemplars[exemplars.length - 1];
+                                    if (exemplar != null) {
+                                        aggregateExemplar = exemplar;
+                                    }
                                     samples.add(new Collector.MetricFamilySamples.Sample(sampleName, histogramKeys,
-                                            histogramValues, count, exemplars[exemplars.length - 1]));
+                                            histogramValues, count, exemplar));
                                 }
                             }
                             break;
@@ -295,11 +304,11 @@ public class PrometheusMeterRegistry extends MeterRegistry {
 
                 }
 
-                samples.add(
-                        new Collector.MetricFamilySamples.Sample(conventionName + "_count", tagKeys, tagValues, count));
+                samples.add(new Collector.MetricFamilySamples.Sample(conventionName + "_count", tagKeys, tagValues,
+                        count, aggregateExemplar));
 
                 samples.add(new Collector.MetricFamilySamples.Sample(conventionName + "_sum", tagKeys, tagValues,
-                        summary.totalAmount()));
+                        summary.totalAmount(), aggregateExemplar));
 
                 return Stream.of(new MicrometerCollector.Family(type, conventionName, samples.build()),
                         new MicrometerCollector.Family(Collector.Type.GAUGE, conventionName + "_max",
@@ -449,6 +458,7 @@ public class PrometheusMeterRegistry extends MeterRegistry {
             ValueAtPercentile[] percentileValues = histogramSnapshot.percentileValues();
             CountAtBucket[] histogramCounts = histogramSnapshot.histogramCounts();
             double count = histogramSnapshot.count();
+            Exemplar aggregateExemplar = null;
 
             if (percentileValues.length > 0) {
                 List<String> quantileKeys = new ArrayList<>(tagKeys);
@@ -490,6 +500,10 @@ public class PrometheusMeterRegistry extends MeterRegistry {
                                         histogramValues, c.count()));
                             }
                             else {
+                                Exemplar exemplar = exemplars[i];
+                                if (exemplar != null) {
+                                    aggregateExemplar = exemplar;
+                                }
                                 samples.add(new Collector.MetricFamilySamples.Sample(sampleName, histogramKeys,
                                         histogramValues, c.count(), exemplars[i]));
                             }
@@ -503,8 +517,13 @@ public class PrometheusMeterRegistry extends MeterRegistry {
                                     histogramValues, count));
                         }
                         else {
+                            Exemplar exemplar = exemplars[exemplars.length - 1];
+                            if (exemplar != null) {
+                                aggregateExemplar = exemplar;
+                            }
+
                             samples.add(new Collector.MetricFamilySamples.Sample(sampleName, histogramKeys,
-                                    histogramValues, count, exemplars[exemplars.length - 1]));
+                                    histogramValues, count, exemplar));
                         }
                         break;
                     case VictoriaMetrics:
@@ -524,11 +543,12 @@ public class PrometheusMeterRegistry extends MeterRegistry {
             }
 
             samples.add(new Collector.MetricFamilySamples.Sample(
-                    conventionName + (forLongTaskTimer ? "_active_count" : "_count"), tagKeys, tagValues, count));
+                    conventionName + (forLongTaskTimer ? "_active_count" : "_count"), tagKeys, tagValues, count,
+                    aggregateExemplar));
 
             samples.add(new Collector.MetricFamilySamples.Sample(
                     conventionName + (forLongTaskTimer ? "_duration_sum" : "_sum"), tagKeys, tagValues,
-                    histogramSnapshot.total(TimeUnit.SECONDS)));
+                    histogramSnapshot.total(TimeUnit.SECONDS), aggregateExemplar));
 
             return Stream.of(new MicrometerCollector.Family(type, conventionName, samples.build()),
                     new MicrometerCollector.Family(Collector.Type.GAUGE, conventionName + "_max",
