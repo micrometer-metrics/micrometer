@@ -13,14 +13,14 @@ buildscript {
     dependencies {
         classpath 'gradle.plugin.com.hierynomus.gradle.plugins:license-gradle-plugin:0.16.1'
         classpath 'com.netflix.nebula:gradle-info-plugin:11.4.1'
-        classpath 'com.netflix.nebula:nebula-release-plugin:16.0.0'
+        classpath 'com.netflix.nebula:nebula-release-plugin:16.1.0'
         classpath 'com.netflix.nebula:nebula-publishing-plugin:18.4.0'
         classpath 'com.netflix.nebula:nebula-project-plugin:9.4.0'
         classpath 'io.spring.nohttp:nohttp-gradle:0.0.10'
         classpath 'org.gradle:test-retry-gradle-plugin:1.4.1'
         classpath 'io.github.gradle-nexus:publish-plugin:1.1.0'
         classpath 'me.champeau.gradle:japicmp-gradle-plugin:0.4.1'
-        classpath 'de.undercouch:gradle-download-task:5.0.2'
+        classpath 'de.undercouch:gradle-download-task:5.2.1'
         classpath 'io.spring.javaformat:spring-javaformat-gradle-plugin:0.0.35'
         classpath 'com.diffplug.spotless:spotless-plugin-gradle:6.10.0'
 
