@@ -103,8 +103,4 @@ public abstract class StepMeterRegistry extends PushMeterRegistry {
                 .merge(DistributionStatisticConfig.DEFAULT);
     }
 
-    private long getOffsetFromEpochStepMillis() {
-        return config.alignToEpoch() ? 0 : getRegistryCreationOffsetFromEpochStepMillis();
-    }
-
 }

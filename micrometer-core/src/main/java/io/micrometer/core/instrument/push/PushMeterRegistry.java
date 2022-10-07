@@ -97,8 +97,8 @@ public abstract class PushMeterRegistry extends MeterRegistry {
         }
     }
 
-    protected long getRegistryCreationOffsetFromEpochStepMillis() {
-        return this.registryCreationOffsetFromEpochStepMillis;
+    protected long getOffsetFromEpochStepMillis() {
+        return config.alignToEpoch() ? 0 : registryCreationOffsetFromEpochStepMillis;
     }
 
     public void stop() {

@@ -185,11 +185,6 @@ class PushMeterRegistryTest {
             lastStartTimeMillis = clock.wallTime();
         }
 
-        @Override
-        protected long getRegistryCreationOffsetFromEpochStepMillis() {
-            return super.getRegistryCreationOffsetFromEpochStepMillis();
-        }
-
     }
 
 }
