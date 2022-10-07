@@ -33,7 +33,7 @@ public abstract class PushMeterRegistry extends MeterRegistry {
 
     private final PushRegistryConfig config;
 
-    private final long registryStartMillis;
+    private final long registryCreationOffsetFromEpochStepMillis;
 
     @Nullable
     private ScheduledExecutorService scheduledExecutorService;
@@ -44,7 +44,7 @@ public abstract class PushMeterRegistry extends MeterRegistry {
         config.requireValid();
 
         this.config = config;
-        this.registryStartMillis = clock.wallTime() % this.config.step().toMillis();
+        this.registryCreationOffsetFromEpochStepMillis = clock.wallTime() % this.config.step().toMillis();
     }
 
     protected abstract void publish();
@@ -81,11 +81,12 @@ public abstract class PushMeterRegistry extends MeterRegistry {
             // time publication to happen just after StepValue finishes the step
             long stepMillis = config.step().toMillis();
             long initialDelayMillis;
-            if (config.publishAtStep()) {
+            if (config.alignToEpoch()) {
                 initialDelayMillis = stepMillis - (clock.wallTime() % stepMillis) + 1;
             }
             else {
-                initialDelayMillis = registryStartMillis + stepMillis - (clock.wallTime() % stepMillis) + 1;
+                initialDelayMillis = registryCreationOffsetFromEpochStepMillis + stepMillis
+                        - (clock.wallTime() % stepMillis) + 1;
                 if (initialDelayMillis > stepMillis + 1) {
                     initialDelayMillis = initialDelayMillis - stepMillis;
                 }
@@ -96,8 +97,8 @@ public abstract class PushMeterRegistry extends MeterRegistry {
         }
     }
 
-    protected long getRegistryStartMillis() {
-        return this.registryStartMillis;
+    protected long getRegistryCreationOffsetFromEpochStepMillis() {
+        return this.registryCreationOffsetFromEpochStepMillis;
     }
 
     public void stop() {

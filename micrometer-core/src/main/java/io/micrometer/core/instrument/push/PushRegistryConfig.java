@@ -91,13 +91,14 @@ public interface PushRegistryConfig extends MeterRegistryConfig {
     }
 
     /**
-     * This controls when the call to {@link PushMeterRegistry#publish()} needs to be
-     * triggered. By default, publish() is called at the beginning of the step.
-     * @return false if publishing needs to be relative to registry start time. Default is
-     * {@code true}.
+     * This controls when the call to {@link PushMeterRegistry#publish()} is scheduled. If
+     * this returns true, publishing is scheduled at the beginning of each step interval,
+     * relative to the Unix Epoch.
+     * @return false if publishing should be scheduled relative to registry instantiation
+     * time. Default is {@code true}.
      */
-    default boolean publishAtStep() {
-        return getBoolean(this, "publishAtStep").orElse(true);
+    default boolean alignToEpoch() {
+        return getBoolean(this, "alignToEpoch").orElse(true);
     }
 
     @Override
@@ -116,7 +117,7 @@ public interface PushRegistryConfig extends MeterRegistryConfig {
                 check("connectTimeout", PushRegistryConfig::connectTimeout),
                 check("readTimeout", PushRegistryConfig::readTimeout),
                 check("batchSize", PushRegistryConfig::batchSize), check("numThreads", PushRegistryConfig::numThreads),
-                check("publishAtStep", PushRegistryConfig::publishAtStep));
+                check("alignToEpoch", PushRegistryConfig::alignToEpoch));
     }
 
 }

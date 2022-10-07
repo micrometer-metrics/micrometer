@@ -34,8 +34,8 @@ public class StepDouble extends StepValue<Double> {
         this(clock, stepMillis, 0);
     }
 
-    public StepDouble(Clock clock, long stepMillis, long registryStartMillis) {
-        super(clock, stepMillis, registryStartMillis);
+    public StepDouble(Clock clock, long stepMillis, long offsetFromEpochStepMillis) {
+        super(clock, stepMillis, offsetFromEpochStepMillis);
     }
 
     @Override

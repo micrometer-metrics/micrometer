@@ -34,9 +34,9 @@ public class StepCounter extends AbstractMeter implements Counter {
         this(id, clock, stepMillis, 0);
     }
 
-    public StepCounter(Id id, Clock clock, long stepMillis, long registryStartMillis) {
+    public StepCounter(Id id, Clock clock, long stepMillis, long offsetFromEpochStepMillis) {
         super(id);
-        this.value = new StepDouble(clock, stepMillis, registryStartMillis);
+        this.value = new StepDouble(clock, stepMillis, offsetFromEpochStepMillis);
     }
 
     @Override

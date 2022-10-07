@@ -33,7 +33,7 @@ public class StepTuple2<T1, T2> {
 
     private final long stepMillis;
 
-    private final long registryStartMillis;
+    private final long offsetFromEpochStepMillis;
 
     private AtomicLong lastInitPos;
 
@@ -49,18 +49,18 @@ public class StepTuple2<T1, T2> {
 
     private volatile T2 t2Previous;
 
-    public StepTuple2(Clock clock, long stepMillis, long registryStartMillis, T1 t1NoValue, T2 t2NoValue,
+    public StepTuple2(Clock clock, long stepMillis, long offsetFromEpochStepMillis, T1 t1NoValue, T2 t2NoValue,
             Supplier<T1> t1Supplier, Supplier<T2> t2Supplier) {
         this.clock = clock;
         this.stepMillis = stepMillis;
-        this.registryStartMillis = registryStartMillis;
+        this.offsetFromEpochStepMillis = offsetFromEpochStepMillis;
         this.t1NoValue = t1NoValue;
         this.t2NoValue = t2NoValue;
         this.t1Supplier = t1Supplier;
         this.t2Supplier = t2Supplier;
         this.t1Previous = t1NoValue;
         this.t2Previous = t2NoValue;
-        lastInitPos = new AtomicLong((clock.wallTime() - registryStartMillis) / stepMillis);
+        lastInitPos = new AtomicLong((clock.wallTime() - offsetFromEpochStepMillis) / stepMillis);
     }
 
     public StepTuple2(Clock clock, long stepMillis, T1 t1NoValue, T2 t2NoValue, Supplier<T1> t1Supplier,
@@ -69,7 +69,7 @@ public class StepTuple2<T1, T2> {
     }
 
     private void rollCount(long now) {
-        long stepTime = (now - registryStartMillis) / stepMillis;
+        long stepTime = (now - offsetFromEpochStepMillis) / stepMillis;
         long lastInit = lastInitPos.get();
         if (lastInit < stepTime && lastInitPos.compareAndSet(lastInit, stepTime)) {
             // Need to check if there was any activity during the previous step interval.

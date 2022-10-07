@@ -51,7 +51,7 @@ public abstract class StepMeterRegistry extends PushMeterRegistry {
 
     @Override
     protected Counter newCounter(Meter.Id id) {
-        return new StepCounter(id, clock, config.step().toMillis(), this.getRegistryStartMillis());
+        return new StepCounter(id, clock, config.step().toMillis(), getOffsetFromEpochStepMillis());
     }
 
     @Override
@@ -65,7 +65,7 @@ public abstract class StepMeterRegistry extends PushMeterRegistry {
     protected Timer newTimer(Meter.Id id, DistributionStatisticConfig distributionStatisticConfig,
             PauseDetector pauseDetector) {
         Timer timer = new StepTimer(id, clock, distributionStatisticConfig, pauseDetector, getBaseTimeUnit(),
-                this.config.step().toMillis(), this.getRegistryStartMillis(), false);
+                this.config.step().toMillis(), getOffsetFromEpochStepMillis(), false);
         HistogramGauges.registerWithCommonFormat(timer, this);
         return timer;
     }
@@ -74,7 +74,7 @@ public abstract class StepMeterRegistry extends PushMeterRegistry {
     protected DistributionSummary newDistributionSummary(Meter.Id id,
             DistributionStatisticConfig distributionStatisticConfig, double scale) {
         DistributionSummary summary = new StepDistributionSummary(id, clock, distributionStatisticConfig, scale,
-                config.step().toMillis(), this.getRegistryStartMillis(), false);
+                config.step().toMillis(), getOffsetFromEpochStepMillis(), false);
         HistogramGauges.registerWithCommonFormat(summary, this);
         return summary;
     }
@@ -82,13 +82,13 @@ public abstract class StepMeterRegistry extends PushMeterRegistry {
     @Override
     protected <T> FunctionTimer newFunctionTimer(Meter.Id id, T obj, ToLongFunction<T> countFunction,
             ToDoubleFunction<T> totalTimeFunction, TimeUnit totalTimeFunctionUnit) {
-        return new StepFunctionTimer<>(id, clock, config.step().toMillis(), this.getRegistryStartMillis(), obj,
+        return new StepFunctionTimer<>(id, clock, config.step().toMillis(), getOffsetFromEpochStepMillis(), obj,
                 countFunction, totalTimeFunction, totalTimeFunctionUnit, getBaseTimeUnit());
     }
 
     @Override
     protected <T> FunctionCounter newFunctionCounter(Meter.Id id, T obj, ToDoubleFunction<T> countFunction) {
-        return new StepFunctionCounter<>(id, clock, config.step().toMillis(), this.getRegistryStartMillis(), obj,
+        return new StepFunctionCounter<>(id, clock, config.step().toMillis(), getOffsetFromEpochStepMillis(), obj,
                 countFunction);
     }
 
@@ -103,9 +103,8 @@ public abstract class StepMeterRegistry extends PushMeterRegistry {
                 .merge(DistributionStatisticConfig.DEFAULT);
     }
 
-    @Override
-    protected long getRegistryStartMillis() {
-        return config.publishAtStep() ? 0 : super.getRegistryStartMillis();
+    private long getOffsetFromEpochStepMillis() {
+        return config.alignToEpoch() ? 0 : getRegistryCreationOffsetFromEpochStepMillis();
     }
 
 }

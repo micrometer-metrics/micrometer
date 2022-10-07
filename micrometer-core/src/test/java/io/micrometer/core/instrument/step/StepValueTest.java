@@ -72,9 +72,9 @@ class StepValueTest {
         final MockClock mockClock = new MockClock();
         mockClock.add(Duration.ofMillis(30));
 
-        final long registryStartTime = 18;
+        final long offsetFromEpochStepMillis = 18;
         final AtomicLong aLong = new AtomicLong(12);
-        final StepValue<Long> stepValue = new StepValue<Long>(mockClock, 60, registryStartTime) {
+        final StepValue<Long> stepValue = new StepValue<Long>(mockClock, 60, offsetFromEpochStepMillis) {
             @Override
             protected Supplier<Long> valueSupplier() {
                 return () -> aLong.getAndSet(0);

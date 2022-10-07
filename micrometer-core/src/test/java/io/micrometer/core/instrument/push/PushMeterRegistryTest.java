@@ -59,7 +59,7 @@ class PushMeterRegistryTest {
         }
 
         @Override
-        public boolean publishAtStep() {
+        public boolean alignToEpoch() {
             return false;
         }
     };
@@ -186,8 +186,8 @@ class PushMeterRegistryTest {
         }
 
         @Override
-        protected long getRegistryStartMillis() {
-            return super.getRegistryStartMillis();
+        protected long getRegistryCreationOffsetFromEpochStepMillis() {
+            return super.getRegistryCreationOffsetFromEpochStepMillis();
         }
 
     }
