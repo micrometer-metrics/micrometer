@@ -4,9 +4,9 @@
 antlr:antlr:2.7.7=nohttp
 ch.qos.logback:logback-classic:1.2.3=checkstyle,nohttp,nohttp-cli
 ch.qos.logback:logback-core:1.2.3=checkstyle,nohttp,nohttp-cli
-com.amazonaws:aws-java-sdk-cloudwatch:1.12.300=compileClasspath,default,runtimeClasspath,testCompileClasspath,testRuntimeClasspath
-com.amazonaws:aws-java-sdk-core:1.12.300=compileClasspath,default,runtimeClasspath,testCompileClasspath,testRuntimeClasspath
-com.amazonaws:jmespath-java:1.12.300=compileClasspath,default,runtimeClasspath,testCompileClasspath,testRuntimeClasspath
+com.amazonaws:aws-java-sdk-cloudwatch:1.12.318=compileClasspath,default,runtimeClasspath,testCompileClasspath,testRuntimeClasspath
+com.amazonaws:aws-java-sdk-core:1.12.318=compileClasspath,default,runtimeClasspath,testCompileClasspath,testRuntimeClasspath
+com.amazonaws:jmespath-java:1.12.318=compileClasspath,default,runtimeClasspath,testCompileClasspath,testRuntimeClasspath
 com.fasterxml.jackson.core:jackson-annotations:2.13.0=compileClasspath,default,runtimeClasspath,testCompileClasspath,testRuntimeClasspath
 com.fasterxml.jackson.core:jackson-core:2.13.0=compileClasspath,default,runtimeClasspath,testCompileClasspath,testRuntimeClasspath
 com.fasterxml.jackson.core:jackson-databind:2.13.0=compileClasspath,default,runtimeClasspath,testCompileClasspath,testRuntimeClasspath
