@@ -1,0 +1,21 @@
+description 'Micrometer instrumentation for Jetty 11'
+
+dependencies {
+    api project(":micrometer-core")
+    api 'org.eclipse.jetty:jetty-server:11.+'
+
+    testImplementation 'org.junit.jupiter:junit-jupiter'
+    testImplementation 'org.assertj:assertj-core'
+}
+
+compileJava {
+    sourceCompatibility = JavaVersion.VERSION_11
+    targetCompatibility = JavaVersion.VERSION_11
+    options.release = 11
+}
+
+// this module was introduced in 1.10; the following can be removed in later branches
+if ("$project.version".startsWith("1.10.")) {
+    japicmp.enabled = false
+    downloadBaseline.enabled = false
+}

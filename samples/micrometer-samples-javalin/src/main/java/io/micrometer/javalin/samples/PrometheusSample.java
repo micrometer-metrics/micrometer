@@ -16,31 +16,30 @@
 package io.micrometer.javalin.samples;
 
 import io.javalin.Javalin;
-import io.javalin.core.plugin.Plugin;
 import io.javalin.http.ExceptionHandler;
-import io.javalin.http.HandlerEntry;
 import io.javalin.http.HandlerType;
+import io.javalin.plugin.Plugin;
+import io.javalin.routing.HandlerEntry;
 import io.micrometer.common.lang.NonNull;
 import io.micrometer.common.util.StringUtils;
 import io.micrometer.core.instrument.MeterRegistry;
 import io.micrometer.core.instrument.Tag;
 import io.micrometer.core.instrument.Tags;
-import io.micrometer.core.instrument.binder.http.DefaultHttpServletRequestTagsProvider;
+import io.micrometer.core.instrument.binder.http.DefaultHttpJakartaServletRequestTagsProvider;
 import io.micrometer.core.instrument.binder.jetty.JettyConnectionMetrics;
 import io.micrometer.core.instrument.binder.jetty.JettyServerThreadPoolMetrics;
-import io.micrometer.core.instrument.binder.jetty.TimedHandler;
 import io.micrometer.core.instrument.binder.jvm.JvmGcMetrics;
 import io.micrometer.core.instrument.binder.jvm.JvmHeapPressureMetrics;
 import io.micrometer.core.instrument.binder.jvm.JvmMemoryMetrics;
 import io.micrometer.core.instrument.binder.system.FileDescriptorMetrics;
 import io.micrometer.core.instrument.binder.system.ProcessorMetrics;
+import io.micrometer.jetty11.TimedHandler;
 import io.micrometer.prometheus.PrometheusConfig;
 import io.micrometer.prometheus.PrometheusMeterRegistry;
 import io.prometheus.client.exporter.common.TextFormat;
+import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletResponse;
 import org.eclipse.jetty.server.Server;
-
-import javax.servlet.http.HttpServletRequest;
-import javax.servlet.http.HttpServletResponse;
 
 import static io.javalin.apibuilder.ApiBuilder.get;
 import static io.javalin.apibuilder.ApiBuilder.path;
@@ -64,7 +63,8 @@ public class PrometheusSample {
         new ProcessorMetrics().bindTo(meterRegistry);
         new FileDescriptorMetrics().bindTo(meterRegistry);
 
-        Javalin app = Javalin.create(config -> config.registerPlugin(new MicrometerPlugin(meterRegistry))).start(8080);
+        Javalin app = Javalin.create(config -> config.plugins.register(new MicrometerPlugin(meterRegistry)))
+                .start(8080);
 
         // must manually delegate to Micrometer exception handler for excepton tags to be
         // correct
@@ -74,14 +74,14 @@ public class PrometheusSample {
         });
 
         app.get("/", ctx -> ctx.result("Hello World"));
-        app.get("/hello/:name", ctx -> ctx.result("Hello: " + ctx.pathParam("name")));
+        app.get("/hello/{name}", ctx -> ctx.result("Hello: " + ctx.pathParam("name")));
         app.get("/boom", ctx -> {
             throw new IllegalArgumentException("boom");
         });
 
         app.routes(() -> {
             path("hi", () -> {
-                get(":name", ctx -> ctx.result("Hello: " + ctx.pathParam("name")));
+                get("{name}", ctx -> ctx.result("Hello: " + ctx.pathParam("name")));
             });
         });
 
@@ -123,7 +123,7 @@ class MicrometerPlugin implements Plugin {
 
         app.exception(Exception.class, EXCEPTION_HANDLER);
 
-        server.insertHandler(new TimedHandler(registry, tags, new DefaultHttpServletRequestTagsProvider() {
+        server.insertHandler(new TimedHandler(registry, tags, new DefaultHttpJakartaServletRequestTagsProvider() {
             @Override
             public Iterable<Tag> getTags(HttpServletRequest request, HttpServletResponse response) {
                 String exceptionName = response.getHeader(EXCEPTION_HEADER);

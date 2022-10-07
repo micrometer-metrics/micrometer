@@ -5,8 +5,14 @@ plugins {
 dependencies {
     implementation project(":micrometer-core")
     implementation project(":micrometer-registry-prometheus")
+    implementation project(":micrometer-jetty11")
 
-    // pin to 4.x; 5.x requires changes for Jakarta EE switch
-    implementation 'io.javalin:javalin:4.+'
+    implementation 'io.javalin:javalin:latest.release'
     implementation 'ch.qos.logback:logback-classic'
+}
+
+compileJava {
+    sourceCompatibility = JavaVersion.VERSION_11
+    targetCompatibility = JavaVersion.VERSION_11
+    options.release = 11
 }

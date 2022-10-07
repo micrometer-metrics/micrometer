@@ -59,6 +59,8 @@ dependencies {
 
     // server runtime monitoring
     optionalApi 'org.eclipse.jetty:jetty-server'
+    // jakarta servlet
+    optionalApi 'jakarta.servlet:jakarta.servlet-api:5.+'
     optionalApi 'org.eclipse.jetty:jetty-client'
     optionalApi 'org.apache.tomcat.embed:tomcat-embed-core'
     optionalApi 'org.glassfish.jersey.core:jersey-server'
