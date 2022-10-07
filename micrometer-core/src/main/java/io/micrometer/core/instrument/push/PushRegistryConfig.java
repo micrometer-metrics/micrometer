@@ -93,12 +93,15 @@ public interface PushRegistryConfig extends MeterRegistryConfig {
     /**
      * This controls when the call to {@link PushMeterRegistry#publish()} is scheduled. If
      * this returns true, publishing is scheduled at the beginning of each step interval,
-     * relative to the Unix Epoch.
+     * relative to the Unix Epoch. This has the side effect of causing all application
+     * instances publishing metrics with this configuration to publish at the same time,
+     * which may overload resources by concentrating the work to publish and ingest
+     * metrics.
      * @return false if publishing should be scheduled relative to registry instantiation
-     * time. Default is {@code true}.
+     * time. Default is {@code false}.
      */
     default boolean alignToEpoch() {
-        return getBoolean(this, "alignToEpoch").orElse(true);
+        return getBoolean(this, "alignToEpoch").orElse(false);
     }
 
     @Override
