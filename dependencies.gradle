@@ -6,7 +6,8 @@ def VERSIONS = [
         'com.fasterxml.jackson.core:jackson-databind:latest.release',
         'com.github.ben-manes.caffeine:caffeine:2.+',
         'com.github.charithe:kafka-junit:latest.release',
-        'com.github.tomakehurst:wiremock-jre8-standalone:latest.release',
+        // pinned to avoid issues with shaded slf4j version - see gh-3414
+        'com.github.tomakehurst:wiremock-jre8-standalone:2.33.+',
         'com.google.cloud:google-cloud-monitoring:3.2.+',
         'com.google.dagger:dagger:2.11',
         'com.google.dagger:dagger-compiler:2.11',
@@ -62,8 +63,8 @@ def VERSIONS = [
         'org.hsqldb:hsqldb:2.5.+', // 2.6.0 requires JDK 11.
         'org.jooq:jooq:3.14.+',
         'org.jsr107.ri:cache-ri-impl:1.0.0',
-        'org.junit.jupiter:junit-jupiter:5.8.+', // Not using latest.release to avoid using a milestone version.
-        'org.junit.platform:junit-platform-launcher:1.8.+',
+        'org.junit.jupiter:junit-jupiter:5.9.+', // Not using latest.release to avoid using a milestone version.
+        'org.junit.platform:junit-platform-launcher:1.9.+',
         'org.latencyutils:LatencyUtils:latest.release',
         'org.mockito:mockito-core:latest.release',
         'org.mockito:mockito-inline:latest.release',
