@@ -153,7 +153,7 @@ class TestObservationRegistryAssertTests {
     }
 
     @Test
-    void should_fail_when_all_observations_match_the_assertion() {
+    void should_fail_when_all_observations_do_not_match_the_assertion() {
         Observation.createNotStarted("foo", registry).start().stop();
 
         thenThrownBy(() -> TestObservationRegistryAssert.assertThat(registry).forAllObservationsWithNameEqualTo("foo",
@@ -211,7 +211,7 @@ class TestObservationRegistryAssertTests {
     }
 
     @Test
-    void should_fail_when_number_is_correct_but_names_dont_match() {
+    void should_fail_when_names_match_but_number_is_incorrect() {
         Observation.createNotStarted("foo", registry).start().stop();
 
         thenThrownBy(() -> TestObservationRegistryAssert.assertThat(registry)
@@ -219,7 +219,7 @@ class TestObservationRegistryAssertTests {
     }
 
     @Test
-    void should_fail_when_number_is_incorrect_but_names_match() {
+    void should_fail_when_number_is_correct_but_names_do_not_match() {
         Observation.createNotStarted("foo", registry).start().stop();
 
         thenThrownBy(() -> TestObservationRegistryAssert.assertThat(registry)
@@ -235,7 +235,7 @@ class TestObservationRegistryAssertTests {
     }
 
     @Test
-    void should_fail_when_number_is_correct_but_names_dont_match_ignore_case() {
+    void should_fail_when_names_match_but_number_is_incorrect_ignore_case() {
         Observation.createNotStarted("FOO", registry).start().stop();
 
         thenThrownBy(() -> TestObservationRegistryAssert.assertThat(registry)
@@ -243,7 +243,7 @@ class TestObservationRegistryAssertTests {
     }
 
     @Test
-    void should_fail_when_number_is_incorrect_but_names_match_ignore_case() {
+    void should_fail_when_number_is_correct_but_names_do_not_match_ignore_case() {
         Observation.createNotStarted("FOO", registry).start().stop();
 
         thenThrownBy(() -> TestObservationRegistryAssert.assertThat(registry)

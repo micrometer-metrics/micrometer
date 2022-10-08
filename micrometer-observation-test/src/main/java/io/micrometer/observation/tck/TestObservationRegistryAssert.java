@@ -172,7 +172,6 @@ public class TestObservationRegistryAssert
      * @throws AssertionError if there is no Observation with the given name
      * @throws AssertionError if there is an Observation with the given name but the
      * additional assertion is not successful
-     * @since 1.0.0
      */
     @SuppressWarnings("rawtypes")
     public TestObservationRegistryAssert forAllObservationsWithNameEqualTo(String name,
@@ -198,9 +197,8 @@ public class TestObservationRegistryAssert
      * @throws AssertionError if the actual value is {@code null}.
      * @throws AssertionError if there is no Observation with the given name (ignoring
      * case)
-     * @throws AssertionError if there is a Observation with the given name (ignoring
+     * @throws AssertionError if there is an Observation with the given name (ignoring
      * case) but the additional assertion is not successful
-     * @since 1.0.0
      */
     @SuppressWarnings("rawtypes")
     public TestObservationRegistryAssert forAllObservationsWithNameEqualToIgnoreCase(String name,
@@ -225,12 +223,11 @@ public class TestObservationRegistryAssert
      * @throws AssertionError if the actual value is {@code null}.
      * @throws AssertionError if the number of Observations is different from the desired
      * one
-     * @since 1.0.0
      */
     public TestObservationRegistryAssert hasNumberOfObservationsEqualTo(int expectedNumberOfObservations) {
         isNotNull();
         if (this.actual.getContexts().size() != expectedNumberOfObservations) {
-            failWithMessage("There should be <%s> Observations but there were <%s>. Found following Observations \n%s",
+            failWithMessage("There should be <%s> Observations but there were <%s>. Found following Observations:\n%s",
                     expectedNumberOfObservations, this.actual.getContexts().size(),
                     observationNames(this.actual.getContexts()));
         }
@@ -252,7 +249,6 @@ public class TestObservationRegistryAssert
      * @throws AssertionError if the actual value is {@code null}.
      * @throws AssertionError if the number of properly named Observations is different
      * from the desired one
-     * @since 1.0.0
      */
     public TestObservationRegistryAssert hasNumberOfObservationsWithNameEqualTo(String observationName,
             int expectedNumberOfObservations) {
@@ -261,7 +257,7 @@ public class TestObservationRegistryAssert
                 .filter(f -> observationName.equals(f.getContext().getName())).count();
         if (observationsWithNameSize != expectedNumberOfObservations) {
             failWithMessage(
-                    "There should be <%s> Observations with name <%s> but there were <%s>. Found following Observations \n%s",
+                    "There should be <%s> Observations with name <%s> but there were <%s>. Found following Observations:\n%s",
                     expectedNumberOfObservations, observationName, observationsWithNameSize,
                     observationNames(this.actual.getContexts()));
         }
@@ -273,10 +269,10 @@ public class TestObservationRegistryAssert
      * (ignoring case).
      * <p>
      * Examples: <pre><code class='java'> // assertions succeed
-     * assertThat(testObservationRegistry).hasNumberOfObservationsWithNameEqualToIgnoreCase(1);
+     * assertThat(testObservationRegistry).hasNumberOfObservationsWithNameEqualToIgnoreCase("foo", 1);
      *
      * // assertions fail - assuming that there's only 1 such observation
-     * assertThat(testObservationRegistry).hasNumberOfObservationsWithNameEqualToIgnoreCase(2);</code></pre>
+     * assertThat(testObservationRegistry).hasNumberOfObservationsWithNameEqualToIgnoreCase("foo", 2);</code></pre>
      * @param observationName Observation name
      * @param expectedNumberOfObservations expected number of Observations with the given
      * name (ignoring case)
@@ -284,7 +280,6 @@ public class TestObservationRegistryAssert
      * @throws AssertionError if the actual value is {@code null}.
      * @throws AssertionError if the number of properly named Observations is different
      * from the desired one
-     * @since 1.0.0
      */
     public TestObservationRegistryAssert hasNumberOfObservationsWithNameEqualToIgnoreCase(String observationName,
             int expectedNumberOfObservations) {
@@ -293,7 +288,7 @@ public class TestObservationRegistryAssert
                 .filter(f -> observationName.equalsIgnoreCase(f.getContext().getName())).count();
         if (observationsWithNameSize != expectedNumberOfObservations) {
             failWithMessage(
-                    "There should be <%s> Observations with name (ignoring case) <%s> but there were <%s>. Found following Observations \n%s",
+                    "There should be <%s> Observations with name (ignoring case) <%s> but there were <%s>. Found following Observations:\n%s",
                     expectedNumberOfObservations, observationName, observationsWithNameSize,
                     observationNames(this.actual.getContexts()));
         }
@@ -301,19 +296,18 @@ public class TestObservationRegistryAssert
     }
 
     /**
-     * Verifies that there is a Observation with a key value.
+     * Verifies that there is an Observation with a key value.
      * <p>
      * Examples: <pre><code class='java'> // assertions succeed
      * assertThat(testObservationRegistry).hasAnObservationWithAKeyValue("foo", "bar");
      *
-     * // assertions fail - assuming that there is no such tags in any observation
+     * // assertions fail - assuming that there is no such a key value in any observation
      * assertThat(testObservationRegistry).hasAnObservationWithAKeyValue("foo", "bar");</code></pre>
-     * @param key expected tag key
-     * @param value expected tag value
+     * @param key expected key name
+     * @param value expected key value
      * @return {@code this} assertion object.
      * @throws AssertionError if the actual value is {@code null}.
-     * @throws AssertionError if there is no Observation with given tag key and value
-     * @since 1.0.0
+     * @throws AssertionError if there is no Observation with given key name and value
      */
     public TestObservationRegistryAssert hasAnObservationWithAKeyValue(String key, String value) {
         isNotNull();
@@ -321,7 +315,7 @@ public class TestObservationRegistryAssert
                 .filter(keyValue -> keyValue.getKey().equals(key) && keyValue.getValue().equals(value)).findFirst()
                 .orElseThrow(() -> {
                     failWithMessage(
-                            "There should be at least one Observation with tag key <%s> and value <%s> but found none. Found following Observations \n%s",
+                            "There should be at least one Observation with key name <%s> and value <%s> but found none. Found following Observations:\n%s",
                             key, value, observations());
                     return new AssertionError();
                 });
@@ -329,25 +323,24 @@ public class TestObservationRegistryAssert
     }
 
     /**
-     * Verifies that there is a Observation with a key value key.
+     * Verifies that there is an Observation with a key name.
      * <p>
      * Examples: <pre><code class='java'> // assertions succeed
      * assertThat(testObservationRegistry).hasAnObservationWithAKeyName("foo");
      *
-     * // assertions fail - assuming that the observation doesn't have a key value with such a key
+     * // assertions fail - assuming that there are no observations with such a key name
      * assertThat(testObservationRegistry).hasAnObservationWithAKeyName("foo");</code></pre>
-     * @param key expected tag key
+     * @param key expected key name
      * @return {@code this} assertion object.
      * @throws AssertionError if the actual value is {@code null}.
-     * @throws AssertionError if there is no Observation with given tag key
-     * @since 1.0.0
+     * @throws AssertionError if there is no Observation with given key name
      */
     public TestObservationRegistryAssert hasAnObservationWithAKeyName(String key) {
         isNotNull();
         this.actual.getContexts().stream().flatMap(f -> f.getContext().getAllKeyValues().stream())
                 .filter(keyValue -> keyValue.getKey().equals(key)).findFirst().orElseThrow(() -> {
                     failWithMessage(
-                            "There should be at least one Observation with tag key <%s> but found none. Found following Observations \n%s",
+                            "There should be at least one Observation with key name <%s> but found none. Found following Observations:\n%s",
                             key, observations());
                     return new AssertionError();
                 });
@@ -355,37 +348,35 @@ public class TestObservationRegistryAssert
     }
 
     /**
-     * Verifies that there is a Observation with a tag.
+     * Verifies that there is an Observation with a key value.
      * <p>
      * Examples: <pre><code class='java'> // assertions succeed
      * assertThat(testObservationRegistry).hasAnObservationWithAKeyValue(SomeKeyName.FOO, "bar");
      *
-     * // assertions fail - assuming that the observation doesn't have such a key value
+     * // assertions fail - assuming that there are no observations with such a key value
      * assertThat(testObservationRegistry).hasAnObservationWithAKeyValue(SomeKeyName.FOO, "baz");</code></pre>
-     * @param key expected tag key
-     * @param value expected tag value
+     * @param key expected key name
+     * @param value expected key value
      * @return {@code this} assertion object.
      * @throws AssertionError if the actual value is {@code null}.
-     * @throws AssertionError if there is no Observation with given tag key
-     * @since 1.0.0
+     * @throws AssertionError if there is no Observation with given key name and value
      */
     public TestObservationRegistryAssert hasAnObservationWithAKeyValue(KeyName key, String value) {
         return hasAnObservationWithAKeyValue(key.asString(), value);
     }
 
     /**
-     * Verifies that there is a Observation with a tag key.
+     * Verifies that there is an Observation with a key name.
      * <p>
      * Examples: <pre><code class='java'> // assertions succeed
      * assertThat(testObservationRegistry).hasAnObservationWithAKeyName(SomeKeyName.FOO);
      *
-     * // assertions fail - assuming that the observation doesn't have such a key name
+     * // assertions fail - assuming that there are no observation with such a key name
      * assertThat(testObservationRegistry).hasAnObservationWithAKeyName(SomeKeyName.FOO);</code></pre>
-     * @param key expected tag key
+     * @param key expected key name
      * @return {@code this} assertion object.
      * @throws AssertionError if the actual value is {@code null}.
-     * @throws AssertionError if there is no Observation with given tag key
-     * @since 1.0.0
+     * @throws AssertionError if there is no Observation with given key name
      */
     public TestObservationRegistryAssert hasAnObservationWithAKeyName(KeyName key) {
         return hasAnObservationWithAKeyName(key.asString());
