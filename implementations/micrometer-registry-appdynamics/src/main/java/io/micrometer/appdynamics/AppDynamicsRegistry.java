@@ -32,6 +32,8 @@ import java.util.concurrent.ThreadFactory;
 import java.util.concurrent.TimeUnit;
 
 /**
+ * {@link StepMeterRegistry} for AppDynamics.
+ *
  * @author Ricardo Veloso
  */
 public class AppDynamicsRegistry extends StepMeterRegistry {

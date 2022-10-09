@@ -18,6 +18,8 @@ package io.micrometer.appdynamics.aggregation;
 import java.util.concurrent.TimeUnit;
 
 /**
+ * {@link MetricSnapshot} provider.
+ *
  * @author Ricardo Veloso
  */
 public interface MetricSnapshotProvider {

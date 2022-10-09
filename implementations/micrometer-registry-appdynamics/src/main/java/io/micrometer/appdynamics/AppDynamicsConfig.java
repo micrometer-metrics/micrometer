@@ -20,6 +20,8 @@ import io.micrometer.core.instrument.step.StepRegistryConfig;
 import java.util.concurrent.TimeUnit;
 
 /**
+ * Configuration for {@link AppDynamicsRegistry}.
+ *
  * @author Ricardo Veloso
  */
 public interface AppDynamicsConfig extends StepRegistryConfig {

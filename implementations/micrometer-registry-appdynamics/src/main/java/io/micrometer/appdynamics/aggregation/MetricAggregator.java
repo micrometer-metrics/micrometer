@@ -20,9 +20,12 @@ import java.util.concurrent.atomic.AtomicLong;
 import java.util.concurrent.atomic.LongAdder;
 
 /**
+ * Resettable metric aggregator.
+ * This class may be used as a cumulative or step aggregator, and allows to retrieve a snapshot at a point in time.
+ *
  * @author Ricardo Veloso
  */
-public class MetricAggregator {
+public final class MetricAggregator {
 
     private final LongAdder count = new LongAdder();
 

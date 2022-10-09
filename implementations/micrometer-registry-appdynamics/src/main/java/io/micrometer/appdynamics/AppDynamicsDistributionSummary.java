@@ -20,11 +20,14 @@ import io.micrometer.appdynamics.aggregation.MetricSnapshot;
 import io.micrometer.appdynamics.aggregation.MetricSnapshotProvider;
 import io.micrometer.core.instrument.AbstractDistributionSummary;
 import io.micrometer.core.instrument.Clock;
+import io.micrometer.core.instrument.DistributionSummary;
 import io.micrometer.core.instrument.distribution.DistributionStatisticConfig;
 
 import java.util.concurrent.TimeUnit;
 
 /**
+ * AppDynamics {@link DistributionSummary} that keeps track of the min value.
+ *
  * @author Ricardo Veloso
  */
 public class AppDynamicsDistributionSummary extends AbstractDistributionSummary implements MetricSnapshotProvider {

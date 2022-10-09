@@ -19,6 +19,8 @@ import io.micrometer.core.instrument.Meter;
 import io.micrometer.core.instrument.config.NamingConvention;
 
 /**
+ * {@link NamingConvention} for AppDynamics.
+ *
  * @author Ricardo Veloso
  */
 public class PathNamingConvention implements NamingConvention {

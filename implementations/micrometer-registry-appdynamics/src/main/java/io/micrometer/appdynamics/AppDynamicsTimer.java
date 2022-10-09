@@ -20,14 +20,14 @@ import io.micrometer.appdynamics.aggregation.MetricSnapshot;
 import io.micrometer.appdynamics.aggregation.MetricSnapshotProvider;
 import io.micrometer.core.instrument.AbstractTimer;
 import io.micrometer.core.instrument.Clock;
+import io.micrometer.core.instrument.Timer;
 import io.micrometer.core.instrument.distribution.DistributionStatisticConfig;
 import io.micrometer.core.instrument.distribution.pause.PauseDetector;
-import io.micrometer.core.instrument.util.TimeUtils;
 
 import java.util.concurrent.TimeUnit;
 
 /**
- * AppDynamics timer that keeps track of the min value
+ * AppDynamics {@link Timer} that keeps track of the min value.
  *
  * @author Ricardo Veloso
  */
@@ -41,7 +41,7 @@ public class AppDynamicsTimer extends AbstractTimer implements MetricSnapshotPro
 
     @Override
     protected void recordNonNegative(long amount, TimeUnit unit) {
-        long value = (long) TimeUtils.convert(amount, unit, TimeUnit.NANOSECONDS);
+        long value = TimeUnit.NANOSECONDS.convert(amount, unit);
         aggregator.recordNonNegative(value);
     }
 
@@ -52,16 +52,16 @@ public class AppDynamicsTimer extends AbstractTimer implements MetricSnapshotPro
 
     @Override
     public double totalTime(TimeUnit unit) {
-        return TimeUtils.nanosToUnit(aggregator.total(), unit);
+        return unit.convert(aggregator.total(), TimeUnit.NANOSECONDS);
     }
 
     public double min(TimeUnit unit) {
-        return TimeUtils.nanosToUnit(aggregator.min(), unit);
+        return unit.convert(aggregator.min(), TimeUnit.NANOSECONDS);
     }
 
     @Override
     public double max(TimeUnit unit) {
-        return TimeUtils.nanosToUnit(aggregator.max(), unit);
+        return unit.convert(aggregator.max(), TimeUnit.NANOSECONDS);
     }
 
     @Override

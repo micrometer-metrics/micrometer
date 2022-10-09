@@ -16,6 +16,8 @@
 package io.micrometer.appdynamics.aggregation;
 
 /**
+ * Snapshot of a AppDynamics metric aggregator.
+ *
  * @author Ricardo Veloso
  */
 public class MetricSnapshot {
