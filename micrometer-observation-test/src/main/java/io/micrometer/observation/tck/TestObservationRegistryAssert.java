@@ -161,10 +161,10 @@ public class TestObservationRegistryAssert
      * Provides verification for all Observations having the given name.
      * <p>
      * Examples: <pre><code class='java'> // assertions succeed
-     * assertThat(testObservationRegistry).forAllObservationsWithNameEqualTo("foo", ObservationContextAssert -> ObservationContextAssert.hasError());
+     * assertThat(testObservationRegistry).forAllObservationsWithNameEqualTo("foo", ObservationContextAssert -&gt; ObservationContextAssert.hasError());
      *
      * // assertions fail - assuming that there was a foo observation but none had errors
-     * assertThat(testObservationRegistry).forAllObservationsWithNameEqualTo("foo", ObservationContextAssert -> ObservationContextAssert.hasError());</code></pre>
+     * assertThat(testObservationRegistry).forAllObservationsWithNameEqualTo("foo", ObservationContextAssert -&gt; ObservationContextAssert.hasError());</code></pre>
      * @param name searched Observation name
      * @param observationConsumer assertion to be executed for each Observation
      * @return {@code this} assertion object.
@@ -187,10 +187,10 @@ public class TestObservationRegistryAssert
      * Provides verification for all Observations having the given name (ignoring case).
      * <p>
      * Examples: <pre><code class='java'> // assertions succeed
-     * assertThat(testObservationRegistry).forAllObservationsWithNameEqualTo("foo", ObservationContextAssert -> ObservationContextAssert.hasError());
+     * assertThat(testObservationRegistry).forAllObservationsWithNameEqualTo("foo", ObservationContextAssert -&gt; ObservationContextAssert.hasError());
      *
      * // assertions fail - assuming that there was a foo observation but none had errors
-     * assertThat(testObservationRegistry).forAllObservationsWithNameEqualTo("foo", ObservationContextAssert -> ObservationContextAssert.hasError());</code></pre>
+     * assertThat(testObservationRegistry).forAllObservationsWithNameEqualTo("foo", ObservationContextAssert -&gt; ObservationContextAssert.hasError());</code></pre>
      * @param name searched Observation name (ignoring case)
      * @param observationConsumer assertion to be executed for each Observation
      * @return {@code this} assertion object.

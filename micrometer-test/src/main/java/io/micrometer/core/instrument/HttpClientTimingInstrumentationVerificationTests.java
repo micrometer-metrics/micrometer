@@ -41,8 +41,8 @@ import static org.assertj.core.api.Assertions.assertThat;
  * to receive real requests from an instrumented HTTP client.
  *
  * In order to make an actual HTTP call use the
- * {@link HttpClientTimingInstrumentationVerificationTests#instrumentedClient()} method
- * that will cache the instrumented instance for a test.
+ * {@link HttpClientTimingInstrumentationVerificationTests#instrumentedClient(TestType)}
+ * method that will cache the instrumented instance for a test.
  */
 @WireMockTest
 @Incubating(since = "1.8.8")
