@@ -16,6 +16,7 @@
 package io.micrometer.dynatrace.v1;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import io.micrometer.common.util.internal.logging.LogEvent;
 import io.micrometer.common.util.internal.logging.MockLogger;
 import io.micrometer.common.util.internal.logging.MockLoggerFactory;
 import io.micrometer.core.instrument.*;
@@ -40,11 +41,9 @@ import java.util.stream.Stream;
 import static io.micrometer.common.util.internal.logging.InternalLogLevel.DEBUG;
 import static io.micrometer.common.util.internal.logging.InternalLogLevel.ERROR;
 import static java.nio.charset.StandardCharsets.UTF_8;
-import static org.assertj.core.api.Assertions.assertThat;
-import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import static org.assertj.core.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.isA;
-import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.when;
+import static org.mockito.Mockito.*;
 
 /**
  * Tests for {@link DynatraceExporterV1}.
@@ -271,8 +270,8 @@ class DynatraceExporterV1Test {
                 // Max bytes: 15330 (excluding header/footer, 15360 with header/footer)
                 Arrays.asList(createTimeSeriesWithDimensions(750), // 14861 bytes
                         createTimeSeriesWithDimensions(23, "asdfg"), // 469 bytes
-                                                                     // (overflows due to
-                                                                     // comma)
+                        // (overflows due to
+                        // comma)
                         createTimeSeriesWithDimensions(750), // 14861 bytes
                         createTimeSeriesWithDimensions(22, "asd") // 468 bytes + comma
                 ));
@@ -291,8 +290,8 @@ class DynatraceExporterV1Test {
                 Arrays.asList(createTimeSeriesWithDimensions(750), // 14861 bytes
                         createTimeSeriesWithDimensions(10, "asdf"), // 234 bytes + comma
                         createTimeSeriesWithDimensions(10, "asdf") // 234 bytes + comma =
-                                                                   // 15331 bytes
-                                                                   // (overflow)
+                // 15331 bytes
+                // (overflow)
                 ));
         assertThat(messages).hasSize(2);
         assertThat(messages.get(0).metricCount).isEqualTo(2);
@@ -384,6 +383,130 @@ class DynatraceExporterV1Test {
         assertThat(LOGGER.getLogEvents().get(1).getMessage())
                 .isEqualTo("failed to send metrics to Dynatrace: Error Code=500, Response Body=simulated");
         assertThat(LOGGER.getLogEvents().get(1).getCause()).isNull();
+    }
+
+    @Test
+    void testTokenShouldBeRedactedInPutFailure() {
+        HttpSender httpClient = spy(HttpSender.class);
+
+        String invalidUrl = "http://localhost###";
+        String apiToken = "this.is.a.fake.apiToken";
+
+        DynatraceExporterV1 exporter = getDynatraceExporterV1(httpClient, invalidUrl, apiToken);
+
+        meterRegistry.gauge("my.gauge", GAUGE_VALUE);
+        Gauge gauge = meterRegistry.find("my.gauge").gauge();
+
+        exporter.export(Collections.singletonList(gauge));
+
+        assertThat(LOGGER.getLogEvents())
+                // map to only keep the message strings
+                .extracting(LogEvent::getMessage)
+                .containsExactly(String.format(
+                        "failed to build request: Illegal character in fragment at index 17: %s/api/v1/timeseries/custom:my.gauge?api-token=<redacted>",
+                        invalidUrl));
+    }
+
+    @Test
+    void testTokenShouldBeRedactedInPostFailure() throws Throwable {
+        HttpSender httpClient = spy(HttpSender.class);
+
+        String invalidUrl = "http://localhost###";
+        String apiToken = "this.is.a.fake.apiToken";
+
+        HttpSender.Request.Builder builder = HttpSender.Request.build("http://localhost", httpClient);
+        // mock the PUT call, so we can even run the post call.
+        doReturn(builder).when(httpClient).put(anyString());
+        doReturn(new HttpSender.Response(200, "")).when(httpClient).send(any(HttpSender.Request.class));
+
+        DynatraceExporterV1 exporter = getDynatraceExporterV1(httpClient, invalidUrl, apiToken);
+
+        meterRegistry.gauge("my.gauge", GAUGE_VALUE);
+        Gauge gauge = meterRegistry.find("my.gauge").gauge();
+
+        exporter.export(Collections.singletonList(gauge));
+
+        assertThat(LOGGER.getLogEvents())
+                // map to only keep the message strings
+                .extracting(LogEvent::getMessage).containsExactly(
+                        // the custom metric was created, meaning the PUT call succeeded
+                        "created custom:my.gauge as custom metric in Dynatrace",
+                        // the POST call now threw, and the token is redacted.
+                        String.format(
+                                "failed to build request: Illegal character in fragment at index 17: %s/api/v1/entity/infrastructure/custom/?api-token=<redacted>",
+                                invalidUrl));
+    }
+
+    @Test
+    void trySendHttpRequestSuccess() throws Throwable {
+        HttpSender httpClient = mock(HttpSender.class);
+        DynatraceExporterV1 exporter = FACTORY.injectLogger(() -> createExporter(httpClient));
+        HttpSender.Request.Builder reqBuilder = mock(HttpSender.Request.Builder.class);
+
+        // simulate a success response
+        when(reqBuilder.send()).thenReturn(new HttpSender.Response(200, ""));
+
+        // test that everything works and no error is logged
+        exporter.trySendHttpRequest(reqBuilder);
+        verify(reqBuilder).send();
+        assertThat(LOGGER.getLogEvents()).isEmpty();
+    }
+
+    @Test
+    void trySendHttpRequestErrorCode() throws Throwable {
+        HttpSender httpClient = mock(HttpSender.class);
+        DynatraceExporterV1 exporter = FACTORY.injectLogger(() -> createExporter(httpClient));
+        HttpSender.Request.Builder reqBuilder = mock(HttpSender.Request.Builder.class);
+
+        // simulate a failure response. This should be accepted, it will be handled
+        // elsewhere
+        when(reqBuilder.send()).thenReturn(new HttpSender.Response(400, ""));
+
+        // test that everything works and no error is logged
+        exporter.trySendHttpRequest(reqBuilder);
+        verify(reqBuilder).send();
+        assertThat(LOGGER.getLogEvents()).isEmpty();
+    }
+
+    @Test
+    void trySendHttpRequestThrowsAndRedacts() throws Throwable {
+        HttpSender httpClient = mock(HttpSender.class);
+        String apiToken = "this.is.a.fake.apiToken";
+        DynatraceExporterV1 exporter = getDynatraceExporterV1(httpClient, "http://localhost", apiToken);
+
+        HttpSender.Request.Builder reqBuilder = mock(HttpSender.Request.Builder.class);
+
+        // simulate that the request builder throws. This should not happen if the
+        // endpoint is invalid,
+        // as the URI is validated elsewhere.
+        String exceptionMessageTemplate = "Exception with the token: %s";
+        when(reqBuilder.send()).thenThrow(new Throwable(String.format(exceptionMessageTemplate, apiToken)));
+
+        exporter.trySendHttpRequest(reqBuilder);
+        verify(reqBuilder).send();
+        // assert that an error is logged
+        assertThat(LOGGER.getLogEvents()).hasSize(1).extracting(x -> x.getMessage()).containsExactlyInAnyOrder(
+                "failed to send metrics to Dynatrace: " + String.format(exceptionMessageTemplate, "<redacted>"));
+    }
+
+    private DynatraceExporterV1 getDynatraceExporterV1(HttpSender httpClient, String url, String apiToken) {
+        DynatraceExporterV1 exporter = FACTORY.injectLogger(() -> new DynatraceExporterV1(new DynatraceConfig() {
+            @Override
+            public String get(String key) {
+                return null;
+            }
+
+            @Override
+            public String apiToken() {
+                return apiToken;
+            }
+
+            @Override
+            public String uri() {
+                return url;
+            }
+        }, clock, httpClient));
+        return exporter;
     }
 
     private DynatraceExporterV1 createExporter(HttpSender httpClient) {
