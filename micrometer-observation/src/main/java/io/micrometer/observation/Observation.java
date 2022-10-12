@@ -191,7 +191,7 @@ public interface Observation extends ObservationView {
      * returned.
      * @param <T> type of context
      * @param observationConvention observation convention
-     * @param contextSupplier mutable context
+     * @param contextSupplier mutable context supplier
      * @param registry observation registry
      * @return started observation
      */
@@ -215,7 +215,7 @@ public interface Observation extends ObservationView {
      * was found.
      * @param <T> type of context
      * @param registry observation registry
-     * @param contextSupplier the observation context
+     * @param contextSupplier the observation context supplier
      * @param customConvention custom convention. If {@code null}, the default one will be
      * picked.
      * @param defaultConvention default convention when no custom convention was passed,
@@ -248,7 +248,8 @@ public interface Observation extends ObservationView {
      * no-op {@link Observation} and skips the creation of the
      * {@link Observation.Context}. This check avoids unnecessary
      * {@link Observation.Context} creation, which is why it takes a {@link Supplier} for
-     * the context rather than the context directly. If the observation is not enabled(see
+     * the context rather than the context directly. If the observation is not enabled
+     * (see
      * {@link ObservationRegistry.ObservationConfig#observationPredicate(ObservationPredicate)
      * ObservationConfig#observationPredicate}), a no-op observation will also be
      * returned.
@@ -263,7 +264,7 @@ public interface Observation extends ObservationView {
      * </p>
      * @param <T> type of context
      * @param observationConvention observation convention
-     * @param contextSupplier mutable context
+     * @param contextSupplier mutable context supplier
      * @param registry observation registry
      * @return created but not started observation
      */
