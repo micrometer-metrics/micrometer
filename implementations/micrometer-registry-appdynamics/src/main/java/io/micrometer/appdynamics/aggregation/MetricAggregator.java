@@ -20,8 +20,9 @@ import java.util.concurrent.atomic.AtomicLong;
 import java.util.concurrent.atomic.LongAdder;
 
 /**
- * Resettable metric aggregator.
- * This class may be used as a cumulative or step aggregator, and allows to retrieve a snapshot at a point in time.
+ * Resettable metric aggregator.<br>
+ * This class may be used as a cumulative or step aggregator, and allows to retrieve a
+ * snapshot at a point in time.
  *
  * @author Ricardo Veloso
  */
