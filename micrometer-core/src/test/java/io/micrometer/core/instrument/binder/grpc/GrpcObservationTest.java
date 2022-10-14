@@ -40,7 +40,6 @@ import io.micrometer.observation.Observation.Context;
 import io.micrometer.observation.Observation.Event;
 import io.micrometer.observation.ObservationHandler;
 import io.micrometer.observation.ObservationRegistry;
-import io.micrometer.observation.ObservationRegistry.ObservationConfig;
 import io.micrometer.observation.ObservationTextPublisher;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
@@ -83,11 +82,9 @@ class GrpcObservationTest {
 
         MeterRegistry meterRegistry = new SimpleMeterRegistry();
         ObservationRegistry observationRegistry = ObservationRegistry.create();
-        ObservationConfig observationConfig = observationRegistry.observationConfig();
-        observationConfig.observationHandler(new ObservationTextPublisher());
-        observationConfig.observationHandler(new DefaultMeterObservationHandler(meterRegistry));
-        observationConfig.observationHandler(serverHandler);
-        observationConfig.observationHandler(clientHandler);
+        observationRegistry.observationConfig().observationHandler(new ObservationTextPublisher())
+                .observationHandler(new DefaultMeterObservationHandler(meterRegistry)).observationHandler(serverHandler)
+                .observationHandler(clientHandler);
 
         this.serverInterceptor = new ObservationGrpcServerInterceptor(observationRegistry);
         this.clientInterceptor = new ObservationGrpcClientInterceptor(observationRegistry);
@@ -178,7 +175,7 @@ class GrpcObservationTest {
 
         @Test
         void serverStreamingRpc() {
-            // Use async stub since blocking stu cannot detect the server side completion
+            // Use async stub since blocking stub cannot detect the server side completion
             SimpleServiceStub asyncStub = SimpleServiceGrpc.newStub(channel);
 
             List<String> messages = new ArrayList<>();
@@ -220,7 +217,7 @@ class GrpcObservationTest {
             StreamObserver<SimpleRequest> requestObserver = asyncStub.bidiStreamingRpc(responseObserver);
 
             requestObserver.onNext(request1);
-            await().until(() -> messages.size() >= 2);
+            await().until(() -> messages.size() == 2);
             assertThat(messages).containsExactly("Hello-1-A", "Hello-1-B");
             messages.clear();
 
@@ -237,9 +234,8 @@ class GrpcObservationTest {
                     GrpcClientEvents.MESSAGE_RECEIVED, GrpcClientEvents.MESSAGE_RECEIVED);
 
             requestObserver.onNext(request2);
-            await().until(() -> messages.size() >= 2);
+            await().until(() -> messages.size() == 2);
             assertThat(messages).containsExactly("Hello-2-A", "Hello-2-B");
-            messages.clear();
 
             assertThat(serverHandler.getContext().getStatusCode()).isNull();
             assertThat(clientHandler.getContext().getStatusCode()).isNull();
@@ -389,7 +385,7 @@ class GrpcObservationTest {
 
                 @Override
                 public void onCompleted() {
-                    throw new RuntimeException("Should not successfully completed");
+                    throw new RuntimeException("Should not be successfully completed");
                 }
             };
         }
@@ -421,7 +417,7 @@ class GrpcObservationTest {
     // GRPC service extending SimpleService and provides echo implementation.
     static class EchoService extends SimpleServiceImplBase {
 
-        // echo the response message
+        // echo the request message
         @Override
         public void unaryRpc(SimpleRequest request, StreamObserver<SimpleResponse> responseObserver) {
             SimpleResponse response = SimpleResponse.newBuilder().setResponseMessage(request.getRequestMessage())
@@ -464,7 +460,7 @@ class GrpcObservationTest {
             responseObserver.onCompleted();
         }
 
-        // returns two message per received message
+        // returns two messages per received message
         @Override
         public StreamObserver<SimpleRequest> bidiStreamingRpc(StreamObserver<SimpleResponse> responseObserver) {
             return new StreamObserver<>() {
@@ -505,7 +501,7 @@ class GrpcObservationTest {
 
         private final Class<T> contextClass;
 
-        public ContextAndEventHoldingObservationHandler(Class<T> contextClass) {
+        ContextAndEventHoldingObservationHandler(Class<T> contextClass) {
             this.contextClass = contextClass;
         }
 
@@ -524,11 +520,11 @@ class GrpcObservationTest {
         }
 
         @Nullable
-        public T getContext() {
+        T getContext() {
             return this.contextHolder.get();
         }
 
-        public List<Event> getEvents() {
+        List<Event> getEvents() {
             return this.events;
         }
 

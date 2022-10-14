@@ -24,8 +24,6 @@ import io.grpc.health.v1.HealthGrpc.HealthBlockingStub;
 import io.grpc.inprocess.InProcessChannelBuilder;
 import io.grpc.inprocess.InProcessServerBuilder;
 import io.grpc.protobuf.services.HealthStatusManager;
-import io.micrometer.core.instrument.Meter;
-import io.micrometer.core.instrument.MeterRegistry;
 import io.micrometer.core.instrument.binder.grpc.ObservationGrpcClientInterceptor;
 import io.micrometer.core.instrument.binder.grpc.ObservationGrpcServerInterceptor;
 import io.micrometer.core.instrument.observation.DefaultMeterObservationHandler;
@@ -43,12 +41,12 @@ import java.io.IOException;
  */
 public class GrpcObservationSample {
 
-    public static void main(final String... args) throws IOException {
-        MeterRegistry meterRegistry = new SimpleMeterRegistry();
+    public static void main(String[] args) throws IOException {
+        SimpleMeterRegistry meterRegistry = new SimpleMeterRegistry();
 
         ObservationRegistry observationRegistry = ObservationRegistry.create();
-        observationRegistry.observationConfig().observationHandler(new ObservationTextPublisher());
-        observationRegistry.observationConfig().observationHandler(new DefaultMeterObservationHandler(meterRegistry));
+        observationRegistry.observationConfig().observationHandler(new ObservationTextPublisher())
+                .observationHandler(new DefaultMeterObservationHandler(meterRegistry));
 
         HealthStatusManager service = new HealthStatusManager();
 
@@ -65,9 +63,7 @@ public class GrpcObservationSample {
         HealthCheckResponse response = healthClient.check(request);
 
         System.out.println("Check Status: " + response.getStatus());
-        for (Meter meter : meterRegistry.getMeters()) {
-            System.out.println(meter.getClass().getSimpleName() + "->" + meter.getId() + ":" + meter.measure());
-        }
+        System.out.println(meterRegistry.getMetersAsString());
 
         channel.shutdownNow();
         server.shutdownNow();

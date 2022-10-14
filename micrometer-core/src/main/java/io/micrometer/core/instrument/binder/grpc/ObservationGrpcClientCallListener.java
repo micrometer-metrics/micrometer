@@ -32,7 +32,7 @@ class ObservationGrpcClientCallListener<RespT> extends SimpleForwardingClientCal
 
     private final Scope scope;
 
-    public ObservationGrpcClientCallListener(ClientCall.Listener<RespT> delegate, Scope scope) {
+    ObservationGrpcClientCallListener(ClientCall.Listener<RespT> delegate, Scope scope) {
         super(delegate);
         this.scope = scope;
     }
