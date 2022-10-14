@@ -1,0 +1,19 @@
+-tester: biz.aQute.tester.junit-platform
+-runfw: org.apache.felix.framework;
+-runee: JavaSE-11
+-runtrace: true
+
+#uncomment to remote debug
+# -runjdb: 5005
+
+-runrequires: \
+    bnd.identity;id='micrometer-osgi-test-tests',\
+    bnd.identity;id='junit-jupiter-engine',\
+    bnd.identity;id='junit-platform-launcher'
+
+-runstartlevel: \
+    order=sortbynameversion,\
+    begin=-1
+
+-runproperties: \
+    org.osgi.framework.bsnversion=multiple

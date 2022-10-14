@@ -44,9 +44,11 @@ Import-Package: \
     org.apache.kafka.*;resolution:=dynamic,\
     com.codahale.metrics.*;resolution:=dynamic;version="${@}",\
     com.google.common.cache.*;resolution:=dynamic;version="${@}",\
+    jakarta.servlet.*;resolution:=dynamic;version="${@}",\
     javax.servlet.*;resolution:=dynamic;version="${@}",\
     io.micrometer.context.*;resolution:=dynamic,\
     io.micrometer.observation.*;resolution:=dynamic;version="${@}",\
+    kotlin.*;resolution:=dynamic,\
     kotlinx.coroutines.*;resolution:=dynamic,\
     org.LatencyUtils.*;resolution:=dynamic,\
     org.HdrHistogram.*;resolution:=dynamic;version="${@}",\
