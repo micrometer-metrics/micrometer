@@ -36,7 +36,7 @@ import java.util.function.Supplier;
  * </p>
  * <pre>
  * Server server = ServerBuilder.forPort(8080)
- *         .intercept(new ObservationGrpcServerInterceptor(meterRegistry))
+ *         .intercept(new ObservationGrpcServerInterceptor(observationRegistry))
  *         .build();
  * server.start()
  * </pre> The instrumentation is based on the behavior of Spring Cloud Sleuth and Brave.
@@ -98,17 +98,15 @@ public class ObservationGrpcServerInterceptor implements ServerInterceptor {
         Scope scope = observation.start().openScope();
         ObservationGrpcServerCall<ReqT, RespT> serverCall = new ObservationGrpcServerCall<>(call, scope);
 
-        Listener<ReqT> result;
         try {
-            result = next.startCall(serverCall, headers);
+            Listener<ReqT> result = next.startCall(serverCall, headers);
+            return new ObservationGrpcServerCallListener<>(result, scope);
         }
         catch (Exception ex) {
             scope.close();
             observation.error(ex).stop();
             throw ex;
         }
-
-        return new ObservationGrpcServerCallListener<>(result, scope);
     }
 
     /**

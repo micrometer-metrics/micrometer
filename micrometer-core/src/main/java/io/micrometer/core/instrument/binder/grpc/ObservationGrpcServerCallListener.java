@@ -30,7 +30,7 @@ class ObservationGrpcServerCallListener<RespT> extends SimpleForwardingServerCal
 
     private final Scope scope;
 
-    public ObservationGrpcServerCallListener(Listener<RespT> delegate, Scope scope) {
+    ObservationGrpcServerCallListener(Listener<RespT> delegate, Scope scope) {
         super(delegate);
         this.scope = scope;
     }
