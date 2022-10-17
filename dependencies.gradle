@@ -1,4 +1,5 @@
 def VERSIONS = [
+        'aopalliance:aopalliance:1.0',
         'ch.qos.logback:logback-classic:1.2.+',
         'colt:colt:1.2.0',
         'com.amazonaws:aws-java-sdk-cloudwatch:latest.release',
