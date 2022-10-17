@@ -21,4 +21,7 @@
  * {@link io.micrometer.core.instrument.binder.grpc.MetricCollectingServerInterceptor} for
  * usage examples.
  */
+@NonNullApi
 package io.micrometer.core.instrument.binder.grpc;
+
+import io.micrometer.common.lang.NonNullApi;

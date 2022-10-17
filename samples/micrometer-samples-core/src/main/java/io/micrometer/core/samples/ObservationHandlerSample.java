@@ -42,7 +42,7 @@ public class ObservationHandlerSample {
                 .observationPredicate(new IgnoringObservationPredicate());
 
         Observation observation = Observation
-                .createNotStarted("sample.operation", new CustomContext(), observationRegistry)
+                .createNotStarted("sample.operation", CustomContext::new, observationRegistry)
                 .contextualName("CALL sampleOperation").lowCardinalityKeyValue("a", "1")
                 .highCardinalityKeyValue("time", Instant.now().toString())
                 .observationConvention(new CustomLocalObservationConvention()).start();
@@ -60,8 +60,8 @@ public class ObservationHandlerSample {
         observation.stop();
 
         Observation.start("sample.no-context", observationRegistry).stop();
-        Observation.start("sample.unsupported", new UnsupportedContext(), observationRegistry).stop();
-        Observation.start("sample.ignored", new CustomContext(), observationRegistry).stop();
+        Observation.start("sample.unsupported", UnsupportedContext::new, observationRegistry).stop();
+        Observation.start("sample.ignored", CustomContext::new, observationRegistry).stop();
 
         System.out.println("--- Meters:");
         System.out.println(registry.getMetersAsString());

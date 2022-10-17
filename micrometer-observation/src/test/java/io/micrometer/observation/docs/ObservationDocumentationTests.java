@@ -15,7 +15,6 @@
  */
 package io.micrometer.observation.docs;
 
-import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.function.Supplier;
 
 import io.micrometer.common.KeyValue;
@@ -31,15 +30,17 @@ import org.junit.jupiter.api.Test;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.BDDAssertions.then;
 import static org.assertj.core.api.BDDAssertions.thenThrownBy;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.verifyNoInteractions;
 
-class DocumentedObservationTests {
+class ObservationDocumentationTests {
 
     @Test
     void iseShouldBeThrownWhenDocumentedObservationHasNotOverriddenDefaultConvention() {
         ObservationRegistry registry = observationRegistry();
 
         thenThrownBy(() -> TestConventionObservation.NOT_OVERRIDDEN_METHODS.observation(null, null,
-                new Observation.Context(), registry)).isInstanceOf(IllegalStateException.class)
+                Observation.Context::new, registry)).isInstanceOf(IllegalStateException.class)
                         .hasMessageContaining("You've decided to use convention based naming yet this observation");
     }
 
@@ -48,7 +49,7 @@ class DocumentedObservationTests {
         ObservationRegistry registry = observationRegistry();
 
         thenThrownBy(
-                () -> TestConventionObservation.OVERRIDDEN.observation(null, null, new Observation.Context(), registry))
+                () -> TestConventionObservation.OVERRIDDEN.observation(null, null, Observation.Context::new, registry))
                         .isInstanceOf(NullPointerException.class).hasMessageContaining(
                                 "You have not provided a default convention in the Observation factory method");
     }
@@ -58,7 +59,7 @@ class DocumentedObservationTests {
         ObservationRegistry registry = observationRegistry();
 
         thenThrownBy(() -> TestConventionObservation.OVERRIDDEN.observation(null, new SecondObservationConvention(),
-                new Observation.Context(), registry)).isInstanceOf(IllegalArgumentException.class)
+                Observation.Context::new, registry)).isInstanceOf(IllegalArgumentException.class)
                         .hasMessageContaining("but you have provided an incompatible one of type");
     }
 
@@ -67,8 +68,8 @@ class DocumentedObservationTests {
         ObservationRegistry registry = observationRegistry();
         Observation.Context context = new Observation.Context();
 
-        TestConventionObservation.OVERRIDDEN.observation(null, new ThirdObservationConvention(), context, registry)
-                .start().stop();
+        TestConventionObservation.OVERRIDDEN
+                .observation(null, new ThirdObservationConvention(), () -> context, registry).start().stop();
 
         then(context.getName()).isEqualTo("three");
         then(context.getContextualName()).isEqualTo("contextual");
@@ -82,7 +83,7 @@ class DocumentedObservationTests {
         Observation.Context context = new Observation.Context();
 
         TestConventionObservation.CONTEXTUAL_NAME
-                .observation(null, new ContextualObservationConvention(), context, registry).start().stop();
+                .observation(null, new ContextualObservationConvention(), () -> context, registry).start().stop();
 
         then(context.getName()).isEqualTo("technical name");
         then(context.getContextualName()).isEqualTo("contextual name");
@@ -94,8 +95,8 @@ class DocumentedObservationTests {
         registry.observationConfig().observationConvention(new GlobalConvention());
         Observation.Context context = new Observation.Context();
 
-        TestConventionObservation.CONTEXTUAL_NAME.observation(null, new FirstObservationConvention(), context, registry)
-                .start().stop();
+        TestConventionObservation.CONTEXTUAL_NAME
+                .observation(null, new FirstObservationConvention(), () -> context, registry).start().stop();
 
         then(context.getName()).isEqualTo("global name");
         then(context.getContextualName()).isEqualTo("global contextual name");
@@ -110,8 +111,8 @@ class DocumentedObservationTests {
         registry.observationConfig().observationFilter(new KeyValueAddingObservationFilter());
         Observation.Context context = new Observation.Context();
 
-        TestConventionObservation.CONTEXTUAL_NAME.observation(null, new FirstObservationConvention(), context, registry)
-                .start().stop();
+        TestConventionObservation.CONTEXTUAL_NAME
+                .observation(null, new FirstObservationConvention(), () -> context, registry).start().stop();
 
         then(context.getName()).isEqualTo("global name");
         then(context.getContextualName()).isEqualTo("global contextual name");
@@ -124,16 +125,13 @@ class DocumentedObservationTests {
     void createNotStartedShouldNotCreateContextWithNoopRegistry() {
         ObservationRegistry registry = ObservationRegistry.NOOP;
 
-        AtomicBoolean isCalled = new AtomicBoolean();
-        Supplier<Context> supplier = () -> {
-            isCalled.set(true);
-            return new Observation.Context();
-        };
+        @SuppressWarnings("unchecked")
+        Supplier<Context> supplier = mock(Supplier.class);
 
-        Observation observation = TestConventionObservation.CONTEXTUAL_NAME.createNotStarted(null,
+        Observation observation = TestConventionObservation.CONTEXTUAL_NAME.observation(null,
                 new FirstObservationConvention(), supplier, registry);
         assertThat(observation.isNoop()).isTrue();
-        assertThat(isCalled).isFalse();
+        verifyNoInteractions(supplier);
     }
 
     private ObservationRegistry observationRegistry() {
@@ -142,7 +140,7 @@ class DocumentedObservationTests {
         return registry;
     }
 
-    enum TestConventionObservation implements DocumentedObservation {
+    enum TestConventionObservation implements ObservationDocumentation {
 
         NOT_OVERRIDDEN_METHODS {
 

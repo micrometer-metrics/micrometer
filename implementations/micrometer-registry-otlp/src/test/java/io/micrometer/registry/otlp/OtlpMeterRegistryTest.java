@@ -220,10 +220,9 @@ class OtlpMeterRegistryTest {
         clock.add(OtlpConfig.DEFAULT.step());
         size.record(204);
 
-        assertThat(registry.writeHistogramSupport(size).toString()).isEqualTo("name: \"http.request.size\"\n"
-                + "unit: \"bytes\"\n" + "histogram {\n" + "  data_points {\n" + "    start_time_unix_nano: 1000000\n"
-                + "    time_unix_nano: 60001000000\n" + "    count: 4\n" + "    sum: 2552.0\n"
-                + "    bucket_counts: 0\n" + "    bucket_counts: 0\n" + "    bucket_counts: 0\n"
+        String expected = "name: \"http.request.size\"\n" + "unit: \"bytes\"\n" + "histogram {\n" + "  data_points {\n"
+                + "    start_time_unix_nano: 1000000\n" + "    time_unix_nano: 60001000000\n" + "    count: 4\n"
+                + "    sum: 2552.0\n" + "    bucket_counts: 0\n" + "    bucket_counts: 0\n" + "    bucket_counts: 0\n"
                 + "    bucket_counts: 0\n" + "    bucket_counts: 0\n" + "    bucket_counts: 0\n"
                 + "    bucket_counts: 0\n" + "    bucket_counts: 0\n" + "    bucket_counts: 0\n"
                 + "    bucket_counts: 0\n" + "    bucket_counts: 0\n" + "    bucket_counts: 0\n"
@@ -442,7 +441,32 @@ class OtlpMeterRegistryTest {
                 + "    explicit_bounds: 3.0744573456182584E18\n" + "    explicit_bounds: 3.4587645138205409E18\n"
                 + "    explicit_bounds: 3.8430716820228234E18\n" + "    explicit_bounds: 4.2273788502251054E18\n"
                 + "    explicit_bounds: Infinity\n" + "  }\n"
-                + "  aggregation_temporality: AGGREGATION_TEMPORALITY_CUMULATIVE\n" + "}\n");
+                + "  aggregation_temporality: AGGREGATION_TEMPORALITY_CUMULATIVE\n" + "}\n";
+        String[] expectedLines = expected.split("\n");
+        String actual = registry.writeHistogramSupport(size).toString();
+        String[] actualLines = actual.split("\n");
+        assertThat(actualLines).hasSameSizeAs(expectedLines);
+        for (int i = 0; i < actualLines.length; i++) {
+            String actualLine = actualLines[i];
+            String expectedLine = expectedLines[i];
+
+            // Comparing with double values, not with their String representation is
+            // required since Java 19 as it has changed String representation for double
+            // slightly in some cases.
+            // See https://jdk.java.net/19/release-notes#JDK-4511638
+            if (actualLine.contains("explicit_bounds") && !actualLine.contains("Infinity")) {
+                double actualValue = extractValue(actualLine);
+                double expectedValue = extractValue(expectedLine);
+                assertThat(actualValue).isEqualTo(expectedValue);
+            }
+            else {
+                assertThat(actualLine).isEqualTo(expectedLine);
+            }
+        }
+    }
+
+    private double extractValue(String line) {
+        return Double.parseDouble(line.substring(line.lastIndexOf(' ')));
     }
 
     @Test

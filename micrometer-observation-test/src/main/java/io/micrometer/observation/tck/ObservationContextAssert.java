@@ -18,6 +18,7 @@ package io.micrometer.observation.tck;
 import io.micrometer.common.KeyValue;
 import io.micrometer.common.KeyValues;
 import io.micrometer.observation.Observation;
+import io.micrometer.observation.ObservationView;
 import org.assertj.core.api.AbstractAssert;
 import org.assertj.core.api.AbstractThrowableAssert;
 import org.assertj.core.api.ThrowingConsumer;
@@ -25,6 +26,9 @@ import org.assertj.core.api.ThrowingConsumer;
 import java.util.*;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
+
+import static java.util.stream.Collectors.toList;
+import static org.assertj.core.util.Streams.stream;
 
 /**
  * Assertion methods for {@code Observation.Context}s and
@@ -196,6 +200,24 @@ public class ObservationContextAssert<SELF extends ObservationContextAssert<SELF
         return (SELF) this;
     }
 
+    /**
+     * Verifies that the Observation key-value keys are a subset of the given set of keys.
+     */
+    public SELF hasSubsetOfKeys(String... keys) {
+        isNotNull();
+        Set<String> actualKeys = new LinkedHashSet<>(allKeys());
+        Set<String> expectedKeys = new LinkedHashSet<>(Arrays.asList(keys));
+
+        List<String> extra = stream(actualKeys).filter(actualElement -> !expectedKeys.contains(actualElement))
+                .collect(toList());
+
+        if (extra.size() > 0) {
+            failWithMessage("Observation keys are not a subset of %s. Found extra keys: %s", keys, extra);
+        }
+
+        return (SELF) this;
+    }
+
     private List<String> lowCardinalityKeys() {
         return this.actual.getLowCardinalityKeyValues().stream().map(KeyValue::getKey).collect(Collectors.toList());
     }
@@ -316,8 +338,8 @@ public class ObservationContextAssert<SELF extends ObservationContextAssert<SELF
     }
 
     public SELF doesNotHaveError() {
-        thenError().withFailMessage("Observation should not have an error, but found <%s>",
-                this.actual.getError().orElse(null)).isNull();
+        thenError().withFailMessage("Observation should not have an error, but found <%s>", this.actual.getError())
+                .isNull();
         return (SELF) this;
     }
 
@@ -329,12 +351,12 @@ public class ObservationContextAssert<SELF extends ObservationContextAssert<SELF
     public SELF hasError(Throwable expectedError) {
         hasError();
         thenError().withFailMessage("Observation expected to have error <%s>, but has <%s>", expectedError,
-                this.actual.getError().orElse(null)).isEqualTo(expectedError);
+                this.actual.getError()).isEqualTo(expectedError);
         return (SELF) this;
     }
 
     public ObservationContextAssertReturningThrowableAssert assertThatError() {
-        return new ObservationContextAssertReturningThrowableAssert(actual.getError().orElse(null), this);
+        return new ObservationContextAssertReturningThrowableAssert(actual.getError(), this);
     }
 
     public ObservationContextAssertReturningThrowableAssert thenError() {
@@ -354,9 +376,9 @@ public class ObservationContextAssert<SELF extends ObservationContextAssert<SELF
         return (SELF) this;
     }
 
-    private Observation checkedParentObservation() {
+    private ObservationView checkedParentObservation() {
         isNotNull();
-        Observation p = this.actual.getParentObservation();
+        ObservationView p = this.actual.getParentObservation();
         if (p == null) {
             failWithMessage("Observation should have a parent");
         }
@@ -371,7 +393,7 @@ public class ObservationContextAssert<SELF extends ObservationContextAssert<SELF
      */
     public SELF hasParentObservationEqualTo(Observation expectedParent) {
         isNotNull();
-        Observation realParent = this.actual.getParentObservation();
+        ObservationView realParent = this.actual.getParentObservation();
         if (realParent == null) {
             failWithMessage("Observation should have parent <%s> but has none", expectedParent);
         }
@@ -403,9 +425,9 @@ public class ObservationContextAssert<SELF extends ObservationContextAssert<SELF
      */
     public SELF hasParentObservationContextSatisfying(
             ThrowingConsumer<Observation.ContextView> parentContextViewAssertion) {
-        Observation p = checkedParentObservation();
+        ObservationView p = checkedParentObservation();
         try {
-            parentContextViewAssertion.accept(p.getContext());
+            parentContextViewAssertion.accept(p.getContextView());
         }
         catch (Throwable e) {
             failWithMessage("Parent observation does not satisfy given assertion: " + e.getMessage());
@@ -423,8 +445,8 @@ public class ObservationContextAssert<SELF extends ObservationContextAssert<SELF
      */
     public SELF hasParentObservationContextMatching(
             Predicate<? super Observation.ContextView> parentContextViewPredicate) {
-        Observation p = checkedParentObservation();
-        if (!parentContextViewPredicate.test(p.getContext())) {
+        ObservationView p = checkedParentObservation();
+        if (!parentContextViewPredicate.test(p.getContextView())) {
             failWithMessage("Observation should have parent that matches given predicate but <%s> didn't", p);
         }
         return (SELF) this;
@@ -438,8 +460,8 @@ public class ObservationContextAssert<SELF extends ObservationContextAssert<SELF
      */
     public SELF hasParentObservationContextMatching(
             Predicate<? super Observation.ContextView> parentContextViewPredicate, String description) {
-        Observation p = checkedParentObservation();
-        if (!parentContextViewPredicate.test(p.getContext())) {
+        ObservationView p = checkedParentObservation();
+        if (!parentContextViewPredicate.test(p.getContextView())) {
             failWithMessage("Observation should have parent that matches '%s' predicate but <%s> didn't", description,
                     p);
         }

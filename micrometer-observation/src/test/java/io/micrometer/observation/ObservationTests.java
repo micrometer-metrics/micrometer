@@ -73,7 +73,7 @@ class ObservationTests {
         registry.observationConfig().observationFilter(context -> context.put("foo", "bar"));
         Observation.Context context = new Observation.Context();
 
-        Observation.start("foo", context, registry).stop();
+        Observation.start("foo", () -> context, registry).stop();
 
         assertThat((String) context.get("foo")).isEqualTo("bar");
     }
@@ -83,16 +83,19 @@ class ObservationTests {
         registry.observationConfig().observationHandler(context -> true);
 
         Observation.Context parentContext = new Observation.Context();
-        Observation parent = Observation.start("parent", parentContext, registry);
+        Observation parent = Observation.start("parent", () -> parentContext, registry);
 
         Observation.Context childContext = new Observation.Context();
-        Observation child = Observation.createNotStarted("child", childContext, registry).parentObservation(parent)
-                .start();
+        Observation child = Observation.createNotStarted("child", () -> childContext, registry)
+                .parentObservation(parent).start();
 
         parent.stop();
         child.stop();
 
-        assertThat(childContext.getParentObservation().getContext()).isSameAs(parentContext);
+        assertThat(child.getContextView()).isSameAs(childContext);
+        assertThat(parent.getContextView()).isSameAs(parentContext);
+
+        assertThat(childContext.getParentObservation().getContextView()).isSameAs(parentContext);
     }
 
     @Test
@@ -100,12 +103,12 @@ class ObservationTests {
         registry.observationConfig().observationHandler(context -> true);
 
         Observation.Context parentContext = new Observation.Context();
-        Observation parent = Observation.start("parent", parentContext, registry);
+        Observation parent = Observation.start("parent", () -> parentContext, registry);
         Observation.Context childContext = new Observation.Context();
         parent.scoped(() -> {
             assertThat(childContext.getParentObservation()).isNull();
-            Observation.createNotStarted("child", childContext, registry).observe(() -> {
-                assertThat(childContext.getParentObservation().getContext()).isSameAs(parentContext);
+            Observation.createNotStarted("child", () -> childContext, registry).observe(() -> {
+                assertThat(childContext.getParentObservation().getContextView()).isSameAs(parentContext);
             });
             assertThat(childContext.getParentObservation()).isNull();
         });

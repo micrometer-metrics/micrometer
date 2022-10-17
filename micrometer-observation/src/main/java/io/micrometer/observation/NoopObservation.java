@@ -33,7 +33,7 @@ final class NoopObservation implements Observation {
      */
     static final NoopObservation INSTANCE = new NoopObservation();
 
-    private static final ContextView CONTEXT = new Context();
+    private static final Context CONTEXT = new Context();
 
     private NoopObservation() {
     }
@@ -89,7 +89,7 @@ final class NoopObservation implements Observation {
     }
 
     @Override
-    public ContextView getContext() {
+    public Context getContext() {
         return CONTEXT;
     }
 

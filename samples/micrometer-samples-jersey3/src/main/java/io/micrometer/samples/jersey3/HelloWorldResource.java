@@ -15,6 +15,8 @@
  */
 package io.micrometer.samples.jersey3;
 
+import io.micrometer.common.util.internal.logging.InternalLogger;
+import io.micrometer.common.util.internal.logging.InternalLoggerFactory;
 import jakarta.ws.rs.GET;
 import jakarta.ws.rs.Path;
 import jakarta.ws.rs.PathParam;
@@ -23,9 +25,12 @@ import jakarta.ws.rs.Produces;
 @Path("hello/{name}")
 public class HelloWorldResource {
 
+    private static final InternalLogger logger = InternalLoggerFactory.getInstance(HelloWorldResource.class);
+
     @GET
     @Produces("text/plain")
     public String sayHi(@PathParam("name") String name) {
+        logger.debug("Hello, " + name);
         return "Hello, " + name;
     }
 

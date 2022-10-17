@@ -16,13 +16,8 @@
 package io.micrometer.observation.docs;
 
 import io.micrometer.common.docs.KeyName;
-import io.micrometer.common.lang.NonNull;
 import io.micrometer.common.lang.Nullable;
-import io.micrometer.observation.Observation;
-import io.micrometer.observation.ObservationPredicate;
-import io.micrometer.observation.ObservationRegistry;
-import io.micrometer.observation.GlobalObservationConvention;
-import io.micrometer.observation.ObservationConvention;
+import io.micrometer.observation.*;
 
 import java.util.Objects;
 import java.util.function.Supplier;
@@ -37,12 +32,12 @@ import java.util.function.Supplier;
  *
  * <ul>
  * <li>Observations are grouped within an enum - the enum implements the
- * {@code DocumentedObservation} interface</li>
+ * {@code ObservationDocumentation} interface</li>
  * <li>If the observation contains {@link KeyName} then those need to be declared as
  * nested enums</li>
- * <li>The {@link DocumentedObservation#getHighCardinalityKeyNames()} need to call the
+ * <li>The {@link ObservationDocumentation#getHighCardinalityKeyNames()} need to call the
  * nested enum's {@code values()} method to retrieve the array of allowed keys</li>
- * <li>The {@link DocumentedObservation#getLowCardinalityKeyNames()} need to call the
+ * <li>The {@link ObservationDocumentation#getLowCardinalityKeyNames()} need to call the
  * nested enum's {@code values()} method to retrieve the array of allowed keys</li>
  * <li>Javadocs around enums will be used as description</li>
  * <li>If you want to merge different {@link KeyName} enum {@code values()} methods you
@@ -52,7 +47,7 @@ import java.util.function.Supplier;
  * @author Marcin Grzejszczak
  * @since 1.10.0
  */
-public interface DocumentedObservation {
+public interface ObservationDocumentation {
 
     /**
      * Empty key names.
@@ -80,6 +75,7 @@ public interface DocumentedObservation {
      * {@link #getContextualName()}.
      * @return default naming convention
      */
+    @Nullable
     default Class<? extends ObservationConvention<? extends Observation.Context>> getDefaultConvention() {
         return null;
     }
@@ -134,17 +130,23 @@ public interface DocumentedObservation {
      * @return observation
      */
     default Observation observation(ObservationRegistry registry) {
-        return observation(registry, null);
+        return observation(registry, Observation.Context::new);
     }
 
     /**
-     * Creates an {@link Observation}. You need to manually start it.
+     * Creates an {@link Observation}. You need to manually start it. When the
+     * {@link ObservationRegistry} is null or the no-op registry, this fast returns a
+     * no-op {@link Observation} and skips the creation of the
+     * {@link Observation.Context}. This check avoids unnecessary
+     * {@link Observation.Context} creation, which is why it takes a {@link Supplier} for
+     * the context rather than the context directly. If the observation is not enabled by
+     * an {@link ObservationPredicate}, a no-op observation will also be returned.
      * @param registry observation registry
-     * @param context observation context
+     * @param contextSupplier observation context supplier
      * @return observation
      */
-    default Observation observation(ObservationRegistry registry, @Nullable Observation.Context context) {
-        Observation observation = Observation.createNotStarted(getName(), context, registry);
+    default Observation observation(ObservationRegistry registry, Supplier<Observation.Context> contextSupplier) {
+        Observation observation = Observation.createNotStarted(getName(), contextSupplier, registry);
         if (getContextualName() != null) {
             observation.contextualName(getContextualName());
         }
@@ -153,19 +155,23 @@ public interface DocumentedObservation {
 
     /**
      * Creates an {@link Observation} for the given {@link ObservationConvention}. You
-     * need to manually start it.
+     * need to manually start it. When the {@link ObservationRegistry} is null or the
+     * no-op registry, this fast returns a no-op {@link Observation} and skips the
+     * creation of the {@link Observation.Context}. This check avoids unnecessary
+     * {@link Observation.Context} creation, which is why it takes a {@link Supplier} for
+     * the context rather than the context directly. If the observation is not enabled by
+     * an {@link ObservationPredicate}, a no-op observation will also be returned.
      * @param customConvention convention that (if not {@code null}) will override any
      * pre-configured conventions
      * @param defaultConvention default convention that will be picked if there was
      * neither custom convention nor a pre-configured one via
-     * {@link ObservationRegistry.ObservationConfig#observationConvention(GlobalObservationConvention[])}
-     * @param context observation context
+     * {@link ObservationRegistry.ObservationConfig#observationConvention(GlobalObservationConvention)}
+     * @param contextSupplier observation context supplier
      * @param registry observation registry
      * @return observation
      */
     default <T extends Observation.Context> Observation observation(@Nullable ObservationConvention<T> customConvention,
-            @NonNull ObservationConvention<T> defaultConvention, @NonNull T context,
-            @NonNull ObservationRegistry registry) {
+            ObservationConvention<T> defaultConvention, Supplier<T> contextSupplier, ObservationRegistry registry) {
         if (getDefaultConvention() == null) {
             throw new IllegalStateException("You've decided to use convention based naming yet this observation ["
                     + getClass() + "] has not defined any default convention");
@@ -179,9 +185,10 @@ public interface DocumentedObservation {
                     + "] defined default convention to be of type [" + getDefaultConvention()
                     + "] but you have provided an incompatible one of type [" + defaultConvention.getClass() + "]");
         }
-        Observation observation = Observation.createNotStarted(customConvention, defaultConvention, context, registry);
+        Observation observation = Observation.createNotStarted(customConvention, defaultConvention, contextSupplier,
+                registry);
         if (getName() != null) {
-            context.setName(getName());
+            observation.getContext().setName(getName());
         }
         if (getContextualName() != null) {
             observation.contextualName(getContextualName());
@@ -190,65 +197,48 @@ public interface DocumentedObservation {
     }
 
     /**
-     * Creates an {@link Observation} for the given {@link ObservationConvention}. You
-     * need to manually start it. When the {@link ObservationRegistry} is a no-op, this
-     * method fast returns a no-op {@link Observation} and skips the creation of the
-     * {@link Observation.Context}. This quick check avoids unnecessary
-     * {@link Observation.Context} creations. More detailed check, such as
-     * {@link ObservationPredicate}, is performed at the later stage after
-     * {@link Observation.Context} creation.
-     * @param customConvention convention that (if not {@code null}) will override any
-     * pre-configured conventions
-     * @param defaultConvention default convention that will be picked if there was
-     * neither custom convention nor a pre-configured one via
-     * {@link ObservationRegistry.ObservationConfig#observationConvention(GlobalObservationConvention[])}
-     * @param contextSupplier observation context supplier
-     * @param registry observation registry
-     * @return observation
-     */
-    default <T extends Observation.Context> Observation createNotStarted(
-            @Nullable ObservationConvention<T> customConvention, @NonNull ObservationConvention<T> defaultConvention,
-            @NonNull Supplier<T> contextSupplier, @NonNull ObservationRegistry registry) {
-        if (registry.isNoop()) {
-            return Observation.NOOP;
-        }
-        return observation(customConvention, defaultConvention, contextSupplier.get(), registry);
-    }
-
-    /**
      * Creates and starts an {@link Observation}.
      * @param registry observation registry
      * @return observation
      */
     default Observation start(ObservationRegistry registry) {
-        return start(registry, null);
+        return start(registry, Observation.Context::new);
     }
 
     /**
-     * Creates and starts an {@link Observation}.
+     * Creates and starts an {@link Observation}. When the {@link ObservationRegistry} is
+     * null or the no-op registry, this fast returns a no-op {@link Observation} and skips
+     * the creation of the {@link Observation.Context}. This check avoids unnecessary
+     * {@link Observation.Context} creation, which is why it takes a {@link Supplier} for
+     * the context rather than the context directly. If the observation is not enabled by
+     * an {@link ObservationPredicate}, a no-op observation will also be returned.
      * @param registry observation registry
-     * @param context observation context
+     * @param contextSupplier observation context supplier
      * @return observation
      */
-    default Observation start(ObservationRegistry registry, @Nullable Observation.Context context) {
-        return observation(registry, context).start();
+    default Observation start(ObservationRegistry registry, Supplier<Observation.Context> contextSupplier) {
+        return observation(registry, contextSupplier).start();
     }
 
     /**
-     * Creates and starts an {@link Observation}.
+     * Creates and starts an {@link Observation}. When the {@link ObservationRegistry} is
+     * null or the no-op registry, this fast returns a no-op {@link Observation} and skips
+     * the creation of the {@link Observation.Context}. This check avoids unnecessary
+     * {@link Observation.Context} creation, which is why it takes a {@link Supplier} for
+     * the context rather than the context directly. If the observation is not enabled by
+     * an {@link ObservationPredicate}, a no-op observation will also be returned.
      * @param customConvention convention that (if not {@code null}) will override any
      * pre-configured conventions
      * @param defaultConvention default convention that will be picked if there was
      * neither custom convention nor a pre-configured one via
-     * {@link ObservationRegistry.ObservationConfig#observationConvention(GlobalObservationConvention[])}
-     * @param context observation context
+     * {@link ObservationRegistry.ObservationConfig#observationConvention(GlobalObservationConvention)}
+     * @param contextSupplier observation context supplier
      * @param registry observation registry
      * @return observation
      */
     default <T extends Observation.Context> Observation start(@Nullable ObservationConvention<T> customConvention,
-            @NonNull ObservationConvention<T> defaultConvention, @NonNull T context,
-            @NonNull ObservationRegistry registry) {
-        return observation(customConvention, defaultConvention, context, registry).start();
+            ObservationConvention<T> defaultConvention, Supplier<T> contextSupplier, ObservationRegistry registry) {
+        return observation(customConvention, defaultConvention, contextSupplier, registry).start();
     }
 
 }

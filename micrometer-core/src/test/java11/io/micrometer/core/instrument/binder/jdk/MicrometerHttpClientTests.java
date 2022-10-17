@@ -33,17 +33,16 @@ import java.net.http.HttpClient;
 import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
 import java.time.Duration;
-import java.time.temporal.ChronoUnit;
 
 import static com.github.tomakehurst.wiremock.client.WireMock.*;
 import static org.assertj.core.api.BDDAssertions.then;
 
 @WireMockTest
-public class MicrometerHttpClientTests {
+class MicrometerHttpClientTests {
 
     MeterRegistry meterRegistry = new SimpleMeterRegistry();
 
-    HttpClient httpClient = HttpClient.newBuilder().connectTimeout(Duration.of(2, ChronoUnit.SECONDS)).build();
+    HttpClient httpClient = HttpClient.newBuilder().connectTimeout(Duration.ofSeconds(2)).build();
 
     @BeforeEach
     void setup() {

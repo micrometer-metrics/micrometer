@@ -17,14 +17,17 @@ package io.micrometer.core.instrument.binder.httpcomponents;
 
 import io.micrometer.common.KeyValues;
 import io.micrometer.common.lang.Nullable;
+import org.apache.http.HttpException;
 import org.apache.http.HttpRequest;
 import org.apache.http.HttpResponse;
+
+import java.io.IOException;
 
 /**
  * Default implementation of {@link ApacheHttpClientObservationConvention}.
  *
  * @since 1.10.0
- * @see ApacheHttpClientDocumentedObservation
+ * @see ApacheHttpClientObservationDocumentation
  */
 public class DefaultApacheHttpClientObservationConvention implements ApacheHttpClientObservationConvention {
 
@@ -51,19 +54,23 @@ public class DefaultApacheHttpClientObservationConvention implements ApacheHttpC
     @Override
     public KeyValues getLowCardinalityKeyValues(ApacheHttpClientContext context) {
         KeyValues keyValues = KeyValues.of(
-                ApacheHttpClientDocumentedObservation.ApacheHttpClientTags.METHOD
+                ApacheHttpClientObservationDocumentation.ApacheHttpClientKeyNames.METHOD
                         .withValue(getMethodString(context.getCarrier())),
-                ApacheHttpClientDocumentedObservation.ApacheHttpClientTags.URI
+                ApacheHttpClientObservationDocumentation.ApacheHttpClientKeyNames.URI
                         .withValue(context.getUriMapper().apply(context.getCarrier())),
-                ApacheHttpClientDocumentedObservation.ApacheHttpClientTags.STATUS
-                        .withValue(getStatusValue(context.getResponse())));
+                ApacheHttpClientObservationDocumentation.ApacheHttpClientKeyNames.STATUS
+                        .withValue(getStatusValue(context.getResponse(), context.getError())));
         if (context.shouldExportTagsForRoute()) {
             keyValues = keyValues.and(HttpContextUtils.generateTagStringsForRoute(context.getApacheHttpContext()));
         }
         return keyValues;
     }
 
-    String getStatusValue(@Nullable HttpResponse response) {
+    String getStatusValue(@Nullable HttpResponse response, Throwable error) {
+        if (error instanceof IOException || error instanceof HttpException || error instanceof RuntimeException) {
+            return "IO_ERROR";
+        }
+
         return response != null ? Integer.toString(response.getStatusLine().getStatusCode()) : "CLIENT_ERROR";
     }
 

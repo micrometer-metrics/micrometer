@@ -19,7 +19,6 @@ import io.micrometer.common.lang.Nullable;
 import io.micrometer.core.instrument.MeterRegistry;
 import io.micrometer.core.instrument.Tag;
 import io.micrometer.core.instrument.Tags;
-import io.micrometer.core.instrument.binder.httpcomponents.DefaultUriMapper;
 import io.micrometer.core.instrument.observation.ObservationOrTimerCompatibleInstrumentation;
 import io.micrometer.observation.Observation;
 import io.micrometer.observation.ObservationRegistry;
@@ -46,12 +45,17 @@ import java.util.function.Function;
  * }</pre>
  *
  * Inspired by <a href=
- * "https://github.com/raphw/interceptable-http-client">interceptable-http-client</a> .
+ * "https://github.com/raphw/interceptable-http-client">interceptable-http-client</a>.
  *
  * @author Marcin Grzejszczak
  * @since 1.10.0
  */
 public class MicrometerHttpClient extends HttpClient {
+
+    /**
+     * Header name for URI pattern.
+     */
+    public static final String URI_PATTERN_HEADER = "URI_PATTERN";
 
     private final MeterRegistry meterRegistry;
 
@@ -78,7 +82,7 @@ public class MicrometerHttpClient extends HttpClient {
 
     /**
      * Builder for instrumentation of {@link HttpClient}.
-     * @param httpClient wrapped HttpClient
+     * @param httpClient HttpClient to wrap
      * @param meterRegistry meter registry
      * @return builder
      */
@@ -101,11 +105,11 @@ public class MicrometerHttpClient extends HttpClient {
         @Nullable
         private HttpClientObservationConvention customObservationConvention;
 
-        private Function<HttpRequest, String> uriMapper = request -> request.headers()
-                .firstValue(DefaultUriMapper.URI_PATTERN_HEADER).orElse("UNKNOWN");
+        private Function<HttpRequest, String> uriMapper = request -> request.headers().firstValue(URI_PATTERN_HEADER)
+                .orElse("UNKNOWN");
 
         /**
-         * Creates new instance of {@link InstrumentationBuilder}.
+         * Creates a new instance of {@link InstrumentationBuilder}.
          * @param client client to wrap
          * @param meterRegistry a {@link MeterRegistry}
          */
@@ -125,7 +129,7 @@ public class MicrometerHttpClient extends HttpClient {
         }
 
         /**
-         * When used with {@link ObservationRegistry} will override the default
+         * When used with {@link ObservationRegistry}, it will override the default
          * {@link HttpClientObservationConvention}.
          * @param customObservationConvention custom observation convention
          * @return this
@@ -229,11 +233,11 @@ public class MicrometerHttpClient extends HttpClient {
             @Nullable HttpResponse<T> res) {
         instrumentation.stop(DefaultHttpClientObservationConvention.INSTANCE.getName(), "Timer for JDK's HttpClient",
                 () -> {
-                    Tags tags = Tags.of(HttpClientDocumentedObservation.LowCardinalityKeys.METHOD.asString(),
-                            request.method(), HttpClientDocumentedObservation.LowCardinalityKeys.URI.asString(),
+                    Tags tags = Tags.of(HttpClientObservationDocumentation.LowCardinalityKeys.METHOD.asString(),
+                            request.method(), HttpClientObservationDocumentation.LowCardinalityKeys.URI.asString(),
                             DefaultHttpClientObservationConvention.INSTANCE.getUriTag(request, res, uriMapper));
                     if (res != null) {
-                        tags = tags.and(Tag.of(HttpClientDocumentedObservation.LowCardinalityKeys.STATUS.asString(),
+                        tags = tags.and(Tag.of(HttpClientObservationDocumentation.LowCardinalityKeys.STATUS.asString(),
                                 String.valueOf(res.statusCode())));
                     }
                     return tags;
@@ -241,7 +245,7 @@ public class MicrometerHttpClient extends HttpClient {
     }
 
     private ObservationOrTimerCompatibleInstrumentation<HttpClientContext> observationOrTimer(
-            @Nullable HttpRequest.Builder httpRequestBuilder) {
+            HttpRequest.Builder httpRequestBuilder) {
         return ObservationOrTimerCompatibleInstrumentation.start(this.meterRegistry, this.observationRegistry, () -> {
             HttpClientContext context = new HttpClientContext(this.uriMapper);
             context.setCarrier(httpRequestBuilder);

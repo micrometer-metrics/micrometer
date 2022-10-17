@@ -15,8 +15,12 @@
  */
 package io.micrometer.core.instrument;
 
+import io.micrometer.common.lang.Nullable;
 import io.micrometer.core.instrument.binder.jersey.server.DefaultJerseyTagsProvider;
+import io.micrometer.core.instrument.binder.jersey.server.JerseyObservationDocumentation;
 import io.micrometer.core.instrument.binder.jersey.server.MetricsApplicationEventListener;
+import io.micrometer.core.instrument.binder.jersey.server.ObservationApplicationEventListener;
+import io.micrometer.observation.docs.ObservationDocumentation;
 import org.glassfish.jersey.server.ResourceConfig;
 import org.glassfish.jersey.test.JerseyTest;
 
@@ -31,23 +35,38 @@ class JerseyServerTimingInstrumentationVerificationTests extends HttpServerTimin
     JerseyTest jerseyTest;
 
     @Override
-    protected URI startInstrumentedServer() throws Exception {
-        jerseyTest = new JerseyTest() {
+    protected URI startInstrumentedWithMetricsServer() throws Exception {
+        jerseyTest = jerseyWithListener(
+                new MetricsApplicationEventListener(getRegistry(), new DefaultJerseyTagsProvider(), timerName(), true));
+        return setupUri(jerseyTest);
+    }
+
+    @Nullable
+    @Override
+    protected URI startInstrumentedWithObservationsServer() throws Exception {
+        jerseyTest = jerseyWithListener(new ObservationApplicationEventListener(getObservationRegistry(), timerName()));
+        return setupUri(jerseyTest);
+    }
+
+    @Override
+    protected ObservationDocumentation observationDocumentation() {
+        return JerseyObservationDocumentation.DEFAULT;
+    }
+
+    private JerseyTest jerseyWithListener(Object listener) {
+        return new JerseyTest() {
             @Override
             protected Application configure() {
-                MetricsApplicationEventListener listener = new MetricsApplicationEventListener(getRegistry(),
-                        new DefaultJerseyTagsProvider(), timerName(), true);
-
                 ResourceConfig config = new ResourceConfig();
                 config.register(listener);
                 config.register(TestResource.class);
-
                 return config;
             }
         };
+    }
 
+    private URI setupUri(JerseyTest jerseyTest) throws Exception {
         jerseyTest.setUp();
-
         return jerseyTest.target().getUri();
     }
 

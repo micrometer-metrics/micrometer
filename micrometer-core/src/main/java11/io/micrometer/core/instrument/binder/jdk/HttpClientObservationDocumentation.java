@@ -1,5 +1,5 @@
 /*
- * Copyright 2017 VMware, Inc.
+ * Copyright 2022 VMware, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,68 +13,60 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package io.micrometer.core.instrument.binder.httpcomponents;
+package io.micrometer.core.instrument.binder.jdk;
 
 import io.micrometer.common.docs.KeyName;
 import io.micrometer.observation.Observation;
 import io.micrometer.observation.ObservationConvention;
-import io.micrometer.observation.docs.DocumentedObservation;
+import io.micrometer.observation.docs.ObservationDocumentation;
 
-/**
- * {@link DocumentedObservation} for Apache HTTP client instrumentation.
- * @since 1.10.0
- * @see MicrometerHttpRequestExecutor
- */
-public enum ApacheHttpClientDocumentedObservation implements DocumentedObservation {
+enum HttpClientObservationDocumentation implements ObservationDocumentation {
 
-    DEFAULT {
+    /**
+     * Observation when an HTTP call is being made.
+     */
+    HTTP_CALL {
         @Override
         public Class<? extends ObservationConvention<? extends Observation.Context>> getDefaultConvention() {
-            return DefaultApacheHttpClientObservationConvention.class;
+            return DefaultHttpClientObservationConvention.class;
         }
 
         @Override
         public KeyName[] getLowCardinalityKeyNames() {
-            return ApacheHttpClientTags.values();
+            return LowCardinalityKeys.values();
         }
+
     };
 
-    enum ApacheHttpClientTags implements KeyName {
+    enum LowCardinalityKeys implements KeyName {
 
-        STATUS {
-            @Override
-            public String asString() {
-                return "status";
-            }
-        },
+        /**
+         * HTTP Method.
+         */
         METHOD {
             @Override
             public String asString() {
                 return "method";
             }
         },
+
+        /**
+         * HTTP Status.
+         */
+        STATUS {
+            @Override
+            public String asString() {
+                return "status";
+            }
+        },
+
+        /**
+         * HTTP URI.
+         */
         URI {
             @Override
             public String asString() {
                 return "uri";
-            }
-        },
-        TARGET_SCHEME {
-            @Override
-            public String asString() {
-                return "target.scheme";
-            }
-        },
-        TARGET_HOST {
-            @Override
-            public String asString() {
-                return "target.host";
-            }
-        },
-        TARGET_PORT {
-            @Override
-            public String asString() {
-                return "target.port";
             }
         }
 

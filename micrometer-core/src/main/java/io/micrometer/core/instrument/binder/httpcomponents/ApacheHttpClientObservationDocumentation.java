@@ -1,5 +1,5 @@
 /*
- * Copyright 2017 VMware, Inc.
+ * Copyright 2022 VMware, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,87 +13,83 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package io.micrometer.core.instrument.binder.okhttp3;
+package io.micrometer.core.instrument.binder.httpcomponents;
 
 import io.micrometer.common.docs.KeyName;
-import io.micrometer.common.lang.NonNullApi;
 import io.micrometer.observation.Observation;
 import io.micrometer.observation.ObservationConvention;
-import io.micrometer.observation.docs.DocumentedObservation;
+import io.micrometer.observation.docs.ObservationDocumentation;
 
 /**
- * A {@link DocumentedObservation} for OkHttp3 metrics.
- *
- * @author Marcin Grzejszczak
+ * {@link ObservationDocumentation} for Apache HTTP client instrumentation.
  * @since 1.10.0
+ * @see MicrometerHttpRequestExecutor
  */
-@NonNullApi
-public enum OkHttpDocumentedObservation implements DocumentedObservation {
+public enum ApacheHttpClientObservationDocumentation implements ObservationDocumentation {
 
-    /**
-     * Default observation for OK HTTP.
-     */
     DEFAULT {
         @Override
         public Class<? extends ObservationConvention<? extends Observation.Context>> getDefaultConvention() {
-            return DefaultOkHttpObservationConvention.class;
+            return DefaultApacheHttpClientObservationConvention.class;
         }
 
         @Override
         public KeyName[] getLowCardinalityKeyNames() {
-            return OkHttpLegacyLowCardinalityTags.values();
+            return ApacheHttpClientKeyNames.values();
         }
     };
 
-    @NonNullApi
-    enum OkHttpLegacyLowCardinalityTags implements KeyName {
+    enum ApacheHttpClientKeyNames implements KeyName {
 
-        TARGET_SCHEME {
+        STATUS {
             @Override
             public String asString() {
-                return "target.scheme";
+                return "status";
             }
         },
-
-        TARGET_HOST {
-            @Override
-            public String asString() {
-                return "target.host";
-            }
-        },
-
-        TARGET_PORT {
-            @Override
-            public String asString() {
-                return "target.port";
-            }
-        },
-
-        HOST {
-            @Override
-            public String asString() {
-                return "host";
-            }
-        },
-
         METHOD {
             @Override
             public String asString() {
                 return "method";
             }
         },
-
         URI {
             @Override
             public String asString() {
                 return "uri";
             }
         },
-
-        STATUS {
+        TARGET_SCHEME {
             @Override
             public String asString() {
-                return "status";
+                return "target.scheme";
+            }
+
+            @Override
+            public boolean isRequired() {
+                return false;
+            }
+        },
+        TARGET_HOST {
+            @Override
+            public String asString() {
+                return "target.host";
+            }
+
+            @Override
+            public boolean isRequired() {
+                return false;
+            }
+        },
+        TARGET_PORT {
+            @Override
+            public String asString() {
+                return "target.port";
+            }
+
+            @Override
+            public boolean isRequired() {
+                return false;
             }
         }
 

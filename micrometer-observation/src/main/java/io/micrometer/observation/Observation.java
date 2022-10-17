@@ -44,7 +44,7 @@ import java.util.stream.Collectors;
  * @author Marcin Grzejszczak
  * @since 1.10.0
  */
-public interface Observation {
+public interface Observation extends ObservationView {
 
     /**
      * No-op observation.
@@ -59,19 +59,27 @@ public interface Observation {
      * @return started observation
      */
     static Observation start(String name, ObservationRegistry registry) {
-        return start(name, null, registry);
+        return start(name, Context::new, registry);
     }
 
     /**
-     * Creates and starts an {@link Observation}. When no registry is passed or
-     * observation is not applicable will return a no-op observation.
+     * Creates and starts an {@link Observation}. When the {@link ObservationRegistry} is
+     * null or the no-op registry, this fast returns a no-op {@link Observation} and skips
+     * the creation of the {@link Observation.Context}. This check avoids unnecessary
+     * {@link Observation.Context} creation, which is why it takes a {@link Supplier} for
+     * the context rather than the context directly. If the observation is not enabled
+     * (see
+     * {@link ObservationRegistry.ObservationConfig#observationPredicate(ObservationPredicate)
+     * ObservationConfig#observationPredicate}), a no-op observation will also be
+     * returned.
      * @param name name of the observation
-     * @param context mutable context
+     * @param contextSupplier mutable context supplier
      * @param registry observation registry
      * @return started observation
      */
-    static Observation start(String name, @Nullable Context context, @Nullable ObservationRegistry registry) {
-        return createNotStarted(name, context, registry).start();
+    static <T extends Context> Observation start(String name, Supplier<T> contextSupplier,
+            ObservationRegistry registry) {
+        return createNotStarted(name, contextSupplier, registry).start();
     }
 
     /**
@@ -83,24 +91,34 @@ public interface Observation {
      * @param registry observation registry
      * @return created but not started observation
      */
-    static Observation createNotStarted(String name, @Nullable ObservationRegistry registry) {
-        return createNotStarted(name, null, registry);
+    static Observation createNotStarted(String name, ObservationRegistry registry) {
+        return createNotStarted(name, Context::new, registry);
     }
 
     /**
      * Creates but <b>does not start</b> an {@link Observation}. Remember to call
-     * {@link Observation#start()} when you want the measurements to start. When no
-     * registry is passed or observation is not applicable will return a no-op
-     * observation.
+     * {@link Observation#start()} when you want the measurements to start. When the
+     * {@link ObservationRegistry} is null or the no-op registry, this fast returns a
+     * no-op {@link Observation} and skips the creation of the
+     * {@link Observation.Context}. This check avoids unnecessary
+     * {@link Observation.Context} creation, which is why it takes a {@link Supplier} for
+     * the context rather than the context directly. If the observation is not enabled
+     * (see
+     * {@link ObservationRegistry.ObservationConfig#observationPredicate(ObservationPredicate)
+     * ObservationConfig#observationPredicate}), a no-op observation will also be
+     * returned.
      * @param name name of the observation
-     * @param context mutable context
+     * @param contextSupplier supplier for mutable context
      * @param registry observation registry
      * @return created but not started observation
      */
-    static Observation createNotStarted(String name, @Nullable Context context,
-            @Nullable ObservationRegistry registry) {
-        if (registry == null || registry.isNoop()
-                || !registry.observationConfig().isObservationEnabled(name, context)) {
+    static <T extends Context> Observation createNotStarted(String name, Supplier<T> contextSupplier,
+            ObservationRegistry registry) {
+        if (registry == null || registry.isNoop()) {
+            return NOOP;
+        }
+        Context context = contextSupplier.get();
+        if (!registry.observationConfig().isObservationEnabled(name, context)) {
             return NOOP;
         }
         return new SimpleObservation(name, registry, context == null ? new Context() : context);
@@ -108,9 +126,16 @@ public interface Observation {
 
     /**
      * Creates but <b>does not start</b> an {@link Observation}. Remember to call
-     * {@link Observation#start()} when you want the measurements to start. When no
-     * registry is passed or observation is not applicable will return a no-op
-     * observation. Allows to set a custom {@link ObservationConvention} and requires to
+     * {@link Observation#start()} when you want the measurements to start. When the
+     * {@link ObservationRegistry} is null or the no-op registry, this fast returns a
+     * no-op {@link Observation} and skips the creation of the
+     * {@link Observation.Context}. This check avoids unnecessary
+     * {@link Observation.Context} creation, which is why it takes a {@link Supplier} for
+     * the context rather than the context directly. If the observation is not enabled
+     * (see
+     * {@link ObservationRegistry.ObservationConfig#observationPredicate(ObservationPredicate)
+     * ObservationConfig#observationPredicate}), a no-op observation will also be
+     * returned. Allows to set a custom {@link ObservationConvention} and requires to
      * provide a default one if neither a custom nor a pre-configured one (via
      * {@link ObservationRegistry.ObservationConfig#getObservationConvention(Context, ObservationConvention)})
      * was found. The {@link ObservationConvention} implementation can override
@@ -120,21 +145,27 @@ public interface Observation {
      * picked.
      * @param defaultConvention default convention when no custom convention was passed,
      * nor a configured one was found
-     * @param context the observation context
+     * @param contextSupplier supplier for the observation context
      * @param registry observation registry
      * @return created but not started observation
      */
     static <T extends Context> Observation createNotStarted(@Nullable ObservationConvention<T> customConvention,
-            @NonNull ObservationConvention<T> defaultConvention, @NonNull T context,
-            @NonNull ObservationRegistry registry) {
+            ObservationConvention<T> defaultConvention, Supplier<T> contextSupplier, ObservationRegistry registry) {
+        if (registry.isNoop()) {
+            return Observation.NOOP;
+        }
         ObservationConvention<T> convention;
+        T context = contextSupplier.get();
         if (customConvention != null) {
             convention = customConvention;
         }
         else {
             convention = registry.observationConfig().getObservationConvention(context, defaultConvention);
         }
-        return Observation.createNotStarted(convention, context, registry);
+        if (!registry.observationConfig().isObservationEnabled(convention.getName(), context)) {
+            return NOOP;
+        }
+        return new SimpleObservation(convention, registry, context == null ? new Context() : context);
     }
 
     /**
@@ -144,35 +175,47 @@ public interface Observation {
      * @param registry observation registry
      * @return started observation
      */
-    static Observation start(ObservationConvention<? extends Context> observationConvention,
-            @Nullable ObservationRegistry registry) {
-        return start(observationConvention, null, registry);
+    static Observation start(ObservationConvention<Context> observationConvention, ObservationRegistry registry) {
+        return start(observationConvention, Context::new, registry);
     }
 
     /**
-     * Creates and starts an {@link Observation}. When no registry is passed or
-     * observation is not applicable will return a no-op observation.
+     * Creates and starts an {@link Observation}. When the {@link ObservationRegistry} is
+     * null or the no-op registry, this fast returns a no-op {@link Observation} and skips
+     * the creation of the {@link Observation.Context}. This check avoids unnecessary
+     * {@link Observation.Context} creation, which is why it takes a {@link Supplier} for
+     * the context rather than the context directly. If the observation is not enabled
+     * (see
+     * {@link ObservationRegistry.ObservationConfig#observationPredicate(ObservationPredicate)
+     * ObservationConfig#observationPredicate}), a no-op observation will also be
+     * returned.
      * @param <T> type of context
      * @param observationConvention observation convention
-     * @param context mutable context
+     * @param contextSupplier mutable context supplier
      * @param registry observation registry
      * @return started observation
      */
-    static <T extends Context> Observation start(ObservationConvention<T> observationConvention, @Nullable T context,
-            @Nullable ObservationRegistry registry) {
-        return createNotStarted(observationConvention, context, registry).start();
+    static <T extends Context> Observation start(ObservationConvention<T> observationConvention,
+            Supplier<T> contextSupplier, ObservationRegistry registry) {
+        return createNotStarted(observationConvention, contextSupplier, registry).start();
     }
 
     /**
-     * Creates and starts an {@link Observation}. When no registry is passed or
-     * observation is not applicable will return a no-op observation. Allows to set a
-     * custom {@link ObservationConvention} and requires to provide a default one if
-     * neither a custom nor a pre-configured one (via
+     * Creates and starts an {@link Observation}. When the {@link ObservationRegistry} is
+     * null or the no-op registry, this fast returns a no-op {@link Observation} and skips
+     * the creation of the {@link Observation.Context}. This check avoids unnecessary
+     * {@link Observation.Context} creation, which is why it takes a {@link Supplier} for
+     * the context rather than the context directly. If the observation is not enabled
+     * (see
+     * {@link ObservationRegistry.ObservationConfig#observationPredicate(ObservationPredicate)
+     * ObservationConfig#observationPredicate}), a no-op observation will also be
+     * returned. Allows to set a custom {@link ObservationConvention} and requires to
+     * provide a default one if neither a custom nor a pre-configured one (via
      * {@link ObservationRegistry.ObservationConfig#getObservationConvention(Context, ObservationConvention)})
      * was found.
      * @param <T> type of context
      * @param registry observation registry
-     * @param context the observation context
+     * @param contextSupplier the observation context supplier
      * @param customConvention custom convention. If {@code null}, the default one will be
      * picked.
      * @param defaultConvention default convention when no custom convention was passed,
@@ -180,9 +223,8 @@ public interface Observation {
      * @return started observation
      */
     static <T extends Context> Observation start(@Nullable ObservationConvention<T> customConvention,
-            @NonNull ObservationConvention<T> defaultConvention, @NonNull T context,
-            @NonNull ObservationRegistry registry) {
-        return createNotStarted(customConvention, defaultConvention, context, registry).start();
+            ObservationConvention<T> defaultConvention, Supplier<T> contextSupplier, ObservationRegistry registry) {
+        return createNotStarted(customConvention, defaultConvention, contextSupplier, registry).start();
     }
 
     /**
@@ -194,16 +236,23 @@ public interface Observation {
      * @param registry observation registry
      * @return created but not started observation
      */
-    static Observation createNotStarted(ObservationConvention<? extends Context> observationConvention,
-            @Nullable ObservationRegistry registry) {
-        return createNotStarted(observationConvention, null, registry);
+    static Observation createNotStarted(ObservationConvention<Context> observationConvention,
+            ObservationRegistry registry) {
+        return createNotStarted(observationConvention, Context::new, registry);
     }
 
     /**
      * Creates but <b>does not start</b> an {@link Observation}. Remember to call
-     * {@link Observation#start()} when you want the measurements to start. When no
-     * registry is passed or observation is not applicable will return a no-op
-     * observation.
+     * {@link Observation#start()} when you want the measurements to start. When the
+     * {@link ObservationRegistry} is null or the no-op registry, this fast returns a
+     * no-op {@link Observation} and skips the creation of the
+     * {@link Observation.Context}. This check avoids unnecessary
+     * {@link Observation.Context} creation, which is why it takes a {@link Supplier} for
+     * the context rather than the context directly. If the observation is not enabled
+     * (see
+     * {@link ObservationRegistry.ObservationConfig#observationPredicate(ObservationPredicate)
+     * ObservationConfig#observationPredicate}), a no-op observation will also be
+     * returned.
      * <p>
      * <b>Important!</b> If you're using the
      * {@link ObservationConvention#getContextualName(Context)} method to override the
@@ -215,18 +264,19 @@ public interface Observation {
      * </p>
      * @param <T> type of context
      * @param observationConvention observation convention
-     * @param context mutable context
+     * @param contextSupplier mutable context supplier
      * @param registry observation registry
      * @return created but not started observation
      */
     static <T extends Context> Observation createNotStarted(ObservationConvention<T> observationConvention,
-            @Nullable T context, @Nullable ObservationRegistry registry) {
-        if (registry == null || registry.isNoop()
-                || !registry.observationConfig().isObservationEnabled(observationConvention.getName(), context)
-                || observationConvention == NoopObservationConvention.INSTANCE) {
+            Supplier<T> contextSupplier, ObservationRegistry registry) {
+        if (registry == null || registry.isNoop() || observationConvention == NoopObservationConvention.INSTANCE) {
             return NOOP;
         }
-
+        T context = contextSupplier.get();
+        if (!registry.observationConfig().isObservationEnabled(observationConvention.getName(), context)) {
+            return NOOP;
+        }
         return new SimpleObservation(observationConvention, registry, context == null ? new Context() : context);
     }
 
@@ -359,7 +409,16 @@ public interface Observation {
      * Returns the context attached to this observation.
      * @return corresponding context
      */
-    ContextView getContext();
+    Context getContext();
+
+    /**
+     * Returns the context attached to this observation as a read only view.
+     * @return corresponding context
+     */
+    @Override
+    default ContextView getContextView() {
+        return getContext();
+    }
 
     /**
      * Stop the observation. Remember to call this method, otherwise timing calculations
@@ -402,6 +461,10 @@ public interface Observation {
         }
     }
 
+    default Runnable wrap(Runnable runnable) {
+        return () -> observe(runnable);
+    }
+
     /**
      * Observes the passed {@link CheckedRunnable}, this means the followings:
      *
@@ -429,6 +492,10 @@ public interface Observation {
         finally {
             stop();
         }
+    }
+
+    default <E extends Throwable> CheckedRunnable<E> wrapChecked(CheckedRunnable<E> checkedRunnable) throws E {
+        return () -> observeChecked(checkedRunnable);
     }
 
     /**
@@ -461,6 +528,10 @@ public interface Observation {
         }
     }
 
+    default <T> Supplier<T> wrap(Supplier<T> supplier) {
+        return () -> observe(supplier);
+    }
+
     /**
      * Observes the passed {@link CheckedCallable}, this means the followings:
      *
@@ -490,6 +561,10 @@ public interface Observation {
         finally {
             stop();
         }
+    }
+
+    default <T, E extends Throwable> CheckedCallable<T, E> wrapChecked(CheckedCallable<T, E> checkedCallable) throws E {
+        return () -> observeChecked(checkedCallable);
     }
 
     /**
@@ -674,7 +749,7 @@ public interface Observation {
         private Throwable error;
 
         @Nullable
-        private Observation parentObservation;
+        private ObservationView parentObservation;
 
         private final Set<KeyValue> lowCardinalityKeyValues = new LinkedHashSet<>();
 
@@ -716,12 +791,11 @@ public interface Observation {
         }
 
         /**
-         * Returns the parent {@link Observation}.
+         * Returns the parent {@link ObservationView}.
          * @return parent observation or {@code null} if there was no parent
          */
-        @Override
         @Nullable
-        public Observation getParentObservation() {
+        public ObservationView getParentObservation() {
             return parentObservation;
         }
 
@@ -729,17 +803,17 @@ public interface Observation {
          * Sets the parent {@link Observation}.
          * @param parentObservation parent observation to set
          */
-        public void setParentObservation(@Nullable Observation parentObservation) {
+        public void setParentObservation(@Nullable ObservationView parentObservation) {
             this.parentObservation = parentObservation;
         }
 
         /**
-         * Optional error that occurred while processing the {@link Observation}.
-         * @return optional error
+         * Error that occurred while processing the {@link Observation}.
+         * @return error (null if there wasn't any)
          */
-        @Override
-        public Optional<Throwable> getError() {
-            return Optional.ofNullable(this.error);
+        @Nullable
+        public Throwable getError() {
+            return this.error;
         }
 
         /**
@@ -846,6 +920,7 @@ public interface Observation {
          * Adds a low cardinality key value - those will be appended to those fetched from
          * the {@link ObservationConvention#getLowCardinalityKeyValues(Context)} method.
          * @param keyValue a key value
+         * @return this context
          */
         public Context addLowCardinalityKeyValue(KeyValue keyValue) {
             this.lowCardinalityKeyValues.add(keyValue);
@@ -857,6 +932,7 @@ public interface Observation {
          * from the {@link ObservationConvention#getHighCardinalityKeyValues(Context)}
          * method.
          * @param keyValue a key value
+         * @return this context
          */
         public Context addHighCardinalityKeyValue(KeyValue keyValue) {
             this.highCardinalityKeyValues.add(keyValue);
@@ -866,6 +942,7 @@ public interface Observation {
         /**
          * Adds multiple low cardinality key values at once.
          * @param keyValues collection of key values
+         * @return this context
          */
         public Context addLowCardinalityKeyValues(KeyValues keyValues) {
             keyValues.stream().forEach(this::addLowCardinalityKeyValue);
@@ -875,6 +952,7 @@ public interface Observation {
         /**
          * Adds multiple high cardinality key values at once.
          * @param keyValues collection of key values
+         * @return this context
          */
         public Context addHighCardinalityKeyValues(KeyValues keyValues) {
             keyValues.stream().forEach(this::addHighCardinalityKeyValue);
@@ -928,7 +1006,7 @@ public interface Observation {
     interface Event {
 
         /**
-         * Creates a {@link Event} for the given names.
+         * Creates an {@link Event} for the given names.
          * @param name The name of the event (should have low cardinality).
          * @param contextualName The contextual name of the event (can have high
          * cardinality).
@@ -948,14 +1026,13 @@ public interface Observation {
 
                 @Override
                 public String toString() {
-                    return "event.name='" + this.getName() + "', event.contextualName='" + this.getContextualName()
-                            + '\'';
+                    return "event.name='" + getName() + "', event.contextualName='" + getContextualName() + '\'';
                 }
             };
         }
 
         /**
-         * Creates a {@link Event} for the given name.
+         * Creates an {@link Event} for the given name.
          * @param name The name of the event (should have low cardinality).
          * @return event
          */
@@ -980,13 +1057,13 @@ public interface Observation {
         }
 
         /**
-         * Creates an event for the given key name.
+         * Creates a new event with the given dynamic entries for the contextual name.
          * @param dynamicEntriesForContextualName variables to be resolved in
          * {@link Event#getContextualName()} via {@link String#format(String, Object...)}.
          * @return event
          */
         default Event format(Object... dynamicEntriesForContextualName) {
-            return Event.of(this.getName(), String.format(this.getContextualName(), dynamicEntriesForContextualName));
+            return Event.of(getName(), String.format(getContextualName(), dynamicEntriesForContextualName));
         }
 
     }
@@ -1011,17 +1088,18 @@ public interface Observation {
         String getContextualName();
 
         /**
-         * Returns the parent {@link Observation}.
+         * Returns the parent {@link ObservationView}.
          * @return parent observation or {@code null} if there was no parent
          */
         @Nullable
-        Observation getParentObservation();
+        ObservationView getParentObservation();
 
         /**
-         * Optional error that occurred while processing the {@link Observation}.
-         * @return optional error
+         * Error that occurred while processing the {@link Observation}.
+         * @return error (null if there wasn't any)
          */
-        Optional<Throwable> getError();
+        @Nullable
+        Throwable getError();
 
         /**
          * Gets an entry from the context. Returns {@code null} when entry is not present.

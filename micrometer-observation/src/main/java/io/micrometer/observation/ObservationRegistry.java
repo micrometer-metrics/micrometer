@@ -17,7 +17,6 @@ package io.micrometer.observation;
 
 import io.micrometer.common.lang.Nullable;
 
-import java.util.Arrays;
 import java.util.Collection;
 import java.util.List;
 import java.util.Objects;
@@ -135,23 +134,12 @@ public interface ObservationRegistry {
         }
 
         /**
-         * Register {@link ObservationConvention observation conventions}.
-         * @param observationConventions observation conventions
+         * Register an {@link ObservationConvention}.
+         * @param observationConvention observation convention
          * @return This configuration instance
          */
-        public ObservationConfig observationConvention(GlobalObservationConvention<?>... observationConventions) {
-            this.observationConventions.addAll(Arrays.asList(observationConventions));
-            return this;
-        }
-
-        /**
-         * Register a collection of {@link ObservationConvention}.
-         * @param observationConventions observation conventions
-         * @return This configuration instance
-         */
-        public ObservationConfig observationConvention(
-                Collection<GlobalObservationConvention<?>> observationConventions) {
-            this.observationConventions.addAll(observationConventions);
+        public ObservationConfig observationConvention(GlobalObservationConvention<?> observationConvention) {
+            this.observationConventions.add(observationConvention);
             return this;
         }
 
@@ -164,7 +152,7 @@ public interface ObservationRegistry {
          * found
          */
         @SuppressWarnings("unchecked")
-        public <T extends Observation.Context> ObservationConvention<T> getObservationConvention(T context,
+        <T extends Observation.Context> ObservationConvention<T> getObservationConvention(T context,
                 ObservationConvention<T> defaultConvention) {
             return (ObservationConvention<T>) this.observationConventions.stream()
                     .filter(convention -> convention.supportsContext(context)).findFirst().orElse(Objects
@@ -178,7 +166,7 @@ public interface ObservationRegistry {
          * @param context context
          * @return {@code true} when observation is enabled
          */
-        public boolean isObservationEnabled(String name, @Nullable Observation.Context context) {
+        boolean isObservationEnabled(String name, @Nullable Observation.Context context) {
             return this.observationPredicates.stream().allMatch(predicate -> predicate.test(name, context));
         }
 

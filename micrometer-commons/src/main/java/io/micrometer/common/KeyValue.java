@@ -28,6 +28,11 @@ import io.micrometer.common.docs.KeyName;
  */
 public interface KeyValue extends Comparable<KeyValue> {
 
+    /**
+     * Use this if you want to indicate that the value is missing.
+     */
+    String NONE_VALUE = "none";
+
     String getKey();
 
     String getValue();

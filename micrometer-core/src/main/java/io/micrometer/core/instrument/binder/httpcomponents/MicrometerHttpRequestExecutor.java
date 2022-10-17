@@ -117,11 +117,12 @@ public class MicrometerHttpRequestExecutor extends HttpRequestExecutor {
         try {
             HttpResponse response = super.execute(request, conn, context);
             sample.setResponse(response);
-            statusCodeOrError = DefaultApacheHttpClientObservationConvention.INSTANCE.getStatusValue(response);
+            statusCodeOrError = DefaultApacheHttpClientObservationConvention.INSTANCE.getStatusValue(response, null);
             return response;
         }
         catch (IOException | HttpException | RuntimeException e) {
             statusCodeOrError = "IO_ERROR";
+            sample.setThrowable(e);
             throw e;
         }
         finally {
@@ -218,6 +219,7 @@ public class MicrometerHttpRequestExecutor extends HttpRequestExecutor {
          * API instead of directly with a {@link Timer}.
          * @param observationRegistry registry with which to instrument
          * @return This builder instance.
+         * @since 1.10.0
          */
         public Builder observationRegistry(ObservationRegistry observationRegistry) {
             this.observationRegistry = observationRegistry;
@@ -226,11 +228,12 @@ public class MicrometerHttpRequestExecutor extends HttpRequestExecutor {
 
         /**
          * Provide a custom convention to override the default convention used when
-         * instrumenting with the {@link Observation} API. This only takes effect when a
+         * instrumenting with the {@link Observation} API. This only takes effect when an
          * {@link #observationRegistry(ObservationRegistry)} is configured.
          * @param convention semantic convention to use
          * @return This builder instance.
          * @see #observationRegistry(ObservationRegistry)
+         * @since 1.10.0
          */
         public Builder observationConvention(ApacheHttpClientObservationConvention convention) {
             this.observationConvention = convention;

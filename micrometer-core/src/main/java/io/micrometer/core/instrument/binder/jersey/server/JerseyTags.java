@@ -49,9 +49,9 @@ public final class JerseyTags {
 
     private static final Tag METHOD_UNKNOWN = Tag.of("method", "UNKNOWN");
 
-    private static final Pattern TRAILING_SLASH_PATTERN = Pattern.compile("/$");
+    static final Pattern TRAILING_SLASH_PATTERN = Pattern.compile("/$");
 
-    private static final Pattern MULTIPLE_SLASH_PATTERN = Pattern.compile("//+");
+    static final Pattern MULTIPLE_SLASH_PATTERN = Pattern.compile("//+");
 
     private JerseyTags() {
     }
@@ -101,11 +101,11 @@ public final class JerseyTags {
         return Tag.of("uri", matchingPattern);
     }
 
-    private static boolean isRedirection(int status) {
+    static boolean isRedirection(int status) {
         return 300 <= status && status < 400;
     }
 
-    private static String getMatchingPattern(RequestEvent event) {
+    static String getMatchingPattern(RequestEvent event) {
         ExtendedUriInfo uriInfo = event.getUriInfo();
         List<UriTemplate> templates = uriInfo.getMatchedTemplates();
 
@@ -122,7 +122,7 @@ public final class JerseyTags {
     }
 
     /**
-     * Creates a {@code exception} tag based on the {@link Class#getSimpleName() simple
+     * Creates an {@code exception} tag based on the {@link Class#getSimpleName() simple
      * name} of the class of the given {@code exception}.
      * @param event the request event
      * @return the exception tag derived from the exception

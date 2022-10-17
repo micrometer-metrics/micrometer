@@ -15,13 +15,13 @@
  */
 package io.micrometer.core.instrument;
 
+import io.micrometer.common.lang.Nullable;
 import io.micrometer.core.instrument.binder.jetty.TimedHandler;
 import org.eclipse.jetty.server.Server;
 import org.eclipse.jetty.servlet.ServletContextHandler;
 import org.eclipse.jetty.servlet.ServletHandler;
 import org.junit.jupiter.api.Disabled;
 
-import javax.servlet.ServletException;
 import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
@@ -39,7 +39,7 @@ class JettyServerTimingInstrumentationVerificationTests extends HttpServerTiming
     }
 
     @Override
-    protected URI startInstrumentedServer() throws Exception {
+    protected URI startInstrumentedWithMetricsServer() throws Exception {
         server = new Server(0);
         TimedHandler timedHandler = new TimedHandler(getRegistry(), Tags.empty());
         ServletContextHandler servletContextHandler = new ServletContextHandler();
@@ -52,6 +52,12 @@ class JettyServerTimingInstrumentationVerificationTests extends HttpServerTiming
         return server.getURI();
     }
 
+    @Nullable
+    @Override
+    protected URI startInstrumentedWithObservationsServer() throws Exception {
+        return null;
+    }
+
     @Override
     protected void stopInstrumentedServer() throws Exception {
         server.stop();
@@ -60,26 +66,31 @@ class JettyServerTimingInstrumentationVerificationTests extends HttpServerTiming
     public static class MyWebServlet extends HttpServlet {
 
         @Override
-        protected void doGet(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
-            if (req.getPathInfo().contentEquals("/")) {
-                resp.setStatus(200);
+        protected void doGet(HttpServletRequest req, HttpServletResponse resp) throws IOException {
+            if (req.getPathInfo().contentEquals(InstrumentedRoutes.ROOT)) {
+                resp.setStatus(HttpServletResponse.SC_OK);
                 resp.getWriter().print("hello");
             }
-            else if (req.getPathInfo().startsWith("/home/")) {
-                resp.setStatus(200);
+            else if (req.getPathInfo().startsWith("/hello/")) {
+                resp.setStatus(HttpServletResponse.SC_OK);
                 resp.getWriter().print("hello " + "world");
             }
-            else if (req.getPathInfo().contentEquals("/foundRedirect")) {
+            else if (req.getPathInfo().contentEquals(InstrumentedRoutes.REDIRECT)) {
                 resp.sendRedirect("/");
             }
             else {
-                resp.sendError(400);
+                resp.sendError(HttpServletResponse.SC_NOT_FOUND);
             }
         }
 
         @Override
-        protected void doPost(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
-            super.doPost(req, resp);
+        protected void doPost(HttpServletRequest req, HttpServletResponse resp) throws IOException {
+            if (req.getPathInfo().contentEquals(InstrumentedRoutes.ERROR)) {
+                resp.sendError(HttpServletResponse.SC_INTERNAL_SERVER_ERROR);
+            }
+            else {
+                resp.sendError(HttpServletResponse.SC_NOT_FOUND);
+            }
         }
 
     }

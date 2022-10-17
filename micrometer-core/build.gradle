@@ -1,6 +1,6 @@
 plugins {
     id "org.jetbrains.kotlin.jvm" version "1.7.10"
-    id 'me.champeau.mrjar' version "0.1"
+    id 'me.champeau.mrjar' version "0.1.1"
 }
 
 description 'Core module of Micrometer containing instrumentation API and implementation'
@@ -59,6 +59,8 @@ dependencies {
 
     // server runtime monitoring
     optionalApi 'org.eclipse.jetty:jetty-server'
+    // jakarta servlet
+    optionalApi 'jakarta.servlet:jakarta.servlet-api:5.+'
     optionalApi 'org.eclipse.jetty:jetty-client'
     optionalApi 'org.apache.tomcat.embed:tomcat-embed-core'
     optionalApi 'org.glassfish.jersey.core:jersey-server'
@@ -157,6 +159,10 @@ dependencies {
     }
     testImplementation("org.apache.maven.resolver:maven-resolver-connector-basic:latest.release")
     testImplementation("org.springframework:spring-core:latest.release")
+
+    // gRPC
+    testImplementation("io.grpc:grpc-core")
+    testImplementation("io.grpc:grpc-testing-proto")
 }
 
 task shenandoahTest(type: Test) {

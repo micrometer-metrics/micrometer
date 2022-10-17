@@ -97,13 +97,14 @@ public class ObservationOrTimerCompatibleInstrumentation<T extends Observation.C
         this.defaultConvention = defaultConvention;
     }
 
+    @SuppressWarnings("unchecked")
     private void start(Supplier<T> contextSupplier) {
         if (observationRegistry.isNoop()) {
             timerSample = Timer.start(meterRegistry);
         }
         else {
-            context = contextSupplier.get();
-            observation = Observation.start(convention, defaultConvention, context, observationRegistry);
+            observation = Observation.start(convention, defaultConvention, contextSupplier, observationRegistry);
+            context = (T) observation.getContext();
         }
     }
 
@@ -117,13 +118,14 @@ public class ObservationOrTimerCompatibleInstrumentation<T extends Observation.C
         if (observationRegistry.isNoop() || !(context instanceof ResponseContext)) {
             return;
         }
+        @SuppressWarnings("unchecked")
         ResponseContext<? super RES> responseContext = (ResponseContext<? super RES>) context;
         responseContext.setResponse(response);
     }
 
     /**
-     * If using an Observation will set the error on Observation. For metrics, it will do
-     * nothing.
+     * If using an Observation, it will set the error on Observation. For metrics, it will
+     * do nothing.
      * @param throwable error that got recorded
      */
     public void setThrowable(Throwable throwable) {

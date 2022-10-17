@@ -63,7 +63,7 @@ class StatsdMeterRegistryPublishTest {
 
     DisposableChannel server;
 
-    CountDownLatch serverLatch;
+    volatile CountDownLatch serverLatch;
 
     AtomicInteger serverMetricReadCount = new AtomicInteger();
 

@@ -13,36 +13,48 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package io.micrometer.core.instrument.binder.jdk;
+package io.micrometer.core.instrument.binder.jersey.server;
 
 import io.micrometer.common.docs.KeyName;
+import io.micrometer.common.lang.NonNullApi;
 import io.micrometer.observation.Observation;
 import io.micrometer.observation.ObservationConvention;
-import io.micrometer.observation.docs.DocumentedObservation;
+import io.micrometer.observation.docs.ObservationDocumentation;
 
-enum HttpClientDocumentedObservation implements DocumentedObservation {
+/**
+ * A {@link ObservationDocumentation} for Jersey.
+ *
+ * @author Marcin Grzejszczak
+ * @since 1.10.0
+ */
+@NonNullApi
+public enum JerseyObservationDocumentation implements ObservationDocumentation {
 
     /**
-     * Observation when an HTTP call is being made.
+     * Default observation for Jersey.
      */
-    HTTP_CALL {
+    DEFAULT {
         @Override
         public Class<? extends ObservationConvention<? extends Observation.Context>> getDefaultConvention() {
-            return DefaultHttpClientObservationConvention.class;
+            return DefaultJerseyObservationConvention.class;
         }
 
         @Override
         public KeyName[] getLowCardinalityKeyNames() {
-            return LowCardinalityKeys.values();
+            return JerseyLegacyLowCardinalityTags.values();
         }
-
     };
 
-    enum LowCardinalityKeys implements KeyName {
+    @NonNullApi
+    enum JerseyLegacyLowCardinalityTags implements KeyName {
 
-        /**
-         * HTTP Method.
-         */
+        OUTCOME {
+            @Override
+            public String asString() {
+                return "outcome";
+            }
+        },
+
         METHOD {
             @Override
             public String asString() {
@@ -50,23 +62,24 @@ enum HttpClientDocumentedObservation implements DocumentedObservation {
             }
         },
 
-        /**
-         * HTTP Status.
-         */
-        STATUS {
-            @Override
-            public String asString() {
-                return "status";
-            }
-        },
-
-        /**
-         * HTTP URI.
-         */
         URI {
             @Override
             public String asString() {
                 return "uri";
+            }
+        },
+
+        EXCEPTION {
+            @Override
+            public String asString() {
+                return "exception";
+            }
+        },
+
+        STATUS {
+            @Override
+            public String asString() {
+                return "status";
             }
         }
 

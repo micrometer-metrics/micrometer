@@ -45,3 +45,4 @@ include 'micrometer-test', 'micrometer-observation-test'
 }
 
 include 'micrometer-bom'
+include 'micrometer-jetty11'
