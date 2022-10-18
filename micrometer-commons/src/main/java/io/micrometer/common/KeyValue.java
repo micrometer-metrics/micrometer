@@ -58,6 +58,24 @@ public interface KeyValue extends Comparable<KeyValue> {
     }
 
     /**
+     * Creates a {@link KeyValue} for the given key and {@value NONE_VALUE}.
+     * @param key key of the KeyValue
+     * @return KeyValue
+     */
+    static KeyValue of(String key) {
+        return of(key, NONE_VALUE);
+    }
+
+    /**
+     * Creates a {@link KeyValue} for the given {@link KeyName} and {@value NONE_VALUE}.
+     * @param keyName name of the key of the KeyValue
+     * @return KeyValue
+     */
+    static KeyValue of(KeyName keyName) {
+        return of(keyName, NONE_VALUE);
+    }
+
+    /**
      * Creates a {@link KeyValue} for the given key and value and additionally validates
      * it with the {@link Predicate}.
      * @param key key of the KeyValue
