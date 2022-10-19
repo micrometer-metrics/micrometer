@@ -15,6 +15,7 @@
  */
 package io.micrometer.observation.tck;
 
+import io.micrometer.common.KeyValues;
 import io.micrometer.observation.Observation;
 import io.micrometer.observation.ObservationRegistry;
 import org.junit.jupiter.api.BeforeEach;
@@ -573,6 +574,13 @@ class ObservationContextAssertTests {
         thenThrownBy(() -> assertThat(context).hasParentObservationContextSatisfying(c -> assertThat(c).hasError()))
                 .hasMessage(
                         "Parent observation does not satisfy given assertion: Observation should have an error, but none was found");
+    }
+
+    @Test
+    void hasSubsetOfKeys() {
+        context.addLowCardinalityKeyValues(KeyValues.of("a", "1", "b", "2", "c", "3", "d", "4"));
+        thenThrownBy(() -> assertThat(context).hasSubsetOfKeys("a", "b"))
+                .hasMessage("Observation keys are not a subset of [a, b]. Found extra keys: [c, d]");
     }
 
 }
