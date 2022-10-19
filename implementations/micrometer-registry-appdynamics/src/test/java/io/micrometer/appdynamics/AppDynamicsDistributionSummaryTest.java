@@ -22,7 +22,7 @@ import io.micrometer.core.instrument.Tags;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.assertj.core.api.Assertions.assertThat;
 
 public class AppDynamicsDistributionSummaryTest {
 
@@ -71,17 +71,17 @@ public class AppDynamicsDistributionSummaryTest {
 
     private void assertRecordedValues(AppDynamicsDistributionSummary summary, long count, long min, long max,
             long total) {
-        assertEquals(count, summary.count());
-        assertEquals(min, summary.min());
-        assertEquals(max, summary.max());
-        assertEquals(total, summary.totalAmount());
+        assertThat(summary.count()).isEqualTo(count);
+        assertThat(summary.min()).isEqualTo(min);
+        assertThat(summary.max()).isEqualTo(max);
+        assertThat(summary.totalAmount()).isEqualTo(total);
     }
 
     private void assertRecordedValues(MetricSnapshot snapshot, long count, long min, long max, long total) {
-        assertEquals(count, snapshot.count());
-        assertEquals(min, snapshot.min());
-        assertEquals(max, snapshot.max());
-        assertEquals(total, snapshot.total());
+        assertThat(snapshot.count()).isEqualTo(count);
+        assertThat(snapshot.min()).isEqualTo(min);
+        assertThat(snapshot.max()).isEqualTo(max);
+        assertThat(snapshot.total()).isEqualTo(total);
     }
 
 }

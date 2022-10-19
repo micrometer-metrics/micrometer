@@ -30,7 +30,16 @@ public interface AppDynamicsConfig extends StepRegistryConfig {
 
     @Override
     default String prefix() {
-        return "Custom Metrics";
+        return "appdynamics";
+    }
+
+    /**
+     * Return metric group name.
+     * @return metric group name
+     */
+    default String group() {
+        String value = get(prefix() + ".group");
+        return value == null ? "Custom Metrics|" : value;
     }
 
     default TimeUnit getBaseTimeUnit() {

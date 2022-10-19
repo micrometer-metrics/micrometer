@@ -25,7 +25,7 @@ import org.junit.jupiter.api.Test;
 
 import java.util.concurrent.TimeUnit;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.assertj.core.api.Assertions.assertThat;
 
 public class AppDynamicsTimerTest {
 
@@ -60,17 +60,17 @@ public class AppDynamicsTimerTest {
     }
 
     private void assertRecordedValues(AppDynamicsTimer timer, long count, long min, long max, long total) {
-        assertEquals(count, timer.count());
-        assertEquals(min, timer.min(timer.baseTimeUnit()));
-        assertEquals(max, timer.max(timer.baseTimeUnit()));
-        assertEquals(total, timer.totalTime(timer.baseTimeUnit()));
+        assertThat(timer.count()).isEqualTo(count);
+        assertThat(timer.min(timer.baseTimeUnit())).isEqualTo(min);
+        assertThat(timer.max(timer.baseTimeUnit())).isEqualTo(max);
+        assertThat(timer.totalTime(timer.baseTimeUnit())).isEqualTo(total);
     }
 
     private void assertRecordedValues(MetricSnapshot snapshot, long count, long min, long max, long total) {
-        assertEquals(count, snapshot.count());
-        assertEquals(min, snapshot.min());
-        assertEquals(max, snapshot.max());
-        assertEquals(total, snapshot.total());
+        assertThat(snapshot.count()).isEqualTo(count);
+        assertThat(snapshot.min()).isEqualTo(min);
+        assertThat(snapshot.max()).isEqualTo(max);
+        assertThat(snapshot.total()).isEqualTo(total);
     }
 
 }

@@ -15,6 +15,7 @@
  */
 package io.micrometer.appdynamics;
 
+import io.micrometer.common.lang.Nullable;
 import io.micrometer.core.instrument.Meter;
 import io.micrometer.core.instrument.config.NamingConvention;
 
@@ -32,8 +33,8 @@ public class PathNamingConvention implements NamingConvention {
     }
 
     @Override
-    public String name(String name, Meter.Type type, String baseUnit) {
-        return config.prefix() + "|" + name;
+    public String name(String name, @Nullable Meter.Type type, @Nullable String baseUnit) {
+        return config.group() + name;
     }
 
 }

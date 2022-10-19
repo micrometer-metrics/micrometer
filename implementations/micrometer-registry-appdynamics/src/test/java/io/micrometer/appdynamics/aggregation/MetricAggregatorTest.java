@@ -17,7 +17,7 @@ package io.micrometer.appdynamics.aggregation;
 
 import org.junit.jupiter.api.Test;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.assertj.core.api.Assertions.assertThat;
 
 public class MetricAggregatorTest {
 
@@ -53,10 +53,10 @@ public class MetricAggregatorTest {
     }
 
     private void assertRecordedValues(MetricAggregator aggregator, long count, long min, long max, long total) {
-        assertEquals(count, aggregator.count());
-        assertEquals(min, aggregator.min());
-        assertEquals(max, aggregator.max());
-        assertEquals(total, aggregator.total());
+        assertThat(aggregator.count()).isEqualTo(count);
+        assertThat(aggregator.min()).isEqualTo(min);
+        assertThat(aggregator.max()).isEqualTo(max);
+        assertThat(aggregator.total()).isEqualTo(total);
     }
 
 }

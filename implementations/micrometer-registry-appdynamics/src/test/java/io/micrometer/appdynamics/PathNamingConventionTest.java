@@ -18,7 +18,7 @@ package io.micrometer.appdynamics;
 import io.micrometer.core.instrument.Meter;
 import org.junit.jupiter.api.Test;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.assertj.core.api.Assertions.assertThat;
 
 public class PathNamingConventionTest {
 
@@ -29,7 +29,7 @@ public class PathNamingConventionTest {
         PathNamingConvention victim = new PathNamingConvention(config);
         String name = victim.name("counter", Meter.Type.COUNTER);
 
-        assertEquals(config.prefix() + "|counter", name);
+        assertThat(name).isEqualTo(config.group() + "counter");
     }
 
 }
