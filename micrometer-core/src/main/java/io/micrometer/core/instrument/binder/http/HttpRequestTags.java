@@ -56,6 +56,7 @@ public class HttpRequestTags {
      * {@code request}.
      * @param request the request
      * @return the method tag whose value is a capitalized method (e.g. GET).
+     * @since 1.10.0
      */
     public static Tag method(jakarta.servlet.http.HttpServletRequest request) {
         return (request != null) ? Tag.of("method", request.getMethod()) : METHOD_UNKNOWN;
@@ -74,6 +75,7 @@ public class HttpRequestTags {
      * Creates a {@code status} tag based on the status of the given {@code response}.
      * @param response the HTTP response
      * @return the status tag derived from the status of the response
+     * @since 1.10.0
      */
     public static Tag status(jakarta.servlet.http.HttpServletResponse response) {
         return (response != null) ? Tag.of("status", Integer.toString(response.getStatus())) : STATUS_UNKNOWN;
@@ -108,6 +110,7 @@ public class HttpRequestTags {
      * Creates an {@code outcome} tag based on the status of the given {@code response}.
      * @param response the HTTP response
      * @return the outcome tag derived from the status of the response
+     * @since 1.10.0
      */
     public static Tag outcome(jakarta.servlet.http.HttpServletResponse response) {
         Outcome outcome = (response != null) ? Outcome.forStatus(response.getStatus()) : Outcome.UNKNOWN;
