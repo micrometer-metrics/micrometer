@@ -249,7 +249,7 @@ class KafkaMetrics implements MeterBinder, AutoCloseable {
     }
 
     private Meter registerMeter(MeterRegistry registry, MetricName metricName, String meterName, Iterable<Tag> tags) {
-        if (meterName.endsWith("total") || meterName.endsWith("count")) {
+        if (meterName.endsWith("total")) {
             return registerCounter(registry, metricName, meterName, tags);
         }
         else {

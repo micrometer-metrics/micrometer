@@ -15,6 +15,7 @@
  */
 package io.micrometer.core.instrument.binder.kafka;
 
+import io.micrometer.core.instrument.Gauge;
 import io.micrometer.core.instrument.simple.SimpleMeterRegistry;
 import org.apache.kafka.clients.consumer.Consumer;
 import org.apache.kafka.clients.consumer.ConsumerConfig;
@@ -107,6 +108,10 @@ class KafkaClientMetricsIntegrationTest {
 
         assertThat(registry.getMeters()).hasSizeGreaterThan(producerAndConsumerMetricsAfterSend);
         assertThat(registry.getMeters()).extracting(m -> m.getId().getTag("kafka.version")).allMatch(v -> !v.isEmpty());
+
+        // see gh-3300
+        assertThat(registry.getMeters().stream().filter(meter -> meter.getId().getName().endsWith(".count")))
+                .allMatch(meter -> meter instanceof Gauge);
 
         // Printing out for discovery purposes
         out.println("All meters from producer and consumer:");
