@@ -9,14 +9,6 @@ multiRelease {
     targetVersions 8, 11
 }
 
-// Otherwise java11 tests will not see java11 code
-sourceSets {
-    java11Test {
-        compileClasspath += sourceSets.java11.output
-        runtimeClasspath += sourceSets.java11.output
-    }
-}
-
 tasks.withType(org.jetbrains.kotlin.gradle.tasks.KotlinCompile).all {
     kotlinOptions {
         jvmTarget = javaTargetVersion
