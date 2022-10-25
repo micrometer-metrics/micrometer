@@ -53,8 +53,8 @@ import static java.nio.charset.StandardCharsets.UTF_8;
  */
 public class DynatraceExporterV1 extends AbstractDynatraceExporter {
 
-    private static final int MAX_MESSAGE_SIZE = 15360; // max message size in bytes that
-                                                       // Dynatrace will accept
+    // max message size in bytes that Dynatrace will accept
+    private static final int MAX_MESSAGE_SIZE = 15360;
 
     private final InternalLogger logger = InternalLoggerFactory.getInstance(DynatraceExporterV1.class);
 
@@ -194,12 +194,10 @@ public class DynatraceExporterV1 extends AbstractDynatraceExporter {
                     .withJsonContent(customMetric.asJson());
         }
         catch (Exception ex) {
-            // log only the error message without the token
             if (logger.isErrorEnabled()) {
                 logger.error("failed to build request: {}", redactToken(ex.getMessage()));
             }
-            // do not attempt to export if the creation of the request already failed
-            return;
+            return; // don't try to export data points, the request can't be built
         }
 
         HttpSender.Response httpResponse = trySendHttpRequest(requestBuilder);
@@ -225,9 +223,8 @@ public class DynatraceExporterV1 extends AbstractDynatraceExporter {
                 if (logger.isErrorEnabled()) {
                     logger.error("failed to build request: {}", redactToken(ex.getMessage()));
                 }
-                // don't export the other data points, since the endpoint will always be
-                // invalid.
-                return;
+
+                return; // don't try to export data points, the request can't be built
             }
 
             HttpSender.Response httpResponse = trySendHttpRequest(requestBuilder);
@@ -249,9 +246,8 @@ public class DynatraceExporterV1 extends AbstractDynatraceExporter {
 
     // VisibleForTesting
     HttpSender.Response trySendHttpRequest(HttpSender.Request.Builder requestBuilder) {
-        HttpSender.Response httpResponse;
         try {
-            httpResponse = requestBuilder.send();
+            return requestBuilder.send();
         }
         catch (Throwable e) {
             if (logger.isErrorEnabled()) {
@@ -259,7 +255,6 @@ public class DynatraceExporterV1 extends AbstractDynatraceExporter {
             }
             return null;
         }
-        return httpResponse;
     }
 
     // VisibleForTesting
@@ -314,8 +309,8 @@ public class DynatraceExporterV1 extends AbstractDynatraceExporter {
         return id.withName(id.getName() + "." + suffix);
     }
 
-    private String redactToken(String s) {
-        return s.replace(config.apiToken(), "<redacted>");
+    private String redactToken(String message) {
+        return message.replace(config.apiToken(), "<redacted>");
     }
 
 }
