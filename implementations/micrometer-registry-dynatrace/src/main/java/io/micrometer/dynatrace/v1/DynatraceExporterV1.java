@@ -53,8 +53,8 @@ import static java.nio.charset.StandardCharsets.UTF_8;
  */
 public class DynatraceExporterV1 extends AbstractDynatraceExporter {
 
-    private static final int MAX_MESSAGE_SIZE = 15360; // max message size in bytes that
-                                                       // Dynatrace will accept
+    // max message size in bytes that Dynatrace will accept
+    private static final int MAX_MESSAGE_SIZE = 15360;
 
     private final InternalLogger logger = InternalLoggerFactory.getInstance(DynatraceExporterV1.class);
 
@@ -187,43 +187,73 @@ public class DynatraceExporterV1 extends AbstractDynatraceExporter {
 
     // VisibleForTesting
     void putCustomMetric(final DynatraceMetricDefinition customMetric) {
+        HttpSender.Request.Builder requestBuilder;
         try {
-            httpClient
+            requestBuilder = httpClient
                     .put(customMetricEndpointTemplate + customMetric.getMetricId() + "?api-token=" + config.apiToken())
-                    .withJsonContent(customMetric.asJson()).send().onSuccess(response -> {
-                        logger.debug("created {} as custom metric in Dynatrace", customMetric.getMetricId());
-                        createdCustomMetrics.add(customMetric.getMetricId());
-                    })
-                    .onError(response -> logger.error(
-                            "failed to create custom metric {} in Dynatrace: Error Code={}, Response Body={}",
-                            customMetric.getMetricId(), response.code(), response.body()));
+                    .withJsonContent(customMetric.asJson());
         }
-        catch (Throwable e) {
+        catch (Exception ex) {
             if (logger.isErrorEnabled()) {
-                logger.error("failed to create custom metric in Dynatrace: " + customMetric.getMetricId(), e);
+                logger.error("failed to build request: {}", redactToken(ex.getMessage()));
             }
+            return; // don't try to export data points, the request can't be built
+        }
+
+        HttpSender.Response httpResponse = trySendHttpRequest(requestBuilder);
+
+        if (httpResponse != null) {
+            httpResponse.onSuccess(response -> {
+                logger.debug("created {} as custom metric in Dynatrace", customMetric.getMetricId());
+                createdCustomMetrics.add(customMetric.getMetricId());
+            }).onError(response -> logger.error(
+                    "failed to create custom metric {} in Dynatrace: Error Code={}, Response Body={}",
+                    customMetric.getMetricId(), response.code(), response.body()));
         }
     }
 
     private void postCustomMetricValues(String type, String group, List<DynatraceTimeSeries> timeSeries,
             String customDeviceMetricEndpoint) {
-        try {
-            for (DynatraceBatchedPayload postMessage : createPostMessages(type, group, timeSeries)) {
-                httpClient.post(customDeviceMetricEndpoint).withJsonContent(postMessage.payload).send()
-                        .onSuccess(response -> {
-                            if (logger.isDebugEnabled()) {
-                                logger.debug("successfully sent {} metrics to Dynatrace ({} bytes).",
-                                        postMessage.metricCount, postMessage.payload.getBytes(UTF_8).length);
-                            }
-                        }).onError(response -> {
-                            logger.error("failed to send metrics to Dynatrace: Error Code={}, Response Body={}",
-                                    response.code(), response.body());
-                            logger.debug("failed metrics payload: {}", postMessage.payload);
-                        });
+        for (DynatraceBatchedPayload postMessage : createPostMessages(type, group, timeSeries)) {
+            HttpSender.Request.Builder requestBuilder;
+            try {
+                requestBuilder = httpClient.post(customDeviceMetricEndpoint).withJsonContent(postMessage.payload);
+            }
+            catch (Exception ex) {
+                if (logger.isErrorEnabled()) {
+                    logger.error("failed to build request: {}", redactToken(ex.getMessage()));
+                }
+
+                return; // don't try to export data points, the request can't be built
+            }
+
+            HttpSender.Response httpResponse = trySendHttpRequest(requestBuilder);
+
+            if (httpResponse != null) {
+                httpResponse.onSuccess(response -> {
+                    if (logger.isDebugEnabled()) {
+                        logger.debug("successfully sent {} metrics to Dynatrace ({} bytes).", postMessage.metricCount,
+                                postMessage.payload.getBytes(UTF_8).length);
+                    }
+                }).onError(response -> {
+                    logger.error("failed to send metrics to Dynatrace: Error Code={}, Response Body={}",
+                            response.code(), response.body());
+                    logger.debug("failed metrics payload: {}", postMessage.payload);
+                });
             }
         }
+    }
+
+    // VisibleForTesting
+    HttpSender.Response trySendHttpRequest(HttpSender.Request.Builder requestBuilder) {
+        try {
+            return requestBuilder.send();
+        }
         catch (Throwable e) {
-            logger.error("failed to send metrics to Dynatrace", e);
+            if (logger.isErrorEnabled()) {
+                logger.error("failed to send metrics to Dynatrace: {}", redactToken(e.getMessage()));
+            }
+            return null;
         }
     }
 
@@ -277,6 +307,10 @@ public class DynatraceExporterV1 extends AbstractDynatraceExporter {
 
     private Meter.Id idWithSuffix(Meter.Id id, String suffix) {
         return id.withName(id.getName() + "." + suffix);
+    }
+
+    private String redactToken(String message) {
+        return message.replace(config.apiToken(), "<redacted>");
     }
 
 }
