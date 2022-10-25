@@ -157,4 +157,40 @@ class StepMeterRegistryTest {
         });
     }
 
+    @Issue("#1882")
+    @Test
+    void publishLastRecordedValuesOnClose() {
+
+        MockClock mockClock = new MockClock();
+        StepMeterRegistry registry = new StepMeterRegistry(config, mockClock) {
+            @Override
+            protected void publish() {
+                this.getMeters().forEach(meter -> {
+                    if (meter instanceof Counter) {
+                        assertThat(((Counter) meter).count()).isEqualTo(1);
+                    }
+                });
+            }
+
+            @Override
+            protected TimeUnit getBaseTimeUnit() {
+                return TimeUnit.SECONDS;
+            }
+        };
+
+        Counter counter = Counter.builder("my.shutdown.counter").register(registry);
+        counter.increment();
+        counter.increment();
+
+        assertThat(counter.count()).isEqualTo(0);
+        mockClock.add(config.step());
+        assertThat(counter.count()).isEqualTo(2);
+
+        mockClock.add(Duration.ofSeconds(30));
+        counter.increment();
+
+        assertThat(counter.count()).isEqualTo(2);
+        registry.close();
+    }
+
 }

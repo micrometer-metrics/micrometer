@@ -39,9 +39,21 @@ public abstract class StepMeterRegistry extends PushMeterRegistry {
 
     private final StepRegistryConfig config;
 
+    /**
+     * Use a different instance of clock that is specific to StepMeterRegistry so that
+     * underlying implementations can use either of them to set the timestamps when
+     * exporting metrics.
+     *
+     * A potential issue of updating {@link MeterRegistry#clock} will be the
+     * implementations that rely on {@link MeterRegistry#clock} to set the metric
+     * timestamp to a future timestamp for the last metric.
+     */
+    protected final SkewableClock stepRegistryClock;
+
     public StepMeterRegistry(StepRegistryConfig config, Clock clock) {
         super(config, clock);
         this.config = config;
+        this.stepRegistryClock = new SkewableClock(clock);
     }
 
     @Override
@@ -51,12 +63,13 @@ public abstract class StepMeterRegistry extends PushMeterRegistry {
 
     @Override
     protected Counter newCounter(Meter.Id id) {
-        return new StepCounter(id, clock, config.step().toMillis());
+        return new StepCounter(id, stepRegistryClock, config.step().toMillis());
     }
 
     @Override
     protected LongTaskTimer newLongTaskTimer(Meter.Id id, DistributionStatisticConfig distributionStatisticConfig) {
-        LongTaskTimer ltt = new DefaultLongTaskTimer(id, clock, getBaseTimeUnit(), distributionStatisticConfig, false);
+        LongTaskTimer ltt = new DefaultLongTaskTimer(id, stepRegistryClock, getBaseTimeUnit(),
+                distributionStatisticConfig, false);
         HistogramGauges.registerWithCommonFormat(ltt, this);
         return ltt;
     }
@@ -64,8 +77,8 @@ public abstract class StepMeterRegistry extends PushMeterRegistry {
     @Override
     protected Timer newTimer(Meter.Id id, DistributionStatisticConfig distributionStatisticConfig,
             PauseDetector pauseDetector) {
-        Timer timer = new StepTimer(id, clock, distributionStatisticConfig, pauseDetector, getBaseTimeUnit(),
-                this.config.step().toMillis(), false);
+        Timer timer = new StepTimer(id, stepRegistryClock, distributionStatisticConfig, pauseDetector,
+                getBaseTimeUnit(), this.config.step().toMillis(), false);
         HistogramGauges.registerWithCommonFormat(timer, this);
         return timer;
     }
@@ -73,8 +86,8 @@ public abstract class StepMeterRegistry extends PushMeterRegistry {
     @Override
     protected DistributionSummary newDistributionSummary(Meter.Id id,
             DistributionStatisticConfig distributionStatisticConfig, double scale) {
-        DistributionSummary summary = new StepDistributionSummary(id, clock, distributionStatisticConfig, scale,
-                config.step().toMillis(), false);
+        DistributionSummary summary = new StepDistributionSummary(id, stepRegistryClock, distributionStatisticConfig,
+                scale, config.step().toMillis(), false);
         HistogramGauges.registerWithCommonFormat(summary, this);
         return summary;
     }
@@ -82,13 +95,13 @@ public abstract class StepMeterRegistry extends PushMeterRegistry {
     @Override
     protected <T> FunctionTimer newFunctionTimer(Meter.Id id, T obj, ToLongFunction<T> countFunction,
             ToDoubleFunction<T> totalTimeFunction, TimeUnit totalTimeFunctionUnit) {
-        return new StepFunctionTimer<>(id, clock, config.step().toMillis(), obj, countFunction, totalTimeFunction,
-                totalTimeFunctionUnit, getBaseTimeUnit());
+        return new StepFunctionTimer<>(id, stepRegistryClock, config.step().toMillis(), obj, countFunction,
+                totalTimeFunction, totalTimeFunctionUnit, getBaseTimeUnit());
     }
 
     @Override
     protected <T> FunctionCounter newFunctionCounter(Meter.Id id, T obj, ToDoubleFunction<T> countFunction) {
-        return new StepFunctionCounter<>(id, clock, config.step().toMillis(), obj, countFunction);
+        return new StepFunctionCounter<>(id, stepRegistryClock, config.step().toMillis(), obj, countFunction);
     }
 
     @Override
@@ -100,6 +113,19 @@ public abstract class StepMeterRegistry extends PushMeterRegistry {
     protected DistributionStatisticConfig defaultHistogramConfig() {
         return DistributionStatisticConfig.builder().expiry(config.step()).build()
                 .merge(DistributionStatisticConfig.DEFAULT);
+    }
+
+    @Override
+    public void close() {
+        // Stop publishing via Scheduler to ensure that we are not publishing duplicate
+        // data.
+        super.stop();
+
+        // Move clock to start of next step.
+        long now = stepRegistryClock.wallTime();
+        long millisUntilNextStep = config.step().toMillis() - now % config.step().toMillis();
+        stepRegistryClock.setClockSkew(millisUntilNextStep + 1, TimeUnit.MILLISECONDS);
+        super.close();
     }
 
 }
