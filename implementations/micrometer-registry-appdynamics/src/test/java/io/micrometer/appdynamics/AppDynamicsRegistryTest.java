@@ -15,8 +15,10 @@
  */
 package io.micrometer.appdynamics;
 
-import com.appdynamics.agent.api.MetricPublisher;
+import io.micrometer.appdynamics.reporter.AppDynamicsReporter;
+import io.micrometer.core.instrument.Meter;
 import io.micrometer.core.instrument.MockClock;
+import io.micrometer.core.instrument.Tags;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
@@ -28,48 +30,51 @@ public class AppDynamicsRegistryTest {
 
     private MockClock clock;
 
-    private MetricPublisher publisher;
-
     private AppDynamicsConfig config;
 
-    private AppDynamicsRegistry registry;
+    private AppDynamicsReporter reporter;
+
+    private AppDynamicsRegistry victim;
 
     @BeforeEach
     void init() {
         clock = new MockClock();
         config = AppDynamicsConfig.DEFAULT;
-        publisher = mock(MetricPublisher.class);
-        registry = new AppDynamicsRegistry(config, publisher, clock);
+        reporter = mock(AppDynamicsReporter.class);
+        victim = new AppDynamicsRegistry(config, reporter, clock);
     }
 
     @Test
     void shouldPublishSumValue() {
-        registry.counter("counter").increment(10d);
+        victim.counter("counter").increment(10d);
         clock.add(config.step());
 
-        registry.publish();
+        victim.publish();
 
-        verify(publisher).reportMetric(config.group() + "counter", 10, "SUM", "SUM", "COLLECTIVE");
-    }
-
-    @Test
-    void shouldPublishAverageValue() {
-        registry.timer("timer").record(100, TimeUnit.MILLISECONDS);
-        clock.add(config.step());
-
-        registry.publish();
-
-        verify(publisher).reportMetric(config.group() + "timer", 100, 1, 100, 100, "AVERAGE", "AVERAGE", "INDIVIDUAL");
+        Meter.Id id = new Meter.Id("counter", Tags.empty(), null, null, Meter.Type.COUNTER);
+        verify(reporter, times(1)).publishSumValue(id, 10);
     }
 
     @Test
     void shouldPublishObservationValue() {
-        registry.gauge("gauge", 10);
+        victim.gauge("gauge", 10);
         clock.add(config.step());
 
-        registry.publish();
+        victim.publish();
 
-        verify(publisher).reportMetric(config.group() + "gauge", 10, "OBSERVATION", "CURRENT", "COLLECTIVE");
+        Meter.Id id = new Meter.Id("gauge", Tags.empty(), null, null, Meter.Type.GAUGE);
+        verify(reporter, times(1)).publishObservation(id, 10);
+    }
+
+    @Test
+    void shouldPublishAggregationValue() {
+        victim.timer("timer").record(100, TimeUnit.MILLISECONDS);
+        clock.add(config.step());
+
+        victim.publish();
+
+        Meter.Id id = new Meter.Id("timer", Tags.empty(), null, null, Meter.Type.TIMER);
+        verify(reporter, times(1)).publishAggregation(id, 1, 100, 100, 100);
     }
 
 }

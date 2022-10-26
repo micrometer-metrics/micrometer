@@ -66,12 +66,7 @@ public class AppDynamicsTimer extends AbstractTimer implements MetricSnapshotPro
 
     @Override
     public MetricSnapshot snapshot() {
-        return snapshot(baseTimeUnit());
-    }
-
-    @Override
-    public MetricSnapshot snapshot(TimeUnit unit) {
-        MetricSnapshot snapshot = new MetricSnapshot(count(), min(unit), max(unit), totalTime(unit));
+        MetricSnapshot snapshot = aggregator.snapshot(baseTimeUnit());
         aggregator.reset();
         return snapshot;
     }

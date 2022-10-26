@@ -23,8 +23,6 @@ import io.micrometer.core.instrument.Clock;
 import io.micrometer.core.instrument.DistributionSummary;
 import io.micrometer.core.instrument.distribution.DistributionStatisticConfig;
 
-import java.util.concurrent.TimeUnit;
-
 /**
  * AppDynamics {@link DistributionSummary} that keeps track of the min value.
  *
@@ -64,14 +62,9 @@ public class AppDynamicsDistributionSummary extends AbstractDistributionSummary 
 
     @Override
     public MetricSnapshot snapshot() {
-        MetricSnapshot snapshot = new MetricSnapshot(count(), min(), max(), totalAmount());
+        MetricSnapshot snapshot = aggregator.snapshot();
         aggregator.reset();
         return snapshot;
-    }
-
-    @Override
-    public MetricSnapshot snapshot(TimeUnit unit) {
-        return snapshot();
     }
 
 }

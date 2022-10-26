@@ -13,15 +13,4 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package io.micrometer.appdynamics.aggregation;
-
-/**
- * {@link MetricSnapshot} provider.
- *
- * @author Ricardo Veloso
- */
-public interface MetricSnapshotProvider {
-
-    MetricSnapshot snapshot();
-
-}
+package io.micrometer.appdynamics.reporter;

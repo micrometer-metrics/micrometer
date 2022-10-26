@@ -13,15 +13,22 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package io.micrometer.appdynamics.aggregation;
+package io.micrometer.appdynamics.reporter;
+
+import io.micrometer.core.instrument.Meter;
 
 /**
- * {@link MetricSnapshot} provider.
+ * AppDynamics reporter interface.<br>
+ * Implementations may target Java Agent API or Machine Agent API.
  *
  * @author Ricardo Veloso
  */
-public interface MetricSnapshotProvider {
+public interface AppDynamicsReporter {
 
-    MetricSnapshot snapshot();
+    void publishSumValue(Meter.Id id, long value);
+
+    void publishObservation(Meter.Id id, long value);
+
+    void publishAggregation(Meter.Id id, long count, long value, long min, long max);
 
 }

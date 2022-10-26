@@ -20,7 +20,7 @@ package io.micrometer.appdynamics.aggregation;
  *
  * @author Ricardo Veloso
  */
-public class MetricSnapshot {
+public final class MetricSnapshot {
 
     private final long count;
 
@@ -30,7 +30,7 @@ public class MetricSnapshot {
 
     private final double total;
 
-    public MetricSnapshot(long count, double min, double max, double total) {
+    MetricSnapshot(long count, double min, double max, double total) {
         this.count = count;
         this.min = min;
         this.max = max;

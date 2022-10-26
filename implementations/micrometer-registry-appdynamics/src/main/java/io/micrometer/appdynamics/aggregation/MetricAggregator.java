@@ -15,6 +15,8 @@
  */
 package io.micrometer.appdynamics.aggregation;
 
+import io.micrometer.core.instrument.util.TimeUtils;
+
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.concurrent.atomic.LongAdder;
@@ -38,7 +40,7 @@ public final class MetricAggregator {
 
     // private final TimeWindowMax max;
 
-    // AppDynamicsSummary(Clock clock, DistributionStatisticConfig
+    // MetricAggregator(Clock clock, DistributionStatisticConfig
     // distributionStatisticConfig) {
     // max = new TimeWindowMax(clock, distributionStatisticConfig);
     // }
@@ -59,10 +61,6 @@ public final class MetricAggregator {
         return total.longValue();
     }
 
-    public MetricSnapshot snapshot(TimeUnit unit) {
-        return new MetricSnapshot(count(), min(), max(), total());
-    }
-
     public void recordNonNegative(long amount) {
         if (amount >= 0) {
             count.increment();
@@ -80,6 +78,15 @@ public final class MetricAggregator {
             total.reset();
             count.reset();
         }
+    }
+
+    public MetricSnapshot snapshot() {
+        return new MetricSnapshot(count(), min(), max(), total());
+    }
+
+    public MetricSnapshot snapshot(TimeUnit unit) {
+        return new MetricSnapshot(count(), TimeUtils.nanosToUnit(min(), unit), TimeUtils.nanosToUnit(max(), unit),
+                TimeUtils.nanosToUnit(total(), unit));
     }
 
 }
