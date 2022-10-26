@@ -85,8 +85,8 @@ public final class MetricAggregator {
     }
 
     public MetricSnapshot snapshot(TimeUnit unit) {
-        return new MetricSnapshot(count(), TimeUtils.nanosToUnit(min(), unit), TimeUtils.nanosToUnit(max(), unit),
-                TimeUtils.nanosToUnit(total(), unit));
+        return new MetricSnapshot(count(), TimeUtils.nanosToUnit((double) min(), unit),
+                TimeUtils.nanosToUnit((double) max(), unit), TimeUtils.nanosToUnit((double) total(), unit));
     }
 
 }
