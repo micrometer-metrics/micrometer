@@ -109,7 +109,7 @@ public class DynatraceMeterRegistry extends StepMeterRegistry {
     protected DistributionSummary newDistributionSummary(Meter.Id id,
             DistributionStatisticConfig distributionStatisticConfig, double scale) {
         if (useDynatraceSummaryInstruments) {
-            return new DynatraceDistributionSummary(id, clock, distributionStatisticConfig, scale);
+            return new DynatraceDistributionSummary(id, stepRegistryClock, distributionStatisticConfig, scale);
         }
         return super.newDistributionSummary(id, distributionStatisticConfig, scale);
     }
@@ -118,7 +118,7 @@ public class DynatraceMeterRegistry extends StepMeterRegistry {
     protected Timer newTimer(Meter.Id id, DistributionStatisticConfig distributionStatisticConfig,
             PauseDetector pauseDetector) {
         if (useDynatraceSummaryInstruments) {
-            return new DynatraceTimer(id, clock, distributionStatisticConfig, pauseDetector,
+            return new DynatraceTimer(id, stepRegistryClock, distributionStatisticConfig, pauseDetector,
                     exporter.getBaseTimeUnit());
         }
         return super.newTimer(id, distributionStatisticConfig, pauseDetector);

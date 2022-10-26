@@ -237,14 +237,14 @@ public class StackdriverMeterRegistry extends StepMeterRegistry {
     @Override
     protected DistributionSummary newDistributionSummary(Meter.Id id,
             DistributionStatisticConfig distributionStatisticConfig, double scale) {
-        return new StepDistributionSummary(id, clock, distributionStatisticConfig, scale, config.step().toMillis(),
-                true);
+        return new StepDistributionSummary(id, stepRegistryClock, distributionStatisticConfig, scale,
+                config.step().toMillis(), true);
     }
 
     @Override
     protected Timer newTimer(Meter.Id id, DistributionStatisticConfig distributionStatisticConfig,
             PauseDetector pauseDetector) {
-        return new StepTimer(id, clock, distributionStatisticConfig, pauseDetector, getBaseTimeUnit(),
+        return new StepTimer(id, stepRegistryClock, distributionStatisticConfig, pauseDetector, getBaseTimeUnit(),
                 this.config.step().toMillis(), true);
     }
 
@@ -308,7 +308,7 @@ public class StackdriverMeterRegistry extends StepMeterRegistry {
         private final Timestamp endTime;
 
         Batch() {
-            long wallTime = clock.wallTime();
+            long wallTime = stepRegistryClock.wallTime();
             startTime = buildTimestamp(previousBatchEndTime + 1);
             endTime = buildTimestamp(wallTime);
             previousBatchEndTime = wallTime;

@@ -164,15 +164,15 @@ public class LoggingMeterRegistry extends StepMeterRegistry {
     @Override
     protected Timer newTimer(Meter.Id id, DistributionStatisticConfig distributionStatisticConfig,
             PauseDetector pauseDetector) {
-        return new StepTimer(id, clock, distributionStatisticConfig, pauseDetector, getBaseTimeUnit(),
+        return new StepTimer(id, stepRegistryClock, distributionStatisticConfig, pauseDetector, getBaseTimeUnit(),
                 this.config.step().toMillis(), false);
     }
 
     @Override
     protected DistributionSummary newDistributionSummary(Meter.Id id,
             DistributionStatisticConfig distributionStatisticConfig, double scale) {
-        return new StepDistributionSummary(id, clock, distributionStatisticConfig, scale, config.step().toMillis(),
-                false);
+        return new StepDistributionSummary(id, stepRegistryClock, distributionStatisticConfig, scale,
+                config.step().toMillis(), false);
     }
 
     class Printer {

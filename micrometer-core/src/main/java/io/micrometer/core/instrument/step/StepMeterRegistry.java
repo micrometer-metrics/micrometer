@@ -44,7 +44,7 @@ public abstract class StepMeterRegistry extends PushMeterRegistry {
      * underlying implementations can use either of them to set the timestamps when
      * exporting metrics.
      *
-     * A potential issue of updating {@link MeterRegistry#clock} will be the
+     * A potential issue of updating {@link MeterRegistry#clock} will be forcing the
      * implementations that rely on {@link MeterRegistry#clock} to set the metric
      * timestamp to a future timestamp for the last metric.
      */
@@ -117,13 +117,10 @@ public abstract class StepMeterRegistry extends PushMeterRegistry {
 
     @Override
     public void close() {
-        // Stop publishing via Scheduler to ensure that we are not publishing duplicate
-        // data.
-        super.stop();
-
         // Move clock to start of next step.
         long now = stepRegistryClock.wallTime();
         long millisUntilNextStep = config.step().toMillis() - now % config.step().toMillis();
+
         stepRegistryClock.setClockSkew(millisUntilNextStep + 1, TimeUnit.MILLISECONDS);
         super.close();
     }

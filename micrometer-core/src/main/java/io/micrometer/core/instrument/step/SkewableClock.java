@@ -34,7 +34,7 @@ public class SkewableClock implements Clock {
 
     @Override
     public long wallTime() {
-        return clock.wallTime() + skewedTimeInMillis;
+        return clock.wallTime() + this.skewedTimeInMillis;
     }
 
     @Override
