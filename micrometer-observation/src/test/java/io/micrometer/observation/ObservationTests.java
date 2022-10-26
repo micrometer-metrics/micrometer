@@ -15,6 +15,7 @@
  */
 package io.micrometer.observation;
 
+import io.micrometer.common.KeyValue;
 import org.junit.jupiter.api.Test;
 
 import java.io.IOException;
@@ -76,6 +77,27 @@ class ObservationTests {
         Observation.start("foo", () -> context, registry).stop();
 
         assertThat((String) context.get("foo")).isEqualTo("bar");
+    }
+
+    @Test
+    void havingAnObservationFilterToModifyKeyValue() {
+        registry.observationConfig().observationHandler(context -> true);
+
+        Observation.Context context = new Observation.Context();
+        context.addHighCardinalityKeyValue(KeyValue.of("foo", "FOO"));
+
+        ObservationFilter filter = (ctx) -> {
+            KeyValue keyValue = ctx.getHighCardinalityKeyValue("foo");
+            assertThat(keyValue).isNotNull();
+            return ctx.addHighCardinalityKeyValue(KeyValue.of(keyValue.getKey(), keyValue.getValue() + "-modified"));
+        };
+
+        registry.observationConfig().observationFilter(filter);
+
+        Observation.start("foo", () -> context, registry).stop();
+
+        assertThat(context.getHighCardinalityKeyValue("foo")).isNotNull().extracting(KeyValue::getValue)
+                .isEqualTo("FOO-modified");
     }
 
     @Test
