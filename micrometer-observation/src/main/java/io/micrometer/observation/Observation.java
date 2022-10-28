@@ -20,7 +20,9 @@ import io.micrometer.common.KeyValues;
 import io.micrometer.common.lang.NonNull;
 import io.micrometer.common.lang.Nullable;
 
-import java.util.*;
+import java.util.HashMap;
+import java.util.LinkedHashMap;
+import java.util.Map;
 import java.util.concurrent.Callable;
 import java.util.function.Function;
 import java.util.function.Supplier;
@@ -751,9 +753,9 @@ public interface Observation extends ObservationView {
         @Nullable
         private ObservationView parentObservation;
 
-        private final Set<KeyValue> lowCardinalityKeyValues = new LinkedHashSet<>();
+        private final Map<String, KeyValue> lowCardinalityKeyValues = new LinkedHashMap<>();
 
-        private final Set<KeyValue> highCardinalityKeyValues = new LinkedHashSet<>();
+        private final Map<String, KeyValue> highCardinalityKeyValues = new LinkedHashMap<>();
 
         /**
          * The observation name.
@@ -923,7 +925,7 @@ public interface Observation extends ObservationView {
          * @return this context
          */
         public Context addLowCardinalityKeyValue(KeyValue keyValue) {
-            this.lowCardinalityKeyValues.add(keyValue);
+            this.lowCardinalityKeyValues.put(keyValue.getKey(), keyValue);
             return this;
         }
 
@@ -935,7 +937,7 @@ public interface Observation extends ObservationView {
          * @return this context
          */
         public Context addHighCardinalityKeyValue(KeyValue keyValue) {
-            this.highCardinalityKeyValues.add(keyValue);
+            this.highCardinalityKeyValues.put(keyValue.getKey(), keyValue);
             return this;
         }
 
@@ -962,13 +964,23 @@ public interface Observation extends ObservationView {
         @NonNull
         @Override
         public KeyValues getLowCardinalityKeyValues() {
-            return KeyValues.of(this.lowCardinalityKeyValues);
+            return KeyValues.of(this.lowCardinalityKeyValues.values());
         }
 
         @NonNull
         @Override
         public KeyValues getHighCardinalityKeyValues() {
-            return KeyValues.of(this.highCardinalityKeyValues);
+            return KeyValues.of(this.highCardinalityKeyValues.values());
+        }
+
+        @Override
+        public KeyValue getLowCardinalityKeyValue(String key) {
+            return this.lowCardinalityKeyValues.get(key);
+        }
+
+        @Override
+        public KeyValue getHighCardinalityKeyValue(String key) {
+            return this.highCardinalityKeyValues.get(key);
         }
 
         @NonNull
@@ -1148,6 +1160,22 @@ public interface Observation extends ObservationView {
          */
         @NonNull
         KeyValues getHighCardinalityKeyValues();
+
+        /**
+         * Returns a low cardinality key value or {@code null} if not present.
+         * @param key key
+         * @return a low cardinality key value or {@code null}
+         */
+        @Nullable
+        KeyValue getLowCardinalityKeyValue(String key);
+
+        /**
+         * Returns a high cardinality key value or {@code null} if not present.
+         * @param key key
+         * @return a high cardinality key value or {@code null}
+         */
+        @Nullable
+        KeyValue getHighCardinalityKeyValue(String key);
 
         /**
          * Returns all key values.

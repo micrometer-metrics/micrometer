@@ -15,6 +15,7 @@
  */
 package io.micrometer.observation;
 
+import io.micrometer.common.KeyValue;
 import org.assertj.core.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -107,6 +108,27 @@ class ObservationContextTest {
     @Test
     void cleanEmptyContextShouldNotFail() {
         context.clear();
+    }
+
+    @Test
+    void sameKeyShouldOverrideKeyValue() {
+        KeyValue low = KeyValue.of("low", "LOW");
+        KeyValue high = KeyValue.of("high", "HIGH");
+        context.addLowCardinalityKeyValue(low);
+        context.addHighCardinalityKeyValue(high);
+
+        assertThat(context.getLowCardinalityKeyValue("low")).isSameAs(low);
+        assertThat(context.getHighCardinalityKeyValue("high")).isSameAs(high);
+
+        KeyValue newLow = KeyValue.of("low", "LOW-NEW");
+        KeyValue newHigh = KeyValue.of("high", "HIGH-NEW");
+        context.addLowCardinalityKeyValue(newLow);
+        context.addHighCardinalityKeyValue(newHigh);
+
+        assertThat(context.getLowCardinalityKeyValue("low")).isSameAs(newLow);
+        assertThat(context.getHighCardinalityKeyValue("high")).isSameAs(newHigh);
+        assertThat(context.getLowCardinalityKeyValues()).containsExactly(newLow);
+        assertThat(context.getHighCardinalityKeyValues()).containsExactly(newHigh);
     }
 
 }
