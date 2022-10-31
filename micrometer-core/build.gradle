@@ -36,6 +36,7 @@ dependencies {
     }
 
     // Aspects
+    optionalApi 'aopalliance:aopalliance'
     optionalApi 'org.aspectj:aspectjweaver'
 
     // instrumentation options

@@ -25,17 +25,20 @@ import io.micrometer.core.instrument.distribution.DistributionStatisticConfig;
 import io.micrometer.core.instrument.distribution.pause.PauseDetector;
 import io.micrometer.core.instrument.search.MeterNotFoundException;
 import io.micrometer.core.instrument.simple.SimpleMeterRegistry;
-import org.aspectj.lang.ProceedingJoinPoint;
+import org.aopalliance.intercept.MethodInvocation;
 import org.junit.jupiter.api.Test;
-import org.springframework.aop.aspectj.annotation.AspectJProxyFactory;
+import org.springframework.aop.framework.ProxyFactoryBean;
 
 import javax.annotation.Nonnull;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionException;
 import java.util.function.Predicate;
+import java.util.function.Supplier;
 
 import static java.util.concurrent.CompletableFuture.supplyAsync;
-import static org.assertj.core.api.Assertions.*;
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatExceptionOfType;
+import static org.assertj.core.api.Assertions.catchThrowableOfType;
 
 class TimedAspectTest {
 
@@ -43,10 +46,7 @@ class TimedAspectTest {
     void timeMethod() {
         MeterRegistry registry = new SimpleMeterRegistry();
 
-        AspectJProxyFactory pf = new AspectJProxyFactory(new TimedService());
-        pf.addAspect(new TimedAspect(registry));
-
-        TimedService service = pf.getProxy();
+        TimedService service = createTimedInstance(TimedService::new, () -> new TimedAspect(registry));
 
         service.call();
 
@@ -58,10 +58,8 @@ class TimedAspectTest {
     void timeMethodWithSkipPredicate() {
         MeterRegistry registry = new SimpleMeterRegistry();
 
-        AspectJProxyFactory pf = new AspectJProxyFactory(new TimedService());
-        pf.addAspect(new TimedAspect(registry, (Predicate<ProceedingJoinPoint>) pjp -> true));
-
-        TimedService service = pf.getProxy();
+        TimedService service = createTimedInstance(TimedService::new,
+                () -> new TimedAspect(registry, (Predicate<MethodInvocation>) invocation -> true));
 
         service.call();
 
@@ -72,10 +70,7 @@ class TimedAspectTest {
     void timeMethodWithLongTaskTimer() {
         MeterRegistry registry = new SimpleMeterRegistry();
 
-        AspectJProxyFactory pf = new AspectJProxyFactory(new TimedService());
-        pf.addAspect(new TimedAspect(registry));
-
-        TimedService service = pf.getProxy();
+        TimedService service = createTimedInstance(TimedService::new, () -> new TimedAspect(registry));
 
         service.longCall();
 
@@ -87,10 +82,7 @@ class TimedAspectTest {
     void timeMethodFailure() {
         MeterRegistry failingRegistry = new FailingMeterRegistry();
 
-        AspectJProxyFactory pf = new AspectJProxyFactory(new TimedService());
-        pf.addAspect(new TimedAspect(failingRegistry));
-
-        TimedService service = pf.getProxy();
+        TimedService service = createTimedInstance(TimedService::new, () -> new TimedAspect(failingRegistry));
 
         service.call();
 
@@ -104,10 +96,7 @@ class TimedAspectTest {
     void timeMethodFailureWithLongTaskTimer() {
         MeterRegistry failingRegistry = new FailingMeterRegistry();
 
-        AspectJProxyFactory pf = new AspectJProxyFactory(new TimedService());
-        pf.addAspect(new TimedAspect(failingRegistry));
-
-        TimedService service = pf.getProxy();
+        TimedService service = createTimedInstance(TimedService::new, () -> new TimedAspect(failingRegistry));
 
         service.longCall();
 
@@ -121,10 +110,7 @@ class TimedAspectTest {
     void timeMethodWhenCompleted() {
         MeterRegistry registry = new SimpleMeterRegistry();
 
-        AspectJProxyFactory pf = new AspectJProxyFactory(new AsyncTimedService());
-        pf.addAspect(new TimedAspect(registry));
-
-        AsyncTimedService service = pf.getProxy();
+        AsyncTimedService service = createTimedInstance(AsyncTimedService::new, () -> new TimedAspect(registry));
 
         GuardedResult guardedResult = new GuardedResult();
         CompletableFuture<?> completableFuture = service.call(guardedResult);
@@ -143,10 +129,7 @@ class TimedAspectTest {
     void timeMethodWhenCompletedExceptionally() {
         MeterRegistry registry = new SimpleMeterRegistry();
 
-        AspectJProxyFactory pf = new AspectJProxyFactory(new AsyncTimedService());
-        pf.addAspect(new TimedAspect(registry));
-
-        AsyncTimedService service = pf.getProxy();
+        AsyncTimedService service = createTimedInstance(AsyncTimedService::new, () -> new TimedAspect(registry));
 
         GuardedResult guardedResult = new GuardedResult();
         CompletableFuture<?> completableFuture = service.call(guardedResult);
@@ -165,10 +148,7 @@ class TimedAspectTest {
     void timeMethodWithLongTaskTimerWhenCompleted() {
         MeterRegistry registry = new SimpleMeterRegistry();
 
-        AspectJProxyFactory pf = new AspectJProxyFactory(new AsyncTimedService());
-        pf.addAspect(new TimedAspect(registry));
-
-        AsyncTimedService service = pf.getProxy();
+        AsyncTimedService service = createTimedInstance(AsyncTimedService::new, () -> new TimedAspect(registry));
 
         GuardedResult guardedResult = new GuardedResult();
         CompletableFuture<?> completableFuture = service.longCall(guardedResult);
@@ -187,10 +167,7 @@ class TimedAspectTest {
     void timeMethodWithLongTaskTimerWhenCompletedExceptionally() {
         MeterRegistry registry = new SimpleMeterRegistry();
 
-        AspectJProxyFactory pf = new AspectJProxyFactory(new AsyncTimedService());
-        pf.addAspect(new TimedAspect(registry));
-
-        AsyncTimedService service = pf.getProxy();
+        AsyncTimedService service = createTimedInstance(AsyncTimedService::new, () -> new TimedAspect(registry));
 
         GuardedResult guardedResult = new GuardedResult();
         CompletableFuture<?> completableFuture = service.longCall(guardedResult);
@@ -209,10 +186,7 @@ class TimedAspectTest {
     void timeMethodFailureWhenCompletedExceptionally() {
         MeterRegistry failingRegistry = new FailingMeterRegistry();
 
-        AspectJProxyFactory pf = new AspectJProxyFactory(new AsyncTimedService());
-        pf.addAspect(new TimedAspect(failingRegistry));
-
-        AsyncTimedService service = pf.getProxy();
+        AsyncTimedService service = createTimedInstance(AsyncTimedService::new, () -> new TimedAspect(failingRegistry));
 
         GuardedResult guardedResult = new GuardedResult();
         CompletableFuture<?> completableFuture = service.call(guardedResult);
@@ -228,10 +202,7 @@ class TimedAspectTest {
     void timeMethodFailureWithLongTaskTimerWhenCompleted() {
         MeterRegistry failingRegistry = new FailingMeterRegistry();
 
-        AspectJProxyFactory pf = new AspectJProxyFactory(new AsyncTimedService());
-        pf.addAspect(new TimedAspect(failingRegistry));
-
-        AsyncTimedService service = pf.getProxy();
+        AsyncTimedService service = createTimedInstance(AsyncTimedService::new, () -> new TimedAspect(failingRegistry));
 
         GuardedResult guardedResult = new GuardedResult();
         CompletableFuture<?> completableFuture = service.longCall(guardedResult);
@@ -248,10 +219,7 @@ class TimedAspectTest {
     void timeClass() {
         MeterRegistry registry = new SimpleMeterRegistry();
 
-        AspectJProxyFactory pf = new AspectJProxyFactory(new TimedClass());
-        pf.addAspect(new TimedAspect(registry));
-
-        TimedClass service = pf.getProxy();
+        TimedClass service = createTimedInstance(TimedClass::new, () -> new TimedAspect(registry));
 
         service.call();
 
@@ -263,10 +231,8 @@ class TimedAspectTest {
     void timeClassWithSkipPredicate() {
         MeterRegistry registry = new SimpleMeterRegistry();
 
-        AspectJProxyFactory pf = new AspectJProxyFactory(new TimedClass());
-        pf.addAspect(new TimedAspect(registry, (Predicate<ProceedingJoinPoint>) pjp -> true));
-
-        TimedClass service = pf.getProxy();
+        TimedClass service = createTimedInstance(TimedClass::new,
+                () -> new TimedAspect(registry, (Predicate<MethodInvocation>) invocation -> true));
 
         service.call();
 
@@ -277,10 +243,7 @@ class TimedAspectTest {
     void timeClassImplementingInterface() {
         MeterRegistry registry = new SimpleMeterRegistry();
 
-        AspectJProxyFactory pf = new AspectJProxyFactory(new TimedImpl());
-        pf.addAspect(new TimedAspect(registry));
-
-        TimedInterface service = pf.getProxy();
+        TimedInterface service = createTimedInstance(TimedImpl::new, () -> new TimedAspect(registry));
 
         service.call();
 
@@ -292,10 +255,7 @@ class TimedAspectTest {
     void timeClassFailure() {
         MeterRegistry failingRegistry = new FailingMeterRegistry();
 
-        AspectJProxyFactory pf = new AspectJProxyFactory(new TimedClass());
-        pf.addAspect(new TimedAspect(failingRegistry));
-
-        TimedClass service = pf.getProxy();
+        TimedClass service = createTimedInstance(TimedClass::new, () -> new TimedAspect(failingRegistry));
 
         service.call();
 
@@ -303,6 +263,14 @@ class TimedAspectTest {
             failingRegistry.get("call").tag("class", "io.micrometer.core.aop.TimedAspectTest$TimedClass")
                     .tag("method", "call").tag("extra", "tag").timer();
         });
+    }
+
+    @SuppressWarnings("unchecked")
+    private <T> T createTimedInstance(Supplier<? extends T> instance, Supplier<? extends TimedAspect> timedAspect) {
+        ProxyFactoryBean pf = new ProxyFactoryBean();
+        pf.addAdvice(timedAspect.get());
+        pf.setTarget(instance.get());
+        return (T) pf.getObject();
     }
 
     private final class FailingMeterRegistry extends SimpleMeterRegistry {
