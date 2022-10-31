@@ -43,6 +43,8 @@ public class GrpcClientObservationContext extends RequestReplySenderContext<Meta
     @Nullable
     private Code statusCode;
 
+    private String authority;
+
     public GrpcClientObservationContext(Setter<Metadata> setter) {
         super(setter);
     }
@@ -86,6 +88,14 @@ public class GrpcClientObservationContext extends RequestReplySenderContext<Meta
 
     public void setStatusCode(Code statusCode) {
         this.statusCode = statusCode;
+    }
+
+    public String getAuthority() {
+        return this.authority;
+    }
+
+    public void setAuthority(String authority) {
+        this.authority = authority;
     }
 
 }

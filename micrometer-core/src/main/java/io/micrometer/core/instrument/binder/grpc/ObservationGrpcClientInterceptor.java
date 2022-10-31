@@ -80,7 +80,7 @@ public class ObservationGrpcClientInterceptor implements ClientInterceptor {
             }
             context.setFullMethodName(fullMethodName);
             context.setMethodType(methodType);
-
+            context.setAuthority(next.authority());
             return context;
         };
 
