@@ -83,6 +83,7 @@ public class ObservationGrpcServerInterceptor implements ServerInterceptor {
             }
             context.setFullMethodName(fullMethodName);
             context.setMethodType(methodType);
+            context.setAuthority(call.getAuthority());
 
             return context;
         };
