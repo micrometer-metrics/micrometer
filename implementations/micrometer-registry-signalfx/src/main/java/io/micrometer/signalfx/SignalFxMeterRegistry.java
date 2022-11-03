@@ -104,7 +104,6 @@ public class SignalFxMeterRegistry extends StepMeterRegistry {
 
     @Override
     protected void publish() {
-        // Report as if the data is for start of the step time.
         final long timestamp = clock.wallTime();
 
         AggregateMetricSender metricSender = new AggregateMetricSender(this.config.source(),
@@ -143,8 +142,8 @@ public class SignalFxMeterRegistry extends StepMeterRegistry {
         if (!publishCumulativeHistogram && !publishDeltaHistogram) {
             return super.newTimer(id, distributionStatisticConfig, pauseDetector);
         }
-        Timer timer = new SignalfxTimer(id, stepRegistryClock, distributionStatisticConfig, pauseDetector,
-                getBaseTimeUnit(), config.step().toMillis(), publishDeltaHistogram);
+        Timer timer = new SignalfxTimer(id, clock, distributionStatisticConfig, pauseDetector, getBaseTimeUnit(),
+                config.step().toMillis(), publishDeltaHistogram);
         HistogramGauges.registerWithCommonFormat(timer, this);
         return timer;
     }
@@ -155,8 +154,8 @@ public class SignalFxMeterRegistry extends StepMeterRegistry {
         if (!publishCumulativeHistogram && !publishDeltaHistogram) {
             return super.newDistributionSummary(id, distributionStatisticConfig, scale);
         }
-        DistributionSummary summary = new SignalfxDistributionSummary(id, stepRegistryClock,
-                distributionStatisticConfig, scale, config.step().toMillis(), publishDeltaHistogram);
+        DistributionSummary summary = new SignalfxDistributionSummary(id, clock, distributionStatisticConfig, scale,
+                config.step().toMillis(), publishDeltaHistogram);
         HistogramGauges.registerWithCommonFormat(summary, this);
         return summary;
     }
