@@ -169,6 +169,11 @@ class StepMeterRegistryTest {
                     if (meter instanceof Counter) {
                         assertThat(((Counter) meter).count()).isEqualTo(1);
                     }
+                    if (meter instanceof Timer) {
+                        assertThat(((Timer) meter).count()).isEqualTo(1);
+                        assertThat(((Timer) meter).totalTime(MILLISECONDS)).isEqualTo(50);
+                        assertThat(((Timer) meter).max(MILLISECONDS)).isEqualTo(50);
+                    }
                 });
             }
 
@@ -179,17 +184,30 @@ class StepMeterRegistryTest {
         };
 
         Counter counter = Counter.builder("my.shutdown.counter").register(registry);
+        Timer timer = Timer.builder("my.shutdown.timer").register(registry);
+
         counter.increment();
         counter.increment();
+        timer.record(Duration.ofMillis(10));
+        timer.record(Duration.ofMillis(10));
 
         assertThat(counter.count()).isEqualTo(0);
+        assertThat(timer.count()).isEqualTo(0);
+        assertThat(timer.totalTime(MILLISECONDS)).isEqualTo(0);
+
         mockClock.add(config.step());
         assertThat(counter.count()).isEqualTo(2);
+        assertThat(timer.count()).isEqualTo(2);
+        assertThat(timer.totalTime(MILLISECONDS)).isEqualTo(20);
 
         mockClock.add(Duration.ofSeconds(30));
         counter.increment();
+        timer.record(Duration.ofMillis(50));
 
         assertThat(counter.count()).isEqualTo(2);
+        assertThat(timer.count()).isEqualTo(2);
+        assertThat(timer.totalTime(MILLISECONDS)).isEqualTo(20);
+
         registry.close();
     }
 
