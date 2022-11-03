@@ -18,18 +18,26 @@ public class SkewableClock implements Clock {
 
     private long skewedTimeInMillis;
 
-    SkewableClock(Clock clock) {
+    public SkewableClock(Clock clock) {
         this.clock = clock;
         this.skewedTimeInMillis = 0;
     }
 
     /**
-     * Sets the clock skew to "amount" of time.
+     * Sets the clock skew to "amount" of time provided. Note: The skew set is relative to
+     * underlying {@link SkewableClock#clock}.
      * @param amount - amount of time to be skew the original clock with
      * @param unit - {@link TimeUnit} of amount.
      */
-    void setClockSkew(long amount, TimeUnit unit) {
+    public void setClockSkew(long amount, TimeUnit unit) {
         skewedTimeInMillis = unit.toMillis(amount);
+    }
+
+    /**
+     * @return current clock skew time in milliseconds.
+     */
+    public long getClockSkew() {
+        return this.skewedTimeInMillis;
     }
 
     @Override

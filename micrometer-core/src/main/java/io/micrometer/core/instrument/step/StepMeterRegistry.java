@@ -121,7 +121,8 @@ public abstract class StepMeterRegistry extends PushMeterRegistry {
         long now = stepRegistryClock.wallTime();
         long millisUntilNextStep = config.step().toMillis() - now % config.step().toMillis();
 
-        stepRegistryClock.setClockSkew(millisUntilNextStep + 1, TimeUnit.MILLISECONDS);
+        stepRegistryClock.setClockSkew(stepRegistryClock.getClockSkew() +
+                millisUntilNextStep + 1, TimeUnit.MILLISECONDS);
         super.close();
     }
 
