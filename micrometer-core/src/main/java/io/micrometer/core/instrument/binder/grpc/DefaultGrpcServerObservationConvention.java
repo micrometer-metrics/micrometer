@@ -46,9 +46,16 @@ public class DefaultGrpcServerObservationConvention implements GrpcServerObserva
         List<KeyValue> keyValues = new ArrayList<>();
         keyValues.add(LowCardinalityKeyNames.METHOD.withValue(context.getMethodName()));
         keyValues.add(LowCardinalityKeyNames.SERVICE.withValue(context.getServiceName()));
+        keyValues.add(LowCardinalityKeyNames.SYSTEM.withValue("grpc"));
         keyValues.add(LowCardinalityKeyNames.METHOD_TYPE.withValue(context.getMethodType().name()));
         if (context.getStatusCode() != null) {
             keyValues.add(LowCardinalityKeyNames.STATUS_CODE.withValue(context.getStatusCode().name()));
+        }
+        if (context.getPeerName() != null) {
+            keyValues.add(LowCardinalityKeyNames.PEER_NAME.withValue(context.getPeerName()));
+        }
+        if (context.getPeerPort() != null) {
+            keyValues.add(LowCardinalityKeyNames.PEER_PORT.withValue(context.getPeerPort().toString()));
         }
         return KeyValues.of(keyValues);
     }

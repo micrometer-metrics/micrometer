@@ -46,6 +46,12 @@ public class GrpcServerObservationContext extends RequestReplyReceiverContext<Me
     @Nullable
     private String authority;
 
+    @Nullable
+    private String peerName;
+
+    @Nullable
+    private Integer peerPort;
+
     public GrpcServerObservationContext(Getter<Metadata> getter) {
         super(getter);
     }
@@ -98,6 +104,24 @@ public class GrpcServerObservationContext extends RequestReplyReceiverContext<Me
 
     public void setAuthority(@Nullable String authority) {
         this.authority = authority;
+    }
+
+    @Nullable
+    public String getPeerName() {
+        return this.peerName;
+    }
+
+    public void setPeerName(@Nullable String peerName) {
+        this.peerName = peerName;
+    }
+
+    @Nullable
+    public Integer getPeerPort() {
+        return this.peerPort;
+    }
+
+    public void setPeerPort(@Nullable Integer peerPort) {
+        this.peerPort = peerPort;
     }
 
 }

@@ -45,6 +45,11 @@ public class GrpcClientObservationContext extends RequestReplySenderContext<Meta
 
     private String authority;
 
+    private String peerName;
+
+    @Nullable
+    private Integer peerPort;
+
     public GrpcClientObservationContext(Setter<Metadata> setter) {
         super(setter);
     }
@@ -96,6 +101,23 @@ public class GrpcClientObservationContext extends RequestReplySenderContext<Meta
 
     public void setAuthority(String authority) {
         this.authority = authority;
+    }
+
+    public String getPeerName() {
+        return this.peerName;
+    }
+
+    public void setPeerName(String peerName) {
+        this.peerName = peerName;
+    }
+
+    @Nullable
+    public Integer getPeerPort() {
+        return this.peerPort;
+    }
+
+    public void setPeerPort(@Nullable Integer peerPort) {
+        this.peerPort = peerPort;
     }
 
 }

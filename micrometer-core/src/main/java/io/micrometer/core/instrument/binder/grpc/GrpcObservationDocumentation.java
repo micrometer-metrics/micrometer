@@ -72,6 +72,12 @@ public enum GrpcObservationDocumentation implements ObservationDocumentation {
                 return "rpc.service";
             }
         },
+        SYSTEM {
+            @Override
+            public String asString() {
+                return "rpc.system";
+            }
+        },
         ERROR_CODE {
             @Override
             public String asString() {
@@ -81,7 +87,34 @@ public enum GrpcObservationDocumentation implements ObservationDocumentation {
         STATUS_CODE {
             @Override
             public String asString() {
-                return "grpc.status_code";
+                return "rpc.grpc.status_code";
+            }
+
+            @Override
+            public boolean isRequired() {
+                return false;
+            }
+        },
+        PEER_NAME {
+            @Override
+            public String asString() {
+                return "net.peer.name";
+            }
+
+            @Override
+            public boolean isRequired() {
+                return false;
+            }
+        },
+        PEER_PORT {
+            @Override
+            public String asString() {
+                return "net.peer.port";
+            }
+
+            @Override
+            public boolean isRequired() {
+                return false;
             }
         }
 
