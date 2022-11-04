@@ -15,12 +15,8 @@
  */
 package io.micrometer.core.instrument.binder.grpc;
 
-import io.micrometer.common.KeyValue;
 import io.micrometer.common.KeyValues;
 import io.micrometer.core.instrument.binder.grpc.GrpcObservationDocumentation.LowCardinalityKeyNames;
-
-import java.util.ArrayList;
-import java.util.List;
 
 /**
  * Default convention for gRPC server. This class defines how to extract values from
@@ -43,21 +39,16 @@ public class DefaultGrpcServerObservationConvention implements GrpcServerObserva
 
     @Override
     public KeyValues getLowCardinalityKeyValues(GrpcServerObservationContext context) {
-        List<KeyValue> keyValues = new ArrayList<>();
-        keyValues.add(LowCardinalityKeyNames.METHOD.withValue(context.getMethodName()));
-        keyValues.add(LowCardinalityKeyNames.SERVICE.withValue(context.getServiceName()));
-        keyValues.add(LowCardinalityKeyNames.SYSTEM.withValue("grpc"));
-        keyValues.add(LowCardinalityKeyNames.METHOD_TYPE.withValue(context.getMethodType().name()));
-        if (context.getStatusCode() != null) {
-            keyValues.add(LowCardinalityKeyNames.STATUS_CODE.withValue(context.getStatusCode().name()));
-        }
-        if (context.getPeerName() != null) {
-            keyValues.add(LowCardinalityKeyNames.PEER_NAME.withValue(context.getPeerName()));
-        }
-        if (context.getPeerPort() != null) {
-            keyValues.add(LowCardinalityKeyNames.PEER_PORT.withValue(context.getPeerPort().toString()));
-        }
-        return KeyValues.of(keyValues);
+        String statusCode = context.getStatusCode() != null ? context.getStatusCode().name() : UNKNOWN;
+        String peerName = context.getPeerName() != null ? context.getPeerName() : UNKNOWN;
+        String peerPort = context.getPeerPort() != null ? context.getPeerPort().toString() : UNKNOWN;
+        return KeyValues.of(LowCardinalityKeyNames.METHOD.withValue(context.getMethodName()),
+                LowCardinalityKeyNames.SERVICE.withValue(context.getServiceName()),
+                LowCardinalityKeyNames.SYSTEM.withValue("grpc"),
+                LowCardinalityKeyNames.METHOD_TYPE.withValue(context.getMethodType().name()),
+                LowCardinalityKeyNames.STATUS_CODE.withValue(statusCode),
+                LowCardinalityKeyNames.PEER_NAME.withValue(peerName),
+                LowCardinalityKeyNames.PEER_PORT.withValue(peerPort));
     }
 
 }

@@ -26,6 +26,8 @@ import io.micrometer.observation.ObservationConvention;
  */
 public interface GrpcServerObservationConvention extends ObservationConvention<GrpcServerObservationContext> {
 
+    String UNKNOWN = "UNKNOWN";
+
     @Override
     default boolean supportsContext(Context context) {
         return context instanceof GrpcServerObservationContext;

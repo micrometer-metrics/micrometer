@@ -89,21 +89,11 @@ public enum GrpcObservationDocumentation implements ObservationDocumentation {
             public String asString() {
                 return "rpc.grpc.status_code";
             }
-
-            @Override
-            public boolean isRequired() {
-                return false;
-            }
         },
         PEER_NAME {
             @Override
             public String asString() {
                 return "net.peer.name";
-            }
-
-            @Override
-            public boolean isRequired() {
-                return false;
             }
         },
         PEER_PORT {
@@ -112,10 +102,6 @@ public enum GrpcObservationDocumentation implements ObservationDocumentation {
                 return "net.peer.port";
             }
 
-            @Override
-            public boolean isRequired() {
-                return false;
-            }
         }
 
     }
