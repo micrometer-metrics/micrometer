@@ -80,21 +80,25 @@ public abstract class PushMeterRegistry extends MeterRegistry {
             scheduledExecutorService = Executors.newSingleThreadScheduledExecutor(threadFactory);
             // time publication to happen just after StepValue finishes the step
             long stepMillis = config.step().toMillis();
-            long initialDelayMillis;
-            if (config.alignToEpoch()) {
-                initialDelayMillis = stepMillis - (clock.wallTime() % stepMillis) + 1;
-            }
-            else {
-                initialDelayMillis = registryCreationOffsetFromEpochStepMillis + stepMillis
-                        - (clock.wallTime() % stepMillis) + 1;
-                if (initialDelayMillis > stepMillis + 1) {
-                    initialDelayMillis = initialDelayMillis - stepMillis;
-                }
-            }
+            long initialDelayMillis = calculateInitialDelayMillis();
 
             scheduledExecutorService.scheduleAtFixedRate(this::publishSafely, initialDelayMillis, stepMillis,
                     TimeUnit.MILLISECONDS);
         }
+    }
+
+    // VisibleForTesting
+    long calculateInitialDelayMillis() {
+        long stepMillis = config.step().toMillis();
+        long initialDelayMillis;
+        if (config.alignToEpoch()) {
+            initialDelayMillis = stepMillis - (clock.wallTime() % stepMillis) + 1;
+        }
+        else {
+            initialDelayMillis = stepMillis
+                    - ((clock.wallTime() - registryCreationOffsetFromEpochStepMillis) % stepMillis) + 1;
+        }
+        return initialDelayMillis;
     }
 
     protected long getOffsetFromEpochStepMillis() {

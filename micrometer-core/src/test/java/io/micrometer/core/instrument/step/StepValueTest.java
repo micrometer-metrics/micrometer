@@ -69,12 +69,12 @@ class StepValueTest {
 
     @Test
     void testWithRegistryStart() {
-        final MockClock mockClock = new MockClock();
-        mockClock.add(Duration.ofMillis(30));
-
         final long offsetFromEpochStepMillis = 18;
+        final MockClock mockClock = new MockClock();
+        mockClock.add(Duration.ofMillis(offsetFromEpochStepMillis));
+
         final AtomicLong aLong = new AtomicLong(12);
-        final StepValue<Long> stepValue = new StepValue<Long>(mockClock, 60, offsetFromEpochStepMillis) {
+        final StepValue<Long> stepValue = new StepValue<Long>(mockClock, stepTime, offsetFromEpochStepMillis) {
             @Override
             protected Supplier<Long> valueSupplier() {
                 return () -> aLong.getAndSet(0);
@@ -91,7 +91,7 @@ class StepValueTest {
         mockClock.add(Duration.ofMillis(30));
         assertThat(stepValue.poll()).isEqualTo(0L);
 
-        mockClock.add(Duration.ofMillis(18));
+        mockClock.add(Duration.ofMillis(30));
         assertThat(stepValue.poll()).isEqualTo(12L);
 
         mockClock.add(Duration.ofMillis(42));
@@ -101,7 +101,7 @@ class StepValueTest {
         assertThat(stepValue.poll()).isEqualTo(0L);
 
         aLong.set(25);
-        mockClock.add(Duration.ofMillis(60));
+        mockClock.add(Duration.ofMillis(stepTime));
         assertThat(stepValue.poll()).isEqualTo(25L);
     }
 
