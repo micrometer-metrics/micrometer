@@ -90,15 +90,7 @@ public abstract class PushMeterRegistry extends MeterRegistry {
     // VisibleForTesting
     long calculateInitialDelayMillis() {
         long stepMillis = config.step().toMillis();
-        long initialDelayMillis;
-        if (config.alignToEpoch()) {
-            initialDelayMillis = stepMillis - (clock.wallTime() % stepMillis) + 1;
-        }
-        else {
-            initialDelayMillis = stepMillis
-                    - ((clock.wallTime() - registryCreationOffsetFromEpochStepMillis) % stepMillis) + 1;
-        }
-        return initialDelayMillis;
+        return stepMillis - ((clock.wallTime() - getOffsetFromEpochStepMillis()) % stepMillis) + 1;
     }
 
     protected long getOffsetFromEpochStepMillis() {
