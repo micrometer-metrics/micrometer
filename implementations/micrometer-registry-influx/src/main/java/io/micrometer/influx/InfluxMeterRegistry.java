@@ -29,10 +29,6 @@ import io.micrometer.core.instrument.step.StepMeterRegistry;
 import io.micrometer.core.instrument.util.DoubleFormat;
 import io.micrometer.core.instrument.util.MeterPartition;
 import io.micrometer.core.instrument.util.NamedThreadFactory;
-import io.micrometer.core.instrument.util.DoubleFormat;
-import io.micrometer.core.instrument.util.MeterPartition;
-import io.micrometer.core.instrument.util.NamedThreadFactory;
-import io.micrometer.core.instrument.util.StringUtils;
 import io.micrometer.core.ipc.http.HttpSender;
 import io.micrometer.core.ipc.http.HttpUrlConnectionSender;
 import org.slf4j.Logger;
@@ -254,7 +250,8 @@ public class InfluxMeterRegistry extends StepMeterRegistry {
         final List<Tag> influxTags = new ArrayList<>();
         final List<Tag> influxFields = new ArrayList<>();
         for (Tag meterTag : meterTags) {
-            if (this.tagMapper.shouldBeField(id, meterTag)) {
+            InfluxTagMapper.ValueType valueType = this.tagMapper.valueType(id, meterTag);
+            if (valueType == InfluxTagMapper.ValueType.FIELD) {
                 influxFields.add(meterTag);
             } else {
                 influxTags.add(meterTag);

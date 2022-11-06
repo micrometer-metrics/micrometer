@@ -23,17 +23,20 @@ import io.micrometer.core.instrument.Tag;
  */
 public interface InfluxTagMapper {
 
+    enum ValueType {
+        FIELD,TAG
+    }
     /**
-     * Default implementation that does not map any tag. It lets all Meter tags to be stored as tags in Influx.
+     * Default implementation that does not map any micrometer tags to Influx field. It lets all Meter tags to be stored as tags in Influx.
      */
-    InfluxTagMapper DEFAULT = (id, tag) -> false;
+    InfluxTagMapper DEFAULT = (id, tag) -> ValueType.TAG;
 
     /**
      * Decides whether a meter tag in context of concrete meter should be mapped as field or tag.
      * @param id meter id, mapper can decide that e.g. a tag "URI" under measurement "http_requests" should be stored as field in influx.
      * @param tag a tag that the mapper decides about
-     * @return true = the tag should be stored as a field key in InfluxDB. false = should be stored as tag key in influxDB.
+     * @return an enum to indicate whether the micrometer tag should be stored as field or tag
      */
-    boolean shouldBeField(Meter.Id id, Tag tag);
+    ValueType valueType(Meter.Id id, Tag tag);
 
 }
