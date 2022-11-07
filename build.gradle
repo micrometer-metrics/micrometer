@@ -391,14 +391,6 @@ subprojects {
 
     repositories {
         mavenCentral()
-        maven { // we only need this repo for context-propagation
-            url 'https://repo.spring.io/milestone/'
-            content { includeModule 'io.micrometer', 'context-propagation' }
-        }
-        maven { // we only need this repo for context-propagation
-            url 'https://repo.spring.io/snapshot/'
-            content { includeModule 'io.micrometer', 'context-propagation' }
-        }
     }
 
     def check = tasks.findByName('check')
