@@ -50,7 +50,9 @@ public class InfluxMeterRegistry extends StepMeterRegistry {
     private final InfluxConfig config;
 
     private final HttpSender httpClient;
+
     private final InfluxTagMapper tagMapper;
+
     private final Logger logger = LoggerFactory.getLogger(InfluxMeterRegistry.class);
 
     private boolean databaseExists = false;
@@ -70,10 +72,12 @@ public class InfluxMeterRegistry extends StepMeterRegistry {
      */
     @Deprecated
     public InfluxMeterRegistry(InfluxConfig config, Clock clock, ThreadFactory threadFactory) {
-        this(config, clock, threadFactory, new HttpUrlConnectionSender(config.connectTimeout(), config.readTimeout()), InfluxTagMapper.DEFAULT);
+        this(config, clock, threadFactory, new HttpUrlConnectionSender(config.connectTimeout(), config.readTimeout()),
+                InfluxTagMapper.DEFAULT);
     }
 
-    private InfluxMeterRegistry(InfluxConfig config, Clock clock, ThreadFactory threadFactory, HttpSender httpClient, InfluxTagMapper tagMapper) {
+    private InfluxMeterRegistry(InfluxConfig config, Clock clock, ThreadFactory threadFactory, HttpSender httpClient,
+            InfluxTagMapper tagMapper) {
         super(config, clock);
         config().namingConvention(new InfluxNamingConvention());
         this.config = config;
@@ -245,7 +249,8 @@ public class InfluxMeterRegistry extends StepMeterRegistry {
             InfluxTagMapper.ValueType valueType = this.tagMapper.valueType(id, meterTag);
             if (valueType == InfluxTagMapper.ValueType.FIELD) {
                 influxFields.add(meterTag);
-            } else {
+            }
+            else {
                 influxTags.add(meterTag);
             }
         }
@@ -253,12 +258,12 @@ public class InfluxMeterRegistry extends StepMeterRegistry {
         String tags = influxTags.stream().filter(t -> StringUtils.isNotBlank(t.getValue()))
                 .map(t -> "," + t.getKey() + "=" + t.getValue()).collect(joining(""));
 
-        String tagFields = influxFields.stream()
-                .filter(t -> StringUtils.isNotBlank(t.getValue()))
-                .map(t -> "," + t.getKey() + "=\"" + t.getValue() + "\"") // tags are string, so place them as strings into influx line protocol (quotes)
-                .collect(joining(""));return getConventionName(id) + tags + ",metric_type=" + metricType + " "
-                + fields.map(Field::toString).collect(joining(","))+ tagFields
-                + " " + clock.wallTime();
+        String tagFields = influxFields.stream().filter(t -> StringUtils.isNotBlank(t.getValue()))
+                // tags are string, so place them as strings into influx line protocol
+                // (quotes)
+                .map(t -> "," + t.getKey() + "=\"" + t.getValue() + "\"").collect(joining(""));
+        return getConventionName(id) + tags + ",metric_type=" + metricType + " "
+                + fields.map(Field::toString).collect(joining(",")) + tagFields + " " + clock.wallTime();
     }
 
     @Override
@@ -273,6 +278,7 @@ public class InfluxMeterRegistry extends StepMeterRegistry {
         private Clock clock = Clock.SYSTEM;
 
         private ThreadFactory threadFactory = DEFAULT_THREAD_FACTORY;
+
         private InfluxTagMapper tagMapper = InfluxTagMapper.DEFAULT;
 
         private HttpSender httpClient;

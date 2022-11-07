@@ -133,15 +133,20 @@ class InfluxMeterRegistryTest {
         var shouldBeField = Set.of("tagB", "tagWithQuote");
 
         InfluxTagMapper mapper = (id, tag) -> {
-            if(shouldBeField.contains(tag.getKey())) return InfluxTagMapper.ValueType.FIELD;
-            else return InfluxTagMapper.ValueType.TAG;
+            if (shouldBeField.contains(tag.getKey()))
+                return InfluxTagMapper.ValueType.FIELD;
+            else
+                return InfluxTagMapper.ValueType.TAG;
         };
-        InfluxMeterRegistry meterRegistry = new InfluxMeterRegistry.Builder(config).clock(clock).tagMapper(mapper).build();
-        var micrometerTags= Tags.of("tagA", "valA").and("tagB", "valB").and("tagC", "valC").and("tagWithQuote", "strange-string-with-\"-quote");
+        InfluxMeterRegistry meterRegistry = new InfluxMeterRegistry.Builder(config).clock(clock).tagMapper(mapper)
+                .build();
+        var micrometerTags = Tags.of("tagA", "valA").and("tagB", "valB").and("tagC", "valC").and("tagWithQuote",
+                "strange-string-with-\"-quote");
         meterRegistry.gauge("my.gauge", micrometerTags, 42.0);
         final Gauge gauge = meterRegistry.find("my.gauge").gauge();
 
-        assertThat(meterRegistry.writeGauge(gauge.getId(), 42.1).collect(Collectors.joining())).isEqualTo(expectedInfluxLine);
+        assertThat(meterRegistry.writeGauge(gauge.getId(), 42.1).collect(Collectors.joining()))
+                .isEqualTo(expectedInfluxLine);
     }
 
     @Test

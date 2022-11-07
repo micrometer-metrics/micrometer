@@ -19,23 +19,32 @@ import io.micrometer.core.instrument.Meter;
 import io.micrometer.core.instrument.Tag;
 
 /**
- * Component that decides what Meter Tags (from {@link io.micrometer.core.instrument.Meter.Id}} are going to be mapped into InfluxDB field keys.
+ * Component that decides what Meter Tags (from
+ * {@link io.micrometer.core.instrument.Meter.Id}} are going to be mapped into InfluxDB
+ * field keys.
  */
 public interface InfluxTagMapper {
 
     enum ValueType {
-        FIELD,TAG
+
+        FIELD, TAG
+
     }
+
     /**
-     * Default implementation that does not map any micrometer tags to Influx field. It lets all Meter tags to be stored as tags in Influx.
+     * Default implementation that does not map any micrometer tags to Influx field. It
+     * lets all Meter tags to be stored as tags in Influx.
      */
     InfluxTagMapper DEFAULT = (id, tag) -> ValueType.TAG;
 
     /**
-     * Decides whether a meter tag in context of concrete meter should be mapped as field or tag.
-     * @param id meter id, mapper can decide that e.g. a tag "URI" under measurement "http_requests" should be stored as field in influx.
+     * Decides whether a meter tag in context of concrete meter should be mapped as field
+     * or tag.
+     * @param id meter id, mapper can decide that e.g. a tag "URI" under measurement
+     * "http_requests" should be stored as field in influx.
      * @param tag a tag that the mapper decides about
-     * @return an enum to indicate whether the micrometer tag should be stored as field or tag
+     * @return an enum to indicate whether the micrometer tag should be stored as field or
+     * tag
      */
     ValueType valueType(Meter.Id id, Tag tag);
 
