@@ -132,7 +132,7 @@ public final class KeyValues implements Iterable<KeyValue> {
      * @return a new {@code KeyValues} instance
      */
     public KeyValues and(@Nullable Iterable<? extends KeyValue> keyValues) {
-        if (keyValues == null || !keyValues.iterator().hasNext()) {
+        if (keyValues == null || keyValues == EMPTY || !keyValues.iterator().hasNext()) {
             return this;
         }
 
@@ -256,7 +256,7 @@ public final class KeyValues implements Iterable<KeyValue> {
      * @return a new {@code KeyValues} instance
      */
     public static KeyValues of(@Nullable Iterable<? extends KeyValue> keyValues) {
-        if (keyValues == null || !keyValues.iterator().hasNext()) {
+        if (keyValues == null || keyValues == EMPTY || !keyValues.iterator().hasNext()) {
             return KeyValues.empty();
         }
         else if (keyValues instanceof KeyValues) {
