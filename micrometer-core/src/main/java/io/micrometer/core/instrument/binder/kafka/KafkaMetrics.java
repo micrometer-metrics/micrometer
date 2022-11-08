@@ -27,6 +27,8 @@ import io.micrometer.core.instrument.binder.MeterBinder;
 import io.micrometer.core.instrument.util.NamedThreadFactory;
 import org.apache.kafka.common.Metric;
 import org.apache.kafka.common.MetricName;
+import org.apache.kafka.common.metrics.KafkaMetric;
+import org.apache.kafka.common.metrics.Measurable;
 
 import java.time.Duration;
 import java.util.*;
@@ -68,6 +70,23 @@ class KafkaMetrics implements MeterBinder, AutoCloseable {
     static final Duration DEFAULT_REFRESH_INTERVAL = Duration.ofSeconds(60);
     static final String KAFKA_VERSION_TAG_NAME = "kafka.version";
     static final String DEFAULT_VALUE = "unknown";
+
+    private static final Set<Class<?>> counterMeasurableClasses = new HashSet<>();
+
+    static {
+        Set<String> classNames = new HashSet<>();
+        classNames.add("org.apache.kafka.common.metrics.stats.CumulativeSum");
+        classNames.add("org.apache.kafka.common.metrics.stats.CumulativeCount");
+
+        for (String className : classNames) {
+            try {
+                counterMeasurableClasses.add(Class.forName(className));
+            }
+            catch (ClassNotFoundException e) {
+                // Class doesn't exist in this version of kafka client - skip
+            }
+        }
+    }
 
     private final Supplier<Map<MetricName, ? extends Metric>> metricsSupplier;
 
@@ -135,7 +154,7 @@ class KafkaMetrics implements MeterBinder, AutoCloseable {
         this.metrics.set(this.metricsSupplier.get());
         Map<MetricName, ? extends Metric> metrics = this.metrics.get();
         // Collect static metrics and tags
-        MetricName startTime = null;
+        Metric startTimeMetric = null;
 
         for (Map.Entry<MetricName, ? extends Metric> entry : metrics.entrySet()) {
             MetricName name = entry.getKey();
@@ -144,12 +163,13 @@ class KafkaMetrics implements MeterBinder, AutoCloseable {
                     kafkaVersion = (String) entry.getValue().metricValue();
                 }
                 else if (START_TIME_METRIC_NAME.equals(name.name())) {
-                    startTime = entry.getKey();
+                    startTimeMetric = entry.getValue();
                 }
         }
 
-        if (startTime != null) {
-            bindMeter(registry, startTime, meterName(startTime), meterTags(startTime));
+        if (startTimeMetric != null) {
+            MetricName startTimeMetricName = startTimeMetric.metricName();
+            bindMeter(registry, startTimeMetric, meterName(startTimeMetricName), meterTags(startTimeMetricName));
         }
     }
 
@@ -220,7 +240,7 @@ class KafkaMetrics implements MeterBinder, AutoCloseable {
 
                     List<Tag> tags = meterTags(name);
                     try {
-                        Meter meter = bindMeter(registry, metric.metricName(), meterName, tags);
+                        Meter meter = bindMeter(registry, metric, meterName, tags);
                         List<Meter> meters = registryMetersByNames.computeIfAbsent(meterName, k -> new ArrayList<>());
                         meters.add(meter);
                     }
@@ -242,18 +262,34 @@ class KafkaMetrics implements MeterBinder, AutoCloseable {
         }
     }
 
-    private Meter bindMeter(MeterRegistry registry, MetricName metricName, String meterName, Iterable<Tag> tags) {
-        Meter meter = registerMeter(registry, metricName, meterName, tags);
+    private Meter bindMeter(MeterRegistry registry, Metric metric, String meterName, Iterable<Tag> tags) {
+        Meter meter = registerMeter(registry, metric, meterName, tags);
         registeredMeterIds.add(meter.getId());
         return meter;
     }
 
-    private Meter registerMeter(MeterRegistry registry, MetricName metricName, String meterName, Iterable<Tag> tags) {
-        if (meterName.endsWith("total")) {
+    private Meter registerMeter(MeterRegistry registry, Metric metric, String meterName, Iterable<Tag> tags) {
+        MetricName metricName = metric.metricName();
+        Class<? extends Measurable> measurableClass = getMeasurableClass(metric);
+        if ((measurableClass == null && meterName.endsWith("total"))
+                || (measurableClass != null && counterMeasurableClasses.contains(measurableClass))) {
             return registerCounter(registry, metricName, meterName, tags);
         }
-        else {
-            return registerGauge(registry, metricName, meterName, tags);
+
+        return registerGauge(registry, metricName, meterName, tags);
+    }
+
+    @Nullable
+    private static Class<? extends Measurable> getMeasurableClass(Metric metric) {
+        if (!(metric instanceof KafkaMetric)) {
+            return null;
+        }
+
+        try {
+            return ((KafkaMetric) metric).measurable().getClass();
+        }
+        catch (IllegalStateException ex) {
+            return null;
         }
     }
 
