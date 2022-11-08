@@ -20,6 +20,7 @@ import io.micrometer.common.KeyValues;
 import io.micrometer.common.lang.NonNull;
 import io.micrometer.common.lang.Nullable;
 
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.Map;
@@ -942,6 +943,30 @@ public interface Observation extends ObservationView {
         }
 
         /**
+         * Removes a low cardinality key value by looking at its key - those will be
+         * removed to those fetched from the
+         * {@link ObservationConvention#getLowCardinalityKeyValues(Context)} method.
+         * @param keyName name of the key
+         * @return this context
+         */
+        public Context removeLowCardinalityKeyValue(String keyName) {
+            this.lowCardinalityKeyValues.remove(keyName);
+            return this;
+        }
+
+        /**
+         * Removes a high cardinality key value by looking at its key - those will be
+         * removed to those fetched from the
+         * {@link ObservationConvention#getHighCardinalityKeyValues(Context)} method.
+         * @param keyName name of the key
+         * @return this context
+         */
+        public Context removeHighCardinalityKeyValue(String keyName) {
+            this.highCardinalityKeyValues.remove(keyName);
+            return this;
+        }
+
+        /**
          * Adds multiple low cardinality key values at once.
          * @param keyValues collection of key values
          * @return this context
@@ -958,6 +983,26 @@ public interface Observation extends ObservationView {
          */
         public Context addHighCardinalityKeyValues(KeyValues keyValues) {
             keyValues.stream().forEach(this::addHighCardinalityKeyValue);
+            return this;
+        }
+
+        /**
+         * Removes multiple low cardinality key values at once.
+         * @param keyNames collection of key names
+         * @return this context
+         */
+        public Context removeLowCardinalityKeyValues(String... keyNames) {
+            Arrays.stream(keyNames).forEach(this::removeLowCardinalityKeyValue);
+            return this;
+        }
+
+        /**
+         * Removes multiple high cardinality key values at once.
+         * @param keyNames collection of key names
+         * @return this context
+         */
+        public Context removeHighCardinalityKeyValues(String... keyNames) {
+            Arrays.stream(keyNames).forEach(this::removeHighCardinalityKeyValue);
             return this;
         }
 
