@@ -302,7 +302,7 @@ public interface Observation extends ObservationView {
      * @param parentObservation parent observation to set
      * @return this
      */
-    Observation parentObservation(Observation parentObservation);
+    Observation parentObservation(@Nullable Observation parentObservation);
 
     /**
      * Adds a low cardinality key value. Low cardinality means that this key value will
