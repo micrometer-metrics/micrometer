@@ -85,7 +85,7 @@ class SimpleObservation implements Observation {
     }
 
     @Override
-    public Observation parentObservation(Observation parentObservation) {
+    public Observation parentObservation(@Nullable Observation parentObservation) {
         this.context.setParentObservation(parentObservation);
         return this;
     }
