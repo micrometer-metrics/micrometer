@@ -16,6 +16,7 @@
 package io.micrometer.observation;
 
 import io.micrometer.common.KeyValue;
+import io.micrometer.common.lang.Nullable;
 
 /**
  * No-op implementation of {@link Observation} so that we can disable the instrumentation
@@ -39,12 +40,12 @@ final class NoopObservation implements Observation {
     }
 
     @Override
-    public Observation contextualName(String contextualName) {
+    public Observation contextualName(@Nullable String contextualName) {
         return this;
     }
 
     @Override
-    public Observation parentObservation(Observation parentObservation) {
+    public Observation parentObservation(@Nullable Observation parentObservation) {
         return this;
     }
 
