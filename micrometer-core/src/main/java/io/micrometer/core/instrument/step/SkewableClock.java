@@ -49,10 +49,14 @@ public class SkewableClock implements Clock {
     }
 
     /**
-     * @return current clock skew time in milliseconds.
+     * Returns current clock skew time in milliseconds.
      */
     public long getClockSkew() {
         return this.skewedTimeInMillis;
+    }
+
+    public Clock getOriginalClock() {
+        return this.clock;
     }
 
     @Override

@@ -15,6 +15,7 @@
  */
 package io.micrometer.core.instrument;
 
+import io.micrometer.core.instrument.step.SkewableClock;
 import io.micrometer.core.instrument.util.TimeUtils;
 
 import java.time.Duration;
@@ -50,7 +51,11 @@ public class MockClock implements Clock {
     }
 
     public static MockClock clock(MeterRegistry registry) {
-        return (MockClock) registry.config().clock();
+        Clock clock = registry.config().clock();
+        if (clock instanceof SkewableClock) {
+            return (MockClock) ((SkewableClock) clock).getOriginalClock();
+        }
+        return (MockClock) clock;
     }
 
 }
