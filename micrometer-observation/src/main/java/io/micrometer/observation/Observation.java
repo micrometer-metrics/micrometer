@@ -948,6 +948,7 @@ public interface Observation extends ObservationView {
          * {@link ObservationConvention#getLowCardinalityKeyValues(Context)} method.
          * @param keyName name of the key
          * @return this context
+         * @since 1.10.1
          */
         public Context removeLowCardinalityKeyValue(String keyName) {
             this.lowCardinalityKeyValues.remove(keyName);
@@ -960,6 +961,7 @@ public interface Observation extends ObservationView {
          * {@link ObservationConvention#getHighCardinalityKeyValues(Context)} method.
          * @param keyName name of the key
          * @return this context
+         * @since 1.10.1
          */
         public Context removeHighCardinalityKeyValue(String keyName) {
             this.highCardinalityKeyValues.remove(keyName);
@@ -990,6 +992,7 @@ public interface Observation extends ObservationView {
          * Removes multiple low cardinality key values at once.
          * @param keyNames collection of key names
          * @return this context
+         * @since 1.10.1
          */
         public Context removeLowCardinalityKeyValues(String... keyNames) {
             Arrays.stream(keyNames).forEach(this::removeLowCardinalityKeyValue);
@@ -1000,6 +1003,7 @@ public interface Observation extends ObservationView {
          * Removes multiple high cardinality key values at once.
          * @param keyNames collection of key names
          * @return this context
+         * @since 1.10.1
          */
         public Context removeHighCardinalityKeyValues(String... keyNames) {
             Arrays.stream(keyNames).forEach(this::removeHighCardinalityKeyValue);
