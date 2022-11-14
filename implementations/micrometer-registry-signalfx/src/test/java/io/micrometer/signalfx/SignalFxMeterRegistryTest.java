@@ -331,7 +331,13 @@ class SignalFxMeterRegistryTest {
     private static Condition<SignalFxProtocolBuffers.DataPoint> hasValue(double value) {
         return new Condition<>(point -> {
             SignalFxProtocolBuffers.Datum v = point.getValue();
-            return v.getDoubleValue() == value || v.getIntValue() == (int) value;
+            if (v.hasDoubleValue()) {
+                return v.getDoubleValue() == value;
+            }
+            if (v.hasIntValue()) {
+                return v.getIntValue() == (int) value;
+            }
+            return false;
         }, "Has value %s", value);
     }
 
