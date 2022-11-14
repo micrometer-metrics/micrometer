@@ -104,7 +104,7 @@ public class SignalFxMeterRegistry extends StepMeterRegistry {
 
     @Override
     protected void publish() {
-        final long timestamp = (clock.wallTime() / config.step().toMillis()) * config.step().toMillis();
+        final long timestamp = clock.wallTime();
 
         AggregateMetricSender metricSender = new AggregateMetricSender(this.config.source(),
                 this.dataPointReceiverFactory, this.eventReceiverFactory,
