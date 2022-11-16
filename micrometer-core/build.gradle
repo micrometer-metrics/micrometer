@@ -150,7 +150,7 @@ dependencies {
         exclude group: "org.slf4j", module: "jcl-over-slf4j"
     }
     testImplementation("org.apache.maven.resolver:maven-resolver-connector-basic:latest.release")
-    testImplementation("org.springframework:spring-core:latest.release")
+    testImplementation("org.springframework:spring-core")
 
     // gRPC
     testImplementation("io.grpc:grpc-core")
