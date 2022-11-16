@@ -441,28 +441,31 @@ class SignalFxMeterRegistryTest {
     void shouldNotExportCumulativeHistogramDataByDefault_Timer() {
         MockClock mockClock = new MockClock();
         SignalFxMeterRegistry registry = new SignalFxMeterRegistry(config, mockClock);
-        Timer timer = Timer
-                .builder("my.timer").serviceLevelObjectives(Duration.ofMillis(1), Duration.ofMillis(10),
-                        Duration.ofMillis(100), Duration.ofMillis(1000))
-                .distributionStatisticExpiry(Duration.ofSeconds(10)).register(registry);
+        Timer timer = Timer.builder("my.timer").serviceLevelObjectives(Duration.ofMillis(1), Duration.ofMillis(10),
+                Duration.ofMillis(100), Duration.ofMillis(1000)).register(registry);
 
         timer.record(50, TimeUnit.MILLISECONDS);
         timer.record(5000, TimeUnit.MILLISECONDS);
         mockClock.add(config.step());
         getDataPoints(registry, mockClock.wallTime());
 
+        // histogram data recorded at the beginning of the step would be rotated out by
+        // the time of publish
+        // record in the middle of the step to avoid this issue
+        mockClock.add(config.step().dividedBy(2));
         timer.record(5, TimeUnit.MILLISECONDS);
         timer.record(500, TimeUnit.MILLISECONDS);
-        mockClock.add(config.step().minus(Duration.ofMillis(1)));
+
+        mockClock.add(config.step().dividedBy(2));
 
         assertThat(getDataPoints(registry, mockClock.wallTime())).hasSize(8)
-                .has(gaugePoint("my.timer.avg", 2.525), atIndex(0)).has(counterPoint("my.timer.count", 2), atIndex(1))
+                .has(gaugePoint("my.timer.avg", 0.2525), atIndex(0)).has(counterPoint("my.timer.count", 2), atIndex(1))
                 .has(allOf(gaugePoint("my.timer.histogram", 0), bucket(Duration.ofMillis(1))), atIndex(2))
-                .has(allOf(gaugePoint("my.timer.histogram", 0), bucket(Duration.ofMillis(10))), atIndex(3))
-                .has(allOf(gaugePoint("my.timer.histogram", 0), bucket(Duration.ofMillis(100))), atIndex(4))
-                .has(allOf(gaugePoint("my.timer.histogram", 0), bucket(Duration.ofMillis(1000))), atIndex(5))
-                .has(gaugePoint("my.timer.max", 5.0), atIndex(6))
-                .has(counterPoint("my.timer.totalTime", 5.05), atIndex(7));
+                .has(allOf(gaugePoint("my.timer.histogram", 1), bucket(Duration.ofMillis(10))), atIndex(3))
+                .has(allOf(gaugePoint("my.timer.histogram", 1), bucket(Duration.ofMillis(100))), atIndex(4))
+                .has(allOf(gaugePoint("my.timer.histogram", 2), bucket(Duration.ofMillis(1000))), atIndex(5))
+                .has(gaugePoint("my.timer.max", 5), atIndex(6))
+                .has(counterPoint("my.timer.totalTime", 0.505), atIndex(7));
 
         registry.close();
     }
@@ -472,27 +475,30 @@ class SignalFxMeterRegistryTest {
         MockClock mockClock = new MockClock();
         SignalFxMeterRegistry registry = new SignalFxMeterRegistry(config, mockClock);
         DistributionSummary summary = DistributionSummary.builder("my.distribution")
-                .serviceLevelObjectives(1, 10, 100, 1000).distributionStatisticExpiry(Duration.ofSeconds(10))
-                .register(registry);
+                .serviceLevelObjectives(1, 10, 100, 1000).register(registry);
 
         summary.record(50);
         summary.record(5000);
         mockClock.add(config.step());
         getDataPoints(registry, mockClock.wallTime());
 
+        // histogram data recorded at the beginning of the step would be rotated out by
+        // the time of publish
+        // record in the middle of the step to avoid this issue
+        mockClock.add(config.step().dividedBy(2));
         summary.record(5);
         summary.record(500);
-        mockClock.add(config.step().minus(Duration.ofMillis(1)));
+        mockClock.add(config.step().dividedBy(2));
 
         assertThat(getDataPoints(registry, mockClock.wallTime())).hasSize(8)
-                .has(gaugePoint("my.distribution.avg", 2525), atIndex(0))
+                .has(gaugePoint("my.distribution.avg", 252.5), atIndex(0))
                 .has(counterPoint("my.distribution.count", 2), atIndex(1))
                 .has(allOf(gaugePoint("my.distribution.histogram", 0), bucket(1)), atIndex(2))
-                .has(allOf(gaugePoint("my.distribution.histogram", 0), bucket(10)), atIndex(3))
-                .has(allOf(gaugePoint("my.distribution.histogram", 0), bucket(100)), atIndex(4))
-                .has(allOf(gaugePoint("my.distribution.histogram", 0), bucket(1000)), atIndex(5))
+                .has(allOf(gaugePoint("my.distribution.histogram", 1), bucket(10)), atIndex(3))
+                .has(allOf(gaugePoint("my.distribution.histogram", 1), bucket(100)), atIndex(4))
+                .has(allOf(gaugePoint("my.distribution.histogram", 2), bucket(1000)), atIndex(5))
                 .has(gaugePoint("my.distribution.max", 5000), atIndex(6))
-                .has(counterPoint("my.distribution.totalTime", 5050), atIndex(7));
+                .has(counterPoint("my.distribution.totalTime", 505), atIndex(7));
 
         registry.close();
     }
