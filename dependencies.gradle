@@ -72,6 +72,7 @@ def VERSIONS = [
         'org.postgresql:postgresql:latest.release',
         'org.slf4j:slf4j-api:1.7.+',
         'org.springframework:spring-context:5.+',
+        'org.springframework:spring-core:5+',
         'org.testcontainers:junit-jupiter:latest.release',
         'org.testcontainers:kafka:latest.release',
         'org.testcontainers:postgresql:latest.release',
