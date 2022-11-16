@@ -17,11 +17,16 @@ package io.micrometer.observation;
 
 import io.micrometer.common.KeyValue;
 import io.micrometer.common.KeyValues;
+import io.micrometer.observation.Observation.Context;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
 import java.io.IOException;
 import java.util.Random;
+import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.atomic.AtomicReference;
+import java.util.function.Function;
+import java.util.function.Supplier;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -287,6 +292,80 @@ class ObservationTests {
                 KeyValue.of("instrumentation", "present"), KeyValue.of("low", "instrumentation"));
     }
 
+    @Test
+    void observe() {
+        String result;
+        // with supplier
+        result = Observation.start("service", registry).observe(() -> "foo");
+        assertThat(result).isEqualTo("foo");
+
+        // with function
+        result = Observation.start("service", registry).observeWithContext((context) -> "bar");
+        assertThat(result).isEqualTo("bar");
+
+        // with runnable
+        AtomicBoolean called = new AtomicBoolean();
+        Observation.start("service", registry).observe(() -> {
+            called.set(true);
+        });
+        assertThat(called).isTrue();
+    }
+
+    @Test
+    void observeWithFunction() {
+        CustomContext context = new CustomContext();
+        AtomicReference<CustomContext> contextHolder = new AtomicReference<>();
+        String result = new SimpleObservation("service", registry, context).observeWithContext((ctx) -> {
+            CustomContext customContext = (CustomContext) ctx;
+            customContext.hello();
+            contextHolder.set(customContext);
+            return "foo";
+        });
+        assertThat(result).isEqualTo("foo");
+        assertThat(contextHolder).hasValueSatisfying((value) -> assertThat(value).isSameAs(context));
+
+        // passing function as a method arg
+        Function<CustomContext, String> function = (customContext) -> {
+            customContext.hello(); // compilation check
+            return "bar";
+        };
+        result = new SimpleObservation("service", registry, context).observeWithContext(function);
+        assertThat(result).isEqualTo("bar");
+
+        // method reference
+        result = new SimpleObservation("service", registry, context).observeWithContext(this::convert);
+        assertThat(result).isEqualTo("Hi");
+
+        // with explicit type cast on method
+        result = new SimpleObservation("service", registry, context)
+                .<CustomContext, String>observeWithContext((ctx) -> {
+                    ctx.hello(); // compilation check
+                    return "Hello";
+                });
+        assertThat(result).isEqualTo("Hello");
+
+        // with Noop registry, supplier provided context will not be created
+        AtomicBoolean contextCreated = new AtomicBoolean();
+        Supplier<Context> supplier = () -> new Context() {
+            {
+                contextCreated.set(true);
+            }
+        };
+        AtomicReference<Context> passedContextHolder = new AtomicReference<>();
+        result = Observation.createNotStarted("service", supplier, NoopObservationRegistry.INSTANCE)
+                .observeWithContext((ctx) -> {
+                    passedContextHolder.set(ctx);
+                    return "World";
+                });
+        assertThat(passedContextHolder).as("passed a noop context").hasValue(NoopObservation.INSTANCE.getContext());
+        assertThat(contextCreated).isFalse();
+        assertThat(result).isEqualTo("World");
+    }
+
+    private String convert(CustomContext customContext) {
+        return "Hi";
+    }
+
     static class Service {
 
         String executeCallable() throws IOException {
@@ -396,6 +475,14 @@ class ObservationTests {
         @Override
         public boolean supportsContext(Observation.Context context) {
             return true;
+        }
+
+    }
+
+    static class CustomContext extends Observation.Context {
+
+        public String hello() {
+            return "Hello";
         }
 
     }

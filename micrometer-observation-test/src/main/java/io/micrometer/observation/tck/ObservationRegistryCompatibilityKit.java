@@ -30,6 +30,7 @@ import org.mockito.InOrder;
 import java.io.IOException;
 import java.util.UUID;
 import java.util.function.Consumer;
+import java.util.function.Function;
 import java.util.function.Supplier;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -476,6 +477,110 @@ public abstract class ObservationRegistryCompatibilityKit {
             throw new IOException("simulated");
         };
         assertThatThrownBy(() -> observation.wrapChecked(callable).call()).isInstanceOf(IOException.class)
+                .hasMessage("simulated").hasNoCause();
+
+        assertThat(registry.getCurrentObservation()).isNull();
+
+        InOrder inOrder = inOrder(handler);
+        inOrder.verify(handler).supportsContext(isA(Observation.Context.class));
+        inOrder.verify(handler).onStart(isA(Observation.Context.class));
+        inOrder.verify(handler).onScopeOpened(isA(Observation.Context.class));
+        inOrder.verify(handler).onScopeClosed(isA(Observation.Context.class));
+        inOrder.verify(handler).onError(isA(Observation.Context.class));
+        inOrder.verify(handler).onStop(isA(Observation.Context.class));
+    }
+
+    @Test
+    void functionShouldBeObserved() {
+        @SuppressWarnings("unchecked")
+        ObservationHandler<Observation.Context> handler = mock(ObservationHandler.class);
+        when(handler.supportsContext(isA(Observation.Context.class))).thenReturn(true);
+        registry.observationConfig().observationHandler(handler);
+        Observation observation = Observation.createNotStarted("myObservation", registry);
+
+        Function<Observation.Context, String> function = (context) -> {
+            assertThat(registry.getCurrentObservation()).isSameAs(observation);
+            assertThat(context).isSameAs(observation.getContext());
+            return "test";
+        };
+        String result = observation.observeWithContext(function);
+        assertThat(result).isEqualTo("test");
+        assertThat(registry.getCurrentObservation()).isNull();
+
+        InOrder inOrder = inOrder(handler);
+        inOrder.verify(handler).supportsContext(isA(Observation.Context.class));
+        inOrder.verify(handler).onStart(isA(Observation.Context.class));
+        inOrder.verify(handler).onScopeOpened(isA(Observation.Context.class));
+        inOrder.verify(handler).onScopeClosed(isA(Observation.Context.class));
+        inOrder.verify(handler, times(0)).onError(isA(Observation.Context.class));
+        inOrder.verify(handler).onStop(isA(Observation.Context.class));
+    }
+
+    @Test
+    void functionThrowingErrorShouldBeObserved() {
+        @SuppressWarnings("unchecked")
+        ObservationHandler<Observation.Context> handler = mock(ObservationHandler.class);
+        when(handler.supportsContext(isA(Observation.Context.class))).thenReturn(true);
+        registry.observationConfig().observationHandler(handler);
+        Observation observation = Observation.createNotStarted("myObservation", registry);
+
+        Function<Observation.Context, String> function = (context) -> {
+            assertThat(registry.getCurrentObservation()).isSameAs(observation);
+            throw new RuntimeException("simulated");
+        };
+        assertThatThrownBy(() -> observation.observeWithContext(function)).isInstanceOf(RuntimeException.class)
+                .hasMessage("simulated").hasNoCause();
+
+        assertThat(registry.getCurrentObservation()).isNull();
+
+        InOrder inOrder = inOrder(handler);
+        inOrder.verify(handler).supportsContext(isA(Observation.Context.class));
+        inOrder.verify(handler).onStart(isA(Observation.Context.class));
+        inOrder.verify(handler).onScopeOpened(isA(Observation.Context.class));
+        inOrder.verify(handler).onScopeClosed(isA(Observation.Context.class));
+        inOrder.verify(handler).onError(isA(Observation.Context.class));
+        inOrder.verify(handler).onStop(isA(Observation.Context.class));
+    }
+
+    @Test
+    void checkedFunctionShouldBeObserved() throws Throwable {
+        @SuppressWarnings("unchecked")
+        ObservationHandler<Observation.Context> handler = mock(ObservationHandler.class);
+        when(handler.supportsContext(isA(Observation.Context.class))).thenReturn(true);
+        registry.observationConfig().observationHandler(handler);
+        Observation observation = Observation.createNotStarted("myObservation", registry);
+
+        Observation.CheckedFunction<Observation.Context, String, Throwable> function = (context) -> {
+            assertThat(registry.getCurrentObservation()).isSameAs(observation);
+            assertThat(context).isSameAs(observation.getContext());
+            return "test";
+        };
+        String result = observation.observeCheckedWithContext(function);
+        assertThat(result).isEqualTo("test");
+        assertThat(registry.getCurrentObservation()).isNull();
+
+        InOrder inOrder = inOrder(handler);
+        inOrder.verify(handler).supportsContext(isA(Observation.Context.class));
+        inOrder.verify(handler).onStart(isA(Observation.Context.class));
+        inOrder.verify(handler).onScopeOpened(isA(Observation.Context.class));
+        inOrder.verify(handler).onScopeClosed(isA(Observation.Context.class));
+        inOrder.verify(handler, times(0)).onError(isA(Observation.Context.class));
+        inOrder.verify(handler).onStop(isA(Observation.Context.class));
+    }
+
+    @Test
+    void checkedFunctionThrowingErrorShouldBeObserved() {
+        @SuppressWarnings("unchecked")
+        ObservationHandler<Observation.Context> handler = mock(ObservationHandler.class);
+        when(handler.supportsContext(isA(Observation.Context.class))).thenReturn(true);
+        registry.observationConfig().observationHandler(handler);
+        Observation observation = Observation.createNotStarted("myObservation", registry);
+
+        Observation.CheckedFunction<Observation.Context, String, Throwable> function = (context) -> {
+            assertThat(registry.getCurrentObservation()).isSameAs(observation);
+            throw new IOException("simulated");
+        };
+        assertThatThrownBy(() -> observation.observeCheckedWithContext(function)).isInstanceOf(IOException.class)
                 .hasMessage("simulated").hasNoCause();
 
         assertThat(registry.getCurrentObservation()).isNull();
