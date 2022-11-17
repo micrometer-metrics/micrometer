@@ -28,8 +28,8 @@ public class StepLong extends StepValue<Long> {
         this(clock, stepMillis, 0);
     }
 
-    public StepLong(Clock clock, long stepMillis, long offsetFromEpochStepMillis) {
-        super(clock, stepMillis, offsetFromEpochStepMillis);
+    public StepLong(Clock clock, long stepMillis, long pushOffsetFromEpochStepMillis) {
+        super(clock, stepMillis, pushOffsetFromEpochStepMillis);
     }
 
     @Override

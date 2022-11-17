@@ -34,7 +34,7 @@ public abstract class StepValue<V> {
 
     private final long stepMillis;
 
-    private final long offsetFromEpochStepMillis;
+    private final long pushOffsetFromEpochStepMillis;
 
     private AtomicLong lastInitPos;
 
@@ -44,11 +44,11 @@ public abstract class StepValue<V> {
         this(clock, stepMillis, 0);
     }
 
-    public StepValue(final Clock clock, final long stepMillis, final long offsetFromEpochStepMillis) {
+    public StepValue(final Clock clock, final long stepMillis, final long pushOffsetFromEpochStepMillis) {
         this.clock = clock;
         this.stepMillis = stepMillis;
-        this.offsetFromEpochStepMillis = offsetFromEpochStepMillis;
-        lastInitPos = new AtomicLong((clock.wallTime() - offsetFromEpochStepMillis) / stepMillis);
+        this.pushOffsetFromEpochStepMillis = pushOffsetFromEpochStepMillis;
+        lastInitPos = new AtomicLong((clock.wallTime() - pushOffsetFromEpochStepMillis) / stepMillis);
     }
 
     protected abstract Supplier<V> valueSupplier();
@@ -60,7 +60,7 @@ public abstract class StepValue<V> {
     protected abstract V noValue();
 
     private void rollCount(long now) {
-        final long stepTime = (now - offsetFromEpochStepMillis) / stepMillis;
+        final long stepTime = (now - pushOffsetFromEpochStepMillis) / stepMillis;
         final long lastInit = lastInitPos.get();
         if (lastInit < stepTime && lastInitPos.compareAndSet(lastInit, stepTime)) {
             final V v = valueSupplier().get();

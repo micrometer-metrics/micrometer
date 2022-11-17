@@ -60,7 +60,7 @@ public class StepFunctionTimer<T> implements FunctionTimer {
 
     private final StepTuple2<Long, Double> countTotal;
 
-    public StepFunctionTimer(Id id, Clock clock, long stepMillis, long offsetFromEpochStepMillis, T obj,
+    public StepFunctionTimer(Id id, Clock clock, long stepMillis, long pushOffsetFromEpochStepMillis, T obj,
             ToLongFunction<T> countFunction, ToDoubleFunction<T> totalTimeFunction, TimeUnit totalTimeFunctionUnit,
             TimeUnit baseTimeUnit) {
         this.id = id;
@@ -70,8 +70,8 @@ public class StepFunctionTimer<T> implements FunctionTimer {
         this.totalTimeFunction = totalTimeFunction;
         this.totalTimeFunctionUnit = totalTimeFunctionUnit;
         this.baseTimeUnit = baseTimeUnit;
-        this.countTotal = new StepTuple2<>(clock, stepMillis, offsetFromEpochStepMillis, 0L, 0.0, count::sumThenReset,
-                total::sumThenReset);
+        this.countTotal = new StepTuple2<>(clock, stepMillis, pushOffsetFromEpochStepMillis, 0L, 0.0,
+                count::sumThenReset, total::sumThenReset);
     }
 
     public StepFunctionTimer(Id id, Clock clock, long stepMillis, T obj, ToLongFunction<T> countFunction,

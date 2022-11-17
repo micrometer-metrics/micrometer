@@ -32,12 +32,12 @@ public class StepFunctionCounter<T> extends AbstractMeter implements FunctionCou
 
     private StepDouble count;
 
-    public StepFunctionCounter(Id id, Clock clock, long stepMillis, long offsetFromEpochStepMillis, T obj,
+    public StepFunctionCounter(Id id, Clock clock, long stepMillis, long pushOffsetFromEpochStepMillis, T obj,
             ToDoubleFunction<T> f) {
         super(id);
         this.ref = new WeakReference<>(obj);
         this.f = f;
-        this.count = new StepDouble(clock, stepMillis, offsetFromEpochStepMillis);
+        this.count = new StepDouble(clock, stepMillis, pushOffsetFromEpochStepMillis);
     }
 
     public StepFunctionCounter(Id id, Clock clock, long stepMillis, T obj, ToDoubleFunction<T> f) {

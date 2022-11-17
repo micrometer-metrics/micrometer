@@ -90,11 +90,20 @@ public abstract class PushMeterRegistry extends MeterRegistry {
     // VisibleForTesting
     long calculateInitialDelayMillis() {
         long stepMillis = config.step().toMillis();
-        return stepMillis - ((clock.wallTime() - getOffsetFromEpochStepMillis()) % stepMillis) + 1;
+        return stepMillis - ((clock.wallTime() - getPushOffsetFromEpochStepMillis()) % stepMillis) + 1;
     }
 
-    protected long getOffsetFromEpochStepMillis() {
-        return config.alignToEpoch() ? 0 : registryCreationOffsetFromEpochStepMillis;
+    /**
+     * Publishing may be aligned globally (for example, offset 0 from step intervals
+     * starting at the Unix Epoch) with a fixed offset such that all application instances
+     * publish metrics at the same point in time, or it may be dynamic for each
+     * application instance relative to when the registry was created. This value is given
+     * in millisecond as the offset from the Unix Epoch-based step intervals.
+     * @return how many milliseconds publishing is offset from Unix Epoch-based step
+     * intervals
+     */
+    protected long getPushOffsetFromEpochStepMillis() {
+        return config.isPushAlignedGlobally() ? 0 : registryCreationOffsetFromEpochStepMillis;
     }
 
     public void stop() {

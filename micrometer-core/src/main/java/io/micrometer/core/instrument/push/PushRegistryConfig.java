@@ -93,15 +93,16 @@ public interface PushRegistryConfig extends MeterRegistryConfig {
     /**
      * This controls when the call to {@link PushMeterRegistry#publish()} is scheduled. If
      * this returns true, publishing is scheduled at the beginning of each step interval,
-     * relative to the Unix Epoch. This has the side effect of causing all application
+     * relative to the Unix Epoch. This has the effect of causing all application
      * instances publishing metrics with this configuration to publish at the same time,
      * which may overload resources by concentrating the work to publish and ingest
-     * metrics.
+     * metrics. The more instances you have publishing metrics at the same time, the more
+     * of a problem this will be.
      * @return false if publishing should be scheduled relative to registry instantiation
-     * time. Default is {@code false}.
+     * time. Default is {@code false} to avoid the documented resource exhaustion issue.
      */
-    default boolean alignToEpoch() {
-        return getBoolean(this, "alignToEpoch").orElse(false);
+    default boolean isPushAlignedGlobally() {
+        return getBoolean(this, "isPushAlignedGlobally").orElse(false);
     }
 
     @Override
@@ -120,7 +121,7 @@ public interface PushRegistryConfig extends MeterRegistryConfig {
                 check("connectTimeout", PushRegistryConfig::connectTimeout),
                 check("readTimeout", PushRegistryConfig::readTimeout),
                 check("batchSize", PushRegistryConfig::batchSize), check("numThreads", PushRegistryConfig::numThreads),
-                check("alignToEpoch", PushRegistryConfig::alignToEpoch));
+                check("isPushAlignedGlobally", PushRegistryConfig::isPushAlignedGlobally));
     }
 
 }

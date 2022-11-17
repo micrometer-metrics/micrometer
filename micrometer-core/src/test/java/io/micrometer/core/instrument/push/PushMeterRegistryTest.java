@@ -55,7 +55,7 @@ class PushMeterRegistryTest {
         }
 
         @Override
-        public boolean alignToEpoch() {
+        public boolean isPushAlignedGlobally() {
             return false;
         }
     };
