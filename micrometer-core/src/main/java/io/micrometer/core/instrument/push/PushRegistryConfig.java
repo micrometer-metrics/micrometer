@@ -92,12 +92,13 @@ public interface PushRegistryConfig extends MeterRegistryConfig {
 
     /**
      * This controls when the call to {@link PushMeterRegistry#publish()} is scheduled. If
-     * this returns true, publishing is scheduled at the beginning of each step interval,
-     * relative to the Unix Epoch. This has the effect of causing all application
-     * instances publishing metrics with this configuration to publish at the same time,
-     * which may overload resources by concentrating the work to publish and ingest
-     * metrics. The more instances you have publishing metrics at the same time, the more
-     * of a problem this will be.
+     * this returns true, publishing is scheduled at the same time relative to the Unix
+     * Epoch regardless of when the registry was created. This has the effect of causing
+     * all application instances publishing metrics with the same configuration to publish
+     * at the same point in time globally, which may overload resources by concentrating
+     * the work to publish and ingest metrics from many application instances. The more
+     * instances you have publishing metrics at the same time, the more of a problem this
+     * will be.
      * @return false if publishing should be scheduled relative to registry instantiation
      * time. Default is {@code false} to avoid the documented resource exhaustion issue.
      */
