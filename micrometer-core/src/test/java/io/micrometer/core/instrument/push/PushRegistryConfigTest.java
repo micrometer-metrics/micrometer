@@ -51,7 +51,7 @@ class PushRegistryConfigTest {
         props.put("push.readTimeout", "1w");
         props.put("push.batchSize", "Z");
         props.put("push.step", "up");
-        props.put("push.alignToEpoch", "oops");
+        props.put("push.isPushAlignedGlobally", "oops");
 
         // overall not valid
         assertThat(config.validate().isValid()).isFalse();
@@ -73,7 +73,7 @@ class PushRegistryConfigTest {
         props.put("push.readTimeout", "1s");
         props.put("push.batchSize", "3");
         props.put("push.step", "1s");
-        props.put("push.alignToEpoch", "false");
+        props.put("push.isPushAlignedGlobally", "false");
 
         assertThat(config.validate().isValid()).isTrue();
     }
