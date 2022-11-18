@@ -40,7 +40,7 @@ public abstract class StepMeterRegistry extends PushMeterRegistry {
     private final StepRegistryConfig config;
 
     public StepMeterRegistry(StepRegistryConfig config, Clock clock) {
-        super(config, new SkewableClock(clock));
+        super(config, new StoppableClock(clock));
         this.config = config;
     }
 
@@ -104,13 +104,12 @@ public abstract class StepMeterRegistry extends PushMeterRegistry {
 
     @Override
     public void close() {
-        // Move clock to start of next step.
-        if (clock instanceof SkewableClock) {
+        // Move clock to start of next step and stop it.
+        if (clock instanceof StoppableClock) {
             long now = clock.wallTime();
             long millisUntilNextStep = config.step().toMillis() - now % config.step().toMillis();
 
-            ((SkewableClock) clock).setClockSkew(((SkewableClock) clock).getClockSkew() + millisUntilNextStep + 1,
-                    TimeUnit.MILLISECONDS);
+            ((StoppableClock) clock).stopClock(now + millisUntilNextStep + 1);
         }
         super.close();
     }
