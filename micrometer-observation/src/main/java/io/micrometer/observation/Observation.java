@@ -1042,8 +1042,8 @@ public interface Observation extends ObservationView {
         public String toString() {
             return "name='" + name + '\'' + ", contextualName='" + contextualName + '\'' + ", error='" + error + '\''
                     + ", lowCardinalityKeyValues=" + toString(getLowCardinalityKeyValues())
-                    + ", highCardinalityKeyValues=" + toString(getHighCardinalityKeyValues()) + ", map="
-                    + toString(map);
+                    + ", highCardinalityKeyValues=" + toString(getHighCardinalityKeyValues()) + ", map=" + toString(map)
+                    + ", parentObservation=" + parentObservation;
         }
 
         private String toString(KeyValues keyValues) {
