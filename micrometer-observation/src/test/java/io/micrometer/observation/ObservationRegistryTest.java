@@ -96,8 +96,6 @@ class ObservationRegistryTest {
         registry.observationConfig().observationHandler(c -> true);
         // Define a convention
         MessagingConvention messagingConvention = new OurCompanyStandardMessagingConvention();
-        // Register a semantic name provider
-        registry.observationConfig().observationConvention(new OurCompanyObservationConvention());
 
         Observation.Context myContext = new MessagingContext().put("foo", "hello");
         // Observation convention wants to use a MessagingConvention
@@ -125,6 +123,12 @@ class ObservationRegistryTest {
             this.messagingConvention = messagingConvention;
         }
 
+        // Here we override the default "observation" name
+        @Override
+        public String getName() {
+            return "new name";
+        }
+
         @Override
         public KeyValues getLowCardinalityKeyValues(MessagingContext context) {
             return KeyValues.of(this.messagingConvention.queueName(context.get("foo")));
@@ -149,24 +153,6 @@ class ObservationRegistryTest {
         @Override
         public KeyValue queueName(String messagePayload) {
             return KeyValue.of("baz", messagePayload + " bar");
-        }
-
-    }
-
-    static class OurCompanyObservationConvention implements GlobalObservationConvention<Observation.Context> {
-
-        // Here we override the default "observation" name
-        @Override
-        public String getName() {
-            return "new name";
-        }
-
-        // This semantic name provider is only applicable when we're using a messaging
-        // context
-
-        @Override
-        public boolean supportsContext(Observation.Context context) {
-            return context instanceof MessagingContext;
         }
 
     }

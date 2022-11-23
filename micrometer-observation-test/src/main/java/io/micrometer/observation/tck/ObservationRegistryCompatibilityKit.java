@@ -765,8 +765,6 @@ public abstract class ObservationRegistryCompatibilityKit {
                 .highCardinalityKeyValue("hcTag1", "0")
                 // should override the previous line
                 .highCardinalityKeyValue("hcTag1", "3").highCardinalityKeyValues(KeyValues.of("hcTag2", "4"))
-                .observationConvention(new TestObservationConvention("local"))
-                .observationConvention(new UnsupportedObservationConvention("local"))
                 .contextualName("test.observation.42").error(exception).start();
         observation.stop();
 
@@ -774,16 +772,13 @@ public abstract class ObservationRegistryCompatibilityKit {
             assertThat(context).isSameAs(testContext);
             assertThat(context.getName()).isEqualTo("test.observation");
             assertThat(context.getLowCardinalityKeyValues()).containsExactlyInAnyOrder(KeyValue.of("lcTag1", "1"),
-                    KeyValue.of("lcTag2", "2"), KeyValue.of("local.context.class", "TestContext"),
-                    KeyValue.of("global.context.class", "TestContext"));
+                    KeyValue.of("lcTag2", "2"), KeyValue.of("global.context.class", "TestContext"));
             assertThat(context.getHighCardinalityKeyValues()).containsExactlyInAnyOrder(KeyValue.of("hcTag1", "3"),
-                    KeyValue.of("hcTag2", "4"), KeyValue.of("local.uuid", testContext.uuid),
-                    KeyValue.of("global.uuid", testContext.uuid));
+                    KeyValue.of("hcTag2", "4"), KeyValue.of("global.uuid", testContext.uuid));
 
             assertThat(context.getAllKeyValues()).containsExactlyInAnyOrder(KeyValue.of("lcTag1", "1"),
-                    KeyValue.of("lcTag2", "2"), KeyValue.of("local.context.class", "TestContext"),
-                    KeyValue.of("global.context.class", "TestContext"), KeyValue.of("hcTag1", "3"),
-                    KeyValue.of("hcTag2", "4"), KeyValue.of("local.uuid", testContext.uuid),
+                    KeyValue.of("lcTag2", "2"), KeyValue.of("global.context.class", "TestContext"),
+                    KeyValue.of("hcTag1", "3"), KeyValue.of("hcTag2", "4"),
                     KeyValue.of("global.uuid", testContext.uuid));
 
             assertThat((String) context.get("context.field")).isEqualTo("42");
@@ -795,9 +790,9 @@ public abstract class ObservationRegistryCompatibilityKit {
                     .containsOnlyOnce("contextualName='test.observation.42'")
                     .containsOnlyOnce("error='java.io.IOException: simulated'")
                     .containsOnlyOnce(
-                            "lowCardinalityKeyValues=[global.context.class='TestContext', lcTag1='1', lcTag2='2', local.context.class='TestContext']")
-                    .containsOnlyOnce("highCardinalityKeyValues=[global.uuid='" + testContext.uuid
-                            + "', hcTag1='3', hcTag2='4', local.uuid='" + testContext.uuid + "']")
+                            "lowCardinalityKeyValues=[global.context.class='TestContext', lcTag1='1', lcTag2='2']")
+                    .containsOnlyOnce(
+                            "highCardinalityKeyValues=[global.uuid='" + testContext.uuid + "', hcTag1='3', hcTag2='4']")
                     .containsOnlyOnce("map=[context.field='42']");
         });
     }
