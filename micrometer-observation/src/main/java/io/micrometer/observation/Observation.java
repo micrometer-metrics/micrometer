@@ -55,11 +55,12 @@ public interface Observation extends ObservationView {
     Observation NOOP = NoopObservation.INSTANCE;
 
     /**
-     * Create and start an {@link Observation} with the given name.
-     * All Observations of the same type must share the same name.
-     * <p>When no registry is passed or the observation is
-     * {@link ObservationRegistry.ObservationConfig#observationPredicate(ObservationPredicate) not applicable},
-     * a no-op observation will be returned.
+     * Create and start an {@link Observation} with the given name. All Observations of
+     * the same type must share the same name.
+     * <p>
+     * When no registry is passed or the observation is
+     * {@link ObservationRegistry.ObservationConfig#observationPredicate(ObservationPredicate)
+     * not applicable}, a no-op observation will be returned.
      * @param name name of the observation
      * @param registry observation registry
      * @return a started observation
@@ -160,7 +161,8 @@ public interface Observation extends ObservationView {
      */
     // @formatter:on
     static <T extends Context> Observation createNotStarted(@Nullable ObservationConvention<T> customConvention,
-            ObservationConvention<T> defaultConvention, Supplier<T> contextSupplier, @Nullable ObservationRegistry registry) {
+            ObservationConvention<T> defaultConvention, Supplier<T> contextSupplier,
+            @Nullable ObservationRegistry registry) {
         if (registry == null || registry.isNoop()) {
             return Observation.NOOP;
         }
