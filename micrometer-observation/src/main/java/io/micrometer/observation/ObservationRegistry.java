@@ -21,6 +21,7 @@ import java.util.Collection;
 import java.util.List;
 import java.util.Objects;
 import java.util.concurrent.CopyOnWriteArrayList;
+import java.util.function.Supplier;
 
 /**
  * Implementations of this interface are responsible for managing state of an
@@ -135,6 +136,11 @@ public interface ObservationRegistry {
 
         /**
          * Register an {@link ObservationConvention}.
+         * <p>
+         * Please check the javadoc of
+         * {@link Observation#createNotStarted(ObservationConvention, ObservationConvention, Supplier, ObservationRegistry)}
+         * method for the logic of choosing the convention.
+         * </p>
          * @param observationConvention observation convention
          * @return This configuration instance
          */

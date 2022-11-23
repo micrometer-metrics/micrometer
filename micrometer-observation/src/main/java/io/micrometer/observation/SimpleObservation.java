@@ -38,8 +38,9 @@ class SimpleObservation implements Observation {
 
     private final Context context;
 
+    @Nullable
     @SuppressWarnings("rawtypes")
-    private final Collection<ObservationConvention> conventions;
+    private ObservationConvention convention;
 
     @SuppressWarnings("rawtypes")
     private final Deque<ObservationHandler> handlers;
@@ -50,16 +51,20 @@ class SimpleObservation implements Observation {
         this.registry = registry;
         this.context = context;
         this.context.setName(name);
-        this.conventions = getConventionsFromConfig(registry, context);
+        this.convention = getConventionFromConfig(registry, context);
         this.handlers = getHandlersFromConfig(registry, context);
         this.filters = registry.observationConfig().getObservationFilters();
     }
 
     SimpleObservation(ObservationConvention<? extends Context> convention, ObservationRegistry registry,
             Context context) {
-        this((String) null, registry, context); // name is set later in start()
+        this.registry = registry;
+        this.context = context;
+        // name is set later in start()
+        this.handlers = getHandlersFromConfig(registry, context);
+        this.filters = registry.observationConfig().getObservationFilters();
         if (convention.supportsContext(context)) {
-            this.conventions.add(convention);
+            this.convention = convention;
         }
         else {
             throw new IllegalStateException(
@@ -67,10 +72,10 @@ class SimpleObservation implements Observation {
         }
     }
 
-    private static Collection<ObservationConvention> getConventionsFromConfig(ObservationRegistry registry,
-            Context context) {
+    @Nullable
+    private static ObservationConvention getConventionFromConfig(ObservationRegistry registry, Context context) {
         return registry.observationConfig().getObservationConventions().stream()
-                .filter(convention -> convention.supportsContext(context)).collect(Collectors.toList());
+                .filter(convention -> convention.supportsContext(context)).findFirst().orElse(null);
     }
 
     private static Deque<ObservationHandler> getHandlersFromConfig(ObservationRegistry registry, Context context) {
@@ -105,7 +110,7 @@ class SimpleObservation implements Observation {
     @Override
     public Observation observationConvention(ObservationConvention<?> convention) {
         if (convention.supportsContext(context)) {
-            this.conventions.add(convention);
+            this.convention = convention;
         }
         return this;
     }
@@ -125,18 +130,13 @@ class SimpleObservation implements Observation {
 
     @Override
     public Observation start() {
-        // We want to rename with the first matching convention
-        boolean nameChanged = false;
-        for (ObservationConvention convention : this.conventions) {
+        if (this.convention != null) {
             this.context.addLowCardinalityKeyValues(convention.getLowCardinalityKeyValues(context));
             this.context.addHighCardinalityKeyValues(convention.getHighCardinalityKeyValues(context));
 
-            if (!nameChanged) {
-                String newName = convention.getName();
-                if (StringUtils.isNotBlank(newName)) {
-                    this.context.setName(newName);
-                    nameChanged = true;
-                }
+            String newName = convention.getName();
+            if (StringUtils.isNotBlank(newName)) {
+                this.context.setName(newName);
             }
         }
 
@@ -152,18 +152,13 @@ class SimpleObservation implements Observation {
     @SuppressWarnings({ "rawtypes", "unchecked" })
     @Override
     public void stop() {
-        // We want to rename with the first matching convention
-        boolean contextualNameChanged = false;
-        for (ObservationConvention convention : this.conventions) {
+        if (this.convention != null) {
             this.context.addLowCardinalityKeyValues(convention.getLowCardinalityKeyValues(context));
             this.context.addHighCardinalityKeyValues(convention.getHighCardinalityKeyValues(context));
 
-            if (!contextualNameChanged) {
-                String newContextualName = convention.getContextualName(context);
-                if (StringUtils.isNotBlank(newContextualName)) {
-                    this.context.setContextualName(newContextualName);
-                    contextualNameChanged = true;
-                }
+            String newContextualName = convention.getContextualName(context);
+            if (StringUtils.isNotBlank(newContextualName)) {
+                this.context.setContextualName(newContextualName);
             }
         }
 

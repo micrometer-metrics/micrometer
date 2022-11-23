@@ -127,6 +127,7 @@ public interface Observation extends ObservationView {
         return new SimpleObservation(name, registry, context == null ? new Context() : context);
     }
 
+    // @formatter:off
     /**
      * Creates but <b>does not start</b> an {@link Observation}. Remember to call
      * {@link Observation#start()} when you want the measurements to start. When the
@@ -143,15 +144,37 @@ public interface Observation extends ObservationView {
      * {@link ObservationRegistry.ObservationConfig#getObservationConvention(Context, ObservationConvention)})
      * was found. The {@link ObservationConvention} implementation can override
      * {@link Observation} names (i.e. name and contextual name) and key values.
+     * <pre>
+     * Here you can find the matrix of choosing the convention:
+     * 1. custom     default     no pre-configured  -> custom
+     * 2. custom     default     pre-configured     -> custom (not a valid case, just use custom)
+     * 3. no custom  default     no pre-configured  -> default
+     * 4. no custom  default     pre-configured     -> pre-configured
+     * 5. custom     no default  no pre-configured  -> custom (providing default is recommended)
+     * 6. custom     no default  pre-configured     -> custom (providing default is recommended)
+     * 7. no custom  no default  no pre-configured  -> local names/tags will be used
+     * 8. no custom  no default  pre-configured     -> pre-configured
+     * </pre>
+     * <p>
+     * Also, if you set a convention using,
+     * {@link Observation#observationConvention(ObservationConvention)} (not recommended),
+     * the convention you set here will be used and everything else (custom, default,
+     * pre-configured) will be ignored.
+     * </p>
+     * <p>
+     * If you want to add to the all the contexts or mutate them,
+     * use the ObservationFilter (e.g.: add region=cloud-1 or remove PII).
+     * </p>
      * @param <T> type of context
      * @param customConvention custom convention. If {@code null}, the default one will be
      * picked.
      * @param defaultConvention default convention when no custom convention was passed,
-     * nor a configured one was found
+     * nor a pre-configured one was found
      * @param contextSupplier supplier for the observation context
      * @param registry observation registry
      * @return created but not started observation
      */
+    // @formatter:on
     static <T extends Context> Observation createNotStarted(@Nullable ObservationConvention<T> customConvention,
             ObservationConvention<T> defaultConvention, Supplier<T> contextSupplier, ObservationRegistry registry) {
         if (registry.isNoop()) {
@@ -174,6 +197,11 @@ public interface Observation extends ObservationView {
     /**
      * Creates and starts an {@link Observation}. When no registry is passed or
      * observation is not applicable will return a no-op observation.
+     * <p>
+     * Please check the javadoc of
+     * {@link Observation#createNotStarted(ObservationConvention, ObservationConvention, Supplier, ObservationRegistry)}
+     * method for the logic of choosing the convention.
+     * </p>
      * @param observationConvention observation convention
      * @param registry observation registry
      * @return started observation
@@ -192,6 +220,11 @@ public interface Observation extends ObservationView {
      * {@link ObservationRegistry.ObservationConfig#observationPredicate(ObservationPredicate)
      * ObservationConfig#observationPredicate}), a no-op observation will also be
      * returned.
+     * <p>
+     * Please check the javadoc of
+     * {@link Observation#createNotStarted(ObservationConvention, ObservationConvention, Supplier, ObservationRegistry)}
+     * method for the logic of choosing the convention.
+     * </p>
      * @param <T> type of context
      * @param observationConvention observation convention
      * @param contextSupplier mutable context supplier
@@ -216,6 +249,11 @@ public interface Observation extends ObservationView {
      * provide a default one if neither a custom nor a pre-configured one (via
      * {@link ObservationRegistry.ObservationConfig#getObservationConvention(Context, ObservationConvention)})
      * was found.
+     * <p>
+     * Please check the javadoc of
+     * {@link Observation#createNotStarted(ObservationConvention, ObservationConvention, Supplier, ObservationRegistry)}
+     * method for the logic of choosing the convention.
+     * </p>
      * @param <T> type of context
      * @param registry observation registry
      * @param contextSupplier the observation context supplier
@@ -235,6 +273,11 @@ public interface Observation extends ObservationView {
      * {@link Observation#start()} when you want the measurements to start. When no
      * registry is passed or observation is not applicable will return a no-op
      * observation.
+     * <p>
+     * Please check the javadoc of
+     * {@link Observation#createNotStarted(ObservationConvention, ObservationConvention, Supplier, ObservationRegistry)}
+     * method for the logic of choosing the convention.
+     * </p>
      * @param observationConvention observation convention
      * @param registry observation registry
      * @return created but not started observation
@@ -264,6 +307,11 @@ public interface Observation extends ObservationView {
      * {@link ObservationConvention#getContextualName(Context)} requires a concrete type
      * of {@link Context} to be passed and if you're not providing one we won't be able to
      * initialize it ourselves.
+     * </p>
+     * <p>
+     * Please check the javadoc of
+     * {@link Observation#createNotStarted(ObservationConvention, ObservationConvention, Supplier, ObservationRegistry)}
+     * method for the logic of choosing the convention.
      * </p>
      * @param <T> type of context
      * @param observationConvention observation convention
@@ -380,8 +428,8 @@ public interface Observation extends ObservationView {
 
     /**
      * Adds an observation convention that can be used to attach key values to the
-     * observation. WARNING: You must add ObservationConvention instances to the
-     * Observation before it is started.
+     * observation. WARNING: You must set the ObservationConvention to the Observation
+     * before it is started.
      * @param observationConvention observation convention
      * @return this
      */
