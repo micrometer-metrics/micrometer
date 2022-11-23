@@ -413,7 +413,7 @@ public interface Observation extends ObservationView {
     }
 
     /**
-     * Adds an observation convention that can be used to attach key values to the
+     * Sets an observation convention that can be used to attach key values to the
      * observation. WARNING: You must set the ObservationConvention to the Observation
      * before it is started.
      * @param observationConvention observation convention
