@@ -133,7 +133,7 @@ public interface Observation extends ObservationView {
 
     // @formatter:off
     /**
-     * Create but <b>does not start</b> an {@link Observation}.
+     * Creates but <b>does not start</b> an {@link Observation}.
      * <p>Remember to call {@link Observation#start()} when you want the measurements to start.
      * When the {@link ObservationRegistry} is null or the no-op registry, this returns a
      * no-op {@link Observation} and skips the creation of the {@link Observation.Context}.
@@ -839,7 +839,7 @@ public interface Observation extends ObservationView {
         }
 
         /**
-         * Sets the parent {@link Observation}.
+         * Sets the parent {@link ObservationView}.
          * @param parentObservation parent observation to set
          */
         public void setParentObservation(@Nullable ObservationView parentObservation) {
@@ -851,6 +851,7 @@ public interface Observation extends ObservationView {
          * @return error (null if there wasn't any)
          */
         @Nullable
+        @Override
         public Throwable getError() {
             return this.error;
         }

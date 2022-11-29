@@ -42,9 +42,9 @@ abstract class InstrumentationTimingVerificationTests extends InstrumentationVer
     protected abstract String timerName();
 
     /**
-     * If a {@link ObservationDocumentation} is provided the tests run will check that the
-     * produced instrumentation matches the given {@link ObservationDocumentation}.
-     * @return the documented observation to compare results against, or null to do
+     * If an {@link ObservationDocumentation} is provided the tests run will check that
+     * the produced instrumentation matches the given {@link ObservationDocumentation}.
+     * @return the observation documentation to compare results against, or null to do
      * nothing
      */
     @Nullable
