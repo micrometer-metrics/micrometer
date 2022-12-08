@@ -113,6 +113,9 @@ public abstract class PushMeterRegistry extends MeterRegistry {
             scheduledExecutorService = Executors.newSingleThreadScheduledExecutor(threadFactory);
             long stepMillis = config.step().toMillis();
             long initialDelayMillis = calculateInitialDelay();
+            if (config.stepAlignment()) {
+                initialDelayMillis = initialDelayMillis - (clock.wallTime() % initialDelayMillis) + 1;
+            }
             scheduledExecutorService.scheduleAtFixedRate(this::publishSafelyOrSkipIfInProgress, initialDelayMillis,
                     stepMillis, TimeUnit.MILLISECONDS);
         }

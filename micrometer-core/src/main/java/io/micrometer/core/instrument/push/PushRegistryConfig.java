@@ -41,6 +41,11 @@ public interface PushRegistryConfig extends MeterRegistryConfig {
     }
 
     /**
+     * @return The step time alignment. The default is {@code false}.
+     */
+    default boolean stepAlignment() { return getBoolean(this, "stepAlignment").orElse(false); }
+
+    /**
      * @return {@code true} if publishing is enabled. Default is {@code true}.
      */
     default boolean enabled() {
@@ -103,6 +108,7 @@ public interface PushRegistryConfig extends MeterRegistryConfig {
      */
     static Validated<?> validate(PushRegistryConfig config) {
         return checkAll(config, check("step", PushRegistryConfig::step),
+                check("stepAlignment", PushRegistryConfig::stepAlignment),
                 check("connectTimeout", PushRegistryConfig::connectTimeout),
                 check("readTimeout", PushRegistryConfig::readTimeout),
                 check("batchSize", PushRegistryConfig::batchSize), check("numThreads", PushRegistryConfig::numThreads));
