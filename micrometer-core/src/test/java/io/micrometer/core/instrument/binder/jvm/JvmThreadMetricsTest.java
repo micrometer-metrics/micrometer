@@ -39,6 +39,7 @@ class JvmThreadMetricsTest {
     void threadMetrics() {
         MeterRegistry registry = new SimpleMeterRegistry();
         new JvmThreadMetrics().bindTo(registry);
+        double initialThreadCount = registry.get("jvm.threads.started").gauge().value();
 
         assertThat(registry.get("jvm.threads.live").gauge().value()).isGreaterThan(0);
         assertThat(registry.get("jvm.threads.daemon").gauge().value()).isGreaterThan(0);
@@ -51,6 +52,7 @@ class JvmThreadMetricsTest {
 
         createTimedWaitingThread();
         assertThat(registry.get("jvm.threads.states").tag("state", "timed-waiting").gauge().value()).isGreaterThan(0);
+        assertThat(registry.get("jvm.threads.started").gauge().value()).isGreaterThan(initialThreadCount);
     }
 
     @Test

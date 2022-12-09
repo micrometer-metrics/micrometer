@@ -66,6 +66,11 @@ public class JvmThreadMetrics implements MeterBinder {
                 .description("The current number of live threads including both daemon and non-daemon threads")
                 .baseUnit(BaseUnits.THREADS).register(registry);
 
+        Gauge.builder("jvm.threads.started", threadBean, ThreadMXBean::getTotalStartedThreadCount).tags(tags)
+                .description(
+                        "The total number of threads created and also started since the Java virtual machine started")
+                .baseUnit(BaseUnits.THREADS).register(registry);
+
         try {
             threadBean.getAllThreadIds();
             for (Thread.State state : Thread.State.values()) {
