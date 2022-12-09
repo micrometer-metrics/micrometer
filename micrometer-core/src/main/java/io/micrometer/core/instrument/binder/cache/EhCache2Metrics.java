@@ -128,7 +128,7 @@ public class EhCache2Metrics extends CacheMeterBinder<Ehcache> {
 
         Gauge.builder("cache.writeQueueLength", stats, StatisticsGateway::getWriterQueueLength)
                 .tags(getTagsWithCacheName())
-                .description("the number of units waiting in a queue or present in a system").register(registry);
+                .description("The number of units waiting in a queue or present in a system").register(registry);
 
         missMetrics(registry);
         commitTransactionMetrics(registry);
