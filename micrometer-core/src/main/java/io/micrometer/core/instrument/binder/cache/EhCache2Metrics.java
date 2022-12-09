@@ -117,18 +117,18 @@ public class EhCache2Metrics extends CacheMeterBinder<Ehcache> {
         FunctionCounter.builder("cache.puts.added", stats, StatisticsGateway::cachePutUpdatedCount)
                 .tags(getTagsWithCacheName()).tags("result", "updated").description(DESCRIPTION_CACHE_PUTS_ADDED)
                 .register(registry);
-        
+
         FunctionCounter.builder("cache.expired.count", stats, StatisticsGateway::cacheExpiredCount)
                 .tags(getTagsWithCacheName()).description("Cache expired count").register(registry);
-        
-		Gauge.builder("cache.hitRatio", stats, StatisticsGateway::cacheHitRatio).tags(getTagsWithCacheName())
-				.description(
-						"Cache hit ratio is a measurement of how many content requests a cache is able to fill successfully, compared to how many requests it receives")
-				.register(registry);
-		
-		Gauge.builder("cache.writeQueueLength", stats, StatisticsGateway::getWriterQueueLength)
-				.tags(getTagsWithCacheName())
-				.description("the number of units waiting in a queue or present in a system").register(registry);
+
+        Gauge.builder("cache.hitRatio", stats, StatisticsGateway::cacheHitRatio).tags(getTagsWithCacheName())
+                .description(
+                        "Cache hit ratio is a measurement of how many content requests a cache is able to fill successfully, compared to how many requests it receives")
+                .register(registry);
+
+        Gauge.builder("cache.writeQueueLength", stats, StatisticsGateway::getWriterQueueLength)
+                .tags(getTagsWithCacheName())
+                .description("the number of units waiting in a queue or present in a system").register(registry);
 
         missMetrics(registry);
         commitTransactionMetrics(registry);
@@ -137,10 +137,10 @@ public class EhCache2Metrics extends CacheMeterBinder<Ehcache> {
         localOffHeapMetrics(registry);
         localHeapMetrics(registry);
         localDiskMetrics(registry);
-        
+
     }
 
-	@Nullable
+    @Nullable
     private StatisticsGateway getStats() {
         Ehcache cache = getCache();
         return cache != null ? cache.getStatistics() : null;
@@ -194,84 +194,84 @@ public class EhCache2Metrics extends CacheMeterBinder<Ehcache> {
                 .register(registry);
     }
 
-	private void localOffHeapMetrics(MeterRegistry registry) {
-		StatisticsGateway stats = getStats();
-		
-		Gauge.builder("cache.local.offheap.size", stats, StatisticsGateway::getLocalOffHeapSizeInBytes)
-				.tags(getTagsWithCacheName()).description("Local off-heap size").baseUnit(BaseUnits.BYTES)
-				.register(registry);
+    private void localOffHeapMetrics(MeterRegistry registry) {
+        StatisticsGateway stats = getStats();
 
-		Gauge.builder("cache.local.offheap.hitCount", stats, StatisticsGateway::localOffHeapHitCount)
-				.tags(getTagsWithCacheName()).description("Local off-heap hit count").register(registry);
+        Gauge.builder("cache.local.offheap.size", stats, StatisticsGateway::getLocalOffHeapSizeInBytes)
+                .tags(getTagsWithCacheName()).description("Local off-heap size").baseUnit(BaseUnits.BYTES)
+                .register(registry);
 
-		Gauge.builder("cache.local.offheap.missCount", stats, StatisticsGateway::localOffHeapMissCount)
-				.tags(getTagsWithCacheName()).description("Local off-heap miss count").register(registry);
+        Gauge.builder("cache.local.offheap.hitCount", stats, StatisticsGateway::localOffHeapHitCount)
+                .tags(getTagsWithCacheName()).description("Local off-heap hit count").register(registry);
 
-		Gauge.builder("cache.local.offheap.putCount", stats, StatisticsGateway::localOffHeapPutCount)
-				.tags(getTagsWithCacheName()).description("Local off-heap put count").register(registry);
+        Gauge.builder("cache.local.offheap.missCount", stats, StatisticsGateway::localOffHeapMissCount)
+                .tags(getTagsWithCacheName()).description("Local off-heap miss count").register(registry);
 
-		Gauge.builder("cache.local.offheap.putAddedCount", stats, StatisticsGateway::localOffHeapPutAddedCount)
-				.tags(getTagsWithCacheName()).description("Local off-heap put added count").register(registry);
+        Gauge.builder("cache.local.offheap.putCount", stats, StatisticsGateway::localOffHeapPutCount)
+                .tags(getTagsWithCacheName()).description("Local off-heap put count").register(registry);
 
-		Gauge.builder("cache.local.offheap.putUpdatedCount", stats, StatisticsGateway::localOffHeapPutUpdatedCount)
-				.tags(getTagsWithCacheName()).description("Local off-heap put updated count").register(registry);
+        Gauge.builder("cache.local.offheap.putAddedCount", stats, StatisticsGateway::localOffHeapPutAddedCount)
+                .tags(getTagsWithCacheName()).description("Local off-heap put added count").register(registry);
 
-		Gauge.builder("cache.local.offheap.removeCount", stats, StatisticsGateway::localOffHeapRemoveCount)
-				.tags(getTagsWithCacheName()).description("Local off-heap remove count").register(registry);
-	}
-	
-	private void localHeapMetrics(MeterRegistry registry) {
-		StatisticsGateway stats = getStats();
-		
-		Gauge.builder("cache.local.heap.size", stats, StatisticsGateway::getLocalHeapSizeInBytes)
-				.tags(getTagsWithCacheName()).description("Local heap size").baseUnit(BaseUnits.BYTES)
-				.register(registry);
+        Gauge.builder("cache.local.offheap.putUpdatedCount", stats, StatisticsGateway::localOffHeapPutUpdatedCount)
+                .tags(getTagsWithCacheName()).description("Local off-heap put updated count").register(registry);
 
-		Gauge.builder("cache.local.heap.hitCount", stats, StatisticsGateway::localHeapHitCount)
-				.tags(getTagsWithCacheName()).description("Local heap hit count").register(registry);
+        Gauge.builder("cache.local.offheap.removeCount", stats, StatisticsGateway::localOffHeapRemoveCount)
+                .tags(getTagsWithCacheName()).description("Local off-heap remove count").register(registry);
+    }
 
-		Gauge.builder("cache.local.heap.missCount", stats, StatisticsGateway::localHeapMissCount)
-				.tags(getTagsWithCacheName()).description("Local heap miss count").register(registry);
+    private void localHeapMetrics(MeterRegistry registry) {
+        StatisticsGateway stats = getStats();
 
-		Gauge.builder("cache.local.heap.putCount", stats, StatisticsGateway::localHeapPutCount)
-				.tags(getTagsWithCacheName()).description("Local heap put count").register(registry);
+        Gauge.builder("cache.local.heap.size", stats, StatisticsGateway::getLocalHeapSizeInBytes)
+                .tags(getTagsWithCacheName()).description("Local heap size").baseUnit(BaseUnits.BYTES)
+                .register(registry);
 
-		Gauge.builder("cache.local.heap.putAddedCount", stats, StatisticsGateway::localHeapPutAddedCount)
-				.tags(getTagsWithCacheName()).description("Local heap put added count").register(registry);
+        Gauge.builder("cache.local.heap.hitCount", stats, StatisticsGateway::localHeapHitCount)
+                .tags(getTagsWithCacheName()).description("Local heap hit count").register(registry);
 
-		Gauge.builder("cache.local.heap.putUpdatedCount", stats, StatisticsGateway::localHeapPutUpdatedCount)
-				.tags(getTagsWithCacheName()).description("Local heap put updated count").register(registry);
+        Gauge.builder("cache.local.heap.missCount", stats, StatisticsGateway::localHeapMissCount)
+                .tags(getTagsWithCacheName()).description("Local heap miss count").register(registry);
 
-		Gauge.builder("cache.local.heap.removeCount", stats, StatisticsGateway::localHeapRemoveCount)
-				.tags(getTagsWithCacheName()).description("Local heap remove count").register(registry);
-	}
-	
-	private void localDiskMetrics(MeterRegistry registry) {
-		StatisticsGateway stats = getStats();
-		
-		Gauge.builder("cache.local.disk.size", stats, StatisticsGateway::getLocalDiskSizeInBytes)
-				.tags(getTagsWithCacheName()).description("Local disk size").baseUnit(BaseUnits.BYTES)
-				.register(registry);
+        Gauge.builder("cache.local.heap.putCount", stats, StatisticsGateway::localHeapPutCount)
+                .tags(getTagsWithCacheName()).description("Local heap put count").register(registry);
 
-		Gauge.builder("cache.local.disk.hitCount", stats, StatisticsGateway::localDiskHitCount)
-				.tags(getTagsWithCacheName()).description("Local disk hit count").register(registry);
+        Gauge.builder("cache.local.heap.putAddedCount", stats, StatisticsGateway::localHeapPutAddedCount)
+                .tags(getTagsWithCacheName()).description("Local heap put added count").register(registry);
 
-		Gauge.builder("cache.local.disk.missCount", stats, StatisticsGateway::localDiskMissCount)
-				.tags(getTagsWithCacheName()).description("Local disk miss count").register(registry);
+        Gauge.builder("cache.local.heap.putUpdatedCount", stats, StatisticsGateway::localHeapPutUpdatedCount)
+                .tags(getTagsWithCacheName()).description("Local heap put updated count").register(registry);
 
-		Gauge.builder("cache.local.disk.putCount", stats, StatisticsGateway::localDiskPutCount)
-				.tags(getTagsWithCacheName()).description("Local disk put count").register(registry);
+        Gauge.builder("cache.local.heap.removeCount", stats, StatisticsGateway::localHeapRemoveCount)
+                .tags(getTagsWithCacheName()).description("Local heap remove count").register(registry);
+    }
 
-		Gauge.builder("cache.local.disk.putAddedCount", stats, StatisticsGateway::localDiskPutAddedCount)
-				.tags(getTagsWithCacheName()).description("Local disk put added count").register(registry);
+    private void localDiskMetrics(MeterRegistry registry) {
+        StatisticsGateway stats = getStats();
 
-		Gauge.builder("cache.local.disk.putUpdatedCount", stats, StatisticsGateway::localDiskPutUpdatedCount)
-				.tags(getTagsWithCacheName()).description("Local disk put updated count").register(registry);
+        Gauge.builder("cache.local.disk.size", stats, StatisticsGateway::getLocalDiskSizeInBytes)
+                .tags(getTagsWithCacheName()).description("Local disk size").baseUnit(BaseUnits.BYTES)
+                .register(registry);
 
-		Gauge.builder("cache.local.disk.removeCount", stats, StatisticsGateway::localDiskRemoveCount)
-				.tags(getTagsWithCacheName()).description("Local disk remove count").register(registry);
-	}	
-    
+        Gauge.builder("cache.local.disk.hitCount", stats, StatisticsGateway::localDiskHitCount)
+                .tags(getTagsWithCacheName()).description("Local disk hit count").register(registry);
+
+        Gauge.builder("cache.local.disk.missCount", stats, StatisticsGateway::localDiskMissCount)
+                .tags(getTagsWithCacheName()).description("Local disk miss count").register(registry);
+
+        Gauge.builder("cache.local.disk.putCount", stats, StatisticsGateway::localDiskPutCount)
+                .tags(getTagsWithCacheName()).description("Local disk put count").register(registry);
+
+        Gauge.builder("cache.local.disk.putAddedCount", stats, StatisticsGateway::localDiskPutAddedCount)
+                .tags(getTagsWithCacheName()).description("Local disk put added count").register(registry);
+
+        Gauge.builder("cache.local.disk.putUpdatedCount", stats, StatisticsGateway::localDiskPutUpdatedCount)
+                .tags(getTagsWithCacheName()).description("Local disk put updated count").register(registry);
+
+        Gauge.builder("cache.local.disk.removeCount", stats, StatisticsGateway::localDiskRemoveCount)
+                .tags(getTagsWithCacheName()).description("Local disk remove count").register(registry);
+    }
+
     @Nullable
     private Long getOrDefault(Function<StatisticsGateway, Long> function, @Nullable Long defaultValue) {
         StatisticsGateway ref = getStats();
