@@ -87,7 +87,7 @@ public enum GrpcObservationDocumentation implements ObservationDocumentation {
         STATUS_CODE {
             @Override
             public String asString() {
-                return "rpc.grpc.status_code";
+                return "grpc.status_code";
             }
         },
         PEER_NAME {
