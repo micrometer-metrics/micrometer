@@ -21,6 +21,7 @@ import io.micrometer.core.instrument.util.TimeUtils;
 import io.micrometer.core.lang.Nullable;
 import io.micrometer.core.util.internal.logging.InternalLogger;
 import io.micrometer.core.util.internal.logging.InternalLoggerFactory;
+import org.apache.commons.lang.time.StopWatch;
 
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
@@ -49,7 +50,11 @@ public abstract class PushMeterRegistry extends MeterRegistry {
      */
     private void publishSafely() {
         try {
+            StopWatch sw = new StopWatch();
+            sw.start();
             publish();
+            sw.stop();
+            logger.debug("Published metrics in {} ms", sw.getTime());
         } catch (Throwable e) {
             logger.warn("Unexpected exception thrown while publishing metrics for " + this.getClass().getSimpleName(), e);
         }
@@ -71,9 +76,12 @@ public abstract class PushMeterRegistry extends MeterRegistry {
             logger.info("publishing metrics for " + this.getClass().getSimpleName() + " every " + TimeUtils.format(config.step()));
 
             scheduledExecutorService = Executors.newSingleThreadScheduledExecutor(threadFactory);
-            // time publication to happen just after StepValue finishes the step
+            // if aligned, time publication to happen just after StepValue finishes the step
             long stepMillis = config.step().toMillis();
-            long initialDelayMillis = stepMillis - (clock.wallTime() % stepMillis) + 1;
+            long initialDelayMillis = stepMillis;
+            if (config.stepAlignment()) {
+                initialDelayMillis = stepMillis - (clock.wallTime() % stepMillis) + 1;
+            }
             scheduledExecutorService.scheduleAtFixedRate(this::publishSafely,
                                                          initialDelayMillis, stepMillis, TimeUnit.MILLISECONDS);
         }
