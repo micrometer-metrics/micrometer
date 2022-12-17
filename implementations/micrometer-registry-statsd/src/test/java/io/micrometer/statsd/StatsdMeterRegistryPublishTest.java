@@ -255,7 +255,7 @@ class StatsdMeterRegistryPublishTest {
         final int port = getPort(protocol);
         meterRegistry = new StatsdMeterRegistry(getUnbufferedConfig(protocol, port), Clock.SYSTEM);
         startRegistryAndWaitForClient();
-        ((Connection) meterRegistry.statsdConnection.get()).addHandler("writeFailure",
+        ((Connection) meterRegistry.statsdConnection.get()).addHandlerFirst("writeFailure",
                 new ChannelOutboundHandlerAdapter() {
                     @Override
                     public void write(ChannelHandlerContext ctx, Object msg, ChannelPromise promise) throws Exception {
@@ -310,8 +310,8 @@ class StatsdMeterRegistryPublishTest {
         if (protocol == StatsdProtocol.UDP) {
             await().until(() -> meterRegistry.statsdConnection.get() != null);
             ((Connection) meterRegistry.statsdConnection.get())
-                    .addHandler(new LoggingHandler("testudpclient", LogLevel.INFO))
-                    .addHandler(new ChannelOutboundHandlerAdapter() {
+                    .addHandlerFirst(new LoggingHandler("testudpclient", LogLevel.INFO))
+                    .addHandlerFirst(new ChannelOutboundHandlerAdapter() {
                         @Override
                         public void write(ChannelHandlerContext ctx, Object msg, ChannelPromise promise)
                                 throws Exception {

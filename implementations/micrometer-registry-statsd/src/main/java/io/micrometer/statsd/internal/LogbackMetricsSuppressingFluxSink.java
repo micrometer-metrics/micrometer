@@ -50,6 +50,7 @@ public class LogbackMetricsSuppressingFluxSink implements FluxSink<String> {
         LogbackMetrics.ignoreMetrics(() -> delegate.error(e));
     }
 
+    @Deprecated
     @Override
     public Context currentContext() {
         return delegate.currentContext();
