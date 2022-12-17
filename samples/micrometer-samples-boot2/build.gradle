@@ -27,7 +27,7 @@ dependencies {
         exclude group: 'io.micrometer', module: 'micrometer-core'
     }
 
-    implementation platform('org.springframework.cloud:spring-cloud-dependencies:latest.release')
+    implementation platform('org.springframework.cloud:spring-cloud-dependencies:2021.0.5')
     implementation 'org.springframework.cloud:spring-cloud-starter-sleuth'
     implementation 'org.springframework.cloud:spring-cloud-sleuth-zipkin'
 
