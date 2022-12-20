@@ -21,7 +21,6 @@ import io.micrometer.common.util.internal.logging.InternalLoggerFactory;
 import io.micrometer.core.instrument.Clock;
 import io.micrometer.core.instrument.MeterRegistry;
 import io.micrometer.core.instrument.util.TimeUtils;
-import org.apache.commons.lang.time.StopWatch;
 
 import java.util.Random;
 import java.util.concurrent.Executors;
@@ -65,11 +64,8 @@ public abstract class PushMeterRegistry extends MeterRegistry {
         if (this.publishing.compareAndSet(false, true)) {
             this.lastScheduledPublishStartTime = clock.wallTime();
             try {
-                StopWatch sw = new StopWatch();
-                sw.start();
                 publish();
-                sw.stop();
-                logger.debug("Published metrics in {} ms", sw.getTime());
+                logger.debug("Published metrics in {} ms", clock.wallTime() - this.lastScheduledPublishStartTime);
             }
             catch (Throwable e) {
                 logger.warn("Unexpected exception thrown while publishing metrics for " + getClass().getSimpleName(),
