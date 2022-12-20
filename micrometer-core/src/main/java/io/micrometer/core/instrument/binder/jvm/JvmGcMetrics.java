@@ -180,17 +180,19 @@ public class JvmGcMetrics implements MeterBinder, AutoCloseable {
             CompositeData cd = (CompositeData) notification.getUserData();
             GarbageCollectionNotificationInfo notificationInfo = GarbageCollectionNotificationInfo.from(cd);
 
+            String gcName = notificationInfo.getGcName();
             String gcCause = notificationInfo.getGcCause();
             String gcAction = notificationInfo.getGcAction();
             GcInfo gcInfo = notificationInfo.getGcInfo();
             long duration = gcInfo.getDuration();
-            if (isConcurrentPhase(gcCause, notificationInfo.getGcName())) {
-                Timer.builder("jvm.gc.concurrent.phase.time").tags(tags).tags("action", gcAction, "cause", gcCause)
+            if (isConcurrentPhase(gcCause, gcName)) {
+                Timer.builder("jvm.gc.concurrent.phase.time").tags(tags)
+                        .tags("action", gcAction, "cause", gcCause, "gc_name", gcName)
                         .description("Time spent in concurrent phase").register(registry)
                         .record(duration, TimeUnit.MILLISECONDS);
             }
             else {
-                Timer.builder("jvm.gc.pause").tags(tags).tags("action", gcAction, "cause", gcCause)
+                Timer.builder("jvm.gc.pause").tags(tags).tags("action", gcAction, "cause", gcCause, "gc", gcName)
                         .description("Time spent in GC pause").register(registry)
                         .record(duration, TimeUnit.MILLISECONDS);
             }
