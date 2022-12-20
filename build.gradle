@@ -17,12 +17,11 @@ buildscript {
         classpath 'com.netflix.nebula:nebula-publishing-plugin:18.4.0'
         classpath 'com.netflix.nebula:nebula-project-plugin:9.4.0'
         classpath 'io.spring.nohttp:nohttp-gradle:0.0.10'
-        classpath 'org.gradle:test-retry-gradle-plugin:1.4.1'
         classpath 'io.github.gradle-nexus:publish-plugin:1.1.0'
         classpath 'me.champeau.gradle:japicmp-gradle-plugin:0.4.1'
         classpath 'de.undercouch:gradle-download-task:5.2.1'
         classpath 'io.spring.javaformat:spring-javaformat-gradle-plugin:0.0.35'
-        classpath 'com.diffplug.spotless:spotless-plugin-gradle:6.11.0'
+        classpath 'com.diffplug.spotless:spotless-plugin-gradle:6.12.0'
 
         constraints {
             classpath('org.ow2.asm:asm:7.3.1') {
@@ -63,7 +62,6 @@ subprojects {
         apply plugin: 'com.github.hierynomus.license'
         apply plugin: 'checkstyle'
         apply plugin: 'io.spring.nohttp'
-        apply plugin: 'org.gradle.test-retry'
 
         java {
             // It is more idiomatic to define different features for different sets of optional

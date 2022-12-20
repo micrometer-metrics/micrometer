@@ -201,7 +201,7 @@ class ObservationTests {
     }
 
     @Test
-    void noCustomAndDefaultAndGlobalConventionShouldResolveToDefaultConvention() {
+    void noCustomAndDefaultAndGlobalConventionShouldResolveToGlobalConvention() {
         registry.observationConfig().observationHandler(context -> true);
         registry.observationConfig().observationConvention(new GlobalConvention());
 

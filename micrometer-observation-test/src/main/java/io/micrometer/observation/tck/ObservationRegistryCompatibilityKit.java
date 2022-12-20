@@ -798,7 +798,7 @@ public abstract class ObservationRegistryCompatibilityKit {
     }
 
     @Test
-    void globallyOverridenNameAndContextualNameShouldBeSetOnContext() {
+    void globallyOverriddenNameAndContextualNameShouldBeSetOnContext() {
         AssertingHandler assertingHandler = new AssertingHandler();
         registry.observationConfig().observationConvention(new TestObservationConventionWithNameOverrides())
                 .observationHandler(assertingHandler);
@@ -819,7 +819,7 @@ public abstract class ObservationRegistryCompatibilityKit {
     }
 
     @Test
-    void locallyOverridenNameAndContextualNameShouldBeSetOnContext() {
+    void locallyOverriddenNameAndContextualNameShouldBeSetOnContext() {
         AssertingHandler assertingHandler = new AssertingHandler();
         registry.observationConfig().observationHandler(assertingHandler);
 
