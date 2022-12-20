@@ -560,6 +560,7 @@ public class StatsdMeterRegistry extends MeterRegistry {
         public void error(Throwable e) {
         }
 
+        @Deprecated
         @Override
         public Context currentContext() {
             return Context.empty();
