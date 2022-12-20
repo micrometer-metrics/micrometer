@@ -19,6 +19,7 @@ import io.micrometer.core.instrument.Clock;
 
 import java.io.PrintStream;
 import java.util.Arrays;
+import java.util.Iterator;
 import java.util.Locale;
 import java.util.NavigableSet;
 import java.util.Objects;
@@ -111,9 +112,28 @@ public class TimeWindowFixedBoundaryHistogram
     }
 
     @Override
-    double countAtValue(double value) {
-        return this.cumulativeBucketCounts ? currentHistogram().countAtValueCumulative(value)
-                : currentHistogram().countAtValue(value);
+    Iterator<CountAtBucket> countAtValues(Iterator<Double> values) {
+        return new Iterator<CountAtBucket>() {
+            private double accumulation = 0.0;
+
+            @Override
+            public boolean hasNext() {
+                return values.hasNext();
+            }
+
+            @Override
+            public CountAtBucket next() {
+                double value = values.next();
+                double count = currentHistogram().countAtValue(value);
+                if (cumulativeBucketCounts) {
+                    accumulation += count;
+                    return new CountAtBucket(value, accumulation);
+                }
+                else {
+                    return new CountAtBucket(value, count);
+                }
+            }
+        };
     }
 
     @Override
@@ -149,16 +169,6 @@ public class TimeWindowFixedBoundaryHistogram
 
         FixedBoundaryHistogram() {
             this.values = new AtomicLongArray(buckets.length);
-        }
-
-        long countAtValueCumulative(double value) {
-            int index = Arrays.binarySearch(buckets, value);
-            if (index < 0)
-                return 0;
-            long count = 0;
-            for (int i = 0; i <= index; i++)
-                count += values.get(i);
-            return count;
         }
 
         long countAtValue(double value) {
