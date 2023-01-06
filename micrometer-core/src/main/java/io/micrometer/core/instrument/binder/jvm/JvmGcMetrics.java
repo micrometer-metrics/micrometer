@@ -49,11 +49,21 @@ import static java.util.Collections.emptyList;
  * emanating from the MXBean and also adds information about GC causes.
  * <p>
  * This provides metrics for OpenJDK garbage collectors (serial, parallel, G1, Shenandoah,
- * ZGC) and for OpenJ9 garbage collectors (gencon, balanced, opthruput, optavgpause,
- * metronome).
+ * ZGC), OpenJ9 garbage collectors (gencon, balanced, opthruput, optavgpause, metronome)
+ * and for Azul Prime's (formerly Zing) C4 GC (formerly GPGC).
+ * <p>
+ * WARNING: Older versions of Azul Prime (Zing) did not report timing information about
+ * pauses and cycles correctly (duration of GC pauses and duration of the concurrent part
+ * of the GC which runs in parallel to application threads and is not stopping the
+ * application). See the
+ * <a href="https://docs.azul.com/prime/release-notes#prime_stream_22_12_0_0">release
+ * notes</a> and <a href="https://bugs.openjdk.org/browse/JDK-8265136">JDK-8265136</a>. If
+ * you want better accuracy, please make sure that you use a newer version and the new
+ * metrics are enabled.
  *
  * @author Jon Schneider
  * @author Tommy Ludwig
+ * @author Andrew Krasny
  * @see GarbageCollectorMXBean
  */
 @NonNullApi
@@ -242,8 +252,25 @@ public class JvmGcMetrics implements MeterBinder, AutoCloseable {
     }
 
     private boolean isGenerationalGcConfigured() {
-        return ManagementFactory.getMemoryPoolMXBeans().stream().filter(JvmMemory::isHeap)
-                .map(MemoryPoolMXBean::getName).filter(name -> !name.contains("tenured")).count() > 1;
+        // Azul Prime's (formerly Zing) C4 GC (formerly GPGC) is always generational
+        // and having more than one non-'tenured' pools is also considered to be
+        // generational.
+        int nonTenuredPools = 0;
+        for (MemoryPoolMXBean bean : ManagementFactory.getMemoryPoolMXBeans()) {
+            if (JvmMemory.isHeap(bean)) {
+                String name = bean.getName();
+                if (!name.contains("tenured")) {
+                    nonTenuredPools++;
+                    if (nonTenuredPools == 2) {
+                        return true;
+                    }
+                }
+                if (name.contains("GPGC")) {
+                    return true;
+                }
+            }
+        }
+        return false;
     }
 
     private static boolean isManagementExtensionsPresent() {
@@ -295,6 +322,14 @@ public class JvmGcMetrics implements MeterBinder, AutoCloseable {
                 put("partial gc", YOUNG);
                 put("global garbage collect", OLD);
                 put("Epsilon", OLD);
+                // GPGC (Azul's C4, see:
+                // https://docs.azul.com/prime/release-notes#prime_stream_22_12_0_0)
+                put("GPGC New", YOUNG); // old naming
+                put("GPGC Old", OLD); // old naming
+                put("GPGC New Cycles", YOUNG); // new naming
+                put("GPGC Old Cycles", OLD); // new naming
+                put("GPGC New Pauses", YOUNG); // new naming
+                put("GPGC Old Pauses", OLD); // new naming
             }
         };
 
