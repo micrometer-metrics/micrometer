@@ -20,6 +20,7 @@ import org.HdrHistogram.DoubleHistogram;
 import org.HdrHistogram.DoubleRecorder;
 
 import java.io.PrintStream;
+import java.util.Iterator;
 
 /**
  * <b>NOTE: This class is intended for internal use as an implementation detail. You
@@ -85,8 +86,26 @@ public class TimeWindowPercentileHistogram extends AbstractTimeWindowHistogram<D
     }
 
     @Override
-    double countAtValue(double value) {
-        return accumulatedHistogram().getCountBetweenValues(0, value);
+    Iterator<CountAtBucket> countsAtValues(Iterator<Double> values) {
+        return new Iterator<CountAtBucket>() {
+            private double cumulativeCount = 0.0;
+
+            private double lowerBoundValue = 0.0;
+
+            @Override
+            public boolean hasNext() {
+                return values.hasNext();
+            }
+
+            @Override
+            public CountAtBucket next() {
+                double higherBoundValue = values.next();
+                double count = accumulatedHistogram().getCountBetweenValues(lowerBoundValue, higherBoundValue);
+                lowerBoundValue = accumulatedHistogram().nextNonEquivalentValue(higherBoundValue);
+                cumulativeCount += count;
+                return new CountAtBucket(higherBoundValue, cumulativeCount);
+            }
+        };
     }
 
     private int percentilePrecision(DistributionStatisticConfig config) {
