@@ -242,8 +242,18 @@ public class JvmGcMetrics implements MeterBinder, AutoCloseable {
     }
 
     private boolean isGenerationalGcConfigured() {
-        return ManagementFactory.getMemoryPoolMXBeans().stream().filter(JvmMemory::isHeap)
+        boolean result = false;
+
+        // Zing GPGC is always generational:
+        result |= ManagementFactory.getMemoryPoolMXBeans().stream().filter(JvmMemory::isHeap)
+                .map(MemoryPoolMXBean::getName).filter(name -> name.contains("GPGC")).findAny().isPresent();
+
+        // Keep original logic for other GCs:
+        // having more than 1 non-'tenured' pools is considered to be generational.
+        result |= ManagementFactory.getMemoryPoolMXBeans().stream().filter(JvmMemory::isHeap)
                 .map(MemoryPoolMXBean::getName).filter(name -> !name.contains("tenured")).count() > 1;
+
+        return result;
     }
 
     private static boolean isManagementExtensionsPresent() {
@@ -295,6 +305,13 @@ public class JvmGcMetrics implements MeterBinder, AutoCloseable {
                 put("partial gc", YOUNG);
                 put("global garbage collect", OLD);
                 put("Epsilon", OLD);
+                // GPGC
+                put("GPGC New", YOUNG); // old naming
+                put("GPGC Old", OLD); // old naming
+                put("GPGC New Cycles", YOUNG); // new naming
+                put("GPGC Old Cycles", OLD); // new naming
+                put("GPGC New Pauses", YOUNG); // new naming
+                put("GPGC Old Pauses", OLD); // new naming
             }
         };
 
