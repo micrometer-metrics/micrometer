@@ -79,7 +79,7 @@ def VERSIONS = [
         'org.testcontainers:mongodb:latest.release',
         'org.testcontainers:testcontainers:latest.release',
         'ru.lanwen.wiremock:wiremock-junit5:latest.release',
-        'software.amazon.awssdk:cloudwatch:latest.release'
+        'software.amazon.awssdk:cloudwatch:2.18.+'
 ]
 
 subprojects {
