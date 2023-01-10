@@ -4,7 +4,7 @@ dependencies {
     api project(':micrometer-core')
 
     // some proto are marked alpha, hence the alpha version. metrics proto is what we use and it is marked stable
-    implementation 'io.opentelemetry.proto:opentelemetry-proto:latest.release'
+    implementation 'io.opentelemetry.proto:opentelemetry-proto:0.19.+'
 
     testImplementation project(':micrometer-test')
 }
