@@ -146,7 +146,8 @@ class HazelcastCacheMetricsTest extends AbstractCacheMetricsTest {
 
     @Test
     void returnPutCount() {
-        assertThat(metrics.putCount()).isEqualTo(cache.getLocalMapStats().getPutOperationCount());
+        assertThat(metrics.putCount()).isEqualTo(
+                cache.getLocalMapStats().getPutOperationCount() + cache.getLocalMapStats().getSetOperationCount());
     }
 
     @Test
@@ -175,6 +176,7 @@ class HazelcastCacheMetricsTest extends AbstractCacheMetricsTest {
         localMapStats.setOwnedEntryMemoryCost(random.nextInt(valueBound));
         localMapStats.incrementGetLatencyNanos(random.nextInt(valueBound));
         localMapStats.incrementPutLatencyNanos(random.nextInt(valueBound));
+        localMapStats.incrementSetLatencyNanos(random.nextInt(valueBound));
         localMapStats.incrementRemoveLatencyNanos(random.nextInt(valueBound));
     }
 
