@@ -125,7 +125,7 @@ public class HazelcastCacheMetrics extends CacheMeterBinder<Object> {
     protected long putCount() {
         LocalMapStats localMapStats = cache.getLocalMapStats();
         if (localMapStats != null) {
-            return localMapStats.getPutOperationCount();
+            return localMapStats.getPutOperationCount() + localMapStats.getSetOperationCount();
         }
 
         return 0L;
