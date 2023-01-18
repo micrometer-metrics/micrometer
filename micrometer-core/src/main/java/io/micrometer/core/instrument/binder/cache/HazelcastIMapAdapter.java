@@ -16,6 +16,8 @@
 package io.micrometer.core.instrument.binder.cache;
 
 import io.micrometer.common.lang.Nullable;
+import io.micrometer.common.util.internal.logging.InternalLogger;
+import io.micrometer.common.util.internal.logging.InternalLoggerFactory;
 
 import java.lang.invoke.MethodHandle;
 import java.lang.invoke.MethodHandles;
@@ -32,6 +34,8 @@ import static java.lang.invoke.MethodType.methodType;
  * @implNote Note that {@link MethodHandle} is used, so the performance does not suffer.
  */
 class HazelcastIMapAdapter {
+
+    private static final InternalLogger log = InternalLoggerFactory.getInstance(HazelcastIMapAdapter.class);
 
     private static final Class<?> CLASS_I_MAP = resolveOneOf("com.hazelcast.map.IMap", "com.hazelcast.core.IMap");
 
@@ -86,6 +90,9 @@ class HazelcastIMapAdapter {
 
         private static final MethodHandle GET_PUT_OPERATION_COUNT;
 
+        @Nullable
+        private static final MethodHandle GET_SET_OPERATION_COUNT;
+
         private static final MethodHandle GET_BACKUP_ENTRY_COUNT;
 
         private static final MethodHandle GET_BACKUP_ENTRY_MEMORY_COST;
@@ -108,6 +115,7 @@ class HazelcastIMapAdapter {
             GET_OWNED_ENTRY_COUNT = resolveMethod("getOwnedEntryCount", methodType(long.class));
             GET_HITS = resolveMethod("getHits", methodType(long.class));
             GET_PUT_OPERATION_COUNT = resolveMethod("getPutOperationCount", methodType(long.class));
+            GET_SET_OPERATION_COUNT = resolveMethod("getSetOperationCount", methodType(long.class));
             GET_BACKUP_ENTRY_COUNT = resolveMethod("getBackupEntryCount", methodType(long.class));
             GET_BACKUP_ENTRY_MEMORY_COST = resolveMethod("getBackupEntryMemoryCost", methodType(long.class));
             GET_OWNED_ENTRY_MEMORY_COST = resolveMethod("getOwnedEntryMemoryCost", methodType(long.class));
@@ -134,6 +142,14 @@ class HazelcastIMapAdapter {
 
         long getPutOperationCount() {
             return (long) invoke(GET_PUT_OPERATION_COUNT, localMapStats);
+        }
+
+        long getSetOperationCount() {
+            if (GET_SET_OPERATION_COUNT == null) {
+                return 0L;
+            }
+
+            return (long) invoke(GET_SET_OPERATION_COUNT, localMapStats);
         }
 
         double getBackupEntryCount() {
@@ -173,12 +189,14 @@ class HazelcastIMapAdapter {
             return (long) invoke(GET_TOTAL_REMOVE_LATENCY, localMapStats);
         }
 
+        @Nullable
         private static MethodHandle resolveMethod(String name, MethodType mt) {
             try {
                 return MethodHandles.publicLookup().findVirtual(CLASS_LOCAL_MAP, name, mt);
             }
             catch (NoSuchMethodException | IllegalAccessException e) {
-                throw new IllegalStateException(e);
+                log.debug("Failed to resolve method: " + name, e);
+                return null;
             }
         }
 

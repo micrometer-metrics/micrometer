@@ -400,6 +400,7 @@ class GrpcObservationTest {
             assertThat(serverContext.getMethodName()).isEqualTo(methodName);
             assertThat(serverContext.getFullMethodName()).isEqualTo(contextualName);
             assertThat(serverContext.getMethodType()).isEqualTo(methodType);
+            assertThat(serverContext.getAuthority()).isEqualTo("localhost");
         });
     }
 
@@ -411,6 +412,7 @@ class GrpcObservationTest {
             assertThat(clientContext.getMethodName()).isEqualTo(methodName);
             assertThat(clientContext.getFullMethodName()).isEqualTo(contextualName);
             assertThat(clientContext.getMethodType()).isEqualTo(methodType);
+            assertThat(clientContext.getAuthority()).isEqualTo("localhost");
         });
     }
 

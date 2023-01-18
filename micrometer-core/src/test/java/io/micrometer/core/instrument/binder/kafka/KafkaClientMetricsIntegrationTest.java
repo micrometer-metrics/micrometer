@@ -15,6 +15,9 @@
  */
 package io.micrometer.core.instrument.binder.kafka;
 
+import io.micrometer.core.instrument.FunctionCounter;
+import io.micrometer.core.instrument.Gauge;
+import io.micrometer.core.instrument.Meter;
 import io.micrometer.core.instrument.simple.SimpleMeterRegistry;
 import org.apache.kafka.clients.consumer.Consumer;
 import org.apache.kafka.clients.consumer.ConsumerConfig;
@@ -34,7 +37,9 @@ import org.testcontainers.utility.DockerImageName;
 
 import java.time.Duration;
 import java.util.Collections;
+import java.util.List;
 import java.util.Properties;
+import java.util.stream.Collectors;
 
 import static java.lang.System.out;
 import static org.assertj.core.api.Assertions.assertThat;
@@ -108,9 +113,19 @@ class KafkaClientMetricsIntegrationTest {
         assertThat(registry.getMeters()).hasSizeGreaterThan(producerAndConsumerMetricsAfterSend);
         assertThat(registry.getMeters()).extracting(m -> m.getId().getTag("kafka.version")).allMatch(v -> !v.isEmpty());
 
+        // see gh-3300
+        assertThat(registry.getMeters().stream().filter(meter -> meter.getId().getName().endsWith(".count")))
+                .allMatch(meter -> meter instanceof Gauge);
+
         // Printing out for discovery purposes
         out.println("All meters from producer and consumer:");
         printMeters(registry);
+
+        List<Meter> metersEndingWithTotal = registry.getMeters().stream()
+                .filter(meter -> meter.getId().getName().endsWith(".total")).collect(Collectors.toList());
+        List<Meter> functionCounters = registry.getMeters().stream().filter(meter -> meter instanceof FunctionCounter)
+                .collect(Collectors.toList());
+        assertThat(metersEndingWithTotal).isEqualTo(functionCounters);
 
         producerKafkaMetrics.close();
         consumerKafkaMetrics.close();

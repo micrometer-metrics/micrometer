@@ -22,7 +22,7 @@ import io.micrometer.observation.ObservationConvention;
 import io.micrometer.observation.docs.ObservationDocumentation;
 
 /**
- * A {@link ObservationDocumentation} for OkHttp3 metrics.
+ * An {@link ObservationDocumentation} for OkHttp3 metrics.
  *
  * @author Marcin Grzejszczak
  * @since 1.10.0

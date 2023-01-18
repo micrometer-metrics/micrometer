@@ -22,7 +22,7 @@ import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 
 /**
- * Default {@link HttpServletRequestTagsProvider}.
+ * Default {@link HttpJakartaServletRequestTagsProvider}.
  *
  * @author Jon Schneider
  * @since 1.10.0

@@ -20,9 +20,13 @@ import io.micrometer.core.annotation.Incubating;
 import io.micrometer.core.instrument.search.RequiredSearch;
 import io.micrometer.core.ipc.http.HttpSender;
 import io.micrometer.core.ipc.http.HttpUrlConnectionSender;
+import io.micrometer.observation.Observation;
+import io.micrometer.observation.ObservationHandler;
 import io.micrometer.observation.ObservationRegistry;
+import io.micrometer.observation.tck.TestObservationRegistry;
+import io.micrometer.observation.transport.ReceiverContext;
+import org.assertj.core.api.Condition;
 import org.junit.jupiter.api.AfterEach;
-import org.junit.jupiter.api.Assumptions;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.junit.jupiter.params.ParameterizedTest;
@@ -32,7 +36,9 @@ import java.net.URI;
 import java.time.Duration;
 import java.util.function.Function;
 
+import static io.micrometer.observation.tck.TestObservationRegistryAssert.assertThat;
 import static org.awaitility.Awaitility.await;
+import static org.junit.jupiter.api.Assumptions.assumeTrue;
 
 /**
  * Verify the instrumentation of an HTTP server has the minimum expected results. See
@@ -101,7 +107,7 @@ public abstract class HttpServerTimingInstrumentationVerificationTests extends I
         else {
             baseUri = startInstrumentedWithObservationsServer();
             assumptionSucceeded = baseUri != null;
-            Assumptions.assumeTrue(assumptionSucceeded,
+            assumeTrue(assumptionSucceeded,
                     "You must implement the <startInstrumentedWithObservationsServer> method to test your instrumentation against an ObservationRegistry");
         }
     }
@@ -142,6 +148,48 @@ public abstract class HttpServerTimingInstrumentationVerificationTests extends I
         sender.post(baseUri + "error").send();
         checkTimer(
                 rs -> rs.tags("uri", InstrumentedRoutes.ERROR, "status", "500", "method", "POST").timer().count() == 1);
+    }
+
+    @ParameterizedTest
+    @EnumSource(TestType.class)
+    void canExtractContextFromHeaders(TestType testType) throws Throwable {
+        sender.get(baseUri + "hello/micrometer").withHeader("Test-Propagation", "someValue").send();
+
+        // only applicable with Observation-based instrumentation
+        // TODO documentation verification maybe shouldn't be done after each test?
+        // That's why this has to be after the http request is made
+        assumeTrue(testType == TestType.METRICS_VIA_OBSERVATIONS_WITH_METRICS_HANDLER);
+
+        assertThat(getObservationRegistry()).hasSingleObservationThat()
+                .has(new Condition<>(
+                        context -> "someValue".contentEquals((CharSequence) context.getRequired("Test-Propagation")),
+                        "has Test-Propagation in context with value 'someValue'"));
+    }
+
+    @Override
+    protected TestObservationRegistry createObservationRegistryWithMetrics() {
+        TestObservationRegistry observationRegistryWithMetrics = super.createObservationRegistryWithMetrics();
+        observationRegistryWithMetrics.observationConfig().observationHandler(new ExtractHeaderObservationHandler<>());
+        return observationRegistryWithMetrics;
+    }
+
+    @SuppressWarnings("rawtypes")
+    static class ExtractHeaderObservationHandler<T extends ReceiverContext> implements ObservationHandler<T> {
+
+        @SuppressWarnings("unchecked")
+        @Override
+        public void onStart(T context) {
+            String testPropagation = context.getGetter().get(context.getCarrier(), "Test-Propagation");
+            if (testPropagation != null) {
+                context.put("Test-Propagation", testPropagation);
+            }
+        }
+
+        @Override
+        public boolean supportsContext(Observation.Context context) {
+            return context instanceof ReceiverContext;
+        }
+
     }
 
     private void checkTimer(Function<RequiredSearch, Boolean> timerCheck) {

@@ -22,7 +22,7 @@ import io.micrometer.observation.ObservationConvention;
 import io.micrometer.observation.docs.ObservationDocumentation;
 
 /**
- * A {@link ObservationDocumentation} for Jersey.
+ * An {@link ObservationDocumentation} for Jersey.
  *
  * @author Marcin Grzejszczak
  * @since 1.10.0

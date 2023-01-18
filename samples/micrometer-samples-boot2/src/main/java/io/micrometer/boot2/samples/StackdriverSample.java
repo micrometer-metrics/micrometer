@@ -20,7 +20,6 @@ import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.boot.builder.SpringApplicationBuilder;
 import org.springframework.scheduling.annotation.EnableScheduling;
 
-// https://docs.pivotal.io/partners/gcp-sdn/upgrading-clear-metrics-descriptors.html
 @SpringBootApplication(scanBasePackageClasses = PersonController.class)
 @EnableScheduling
 public class StackdriverSample {
