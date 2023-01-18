@@ -212,7 +212,7 @@ public class ObservationContextAssert<SELF extends ObservationContextAssert<SELF
                 .collect(toList());
 
         if (extra.size() > 0) {
-            failWithMessage("Observation keys are not a subset of %s. Found extra keys: %s", keys, extra);
+            failWithMessage("Observation keys are not a subset of %s. Found extra keys: %s", expectedKeys, extra);
         }
 
         return (SELF) this;

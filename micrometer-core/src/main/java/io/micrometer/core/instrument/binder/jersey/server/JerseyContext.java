@@ -36,7 +36,7 @@ public class JerseyContext extends RequestReplyReceiverContext<ContainerRequest,
     public JerseyContext(RequestEvent requestEvent) {
         super((carrier, key) -> {
             List<String> requestHeader = carrier.getRequestHeader(key);
-            if (requestHeader.isEmpty()) {
+            if (requestHeader == null || requestHeader.isEmpty()) {
                 return null;
             }
             return requestHeader.get(0);

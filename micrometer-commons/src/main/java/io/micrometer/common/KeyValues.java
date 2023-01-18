@@ -18,6 +18,7 @@ package io.micrometer.common;
 import io.micrometer.common.lang.Nullable;
 
 import java.util.*;
+import java.util.function.Function;
 import java.util.stream.Stream;
 import java.util.stream.StreamSupport;
 
@@ -107,13 +108,31 @@ public final class KeyValues implements Iterable<KeyValue> {
     }
 
     /**
+     * Return a new {@code KeyValues} instance by merging this collection and the key
+     * values extracted from the given elements.
+     * @param elements the source elements
+     * @param keyExtractor function to extract the key from the element
+     * @param valueExtractor function to extract the value from the element
+     * @return a new {@code KeyValues} instance
+     */
+    public <E> KeyValues and(@Nullable Iterable<E> elements, Function<E, String> keyExtractor,
+            Function<E, String> valueExtractor) {
+        if (elements == null || !elements.iterator().hasNext()) {
+            return this;
+        }
+        Function<E, KeyValue> mapper = element -> KeyValue.of(element, keyExtractor, valueExtractor);
+        Iterable<KeyValue> keyValues = () -> StreamSupport.stream(elements.spliterator(), false).map(mapper).iterator();
+        return and(keyValues);
+    }
+
+    /**
      * Return a new {@code KeyValues} instance by merging this collection and the
      * specified key values.
      * @param keyValues the key values to add
      * @return a new {@code KeyValues} instance
      */
     public KeyValues and(@Nullable Iterable<? extends KeyValue> keyValues) {
-        if (keyValues == null || !keyValues.iterator().hasNext()) {
+        if (keyValues == null || keyValues == EMPTY || !keyValues.iterator().hasNext()) {
             return this;
         }
 
@@ -218,13 +237,26 @@ public final class KeyValues implements Iterable<KeyValue> {
     }
 
     /**
+     * Return a new {@code KeyValues} instance containing key values extracted from the
+     * given elements.
+     * @param elements the source elements
+     * @param keyExtractor function to extract the key from the element
+     * @param valueExtractor function to extract the value from the element
+     * @return a new {@code KeyValues} instance
+     */
+    public static <E> KeyValues of(@Nullable Iterable<E> elements, Function<E, String> keyExtractor,
+            Function<E, String> valueExtractor) {
+        return empty().and(elements, keyExtractor, valueExtractor);
+    }
+
+    /**
      * Return a new {@code KeyValues} instance containing key values constructed from the
      * specified source key values.
      * @param keyValues the key values to add
      * @return a new {@code KeyValues} instance
      */
     public static KeyValues of(@Nullable Iterable<? extends KeyValue> keyValues) {
-        if (keyValues == null || !keyValues.iterator().hasNext()) {
+        if (keyValues == null || keyValues == EMPTY || !keyValues.iterator().hasNext()) {
             return KeyValues.empty();
         }
         else if (keyValues instanceof KeyValues) {

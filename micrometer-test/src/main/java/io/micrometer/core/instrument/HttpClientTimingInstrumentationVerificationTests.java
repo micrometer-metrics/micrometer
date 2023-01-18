@@ -20,8 +20,10 @@ import com.github.tomakehurst.wiremock.junit5.WireMockTest;
 import io.micrometer.common.lang.Nullable;
 import io.micrometer.core.annotation.Incubating;
 import io.micrometer.observation.Observation;
+import io.micrometer.observation.ObservationHandler;
 import io.micrometer.observation.ObservationRegistry;
-import org.junit.jupiter.api.Assumptions;
+import io.micrometer.observation.tck.TestObservationRegistry;
+import io.micrometer.observation.transport.RequestReplySenderContext;
 import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.EnumSource;
@@ -33,6 +35,7 @@ import java.util.concurrent.TimeUnit;
 
 import static com.github.tomakehurst.wiremock.client.WireMock.*;
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.junit.jupiter.api.Assumptions.assumeTrue;
 
 /**
  * Test suite for HTTP client timing instrumentation that verifies the expected metrics
@@ -212,9 +215,52 @@ public abstract class HttpClientTimingInstrumentationVerificationTests<CLIENT>
         assertThat(timer.totalTime(TimeUnit.NANOSECONDS)).isPositive();
     }
 
+    // TODO this test doesn't need to be parameterized but the custom resolver for
+    // Before/After methods doesn't like when it isn't.
+    @ParameterizedTest
+    @EnumSource(TestType.class)
+    void headerIsPropagatedFromContext(TestType testType, WireMockRuntimeInfo wmRuntimeInfo) {
+        checkAndSetupTestForTestType(testType);
+
+        stubFor(get(anyUrl()).willReturn(ok()));
+
+        String templatedPath = "/fxrates/{currencypair}";
+        sendHttpRequest(instrumentedClient(testType), HttpMethod.GET, null, URI.create(wmRuntimeInfo.getHttpBaseUrl()),
+                templatedPath, "USDJPY");
+
+        // Only Observation-based instrumentation deals with propagation
+        // TODO documentation verification maybe shouldn't be done after each test?
+        // That's why this has to be after the http request is made
+        assumeTrue(testType == TestType.METRICS_VIA_OBSERVATIONS_WITH_METRICS_HANDLER);
+
+        verify(getRequestedFor(urlEqualTo("/fxrates/USDJPY")).withHeader("Test-Propagation", equalTo("testValue")));
+    }
+
+    @Override
+    protected TestObservationRegistry createObservationRegistryWithMetrics() {
+        TestObservationRegistry observationRegistryWithMetrics = super.createObservationRegistryWithMetrics();
+        observationRegistryWithMetrics.observationConfig().observationHandler(new SenderPropagationHandler<>());
+        return observationRegistryWithMetrics;
+    }
+
+    @SuppressWarnings({ "unchecked", "rawtypes" })
+    static class SenderPropagationHandler<T extends RequestReplySenderContext> implements ObservationHandler<T> {
+
+        @Override
+        public void onStart(T context) {
+            context.getSetter().set(context.getCarrier(), "Test-Propagation", "testValue");
+        }
+
+        @Override
+        public boolean supportsContext(Observation.Context context) {
+            return context instanceof RequestReplySenderContext;
+        }
+
+    }
+
     private void checkAndSetupTestForTestType(TestType testType) {
         if (testType == TestType.METRICS_VIA_OBSERVATIONS_WITH_METRICS_HANDLER) {
-            Assumptions.assumeTrue(clientInstrumentedWithObservations() != null,
+            assumeTrue(clientInstrumentedWithObservations() != null,
                     "You must implement the <clientInstrumentedWithObservations> method to test your instrumentation against an ObservationRegistry");
         }
     }

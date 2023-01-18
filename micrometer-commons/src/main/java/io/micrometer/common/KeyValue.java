@@ -15,6 +15,7 @@
  */
 package io.micrometer.common;
 
+import java.util.function.Function;
 import java.util.function.Predicate;
 
 import io.micrometer.common.docs.KeyName;
@@ -55,6 +56,18 @@ public interface KeyValue extends Comparable<KeyValue> {
      */
     static KeyValue of(KeyName keyName, String value) {
         return KeyValue.of(keyName.asString(), value);
+    }
+
+    /**
+     * Creates a {@link KeyValue} for the given {@code element} by extracting a key and
+     * value from it.
+     * @param element the source element
+     * @param keyExtractor function to extract the key from the element
+     * @param valueExtractor function to extract the value from the element
+     * @return KeyValue
+     */
+    static <E> KeyValue of(E element, Function<E, String> keyExtractor, Function<E, String> valueExtractor) {
+        return KeyValue.of(keyExtractor.apply(element), valueExtractor.apply(element));
     }
 
     /**

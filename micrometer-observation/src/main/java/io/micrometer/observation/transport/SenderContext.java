@@ -40,6 +40,9 @@ public class SenderContext<C> extends Observation.Context {
     @Nullable
     private String remoteServiceName;
 
+    @Nullable
+    private String remoteServiceAddress;
+
     /**
      * Creates a new instance of {@link SenderContext}.
      * @param setter propagator setter
@@ -90,6 +93,23 @@ public class SenderContext<C> extends Observation.Context {
      */
     public void setRemoteServiceName(@Nullable String remoteServiceName) {
         this.remoteServiceName = remoteServiceName;
+    }
+
+    /**
+     * Return optional address for the service that will be called.
+     * @return optional address for the service that will be called
+     */
+    @Nullable
+    public String getRemoteServiceAddress() {
+        return remoteServiceAddress;
+    }
+
+    /**
+     * Set optional service address for the service that will be called.
+     * @param remoteServiceAddress service address for the service that will be called
+     */
+    public void setRemoteServiceAddress(@Nullable String remoteServiceAddress) {
+        this.remoteServiceAddress = remoteServiceAddress;
     }
 
 }

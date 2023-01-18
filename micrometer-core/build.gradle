@@ -9,14 +9,6 @@ multiRelease {
     targetVersions 8, 11
 }
 
-// Otherwise java11 tests will not see java11 code
-sourceSets {
-    java11Test {
-        compileClasspath += sourceSets.java11.output
-        runtimeClasspath += sourceSets.java11.output
-    }
-}
-
 tasks.withType(org.jetbrains.kotlin.gradle.tasks.KotlinCompile).all {
     kotlinOptions {
         jvmTarget = javaTargetVersion
@@ -151,14 +143,14 @@ dependencies {
     testImplementation("org.junit.platform:junit-platform-engine")
     testImplementation("org.junit.platform:junit-platform-launcher")
     testImplementation("org.apache.maven.resolver:maven-resolver-connector-basic:latest.release")
-    testImplementation("org.apache.maven:maven-resolver-provider:latest.release") {
+    testImplementation("org.apache.maven:maven-resolver-provider:3.+") {
         exclude(group: "javax.inject", module: "javax.inject")
     }
     testImplementation("org.apache.maven.resolver:maven-resolver-transport-http:latest.release") {
         exclude group: "org.slf4j", module: "jcl-over-slf4j"
     }
     testImplementation("org.apache.maven.resolver:maven-resolver-connector-basic:latest.release")
-    testImplementation("org.springframework:spring-core:latest.release")
+    testImplementation("org.springframework:spring-core")
 
     // gRPC
     testImplementation("io.grpc:grpc-core")
