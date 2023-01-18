@@ -111,14 +111,14 @@ public class DatadogMeterRegistry extends StepMeterRegistry {
     }
 
     private DatadogMeterRegistry(DatadogConfig config, Clock clock, ThreadFactory threadFactory, HttpSender httpClient,
-            @Nullable StatsDClient statsdClient) {
+            @Var @Nullable StatsDClient statsdClient) {
         super(config, clock);
 
         config().namingConvention(new DatadogNamingConvention());
 
         if (statsdClient == null && isStatsd(config.uri())) {
-            NonBlockingStatsDClientBuilder builder = new NonBlockingStatsDClientBuilder();
-            URI statsdURI = URI.create(config.uri());
+            @Var NonBlockingStatsDClientBuilder builder = new NonBlockingStatsDClientBuilder();
+            var statsdURI = URI.create(config.uri());
             if (statsdURI.getScheme().equalsIgnoreCase("tcp") || statsdURI.getScheme().equalsIgnoreCase("udp")) {
                 if (!statsdURI.getHost().equalsIgnoreCase("")) {
                     builder = builder.hostname(statsdURI.getHost());
@@ -357,7 +357,7 @@ public class DatadogMeterRegistry extends StepMeterRegistry {
         List<String> tagsList = tags.iterator().hasNext() ? stream(tags.spliterator(), false)
                 .map(t -> "\"" + escapeJson(t.getKey()) + ":" + escapeJson(t.getValue()) + "\"").collect(toList())
                 : new ArrayList<String>();
-        if (config.hostTag() != null && !"".equals(config.hostTag())) {
+        if (config.hostTag() != null && !Objects.equals(config.hostTag(), "")) {
             tagsList.add("host:" + config.hostTag());
         }
         String[] tagsArray = new String[tagsList.size()];
@@ -495,7 +495,7 @@ public class DatadogMeterRegistry extends StepMeterRegistry {
             return this;
         }
 
-        public Builder statsDClient(StatsDClient statsDClient) {
+        public Builder statsDClient(StatsDClient statsdClient) {
             this.statsDClient = statsDClient;
             return this;
         }
