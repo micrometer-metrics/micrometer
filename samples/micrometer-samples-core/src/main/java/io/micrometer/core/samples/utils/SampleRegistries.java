@@ -170,17 +170,14 @@ public class SampleRegistries {
                 return null;
             }
 
-            @Override
             public boolean enableAggregation() {
                 return false;
             }
 
-            @Override
             public int aggregationFlushInterval() {
                 return 300;
             }
 
-            @Override
             public int aggregationShards() {
                 return 4;
             }
