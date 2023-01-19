@@ -110,6 +110,7 @@ public class DatadogMeterRegistry extends StepMeterRegistry {
         return !(scheme.equalsIgnoreCase("https") || scheme.equalsIgnoreCase("http"));
     }
 
+    @SuppressWarnings("Var")
     private DatadogMeterRegistry(DatadogConfig config, Clock clock, ThreadFactory threadFactory, HttpSender httpClient,
             @Nullable StatsDClient statsDClient) {
         super(config, clock);
