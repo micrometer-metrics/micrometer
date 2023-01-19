@@ -110,7 +110,6 @@ public class DatadogMeterRegistry extends StepMeterRegistry {
         return !(scheme.equalsIgnoreCase("https") || scheme.equalsIgnoreCase("http"));
     }
 
-    @SuppressWarnings("Var")
     private DatadogMeterRegistry(DatadogConfig config, Clock clock, ThreadFactory threadFactory, HttpSender httpClient,
             @Nullable StatsDClient statsDClient) {
         super(config, clock);
@@ -119,6 +118,7 @@ public class DatadogMeterRegistry extends StepMeterRegistry {
 
         if (statsDClient == null && isStatsd(config.uri())) {
             NonBlockingStatsDClientBuilder builder = new NonBlockingStatsDClientBuilder();
+            @SuppressWarnings("Var")
             URI statsdURI = URI.create(config.uri());
             if (statsdURI.getScheme().equalsIgnoreCase("tcp") || statsdURI.getScheme().equalsIgnoreCase("udp")) {
                 if (!statsdURI.getHost().equalsIgnoreCase("")) {
