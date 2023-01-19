@@ -111,13 +111,12 @@ public class DatadogMeterRegistry extends StepMeterRegistry {
     }
 
     private DatadogMeterRegistry(DatadogConfig config, Clock clock, ThreadFactory threadFactory, HttpSender httpClient,
-            @Var @Nullable StatsDClient statsdClient) {
+            @Nullable StatsDClient statsdClient) {
         super(config, clock);
 
         config().namingConvention(new DatadogNamingConvention());
 
         if (statsdClient == null && isStatsd(config.uri())) {
-            @Var
             NonBlockingStatsDClientBuilder builder = new NonBlockingStatsDClientBuilder();
             URI statsdURI = URI.create(config.uri());
             if (statsdURI.getScheme().equalsIgnoreCase("tcp") || statsdURI.getScheme().equalsIgnoreCase("udp")) {
