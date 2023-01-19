@@ -119,7 +119,7 @@ public class DatadogMeterRegistry extends StepMeterRegistry {
         if (statsdClient == null && isStatsd(config.uri())) {
             @Var
             NonBlockingStatsDClientBuilder builder = new NonBlockingStatsDClientBuilder();
-            var statsdURI = URI.create(config.uri());
+            URI statsdURI = URI.create(config.uri());
             if (statsdURI.getScheme().equalsIgnoreCase("tcp") || statsdURI.getScheme().equalsIgnoreCase("udp")) {
                 if (!statsdURI.getHost().equalsIgnoreCase("")) {
                     builder = builder.hostname(statsdURI.getHost());
