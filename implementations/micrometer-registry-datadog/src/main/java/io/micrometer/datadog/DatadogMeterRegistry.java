@@ -55,7 +55,7 @@ public class DatadogMeterRegistry extends StepMeterRegistry {
     private final HttpSender httpClient;
 
     @Nullable
-    private final StatsDClient statsdClient;
+    private final StatsDClient statsDClient;
 
     /**
      * Metric names for which we have posted metadata concerning type and base unit
@@ -111,12 +111,12 @@ public class DatadogMeterRegistry extends StepMeterRegistry {
     }
 
     private DatadogMeterRegistry(DatadogConfig config, Clock clock, ThreadFactory threadFactory, HttpSender httpClient,
-            @Nullable StatsDClient statsdClient) {
+            @Nullable StatsDClient statsDClient) {
         super(config, clock);
 
         config().namingConvention(new DatadogNamingConvention());
 
-        if (statsdClient == null && isStatsd(config.uri())) {
+        if (statsDClient == null && isStatsd(config.uri())) {
             NonBlockingStatsDClientBuilder builder = new NonBlockingStatsDClientBuilder();
             URI statsdURI = URI.create(config.uri());
             if (statsdURI.getScheme().equalsIgnoreCase("tcp") || statsdURI.getScheme().equalsIgnoreCase("udp")) {
@@ -132,12 +132,12 @@ public class DatadogMeterRegistry extends StepMeterRegistry {
                 builder = builder.namedPipe(config.uri());
             }
 
-            statsdClient = builder.build();
+            statsDClient = builder.build();
         }
 
         this.config = config;
         this.httpClient = httpClient;
-        this.statsdClient = statsdClient;
+        this.statsDClient = statsDClient;
 
         start(threadFactory);
     }
@@ -344,7 +344,7 @@ public class DatadogMeterRegistry extends StepMeterRegistry {
     // VisibleForTesting
     void writeMetricViaStatsd(Meter.Id id, @Nullable String suffix, double value, Statistic statistic,
             @Nullable String overrideBaseUnit) {
-        if (statsdClient == null) {
+        if (statsDClient == null) {
             return;
         }
 
@@ -368,20 +368,20 @@ public class DatadogMeterRegistry extends StepMeterRegistry {
         // Create type attribute
         switch (fullId.getType()) {
             case COUNTER:
-                statsdClient.count(metricName, value, 1.0, tagsArray);
+                statsDClient.count(metricName, value, 1.0, tagsArray);
                 break;
             case GAUGE:
-                statsdClient.gauge(metricName, value, 1.0, tagsArray);
+                statsDClient.gauge(metricName, value, 1.0, tagsArray);
                 break;
             case LONG_TASK_TIMER:
                 // fall through
             case TIMER:
                 // fall through
             case DISTRIBUTION_SUMMARY:
-                statsdClient.distribution(metricName, value, 1.0, tagsArray);
+                statsDClient.distribution(metricName, value, 1.0, tagsArray);
                 break;
             default:
-                statsdClient.gauge(metricName, value, 1.0, tagsArray);
+                statsDClient.gauge(metricName, value, 1.0, tagsArray);
         }
     }
 
