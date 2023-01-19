@@ -67,17 +67,22 @@ public class DynatraceExporterV1 extends AbstractDynatraceExporter {
 
     private final NamingConvention namingConvention;
 
+    private static final String AUTHORIZATION_HEADER_KEY = "Authorization";
+
+    private final String authorizationHeaderValue;
+
     public DynatraceExporterV1(DynatraceConfig config, Clock clock, HttpSender httpClient) {
         super(config, clock, httpClient);
 
         this.customMetricEndpointTemplate = config.uri() + "/api/v1/timeseries/";
         this.namingConvention = new DynatraceNamingConvention(NamingConvention.dot, DynatraceApiVersion.V1);
+
+        this.authorizationHeaderValue = String.format("Api-Token %s", config.apiToken());
     }
 
     @Override
     public void export(List<Meter> meters) {
-        String customDeviceMetricEndpoint = config.uri() + "/api/v1/entity/infrastructure/custom/" + config.deviceId()
-                + "?api-token=" + config.apiToken();
+        String customDeviceMetricEndpoint = config.uri() + "/api/v1/entity/infrastructure/custom/" + config.deviceId();
 
         for (List<Meter> batch : new MeterPartition(meters, config.batchSize())) {
             final List<DynatraceCustomMetric> series = batch.stream()
@@ -190,7 +195,8 @@ public class DynatraceExporterV1 extends AbstractDynatraceExporter {
         HttpSender.Request.Builder requestBuilder;
         try {
             requestBuilder = httpClient
-                    .put(customMetricEndpointTemplate + customMetric.getMetricId() + "?api-token=" + config.apiToken())
+                    .put(customMetricEndpointTemplate + customMetric.getMetricId())
+                    .withHeader(AUTHORIZATION_HEADER_KEY, authorizationHeaderValue)
                     .withJsonContent(customMetric.asJson());
         }
         catch (Exception ex) {
@@ -217,7 +223,9 @@ public class DynatraceExporterV1 extends AbstractDynatraceExporter {
         for (DynatraceBatchedPayload postMessage : createPostMessages(type, group, timeSeries)) {
             HttpSender.Request.Builder requestBuilder;
             try {
-                requestBuilder = httpClient.post(customDeviceMetricEndpoint).withJsonContent(postMessage.payload);
+                requestBuilder = httpClient
+                        .post(customDeviceMetricEndpoint).withJsonContent(postMessage.payload)
+                        .withHeader(AUTHORIZATION_HEADER_KEY, authorizationHeaderValue);
             }
             catch (Exception ex) {
                 if (logger.isErrorEnabled()) {
