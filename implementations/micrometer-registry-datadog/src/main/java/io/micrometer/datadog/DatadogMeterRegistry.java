@@ -495,8 +495,8 @@ public class DatadogMeterRegistry extends StepMeterRegistry {
             return this;
         }
 
-        public Builder statsDClient(StatsDClient statsdClient) {
-            this.statsDClient = statsDClient;
+        public Builder statsDClient(StatsDClient statsDClient) {
+            this.statsDClient = statsdClient;
             return this;
         }
 
