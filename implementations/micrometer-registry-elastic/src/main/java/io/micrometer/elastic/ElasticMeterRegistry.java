@@ -18,6 +18,7 @@ package io.micrometer.elastic;
 import io.micrometer.common.lang.NonNull;
 import io.micrometer.common.util.StringUtils;
 import io.micrometer.core.instrument.*;
+import io.micrometer.core.instrument.Timer;
 import io.micrometer.core.instrument.distribution.HistogramSnapshot;
 import io.micrometer.core.instrument.step.StepMeterRegistry;
 import io.micrometer.core.instrument.util.MeterPartition;
@@ -31,12 +32,11 @@ import java.time.Instant;
 import java.time.ZoneOffset;
 import java.time.ZonedDateTime;
 import java.time.format.DateTimeFormatter;
-import java.util.ArrayList;
-import java.util.Date;
-import java.util.List;
-import java.util.Optional;
+import java.util.*;
+import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.ThreadFactory;
 import java.util.concurrent.TimeUnit;
+import java.util.function.BiConsumer;
 import java.util.function.Consumer;
 import java.util.function.Function;
 import java.util.regex.Matcher;
@@ -58,6 +58,7 @@ public class ElasticMeterRegistry extends StepMeterRegistry {
 
     private static final ThreadFactory DEFAULT_THREAD_FACTORY = new NamedThreadFactory("elastic-metrics-publisher");
     static final DateTimeFormatter TIMESTAMP_FORMATTER = DateTimeFormatter.ISO_INSTANT;
+    private final List<BiConsumer<ElasticMeterRegistry, List<Meter>>> meterPublishedSuccessListeners = new CopyOnWriteArrayList<>();
 
     private static final String ES_METRICS_TEMPLATE = "/_template/metrics_template";
 
@@ -98,7 +99,7 @@ public class ElasticMeterRegistry extends StepMeterRegistry {
     @SuppressWarnings("deprecation")
     public ElasticMeterRegistry(ElasticConfig config, Clock clock) {
         this(config, clock, DEFAULT_THREAD_FACTORY,
-                new HttpUrlConnectionSender(config.connectTimeout(), config.readTimeout()));
+             new HttpUrlConnectionSender(config.connectTimeout(), config.readTimeout()), Collections.emptyList());
     }
 
     /**
@@ -110,7 +111,7 @@ public class ElasticMeterRegistry extends StepMeterRegistry {
      * @since 1.2.1
      */
     protected ElasticMeterRegistry(ElasticConfig config, Clock clock, ThreadFactory threadFactory,
-            HttpSender httpClient) {
+            HttpSender httpClient, List<BiConsumer<ElasticMeterRegistry, List<Meter>>> meterPublishedSuccessListeners) {
         super(config, clock);
         config().namingConvention(new ElasticNamingConvention());
         this.config = config;
@@ -122,6 +123,7 @@ public class ElasticMeterRegistry extends StepMeterRegistry {
         else {
             actionLine = "{ \"create\" : {} }\n";
         }
+        this.meterPublishedSuccessListeners.addAll(meterPublishedSuccessListeners);
 
         start(threadFactory);
     }
@@ -198,6 +200,8 @@ public class ElasticMeterRegistry extends StepMeterRegistry {
                     }
                     else {
                         logger.debug("successfully sent {} metrics to elastic", numberOfSentItems);
+
+                        meterPublishedSuccess(batch);
                     }
                 }).onError(response -> {
                     logger.debug("failed metrics payload: {}", requestBody);
@@ -385,6 +389,16 @@ public class ElasticMeterRegistry extends StepMeterRegistry {
         return TimeUnit.MILLISECONDS;
     }
 
+    /**
+     * Handle meter publish success notifications for a batch of meters.
+     * @param batch The batch of meters successfully published to remote registry
+     */
+    protected void meterPublishedSuccess(List<Meter> batch) {
+        for (BiConsumer<ElasticMeterRegistry, List<Meter>> listener : meterPublishedSuccessListeners) {
+            listener.accept(this, batch);
+        }
+    }
+
     public static class Builder {
 
         private final ElasticConfig config;
@@ -394,6 +408,8 @@ public class ElasticMeterRegistry extends StepMeterRegistry {
         private ThreadFactory threadFactory = DEFAULT_THREAD_FACTORY;
 
         private HttpSender httpClient;
+
+        private List<BiConsumer<ElasticMeterRegistry, List<Meter>>> meterPublishedSuccessListeners = new CopyOnWriteArrayList<>();
 
         @SuppressWarnings("deprecation")
         Builder(ElasticConfig config) {
@@ -416,8 +432,13 @@ public class ElasticMeterRegistry extends StepMeterRegistry {
             return this;
         }
 
+        public Builder onMeterPublishedSuccess(BiConsumer<ElasticMeterRegistry, List<Meter>> meterPublishedSuccessListener) {
+            meterPublishedSuccessListeners.add(meterPublishedSuccessListener);
+            return this;
+        }
+
         public ElasticMeterRegistry build() {
-            return new ElasticMeterRegistry(config, clock, threadFactory, httpClient);
+            return new ElasticMeterRegistry(config, clock, threadFactory, httpClient, meterPublishedSuccessListeners);
         }
 
     }

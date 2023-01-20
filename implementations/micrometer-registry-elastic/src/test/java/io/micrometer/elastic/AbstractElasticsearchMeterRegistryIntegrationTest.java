@@ -17,6 +17,7 @@ package io.micrometer.elastic;
 
 import com.jayway.jsonpath.JsonPath;
 import io.micrometer.core.instrument.Counter;
+import io.micrometer.core.instrument.Meter;
 import io.micrometer.core.ipc.http.HttpSender;
 import io.micrometer.core.ipc.http.HttpUrlConnectionSender;
 import org.junit.jupiter.api.BeforeEach;
@@ -28,6 +29,10 @@ import org.testcontainers.junit.jupiter.Testcontainers;
 import org.testcontainers.utility.DockerImageName;
 
 import java.time.Duration;
+import java.util.Arrays;
+import java.util.List;
+import java.util.Map;
+import java.util.concurrent.atomic.AtomicReference;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -59,10 +64,15 @@ abstract class AbstractElasticsearchMeterRegistryIntegrationTest {
 
     protected abstract String getVersion();
 
+    private AtomicReference<Map.Entry<ElasticMeterRegistry, List<Meter>>> publishResult;
+
     @BeforeEach
     void setUp() {
+        publishResult = new AtomicReference<>();
         host = "http://" + elasticsearch.getHttpHostAddress();
-        registry = ElasticMeterRegistry.builder(getConfig()).build();
+        registry = ElasticMeterRegistry.builder(getConfig())
+                                       .onMeterPublishedSuccess((registry, batch) -> publishResult.set(Map.entry(registry, batch)))
+                                       .build();
     }
 
     @Test
@@ -80,6 +90,18 @@ abstract class AbstractElasticsearchMeterRegistryIntegrationTest {
         String mapping = sendHttpGet(host + "/" + indexName + "/_mapping");
         String countType = JsonPath.parse(mapping).read(getCountTypePath(indexName));
         assertThat(countType).isEqualTo("double");
+    }
+
+    @Test
+    void shouldNotifyListenersOnPublishSuccess() throws Throwable {
+        Counter counter = registry.counter("publish-test.counter");
+        counter.increment();
+
+        registry.publish();
+
+        assertThat(publishResult).isNotNull()
+                                 .hasValueSatisfying(value -> assertThat(value).extracting(Map.Entry::getKey, Map.Entry::getValue)
+                                                                               .containsExactly(registry, Arrays.asList(counter)));
     }
 
     protected String getCountTypePath(String indexName) {
