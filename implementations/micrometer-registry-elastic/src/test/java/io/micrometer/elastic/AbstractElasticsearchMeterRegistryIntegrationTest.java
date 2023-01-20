@@ -40,9 +40,9 @@ import static org.assertj.core.api.Assertions.assertThat;
 @Tag("docker")
 abstract class AbstractElasticsearchMeterRegistryIntegrationTest {
 
-    protected static final String VERSION_7 = "7.17.2";
+    protected static final String VERSION_7 = "7.17.8";
 
-    protected static final String VERSION_8 = "8.1.2";
+    protected static final String VERSION_8 = "8.6.0";
 
     protected static final String USER = "elastic";
 
