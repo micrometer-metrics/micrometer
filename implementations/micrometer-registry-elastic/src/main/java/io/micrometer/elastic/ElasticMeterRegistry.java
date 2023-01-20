@@ -100,7 +100,7 @@ public class ElasticMeterRegistry extends StepMeterRegistry {
     @SuppressWarnings("deprecation")
     public ElasticMeterRegistry(ElasticConfig config, Clock clock) {
         this(config, clock, DEFAULT_THREAD_FACTORY,
-             new HttpUrlConnectionSender(config.connectTimeout(), config.readTimeout()), Collections.emptyList());
+                new HttpUrlConnectionSender(config.connectTimeout(), config.readTimeout()), Collections.emptyList());
     }
 
     /**
