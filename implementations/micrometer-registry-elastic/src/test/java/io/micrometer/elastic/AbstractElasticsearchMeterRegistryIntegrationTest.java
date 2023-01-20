@@ -71,8 +71,7 @@ abstract class AbstractElasticsearchMeterRegistryIntegrationTest {
         publishResult = new AtomicReference<>();
         host = "http://" + elasticsearch.getHttpHostAddress();
         registry = ElasticMeterRegistry.builder(getConfig())
-                                       .onMeterPublishedSuccess((registry, batch) -> publishResult.set(Map.entry(registry, batch)))
-                                       .build();
+                .onMeterPublishedSuccess((registry, batch) -> publishResult.set(Map.entry(registry, batch))).build();
     }
 
     @Test
@@ -99,9 +98,8 @@ abstract class AbstractElasticsearchMeterRegistryIntegrationTest {
 
         registry.publish();
 
-        assertThat(publishResult).isNotNull()
-                                 .hasValueSatisfying(value -> assertThat(value).extracting(Map.Entry::getKey, Map.Entry::getValue)
-                                                                               .containsExactly(registry, Arrays.asList(counter)));
+        assertThat(publishResult).isNotNull().hasValueSatisfying(value -> assertThat(value)
+                .extracting(Map.Entry::getKey, Map.Entry::getValue).containsExactly(registry, Arrays.asList(counter)));
     }
 
     protected String getCountTypePath(String indexName) {

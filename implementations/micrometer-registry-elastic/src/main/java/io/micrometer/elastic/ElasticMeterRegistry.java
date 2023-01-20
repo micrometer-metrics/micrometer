@@ -58,6 +58,7 @@ public class ElasticMeterRegistry extends StepMeterRegistry {
 
     private static final ThreadFactory DEFAULT_THREAD_FACTORY = new NamedThreadFactory("elastic-metrics-publisher");
     static final DateTimeFormatter TIMESTAMP_FORMATTER = DateTimeFormatter.ISO_INSTANT;
+
     private final List<BiConsumer<ElasticMeterRegistry, List<Meter>>> meterPublishedSuccessListeners = new CopyOnWriteArrayList<>();
 
     private static final String ES_METRICS_TEMPLATE = "/_template/metrics_template";
@@ -432,7 +433,8 @@ public class ElasticMeterRegistry extends StepMeterRegistry {
             return this;
         }
 
-        public Builder onMeterPublishedSuccess(BiConsumer<ElasticMeterRegistry, List<Meter>> meterPublishedSuccessListener) {
+        public Builder onMeterPublishedSuccess(
+                BiConsumer<ElasticMeterRegistry, List<Meter>> meterPublishedSuccessListener) {
             meterPublishedSuccessListeners.add(meterPublishedSuccessListener);
             return this;
         }
