@@ -69,15 +69,13 @@ public class DynatraceExporterV1 extends AbstractDynatraceExporter {
 
     private static final String AUTHORIZATION_HEADER_KEY = "Authorization";
 
-    private final String authorizationHeaderValue;
+    private static final String AUTHORIZATION_HEADER_VALUE_TEMPLATE = "Api-Token %s";
 
     public DynatraceExporterV1(DynatraceConfig config, Clock clock, HttpSender httpClient) {
         super(config, clock, httpClient);
 
         this.customMetricEndpointTemplate = config.uri() + "/api/v1/timeseries/";
         this.namingConvention = new DynatraceNamingConvention(NamingConvention.dot, DynatraceApiVersion.V1);
-
-        this.authorizationHeaderValue = String.format("Api-Token %s", config.apiToken());
     }
 
     @Override
@@ -195,7 +193,8 @@ public class DynatraceExporterV1 extends AbstractDynatraceExporter {
         HttpSender.Request.Builder requestBuilder;
         try {
             requestBuilder = httpClient.put(customMetricEndpointTemplate + customMetric.getMetricId())
-                    .withHeader(AUTHORIZATION_HEADER_KEY, authorizationHeaderValue)
+                    .withHeader(AUTHORIZATION_HEADER_KEY,
+                            String.format(AUTHORIZATION_HEADER_VALUE_TEMPLATE, config.apiToken()))
                     .withJsonContent(customMetric.asJson());
         }
         catch (Exception ex) {
@@ -223,7 +222,8 @@ public class DynatraceExporterV1 extends AbstractDynatraceExporter {
             HttpSender.Request.Builder requestBuilder;
             try {
                 requestBuilder = httpClient.post(customDeviceMetricEndpoint).withJsonContent(postMessage.payload)
-                        .withHeader(AUTHORIZATION_HEADER_KEY, authorizationHeaderValue);
+                        .withHeader(AUTHORIZATION_HEADER_KEY,
+                                String.format(AUTHORIZATION_HEADER_VALUE_TEMPLATE, config.apiToken()));
             }
             catch (Exception ex) {
                 if (logger.isErrorEnabled()) {
