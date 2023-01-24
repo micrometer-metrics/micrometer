@@ -30,8 +30,8 @@ import java.util.function.Function;
 
 /**
  * Provides {@link HttpRequestInterceptor} and {@link HttpResponseInterceptor} for
- * configuring with an {@link org.apache.hc.client5.http.async.HttpAsyncClient}. Usage
- * example: <pre>{@code
+ * instrumenting async Apache HTTP Client 5. Configure the interceptors on an
+ * {@link org.apache.hc.client5.http.async.HttpAsyncClient}. Usage example: <pre>{@code
  *     MicrometerHttpClientInterceptor interceptor = new MicrometerHttpClientInterceptor(registry,
  *             HttpRequest::getRequestUri,
  *             Tags.empty(),

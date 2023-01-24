@@ -19,7 +19,7 @@ import io.micrometer.observation.Observation;
 import io.micrometer.observation.ObservationConvention;
 
 /**
- * {@link ObservationConvention} for Apache HTTP client instrumentation.
+ * {@link ObservationConvention} for Apache HTTP Client 5 instrumentation.
  *
  * @since 1.11.0
  * @see DefaultApacheHttpClientObservationConvention

@@ -22,13 +22,15 @@ import io.micrometer.core.instrument.Tag;
 import io.micrometer.core.instrument.Tags;
 import io.micrometer.core.instrument.binder.MeterBinder;
 import org.apache.hc.client5.http.HttpRoute;
+import org.apache.hc.client5.http.impl.io.PoolingHttpClientConnectionManager;
+import org.apache.hc.client5.http.impl.nio.PoolingAsyncClientConnectionManager;
 import org.apache.hc.core5.pool.ConnPoolControl;
 
 /**
  * Collects metrics from a {@link ConnPoolControl}, for example
- * {@link org.apache.http.impl.conn.PoolingHttpClientConnectionManager} for synchronous
+ * {@link PoolingHttpClientConnectionManager} for synchronous
  * HTTP clients or
- * {@link org.apache.http.impl.nio.conn.PoolingNHttpClientConnectionManager} for
+ * {@link PoolingAsyncClientConnectionManager} for
  * asynchronous HTTP clients.
  * <p>
  * It monitors the overall connection pool state. Usage example: <pre>{@code
