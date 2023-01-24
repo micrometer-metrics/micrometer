@@ -33,14 +33,14 @@ import java.util.function.Function;
  * configuring with an {@link org.apache.hc.client5.http.async.HttpAsyncClient}. Usage
  * example: <pre>{@code
  *     MicrometerHttpClientInterceptor interceptor = new MicrometerHttpClientInterceptor(registry,
- *             request -> request.getRequestLine().getUri(),
+ *             HttpRequest::getRequestUri,
  *             Tags.empty(),
  *             true);
  *
  *     CloseableHttpAsyncClient httpAsyncClient = HttpAsyncClients.custom()
- *             .addInterceptorFirst(interceptor.getRequestInterceptor())
- *             .addInterceptorLast(interceptor.getResponseInterceptor())
- *             .build();
+ *                 .addRequestInterceptorFirst(interceptor.getRequestInterceptor())
+ *                 .addResponseInterceptorLast(interceptor.getResponseInterceptor())
+ *                 .build();
  * }</pre>
  *
  * @author Jon Schneider
