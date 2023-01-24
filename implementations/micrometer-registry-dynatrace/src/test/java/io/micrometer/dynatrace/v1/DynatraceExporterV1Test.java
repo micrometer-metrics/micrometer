@@ -397,7 +397,7 @@ class DynatraceExporterV1Test {
     }
 
     @Test
-    void testTokenShouldBeRedactedInPutFailure() {
+    void testTokenShouldNotShowUpInPutFailureErrorMessage() {
         HttpSender httpClient = spy(HttpSender.class);
 
         String invalidUrl = "http://localhost###";
@@ -412,14 +412,15 @@ class DynatraceExporterV1Test {
 
         assertThat(LOGGER.getLogEvents())
                 // map to only keep the message strings
-                .extracting(LogEvent::getMessage)
-                .containsExactly(String.format(
-                        "failed to build request: Illegal character in fragment at index 17: %s/api/v1/timeseries/custom:my.gauge?api-token=<redacted>",
-                        invalidUrl));
+                .extracting(LogEvent::getMessage).containsExactly("failed to build request")
+                // this is different from doesNotContain, as doesNotContain checks for
+                // whole strings in all log messages whereas this checks that none of the
+                // log messages contain the token.
+                .noneMatch(x -> x.contains(apiToken));
     }
 
     @Test
-    void testTokenShouldBeRedactedInPostFailure() throws Throwable {
+    void testTokenShouldNotShowUpInPostFailureErrorMessage() throws Throwable {
         HttpSender httpClient = spy(HttpSender.class);
 
         String invalidUrl = "http://localhost###";
@@ -442,10 +443,9 @@ class DynatraceExporterV1Test {
                 .extracting(LogEvent::getMessage).containsExactly(
                         // the custom metric was created, meaning the PUT call succeeded
                         "created custom:my.gauge as custom metric in Dynatrace",
-                        // the POST call throws an exception and the token is redacted
-                        String.format(
-                                "failed to build request: Illegal character in fragment at index 17: %s/api/v1/entity/infrastructure/custom/?api-token=<redacted>",
-                                invalidUrl));
+                        // the error message from the post call contains no token
+                        "failed to build request")
+                .noneMatch(x -> x.contains(apiToken));
     }
 
     @Test
@@ -479,23 +479,23 @@ class DynatraceExporterV1Test {
     }
 
     @Test
-    void trySendHttpRequestThrowsAndRedacts() throws Throwable {
+    void trySendHttpRequestThrows() throws Throwable {
         HttpSender httpClient = mock(HttpSender.class);
         String apiToken = "this.is.a.fake.apiToken";
         DynatraceExporterV1 exporter = getDynatraceExporterV1(httpClient, "http://localhost", apiToken);
 
         HttpSender.Request.Builder reqBuilder = mock(HttpSender.Request.Builder.class);
 
-        // Simulate that the request builder throws an exception.
-        // Should not happen if the endpoint is invalid, the URI is validated elsewhere.
-        String exceptionMessageTemplate = "Exception with the token: %s";
-        when(reqBuilder.send()).thenThrow(new Throwable(String.format(exceptionMessageTemplate, apiToken)));
+        // Simulate that sending throws an exception AND adds the token to the message,
+        // which shouldn't happen.
+        when(reqBuilder.send())
+                .thenThrow(new NullPointerException(String.format("Header key is null for value %s", apiToken)));
 
         exporter.trySendHttpRequest(reqBuilder);
         verify(reqBuilder).send();
-        // assert that an error is logged
-        assertThat(LOGGER.getLogEvents()).hasSize(1).extracting(x -> x.getMessage()).containsExactlyInAnyOrder(
-                "failed to send metrics to Dynatrace: " + String.format(exceptionMessageTemplate, "<redacted>"));
+        // assert that an error is logged that does not contain the token.
+        assertThat(LOGGER.getLogEvents()).hasSize(1).extracting(LogEvent::getMessage)
+                .containsExactlyInAnyOrder("failed to send metrics to Dynatrace").noneMatch(x -> x.contains(apiToken));
     }
 
     private DynatraceExporterV1 getDynatraceExporterV1(HttpSender httpClient, String url, String apiToken) {
