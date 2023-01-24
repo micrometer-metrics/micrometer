@@ -28,10 +28,8 @@ import org.apache.hc.core5.pool.ConnPoolControl;
 
 /**
  * Collects metrics from a {@link ConnPoolControl}, for example
- * {@link PoolingHttpClientConnectionManager} for synchronous
- * HTTP clients or
- * {@link PoolingAsyncClientConnectionManager} for
- * asynchronous HTTP clients.
+ * {@link PoolingHttpClientConnectionManager} for synchronous HTTP clients or
+ * {@link PoolingAsyncClientConnectionManager} for asynchronous HTTP clients.
  * <p>
  * It monitors the overall connection pool state. Usage example: <pre>{@code
  *      PoolingHttpClientConnectionManager connectionManager = new PoolingHttpClientConnectionManager();

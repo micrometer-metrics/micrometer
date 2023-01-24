@@ -34,9 +34,10 @@ import java.util.Optional;
 import java.util.function.Function;
 
 /**
- * This instruments the execution of every request that goes
- * through an {@link org.apache.hc.client5.http.classic.HttpClient} on which it is configured. It must be registered
- * as request executor when creating the HttpClient instance. For example:
+ * This instruments the execution of every request that goes through an
+ * {@link org.apache.hc.client5.http.classic.HttpClient} on which it is configured. It
+ * must be registered as request executor when creating the HttpClient instance. For
+ * example:
  *
  * <pre>
  *     HttpClientBuilder.create()
