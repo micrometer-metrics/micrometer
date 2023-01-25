@@ -38,8 +38,6 @@ public class ObservationThreadLocalAccessor implements ThreadLocalAccessor<Obser
 
     private static final ObservationRegistry observationRegistry = ObservationRegistry.create();
 
-    private static final ThreadLocal<Observation.Scope> scopes = new ThreadLocal<>();
-
     @Override
     public Object key() {
         return KEY;
@@ -52,26 +50,54 @@ public class ObservationThreadLocalAccessor implements ThreadLocalAccessor<Obser
 
     @Override
     public void setValue(Observation value) {
-        Observation.Scope scope = value.openScope();
-        scopes.set(scope);
+        if (value == observationRegistry.getCurrentObservation()) {
+            // A noop case where we don't want to override anything in thread locals. We DON'T want to call <openScope>.
+            Observation.Scope scope = observationRegistry.getCurrentObservationScope();
+            // We always want to open a new scope and close it later, so we create a scope that just reverts to a previous one
+            observationRegistry.setCurrentObservationScope(new RevertToPrevious(observationRegistry, scope));
+            return;
+        }
+        // Iterate over all handlers and open a new scope. The created scope will put itself to TL
+        value.openScope();
     }
 
     @Override
     public void reset() {
-        Observation.Scope scope = scopes.get();
-        Observation.Scope scopeFromObservationRegistry = observationRegistry.getCurrentObservationScope();
-        if (scopeFromObservationRegistry != scope) {
-            // TODO: Maybe we should throw an ISE
-            LOG.warn("Scope from ObservationThreadLocalAccessor [" + scope
-                    + "] is not the same as the one from ObservationRegistry [" + scopeFromObservationRegistry
-                    + "]. You must have created additional scopes and forgotten to close them. Will close both of them");
-            if (scopeFromObservationRegistry != null) {
-                scopeFromObservationRegistry.close();
-            }
-        }
-        if (scope != null) {
+        Observation.Scope scope = observationRegistry.getCurrentObservationScope();
+        while (scope != null) {
             scope.close();
-            scopes.remove();
+            scope = observationRegistry.getCurrentObservationScope();
+        }
+        observationRegistry.setCurrentObservationScope(null);
+    }
+
+    @Override
+    public void restore(Observation value) {
+        // TODO: Do we want to close the scope or just reset observation scopes?
+        Observation.Scope scope = observationRegistry.getCurrentObservationScope();
+        if (scope != null) {
+            scope.close(); // scope will be removed from TL and previous scope will be restored to TL
+        }
+    }
+
+    static class RevertToPrevious implements Observation.Scope {
+        private final ObservationRegistry registry;
+        private final Observation.Scope scope;
+
+        RevertToPrevious(ObservationRegistry registry, Observation.Scope scope) {
+            this.registry = registry;
+            this.scope = scope;
+        }
+
+
+        @Override
+        public Observation getCurrentObservation() {
+            return this.scope.getCurrentObservation();
+        }
+
+        @Override
+        public void close() {
+            this.registry.setCurrentObservationScope(scope);
         }
     }
 
