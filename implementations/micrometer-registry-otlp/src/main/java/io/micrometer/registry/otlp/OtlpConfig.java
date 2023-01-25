@@ -110,7 +110,7 @@ public interface OtlpConfig extends PushRegistryConfig {
             headersString = env.getOrDefault("OTEL_EXPORTER_OTLP_HEADERS", "").trim(); // common
                                                                                        // headers
             String metricsHeaders = env.getOrDefault("OTEL_EXPORTER_OTLP_METRICS_HEADERS", "").trim();
-            headersString = "".equals(headersString) ? metricsHeaders : headersString + "," + metricsHeaders;
+            headersString = Objects.equals(headersString, "") ? metricsHeaders : headersString + "," + metricsHeaders;
         }
 
         String[] keyvalues = Objects.equals(headersString, "") ? new String[] {} : headersString.split(",");
