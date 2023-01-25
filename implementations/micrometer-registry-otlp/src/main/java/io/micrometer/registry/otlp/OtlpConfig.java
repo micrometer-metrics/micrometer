@@ -113,7 +113,7 @@ public interface OtlpConfig extends PushRegistryConfig {
             headersString = "".equals(headersString) ? metricsHeaders : headersString + "," + metricsHeaders;
         }
 
-        String[] keyvalues = "".equals(headersString) ? new String[] {} : headersString.split(",");
+        String[] keyvalues = Objects.equals(headersString, "") ? new String[] {} : headersString.split(",");
 
         return Arrays.stream(keyvalues).map(String::trim)
                 .filter(keyvalue -> keyvalue.length() > 2 && keyvalue.indexOf('=') > 0)
