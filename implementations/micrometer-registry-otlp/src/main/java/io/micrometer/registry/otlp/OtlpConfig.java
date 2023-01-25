@@ -20,6 +20,7 @@ import io.micrometer.core.instrument.push.PushRegistryConfig;
 
 import java.util.Arrays;
 import java.util.Map;
+import java.util.Objects;
 import java.util.stream.Collectors;
 
 import static io.micrometer.core.instrument.config.MeterRegistryConfigValidator.*;
