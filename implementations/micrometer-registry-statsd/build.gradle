@@ -11,6 +11,7 @@ dependencies {
         exclude module: 'netty-codec-http'
     }
     implementation(group: 'io.netty', name: 'netty-transport-native-epoll', classifier: 'linux-aarch_64')
+    implementation(group: 'io.netty', name: 'netty-transport-native-epoll', classifier: 'linux-x86_64')
 
     testImplementation project(':micrometer-test')
     testImplementation 'io.projectreactor:reactor-test'
