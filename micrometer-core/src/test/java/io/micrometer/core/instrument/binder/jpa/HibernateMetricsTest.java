@@ -41,7 +41,7 @@ import static org.mockito.Mockito.*;
  * part of the Hibernate project as of version 5.4.26. See
  * https://mvnrepository.com/artifact/org.hibernate/hibernate-micrometer/
  */
-@SuppressWarnings("deprecation")
+@Deprecated
 class HibernateMetricsTest {
 
     private final MeterRegistry registry = new SimpleMeterRegistry(SimpleConfig.DEFAULT, new MockClock());
