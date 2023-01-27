@@ -61,7 +61,7 @@ class ObservationThreadLocalAccessorTests {
         ContextSnapshot container;
         try (Observation.Scope scope = child.openScope()) {
             thenCurrentObservationHasParent(parent, child);
-            thenCurrentScopeHasParent(TracingHandler.PARENT_FOR_A_NON_USED_THREAD);
+            thenCurrentScopeHasParent(null);
             container = ContextSnapshot.captureAllUsing(key -> true, registry);
         }
 
@@ -70,7 +70,7 @@ class ObservationThreadLocalAccessorTests {
         // when first scope created
         try (ContextSnapshot.Scope scope = container.setThreadLocals()) {
             thenCurrentObservationHasParent(parent, child);
-            Scope inScope = thenCurrentScopeHasParent(TracingHandler.PARENT_FOR_A_NON_USED_THREAD);
+            Scope inScope = thenCurrentScopeHasParent(null);
 
             // when second, nested scope created
             try (ContextSnapshot.Scope scope2 = container.setThreadLocals()) {
@@ -80,12 +80,12 @@ class ObservationThreadLocalAccessorTests {
                 // when context gets propagated to a new thread
                 ContextExecutorService.wrap(executorService, () -> container).submit(() -> {
                     thenCurrentObservationHasParent(parent, child);
-                    thenCurrentScopeHasParent(TracingHandler.PARENT_FOR_A_NON_USED_THREAD);
+                    thenCurrentScopeHasParent(null);
                 }).get(5, TimeUnit.SECONDS);
 
                 then(scopeParent(inSecondScope)).isSameAs(inScope);
             }
-            then(scopeParent(inScope)).isSameAs(TracingHandler.PARENT_FOR_A_NON_USED_THREAD);
+            then(scopeParent(inScope)).isSameAs(null);
         }
 
         thenCurrentObservationIsNull();
@@ -107,7 +107,7 @@ class ObservationThreadLocalAccessorTests {
 
     private void thenCurrentObservationIsNull() {
         then(observationRegistry.getCurrentObservation()).isNull();
-        then(TracingHandler.value.get()).isSameAs(TracingHandler.PARENT_FOR_A_NON_USED_THREAD);
+        then(TracingHandler.value.get()).isSameAs(null);
     }
 
     private Scope scopeParent(Scope scope) {
@@ -116,9 +116,7 @@ class ObservationThreadLocalAccessorTests {
 
     static class TracingHandler implements ObservationHandler<Observation.Context> {
 
-        static final Scope PARENT_FOR_A_NON_USED_THREAD = new Scope(null);
-
-        static final ThreadLocal<Scope> value = ThreadLocal.withInitial(() -> PARENT_FOR_A_NON_USED_THREAD);
+        static final ThreadLocal<Scope> value = new ThreadLocal<>();
 
         @Override
         public void onStart(Observation.Context context) {
