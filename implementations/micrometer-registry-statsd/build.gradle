@@ -10,6 +10,7 @@ dependencies {
         // We do not use HTTP modules; exclude to avoid false positive CVE reports
         exclude module: 'netty-codec-http'
     }
+    implementation(group: 'io.netty', name: 'netty-transport-native-epoll', classifier: 'linux-aarch_64')
 
     testImplementation project(':micrometer-test')
     testImplementation 'io.projectreactor:reactor-test'
