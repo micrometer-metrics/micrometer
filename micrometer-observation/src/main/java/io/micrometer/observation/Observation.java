@@ -465,7 +465,6 @@ public interface Observation extends ObservationView {
      */
     void stop();
 
-
     /**
      * Resets the observation scopes.
      */
