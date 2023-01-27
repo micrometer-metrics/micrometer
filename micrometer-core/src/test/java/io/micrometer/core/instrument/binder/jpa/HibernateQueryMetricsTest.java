@@ -38,7 +38,7 @@ import static org.mockito.Mockito.when;
  * part of the Hibernate project as of version 5.4.26. See
  * https://mvnrepository.com/artifact/org.hibernate/hibernate-micrometer/
  */
-@SuppressWarnings("deprecation")
+@Deprecated
 class HibernateQueryMetricsTest {
 
     private MeterRegistry registry = new SimpleMeterRegistry();
