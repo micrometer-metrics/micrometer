@@ -388,7 +388,7 @@ subprojects {
     description = 'Application monitoring instrumentation facade'
 
     repositories {
-        mavenLocal()
+//        mavenLocal()
         mavenCentral()
     }
 
