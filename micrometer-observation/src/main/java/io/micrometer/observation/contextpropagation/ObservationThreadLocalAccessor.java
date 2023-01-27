@@ -15,8 +15,6 @@
  */
 package io.micrometer.observation.contextpropagation;
 
-import io.micrometer.common.util.internal.logging.InternalLogger;
-import io.micrometer.common.util.internal.logging.InternalLoggerFactory;
 import io.micrometer.context.ThreadLocalAccessor;
 import io.micrometer.observation.Observation;
 import io.micrometer.observation.ObservationRegistry;
@@ -29,16 +27,12 @@ import io.micrometer.observation.ObservationRegistry;
  */
 public class ObservationThreadLocalAccessor implements ThreadLocalAccessor<Observation> {
 
-    private static final InternalLogger LOG = InternalLoggerFactory.getInstance(ObservationThreadLocalAccessor.class);
-
     /**
      * Key under which Micrometer Observation is being registered.
      */
     public static final String KEY = "micrometer.observation";
 
     private static final ObservationRegistry observationRegistry = ObservationRegistry.create();
-
-    private static final ThreadLocal<Observation.Scope> scopes = new ThreadLocal<>();
 
     @Override
     public Object key() {
@@ -52,26 +46,26 @@ public class ObservationThreadLocalAccessor implements ThreadLocalAccessor<Obser
 
     @Override
     public void setValue(Observation value) {
-        Observation.Scope scope = value.openScope();
-        scopes.set(scope);
+        // Iterate over all handlers and open a new scope. The created scope will put
+        // itself to TL.
+        value.openScope();
     }
 
     @Override
     public void reset() {
-        Observation.Scope scope = scopes.get();
-        Observation.Scope scopeFromObservationRegistry = observationRegistry.getCurrentObservationScope();
-        if (scopeFromObservationRegistry != scope) {
-            // TODO: Maybe we should throw an ISE
-            LOG.warn("Scope from ObservationThreadLocalAccessor [" + scope
-                    + "] is not the same as the one from ObservationRegistry [" + scopeFromObservationRegistry
-                    + "]. You must have created additional scopes and forgotten to close them. Will close both of them");
-            if (scopeFromObservationRegistry != null) {
-                scopeFromObservationRegistry.close();
-            }
-        }
-        if (scope != null) {
+        Observation.Scope scope = observationRegistry.getCurrentObservationScope();
+        while (scope != null) {
             scope.close();
-            scopes.remove();
+            scope = observationRegistry.getCurrentObservationScope();
+        }
+    }
+
+    @Override
+    public void restore(Observation value) {
+        Observation.Scope scope = observationRegistry.getCurrentObservationScope();
+        if (scope != null) {
+            scope.close(); // scope will be removed from TL and previous scope will be
+                           // restored to TL
         }
     }
 
