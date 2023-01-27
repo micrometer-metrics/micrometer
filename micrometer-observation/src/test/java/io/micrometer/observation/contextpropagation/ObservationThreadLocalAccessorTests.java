@@ -15,16 +15,24 @@
  */
 package io.micrometer.observation.contextpropagation;
 
+import io.micrometer.context.ContextExecutorService;
 import io.micrometer.context.ContextRegistry;
 import io.micrometer.context.ContextSnapshot;
 import io.micrometer.observation.Observation;
+import io.micrometer.observation.ObservationHandler;
 import io.micrometer.observation.ObservationRegistry;
+import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+
+import java.io.Closeable;
+import java.util.concurrent.*;
 
 import static org.assertj.core.api.BDDAssertions.then;
 
 class ObservationThreadLocalAccessorTests {
+
+    ExecutorService executorService = Executors.newSingleThreadExecutor();
 
     ObservationRegistry observationRegistry = ObservationRegistry.create();
 
@@ -32,30 +40,135 @@ class ObservationThreadLocalAccessorTests {
 
     @BeforeEach
     void setup() {
-        observationRegistry.observationConfig().observationHandler(context -> true);
+        observationRegistry.observationConfig().observationHandler(new TracingHandler());
         registry.registerThreadLocalAccessor(new ObservationThreadLocalAccessor());
     }
 
-    @Test
-    void capturedThreadLocalValuesShouldBeCapturedRestoredAndCleared() {
-        Observation observation = Observation.start("foo", observationRegistry);
-        then(observationRegistry.getCurrentObservation()).isNull();
+    @AfterEach
+    void clean() {
+        executorService.shutdown();
+    }
 
+    @Test
+    void capturedThreadLocalValuesShouldBeCapturedRestoredAndCleared()
+            throws InterruptedException, ExecutionException, TimeoutException {
+        // given
+        Observation parent = Observation.start("parent", observationRegistry);
+        Observation child = Observation.createNotStarted("foo", observationRegistry).parentObservation(parent).start();
+        thenCurrentObservationIsNull();
+
+        // when context captured
         ContextSnapshot container;
-        try (Observation.Scope scope = observation.openScope()) {
-            then(observationRegistry.getCurrentObservation()).isSameAs(observation);
+        try (Observation.Scope scope = child.openScope()) {
+            thenCurrentObservationHasParent(parent, child);
+            thenCurrentScopeHasParent(null);
             container = ContextSnapshot.captureAllUsing(key -> true, registry);
         }
 
-        then(observationRegistry.getCurrentObservation()).isNull();
+        thenCurrentObservationIsNull();
 
-        // when restored
+        // when first scope created
         try (ContextSnapshot.Scope scope = container.setThreadLocals()) {
-            then(observationRegistry.getCurrentObservation()).isSameAs(observation);
+            thenCurrentObservationHasParent(parent, child);
+            Scope inScope = thenCurrentScopeHasParent(null);
+
+            // when second, nested scope created
+            try (ContextSnapshot.Scope scope2 = container.setThreadLocals()) {
+                thenCurrentObservationHasParent(parent, child);
+                Scope inSecondScope = thenCurrentScopeHasParent(inScope);
+
+                // when context gets propagated to a new thread
+                ContextExecutorService.wrap(executorService, () -> container).submit(() -> {
+                    thenCurrentObservationHasParent(parent, child);
+                    thenCurrentScopeHasParent(null);
+                }).get(5, TimeUnit.SECONDS);
+
+                then(scopeParent(inSecondScope)).isSameAs(inScope);
+            }
+            then(scopeParent(inScope)).isSameAs(null);
         }
 
-        // then cleared
+        thenCurrentObservationIsNull();
+
+        child.stop();
+        parent.stop();
+    }
+
+    private void thenCurrentObservationHasParent(Observation parent, Observation observation) {
+        then(observationRegistry.getCurrentObservation()).isSameAs(observation);
+        then(observationRegistry.getCurrentObservation().getContextView().getParentObservation()).isSameAs(parent);
+    }
+
+    private Scope thenCurrentScopeHasParent(Scope first) {
+        Scope inScope = TracingHandler.value.get();
+        then(scopeParent(inScope)).isSameAs(first);
+        return inScope;
+    }
+
+    private void thenCurrentObservationIsNull() {
         then(observationRegistry.getCurrentObservation()).isNull();
+        then(TracingHandler.value.get()).isSameAs(null);
+    }
+
+    private Scope scopeParent(Scope scope) {
+        return scope.parent();
+    }
+
+    static class TracingHandler implements ObservationHandler<Observation.Context> {
+
+        static final ThreadLocal<Scope> value = new ThreadLocal<>();
+
+        @Override
+        public void onStart(Observation.Context context) {
+            System.out.println("on start [" + context + "]");
+        }
+
+        @Override
+        public void onScopeOpened(Observation.Context context) {
+            Scope currentScope = value.get();
+            Scope newScope = new Scope(currentScope);
+            context.put(Scope.class, newScope);
+            System.out.println("\ton open scope [" + context + "]");
+        }
+
+        @Override
+        public void onScopeClosed(Observation.Context context) {
+            Scope scope = context.get(Scope.class);
+            scope.close();
+            System.out.println("\ton scope remove [" + context + "]");
+        }
+
+        @Override
+        public void onStop(Observation.Context context) {
+            context.put("state", "stopped");
+            System.out.println("on stop [" + context.getName() + "]");
+        }
+
+        @Override
+        public boolean supportsContext(Observation.Context context) {
+            return true;
+        }
+
+    }
+
+    static class Scope implements Closeable {
+
+        private final Scope previous;
+
+        Scope(Scope previous) {
+            this.previous = previous;
+            TracingHandler.value.set(this);
+        }
+
+        @Override
+        public void close() {
+            TracingHandler.value.set(previous);
+        }
+
+        Scope parent() {
+            return this.previous;
+        }
+
     }
 
 }
