@@ -466,13 +466,6 @@ public interface Observation extends ObservationView {
     void stop();
 
     /**
-     * Resets the observation scopes.
-     */
-    default void resetObservationScopes() {
-
-    }
-
-    /**
      * When put in scope, additional operations can take place by the
      * {@link ObservationHandler}s such as putting entries in thread local.
      * @return new scope
