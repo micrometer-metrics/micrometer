@@ -20,6 +20,7 @@ import io.micrometer.core.instrument.push.PushRegistryConfig;
 
 import java.util.Arrays;
 import java.util.Map;
+import java.util.Objects;
 import java.util.stream.Collectors;
 
 import static io.micrometer.core.instrument.config.MeterRegistryConfigValidator.*;
@@ -84,6 +85,41 @@ public interface OtlpConfig extends PushRegistryConfig {
         }
 
         return resourceAttributes;
+    }
+
+    /**
+     * Additional headers to send with exported metrics. This may be needed for
+     * authorization headers, for example.
+     * <p>
+     * By default, headers will be loaded from {@link #get(String)}. If that is not set,
+     * they will be taken from the environment variables
+     * {@code OTEL_EXPORTER_OTLP_HEADERS} and {@code OTEL_EXPORTER_OTLP_METRICS_HEADERS}.
+     * The header key-value pairs are expected to be in a comma-separated list in the
+     * format {@code key1=value1,key2=value2}. If a header is set in both
+     * {@code OTEL_EXPORTER_OTLP_HEADERS} and {@code OTEL_EXPORTER_OTLP_METRICS_HEADERS},
+     * the header in the latter will overwrite the former.
+     * @return a map of the headers' key-value pairs
+     * @see <a href=
+     * "https://opentelemetry.io/docs/reference/specification/protocol/exporter/#specifying-headers-via-environment-variables">OTLP
+     * Exporer headers configuration</a>
+     */
+    default Map<String, String> headers() {
+        Map<String, String> env = System.getenv();
+        String headersString = getString(this, "headers").orElse(null);
+
+        if (headersString == null) {
+            headersString = env.getOrDefault("OTEL_EXPORTER_OTLP_HEADERS", "").trim(); // common
+                                                                                       // headers
+            String metricsHeaders = env.getOrDefault("OTEL_EXPORTER_OTLP_METRICS_HEADERS", "").trim();
+            headersString = Objects.equals(headersString, "") ? metricsHeaders : headersString + "," + metricsHeaders;
+        }
+
+        String[] keyvalues = Objects.equals(headersString, "") ? new String[] {} : headersString.split(",");
+
+        return Arrays.stream(keyvalues).map(String::trim)
+                .filter(keyvalue -> keyvalue.length() > 2 && keyvalue.indexOf('=') > 0)
+                .collect(Collectors.toMap(keyvalue -> keyvalue.substring(0, keyvalue.indexOf('=')).trim(),
+                        keyvalue -> keyvalue.substring(keyvalue.indexOf('=') + 1).trim(), (l, r) -> r));
     }
 
     @Override

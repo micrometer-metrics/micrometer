@@ -54,6 +54,7 @@ class SimpleObservation implements Observation {
         this.convention = getConventionFromConfig(registry, context);
         this.handlers = getHandlersFromConfig(registry, context);
         this.filters = registry.observationConfig().getObservationFilters();
+        setParentFromCurrentObservation();
     }
 
     SimpleObservation(ObservationConvention<? extends Context> convention, ObservationRegistry registry,
@@ -69,6 +70,14 @@ class SimpleObservation implements Observation {
         else {
             throw new IllegalStateException(
                     "Convention [" + convention + "] doesn't support context [" + context + "]");
+        }
+        setParentFromCurrentObservation();
+    }
+
+    private void setParentFromCurrentObservation() {
+        Observation currentObservation = this.registry.getCurrentObservation();
+        if (currentObservation != null) {
+            this.context.setParentObservation(currentObservation);
         }
     }
 
@@ -226,17 +235,10 @@ class SimpleObservation implements Observation {
         @Nullable
         private final Observation.Scope previousObservationScope;
 
-        @Nullable
-        private final ObservationView previousParentObservationView;
-
         SimpleScope(ObservationRegistry registry, SimpleObservation current) {
             this.registry = registry;
             this.currentObservation = current;
             this.previousObservationScope = registry.getCurrentObservationScope();
-            this.previousParentObservationView = current.context.getParentObservation();
-            if (this.previousObservationScope != null) {
-                current.context.setParentObservation(this.previousObservationScope.getCurrentObservation());
-            }
             this.registry.setCurrentObservationScope(this);
         }
 
@@ -249,7 +251,6 @@ class SimpleObservation implements Observation {
         public void close() {
             this.registry.setCurrentObservationScope(previousObservationScope);
             this.currentObservation.notifyOnScopeClosed();
-            this.currentObservation.context.setParentObservation(this.previousParentObservationView);
         }
 
     }

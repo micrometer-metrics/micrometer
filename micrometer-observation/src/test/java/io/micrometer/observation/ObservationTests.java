@@ -128,21 +128,19 @@ class ObservationTests {
     }
 
     @Test
-    void settingScopeMakesAReferenceOnParentContext() {
+    void creatingAChildInAScopeLinksTheTwoAsParentAndChild() {
         registry.observationConfig().observationHandler(context -> true);
 
-        Observation.Context parentContext = new Observation.Context();
-        Observation parent = Observation.start("parent", () -> parentContext, registry);
-        Observation.Context childContext = new Observation.Context();
+        Observation parent = Observation.start("parent", registry);
+        Observation parent2 = Observation.start("parent2", registry);
+        Observation childOutsideOfScope = Observation.createNotStarted("childOutsideOfScope", registry)
+                .parentObservation(parent2).start();
         parent.scoped(() -> {
-            assertThat(childContext.getParentObservation()).isNull();
-            Observation.createNotStarted("child", () -> childContext, registry).observe(() -> {
-                assertThat(childContext.getParentObservation().getContextView()).isSameAs(parentContext);
-            });
-            assertThat(childContext.getParentObservation()).isNull();
+            Observation child = Observation.start("child", registry);
+            assertThat(child.getContextView().getParentObservation()).isSameAs(parent);
+            assertThat(childOutsideOfScope.getContextView().getParentObservation()).isSameAs(parent2);
         });
         parent.stop();
-        assertThat(childContext.getParentObservation()).isNull();
     }
 
     @Test
@@ -201,7 +199,7 @@ class ObservationTests {
     }
 
     @Test
-    void noCustomAndDefaultAndGlobalConventionShouldResolveToDefaultConvention() {
+    void noCustomAndDefaultAndGlobalConventionShouldResolveToGlobalConvention() {
         registry.observationConfig().observationHandler(context -> true);
         registry.observationConfig().observationConvention(new GlobalConvention());
 

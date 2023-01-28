@@ -45,7 +45,7 @@ public class CacheSample {
         GuavaCacheMetrics.monitor(registry, guavaCache, "book.guava");
 
         // read all of Frankenstein
-        HttpClient.create().baseUrl("www.gutenberg.org").doOnRequest((req, conn) -> conn.addHandler(wordDecoder()))
+        HttpClient.create().baseUrl("www.gutenberg.org").doOnRequest((req, conn) -> conn.addHandlerLast(wordDecoder()))
                 .get().uri("/files/84/84-0.txt").responseContent().asString().delayElements(Duration.ofMillis(10)) // one
                                                                                                                    // word
                                                                                                                    // per

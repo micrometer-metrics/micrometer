@@ -62,7 +62,11 @@ public final class DynatraceExporterV2 extends AbstractDynatraceExporter {
 
     private static final Pattern IS_NULL_ERROR_RESPONSE = Pattern.compile("\"error\":\\s?null");
 
-    private static final WarnThenDebugLogger warnThenDebugLogger = new WarnThenDebugLogger(DynatraceExporterV2.class);
+    private static final WarnThenDebugLogger stackTraceWarnThenDebugLogger = new WarnThenDebugLogger(
+            DynatraceExporterV2.class);
+
+    private static final WarnThenDebugLogger nanGaugeWarnThenDebugLogger = new WarnThenDebugLogger(
+            DynatraceExporterV2.class);
 
     private static final Map<String, String> staticDimensions = Collections.singletonMap("dt.metrics.source",
             "micrometer");
@@ -132,13 +136,9 @@ public final class DynatraceExporterV2 extends AbstractDynatraceExporter {
     @Override
     public void export(List<Meter> meters) {
         // Lines that are too long to be ingested into Dynatrace, as well as lines that
-        // contain NaN
-        // or Inf values are dropped and not returned from "toMetricLines", and are
+        // contain NaN or Inf values are not returned from "toMetricLines", and are
         // therefore dropped.
-        List<String> metricLines = meters.stream().flatMap(this::toMetricLines) // Stream<Meter>
-                                                                                // to
-                                                                                // Stream<String>
-                .collect(Collectors.toList());
+        List<String> metricLines = meters.stream().flatMap(this::toMetricLines).collect(Collectors.toList());
 
         sendInBatches(metricLines);
     }
@@ -155,7 +155,25 @@ public final class DynatraceExporterV2 extends AbstractDynatraceExporter {
 
     private String createGaugeLine(Meter meter, Measurement measurement) {
         try {
-            return createMetricBuilder(meter).setDoubleGaugeValue(measurement.getValue()).serialize();
+            double value = measurement.getValue();
+            if (Double.isNaN(value)) {
+                // NaNs can be caused by garbage collecting the backing field for a weak
+                // reference or by setting the value of the backing field to NaN. At this
+                // point it is impossible to distinguish these cases. This information is
+                // logged once at WARN then on DEBUG level, as otherwise the serialization
+                // would throw an exception and get logged at WARNING level. This can lead
+                // to a lot of warning logs for the remainder of the application execution
+                // if an object holding the weakly referenced objects has been garbage
+                // collected, but the meter has not been removed from the registry.
+                // NaN's are currently dropped on the Dynatrace side, so dropping them
+                // on the client side here will not change the metrics in Dynatrace.
+
+                nanGaugeWarnThenDebugLogger.log(() -> String.format(
+                        "Meter '%s' returned a value of NaN, which will not be exported. This can be a deliberate value or because the weak reference to the backing object expired.",
+                        meter.getId().getName()));
+                return null;
+            }
+            return createMetricBuilder(meter).setDoubleGaugeValue(value).serialize();
         }
         catch (MetricException e) {
             logger.warn(METER_EXCEPTION_LOG_FORMAT, meter.getId().getName(), e.getMessage());
@@ -317,7 +335,8 @@ public final class DynatraceExporterV2 extends AbstractDynatraceExporter {
         }
         catch (Throwable throwable) {
             logger.warn("Failed metric ingestion: " + throwable);
-            warnThenDebugLogger.log("Stack trace for previous 'Failed metric ingestion' warning log: ", throwable);
+            stackTraceWarnThenDebugLogger.log("Stack trace for previous 'Failed metric ingestion' warning log: ",
+                    throwable);
         }
     }
 

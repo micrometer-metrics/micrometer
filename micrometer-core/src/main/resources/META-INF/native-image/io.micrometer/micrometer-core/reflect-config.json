@@ -1,5 +1,12 @@
 [
   {
+    "condition": { "typeReachable" : "java.io.Serial" },
+    "name":"com.sun.management.OperatingSystemMXBean",
+    "methods":[
+      {"name":"getCpuLoad","parameterTypes":[] }
+    ]
+  },
+  {
     "name":"com.sun.management.OperatingSystemMXBean",
     "methods":[
       {"name":"getProcessCpuLoad","parameterTypes":[] },
