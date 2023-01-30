@@ -56,6 +56,12 @@ public interface ObservationHandler<T extends Observation.Context> {
     }
 
     /**
+     * Reacts to resetting of an {@link Observation.Scope}.
+     */
+    default void onScopeReset() {
+    }
+
+    /**
      * Reacts to opening of an {@link Observation.Scope}.
      * @param context an {@link Observation.Context}
      */
@@ -145,6 +151,11 @@ public interface ObservationHandler<T extends Observation.Context> {
         }
 
         @Override
+        public void onScopeReset() {
+            this.handlers.forEach(ObservationHandler::onScopeReset);
+        }
+
+        @Override
         public void onScopeOpened(Observation.Context context) {
             getFirstApplicableHandler(context).ifPresent(handler -> handler.onScopeOpened(context));
         }
@@ -216,6 +227,11 @@ public interface ObservationHandler<T extends Observation.Context> {
         @Override
         public void onEvent(Observation.Event event, Observation.Context context) {
             getAllApplicableHandlers(context).forEach(handler -> handler.onEvent(event, context));
+        }
+
+        @Override
+        public void onScopeReset() {
+            this.handlers.forEach(ObservationHandler::onScopeReset);
         }
 
         @Override

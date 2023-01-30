@@ -19,6 +19,8 @@ import io.micrometer.context.ThreadLocalAccessor;
 import io.micrometer.observation.Observation;
 import io.micrometer.observation.ObservationRegistry;
 
+import java.util.Objects;
+
 /**
  * A {@link ThreadLocalAccessor} to put and restore current {@link Observation}.
  *
@@ -32,7 +34,15 @@ public class ObservationThreadLocalAccessor implements ThreadLocalAccessor<Obser
      */
     public static final String KEY = "micrometer.observation";
 
-    private static final ObservationRegistry observationRegistry = ObservationRegistry.create();
+    private static ObservationThreadLocalAccessor instance;
+
+    private static final String SCOPE_KEY = KEY + ".scope";
+
+    private ObservationRegistry observationRegistry = ObservationRegistry.create();
+
+    public ObservationThreadLocalAccessor() {
+        instance = this;
+    }
 
     @Override
     public Object key() {
@@ -41,7 +51,12 @@ public class ObservationThreadLocalAccessor implements ThreadLocalAccessor<Obser
 
     @Override
     public Observation getValue() {
-        return observationRegistry.getCurrentObservation();
+        Observation.Scope scope = observationRegistry.getCurrentObservationScope();
+        Observation observation = observationRegistry.getCurrentObservation();
+        if (scope != null) {
+            observation.getContext().put(SCOPE_KEY, scope);
+        }
+        return observation;
     }
 
     @Override
@@ -53,20 +68,31 @@ public class ObservationThreadLocalAccessor implements ThreadLocalAccessor<Obser
 
     @Override
     public void reset() {
-        Observation.Scope scope = observationRegistry.getCurrentObservationScope();
-        while (scope != null) {
-            scope.close();
-            scope = observationRegistry.getCurrentObservationScope();
-        }
+        observationRegistry.resetScope();
     }
 
     @Override
     public void restore(Observation value) {
-        Observation.Scope scope = observationRegistry.getCurrentObservationScope();
-        if (scope != null) {
-            scope.close(); // scope will be removed from TL and previous scope will be
-                           // restored to TL
+        reset();
+        Observation.Scope observationScope = value.getContext().get(SCOPE_KEY);
+        if (observationScope != null) {
+            observationScope.close(); // We close the previous scope -
+            // it will put its parent as current
         }
+        setValue(value); // We open the previous scope again, however this time in TL
+        // we have the whole hierarchy of scopes re-attached
+    }
+
+    /**
+     * Returns the instance of {@link ObservationThreadLocalAccessor}.
+     * @return instance
+     */
+    public static ObservationThreadLocalAccessor getInstance() {
+        return Objects.requireNonNull(instance, "Instance was not set - please ensure that ContextRegistry methods were called so that this class gets instantiated via the SPI mechanism");
+    }
+
+    public void setObservationRegistry(ObservationRegistry observationRegistry) {
+        this.observationRegistry = observationRegistry;
     }
 
 }

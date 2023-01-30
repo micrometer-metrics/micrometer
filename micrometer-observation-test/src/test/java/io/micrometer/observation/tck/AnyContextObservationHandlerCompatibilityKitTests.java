@@ -40,6 +40,15 @@ class AnyContextObservationHandlerCompatibilityKitTests extends AnyContextObserv
             }
 
             @Override
+            public void onScopeReset() {
+
+            }
+
+            @Override
+            public void onScopeClosed(Observation.Context context) {
+            }
+
+            @Override
             public void onStop(Observation.Context context) {
             }
 
