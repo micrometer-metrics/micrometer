@@ -66,8 +66,8 @@ def VERSIONS = [
         'org.junit.jupiter:junit-jupiter:5.9.+', // Not using latest.release to avoid using a milestone version.
         'org.junit.platform:junit-platform-launcher:1.9.+',
         'org.latencyutils:LatencyUtils:latest.release',
-        'org.mockito:mockito-core:latest.release',
-        'org.mockito:mockito-inline:latest.release',
+        'org.mockito:mockito-core:4.8.1',
+        'org.mockito:mockito-inline:4.8.1',
         'org.mongodb:mongodb-driver-sync:latest.release',
         'org.postgresql:postgresql:latest.release',
         'org.slf4j:slf4j-api:1.7.+',

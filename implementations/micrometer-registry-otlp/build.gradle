@@ -7,6 +7,7 @@ dependencies {
     implementation 'io.opentelemetry.proto:opentelemetry-proto:0.16.0-alpha'
 
     testImplementation project(':micrometer-test')
+    testImplementation 'uk.org.webcompere:system-stubs-jupiter:latest.release'
 }
 
 // new module in 1.9. This should be removed in later branches.
