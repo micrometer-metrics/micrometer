@@ -7,4 +7,5 @@ dependencies {
     implementation 'io.opentelemetry.proto:opentelemetry-proto:0.19.+'
 
     testImplementation project(':micrometer-test')
+    testImplementation 'uk.org.webcompere:system-stubs-jupiter:latest.release'
 }
