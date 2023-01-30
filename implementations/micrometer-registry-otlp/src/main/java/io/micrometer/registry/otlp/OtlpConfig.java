@@ -102,24 +102,25 @@ public interface OtlpConfig extends PushRegistryConfig {
      * @see <a href=
      * "https://opentelemetry.io/docs/reference/specification/protocol/exporter/#specifying-headers-via-environment-variables">OTLP
      * Exporer headers configuration</a>
+     * @since 1.11.0
      */
     default Map<String, String> headers() {
-        Map<String, String> env = System.getenv();
         String headersString = getString(this, "headers").orElse(null);
 
         if (headersString == null) {
-            headersString = env.getOrDefault("OTEL_EXPORTER_OTLP_HEADERS", "").trim(); // common
-                                                                                       // headers
+            Map<String, String> env = System.getenv();
+            // common headers
+            headersString = env.getOrDefault("OTEL_EXPORTER_OTLP_HEADERS", "").trim();
             String metricsHeaders = env.getOrDefault("OTEL_EXPORTER_OTLP_METRICS_HEADERS", "").trim();
             headersString = Objects.equals(headersString, "") ? metricsHeaders : headersString + "," + metricsHeaders;
         }
 
-        String[] keyvalues = Objects.equals(headersString, "") ? new String[] {} : headersString.split(",");
+        String[] keyValues = Objects.equals(headersString, "") ? new String[] {} : headersString.split(",");
 
-        return Arrays.stream(keyvalues).map(String::trim)
-                .filter(keyvalue -> keyvalue.length() > 2 && keyvalue.indexOf('=') > 0)
-                .collect(Collectors.toMap(keyvalue -> keyvalue.substring(0, keyvalue.indexOf('=')).trim(),
-                        keyvalue -> keyvalue.substring(keyvalue.indexOf('=') + 1).trim(), (l, r) -> r));
+        return Arrays.stream(keyValues).map(String::trim)
+                .filter(keyValue -> keyValue.length() > 2 && keyValue.indexOf('=') > 0)
+                .collect(Collectors.toMap(keyValue -> keyValue.substring(0, keyValue.indexOf('=')).trim(),
+                        keyValue -> keyValue.substring(keyValue.indexOf('=') + 1).trim(), (l, r) -> r));
     }
 
     @Override
