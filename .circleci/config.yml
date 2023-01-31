@@ -42,7 +42,6 @@ commands:
       - restore_cache:
           keys:
             - gradle-dependencies-{{ .Branch }}-{{ checksum "build.gradle" }}-{{ checksum ".circleci/config.yml" }}
-            - gradle-dependencies-{{ .Branch }}
       - run:
           name: downloadDependencies
           command: ./gradlew downloadDependencies --console=plain
