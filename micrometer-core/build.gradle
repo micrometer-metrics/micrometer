@@ -61,6 +61,7 @@ dependencies {
     // apache httpcomponents monitoring
     optionalApi 'org.apache.httpcomponents:httpclient'
     optionalApi 'org.apache.httpcomponents:httpasyncclient'
+    optionalApi 'org.apache.httpcomponents.client5:httpclient5'
 
     // hystrix monitoring
     optionalApi 'com.netflix.hystrix:hystrix-core'
