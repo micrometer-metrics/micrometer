@@ -13,6 +13,8 @@ dependencies {
     // We need to make sure netty dns resolution works on all macs
     implementation(group: 'io.netty', name: 'netty-resolver-dns-native-macos', classifier: 'osx-x86_64')
     implementation(group: 'io.netty', name: 'netty-resolver-dns-native-macos', classifier: 'osx-aarch_64')
+    implementation(group: 'io.netty', name: 'netty-transport-native-epoll', classifier: 'linux-aarch_64')
+    implementation(group: 'io.netty', name: 'netty-transport-native-epoll', classifier: 'linux-x86_64')
 
     testImplementation project(':micrometer-test')
     testImplementation 'io.projectreactor:reactor-test'
