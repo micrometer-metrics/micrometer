@@ -76,9 +76,9 @@ public interface OtlpConfig extends PushRegistryConfig {
                 : resourceAttributesConfig.trim().split(",");
 
         Map<String, String> resourceAttributes = Arrays.stream(splitResourceAttributesString).map(String::trim)
-                .filter(keyvalue -> keyvalue.length() > 2 && keyvalue.indexOf('=') > 0)
+                .filter(keyValue -> keyValue.length() > 2 && keyValue.indexOf('=') > 0)
                 .collect(Collectors.toMap(keyvalue -> keyvalue.substring(0, keyvalue.indexOf('=')).trim(),
-                        keyvalue -> keyvalue.substring(keyvalue.indexOf('=') + 1).trim()));
+                        keyValue -> keyValue.substring(keyValue.indexOf('=') + 1).trim()));
 
         if (env.containsKey("OTEL_SERVICE_NAME") && !resourceAttributes.containsKey("service.name")) {
             resourceAttributes.put("service.name", env.get("OTEL_SERVICE_NAME"));

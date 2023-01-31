@@ -28,7 +28,14 @@ import java.util.Properties;
 import java.util.concurrent.TimeUnit;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static uk.org.webcompere.systemstubs.SystemStubs.withEnvironmentVariables;
 
+/**
+ * Tests for {@link OtlpMeterRegistry}.
+ *
+ * @author Tommy Ludwig
+ * @author Johnny Lim
+ */
 class OtlpMeterRegistryTest {
 
     MockClock clock = new MockClock();
@@ -519,7 +526,6 @@ class OtlpMeterRegistryTest {
                 .contains(OtlpMeterRegistry.createKeyValue("service.name", "myService"));
     }
 
-    // can't test environment variables easily in an isolated way
     @Test
     void setResourceAttributesAsString() throws IOException {
         Properties propertiesConfig = new Properties();
@@ -527,6 +533,16 @@ class OtlpMeterRegistryTest {
         registry = new OtlpMeterRegistry(key -> (String) propertiesConfig.get(key), Clock.SYSTEM);
         assertThat(registry.getResourceAttributes()).contains(OtlpMeterRegistry.createKeyValue("key1", "value1"),
                 OtlpMeterRegistry.createKeyValue("key2", "value2"));
+    }
+
+    @Test
+    void setResourceAttributesFromEnvironmentVariables() throws Exception {
+        withEnvironmentVariables("OTEL_RESOURCE_ATTRIBUTES", "a=1,b=2", "OTEL_SERVICE_NAME", "my-service")
+                .execute(() -> {
+                    assertThat(registry.getResourceAttributes()).contains(OtlpMeterRegistry.createKeyValue("a", "1"),
+                            OtlpMeterRegistry.createKeyValue("b", "2"),
+                            OtlpMeterRegistry.createKeyValue("service.name", "my-service"));
+                });
     }
 
 }

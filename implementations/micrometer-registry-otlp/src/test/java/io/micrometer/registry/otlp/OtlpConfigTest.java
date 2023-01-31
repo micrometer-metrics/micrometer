@@ -17,6 +17,8 @@ package io.micrometer.registry.otlp;
 
 import org.junit.jupiter.api.Test;
 
+import java.util.Collections;
+import java.util.Map;
 import java.util.stream.Stream;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -24,7 +26,10 @@ import static uk.org.webcompere.systemstubs.SystemStubs.withEnvironmentVariable;
 import static uk.org.webcompere.systemstubs.SystemStubs.withEnvironmentVariables;
 
 /**
- * Tests for {@link OtlpConfig}
+ * Tests for {@link OtlpConfig}.
+ *
+ * @author Tommy Ludwig
+ * @author Johnny Lim
  */
 class OtlpConfigTest {
 
@@ -74,6 +79,27 @@ class OtlpConfigTest {
         withEnvironmentVariables().set("OTEL_EXPORTER_OTLP_HEADERS", "metrics=m,auth=token")
                 .set("OTEL_EXPORTER_OTLP_METRICS_HEADERS", "metrics=t").execute(() -> assertThat(config.headers())
                         .containsEntry("auth", "token").containsEntry("metrics", "t").hasSize(2));
+    }
+
+    @Test
+    void resourceAttributesFromEnvironmentVariables() throws Exception {
+        withEnvironmentVariables("OTEL_RESOURCE_ATTRIBUTES", "a=1,b=2", "OTEL_SERVICE_NAME", "my-service")
+                .execute(() -> {
+                    assertThat(OtlpConfig.DEFAULT.resourceAttributes()).hasSize(3).containsEntry("a", "1")
+                            .containsEntry("b", "2").containsEntry("service.name", "my-service");
+                });
+    }
+
+    @Test
+    void resourceAttributesFromGetTakePrecedenceOverOnesFromEnvironmentVariables() throws Exception {
+        Map<String, String> map = Collections.singletonMap("otlp.resourceAttributes",
+                "a=100,service.name=your-service");
+        OtlpConfig config = map::get;
+        withEnvironmentVariables("OTEL_RESOURCE_ATTRIBUTES", "a=1,b=2", "OTEL_SERVICE_NAME", "my-service")
+                .execute(() -> {
+                    assertThat(config.resourceAttributes()).hasSize(2).containsEntry("a", "100")
+                            .containsEntry("service.name", "your-service");
+                });
     }
 
 }
