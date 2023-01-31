@@ -31,7 +31,6 @@ internal class AsContextElementKtTests {
 
     @BeforeEach
     fun before() {
-        ContextRegistry.getInstance()
         ObservationThreadLocalAccessor.getInstance().setObservationRegistry(observationRegistry)
     }
 

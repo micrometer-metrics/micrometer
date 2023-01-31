@@ -15,6 +15,7 @@
  */
 package io.micrometer.observation.contextpropagation;
 
+import io.micrometer.context.ContextRegistry;
 import io.micrometer.context.ThreadLocalAccessor;
 import io.micrometer.observation.Observation;
 import io.micrometer.observation.ObservationRegistry;
@@ -93,8 +94,9 @@ public class ObservationThreadLocalAccessor implements ThreadLocalAccessor<Obser
      * @return instance
      */
     public static ObservationThreadLocalAccessor getInstance() {
-        return Objects.requireNonNull(instance,
-                "Instance was not set - please ensure that ContextRegistry methods were called (e.g. <ContextRegistry.getInstance()>) so that this class gets instantiated via the SPI mechanism.");
+        ContextRegistry.getInstance(); // we're ensuring that the SPI mechanism got called
+                                       // and an instance of OTLA was created
+        return instance;
     }
 
     public void setObservationRegistry(ObservationRegistry observationRegistry) {

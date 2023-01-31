@@ -50,7 +50,7 @@ class ObservedAspectTests {
 
     @BeforeEach
     void setup() {
-        ContextRegistry.getInstance();
+        ;
         ObservationThreadLocalAccessor.getInstance().setObservationRegistry(registry);
     }
 
