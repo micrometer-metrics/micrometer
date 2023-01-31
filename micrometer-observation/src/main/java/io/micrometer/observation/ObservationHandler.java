@@ -56,7 +56,9 @@ public interface ObservationHandler<T extends Observation.Context> {
     }
 
     /**
-     * Reacts to resetting of an {@link Observation.Scope}.
+     * Reacts to resetting of scopes. If your handler uses a
+     * {@link ThreadLocal} value, this method should clear that
+     * {@link ThreadLocal}.
      */
     default void onScopeReset() {
     }
