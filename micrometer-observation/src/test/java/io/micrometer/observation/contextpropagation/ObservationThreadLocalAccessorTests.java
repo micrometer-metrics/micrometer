@@ -43,7 +43,6 @@ class ObservationThreadLocalAccessorTests {
     void setup() {
         observationRegistry.observationConfig().observationHandler(new TracingHandler());
         registry.registerThreadLocalAccessor(new ObservationThreadLocalAccessor());
-        ;
         ObservationThreadLocalAccessor.getInstance().setObservationRegistry(observationRegistry);
     }
 
