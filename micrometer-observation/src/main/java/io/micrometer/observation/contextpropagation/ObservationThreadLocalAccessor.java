@@ -38,7 +38,7 @@ public class ObservationThreadLocalAccessor implements ThreadLocalAccessor<Obser
 
     private static final String SCOPE_KEY = KEY + ".scope";
 
-    private ObservationRegistry observationRegistry = ObservationRegistry.create();
+    private ObservationRegistry observationRegistry;
 
     public ObservationThreadLocalAccessor() {
         instance = this;
@@ -51,8 +51,8 @@ public class ObservationThreadLocalAccessor implements ThreadLocalAccessor<Obser
 
     @Override
     public Observation getValue() {
-        Observation.Scope scope = observationRegistry.getCurrentObservationScope();
-        Observation observation = observationRegistry.getCurrentObservation();
+        Observation.Scope scope = observationRegistry().getCurrentObservationScope();
+        Observation observation = observationRegistry().getCurrentObservation();
         if (scope != null) {
             observation.getContext().put(SCOPE_KEY, scope);
         }
@@ -68,7 +68,12 @@ public class ObservationThreadLocalAccessor implements ThreadLocalAccessor<Obser
 
     @Override
     public void reset() {
-        observationRegistry.resetScope();
+        observationRegistry().resetScope();
+    }
+
+    private ObservationRegistry observationRegistry() {
+        return Objects.requireNonNull(observationRegistry,
+                "You must override the default ObservationRegistry, otherwise your configured handlers will never be called. First ensure that <ContextRegistry.getInstance()> was called, then you can set the ObservationRegistry by calling <ObservationThreadLocalAccessor.getInstance().setObservationRegistry(...)>.");
     }
 
     @Override
@@ -77,10 +82,10 @@ public class ObservationThreadLocalAccessor implements ThreadLocalAccessor<Obser
         Observation.Scope observationScope = value.getContext().get(SCOPE_KEY);
         if (observationScope != null) {
             observationScope.close(); // We close the previous scope -
-            // it will put its parent as current
+            // it will put its parent as current and call all handlers
         }
         setValue(value); // We open the previous scope again, however this time in TL
-        // we have the whole hierarchy of scopes re-attached
+        // we have the whole hierarchy of scopes re-attached via handlers
     }
 
     /**
@@ -88,7 +93,8 @@ public class ObservationThreadLocalAccessor implements ThreadLocalAccessor<Obser
      * @return instance
      */
     public static ObservationThreadLocalAccessor getInstance() {
-        return Objects.requireNonNull(instance, "Instance was not set - please ensure that ContextRegistry methods were called so that this class gets instantiated via the SPI mechanism");
+        return Objects.requireNonNull(instance,
+                "Instance was not set - please ensure that ContextRegistry methods were called (e.g. <ContextRegistry.getInstance()>) so that this class gets instantiated via the SPI mechanism.");
     }
 
     public void setObservationRegistry(ObservationRegistry observationRegistry) {

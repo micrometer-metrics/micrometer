@@ -90,7 +90,8 @@ public interface ObservationRegistry {
     }
 
     /**
-     * Clear all thread local entries for {@link ObservationHandler}s and {@link ObservationRegistry}.
+     * Clear all thread local entries for {@link ObservationHandler}s and
+     * {@link ObservationRegistry}.
      */
     default void resetScope() {
         observationConfig().getObservationHandlers().forEach(ObservationHandler::onScopeReset);

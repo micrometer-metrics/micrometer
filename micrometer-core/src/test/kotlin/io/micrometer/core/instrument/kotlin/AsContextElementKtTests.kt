@@ -19,15 +19,24 @@ package io.micrometer.core.instrument.kotlin
 import io.micrometer.context.ContextRegistry
 import io.micrometer.observation.Observation
 import io.micrometer.observation.ObservationRegistry
+import io.micrometer.observation.contextpropagation.ObservationThreadLocalAccessor
 import kotlinx.coroutines.*
 import org.assertj.core.api.BDDAssertions.then
+import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
 
 internal class AsContextElementKtTests {
 
+    val observationRegistry = ObservationRegistry.create()
+
+    @BeforeEach
+    fun before() {
+        ContextRegistry.getInstance()
+        ObservationThreadLocalAccessor.getInstance().setObservationRegistry(observationRegistry)
+    }
+
     @Test
     fun `should return current observation from context`(): Unit = runBlocking {
-        val observationRegistry = ObservationRegistry.create()
         observationRegistry.observationConfig().observationHandler { true }
         val nextObservation = Observation.start("name", observationRegistry)
         val inScope = nextObservation.openScope()
