@@ -24,11 +24,9 @@ import io.micrometer.observation.Observation;
 import io.micrometer.observation.ObservationConvention;
 import io.micrometer.observation.ObservationTextPublisher;
 import io.micrometer.observation.annotation.Observed;
-import io.micrometer.observation.contextpropagation.ObservationThreadLocalAccessor;
 import io.micrometer.observation.tck.TestObservationRegistry;
 import io.micrometer.observation.tck.TestObservationRegistryAssert;
 import org.aspectj.lang.ProceedingJoinPoint;
-import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.aop.aspectj.annotation.AspectJProxyFactory;
 
@@ -47,11 +45,6 @@ import static org.awaitility.Awaitility.await;
 class ObservedAspectTests {
 
     TestObservationRegistry registry = TestObservationRegistry.create();
-
-    @BeforeEach
-    void setup() {
-        ObservationThreadLocalAccessor.getInstance().setObservationRegistry(registry);
-    }
 
     @Test
     void annotatedCallShouldBeObserved() {

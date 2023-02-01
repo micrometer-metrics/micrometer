@@ -29,7 +29,6 @@ import java.io.Closeable;
 import java.util.concurrent.*;
 
 import static org.assertj.core.api.BDDAssertions.then;
-import static org.assertj.core.api.BDDAssertions.thenThrownBy;
 
 class ObservationThreadLocalAccessorTests {
 
@@ -43,7 +42,6 @@ class ObservationThreadLocalAccessorTests {
     void setup() {
         observationRegistry.observationConfig().observationHandler(new TracingHandler());
         registry.registerThreadLocalAccessor(new ObservationThreadLocalAccessor());
-        ObservationThreadLocalAccessor.getInstance().setObservationRegistry(observationRegistry);
     }
 
     @AfterEach
@@ -95,16 +93,6 @@ class ObservationThreadLocalAccessorTests {
 
         child.stop();
         parent.stop();
-    }
-
-    @Test
-    void exceptionShouldBeThrownWhenObservationRegistryNotSet() {
-        ObservationThreadLocalAccessor accessor = new ObservationThreadLocalAccessor();
-
-        thenThrownBy(accessor::getValue).hasMessageContaining("You must override the default ObservationRegistry");
-        thenThrownBy(accessor::reset).hasMessageContaining("You must override the default ObservationRegistry");
-        thenThrownBy(() -> accessor.restore(Observation.NOOP))
-                .hasMessageContaining("You must override the default ObservationRegistry");
     }
 
     private void thenCurrentObservationHasParent(Observation parent, Observation observation) {

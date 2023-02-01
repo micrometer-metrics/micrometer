@@ -15,12 +15,9 @@
  */
 package io.micrometer.observation.contextpropagation;
 
-import io.micrometer.context.ContextRegistry;
 import io.micrometer.context.ThreadLocalAccessor;
 import io.micrometer.observation.Observation;
 import io.micrometer.observation.ObservationRegistry;
-
-import java.util.Objects;
 
 /**
  * A {@link ThreadLocalAccessor} to put and restore current {@link Observation}.
@@ -35,15 +32,9 @@ public class ObservationThreadLocalAccessor implements ThreadLocalAccessor<Obser
      */
     public static final String KEY = "micrometer.observation";
 
-    private static ObservationThreadLocalAccessor instance;
-
     private static final String SCOPE_KEY = KEY + ".scope";
 
-    private ObservationRegistry observationRegistry;
-
-    public ObservationThreadLocalAccessor() {
-        instance = this;
-    }
+    private static final ObservationRegistry observationRegistry = ObservationRegistry.create();
 
     @Override
     public Object key() {
@@ -52,7 +43,7 @@ public class ObservationThreadLocalAccessor implements ThreadLocalAccessor<Obser
 
     @Override
     public Observation getValue() {
-        Observation.Scope scope = observationRegistry().getCurrentObservationScope();
+        Observation.Scope scope = observationRegistry.getCurrentObservationScope();
         if (scope != null) {
             Observation observation = scope.getCurrentObservation();
             observation.getContext().put(SCOPE_KEY, scope);
@@ -72,15 +63,10 @@ public class ObservationThreadLocalAccessor implements ThreadLocalAccessor<Obser
 
     @Override
     public void reset() {
-        Observation.Scope scope = observationRegistry().getCurrentObservationScope();
+        Observation.Scope scope = observationRegistry.getCurrentObservationScope();
         if (scope != null) {
             scope.reset();
         }
-    }
-
-    private ObservationRegistry observationRegistry() {
-        return Objects.requireNonNull(observationRegistry,
-                "You must override the default ObservationRegistry, otherwise your configured handlers will never be called. First ensure that <ContextRegistry.getInstance()> was called, then you can set the ObservationRegistry by calling <ObservationThreadLocalAccessor.getInstance().setObservationRegistry(...)>.");
     }
 
     @Override
@@ -93,20 +79,6 @@ public class ObservationThreadLocalAccessor implements ThreadLocalAccessor<Obser
         }
         setValue(value); // We open the previous scope again, however this time in TL
         // we have the whole hierarchy of scopes re-attached via handlers
-    }
-
-    /**
-     * Returns the instance of {@link ObservationThreadLocalAccessor}.
-     * @return instance
-     */
-    public static ObservationThreadLocalAccessor getInstance() {
-        ContextRegistry.getInstance(); // we're ensuring that the SPI mechanism got called
-                                       // and an instance of OTLA was created
-        return instance;
-    }
-
-    public void setObservationRegistry(ObservationRegistry observationRegistry) {
-        this.observationRegistry = observationRegistry;
     }
 
 }
