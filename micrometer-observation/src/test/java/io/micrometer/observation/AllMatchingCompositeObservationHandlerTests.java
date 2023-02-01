@@ -100,7 +100,7 @@ class AllMatchingCompositeObservationHandlerTests {
         AllMatchingCompositeObservationHandler allMatchingHandler = new AllMatchingCompositeObservationHandler(
                 this.matchingHandler, this.matchingHandler2);
 
-        allMatchingHandler.onScopeReset();
+        allMatchingHandler.onScopeReset(null);
 
         assertThat(this.matchingHandler.scopeReset).isTrue();
         assertThat(this.matchingHandler2.scopeReset).isTrue();
@@ -177,7 +177,7 @@ class AllMatchingCompositeObservationHandlerTests {
         }
 
         @Override
-        public void onScopeReset() {
+        public void onScopeReset(Observation.Context context) {
             this.scopeReset = true;
         }
 

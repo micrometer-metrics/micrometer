@@ -45,7 +45,7 @@ public abstract class AnyContextObservationHandlerCompatibilityKit
                 .doesNotThrowAnyException();
         assertThatCode(() -> handler.onScopeOpened(testContext)).doesNotThrowAnyException();
         assertThatCode(() -> handler.onScopeClosed(testContext)).doesNotThrowAnyException();
-        assertThatCode(() -> handler.onScopeReset()).doesNotThrowAnyException();
+        assertThatCode(() -> handler.onScopeReset(testContext)).doesNotThrowAnyException();
         assertThatCode(() -> handler.supportsContext(testContext)).doesNotThrowAnyException();
         assertThat(handler.supportsContext(testContext)).as("Handler supports any context").isTrue();
     }
