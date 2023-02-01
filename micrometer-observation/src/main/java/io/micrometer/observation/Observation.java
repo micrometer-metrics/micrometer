@@ -755,8 +755,22 @@ public interface Observation extends ObservationView {
          */
         Observation getCurrentObservation();
 
+        /**
+         * Clears the current scope and notifies the handlers that the scope was closed.
+         * You don't need to call this method manually, if you use try-with-resource, it
+         * will call this for you. Please only call this method if you know what you are
+         * doing and your use-case demands the usage of it.
+         */
         @Override
         void close();
+
+        /**
+         * Clears the current scope and notifies the handlers that the scope was reset.
+         * You don't need to call this method in most of the cases, please only call this
+         * method if you know what you are doing and your use-case demands the usage of
+         * it.
+         */
+        void reset();
 
         /**
          * Checks whether this {@link Scope} is no-op.

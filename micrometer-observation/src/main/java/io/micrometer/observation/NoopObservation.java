@@ -126,6 +126,10 @@ final class NoopObservation implements Observation {
         public void close() {
         }
 
+        @Override
+        public void reset() {
+        }
+
     }
 
 }
