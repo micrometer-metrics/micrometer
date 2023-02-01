@@ -80,14 +80,18 @@ public final class DynatraceDistributionSummary extends AbstractDistributionSumm
         return summary.getMin();
     }
 
+    /**
+     * @deprecated see {@link DynatraceSummarySnapshotSupport#hasValues()}.
+     */
     @Override
+    @Deprecated
     public boolean hasValues() {
         return count() > 0;
     }
 
     @Override
     public DynatraceSummarySnapshot takeSummarySnapshot() {
-        return new DynatraceSummarySnapshot(min(), max(), totalAmount(), count());
+        return summary.takeSummarySnapshot();
     }
 
     @Override
@@ -98,9 +102,7 @@ public final class DynatraceDistributionSummary extends AbstractDistributionSumm
 
     @Override
     public DynatraceSummarySnapshot takeSummarySnapshotAndReset() {
-        DynatraceSummarySnapshot snapshot = takeSummarySnapshot();
-        summary.reset();
-        return snapshot;
+        return summary.takeSummarySnapshotAndReset();
     }
 
     @Override

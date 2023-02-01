@@ -199,17 +199,16 @@ public final class DynatraceExporterV2 extends AbstractDynatraceExporter {
 
     Stream<String> toTimerLine(Timer meter) {
         if (!(meter instanceof DynatraceSummarySnapshotSupport)) {
-            // fall back to previous behaviour
             return toSummaryLine(meter, meter.takeSnapshot(), getBaseTimeUnit());
         }
 
-        DynatraceSummarySnapshotSupport summary = (DynatraceSummarySnapshotSupport) meter;
-        if (!summary.hasValues()) {
+        DynatraceSummarySnapshot snapshot = ((DynatraceSummarySnapshotSupport) meter)
+                .takeSummarySnapshotAndReset(getBaseTimeUnit());
+
+        if (snapshot.getCount() == 0) {
             return Stream.empty();
         }
 
-        // Take a snapshot and reset the Timer for the next export
-        DynatraceSummarySnapshot snapshot = summary.takeSummarySnapshotAndReset(getBaseTimeUnit());
         return createSummaryLine(meter, snapshot.getMin(), snapshot.getMax(), snapshot.getTotal(), snapshot.getCount());
     }
 
@@ -249,18 +248,15 @@ public final class DynatraceExporterV2 extends AbstractDynatraceExporter {
 
     Stream<String> toDistributionSummaryLine(DistributionSummary meter) {
         if (!(meter instanceof DynatraceSummarySnapshotSupport)) {
-            // fall back to previous behaviour
             return toSummaryLine(meter, meter.takeSnapshot(), null);
         }
 
-        DynatraceSummarySnapshotSupport summary = (DynatraceSummarySnapshotSupport) meter;
+        DynatraceSummarySnapshot snapshot = ((DynatraceSummarySnapshotSupport) meter).takeSummarySnapshotAndReset();
 
-        if (!summary.hasValues()) {
+        if (snapshot.getCount() == 0) {
             return Stream.empty();
         }
 
-        // Take a snapshot and reset the DistributionSummary for the next export
-        DynatraceSummarySnapshot snapshot = ((DynatraceSummarySnapshotSupport) meter).takeSummarySnapshotAndReset();
         return createSummaryLine(meter, snapshot.getMin(), snapshot.getMax(), snapshot.getTotal(), snapshot.getCount());
     }
 
