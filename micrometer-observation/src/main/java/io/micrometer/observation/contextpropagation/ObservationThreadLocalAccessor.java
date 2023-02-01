@@ -53,11 +53,14 @@ public class ObservationThreadLocalAccessor implements ThreadLocalAccessor<Obser
     @Override
     public Observation getValue() {
         Observation.Scope scope = observationRegistry().getCurrentObservationScope();
-        Observation observation = observationRegistry().getCurrentObservation();
         if (scope != null) {
+            Observation observation = scope.getCurrentObservation();
             observation.getContext().put(SCOPE_KEY, scope);
+            return observation;
         }
-        return observation;
+        else {
+            return null;
+        }
     }
 
     @Override
@@ -69,7 +72,10 @@ public class ObservationThreadLocalAccessor implements ThreadLocalAccessor<Obser
 
     @Override
     public void reset() {
-        observationRegistry().resetScope();
+        Observation.Scope scope = observationRegistry().getCurrentObservationScope();
+        if (scope != null) {
+            scope.reset();
+        }
     }
 
     private ObservationRegistry observationRegistry() {

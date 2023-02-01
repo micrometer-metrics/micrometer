@@ -158,7 +158,7 @@ class ObservationThreadLocalAccessorTests {
         }
 
         @Override
-        public void onScopeReset() {
+        public void onScopeReset(Observation.Context context) {
             value.remove();
         }
 

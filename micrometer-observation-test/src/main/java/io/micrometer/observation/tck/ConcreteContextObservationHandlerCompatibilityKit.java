@@ -61,6 +61,7 @@ public abstract class ConcreteContextObservationHandlerCompatibilityKit<T extend
         assertThatCode(() -> handler.onEvent(Observation.Event.of("testEvent"), context())).doesNotThrowAnyException();
         assertThatCode(() -> handler.onScopeOpened(context())).doesNotThrowAnyException();
         assertThatCode(() -> handler.onScopeClosed(context())).doesNotThrowAnyException();
+        assertThatCode(() -> handler.onScopeReset(context())).doesNotThrowAnyException();
     }
 
     @Test

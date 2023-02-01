@@ -220,6 +220,11 @@ class SimpleObservation implements Observation {
     }
 
     @SuppressWarnings("unchecked")
+    private void notifyOnScopeReset() {
+        this.handlers.forEach(handler -> handler.onScopeReset(this.context));
+    }
+
+    @SuppressWarnings("unchecked")
     private void notifyOnObservationStopped(Observation.Context context) {
         // We're closing from end till the beginning - e.g. we started with handlers with
         // ids 1,2,3 and we need to call close on 3,2,1
@@ -251,6 +256,12 @@ class SimpleObservation implements Observation {
         public void close() {
             this.registry.setCurrentObservationScope(previousObservationScope);
             this.currentObservation.notifyOnScopeClosed();
+        }
+
+        @Override
+        public void reset() {
+            this.registry.setCurrentObservationScope(null);
+            this.currentObservation.notifyOnScopeReset();
         }
 
     }

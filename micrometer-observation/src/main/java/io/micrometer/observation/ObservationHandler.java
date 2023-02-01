@@ -56,13 +56,6 @@ public interface ObservationHandler<T extends Observation.Context> {
     }
 
     /**
-     * Reacts to resetting of scopes. If your handler uses a {@link ThreadLocal} value,
-     * this method should clear that {@link ThreadLocal}.
-     */
-    default void onScopeReset() {
-    }
-
-    /**
      * Reacts to opening of an {@link Observation.Scope}.
      * @param context an {@link Observation.Context}
      */
@@ -74,6 +67,14 @@ public interface ObservationHandler<T extends Observation.Context> {
      * @param context an {@link Observation.Context}
      */
     default void onScopeClosed(T context) {
+    }
+
+    /**
+     * Reacts to resetting of scopes. If your handler uses a {@link ThreadLocal} value,
+     * this method should clear that {@link ThreadLocal}.
+     * @param context an {@link Observation.Context}
+     */
+    default void onScopeReset(T context) {
     }
 
     /**
@@ -152,11 +153,6 @@ public interface ObservationHandler<T extends Observation.Context> {
         }
 
         @Override
-        public void onScopeReset() {
-            this.handlers.forEach(ObservationHandler::onScopeReset);
-        }
-
-        @Override
         public void onScopeOpened(Observation.Context context) {
             getFirstApplicableHandler(context).ifPresent(handler -> handler.onScopeOpened(context));
         }
@@ -164,6 +160,11 @@ public interface ObservationHandler<T extends Observation.Context> {
         @Override
         public void onScopeClosed(Observation.Context context) {
             getFirstApplicableHandler(context).ifPresent(handler -> handler.onScopeClosed(context));
+        }
+
+        @Override
+        public void onScopeReset(Observation.Context context) {
+            getFirstApplicableHandler(context).ifPresent(handler -> handler.onScopeReset(context));
         }
 
         @Override
@@ -231,11 +232,6 @@ public interface ObservationHandler<T extends Observation.Context> {
         }
 
         @Override
-        public void onScopeReset() {
-            this.handlers.forEach(ObservationHandler::onScopeReset);
-        }
-
-        @Override
         public void onScopeOpened(Observation.Context context) {
             getAllApplicableHandlers(context).forEach(handler -> handler.onScopeOpened(context));
         }
@@ -243,6 +239,11 @@ public interface ObservationHandler<T extends Observation.Context> {
         @Override
         public void onScopeClosed(Observation.Context context) {
             getAllApplicableHandlers(context).forEach(handler -> handler.onScopeClosed(context));
+        }
+
+        @Override
+        public void onScopeReset(Observation.Context context) {
+            getAllApplicableHandlers(context).forEach(handler -> handler.onScopeReset(context));
         }
 
         @Override

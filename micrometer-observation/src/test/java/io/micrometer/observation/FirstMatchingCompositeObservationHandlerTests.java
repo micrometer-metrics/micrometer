@@ -92,7 +92,7 @@ class FirstMatchingCompositeObservationHandlerTests {
         FirstMatchingCompositeObservationHandler firstMatchingHandler = new FirstMatchingCompositeObservationHandler(
                 new NotMatchingHandler(), this.matchingHandler, new NotMatchingHandler());
 
-        firstMatchingHandler.onScopeReset();
+        firstMatchingHandler.onScopeReset(null);
 
         assertThat(this.matchingHandler.scopeReset).isTrue();
     }
@@ -167,7 +167,7 @@ class FirstMatchingCompositeObservationHandlerTests {
         }
 
         @Override
-        public void onScopeReset() {
+        public void onScopeReset(Observation.Context context) {
             this.scopeReset = true;
         }
 
