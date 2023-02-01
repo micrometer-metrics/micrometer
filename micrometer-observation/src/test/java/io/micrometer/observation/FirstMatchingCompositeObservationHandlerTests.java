@@ -88,6 +88,16 @@ class FirstMatchingCompositeObservationHandlerTests {
     }
 
     @Test
+    void should_run_on_scope_reset_for_handlers() {
+        FirstMatchingCompositeObservationHandler firstMatchingHandler = new FirstMatchingCompositeObservationHandler(
+                new NotMatchingHandler(), this.matchingHandler, new NotMatchingHandler());
+
+        firstMatchingHandler.onScopeReset(null);
+
+        assertThat(this.matchingHandler.scopeReset).isTrue();
+    }
+
+    @Test
     void should_support_the_context_if_any_handler_supports_it() {
         FirstMatchingCompositeObservationHandler firstMatchingHandler = new FirstMatchingCompositeObservationHandler(
                 new NotMatchingHandler(), this.matchingHandler, new NotMatchingHandler());
@@ -129,6 +139,8 @@ class FirstMatchingCompositeObservationHandlerTests {
 
         boolean scopeClosed;
 
+        boolean scopeReset;
+
         @Override
         public void onStart(Observation.Context context) {
             this.started = true;
@@ -152,6 +164,11 @@ class FirstMatchingCompositeObservationHandlerTests {
         @Override
         public void onScopeClosed(Observation.Context context) {
             this.scopeClosed = true;
+        }
+
+        @Override
+        public void onScopeReset(Observation.Context context) {
+            this.scopeReset = true;
         }
 
         @Override

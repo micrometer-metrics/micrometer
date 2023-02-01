@@ -52,6 +52,7 @@ class ObservationThreadLocalAccessorTests {
     @Test
     void capturedThreadLocalValuesShouldBeCapturedRestoredAndCleared()
             throws InterruptedException, ExecutionException, TimeoutException {
+
         // given
         Observation parent = Observation.start("parent", observationRegistry);
         Observation child = Observation.createNotStarted("foo", observationRegistry).parentObservation(parent).start();
@@ -142,6 +143,11 @@ class ObservationThreadLocalAccessorTests {
         public void onStop(Observation.Context context) {
             context.put("state", "stopped");
             System.out.println("on stop [" + context.getName() + "]");
+        }
+
+        @Override
+        public void onScopeReset(Observation.Context context) {
+            value.remove();
         }
 
         @Override

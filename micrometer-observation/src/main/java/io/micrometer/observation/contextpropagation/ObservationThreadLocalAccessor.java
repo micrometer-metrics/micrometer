@@ -32,6 +32,8 @@ public class ObservationThreadLocalAccessor implements ThreadLocalAccessor<Obser
      */
     public static final String KEY = "micrometer.observation";
 
+    private static final String SCOPE_KEY = KEY + ".scope";
+
     private static final ObservationRegistry observationRegistry = ObservationRegistry.create();
 
     @Override
@@ -41,7 +43,15 @@ public class ObservationThreadLocalAccessor implements ThreadLocalAccessor<Obser
 
     @Override
     public Observation getValue() {
-        return observationRegistry.getCurrentObservation();
+        Observation.Scope scope = observationRegistry.getCurrentObservationScope();
+        if (scope != null) {
+            Observation observation = scope.getCurrentObservation();
+            observation.getContext().put(SCOPE_KEY, scope);
+            return observation;
+        }
+        else {
+            return null;
+        }
     }
 
     @Override
@@ -54,19 +64,21 @@ public class ObservationThreadLocalAccessor implements ThreadLocalAccessor<Obser
     @Override
     public void reset() {
         Observation.Scope scope = observationRegistry.getCurrentObservationScope();
-        while (scope != null) {
-            scope.close();
-            scope = observationRegistry.getCurrentObservationScope();
+        if (scope != null) {
+            scope.reset();
         }
     }
 
     @Override
     public void restore(Observation value) {
-        Observation.Scope scope = observationRegistry.getCurrentObservationScope();
-        if (scope != null) {
-            scope.close(); // scope will be removed from TL and previous scope will be
-                           // restored to TL
+        reset();
+        Observation.Scope observationScope = value.getContext().get(SCOPE_KEY);
+        if (observationScope != null) {
+            observationScope.close(); // We close the previous scope -
+            // it will put its parent as current and call all handlers
         }
+        setValue(value); // We open the previous scope again, however this time in TL
+        // we have the whole hierarchy of scopes re-attached via handlers
     }
 
 }

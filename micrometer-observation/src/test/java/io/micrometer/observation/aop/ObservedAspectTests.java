@@ -21,9 +21,9 @@ import io.micrometer.common.lang.Nullable;
 import io.micrometer.context.ContextRegistry;
 import io.micrometer.context.ContextSnapshot;
 import io.micrometer.observation.Observation;
+import io.micrometer.observation.ObservationConvention;
 import io.micrometer.observation.ObservationTextPublisher;
 import io.micrometer.observation.annotation.Observed;
-import io.micrometer.observation.ObservationConvention;
 import io.micrometer.observation.tck.TestObservationRegistry;
 import io.micrometer.observation.tck.TestObservationRegistryAssert;
 import org.aspectj.lang.ProceedingJoinPoint;
@@ -44,9 +44,10 @@ import static org.awaitility.Awaitility.await;
  */
 class ObservedAspectTests {
 
+    TestObservationRegistry registry = TestObservationRegistry.create();
+
     @Test
     void annotatedCallShouldBeObserved() {
-        TestObservationRegistry registry = TestObservationRegistry.create();
         registry.observationConfig().observationHandler(new ObservationTextPublisher());
 
         AspectJProxyFactory pf = new AspectJProxyFactory(new ObservedService());
@@ -65,7 +66,6 @@ class ObservedAspectTests {
 
     @Test
     void annotatedCallShouldBeObservedAndErrorRecorded() {
-        TestObservationRegistry registry = TestObservationRegistry.create();
         registry.observationConfig().observationHandler(new ObservationTextPublisher());
 
         AspectJProxyFactory pf = new AspectJProxyFactory(new ObservedService());
@@ -84,7 +84,6 @@ class ObservedAspectTests {
 
     @Test
     void annotatedAsyncCallShouldBeObserved() throws ExecutionException, InterruptedException {
-        TestObservationRegistry registry = TestObservationRegistry.create();
         registry.observationConfig().observationHandler(new ObservationTextPublisher());
 
         AspectJProxyFactory pf = new AspectJProxyFactory(new ObservedService());
@@ -109,7 +108,6 @@ class ObservedAspectTests {
 
     @Test
     void annotatedAsyncCallShouldBeObservedAndErrorRecorded() {
-        TestObservationRegistry registry = TestObservationRegistry.create();
         registry.observationConfig().observationHandler(new ObservationTextPublisher());
 
         AspectJProxyFactory pf = new AspectJProxyFactory(new ObservedService());
@@ -135,7 +133,6 @@ class ObservedAspectTests {
 
     @Test
     void customObservationConventionShouldBeUsed() {
-        TestObservationRegistry registry = TestObservationRegistry.create();
         registry.observationConfig().observationHandler(new ObservationTextPublisher());
 
         AspectJProxyFactory pf = new AspectJProxyFactory(new ObservedService());
@@ -153,7 +150,6 @@ class ObservedAspectTests {
 
     @Test
     void skipPredicateShouldTakeEffect() {
-        TestObservationRegistry registry = TestObservationRegistry.create();
         registry.observationConfig().observationHandler(new ObservationTextPublisher());
 
         AspectJProxyFactory pf = new AspectJProxyFactory(new ObservedService());
@@ -166,7 +162,6 @@ class ObservedAspectTests {
 
     @Test
     void annotatedClassShouldBeObserved() {
-        TestObservationRegistry registry = TestObservationRegistry.create();
         registry.observationConfig().observationHandler(new ObservationTextPublisher());
 
         AspectJProxyFactory pf = new AspectJProxyFactory(new ObservedClassLevelAnnotatedService());
@@ -185,7 +180,6 @@ class ObservedAspectTests {
 
     @Test
     void annotatedClassShouldBeObservedAndErrorRecorded() {
-        TestObservationRegistry registry = TestObservationRegistry.create();
         registry.observationConfig().observationHandler(new ObservationTextPublisher());
 
         AspectJProxyFactory pf = new AspectJProxyFactory(new ObservedClassLevelAnnotatedService());
@@ -205,7 +199,6 @@ class ObservedAspectTests {
 
     @Test
     void annotatedAsyncClassCallShouldBeObserved() throws ExecutionException, InterruptedException {
-        TestObservationRegistry registry = TestObservationRegistry.create();
         registry.observationConfig().observationHandler(new ObservationTextPublisher());
 
         AspectJProxyFactory pf = new AspectJProxyFactory(new ObservedClassLevelAnnotatedService());
@@ -230,7 +223,6 @@ class ObservedAspectTests {
 
     @Test
     void annotatedAsyncClassCallShouldBeObservedAndErrorRecorded() {
-        TestObservationRegistry registry = TestObservationRegistry.create();
         registry.observationConfig().observationHandler(new ObservationTextPublisher());
 
         AspectJProxyFactory pf = new AspectJProxyFactory(new ObservedClassLevelAnnotatedService());
@@ -256,7 +248,6 @@ class ObservedAspectTests {
 
     @Test
     void customObservationConventionShouldBeUsedForClass() {
-        TestObservationRegistry registry = TestObservationRegistry.create();
         registry.observationConfig().observationHandler(new ObservationTextPublisher());
 
         AspectJProxyFactory pf = new AspectJProxyFactory(new ObservedClassLevelAnnotatedService());
@@ -274,7 +265,6 @@ class ObservedAspectTests {
 
     @Test
     void skipPredicateShouldTakeEffectForClass() {
-        TestObservationRegistry registry = TestObservationRegistry.create();
         registry.observationConfig().observationHandler(new ObservationTextPublisher());
 
         AspectJProxyFactory pf = new AspectJProxyFactory(new ObservedClassLevelAnnotatedService());
