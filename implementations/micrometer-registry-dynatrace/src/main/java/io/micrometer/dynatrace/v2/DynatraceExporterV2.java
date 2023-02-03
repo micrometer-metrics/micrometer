@@ -176,7 +176,7 @@ public final class DynatraceExporterV2 extends AbstractDynatraceExporter {
             return createMetricBuilder(meter).setDoubleGaugeValue(value).serialize();
         }
         catch (MetricException e) {
-            logger.warn(METER_EXCEPTION_LOG_FORMAT, meter.getId().getName(), e.getMessage());
+            logger.warn(METER_EXCEPTION_LOG_FORMAT, meter.getId(), e.getMessage());
         }
 
         return null;
@@ -191,7 +191,7 @@ public final class DynatraceExporterV2 extends AbstractDynatraceExporter {
             return createMetricBuilder(meter).setDoubleCounterValueDelta(measurement.getValue()).serialize();
         }
         catch (MetricException e) {
-            logger.warn(METER_EXCEPTION_LOG_FORMAT, meter.getId().getName(), e.getMessage());
+            logger.warn(METER_EXCEPTION_LOG_FORMAT, meter.getId(), e.getMessage());
         }
 
         return null;
@@ -241,7 +241,7 @@ public final class DynatraceExporterV2 extends AbstractDynatraceExporter {
             return Stream.of(line);
         }
         catch (MetricException e) {
-            logger.warn(METER_EXCEPTION_LOG_FORMAT, meter.getId().getName(), e.getMessage());
+            logger.warn(METER_EXCEPTION_LOG_FORMAT, meter.getId(), e.getMessage());
         }
 
         return Stream.empty();
