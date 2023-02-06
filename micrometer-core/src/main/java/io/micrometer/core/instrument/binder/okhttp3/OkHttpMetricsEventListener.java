@@ -102,24 +102,27 @@ public class OkHttpMetricsEventListener extends EventListener {
 
     private final boolean includeHostTag;
 
+    private final double[] timerPercentiles;
+
     // VisibleForTesting
     final ConcurrentMap<Call, CallState> callState = new ConcurrentHashMap<>();
 
     protected OkHttpMetricsEventListener(MeterRegistry registry, String requestsMetricName,
             Function<Request, String> urlMapper, Iterable<Tag> extraTags,
             Iterable<BiFunction<Request, Response, Tag>> contextSpecificTags) {
-        this(registry, requestsMetricName, urlMapper, extraTags, contextSpecificTags, emptyList(), true);
+        this(registry, requestsMetricName, urlMapper, extraTags, contextSpecificTags, emptyList(), true, null);
     }
 
     OkHttpMetricsEventListener(MeterRegistry registry, String requestsMetricName, Function<Request, String> urlMapper,
             Iterable<Tag> extraTags, Iterable<BiFunction<Request, Response, Tag>> contextSpecificTags,
-            Iterable<String> requestTagKeys, boolean includeHostTag) {
+            Iterable<String> requestTagKeys, boolean includeHostTag, @Nullable double[] timerPercentiles) {
         this.registry = registry;
         this.requestsMetricName = requestsMetricName;
         this.urlMapper = urlMapper;
         this.extraTags = extraTags;
         this.contextSpecificTags = contextSpecificTags;
         this.includeHostTag = includeHostTag;
+        this.timerPercentiles = timerPercentiles;
 
         List<Tag> unknownRequestTags = new ArrayList<>();
         for (String requestTagKey : requestTagKeys) {
@@ -177,7 +180,11 @@ public class OkHttpMetricsEventListener extends EventListener {
             tags = Tags.of(tags).and("host", requestAvailable ? request.url().host() : TAG_VALUE_UNKNOWN);
         }
 
-        Timer.builder(this.requestsMetricName).tags(tags).description("Timer of OkHttp operation").register(registry)
+        Timer.builder(this.requestsMetricName)
+                .tags(tags)
+                .description("Timer of OkHttp operation")
+                .publishPercentiles(timerPercentiles)
+                .register(registry)
                 .record(registry.config().clock().monotonicTime() - state.startTime, TimeUnit.NANOSECONDS);
     }
 
@@ -258,9 +265,11 @@ public class OkHttpMetricsEventListener extends EventListener {
 
         private Tags tags = Tags.empty();
 
-        private Collection<BiFunction<Request, Response, Tag>> contextSpecificTags = new ArrayList<>();
+        private final Collection<BiFunction<Request, Response, Tag>> contextSpecificTags = new ArrayList<>();
 
         private boolean includeHostTag = true;
+
+        private @Nullable double[] timerPercentiles = null;
 
         private Iterable<String> requestTagKeys = Collections.emptyList();
 
@@ -345,9 +354,14 @@ public class OkHttpMetricsEventListener extends EventListener {
             return this;
         }
 
+        public Builder timerPercentiles(double... timerPercentiles) {
+            this.timerPercentiles = timerPercentiles;
+            return this;
+        }
+
         public OkHttpMetricsEventListener build() {
             return new OkHttpMetricsEventListener(registry, name, uriMapper, tags, contextSpecificTags, requestTagKeys,
-                    includeHostTag);
+                    includeHostTag, timerPercentiles);
         }
 
     }

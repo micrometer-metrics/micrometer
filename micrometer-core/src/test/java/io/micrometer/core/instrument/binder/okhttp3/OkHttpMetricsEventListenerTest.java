@@ -20,8 +20,12 @@ import io.micrometer.core.instrument.MeterRegistry;
 import io.micrometer.core.instrument.MockClock;
 import io.micrometer.core.instrument.Tag;
 import io.micrometer.core.instrument.Tags;
+import io.micrometer.core.instrument.distribution.ValueAtPercentile;
 import io.micrometer.core.instrument.simple.SimpleConfig;
 import io.micrometer.core.instrument.simple.SimpleMeterRegistry;
+
+import java.util.Arrays;
+
 import okhttp3.Cache;
 import okhttp3.OkHttpClient;
 import okhttp3.Request;
@@ -213,6 +217,28 @@ class OkHttpMetricsEventListenerTest {
                         .tags("status", "200", "target.host", "localhost", "target.port", String.valueOf(server.port()),
                                 "target.scheme", "http")
                         .timer().getId().getTags()).doesNotContain(Tag.of("host", "localhost"));
+    }
+
+    @Test
+    void timerPercentilesCanBeDefined(@WiremockResolver.Wiremock WireMockServer server) throws IOException {
+        server.stubFor(any(anyUrl()));
+        OkHttpMetricsEventListener eventListener = OkHttpMetricsEventListener.builder(registry, "okhttp.requests")
+                .timerPercentiles(0.9, 0.99)
+                .build();
+        OkHttpClient client = new OkHttpClient.Builder()
+                .eventListener(eventListener)
+                .build();
+        Request request = new Request.Builder().url(server.baseUrl()).build();
+
+        client.newCall(request).execute().close();
+
+        ValueAtPercentile[] percentiles = registry.get("okhttp.requests")
+                .tags("status", "200", "target.host", "localhost", "target.port", String.valueOf(server.port()),
+                        "target.scheme", "http")
+                .timer()
+                .takeSnapshot()
+                .percentileValues();
+        assertThat(Arrays.stream(percentiles).map(ValueAtPercentile::percentile)).contains(0.9, 0.99);
     }
 
     @Test
