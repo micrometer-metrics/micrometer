@@ -180,11 +180,8 @@ public class OkHttpMetricsEventListener extends EventListener {
             tags = Tags.of(tags).and("host", requestAvailable ? request.url().host() : TAG_VALUE_UNKNOWN);
         }
 
-        Timer.builder(this.requestsMetricName)
-                .tags(tags)
-                .description("Timer of OkHttp operation")
-                .publishPercentiles(timerPercentiles)
-                .register(registry)
+        Timer.builder(this.requestsMetricName).tags(tags).description("Timer of OkHttp operation")
+                .publishPercentiles(timerPercentiles).register(registry)
                 .record(registry.config().clock().monotonicTime() - state.startTime, TimeUnit.NANOSECONDS);
     }
 

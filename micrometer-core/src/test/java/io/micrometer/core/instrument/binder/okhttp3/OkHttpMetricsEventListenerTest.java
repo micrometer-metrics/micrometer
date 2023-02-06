@@ -223,21 +223,16 @@ class OkHttpMetricsEventListenerTest {
     void timerPercentilesCanBeDefined(@WiremockResolver.Wiremock WireMockServer server) throws IOException {
         server.stubFor(any(anyUrl()));
         OkHttpMetricsEventListener eventListener = OkHttpMetricsEventListener.builder(registry, "okhttp.requests")
-                .timerPercentiles(0.9, 0.99)
-                .build();
-        OkHttpClient client = new OkHttpClient.Builder()
-                .eventListener(eventListener)
-                .build();
+                .timerPercentiles(0.9, 0.99).build();
+        OkHttpClient client = new OkHttpClient.Builder().eventListener(eventListener).build();
         Request request = new Request.Builder().url(server.baseUrl()).build();
 
         client.newCall(request).execute().close();
 
-        ValueAtPercentile[] percentiles = registry.get("okhttp.requests")
-                .tags("status", "200", "target.host", "localhost", "target.port", String.valueOf(server.port()),
-                        "target.scheme", "http")
-                .timer()
-                .takeSnapshot()
-                .percentileValues();
+        ValueAtPercentile[] percentiles = registry
+                .get("okhttp.requests").tags("status", "200", "target.host", "localhost", "target.port",
+                        String.valueOf(server.port()), "target.scheme", "http")
+                .timer().takeSnapshot().percentileValues();
         assertThat(Arrays.stream(percentiles).map(ValueAtPercentile::percentile)).contains(0.9, 0.99);
     }
 
