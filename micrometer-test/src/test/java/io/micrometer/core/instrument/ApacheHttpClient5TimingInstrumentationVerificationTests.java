@@ -1,5 +1,5 @@
 /*
- * Copyright 2022 VMware, Inc.
+ * Copyright 2023 VMware, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -24,7 +24,9 @@ import org.apache.hc.client5.http.classic.methods.HttpUriRequest;
 import org.apache.hc.client5.http.classic.methods.HttpUriRequestBase;
 import org.apache.hc.client5.http.impl.classic.CloseableHttpClient;
 import org.apache.hc.client5.http.impl.classic.HttpClientBuilder;
+import org.apache.hc.core5.http.ClassicHttpResponse;
 import org.apache.hc.core5.http.ContentType;
+import org.apache.hc.core5.http.io.HttpClientResponseHandler;
 import org.apache.hc.core5.http.io.entity.BasicHttpEntity;
 import org.apache.hc.core5.http.io.entity.EntityUtils;
 
@@ -34,6 +36,8 @@ import java.net.URI;
 
 class ApacheHttpClient5TimingInstrumentationVerificationTests
         extends HttpClientTimingInstrumentationVerificationTests<CloseableHttpClient> {
+
+    private static final HttpClientResponseHandler<ClassicHttpResponse> NOOP_RESPONSE_HANDLER = (response) -> response;
 
     @Override
     protected CloseableHttpClient clientInstrumentedWithMetrics() {
@@ -63,7 +67,8 @@ class ApacheHttpClient5TimingInstrumentationVerificationTests
             URI baseUri, String templatedPath, String... pathVariables) {
         try {
             EntityUtils.consume(instrumentedClient
-                    .execute(makeRequest(method, body, baseUri, templatedPath, pathVariables)).getEntity());
+                    .execute(makeRequest(method, body, baseUri, templatedPath, pathVariables), NOOP_RESPONSE_HANDLER)
+                    .getEntity());
         }
         catch (IOException e) {
             throw new RuntimeException(e);

@@ -23,6 +23,9 @@ import java.util.function.Function;
 /**
  * Extracts the URI pattern from the predefined request header,
  * {@value DefaultUriMapper#URI_PATTERN_HEADER} if available.
+ * <p>
+ * See {@link io.micrometer.core.instrument.binder.httpcomponents.hc5.DefaultUriMapper}
+ * for Apache HTTP client 5 support.
  *
  * @author Benjamin Hubert
  * @since 1.4.0

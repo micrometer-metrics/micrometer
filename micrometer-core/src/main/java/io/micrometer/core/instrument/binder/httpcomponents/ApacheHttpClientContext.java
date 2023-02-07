@@ -25,6 +25,10 @@ import java.util.function.Function;
 /**
  * {@link io.micrometer.observation.Observation.Context} for use with Apache HTTP client
  * {@link io.micrometer.observation.Observation} instrumentation.
+ * <p>
+ * See
+ * {@link io.micrometer.core.instrument.binder.httpcomponents.hc5.ApacheHttpClientContext}
+ * for Apache HTTP client 5 support.
  *
  * @since 1.10.0
  */

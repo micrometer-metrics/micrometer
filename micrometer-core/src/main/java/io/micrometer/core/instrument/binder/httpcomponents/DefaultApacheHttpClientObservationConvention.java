@@ -25,6 +25,10 @@ import java.io.IOException;
 
 /**
  * Default implementation of {@link ApacheHttpClientObservationConvention}.
+ * <p>
+ * See
+ * {@link io.micrometer.core.instrument.binder.httpcomponents.hc5.DefaultApacheHttpClientObservationConvention}
+ * for Apache HTTP client 5 support.
  *
  * @since 1.10.0
  * @see ApacheHttpClientObservationDocumentation

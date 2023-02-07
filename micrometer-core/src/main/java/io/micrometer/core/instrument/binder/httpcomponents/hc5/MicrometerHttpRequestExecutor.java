@@ -1,5 +1,5 @@
 /*
- * Copyright 2019 VMware, Inc.
+ * Copyright 2023 VMware, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -27,6 +27,7 @@ import org.apache.hc.core5.http.*;
 import org.apache.hc.core5.http.impl.io.HttpRequestExecutor;
 import org.apache.hc.core5.http.io.HttpClientConnection;
 import org.apache.hc.core5.http.protocol.HttpContext;
+import org.apache.hc.core5.util.Timeout;
 
 import java.io.IOException;
 import java.util.Collections;
@@ -71,10 +72,10 @@ public class MicrometerHttpRequestExecutor extends HttpRequestExecutor {
     /**
      * Use {@link #builder(MeterRegistry)} to create an instance of this class.
      */
-    private MicrometerHttpRequestExecutor(MeterRegistry registry, Function<HttpRequest, String> uriMapper,
-            Iterable<Tag> extraTags, boolean exportTagsForRoute, ObservationRegistry observationRegistry,
-            @Nullable ApacheHttpClientObservationConvention convention) {
-        super();
+    private MicrometerHttpRequestExecutor(Timeout waitForContinue, MeterRegistry registry,
+            Function<HttpRequest, String> uriMapper, Iterable<Tag> extraTags, boolean exportTagsForRoute,
+            ObservationRegistry observationRegistry, @Nullable ApacheHttpClientObservationConvention convention) {
+        super(waitForContinue, null, null);
         this.registry = Optional.ofNullable(registry).orElseThrow(
                 () -> new IllegalArgumentException("registry is required but has been initialized with null"));
         this.uriMapper = Optional.ofNullable(uriMapper).orElseThrow(
@@ -131,6 +132,8 @@ public class MicrometerHttpRequestExecutor extends HttpRequestExecutor {
 
         private ObservationRegistry observationRegistry = ObservationRegistry.NOOP;
 
+        private Timeout waitForContinue = HttpRequestExecutor.DEFAULT_WAIT_FOR_CONTINUE;
+
         private Iterable<Tag> extraTags = Collections.emptyList();
 
         private Function<HttpRequest, String> uriMapper = new DefaultUriMapper();
@@ -142,6 +145,16 @@ public class MicrometerHttpRequestExecutor extends HttpRequestExecutor {
 
         Builder(MeterRegistry registry) {
             this.registry = registry;
+        }
+
+        /**
+         * @param waitForContinue Overrides the wait for continue time for this request
+         * executor. See {@link HttpRequestExecutor} for details.
+         * @return This builder instance.
+         */
+        public Builder waitForContinue(Timeout waitForContinue) {
+            this.waitForContinue = waitForContinue;
+            return this;
         }
 
         /**
@@ -221,8 +234,8 @@ public class MicrometerHttpRequestExecutor extends HttpRequestExecutor {
          * the configured properties.
          */
         public MicrometerHttpRequestExecutor build() {
-            return new MicrometerHttpRequestExecutor(registry, uriMapper, extraTags, exportTagsForRoute,
-                    observationRegistry, observationConvention);
+            return new MicrometerHttpRequestExecutor(waitForContinue, registry, uriMapper, extraTags,
+                    exportTagsForRoute, observationRegistry, observationConvention);
         }
 
     }

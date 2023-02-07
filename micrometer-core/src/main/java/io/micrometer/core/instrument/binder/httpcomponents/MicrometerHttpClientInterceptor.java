@@ -43,6 +43,10 @@ import java.util.function.Function;
  *             .addInterceptorLast(interceptor.getResponseInterceptor())
  *             .build();
  * }</pre>
+ * <p>
+ * See
+ * {@link io.micrometer.core.instrument.binder.httpcomponents.hc5.MicrometerHttpClientInterceptor}
+ * for Apache HTTP client 5 support.
  *
  * @author Jon Schneider
  * @since 1.4.0

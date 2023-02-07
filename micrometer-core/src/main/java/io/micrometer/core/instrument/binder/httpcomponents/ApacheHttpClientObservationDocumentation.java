@@ -22,6 +22,11 @@ import io.micrometer.observation.docs.ObservationDocumentation;
 
 /**
  * {@link ObservationDocumentation} for Apache HTTP client instrumentation.
+ * <p>
+ * See
+ * {@link io.micrometer.core.instrument.binder.httpcomponents.hc5.ApacheHttpClientObservationDocumentation}
+ * for Apache HTTP client 5 support.
+ *
  * @since 1.10.0
  * @see MicrometerHttpRequestExecutor
  */
