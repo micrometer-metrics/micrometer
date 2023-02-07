@@ -485,19 +485,11 @@ public interface Observation extends ObservationView {
      * </ul>
      * @param runnable the {@link Runnable} to run
      */
-    @SuppressWarnings("unused")
     default void observe(Runnable runnable) {
-        start();
-        try (Scope scope = openScope()) {
+        observeWithContext((context) -> {
             runnable.run();
-        }
-        catch (Exception exception) {
-            error(exception);
-            throw exception;
-        }
-        finally {
-            stop();
-        }
+            return null; // returned value is ignored
+        });
     }
 
     default Runnable wrap(Runnable runnable) {
@@ -518,19 +510,11 @@ public interface Observation extends ObservationView {
      * @param checkedRunnable the {@link CheckedRunnable} to run
      * @param <E> type of exception thrown
      */
-    @SuppressWarnings("unused")
     default <E extends Throwable> void observeChecked(CheckedRunnable<E> checkedRunnable) throws E {
-        start();
-        try (Scope scope = openScope()) {
+        observeCheckedWithContext((context) -> {
             checkedRunnable.run();
-        }
-        catch (Throwable error) {
-            error(error);
-            throw error;
-        }
-        finally {
-            stop();
-        }
+            return null; // returned value is ignored
+        });
     }
 
     default <E extends Throwable> CheckedRunnable<E> wrapChecked(CheckedRunnable<E> checkedRunnable) throws E {
@@ -552,19 +536,9 @@ public interface Observation extends ObservationView {
      * @param <T> the type parameter of the {@link Supplier}
      * @return the result from {@link Supplier#get()}
      */
-    @SuppressWarnings("unused")
+    @Nullable
     default <T> T observe(Supplier<T> supplier) {
-        start();
-        try (Scope scope = openScope()) {
-            return supplier.get();
-        }
-        catch (Exception exception) {
-            error(exception);
-            throw exception;
-        }
-        finally {
-            stop();
-        }
+        return observeWithContext((context) -> supplier.get());
     }
 
     default <T> Supplier<T> wrap(Supplier<T> supplier) {
@@ -587,11 +561,42 @@ public interface Observation extends ObservationView {
      * @param <E> type of exception checkedCallable throws
      * @return the result from {@link CheckedCallable#call()}
      */
-    @SuppressWarnings("unused")
+    @Nullable
     default <T, E extends Throwable> T observeChecked(CheckedCallable<T, E> checkedCallable) throws E {
+        return observeCheckedWithContext((context) -> checkedCallable.call());
+    }
+
+    default <T, E extends Throwable> CheckedCallable<T, E> wrapChecked(CheckedCallable<T, E> checkedCallable) throws E {
+        return () -> observeChecked(checkedCallable);
+    }
+
+    /**
+     * Observes the passed {@link Function} which provides access to the {@link Context}.
+     *
+     * This means the followings:
+     * <ul>
+     * <li>Starts the {@code Observation}</li>
+     * <li>Opens a {@code Scope}</li>
+     * <li>Calls {@link Function#apply(Object)} where it gets a {@link Context}</li>
+     * <li>Closes the {@code Scope}</li>
+     * <li>Signals the error to the {@code Observation} if any</li>
+     * <li>Stops the {@code Observation}</li>
+     * </ul>
+     *
+     * NOTE: When the {@link ObservationRegistry} is a noop, this function receives a
+     * default {@link Context} instance which is not the one that have passed at
+     * {@link Observation} creation.
+     * @param function the {@link Function} to call
+     * @return the result from {@link Function#apply(Object)}
+     * @param <C> the type of input {@link Context} to the function
+     * @param <T> the type parameter of the {@link Function} return
+     */
+    @SuppressWarnings({ "unchecked" })
+    @Nullable
+    default <C extends Context, T> T observeWithContext(Function<C, T> function) {
         start();
         try (Scope scope = openScope()) {
-            return checkedCallable.call();
+            return function.apply((C) getContext());
         }
         catch (Throwable error) {
             error(error);
@@ -602,8 +607,44 @@ public interface Observation extends ObservationView {
         }
     }
 
-    default <T, E extends Throwable> CheckedCallable<T, E> wrapChecked(CheckedCallable<T, E> checkedCallable) throws E {
-        return () -> observeChecked(checkedCallable);
+    /**
+     * Observes the passed {@link Function} which provides access to the {@link Context}.
+     *
+     * This means the followings:
+     * <ul>
+     * <li>Starts the {@code Observation}</li>
+     * <li>Opens a {@code Scope}</li>
+     * <li>Calls {@link Function#apply(Object)} where it gets a {@link Context}</li>
+     * <li>Closes the {@code Scope}</li>
+     * <li>Signals the error to the {@code Observation} if any</li>
+     * <li>Stops the {@code Observation}</li>
+     * </ul>
+     *
+     * NOTE: When the {@link ObservationRegistry} is a noop, this function receives a
+     * default {@link Context} instance which is not the one that have passed at
+     * {@link Observation} creation.
+     * @param function the {@link CheckedFunction} to call
+     * @return the result from {@link Function#apply(Object)}
+     * @param <C> the type of input {@link Context} to the function
+     * @param <T> the type of return to the function
+     * @param <E> type of exception {@link CheckedFunction} throws
+     * @param <E> type of exception thrown
+     */
+    @SuppressWarnings({ "unused", "unchecked" })
+    @Nullable
+    default <C extends Context, T, E extends Throwable> T observeCheckedWithContext(CheckedFunction<C, T, E> function)
+            throws E {
+        start();
+        try (Scope scope = openScope()) {
+            return function.apply((C) getContext());
+        }
+        catch (Throwable error) {
+            error(error);
+            throw error;
+        }
+        finally {
+            stop();
+        }
     }
 
     /**
@@ -1303,6 +1344,17 @@ public interface Observation extends ObservationView {
     interface CheckedCallable<T, E extends Throwable> {
 
         T call() throws E;
+
+    }
+
+    /**
+     * A functional interface like {@link Function} but it can throw a {@link Throwable}.
+     */
+    @FunctionalInterface
+    interface CheckedFunction<T, R, E extends Throwable> {
+
+        @Nullable
+        R apply(T t) throws E;
 
     }
 
