@@ -25,7 +25,7 @@ import java.util.function.BiFunction;
 /**
  * Context to use when instrumenting Jetty client metrics with the Observation API.
  *
- * @since 1.10.0
+ * @since 1.11.0
  * @see JettyClientMetrics
  */
 public class JettyClientContext extends RequestReplySenderContext<Request, Result> {

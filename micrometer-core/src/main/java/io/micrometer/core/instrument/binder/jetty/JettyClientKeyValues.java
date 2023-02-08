@@ -31,7 +31,7 @@ import java.util.regex.Pattern;
  * is handled by Jetty {@link org.eclipse.jetty.client.HttpClient}.
  *
  * @author Jon Schneider
- * @since 1.10.0
+ * @since 1.11.0
  */
 public final class JettyClientKeyValues {
 

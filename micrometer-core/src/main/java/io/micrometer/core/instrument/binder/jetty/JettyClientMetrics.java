@@ -135,7 +135,7 @@ public class JettyClientMetrics implements Request.Listener {
      * @param registry meter registry to use
      * @param uriPatternFunction how to extract the URI pattern for tagging
      * @return builder
-     * @since 1.10.0
+     * @since 1.11.0
      */
     public static Builder builder(MeterRegistry registry, BiFunction<Request, Result, String> uriPatternFunction) {
         return new Builder(registry, uriPatternFunction);
@@ -187,7 +187,7 @@ public class JettyClientMetrics implements Request.Listener {
          * {@link #observationRegistry(ObservationRegistry)} is configured.
          * @param tagsProvider tags provider to use with metrics instrumentation
          * @return this builder
-         * @since 1.10.0
+         * @since 1.11.0
          */
         public Builder tagsProvider(JettyClientTagsProvider tagsProvider) {
             this.tagsProvider = tagsProvider;
@@ -199,7 +199,7 @@ public class JettyClientMetrics implements Request.Listener {
          * API instead of directly with a {@link Timer}.
          * @param observationRegistry registry with which to instrument
          * @return this builder
-         * @since 1.10.0
+         * @since 1.11.0
          */
         public Builder observationRegistry(ObservationRegistry observationRegistry) {
             this.observationRegistry = observationRegistry;
@@ -213,6 +213,7 @@ public class JettyClientMetrics implements Request.Listener {
          * @param convention semantic convention to use
          * @return This builder instance.
          * @see #observationRegistry(ObservationRegistry)
+         * @since 1.11.0
          */
         public Builder observationConvention(JettyClientObservationConvention convention) {
             this.observationConvention = convention;

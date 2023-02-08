@@ -76,7 +76,7 @@ public enum Outcome {
     /**
      * Returns the {@code Outcome} as a {@link KeyValue} named {@code outcome}.
      * @return the {@code outcome} {@code KeyValue}
-     * @since 1.10.0
+     * @since 1.11.0
      */
     public KeyValue asKeyValue() {
         return this.keyValue;

@@ -22,9 +22,9 @@ import org.eclipse.jetty.client.api.Result;
 /**
  * Default implementation of {@link JettyClientObservationConvention}.
  *
- * @since 1.10.0
+ * @since 1.11.0
  */
-public class DefaultJettyClientObservationConvention extends JettyClientObservationConvention {
+public class DefaultJettyClientObservationConvention implements JettyClientObservationConvention {
 
     public static DefaultJettyClientObservationConvention INSTANCE = new DefaultJettyClientObservationConvention();
 

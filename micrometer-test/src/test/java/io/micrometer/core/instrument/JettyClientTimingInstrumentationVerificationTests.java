@@ -17,6 +17,8 @@ package io.micrometer.core.instrument;
 
 import io.micrometer.common.lang.Nullable;
 import io.micrometer.core.instrument.binder.jetty.JettyClientMetrics;
+import io.micrometer.core.instrument.binder.jetty.JettyClientObservationDocumentation;
+import io.micrometer.observation.docs.ObservationDocumentation;
 import org.eclipse.jetty.client.HttpClient;
 import org.eclipse.jetty.client.api.Request;
 import org.eclipse.jetty.client.util.BytesContentProvider;
@@ -31,6 +33,11 @@ class JettyClientTimingInstrumentationVerificationTests
     @Override
     protected String timerName() {
         return "jetty.client.requests";
+    }
+
+    @Override
+    protected ObservationDocumentation observationDocumentation() {
+        return JettyClientObservationDocumentation.DEFAULT;
     }
 
     @Override

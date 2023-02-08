@@ -21,12 +21,12 @@ import io.micrometer.observation.ObservationConvention;
 /**
  * Convention used with Jetty client instrumentation {@link JettyClientMetrics}.
  *
- * @since 1.10.0
+ * @since 1.11.0
  */
-public class JettyClientObservationConvention implements ObservationConvention<JettyClientContext> {
+public interface JettyClientObservationConvention extends ObservationConvention<JettyClientContext> {
 
     @Override
-    public boolean supportsContext(Observation.Context context) {
+    default boolean supportsContext(Observation.Context context) {
         return context instanceof JettyClientContext;
     }
 
